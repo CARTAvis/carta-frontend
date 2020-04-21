@@ -81,7 +81,7 @@ export class PreferenceDialogComponent extends React.Component {
 
     public render() {
         const appStore = AppStore.Instance;
-        const preference = PreferenceStore.Instance;
+        const preference = appStore.preferenceStore;
         const layoutStore = appStore.layoutStore;
 
         const globalPanel = (
@@ -536,16 +536,14 @@ export class PreferenceDialogComponent extends React.Component {
             className += " bp3-dark";
         }
 
-        const dialogStore = DialogStore.Instance;
-
         const dialogProps: IDialogProps = {
             icon: "cog",
             backdropClassName: "minimal-dialog-backdrop",
             className: className,
             canOutsideClickClose: false,
             lazy: true,
-            isOpen: dialogStore.preferenceDialogVisible,
-            onClose: dialogStore.hidePreferenceDialog,
+            isOpen: appStore.dialogStore.preferenceDialogVisible,
+            onClose: appStore.dialogStore.hidePreferenceDialog,
             title: "Preferences",
         };
 
@@ -572,7 +570,7 @@ export class PreferenceDialogComponent extends React.Component {
                         <Tooltip content="Apply to current tab only." position={Position.TOP}>
                             <AnchorButton intent={Intent.WARNING} icon={"refresh"} onClick={this.reset} text="Restore defaults"/>
                         </Tooltip>
-                        <Button intent={Intent.NONE} onClick={dialogStore.hidePreferenceDialog} text="Close"/>
+                        <Button intent={Intent.NONE} onClick={appStore.dialogStore.hidePreferenceDialog} text="Close"/>
                     </div>
                 </div>
             </DraggableDialogComponent>

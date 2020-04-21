@@ -11,7 +11,6 @@ export class FileInfoDialogComponent extends React.Component {
 
     render() {
         const appStore = AppStore.Instance;
-        const dialogStore = DialogStore.Instance;
 
         let className = "file-info-dialog";
         if (appStore.darkTheme) {
@@ -24,8 +23,8 @@ export class FileInfoDialogComponent extends React.Component {
             backdropClassName: "minimal-dialog-backdrop",
             canOutsideClickClose: false,
             lazy: true,
-            isOpen: dialogStore.fileInfoDialogVisible,
-            onClose: dialogStore.hideFileInfoDialog,
+            isOpen: appStore.dialogStore.fileInfoDialogVisible,
+            onClose: appStore.dialogStore.hideFileInfoDialog,
             title: "File Info",
         };
 
@@ -37,8 +36,8 @@ export class FileInfoDialogComponent extends React.Component {
                         fileInfoExtended={appStore.activeFrame ? appStore.activeFrame.frameInfo.fileInfoExtended : null}
                         regionFileInfo={""}
                         catalogFileInfo={null}
-                        selectedTab={dialogStore.selectedFileInfoDialogTab as FileInfoType}
-                        handleTabChange={dialogStore.setSelectedFileInfoDialogTab}
+                        selectedTab={appStore.dialogStore.selectedFileInfoDialogTab as FileInfoType}
+                        handleTabChange={appStore.dialogStore.setSelectedFileInfoDialogTab}
                         isLoading={false}
                         errorMessage={""}
                     />

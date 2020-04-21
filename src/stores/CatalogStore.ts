@@ -15,13 +15,22 @@ type CatalogSettings = {
 };
 
 export class CatalogStore {
+    private static staticInstance: CatalogStore;
+
+    static get Instance() {
+        if (!CatalogStore.staticInstance) {
+            CatalogStore.staticInstance = new CatalogStore();
+        }
+        return CatalogStore.staticInstance;
+    }
+
     private readonly degreeUnits = ["deg", "degrees"];
     private readonly arcsecUnits = ["arcsec", "arcsecond"];
     private readonly arcminUnits = ["arcmin", "arcminute"];
 
     @observable catalogs: ObservableMap<string, CatalogSettings>;
 
-    constructor() {
+    private constructor() {
         this.catalogs = new ObservableMap();
     }
 

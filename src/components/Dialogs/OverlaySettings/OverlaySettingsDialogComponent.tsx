@@ -90,7 +90,7 @@ export class OverlaySettingsDialogComponent extends React.Component {
 
     public render() {
         const appStore = AppStore.Instance;
-        const overlayStore = OverlayStore.Instance;
+        const overlayStore = appStore.overlayStore;
         const global = overlayStore.global;
         const title = overlayStore.title;
         const grid = overlayStore.grid;

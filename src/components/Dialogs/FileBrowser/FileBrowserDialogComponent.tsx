@@ -26,7 +26,7 @@ export class FileBrowserDialogComponent extends React.Component {
 
     private loadFile = (fileInfo: CARTA.IFileInfo | CARTA.ICatalogFileInfo, hdu?: string) => {
         const appStore = AppStore.Instance;
-        const fileBrowserStore = FileBrowserStore.Instance;
+        const fileBrowserStore = appStore.fileBrowserStore;
 
         // Ignore load if in export mode
         if (fileBrowserStore.browserMode === BrowserMode.RegionExport) {
@@ -50,7 +50,6 @@ export class FileBrowserDialogComponent extends React.Component {
     };
 
     private handleExportRegionsClicked = () => {
-        const appStore = AppStore.Instance;
         const fileBrowserStore = FileBrowserStore.Instance;
         const filename = fileBrowserStore.exportFilename.trim();
         if (fileBrowserStore.fileList && fileBrowserStore.fileList.files && fileBrowserStore.fileList.files.find(f => f.name.trim() === filename)) {
@@ -75,7 +74,6 @@ export class FileBrowserDialogComponent extends React.Component {
 
     private handleOverwriteAlertConfirmed = () => {
         this.overwriteExistingFileAlertVisible = false;
-        const appStore = AppStore.Instance;
         const fileBrowserStore = FileBrowserStore.Instance;
         const filename = fileBrowserStore.exportFilename.trim();
         this.exportRegion(fileBrowserStore.fileList.directory, filename);
@@ -97,7 +95,7 @@ export class FileBrowserDialogComponent extends React.Component {
 
     private renderActionButton(browserMode: BrowserMode, appending: boolean) {
         const appStore = AppStore.Instance;
-        const fileBrowserStore = FileBrowserStore.Instance;
+        const fileBrowserStore = appStore.fileBrowserStore;
 
         if (browserMode === BrowserMode.File) {
             if (appending) {
@@ -219,7 +217,7 @@ export class FileBrowserDialogComponent extends React.Component {
 
     public render() {
         const appStore = AppStore.Instance;
-        const fileBrowserStore = FileBrowserStore.Instance;
+        const fileBrowserStore = appStore.fileBrowserStore;
 
         let className = "file-browser-dialog";
         if (appStore.darkTheme) {
@@ -232,7 +230,7 @@ export class FileBrowserDialogComponent extends React.Component {
             backdropClassName: "minimal-dialog-backdrop",
             canOutsideClickClose: false,
             lazy: true,
-            isOpen: DialogStore.Instance.fileBrowserDialogVisible,
+            isOpen: appStore.dialogStore.fileBrowserDialogVisible,
             onClose: fileBrowserStore.hideFileBrowser,
             onOpened: () => this.refreshFileList(),
             title: "File Browser",
@@ -354,7 +352,6 @@ export class FileBrowserDialogComponent extends React.Component {
     }
 
     @computed get pathItems() {
-        const appStore = AppStore.Instance;
         const fileBrowserStore = FileBrowserStore.Instance;
 
         // let pathItems: IBreadcrumbProps[] = [{icon: "desktop", target: "."}];

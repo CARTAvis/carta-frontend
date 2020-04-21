@@ -18,7 +18,7 @@ export class RegionDialogComponent extends React.Component {
 
     private handleDeleteClicked = () => {
         const appStore = AppStore.Instance;
-        DialogStore.Instance.hideRegionDialog();
+        appStore.dialogStore.hideRegionDialog();
         if (appStore.activeFrame && appStore.activeFrame.regionSet.selectedRegion) {
             appStore.deleteRegion(appStore.activeFrame.regionSet.selectedRegion);
         }
@@ -28,15 +28,14 @@ export class RegionDialogComponent extends React.Component {
 
     public render() {
         const appStore = AppStore.Instance;
-        const dialogStore = DialogStore.Instance;
 
         const dialogProps: IDialogProps = {
             icon: "info-sign",
             backdropClassName: "minimal-dialog-backdrop",
             canOutsideClickClose: true,
             lazy: true,
-            isOpen: dialogStore.regionDialogVisible,
-            onClose: dialogStore.hideRegionDialog,
+            isOpen: appStore.dialogStore.regionDialogVisible,
+            onClose: appStore.dialogStore.hideRegionDialog,
             className: "region-dialog",
             canEscapeKeyClose: true,
             title: "No region selected",
@@ -116,7 +115,7 @@ export class RegionDialogComponent extends React.Component {
                     <div className={Classes.DIALOG_FOOTER_ACTIONS}>
                         {tooltips}
                         {editableRegion && <AnchorButton intent={Intent.DANGER} icon={"trash"} text="Delete" onClick={this.handleDeleteClicked}/>}
-                        <AnchorButton intent={Intent.NONE} onClick={dialogStore.hideRegionDialog} text="Close"/>
+                        <AnchorButton intent={Intent.NONE} onClick={appStore.dialogStore.hideRegionDialog} text="Close"/>
                     </div>
                 </div>
             </DraggableDialogComponent>

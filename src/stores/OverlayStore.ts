@@ -702,9 +702,9 @@ export class OverlayBeamSettings {
     constructor() {
         this.selectedFileId = -1;
         this.settingsForDisplay = null;
-        const appStore = AppStore.Instance;
 
         autorun(() => {
+            const appStore = AppStore.Instance;
             if (appStore.activeFrame && appStore.activeFrame.frameInfo && appStore.activeFrame.frameInfo.fileInfo) {
                 this.setSelectedFrame(appStore.activeFrame.frameInfo.fileId);
             }

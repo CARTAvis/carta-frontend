@@ -106,8 +106,8 @@ export class CatalogOverlayWidgetStore extends RegionWidgetStore {
     @observable showSelectedData: boolean;
     @observable catalogTableRef: Table;
 
-    constructor(appStore: AppStore, catalogInfo: CatalogInfo, catalogHeader: Array<CARTA.ICatalogHeader>, catalogData: CARTA.ICatalogColumnsData, id: string) {
-        super(appStore, RegionsType.CLOSED_AND_POINT);
+    constructor(catalogInfo: CatalogInfo, catalogHeader: Array<CARTA.ICatalogHeader>, catalogData: CARTA.ICatalogColumnsData, id: string) {
+        super(RegionsType.CLOSED_AND_POINT);
         this.storeId = id;
         this.catalogInfo = catalogInfo;
         this.catalogHeader = catalogHeader.sort((a, b) => { return (a.columnIndex - b.columnIndex); });

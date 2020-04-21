@@ -25,7 +25,7 @@ import {
     RenderConfigSettingsPanelComponent,
     HistogramSettingsPanelComponent
 } from "components";
-import {AppStore, HelpStore, HelpType} from "stores";
+import {AppStore, HelpStore, HelpType, LayoutStore} from "stores";
 import {
     EmptyWidgetStore, 
     HistogramWidgetStore, 
@@ -64,6 +64,15 @@ export class WidgetProps {
 }
 
 export class WidgetsStore {
+    private static staticInstance: WidgetsStore;
+
+    static get Instance() {
+        if (!WidgetsStore.staticInstance) {
+            WidgetsStore.staticInstance = new WidgetsStore();
+        }
+        return WidgetsStore.staticInstance;
+    }
+
     // Floating widgets
     @observable floatingWidgets: WidgetConfig[];
     // Widget Stores
@@ -81,7 +90,6 @@ export class WidgetsStore {
     @observable catalogOverlayWidgets: Map<string, CatalogOverlayWidgetStore>;
     @observable catalogScatterWidgets: Map<string, CatalogScatterWidgetStore>;
 
-    private appStore: AppStore;
     private widgetsMap: Map<string, Map<string, any>>;
     private defaultFloatingWidgetOffset: number;
 
@@ -107,8 +115,7 @@ export class WidgetsStore {
         });
     };
 
-    constructor(appStore: AppStore) {
-        this.appStore = appStore;
+    private constructor() {
         this.spatialProfileWidgets = new Map<string, SpatialProfileWidgetStore>();
         this.spectralProfileWidgets = new Map<string, SpectralProfileWidgetStore>();
         this.statsWidgets = new Map<string, StatsWidgetStore>();
@@ -193,14 +200,14 @@ export class WidgetsStore {
     }
 
     // create drag source for ToolbarMenuComponent
-    private static CreateDragSource(appStore: AppStore, layout: GoldenLayout, widgetConfig: WidgetConfig, elementId: string) {
+    private static CreateDragSource(layout: GoldenLayout, widgetConfig: WidgetConfig, elementId: string) {
         const glConfig: GoldenLayout.ReactComponentConfig = {
             type: "react-component",
             component: widgetConfig.type,
             title: widgetConfig.title,
             id: widgetConfig.id,
             isClosable: widgetConfig.isCloseable,
-            props: {appStore: appStore, id: widgetConfig.id, docked: true}
+            props: {appStore: AppStore.Instance, id: widgetConfig.id, docked: true}
         };
 
         const widgetElement = document.getElementById(elementId);
@@ -396,7 +403,7 @@ export class WidgetsStore {
 
         const showCogWidgets = ["spatial-profiler", "spectral-profiler", "histogram", "render-config", "stokes"];
         // add drag source buttons from ToolbarMenuComponent
-        ToolbarMenuComponent.DRAGSOURCE_WIDGETCONFIG_MAP.forEach((widgetConfig, id) => WidgetsStore.CreateDragSource(this.appStore, layout, widgetConfig, id));
+        ToolbarMenuComponent.DRAGSOURCE_WIDGETCONFIG_MAP.forEach((widgetConfig, id) => WidgetsStore.CreateDragSource(layout, widgetConfig, id));
 
         layout.on("stackCreated", (stack) => {
             let unpinButton = $(`<li class="lm-pin" title="detach"><span class="bp3-icon-standard bp3-icon-unpin"/></li>`);
@@ -577,15 +584,16 @@ export class WidgetsStore {
     // endregion
 
     @action updateImageWidgetTitle() {
+        const appStore = AppStore.Instance;
         let newTitle;
-        if (this.appStore.activeFrame) {
-            newTitle = this.appStore.activeFrame.frameInfo.fileInfo.name;
+        if (appStore.activeFrame) {
+            newTitle = appStore.activeFrame.frameInfo.fileInfo.name;
         } else {
             newTitle = "No image loaded";
         }
 
         // Update GL title by searching for image-view components
-        const layoutStore = this.appStore.layoutStore;
+        const layoutStore = appStore.layoutStore;
         if (layoutStore.dockedLayout && layoutStore.dockedLayout.root) {
             const imageViewComponents = layoutStore.dockedLayout.root.getItemsByFilter((item: any) => item.config.component === ImageViewComponent.WIDGET_CONFIG.type);
             if (imageViewComponents.length) {
@@ -603,7 +611,7 @@ export class WidgetsStore {
     }
 
     @action setWidgetTitle(id: string, title: string) {
-        const layoutStore = this.appStore.layoutStore;
+        const layoutStore = LayoutStore.Instance;
         if (layoutStore.dockedLayout && layoutStore.dockedLayout.root) {
             const matchingComponents = layoutStore.dockedLayout.root.getItemsByFilter(item => item.config.id === id);
             if (matchingComponents.length) {
@@ -618,7 +626,7 @@ export class WidgetsStore {
     }
 
     @action setWidgetComponentTitle(componentId: string, title: string) {
-        const layoutStore = this.appStore.layoutStore;
+        const layoutStore = LayoutStore.Instance;
         if (layoutStore.dockedLayout && layoutStore.dockedLayout.root) {
             const matchingComponents = layoutStore.dockedLayout.root.getItemsById(componentId);
             if (matchingComponents.length) {
@@ -676,7 +684,7 @@ export class WidgetsStore {
         }
 
         if (id) {
-            const widgetStore = new SpectralProfileWidgetStore(this.appStore);
+            const widgetStore = new SpectralProfileWidgetStore();
             if (widgetSettings) {
                 widgetStore.init(widgetSettings);
             }
@@ -700,7 +708,7 @@ export class WidgetsStore {
         }
 
         if (id) {
-            const widgetStore = new StokesAnalysisWidgetStore(this.appStore);
+            const widgetStore = new StokesAnalysisWidgetStore();
             if (widgetSettings) {
                 widgetStore.init(widgetSettings);
             }
@@ -736,7 +744,7 @@ export class WidgetsStore {
     };
 
     getDockedWidgetByType(type: string): GoldenLayout.ContentItem[] {
-        const layoutStore = this.appStore.layoutStore;
+        const layoutStore = LayoutStore.Instance;
         let matchingComponents = [];
         if (layoutStore.dockedLayout && layoutStore.dockedLayout.root) {
             matchingComponents = layoutStore.dockedLayout.root.getItemsByFilter(
@@ -784,28 +792,28 @@ export class WidgetsStore {
         }
 
         if (id) {
-            this.catalogOverlayWidgets.set(id, new CatalogOverlayWidgetStore(this.appStore, catalogInfo, catalogHeader, catalogData, id));
+            this.catalogOverlayWidgets.set(id, new CatalogOverlayWidgetStore(catalogInfo, catalogHeader, catalogData, id));
         }
         return id;
     }
     // endregion 
 
     // region Catalog Scatter Widgets
-    createFloatingCatalogScatterWidget = (porps: CatalogScatterWidgetStoreProps): string => {
+    createFloatingCatalogScatterWidget = (props: CatalogScatterWidgetStoreProps): string => {
         let config = CatalogScatterComponent.WIDGET_CONFIG;
-        config.id = this.addCatalogScatterWidget(porps);
+        config.id = this.addCatalogScatterWidget(props);
         this.addFloatingWidget(config);
         return config.id;
     };
 
-    @action addCatalogScatterWidget(porps: CatalogScatterWidgetStoreProps, id: string = null) {
+    @action addCatalogScatterWidget(props: CatalogScatterWidgetStoreProps, id: string = null) {
         // Generate new id if none passed in
         if (!id) {
             id = this.getNextId(CatalogScatterComponent.WIDGET_CONFIG.type);
         }
 
         if (id) {
-            this.catalogScatterWidgets.set(id, new CatalogScatterWidgetStore(porps));
+            this.catalogScatterWidgets.set(id, new CatalogScatterWidgetStore(props));
         }
         return id;
     }
@@ -849,7 +857,7 @@ export class WidgetsStore {
         }
 
         if (id) {
-            this.statsWidgets.set(id, new StatsWidgetStore(this.appStore));
+            this.statsWidgets.set(id, new StatsWidgetStore());
         }
         return id;
     }
@@ -869,7 +877,7 @@ export class WidgetsStore {
         }
 
         if (id) {
-            const widgetStore = new HistogramWidgetStore(this.appStore);
+            const widgetStore = new HistogramWidgetStore();
             if (widgetSettings) {
                 widgetStore.init(widgetSettings);
             }

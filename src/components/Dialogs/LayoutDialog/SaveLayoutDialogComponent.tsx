@@ -29,23 +29,21 @@ export class SaveLayoutDialogComponent extends React.Component {
 
     private saveLayout = () => {
         const appStore = AppStore.Instance;
-        const layoutStore = appStore.layoutStore;
-        const alertStore = AlertStore.Instance;
 
-        DialogStore.Instance.hideSaveLayoutDialog();
-        layoutStore.setLayoutToBeSaved(this.layoutName);
-        if (layoutStore.layoutExist(this.layoutName)) {
+        appStore.dialogStore.hideSaveLayoutDialog();
+        appStore.layoutStore.setLayoutToBeSaved(this.layoutName);
+        if (appStore.layoutStore.layoutExist(this.layoutName)) {
             if (PresetLayout.isPreset(this.layoutName)) {
-                alertStore.showAlert("Layout name cannot be the same as system presets.");
+                appStore.alertStore.showAlert("Layout name cannot be the same as system presets.");
             } else {
-                alertStore.showInteractiveAlert(`Are you sure to overwrite the existing layout ${this.layoutName}?`, (confirmed: boolean) => {
+                appStore.alertStore.showInteractiveAlert(`Are you sure to overwrite the existing layout ${this.layoutName}?`, (confirmed: boolean) => {
                     if (confirmed) {
-                        layoutStore.saveLayout();
+                        appStore.layoutStore.saveLayout();
                     }
                 });
             }
         } else {
-            layoutStore.saveLayout();
+            appStore.layoutStore.saveLayout();
         }
         this.clearInput();
     };
@@ -56,7 +54,6 @@ export class SaveLayoutDialogComponent extends React.Component {
 
     render() {
         const appStore = AppStore.Instance;
-        const dialogStore = DialogStore.Instance;
 
         let className = "preference-dialog";
         if (appStore.darkTheme) {
@@ -69,8 +66,8 @@ export class SaveLayoutDialogComponent extends React.Component {
             className: className,
             canOutsideClickClose: false,
             lazy: true,
-            isOpen: dialogStore.saveLayoutDialogVisible,
-            onClose: dialogStore.hideSaveLayoutDialog,
+            isOpen: appStore.dialogStore.saveLayoutDialogVisible,
+            onClose: appStore.dialogStore.hideSaveLayoutDialog,
             title: "Save Layout",
         };
 
@@ -90,7 +87,7 @@ export class SaveLayoutDialogComponent extends React.Component {
                             intent={Intent.NONE}
                             text="Close"
                             onClick={() => {
-                                dialogStore.hideSaveLayoutDialog();
+                                appStore.dialogStore.hideSaveLayoutDialog();
                                 this.clearInput();
                             }}
                         />

@@ -30,7 +30,7 @@ import {
     SpatialProfileStore,
     SpectralProfileStore,
     WidgetsStore,
-    CatalogStore
+    CatalogStore, HelpStore
 } from ".";
 import {distinct, GetRequiredTiles} from "utilities";
 import {BackendService, ConnectionStatus, TileService, TileStreamDetails} from "services";
@@ -50,8 +50,21 @@ export class AppStore {
     }
 
     // Backend services
-    backendService: BackendService;
-    tileService: TileService;
+    readonly backendService: BackendService;
+    readonly tileService: TileService;
+
+    // Other stores
+    readonly alertStore: AlertStore;
+    readonly animatorStore: AnimatorStore;
+    readonly catalogStore: CatalogStore;
+    readonly dialogStore: DialogStore;
+    readonly fileBrowserStore: FileBrowserStore;
+    readonly helpStore: HelpStore;
+    readonly layoutStore: LayoutStore;
+    readonly logStore: LogStore;
+    readonly overlayStore: OverlayStore;
+    readonly preferenceStore: PreferenceStore;
+    readonly widgetsStore: WidgetsStore;
 
     // WebAssembly Module status
     @observable astReady: boolean;
@@ -65,12 +78,6 @@ export class AppStore {
 
     // catalog map catalog widget store with file Id
     @observable catalogs: Map<string, number>;
-    // catalog data for image viewer
-    @observable catalogStore: CatalogStore;
-
-    readonly layoutStore: LayoutStore;
-    // Widgets
-    readonly widgetsStore: WidgetsStore;
 
     // Profiles and region data
     @observable spatialProfiles: Map<string, SpatialProfileStore>;
@@ -704,9 +711,23 @@ export class AppStore {
     }, AppStore.ImageChannelThrottleTime);
 
     private constructor() {
-        this.layoutStore = new LayoutStore(this, AlertStore.Instance);
+        // Assign service instances
         this.backendService = BackendService.Instance;
         this.tileService = TileService.Instance;
+
+        // Assign lower level store instances
+        this.alertStore = AlertStore.Instance;
+        this.animatorStore = AnimatorStore.Instance;
+        this.catalogStore = CatalogStore.Instance;
+        this.dialogStore = DialogStore.Instance;
+        this.fileBrowserStore = FileBrowserStore.Instance;
+        this.helpStore = HelpStore.Instance;
+        this.layoutStore = LayoutStore.Instance;
+        this.logStore = LogStore.Instance;
+        this.overlayStore = OverlayStore.Instance;
+        this.preferenceStore = PreferenceStore.Instance;
+        this.widgetsStore = WidgetsStore.Instance;
+
         this.astReady = false;
         this.cartaComputeReady = false;
         this.spatialProfiles = new Map<string, SpatialProfileStore>();
@@ -717,12 +738,10 @@ export class AppStore {
 
         this.frames = [];
         this.catalogs = new Map();
-        this.catalogStore = new CatalogStore();
         this.activeFrame = null;
         this.contourDataSource = null;
         this.syncFrameToContour = true;
         this.syncContourToFrame = true;
-        this.widgetsStore = new WidgetsStore(this);
         this.initRequirements();
 
         const throttledSetCursorRotated = _.throttle(this.setCursor, AppStore.CursorThrottleTimeRotated);

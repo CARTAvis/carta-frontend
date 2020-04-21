@@ -66,21 +66,20 @@ export class ContourDialogComponent extends React.Component {
     @action setDefaultContourParameters() {
         const appStore = AppStore.Instance;
         const dataSource = appStore.contourDataSource;
-        const preferenceStore = PreferenceStore.Instance;
         if (dataSource) {
             this.levels = dataSource.contourConfig.levels.slice();
             this.smoothingMode = dataSource.contourConfig.smoothingMode;
             this.smoothingFactor = dataSource.contourConfig.smoothingFactor;
         } else {
             this.levels = [];
-            this.smoothingMode = preferenceStore.contourSmoothingMode;
-            this.smoothingFactor = preferenceStore.contourSmoothingFactor;
+            this.smoothingMode = appStore.preferenceStore.contourSmoothingMode;
+            this.smoothingFactor = appStore.preferenceStore.contourSmoothingFactor;
         }
     }
 
     componentDidUpdate() {
         const appStore = AppStore.Instance;
-        if (AppStore.Instance.contourDataSource !== this.cachedFrame) {
+        if (appStore.contourDataSource !== this.cachedFrame) {
             this.cachedFrame = appStore.contourDataSource;
             this.widgetStore.clearXYBounds();
             this.setDefaultContourParameters();
@@ -267,15 +266,14 @@ export class ContourDialogComponent extends React.Component {
 
     public render() {
         const appStore = AppStore.Instance;
-        const dialogStore = DialogStore.Instance;
 
         const dialogProps: IDialogProps = {
             icon: <CustomIcon icon="contour" size={CustomIcon.SIZE_LARGE}/>,
             backdropClassName: "minimal-dialog-backdrop",
             canOutsideClickClose: false,
             lazy: true,
-            isOpen: dialogStore.contourDialogVisible,
-            onClose: dialogStore.hideContourDialog,
+            isOpen: appStore.dialogStore.contourDialogVisible,
+            onClose: appStore.dialogStore.hideContourDialog,
             className: "contour-dialog",
             canEscapeKeyClose: true,
             title: "Contour Configuration",
@@ -418,7 +416,7 @@ export class ContourDialogComponent extends React.Component {
                 <div className="histogram-plot">
                     <LinePlotComponent {...linePlotProps}/>
                 </div>
-                <ContourGeneratorPanelComponent frame={dataSource} generatorType={PreferenceStore.Instance.contourGeneratorType} onLevelsGenerated={this.handleLevelsGenerated}/>
+                <ContourGeneratorPanelComponent frame={dataSource} generatorType={appStore.preferenceStore.contourGeneratorType} onLevelsGenerated={this.handleLevelsGenerated}/>
                 <div className="contour-level-panel-levels">
                     <FormGroup label={"Levels"} inline={true}>
                         <TagInput
@@ -496,7 +494,7 @@ export class ContourDialogComponent extends React.Component {
                     <div className={Classes.DIALOG_FOOTER_ACTIONS}>
                         <AnchorButton intent={Intent.WARNING} onClick={this.handleClearContours} disabled={!dataSource.contourConfig.enabled} text="Clear"/>
                         <AnchorButton intent={Intent.SUCCESS} onClick={this.handleApplyContours} disabled={!hasLevels || (!this.contourConfigChanged && dataSource.contourConfig.enabled)} text="Apply"/>
-                        <AnchorButton intent={Intent.NONE} onClick={dialogStore.hideContourDialog} text="Close"/>
+                        <AnchorButton intent={Intent.NONE} onClick={appStore.dialogStore.hideContourDialog} text="Close"/>
                     </div>
                 </div>
                 <Alert icon={"time"} isOpen={this.showCubeHistogramAlert} onCancel={this.handleAlertCancel} onConfirm={this.handleAlertConfirm} cancelButtonText={"Cancel"}>

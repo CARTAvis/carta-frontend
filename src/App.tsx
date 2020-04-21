@@ -23,21 +23,20 @@ export class App extends React.Component {
         super(props);
 
         const appStore = AppStore.Instance;
-        const logStore = LogStore.Instance;
 
         AST.onReady.then(() => {
             AST.setPalette(appStore.darkTheme ? nightPalette : dayPalette);
             appStore.astReady = true;
-            logStore.addInfo("AST library loaded", ["ast"]);
+            appStore.logStore.addInfo("AST library loaded", ["ast"]);
         });
 
         CARTACompute.onReady.then(() => {
             appStore.cartaComputeReady = true;
-            logStore.addInfo("Compute module loaded", ["compute"]);
+            appStore.logStore.addInfo("Compute module loaded", ["compute"]);
         });
 
         // Log the frontend git commit hash
-        logStore.addDebug(`Current frontend version: ${GitCommit.logMessage}`, ["version"]);
+        appStore.logStore.addDebug(`Current frontend version: ${GitCommit.logMessage}`, ["version"]);
 
         this.previousConnectionStatus = ConnectionStatus.CLOSED;
         // Display toasts when connection status changes
@@ -74,7 +73,6 @@ export class App extends React.Component {
 
     public render() {
         const appStore = AppStore.Instance;
-        const alertStore = AlertStore.Instance;
         let className = "App";
         let glClassName = "gl-container-app";
         if (appStore.darkTheme) {
@@ -87,25 +85,25 @@ export class App extends React.Component {
         return (
             <div className={className}>
                 <UIControllerComponent appStore={appStore}/>
-                <Alert isOpen={alertStore.alertVisible} onClose={alertStore.dismissAlert} canEscapeKeyCancel={true}>
-                    <p>{alertStore.alertText}</p>
+                <Alert isOpen={appStore.alertStore.alertVisible} onClose={appStore.alertStore.dismissAlert} canEscapeKeyCancel={true}>
+                    <p>{appStore.alertStore.alertText}</p>
                 </Alert>
                 <Alert
-                    isOpen={alertStore.interactiveAlertVisible}
+                    isOpen={appStore.alertStore.interactiveAlertVisible}
                     confirmButtonText="OK"
                     cancelButtonText="Cancel"
                     intent={Intent.DANGER}
-                    onClose={alertStore.handleInteractiveAlertClosed}
+                    onClose={appStore.alertStore.handleInteractiveAlertClosed}
                     canEscapeKeyCancel={true}
                 >
-                    <p>{alertStore.interactiveAlertText}</p>
+                    <p>{appStore.alertStore.interactiveAlertText}</p>
                 </Alert>
                 <TaskProgressDialogComponent progress={undefined} timeRemaining={0} isOpen={appStore.resumingSession} cancellable={false} text={"Resuming session..."}/>
                 <div className={glClassName} ref={ref => appStore.setAppContainer(ref)}>
                     <ReactResizeDetector handleWidth handleHeight onResize={this.onContainerResize} refreshMode={"throttle"} refreshRate={200}/>
                 </div>
                 <FloatingWidgetManagerComponent appStore={appStore}/>
-                <Dialog isOpen={DialogStore.Instance.hotkeyDialogVisible} className={"bp3-hotkey-dialog"} canEscapeKeyClose={true} canOutsideClickClose={true} onClose={DialogStore.Instance.hideHotkeyDialog}>
+                <Dialog isOpen={appStore.dialogStore.hotkeyDialogVisible} className={"bp3-hotkey-dialog"} canEscapeKeyClose={true} canOutsideClickClose={true} onClose={appStore.dialogStore.hideHotkeyDialog}>
                     <div className={Classes.DIALOG_BODY}>
                         {this.renderHotkeys()}
                     </div>
@@ -187,7 +185,6 @@ export class App extends React.Component {
 
     public renderHotkeys() {
         const appStore = AppStore.Instance;
-        const fileBrowserStore = FileBrowserStore.Instance;
         const modString = appStore.modifierString;
 
         const navigationGroupTitle = "1) Navigation";
@@ -225,11 +222,11 @@ export class App extends React.Component {
         ];
 
         const fileHotkeys = [
-            <Hotkey key={0} group={fileGroupTitle} global={true} combo={`${modString}O`} label="Open image" onKeyDown={() => fileBrowserStore.showFileBrowser(BrowserMode.File)}/>,
-            <Hotkey key={1} group={fileGroupTitle} global={true} combo={`${modString}L`} label="Append image" onKeyDown={() => fileBrowserStore.showFileBrowser(BrowserMode.File, true)}/>,
+            <Hotkey key={0} group={fileGroupTitle} global={true} combo={`${modString}O`} label="Open image" onKeyDown={() => appStore.fileBrowserStore.showFileBrowser(BrowserMode.File)}/>,
+            <Hotkey key={1} group={fileGroupTitle} global={true} combo={`${modString}L`} label="Append image" onKeyDown={() => appStore.fileBrowserStore.showFileBrowser(BrowserMode.File, true)}/>,
             <Hotkey key={1} group={fileGroupTitle} global={true} combo={`${modString}W`} label="Close image" onKeyDown={() => appStore.closeCurrentFile(true)}/>,
-            <Hotkey key={2} group={fileGroupTitle} global={true} combo={`${modString}E`} label="Export image" onKeyDown={() => exportImage(OverlayStore.Instance.padding, appStore.darkTheme, appStore.activeFrame.frameInfo.fileInfo.name)}/>,
-            <Hotkey key={3} group={fileGroupTitle} global={true} combo={`${modString}C`} label="Append catalog" onKeyDown={() => fileBrowserStore.showFileBrowser(BrowserMode.Catalog, false)}/>
+            <Hotkey key={2} group={fileGroupTitle} global={true} combo={`${modString}E`} label="Export image" onKeyDown={() => exportImage(appStore.overlayStore.padding, appStore.darkTheme, appStore.activeFrame.frameInfo.fileInfo.name)}/>,
+            <Hotkey key={3} group={fileGroupTitle} global={true} combo={`${modString}C`} label="Append catalog" onKeyDown={() => appStore.fileBrowserStore.showFileBrowser(BrowserMode.Catalog, false)}/>
         ];
 
         const otherHotKeys = [

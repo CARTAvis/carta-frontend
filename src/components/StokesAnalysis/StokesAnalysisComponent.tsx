@@ -57,7 +57,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
             }
         }
         console.log("can't find store for widget");
-        return new StokesAnalysisWidgetStore(this.props.appStore);
+        return new StokesAnalysisWidgetStore();
     }
 
     @computed get profileStore(): SpectralProfileStore {
@@ -94,7 +94,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
         } else {
             if (!this.props.appStore.widgetsStore.stokesAnalysisWidgets.has(this.props.id)) {
                 console.log(`can't find store for widget with id=${this.props.id}`);
-                this.props.appStore.widgetsStore.stokesAnalysisWidgets.set(this.props.id, new StokesAnalysisWidgetStore(this.props.appStore));
+                this.props.appStore.widgetsStore.stokesAnalysisWidgets.set(this.props.id, new StokesAnalysisWidgetStore());
             }
         }
 

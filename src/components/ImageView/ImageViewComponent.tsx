@@ -151,15 +151,14 @@ export class ImageViewComponent extends React.Component<WidgetProps> {
             const frame = appStore.getFrame(region.fileId);
             if (frame) {
                 frame.regionSet.selectRegion(region);
-                DialogStore.Instance.showRegionDialog();
+                appStore.dialogStore.showRegionDialog();
             }
         }
     };
 
     render() {
         const appStore = AppStore.Instance;
-        const preferenceStore = PreferenceStore.Instance;
-        const overlayStore = OverlayStore.Instance;
+        const overlayStore = appStore.overlayStore;
         let divContents;
         if (appStore.activeFrame && appStore.activeFrame.isRenderable && appStore.astReady) {
             const effectiveWidth = appStore.activeFrame.renderWidth * (appStore.activeFrame.renderHiDPI ? devicePixelRatio : 1);
@@ -218,8 +217,8 @@ export class ImageViewComponent extends React.Component<WidgetProps> {
                         onRegionDoubleClicked={this.handleRegionDoubleClicked}
                         onZoomed={this.onZoomed}
                         overlaySettings={overlayStore}
-                        isRegionCornerMode={preferenceStore.isRegionCornerMode}
-                        dragPanningEnabled={preferenceStore.dragPanning}
+                        isRegionCornerMode={appStore.preferenceStore.isRegionCornerMode}
+                        dragPanningEnabled={appStore.preferenceStore.dragPanning}
                         cursorFrozen={appStore.activeFrame.cursorFrozen}
                         cursorPoint={appStore.activeFrame.cursorInfo.posImageSpace}
                         docked={this.props.docked}
