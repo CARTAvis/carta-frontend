@@ -13,11 +13,25 @@
     }
 
     .panel-left {
-        width: 325px;
-        .cursor-selection {
-            margin-left: 101px;
-            .cursor-selection-button{
-                width: 10em;
+        width: 400px;
+
+        .range-select {
+            display: flex;
+            flex-direction: row;
+            margin: 10px;
+
+            .range-slider {
+                position: relative;
+                .bp3-slider {
+                    .bp3-slider-axis {
+                        display: none;
+                    }
+                }
+            }
+
+            .cursor-select {
+                display: flex;
+                margin-left: 20px;
             }
         }
     }

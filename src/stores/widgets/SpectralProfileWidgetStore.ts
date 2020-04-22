@@ -187,16 +187,15 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         this.lineWidth = 1;
         this.linePlotInitXYBoundaries = { minXVal: 0, maxXVal: 0, minYVal: 0, maxYVal: 0 };
 
-        this.channelRange = [0, 0];
+        this.channelRange = [0, 10];
         this.isCursorSelect = false;
         this.momentMask = MomentMask.NONE;
         this.moments = new Map<Moments, boolean>();
         Object.keys(Moments).forEach(momentType => this.moments.set(momentType as Moments, false));
 
         autorun(() => {
-            const frame = appStore.activeFrame;
-            if (frame) {
-                this.channelRange = [0, frame.numChannels - 1];
+            if (appStore.activeFrame) {
+                this.setChannelRange([0, appStore.activeFrame.numChannels - 1]);
             }
         });
     }

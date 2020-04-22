@@ -1,6 +1,6 @@
 import * as React from "react";
 import {observer} from "mobx-react";
-import {Button, Checkbox, Divider, FormGroup, HTMLSelect, NumericInput, NumberRange, Position, RangeSlider, Tooltip} from "@blueprintjs/core";
+import {Button, Checkbox, Divider, FormGroup, HTMLSelect, Label, NumericInput, NumberRange, Position, RangeSlider, Tooltip} from "@blueprintjs/core";
 import {RegionSelectorComponent} from "components";
 import {SpectralSettingsComponent} from "components/Shared";
 import {SpectralProfileWidgetStore} from "stores/widgets";
@@ -36,26 +36,29 @@ export class MomentGeneratorComponent extends React.Component<{appStore: AppStor
                 <SpectralSettingsComponent appStore={this.props.appStore} widgetStore={this.props.widgetStore} disable={false}/>
                 {activeFrame && activeFrame.numChannels > 1 &&
                     <React.Fragment>
-                        <FormGroup label="Channel" disabled={!activeFrame || activeFrame.numChannels <= 1}>
-                            <RangeSlider
-                                value={widgetStore.channelRange}
-                                min={0}
-                                max={activeFrame ? activeFrame.numChannels - 1 : 0}
-                                labelStepSize={activeFrame && activeFrame.numChannels > 10 ? ((activeFrame.numChannels - 1) / 4) : 1}
-                                labelPrecision={0}
-                                onChange={this.onChannelRangeChanged}
-                                disabled={!activeFrame || activeFrame.numChannels <= 1}
-                            />
-                            <Tooltip content="Use cursor to select range in profiler" position={Position.BOTTOM}>
-                                <Button
-                                    className={widgetStore.isCursorSelect ? "bp3-active" : ""}
-                                    icon="select"
-                                    small={true}
-                                    onClick={() => widgetStore.setCursorSelect(!widgetStore.isCursorSelect)}
-                                    disabled={!activeFrame || activeFrame.numChannels <= 1}
+                        <Label>Channel</Label>
+                        <div className="range-select">
+                            <div className="range-slider">
+                                <RangeSlider
+                                    value={widgetStore.channelRange}
+                                    min={0}
+                                    max={activeFrame.numChannels - 1}
+                                    labelStepSize={20}
+                                    labelPrecision={0}
+                                    onChange={this.onChannelRangeChanged}
                                 />
-                            </Tooltip>
-                        </FormGroup>
+                            </div>
+                            <div className="cursor-select">
+                                <Tooltip content="Use cursor to select range in profiler" position={Position.BOTTOM}>
+                                    <Button
+                                        className={widgetStore.isCursorSelect ? "bp3-active" : ""}
+                                        icon="select"
+                                        small={true}
+                                        onClick={() => widgetStore.setCursorSelect(!widgetStore.isCursorSelect)}
+                                    />
+                                </Tooltip>
+                            </div>
+                        </div>
                     </React.Fragment>
                 }
             </React.Fragment>
