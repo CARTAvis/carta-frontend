@@ -133,7 +133,7 @@ export class RegionListComponent extends React.Component<WidgetProps> {
                     const sizePoint = region.controlPoints[1];
                     pixelSizeEntry = (
                         <td style={{width: RegionListComponent.SIZE_COLUMN_DEFAULT_WIDTH}} onDoubleClick={this.handleRegionListDoubleClick} >
-                            <Tooltip content="Semi-major and sem-minor axes" position={Position.BOTTOM}>{`(${toFixed(sizePoint.x, 1)}, ${toFixed(sizePoint.y, 1)})`}</Tooltip>
+                            <Tooltip content="Semi-major and semi-minor axes" position={Position.BOTTOM}>{`(${toFixed(sizePoint.x, 1)}, ${toFixed(sizePoint.y, 1)})`}</Tooltip>
                         </td>
                     );
                 } else {
