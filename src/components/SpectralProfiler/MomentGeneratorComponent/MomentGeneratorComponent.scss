@@ -17,7 +17,7 @@
             margin: 10px;
 
             .range-slider {
-                position: relative;
+                width: calc(100% - 24px);
                 .bp3-slider {
                     .bp3-slider-axis {
                         display: none;
@@ -33,7 +33,7 @@
     }
 
     .panel-right {
-        width: 380px;
+        width: calc(100% - 400px);
         margin-left: 20px;
         .bp3-form-content {
             display: flex;
