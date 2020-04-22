@@ -95,6 +95,7 @@ export class LinePlotComponentProps {
     multiColorMultiLinesColors?: Map<string, Array<string>>;
     borderWidth?: number;
     isSelectingMomentChannels?: boolean;
+    setMomentChannels?: (xMin: number, xMax: number) => void;
 }
 
 // Maximum time between double clicks
@@ -348,8 +349,8 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
                     let minY = this.getValueForPixelY(maxCanvasSpace, this.props.logY);
                     let maxY = this.getValueForPixelY(minCanvasSpace, this.props.logY);
 
-                    if (this.props.isSelectingMomentChannels) {
-                        console.log("selecting moment channels + " + minX + " " + maxX);
+                    if (this.props.isSelectingMomentChannels && this.props.setMomentChannels) {
+                        this.props.setMomentChannels(minX, maxX);
                     } else {
                         if (this.zoomMode === ZoomMode.X) {
                             this.props.graphZoomedX(minX, maxX);

@@ -212,27 +212,12 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
 
     onChannelChanged = (x: number) => {
         const frame = this.props.appStore.activeFrame;
-        if (this.props.appStore.animatorStore.animationState === AnimationState.PLAYING) {
+        if (x === null || x === undefined || !isFinite(x) || this.props.appStore.animatorStore.animationState === AnimationState.PLAYING) {
             return;
         }
-
-        if (frame && frame.channelInfo) {
-            let channelInfo = frame.channelInfo;
-            let nearestIndex;
-            if (frame.isCoordChannel) {
-                nearestIndex = channelInfo.getChannelIndexSimple(x);
-            } else {
-                if ((frame.spectralAxis && !frame.spectralAxis.valid) || frame.isSpectralPropsEqual) {
-                    nearestIndex = channelInfo.getChannelIndexWCS(x);
-                } else {
-                    // invert x in selected widget wcs to frame's default wcs
-                    const tx =  AST.transformSpectralPoint(frame.spectralFrame, frame.spectralType, frame.spectralUnit, frame.spectralSystem, x, false);
-                    nearestIndex = channelInfo.getChannelIndexWCS(tx);
-                }
-            }
-            if (nearestIndex !== null && nearestIndex !== undefined) {
-                frame.setChannels(nearestIndex, frame.requiredStokes, true);
-            }
+        const nearestIndex = this.findChannelIndexByValue(x);
+        if (frame && isFinite(nearestIndex) && nearestIndex >= 0 && nearestIndex < frame.numChannels) {
+            frame.setChannels(nearestIndex, frame.requiredStokes, true);
         }
     };
 
@@ -298,6 +283,37 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
         return profilerInfo;
     };
 
+    private findChannelIndexByValue = (x: number): number => {
+        if (x === null || x === undefined || !isFinite(x)) {
+            return undefined;
+        }
+
+        const frame = this.props.appStore.activeFrame;
+        if (frame && frame.channelInfo) {
+            const channelInfo = frame.channelInfo;
+            if (frame.isCoordChannel) {
+                return channelInfo.getChannelIndexSimple(x);
+            } else {
+                if ((frame.spectralAxis && !frame.spectralAxis.valid) || frame.isSpectralPropsEqual) {
+                    return channelInfo.getChannelIndexWCS(x);
+                } else {
+                    // invert x in selected widget wcs to frame's default wcs
+                    const tx =  AST.transformSpectralPoint(frame.spectralFrame, frame.spectralType, frame.spectralUnit, frame.spectralSystem, x, false);
+                    return channelInfo.getChannelIndexWCS(tx);
+                }
+            }
+        }
+        return undefined;
+    };
+
+    private setMomentChannels = (xMin: number, xMax: number) => {
+        const index1 = this.findChannelIndexByValue(xMin);
+        const index2 = this.findChannelIndexByValue(xMax);
+        if (isFinite(index1) && isFinite(index2)) {
+            this.widgetStore.setChannelRange(index1 <= index2 ? [index1, index2] : [index2, index1]);
+        }
+    };
+
     render() {
         const appStore = this.props.appStore;
         if (!this.widgetStore) {
@@ -328,6 +344,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
             borderWidth: this.widgetStore.lineWidth,
             pointRadius: this.widgetStore.linePlotPointSize,
             isSelectingMomentChannels: this.widgetStore.isCursorSelect,
+            setMomentChannels: this.setMomentChannels,
             zeroLineWidth: 2
         };
 
