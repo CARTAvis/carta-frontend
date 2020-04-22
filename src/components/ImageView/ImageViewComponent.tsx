@@ -237,7 +237,6 @@ export class ImageViewComponent extends React.Component<WidgetProps> {
                     }
                     {appStore.activeFrame &&
                     <CatalogViewComponent
-                        frame={appStore.activeFrame}
                         width={appStore.activeFrame.renderWidth}
                         height={appStore.activeFrame.renderHeight}
                         activeLayer={this.activeLayer}

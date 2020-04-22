@@ -69,7 +69,7 @@ export class CatalogViewComponent extends React.Component<CatalogViewComponentPr
     }
 
     private onClick = (event: Readonly<Plotly.PlotMouseEvent>) => {
-        const appStore = AppStore.Instance
+        const appStore = AppStore.Instance;
         if (event && event.points && event.points.length > 0) {
             const catalogWidgetId = event.points[0].data.name;
             const catalogWidget = appStore.widgetsStore.catalogOverlayWidgets.get(catalogWidgetId);
