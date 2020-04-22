@@ -17,6 +17,7 @@ import {
     FileBrowserStore,
     FrameInfo,
     FrameStore,
+    HelpStore,
     LayoutStore,
     LogEntry,
     LogStore,
@@ -30,7 +31,7 @@ import {
     SpatialProfileStore,
     SpectralProfileStore,
     WidgetsStore,
-    CatalogStore, HelpStore
+    CatalogStore
 } from ".";
 import {distinct, GetRequiredTiles} from "utilities";
 import {BackendService, ConnectionStatus, TileService, TileStreamDetails} from "services";
@@ -527,7 +528,7 @@ export class AppStore {
                 }
                 if (catalogWidgetId) {
                     this.catalogs.set(catalogWidgetId, fileId);
-                    this.catalogStore.addCatalogs(catalogWidgetId);
+                    this.catalogStore.addCatalogs(catalogWidgetId, fileId);
                     this.fileBrowserStore.hideFileBrowser();
                 }
             }

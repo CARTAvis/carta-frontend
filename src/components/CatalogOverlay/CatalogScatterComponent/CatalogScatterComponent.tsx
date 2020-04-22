@@ -312,6 +312,7 @@ export class CatalogScatterComponent extends React.Component<WidgetProps> {
             scrollZoom: true,
             showTips: false,
             doubleClick: false,
+            showAxisDragHandles: false,
             modeBarButtonsToRemove: [
                 "zoomIn2d",
                 "zoomOut2d",

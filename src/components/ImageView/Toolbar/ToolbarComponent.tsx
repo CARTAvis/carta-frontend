@@ -5,6 +5,7 @@ import {Button, ButtonGroup, IconName, Menu, MenuItem, Popover, PopoverPosition,
 import {CARTA} from "carta-protobuf";
 import {exportImage} from "components";
 import {AppStore, OverlayStore, PreferenceStore, RegionMode, SystemType} from "stores";
+import {ImageViewLayer} from "../ImageViewComponent";
 import {toFixed} from "utilities";
 import "./ToolbarComponent.css";
 
@@ -12,6 +13,8 @@ export class ToolbarComponentProps {
     docked: boolean;
     visible: boolean;
     vertical: boolean;
+    onActiveLayerChange: (layer: ImageViewLayer) => void;
+    activeLayer: ImageViewLayer;
 }
 
 @observer
@@ -59,6 +62,13 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
     handleCoordinateSystemClicked = (coordinateSystem: SystemType) => {
         OverlayStore.Instance.global.setSystem(coordinateSystem);
     };
+
+    private handelActiveLayerClicked = (layer: ImageViewLayer) => {
+        this.props.onActiveLayerChange(layer);
+        if (layer === ImageViewLayer.RegionMoving) {
+            AppStore.Instance.activeFrame.regionSet.setMode(RegionMode.MOVING);
+        }
+    }
 
     render() {
         const appStore = AppStore.Instance;
@@ -170,13 +180,18 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
             </Menu>
         );
 
+        const catalogOverlayEnabled = this.props.activeLayer === ImageViewLayer.Catalog;
+        const catalogSelectionDisabled = appStore.catalogs.size === 0;
+
         return (
             <ButtonGroup className={className} style={styleProps} vertical={this.props.vertical}>
-
+                <Tooltip position={tooltipPosition} content={<span>Catalog selection<br/><i><small>Click to select single catalog source</small></i></span>}>
+                    <Button icon={"selection"} active={catalogOverlayEnabled} onClick={() => this.handelActiveLayerClicked(ImageViewLayer.Catalog)} disabled={catalogSelectionDisabled}/>
+                </Tooltip>
                 {frame.regionSet.mode === RegionMode.CREATING &&
                 <Tooltip position={tooltipPosition} content={<span>Create region<br/><i><small>Click to select region type</small></i></span>}>
                     <Popover content={regionMenu} position={Position.TOP} minimal={true}>
-                        <Button icon={regionIcon} active={true}/>
+                        <Button icon={regionIcon} active={!catalogOverlayEnabled} onClick={() => this.handelActiveLayerClicked(ImageViewLayer.RegionCreating)}/>
                     </Popover>
                 </Tooltip>
                 }
@@ -186,7 +201,7 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
                 </Tooltip>
                 }
                 <Tooltip position={tooltipPosition} content="Select and pan mode">
-                    <Button icon={"hand"} onClick={() => frame.regionSet.setMode(RegionMode.MOVING)} active={frame.regionSet.mode === RegionMode.MOVING}/>
+                    <Button icon={"hand"} onClick={() => this.handelActiveLayerClicked(ImageViewLayer.RegionMoving)} active={frame.regionSet.mode === RegionMode.MOVING && !catalogOverlayEnabled}/>
                 </Tooltip>
                 <Tooltip position={tooltipPosition} content={<span>Zoom in (Scroll wheel up){currentZoomSpan}</span>}>
                     <Button icon={"zoom-in"} onClick={this.handleZoomInClicked}/>
