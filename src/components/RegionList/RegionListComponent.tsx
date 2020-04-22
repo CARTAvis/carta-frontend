@@ -126,7 +126,7 @@ export class RegionListComponent extends React.Component<WidgetProps> {
                     const sizePoint = region.boundingBox;
                     pixelSizeEntry = (
                         <td style={{width: RegionListComponent.SIZE_COLUMN_DEFAULT_WIDTH}} onDoubleClick={this.handleRegionListDoubleClick} >
-                            <Tooltip content="Width and height" position={Position.BOTTOM}>{`(${toFixed(sizePoint.x, 1)} \u00D7 ${toFixed(sizePoint.y, 1)})`}</Tooltip>
+                            <Tooltip content="Width and height" position={Position.BOTTOM}>{`(${toFixed(sizePoint.x, 1)}, ${toFixed(sizePoint.y, 1)})`}</Tooltip>
                         </td>
                     );
                 } else if (region.regionType === CARTA.RegionType.ELLIPSE) {
