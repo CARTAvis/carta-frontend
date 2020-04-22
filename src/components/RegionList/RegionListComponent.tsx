@@ -1,7 +1,7 @@
 import * as React from "react";
 import { computed, observable } from "mobx";
 import { observer } from "mobx-react";
-import { HTMLTable, Icon, NonIdealState } from "@blueprintjs/core";
+import { HTMLTable, Icon, NonIdealState, Position, Tooltip } from "@blueprintjs/core";
 import ReactResizeDetector from "react-resize-detector";
 import { CARTA } from "carta-protobuf";
 import { RegionStore, WidgetConfig, WidgetProps, HelpType } from "stores";
@@ -124,10 +124,18 @@ export class RegionListComponent extends React.Component<WidgetProps> {
             if (showSizeColumn) {
                 if (region.regionType === CARTA.RegionType.RECTANGLE || region.regionType === CARTA.RegionType.POLYGON) {
                     const sizePoint = region.boundingBox;
-                    pixelSizeEntry = <td style={{width: RegionListComponent.SIZE_COLUMN_DEFAULT_WIDTH}} onDoubleClick={this.handleRegionListDoubleClick} >{`(${toFixed(sizePoint.x, 1)} \u00D7 ${toFixed(sizePoint.y, 1)})`}</td>;
+                    pixelSizeEntry = (
+                        <td style={{width: RegionListComponent.SIZE_COLUMN_DEFAULT_WIDTH}} onDoubleClick={this.handleRegionListDoubleClick} >
+                            <Tooltip content="Width and height" position={Position.BOTTOM}>{`(${toFixed(sizePoint.x, 1)} \u00D7 ${toFixed(sizePoint.y, 1)})`}</Tooltip>
+                        </td>
+                    );
                 } else if (region.regionType === CARTA.RegionType.ELLIPSE) {
                     const sizePoint = region.controlPoints[1];
-                    pixelSizeEntry = <td style={{width: RegionListComponent.SIZE_COLUMN_DEFAULT_WIDTH}} onDoubleClick={this.handleRegionListDoubleClick} >{`maj: ${toFixed(sizePoint.x, 1)}; min: ${toFixed(sizePoint.y, 1)}`}</td>;
+                    pixelSizeEntry = (
+                        <td style={{width: RegionListComponent.SIZE_COLUMN_DEFAULT_WIDTH}} onDoubleClick={this.handleRegionListDoubleClick} >
+                            <Tooltip content="Semi-major and sem-minor axes" position={Position.BOTTOM}>{`(${toFixed(sizePoint.x, 1)}, ${toFixed(sizePoint.y, 1)})`}</Tooltip>
+                        </td>
+                    );
                 } else {
                     pixelSizeEntry = <td style={{width: RegionListComponent.SIZE_COLUMN_DEFAULT_WIDTH}} onDoubleClick={this.handleRegionListDoubleClick} />;
                 }

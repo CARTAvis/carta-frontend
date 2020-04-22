@@ -118,7 +118,7 @@ export class EllipticalRegionForm extends React.Component<{ region: RegionStore,
             const hDist = Math.abs(AST.axDistance(this.props.wcsInfo, 1, centerWCS.x, horizontalEdgeWCS.x));
             const vDist = Math.abs(AST.axDistance(this.props.wcsInfo, 2, centerWCS.y, verticalEdgeWCS.y));
             const wcsDistStrings = AST.getFormattedCoordinates(this.props.wcsInfo, hDist, vDist, "Format(1)=m.5, Format(2)=m.5", true);
-            return `maj: ${wcsDistStrings.y}; min: ${wcsDistStrings.x}'`;
+            return `Semi-maj: ${wcsDistStrings.y}; Semi-min: ${wcsDistStrings.x}'`;
         }
         return null;
     }
