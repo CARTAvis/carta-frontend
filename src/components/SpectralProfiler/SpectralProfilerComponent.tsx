@@ -327,6 +327,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
             mouseEntered: this.widgetStore.setMouseMoveIntoLinePlots,
             borderWidth: this.widgetStore.lineWidth,
             pointRadius: this.widgetStore.linePlotPointSize,
+            isSelectingMomentChannels: this.widgetStore.isCursorSelect,
             zeroLineWidth: 2
         };
 

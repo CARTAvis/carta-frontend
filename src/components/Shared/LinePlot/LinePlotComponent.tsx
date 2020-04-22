@@ -94,6 +94,7 @@ export class LinePlotComponentProps {
     multiColorSingleLineColors?: Array<string>;
     multiColorMultiLinesColors?: Map<string, Array<string>>;
     borderWidth?: number;
+    isSelectingMomentChannels?: boolean;
 }
 
 // Maximum time between double clicks
@@ -149,6 +150,16 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
         } else {
             return ZoomMode.NONE;
         }
+    }
+
+    @computed get cursorShape(): string {
+        const isHovering = this.hoveredMarker !== undefined && !this.isSelecting;
+        if (this.isPanning || isHovering) {
+            return "move";
+        } else if (this.props.isSelectingMomentChannels) {
+            return "ew-resize";
+        }
+        return "crosshair";
     }
 
     private getValueForPixelX(pixel: number) {
@@ -337,13 +348,17 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
                     let minY = this.getValueForPixelY(maxCanvasSpace, this.props.logY);
                     let maxY = this.getValueForPixelY(minCanvasSpace, this.props.logY);
 
-                    if (this.zoomMode === ZoomMode.X) {
-                        this.props.graphZoomedX(minX, maxX);
-                    }
-                    if (this.zoomMode === ZoomMode.Y) {
-                        this.props.graphZoomedY(minY, maxY);
-                    } else if (this.zoomMode === ZoomMode.XY) {
-                        this.props.graphZoomedXY(minX, maxX, minY, maxY);
+                    if (this.props.isSelectingMomentChannels) {
+                        console.log("selecting moment channels + " + minX + " " + maxX);
+                    } else {
+                        if (this.zoomMode === ZoomMode.X) {
+                            this.props.graphZoomedX(minX, maxX);
+                        }
+                        if (this.zoomMode === ZoomMode.Y) {
+                            this.props.graphZoomedY(minY, maxY);
+                        } else if (this.zoomMode === ZoomMode.XY) {
+                            this.props.graphZoomedXY(minX, maxX, minY, maxY);
+                        }
                     }
                 }
             }
@@ -807,11 +822,10 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
     };
 
     render() {
-        const isHovering = this.hoveredMarker !== undefined && !this.isSelecting;
         return (
             <div
                 className={"line-plot-component"}
-                style={{cursor: this.isPanning || isHovering ? "move" : "crosshair"}}
+                style={{cursor: this.cursorShape}}
                 onKeyDown={this.onKeyDown}
                 onMouseEnter={this.onMouseEnter}
                 onMouseMove={this.onMouseMove}
