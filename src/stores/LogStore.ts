@@ -9,12 +9,21 @@ export class LogEntry {
 }
 
 export class LogStore {
+    private static staticInstance: LogStore;
+
+    static get Instance() {
+        if (!LogStore.staticInstance) {
+            LogStore.staticInstance = new LogStore();
+        }
+        return LogStore.staticInstance;
+    }
+
     @observable logEntries: LogEntry[];
     @observable hiddenTags: string[];
     @observable logLevel: CARTA.ErrorSeverity;
     readonly logLimit = 1000;
 
-    constructor() {
+    private constructor() {
         this.logEntries = [];
         this.hiddenTags = [];
         this.logLevel = CARTA.ErrorSeverity.INFO;

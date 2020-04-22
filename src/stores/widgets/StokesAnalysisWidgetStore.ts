@@ -214,8 +214,8 @@ export class StokesAnalysisWidgetStore extends RegionWidgetStore {
         this.clearScatterPlotXYBounds();
     };
 
-    constructor(appStore: AppStore) {
-        super(appStore, RegionsType.CLOSED_AND_POINT);
+    constructor() {
+        super(RegionsType.CLOSED_AND_POINT);
         this.colorMap = DEFAULTS.colorMap;
         this.colorPixel = getColorsForValues(DEFAULTS.colorMap);
         this.statsType = CARTA.StatsType.Mean;

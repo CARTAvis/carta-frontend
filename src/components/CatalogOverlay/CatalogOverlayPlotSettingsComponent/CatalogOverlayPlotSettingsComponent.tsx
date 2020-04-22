@@ -1,14 +1,14 @@
 import {observer} from "mobx-react";
 import * as React from "react";
 import {FormGroup, HTMLSelect, NumericInput} from "@blueprintjs/core";
-import {AppStore, SystemType} from "stores";
+import {AppStore, CatalogStore, SystemType} from "stores";
 import {CatalogOverlayWidgetStore, CatalogOverlayShape} from "stores/widgets";
 import {ColorResult} from "react-color";
 import {ColorPickerComponent} from "components/Shared";
 import {SWATCH_COLORS} from "utilities";
 
 @observer
-export class CatalogOverlayPlotSettingsComponent extends React.Component<{widgetStore: CatalogOverlayWidgetStore, appStore: AppStore, id: string}> {
+export class CatalogOverlayPlotSettingsComponent extends React.Component<{widgetStore: CatalogOverlayWidgetStore, id: string}> {
     private readonly MinOverlaySize = 1;
     private readonly MaxOverlaySize = 100;
 
@@ -23,19 +23,19 @@ export class CatalogOverlayPlotSettingsComponent extends React.Component<{widget
     private handleCatalogShapeChange(changeEvent: React.ChangeEvent<HTMLSelectElement>) {
         const val = changeEvent.currentTarget.value as CatalogOverlayShape;
         this.props.widgetStore.setCatalogShape(val);
-        this.props.appStore.catalogStore.updateCatalogShape(this.props.id, val);
+        CatalogStore.Instance.updateCatalogShape(this.props.id, val);
     }
 
     private handleCatalogSizeChange(val: number) {
         this.props.widgetStore.setCatalogSize(val);
         if (val >= this.MinOverlaySize && val <= this.MaxOverlaySize) {
-            this.props.appStore.catalogStore.updateCatalogSize(this.props.id, val);   
+            CatalogStore.Instance.updateCatalogSize(this.props.id, val);
         }
     }
 
     private handleCatalogColorChange(color: string) {
         this.props.widgetStore.setCatalogColor(color);
-        this.props.appStore.catalogStore.updateCatalogColor(this.props.id, color);
+        CatalogStore.Instance.updateCatalogColor(this.props.id, color);
     }
 
     private handleHeaderCatalogSystemChange(changeEvent: React.ChangeEvent<HTMLSelectElement>) {
@@ -44,7 +44,6 @@ export class CatalogOverlayPlotSettingsComponent extends React.Component<{widget
     }
 
     public render() {
-        const appStore = this.props.appStore;
         const widgetStore = this.props.widgetStore;
 
         let systemOptions = [];
@@ -67,7 +66,7 @@ export class CatalogOverlayPlotSettingsComponent extends React.Component<{widget
                             this.handleCatalogColorChange(color.hex === "transparent" ? "#000000" : color.hex);
                         }}
                         disableAlpha={true}
-                        darkTheme={appStore.darkTheme}
+                        darkTheme={AppStore.Instance.darkTheme}
                     />
                 </FormGroup>
                 <FormGroup  inline={true} label="Shape">

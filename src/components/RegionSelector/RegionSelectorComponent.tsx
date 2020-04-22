@@ -7,17 +7,17 @@ import {RegionWidgetStore, RegionsType, RegionId} from "stores/widgets";
 import "./RegionSelectorComponent.css";
 
 @observer
-export class RegionSelectorComponent extends React.Component<{ widgetStore: RegionWidgetStore, appStore: AppStore }> {
+export class RegionSelectorComponent extends React.Component<{ widgetStore: RegionWidgetStore}> {
 
     private handleRegionChanged = (changeEvent: React.ChangeEvent<HTMLSelectElement>) => {
-        const appStore = this.props.appStore;
+        const appStore = AppStore.Instance;
         if (appStore.activeFrame) {
             this.props.widgetStore.setRegionId(appStore.activeFrame.frameInfo.fileId, parseInt(changeEvent.target.value));
         }
     };
 
     public render() {
-        const appStore = this.props.appStore;
+        const appStore = AppStore.Instance;
         const widgetStore = this.props.widgetStore;
 
         let enableRegionSelect = false;

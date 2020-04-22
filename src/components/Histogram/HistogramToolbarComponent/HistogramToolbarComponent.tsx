@@ -6,12 +6,12 @@ import {RegionSelectorComponent} from "components";
 import "./HistogramToolbarComponent.css";
 
 @observer
-export class HistogramToolbarComponent extends React.Component<{ widgetStore: HistogramWidgetStore, appStore: AppStore }> {
+export class HistogramToolbarComponent extends React.Component<{ widgetStore: HistogramWidgetStore}> {
 
     public render() {
         return (
             <div className="spectral-profiler-toolbar">
-                <RegionSelectorComponent widgetStore={this.props.widgetStore} appStore={this.props.appStore}/>
+                <RegionSelectorComponent widgetStore={this.props.widgetStore}/>
             </div>
         );
     }

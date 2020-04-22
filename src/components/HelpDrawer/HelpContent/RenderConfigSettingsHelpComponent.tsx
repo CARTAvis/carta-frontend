@@ -1,8 +1,6 @@
 import * as React from "react";
-import {AppStore} from "stores";
-import {ImageComponent} from "./ImageComponent";
 
-export class RenderConfigSettingsHelpComponent extends React.Component<{ appStore: AppStore }> {
+export class RenderConfigSettingsHelpComponent extends React.Component {
     public render() {
         return (
             <div>
@@ -16,7 +14,6 @@ export class RenderConfigSettingsHelpComponent extends React.Component<{ appStor
                     <li>display mean and RMS</li>
                     <li>display clip labels</li>
                 </ul>
-
             </div>
         );
     }

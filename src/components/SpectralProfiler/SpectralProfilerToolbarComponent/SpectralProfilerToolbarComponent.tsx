@@ -8,7 +8,7 @@ import {RegionSelectorComponent} from "components";
 import "./SpectralProfilerToolbarComponent.css";
 
 @observer
-export class SpectralProfilerToolbarComponent extends React.Component<{ widgetStore: SpectralProfileWidgetStore, appStore: AppStore }> {
+export class SpectralProfilerToolbarComponent extends React.Component<{ widgetStore: SpectralProfileWidgetStore }> {
 
     private handleStatsChanged = (changeEvent: React.ChangeEvent<HTMLSelectElement>) => {
         this.props.widgetStore.setStatsType(parseInt(changeEvent.target.value));
@@ -19,7 +19,7 @@ export class SpectralProfilerToolbarComponent extends React.Component<{ widgetSt
     };
 
     public render() {
-        const appStore = this.props.appStore;
+        const appStore = AppStore.Instance;
         const widgetStore = this.props.widgetStore;
 
         let enableStatsSelect = false;
@@ -55,7 +55,7 @@ export class SpectralProfilerToolbarComponent extends React.Component<{ widgetSt
 
         return (
             <div className="spectral-profiler-toolbar">
-                <RegionSelectorComponent widgetStore={widgetStore} appStore={appStore}/>
+                <RegionSelectorComponent widgetStore={widgetStore}/>
                 <FormGroup label={"Statistic"} inline={true} disabled={!enableStatsSelect}>
                     <HTMLSelect value={enableStatsSelect ? widgetStore.statsType : CARTA.StatsType.Mean} options={profileStatsOptions} onChange={this.handleStatsChanged} disabled={!enableStatsSelect}/>
                 </FormGroup>

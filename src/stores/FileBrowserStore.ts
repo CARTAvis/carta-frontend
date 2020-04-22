@@ -2,7 +2,7 @@ import {action, computed, observable} from "mobx";
 import {TabId} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import {BackendService} from "services";
-import { AppStore } from "stores";
+import {AppStore, DialogStore} from "stores";
 import {FileInfoType} from "components";
 
 export enum BrowserMode {
@@ -17,7 +17,14 @@ export type ImageFileType = CARTA.FileType.CASA | CARTA.FileType.FITS | CARTA.Fi
 export type CatalogFileType = CARTA.CatalogFileType.VOTable;
 
 export class FileBrowserStore {
-    private readonly appStore: AppStore;
+    private static staticInstance: FileBrowserStore;
+
+    static get Instance() {
+        if (!FileBrowserStore.staticInstance) {
+            FileBrowserStore.staticInstance = new FileBrowserStore();
+        }
+        return FileBrowserStore.staticInstance;
+    }
 
     @observable browserMode: BrowserMode = BrowserMode.File;
     @observable appendingFrame = false;
@@ -44,7 +51,7 @@ export class FileBrowserStore {
     @action showFileBrowser = (mode: BrowserMode, append = false) => {
         this.appendingFrame = append;
         this.browserMode = mode;
-        this.appStore.dialogStore.showFileBrowserDialog();
+        DialogStore.Instance.showFileBrowserDialog();
         this.fileList = null;
         this.selectedTab = this.getBrowserMode;
         this.responseErrorMessage = "";
@@ -54,10 +61,11 @@ export class FileBrowserStore {
     };
 
     @action hideFileBrowser = () => {
-        this.appStore.dialogStore.hideFileBrowserDialog();
+        DialogStore.Instance.hideFileBrowserDialog();
     };
 
     @action getFileList = (directory: string) => {
+        const backendService = BackendService.Instance;
         this.loadingList = true;
         this.selectedFile = null;
         this.selectedHDU = null;
@@ -65,21 +73,21 @@ export class FileBrowserStore {
         this.regionFileInfo = null;
 
         if (this.browserMode === BrowserMode.File) {
-            this.backendService.getFileList(directory).subscribe(res => {
+            backendService.getFileList(directory).subscribe(res => {
                 this.fileList = res;
             }, err => {
                 console.log(err);
                 this.loadingList = false;
             });
         } else if (this.browserMode === BrowserMode.Catalog) {
-            this.backendService.getCatalogList(directory).subscribe(res => {
+            backendService.getCatalogList(directory).subscribe(res => {
                 this.catalogFileList = res;
             }, err => {
                 console.log(err);
                 this.loadingList = false;
             });
         } else {
-            this.backendService.getRegionList(directory).subscribe(res => {
+            backendService.getRegionList(directory).subscribe(res => {
                 this.fileList = res;
             }, err => {
                 console.log(err);
@@ -89,11 +97,13 @@ export class FileBrowserStore {
     };
 
     @action getFileInfo = (directory: string, file: string, hdu: string) => {
+        const backendService = BackendService.Instance;
         this.loadingInfo = true;
         this.fileInfoResp = false;
         this.fileInfoExtended = null;
         this.responseErrorMessage = "";
-        this.backendService.getFileInfo(directory, file, hdu).subscribe((res: CARTA.FileInfoResponse) => {
+
+        backendService.getFileInfo(directory, file, hdu).subscribe((res: CARTA.FileInfoResponse) => {
             if (res.fileInfo && this.selectedFile && res.fileInfo.name === this.selectedFile.name) {
                 this.fileInfoExtended = res.fileInfoExtended;
                 this.loadingInfo = false;
@@ -109,11 +119,13 @@ export class FileBrowserStore {
     };
 
     @action getRegionFileInfo = (directory: string, file: string) => {
+        const backendService = BackendService.Instance;
         this.loadingInfo = true;
         this.fileInfoResp = false;
         this.regionFileInfo = null;
         this.responseErrorMessage = "";
-        this.backendService.getRegionFileInfo(directory, file).subscribe((res: CARTA.IRegionFileInfoResponse) => {
+
+        backendService.getRegionFileInfo(directory, file).subscribe((res: CARTA.IRegionFileInfoResponse) => {
             if (res.fileInfo && this.selectedFile && res.fileInfo.name === this.selectedFile.name) {
                 this.loadingInfo = false;
                 this.regionFileInfo = res.contents;
@@ -129,11 +141,13 @@ export class FileBrowserStore {
     };
 
     @action getCatalogFileInfo = (directory: string, filename: string) => {
+        const backendService = BackendService.Instance;
         this.loadingInfo = true;
         this.fileInfoResp = false;
         this.catalogFileInfor = null;
         this.catalogHeaders = [];
-        this.backendService.getCatalogFileInfo(directory, filename).subscribe((res: CARTA.ICatalogFileInfoResponse) => {
+
+        backendService.getCatalogFileInfo(directory, filename).subscribe((res: CARTA.ICatalogFileInfoResponse) => {
             if (res.fileInfo && this.selectedFile && res.fileInfo.name === this.selectedFile.name) {
                 this.loadingInfo = false;
                 this.catalogFileInfor = res.fileInfo;
@@ -281,11 +295,7 @@ export class FileBrowserStore {
         return {columnHeaders: columnHeaders, columnsData: columnsData};
     }
 
-    private backendService: BackendService;
-
-    constructor(appStore: AppStore, backendService: BackendService) {
-        this.appStore = appStore;
-        this.backendService = backendService;
+    constructor() {
         this.exportCoordinateType = CARTA.CoordinateType.WORLD;
         this.exportFileType = CARTA.FileType.CRTF;
     }

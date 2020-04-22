@@ -33,6 +33,15 @@ export const NUM_PERSISTENT_LAYERS = 4;
 export const NUM_PERSISTENT_TILES = 85;
 
 export class TileService {
+    private static staticInstance: TileService;
+
+    static get Instance() {
+        if (!TileService.staticInstance) {
+            TileService.staticInstance = new TileService();
+        }
+        return TileService.staticInstance;
+    }
+
     private readonly backendService: BackendService;
     private readonly persistentTiles: Map<number, RasterTile>;
     private readonly cacheMapCompressedTiles: Map<number, LRUCache<number, CompressedTile>>;
@@ -85,8 +94,8 @@ export class TileService {
         this.lruCapacitySystem = lruCapacitySystem;
     };
 
-    constructor(backendService: BackendService) {
-        this.backendService = backendService;
+    private constructor() {
+        this.backendService = BackendService.Instance;
         this.gl = TileWebGLService.Instance.gl;
 
         this.channelMap = new Map<number, { channel: number, stokes: number }>();
@@ -101,7 +110,7 @@ export class TileService {
         this.animationEnabled = false;
 
         this.tileStream = new Subject<TileStreamDetails>();
-        this.backendService.getRasterTileStream().subscribe(this.handleStreamedTiles);
+        this.backendService.rasterTileStream.subscribe(this.handleStreamedTiles);
         this.backendService.rasterSyncStream.subscribe(this.handleStreamSync);
 
         const ZFPWorker = require("worker-loader!zfp_wrapper");

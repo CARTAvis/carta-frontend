@@ -4,7 +4,7 @@ import {observer} from "mobx-react";
 import {Colors, Tab, Tabs} from "@blueprintjs/core";
 import {LinePlotSettingsPanelComponent, LinePlotSettingsPanelComponentProps, ScatterPlotSettingsPanelComponentProps, ScatterPlotSettingsPanelComponent, SpectralSettingsComponent} from "components/Shared";
 import {StokesAnalysisWidgetStore} from "stores/widgets";
-import {WidgetProps, WidgetConfig, HelpType} from "stores";
+import {WidgetProps, WidgetConfig, HelpType, WidgetsStore, AppStore} from "stores";
 import "./StokesAnalysisSettingsPanelComponent.css";
 
 @observer
@@ -27,8 +27,9 @@ export class StokesAnalysisSettingsPanelComponent extends React.Component<Widget
     }
 
     @computed get widgetStore(): StokesAnalysisWidgetStore {
-        if (this.props.appStore && this.props.appStore.widgetsStore.stokesAnalysisWidgets) {
-            const widgetStore = this.props.appStore.widgetsStore.stokesAnalysisWidgets.get(this.props.id);
+        const widgetsStore = WidgetsStore.Instance;
+        if (widgetsStore.stokesAnalysisWidgets) {
+            const widgetStore = widgetsStore.stokesAnalysisWidgets.get(this.props.id);
             if (widgetStore) {
                 return widgetStore;
             }
@@ -39,16 +40,16 @@ export class StokesAnalysisSettingsPanelComponent extends React.Component<Widget
 
     constructor(props: WidgetProps) {
         super(props);
+        const appStore = AppStore.Instance;
 
         autorun(() => {
             if (this.widgetStore) {
-                const appStore = this.props.appStore;
                 const frame = appStore.activeFrame;
                 if (frame) {
                     const regionId = this.widgetStore.effectiveRegionId;
                     const regionString = regionId === 0 ? "Cursor" : `Region #${regionId}`;
                     const selectedString = this.widgetStore.matchesSelectedRegion ? "(Active)" : "";
-                    this.props.appStore.widgetsStore.setWidgetTitle(this.props.floatingSettingsId, `Stokes Analysis Settings: ${regionString} ${selectedString}`);
+                    appStore.widgetsStore.setWidgetTitle(this.props.floatingSettingsId, `Stokes Analysis Settings: ${regionString} ${selectedString}`);
                 }
             }
         });
@@ -59,7 +60,7 @@ export class StokesAnalysisSettingsPanelComponent extends React.Component<Widget
     };
 
     render() {
-        const appStore = this.props.appStore;
+        const appStore = AppStore.Instance;
         const widgetStore = this.widgetStore;
         const lineSettingsProps: LinePlotSettingsPanelComponentProps = {
             darkMode: appStore.darkTheme,
@@ -77,7 +78,7 @@ export class StokesAnalysisSettingsPanelComponent extends React.Component<Widget
             setSecondaryLineColor: widgetStore.setSecondaryLineColor
         };
 
-        const scatterSettingsProrps: ScatterPlotSettingsPanelComponentProps = {
+        const scatterSettingsProps: ScatterPlotSettingsPanelComponentProps = {
             colorMap: widgetStore.colorMap,
             scatterPlotPointSize: widgetStore.scatterPlotPointSize,
             pointTransparency: widgetStore.pointTransparency,
@@ -93,9 +94,9 @@ export class StokesAnalysisSettingsPanelComponent extends React.Component<Widget
         return (
             <div className="stokes-settings">
                 <Tabs id="spectralSettingTabs">
-                    <Tab id="conversion" title="Conversion" panel={<SpectralSettingsComponent appStore={appStore} widgetStore={widgetStore} disable={!hasStokes}/>}/>
+                    <Tab id="conversion" title="Conversion" panel={<SpectralSettingsComponent widgetStore={widgetStore} disable={!hasStokes}/>}/>
                     <Tab id="linePlotStyling" title="Line Plot Styling" panel={<LinePlotSettingsPanelComponent {...lineSettingsProps}/>}/>
-                    <Tab id="scatterPlotStyling" title="Scatter Plot Styling" panel={<ScatterPlotSettingsPanelComponent {...scatterSettingsProrps}/>}/>
+                    <Tab id="scatterPlotStyling" title="Scatter Plot Styling" panel={<ScatterPlotSettingsPanelComponent {...scatterSettingsProps}/>}/>
                 </Tabs>
             </div>
         );

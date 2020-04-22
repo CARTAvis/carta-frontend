@@ -121,8 +121,8 @@ export class HistogramWidgetStore extends RegionWidgetStore {
         return diffList;
     }
 
-    constructor(appStore: AppStore) {
-        super(appStore, RegionsType.CLOSED);
+    constructor() {
+        super(RegionsType.CLOSED);
         this.logScaleY = true;
         this.plotType = PlotType.STEPS;
         this.primaryLineColor = { colorHex: Colors.BLUE2, fixed: false };

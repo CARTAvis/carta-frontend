@@ -3,7 +3,7 @@ import {observer} from "mobx-react";
 import {Button, Code, Colors, FormGroup, HTMLSelect, NonIdealState, Tag, Intent} from "@blueprintjs/core";
 import ScrollToBottom from "react-scroll-to-bottom";
 import {CARTA} from "carta-protobuf";
-import {WidgetConfig, WidgetProps, HelpType} from "stores";
+import {WidgetConfig, WidgetProps, HelpType, LogStore} from "stores";
 import "./LogComponent.css";
 
 @observer
@@ -23,19 +23,19 @@ export class LogComponent extends React.Component<WidgetProps> {
     }
 
     onClearClicked = () => {
-        this.props.appStore.logStore.clearLog();
+        LogStore.Instance.clearLog();
     };
 
     onTagClicked = (tag: string) => {
-        this.props.appStore.logStore.toggleTag(tag);
+        LogStore.Instance.toggleTag(tag);
     };
 
     onLogLevelChanged = (event: React.FormEvent<HTMLSelectElement>) => {
-        this.props.appStore.logStore.setLevel(parseInt(event.currentTarget.value));
+        LogStore.Instance.setLevel(parseInt(event.currentTarget.value));
     };
 
     private isTagHidden = (tag: string) => {
-        return (this.props.appStore.logStore.hiddenTags.indexOf(tag) !== -1);
+        return (LogStore.Instance.hiddenTags.indexOf(tag) !== -1);
     };
 
     private colorFromSeverity(severity: CARTA.ErrorSeverity): string {
@@ -63,7 +63,7 @@ export class LogComponent extends React.Component<WidgetProps> {
     }
 
     render() {
-        const logStore = this.props.appStore.logStore;
+        const logStore = LogStore.Instance;
         const entries = logStore.logEntries;
         const hiddenTags = logStore.hiddenTags;
 

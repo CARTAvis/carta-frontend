@@ -10,7 +10,7 @@ import {RasterViewComponent} from "./RasterView/RasterViewComponent";
 import {ToolbarComponent} from "./Toolbar/ToolbarComponent";
 import {BeamProfileOverlayComponent} from "./BeamProfileOverlay/BeamProfileOverlayComponent";
 import {RegionViewComponent} from "./RegionView/RegionViewComponent";
-import {AnimationMode, AnimationState, RegionStore, WidgetConfig, WidgetProps, HelpType} from "stores";
+import {AnimationMode, AnimationState, RegionStore, WidgetConfig, WidgetProps, HelpType, DialogStore, PreferenceStore, AppStore, OverlayStore} from "stores";
 import {CursorInfo, Point2D} from "models";
 import {toFixed} from "utilities";
 import "./ImageViewComponent.css";
@@ -96,9 +96,9 @@ export class ImageViewComponent extends React.Component<WidgetProps> {
         super(props);
         this.activeLayer = ImageViewLayer.RegionMoving;
         autorun(() => {
-            const appStore = this.props.appStore;
-            if (appStore.activeFrame) {
-                const imageSize = {x: appStore.activeFrame.renderWidth, y: appStore.activeFrame.renderHeight};
+            const frame = AppStore.Instance.activeFrame;
+            if (frame) {
+                const imageSize = {x: frame.renderWidth, y: frame.renderHeight};
                 // Compare to cached image size to prevent duplicate events when changing frames
                 if (!this.cachedImageSize || this.cachedImageSize.x !== imageSize.x || this.cachedImageSize.y !== imageSize.y) {
                     this.cachedImageSize = imageSize;
@@ -114,42 +114,42 @@ export class ImageViewComponent extends React.Component<WidgetProps> {
 
     onResize = (width: number, height: number) => {
         if (width > 0 && height > 0) {
-            this.props.appStore.setImageViewDimensions(width, height);
+            AppStore.Instance.setImageViewDimensions(width, height);
         }
     };
 
     onClicked = (cursorInfo: CursorInfo) => {
-        const appStore = this.props.appStore;
-        if (appStore.activeFrame) {
+        const frame = AppStore.Instance.activeFrame;
+        if (frame) {
             // Shift from one-indexed image space position to zero-indexed
-            appStore.activeFrame.setCenter(cursorInfo.posImageSpace.x + 1, cursorInfo.posImageSpace.y + 1);
+            frame.setCenter(cursorInfo.posImageSpace.x + 1, cursorInfo.posImageSpace.y + 1);
         }
     };
 
     onZoomed = (cursorInfo: CursorInfo, delta: number) => {
-        const appStore = this.props.appStore;
-        if (appStore.activeFrame) {
+        const frame = AppStore.Instance.activeFrame;
+        if (frame) {
             const zoomSpeed = 1 + Math.abs(delta / 750.0);
 
             // If frame is spatially matched, apply zoom to the reference frame, rather than the active frame
-            if (appStore.activeFrame.spatialReference) {
-                const newZoom = appStore.activeFrame.spatialReference.zoomLevel * (delta > 0 ? zoomSpeed : 1.0 / zoomSpeed);
+            if (frame.spatialReference) {
+                const newZoom = frame.spatialReference.zoomLevel * (delta > 0 ? zoomSpeed : 1.0 / zoomSpeed);
                 // Shift from one-indexed image space position to zero-indexed
-                appStore.activeFrame.zoomToPoint(cursorInfo.posImageSpace.x + 1, cursorInfo.posImageSpace.y + 1, newZoom, true);
+                frame.zoomToPoint(cursorInfo.posImageSpace.x + 1, cursorInfo.posImageSpace.y + 1, newZoom, true);
             } else {
-                const newZoom = appStore.activeFrame.zoomLevel * (delta > 0 ? zoomSpeed : 1.0 / zoomSpeed);
+                const newZoom = frame.zoomLevel * (delta > 0 ? zoomSpeed : 1.0 / zoomSpeed);
                 // Shift from one-indexed image space position to zero-indexed
-                appStore.activeFrame.zoomToPoint(cursorInfo.posImageSpace.x + 1, cursorInfo.posImageSpace.y + 1, newZoom, true);
+                frame.zoomToPoint(cursorInfo.posImageSpace.x + 1, cursorInfo.posImageSpace.y + 1, newZoom, true);
             }
         }
     };
 
     onMouseEnter = () => {
-        this.props.appStore.showImageToolbar();
+        AppStore.Instance.showImageToolbar();
     };
 
     onMouseLeave = () => {
-        this.props.appStore.hideImageToolbar();
+        AppStore.Instance.hideImageToolbar();
     };
 
     @action updateActiveLayer = (layer: ImageViewLayer) => {
@@ -157,7 +157,7 @@ export class ImageViewComponent extends React.Component<WidgetProps> {
     }
 
     private handleRegionDoubleClicked = (region: RegionStore) => {
-        const appStore = this.props.appStore;
+        const appStore = AppStore.Instance;
         if (region) {
             const frame = appStore.getFrame(region.fileId);
             if (frame) {
@@ -168,20 +168,20 @@ export class ImageViewComponent extends React.Component<WidgetProps> {
     };
 
     render() {
-        const appStore = this.props.appStore;
-
+        const appStore = AppStore.Instance;
+        const overlayStore = appStore.overlayStore;
         let divContents;
         if (appStore.activeFrame && appStore.activeFrame.isRenderable && appStore.astReady) {
             const effectiveWidth = appStore.activeFrame.renderWidth * (appStore.activeFrame.renderHiDPI ? devicePixelRatio : 1);
             const effectiveHeight = appStore.activeFrame.renderHeight * (appStore.activeFrame.renderHiDPI ? devicePixelRatio : 1);
-            const imageRatioTagOffset = {x: appStore.overlayStore.padding.left + appStore.overlayStore.viewWidth / 2.0, y: appStore.overlayStore.padding.top + appStore.overlayStore.viewHeight / 2.0};
+            const imageRatioTagOffset = {x: overlayStore.padding.left + overlayStore.viewWidth / 2.0, y: overlayStore.padding.top + overlayStore.viewHeight / 2.0};
 
             divContents = (
                 <React.Fragment>
                     {appStore.activeFrame.valid &&
                     <OverlayComponent
                         frame={appStore.activeFrame}
-                        overlaySettings={appStore.overlayStore}
+                        overlaySettings={overlayStore}
                         docked={this.props.docked}
                     />
                     }
@@ -190,12 +190,12 @@ export class ImageViewComponent extends React.Component<WidgetProps> {
                         cursorInfo={appStore.activeFrame.cursorInfo}
                         cursorValue={appStore.activeFrame.cursorValue}
                         spectralInfo={appStore.activeFrame.spectralInfo}
-                        width={appStore.overlayStore.viewWidth}
-                        left={appStore.overlayStore.padding.left}
-                        right={appStore.overlayStore.padding.right}
+                        width={overlayStore.viewWidth}
+                        left={overlayStore.padding.left}
+                        right={overlayStore.padding.right}
                         docked={this.props.docked}
                         unit={appStore.activeFrame.unit}
-                        top={appStore.overlayStore.padding.top}
+                        top={overlayStore.padding.top}
                         showImage={true}
                         showWCS={true}
                         showValue={true}
@@ -209,8 +209,8 @@ export class ImageViewComponent extends React.Component<WidgetProps> {
                     <BeamProfileOverlayComponent
                         width={appStore.activeFrame.renderWidth}
                         height={appStore.activeFrame.renderHeight}
-                        top={appStore.overlayStore.padding.top}
-                        left={appStore.overlayStore.padding.left}
+                        top={overlayStore.padding.top}
+                        left={overlayStore.padding.left}
                         frame={appStore.activeFrame}
                         docked={this.props.docked}
                         padding={10}
@@ -222,12 +222,12 @@ export class ImageViewComponent extends React.Component<WidgetProps> {
                         frame={appStore.activeFrame}
                         width={appStore.activeFrame.renderWidth}
                         height={appStore.activeFrame.renderHeight}
-                        top={appStore.overlayStore.padding.top}
-                        left={appStore.overlayStore.padding.left}
+                        top={overlayStore.padding.top}
+                        left={overlayStore.padding.left}
                         onClicked={this.onClicked}
                         onRegionDoubleClicked={this.handleRegionDoubleClicked}
                         onZoomed={this.onZoomed}
-                        overlaySettings={appStore.overlayStore}
+                        overlaySettings={overlayStore}
                         isRegionCornerMode={appStore.preferenceStore.isRegionCornerMode}
                         dragPanningEnabled={appStore.preferenceStore.dragPanning}
                         cursorFrozen={appStore.activeFrame.cursorFrozen}
@@ -237,11 +237,8 @@ export class ImageViewComponent extends React.Component<WidgetProps> {
                     }
                     {appStore.activeFrame &&
                     <CatalogViewComponent
-                        appStore={appStore}
-                        frame={appStore.activeFrame}
                         width={appStore.activeFrame.renderWidth}
                         height={appStore.activeFrame.renderHeight}
-                        overlaySettings={appStore.overlayStore}
                         activeLayer={this.activeLayer}
                         docked={this.props.docked && this.activeLayer === ImageViewLayer.Catalog}
                         onClicked={this.onClicked}
@@ -249,7 +246,6 @@ export class ImageViewComponent extends React.Component<WidgetProps> {
                     />
                     }
                     <ToolbarComponent
-                        appStore={appStore}
                         docked={this.props.docked}
                         visible={appStore.imageToolbarVisible}
                         vertical={false}
@@ -272,14 +268,10 @@ export class ImageViewComponent extends React.Component<WidgetProps> {
         return (
             <div className="image-view-div" onMouseOver={this.onMouseEnter} onMouseLeave={this.onMouseLeave}>
                 <RasterViewComponent
-                    appStore={appStore}
                     docked={this.props.docked}
-                    overlaySettings={appStore.overlayStore}
                 />
                 <ContourViewComponent
-                    appStore={appStore}
                     docked={this.props.docked}
-                    overlaySettings={appStore.overlayStore}
                 />
                 {divContents}
                 <ReactResizeDetector handleWidth handleHeight onResize={this.onResize} refreshMode={"throttle"} refreshRate={33}/>
