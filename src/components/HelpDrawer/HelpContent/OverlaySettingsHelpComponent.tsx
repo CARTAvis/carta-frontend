@@ -4,12 +4,11 @@ import {ImageComponent} from "./ImageComponent";
 import * as headOverlayButton from "static/help/head_overlay_button.png";
 import * as headOverlayButton_d from "static/help/head_overlay_button_d.png";
 
-export class OverlaySettingsHelpComponent extends React.Component<{ appStore: AppStore }> {
+export class OverlaySettingsHelpComponent extends React.Component {
     public render() {
-        const appStore = this.props.appStore;
         return (
             <div>
-                <p><ImageComponent appStore={appStore} light={headOverlayButton} dark={headOverlayButton_d} width="90%"/></p>
+                <p><ImageComponent light={headOverlayButton} dark={headOverlayButton_d} width="90%"/></p>
                 <p>The overlay settings dialogue allows users to customize coordinate grid related properties in the image viewer.</p>
                 <h3 id="global">Global</h3>
                 <p>This section allows users to</p>

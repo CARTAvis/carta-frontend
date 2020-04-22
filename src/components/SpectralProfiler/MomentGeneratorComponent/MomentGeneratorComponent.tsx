@@ -9,9 +9,9 @@ import {MomentMask, Moments} from "models";
 import "./MomentGeneratorComponent.css";
 
 @observer
-export class MomentGeneratorComponent extends React.Component<{appStore: AppStore, widgetStore: SpectralProfileWidgetStore}> {
+export class MomentGeneratorComponent extends React.Component<{widgetStore: SpectralProfileWidgetStore}> {
     private onChannelRangeChanged = (range: NumberRange) => {
-        const frame = this.props.appStore.activeFrame;
+        const frame = AppStore.Instance.activeFrame;
         const widgetStore = this.props.widgetStore;
         if (frame && range && range.length === 2 && range[0] >= 0 && range[0] < range[1] && range[1] < frame.numChannels) {
             widgetStore.setChannelRange(range);
@@ -19,21 +19,21 @@ export class MomentGeneratorComponent extends React.Component<{appStore: AppStor
     };
 
     private handleMomentGenerate = () => {
-        const appStore = this.props.appStore;
+        const appStore = AppStore.Instance;
         if (appStore.activeFrame) {
             appStore.generateMoment(appStore.activeFrame.frameInfo.fileId);
         }
     };
 
     render() {
-        const appStore = this.props.appStore;
+        const appStore = AppStore.Instance;
         const activeFrame = appStore.activeFrame;
         const widgetStore = this.props.widgetStore;
-        const regionPanel = <RegionSelectorComponent appStore={this.props.appStore} widgetStore={this.props.widgetStore}/>;
+        const regionPanel = <RegionSelectorComponent widgetStore={this.props.widgetStore}/>;
 
         const spectralPanel = (
             <React.Fragment>
-                <SpectralSettingsComponent appStore={this.props.appStore} widgetStore={this.props.widgetStore} disable={false}/>
+                <SpectralSettingsComponent widgetStore={this.props.widgetStore} disable={false}/>
                 {activeFrame && activeFrame.numChannels > 1 &&
                     <React.Fragment>
                         <Label>Channel</Label>
@@ -66,30 +66,30 @@ export class MomentGeneratorComponent extends React.Component<{appStore: AppStor
 
         const maskPanel = (
             <React.Fragment>
-                <FormGroup label="Mask" inline={true} disabled={!appStore.activeFrame}>
+                <FormGroup label="Mask" inline={true} disabled={!activeFrame}>
                     <HTMLSelect
                         value={widgetStore.momentMask}
                         options={Object.keys(MomentMask).map((key) => ({label: MomentMask[key], value: key}))}
                         onChange={(event: React.FormEvent<HTMLSelectElement>) => widgetStore.setMomentMask(event.currentTarget.value as MomentMask)}
-                        disabled={!appStore.activeFrame}
+                        disabled={!activeFrame}
                     />
                 </FormGroup>
-                <FormGroup label="From" inline={true} disabled={!appStore.activeFrame}>
+                <FormGroup label="From" inline={true} disabled={!activeFrame}>
                     <NumericInput
                         value={0}
                         selectAllOnFocus={true}
                         buttonPosition={"none"}
                         allowNumericCharactersOnly={true}
-                        disabled={!appStore.activeFrame}
+                        disabled={!activeFrame}
                     />
                 </FormGroup>
-                <FormGroup label="To" inline={true} disabled={!appStore.activeFrame}>
+                <FormGroup label="To" inline={true} disabled={!activeFrame}>
                     <NumericInput
                         value={0}
                         selectAllOnFocus={true}
                         buttonPosition={"none"}
                         allowNumericCharactersOnly={true}
-                        disabled={!appStore.activeFrame}
+                        disabled={!activeFrame}
                     />
                 </FormGroup>
             </React.Fragment>
@@ -103,11 +103,11 @@ export class MomentGeneratorComponent extends React.Component<{appStore: AppStor
                         checked={widgetStore.moments.get(momentType as Moments)}
                         label={Moments[momentType]}
                         onChange={() => widgetStore.moments.set(momentType as Moments, !widgetStore.moments.get(momentType as Moments))}
-                        disabled={!appStore.activeFrame}
+                        disabled={!activeFrame}
                     />
                 )}
                 <div className="moment-generate">
-                    <Button intent="success" onClick={this.handleMomentGenerate} disabled={!appStore.activeFrame}>Generate</Button>
+                    <Button intent="success" onClick={this.handleMomentGenerate} disabled={!activeFrame}>Generate</Button>
                 </div>
             </React.Fragment>
         );

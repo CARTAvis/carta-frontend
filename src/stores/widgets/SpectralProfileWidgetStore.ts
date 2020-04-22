@@ -173,8 +173,8 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         this.isMouseMoveIntoLinePlots = val;
     };
 
-    constructor(appStore: AppStore, coordinate: string = "z") {
-        super(appStore, RegionsType.CLOSED_AND_POINT);
+    constructor(coordinate: string = "z") {
+        super(RegionsType.CLOSED_AND_POINT);
         this.coordinate = coordinate;
         this.statsType = CARTA.StatsType.Mean;
 
@@ -194,8 +194,8 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         Object.keys(Moments).forEach(momentType => this.moments.set(momentType as Moments, false));
 
         autorun(() => {
-            if (appStore.activeFrame) {
-                this.setChannelRange([0, appStore.activeFrame.numChannels - 1]);
+            if (AppStore.Instance.activeFrame) {
+                this.setChannelRange([0, AppStore.Instance.activeFrame.numChannels - 1]);
             }
         });
     }

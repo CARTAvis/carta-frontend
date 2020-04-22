@@ -3,16 +3,13 @@ import * as Plotly from "plotly.js";
 import {observer} from "mobx-react";
 import {computed} from "mobx";
 import Plot from "react-plotly.js";
-import {AppStore, OverlayStore, FrameStore} from "stores";
+import {AppStore, CatalogStore, OverlayStore, FrameStore} from "stores";
 import {canvasToTransformedImagePos} from "components/ImageView/RegionView/shared";
 import {ImageViewLayer} from "../ImageViewComponent";
 import {CursorInfo} from "models";
 import "./CatalogViewComponent.css";
 
 export interface CatalogViewComponentProps {
-    frame: FrameStore;
-    overlaySettings: OverlayStore;
-    appStore: AppStore;
     docked: boolean;
     width: number;
     height: number;
@@ -25,7 +22,7 @@ export interface CatalogViewComponentProps {
 export class CatalogViewComponent extends React.Component<CatalogViewComponentProps> {
 
     @computed get scatterDatasets() {
-        const catalogStore = this.props.appStore.catalogStore;
+        const catalogStore = CatalogStore.Instance;
         let scatterDatasets: Plotly.Data[] = [];
 
         catalogStore.catalogs.forEach((catalog, key) => {
@@ -72,15 +69,16 @@ export class CatalogViewComponent extends React.Component<CatalogViewComponentPr
     }
 
     private onClick = (event: Readonly<Plotly.PlotMouseEvent>) => {
+        const appStore = AppStore.Instance;
         if (event && event.points && event.points.length > 0) {
             const catalogWidgetId = event.points[0].data.name;
-            const catalogWidget = this.props.appStore.widgetsStore.catalogOverlayWidgets.get(catalogWidgetId);
+            const catalogWidget = appStore.widgetsStore.catalogOverlayWidgets.get(catalogWidgetId);
             if (catalogWidget) {
                 let selectedPointIndex = [];
                 const selectedPoint = event.points[0];
                 selectedPointIndex.push(selectedPoint.pointIndex);
                 catalogWidget.setselectedPointIndexs(selectedPointIndex, true);
-                this.props.appStore.catalogStore.updateSelectedPoints(catalogWidgetId, selectedPointIndex);
+                appStore.catalogStore.updateSelectedPoints(catalogWidgetId, selectedPointIndex);
             }
         }
     }
@@ -88,21 +86,22 @@ export class CatalogViewComponent extends React.Component<CatalogViewComponentPr
     private onWheelCaptured = (event: React.WheelEvent<HTMLDivElement>) => {
         if (event && event.nativeEvent && event.nativeEvent.type === "wheel") {
             const wheelEvent = event.nativeEvent;
-            const frame = this.props.frame;
+            const frame = AppStore.Instance.activeFrame;
             const lineHeight = 15;
             const delta = wheelEvent.deltaMode === WheelEvent.DOM_DELTA_PIXEL ? wheelEvent.deltaY : wheelEvent.deltaY * lineHeight;
-            if (this.props.frame.wcsInfo && this.props.onZoomed) {
+            if (frame.wcsInfo && this.props.onZoomed) {
                 const cursorPosImageSpace = canvasToTransformedImagePos(wheelEvent.offsetX, wheelEvent.offsetY, frame, this.props.width, this.props.height);
-                this.props.onZoomed(this.props.frame.getCursorInfo(cursorPosImageSpace), -delta);
+                this.props.onZoomed(frame.getCursorInfo(cursorPosImageSpace), -delta);
             }
         }
     }
 
     render() {
-        const frame = this.props.appStore.activeFrame;
+        const appStore = AppStore.Instance;
+        const frame = appStore.activeFrame;
         const width = frame ? frame.renderWidth || 1 : 1;
         const height = frame ? frame.renderHeight || 1 : 1;
-        const padding = this.props.overlaySettings.padding;
+        const padding = appStore.overlayStore.padding;
         let className = "catalog-div";
         if (this.props.docked) {
             className += " docked";

@@ -6,8 +6,6 @@ import {ContourWebGLService} from "services";
 import "./ContourViewComponent.css";
 
 export interface ContourViewComponentProps {
-    overlaySettings: OverlayStore;
-    appStore: AppStore;
     docked: boolean;
 }
 
@@ -30,7 +28,7 @@ export class ContourViewComponent extends React.Component<ContourViewComponentPr
     }
 
     private resizeAndClearCanvas() {
-        const frame = this.props.appStore.activeFrame;
+        const frame = AppStore.Instance.activeFrame;
         if (!frame) {
             return;
         }
@@ -50,8 +48,9 @@ export class ContourViewComponent extends React.Component<ContourViewComponentPr
     }
 
     private updateCanvas = () => {
-        const baseFrame = this.props.appStore.activeFrame;
-        const contourFrames = this.props.appStore.contourFrames;
+        const appStore = AppStore.Instance;
+        const baseFrame = appStore.activeFrame;
+        const contourFrames = appStore.contourFrames;
         if (baseFrame && this.canvas && this.gl && this.contourWebGLService.shaderUniforms) {
             this.resizeAndClearCanvas();
 
@@ -186,12 +185,13 @@ export class ContourViewComponent extends React.Component<ContourViewComponentPr
 
     render() {
         // dummy values to trigger React's componentDidUpdate()
-        const baseFrame = this.props.appStore.activeFrame;
+        const appStore = AppStore.Instance;
+        const baseFrame = appStore.activeFrame;
         if (baseFrame) {
             const view = baseFrame.requiredFrameView;
         }
 
-        const contourFrames = this.props.appStore.contourFrames;
+        const contourFrames = appStore.contourFrames;
         for (const frame of contourFrames) {
             const config = frame.contourConfig;
             const thickness = config.thickness;
@@ -204,7 +204,7 @@ export class ContourViewComponent extends React.Component<ContourViewComponentPr
             });
         }
 
-        const padding = this.props.overlaySettings.padding;
+        const padding = appStore.overlayStore.padding;
         let className = "contour-div";
         if (this.props.docked) {
             className += " docked";

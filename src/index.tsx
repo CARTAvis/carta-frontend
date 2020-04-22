@@ -2,7 +2,6 @@ import * as React from "react";
 import * as ReactDOM from "react-dom";
 import {FocusStyleManager} from "@blueprintjs/core";
 import {App} from "./App";
-import {AppStore} from "./stores";
 import {unregister} from "./registerServiceWorker";
 import "./index.css";
 import "@blueprintjs/core/lib/css/blueprint.css";
@@ -29,10 +28,8 @@ FocusStyleManager.onlyShowFocusOnTabs();
 window["React"] = React; // tslint:disable-line
 window["ReactDOM"] = ReactDOM; // tslint:disable-line
 
-const appStore = new AppStore();
-
 ReactDOM.render(
-    <App appStore={appStore}/>,
+    <App/>,
     document.getElementById("root") as HTMLElement
 );
 
