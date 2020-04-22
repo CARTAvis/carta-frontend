@@ -1,7 +1,7 @@
 import * as React from "react";
 import * as $ from "jquery";
 import {observer} from "mobx-react";
-import {autorun, observable} from "mobx";
+import {autorun, observable, action} from "mobx";
 import {Colors, NonIdealState, Spinner, Tag} from "@blueprintjs/core";
 import ReactResizeDetector from "react-resize-detector";
 import {OverlayComponent} from "./Overlay/OverlayComponent";
@@ -64,12 +64,19 @@ export const exportImage = (padding, darkTheme, imageName) => {
     }, "image/png");
 };
 
+export enum ImageViewLayer {
+    RegionCreating = "regionCreating",
+    Catalog = "catalog",
+    RegionMoving = "regionMoving"
+}
+
 @observer
 export class ImageViewComponent extends React.Component<WidgetProps> {
     private ratioIndicatorTimeoutHandle;
     private cachedImageSize: Point2D;
 
     @observable showRatioIndicator: boolean;
+    @observable activeLayer: ImageViewLayer;
 
     public static get WIDGET_CONFIG(): WidgetConfig {
         return {
@@ -87,7 +94,7 @@ export class ImageViewComponent extends React.Component<WidgetProps> {
 
     constructor(props: WidgetProps) {
         super(props);
-
+        this.activeLayer = ImageViewLayer.RegionMoving;
         autorun(() => {
             const appStore = this.props.appStore;
             if (appStore.activeFrame) {
@@ -144,6 +151,10 @@ export class ImageViewComponent extends React.Component<WidgetProps> {
     onMouseLeave = () => {
         this.props.appStore.hideImageToolbar();
     };
+
+    @action updateActiveLayer = (layer: ImageViewLayer) => {
+        this.activeLayer = layer;
+    }
 
     private handleRegionDoubleClicked = (region: RegionStore) => {
         const appStore = this.props.appStore;
@@ -221,7 +232,20 @@ export class ImageViewComponent extends React.Component<WidgetProps> {
                         dragPanningEnabled={appStore.preferenceStore.dragPanning}
                         cursorFrozen={appStore.activeFrame.cursorFrozen}
                         cursorPoint={appStore.activeFrame.cursorInfo.posImageSpace}
-                        docked={this.props.docked}
+                        docked={this.props.docked && (this.activeLayer === ImageViewLayer.RegionMoving || this.activeLayer === ImageViewLayer.RegionCreating)}
+                    />
+                    }
+                    {appStore.activeFrame &&
+                    <CatalogViewComponent
+                        appStore={appStore}
+                        frame={appStore.activeFrame}
+                        width={appStore.activeFrame.renderWidth}
+                        height={appStore.activeFrame.renderHeight}
+                        overlaySettings={appStore.overlayStore}
+                        activeLayer={this.activeLayer}
+                        docked={this.props.docked && this.activeLayer === ImageViewLayer.Catalog}
+                        onClicked={this.onClicked}
+                        onZoomed={this.onZoomed}
                     />
                     }
                     <ToolbarComponent
@@ -229,6 +253,8 @@ export class ImageViewComponent extends React.Component<WidgetProps> {
                         docked={this.props.docked}
                         visible={appStore.imageToolbarVisible}
                         vertical={false}
+                        onActiveLayerChange={this.updateActiveLayer}
+                        activeLayer={this.activeLayer}
                     />
                     <div style={{opacity: this.showRatioIndicator ? 1 : 0, left: imageRatioTagOffset.x, top: imageRatioTagOffset.y}} className={"tag-image-ratio"}>
                         <Tag large={true}>
@@ -254,11 +280,6 @@ export class ImageViewComponent extends React.Component<WidgetProps> {
                     appStore={appStore}
                     docked={this.props.docked}
                     overlaySettings={appStore.overlayStore}
-                />
-                <CatalogViewComponent
-                    appStore={appStore}
-                    overlaySettings={appStore.overlayStore}
-                    docked={this.props.docked}
                 />
                 {divContents}
                 <ReactResizeDetector handleWidth handleHeight onResize={this.onResize} refreshMode={"throttle"} refreshRate={33}/>

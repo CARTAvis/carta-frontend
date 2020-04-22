@@ -529,7 +529,7 @@ export class AppStore {
                 }
                 if (catalogWidgetId) {
                     this.catalogs.set(catalogWidgetId, fileId);
-                    this.catalogStore.addCatalogs(catalogWidgetId);
+                    this.catalogStore.addCatalogs(catalogWidgetId, fileId);
                     this.fileBrowserStore.hideFileBrowser(); 
                 }
             }
