@@ -153,8 +153,8 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         this.isMouseMoveIntoLinePlots = val;
     };
 
-    constructor(appStore: AppStore, coordinate: string = "z") {
-        super(appStore, RegionsType.CLOSED_AND_POINT);
+    constructor(coordinate: string = "z") {
+        super(RegionsType.CLOSED_AND_POINT);
         this.coordinate = coordinate;
         this.statsType = CARTA.StatsType.Mean;
 

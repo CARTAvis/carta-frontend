@@ -1,9 +1,7 @@
 import * as React from "react";
-import {AppStore} from "stores";
-import {ImageComponent} from "./ImageComponent";
 import * as underConstruction from "static/help/under_construction.png";
 
-export class PlaceholderHelpComponent extends React.Component<{ appStore: AppStore }> {
+export class PlaceholderHelpComponent extends React.Component {
     public render() {
         return (
             <React.Fragment>

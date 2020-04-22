@@ -4,7 +4,7 @@ import {computed} from "mobx";
 import {Colors} from "@blueprintjs/core";
 import {LinePlotSettingsPanelComponentProps, LinePlotSettingsPanelComponent} from "components/Shared";
 import {RenderConfigWidgetStore} from "stores/widgets/RenderConfigWidgetStore";
-import {WidgetProps, WidgetConfig, HelpType} from "stores";
+import {WidgetProps, WidgetConfig, HelpType, WidgetsStore, AppStore} from "stores";
 import {parseNumber} from "utilities";
 
 const KEYCODE_ENTER = 13;
@@ -29,8 +29,9 @@ export class RenderConfigSettingsPanelComponent extends React.Component<WidgetPr
     }
 
     @computed get widgetStore(): RenderConfigWidgetStore {
-        if (this.props.appStore && this.props.appStore.widgetsStore.renderConfigWidgets) {
-            const widgetStore = this.props.appStore.widgetsStore.renderConfigWidgets.get(this.props.id);
+        const widgetsStore = WidgetsStore.Instance;
+        if (widgetsStore.renderConfigWidgets) {
+            const widgetStore = widgetsStore.renderConfigWidgets.get(this.props.id);
             if (widgetStore) {
                 return widgetStore;
             }
@@ -118,7 +119,7 @@ export class RenderConfigSettingsPanelComponent extends React.Component<WidgetPr
     render() {
         const widgetStore = this.widgetStore;
         const lineSettingsProps: LinePlotSettingsPanelComponentProps = {
-            darkMode: this.props.appStore.darkTheme,
+            darkMode: AppStore.Instance.darkTheme,
             primaryDarkModeLineColor: Colors.BLUE4,
             primaryLineColor: widgetStore.primaryLineColor,
             lineWidth: widgetStore.lineWidth,

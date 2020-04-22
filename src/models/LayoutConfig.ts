@@ -467,8 +467,8 @@ export class LayoutConfig {
         });
     };
 
-    public static CreateConfigToApply = (appStore: AppStore, newParentContent: any, parentContent: any, componentConfigs: any[]) => {
-        if (!appStore || !newParentContent || !Array.isArray(newParentContent) || !parentContent || !Array.isArray(parentContent)) {
+    public static CreateConfigToApply = (newParentContent: any, parentContent: any, componentConfigs: any[]) => {
+        if (!newParentContent || !Array.isArray(newParentContent) || !parentContent || !Array.isArray(parentContent)) {
             return;
         }
 
@@ -487,7 +487,7 @@ export class LayoutConfig {
                     }
                     newParentContent.push(simpleChild);
                     if (child.content) {
-                        LayoutConfig.CreateConfigToApply(appStore, simpleChild.content, child.content, componentConfigs);
+                        LayoutConfig.CreateConfigToApply(simpleChild.content, child.content, componentConfigs);
                     }
                 } else if (child.type === "component" && child.id) {
                     const widgetType = (child.id).replace(/\-\d+$/, "");
@@ -502,7 +502,7 @@ export class LayoutConfig {
                         if ("widgetSettings" in child) {
                             componentConfig["widgetSettings"] = child.widgetSettings;
                         }
-                        componentConfig.props = {appStore: appStore, id: "", docked: true};
+                        componentConfig.props = {appStore: AppStore.Instance, id: "", docked: true};
                         componentConfigs.push(componentConfig);
                         newParentContent.push(componentConfig);
                     }
