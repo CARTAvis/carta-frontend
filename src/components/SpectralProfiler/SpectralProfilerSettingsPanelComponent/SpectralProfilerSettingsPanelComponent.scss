@@ -8,7 +8,24 @@
     }
 
     .bp3-form-group .bp3-label {
-        width: 8em;
         text-align: left;
+    }
+
+    .conversion-tab-panel{
+        .bp3-form-group .bp3-label {
+            width: 6em;
+        }
+    }
+
+    .moment-tab-panel{
+        .bp3-form-group .bp3-label {
+            width: 6em;
+        }
+    }
+
+    .styling-tab-panel {
+        .bp3-form-group .bp3-label {
+            width: 8em;
+        }
     }
 }
