@@ -1,8 +1,8 @@
 import * as React from "react";
 import {observer} from "mobx-react";
-import {Button, Checkbox, Divider, FormGroup, HTMLSelect, Label, NumericInput, NumberRange, Position, RangeSlider, Tooltip} from "@blueprintjs/core";
+import {Button, Checkbox, Divider, FormGroup, HTMLSelect, NumericInput, Position, Tooltip} from "@blueprintjs/core";
 import {RegionSelectorComponent} from "components";
-import {SpectralSettingsComponent} from "components/Shared";
+import {SafeNumericInput, SpectralSettingsComponent} from "components/Shared";
 import {SpectralProfileWidgetStore} from "stores/widgets";
 import {AppStore} from "stores";
 import {MomentMask, Moments} from "models";
@@ -10,11 +10,19 @@ import "./MomentGeneratorComponent.css";
 
 @observer
 export class MomentGeneratorComponent extends React.Component<{widgetStore: SpectralProfileWidgetStore}> {
-    private onChannelRangeChanged = (range: NumberRange) => {
+    private onChannelFromChanged = (from: number) => {
         const frame = AppStore.Instance.activeFrame;
         const widgetStore = this.props.widgetStore;
-        if (frame && range && range.length === 2 && range[0] >= 0 && range[0] < range[1] && range[1] < frame.numChannels) {
-            widgetStore.setChannelRange(range);
+        if (frame && isFinite(from) && from >= 0 && from < frame.numChannels) {
+            widgetStore.setChannelRange([from, widgetStore.channelRange[1]]);
+        }
+    };
+
+    private onChannelToChanged = (to: number) => {
+        const frame = AppStore.Instance.activeFrame;
+        const widgetStore = this.props.widgetStore;
+        if (frame && isFinite(to) && to >= 0 && to < frame.numChannels) {
+            widgetStore.setChannelRange([widgetStore.channelRange[0], to]);
         }
     };
 
@@ -36,24 +44,31 @@ export class MomentGeneratorComponent extends React.Component<{widgetStore: Spec
                 <SpectralSettingsComponent widgetStore={this.props.widgetStore} disable={false}/>
                 {activeFrame && activeFrame.numChannels > 1 &&
                     <React.Fragment>
-                        <Label>Channel</Label>
+                        <FormGroup label="Channel"/>
                         <div className="range-select">
-                            <div className="range-slider">
-                                <RangeSlider
-                                    value={widgetStore.channelRange}
+                            <FormGroup label="From" inline={true}>
+                                <SafeNumericInput
+                                    value={widgetStore.channelRange[0]}
                                     min={0}
                                     max={activeFrame.numChannels - 1}
-                                    labelStepSize={20}
-                                    labelPrecision={0}
-                                    onChange={this.onChannelRangeChanged}
+                                    step={1}
+                                    onValueChange={val => this.onChannelFromChanged(val)}
                                 />
-                            </div>
+                            </FormGroup>
+                            <FormGroup label="To" inline={true}>
+                                <SafeNumericInput
+                                    value={widgetStore.channelRange[1]}
+                                    min={widgetStore.channelRange[0]}
+                                    max={activeFrame.numChannels - 1}
+                                    step={1}
+                                    onValueChange={val => this.onChannelToChanged(val)}
+                                />
+                            </FormGroup>
                             <div className="cursor-select">
                                 <Tooltip content="Use cursor to select range in profiler" position={Position.BOTTOM}>
                                     <Button
                                         className={widgetStore.isCursorSelect ? "bp3-active" : ""}
                                         icon="select"
-                                        small={true}
                                         onClick={() => widgetStore.setCursorSelect(!widgetStore.isCursorSelect)}
                                     />
                                 </Tooltip>

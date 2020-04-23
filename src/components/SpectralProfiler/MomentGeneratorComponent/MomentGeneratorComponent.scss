@@ -16,13 +16,10 @@
             flex-direction: row;
             margin: 10px;
 
-            .range-slider {
-                width: calc(100% - 24px);
-                .bp3-slider {
-                    .bp3-slider-axis {
-                        display: none;
-                    }
-                }
+            .bp3-form-group .bp3-label {
+                width: 3em;
+                margin-left: 10px;
+                text-align: right;
             }
 
             .cursor-select {
