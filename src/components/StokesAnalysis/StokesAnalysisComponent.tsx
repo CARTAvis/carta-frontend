@@ -13,7 +13,7 @@ import {TickType} from "../Shared/LinePlot/PlotContainer/PlotContainerComponent"
 import {AnimationState, SpectralProfileStore, WidgetConfig, WidgetProps, HelpType, AnimatorStore, WidgetsStore, AppStore} from "stores";
 import {StokesAnalysisWidgetStore, StokesCoordinate} from "stores/widgets";
 import {Point2D} from "models";
-import {clamp, normalising, polarizationAngle, polarizedIntensity, binarySearchByX, closestPointIndexToCursor, toFixed, toExponential, minMaxPointArrayZ, formattedNotation} from "utilities";
+import {clamp, normalising, polarizationAngle, polarizedIntensity, binarySearchByX, closestPointIndexToCursor, toFixed, toExponential, minMaxPointArrayZ, formattedNotation, minMaxArray} from "utilities";
 import "./StokesAnalysisComponent.css";
 
 type Border = { xMin: number, xMax: number, yMin: number, yMax: number };
@@ -348,14 +348,12 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
     }
 
     private calculateXYborder(xValues: Array<number>, yValues: Array<number>, isLinePlots: boolean, type: StokesCoordinate): Border {
-        let xMin = Math.min(...xValues.filter(n => {
-            return !isNaN(n);
-        }));
-        let xMax = Math.max(...xValues.filter(n => {
-            return !isNaN(n);
-        }));
-        let yMin = Number.MAX_VALUE;
-        let yMax = -Number.MAX_VALUE;
+        const xBounds = minMaxArray(xValues);
+        const yBounds = minMaxArray(yValues);
+        let xMin = xBounds.minVal;
+        let xMax = xBounds.maxVal;
+        let yMin = yBounds.minVal;
+        let yMax = yBounds.maxVal;
 
         if (!this.widgetStore.isLinePlotsAutoScaledX && isLinePlots) {
             const localXMin = clamp(this.widgetStore.sharedMinX, xMin, xMax);
@@ -370,13 +368,6 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
             xMin = localXMin;
             xMax = localXMax;
         }
-
-        yMin = Math.min(...yValues.filter(n => {
-            return !isNaN(n);
-        }));
-        yMax = Math.max(...yValues.filter(n => {
-            return !isNaN(n);
-        }));
 
         if (!this.widgetStore.isQUScatterPlotAutoScaledY && !isLinePlots && type === StokesCoordinate.PolarizationQU) {
             const localYMin = clamp(this.widgetStore.quScatterMinY, yMin, yMax);
