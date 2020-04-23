@@ -1,6 +1,7 @@
 import * as React from "react";
 import * as _ from "lodash";
 import * as AST from "ast_wrapper";
+import * as GSL from "gsl_wrapper";
 import {autorun, computed, observable} from "mobx";
 import {observer} from "mobx-react";
 import {Colors, NonIdealState} from "@blueprintjs/core";
@@ -98,10 +99,12 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
             let ySum2 = 0;
             let yCount = 0;
 
+            let smoothingValues = GSL.gaussianSmooth(coordinateData.values, 5);
+
             let values: Array<{ x: number, y: number }> = [];
             for (let i = 0; i < channelValues.length; i++) {
                 const x = channelValues[i];
-                const y = coordinateData.values[i];
+                const y = smoothingValues[i];
 
                 // Skip values outside of range. If array already contains elements, we've reached the end of the range, and can break
                 if (x < xMin || x > xMax) {
