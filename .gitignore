@@ -180,6 +180,11 @@ wasm_libs/zstd-1.4.4.tar.gz
 wasm_src/carta_computation/build/*
 wasm_src/carta_computation/post.js
 public/carta_computation.wasm
+# GSL
+wasm_libs/gsl/*
+wasm_libs/gsl-*.tar.gz
+wasm_src/gsl_wrapper/build/*
+public/gsl_wrapper.wasm
 
 # Protocol buffers
 protobuf/build/*
