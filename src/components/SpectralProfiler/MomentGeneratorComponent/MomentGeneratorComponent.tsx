@@ -37,6 +37,8 @@ export class MomentGeneratorComponent extends React.Component<{widgetStore: Spec
         const appStore = AppStore.Instance;
         const activeFrame = appStore.activeFrame;
         const widgetStore = this.props.widgetStore;
+
+        const dataSourcePanel = (null);
         const regionPanel = <RegionSelectorComponent widgetStore={this.props.widgetStore}/>;
 
         const spectralPanel = (
@@ -44,7 +46,7 @@ export class MomentGeneratorComponent extends React.Component<{widgetStore: Spec
                 <SpectralSettingsComponent widgetStore={this.props.widgetStore} disable={false}/>
                 {activeFrame && activeFrame.numChannels > 1 &&
                     <React.Fragment>
-                        <FormGroup label="Channel"/>
+                        <FormGroup label="Range"/>
                         <div className="range-select">
                             <FormGroup label="From" inline={true}>
                                 <SafeNumericInput
@@ -130,6 +132,8 @@ export class MomentGeneratorComponent extends React.Component<{widgetStore: Spec
         return (
             <div className="moment-generator">
                 <div className="panel-left">
+                    {dataSourcePanel}
+                    <Divider/>
                     {regionPanel}
                     <Divider/>
                     {spectralPanel}

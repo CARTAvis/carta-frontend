@@ -191,7 +191,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         this.isCursorSelect = false;
         this.momentMask = MomentMask.NONE;
         this.moments = new Map<Moments, boolean>();
-        Object.keys(Moments).forEach(momentType => this.moments.set(momentType as Moments, false));
+        Object.keys(Moments).forEach((momentType) => this.moments.set(momentType as Moments, momentType === "TYPE_0" ? true : false));
 
         autorun(() => {
             if (AppStore.Instance.activeFrame) {
