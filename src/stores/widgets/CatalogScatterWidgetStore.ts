@@ -1,6 +1,7 @@
 import {action, observable, computed} from "mobx";
 import {CatalogOverlayWidgetStore} from "./CatalogOverlayWidgetStore";
 import {Point2D} from "models";
+import {minMaxArray} from "utilities";
 
 export interface CatalogScatterWidgetStoreProps {
     x: Array<any>;
@@ -76,11 +77,13 @@ export class CatalogScatterWidgetStore {
     }
 
     @computed get initBorder(): Border {
+        const xBounds = minMaxArray(this.xDataset);
+        const yBounds = minMaxArray(this.yDataset);
         return {
-            xMin: Math.min(...this.xDataset) - this.rangeOffset, 
-            xMax: Math.max(...this.xDataset) + this.rangeOffset,
-            yMin: Math.min(...this.yDataset) - this.rangeOffset,
-            yMax: Math.max(...this.yDataset) + this.rangeOffset
+            xMin: xBounds.minVal - this.rangeOffset,
+            xMax: xBounds.maxVal + this.rangeOffset,
+            yMin: yBounds.minVal - this.rangeOffset,
+            yMax: yBounds.maxVal + this.rangeOffset
         };
     }
 }
