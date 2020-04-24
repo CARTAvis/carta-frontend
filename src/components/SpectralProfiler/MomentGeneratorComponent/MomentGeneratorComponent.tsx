@@ -1,12 +1,15 @@
 import * as React from "react";
 import {observer} from "mobx-react";
-import {Button, Checkbox, Divider, FormGroup, HTMLSelect, NumericInput, Position, Tooltip} from "@blueprintjs/core";
+import {Button, Checkbox, Divider, FormGroup, HTMLSelect, MenuItem, NumericInput, Position, Tooltip} from "@blueprintjs/core";
+import {ItemRenderer, MultiSelect} from "@blueprintjs/select";
 import {RegionSelectorComponent} from "components";
 import {SafeNumericInput, SpectralSettingsComponent} from "components/Shared";
 import {SpectralProfileWidgetStore} from "stores/widgets";
 import {AppStore} from "stores";
 import {MomentMask, Moments} from "models";
 import "./MomentGeneratorComponent.css";
+
+const MomentMultiSelect = MultiSelect.ofType<Moments>();
 
 @observer
 export class MomentGeneratorComponent extends React.Component<{widgetStore: SpectralProfileWidgetStore}> {
@@ -31,6 +34,11 @@ export class MomentGeneratorComponent extends React.Component<{widgetStore: Spec
         if (appStore.activeFrame) {
             appStore.generateMoment(appStore.activeFrame.frameInfo.fileId);
         }
+    };
+
+    private renderMomentTag = (momentType: Moments) => "a";
+    private renderMomentSelectItem:  ItemRenderer<Moments>  = (momentType: Moments, {modifiers, handleClick}) => {
+        return <MenuItem text={`${Moments[momentType]}`} onClick={handleClick} key={momentType}/>;
     };
 
     render() {
@@ -126,6 +134,14 @@ export class MomentGeneratorComponent extends React.Component<{widgetStore: Spec
                 <div className="moment-generate">
                     <Button intent="success" onClick={this.handleMomentGenerate} disabled={!activeFrame}>Generate</Button>
                 </div>
+
+                <MomentMultiSelect
+                    tagRenderer={this.renderMomentTag}
+                    onItemSelect={(momentType) => widgetStore.setSelectedMoment(momentType)}
+                    popoverProps={{minimal: true, position: "bottom"}}
+                    items={Object.keys(Moments) as Moments[]}
+                    itemRenderer={this.renderMomentSelectItem}
+                />
             </React.Fragment>
         );
 
