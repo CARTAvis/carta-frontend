@@ -29,16 +29,26 @@ export class MomentGeneratorComponent extends React.Component<{widgetStore: Spec
         }
     };
 
+    private renderMomentTag = (momentType: Moments) => `${momentType}`;
+    private renderMomentSelectItem:  ItemRenderer<Moments>  = (momentType: Moments, {modifiers, handleClick}) => {
+        return <MenuItem text={`${Moments[momentType]}`} onClick={handleClick} key={momentType}/>;
+    };
+
+    private handleMomentsClear = () => {
+        const widgetStore = this.props.widgetStore;
+        Object.keys(Moments).map((momentType) => {});
+    };
+
+    private handleMomentTagRemove = () => {
+        const widgetStore = this.props.widgetStore;
+        Object.keys(Moments).map((momentType) => {});
+    };
+
     private handleMomentGenerate = () => {
         const appStore = AppStore.Instance;
         if (appStore.activeFrame) {
             appStore.generateMoment(appStore.activeFrame.frameInfo.fileId);
         }
-    };
-
-    private renderMomentTag = (momentType: Moments) => "a";
-    private renderMomentSelectItem:  ItemRenderer<Moments>  = (momentType: Moments, {modifiers, handleClick}) => {
-        return <MenuItem text={`${Moments[momentType]}`} onClick={handleClick} key={momentType}/>;
     };
 
     render() {
@@ -120,6 +130,8 @@ export class MomentGeneratorComponent extends React.Component<{widgetStore: Spec
             </React.Fragment>
         );
 
+        const clearButton = <Button icon="cross" minimal={true} onClick={this.handleMomentsClear}/>;
+
         const momentsPanel = (
             <React.Fragment>
                 {Object.keys(Moments).map((momentType) =>
@@ -136,11 +148,16 @@ export class MomentGeneratorComponent extends React.Component<{widgetStore: Spec
                 </div>
 
                 <MomentMultiSelect
-                    tagRenderer={this.renderMomentTag}
-                    onItemSelect={(momentType) => widgetStore.setSelectedMoment(momentType)}
-                    popoverProps={{minimal: true, position: "bottom"}}
                     items={Object.keys(Moments) as Moments[]}
                     itemRenderer={this.renderMomentSelectItem}
+                    onItemSelect={(momentType) => widgetStore.setSelectedMoment(momentType)}
+                    fill={true}
+                    popoverProps={{minimal: true, position: "bottom"}}
+                    tagRenderer={this.renderMomentTag}
+                    tagInputProps={{
+                        onRemove: this.handleMomentTagRemove,
+                        rightElement: clearButton
+                    }}
                 />
             </React.Fragment>
         );
