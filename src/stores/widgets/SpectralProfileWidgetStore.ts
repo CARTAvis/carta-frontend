@@ -29,8 +29,10 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
 
     // moment settings
     @observable channelRange: NumberRange;
-    @observable isCursorSelect: boolean;
+    @observable isChannelCursorSelect: boolean;
     @observable momentMask: MomentMask;
+    @observable maskRange: NumberRange;
+    @observable isMaskCursorSelect: boolean;
     @observable moments: Map<Moments, boolean>;
 
     public static StatsTypeString(statsType: CARTA.StatsType) {
@@ -105,14 +107,22 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         this.channelRange = range;
     };
 
-    @action setCursorSelect = (isCursorSelect: boolean) => {
-        this.isCursorSelect = isCursorSelect;
+    @action setChannelCursorSelect = (isCursorSelect: boolean) => {
+        this.isChannelCursorSelect = isCursorSelect;
     };
 
     @action setMomentMask = (momentMask: MomentMask) => {
         if (momentMask) {
             this.momentMask = momentMask;
         }
+    };
+
+    @action setMaskRange = (range: NumberRange) => {
+        this.maskRange = range;
+    };
+
+    @action setMaskCursorSelect = (isCursorSelect: boolean) => {
+        this.isMaskCursorSelect = isCursorSelect;
     };
 
     @action setSelectedMoment = (momentType: Moments) => {
@@ -194,8 +204,10 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         this.linePlotInitXYBoundaries = { minXVal: 0, maxXVal: 0, minYVal: 0, maxYVal: 0 };
 
         this.channelRange = [0, 10];
-        this.isCursorSelect = false;
+        this.isChannelCursorSelect = false;
         this.momentMask = MomentMask.NONE;
+        this.maskRange = [0, 10];
+        this.isMaskCursorSelect = false;
         this.moments = new Map<Moments, boolean>();
         Object.keys(Moments).forEach((momentType) => this.moments.set(momentType as Moments, momentType === "TYPE_0" ? true : false));
 

@@ -29,6 +29,22 @@ export class MomentGeneratorComponent extends React.Component<{widgetStore: Spec
         }
     };
 
+    private onMaskFromChanged = (from: number) => {
+        const frame = AppStore.Instance.activeFrame;
+        const widgetStore = this.props.widgetStore;
+        if (frame && isFinite(from)) {
+            widgetStore.setMaskRange([from, widgetStore.maskRange[1]]);
+        }
+    };
+
+    private onMaskToChanged = (to: number) => {
+        const frame = AppStore.Instance.activeFrame;
+        const widgetStore = this.props.widgetStore;
+        if (frame && isFinite(to)) {
+            widgetStore.setMaskRange([widgetStore.maskRange[0], to]);
+        }
+    };
+
     private renderMomentTag = (momentType: Moments) => `${momentType}`;
     private renderMomentSelectItem:  ItemRenderer<Moments>  = (momentType: Moments, {modifiers, handleClick}) => {
         return <MenuItem text={`${Moments[momentType]}`} onClick={handleClick} key={momentType}/>;
@@ -87,9 +103,9 @@ export class MomentGeneratorComponent extends React.Component<{widgetStore: Spec
                             <div className="cursor-select">
                                 <Tooltip content="Use cursor to select range in profiler" position={Position.BOTTOM}>
                                     <Button
-                                        className={widgetStore.isCursorSelect ? "bp3-active" : ""}
+                                        className={widgetStore.isChannelCursorSelect ? "bp3-active" : ""}
                                         icon="select"
-                                        onClick={() => widgetStore.setCursorSelect(!widgetStore.isCursorSelect)}
+                                        onClick={() => widgetStore.setChannelCursorSelect(!widgetStore.isChannelCursorSelect)}
                                     />
                                 </Tooltip>
                             </div>
@@ -109,24 +125,36 @@ export class MomentGeneratorComponent extends React.Component<{widgetStore: Spec
                         disabled={!activeFrame}
                     />
                 </FormGroup>
-                <FormGroup label="From" inline={true} disabled={!activeFrame}>
-                    <NumericInput
-                        value={0}
-                        selectAllOnFocus={true}
-                        buttonPosition={"none"}
-                        allowNumericCharactersOnly={true}
-                        disabled={!activeFrame}
-                    />
-                </FormGroup>
-                <FormGroup label="To" inline={true} disabled={!activeFrame}>
-                    <NumericInput
-                        value={0}
-                        selectAllOnFocus={true}
-                        buttonPosition={"none"}
-                        allowNumericCharactersOnly={true}
-                        disabled={!activeFrame}
-                    />
-                </FormGroup>
+                <FormGroup label="Range"/>
+                <div className="range-select">
+                    <FormGroup label="From" inline={true}>
+                        <SafeNumericInput
+                            value={widgetStore.maskRange[0]}
+                            min={0}
+                            max={activeFrame.numChannels - 1}
+                            step={1}
+                            onValueChange={val => this.onMaskFromChanged(val)}
+                        />
+                    </FormGroup>
+                    <FormGroup label="To" inline={true}>
+                        <SafeNumericInput
+                            value={widgetStore.maskRange[1]}
+                            min={widgetStore.channelRange[0]}
+                            max={activeFrame.numChannels - 1}
+                            step={1}
+                            onValueChange={val => this.onMaskToChanged(val)}
+                        />
+                    </FormGroup>
+                    <div className="cursor-select">
+                        <Tooltip content="Use cursor to select range in profiler" position={Position.BOTTOM}>
+                            <Button
+                                className={widgetStore.isMaskCursorSelect ? "bp3-active" : ""}
+                                icon="select"
+                                onClick={() => widgetStore.setMaskCursorSelect(!widgetStore.isMaskCursorSelect)}
+                            />
+                        </Tooltip>
+                    </div>
+                </div>
             </React.Fragment>
         );
 
@@ -134,19 +162,6 @@ export class MomentGeneratorComponent extends React.Component<{widgetStore: Spec
 
         const momentsPanel = (
             <React.Fragment>
-                {Object.keys(Moments).map((momentType) =>
-                    <Checkbox
-                        key={momentType}
-                        checked={widgetStore.moments.get(momentType as Moments)}
-                        label={Moments[momentType]}
-                        onChange={() => widgetStore.moments.set(momentType as Moments, !widgetStore.moments.get(momentType as Moments))}
-                        disabled={!activeFrame}
-                    />
-                )}
-                <div className="moment-generate">
-                    <Button intent="success" onClick={this.handleMomentGenerate} disabled={!activeFrame}>Generate</Button>
-                </div>
-
                 <MomentMultiSelect
                     items={Object.keys(Moments) as Moments[]}
                     itemRenderer={this.renderMomentSelectItem}
@@ -159,6 +174,9 @@ export class MomentGeneratorComponent extends React.Component<{widgetStore: Spec
                         rightElement: clearButton
                     }}
                 />
+                <div className="moment-generate">
+                    <Button intent="success" onClick={this.handleMomentGenerate} disabled={!activeFrame}>Generate</Button>
+                </div>
             </React.Fragment>
         );
 
@@ -172,8 +190,7 @@ export class MomentGeneratorComponent extends React.Component<{widgetStore: Spec
                     {spectralPanel}
                     <Divider/>
                     {maskPanel}
-                </div>
-                <div className="panel-right">
+                    <Divider/>
                     {momentsPanel}
                 </div>
             </div>
