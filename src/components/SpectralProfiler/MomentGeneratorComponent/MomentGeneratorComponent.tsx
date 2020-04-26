@@ -182,7 +182,7 @@ export class MomentGeneratorComponent extends React.Component<{widgetStore: Spec
 
         return (
             <div className="moment-generator">
-                <div className="panel-left">
+                <div className="moment-panel">
                     {dataSourcePanel}
                     <Divider/>
                     {regionPanel}
