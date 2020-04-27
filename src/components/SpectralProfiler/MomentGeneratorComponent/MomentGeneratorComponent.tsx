@@ -45,19 +45,17 @@ export class MomentGeneratorComponent extends React.Component<{widgetStore: Spec
         }
     };
 
-    private renderMomentTag = (momentType: Moments) => `${momentType}`;
+    private renderMomentTag = (momentType: Moments) => `${ momentType ? (Moments[momentType].split(":"))[0] : ""}`;
     private renderMomentSelectItem:  ItemRenderer<Moments>  = (momentType: Moments, {modifiers, handleClick}) => {
         return <MenuItem text={`${Moments[momentType]}`} onClick={handleClick} key={momentType} icon={this.props.widgetStore.isMomentSelected(momentType) ? "tick" : "blank"}/>;
     };
 
-    private handleMomentsClear = () => {
-        const widgetStore = this.props.widgetStore;
-        Object.keys(Moments).map((momentType) => widgetStore.setSelectedMoment(momentType as Moments, false));
+    private handleMomentTagRemove = (tag: string, index: number) => {
+        this.props.widgetStore.removeMomentByIndex(index);
     };
 
-    private handleMomentTagRemove = (tag: string, index: number) => {
-        const widgetStore = this.props.widgetStore;
-        Object.keys(Moments).map((momentType) => {});
+    private handleMomentsClear = () => {
+        this.props.widgetStore.clearSelectedMoments();
     };
 
     private handleMomentGenerate = () => {
@@ -161,9 +159,11 @@ export class MomentGeneratorComponent extends React.Component<{widgetStore: Spec
         const momentsPanel = (
             <React.Fragment>
                 <MomentMultiSelect
+                    placeholder="Select..."
                     items={Object.keys(Moments) as Moments[]}
                     itemRenderer={this.renderMomentSelectItem}
-                    onItemSelect={(momentType) => widgetStore.setSelectedMoment(momentType, !widgetStore.isMomentSelected(momentType))}
+                    onItemSelect={(momentType) => widgetStore.isMomentSelected(momentType) ? widgetStore.deselectMoment(momentType) : widgetStore.selectMoment(momentType)}
+                    selectedItems={widgetStore.selectedMoments}
                     fill={true}
                     popoverProps={{minimal: true, position: "bottom"}}
                     tagRenderer={this.renderMomentTag}

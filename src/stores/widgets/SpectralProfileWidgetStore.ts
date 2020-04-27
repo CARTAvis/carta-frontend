@@ -33,7 +33,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
     @observable momentMask: MomentMask;
     @observable maskRange: NumberRange;
     @observable isMaskCursorSelect: boolean;
-    @observable moments: Map<Moments, boolean>;
+    @observable selectedMoments: Moments[];
 
     public static StatsTypeString(statsType: CARTA.StatsType) {
         switch (statsType) {
@@ -125,14 +125,30 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         this.isMaskCursorSelect = isCursorSelect;
     };
 
-    @action setSelectedMoment = (momentType: Moments, value: boolean) => {
-        if (momentType) {
-            this.moments.set(momentType, value);
+    @action selectMoment = (selected: Moments) => {
+        if (!this.selectedMoments.includes(selected)) {
+            this.selectedMoments.push(selected);
         }
     };
 
+    @action deselectMoment = (deselected: Moments) => {
+        if (this.selectedMoments.includes(deselected)) {
+            this.selectedMoments = this.selectedMoments.filter((momentType) => momentType !== deselected);
+        }
+    };
+
+    @action removeMomentByIndex = (removeIndex: number) => {
+        if (removeIndex >= 0 && removeIndex < this.selectedMoments.length) {
+            this.selectedMoments = this.selectedMoments.filter((momentType, index) => index !== removeIndex);
+        }
+    };
+
+    @action clearSelectedMoments = () => {
+        this.selectedMoments = [];
+    };
+
     @action isMomentSelected = (momentType: Moments): boolean => {
-        return momentType ? this.moments.get(momentType) : false;
+        return this.selectedMoments.includes(momentType);
     };
 
     @action setXBounds = (minVal: number, maxVal: number) => {
@@ -212,12 +228,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         this.momentMask = MomentMask.NONE;
         this.maskRange = [0, 10];
         this.isMaskCursorSelect = false;
-        this.moments = new Map<Moments, boolean>();
-        Object.keys(Moments).forEach((momentType) => this.setSelectedMoment(momentType as Moments, Moments[momentType] === Moments.TYPE_0 ? true : false));
-        
-        autorun(() => {
-            this.moments.forEach((value, key) => console.log(`${key} => ${value ? "T" : "F"}`));
-        });
+        this.selectedMoments = ["TYPE_0" as Moments];
 
         autorun(() => {
             if (AppStore.Instance.activeFrame) {
