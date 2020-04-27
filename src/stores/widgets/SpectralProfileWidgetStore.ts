@@ -125,9 +125,9 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         this.isMaskCursorSelect = isCursorSelect;
     };
 
-    @action setSelectedMoment = (momentType: Moments) => {
+    @action setSelectedMoment = (momentType: Moments, value: boolean) => {
         if (momentType) {
-            this.moments.set(momentType, !this.moments.get(momentType));
+            this.moments.set(momentType, value);
         }
     };
 
@@ -209,7 +209,11 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         this.maskRange = [0, 10];
         this.isMaskCursorSelect = false;
         this.moments = new Map<Moments, boolean>();
-        Object.keys(Moments).forEach((momentType) => this.moments.set(momentType as Moments, momentType === "TYPE_0" ? true : false));
+        Object.keys(Moments).forEach((momentType) => this.setSelectedMoment(momentType as Moments, Moments[momentType] === Moments.TYPE_0 ? true : false));
+        
+        autorun(() => {
+            this.moments.forEach((value, key) => console.log(`${key} => ${value ? "T" : "F"}`));
+        });
 
         autorun(() => {
             if (AppStore.Instance.activeFrame) {

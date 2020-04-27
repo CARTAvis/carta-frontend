@@ -52,10 +52,10 @@ export class MomentGeneratorComponent extends React.Component<{widgetStore: Spec
 
     private handleMomentsClear = () => {
         const widgetStore = this.props.widgetStore;
-        Object.keys(Moments).map((momentType) => {});
+        Object.keys(Moments).map((momentType) => widgetStore.setSelectedMoment(momentType as Moments, false));
     };
 
-    private handleMomentTagRemove = () => {
+    private handleMomentTagRemove = (tag: string, index: number) => {
         const widgetStore = this.props.widgetStore;
         Object.keys(Moments).map((momentType) => {});
     };
@@ -165,7 +165,7 @@ export class MomentGeneratorComponent extends React.Component<{widgetStore: Spec
                 <MomentMultiSelect
                     items={Object.keys(Moments) as Moments[]}
                     itemRenderer={this.renderMomentSelectItem}
-                    onItemSelect={(momentType) => widgetStore.setSelectedMoment(momentType)}
+                    onItemSelect={(momentType) => widgetStore.setSelectedMoment(momentType, true)}
                     fill={true}
                     popoverProps={{minimal: true, position: "bottom"}}
                     tagRenderer={this.renderMomentTag}
