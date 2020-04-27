@@ -163,7 +163,7 @@ export class MomentGeneratorComponent extends React.Component<{widgetStore: Spec
                 <MomentMultiSelect
                     items={Object.keys(Moments) as Moments[]}
                     itemRenderer={this.renderMomentSelectItem}
-                    onItemSelect={(momentType) => widgetStore.setSelectedMoment(momentType, true)}
+                    onItemSelect={(momentType) => widgetStore.setSelectedMoment(momentType, !widgetStore.isMomentSelected(momentType))}
                     fill={true}
                     popoverProps={{minimal: true, position: "bottom"}}
                     tagRenderer={this.renderMomentTag}
