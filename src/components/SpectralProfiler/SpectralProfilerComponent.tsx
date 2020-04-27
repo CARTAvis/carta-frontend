@@ -7,7 +7,7 @@ import {observer} from "mobx-react";
 import {Colors, NonIdealState} from "@blueprintjs/core";
 import ReactResizeDetector from "react-resize-detector";
 import {CARTA} from "carta-protobuf";
-import {LinePlotComponent, LinePlotComponentProps, PlotType, ProfilerInfoComponent, VERTICAL_RANGE_PADDING} from "components/Shared";
+import {LinePlotComponent, LinePlotComponentProps, PlotType, ProfilerInfoComponent, VERTICAL_RANGE_PADDING, SmoothingType} from "components/Shared";
 import {TickType} from "../Shared/LinePlot/PlotContainer/PlotContainerComponent";
 import {SpectralProfilerToolbarComponent} from "./SpectralProfilerToolbarComponent/SpectralProfilerToolbarComponent";
 import {AnimationState, SpectralProfileStore, WidgetConfig, WidgetProps, HelpType} from "stores";
@@ -99,7 +99,14 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
             let ySum2 = 0;
             let yCount = 0;
 
-            let smoothingValues = GSL.gaussianSmooth(coordinateData.values, 5);
+            let smoothingValues: Float32Array | Float64Array;
+            if (this.widgetStore.smoothingType === SmoothingType.BOXCAR) {
+                smoothingValues = GSL.boxcarSmooth(coordinateData.values, this.widgetStore.smoothingKernel);
+            } else if (this.widgetStore.smoothingType === SmoothingType.GAUSSIAN) {
+                smoothingValues = GSL.gaussianSmooth(coordinateData.values, this.widgetStore.smoothingKernel);
+            } else {
+                smoothingValues = coordinateData.values;
+            }
 
             let values: Array<{ x: number, y: number }> = [];
             for (let i = 0; i < channelValues.length; i++) {

@@ -1,7 +1,7 @@
 import {action, computed, observable} from "mobx";
 import {Colors} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
-import {PlotType, LineSettings} from "components/Shared";
+import {PlotType, LineSettings, SmoothingType} from "components/Shared";
 import {RegionWidgetStore, RegionsType} from "./RegionWidgetStore";
 import {AppStore, FrameStore} from "..";
 import {isColorValid} from "utilities";
@@ -26,6 +26,8 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
     @observable lineWidth: number;
     @observable linePlotPointSize: number;
     @observable linePlotInitXYBoundaries: { minXVal: number, maxXVal: number, minYVal: number, maxYVal: number };
+    @observable smoothingType: SmoothingType;
+    @observable smoothingKernel: number;
 
     public static StatsTypeString(statsType: CARTA.StatsType) {
         switch (statsType) {
@@ -152,6 +154,14 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
     @action setMouseMoveIntoLinePlots = (val: boolean) => {
         this.isMouseMoveIntoLinePlots = val;
     };
+
+    @action setSmoothingType = (val: SmoothingType) => {
+        this.smoothingType = val;
+    }
+
+    @action setSmoothingKernel = (val: number) => {
+        this.smoothingKernel = val;
+    }
 
     constructor(appStore: AppStore, coordinate: string = "z") {
         super(appStore, RegionsType.CLOSED_AND_POINT);
