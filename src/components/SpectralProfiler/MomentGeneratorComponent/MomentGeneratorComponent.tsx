@@ -47,7 +47,7 @@ export class MomentGeneratorComponent extends React.Component<{widgetStore: Spec
 
     private renderMomentTag = (momentType: Moments) => `${momentType}`;
     private renderMomentSelectItem:  ItemRenderer<Moments>  = (momentType: Moments, {modifiers, handleClick}) => {
-        return <MenuItem text={`${Moments[momentType]}`} onClick={handleClick} key={momentType}/>;
+        return <MenuItem text={`${Moments[momentType]}`} onClick={handleClick} key={momentType} icon={this.props.widgetStore.isMomentSelected(momentType) ? "tick" : "blank"}/>;
     };
 
     private handleMomentsClear = () => {
@@ -158,8 +158,6 @@ export class MomentGeneratorComponent extends React.Component<{widgetStore: Spec
             </React.Fragment>
         );
 
-        const clearButton = <Button icon="cross" minimal={true} onClick={this.handleMomentsClear}/>;
-
         const momentsPanel = (
             <React.Fragment>
                 <MomentMultiSelect
@@ -171,7 +169,7 @@ export class MomentGeneratorComponent extends React.Component<{widgetStore: Spec
                     tagRenderer={this.renderMomentTag}
                     tagInputProps={{
                         onRemove: this.handleMomentTagRemove,
-                        rightElement: clearButton
+                        rightElement: <Button icon="cross" minimal={true} onClick={this.handleMomentsClear}/>
                     }}
                 />
                 <div className="moment-generate">

@@ -131,6 +131,10 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         }
     };
 
+    @action isMomentSelected = (momentType: Moments): boolean => {
+        return momentType ? this.moments.get(momentType) : false;
+    };
+
     @action setXBounds = (minVal: number, maxVal: number) => {
         this.minX = minVal;
         this.maxX = maxVal;
