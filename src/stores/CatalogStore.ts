@@ -5,6 +5,7 @@ import {SystemType} from "stores";
 import {CatalogOverlayShape} from "stores/widgets";
 
 type CatalogSettings = {
+    fileId: number,
     color: string,
     size: number,
     shape: CatalogOverlayShape,
@@ -15,19 +16,29 @@ type CatalogSettings = {
 };
 
 export class CatalogStore {
+    private static staticInstance: CatalogStore;
+
+    static get Instance() {
+        if (!CatalogStore.staticInstance) {
+            CatalogStore.staticInstance = new CatalogStore();
+        }
+        return CatalogStore.staticInstance;
+    }
+
     private readonly degreeUnits = ["deg", "degrees"];
     private readonly arcsecUnits = ["arcsec", "arcsecond"];
     private readonly arcminUnits = ["arcmin", "arcminute"];
 
     @observable catalogs: ObservableMap<string, CatalogSettings>;
 
-    constructor() {
+    private constructor() {
         this.catalogs = new ObservableMap();
     }
 
-    @action addCatalogs(widgetId: string) {
-        this.catalogs.set(widgetId, { 
-            color: Colors.RED2, 
+    @action addCatalogs(widgetId: string, fileId: number) {
+        this.catalogs.set(widgetId, {
+            fileId: fileId, 
+            color: Colors.TURQUOISE3, 
             size: 5, 
             shape: CatalogOverlayShape.Circle, 
             xImageCoords: [], 
@@ -74,6 +85,14 @@ export class CatalogStore {
         const catalog = this.catalogs.get(widgetId);
         if (catalog) {
             catalog.selectedPointIndexs = selectedPointIndexs;   
+        }
+    }
+
+    @action unSelectedPoints() {
+        if (this.catalogs.size > 0) {
+            this.catalogs.forEach(catalog => {
+                catalog.selectedPointIndexs = [];
+            });
         }
     }
 

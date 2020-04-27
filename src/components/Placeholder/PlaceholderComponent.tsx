@@ -4,7 +4,6 @@ import {AppStore, WidgetConfig, HelpType} from "stores";
 import "./PlaceholderComponent.css";
 
 class PlaceholderComponentProps {
-    appStore: AppStore;
     id: string;
     label: string;
     docked: boolean;

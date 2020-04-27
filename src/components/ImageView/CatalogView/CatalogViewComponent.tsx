@@ -1,22 +1,28 @@
-import {observer} from "mobx-react";
 import * as React from "react";
 import * as Plotly from "plotly.js";
-import Plot from "react-plotly.js";
-import {AppStore, OverlayStore} from "stores";
-import "./CatalogViewComponent.css";
+import {observer} from "mobx-react";
 import {computed} from "mobx";
+import Plot from "react-plotly.js";
+import {AppStore, CatalogStore, OverlayStore, FrameStore} from "stores";
+import {canvasToTransformedImagePos} from "components/ImageView/RegionView/shared";
+import {ImageViewLayer} from "../ImageViewComponent";
+import {CursorInfo} from "models";
+import "./CatalogViewComponent.css";
 
 export interface CatalogViewComponentProps {
-    overlaySettings: OverlayStore;
-    appStore: AppStore;
     docked: boolean;
+    width: number;
+    height: number;
+    activeLayer: ImageViewLayer;
+    onClicked?: (cursorInfo: CursorInfo) => void;
+    onZoomed?: (cursorInfo: CursorInfo, delta: number) => void;
 }
 
 @observer
 export class CatalogViewComponent extends React.Component<CatalogViewComponentProps> {
 
     @computed get scatterDatasets() {
-        const catalogStore = this.props.appStore.catalogStore;
+        const catalogStore = CatalogStore.Instance;
         let scatterDatasets: Plotly.Data[] = [];
 
         catalogStore.catalogs.forEach((catalog, key) => {
@@ -44,7 +50,7 @@ export class CatalogViewComponent extends React.Component<CatalogViewComponentPr
 
             data.x = xArray;
             data.y = yArray;
-
+            data.name = key;
             if (selectedPointIndexs.length > 0) {
                 data["selectedpoints"] = selectedPointIndexs;
                 let opacity = 0.2;
@@ -62,11 +68,40 @@ export class CatalogViewComponent extends React.Component<CatalogViewComponentPr
         return scatterDatasets;
     }
 
+    private onClick = (event: Readonly<Plotly.PlotMouseEvent>) => {
+        const appStore = AppStore.Instance;
+        if (event && event.points && event.points.length > 0) {
+            const catalogWidgetId = event.points[0].data.name;
+            const catalogWidget = appStore.widgetsStore.catalogOverlayWidgets.get(catalogWidgetId);
+            if (catalogWidget) {
+                let selectedPointIndex = [];
+                const selectedPoint = event.points[0];
+                selectedPointIndex.push(selectedPoint.pointIndex);
+                catalogWidget.setselectedPointIndexs(selectedPointIndex, true);
+                appStore.catalogStore.updateSelectedPoints(catalogWidgetId, selectedPointIndex);
+            }
+        }
+    }
+
+    private onWheelCaptured = (event: React.WheelEvent<HTMLDivElement>) => {
+        if (event && event.nativeEvent && event.nativeEvent.type === "wheel") {
+            const wheelEvent = event.nativeEvent;
+            const frame = AppStore.Instance.activeFrame;
+            const lineHeight = 15;
+            const delta = wheelEvent.deltaMode === WheelEvent.DOM_DELTA_PIXEL ? wheelEvent.deltaY : wheelEvent.deltaY * lineHeight;
+            if (frame.wcsInfo && this.props.onZoomed) {
+                const cursorPosImageSpace = canvasToTransformedImagePos(wheelEvent.offsetX, wheelEvent.offsetY, frame, this.props.width, this.props.height);
+                this.props.onZoomed(frame.getCursorInfo(cursorPosImageSpace), -delta);
+            }
+        }
+    }
+
     render() {
-        const frame = this.props.appStore.activeFrame;
+        const appStore = AppStore.Instance;
+        const frame = appStore.activeFrame;
         const width = frame ? frame.renderWidth || 1 : 1;
         const height = frame ? frame.renderHeight || 1 : 1;
-        const padding = this.props.overlaySettings.padding;
+        const padding = appStore.overlayStore.padding;
         let className = "catalog-div";
         if (this.props.docked) {
             className += " docked";
@@ -75,8 +110,6 @@ export class CatalogViewComponent extends React.Component<CatalogViewComponentPr
         let layout: Partial<Plotly.Layout> = {
             width: width, 
             height: height,
-            paper_bgcolor: "rgba(255,255,255, 0)", 
-            plot_bgcolor: "rgba(255,255,255, 0)",
             hovermode: "closest",
             xaxis: {
                 autorange: false,
@@ -107,6 +140,9 @@ export class CatalogViewComponent extends React.Component<CatalogViewComponentPr
             showTips: false,
             doubleClick: false,
             displaylogo: false,
+            scrollZoom: false,
+            showAxisDragHandles: false,
+            setBackground: () => { return "transparent"; },
         };
 
         if (frame) {
@@ -116,11 +152,13 @@ export class CatalogViewComponent extends React.Component<CatalogViewComponentPr
         }
 
         return (
-            <div className={className} style={{left: padding.left, top: padding.top}}>
+            <div className={className} style={{left: padding.left, top: padding.top}} onWheelCapture={this.onWheelCaptured}>
                 <Plot
+                    className={"catalog-plotly"}
                     data={this.scatterDatasets}
                     layout={layout}
                     config={config}
+                    onClick={this.onClick}
                 />
             </div>
         );

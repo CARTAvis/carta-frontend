@@ -6,10 +6,10 @@ import {AppStore} from "stores";
 import {SpectralSystem} from "models";
 
 @observer
-export class SpectralSettingsComponent extends React.Component<{appStore: AppStore, widgetStore: SpectralProfileWidgetStore|StokesAnalysisWidgetStore, disable: boolean}> {
+export class SpectralSettingsComponent extends React.Component<{widgetStore: SpectralProfileWidgetStore|StokesAnalysisWidgetStore, disable: boolean}> {
 
     render() {
-        const frame = this.props.appStore.activeFrame;
+        const frame = AppStore.Instance.activeFrame;
         const nativeSpectralCoordinate = frame ? frame.nativeSpectralCoordinate : undefined;
         const widgetStore = this.props.widgetStore;
         const spectralCoordinateOptions: IOptionProps[] = frame && frame.spectralCoordsSupported ?

@@ -7,7 +7,7 @@ import {observer} from "mobx-react";
 import {FormGroup, HTMLSelect, AnchorButton, Intent, Tooltip, Switch} from "@blueprintjs/core";
 import ReactResizeDetector from "react-resize-detector";
 import {CARTA} from "carta-protobuf";
-import {WidgetConfig, WidgetProps, HelpType} from "stores";
+import {WidgetConfig, WidgetProps, HelpType, AppStore, WidgetsStore, CatalogStore} from "stores";
 import {CatalogScatterWidgetStore, Border, CatalogUpdateMode, DragMode} from "stores/widgets";
 import {ProfilerInfoComponent} from "components/Shared";
 import {Colors} from "@blueprintjs/core";
@@ -42,7 +42,7 @@ export class CatalogScatterComponent extends React.Component<WidgetProps> {
                 let progressString = "";
                 const catalogFile = this.widgetStore.catalogOverlayWidgetStore.catalogInfo;
                 const fileName = catalogFile.fileInfo.name || "";
-                const appStore = this.props.appStore;
+                const appStore = AppStore.Instance;
                 const frame = appStore.activeFrame;
                 const progress = this.widgetStore.catalogOverlayWidgetStore.progress;
                 if (progress && isFinite(progress) && progress < 1) {
@@ -53,10 +53,10 @@ export class CatalogScatterComponent extends React.Component<WidgetProps> {
                     // const regionString = regionId === 0 ? "Cursor" : `Region #${regionId}`;
                     // const selectedString = this.matchesSelectedRegion ? "(Selected)" : "";
                     const catalogFileId = catalogFile.fileId || "";
-                    this.props.appStore.widgetsStore.setWidgetTitle(this.props.id, `Catalog ${fileName} : ${catalogFileId} ${progressString}`);
+                    WidgetsStore.Instance.setWidgetTitle(this.props.id, `Catalog ${fileName} : ${catalogFileId} ${progressString}`);
                 }
             } else {
-                this.props.appStore.widgetsStore.setWidgetTitle(this.props.id, `Catalog : Cursor`);
+                WidgetsStore.Instance.setWidgetTitle(this.props.id, `Catalog : Cursor`);
             }
         });
     }
@@ -67,7 +67,7 @@ export class CatalogScatterComponent extends React.Component<WidgetProps> {
     };
 
     @computed get widgetStore(): CatalogScatterWidgetStore {
-        const widgetStore = this.props.appStore.widgetsStore.catalogScatterWidgets.get(this.props.id); 
+        const widgetStore = WidgetsStore.Instance.catalogScatterWidgets.get(this.props.id);
         return widgetStore;
     }
 
@@ -104,7 +104,7 @@ export class CatalogScatterComponent extends React.Component<WidgetProps> {
         const val = changeEvent.target.checked;
         this.widgetStore.catalogOverlayWidgetStore.setShowSelectedData(val);
         const storeId = this.widgetStore.catalogOverlayWidgetStore.storeId;
-        this.props.appStore.catalogStore.updateShowSelectedData(storeId, val);
+        CatalogStore.Instance.updateShowSelectedData(storeId, val);
     }
 
     private onHover = (event: Plotly.PlotMouseEvent) => {
@@ -146,7 +146,7 @@ export class CatalogScatterComponent extends React.Component<WidgetProps> {
 
     private handlePlotClick = () => {
         const catalogOverlayWidgetStore = this.widgetStore.catalogOverlayWidgetStore;
-        const appStore = this.props.appStore;
+        const appStore = AppStore.Instance;
 
         if (catalogOverlayWidgetStore.shouldUpdateData) {
             catalogOverlayWidgetStore.setUpdateMode(CatalogUpdateMode.PlotsUpdate);
@@ -167,16 +167,17 @@ export class CatalogScatterComponent extends React.Component<WidgetProps> {
             }
             this.widgetStore.catalogOverlayWidgetStore.setselectedPointIndexs(selectedPointIndexs, true);
             const storeId = this.widgetStore.catalogOverlayWidgetStore.storeId;
-            this.props.appStore.catalogStore.updateSelectedPoints(storeId, selectedPointIndexs);
+            CatalogStore.Instance.updateSelectedPoints(storeId, selectedPointIndexs);
         }
     }
 
     private onDeselect = () => {
+        const catalogStore = CatalogStore.Instance;
         this.widgetStore.catalogOverlayWidgetStore.setselectedPointIndexs([]);
         const storeId = this.widgetStore.catalogOverlayWidgetStore.storeId;
-        this.props.appStore.catalogStore.updateSelectedPoints(storeId, []);
+        catalogStore.updateSelectedPoints(storeId, []);
         this.widgetStore.catalogOverlayWidgetStore.setShowSelectedData(false);
-        this.props.appStore.catalogStore.updateShowSelectedData(storeId, false);
+        catalogStore.updateShowSelectedData(storeId, false);
     }
 
     // Single source selected
@@ -189,13 +190,12 @@ export class CatalogScatterComponent extends React.Component<WidgetProps> {
             selectedPointIndex.push(selectedPoint.pointIndex);
             this.widgetStore.catalogOverlayWidgetStore.setselectedPointIndexs(selectedPointIndex, true);
             const storeId = this.widgetStore.catalogOverlayWidgetStore.storeId;
-            this.props.appStore.catalogStore.updateSelectedPoints(storeId, selectedPointIndex);
+            CatalogStore.Instance.updateSelectedPoints(storeId, selectedPointIndex);
         }
     }
 
     public render() {
         const widgetStore = this.widgetStore;
-        const appStore = this.props.appStore;
         const columnsName = widgetStore.catalogOverlayWidgetStore.displayedColumnHeaders;
         const xyOptions = [];
         const fontFamily = "'Helvetica Neue', 'Helvetica', 'Arial', sans-serif";
@@ -212,7 +212,7 @@ export class CatalogScatterComponent extends React.Component<WidgetProps> {
             }
         }
 
-        if (appStore.darkTheme) {
+        if (AppStore.Instance.darkTheme) {
             gridColor = Colors.DARK_GRAY5;
             lableColor = Colors.LIGHT_GRAY5;
             themeColor = Colors.DARK_GRAY3;
@@ -312,6 +312,7 @@ export class CatalogScatterComponent extends React.Component<WidgetProps> {
             scrollZoom: true,
             showTips: false,
             doubleClick: false,
+            showAxisDragHandles: false,
             modeBarButtonsToRemove: [
                 "zoomIn2d",
                 "zoomOut2d",

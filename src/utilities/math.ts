@@ -104,3 +104,25 @@ export function ceilToPower(val: number, power: number) {
 export function floorToPower(val: number, power: number) {
     return Math.pow(power, Math.floor(Math.log(val) / Math.log(power)));
 }
+
+export function minMaxArray(data: Array<number>): { maxVal: number, minVal: number } {
+    if (data && data.length) {
+        let maxVal = -Number.MAX_VALUE;
+        let minVal = Number.MAX_VALUE;
+        let hasValue = false;
+
+        for (const val of data) {
+            if (isNaN(val)) {
+                continue;
+            }
+            maxVal = Math.max(maxVal, val);
+            minVal = Math.min(minVal, val);
+            hasValue = true;
+        }
+
+        if (hasValue) {
+            return {maxVal, minVal};
+        }
+    }
+    return {minVal: NaN, maxVal: NaN};
+}

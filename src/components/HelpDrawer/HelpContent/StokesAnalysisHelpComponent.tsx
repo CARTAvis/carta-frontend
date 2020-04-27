@@ -1,15 +1,13 @@
 import * as React from "react";
-import {AppStore} from "stores";
 import {ImageComponent} from "./ImageComponent";
 import * as headStokesButton from "static/help/head_stokes_button.png";
 import * as headStokesButton_d from "static/help/head_stokes_button_d.png";
 
-export class StokesAnalysisHelpComponent extends React.Component<{ appStore: AppStore }> {
+export class StokesAnalysisHelpComponent extends React.Component {
     public render() {
-        const appStore = this.props.appStore;
         return (
             <div>
-                <p><ImageComponent appStore={appStore} light={headStokesButton} dark={headStokesButton_d} width="90%"/></p>
+                <p><ImageComponent light={headStokesButton} dark={headStokesButton_d} width="90%"/></p>
                 <p>The Stokes analysis widget is specifically made for efficient visualization of a Stokes cube. The widget includes plots, such as:</p>
                 <ul>
                     <li>Region spectral profiles for Stokes Q and Stokes U, as absolute or fractional values</li>

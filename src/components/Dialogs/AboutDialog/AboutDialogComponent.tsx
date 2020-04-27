@@ -2,31 +2,30 @@ import * as React from "react";
 import {observer} from "mobx-react";
 import {AnchorButton, Classes, IDialogProps, Intent} from "@blueprintjs/core";
 import {DraggableDialogComponent} from "components/Dialogs";
-import {AppStore, HelpType} from "stores";
+import {DialogStore} from "stores";
 import {CARTA_INFO} from "models";
 import "./AboutDialogComponent.css";
 import * as logoPng from "static/carta_logo.png";
 
 @observer
-export class AboutDialogComponent extends React.Component<{ appStore: AppStore }> {
-
+export class AboutDialogComponent extends React.Component {
     public render() {
-        const appStore = this.props.appStore;
+        const dialogStore = DialogStore.Instance;
 
         const dialogProps: IDialogProps = {
             icon: "info-sign",
             backdropClassName: "minimal-dialog-backdrop",
             canOutsideClickClose: true,
             lazy: true,
-            isOpen: appStore.dialogStore.aboutDialogVisible,
-            onClose: appStore.dialogStore.hideAboutDialog,
+            isOpen: dialogStore.aboutDialogVisible,
+            onClose: dialogStore.hideAboutDialog,
             className: "about-dialog",
             canEscapeKeyClose: true,
             title: "About CARTA",
         };
 
         return (
-            <DraggableDialogComponent dialogProps={dialogProps} appStore={appStore} defaultWidth={620} defaultHeight={700} enableResizing={false}>
+            <DraggableDialogComponent dialogProps={dialogProps} defaultWidth={620} defaultHeight={700} enableResizing={false}>
                 <div className={Classes.DIALOG_BODY}>
                     <div className={"image-div"}>
                         <img src={logoPng} width={80}/>
@@ -57,7 +56,7 @@ export class AboutDialogComponent extends React.Component<{ appStore: AppStore }
                 </div>
                 <div className={Classes.DIALOG_FOOTER}>
                     <div className={Classes.DIALOG_FOOTER_ACTIONS}>
-                        <AnchorButton intent={Intent.NONE} onClick={appStore.dialogStore.hideAboutDialog} text="Close"/>
+                        <AnchorButton intent={Intent.NONE} onClick={dialogStore.hideAboutDialog} text="Close"/>
                     </div>
                 </div>
             </DraggableDialogComponent>

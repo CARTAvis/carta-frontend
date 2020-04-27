@@ -47,9 +47,9 @@ export class TableComponent extends React.Component<TableComponentProps> {
     private renderCell = (rowIndex: number, columnIndex: number, coloumnData: any) => {
         const dataIndex = this.props.selectedDataIndex;
         if (dataIndex && dataIndex.includes(rowIndex) && !this.props.showSelectedData) {
-            return <Cell key={`cell_${columnIndex}_${rowIndex}`} intent={"danger"} loading={this.isLoading(rowIndex)} interactive={true}>{coloumnData[rowIndex]}</Cell>;
+            return <Cell key={`cell_${columnIndex}_${rowIndex}`} intent={"danger"} loading={this.isLoading(rowIndex)} interactive={false}>{coloumnData[rowIndex]}</Cell>;
         } else {
-            return <Cell key={`cell_${columnIndex}_${rowIndex}`} loading={this.isLoading(rowIndex)} interactive={true}>{coloumnData[rowIndex]}</Cell>;
+            return <Cell key={`cell_${columnIndex}_${rowIndex}`} loading={this.isLoading(rowIndex)} interactive={false}>{coloumnData[rowIndex]}</Cell>;
         }
     }
 
@@ -144,7 +144,6 @@ export class TableComponent extends React.Component<TableComponentProps> {
                     columnWidths={table.columnWidts}
                     onColumnWidthChanged={this.updateTableColumnWidth}
                     enableGhostCells={true}
-                    // selectedRegions={null}
                     onSelection={this.onRowIndexSelection}
                     enableMultipleSelection={false}
                 >

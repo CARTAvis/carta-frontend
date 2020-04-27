@@ -4,8 +4,8 @@ import {RegionWidgetStore, RegionsType} from "stores/widgets";
 
 export class StatsWidgetStore extends RegionWidgetStore {
 
-    constructor(appStore: AppStore) {
-        super(appStore, RegionsType.CLOSED);
+    constructor() {
+        super(RegionsType.CLOSED);
     }
 
     public static DiffRequirementsArray(originalRequirements: Map<number, Array<number>>, updatedRequirements: Map<number, Array<number>>) {
