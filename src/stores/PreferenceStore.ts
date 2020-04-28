@@ -2,7 +2,7 @@ import {observable, computed, action} from "mobx";
 import {Colors} from "@blueprintjs/core";
 import * as AST from "ast_wrapper";
 import {CARTA} from "carta-protobuf";
-import {AppStore, BeamType, ContourGeneratorType, FrameScaling, RenderConfigStore, RegionStore} from "stores";
+import {AppStore, BeamType, ContourGeneratorType, FrameScaling, RenderConfigStore, RegionStore, AlertStore} from "stores";
 import {Theme, PresetLayout, CursorPosition, Zoom, ZoomPoint, WCSType, RegionCreationMode, CompressionQuality, TileCache, Event, ControlMap, SpectralType, IsSpectralMatchingTypeValid, WCSMatchingType, IsWCSMatchingTypeValid} from "models";
 import {isColorValid, parseBoolean} from "utilities";
 
@@ -189,7 +189,14 @@ const DEFAULTS = {
 };
 
 export class PreferenceStore {
-    private readonly appStore: AppStore;
+    private static staticInstance: PreferenceStore;
+
+    static get Instance() {
+        if (!PreferenceStore.staticInstance) {
+            PreferenceStore.staticInstance = new PreferenceStore();
+        }
+        return PreferenceStore.staticInstance;
+    }
 
     @observable preferences: Map<PreferenceKeys, any>;
     @observable supportsServer: boolean;
@@ -197,7 +204,7 @@ export class PreferenceStore {
     private PREFERENCE_VALIDATORS = new Map<PreferenceKeys, (values: string) => any>([
         [PreferenceKeys.GLOBAL_THEME, (value: string): string => { return value && Theme.isValid(value) ? value : DEFAULTS.GLOBAL.theme; }],
         [PreferenceKeys.GLOBAL_AUTOLAUNCH, (value: string): boolean => { return parseBoolean(value, DEFAULTS.GLOBAL.autoLaunch); }],
-        [PreferenceKeys.GLOBAL_LAYOUT, (value: string): string => { return value && this.appStore.layoutStore.layoutExist(value) ? value : DEFAULTS.GLOBAL.layout; }],
+        [PreferenceKeys.GLOBAL_LAYOUT, (value: string): string => { return value && AppStore.Instance.layoutStore.layoutExist(value) ? value : DEFAULTS.GLOBAL.layout; }],
         [PreferenceKeys.GLOBAL_CURSOR_POSITION, (value: string): string => { return value && CursorPosition.isValid(value) ? value : DEFAULTS.GLOBAL.cursorPosition; }],
         [PreferenceKeys.GLOBAL_ZOOM_MODE, (value: string): string => { return value && Zoom.isValid(value) ? value : DEFAULTS.GLOBAL.zoomMode; }],
         [PreferenceKeys.GLOBAL_ZOOM_POINT, (value: string): string => { return value && ZoomPoint.isValid(value) ? value : DEFAULTS.GLOBAL.zoomPoint; }],
@@ -760,19 +767,19 @@ export class PreferenceStore {
         let result = false;
         let obj = {};
         obj[key] = value;
-        this.appStore.backendService.setUserPreferences(obj).subscribe(ack => {
+        const appStore = AppStore.Instance;
+        appStore.backendService.setUserPreferences(obj).subscribe(ack => {
             if (ack.success) {
                 result = true;
             } else {
-                this.appStore.alertStore.showAlert("Saving user-defined preferences to server failed! ");
+                AlertStore.Instance.showAlert("Saving user-defined preferences to server failed! ");
                 result = false;
             }
         });
         return result;
     };
 
-    constructor(appStore: AppStore) {
-        this.appStore = appStore;
+    private constructor() {
         this.supportsServer = false;
         this.initPreferenceFromDefault();
     }

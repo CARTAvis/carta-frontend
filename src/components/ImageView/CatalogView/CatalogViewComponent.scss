@@ -1,20 +1,18 @@
 .catalog-div {
     position: absolute;
     left: 0;
+    z-index: 1;
 
     &.docked {
         z-index: 3;
     }
-
-    .catalog-canvas {
-        position: absolute;
-        z-index: 0;
-    }
-
-    .gl-container {
-        top: 0px;
-        left: 0px;
-        width: inherit;
-        height: inherit;
+    
+    catalog-plotly {
+        .gl-container {
+            top: 0px;
+            left: 0px;
+            width: inherit;
+            height: inherit;
+        }
     }
 }

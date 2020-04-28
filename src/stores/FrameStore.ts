@@ -100,7 +100,7 @@ export class FrameStore {
 
             const {minPoint, maxPoint} = minMax2D(corners);
             // Manually get adjusted zoom level and round to a power of 2
-            const mipAdjustment = (this.preference.lowBandwidthMode ? 2.0 : 1.0) / this.spatialTransform.scale;
+            const mipAdjustment = (PreferenceStore.Instance.lowBandwidthMode ? 2.0 : 1.0) / this.spatialTransform.scale;
             const mipExact = Math.max(1.0, mipAdjustment / this.spatialReference.zoomLevel);
             const mipLog2 = Math.log2(mipExact);
             const mipLog2Rounded = Math.round(mipLog2);
@@ -129,7 +129,7 @@ export class FrameStore {
             const imageWidth = pixelRatio * this.renderWidth / this.zoomLevel;
             const imageHeight = pixelRatio * this.renderHeight / this.zoomLevel;
 
-            const mipAdjustment = (this.preference.lowBandwidthMode ? 2.0 : 1.0);
+            const mipAdjustment = (PreferenceStore.Instance.lowBandwidthMode ? 2.0 : 1.0);
             const mipExact = Math.max(1.0, mipAdjustment / this.zoomLevel);
             const mipLog2 = Math.log2(mipExact);
             const mipLog2Rounded = Math.round(mipLog2);
@@ -509,7 +509,6 @@ export class FrameStore {
 
     private readonly overlayStore: OverlayStore;
     private readonly logStore: LogStore;
-    private readonly preference: PreferenceStore;
     private readonly backendService: BackendService;
     private readonly controlMaps: Map<FrameStore, ControlMap>;
     private spatialTransformAST: number;
@@ -520,11 +519,12 @@ export class FrameStore {
     private static readonly CursorInfoMaxPrecision = 25;
     private static readonly ZoomInertiaDuration = 250;
 
-    constructor(preference: PreferenceStore, overlay: OverlayStore, logStore: LogStore, frameInfo: FrameInfo, backendService: BackendService) {
-        this.overlayStore = overlay;
-        this.logStore = logStore;
-        this.backendService = backendService;
-        this.preference = preference;
+    constructor(frameInfo: FrameInfo) {
+        this.overlayStore = OverlayStore.Instance;
+        this.logStore = LogStore.Instance;
+        this.backendService = BackendService.Instance;
+        const preferenceStore = PreferenceStore.Instance;
+
         this.astFrameSet = null;
         this.spectralFrame = null;
         this.spectralType = null;
@@ -542,33 +542,33 @@ export class FrameStore {
         this.channel = 0;
         this.requiredStokes = 0;
         this.requiredChannel = 0;
-        this.renderConfig = new RenderConfigStore(preference);
-        this.contourConfig = new ContourConfigStore(preference);
+        this.renderConfig = new RenderConfigStore(preferenceStore);
+        this.contourConfig = new ContourConfigStore(preferenceStore);
         this.contourStores = new Map<number, ContourStore>();
         this.renderType = RasterRenderType.NONE;
         this.moving = false;
         this.zooming = false;
-        this.overlayBeamSettings = new OverlayBeamStore(preference);
+        this.overlayBeamSettings = new OverlayBeamStore();
         this.spatialTransformAST = null;
         this.controlMaps = new Map<FrameStore, ControlMap>();
         this.secondarySpatialImages = [];
         this.secondarySpectralImages = [];
 
         // synchronize AST overlay's color/grid/label with preference when frame is created
-        const astColor = preference.astColor;
-        if (astColor !== overlay.global.color) {
-            overlay.global.setColor(astColor);
+        const astColor = preferenceStore.astColor;
+        if (astColor !== this.overlayStore.global.color) {
+            this.overlayStore.global.setColor(astColor);
         }
-        const astGridVisible = preference.astGridVisible;
-        if (astGridVisible !== overlay.grid.visible) {
-            overlay.grid.setVisible(astGridVisible);
+        const astGridVisible = preferenceStore.astGridVisible;
+        if (astGridVisible !== this.overlayStore.grid.visible) {
+            this.overlayStore.grid.setVisible(astGridVisible);
         }
-        const astLabelsVisible = preference.astLabelsVisible;
-        if (astLabelsVisible !== overlay.labels.visible) {
-            overlay.labels.setVisible(astLabelsVisible);
+        const astLabelsVisible = preferenceStore.astLabelsVisible;
+        if (astLabelsVisible !== this.overlayStore.labels.visible) {
+            this.overlayStore.labels.setVisible(astLabelsVisible);
         }
 
-        this.regionSet = new RegionSetStore(this, preference, backendService);
+        this.regionSet = new RegionSetStore(this, PreferenceStore.Instance, BackendService.Instance);
         this.valid = true;
         this.currentFrameView = {
             xMin: 0,
@@ -590,7 +590,7 @@ export class FrameStore {
         }
         this.initSupportedSpectralConversion();
         this.initCenter();
-        this.zoomLevel = preference.isZoomRAWMode ? 1.0 : this.zoomLevelForFit;
+        this.zoomLevel = preferenceStore.isZoomRAWMode ? 1.0 : this.zoomLevelForFit;
 
         // init spectral settings
         if (this.spectralAxis && IsSpectralTypeSupported(this.spectralAxis.type.code as string) && IsSpectralUnitSupported(this.spectralAxis.type.unit as string)) {
@@ -604,7 +604,7 @@ export class FrameStore {
         // need initialized wcs to get correct cursor info
         this.cursorInfo = this.getCursorInfo(this.center);
         this.cursorValue = 0;
-        this.cursorFrozen = preference.isCursorFrozen;
+        this.cursorFrozen = preferenceStore.isCursorFrozen;
 
         autorun(() => {
             // update zoomLevel when image viewer is available for drawing
@@ -907,14 +907,15 @@ export class FrameStore {
     }
 
     public getControlMap(frame: FrameStore) {
+        const preferenceStore = PreferenceStore.Instance;
         let controlMap = this.controlMaps.get(frame);
         if (!controlMap) {
             const tStart = performance.now();
-            controlMap = new ControlMap(this, frame, -1, this.preference.contourControlMapWidth, this.preference.contourControlMapWidth);
+            controlMap = new ControlMap(this, frame, -1, preferenceStore.contourControlMapWidth, preferenceStore.contourControlMapWidth);
             this.controlMaps.set(frame, controlMap);
             const tEnd = performance.now();
             const dt = tEnd - tStart;
-            console.log(`Created ${this.preference.contourControlMapWidth}x${this.preference.contourControlMapWidth} transform grid for ${this.frameInfo.fileId} -> ${frame.frameInfo.fileId} in ${dt} ms`);
+            console.log(`Created ${preferenceStore.contourControlMapWidth}x${preferenceStore.contourControlMapWidth} transform grid for ${this.frameInfo.fileId} -> ${frame.frameInfo.fileId} in ${dt} ms`);
         }
 
         return controlMap;
@@ -983,7 +984,7 @@ export class FrameStore {
 
         if (recursive) {
             this.spectralSiblings.forEach(frame => {
-                const siblingChannel = getTransformedChannel(this.fullWcsInfo, frame.fullWcsInfo, this.preference.spectralMatchingType, sanitizedChannel);
+                const siblingChannel = getTransformedChannel(this.fullWcsInfo, frame.fullWcsInfo, PreferenceStore.Instance.spectralMatchingType, sanitizedChannel);
                 frame.setChannels(siblingChannel, frame.requiredStokes, false);
             });
 
@@ -1053,7 +1054,7 @@ export class FrameStore {
             const pointRefImage = getTransformedCoordinates(this.spatialTransformAST, {x, y}, true);
             this.spatialReference.zoomToPoint(pointRefImage.x, pointRefImage.y, adjustedZoom);
         } else {
-            if (this.preference.zoomPoint === ZoomPoint.CURSOR) {
+            if (PreferenceStore.Instance.zoomPoint === ZoomPoint.CURSOR) {
                 this.center = {
                     x: x + this.zoomLevel / zoom * (this.center.x - x),
                     y: y + this.zoomLevel / zoom * (this.center.y - y)
@@ -1125,6 +1126,7 @@ export class FrameStore {
             return;
         }
 
+        const preferenceStore = PreferenceStore.Instance;
         this.contourConfig.setEnabled(true);
 
         // TODO: Allow a different reference frame
@@ -1140,9 +1142,9 @@ export class FrameStore {
                 yMin: 0,
                 yMax: this.frameInfo.fileInfoExtended.height,
             },
-            decimationFactor: this.preference.contourDecimation,
-            compressionLevel: this.preference.contourCompressionLevel,
-            contourChunkSize: this.preference.contourChunkSize
+            decimationFactor: preferenceStore.contourDecimation,
+            compressionLevel: preferenceStore.contourCompressionLevel,
+            contourChunkSize: preferenceStore.contourChunkSize
         };
         this.backendService.setContourParameters(contourParameters);
     };
@@ -1261,11 +1263,12 @@ export class FrameStore {
         // For now, this is just done to ensure a mapping can be constructed
         const copySrc = AST.copy(this.fullWcsInfo);
         const copyDest = AST.copy(frame.fullWcsInfo);
-        const spectralMatchingType = this.preference.spectralMatchingType;
+        const preferenceStore = PreferenceStore.Instance;
+        const spectralMatchingType = preferenceStore.spectralMatchingType;
         // Ensure that a mapping for the current alignment system is possible
         if (spectralMatchingType !== SpectralType.CHANNEL) {
-            AST.set(copySrc, `AlignSystem=${this.preference.spectralMatchingType}`);
-            AST.set(copyDest, `AlignSystem=${this.preference.spectralMatchingType}`);
+            AST.set(copySrc, `AlignSystem=${preferenceStore.spectralMatchingType}`);
+            AST.set(copyDest, `AlignSystem=${preferenceStore.spectralMatchingType}`);
         }
         AST.invert(copySrc);
         AST.invert(copyDest);
@@ -1281,7 +1284,7 @@ export class FrameStore {
 
         this.spectralReference = frame;
         this.spectralReference.addSecondarySpectralImage(this);
-        const matchedChannel = getTransformedChannel(frame.fullWcsInfo, this.fullWcsInfo, this.preference.spectralMatchingType, frame.requiredChannel);
+        const matchedChannel = getTransformedChannel(frame.fullWcsInfo, this.fullWcsInfo, preferenceStore.spectralMatchingType, frame.requiredChannel);
         this.setChannels(matchedChannel, this.requiredStokes, false);
         return true;
     };

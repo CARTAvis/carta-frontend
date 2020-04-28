@@ -10,10 +10,10 @@ import {CARTA} from "carta-protobuf";
 import {LinePlotComponent, LinePlotComponentProps, ProfilerInfoComponent, ScatterPlotComponent, ScatterPlotComponentProps, VERTICAL_RANGE_PADDING, PlotType} from "components/Shared";
 import {StokesAnalysisToolbarComponent} from "./StokesAnalysisToolbarComponent/StokesAnalysisToolbarComponent";
 import {TickType} from "../Shared/LinePlot/PlotContainer/PlotContainerComponent";
-import {AnimationState, SpectralProfileStore, WidgetConfig, WidgetProps, HelpType} from "stores";
+import {AnimationState, SpectralProfileStore, WidgetConfig, WidgetProps, HelpType, AnimatorStore, WidgetsStore, AppStore} from "stores";
 import {StokesAnalysisWidgetStore, StokesCoordinate} from "stores/widgets";
 import {Point2D} from "models";
-import {clamp, normalising, polarizationAngle, polarizedIntensity, binarySearchByX, closestPointIndexToCursor, toFixed, toExponential, minMaxPointArrayZ, formattedNotation} from "utilities";
+import {clamp, normalising, polarizationAngle, polarizedIntensity, binarySearchByX, closestPointIndexToCursor, toFixed, toExponential, minMaxPointArrayZ, formattedNotation, minMaxArray} from "utilities";
 import "./StokesAnalysisComponent.css";
 
 type Border = { xMin: number, xMax: number, yMin: number, yMax: number };
@@ -50,21 +50,23 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
     @observable height: number;
 
     @computed get widgetStore(): StokesAnalysisWidgetStore {
-        if (this.props.appStore && this.props.appStore.widgetsStore.stokesAnalysisWidgets) {
-            const widgetStore = this.props.appStore.widgetsStore.stokesAnalysisWidgets.get(this.props.id);
+        const widgetsStore = WidgetsStore.Instance;
+        if (widgetsStore.stokesAnalysisWidgets) {
+            const widgetStore = widgetsStore.stokesAnalysisWidgets.get(this.props.id);
             if (widgetStore) {
                 return widgetStore;
             }
         }
         console.log("can't find store for widget");
-        return new StokesAnalysisWidgetStore(this.props.appStore);
+        return new StokesAnalysisWidgetStore();
     }
 
     @computed get profileStore(): SpectralProfileStore {
-        if (this.props.appStore && this.props.appStore.activeFrame) {
-            let fileId = this.props.appStore.activeFrame.frameInfo.fileId;
+        const appStore = AppStore.Instance;
+        if (appStore.activeFrame) {
+            let fileId = appStore.activeFrame.frameInfo.fileId;
             const regionId = this.widgetStore.effectiveRegionId;
-            const frameMap = this.props.appStore.spectralProfiles.get(fileId);
+            const frameMap = appStore.spectralProfiles.get(fileId);
             if (frameMap) {
                 return frameMap.get(regionId);
             }
@@ -74,7 +76,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
 
     @computed get exportHeaders(): string[] {
         let headerString = [];
-        const frame = this.props.appStore.activeFrame;
+        const frame = AppStore.Instance.activeFrame;
         if (frame && frame.frameInfo && frame.regionSet) {
             const regionId = this.widgetStore.effectiveRegionId;
             const region = frame.regionSet.regions.find(r => r.regionId === regionId);
@@ -88,19 +90,19 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
 
     constructor(props: WidgetProps) {
         super(props);
+        const appStore = AppStore.Instance;
         if (!props.docked && props.id === StokesAnalysisComponent.WIDGET_CONFIG.type) {
-            const id = props.appStore.widgetsStore.addStokesWidget();
-            props.appStore.widgetsStore.changeWidgetId(props.id, id);
+            const id = appStore.widgetsStore.addStokesWidget();
+            appStore.widgetsStore.changeWidgetId(props.id, id);
         } else {
-            if (!this.props.appStore.widgetsStore.stokesAnalysisWidgets.has(this.props.id)) {
+            if (!appStore.widgetsStore.stokesAnalysisWidgets.has(this.props.id)) {
                 console.log(`can't find store for widget with id=${this.props.id}`);
-                this.props.appStore.widgetsStore.stokesAnalysisWidgets.set(this.props.id, new StokesAnalysisWidgetStore(this.props.appStore));
+                appStore.widgetsStore.stokesAnalysisWidgets.set(this.props.id, new StokesAnalysisWidgetStore());
             }
         }
 
         autorun(() => {
             if (this.widgetStore) {
-                const appStore = this.props.appStore;
                 const frame = appStore.activeFrame;
                 let progressString = "";
                 const currentData = this.plotData;
@@ -115,10 +117,10 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
                     const regionId = this.widgetStore.effectiveRegionId;
                     const regionString = regionId === 0 ? "Cursor" : `Region #${regionId}`;
                     const selectedString = this.widgetStore.matchesSelectedRegion ? "(Active)" : "";
-                    this.props.appStore.widgetsStore.setWidgetTitle(this.props.id, `Stokes Analysis : ${regionString} ${selectedString} ${progressString}`);
+                    appStore.widgetsStore.setWidgetTitle(this.props.id, `Stokes Analysis : ${regionString} ${selectedString} ${progressString}`);
                 }
             } else {
-                this.props.appStore.widgetsStore.setWidgetTitle(this.props.id, `Stokes Analysis: Cursor`);
+                appStore.widgetsStore.setWidgetTitle(this.props.id, `Stokes Analysis: Cursor`);
             }
         });
     }
@@ -130,7 +132,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
     };
 
     @computed get currentChannelValue(): number {
-        const frame = this.props.appStore.activeFrame;
+        const frame = AppStore.Instance.activeFrame;
         if (!frame || !frame.channelValues) {
             return null;
         }
@@ -142,7 +144,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
     }
 
     @computed get requiredChannelValue(): number {
-        const frame = this.props.appStore.activeFrame;
+        const frame = AppStore.Instance.activeFrame;
         if (!frame || !frame.channelValues) {
             return null;
         }
@@ -154,8 +156,8 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
     }
 
     onChannelChanged = (x: number) => {
-        const frame = this.props.appStore.activeFrame;
-        if (this.props.appStore.animatorStore.animationState === AnimationState.PLAYING) {
+        const frame = AppStore.Instance.activeFrame;
+        if (AnimatorStore.Instance.animationState === AnimationState.PLAYING) {
             return;
         }
 
@@ -182,8 +184,8 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
     };
 
     onScatterChannelChanged = (x: number, y: number, data: Point3D[]) => {
-        const frame = this.props.appStore.activeFrame;
-        if (this.props.appStore.animatorStore.animationState === AnimationState.PLAYING) {
+        const frame = AppStore.Instance.activeFrame;
+        if (AnimatorStore.Instance.animationState === AnimationState.PLAYING) {
             return;
         }
         if (data.length > 0 && frame && frame.channelInfo) {
@@ -350,14 +352,12 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
     }
 
     private calculateXYborder(xValues: Array<number>, yValues: Array<number>, isLinePlots: boolean, type: StokesCoordinate): Border {
-        let xMin = Math.min(...xValues.filter(n => {
-            return !isNaN(n);
-        }));
-        let xMax = Math.max(...xValues.filter(n => {
-            return !isNaN(n);
-        }));
-        let yMin = Number.MAX_VALUE;
-        let yMax = -Number.MAX_VALUE;
+        const xBounds = minMaxArray(xValues);
+        const yBounds = minMaxArray(yValues);
+        let xMin = xBounds.minVal;
+        let xMax = xBounds.maxVal;
+        let yMin = yBounds.minVal;
+        let yMax = yBounds.maxVal;
 
         if (!this.widgetStore.isLinePlotsAutoScaledX && isLinePlots) {
             const localXMin = clamp(this.widgetStore.sharedMinX, xMin, xMax);
@@ -372,13 +372,6 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
             xMin = localXMin;
             xMax = localXMax;
         }
-
-        yMin = Math.min(...yValues.filter(n => {
-            return !isNaN(n);
-        }));
-        yMax = Math.max(...yValues.filter(n => {
-            return !isNaN(n);
-        }));
 
         if (!this.widgetStore.isQUScatterPlotAutoScaledY && !isLinePlots && type === StokesCoordinate.PolarizationQU) {
             const localYMin = clamp(this.widgetStore.quScatterMinY, yMin, yMax);
@@ -424,7 +417,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
         dataset: Array<Point2D>,
         border: Border
     } {
-        const frame = this.props.appStore.activeFrame;
+        const frame = AppStore.Instance.activeFrame;
         if (profile && profile.length &&
             frame.channelValues && frame.channelValues.length &&
             profile.length === frame.channelValues.length) {
@@ -450,7 +443,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
         dataset: Array<{ x: number, y: number, z: number }>,
         border: Border
     } {
-        const frame = this.props.appStore.activeFrame;
+        const frame = AppStore.Instance.activeFrame;
         if (qProfile && qProfile.length && uProfile && uProfile.length &&
             frame.channelValues && frame.channelValues.length &&
             qProfile.length === uProfile.length && qProfile.length === frame.channelValues.length) {
@@ -599,7 +592,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
         uProgress: number,
         iProgress: number
     } {
-        const frame = this.props.appStore.activeFrame;
+        const frame = AppStore.Instance.activeFrame;
         if (!frame) {
             return null;
         }
@@ -698,7 +691,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
     ) => {
         let cursorInfo = null;
         const isMouseEntered = this.widgetStore.isMouseMoveIntoLinePlots || this.widgetStore.isMouseMoveIntoScatterPlots;
-        const xUnit =  this.props.appStore.activeFrame ? this.props.appStore.activeFrame.spectralUnitStr : "Channel";
+        const xUnit =  AppStore.Instance.activeFrame ? AppStore.Instance.activeFrame.spectralUnitStr : "Channel";
         if (isMouseEntered) {
             let profilerData = {q: NaN, u: NaN, pi: NaN, pa: NaN, channel: NaN};
             if (this.widgetStore.isMouseMoveIntoLinePlots) {
@@ -736,7 +729,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
             isNaN(this.cursorInfo.quValue.x) || isNaN(this.cursorInfo.quValue.y)) {
             return profilerInfo;
         }
-        const frame = this.props.appStore.activeFrame;
+        const frame = AppStore.Instance.activeFrame;
         if (frame && this.plotData) {
             const xLabel = this.cursorInfo.xUnit === "Channel" ?
                         "Channel " + toFixed(this.cursorInfo.channel) :
@@ -757,7 +750,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
     };
     
     render() {
-        const appStore = this.props.appStore;
+        const appStore = AppStore.Instance;
         if (!this.widgetStore) {
             return <NonIdealState icon={"error"} title={"Missing profile"} description={"Profile not found"}/>;
         }
@@ -1073,7 +1066,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
                 let channelRequired = {
                     value: this.requiredChannelValue,
                     id: "marker-channel-required",
-                    draggable: appStore.animatorStore.animationState !== AnimationState.PLAYING,
+                    draggable: AnimatorStore.Instance.animationState !== AnimationState.PLAYING,
                     dragMove: this.onChannelChanged,
                     horizontal: false,
                 };
@@ -1105,7 +1098,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
             <div className={"stokes-widget"}>
                 <div className={className}>
                     <div className="profile-plot-toolbar">
-                        <StokesAnalysisToolbarComponent widgetStore={this.widgetStore} appStore={appStore}/>
+                        <StokesAnalysisToolbarComponent widgetStore={this.widgetStore}/>
                     </div>
                     <div className="profile-plot-qup">
                         <div className="profile-plot-qu">

@@ -11,7 +11,7 @@ import {ScalingSelectComponent} from "components/Shared/ScalingSelectComponent/S
 import {ColorComponent} from "components/Dialogs/OverlaySettings/ColorComponent";
 import {ColormapComponent, ColorPickerComponent, SafeNumericInput} from "components/Shared";
 import {CompressionQuality, CursorPosition, Event, RegionCreationMode, SPECTRAL_MATCHING_TYPES, SPECTRAL_TYPE_STRING, Theme, TileCache, WCSMatchingType, WCSType, Zoom, ZoomPoint} from "models";
-import {AppStore, BeamType, ContourGeneratorType, FrameScaling, HelpType, PreferenceKeys, RegionStore, RenderConfigStore} from "stores";
+import {AppStore, BeamType, ContourGeneratorType, DialogStore, FrameScaling, HelpType, PreferenceKeys, PreferenceStore, RegionStore, RenderConfigStore} from "stores";
 import {hexStringToRgba, SWATCH_COLORS} from "utilities";
 import "./PreferenceDialogComponent.css";
 
@@ -28,31 +28,31 @@ enum TABS {
 const PercentileSelect = Select.ofType<string>();
 
 @observer
-export class PreferenceDialogComponent extends React.Component<{ appStore: AppStore }> {
+export class PreferenceDialogComponent extends React.Component {
     @observable selectedTab: TabId = TABS.GLOBAL;
 
     private renderPercentileSelectItem = (percentile: string, {handleClick, modifiers, query}) => {
         return <MenuItem text={percentile + "%"} onClick={handleClick} key={percentile}/>;
     };
-
+    
     private handleImageCompressionQualityChange = _.throttle((value: number) => {
-        this.props.appStore.preferenceStore.setPreference(PreferenceKeys.PERFORMANCE_IMAGE_COMPRESSION_QUALITY, value);
+        PreferenceStore.Instance.setPreference(PreferenceKeys.PERFORMANCE_IMAGE_COMPRESSION_QUALITY, value);
     }, 100);
 
     private handleAnimationCompressionQualityChange = _.throttle((value: number) => {
-        this.props.appStore.preferenceStore.setPreference(PreferenceKeys.PERFORMANCE_ANIMATION_COMPRESSION_QUALITY, value);
+        PreferenceStore.Instance.setPreference(PreferenceKeys.PERFORMANCE_ANIMATION_COMPRESSION_QUALITY, value);
     }, 100);
 
     private handleGPUTileCacheChange = _.throttle((value: number) => {
-        this.props.appStore.preferenceStore.setPreference(PreferenceKeys.PERFORMANCE_GPU_TILE_CACHE, value);
+        PreferenceStore.Instance.setPreference(PreferenceKeys.PERFORMANCE_GPU_TILE_CACHE, value);
     }, 100);
 
     private handleSystemTileCacheChange = _.throttle((value: number) => {
-        this.props.appStore.preferenceStore.setPreference(PreferenceKeys.PERFORMANCE_SYSTEM_TILE_CACHE, value);
+        PreferenceStore.Instance.setPreference(PreferenceKeys.PERFORMANCE_SYSTEM_TILE_CACHE, value);
     }, 100);
 
     private reset = () => {
-        const preference = this.props.appStore.preferenceStore;
+        const preference = PreferenceStore.Instance;
         switch (this.selectedTab) {
             case TABS.RENDER_CONFIG:
                 preference.resetRenderConfigSettings();
@@ -80,7 +80,7 @@ export class PreferenceDialogComponent extends React.Component<{ appStore: AppSt
     };
 
     public render() {
-        const appStore = this.props.appStore;
+        const appStore = AppStore.Instance;
         const preference = appStore.preferenceStore;
         const layoutStore = appStore.layoutStore;
 
@@ -335,7 +335,7 @@ export class PreferenceDialogComponent extends React.Component<{ appStore: AppSt
                         presetColors={SWATCH_COLORS}
                         setColor={(color: ColorResult) => preference.setPreference(PreferenceKeys.WCS_OVERLAY_BEAM_COLOR, color.hex)}
                         disableAlpha={true}
-                        darkTheme={this.props.appStore.darkTheme}
+                        darkTheme={appStore.darkTheme}
                     />
                 </FormGroup>
                 <FormGroup inline={true} label="Beam Type">
@@ -548,7 +548,7 @@ export class PreferenceDialogComponent extends React.Component<{ appStore: AppSt
         };
 
         return (
-            <DraggableDialogComponent dialogProps={dialogProps} appStore={appStore} helpType={HelpType.PREFERENCES} minWidth={450} minHeight={300} defaultWidth={775} defaultHeight={500} enableResizing={true}>
+            <DraggableDialogComponent dialogProps={dialogProps} helpType={HelpType.PREFERENCES} minWidth={450} minHeight={300} defaultWidth={775} defaultHeight={500} enableResizing={true}>
                 <div className="bp3-dialog-body">
                     <Tabs
                         id="preferenceTabs"

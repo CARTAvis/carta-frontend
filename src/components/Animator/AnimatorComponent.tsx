@@ -3,7 +3,7 @@ import {observer} from "mobx-react";
 import {action, observable} from "mobx";
 import {Button, ButtonGroup, FormGroup, IconName, Menu, MenuItem, NonIdealState, NumberRange, Popover, Position, Radio, RangeSlider, Slider, Tooltip} from "@blueprintjs/core";
 import ReactResizeDetector from "react-resize-detector";
-import {AnimationMode, AnimationState, PlayMode, WidgetConfig, WidgetProps, HelpType} from "stores";
+import {AnimationMode, AnimationState, PlayMode, WidgetConfig, WidgetProps, HelpType, AnimatorStore, AppStore} from "stores";
 import {SafeNumericInput} from "components/Shared";
 import "./AnimatorComponent.css";
 
@@ -32,19 +32,20 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
     };
 
     onChannelChanged = (val: number) => {
-        if (this.props.appStore.activeFrame) {
+        const frame = AppStore.Instance.activeFrame;
+        if (frame) {
             if (val < 0) {
-                val += this.props.appStore.activeFrame.frameInfo.fileInfoExtended.depth;
+                val += frame.frameInfo.fileInfoExtended.depth;
             }
-            if (val >= this.props.appStore.activeFrame.frameInfo.fileInfoExtended.depth) {
+            if (val >= frame.frameInfo.fileInfoExtended.depth) {
                 val = 0;
             }
-            this.props.appStore.activeFrame.setChannels(val, this.props.appStore.activeFrame.requiredStokes, true);
+            frame.setChannels(val, frame.requiredStokes, true);
         }
     };
 
     onRangeChanged = (range: NumberRange) => {
-        const frame = this.props.appStore.activeFrame;
+        const frame = AppStore.Instance.activeFrame;
         if (range && range.length === 2 && frame) {
             if (range[0] >= 0 && range[0] < range[1] && range[1] < frame.frameInfo.fileInfoExtended.depth) {
                 frame.setAnimationRange(range);
@@ -53,34 +54,36 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
     };
 
     onStokesChanged = (val: number) => {
-        if (this.props.appStore.activeFrame) {
+        const frame = AppStore.Instance.activeFrame;
+        if (frame) {
             if (val < 0) {
-                val += this.props.appStore.activeFrame.frameInfo.fileInfoExtended.stokes;
+                val += frame.frameInfo.fileInfoExtended.stokes;
             }
-            if (val >= this.props.appStore.activeFrame.frameInfo.fileInfoExtended.stokes) {
+            if (val >= frame.frameInfo.fileInfoExtended.stokes) {
                 val = 0;
             }
-            this.props.appStore.activeFrame.setChannels(this.props.appStore.activeFrame.requiredChannel, val, true);
+            frame.setChannels(frame.requiredChannel, val, true);
         }
     };
 
     onFrameChanged = (val: number) => {
+        const appStore = AppStore.Instance;
         if (val < 0) {
-            val += this.props.appStore.frames.length;
+            val += appStore.frames.length;
         }
-        if (val >= this.props.appStore.frames.length) {
+        if (val >= appStore.frames.length) {
             val = 0;
         }
-        this.props.appStore.setActiveFrameByIndex(val);
+        appStore.setActiveFrameByIndex(val);
     };
 
     onAnimationModeChanged = (event: React.FormEvent<HTMLInputElement>) => {
         const newMode = parseInt(event.currentTarget.value) as AnimationMode;
-        this.props.appStore.animatorStore.setAnimationMode(newMode);
+        AnimatorStore.Instance.setAnimationMode(newMode);
     };
 
     onFirstClicked = () => {
-        const appStore = this.props.appStore;
+        const appStore = AppStore.Instance;
         const frame = appStore.activeFrame;
 
         if (!frame) {
@@ -103,7 +106,7 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
     };
 
     onLastClicked = () => {
-        const appStore = this.props.appStore;
+        const appStore = AppStore.Instance;
         const frame = appStore.activeFrame;
 
         if (!frame) {
@@ -126,7 +129,7 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
     };
 
     onNextClicked = () => {
-        const appStore = this.props.appStore;
+        const appStore = AppStore.Instance;
         const frame = appStore.activeFrame;
 
         if (!frame) {
@@ -149,7 +152,7 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
     };
 
     onPrevClicked = () => {
-        const appStore = this.props.appStore;
+        const appStore = AppStore.Instance;
         const frame = appStore.activeFrame;
 
         if (!frame) {
@@ -172,8 +175,7 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
     };
 
     private getPlayModeIcon = (): IconName => {
-        const appStore = this.props.appStore;
-        switch (appStore.animatorStore.playMode) {
+        switch (AnimatorStore.Instance.playMode) {
             case PlayMode.FORWARD: default:
                 return "arrow-right";
             case PlayMode.BACKWARD:
@@ -199,7 +201,7 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
     }
 
     public render() {
-        const appStore = this.props.appStore;
+        const appStore = AppStore.Instance;
         const activeFrame = appStore.activeFrame;
         const dims = activeFrame ? activeFrame.frameInfo.fileInfoExtended.dimensions : 0;
         const numChannels = activeFrame ? activeFrame.frameInfo.fileInfoExtended.depth : 0;

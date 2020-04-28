@@ -1,15 +1,14 @@
 import * as React from "react";
-import * as _ from "lodash";
-import {autorun, computed, observable, action} from "mobx";
+import {action, autorun, computed, observable} from "mobx";
 import {observer} from "mobx-react";
-import {Switch, HTMLSelect, AnchorButton, Intent, Tooltip, FormGroup, NonIdealState} from "@blueprintjs/core";
-import {Cell, Column, Table, SelectionModes, RenderMode, Regions} from "@blueprintjs/table";
+import {AnchorButton, FormGroup, HTMLSelect, Intent, NonIdealState, Switch, Tooltip} from "@blueprintjs/core";
+import {Cell, Column, Regions, RenderMode, SelectionModes, Table} from "@blueprintjs/table";
 import ReactResizeDetector from "react-resize-detector";
 import {CARTA} from "carta-protobuf";
 import {TableComponent, TableComponentProps, TableType} from "components/Shared";
 import {CatalogOverlayPlotSettingsComponent} from "./CatalogOverlayPlotSettingsComponent/CatalogOverlayPlotSettingsComponent";
-import {WidgetConfig, WidgetProps, HelpType} from "stores";
-import {CatalogOverlayWidgetStore, CatalogOverlay, CatalogUpdateMode, CatalogPlotType, CatalogScatterWidgetStoreProps} from "stores/widgets";
+import {AppStore, CatalogStore, HelpType, WidgetConfig, WidgetProps, WidgetsStore} from "stores";
+import {CatalogOverlay, CatalogOverlayWidgetStore, CatalogPlotType, CatalogScatterWidgetStoreProps, CatalogUpdateMode} from "stores/widgets";
 import {toFixed} from "utilities";
 import "./CatalogOverlayComponent.css";
 
@@ -68,20 +67,19 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
     }
 
     @computed get widgetStore(): CatalogOverlayWidgetStore {
-
-        let widgetStore = this.props.appStore.widgetsStore.catalogOverlayWidgets.get(this.widgetId);
+        const widgetsStore = WidgetsStore.Instance;
+        let widgetStore = widgetsStore.catalogOverlayWidgets.get(this.widgetId);
         let widgetId = this.matchesSelectedCatalogFile;
         if (widgetId) {
-            widgetStore = this.props.appStore.widgetsStore.catalogOverlayWidgets.get(widgetId);   
+            widgetStore = widgetsStore.catalogOverlayWidgets.get(widgetId);
         } else {
-            widgetStore = this.props.appStore.widgetsStore.catalogOverlayWidgets.values().next().value;
+            widgetStore = widgetsStore.catalogOverlayWidgets.values().next().value;
         }
         return widgetStore;
     }
 
     @computed get matchesSelectedRegion() {
-        const appStore = this.props.appStore;
-        const frame = appStore.activeFrame;
+        const frame = AppStore.Instance.activeFrame;
         if (frame) {
             const widgetRegion = this.widgetStore.regionIdMap.get(frame.frameInfo.fileId);
             if (frame.regionSet.selectedRegion && frame.regionSet.selectedRegion.regionId !== 0) {
@@ -93,7 +91,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
 
     @computed get matchesSelectedCatalogFile(): string {
         let widgetId = undefined;
-        this.props.appStore.catalogs.forEach((value, key) => {
+        AppStore.Instance.catalogs.forEach((value, key) => {
             if (value === this.catalogFileId) {
                 widgetId = key;
             }
@@ -102,17 +100,15 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
     }
 
     @action handleCatalogFileChange(changeEvent: React.ChangeEvent<HTMLSelectElement>) {
-        const val = Number(changeEvent.currentTarget.value);
-        this.catalogFileId = val;
+        this.catalogFileId = Number(changeEvent.currentTarget.value);
         this.widgetId = this.matchesSelectedCatalogFile;
     }
 
     @action handleFileCloseClick = () => {
-        const appStore = this.props.appStore;
+        const appStore = AppStore.Instance;
         appStore.reomveCatalog(this.widgetId, this.props.id);
         if (appStore.catalogs.size > 0) {
-            const catalogFileId = appStore.catalogs.values().next().value;
-            this.catalogFileId = catalogFileId;
+            this.catalogFileId = appStore.catalogs.values().next().value;
         }
     }
 
@@ -144,7 +140,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
                 this.widgetId = this.matchesSelectedCatalogFile;
                 let progressString = "";
                 const fileName = this.widgetStore.catalogInfo.fileInfo.name || "";
-                const appStore = this.props.appStore;
+                const appStore = AppStore.Instance;
                 const frame = appStore.activeFrame;
                 const progress = this.widgetStore.progress;
                 if (progress && isFinite(progress) && progress < 1) {
@@ -154,15 +150,15 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
                     const regionId = this.widgetStore.regionIdMap.get(frame.frameInfo.fileId) || 0;
                     const regionString = regionId === 0 ? "Cursor" : `Region #${regionId}`;
                     const selectedString = this.matchesSelectedRegion ? "(Selected)" : "";
-                    this.props.appStore.widgetsStore.setWidgetComponentTitle(this.props.id, `Catalog ${fileName} : ${regionString} ${selectedString} ${progressString}`);
+                    appStore.widgetsStore.setWidgetComponentTitle(this.props.id, `Catalog ${fileName} : ${regionString} ${selectedString} ${progressString}`);
                 }
             } else {
-                this.props.appStore.widgetsStore.setWidgetComponentTitle(this.props.id, `Catalog : Cursor`);
+                WidgetsStore.Instance.setWidgetComponentTitle(this.props.id, `Catalog : Cursor`);
             }
         });
     }
 
-    onCatalogdataTableRefUpdated = (ref) => {
+    onCatalogDataTableRefUpdated = (ref) => {
         const widgetStore = this.widgetStore;
         if (widgetStore) {
             widgetStore.setCatalogTableRef(ref);
@@ -425,7 +421,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
 
     private initSelectedPointIndexs = () => {
         const widgetStore = this.widgetStore;
-        const appStore = this.props.appStore;
+        const appStore = AppStore.Instance;
         widgetStore.setselectedPointIndexs([]);
         widgetStore.setShowSelectedData(false);
         appStore.catalogStore.updateSelectedPoints(this.widgetId, []);
@@ -433,7 +429,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
 
     private handleFilterClick = () => {
         const widgetStore = this.widgetStore;
-        const appStore = this.props.appStore;
+        const appStore = AppStore.Instance;
         if (widgetStore && appStore) {
             widgetStore.setUpdateMode(CatalogUpdateMode.TableUpdate);
             widgetStore.clearData();
@@ -462,14 +458,14 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
             const filter = this.widgetStore.updateRequestDataSize;
             const currentHidedHeaders = widgetStore.hidedHeaders;
             filter.hidedHeaders = currentHidedHeaders;
-            this.props.appStore.sendCatalogFilter(filter);
+            AppStore.Instance.sendCatalogFilter(filter);
             widgetStore.setLoadingDataStatus(true);
         }
     }
 
     private handleResetClick = () => {
         const widgetStore = this.widgetStore;
-        const appStore = this.props.appStore;
+        const appStore = AppStore.Instance;
         if (widgetStore) {
             widgetStore.reset();
             this.initSelectedPointIndexs();
@@ -481,7 +477,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
 
     private handlePlotClick = () => {
         const widgetStore = this.widgetStore;
-        const appStore = this.props.appStore;
+        const appStore = AppStore.Instance;
         const frame = appStore.activeFrame;
         // init plot data   
         const coords = widgetStore.get2DPlotData(widgetStore.xColumnRepresentation, widgetStore.yColumnRepresentation, widgetStore.catalogData);
@@ -536,14 +532,14 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
             selectedData.push(selectedDataIndex);
         }
         widgetsStore.setselectedPointIndexs(selectedData);
-        this.props.appStore.catalogStore.updateSelectedPoints(this.widgetId, selectedData);
+        CatalogStore.Instance.updateSelectedPoints(this.widgetId, selectedData);
     }
 
     public render() {
-        const appStore = this.props.appStore;
+        const appStore = AppStore.Instance;
         const widgetStore = this.widgetStore;
 
-        if (!widgetStore || !appStore) {
+        if (!widgetStore) {
             return (
                 <div className="catalog-overlay">
                     <NonIdealState icon={"folder-open"} title={"No file loaded"} description={"Load a file using the menu"}/>;
@@ -563,7 +559,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
             loadingCell: widgetStore.loadingData,
             selectedDataIndex: widgetStore.selectedPointIndexs,
             showSelectedData: widgetStore.showSelectedData,
-            upTableRef: this.onCatalogdataTableRefUpdated,
+            upTableRef: this.onCatalogDataTableRefUpdated,
             updateColumnFilter: widgetStore.setColumnFilter,
             updateByInfiniteScroll: this.updateByInfiniteScroll,
             updateTableColumnWidth: widgetStore.setTableColumnWidth,
@@ -599,7 +595,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
                             {catalogFile}
                         </HTMLSelect>
                     </FormGroup>
-                    <CatalogOverlayPlotSettingsComponent widgetStore={this.widgetStore} appStore={appStore} id={this.widgetId}/>
+                    <CatalogOverlayPlotSettingsComponent widgetStore={this.widgetStore} id={this.widgetId}/>
                 </div>
                 <div className={"catalog-overlay-column-header-container"}>
                     {this.createHeaderTable()}
