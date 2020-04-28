@@ -94,8 +94,10 @@ export class LinePlotComponentProps {
     multiColorSingleLineColors?: Array<string>;
     multiColorMultiLinesColors?: Map<string, Array<string>>;
     borderWidth?: number;
-    isSelectingMomentChannels?: boolean;
-    setMomentChannels?: (xMin: number, xMax: number) => void;
+    isSelectingMomentChannel?: boolean;
+    setMomentChannelRange?: (xMin: number, xMax: number) => void;
+    isSelectingMomentMask?: boolean;
+    setMomentMaskRange?: (yMin: number, yMax: number) => void;
 }
 
 // Maximum time between double clicks
@@ -157,8 +159,10 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
         const isHovering = this.hoveredMarker !== undefined && !this.isSelecting;
         if (this.isPanning || isHovering) {
             return "move";
-        } else if (this.props.isSelectingMomentChannels) {
+        } else if (this.props.isSelectingMomentChannel) {
             return "ew-resize";
+        } else if (this.props.isSelectingMomentMask) {
+            return "ns-resize";
         }
         return "crosshair";
     }
@@ -349,8 +353,10 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
                     let minY = this.getValueForPixelY(maxCanvasSpace, this.props.logY);
                     let maxY = this.getValueForPixelY(minCanvasSpace, this.props.logY);
 
-                    if (this.props.isSelectingMomentChannels && this.props.setMomentChannels) {
-                        this.props.setMomentChannels(minX, maxX);
+                    if (this.props.isSelectingMomentChannel && this.props.setMomentChannelRange) {
+                        this.props.setMomentChannelRange(minX, maxX);
+                    } else if (this.props.isSelectingMomentMask && this.props.setMomentMaskRange) {
+                        this.props.setMomentMaskRange(minY, maxY);
                     } else {
                         if (this.zoomMode === ZoomMode.X) {
                             this.props.graphZoomedX(minX, maxX);

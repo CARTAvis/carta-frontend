@@ -37,6 +37,12 @@ export class MomentGeneratorComponent extends React.Component<{widgetStore: Spec
         }
     };
 
+    private handleChannelSelectionClicked = () => {
+        const widgetStore = this.props.widgetStore;
+        widgetStore.setChannelCursorSelect(!widgetStore.isChannelCursorSelect);
+        widgetStore.setMaskCursorSelect(false);
+    };
+
     private onMaskFromChanged = (from: number) => {
         const frame = AppStore.Instance.activeFrame;
         const widgetStore = this.props.widgetStore;
@@ -51,6 +57,12 @@ export class MomentGeneratorComponent extends React.Component<{widgetStore: Spec
         if (frame && isFinite(to)) {
             widgetStore.setMaskRange([widgetStore.maskRange[0], to]);
         }
+    };
+
+    private handleMaskSelectionClicked = () => {
+        const widgetStore = this.props.widgetStore;
+        widgetStore.setMaskCursorSelect(!widgetStore.isMaskCursorSelect);
+        widgetStore.setChannelCursorSelect(false);
     };
 
     private renderMomentTag = (momentType: Moments) => `${ momentType ? (Moments[momentType].split(":"))[0] : ""}`;
@@ -118,11 +130,11 @@ export class MomentGeneratorComponent extends React.Component<{widgetStore: Spec
                                 />
                             </FormGroup>
                             <div className="cursor-select">
-                                <Tooltip content="Use cursor to select range in profiler" position={Position.BOTTOM}>
+                                <Tooltip content="Use cursor to select channel range in profiler" position={Position.BOTTOM}>
                                     <Button
                                         className={widgetStore.isChannelCursorSelect ? "bp3-active" : ""}
                                         icon="select"
-                                        onClick={() => widgetStore.setChannelCursorSelect(!widgetStore.isChannelCursorSelect)}
+                                        onClick={this.handleChannelSelectionClicked}
                                     />
                                 </Tooltip>
                             </div>
@@ -160,11 +172,11 @@ export class MomentGeneratorComponent extends React.Component<{widgetStore: Spec
                                 />
                             </FormGroup>
                             <div className="cursor-select">
-                                <Tooltip content="Use cursor to select range in profiler" position={Position.BOTTOM}>
+                                <Tooltip content="Use cursor to select mask range in profiler" position={Position.BOTTOM}>
                                     <Button
                                         className={widgetStore.isMaskCursorSelect ? "bp3-active" : ""}
                                         icon="select"
-                                        onClick={() => widgetStore.setMaskCursorSelect(!widgetStore.isMaskCursorSelect)}
+                                        onClick={this.handleMaskSelectionClicked}
                                     />
                                 </Tooltip>
                             </div>

@@ -19,7 +19,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
     @observable markerTextVisible: boolean;
     @observable isMouseMoveIntoLinePlots: boolean;
 
-    // settings 
+    // style settings
     @observable plotType: PlotType;
     @observable meanRmsVisible: boolean;
     @observable primaryLineColor: { colorHex: string, fixed: boolean };

@@ -308,12 +308,19 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
         return undefined;
     };
 
-    private setMomentChannels = (xMin: number, xMax: number) => {
+    private setMomentChannelRange = (xMin: number, xMax: number) => {
         const index1 = this.findChannelIndexByValue(xMin);
         const index2 = this.findChannelIndexByValue(xMax);
         if (isFinite(index1) && isFinite(index2)) {
             this.widgetStore.setChannelRange(index1 <= index2 ? [index1, index2] : [index2, index1]);
             this.widgetStore.setChannelCursorSelect(false);
+        }
+    };
+
+    private setMomentMaskRange = (yMin: number, yMax: number) => {
+        if (isFinite(yMin) && isFinite(yMax)) {
+            this.widgetStore.setMaskRange([yMin, yMax]);
+            this.widgetStore.setMaskCursorSelect(false);
         }
     };
 
@@ -346,8 +353,10 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
             mouseEntered: this.widgetStore.setMouseMoveIntoLinePlots,
             borderWidth: this.widgetStore.lineWidth,
             pointRadius: this.widgetStore.linePlotPointSize,
-            isSelectingMomentChannels: this.widgetStore.isChannelCursorSelect,
-            setMomentChannels: this.setMomentChannels,
+            isSelectingMomentChannel: this.widgetStore.isChannelCursorSelect,
+            setMomentChannelRange: this.setMomentChannelRange,
+            isSelectingMomentMask: this.widgetStore.isMaskCursorSelect,
+            setMomentMaskRange: this.setMomentMaskRange,
             zeroLineWidth: 2
         };
 
