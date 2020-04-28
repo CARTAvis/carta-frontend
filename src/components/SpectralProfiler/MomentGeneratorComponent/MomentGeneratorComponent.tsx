@@ -1,6 +1,6 @@
 import * as React from "react";
 import {observer} from "mobx-react";
-import {Button, Checkbox, Divider, FormGroup, HTMLSelect, MenuItem, NumericInput, Position, Tooltip} from "@blueprintjs/core";
+import {Button, Divider, FormGroup, HTMLSelect, MenuItem, Position, Tooltip} from "@blueprintjs/core";
 import {ItemRenderer, MultiSelect} from "@blueprintjs/select";
 import {RegionSelectorComponent} from "components";
 import {SafeNumericInput, SpectralSettingsComponent} from "components/Shared";
@@ -83,18 +83,14 @@ export class MomentGeneratorComponent extends React.Component<{widgetStore: Spec
                             <FormGroup label="From" inline={true}>
                                 <SafeNumericInput
                                     value={widgetStore.channelRange[0]}
-                                    min={0}
-                                    max={activeFrame.numChannels - 1}
-                                    step={1}
+                                    buttonPosition="none"
                                     onValueChange={val => this.onChannelFromChanged(val)}
                                 />
                             </FormGroup>
                             <FormGroup label="To" inline={true}>
                                 <SafeNumericInput
                                     value={widgetStore.channelRange[1]}
-                                    min={widgetStore.channelRange[0]}
-                                    max={activeFrame.numChannels - 1}
-                                    step={1}
+                                    buttonPosition="none"
                                     onValueChange={val => this.onChannelToChanged(val)}
                                 />
                             </FormGroup>
@@ -123,55 +119,57 @@ export class MomentGeneratorComponent extends React.Component<{widgetStore: Spec
                         disabled={!activeFrame}
                     />
                 </FormGroup>
-                <FormGroup label="Range"/>
-                <div className="range-select">
-                    <FormGroup label="From" inline={true}>
-                        <SafeNumericInput
-                            value={widgetStore.maskRange[0]}
-                            min={0}
-                            max={activeFrame.numChannels - 1}
-                            step={1}
-                            onValueChange={val => this.onMaskFromChanged(val)}
-                        />
-                    </FormGroup>
-                    <FormGroup label="To" inline={true}>
-                        <SafeNumericInput
-                            value={widgetStore.maskRange[1]}
-                            min={widgetStore.channelRange[0]}
-                            max={activeFrame.numChannels - 1}
-                            step={1}
-                            onValueChange={val => this.onMaskToChanged(val)}
-                        />
-                    </FormGroup>
-                    <div className="cursor-select">
-                        <Tooltip content="Use cursor to select range in profiler" position={Position.BOTTOM}>
-                            <Button
-                                className={widgetStore.isMaskCursorSelect ? "bp3-active" : ""}
-                                icon="select"
-                                onClick={() => widgetStore.setMaskCursorSelect(!widgetStore.isMaskCursorSelect)}
-                            />
-                        </Tooltip>
-                    </div>
-                </div>
+                {activeFrame && activeFrame.numChannels > 1 &&
+                    <React.Fragment>
+                        <FormGroup label="Range"/>
+                        <div className="range-select">
+                            <FormGroup label="From" inline={true}>
+                                <SafeNumericInput
+                                    value={widgetStore.maskRange[0]}
+                                    buttonPosition="none"
+                                    onValueChange={val => this.onMaskFromChanged(val)}
+                                />
+                            </FormGroup>
+                            <FormGroup label="To" inline={true}>
+                                <SafeNumericInput
+                                    value={widgetStore.maskRange[1]}
+                                    buttonPosition="none"
+                                    onValueChange={val => this.onMaskToChanged(val)}
+                                />
+                            </FormGroup>
+                            <div className="cursor-select">
+                                <Tooltip content="Use cursor to select range in profiler" position={Position.BOTTOM}>
+                                    <Button
+                                        className={widgetStore.isMaskCursorSelect ? "bp3-active" : ""}
+                                        icon="select"
+                                        onClick={() => widgetStore.setMaskCursorSelect(!widgetStore.isMaskCursorSelect)}
+                                    />
+                                </Tooltip>
+                            </div>
+                        </div>
+                    </React.Fragment>
+                }
             </React.Fragment>
         );
 
         const momentsPanel = (
             <React.Fragment>
-                <MomentMultiSelect
-                    placeholder="Select..."
-                    items={Object.keys(Moments) as Moments[]}
-                    itemRenderer={this.renderMomentSelectItem}
-                    onItemSelect={(momentType) => widgetStore.isMomentSelected(momentType) ? widgetStore.deselectMoment(momentType) : widgetStore.selectMoment(momentType)}
-                    selectedItems={widgetStore.selectedMoments}
-                    fill={true}
-                    popoverProps={{minimal: true, position: "bottom"}}
-                    tagRenderer={this.renderMomentTag}
-                    tagInputProps={{
-                        onRemove: this.handleMomentTagRemove,
-                        rightElement: <Button icon="cross" minimal={true} onClick={this.handleMomentsClear}/>
-                    }}
-                />
+                <FormGroup label="Moments" inline={true}>
+                    <MomentMultiSelect
+                        placeholder="Select..."
+                        items={Object.keys(Moments) as Moments[]}
+                        itemRenderer={this.renderMomentSelectItem}
+                        onItemSelect={(momentType) => widgetStore.isMomentSelected(momentType) ? widgetStore.deselectMoment(momentType) : widgetStore.selectMoment(momentType)}
+                        selectedItems={widgetStore.selectedMoments}
+                        fill={true}
+                        popoverProps={{minimal: true, position: "bottom"}}
+                        tagRenderer={this.renderMomentTag}
+                        tagInputProps={{
+                            onRemove: this.handleMomentTagRemove,
+                            rightElement: <Button icon="cross" minimal={true} onClick={this.handleMomentsClear}/>
+                        }}
+                    />
+                </FormGroup>
                 <div className="moment-generate">
                     <Button intent="success" onClick={this.handleMomentGenerate} disabled={!activeFrame}>Generate</Button>
                 </div>

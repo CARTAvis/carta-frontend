@@ -223,10 +223,10 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         this.lineWidth = 1;
         this.linePlotInitXYBoundaries = { minXVal: 0, maxXVal: 0, minYVal: 0, maxYVal: 0 };
 
-        this.channelRange = [0, 10];
+        this.channelRange = [0, 0];
         this.isChannelCursorSelect = false;
         this.momentMask = MomentMask.NONE;
-        this.maskRange = [0, 10];
+        this.maskRange = [0, 0];
         this.isMaskCursorSelect = false;
         this.selectedMoments = ["TYPE_0" as Moments];
 
