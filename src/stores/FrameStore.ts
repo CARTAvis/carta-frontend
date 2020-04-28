@@ -683,6 +683,20 @@ export class FrameStore {
             this.overlayStore.setDefaultsFromAST(this);
             console.log("Initialised WCS info from frame");
         }
+
+        // const N = 100;
+        // const xWCSValues = new Float64Array(N);
+        // const yWCSValues = new Float64Array(N);
+        //
+        // for (let i = 0; i < N; i++) {
+        //     xWCSValues[i] = 2.6349675579325287 + 0.0001 * i;
+        //     yWCSValues[i] = 0.024208492616605525 + 0.0001 * i;
+        // }
+        //
+        // console.log(xWCSValues);
+        // console.log(yWCSValues);
+        // const results = AST.transformPointArrays(this.wcsInfo, xWCSValues, yWCSValues, false);
+        // console.log(results);
     };
 
     @action private initFullWCS = () => {
