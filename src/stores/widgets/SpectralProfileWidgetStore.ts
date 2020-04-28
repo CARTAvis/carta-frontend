@@ -104,7 +104,9 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
     };
 
     @action setChannelRange = (range: NumberRange) => {
-        this.channelRange = range;
+        if (range) {
+            this.channelRange = range[0] <= range[1] ? range : [range[1], range[0]];
+        }
     };
 
     @action setChannelCursorSelect = (isCursorSelect: boolean) => {
