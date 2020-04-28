@@ -14,17 +14,17 @@
         .range-select {
             display: flex;
             flex-direction: row;
-            margin: 10px;
 
-            .bp3-form-group .bp3-label {
-                width: 3em;
-                margin-left: 10px;
-                text-align: right;
+            .bp3-form-group {
+                margin-right: 10px;
+                .bp3-label {
+                    width: 3em;
+                }
             }
 
             .cursor-select {
                 display: flex;
-                margin-left: 20px;
+                margin-left: 5px;
             }
         }
 

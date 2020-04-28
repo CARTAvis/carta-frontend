@@ -77,8 +77,7 @@ export class MomentGeneratorComponent extends React.Component<{widgetStore: Spec
             <React.Fragment>
                 <SpectralSettingsComponent widgetStore={this.props.widgetStore} disable={false}/>
                 {activeFrame && activeFrame.numChannels > 1 &&
-                    <React.Fragment>
-                        <FormGroup label="Range"/>
+                    <FormGroup label="Range"  inline={true}>
                         <div className="range-select">
                             <FormGroup label="From" inline={true}>
                                 <SafeNumericInput
@@ -104,7 +103,7 @@ export class MomentGeneratorComponent extends React.Component<{widgetStore: Spec
                                 </Tooltip>
                             </div>
                         </div>
-                    </React.Fragment>
+                    </FormGroup>
                 }
             </React.Fragment>
         );
@@ -120,8 +119,7 @@ export class MomentGeneratorComponent extends React.Component<{widgetStore: Spec
                     />
                 </FormGroup>
                 {activeFrame && activeFrame.numChannels > 1 &&
-                    <React.Fragment>
-                        <FormGroup label="Range"/>
+                    <FormGroup label="Range"  inline={true}>
                         <div className="range-select">
                             <FormGroup label="From" inline={true}>
                                 <SafeNumericInput
@@ -147,7 +145,7 @@ export class MomentGeneratorComponent extends React.Component<{widgetStore: Spec
                                 </Tooltip>
                             </div>
                         </div>
-                    </React.Fragment>
+                    </FormGroup>
                 }
             </React.Fragment>
         );
