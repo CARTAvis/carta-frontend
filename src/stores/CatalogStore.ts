@@ -9,8 +9,8 @@ type CatalogSettings = {
     color: string,
     size: number,
     shape: CatalogOverlayShape,
-    xImageCoords: Array<number>[],
-    yImageCoords: Array<number>[],
+    xImageCoords: Array<Float64Array>,
+    yImageCoords: Array<Float64Array>,
     selectedPointIndexs: Array<number>,
     showSelectedData: boolean;
 };
@@ -37,14 +37,14 @@ export class CatalogStore {
 
     @action addCatalogs(widgetId: string, fileId: number) {
         this.catalogs.set(widgetId, {
-            fileId: fileId, 
-            color: Colors.TURQUOISE3, 
-            size: 5, 
-            shape: CatalogOverlayShape.Circle, 
-            xImageCoords: [], 
-            yImageCoords: [], 
+            fileId: fileId,
+            color: Colors.TURQUOISE3,
+            size: 5,
+            shape: CatalogOverlayShape.Circle,
+            xImageCoords: [],
+            yImageCoords: [],
             selectedPointIndexs: [],
-            showSelectedData: false 
+            showSelectedData: false
         });
     }
 
@@ -53,7 +53,7 @@ export class CatalogStore {
         const catalogSettings = this.catalogs.get(widgetId);
         if (catalogSettings) {
             catalogSettings.xImageCoords.push(pixelData.xImageCoords);
-            catalogSettings.yImageCoords.push(pixelData.yImageCoords);   
+            catalogSettings.yImageCoords.push(pixelData.yImageCoords);
         }
     }
 
@@ -73,7 +73,7 @@ export class CatalogStore {
         const catalogSettings = this.catalogs.get(widgetId);
         if (catalogSettings) {
             catalogSettings.xImageCoords = [];
-            catalogSettings.yImageCoords = [];   
+            catalogSettings.yImageCoords = [];
         }
     }
 
@@ -84,7 +84,7 @@ export class CatalogStore {
     @action updateSelectedPoints(widgetId: string, selectedPointIndexs: number[]) {
         const catalog = this.catalogs.get(widgetId);
         if (catalog) {
-            catalog.selectedPointIndexs = selectedPointIndexs;   
+            catalog.selectedPointIndexs = selectedPointIndexs;
         }
     }
 
@@ -101,10 +101,10 @@ export class CatalogStore {
         catalog.showSelectedData = val;
     }
 
-    private transformCatalogData(xWcsData: Array<any>, yWcsData: Array<any>, wcsInfo: number, xUnit: string, yUnit: string, catalogFrame: SystemType): {xImageCoords: Array<number>, yImageCoords: Array<number>} {
-        const xImageCoords = [];
-        const yImageCoords = [];
+    private transformCatalogData(xWcsData: Array<any>, yWcsData: Array<any>, wcsInfo: number, xUnit: string, yUnit: string, catalogFrame: SystemType): {xImageCoords: Float64Array, yImageCoords: Float64Array} {
         if (xWcsData.length === yWcsData.length) {
+            const N = xWcsData.length;
+
             const xUnitLowerCase = xUnit.toLocaleLowerCase();
             const yUnitLowerCase = yUnit.toLocaleLowerCase();
             let xFraction = 1;
@@ -144,15 +144,18 @@ export class CatalogStore {
                 yFraction = Math.PI / 180.0;
             }
 
-            for (let index = 0; index < xWcsData.length; index++) {
-                const xWCSValue = xWcsData[index] * xFraction;
-                const yWCSValue = yWcsData[index] * yFraction;
-                const pixelValue = AST.transformPoint(wcsCopy, xWCSValue, yWCSValue, false);
-                xImageCoords.push(pixelValue.x);
-                yImageCoords.push(pixelValue.y);
+            const xWCSValues = new Float64Array(N);
+            const yWCSValues = new Float64Array(N);
+
+            for (let i = 0; i < N; i++) {
+                xWCSValues[i] = xWcsData[i] * xFraction;
+                yWCSValues[i] = yWcsData[i] * yFraction;
             }
+
+            const results = AST.transformPointArrays(wcsCopy, xWCSValues, yWCSValues, 0);
             AST.delete(wcsCopy);
+            return {xImageCoords: results.x, yImageCoords: results.y};
         }
-        return {xImageCoords: xImageCoords, yImageCoords: yImageCoords};
+        return {xImageCoords: new Float64Array(0), yImageCoords: new Float64Array(0)};
     }
 }
