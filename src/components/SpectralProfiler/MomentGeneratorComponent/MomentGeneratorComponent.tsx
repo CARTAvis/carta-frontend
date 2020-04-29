@@ -4,7 +4,7 @@ import {Button, Divider, FormGroup, HTMLSelect, MenuItem, Position, Tooltip} fro
 import {ItemRenderer, MultiSelect, Select} from "@blueprintjs/select";
 import {RegionSelectorComponent} from "components";
 import {SafeNumericInput, SpectralSettingsComponent} from "components/Shared";
-import {SpectralProfileWidgetStore} from "stores/widgets";
+import {MomentSelectingMode, SpectralProfileWidgetStore} from "stores/widgets";
 import {AppStore, FrameStore} from "stores";
 import {MomentMask, Moments} from "models";
 import "./MomentGeneratorComponent.css";
@@ -24,30 +24,29 @@ export class MomentGeneratorComponent extends React.Component<{widgetStore: Spec
     private onChannelFromChanged = (from: number) => {
         const frame = AppStore.Instance.activeFrame;
         const widgetStore = this.props.widgetStore;
-        if (frame && isFinite(from) && from >= 0 && from < frame.numChannels) {
-            widgetStore.setChannelRange([from, widgetStore.channelRange[1]]);
+        if (frame && isFinite(from)) {
+            widgetStore.setSelectedChannelRange([from, widgetStore.channelRange[1]]);
         }
     };
 
     private onChannelToChanged = (to: number) => {
         const frame = AppStore.Instance.activeFrame;
         const widgetStore = this.props.widgetStore;
-        if (frame && isFinite(to) && to >= 0 && to < frame.numChannels) {
-            widgetStore.setChannelRange([widgetStore.channelRange[0], to]);
+        if (frame && isFinite(to)) {
+            widgetStore.setSelectedChannelRange([widgetStore.channelRange[0], to]);
         }
     };
 
     private handleChannelSelectionClicked = () => {
         const widgetStore = this.props.widgetStore;
-        widgetStore.setChannelCursorSelect(!widgetStore.isChannelCursorSelect);
-        widgetStore.setMaskCursorSelect(false);
+        widgetStore.setMomentRangeSelectingMode(widgetStore.isSelectingMomentChannelRange ?  MomentSelectingMode.NONE : MomentSelectingMode.CHANNEL);
     };
 
     private onMaskFromChanged = (from: number) => {
         const frame = AppStore.Instance.activeFrame;
         const widgetStore = this.props.widgetStore;
         if (frame && isFinite(from)) {
-            widgetStore.setMaskRange([from, widgetStore.maskRange[1]]);
+            widgetStore.setSelectedMaskRange([from, widgetStore.maskRange[1]]);
         }
     };
 
@@ -55,14 +54,13 @@ export class MomentGeneratorComponent extends React.Component<{widgetStore: Spec
         const frame = AppStore.Instance.activeFrame;
         const widgetStore = this.props.widgetStore;
         if (frame && isFinite(to)) {
-            widgetStore.setMaskRange([widgetStore.maskRange[0], to]);
+            widgetStore.setSelectedMaskRange([widgetStore.maskRange[0], to]);
         }
     };
 
     private handleMaskSelectionClicked = () => {
         const widgetStore = this.props.widgetStore;
-        widgetStore.setMaskCursorSelect(!widgetStore.isMaskCursorSelect);
-        widgetStore.setChannelCursorSelect(false);
+        widgetStore.setMomentRangeSelectingMode(widgetStore.isSelectingMomentMaskRange ?  MomentSelectingMode.NONE : MomentSelectingMode.MASK);
     };
 
     private renderMomentTag = (momentType: Moments) => `${ momentType ? (Moments[momentType].split(":"))[0] : ""}`;
@@ -132,7 +130,7 @@ export class MomentGeneratorComponent extends React.Component<{widgetStore: Spec
                             <div className="cursor-select">
                                 <Tooltip content="Use cursor to select channel range in profiler" position={Position.BOTTOM}>
                                     <Button
-                                        className={widgetStore.isChannelCursorSelect ? "bp3-active" : ""}
+                                        className={widgetStore.isSelectingMomentChannelRange ? "bp3-active" : ""}
                                         icon="select"
                                         onClick={this.handleChannelSelectionClicked}
                                     />
@@ -174,7 +172,7 @@ export class MomentGeneratorComponent extends React.Component<{widgetStore: Spec
                             <div className="cursor-select">
                                 <Tooltip content="Use cursor to select mask range in profiler" position={Position.BOTTOM}>
                                     <Button
-                                        className={widgetStore.isMaskCursorSelect ? "bp3-active" : ""}
+                                        className={widgetStore.isSelectingMomentMaskRange ? "bp3-active" : ""}
                                         icon="select"
                                         onClick={this.handleMaskSelectionClicked}
                                     />

@@ -6,7 +6,7 @@ import {observer} from "mobx-react";
 import {Colors, NonIdealState} from "@blueprintjs/core";
 import ReactResizeDetector from "react-resize-detector";
 import {CARTA} from "carta-protobuf";
-import {LinePlotComponent, LinePlotComponentProps, PlotType, ProfilerInfoComponent, VERTICAL_RANGE_PADDING} from "components/Shared";
+import {LinePlotComponent, LinePlotComponentProps, LinePlotSelectingMode, PlotType, ProfilerInfoComponent, VERTICAL_RANGE_PADDING} from "components/Shared";
 import {TickType} from "../Shared/LinePlot/PlotContainer/PlotContainerComponent";
 import {SpectralProfilerToolbarComponent} from "./SpectralProfilerToolbarComponent/SpectralProfilerToolbarComponent";
 import {AnimationState, SpectralProfileStore, WidgetConfig, WidgetProps, HelpType, AnimatorStore, WidgetsStore, AppStore} from "stores";
@@ -247,6 +247,15 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
         return frame.isCoordChannel ? channel : frame.channelValues[channel];
     }
 
+    @computed get linePlotSeletingMode(): LinePlotSelectingMode {
+        if (this.widgetStore.isSelectingMomentChannelRange) {
+            return LinePlotSelectingMode.HORIZONTAL;
+        } else if (this.widgetStore.isSelectingMomentMaskRange) {
+            return LinePlotSelectingMode.VERTICAL;
+        }
+        return LinePlotSelectingMode.BOX;
+    }
+
     onGraphCursorMoved = _.throttle((x) => {
         this.widgetStore.setCursor(x);
     }, 33);
@@ -308,20 +317,15 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
         return undefined;
     };
 
-    private setMomentChannelRange = (xMin: number, xMax: number) => {
-        const index1 = this.findChannelIndexByValue(xMin);
-        const index2 = this.findChannelIndexByValue(xMax);
-        if (isFinite(index1) && isFinite(index2)) {
-            this.widgetStore.setChannelRange(index1 <= index2 ? [index1, index2] : [index2, index1]);
-            this.widgetStore.setChannelCursorSelect(false);
+    private setSelectedRange = (min: number, max: number) => {
+        if (isFinite(min) && isFinite(max)) {
+            if (this.widgetStore.isSelectingMomentChannelRange) {
+                this.widgetStore.setSelectedChannelRange([min, max]);
+            } else if (this.widgetStore.isSelectingMomentMaskRange) {
+                this.widgetStore.setSelectedMaskRange([min, max]);
+            }
         }
-    };
-
-    private setMomentMaskRange = (yMin: number, yMax: number) => {
-        if (isFinite(yMin) && isFinite(yMax)) {
-            this.widgetStore.setMaskRange([yMin, yMax]);
-            this.widgetStore.setMaskCursorSelect(false);
-        }
+        this.widgetStore.clearMomentRangeSelectingMode();
     };
 
     render() {
@@ -353,10 +357,8 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
             mouseEntered: this.widgetStore.setMouseMoveIntoLinePlots,
             borderWidth: this.widgetStore.lineWidth,
             pointRadius: this.widgetStore.linePlotPointSize,
-            isSelectingMomentChannel: this.widgetStore.isChannelCursorSelect,
-            setMomentChannelRange: this.setMomentChannelRange,
-            isSelectingMomentMask: this.widgetStore.isMaskCursorSelect,
-            setMomentMaskRange: this.setMomentMaskRange,
+            selectingMode: this.linePlotSeletingMode,
+            setSelectedRange: this.setSelectedRange,
             zeroLineWidth: 2
         };
 

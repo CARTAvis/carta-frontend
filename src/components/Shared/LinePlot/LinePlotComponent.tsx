@@ -27,6 +27,12 @@ export enum InteractionMode {
     PANNING
 }
 
+export enum LinePlotSelectingMode {
+    BOX,
+    HORIZONTAL,
+    VERTICAL
+}
+
 export interface LineMarker {
     value: number;
     id: string;
@@ -94,10 +100,8 @@ export class LinePlotComponentProps {
     multiColorSingleLineColors?: Array<string>;
     multiColorMultiLinesColors?: Map<string, Array<string>>;
     borderWidth?: number;
-    isSelectingMomentChannel?: boolean;
-    setMomentChannelRange?: (xMin: number, xMax: number) => void;
-    isSelectingMomentMask?: boolean;
-    setMomentMaskRange?: (yMin: number, yMax: number) => void;
+    selectingMode?: LinePlotSelectingMode;
+    setSelectedRange?: (min: number, max: number) => void;
 }
 
 // Maximum time between double clicks
@@ -159,9 +163,9 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
         const isHovering = this.hoveredMarker !== undefined && !this.isSelecting;
         if (this.isPanning || isHovering) {
             return "move";
-        } else if (this.props.isSelectingMomentChannel) {
+        } else if (this.props.selectingMode === LinePlotSelectingMode.HORIZONTAL) {
             return "ew-resize";
-        } else if (this.props.isSelectingMomentMask) {
+        } else if (this.props.selectingMode === LinePlotSelectingMode.VERTICAL) {
             return "ns-resize";
         }
         return "crosshair";
@@ -353,10 +357,10 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
                     let minY = this.getValueForPixelY(maxCanvasSpace, this.props.logY);
                     let maxY = this.getValueForPixelY(minCanvasSpace, this.props.logY);
 
-                    if (this.props.isSelectingMomentChannel && this.props.setMomentChannelRange) {
-                        this.props.setMomentChannelRange(minX, maxX);
-                    } else if (this.props.isSelectingMomentMask && this.props.setMomentMaskRange) {
-                        this.props.setMomentMaskRange(minY, maxY);
+                    if (this.props.setSelectedRange && this.props.selectingMode === LinePlotSelectingMode.HORIZONTAL) {
+                        this.props.setSelectedRange(minX, maxX);
+                    } else if (this.props.setSelectedRange && this.props.selectingMode === LinePlotSelectingMode.VERTICAL) {
+                        this.props.setSelectedRange(minY, maxY);
                     } else {
                         if (this.zoomMode === ZoomMode.X) {
                             this.props.graphZoomedX(minX, maxX);

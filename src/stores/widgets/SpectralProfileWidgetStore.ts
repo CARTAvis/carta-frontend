@@ -7,6 +7,12 @@ import {AppStore, FrameStore} from "..";
 import {isColorValid} from "utilities";
 import {MomentMask, Moments, SpectralSystem, SpectralType, SpectralUnit} from "models";
 
+export enum MomentSelectingMode {
+    NONE = 1,
+    CHANNEL,
+    MASK
+}
+
 export class SpectralProfileWidgetStore extends RegionWidgetStore {
     @observable coordinate: string;
     @observable statsType: CARTA.StatsType;
@@ -28,11 +34,10 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
     @observable linePlotInitXYBoundaries: { minXVal: number, maxXVal: number, minYVal: number, maxYVal: number };
 
     // moment settings
+    @observable selectingMode: MomentSelectingMode;
     @observable channelRange: NumberRange;
-    @observable isChannelCursorSelect: boolean;
     @observable momentMask: MomentMask;
     @observable maskRange: NumberRange;
-    @observable isMaskCursorSelect: boolean;
     @observable selectedMoments: Moments[];
 
     public static StatsTypeString(statsType: CARTA.StatsType) {
@@ -103,28 +108,32 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         }
     };
 
-    @action setChannelRange = (range: NumberRange) => {
-        if (range) {
-            this.channelRange = range[0] <= range[1] ? range : [range[1], range[0]];
+    @action setMomentRangeSelectingMode = (mode: MomentSelectingMode) => {
+        if (mode) {
+            this.selectingMode = mode;
         }
     };
 
-    @action setChannelCursorSelect = (isCursorSelect: boolean) => {
-        this.isChannelCursorSelect = isCursorSelect;
+    @action clearMomentRangeSelectingMode = () => {
+        this.selectingMode = MomentSelectingMode.NONE;
+    };
+
+    @action setSelectedChannelRange = (range: NumberRange) => {
+        if (range) {
+                this.channelRange = range;
+        }
+    };
+
+    @action setSelectedMaskRange = (range: NumberRange) => {
+        if (range) {
+                this.maskRange = range;
+        }
     };
 
     @action setMomentMask = (momentMask: MomentMask) => {
         if (momentMask) {
             this.momentMask = momentMask;
         }
-    };
-
-    @action setMaskRange = (range: NumberRange) => {
-        this.maskRange = range;
-    };
-
-    @action setMaskCursorSelect = (isCursorSelect: boolean) => {
-        this.isMaskCursorSelect = isCursorSelect;
     };
 
     @action selectMoment = (selected: Moments) => {
@@ -225,16 +234,15 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         this.lineWidth = 1;
         this.linePlotInitXYBoundaries = { minXVal: 0, maxXVal: 0, minYVal: 0, maxYVal: 0 };
 
+        this.selectingMode = MomentSelectingMode.NONE;
         this.channelRange = [0, 0];
-        this.isChannelCursorSelect = false;
         this.momentMask = MomentMask.NONE;
         this.maskRange = [0, 0];
-        this.isMaskCursorSelect = false;
         this.selectedMoments = ["TYPE_0" as Moments];
 
         autorun(() => {
             if (AppStore.Instance.activeFrame) {
-                this.setChannelRange([0, AppStore.Instance.activeFrame.numChannels - 1]);
+                // this.setSelectedRange([0, AppStore.Instance.activeFrame.numChannels - 1]);
             }
         });
     }
@@ -245,6 +253,14 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
 
     @computed get isAutoScaledY() {
         return (this.minY === undefined || this.maxY === undefined);
+    }
+
+    @computed get isSelectingMomentChannelRange() {
+        return this.selectingMode === MomentSelectingMode.CHANNEL;
+    }
+
+    @computed get isSelectingMomentMaskRange() {
+        return this.selectingMode === MomentSelectingMode.MASK;
     }
 
     public static CalculateRequirementsMap(frame: FrameStore, widgetsMap: Map<string, SpectralProfileWidgetStore>) {
