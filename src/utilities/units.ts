@@ -82,3 +82,19 @@ export function formattedFrequency(freqGHz: number): string {
     }
     return freqString;
 }
+
+export function formattedArcsec(arcsec: number): string {
+    if (!isFinite(arcsec)) {
+        return null;
+    }
+
+    let arcString = "";
+    if (arcsec < 120) {
+        arcString = `${toFixed(arcsec, 6)}"`;
+    } else if (arcsec >= 120 && arcsec < 7200) {
+        arcString = `${toFixed(arcsec / 60.0, 3)}'`;
+    } else {
+        arcString = `${toFixed(arcsec / 3600.0, 3)} deg`;
+    }
+    return arcString;
+}
