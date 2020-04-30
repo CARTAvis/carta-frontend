@@ -113,7 +113,7 @@ export class EllipticalRegionForm extends React.Component<{ region: RegionStore,
     private getSizeString(size: Point2D) {
         const wcsSize = this.props.frame.getWcsSizeInArcsec(size);
         if (wcsSize) {
-            return `Semi-major: ${formattedArcsec(wcsSize.y)}; Semi-minor: ${formattedArcsec(wcsSize.x)}`;
+            return `Semi-major: ${formattedArcsec(wcsSize.x)}; Semi-minor: ${formattedArcsec(wcsSize.y)}`;
         }
         return null;
     }
