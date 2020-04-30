@@ -1,24 +1,20 @@
 import * as React from "react";
 import {observer} from "mobx-react";
 import {Button, Divider, FormGroup, HTMLSelect, MenuItem, Position, Tooltip} from "@blueprintjs/core";
-import {ItemRenderer, MultiSelect, Select} from "@blueprintjs/select";
+import {ItemRenderer, MultiSelect} from "@blueprintjs/select";
 import {RegionSelectorComponent} from "components";
 import {SafeNumericInput, SpectralSettingsComponent} from "components/Shared";
 import {MomentSelectingMode, SpectralProfileWidgetStore} from "stores/widgets";
-import {AppStore, FrameStore} from "stores";
+import {AppStore} from "stores";
 import {MomentMask, Moments} from "models";
 import "./MomentGeneratorComponent.css";
 
-const DataSourceSelect = Select.ofType<FrameStore>();
 const MomentMultiSelect = MultiSelect.ofType<Moments>();
 
 @observer
 export class MomentGeneratorComponent extends React.Component<{widgetStore: SpectralProfileWidgetStore}> {
-    private renderDataSourceSelectItem = (frame: FrameStore, {handleClick, modifiers, query}) => {
-        if (!frame) {
-            return null;
-        }
-        return <MenuItem text={frame.frameInfo.fileInfo.name} onClick={handleClick} key={frame.frameInfo.fileId}/>;
+    private handleSelectedDataSource = (selectedFileId: number) => {
+        return;
     };
 
     private onChannelFromChanged = (from: number) => {
@@ -89,20 +85,13 @@ export class MomentGeneratorComponent extends React.Component<{widgetStore: Spec
         const widgetStore = this.props.widgetStore;
 
         const dataSourcePanel = (
-            <FormGroup inline={true} label="Data Source">
-                <DataSourceSelect
-                    activeItem={activeFrame}
-                    onItemSelect={appStore.setContourDataSource}
-                    popoverProps={{minimal: true, position: "bottom"}}
-                    filterable={false}
-                    items={appStore.frames}
-                    itemRenderer={this.renderDataSourceSelectItem}
-                >
-                    <Button text={activeFrame.frameInfo.fileInfo.name} rightIcon="double-caret-vertical" alignText={"right"}/>
-                </DataSourceSelect>
-                <Tooltip content={appStore.frameLockedToContour ? "Data source is locked to active image" : "Data source is independent of active image"}>
-                    <Button className="lock-button" icon={appStore.frameLockedToContour ? "lock" : "unlock"} minimal={true} onClick={appStore.toggleFrameContourLock}/>
-                </Tooltip>
+            <FormGroup inline={true} label="Data Source" disabled={true}>
+                <HTMLSelect
+                    options={appStore.frameNames}
+                    value={activeFrame ? activeFrame.frameInfo.fileId : ""}
+                    onChange={(event: React.FormEvent<HTMLSelectElement>) => { this.handleSelectedDataSource(parseInt(event.currentTarget.value)); }}
+                    disabled={true}
+                />
             </FormGroup>
         );
         const regionPanel = <RegionSelectorComponent widgetStore={this.props.widgetStore}/>;
