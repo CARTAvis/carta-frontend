@@ -1,8 +1,9 @@
 import * as React from "react";
-import {action, autorun, computed, observable} from "mobx";
+import {action, autorun, computed, observable, values} from "mobx";
 import {observer} from "mobx-react";
-import {AnchorButton, FormGroup, Intent, HTMLSelect, NonIdealState, Switch, Tooltip} from "@blueprintjs/core";
+import {AnchorButton, FormGroup, Intent, HTMLSelect, NonIdealState, Switch, Tooltip, MenuItem, PopoverPosition, Button} from "@blueprintjs/core";
 import {Cell, Column, Regions, RenderMode, SelectionModes, Table} from "@blueprintjs/table";
+import {Select, IItemRendererProps} from "@blueprintjs/select";
 import ReactResizeDetector from "react-resize-detector";
 import {CARTA} from "carta-protobuf";
 import {TableComponent, TableComponentProps, TableType} from "components/Shared";
@@ -99,8 +100,8 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         return widgetId;
     }
 
-    @action handleCatalogFileChange(changeEvent: React.ChangeEvent<HTMLSelectElement>) {
-        this.catalogFileId = Number(changeEvent.currentTarget.value);
+    @action handleCatalogFileChange = (fileId: number) => {
+        this.catalogFileId = fileId;
         this.widgetId = this.matchesSelectedCatalogFile;
     }
 
@@ -535,6 +536,17 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         CatalogStore.Instance.updateSelectedPoints(this.widgetId, selectedData);
     }
 
+    private renderFileIdPopOver = (fileId: number, itemProps: IItemRendererProps) => {
+        return (
+            <MenuItem
+                key={fileId}
+                text={fileId}
+                onClick={itemProps.handleClick}
+                active={itemProps.modifiers.active}
+            />
+        );
+    }
+
     public render() {
         const appStore = AppStore.Instance;
         const widgetStore = this.widgetStore;
@@ -582,18 +594,26 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
             </tr>
         ) : null;
 
-        let catalogFile = [];
+        let catalogFiles = [];
         appStore.catalogs.forEach((value, key) => {
-            catalogFile.push(<option key={key} value={value}>{value}</option>);
+            catalogFiles.push(value);
         }); 
 
         return (
             <div className={"catalog-overlay"}>
                 <div className={"catalog-overlay-filter-settings"}>
                     <FormGroup  inline={true} label="File">
-                        <HTMLSelect className="bp3-fill" value={this.catalogFileId} onChange={changeEvent => this.handleCatalogFileChange(changeEvent)}>
-                            {catalogFile}
-                        </HTMLSelect>
+                        <Select 
+                            className="bp3-fill"
+                            filterable={false}
+                            items={catalogFiles} 
+                            activeItem={this.catalogFileId}
+                            onItemSelect={this.handleCatalogFileChange}
+                            itemRenderer={this.renderFileIdPopOver}
+                            popoverProps={{popoverClassName: "catalog-select", position: PopoverPosition.RIGHT}}
+                        >
+                            <Button text={this.catalogFileId}/>
+                        </Select>
                     </FormGroup>
                     <CatalogOverlayPlotSettingsComponent widgetStore={this.widgetStore} id={this.widgetId}/>
                 </div>

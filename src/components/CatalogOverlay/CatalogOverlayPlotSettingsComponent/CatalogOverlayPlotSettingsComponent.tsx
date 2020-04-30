@@ -1,6 +1,6 @@
 import {observer} from "mobx-react";
 import * as React from "react";
-import {FormGroup, HTMLSelect, NumericInput, Button, MenuItem, PopoverPosition, Icon} from "@blueprintjs/core";
+import {FormGroup, NumericInput, Button, MenuItem, PopoverPosition, Icon} from "@blueprintjs/core";
 import {Select, IItemRendererProps} from "@blueprintjs/select";
 import {AppStore, CatalogStore, SystemType} from "stores";
 import {CatalogOverlayWidgetStore, CatalogOverlayShape} from "stores/widgets";
@@ -39,7 +39,7 @@ export class CatalogOverlayPlotSettingsComponent extends React.Component<{widget
     private readonly MinOverlaySize = 1;
     private readonly MaxOverlaySize = 100;
 
-    private static readonly CoordinateSystemName = new Map<SystemType, string>([
+    private readonly CoordinateSystem = new Map<SystemType, string>([
         [SystemType.FK5, "FK5"],
         [SystemType.FK4, "FK4"],
         [SystemType.Galactic, "GAL"],
@@ -64,17 +64,27 @@ export class CatalogOverlayPlotSettingsComponent extends React.Component<{widget
         CatalogStore.Instance.updateCatalogColor(this.props.id, color);
     }
 
-    private handleHeaderCatalogSystemChange(changeEvent: React.ChangeEvent<HTMLSelectElement>) {
-        const val = changeEvent.currentTarget.value as SystemType;
-        this.props.widgetStore.setCatalogCoordinateSystem(val);
+    private handleHeaderCatalogSystemChange = (system: SystemType) => {
+        this.props.widgetStore.setCatalogCoordinateSystem(system);
     }
 
-    private renderSelect = (shape: CatalogOverlayShape, itemProps: IItemRendererProps) => {
+    private renderShapePopOver = (shape: CatalogOverlayShape, itemProps: IItemRendererProps) => {
         const shapeItem = this.getCatalogShape(shape);
         return (
             <MenuItem
                 icon={shapeItem}
                 key={shape}
+                onClick={itemProps.handleClick}
+                active={itemProps.modifiers.active}
+            />
+        );
+    }
+
+    private renderSystemPopOver = (system: SystemType, itemProps: IItemRendererProps) => {
+        return (
+            <MenuItem
+                key={system}
+                text={this.CoordinateSystem.get(system)}
                 onClick={itemProps.handleClick}
                 active={itemProps.modifiers.active}
             />
@@ -117,16 +127,25 @@ export class CatalogOverlayPlotSettingsComponent extends React.Component<{widget
         const widgetStore = this.props.widgetStore;
 
         let systemOptions = [];
-        CatalogOverlayPlotSettingsComponent.CoordinateSystemName.forEach((value, key) => {
-            systemOptions.push(<option key={key} value={key}>{value}</option>);
-        }); 
+        this.CoordinateSystem.forEach((value, key) => {
+            systemOptions.push(key);
+        });
+        const activeSystem = this.CoordinateSystem.get(widgetStore.catalogCoordinateSystem.system);
 
         return (
             <div className="catalog-overlay-plot-settings">
                 <FormGroup  inline={true} label="System">
-                    <HTMLSelect className="bp3-fill" value={widgetStore.catalogCoordinateSystem.system} onChange={changeEvent => this.handleHeaderCatalogSystemChange(changeEvent)}>
-                        {systemOptions}
-                    </HTMLSelect>
+                    <Select 
+                        className="bp3-fill"
+                        filterable={false}
+                        items={systemOptions} 
+                        activeItem={widgetStore.catalogCoordinateSystem.system}
+                        onItemSelect={this.handleHeaderCatalogSystemChange}
+                        itemRenderer={this.renderSystemPopOver}
+                        popoverProps={{popoverClassName: "catalog-select", position: PopoverPosition.RIGHT}}
+                    >
+                        <Button text={activeSystem}/>
+                    </Select>
                 </FormGroup>
                 <FormGroup label={"Color"} inline={true}>
                     <ColorPickerComponent
@@ -146,10 +165,10 @@ export class CatalogOverlayPlotSettingsComponent extends React.Component<{widget
                         items={Object.values(CatalogOverlayShape)} 
                         activeItem={widgetStore.catalogShape} 
                         onItemSelect={this.handleCatalogShapeChange}
-                        itemRenderer={this.renderSelect}
-                        popoverProps={{popoverClassName: "catalog-shape-select", position: PopoverPosition.RIGHT}}
+                        itemRenderer={this.renderShapePopOver}
+                        popoverProps={{popoverClassName: "catalog-select", position: PopoverPosition.RIGHT}}
                     >
-                        <Button icon={this.getCatalogShape(widgetStore.catalogShape)} />
+                        <Button icon={this.getCatalogShape(widgetStore.catalogShape)}/>
                     </Select>
                 </FormGroup>
                 <FormGroup  inline={true} label="Size" labelInfo="(px)">
