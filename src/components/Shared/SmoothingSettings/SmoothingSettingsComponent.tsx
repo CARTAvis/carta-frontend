@@ -28,7 +28,7 @@ export class SmoothingSettingsComponent extends React.Component<{widgetStore: Sp
             {value: 4, label: "4"},
             {value: 5, label: "5"},
             {value: 6, label: "6"},
-            {value: 7, label: "7"},
+            {value: 11, label: "11"},
             {value: 21, label: "21"},
         ];
 
