@@ -517,9 +517,8 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         }
     }
 
-    private handlePlotTypeChange(changeEvent: React.ChangeEvent<HTMLSelectElement>) {
-        const val = changeEvent.currentTarget.value as CatalogPlotType;
-        this.widgetStore.setCatalogPlotType(val);
+    private handlePlotTypeChange = (plotType: CatalogPlotType) => {
+        this.widgetStore.setCatalogPlotType(plotType);
     }
 
     // single source selected in table
@@ -541,6 +540,17 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
             <MenuItem
                 key={fileId}
                 text={fileId}
+                onClick={itemProps.handleClick}
+                active={itemProps.modifiers.active}
+            />
+        );
+    }
+
+    private renderPlotTypePopOver = (plotType: CatalogPlotType, itemProps: IItemRendererProps) => {
+        return (
+            <MenuItem
+                key={plotType}
+                text={plotType}
                 onClick={itemProps.handleClick}
                 active={itemProps.modifiers.active}
             />
@@ -664,11 +674,16 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
                             disabled={!widgetStore.enableLoadButton}
                         />
                         </Tooltip>
-                        <HTMLSelect className="bp3-minimal" value={widgetStore.catalogPlotType} onChange={changeEvent => this.handlePlotTypeChange(changeEvent)}>
-                            {Object.keys(CatalogPlotType).map(plotType => {                           
-                                return <option key={plotType} value={CatalogPlotType[plotType]}>{CatalogPlotType[plotType]}</option>;
-                            })}
-                        </HTMLSelect>
+                        <Select 
+                            filterable={false}
+                            items={Object.values(CatalogPlotType)} 
+                            activeItem={widgetStore.catalogPlotType}
+                            onItemSelect={this.handlePlotTypeChange}
+                            itemRenderer={this.renderPlotTypePopOver}
+                            popoverProps={{popoverClassName: "catalog-select", position: PopoverPosition.TOP}}
+                        >
+                            <Button className="bp3-minimal" text={widgetStore.catalogPlotType}/>
+                        </Select>
                     </div>
                 </div>
                 <ReactResizeDetector handleWidth handleHeight onResize={this.onResize} refreshMode={"throttle"} refreshRate={33}/>
