@@ -1,5 +1,5 @@
 import * as React from "react";
-import {action, autorun, computed, observable, values} from "mobx";
+import {action, autorun, computed, observable} from "mobx";
 import {observer} from "mobx-react";
 import {AnchorButton, FormGroup, Intent, HTMLSelect, NonIdealState, Switch, Tooltip, MenuItem, PopoverPosition, Button} from "@blueprintjs/core";
 import {Cell, Column, Regions, RenderMode, SelectionModes, Table} from "@blueprintjs/table";
@@ -622,7 +622,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
                             itemRenderer={this.renderFileIdPopOver}
                             popoverProps={{popoverClassName: "catalog-select", position: PopoverPosition.RIGHT}}
                         >
-                            <Button text={this.catalogFileId}/>
+                            <Button text={this.catalogFileId} rightIcon="double-caret-vertical"/>
                         </Select>
                     </FormGroup>
                     <CatalogOverlayPlotSettingsComponent widgetStore={this.widgetStore} id={this.widgetId}/>
@@ -682,7 +682,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
                             itemRenderer={this.renderPlotTypePopOver}
                             popoverProps={{popoverClassName: "catalog-select", position: PopoverPosition.TOP}}
                         >
-                            <Button className="bp3-minimal" text={widgetStore.catalogPlotType}/>
+                            <Button className="bp3-minimal" text={widgetStore.catalogPlotType} rightIcon="double-caret-vertical"/>
                         </Select>
                     </div>
                 </div>

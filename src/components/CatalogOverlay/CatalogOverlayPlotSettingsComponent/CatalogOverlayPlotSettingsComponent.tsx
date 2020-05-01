@@ -144,7 +144,7 @@ export class CatalogOverlayPlotSettingsComponent extends React.Component<{widget
                         itemRenderer={this.renderSystemPopOver}
                         popoverProps={{popoverClassName: "catalog-select", position: PopoverPosition.RIGHT}}
                     >
-                        <Button text={activeSystem}/>
+                        <Button text={activeSystem} rightIcon="double-caret-vertical"/>
                     </Select>
                 </FormGroup>
                 <FormGroup label={"Color"} inline={true}>
@@ -168,7 +168,7 @@ export class CatalogOverlayPlotSettingsComponent extends React.Component<{widget
                         itemRenderer={this.renderShapePopOver}
                         popoverProps={{popoverClassName: "catalog-select", position: PopoverPosition.RIGHT}}
                     >
-                        <Button icon={this.getCatalogShape(widgetStore.catalogShape)}/>
+                        <Button icon={this.getCatalogShape(widgetStore.catalogShape)} rightIcon="double-caret-vertical"/>
                     </Select>
                 </FormGroup>
                 <FormGroup  inline={true} label="Size" labelInfo="(px)">
