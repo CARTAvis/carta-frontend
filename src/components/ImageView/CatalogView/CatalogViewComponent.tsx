@@ -28,8 +28,6 @@ export class CatalogViewComponent extends React.Component<CatalogViewComponentPr
         catalogStore.catalogs.forEach((catalog, key) => {
             const selectedPointIndexs = catalog.selectedPointIndexs;
             let data: Plotly.Data = {};
-            let xArray = [];
-            let yArray = [];
 
             data.type = "scattergl";
             data.mode = "markers";
@@ -44,9 +42,19 @@ export class CatalogViewComponent extends React.Component<CatalogViewComponentPr
                 }
             };
 
+            let totalLength = 0;
             for (let i = 0; i < catalog.xImageCoords.length; i++) {
-                xArray.push(...catalog.xImageCoords[i]);
-                yArray.push(...catalog.yImageCoords[i]);
+                totalLength += catalog.xImageCoords[i].length;
+            }
+
+            const xArray = new Float64Array(totalLength);
+            const yArray = new Float64Array(totalLength);
+
+            let offset = 0;
+            for (let i = 0; i < catalog.xImageCoords.length; i++) {
+                xArray.set(catalog.xImageCoords[i], offset);
+                yArray.set(catalog.yImageCoords[i], offset);
+                offset += catalog.xImageCoords[i].length;
             }
 
             data.x = xArray;
