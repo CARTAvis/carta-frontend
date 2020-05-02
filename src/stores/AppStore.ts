@@ -1209,12 +1209,6 @@ export class AppStore {
         }
     };
 
-    @action deselectRegion = () => {
-        if (this.activeFrame && this.activeFrame.regionSet) {
-            this.activeFrame.regionSet.deselectRegion();
-        }
-    };
-
     private setCursor = (fileId: number, x: number, y: number) => {
         const frame = this.getFrame(fileId);
         if (frame && frame.regionSet.regions[0]) {
