@@ -93,6 +93,7 @@ Module.setCanvas = function (canvas) {
 
 Module.plot = Module.cwrap("plotGrid", "number", ["number", "number", "number", "number", "number", "number", "number", "number", "number", "number", "number", "string"]);
 Module.initFrame = Module.cwrap("initFrame", "number", ["string"]);
+Module.getSkyFrame = Module.cwrap("getSkyFrame", "number", ["number"]);
 Module.getSpectralFrame = Module.cwrap("getSpectralFrame", "number", ["number"]);
 Module.initDummyFrame = Module.cwrap("initDummyFrame", "number", []);
 Module.set = Module.cwrap("set", "number", ["number", "string"]);

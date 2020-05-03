@@ -58,6 +58,37 @@ EMSCRIPTEN_KEEPALIVE AstFrameSet* initFrame(const char* header)
     return frameSet;
 }
 
+EMSCRIPTEN_KEEPALIVE AstSkyFrame* getSkyFrame(AstFrameSet* frameSet)
+{
+   if (!frameSet || !astIsAFrameSet(frameSet))
+    {
+        cout << "Invalid frame set." << endl;
+        return nullptr;
+    }
+
+    // Find skyframe with sky template
+    AstFrame *skyTemplate = (AstFrame*) astSkyFrame("MaxAxes=100,MinAxes=0");
+    if (!skyTemplate)
+    {
+        cout << "Creating skyframe template failed." << endl;
+        return nullptr;
+    }
+    AstFrameSet* found = static_cast<AstFrameSet*>astFindFrame(frameSet, skyTemplate, " ");
+    if (!found)
+    {
+        cout << "Sky frame not found." << endl;
+        return nullptr;
+    }
+    AstSkyFrame *skyframe = static_cast<AstSkyFrame*>astGetFrame(found, AST__CURRENT);
+    if (!skyframe)
+    {
+        cout << "Getting sky frame failed." << endl;
+        return nullptr;
+    }
+
+    return skyframe;
+}
+
 EMSCRIPTEN_KEEPALIVE AstSpecFrame* getSpectralFrame(AstFrameSet* frameSet)
 {
    if (!frameSet || !astIsAFrameSet(frameSet))
@@ -73,7 +104,7 @@ EMSCRIPTEN_KEEPALIVE AstSpecFrame* getSpectralFrame(AstFrameSet* frameSet)
         cout << "Creating spectral template failed." << endl;
         return nullptr;
     }
-    AstFrameSet* found = static_cast<AstFrameSet*>astFindFrame(frameSet, spectralTemplate, " " );
+    AstFrameSet* found = static_cast<AstFrameSet*>astFindFrame(frameSet, spectralTemplate, " ");
     if (!found)
     {
         cout << "Spectral frame not found." << endl;
