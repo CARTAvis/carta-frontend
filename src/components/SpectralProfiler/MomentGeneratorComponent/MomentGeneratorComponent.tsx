@@ -3,7 +3,7 @@ import {observer} from "mobx-react";
 import {Button, Divider, FormGroup, HTMLSelect, MenuItem, Position, Tooltip} from "@blueprintjs/core";
 import {ItemRenderer, MultiSelect} from "@blueprintjs/select";
 import {RegionSelectorComponent} from "components";
-import {ClearableNumericInputComponent, SafeNumericInput, SpectralSettingsComponent} from "components/Shared";
+import {SafeNumericInput, SpectralSettingsComponent} from "components/Shared";
 import {MomentSelectingMode, SpectralProfileWidgetStore} from "stores/widgets";
 import {AppStore} from "stores";
 import {MomentMask, Moments} from "models";
@@ -102,20 +102,20 @@ export class MomentGeneratorComponent extends React.Component<{widgetStore: Spec
                 {activeFrame && activeFrame.numChannels > 1 &&
                     <FormGroup label="Range"  inline={true} labelInfo={`(${activeFrame.spectralUnit})`}>
                         <div className="range-select">
-                            <ClearableNumericInputComponent
-                                label="From"
-                                value={widgetStore.channelRange[0]}
-                                onValueChanged={val => this.onChannelFromChanged(val)}
-                                onValueCleared={() => widgetStore.channelRange[0] = 0}
-                                displayExponential={true}
-                            />
-                            <ClearableNumericInputComponent
-                                label="To"
-                                value={widgetStore.channelRange[1]}
-                                onValueChanged={val => this.onChannelToChanged(val)}
-                                onValueCleared={() => widgetStore.channelRange[1] = 0}
-                                displayExponential={true}
-                            />
+                            <FormGroup label="From" inline={true}>
+                                <SafeNumericInput
+                                    value={widgetStore.channelRange[0]}
+                                    buttonPosition="none"
+                                    onValueChange={val => this.onChannelFromChanged(val)}
+                                />
+                            </FormGroup>
+                            <FormGroup label="To" inline={true}>
+                                <SafeNumericInput
+                                    value={widgetStore.channelRange[1]}
+                                    buttonPosition="none"
+                                    onValueChange={val => this.onChannelToChanged(val)}
+                                />
+                            </FormGroup>
                             <div className="cursor-select">
                                 <Tooltip content="Use cursor to select channel range in profiler" position={Position.BOTTOM}>
                                     <Button
