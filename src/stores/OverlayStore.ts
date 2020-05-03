@@ -468,8 +468,7 @@ export class OverlayNumberSettings {
         }
 
         let format = (this.customFormat ? this.formatX : this.defaultFormatX);
-        let precision = (this.customPrecision ? this.precision : "*");
-        return `${format}.${precision}`;
+        return `${format}${this.customPrecision ? "." + this.precision : ""}`;
     }
 
     @computed get formatStringY() {
@@ -478,8 +477,7 @@ export class OverlayNumberSettings {
         }
 
         let format = (this.customFormat ? this.formatY : this.defaultFormatY);
-        let precision = (this.customPrecision ? this.precision : "*");
-        return `${format}.${precision}`;
+        return `${format}${this.customPrecision ? "." + this.precision : ""}`;
     }
 
     cursorFormatStringX(precision: number) {

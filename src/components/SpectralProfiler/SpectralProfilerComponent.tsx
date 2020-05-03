@@ -220,7 +220,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
 
         if (frame && frame.channelInfo) {
             let channelInfo = frame.channelInfo;
-            let nearestIndex = undefined;
+            let nearestIndex;
             if (frame.isCoordChannel) {
                 nearestIndex = channelInfo.getChannelIndexSimple(x);
             } else {

@@ -163,7 +163,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
 
         if (frame && frame.channelInfo) {
             let channelInfo = frame.channelInfo;
-            let nearestIndex = undefined;
+            let nearestIndex;
             if (frame.isCoordChannel) {
                 nearestIndex = channelInfo.getChannelIndexSimple(x);
             } else {
@@ -191,7 +191,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
         if (data.length > 0 && frame && frame.channelInfo) {
             let channelInfo = frame.channelInfo;
             const zIndex = this.matchZindex(x, y, data);
-            let nearestIndex = undefined;
+            let nearestIndex;
             if (frame.isCoordChannel) {
                 nearestIndex = channelInfo.getChannelIndexSimple(zIndex);
             } else {
