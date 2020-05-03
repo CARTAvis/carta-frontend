@@ -474,7 +474,7 @@ export class BackendService {
             }
         }
         return false;
-    } 
+    }
 
     @action("set spatial requirements")
     setSpatialRequirements(requirementsMessage: CARTA.ISetSpectralRequirements) {
