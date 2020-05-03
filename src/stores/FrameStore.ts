@@ -579,6 +579,7 @@ export class FrameStore {
         };
         this.animationChannelRange = [0, frameInfo.fileInfoExtended.depth - 1];
 
+        this.initWCS();
         if (frameInfo.fileInfoExtended.depth > 1) {
             this.initFullWCS();
         }
@@ -586,13 +587,7 @@ export class FrameStore {
         this.astFrameSet = this.initFrame();
         if (this.astFrameSet) {
             this.spectralFrame = AST.getSpectralFrame(this.astFrameSet);
-            this.wcsInfo = AST.getSkyFrame(this.astFrameSet);
-            if (this.wcsInfo) {
-                this.validWcs = true;
-                this.overlayStore.setDefaultsFromAST(this);
-            }
         }
-
         this.initSupportedSpectralConversion();
         this.initCenter();
         this.zoomLevel = preferenceStore.isZoomRAWMode ? 1.0 : this.zoomLevelForFit;
@@ -644,6 +639,56 @@ export class FrameStore {
             return undefined;
         }
         return AST.transformSpectralPoint(this.spectralFrame, type, unit, system, value);
+    };
+
+    @action private initWCS = () => {
+        let headerString = "";
+
+        for (let entry of this.frameInfo.fileInfoExtended.headerEntries) {
+            // Skip empty header entries
+            if (!entry.value.length) {
+                continue;
+            }
+
+            // Skip higher dimensions
+            if (entry.name.match(/(CTYPE|CDELT|CRPIX|CRVAL|CUNIT|NAXIS|CROTA)[3-9]/)) {
+                continue;
+            }
+
+            let value = entry.value;
+            if (entry.name.toUpperCase() === "NAXIS") {
+                value = "2";
+            }
+
+            if (entry.name.toUpperCase() === "WCSAXES") {
+                value = "2";
+            }
+
+            if (entry.entryType === CARTA.EntryType.STRING) {
+                value = `'${value}'`;
+            }
+
+            let name = entry.name;
+            while (name.length < 8) {
+                name += " ";
+            }
+
+            let entryString = `${name}=  ${value}`;
+            while (entryString.length < 80) {
+                entryString += " ";
+            }
+            headerString += entryString;
+        }
+        const initResult = AST.initFrame(headerString);
+        if (!initResult) {
+            this.logStore.addWarning(`Problem processing WCS info in file ${this.frameInfo.fileInfo.name}`, ["ast"]);
+            this.wcsInfo = AST.initDummyFrame();
+        } else {
+            this.wcsInfo = initResult;
+            this.validWcs = true;
+            this.overlayStore.setDefaultsFromAST(this);
+            console.log("Initialised WCS info from frame");
+        }
     };
 
     @action private initFullWCS = () => {
