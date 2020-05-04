@@ -144,35 +144,36 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
         }
     };
 
-    private filterLogTicks = (axis) => {
-        if (axis.ticks) {
+    private filterLogTicks = (_axis, ticks: number[]) => {
+        if (ticks && ticks.length) {
             // Limit log axis ticks to integer multiples of power of 10 (i.e 1, 2, 3, 0.8, 0.5)
-            let filteredTicks = axis.ticks.filter(v => {
+            let filteredTicks = ticks.filter(v => {
                 const power = Math.floor(Math.log10(v));
                 const mantissa = v * Math.pow(10, power);
                 return (Math.abs(mantissa % 1.0) < 1e-6);
             });
             if (filteredTicks.length > 8) {
                 // Limit log axis ticks to power of 10 values or multiples of 2 of powers of 10 (i.e. 1, 2, 10, 0.1, 0.2)
-                filteredTicks = axis.ticks.filter(v => Math.abs(Math.log10(v) % 1.0) < 0.001 || Math.abs(Math.log10(v / 2.0) % 1.0) < 0.001);
+                filteredTicks = ticks.filter(v => Math.abs(Math.log10(v) % 1.0) < 0.001 || Math.abs(Math.log10(v / 2.0) % 1.0) < 0.001);
                 if (filteredTicks.length > 8) {
                     // Limit log axis ticks to power of 10 values
-                    filteredTicks = axis.ticks.filter(v => Math.abs(Math.log10(v) % 1.0) < 0.001);
+                    filteredTicks = ticks.filter(v => Math.abs(Math.log10(v) % 1.0) < 0.001);
                 }
 
             }
-            axis.ticks = filteredTicks;
+            return filteredTicks;
         }
+        return null;
     };
 
-    private filterLinearTicks = (axis) => {
+    private filterLinearTicks = (_axis, ticks: number[]) => {
         let removeFirstTick = false;
         let removeLastTick = false;
         // Get inter-tick distance
-        if (axis.ticks && axis.ticks.length >= 4) {
-            const interTickDist = Math.abs(axis.ticks[2] - axis.ticks[1]);
-            const initialDist = Math.abs(axis.ticks[1] - axis.ticks[0]);
-            const finalDist = Math.abs(axis.ticks[axis.ticks.length - 1] - axis.ticks[axis.ticks.length - 2]);
+        if (ticks && ticks.length >= 4) {
+            const interTickDist = Math.abs(ticks[2] - ticks[1]);
+            const initialDist = Math.abs(ticks[1] - ticks[0]);
+            const finalDist = Math.abs(ticks[ticks.length - 1] - ticks[ticks.length - 2]);
 
             // Flag initial tick removal if tick is too close to the subsequent tick
             if (initialDist < interTickDist * 0.999) {
@@ -184,20 +185,20 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
             }
             // Ensure that very small ticks display as zero
             // This is necessary due to a bug in Chart.js 2.8.0 that should be fixed in the next release
-            const delta = axis.ticks.length > 3 ? axis.ticks[2] - axis.ticks[1] : axis.ticks[1] - axis.ticks[0];
-            for (let i = 1; i < axis.ticks.length - 1; i++) {
-                const tickVal = axis.ticks[i];
-                const prevVal = axis.ticks[i - 1];
-                const nextVal = axis.ticks[i + 1];
+            const delta = ticks.length > 3 ? ticks[2] - ticks[1] : ticks[1] - ticks[0];
+            for (let i = 1; i < ticks.length - 1; i++) {
+                const tickVal = ticks[i];
+                const prevVal = ticks[i - 1];
+                const nextVal = ticks[i + 1];
                 // check if this tick might be the zero tick. If so, set it to exactly zero
                 if (prevVal * nextVal < 0 && Math.abs(tickVal) < Math.abs(delta * 1e-3)) {
-                    axis.ticks[i] = 0.0;
+                    ticks[i] = 0.0;
                     break;
                 }
             }
         }
         // Remove first and last ticks if they've been flagged
-        axis.ticks = axis.ticks.slice(removeFirstTick ? 1 : 0, removeLastTick ? -1 : undefined);
+        return ticks.slice(removeFirstTick ? 1 : 0, removeLastTick ? -1 : undefined);
     };
 
     private static FormatTicksScientific = (value: number, index: number, values: number[]) => {
