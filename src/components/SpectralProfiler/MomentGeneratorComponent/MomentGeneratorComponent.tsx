@@ -18,12 +18,7 @@ export class MomentGeneratorComponent extends React.Component<{widgetStore: Spec
     @observable showMomentAlert: boolean;
 
     @action handleMomentAlertConfirm = () => {
-        const appStore = AppStore.Instance;
-        if (appStore.activeFrame) {
-            const widgetStore = this.props.widgetStore;
-            appStore.activeFrame.setIsRequestingMoments(true);
-            appStore.generateMoment(appStore.activeFrame.frameInfo.fileId);
-        }
+        this.props.widgetStore.requestMoment();
         this.showMomentAlert = false;
     };
 

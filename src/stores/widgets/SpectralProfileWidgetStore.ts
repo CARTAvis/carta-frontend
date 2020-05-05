@@ -162,6 +162,26 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         return this.selectedMoments.includes(momentType);
     };
 
+    @action requestMoment = () => {
+        const appStore = AppStore.Instance;
+        const frame = appStore.activeFrame;
+        if (frame) {
+            const requestMessage: CARTA.IMomentRequest = {
+                fileId: frame.frameInfo.fileId,
+                moments: undefined,
+                axis: undefined,
+                regionId: undefined,
+                spectralRange: undefined,
+                stokes: undefined,
+                mask: undefined,
+                pixelRange: undefined
+            };
+            appStore.requestMoment(requestMessage);
+            frame.resetMomentRequestState();
+            frame.setIsRequestingMoments(true);
+        }
+    };
+
     @action setXBounds = (minVal: number, maxVal: number) => {
         this.minX = minVal;
         this.maxX = maxVal;

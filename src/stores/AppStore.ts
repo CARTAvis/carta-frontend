@@ -624,12 +624,9 @@ export class AppStore {
         }
     };
 
-    @action generateMoment = (fileId: number = -1) => {
-        const frame = this.getFrame(fileId);
-        if (frame) {
-            this.backendService.generateMoment(frame.frameInfo.fileId, -2);
-            this.restartTaskProgress();
-        }
+    @action requestMoment = (message: CARTA.IMomentRequest) => {
+        this.backendService.requestMoment(message);
+        this.restartTaskProgress();
     };
 
     @action cancelMomentRequest = (fileId: number = -1) => {

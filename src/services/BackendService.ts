@@ -129,7 +129,8 @@ export class BackendService {
             [CARTA.EventType.CATALOG_FILTER_RESPONSE, CARTA.CatalogFilterResponse],
             [CARTA.EventType.SET_USER_LAYOUT_ACK, CARTA.SetUserLayoutAck],
             [CARTA.EventType.SET_USER_PREFERENCES_ACK, CARTA.SetUserPreferencesAck],
-            [CARTA.EventType.RASTER_TILE_SYNC, CARTA.RasterTileSync]
+            [CARTA.EventType.RASTER_TILE_SYNC, CARTA.RasterTileSync],
+            [CARTA.EventType.MOMENT_RESPONSE, CARTA.MomentResponse]
         ]);
 
         // check ping every 5 seconds
@@ -676,25 +677,21 @@ export class BackendService {
         document.cookie = `CARTA-Authorization=${token}; path=/`;
     };
 
-    @action("generate moment")
-    generateMoment(fileId: number, regionId: number) {
+    @action("request moment")
+    requestMoment(message: CARTA.IMomentRequest): Observable<CARTA.MomentResponse> {
         if (this.connectionStatus !== ConnectionStatus.ACTIVE) {
             return throwError(new Error("Not connected"));
         } else {
-            /*
-            const message = CARTA.MomentRequest.create({file, type, fileId, regionId});
             const requestId = this.eventCounter;
             this.logEvent(CARTA.EventType.MOMENT_REQUEST, requestId, message, false);
+            console.log(message);
             if (this.sendEvent(CARTA.EventType.MOMENT_REQUEST, CARTA.MomentRequest.encode(message).finish())) {
-                return new Observable<CARTA.GenerateMomentAck>(observer => {
+                return new Observable<CARTA.MomentResponse>(observer => {
                     this.observerRequestMap.set(requestId, observer);
                 });
             } else {
                 return throwError(new Error("Could not send event"));
             }
-            */
-            console.log("Under construction!");
-            return throwError(new Error("Under construction!"));
         }
     }
 
