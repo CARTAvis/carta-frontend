@@ -7,14 +7,9 @@ export class ExecutionEntry {
     parameters: any[];
     valid: boolean;
     async: boolean;
-    private readonly appStore: AppStore;
 
-    private constructor(appStore: AppStore) {
-        this.appStore = appStore;
-    }
-
-    static FromString(entryString: string, appStore: AppStore): ExecutionEntry {
-        const executionEntry = new ExecutionEntry(appStore);
+    static FromString(entryString: string): ExecutionEntry {
+        const executionEntry = new ExecutionEntry();
         entryString = entryString.trim();
 
         const entryRegex = /^(\+?)((?:[\w\[\]]+\.)*)(\w+)\(([^)]*)\);?$/gm;
@@ -33,8 +28,8 @@ export class ExecutionEntry {
         return executionEntry;
     }
 
-    static FromScriptingRequest(requestMessage: CARTA.IScriptingRequest, appStore: AppStore): ExecutionEntry {
-        const executionEntry = new ExecutionEntry(appStore);
+    static FromScriptingRequest(requestMessage: CARTA.IScriptingRequest): ExecutionEntry {
+        const executionEntry = new ExecutionEntry();
         executionEntry.async = requestMessage.async;
         executionEntry.target = requestMessage.target;
         executionEntry.action = requestMessage.action;
@@ -69,7 +64,7 @@ export class ExecutionEntry {
     }
 
     async execute() {
-        const targetObject = ExecutionEntry.GetTargetObject(this.appStore, this.target);
+        const targetObject = ExecutionEntry.GetTargetObject(AppStore.Instance, this.target);
         if (targetObject == null) {
             throw(`Missing target object: ${this.target}`);
         }
@@ -130,7 +125,7 @@ export class ExecutionEntry {
     private mapMacro = (parameter: any) => {
         if (typeof parameter === "object" && parameter.macroVariable) {
             const targetString = parameter.macroTarget ? `${parameter.macroTarget}.${parameter.macroVariable}` : parameter.macroVariable;
-            return ExecutionEntry.GetTargetObject(this.appStore, targetString);
+            return ExecutionEntry.GetTargetObject(AppStore.Instance, targetString);
         }
         return parameter;
     };
@@ -152,8 +147,8 @@ export class ScriptingService {
         });
     }
 
-    handleScriptingRequest = async (requestMessage: CARTA.IScriptingRequest, appStore: AppStore): Promise<CARTA.IScriptingResponse> => {
-        const entry = ExecutionEntry.FromScriptingRequest(requestMessage, appStore);
+    handleScriptingRequest = async (requestMessage: CARTA.IScriptingRequest): Promise<CARTA.IScriptingResponse> => {
+        const entry = ExecutionEntry.FromScriptingRequest(requestMessage);
         if (!entry.valid) {
             return {
                 scriptingRequestId: requestMessage.scriptingRequestId,

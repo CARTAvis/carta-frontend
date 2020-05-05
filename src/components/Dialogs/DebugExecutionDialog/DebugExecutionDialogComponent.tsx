@@ -22,7 +22,7 @@ export class DebugExecutionDialogComponent extends React.Component {
             if (!entry || !entry.length || entry.startsWith("//")) {
                 continue;
             }
-            const executionEntry = ExecutionEntry.FromString(entry, appStore);
+            const executionEntry = ExecutionEntry.FromString(entry);
             if (!executionEntry.valid) {
                 return [];
             } else {

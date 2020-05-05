@@ -54,6 +54,7 @@ export class AppStore {
     // Backend services
     readonly backendService: BackendService;
     readonly tileService: TileService;
+    readonly scriptingService: ScriptingService;
 
     // Other stores
     readonly alertStore: AlertStore;
@@ -726,6 +727,7 @@ export class AppStore {
         // Assign service instances
         this.backendService = BackendService.Instance;
         this.tileService = TileService.Instance;
+        this.scriptingService = ScriptingService.Instance;
 
         // Assign lower level store instances
         this.alertStore = AlertStore.Instance;
@@ -1065,7 +1067,7 @@ export class AppStore {
     };
 
     handleScriptingRequest = (request: CARTA.IScriptingRequest) => {
-        ScriptingService.Instance.handleScriptingRequest(request, this).then(this.backendService.sendScriptingResponse);
+        this.scriptingService.handleScriptingRequest(request).then(this.backendService.sendScriptingResponse);
     };
 
     // endregion
