@@ -679,15 +679,32 @@ export class BackendService {
             return throwError(new Error("Not connected"));
         } else {
             /*
-            const message = CARTA.GenerateMoment.create({file, type, fileId, regionId});
+            const message = CARTA.MomentRequest.create({file, type, fileId, regionId});
             const requestId = this.eventCounter;
-            this.logEvent(CARTA.EventType.GENERATE_MOMENT, requestId, message, false);
-            if (this.sendEvent(CARTA.EventType.GENERATE_MOMENT, CARTA.GenerateMoment.encode(message).finish())) {
+            this.logEvent(CARTA.EventType.MOMENT_REQUEST, requestId, message, false);
+            if (this.sendEvent(CARTA.EventType.MOMENT_REQUEST, CARTA.MomentRequest.encode(message).finish())) {
                 return new Observable<CARTA.GenerateMomentAck>(observer => {
                     this.observerRequestMap.set(requestId, observer);
                 });
             } else {
                 return throwError(new Error("Could not send event"));
+            }
+            */
+            console.log("Under construction!");
+            return throwError(new Error("Under construction!"));
+        }
+    }
+
+    @action("cancel generating moment")
+    cancelGeneratingMoment(fileId: number) {
+        if (this.connectionStatus !== ConnectionStatus.ACTIVE) {
+            return throwError(new Error("Not connected"));
+        } else {
+            /*
+            const message = CARTA.StopMomentCalc.create({fileId});
+            this.logEvent(CARTA.EventType.STOP_MOMENT_CALC, this.eventCounter, message, false);
+            if (this.sendEvent(CARTA.EventType.STOP_MOMENT_CALC, CARTA.StopMomentCalc.encode(message).finish())) {
+                return true;
             }
             */
             console.log("Under construction!");

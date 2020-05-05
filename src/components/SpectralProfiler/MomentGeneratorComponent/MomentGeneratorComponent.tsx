@@ -1,8 +1,10 @@
 import * as React from "react";
+import {action, observable} from "mobx";
 import {observer} from "mobx-react";
-import {Button, Divider, FormGroup, HTMLSelect, MenuItem, Position, Tooltip} from "@blueprintjs/core";
+import {Alert, Button, Divider, FormGroup, HTMLSelect, MenuItem, Position, Tooltip} from "@blueprintjs/core";
 import {ItemRenderer, MultiSelect} from "@blueprintjs/select";
 import {RegionSelectorComponent} from "components";
+import {TaskProgressDialogComponent} from "components/Dialogs";
 import {SafeNumericInput, SpectralSettingsComponent} from "components/Shared";
 import {MomentSelectingMode, SpectralProfileWidgetStore} from "stores/widgets";
 import {AppStore} from "stores";
@@ -13,6 +15,22 @@ const MomentMultiSelect = MultiSelect.ofType<Moments>();
 
 @observer
 export class MomentGeneratorComponent extends React.Component<{widgetStore: SpectralProfileWidgetStore}> {
+    @observable showMomentAlert: boolean;
+
+    @action handleMomentAlertConfirm = () => {
+        const appStore = AppStore.Instance;
+        if (appStore.activeFrame) {
+            const widgetStore = this.props.widgetStore;
+            widgetStore.setIsGeneratingMoments(true);
+            appStore.generateMoment(appStore.activeFrame.frameInfo.fileId);
+        }
+        this.showMomentAlert = false;
+    };
+
+    @action handleMomentAlertCancel = () => {
+        this.showMomentAlert = false;
+    };
+
     private handleSelectedDataSource = (selectedFileId: number) => {
         return;
     };
@@ -73,10 +91,15 @@ export class MomentGeneratorComponent extends React.Component<{widgetStore: Spec
     };
 
     private handleMomentGenerate = () => {
+        this.showMomentAlert = true;
+    };
+
+    private handleMomentGenerateCancelled = () => {
         const appStore = AppStore.Instance;
         if (appStore.activeFrame) {
-            appStore.generateMoment(appStore.activeFrame.frameInfo.fileId);
+            appStore.cancelMomentRequest(appStore.activeFrame.frameInfo.fileId);
         }
+        this.props.widgetStore.setIsGeneratingMoments(false);
     };
 
     render() {
@@ -210,6 +233,19 @@ export class MomentGeneratorComponent extends React.Component<{widgetStore: Spec
                     <Divider/>
                     {momentsPanel}
                 </div>
+                <Alert icon={"time"} isOpen={this.showMomentAlert} onCancel={this.handleMomentAlertCancel} onConfirm={this.handleMomentAlertConfirm} cancelButtonText={"Cancel"}>
+                    <p>
+                        Generating moments may take a long time, are you sure you want to continue?
+                    </p>
+                </Alert>
+                <TaskProgressDialogComponent
+                    isOpen={widgetStore.isGeneratingMoments}
+                    progress={widgetStore.generatingMomentsProgress}
+                    timeRemaining={appStore.estimatedTaskRemainingTime}
+                    cancellable={true}
+                    onCancel={this.handleMomentGenerateCancelled}
+                    text={"Generating moments"}
+                />
             </div>
         );
     }

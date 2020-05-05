@@ -247,7 +247,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
         return frame.isCoordChannel ? channel : frame.channelValues[channel];
     }
 
-    @computed get linePlotSeletingMode(): LinePlotSelectingMode {
+    @computed get linePlotSelectingMode(): LinePlotSelectingMode {
         if (this.widgetStore.isSelectingMomentChannelRange) {
             return LinePlotSelectingMode.HORIZONTAL;
         } else if (this.widgetStore.isSelectingMomentMaskRange) {
@@ -357,7 +357,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
             mouseEntered: this.widgetStore.setMouseMoveIntoLinePlots,
             borderWidth: this.widgetStore.lineWidth,
             pointRadius: this.widgetStore.linePlotPointSize,
-            selectingMode: this.linePlotSeletingMode,
+            selectingMode: this.linePlotSelectingMode,
             setSelectedRange: this.setSelectedRange,
             zeroLineWidth: 2
         };

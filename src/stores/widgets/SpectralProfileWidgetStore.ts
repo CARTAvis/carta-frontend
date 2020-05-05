@@ -40,6 +40,9 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
     @observable maskRange: NumberRange;
     @observable selectedMoments: Moments[];
 
+    @observable isGeneratingMoments: boolean;
+    @observable generatingMomentsProgress: number;
+
     public static StatsTypeString(statsType: CARTA.StatsType) {
         switch (statsType) {
             case CARTA.StatsType.Sum:
@@ -162,6 +165,14 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         return this.selectedMoments.includes(momentType);
     };
 
+    @action setIsGeneratingMoments = (val: boolean) => {
+        this.isGeneratingMoments = val;
+    };
+
+    @action updateGeneratingMomentsProgress = (progress: number) => {
+        this.generatingMomentsProgress = progress;
+    };
+
     @action setXBounds = (minVal: number, maxVal: number) => {
         this.minX = minVal;
         this.maxX = maxVal;
@@ -239,6 +250,8 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         this.momentMask = MomentMask.NONE;
         this.maskRange = [0, 0];
         this.selectedMoments = ["TYPE_0" as Moments];
+        this.isGeneratingMoments = false;
+        this.generatingMomentsProgress = 0;
 
         autorun(() => {
             if (AppStore.Instance.activeFrame) {
