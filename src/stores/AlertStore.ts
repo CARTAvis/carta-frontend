@@ -1,10 +1,19 @@
 import {action, observable} from "mobx";
 
 export class AlertStore {
-    @observable alertVisible;
-    @observable alertText;
-    @observable interactiveAlertVisible;
-    @observable interactiveAlertText;
+    private static staticInstance: AlertStore;
+
+    static get Instance() {
+        if (!AlertStore.staticInstance) {
+            AlertStore.staticInstance = new AlertStore();
+        }
+        return AlertStore.staticInstance;
+    }
+
+    @observable alertVisible: boolean;
+    @observable alertText: string;
+    @observable interactiveAlertVisible: boolean;
+    @observable interactiveAlertText: string;
     interactiveAlertCallback: (confirmed: boolean) => void;
 
     @action("show_alert") showAlert = (text: string) => {
@@ -31,5 +40,10 @@ export class AlertStore {
         if (this.interactiveAlertCallback) {
             this.interactiveAlertCallback(confirmed);
         }
+    }
+
+    private constructor() {
+        this.alertVisible = false;
+        this.interactiveAlertVisible = false;
     }
 }

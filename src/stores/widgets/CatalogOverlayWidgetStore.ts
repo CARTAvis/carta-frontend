@@ -39,8 +39,9 @@ export enum CatalogUpdateMode {
 
 export enum CatalogPlotType {
     ImageOverlay = "as image overlay",
+    // 1DHistogram = "as 1D histogram",
     D2Scatter = "as 2D scatter",
-    // D3Scatter = "as 3D scatter"
+    // D3Scatter = "as 3D scatter",
 }
 
 export type ControlHeader = { columnIndex: number, dataIndex: number, display: boolean, representAs: CatalogOverlay, filter: string, columnWidth: number };
@@ -106,15 +107,15 @@ export class CatalogOverlayWidgetStore extends RegionWidgetStore {
     @observable showSelectedData: boolean;
     @observable catalogTableRef: Table;
 
-    constructor(appStore: AppStore, catalogInfo: CatalogInfo, catalogHeader: Array<CARTA.ICatalogHeader>, catalogData: CARTA.ICatalogColumnsData, id: string) {
-        super(appStore, RegionsType.CLOSED_AND_POINT);
+    constructor(catalogInfo: CatalogInfo, catalogHeader: Array<CARTA.ICatalogHeader>, catalogData: CARTA.ICatalogColumnsData, id: string) {
+        super(RegionsType.CLOSED_AND_POINT);
         this.storeId = id;
         this.catalogInfo = catalogInfo;
         this.catalogHeader = catalogHeader.sort((a, b) => { return (a.columnIndex - b.columnIndex); });
         this.catalogData = catalogData;
         this.catalogControlHeader = this.initCatalogControlHeader;
         this.loadingData = false;
-        this.catalogColor = Colors.RED2;
+        this.catalogColor = Colors.TURQUOISE3;
         this.catalogSize = 5;
         this.catalogShape = CatalogOverlayShape.Circle;
         this.userFilters = this.initUserFilters;

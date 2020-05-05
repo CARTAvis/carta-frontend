@@ -1,6 +1,6 @@
 import {action, computed, observable} from "mobx";
 import {CARTA} from "carta-protobuf";
-import {AppStore, FrameStore} from "stores";
+import {AppStore, FrameStore, PreferenceStore} from "stores";
 import {clamp, GetRequiredTiles} from "utilities";
 import {FrameView, Point2D} from "models";
 
@@ -23,6 +23,15 @@ export enum PlayMode {
 }
 
 export class AnimatorStore {
+    private static staticInstance: AnimatorStore;
+
+    static get Instance() {
+        if (!AnimatorStore.staticInstance) {
+            AnimatorStore.staticInstance = new AnimatorStore();
+        }
+        return AnimatorStore.staticInstance;
+    }
+
     @observable frameRate: number;
     @observable maxFrameRate: number;
     @observable minFrameRate: number;
@@ -43,7 +52,9 @@ export class AnimatorStore {
     };
 
     @action startAnimation = () => {
-        const frame = this.appStore.activeFrame;
+        const appStore = AppStore.Instance;
+        const preferenceStore = PreferenceStore.Instance;
+        const frame = appStore.activeFrame;
         if (!frame) {
             return;
         }
@@ -76,7 +87,7 @@ export class AnimatorStore {
             fileId: frame.frameInfo.fileId,
             tiles: tiles,
             compressionType: CARTA.CompressionType.ZFP,
-            compressionQuality: this.appStore.preferenceStore.animationCompressionQuality,
+            compressionQuality: preferenceStore.animationCompressionQuality,
         };
 
         const animationMessage: CARTA.IStartAnimation = {
@@ -91,27 +102,28 @@ export class AnimatorStore {
             frameRate: this.frameRate
         };
 
-        this.appStore.backendService.startAnimation(animationMessage).subscribe(() => {
+        appStore.backendService.startAnimation(animationMessage).subscribe(() => {
             console.log("Animation started successfully");
         }, err => {
             console.log(err);
-            this.appStore.tileService.setAnimationEnabled(false);
+            appStore.tileService.setAnimationEnabled(false);
         });
-        this.appStore.tileService.setAnimationEnabled(true);
+        appStore.tileService.setAnimationEnabled(true);
         this.animationState = AnimationState.PLAYING;
 
         clearTimeout(this.stopHandle);
-        this.stopHandle = setTimeout(this.stopAnimation, 1000 * 60 * this.appStore.preferenceStore.stopAnimationPlaybackMinutes);
+        this.stopHandle = setTimeout(this.stopAnimation, 1000 * 60 * preferenceStore.stopAnimationPlaybackMinutes);
     };
 
     @action stopAnimation = () => {
-        const frame = this.appStore.activeFrame;
+        const appStore = AppStore.Instance;
+        const frame = appStore.activeFrame;
         if (!frame) {
             return;
         }
 
         this.animationState = AnimationState.STOPPED;
-        this.appStore.tileService.setAnimationEnabled(false);
+        appStore.tileService.setAnimationEnabled(false);
 
         if (this.animationMode === AnimationMode.FRAME) {
             clearInterval(this.animateHandle);
@@ -125,23 +137,22 @@ export class AnimatorStore {
                 fileId: frame.frameInfo.fileId,
                 endFrame
             };
-            this.appStore.backendService.stopAnimation(stopMessage);
-            this.appStore.throttledSetChannels([{frame, channel: frame.requiredChannel, stokes: frame.requiredStokes}]);
+            appStore.backendService.stopAnimation(stopMessage);
+            appStore.throttledSetChannels([{frame, channel: frame.requiredChannel, stokes: frame.requiredStokes}]);
         }
     };
 
     @action animate = () => {
         if (this.animationState === AnimationState.PLAYING && this.animationMode === AnimationMode.FRAME) {
             // Do animation
-            this.appStore.nextFrame();
+            AppStore.Instance.nextFrame();
         }
     };
 
-    private readonly appStore: AppStore;
     private animateHandle;
     private stopHandle;
 
-    constructor(appStore: AppStore) {
+    constructor() {
         this.frameRate = 5;
         this.maxFrameRate = 15;
         this.minFrameRate = 1;
@@ -149,7 +160,6 @@ export class AnimatorStore {
         this.animationState = AnimationState.STOPPED;
         this.animateHandle = null;
         this.playMode = PlayMode.FORWARD;
-        this.appStore = appStore;
     }
 
     @computed get frameInterval() {

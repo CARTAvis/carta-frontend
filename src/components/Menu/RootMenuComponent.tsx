@@ -4,24 +4,24 @@ import {observer} from "mobx-react";
 import {Alert, Icon, Menu, Popover, Position, Tooltip, Tag} from "@blueprintjs/core";
 import {ToolbarMenuComponent} from "./ToolbarMenu/ToolbarMenuComponent";
 import {PresetLayout} from "models";
-import {AppStore, BrowserMode, PreferenceKeys} from "stores";
+import {AppStore, BrowserMode, DialogStore, FileBrowserStore, OverlayStore, PreferenceKeys, PreferenceStore} from "stores";
 import {ConnectionStatus} from "services";
 import {toFixed} from "utilities";
 import {CustomIcon} from "icons/CustomIcons";
 import "./RootMenuComponent.css";
 
 @observer
-export class RootMenuComponent extends React.Component<{ appStore: AppStore }> {
+export class RootMenuComponent extends React.Component {
     @observable documentationAlertVisible: boolean;
     private documentationAlertTimeoutHandle;
 
     render() {
-        const appStore = this.props.appStore;
+        const appStore = AppStore.Instance;
         const modString = appStore.modifierString;
         const connectionStatus = appStore.backendService.connectionStatus;
 
         let stokesClassName = "stokes-item";
-        if (this.props.appStore.darkTheme) {
+        if (appStore.darkTheme) {
             stokesClassName += " bp3-dark";
         }
 
@@ -272,7 +272,7 @@ export class RootMenuComponent extends React.Component<{ appStore: AppStore }> {
                         <Menu.Item text="Help"/>
                     </Menu>
                 </Popover>
-                <ToolbarMenuComponent appStore={appStore}/>
+                <ToolbarMenuComponent/>
                 <Alert isOpen={this.documentationAlertVisible} onClose={this.handleAlertDismissed} canEscapeKeyCancel={true} canOutsideClickCancel={true} confirmButtonText={"Dismiss"}>
                     Documentation will open in a new tab. Please ensure any popup blockers are disabled.
                 </Alert>
@@ -303,7 +303,7 @@ export class RootMenuComponent extends React.Component<{ appStore: AppStore }> {
     };
 
     handleFrameSelect = (fileId: number) => {
-        const appStore = this.props.appStore;
+        const appStore = AppStore.Instance;
         if (appStore.activeFrame && appStore.activeFrame.frameInfo.fileId === fileId) {
             return;
         } else {

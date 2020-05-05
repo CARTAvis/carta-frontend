@@ -13,29 +13,26 @@ import {
     ContourDialogComponent,
     DebugExecutionDialogComponent
 } from "components/Dialogs";
-import {AppStore} from "stores";
 
 @observer
-export class UIControllerComponent extends React.Component<{ appStore: AppStore }> {
-
+export class UIControllerComponent extends React.Component {
+ 
     render() {
-        const appStore = this.props.appStore;
-
         return (
             <React.Fragment>
-                <SplashScreenComponent appStore={appStore}/>
-                <RootMenuComponent appStore={appStore}/>
-                <OverlaySettingsDialogComponent appStore={appStore}/>
-                <AuthDialogComponent appStore={appStore}/>
-                <FileBrowserDialogComponent appStore={appStore}/>
-                <AboutDialogComponent appStore={appStore}/>
-                <RegionDialogComponent appStore={appStore}/>
-                <PreferenceDialogComponent appStore={appStore}/>
-                <SaveLayoutDialogComponent appStore={appStore}/>
-                <FileInfoDialogComponent appStore={appStore}/>
-                <ContourDialogComponent appStore={appStore}/>
-                <DebugExecutionDialogComponent appStore={appStore}/>
-                <HelpDrawerComponent appStore={appStore}/>
+                <SplashScreenComponent/>
+                <RootMenuComponent/>
+                <OverlaySettingsDialogComponent/>
+                <AuthDialogComponent/>
+                <FileBrowserDialogComponent/>
+                <AboutDialogComponent/>
+                <RegionDialogComponent/>
+                <PreferenceDialogComponent/>
+                <SaveLayoutDialogComponent/>
+                <FileInfoDialogComponent/>
+                <ContourDialogComponent/>
+                <DebugExecutionDialogComponent/>
+                <HelpDrawerComponent/>
             </React.Fragment>
         );
     }

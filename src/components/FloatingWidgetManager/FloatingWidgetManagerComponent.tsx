@@ -22,19 +22,19 @@ import {
     RenderConfigSettingsPanelComponent,
     HistogramSettingsPanelComponent
 } from "components";
-import {AppStore, WidgetConfig} from "stores";
+import {AppStore, WidgetConfig, WidgetsStore} from "stores";
 
 @observer
-export class FloatingWidgetManagerComponent extends React.Component<{ appStore: AppStore }> {
+export class FloatingWidgetManagerComponent extends React.Component {
     private floatingSettingType = "floating-settings";
 
     onFloatingWidgetSelected = (widget: WidgetConfig) => {
         // rearrange will cause a bug of empty table, change to zIndex 
-        this.props.appStore.widgetsStore.updateSelectFloatingWidgetzIndex(widget.id);
+        WidgetsStore.Instance.updateSelectFloatingWidgetzIndex(widget.id);
     };
 
     onFloatingWidgetClosed = (widget: WidgetConfig) => {
-        const widgetsStore = this.props.appStore.widgetsStore;
+        const widgetsStore = WidgetsStore.Instance;
         switch (widget.type) {
             case CatalogOverlayComponent.WIDGET_CONFIG.type:
                 // remove widget component only
@@ -47,53 +47,51 @@ export class FloatingWidgetManagerComponent extends React.Component<{ appStore: 
     };
 
     private getWidgetContent(widgetConfig: WidgetConfig) {
-        const appStore = this.props.appStore;
         switch (widgetConfig.type) {
             case ImageViewComponent.WIDGET_CONFIG.type:
-                return <ImageViewComponent appStore={appStore} id={widgetConfig.id} docked={false}/>;
+                return <ImageViewComponent id={widgetConfig.id} docked={false}/>;
             case LayerListComponent.WIDGET_CONFIG.type:
-                return <LayerListComponent appStore={appStore} id={widgetConfig.id} docked={false}/>;
+                return <LayerListComponent id={widgetConfig.id} docked={false}/>;
             case LogComponent.WIDGET_CONFIG.type:
-                return <LogComponent appStore={appStore} id={widgetConfig.id} docked={false}/>;
+                return <LogComponent id={widgetConfig.id} docked={false}/>;
             case RenderConfigComponent.WIDGET_CONFIG.type:
-                return <RenderConfigComponent appStore={appStore} id={widgetConfig.id} docked={false}/>;
+                return <RenderConfigComponent id={widgetConfig.id} docked={false}/>;
             case AnimatorComponent.WIDGET_CONFIG.type:
-                return <AnimatorComponent appStore={appStore} id={widgetConfig.id} docked={false}/>;
+                return <AnimatorComponent id={widgetConfig.id} docked={false}/>;
             case SpatialProfilerComponent.WIDGET_CONFIG.type:
-                return <SpatialProfilerComponent appStore={appStore} id={widgetConfig.id} docked={false}/>;
+                return <SpatialProfilerComponent id={widgetConfig.id} docked={false}/>;
             case SpectralProfilerComponent.WIDGET_CONFIG.type:
-                return <SpectralProfilerComponent appStore={appStore} id={widgetConfig.id} docked={false}/>;
+                return <SpectralProfilerComponent id={widgetConfig.id} docked={false}/>;
             case StatsComponent.WIDGET_CONFIG.type:
-                return <StatsComponent appStore={appStore} id={widgetConfig.id} docked={false}/>;
+                return <StatsComponent id={widgetConfig.id} docked={false}/>;
             case HistogramComponent.WIDGET_CONFIG.type:
-                return <HistogramComponent appStore={appStore} id={widgetConfig.id} docked={false}/>;
+                return <HistogramComponent id={widgetConfig.id} docked={false}/>;
             case RegionListComponent.WIDGET_CONFIG.type:
-                return <RegionListComponent appStore={appStore} id={widgetConfig.id} docked={false}/>;
+                return <RegionListComponent id={widgetConfig.id} docked={false}/>;
             case StokesAnalysisComponent.WIDGET_CONFIG.type:
-                return <StokesAnalysisComponent appStore={appStore} id={widgetConfig.id} docked={false}/>;
+                return <StokesAnalysisComponent id={widgetConfig.id} docked={false}/>;
             case CatalogOverlayComponent.WIDGET_CONFIG.type:
-                return <CatalogOverlayComponent appStore={appStore} id={widgetConfig.componentId} docked={false}/>;
+                return <CatalogOverlayComponent id={widgetConfig.componentId} docked={false}/>;
             case CatalogScatterComponent.WIDGET_CONFIG.type:
-                return <CatalogScatterComponent appStore={appStore} id={widgetConfig.id} docked={false}/>;
+                return <CatalogScatterComponent id={widgetConfig.id} docked={false}/>;
             default:
-                return <PlaceholderComponent appStore={appStore} id={widgetConfig.id} docked={false} label={widgetConfig.title}/>;
+                return <PlaceholderComponent id={widgetConfig.id} docked={false} label={widgetConfig.title}/>;
         }
     }
 
     private getWidgetSettings(widgetConfig: WidgetConfig) {
         if (widgetConfig.parentId) {
-            const appStore = this.props.appStore;
             switch (widgetConfig.parentType) {
                 case StokesAnalysisComponent.WIDGET_CONFIG.type:
-                    return <StokesAnalysisSettingsPanelComponent appStore={appStore} id={widgetConfig.parentId} docked={false} floatingSettingsId={widgetConfig.id}/>;
+                    return <StokesAnalysisSettingsPanelComponent id={widgetConfig.parentId} docked={false} floatingSettingsId={widgetConfig.id}/>;
                 case SpectralProfilerComponent.WIDGET_CONFIG.type:
-                    return <SpectralProfilerSettingsPanelComponent appStore={appStore} id={widgetConfig.parentId} docked={false} floatingSettingsId={widgetConfig.id}/>;
+                    return <SpectralProfilerSettingsPanelComponent id={widgetConfig.parentId} docked={false} floatingSettingsId={widgetConfig.id}/>;
                 case SpatialProfilerComponent.WIDGET_CONFIG.type:
-                    return <SpatialProfilerSettingsPanelComponent appStore={appStore} id={widgetConfig.parentId} docked={false} floatingSettingsId={widgetConfig.id}/>;
+                    return <SpatialProfilerSettingsPanelComponent id={widgetConfig.parentId} docked={false} floatingSettingsId={widgetConfig.id}/>;
                 case RenderConfigComponent.WIDGET_CONFIG.type:
-                    return <RenderConfigSettingsPanelComponent appStore={appStore} id={widgetConfig.parentId} docked={false} floatingSettingsId={widgetConfig.id}/>;
+                    return <RenderConfigSettingsPanelComponent id={widgetConfig.parentId} docked={false} floatingSettingsId={widgetConfig.id}/>;
                 case HistogramComponent.WIDGET_CONFIG.type:
-                    return <HistogramSettingsPanelComponent appStore={appStore} id={widgetConfig.parentId} docked={false} floatingSettingsId={widgetConfig.id}/>;
+                    return <HistogramSettingsPanelComponent id={widgetConfig.parentId} docked={false} floatingSettingsId={widgetConfig.id}/>;
                 default:
                     return null;
             }
@@ -126,8 +124,7 @@ export class FloatingWidgetManagerComponent extends React.Component<{ appStore: 
     }
 
     public render() {
-        const appStore = this.props.appStore;
-        const widgetConfigs = appStore.widgetsStore.floatingWidgets;
+        const widgetConfigs = WidgetsStore.Instance.floatingWidgets;
         return (
             <div>
                 {widgetConfigs.map((w) => {
@@ -137,7 +134,6 @@ export class FloatingWidgetManagerComponent extends React.Component<{ appStore: 
                         <div key={id}>
                             <FloatingWidgetComponent
                                 isSelected={w.zIndex === widgetConfigs.length}
-                                appStore={appStore}
                                 key={id}
                                 widgetConfig={w}
                                 zIndex={w.zIndex}
@@ -145,7 +141,7 @@ export class FloatingWidgetManagerComponent extends React.Component<{ appStore: 
                                 onSelected={() => this.onFloatingWidgetSelected(w)}
                                 onClosed={() => this.onFloatingWidgetClosed(w)}
                                 showFloatingSettingsButton={this.showFloatingSettingsButton(w)}
-                                floatingWidgets={this.props.appStore.widgetsStore.floatingWidgets.length}
+                                floatingWidgets={widgetConfigs.length}
                             >
                                 {showPinButton ?
                                     this.getWidgetContent(w)

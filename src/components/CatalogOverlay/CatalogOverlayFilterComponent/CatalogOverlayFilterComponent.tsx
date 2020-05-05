@@ -6,11 +6,12 @@ import {AppStore} from "stores";
 import {CatalogOverlayWidgetStore} from "stores/widgets";
 
 @observer
-export class CatalogOverlayFilterComponent extends React.Component<{widgetStore: CatalogOverlayWidgetStore, appStore: AppStore}> {
+export class CatalogOverlayFilterComponent extends React.Component<{widgetStore: CatalogOverlayWidgetStore}> {
     
     private handleRegionChanged = (changeEvent: React.ChangeEvent<HTMLSelectElement>) => {
-        if (this.props.appStore.activeFrame) {
-            this.props.widgetStore.setRegionId(this.props.appStore.activeFrame.frameInfo.fileId, parseInt(changeEvent.target.value));
+        const frame = AppStore.Instance.activeFrame;
+        if (frame) {
+            this.props.widgetStore.setRegionId(frame.frameInfo.fileId, parseInt(changeEvent.target.value));
         }
     };
 
@@ -19,16 +20,16 @@ export class CatalogOverlayFilterComponent extends React.Component<{widgetStore:
     };
 
     public render() {
-        const appStore = this.props.appStore;
+        const frame = AppStore.Instance.activeFrame;
         const widgetStore = this.props.widgetStore;
 
         let enableRegionSelect = false;
         let regionId = 0;
         let profileRegionOptions: IOptionProps[];
-        if (appStore.activeFrame && appStore.activeFrame.regionSet) {
-            let fileId = appStore.activeFrame.frameInfo.fileId;
+        if (frame && frame.regionSet) {
+            let fileId = frame.frameInfo.fileId;
             regionId = widgetStore.regionIdMap.get(fileId) || 0;
-            profileRegionOptions = appStore.activeFrame.regionSet.regions.filter(r => !r.isTemporary && (r.isClosedRegion || r.regionType === CARTA.RegionType.POINT)).map(r => {
+            profileRegionOptions = frame.regionSet.regions.filter(r => !r.isTemporary && (r.isClosedRegion || r.regionType === CARTA.RegionType.POINT)).map(r => {
                 return {
                     value: r.regionId,
                     label: r.nameString

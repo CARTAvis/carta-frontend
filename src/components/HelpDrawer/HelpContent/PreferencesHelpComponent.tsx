@@ -4,12 +4,11 @@ import {ImageComponent} from "./ImageComponent";
 import * as headPreferenceButton from "static/help/head_preference_button.png";
 import * as headPreferenceButton_d from "static/help/head_preference_button_d.png";
 
-export class PreferencesHelpComponent extends React.Component<{ appStore: AppStore }> {
+export class PreferencesHelpComponent extends React.Component {
     public render() {
-        const appStore = this.props.appStore;
         return (
             <div>
-                <p><ImageComponent appStore={appStore} light={headPreferenceButton} dark={headPreferenceButton_d} width="90%"/></p>
+                <p><ImageComponent light={headPreferenceButton} dark={headPreferenceButton_d} width="90%"/></p>
                 <p>The preferences dialogue provides a centralized place to customize the entire graphical user interface and performance control parameters. All settings are recorded and applied to new CARTA sessions. Some settings are
                     effective immediately.</p>
                 <h3 id="global">Global</h3>

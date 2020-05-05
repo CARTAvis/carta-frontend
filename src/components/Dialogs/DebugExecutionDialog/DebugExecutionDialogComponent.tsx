@@ -8,13 +8,13 @@ import {AppStore} from "stores";
 import "./DebugExecutionDialogComponent.css";
 
 @observer
-export class DebugExecutionDialogComponent extends React.Component<{ appStore: AppStore }> {
+export class DebugExecutionDialogComponent extends React.Component {
     @observable inputString: string = "";
     @observable isExecuting: boolean;
     @observable errorString: string = "";
 
     @computed get executionEntries() {
-        const appStore = this.props.appStore;
+        const appStore = AppStore.Instance;
         let entries = this.inputString.split("\n");
         let executionStrings = new Array<ExecutionEntry>();
 
@@ -34,7 +34,7 @@ export class DebugExecutionDialogComponent extends React.Component<{ appStore: A
     }
 
     public render() {
-        const appStore = this.props.appStore;
+        const appStore = AppStore.Instance;
         let className = "debug-execution-dialog";
         if (appStore.darkTheme) {
             className += " bp3-dark";
@@ -53,7 +53,7 @@ export class DebugExecutionDialogComponent extends React.Component<{ appStore: A
         const validInput = (this.executionEntries && this.executionEntries.length);
 
         return (
-            <DraggableDialogComponent appStore={appStore} dialogProps={dialogProps} defaultWidth={500} defaultHeight={300} enableResizing={true}>
+            <DraggableDialogComponent dialogProps={dialogProps} defaultWidth={500} defaultHeight={300} enableResizing={true}>
                 <div className={Classes.DIALOG_BODY}>
                     <EditableText className="input-text" onChange={this.handleActionInput} value={this.inputString} minLines={5} intent={!validInput ? "warning" : "success"} placeholder="Enter execution string" multiline={true}/>
                 </div>
