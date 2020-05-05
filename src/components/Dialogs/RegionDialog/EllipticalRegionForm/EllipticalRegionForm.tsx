@@ -3,15 +3,15 @@ import * as AST from "ast_wrapper";
 import {observer} from "mobx-react";
 import {H5, InputGroup, NumericInput, Classes} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
-import {RegionStore} from "stores";
+import {FrameStore, RegionStore} from "stores";
 import {Point2D} from "models";
-import {closeTo} from "utilities";
+import {closeTo, formattedArcsec} from "utilities";
 import "./EllipticalRegionForm.css";
 
 const KEYCODE_ENTER = 13;
 
 @observer
-export class EllipticalRegionForm extends React.Component<{ region: RegionStore, wcsInfo: number }> {
+export class EllipticalRegionForm extends React.Component<{ region: RegionStore, frame: FrameStore, wcsInfo: number }> {
     private static readonly REGION_PIXEL_EPS = 1.0e-3;
 
     private handleNameChange = (ev) => {
@@ -110,15 +110,10 @@ export class EllipticalRegionForm extends React.Component<{ region: RegionStore,
         return null;
     }
 
-    private getSizeString(wcsInfo: number, centerPixel: Point2D, cornerPixel: Point2D) {
-        if (wcsInfo) {
-            const centerWCS = AST.transformPoint(this.props.wcsInfo, centerPixel.x, centerPixel.y);
-            const horizontalEdgeWCS = AST.transformPoint(this.props.wcsInfo, cornerPixel.x, centerPixel.y);
-            const verticalEdgeWCS = AST.transformPoint(this.props.wcsInfo, centerPixel.x, cornerPixel.y);
-            const hDist = Math.abs(AST.axDistance(this.props.wcsInfo, 1, centerWCS.x, horizontalEdgeWCS.x));
-            const vDist = Math.abs(AST.axDistance(this.props.wcsInfo, 2, centerWCS.y, verticalEdgeWCS.y));
-            const wcsDistStrings = AST.getFormattedCoordinates(this.props.wcsInfo, hDist, vDist, "Format(1)=m.5, Format(2)=m.5", true);
-            return `Semi-major: ${wcsDistStrings.y}; Semi-minor: ${wcsDistStrings.x}'`;
+    private getSizeString(size: Point2D) {
+        const wcsSize = this.props.frame.getWcsSizeInArcsec(size);
+        if (wcsSize) {
+            return `Semi-major: ${formattedArcsec(wcsSize.x)}; Semi-minor: ${formattedArcsec(wcsSize.y)}`;
         }
         return null;
     }
@@ -134,7 +129,7 @@ export class EllipticalRegionForm extends React.Component<{ region: RegionStore,
         // CRTF uses north/south for major axis
         const topRightPoint = {x: centerPoint.x + sizeDims.y, y: centerPoint.y + sizeDims.x};
         const wcsStringCenter = this.getFormattedString(this.props.wcsInfo, centerPoint);
-        const wcsStringSize = this.getSizeString(this.props.wcsInfo, centerPoint, topRightPoint);
+        const wcsStringSize = this.getSizeString(sizeDims);
 
         const commonProps = {
             selectAllOnFocus: true,
