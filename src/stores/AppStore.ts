@@ -1400,6 +1400,8 @@ export class AppStore {
         });
     };
 
+    fetchParameter = v => v;
+
     // region requirements calculations
 
     private initRequirements = () => {
