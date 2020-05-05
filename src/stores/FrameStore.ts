@@ -84,6 +84,9 @@ export class FrameStore {
     @observable secondarySpatialImages: FrameStore[];
     @observable secondarySpectralImages: FrameStore[];
 
+    @observable isRequestingMoments: boolean;
+    @observable requestingMomentsProgress: number;
+
     @computed get requiredFrameView(): FrameView {
         // use spatial reference frame to calculate frame view, if it exists
         if (this.spatialReference) {
@@ -571,6 +574,9 @@ export class FrameStore {
         this.controlMaps = new Map<FrameStore, ControlMap>();
         this.secondarySpatialImages = [];
         this.secondarySpectralImages = [];
+
+        this.isRequestingMoments = false;
+        this.requestingMomentsProgress = 0;
 
         // synchronize AST overlay's color/grid/label with preference when frame is created
         const astColor = preferenceStore.astColor;
@@ -1339,5 +1345,18 @@ export class FrameStore {
 
     @action removeSecondarySpectralImage = (frame: FrameStore) => {
         this.secondarySpectralImages = this.secondarySpectralImages.filter(f => f.frameInfo.fileId !== frame.frameInfo.fileId);
+    };
+
+    @action setIsRequestingMoments = (val: boolean) => {
+        this.isRequestingMoments = val;
+    };
+
+    @action updateRequestingMomentsProgress = (progress: number) => {
+        this.requestingMomentsProgress = progress;
+    };
+
+    @action resetMomentRequestState = () => {
+        this.setIsRequestingMoments(false);
+        this.updateRequestingMomentsProgress(0);
     };
 }

@@ -1053,10 +1053,10 @@ export class AppStore {
         if (!momentProgress) {
             return;
         }
-        // TODO: how to map back to spectral profiler widget
-        // const spectralProfileWidgetStore = this.widgetsStore.spectralProfileWidgets.get(catalogWidgetId);
-        // spectralProfileWidgetStore.updateGeneratingMomentsProgress(momentProgress.progress);
-        this.updateTaskProgress(momentProgress.progress);
+        if (this.activeFrame) {
+            this.activeFrame.updateRequestingMomentsProgress(momentProgress.progress);
+            this.updateTaskProgress(momentProgress.progress);
+        }
     };
 
     handleErrorStream = (errorData: CARTA.ErrorData) => {

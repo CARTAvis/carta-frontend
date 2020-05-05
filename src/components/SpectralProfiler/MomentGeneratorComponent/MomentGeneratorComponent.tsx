@@ -21,7 +21,7 @@ export class MomentGeneratorComponent extends React.Component<{widgetStore: Spec
         const appStore = AppStore.Instance;
         if (appStore.activeFrame) {
             const widgetStore = this.props.widgetStore;
-            widgetStore.setIsGeneratingMoments(true);
+            appStore.activeFrame.setIsRequestingMoments(true);
             appStore.generateMoment(appStore.activeFrame.frameInfo.fileId);
         }
         this.showMomentAlert = false;
@@ -97,7 +97,7 @@ export class MomentGeneratorComponent extends React.Component<{widgetStore: Spec
     private handleMomentGenerateCancelled = () => {
         const appStore = AppStore.Instance;
         if (appStore.activeFrame) {
-            this.props.widgetStore.resetMomentRequestState();
+            appStore.activeFrame.resetMomentRequestState();
             appStore.cancelMomentRequest(appStore.activeFrame.frameInfo.fileId);
         }
     };
@@ -239,8 +239,8 @@ export class MomentGeneratorComponent extends React.Component<{widgetStore: Spec
                     </p>
                 </Alert>
                 <TaskProgressDialogComponent
-                    isOpen={widgetStore.isGeneratingMoments}
-                    progress={widgetStore.generatingMomentsProgress}
+                    isOpen={activeFrame && activeFrame.isRequestingMoments}
+                    progress={activeFrame ? activeFrame.requestingMomentsProgress : 0}
                     timeRemaining={appStore.estimatedTaskRemainingTime}
                     cancellable={true}
                     onCancel={this.handleMomentGenerateCancelled}
