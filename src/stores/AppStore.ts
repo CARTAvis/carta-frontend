@@ -628,7 +628,7 @@ export class AppStore {
         const frame = this.getFrame(fileId);
         if (frame) {
             this.backendService.generateMoment(frame.frameInfo.fileId, -2);
-            // this.restartTaskProgress();
+            this.restartTaskProgress();
         }
     };
 
@@ -857,6 +857,7 @@ export class AppStore {
         this.backendService.catalogStream.subscribe(this.handleCatalogFilterStream);
         this.backendService.errorStream.subscribe(this.handleErrorStream);
         this.backendService.statsStream.subscribe(this.handleRegionStatsStream);
+        this.backendService.momentProgressStream.subscribe(this.handleMomentProgressStream);
         this.backendService.reconnectStream.subscribe(this.handleReconnectStream);
         this.tileService.tileStream.subscribe(this.handleTileStream);
 
@@ -1046,6 +1047,16 @@ export class AppStore {
                 }
             }
         }
+    };
+
+    handleMomentProgressStream = (momentProgress: CARTA.MomentProgress) => {
+        if (!momentProgress) {
+            return;
+        }
+        // TODO: how to map back to spectral profiler widget
+        // const spectralProfileWidgetStore = this.widgetsStore.spectralProfileWidgets.get(catalogWidgetId);
+        // spectralProfileWidgetStore.updateGeneratingMomentsProgress(momentProgress.progress);
+        this.updateTaskProgress(momentProgress.progress);
     };
 
     handleErrorStream = (errorData: CARTA.ErrorData) => {

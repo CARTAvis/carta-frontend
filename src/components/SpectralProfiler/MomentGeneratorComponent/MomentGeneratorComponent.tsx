@@ -97,9 +97,9 @@ export class MomentGeneratorComponent extends React.Component<{widgetStore: Spec
     private handleMomentGenerateCancelled = () => {
         const appStore = AppStore.Instance;
         if (appStore.activeFrame) {
+            this.props.widgetStore.resetMomentRequestState();
             appStore.cancelMomentRequest(appStore.activeFrame.frameInfo.fileId);
         }
-        this.props.widgetStore.setIsGeneratingMoments(false);
     };
 
     render() {

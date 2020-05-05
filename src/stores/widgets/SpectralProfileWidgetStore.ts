@@ -173,6 +173,11 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         this.generatingMomentsProgress = progress;
     };
 
+    @action resetMomentRequestState = () => {
+        this.setIsGeneratingMoments(false);
+        this.updateGeneratingMomentsProgress(0);
+    };
+
     @action setXBounds = (minVal: number, maxVal: number) => {
         this.minX = minVal;
         this.maxX = maxVal;

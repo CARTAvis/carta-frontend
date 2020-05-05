@@ -49,6 +49,7 @@ export class BackendService {
     readonly statsStream: Subject<CARTA.RegionStatsData>;
     readonly contourStream: Subject<CARTA.ContourImageData>;
     readonly catalogStream: Subject<CARTA.CatalogFilterResponse>;
+    readonly momentProgressStream: Subject<CARTA.MomentProgress>;
     readonly reconnectStream: Subject<void>;
     private readonly handlerMap: Map<CARTA.EventType, HandlerFunction>;
     private readonly decoderMap: Map<CARTA.EventType, any>;
@@ -70,6 +71,7 @@ export class BackendService {
         this.statsStream = new Subject<CARTA.RegionStatsData>();
         this.contourStream = new Subject<CARTA.ContourImageData>();
         this.catalogStream = new Subject<CARTA.CatalogFilterResponse>();
+        this.momentProgressStream = new Subject<CARTA.MomentProgress>();
         this.reconnectStream = new Subject<void>();
 
         // Construct handler and decoder maps
@@ -98,7 +100,8 @@ export class BackendService {
             [CARTA.EventType.REGION_STATS_DATA, this.onStreamedRegionStatsData],
             [CARTA.EventType.CONTOUR_IMAGE_DATA, this.onStreamedContourData],
             [CARTA.EventType.CATALOG_FILTER_RESPONSE, this.onStreamedCatalogData],
-            [CARTA.EventType.RASTER_TILE_SYNC, this.onStreamedRasterSync]
+            [CARTA.EventType.RASTER_TILE_SYNC, this.onStreamedRasterSync],
+            [CARTA.EventType.MOMENT_PROGRESS, this.onStreamedMomentProgress]
         ]);
 
         this.decoderMap = new Map<CARTA.EventType, any>([
@@ -829,6 +832,10 @@ export class BackendService {
 
     private onStreamedCatalogData(eventId: number, catalogFilter: CARTA.CatalogFilterResponse) {
         this.catalogStream.next(catalogFilter);
+    }
+
+    private onStreamedMomentProgress(eventId: number, momentProgress: CARTA.MomentProgress) {
+        this.momentProgressStream.next(momentProgress);
     }
 
     private sendEvent(eventType: CARTA.EventType, payload: Uint8Array): boolean {
