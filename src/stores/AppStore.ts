@@ -629,11 +629,8 @@ export class AppStore {
         this.restartTaskProgress();
     };
 
-    @action cancelMomentRequest = (fileId: number = -1) => {
-        const frame = this.getFrame(fileId);
-        if (frame) {
-            this.backendService.cancelGeneratingMoment(fileId);
-        }
+    @action cancelRequestingMoment = (fileId: number = -1) => {
+        this.backendService.cancelRequestingMoment(fileId);
     };
 
     @action setDarkTheme = () => {

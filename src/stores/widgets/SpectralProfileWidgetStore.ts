@@ -182,6 +182,15 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         }
     };
 
+    @action requestingMomentCancelled = () => {
+        const appStore = AppStore.Instance;
+        const frame = appStore.activeFrame;
+        if (frame) {
+            frame.resetMomentRequestState();
+            appStore.cancelRequestingMoment(frame.frameInfo.fileId);
+        }
+    };
+
     @action setXBounds = (minVal: number, maxVal: number) => {
         this.minX = minVal;
         this.maxX = maxVal;

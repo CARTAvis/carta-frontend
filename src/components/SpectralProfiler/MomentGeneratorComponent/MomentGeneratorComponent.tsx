@@ -85,16 +85,12 @@ export class MomentGeneratorComponent extends React.Component<{widgetStore: Spec
         this.props.widgetStore.clearSelectedMoments();
     };
 
-    private handleMomentGenerate = () => {
+    private handleRequestMoment = () => {
         this.showMomentAlert = true;
     };
 
-    private handleMomentGenerateCancelled = () => {
-        const appStore = AppStore.Instance;
-        if (appStore.activeFrame) {
-            appStore.activeFrame.resetMomentRequestState();
-            appStore.cancelMomentRequest(appStore.activeFrame.frameInfo.fileId);
-        }
+    private handleRequestingMomentCancelled = () => {
+        this.props.widgetStore.requestingMomentCancelled();
     };
 
     render() {
@@ -210,7 +206,7 @@ export class MomentGeneratorComponent extends React.Component<{widgetStore: Spec
                     />
                 </FormGroup>
                 <div className="moment-generate">
-                    <Button intent="success" onClick={this.handleMomentGenerate} disabled={!activeFrame}>Generate</Button>
+                    <Button intent="success" onClick={this.handleRequestMoment} disabled={!activeFrame}>Generate</Button>
                 </div>
             </React.Fragment>
         );
@@ -238,7 +234,7 @@ export class MomentGeneratorComponent extends React.Component<{widgetStore: Spec
                     progress={activeFrame ? activeFrame.requestingMomentsProgress : 0}
                     timeRemaining={appStore.estimatedTaskRemainingTime}
                     cancellable={true}
-                    onCancel={this.handleMomentGenerateCancelled}
+                    onCancel={this.handleRequestingMomentCancelled}
                     text={"Generating moments"}
                 />
             </div>

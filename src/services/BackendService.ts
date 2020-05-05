@@ -696,8 +696,8 @@ export class BackendService {
         }
     }
 
-    @action("cancel generating moment")
-    cancelGeneratingMoment(fileId: number) {
+    @action("cancel requesting moment")
+    cancelRequestingMoment(fileId: number) {
         if (this.connectionStatus !== ConnectionStatus.ACTIVE) {
             return throwError(new Error("Not connected"));
         } else {
