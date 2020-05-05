@@ -60,7 +60,7 @@ export class DebugExecutionDialogComponent extends React.Component {
                 <div className={Classes.DIALOG_FOOTER}>
                     <div className={Classes.DIALOG_FOOTER_ACTIONS}>
                         <AnchorButton intent={Intent.PRIMARY} onClick={this.onExecuteClicked} disabled={!validInput || this.isExecuting} text="Execute"/>
-                        <AnchorButton intent={Intent.WARNING} onClick={() => appStore.handleScriptingRequest(JSON.parse(this.inputString))} text="DebugTest"/>
+                        <AnchorButton intent={Intent.WARNING} onClick={() => appStore.backendService.scriptingStream.next(JSON.parse(this.inputString))} text="DebugTest"/>
                         <AnchorButton intent={Intent.NONE} onClick={appStore.dialogStore.hideDebugExecutionDialog} text="Close"/>
                     </div>
                 </div>

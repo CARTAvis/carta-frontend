@@ -45,10 +45,7 @@ export class AppStore {
     private static staticInstance: AppStore;
 
     static get Instance() {
-        if (!AppStore.staticInstance) {
-            AppStore.staticInstance = new AppStore();
-        }
-        return AppStore.staticInstance;
+        return AppStore.staticInstance || new AppStore();
     }
 
     // Backend services
@@ -724,6 +721,7 @@ export class AppStore {
     }, AppStore.ImageChannelThrottleTime);
 
     private constructor() {
+        AppStore.staticInstance = this;
         // Assign service instances
         this.backendService = BackendService.Instance;
         this.tileService = TileService.Instance;
