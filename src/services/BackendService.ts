@@ -101,7 +101,8 @@ export class BackendService {
             [CARTA.EventType.CONTOUR_IMAGE_DATA, this.onStreamedContourData],
             [CARTA.EventType.CATALOG_FILTER_RESPONSE, this.onStreamedCatalogData],
             [CARTA.EventType.RASTER_TILE_SYNC, this.onStreamedRasterSync],
-            [CARTA.EventType.MOMENT_PROGRESS, this.onStreamedMomentProgress]
+            [CARTA.EventType.MOMENT_PROGRESS, this.onStreamedMomentProgress],
+            [CARTA.EventType.MOMENT_RESPONSE, this.onMomentResponse]
         ]);
 
         this.decoderMap = new Map<CARTA.EventType, any>([
@@ -787,6 +788,21 @@ export class BackendService {
                 observer.next(ack);
             } else {
                 observer.error(ack.message);
+            }
+            observer.complete();
+            this.observerRequestMap.delete(eventId);
+        } else {
+            console.log(`Can't find observable for request ${eventId}`);
+        }
+    }
+
+    private onMomentResponse(eventId: number, response: CARTA.MomentResponse) {
+        const observer = this.observerRequestMap.get(eventId);
+        if (observer) {
+            if (response.success && response.directory && response.outputFiles) {
+                // TODO: append output files
+            } else {
+                observer.error(response.message);
             }
             observer.complete();
             this.observerRequestMap.delete(eventId);
