@@ -168,8 +168,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
             const requestMessage: CARTA.IMomentRequest = {
                 fileId: frame.frameInfo.fileId,
                 moments: this.selectedMoments,
-                axis: undefined,
-                regionId: undefined,
+                regionId: this.effectiveRegionId,
                 spectralRange: undefined,
                 mask: this.momentMask,
                 pixelRange: this.maskRange
