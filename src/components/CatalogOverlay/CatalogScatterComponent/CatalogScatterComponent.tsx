@@ -343,7 +343,7 @@ export class CatalogScatterComponent extends React.Component<WidgetProps> {
                             activeItem={widgetStore.columnsName.x}
                             onItemSelect={item => this.handleColumnNameChange("x", item)}
                             itemRenderer={this.renderSystemPopOver}
-                            popoverProps={{popoverClassName: "catalog-select", position: PopoverPosition.RIGHT}}
+                            popoverProps={{popoverClassName: "catalog-select", minimal: true , position: PopoverPosition.AUTO_END}}
                         >
                             <Button text={widgetStore.columnsName.x} rightIcon="double-caret-vertical"/>
                         </Select>
@@ -356,7 +356,7 @@ export class CatalogScatterComponent extends React.Component<WidgetProps> {
                             activeItem={widgetStore.columnsName.y}
                             onItemSelect={item => this.handleColumnNameChange("y", item)}
                             itemRenderer={this.renderSystemPopOver}
-                            popoverProps={{popoverClassName: "catalog-select", position: PopoverPosition.RIGHT}}
+                            popoverProps={{popoverClassName: "catalog-select", minimal: true , position: PopoverPosition.AUTO_END}}
                         >
                             <Button text={widgetStore.columnsName.y} rightIcon="double-caret-vertical"/>
                         </Select>

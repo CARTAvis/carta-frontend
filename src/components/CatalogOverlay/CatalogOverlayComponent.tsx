@@ -620,7 +620,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
                             activeItem={this.catalogFileId}
                             onItemSelect={this.handleCatalogFileChange}
                             itemRenderer={this.renderFileIdPopOver}
-                            popoverProps={{popoverClassName: "catalog-select", position: PopoverPosition.RIGHT}}
+                            popoverProps={{popoverClassName: "catalog-select", minimal: true , position: PopoverPosition.AUTO_END}}
                         >
                             <Button text={this.catalogFileId} rightIcon="double-caret-vertical"/>
                         </Select>
@@ -680,7 +680,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
                             activeItem={widgetStore.catalogPlotType}
                             onItemSelect={this.handlePlotTypeChange}
                             itemRenderer={this.renderPlotTypePopOver}
-                            popoverProps={{popoverClassName: "catalog-select", position: PopoverPosition.TOP}}
+                            popoverProps={{popoverClassName: "catalog-select", minimal: true , position: PopoverPosition.AUTO_END}}
                         >
                             <Button className="bp3-minimal" text={widgetStore.catalogPlotType} rightIcon="double-caret-vertical"/>
                         </Select>

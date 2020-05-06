@@ -142,7 +142,7 @@ export class CatalogOverlayPlotSettingsComponent extends React.Component<{widget
                         activeItem={widgetStore.catalogCoordinateSystem.system}
                         onItemSelect={this.handleHeaderCatalogSystemChange}
                         itemRenderer={this.renderSystemPopOver}
-                        popoverProps={{popoverClassName: "catalog-select", position: PopoverPosition.RIGHT}}
+                        popoverProps={{popoverClassName: "catalog-select", minimal: true , position: PopoverPosition.AUTO_END}}
                     >
                         <Button text={activeSystem} rightIcon="double-caret-vertical"/>
                     </Select>
@@ -166,7 +166,7 @@ export class CatalogOverlayPlotSettingsComponent extends React.Component<{widget
                         activeItem={widgetStore.catalogShape} 
                         onItemSelect={this.handleCatalogShapeChange}
                         itemRenderer={this.renderShapePopOver}
-                        popoverProps={{popoverClassName: "catalog-select", position: PopoverPosition.RIGHT}}
+                        popoverProps={{popoverClassName: "catalog-select", minimal: true , position: PopoverPosition.AUTO_END}}
                     >
                         <Button icon={this.getCatalogShape(widgetStore.catalogShape)} rightIcon="double-caret-vertical"/>
                     </Select>
