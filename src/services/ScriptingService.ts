@@ -52,7 +52,7 @@ export class ExecutionEntry {
             const parameterArray = JSON.parse(substitutedParameterString);
             this.parameters = parameterArray.map(parameter => {
                 if (typeof parameter === "object" && parameter.macroTarget && parameter.macroVariable) {
-                    parameter.macroTarget = parameter.macroTarget.slice(1, -1);
+                    parameter.macroTarget = parameter.macroTarget.replace(/\$(.*)\./, "$1");
                 }
                 return parameter;
             });
