@@ -510,10 +510,12 @@ export class AppStore {
             AppToaster.show({icon: "warning-sign", message: `Catalog type not supported`, intent: "danger", timeout: 3000});
             return;
         }
+        this.fileLoading = true;
 
         const frame = this.activeFrame;
         const fileId = this.catalogNum + 1;
         this.backendService.loadCatalogFile(directory, file, fileId, previewDataSize).subscribe(ack => {
+            this.fileLoading = false;
             if (frame && ack.success && ack.dataSize) {
                 let catalogInfo: CatalogInfo = {fileId: fileId, fileInfo: ack.fileInfo, dataSize: ack.dataSize};
                 let catalogWidgetId = null;
@@ -535,6 +537,7 @@ export class AppStore {
         }, error => {
             console.error(error);
             AppToaster.show({icon: "warning-sign", message: error, intent: "danger", timeout: 3000});
+            this.fileLoading = false;
         });
     };
 
