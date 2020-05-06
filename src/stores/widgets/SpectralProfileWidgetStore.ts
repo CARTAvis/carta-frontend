@@ -27,7 +27,9 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
     @observable linePlotPointSize: number;
     @observable linePlotInitXYBoundaries: { minXVal: number, maxXVal: number, minYVal: number, maxYVal: number };
     @observable smoothingType: SmoothingType;
-    @observable smoothingKernel: number;
+    @observable smoothingBoxcarSize: number = 2;
+    @observable smoothingGaussianSigma: number = 1.0;
+    @observable smoothingHanningSize: number = 3;
 
     public static StatsTypeString(statsType: CARTA.StatsType) {
         switch (statsType) {
@@ -159,8 +161,16 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         this.smoothingType = val;
     }
 
-    @action setSmoothingKernel = (val: number) => {
-        this.smoothingKernel = val;
+    @action setSmoothingBoxcarSize = (val: number) => {
+        this.smoothingBoxcarSize = val;
+    }
+    
+    @action setSmoothingGaussianSigma = (val: number) => {
+        this.smoothingGaussianSigma = val;
+    }
+
+    @action setSmoothingHanningSize = (val: number) => {
+        this.smoothingHanningSize = val;
     }
 
     constructor(appStore: AppStore, coordinate: string = "z") {

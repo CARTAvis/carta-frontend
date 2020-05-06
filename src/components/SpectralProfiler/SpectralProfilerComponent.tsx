@@ -100,11 +100,18 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
             let yCount = 0;
 
             let smoothingValues: Float32Array | Float64Array;
-            let smoothingKernel = this.widgetStore.smoothingKernel | 3;
             if (this.widgetStore.smoothingType === SmoothingType.BOXCAR) {
-                smoothingValues = GSL.boxcarSmooth(coordinateData.values, smoothingKernel);
+                smoothingValues = GSL.boxcarSmooth(coordinateData.values, this.widgetStore.smoothingBoxcarSize);
             } else if (this.widgetStore.smoothingType === SmoothingType.GAUSSIAN) {
-                smoothingValues = GSL.gaussianSmooth(coordinateData.values, smoothingKernel);
+                if (this.widgetStore.smoothingGaussianSigma && this.widgetStore.smoothingGaussianSigma > 0.5) {
+                    let kernelSize = Math.ceil(this.widgetStore.smoothingGaussianSigma * 2);
+                    let alpha = (kernelSize - 1) / (2 * this.widgetStore.smoothingGaussianSigma);
+                    smoothingValues = GSL.gaussianSmooth(coordinateData.values, kernelSize, alpha);
+                } else {
+                    smoothingValues = GSL.gaussianSmooth(coordinateData.values, 1, 1);
+                }
+            } else if (this.widgetStore.smoothingType === SmoothingType.HANNING) {
+                smoothingValues = GSL.hanningSmooth(coordinateData.values, this.widgetStore.smoothingHanningSize);
             } else {
                 smoothingValues = coordinateData.values;
             }

@@ -2,6 +2,7 @@ import * as React from "react";
 import {observer} from "mobx-react";
 import {FormGroup, HTMLSelect, IOptionProps} from "@blueprintjs/core";
 import {SpectralProfileWidgetStore} from "stores/widgets";
+import {SafeNumericInput} from "components/Shared";
 
 export enum SmoothingType {
     NONE = "None",
@@ -21,15 +22,8 @@ export class SmoothingSettingsComponent extends React.Component<{widgetStore: Sp
         const smoothingTypeOptions: IOptionProps[] = [
             {value: SmoothingType.NONE, label: "None"},
             {value: SmoothingType.BOXCAR, label: "Boxcar"},
-            {value: SmoothingType.GAUSSIAN, label: "Gaussian"}
-        ];
-        const kernelOptions: IOptionProps[] = [
-            {value: 3, label: "3"},
-            {value: 4, label: "4"},
-            {value: 5, label: "5"},
-            {value: 6, label: "6"},
-            {value: 11, label: "11"},
-            {value: 21, label: "21"},
+            {value: SmoothingType.GAUSSIAN, label: "Gaussian"},
+            {value: SmoothingType.HANNING, label: "Hanning"}
         ];
 
         return (
@@ -41,14 +35,40 @@ export class SmoothingSettingsComponent extends React.Component<{widgetStore: Sp
                         onChange={(event: React.FormEvent<HTMLSelectElement>) => widgetStore.setSmoothingType(event.currentTarget.value as SmoothingType)}
                     />
                 </FormGroup>
-                <FormGroup label={"Kernel"} inline={true} disabled={widgetStore.smoothingType === SmoothingType.NONE}>
-                    <HTMLSelect
-                        disabled={widgetStore.smoothingType === SmoothingType.NONE}
-                        value={widgetStore && widgetStore.smoothingKernel ? widgetStore.smoothingKernel : 3}
-                        options={kernelOptions}
-                        onChange={(event: React.FormEvent<HTMLSelectElement>) => widgetStore.setSmoothingKernel(Number.parseInt(event.currentTarget.value))}
+                {(widgetStore.smoothingType === SmoothingType.BOXCAR) &&
+                <FormGroup label={"Kernel"} inline={true}>
+                    <SafeNumericInput
+                        value={widgetStore.smoothingBoxcarSize}
+                        min={2}
+                        step={1}
+                        className="narrow"
+                        onValueChange={val => widgetStore.setSmoothingBoxcarSize(Math.round(val))}
                     />
                 </FormGroup>
+                }
+                {widgetStore.smoothingType === SmoothingType.GAUSSIAN &&
+                <FormGroup label={"Sigma"} inline={true}>
+                    <SafeNumericInput
+                        value={widgetStore.smoothingGaussianSigma}
+                        min={1}
+                        className="narrow"
+                        onValueChange={val => widgetStore.setSmoothingGaussianSigma(Number.parseFloat(val))}
+                    />
+                    {/* {Math.ceil(widgetStore.smoothingGaussianSigma * 2)}
+                    {(Math.ceil(widgetStore.smoothingGaussianSigma * 2) - 1) / (2 * widgetStore.smoothingGaussianSigma)} */}
+                </FormGroup>
+                }
+                {(widgetStore.smoothingType === SmoothingType.HANNING) &&
+                <FormGroup label={"Kernel"} inline={true}>
+                    <SafeNumericInput
+                        value={widgetStore.smoothingHanningSize}
+                        min={3}
+                        step={1}
+                        className="narrow"
+                        onValueChange={val => widgetStore.setSmoothingHanningSize(Math.round(val))}
+                    />
+                </FormGroup>
+                }
             </React.Fragment>
         );
     }
