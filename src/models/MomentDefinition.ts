@@ -13,9 +13,3 @@ export enum Moments {
     TYPE_10 = "10: Minimum value of the spectrum",
     TYPE_11 = "11: Coordinate of the minimum value of the spectrum"
 }
-
-export enum MomentMask {
-    NONE = "None",
-    INCLUDE = "Include",
-    EXCLUDE = "Exclude"
-}

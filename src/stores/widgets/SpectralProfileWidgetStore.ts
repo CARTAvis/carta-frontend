@@ -5,7 +5,7 @@ import {PlotType, LineSettings} from "components/Shared";
 import {RegionWidgetStore, RegionsType} from "./RegionWidgetStore";
 import {AppStore, FrameStore} from "..";
 import {isColorValid} from "utilities";
-import {MomentMask, Moments, SpectralSystem, SpectralType, SpectralUnit} from "models";
+import {Moments, SpectralSystem, SpectralType, SpectralUnit} from "models";
 
 export enum MomentSelectingMode {
     NONE = 1,
@@ -36,7 +36,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
     // moment settings
     @observable selectingMode: MomentSelectingMode;
     @observable channelRange: NumberRange;
-    @observable momentMask: MomentMask;
+    @observable momentMask: CARTA.MomentMask;
     @observable maskRange: NumberRange;
     @observable selectedMoments: Moments[];
 
@@ -130,10 +130,8 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         }
     };
 
-    @action setMomentMask = (momentMask: MomentMask) => {
-        if (momentMask) {
+    @action setMomentMask = (momentMask: CARTA.MomentMask) => {
             this.momentMask = momentMask;
-        }
     };
 
     @action selectMoment = (selected: Moments) => {
@@ -172,8 +170,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
                 axis: undefined,
                 regionId: undefined,
                 spectralRange: undefined,
-                stokes: undefined,
-                mask: undefined,
+                mask: this.momentMask,
                 pixelRange: undefined
             };
             appStore.requestMoment(requestMessage);
@@ -265,7 +262,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
 
         this.selectingMode = MomentSelectingMode.NONE;
         this.channelRange = [0, 0];
-        this.momentMask = MomentMask.NONE;
+        this.momentMask = CARTA.MomentMask.None;
         this.maskRange = [0, 0];
         this.selectedMoments = ["TYPE_0" as Moments];
 

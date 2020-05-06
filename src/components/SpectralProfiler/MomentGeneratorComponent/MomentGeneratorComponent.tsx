@@ -1,6 +1,7 @@
 import * as React from "react";
 import {action, observable} from "mobx";
 import {observer} from "mobx-react";
+import {CARTA} from "carta-protobuf";
 import {Alert, Button, Divider, FormGroup, HTMLSelect, MenuItem, Position, Tooltip} from "@blueprintjs/core";
 import {ItemRenderer, MultiSelect} from "@blueprintjs/select";
 import {RegionSelectorComponent} from "components";
@@ -8,7 +9,7 @@ import {TaskProgressDialogComponent} from "components/Dialogs";
 import {SafeNumericInput, SpectralSettingsComponent} from "components/Shared";
 import {MomentSelectingMode, SpectralProfileWidgetStore} from "stores/widgets";
 import {AppStore} from "stores";
-import {MomentMask, Moments} from "models";
+import {Moments} from "models";
 import "./MomentGeneratorComponent.css";
 
 const MomentMultiSelect = MultiSelect.ofType<Moments>();
@@ -150,8 +151,8 @@ export class MomentGeneratorComponent extends React.Component<{widgetStore: Spec
                 <FormGroup label="Mask" inline={true} disabled={!activeFrame}>
                     <HTMLSelect
                         value={widgetStore.momentMask}
-                        options={Object.keys(MomentMask).map((key) => ({label: MomentMask[key], value: key}))}
-                        onChange={(event: React.FormEvent<HTMLSelectElement>) => widgetStore.setMomentMask(event.currentTarget.value as MomentMask)}
+                        options={Object.keys(CARTA.MomentMask).map((key) => ({label: key, value: CARTA.MomentMask[key]}))}
+                        onChange={(event: React.FormEvent<HTMLSelectElement>) => widgetStore.setMomentMask(parseInt(event.currentTarget.value) as CARTA.MomentMask)}
                         disabled={!activeFrame}
                     />
                 </FormGroup>
