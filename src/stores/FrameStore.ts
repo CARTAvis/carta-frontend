@@ -234,22 +234,6 @@ export class FrameStore {
         return null;
     }
 
-    public getWcsSizeInArcsec(size: Point2D): Point2D {
-        const deltaHeader = this.frameInfo.fileInfoExtended.headerEntries.find(entry => entry.name.indexOf("CDELT1") !== -1);
-        const unitHeader = this.frameInfo.fileInfoExtended.headerEntries.find(entry => entry.name.indexOf("CUNIT1") !== -1);
-        if (size && deltaHeader && unitHeader) {
-            const delta = getHeaderNumericValue(deltaHeader);
-            const unit = unitHeader.value.trim();
-            if (isFinite(delta) && unit === "deg" || unit === "rad") {
-                return {
-                    x: size.x * Math.abs(delta) * (unit === "deg" ? 3600 : (180 * 3600 / Math.PI)),
-                    y: size.y * Math.abs(delta) * (unit === "deg" ? 3600 : (180 * 3600 / Math.PI))
-                };
-            }
-        }
-        return null;
-    }
-
     @computed get channelInfo(): ChannelInfo {
         if (!this.frameInfo || !this.frameInfo.fileInfoExtended || this.frameInfo.fileInfoExtended.depth <= 1 || !this.frameInfo.fileInfoExtended.headerEntries) {
             return undefined;
@@ -966,6 +950,43 @@ export class FrameStore {
         }
         this.controlMaps.delete(frame);
     }
+
+    public getWcsSizeInArcsec(size: Point2D): Point2D {
+        const deltaHeader = this.frameInfo.fileInfoExtended.headerEntries.find(entry => entry.name.indexOf("CDELT1") !== -1);
+        const unitHeader = this.frameInfo.fileInfoExtended.headerEntries.find(entry => entry.name.indexOf("CUNIT1") !== -1);
+        if (size && deltaHeader && unitHeader) {
+            const delta = getHeaderNumericValue(deltaHeader);
+            const unit = unitHeader.value.trim();
+            if (isFinite(delta) && unit === "deg" || unit === "rad") {
+                return {
+                    x: size.x * Math.abs(delta) * (unit === "deg" ? 3600 : (180 * 3600 / Math.PI)),
+                    y: size.y * Math.abs(delta) * (unit === "deg" ? 3600 : (180 * 3600 / Math.PI))
+                };
+            }
+        }
+        return null;
+    }
+
+    public findChannelIndexByValue = (x: number): number => {
+        if (x === null || x === undefined || !isFinite(x)) {
+            return undefined;
+        }
+
+        if (this.channelInfo) {
+            if (this.isCoordChannel) {
+                return this.channelInfo.getChannelIndexSimple(x);
+            } else {
+                if ((this.spectralAxis && !this.spectralAxis.valid) || this.isSpectralPropsEqual) {
+                    return this.channelInfo.getChannelIndexWCS(x);
+                } else {
+                    // invert x in selected widget wcs to frame's default wcs
+                    const tx =  AST.transformSpectralPoint(this.spectralFrame, this.spectralType, this.spectralUnit, this.spectralSystem, x, false);
+                    return this.channelInfo.getChannelIndexWCS(tx);
+                }
+            }
+        }
+        return undefined;
+    };
 
     @action updateFromContourData(contourImageData: CARTA.ContourImageData) {
         let vertexCounter = 0;

@@ -35,7 +35,7 @@ export class MomentGeneratorComponent extends React.Component<{widgetStore: Spec
         const frame = AppStore.Instance.activeFrame;
         const widgetStore = this.props.widgetStore;
         if (frame && isFinite(from)) {
-            widgetStore.setSelectedChannelRange([from, widgetStore.channelRange[1]]);
+            widgetStore.setSelectedChannelRange([from, widgetStore.channelValueRange[1]]);
         }
     };
 
@@ -43,7 +43,7 @@ export class MomentGeneratorComponent extends React.Component<{widgetStore: Spec
         const frame = AppStore.Instance.activeFrame;
         const widgetStore = this.props.widgetStore;
         if (frame && isFinite(to)) {
-            widgetStore.setSelectedChannelRange([widgetStore.channelRange[0], to]);
+            widgetStore.setSelectedChannelRange([widgetStore.channelValueRange[0], to]);
         }
     };
 
@@ -124,14 +124,14 @@ export class MomentGeneratorComponent extends React.Component<{widgetStore: Spec
                         <div className="range-select">
                             <FormGroup label="From" inline={true}>
                                 <SafeNumericInput
-                                    value={widgetStore.channelRange[0]}
+                                    value={widgetStore.channelValueRange[0]}
                                     buttonPosition="none"
                                     onValueChange={val => this.onChannelFromChanged(val)}
                                 />
                             </FormGroup>
                             <FormGroup label="To" inline={true}>
                                 <SafeNumericInput
-                                    value={widgetStore.channelRange[1]}
+                                    value={widgetStore.channelValueRange[1]}
                                     buttonPosition="none"
                                     onValueChange={val => this.onChannelToChanged(val)}
                                 />

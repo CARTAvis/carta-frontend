@@ -35,7 +35,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
 
     // moment settings
     @observable selectingMode: MomentSelectingMode;
-    @observable channelRange: NumberRange;
+    @observable channelValueRange: NumberRange;
     @observable momentMask: CARTA.MomentMask;
     @observable maskRange: CARTA.FloatBounds;
     @observable selectedMoments: CARTA.Moment[];
@@ -118,9 +118,9 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         this.selectingMode = MomentSelectingMode.NONE;
     };
 
-    @action setSelectedChannelRange = (range: NumberRange) => {
-        if (range) {
-                this.channelRange = range;
+    @action setSelectedChannelRange = (valueRange: NumberRange) => {
+        if (valueRange) {
+            this.channelValueRange = valueRange;
         }
     };
 
@@ -164,12 +164,18 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
     @action requestMoment = () => {
         const appStore = AppStore.Instance;
         const frame = appStore.activeFrame;
-        if (frame) {
+        const channelIndex1 = frame.findChannelIndexByValue(this.channelValueRange[0]);
+        const channelIndex2 = frame.findChannelIndexByValue((this.channelValueRange[1]));
+        if (frame && isFinite(channelIndex1) && isFinite(channelIndex2)) {
+            const channelIndexRange: CARTA.IIntBounds = {
+                min: channelIndex1 <= channelIndex2 ? channelIndex1 : channelIndex2,
+                max: channelIndex1 <= channelIndex2 ? channelIndex2 : channelIndex1
+            };
             const requestMessage: CARTA.IMomentRequest = {
                 fileId: frame.frameInfo.fileId,
                 moments: this.selectedMoments,
                 regionId: this.effectiveRegionId,
-                spectralRange: undefined,
+                spectralRange: channelIndexRange,
                 mask: this.momentMask,
                 pixelRange: this.maskRange
             };
@@ -261,14 +267,14 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         this.linePlotInitXYBoundaries = { minXVal: 0, maxXVal: 0, minYVal: 0, maxYVal: 0 };
 
         this.selectingMode = MomentSelectingMode.NONE;
-        this.channelRange = [0, 0];
+        this.channelValueRange = [0, 0];
         this.momentMask = CARTA.MomentMask.None;
         this.maskRange = new CARTA.FloatBounds({min: 0, max: 0});
         this.selectedMoments = [CARTA.Moment.INTEGRATED_OF_THE_SPECTRUM];
 
         autorun(() => {
             if (AppStore.Instance.activeFrame) {
-                // this.setSelectedRange([0, AppStore.Instance.activeFrame.numChannels - 1]);
+                // TODO: sync channelIndexRange, channelValueRange, maskRange with active frame
             }
         });
     }
