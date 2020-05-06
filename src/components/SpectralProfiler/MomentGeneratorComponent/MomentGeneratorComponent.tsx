@@ -56,7 +56,7 @@ export class MomentGeneratorComponent extends React.Component<{widgetStore: Spec
         const frame = AppStore.Instance.activeFrame;
         const widgetStore = this.props.widgetStore;
         if (frame && isFinite(from)) {
-            widgetStore.setSelectedMaskRange([from, widgetStore.maskRange[1]]);
+            widgetStore.setSelectedMaskRange(from, widgetStore.maskRange.max);
         }
     };
 
@@ -64,7 +64,7 @@ export class MomentGeneratorComponent extends React.Component<{widgetStore: Spec
         const frame = AppStore.Instance.activeFrame;
         const widgetStore = this.props.widgetStore;
         if (frame && isFinite(to)) {
-            widgetStore.setSelectedMaskRange([widgetStore.maskRange[0], to]);
+            widgetStore.setSelectedMaskRange(widgetStore.maskRange.min, to);
         }
     };
 
@@ -161,14 +161,14 @@ export class MomentGeneratorComponent extends React.Component<{widgetStore: Spec
                         <div className="range-select">
                             <FormGroup label="From" inline={true}>
                                 <SafeNumericInput
-                                    value={widgetStore.maskRange[0]}
+                                    value={widgetStore.maskRange.min}
                                     buttonPosition="none"
                                     onValueChange={val => this.onMaskFromChanged(val)}
                                 />
                             </FormGroup>
                             <FormGroup label="To" inline={true}>
                                 <SafeNumericInput
-                                    value={widgetStore.maskRange[1]}
+                                    value={widgetStore.maskRange.max}
                                     buttonPosition="none"
                                     onValueChange={val => this.onMaskToChanged(val)}
                                 />

@@ -37,7 +37,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
     @observable selectingMode: MomentSelectingMode;
     @observable channelRange: NumberRange;
     @observable momentMask: CARTA.MomentMask;
-    @observable maskRange: NumberRange;
+    @observable maskRange: CARTA.FloatBounds;
     @observable selectedMoments: Moments[];
 
     public static StatsTypeString(statsType: CARTA.StatsType) {
@@ -124,9 +124,10 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         }
     };
 
-    @action setSelectedMaskRange = (range: NumberRange) => {
-        if (range) {
-                this.maskRange = range;
+    @action setSelectedMaskRange = (min: number, max: number) => {
+        if (isFinite(min) && isFinite(max)) {
+            this.maskRange.min = min;
+            this.maskRange.max = max;
         }
     };
 
@@ -171,7 +172,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
                 regionId: undefined,
                 spectralRange: undefined,
                 mask: this.momentMask,
-                pixelRange: undefined
+                pixelRange: this.maskRange
             };
             appStore.requestMoment(requestMessage);
             frame.resetMomentRequestState();
@@ -263,7 +264,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         this.selectingMode = MomentSelectingMode.NONE;
         this.channelRange = [0, 0];
         this.momentMask = CARTA.MomentMask.None;
-        this.maskRange = [0, 0];
+        this.maskRange = new CARTA.FloatBounds({min: 0, max: 0});
         this.selectedMoments = ["TYPE_0" as Moments];
 
         autorun(() => {
