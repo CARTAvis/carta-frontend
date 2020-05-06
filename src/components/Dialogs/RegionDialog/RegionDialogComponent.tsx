@@ -67,7 +67,7 @@ export class RegionDialogComponent extends React.Component {
                     bodyContent = (
                         <React.Fragment>
                             <AppearanceForm region={region} darkTheme={appStore.darkTheme}/>
-                            <RectangularRegionForm region={region} wcsInfo={frame.validWcs ? frame.wcsInfo : 0}/>
+                            <RectangularRegionForm region={region} frame={frame} wcsInfo={frame.validWcs ? frame.wcsInfo : 0}/>
                         </React.Fragment>
                     );
                     editableRegion = true;
@@ -76,7 +76,7 @@ export class RegionDialogComponent extends React.Component {
                     bodyContent = (
                         <React.Fragment>
                             <AppearanceForm region={region} darkTheme={appStore.darkTheme}/>
-                            <EllipticalRegionForm region={region} wcsInfo={frame.validWcs ? frame.wcsInfo : 0}/>
+                            <EllipticalRegionForm region={region} frame={frame} wcsInfo={frame.validWcs ? frame.wcsInfo : 0}/>
                         </React.Fragment>
                     );
                     editableRegion = true;
