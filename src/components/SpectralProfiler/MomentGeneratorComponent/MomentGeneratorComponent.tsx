@@ -9,10 +9,10 @@ import {TaskProgressDialogComponent} from "components/Dialogs";
 import {SafeNumericInput, SpectralSettingsComponent} from "components/Shared";
 import {MomentSelectingMode, SpectralProfileWidgetStore} from "stores/widgets";
 import {AppStore} from "stores";
-import {Moments} from "models";
+import {MOMENT_TEXT} from "models";
 import "./MomentGeneratorComponent.css";
 
-const MomentMultiSelect = MultiSelect.ofType<Moments>();
+const MomentMultiSelect = MultiSelect.ofType<CARTA.Moment>();
 
 @observer
 export class MomentGeneratorComponent extends React.Component<{widgetStore: SpectralProfileWidgetStore}> {
@@ -73,9 +73,14 @@ export class MomentGeneratorComponent extends React.Component<{widgetStore: Spec
         widgetStore.setMomentRangeSelectingMode(widgetStore.isSelectingMomentMaskRange ?  MomentSelectingMode.NONE : MomentSelectingMode.MASK);
     };
 
-    private renderMomentTag = (momentType: Moments) => `${ momentType ? (Moments[momentType].split(":"))[0] : ""}`;
-    private renderMomentSelectItem:  ItemRenderer<Moments>  = (momentType: Moments, {modifiers, handleClick}) => {
-        return <MenuItem text={`${Moments[momentType]}`} onClick={handleClick} key={momentType} icon={this.props.widgetStore.isMomentSelected(momentType) ? "tick" : "blank"}/>;
+    private renderMomentTag = (moment: CARTA.Moment) => {
+        const momentContent = MOMENT_TEXT.get(moment);
+        return momentContent ? momentContent.tag : undefined;
+    };
+
+    private renderMomentSelectItem:  ItemRenderer<CARTA.Moment>  = (moment: CARTA.Moment, {modifiers, handleClick}) => {
+        const momentContent = MOMENT_TEXT.get(moment);
+        return momentContent ? <MenuItem text={`${momentContent.tag}: ${momentContent.text}`} onClick={handleClick} key={moment} icon={this.props.widgetStore.isMomentSelected(moment) ? "tick" : "blank"}/> : undefined;
     };
 
     private handleMomentTagRemove = (tag: string, index: number) => {
@@ -193,9 +198,9 @@ export class MomentGeneratorComponent extends React.Component<{widgetStore: Spec
                 <FormGroup label="Moments" inline={true}>
                     <MomentMultiSelect
                         placeholder="Select..."
-                        items={Object.keys(Moments) as Moments[]}
+                        items={Object.values(CARTA.Moment) as CARTA.Moment[]}
                         itemRenderer={this.renderMomentSelectItem}
-                        onItemSelect={(momentType) => widgetStore.isMomentSelected(momentType) ? widgetStore.deselectMoment(momentType) : widgetStore.selectMoment(momentType)}
+                        onItemSelect={(moment) => widgetStore.isMomentSelected(moment) ? widgetStore.deselectMoment(moment) : widgetStore.selectMoment(moment)}
                         selectedItems={widgetStore.selectedMoments}
                         fill={true}
                         popoverProps={{minimal: true, position: "bottom"}}

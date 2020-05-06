@@ -5,7 +5,7 @@ import {PlotType, LineSettings} from "components/Shared";
 import {RegionWidgetStore, RegionsType} from "./RegionWidgetStore";
 import {AppStore, FrameStore} from "..";
 import {isColorValid} from "utilities";
-import {Moments, SpectralSystem, SpectralType, SpectralUnit} from "models";
+import {SpectralSystem, SpectralType, SpectralUnit} from "models";
 
 export enum MomentSelectingMode {
     NONE = 1,
@@ -38,7 +38,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
     @observable channelRange: NumberRange;
     @observable momentMask: CARTA.MomentMask;
     @observable maskRange: CARTA.FloatBounds;
-    @observable selectedMoments: Moments[];
+    @observable selectedMoments: CARTA.Moment[];
 
     public static StatsTypeString(statsType: CARTA.StatsType) {
         switch (statsType) {
@@ -135,13 +135,13 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
             this.momentMask = momentMask;
     };
 
-    @action selectMoment = (selected: Moments) => {
+    @action selectMoment = (selected: CARTA.Moment) => {
         if (!this.selectedMoments.includes(selected)) {
             this.selectedMoments.push(selected);
         }
     };
 
-    @action deselectMoment = (deselected: Moments) => {
+    @action deselectMoment = (deselected: CARTA.Moment) => {
         if (this.selectedMoments.includes(deselected)) {
             this.selectedMoments = this.selectedMoments.filter((momentType) => momentType !== deselected);
         }
@@ -157,7 +157,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         this.selectedMoments = [];
     };
 
-    @action isMomentSelected = (momentType: Moments): boolean => {
+    @action isMomentSelected = (momentType: CARTA.Moment): boolean => {
         return this.selectedMoments.includes(momentType);
     };
 
@@ -167,7 +167,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         if (frame) {
             const requestMessage: CARTA.IMomentRequest = {
                 fileId: frame.frameInfo.fileId,
-                moments: undefined,
+                moments: this.selectedMoments,
                 axis: undefined,
                 regionId: undefined,
                 spectralRange: undefined,
@@ -265,7 +265,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         this.channelRange = [0, 0];
         this.momentMask = CARTA.MomentMask.None;
         this.maskRange = new CARTA.FloatBounds({min: 0, max: 0});
-        this.selectedMoments = ["TYPE_0" as Moments];
+        this.selectedMoments = [CARTA.Moment.INTEGRATED_OF_THE_SPECTRUM];
 
         autorun(() => {
             if (AppStore.Instance.activeFrame) {
