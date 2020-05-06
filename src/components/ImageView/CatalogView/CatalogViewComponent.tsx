@@ -35,9 +35,10 @@ export class CatalogViewComponent extends React.Component<CatalogViewComponentPr
             data.marker = {
                 symbol: catalog.shape, 
                 color: catalog.color,
-                size: catalog.size,
+                size: catalog.size * devicePixelRatio,
                 line: {
-                    width: 1.5
+                    width: 2,
+                    color: catalog.color
                 }
             };
 
@@ -107,8 +108,8 @@ export class CatalogViewComponent extends React.Component<CatalogViewComponentPr
     render() {
         const appStore = AppStore.Instance;
         const frame = appStore.activeFrame;
-        const width = frame ? frame.renderWidth || 1 : 1;
-        const height = frame ? frame.renderHeight || 1 : 1;
+        const width = this.props.width;
+        const height = this.props.height;
         const padding = appStore.overlayStore.padding;
         let className = "catalog-div";
         if (this.props.docked) {
@@ -124,14 +125,14 @@ export class CatalogViewComponent extends React.Component<CatalogViewComponentPr
                 showgrid: false,
                 zeroline: false,
                 showline: false,
-                showticklabels: false
+                showticklabels: false,
             },
             yaxis: {
                 autorange: false,
                 showgrid: false,
                 zeroline: false,
                 showline: false,
-                showticklabels: false
+                showticklabels: false,
             },
             margin: {
                 l: 0,

@@ -28,7 +28,17 @@ export enum CatalogOverlay {
 
 export enum CatalogOverlayShape {
     Circle = "circle-open",
-    Square = "square-open"
+    FullCircle = "circle",
+    Star = "star-open",
+    FullStar = "star",
+    Square = "square-open",
+    Plus = "cross-thin-open",
+    Cross = "x-thin-open",
+    TriangleUp = "triangle-up-open",
+    TriangleDown = "triangle-down-open",
+    Diamond = "diamond-open",
+    hexagon2 = "hexagon2-open",
+    hexagon = "hexagon-open",
 }
 
 export enum CatalogUpdateMode {
