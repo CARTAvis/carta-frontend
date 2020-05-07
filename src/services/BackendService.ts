@@ -1,7 +1,7 @@
 import {action, observable} from "mobx";
 import {CARTA} from "carta-protobuf";
 import {Observable, Observer, Subject, throwError} from "rxjs";
-import {PreferenceStore, RegionStore} from "stores";
+import {AppStore, PreferenceStore, RegionStore} from "stores";
 
 export enum ConnectionStatus {
     CLOSED = 0,
@@ -795,9 +795,9 @@ export class BackendService {
 
     private onMomentResponse(eventId: number, response: CARTA.MomentResponse) {
         if (response.success && response.directory && response.outputFiles) {
-            // TODO: append output files
+            const appStore = AppStore.Instance;
             response.outputFiles.forEach(image => {
-                console.log(response.directory + image.fileName);
+                appStore.appendFile(response.directory, image.fileName, "");
             });
         }
     }
