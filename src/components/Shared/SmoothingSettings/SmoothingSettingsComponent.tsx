@@ -40,7 +40,7 @@ export class SmoothingSettingsComponent extends React.Component<{widgetStore: Sp
                     <SafeNumericInput
                         value={widgetStore.smoothingBoxcarSize}
                         min={2}
-                        step={1}
+                        stepSize={1}
                         className="narrow"
                         onValueChange={val => widgetStore.setSmoothingBoxcarSize(Math.round(val))}
                     />
@@ -63,7 +63,7 @@ export class SmoothingSettingsComponent extends React.Component<{widgetStore: Sp
                     <SafeNumericInput
                         value={widgetStore.smoothingHanningSize}
                         min={3}
-                        step={1}
+                        stepSize={2}
                         className="narrow"
                         onValueChange={val => widgetStore.setSmoothingHanningSize(Math.round(val))}
                     />
