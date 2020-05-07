@@ -1,9 +1,10 @@
 import * as _ from "lodash";
-import * as AST from "ast_wrapper";
-import * as Long from "long";
 import {action, autorun, computed, observable, ObservableMap, when} from "mobx";
-import {IOptionProps} from "@blueprintjs/core";
+import * as Long from "long";
+import {Colors, IOptionProps} from "@blueprintjs/core";
 import {Utils} from "@blueprintjs/table";
+import * as AST from "ast_wrapper";
+import * as CARTACompute from "carta_computation";
 import {CARTA} from "carta-protobuf";
 import {
     AlertStore,
@@ -40,6 +41,7 @@ import {HistogramWidgetStore, RegionWidgetStore, SpatialProfileWidgetStore, Spec
 import {getImageCanvas} from "components";
 import {CatalogOverlayComponent} from "components";
 import {AppToaster} from "../components/Shared";
+import GitCommit from "../static/gitInfo";
 
 export class AppStore {
     private static staticInstance: AppStore;
@@ -91,6 +93,7 @@ export class AppStore {
 
     private appContainer: HTMLElement;
     private fileCounter = 0;
+    private previousConnectionStatus: ConnectionStatus;
 
     public getAppContainer = (): HTMLElement => {
         return this.appContainer;
@@ -759,6 +762,49 @@ export class AppStore {
         this.syncContourToFrame = true;
         this.initRequirements();
 
+        AST.onReady.then(() => {
+            AST.setPalette(this.darkTheme ? nightPalette : dayPalette);
+            this.astReady = true;
+            this.logStore.addInfo("AST library loaded", ["ast"]);
+        });
+
+        CARTACompute.onReady.then(() => {
+            this.cartaComputeReady = true;
+            this.logStore.addInfo("Compute module loaded", ["compute"]);
+        });
+
+        // Log the frontend git commit hash
+        this.logStore.addDebug(`Current frontend version: ${GitCommit.logMessage}`, ["version"]);
+        this.previousConnectionStatus = ConnectionStatus.CLOSED;
+
+        // Adjust document background when theme changes
+        autorun(() => {
+            document.body.style.backgroundColor = this.darkTheme ? Colors.DARK_GRAY4 : Colors.WHITE;
+        });
+
+        // Display toasts when connection status changes
+        autorun(() => {
+            const newConnectionStatus = this.backendService.connectionStatus;
+            const userString = this.username ? ` as ${this.username}` : "";
+            switch (newConnectionStatus) {
+                case ConnectionStatus.ACTIVE:
+                    if (this.backendService.connectionDropped) {
+                        AppToaster.show({icon: "warning-sign", message: `Reconnected to server${userString}. Some errors may occur`, intent: "warning", timeout: 3000});
+                    } else {
+                        AppToaster.show({icon: "swap-vertical", message: `Connected to CARTA server${userString}`, intent: "success", timeout: 3000});
+                    }
+                    break;
+                case ConnectionStatus.CLOSED:
+                    if (this.previousConnectionStatus === ConnectionStatus.ACTIVE) {
+                        AppToaster.show({icon: "error", message: "Disconnected from server", intent: "danger", timeout: 3000});
+                    }
+                    break;
+                default:
+                    break;
+            }
+            this.previousConnectionStatus = newConnectionStatus;
+        });
+
         const throttledSetCursorRotated = _.throttle(this.setCursor, AppStore.CursorThrottleTimeRotated);
         const throttledSetCursor = _.throttle(this.setCursor, AppStore.CursorThrottleTime);
         // Low-bandwidth mode
@@ -1402,7 +1448,17 @@ export class AppStore {
         });
     };
 
-    fetchParameter = v => v;
+    fetchParameter = (val: any) => {
+        if (val && val instanceof Map) {
+            const obj = {};
+            const map = val as Map<any, any>;
+            for (let [key, value] of map) {
+                obj[key] = value;
+            }
+            return obj;
+        }
+        return val;
+    };
 
     // region requirements calculations
 
