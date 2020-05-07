@@ -42,23 +42,17 @@ export class ExecutionEntry {
             this.parameters = [];
             return true;
         }
-
-        const parameterRegex = /(\$(?:[\w\[\]]+\.)*)([\w\[\]]+)/gm;
         try {
-            let substitutedParameterString = parameterString.replace(parameterRegex, "{\"macroTarget\": \"$1\", \"macroVariable\": \"$2\"}");
+            let substitutedParameterString = parameterString.replace(
+                /\$((?:[\w\[\]]+\.)*)([\w\[\]]+)/gm,
+                (_match, target, variable) => {
+                    return `{"macroTarget": "${target.slice(0, -1)}", "macroVariable": "${variable}"}`;
+                }
+            );
             if (pad) {
                 substitutedParameterString = `[${substitutedParameterString}]`;
             }
-            const parameterArray = JSON.parse(substitutedParameterString);
-            this.parameters = parameterArray.map(parameter => {
-                if (typeof parameter === "object" && parameter.macroTarget && parameter.macroVariable) {
-                    parameter.macroTarget = parameter.macroTarget.replace(/\$(.*)\./, "$1");
-                    if (parameter.macroTarget === "$") {
-                        parameter.macroTarget = "";
-                    }
-                }
-                return parameter;
-            });
+            this.parameters = JSON.parse(substitutedParameterString);
         } catch (e) {
             console.log(e);
             return false;
