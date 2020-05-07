@@ -71,6 +71,7 @@ export class FileBrowserStore {
         this.selectedHDU = null;
         this.fileInfoExtended = null;
         this.regionFileInfo = null;
+        this.catalogFileInfor = null;
 
         if (this.browserMode === BrowserMode.File) {
             backendService.getFileList(directory).subscribe(res => {
