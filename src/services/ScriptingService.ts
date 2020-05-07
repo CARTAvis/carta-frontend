@@ -53,6 +53,9 @@ export class ExecutionEntry {
             this.parameters = parameterArray.map(parameter => {
                 if (typeof parameter === "object" && parameter.macroTarget && parameter.macroVariable) {
                     parameter.macroTarget = parameter.macroTarget.replace(/\$(.*)\./, "$1");
+                    if (parameter.macroTarget === "$") {
+                        parameter.macroTarget = "";
+                    }
                 }
                 return parameter;
             });
