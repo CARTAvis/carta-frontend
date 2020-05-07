@@ -863,7 +863,7 @@ export class FrameStore {
         }
     };
 
-    public invertToNativeWCS = (value: number): number => {
+    public convertToNativeWCS = (value: number): number => {
         if (!this.spectralFrame || !isFinite(value)) {
             return undefined;
         }

@@ -228,7 +228,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
                     nearestIndex = channelInfo.getChannelIndexWCS(x);
                 } else {
                     // invert x in selected widget wcs to frame's default wcs
-                    const nativeX = frame.invertToNativeWCS(x);
+                    const nativeX = frame.convertToNativeWCS(x);
                     if (isFinite(nativeX)) {
                         nearestIndex = channelInfo.getChannelIndexWCS(nativeX);
                     }
