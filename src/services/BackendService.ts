@@ -1,7 +1,7 @@
 import {action, observable} from "mobx";
 import {CARTA} from "carta-protobuf";
 import {Observable, Observer, Subject, throwError} from "rxjs";
-import {LogStore, PreferenceStore, RegionStore} from "stores";
+import {PreferenceStore, RegionStore} from "stores";
 
 export enum ConnectionStatus {
     CLOSED = 0,
@@ -679,17 +679,14 @@ export class BackendService {
     };
 
     @action("request moment")
-    requestMoment(message: CARTA.IMomentRequest): Observable<CARTA.MomentResponse> {
+    requestMoment(message: CARTA.IMomentRequest) {
         if (this.connectionStatus !== ConnectionStatus.ACTIVE) {
             return throwError(new Error("Not connected"));
         } else {
             const requestId = this.eventCounter;
             this.logEvent(CARTA.EventType.MOMENT_REQUEST, requestId, message, false);
-            console.log(message);
             if (this.sendEvent(CARTA.EventType.MOMENT_REQUEST, CARTA.MomentRequest.encode(message).finish())) {
-                return new Observable<CARTA.MomentResponse>(observer => {
-                    this.observerRequestMap.set(requestId, observer);
-                });
+                return true;
             } else {
                 return throwError(new Error("Could not send event"));
             }
@@ -797,17 +794,11 @@ export class BackendService {
     }
 
     private onMomentResponse(eventId: number, response: CARTA.MomentResponse) {
-        const observer = this.observerRequestMap.get(eventId);
-        if (observer) {
-            if (response.success && response.directory && response.outputFiles) {
-                // TODO: append output files
-            } else {
-                observer.error(response.message);
-            }
-            observer.complete();
-            this.observerRequestMap.delete(eventId);
-        } else {
-            console.log(`Can't find observable for request ${eventId}`);
+        if (response.success && response.directory && response.outputFiles) {
+            // TODO: append output files
+            response.outputFiles.forEach(image => {
+                console.log(response.directory + image.fileName);
+            });
         }
     }
 

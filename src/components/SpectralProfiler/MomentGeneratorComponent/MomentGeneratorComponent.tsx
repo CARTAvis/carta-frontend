@@ -1,8 +1,7 @@
 import * as React from "react";
-import {action, observable} from "mobx";
 import {observer} from "mobx-react";
 import {CARTA} from "carta-protobuf";
-import {Alert, Button, Divider, FormGroup, HTMLSelect, MenuItem, Position, Tooltip} from "@blueprintjs/core";
+import {Button, Divider, FormGroup, HTMLSelect, MenuItem, Position, Tooltip} from "@blueprintjs/core";
 import {ItemRenderer, MultiSelect} from "@blueprintjs/select";
 import {RegionSelectorComponent} from "components";
 import {TaskProgressDialogComponent} from "components/Dialogs";
@@ -16,17 +15,6 @@ const MomentMultiSelect = MultiSelect.ofType<CARTA.Moment>();
 
 @observer
 export class MomentGeneratorComponent extends React.Component<{widgetStore: SpectralProfileWidgetStore}> {
-    @observable showMomentAlert: boolean;
-
-    @action handleMomentAlertConfirm = () => {
-        this.props.widgetStore.requestMoment();
-        this.showMomentAlert = false;
-    };
-
-    @action handleMomentAlertCancel = () => {
-        this.showMomentAlert = false;
-    };
-
     private handleSelectedDataSource = (selectedFileId: number) => {
         return;
     };
@@ -92,7 +80,7 @@ export class MomentGeneratorComponent extends React.Component<{widgetStore: Spec
     };
 
     private handleRequestMoment = () => {
-        this.showMomentAlert = true;
+        this.props.widgetStore.requestMoment();
     };
 
     private handleRequestingMomentCancelled = () => {
@@ -230,11 +218,6 @@ export class MomentGeneratorComponent extends React.Component<{widgetStore: Spec
                     <Divider/>
                     {momentsPanel}
                 </div>
-                <Alert icon={"time"} isOpen={this.showMomentAlert} onCancel={this.handleMomentAlertCancel} onConfirm={this.handleMomentAlertConfirm} cancelButtonText={"Cancel"}>
-                    <p>
-                        Generating moments may take a long time, are you sure you want to continue?
-                    </p>
-                </Alert>
                 <TaskProgressDialogComponent
                     isOpen={activeFrame && activeFrame.isRequestingMoments}
                     progress={activeFrame ? activeFrame.requestingMomentsProgress : 0}
