@@ -8,6 +8,7 @@ import {canvasToTransformedImagePos} from "components/ImageView/RegionView/share
 import {ImageViewLayer} from "../ImageViewComponent";
 import {CursorInfo} from "models";
 import "./CatalogViewComponent.css";
+import {Colors} from "@blueprintjs/core";
 
 export interface CatalogViewComponentProps {
     docked: boolean;
@@ -27,12 +28,31 @@ export class CatalogViewComponent extends React.Component<CatalogViewComponentPr
 
         catalogStore.catalogs.forEach((catalog, key) => {
             const selectedPointIndexs = catalog.selectedPointIndexs;
-            let data: Plotly.Data = {};
+            const selectedPointSize = selectedPointIndexs.length;
+            let selectedata: Plotly.Data = {};
+            let unSelectedata: Plotly.Data = {};
 
-            data.type = "scattergl";
-            data.mode = "markers";
-            data.hoverinfo = "none";
-            data.marker = {
+            let totalLength = 0;
+            for (let i = 0; i < catalog.xImageCoords.length; i++) {
+                totalLength += catalog.xImageCoords[i].length;
+            }
+
+            const xArray = new Array(totalLength);
+            const yArray = new Array(totalLength);
+
+            let offset = 0;
+            for (let i = 0; i < catalog.xImageCoords.length; i++) {
+                for (let j = 0; j < catalog.xImageCoords[i].length; j++) {
+                    xArray[j + offset] = catalog.xImageCoords[i][j];
+                    yArray[j + offset] = catalog.yImageCoords[i][j];
+                }
+                offset += catalog.xImageCoords[i].length;
+            }
+            
+            unSelectedata.type = "scattergl";
+            unSelectedata.mode = "markers";
+            unSelectedata.hoverinfo = "none";
+            unSelectedata.marker = {
                 symbol: catalog.shape, 
                 color: catalog.color,
                 size: catalog.size * devicePixelRatio,
@@ -41,38 +61,37 @@ export class CatalogViewComponent extends React.Component<CatalogViewComponentPr
                     color: catalog.color
                 }
             };
+            unSelectedata.x = xArray;
+            unSelectedata.y = yArray;
+            unSelectedata.name = key;
+            scatterDatasets.push(unSelectedata);
 
-            let totalLength = 0;
-            for (let i = 0; i < catalog.xImageCoords.length; i++) {
-                totalLength += catalog.xImageCoords[i].length;
-            }
-
-            const xArray = new Float64Array(totalLength);
-            const yArray = new Float64Array(totalLength);
-
-            let offset = 0;
-            for (let i = 0; i < catalog.xImageCoords.length; i++) {
-                xArray.set(catalog.xImageCoords[i], offset);
-                yArray.set(catalog.yImageCoords[i], offset);
-                offset += catalog.xImageCoords[i].length;
-            }
-
-            data.x = xArray;
-            data.y = yArray;
-            data.name = key;
-            if (selectedPointIndexs.length > 0) {
-                data["selectedpoints"] = selectedPointIndexs;
-                let opacity = 0.2;
-                if (catalog.showSelectedData) {
-                    opacity = 0;
+            if (selectedPointSize > 0) {
+                selectedata.type = "scattergl";
+                selectedata.mode = "markers";
+                selectedata.hoverinfo = "none";
+                selectedata.marker = {
+                    symbol: catalog.shape, 
+                    color: Colors.RED2,
+                    size: catalog.size * devicePixelRatio + 5,
+                    line: {
+                        width: 2,
+                        color: Colors.RED2
+                    }
+                };
+                let selectedX = new Array(selectedPointSize);
+                let selectedY = new Array(selectedPointSize);
+                for (let index = 0; index < selectedPointSize; index++) {
+                    const pointIndex = selectedPointIndexs[index];
+                    selectedX.push(xArray[pointIndex]);
+                    selectedY.push(yArray[pointIndex]);
                 }
-                data["unselected"] = {"marker": {"opacity": opacity}};
-            } else {
-                data["selectedpoints"] = [];
-                data["unselected"] = {"marker": {"opacity": 1}};
+                selectedata.x = selectedX;
+                selectedata.y = selectedY;
             }
-
-            scatterDatasets.push(data);
+            if (selectedata.x && selectedata.x.length) {
+                scatterDatasets.push(selectedata);   
+            }
         });
         return scatterDatasets;
     }
