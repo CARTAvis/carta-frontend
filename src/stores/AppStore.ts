@@ -633,7 +633,11 @@ export class AppStore {
     };
 
     @action cancelRequestingMoment = (fileId: number = -1) => {
-        this.backendService.cancelRequestingMoment(fileId);
+        const frame = this.getFrame(fileId);
+        if (frame && frame.requestingMomentsProgress < 1.0) {
+            frame.resetMomentRequestState();
+            this.backendService.cancelRequestingMoment(fileId);
+        }
     };
 
     @action setDarkTheme = () => {
