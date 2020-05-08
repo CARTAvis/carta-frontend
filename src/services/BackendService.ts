@@ -698,13 +698,11 @@ export class BackendService {
         if (this.connectionStatus !== ConnectionStatus.ACTIVE) {
             return throwError(new Error("Not connected"));
         } else {
-            /*
             const message = CARTA.StopMomentCalc.create({fileId});
             this.logEvent(CARTA.EventType.STOP_MOMENT_CALC, this.eventCounter, message, false);
             if (this.sendEvent(CARTA.EventType.STOP_MOMENT_CALC, CARTA.StopMomentCalc.encode(message).finish())) {
                 return true;
             }
-            */
             console.log("Under construction!");
             return throwError(new Error("Under construction!"));
         }
