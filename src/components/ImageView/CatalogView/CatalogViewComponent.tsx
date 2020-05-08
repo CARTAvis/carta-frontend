@@ -3,12 +3,13 @@ import * as Plotly from "plotly.js";
 import {observer} from "mobx-react";
 import {computed} from "mobx";
 import Plot from "react-plotly.js";
-import {AppStore, CatalogStore, OverlayStore, FrameStore} from "stores";
+import {Colors} from "@blueprintjs/core";
+import {AppStore, CatalogStore} from "stores";
+import {CatalogOverlayShape, CatalogOverlay} from "stores/widgets";
 import {canvasToTransformedImagePos} from "components/ImageView/RegionView/shared";
 import {ImageViewLayer} from "../ImageViewComponent";
 import {CursorInfo} from "models";
 import "./CatalogViewComponent.css";
-import {Colors} from "@blueprintjs/core";
 
 export interface CatalogViewComponentProps {
     docked: boolean;
@@ -70,10 +71,21 @@ export class CatalogViewComponent extends React.Component<CatalogViewComponentPr
                 selectedata.type = "scattergl";
                 selectedata.mode = "markers";
                 selectedata.hoverinfo = "none";
+                let outlineShape = catalog.shape;
+                let outlineSize = catalog.size * devicePixelRatio + 4;
+                if (outlineShape === CatalogOverlayShape.FullCircle) {
+                    outlineShape = CatalogOverlayShape.Circle;
+                } else if (outlineShape === CatalogOverlayShape.FullStar) {
+                    outlineShape = CatalogOverlayShape.Star;
+                } else if (outlineShape === CatalogOverlayShape.Plus) {
+                    outlineShape = "cross-open" as CatalogOverlayShape;
+                } else if (outlineShape === CatalogOverlayShape.Cross) {
+                    outlineShape = "x-open" as CatalogOverlayShape;
+                }
                 selectedata.marker = {
-                    symbol: catalog.shape, 
+                    symbol: outlineShape, 
                     color: Colors.RED2,
-                    size: catalog.size * devicePixelRatio + 5,
+                    size: outlineSize,
                     line: {
                         width: 2,
                         color: Colors.RED2
