@@ -3,11 +3,10 @@ import * as React from "react";
 import * as ReactDOM from "react-dom";
 import {ResizeEnable, Rnd} from "react-rnd";
 import {Dialog, IDialogProps, Button} from "@blueprintjs/core";
+import {HelpStore, HelpType} from "stores";
 import "./DraggableDialogComponent.css";
-import { AppStore, HelpType } from "stores";
 
 export class ResizableDialogComponentProps {
-    appStore: AppStore;
     dialogProps: IDialogProps;
     defaultWidth: number;
     defaultHeight: number;
@@ -40,7 +39,7 @@ export class DraggableDialogComponent extends React.Component<ResizableDialogCom
 
     private onClickHelpButton = () => {
         const centerX = this.rnd.draggable.state.x + this.rnd.resizable.size.width * 0.5;
-        this.props.appStore.helpStore.showHelpDrawer(this.props.helpType, centerX);
+        HelpStore.Instance.showHelpDrawer(this.props.helpType, centerX);
     }
 
     render() {

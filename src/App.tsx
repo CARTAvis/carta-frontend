@@ -8,22 +8,21 @@ import {Alert, Classes, Colors, Dialog, Hotkey, Hotkeys, HotkeysTarget, Intent} 
 import {UIControllerComponent, exportImage, FloatingWidgetManagerComponent} from "./components";
 import {AppToaster} from "./components/Shared";
 import {TaskProgressDialogComponent} from "./components/Dialogs";
-import {AppStore, BrowserMode, dayPalette, nightPalette, RegionMode} from "./stores";
+import {AlertStore, AppStore, BrowserMode, dayPalette, DialogStore, FileBrowserStore, LogStore, nightPalette, OverlayStore, RegionMode} from "./stores";
 import {ConnectionStatus} from "./services";
-import {PresetLayout} from "models";
 import GitCommit from "./static/gitInfo";
 import "./App.css";
 import "./layout-base.css";
 import "./layout-theme.css";
 
 @HotkeysTarget @observer
-export class App extends React.Component<{ appStore: AppStore }> {
+export class App extends React.Component {
     private previousConnectionStatus: ConnectionStatus;
 
-    constructor(props: { appStore: AppStore }) {
+    constructor(props: any) {
         super(props);
 
-        const appStore = this.props.appStore;
+        const appStore = AppStore.Instance;
 
         AST.onReady.then(() => {
             AST.setPalette(appStore.darkTheme ? nightPalette : dayPalette);
@@ -66,13 +65,14 @@ export class App extends React.Component<{ appStore: AppStore }> {
 
     // GoldenLayout resize handler
     onContainerResize = (width, height) => {
-        if (this.props.appStore.layoutStore.dockedLayout) {
-            this.props.appStore.layoutStore.dockedLayout.updateSize(width, height);
+        const appStore = AppStore.Instance;
+        if (appStore.layoutStore.dockedLayout) {
+            appStore.layoutStore.dockedLayout.updateSize(width, height);
         }
     };
 
     public render() {
-        const appStore = this.props.appStore;
+        const appStore = AppStore.Instance;
         let className = "App";
         let glClassName = "gl-container-app";
         if (appStore.darkTheme) {
@@ -84,7 +84,7 @@ export class App extends React.Component<{ appStore: AppStore }> {
 
         return (
             <div className={className}>
-                <UIControllerComponent appStore={appStore}/>
+                <UIControllerComponent/>
                 <Alert isOpen={appStore.alertStore.alertVisible} onClose={appStore.alertStore.dismissAlert} canEscapeKeyCancel={true}>
                     <p>{appStore.alertStore.alertText}</p>
                 </Alert>
@@ -102,7 +102,7 @@ export class App extends React.Component<{ appStore: AppStore }> {
                 <div className={glClassName} ref={ref => appStore.setAppContainer(ref)}>
                     <ReactResizeDetector handleWidth handleHeight onResize={this.onContainerResize} refreshMode={"throttle"} refreshRate={200}/>
                 </div>
-                <FloatingWidgetManagerComponent appStore={appStore}/>
+                <FloatingWidgetManagerComponent/>
                 <Dialog isOpen={appStore.dialogStore.hotkeyDialogVisible} className={"bp3-hotkey-dialog"} canEscapeKeyClose={true} canOutsideClickClose={true} onClose={appStore.dialogStore.hideHotkeyDialog}>
                     <div className={Classes.DIALOG_BODY}>
                         {this.renderHotkeys()}
@@ -113,35 +113,35 @@ export class App extends React.Component<{ appStore: AppStore }> {
     }
 
     nextChannel = () => {
-        const appStore = this.props.appStore;
+        const appStore = AppStore.Instance;
         if (appStore.activeFrame) {
             appStore.activeFrame.incrementChannels(1, 0);
         }
     };
 
     prevChannel = () => {
-        const appStore = this.props.appStore;
+        const appStore = AppStore.Instance;
         if (appStore.activeFrame) {
             appStore.activeFrame.incrementChannels(-1, 0);
         }
     };
 
     nextStokes = () => {
-        const appStore = this.props.appStore;
+        const appStore = AppStore.Instance;
         if (appStore.activeFrame) {
             appStore.activeFrame.incrementChannels(0, 1);
         }
     };
 
     prevStokes = () => {
-        const appStore = this.props.appStore;
+        const appStore = AppStore.Instance;
         if (appStore.activeFrame) {
             appStore.activeFrame.incrementChannels(0, -1);
         }
     };
 
     toggleDarkTheme = () => {
-        const appStore = this.props.appStore;
+        const appStore = AppStore.Instance;
         if (appStore.darkTheme) {
             appStore.setLightTheme();
         } else {
@@ -150,21 +150,21 @@ export class App extends React.Component<{ appStore: AppStore }> {
     };
 
     toggleCreateMode = () => {
-        const appStore = this.props.appStore;
+        const appStore = AppStore.Instance;
         if (appStore.activeFrame) {
             appStore.activeFrame.regionSet.toggleMode();
         }
     };
 
     exitCreateMode = () => {
-        const appStore = this.props.appStore;
+        const appStore = AppStore.Instance;
         if (appStore.activeFrame && appStore.activeFrame.regionSet.mode !== RegionMode.MOVING) {
             appStore.activeFrame.regionSet.setMode(RegionMode.MOVING);
         }
     };
 
     toggleRegionLock = () => {
-        const appStore = this.props.appStore;
+        const appStore = AppStore.Instance;
         if (appStore.activeFrame) {
             const regionSet = appStore.activeFrame.regionSet;
             if (regionSet.selectedRegion) {
@@ -174,7 +174,7 @@ export class App extends React.Component<{ appStore: AppStore }> {
     };
 
     unlockAllRegions = () => {
-        const appStore = this.props.appStore;
+        const appStore = AppStore.Instance;
         if (appStore.activeFrame) {
             const regionSet = appStore.activeFrame.regionSet;
             for (const region of regionSet.regions) {
@@ -183,8 +183,20 @@ export class App extends React.Component<{ appStore: AppStore }> {
         }
     };
 
+    handleRegionEsc = () => {
+        const appStore = AppStore.Instance;
+        if (appStore.activeFrame && appStore.activeFrame.regionSet) {
+            const regionSet = appStore.activeFrame.regionSet;
+            if (regionSet.selectedRegion) {
+                regionSet.deselectRegion();
+            } else if (regionSet.mode === RegionMode.CREATING) {
+                regionSet.setMode(RegionMode.MOVING);
+            }
+        }
+    };
+
     public renderHotkeys() {
-        const appStore = this.props.appStore;
+        const appStore = AppStore.Instance;
         const modString = appStore.modifierString;
 
         const navigationGroupTitle = "1) Navigation";
@@ -206,7 +218,7 @@ export class App extends React.Component<{ appStore: AppStore }> {
             <Hotkey key={2} group={regionGroupTitle} global={true} combo="shift + l" label="Unlock all regions" onKeyDown={this.unlockAllRegions}/>,
             <Hotkey key={3} group={regionGroupTitle} global={true} combo="del" label="Delete selected region" onKeyDown={appStore.deleteSelectedRegion}/>,
             <Hotkey key={4} group={regionGroupTitle} global={true} combo="backspace" label="Delete selected region" onKeyDown={appStore.deleteSelectedRegion}/>,
-            <Hotkey key={5} group={regionGroupTitle} global={true} combo="esc" label="Deselect region" onKeyDown={appStore.deselectRegion}/>,
+            <Hotkey key={5} group={regionGroupTitle} global={true} combo="esc" label="Deselect region/Cancel region creation" onKeyDown={this.handleRegionEsc}/>,
             <Hotkey key={6} group={regionGroupTitle} global={true} combo="mod" label="Switch region creation mode"/>,
             <Hotkey key={7} group={regionGroupTitle} global={true} combo={"shift"} label="Symmetric region creation"/>,
             <Hotkey key={8} group={regionGroupTitle} global={true} combo="double-click" label="Region properties"/>

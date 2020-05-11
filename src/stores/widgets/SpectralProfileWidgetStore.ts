@@ -164,7 +164,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
     @action setSmoothingBoxcarSize = (val: number) => {
         this.smoothingBoxcarSize = val;
     }
-    
+
     @action setSmoothingGaussianSigma = (val: number) => {
         this.smoothingGaussianSigma = val;
     }
@@ -173,8 +173,8 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         this.smoothingHanningSize = val;
     }
 
-    constructor(appStore: AppStore, coordinate: string = "z") {
-        super(appStore, RegionsType.CLOSED_AND_POINT);
+    constructor(coordinate: string = "z") {
+        super(RegionsType.CLOSED_AND_POINT);
         this.coordinate = coordinate;
         this.statsType = CARTA.StatsType.Mean;
 

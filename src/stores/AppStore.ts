@@ -41,9 +41,31 @@ import {AppToaster} from "../components/Shared";
 import {CatalogOverlayComponent} from "components";
 
 export class AppStore {
+    private static staticInstance: AppStore;
+
+    static get Instance() {
+        if (!AppStore.staticInstance) {
+            AppStore.staticInstance = new AppStore();
+        }
+        return AppStore.staticInstance;
+    }
+
     // Backend services
-    backendService: BackendService;
-    tileService: TileService;
+    readonly backendService: BackendService;
+    readonly tileService: TileService;
+
+    // Other stores
+    readonly alertStore: AlertStore;
+    readonly animatorStore: AnimatorStore;
+    readonly catalogStore: CatalogStore;
+    readonly dialogStore: DialogStore;
+    readonly fileBrowserStore: FileBrowserStore;
+    readonly helpStore: HelpStore;
+    readonly layoutStore: LayoutStore;
+    readonly logStore: LogStore;
+    readonly overlayStore: OverlayStore;
+    readonly preferenceStore: PreferenceStore;
+    readonly widgetsStore: WidgetsStore;
 
     // WebAssembly Module status
     @observable astReady: boolean;
@@ -55,30 +77,8 @@ export class AppStore {
     @observable syncContourToFrame: boolean;
     @observable syncFrameToContour: boolean;
 
-    // Animation
-    @observable animatorStore: AnimatorStore;
-    // Error alerts
-    readonly alertStore: AlertStore;
-    // Logs
-    readonly logStore: LogStore;
-    // User preference
-    @observable preferenceStore: PreferenceStore;
     // catalog map catalog widget store with file Id
     @observable catalogs: Map<string, number>;
-    // catalog data for image viewer
-    @observable catalogStore: CatalogStore;
-
-    readonly layoutStore: LayoutStore;
-    // Dialogs
-    readonly dialogStore: DialogStore;
-    // Overlay
-    readonly overlayStore: OverlayStore;
-    // File Browser
-    readonly fileBrowserStore: FileBrowserStore;
-    // Widgets
-    readonly widgetsStore: WidgetsStore;
-    // Help
-    @observable helpStore: HelpStore;
 
     // Profiles and region data
     @observable spatialProfiles: Map<string, SpatialProfileStore>;
@@ -91,7 +91,6 @@ export class AppStore {
     @observable spectralReference: FrameStore;
 
     private appContainer: HTMLElement;
-    private contourWebGLContext: WebGLRenderingContext;
 
     public getAppContainer = (): HTMLElement => {
         return this.appContainer;
@@ -247,7 +246,7 @@ export class AppStore {
     @computed get catalogNum(): number {
         const fileNumbers = Array.from(this.catalogs.values());
         if (fileNumbers.length) {
-            return Math.max(...fileNumbers);   
+            return Math.max(...fileNumbers);
         }
         return 0;
     }
@@ -315,7 +314,7 @@ export class AppStore {
             // Clear existing tile cache if it exists
             this.tileService.clearCompressedCache(fileId);
 
-            let newFrame = new FrameStore(this.preferenceStore, this.overlayStore, this.logStore, frameInfo, this.backendService);
+            let newFrame = new FrameStore(frameInfo);
 
             // clear existing requirements for the frame
             this.spectralRequirements.delete(ack.fileId);
@@ -511,31 +510,34 @@ export class AppStore {
             AppToaster.show({icon: "warning-sign", message: `Catalog type not supported`, intent: "danger", timeout: 3000});
             return;
         }
+        this.fileLoading = true;
 
         const frame = this.activeFrame;
         const fileId = this.catalogNum + 1;
         this.backendService.loadCatalogFile(directory, file, fileId, previewDataSize).subscribe(ack => {
+            this.fileLoading = false;
             if (frame && ack.success && ack.dataSize) {
-                let catalogInfo: CatalogInfo = {fileId : fileId, fileInfo: ack.fileInfo, dataSize: ack.dataSize};
+                let catalogInfo: CatalogInfo = {fileId: fileId, fileInfo: ack.fileInfo, dataSize: ack.dataSize};
                 let catalogWidgetId = null;
                 const config = CatalogOverlayComponent.WIDGET_CONFIG;
                 let floatingCatalogWidgets = this.widgetsStore.getFloatingWidgetByComponentId(config.componentId).length;
                 let dockedCatalogWidgets = this.widgetsStore.getDockedWidgetByType(config.type).length;
 
-                if (floatingCatalogWidgets === 0  && dockedCatalogWidgets === 0) {
-                    catalogWidgetId = this.widgetsStore.createFloatingCatalogOverlayWidget(catalogInfo, ack.headers, ack.columnsData);   
+                if (floatingCatalogWidgets === 0 && dockedCatalogWidgets === 0) {
+                    catalogWidgetId = this.widgetsStore.createFloatingCatalogOverlayWidget(catalogInfo, ack.headers, ack.columnsData);
                 } else {
                     catalogWidgetId = this.widgetsStore.addCatalogOverlayWidget(catalogInfo, ack.headers, ack.columnsData);
                 }
                 if (catalogWidgetId) {
                     this.catalogs.set(catalogWidgetId, fileId);
-                    this.catalogStore.addCatalogs(catalogWidgetId);
-                    this.fileBrowserStore.hideFileBrowser(); 
+                    this.catalogStore.addCatalogs(catalogWidgetId, fileId);
+                    this.fileBrowserStore.hideFileBrowser();
                 }
             }
         }, error => {
             console.error(error);
             AppToaster.show({icon: "warning-sign", message: error, intent: "danger", timeout: 3000});
+            this.fileLoading = false;
         });
     };
 
@@ -709,13 +711,24 @@ export class AppStore {
         }
     }, AppStore.ImageChannelThrottleTime);
 
-    constructor() {
-        this.alertStore = new AlertStore();
-        this.layoutStore = new LayoutStore(this, this.alertStore);
-        this.preferenceStore = new PreferenceStore(this);
-        this.logStore = new LogStore();
-        this.backendService = new BackendService(this.logStore, this.preferenceStore);
-        this.tileService = new TileService(this.backendService);
+    private constructor() {
+        // Assign service instances
+        this.backendService = BackendService.Instance;
+        this.tileService = TileService.Instance;
+
+        // Assign lower level store instances
+        this.alertStore = AlertStore.Instance;
+        this.animatorStore = AnimatorStore.Instance;
+        this.catalogStore = CatalogStore.Instance;
+        this.dialogStore = DialogStore.Instance;
+        this.fileBrowserStore = FileBrowserStore.Instance;
+        this.helpStore = HelpStore.Instance;
+        this.layoutStore = LayoutStore.Instance;
+        this.logStore = LogStore.Instance;
+        this.overlayStore = OverlayStore.Instance;
+        this.preferenceStore = PreferenceStore.Instance;
+        this.widgetsStore = WidgetsStore.Instance;
+
         this.astReady = false;
         this.cartaComputeReady = false;
         this.spatialProfiles = new Map<string, SpatialProfileStore>();
@@ -726,18 +739,11 @@ export class AppStore {
 
         this.frames = [];
         this.catalogs = new Map();
-        this.catalogStore = new CatalogStore();
         this.activeFrame = null;
         this.contourDataSource = null;
         this.syncFrameToContour = true;
         this.syncContourToFrame = true;
-        this.fileBrowserStore = new FileBrowserStore(this, this.backendService);
-        this.animatorStore = new AnimatorStore(this);
-        this.overlayStore = new OverlayStore(this, this.preferenceStore);
-        this.widgetsStore = new WidgetsStore(this);
         this.initRequirements();
-        this.dialogStore = new DialogStore(this);
-        this.helpStore = new HelpStore();
 
         const throttledSetCursorRotated = _.throttle(this.setCursor, AppStore.CursorThrottleTimeRotated);
         const throttledSetCursor = _.throttle(this.setCursor, AppStore.CursorThrottleTime);
@@ -832,14 +838,14 @@ export class AppStore {
         setInterval(this.recalculateRequirements, AppStore.RequirementsCheckInterval);
 
         // Subscribe to frontend streams
-        this.backendService.getSpatialProfileStream().subscribe(this.handleSpatialProfileStream);
-        this.backendService.getSpectralProfileStream().subscribe(this.handleSpectralProfileStream);
-        this.backendService.getRegionHistogramStream().subscribe(this.handleRegionHistogramStream);
-        this.backendService.getContourStream().subscribe(this.handleContourImageStream);
-        this.backendService.getCatalogStream().subscribe(this.handleCatalogFilterStream);
-        this.backendService.getErrorStream().subscribe(this.handleErrorStream);
-        this.backendService.getRegionStatsStream().subscribe(this.handleRegionStatsStream);
-        this.backendService.getReconnectStream().subscribe(this.handleReconnectStream);
+        this.backendService.spatialProfileStream.subscribe(this.handleSpatialProfileStream);
+        this.backendService.spectralProfileStream.subscribe(this.handleSpectralProfileStream);
+        this.backendService.histogramStream.subscribe(this.handleRegionHistogramStream);
+        this.backendService.contourStream.subscribe(this.handleContourImageStream);
+        this.backendService.catalogStream.subscribe(this.handleCatalogFilterStream);
+        this.backendService.errorStream.subscribe(this.handleErrorStream);
+        this.backendService.statsStream.subscribe(this.handleRegionStatsStream);
+        this.backendService.reconnectStream.subscribe(this.handleReconnectStream);
         this.tileService.tileStream.subscribe(this.handleTileStream);
 
         // Auth and connection
@@ -999,7 +1005,7 @@ export class AppStore {
             }
         });
 
-        const progress = catalogFilter.progress; 
+        const progress = catalogFilter.progress;
         const catalogWidgetStore = this.widgetsStore.catalogOverlayWidgets.get(catalogWidgetId);
         if (catalogWidgetStore) {
             catalogWidgetStore.updateCatalogData(catalogFilter);
@@ -1009,7 +1015,7 @@ export class AppStore {
                 catalogWidgetStore.setPlotingData(false);
             }
 
-            if (catalogWidgetStore.updateMode === CatalogUpdateMode.ViewUpdate) {               
+            if (catalogWidgetStore.updateMode === CatalogUpdateMode.ViewUpdate) {
                 const xColumn = catalogWidgetStore.xColumnRepresentation;
                 const yColumn = catalogWidgetStore.yColumnRepresentation;
                 if (xColumn && yColumn) {
@@ -1024,11 +1030,11 @@ export class AppStore {
                 const scatterWidgetStore = scatterWidgetsStore[index];
                 const scatterWidget = this.widgetsStore.catalogScatterWidgets.get(scatterWidgetStore);
                 if (scatterWidget) {
-                    scatterWidget.updateScatterData();   
-                }    
+                    scatterWidget.updateScatterData();
+                }
             }
         }
-    }
+    };
 
     handleErrorStream = (errorData: CARTA.ErrorData) => {
         if (errorData) {
@@ -1195,12 +1201,6 @@ export class AppStore {
             if (frame) {
                 frame.regionSet.deleteRegion(region);
             }
-        }
-    };
-
-    @action deselectRegion = () => {
-        if (this.activeFrame && this.activeFrame.regionSet) {
-            this.activeFrame.regionSet.deselectRegion();
         }
     };
 

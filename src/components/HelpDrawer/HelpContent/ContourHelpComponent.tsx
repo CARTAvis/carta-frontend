@@ -4,12 +4,11 @@ import {ImageComponent} from "./ImageComponent";
 import * as headContourButton from "static/help/head_contour_button.png";
 import * as headContourButton_d from "static/help/head_contour_button_d.png";
 
-export class ContourHelpComponent extends React.Component<{ appStore: AppStore }> {
+export class ContourHelpComponent extends React.Component {
     public render() {
-        const appStore = this.props.appStore;
         return (
             <div>
-                <p><ImageComponent appStore={appStore} light={headContourButton} dark={headContourButton_d} width="90%"/></p>
+                <p><ImageComponent light={headContourButton} dark={headContourButton_d} width="90%"/></p>
                 <p>Contour configuration dialogue allows users to generate a contour layer on top of a raster image in the image
         viewer. Steps to create a contour layer with the &quot;Levels&quot; tab are:</p>
                 <ol>

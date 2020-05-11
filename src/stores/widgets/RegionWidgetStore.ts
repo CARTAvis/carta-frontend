@@ -17,8 +17,9 @@ export class RegionWidgetStore {
     @observable regionIdMap: Map<number, number>;
     @observable type: RegionsType;
 
-    constructor(appStore: AppStore, type: RegionsType) {
-        this.appStore = appStore;
+    constructor(type: RegionsType) {
+        // TODO: Do we need a ref here?
+        this.appStore = AppStore.Instance;
         this.type = type;
         this.regionIdMap = new Map<number, number>();
     }
