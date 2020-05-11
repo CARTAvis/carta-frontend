@@ -146,6 +146,7 @@ export class TableComponent extends React.Component<TableComponentProps> {
                     enableGhostCells={true}
                     onSelection={this.onRowIndexSelection}
                     enableMultipleSelection={false}
+                    enableRowResizing={false}
                 >
                     {tableColumns}
                 </Table>
@@ -158,6 +159,7 @@ export class TableComponent extends React.Component<TableComponentProps> {
                     enableRowReordering={false}
                     selectionModes={SelectionModes.NONE}
                     enableGhostCells={true} 
+                    enableRowResizing={false}
                 >
                     {tableColumns}
                 </Table>
