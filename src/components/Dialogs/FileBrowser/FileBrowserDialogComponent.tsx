@@ -299,7 +299,7 @@ export class FileBrowserDialogComponent extends React.Component {
                                 infoTypes={this.getFileInfoTypes(fileBrowserStore.browserMode)}
                                 fileInfoExtended={fileBrowserStore.fileInfoExtended}
                                 regionFileInfo={fileBrowserStore.regionFileInfo ? fileBrowserStore.regionFileInfo.join("\n") : ""}
-                                catalogFileInfo={fileBrowserStore.catalogFileInfor}
+                                catalogFileInfo={fileBrowserStore.catalogFileInfo}
                                 selectedTab={fileBrowserStore.selectedTab as FileInfoType}
                                 handleTabChange={this.handleTabChange}
                                 isLoading={fileBrowserStore.loadingInfo}
