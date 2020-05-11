@@ -3,12 +3,12 @@ import * as Plotly from "plotly.js";
 import {observer} from "mobx-react";
 import {computed} from "mobx";
 import Plot from "react-plotly.js";
-import {AppStore, CatalogStore, OverlayStore, FrameStore} from "stores";
+import {Colors} from "@blueprintjs/core";
+import {AppStore, CatalogStore} from "stores";
 import {canvasToTransformedImagePos} from "components/ImageView/RegionView/shared";
 import {ImageViewLayer} from "../ImageViewComponent";
 import {CursorInfo} from "models";
 import "./CatalogViewComponent.css";
-import {Colors} from "@blueprintjs/core";
 
 export interface CatalogViewComponentProps {
     docked: boolean;
@@ -48,12 +48,12 @@ export class CatalogViewComponent extends React.Component<CatalogViewComponentPr
                 }
                 offset += catalog.xImageCoords[i].length;
             }
-            
+
             unSelectedata.type = "scattergl";
             unSelectedata.mode = "markers";
             unSelectedata.hoverinfo = "none";
             unSelectedata.marker = {
-                symbol: catalog.shape, 
+                symbol: catalog.shape,
                 color: catalog.color,
                 size: catalog.size * devicePixelRatio,
                 line: {
@@ -71,7 +71,7 @@ export class CatalogViewComponent extends React.Component<CatalogViewComponentPr
                 selectedata.mode = "markers";
                 selectedata.hoverinfo = "none";
                 selectedata.marker = {
-                    symbol: catalog.shape, 
+                    symbol: catalog.shape,
                     color: Colors.RED2,
                     size: catalog.size * devicePixelRatio + 5,
                     line: {
@@ -90,7 +90,7 @@ export class CatalogViewComponent extends React.Component<CatalogViewComponentPr
                 selectedata.y = selectedY;
             }
             if (selectedata.x && selectedata.x.length) {
-                scatterDatasets.push(selectedata);   
+                scatterDatasets.push(selectedata);
             }
         });
         return scatterDatasets;
@@ -109,7 +109,7 @@ export class CatalogViewComponent extends React.Component<CatalogViewComponentPr
                 appStore.catalogStore.updateSelectedPoints(catalogWidgetId, selectedPointIndex);
             }
         }
-    }
+    };
 
     private onWheelCaptured = (event: React.WheelEvent<HTMLDivElement>) => {
         if (event && event.nativeEvent && event.nativeEvent.type === "wheel") {
@@ -122,7 +122,7 @@ export class CatalogViewComponent extends React.Component<CatalogViewComponentPr
                 this.props.onZoomed(frame.getCursorInfo(cursorPosImageSpace), -delta);
             }
         }
-    }
+    };
 
     render() {
         const appStore = AppStore.Instance;
@@ -136,7 +136,7 @@ export class CatalogViewComponent extends React.Component<CatalogViewComponentPr
         }
 
         let layout: Partial<Plotly.Layout> = {
-            width: width, 
+            width: width,
             height: height,
             hovermode: "closest",
             xaxis: {
@@ -170,13 +170,15 @@ export class CatalogViewComponent extends React.Component<CatalogViewComponentPr
             displaylogo: false,
             scrollZoom: false,
             showAxisDragHandles: false,
-            setBackground: () => { return "transparent"; },
+            setBackground: () => {
+                return "transparent";
+            },
         };
 
         if (frame) {
             const border = frame.requiredFrameView;
-            layout.xaxis.range =  [border.xMin, border.xMax];
-            layout.yaxis.range =  [border.yMin, border.yMax];
+            layout.xaxis.range = [border.xMin, border.xMax];
+            layout.yaxis.range = [border.yMin, border.yMax];
         }
 
         return (
