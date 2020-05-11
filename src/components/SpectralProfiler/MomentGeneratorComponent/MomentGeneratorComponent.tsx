@@ -68,7 +68,7 @@ export class MomentGeneratorComponent extends React.Component<{widgetStore: Spec
 
     private renderMomentSelectItem:  ItemRenderer<CARTA.Moment>  = (moment: CARTA.Moment, {modifiers, handleClick}) => {
         const momentContent = MOMENT_TEXT.get(moment);
-        return momentContent ? <MenuItem text={`${momentContent.tag}: ${momentContent.text}`} onClick={handleClick} key={moment} icon={this.props.widgetStore.isMomentSelected(moment) ? "tick" : "blank"}/> : undefined;
+        return momentContent ? <MenuItem disabled={moment === CARTA.Moment.MEDIAN_COORDINATE} text={`${momentContent.tag}: ${momentContent.text}`} onClick={handleClick} key={moment} icon={this.props.widgetStore.isMomentSelected(moment) ? "tick" : "blank"}/> : undefined;
     };
 
     private handleMomentTagRemove = (tag: string, index: number) => {
