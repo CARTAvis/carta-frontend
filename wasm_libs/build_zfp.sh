@@ -16,7 +16,7 @@ emcmake cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_C_FLAGS="-s WASM=1" -DZFP_WITH_
 emmake make -j4
 emmake make install
 echo "Checking for ZFP static lib..."
-if [[ $(find -L ../../lib/libzfp.a -type f -size +192000c 2>/dev/null) ]]; then
+if [[ $(find -L ../../built/lib/libzfp.a -type f -size +192000c 2>/dev/null) ]]; then
     echo "Found"
 else
     echo "Not found!"
