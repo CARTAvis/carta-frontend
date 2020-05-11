@@ -1,5 +1,5 @@
 import {action, autorun, computed, observable} from "mobx";
-import {Colors, NumberRange} from "@blueprintjs/core";
+import {Colors} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import {PlotType, LineSettings} from "components/Shared";
 import {RegionWidgetStore, RegionsType} from "./RegionWidgetStore";
@@ -35,7 +35,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
 
     // moment settings
     @observable selectingMode: MomentSelectingMode;
-    @observable channelValueRange: NumberRange;
+    @observable channelValueRange: CARTA.FloatBounds;
     @observable momentMask: CARTA.MomentMask;
     @observable maskRange: CARTA.FloatBounds;
     @observable selectedMoments: CARTA.Moment[];
@@ -118,9 +118,10 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         this.selectingMode = MomentSelectingMode.NONE;
     };
 
-    @action setSelectedChannelRange = (valueRange: NumberRange) => {
-        if (valueRange) {
-            this.channelValueRange = valueRange;
+    @action setSelectedChannelRange = (min: number, max: number) => {
+        if (isFinite(min) && isFinite(max)) {
+            this.channelValueRange.min = min;
+            this.channelValueRange.max = max;
         }
     };
 
@@ -128,6 +129,16 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         if (isFinite(min) && isFinite(max)) {
             this.maskRange.min = min;
             this.maskRange.max = max;
+        }
+    };
+
+    @action private updateRanges = () => {
+        const frame = AppStore.Instance.activeFrame;
+        if (frame && frame.channelValueBounds) {
+            this.channelValueRange.min = frame.channelValueBounds.min;
+            this.channelValueRange.max = frame.channelValueBounds.max;
+            this.maskRange.min = 0;
+            this.maskRange.max = 1;
         }
     };
 
@@ -268,14 +279,14 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         this.linePlotInitXYBoundaries = { minXVal: 0, maxXVal: 0, minYVal: 0, maxYVal: 0 };
 
         this.selectingMode = MomentSelectingMode.NONE;
-        this.channelValueRange = [0, 0];
+        this.channelValueRange = new CARTA.FloatBounds({min: 0, max: 0});
         this.momentMask = CARTA.MomentMask.None;
-        this.maskRange = new CARTA.FloatBounds({min: 0, max: 0});
+        this.maskRange = new CARTA.FloatBounds({min: 0, max: 1});
         this.selectedMoments = [CARTA.Moment.INTEGRATED_OF_THE_SPECTRUM];
 
         autorun(() => {
             if (AppStore.Instance.activeFrame) {
-                // TODO: sync channelIndexRange, channelValueRange, maskRange with active frame
+                this.updateRanges();
             }
         });
     }

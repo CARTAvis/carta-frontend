@@ -297,7 +297,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
     private setSelectedRange = (min: number, max: number) => {
         if (isFinite(min) && isFinite(max)) {
             if (this.widgetStore.isSelectingMomentChannelRange) {
-                this.widgetStore.setSelectedChannelRange([min, max]);
+                this.widgetStore.setSelectedChannelRange(min, max);
             } else if (this.widgetStore.isSelectingMomentMaskRange) {
                 this.widgetStore.setSelectedMaskRange(min, max);
             }

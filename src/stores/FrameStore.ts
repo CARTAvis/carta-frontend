@@ -458,6 +458,15 @@ export class FrameStore {
         return this.frameInfo.fileInfoExtended.depth;
     }
 
+    @computed get channelValueBounds(): CARTA.FloatBounds {
+        if (this.numChannels > 1 && this.channelValues) {
+            const head = this.channelValues[0];
+            const tail = this.channelValues[this.numChannels - 1];
+            return new CARTA.FloatBounds(head <=  tail ?  {min: head, max: tail} : {min: tail, max: head});
+        }
+        return null;
+    }
+
     @computed get spectralSiblings(): FrameStore[] {
         if (this.spectralReference) {
             let siblings = [];
