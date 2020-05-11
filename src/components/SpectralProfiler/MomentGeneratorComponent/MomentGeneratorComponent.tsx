@@ -2,7 +2,7 @@ import * as React from "react";
 import {observer} from "mobx-react";
 import {CARTA} from "carta-protobuf";
 import {Button, Divider, FormGroup, HTMLSelect, MenuItem, Position, Tooltip} from "@blueprintjs/core";
-import {ItemRenderer, MultiSelect} from "@blueprintjs/select";
+import {ItemPredicate, ItemRenderer, MultiSelect} from "@blueprintjs/select";
 import {RegionSelectorComponent} from "components";
 import {TaskProgressDialogComponent} from "components/Dialogs";
 import {SafeNumericInput, SpectralSettingsComponent} from "components/Shared";
@@ -59,6 +59,18 @@ export class MomentGeneratorComponent extends React.Component<{widgetStore: Spec
     private handleMaskSelectionClicked = () => {
         const widgetStore = this.props.widgetStore;
         widgetStore.setMomentRangeSelectingMode(widgetStore.isSelectingMomentMaskRange ?  MomentSelectingMode.NONE : MomentSelectingMode.MASK);
+    };
+
+    private filterMoment: ItemPredicate<CARTA.Moment> = (query, moment, index, exactMatch) => {
+        const momentContent = MOMENT_TEXT.get(moment);
+        const normalizedMoment = momentContent.tag.toLowerCase();
+        const normalizedQuery = query.toLowerCase();
+
+        if (exactMatch) {
+            return normalizedMoment === normalizedQuery;
+        } else {
+            return momentContent.tag.indexOf(normalizedQuery) >= 0;
+        }
     };
 
     private renderMomentTag = (moment: CARTA.Moment) => {
@@ -187,6 +199,7 @@ export class MomentGeneratorComponent extends React.Component<{widgetStore: Spec
                     <MomentMultiSelect
                         placeholder="Select..."
                         items={Object.values(CARTA.Moment) as CARTA.Moment[]}
+                        itemPredicate={this.filterMoment}
                         itemRenderer={this.renderMomentSelectItem}
                         onItemSelect={(moment) => widgetStore.isMomentSelected(moment) ? widgetStore.deselectMoment(moment) : widgetStore.selectMoment(moment)}
                         selectedItems={widgetStore.selectedMoments}
