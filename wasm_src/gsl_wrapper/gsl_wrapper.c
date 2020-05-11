@@ -22,13 +22,7 @@ int EMSCRIPTEN_KEEPALIVE filterBoxcar(double* xInArray, const int N, double* xOu
     size_t i;
     for (i = 0; i < N; ++i) {
         size_t wsize = gsl_movstat_fill(GSL_MOVSTAT_END_PADVALUE, &xIn.vector, i, H, J, window);
-
-        size_t j;
-        double sum = 0;
-        for ( j=0; j < wsize; j++) {
-            sum += window[j];
-        }
-        xOutArray[i] = sum/wsize;
+        xOutArray[i] = gsl_stats_mean(window, 1, wsize);
     }
 
     free(window);
