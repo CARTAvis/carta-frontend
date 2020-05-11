@@ -175,8 +175,8 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
     @action requestMoment = () => {
         const appStore = AppStore.Instance;
         const frame = appStore.activeFrame;
-        const channelIndex1 = frame.findChannelIndexByValue(this.channelValueRange[0]);
-        const channelIndex2 = frame.findChannelIndexByValue((this.channelValueRange[1]));
+        const channelIndex1 = frame.findChannelIndexByValue(this.channelValueRange.min);
+        const channelIndex2 = frame.findChannelIndexByValue(this.channelValueRange.max);
         if (frame && isFinite(channelIndex1) && isFinite(channelIndex2)) {
             const channelIndexRange: CARTA.IIntBounds = {
                 min: channelIndex1 <= channelIndex2 ? channelIndex1 : channelIndex2,
