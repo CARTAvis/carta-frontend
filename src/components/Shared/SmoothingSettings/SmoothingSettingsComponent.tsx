@@ -54,8 +54,6 @@ export class SmoothingSettingsComponent extends React.Component<{widgetStore: Sp
                         className="narrow"
                         onValueChange={val => widgetStore.setSmoothingGaussianSigma(Number.parseFloat(val))}
                     />
-                    {/* {Math.ceil(widgetStore.smoothingGaussianSigma * 2)}
-                    {(Math.ceil(widgetStore.smoothingGaussianSigma * 2) - 1) / (2 * widgetStore.smoothingGaussianSigma)} */}
                 </FormGroup>
                 }
                 {(widgetStore.smoothingType === SmoothingType.HANNING) &&
