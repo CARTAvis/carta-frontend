@@ -208,6 +208,9 @@ export class MomentGeneratorComponent extends React.Component<{widgetStore: Spec
                         tagRenderer={this.renderMomentTag}
                         tagInputProps={{
                             onRemove: this.handleMomentTagRemove,
+                            tagProps: {
+                                minimal: true,
+                            },
                             rightElement: <Button icon="cross" minimal={true} onClick={this.handleMomentsClear}/>
                         }}
                     />
