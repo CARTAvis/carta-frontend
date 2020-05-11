@@ -45,7 +45,7 @@ export class FileBrowserStore {
 
     @observable catalogFileList: CARTA.ICatalogListResponse;
     @observable selectedCatalogFile: CARTA.ICatalogFileInfo;
-    @observable catalogFileInfor: CARTA.ICatalogFileInfo;
+    @observable catalogFileInfo: CARTA.ICatalogFileInfo;
     @observable catalogHeaders: Array<CARTA.ICatalogHeader>;
 
     @action showFileBrowser = (mode: BrowserMode, append = false) => {
@@ -71,6 +71,7 @@ export class FileBrowserStore {
         this.selectedHDU = null;
         this.fileInfoExtended = null;
         this.regionFileInfo = null;
+        this.catalogFileInfo = null;
 
         if (this.browserMode === BrowserMode.File) {
             backendService.getFileList(directory).subscribe(res => {
@@ -144,13 +145,13 @@ export class FileBrowserStore {
         const backendService = BackendService.Instance;
         this.loadingInfo = true;
         this.fileInfoResp = false;
-        this.catalogFileInfor = null;
+        this.catalogFileInfo = null;
         this.catalogHeaders = [];
 
         backendService.getCatalogFileInfo(directory, filename).subscribe((res: CARTA.ICatalogFileInfoResponse) => {
             if (res.fileInfo && this.selectedFile && res.fileInfo.name === this.selectedFile.name) {
                 this.loadingInfo = false;
-                this.catalogFileInfor = res.fileInfo;
+                this.catalogFileInfo = res.fileInfo;
                 this.catalogHeaders = res.headers.sort((a, b) => { return a.columnIndex - b.columnIndex; });
             }
             this.fileInfoResp = res.success;
@@ -158,7 +159,7 @@ export class FileBrowserStore {
             console.log(err);
             this.responseErrorMessage = err;
             this.fileInfoResp = false;
-            this.catalogFileInfor = null;
+            this.catalogFileInfo = null;
             this.loadingInfo = false;
         });
     };
