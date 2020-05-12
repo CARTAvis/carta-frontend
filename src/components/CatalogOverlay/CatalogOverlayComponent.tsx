@@ -483,7 +483,6 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         const frame = appStore.activeFrame;
         // init plot data   
         const coords = widgetStore.get2DPlotData(widgetStore.xColumnRepresentation, widgetStore.yColumnRepresentation, widgetStore.catalogData);
-
         switch (widgetStore.catalogPlotType) {
             case CatalogPlotType.ImageOverlay:
                 widgetStore.setUpdateMode(CatalogUpdateMode.ViewUpdate);
