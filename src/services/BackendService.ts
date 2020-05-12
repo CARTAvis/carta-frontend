@@ -131,6 +131,7 @@ export class BackendService {
             [CARTA.EventType.SET_USER_LAYOUT_ACK, CARTA.SetUserLayoutAck],
             [CARTA.EventType.SET_USER_PREFERENCES_ACK, CARTA.SetUserPreferencesAck],
             [CARTA.EventType.RASTER_TILE_SYNC, CARTA.RasterTileSync],
+            [CARTA.EventType.MOMENT_PROGRESS, CARTA.MomentProgress],
             [CARTA.EventType.MOMENT_RESPONSE, CARTA.MomentResponse]
         ]);
 
