@@ -1,7 +1,7 @@
 import * as React from "react";
 import {CSSProperties} from "react";
 import {observer} from "mobx-react";
-import {Button, ButtonGroup, IconName, Menu, MenuItem, Popover, PopoverPosition, Position, Tooltip} from "@blueprintjs/core";
+import {Button, ButtonGroup, IconName, Menu, MenuItem, Popover, PopoverPosition, Position, Tooltip, AnchorButton} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import {exportImage} from "components";
 import {AppStore, OverlayStore, PreferenceStore, RegionMode, SystemType} from "stores";
@@ -186,7 +186,7 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
         return (
             <ButtonGroup className={className} style={styleProps} vertical={this.props.vertical}>
                 <Tooltip position={tooltipPosition} content={<span>Catalog selection<br/><i><small>Click to select single catalog source</small></i></span>}>
-                    <Button icon={"locate"} active={catalogOverlayEnabled} onClick={() => this.handelActiveLayerClicked(ImageViewLayer.Catalog)} disabled={catalogSelectionDisabled}/>
+                    <AnchorButton icon={"locate"} active={catalogOverlayEnabled} onClick={() => this.handelActiveLayerClicked(ImageViewLayer.Catalog)} disabled={catalogSelectionDisabled}/>
                 </Tooltip>
                 {frame.regionSet.mode === RegionMode.CREATING &&
                 <Tooltip position={tooltipPosition} content={<span>Create region<br/><i><small>Click to select region type</small></i></span>}>
