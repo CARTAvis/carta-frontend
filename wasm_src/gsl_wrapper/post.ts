@@ -17,7 +17,7 @@ Module.boxcarSmooth = function (xIn: Float64Array | Float32Array, kernelSize: nu
 
     Module.HEAPF64.set(new Float64Array(xIn), Module.xIn / 8);
     Module.filterBoxcar(Module.xIn, N, Module.xOut, kernelSize);
-    const xOut = new Float64Array(Module.HEAPF64.buffer, Module.xOut, N);
+    const xOut = new Float64Array(Module.HEAPF64.buffer, Module.xOut, N).slice();
 
     Module._free(Module.xIn);
     Module._free(Module.xOut);
@@ -36,7 +36,7 @@ Module.gaussianSmooth = function (xIn: Float64Array | Float32Array, kernelSize: 
 
     Module.HEAPF64.set(new Float64Array(xIn), Module.xIn / 8);
     Module.filterGaussian(Module.xIn, N, Module.xOut, kernelSize, alpha);
-    const xOut = new Float64Array(Module.HEAPF64.buffer, Module.xOut, N);
+    const xOut = new Float64Array(Module.HEAPF64.buffer, Module.xOut, N).slice();
 
     Module._free(Module.xIn);
     Module._free(Module.xOut);
@@ -54,7 +54,7 @@ Module.hanningSmooth = function (xIn: Float64Array | Float32Array, kernelSize: n
 
     Module.HEAPF64.set(new Float64Array(xIn), Module.xIn / 8);
     Module.filterHanning(Module.xIn, N, Module.xOut, kernelSize);
-    const xOut = new Float64Array(Module.HEAPF64.buffer, Module.xOut, N);
+    const xOut = new Float64Array(Module.HEAPF64.buffer, Module.xOut, N).slice();
 
     Module._free(Module.xIn);
     Module._free(Module.xOut);
