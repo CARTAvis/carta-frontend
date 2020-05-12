@@ -217,7 +217,7 @@ export class MomentGeneratorComponent extends React.Component<{widgetStore: Spec
                     />
                 </FormGroup>
                 <div className="moment-generate">
-                    <Button intent="success" onClick={this.handleRequestMoment} disabled={!activeFrame}>Generate</Button>
+                    <Button intent="success" onClick={this.handleRequestMoment} disabled={!(activeFrame && activeFrame.numChannels > 1)}>Generate</Button>
                 </div>
             </React.Fragment>
         );
