@@ -794,9 +794,8 @@ export class BackendService {
     private onMomentResponse(eventId: number, response: CARTA.MomentResponse) {
         if (response.success && response.directory && response.outputFiles) {
             const appStore = AppStore.Instance;
-            response.outputFiles.forEach(image => {
-                appStore.appendFile(response.directory, image.fileName, "");
-            });
+            const fileNames = response.outputFiles.map(image => image.fileName);
+            appStore.batchAppendFiles(response.directory, fileNames, "");
         }
     }
 
