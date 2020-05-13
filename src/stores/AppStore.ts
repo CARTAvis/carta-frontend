@@ -530,7 +530,7 @@ export class AppStore {
                 }
                 if (catalogWidgetId) {
                     this.catalogs.set(catalogWidgetId, fileId);
-                    this.catalogStore.addCatalog(catalogWidgetId, fileId, ack.dataSize);
+                    this.catalogStore.addCatalog(catalogWidgetId, fileId);
                     this.fileBrowserStore.hideFileBrowser();
                 }
             }

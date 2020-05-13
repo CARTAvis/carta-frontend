@@ -203,7 +203,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
                 key={columnName} 
                 name={columnName} 
                 cellRenderer={(rowIndex, columnIndex) => (
-                    <Cell style={{lineHeight: "250%"}} key={`cell_${columnIndex}_${rowIndex}`} interactive={true}>{coloumnData[rowIndex]}</Cell>
+                    <Cell className="header-table-cell" key={`cell_${columnIndex}_${rowIndex}`} interactive={true}>{coloumnData[rowIndex]}</Cell>
             )}
             />
         );
@@ -217,7 +217,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
             disable = false;
         }
         return (
-            <Cell style={{lineHeight: "250%"}} key={`cell_switch_${rowIndex}`}>
+            <Cell className="header-table-cell" key={`cell_switch_${rowIndex}`}>
                 <React.Fragment>
                     <Switch className="cell-switch-button" key={`cell_switch_button_${rowIndex}`} disabled={disable} checked={display} onChange={changeEvent => this.handleHeaderDisplayChange(changeEvent, columnName)}/>
                 </React.Fragment>

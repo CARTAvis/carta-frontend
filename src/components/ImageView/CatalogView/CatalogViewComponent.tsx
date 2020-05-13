@@ -46,8 +46,7 @@ export class CatalogViewComponent extends React.Component<CatalogViewComponentPr
 
     @computed get selectedData(): Map<string, Plotly.Data> {
         const catalogStore = CatalogStore.Instance;
-        let coordsData = new Map<string, Plotly.Data>();
-
+        let coordsData = new Map<string, Plotly.Data>();    
         catalogStore.selectedPointIndexs.forEach((selectedPointIndexs, key) => {
             const selectedPointSize = selectedPointIndexs.length;
             let selecteData: Plotly.Data = {};
@@ -56,19 +55,21 @@ export class CatalogViewComponent extends React.Component<CatalogViewComponentPr
                 selecteData.mode = "markers";
                 selecteData.hoverinfo = "none";
                 const coords = catalogStore.catalogData.get(key);
-                let selectedX = new Array(selectedPointSize);
-                let selectedY = new Array(selectedPointSize);
-                for (let index = 0; index < selectedPointSize; index++) {
-                    const pointIndex = selectedPointIndexs[index];
-                    selectedX.push(coords.xImageCoords[pointIndex]);
-                    selectedY.push(coords.yImageCoords[pointIndex]);
+                if (coords && coords.xImageCoords.length) {   
+                    let selectedX = [];
+                    let selectedY = [];
+                    for (let index = 0; index < selectedPointSize; index++) {
+                        const pointIndex = selectedPointIndexs[index];
+                        selectedX.push(coords.xImageCoords[pointIndex]);
+                        selectedY.push(coords.yImageCoords[pointIndex]);
+                    }
+                    selecteData.x = selectedX;
+                    selecteData.y = selectedY;
+                    selecteData.name = key;
+                    selecteData.marker = {};
+                    selecteData.marker.line = {};
+                    coordsData.set(key, selecteData);
                 }
-                selecteData.x = selectedX;
-                selecteData.y = selectedY;
-                selecteData.name = key + "-selected";
-                selecteData.marker = {};
-                selecteData.marker.line = {};
-                coordsData.set(key, selecteData);
             }
         });
         return coordsData;
@@ -114,7 +115,7 @@ export class CatalogViewComponent extends React.Component<CatalogViewComponentPr
                 appStore.catalogStore.updateSelectedPoints(catalogWidgetId, selectedPointIndex);
             }
         }
-    }
+    };
 
     private onWheelCaptured = (event: React.WheelEvent<HTMLDivElement>) => {
         if (event && event.nativeEvent && event.nativeEvent.type === "wheel") {
@@ -127,7 +128,7 @@ export class CatalogViewComponent extends React.Component<CatalogViewComponentPr
                 this.props.onZoomed(frame.getCursorInfo(cursorPosImageSpace), -delta);
             }
         }
-    }
+    };
 
     render() {
         const appStore = AppStore.Instance;
@@ -141,7 +142,7 @@ export class CatalogViewComponent extends React.Component<CatalogViewComponentPr
         }
 
         let layout: Partial<Plotly.Layout> = {
-            width: width, 
+            width: width,
             height: height,
             hovermode: "closest",
             xaxis: {
@@ -175,13 +176,15 @@ export class CatalogViewComponent extends React.Component<CatalogViewComponentPr
             displaylogo: false,
             scrollZoom: false,
             showAxisDragHandles: false,
-            setBackground: () => { return "transparent"; },
+            setBackground: () => {
+                return "transparent";
+            },
         };
 
         if (frame) {
             const border = frame.requiredFrameView;
-            layout.xaxis.range =  [border.xMin, border.xMax];
-            layout.yaxis.range =  [border.yMin, border.yMax];
+            layout.xaxis.range = [border.xMin, border.xMax];
+            layout.yaxis.range = [border.yMin, border.yMax];
         }
         let scatterData: Plotly.Data[] = [];
         const unSelectedData = this.unSelectedData;

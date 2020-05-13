@@ -39,12 +39,12 @@ export class CatalogStore {
         this.selectedPointIndexs = new ObservableMap();
     }
 
-    @action addCatalog(widgetId: string, fileId: number, dataSize: number) {
+    @action addCatalog(widgetId: string, fileId: number) {
         // init catalog data
         this.catalogData.set(widgetId, {
             fileId: fileId,
-            xImageCoords: new Array(dataSize),
-            yImageCoords: new Array(dataSize),
+            xImageCoords: new Array(),
+            yImageCoords: new Array(),
             showSelectedData: false
         });
         this.catalogColor.set(widgetId, Colors.TURQUOISE3);
@@ -56,10 +56,9 @@ export class CatalogStore {
         const pixelData = this.transformCatalogData(xWcsData, yWcsData, wcsInfo, xUnit, yUnit, catalogFrame);
         const catalogDataInfo = this.catalogData.get(widgetId);
         if (catalogDataInfo) {
-            const offset = catalogDataInfo.xImageCoords.length;
             for (let i = 0; i < pixelData.xImageCoords.length; i++) {
-                catalogDataInfo.xImageCoords[offset + i] = pixelData.xImageCoords[i];
-                catalogDataInfo.yImageCoords[offset + i] = pixelData.yImageCoords[i];
+                catalogDataInfo.xImageCoords.push(pixelData.xImageCoords[i]);
+                catalogDataInfo.yImageCoords.push(pixelData.yImageCoords[i]);
             }
             this.catalogData.set(widgetId, 
                 {
@@ -104,9 +103,11 @@ export class CatalogStore {
         this.selectedPointIndexs.set(widgetId, selectedPointIndexs);
     }
 
-    @action unSelectedPoints(widgetId: string) {
+    @action unSelectedAll() {
         if (this.catalogData.size > 0) {
-            this.selectedPointIndexs.set(widgetId, []);
+            this.selectedPointIndexs.forEach((selectedPointIndexs, widgetId) => {
+                this.selectedPointIndexs.set(widgetId, []);
+            });
         }
     }
 
