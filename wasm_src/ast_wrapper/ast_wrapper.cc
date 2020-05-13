@@ -58,7 +58,7 @@ EMSCRIPTEN_KEEPALIVE AstFrameSet* initFrame(const char* header)
 
     // work around for missing CTYPE1 & CTYPE2
     const char *domain = astGetC(frameSet, "Domain");
-    if (strcmp(domain, "AXIS1-AXIS2") == 0) {
+    if (!strstr(domain, "SKY")) {
         return nullptr;
     }
 

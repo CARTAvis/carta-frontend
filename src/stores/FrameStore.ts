@@ -595,7 +595,7 @@ export class FrameStore {
         };
         this.animationChannelRange = [0, frameInfo.fileInfoExtended.depth - 1];
 
-        this.initWCS();
+        this.initSkyWCS();
         if (frameInfo.fileInfoExtended.depth > 1) {
             this.initFullWCS();
         }
@@ -657,7 +657,7 @@ export class FrameStore {
         return AST.transformSpectralPoint(this.spectralFrame, type, unit, system, value);
     };
 
-    @action private initWCS = () => {
+    @action private initSkyWCS = () => {
         let headerString = "";
 
         for (let entry of this.frameInfo.fileInfoExtended.headerEntries) {
