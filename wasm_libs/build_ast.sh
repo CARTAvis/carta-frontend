@@ -11,10 +11,11 @@ mkdir -p ast; tar -xf ast-9.1.1.tar.gz --directory ./ast --strip-components=1
 cd ast
 
 echo "Building AST using Emscripten"
-CFLAGS="-g0 -O3 -s WASM=1" emconfigure ./configure --without-pthreads --without-fortran --without-stardocs --enable-shared=no --host=wasm32
+CFLAGS="-g0 -O3 -s WASM=1" emconfigure ./configure --without-pthreads --without-fortran --without-stardocs --enable-shared=no --host=wasm32 --prefix=${PWD}/../built
 emmake make -j 4
+emmake make install
 echo "Checking for AST static lib..."
-if [[ $(find .libs/libast.a -type f -size +1000000c 2>/dev/null) ]]; then
+if [[ $(find ../built/lib/libast.a -type f -size +1000000c 2>/dev/null) ]]; then
     echo "Found"
 else
     echo "Not found!"

@@ -203,7 +203,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
                 key={columnName} 
                 name={columnName} 
                 cellRenderer={(rowIndex, columnIndex) => (
-                    <Cell key={`cell_${columnIndex}_${rowIndex}`} interactive={true}>{coloumnData[rowIndex]}</Cell>
+                    <Cell className="header-table-cell" key={`cell_${columnIndex}_${rowIndex}`} interactive={true}>{coloumnData[rowIndex]}</Cell>
             )}
             />
         );
@@ -217,9 +217,9 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
             disable = false;
         }
         return (
-            <Cell key={`cell_switch_${rowIndex}`}>
+            <Cell className="header-table-cell" key={`cell_switch_${rowIndex}`}>
                 <React.Fragment>
-                    <Switch className="display-switch" key={`cell_switch_button_${rowIndex}`} disabled={disable} checked={display} onChange={changeEvent => this.handleHeaderDisplayChange(changeEvent, columnName)}/>
+                    <Switch className="cell-switch-button" key={`cell_switch_button_${rowIndex}`} disabled={disable} checked={display} onChange={changeEvent => this.handleHeaderDisplayChange(changeEvent, columnName)}/>
                 </React.Fragment>
             </Cell>
         );
@@ -233,9 +233,9 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         const disabled = !controlHeader.display;
 
         return (
-            <Cell key={`cell_drop_down_${rowIndex}`}>
+            <Cell className="cell-dropdown-menu" key={`cell_drop_down_${rowIndex}`}>
                 <React.Fragment>
-                    <HTMLSelect className="bp3-minimal bp3-fill " value={controlHeader.representAs} disabled={disabled} onChange={changeEvent => this.handleHeaderRepresentationChange(changeEvent, columnName)}>
+                    <HTMLSelect className="bp3-minimal bp3-fill" value={controlHeader.representAs} disabled={disabled} onChange={changeEvent => this.handleHeaderRepresentationChange(changeEvent, columnName)}>
                         {supportedRepresentations.map( representation => {                           
                             if (representation === CatalogOverlay.X) {
                                 return (<option key={representation} value={representation}>{this.coordinate.x}</option>);
@@ -293,13 +293,14 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
                 enableRowReordering={false}
                 renderMode={RenderMode.BATCH} 
                 selectionModes={SelectionModes.NONE} 
-                defaultRowHeight={35}
+                defaultRowHeight={30}
                 minRowHeight={20}
                 minColumnWidth={30}
                 enableGhostCells={true}
                 numFrozenColumns={1}
                 columnWidths={this.widgetStore.headerTableColumnWidts}
                 onColumnWidthChanged={this.updateHeaderTableColumnSize}
+                enableRowResizing={false}
             >
                 {tableColumns}
             </Table>
