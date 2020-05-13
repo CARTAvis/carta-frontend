@@ -55,6 +55,13 @@ EMSCRIPTEN_KEEPALIVE AstFrameSet* initFrame(const char* header)
         cout << "Creating frame set failed." << endl;
         return nullptr;
     }
+
+    // work around for missing CTYPE1 & CTYPE2
+    const char *domain = astGetC(frameSet, "Domain");
+    if (strcmp(domain, "AXIS1-AXIS2") == 0) {
+        return nullptr;
+    }
+
     return frameSet;
 }
 
