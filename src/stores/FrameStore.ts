@@ -659,12 +659,8 @@ export class FrameStore {
 
     @action private initWCS = () => {
         let headerString = "";
-        let isInvalidSkyFrame = false;
+
         for (let entry of this.frameInfo.fileInfoExtended.headerEntries) {
-            // Work around for special case "LMCq.fits"
-            if ((entry.name.toUpperCase() === "CTYPE1" || entry.name.toUpperCase() === "CTYPE2") && !entry.value.length) {
-                isInvalidSkyFrame = true;
-            }
             // Skip empty header entries
             if (!entry.value.length) {
                 continue;
@@ -700,7 +696,7 @@ export class FrameStore {
             headerString += entryString;
         }
         const initResult = AST.initFrame(headerString);
-        if (isInvalidSkyFrame || !initResult) {
+        if (!initResult) {
             this.logStore.addWarning(`Problem processing WCS info in file ${this.frameInfo.fileInfo.name}`, ["ast"]);
             this.wcsInfo = AST.initDummyFrame();
         } else {
