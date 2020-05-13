@@ -423,10 +423,8 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
 
     private initSelectedPointIndexs = () => {
         const widgetStore = this.widgetStore;
-        const appStore = AppStore.Instance;
         widgetStore.setselectedPointIndexs([]);
         widgetStore.setShowSelectedData(false);
-        appStore.catalogStore.updateSelectedPoints(this.widgetId, []);
     } 
 
     private handleFilterClick = () => {
@@ -532,7 +530,6 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
             selectedData.push(selectedDataIndex);
         }
         widgetsStore.setselectedPointIndexs(selectedData);
-        CatalogStore.Instance.updateSelectedPoints(this.widgetId, selectedData);
     }
 
     private renderFileIdPopOver = (fileId: number, itemProps: IItemRendererProps) => {

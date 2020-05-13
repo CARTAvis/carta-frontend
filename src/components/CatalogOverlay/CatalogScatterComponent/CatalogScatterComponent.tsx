@@ -163,8 +163,6 @@ export class CatalogScatterComponent extends React.Component<WidgetProps> {
                 selectedPointIndexs.push(selectedPoint.pointIndex);
             }
             this.widgetStore.catalogOverlayWidgetStore.setselectedPointIndexs(selectedPointIndexs, true);
-            const storeId = this.widgetStore.catalogOverlayWidgetStore.storeId;
-            CatalogStore.Instance.updateSelectedPoints(storeId, selectedPointIndexs);
         }
     }
 
@@ -172,7 +170,6 @@ export class CatalogScatterComponent extends React.Component<WidgetProps> {
         const catalogStore = CatalogStore.Instance;
         this.widgetStore.catalogOverlayWidgetStore.setselectedPointIndexs([]);
         const storeId = this.widgetStore.catalogOverlayWidgetStore.storeId;
-        catalogStore.updateSelectedPoints(storeId, []);
         this.widgetStore.catalogOverlayWidgetStore.setShowSelectedData(false);
         catalogStore.updateShowSelectedData(storeId, false);
     }
@@ -186,8 +183,6 @@ export class CatalogScatterComponent extends React.Component<WidgetProps> {
             const selectedPoint = event.points[0];
             selectedPointIndex.push(selectedPoint.pointIndex);
             this.widgetStore.catalogOverlayWidgetStore.setselectedPointIndexs(selectedPointIndex, true);
-            const storeId = this.widgetStore.catalogOverlayWidgetStore.storeId;
-            CatalogStore.Instance.updateSelectedPoints(storeId, selectedPointIndex);
         }
     }
 

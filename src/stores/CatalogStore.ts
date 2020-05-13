@@ -29,14 +29,12 @@ export class CatalogStore {
     @observable catalogColor: ObservableMap<string, string>;
     @observable catalogSize: ObservableMap<string, number>;
     @observable catalogShape: ObservableMap<string, CatalogOverlayShape>;
-    @observable selectedPointIndexs: ObservableMap<string, number[]>;
 
     private constructor() {
         this.catalogData = new ObservableMap();
         this.catalogColor = new ObservableMap();
         this.catalogSize = new ObservableMap();
         this.catalogShape = new ObservableMap();
-        this.selectedPointIndexs = new ObservableMap();
     }
 
     @action addCatalog(widgetId: string, fileId: number) {
@@ -96,20 +94,15 @@ export class CatalogStore {
         this.catalogColor.delete(widgetId);
         this.catalogSize.delete(widgetId);
         this.catalogShape.delete(widgetId);
-        this.selectedPointIndexs.delete(widgetId);
     }
 
-    @action updateSelectedPoints(widgetId: string, selectedPointIndexs: number[]) {
-        this.selectedPointIndexs.set(widgetId, selectedPointIndexs);
-    }
-
-    @action unSelectedAll() {
-        if (this.catalogData.size > 0) {
-            this.selectedPointIndexs.forEach((selectedPointIndexs, widgetId) => {
-                this.selectedPointIndexs.set(widgetId, []);
-            });
-        }
-    }
+    // @action unSelectedAll() {
+    //     if (this.catalogData.size > 0) {
+    //         this.selectedPointIndexs.forEach((selectedPointIndexs, widgetId) => {
+    //             this.selectedPointIndexs.set(widgetId, []);
+    //         });
+    //     }
+    // }
 
     @action updateShowSelectedData(widgetId: string, val: boolean) {
         const catalog = this.catalogData.get(widgetId);

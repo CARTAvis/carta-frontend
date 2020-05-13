@@ -4,7 +4,7 @@ import {observer} from "mobx-react";
 import {computed} from "mobx";
 import Plot from "react-plotly.js";
 import {Colors} from "@blueprintjs/core";
-import {AppStore, CatalogStore} from "stores";
+import {AppStore, WidgetsStore, CatalogStore} from "stores";
 import {CatalogOverlayShape} from "stores/widgets";
 import {canvasToTransformedImagePos} from "components/ImageView/RegionView/shared";
 import {ImageViewLayer} from "../ImageViewComponent";
@@ -45,32 +45,37 @@ export class CatalogViewComponent extends React.Component<CatalogViewComponentPr
     }
 
     @computed get selectedData(): Map<string, Plotly.Data> {
-        const catalogStore = CatalogStore.Instance;
-        let coordsData = new Map<string, Plotly.Data>();    
-        catalogStore.selectedPointIndexs.forEach((selectedPointIndexs, key) => {
-            const selectedPointSize = selectedPointIndexs.length;
+        const catalogStore = CatalogStore.Instance;   
+        const appStore = AppStore.Instance;
+        const widgetsStore = WidgetsStore.Instance;
+        let coordsData = new Map<string, Plotly.Data>(); 
+        appStore.catalogs.forEach((fileId, widgetId) => {
+            const catalogOverlayStore = widgetsStore.catalogOverlayWidgets.get(widgetId);
+            const selectedPoints = catalogOverlayStore.selectedPointIndexs;
+            const selectedPointSize = selectedPoints.length;
             let selecteData: Plotly.Data = {};
             if (selectedPointSize > 0) {
                 selecteData.type = "scattergl";
                 selecteData.mode = "markers";
                 selecteData.hoverinfo = "none";
-                const coords = catalogStore.catalogData.get(key);
+                const coords = catalogStore.catalogData.get(widgetId);
                 if (coords && coords.xImageCoords.length) {   
                     let selectedX = [];
                     let selectedY = [];
                     for (let index = 0; index < selectedPointSize; index++) {
-                        const pointIndex = selectedPointIndexs[index];
+                        const pointIndex = selectedPoints[index];
                         selectedX.push(coords.xImageCoords[pointIndex]);
                         selectedY.push(coords.yImageCoords[pointIndex]);
                     }
                     selecteData.x = selectedX;
                     selecteData.y = selectedY;
-                    selecteData.name = key;
+                    selecteData.name = widgetId;
                     selecteData.marker = {};
                     selecteData.marker.line = {};
-                    coordsData.set(key, selecteData);
+                    coordsData.set(widgetId, selecteData);
                 }
             }
+
         });
         return coordsData;
     }
@@ -112,10 +117,21 @@ export class CatalogViewComponent extends React.Component<CatalogViewComponentPr
                 const selectedPoint = event.points[0];
                 selectedPointIndex.push(selectedPoint.pointIndex);
                 catalogWidget.setselectedPointIndexs(selectedPointIndex, true);
-                appStore.catalogStore.updateSelectedPoints(catalogWidgetId, selectedPointIndex);
             }
         }
     };
+
+    private onDoubleClick() {
+        const catalogStore = CatalogStore.Instance;
+        if (catalogStore.catalogData.size) {   
+            const appStore = AppStore.Instance;
+            const widgetsStore = WidgetsStore.Instance;
+            appStore.catalogs.forEach((fileId, widgetId) => {
+                const catalogOverlayStore = widgetsStore.catalogOverlayWidgets.get(widgetId);
+                catalogOverlayStore.setselectedPointIndexs([]);
+            });
+        }
+    }
 
     private onWheelCaptured = (event: React.WheelEvent<HTMLDivElement>) => {
         if (event && event.nativeEvent && event.nativeEvent.type === "wheel") {
@@ -247,6 +263,7 @@ export class CatalogViewComponent extends React.Component<CatalogViewComponentPr
                     layout={layout}
                     config={config}
                     onClick={this.onClick}
+                    onDoubleClick={this.onDoubleClick}
                 />
             </div>
         );
