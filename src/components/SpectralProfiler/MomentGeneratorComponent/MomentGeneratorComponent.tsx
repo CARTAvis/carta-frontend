@@ -236,7 +236,7 @@ export class MomentGeneratorComponent extends React.Component<{widgetStore: Spec
                     {momentsPanel}
                 </div>
                 <TaskProgressDialogComponent
-                    isOpen={activeFrame && activeFrame.isRequestingMoments}
+                    isOpen={activeFrame && activeFrame.isRequestingMoments && activeFrame.requestingMomentsProgress < 1}
                     progress={activeFrame ? activeFrame.requestingMomentsProgress : 0}
                     timeRemaining={appStore.estimatedTaskRemainingTime}
                     cancellable={true}
