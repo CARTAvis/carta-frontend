@@ -96,14 +96,6 @@ export class CatalogStore {
         this.catalogShape.delete(widgetId);
     }
 
-    // @action unSelectedAll() {
-    //     if (this.catalogData.size > 0) {
-    //         this.selectedPointIndexs.forEach((selectedPointIndexs, widgetId) => {
-    //             this.selectedPointIndexs.set(widgetId, []);
-    //         });
-    //     }
-    // }
-
     @action updateShowSelectedData(widgetId: string, val: boolean) {
         const catalog = this.catalogData.get(widgetId);
         if (catalog) {

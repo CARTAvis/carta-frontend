@@ -524,10 +524,16 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         const widgetsStore = this.widgetStore;
         const selectedPointIndexs = widgetsStore.selectedPointIndexs;
         const selectedData = [];
-        if (widgetsStore.showSelectedData && selectedPointIndexs.length) {
-            selectedData.push(selectedPointIndexs[selectedDataIndex]);
-        } else {
-            selectedData.push(selectedDataIndex);
+        let highlighted = false;
+        if (selectedPointIndexs.length === 1) {
+            highlighted = selectedPointIndexs.includes(selectedDataIndex);
+        }
+        if (!highlighted) {
+            if (widgetsStore.showSelectedData && selectedPointIndexs.length) {
+                selectedData.push(selectedPointIndexs[selectedDataIndex]);
+            } else {
+                selectedData.push(selectedDataIndex);   
+            }
         }
         widgetsStore.setselectedPointIndexs(selectedData);
     }
