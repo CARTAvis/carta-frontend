@@ -38,7 +38,7 @@ import {BackendService, ConnectionStatus, TileService, TileStreamDetails} from "
 import {FrameView, Point2D, ProtobufProcessing, Theme, TileCoordinate, WCSMatchingType} from "models";
 import {HistogramWidgetStore, RegionWidgetStore, SpatialProfileWidgetStore, SpectralProfileWidgetStore, StatsWidgetStore, StokesAnalysisWidgetStore, CatalogInfo, CatalogUpdateMode} from "./widgets";
 import {AppToaster} from "../components/Shared";
-import {CatalogOverlayComponent} from "components";
+import {CatalogOverlayComponent, CatalogScatterComponent} from "components";
 
 export class AppStore {
     private static staticInstance: AppStore;
@@ -544,6 +544,23 @@ export class AppStore {
     @action reomveCatalog(catalogWidgetId: string, catalogComponentId: string) {
         const fileId = this.catalogs.get(catalogWidgetId);
         if (fileId > -1 && this.backendService.closeCatalogFile(fileId)) {
+            // close all associated scatter widget
+            const config = CatalogScatterComponent.WIDGET_CONFIG;
+            const catalogOverlayWidgetStore = this.widgetsStore.catalogOverlayWidgets.get(catalogWidgetId);
+            let dockedCatalogScatterWidgets = this.widgetsStore.getDockedWidgetByType(config.type);
+            const dockedScatterWidgetId = dockedCatalogScatterWidgets.map(contentItem => {
+                return contentItem.config.id;
+            });
+            if (catalogOverlayWidgetStore.catalogScatterWidgetsId.length) {
+                catalogOverlayWidgetStore.catalogScatterWidgetsId.forEach(scatterWidgetsId => {
+                    if (dockedScatterWidgetId.includes(scatterWidgetsId)) {
+                        LayoutStore.Instance.dockedLayout.root.getItemsById(scatterWidgetsId)[0].remove();
+                    } else {
+                        this.widgetsStore.removeFloatingWidget(scatterWidgetsId);
+                    }
+                });
+            }
+            // close catalogOverlay 
             this.catalogs.delete(catalogWidgetId);
             if (this.catalogs.size === 0) {
                 this.widgetsStore.removeFloatingWidgetComponent(catalogComponentId);
