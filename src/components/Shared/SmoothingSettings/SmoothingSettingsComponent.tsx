@@ -1,8 +1,11 @@
 import * as React from "react";
 import {observer} from "mobx-react";
-import {FormGroup, HTMLSelect, IOptionProps} from "@blueprintjs/core";
+import {FormGroup, HTMLSelect, IOptionProps, Switch} from "@blueprintjs/core";
 import {SpectralProfileWidgetStore} from "stores/widgets";
-import {SafeNumericInput} from "components/Shared";
+import {ColorPickerComponent, SafeNumericInput} from "components/Shared";
+import {ColorResult} from "react-color";
+import {SWATCH_COLORS} from "utilities";
+import { AppStore } from "stores";
 
 export enum SmoothingType {
     NONE = "None",
@@ -35,6 +38,24 @@ export class SmoothingSettingsComponent extends React.Component<{widgetStore: Sp
                         onChange={(event: React.FormEvent<HTMLSelectElement>) => widgetStore.setSmoothingType(event.currentTarget.value as SmoothingType)}
                     />
                 </FormGroup>
+                {(widgetStore.smoothingType !== SmoothingType.NONE) &&
+                <React.Fragment>
+                    <FormGroup inline={true} label="Color">
+                        <ColorPickerComponent
+                            color={widgetStore.smoothingLineColor.colorHex}
+                            presetColors={SWATCH_COLORS}
+                            setColor={(color: ColorResult) => {
+                                widgetStore.setSmoothingLineColor(color.hex, true);
+                            }}
+                            disableAlpha={true}
+                            darkTheme={AppStore.Instance.darkTheme}
+                        />
+                    </FormGroup>
+                    <FormGroup label={"Overlay"} inline={true}>
+                        <Switch checked={widgetStore.isSmoothingOverlayOn} onChange={(ev) => widgetStore.setIsSmoothingOverlayOn(ev.currentTarget.checked)}/>
+                    </FormGroup>
+                </React.Fragment>
+                }
                 {(widgetStore.smoothingType === SmoothingType.BOXCAR) &&
                 <FormGroup label={"Kernel"} inline={true}>
                     <SafeNumericInput

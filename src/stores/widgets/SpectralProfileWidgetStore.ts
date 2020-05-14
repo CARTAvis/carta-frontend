@@ -26,7 +26,9 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
     @observable lineWidth: number;
     @observable linePlotPointSize: number;
     @observable linePlotInitXYBoundaries: { minXVal: number, maxXVal: number, minYVal: number, maxYVal: number };
-    @observable smoothingType: SmoothingType;
+    @observable smoothingType: SmoothingType = SmoothingType.NONE;
+    @observable smoothingLineColor: { colorHex: string, fixed: boolean };
+    @observable isSmoothingOverlayOn: boolean = false;
     @observable smoothingBoxcarSize: number = 2;
     @observable smoothingGaussianSigma: number = 1.0;
     @observable smoothingHanningSize: number = 3;
@@ -161,6 +163,14 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         this.smoothingType = val;
     }
 
+    @action setSmoothingLineColor = (colorHex: string, fixed: boolean) => {
+        this.smoothingLineColor = { colorHex: colorHex, fixed: fixed };
+    }
+
+    @action setIsSmoothingOverlayOn = (val: boolean) => {
+        this.isSmoothingOverlayOn = val;
+    }
+
     @action setSmoothingBoxcarSize = (val: number) => {
         this.smoothingBoxcarSize = val;
     }
@@ -186,6 +196,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         this.linePlotPointSize = 1.5;
         this.lineWidth = 1;
         this.linePlotInitXYBoundaries = { minXVal: 0, maxXVal: 0, minYVal: 0, maxYVal: 0 };
+        this.smoothingLineColor = { colorHex: Colors.GREEN3, fixed: false };
     }
 
     @computed get isAutoScaledX() {

@@ -16,7 +16,7 @@ import {Point2D, ProcessedSpectralProfile} from "models";
 import {binarySearchByX, clamp, formattedNotation, toExponential, toFixed} from "utilities";
 import "./SpectralProfilerComponent.css";
 
-type PlotData = { values: Point2D[], xMin: number, xMax: number, yMin: number, yMax: number, yMean: number, yRms: number, progress: number };
+type PlotData = { values: Map<string, Point2D[]>, xMin: number, xMax: number, yMin: number, yMax: number, yMean: number, yRms: number, progress: number };
 
 @observer
 export class SpectralProfilerComponent extends React.Component<WidgetProps> {
@@ -118,10 +118,13 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
                 smoothingValues = coordinateData.values;
             }
 
+            let valuesMap: Map<string, Point2D[]> = new Map<string, Point2D[]>();
             let values: Array<{ x: number, y: number }> = [];
+            let smoothingPlot: Array<{ x: number, y: number }> = [];
             for (let i = 0; i < channelValues.length; i++) {
                 const x = channelValues[i];
-                const y = smoothingValues[i];
+                const y = coordinateData.values[i];
+                const smoothingY = smoothingValues[i];
 
                 // Skip values outside of range. If array already contains elements, we've reached the end of the range, and can break
                 if (x < xMin || x > xMax) {
@@ -132,6 +135,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
                     }
                 }
                 values.push({x, y});
+                smoothingPlot.push({x, y: smoothingY});
                 // Mean/RMS calculations
                 if (!isNaN(y)) {
                     yMin = Math.min(yMin, y);
@@ -156,7 +160,9 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
                 yMin -= range * VERTICAL_RANGE_PADDING;
                 yMax += range * VERTICAL_RANGE_PADDING;
             }
-            return {values, xMin, xMax, yMin, yMax, yMean, yRms, progress: coordinateData.progress};
+            valuesMap.set("origin", values);
+            valuesMap.set("smoothing", smoothingPlot);
+            return {values: valuesMap, xMin, xMax, yMin, yMax, yMean, yRms, progress: coordinateData.progress};
         }
         return null;
     }
@@ -294,9 +300,9 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
                 unit: frame.spectralUnitStr
             };
             const data = this.plotData.values;
-            const nearest = binarySearchByX(data, this.widgetStore.isMouseMoveIntoLinePlots ? cursorX.profiler : cursorX.image);
+            const nearest = binarySearchByX(data.get("original"), this.widgetStore.isMouseMoveIntoLinePlots ? cursorX.profiler : cursorX.image);
             let cursorString = "";
-            if (nearest && nearest.point && nearest.index >= 0 && nearest.index < data.length) {
+            if (nearest && nearest.point && nearest.index >= 0 && nearest.index < data.get("original").length) {
                 let floatXStr = "";
                 const diffLeft = nearest.index - 1 >= 0 ? Math.abs(nearest.point.x - data[nearest.index - 1].x) : 0;
                 if (diffLeft > 0 && diffLeft < 1e-6) {
@@ -347,7 +353,8 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
             mouseEntered: this.widgetStore.setMouseMoveIntoLinePlots,
             borderWidth: this.widgetStore.lineWidth,
             pointRadius: this.widgetStore.linePlotPointSize,
-            zeroLineWidth: 2
+            zeroLineWidth: 2,
+            multiPlotBorderColor: new Map()
         };
 
         if (this.profileStore && frame) {
@@ -361,7 +368,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
 
             const currentPlotData = this.plotData;
             if (currentPlotData) {
-                linePlotProps.data = currentPlotData.values;
+                linePlotProps.multiPlotData = currentPlotData.values;
                 // Opacity ranges from 0.15 to 0.40 when data is in progress, and is 1.0 when finished
                 linePlotProps.opacity = currentPlotData.progress < 1.0 ? 0.15 + currentPlotData.progress / 4.0 : 1.0;
                 
@@ -373,6 +380,15 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
                     }
                 }
                 linePlotProps.lineColor = primaryLineColor;
+                linePlotProps.multiPlotBorderColor.set("origin", primaryLineColor);
+                if (this.widgetStore.smoothingType !== SmoothingType.NONE) {
+                    if (!this.widgetStore.isSmoothingOverlayOn) {
+                        linePlotProps.multiPlotBorderColor.set("origin", "#00000000");
+                    }
+                    linePlotProps.multiPlotBorderColor.set("smoothing", this.widgetStore.smoothingLineColor.colorHex);
+                } else {
+                    linePlotProps.multiPlotBorderColor.set("smoothing", "#00000000");
+                }
                 // Determine scale in X and Y directions. If auto-scaling, use the bounds of the current data
                 if (this.widgetStore.isAutoScaledX) {
                     linePlotProps.xMin = currentPlotData.xMin;
