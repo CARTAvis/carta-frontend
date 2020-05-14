@@ -297,6 +297,7 @@ export class CatalogScatterComponent extends React.Component<WidgetProps> {
             showlegend: false,
             dragmode: widgetStore.dragmode,
         };
+        layout["hoverdistance"] = 5;
         let data = this.scatterData;
         const selectedPointIndexs = widgetStore.catalogOverlayWidgetStore.selectedPointIndexs;
         let scatterDataMarker = data[0].marker;
