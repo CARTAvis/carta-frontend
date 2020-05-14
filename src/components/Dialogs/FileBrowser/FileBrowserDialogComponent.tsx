@@ -49,6 +49,13 @@ export class FileBrowserDialogComponent extends React.Component {
         fileBrowserStore.saveStartingDirectory();
     };
 
+    private saveFile = () => {
+        const appStore = AppStore.Instance;
+        const fileBrowserStore = appStore.fileBrowserStore;
+        // TODO: filename
+        appStore.saveFile(fileBrowserStore.fileList.directory, "");
+    };
+
     private handleExportRegionsClicked = () => {
         const fileBrowserStore = FileBrowserStore.Instance;
         const filename = fileBrowserStore.exportFilename.trim();
@@ -120,6 +127,17 @@ export class FileBrowserDialogComponent extends React.Component {
                     </Tooltip>
                 );
             }
+        } else if (browserMode === BrowserMode.SaveFile) {
+            return (
+                <Tooltip content={"Save this file"}>
+                    <AnchorButton
+                        intent={Intent.PRIMARY}
+                        disabled={appStore.fileLoading || !fileBrowserStore.selectedFile || !fileBrowserStore.fileInfoResp || fileBrowserStore.loadingInfo}
+                        onClick={this.saveFile}
+                        text="Save"
+                    />
+                </Tooltip>
+            );
         } else if (browserMode === BrowserMode.RegionImport) {
             return (
                 <Tooltip content={"Load a region file for the currently active frame"}>

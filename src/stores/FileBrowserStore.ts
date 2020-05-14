@@ -7,6 +7,7 @@ import {FileInfoType} from "components";
 
 export enum BrowserMode {
     File,
+    SaveFile,
     RegionImport,
     RegionExport,
     Catalog
