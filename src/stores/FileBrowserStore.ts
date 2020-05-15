@@ -62,6 +62,9 @@ export class FileBrowserStore {
         this.exportFilename = "";
         this.catalogFileList = null;
         this.getFileList(this.startingDirectory);
+        if (AppStore.Instance.activeFrame && mode === BrowserMode.SaveFile) {
+            this.saveFilename = AppStore.Instance.activeFrame.frameInfo.fileInfo.name;
+        }
     };
 
     @action hideFileBrowser = () => {
