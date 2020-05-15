@@ -51,9 +51,14 @@ export class FileBrowserDialogComponent extends React.Component {
 
     private saveFile = () => {
         const appStore = AppStore.Instance;
-        const fileBrowserStore = appStore.fileBrowserStore;
+        const fileBrowserStore = FileBrowserStore.Instance;
         // TODO: filename
         appStore.saveFile(fileBrowserStore.fileList.directory, "");
+    };
+
+    private handleSaveFileNameChanged = (ev: React.ChangeEvent<HTMLInputElement>) => {
+        const fileBrowserStore = FileBrowserStore.Instance;
+        fileBrowserStore.setSaveFilename(ev.target.value);
     };
 
     private handleExportRegionsClicked = () => {
@@ -219,6 +224,28 @@ export class FileBrowserDialogComponent extends React.Component {
         return <InputGroup autoFocus={true} placeholder="Enter file name" value={fileBrowserStore.exportFilename} onChange={this.handleExportInputChanged} rightElement={sideMenu}/>;
     }
 
+    private renderSaveFilenameInput() {
+        const fileBrowserStore = FileBrowserStore.Instance;
+
+        const fileTypeMenu = (
+            <Popover
+                content={
+                    <Menu>
+                        <MenuItem text="CASA" onClick={() => fileBrowserStore.setSaveFileType(CARTA.FileType.CASA)}/>
+                        <MenuItem text="FITS" onClick={() => fileBrowserStore.setSaveFileType(CARTA.FileType.FITS)}/>
+                    </Menu>
+                }
+                position={Position.BOTTOM_RIGHT}
+            >
+                <Button minimal={true} rightIcon="caret-down">
+                    {fileBrowserStore.saveFileType === CARTA.FileType.CASA ? "CASA" : "FITS"}
+                </Button>
+            </Popover>
+        );
+
+        return <InputGroup autoFocus={true} placeholder="Enter file name" value={fileBrowserStore.saveFilename} onChange={this.handleSaveFileNameChanged} rightElement={fileTypeMenu}/>;
+    }
+
     // Refresh file list to trigger the Breadcrumb re-rendering
     @action
     private refreshFileList() {
@@ -259,7 +286,9 @@ export class FileBrowserDialogComponent extends React.Component {
         let exportFileInput: React.ReactNode;
         let paneClassName = "file-panes";
 
-        if (fileBrowserStore.browserMode === BrowserMode.RegionExport) {
+        if (fileBrowserStore.browserMode === BrowserMode.SaveFile) {
+            exportFileInput = this.renderSaveFilenameInput();
+        } else if (fileBrowserStore.browserMode === BrowserMode.RegionExport) {
             exportFileInput = this.renderExportFilenameInput();
         } else {
             paneClassName += " extended";

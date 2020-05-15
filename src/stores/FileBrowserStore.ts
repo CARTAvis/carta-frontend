@@ -49,6 +49,9 @@ export class FileBrowserStore {
     @observable catalogFileInfo: CARTA.ICatalogFileInfo;
     @observable catalogHeaders: Array<CARTA.ICatalogHeader>;
 
+    @observable saveFilename: string = "";
+    @observable saveFileType: CARTA.FileType = CARTA.FileType.CASA;
+
     @action showFileBrowser = (mode: BrowserMode, append = false) => {
         this.appendingFrame = append;
         this.browserMode = mode;
@@ -230,6 +233,14 @@ export class FileBrowserStore {
 
     @action setExportFileType = (fileType: RegionFileType) => {
         this.exportFileType = fileType;
+    };
+
+    @action setSaveFilename = (filename: string) => {
+        this.saveFilename = filename;
+    };
+
+    @action setSaveFileType = (fileType: CARTA.FileType) => {
+        this.saveFileType = fileType;
     };
 
     @computed get fileInfo() {
