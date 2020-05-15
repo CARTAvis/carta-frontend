@@ -80,7 +80,7 @@ export class FileBrowserStore {
         this.regionFileInfo = null;
         this.catalogFileInfo = null;
 
-        if (this.browserMode === BrowserMode.File) {
+        if (this.browserMode === BrowserMode.File || this.browserMode === BrowserMode.SaveFile) {
             backendService.getFileList(directory).subscribe(res => {
                 this.fileList = res;
             }, err => {
@@ -181,6 +181,9 @@ export class FileBrowserStore {
 
         if (this.browserMode === BrowserMode.File) {
             this.getFileInfo(fileList.directory, file.name, hdu);
+        } else if (this.browserMode === BrowserMode.SaveFile) {
+            this.getFileInfo(fileList.directory, file.name, hdu);
+            this.saveFilename = file.name;
         } else if (this.browserMode === BrowserMode.Catalog) {
             this.getCatalogFileInfo(fileList.directory, file.name);
         } else {
@@ -282,6 +285,7 @@ export class FileBrowserStore {
     @computed get getBrowserMode(): FileInfoType {
         switch (this.browserMode) {
             case BrowserMode.File:
+            case BrowserMode.SaveFile:
                 return FileInfoType.IMAGE_FILE;
             case BrowserMode.Catalog:
                 return FileInfoType.CATALOG_FILE;
