@@ -89,6 +89,9 @@ export class ToolbarMenuComponent extends React.Component {
                     <Tooltip content={<span>Catalog Widget{commonTooltip}</span>}>
                         <Button icon={"heatmap"} id="catalogOverlayButton" onClick={appStore.widgetsStore.reloadFloatingCatalogOverlayWidget}/>
                     </Tooltip>
+                    <Tooltip content={<span>Spectral Line Widget{commonTooltip}</span>}>
+                        <Button icon={"geosearch"} id="spectralLineOverlayButton" onClick={appStore.widgetsStore.createFloatingSpectralLineOverlayWidget}/>
+                    </Tooltip>
                 </ButtonGroup>
                 <ButtonGroup className={dialogClassName}>
                     <Tooltip content={<span>File Info</span>}>
