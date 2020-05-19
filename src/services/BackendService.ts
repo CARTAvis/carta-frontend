@@ -1,7 +1,7 @@
 import {action, observable} from "mobx";
 import {CARTA} from "carta-protobuf";
 import {Observable, Observer, Subject, throwError} from "rxjs";
-import {LogStore, PreferenceStore, RegionStore} from "stores";
+import {PreferenceStore, RegionStore} from "stores";
 
 export enum ConnectionStatus {
     CLOSED = 0,
@@ -23,7 +23,7 @@ export class BackendService {
         return BackendService.staticInstance;
     }
 
-    private static readonly IcdVersion = 12;
+    private static readonly IcdVersion = 13;
     private static readonly DefaultFeatureFlags = CARTA.ClientFeatureFlags.WEB_ASSEMBLY | CARTA.ClientFeatureFlags.WEB_GL;
     @observable connectionStatus: ConnectionStatus;
     readonly loggingEnabled: boolean;
