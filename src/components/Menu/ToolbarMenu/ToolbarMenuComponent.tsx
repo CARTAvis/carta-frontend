@@ -1,18 +1,19 @@
 import * as React from "react";
 import {observer} from "mobx-react";
 import {Button, ButtonGroup, Tooltip} from "@blueprintjs/core";
-import {AppStore, DialogStore, WidgetConfig} from "stores";
+import {AppStore, WidgetConfig} from "stores";
 import {
-    AnimatorComponent, 
-    HistogramComponent, 
-    LayerListComponent, 
-    LogComponent, 
-    RegionListComponent, 
-    RenderConfigComponent, 
-    SpatialProfilerComponent, 
-    SpectralProfilerComponent, 
-    StatsComponent, 
-    StokesAnalysisComponent, 
+    AnimatorComponent,
+    HistogramComponent,
+    LayerListComponent,
+    LogComponent,
+    RegionListComponent,
+    RenderConfigComponent,
+    SpatialProfilerComponent,
+    SpectralProfilerComponent,
+    SpectralLineOverlayComponent,
+    StatsComponent,
+    StokesAnalysisComponent,
     CatalogOverlayComponent
 } from "components";
 import {CustomIcon} from "icons/CustomIcons";
@@ -28,6 +29,7 @@ export class ToolbarMenuComponent extends React.Component {
             ["regionListButton", RegionListComponent.WIDGET_CONFIG],
             ["spatialProfilerButton", SpatialProfilerComponent.WIDGET_CONFIG],
             ["spectralProfilerButton", SpectralProfilerComponent.WIDGET_CONFIG],
+            ["spectralLineOverlayButton", SpectralLineOverlayComponent.WIDGET_CONFIG],
             ["statsButton", StatsComponent.WIDGET_CONFIG],
             ["histogramButton", HistogramComponent.WIDGET_CONFIG],
             ["stokesAnalysisButton", StokesAnalysisComponent.WIDGET_CONFIG],

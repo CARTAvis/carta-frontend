@@ -790,10 +790,6 @@ export class WidgetsStore {
         this.addFloatingWidget(config);
     };
 
-    createFloatingSpectralLineOverlayWidget = (): string => {
-        return "";
-    };
-
     // add catalog overlay widget store
     @action addCatalogOverlayWidget(catalogInfo: CatalogInfo, catalogHeader: Array<CARTA.ICatalogHeader>, catalogData: CARTA.ICatalogColumnsData, id: string = null) {
         // Generate new id if none passed in
@@ -827,7 +823,31 @@ export class WidgetsStore {
         }
         return id;
     }
-    // endregion 
+    // endregion
+
+    // region Spectral Line Overlay Widgets
+    createFloatingSpectralLineOverlayWidget = (): string => {
+        let config = SpectralLineOverlayComponent.WIDGET_CONFIG;
+        const widgetId = this.addSpectralLineOverlayWidget();
+        config.id = widgetId;
+        config.componentId = this.getNextComponentId(config);
+        this.addFloatingWidget(config);
+        return widgetId;
+    };
+
+     // add spectral line overlay widget store
+     @action addSpectralLineOverlayWidget(id: string = null) {
+        // Generate new id if none passed in
+        if (!id) {
+            id = this.getNextId(SpectralLineOverlayComponent.WIDGET_CONFIG.type);
+        }
+
+        if (id) {
+            this.spectralLineOverlayWidgets.set(id, new SpectralLineOverlayWidgetStore());
+        }
+        return id;
+    }
+    // endregion
 
     // region Floating Settings
     createFloatingSettingsWidget = (title: string, parentId: string, parentType: string) => {
