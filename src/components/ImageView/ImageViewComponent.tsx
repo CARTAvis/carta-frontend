@@ -2,7 +2,7 @@ import * as React from "react";
 import * as $ from "jquery";
 import {observer} from "mobx-react";
 import {autorun, observable, action} from "mobx";
-import {Colors, NonIdealState, Spinner, Tag} from "@blueprintjs/core";
+import {NonIdealState, Spinner, Tag} from "@blueprintjs/core";
 import ReactResizeDetector from "react-resize-detector";
 import {OverlayComponent} from "./Overlay/OverlayComponent";
 import {CursorOverlayComponent} from "./CursorOverlay/CursorOverlayComponent";
@@ -10,17 +10,21 @@ import {RasterViewComponent} from "./RasterView/RasterViewComponent";
 import {ToolbarComponent} from "./Toolbar/ToolbarComponent";
 import {BeamProfileOverlayComponent} from "./BeamProfileOverlay/BeamProfileOverlayComponent";
 import {RegionViewComponent} from "./RegionView/RegionViewComponent";
-import {AnimationMode, AnimationState, RegionStore, WidgetConfig, WidgetProps, HelpType, DialogStore, PreferenceStore, AppStore, OverlayStore} from "stores";
+import {ContourViewComponent} from "./ContourView/ContourViewComponent";
+import {CatalogViewComponent} from "./CatalogView/CatalogViewComponent";
+import {AppStore, RegionStore, WidgetConfig, WidgetProps, HelpType, Padding} from "stores";
 import {CursorInfo, Point2D} from "models";
 import {toFixed} from "utilities";
 import "./ImageViewComponent.css";
-import {ContourViewComponent} from "./ContourView/ContourViewComponent";
-import {CatalogViewComponent} from "./CatalogView/CatalogViewComponent";
 
-export const exportImage = (padding, darkTheme, imageName) => {
+export const getImageCanvas = (padding: Padding, backgroundColor: string = "rgba(255, 255, 255, 0)"): HTMLCanvasElement => {
     const rasterCanvas = document.getElementById("raster-canvas") as HTMLCanvasElement;
     const contourCanvas = document.getElementById("contour-canvas") as HTMLCanvasElement;
     const overlayCanvas = document.getElementById("overlay-canvas") as HTMLCanvasElement;
+
+    if (!rasterCanvas || !contourCanvas || !overlayCanvas) {
+        return null;
+    }
 
     let regionCanvas: HTMLCanvasElement;
     let beamProfileCanvas: HTMLCanvasElement;
@@ -39,7 +43,7 @@ export const exportImage = (padding, darkTheme, imageName) => {
     composedCanvas.height = overlayCanvas.height;
 
     const ctx = composedCanvas.getContext("2d");
-    ctx.fillStyle = "rgba(255, 255, 255, 0.0)";
+    ctx.fillStyle = backgroundColor;
     ctx.fillRect(0, 0, composedCanvas.width, composedCanvas.height);
     ctx.drawImage(rasterCanvas, padding.left * devicePixelRatio, padding.top * devicePixelRatio);
     ctx.drawImage(contourCanvas, padding.left * devicePixelRatio, padding.top * devicePixelRatio);
@@ -54,14 +58,7 @@ export const exportImage = (padding, darkTheme, imageName) => {
     ctx.setTransform(1, 0, 0, 1, 0, 0);
     ctx.drawImage(overlayCanvas, 0, 0);
 
-    composedCanvas.toBlob((blob) => {
-        const now = new Date();
-        const timestamp = `${now.getFullYear()}-${now.getMonth() + 1}-${now.getDate()}-${now.getHours()}-${now.getMinutes()}-${now.getSeconds()}`;
-        const link = document.createElement("a") as HTMLAnchorElement;
-        link.download = `${imageName}-image-${timestamp}.png`;
-        link.href = URL.createObjectURL(blob);
-        link.dispatchEvent(new MouseEvent("click"));
-    }, "image/png");
+    return composedCanvas;
 };
 
 export enum ImageViewLayer {
