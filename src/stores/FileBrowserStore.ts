@@ -7,6 +7,7 @@ import {FileInfoType} from "components";
 
 export enum BrowserMode {
     File,
+    SaveFile,
     RegionImport,
     RegionExport,
     Catalog
@@ -48,6 +49,9 @@ export class FileBrowserStore {
     @observable catalogFileInfo: CARTA.ICatalogFileInfo;
     @observable catalogHeaders: Array<CARTA.ICatalogHeader>;
 
+    @observable saveFilename: string = "";
+    @observable saveFileType: CARTA.FileType = CARTA.FileType.CASA;
+
     @action showFileBrowser = (mode: BrowserMode, append = false) => {
         this.appendingFrame = append;
         this.browserMode = mode;
@@ -58,6 +62,9 @@ export class FileBrowserStore {
         this.exportFilename = "";
         this.catalogFileList = null;
         this.getFileList(this.startingDirectory);
+        if (AppStore.Instance.activeFrame && mode === BrowserMode.SaveFile) {
+            this.saveFilename = AppStore.Instance.activeFrame.frameInfo.fileInfo.name;
+        }
     };
 
     @action hideFileBrowser = () => {
@@ -73,7 +80,7 @@ export class FileBrowserStore {
         this.regionFileInfo = null;
         this.catalogFileInfo = null;
 
-        if (this.browserMode === BrowserMode.File) {
+        if (this.browserMode === BrowserMode.File || this.browserMode === BrowserMode.SaveFile) {
             backendService.getFileList(directory).subscribe(res => {
                 this.fileList = res;
             }, err => {
@@ -174,6 +181,9 @@ export class FileBrowserStore {
 
         if (this.browserMode === BrowserMode.File) {
             this.getFileInfo(fileList.directory, file.name, hdu);
+        } else if (this.browserMode === BrowserMode.SaveFile) {
+            this.getFileInfo(fileList.directory, file.name, hdu);
+            this.saveFilename = file.name;
         } else if (this.browserMode === BrowserMode.Catalog) {
             this.getCatalogFileInfo(fileList.directory, file.name);
         } else {
@@ -231,6 +241,14 @@ export class FileBrowserStore {
         this.exportFileType = fileType;
     };
 
+    @action setSaveFilename = (filename: string) => {
+        this.saveFilename = filename;
+    };
+
+    @action setSaveFileType = (fileType: CARTA.FileType) => {
+        this.saveFileType = fileType;
+    };
+
     @computed get fileInfo() {
         let fileInfo = "";
         if (this.fileInfoExtended && this.fileInfoExtended.computedEntries) {
@@ -267,6 +285,7 @@ export class FileBrowserStore {
     @computed get getBrowserMode(): FileInfoType {
         switch (this.browserMode) {
             case BrowserMode.File:
+            case BrowserMode.SaveFile:
                 return FileInfoType.IMAGE_FILE;
             case BrowserMode.Catalog:
                 return FileInfoType.CATALOG_FILE;

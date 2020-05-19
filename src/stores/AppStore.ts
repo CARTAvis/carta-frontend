@@ -389,6 +389,14 @@ export class AppStore {
         this.addFrame(directory, file, hdu, 0);
     };
 
+    @action saveFile = (directory: string, file: string) => {
+        if (!this.activeFrame) {
+            return;
+        }
+
+        // TODO: show filebrowser & append text field for input file name
+    };
+
     @action closeFile = (frame: FrameStore, confirmClose: boolean = true) => {
         if (!frame) {
             return;
