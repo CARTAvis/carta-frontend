@@ -1,10 +1,11 @@
 import * as React from "react";
 import {action, computed, observable} from "mobx";
 import {observer} from "mobx-react";
-import {Checkbox, FormGroup, HTMLSelect, Button} from "@blueprintjs/core";
+import {Button, Checkbox, FormGroup, HTMLSelect, Radio, RadioGroup} from "@blueprintjs/core";
 import ReactResizeDetector from "react-resize-detector";
+import {SafeNumericInput, SpectralSettingsComponent} from "components/Shared";
 import {AppStore, HelpType, WidgetConfig, WidgetProps, WidgetsStore} from "stores";
-import {SpectralLineOverlayWidgetStore} from "stores/widgets";
+import {RedshiftGroup, SpectralLineOverlayWidgetStore} from "stores/widgets";
 import "./SpectralLineOverlayComponent.css";
 
 const SPECTRAL_LINE_OPTIONS = [
@@ -50,7 +51,7 @@ export class SpectralLineOverlayComponent extends React.Component<WidgetProps> {
         return new SpectralLineOverlayWidgetStore();
     }
 
-    onResize = (width: number, height: number) => {
+    @action onResize = (width: number, height: number) => {
         this.width = width;
         this.height = height;
     };
@@ -89,6 +90,27 @@ export class SpectralLineOverlayComponent extends React.Component<WidgetProps> {
             </table>
         );
 
+        const redshiftPanel = (
+            <div>
+                <FormGroup label="Redshift" inline={true}/>
+                <FormGroup inline={true}>
+                    <SafeNumericInput
+                        value={widgetStore.redshiftSpeed}
+                        buttonPosition="none"
+                        onValueChange={val => widgetStore.setRedshiftSpeed(val)}
+                    />
+                </FormGroup>
+                <RadioGroup
+                    inline={true}
+                    onChange={ev => widgetStore.setRedshiftGroup(ev.currentTarget.value as RedshiftGroup)}
+                    selectedValue={widgetStore.redshiftGroup}
+                >
+                    <Radio label={RedshiftGroup.V} value={RedshiftGroup.V}/>
+                    <Radio label={RedshiftGroup.Z} value={RedshiftGroup.Z}/>
+                </RadioGroup>
+            </div>
+        );
+
         const resultTable = (
             <table>
                 <thead>
@@ -108,6 +130,7 @@ export class SpectralLineOverlayComponent extends React.Component<WidgetProps> {
             <div className={className}>
                 {wcsGroup}
                 {optionTable}
+                {redshiftPanel}
                 {resultTable}
                 <div className="spectral-line-plot">
                     <Button intent="success" onClick={this.handlePlot}>Plot</Button>
