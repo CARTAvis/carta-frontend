@@ -84,6 +84,7 @@ export class BackendService {
             [CARTA.EventType.REGION_FILE_INFO_RESPONSE, this.onSimpleMappedResponse],
             [CARTA.EventType.CATALOG_FILE_INFO_RESPONSE, this.onSimpleMappedResponse],
             [CARTA.EventType.OPEN_FILE_ACK, this.onSimpleMappedResponse],
+            [CARTA.EventType.SAVE_FILE_ACK, this.onSimpleMappedResponse],
             [CARTA.EventType.OPEN_CATALOG_FILE_ACK, this.onSimpleMappedResponse],
             [CARTA.EventType.IMPORT_REGION_ACK, this.onSimpleMappedResponse],
             [CARTA.EventType.EXPORT_REGION_ACK, this.onSimpleMappedResponse],
@@ -114,6 +115,7 @@ export class BackendService {
             [CARTA.EventType.REGION_FILE_INFO_RESPONSE, CARTA.RegionFileInfoResponse],
             [CARTA.EventType.CATALOG_FILE_INFO_RESPONSE, CARTA.CatalogFileInfoResponse],
             [CARTA.EventType.OPEN_FILE_ACK, CARTA.OpenFileAck],
+            [CARTA.EventType.SAVE_FILE_ACK, CARTA.SaveFileAck],
             [CARTA.EventType.OPEN_CATALOG_FILE_ACK, CARTA.OpenCatalogFileAck],
             [CARTA.EventType.IMPORT_REGION_ACK, CARTA.ImportRegionAck],
             [CARTA.EventType.EXPORT_REGION_ACK, CARTA.ExportRegionAck],
@@ -391,6 +393,18 @@ export class BackendService {
             const message = CARTA.CloseCatalogFile.create({fileId});
             this.logEvent(CARTA.EventType.CLOSE_CATALOG_FILE, this.eventCounter, message, false);
             if (this.sendEvent(CARTA.EventType.CLOSE_CATALOG_FILE, CARTA.CloseCatalogFile.encode(message).finish())) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    @action("save file")
+    saveFile(fileId: number, outputFileDirectory: string, outputFileName: string, outputFileType: CARTA.FileType): boolean {
+        if (this.connectionStatus === ConnectionStatus.ACTIVE) {
+            const message = CARTA.SaveFile.create({fileId, outputFileDirectory, outputFileName, outputFileType});
+            this.logEvent(CARTA.EventType.SAVE_FILE, this.eventCounter, message, false);
+            if (this.sendEvent(CARTA.EventType.SAVE_FILE, CARTA.SaveFile.encode(message).finish())) {
                 return true;
             }
         }

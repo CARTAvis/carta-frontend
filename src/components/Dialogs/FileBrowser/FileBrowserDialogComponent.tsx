@@ -52,8 +52,7 @@ export class FileBrowserDialogComponent extends React.Component {
     private saveFile = () => {
         const appStore = AppStore.Instance;
         const fileBrowserStore = FileBrowserStore.Instance;
-        // TODO: filename
-        appStore.saveFile(fileBrowserStore.fileList.directory, "");
+        appStore.saveFile(fileBrowserStore.fileList.directory, fileBrowserStore.saveFilename, fileBrowserStore.saveFileType);
     };
 
     private handleSaveFileNameChanged = (ev: React.ChangeEvent<HTMLInputElement>) => {
@@ -137,7 +136,7 @@ export class FileBrowserDialogComponent extends React.Component {
                 <Tooltip content={"Save this file"}>
                     <AnchorButton
                         intent={Intent.PRIMARY}
-                        disabled={appStore.fileLoading || !fileBrowserStore.selectedFile || !fileBrowserStore.fileInfoResp || fileBrowserStore.loadingInfo}
+                        disabled={appStore.fileLoading || fileBrowserStore.loadingInfo}
                         onClick={this.saveFile}
                         text="Save"
                     />

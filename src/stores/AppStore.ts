@@ -389,12 +389,12 @@ export class AppStore {
         this.addFrame(directory, file, hdu, 0);
     };
 
-    @action saveFile = (directory: string, file: string) => {
+    @action saveFile = (directory: string, filename: string, fileType: CARTA.FileType) => {
         if (!this.activeFrame) {
             return;
         }
-
-        // TODO: show filebrowser & append text field for input file name
+        const fileId = this.activeFrame.frameInfo.fileId;
+        this.backendService.saveFile(fileId, directory, filename, fileType);
     };
 
     @action closeFile = (frame: FrameStore, confirmClose: boolean = true) => {
