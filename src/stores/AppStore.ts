@@ -38,9 +38,8 @@ import {distinct, GetRequiredTiles} from "utilities";
 import {BackendService, ConnectionStatus, ScriptingService, TileService, TileStreamDetails} from "services";
 import {FrameView, Point2D, ProtobufProcessing, Theme, TileCoordinate, WCSMatchingType} from "models";
 import {HistogramWidgetStore, RegionWidgetStore, SpatialProfileWidgetStore, SpectralProfileWidgetStore, StatsWidgetStore, StokesAnalysisWidgetStore, CatalogInfo, CatalogUpdateMode} from "./widgets";
-import {getImageCanvas} from "components";
-import {CatalogOverlayComponent} from "components";
-import {AppToaster} from "../components/Shared";
+import {CatalogOverlayComponent, CatalogScatterComponent, getImageCanvas} from "components";
+import {AppToaster} from "components/Shared";
 import GitCommit from "../static/gitInfo";
 
 export class AppStore {
@@ -545,7 +544,7 @@ export class AppStore {
                 }
                 if (catalogWidgetId) {
                     this.catalogs.set(catalogWidgetId, fileId);
-                    this.catalogStore.addCatalogs(catalogWidgetId, fileId);
+                    this.catalogStore.addCatalog(catalogWidgetId, fileId);
                     this.fileBrowserStore.hideFileBrowser();
                 }
             }
@@ -559,6 +558,23 @@ export class AppStore {
     @action reomveCatalog(catalogWidgetId: string, catalogComponentId: string) {
         const fileId = this.catalogs.get(catalogWidgetId);
         if (fileId > -1 && this.backendService.closeCatalogFile(fileId)) {
+            // close all associated scatter widgets
+            const config = CatalogScatterComponent.WIDGET_CONFIG;
+            const catalogOverlayWidgetStore = this.widgetsStore.catalogOverlayWidgets.get(catalogWidgetId);
+            let dockedCatalogScatterWidgets = this.widgetsStore.getDockedWidgetByType(config.type);
+            const dockedScatterWidgetId = dockedCatalogScatterWidgets.map(contentItem => {
+                return contentItem.config.id;
+            });
+            if (catalogOverlayWidgetStore.catalogScatterWidgetsId.length) {
+                catalogOverlayWidgetStore.catalogScatterWidgetsId.forEach(scatterWidgetsId => {
+                    if (dockedScatterWidgetId.includes(scatterWidgetsId)) {
+                        LayoutStore.Instance.dockedLayout.root.getItemsById(scatterWidgetsId)[0].remove();
+                    } else {
+                        this.widgetsStore.removeFloatingWidget(scatterWidgetsId);
+                    }
+                });
+            }
+            // close catalogOverlay
             this.catalogs.delete(catalogWidgetId);
             if (this.catalogs.size === 0) {
                 this.widgetsStore.removeFloatingWidgetComponent(catalogComponentId);
