@@ -3,7 +3,6 @@ import {observable} from "mobx";
 import {observer} from "mobx-react";
 import {Alert, Icon, Menu, Popover, Position, Tooltip, Tag} from "@blueprintjs/core";
 import {ToolbarMenuComponent} from "./ToolbarMenu/ToolbarMenuComponent";
-import {exportImage} from "components";
 import {PresetLayout} from "models";
 import {AppStore, BrowserMode, OverlayStore, PreferenceKeys} from "stores";
 import {ConnectionStatus} from "services";
@@ -75,7 +74,7 @@ export class RootMenuComponent extends React.Component {
                     text="Export image"
                     label={`${modString}E`}
                     disabled={!appStore.activeFrame}
-                    onClick={() => exportImage(OverlayStore.Instance.padding, appStore.darkTheme, appStore.activeFrame.frameInfo.fileInfo.name)}
+                    onClick={appStore.exportImage}
                 />
                 <Menu.Item text="Preferences" onClick={appStore.dialogStore.showPreferenceDialog} disabled={appStore.preferenceStore.supportsServer && connectionStatus !== ConnectionStatus.ACTIVE}/>
             </Menu>
@@ -209,7 +208,7 @@ export class RootMenuComponent extends React.Component {
                     connectivityTooltip = <span>Reconnected to server {userString} after disconnect. Some errors may occur<br/><i><small>Latency: {latencyString}</small></i></span>;
                     connectivityClass += " warning";
                 } else {
-                    connectivityTooltip = <span>Connected to server {userString}<br/><i><small>Latency: {latencyString}</small></i></span>;
+                    connectivityTooltip = <span>Connected to server {userString}<br/><i><small>Latency: {latencyString}<br/>Session ID: {appStore.backendService.sessionId}</small></i></span>;
                     connectivityClass += " online";
                 }
                 break;

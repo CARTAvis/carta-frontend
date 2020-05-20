@@ -45,7 +45,8 @@ export enum RasterRenderType {
 }
 
 export class FrameStore {
-    public spectralFrame: number;
+    private astFrameSet: number;
+    private spectralFrame: number;
     public spectralCoordsSupported: Map<string, {type: SpectralType, unit: SpectralUnit}>;
     public spectralSystemsSupported: Array<SpectralSystem>;
 
@@ -540,6 +541,7 @@ export class FrameStore {
         this.backendService = BackendService.Instance;
         const preferenceStore = PreferenceStore.Instance;
 
+        this.astFrameSet = null;
         this.spectralFrame = null;
         this.spectralType = null;
         this.spectralUnit = null;
@@ -596,11 +598,15 @@ export class FrameStore {
         };
         this.animationChannelRange = [0, frameInfo.fileInfoExtended.depth - 1];
 
-        this.initWCS();
+        this.initSkyWCS();
         if (frameInfo.fileInfoExtended.depth > 1) {
             this.initFullWCS();
         }
-        this.initSpectralFrame();
+
+        this.astFrameSet = this.initFrame();
+        if (this.astFrameSet) {
+            this.spectralFrame = AST.getSpectralFrame(this.astFrameSet);
+        }
         this.initSupportedSpectralConversion();
         this.initCenter();
         this.zoomLevel = preferenceStore.isZoomRAWMode ? 1.0 : this.zoomLevelForFit;
@@ -654,7 +660,7 @@ export class FrameStore {
         return AST.transformSpectralPoint(this.spectralFrame, type, unit, system, value);
     };
 
-    @action private initWCS = () => {
+    @action private initSkyWCS = () => {
         let headerString = "";
 
         for (let entry of this.frameInfo.fileInfoExtended.headerEntries) {
@@ -752,59 +758,36 @@ export class FrameStore {
         }
     };
 
-    @action private initSpectralFrame = () => {
-        this.spectralFrame = null;
-        const entries = this.frameInfo.fileInfoExtended.headerEntries;
+    private initFrame = (): number => {
         if (!this.spectralAxis || !this.spectralAxis.valid) {
-            return;
+            return null;
         }
 
-        const dimension = this.spectralAxis.dimension;
-        const skipRegex = new RegExp(`(CTYPE|CDELT|CRPIX|CRVAL|CUNIT|NAXIS|CROTA)[^1|2|${dimension.toString()}]`, "i");
-        const spectralAxisRegex = new RegExp(`(CTYPE|CDELT|CRPIX|CRVAL|CUNIT|NAXIS|CROTA)[${dimension.toString()}]`, "i");
         let headerString = "";
+        const entries = this.frameInfo.fileInfoExtended.headerEntries;
         for (let entry of entries) {
             // Skip empty header entries
             if (!entry.value.length) {
                 continue;
             }
-            // Skip other dimensions, however spectral frame still need skyframe's info (RefRA, RefDec), keep NAXIS1 & NAXIS2.
-            // skyframe (NAXIS1 & NAXIS2) and spectral frame (NAXIS3 or NAXIS4) headers are provided, unify spectral axis to NAXIS3
-            if (entry.name.match(skipRegex)) {
-                continue;
-            }
-
             let name = entry.name;
             let value = trimFitsComment(entry.value);
-            if (entry.name.toUpperCase() === "NAXIS") {
-                value = "3";
-            }
-            if (entry.name.match(spectralAxisRegex)) {
-                name = entry.name.replace(dimension.toString(), "3");
-            }
             if (entry.entryType === CARTA.EntryType.STRING) {
                 value = `'${value}'`;
             }
-
             while (name.length < 8) {
                 name += " ";
             }
-
             let entryString = `${name}=  ${value}`;
             while (entryString.length < 80) {
                 entryString += " ";
             }
             headerString += entryString;
         }
-
-        const initResult = AST.initSpectralFrame(headerString, this.spectralAxis.type.code, this.spectralAxis.type.unit);
-        if (initResult) {
-            this.spectralFrame = initResult;
-            console.log("Initialised spectral info from frame");
-        }
+        return AST.initFrame(headerString);
     };
 
-    private initSupportedSpectralConversion = () => {
+    @action private initSupportedSpectralConversion = () => {
         if (this.spectralAxis && !this.spectralAxis.valid) {
             this.channelValues = this.channelInfo.values;
             this.spectralCoordsSupported = new Map<string, {type: SpectralType, unit: SpectralUnit}>([
@@ -881,6 +864,13 @@ export class FrameStore {
         } else {
             this.spectralSystemsSupported = [];
         }
+    };
+
+    public convertToNativeWCS = (value: number): number => {
+        if (!this.spectralFrame || !isFinite(value)) {
+            return undefined;
+        }
+        return AST.transformSpectralPoint(this.spectralFrame, this.spectralType, this.spectralUnit, this.spectralSystem, value, false);
     };
 
     public getCursorInfo(cursorPosImageSpace: Point2D) {

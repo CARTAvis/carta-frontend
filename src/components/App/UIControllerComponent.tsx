@@ -1,5 +1,5 @@
 import * as React from "react";
-import { observer } from "mobx-react";
+import {observer} from "mobx-react";
 import {RootMenuComponent, SplashScreenComponent, HelpDrawerComponent} from "components";
 import {
     AboutDialogComponent,
@@ -10,7 +10,8 @@ import {
     RegionDialogComponent,
     SaveLayoutDialogComponent,
     FileInfoDialogComponent,
-    ContourDialogComponent
+    ContourDialogComponent,
+    DebugExecutionDialogComponent
 } from "components/Dialogs";
 
 @observer
@@ -30,6 +31,7 @@ export class UIControllerComponent extends React.Component {
                 <SaveLayoutDialogComponent/>
                 <FileInfoDialogComponent/>
                 <ContourDialogComponent/>
+                <DebugExecutionDialogComponent/>
                 <HelpDrawerComponent/>
             </React.Fragment>
         );

@@ -23,7 +23,7 @@ export class BackendService {
         return BackendService.staticInstance;
     }
 
-    private static readonly IcdVersion = 12;
+    private static readonly IcdVersion = 13;
     private static readonly DefaultFeatureFlags = CARTA.ClientFeatureFlags.WEB_ASSEMBLY | CARTA.ClientFeatureFlags.WEB_GL;
     @observable connectionStatus: ConnectionStatus;
     readonly loggingEnabled: boolean;
@@ -31,6 +31,7 @@ export class BackendService {
     @observable endToEndPing: number;
 
     public animationId: number;
+    public sessionId: number;
 
     private connection: WebSocket;
     private lastPingTime: number;
@@ -38,7 +39,6 @@ export class BackendService {
     private autoReconnect: boolean;
     private observerRequestMap: Map<number, Observer<any>>;
     private eventCounter: number;
-    private sessionId: number;
 
     readonly rasterTileStream: Subject<CARTA.RasterTileData>;
     readonly rasterSyncStream: Subject<CARTA.RasterTileSync>;
@@ -51,6 +51,7 @@ export class BackendService {
     readonly catalogStream: Subject<CARTA.CatalogFilterResponse>;
     readonly momentProgressStream: Subject<CARTA.MomentProgress>;
     readonly reconnectStream: Subject<void>;
+    readonly scriptingStream: Subject<CARTA.ScriptingRequest>;
     private readonly handlerMap: Map<CARTA.EventType, HandlerFunction>;
     private readonly decoderMap: Map<CARTA.EventType, any>;
 
@@ -70,6 +71,7 @@ export class BackendService {
         this.spectralProfileStream = new Subject<CARTA.SpectralProfileData>();
         this.statsStream = new Subject<CARTA.RegionStatsData>();
         this.contourStream = new Subject<CARTA.ContourImageData>();
+        this.scriptingStream = new Subject<CARTA.ScriptingRequest>();
         this.catalogStream = new Subject<CARTA.CatalogFilterResponse>();
         this.momentProgressStream = new Subject<CARTA.MomentProgress>();
         this.reconnectStream = new Subject<void>();
@@ -103,7 +105,8 @@ export class BackendService {
             [CARTA.EventType.CATALOG_FILTER_RESPONSE, this.onStreamedCatalogData],
             [CARTA.EventType.RASTER_TILE_SYNC, this.onStreamedRasterSync],
             [CARTA.EventType.MOMENT_PROGRESS, this.onStreamedMomentProgress],
-            [CARTA.EventType.MOMENT_RESPONSE, this.onMomentResponse]
+            [CARTA.EventType.MOMENT_RESPONSE, this.onMomentResponse],
+            [CARTA.EventType.SCRIPTING_REQUEST, this.onScriptingRequest]
         ]);
 
         this.decoderMap = new Map<CARTA.EventType, any>([
@@ -134,7 +137,8 @@ export class BackendService {
             [CARTA.EventType.SET_USER_PREFERENCES_ACK, CARTA.SetUserPreferencesAck],
             [CARTA.EventType.RASTER_TILE_SYNC, CARTA.RasterTileSync],
             [CARTA.EventType.MOMENT_PROGRESS, CARTA.MomentProgress],
-            [CARTA.EventType.MOMENT_RESPONSE, CARTA.MomentResponse]
+            [CARTA.EventType.MOMENT_RESPONSE, CARTA.MomentResponse],
+            [CARTA.EventType.SCRIPTING_REQUEST, CARTA.ScriptingRequest]
         ]);
 
         // check ping every 5 seconds
@@ -723,6 +727,16 @@ export class BackendService {
         }
     }
 
+    sendScriptingResponse = (message: CARTA.IScriptingResponse) => {
+        if (this.connectionStatus === ConnectionStatus.ACTIVE) {
+            this.logEvent(CARTA.EventType.SCRIPTING_RESPONSE, this.eventCounter, message, false);
+            if (this.sendEvent(CARTA.EventType.SCRIPTING_RESPONSE, CARTA.ScriptingResponse.encode(message).finish())) {
+                return true;
+            }
+        }
+        return false;
+    };
+
     private messageHandler(event: MessageEvent) {
         if (event.data === "PONG") {
             this.lastPongTime = performance.now();
@@ -844,6 +858,10 @@ export class BackendService {
 
     private onStreamedContourData(eventId: number, contourData: CARTA.ContourImageData) {
         this.contourStream.next(contourData);
+    }
+
+    private onScriptingRequest(eventId: number, scriptingRequest: CARTA.ScriptingRequest) {
+        this.scriptingStream.next(scriptingRequest);
     }
 
     private onStreamedCatalogData(eventId: number, catalogFilter: CARTA.CatalogFilterResponse) {

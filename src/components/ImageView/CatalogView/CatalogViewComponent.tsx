@@ -4,7 +4,8 @@ import {observer} from "mobx-react";
 import {computed} from "mobx";
 import Plot from "react-plotly.js";
 import {Colors} from "@blueprintjs/core";
-import {AppStore, CatalogStore} from "stores";
+import {AppStore, WidgetsStore, CatalogStore} from "stores";
+import {CatalogOverlayShape} from "stores/widgets";
 import {canvasToTransformedImagePos} from "components/ImageView/RegionView/shared";
 import {ImageViewLayer} from "../ImageViewComponent";
 import {CursorInfo} from "models";
@@ -22,78 +23,88 @@ export interface CatalogViewComponentProps {
 @observer
 export class CatalogViewComponent extends React.Component<CatalogViewComponentProps> {
 
-    @computed get scatterDatasets() {
+    @computed get unSelectedData(): Map<string, Plotly.Data> {
         const catalogStore = CatalogStore.Instance;
-        let scatterDatasets: Plotly.Data[] = [];
-
-        catalogStore.catalogs.forEach((catalog, key) => {
-            const selectedPointIndexs = catalog.selectedPointIndexs;
-            const selectedPointSize = selectedPointIndexs.length;
-            let selectedata: Plotly.Data = {};
-            let unSelectedata: Plotly.Data = {};
-
-            let totalLength = 0;
-            for (let i = 0; i < catalog.xImageCoords.length; i++) {
-                totalLength += catalog.xImageCoords[i].length;
-            }
-
-            const xArray = new Array(totalLength);
-            const yArray = new Array(totalLength);
-
-            let offset = 0;
-            for (let i = 0; i < catalog.xImageCoords.length; i++) {
-                for (let j = 0; j < catalog.xImageCoords[i].length; j++) {
-                    xArray[j + offset] = catalog.xImageCoords[i][j];
-                    yArray[j + offset] = catalog.yImageCoords[i][j];
-                }
-                offset += catalog.xImageCoords[i].length;
-            }
-
-            unSelectedata.type = "scattergl";
-            unSelectedata.mode = "markers";
-            unSelectedata.hoverinfo = "none";
-            unSelectedata.marker = {
-                symbol: catalog.shape,
-                color: catalog.color,
-                size: catalog.size * devicePixelRatio,
-                line: {
-                    width: 2,
-                    color: catalog.color
-                }
-            };
-            unSelectedata.x = xArray;
-            unSelectedata.y = yArray;
-            unSelectedata.name = key;
-            scatterDatasets.push(unSelectedata);
-
-            if (selectedPointSize > 0) {
-                selectedata.type = "scattergl";
-                selectedata.mode = "markers";
-                selectedata.hoverinfo = "none";
-                selectedata.marker = {
-                    symbol: catalog.shape,
-                    color: Colors.RED2,
-                    size: catalog.size * devicePixelRatio + 5,
-                    line: {
-                        width: 2,
-                        color: Colors.RED2
-                    }
-                };
-                let selectedX = new Array(selectedPointSize);
-                let selectedY = new Array(selectedPointSize);
-                for (let index = 0; index < selectedPointSize; index++) {
-                    const pointIndex = selectedPointIndexs[index];
-                    selectedX.push(xArray[pointIndex]);
-                    selectedY.push(yArray[pointIndex]);
-                }
-                selectedata.x = selectedX;
-                selectedata.y = selectedY;
-            }
-            if (selectedata.x && selectedata.x.length) {
-                scatterDatasets.push(selectedata);
+        let coordsData = new Map<string, Plotly.Data>();
+        catalogStore.catalogData.forEach((catalog, key) => {
+            if (!catalog.showSelectedData) {
+                let unSelectedata: Plotly.Data = {};
+                unSelectedata.type = "scattergl";
+                unSelectedata.mode = "markers";
+                unSelectedata.hoverinfo = "none";
+                unSelectedata.marker = {};
+                unSelectedata.marker.line = {};
+                // copy data to trigger react-plotly js update. only update revision number not working, with layout["datarevision"] will slow down the plotly;
+                unSelectedata.x = catalog.xImageCoords.slice(0);
+                unSelectedata.y = catalog.yImageCoords.slice(0);
+                unSelectedata.name = key;
+                coordsData.set(key, unSelectedata);
             }
         });
-        return scatterDatasets;
+        return coordsData;
+    }
+
+    @computed get selectedData(): Map<string, Plotly.Data> {
+        const catalogStore = CatalogStore.Instance;   
+        const appStore = AppStore.Instance;
+        const widgetsStore = WidgetsStore.Instance;
+        let coordsData = new Map<string, Plotly.Data>(); 
+        appStore.catalogs.forEach((fileId, widgetId) => {
+            const catalogOverlayStore = widgetsStore.catalogOverlayWidgets.get(widgetId);
+            const selectedPoints = catalogOverlayStore.selectedPointIndexs;
+            const selectedPointSize = selectedPoints.length;
+            let selecteData: Plotly.Data = {};
+            if (selectedPointSize > 0) {
+                selecteData.type = "scattergl";
+                selecteData.mode = "markers";
+                selecteData.hoverinfo = "none";
+                const coords = catalogStore.catalogData.get(widgetId);
+                if (coords && coords.xImageCoords.length) {   
+                    let selectedX = [];
+                    let selectedY = [];
+                    for (let index = 0; index < selectedPointSize; index++) {
+                        const pointIndex = selectedPoints[index];
+                        selectedX.push(coords.xImageCoords[pointIndex]);
+                        selectedY.push(coords.yImageCoords[pointIndex]);
+                    }
+                    selecteData.x = selectedX;
+                    selecteData.y = selectedY;
+                    selecteData.name = widgetId;
+                    selecteData.marker = {};
+                    selecteData.marker.line = {};
+                    coordsData.set(widgetId, selecteData);
+                }
+            }
+
+        });
+        return coordsData;
+    }
+
+    @computed get catalogColor() {
+        const catalogStore = CatalogStore.Instance;
+        let catalogColor = new Map<string, string>();
+        catalogStore.catalogColor.forEach((color, key) => {
+            catalogColor.set(key, color);
+        });
+        return catalogColor;
+    }
+
+    @computed get catalogShape() {
+        const catalogStore = CatalogStore.Instance;
+        let catalogShape = new Map<string, string>();
+        catalogStore.catalogShape.forEach((shape, key) => {
+            catalogShape.set(key, shape);
+        });
+        return catalogShape;
+    }
+
+    @computed get catalogSize() {
+        const catalogStore = CatalogStore.Instance;
+        let catalogSize = new Map<string, number>();
+        catalogStore.catalogSize.forEach((size, key) => {
+            catalogSize.set(key, size);
+        });
+        return catalogSize;
     }
 
     private onClick = (event: Readonly<Plotly.PlotMouseEvent>) => {
@@ -106,10 +117,21 @@ export class CatalogViewComponent extends React.Component<CatalogViewComponentPr
                 const selectedPoint = event.points[0];
                 selectedPointIndex.push(selectedPoint.pointIndex);
                 catalogWidget.setselectedPointIndexs(selectedPointIndex, true);
-                appStore.catalogStore.updateSelectedPoints(catalogWidgetId, selectedPointIndex);
             }
         }
     };
+
+    private onDoubleClick() {
+        const catalogStore = CatalogStore.Instance;
+        if (catalogStore.catalogData.size) {   
+            const appStore = AppStore.Instance;
+            const widgetsStore = WidgetsStore.Instance;
+            appStore.catalogs.forEach((fileId, widgetId) => {
+                const catalogOverlayStore = widgetsStore.catalogOverlayWidgets.get(widgetId);
+                catalogOverlayStore.setselectedPointIndexs([]);
+            });
+        }
+    }
 
     private onWheelCaptured = (event: React.WheelEvent<HTMLDivElement>) => {
         if (event && event.nativeEvent && event.nativeEvent.type === "wheel") {
@@ -180,15 +202,68 @@ export class CatalogViewComponent extends React.Component<CatalogViewComponentPr
             layout.xaxis.range = [border.xMin, border.xMax];
             layout.yaxis.range = [border.yMin, border.yMax];
         }
+        let scatterData: Plotly.Data[] = [];
+        const unSelectedData = this.unSelectedData;
+        const selectedData = this.selectedData;
+        const catalogColor = this.catalogColor;
+        const catalogSize = this.catalogSize;
+        const catalogShape = this.catalogShape;
+        unSelectedData.forEach((data, widgetId) => {
+            const color = catalogColor.get(widgetId);
+            if (color) {
+                data.marker.color = color;
+                data.marker.line.color = color;
+                data.marker.line.width = 2;
+            }
+
+            const size = catalogSize.get(widgetId);
+            if (size) {
+                data.marker.size = size * devicePixelRatio;
+            }
+
+            const shape = catalogShape.get(widgetId);
+            if (shape) {
+                data.marker.symbol = shape;
+            }
+            scatterData.push(data);
+        });
+
+        if (selectedData) {
+            selectedData.forEach((data, widgetId) => {
+                data.marker.color = Colors.RED2;
+                data.marker.line.color = Colors.RED2;
+                data.marker.line.width = 2;
+    
+                const size = catalogSize.get(widgetId);
+                if (size) {
+                    data.marker.size = size * devicePixelRatio + 4;
+                }
+                let outlineShape = catalogShape.get(widgetId);
+                if (outlineShape) {
+                    if (outlineShape === CatalogOverlayShape.FullCircle) {
+                        outlineShape = CatalogOverlayShape.Circle;
+                    } else if (outlineShape === CatalogOverlayShape.FullStar) {
+                        outlineShape = CatalogOverlayShape.Star;
+                    } else if (outlineShape === CatalogOverlayShape.Plus) {
+                        outlineShape = "cross-open" as CatalogOverlayShape;
+                    } else if (outlineShape === CatalogOverlayShape.Cross) {
+                        outlineShape = "x-open" as CatalogOverlayShape;
+                    }
+                    data.marker.symbol = outlineShape;
+                }
+                scatterData.push(data);
+            });
+        }
 
         return (
             <div className={className} style={{left: padding.left, top: padding.top}} onWheelCapture={this.onWheelCaptured}>
                 <Plot
                     className={"catalog-plotly"}
-                    data={this.scatterDatasets}
+                    data={scatterData}
                     layout={layout}
                     config={config}
                     onClick={this.onClick}
+                    onDoubleClick={this.onDoubleClick}
                 />
             </div>
         );

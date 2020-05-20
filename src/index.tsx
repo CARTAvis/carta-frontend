@@ -1,7 +1,7 @@
 import * as React from "react";
 import * as ReactDOM from "react-dom";
 import {FocusStyleManager} from "@blueprintjs/core";
-import {App} from "./App";
+import {AppContainer} from "./App";
 import {unregister} from "./registerServiceWorker";
 import "./index.css";
 import "@blueprintjs/core/lib/css/blueprint.css";
@@ -29,7 +29,7 @@ window["React"] = React; // tslint:disable-line
 window["ReactDOM"] = ReactDOM; // tslint:disable-line
 
 ReactDOM.render(
-    <App/>,
+    <AppContainer/>,
     document.getElementById("root") as HTMLElement
 );
 
