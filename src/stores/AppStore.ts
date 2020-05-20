@@ -378,16 +378,6 @@ export class AppStore {
         return this.addFrame(directory, file, hdu);
     };
 
-    @action batchAppendFiles = (directory: string, files: string[], hdu: string) => {
-        // Stop animations playing before loading a new frame
-        if (this.animatorStore.animationState === AnimationState.PLAYING) {
-            this.animatorStore.stopAnimation();
-        }
-        const currentIdList = this.frames.map(frame => frame.frameInfo.fileId).sort((a, b) => a - b);
-        let currentId = currentIdList.pop();
-        files.forEach(file => this.addFrame(directory, file, hdu, ++currentId));
-    };
-
     @action openFile = (directory: string, file: string, hdu: string) => {
         // Stop animations playing before loading a new frame
         if (this.animatorStore.animationState === AnimationState.PLAYING) {
