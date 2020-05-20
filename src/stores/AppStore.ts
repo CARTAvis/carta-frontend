@@ -392,7 +392,13 @@ export class AppStore {
             return;
         }
         const fileId = this.activeFrame.frameInfo.fileId;
-        this.backendService.saveFile(fileId, directory, filename, fileType);
+        this.backendService.saveFile(fileId, directory, filename, fileType).subscribe(() => {
+            AppToaster.show({icon: "saved", message: `${filename} saved.`, intent: "success", timeout: 3000});
+            this.fileBrowserStore.hideFileBrowser();
+        }, error => {
+            console.error(error);
+            AppToaster.show({icon: "warning-sign", message: error, intent: "danger", timeout: 3000});
+        });
     };
 
     @action closeFile = (frame: FrameStore, confirmClose: boolean = true) => {

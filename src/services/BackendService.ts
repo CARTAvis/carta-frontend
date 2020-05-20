@@ -404,15 +404,21 @@ export class BackendService {
     }
 
     @action("save file")
-    saveFile(fileId: number, outputFileDirectory: string, outputFileName: string, outputFileType: CARTA.FileType): boolean {
-        if (this.connectionStatus === ConnectionStatus.ACTIVE) {
+    saveFile(fileId: number, outputFileDirectory: string, outputFileName: string, outputFileType: CARTA.FileType): Observable<CARTA.SaveFileAck> {
+        if (this.connectionStatus !== ConnectionStatus.ACTIVE) {
+            return throwError(new Error("Not connected"));
+        } else {
             const message = CARTA.SaveFile.create({fileId, outputFileDirectory, outputFileName, outputFileType});
+            const requestId = this.eventCounter;
             this.logEvent(CARTA.EventType.SAVE_FILE, this.eventCounter, message, false);
             if (this.sendEvent(CARTA.EventType.SAVE_FILE, CARTA.SaveFile.encode(message).finish())) {
-                return true;
+                return new Observable<CARTA.SaveFileAck>(observer => {
+                    this.observerRequestMap.set(requestId, observer);
+                });
+            } else {
+                return throwError(new Error("Could not send event"));
             }
         }
-        return false;
     }
 
     @action("close file")
