@@ -423,10 +423,8 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
 
     private initSelectedPointIndexs = () => {
         const widgetStore = this.widgetStore;
-        const appStore = AppStore.Instance;
         widgetStore.setselectedPointIndexs([]);
         widgetStore.setShowSelectedData(false);
-        appStore.catalogStore.updateSelectedPoints(this.widgetId, []);
     } 
 
     private handleFilterClick = () => {
@@ -483,7 +481,6 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         const frame = appStore.activeFrame;
         // init plot data   
         const coords = widgetStore.get2DPlotData(widgetStore.xColumnRepresentation, widgetStore.yColumnRepresentation, widgetStore.catalogData);
-
         switch (widgetStore.catalogPlotType) {
             case CatalogPlotType.ImageOverlay:
                 widgetStore.setUpdateMode(CatalogUpdateMode.ViewUpdate);
@@ -527,13 +524,18 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         const widgetsStore = this.widgetStore;
         const selectedPointIndexs = widgetsStore.selectedPointIndexs;
         const selectedData = [];
-        if (widgetsStore.showSelectedData && selectedPointIndexs.length) {
-            selectedData.push(selectedPointIndexs[selectedDataIndex]);
-        } else {
-            selectedData.push(selectedDataIndex);
+        let highlighted = false;
+        if (selectedPointIndexs.length === 1) {
+            highlighted = selectedPointIndexs.includes(selectedDataIndex);
+        }
+        if (!highlighted) {
+            if (widgetsStore.showSelectedData && selectedPointIndexs.length) {
+                selectedData.push(selectedPointIndexs[selectedDataIndex]);
+            } else {
+                selectedData.push(selectedDataIndex);   
+            }
         }
         widgetsStore.setselectedPointIndexs(selectedData);
-        CatalogStore.Instance.updateSelectedPoints(this.widgetId, selectedData);
     }
 
     private renderFileIdPopOver = (fileId: number, itemProps: IItemRendererProps) => {

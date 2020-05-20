@@ -3,7 +3,7 @@ import {Colors} from "@blueprintjs/core";
 import {Table, Regions, IRegion} from "@blueprintjs/table";
 import {CARTA} from "carta-protobuf";
 import {RegionWidgetStore, RegionsType} from "./RegionWidgetStore";
-import {AppStore, SystemType} from "stores";
+import {SystemType} from "stores";
 import {getTableDataByType} from "utilities";
 
 export interface CatalogInfo {
@@ -647,7 +647,10 @@ export class CatalogOverlayWidgetStore extends RegionWidgetStore {
             const init = initData[index];
             const source = sourceData[index];
             if (init && source) {
-                init.doubleColumn.push(...source.doubleColumn);
+                for (let j = 0; j < source.doubleColumn.length; j++) {
+                    const data = source.doubleColumn[j];
+                    init.doubleColumn.push(data);
+                }
             }
         }
     }
@@ -657,7 +660,10 @@ export class CatalogOverlayWidgetStore extends RegionWidgetStore {
             const init = initData[index];
             const source = sourceData[index];
             if (init && source) {
-                init.boolColumn.push(...source.boolColumn);
+                for (let j = 0; j < source.boolColumn.length; j++) {
+                    const data = source.boolColumn[j];
+                    init.boolColumn.push(data);
+                }
             }
         }
     }
@@ -667,7 +673,10 @@ export class CatalogOverlayWidgetStore extends RegionWidgetStore {
             const init = initData[index];
             const source = sourceData[index];
             if (init && source) {
-                init.floatColumn.push(...source.floatColumn);
+                for (let j = 0; j < source.floatColumn.length; j++) {
+                    const data = source.floatColumn[j];
+                    init.floatColumn.push(data);
+                }
             }
         }
     }
@@ -677,7 +686,10 @@ export class CatalogOverlayWidgetStore extends RegionWidgetStore {
             const init = initData[index];
             const source = sourceData[index];
             if (init && source) {
-                init.stringColumn.push(...source.stringColumn);
+                for (let j = 0; j < source.stringColumn.length; j++) {
+                    const data = source.stringColumn[j];
+                    init.stringColumn.push(data);
+                }
             }
         }
     }
@@ -687,7 +699,10 @@ export class CatalogOverlayWidgetStore extends RegionWidgetStore {
             const init = initData[index];
             const source = sourceData[index];
             if (init && source) {
-                init.intColumn.push(...source.intColumn);
+                for (let j = 0; j < source.intColumn.length; j++) {
+                    const data = source.intColumn[j];
+                    init.intColumn.push(data);
+                }
             }
         }
     }
@@ -697,7 +712,10 @@ export class CatalogOverlayWidgetStore extends RegionWidgetStore {
             const init = initData[index];
             const source = sourceData[index];
             if (init && source) {
-                init.llColumn.push(...source.llColumn);   
+                for (let j = 0; j < source.llColumn.length; j++) {
+                    const data = source.llColumn[j];
+                    init.llColumn.push(data);
+                }   
             }
         }
     }
