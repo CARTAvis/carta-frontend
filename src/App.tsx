@@ -1,68 +1,17 @@
 import * as React from "react";
-import * as AST from "ast_wrapper";
-import * as CARTACompute from "carta_computation";
+
 import {observer} from "mobx-react";
-import {autorun} from "mobx";
 import ReactResizeDetector from "react-resize-detector";
 import {Alert, Classes, Colors, Dialog, Hotkey, Hotkeys, HotkeysTarget, Intent} from "@blueprintjs/core";
-import {UIControllerComponent, exportImage, FloatingWidgetManagerComponent} from "./components";
-import {AppToaster} from "./components/Shared";
+import {UIControllerComponent, FloatingWidgetManagerComponent} from "./components";
 import {TaskProgressDialogComponent} from "./components/Dialogs";
-import {AlertStore, AppStore, BrowserMode, dayPalette, DialogStore, FileBrowserStore, LogStore, nightPalette, OverlayStore, RegionMode} from "./stores";
-import {ConnectionStatus} from "./services";
-import GitCommit from "./static/gitInfo";
+import {AppStore, BrowserMode, RegionMode} from "./stores";
 import "./App.css";
 import "./layout-base.css";
 import "./layout-theme.css";
 
-@HotkeysTarget @observer
+@observer
 export class App extends React.Component {
-    private previousConnectionStatus: ConnectionStatus;
-
-    constructor(props: any) {
-        super(props);
-
-        const appStore = AppStore.Instance;
-
-        AST.onReady.then(() => {
-            AST.setPalette(appStore.darkTheme ? nightPalette : dayPalette);
-            appStore.astReady = true;
-            appStore.logStore.addInfo("AST library loaded", ["ast"]);
-        });
-
-        CARTACompute.onReady.then(() => {
-            appStore.cartaComputeReady = true;
-            appStore.logStore.addInfo("Compute module loaded", ["compute"]);
-        });
-
-        // Log the frontend git commit hash
-        appStore.logStore.addDebug(`Current frontend version: ${GitCommit.logMessage}`, ["version"]);
-
-        this.previousConnectionStatus = ConnectionStatus.CLOSED;
-        // Display toasts when connection status changes
-        autorun(() => {
-            const newConnectionStatus = appStore.backendService.connectionStatus;
-            const userString = appStore.username ? ` as ${appStore.username}` : "";
-            switch (newConnectionStatus) {
-                case ConnectionStatus.ACTIVE:
-                    if (appStore.backendService.connectionDropped) {
-                        AppToaster.show({icon: "warning-sign", message: `Reconnected to server${userString}. Some errors may occur`, intent: "warning", timeout: 3000});
-                    } else {
-                        AppToaster.show({icon: "swap-vertical", message: `Connected to CARTA server${userString}`, intent: "success", timeout: 3000});
-                    }
-                    break;
-                case ConnectionStatus.CLOSED:
-                    if (this.previousConnectionStatus === ConnectionStatus.ACTIVE) {
-                        AppToaster.show({icon: "error", message: "Disconnected from server", intent: "danger", timeout: 3000});
-                    }
-                    break;
-                default:
-                    break;
-            }
-            this.previousConnectionStatus = newConnectionStatus;
-        });
-    }
-
     // GoldenLayout resize handler
     onContainerResize = (width, height) => {
         const appStore = AppStore.Instance;
@@ -79,8 +28,6 @@ export class App extends React.Component {
             className += " bp3-dark";
             glClassName += " dark-theme";
         }
-
-        document.body.style.backgroundColor = appStore.darkTheme ? Colors.DARK_GRAY4 : Colors.WHITE;
 
         return (
             <div className={className}>
@@ -236,9 +183,9 @@ export class App extends React.Component {
         const fileHotkeys = [
             <Hotkey key={0} group={fileGroupTitle} global={true} combo={`${modString}O`} label="Open image" onKeyDown={() => appStore.fileBrowserStore.showFileBrowser(BrowserMode.File)}/>,
             <Hotkey key={1} group={fileGroupTitle} global={true} combo={`${modString}L`} label="Append image" onKeyDown={() => appStore.fileBrowserStore.showFileBrowser(BrowserMode.File, true)}/>,
-            <Hotkey key={1} group={fileGroupTitle} global={true} combo={`${modString}W`} label="Close image" onKeyDown={() => appStore.closeCurrentFile(true)}/>,
-            <Hotkey key={2} group={fileGroupTitle} global={true} combo={`${modString}E`} label="Export image" onKeyDown={() => exportImage(appStore.overlayStore.padding, appStore.darkTheme, appStore.activeFrame.frameInfo.fileInfo.name)}/>,
-            <Hotkey key={3} group={fileGroupTitle} global={true} combo={`${modString}C`} label="Append catalog" onKeyDown={() => appStore.fileBrowserStore.showFileBrowser(BrowserMode.Catalog, false)}/>
+            <Hotkey key={2} group={fileGroupTitle} global={true} combo={`${modString}W`} label="Close image" onKeyDown={() => appStore.closeCurrentFile(true)}/>,
+            <Hotkey key={3} group={fileGroupTitle} global={true} combo={`${modString}E`} label="Export image" onKeyDown={appStore.exportImage}/>,
+            <Hotkey key={4} group={fileGroupTitle} global={true} combo={`${modString}C`} label="Append catalog" onKeyDown={() => appStore.fileBrowserStore.showFileBrowser(BrowserMode.Catalog, false)}/>
         ];
 
         const otherHotKeys = [
@@ -257,3 +204,10 @@ export class App extends React.Component {
         );
     }
 }
+
+// Workaround to fix Blueprint HotkeysTarget bug
+function AppWrapper() {} // tslint:disable-line
+AppWrapper.prototype = Object.create(App.prototype);
+AppWrapper.prototype.renderHotkeys = App.prototype.renderHotkeys;
+
+export const AppContainer = HotkeysTarget(AppWrapper as any);

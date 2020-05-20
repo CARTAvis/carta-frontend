@@ -4,14 +4,10 @@ import {Colors} from "@blueprintjs/core";
 import {SystemType} from "stores";
 import {CatalogOverlayShape} from "stores/widgets";
 
-type CatalogSettings = {
+type CatalogDataInfo = {
     fileId: number,
-    color: string,
-    size: number,
-    shape: CatalogOverlayShape,
-    xImageCoords: Array<Float64Array>,
-    yImageCoords: Array<Float64Array>,
-    selectedPointIndexs: Array<number>,
+    xImageCoords: Array<number>,
+    yImageCoords: Array<number>,
     showSelectedData: boolean;
 };
 
@@ -29,76 +25,82 @@ export class CatalogStore {
     private readonly arcsecUnits = ["arcsec", "arcsecond"];
     private readonly arcminUnits = ["arcmin", "arcminute"];
 
-    @observable catalogs: ObservableMap<string, CatalogSettings>;
+    @observable catalogData: ObservableMap<string, CatalogDataInfo>;
+    @observable catalogColor: ObservableMap<string, string>;
+    @observable catalogSize: ObservableMap<string, number>;
+    @observable catalogShape: ObservableMap<string, CatalogOverlayShape>;
 
     private constructor() {
-        this.catalogs = new ObservableMap();
+        this.catalogData = new ObservableMap();
+        this.catalogColor = new ObservableMap();
+        this.catalogSize = new ObservableMap();
+        this.catalogShape = new ObservableMap();
     }
 
-    @action addCatalogs(widgetId: string, fileId: number) {
-        this.catalogs.set(widgetId, {
+    @action addCatalog(widgetId: string, fileId: number) {
+        // init catalog data
+        this.catalogData.set(widgetId, {
             fileId: fileId,
-            color: Colors.TURQUOISE3,
-            size: 5,
-            shape: CatalogOverlayShape.Circle,
-            xImageCoords: [],
-            yImageCoords: [],
-            selectedPointIndexs: [],
+            xImageCoords: new Array(),
+            yImageCoords: new Array(),
             showSelectedData: false
         });
+        this.catalogColor.set(widgetId, Colors.TURQUOISE3);
+        this.catalogSize.set(widgetId, 5);
+        this.catalogShape.set(widgetId, CatalogOverlayShape.Circle);
     }
 
     @action updateCatalogData(widgetId: string, xWcsData: Array<any>, yWcsData: Array<any>, wcsInfo: number, xUnit: string, yUnit: string, catalogFrame: SystemType) {
         const pixelData = this.transformCatalogData(xWcsData, yWcsData, wcsInfo, xUnit, yUnit, catalogFrame);
-        const catalogSettings = this.catalogs.get(widgetId);
-        if (catalogSettings) {
-            catalogSettings.xImageCoords.push(pixelData.xImageCoords);
-            catalogSettings.yImageCoords.push(pixelData.yImageCoords);
+        const catalogDataInfo = this.catalogData.get(widgetId);
+        if (catalogDataInfo) {
+            for (let i = 0; i < pixelData.xImageCoords.length; i++) {
+                catalogDataInfo.xImageCoords.push(pixelData.xImageCoords[i]);
+                catalogDataInfo.yImageCoords.push(pixelData.yImageCoords[i]);
+            }
+            this.catalogData.set(widgetId, 
+                {
+                    fileId: catalogDataInfo.fileId, 
+                    xImageCoords: catalogDataInfo.xImageCoords, 
+                    yImageCoords: catalogDataInfo.yImageCoords,
+                    showSelectedData: catalogDataInfo.showSelectedData
+                });
         }
     }
 
     @action updateCatalogSize(widgetId: string, size: number) {
-        this.catalogs.get(widgetId).size = size;
+        this.catalogSize.set(widgetId, size);
     }
 
     @action updateCatalogColor(widgetId: string, color: string) {
-        this.catalogs.get(widgetId).color = color;
+        this.catalogColor.set(widgetId, color);
     }
 
     @action updateCatalogShape(widgetId: string, shape: CatalogOverlayShape) {
-        this.catalogs.get(widgetId).shape = shape;
+        this.catalogShape.set(widgetId, shape);
     }
 
     @action clearData(widgetId: string) {
-        const catalogSettings = this.catalogs.get(widgetId);
-        if (catalogSettings) {
-            catalogSettings.xImageCoords = [];
-            catalogSettings.yImageCoords = [];
+        const catalogData = this.catalogData.get(widgetId);
+        if (catalogData) {
+            catalogData.xImageCoords = [];
+            catalogData.yImageCoords = [];
+            catalogData.showSelectedData = false;
         }
     }
 
     @action removeCatalog(widgetId: string) {
-        this.catalogs.delete(widgetId);
-    }
-
-    @action updateSelectedPoints(widgetId: string, selectedPointIndexs: number[]) {
-        const catalog = this.catalogs.get(widgetId);
-        if (catalog) {
-            catalog.selectedPointIndexs = selectedPointIndexs;
-        }
-    }
-
-    @action unSelectedPoints() {
-        if (this.catalogs.size > 0) {
-            this.catalogs.forEach(catalog => {
-                catalog.selectedPointIndexs = [];
-            });
-        }
+        this.catalogData.delete(widgetId);
+        this.catalogColor.delete(widgetId);
+        this.catalogSize.delete(widgetId);
+        this.catalogShape.delete(widgetId);
     }
 
     @action updateShowSelectedData(widgetId: string, val: boolean) {
-        const catalog = this.catalogs.get(widgetId);
-        catalog.showSelectedData = val;
+        const catalog = this.catalogData.get(widgetId);
+        if (catalog) {
+            catalog.showSelectedData = val;   
+        }
     }
 
     private transformCatalogData(xWcsData: Array<any>, yWcsData: Array<any>, wcsInfo: number, xUnit: string, yUnit: string, catalogFrame: SystemType): {xImageCoords: Float64Array, yImageCoords: Float64Array} {

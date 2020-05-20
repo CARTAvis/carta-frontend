@@ -34,175 +34,62 @@ extern "C" {
 
 EMSCRIPTEN_KEEPALIVE AstFrameSet* initFrame(const char* header)
 {
-    AstFitsChan* fitschan = nullptr;
-    AstFrameSet* wcsinfo = nullptr;
-    int status = 0;
-    if (wcsinfo)
-    {
-        astEnd;
-    }
-	astClearStatus;
-    astBegin;
-
-    fitschan = astFitsChan(nullptr, nullptr, "");
-    if (!fitschan)
-    {
-        cout << "astFitsChan returned null :(" << endl;
-        astClearStatus;
-        return nullptr;
-    }
-    if (!header)
+     if (!header)
     {
         cout << "Missing header argument." << endl;
         return nullptr;
     }
 
+    AstFitsChan* fitschan = astFitsChan(nullptr, nullptr, "");
+    if (!fitschan)
+    {
+        cout << "astFitsChan returned null :(" << endl;
+        return nullptr;
+    }
+    astClear(fitschan, "Card");
     astPutCards(fitschan, header);
-    wcsinfo = static_cast<AstFrameSet*>(astRead(fitschan));
 
-    if (!astOK)
+    AstFrameSet* frameSet = static_cast<AstFrameSet*>(astRead(fitschan));
+    if (!frameSet || !astIsAFrameSet(frameSet))
     {
-        cout << "Some AST LIB error, check logs." << endl;
-        astClearStatus;
-        return nullptr;
-    }
-    else if (wcsinfo == AST__NULL)
-    {
-        cout << "No WCS found" << endl;
-        return nullptr;
-    }
-    else if (strcmp(astGetC(wcsinfo, "Class"), "FrameSet"))
-    {
-        cout << "check FITS header (astlib)" << endl;
+        cout << "Creating frame set failed." << endl;
         return nullptr;
     }
 
-    return wcsinfo;
+    // work around for missing CTYPE1 & CTYPE2
+    const char *domain = astGetC(frameSet, "Domain");
+    if (!strstr(domain, "SKY")) {
+        return nullptr;
+    }
+
+    return frameSet;
 }
 
-EMSCRIPTEN_KEEPALIVE AstSpecFrame* initSpectralFrame(const char* header, const char *system, const char *unit)
+EMSCRIPTEN_KEEPALIVE AstSpecFrame* getSpectralFrame(AstFrameSet* frameSet)
 {
-     if (!header || !system || !unit)
+   if (!frameSet || !astIsAFrameSet(frameSet))
     {
-        cout << "Missing header argument." << endl;
+        cout << "Invalid frame set." << endl;
         return nullptr;
     }
 
-    AstFitsChan* fitschan = nullptr;
-    AstFrameSet* frame = nullptr;
-    int status = 0;
-    if (frame)
+    // Find spectral frame with spectral template
+    AstSpecFrame *spectralTemplate = astSpecFrame("MaxAxes=100,MinAxes=0");
+    if (!spectralTemplate)
     {
-        astEnd;
-    }
-	astClearStatus;
-    astBegin;
-
-    fitschan = astFitsChan(nullptr, nullptr, "");
-    if (!fitschan)
-    {
-        cout << "astFitsChan returned null :(" << endl;
-        astClearStatus;
+        cout << "Creating spectral template failed." << endl;
         return nullptr;
     }
-
-    astPutCards(fitschan, header);
-    frame = static_cast<AstFrameSet*>(astRead(fitschan));
-    if (!astOK)
+    AstFrameSet* found = static_cast<AstFrameSet*>astFindFrame(frameSet, spectralTemplate, " " );
+    if (!found)
     {
-        cout << "Some AST LIB error, check logs." << endl;
-        astClearStatus;
+        cout << "Spectral frame not found." << endl;
         return nullptr;
     }
-    else if (frame == AST__NULL)
-    {
-        cout << "No WCS found" << endl;
-        return nullptr;
-    }
-    else if (strcmp(astGetC(frame, "Class"), "FrameSet"))
-    {
-        cout << "check FITS header (astlib)" << endl;
-        return nullptr;
-    }
-
-    // create a simple 1D spectral frame through astSet() for spectral conversion
-    AstSpecFrame *specframe = nullptr;
-    specframe = astSpecFrame("");
+    AstSpecFrame *specframe = static_cast<AstSpecFrame*>astGetFrame(found, AST__CURRENT);
     if (!specframe)
     {
-        cout << "Create empty spectral frame failed." << endl;
-        astClearStatus;
-        return nullptr;
-    }
-
-    // set spectral system, unit from parameter (CTYPE, CUNIT)
-    char buffer[128];
-    snprintf(buffer, sizeof(buffer), "System=%s", system);
-    astSet(specframe, buffer);
-    snprintf(buffer, sizeof(buffer), "Unit=%s", unit);
-    astSet(specframe, buffer);
-
-    // get Epoch, ObsLon, ObsLat, ObsAlt, RefRA, RefDec, RestFreq, StdOfRest attributes from AST compound frame
-    // due to observation coordinate (ObsLon/ObsLat/ObsAlt) has to be geodetic, RefRA/RefDec has to be FK5, J2000.
-    // RefRA/RefDec will be 0 if skyframe is not provided, & the conversion will be imprecise.
-    const char *epoch = astGetC(frame, "Epoch");
-    if (epoch)
-    {
-        snprintf(buffer, sizeof(buffer), "Epoch=%s", epoch);
-        astSet(specframe, buffer);
-    }
-    const char *obsLon = astGetC(frame, "ObsLon");
-    if (obsLon)
-    {
-        snprintf(buffer, sizeof(buffer), "ObsLon=%s", obsLon);
-        astSet(specframe, buffer);
-    }
-    const char *obsLat = astGetC(frame, "ObsLat");
-    if (obsLat)
-    {
-        snprintf(buffer, sizeof(buffer), "ObsLat=%s", obsLat);
-        astSet(specframe, buffer);
-    }
-    const char *obsAlt = astGetC(frame, "ObsAlt");
-    if (obsAlt)
-    {
-        snprintf(buffer, sizeof(buffer), "ObsAlt=%s", obsAlt);
-        astSet(specframe, buffer);
-    }
-    const char *refRA = astGetC(frame, "RefRA");
-    if (refRA)
-    {
-        snprintf(buffer, sizeof(buffer), "RefRA=%s", refRA);
-        astSet(specframe, buffer);
-    }
-    const char *refDec = astGetC(frame, "RefDec");
-    if (refDec)
-    {
-        snprintf(buffer, sizeof(buffer), "RefDec=%s", refDec);
-        astSet(specframe, buffer);
-    }
-    const char *restFreq = astGetC(frame, "RestFreq");
-    if (restFreq)
-    {
-        snprintf(buffer, sizeof(buffer), "RestFreq=%s", restFreq);
-        astSet(specframe, buffer);
-    }
-    const char *stdOfRest = astGetC(frame, "StdOfRest");
-    if (stdOfRest)
-    {
-        snprintf(buffer, sizeof(buffer), "StdOfRest=%s", stdOfRest);
-        astSet(specframe, buffer);
-    }
-
-    if (!astOK)
-    {
-        cout << "Some AST LIB error, check logs." << endl;
-        astClearStatus;
-        return nullptr;
-    }
-    else if (specframe == AST__NULL)
-    {
-        cout << "Create 1D spectral frame failed." << endl;
+        cout << "Getting spectral frame failed." << endl;
         return nullptr;
     }
 
