@@ -560,7 +560,7 @@ export class CatalogOverlayWidgetStore extends RegionWidgetStore {
         return catalogColumnsData;
     }
 
-    @computed get regionSelected(): number {
+    @computed get selectedDataLength(): number {
         return this.selectedPointIndexs.length;
     }
 

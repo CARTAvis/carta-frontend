@@ -5,6 +5,7 @@ import {Cell, Column, Table, SelectionModes, RenderMode, ColumnHeaderCell, Edita
 import {IRowIndices} from "@blueprintjs/table/lib/esm/common/grid";
 import {ControlHeader} from "stores/widgets";
 import {getTableDataByType} from "utilities";
+import "./TableComponent.css";
 
 export type ColumnFilter = { index: number, columnFilter: string };
 
@@ -27,7 +28,7 @@ export class TableComponentProps {
     updateColumnFilter?: (value: string, columnName: string) => void;
     updateByInfiniteScroll?: (rowIndexEnd: number) => void;
     updateTableColumnWidth?: (width: number, columnName: string) => void;
-    updateSelectedRow?: (dataIndex: number) => void;
+    updateSelectedRow?: (dataIndex: number[]) => void;
 }
 
 @observer
@@ -108,7 +109,20 @@ export class TableComponent extends React.Component<TableComponentProps> {
 
     private onRowIndexSelection = (selectedRegions: IRegion[]) => {
         if (selectedRegions.length > 0) {
-            this.props.updateSelectedRow(selectedRegions[0].rows["0"]);
+            let selectedDataIndex = [];
+            for (let i = 0; i < selectedRegions.length; i++) {
+                const region = selectedRegions[i];
+                const start = region.rows[0];
+                const end = region.rows[1];
+                if (start === end) {
+                    selectedDataIndex.push(start);
+                } else {
+                    for (let j = start; j <= end; j++) {
+                        selectedDataIndex.push(j);
+                    }
+                } 
+            }
+            this.props.updateSelectedRow(selectedDataIndex);
         }
     }
 
@@ -135,6 +149,7 @@ export class TableComponent extends React.Component<TableComponentProps> {
         if (table.type === TableType.ColumnFilter) {
             return (
                 <Table
+                    className={"column-filter"}
                     ref={(ref) => table.upTableRef(ref)}
                     numRows={table.numVisibleRows}
                     renderMode={RenderMode.BATCH}
@@ -145,7 +160,7 @@ export class TableComponent extends React.Component<TableComponentProps> {
                     onColumnWidthChanged={this.updateTableColumnWidth}
                     enableGhostCells={true}
                     onSelection={this.onRowIndexSelection}
-                    enableMultipleSelection={false}
+                    enableMultipleSelection={true}
                     enableRowResizing={false}
                 >
                     {tableColumns}

@@ -8,7 +8,7 @@ import ReactResizeDetector from "react-resize-detector";
 import {CARTA} from "carta-protobuf";
 import {TableComponent, TableComponentProps, TableType} from "components/Shared";
 import {CatalogOverlayPlotSettingsComponent} from "./CatalogOverlayPlotSettingsComponent/CatalogOverlayPlotSettingsComponent";
-import {AppStore, CatalogStore, HelpType, WidgetConfig, WidgetProps, WidgetsStore} from "stores";
+import {AppStore, HelpType, WidgetConfig, WidgetProps, WidgetsStore} from "stores";
 import {CatalogOverlay, CatalogOverlayWidgetStore, CatalogPlotType, CatalogScatterWidgetStoreProps, CatalogUpdateMode} from "stores/widgets";
 import {toFixed} from "utilities";
 import "./CatalogOverlayComponent.css";
@@ -117,9 +117,9 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         if (widgetStore) {
             dataset = widgetStore.catalogData;
             numVisibleRows = widgetStore.numVisibleRows;
-            if (widgetStore.regionSelected && widgetStore.showSelectedData) {
+            if (widgetStore.selectedDataLength && widgetStore.showSelectedData) {
                 dataset = widgetStore.selectedData;
-                numVisibleRows = widgetStore.regionSelected;
+                numVisibleRows = widgetStore.selectedDataLength;
             }
         }
         return {dataset: dataset, numVisibleRows: numVisibleRows};
@@ -521,22 +521,22 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
     }
 
     // single source selected in table
-    private onCatalogTableDataSelected = (selectedDataIndex: number) => {
+    private onCatalogTableDataSelected = (selectedDataIndex: number[]) => {
         const widgetsStore = this.widgetStore;
-        const selectedPointIndexs = widgetsStore.selectedPointIndexs;
-        const selectedData = [];
-        let highlighted = false;
-        if (selectedPointIndexs.length === 1) {
-            highlighted = selectedPointIndexs.includes(selectedDataIndex);
-        }
-        if (!highlighted) {
-            if (widgetsStore.showSelectedData && selectedPointIndexs.length) {
-                selectedData.push(selectedPointIndexs[selectedDataIndex]);
-            } else {
-                selectedData.push(selectedDataIndex);   
+        if (selectedDataIndex.length === 1) {
+            const selectedPointIndexs = widgetsStore.selectedPointIndexs;
+            let highlighted = false;
+            if (selectedPointIndexs.length === 1) {
+                highlighted = selectedPointIndexs.includes(selectedDataIndex[0]);
             }
+            if (!highlighted) {
+                widgetsStore.setselectedPointIndexs(selectedDataIndex);
+            } else {
+                widgetsStore.setselectedPointIndexs([]);
+            }
+        } else {
+            widgetsStore.setselectedPointIndexs(selectedDataIndex);
         }
-        widgetsStore.setselectedPointIndexs(selectedData);
     }
 
     private renderFileIdPopOver = (fileId: number, itemProps: IItemRendererProps) => {
