@@ -101,16 +101,13 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
     }
 
     @action handleCatalogFileChange = (fileId: number) => {
-        this.catalogFileId = fileId;
+        AppStore.Instance.catalogProfiles.set(this.props.id, fileId);
         this.widgetId = this.matchesSelectedCatalogFile;
     }
 
     @action handleFileCloseClick = () => {
         const appStore = AppStore.Instance;
         appStore.reomveCatalog(this.widgetId, this.props.id);
-        if (appStore.catalogs.size > 0) {
-            this.catalogFileId = appStore.catalogs.values().next().value;
-        }
     }
 
     @computed get tableInfo(): {dataset: CARTA.ICatalogColumnsData, numVisibleRows: number} {
@@ -131,18 +128,22 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
     constructor(props: WidgetProps) {
         super(props);
         this.widgetId = "catalog-overlay-0";
-        if (this.widgetStore) {
-            this.catalogFileId = this.widgetStore.catalogInfo.fileId; 
+        const catalogFileId = AppStore.Instance.catalogProfiles.get(this.props.id);
+
+        if (catalogFileId) {
+            AppStore.Instance.catalogProfiles.set(this.props.id, catalogFileId);
         } else {
-            this.catalogFileId = 1;
+            AppStore.Instance.catalogProfiles.set(this.props.id, 1);
         }
+
         autorun(() => {
             if (this.widgetStore) {
+                const appStore = AppStore.Instance;
+                const frame = appStore.activeFrame;
+                this.catalogFileId = appStore.catalogProfiles.get(this.props.id);
                 this.widgetId = this.matchesSelectedCatalogFile;
                 let progressString = "";
                 const fileName = this.widgetStore.catalogInfo.fileInfo.name || "";
-                const appStore = AppStore.Instance;
-                const frame = appStore.activeFrame;
                 const progress = this.widgetStore.progress;
                 if (progress && isFinite(progress) && progress < 1) {
                     progressString = `[${toFixed(progress * 100)}% complete]`;

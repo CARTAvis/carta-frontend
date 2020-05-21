@@ -326,6 +326,7 @@ export class WidgetsStore {
                 break;
             case CatalogOverlayComponent.WIDGET_CONFIG.type:
                 itemId = this.getNextComponentId(CatalogOverlayComponent.WIDGET_CONFIG);
+                AppStore.Instance.catalogProfiles.set(itemId, 1);
                 break;
             default:
                 // Remove it from the floating widget array, while preserving its store
@@ -562,6 +563,10 @@ export class WidgetsStore {
                 const id = config.id as string;
                 this.removeWidget(id, config.component);
             }
+
+            if (config.component === CatalogOverlayComponent.WIDGET_CONFIG.type) {
+                AppStore.Instance.catalogProfiles.delete(config.id as string);
+            }
         }
     };
 
@@ -766,20 +771,26 @@ export class WidgetsStore {
         return floatingCatalogWidgetComponent;
     }
 
-    createFloatingCatalogOverlayWidget = (catalogInfo: CatalogInfo, catalogHeader: Array<CARTA.ICatalogHeader>, catalogData: CARTA.ICatalogColumnsData): string => {
+    createFloatingCatalogOverlayWidget = (catalogInfo: CatalogInfo, catalogHeader: Array<CARTA.ICatalogHeader>, catalogData: CARTA.ICatalogColumnsData): {widgetStoreId: string, widgetComponentId: string} => {
         let config = CatalogOverlayComponent.WIDGET_CONFIG;
-        const widgetId = this.addCatalogOverlayWidget(catalogInfo, catalogHeader, catalogData);
-        config.id = widgetId;
-        config.componentId = this.getNextComponentId(config);
+        const widgetStoreId = this.addCatalogOverlayWidget(catalogInfo, catalogHeader, catalogData);
+        const widgetComponentId = this.getNextComponentId(config);
+        config.id = widgetComponentId;
+        config.componentId = widgetComponentId;
         this.addFloatingWidget(config);
-        return widgetId;  
+        return {widgetStoreId: widgetStoreId, widgetComponentId: widgetComponentId};  
     };
 
     reloadFloatingCatalogOverlayWidget = () => {
+        const appStore = AppStore.Instance;
+        const catalogFileNum = appStore.catalogs.size;
         let config = CatalogOverlayComponent.WIDGET_CONFIG;
         const componentId = this.getNextComponentId(config);
         config.componentId = componentId;
         config.id = componentId; 
+        if (catalogFileNum) {
+            AppStore.Instance.catalogProfiles.set(componentId, catalogFileNum);   
+        }
         this.addFloatingWidget(config);
     };
 
@@ -1061,10 +1072,12 @@ export class WidgetsStore {
 
     // remove a widget component by componentId
     @action removeFloatingWidgetComponent = (componentId: string) => {
+
         const widget = this.floatingWidgets.find(w => w.componentId === componentId);
         if (widget) {
             this.updateFloatingWidgetzIndexOnRemove(widget.zIndex);
             this.floatingWidgets = this.floatingWidgets.filter(w => w.componentId !== componentId);
+            AppStore.Instance.catalogProfiles.delete(componentId);
         }
     }
 }

@@ -113,6 +113,8 @@ export class CatalogViewComponent extends React.Component<CatalogViewComponentPr
             const catalogWidgetId = event.points[0].data.name;
             const catalogWidget = appStore.widgetsStore.catalogOverlayWidgets.get(catalogWidgetId);
             if (catalogWidget) {
+                const catalogFileId = catalogWidget.catalogInfo.fileId;
+                AppStore.Instance.updateCatalogProfiles(catalogFileId);
                 let selectedPointIndex = [];
                 const selectedPoint = event.points[0];
                 selectedPointIndex.push(selectedPoint.pointIndex);

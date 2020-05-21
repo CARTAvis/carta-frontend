@@ -77,8 +77,10 @@ export class AppStore {
     @observable syncContourToFrame: boolean;
     @observable syncFrameToContour: boolean;
 
-    // catalog map catalog widget store with file Id
+    // map catalog widget store with file Id
     @observable catalogs: Map<string, number>;
+    // map catalog component with file Id
+    @observable catalogProfiles: Map<string, number>;
 
     // Profiles and region data
     @observable spatialProfiles: Map<string, SpatialProfileStore>;
@@ -536,11 +538,14 @@ export class AppStore {
                 const config = CatalogOverlayComponent.WIDGET_CONFIG;
                 let floatingCatalogWidgets = this.widgetsStore.getFloatingWidgetByComponentId(config.componentId).length;
                 let dockedCatalogWidgets = this.widgetsStore.getDockedWidgetByType(config.type).length;
-
                 if (floatingCatalogWidgets === 0 && dockedCatalogWidgets === 0) {
-                    catalogWidgetId = this.widgetsStore.createFloatingCatalogOverlayWidget(catalogInfo, ack.headers, ack.columnsData);
+                    const catalog = this.widgetsStore.createFloatingCatalogOverlayWidget(catalogInfo, ack.headers, ack.columnsData);
+                    catalogWidgetId = catalog.widgetStoreId;
+                    this.catalogProfiles.set(catalog.widgetComponentId, fileId);
                 } else {
                     catalogWidgetId = this.widgetsStore.addCatalogOverlayWidget(catalogInfo, ack.headers, ack.columnsData);
+                    const key = this.catalogProfiles.keys().next().value;
+                    this.catalogProfiles.set(key, fileId);
                 }
                 if (catalogWidgetId) {
                     this.catalogs.set(catalogWidgetId, fileId);
@@ -574,13 +579,23 @@ export class AppStore {
                     }
                 });
             }
-            // close catalogOverlay
+
+            // remove catalog overlay widget store, remove catalog from image viewer 
             this.catalogs.delete(catalogWidgetId);
-            if (this.catalogs.size === 0) {
-                this.widgetsStore.removeFloatingWidgetComponent(catalogComponentId);
-            }
             this.widgetsStore.catalogOverlayWidgets.delete(catalogWidgetId);
             this.catalogStore.clearData(catalogWidgetId);
+
+            // update catalogProfiles fileId
+            if (this.catalogs.size > 0) {
+                const nextFileId = this.catalogs.values().next().value;
+                this.catalogProfiles.forEach((catalogFileId, componentId) => {
+                    if (catalogFileId === fileId) {
+                        this.catalogProfiles.set(componentId, nextFileId);     
+                    }
+                });
+            } else {
+                this.catalogProfiles.set(catalogComponentId, 1);
+            }
         }
     }
 
@@ -771,12 +786,13 @@ export class AppStore {
         this.pendingChannelHistograms = new Map<string, CARTA.IRegionHistogramData>();
 
         this.frames = [];
-        this.catalogs = new Map();
         this.activeFrame = null;
         this.contourDataSource = null;
         this.syncFrameToContour = true;
         this.syncContourToFrame = true;
         this.initRequirements();
+        this.catalogs = new Map();
+        this.catalogProfiles = new Map();
 
         AST.onReady.then(() => {
             AST.setPalette(this.darkTheme ? nightPalette : dayPalette);
@@ -1556,4 +1572,15 @@ export class AppStore {
     }
 
     // endregion
+
+    // update associated catalogProfile fileId
+    @action updateCatalogProfiles = (catalogFileId: number) => {
+        if (this.catalogProfiles.size > 0) {
+            const componentIds = Array.from(this.catalogProfiles.keys());
+            const fileIds = Array.from(this.catalogProfiles.values());
+            if (!fileIds.includes(catalogFileId)) {
+                this.catalogProfiles.set(componentIds[0], catalogFileId);
+            }
+        }
+    }
 }
