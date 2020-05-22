@@ -2,7 +2,7 @@ import * as React from "react";
 import {observer} from "mobx-react";
 import {FormGroup, HTMLSelect, IOptionProps, Switch} from "@blueprintjs/core";
 import {SpectralProfileWidgetStore} from "stores/widgets";
-import {ColorPickerComponent, SafeNumericInput} from "components/Shared";
+import {ColorPickerComponent, SafeNumericInput, PlotTypeSelectorComponent} from "components/Shared";
 import {ColorResult} from "react-color";
 import {SWATCH_COLORS} from "utilities";
 import { AppStore } from "stores";
@@ -49,6 +49,20 @@ export class SmoothingSettingsComponent extends React.Component<{widgetStore: Sp
                             }}
                             disableAlpha={true}
                             darkTheme={AppStore.Instance.darkTheme}
+                        />
+                    </FormGroup>
+                    <FormGroup inline={true} label={"Line Style"}>
+                        <PlotTypeSelectorComponent value={widgetStore.smoothingLineType} onValueChanged={widgetStore.setSmoothingLineType}/>
+                    </FormGroup>
+                    <FormGroup  inline={true} label="Line Width" labelInfo="(px)">
+                        <SafeNumericInput
+                            placeholder="Line Width"
+                            min={0.5}
+                            max={10}
+                            value={widgetStore.smoothingLineWidth}
+                            stepSize={1}
+                            // disabled={props.plotType === PlotType.POINTS}
+                            onValueChange={(value: number) => widgetStore.setSmoothingLineWidth(value)}
                         />
                     </FormGroup>
                     <FormGroup label={"Overlay"} inline={true}>

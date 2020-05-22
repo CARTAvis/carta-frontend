@@ -12,6 +12,7 @@ import {ToolbarComponent} from "./Toolbar/ToolbarComponent";
 import {StokesCoordinate} from "stores/widgets/StokesAnalysisWidgetStore";
 import {Point2D} from "models";
 import {clamp, toExponential} from "utilities";
+import {PlotType} from "components/Shared";
 import "./LinePlotComponent.css";
 
 export enum ZoomMode {
@@ -85,6 +86,8 @@ export class LinePlotComponentProps {
     showLegend?: boolean;
     xTickMarkLength?: number;
     multiPlotBorderColor?: Map<string, string>;
+    multiPlotLineType?: Map<string, PlotType>;
+    multiPlotLineWidth?: Map<string, number>;
     plotType?: string;
     isGroupSubPlot?: boolean;
     zIndex?: boolean;
