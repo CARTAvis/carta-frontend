@@ -130,6 +130,7 @@ export class ProtobufProcessing {
             case CARTA.ColumnType.String:
                 return {dataType: column.dataType, data: column.stringData};
             case CARTA.ColumnType.Uint64:
+                // Convert from uint64 to double to avoid using bigint for calculations
                 const uint64Array = new BigUint64Array(column.binaryData.slice().buffer);
                 const floatFromUintArray = new Float64Array(uint64Array.length);
                 for (let i = floatFromUintArray.length - 1; i >= 0; i--) {
@@ -137,6 +138,7 @@ export class ProtobufProcessing {
                 }
                 return {dataType: column.dataType, data: floatFromUintArray};
             case CARTA.ColumnType.Int64:
+                // Convert from int64 to double
                 const int64Array = new BigInt64Array(column.binaryData.slice().buffer);
                 const floatFromIntArray = new Float64Array(int64Array.length);
                 for (let i = floatFromIntArray.length - 1; i >= 0; i--) {

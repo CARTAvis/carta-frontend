@@ -4,31 +4,31 @@ import {ProcessedColumnData, TypedArray} from "models";
 export function getDataTypeString(dataType: CARTA.ColumnType): string {
     switch (dataType) {
         case CARTA.ColumnType.String:
-            return "String";
+            return "string";
         case CARTA.ColumnType.Uint8:
-            return "Unsigned 8-bit Integer";
+            return "uint8";
         case CARTA.ColumnType.Int8:
-            return "8-bit Integer";
+            return "int8";
         case CARTA.ColumnType.Uint16:
-            return "Unsigned 16-bit Integer";
+            return "uint16";
         case CARTA.ColumnType.Int16:
-            return "16-bit Integer";
+            return "int16";
         case CARTA.ColumnType.Uint32:
-            return "Unsigned 32-bit Integer";
+            return "uint32";
         case CARTA.ColumnType.Int32:
-            return "32-bit Integer";
+            return "int32";
         case CARTA.ColumnType.Uint64:
-            return "Unsigned 64-bit Integer";
+            return "uint64";
         case CARTA.ColumnType.Int64:
-            return "64-bit Integer";
+            return "int64";
         case CARTA.ColumnType.Float:
-            return "Float";
+            return "float";
         case CARTA.ColumnType.Double:
-            return "Double";
+            return "double";
         case CARTA.ColumnType.Bool:
-            return "Boolean";
+            return "bool";
         default:
-            return "Unsupported type";
+            return "unsupported";
     }
 }
 
@@ -72,10 +72,10 @@ export function filterProcessedColumnData(columnData: ProcessedColumnData, selec
                 data = new Int32Array(N);
                 break;
             case CARTA.ColumnType.Uint64:
-                data = new BigUint64Array(N);
+                data = new Float64Array(N);
                 break;
             case CARTA.ColumnType.Int64:
-                data = new BigInt64Array(N);
+                data = new Float64Array(N);
                 break;
             case CARTA.ColumnType.Float:
                 data = new Float32Array(N);
