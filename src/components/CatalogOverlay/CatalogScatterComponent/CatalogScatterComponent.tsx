@@ -20,7 +20,7 @@ export class CatalogScatterComponent extends React.Component<WidgetProps> {
     @observable width: number;
     @observable height: number;
 
-    private readonly DataTypes = [CARTA.EntryType.DOUBLE, CARTA.EntryType.FLOAT, CARTA.EntryType.INT, CARTA.EntryType.LONGLONG];
+    private static readonly UnsupportedDataTypes = [CARTA.ColumnType.String, CARTA.ColumnType.Bool, CARTA.ColumnType.UnsupportedType];
 
     public static get WIDGET_CONFIG(): WidgetConfig {
         return {
@@ -210,7 +210,7 @@ export class CatalogScatterComponent extends React.Component<WidgetProps> {
         
         for (let index = 0; index < columnsName.length; index++) {
             const column = columnsName[index];
-            if (this.DataTypes.indexOf(column.dataType) !== -1) {
+            if (!CatalogScatterComponent.UnsupportedDataTypes.includes(column.dataType)) {
                 xyOptions.push(column.name); 
             }
         }
@@ -299,7 +299,7 @@ export class CatalogScatterComponent extends React.Component<WidgetProps> {
         };
         layout["hoverdistance"] = 5;
         let data = this.scatterData;
-        const selectedPointIndexs = widgetStore.catalogOverlayWidgetStore.selectedPointIndexs;
+        const selectedPointIndexs = widgetStore.catalogOverlayWidgetStore.selectedPointIndices;
         let scatterDataMarker = data[0].marker;
         if (selectedPointIndexs.length > 0) {
             data[0]["selectedpoints"] = selectedPointIndexs;

@@ -4,6 +4,7 @@ import {CARTA} from "carta-protobuf";
 import {BackendService} from "services";
 import {AppStore, DialogStore} from "stores";
 import {FileInfoType} from "components";
+import {ProcessedColumnData} from "../models";
 
 export enum BrowserMode {
     File,
@@ -275,23 +276,29 @@ export class FileBrowserStore {
         }
     }
 
-    @computed get catalogHeaderDataset(): {columnHeaders: Array<CARTA.CatalogHeader>, columnsData: CARTA.CatalogColumnsData} {
-        let columnsData = new CARTA.CatalogColumnsData();
-        columnsData.stringColumn[0] = new CARTA.StringColumn();
-        columnsData.stringColumn[1] = new CARTA.StringColumn();
-        columnsData.stringColumn[2] = new CARTA.StringColumn();
+    @computed get catalogHeaderDataset(): {columnHeaders: Array<CARTA.CatalogHeader>, columnsData: Map<number, ProcessedColumnData>} {
+        let columnsData = new Map<number, ProcessedColumnData>();
 
-        let columnHeaders: Array<CARTA.CatalogHeader> = [];
+        const nameData = [];
+        const unitData = [];
+        const descriptionData = [];
+
         for (let index = 0; index < this.catalogHeaders.length; index++) {
             const catalogHeader = this.catalogHeaders[index];
-            columnsData.stringColumn[0].stringColumn.push(catalogHeader.name);
-            columnsData.stringColumn[1].stringColumn.push(catalogHeader.description);
-            columnsData.stringColumn[2].stringColumn.push(catalogHeader.units);
+            nameData.push(catalogHeader.name);
+            unitData.push(catalogHeader.units);
+            descriptionData.push(catalogHeader.description);
         }
-        const stringType = CARTA.EntryType.STRING;
-        columnHeaders[0] = new CARTA.CatalogHeader({name: "Name", dataType: stringType, columnIndex: 0, dataTypeIndex: 0});
-        columnHeaders[1] = new CARTA.CatalogHeader({name: "Description", dataType: stringType, columnIndex: 1, dataTypeIndex: 1});
-        columnHeaders[2] = new CARTA.CatalogHeader({name: "Unit", dataType: stringType, columnIndex: 2, dataTypeIndex: 2});
+
+        const dataType = CARTA.ColumnType.String;
+        columnsData.set(0, {dataType, data: nameData});
+        columnsData.set(1, {dataType, data: unitData});
+        columnsData.set(2, {dataType, data: descriptionData});
+
+        let columnHeaders = new Array(3);
+        columnHeaders[0] = new CARTA.CatalogHeader({name: "Name", dataType, columnIndex: 0});
+        columnHeaders[2] = new CARTA.CatalogHeader({name: "Unit", dataType, columnIndex: 1});
+        columnHeaders[1] = new CARTA.CatalogHeader({name: "Description", dataType, columnIndex: 2});
 
         return {columnHeaders: columnHeaders, columnsData: columnsData};
     }

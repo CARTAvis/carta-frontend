@@ -12,6 +12,7 @@ import {AppStore, CatalogStore, HelpType, WidgetConfig, WidgetProps, WidgetsStor
 import {CatalogOverlay, CatalogOverlayWidgetStore, CatalogPlotType, CatalogScatterWidgetStoreProps, CatalogUpdateMode} from "stores/widgets";
 import {toFixed} from "utilities";
 import "./CatalogOverlayComponent.css";
+import {ProcessedColumnData} from "../../models";
 
 enum HeaderTableColumnName {
     Name = "Name",
@@ -42,14 +43,20 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
     @observable catalogFileId: number;
 
     private catalogHeaderTableRef: Table;
-    private static readonly DataTypeRepresentationMap = new Map<CARTA.EntryType, Array<CatalogOverlay>>([
-        [CARTA.EntryType.BOOL, [CatalogOverlay.NONE]],
-        [CARTA.EntryType.DOUBLE, [CatalogOverlay.X, CatalogOverlay.Y, CatalogOverlay.NONE]],
-        [CARTA.EntryType.FLOAT, [CatalogOverlay.X, CatalogOverlay.Y, CatalogOverlay.NONE]],
-        [CARTA.EntryType.INT, [CatalogOverlay.X, CatalogOverlay.Y, CatalogOverlay.NONE]],
-        [CARTA.EntryType.LONGLONG, [CatalogOverlay.X, CatalogOverlay.Y, CatalogOverlay.NONE]],
-        [CARTA.EntryType.STRING, [CatalogOverlay.NONE]],
-        [CARTA.EntryType.UNKNOWN_TYPE, [CatalogOverlay.NONE]]
+    private static readonly DataTypeRepresentationMap = new Map<CARTA.ColumnType, Array<CatalogOverlay>>([
+        [CARTA.ColumnType.Bool, [CatalogOverlay.NONE]],
+        [CARTA.ColumnType.Double, [CatalogOverlay.X, CatalogOverlay.Y, CatalogOverlay.NONE]],
+        [CARTA.ColumnType.Float, [CatalogOverlay.X, CatalogOverlay.Y, CatalogOverlay.NONE]],
+        [CARTA.ColumnType.Int8, [CatalogOverlay.X, CatalogOverlay.Y, CatalogOverlay.NONE]],
+        [CARTA.ColumnType.Uint8, [CatalogOverlay.X, CatalogOverlay.Y, CatalogOverlay.NONE]],
+        [CARTA.ColumnType.Int16, [CatalogOverlay.X, CatalogOverlay.Y, CatalogOverlay.NONE]],
+        [CARTA.ColumnType.Uint8, [CatalogOverlay.X, CatalogOverlay.Y, CatalogOverlay.NONE]],
+        [CARTA.ColumnType.Int32, [CatalogOverlay.X, CatalogOverlay.Y, CatalogOverlay.NONE]],
+        [CARTA.ColumnType.Uint32, [CatalogOverlay.X, CatalogOverlay.Y, CatalogOverlay.NONE]],
+        [CARTA.ColumnType.Int64, [CatalogOverlay.X, CatalogOverlay.Y, CatalogOverlay.NONE]],
+        [CARTA.ColumnType.Uint64, [CatalogOverlay.X, CatalogOverlay.Y, CatalogOverlay.NONE]],
+        [CARTA.ColumnType.String, [CatalogOverlay.NONE]],
+        [CARTA.ColumnType.UnsupportedType, [CatalogOverlay.NONE]]
     ]);
 
     public static get WIDGET_CONFIG(): WidgetConfig {
@@ -113,9 +120,9 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         }
     }
 
-    @computed get tableInfo(): {dataset: CARTA.ICatalogColumnsData, numVisibleRows: number} {
+    @computed get tableInfo(): {dataset: Map<number, ProcessedColumnData>, numVisibleRows: number} {
         const widgetStore = this.widgetStore;
-        let dataset = [] as CARTA.ICatalogColumnsData;
+        let dataset;
         let numVisibleRows = 0;
         if (widgetStore) {
             dataset = widgetStore.catalogData;
@@ -125,7 +132,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
                 numVisibleRows = widgetStore.regionSelected;
             }
         }
-        return {dataset: dataset, numVisibleRows: numVisibleRows};
+        return {dataset, numVisibleRows};
     }
 
     constructor(props: WidgetProps) {
@@ -332,7 +339,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
                 let filter = new CARTA.FilterConfig();
                 const dataType = this.widgetStore.catalogHeader[value.dataIndex].dataType;
                 filter.columnName = key;
-                if (dataType === CARTA.EntryType.STRING) {
+                if (dataType === CARTA.ColumnType.String) {
                     filter.subString = value.filter;
                     filter.comparisonOperator = null;
                     filter.max = null;
@@ -522,7 +529,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
     // single source selected in table
     private onCatalogTableDataSelected = (selectedDataIndex: number) => {
         const widgetsStore = this.widgetStore;
-        const selectedPointIndexs = widgetsStore.selectedPointIndexs;
+        const selectedPointIndexs = widgetsStore.selectedPointIndices;
         const selectedData = [];
         let highlighted = false;
         if (selectedPointIndexs.length === 1) {
@@ -580,9 +587,9 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
             filter: widgetStore.catalogControlHeader,
             columnHeaders: widgetStore.displayedColumnHeaders,
             numVisibleRows: catalogTable.numVisibleRows,
-            columnWidts: widgetStore.tableColumnWidts,
+            columnWidths: widgetStore.tableColumnWidts,
             loadingCell: widgetStore.loadingData,
-            selectedDataIndex: widgetStore.selectedPointIndexs,
+            selectedDataIndex: widgetStore.selectedPointIndices,
             showSelectedData: widgetStore.showSelectedData,
             upTableRef: this.onCatalogDataTableRefUpdated,
             updateColumnFilter: widgetStore.setColumnFilter,

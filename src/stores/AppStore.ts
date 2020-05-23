@@ -36,7 +36,7 @@ import {
 } from ".";
 import {distinct, GetRequiredTiles} from "utilities";
 import {BackendService, ConnectionStatus, ScriptingService, TileService, TileStreamDetails} from "services";
-import {FrameView, Point2D, ProtobufProcessing, Theme, TileCoordinate, WCSMatchingType} from "models";
+import {FrameView, Point2D, ProcessedColumnData, ProtobufProcessing, Theme, TileCoordinate, WCSMatchingType} from "models";
 import {HistogramWidgetStore, RegionWidgetStore, SpatialProfileWidgetStore, SpectralProfileWidgetStore, StatsWidgetStore, StokesAnalysisWidgetStore, CatalogInfo, CatalogUpdateMode} from "./widgets";
 import {CatalogOverlayComponent, CatalogScatterComponent, getImageCanvas} from "components";
 import {AppToaster} from "components/Shared";
@@ -528,19 +528,25 @@ export class AppStore {
 
         const frame = this.activeFrame;
         const fileId = this.catalogNum + 1;
+
+        // HACK to load FITS tables
+        //file = file.replace(".vot", ".fits");
+        //file = file.replace(".xml", ".fits");
+        console.time(`CatalogLoad_${file}`);
         this.backendService.loadCatalogFile(directory, file, fileId, previewDataSize).subscribe(ack => {
             this.fileLoading = false;
+            console.timeEnd(`CatalogLoad_${file}`);
             if (frame && ack.success && ack.dataSize) {
                 let catalogInfo: CatalogInfo = {fileId: fileId, fileInfo: ack.fileInfo, dataSize: ack.dataSize};
                 let catalogWidgetId = null;
                 const config = CatalogOverlayComponent.WIDGET_CONFIG;
                 let floatingCatalogWidgets = this.widgetsStore.getFloatingWidgetByComponentId(config.componentId).length;
                 let dockedCatalogWidgets = this.widgetsStore.getDockedWidgetByType(config.type).length;
-
+                const columnData = ProtobufProcessing.ProcessCatalogData(ack.previewData);
                 if (floatingCatalogWidgets === 0 && dockedCatalogWidgets === 0) {
-                    catalogWidgetId = this.widgetsStore.createFloatingCatalogOverlayWidget(catalogInfo, ack.headers, ack.columnsData);
+                    catalogWidgetId = this.widgetsStore.createFloatingCatalogOverlayWidget(catalogInfo, ack.headers, columnData);
                 } else {
-                    catalogWidgetId = this.widgetsStore.addCatalogOverlayWidget(catalogInfo, ack.headers, ack.columnsData);
+                    catalogWidgetId = this.widgetsStore.addCatalogOverlayWidget(catalogInfo, ack.headers, columnData);
                 }
                 if (catalogWidgetId) {
                     this.catalogs.set(catalogWidgetId, fileId);
@@ -1096,7 +1102,9 @@ export class AppStore {
                 const xColumn = catalogWidgetStore.xColumnRepresentation;
                 const yColumn = catalogWidgetStore.yColumnRepresentation;
                 if (xColumn && yColumn) {
-                    const coords = catalogWidgetStore.get2DPlotData(xColumn, yColumn, catalogFilter.columnsData);
+                    // TODO: Handle filtered data once ICD is made consistent!
+                    const data = new Map<number, ProcessedColumnData>();
+                    const coords = catalogWidgetStore.get2DPlotData(xColumn, yColumn, data);
                     const wcs = this.activeFrame.validWcs ? this.activeFrame.wcsInfo : 0;
                     this.catalogStore.updateCatalogData(catalogWidgetId, coords.wcsX, coords.wcsY, wcs, coords.xHeaderInfo.units, coords.yHeaderInfo.units, catalogWidgetStore.catalogCoordinateSystem.system);
                 }

@@ -1,10 +1,10 @@
 import * as React from "react";
-import {CARTA} from "carta-protobuf";
 import {observer} from "mobx-react";
 import {Cell, Column, Table, SelectionModes, RenderMode, ColumnHeaderCell, EditableCell, IRegion} from "@blueprintjs/table";
 import {IRowIndices} from "@blueprintjs/table/lib/esm/common/grid";
+import {CARTA} from "carta-protobuf";
 import {ControlHeader} from "stores/widgets";
-import {getTableDataByType} from "utilities";
+import {ProcessedColumnData} from "models";
 
 export type ColumnFilter = { index: number, columnFilter: string };
 
@@ -14,11 +14,11 @@ export enum TableType {
 }
 
 export class TableComponentProps {
-    dataset: CARTA.ICatalogColumnsData;
+    dataset: Map<number, ProcessedColumnData>;
     filter?: Map<string, ControlHeader>;
     columnHeaders: Array<CARTA.CatalogHeader>;
     numVisibleRows: number;
-    columnWidts?: Array<number>;
+    columnWidths?: Array<number>;
     type: TableType;
     loadingCell?: boolean;
     selectedDataIndex?: number[];
@@ -33,23 +33,23 @@ export class TableComponentProps {
 @observer
 export class TableComponent extends React.Component<TableComponentProps> {
 
-    private renderDataColumnWithFilter = (columnName: string, coloumnData: any) => {
+    private renderDataColumnWithFilter = (columnName: string, columnData: any) => {
         return (
             <Column 
                 key={columnName} 
                 name={columnName} 
                 columnHeaderCellRenderer={(columnIndex: number) => this.renderColumnHeaderCell(columnIndex, columnName)} 
-                cellRenderer={(rowIndex, columnIndex) => this.renderCell(rowIndex, columnIndex, coloumnData)}
+                cellRenderer={(rowIndex, columnIndex) => this.renderCell(rowIndex, columnIndex, columnData)}
             />
         );
     }
 
-    private renderCell = (rowIndex: number, columnIndex: number, coloumnData: any) => {
+    private renderCell = (rowIndex: number, columnIndex: number, columnData: any) => {
         const dataIndex = this.props.selectedDataIndex;
         if (dataIndex && dataIndex.includes(rowIndex) && !this.props.showSelectedData) {
-            return <Cell key={`cell_${columnIndex}_${rowIndex}`} intent={"danger"} loading={this.isLoading(rowIndex)} interactive={false}>{coloumnData[rowIndex]}</Cell>;
+            return <Cell key={`cell_${columnIndex}_${rowIndex}`} intent={"danger"} loading={this.isLoading(rowIndex)} interactive={false}>{columnData[rowIndex]}</Cell>;
         } else {
-            return <Cell key={`cell_${columnIndex}_${rowIndex}`} loading={this.isLoading(rowIndex)} interactive={false}>{coloumnData[rowIndex]}</Cell>;
+            return <Cell key={`cell_${columnIndex}_${rowIndex}`} loading={this.isLoading(rowIndex)} interactive={false}>{columnData[rowIndex]}</Cell>;
         }
     }
 
@@ -119,9 +119,8 @@ export class TableComponent extends React.Component<TableComponentProps> {
         
         for (let index = 0; index < table.columnHeaders.length; index++) {
             const header = table.columnHeaders[index];
-            const dataType = header.dataType;
-            const dataIndex = header.dataTypeIndex;
-            let dataArray = getTableDataByType(tableData, dataType, dataIndex);
+            const columnIndex = header.columnIndex;
+            let dataArray = tableData.get(columnIndex)?.data;
 
             if (table.type === TableType.ColumnFilter) {
                 const column = this.renderDataColumnWithFilter(header.name, dataArray);
@@ -141,7 +140,7 @@ export class TableComponent extends React.Component<TableComponentProps> {
                     enableRowReordering={false}
                     selectionModes={SelectionModes.ROWS_AND_CELLS}
                     onVisibleCellsChange={this.infiniteScroll}
-                    columnWidths={table.columnWidts}
+                    columnWidths={table.columnWidths}
                     onColumnWidthChanged={this.updateTableColumnWidth}
                     enableGhostCells={true}
                     onSelection={this.onRowIndexSelection}

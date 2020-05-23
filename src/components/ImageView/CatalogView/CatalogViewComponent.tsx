@@ -51,7 +51,7 @@ export class CatalogViewComponent extends React.Component<CatalogViewComponentPr
         let coordsData = new Map<string, Plotly.Data>(); 
         appStore.catalogs.forEach((fileId, widgetId) => {
             const catalogOverlayStore = widgetsStore.catalogOverlayWidgets.get(widgetId);
-            const selectedPoints = catalogOverlayStore.selectedPointIndexs;
+            const selectedPoints = catalogOverlayStore.selectedPointIndices;
             const selectedPointSize = selectedPoints.length;
             let selecteData: Plotly.Data = {};
             if (selectedPointSize > 0) {

@@ -1,6 +1,8 @@
 import {CARTA} from "carta-protobuf";
-// @ts-ignore
 import * as CARTACompute from "carta_computation";
+
+export type TypedArray = Int8Array | Uint8Array | Int16Array | Uint16Array | Int32Array | Uint32Array | Float32Array | Float64Array;
+export type ColumnArray = TypedArray | Array<string> | Array<boolean>;
 
 export interface ProcessedSpatialProfile extends CARTA.ISpatialProfile {
     values: Float32Array;
@@ -24,6 +26,11 @@ export interface ProcessedContourSet {
     level: number;
     indexOffsets: Int32Array;
     coordinates: Float32Array;
+}
+
+export interface ProcessedColumnData {
+    dataType: CARTA.ColumnType;
+    data: ColumnArray;
 }
 
 export class ProtobufProcessing {
@@ -100,5 +107,61 @@ export class ProtobufProcessing {
             progress: contourData.progress,
             contourSets: contourData.contourSets ? contourData.contourSets.map(contourSet => this.ProcessContourSet(contourSet)) : null
         };
+    }
+
+    static GetProcessedData(column: CARTA.IColumnData): ProcessedColumnData {
+        switch (column.dataType) {
+            case CARTA.ColumnType.Uint8:
+                return {dataType: column.dataType, data: new Uint8Array(column.binaryData.slice().buffer)};
+            case CARTA.ColumnType.Int8:
+                return {dataType: column.dataType, data: new Int8Array(column.binaryData.slice().buffer)};
+            case CARTA.ColumnType.Uint16:
+                return {dataType: column.dataType, data: new Uint16Array(column.binaryData.slice().buffer)};
+            case CARTA.ColumnType.Int16:
+                return {dataType: column.dataType, data: new Int16Array(column.binaryData.slice().buffer)};
+            case CARTA.ColumnType.Uint32:
+                return {dataType: column.dataType, data: new Uint32Array(column.binaryData.slice().buffer)};
+            case CARTA.ColumnType.Int32:
+                return {dataType: column.dataType, data: new Int32Array(column.binaryData.slice().buffer)};
+            case CARTA.ColumnType.Float:
+                return {dataType: column.dataType, data: new Float32Array(column.binaryData.slice().buffer)};
+            case CARTA.ColumnType.Double:
+                return {dataType: column.dataType, data: new Float64Array(column.binaryData.slice().buffer)};
+            case CARTA.ColumnType.String:
+                return {dataType: column.dataType, data: column.stringData};
+            case CARTA.ColumnType.Uint64:
+                const uint64Array = new BigUint64Array(column.binaryData.slice().buffer);
+                const floatFromUintArray = new Float64Array(uint64Array.length);
+                for (let i = floatFromUintArray.length - 1; i >= 0; i--) {
+                    floatFromUintArray[i] = Number(uint64Array[i]);
+                }
+                return {dataType: column.dataType, data: floatFromUintArray};
+            case CARTA.ColumnType.Int64:
+                const int64Array = new BigInt64Array(column.binaryData.slice().buffer);
+                const floatFromIntArray = new Float64Array(int64Array.length);
+                for (let i = floatFromIntArray.length - 1; i >= 0; i--) {
+                    floatFromIntArray[i] = Number(int64Array[i]);
+                }
+                return {dataType: column.dataType, data: floatFromIntArray};
+            case CARTA.ColumnType.Bool:
+                const array = new Uint8Array(column.binaryData.slice().buffer);
+                const boolData = new Array<boolean>(array.length);
+                for (let i = boolData.length - 1; i >= 0; i--) {
+                    boolData[i] = array[i] !== 0;
+                }
+                return {dataType: column.dataType, data: boolData};
+            default:
+                return {dataType: CARTA.ColumnType.UnsupportedType, data: []};
+        }
+    }
+
+    static ProcessCatalogData(catalogData: { [k: string]: CARTA.IColumnData }): Map<number, ProcessedColumnData> {
+        const dataMap = new Map<number, ProcessedColumnData>();
+        const originalMap = new Map(Object.entries(catalogData));
+        originalMap.forEach((column, i) => {
+            dataMap.set(parseInt(i), ProtobufProcessing.GetProcessedData(column));
+        });
+
+        return dataMap;
     }
 }
