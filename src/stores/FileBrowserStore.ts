@@ -5,6 +5,7 @@ import {BackendService} from "services";
 import {AppStore, DialogStore} from "stores";
 import {FileInfoType} from "components";
 import {ProcessedColumnData} from "../models";
+import {getDataTypeString} from "../utilities";
 
 export enum BrowserMode {
     File,
@@ -30,7 +31,7 @@ export class FileBrowserStore {
     @observable browserMode: BrowserMode = BrowserMode.File;
     @observable appendingFrame = false;
     @observable fileList: CARTA.IFileListResponse;
-    @observable selectedFile: CARTA.IFileInfo| CARTA.ICatalogFileInfo;
+    @observable selectedFile: CARTA.IFileInfo | CARTA.ICatalogFileInfo;
     @observable selectedHDU: string;
     @observable fileInfoExtended: CARTA.IFileInfoExtended;
     @observable regionFileInfo: string[];
@@ -153,7 +154,9 @@ export class FileBrowserStore {
             if (res.fileInfo && this.selectedFile && res.fileInfo.name === this.selectedFile.name) {
                 this.loadingInfo = false;
                 this.catalogFileInfo = res.fileInfo;
-                this.catalogHeaders = res.headers.sort((a, b) => { return a.columnIndex - b.columnIndex; });
+                this.catalogHeaders = res.headers.sort((a, b) => {
+                    return a.columnIndex - b.columnIndex;
+                });
             }
             this.fileInfoResp = res.success;
         }, err => {
@@ -170,7 +173,7 @@ export class FileBrowserStore {
         this.selectedFile = file;
 
         if (hdu) {
-            this.selectedHDU = hdu;   
+            this.selectedHDU = hdu;
         }
 
         if (this.browserMode === BrowserMode.File) {
@@ -276,29 +279,34 @@ export class FileBrowserStore {
         }
     }
 
-    @computed get catalogHeaderDataset(): {columnHeaders: Array<CARTA.CatalogHeader>, columnsData: Map<number, ProcessedColumnData>} {
+    @computed get catalogHeaderDataset(): { columnHeaders: Array<CARTA.CatalogHeader>, columnsData: Map<number, ProcessedColumnData> } {
         let columnsData = new Map<number, ProcessedColumnData>();
 
         const nameData = [];
         const unitData = [];
+        const typeData = [];
         const descriptionData = [];
 
         for (let index = 0; index < this.catalogHeaders.length; index++) {
             const catalogHeader = this.catalogHeaders[index];
             nameData.push(catalogHeader.name);
             unitData.push(catalogHeader.units);
+            typeData.push(getDataTypeString(catalogHeader.dataType));
             descriptionData.push(catalogHeader.description);
         }
 
         const dataType = CARTA.ColumnType.String;
         columnsData.set(0, {dataType, data: nameData});
         columnsData.set(1, {dataType, data: unitData});
-        columnsData.set(2, {dataType, data: descriptionData});
+        columnsData.set(2, {dataType, data: typeData});
+        columnsData.set(3, {dataType, data: descriptionData});
 
-        let columnHeaders = new Array(3);
-        columnHeaders[0] = new CARTA.CatalogHeader({name: "Name", dataType, columnIndex: 0});
-        columnHeaders[1] = new CARTA.CatalogHeader({name: "Unit", dataType, columnIndex: 1});
-        columnHeaders[2] = new CARTA.CatalogHeader({name: "Description", dataType, columnIndex: 2});
+        let columnHeaders = [
+            new CARTA.CatalogHeader({name: "Name", dataType, columnIndex: 0}),
+            new CARTA.CatalogHeader({name: "Unit", dataType, columnIndex: 1}),
+            new CARTA.CatalogHeader({name: "Data Type", dataType, columnIndex: 2}),
+            new CARTA.CatalogHeader({name: "Description", dataType, columnIndex: 3})
+        ];
 
         return {columnHeaders: columnHeaders, columnsData: columnsData};
     }
