@@ -1,8 +1,8 @@
 import {CARTA} from "carta-protobuf";
 import * as CARTACompute from "carta_computation";
 
-export type TypedArray = Int8Array | Uint8Array | Int16Array | Uint16Array | Int32Array | Uint32Array | Float32Array | Float64Array;
-export type ColumnArray = TypedArray | Array<string> | Array<boolean>;
+type TypedArray = Int8Array | Uint8Array | Int16Array | Uint16Array | Int32Array | Uint32Array | Float32Array | Float64Array | BigInt64Array | BigUint64Array;
+export type ColumnArray = Array<string> | Array<boolean> | Array<number>;
 
 export interface ProcessedSpatialProfile extends CARTA.ISpatialProfile {
     values: Float32Array;
@@ -110,41 +110,39 @@ export class ProtobufProcessing {
     }
 
     static GetProcessedData(column: CARTA.IColumnData): ProcessedColumnData {
+        let data: TypedArray;
+
         switch (column.dataType) {
             case CARTA.ColumnType.Uint8:
-                return {dataType: column.dataType, data: new Uint8Array(column.binaryData.slice().buffer)};
+                data = new Uint8Array(column.binaryData.slice().buffer);
+                break;
             case CARTA.ColumnType.Int8:
-                return {dataType: column.dataType, data: new Int8Array(column.binaryData.slice().buffer)};
+                data = new Int8Array(column.binaryData.slice().buffer);
+                break;
             case CARTA.ColumnType.Uint16:
-                return {dataType: column.dataType, data: new Uint16Array(column.binaryData.slice().buffer)};
+                data = new Uint16Array(column.binaryData.slice().buffer);
+                break;
             case CARTA.ColumnType.Int16:
-                return {dataType: column.dataType, data: new Int16Array(column.binaryData.slice().buffer)};
+                data = new Int16Array(column.binaryData.slice().buffer);
+                break;
             case CARTA.ColumnType.Uint32:
-                return {dataType: column.dataType, data: new Uint32Array(column.binaryData.slice().buffer)};
+                data = new Uint32Array(column.binaryData.slice().buffer);
+                break;
             case CARTA.ColumnType.Int32:
-                return {dataType: column.dataType, data: new Int32Array(column.binaryData.slice().buffer)};
+                data = new Int32Array(column.binaryData.slice().buffer);
+                break;
             case CARTA.ColumnType.Float:
-                return {dataType: column.dataType, data: new Float32Array(column.binaryData.slice().buffer)};
+                data = new Float32Array(column.binaryData.slice().buffer);
+                break;
             case CARTA.ColumnType.Double:
-                return {dataType: column.dataType, data: new Float64Array(column.binaryData.slice().buffer)};
-            case CARTA.ColumnType.String:
-                return {dataType: column.dataType, data: column.stringData};
+                data = new Float64Array(column.binaryData.slice().buffer);
+                break;
             case CARTA.ColumnType.Uint64:
-                // Convert from uint64 to double to avoid using bigint for calculations
-                const uint64Array = new BigUint64Array(column.binaryData.slice().buffer);
-                const floatFromUintArray = new Float64Array(uint64Array.length);
-                for (let i = floatFromUintArray.length - 1; i >= 0; i--) {
-                    floatFromUintArray[i] = Number(uint64Array[i]);
-                }
-                return {dataType: column.dataType, data: floatFromUintArray};
+                data = new BigUint64Array(column.binaryData.slice().buffer);
+                break;
             case CARTA.ColumnType.Int64:
-                // Convert from int64 to double
-                const int64Array = new BigInt64Array(column.binaryData.slice().buffer);
-                const floatFromIntArray = new Float64Array(int64Array.length);
-                for (let i = floatFromIntArray.length - 1; i >= 0; i--) {
-                    floatFromIntArray[i] = Number(int64Array[i]);
-                }
-                return {dataType: column.dataType, data: floatFromIntArray};
+                data = new BigInt64Array(column.binaryData.slice().buffer);
+                break;
             case CARTA.ColumnType.Bool:
                 const array = new Uint8Array(column.binaryData.slice().buffer);
                 const boolData = new Array<boolean>(array.length);
@@ -152,9 +150,27 @@ export class ProtobufProcessing {
                     boolData[i] = array[i] !== 0;
                 }
                 return {dataType: column.dataType, data: boolData};
+            case CARTA.ColumnType.String:
+                return {dataType: column.dataType, data: column.stringData};
             default:
                 return {dataType: CARTA.ColumnType.UnsupportedType, data: []};
         }
+        const N = data.length;
+        let arr = new Array<number>(N);
+
+        // Convert values from typed arrays to a plain JS array for use with plotly
+        if (data instanceof BigInt64Array || data instanceof BigUint64Array) {
+            for (let i = N - 1; i >= 0; i--) {
+                arr[i] = Number(data[i]);
+            }
+        } else {
+            for (let i = N - 1; i >= 0; i--) {
+                arr[i] = data[i];
+            }
+        }
+
+        return {dataType: column.dataType, data: arr};
+
     }
 
     static ProcessCatalogData(catalogData: { [k: string]: CARTA.IColumnData }): Map<number, ProcessedColumnData> {

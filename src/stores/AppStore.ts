@@ -594,6 +594,7 @@ export class AppStore {
         if (!this.activeFrame) {
             return;
         }
+        console.time("fullFilter");
         this.backendService.setCatalogFilterRequest(catalogFilter);
     }
 
@@ -1081,6 +1082,7 @@ export class AppStore {
     };
 
     @action handleCatalogFilterStream = (catalogFilter: CARTA.CatalogFilterResponse) => {
+        console.timeEnd("fullFilter");
         let catalogWidgetId = null;
         this.catalogs.forEach((value, key) => {
             if (value === catalogFilter.fileId) {
@@ -1091,7 +1093,8 @@ export class AppStore {
         const progress = catalogFilter.progress;
         const catalogWidgetStore = this.widgetsStore.catalogOverlayWidgets.get(catalogWidgetId);
         if (catalogWidgetStore) {
-            catalogWidgetStore.updateCatalogData(catalogFilter);
+            const catalogData = ProtobufProcessing.ProcessCatalogData(catalogFilter.columns);
+            catalogWidgetStore.updateCatalogData(catalogFilter, catalogData);
             catalogWidgetStore.setProgress(progress);
             if (progress === 1) {
                 catalogWidgetStore.setLoadingDataStatus(false);
@@ -1102,9 +1105,7 @@ export class AppStore {
                 const xColumn = catalogWidgetStore.xColumnRepresentation;
                 const yColumn = catalogWidgetStore.yColumnRepresentation;
                 if (xColumn && yColumn) {
-                    // TODO: Handle filtered data once ICD is made consistent!
-                    const data = new Map<number, ProcessedColumnData>();
-                    const coords = catalogWidgetStore.get2DPlotData(xColumn, yColumn, data);
+                    const coords = catalogWidgetStore.get2DPlotData(xColumn, yColumn, catalogData);
                     const wcs = this.activeFrame.validWcs ? this.activeFrame.wcsInfo : 0;
                     this.catalogStore.updateCatalogData(catalogWidgetId, coords.wcsX, coords.wcsY, wcs, coords.xHeaderInfo.units, coords.yHeaderInfo.units, catalogWidgetStore.catalogCoordinateSystem.system);
                 }

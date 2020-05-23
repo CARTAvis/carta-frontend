@@ -3,7 +3,6 @@ import {action, observable, ObservableMap} from "mobx";
 import {Colors} from "@blueprintjs/core";
 import {SystemType} from "stores";
 import {CatalogOverlayShape} from "stores/widgets";
-import {ColumnArray, TypedArray} from "models";
 
 type CatalogDataInfo = {
     fileId: number,
@@ -42,8 +41,8 @@ export class CatalogStore {
         // init catalog data
         this.catalogData.set(widgetId, {
             fileId: fileId,
-            xImageCoords: new Array(),
-            yImageCoords: new Array(),
+            xImageCoords: [],
+            yImageCoords: [],
             showSelectedData: false
         });
         this.catalogColor.set(widgetId, Colors.TURQUOISE3);
@@ -51,8 +50,8 @@ export class CatalogStore {
         this.catalogShape.set(widgetId, CatalogOverlayShape.Circle);
     }
 
-    @action updateCatalogData(widgetId: string, xWcsData: TypedArray, yWcsData: TypedArray, wcsInfo: number, xUnit: string, yUnit: string, catalogFrame: SystemType) {
-        const pixelData = this.transformCatalogData(xWcsData, yWcsData, wcsInfo, xUnit, yUnit, catalogFrame);
+    @action updateCatalogData(widgetId: string, xWcsData: Array<number>, yWcsData: Array<number>, wcsInfo: number, xUnit: string, yUnit: string, catalogFrame: SystemType) {
+        const pixelData = CatalogStore.TransformCatalogData(xWcsData, yWcsData, wcsInfo, xUnit, yUnit, catalogFrame);
         const catalogDataInfo = this.catalogData.get(widgetId);
         if (catalogDataInfo) {
             for (let i = 0; i < pixelData.xImageCoords.length; i++) {
@@ -115,7 +114,7 @@ export class CatalogStore {
         }
     }
 
-    private transformCatalogData(xWcsData: TypedArray, yWcsData: TypedArray, wcsInfo: number, xUnit: string, yUnit: string, catalogFrame: SystemType): { xImageCoords: Float64Array, yImageCoords: Float64Array } {
+    private static TransformCatalogData(xWcsData: Array<number>, yWcsData: Array<number>, wcsInfo: number, xUnit: string, yUnit: string, catalogFrame: SystemType): { xImageCoords: Float64Array, yImageCoords: Float64Array } {
         if (xWcsData.length === yWcsData.length) {
             const N = xWcsData.length;
 
