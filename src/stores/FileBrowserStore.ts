@@ -297,8 +297,8 @@ export class FileBrowserStore {
 
         let columnHeaders = new Array(3);
         columnHeaders[0] = new CARTA.CatalogHeader({name: "Name", dataType, columnIndex: 0});
-        columnHeaders[2] = new CARTA.CatalogHeader({name: "Unit", dataType, columnIndex: 1});
-        columnHeaders[1] = new CARTA.CatalogHeader({name: "Description", dataType, columnIndex: 2});
+        columnHeaders[1] = new CARTA.CatalogHeader({name: "Unit", dataType, columnIndex: 1});
+        columnHeaders[2] = new CARTA.CatalogHeader({name: "Description", dataType, columnIndex: 2});
 
         return {columnHeaders: columnHeaders, columnsData: columnsData};
     }
