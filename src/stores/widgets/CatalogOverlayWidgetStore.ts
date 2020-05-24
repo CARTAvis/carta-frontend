@@ -219,13 +219,36 @@ export class CatalogOverlayWidgetStore extends RegionWidgetStore {
         this.updateMode = mode;
     }
 
+    private static  FillAllocatedArray<T>(existingArray: Array<T>, newArray: Array<T>, insertionIndex: number, allocationSize: number): Array<T> {
+        const newDataSize = newArray.length;
+        let destArr: Array<T>;
+        // fill in-place
+        if (existingArray.length === allocationSize) {
+            destArr = existingArray;
+            for (let i = 0; i < newDataSize; i++) {
+                destArr[i + insertionIndex] = newArray[i];
+            }
+        } else {
+            // Create a new array and copy across up to the insertion index
+            destArr = new Array<T>(allocationSize);
+            for (let i = 0; i < insertionIndex; i++) {
+                destArr[i] = existingArray[i];
+            }
+
+            for (let i = 0; i < newDataSize; i++) {
+                destArr[i + insertionIndex] = newArray[i];
+            }
+        }
+        return destArr;
+    }
+
     @action updateCatalogData(catalogFilter: CARTA.CatalogFilterResponse, catalogData: Map<number, ProcessedColumnData>) {
         let subsetDataSize = catalogFilter.subsetDataSize;
         console.time(`updateCatalogData_${subsetDataSize}`);
         const subsetEndIndex = catalogFilter.subsetEndIndex;
         const startIndex = subsetEndIndex - subsetDataSize;
 
-        const totalDataSize = catalogFilter.filterDataSize;
+        const totalDataSize = catalogFilter.requestEndIndex;
 
         if (this.subsetEndIndex <= this.catalogInfo.dataSize) {
             let numVisibleRows = this.numVisibleRows + subsetDataSize;
@@ -234,81 +257,20 @@ export class CatalogOverlayWidgetStore extends RegionWidgetStore {
                 if (!currentData) {
                     this.catalogData.set(key, newData);
                 } else {
-                    const N = newData.data.length;
                     if (currentData.dataType === CARTA.ColumnType.String) {
                         const currentArr = currentData.data as Array<string>;
                         const newArr = newData.data as Array<string>;
-                        const currentDataSize = currentArr.length;
-                        const newDataSize = newArr.length;
-                        let destArr: Array<string>;
-                        // fill in-place
-                        if (currentArr.length === totalDataSize) {
-                            destArr = currentArr;
-                            for (let i = 0; i < newDataSize; i++) {
-                                destArr[i + startIndex] = newArr[i];
-                            }
-                        } else {
-                            // Copy across
-                            destArr = new Array<string>(totalDataSize);
-                            for (let i = 0; i < currentDataSize; i++) {
-                                destArr[i] = currentArr[i];
-                            }
-
-                            for (let i = 0; i < newDataSize; i++) {
-                                destArr[i + startIndex] = newArr[i];
-                            }
-                            currentData.data = destArr;
-                        }
+                        currentData.data = CatalogOverlayWidgetStore.FillAllocatedArray<string>(currentArr, newArr, startIndex, totalDataSize);
                     } else if (currentData.dataType === CARTA.ColumnType.Bool) {
                         const currentArr = currentData.data as Array<boolean>;
                         const newArr = newData.data as Array<boolean>;
-                        const currentDataSize = currentArr.length;
-                        const newDataSize = newArr.length;
-                        let destArr: Array<boolean>;
-                        // fill in-place
-                        if (currentArr.length === totalDataSize) {
-                            destArr = currentArr;
-                            for (let i = 0; i < newDataSize; i++) {
-                                destArr[i + startIndex] = newArr[i];
-                            }
-                        } else {
-                            // Copy across
-                            destArr = new Array<boolean>(totalDataSize);
-                            for (let i = 0; i < currentDataSize; i++) {
-                                destArr[i] = currentArr[i];
-                            }
-
-                            for (let i = 0; i < newDataSize; i++) {
-                                destArr[i + startIndex] = newArr[i];
-                            }
-                            currentData.data = destArr;
-                        }
+                        currentData.data = CatalogOverlayWidgetStore.FillAllocatedArray<boolean>(currentArr, newArr, startIndex, totalDataSize);
                     } else if (currentData.dataType === CARTA.ColumnType.UnsupportedType) {
                         return;
                     } else {
                         const currentArr = currentData.data as Array<number>;
                         const newArr = newData.data as Array<number>;
-                        const currentDataSize = currentArr.length;
-                        const newDataSize = newArr.length;
-                        let destArr: Array<number>;
-                        // fill in-place
-                        if (currentArr.length === totalDataSize) {
-                            destArr = currentArr;
-                            for (let i = 0; i < newDataSize; i++) {
-                                destArr[i + startIndex] = newArr[i];
-                            }
-                        } else {
-                            // Copy across
-                            destArr = new Array<number>(totalDataSize);
-                            for (let i = 0; i < currentDataSize; i++) {
-                                destArr[i] = currentArr[i];
-                            }
-
-                            for (let i = 0; i < newDataSize; i++) {
-                                destArr[i + startIndex] = newArr[i];
-                            }
-                            currentData.data = destArr;
-                        }
+                        currentData.data = CatalogOverlayWidgetStore.FillAllocatedArray<number>(currentArr, newArr, startIndex, totalDataSize);
                     }
 
                 }
@@ -694,83 +656,5 @@ export class CatalogOverlayWidgetStore extends RegionWidgetStore {
             }
         });
         return catalogSystem;
-    }
-
-    private addSubsetDoubleData(initData: Array<CARTA.IDoubleColumn>, sourceData: Array<CARTA.IDoubleColumn>) {
-        for (let index = 0; index < initData.length; index++) {
-            const init = initData[index];
-            const source = sourceData[index];
-            if (init && source) {
-                for (let j = 0; j < source.doubleColumn.length; j++) {
-                    const data = source.doubleColumn[j];
-                    init.doubleColumn.push(data);
-                }
-            }
-        }
-    }
-
-    private addSubsetBoolData(initData: Array<CARTA.IBoolColumn>, sourceData: Array<CARTA.IBoolColumn>) {
-        for (let index = 0; index < initData.length; index++) {
-            const init = initData[index];
-            const source = sourceData[index];
-            if (init && source) {
-                for (let j = 0; j < source.boolColumn.length; j++) {
-                    const data = source.boolColumn[j];
-                    init.boolColumn.push(data);
-                }
-            }
-        }
-    }
-
-    private addSubsetFloatData(initData: Array<CARTA.IFloatColumn>, sourceData: Array<CARTA.IFloatColumn>) {
-        for (let index = 0; index < initData.length; index++) {
-            const init = initData[index];
-            const source = sourceData[index];
-            if (init && source) {
-                for (let j = 0; j < source.floatColumn.length; j++) {
-                    const data = source.floatColumn[j];
-                    init.floatColumn.push(data);
-                }
-            }
-        }
-    }
-
-    private addSubsetStringData(initData: Array<CARTA.IStringColumn>, sourceData: Array<CARTA.IStringColumn>) {
-        for (let index = 0; index < initData.length; index++) {
-            const init = initData[index];
-            const source = sourceData[index];
-            if (init && source) {
-                for (let j = 0; j < source.stringColumn.length; j++) {
-                    const data = source.stringColumn[j];
-                    init.stringColumn.push(data);
-                }
-            }
-        }
-    }
-
-    private addSubsetIntData(initData: Array<CARTA.IIntColumn>, sourceData: Array<CARTA.IIntColumn>) {
-        for (let index = 0; index < initData.length; index++) {
-            const init = initData[index];
-            const source = sourceData[index];
-            if (init && source) {
-                for (let j = 0; j < source.intColumn.length; j++) {
-                    const data = source.intColumn[j];
-                    init.intColumn.push(data);
-                }
-            }
-        }
-    }
-
-    private addSubsetLLData(initData: Array<CARTA.ILLColumn>, sourceData: Array<CARTA.ILLColumn>) {
-        for (let index = 0; index < initData.length; index++) {
-            const init = initData[index];
-            const source = sourceData[index];
-            if (init && source) {
-                for (let j = 0; j < source.llColumn.length; j++) {
-                    const data = source.llColumn[j];
-                    init.llColumn.push(data);
-                }
-            }
-        }
     }
 }
