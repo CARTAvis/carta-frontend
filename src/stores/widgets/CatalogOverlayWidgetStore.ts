@@ -221,6 +221,7 @@ export class CatalogOverlayWidgetStore extends RegionWidgetStore {
 
     @action updateCatalogData(catalogFilter: CARTA.CatalogFilterResponse, catalogData: Map<number, ProcessedColumnData>) {
         let subsetDataSize = catalogFilter.subsetDataSize;
+        console.time(`updateCatalogData_${subsetDataSize}`);
         const subsetEndIndex = catalogFilter.subsetEndIndex;
 
         if (this.subsetEndIndex <= this.catalogInfo.dataSize) {
@@ -230,27 +231,20 @@ export class CatalogOverlayWidgetStore extends RegionWidgetStore {
                 if (!currentData) {
                     this.catalogData.set(key, newData);
                 } else {
-                    const N = currentData.data.length;
                     if (currentData.dataType === CARTA.ColumnType.String) {
                         const currentArr = currentData.data as Array<string>;
                         const newArr = newData.data as Array<string>;
-                        for (let i = 0; i < N; i++) {
-                            currentArr.push(newArr[i]);
-                        }
+                        currentData.data = currentArr.concat(newArr);
                     } else if (currentData.dataType === CARTA.ColumnType.Bool) {
                         const currentArr = currentData.data as Array<boolean>;
                         const newArr = newData.data as Array<boolean>;
-                        for (let i = 0; i < N; i++) {
-                            currentArr.push(newArr[i]);
-                        }
+                        currentData.data = currentArr.concat(newArr);
                     } else if (currentData.dataType === CARTA.ColumnType.UnsupportedType) {
                         return;
                     } else {
                         const currentArr = currentData.data as Array<number>;
                         const newArr = newData.data as Array<number>;
-                        for (let i = 0; i < N; i++) {
-                            currentArr.push(newArr[i]);
-                        }
+                        currentData.data = currentArr.concat(newArr);
                     }
 
                 }
@@ -259,6 +253,7 @@ export class CatalogOverlayWidgetStore extends RegionWidgetStore {
             this.subsetEndIndex = subsetEndIndex;
             this.filterDataSize = catalogFilter.filterDataSize;
         }
+        console.timeEnd(`updateCatalogData_${subsetDataSize}`);
     }
 
     @action clearData() {

@@ -35,14 +35,14 @@ export class TableComponent extends React.Component<TableComponentProps> {
 
     private renderDataColumnWithFilter = (columnName: string, columnData: any) => {
         return (
-            <Column 
-                key={columnName} 
-                name={columnName} 
-                columnHeaderCellRenderer={(columnIndex: number) => this.renderColumnHeaderCell(columnIndex, columnName)} 
-                cellRenderer={(rowIndex, columnIndex) => this.renderCell(rowIndex, columnIndex, columnData)}
+            <Column
+                key={columnName}
+                name={columnName}
+                columnHeaderCellRenderer={(columnIndex: number) => this.renderColumnHeaderCell(columnIndex, columnName)}
+                cellRenderer={columnData ? (rowIndex, columnIndex) => this.renderCell(rowIndex, columnIndex, columnData) : undefined}
             />
         );
-    }
+    };
 
     private renderCell = (rowIndex: number, columnIndex: number, columnData: any) => {
         const dataIndex = this.props.selectedDataIndex;
@@ -51,13 +51,13 @@ export class TableComponent extends React.Component<TableComponentProps> {
         } else {
             return <Cell key={`cell_${columnIndex}_${rowIndex}`} loading={this.isLoading(rowIndex)} interactive={false}>{columnData[rowIndex]}</Cell>;
         }
-    }
+    };
 
     private renderColumnHeaderCell = (columnIndex: number, columnName: string) => {
         const controlheader = this.props.filter.get(columnName);
-        return (        
+        return (
             <ColumnHeaderCell>
-                <ColumnHeaderCell isActive={true}>  
+                <ColumnHeaderCell isActive={true}>
                     <EditableCell
                         className={"column-filter"}
                         key={"column-filter-" + columnIndex}
@@ -65,12 +65,12 @@ export class TableComponent extends React.Component<TableComponentProps> {
                         onChange={((value: string) => this.props.updateColumnFilter(value, columnName))}
                         value={controlheader.filter ? controlheader.filter : ""}
                     />
-                </ColumnHeaderCell> 
+                </ColumnHeaderCell>
                 <ColumnHeaderCell name={columnName}/>
             </ColumnHeaderCell>
-            
+
         );
-    }
+    };
 
     private isLoading(rowIndex: number): boolean {
         if (this.props.loadingCell && rowIndex + 4 > this.props.numVisibleRows) {
@@ -85,16 +85,16 @@ export class TableComponent extends React.Component<TableComponentProps> {
         if (rowIndices.rowIndexEnd > 0 && currentIndex >= this.props.numVisibleRows && !this.props.loadingCell && !this.props.showSelectedData) {
             this.props.updateByInfiniteScroll(rowIndices.rowIndexEnd);
         }
-    }
+    };
 
     private renderDataColumn(columnName: string, coloumnData: any) {
         return (
-            <Column 
-                key={columnName} 
-                name={columnName} 
+            <Column
+                key={columnName}
+                name={columnName}
                 cellRenderer={(rowIndex, columnIndex) => (
                     <Cell key={`cell_${columnIndex}_${rowIndex}`} interactive={true}>{coloumnData[rowIndex]}</Cell>
-            )}
+                )}
             />
         );
     }
@@ -104,19 +104,19 @@ export class TableComponent extends React.Component<TableComponentProps> {
         if (header) {
             this.props.updateTableColumnWidth(size, header.name);
         }
-    }
+    };
 
     private onRowIndexSelection = (selectedRegions: IRegion[]) => {
         if (selectedRegions.length > 0) {
             this.props.updateSelectedRow(selectedRegions[0].rows["0"]);
         }
-    }
+    };
 
     render() {
         const table = this.props;
         const tableColumns = [];
         const tableData = table.dataset;
-        
+
         for (let index = 0; index < table.columnHeaders.length; index++) {
             const header = table.columnHeaders[index];
             const columnIndex = header.columnIndex;
@@ -124,11 +124,11 @@ export class TableComponent extends React.Component<TableComponentProps> {
 
             if (table.type === TableType.ColumnFilter) {
                 const column = this.renderDataColumnWithFilter(header.name, dataArray);
-                tableColumns.push(column); 
+                tableColumns.push(column);
             } else if (table.type === TableType.Normal) {
                 const column = this.renderDataColumn(header.name, dataArray);
                 tableColumns.push(column);
-            }  
+            }
         }
 
         if (table.type === TableType.ColumnFilter) {
@@ -157,7 +157,7 @@ export class TableComponent extends React.Component<TableComponentProps> {
                     renderMode={RenderMode.NONE}
                     enableRowReordering={false}
                     selectionModes={SelectionModes.NONE}
-                    enableGhostCells={true} 
+                    enableGhostCells={true}
                     enableRowResizing={false}
                 >
                     {tableColumns}
