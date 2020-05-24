@@ -529,9 +529,6 @@ export class AppStore {
         const frame = this.activeFrame;
         const fileId = this.catalogNum + 1;
 
-        // HACK to load FITS tables
-        //file = file.replace(".vot", ".fits");
-        //file = file.replace(".xml", ".fits");
         console.time(`CatalogLoad_${file}`);
         this.backendService.loadCatalogFile(directory, file, fileId, previewDataSize).subscribe(ack => {
             this.fileLoading = false;
