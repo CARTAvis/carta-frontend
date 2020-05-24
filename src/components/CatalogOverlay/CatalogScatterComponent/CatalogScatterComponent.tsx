@@ -156,19 +156,19 @@ export class CatalogScatterComponent extends React.Component<WidgetProps> {
     // region selection
     private onLassoSelected = (event: Plotly.PlotSelectionEvent) => {
         if (event && event.points && event.points.length > 0) {
-            let selectedPointIndexs = [];
+            let selectedPointIndices = [];
             const points = event.points;
             for (let index = 0; index < points.length; index++) {
                 const selectedPoint = points[index];
-                selectedPointIndexs.push(selectedPoint.pointIndex);
+                selectedPointIndices.push(selectedPoint.pointIndex);
             }
-            this.widgetStore.catalogOverlayWidgetStore.setselectedPointIndexs(selectedPointIndexs, true);
+            this.widgetStore.catalogOverlayWidgetStore.setSelectedPointIndices(selectedPointIndices, true);
         }
     }
 
     private onDeselect = () => {
         const catalogStore = CatalogStore.Instance;
-        this.widgetStore.catalogOverlayWidgetStore.setselectedPointIndexs([]);
+        this.widgetStore.catalogOverlayWidgetStore.setSelectedPointIndices([]);
         const storeId = this.widgetStore.catalogOverlayWidgetStore.storeId;
         this.widgetStore.catalogOverlayWidgetStore.setShowSelectedData(false);
         catalogStore.updateShowSelectedData(storeId, false);
@@ -182,7 +182,7 @@ export class CatalogScatterComponent extends React.Component<WidgetProps> {
             let selectedPointIndex = [];
             const selectedPoint = event.points[0];
             selectedPointIndex.push(selectedPoint.pointIndex);
-            this.widgetStore.catalogOverlayWidgetStore.setselectedPointIndexs(selectedPointIndex, true);
+            this.widgetStore.catalogOverlayWidgetStore.setSelectedPointIndices(selectedPointIndex, true);
         }
     }
 
@@ -299,10 +299,10 @@ export class CatalogScatterComponent extends React.Component<WidgetProps> {
         };
         layout["hoverdistance"] = 5;
         let data = this.scatterData;
-        const selectedPointIndexs = widgetStore.catalogOverlayWidgetStore.selectedPointIndices;
+        const selectedPointIndices = widgetStore.catalogOverlayWidgetStore.selectedPointIndices;
         let scatterDataMarker = data[0].marker;
-        if (selectedPointIndexs.length > 0) {
-            data[0]["selectedpoints"] = selectedPointIndexs;
+        if (selectedPointIndices.length > 0) {
+            data[0]["selectedpoints"] = selectedPointIndices;
             data[0]["selected"] = {"marker": {"color": Colors.RED2}};
             data[0]["unselected"] = {"marker": {"opacity": 0.5}};
         } else {

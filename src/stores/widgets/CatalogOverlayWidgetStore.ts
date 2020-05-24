@@ -423,9 +423,9 @@ export class CatalogOverlayWidgetStore extends RegionWidgetStore {
         this.filterDataSize = undefined;
     }
 
-    @action setselectedPointIndexs = (pointIndexs: Array<number>, autoScroll: boolean = false) => {
-        this.selectedPointIndices = pointIndexs;
-        if (pointIndexs.length > 0 && this.catalogTableRef && autoScroll) {
+    @action setSelectedPointIndices = (pointIndices: Array<number>, autoScroll: boolean = false) => {
+        this.selectedPointIndices = pointIndices;
+        if (pointIndices.length > 0 && this.catalogTableRef && autoScroll) {
             this.catalogTableRef.scrollToRegion(this.autoScrollRowNumber);
         }
     };

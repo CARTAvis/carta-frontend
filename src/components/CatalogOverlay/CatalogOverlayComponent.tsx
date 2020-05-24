@@ -421,9 +421,9 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         return result;
     }
 
-    private initSelectedPointIndexs = () => {
+    private initSelectedPointIndices = () => {
         const widgetStore = this.widgetStore;
-        widgetStore.setselectedPointIndexs([]);
+        widgetStore.setSelectedPointIndices([]);
         widgetStore.setShowSelectedData(false);
     } 
 
@@ -436,7 +436,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
             widgetStore.setNumVisibleRows(0);
             widgetStore.setSubsetEndIndex(0);
             widgetStore.setLoadingDataStatus(true);
-            this.initSelectedPointIndexs();
+            this.initSelectedPointIndices();
             let catalogFilter = widgetStore.updateRequestDataSize;
 
             // Todo filter by region Id and Imageview boundary
@@ -467,7 +467,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         const appStore = AppStore.Instance;
         if (widgetStore) {
             widgetStore.reset();
-            this.initSelectedPointIndexs();
+            this.initSelectedPointIndices();
             appStore.catalogStore.clearData(this.widgetId);
             const catalogFilter = widgetStore.initUserFilters;
             appStore.sendCatalogFilter(catalogFilter); 
@@ -521,20 +521,20 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
     // single source selected in table
     private onCatalogTableDataSelected = (selectedDataIndex: number) => {
         const widgetsStore = this.widgetStore;
-        const selectedPointIndexs = widgetsStore.selectedPointIndices;
+        const selectedPointIndices = widgetsStore.selectedPointIndices;
         const selectedData = [];
         let highlighted = false;
-        if (selectedPointIndexs.length === 1) {
-            highlighted = selectedPointIndexs.includes(selectedDataIndex);
+        if (selectedPointIndices.length === 1) {
+            highlighted = selectedPointIndices.includes(selectedDataIndex);
         }
         if (!highlighted) {
-            if (widgetsStore.showSelectedData && selectedPointIndexs.length) {
-                selectedData.push(selectedPointIndexs[selectedDataIndex]);
+            if (widgetsStore.showSelectedData && selectedPointIndices.length) {
+                selectedData.push(selectedPointIndices[selectedDataIndex]);
             } else {
                 selectedData.push(selectedDataIndex);   
             }
         }
-        widgetsStore.setselectedPointIndexs(selectedData);
+        widgetsStore.setSelectedPointIndices(selectedData);
     }
 
     private renderFileIdPopOver = (fileId: number, itemProps: IItemRendererProps) => {

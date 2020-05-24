@@ -116,7 +116,7 @@ export class CatalogViewComponent extends React.Component<CatalogViewComponentPr
                 let selectedPointIndex = [];
                 const selectedPoint = event.points[0];
                 selectedPointIndex.push(selectedPoint.pointIndex);
-                catalogWidget.setselectedPointIndexs(selectedPointIndex, true);
+                catalogWidget.setSelectedPointIndices(selectedPointIndex, true);
             }
         }
     };
@@ -128,7 +128,7 @@ export class CatalogViewComponent extends React.Component<CatalogViewComponentPr
             const widgetsStore = WidgetsStore.Instance;
             appStore.catalogs.forEach((fileId, widgetId) => {
                 const catalogOverlayStore = widgetsStore.catalogOverlayWidgets.get(widgetId);
-                catalogOverlayStore.setselectedPointIndexs([]);
+                catalogOverlayStore.setSelectedPointIndices([]);
             });
         }
     }
