@@ -2,10 +2,10 @@ import {action, computed, observable} from "mobx";
 import {TabId} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import {BackendService} from "services";
-import {AppStore, DialogStore} from "stores";
+import {DialogStore} from "stores";
 import {FileInfoType} from "components";
-import {ProcessedColumnData} from "../models";
-import {getDataTypeString} from "../utilities";
+import {ProcessedColumnData} from "models";
+import {getDataTypeString} from "utilities";
 
 export enum BrowserMode {
     File,
@@ -16,7 +16,7 @@ export enum BrowserMode {
 
 export type RegionFileType = CARTA.FileType.CRTF | CARTA.FileType.REG;
 export type ImageFileType = CARTA.FileType.CASA | CARTA.FileType.FITS | CARTA.FileType.HDF5 | CARTA.FileType.MIRIAD;
-export type CatalogFileType = CARTA.CatalogFileType.VOTable;
+export type CatalogFileType = CARTA.CatalogFileType.VOTable | CARTA.CatalogFileType.FITSTable;
 
 export class FileBrowserStore {
     private static staticInstance: FileBrowserStore;
@@ -149,6 +149,7 @@ export class FileBrowserStore {
         this.fileInfoResp = false;
         this.catalogFileInfo = null;
         this.catalogHeaders = [];
+        this.responseErrorMessage = "";
 
         backendService.getCatalogFileInfo(directory, filename).subscribe((res: CARTA.ICatalogFileInfoResponse) => {
             if (res.fileInfo && this.selectedFile && res.fileInfo.name === this.selectedFile.name) {
@@ -158,7 +159,7 @@ export class FileBrowserStore {
                     return a.columnIndex - b.columnIndex;
                 });
             }
-            this.fileInfoResp = res.success;
+            this.fileInfoResp = true;
         }, err => {
             console.log(err);
             this.responseErrorMessage = err;
