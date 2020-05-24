@@ -445,7 +445,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
             
             catalogFilter.fileId = widgetStore.catalogInfo.fileId;
             catalogFilter.filterConfigs = this.getUserFilters();
-            catalogFilter.columnIndices = widgetStore.columnIndices;
+            catalogFilter.columnIndices = widgetStore.displayedColumnHeaders.map(v => v.columnIndex);
             appStore.sendCatalogFilter(catalogFilter);
         }
     };
@@ -456,7 +456,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         if (widgetStore.loadingData === false && widgetStore.updateMode === CatalogUpdateMode.TableUpdate && widgetStore.shouldUpdateData && !selectedMode) {
             widgetStore.setUpdateMode(CatalogUpdateMode.TableUpdate);
             const filter = this.widgetStore.updateRequestDataSize;
-            filter.columnIndices = widgetStore.columnIndices;
+            filter.columnIndices = widgetStore.displayedColumnHeaders.map(v => v.columnIndex);
             AppStore.Instance.sendCatalogFilter(filter);
             widgetStore.setLoadingDataStatus(true);
         }

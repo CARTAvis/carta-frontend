@@ -223,6 +223,9 @@ export class CatalogOverlayWidgetStore extends RegionWidgetStore {
         let subsetDataSize = catalogFilter.subsetDataSize;
         console.time(`updateCatalogData_${subsetDataSize}`);
         const subsetEndIndex = catalogFilter.subsetEndIndex;
+        const startIndex = subsetEndIndex - subsetDataSize;
+
+        const totalDataSize = catalogFilter.filterDataSize;
 
         if (this.subsetEndIndex <= this.catalogInfo.dataSize) {
             let numVisibleRows = this.numVisibleRows + subsetDataSize;
@@ -231,20 +234,81 @@ export class CatalogOverlayWidgetStore extends RegionWidgetStore {
                 if (!currentData) {
                     this.catalogData.set(key, newData);
                 } else {
+                    const N = newData.data.length;
                     if (currentData.dataType === CARTA.ColumnType.String) {
                         const currentArr = currentData.data as Array<string>;
                         const newArr = newData.data as Array<string>;
-                        currentData.data = currentArr.concat(newArr);
+                        const currentDataSize = currentArr.length;
+                        const newDataSize = newArr.length;
+                        let destArr: Array<string>;
+                        // fill in-place
+                        if (currentArr.length === totalDataSize) {
+                            destArr = currentArr;
+                            for (let i = 0; i < newDataSize; i++) {
+                                destArr[i + startIndex] = newArr[i];
+                            }
+                        } else {
+                            // Copy across
+                            destArr = new Array<string>(totalDataSize);
+                            for (let i = 0; i < currentDataSize; i++) {
+                                destArr[i] = currentArr[i];
+                            }
+
+                            for (let i = 0; i < newDataSize; i++) {
+                                destArr[i + startIndex] = newArr[i];
+                            }
+                            currentData.data = destArr;
+                        }
                     } else if (currentData.dataType === CARTA.ColumnType.Bool) {
                         const currentArr = currentData.data as Array<boolean>;
                         const newArr = newData.data as Array<boolean>;
-                        currentData.data = currentArr.concat(newArr);
+                        const currentDataSize = currentArr.length;
+                        const newDataSize = newArr.length;
+                        let destArr: Array<boolean>;
+                        // fill in-place
+                        if (currentArr.length === totalDataSize) {
+                            destArr = currentArr;
+                            for (let i = 0; i < newDataSize; i++) {
+                                destArr[i + startIndex] = newArr[i];
+                            }
+                        } else {
+                            // Copy across
+                            destArr = new Array<boolean>(totalDataSize);
+                            for (let i = 0; i < currentDataSize; i++) {
+                                destArr[i] = currentArr[i];
+                            }
+
+                            for (let i = 0; i < newDataSize; i++) {
+                                destArr[i + startIndex] = newArr[i];
+                            }
+                            currentData.data = destArr;
+                        }
                     } else if (currentData.dataType === CARTA.ColumnType.UnsupportedType) {
                         return;
                     } else {
                         const currentArr = currentData.data as Array<number>;
                         const newArr = newData.data as Array<number>;
-                        currentData.data = currentArr.concat(newArr);
+                        const currentDataSize = currentArr.length;
+                        const newDataSize = newArr.length;
+                        let destArr: Array<number>;
+                        // fill in-place
+                        if (currentArr.length === totalDataSize) {
+                            destArr = currentArr;
+                            for (let i = 0; i < newDataSize; i++) {
+                                destArr[i + startIndex] = newArr[i];
+                            }
+                        } else {
+                            // Copy across
+                            destArr = new Array<number>(totalDataSize);
+                            for (let i = 0; i < currentDataSize; i++) {
+                                destArr[i] = currentArr[i];
+                            }
+
+                            for (let i = 0; i < newDataSize; i++) {
+                                destArr[i + startIndex] = newArr[i];
+                            }
+                            currentData.data = destArr;
+                        }
                     }
 
                 }

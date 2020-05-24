@@ -594,7 +594,6 @@ export class AppStore {
         if (!this.activeFrame) {
             return;
         }
-        console.time("fullFilter");
         this.backendService.setCatalogFilterRequest(catalogFilter);
     }
 
@@ -1082,7 +1081,6 @@ export class AppStore {
     };
 
     @action handleCatalogFilterStream = (catalogFilter: CARTA.CatalogFilterResponse) => {
-        console.timeEnd("fullFilter");
         let catalogWidgetId = null;
         this.catalogs.forEach((value, key) => {
             if (value === catalogFilter.fileId) {

@@ -54,10 +54,12 @@ export class CatalogStore {
         const pixelData = CatalogStore.TransformCatalogData(xWcsData, yWcsData, wcsInfo, xUnit, yUnit, catalogFrame);
         const catalogDataInfo = this.catalogData.get(widgetId);
         if (catalogDataInfo) {
+            console.time(`updatePixelCoordsArray_${xWcsData.length}`);
             for (let i = 0; i < pixelData.xImageCoords.length; i++) {
                 catalogDataInfo.xImageCoords.push(pixelData.xImageCoords[i]);
                 catalogDataInfo.yImageCoords.push(pixelData.yImageCoords[i]);
             }
+            console.timeEnd(`updatePixelCoordsArray_${xWcsData.length}`);
             this.catalogData.set(widgetId,
                 {
                     fileId: catalogDataInfo.fileId,
