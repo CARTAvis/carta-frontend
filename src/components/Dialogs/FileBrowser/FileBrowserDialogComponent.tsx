@@ -49,10 +49,15 @@ export class FileBrowserDialogComponent extends React.Component {
         fileBrowserStore.saveStartingDirectory();
     };
 
-    private saveFile = () => {
+    private handleSaveFileClicked = () => {
         const appStore = AppStore.Instance;
         const fileBrowserStore = FileBrowserStore.Instance;
-        appStore.saveFile(fileBrowserStore.fileList.directory, fileBrowserStore.saveFilename, fileBrowserStore.saveFileType);
+        const filename = fileBrowserStore.saveFilename.trim();
+        if (fileBrowserStore.fileList && fileBrowserStore.fileList.files && fileBrowserStore.fileList.files.find(f => f.name.trim() === filename)) {
+            this.overwriteExistingFileAlertVisible = true;
+        } else {
+            appStore.saveFile(fileBrowserStore.fileList.directory, filename, fileBrowserStore.saveFileType);
+        }
     };
 
     private handleSaveFileNameChanged = (ev: React.ChangeEvent<HTMLInputElement>) => {
@@ -86,8 +91,14 @@ export class FileBrowserDialogComponent extends React.Component {
     private handleOverwriteAlertConfirmed = () => {
         this.overwriteExistingFileAlertVisible = false;
         const fileBrowserStore = FileBrowserStore.Instance;
-        const filename = fileBrowserStore.exportFilename.trim();
-        this.exportRegion(fileBrowserStore.fileList.directory, filename);
+        if (fileBrowserStore.browserMode === BrowserMode.RegionExport) {
+            const filename = fileBrowserStore.exportFilename.trim();
+            this.exportRegion(fileBrowserStore.fileList.directory, filename);
+        } else if (fileBrowserStore.browserMode === BrowserMode.SaveFile) {
+            const appStore = AppStore.Instance;
+            const filename = fileBrowserStore.saveFilename.trim();
+            appStore.saveFile(fileBrowserStore.fileList.directory, filename, fileBrowserStore.saveFileType);
+        }
     };
 
     private handleOverwriteAlertDismissed = () => {
@@ -137,7 +148,7 @@ export class FileBrowserDialogComponent extends React.Component {
                     <AnchorButton
                         intent={Intent.PRIMARY}
                         disabled={appStore.fileLoading || fileBrowserStore.loadingInfo}
-                        onClick={this.saveFile}
+                        onClick={this.handleSaveFileClicked}
                         text="Save"
                     />
                 </Tooltip>
