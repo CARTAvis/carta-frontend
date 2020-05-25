@@ -137,12 +137,6 @@ export class ProtobufProcessing {
             case CARTA.ColumnType.Double:
                 data = new Float64Array(column.binaryData.slice().buffer);
                 break;
-            case CARTA.ColumnType.Uint64:
-                data = new BigUint64Array(column.binaryData.slice().buffer);
-                break;
-            case CARTA.ColumnType.Int64:
-                data = new BigInt64Array(column.binaryData.slice().buffer);
-                break;
             case CARTA.ColumnType.Bool:
                 const array = new Uint8Array(column.binaryData.slice().buffer);
                 const boolData = new Array<boolean>(array.length);
@@ -159,14 +153,8 @@ export class ProtobufProcessing {
         let arr = new Array<number>(N);
 
         // Convert values from typed arrays to a plain JS array for use with plotly
-        if (data instanceof BigInt64Array || data instanceof BigUint64Array) {
-            for (let i = N - 1; i >= 0; i--) {
-                arr[i] = Number(data[i]);
-            }
-        } else {
-            for (let i = N - 1; i >= 0; i--) {
-                arr[i] = data[i];
-            }
+        for (let i = N - 1; i >= 0; i--) {
+            arr[i] = data[i];
         }
 
         return {dataType: column.dataType, data: arr};

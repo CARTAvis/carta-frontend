@@ -114,7 +114,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
 
     @action handleFileCloseClick = () => {
         const appStore = AppStore.Instance;
-        appStore.reomveCatalog(this.widgetId, this.props.id);
+        appStore.removeCatalog(this.widgetId, this.props.id);
         if (appStore.catalogs.size > 0) {
             this.catalogFileId = appStore.catalogs.values().next().value;
         }

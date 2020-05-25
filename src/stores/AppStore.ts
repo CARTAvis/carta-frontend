@@ -558,7 +558,7 @@ export class AppStore {
         });
     };
 
-    @action reomveCatalog(catalogWidgetId: string, catalogComponentId: string) {
+    @action removeCatalog(catalogWidgetId: string, catalogComponentId: string) {
         const fileId = this.catalogs.get(catalogWidgetId);
         if (fileId > -1 && this.backendService.closeCatalogFile(fileId)) {
             // close all associated scatter widgets
