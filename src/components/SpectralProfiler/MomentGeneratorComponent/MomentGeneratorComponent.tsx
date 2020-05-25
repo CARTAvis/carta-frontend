@@ -23,7 +23,7 @@ export class MomentGeneratorComponent extends React.Component<{widgetStore: Spec
         const frame = AppStore.Instance.activeFrame;
         const widgetStore = this.props.widgetStore;
         if (frame && isFinite(from)) {
-            widgetStore.setSelectedChannelRange(from, widgetStore.channelValueRange.max);
+            widgetStore.setSelectedChannelRange(from, widgetStore.channelValueRange[1]);
         }
     };
 
@@ -31,7 +31,7 @@ export class MomentGeneratorComponent extends React.Component<{widgetStore: Spec
         const frame = AppStore.Instance.activeFrame;
         const widgetStore = this.props.widgetStore;
         if (frame && isFinite(to)) {
-            widgetStore.setSelectedChannelRange(widgetStore.channelValueRange.min, to);
+            widgetStore.setSelectedChannelRange(widgetStore.channelValueRange[0], to);
         }
     };
 
@@ -44,7 +44,7 @@ export class MomentGeneratorComponent extends React.Component<{widgetStore: Spec
         const frame = AppStore.Instance.activeFrame;
         const widgetStore = this.props.widgetStore;
         if (frame && isFinite(from)) {
-            widgetStore.setSelectedMaskRange(from, widgetStore.maskRange.max);
+            widgetStore.setSelectedMaskRange(from, widgetStore.maskRange[1]);
         }
     };
 
@@ -52,7 +52,7 @@ export class MomentGeneratorComponent extends React.Component<{widgetStore: Spec
         const frame = AppStore.Instance.activeFrame;
         const widgetStore = this.props.widgetStore;
         if (frame && isFinite(to)) {
-            widgetStore.setSelectedMaskRange(widgetStore.maskRange.min, to);
+            widgetStore.setSelectedMaskRange(widgetStore.maskRange[0], to);
         }
     };
 
@@ -124,14 +124,14 @@ export class MomentGeneratorComponent extends React.Component<{widgetStore: Spec
                         <div className="range-select">
                             <FormGroup label="From" inline={true}>
                                 <SafeNumericInput
-                                    value={widgetStore.channelValueRange.min}
+                                    value={widgetStore.channelValueRange[0]}
                                     buttonPosition="none"
                                     onValueChange={val => this.onChannelFromChanged(val)}
                                 />
                             </FormGroup>
                             <FormGroup label="To" inline={true}>
                                 <SafeNumericInput
-                                    value={widgetStore.channelValueRange.max}
+                                    value={widgetStore.channelValueRange[1]}
                                     buttonPosition="none"
                                     onValueChange={val => this.onChannelToChanged(val)}
                                 />
@@ -166,14 +166,14 @@ export class MomentGeneratorComponent extends React.Component<{widgetStore: Spec
                         <div className="range-select">
                             <FormGroup label="From" inline={true}>
                                 <SafeNumericInput
-                                    value={widgetStore.maskRange.min}
+                                    value={widgetStore.maskRange[0]}
                                     buttonPosition="none"
                                     onValueChange={val => this.onMaskFromChanged(val)}
                                 />
                             </FormGroup>
                             <FormGroup label="To" inline={true}>
                                 <SafeNumericInput
-                                    value={widgetStore.maskRange.max}
+                                    value={widgetStore.maskRange[1]}
                                     buttonPosition="none"
                                     onValueChange={val => this.onMaskToChanged(val)}
                                 />

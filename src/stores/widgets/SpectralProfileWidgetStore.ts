@@ -1,5 +1,5 @@
 import {action, autorun, computed, observable} from "mobx";
-import {Colors} from "@blueprintjs/core";
+import {Colors, NumberRange} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import {PlotType, LineSettings} from "components/Shared";
 import {RegionWidgetStore, RegionsType} from "./RegionWidgetStore";
@@ -35,9 +35,9 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
 
     // moment settings
     @observable selectingMode: MomentSelectingMode;
-    @observable channelValueRange: CARTA.FloatBounds;
+    @observable channelValueRange: NumberRange;
     @observable momentMask: CARTA.MomentMask;
-    @observable maskRange: CARTA.FloatBounds;
+    @observable maskRange: NumberRange;
     @observable selectedMoments: CARTA.Moment[];
 
     public static StatsTypeString(statsType: CARTA.StatsType) {
@@ -120,25 +120,25 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
 
     @action setSelectedChannelRange = (min: number, max: number) => {
         if (isFinite(min) && isFinite(max)) {
-            this.channelValueRange.min = min;
-            this.channelValueRange.max = max;
+            this.channelValueRange[0] = min;
+            this.channelValueRange[1] = max;
         }
     };
 
     @action setSelectedMaskRange = (min: number, max: number) => {
         if (isFinite(min) && isFinite(max)) {
-            this.maskRange.min = min;
-            this.maskRange.max = max;
+            this.maskRange[0] = min;
+            this.maskRange[1] = max;
         }
     };
 
     @action private updateRanges = () => {
         const frame = AppStore.Instance.activeFrame;
         if (frame && frame.channelValueBounds) {
-            this.channelValueRange.min = frame.channelValueBounds.min;
-            this.channelValueRange.max = frame.channelValueBounds.max;
-            this.maskRange.min = 0;
-            this.maskRange.max = 1;
+            this.channelValueRange[0] = frame.channelValueBounds.min;
+            this.channelValueRange[1] = frame.channelValueBounds.max;
+            this.maskRange[0] = 0;
+            this.maskRange[1] = 1;
         }
     };
 
@@ -175,8 +175,8 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
     @action requestMoment = () => {
         const appStore = AppStore.Instance;
         const frame = appStore.activeFrame;
-        const channelIndex1 = frame.findChannelIndexByValue(this.channelValueRange.min);
-        const channelIndex2 = frame.findChannelIndexByValue(this.channelValueRange.max);
+        const channelIndex1 = frame.findChannelIndexByValue(this.channelValueRange[0]);
+        const channelIndex2 = frame.findChannelIndexByValue(this.channelValueRange[1]);
         if (frame && isFinite(channelIndex1) && isFinite(channelIndex2)) {
             const channelIndexRange: CARTA.IIntBounds = {
                 min: channelIndex1 <= channelIndex2 ? channelIndex1 : channelIndex2,
@@ -189,7 +189,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
                 regionId: this.effectiveRegionId,
                 spectralRange: channelIndexRange,
                 mask: this.momentMask,
-                pixelRange: this.maskRange
+                pixelRange: new CARTA.FloatBounds({min: this.maskRange[0], max: this.maskRange[1]})
             };
             appStore.requestMoment(requestMessage);
             frame.resetMomentRequestState();
@@ -279,9 +279,9 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         this.linePlotInitXYBoundaries = { minXVal: 0, maxXVal: 0, minYVal: 0, maxYVal: 0 };
 
         this.selectingMode = MomentSelectingMode.NONE;
-        this.channelValueRange = new CARTA.FloatBounds({min: 0, max: 0});
+        this.channelValueRange = [0, 0];
         this.momentMask = CARTA.MomentMask.None;
-        this.maskRange = new CARTA.FloatBounds({min: 0, max: 1});
+        this.maskRange = [0, 1];
         this.selectedMoments = [CARTA.Moment.INTEGRATED_OF_THE_SPECTRUM];
 
         autorun(() => {
@@ -305,6 +305,23 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
 
     @computed get isSelectingMomentMaskRange() {
         return this.selectingMode === MomentSelectingMode.MASK;
+    }
+
+    @computed get selectedRange(): {isHorizontal: boolean, center: number, width: number} {
+        if (this.isSelectingMomentChannelRange) {
+            return {
+                isHorizontal: false,
+                center: (this.channelValueRange[0] + this.channelValueRange[1]) / 2,
+                width: Math.abs(this.channelValueRange[0] - this.channelValueRange[1])
+            };
+        } else if (this.isSelectingMomentMaskRange) {
+            return {
+                isHorizontal: true,
+                center: (this.maskRange[0] + this.maskRange[1]) / 2,
+                width: Math.abs(this.maskRange[0] - this.maskRange[1])
+            };
+        }
+        return null;
     }
 
     public static CalculateRequirementsMap(frame: FrameStore, widgetsMap: Map<string, SpectralProfileWidgetStore>) {

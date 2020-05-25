@@ -302,7 +302,6 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
                 this.widgetStore.setSelectedMaskRange(min, max);
             }
         }
-        this.widgetStore.clearMomentRangeSelectingMode();
     };
 
     render() {
@@ -429,6 +428,19 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
                     width: currentPlotData.yRms,
                     opacity: 0.2,
                     color: appStore.darkTheme ? Colors.GREEN4 : Colors.GREEN2
+                });
+            }
+
+            const selectedRange = this.widgetStore.selectedRange;
+            if (selectedRange && isFinite(selectedRange.center) && isFinite(selectedRange.width)) {
+                linePlotProps.markers.push({
+                    value: selectedRange.center,
+                    id: "marker-range",
+                    draggable: false,
+                    horizontal: selectedRange.isHorizontal,
+                    width: selectedRange.width / 2,
+                    opacity: 0.2,
+                    color: appStore.darkTheme ? Colors.GRAY4 : Colors.GRAY2
                 });
             }
 

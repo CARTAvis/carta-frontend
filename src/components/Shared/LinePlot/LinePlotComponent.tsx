@@ -745,13 +745,13 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
                 const markerOpacity = (marker.isMouseMove && (!this.isMouseEntered || this.isMarkerDragging)) ? 0 : (marker.opacity || 1);
                 if (marker.horizontal) {
                     let valueCanvasSpace = this.getCanvasSpaceY(marker.value);
-                    if (valueCanvasSpace < Math.floor(chartArea.top - 1) || valueCanvasSpace > Math.ceil(chartArea.bottom + 1) || isNaN(valueCanvasSpace)) {
+                    if (isNaN(valueCanvasSpace)) {
                         continue;
                     }
                     lines.push(this.genHorizontalLines(marker, isHovering, markerColor, markerOpacity, valueCanvasSpace));
                 } else {
                     let valueCanvasSpace = this.getCanvasSpaceX(marker.value);
-                    if (valueCanvasSpace < Math.floor(chartArea.left - 1) || valueCanvasSpace > Math.ceil(chartArea.right + 1) || isNaN(valueCanvasSpace)) {
+                    if (isNaN(valueCanvasSpace)) {
                         continue;
                     }
                     if (marker.interactionMarker) {
