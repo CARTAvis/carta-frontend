@@ -3,9 +3,10 @@ import {action, computed, observable} from "mobx";
 import {observer} from "mobx-react";
 import {Button, Checkbox, FormGroup, HTMLSelect, HTMLTable, Radio, RadioGroup} from "@blueprintjs/core";
 import ReactResizeDetector from "react-resize-detector";
-import {SafeNumericInput, SpectralSettingsComponent} from "components/Shared";
+import {SafeNumericInput} from "components/Shared";
 import {AppStore, HelpType, WidgetConfig, WidgetProps, WidgetsStore} from "stores";
-import {RedshiftGroup, SPECTRAL_LINE_OPTION_DESCRIPTIONS, SpectralLineOptions, SpectralLineOverlayWidgetStore} from "stores/widgets";
+import {Doppler, RedshiftGroup, SPECTRAL_LINE_OPTION_DESCRIPTIONS, SpectralLineOptions, SpectralLineOverlayWidgetStore} from "stores/widgets";
+import {SpectralSystem} from "models";
 import "./SpectralLineOverlayComponent.css";
 
 @observer
@@ -109,6 +110,12 @@ export class SpectralLineOverlayComponent extends React.Component<WidgetProps> {
                     <Radio label={RedshiftGroup.V} value={RedshiftGroup.V}/>
                     <Radio label={RedshiftGroup.Z} value={RedshiftGroup.Z}/>
                 </RadioGroup>
+                <FormGroup label="Frame" inline={true}>
+                    <HTMLSelect options={[SpectralSystem.LSRK, SpectralSystem.BARY]} value={widgetStore.spectralSystem} onChange={(ev) => widgetStore.setSpectralSystem(ev.currentTarget.value as SpectralSystem)}/>
+                </FormGroup>
+                <FormGroup label="Doppler" inline={true}>
+                    <HTMLSelect options={[Doppler.Radio, Doppler.Optical]} value={widgetStore.doppler} onChange={(ev) => widgetStore.setDoppler(ev.currentTarget.value as Doppler)}/>
+                </FormGroup>
             </div>
         );
 

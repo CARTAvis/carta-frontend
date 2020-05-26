@@ -2,6 +2,7 @@ import {action, computed, observable} from "mobx";
 import {CARTA} from "carta-protobuf";
 import {AppStore} from "stores";
 import {RegionWidgetStore, RegionsType} from "./RegionWidgetStore";
+import {SpectralSystem} from "models";
 
 export enum SpectralLineOptions {
     Formula = "FORMULA",
@@ -28,11 +29,18 @@ export enum RedshiftGroup {
     Z = "Z"
 }
 
+export enum Doppler {
+    Radio = "Radio",
+    Optical = "Optical"
+}
+
 export class SpectralLineOverlayWidgetStore extends RegionWidgetStore {
     @observable optionsDisplay: Map<SpectralLineOptions, boolean>;
     @observable optionsLabel: Map<SpectralLineOptions, boolean>;
     @observable redshiftSpeed: number;
     @observable redshiftGroup: RedshiftGroup;
+    @observable spectralSystem: SpectralSystem;
+    @observable doppler: Doppler;
 
     @action setOptionsDisplay = (option: SpectralLineOptions) => {
         this.optionsDisplay.set(option, !this.optionsDisplay.get(option));
@@ -52,6 +60,14 @@ export class SpectralLineOverlayWidgetStore extends RegionWidgetStore {
        this.redshiftGroup = redshiftGroup;
     };
 
+    @action setSpectralSystem = (spectralSystem: SpectralSystem) => {
+        this.spectralSystem = spectralSystem;
+    };
+
+    @action setDoppler = (doppler: Doppler) => {
+        this.doppler = doppler;
+    };
+
     constructor() {
         super(RegionsType.CLOSED);
         this.optionsDisplay = new Map<SpectralLineOptions, boolean>();
@@ -60,5 +76,7 @@ export class SpectralLineOverlayWidgetStore extends RegionWidgetStore {
         Object.values(SpectralLineOptions).forEach(option => this.optionsLabel.set(option, false));
         this.redshiftSpeed = 0;
         this.redshiftGroup = RedshiftGroup.V;
+        this.spectralSystem = SpectralSystem.LSRK;
+        this.doppler = Doppler.Radio;
     }
 }
