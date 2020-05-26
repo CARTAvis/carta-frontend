@@ -95,7 +95,7 @@ export class SpectralLineOverlayComponent extends React.Component<WidgetProps> {
 
         const redshiftPanel = (
             <div>
-                <FormGroup label="Redshift" labelInfo={"(km/s)"} inline={true}>
+                <FormGroup label="Redshift" labelInfo={widgetStore.redshiftGroup === RedshiftGroup.V ? "(km/s)" : ""} inline={true}>
                     <SafeNumericInput
                         value={widgetStore.redshiftSpeed}
                         buttonPosition="none"
