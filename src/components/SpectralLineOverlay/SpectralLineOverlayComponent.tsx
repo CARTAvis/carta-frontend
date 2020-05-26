@@ -1,7 +1,7 @@
 import * as React from "react";
 import {action, computed, observable} from "mobx";
 import {observer} from "mobx-react";
-import {Button, Checkbox, FormGroup, HTMLSelect, HTMLTable, Radio, RadioGroup} from "@blueprintjs/core";
+import {Button, FormGroup, HTMLSelect, HTMLTable, Radio, RadioGroup, Switch} from "@blueprintjs/core";
 import ReactResizeDetector from "react-resize-detector";
 import {SafeNumericInput} from "components/Shared";
 import {AppStore, HelpType, WidgetConfig, WidgetProps, WidgetsStore} from "stores";
@@ -74,14 +74,14 @@ export class SpectralLineOverlayComponent extends React.Component<WidgetProps> {
                             <td>{option}</td>
                             <td>{SPECTRAL_LINE_OPTION_DESCRIPTIONS.get(option)}</td>
                             <td>
-                                <Checkbox
+                                <Switch
                                     key={`${option}-display`}
                                     checked={widgetStore.optionsDisplay.get(option)}
                                     onChange={() => widgetStore.setOptionsDisplay(option)}
                                 />
                             </td>
                             <td>
-                                <Checkbox
+                                <Switch
                                     key={`${option}-label`}
                                     checked={widgetStore.optionsLabel.get(option)}
                                     onChange={() => widgetStore.setOptionsLabel(option)}
