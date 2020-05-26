@@ -249,8 +249,9 @@ export class CatalogOverlayWidgetStore extends RegionWidgetStore {
         const startIndex = subsetEndIndex - subsetDataSize;
 
         const totalDataSize = catalogFilter.requestEndIndex;
+        this.filterDataSize = catalogFilter.filterDataSize;
 
-        if (this.subsetEndIndex <= this.catalogInfo.dataSize) {
+        if (this.subsetEndIndex <= this.filterDataSize) {
             let numVisibleRows = this.numVisibleRows + subsetDataSize;
             catalogData.forEach(((newData, key) => {
                 let currentData = this.catalogData.get(key);
@@ -277,7 +278,6 @@ export class CatalogOverlayWidgetStore extends RegionWidgetStore {
             }));
             this.setNumVisibleRows(numVisibleRows);
             this.subsetEndIndex = subsetEndIndex;
-            this.filterDataSize = catalogFilter.filterDataSize;
         }
         console.timeEnd(`updateCatalogData_${subsetDataSize}`);
     }
@@ -486,10 +486,11 @@ export class CatalogOverlayWidgetStore extends RegionWidgetStore {
     }
 
     @computed get shouldUpdateData(): boolean {
-        if (this.subsetEndIndex < this.catalogInfo.dataSize) {
-            return true;
+        if (isFinite(this.filterDataSize)) {
+            return this.subsetEndIndex < this.filterDataSize;
+        } else {
+            return this.subsetEndIndex < this.catalogInfo.dataSize;
         }
-        return false;
     }
 
     @computed get enableLoadButton(): boolean {
