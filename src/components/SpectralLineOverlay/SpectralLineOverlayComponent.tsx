@@ -21,7 +21,7 @@ export class SpectralLineOverlayComponent extends React.Component<WidgetProps> {
             type: "spectral-line-overlay",
             minWidth: 320,
             minHeight: 400,
-            defaultWidth: 600,
+            defaultWidth: 750,
             defaultHeight: 600,
             title: "Spectral Line Overlay",
             isCloseable: true,
@@ -62,39 +62,41 @@ export class SpectralLineOverlayComponent extends React.Component<WidgetProps> {
         );
 
         const optionTable = (
-            <HTMLTable bordered={true} striped={true} condensed={true}>
-                <thead>
-                    <tr>
-                        <th>Name</th><th>Description</th><th>Display</th><th>Label</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {Object.values(SpectralLineOptions).map((option) =>
-                        <tr key={`${option}`}>
-                            <td>{option}</td>
-                            <td>{SPECTRAL_LINE_OPTION_DESCRIPTIONS.get(option)}</td>
-                            <td>
-                                <Switch
-                                    key={`${option}-display`}
-                                    checked={widgetStore.optionsDisplay.get(option)}
-                                    onChange={() => widgetStore.setOptionsDisplay(option)}
-                                />
-                            </td>
-                            <td>
-                                <Switch
-                                    key={`${option}-label`}
-                                    checked={widgetStore.optionsLabel.get(option)}
-                                    onChange={() => widgetStore.setOptionsLabel(option)}
-                                />
-                            </td>
+            <div>
+                <HTMLTable bordered={true} striped={true} condensed={true}>
+                    <thead>
+                        <tr>
+                            <th>Name</th><th>Description</th><th>Display</th><th>Label</th>
                         </tr>
-                    )}
-                </tbody>
-            </HTMLTable>
+                    </thead>
+                    <tbody>
+                        {Object.values(SpectralLineOptions).map((option) =>
+                            <tr key={`${option}`}>
+                                <td>{option}</td>
+                                <td>{SPECTRAL_LINE_OPTION_DESCRIPTIONS.get(option)}</td>
+                                <td>
+                                    <Switch
+                                        key={`${option}-display`}
+                                        checked={widgetStore.optionsDisplay.get(option)}
+                                        onChange={() => widgetStore.setOptionsDisplay(option)}
+                                    />
+                                </td>
+                                <td>
+                                    <Switch
+                                        key={`${option}-label`}
+                                        checked={widgetStore.optionsLabel.get(option)}
+                                        onChange={() => widgetStore.setOptionsLabel(option)}
+                                    />
+                                </td>
+                            </tr>
+                        )}
+                    </tbody>
+                </HTMLTable>
+            </div>
         );
 
         const redshiftPanel = (
-            <div>
+            <div className="redshift-panel">
                 <FormGroup label="Redshift" labelInfo={widgetStore.redshiftGroup === RedshiftGroup.V ? "(km/s)" : ""} inline={true}>
                     <SafeNumericInput
                         value={widgetStore.redshiftSpeed}
@@ -137,8 +139,10 @@ export class SpectralLineOverlayComponent extends React.Component<WidgetProps> {
         return (
             <div className={className}>
                 {wcsGroup}
-                {optionTable}
-                {redshiftPanel}
+                <div className="spectral-line-option">
+                    {optionTable}
+                    {redshiftPanel}
+                </div>
                 {resultTable}
                 <div className="spectral-line-plot">
                     <Button intent="success" onClick={this.handlePlot}>Plot</Button>
