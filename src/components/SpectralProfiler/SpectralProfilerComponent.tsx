@@ -114,8 +114,6 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
                 }
             } else if (this.widgetStore.smoothingType === SmoothingType.HANNING) {
                 smoothingValues = GSL.hanningSmooth(coordinateData.values, this.widgetStore.smoothingHanningSize);
-            } else if (this.widgetStore.smoothingType === SmoothingType.DECIMATION) {
-                smoothingValues = GSL.decimationSmooth(coordinateData.values, this.widgetStore.smoothingDecimationValue);
             } else {
                 smoothingValues = coordinateData.values;
             }
@@ -123,10 +121,6 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
             let smoothingMap: Map<string, Point2D[]> = new Map<string, Point2D[]>();
             let values: Array<{ x: number, y: number }> = [];
             let smoothingArray: Array<{ x: number, y: number }> = [];
-            let smoothingChannel;
-            if (this.widgetStore.smoothingType === SmoothingType.DECIMATION) {
-                smoothingChannel = GSL.decimationSmooth(frame.channelValues, this.widgetStore.smoothingDecimationValue);
-            }
             for (let i = 0; i < channelValues.length; i++) {
                 const x = channelValues[i];
                 const y = coordinateData.values[i];
