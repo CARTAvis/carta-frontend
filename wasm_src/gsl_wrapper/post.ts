@@ -4,6 +4,7 @@ declare var addOnPostRun: any;
 Module.filterBoxcar = Module.cwrap("filterBoxcar", "number", ["number", "number", "number", "number"]);
 Module.filterGaussian = Module.cwrap("filterGaussian", "number", ["number", "number", "number", "number", "number"]);
 Module.filterHanning = Module.cwrap("filterHanning", "number", ["number", "number", "number", "number"]);
+Module.filterDecimation = Module.cwrap("filterDecimation", "number", ["number", "number", "number", "number", "number"]);
 
 Module.boxcarSmooth = function (xIn: Float64Array | Float32Array, kernelSize: number) {
     // Return empty array if arguments are invalid
@@ -58,6 +59,29 @@ Module.hanningSmooth = function (xIn: Float64Array | Float32Array, kernelSize: n
 
     Module._free(Module.xIn);
     Module._free(Module.xOut);
+    return xOut;
+};
+
+Module.decimationSmooth = function (xIn: Float64Array | Float32Array, decimationValue: number) {
+    if (!xIn) {
+        return new Float64Array(1);
+    }
+
+    let N: number;
+    if (xIn.length % decimationValue !== 0) {
+        N = Math.floor(xIn.length / decimationValue) + 1;
+    } else {
+        N = xIn.length / decimationValue;
+    }
+
+    const xOut = new Float64Array(N);
+    let i;
+    for (i = 0; i < N; i++) {
+        xOut[i] = xIn[i * decimationValue];
+    }
+    if ( (xIn.length - 1) % decimationValue !== 0) {
+        xOut[N - 1] = xIn[xIn.length - 1];
+    }
     return xOut;
 };
 

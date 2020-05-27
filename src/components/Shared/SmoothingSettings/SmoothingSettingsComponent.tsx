@@ -26,7 +26,8 @@ export class SmoothingSettingsComponent extends React.Component<{widgetStore: Sp
             {value: SmoothingType.NONE, label: "None"},
             {value: SmoothingType.BOXCAR, label: "Boxcar"},
             {value: SmoothingType.GAUSSIAN, label: "Gaussian"},
-            {value: SmoothingType.HANNING, label: "Hanning"}
+            {value: SmoothingType.HANNING, label: "Hanning"},
+            {value: SmoothingType.DECIMATION, label: "Decimation"}
         ];
 
         return (
@@ -99,6 +100,17 @@ export class SmoothingSettingsComponent extends React.Component<{widgetStore: Sp
                         stepSize={2}
                         className="narrow"
                         onValueChange={val => widgetStore.setSmoothingHanningSize(Math.round(val))}
+                    />
+                </FormGroup>
+                }
+                {(widgetStore.smoothingType === SmoothingType.DECIMATION) &&
+                <FormGroup label={"Decimation Value"} inline={true}>
+                    <SafeNumericInput
+                        value={widgetStore.smoothingDecimationValue}
+                        min={2}
+                        stepSize={1}
+                        className="narrow"
+                        onValueChange={val => widgetStore.setSmoothingDecimationValue(Math.round(val))}
                     />
                 </FormGroup>
                 }

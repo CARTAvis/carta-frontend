@@ -28,12 +28,13 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
     @observable linePlotInitXYBoundaries: { minXVal: number, maxXVal: number, minYVal: number, maxYVal: number };
     @observable smoothingType: SmoothingType = SmoothingType.NONE;
     @observable smoothingLineColor: { colorHex: string, fixed: boolean };
-    @observable smoothingLineType: PlotType;
+    @observable smoothingLineType: PlotType = PlotType.STEPS;
     @observable smoothingLineWidth: number;
     @observable isSmoothingOverlayOn: boolean = false;
     @observable smoothingBoxcarSize: number = 2;
     @observable smoothingGaussianSigma: number = 1.0;
     @observable smoothingHanningSize: number = 3;
+    @observable smoothingDecimationValue: number = 2;
 
     public static StatsTypeString(statsType: CARTA.StatsType) {
         switch (statsType) {
@@ -191,6 +192,10 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
 
     @action setSmoothingHanningSize = (val: number) => {
         this.smoothingHanningSize = val;
+    }
+
+    @action setSmoothingDecimationValue = (val: number) => {
+        this.smoothingDecimationValue = val;
     }
 
     constructor(coordinate: string = "z") {

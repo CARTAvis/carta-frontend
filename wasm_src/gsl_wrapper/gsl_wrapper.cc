@@ -72,4 +72,24 @@ int EMSCRIPTEN_KEEPALIVE filterHanning(double* xInArray, const int N, double* xO
     return status;
 }
 
+int EMSCRIPTEN_KEEPALIVE filterDecimation(double* xInArray, const int N, double* xOutArray, const int outN, const int decimationValue) {
+    int status = 0;    /* return value: 0 = success */
+    // gsl_vector_view xIn = gsl_vector_view_array(xInArray, N);
+    // gsl_vector_view xOut = gsl_vector_view_array(xOutArray, outN);
+    size_t i;
+
+    for (i = 0 ; i < N/decimationValue; i++) {
+        xOutArray[i] = xInArray[i*decimationValue + 1];
+    }
+    // gsl_movstat_workspace* w = gsl_movstat_alloc(K);
+    // gsl_movstat_function F;
+
+    // F.function = hanningWindow;
+    // gsl_movstat_apply(GSL_MOVSTAT_END_PADVALUE, &F, &xIn.vector, &xOut.vector, w);
+
+    // gsl_movstat_free(w);
+
+    return status;
+}
+
 }
