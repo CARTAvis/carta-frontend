@@ -19,8 +19,35 @@
         display: flex;
     }
 
+    .header-table {
+        overflow: auto;
+        height: 40%;
+        width: 100%;
+        padding-left: 5px;
+        padding-right: 5px;
+        padding-top: 5px;
+        padding-bottom: 4px;
+
+        .bp3-table-container {
+            width: 100%;
+
+            .bp3-table-header {
+                line-height: 220%;
+            }
+
+            .header-table-cell {
+                line-height: 250%;
+            }
+
+            .cell-switch-button{
+                margin: 0;
+            }
+        }
+    }
+
     .redshift-panel {
         display: flex;
+        padding-top: 10px;
     }
 
     .spectral-line-plot {

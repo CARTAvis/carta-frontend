@@ -18,7 +18,7 @@ export enum SpectralLineOptions {
     AstroFilter = "ASTRO"
 }
 
-export const SPECTRAL_LINE_OPTION_DESCRIPTIONS = new Map<SpectralLineOptions, string>([
+export const SPECTRAL_LINE_OPTION_DESCRIPTIONS =[
     [SpectralLineOptions.Formula, "Chemical formula of the Species"],
     [SpectralLineOptions.Name, "Name of the Species"],
     [SpectralLineOptions.Frequency, "Rest Frequency (MHz)"],
@@ -26,7 +26,7 @@ export const SPECTRAL_LINE_OPTION_DESCRIPTIONS = new Map<SpectralLineOptions, st
     [SpectralLineOptions.QuantumNumber, "Resolved Quantum Number"],
     [SpectralLineOptions.Intensity, "Intensity(for JPL/CDMS)"],
     [SpectralLineOptions.AstroFilter, "Astronomical Filter(Dark Cloud, Extragalatic, ...)"]
-]);
+];
 
 export enum RedshiftType {
     V = "V",
