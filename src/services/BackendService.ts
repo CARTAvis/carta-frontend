@@ -23,7 +23,7 @@ export class BackendService {
         return BackendService.staticInstance;
     }
 
-    private static readonly IcdVersion = 13;
+    private static readonly IcdVersion = 14;
     private static readonly DefaultFeatureFlags = CARTA.ClientFeatureFlags.WEB_ASSEMBLY | CARTA.ClientFeatureFlags.WEB_GL;
     @observable connectionStatus: ConnectionStatus;
     readonly loggingEnabled: boolean;
