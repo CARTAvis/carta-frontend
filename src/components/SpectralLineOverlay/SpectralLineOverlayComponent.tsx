@@ -1,7 +1,7 @@
 import * as React from "react";
 import {action, computed, observable} from "mobx";
 import {observer} from "mobx-react";
-import {Button, FormGroup, HTMLSelect, HTMLTable, Radio, RadioGroup, Switch} from "@blueprintjs/core";
+import {Button, Divider, FormGroup, HTMLSelect, HTMLTable, Switch} from "@blueprintjs/core";
 import ReactResizeDetector from "react-resize-detector";
 import {SafeNumericInput} from "components/Shared";
 import {AppStore, HelpType, WidgetConfig, WidgetProps, WidgetsStore} from "stores";
@@ -20,7 +20,7 @@ export class SpectralLineOverlayComponent extends React.Component<WidgetProps> {
             type: "spectral-line-overlay",
             minWidth: 320,
             minHeight: 400,
-            defaultWidth: 750,
+            defaultWidth: 600,
             defaultHeight: 600,
             title: "Spectral Line Overlay",
             isCloseable: true,
@@ -98,18 +98,15 @@ export class SpectralLineOverlayComponent extends React.Component<WidgetProps> {
 
         const queryPanel = (
             <div className="query-panel">
-                <RadioGroup
-                    inline={true}
-                    onChange={ev => widgetStore.setQueryRangeType(ev.currentTarget.value as SpectralLineQueryRangeType)}
-                    selectedValue={widgetStore.queryRangeType}
-                >
-                    <Radio label={SpectralLineQueryRangeType.Range} value={SpectralLineQueryRangeType.Range}/>
-                    <Radio label={SpectralLineQueryRangeType.Center} value={SpectralLineQueryRangeType.Center}/>
-                </RadioGroup>
+                <FormGroup inline={true}>
+                    <HTMLSelect options={[SpectralLineQueryRangeType.Range, SpectralLineQueryRangeType.Center]} value={widgetStore.queryRangeType} onChange={(ev) => widgetStore.setQueryRangeType(ev.currentTarget.value as SpectralLineQueryRangeType)}/>
+                </FormGroup>
+                <Divider/>
                 {widgetStore.queryRangeType === SpectralLineQueryRangeType.Range ? inputByRange : inputByCenter}
                 <FormGroup inline={true}>
                     <HTMLSelect options={["GHz", "MHz", "cm", "mm"]} value={"GHz"} onChange={() => {}}/>
                 </FormGroup>
+                <Divider/>
                 <Button intent="success" small={true} onClick={this.handleQuery}>Query</Button>
             </div>
         );
@@ -141,14 +138,9 @@ export class SpectralLineOverlayComponent extends React.Component<WidgetProps> {
 
         const redshiftPanel = (
             <div className="redshift-panel">
-                <RadioGroup
-                    inline={true}
-                    onChange={ev => widgetStore.setRedshiftType(ev.currentTarget.value as RedshiftType)}
-                    selectedValue={widgetStore.redshiftType}
-                >
-                    <Radio label={RedshiftType.V} value={RedshiftType.V}/>
-                    <Radio label={RedshiftType.Z} value={RedshiftType.Z}/>
-                </RadioGroup>
+                <FormGroup inline={true}>
+                    <HTMLSelect options={[RedshiftType.V, RedshiftType.Z]} value={widgetStore.redshiftType} onChange={(ev) => widgetStore.setRedshiftType(ev.currentTarget.value as RedshiftType)}/>
+                </FormGroup>
                 <FormGroup label="Redshift" labelInfo={widgetStore.redshiftType === RedshiftType.V ? "(km/s)" : ""} inline={true}>
                     <SafeNumericInput
                         value={widgetStore.redshiftSpeed}
@@ -181,6 +173,7 @@ export class SpectralLineOverlayComponent extends React.Component<WidgetProps> {
             <div className={className}>
                 {queryPanel}
                 {optionTable}
+                <Divider/>
                 {redshiftPanel}
                 {resultTable}
                 <div className="spectral-line-plot">

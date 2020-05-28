@@ -3,6 +3,18 @@
     width: 100%;
     padding: 20px;
 
+    .bp3-numeric-input {
+        .bp3-input-group {
+            width: 80px;
+        }
+    }
+
+    .bp3-form-group {
+        .bp3-label {
+            text-align: right;
+        }
+    }
+
     .query-panel {
         display: flex;
     }
