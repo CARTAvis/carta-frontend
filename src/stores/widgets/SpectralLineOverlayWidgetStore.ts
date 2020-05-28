@@ -2,7 +2,11 @@ import {action, computed, observable} from "mobx";
 import {CARTA} from "carta-protobuf";
 import {AppStore} from "stores";
 import {RegionWidgetStore, RegionsType} from "./RegionWidgetStore";
-import {SpectralSystem} from "models";
+
+export enum SpectralLineQueryRangeType {
+    Range = "Range",
+    Center = "Center"
+}
 
 export enum SpectralLineOptions {
     Formula = "FORMULA",
@@ -24,31 +28,28 @@ export const SPECTRAL_LINE_OPTION_DESCRIPTIONS = new Map<SpectralLineOptions, st
     [SpectralLineOptions.AstroFilter, "Astronomical Filter(Dark Cloud, Extragalatic, ...)"]
 ]);
 
-export enum RedshiftGroup {
+export enum RedshiftType {
     V = "V",
     Z = "Z"
 }
 
-export enum Doppler {
-    Radio = "Radio",
-    Optical = "Optical"
-}
-
 export class SpectralLineOverlayWidgetStore extends RegionWidgetStore {
+    @observable queryRangeType: SpectralLineQueryRangeType;
     @observable optionsDisplay: Map<SpectralLineOptions, boolean>;
-    @observable optionsLabel: Map<SpectralLineOptions, boolean>;
+    @observable redshiftType: RedshiftType;
     @observable redshiftSpeed: number;
-    @observable redshiftGroup: RedshiftGroup;
-    @observable spectralSystem: SpectralSystem;
-    @observable doppler: Doppler;
+
+    @action setQueryRangeType = (queryRangeType: SpectralLineQueryRangeType) => {
+        this.queryRangeType = queryRangeType;
+     };
 
     @action setOptionsDisplay = (option: SpectralLineOptions) => {
         this.optionsDisplay.set(option, !this.optionsDisplay.get(option));
     };
 
-    @action setOptionsLabel = (option: SpectralLineOptions) => {
-        this.optionsLabel.set(option, !this.optionsLabel.get(option));
-    };
+    @action setRedshiftType = (redshiftType: RedshiftType) => {
+        this.redshiftType = redshiftType;
+     };
 
     @action setRedshiftSpeed = (speed: number) => {
         if (isFinite(speed)) {
@@ -56,27 +57,12 @@ export class SpectralLineOverlayWidgetStore extends RegionWidgetStore {
         }
     };
 
-    @action setRedshiftGroup = (redshiftGroup: RedshiftGroup) => {
-       this.redshiftGroup = redshiftGroup;
-    };
-
-    @action setSpectralSystem = (spectralSystem: SpectralSystem) => {
-        this.spectralSystem = spectralSystem;
-    };
-
-    @action setDoppler = (doppler: Doppler) => {
-        this.doppler = doppler;
-    };
-
     constructor() {
         super(RegionsType.CLOSED);
+        this.queryRangeType = SpectralLineQueryRangeType.Range;
         this.optionsDisplay = new Map<SpectralLineOptions, boolean>();
         Object.values(SpectralLineOptions).forEach(option => this.optionsDisplay.set(option, false));
-        this.optionsLabel = new Map<SpectralLineOptions, boolean>();
-        Object.values(SpectralLineOptions).forEach(option => this.optionsLabel.set(option, false));
+        this.redshiftType = RedshiftType.V;
         this.redshiftSpeed = 0;
-        this.redshiftGroup = RedshiftGroup.V;
-        this.spectralSystem = SpectralSystem.LSRK;
-        this.doppler = Doppler.Radio;
     }
 }

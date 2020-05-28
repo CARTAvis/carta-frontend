@@ -5,8 +5,7 @@ import {Button, FormGroup, HTMLSelect, HTMLTable, Radio, RadioGroup, Switch} fro
 import ReactResizeDetector from "react-resize-detector";
 import {SafeNumericInput} from "components/Shared";
 import {AppStore, HelpType, WidgetConfig, WidgetProps, WidgetsStore} from "stores";
-import {Doppler, RedshiftGroup, SPECTRAL_LINE_OPTION_DESCRIPTIONS, SpectralLineOptions, SpectralLineOverlayWidgetStore} from "stores/widgets";
-import {SpectralSystem} from "models";
+import {RedshiftType, SPECTRAL_LINE_OPTION_DESCRIPTIONS, SpectralLineOptions, SpectralLineOverlayWidgetStore, SpectralLineQueryRangeType} from "stores/widgets";
 import "./SpectralLineOverlayComponent.css";
 
 @observer
@@ -47,6 +46,10 @@ export class SpectralLineOverlayComponent extends React.Component<WidgetProps> {
         this.height = height;
     };
 
+    private handleQuery = () => {
+        return;
+    };
+
     private handlePlot = () => {
         return;
     };
@@ -55,80 +58,118 @@ export class SpectralLineOverlayComponent extends React.Component<WidgetProps> {
         const appStore = AppStore.Instance;
         const widgetStore = this.widgetStore;
 
-        const wcsGroup = (
-            <FormGroup label="WCS Group" inline={true}>
-                <HTMLSelect/>
-            </FormGroup>
-        );
-
-        const optionTable = (
-            <div>
-                <HTMLTable bordered={true} striped={true} condensed={true}>
-                    <thead>
-                        <tr>
-                            <th>Name</th><th>Description</th><th>Display</th><th>Label</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {Object.values(SpectralLineOptions).map((option) =>
-                            <tr key={`${option}`}>
-                                <td>{option}</td>
-                                <td>{SPECTRAL_LINE_OPTION_DESCRIPTIONS.get(option)}</td>
-                                <td>
-                                    <Switch
-                                        key={`${option}-display`}
-                                        checked={widgetStore.optionsDisplay.get(option)}
-                                        onChange={() => widgetStore.setOptionsDisplay(option)}
-                                    />
-                                </td>
-                                <td>
-                                    <Switch
-                                        key={`${option}-label`}
-                                        checked={widgetStore.optionsLabel.get(option)}
-                                        onChange={() => widgetStore.setOptionsLabel(option)}
-                                    />
-                                </td>
-                            </tr>
-                        )}
-                    </tbody>
-                </HTMLTable>
-            </div>
-        );
-
-        const redshiftPanel = (
-            <div className="redshift-panel">
-                <FormGroup label="Redshift" labelInfo={widgetStore.redshiftGroup === RedshiftGroup.V ? "(km/s)" : ""} inline={true}>
+        const inputByRange = (
+            <React.Fragment>
+                <FormGroup label="From" inline={true}>
                     <SafeNumericInput
                         value={widgetStore.redshiftSpeed}
                         buttonPosition="none"
                         onValueChange={val => widgetStore.setRedshiftSpeed(val)}
                     />
                 </FormGroup>
+                <FormGroup label="To" inline={true}>
+                    <SafeNumericInput
+                        value={widgetStore.redshiftSpeed}
+                        buttonPosition="none"
+                        onValueChange={val => widgetStore.setRedshiftSpeed(val)}
+                    />
+                </FormGroup>
+            </React.Fragment>
+        );
+
+        const inputByCenter = (
+            <React.Fragment>
+                <FormGroup inline={true}>
+                    <SafeNumericInput
+                        value={widgetStore.redshiftSpeed}
+                        buttonPosition="none"
+                        onValueChange={val => widgetStore.setRedshiftSpeed(val)}
+                    />
+                </FormGroup>
+                <FormGroup label="±" inline={true}>
+                    <SafeNumericInput
+                        value={widgetStore.redshiftSpeed}
+                        buttonPosition="none"
+                        onValueChange={val => widgetStore.setRedshiftSpeed(val)}
+                    />
+                </FormGroup>
+            </React.Fragment>
+        );
+
+        const queryPanel = (
+            <div className="query-panel">
                 <RadioGroup
                     inline={true}
-                    onChange={ev => widgetStore.setRedshiftGroup(ev.currentTarget.value as RedshiftGroup)}
-                    selectedValue={widgetStore.redshiftGroup}
+                    onChange={ev => widgetStore.setQueryRangeType(ev.currentTarget.value as SpectralLineQueryRangeType)}
+                    selectedValue={widgetStore.queryRangeType}
                 >
-                    <Radio label={RedshiftGroup.V} value={RedshiftGroup.V}/>
-                    <Radio label={RedshiftGroup.Z} value={RedshiftGroup.Z}/>
+                    <Radio label={SpectralLineQueryRangeType.Range} value={SpectralLineQueryRangeType.Range}/>
+                    <Radio label={SpectralLineQueryRangeType.Center} value={SpectralLineQueryRangeType.Center}/>
                 </RadioGroup>
-                <FormGroup label="Frame" inline={true}>
-                    <HTMLSelect options={[SpectralSystem.LSRK, SpectralSystem.BARY]} value={widgetStore.spectralSystem} onChange={(ev) => widgetStore.setSpectralSystem(ev.currentTarget.value as SpectralSystem)}/>
+                {widgetStore.queryRangeType === SpectralLineQueryRangeType.Range ? inputByRange : inputByCenter}
+                <FormGroup inline={true}>
+                    <HTMLSelect options={["GHz", "MHz", "cm", "mm"]} value={"GHz"} onChange={() => {}}/>
                 </FormGroup>
-                <FormGroup label="Doppler" inline={true}>
-                    <HTMLSelect options={[Doppler.Radio, Doppler.Optical]} value={widgetStore.doppler} onChange={(ev) => widgetStore.setDoppler(ev.currentTarget.value as Doppler)}/>
+                <Button intent="success" small={true} onClick={this.handleQuery}>Query</Button>
+            </div>
+        );
+
+        const optionTable = (
+            <HTMLTable bordered={true} striped={true} condensed={true}>
+                <thead>
+                    <tr>
+                        <th>Name</th><th>Description</th><th>Display</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {Object.values(SpectralLineOptions).map((option) =>
+                        <tr key={`${option}`}>
+                            <td>{option}</td>
+                            <td>{SPECTRAL_LINE_OPTION_DESCRIPTIONS.get(option)}</td>
+                            <td>
+                                <Switch
+                                    key={`${option}-display`}
+                                    checked={widgetStore.optionsDisplay.get(option)}
+                                    onChange={() => widgetStore.setOptionsDisplay(option)}
+                                />
+                            </td>
+                        </tr>
+                    )}
+                </tbody>
+            </HTMLTable>
+        );
+
+        const redshiftPanel = (
+            <div className="redshift-panel">
+                <RadioGroup
+                    inline={true}
+                    onChange={ev => widgetStore.setRedshiftType(ev.currentTarget.value as RedshiftType)}
+                    selectedValue={widgetStore.redshiftType}
+                >
+                    <Radio label={RedshiftType.V} value={RedshiftType.V}/>
+                    <Radio label={RedshiftType.Z} value={RedshiftType.Z}/>
+                </RadioGroup>
+                <FormGroup label="Redshift" labelInfo={widgetStore.redshiftType === RedshiftType.V ? "(km/s)" : ""} inline={true}>
+                    <SafeNumericInput
+                        value={widgetStore.redshiftSpeed}
+                        buttonPosition="none"
+                        onValueChange={val => widgetStore.setRedshiftSpeed(val)}
+                    />
                 </FormGroup>
             </div>
         );
 
         const resultTable = (
-            <table>
+            <HTMLTable bordered={true} striped={true} condensed={true}>
                 <thead>
                     <tr>
                         <th>FORMULA</th><th>NAME</th><th>FREQ</th><th>REDSHIFTED_FREQ</th><th>ASTRO</th>
                     </tr>
                 </thead>
-            </table>
+                <tbody>
+                    <tr><td></td><td></td><td></td><td></td><td></td></tr>
+                </tbody>
+            </HTMLTable>
         );
 
         let className = "spectral-line-overlay-widget";
@@ -138,11 +179,9 @@ export class SpectralLineOverlayComponent extends React.Component<WidgetProps> {
 
         return (
             <div className={className}>
-                {wcsGroup}
-                <div className="spectral-line-option">
-                    {optionTable}
-                    {redshiftPanel}
-                </div>
+                {queryPanel}
+                {optionTable}
+                {redshiftPanel}
                 {resultTable}
                 <div className="spectral-line-plot">
                     <Button intent="success" onClick={this.handlePlot}>Plot</Button>

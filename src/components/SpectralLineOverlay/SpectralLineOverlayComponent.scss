@@ -3,13 +3,12 @@
     width: 100%;
     padding: 20px;
 
-    .spectral-line-option {
+    .query-panel {
         display: flex;
-        flex-direction: row;
+    }
 
-        .redshift-panel {
-            padding: 10px;
-        }
+    .redshift-panel {
+        display: flex;
     }
 
     .spectral-line-plot {
