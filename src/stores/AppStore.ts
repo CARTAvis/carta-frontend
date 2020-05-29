@@ -227,9 +227,17 @@ export class AppStore {
         return "alt + ";
     }
 
-    // Dark theme
+    // System theme, based on media query
+    @observable systemTheme: string;
+
+    // Apply dark theme if it is forced or the system theme is dark
     @computed get darkTheme(): boolean {
-        return this.preferenceStore.isDarkTheme;
+        console.log(this.preferenceStore.theme);
+        if (this.preferenceStore.theme === Theme.AUTO) {
+            return this.systemTheme === Theme.DARK;
+        } else {
+            return this.preferenceStore.theme === Theme.DARK;
+        }
     }
 
     // Frame actions
@@ -800,6 +808,15 @@ export class AppStore {
         autorun(() => {
             document.body.style.backgroundColor = this.darkTheme ? Colors.DARK_GRAY4 : Colors.WHITE;
         });
+
+        // Watch for system theme preference changes
+        const handleThemeChange = (darkMode: boolean) => {
+            this.systemTheme = darkMode ? "dark" : "light";
+        };
+
+        const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
+        mediaQuery.addEventListener("change", changeEvent => handleThemeChange(changeEvent.matches));
+        handleThemeChange(mediaQuery.matches);
 
         // Display toasts when connection status changes
         autorun(() => {
