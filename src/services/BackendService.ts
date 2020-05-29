@@ -105,7 +105,7 @@ export class BackendService {
             [CARTA.EventType.CATALOG_FILTER_RESPONSE, this.onStreamedCatalogData],
             [CARTA.EventType.RASTER_TILE_SYNC, this.onStreamedRasterSync],
             [CARTA.EventType.MOMENT_PROGRESS, this.onStreamedMomentProgress],
-            [CARTA.EventType.MOMENT_RESPONSE, this.onMomentResponse],
+            [CARTA.EventType.MOMENT_RESPONSE, this.onSimpleMappedResponse],
             [CARTA.EventType.SCRIPTING_REQUEST, this.onScriptingRequest]
         ]);
 
@@ -704,14 +704,16 @@ export class BackendService {
     };
 
     @action("request moment")
-    requestMoment(message: CARTA.IMomentRequest) {
+    requestMoment(message: CARTA.IMomentRequest): Observable<CARTA.MomentResponse> {
         if (this.connectionStatus !== ConnectionStatus.ACTIVE) {
             return throwError(new Error("Not connected"));
         } else {
             const requestId = this.eventCounter;
             this.logEvent(CARTA.EventType.MOMENT_REQUEST, requestId, message, false);
             if (this.sendEvent(CARTA.EventType.MOMENT_REQUEST, CARTA.MomentRequest.encode(message).finish())) {
-                return true;
+                return new Observable<CARTA.MomentResponse>(observer => {
+                    this.observerRequestMap.set(requestId, observer);
+                });
             } else {
                 return throwError(new Error("Could not send event"));
             }
@@ -823,12 +825,6 @@ export class BackendService {
             this.observerRequestMap.delete(eventId);
         } else {
             console.log(`Can't find observable for request ${eventId}`);
-        }
-    }
-
-    private onMomentResponse(eventId: number, response: CARTA.MomentResponse) {
-        if (response.success && response.outputFiles) {
-            const appStore = AppStore.Instance;
         }
     }
 
