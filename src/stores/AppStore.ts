@@ -815,7 +815,15 @@ export class AppStore {
         };
 
         const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
-        mediaQuery.addEventListener("change", changeEvent => handleThemeChange(changeEvent.matches));
+        if (mediaQuery) {
+            if (mediaQuery.addEventListener) {
+                mediaQuery.addEventListener("change", changeEvent => handleThemeChange(changeEvent.matches));
+            } else if (mediaQuery.addListener) {
+                // Workaround for Safari
+                // @ts-ignore
+                mediaQuery.addListener("change", changeEvent => handleThemeChange(changeEvent.matches));
+            }
+        }
         handleThemeChange(mediaQuery.matches);
 
         // Display toasts when connection status changes
