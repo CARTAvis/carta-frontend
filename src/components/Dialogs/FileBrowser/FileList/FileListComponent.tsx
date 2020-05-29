@@ -1,10 +1,12 @@
 import * as React from "react";
+import {observer} from "mobx-react";
 import {Icon, NonIdealState, Spinner, HTMLTable, Tooltip} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import {BrowserMode} from "stores/FileBrowserStore";
 import {toFixed} from "utilities";
 import "./FileListComponent.css";
 
+@observer
 export class FileListComponent extends React.Component<{
     darkTheme: boolean,
     files: CARTA.IFileListResponse | CARTA.ICatalogListResponse,
@@ -27,6 +29,7 @@ export class FileListComponent extends React.Component<{
 
     private static readonly CatalogFileTypeMap = new Map<CARTA.CatalogFileType, { type: string, description: string }>([
         [CARTA.CatalogFileType.VOTable, {type: "VOTable", description: "XML-Based Table Format"}],
+        [CARTA.CatalogFileType.FITSTable, {type: "FITS", description: "Flexible Image Transport System"}],
     ]);
 
     constructor(props: any) {
