@@ -232,7 +232,6 @@ export class AppStore {
 
     // Apply dark theme if it is forced or the system theme is dark
     @computed get darkTheme(): boolean {
-        console.log(this.preferenceStore.theme);
         if (this.preferenceStore.theme === Theme.AUTO) {
             return this.systemTheme === Theme.DARK;
         } else {
