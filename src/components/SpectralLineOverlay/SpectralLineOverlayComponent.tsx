@@ -147,6 +147,9 @@ export class SpectralLineOverlayComponent extends React.Component<WidgetProps> {
         }
     }
 
+    private setQueryResultTableColumnWidth = (width: number, columnName: string) => {
+    }
+
     private updateTableSize(ref: any, docked: boolean) {
         const viewportRect = ref.locator.getViewportRect();
         ref.updateViewportRect(viewportRect);
@@ -155,6 +158,18 @@ export class SpectralLineOverlayComponent extends React.Component<WidgetProps> {
         if (docked) {
             ref.scrollToRegion(Regions.column(0));
         }
+    }
+
+    private updateByInfiniteScroll = () => {
+        const widgetStore = this.widgetStore;
+    }
+
+    private onQueryResultTableRefUpdated = (ref) => {
+        this.widgetStore.setQueryResultTableRef(ref);
+    }
+
+    private onQueryResultTableDataSelected = (selectedDataIndex: number) => {
+        const widgetsStore = this.widgetStore;
     }
 
     private handleQuery = () => {
@@ -237,18 +252,16 @@ export class SpectralLineOverlayComponent extends React.Component<WidgetProps> {
             </div>
         );
 
-        const resultTable = (
-            <HTMLTable bordered={true} striped={true} condensed={true}>
-                <thead>
-                    <tr>
-                        <th>FORMULA</th><th>NAME</th><th>FREQ</th><th>REDSHIFTED_FREQ</th><th>ASTRO</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr><td></td><td></td><td></td><td></td><td></td></tr>
-                </tbody>
-            </HTMLTable>
-        );
+        const queryResultTableProps: TableComponentProps = {
+            type: TableType.ColumnFilter,
+            dataset: widgetStore.queryResult,
+            columnHeaders: widgetStore.displayedColumnHeaders,
+            numVisibleRows: widgetStore.numVisibleRows,
+            upTableRef: this.onQueryResultTableRefUpdated,
+            updateByInfiniteScroll: this.updateByInfiniteScroll,
+            updateTableColumnWidth: this.setQueryResultTableColumnWidth,
+            updateSelectedRow: this.onQueryResultTableDataSelected
+        };
 
         let className = "spectral-line-overlay-widget";
         if (appStore.darkTheme) {
@@ -263,7 +276,9 @@ export class SpectralLineOverlayComponent extends React.Component<WidgetProps> {
                 </div>
                 <Divider/>
                 {redshiftPanel}
-                {resultTable}
+                <div className={"query-result-table"}>
+                    <TableComponent {...queryResultTableProps}/>
+                </div>
                 <div className="spectral-line-plot">
                     <Button intent="success" onClick={this.handlePlot}>Plot</Button>
                 </div>

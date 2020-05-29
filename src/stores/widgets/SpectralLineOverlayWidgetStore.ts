@@ -1,4 +1,5 @@
 import {action, computed, observable} from "mobx";
+import {Table} from "@blueprintjs/table";
 import {CARTA} from "carta-protobuf";
 import {AppStore} from "stores";
 import {RegionWidgetStore, RegionsType} from "./RegionWidgetStore";
@@ -18,7 +19,7 @@ export enum SpectralLineOptions {
     AstroFilter = "ASTRO"
 }
 
-export const SPECTRAL_LINE_OPTION_DESCRIPTIONS =[
+export const SPECTRAL_LINE_OPTION_DESCRIPTIONS = [
     [SpectralLineOptions.Formula, "Chemical formula of the Species"],
     [SpectralLineOptions.Name, "Name of the Species"],
     [SpectralLineOptions.Frequency, "Rest Frequency (MHz)"],
@@ -38,6 +39,9 @@ export class SpectralLineOverlayWidgetStore extends RegionWidgetStore {
     @observable optionsDisplay: Map<SpectralLineOptions, boolean>;
     @observable redshiftType: RedshiftType;
     @observable redshiftSpeed: number;
+    @observable queryResultTableRef: Table;
+    @observable queryResult: CARTA.ICatalogColumnsData;
+    @observable numVisibleRows: number;
 
     @action setQueryRangeType = (queryRangeType: SpectralLineQueryRangeType) => {
         this.queryRangeType = queryRangeType;
@@ -57,6 +61,15 @@ export class SpectralLineOverlayWidgetStore extends RegionWidgetStore {
         }
     };
 
+    @action setQueryResultTableRef(ref: Table) {
+        this.queryResultTableRef = ref;
+    }
+
+    @computed get displayedColumnHeaders(): Array<CARTA.CatalogHeader> {
+        let displayedColumnHeaders = [];
+        return displayedColumnHeaders;
+    }
+
     constructor() {
         super(RegionsType.CLOSED);
         this.queryRangeType = SpectralLineQueryRangeType.Range;
@@ -64,5 +77,7 @@ export class SpectralLineOverlayWidgetStore extends RegionWidgetStore {
         Object.values(SpectralLineOptions).forEach(option => this.optionsDisplay.set(option, false));
         this.redshiftType = RedshiftType.V;
         this.redshiftSpeed = 0;
+        this.queryResultTableRef = undefined;
+        this.numVisibleRows = 1;
     }
 }

@@ -50,6 +50,34 @@
         padding-top: 10px;
     }
 
+    .query-result-table {
+        overflow: auto;
+        height: 40%;
+        width: 100%;
+        padding-left: 5px;
+        padding-right: 5px;
+        padding-bottom: 1px;
+        padding-top: 1px;
+
+        .bp3-table-container{
+            width: 100%;
+
+            .bp3-table-editable-name.bp3-editable-text::before {
+                right: 0px;
+                left: 0px;
+            }
+
+            .bp3-editable-text::before {
+                right: 0px;
+                left: 0px;
+            }
+            .column-filter {
+                width: inherit;
+                height: inherit;
+            }
+        }
+    }
+
     .spectral-line-plot {
         float: right;
     }
