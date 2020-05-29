@@ -3,6 +3,7 @@ import {Table} from "@blueprintjs/table";
 import {CARTA} from "carta-protobuf";
 import {AppStore} from "stores";
 import {RegionWidgetStore, RegionsType} from "./RegionWidgetStore";
+import {ProcessedColumnData} from "models";
 
 export enum SpectralLineQueryRangeType {
     Range = "Range",
@@ -40,7 +41,7 @@ export class SpectralLineOverlayWidgetStore extends RegionWidgetStore {
     @observable redshiftType: RedshiftType;
     @observable redshiftSpeed: number;
     @observable queryResultTableRef: Table;
-    @observable queryResult: CARTA.ICatalogColumnsData;
+    @observable queryResult: Map<number, ProcessedColumnData>;
     @observable numVisibleRows: number;
 
     @action setQueryRangeType = (queryRangeType: SpectralLineQueryRangeType) => {

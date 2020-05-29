@@ -1,11 +1,10 @@
 import * as React from "react";
 import {action, computed, observable} from "mobx";
 import {observer} from "mobx-react";
-import {Button, Divider, FormGroup, HTMLSelect, HTMLTable, Switch} from "@blueprintjs/core";
+import {Button, Divider, FormGroup, HTMLSelect, Switch} from "@blueprintjs/core";
 import {Cell, Column, Regions, RenderMode, SelectionModes, Table} from "@blueprintjs/table";
 import ReactResizeDetector from "react-resize-detector";
-import {TableComponent, TableComponentProps, TableType} from "components/Shared";
-import {SafeNumericInput} from "components/Shared";
+import {SafeNumericInput, TableComponent, TableComponentProps, TableType} from "components/Shared";
 import {AppStore, HelpType, WidgetConfig, WidgetProps, WidgetsStore} from "stores";
 import {RedshiftType, SPECTRAL_LINE_OPTION_DESCRIPTIONS, SpectralLineOptions, SpectralLineOverlayWidgetStore, SpectralLineQueryRangeType} from "stores/widgets";
 import "./SpectralLineOverlayComponent.css";
@@ -225,7 +224,11 @@ export class SpectralLineOverlayComponent extends React.Component<WidgetProps> {
         const queryPanel = (
             <div className="query-panel">
                 <FormGroup inline={true}>
-                    <HTMLSelect options={[SpectralLineQueryRangeType.Range, SpectralLineQueryRangeType.Center]} value={widgetStore.queryRangeType} onChange={(ev) => widgetStore.setQueryRangeType(ev.currentTarget.value as SpectralLineQueryRangeType)}/>
+                    <HTMLSelect
+                        options={[SpectralLineQueryRangeType.Range, SpectralLineQueryRangeType.Center]}
+                        value={widgetStore.queryRangeType}
+                        onChange={(ev) => widgetStore.setQueryRangeType(ev.currentTarget.value as SpectralLineQueryRangeType)}
+                    />
                 </FormGroup>
                 <Divider/>
                 {widgetStore.queryRangeType === SpectralLineQueryRangeType.Range ? inputByRange : inputByCenter}
