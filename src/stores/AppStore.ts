@@ -12,6 +12,7 @@ import {
     AnimationState,
     AnimatorStore,
     BrowserMode,
+    CatalogStore,
     CURSOR_REGION_ID,
     dayPalette,
     DialogStore,
@@ -31,13 +32,12 @@ import {
     RegionStore,
     SpatialProfileStore,
     SpectralProfileStore,
-    WidgetsStore,
-    CatalogStore
+    WidgetsStore
 } from ".";
 import {distinct, GetRequiredTiles} from "utilities";
 import {BackendService, ConnectionStatus, ScriptingService, TileService, TileStreamDetails} from "services";
-import {FrameView, Point2D, ProcessedColumnData, ProtobufProcessing, Theme, TileCoordinate, WCSMatchingType} from "models";
-import {HistogramWidgetStore, RegionWidgetStore, SpatialProfileWidgetStore, SpectralProfileWidgetStore, StatsWidgetStore, StokesAnalysisWidgetStore, CatalogInfo, CatalogUpdateMode} from "./widgets";
+import {FrameView, Point2D, ProtobufProcessing, Theme, TileCoordinate, WCSMatchingType} from "models";
+import {CatalogInfo, CatalogUpdateMode, HistogramWidgetStore, RegionWidgetStore, SpatialProfileWidgetStore, SpectralProfileWidgetStore, StatsWidgetStore, StokesAnalysisWidgetStore} from "./widgets";
 import {CatalogOverlayComponent, CatalogScatterComponent, getImageCanvas} from "components";
 import {AppToaster} from "components/Shared";
 import GitCommit from "../static/gitInfo";
@@ -676,6 +676,10 @@ export class AppStore {
     @action setLightTheme = () => {
         this.preferenceStore.setPreference(PreferenceKeys.GLOBAL_THEME, Theme.LIGHT);
     };
+
+    @action setAutoTheme = () =>  {
+        this.preferenceStore.setPreference(PreferenceKeys.GLOBAL_THEME, Theme.AUTO);
+    }
 
     @action toggleCursorFrozen = () => {
         if (this.activeFrame) {
