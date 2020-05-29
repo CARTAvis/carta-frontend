@@ -301,7 +301,11 @@ export class AppStore {
         return this.spatialGroup.filter(f => f.contourConfig.enabled && f.contourConfig.visible);
     }
 
-    @action addFrame = (ack: CARTA.OpenFileAck, directory: string, hdu: string) => {
+    @action addFrame = (ack: CARTA.OpenFileAck, directory: string, hdu: string): boolean => {
+        if (!ack) {
+            return false;
+        }
+
         let dimensionsString = `${ack.fileInfoExtended.width}\u00D7${ack.fileInfoExtended.height}`;
         if (ack.fileInfoExtended.dimensions > 2) {
             dimensionsString += `\u00D7${ack.fileInfoExtended.depth}`;
@@ -352,6 +356,8 @@ export class AppStore {
                 this.setSpectralMatchingEnabled(newFrame, true);
             }
         }
+
+        return true;
     };
 
     @action loadFile = (directory: string, file: string, hdu: string) => {
@@ -359,7 +365,9 @@ export class AppStore {
             this.fileLoading = true;
 
             this.backendService.loadFile(directory, file, hdu, this.fileCounter, CARTA.RenderMode.RASTER).subscribe(ack => {
-                this.addFrame(ack, directory, hdu);
+                if (!this.addFrame(ack, directory, hdu)) {
+                    AppToaster.show({icon: "warning-sign", message: "Load file failed.", intent: "danger", timeout: 3000});
+                }
                 this.fileLoading = false;
                 this.fileBrowserStore.hideFileBrowser();
                 resolve(ack.fileId);
@@ -682,7 +690,11 @@ export class AppStore {
         this.backendService.requestMoment(message).subscribe(ack => {
             if (ack.success && ack.outputFiles) {
                 ack.outputFiles.forEach(ack => {
-                    // this.addFrame(ack, "", "");
+                    /*
+                    if (!this.addFrame(ack, directory, hdu)) {
+                        AppToaster.show({icon: "warning-sign", message: "Load file failed.", intent: "danger", timeout: 3000});
+                    }
+                    */
                 });
             }
         }, error => {
