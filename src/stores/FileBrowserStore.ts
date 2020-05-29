@@ -2,7 +2,7 @@ import {action, computed, observable} from "mobx";
 import {TabId} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import {BackendService} from "services";
-import {DialogStore} from "stores";
+import {AppStore, DialogStore} from "stores";
 import {FileInfoType} from "components";
 import {ProcessedColumnData} from "models";
 import {getDataTypeString} from "utilities";
