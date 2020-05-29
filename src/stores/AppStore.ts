@@ -825,7 +825,7 @@ export class AppStore {
             } else if (mediaQuery.addListener) {
                 // Workaround for Safari
                 // @ts-ignore
-                mediaQuery.addListener("change", changeEvent => handleThemeChange(changeEvent.matches));
+                mediaQuery.addListener(changeEvent => handleThemeChange(changeEvent.matches));
             }
         }
         handleThemeChange(mediaQuery.matches);
