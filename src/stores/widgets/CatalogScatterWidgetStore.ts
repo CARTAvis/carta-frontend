@@ -4,8 +4,8 @@ import {Point2D} from "models";
 import {minMaxArray} from "utilities";
 
 export interface CatalogScatterWidgetStoreProps {
-    x: Array<any>;
-    y: Array<any>;
+    x: Array<number>;
+    y: Array<number>;
     catalogOverlayWidgetStore: CatalogOverlayWidgetStore;
 }
 
@@ -14,8 +14,8 @@ export type DragMode = "zoom" | "pan" | "select" | "lasso" | "orbit" | "turntabl
 
 export class CatalogScatterWidgetStore {
     private rangeOffset = 0.01;
-    @observable xDataset: Array<any>;
-    @observable yDataset: Array<any>;
+    @observable xDataset: Array<number>;
+    @observable yDataset: Array<number>;
     @observable catalogOverlayWidgetStore: CatalogOverlayWidgetStore;
     @observable columnsName: {x: string, y: string};
     @observable indicatorInfo: Point2D;
@@ -45,11 +45,11 @@ export class CatalogScatterWidgetStore {
         this.yDataset = this.catalogOverlayWidgetStore.get1DPlotData(columnName).wcsData;
     }
 
-    @action setXDataset(x: Array<any>) {
+    @action setXDataset(x: Array<number>) {
         this.xDataset = x;
     }
 
-    @action setYDataset(y: Array<any>) {
+    @action setYDataset(y: Array<number>) {
         this.yDataset = y;
     }
 
