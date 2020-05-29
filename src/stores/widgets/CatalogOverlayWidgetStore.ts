@@ -116,6 +116,7 @@ export class CatalogOverlayWidgetStore extends RegionWidgetStore {
     @observable filterDataSize: number;
     @observable showSelectedData: boolean;
     @observable catalogTableRef: Table;
+    @observable userFilterChanged: boolean;
 
     constructor(catalogInfo: CatalogInfo, catalogHeader: Array<CARTA.ICatalogHeader>, catalogData: CARTA.ICatalogColumnsData, id: string) {
         super(RegionsType.CLOSED_AND_POINT);
@@ -137,6 +138,7 @@ export class CatalogOverlayWidgetStore extends RegionWidgetStore {
         this.filterDataSize = undefined;
         this.showSelectedData = false;
         this.catalogTableRef = undefined;
+        this.userFilterChanged = false;
 
         this.catalogPlotType = CatalogPlotType.ImageOverlay;
         const coordinateSystem = catalogInfo.fileInfo.coosys[0];
@@ -296,6 +298,11 @@ export class CatalogOverlayWidgetStore extends RegionWidgetStore {
 
     @action.bound setColumnFilter(filter: string, columnName: string) {
         this.catalogControlHeader.get(columnName).filter = filter;
+        this.updateUserFilterChanged(true);
+    }
+
+    @action updateUserFilterChanged(val: boolean) {
+        this.userFilterChanged = val;
     }
 
     @action.bound setNumVisibleRows(val: number) {

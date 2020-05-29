@@ -437,8 +437,10 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
             widgetStore.setNumVisibleRows(0);
             widgetStore.setSubsetEndIndex(0);
             widgetStore.setLoadingDataStatus(true);
+            widgetStore.updateUserFilterChanged(false);
             this.initSelectedPointIndexs();
             let catalogFilter = widgetStore.updateRequestDataSize;
+            appStore.catalogStore.clearData(this.widgetId);
 
             // Todo filter by region Id and Imageview boundary
             catalogFilter.imageBounds.xColumnName = widgetStore.xColumnRepresentation;
@@ -648,8 +650,8 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
                     <div className="bp3-dialog-footer-actions">
                         <Tooltip content={"Apply filter"}>
                         <AnchorButton
-                            intent={Intent.PRIMARY}
-                            text="Filter"
+                            intent={widgetStore.userFilterChanged ? Intent.SUCCESS : Intent.PRIMARY}
+                            text="Update"
                             onClick={this.handleFilterClick}
                             disabled={widgetStore.loadOntoImage}
                         />

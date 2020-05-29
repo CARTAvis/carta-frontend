@@ -2,6 +2,7 @@ import * as React from "react";
 import {CARTA} from "carta-protobuf";
 import {observer} from "mobx-react";
 import {Cell, Column, Table, SelectionModes, RenderMode, ColumnHeaderCell, EditableCell, IRegion} from "@blueprintjs/table";
+import {Tooltip} from "@blueprintjs/core";
 import {IRowIndices} from "@blueprintjs/table/lib/esm/common/grid";
 import {ControlHeader} from "stores/widgets";
 import {getTableDataByType} from "utilities";
@@ -58,16 +59,17 @@ export class TableComponent extends React.Component<TableComponentProps> {
         const controlheader = this.props.filter.get(columnName);
         return (        
             <ColumnHeaderCell>
-                <ColumnHeaderCell isActive={true}>  
-                    <EditableCell
-                        className={"column-filter"}
-                        key={"column-filter-" + columnIndex}
-                        intent={"primary"}
-                        onChange={((value: string) => this.props.updateColumnFilter(value, columnName))}
-                        value={controlheader.filter ? controlheader.filter : ""}
-                    />
-                </ColumnHeaderCell> 
                 <ColumnHeaderCell name={columnName}/>
+                <ColumnHeaderCell isActive={true}>  
+                    <Tooltip content={"filter Todo"}>
+                        <EditableCell
+                            className={"column-filter"}
+                            key={"column-filter-" + columnIndex}
+                            onChange={((value: string) => this.props.updateColumnFilter(value, columnName))}
+                            value={controlheader.filter ? controlheader.filter : "Double click to filter"}
+                        />
+                    </Tooltip>
+                </ColumnHeaderCell> 
             </ColumnHeaderCell>
             
         );
