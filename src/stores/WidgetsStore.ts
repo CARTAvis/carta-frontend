@@ -37,6 +37,7 @@ import {
     StokesAnalysisWidgetStore, 
     CatalogOverlayWidgetStore, CatalogInfo, CatalogScatterWidgetStore, CatalogScatterWidgetStoreProps
 } from "./widgets";
+import {ProcessedColumnData} from "../models";
 
 export class WidgetConfig {
     id: string;
@@ -771,7 +772,7 @@ export class WidgetsStore {
         return floatingCatalogWidgetComponent;
     }
 
-    createFloatingCatalogOverlayWidget = (catalogInfo: CatalogInfo, catalogHeader: Array<CARTA.ICatalogHeader>, catalogData: CARTA.ICatalogColumnsData): {widgetStoreId: string, widgetComponentId: string} => {
+    createFloatingCatalogOverlayWidget = (catalogInfo: CatalogInfo, catalogHeader: Array<CARTA.ICatalogHeader>, catalogData: Map<number, ProcessedColumnData>): {widgetStoreId: string, widgetComponentId: string} => {
         let config = CatalogOverlayComponent.WIDGET_CONFIG;
         const widgetStoreId = this.addCatalogOverlayWidget(catalogInfo, catalogHeader, catalogData);
         const widgetComponentId = this.getNextComponentId(config);
@@ -795,7 +796,7 @@ export class WidgetsStore {
     };
 
     // add catalog overlay widget store
-    @action addCatalogOverlayWidget(catalogInfo: CatalogInfo, catalogHeader: Array<CARTA.ICatalogHeader>, catalogData: CARTA.ICatalogColumnsData, id: string = null) {
+    @action addCatalogOverlayWidget(catalogInfo: CatalogInfo, catalogHeader: Array<CARTA.ICatalogHeader>, catalogData: Map<number, ProcessedColumnData>, id: string = null) {
         // Generate new id if none passed in
         if (!id) {
             id = this.getNextId(CatalogOverlayComponent.WIDGET_CONFIG.type);

@@ -20,7 +20,7 @@ export class CatalogScatterComponent extends React.Component<WidgetProps> {
     @observable width: number;
     @observable height: number;
 
-    private readonly DataTypes = [CARTA.EntryType.DOUBLE, CARTA.EntryType.FLOAT, CARTA.EntryType.INT, CARTA.EntryType.LONGLONG];
+    private static readonly UnsupportedDataTypes = [CARTA.ColumnType.String, CARTA.ColumnType.Bool, CARTA.ColumnType.UnsupportedType];
 
     public static get WIDGET_CONFIG(): WidgetConfig {
         return {
@@ -158,13 +158,13 @@ export class CatalogScatterComponent extends React.Component<WidgetProps> {
         if (event && event.points && event.points.length > 0) {
             const catalogFileId = this.widgetStore.catalogOverlayWidgetStore.catalogInfo.fileId;
             AppStore.Instance.updateCatalogProfiles(catalogFileId);
-            let selectedPointIndexs = [];
+            let selectedPointIndices = [];
             const points = event.points;
             for (let index = 0; index < points.length; index++) {
                 const selectedPoint = points[index];
-                selectedPointIndexs.push(selectedPoint.pointIndex);
+                selectedPointIndices.push(selectedPoint.pointIndex);
             }
-            this.widgetStore.catalogOverlayWidgetStore.setselectedPointIndexs(selectedPointIndexs, true);
+            this.widgetStore.catalogOverlayWidgetStore.setSelectedPointIndices(selectedPointIndices, true);
         }
     }
 
@@ -172,7 +172,7 @@ export class CatalogScatterComponent extends React.Component<WidgetProps> {
         const catalogFileId = this.widgetStore.catalogOverlayWidgetStore.catalogInfo.fileId;
         AppStore.Instance.updateCatalogProfiles(catalogFileId);
         const catalogStore = CatalogStore.Instance;
-        this.widgetStore.catalogOverlayWidgetStore.setselectedPointIndexs([]);
+        this.widgetStore.catalogOverlayWidgetStore.setSelectedPointIndices([]);
         const storeId = this.widgetStore.catalogOverlayWidgetStore.storeId;
         this.widgetStore.catalogOverlayWidgetStore.setShowSelectedData(false);
         catalogStore.updateShowSelectedData(storeId, false);
@@ -189,7 +189,7 @@ export class CatalogScatterComponent extends React.Component<WidgetProps> {
             let selectedPointIndex = [];
             const selectedPoint = event.points[0];
             selectedPointIndex.push(selectedPoint.pointIndex);
-            this.widgetStore.catalogOverlayWidgetStore.setselectedPointIndexs(selectedPointIndex, true);
+            this.widgetStore.catalogOverlayWidgetStore.setSelectedPointIndices(selectedPointIndex, true);
         }
     }
 
@@ -217,7 +217,7 @@ export class CatalogScatterComponent extends React.Component<WidgetProps> {
         
         for (let index = 0; index < columnsName.length; index++) {
             const column = columnsName[index];
-            if (this.DataTypes.indexOf(column.dataType) !== -1) {
+            if (!CatalogScatterComponent.UnsupportedDataTypes.includes(column.dataType)) {
                 xyOptions.push(column.name); 
             }
         }
@@ -306,10 +306,10 @@ export class CatalogScatterComponent extends React.Component<WidgetProps> {
         };
         layout["hoverdistance"] = 5;
         let data = this.scatterData;
-        const selectedPointIndexs = widgetStore.catalogOverlayWidgetStore.selectedPointIndexs;
+        const selectedPointIndices = widgetStore.catalogOverlayWidgetStore.selectedPointIndices;
         let scatterDataMarker = data[0].marker;
-        if (selectedPointIndexs.length > 0) {
-            data[0]["selectedpoints"] = selectedPointIndexs;
+        if (selectedPointIndices.length > 0) {
+            data[0]["selectedpoints"] = selectedPointIndices;
             data[0]["selected"] = {"marker": {"color": Colors.RED2}};
             data[0]["unselected"] = {"marker": {"opacity": 0.5}};
         } else {

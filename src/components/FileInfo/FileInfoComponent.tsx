@@ -1,4 +1,5 @@
 import * as React from "react";
+import {observer} from "mobx-react";
 import {Pre, Tab, TabId, Tabs, NonIdealState, Spinner, Text} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import {TableComponent, TableComponentProps} from "components/Shared";
@@ -12,6 +13,7 @@ export enum FileInfoType {
     CATALOG_HEADER = "catalog-header"
 }
 
+@observer
 export class FileInfoComponent extends React.Component<{
     infoTypes: FileInfoType[],
     fileInfoExtended: CARTA.IFileInfoExtended,
