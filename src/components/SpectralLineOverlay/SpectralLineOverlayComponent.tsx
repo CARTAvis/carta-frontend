@@ -6,7 +6,7 @@ import {Cell, Column, Regions, RenderMode, SelectionModes, Table} from "@bluepri
 import ReactResizeDetector from "react-resize-detector";
 import {SafeNumericInput, TableComponent, TableComponentProps, TableType} from "components/Shared";
 import {AppStore, HelpType, WidgetConfig, WidgetProps, WidgetsStore} from "stores";
-import {RedshiftType, SPECTRAL_LINE_OPTION_DESCRIPTIONS, SpectralLineOptions, SpectralLineOverlayWidgetStore, SpectralLineQueryRangeType} from "stores/widgets";
+import {RedshiftType, SPECTRAL_LINE_OPTION_DESCRIPTIONS, SpectralLineOptions, SpectralLineOverlayWidgetStore, SpectralLineQueryRangeType, SpectralLineQueryUnit} from "stores/widgets";
 import "./SpectralLineOverlayComponent.css";
 
 enum HeaderTableColumnName {
@@ -191,16 +191,16 @@ export class SpectralLineOverlayComponent extends React.Component<WidgetProps> {
             <React.Fragment>
                 <FormGroup label="From" inline={true}>
                     <SafeNumericInput
-                        value={widgetStore.redshiftSpeed}
+                        value={widgetStore.queryRange[0]}
                         buttonPosition="none"
-                        onValueChange={val => widgetStore.setRedshiftSpeed(val)}
+                        onValueChange={val => widgetStore.setQueryRange([val, widgetStore.queryRange[1]])}
                     />
                 </FormGroup>
                 <FormGroup label="To" inline={true}>
                     <SafeNumericInput
-                        value={widgetStore.redshiftSpeed}
+                        value={widgetStore.queryRange[1]}
                         buttonPosition="none"
-                        onValueChange={val => widgetStore.setRedshiftSpeed(val)}
+                        onValueChange={val => widgetStore.setQueryRange([widgetStore.queryRange[0], val])}
                     />
                 </FormGroup>
             </React.Fragment>
@@ -210,16 +210,16 @@ export class SpectralLineOverlayComponent extends React.Component<WidgetProps> {
             <React.Fragment>
                 <FormGroup inline={true}>
                     <SafeNumericInput
-                        value={widgetStore.redshiftSpeed}
+                        value={widgetStore.queryRangeByCenter[0]}
                         buttonPosition="none"
-                        onValueChange={val => widgetStore.setRedshiftSpeed(val)}
+                        onValueChange={val => widgetStore.setQueryRangeByCenter([val, widgetStore.queryRangeByCenter[1]])}
                     />
                 </FormGroup>
                 <FormGroup label="±" inline={true}>
                     <SafeNumericInput
-                        value={widgetStore.redshiftSpeed}
+                        value={widgetStore.queryRangeByCenter[1]}
                         buttonPosition="none"
-                        onValueChange={val => widgetStore.setRedshiftSpeed(val)}
+                        onValueChange={val => widgetStore.setQueryRangeByCenter([widgetStore.queryRangeByCenter[0], val])}
                     />
                 </FormGroup>
             </React.Fragment>
@@ -227,18 +227,26 @@ export class SpectralLineOverlayComponent extends React.Component<WidgetProps> {
 
         const queryPanel = (
             <div className="query-panel">
-                <FormGroup inline={true}>
-                    <HTMLSelect
-                        options={[SpectralLineQueryRangeType.Range, SpectralLineQueryRangeType.Center]}
-                        value={widgetStore.queryRangeType}
-                        onChange={(ev) => widgetStore.setQueryRangeType(ev.currentTarget.value as SpectralLineQueryRangeType)}
-                    />
-                </FormGroup>
-                {widgetStore.queryRangeType === SpectralLineQueryRangeType.Range ? inputByRange : inputByCenter}
-                <FormGroup inline={true}>
-                    <HTMLSelect options={["GHz", "MHz", "cm", "mm"]} value={"GHz"} onChange={() => {}}/>
-                </FormGroup>
-                <Button intent={Intent.PRIMARY} small={true} onClick={this.handleQuery}>Query</Button>
+                <div className="query-panel-input">
+                    <FormGroup inline={true}>
+                        <HTMLSelect
+                            options={[SpectralLineQueryRangeType.Range, SpectralLineQueryRangeType.Center]}
+                            value={widgetStore.queryRangeType}
+                            onChange={(ev) => widgetStore.setQueryRangeType(ev.currentTarget.value as SpectralLineQueryRangeType)}
+                        />
+                    </FormGroup>
+                    {widgetStore.queryRangeType === SpectralLineQueryRangeType.Range ? inputByRange : inputByCenter}
+                    <FormGroup inline={true}>
+                        <HTMLSelect
+                            options={Object.values(SpectralLineQueryUnit)}
+                            value={widgetStore.queryUnit}
+                            onChange={(ev) => widgetStore.setQueryUnit(ev.currentTarget.value as SpectralLineQueryUnit)}
+                        />
+                    </FormGroup>
+                </div>
+                <div>
+                    <Button intent={Intent.PRIMARY} onClick={this.handleQuery}>Query</Button>
+                </div>
             </div>
         );
 

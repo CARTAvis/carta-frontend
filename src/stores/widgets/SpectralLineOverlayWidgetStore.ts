@@ -1,4 +1,5 @@
 import {action, computed, observable} from "mobx";
+import {NumberRange} from "@blueprintjs/core";
 import {Table} from "@blueprintjs/table";
 import {CARTA} from "carta-protobuf";
 import {AppStore} from "stores";
@@ -8,6 +9,13 @@ import {ProcessedColumnData} from "models";
 export enum SpectralLineQueryRangeType {
     Range = "Range",
     Center = "Center"
+}
+
+export enum SpectralLineQueryUnit {
+    GHz = "GHz",
+    MHz = "MHz",
+    CM = "cm",
+    MM = "mm"
 }
 
 export enum SpectralLineOptions {
@@ -37,6 +45,9 @@ export enum RedshiftType {
 
 export class SpectralLineOverlayWidgetStore extends RegionWidgetStore {
     @observable queryRangeType: SpectralLineQueryRangeType;
+    @observable queryRange: NumberRange;
+    @observable queryRangeByCenter: NumberRange;
+    @observable queryUnit: SpectralLineQueryUnit;
     @observable optionsDisplay: Map<SpectralLineOptions, boolean>;
     @observable redshiftType: RedshiftType;
     @observable redshiftSpeed: number;
@@ -46,7 +57,19 @@ export class SpectralLineOverlayWidgetStore extends RegionWidgetStore {
 
     @action setQueryRangeType = (queryRangeType: SpectralLineQueryRangeType) => {
         this.queryRangeType = queryRangeType;
-     };
+    };
+
+    @action setQueryRange = (queryRange: NumberRange) => {
+        this.queryRange = queryRange;
+    };
+
+    @action setQueryRangeByCenter = (queryRange: NumberRange) => {
+        this.queryRangeByCenter = queryRange;
+    };
+
+    @action setQueryUnit = (queryUnit: SpectralLineQueryUnit) => {
+        this.queryUnit = queryUnit;
+    };
 
     @action setOptionsDisplay = (option: SpectralLineOptions) => {
         this.optionsDisplay.set(option, !this.optionsDisplay.get(option));
@@ -74,6 +97,9 @@ export class SpectralLineOverlayWidgetStore extends RegionWidgetStore {
     constructor() {
         super(RegionsType.CLOSED);
         this.queryRangeType = SpectralLineQueryRangeType.Range;
+        this.queryRange = [0, 0];
+        this.queryRangeByCenter = [0, 0];
+        this.queryUnit = SpectralLineQueryUnit.GHz;
         this.optionsDisplay = new Map<SpectralLineOptions, boolean>();
         Object.values(SpectralLineOptions).forEach(option => this.optionsDisplay.set(option, false));
         this.redshiftType = RedshiftType.V;
