@@ -1,7 +1,7 @@
 import * as React from "react";
 import {action, computed, observable} from "mobx";
 import {observer} from "mobx-react";
-import {Button, Divider, FormGroup, HTMLSelect, Switch} from "@blueprintjs/core";
+import {AnchorButton, Button, Divider, FormGroup, HTMLSelect, Intent, Switch, Tooltip} from "@blueprintjs/core";
 import {Cell, Column, Regions, RenderMode, SelectionModes, Table} from "@blueprintjs/table";
 import ReactResizeDetector from "react-resize-detector";
 import {SafeNumericInput, TableComponent, TableComponentProps, TableType} from "components/Shared";
@@ -179,6 +179,10 @@ export class SpectralLineOverlayComponent extends React.Component<WidgetProps> {
         return;
     };
 
+    private handleFilter = () => {
+        return;
+    };
+
     render() {
         const appStore = AppStore.Instance;
         const widgetStore = this.widgetStore;
@@ -230,13 +234,11 @@ export class SpectralLineOverlayComponent extends React.Component<WidgetProps> {
                         onChange={(ev) => widgetStore.setQueryRangeType(ev.currentTarget.value as SpectralLineQueryRangeType)}
                     />
                 </FormGroup>
-                <Divider/>
                 {widgetStore.queryRangeType === SpectralLineQueryRangeType.Range ? inputByRange : inputByCenter}
                 <FormGroup inline={true}>
                     <HTMLSelect options={["GHz", "MHz", "cm", "mm"]} value={"GHz"} onChange={() => {}}/>
                 </FormGroup>
-                <Divider/>
-                <Button intent="success" small={true} onClick={this.handleQuery}>Query</Button>
+                <Button intent={Intent.PRIMARY} small={true} onClick={this.handleQuery}>Query</Button>
             </div>
         );
 
@@ -282,8 +284,17 @@ export class SpectralLineOverlayComponent extends React.Component<WidgetProps> {
                 <div className={"query-result-table"}>
                     <TableComponent {...queryResultTableProps}/>
                 </div>
-                <div className="spectral-line-plot">
-                    <Button intent="success" onClick={this.handlePlot}>Plot</Button>
+                <div className="bp3-dialog-footer">
+                    <div className="bp3-dialog-footer-actions">
+                        <Tooltip content={"Apply filter"}>
+                            <AnchorButton
+                                intent={Intent.PRIMARY}
+                                text="Filter"
+                                onClick={this.handleFilter}
+                            />
+                        </Tooltip>
+                        <Button intent={Intent.PRIMARY} onClick={this.handlePlot}>Plot</Button>
+                    </div>
                 </div>
                 <ReactResizeDetector handleWidth handleHeight onResize={this.onResize} refreshMode={"throttle"} refreshRate={33}/>
             </div>
