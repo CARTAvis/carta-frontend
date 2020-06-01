@@ -94,6 +94,7 @@ export class RootMenuComponent extends React.Component {
         const viewMenu = (
             <Menu>
                 <Menu.Item text="Interface" icon={"control"}>
+                    <Menu.Item text="Automatic" icon={"contrast"} onClick={appStore.setAutoTheme}/>
                     <Menu.Item text="Light" icon={"flash"} onClick={appStore.setLightTheme}/>
                     <Menu.Item text="Dark" icon={"moon"} onClick={appStore.setDarkTheme}/>
                 </Menu.Item>
