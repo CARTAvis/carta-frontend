@@ -94,6 +94,37 @@ export class SpectralLineOverlayWidgetStore extends RegionWidgetStore {
         return displayedColumnHeaders;
     }
 
+    public query = () => {
+        let freqMHzFrom = 0;
+        let freqMHzTo = 0;
+        if (this.queryRangeType === SpectralLineQueryRangeType.Range) {
+            if (this.queryUnit === SpectralLineQueryUnit.CM) {
+            } else if (this.queryUnit === SpectralLineQueryUnit.MM) {
+            } else if (this.queryUnit === SpectralLineQueryUnit.GHz) {
+                freqMHzFrom = this.queryRange[0] * 1000;
+                freqMHzTo = this.queryRange[1] * 1000;
+            } else {
+                freqMHzFrom = this.queryRange[0];
+                freqMHzTo = this.queryRange[1];
+            }
+        } else {
+            if (this.queryUnit === SpectralLineQueryUnit.CM) {
+            } else if (this.queryUnit === SpectralLineQueryUnit.MM) {
+            } else if (this.queryUnit === SpectralLineQueryUnit.GHz) {
+                freqMHzFrom = (this.queryRangeByCenter[0] - this.queryRangeByCenter[1]) * 1000;
+                freqMHzTo = (this.queryRangeByCenter[0] + this.queryRangeByCenter[1]) * 1000;
+            } else {
+                freqMHzFrom = this.queryRangeByCenter[0] - this.queryRangeByCenter[1];
+                freqMHzTo = this.queryRangeByCenter[0] + this.queryRangeByCenter[1];
+            }
+        }
+
+        const queryURL = "https://www.cv.nrao.edu/php/splat/c_export.php?submit=Search&chemical_name=&sid%5B%5D=1154&calcIn=&data_version=v3.0&redshift=&freqfile=&energy_range_from=&energy_range_to=&lill=on&displayJPL=displayJPL&displayCDMS=displayCDMS&displayLovas=displayLovas&displaySLAIM=displaySLAIM&displayToyaMA=displayToyaMA&displayOSU=displayOSU&displayRecomb=displayRecomb&displayLisa=displayLisa&displayRFI=displayRFI&ls1=ls1&ls5=ls5&el1=el1&export_type=current&export_delimiter=tab&offset=0&limit=501&range=on&submit=Export";
+        const queryLink = queryURL + `&frequency_units=MHz&from=${freqMHzFrom}&to=${freqMHzTo}`;
+
+        // TODO: send http request & parse result
+    };
+
     constructor() {
         super(RegionsType.CLOSED);
         this.queryRangeType = SpectralLineQueryRangeType.Range;

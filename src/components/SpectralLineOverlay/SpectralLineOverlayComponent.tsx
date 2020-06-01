@@ -171,10 +171,6 @@ export class SpectralLineOverlayComponent extends React.Component<WidgetProps> {
         const widgetsStore = this.widgetStore;
     }
 
-    private handleQuery = () => {
-        return;
-    };
-
     private handlePlot = () => {
         return;
     };
@@ -245,7 +241,7 @@ export class SpectralLineOverlayComponent extends React.Component<WidgetProps> {
                     </FormGroup>
                 </div>
                 <div>
-                    <Button intent={Intent.PRIMARY} onClick={this.handleQuery}>Query</Button>
+                    <Button intent={Intent.PRIMARY} onClick={widgetStore.query}>Query</Button>
                 </div>
             </div>
         );
