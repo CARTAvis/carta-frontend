@@ -695,13 +695,11 @@ export class AppStore {
 
     @action requestMoment = (message: CARTA.IMomentRequest) => {
         this.backendService.requestMoment(message).subscribe(ack => {
-            if (ack.success && ack.outputFiles) {
-                ack.outputFiles.forEach(ack => {
-                    /*
-                    if (!this.addFrame(ack, directory, hdu)) {
+            if (ack.success && ack.openFileAcks) {
+                ack.openFileAcks.forEach(openFileAck => {
+                    if (!this.addFrame(CARTA.OpenFileAck.create(openFileAck), "", "")) {
                         AppToaster.show({icon: "warning-sign", message: "Load file failed.", intent: "danger", timeout: 3000});
                     }
-                    */
                 });
             }
         }, error => {
