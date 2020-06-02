@@ -34,7 +34,7 @@ export class PreferenceDialogComponent extends React.Component {
     private renderPercentileSelectItem = (percentile: string, {handleClick, modifiers, query}) => {
         return <MenuItem text={percentile + "%"} onClick={handleClick} key={percentile}/>;
     };
-    
+
     private handleImageCompressionQualityChange = _.throttle((value: number) => {
         PreferenceStore.Instance.setPreference(PreferenceKeys.PERFORMANCE_IMAGE_COMPRESSION_QUALITY, value);
     }, 100);
@@ -87,16 +87,14 @@ export class PreferenceDialogComponent extends React.Component {
         const globalPanel = (
             <React.Fragment>
                 <FormGroup inline={true} label="Theme">
-                    <RadioGroup
-                        selectedValue={preference.theme}
-                        onChange={(ev) => {
-                            ev.currentTarget.value === Theme.LIGHT ? appStore.setLightTheme() : appStore.setDarkTheme();
-                        }}
-                        inline={true}
+                    <HTMLSelect
+                        value={preference.theme}
+                        onChange={(ev) => appStore.preferenceStore.setPreference(PreferenceKeys.GLOBAL_THEME, ev.currentTarget.value)}
                     >
-                        <Radio label="Light" value={Theme.LIGHT}/>
-                        <Radio label="Dark" value={Theme.DARK}/>
-                    </RadioGroup>
+                        <option value={Theme.AUTO}>Automatic</option>
+                        <option value={Theme.LIGHT}>Light</option>
+                        <option value={Theme.DARK}>Dark</option>
+                    </HTMLSelect>
                 </FormGroup>
                 <FormGroup inline={true} label="Auto-launch File Browser">
                     <Switch checked={preference.autoLaunch} onChange={(ev) => preference.setPreference(PreferenceKeys.GLOBAL_AUTOLAUNCH, ev.currentTarget.checked)}/>

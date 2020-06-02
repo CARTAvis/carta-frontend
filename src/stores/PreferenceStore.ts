@@ -124,7 +124,7 @@ const KEY_TO_STRING = new Map<PreferenceKeys, string>([
 
 const DEFAULTS = {
     GLOBAL: {
-        theme: Theme.LIGHT,
+        theme: Theme.AUTO,
         autoLaunch: true,
         layout: PresetLayout.DEFAULT,
         cursorPosition: CursorPosition.TRACKING,
@@ -472,11 +472,6 @@ export class PreferenceStore {
     public isEventLoggingEnabled = (eventType: CARTA.EventType): boolean => {
         return Event.isEventTypeValid(eventType) && this.preferences.get(PreferenceKeys.LOG_EVENT).get(eventType);
     };
-
-    // getters for boolean(convenient)
-    @computed get isDarkTheme(): boolean {
-        return this.theme === Theme.DARK;
-    }
 
     @computed get isZoomRAWMode(): boolean {
         return this.zoomMode === Zoom.RAW;

@@ -12,6 +12,7 @@ import {
     AnimationState,
     AnimatorStore,
     BrowserMode,
+    CatalogStore,
     CURSOR_REGION_ID,
     dayPalette,
     DialogStore,
@@ -31,13 +32,12 @@ import {
     RegionStore,
     SpatialProfileStore,
     SpectralProfileStore,
-    WidgetsStore,
-    CatalogStore
+    WidgetsStore
 } from ".";
 import {distinct, GetRequiredTiles} from "utilities";
 import {BackendService, ConnectionStatus, ScriptingService, TileService, TileStreamDetails} from "services";
-import {FrameView, Point2D, ProcessedColumnData, ProtobufProcessing, Theme, TileCoordinate, WCSMatchingType} from "models";
-import {HistogramWidgetStore, RegionWidgetStore, SpatialProfileWidgetStore, SpectralProfileWidgetStore, StatsWidgetStore, StokesAnalysisWidgetStore, CatalogInfo, CatalogUpdateMode} from "./widgets";
+import {FrameView, Point2D, ProtobufProcessing, Theme, TileCoordinate, WCSMatchingType} from "models";
+import {CatalogInfo, CatalogUpdateMode, HistogramWidgetStore, RegionWidgetStore, SpatialProfileWidgetStore, SpectralProfileWidgetStore, StatsWidgetStore, StokesAnalysisWidgetStore} from "./widgets";
 import {CatalogScatterComponent, getImageCanvas} from "components";
 import {AppToaster} from "components/Shared";
 import GitCommit from "../static/gitInfo";
@@ -229,9 +229,16 @@ export class AppStore {
         return "alt + ";
     }
 
-    // Dark theme
+    // System theme, based on media query
+    @observable systemTheme: string;
+
+    // Apply dark theme if it is forced or the system theme is dark
     @computed get darkTheme(): boolean {
-        return this.preferenceStore.isDarkTheme;
+        if (this.preferenceStore.theme === Theme.AUTO) {
+            return this.systemTheme === Theme.DARK;
+        } else {
+            return this.preferenceStore.theme === Theme.DARK;
+        }
     }
 
     // Frame actions
@@ -683,6 +690,10 @@ export class AppStore {
         this.preferenceStore.setPreference(PreferenceKeys.GLOBAL_THEME, Theme.LIGHT);
     };
 
+    @action setAutoTheme = () =>  {
+        this.preferenceStore.setPreference(PreferenceKeys.GLOBAL_THEME, Theme.AUTO);
+    }
+
     @action toggleCursorFrozen = () => {
         if (this.activeFrame) {
             this.activeFrame.cursorFrozen = !this.activeFrame.cursorFrozen;
@@ -815,6 +826,23 @@ export class AppStore {
         autorun(() => {
             document.body.style.backgroundColor = this.darkTheme ? Colors.DARK_GRAY4 : Colors.WHITE;
         });
+
+        // Watch for system theme preference changes
+        const handleThemeChange = (darkMode: boolean) => {
+            this.systemTheme = darkMode ? "dark" : "light";
+        };
+
+        const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
+        if (mediaQuery) {
+            if (mediaQuery.addEventListener) {
+                mediaQuery.addEventListener("change", changeEvent => handleThemeChange(changeEvent.matches));
+            } else if (mediaQuery.addListener) {
+                // Workaround for Safari
+                // @ts-ignore
+                mediaQuery.addListener(changeEvent => handleThemeChange(changeEvent.matches));
+            }
+        }
+        handleThemeChange(mediaQuery.matches);
 
         // Display toasts when connection status changes
         autorun(() => {
