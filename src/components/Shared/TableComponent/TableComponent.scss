@@ -12,4 +12,17 @@
     .bp3-table-header.bp3-table-header-selected::before {
         background-image: none;
     }
+    
+    .bp3-popover-target {
+        width: inherit;
+
+        .bp3-input-group {
+            .bp3-input {
+                border-radius: 0px;
+                vertical-align: baseline;
+                box-shadow: none;
+                background: #ffffff00;
+            }
+        }
+    }
 }

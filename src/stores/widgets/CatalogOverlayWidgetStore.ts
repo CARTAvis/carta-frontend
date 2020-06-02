@@ -4,6 +4,8 @@ import {Table, Regions, IRegion} from "@blueprintjs/table";
 import {CARTA} from "carta-protobuf";
 import {RegionWidgetStore, RegionsType} from "./RegionWidgetStore";
 import {SystemType} from "stores";
+import {AppStore} from "stores/AppStore";
+import {CatalogOverlayComponent} from "components";
 import {filterProcessedColumnData} from "utilities";
 import {ProcessedColumnData} from "models";
 
@@ -340,8 +342,17 @@ export class CatalogOverlayWidgetStore extends RegionWidgetStore {
         this.catalogControlHeader.get(columnName).columnWidth = width;
     }
 
-    @action.bound setColumnFilter(filter: string, columnName: string) {
-        this.catalogControlHeader.get(columnName).filter = filter;
+    @action setColumnFilter = (filter: string, columnName: string) => {
+        const current = this.catalogControlHeader.get(columnName);
+        const newHeader: ControlHeader = {
+            columnIndex: current.columnIndex,
+            dataIndex: current.dataIndex,
+            display: current.display,
+            representAs: current.representAs,
+            filter: filter,
+            columnWidth: current.columnWidth
+        };
+        this.catalogControlHeader.set(columnName, newHeader);
         this.updateUserFilterChanged(true);
     }
 
@@ -416,7 +427,7 @@ export class CatalogOverlayWidgetStore extends RegionWidgetStore {
                 if (index < CatalogOverlayWidgetStore.initDisplayedColumnSize) {
                     display = true;
                 }
-                let controlHeader: ControlHeader = {columnIndex: header.columnIndex, dataIndex: index, display: display, representAs: CatalogOverlay.NONE, filter: undefined, columnWidth: null};
+                let controlHeader: ControlHeader = {columnIndex: header.columnIndex, dataIndex: index, display: display, representAs: CatalogOverlay.NONE, filter: "", columnWidth: null};
                 controlHeaders.set(header.name, controlHeader);
             }
         }
@@ -426,14 +437,15 @@ export class CatalogOverlayWidgetStore extends RegionWidgetStore {
     @action resetFilter() {
         const controlHeaders = this.catalogControlHeader;
         controlHeaders.forEach((value, key) => {
-            value.filter = undefined;
+            value.filter = "";
         });
         this.filterDataSize = undefined;
     }
 
     @action setSelectedPointIndices = (pointIndices: Array<number>, autoScroll: boolean = false) => {
         this.selectedPointIndices = pointIndices;
-        if (pointIndices.length > 0 && this.catalogTableRef && autoScroll) {
+        const catalogComponentSize = AppStore.Instance.widgetsStore.catalogComponentSize();
+        if (pointIndices.length > 0 && this.catalogTableRef && autoScroll && catalogComponentSize) {
             this.catalogTableRef.scrollToRegion(this.autoScrollRowNumber);
         }
     };

@@ -751,7 +751,7 @@ export class WidgetsStore {
     getDockedWidgetByType(type: string): GoldenLayout.ContentItem[] {
         const layoutStore = LayoutStore.Instance;
         let matchingComponents = [];
-        if (layoutStore.dockedLayout && layoutStore.dockedLayout.root) {
+        if (layoutStore?.dockedLayout?.root) {
             matchingComponents = layoutStore.dockedLayout.root.getItemsByFilter(
                 item => {
                     const config = item.config as GoldenLayout.ReactComponentConfig;
@@ -771,6 +771,13 @@ export class WidgetsStore {
         });
         return floatingCatalogWidgetComponent;
     }
+
+    catalogComponentSize = (): number => {
+        const config = CatalogOverlayComponent.WIDGET_CONFIG;
+        const floatingCatalogWidgets = this.getFloatingWidgetByComponentId(config.componentId).length;
+        const dockedCatalogWidgets = this.getDockedWidgetByType(config.type).length;
+        return (floatingCatalogWidgets + dockedCatalogWidgets);
+    };
 
     createFloatingCatalogOverlayWidget = (catalogInfo: CatalogInfo, catalogHeader: Array<CARTA.ICatalogHeader>, catalogData: Map<number, ProcessedColumnData>): {widgetStoreId: string, widgetComponentId: string} => {
         let config = CatalogOverlayComponent.WIDGET_CONFIG;

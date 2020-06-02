@@ -1,11 +1,12 @@
 import * as React from "react";
 import {observer} from "mobx-react";
-import {Cell, Column, Table, SelectionModes, RenderMode, ColumnHeaderCell, EditableCell, IRegion} from "@blueprintjs/table";
-import {Tooltip} from "@blueprintjs/core";
+import {Cell, Column, Table, SelectionModes, RenderMode, ColumnHeaderCell, IRegion} from "@blueprintjs/table";
+import {Tooltip, PopoverPosition, InputGroup} from "@blueprintjs/core";
 import {IRowIndices} from "@blueprintjs/table/lib/esm/common/grid";
 import {CARTA} from "carta-protobuf";
 import {ControlHeader} from "stores/widgets";
 import {ProcessedColumnData} from "models";
+import "./TableComponent.css";
 
 export type ColumnFilter = { index: number, columnFilter: string };
 
@@ -66,19 +67,24 @@ export class TableComponent extends React.Component<TableComponentProps> {
     private renderColumnHeaderCell = (columnIndex: number, column: CARTA.CatalogHeader) => {
         const controlheader = this.props.filter.get(column.name);
         const filterSyntax = this.getfilterSyntax(column.dataType);
+        let active = false;
+        if (controlheader.filter !== "") {
+            active = true;
+        }
         return (
             <ColumnHeaderCell>
                 <ColumnHeaderCell name={column.name}/>
-                <ColumnHeaderCell isActive={true}>  
-                    <Tooltip content={filterSyntax}>
-                        <EditableCell
-                            className={"column-filter"}
+                <ColumnHeaderCell isActive={active}>
+                    <Tooltip content={filterSyntax} position={PopoverPosition.BOTTOM} className={"column-filter"}>
+                        <InputGroup
                             key={"column-filter-" + columnIndex}
-                            onChange={((value: string) => this.props.updateColumnFilter(value, column.name))}
-                            value={controlheader.filter ? controlheader.filter : "Double click to filter"}
+                            small={true}
+                            placeholder="Click to filter"
+                            value={controlheader.filter} 
+                            onChange={ev => this.props.updateColumnFilter(ev.currentTarget.value, column.name)}
                         />
                     </Tooltip>
-                </ColumnHeaderCell> 
+                </ColumnHeaderCell>
             </ColumnHeaderCell>
 
         );

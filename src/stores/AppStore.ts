@@ -38,7 +38,7 @@ import {distinct, GetRequiredTiles} from "utilities";
 import {BackendService, ConnectionStatus, ScriptingService, TileService, TileStreamDetails} from "services";
 import {FrameView, Point2D, ProcessedColumnData, ProtobufProcessing, Theme, TileCoordinate, WCSMatchingType} from "models";
 import {HistogramWidgetStore, RegionWidgetStore, SpatialProfileWidgetStore, SpectralProfileWidgetStore, StatsWidgetStore, StokesAnalysisWidgetStore, CatalogInfo, CatalogUpdateMode} from "./widgets";
-import {CatalogOverlayComponent, CatalogScatterComponent, getImageCanvas} from "components";
+import {CatalogScatterComponent, getImageCanvas} from "components";
 import {AppToaster} from "components/Shared";
 import GitCommit from "../static/gitInfo";
 
@@ -538,11 +538,9 @@ export class AppStore {
             if (frame && ack.success && ack.dataSize) {
                 let catalogInfo: CatalogInfo = {fileId: fileId, fileInfo: ack.fileInfo, dataSize: ack.dataSize};
                 let catalogWidgetId = null;
-                const config = CatalogOverlayComponent.WIDGET_CONFIG;
-                let floatingCatalogWidgets = this.widgetsStore.getFloatingWidgetByComponentId(config.componentId).length;
-                let dockedCatalogWidgets = this.widgetsStore.getDockedWidgetByType(config.type).length;
                 const columnData = ProtobufProcessing.ProcessCatalogData(ack.previewData);
-                if (floatingCatalogWidgets === 0 && dockedCatalogWidgets === 0) {
+                const catalogComponentSize = this.widgetsStore.catalogComponentSize();
+                if (catalogComponentSize === 0 ) {
                     const catalog = this.widgetsStore.createFloatingCatalogOverlayWidget(catalogInfo, ack.headers, columnData);
                     catalogWidgetId = catalog.widgetStoreId;
                     this.catalogProfiles.set(catalog.widgetComponentId, fileId);
@@ -795,8 +793,8 @@ export class AppStore {
         this.syncFrameToContour = true;
         this.syncContourToFrame = true;
         this.initRequirements();
-        this.catalogs = new Map();
-        this.catalogProfiles = new Map();
+        this.catalogs = new Map<string, number>();
+        this.catalogProfiles = new Map<string, number>();
 
         AST.onReady.then(() => {
             AST.setPalette(this.darkTheme ? nightPalette : dayPalette);

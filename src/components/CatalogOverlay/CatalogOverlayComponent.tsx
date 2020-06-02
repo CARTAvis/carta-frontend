@@ -9,7 +9,7 @@ import {CARTA} from "carta-protobuf";
 import {TableComponent, TableComponentProps, TableType} from "components/Shared";
 import {CatalogOverlayPlotSettingsComponent} from "./CatalogOverlayPlotSettingsComponent/CatalogOverlayPlotSettingsComponent";
 import {AppStore, HelpType, WidgetConfig, WidgetProps, WidgetsStore} from "stores";
-import {CatalogOverlay, CatalogOverlayWidgetStore, CatalogPlotType, CatalogScatterWidgetStoreProps, CatalogUpdateMode} from "stores/widgets";
+import {CatalogOverlay, CatalogOverlayWidgetStore, CatalogPlotType, CatalogScatterWidgetStoreProps, CatalogUpdateMode, ControlHeader} from "stores/widgets";
 import {toFixed} from "utilities";
 import "./CatalogOverlayComponent.css";
 import {ProcessedColumnData} from "../../models";
@@ -117,7 +117,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         appStore.removeCatalog(this.widgetId, this.props.id);
     }
 
-    @computed get tableInfo(): {dataset: Map<number, ProcessedColumnData>, numVisibleRows: number} {
+    @computed get catalogData(): {dataset: Map<number, ProcessedColumnData>, numVisibleRows: number} {
         const widgetStore = this.widgetStore;
         let dataset;
         let numVisibleRows = 0;
@@ -135,11 +135,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
     constructor(props: WidgetProps) {
         super(props);
         this.widgetId = "catalog-overlay-0";
-        const catalogFileId = AppStore.Instance.catalogProfiles.get(this.props.id);
-
-        if (catalogFileId) {
-            AppStore.Instance.catalogProfiles.set(this.props.id, catalogFileId);
-        } else {
+        if (!AppStore.Instance.catalogProfiles.has(this.props.id)) {
             AppStore.Instance.catalogProfiles.set(this.props.id, 1);
         }
 
@@ -472,8 +468,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
             widgetStore.reset();
             this.initSelectedPointIndices();
             appStore.catalogStore.clearData(this.widgetId);
-            const catalogFilter = widgetStore.initUserFilters;
-            appStore.sendCatalogFilter(catalogFilter); 
+            appStore.sendCatalogFilter(widgetStore.userFilters); 
         }
     }
 
@@ -522,21 +517,21 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
     }
 
     // source selected in table
-    private onCatalogTableDataSelected = (selectedDataIndex: number[]) => {
+    private onCatalogTableDataSelected = (selectedDataIndices: number[]) => {
         const widgetsStore = this.widgetStore;
-        if (selectedDataIndex.length === 1) {
+        if (selectedDataIndices.length === 1) {
             const selectedPointIndexs = widgetsStore.selectedPointIndices;
             let highlighted = false;
             if (selectedPointIndexs.length === 1) {
-                highlighted = selectedPointIndexs.includes(selectedDataIndex[0]);
+                highlighted = selectedPointIndexs.includes(selectedDataIndices[0]);
             }
             if (!highlighted) {
-                widgetsStore.setSelectedPointIndices(selectedDataIndex);
+                widgetsStore.setSelectedPointIndices(selectedDataIndices);
             } else {
                 widgetsStore.setSelectedPointIndices([]);
             }
         } else {
-            widgetsStore.setSelectedPointIndices(selectedDataIndex);
+            widgetsStore.setSelectedPointIndices(selectedDataIndices);
         }
     }
 
@@ -575,7 +570,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         }
 
         this.coordinate = widgetStore.catalogCoordinateSystem.coordinate;
-        const catalogTable = this.tableInfo;
+        const catalogTable = this.catalogData;
         const dataTableProps: TableComponentProps = {
             type: TableType.ColumnFilter,
             dataset: catalogTable.dataset,
@@ -612,7 +607,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         let catalogFiles = [];
         appStore.catalogs.forEach((value, key) => {
             catalogFiles.push(value);
-        }); 
+        });
 
         return (
             <div className={"catalog-overlay"}>
@@ -649,10 +644,10 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
                     <div className="bp3-dialog-footer-actions">
                         <Tooltip content={"Apply filter"}>
                         <AnchorButton
-                            intent={widgetStore.userFilterChanged ? Intent.SUCCESS : Intent.PRIMARY}
+                            intent={Intent.PRIMARY}
                             text="Update"
                             onClick={this.handleFilterClick}
-                            disabled={widgetStore.loadOntoImage}
+                            disabled={widgetStore.loadOntoImage || !widgetStore.userFilterChanged}
                         />
                         </Tooltip>
                         <Tooltip content={"Reset filter and catalog data"}>

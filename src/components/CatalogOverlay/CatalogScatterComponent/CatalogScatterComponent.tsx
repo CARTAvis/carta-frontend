@@ -180,10 +180,9 @@ export class CatalogScatterComponent extends React.Component<WidgetProps> {
 
     // Single source selected
     private onSingleSourceClick = (event: Readonly<Plotly.PlotMouseEvent>) => {
-        const appStore = AppStore.Instance;
         const dragmode: DragMode[] = ["select", "lasso"];
         const inDragmode = dragmode.includes(this.widgetStore.dragmode);
-        if (event && event.points && event.points.length > 0 && inDragmode && appStore.catalogProfiles.size > 0) {
+        if (event?.points?.length > 0 && inDragmode) {
             const catalogFileId = this.widgetStore.catalogOverlayWidgetStore.catalogInfo.fileId;
             AppStore.Instance.updateCatalogProfiles(catalogFileId);
             let selectedPointIndex = [];
