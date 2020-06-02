@@ -694,15 +694,17 @@ export class AppStore {
     };
 
     @action requestMoment = (message: CARTA.IMomentRequest) => {
+        this.fileLoading = true;
         this.backendService.requestMoment(message).subscribe(ack => {
             if (ack.success && ack.openFileAcks) {
                 ack.openFileAcks.forEach(openFileAck => {
-                    if (!this.addFrame(CARTA.OpenFileAck.create(openFileAck), "", "")) {
+                    this.addFrame(CARTA.OpenFileAck.create(openFileAck), "", "") ? this.fileCounter++ :
                         AppToaster.show({icon: "warning-sign", message: "Load file failed.", intent: "danger", timeout: 3000});
-                    }
                 });
             }
+            this.fileLoading = false;
         }, error => {
+            this.fileLoading = false;
             console.error(error);
         });
         this.restartTaskProgress();
