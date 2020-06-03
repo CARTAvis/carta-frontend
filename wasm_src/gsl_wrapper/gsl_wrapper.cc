@@ -4,6 +4,9 @@
 #include "gsl/gsl_vector.h"
 #include "gsl/gsl_sf_trig.h"
 #include "gsl/gsl_statistics.h"
+#include "gsl/gsl_statistics_double.h"
+#include "gsl/gsl_sort_int.h"
+#include <math.h>
 
 extern "C" {
 
@@ -68,6 +71,31 @@ int EMSCRIPTEN_KEEPALIVE filterHanning(double* xInArray, const int N, double* xO
     gsl_movstat_apply(GSL_MOVSTAT_END_PADVALUE, &F, &xIn.vector, &xOut.vector, w);
 
     gsl_movstat_free(w);
+
+    return status;
+}
+
+int EMSCRIPTEN_KEEPALIVE filterDecimation(double* xInArray, const int inN, int* xOutArray, const int outN, const int D) {
+    int status = 0;    /* return value: 0 = success */
+    size_t i;
+
+    for (size_t i = 0; i < inN / D; i++) {
+        size_t maxIndex, minIndex;
+        maxIndex = gsl_stats_max_index(&xInArray[i * D], 1, D);
+        minIndex = gsl_stats_min_index(&xInArray[i * D], 1, D);
+
+        xOutArray[i*2] = i * D + minIndex;
+        xOutArray[i*2 + 1] = i * D + maxIndex;
+    }
+
+    if (inN % D != 0) {
+        size_t startIndex = floor(inN / D) * D;
+        size_t maxIndex, minIndex;
+        maxIndex = gsl_stats_max_index(&xInArray[startIndex], 1, inN % D);
+        minIndex = gsl_stats_min_index(&xInArray[startIndex], 1, inN % D);
+    }
+
+    gsl_sort_int(xOutArray, 1, outN);
 
     return status;
 }

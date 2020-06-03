@@ -114,6 +114,8 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
                 }
             } else if (this.widgetStore.smoothingType === SmoothingType.HANNING) {
                 smoothingValues = GSL.hanningSmooth(coordinateData.values, this.widgetStore.smoothingHanningSize);
+            } else if (this.widgetStore.smoothingType === SmoothingType.DECIMATION) {
+                smoothingValues = GSL.decimation(coordinateData.values, this.widgetStore.smoothingDecimationValue);
             } else {
                 smoothingValues = coordinateData.values;
             }
@@ -125,11 +127,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
                 const x = channelValues[i];
                 const y = coordinateData.values[i];
                 let smoothingY;
-                if (this.widgetStore.smoothingType === SmoothingType.DECIMATION) {
-                    if ((i % this.widgetStore.smoothingDecimationValue) === 0 || i === channelValues.length - 1) {
-                        smoothingY = coordinateData.values[i];
-                    }
-                } else if (this.widgetStore.smoothingType !== SmoothingType.NONE) {
+                if (this.widgetStore.smoothingType !== SmoothingType.NONE) {
                     smoothingY = smoothingValues[i];
                 }
 
@@ -151,6 +149,14 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
                     ySum += y;
                     ySum2 += y * y;
                 }
+            }
+
+            if (this.widgetStore.smoothingType === SmoothingType.DECIMATION) {
+                smoothingArray.fill({x: channelValues[0], y: coordinateData.values[0]}, 0);
+                for (let i = 0; i < smoothingValues.length; i++) {
+                    smoothingArray.fill({ x: channelValues[smoothingValues[i]], y: coordinateData.values[smoothingValues[i]]}, smoothingValues[i]);
+                }
+                smoothingArray.fill({x: channelValues[channelValues.length - 1], y: coordinateData.values[coordinateData.values.length - 1]}, smoothingArray.length - 1);
             }
 
             if (yCount > 0) {
