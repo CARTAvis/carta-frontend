@@ -1073,20 +1073,21 @@ export class AppStore {
 
         frameHistogramMap.set(regionHistogramData.regionId, regionHistogramData);
 
-        const updatedFrame = this.getFrame(regionHistogramData.fileId);
-
         // Add histogram to pending histogram list
-        if (updatedFrame && regionHistogramData.regionId === -1) {
+        if (regionHistogramData.regionId === -1) {
             regionHistogramData.histograms.forEach(histogram => {
                 const key = `${regionHistogramData.fileId}_${regionHistogramData.stokes}_${histogram.channel}`;
                 this.pendingChannelHistograms.set(key, regionHistogramData);
             });
-        } else if (updatedFrame && regionHistogramData.regionId === -2) {
+        } else if (regionHistogramData.regionId === -2) {
             // Update cube histogram if it is still required
-            const cubeHist = regionHistogramData.histograms[0];
-            if (cubeHist && (updatedFrame.renderConfig.useCubeHistogram || updatedFrame.renderConfig.useCubeHistogramContours)) {
-                updatedFrame.renderConfig.updateCubeHistogram(cubeHist, regionHistogramData.progress);
-                this.updateTaskProgress(regionHistogramData.progress);
+            const updatedFrame = this.getFrame(regionHistogramData.fileId);
+            if (updatedFrame) {
+                const cubeHist = regionHistogramData.histograms[0];
+                if (cubeHist && (updatedFrame.renderConfig.useCubeHistogram || updatedFrame.renderConfig.useCubeHistogramContours)) {
+                    updatedFrame.renderConfig.updateCubeHistogram(cubeHist, regionHistogramData.progress);
+                    this.updateTaskProgress(regionHistogramData.progress);
+                }
             }
         }
     };
