@@ -3,91 +3,101 @@
     width: 100%;
     padding: 20px;
 
-    .bp3-numeric-input {
-        .bp3-input-group {
-            width: 80px;
-        }
-    }
+    .bp3-dialog-body {
+        margin: 0;
 
-    .bp3-form-group {
-        margin: 0 10px 0 0;
-        .bp3-label {
-            text-align: right;
-        }
-    }
-
-    .query-panel {
-        display: flex;
-        flex-direction: row;
-        flex-wrap: wrap;
-        justify-content: space-between;
-        margin: 0 5px 5px 0;
-        .query-panel-input {
-            display: flex;
-            flex-direction: row;
-        }
-    }
-
-    .header-table {
-        overflow: auto;
-        height: 40%;
-        width: 100%;
-        padding-left: 5px;
-        padding-right: 5px;
-        padding-top: 5px;
-        padding-bottom: 4px;
-
-        .bp3-table-container {
-            width: 100%;
-
-            .bp3-table-header {
-                line-height: 220%;
-            }
-
-            .header-table-cell {
-                line-height: 250%;
-            }
-
-            .cell-switch-button{
-                margin: 0;
+        .bp3-numeric-input {
+            .bp3-input-group {
+                width: 80px;
             }
         }
-    }
 
-    .redshift-panel {
-        display: flex;
-        margin: 5px 0 5px 0;
-    }
+        .bp3-form-group {
+            margin: 0 10px 0 0;
+            .bp3-label {
+                text-align: right;
+            }
+        }
 
-    .query-result-table {
-        overflow: auto;
-        height: 40%;
-        width: 100%;
-        padding-left: 5px;
-        padding-right: 5px;
-        padding-bottom: 5px;
-        padding-top: 1px;
-
-        .bp3-table-container{
-            width: 100%;
-
-            .bp3-table-editable-name.bp3-editable-text::before {
-                right: 0px;
-                left: 0px;
+        .query-section {
+            height: 50%;
+            .query-panel {
+                display: flex;
+                flex-direction: row;
+                flex-wrap: wrap;
+                justify-content: space-between;
+                margin: 0 5px 5px 5px;
+                .query-panel-input {
+                    display: flex;
+                    flex-direction: row;
+                }
             }
 
-            .bp3-editable-text::before {
-                right: 0px;
-                left: 0px;
+            .header-table {
+                overflow: auto;
+                height: calc(50% - 35px - 1px);
+                width: 100%;
+                padding-left: 5px;
+                padding-right: 5px;
+                padding-top: 5px;
+                padding-bottom: 4px;
+
+                .bp3-table-container {
+                    width: 100%;
+
+                    .bp3-table-header {
+                        line-height: 220%;
+                    }
+
+                    .header-table-cell {
+                        line-height: 250%;
+                    }
+
+                    .cell-switch-button{
+                        margin: 0;
+                    }
+                }
             }
-            .column-filter {
-                width: inherit;
-                height: inherit;
+        }
+
+        .result-section {
+            height: 50%;
+            .redshift-panel {
+                display: flex;
+                margin: 10px 0 10px 5px;
+            }
+
+            .result-table {
+                overflow: auto;
+                height: calc(50% - 50px);
+                width: 100%;
+                padding-left: 5px;
+                padding-right: 5px;
+                padding-bottom: 5px;
+                padding-top: 1px;
+
+                .bp3-table-container{
+                    width: 100%;
+
+                    .bp3-table-editable-name.bp3-editable-text::before {
+                        right: 0px;
+                        left: 0px;
+                    }
+
+                    .bp3-editable-text::before {
+                        right: 0px;
+                        left: 0px;
+                    }
+                    .column-filter {
+                        width: inherit;
+                        height: inherit;
+                    }
+                }
             }
         }
     }
 
     .bp3-dialog-footer {
-        margin: 0 5px 0 0;
+        margin: 5px 5px 0 0;
     }
 }

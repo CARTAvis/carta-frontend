@@ -279,14 +279,20 @@ export class SpectralLineOverlayComponent extends React.Component<WidgetProps> {
 
         return (
             <div className={className}>
-                {queryPanel}
-                <div className="header-table">
-                    {this.createHeaderTable()}
-                </div>
-                <Divider/>
-                {redshiftPanel}
-                <div className={"query-result-table"}>
-                    <TableComponent {...queryResultTableProps}/>
+                <div className="bp3-dialog-body">
+                    <div className="query-section">
+                        {queryPanel}
+                        <div className="header-table">
+                            {this.createHeaderTable()}
+                        </div>
+                    </div>
+                    <Divider/>
+                    <div className="result-section">
+                        {redshiftPanel}
+                        <div className={"result-table"}>
+                            <TableComponent {...queryResultTableProps}/>
+                        </div>
+                    </div>
                 </div>
                 <div className="bp3-dialog-footer">
                     <div className="bp3-dialog-footer-actions">
