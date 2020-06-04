@@ -12,6 +12,7 @@ import {
     AnimationState,
     AnimatorStore,
     BrowserMode,
+    CatalogStore,
     CURSOR_REGION_ID,
     dayPalette,
     DialogStore,
@@ -31,13 +32,12 @@ import {
     RegionStore,
     SpatialProfileStore,
     SpectralProfileStore,
-    WidgetsStore,
-    CatalogStore
+    WidgetsStore
 } from ".";
 import {distinct, GetRequiredTiles} from "utilities";
 import {BackendService, ConnectionStatus, ScriptingService, TileService, TileStreamDetails} from "services";
 import {FrameView, Point2D, ProtobufProcessing, Theme, TileCoordinate, WCSMatchingType} from "models";
-import {HistogramWidgetStore, RegionWidgetStore, SpatialProfileWidgetStore, SpectralProfileWidgetStore, StatsWidgetStore, StokesAnalysisWidgetStore, CatalogInfo, CatalogUpdateMode} from "./widgets";
+import {CatalogInfo, CatalogUpdateMode, HistogramWidgetStore, RegionWidgetStore, SpatialProfileWidgetStore, SpectralProfileWidgetStore, StatsWidgetStore, StokesAnalysisWidgetStore} from "./widgets";
 import {CatalogOverlayComponent, CatalogScatterComponent, getImageCanvas} from "components";
 import {AppToaster} from "components/Shared";
 import GitCommit from "../static/gitInfo";
@@ -227,9 +227,16 @@ export class AppStore {
         return "alt + ";
     }
 
-    // Dark theme
+    // System theme, based on media query
+    @observable systemTheme: string;
+
+    // Apply dark theme if it is forced or the system theme is dark
     @computed get darkTheme(): boolean {
-        return this.preferenceStore.isDarkTheme;
+        if (this.preferenceStore.theme === Theme.AUTO) {
+            return this.systemTheme === Theme.DARK;
+        } else {
+            return this.preferenceStore.theme === Theme.DARK;
+        }
     }
 
     // Frame actions
@@ -528,19 +535,22 @@ export class AppStore {
 
         const frame = this.activeFrame;
         const fileId = this.catalogNum + 1;
+
+        console.time(`CatalogLoad_${file}`);
         this.backendService.loadCatalogFile(directory, file, fileId, previewDataSize).subscribe(ack => {
             this.fileLoading = false;
+            console.timeEnd(`CatalogLoad_${file}`);
             if (frame && ack.success && ack.dataSize) {
                 let catalogInfo: CatalogInfo = {fileId: fileId, fileInfo: ack.fileInfo, dataSize: ack.dataSize};
                 let catalogWidgetId = null;
                 const config = CatalogOverlayComponent.WIDGET_CONFIG;
                 let floatingCatalogWidgets = this.widgetsStore.getFloatingWidgetByComponentId(config.componentId).length;
                 let dockedCatalogWidgets = this.widgetsStore.getDockedWidgetByType(config.type).length;
-
+                const columnData = ProtobufProcessing.ProcessCatalogData(ack.previewData);
                 if (floatingCatalogWidgets === 0 && dockedCatalogWidgets === 0) {
-                    catalogWidgetId = this.widgetsStore.createFloatingCatalogOverlayWidget(catalogInfo, ack.headers, ack.columnsData);
+                    catalogWidgetId = this.widgetsStore.createFloatingCatalogOverlayWidget(catalogInfo, ack.headers, columnData);
                 } else {
-                    catalogWidgetId = this.widgetsStore.addCatalogOverlayWidget(catalogInfo, ack.headers, ack.columnsData);
+                    catalogWidgetId = this.widgetsStore.addCatalogOverlayWidget(catalogInfo, ack.headers, columnData);
                 }
                 if (catalogWidgetId) {
                     this.catalogs.set(catalogWidgetId, fileId);
@@ -555,7 +565,7 @@ export class AppStore {
         });
     };
 
-    @action reomveCatalog(catalogWidgetId: string, catalogComponentId: string) {
+    @action removeCatalog(catalogWidgetId: string, catalogComponentId: string) {
         const fileId = this.catalogs.get(catalogWidgetId);
         if (fileId > -1 && this.backendService.closeCatalogFile(fileId)) {
             // close all associated scatter widgets
@@ -665,6 +675,10 @@ export class AppStore {
     @action setLightTheme = () => {
         this.preferenceStore.setPreference(PreferenceKeys.GLOBAL_THEME, Theme.LIGHT);
     };
+
+    @action setAutoTheme = () =>  {
+        this.preferenceStore.setPreference(PreferenceKeys.GLOBAL_THEME, Theme.AUTO);
+    }
 
     @action toggleCursorFrozen = () => {
         if (this.activeFrame) {
@@ -797,6 +811,23 @@ export class AppStore {
         autorun(() => {
             document.body.style.backgroundColor = this.darkTheme ? Colors.DARK_GRAY4 : Colors.WHITE;
         });
+
+        // Watch for system theme preference changes
+        const handleThemeChange = (darkMode: boolean) => {
+            this.systemTheme = darkMode ? "dark" : "light";
+        };
+
+        const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
+        if (mediaQuery) {
+            if (mediaQuery.addEventListener) {
+                mediaQuery.addEventListener("change", changeEvent => handleThemeChange(changeEvent.matches));
+            } else if (mediaQuery.addListener) {
+                // Workaround for Safari
+                // @ts-ignore
+                mediaQuery.addListener(changeEvent => handleThemeChange(changeEvent.matches));
+            }
+        }
+        handleThemeChange(mediaQuery.matches);
 
         // Display toasts when connection status changes
         autorun(() => {
@@ -1085,7 +1116,8 @@ export class AppStore {
         const progress = catalogFilter.progress;
         const catalogWidgetStore = this.widgetsStore.catalogOverlayWidgets.get(catalogWidgetId);
         if (catalogWidgetStore) {
-            catalogWidgetStore.updateCatalogData(catalogFilter);
+            const catalogData = ProtobufProcessing.ProcessCatalogData(catalogFilter.columns);
+            catalogWidgetStore.updateCatalogData(catalogFilter, catalogData);
             catalogWidgetStore.setProgress(progress);
             if (progress === 1) {
                 catalogWidgetStore.setLoadingDataStatus(false);
@@ -1096,7 +1128,7 @@ export class AppStore {
                 const xColumn = catalogWidgetStore.xColumnRepresentation;
                 const yColumn = catalogWidgetStore.yColumnRepresentation;
                 if (xColumn && yColumn) {
-                    const coords = catalogWidgetStore.get2DPlotData(xColumn, yColumn, catalogFilter.columnsData);
+                    const coords = catalogWidgetStore.get2DPlotData(xColumn, yColumn, catalogData);
                     const wcs = this.activeFrame.validWcs ? this.activeFrame.wcsInfo : 0;
                     this.catalogStore.updateCatalogData(catalogWidgetId, coords.wcsX, coords.wcsY, wcs, coords.xHeaderInfo.units, coords.yHeaderInfo.units, catalogWidgetStore.catalogCoordinateSystem.system);
                 }
