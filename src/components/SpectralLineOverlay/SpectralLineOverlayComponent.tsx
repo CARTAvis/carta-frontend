@@ -1,7 +1,7 @@
 import * as React from "react";
 import {action, computed, observable} from "mobx";
 import {observer} from "mobx-react";
-import {AnchorButton, Button, Divider, FormGroup, HTMLSelect, Intent, Switch, Tooltip} from "@blueprintjs/core";
+import {AnchorButton, Button, Classes, Divider, FormGroup, HTMLSelect, Intent, Overlay, Spinner, Switch, Tooltip} from "@blueprintjs/core";
 import {Cell, Column, Regions, RenderMode, SelectionModes, Table} from "@blueprintjs/table";
 import ReactResizeDetector from "react-resize-detector";
 import {SafeNumericInput, TableComponent, TableComponentProps, TableType} from "components/Shared";
@@ -306,6 +306,11 @@ export class SpectralLineOverlayComponent extends React.Component<WidgetProps> {
                         <Button intent={Intent.PRIMARY} onClick={this.handlePlot}>Plot</Button>
                     </div>
                 </div>
+                <Overlay className={Classes.OVERLAY_SCROLL_CONTAINER} autoFocus={true} canEscapeKeyClose={false} canOutsideClickClose={false} isOpen={widgetStore.isQuerying} usePortal={false}>
+                    <div className="spinner">
+                        <Spinner intent={Intent.PRIMARY} size={30} value={null}/>
+                    </div>
+                </Overlay>
                 <ReactResizeDetector handleWidth handleHeight onResize={this.onResize} refreshMode={"throttle"} refreshRate={33}/>
             </div>
         );

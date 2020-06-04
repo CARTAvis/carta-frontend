@@ -48,6 +48,7 @@ export class SpectralLineOverlayWidgetStore extends RegionWidgetStore {
     @observable queryRange: NumberRange;
     @observable queryRangeByCenter: NumberRange;
     @observable queryUnit: SpectralLineQueryUnit;
+    @observable isQuerying: boolean;
     @observable optionsDisplay: Map<SpectralLineOptions, boolean>;
     @observable redshiftType: RedshiftType;
     @observable redshiftSpeed: number;
@@ -122,7 +123,16 @@ export class SpectralLineOverlayWidgetStore extends RegionWidgetStore {
         const queryURL = "https://www.cv.nrao.edu/php/splat/c_export.php?submit=Search&chemical_name=&sid%5B%5D=1154&calcIn=&data_version=v3.0&redshift=&freqfile=&energy_range_from=&energy_range_to=&lill=on&displayJPL=displayJPL&displayCDMS=displayCDMS&displayLovas=displayLovas&displaySLAIM=displaySLAIM&displayToyaMA=displayToyaMA&displayOSU=displayOSU&displayRecomb=displayRecomb&displayLisa=displayLisa&displayRFI=displayRFI&ls1=ls1&ls5=ls5&el1=el1&export_type=current&export_delimiter=tab&offset=0&limit=501&range=on&submit=Export";
         const queryLink = queryURL + `&frequency_units=MHz&from=${freqMHzFrom}&to=${freqMHzTo}`;
 
-        // TODO: send http request & parse result
+        this.isQuerying = true;
+        fetch(queryLink, {
+            mode: 'no-cors'
+        }).then(response => {
+            this.isQuerying = false;
+            console.log(response.text());
+        }).catch((err) => {
+            this.isQuerying = false;
+            console.log(err);
+        });
     };
 
     constructor() {
@@ -131,6 +141,7 @@ export class SpectralLineOverlayWidgetStore extends RegionWidgetStore {
         this.queryRange = [0, 0];
         this.queryRangeByCenter = [0, 0];
         this.queryUnit = SpectralLineQueryUnit.GHz;
+        this.isQuerying = false;
         this.optionsDisplay = new Map<SpectralLineOptions, boolean>();
         Object.values(SpectralLineOptions).forEach(option => this.optionsDisplay.set(option, false));
         this.redshiftType = RedshiftType.V;
