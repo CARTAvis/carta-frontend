@@ -1136,7 +1136,7 @@ export class AppStore {
             catalogWidgetStore.setProgress(progress);
             if (progress === 1) {
                 catalogWidgetStore.setLoadingDataStatus(false);
-                catalogWidgetStore.setPlotingData(false);
+                catalogWidgetStore.setUpdatingDataStream(false);
             }
 
             if (catalogWidgetStore.updateMode === CatalogUpdateMode.ViewUpdate) {

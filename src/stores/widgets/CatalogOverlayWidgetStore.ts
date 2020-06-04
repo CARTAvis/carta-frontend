@@ -5,7 +5,6 @@ import {CARTA} from "carta-protobuf";
 import {RegionWidgetStore, RegionsType} from "./RegionWidgetStore";
 import {SystemType} from "stores";
 import {AppStore} from "stores/AppStore";
-import {CatalogOverlayComponent} from "components";
 import {filterProcessedColumnData} from "utilities";
 import {ProcessedColumnData} from "models";
 
@@ -109,9 +108,9 @@ export class CatalogOverlayWidgetStore extends RegionWidgetStore {
     @observable catalogColor: string;
     @observable catalogShape: CatalogOverlayShape;
     @observable subsetEndIndex: number;
-    @observable plotingData: boolean;
+    @observable updatingDataStream: boolean;
     @observable updateMode: CatalogUpdateMode;
-    @observable userFilters: CARTA.CatalogFilterRequest;
+    @observable catalogFilterRequest: CARTA.CatalogFilterRequest;
     @observable catalogCoordinateSystem: { system: SystemType, equinox: string, epoch: string, coordinate: { x: CatalogOverlay, y: CatalogOverlay } };
     @observable catalogPlotType: CatalogPlotType;
     @observable catalogScatterWidgetsId: string[];
@@ -120,6 +119,7 @@ export class CatalogOverlayWidgetStore extends RegionWidgetStore {
     @observable showSelectedData: boolean;
     @observable catalogTableRef: Table;
     @observable userFilterChanged: boolean;
+    @observable sortingInfo: {columnName: string, sortingType: CARTA.SortingType};
 
     constructor(catalogInfo: CatalogInfo, catalogHeader: Array<CARTA.ICatalogHeader>, catalogData: Map<number, ProcessedColumnData>, id: string) {
         super(RegionsType.CLOSED_AND_POINT);
@@ -134,8 +134,8 @@ export class CatalogOverlayWidgetStore extends RegionWidgetStore {
         this.catalogColor = Colors.TURQUOISE3;
         this.catalogSize = 5;
         this.catalogShape = CatalogOverlayShape.Circle;
-        this.userFilters = this.initUserFilters;
-        this.plotingData = false;
+        this.catalogFilterRequest = this.initCatalogFilterRequest;
+        this.updatingDataStream = false;
         this.updateMode = CatalogUpdateMode.TableUpdate;
         this.headerTableColumnWidts = [75, 75, 65, 100, null];
         this.catalogScatterWidgetsId = [];
@@ -144,6 +144,7 @@ export class CatalogOverlayWidgetStore extends RegionWidgetStore {
         this.showSelectedData = false;
         this.catalogTableRef = undefined;
         this.userFilterChanged = false;
+        this.sortingInfo = {columnName: null, sortingType: null};
 
         this.catalogPlotType = CatalogPlotType.ImageOverlay;
         const coordinateSystem = catalogInfo.fileInfo.coosys[0];
@@ -208,8 +209,8 @@ export class CatalogOverlayWidgetStore extends RegionWidgetStore {
         this.catalogCoordinateSystem.coordinate = this.systemCoordinateMap.get(catalogSystem);
     }
 
-    @action setUserFilter(userFilters: CARTA.CatalogFilterRequest) {
-        this.userFilters = userFilters;
+    @action setUserFilter(catalogFilterRequest: CARTA.CatalogFilterRequest) {
+        this.catalogFilterRequest = catalogFilterRequest;
     }
 
     @action setProgress(val: number) {
@@ -222,6 +223,10 @@ export class CatalogOverlayWidgetStore extends RegionWidgetStore {
 
     @action setUpdateMode(mode: CatalogUpdateMode) {
         this.updateMode = mode;
+    }
+
+    @action setSortingInfo(columnName: string, sortingType: CARTA.SortingType) {
+        this.sortingInfo = {columnName, sortingType};
     }
 
     private static  FillAllocatedArray<T>(existingArray: Array<T>, newArray: Array<T>, insertionIndex: number, allocationSize: number): Array<T> {
@@ -396,23 +401,35 @@ export class CatalogOverlayWidgetStore extends RegionWidgetStore {
         this.catalogShape = shape;
     }
 
-    @action setPlotingData(val: boolean) {
-        this.plotingData = val;
+    @action setUpdatingDataStream(val: boolean) {
+        this.updatingDataStream = val;
     }
 
-    @action.bound reset() {
+    @action resetCatalogFilterRequest = () => {
+        this.resetFilterRequestControlParams();
+        this.resetUserFilters();
+        this.loadingData = false;
+        this.catalogFilterRequest = this.initCatalogFilterRequest;
+        this.updatingDataStream = false;
+        this.sortingInfo.columnName = null;
+        this.sortingInfo.sortingType = null;
+    }
+
+    @action resetFilterRequestControlParams() {
+        this.setUpdateMode(CatalogUpdateMode.TableUpdate);
         this.clearData();
         this.setNumVisibleRows(0);
+        this.setSubsetEndIndex(0);
         this.setLoadingDataStatus(true);
-        this.resetFilter();
-        this.loadingData = false;
-        this.userFilters = this.initUserFilters;
-        this.updateMode = CatalogUpdateMode.TableUpdate;
-        this.plotingData = false;
     }
 
+    @action resetSelectedPointIndices () {
+        this.setSelectedPointIndices([]);
+        this.setShowSelectedData(false);
+    } 
+
     @computed get loadOntoImage() {
-        return (this.loadingData || this.plotingData);
+        return (this.loadingData || this.updatingDataStream);
     }
 
     @computed get initCatalogControlHeader() {
@@ -434,7 +451,7 @@ export class CatalogOverlayWidgetStore extends RegionWidgetStore {
         return controlHeaders;
     }
 
-    @action resetFilter() {
+    @action resetUserFilters() {
         const controlHeaders = this.catalogControlHeader;
         controlHeaders.forEach((value, key) => {
             value.filter = "";
@@ -470,7 +487,7 @@ export class CatalogOverlayWidgetStore extends RegionWidgetStore {
         return columnWidts;
     }
 
-    @computed get initUserFilters(): CARTA.CatalogFilterRequest {
+    @computed get initCatalogFilterRequest(): CARTA.CatalogFilterRequest {
         let catalogFilter: CARTA.CatalogFilterRequest = new CARTA.CatalogFilterRequest();
         let imageBounds: CARTA.CatalogImageBounds = new CARTA.CatalogImageBounds();
         const previewDatasize = CatalogOverlayWidgetStore.InitTableRows;
@@ -480,6 +497,8 @@ export class CatalogOverlayWidgetStore extends RegionWidgetStore {
         catalogFilter.subsetStartIndex = 0;
         catalogFilter.imageBounds = imageBounds;
         catalogFilter.regionId = null;
+        catalogFilter.sortColumn = null;
+        catalogFilter.sortingType = null;
 
         if (this.catalogInfo.dataSize < previewDatasize) {
             catalogFilter.subsetDataSize = this.catalogInfo.dataSize;
@@ -491,18 +510,18 @@ export class CatalogOverlayWidgetStore extends RegionWidgetStore {
     }
 
     @computed get updateRequestDataSize() {
-        this.userFilters.subsetStartIndex = this.subsetEndIndex;
+        this.catalogFilterRequest.subsetStartIndex = this.subsetEndIndex;
         const dataSize = this.catalogInfo.dataSize - this.numVisibleRows;
         if (this.updateMode === CatalogUpdateMode.TableUpdate) {
             let subsetDataSize = CatalogOverlayWidgetStore.DataChunkSize;
             if (dataSize < subsetDataSize && dataSize > 0) {
                 subsetDataSize = dataSize;
             }
-            this.userFilters.subsetDataSize = subsetDataSize;
+            this.catalogFilterRequest.subsetDataSize = subsetDataSize;
         } else {
-            this.userFilters.subsetDataSize = dataSize;
+            this.catalogFilterRequest.subsetDataSize = dataSize;
         }
-        return this.userFilters;
+        return this.catalogFilterRequest;
     }
 
     @computed get shouldUpdateData(): boolean {
@@ -514,7 +533,7 @@ export class CatalogOverlayWidgetStore extends RegionWidgetStore {
     }
 
     @computed get enableLoadButton(): boolean {
-        return (this.xColumnRepresentation !== null && this.yColumnRepresentation !== null && !this.loadingData && !this.plotingData);
+        return (this.xColumnRepresentation !== null && this.yColumnRepresentation !== null && !this.loadingData && !this.updatingDataStream);
     }
 
     @computed get xColumnRepresentation(): string {

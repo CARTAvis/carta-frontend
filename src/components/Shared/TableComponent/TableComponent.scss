@@ -1,3 +1,18 @@
+.column-name {
+    user-select: none;
+    .lable {
+        margin: 0px;
+    }
+
+    .sort-icon {
+        margin-right: 5px;
+    }
+}
+
+.catalog-sort-menu-item {
+    min-width: fit-content !important;
+}
+
 .column-filter {
     .bp3-table-selection-region {
         border: 0px;

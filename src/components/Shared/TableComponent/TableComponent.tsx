@@ -1,7 +1,7 @@
 import * as React from "react";
 import {observer} from "mobx-react";
 import {Cell, Column, Table, SelectionModes, RenderMode, ColumnHeaderCell, IRegion} from "@blueprintjs/table";
-import {Tooltip, PopoverPosition, InputGroup} from "@blueprintjs/core";
+import {Tooltip, PopoverPosition, InputGroup, Menu, MenuItem, Icon, Label} from "@blueprintjs/core";
 import {IRowIndices} from "@blueprintjs/table/lib/esm/common/grid";
 import {CARTA} from "carta-protobuf";
 import {ControlHeader} from "stores/widgets";
@@ -25,11 +25,13 @@ export class TableComponentProps {
     loadingCell?: boolean;
     selectedDataIndex?: number[];
     showSelectedData?: boolean;
-    upTableRef?: (ref: Table) => void;
+    updateTableRef?: (ref: Table) => void;
     updateColumnFilter?: (value: string, columnName: string) => void;
     updateByInfiniteScroll?: (rowIndexEnd: number) => void;
     updateTableColumnWidth?: (width: number, columnName: string) => void;
     updateSelectedRow?: (dataIndex: number[]) => void;
+    updateSortRequest?: (columnName: string, sortingType: CARTA.SortingType) => void;
+    sortingInfo?: {columnName: string, sortingType: CARTA.SortingType};
 }
 
 @observer
@@ -67,14 +69,57 @@ export class TableComponent extends React.Component<TableComponentProps> {
     private renderColumnHeaderCell = (columnIndex: number, column: CARTA.CatalogHeader) => {
         const controlheader = this.props.filter.get(column.name);
         const filterSyntax = this.getfilterSyntax(column.dataType);
-        let active = false;
+        const sortingInfo = this.props.sortingInfo;
+        const sortColumn = sortingInfo.columnName === column.name;
+        const sortDesc = sortingInfo.sortingType === CARTA.SortingType.Descending;
+        let activeFilter = false;
         if (controlheader.filter !== "") {
-            active = true;
+            activeFilter = true;
         }
+
+        const menuRenderer = () => {
+            let activeAsc = false;
+            let activeDesc = false;
+            if (sortColumn) {
+                if (sortDesc) {
+                    activeDesc = true;
+                } else {
+                    activeAsc = true;
+                }
+            }
+            return(
+                <Menu className="catalog-sort-menu-item">
+                    <MenuItem icon="sort-asc" active={activeAsc} onClick={() => this.props.updateSortRequest(column.name, CARTA.SortingType.Ascending)} text="Sort Asc" />
+                    <MenuItem icon="sort-desc" active={activeDesc} onClick={() => this.props.updateSortRequest(column.name, CARTA.SortingType.Descending)} text="Sort Desc" />
+                </Menu>
+            );
+        };
+
+        const nameRenderer = () => {
+            if (sortColumn) {
+                return (
+                    <Label className="bp3-inline lable">
+                        {sortDesc ? 
+                            <Icon className="sort-icon" icon={"sort-desc"} />
+                            :
+                            <Icon className="sort-icon" icon={"sort-asc"} />
+                        }   
+                        {column.name}
+                    </Label>
+                );
+            } else {
+                return (
+                    <Label className="bp3-inline lable">
+                        {column.name}
+                    </Label>
+                );
+            }
+        };
+
         return (
             <ColumnHeaderCell>
-                <ColumnHeaderCell name={column.name}/>
-                <ColumnHeaderCell isActive={active}>
+                <ColumnHeaderCell className={"column-name"} nameRenderer={nameRenderer} menuRenderer={menuRenderer}/>
+                <ColumnHeaderCell isActive={activeFilter}>
                     <Tooltip content={filterSyntax} position={PopoverPosition.BOTTOM} className={"column-filter"}>
                         <InputGroup
                             key={"column-filter-" + columnIndex}
@@ -166,7 +211,7 @@ export class TableComponent extends React.Component<TableComponentProps> {
             return (
                 <Table
                     className={"column-filter"}
-                    ref={(ref) => table.upTableRef(ref)}
+                    ref={(ref) => table.updateTableRef(ref)}
                     numRows={table.numVisibleRows}
                     renderMode={RenderMode.BATCH}
                     enableRowReordering={false}

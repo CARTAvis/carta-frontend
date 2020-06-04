@@ -192,7 +192,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         const withFilter = this.widgetStore.catalogControlHeader.get(columnName);
         this.widgetStore.setHeaderDisplay(val, columnName);
         if (val === true || (withFilter.filter !== undefined && val === false)) {
-            this.handleFilterClick();   
+            this.handleFilterRequest();   
         }   
     }
 
@@ -418,36 +418,42 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         return result;
     }
 
-    private initSelectedPointIndices = () => {
-        const widgetStore = this.widgetStore;
-        widgetStore.setSelectedPointIndices([]);
-        widgetStore.setShowSelectedData(false);
-    } 
-
-    private handleFilterClick = () => {
+    private handleFilterRequest = () => {
         const widgetStore = this.widgetStore;
         const appStore = AppStore.Instance;
         if (widgetStore && appStore) {
-            widgetStore.setUpdateMode(CatalogUpdateMode.TableUpdate);
-            widgetStore.clearData();
-            widgetStore.setNumVisibleRows(0);
-            widgetStore.setSubsetEndIndex(0);
-            widgetStore.setLoadingDataStatus(true);
             widgetStore.updateUserFilterChanged(false);
-            this.initSelectedPointIndices();
-            let catalogFilter = widgetStore.updateRequestDataSize;
+            widgetStore.resetFilterRequestControlParams();
+            widgetStore.resetSelectedPointIndices();
             appStore.catalogStore.clearData(this.widgetId);
 
+            let filter = widgetStore.updateRequestDataSize;
             // Todo filter by region Id and Imageview boundary
-            catalogFilter.imageBounds.xColumnName = widgetStore.xColumnRepresentation;
-            catalogFilter.imageBounds.yColumnName = widgetStore.yColumnRepresentation;
+            filter.imageBounds.xColumnName = widgetStore.xColumnRepresentation;
+            filter.imageBounds.yColumnName = widgetStore.yColumnRepresentation;
             
-            catalogFilter.fileId = widgetStore.catalogInfo.fileId;
-            catalogFilter.filterConfigs = this.getUserFilters();
-            catalogFilter.columnIndices = widgetStore.displayedColumnHeaders.map(v => v.columnIndex);
-            appStore.sendCatalogFilter(catalogFilter);
+            filter.fileId = widgetStore.catalogInfo.fileId;
+            filter.filterConfigs = this.getUserFilters();
+            filter.columnIndices = widgetStore.displayedColumnHeaders.map(v => v.columnIndex);
+            appStore.sendCatalogFilter(filter);
         }
     };
+
+    private updateSortRequest = (columnName: string, sortingType: CARTA.SortingType) => {
+        const widgetStore = this.widgetStore;
+        const appStore = AppStore.Instance;
+        if (widgetStore && appStore) {
+            widgetStore.resetFilterRequestControlParams();
+            widgetStore.resetSelectedPointIndices();
+            appStore.catalogStore.clearData(this.widgetId);
+
+            let filter = widgetStore.updateRequestDataSize;
+            filter.sortColumn = columnName;
+            filter.sortingType = sortingType;
+            widgetStore.setSortingInfo(columnName, sortingType);
+            appStore.sendCatalogFilter(filter);
+        }
+    }
 
     private updateByInfiniteScroll = () => {
         const widgetStore = this.widgetStore;
@@ -465,10 +471,10 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         const widgetStore = this.widgetStore;
         const appStore = AppStore.Instance;
         if (widgetStore) {
-            widgetStore.reset();
-            this.initSelectedPointIndices();
+            widgetStore.resetCatalogFilterRequest();
+            widgetStore.resetSelectedPointIndices();
             appStore.catalogStore.clearData(this.widgetId);
-            appStore.sendCatalogFilter(widgetStore.userFilters); 
+            appStore.sendCatalogFilter(widgetStore.catalogFilterRequest); 
         }
     }
 
@@ -492,7 +498,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
                     catalogStore.updateCatalogShape(id, widgetStore.catalogShape);
                 }
                 if (widgetStore.shouldUpdateData) {
-                    widgetStore.setPlotingData(true);   
+                    widgetStore.setUpdatingDataStream(true);   
                     let catalogFilter = widgetStore.updateRequestDataSize;
                     appStore.sendCatalogFilter(catalogFilter);
                 }
@@ -581,11 +587,13 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
             loadingCell: widgetStore.loadingData,
             selectedDataIndex: widgetStore.selectedPointIndices,
             showSelectedData: widgetStore.showSelectedData,
-            upTableRef: this.onCatalogDataTableRefUpdated,
+            updateTableRef: this.onCatalogDataTableRefUpdated,
             updateColumnFilter: widgetStore.setColumnFilter,
             updateByInfiniteScroll: this.updateByInfiniteScroll,
             updateTableColumnWidth: widgetStore.setTableColumnWidth,
             updateSelectedRow: this.onCatalogTableDataSelected,
+            updateSortRequest: this.updateSortRequest,
+            sortingInfo: widgetStore.sortingInfo,
         };
 
         let startIndex = 0;
@@ -646,7 +654,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
                         <AnchorButton
                             intent={Intent.PRIMARY}
                             text="Update"
-                            onClick={this.handleFilterClick}
+                            onClick={this.handleFilterRequest}
                             disabled={widgetStore.loadOntoImage || !widgetStore.userFilterChanged}
                         />
                         </Tooltip>

@@ -147,7 +147,7 @@ export class CatalogScatterComponent extends React.Component<WidgetProps> {
 
         if (catalogOverlayWidgetStore.shouldUpdateData) {
             catalogOverlayWidgetStore.setUpdateMode(CatalogUpdateMode.PlotsUpdate);
-            catalogOverlayWidgetStore.setPlotingData(true);   
+            catalogOverlayWidgetStore.setUpdatingDataStream(true);   
             let catalogFilter = catalogOverlayWidgetStore.updateRequestDataSize;
             appStore.sendCatalogFilter(catalogFilter);
         }
