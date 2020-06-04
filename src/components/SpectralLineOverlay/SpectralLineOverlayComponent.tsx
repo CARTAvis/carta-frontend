@@ -307,7 +307,7 @@ export class SpectralLineOverlayComponent extends React.Component<WidgetProps> {
                     </div>
                 </div>
                 <Overlay className={Classes.OVERLAY_SCROLL_CONTAINER} autoFocus={true} canEscapeKeyClose={false} canOutsideClickClose={false} isOpen={widgetStore.isQuerying} usePortal={false}>
-                    <div className="spinner">
+                    <div className="query-loading">
                         <Spinner intent={Intent.PRIMARY} size={30} value={null}/>
                     </div>
                 </Overlay>
