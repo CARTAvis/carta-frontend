@@ -80,19 +80,21 @@ int EMSCRIPTEN_KEEPALIVE filterDecimation(double* xInArray, const int inN, int* 
     size_t i;
 
     for (size_t i = 0; i < inN / D; i++) {
-        size_t maxIndex, minIndex;
-        maxIndex = gsl_stats_max_index(&xInArray[i * D], 1, D);
-        minIndex = gsl_stats_min_index(&xInArray[i * D], 1, D);
+        size_t* maxIndex = new size_t[1];
+        size_t* minIndex = new size_t[1];
+        gsl_stats_minmax_index(maxIndex, minIndex, &xInArray[i * D], 1, D);
 
-        xOutArray[i*2] = i * D + minIndex;
-        xOutArray[i*2 + 1] = i * D + maxIndex;
+        xOutArray[i*2] = i * D + minIndex[0];
+        xOutArray[i*2 + 1] = i * D + maxIndex[0];
     }
 
     if (inN % D != 0) {
-        size_t startIndex = floor(inN / D) * D;
-        size_t maxIndex, minIndex;
-        maxIndex = gsl_stats_max_index(&xInArray[startIndex], 1, inN % D);
-        minIndex = gsl_stats_min_index(&xInArray[startIndex], 1, inN % D);
+        size_t lastDecimation = floor(inN / D);
+        size_t* maxIndex = new size_t[1];
+        size_t* minIndex = new size_t[1];
+        gsl_stats_minmax_index(maxIndex, minIndex, &xInArray[lastDecimation * D], 1, inN % D);
+        xOutArray[lastDecimation*2] = lastDecimation * D + minIndex[0];
+        xOutArray[lastDecimation*2 + 1] = lastDecimation * D + maxIndex[0];
     }
 
     gsl_sort_int(xOutArray, 1, outN);
