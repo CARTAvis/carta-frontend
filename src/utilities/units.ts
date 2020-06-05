@@ -98,3 +98,11 @@ export function formattedArcsec(arcsec: number): string {
     }
     return arcString;
 }
+
+export function wavelengthToFrequency(meter: number) { // return in Hz
+    if (!isFinite(meter) || meter === 0) {
+        return null;
+    }
+    const c = 299792458;
+    return c / meter;
+}

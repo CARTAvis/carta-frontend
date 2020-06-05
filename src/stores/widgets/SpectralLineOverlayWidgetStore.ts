@@ -5,6 +5,7 @@ import {CARTA} from "carta-protobuf";
 import {AppStore} from "stores";
 import {RegionWidgetStore, RegionsType} from "./RegionWidgetStore";
 import {ProcessedColumnData} from "models";
+import {wavelengthToFrequency} from "utilities";
 
 export enum SpectralLineQueryRangeType {
     Range = "Range",
@@ -90,40 +91,48 @@ export class SpectralLineOverlayWidgetStore extends RegionWidgetStore {
         this.queryResultTableRef = ref;
     }
 
+    @action query = () => {
+        let valueMin = 0;
+        let valueMax = 0;
+        if (this.queryRangeType === SpectralLineQueryRangeType.Range) {
+            valueMin = this.queryRange[0];
+            valueMax = this.queryRange[1];
+        } else {
+            valueMin = this.queryRangeByCenter[0] - this.queryRangeByCenter[1];
+            valueMax = this.queryRangeByCenter[0] + this.queryRangeByCenter[1]
+        }
+
+        const freqMHzFrom = this.calculateFreqMHz(valueMin, this.queryUnit);
+        const freqMHzTo = this.calculateFreqMHz(valueMax, this.queryUnit);
+
+        if (isFinite(freqMHzFrom) && isFinite(freqMHzTo)) {
+            this.isQuerying = true;
+            console.log(`&frequency_units=MHz&from=${freqMHzFrom}&to=${freqMHzTo}`);
+        }
+
+        // TODO: send query & fetch result
+    };
+
     @computed get displayedColumnHeaders(): Array<CARTA.CatalogHeader> {
         let displayedColumnHeaders = [];
         return displayedColumnHeaders;
     }
 
-    public query = () => {
-        let freqMHzFrom = 0;
-        let freqMHzTo = 0;
-        if (this.queryRangeType === SpectralLineQueryRangeType.Range) {
-            if (this.queryUnit === SpectralLineQueryUnit.CM) {
-            } else if (this.queryUnit === SpectralLineQueryUnit.MM) {
-            } else if (this.queryUnit === SpectralLineQueryUnit.GHz) {
-                freqMHzFrom = this.queryRange[0] * 1000;
-                freqMHzTo = this.queryRange[1] * 1000;
-            } else {
-                freqMHzFrom = this.queryRange[0];
-                freqMHzTo = this.queryRange[1];
-            }
-        } else {
-            if (this.queryUnit === SpectralLineQueryUnit.CM) {
-            } else if (this.queryUnit === SpectralLineQueryUnit.MM) {
-            } else if (this.queryUnit === SpectralLineQueryUnit.GHz) {
-                freqMHzFrom = (this.queryRangeByCenter[0] - this.queryRangeByCenter[1]) * 1000;
-                freqMHzTo = (this.queryRangeByCenter[0] + this.queryRangeByCenter[1]) * 1000;
-            } else {
-                freqMHzFrom = this.queryRangeByCenter[0] - this.queryRangeByCenter[1];
-                freqMHzTo = this.queryRangeByCenter[0] + this.queryRangeByCenter[1];
-            }
+    private calculateFreqMHz = (value: number, unit: SpectralLineQueryUnit): number => {
+        if (!isFinite(value) || !unit) {
+            return null;
         }
-
-        const queryURL = "https://www.cv.nrao.edu/php/splat/c_export.php?submit=Search&chemical_name=&sid%5B%5D=1154&calcIn=&data_version=v3.0&redshift=&freqfile=&energy_range_from=&energy_range_to=&lill=on&displayJPL=displayJPL&displayCDMS=displayCDMS&displayLovas=displayLovas&displaySLAIM=displaySLAIM&displayToyaMA=displayToyaMA&displayOSU=displayOSU&displayRecomb=displayRecomb&displayLisa=displayLisa&displayRFI=displayRFI&ls1=ls1&ls5=ls5&el1=el1&export_type=current&export_delimiter=tab&offset=0&limit=501&range=on&submit=Export";
-        const queryLink = queryURL + `&frequency_units=MHz&from=${freqMHzFrom}&to=${freqMHzTo}`;
-
-        this.isQuerying = true;
+        if (unit === SpectralLineQueryUnit.CM) {
+            return wavelengthToFrequency(value / 10) / 1e6;
+        } else if (unit === SpectralLineQueryUnit.MM) {
+            return wavelengthToFrequency(value / 100) / 1e6;
+        } else if (unit === SpectralLineQueryUnit.GHz) {
+            return value * 1000;
+        } else if (unit === SpectralLineQueryUnit.MHz) {
+            return value;
+        } else {
+            return null;
+        }
     };
 
     constructor() {
