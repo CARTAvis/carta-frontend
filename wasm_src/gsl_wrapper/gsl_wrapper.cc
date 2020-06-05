@@ -102,4 +102,20 @@ int EMSCRIPTEN_KEEPALIVE filterDecimation(double* xInArray, const int inN, int* 
     return status;
 }
 
+int EMSCRIPTEN_KEEPALIVE filterBinning(double* xInArray, const int inN, double* xOutArray, const int binWidth) {
+    int status = 0;    /* return value: 0 = success */
+    size_t i;
+
+    for (size_t i = 0; i < inN / binWidth; i++) {
+        xOutArray[i] = gsl_stats_mean(&xInArray[i * binWidth], 1, binWidth);
+    }
+
+    if (inN % binWidth != 0) {
+        size_t lastBin = floor(inN / binWidth);
+        xOutArray[lastBin] = gsl_stats_mean(&xInArray[lastBin * binWidth], 1, inN % binWidth);
+    }
+
+    return status;
+}
+
 }

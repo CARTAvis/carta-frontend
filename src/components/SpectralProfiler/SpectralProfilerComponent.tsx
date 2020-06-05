@@ -116,6 +116,8 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
                 smoothingValues = GSL.hanningSmooth(coordinateData.values, this.widgetStore.smoothingHanningSize);
             } else if (this.widgetStore.smoothingType === SmoothingType.DECIMATION) {
                 smoothingValues = GSL.decimation(coordinateData.values, this.widgetStore.smoothingDecimationValue);
+            } else if (this.widgetStore.smoothingType === SmoothingType.BINNING) {
+                smoothingValues = GSL.binning(coordinateData.values, this.widgetStore.smoothingBinWidth);
             } else {
                 smoothingValues = coordinateData.values;
             }
@@ -123,9 +125,10 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
             let smoothingMap: Map<string, Point2D[]> = new Map<string, Point2D[]>();
             let values: Array<{ x: number, y: number }> = [];
             let smoothingArray: Array<{ x: number, y: number }> = [];
-            for (let i = 0; i < channelValues.length; i++) {
-                const x = channelValues[i];
-                const y = coordinateData.values[i];
+            const plotChannel = (this.widgetStore.smoothingType === SmoothingType.BINNING) ? GSL.binning(channelValues, this.widgetStore.smoothingBinWidth) : channelValues;
+            for (let i = 0; i < plotChannel.length; i++) {
+                const x = plotChannel[i];
+                const y = (this.widgetStore.smoothingType === SmoothingType.BINNING) ? smoothingValues[i] : coordinateData.values[i];
                 let smoothingY;
                 if (this.widgetStore.smoothingType !== SmoothingType.NONE) {
                     smoothingY = smoothingValues[i];
@@ -151,12 +154,12 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
                 }
             }
 
-            if (this.widgetStore.smoothingType === SmoothingType.DECIMATION) {
-                smoothingArray.fill({x: channelValues[0], y: coordinateData.values[0]}, 0);
+            if (this.widgetStore.smoothingType === SmoothingType.DECIMATION ) {
+                smoothingArray.fill({x: plotChannel[0], y: coordinateData.values[0]}, 0);
                 for (let i = 0; i < smoothingValues.length; i++) {
-                    smoothingArray.fill({ x: channelValues[smoothingValues[i]], y: coordinateData.values[smoothingValues[i]]}, smoothingValues[i]);
+                    smoothingArray.fill({ x: plotChannel[smoothingValues[i]], y: coordinateData.values[smoothingValues[i]]}, smoothingValues[i]);
                 }
-                smoothingArray.fill({x: channelValues[channelValues.length - 1], y: coordinateData.values[coordinateData.values.length - 1]}, smoothingArray.length - 1);
+                smoothingArray.fill({x: plotChannel[plotChannel.length - 1], y: coordinateData.values[coordinateData.values.length - 1]}, smoothingArray.length - 1);
             }
 
             if (yCount > 0) {
@@ -398,7 +401,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
                 linePlotProps.lineColor = primaryLineColor;
                 if (this.widgetStore.smoothingType !== SmoothingType.NONE) {
                     linePlotProps.multiPlotData = currentPlotData.smoothingMap;
-                    if (!this.widgetStore.isSmoothingOverlayOn) {
+                    if (!this.widgetStore.isSmoothingOverlayOn || this.widgetStore.smoothingType === SmoothingType.BINNING) {
                         linePlotProps.lineColor = "#00000000";
                     }
                     linePlotProps.multiPlotBorderColor.set("smoothing", this.widgetStore.smoothingLineColor.colorHex);

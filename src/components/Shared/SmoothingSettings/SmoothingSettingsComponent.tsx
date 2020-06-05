@@ -27,7 +27,8 @@ export class SmoothingSettingsComponent extends React.Component<{widgetStore: Sp
             {value: SmoothingType.BOXCAR, label: "Boxcar"},
             {value: SmoothingType.GAUSSIAN, label: "Gaussian"},
             {value: SmoothingType.HANNING, label: "Hanning"},
-            {value: SmoothingType.DECIMATION, label: "Decimation"}
+            {value: SmoothingType.DECIMATION, label: "Decimation"},
+            {value: SmoothingType.BINNING, label: "Binning"}
         ];
 
         return (
@@ -66,6 +67,10 @@ export class SmoothingSettingsComponent extends React.Component<{widgetStore: Sp
                             onValueChange={(value: number) => widgetStore.setSmoothingLineWidth(value)}
                         />
                     </FormGroup>
+                </React.Fragment>
+                }
+                {(widgetStore.smoothingType !== SmoothingType.NONE && widgetStore.smoothingType !== SmoothingType.BINNING) &&
+                <React.Fragment>
                     <FormGroup label={"Overlay"} inline={true}>
                         <Switch checked={widgetStore.isSmoothingOverlayOn} onChange={(ev) => widgetStore.setIsSmoothingOverlayOn(ev.currentTarget.checked)}/>
                     </FormGroup>
@@ -111,6 +116,17 @@ export class SmoothingSettingsComponent extends React.Component<{widgetStore: Sp
                         stepSize={1}
                         className="narrow"
                         onValueChange={val => widgetStore.setSmoothingDecimationValue(Math.round(val))}
+                    />
+                </FormGroup>
+                }
+                {(widgetStore.smoothingType === SmoothingType.BINNING) &&
+                <FormGroup label={"Binning Width"} inline={true}>
+                    <SafeNumericInput
+                        value={widgetStore.smoothingBinWidth}
+                        min={2}
+                        stepSize={1}
+                        className="narrow"
+                        onValueChange={val => widgetStore.setSmoothingBinWidth(Math.round(val))}
                     />
                 </FormGroup>
                 }

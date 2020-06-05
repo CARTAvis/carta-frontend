@@ -35,6 +35,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
     @observable smoothingGaussianSigma: number = 1.0;
     @observable smoothingHanningSize: number = 3;
     @observable smoothingDecimationValue: number = 2;
+    @observable smoothingBinWidth: number = 2;
 
     public static StatsTypeString(statsType: CARTA.StatsType) {
         switch (statsType) {
@@ -196,6 +197,10 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
 
     @action setSmoothingDecimationValue = (val: number) => {
         this.smoothingDecimationValue = val;
+    }
+
+    @action setSmoothingBinWidth = (val: number) => {
+        this.smoothingBinWidth = val;
     }
 
     constructor(coordinate: string = "z") {
