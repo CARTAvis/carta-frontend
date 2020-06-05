@@ -124,15 +124,6 @@ export class SpectralLineOverlayWidgetStore extends RegionWidgetStore {
         const queryLink = queryURL + `&frequency_units=MHz&from=${freqMHzFrom}&to=${freqMHzTo}`;
 
         this.isQuerying = true;
-        fetch(queryLink, {
-            mode: 'no-cors'
-        }).then(response => {
-            this.isQuerying = false;
-            console.log(response.text());
-        }).catch((err) => {
-            this.isQuerying = false;
-            console.log(err);
-        });
     };
 
     constructor() {
