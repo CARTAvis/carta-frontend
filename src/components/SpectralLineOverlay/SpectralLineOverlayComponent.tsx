@@ -6,7 +6,7 @@ import {Cell, Column, Regions, RenderMode, SelectionModes, Table} from "@bluepri
 import ReactResizeDetector from "react-resize-detector";
 import {SafeNumericInput, TableComponent, TableComponentProps, TableType} from "components/Shared";
 import {AppStore, HelpType, WidgetConfig, WidgetProps, WidgetsStore} from "stores";
-import {RedshiftType, SPECTRAL_LINE_OPTION_DESCRIPTIONS, SpectralLineOptions, SpectralLineOverlayWidgetStore, SpectralLineQueryRangeType, SpectralLineQueryUnit} from "stores/widgets";
+import {RedshiftType, SpectralLineOptions, SpectralLineOverlayWidgetStore, SpectralLineQueryRangeType, SpectralLineQueryUnit} from "stores/widgets";
 import "./SpectralLineOverlayComponent.css";
 
 enum HeaderTableColumnName {
@@ -102,16 +102,13 @@ export class SpectralLineOverlayComponent extends React.Component<WidgetProps> {
     }
 
     private createHeaderTable() {
-        const tableColumns = [];
-        const headerNames: SpectralLineOptions[] = [];
+        const headerNames = [];
         const headerDescriptions = [];
-        const headerDataset = SPECTRAL_LINE_OPTION_DESCRIPTIONS;
-        const numResultsRows = headerDataset.length;
-        for (let index = 0; index < headerDataset.length; index++) {
-            const header = headerDataset[index];
-            headerNames.push(header[0] as SpectralLineOptions);
-            headerDescriptions.push(header[1]);
-        }
+        this.widgetStore.headerDataset.forEach(header => {
+            headerNames.push(header.name);
+            headerDescriptions.push(header.desc);
+        });
+        const tableColumns = [];
         const columnName = this.renderDataColumn(HeaderTableColumnName.Name, headerNames);
         tableColumns.push(columnName);
         const columnDescription = this.renderDataColumn(HeaderTableColumnName.Description, headerDescriptions);
@@ -122,7 +119,7 @@ export class SpectralLineOverlayComponent extends React.Component<WidgetProps> {
         return (
             <Table
                 ref={(ref) => this.onControlHeaderTableRef(ref)}
-                numRows={numResultsRows}
+                numRows={this.widgetStore.headerDataset.length}
                 enableRowReordering={false}
                 renderMode={RenderMode.BATCH}
                 selectionModes={SelectionModes.NONE}
