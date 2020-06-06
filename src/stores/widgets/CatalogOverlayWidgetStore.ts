@@ -118,8 +118,9 @@ export class CatalogOverlayWidgetStore extends RegionWidgetStore {
     @observable filterDataSize: number;
     @observable showSelectedData: boolean;
     @observable catalogTableRef: Table;
-    @observable userFilterChanged: boolean;
+    @observable updateTableView: boolean;
     @observable sortingInfo: {columnName: string, sortingType: CARTA.SortingType};
+    @observable maxRows: number;
 
     constructor(catalogInfo: CatalogInfo, catalogHeader: Array<CARTA.ICatalogHeader>, catalogData: Map<number, ProcessedColumnData>, id: string) {
         super(RegionsType.CLOSED_AND_POINT);
@@ -143,8 +144,9 @@ export class CatalogOverlayWidgetStore extends RegionWidgetStore {
         this.filterDataSize = undefined;
         this.showSelectedData = false;
         this.catalogTableRef = undefined;
-        this.userFilterChanged = false;
+        this.updateTableView = false;
         this.sortingInfo = {columnName: null, sortingType: null};
+        this.maxRows = catalogInfo.dataSize;
 
         this.catalogPlotType = CatalogPlotType.ImageOverlay;
         const coordinateSystem = catalogInfo.fileInfo.coosys[0];
@@ -358,11 +360,11 @@ export class CatalogOverlayWidgetStore extends RegionWidgetStore {
             columnWidth: current.columnWidth
         };
         this.catalogControlHeader.set(columnName, newHeader);
-        this.updateUserFilterChanged(true);
+        this.updateTableStatus(true);
     }
 
-    @action updateUserFilterChanged(val: boolean) {
-        this.userFilterChanged = val;
+    @action updateTableStatus(val: boolean) {
+        this.updateTableView = val;
     }
 
     @action.bound setNumVisibleRows(val: number) {
@@ -413,6 +415,7 @@ export class CatalogOverlayWidgetStore extends RegionWidgetStore {
         this.updatingDataStream = false;
         this.sortingInfo.columnName = null;
         this.sortingInfo.sortingType = null;
+        this.maxRows = this.catalogInfo.dataSize;
     }
 
     @action resetFilterRequestControlParams() {
@@ -467,6 +470,13 @@ export class CatalogOverlayWidgetStore extends RegionWidgetStore {
         }
     };
 
+    @action setMaxRows(maxRows: number) {
+        if (this.maxRows > maxRows) {
+            this.updateTableStatus(true);   
+        }
+        this.maxRows = maxRows;
+    }
+
     @computed get displayedColumnHeaders(): Array<CARTA.CatalogHeader> {
         let displayedColumnHeaders = [];
         this.catalogControlHeader.forEach((value, key) => {
@@ -490,7 +500,7 @@ export class CatalogOverlayWidgetStore extends RegionWidgetStore {
     @computed get initCatalogFilterRequest(): CARTA.CatalogFilterRequest {
         let catalogFilter: CARTA.CatalogFilterRequest = new CARTA.CatalogFilterRequest();
         let imageBounds: CARTA.CatalogImageBounds = new CARTA.CatalogImageBounds();
-        const previewDatasize = CatalogOverlayWidgetStore.InitTableRows;
+        let previewDatasize = CatalogOverlayWidgetStore.InitTableRows;
         catalogFilter.fileId = this.catalogInfo.fileId;
         catalogFilter.filterConfigs = null;
         catalogFilter.columnIndices = this.columnIndices;
@@ -499,6 +509,10 @@ export class CatalogOverlayWidgetStore extends RegionWidgetStore {
         catalogFilter.regionId = null;
         catalogFilter.sortColumn = null;
         catalogFilter.sortingType = null;
+
+        if (previewDatasize > this.maxRows) {
+            previewDatasize = this.maxRows;
+        }
 
         if (this.catalogInfo.dataSize < previewDatasize) {
             catalogFilter.subsetDataSize = this.catalogInfo.dataSize;
@@ -511,7 +525,12 @@ export class CatalogOverlayWidgetStore extends RegionWidgetStore {
 
     @computed get updateRequestDataSize() {
         this.catalogFilterRequest.subsetStartIndex = this.subsetEndIndex;
-        const dataSize = this.catalogInfo.dataSize - this.numVisibleRows;
+        if (this.maxRows <= this.numVisibleRows) {
+            this.catalogFilterRequest.subsetStartIndex = 0;
+            this.catalogFilterRequest.subsetDataSize = this.maxRows;
+            return this.catalogFilterRequest;
+        }
+        const dataSize = this.maxRows - this.numVisibleRows;
         if (this.updateMode === CatalogUpdateMode.TableUpdate) {
             let subsetDataSize = CatalogOverlayWidgetStore.DataChunkSize;
             if (dataSize < subsetDataSize && dataSize > 0) {
@@ -526,9 +545,9 @@ export class CatalogOverlayWidgetStore extends RegionWidgetStore {
 
     @computed get shouldUpdateData(): boolean {
         if (isFinite(this.filterDataSize)) {
-            return this.subsetEndIndex < this.filterDataSize;
+            return this.subsetEndIndex < this.filterDataSize && this.subsetEndIndex < this.maxRows;
         } else {
-            return this.subsetEndIndex < this.catalogInfo.dataSize;
+            return this.subsetEndIndex < this.catalogInfo.dataSize && this.subsetEndIndex < this.maxRows;
         }
     }
 

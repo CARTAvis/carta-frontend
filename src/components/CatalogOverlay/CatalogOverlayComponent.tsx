@@ -422,7 +422,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         const widgetStore = this.widgetStore;
         const appStore = AppStore.Instance;
         if (widgetStore && appStore) {
-            widgetStore.updateUserFilterChanged(false);
+            widgetStore.updateTableStatus(false);
             widgetStore.resetFilterRequestControlParams();
             widgetStore.resetSelectedPointIndices();
             appStore.catalogStore.clearData(this.widgetId);
@@ -655,10 +655,10 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
                             intent={Intent.PRIMARY}
                             text="Update"
                             onClick={this.handleFilterRequest}
-                            disabled={widgetStore.loadOntoImage || !widgetStore.userFilterChanged}
+                            disabled={widgetStore.loadOntoImage || !widgetStore.updateTableView}
                         />
                         </Tooltip>
-                        <Tooltip content={"Reset filter and catalog data"}>
+                        <Tooltip content={"Reset table view and remove catalog overlay"}>
                         <AnchorButton
                             intent={Intent.PRIMARY}
                             text="Reset"
