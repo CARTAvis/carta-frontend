@@ -59,6 +59,7 @@ export class SpectralLineOverlayWidgetStore extends RegionWidgetStore {
     @observable optionsDisplay: Map<SpectralLineOptions, boolean>;
     @observable redshiftType: RedshiftType;
     @observable redshiftSpeed: number;
+    @observable queryResults: string;
     @observable queryResultTableRef: Table;
     @observable queryResult: Map<number, ProcessedColumnData>;
     @observable numVisibleRows: number;
@@ -120,6 +121,18 @@ export class SpectralLineOverlayWidgetStore extends RegionWidgetStore {
         setTimeout(() => {
             this.isQuerying = false;
             this.queryHeaders = ["FORMULA", "NAME", "FREQ", "REDSHIFTED_FREQ", "QN", "I", "ASTRO"];
+            /*
+            this.queryHeaders = ["Species", "Chemical Name", "Freq-MHz(rest frame,redshifted)", "Freq Err(rest frame,redshifted)",
+                "Meas Freq-MHz(rest frame,redshifted)", "Meas Freq Err(rest frame,redshifted)", "Resolved QNs",
+                "CDMS/JPL Intensity", "Lovas/AST Intensity", "E_L (cm^-1)", "Linelist"
+            ];
+            */
+            this.queryResults = `
+                H&alpha;	Hydrogen Recombination Line	52.138	0			H(501)&alpha;	0		0	Recomb
+                H&alpha;	Hydrogen Recombination Line	52.451	0			H(500)&alpha;	0		0	Recomb
+                H&alpha;	Hydrogen Recombination Line	52.767	0			H(499)&alpha;	0		0	Recomb
+                H&alpha;	Hydrogen Recombination Line	53.085	0			H(498)&alpha;	0		0	Recomb
+            `;
         }, 1500);
     };
 
