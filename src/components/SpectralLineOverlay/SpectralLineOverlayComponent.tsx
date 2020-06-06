@@ -104,7 +104,7 @@ export class SpectralLineOverlayComponent extends React.Component<WidgetProps> {
     private createHeaderTable() {
         const headerNames = [];
         const headerDescriptions = [];
-        this.widgetStore.headerDataset.forEach(header => {
+        this.widgetStore.formalizedHeaders.forEach(header => {
             headerNames.push(header.name);
             headerDescriptions.push(header.desc);
         });
@@ -119,7 +119,7 @@ export class SpectralLineOverlayComponent extends React.Component<WidgetProps> {
         return (
             <Table
                 ref={(ref) => this.onControlHeaderTableRef(ref)}
-                numRows={this.widgetStore.headerDataset.length}
+                numRows={this.widgetStore.formalizedHeaders.length}
                 enableRowReordering={false}
                 renderMode={RenderMode.BATCH}
                 selectionModes={SelectionModes.NONE}
