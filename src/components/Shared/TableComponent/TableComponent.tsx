@@ -63,7 +63,7 @@ export class TableComponent extends React.Component<TableComponentProps> {
                         key={"column-filter-" + columnIndex}
                         intent={"primary"}
                         onChange={((value: string) => this.props.updateColumnFilter(value, columnName))}
-                        value={controlheader.filter ? controlheader.filter : ""}
+                        value={controlheader && controlheader.filter ? controlheader.filter : ""}
                     />
                 </ColumnHeaderCell>
                 <ColumnHeaderCell name={columnName}/>

@@ -258,12 +258,19 @@ export class SpectralLineOverlayComponent extends React.Component<WidgetProps> {
             </div>
         );
 
+        let info = `Showing to of entries`;
+        let tableInfo = (widgetStore.queryResult) ? (
+            <pre>{info}</pre>
+        ) : null;
+
         const queryResultTableProps: TableComponentProps = {
             type: TableType.ColumnFilter,
             dataset: widgetStore.queryResult,
+            filter: widgetStore.controlHeader,
             columnHeaders: widgetStore.displayedColumnHeaders,
             numVisibleRows: widgetStore.numVisibleRows,
             upTableRef: this.onQueryResultTableRefUpdated,
+            updateColumnFilter: widgetStore.setColumnFilter,
             updateByInfiniteScroll: this.updateByInfiniteScroll,
             updateTableColumnWidth: this.setQueryResultTableColumnWidth,
             updateSelectedRow: this.onQueryResultTableDataSelected
@@ -289,6 +296,7 @@ export class SpectralLineOverlayComponent extends React.Component<WidgetProps> {
                         <div className={"result-table"}>
                             <TableComponent {...queryResultTableProps}/>
                         </div>
+                        {tableInfo}
                     </div>
                 </div>
                 <div className="bp3-dialog-footer">

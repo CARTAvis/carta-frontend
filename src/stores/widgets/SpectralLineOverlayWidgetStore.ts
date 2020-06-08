@@ -5,6 +5,7 @@ import {CARTA} from "carta-protobuf";
 import {AppStore} from "stores";
 import {RegionWidgetStore, RegionsType} from "./RegionWidgetStore";
 import {ProcessedColumnData} from "models";
+import {ControlHeader} from "stores/widgets";
 import {wavelengthToFrequency} from "utilities";
 
 export enum SpectralLineQueryRangeType {
@@ -51,6 +52,8 @@ export enum RedshiftType {
 }
 
 export class SpectralLineOverlayWidgetStore extends RegionWidgetStore {
+    private static readonly initDisplayedColumnSize = 6;
+
     @observable queryRangeType: SpectralLineQueryRangeType;
     @observable queryRange: NumberRange;
     @observable queryRangeByCenter: NumberRange;
@@ -60,8 +63,8 @@ export class SpectralLineOverlayWidgetStore extends RegionWidgetStore {
     @observable headerDisplay: Map<SpectralLineHeaders, boolean>;
     @observable redshiftType: RedshiftType;
     @observable redshiftSpeed: number;
-    @observable queryResults: string[][];
     @observable queryResultTableRef: Table;
+    @observable controlHeader: Map<string, ControlHeader>;
     @observable queryResult: Map<number, ProcessedColumnData>;
     @observable numVisibleRows: number;
 
@@ -132,6 +135,14 @@ export class SpectralLineOverlayWidgetStore extends RegionWidgetStore {
         }
     };
 
+    @action.bound setColumnFilter(filter: string, columnName: string) {
+        this.controlHeader.get(columnName).filter = filter;
+    }
+
+    @action clearData() {
+        this.queryResult.clear();
+    }
+
     @computed get formalizedHeaders(): SpectralLineHeader[] {
         let formalizedHeaders: SpectralLineHeader[] = [];
         this.queryHeaders.forEach(headerString => {
@@ -144,7 +155,35 @@ export class SpectralLineOverlayWidgetStore extends RegionWidgetStore {
 
     @computed get displayedColumnHeaders(): Array<CARTA.CatalogHeader> {
         let displayedColumnHeaders = [];
+        let columnIndex = 0;
+        if (this.queryHeaders.length > 0) {
+            this.headerDisplay.forEach((value, spectralLineHeader) => {
+                if (value) {
+                    displayedColumnHeaders.push(new CARTA.CatalogHeader({name: spectralLineHeader, dataType: CARTA.ColumnType.String, columnIndex: columnIndex}));
+                }
+                columnIndex++;
+            });
+        }
         return displayedColumnHeaders;
+    }
+
+    @computed get initControlHeader() {
+        const controlHeaders = new Map<string, ControlHeader>();
+        if (this.queryHeaders.length) {
+            for (let columnIndex = 0; columnIndex < this.queryHeaders.length; columnIndex++) {
+                const header = this.queryHeaders[columnIndex];
+                let controlHeader: ControlHeader = {
+                    columnIndex: columnIndex,
+                    dataIndex: columnIndex,
+                    display: columnIndex < SpectralLineOverlayWidgetStore.initDisplayedColumnSize ? true : false,
+                    representAs: undefined,
+                    filter: undefined,
+                    columnWidth: null
+                };
+                controlHeaders.set(header, controlHeader);
+            }
+        }
+        return controlHeaders;
     }
 
     private calculateFreqMHz = (value: number, unit: SpectralLineQueryUnit): number => {
@@ -169,14 +208,25 @@ export class SpectralLineOverlayWidgetStore extends RegionWidgetStore {
             return;
         }
         const lines = response.split(/\r?\n/);
-        if (lines && lines.length > 0) {
+        if (lines && lines.length > 1) {
             this.queryHeaders = [];
-            this.queryResults = [];
-            for (let i = 0; i < lines.length; i++) {
-                if (i === 0) {
-                    this.queryHeaders = lines[0].split(/\t/);
-                } else {
-                    this.queryResults.push(lines[i].split(/\t/));
+            const spectralLineInfo = [];
+            lines.forEach(line => {
+                spectralLineInfo.push(line.split(/\t/));
+            });
+
+            // find headers
+            this.queryHeaders = spectralLineInfo[0];
+
+            // find column data
+            const numHeaders = this.queryHeaders.length;
+            if (numHeaders > 0) {
+                for (let columnIndex = 0; columnIndex < numHeaders; columnIndex++) {
+                    const columnData = [];
+                    for (let dataLength = 1; dataLength < lines.length; dataLength++) {
+                        columnData.push(spectralLineInfo[dataLength][columnIndex]);
+                    }
+                    this.queryResult.set(columnIndex, {dataType: CARTA.ColumnType.String, data: columnData});
                 }
             }
         }
@@ -194,7 +244,8 @@ export class SpectralLineOverlayWidgetStore extends RegionWidgetStore {
         Object.values(SpectralLineHeaders).forEach(header => this.headerDisplay.set(header, true));
         this.redshiftType = RedshiftType.V;
         this.redshiftSpeed = 0;
-        this.queryResults = [];
+        this.controlHeader = this.initControlHeader;
+        this.queryResult = new Map<number, ProcessedColumnData>();
         this.queryResultTableRef = undefined;
         this.numVisibleRows = 1;
     }
