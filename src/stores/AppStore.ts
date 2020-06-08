@@ -506,7 +506,7 @@ export class AppStore {
 
     @action shiftFrame = (delta: number) => {
         if (this.activeFrame && this.frames.length > 1) {
-            const frameIds = this.frames.map(f => f.frameInfo.fileId).sort();
+            const frameIds = this.frames.map(f => f.frameInfo.fileId).sort((a, b) => a - b);
             const currentIndex = frameIds.indexOf(this.activeFrame.frameInfo.fileId);
             const requiredIndex = (this.frames.length + currentIndex + delta) % this.frames.length;
             this.setActiveFrame(frameIds[requiredIndex]);
@@ -676,9 +676,9 @@ export class AppStore {
         this.preferenceStore.setPreference(PreferenceKeys.GLOBAL_THEME, Theme.LIGHT);
     };
 
-    @action setAutoTheme = () =>  {
+    @action setAutoTheme = () => {
         this.preferenceStore.setPreference(PreferenceKeys.GLOBAL_THEME, Theme.AUTO);
-    }
+    };
 
     @action toggleCursorFrozen = () => {
         if (this.activeFrame) {
