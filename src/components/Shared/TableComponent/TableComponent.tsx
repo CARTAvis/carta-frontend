@@ -91,6 +91,7 @@ export class TableComponent extends React.Component<TableComponentProps> {
                 <Menu className="catalog-sort-menu-item">
                     <MenuItem icon="sort-asc" active={activeAsc} onClick={() => this.props.updateSortRequest(column.name, CARTA.SortingType.Ascending)} text="Sort Asc" />
                     <MenuItem icon="sort-desc" active={activeDesc} onClick={() => this.props.updateSortRequest(column.name, CARTA.SortingType.Descending)} text="Sort Desc" />
+                    <MenuItem icon="cross" onClick={() => this.props.updateSortRequest(null, null)} text="Clear Sort" />
                 </Menu>
             );
         };
