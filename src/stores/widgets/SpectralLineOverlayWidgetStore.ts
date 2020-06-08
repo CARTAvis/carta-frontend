@@ -19,7 +19,7 @@ export enum SpectralLineQueryUnit {
     MM = "mm"
 }
 
-export enum SpectralLineOptions {
+export enum SpectralLineHeaders {
     Species = "Species",
     ChemicalName = "Chemical Name",
     FreqMHz = "Freq-MHz(rest frame,redshifted)",
@@ -30,18 +30,18 @@ export enum SpectralLineOptions {
     IntensityCDMS = "CDMS/JPL Intensity",
     IntensityLovas = "Lovas/AST Intensity",
     E_L = "E_L (cm^-1)",
-    Linelist = "Linelist"
+    LineList = "Linelist"
 }
 
-const SPECTRAL_LINE_DESCRIPTION = new Map<SpectralLineOptions, string>([
-    [SpectralLineOptions.Species, "Name of the Species"],
-    [SpectralLineOptions.QuantumNumber, "Resolved Quantum Number"],
-    [SpectralLineOptions.IntensityCDMS, "Intensity(for JPL/CDMS)"],
-    [SpectralLineOptions.IntensityLovas, "Intensity(for Lovas/AST)"]
+const SPECTRAL_LINE_DESCRIPTION = new Map<SpectralLineHeaders, string>([
+    [SpectralLineHeaders.Species, "Name of the Species"],
+    [SpectralLineHeaders.QuantumNumber, "Resolved Quantum Number"],
+    [SpectralLineHeaders.IntensityCDMS, "Intensity(for JPL/CDMS)"],
+    [SpectralLineHeaders.IntensityLovas, "Intensity(for Lovas/AST)"]
 ]);
 
 export interface SpectralLineHeader {
-    name: SpectralLineOptions;
+    name: SpectralLineHeaders;
     desc: string;
 }
 
@@ -57,7 +57,7 @@ export class SpectralLineOverlayWidgetStore extends RegionWidgetStore {
     @observable queryUnit: SpectralLineQueryUnit;
     @observable isQuerying: boolean;
     @observable queryHeaders: string[];
-    @observable optionsDisplay: Map<SpectralLineOptions, boolean>;
+    @observable headerDisplay: Map<SpectralLineHeaders, boolean>;
     @observable redshiftType: RedshiftType;
     @observable redshiftSpeed: number;
     @observable queryResults: string[][];
@@ -81,8 +81,8 @@ export class SpectralLineOverlayWidgetStore extends RegionWidgetStore {
         this.queryUnit = queryUnit;
     };
 
-    @action setOptionsDisplay = (option: SpectralLineOptions) => {
-        this.optionsDisplay.set(option, !this.optionsDisplay.get(option));
+    @action setHeaderDisplay = (header: SpectralLineHeaders) => {
+        this.headerDisplay.set(header, !this.headerDisplay.get(header));
     };
 
     @action setRedshiftType = (redshiftType: RedshiftType) => {
@@ -135,8 +135,8 @@ export class SpectralLineOverlayWidgetStore extends RegionWidgetStore {
     @computed get formalizedHeaders(): SpectralLineHeader[] {
         let formalizedHeaders: SpectralLineHeader[] = [];
         this.queryHeaders.forEach(headerString => {
-            if ((<any> Object).values(SpectralLineOptions).includes(headerString)) {
-                formalizedHeaders.push({name: headerString as SpectralLineOptions, desc: SPECTRAL_LINE_DESCRIPTION.get(headerString as SpectralLineOptions)});
+            if ((<any> Object).values(SpectralLineHeaders).includes(headerString)) {
+                formalizedHeaders.push({name: headerString as SpectralLineHeaders, desc: SPECTRAL_LINE_DESCRIPTION.get(headerString as SpectralLineHeaders)});
             }
         });
         return formalizedHeaders;
@@ -190,10 +190,11 @@ export class SpectralLineOverlayWidgetStore extends RegionWidgetStore {
         this.queryUnit = SpectralLineQueryUnit.GHz;
         this.isQuerying = false;
         this.queryHeaders = [];
-        this.optionsDisplay = new Map<SpectralLineOptions, boolean>();
-        Object.values(SpectralLineOptions).forEach(option => this.optionsDisplay.set(option, false));
+        this.headerDisplay = new Map<SpectralLineHeaders, boolean>();
+        Object.values(SpectralLineHeaders).forEach(header => this.headerDisplay.set(header, true));
         this.redshiftType = RedshiftType.V;
         this.redshiftSpeed = 0;
+        this.queryResults = [];
         this.queryResultTableRef = undefined;
         this.numVisibleRows = 1;
     }

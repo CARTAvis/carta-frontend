@@ -6,7 +6,7 @@ import {Cell, Column, Regions, RenderMode, SelectionModes, Table} from "@bluepri
 import ReactResizeDetector from "react-resize-detector";
 import {SafeNumericInput, TableComponent, TableComponentProps, TableType} from "components/Shared";
 import {AppStore, HelpType, WidgetConfig, WidgetProps, WidgetsStore} from "stores";
-import {RedshiftType, SpectralLineOptions, SpectralLineOverlayWidgetStore, SpectralLineQueryRangeType, SpectralLineQueryUnit} from "stores/widgets";
+import {RedshiftType, SpectralLineHeaders, SpectralLineOverlayWidgetStore, SpectralLineQueryRangeType, SpectralLineQueryUnit} from "stores/widgets";
 import "./SpectralLineOverlayComponent.css";
 
 enum HeaderTableColumnName {
@@ -40,7 +40,7 @@ export class SpectralLineOverlayComponent extends React.Component<WidgetProps> {
 
     constructor(props: WidgetProps) {
         super(props);
-        this.headerTableColumnWidths = [100, 300, 70];
+        this.headerTableColumnWidths = [100, 70, 300];
     }
 
     @computed get widgetStore(): SpectralLineOverlayWidgetStore {
@@ -81,19 +81,19 @@ export class SpectralLineOverlayComponent extends React.Component<WidgetProps> {
         );
     }
 
-    private renderSwitchButtonCell(rowIndex: number, columnName: SpectralLineOptions) {
+    private renderSwitchButtonCell(rowIndex: number, columnName: SpectralLineHeaders) {
         const widgetStore = this.widgetStore;
-        const display = widgetStore.optionsDisplay.get(columnName);
+        const display = widgetStore.headerDisplay.get(columnName);
         return (
             <Cell className="header-table-cell" key={`cell_switch_${rowIndex}`}>
                 <React.Fragment>
-                    <Switch className="cell-switch-button" key={`cell_switch_button_${rowIndex}`} checked={display} onChange={() => widgetStore.setOptionsDisplay(columnName)}/>
+                    <Switch className="cell-switch-button" key={`cell_switch_button_${rowIndex}`} checked={display} onChange={() => widgetStore.setHeaderDisplay(columnName)}/>
                 </React.Fragment>
             </Cell>
         );
     }
 
-    private renderButtonColumns(columnName: HeaderTableColumnName, headerNames: SpectralLineOptions[]) {
+    private renderButtonColumns(columnName: HeaderTableColumnName, headerNames: SpectralLineHeaders[]) {
         return <Column key={columnName} name={columnName} cellRenderer={rowIndex => this.renderSwitchButtonCell(rowIndex, headerNames[rowIndex])}/>;
     }
 
@@ -111,10 +111,10 @@ export class SpectralLineOverlayComponent extends React.Component<WidgetProps> {
         const tableColumns = [];
         const columnName = this.renderDataColumn(HeaderTableColumnName.Name, headerNames);
         tableColumns.push(columnName);
-        const columnDescription = this.renderDataColumn(HeaderTableColumnName.Description, headerDescriptions);
-        tableColumns.push(columnDescription);
         const columnDisplaySwitch = this.renderButtonColumns(HeaderTableColumnName.Display, headerNames);
         tableColumns.push(columnDisplaySwitch);
+        const columnDescription = this.renderDataColumn(HeaderTableColumnName.Description, headerDescriptions);
+        tableColumns.push(columnDescription);
 
         return (
             <Table
