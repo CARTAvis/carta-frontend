@@ -40,8 +40,8 @@ const SPECTRAL_LINE_DESCRIPTION = new Map<SpectralLineOptions, string>([
 ]);
 
 export interface SpectralLineHeader {
-    name: SpectralLineOptions,
-    desc: string
+    name: SpectralLineOptions;
+    desc: string;
 }
 
 export enum RedshiftType {
@@ -59,7 +59,7 @@ export class SpectralLineOverlayWidgetStore extends RegionWidgetStore {
     @observable optionsDisplay: Map<SpectralLineOptions, boolean>;
     @observable redshiftType: RedshiftType;
     @observable redshiftSpeed: number;
-    @observable queryResults: string;
+    @observable queryResults: string[][];
     @observable queryResultTableRef: Table;
     @observable queryResult: Map<number, ProcessedColumnData>;
     @observable numVisibleRows: number;
@@ -106,7 +106,7 @@ export class SpectralLineOverlayWidgetStore extends RegionWidgetStore {
             valueMax = this.queryRange[1];
         } else {
             valueMin = this.queryRangeByCenter[0] - this.queryRangeByCenter[1];
-            valueMax = this.queryRangeByCenter[0] + this.queryRangeByCenter[1]
+            valueMax = this.queryRangeByCenter[0] + this.queryRangeByCenter[1];
         }
 
         const freqMHzFrom = this.calculateFreqMHz(valueMin, this.queryUnit);
@@ -114,26 +114,21 @@ export class SpectralLineOverlayWidgetStore extends RegionWidgetStore {
 
         if (isFinite(freqMHzFrom) && isFinite(freqMHzTo)) {
             this.isQuerying = true;
-            console.log(`&frequency_units=MHz&from=${freqMHzFrom}&to=${freqMHzTo}`);
-        }
+            const corsProxy = "https://cors-anywhere.herokuapp.com/";
+            const queryLink = "https://www.cv.nrao.edu/php/splat/c_export.php?submit=Search&chemical_name=&sid%5B%5D=1154&calcIn=&data_version=v3.0&redshift=&freqfile=&energy_range_from=&energy_range_to=&lill=on&displayJPL=displayJPL&displayCDMS=displayCDMS&displayLovas=displayLovas&displaySLAIM=displaySLAIM&displayToyaMA=displayToyaMA&displayOSU=displayOSU&displayRecomb=displayRecomb&displayLisa=displayLisa&displayRFI=displayRFI&ls1=ls1&ls5=ls5&el1=el1&export_type=current&export_delimiter=tab&offset=0&limit=501&range=on&submit=Export";
+            const freqRange = `&frequency_units=MHz&from=${freqMHzFrom}&to=${freqMHzTo}`;
 
-        // TODO: send query & fetch result
-        setTimeout(() => {
-            this.isQuerying = false;
-            this.queryHeaders = ["FORMULA", "NAME", "FREQ", "REDSHIFTED_FREQ", "QN", "I", "ASTRO"];
-            /*
-            this.queryHeaders = ["Species", "Chemical Name", "Freq-MHz(rest frame,redshifted)", "Freq Err(rest frame,redshifted)",
-                "Meas Freq-MHz(rest frame,redshifted)", "Meas Freq Err(rest frame,redshifted)", "Resolved QNs",
-                "CDMS/JPL Intensity", "Lovas/AST Intensity", "E_L (cm^-1)", "Linelist"
-            ];
-            */
-            this.queryResults = `
-                H&alpha;	Hydrogen Recombination Line	52.138	0			H(501)&alpha;	0		0	Recomb
-                H&alpha;	Hydrogen Recombination Line	52.451	0			H(500)&alpha;	0		0	Recomb
-                H&alpha;	Hydrogen Recombination Line	52.767	0			H(499)&alpha;	0		0	Recomb
-                H&alpha;	Hydrogen Recombination Line	53.085	0			H(498)&alpha;	0		0	Recomb
-            `;
-        }, 1500);
+            fetch(`${corsProxy}${queryLink}${freqRange}`, {
+            }).then(response => {
+                return response.text();
+            }).then(data => {
+                this.parsingQueryResponse(data);
+                this.isQuerying = false;
+            }).catch((err) => {
+                this.isQuerying = false;
+                console.log(err);
+            });
+        }
     };
 
     @computed get formalizedHeaders(): SpectralLineHeader[] {
@@ -165,6 +160,24 @@ export class SpectralLineOverlayWidgetStore extends RegionWidgetStore {
             return value;
         } else {
             return null;
+        }
+    };
+
+    private parsingQueryResponse = (response: string) => {
+        if (!response) {
+            return;
+        }
+        const lines = response.split(/\r?\n/);
+        if (lines && lines.length > 0) {
+            this.queryHeaders = [];
+            this.queryResults = [];
+            for (let i = 0; i < lines.length; i++) {
+                if (i === 0) {
+                    this.queryHeaders = lines[0].split(/\t/);
+                } else {
+                    this.queryResults.push(lines[i].split(/\t/));
+                }
+            }
         }
     };
 
