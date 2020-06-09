@@ -1,9 +1,10 @@
 .spectral-line-overlay-widget {
     height: 100%;
     width: 100%;
-    padding: 20px;
+    padding: 5px;
 
     .bp3-dialog-body {
+        height: calc(100% - 40px);
         margin: 0;
 
         .bp3-numeric-input {
@@ -20,13 +21,15 @@
         }
 
         .query-section {
-            height: 50%;
+            height: calc(50% - 11px);
             .query-panel {
+                height: 30px;
                 display: flex;
                 flex-direction: row;
                 flex-wrap: wrap;
                 justify-content: space-between;
-                margin: 0 5px 5px 5px;
+                margin: 0;
+                padding: 0 5px 0 5px;
                 .query-panel-input {
                     display: flex;
                     flex-direction: row;
@@ -35,24 +38,18 @@
 
             .header-table {
                 overflow: auto;
-                height: calc(50% - 35px - 1px);
+                height: calc(100% - 30px);
                 width: 100%;
-                padding-left: 5px;
-                padding-right: 5px;
-                padding-top: 5px;
-                padding-bottom: 4px;
+                padding: 5px 5px 5px 5px;
 
                 .bp3-table-container {
                     width: 100%;
-
                     .bp3-table-header {
                         line-height: 220%;
                     }
-
                     .header-table-cell {
                         line-height: 250%;
                     }
-
                     .cell-switch-button{
                         margin: 0;
                     }
@@ -63,27 +60,24 @@
         .result-section {
             height: 50%;
             .redshift-panel {
+                height: 30px;
+                margin: 0;
+                padding: 0 5px 0 5px;
                 display: flex;
-                margin: 10px 0 10px 5px;
             }
 
             .result-table {
                 overflow: auto;
-                height: calc(50% - 50px);
+                height: calc(100% - 50px);
                 width: 100%;
-                padding-left: 5px;
-                padding-right: 5px;
-                padding-bottom: 5px;
-                padding-top: 1px;
+                padding: 5px 5px 5px 5px;
 
                 .bp3-table-container{
                     width: 100%;
-
                     .bp3-table-editable-name.bp3-editable-text::before {
                         right: 0px;
                         left: 0px;
                     }
-
                     .bp3-editable-text::before {
                         right: 0px;
                         left: 0px;
@@ -94,14 +88,24 @@
                     }
                 }
             }
+
+            .result-table-info {
+                height: 20px;
+                padding: 0 5px 0 5px;
+                pre {
+                    margin: 0;
+                }
+            }
         }
     }
 
     .bp3-dialog-footer {
-        margin: 5px 5px 0 0;
+        height: 40px;
+        margin: 0px;
+        padding: 5px 5px 5px 5px;
     }
 
-    .query-loading {
+    .query-loading-overlay {
         position: absolute;
         top: 50%;
         left: 50%;

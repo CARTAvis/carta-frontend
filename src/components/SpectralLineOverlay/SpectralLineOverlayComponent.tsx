@@ -296,7 +296,9 @@ export class SpectralLineOverlayComponent extends React.Component<WidgetProps> {
                         <div className={"result-table"}>
                             <TableComponent {...queryResultTableProps}/>
                         </div>
-                        {tableInfo}
+                        <div className="result-table-info">
+                            {tableInfo}
+                        </div>
                     </div>
                 </div>
                 <div className="bp3-dialog-footer">
@@ -312,7 +314,7 @@ export class SpectralLineOverlayComponent extends React.Component<WidgetProps> {
                     </div>
                 </div>
                 <Overlay className={Classes.OVERLAY_SCROLL_CONTAINER} autoFocus={true} canEscapeKeyClose={false} canOutsideClickClose={false} isOpen={widgetStore.isQuerying} usePortal={false}>
-                    <div className="query-loading">
+                    <div className="query-loading-overlay">
                         <Spinner intent={Intent.PRIMARY} size={30} value={null}/>
                     </div>
                 </Overlay>
