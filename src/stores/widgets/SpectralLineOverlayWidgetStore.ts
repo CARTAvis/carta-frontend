@@ -1,4 +1,4 @@
-import {action, computed, observable} from "mobx";
+import {action, autorun, computed, observable} from "mobx";
 import {NumberRange} from "@blueprintjs/core";
 import {Table} from "@blueprintjs/table";
 import {CARTA} from "carta-protobuf";
@@ -264,5 +264,15 @@ export class SpectralLineOverlayWidgetStore extends RegionWidgetStore {
         this.queryResult = new Map<number, ProcessedColumnData>();
         this.queryResultTableRef = undefined;
         this.numVisibleRows = 1;
+
+        // update redshift column in result table when redshift changes
+        autorun(() => {
+            if (this.queryResult.size > 0) {
+                this.queryResult.set(REDSHIFT_COLUMN_INDEX, {
+                    dataType: CARTA.ColumnType.Int32,
+                    data: new Array(this.numVisibleRows).fill(this.redshiftSpeed)
+                });
+            }
+        });
     }
 }
