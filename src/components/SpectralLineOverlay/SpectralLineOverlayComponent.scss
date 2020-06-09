@@ -4,7 +4,7 @@
     padding: 5px;
 
     .bp3-dialog-body {
-        height: calc(100% - 40px);
+        height: calc(100% - 35px);
         margin: 0;
 
         .bp3-numeric-input {
@@ -21,7 +21,7 @@
         }
 
         .query-section {
-            height: calc(50% - 11px);
+            height: calc(45% - 11px);
             .query-panel {
                 height: 30px;
                 display: flex;
@@ -58,7 +58,7 @@
         }
 
         .result-section {
-            height: 50%;
+            height: 55%;
             .redshift-panel {
                 height: 30px;
                 margin: 0;
@@ -100,9 +100,9 @@
     }
 
     .bp3-dialog-footer {
-        height: 40px;
+        height: 35px;
         margin: 0px;
-        padding: 5px 5px 5px 5px;
+        padding: 0 5px 5px 5px;
     }
 
     .query-loading-overlay {
