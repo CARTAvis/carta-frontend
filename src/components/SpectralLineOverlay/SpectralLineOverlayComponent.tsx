@@ -40,7 +40,7 @@ export class SpectralLineOverlayComponent extends React.Component<WidgetProps> {
 
     constructor(props: WidgetProps) {
         super(props);
-        this.headerTableColumnWidths = [100, 70, 300];
+        this.headerTableColumnWidths = [150, 70, 300];
     }
 
     @computed get widgetStore(): SpectralLineOverlayWidgetStore {
@@ -307,10 +307,11 @@ export class SpectralLineOverlayComponent extends React.Component<WidgetProps> {
                             <AnchorButton
                                 intent={Intent.PRIMARY}
                                 text="Filter"
+                                disabled={widgetStore.queryResult.size <= 0}
                                 onClick={this.handleFilter}
                             />
                         </Tooltip>
-                        <Button intent={Intent.PRIMARY} onClick={this.handlePlot}>Plot</Button>
+                        <Button intent={Intent.PRIMARY} disabled={widgetStore.queryResult.size <= 0} onClick={this.handlePlot}>Plot</Button>
                     </div>
                 </div>
                 <Overlay className={Classes.OVERLAY_SCROLL_CONTAINER} autoFocus={true} canEscapeKeyClose={false} canOutsideClickClose={false} isOpen={widgetStore.isQuerying} usePortal={false}>
