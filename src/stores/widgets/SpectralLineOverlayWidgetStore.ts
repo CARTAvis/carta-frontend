@@ -207,7 +207,7 @@ export class SpectralLineOverlayWidgetStore extends RegionWidgetStore {
         if (!response) {
             return;
         }
-        const lines = response.split(/\r?\n/);
+        const lines = response.replace(/\n$/, '').split(/\r?\n/);
         if (lines && lines.length > 1) {
             this.queryHeaders = [];
             const spectralLineInfo = [];
@@ -217,6 +217,7 @@ export class SpectralLineOverlayWidgetStore extends RegionWidgetStore {
 
             // find headers
             this.queryHeaders = spectralLineInfo[0];
+            this.numVisibleRows = lines.length - 1;
 
             // find column data
             const numHeaders = this.queryHeaders.length;

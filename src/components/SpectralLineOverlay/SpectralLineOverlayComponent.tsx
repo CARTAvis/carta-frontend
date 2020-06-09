@@ -258,9 +258,8 @@ export class SpectralLineOverlayComponent extends React.Component<WidgetProps> {
             </div>
         );
 
-        let info = `Showing to of entries`;
-        let tableInfo = (widgetStore.queryResult) ? (
-            <pre>{info}</pre>
+        const tableInfo = (widgetStore.queryResult.size > 0) ? (
+            <pre>Showing {widgetStore.numVisibleRows} entries.</pre>
         ) : null;
 
         const queryResultTableProps: TableComponentProps = {
