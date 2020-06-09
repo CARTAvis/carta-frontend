@@ -23,7 +23,6 @@ export enum SpectralLineQueryUnit {
 export enum SpectralLineHeaders {
     Species = "Species",
     ChemicalName = "Chemical Name",
-    RedshiftSpeed = "Redshift",
     FreqMHz = "Freq-MHz(rest frame,redshifted)",
     FreqErr = "Freq Err(rest frame,redshifted)",
     MeasFreqMHz = "Meas Freq-MHz(rest frame,redshifted)",
@@ -37,7 +36,6 @@ export enum SpectralLineHeaders {
 
 const SPECTRAL_LINE_DESCRIPTION = new Map<SpectralLineHeaders, string>([
     [SpectralLineHeaders.Species, "Name of the Species"],
-    [SpectralLineHeaders.RedshiftSpeed, "Redshift speed"],
     [SpectralLineHeaders.QuantumNumber, "Resolved Quantum Number"],
     [SpectralLineHeaders.IntensityCDMS, "Intensity(for JPL/CDMS)"],
     [SpectralLineHeaders.IntensityLovas, "Intensity(for Lovas/AST)"]
@@ -53,7 +51,7 @@ export enum RedshiftType {
     Z = "Z"
 }
 
-const REDSHIFT_COLUMN_INDEX = 2;
+const FREQUENCY_COLUMN_INDEX = 2;
 
 export class SpectralLineOverlayWidgetStore extends RegionWidgetStore {
     private static readonly initDisplayedColumnSize = 6;
@@ -66,10 +64,11 @@ export class SpectralLineOverlayWidgetStore extends RegionWidgetStore {
     @observable queryHeaders: string[];
     @observable headerDisplay: Map<SpectralLineHeaders, boolean>;
     @observable redshiftType: RedshiftType;
-    @observable redshiftSpeed: number;
+    @observable redshiftInput: number;
     @observable queryResultTableRef: Table;
     @observable controlHeader: Map<string, ControlHeader>;
     @observable queryResult: Map<number, ProcessedColumnData>;
+    @observable originalFreqColumn: ProcessedColumnData;
     @observable numDataRows: number;
 
     @action setQueryRangeType = (queryRangeType: SpectralLineQueryRangeType) => {
@@ -96,9 +95,9 @@ export class SpectralLineOverlayWidgetStore extends RegionWidgetStore {
         this.redshiftType = redshiftType;
      };
 
-    @action setRedshiftSpeed = (speed: number) => {
-        if (isFinite(speed)) {
-            this.redshiftSpeed = speed;
+    @action setRedshiftInput = (input: number) => {
+        if (isFinite(input)) {
+            this.redshiftInput = input;
         }
     };
 
@@ -190,6 +189,11 @@ export class SpectralLineOverlayWidgetStore extends RegionWidgetStore {
         return controlHeaders;
     }
 
+    @computed get redshiftSpeed() {
+        // TODO: redshift calculation
+        return this.redshiftInput;
+    }
+
     private calculateFreqMHz = (value: number, unit: SpectralLineQueryUnit): number => {
         if (!isFinite(value) || !unit) {
             return null;
@@ -220,7 +224,6 @@ export class SpectralLineOverlayWidgetStore extends RegionWidgetStore {
 
             // find headers: spectralLineInfo[0]
             this.queryHeaders = spectralLineInfo[0];
-            this.queryHeaders.splice(REDSHIFT_COLUMN_INDEX, 0, SpectralLineHeaders.RedshiftSpeed);
 
             // find column data: spectralLineInfo[1] ~ spectralLineInfo[lines.length - 1]
             const numDataRows = lines.length - 1;
@@ -229,18 +232,17 @@ export class SpectralLineOverlayWidgetStore extends RegionWidgetStore {
                 for (let columnIndex = 0; columnIndex < numHeaders; columnIndex++) {
                     const columnData = [];
                     for (let row = 0; row < numDataRows; row++) {
-                        columnData.push(spectralLineInfo[row + 1][columnIndex]);
+                        const valString = spectralLineInfo[row + 1][columnIndex];
+                        columnData.push(columnIndex === FREQUENCY_COLUMN_INDEX ? Number(valString) : valString);
                     }
-                    this.queryResult.set(
-                        columnIndex < REDSHIFT_COLUMN_INDEX ? columnIndex : columnIndex + 1,
-                        {
-                            dataType: CARTA.ColumnType.String,
-                            data: columnData
-                        }
-                    );
+                    if (columnIndex === FREQUENCY_COLUMN_INDEX) {
+                        this.originalFreqColumn = {dataType:CARTA.ColumnType.Double, data: columnData};
+                        const redshiftedData = columnData.map(val => val + this.redshiftSpeed);
+                        this.queryResult.set(columnIndex, {dataType: CARTA.ColumnType.Double, data: redshiftedData});
+                    } else {
+                        this.queryResult.set(columnIndex, {dataType: CARTA.ColumnType.String, data: columnData});
+                    }
                 }
-                // insert redshift speed column
-                this.queryResult.set(REDSHIFT_COLUMN_INDEX, {dataType: CARTA.ColumnType.Int32, data: new Array(numDataRows).fill(this.redshiftSpeed)});
             }
 
             // update numDataRows
@@ -259,18 +261,19 @@ export class SpectralLineOverlayWidgetStore extends RegionWidgetStore {
         this.headerDisplay = new Map<SpectralLineHeaders, boolean>();
         Object.values(SpectralLineHeaders).forEach(header => this.headerDisplay.set(header, true));
         this.redshiftType = RedshiftType.V;
-        this.redshiftSpeed = 0;
+        this.redshiftInput = 0;
+        this.queryResultTableRef = undefined;
         this.controlHeader = this.initControlHeader;
         this.queryResult = new Map<number, ProcessedColumnData>();
-        this.queryResultTableRef = undefined;
+        this.originalFreqColumn = undefined;
         this.numDataRows = 1;
 
-        // update redshift column in result table when redshift changes
+        // update frequency column when redshift changes
         autorun(() => {
-            if (this.queryResult.size > 0) {
-                this.queryResult.set(REDSHIFT_COLUMN_INDEX, {
-                    dataType: CARTA.ColumnType.Int32,
-                    data: new Array(this.numDataRows).fill(this.redshiftSpeed)
+            if (this.queryResult.size > 0 && this.originalFreqColumn && this.originalFreqColumn.data) {
+                this.queryResult.set(FREQUENCY_COLUMN_INDEX, {
+                    dataType:CARTA.ColumnType.Double,
+                    data: (this.originalFreqColumn.data as Array<number>).map(val => val + this.redshiftSpeed)
                 });
             }
         });

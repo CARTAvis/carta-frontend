@@ -250,9 +250,9 @@ export class SpectralLineOverlayComponent extends React.Component<WidgetProps> {
                 </FormGroup>
                 <FormGroup label="Redshift" labelInfo={widgetStore.redshiftType === RedshiftType.V ? "(km/s)" : ""} inline={true}>
                     <SafeNumericInput
-                        value={widgetStore.redshiftSpeed}
+                        value={widgetStore.redshiftInput}
                         buttonPosition="none"
-                        onValueChange={val => widgetStore.setRedshiftSpeed(val)}
+                        onValueChange={val => widgetStore.setRedshiftInput(val)}
                     />
                 </FormGroup>
             </div>
