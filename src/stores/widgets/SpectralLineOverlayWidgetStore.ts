@@ -23,6 +23,7 @@ export enum SpectralLineQueryUnit {
 export enum SpectralLineHeaders {
     Species = "Species",
     ChemicalName = "Chemical Name",
+    RedshiftSpeed = "Redshift",
     FreqMHz = "Freq-MHz(rest frame,redshifted)",
     FreqErr = "Freq Err(rest frame,redshifted)",
     MeasFreqMHz = "Meas Freq-MHz(rest frame,redshifted)",
@@ -36,6 +37,7 @@ export enum SpectralLineHeaders {
 
 const SPECTRAL_LINE_DESCRIPTION = new Map<SpectralLineHeaders, string>([
     [SpectralLineHeaders.Species, "Name of the Species"],
+    [SpectralLineHeaders.RedshiftSpeed, "Redshift speed"],
     [SpectralLineHeaders.QuantumNumber, "Resolved Quantum Number"],
     [SpectralLineHeaders.IntensityCDMS, "Intensity(for JPL/CDMS)"],
     [SpectralLineHeaders.IntensityLovas, "Intensity(for Lovas/AST)"]
@@ -50,6 +52,8 @@ export enum RedshiftType {
     V = "V",
     Z = "Z"
 }
+
+const REDSHIFT_COLUMN_INDEX = 2;
 
 export class SpectralLineOverlayWidgetStore extends RegionWidgetStore {
     private static readonly initDisplayedColumnSize = 6;
@@ -207,29 +211,40 @@ export class SpectralLineOverlayWidgetStore extends RegionWidgetStore {
         if (!response) {
             return;
         }
-        const lines = response.replace(/\n$/, '').split(/\r?\n/);
+        const lines = response.replace(/\n$/, "").split(/\r?\n/);
         if (lines && lines.length > 1) {
-            this.queryHeaders = [];
             const spectralLineInfo = [];
             lines.forEach(line => {
                 spectralLineInfo.push(line.split(/\t/));
             });
 
-            // find headers
+            // find headers: spectralLineInfo[0]
             this.queryHeaders = spectralLineInfo[0];
-            this.numVisibleRows = lines.length - 1;
+            this.queryHeaders.splice(REDSHIFT_COLUMN_INDEX, 0, SpectralLineHeaders.RedshiftSpeed);
 
-            // find column data
+            // find column data: spectralLineInfo[1] ~ spectralLineInfo[lines.length - 1]
+            const numDataRows = lines.length - 1;
             const numHeaders = this.queryHeaders.length;
             if (numHeaders > 0) {
                 for (let columnIndex = 0; columnIndex < numHeaders; columnIndex++) {
                     const columnData = [];
-                    for (let dataLength = 1; dataLength < lines.length; dataLength++) {
-                        columnData.push(spectralLineInfo[dataLength][columnIndex]);
+                    for (let row = 0; row < numDataRows; row++) {
+                        columnData.push(spectralLineInfo[row + 1][columnIndex]);
                     }
-                    this.queryResult.set(columnIndex, {dataType: CARTA.ColumnType.String, data: columnData});
+                    this.queryResult.set(
+                        columnIndex < REDSHIFT_COLUMN_INDEX ? columnIndex : columnIndex + 1,
+                        {
+                            dataType: CARTA.ColumnType.String,
+                            data: columnData
+                        }
+                    );
                 }
+                // insert redshift speed column
+                this.queryResult.set(REDSHIFT_COLUMN_INDEX, {dataType: CARTA.ColumnType.Int32, data: new Array(numDataRows).fill(this.redshiftSpeed)});
             }
+
+            // update numVisibleRows
+            this.numVisibleRows = numDataRows;
         }
     };
 
