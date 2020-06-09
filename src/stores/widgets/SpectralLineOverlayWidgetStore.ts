@@ -70,7 +70,7 @@ export class SpectralLineOverlayWidgetStore extends RegionWidgetStore {
     @observable queryResultTableRef: Table;
     @observable controlHeader: Map<string, ControlHeader>;
     @observable queryResult: Map<number, ProcessedColumnData>;
-    @observable numVisibleRows: number;
+    @observable numDataRows: number;
 
     @action setQueryRangeType = (queryRangeType: SpectralLineQueryRangeType) => {
         this.queryRangeType = queryRangeType;
@@ -243,8 +243,8 @@ export class SpectralLineOverlayWidgetStore extends RegionWidgetStore {
                 this.queryResult.set(REDSHIFT_COLUMN_INDEX, {dataType: CARTA.ColumnType.Int32, data: new Array(numDataRows).fill(this.redshiftSpeed)});
             }
 
-            // update numVisibleRows
-            this.numVisibleRows = numDataRows;
+            // update numDataRows
+            this.numDataRows = numDataRows;
         }
     };
 
@@ -263,14 +263,14 @@ export class SpectralLineOverlayWidgetStore extends RegionWidgetStore {
         this.controlHeader = this.initControlHeader;
         this.queryResult = new Map<number, ProcessedColumnData>();
         this.queryResultTableRef = undefined;
-        this.numVisibleRows = 1;
+        this.numDataRows = 1;
 
         // update redshift column in result table when redshift changes
         autorun(() => {
             if (this.queryResult.size > 0) {
                 this.queryResult.set(REDSHIFT_COLUMN_INDEX, {
                     dataType: CARTA.ColumnType.Int32,
-                    data: new Array(this.numVisibleRows).fill(this.redshiftSpeed)
+                    data: new Array(this.numDataRows).fill(this.redshiftSpeed)
                 });
             }
         });

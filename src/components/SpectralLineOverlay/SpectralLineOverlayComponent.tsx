@@ -259,7 +259,7 @@ export class SpectralLineOverlayComponent extends React.Component<WidgetProps> {
         );
 
         const tableInfo = (widgetStore.queryResult.size > 0) ? (
-            <pre>Showing {widgetStore.numVisibleRows} entries.</pre>
+            <pre>Showing {widgetStore.numDataRows} entries.</pre>
         ) : null;
 
         const queryResultTableProps: TableComponentProps = {
@@ -267,7 +267,7 @@ export class SpectralLineOverlayComponent extends React.Component<WidgetProps> {
             dataset: widgetStore.queryResult,
             filter: widgetStore.controlHeader,
             columnHeaders: widgetStore.displayedColumnHeaders,
-            numVisibleRows: widgetStore.numVisibleRows,
+            numVisibleRows: widgetStore.numDataRows,
             upTableRef: this.onQueryResultTableRefUpdated,
             updateColumnFilter: widgetStore.setColumnFilter,
             updateByInfiniteScroll: this.updateByInfiniteScroll,
