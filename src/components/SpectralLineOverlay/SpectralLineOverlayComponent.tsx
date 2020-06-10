@@ -169,6 +169,9 @@ export class SpectralLineOverlayComponent extends React.Component<WidgetProps> {
     }
 
     private handlePlot = () => {
+        const widgetStore = this.widgetStore;
+        const appStore = AppStore.Instance;
+        const frame = appStore.activeFrame;
         return;
     };
 
@@ -310,7 +313,7 @@ export class SpectralLineOverlayComponent extends React.Component<WidgetProps> {
                                 onClick={this.handleFilter}
                             />
                         </Tooltip>
-                        <Button intent={Intent.PRIMARY} disabled={widgetStore.queryResult.size <= 0} onClick={this.handlePlot}>Plot</Button>
+                        <Button intent={Intent.PRIMARY} disabled={widgetStore.queryResult.size <= 0 || !appStore.activeFrame} onClick={this.handlePlot}>Plot</Button>
                     </div>
                 </div>
                 <Overlay className={Classes.OVERLAY_SCROLL_CONTAINER} autoFocus={true} canEscapeKeyClose={false} canOutsideClickClose={false} isOpen={widgetStore.isQuerying} usePortal={false}>

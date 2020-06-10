@@ -2,11 +2,10 @@ import {action, autorun, computed, observable} from "mobx";
 import {NumberRange} from "@blueprintjs/core";
 import {Table} from "@blueprintjs/table";
 import {CARTA} from "carta-protobuf";
-import {AppStore} from "stores";
 import {RegionWidgetStore, RegionsType} from "./RegionWidgetStore";
 import {ProcessedColumnData} from "models";
 import {ControlHeader} from "stores/widgets";
-import {wavelengthToFrequency} from "utilities";
+import {wavelengthToFrequency, SPEED_OF_LIGHT} from "utilities";
 
 export enum SpectralLineQueryRangeType {
     Range = "Range",
@@ -189,9 +188,8 @@ export class SpectralLineOverlayWidgetStore extends RegionWidgetStore {
         return controlHeaders;
     }
 
-    @computed get redshiftSpeed() {
-        // TODO: redshift calculation
-        return this.redshiftInput;
+    @computed get redshiftFactor() {
+        return this.redshiftType === RedshiftType.V ? Math.sqrt((1 - this.redshiftInput / SPEED_OF_LIGHT)/(1 + this.redshiftInput / SPEED_OF_LIGHT)) : 1 / (this.redshiftInput + 1);
     }
 
     private calculateFreqMHz = (value: number, unit: SpectralLineQueryUnit): number => {
@@ -236,8 +234,8 @@ export class SpectralLineOverlayWidgetStore extends RegionWidgetStore {
                         columnData.push(columnIndex === FREQUENCY_COLUMN_INDEX ? Number(valString) : valString);
                     }
                     if (columnIndex === FREQUENCY_COLUMN_INDEX) {
-                        this.originalFreqColumn = {dataType:CARTA.ColumnType.Double, data: columnData};
-                        const redshiftedData = columnData.map(val => val + this.redshiftSpeed);
+                        this.originalFreqColumn = {dataType: CARTA.ColumnType.Double, data: columnData};
+                        const redshiftedData = columnData.map(val => val * this.redshiftFactor);
                         this.queryResult.set(columnIndex, {dataType: CARTA.ColumnType.Double, data: redshiftedData});
                     } else {
                         this.queryResult.set(columnIndex, {dataType: CARTA.ColumnType.String, data: columnData});
@@ -272,8 +270,8 @@ export class SpectralLineOverlayWidgetStore extends RegionWidgetStore {
         autorun(() => {
             if (this.queryResult.size > 0 && this.originalFreqColumn && this.originalFreqColumn.data) {
                 this.queryResult.set(FREQUENCY_COLUMN_INDEX, {
-                    dataType:CARTA.ColumnType.Double,
-                    data: (this.originalFreqColumn.data as Array<number>).map(val => val + this.redshiftSpeed)
+                    dataType: CARTA.ColumnType.Double,
+                    data: (this.originalFreqColumn.data as Array<number>).map(val => val * this.redshiftFactor)
                 });
             }
         });
