@@ -512,7 +512,6 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
                         multiPlotDatasetConfig.borderWidth = 0;
                     } else if (this.props.multiPlotLineType.get(key) === PlotType.LINES || this.props.multiPlotLineType.get(key) === PlotType.STEPS) {
                         multiPlotDatasetConfig.showLine = true;
-                        multiPlotDatasetConfig.spanGaps = true;
                         multiPlotDatasetConfig.pointRadius = 0.5;
                         multiPlotDatasetConfig.pointStyle = "line";
                         multiPlotDatasetConfig.steppedLine = this.props.multiPlotLineType.get(key) === PlotType.LINES ? false : "middle";

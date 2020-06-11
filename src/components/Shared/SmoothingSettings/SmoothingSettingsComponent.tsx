@@ -69,7 +69,7 @@ export class SmoothingSettingsComponent extends React.Component<{widgetStore: Sp
                     </FormGroup>
                 </React.Fragment>
                 }
-                {(widgetStore.smoothingType !== SmoothingType.NONE && widgetStore.smoothingType !== SmoothingType.BINNING) &&
+                {(widgetStore.smoothingType !== SmoothingType.NONE) &&
                 <React.Fragment>
                     <FormGroup label={"Overlay"} inline={true}>
                         <Switch checked={widgetStore.isSmoothingOverlayOn} onChange={(ev) => widgetStore.setIsSmoothingOverlayOn(ev.currentTarget.checked)}/>

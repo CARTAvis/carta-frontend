@@ -29,7 +29,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
     @observable smoothingType: SmoothingType = SmoothingType.NONE;
     @observable smoothingLineColor: { colorHex: string, fixed: boolean };
     @observable smoothingLineType: PlotType = PlotType.STEPS;
-    @observable smoothingLineWidth: number;
+    @observable smoothingLineWidth: number = 1;
     @observable isSmoothingOverlayOn: boolean = false;
     @observable smoothingBoxcarSize: number = 2;
     @observable smoothingGaussianSigma: number = 1.0;
