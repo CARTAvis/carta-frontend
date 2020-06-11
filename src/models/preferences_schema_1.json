@@ -1,0 +1,266 @@
+{
+    "$schema": "http://json-schema.org/draft-04/schema#",
+    "title": "Preferences",
+    "description": "Schema for CARTA Preferences (Version 1)",
+    "required": [
+        "version"
+    ],
+    "properties": {
+        "version": {
+            "type": "number",
+            "minimum": 1
+        },
+        "username": {
+            "type": "string",
+            "minLength": 1
+        },
+        "theme": {
+            "type": "string",
+            "enum": [
+                "auto",
+                "light",
+                "dark"
+            ]
+        },
+        "autoLaunch": {
+            "type": "boolean"
+        },
+        "layout": {
+            "type": "string"
+        },
+        "cursorPosition": {
+            "type": "string",
+            "enum": [
+                "fixed",
+                "tracking"
+            ]
+        },
+        "zoomMode": {
+            "type": "string",
+            "enum": [
+                "fit",
+                "full"
+            ]
+        },
+        "zoomPoint": {
+            "type": "string",
+            "enum": [
+                "cursor",
+                "center"
+            ]
+        },
+        "dragPanning": {
+            "type": "boolean"
+        },
+        "spectralMatchingType": {
+            "type": "string",
+            "enum": [
+                "VRAD",
+                "VOPT",
+                "FREQ",
+                "WAVE",
+                "AWAV",
+                "CHANNEL"
+            ]
+        },
+        "wcsMatchingType": {
+            "type": "number",
+            "multipleOf": 1.0,
+            "minimum": 0,
+            "maximum": 3
+        },
+        "scaling": {
+            "type": "number",
+            "multipleOf": 1.0,
+            "minimum": 0,
+            "maximum": 7
+        },
+        "colormap": {
+            "type": "string"
+        },
+        "percentile": {
+            "type": "number",
+            "maximum": 100,
+            "exclusiveMaximum": true,
+            "minimum": 0,
+            "exclusiveMinimum": true
+        },
+        "scalingAlpha": {
+            "type": "number",
+            "minimum": 1
+        },
+        "scalingGamma": {
+            "type": "number",
+            "minimum": 0,
+            "exclusiveMinimum": true
+        },
+        "nanColorHex": {
+            "type": "string",
+            "description": "TODO: validate color string"
+        },
+        "nanAlpha": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1
+        },
+        "contourGeneratorType": {
+            "type": "string",
+            "enum": [
+                "start-step-multiplier",
+                "min-max-scaling",
+                "percentages-ref.value",
+                "mean-sigma-list"
+            ]
+        },
+        "contourSmoothingMode": {
+            "type": "number",
+            "multipleOf": 1.0,
+            "minimum": 0,
+            "maximum": 2
+        },
+        "contourSmoothingFactor": {
+            "type": "number",
+            "multipleOf": 1.0,
+            "minimum": 0
+        },
+        "contourNumLevels": {
+            "type": "number",
+            "multipleOf": 1.0,
+            "minimum": 1
+        },
+        "contourThickness": {
+            "type": "number",
+            "minimum": 0
+        },
+        "contourColormapEnabled": {
+            "type": "boolean"
+        },
+        "contourColor": {
+            "type": "string",
+            "description": "TODO: validate color string"
+        },
+        "contourColormap": {
+            "type": "string"
+        },
+        "astColor": {
+            "type": "number",
+            "multipleOf": 1.0,
+            "minimum": 0
+        },
+        "astGridVisible": {
+            "type": "boolean"
+        },
+        "astLabelsVisible": {
+            "type": "boolean"
+        },
+        "wcsType": {
+            "type": "string",
+            "enum": [
+                "automatic",
+                "degrees",
+                "sexagesimal"
+            ]
+        },
+        "beamVisible": {
+            "type": "boolean"
+        },
+        "beamColor": {
+            "type": "string"
+        },
+        "beamType": {
+            "type": "string",
+            "enum": [
+                "open",
+                "solid"
+            ]
+        },
+        "beamWidth": {
+            "type": "number",
+            "minimum": 0
+        },
+        "regionColor": {
+            "type": "string",
+            "description": "TODO: validate color string"
+        },
+        "regionLineWidth": {
+            "type": "number",
+            "minimum": 0
+        },
+        "regionDashLength": {
+            "type": "number",
+            "multipleOf": 1.0,
+            "minimum": 0
+        },
+        "regionType": {
+            "type": "number",
+            "multipleOf": 1.0,
+            "minimum": 0,
+            "maximum": 6
+        },
+        "regionCreationMode": {
+            "type": "string",
+            "enum": [
+                "center",
+                "corner"
+            ]
+        },
+        "imageCompressionQuality": {
+            "type": "number",
+            "multipleOf": 1.0,
+            "minimum": 4,
+            "maximum": 32
+        },
+        "animationCompressionQuality": {
+            "type": "number",
+            "multipleOf": 1.0,
+            "minimum": 4,
+            "maximum": 32
+        },
+        "GPUTileCache": {
+            "type": "number",
+            "multipleOf": 128,
+            "minimum": 512
+        },
+        "systemTileCache": {
+            "type": "number",
+            "multipleOf": 128,
+            "minimum": 1024
+        },
+        "contourDecimation": {
+            "type": "number",
+            "multipleOf": 1.0,
+            "minimum": 1,
+            "maximum": 32
+        },
+        "contourCompressionLevel": {
+            "type": "number",
+            "multipleOf": 1.0,
+            "minimum": 0,
+            "maximum": 19
+        },
+        "contourChunkSize": {
+            "type": "number",
+            "multipleOf": 25000,
+            "minimum": 25000,
+            "maximum": 1000000
+        },
+        "contourControlMapWidth": {
+            "type": "number",
+            "multipleOf": 128,
+            "minimum": 128,
+            "maximum": 1024
+        },
+        "streamContoursWhileZooming": {
+            "type": "boolean"
+        },
+        "lowBandwidthMode": {
+            "type": "boolean"
+        },
+        "stopAnimationPlayback": {
+            "type": "number",
+            "multipleOf": 1.0,
+            "minimum": 5,
+            "maximum": 30
+        }
+    }
+}

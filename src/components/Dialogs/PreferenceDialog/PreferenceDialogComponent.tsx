@@ -121,7 +121,7 @@ export class PreferenceDialogComponent extends React.Component {
                         inline={true}
                     >
                         <Radio label="Zoom to fit" value={Zoom.FIT}/>
-                        <Radio label="Zoom to 1.0x" value={Zoom.RAW}/>
+                        <Radio label="Zoom to 1.0x" value={Zoom.FULL}/>
                     </RadioGroup>
                 </FormGroup>
                 <FormGroup inline={true} label="Zoom to">
@@ -338,10 +338,12 @@ export class PreferenceDialogComponent extends React.Component {
                 </FormGroup>
                 <FormGroup inline={true} label="Beam Type">
                     <HTMLSelect
-                        options={Object.keys(BeamType).map((key) => ({label: key, value: BeamType[key]}))}
                         value={preference.beamType}
                         onChange={(event: React.FormEvent<HTMLSelectElement>) => preference.setPreference(PreferenceKeys.WCS_OVERLAY_BEAM_TYPE, event.currentTarget.value as BeamType)}
-                    />
+                    >
+                        <option key={0} value={BeamType.Open}>Open</option>
+                        <option key={1} value={BeamType.Solid}>Solid</option>
+                    </HTMLSelect>
                 </FormGroup>
                 <FormGroup inline={true} label="Beam Width" labelInfo="(px)">
                     <SafeNumericInput

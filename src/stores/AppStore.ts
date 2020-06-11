@@ -170,10 +170,9 @@ export class AppStore {
             this.logStore.addInfo(`Connected to server ${wsURL} with session ID ${ack.sessionId}`, ["network"]);
 
             // Init layout/preference store after connection is built
-            const supportsServerLayout = ack.serverFeatureFlags & CARTA.ServerFeatureFlags.USER_LAYOUTS ? true : false;
+            const supportsServerLayout = !!(ack.serverFeatureFlags & CARTA.ServerFeatureFlags.USER_LAYOUTS);
             this.layoutStore.initUserDefinedLayouts(supportsServerLayout, ack.userLayouts);
-            const supportsServerPreference = ack.serverFeatureFlags & CARTA.ServerFeatureFlags.USER_PREFERENCES ? true : false;
-            this.preferenceStore.initUserDefinedPreferences(supportsServerPreference, ack.userPreferences);
+            // this.preferenceStore.initUserDefinedPreferences(supportsServerPreference, ack.userPreferences);
             this.tileService.setCache(this.preferenceStore.gpuTileCache, this.preferenceStore.systemTileCache);
             this.layoutStore.applyLayout(this.preferenceStore.layout);
 
