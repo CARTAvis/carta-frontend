@@ -14,7 +14,7 @@ export enum SmoothingType {
     GAUSSIAN = "Gaussian",
     DECIMATION = "Decimation",
     BINNING = "Binning",
-    SAVITZKT_GOLAY = "Savitzky-Golay"
+    SAVITZKY_GOLAY = "Savitzky-Golay"
 }
 
 @observer
@@ -28,7 +28,8 @@ export class SmoothingSettingsComponent extends React.Component<{widgetStore: Sp
             {value: SmoothingType.GAUSSIAN, label: "Gaussian"},
             {value: SmoothingType.HANNING, label: "Hanning"},
             {value: SmoothingType.DECIMATION, label: "Decimation"},
-            {value: SmoothingType.BINNING, label: "Binning"}
+            {value: SmoothingType.BINNING, label: "Binning"},
+            {value: SmoothingType.SAVITZKY_GOLAY, label: "Savitzky-Golay"}
         ];
 
         return (
@@ -69,7 +70,7 @@ export class SmoothingSettingsComponent extends React.Component<{widgetStore: Sp
                     </FormGroup>
                 </React.Fragment>
                 }
-                {(widgetStore.smoothingType !== SmoothingType.NONE && widgetStore.smoothingType !== SmoothingType.BINNING) &&
+                {(widgetStore.smoothingType !== SmoothingType.NONE) &&
                 <React.Fragment>
                     <FormGroup label={"Overlay"} inline={true}>
                         <Switch checked={widgetStore.isSmoothingOverlayOn} onChange={(ev) => widgetStore.setIsSmoothingOverlayOn(ev.currentTarget.checked)}/>
@@ -87,7 +88,7 @@ export class SmoothingSettingsComponent extends React.Component<{widgetStore: Sp
                     />
                 </FormGroup>
                 }
-                {widgetStore.smoothingType === SmoothingType.GAUSSIAN &&
+                {(widgetStore.smoothingType === SmoothingType.GAUSSIAN) &&
                 <FormGroup label={"Sigma"} inline={true}>
                     <SafeNumericInput
                         value={widgetStore.smoothingGaussianSigma}
@@ -129,6 +130,29 @@ export class SmoothingSettingsComponent extends React.Component<{widgetStore: Sp
                         onValueChange={val => widgetStore.setSmoothingBinWidth(Math.round(val))}
                     />
                 </FormGroup>
+                }
+                {(widgetStore.smoothingType === SmoothingType.SAVITZKY_GOLAY) &&
+                <React.Fragment>
+                    <FormGroup label={"Kernel"} inline={true}>
+                        <SafeNumericInput
+                            value={widgetStore.smoothingSavitzkyGolaySize}
+                            min={5}
+                            stepSize={2}
+                            className="narrow"
+                            onValueChange={val => widgetStore.setSmoothingSavitzkyGolaySize(Math.round(val))}
+                            />
+                    </FormGroup>
+                    <FormGroup label="Degree of Fitting" inline={true}>
+                        <SafeNumericInput
+                            value={widgetStore.smoothingSavitzkyGolayOrder}
+                            min={0}
+                            max={4}
+                            stepSize={1}
+                            className="narrow"
+                            onValueChange={val => widgetStore.setSmoothingSavitzkyGolayOrder(Math.round(val))}
+                        />
+                    </FormGroup>
+                </React.Fragment>
                 }
             </React.Fragment>
         );

@@ -7,6 +7,7 @@
 #include "gsl/gsl_statistics_double.h"
 #include "gsl/gsl_sort_int.h"
 #include <math.h>
+#include "gsl/gsl_multifit.h"
 
 extern "C" {
 
@@ -115,6 +116,65 @@ int EMSCRIPTEN_KEEPALIVE filterBinning(double* xInArray, const int inN, double* 
         xOutArray[lastBin] = gsl_stats_mean(&xInArray[lastBin * binWidth], 1, inN % binWidth);
     }
 
+    return status;
+}
+
+double savitzkyGolayWindow(const size_t n, double x[], void* params) {
+
+    const int order = *(int *) params;
+
+    int i, j;
+    
+    double xi, yi, chisq;
+    gsl_matrix *X, *cov;
+    gsl_vector *y, *c;
+
+
+    X = gsl_matrix_alloc (n, order);
+    y = gsl_vector_alloc (n);
+
+    c = gsl_vector_alloc (order);
+    cov = gsl_matrix_alloc (order, order);
+
+    for (i = 0; i < n; i++) {
+
+        for (j = 0; j<order;j++) {
+            gsl_matrix_set (X, i, j, pow(i,j));
+        }
+
+        gsl_vector_set (y, i, x[i]);
+    }
+
+    gsl_multifit_linear_workspace * work = gsl_multifit_linear_alloc (n, order);
+    gsl_multifit_linear (X, y, c, cov, &chisq, work);
+
+    double sum = 0;
+    for (i = 0; i < order ; i ++) {
+        sum = sum + gsl_vector_get(c,i) * pow((n - 1) / 2, i) ;
+    }
+    gsl_multifit_linear_free (work);
+
+    gsl_matrix_free (X);
+    gsl_vector_free (y);
+    gsl_vector_free (c);
+    gsl_matrix_free (cov);
+
+    return sum;
+}
+
+int EMSCRIPTEN_KEEPALIVE filterSavitzkyGolay(double* xInArray,const int N, double* xOutArray, const int K, const int order) {
+    int status = 0;    /* return value: 0 = success */
+    int orderP = order + 1;
+    gsl_vector_view xIn = gsl_vector_view_array(xInArray, N);
+    gsl_vector_view xOut = gsl_vector_view_array(xOutArray, N);
+    gsl_movstat_workspace* w = gsl_movstat_alloc(K);
+    gsl_movstat_function F;
+
+    F.function = savitzkyGolayWindow;
+    F.params = &orderP;
+    gsl_movstat_apply(GSL_MOVSTAT_END_PADVALUE, &F, &xIn.vector, &xOut.vector, w);
+
+    gsl_movstat_free(w);
     return status;
 }
 

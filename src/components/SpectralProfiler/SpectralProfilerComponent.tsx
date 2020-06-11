@@ -101,38 +101,10 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
             let ySum2 = 0;
             let yCount = 0;
 
-            let smoothingValues: Float32Array | Float64Array;
-            if (this.widgetStore.smoothingType === SmoothingType.BOXCAR) {
-                smoothingValues = GSL.boxcarSmooth(coordinateData.values, this.widgetStore.smoothingBoxcarSize);
-            } else if (this.widgetStore.smoothingType === SmoothingType.GAUSSIAN) {
-                if (this.widgetStore.smoothingGaussianSigma && this.widgetStore.smoothingGaussianSigma > 0.5) {
-                    let kernelSize = Math.ceil(this.widgetStore.smoothingGaussianSigma * 2);
-                    let alpha = (kernelSize - 1) / (2 * this.widgetStore.smoothingGaussianSigma);
-                    smoothingValues = GSL.gaussianSmooth(coordinateData.values, kernelSize, alpha);
-                } else {
-                    smoothingValues = GSL.gaussianSmooth(coordinateData.values, 1, 1);
-                }
-            } else if (this.widgetStore.smoothingType === SmoothingType.HANNING) {
-                smoothingValues = GSL.hanningSmooth(coordinateData.values, this.widgetStore.smoothingHanningSize);
-            } else if (this.widgetStore.smoothingType === SmoothingType.DECIMATION) {
-                smoothingValues = GSL.decimation(coordinateData.values, this.widgetStore.smoothingDecimationValue);
-            } else if (this.widgetStore.smoothingType === SmoothingType.BINNING) {
-                smoothingValues = GSL.binning(coordinateData.values, this.widgetStore.smoothingBinWidth);
-            } else {
-                smoothingValues = coordinateData.values;
-            }
-
-            let smoothingMap: Map<string, Point2D[]> = new Map<string, Point2D[]>();
             let values: Array<{ x: number, y: number }> = [];
-            let smoothingArray: Array<{ x: number, y: number }> = [];
-            const plotChannel = (this.widgetStore.smoothingType === SmoothingType.BINNING) ? GSL.binning(channelValues, this.widgetStore.smoothingBinWidth) : channelValues;
-            for (let i = 0; i < plotChannel.length; i++) {
-                const x = plotChannel[i];
-                const y = (this.widgetStore.smoothingType === SmoothingType.BINNING) ? smoothingValues[i] : coordinateData.values[i];
-                let smoothingY;
-                if (this.widgetStore.smoothingType !== SmoothingType.NONE) {
-                    smoothingY = smoothingValues[i];
-                }
+            for (let i = 0; i < channelValues.length; i++) {
+                const x = channelValues[i];
+                const y = coordinateData.values[i];
 
                 // Skip values outside of range. If array already contains elements, we've reached the end of the range, and can break
                 if (x < xMin || x > xMax) {
@@ -143,7 +115,6 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
                     }
                 }
                 values.push({x, y});
-                smoothingArray.push({x, y: smoothingY});
                 // Mean/RMS calculations
                 if (!isNaN(y)) {
                     yMin = Math.min(yMin, y);
@@ -154,12 +125,42 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
                 }
             }
 
-            if (this.widgetStore.smoothingType === SmoothingType.DECIMATION ) {
-                smoothingArray.fill({x: plotChannel[0], y: coordinateData.values[0]}, 0);
-                for (let i = 0; i < smoothingValues.length; i++) {
-                    smoothingArray.fill({ x: plotChannel[smoothingValues[i]], y: coordinateData.values[smoothingValues[i]]}, smoothingValues[i]);
+            const smoothingType = this.widgetStore.smoothingType;
+            let smoothingMap: Map<string, Point2D[]> = new Map<string, Point2D[]>();
+            if (smoothingType !== SmoothingType.NONE) {
+
+                let smoothingArray: Array<{x: number, y: number}> = [];
+                let smoothingYs: Float32Array | Float64Array;
+                let smoothingXs: number[] = channelValues;
+                if (smoothingType === SmoothingType.BOXCAR) {
+                    smoothingYs = GSL.boxcarSmooth(coordinateData.values, this.widgetStore.smoothingBoxcarSize);
+                } else if (smoothingType === SmoothingType.GAUSSIAN) {
+                    if (this.widgetStore.smoothingGaussianSigma && this.widgetStore.smoothingGaussianSigma > 0.5) {
+                        let kernelSize = Math.ceil(this.widgetStore.smoothingGaussianSigma * 2);
+                        let alpha = (kernelSize - 1) / (2 * this.widgetStore.smoothingGaussianSigma);
+                        smoothingYs = GSL.gaussianSmooth(coordinateData.values, kernelSize, alpha);
+                    } else {
+                        smoothingYs = GSL.gaussianSmooth(coordinateData.values, 1, 1);
+                    }
+                } else if (smoothingType === SmoothingType.HANNING) {
+                    smoothingYs = GSL.hanningSmooth(coordinateData.values, this.widgetStore.smoothingHanningSize);
+                } else if (smoothingType === SmoothingType.DECIMATION) {
+                    smoothingYs = GSL.decimation(coordinateData.values, this.widgetStore.smoothingDecimationValue);
+                } else if (smoothingType === SmoothingType.BINNING) {
+                    smoothingYs = GSL.binning(coordinateData.values, this.widgetStore.smoothingBinWidth);
+                    smoothingXs = GSL.binning(channelValues, this.widgetStore.smoothingBinWidth);
+                } else if (smoothingType === SmoothingType.SAVITZKY_GOLAY) {
+                    smoothingYs = GSL.savitzkyGolaySmooth(coordinateData.values, this.widgetStore.smoothingSavitzkyGolaySize, this.widgetStore.smoothingSavitzkyGolayOrder);
                 }
-                smoothingArray.fill({x: plotChannel[plotChannel.length - 1], y: coordinateData.values[coordinateData.values.length - 1]}, smoothingArray.length - 1);
+
+                for (let i = 0; i < smoothingXs.length; i++) {
+                    if (smoothingType === SmoothingType.DECIMATION) {
+                        smoothingArray.push({x: channelValues[smoothingYs[i]], y: coordinateData.values[smoothingYs[i]]});
+                    } else {
+                        smoothingArray.push({x: smoothingXs[i], y: smoothingYs[i]});
+                    }
+                }
+                smoothingMap.set("smoothing", smoothingArray);
             }
 
             if (yCount > 0) {
@@ -176,7 +177,6 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
                 yMin -= range * VERTICAL_RANGE_PADDING;
                 yMax += range * VERTICAL_RANGE_PADDING;
             }
-            smoothingMap.set("smoothing", smoothingArray);
             return {values, smoothingMap, xMin, xMax, yMin, yMax, yMean, yRms, progress: coordinateData.progress};
         }
         return null;
@@ -401,7 +401,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
                 linePlotProps.lineColor = primaryLineColor;
                 if (this.widgetStore.smoothingType !== SmoothingType.NONE) {
                     linePlotProps.multiPlotData = currentPlotData.smoothingMap;
-                    if (!this.widgetStore.isSmoothingOverlayOn || this.widgetStore.smoothingType === SmoothingType.BINNING) {
+                    if (!this.widgetStore.isSmoothingOverlayOn) {
                         linePlotProps.lineColor = "#00000000";
                     }
                     linePlotProps.multiPlotBorderColor.set("smoothing", this.widgetStore.smoothingLineColor.colorHex);

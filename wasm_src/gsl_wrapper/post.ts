@@ -6,6 +6,7 @@ Module.filterGaussian = Module.cwrap("filterGaussian", "number", ["number", "num
 Module.filterHanning = Module.cwrap("filterHanning", "number", ["number", "number", "number", "number"]);
 Module.filterDecimation = Module.cwrap("filterDecimation", "number", ["number", "number", "number", "number", "number"]);
 Module.filterBinning = Module.cwrap("filterBinning", "number", ["number", "number", "number", "number"]);
+Module.filterSavitzkyGolay = Module.cwrap("filterSavitzkyGolay", "number", ["number", "number", "number", "number", "number"]);
 
 Module.boxcarSmooth = function (xIn: Float64Array | Float32Array, kernelSize: number) {
     // Return empty array if arguments are invalid
@@ -95,6 +96,24 @@ Module.binning = function (xIn: Float64Array | Float32Array, binWidth: number) {
     Module.HEAPF64.set(new Float64Array(xIn), Module.xIn / 8);
     Module.filterBinning(Module.xIn, inN, Module.xOut, binWidth);
     const xOut = new Float64Array(Module.HEAPF64.buffer, Module.xOut, outN).slice();
+
+    Module._free(Module.xIn);
+    Module._free(Module.xOut);
+    return xOut;
+};
+
+Module.savitzkyGolaySmooth = function (xIn: Float64Array | Float32Array, kernelSize: number, order: number) {
+    if (!xIn) {
+        return new Float64Array(1);
+    }
+
+    const N = xIn.length;
+    Module.xIn = Module._malloc(N * 8);
+    Module.xOut = Module._malloc(N * 8);
+
+    Module.HEAPF64.set(new Float64Array(xIn), Module.xIn / 8);
+    Module.filterSavtizkyGolay(Module.xIn, N, Module.xOut, kernelSize, order);
+    const xOut = new Float64Array(Module.HEAPF64.buffer, Module.xOut, N).slice();
 
     Module._free(Module.xIn);
     Module._free(Module.xOut);

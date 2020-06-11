@@ -36,6 +36,8 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
     @observable smoothingHanningSize: number = 3;
     @observable smoothingDecimationValue: number = 2;
     @observable smoothingBinWidth: number = 2;
+    @observable smoothingSavitzkyGolaySize: number = 5;
+    @observable smoothingSavitzkyGolayOrder: number = 1;
 
     public static StatsTypeString(statsType: CARTA.StatsType) {
         switch (statsType) {
@@ -203,6 +205,13 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         this.smoothingBinWidth = val;
     }
 
+    @action setSmoothingSavitzkyGolaySize = (val: number) => {
+        this.smoothingSavitzkyGolaySize = val;
+    }
+
+    @action setSmoothingSavitzkyGolayOrder = (val: number) => {
+        this.smoothingSavitzkyGolayOrder = val;
+    }
     constructor(coordinate: string = "z") {
         super(RegionsType.CLOSED_AND_POINT);
         this.coordinate = coordinate;
