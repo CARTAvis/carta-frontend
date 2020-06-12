@@ -7,6 +7,7 @@
 #include "gsl/gsl_statistics_double.h"
 #include "gsl/gsl_sort_int.h"
 #include <math.h>
+#include "gsl/gsl_multifit.h"
 
 extern "C" {
 
@@ -117,5 +118,160 @@ int EMSCRIPTEN_KEEPALIVE filterBinning(double* xInArray, const int inN, double* 
 
     return status;
 }
+
+double savitzkyGolayWindow(const size_t n, double x[], void* params) {
+
+    const int order = *(int *) params;
+
+    int i, j;
+    
+    double xi, yi, chisq;
+    gsl_matrix *X, *cov;
+    gsl_vector *y, *c;
+
+
+    X = gsl_matrix_alloc (n, order);
+    y = gsl_vector_alloc (n);
+
+    c = gsl_vector_alloc (order);
+    cov = gsl_matrix_alloc (order, order);
+
+    for (i = 0; i < n; i++) {
+
+        for (j = 0; j<order;j++) {
+            gsl_matrix_set (X, i, j, pow(i,j));
+        }
+
+        gsl_vector_set (y, i, x[i]);
+    }
+
+    gsl_multifit_linear_workspace * work = gsl_multifit_linear_alloc (n, order);
+    gsl_multifit_linear (X, y, c, cov, &chisq, work);
+
+    double sum = 0;
+    for (i = 0; i < order ; i ++) {
+        sum = sum + gsl_vector_get(c,i) * pow((n - 1) / 2, i) ;
+    }
+    gsl_multifit_linear_free (work);
+
+    gsl_matrix_free (X);
+    gsl_vector_free (y);
+    gsl_vector_free (c);
+    gsl_matrix_free (cov);
+
+    return sum;
+}
+
+int EMSCRIPTEN_KEEPALIVE filterSavitzkyGolay(double* xInArray,const int N, double* xOutArray, const int K, const int order) {
+    int status = 0;    /* return value: 0 = success */
+    int orderP = order + 1;
+    gsl_vector_view xIn = gsl_vector_view_array(xInArray, N);
+    gsl_vector_view xOut = gsl_vector_view_array(xOutArray, N);
+    gsl_movstat_workspace* w = gsl_movstat_alloc(K);
+    gsl_movstat_function F;
+
+    F.function = savitzkyGolayWindow;
+    F.params = &orderP;
+    gsl_movstat_apply(GSL_MOVSTAT_END_PADVALUE, &F, &xIn.vector, &xOut.vector, w);
+
+    gsl_movstat_free(w);
+    return status;
+}
+
+// double savitzkyGolayWindow(const size_t n, double x[], void* params) {
+
+//     const int order = *(int *) params;
+
+//     int i, j;
+    
+//     double xi, yi, chisq;
+//     gsl_matrix *X, *cov;
+//     gsl_vector *y, *c;
+
+
+//     X = gsl_matrix_alloc (n, order);
+//     y = gsl_vector_alloc (n);
+
+//     c = gsl_vector_alloc (order);
+//     cov = gsl_matrix_alloc (order, order);
+
+//     for (i = 0; i < n; i++) {
+
+//         for (j = 0; j<order;j++) {
+//             gsl_matrix_set (X, i, j, pow(i,j));
+//         }
+
+//         gsl_vector_set (y, i, x[i]);
+//     }
+
+//     gsl_multifit_linear_workspace * work = gsl_multifit_linear_alloc (n, order);
+//     gsl_multifit_linear (X, y, c, cov, &chisq, work);
+
+//     double sum = 0;
+//     for (i = 0; i < order ; i ++) {
+//         sum = sum + gsl_vector_get(c,i) * pow((n - 1) / 2, i) ;
+//     }
+//     gsl_multifit_linear_free (work);
+
+//     gsl_matrix_free (X);
+//     gsl_vector_free (y);
+//     gsl_vector_free (c);
+//     gsl_matrix_free (cov);
+
+//     return sum;
+// }
+
+// int EMSCRIPTEN_KEEPALIVE filterSavitzkyGolay(double* xInArray, double* horizontalArray, const int N, double* xOutArray, const int K, const int order) {
+//     int status = 0;    /* return value: 0 = success */
+//     gsl_vector_view xIn = gsl_vector_view_array(xInArray, N);
+//     double* window = new double[K];
+//     size_t H;
+//     if (K % 2 == 0) {
+//         H = K / 2;
+//     } else {
+//         H = (K - 1) / 2;
+//     }
+
+//     size_t cNum = order + 1;
+
+//     for (size_t i = 0; i < N; ++i) {
+//         size_t wsize = gsl_movstat_fill(GSL_MOVSTAT_END_PADVALUE, &xIn.vector, i, H, H, window);
+
+//         double chisq;
+//         gsl_matrix *X, *cov;
+//         gsl_vector_view y;
+//         gsl_vector *c;
+
+//         X = gsl_matrix_alloc (wsize, cNum);
+//         y = gsl_vector_view_array(window, wsize);
+//         c = gsl_vector_alloc (cNum);
+//         cov = gsl_matrix_alloc (cNum, cNum);
+
+//         for (size_t j = 0; j < wsize; j++) {
+//             for (size_t k = 0; k<cNum; k++) {
+//                 const double val = horizontalArray[i];
+//                 gsl_matrix_set (X, j, k, pow(val,k));
+//             }
+//         }
+//         gsl_multifit_linear_workspace * work = gsl_multifit_linear_alloc (wsize, cNum);
+//         gsl_multifit_linear (X, &y.vector, c, cov, &chisq, work);
+
+//         double sum = 0;
+//         for (size_t t = 0; t < cNum ; t++) {
+//             // const double val = gsl_vector_get(c,t) * pow(horizontalArray[i], t);
+//             sum = sum + gsl_vector_get(c,t) * pow(horizontalArray[i], t);
+//         }
+//         xOutArray[i] = sum;
+//         gsl_multifit_linear_free (work);
+
+//         gsl_matrix_free (X);
+//         gsl_vector_free (c);
+//         gsl_matrix_free (cov);
+//     }
+
+//     delete[] window;
+
+//     return status;
+// }
 
 }

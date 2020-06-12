@@ -46,6 +46,7 @@ export class PlotContainerProps {
     multiPlotBorderColor?: Map<string, string>;
     multiPlotLineType?: Map<string, PlotType>;
     multiPlotLineWidth?: Map<string, number>;
+    multiPlotLineOrder?: Map<string, number>;
     plotType?: string;
     dataBackgroundColor?: Array<string>;
     isGroupSubPlot?: boolean;
@@ -54,6 +55,7 @@ export class PlotContainerProps {
     multiColorSingleLineColors?: Array<string>;
     multiColorMultiLinesColors?: Map<string, Array<string>>;
     borderWidth?: number;
+    order?: number;
 }
 
 interface MulticolorLineChartDatasets extends ChartDataSets {
@@ -428,6 +430,7 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
                 data: this.props.data,
                 fill: false,
                 lineTension: 0,
+                order: this.props.order ? this.props.order : 0
             };
             if (this.props.usePointSymbols) {
                 datasetConfig.showLine = false;
@@ -477,6 +480,7 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
                     fill: false,
                     lineTension: 0,
                     backgroundColor: currentLineColor,
+                    order: this.props.multiPlotLineOrder.get(key) ? this.props.multiPlotLineOrder.get(key) : 0
                 };
 
                 if (this.props.multiColorMultiLinesColors && this.props.multiColorMultiLinesColors.size) {

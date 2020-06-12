@@ -149,6 +149,8 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
                 } else if (smoothingType === SmoothingType.BINNING) {
                     smoothingYs = GSL.binning(coordinateData.values, this.widgetStore.smoothingBinWidth);
                     smoothingXs = GSL.binning(channelValues, this.widgetStore.smoothingBinWidth);
+                } else if (smoothingType === SmoothingType.SAVITZKY_GOLAY) {
+                    smoothingYs = GSL.savitzkyGolaySmooth(coordinateData.values, this.widgetStore.smoothingSavitzkyGolaySize, this.widgetStore.smoothingSavitzkyGolayOrder);
                 }
 
                 for (let i = 0; i < smoothingXs.length; i++) {
@@ -371,7 +373,9 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
             zeroLineWidth: 2,
             multiPlotBorderColor: new Map(),
             multiPlotLineType: new Map(),
-            multiPlotLineWidth: new Map()
+            multiPlotLineWidth: new Map(),
+            multiPlotLineOrder: new Map(),
+            order: 2
         };
 
         if (this.profileStore && frame) {
@@ -405,6 +409,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
                     linePlotProps.multiPlotBorderColor.set("smoothing", this.widgetStore.smoothingLineColor.colorHex);
                     linePlotProps.multiPlotLineType.set("smoothing", this.widgetStore.smoothingLineType);
                     linePlotProps.multiPlotLineWidth.set("smoothing", this.widgetStore.smoothingLineWidth);
+                    linePlotProps.multiPlotLineOrder.set("smoothing", 0);
                 }
 
                 // Determine scale in X and Y directions. If auto-scaling, use the bounds of the current data

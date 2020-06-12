@@ -88,6 +88,7 @@ export class LinePlotComponentProps {
     multiPlotBorderColor?: Map<string, string>;
     multiPlotLineType?: Map<string, PlotType>;
     multiPlotLineWidth?: Map<string, number>;
+    multiPlotLineOrder?: Map<string, number>;
     plotType?: string;
     isGroupSubPlot?: boolean;
     zIndex?: boolean;
@@ -97,6 +98,7 @@ export class LinePlotComponentProps {
     multiColorSingleLineColors?: Array<string>;
     multiColorMultiLinesColors?: Map<string, Array<string>>;
     borderWidth?: number;
+    order?: number;
 }
 
 // Maximum time between double clicks
