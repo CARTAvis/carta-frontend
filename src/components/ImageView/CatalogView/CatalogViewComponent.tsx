@@ -1,7 +1,7 @@
 import * as React from "react";
 import * as Plotly from "plotly.js";
 import {observer} from "mobx-react";
-import {computed} from "mobx";
+import {computed, action} from "mobx";
 import Plot from "react-plotly.js";
 import {Colors} from "@blueprintjs/core";
 import {AppStore, WidgetsStore, CatalogStore} from "stores";
@@ -34,7 +34,7 @@ export class CatalogViewComponent extends React.Component<CatalogViewComponentPr
                 unSelectedata.hoverinfo = "none";
                 unSelectedata.marker = {};
                 unSelectedata.marker.line = {};
-                // copy data to trigger react-plotly js update. only update revision number not working, with layout["datarevision"] will slow down the plotly;
+                // copy data to trigger react-plotly js update. only update revision number not working. with layout["datarevision"] will slow down plotly;
                 unSelectedata.x = catalog.xImageCoords.slice(0);
                 unSelectedata.y = catalog.yImageCoords.slice(0);
                 unSelectedata.name = key;
@@ -59,23 +59,15 @@ export class CatalogViewComponent extends React.Component<CatalogViewComponentPr
                 selecteData.mode = "markers";
                 selecteData.hoverinfo = "none";
                 const coords = catalogStore.catalogData.get(widgetId);
-                if (coords && coords.xImageCoords.length) {   
-                    let selectedX = [];
-                    let selectedY = [];
-                    for (let index = 0; index < selectedPointSize; index++) {
-                        const pointIndex = selectedPoints[index];
-                        selectedX.push(coords.xImageCoords[pointIndex]);
-                        selectedY.push(coords.yImageCoords[pointIndex]);
-                    }
-                    selecteData.x = selectedX;
-                    selecteData.y = selectedY;
+                if (coords?.xImageCoords?.length) {
+                    selecteData.x = coords.xSelectedCoords.slice(0);
+                    selecteData.y = coords.ySelectedCoords.slice(0);
                     selecteData.name = widgetId;
                     selecteData.marker = {};
                     selecteData.marker.line = {};
                     coordsData.set(widgetId, selecteData);
                 }
             }
-
         });
         return coordsData;
     }
@@ -118,7 +110,7 @@ export class CatalogViewComponent extends React.Component<CatalogViewComponentPr
                 let selectedPointIndex = [];
                 const selectedPoint = event.points[0];
                 selectedPointIndex.push(selectedPoint.pointIndex);
-                catalogWidget.setSelectedPointIndices(selectedPointIndex, true);
+                catalogWidget.setSelectedPointIndices(selectedPointIndex, true, false);
             }
         }
     };
@@ -130,7 +122,7 @@ export class CatalogViewComponent extends React.Component<CatalogViewComponentPr
             const widgetsStore = WidgetsStore.Instance;
             appStore.catalogs.forEach((fileId, widgetId) => {
                 const catalogOverlayStore = widgetsStore.catalogOverlayWidgets.get(widgetId);
-                catalogOverlayStore.setSelectedPointIndices([]);
+                catalogOverlayStore.setSelectedPointIndices([], false, false);
             });
         }
     }
@@ -227,7 +219,7 @@ export class CatalogViewComponent extends React.Component<CatalogViewComponentPr
             if (shape) {
                 data.marker.symbol = shape;
             }
-            scatterData.push(data);
+            scatterData.push(data);   
         });
 
         if (selectedData) {

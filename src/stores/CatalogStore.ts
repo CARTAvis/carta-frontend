@@ -8,6 +8,8 @@ type CatalogDataInfo = {
     fileId: number,
     xImageCoords: Array<number>,
     yImageCoords: Array<number>,
+    xSelectedCoords: Array<number>,
+    ySelectedCoords: Array<number>,
     showSelectedData: boolean;
 };
 
@@ -43,6 +45,8 @@ export class CatalogStore {
             fileId: fileId,
             xImageCoords: [],
             yImageCoords: [],
+            xSelectedCoords: [],
+            ySelectedCoords: [],
             showSelectedData: false
         });
         this.catalogColor.set(widgetId, Colors.TURQUOISE3);
@@ -65,7 +69,24 @@ export class CatalogStore {
                     fileId: catalogDataInfo.fileId,
                     xImageCoords: catalogDataInfo.xImageCoords,
                     yImageCoords: catalogDataInfo.yImageCoords,
-                    showSelectedData: catalogDataInfo.showSelectedData
+                    xSelectedCoords: catalogDataInfo.xSelectedCoords,
+                    ySelectedCoords: catalogDataInfo.ySelectedCoords,
+                    showSelectedData: catalogDataInfo.showSelectedData,
+                });
+        }
+    }
+
+    @action updateSelectedPoints(widgetId: string, xSelectedCoords: Array<number>, ySelectedCoords: Array<number>) {
+        const catalogDataInfo = this.catalogData.get(widgetId);
+        if (catalogDataInfo) {
+            this.catalogData.set(widgetId,
+                {
+                    fileId: catalogDataInfo.fileId,
+                    xImageCoords: catalogDataInfo.xImageCoords,
+                    yImageCoords: catalogDataInfo.yImageCoords,
+                    xSelectedCoords: xSelectedCoords,
+                    ySelectedCoords: ySelectedCoords,
+                    showSelectedData: catalogDataInfo.showSelectedData,
                 });
         }
     }

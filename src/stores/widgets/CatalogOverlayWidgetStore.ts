@@ -3,9 +3,8 @@ import {Colors} from "@blueprintjs/core";
 import {Table, Regions, IRegion} from "@blueprintjs/table";
 import {CARTA} from "carta-protobuf";
 import {RegionWidgetStore, RegionsType} from "./RegionWidgetStore";
-import {SystemType} from "stores";
-import {AppStore} from "stores/AppStore";
-import {filterProcessedColumnData} from "utilities";
+import {AppStore, CatalogStore, SystemType} from "stores";
+import {filterProcessedColumnData, minMaxArray} from "utilities";
 import {ProcessedColumnData} from "models";
 
 export interface CatalogInfo {
@@ -62,7 +61,10 @@ export class CatalogOverlayWidgetStore extends RegionWidgetStore {
 
     public static readonly InitTableRows = 50;
     private static readonly DataChunkSize = 50;
-    private static readonly initDisplayedColumnSize = 10;
+    private static readonly InitDisplayedColumnSize = 10;
+    // Number.NEGATIVE_INFINITY -1.797693134862316E+308
+    private static readonly NEGATIVE_INFINITY = -1.7976931348623157e+308;
+    private static readonly POSITIVE_INFINITY = 1.7976931348623157e+308;
     private readonly CoordinateSystemName = new Map<SystemType, string>([
         [SystemType.FK5, "FK5"],
         [SystemType.FK4, "FK4"],
@@ -427,7 +429,7 @@ export class CatalogOverlayWidgetStore extends RegionWidgetStore {
     }
 
     @action resetSelectedPointIndices () {
-        this.setSelectedPointIndices([]);
+        this.setSelectedPointIndices([], false, false);
         this.setShowSelectedData(false);
     } 
 
@@ -444,7 +446,7 @@ export class CatalogOverlayWidgetStore extends RegionWidgetStore {
                 const header = catalogHeader[index];
                 let display = false;
                 // this.findKeywords(header.description) init displayed according discription
-                if (index < CatalogOverlayWidgetStore.initDisplayedColumnSize) {
+                if (index < CatalogOverlayWidgetStore.InitDisplayedColumnSize) {
                     display = true;
                 }
                 let controlHeader: ControlHeader = {columnIndex: header.columnIndex, dataIndex: index, display: display, representAs: CatalogOverlay.NONE, filter: "", columnWidth: null};
@@ -462,11 +464,34 @@ export class CatalogOverlayWidgetStore extends RegionWidgetStore {
         this.filterDataSize = undefined;
     }
 
-    @action setSelectedPointIndices = (pointIndices: Array<number>, autoScroll: boolean = false) => {
+    @action setSelectedPointIndices = (pointIndices: Array<number>, autoScroll: boolean, autoPanZoom: boolean) => {
         this.selectedPointIndices = pointIndices;
         const catalogComponentSize = AppStore.Instance.widgetsStore.catalogComponentSize();
         if (pointIndices.length > 0 && this.catalogTableRef && autoScroll && catalogComponentSize) {
             this.catalogTableRef.scrollToRegion(this.autoScrollRowNumber);
+        }
+
+        const coords = CatalogStore.Instance.catalogData.get(this.storeId);
+        if (coords?.xImageCoords?.length) {
+            let selectedX = [];
+            let selectedY = [];
+            for (let index = 0; index < pointIndices.length; index++) {
+                const pointIndex = pointIndices[index];
+                selectedX.push(coords.xImageCoords[pointIndex]);
+                selectedY.push(coords.yImageCoords[pointIndex]);
+            }
+            CatalogStore.Instance.updateSelectedPoints(this.storeId, selectedX, selectedY);
+
+            if (autoPanZoom) {
+                if (pointIndices.length === 1) {
+                    const pointIndex = pointIndices[0];
+                    const x = coords.xImageCoords[pointIndex];
+                    const y = coords.yImageCoords[pointIndex];
+                    if (!this.isInfinite(x) && !this.isInfinite(y)) {
+                        AppStore.Instance.activeFrame.setCenter(x, y);      
+                    } 
+                }
+            }
         }
     };
 
@@ -618,11 +643,16 @@ export class CatalogOverlayWidgetStore extends RegionWidgetStore {
     @computed get selectedData(): Map<number, ProcessedColumnData> {
         let catalogColumnsData = this.catalogData;
         const selectedPointIndices = this.selectedPointIndices;
+        const displayed = this.displayedColumnHeaders.map(catalogHeader => {
+            return catalogHeader.columnIndex;
+        });
 
         if (selectedPointIndices.length > 0) {
             const selectedData = new Map<number, ProcessedColumnData>();
             this.catalogData.forEach((data, i) => {
-                selectedData.set(i, filterProcessedColumnData(data, selectedPointIndices));
+                if (displayed.includes(i)) {
+                    selectedData.set(i, filterProcessedColumnData(data, selectedPointIndices));   
+                }
             });
 
             return selectedData;
@@ -715,5 +745,13 @@ export class CatalogOverlayWidgetStore extends RegionWidgetStore {
             }
         });
         return catalogSystem;
+    }
+
+    private isInfinite(value: number) {
+        return (
+            !isFinite(value) || 
+            value === CatalogOverlayWidgetStore.NEGATIVE_INFINITY || 
+            value === CatalogOverlayWidgetStore.POSITIVE_INFINITY
+        );
     }
 }

@@ -117,7 +117,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         appStore.removeCatalog(this.widgetId, this.props.id);
     }
 
-    @computed get catalogData(): {dataset: Map<number, ProcessedColumnData>, numVisibleRows: number} {
+    @computed get catalogDataInfo(): {dataset: Map<number, ProcessedColumnData>, numVisibleRows: number} {
         const widgetStore = this.widgetStore;
         let dataset;
         let numVisibleRows = 0;
@@ -496,6 +496,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
                     catalogStore.updateCatalogColor(id, widgetStore.catalogColor);
                     catalogStore.updateCatalogSize(id, widgetStore.catalogSize);
                     catalogStore.updateCatalogShape(id, widgetStore.catalogShape);
+                    widgetStore.setSelectedPointIndices(widgetStore.selectedPointIndices, false, false);
                 }
                 if (widgetStore.shouldUpdateData) {
                     widgetStore.setUpdatingDataStream(true);   
@@ -532,12 +533,12 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
                 highlighted = selectedPointIndexs.includes(selectedDataIndices[0]);
             }
             if (!highlighted) {
-                widgetsStore.setSelectedPointIndices(selectedDataIndices);
+                widgetsStore.setSelectedPointIndices(selectedDataIndices, false, true);
             } else {
-                widgetsStore.setSelectedPointIndices([]);
+                widgetsStore.setSelectedPointIndices([], false, false);
             }
         } else {
-            widgetsStore.setSelectedPointIndices(selectedDataIndices);
+            widgetsStore.setSelectedPointIndices(selectedDataIndices, false, true);
         }
     }
 
@@ -576,7 +577,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         }
 
         this.coordinate = widgetStore.catalogCoordinateSystem.coordinate;
-        const catalogTable = this.catalogData;
+        const catalogTable = this.catalogDataInfo;
         const dataTableProps: TableComponentProps = {
             type: TableType.ColumnFilter,
             dataset: catalogTable.dataset,

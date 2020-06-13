@@ -1,11 +1,16 @@
 .column-name {
-    user-select: none;
+    overflow: hidden;
+
     .lable {
         margin: 0px;
+        display: inline-flex;
+        position: absolute;
     }
 
     .sort-icon {
         margin-right: 5px;
+        position: relative;
+        top: 5px;
     }
 }
 
