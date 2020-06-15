@@ -477,8 +477,12 @@ export class CatalogOverlayWidgetStore extends RegionWidgetStore {
             let selectedY = [];
             for (let index = 0; index < pointIndices.length; index++) {
                 const pointIndex = pointIndices[index];
-                selectedX.push(coords.xImageCoords[pointIndex]);
-                selectedY.push(coords.yImageCoords[pointIndex]);
+                const x = coords.xImageCoords[pointIndex];
+                const y = coords.yImageCoords[pointIndex];
+                if (!this.isInfinite(x) && !this.isInfinite(y)) {
+                    selectedX.push(x);
+                    selectedY.push(y);
+                }
             }
             CatalogStore.Instance.updateSelectedPoints(this.storeId, selectedX, selectedY);
 
@@ -491,6 +495,17 @@ export class CatalogOverlayWidgetStore extends RegionWidgetStore {
                         AppStore.Instance.activeFrame.setCenter(x, y);      
                     } 
                 }
+
+                if (pointIndices.length > 1) {
+                    const minMaxX = minMaxArray(selectedX);
+                    const minMaxY = minMaxArray(selectedY);
+                    const width = minMaxX.maxVal - minMaxX.minVal;
+                    const height = minMaxY.maxVal - minMaxY.minVal;
+                    AppStore.Instance.activeFrame.setCenter(width / 2 + minMaxX.minVal, height / 2 + minMaxY.minVal);
+                    const zoomLevel = Math.min(AppStore.Instance.activeFrame.renderWidth / width, AppStore.Instance.activeFrame.renderHeight / height);
+                    AppStore.Instance.activeFrame.setZoom(zoomLevel);
+                }
+
             }
         }
     };
