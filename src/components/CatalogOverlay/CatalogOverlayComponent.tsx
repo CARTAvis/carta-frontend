@@ -526,19 +526,21 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
     // source selected in table
     private onCatalogTableDataSelected = (selectedDataIndices: number[]) => {
         const widgetsStore = this.widgetStore;
-        if (selectedDataIndices.length === 1) {
-            const selectedPointIndexs = widgetsStore.selectedPointIndices;
-            let highlighted = false;
-            if (selectedPointIndexs.length === 1) {
-                highlighted = selectedPointIndexs.includes(selectedDataIndices[0]);
-            }
-            if (!highlighted) {
-                widgetsStore.setSelectedPointIndices(selectedDataIndices, false, true);
+        if (!widgetsStore.showSelectedData) {
+            if (selectedDataIndices.length === 1) {
+                const selectedPointIndexs = widgetsStore.selectedPointIndices;
+                let highlighted = false;
+                if (selectedPointIndexs.length === 1) {
+                    highlighted = selectedPointIndexs.includes(selectedDataIndices[0]);
+                }
+                if (!highlighted) {
+                    widgetsStore.setSelectedPointIndices(selectedDataIndices, false, true);
+                } else {
+                    widgetsStore.setSelectedPointIndices([], false, false);
+                }
             } else {
-                widgetsStore.setSelectedPointIndices([], false, false);
+                widgetsStore.setSelectedPointIndices(selectedDataIndices, false, true);
             }
-        } else {
-            widgetsStore.setSelectedPointIndices(selectedDataIndices, false, true);
         }
     }
 

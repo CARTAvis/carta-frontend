@@ -475,10 +475,13 @@ export class CatalogOverlayWidgetStore extends RegionWidgetStore {
         if (coords?.xImageCoords?.length) {
             let selectedX = [];
             let selectedY = [];
+            let xArray = coords.xImageCoords;
+            let yArray = coords.yImageCoords;
+
             for (let index = 0; index < pointIndices.length; index++) {
                 const pointIndex = pointIndices[index];
-                const x = coords.xImageCoords[pointIndex];
-                const y = coords.yImageCoords[pointIndex];
+                const x = xArray[pointIndex];
+                const y = yArray[pointIndex];
                 if (!this.isInfinite(x) && !this.isInfinite(y)) {
                     selectedX.push(x);
                     selectedY.push(y);
@@ -489,8 +492,8 @@ export class CatalogOverlayWidgetStore extends RegionWidgetStore {
             if (autoPanZoom) {
                 if (pointIndices.length === 1) {
                     const pointIndex = pointIndices[0];
-                    const x = coords.xImageCoords[pointIndex];
-                    const y = coords.yImageCoords[pointIndex];
+                    const x = xArray[pointIndex];
+                    const y = yArray[pointIndex];
                     if (!this.isInfinite(x) && !this.isInfinite(y)) {
                         AppStore.Instance.activeFrame.setCenter(x, y);      
                     } 
