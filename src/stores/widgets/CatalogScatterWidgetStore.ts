@@ -58,8 +58,8 @@ export class CatalogScatterWidgetStore {
         const columnsName = this.columnsName;
         if (columnsName.x && columnsName.y) {
             const coords = catalogOverlayWidgetStore.get2DPlotData(columnsName.x, columnsName.y, catalogOverlayWidgetStore.catalogData);
-            this.setXDataset(coords.wcsX);
-            this.setYDataset(coords.wcsY);
+            this.setXDataset(coords.wcsX.slice(0));
+            this.setYDataset(coords.wcsY.slice(0));
             this.border = this.initBorder;
         }
     }
