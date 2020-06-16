@@ -248,7 +248,7 @@ export class SpectralLineOverlayWidgetStore extends RegionWidgetStore {
                     const columnName = this.columnHeaders[columnIndex].name;
                     let dataType = CARTA.ColumnType.String;
                     let data = [];
-                    if (columnName === (SpectralLineHeaders.Species || SpectralLineHeaders.ChemicalName)) {
+                    if (columnName === SpectralLineHeaders.Species || columnName === SpectralLineHeaders.ChemicalName) {
                         for (let row = 0; row < numDataRows; row++) {
                             const valString = spectralLineInfo[row + 1][columnIndex];
                             data.push(valString);
