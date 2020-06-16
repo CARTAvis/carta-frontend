@@ -1,7 +1,7 @@
 import * as _ from "lodash";
 import {action, autorun, computed, observable, ObservableMap, when} from "mobx";
 import * as Long from "long";
-import {Colors, IOptionProps} from "@blueprintjs/core";
+import {Classes, Colors, IOptionProps, setHotkeysDialogProps} from "@blueprintjs/core";
 import {Utils} from "@blueprintjs/table";
 import * as AST from "ast_wrapper";
 import * as CARTACompute from "carta_computation";
@@ -508,7 +508,7 @@ export class AppStore {
 
     @action shiftFrame = (delta: number) => {
         if (this.activeFrame && this.frames.length > 1) {
-            const frameIds = this.frames.map(f => f.frameInfo.fileId).sort();
+            const frameIds = this.frames.map(f => f.frameInfo.fileId).sort((a, b) => a - b);
             const currentIndex = frameIds.indexOf(this.activeFrame.frameInfo.fileId);
             const requiredIndex = (this.frames.length + currentIndex + delta) % this.frames.length;
             this.setActiveFrame(frameIds[requiredIndex]);
@@ -690,9 +690,9 @@ export class AppStore {
         this.preferenceStore.setPreference(PreferenceKeys.GLOBAL_THEME, Theme.LIGHT);
     };
 
-    @action setAutoTheme = () =>  {
+    @action setAutoTheme = () => {
         this.preferenceStore.setPreference(PreferenceKeys.GLOBAL_THEME, Theme.AUTO);
-    }
+    };
 
     @action toggleCursorFrozen = () => {
         if (this.activeFrame) {
@@ -825,6 +825,8 @@ export class AppStore {
         // Adjust document background when theme changes
         autorun(() => {
             document.body.style.backgroundColor = this.darkTheme ? Colors.DARK_GRAY4 : Colors.WHITE;
+            const className = this.darkTheme ? Classes.DARK : "";
+            setHotkeysDialogProps({className});
         });
 
         // Watch for system theme preference changes
