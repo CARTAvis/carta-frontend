@@ -569,7 +569,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
     private onMaxRowsChange = (val: number) => {
         const widgetsStore = this.widgetStore;
         const dataSize = widgetsStore?.catalogInfo?.dataSize;
-        if (widgetsStore && val > 0 && val <dataSize) {
+        if (widgetsStore && val > 0 && val < dataSize) {
             widgetsStore.setMaxRows(val);
         } else {
             widgetsStore.setMaxRows(widgetsStore.catalogInfo.dataSize);
@@ -613,11 +613,25 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         if (widgetStore.numVisibleRows) {
             startIndex = 1;
         }
-        let info = `Showing ${startIndex} to ${catalogTable.numVisibleRows} of ${widgetStore.catalogInfo.dataSize} entries`;
+
+        const catalogFileDataSize = widgetStore.catalogInfo.dataSize;
+        const maxRow = widgetStore.maxRows;
+        const tableVisibleRows = catalogTable.numVisibleRows;
+        let info = `Showing ${startIndex} to ${tableVisibleRows} of total ${catalogFileDataSize} entries`;
         if (widgetStore.hasFilter && isFinite(widgetStore.filterDataSize)) {
-            info = `Showing ${startIndex} to ${catalogTable.numVisibleRows} of ${widgetStore.filterDataSize} entries, total ${widgetStore.catalogInfo.dataSize} entries`;
+            info = `Showing ${startIndex} to ${tableVisibleRows} of ${widgetStore.filterDataSize} filtered entries. Total ${catalogFileDataSize} entries`;
+        } 
+        if (maxRow < catalogFileDataSize && maxRow > 0) {
+            info = `Showing ${startIndex} to ${tableVisibleRows} of top ${maxRow} entries. Total ${catalogFileDataSize} entries`;
         }
-        let tableInfo = (widgetStore.catalogInfo.dataSize) ? (
+        if (maxRow < catalogFileDataSize && maxRow > 0 && widgetStore.hasFilter && isFinite(widgetStore.filterDataSize)) {
+            if (widgetStore.filterDataSize >= maxRow) {
+                info = `Showing ${startIndex} to ${tableVisibleRows} of top ${maxRow} entries. Total ${widgetStore.filterDataSize} filtered entries. Total ${catalogFileDataSize} entries`;
+            } else {
+                info = `Showing ${startIndex} to ${tableVisibleRows} of ${widgetStore.filterDataSize} filtered entries. Total ${catalogFileDataSize} entries`;
+            }
+        }
+        let tableInfo = (catalogFileDataSize) ? (
             <tr>
                 <td className="td-label">
                     <pre>{info}</pre>

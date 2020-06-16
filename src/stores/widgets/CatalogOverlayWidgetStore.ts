@@ -649,7 +649,7 @@ export class CatalogOverlayWidgetStore extends RegionWidgetStore {
     @computed get hasFilter(): boolean {
         let filters = [];
         this.catalogControlHeader.forEach((value, key) => {
-            if (value.filter !== undefined) {
+            if (value.filter) {
                 filters.push(value);
             }
         });
@@ -686,11 +686,6 @@ export class CatalogOverlayWidgetStore extends RegionWidgetStore {
             singleRowRegion = Regions.row(this.selectedPointIndices[0]);
         }
         return singleRowRegion;
-    }
-
-    @computed get tableMaxRows() {
-        console.log(this.catalogInfo.dataSize)
-        return this.maxRows;
     }
 
     public get2DPlotData(xColumnName: string, yColumnName: string, columnsData: Map<number, ProcessedColumnData>): { wcsX?: Array<number>, wcsY?: Array<number>, xHeaderInfo: CARTA.ICatalogHeader, yHeaderInfo: CARTA.ICatalogHeader } {
