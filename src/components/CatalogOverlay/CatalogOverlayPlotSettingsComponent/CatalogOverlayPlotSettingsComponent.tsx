@@ -123,10 +123,6 @@ export class CatalogOverlayPlotSettingsComponent extends React.Component<{widget
         }
     }
 
-    private handleMaxRowChange = (value: number) => {
-        this.props.widgetStore.setMaxRows(value);
-    };
-
     public render() {
         const widgetStore = this.props.widgetStore;
 
@@ -150,19 +146,6 @@ export class CatalogOverlayPlotSettingsComponent extends React.Component<{widget
                     >
                         <Button text={activeSystem} rightIcon="double-caret-vertical"/>
                     </Select>
-                </FormGroup>
-                <FormGroup label={"Max"} inline={true}>
-                    <NumericInput
-                        placeholder="Max Rows"
-                        value={widgetStore.maxRows}
-                        buttonPosition={"none"}
-                        max={widgetStore.catalogInfo.dataSize}
-                        min={0}
-                        stepSize={10}
-                        disabled={widgetStore.loadingData}
-                        allowNumericCharactersOnly={true}
-                        onValueChange={(value: number) => this.handleMaxRowChange(value)}
-                    />
                 </FormGroup>
                 <FormGroup label={"Color"} inline={true}>
                     <ColorPickerComponent

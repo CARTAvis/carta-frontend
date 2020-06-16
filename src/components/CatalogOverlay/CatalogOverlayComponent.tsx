@@ -1,18 +1,18 @@
 import * as React from "react";
 import {action, autorun, computed, observable} from "mobx";
 import {observer} from "mobx-react";
-import {AnchorButton, FormGroup, Intent, HTMLSelect, NonIdealState, Switch, Tooltip, MenuItem, PopoverPosition, Button} from "@blueprintjs/core";
+import {AnchorButton, FormGroup, Intent, HTMLSelect, NonIdealState, Switch, Tooltip, MenuItem, PopoverPosition, Button, NumericInput, INumericInputProps} from "@blueprintjs/core";
 import {Cell, Column, Regions, RenderMode, SelectionModes, Table} from "@blueprintjs/table";
 import {Select, IItemRendererProps} from "@blueprintjs/select";
 import ReactResizeDetector from "react-resize-detector";
 import {CARTA} from "carta-protobuf";
-import {TableComponent, TableComponentProps, TableType} from "components/Shared";
+import {TableComponent, TableComponentProps, TableType, ClearableNumericInputComponent} from "components/Shared";
 import {CatalogOverlayPlotSettingsComponent} from "./CatalogOverlayPlotSettingsComponent/CatalogOverlayPlotSettingsComponent";
 import {AppStore, HelpType, WidgetConfig, WidgetProps, WidgetsStore} from "stores";
-import {CatalogOverlay, CatalogOverlayWidgetStore, CatalogPlotType, CatalogScatterWidgetStoreProps, CatalogUpdateMode, ControlHeader} from "stores/widgets";
+import {CatalogOverlay, CatalogOverlayWidgetStore, CatalogPlotType, CatalogScatterWidgetStoreProps, CatalogUpdateMode} from "stores/widgets";
 import {toFixed} from "utilities";
-import "./CatalogOverlayComponent.css";
 import {ProcessedColumnData} from "../../models";
+import "./CatalogOverlayComponent.css";
 
 enum HeaderTableColumnName {
     Name = "Name",
@@ -65,7 +65,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
             type: "catalog-overlay",
             minWidth: 320,
             minHeight: 400,
-            defaultWidth: 600,
+            defaultWidth: 620,
             defaultHeight: 350,
             title: "Catalog Overlay",
             isCloseable: true,
@@ -566,6 +566,16 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         );
     }
 
+    private onMaxRowsChange = (val: number) => {
+        const widgetsStore = this.widgetStore;
+        const dataSize = widgetsStore?.catalogInfo?.dataSize;
+        if (widgetsStore && val > 0 && val <dataSize) {
+            widgetsStore.setMaxRows(val);
+        } else {
+            widgetsStore.setMaxRows(widgetsStore.catalogInfo.dataSize);
+        }
+    }
+
     public render() {
         const appStore = AppStore.Instance;
         const widgetStore = this.widgetStore;
@@ -653,6 +663,15 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
                         </table>
                     </div>
                     <div className="bp3-dialog-footer-actions">
+                        <ClearableNumericInputComponent
+                            className={"catalog-max-rows"}
+                            label="Max Rows"
+                            value={widgetStore.maxRows}
+                            onValueChanged={val => this.onMaxRowsChange(val)}
+                            onValueCleared={() => widgetStore.setMaxRows(widgetStore.catalogInfo.dataSize)}
+                            displayExponential={true}
+                            updateValueOnKeyDown={true}
+                        />
                         <Tooltip content={"Apply filter"}>
                         <AnchorButton
                             intent={Intent.PRIMARY}
@@ -693,7 +712,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
                             itemRenderer={this.renderPlotTypePopOver}
                             popoverProps={{popoverClassName: "catalog-select", minimal: true , position: PopoverPosition.AUTO_END}}
                         >
-                            <Button className="bp3-minimal" text={widgetStore.catalogPlotType} rightIcon="double-caret-vertical"/>
+                            <Button className="bp3-minimal catalog-display-button" text={widgetStore.catalogPlotType} rightIcon="double-caret-vertical"/>
                         </Select>
                     </div>
                 </div>

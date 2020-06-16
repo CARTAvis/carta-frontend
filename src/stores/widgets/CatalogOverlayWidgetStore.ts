@@ -514,9 +514,7 @@ export class CatalogOverlayWidgetStore extends RegionWidgetStore {
     };
 
     @action setMaxRows(maxRows: number) {
-        if (this.maxRows > maxRows) {
-            this.updateTableStatus(true);   
-        }
+        this.updateTableStatus(true);   
         this.maxRows = maxRows;
     }
 
@@ -688,6 +686,11 @@ export class CatalogOverlayWidgetStore extends RegionWidgetStore {
             singleRowRegion = Regions.row(this.selectedPointIndices[0]);
         }
         return singleRowRegion;
+    }
+
+    @computed get tableMaxRows() {
+        console.log(this.catalogInfo.dataSize)
+        return this.maxRows;
     }
 
     public get2DPlotData(xColumnName: string, yColumnName: string, columnsData: Map<number, ProcessedColumnData>): { wcsX?: Array<number>, wcsY?: Array<number>, xHeaderInfo: CARTA.ICatalogHeader, yHeaderInfo: CARTA.ICatalogHeader } {
