@@ -69,7 +69,7 @@ export class ClearableNumericInputComponent extends React.Component<ClearableNum
             value = this.isFocused && !this.isKeyDown ? this.props.value.toString() : this.props.value;
         }
         return (
-        <FormGroup className={this.props.className} label={this.props.label} inline={true}>
+        <FormGroup className={this.props.className} label={this.props.label} inline={true} disabled={this.props.disabled}>
             <NumericInput
                 value={value}
                 onFocus={this.handleOnFocus}
@@ -77,9 +77,10 @@ export class ClearableNumericInputComponent extends React.Component<ClearableNum
                 onKeyDown={this.handleChange}
                 onValueChange={this.handleOnValueChange}
                 buttonPosition="none"
+                disabled={this.props.disabled}
                 rightElement={
                     <Tooltip content="Reset value to default">
-                        <Button icon="refresh" minimal={true} onClick={this.props.onValueCleared}/>
+                        <Button icon="refresh" minimal={true} onClick={this.props.onValueCleared} disabled={this.props.disabled}/>
                     </Tooltip>
                 }
             />
