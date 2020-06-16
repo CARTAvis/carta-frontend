@@ -2,6 +2,7 @@ import {action, autorun, computed, observable} from "mobx";
 import {NumberRange} from "@blueprintjs/core";
 import {Table} from "@blueprintjs/table";
 import {CARTA} from "carta-protobuf";
+import {AppStore} from "stores";
 import {RegionWidgetStore, RegionsType} from "./RegionWidgetStore";
 import {ProcessedColumnData} from "models";
 import {ControlHeader} from "stores/widgets";
@@ -22,8 +23,8 @@ export enum SpectralLineQueryUnit {
 export enum SpectralLineHeaders {
     Species = "Species",
     ChemicalName = "Chemical Name",
-    RestFrequency = "Rest Frequency",
     RedshiftedFrequency = "Redshifted Frequency",
+    RestFrequency = "Rest Frequency",
     FreqErr = "Freq Err(rest frame,redshifted)",
     MeasFreqMHz = "Meas Freq-MHz(rest frame,redshifted)",
     MeasFreqErr = "Meas Freq Err(rest frame,redshifted)",
@@ -125,7 +126,13 @@ export class SpectralLineOverlayWidgetStore extends RegionWidgetStore {
         const freqMHzFrom = this.calculateFreqMHz(valueMin, this.queryUnit);
         const freqMHzTo = this.calculateFreqMHz(valueMax, this.queryUnit);
 
-        if (isFinite(freqMHzFrom) && isFinite(freqMHzTo)) {
+        if (!isFinite(freqMHzFrom) || !isFinite(freqMHzTo)) {
+            AppStore.Instance.alertStore.showAlert("Invalid frequency range.");
+        } else if (freqMHzFrom === freqMHzTo) {
+            AppStore.Instance.alertStore.showAlert("Please specify a frequency range.");
+        } else if (Math.abs(freqMHzTo - freqMHzFrom) > 1e4) {
+            AppStore.Instance.alertStore.showAlert("Frequency range is too wide. Please specify a frequency range within 10GHz.");
+        } else {
             this.isQuerying = true;
             const data =
             `Species	Chemical Name	Freq-MHz(rest frame,redshifted)	Freq Err(rest frame,redshifted)	Meas Freq-MHz(rest frame,redshifted)	Meas Freq Err(rest frame,redshifted)	Resolved QNs	CDMS/JPL Intensity	S<sub>ij</sub>&#956;<sup>2</sup> (D<sup>2</sup>)	S<sub>ij</sub>	Log<sub>10</sub> (A<sub>ij</sub>)	Lovas/AST Intensity	E_L (cm^-1)	E_L (K)	E_U (cm^-1)	E_U (K)	Linelist
@@ -198,11 +205,9 @@ export class SpectralLineOverlayWidgetStore extends RegionWidgetStore {
         this.columnHeaders = [];
         const headers = Object.values(SpectralLineHeaders);
         for (let columnIndex = 0; columnIndex < headers.length; columnIndex++) {
-            this.columnHeaders.push(new CARTA.CatalogHeader({
-                name: headers[columnIndex],
-                dataType: headers[columnIndex] === (SpectralLineHeaders.RestFrequency || SpectralLineHeaders.RedshiftedFrequency) ? CARTA.ColumnType.Double : CARTA.ColumnType.String,
-                columnIndex: columnIndex
-            }));
+            const columnName = headers[columnIndex];
+            let dataType = columnName === (SpectralLineHeaders.RedshiftedFrequency || SpectralLineHeaders.RestFrequency) ? CARTA.ColumnType.Double : CARTA.ColumnType.String;
+            this.columnHeaders.push(new CARTA.CatalogHeader({name: columnName, dataType: dataType, columnIndex: columnIndex}));
         }
 
         // control header
@@ -238,21 +243,36 @@ export class SpectralLineOverlayWidgetStore extends RegionWidgetStore {
 
             // find column data: spectralLineInfo[1] ~ spectralLineInfo[lines.length - 1]
             const numDataRows = lines.length - 1;
-            const numHeaders = this.columnHeaders.length;
-            if (numHeaders > 0) {
-                for (let columnIndex = 0; columnIndex < numHeaders; columnIndex++) {
-                    const columnData = [];
-                    for (let row = 0; row < numDataRows; row++) {
-                        const valString = spectralLineInfo[row + 1][columnIndex];
-                        columnData.push(columnIndex === FREQUENCY_COLUMN_INDEX ? Number(valString) : valString);
-                    }
-                    if (columnIndex === FREQUENCY_COLUMN_INDEX) {
-                        this.queryResult.set(FREQUENCY_COLUMN_INDEX, {dataType: CARTA.ColumnType.Double, data: columnData.map(val => val * this.redshiftFactor)});
-                        this.queryResult.set(FREQUENCY_COLUMN_INDEX + 1, {dataType: CARTA.ColumnType.Double, data: columnData});
-                        this.originalFreqColumn = this.queryResult.get(FREQUENCY_COLUMN_INDEX + 1);
+            if (this.columnHeaders.length > 0) {
+                for (let columnIndex = 0; columnIndex < this.columnHeaders.length; columnIndex++) {
+                    const columnName = this.columnHeaders[columnIndex].name;
+                    let dataType = CARTA.ColumnType.String;
+                    let data = [];
+                    if (columnName === (SpectralLineHeaders.Species || SpectralLineHeaders.ChemicalName)) {
+                        for (let row = 0; row < numDataRows; row++) {
+                            const valString = spectralLineInfo[row + 1][columnIndex];
+                            data.push(valString);
+                        }
+                    } else if (columnName === SpectralLineHeaders.RedshiftedFrequency) {
+                        dataType = CARTA.ColumnType.Double;
+                        for (let row = 0; row < numDataRows; row++) {
+                            const valString = spectralLineInfo[row + 1][columnIndex];
+                            data.push(Number(valString) * this.redshiftFactor);
+                        }
+                    } else if (columnName === SpectralLineHeaders.RestFrequency) {
+                        dataType = CARTA.ColumnType.Double;
+                        for (let row = 0; row < numDataRows; row++) {
+                            const valString = spectralLineInfo[row + 1][columnIndex - 1];
+                            data.push(Number(valString));
+                        }
+                        this.originalFreqColumn = {dataType: dataType, data: data};
                     } else {
-                        this.queryResult.set(columnIndex < FREQUENCY_COLUMN_INDEX ? columnIndex : columnIndex + 1, {dataType: CARTA.ColumnType.String, data: columnData});
+                        for (let row = 0; row < numDataRows; row++) {
+                            const valString = spectralLineInfo[row + 1][columnIndex - 1];
+                            data.push(valString);
+                        }
                     }
+                    this.queryResult.set(columnIndex, {dataType: dataType, data: data});
                 }
             }
 
