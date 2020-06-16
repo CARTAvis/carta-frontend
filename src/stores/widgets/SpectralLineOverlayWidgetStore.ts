@@ -127,20 +127,20 @@ export class SpectralLineOverlayWidgetStore extends RegionWidgetStore {
 
         if (isFinite(freqMHzFrom) && isFinite(freqMHzTo)) {
             this.isQuerying = true;
-            const corsProxy = "https://cors-anywhere.herokuapp.com/";
-            const queryLink = "http://www.cv.nrao.edu/php/splat/c_export.php?sid%5B%5D=&data_version=v3.0&lill=on&displayJPL=displayJPL&displayCDMS=displayCDMS&displayLovas=displayLovas&displaySLAIM=displaySLAIM&displayToyaMA=displayToyaMA&displayOSU=displayOSU&displayRecomb=displayRecomb&displayLisa=displayLisa&displayRFI=displayRFI&ls1=ls1&ls2=ls2&ls3=ls3&ls4=ls4&ls5=ls5&el1=el1&el2=el2&el3=el3&el4=el4&submit=Export&export_type=current&export_delimiter=tab&offset=0&limit=100000&range=on";
-            const freqRange = `&frequency_units=MHz&from=${freqMHzFrom}&to=${freqMHzTo}`;
-
-            fetch(`${corsProxy}${queryLink}${freqRange}`, {
-            }).then(response => {
-                return response.text();
-            }).then(data => {
-                this.parsingQueryResponse(data);
-                this.isQuerying = false;
-            }).catch((err) => {
-                this.isQuerying = false;
-                console.log(err);
-            });
+            const data =
+            `Species	Chemical Name	Freq-MHz(rest frame,redshifted)	Freq Err(rest frame,redshifted)	Meas Freq-MHz(rest frame,redshifted)	Meas Freq Err(rest frame,redshifted)	Resolved QNs	CDMS/JPL Intensity	S<sub>ij</sub>&#956;<sup>2</sup> (D<sup>2</sup>)	S<sub>ij</sub>	Log<sub>10</sub> (A<sub>ij</sub>)	Lovas/AST Intensity	E_L (cm^-1)	E_L (K)	E_U (cm^-1)	E_U (K)	Linelist
+            H2CO	Formaldehyde	0.0004	0			6(5,1)-6(5,2)	-19.9244	109.59367	6.719	-29.67917		255.3456	367.38325	255.3456	367.38325	JPL
+            H2CO	Formaldehyde	0.0004	0			6(5,1)-6(5,2)	-19.9242	109.64415	6.722	-29.67897		255.3456	367.38325	255.3456	367.38325	CDMS
+            CH318OHvt=0,1&2	Methanol	0.001	0			23(5,18)-23(5,19)A,vt=2	-23.063	6.89188	0	-30.36989		1025.747	1475.81264	1025.747	1475.81264	CDMS
+            CH318OHvt=0,1&2	Methanol	0.001	0			22(5,17)-22(5,18)A,vt=2	-22.97	7.20636	0	-30.33162		990.4	1424.95648	990.4	1424.95648	CDMS
+            CH318OHvt=0,1&2	Methanol	0.001	0			21(5,16)-21(5,17)A,vt=2	-22.88	7.53846	0	-30.29231		956.585	1376.30452	956.585	1376.30452	CDMS
+            CH318OHvt=0,1&2	Methanol	0.001	0			11(4,7)-11(4,8)A,vt=2	-21.91	8.96102	0	-29.9455		526.916	758.11023	526.916	758.11023	CDMS
+            CH318OHvt=0,1&2	Methanol	0.001	0			10(4,6)-10(4,7)A,vt=2	-21.835	9.81915	0	-29.86627		509.976	733.73749	509.976	733.73749	CDMS
+            CH318OHvt=0,1&2	Methanol	0.001	0			6(3,4)-6(3,3)A,vt=2	-21.829	8.99023	0	-29.6963		488.706	703.13488	488.706	703.13488	CDMS
+            CH318OHvt=0,1&2	Methanol	0.001	0			2(2,1)-2(2,0)A,vt=2	-22.005	10.78742	0	-29.20218		611.206	879.38404	611.206	879.38404	CDMS
+            CH318OHvt=0,1&2	Methanol	0.001	0			33(7,26)-33(7,27)A,vt=1	-23.568	8.02371	0	-30.45783		1299.911	1870.27121	1299.911	1870.27121	CDMS\n`;
+            this.parsingQueryResponse(data);
+            this.isQuerying = false;
         }
     };
 
@@ -164,6 +164,16 @@ export class SpectralLineOverlayWidgetStore extends RegionWidgetStore {
 
     @computed get redshiftFactor() {
         return this.redshiftType === RedshiftType.V ? Math.sqrt((1 - this.redshiftInput / SPEED_OF_LIGHT) / (1 + this.redshiftInput / SPEED_OF_LIGHT)) : 1 / (this.redshiftInput + 1);
+    }
+
+    @computed get displayedColumnHeaders(): Array<CARTA.CatalogHeader> {
+        let displayedColumnHeaders = [];
+        this.columnHeaders.forEach(columnHeader => {
+            if (this.headerDisplay.get(columnHeader.name as SpectralLineHeaders)) {
+                displayedColumnHeaders.push(columnHeader);
+            }
+        });
+        return displayedColumnHeaders;
     }
 
     private calculateFreqMHz = (value: number, unit: SpectralLineQueryUnit): number => {

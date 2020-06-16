@@ -269,7 +269,7 @@ export class SpectralLineOverlayComponent extends React.Component<WidgetProps> {
             type: TableType.ColumnFilter,
             dataset: widgetStore.queryResult,
             filter: widgetStore.controlHeaders,
-            columnHeaders: widgetStore.columnHeaders,
+            columnHeaders: widgetStore.displayedColumnHeaders,
             numVisibleRows: widgetStore.numDataRows,
             upTableRef: this.onQueryResultTableRefUpdated,
             updateColumnFilter: widgetStore.setColumnFilter,
