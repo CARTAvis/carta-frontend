@@ -37,7 +37,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
     @observable smoothingDecimationValue: number = 2;
     @observable smoothingBinWidth: number = 2;
     @observable smoothingSavitzkyGolaySize: number = 5;
-    @observable smoothingSavitzkyGolayOrder: number = 1;
+    @observable smoothingSavitzkyGolayOrder: number = 0;
 
     public static StatsTypeString(statsType: CARTA.StatsType) {
         switch (statsType) {

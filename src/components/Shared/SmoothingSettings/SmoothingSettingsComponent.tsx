@@ -136,7 +136,7 @@ export class SmoothingSettingsComponent extends React.Component<{widgetStore: Sp
                     <FormGroup label={"Kernel"} inline={true}>
                         <SafeNumericInput
                             value={widgetStore.smoothingSavitzkyGolaySize}
-                            min={3}
+                            min={5}
                             stepSize={2}
                             className="narrow"
                             onValueChange={val => widgetStore.setSmoothingSavitzkyGolaySize(Math.round(val))}

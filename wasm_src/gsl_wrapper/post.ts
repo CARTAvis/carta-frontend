@@ -6,7 +6,7 @@ Module.filterGaussian = Module.cwrap("filterGaussian", "number", ["number", "num
 Module.filterHanning = Module.cwrap("filterHanning", "number", ["number", "number", "number", "number"]);
 Module.filterDecimation = Module.cwrap("filterDecimation", "number", ["number", "number", "number", "number", "number"]);
 Module.filterBinning = Module.cwrap("filterBinning", "number", ["number", "number", "number", "number"]);
-Module.filterSavitzkyGolay = Module.cwrap("filterSavitzkyGolay", "number", ["number", "number", "number", "number", "number"]);
+Module.filterSavitzkyGolay = Module.cwrap("filterSavitzkyGolay", "number", ["number", "number", "number", "number", "number", "number"]);
 
 Module.boxcarSmooth = function (xIn: Float64Array | Float32Array, kernelSize: number) {
     // Return empty array if arguments are invalid
@@ -102,24 +102,25 @@ Module.binning = function (xIn: Float64Array | Float32Array, binWidth: number) {
     return xOut;
 };
 
-Module.savitzkyGolaySmooth = function (xIn: Float64Array | Float32Array, kernelSize: number, order: number) {
-    if (!xIn) {
+Module.savitzkyGolaySmooth = function (xIn: Float64Array | Float32Array, yIn: Float64Array | Float32Array, kernelSize: number, order: number) {
+    if (!xIn || order >= kernelSize) {
         return new Float64Array(1);
     }
 
     const N = xIn.length;
     Module.xIn = Module._malloc(N * 8);
-    Module.xOut = Module._malloc(N * 8);
-    // Module.horizontalIn = Module._malloc(N * 8);
+    Module.yIn = Module._malloc(N * 8);
+    Module.yOut = Module._malloc(N * 8);
 
     Module.HEAPF64.set(new Float64Array(xIn), Module.xIn / 8);
-    // Module.HEAPF64.set(new Float64Array(horizontalIn), Module.horizontalIn / 8);
-    Module.filterSavitzkyGolay(Module.xIn, N, Module.xOut, kernelSize, order);
-    const xOut = new Float64Array(Module.HEAPF64.buffer, Module.xOut, N).slice();
+    Module.HEAPF64.set(new Float64Array(yIn), Module.yIn / 8);
+    Module.filterSavitzkyGolay(Module.xIn, Module.yIn, N, Module.yOut, kernelSize, order);
+    const yOut = new Float64Array(Module.HEAPF64.buffer, Module.yOut, N).slice();
 
     Module._free(Module.xIn);
-    Module._free(Module.xOut);
-    return xOut;
+    Module._free(Module.yIn);
+    Module._free(Module.yOut);
+    return yOut;
 };
 
 module.exports = Module;
