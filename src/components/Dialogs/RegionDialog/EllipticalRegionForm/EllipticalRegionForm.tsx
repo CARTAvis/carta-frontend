@@ -1,11 +1,10 @@
 import * as React from "react";
-import * as AST from "ast_wrapper";
 import {observer} from "mobx-react";
 import {H5, InputGroup, NumericInput, Classes} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import {FrameStore, RegionStore} from "stores";
 import {Point2D} from "models";
-import {closeTo, formattedArcsec} from "utilities";
+import {closeTo, formattedArcsec, getFormattedWCSString} from "utilities";
 import "./EllipticalRegionForm.css";
 
 const KEYCODE_ENTER = 13;
@@ -98,18 +97,6 @@ export class EllipticalRegionForm extends React.Component<{ region: RegionStore,
         ev.currentTarget.value = existingValue;
     };
 
-    private getFormattedString(wcsInfo: number, pixelCoords: Point2D) {
-        if (wcsInfo) {
-            const pointWCS = AST.transformPoint(this.props.wcsInfo, pixelCoords.x, pixelCoords.y);
-            const normVals = AST.normalizeCoordinates(this.props.wcsInfo, pointWCS.x, pointWCS.y);
-            const wcsCoords = AST.getFormattedCoordinates(this.props.wcsInfo, normVals.x, normVals.y);
-            if (wcsCoords) {
-                return `WCS: (${wcsCoords.x}, ${wcsCoords.y})`;
-            }
-        }
-        return null;
-    }
-
     private getSizeString(size: Point2D) {
         const wcsSize = this.props.frame.getWcsSizeInArcsec(size);
         if (wcsSize) {
@@ -128,7 +115,7 @@ export class EllipticalRegionForm extends React.Component<{ region: RegionStore,
         const sizeDims = region.controlPoints[1];
         // CRTF uses north/south for major axis
         const topRightPoint = {x: centerPoint.x + sizeDims.y, y: centerPoint.y + sizeDims.x};
-        const wcsStringCenter = this.getFormattedString(this.props.wcsInfo, centerPoint);
+        const wcsStringCenter = getFormattedWCSString(this.props.wcsInfo, centerPoint);
         const wcsStringSize = this.getSizeString(sizeDims);
 
         const commonProps = {
