@@ -48,7 +48,7 @@ export class DatabaseService {
         if (DatabaseService.ApiBase) {
             try {
                 const url = `${DatabaseService.ApiBase}/database/preferences`;
-                const response = await axios.post(url, preferences);
+                const response = await axios.put(url, preferences);
                 return response?.data?.success;
             } catch (err) {
                 console.log(err);
