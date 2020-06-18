@@ -147,7 +147,7 @@ export class SmoothingSettingsComponent extends React.Component<{widgetStore: Sp
                             value={widgetStore.smoothingSavitzkyGolayOrder}
                             min={0}
                             max={4}
-                            stepSize={1}
+                            stepSize={2}
                             className="narrow"
                             onValueChange={val => widgetStore.setSmoothingSavitzkyGolayOrder(Math.round(val))}
                         />
