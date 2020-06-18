@@ -150,7 +150,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
                     smoothingYs = GSL.binning(coordinateData.values, this.widgetStore.smoothingBinWidth);
                     smoothingXs = GSL.binning(channelValues, this.widgetStore.smoothingBinWidth);
                 } else if (smoothingType === SmoothingType.SAVITZKY_GOLAY) {
-                    smoothingYs = GSL.savitzkyGolaySmooth(new Float64Array(channelValues), coordinateData.values, this.widgetStore.smoothingSavitzkyGolaySize, this.widgetStore.smoothingSavitzkyGolayOrder);
+                    smoothingYs = GSL.savitzkyGolaySmooth(channelValues, coordinateData.values, this.widgetStore.smoothingSavitzkyGolaySize, this.widgetStore.smoothingSavitzkyGolayOrder);
                 }
 
                 for (let i = 0; i < smoothingXs.length; i++) {

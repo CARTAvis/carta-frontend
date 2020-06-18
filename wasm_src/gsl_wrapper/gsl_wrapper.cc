@@ -12,23 +12,22 @@
 
 extern "C" {
 
-int EMSCRIPTEN_KEEPALIVE filterBoxcar(double* xInArray, const int N, double* xOutArray, const int K) {
+int EMSCRIPTEN_KEEPALIVE filterBoxcar(double* yInArray, const int N, double* yOutArray, const int kernel) {
     int status = 0;    /* return value: 0 = success */
-    gsl_vector_view xIn = gsl_vector_view_array(xInArray, N);
-    double* window = new double[K];
-    size_t H;
-    size_t J;
-    if (K % 2 == 0) {
-        H = K / 2 - 1;
-        J = K - H - 1;
+    gsl_vector_view yIn = gsl_vector_view_array(yInArray, N);
+    double* window = new double[kernel];
+    size_t H, J;
+    if (kernel % 2 == 0) {
+        H = kernel / 2 - 1;
+        J = kernel - H - 1;
     } else {
-        H = (K - 1) / 2;
-        J = (K - 1) / 2;
+        H = (kernel - 1) / 2;
+        J = (kernel - 1) / 2;
     }
 
     for (size_t i = 0; i < N; ++i) {
-        size_t wsize = gsl_movstat_fill(GSL_MOVSTAT_END_PADVALUE, &xIn.vector, i, H, J, window);
-        xOutArray[i] = gsl_stats_mean(window, 1, wsize);
+        size_t wsize = gsl_movstat_fill(GSL_MOVSTAT_END_PADVALUE, &yIn.vector, i, H, J, window);
+        yOutArray[i] = gsl_stats_mean(window, 1, wsize);
     }
 
     delete[] window;
@@ -36,106 +35,104 @@ int EMSCRIPTEN_KEEPALIVE filterBoxcar(double* xInArray, const int N, double* xOu
     return status;
 }
 
-int EMSCRIPTEN_KEEPALIVE filterGaussian(double* xInArray, const int N, double* xOutArray, const int K, const double alpha) {
+int EMSCRIPTEN_KEEPALIVE filterGaussian(double* yInArray, const int N, double* yOutArray, const int kernel, const double alpha) {
     int status = 0;    /* return value: 0 = success */
-    gsl_vector_view xIn = gsl_vector_view_array(xInArray, N);
-    gsl_vector_view xOut = gsl_vector_view_array(xOutArray, N);
-    gsl_filter_gaussian_workspace* w = gsl_filter_gaussian_alloc(K);
+    gsl_vector_view yIn = gsl_vector_view_array(yInArray, N);
+    gsl_vector_view yOut = gsl_vector_view_array(yOutArray, N);
+    gsl_filter_gaussian_workspace* w = gsl_filter_gaussian_alloc(kernel);
 
-    gsl_filter_gaussian(GSL_FILTER_END_PADVALUE, alpha, 0, &xIn.vector, &xOut.vector, w);
+    gsl_filter_gaussian(GSL_FILTER_END_PADVALUE, alpha, 0, &yIn.vector, &yOut.vector, w);
 
     gsl_filter_gaussian_free(w);
 
     return status;
 }
 
-double hanningWindow(const size_t n, double x[], void* params) {
+double hanningWindow(const size_t n, double window[], void* params) {
     double val = 0;
     double sum = 0;
 
     for (size_t i = 0; i < n; i++) {
         double hanningVal = (0.5 * (1 - gsl_sf_cos(2 * M_PI * (i + 1) / (n + 1))));
-        val += hanningVal * x[i];
+        val += hanningVal * window[i];
         sum += hanningVal;
     }
 
     return val / sum;
 }
 
-int EMSCRIPTEN_KEEPALIVE filterHanning(double* xInArray, const int N, double* xOutArray, const int K) {
+int EMSCRIPTEN_KEEPALIVE filterHanning(double* yInArray, const int N, double* yOutArray, const int kernel) {
     int status = 0;    /* return value: 0 = success */
-    gsl_vector_view xIn = gsl_vector_view_array(xInArray, N);
-    gsl_vector_view xOut = gsl_vector_view_array(xOutArray, N);
-    gsl_movstat_workspace* w = gsl_movstat_alloc(K);
+    gsl_vector_view yIn = gsl_vector_view_array(yInArray, N);
+    gsl_vector_view yOut = gsl_vector_view_array(yOutArray, N);
+    gsl_movstat_workspace* w = gsl_movstat_alloc(kernel);
     gsl_movstat_function F;
 
     F.function = hanningWindow;
-    gsl_movstat_apply(GSL_MOVSTAT_END_PADVALUE, &F, &xIn.vector, &xOut.vector, w);
+    gsl_movstat_apply(GSL_MOVSTAT_END_PADVALUE, &F, &yIn.vector, &yOut.vector, w);
 
     gsl_movstat_free(w);
 
     return status;
 }
 
-int EMSCRIPTEN_KEEPALIVE filterDecimation(double* xInArray, const int inN, int* xOutArray, const int outN, const int D) {
+int EMSCRIPTEN_KEEPALIVE filterDecimation(double* yInArray, const int inN, int* indexOutArray, const int outN, const int decimationFactor) {
     int status = 0;    /* return value: 0 = success */
-    size_t i;
 
-    for (size_t i = 0; i < inN / D; i++) {
+    for (size_t i = 0; i < inN / decimationFactor; i++) {
         size_t* maxIndex = new size_t[1];
         size_t* minIndex = new size_t[1];
-        gsl_stats_minmax_index(maxIndex, minIndex, &xInArray[i * D], 1, D);
+        gsl_stats_minmax_index(maxIndex, minIndex, &yInArray[i * decimationFactor], 1, decimationFactor);
 
-        xOutArray[i*2] = i * D + minIndex[0];
-        xOutArray[i*2 + 1] = i * D + maxIndex[0];
+        indexOutArray[i*2] = i * decimationFactor + minIndex[0];
+        indexOutArray[i*2 + 1] = i * decimationFactor + maxIndex[0];
     }
 
-    if (inN % D != 0) {
-        size_t lastDecimation = floor(inN / D);
+    if (inN % decimationFactor != 0) {
+        size_t lastDecimation = floor(inN / decimationFactor);
         size_t* maxIndex = new size_t[1];
         size_t* minIndex = new size_t[1];
-        gsl_stats_minmax_index(maxIndex, minIndex, &xInArray[lastDecimation * D], 1, inN % D);
-        xOutArray[lastDecimation*2] = lastDecimation * D + minIndex[0];
-        xOutArray[lastDecimation*2 + 1] = lastDecimation * D + maxIndex[0];
+        gsl_stats_minmax_index(maxIndex, minIndex, &yInArray[lastDecimation * decimationFactor], 1, inN % decimationFactor);
+        indexOutArray[lastDecimation*2] = lastDecimation * decimationFactor + minIndex[0];
+        indexOutArray[lastDecimation*2 + 1] = lastDecimation * decimationFactor + maxIndex[0];
     }
 
-    gsl_sort_int(xOutArray, 1, outN);
+    gsl_sort_int(indexOutArray, 1, outN);
 
     return status;
 }
 
-int EMSCRIPTEN_KEEPALIVE filterBinning(double* xInArray, const int inN, double* xOutArray, const int binWidth) {
+int EMSCRIPTEN_KEEPALIVE filterBinning(double* inputArray, const int N, double* outputArray, const int binWidth) {
     int status = 0;    /* return value: 0 = success */
-    size_t i;
 
-    for (size_t i = 0; i < inN / binWidth; i++) {
-        xOutArray[i] = gsl_stats_mean(&xInArray[i * binWidth], 1, binWidth);
+    for (size_t i = 0; i < N / binWidth; i++) {
+        outputArray[i] = gsl_stats_mean(&inputArray[i * binWidth], 1, binWidth);
     }
 
-    if (inN % binWidth != 0) {
-        size_t lastBin = floor(inN / binWidth);
-        xOutArray[lastBin] = gsl_stats_mean(&xInArray[lastBin * binWidth], 1, inN % binWidth);
+    if (N % binWidth != 0) {
+        size_t lastBin = floor(N / binWidth);
+        outputArray[lastBin] = gsl_stats_mean(&inputArray[lastBin * binWidth], 1, N % binWidth);
     }
 
     return status;
 }
 
-int EMSCRIPTEN_KEEPALIVE filterSavitzkyGolay(double* xInArray, double* yInArray, const int N, double* yOutArray, const int K, const int order) {
+int EMSCRIPTEN_KEEPALIVE filterSavitzkyGolay(double* xInArray, double* yInArray, const int N, double* yOutArray, const int kernel, const int order) {
     int status = 0;    /* return value: 0 = success */
 
-    gsl_vector_view xIn = gsl_vector_view_array(yInArray, N);
-    double* window = new double[K];
+    gsl_vector_view yIn = gsl_vector_view_array(yInArray, N);
+    double* window = new double[kernel];
     size_t H;
-    if (K % 2 == 0) {
-        H = K / 2;
+    if (kernel % 2 == 0) {
+        H = kernel / 2;
     } else {
-        H = (K - 1) / 2;
+        H = (kernel - 1) / 2;
     }
 
     size_t cNum = order + 1;
 
     for (size_t i = 0; i < N; ++i) {
-        size_t wsize = gsl_movstat_fill(GSL_MOVSTAT_END_PADVALUE, &xIn.vector, i, H, H, window);
+        size_t wsize = gsl_movstat_fill(GSL_MOVSTAT_END_PADVALUE, &yIn.vector, i, H, H, window);
 
         if ( i < H || i > N - 1 - H) {
             yOutArray[i] = NAN;
@@ -179,18 +176,17 @@ int EMSCRIPTEN_KEEPALIVE filterSavitzkyGolay(double* xInArray, double* yInArray,
             gsl_vector_free (c);
             gsl_matrix_free (cov);
         } else {
-            const int n = wsize;
             double c0, c1, cov00, cov01, cov11, chisq;
-            double *x = (double *) malloc(n * sizeof(double));
-            double *w = (double *) malloc(n * sizeof(double));
+            double *x = (double *) malloc(wsize * sizeof(double));
+            double *w = (double *) malloc(wsize * sizeof(double));
             for (size_t s = 0; s < wsize; s++) {
                 x[s] = xInArray[(i - H) + s];
                 w[s] = 0.2;
             }
 
-            gsl_fit_wlinear (x, 1, w, 1, window, 1, n, &c0, &c1, &cov00, &cov01, &cov11, &chisq);
-            // best fit Y = c0 + c1 * X;
-            yOutArray[i] = c0 + c1 * xInArray[i];
+            gsl_fit_wlinear (x, 1, w, 1, window, 1, wsize, &c0, &c1, &cov00, &cov01, &cov11, &chisq);
+            yOutArray[i] = c0 + c1 * xInArray[i]; // best fit Y = c0 + c1 * X;
+
             free(x);
             free(w);
         }
