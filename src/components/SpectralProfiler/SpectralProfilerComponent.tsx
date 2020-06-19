@@ -448,8 +448,12 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
         }
 
         let className = "spectral-profiler-widget";
+        if (this.widgetStore.isSelected) {
+            className += " linked-to-widget-selected";
+        }
+
         if (this.widgetStore.matchesSelectedRegion) {
-            className += " linked-to-selected";
+            className += " linked-to-region-selected";
         }
 
         if (appStore.darkTheme) {

@@ -168,6 +168,15 @@ export class SpectralLineOverlayComponent extends React.Component<WidgetProps> {
         const widgetsStore = this.widgetStore;
     }
 
+    private handleEnterWidgetOption = (isEntering: boolean, widgetID: string) => {
+        if (widgetID) {
+            const hoveredOverWidgetStore = AppStore.Instance.widgetsStore.getSpectralWidgetStoreByID(widgetID);
+            if (hoveredOverWidgetStore) {
+                hoveredOverWidgetStore.setSelected(isEntering);
+            }
+        }
+    };
+
     private handlePlot = () => {
         const widgetStore = this.widgetStore;
         const appStore = AppStore.Instance;
@@ -286,7 +295,15 @@ export class SpectralLineOverlayComponent extends React.Component<WidgetProps> {
             <Popover
                 content={
                     <Menu>
-                        {AppStore.Instance.widgetsStore.spectralProfilerList.map(widgetID => <MenuItem key={widgetID} text={widgetID} onClick={() => widgetStore.setSelectedSpectralProfiler(widgetID)}/>)}
+                        {AppStore.Instance.widgetsStore.spectralProfilerList.map(widgetID =>
+                            <MenuItem
+                                key={widgetID}
+                                text={widgetID}
+                                onMouseEnter={() => this.handleEnterWidgetOption(true, widgetID)}
+                                onMouseLeave={() => this.handleEnterWidgetOption(false, widgetID)}
+                                onClick={() => widgetStore.setSelectedSpectralProfiler(widgetID)}
+                            />
+                        )}
                     </Menu>
                 }
                 position={Position.BOTTOM}

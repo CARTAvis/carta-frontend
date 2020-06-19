@@ -19,6 +19,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
     @observable channel: number;
     @observable markerTextVisible: boolean;
     @observable isMouseMoveIntoLinePlots: boolean;
+    @observable isSelected: boolean;
     @observable spectralLines: SpectralLine[];
 
     // settings 
@@ -97,6 +98,20 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         }
     };
 
+    @action setSelected = (isSelected: boolean) => {
+       this.isSelected = isSelected;
+    };
+
+    @action addSpectralLines = (spectralLines: SpectralLine[]) => {
+        if (spectralLines) {
+            this.spectralLines = spectralLines;
+        }
+    };
+
+    @action clearSpectralLines = () => {
+        this.spectralLines = [];
+    };
+
     @action setXBounds = (minVal: number, maxVal: number) => {
         this.minX = minVal;
         this.maxX = maxVal;
@@ -155,20 +170,11 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         this.isMouseMoveIntoLinePlots = val;
     };
 
-    @action addSpectralLines = (spectralLines: SpectralLine[]) => {
-        if (spectralLines) {
-            this.spectralLines = spectralLines;
-        }
-    };
-
-    @action clearSpectralLines = () => {
-        this.spectralLines = [];
-    };
-
     constructor(coordinate: string = "z") {
         super(RegionsType.CLOSED_AND_POINT);
         this.coordinate = coordinate;
         this.statsType = CARTA.StatsType.Mean;
+        this.isSelected = false;
         this.spectralLines = [];
 
         // Describes how the data is visualised
