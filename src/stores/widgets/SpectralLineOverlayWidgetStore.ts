@@ -28,7 +28,8 @@ export enum SpectralLineHeaders {
     FreqErr = "Freq Err(rest frame,redshifted)",
     MeasFreqMHz = "Meas Freq-MHz(rest frame,redshifted)",
     MeasFreqErr = "Meas Freq Err(rest frame,redshifted)",
-    QuantumNumber = "Resolved QNs",
+    ResolvedQN = "Resolved QNs",
+    UnresolvedQN = "Unresolved QNs",
     IntensityCDMS = "CDMS/JPL Intensity",
     IntensitySijm2 = "Sij Miu^2",
     IntensitySij = "Sij",
@@ -43,7 +44,7 @@ export enum SpectralLineHeaders {
 
 const SPECTRAL_LINE_DESCRIPTION = new Map<SpectralLineHeaders, string>([
     [SpectralLineHeaders.Species, "Name of the Species"],
-    [SpectralLineHeaders.QuantumNumber, "Resolved Quantum Number"],
+    [SpectralLineHeaders.ResolvedQN, "Resolved Quantum Number"],
     [SpectralLineHeaders.IntensityCDMS, "Intensity(for JPL/CDMS)"],
     [SpectralLineHeaders.IntensityLovas, "Intensity(for Lovas/AST)"]
 ]);
@@ -149,10 +150,12 @@ export class SpectralLineOverlayWidgetStore extends RegionWidgetStore {
         } else {
             this.isQuerying = true;
             const data =
-            `Species	Chemical Name	Freq-MHz(rest frame,redshifted)	Freq Err(rest frame,redshifted)	Meas Freq-MHz(rest frame,redshifted)	Meas Freq Err(rest frame,redshifted)	Resolved QNs	CDMS/JPL Intensity	S<sub>ij</sub>&#956;<sup>2</sup> (D<sup>2</sup>)	S<sub>ij</sub>	Log<sub>10</sub> (A<sub>ij</sub>)	Lovas/AST Intensity	E_L (cm^-1)	E_L (K)	E_U (cm^-1)	E_U (K)	Linelist
-            H2CO	Formaldehyde	230534	0			6(5,1)-6(5,2)	-19.9244	109.59367	6.719	-29.67917		255.3456	367.38325	255.3456	367.38325	JPL
-            H2CO	Formaldehyde	230535	0			6(5,1)-6(5,2)	-19.9242	109.64415	6.722	-29.67897		255.3456	367.38325	255.3456	367.38325	CDMS
-            CH318OHvt=0,1&2	Methanol	230533	0			23(5,18)-23(5,19)A,vt=2	-23.063	6.89188	0	-30.36989		1025.747	1475.81264	1025.747	1475.81264	CDMS\n`;
+            `Species	Chemical Name	Freq-MHz(rest frame,redshifted)	Freq Err(rest frame,redshifted)	Meas Freq-MHz(rest frame,redshifted)	Meas Freq Err(rest frame,redshifted)	Resolved QNs	Unresolved Quantum Numbers	CDMS/JPL Intensity	S<sub>ij</sub>&#956;<sup>2</sup> (D<sup>2</sup>)	S<sub>ij</sub>	Log<sub>10</sub> (A<sub>ij</sub>)	Lovas/AST Intensity	E_L (cm^-1)	E_L (K)	E_U (cm^-1)	E_U (K)	Linelist
+            H2CO	Formaldehyde	230530	0			6(5,1)-6(5,2)	 6 5 1       6 5 2    	-19.9244	109.59367	6.719	-29.67917		255.3456	367.38325	255.3456	367.38325	JPL
+            H2CO	Formaldehyde	230531	0			6(5,1)-6(5,2)	 6 5 1       6 5 2    	-19.9242	109.64415	6.722	-29.67897		255.3456	367.38325	255.3456	367.38325	CDMS
+            CH318OHvt=0,1&2	Methanol	230532	0			23(5,18)-23(5,19)A,vt=2	23 518 6    23 519 6  	-23.063	6.89188	0	-30.36989		1025.747	1475.81264	1025.747	1475.81264	CDMS
+            CH318OHvt=0,1&2	Methanol	230533	0			22(5,17)-22(5,18)A,vt=2	22 517 6    22 518 6  	-22.97	7.20636	0	-30.33162		990.4	1424.95648	990.4	1424.95648	CDMS
+            CH318OHvt=0,1&2	Methanol	230534	0			21(5,16)-21(5,17)A,vt=2	21 516 6    21 517 6  	-22.88	7.53846	0	-30.29231		956.585	1376.30452	956.585	1376.30452	CDMS\n`;
             this.parsingQueryResponse(data);
             this.isQuerying = false;
         }
