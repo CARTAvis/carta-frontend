@@ -23,7 +23,7 @@ export enum SpectralLineQueryUnit {
 export enum SpectralLineHeaders {
     Species = "Species",
     ChemicalName = "Chemical Name",
-    RedshiftedFrequency = "Redshifted Frequency",
+    ShiftedFrequency = "Shifted Frequency",
     RestFrequency = "Rest Frequency",
     FreqErr = "Freq Err(rest frame,redshifted)",
     MeasFreqMHz = "Meas Freq-MHz(rest frame,redshifted)",
@@ -58,7 +58,15 @@ export enum RedshiftType {
     Z = "Z"
 }
 
-const FREQUENCY_COLUMN_INDEX = 2;
+export interface SpectralLine {
+    species: string;
+    frequency: number;
+    qn: string;
+}
+
+const SPECIES_COLUMN_INDEX = 0;
+const SHIFTIED_FREQUENCY_COLUMN_INDEX = 2;
+const QN_COLUMN_INDEX = 7;
 
 export class SpectralLineOverlayWidgetStore extends RegionWidgetStore {
     private static readonly initDisplayedColumnSize = 6;
@@ -75,8 +83,10 @@ export class SpectralLineOverlayWidgetStore extends RegionWidgetStore {
     @observable queryResultTableRef: Table;
     @observable controlHeaders: Map<string, ControlHeader>;
     @observable queryResult: Map<number, ProcessedColumnData>;
+    @observable lineDisplay: ProcessedColumnData;
     @observable originalFreqColumn: ProcessedColumnData;
     @observable numDataRows: number;
+    @observable selectedSpectralProfilerID: string;
 
     @action setQueryRangeType = (queryRangeType: SpectralLineQueryRangeType) => {
         this.queryRangeType = queryRangeType;
@@ -112,6 +122,10 @@ export class SpectralLineOverlayWidgetStore extends RegionWidgetStore {
         this.queryResultTableRef = ref;
     }
 
+    @action setSelectedSpectralProfiler = (widgetID: string) => {
+        this.selectedSpectralProfilerID = widgetID;
+    };
+
     @action query = () => {
         let valueMin = 0;
         let valueMax = 0;
@@ -136,16 +150,9 @@ export class SpectralLineOverlayWidgetStore extends RegionWidgetStore {
             this.isQuerying = true;
             const data =
             `Species	Chemical Name	Freq-MHz(rest frame,redshifted)	Freq Err(rest frame,redshifted)	Meas Freq-MHz(rest frame,redshifted)	Meas Freq Err(rest frame,redshifted)	Resolved QNs	CDMS/JPL Intensity	S<sub>ij</sub>&#956;<sup>2</sup> (D<sup>2</sup>)	S<sub>ij</sub>	Log<sub>10</sub> (A<sub>ij</sub>)	Lovas/AST Intensity	E_L (cm^-1)	E_L (K)	E_U (cm^-1)	E_U (K)	Linelist
-            H2CO	Formaldehyde	0.0004	0			6(5,1)-6(5,2)	-19.9244	109.59367	6.719	-29.67917		255.3456	367.38325	255.3456	367.38325	JPL
-            H2CO	Formaldehyde	0.0004	0			6(5,1)-6(5,2)	-19.9242	109.64415	6.722	-29.67897		255.3456	367.38325	255.3456	367.38325	CDMS
-            CH318OHvt=0,1&2	Methanol	0.001	0			23(5,18)-23(5,19)A,vt=2	-23.063	6.89188	0	-30.36989		1025.747	1475.81264	1025.747	1475.81264	CDMS
-            CH318OHvt=0,1&2	Methanol	0.001	0			22(5,17)-22(5,18)A,vt=2	-22.97	7.20636	0	-30.33162		990.4	1424.95648	990.4	1424.95648	CDMS
-            CH318OHvt=0,1&2	Methanol	0.001	0			21(5,16)-21(5,17)A,vt=2	-22.88	7.53846	0	-30.29231		956.585	1376.30452	956.585	1376.30452	CDMS
-            CH318OHvt=0,1&2	Methanol	0.001	0			11(4,7)-11(4,8)A,vt=2	-21.91	8.96102	0	-29.9455		526.916	758.11023	526.916	758.11023	CDMS
-            CH318OHvt=0,1&2	Methanol	0.001	0			10(4,6)-10(4,7)A,vt=2	-21.835	9.81915	0	-29.86627		509.976	733.73749	509.976	733.73749	CDMS
-            CH318OHvt=0,1&2	Methanol	0.001	0			6(3,4)-6(3,3)A,vt=2	-21.829	8.99023	0	-29.6963		488.706	703.13488	488.706	703.13488	CDMS
-            CH318OHvt=0,1&2	Methanol	0.001	0			2(2,1)-2(2,0)A,vt=2	-22.005	10.78742	0	-29.20218		611.206	879.38404	611.206	879.38404	CDMS
-            CH318OHvt=0,1&2	Methanol	0.001	0			33(7,26)-33(7,27)A,vt=1	-23.568	8.02371	0	-30.45783		1299.911	1870.27121	1299.911	1870.27121	CDMS\n`;
+            H2CO	Formaldehyde	230534	0			6(5,1)-6(5,2)	-19.9244	109.59367	6.719	-29.67917		255.3456	367.38325	255.3456	367.38325	JPL
+            H2CO	Formaldehyde	230535	0			6(5,1)-6(5,2)	-19.9242	109.64415	6.722	-29.67897		255.3456	367.38325	255.3456	367.38325	CDMS
+            CH318OHvt=0,1&2	Methanol	230533	0			23(5,18)-23(5,19)A,vt=2	-23.063	6.89188	0	-30.36989		1025.747	1475.81264	1025.747	1475.81264	CDMS\n`;
             this.parsingQueryResponse(data);
             this.isQuerying = false;
         }
@@ -183,6 +190,25 @@ export class SpectralLineOverlayWidgetStore extends RegionWidgetStore {
         return displayedColumnHeaders;
     }
 
+    @computed get selectedLines(): SpectralLine[] {
+        const selectedLines = [];
+        if (this.lineDisplay && this.lineDisplay.data) {
+            for (let rowIndex = 0; rowIndex < this.lineDisplay.data.length; rowIndex++) {
+                if (this.lineDisplay.data[rowIndex]) {
+                    const speciesColumn = this.queryResult.get(SPECIES_COLUMN_INDEX);
+                    const freqeuncyColumn = this.queryResult.get(SHIFTIED_FREQUENCY_COLUMN_INDEX);
+                    const QNColumn = this.queryResult.get(QN_COLUMN_INDEX);
+                    selectedLines.push({
+                        species: speciesColumn.data[rowIndex],
+                        frequency: freqeuncyColumn.data[rowIndex],
+                        qn: QNColumn.data[rowIndex]
+                    });
+                }
+            }
+        }
+        return selectedLines;
+    }
+
     private calculateFreqMHz = (value: number, unit: SpectralLineQueryUnit): number => {
         if (!isFinite(value) || !unit) {
             return null;
@@ -206,7 +232,7 @@ export class SpectralLineOverlayWidgetStore extends RegionWidgetStore {
         const headers = Object.values(SpectralLineHeaders);
         for (let columnIndex = 0; columnIndex < headers.length; columnIndex++) {
             const columnName = headers[columnIndex];
-            let dataType = columnName === (SpectralLineHeaders.RedshiftedFrequency || SpectralLineHeaders.RestFrequency) ? CARTA.ColumnType.Double : CARTA.ColumnType.String;
+            let dataType = columnName === (SpectralLineHeaders.ShiftedFrequency || SpectralLineHeaders.RestFrequency) ? CARTA.ColumnType.Double : CARTA.ColumnType.String;
             this.columnHeaders.push(new CARTA.CatalogHeader({name: columnName, dataType: dataType, columnIndex: columnIndex}));
         }
 
@@ -253,7 +279,7 @@ export class SpectralLineOverlayWidgetStore extends RegionWidgetStore {
                             const valString = spectralLineInfo[row + 1][columnIndex];
                             data.push(valString);
                         }
-                    } else if (columnName === SpectralLineHeaders.RedshiftedFrequency) {
+                    } else if (columnName === SpectralLineHeaders.ShiftedFrequency) {
                         dataType = CARTA.ColumnType.Double;
                         for (let row = 0; row < numDataRows; row++) {
                             const valString = spectralLineInfo[row + 1][columnIndex];
@@ -278,6 +304,7 @@ export class SpectralLineOverlayWidgetStore extends RegionWidgetStore {
 
             // update numDataRows
             this.numDataRows = numDataRows;
+            this.lineDisplay = {dataType: CARTA.ColumnType.Bool, data: new Array<boolean>(numDataRows).fill(true)};
         }
     };
 
@@ -298,11 +325,12 @@ export class SpectralLineOverlayWidgetStore extends RegionWidgetStore {
         this.queryResult = new Map<number, ProcessedColumnData>();
         this.originalFreqColumn = undefined;
         this.numDataRows = 1;
+        this.selectedSpectralProfilerID = "";
 
         // update frequency column when redshift changes
         autorun(() => {
             if (this.queryResult.size > 0 && this.originalFreqColumn && this.originalFreqColumn.data) {
-                this.queryResult.set(FREQUENCY_COLUMN_INDEX, {
+                this.queryResult.set(SHIFTIED_FREQUENCY_COLUMN_INDEX, {
                     dataType: CARTA.ColumnType.Double,
                     data: (this.originalFreqColumn.data as Array<number>).map(val => val * this.redshiftFactor)
                 });

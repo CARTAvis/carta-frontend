@@ -700,6 +700,18 @@ export class WidgetsStore {
         return id;
     }
 
+    @computed get spectralProfilerList(): string[] {
+        return Array.from(this.spectralProfileWidgets.keys());
+    }
+
+    @computed get hasSpectralProfiler(): boolean {
+        return this.spectralProfileWidgets && this.spectralProfileWidgets.size > 0;
+    }
+
+    public getSpectralWidgetStoreByID = (id: string): SpectralProfileWidgetStore => {
+        return this.spectralProfileWidgets.get(id);
+    };
+
     // endregion
 
     // region Stokes Profile Widgets

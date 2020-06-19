@@ -1,12 +1,11 @@
 import * as React from "react";
 import * as _ from "lodash";
-import * as AST from "ast_wrapper";
 import {autorun, computed, observable} from "mobx";
 import {observer} from "mobx-react";
 import {Colors, NonIdealState} from "@blueprintjs/core";
 import ReactResizeDetector from "react-resize-detector";
 import {CARTA} from "carta-protobuf";
-import {LinePlotComponent, LinePlotComponentProps, PlotType, ProfilerInfoComponent, VERTICAL_RANGE_PADDING} from "components/Shared";
+import {LineMarker, LinePlotComponent, LinePlotComponentProps, PlotType, ProfilerInfoComponent, VERTICAL_RANGE_PADDING} from "components/Shared";
 import {TickType} from "../Shared/LinePlot/PlotContainer/PlotContainerComponent";
 import {SpectralProfilerToolbarComponent} from "./SpectralProfilerToolbarComponent/SpectralProfilerToolbarComponent";
 import {AnimationState, SpectralProfileStore, WidgetConfig, WidgetProps, HelpType, AnimatorStore, WidgetsStore, AppStore} from "stores";
@@ -302,6 +301,25 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
         return profilerInfo;
     };
 
+    private fillSpectralLines = (): LineMarker[] => {
+        let spectralLineMarkers: LineMarker[] = [];
+        const spectralLines = this.widgetStore.spectralLines;
+        if (spectralLines && spectralLines.length > 0) {
+            for (let lineIndex = 0; lineIndex < spectralLines.length; lineIndex++) {
+                const line = spectralLines[lineIndex];
+                spectralLineMarkers.push({
+                    value: line.frequency,
+                    id: `spectral-line-${lineIndex}`,
+                    label: `${line.species} ${line.qn}`,
+                    draggable: false,
+                    horizontal: false,
+                    color: AppStore.Instance.darkTheme ? Colors.GREEN4 : Colors.GREEN2
+                });
+            }
+        }
+        return spectralLineMarkers;
+    };
+
     render() {
         const appStore = AppStore.Instance;
         if (!this.widgetStore) {
@@ -327,7 +345,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
             graphZoomReset: this.widgetStore.clearXYBounds,
             graphCursorMoved: this.onGraphCursorMoved,
             scrollZoom: true,
-            markers: [],
+            markers: this.fillSpectralLines(),
             mouseEntered: this.widgetStore.setMouseMoveIntoLinePlots,
             borderWidth: this.widgetStore.lineWidth,
             pointRadius: this.widgetStore.linePlotPointSize,
@@ -375,7 +393,6 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
                 }
             }
 
-            linePlotProps.markers = [];
             if (!isNaN(this.widgetStore.cursorX)) {
                 linePlotProps.markers.push({
                     value: this.widgetStore.cursorX,

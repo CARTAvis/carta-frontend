@@ -3,7 +3,8 @@ import {Colors} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import {PlotType, LineSettings} from "components/Shared";
 import {RegionWidgetStore, RegionsType} from "./RegionWidgetStore";
-import {AppStore, FrameStore} from "..";
+import {SpectralLine} from "./SpectralLineOverlayWidgetStore"
+import {FrameStore} from "stores";
 import {isColorValid} from "utilities";
 import {SpectralSystem, SpectralType, SpectralUnit} from "models";
 
@@ -18,6 +19,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
     @observable channel: number;
     @observable markerTextVisible: boolean;
     @observable isMouseMoveIntoLinePlots: boolean;
+    @observable spectralLines: SpectralLine[];
 
     // settings 
     @observable plotType: PlotType;
@@ -153,10 +155,21 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         this.isMouseMoveIntoLinePlots = val;
     };
 
+    @action addSpectralLines = (spectralLines: SpectralLine[]) => {
+        if (spectralLines) {
+            this.spectralLines = spectralLines;
+        }
+    };
+
+    @action clearSpectralLines = () => {
+        this.spectralLines = [];
+    };
+
     constructor(coordinate: string = "z") {
         super(RegionsType.CLOSED_AND_POINT);
         this.coordinate = coordinate;
         this.statsType = CARTA.StatsType.Mean;
+        this.spectralLines = [];
 
         // Describes how the data is visualised
         this.plotType = PlotType.STEPS;

@@ -1,7 +1,7 @@
 import * as React from "react";
 import {action, computed, observable} from "mobx";
 import {observer} from "mobx-react";
-import {AnchorButton, Button, Classes, Divider, FormGroup, HTMLSelect, Intent, Overlay, Spinner, Switch, Tooltip} from "@blueprintjs/core";
+import {AnchorButton, Button, Classes, Divider, FormGroup, HTMLSelect, Intent, Menu, MenuItem, Overlay, Popover, Position, Spinner, Switch, Tooltip} from "@blueprintjs/core";
 import {Cell, Column, Regions, RenderMode, SelectionModes, Table} from "@blueprintjs/table";
 import ReactResizeDetector from "react-resize-detector";
 import {SafeNumericInput, TableComponent, TableComponentProps, TableType} from "components/Shared";
@@ -172,7 +172,23 @@ export class SpectralLineOverlayComponent extends React.Component<WidgetProps> {
         const widgetStore = this.widgetStore;
         const appStore = AppStore.Instance;
         const frame = appStore.activeFrame;
-        return;
+        if (widgetStore.selectedSpectralProfilerID && widgetStore.selectedLines.length > 0 && frame) {
+            const selectedWidgetStore = appStore.widgetsStore.getSpectralWidgetStoreByID(widgetStore.selectedSpectralProfilerID);
+            if (selectedWidgetStore) {
+                selectedWidgetStore.addSpectralLines(widgetStore.selectedLines);
+            }
+        }
+    };
+
+    private handleClear = () => {
+        const widgetStore = this.widgetStore;
+        const appStore = AppStore.Instance;
+        if (widgetStore.selectedSpectralProfilerID) {
+            const selectedWidgetStore = appStore.widgetsStore.getSpectralWidgetStoreByID(widgetStore.selectedSpectralProfilerID);
+            if (selectedWidgetStore) {
+                selectedWidgetStore.clearSpectralLines();
+            }
+        }
     };
 
     private handleFilter = () => {
@@ -265,6 +281,22 @@ export class SpectralLineOverlayComponent extends React.Component<WidgetProps> {
             <pre>Showing {widgetStore.numDataRows} entries.</pre>
         ) : null;
 
+        const isSelectedWidgetExisting = widgetStore.selectedSpectralProfilerID && AppStore.Instance.widgetsStore.getSpectralWidgetStoreByID(widgetStore.selectedSpectralProfilerID);
+        const widgetMenu = (
+            <Popover
+                content={
+                    <Menu>
+                        {AppStore.Instance.widgetsStore.spectralProfilerList.map(widgetID => <MenuItem key={widgetID} text={widgetID} onClick={() => widgetStore.setSelectedSpectralProfiler(widgetID)}/>)}
+                    </Menu>
+                }
+                position={Position.BOTTOM}
+            >
+                <Button minimal={true} rightIcon="caret-down">
+                    {isSelectedWidgetExisting ? widgetStore.selectedSpectralProfilerID : "-- Select a widget --"}
+                </Button>
+            </Popover>
+        );
+
         const queryResultTableProps: TableComponentProps = {
             type: TableType.ColumnFilter,
             dataset: widgetStore.queryResult,
@@ -305,6 +337,7 @@ export class SpectralLineOverlayComponent extends React.Component<WidgetProps> {
                 </div>
                 <div className="bp3-dialog-footer">
                     <div className="bp3-dialog-footer-actions">
+                        {widgetMenu}
                         <Tooltip content={"Apply filter"}>
                             <AnchorButton
                                 intent={Intent.PRIMARY}
@@ -313,7 +346,8 @@ export class SpectralLineOverlayComponent extends React.Component<WidgetProps> {
                                 onClick={this.handleFilter}
                             />
                         </Tooltip>
-                        <Button intent={Intent.PRIMARY} disabled={widgetStore.queryResult.size <= 0 || !appStore.activeFrame} onClick={this.handlePlot}>Plot</Button>
+                        <Button intent={Intent.PRIMARY} disabled={!appStore.activeFrame || !isSelectedWidgetExisting || widgetStore.queryResult.size <= 0} onClick={this.handlePlot}>Plot</Button>
+                        <Button intent={Intent.PRIMARY} disabled={!appStore.activeFrame || !isSelectedWidgetExisting || widgetStore.queryResult.size <= 0} onClick={this.handleClear}>Clear</Button>
                     </div>
                 </div>
                 <Overlay className={Classes.OVERLAY_SCROLL_CONTAINER} autoFocus={true} canEscapeKeyClose={false} canOutsideClickClose={false} isOpen={widgetStore.isQuerying} usePortal={false}>
