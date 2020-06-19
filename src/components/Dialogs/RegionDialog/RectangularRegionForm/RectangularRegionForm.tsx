@@ -1,12 +1,11 @@
 import * as React from "react";
-import * as AST from "ast_wrapper";
 import {observer} from "mobx-react";
 import {computed} from "mobx";
 import {H5, InputGroup, NumericInput, Classes} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import {FrameStore, RegionStore} from "stores";
 import {Point2D} from "models";
-import {closeTo, formattedArcsec} from "utilities";
+import {closeTo, formattedArcsec, getFormattedWCSString} from "utilities";
 import "./RectangularRegionForm.css";
 
 const KEYCODE_ENTER = 13;
@@ -217,18 +216,6 @@ export class RectangularRegionForm extends React.Component<{ region: RegionStore
         ev.currentTarget.value = existingValue;
     };
 
-    private getFormattedString(wcsInfo: number, pixelCoords: Point2D) {
-        if (wcsInfo) {
-            const pointWCS = AST.transformPoint(this.props.wcsInfo, pixelCoords.x, pixelCoords.y);
-            const normVals = AST.normalizeCoordinates(this.props.wcsInfo, pointWCS.x, pointWCS.y);
-            const wcsCoords = AST.getFormattedCoordinates(this.props.wcsInfo, normVals.x, normVals.y);
-            if (wcsCoords) {
-                return `WCS: (${wcsCoords.x}, ${wcsCoords.y})`;
-            }
-        }
-        return null;
-    }
-
     private getSizeString(size: Point2D) {
         const wcsSize = this.props.frame.getWcsSizeInArcsec(size);
         if (wcsSize) {
@@ -247,9 +234,9 @@ export class RectangularRegionForm extends React.Component<{ region: RegionStore
         const sizeDims = region.controlPoints[1];
         const bottomLeftPoint = this.bottomLeftPoint;
         const topRightPoint = this.topRightPoint;
-        const wcsStringCenter = this.getFormattedString(this.props.wcsInfo, centerPoint);
-        const wcsStringLeft = this.getFormattedString(this.props.wcsInfo, bottomLeftPoint);
-        const wcsStringRight = this.getFormattedString(this.props.wcsInfo, topRightPoint);
+        const wcsStringCenter = getFormattedWCSString(this.props.wcsInfo, centerPoint);
+        const wcsStringLeft = getFormattedWCSString(this.props.wcsInfo, bottomLeftPoint);
+        const wcsStringRight = getFormattedWCSString(this.props.wcsInfo, topRightPoint);
         const wcsStringSize = this.getSizeString(sizeDims);
 
         const commonProps = {
