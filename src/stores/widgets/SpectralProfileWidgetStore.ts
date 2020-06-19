@@ -3,7 +3,7 @@ import {Colors} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import {PlotType, LineSettings} from "components/Shared";
 import {RegionWidgetStore, RegionsType} from "./RegionWidgetStore";
-import {SpectralLine} from "./SpectralLineOverlayWidgetStore"
+import {SpectralLine} from "./SpectralLineOverlayWidgetStore";
 import {FrameStore} from "stores";
 import {isColorValid} from "utilities";
 import {SpectralSystem, SpectralType, SpectralUnit} from "models";

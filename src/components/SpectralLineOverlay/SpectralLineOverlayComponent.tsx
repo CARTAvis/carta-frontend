@@ -281,7 +281,7 @@ export class SpectralLineOverlayComponent extends React.Component<WidgetProps> {
             <pre>Showing {widgetStore.numDataRows} entries.</pre>
         ) : null;
 
-        const isSelectedWidgetExisting = widgetStore.selectedSpectralProfilerID && AppStore.Instance.widgetsStore.getSpectralWidgetStoreByID(widgetStore.selectedSpectralProfilerID);
+        const isSelectedWidgetExisted = widgetStore.selectedSpectralProfilerID && AppStore.Instance.widgetsStore.getSpectralWidgetStoreByID(widgetStore.selectedSpectralProfilerID);
         const widgetMenu = (
             <Popover
                 content={
@@ -292,7 +292,7 @@ export class SpectralLineOverlayComponent extends React.Component<WidgetProps> {
                 position={Position.BOTTOM}
             >
                 <Button minimal={true} rightIcon="caret-down">
-                    {isSelectedWidgetExisting ? widgetStore.selectedSpectralProfilerID : "-- Select a widget --"}
+                    {isSelectedWidgetExisted ? widgetStore.selectedSpectralProfilerID : "-- Select a widget --"}
                 </Button>
             </Popover>
         );
@@ -346,8 +346,8 @@ export class SpectralLineOverlayComponent extends React.Component<WidgetProps> {
                                 onClick={this.handleFilter}
                             />
                         </Tooltip>
-                        <Button intent={Intent.PRIMARY} disabled={!appStore.activeFrame || !isSelectedWidgetExisting || widgetStore.queryResult.size <= 0} onClick={this.handlePlot}>Plot</Button>
-                        <Button intent={Intent.PRIMARY} disabled={!appStore.activeFrame || !isSelectedWidgetExisting || widgetStore.queryResult.size <= 0} onClick={this.handleClear}>Clear</Button>
+                        <Button intent={Intent.PRIMARY} disabled={!appStore.activeFrame || !isSelectedWidgetExisted || widgetStore.queryResult.size <= 0} onClick={this.handlePlot}>Plot</Button>
+                        <Button intent={Intent.PRIMARY} disabled={!appStore.activeFrame || !isSelectedWidgetExisted || widgetStore.queryResult.size <= 0} onClick={this.handleClear}>Clear</Button>
                     </div>
                 </div>
                 <Overlay className={Classes.OVERLAY_SCROLL_CONTAINER} autoFocus={true} canEscapeKeyClose={false} canOutsideClickClose={false} isOpen={widgetStore.isQuerying} usePortal={false}>
