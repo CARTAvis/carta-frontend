@@ -5,6 +5,7 @@ import {AnchorButton, FormGroup, Intent, HTMLSelect, NonIdealState, Switch, Tool
 import {Cell, Column, Regions, RenderMode, SelectionModes, Table} from "@blueprintjs/table";
 import {Select, IItemRendererProps} from "@blueprintjs/select";
 import ReactResizeDetector from "react-resize-detector";
+import SplitPane, { Pane } from "react-split-pane";
 import {CARTA} from "carta-protobuf";
 import {TableComponent, TableComponentProps, TableType} from "components/Shared";
 import {CatalogOverlayPlotSettingsComponent} from "./CatalogOverlayPlotSettingsComponent/CatalogOverlayPlotSettingsComponent";
@@ -629,12 +630,14 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
                     </FormGroup>
                     <CatalogOverlayPlotSettingsComponent widgetStore={this.widgetStore} id={this.widgetId}/>
                 </div>
-                <div className={"catalog-overlay-column-header-container"}>
-                    {this.createHeaderTable()}
-                </div>
-                <div className={"catalog-overlay-data-container"}>
-                    <TableComponent {...dataTableProps}/>
-                </div>
+                <SplitPane className="catalog-table" split="horizontal" primary={"second"} defaultSize={"40%"} minSize={"5%"}>
+                    <Pane className={"catalog-overlay-column-header-container"}>
+                        {this.createHeaderTable()}
+                    </Pane>
+                    <Pane className={"catalog-overlay-data-container"}>
+                        <TableComponent {...dataTableProps}/>
+                    </Pane>
+                </SplitPane>
                 <div className="bp3-dialog-footer">
                     <div className={"table-info"}>
                         <table className="info-display">
