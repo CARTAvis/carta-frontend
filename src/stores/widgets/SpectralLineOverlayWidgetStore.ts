@@ -61,7 +61,7 @@ export enum RedshiftType {
 
 export interface SpectralLine {
     species: string;
-    frequency: number;
+    value: number;
     qn: string;
 }
 
@@ -194,7 +194,7 @@ export class SpectralLineOverlayWidgetStore extends RegionWidgetStore {
     }
 
     @computed get selectedLines(): SpectralLine[] {
-        const selectedLines = [];
+        const selectedLines: SpectralLine[] = [];
         if (this.lineDisplay && this.lineDisplay.data) {
             for (let rowIndex = 0; rowIndex < this.lineDisplay.data.length; rowIndex++) {
                 if (this.lineDisplay.data[rowIndex]) {
@@ -202,9 +202,9 @@ export class SpectralLineOverlayWidgetStore extends RegionWidgetStore {
                     const freqeuncyColumn = this.queryResult.get(SHIFTIED_FREQUENCY_COLUMN_INDEX);
                     const QNColumn = this.queryResult.get(QN_COLUMN_INDEX);
                     selectedLines.push({
-                        species: speciesColumn.data[rowIndex],
-                        frequency: freqeuncyColumn.data[rowIndex],
-                        qn: QNColumn.data[rowIndex]
+                        species: speciesColumn.data[rowIndex] as string,
+                        value: freqeuncyColumn.data[rowIndex] as number,
+                        qn: QNColumn.data[rowIndex] as string
                     });
                 }
             }
