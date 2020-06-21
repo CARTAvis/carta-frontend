@@ -326,10 +326,10 @@ export class SpectralLineOverlayComponent extends React.Component<WidgetProps> {
             updateTableColumnWidth: this.setQueryResultTableColumnWidth,
             updateSelectedRow: this.onQueryResultTableDataSelected,
             manualSelectionProps: {
-                isSelectAll: widgetStore.isLineSelectAll,
-                isSelectIndeterminate: widgetStore.isLineSelectIndeterminate,
-                setSelectAll: widgetStore.setSelectAll,
-                setSelectSingle: widgetStore.setSelectSingle
+                isSelectingAll: widgetStore.isSelectingAllLines,
+                isSelectingIndeterminated: widgetStore.isSelectingIndeterminatedLines,
+                selectAllLines: widgetStore.selectAllLines,
+                selectSingleLine: widgetStore.selectSingleLine
             },
             manualSelectionData: widgetStore.manualSelectionData,
         };

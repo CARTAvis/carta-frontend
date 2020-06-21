@@ -16,10 +16,10 @@ export enum TableType {
 }
 
 export interface ManualSelectionProps {
-    isSelectAll: boolean;
-    isSelectIndeterminate: boolean;
-    setSelectAll: () => void;
-    setSelectSingle: (rowIndex: number) => void;
+    isSelectingAll: boolean;
+    isSelectingIndeterminated: boolean;
+    selectAllLines: () => void;
+    selectSingleLine: (rowIndex: number) => void;
 }
 
 export class TableComponentProps {
@@ -69,10 +69,10 @@ export class TableComponent extends React.Component<TableComponentProps> {
                             </ColumnHeaderCell>
                             <ColumnHeaderCell>
                                 <Checkbox
-                                    indeterminate={manualSelectionProps.isSelectIndeterminate}
-                                    checked={manualSelectionProps.isSelectAll}
+                                    indeterminate={manualSelectionProps.isSelectingIndeterminated}
+                                    checked={manualSelectionProps.isSelectingAll}
                                     inline={true}
-                                    onChange={manualSelectionProps.setSelectAll}
+                                    onChange={manualSelectionProps.selectAllLines}
                                 />
                             </ColumnHeaderCell>
                         </ColumnHeaderCell>
@@ -83,7 +83,7 @@ export class TableComponent extends React.Component<TableComponentProps> {
                         <Cell key={`cell_${columnIndex}_${rowIndex}`} interactive={false}>
                             <Checkbox
                                 checked={manualSelectionData[rowIndex]}
-                                onChange={() => manualSelectionProps.setSelectSingle(rowIndex)}
+                                onChange={() => manualSelectionProps.selectSingleLine(rowIndex)}
                             />
                         </Cell>
                     );
