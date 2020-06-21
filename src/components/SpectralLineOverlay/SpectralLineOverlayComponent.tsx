@@ -181,7 +181,7 @@ export class SpectralLineOverlayComponent extends React.Component<WidgetProps> {
         const widgetStore = this.widgetStore;
         const appStore = AppStore.Instance;
         const frame = appStore.activeFrame;
-        if (widgetStore.selectedSpectralProfilerID && widgetStore.selectedLines.length > 0 && frame) {
+        if (widgetStore.selectedSpectralProfilerID && frame) {
             const selectedWidgetStore = appStore.widgetsStore.getSpectralWidgetStoreByID(widgetStore.selectedSpectralProfilerID);
             if (selectedWidgetStore) {
                 selectedWidgetStore.addSpectralLines(widgetStore.selectedLines);
@@ -324,7 +324,14 @@ export class SpectralLineOverlayComponent extends React.Component<WidgetProps> {
             updateColumnFilter: widgetStore.setColumnFilter,
             updateByInfiniteScroll: this.updateByInfiniteScroll,
             updateTableColumnWidth: this.setQueryResultTableColumnWidth,
-            updateSelectedRow: this.onQueryResultTableDataSelected
+            updateSelectedRow: this.onQueryResultTableDataSelected,
+            manualSelectionProps: {
+                isSelectAll: widgetStore.isLineSelectAll,
+                isSelectIndeterminate: widgetStore.isLineSelectIndeterminate,
+                setSelectAll: widgetStore.setSelectAll,
+                setSelectSingle: widgetStore.setSelectSingle
+            },
+            manualSelectionData: widgetStore.manualSelectionData,
         };
 
         let className = "spectral-line-overlay-widget";

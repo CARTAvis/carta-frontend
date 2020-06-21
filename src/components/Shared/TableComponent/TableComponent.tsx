@@ -1,16 +1,25 @@
 import * as React from "react";
 import {observer} from "mobx-react";
-import {Cell, Column, Table, SelectionModes, RenderMode, ColumnHeaderCell, EditableCell, IRegion} from "@blueprintjs/table";
+import {Checkbox} from "@blueprintjs/core";
+import {Cell, Column, ColumnHeaderCell, EditableCell, IRegion, RenderMode, SelectionModes, Table} from "@blueprintjs/table";
 import {IRowIndices} from "@blueprintjs/table/lib/esm/common/grid";
 import {CARTA} from "carta-protobuf";
 import {ControlHeader} from "stores/widgets";
 import {ProcessedColumnData} from "models";
+import "./TableComponent.css";
 
 export type ColumnFilter = { index: number, columnFilter: string };
 
 export enum TableType {
     Normal,
     ColumnFilter
+}
+
+export interface ManualSelectionProps {
+    isSelectAll: boolean;
+    isSelectIndeterminate: boolean;
+    setSelectAll: () => void;
+    setSelectSingle: (rowIndex: number) => void;
 }
 
 export class TableComponentProps {
@@ -23,6 +32,8 @@ export class TableComponentProps {
     loadingCell?: boolean;
     selectedDataIndex?: number[];
     showSelectedData?: boolean;
+    manualSelectionProps?: ManualSelectionProps;
+    manualSelectionData?: boolean[];
     upTableRef?: (ref: Table) => void;
     updateColumnFilter?: (value: string, columnName: string) => void;
     updateByInfiniteScroll?: (rowIndexEnd: number) => void;
@@ -32,6 +43,54 @@ export class TableComponentProps {
 
 @observer
 export class TableComponent extends React.Component<TableComponentProps> {
+
+    private renderManualSelectionColumn = (manualSelectionProps: ManualSelectionProps, manualSelectionData: boolean[]) => {
+        if (!manualSelectionProps || !manualSelectionData || manualSelectionData.length <= 0) {
+            return null;
+        }
+
+        const columnName = "select";
+        const controlheader = this.props.filter.get(columnName);
+        return (
+            <Column
+                key={columnName}
+                name={columnName}
+                columnHeaderCellRenderer={(columnIndex: number) => {
+                    return (
+                        <ColumnHeaderCell>
+                            <ColumnHeaderCell isActive={true}>
+                                <EditableCell
+                                    className={"column-filter"}
+                                    key={"column-filter-" + columnIndex}
+                                    intent={"primary"}
+                                    onChange={((value: string) => this.props.updateColumnFilter(value, columnName))}
+                                    value={controlheader && controlheader.filter ? controlheader.filter : ""}
+                                />
+                            </ColumnHeaderCell>
+                            <ColumnHeaderCell>
+                                <Checkbox
+                                    indeterminate={manualSelectionProps.isSelectIndeterminate}
+                                    checked={manualSelectionProps.isSelectAll}
+                                    inline={true}
+                                    onChange={manualSelectionProps.setSelectAll}
+                                />
+                            </ColumnHeaderCell>
+                        </ColumnHeaderCell>
+                    );
+                }}
+                cellRenderer={(rowIndex, columnIndex) => {
+                    return (
+                        <Cell key={`cell_${columnIndex}_${rowIndex}`} interactive={false}>
+                            <Checkbox
+                                checked={manualSelectionData[rowIndex]}
+                                onChange={() => manualSelectionProps.setSelectSingle(rowIndex)}
+                            />
+                        </Cell>
+                    );
+                }}
+            />
+        );
+    };
 
     private renderDataColumnWithFilter = (columnName: string, columnData: any) => {
         return (
@@ -68,7 +127,6 @@ export class TableComponent extends React.Component<TableComponentProps> {
                 </ColumnHeaderCell>
                 <ColumnHeaderCell name={columnName}/>
             </ColumnHeaderCell>
-
         );
     };
 
@@ -117,6 +175,12 @@ export class TableComponent extends React.Component<TableComponentProps> {
         const tableColumns = [];
         const tableData = table.dataset;
 
+        // Create manuanl selection checkbox column
+        if (table.manualSelectionProps && table.manualSelectionData && table.dataset && table.dataset.size > 0) {
+            const column = this.renderManualSelectionColumn(table.manualSelectionProps, table.manualSelectionData);
+            tableColumns.push(column);
+        }
+
         for (let index = 0; index < table.columnHeaders.length; index++) {
             const header = table.columnHeaders[index];
             const columnIndex = header.columnIndex;
@@ -131,38 +195,38 @@ export class TableComponent extends React.Component<TableComponentProps> {
             }
         }
 
-        if (table.type === TableType.ColumnFilter) {
-            return (
-                <Table
-                    ref={(ref) => table.upTableRef(ref)}
-                    numRows={table.numVisibleRows}
-                    renderMode={RenderMode.BATCH}
-                    enableRowReordering={false}
-                    selectionModes={SelectionModes.ROWS_AND_CELLS}
-                    onVisibleCellsChange={this.infiniteScroll}
-                    columnWidths={table.columnWidths}
-                    onColumnWidthChanged={this.updateTableColumnWidth}
-                    enableGhostCells={true}
-                    onSelection={this.onRowIndexSelection}
-                    enableMultipleSelection={false}
-                    enableRowResizing={false}
-                >
-                    {tableColumns}
-                </Table>
-            );
-        } else {
-            return (
-                <Table
-                    numRows={table.numVisibleRows}
-                    renderMode={RenderMode.NONE}
-                    enableRowReordering={false}
-                    selectionModes={SelectionModes.NONE}
-                    enableGhostCells={true}
-                    enableRowResizing={false}
-                >
-                    {tableColumns}
-                </Table>
-            );
-        }
+        const tableComponent = table.type === TableType.ColumnFilter ?
+            <Table
+                ref={(ref) => table.upTableRef(ref)}
+                numRows={table.numVisibleRows}
+                renderMode={RenderMode.BATCH}
+                enableRowReordering={false}
+                selectionModes={SelectionModes.ROWS_AND_CELLS}
+                onVisibleCellsChange={this.infiniteScroll}
+                columnWidths={table.columnWidths}
+                onColumnWidthChanged={this.updateTableColumnWidth}
+                enableGhostCells={true}
+                onSelection={this.onRowIndexSelection}
+                enableMultipleSelection={false}
+                enableRowResizing={false}
+            >
+                {tableColumns}
+            </Table> :
+            <Table
+                numRows={table.numVisibleRows}
+                renderMode={RenderMode.NONE}
+                enableRowReordering={false}
+                selectionModes={SelectionModes.NONE}
+                enableGhostCells={true}
+                enableRowResizing={false}
+            >
+                {tableColumns}
+            </Table>;
+
+        return (
+            <div className={"table"}>
+                {tableComponent}
+            </div>
+        );
     }
 }

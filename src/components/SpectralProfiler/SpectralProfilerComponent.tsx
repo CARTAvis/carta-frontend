@@ -304,7 +304,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
     private fillSpectralLines = (): LineMarker[] => {
         let spectralLineMarkers: LineMarker[] = [];
         const spectralLines = this.widgetStore.transformedSpectralLines;
-        if (spectralLines && spectralLines.length > 0) {
+        if (spectralLines) {
             for (let lineIndex = 0; lineIndex < spectralLines.length; lineIndex++) {
                 const line = spectralLines[lineIndex];
                 spectralLineMarkers.push({

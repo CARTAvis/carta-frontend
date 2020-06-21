@@ -199,7 +199,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         // transform to corresponding value according to current widget's spectral settings
         let transformedSpectralLines: SpectralLine[] = [];
         const frame = this.appStore.activeFrame;
-        if (frame && this.spectralLinesMHz && this.spectralLinesMHz.length > 0) {
+        if (frame && this.spectralLinesMHz) {
             this.spectralLinesMHz.forEach(spectralLine => {
                 const transformedValue = frame.convertFreqMHzToSettingWCS(spectralLine.value);
                 if (isFinite(transformedValue)) {

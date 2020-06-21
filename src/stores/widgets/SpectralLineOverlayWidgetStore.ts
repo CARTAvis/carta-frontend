@@ -67,7 +67,7 @@ export interface SpectralLine {
 
 const SPECIES_COLUMN_INDEX = 0;
 const SHIFTIED_FREQUENCY_COLUMN_INDEX = 2;
-const QN_COLUMN_INDEX = 7;
+const RESOLVED_QN_COLUMN_INDEX = 7;
 
 export class SpectralLineOverlayWidgetStore extends RegionWidgetStore {
     private static readonly initDisplayedColumnSize = 6;
@@ -84,7 +84,7 @@ export class SpectralLineOverlayWidgetStore extends RegionWidgetStore {
     @observable queryResultTableRef: Table;
     @observable controlHeaders: Map<string, ControlHeader>;
     @observable queryResult: Map<number, ProcessedColumnData>;
-    @observable lineDisplay: ProcessedColumnData;
+    @observable private lineSelectionForDisplay: Array<boolean>;
     @observable originalFreqColumn: ProcessedColumnData;
     @observable numDataRows: number;
     @observable selectedSpectralProfilerID: string;
@@ -122,6 +122,21 @@ export class SpectralLineOverlayWidgetStore extends RegionWidgetStore {
     @action setQueryResultTableRef(ref: Table) {
         this.queryResultTableRef = ref;
     }
+
+    @action setSelectAll = () => {
+        if (this.lineSelectionForDisplay && this.lineSelectionForDisplay.length > 0) {
+            const isSelectAll = this.isLineSelectAll;
+            for (let rowIndex = 0; rowIndex < this.lineSelectionForDisplay.length; rowIndex++) {
+                this.lineSelectionForDisplay[rowIndex] = isSelectAll ? false : true;
+            }
+        }
+    };
+
+    @action setSelectSingle = (rowIndex: number) => {
+        if (this.lineSelectionForDisplay && isFinite(rowIndex) && rowIndex >= 0 && rowIndex < this.lineSelectionForDisplay.length) {
+            this.lineSelectionForDisplay[rowIndex] = !this.lineSelectionForDisplay[rowIndex];
+        }
+    };
 
     @action setSelectedSpectralProfiler = (widgetID: string) => {
         this.selectedSpectralProfilerID = widgetID;
@@ -193,14 +208,39 @@ export class SpectralLineOverlayWidgetStore extends RegionWidgetStore {
         return displayedColumnHeaders;
     }
 
+    @computed get isLineSelectAll(): boolean {
+        let result = true;
+        if (this.lineSelectionForDisplay && this.lineSelectionForDisplay.length > 0) {
+            for (let rowIndex = 0; rowIndex < this.lineSelectionForDisplay.length; rowIndex++) {
+                result = result && this.lineSelectionForDisplay[rowIndex];
+            }
+        }
+        return result;
+    }
+
+    @computed get isLineSelectIndeterminate(): boolean {
+        let result = false;
+        if (this.lineSelectionForDisplay && this.lineSelectionForDisplay.length > 0) {
+            for (let rowIndex = 0; rowIndex < this.lineSelectionForDisplay.length; rowIndex++) {
+                result = result || this.lineSelectionForDisplay[rowIndex];
+            }
+        }
+        return result && !this.isLineSelectAll;
+    }
+
+    @computed get manualSelectionData(): boolean[] {
+        // Create new instance for trigger re-rendering
+        return [...this.lineSelectionForDisplay];
+    }
+
     @computed get selectedLines(): SpectralLine[] {
         const selectedLines: SpectralLine[] = [];
-        if (this.lineDisplay && this.lineDisplay.data) {
-            for (let rowIndex = 0; rowIndex < this.lineDisplay.data.length; rowIndex++) {
-                if (this.lineDisplay.data[rowIndex]) {
+        if (this.lineSelectionForDisplay) {
+            for (let rowIndex = 0; rowIndex < this.lineSelectionForDisplay.length; rowIndex++) {
+                if (this.lineSelectionForDisplay[rowIndex]) {
                     const speciesColumn = this.queryResult.get(SPECIES_COLUMN_INDEX);
                     const freqeuncyColumn = this.queryResult.get(SHIFTIED_FREQUENCY_COLUMN_INDEX);
-                    const QNColumn = this.queryResult.get(QN_COLUMN_INDEX);
+                    const QNColumn = this.queryResult.get(RESOLVED_QN_COLUMN_INDEX);
                     selectedLines.push({
                         species: speciesColumn.data[rowIndex] as string,
                         value: freqeuncyColumn.data[rowIndex] as number,
@@ -307,7 +347,7 @@ export class SpectralLineOverlayWidgetStore extends RegionWidgetStore {
 
             // update numDataRows
             this.numDataRows = numDataRows;
-            this.lineDisplay = {dataType: CARTA.ColumnType.Bool, data: new Array<boolean>(numDataRows).fill(true)};
+            this.lineSelectionForDisplay = new Array<boolean>(numDataRows).fill(false);
         }
     };
 
@@ -328,6 +368,7 @@ export class SpectralLineOverlayWidgetStore extends RegionWidgetStore {
         this.queryResult = new Map<number, ProcessedColumnData>();
         this.originalFreqColumn = undefined;
         this.numDataRows = 1;
+        this.lineSelectionForDisplay = [];
         this.selectedSpectralProfilerID = "";
 
         // update frequency column when redshift changes
