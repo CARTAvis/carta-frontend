@@ -1,6 +1,7 @@
 import {CARTA} from "carta-protobuf";
 import * as AST from "ast_wrapper";
-import {CHANNEL_TYPES, Point2D, SpectralType} from "models";
+import {Point2D, SpectralType} from "models";
+import {add2D} from "./math2d";
 
 export function getHeaderNumericValue(headerEntry: CARTA.IHeaderEntry): number {
     if (!headerEntry) {
@@ -16,6 +17,21 @@ export function getHeaderNumericValue(headerEntry: CARTA.IHeaderEntry): number {
 
 export function getTransformedCoordinates(astTransform: number, point: Point2D, forward: boolean = true) {
     return AST.transformPoint(astTransform, point.x, point.y, forward);
+}
+
+export function getFormattedWCSString(astTransform: number, pixelCoords: Point2D, addPixelOffset: boolean = true) {
+    if (addPixelOffset) {
+        pixelCoords = add2D(pixelCoords, {x: 1, y: 1});
+    }
+    if (astTransform) {
+        const pointWCS = getTransformedCoordinates(astTransform, pixelCoords);
+        const normVals = AST.normalizeCoordinates(astTransform, pointWCS.x, pointWCS.y);
+        const wcsCoords = AST.getFormattedCoordinates(astTransform, normVals.x, normVals.y);
+        if (wcsCoords) {
+            return `WCS: (${wcsCoords.x}, ${wcsCoords.y})`;
+        }
+    }
+    return "";
 }
 
 export function getTransformedChannel(srcTransform: number, destTransform: number, matchingType: SpectralType, srcChannel: number) {

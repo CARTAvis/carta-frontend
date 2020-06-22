@@ -1,7 +1,7 @@
 import * as _ from "lodash";
 import {action, autorun, computed, observable, ObservableMap, when} from "mobx";
 import * as Long from "long";
-import {Colors, IOptionProps} from "@blueprintjs/core";
+import {Classes, Colors, IOptionProps, setHotkeysDialogProps} from "@blueprintjs/core";
 import {Utils} from "@blueprintjs/table";
 import * as AST from "ast_wrapper";
 import * as CARTACompute from "carta_computation";
@@ -809,6 +809,8 @@ export class AppStore {
         // Adjust document background when theme changes
         autorun(() => {
             document.body.style.backgroundColor = this.darkTheme ? Colors.DARK_GRAY4 : Colors.WHITE;
+            const className = this.darkTheme ? Classes.DARK : "";
+            setHotkeysDialogProps({className});
         });
 
         // Watch for system theme preference changes
