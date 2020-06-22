@@ -9,7 +9,7 @@ import SplitPane, { Pane } from "react-split-pane";
 import {CARTA} from "carta-protobuf";
 import {TableComponent, TableComponentProps, TableType} from "components/Shared";
 import {CatalogOverlayPlotSettingsComponent} from "./CatalogOverlayPlotSettingsComponent/CatalogOverlayPlotSettingsComponent";
-import {AppStore, CatalogStore, HelpType, WidgetConfig, WidgetProps, WidgetsStore} from "stores";
+import {AppStore, HelpType, WidgetConfig, WidgetProps, WidgetsStore} from "stores";
 import {CatalogOverlay, CatalogOverlayWidgetStore, CatalogPlotType, CatalogScatterWidgetStoreProps, CatalogUpdateMode} from "stores/widgets";
 import {toFixed} from "utilities";
 import "./CatalogOverlayComponent.css";
@@ -37,8 +37,6 @@ enum ComparisonOperator {
 
 @observer
 export class CatalogOverlayComponent extends React.Component<WidgetProps> {
-    @observable width: number;
-    @observable height: number;
     @observable coordinate: {x: CatalogOverlay, y: CatalogOverlay};
     @observable widgetId: string;
     @observable catalogFileId: number;
@@ -179,8 +177,6 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
     }
 
     onResize = (width: number, height: number) => {
-        this.width = width;
-        this.height = height;
         const widgetStore = this.widgetStore;
         // fixed bug from blueprintjs, only display 4 rows.
         if (widgetStore && this.catalogHeaderTableRef) {
@@ -560,6 +556,17 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         );
     }
 
+    private onTableResize = () => {
+        // update table if resizing happend
+        const widgetStore = this.widgetStore;
+        if (this.catalogHeaderTableRef) {
+            this.updateTableSize(this.catalogHeaderTableRef, false); 
+        }
+        if (widgetStore && widgetStore.catalogTableRef) {
+            this.updateTableSize(widgetStore.catalogTableRef, false);
+        }
+    }
+
     public render() {
         const appStore = AppStore.Instance;
         const widgetStore = this.widgetStore;
@@ -630,7 +637,14 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
                     </FormGroup>
                     <CatalogOverlayPlotSettingsComponent widgetStore={this.widgetStore} id={this.widgetId}/>
                 </div>
-                <SplitPane className="catalog-table" split="horizontal" primary={"second"} defaultSize={"40%"} minSize={"5%"}>
+                <SplitPane 
+                    className="catalog-table" 
+                    split="horizontal" 
+                    primary={"second"} 
+                    defaultSize={"60%"} 
+                    minSize={"5%"}
+                    onChange={this.onTableResize}
+                >
                     <Pane className={"catalog-overlay-column-header-container"}>
                         {this.createHeaderTable()}
                     </Pane>
