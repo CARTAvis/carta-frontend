@@ -2,16 +2,16 @@ import axios from "axios";
 import * as Ajv from "ajv";
 const preferencesSchema = require("models/preferences_schema_1.json");
 
-export class DatabaseService {
+export class ApiService {
     private static readonly ApiBase = process.env.REACT_APP_API_ADDRESS;
 
     // Support for V4 JSON schemas
     private static PreferenceValidator = new Ajv({schemaId: "auto"}).addMetaSchema(require("ajv/lib/refs/json-schema-draft-04.json")).compile(preferencesSchema);
     public static async GetPreferences() {
         let preferences;
-        if (DatabaseService.ApiBase) {
+        if (ApiService.ApiBase) {
             try {
-                const url = `${DatabaseService.ApiBase}/database/preferences`;
+                const url = `${ApiService.ApiBase}/database/preferences`;
                 const response = await axios.get(url);
                 if (response?.data?.success) {
                     preferences = response.data.preferences;
@@ -25,9 +25,9 @@ export class DatabaseService {
         } else {
             preferences = JSON.parse(localStorage.getItem("preferences")) ?? {};
         }
-        const valid = DatabaseService.PreferenceValidator(preferences);
+        const valid = ApiService.PreferenceValidator(preferences);
         if (!valid) {
-            for (const error of DatabaseService.PreferenceValidator.errors) {
+            for (const error of ApiService.PreferenceValidator.errors) {
                 if (error.dataPath) {
                     console.log(`Removing invalid preference ${error.dataPath}`);
                     // Trim the leading "." from the path
@@ -41,13 +41,13 @@ export class DatabaseService {
     public static async SetPreference(key: string, value: any) {
         const obj = {};
         obj[key] = value;
-        return DatabaseService.SetPreferences(obj);
+        return ApiService.SetPreferences(obj);
     }
 
     public static async SetPreferences(preferences: any) {
-        if (DatabaseService.ApiBase) {
+        if (ApiService.ApiBase) {
             try {
-                const url = `${DatabaseService.ApiBase}/database/preferences`;
+                const url = `${ApiService.ApiBase}/database/preferences`;
                 const response = await axios.put(url, preferences);
                 return response?.data?.success;
             } catch (err) {
@@ -61,9 +61,9 @@ export class DatabaseService {
                     obj[key] = preferences[key];
                 }
 
-                const valid = DatabaseService.PreferenceValidator(obj);
+                const valid = ApiService.PreferenceValidator(obj);
                 if (!valid) {
-                    console.log(DatabaseService.PreferenceValidator.errors);
+                    console.log(ApiService.PreferenceValidator.errors);
                 }
 
                 localStorage.setItem("preferences", JSON.stringify(obj));
@@ -75,9 +75,9 @@ export class DatabaseService {
     }
 
     public static async ClearPreferences(keys: string[]) {
-        if (DatabaseService.ApiBase) {
+        if (ApiService.ApiBase) {
             try {
-                const url = `${DatabaseService.ApiBase}/database/preferences`;
+                const url = `${ApiService.ApiBase}/database/preferences`;
                 const response = await axios.delete(url, {data: {keys}});
                 return response?.data?.success;
             } catch (err) {
