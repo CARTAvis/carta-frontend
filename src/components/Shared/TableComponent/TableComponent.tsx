@@ -68,12 +68,14 @@ export class TableComponent extends React.Component<TableComponentProps> {
                                 />
                             </ColumnHeaderCell>
                             <ColumnHeaderCell>
-                                <Checkbox
-                                    indeterminate={manualSelectionProps.isSelectingIndeterminated}
-                                    checked={manualSelectionProps.isSelectingAll}
-                                    inline={true}
-                                    onChange={manualSelectionProps.selectAllLines}
-                                />
+                                <React.Fragment>
+                                    <Checkbox
+                                        indeterminate={manualSelectionProps.isSelectingIndeterminated}
+                                        checked={manualSelectionProps.isSelectingAll}
+                                        inline={true}
+                                        onChange={manualSelectionProps.selectAllLines}
+                                    />
+                                </React.Fragment>
                             </ColumnHeaderCell>
                         </ColumnHeaderCell>
                     );
@@ -81,10 +83,12 @@ export class TableComponent extends React.Component<TableComponentProps> {
                 cellRenderer={(rowIndex, columnIndex) => {
                     return (
                         <Cell key={`cell_${columnIndex}_${rowIndex}`} interactive={false}>
-                            <Checkbox
-                                checked={manualSelectionData[rowIndex]}
-                                onChange={() => manualSelectionProps.selectSingleLine(rowIndex)}
-                            />
+                            <React.Fragment>
+                                <Checkbox
+                                    checked={manualSelectionData[rowIndex]}
+                                    onChange={() => manualSelectionProps.selectSingleLine(rowIndex)}
+                                />
+                            </React.Fragment>
                         </Cell>
                     );
                 }}
@@ -195,7 +199,7 @@ export class TableComponent extends React.Component<TableComponentProps> {
             }
         }
 
-        const tableComponent = table.type === TableType.ColumnFilter ?
+        const tableComponent = table.type === TableType.ColumnFilter ? (
             <Table
                 ref={(ref) => table.upTableRef(ref)}
                 numRows={table.numVisibleRows}
@@ -211,7 +215,8 @@ export class TableComponent extends React.Component<TableComponentProps> {
                 enableRowResizing={false}
             >
                 {tableColumns}
-            </Table> :
+            </Table>
+        ) : (
             <Table
                 numRows={table.numVisibleRows}
                 renderMode={RenderMode.NONE}
@@ -221,7 +226,8 @@ export class TableComponent extends React.Component<TableComponentProps> {
                 enableRowResizing={false}
             >
                 {tableColumns}
-            </Table>;
+            </Table>
+        );
 
         return (
             <div className={"table"}>
