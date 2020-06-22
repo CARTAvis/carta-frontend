@@ -163,7 +163,7 @@ export class TableComponent extends React.Component<TableComponentProps> {
 
     private updateTableColumnWidth = (index: number, size: number) => {
         const header = this.props.columnHeaders[index];
-        if (header) {
+        if (header && this.props.updateTableColumnWidth) {
             this.props.updateTableColumnWidth(size, header.name);
         }
     };

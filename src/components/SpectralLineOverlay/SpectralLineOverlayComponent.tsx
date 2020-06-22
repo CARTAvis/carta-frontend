@@ -143,9 +143,6 @@ export class SpectralLineOverlayComponent extends React.Component<WidgetProps> {
         }
     }
 
-    private setQueryResultTableColumnWidth = (width: number, columnName: string) => {
-    }
-
     private updateTableSize(ref: any, docked: boolean) {
         const viewportRect = ref.locator.getViewportRect();
         ref.updateViewportRect(viewportRect);
@@ -323,7 +320,6 @@ export class SpectralLineOverlayComponent extends React.Component<WidgetProps> {
             upTableRef: this.onQueryResultTableRefUpdated,
             updateColumnFilter: widgetStore.setColumnFilter,
             updateByInfiniteScroll: this.updateByInfiniteScroll,
-            updateTableColumnWidth: this.setQueryResultTableColumnWidth,
             updateSelectedRow: this.onQueryResultTableDataSelected,
             manualSelectionProps: {
                 isSelectingAll: widgetStore.isSelectingAllLines,
