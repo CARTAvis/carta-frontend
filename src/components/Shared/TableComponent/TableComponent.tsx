@@ -41,6 +41,9 @@ export class TableComponentProps {
     updateSelectedRow?: (dataIndex: number) => void;
 }
 
+const MANUAL_SELECTION_COLUMN_WIDTH = 50;
+const DEFAULT_COLUMN_WIDTH = 150;
+
 @observer
 export class TableComponent extends React.Component<TableComponentProps> {
 
@@ -178,11 +181,16 @@ export class TableComponent extends React.Component<TableComponentProps> {
         const table = this.props;
         const tableColumns = [];
         const tableData = table.dataset;
+        let columnWidths = table.columnWidths;
 
         // Create manuanl selection checkbox column
         if (table.manualSelectionProps && table.manualSelectionData && table.dataset && table.dataset.size > 0) {
             const column = this.renderManualSelectionColumn(table.manualSelectionProps, table.manualSelectionData);
             tableColumns.push(column);
+            if (!columnWidths) {
+                columnWidths = new Array<number>(table.columnHeaders.length).fill(DEFAULT_COLUMN_WIDTH);
+            }
+            columnWidths.splice(0, 0, MANUAL_SELECTION_COLUMN_WIDTH);
         }
 
         for (let index = 0; index < table.columnHeaders.length; index++) {
@@ -207,7 +215,7 @@ export class TableComponent extends React.Component<TableComponentProps> {
                 enableRowReordering={false}
                 selectionModes={SelectionModes.ROWS_AND_CELLS}
                 onVisibleCellsChange={this.infiniteScroll}
-                columnWidths={table.columnWidths}
+                columnWidths={columnWidths}
                 onColumnWidthChanged={this.updateTableColumnWidth}
                 enableGhostCells={true}
                 onSelection={this.onRowIndexSelection}
