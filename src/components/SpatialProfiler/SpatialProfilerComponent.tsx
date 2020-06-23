@@ -397,8 +397,7 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
             darkMode: appStore.darkTheme,
             imageName: imageName,
             plotName: `${isXProfile ? "X" : "Y"} profile`,
-            usePointSymbols: this.widgetStore.plotType === PlotType.POINTS,
-            interpolateLines: this.widgetStore.plotType === PlotType.LINES,
+            plotType: this.widgetStore.plotType,
             tickTypeY: TickType.Scientific,
             graphZoomedX: this.widgetStore.setXBounds,
             graphZoomedY: this.widgetStore.setYBounds,
@@ -457,7 +456,7 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
 
                     // Use interpolated lines when decimating data to speed up rendering
                     if (currentPlotData.values && currentPlotData.values.length > this.width * 1.5) {
-                        linePlotProps.interpolateLines = true;
+                        linePlotProps.plotType = PlotType.LINES;
                     }
                 }
 

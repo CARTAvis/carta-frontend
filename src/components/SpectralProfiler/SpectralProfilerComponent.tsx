@@ -8,7 +8,7 @@ import {Colors, NonIdealState} from "@blueprintjs/core";
 import ReactResizeDetector from "react-resize-detector";
 import {CARTA} from "carta-protobuf";
 import {LinePlotComponent, LinePlotComponentProps, PlotType, ProfilerInfoComponent, VERTICAL_RANGE_PADDING, SmoothingType} from "components/Shared";
-import {TickType} from "../Shared/LinePlot/PlotContainer/PlotContainerComponent";
+import {TickType, MultiPlotProps} from "../Shared/LinePlot/PlotContainer/PlotContainerComponent";
 import {SpectralProfilerToolbarComponent} from "./SpectralProfilerToolbarComponent/SpectralProfilerToolbarComponent";
 import {AnimationState, SpectralProfileStore, WidgetConfig, WidgetProps, HelpType, AnimatorStore, WidgetsStore, AppStore} from "stores";
 import {SpectralProfileWidgetStore} from "stores/widgets";
@@ -16,7 +16,7 @@ import {Point2D, ProcessedSpectralProfile} from "models";
 import {binarySearchByX, clamp, formattedNotation, toExponential, toFixed} from "utilities";
 import "./SpectralProfilerComponent.css";
 
-type PlotData = { values: Point2D[], smoothingMap: Map<string, Point2D[]>, xMin: number, xMax: number, yMin: number, yMax: number, yMean: number, yRms: number, progress: number };
+type PlotData = { values: Point2D[], smoothingValues: Point2D[], xMin: number, xMax: number, yMin: number, yMax: number, yMean: number, yRms: number, progress: number };
 
 @observer
 export class SpectralProfilerComponent extends React.Component<WidgetProps> {
@@ -126,12 +126,13 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
             }
 
             const smoothingType = this.widgetStore.smoothingType;
-            let smoothingMap: Map<string, Point2D[]> = new Map<string, Point2D[]>();
+            let smoothingValues: Point2D[] = [];
             if (smoothingType !== SmoothingType.NONE) {
 
                 let smoothingArray: Array<{x: number, y: number}> = [];
                 let smoothingYs: Float32Array | Float64Array;
                 let smoothingXs: number[] = channelValues;
+                let decimatedIndexes: number[];
                 if (smoothingType === SmoothingType.BOXCAR) {
                     smoothingYs = GSL.boxcarSmooth(coordinateData.values, this.widgetStore.smoothingBoxcarSize);
                 } else if (smoothingType === SmoothingType.GAUSSIAN) {
@@ -145,7 +146,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
                 } else if (smoothingType === SmoothingType.HANNING) {
                     smoothingYs = GSL.hanningSmooth(coordinateData.values, this.widgetStore.smoothingHanningSize);
                 } else if (smoothingType === SmoothingType.DECIMATION) {
-                    smoothingYs = GSL.decimation(coordinateData.values, this.widgetStore.smoothingDecimationValue);
+                    decimatedIndexes = GSL.decimation(coordinateData.values, this.widgetStore.smoothingDecimationValue);
                 } else if (smoothingType === SmoothingType.BINNING) {
                     smoothingYs = GSL.binning(coordinateData.values, this.widgetStore.smoothingBinWidth);
                     smoothingXs = GSL.binning(channelValues, this.widgetStore.smoothingBinWidth);
@@ -155,12 +156,15 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
 
                 for (let i = 0; i < smoothingXs.length; i++) {
                     if (smoothingType === SmoothingType.DECIMATION) {
-                        smoothingArray.push({x: channelValues[smoothingYs[i]], y: coordinateData.values[smoothingYs[i]]});
+                        if (i === decimatedIndexes.length) {
+                            break;
+                        }
+                        smoothingArray.push({x: smoothingXs[decimatedIndexes[i]], y: coordinateData.values[decimatedIndexes[i]]});
                     } else {
                         smoothingArray.push({x: smoothingXs[i], y: smoothingYs[i]});
                     }
                 }
-                smoothingMap.set("smoothing", smoothingArray);
+                smoothingValues = smoothingArray;
             }
 
             if (yCount > 0) {
@@ -177,7 +181,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
                 yMin -= range * VERTICAL_RANGE_PADDING;
                 yMax += range * VERTICAL_RANGE_PADDING;
             }
-            return {values, smoothingMap, xMin, xMax, yMin, yMax, yMean, yRms, progress: coordinateData.progress};
+            return {values, smoothingValues, xMin, xMax, yMin, yMax, yMean, yRms, progress: coordinateData.progress};
         }
         return null;
     }
@@ -356,8 +360,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
             darkMode: appStore.darkTheme,
             imageName: imageName,
             plotName: `Z profile`,
-            usePointSymbols: this.widgetStore.plotType === PlotType.POINTS,
-            interpolateLines: this.widgetStore.plotType === PlotType.LINES,
+            plotType: this.widgetStore.plotType,
             tickTypeY: TickType.Scientific,
             graphClicked: this.onChannelChanged,
             graphZoomedX: this.widgetStore.setXBounds,
@@ -371,11 +374,8 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
             borderWidth: this.widgetStore.lineWidth,
             pointRadius: this.widgetStore.linePlotPointSize,
             zeroLineWidth: 2,
-            multiPlotBorderColor: new Map(),
-            multiPlotLineType: new Map(),
-            multiPlotLineWidth: new Map(),
-            multiPlotLineOrder: new Map(),
-            order: 2
+            order: 2,
+            multiPlotPropsMap: new Map()
         };
 
         if (this.profileStore && frame) {
@@ -402,14 +402,36 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
                 }
                 linePlotProps.lineColor = primaryLineColor;
                 if (this.widgetStore.smoothingType !== SmoothingType.NONE) {
-                    linePlotProps.multiPlotData = currentPlotData.smoothingMap;
                     if (!this.widgetStore.isSmoothingOverlayOn) {
                         linePlotProps.lineColor = "#00000000";
                     }
-                    linePlotProps.multiPlotBorderColor.set("smoothing", this.widgetStore.smoothingLineColor.colorHex);
-                    linePlotProps.multiPlotLineType.set("smoothing", this.widgetStore.smoothingLineType);
-                    linePlotProps.multiPlotLineWidth.set("smoothing", this.widgetStore.smoothingLineWidth);
-                    linePlotProps.multiPlotLineOrder.set("smoothing", 0);
+                    let exportData: Map<string, string> = new Map<string, string>();
+                    exportData.set("smooth", this.widgetStore.smoothingType);
+                    if (this.widgetStore.smoothingType === SmoothingType.BOXCAR) {
+                        exportData.set("kernel", String(this.widgetStore.smoothingBoxcarSize));
+                    } else if (this.widgetStore.smoothingType === SmoothingType.GAUSSIAN) {
+                        exportData.set("sigma", String(this.widgetStore.smoothingGaussianSigma));
+                        exportData.set("kernel", String(Math.ceil(this.widgetStore.smoothingGaussianSigma * 2)));
+                    } else if (this.widgetStore.smoothingType === SmoothingType.HANNING) {
+                        exportData.set("kernel", String(this.widgetStore.smoothingHanningSize));
+                    } else if (this.widgetStore.smoothingType === SmoothingType.DECIMATION) {
+                        exportData.set("decimation value", String(this.widgetStore.smoothingDecimationValue));
+                    } else if (this.widgetStore.smoothingType === SmoothingType.BINNING) {
+                        exportData.set("bin width", String(this.widgetStore.setSmoothingBinWidth));
+                    } else if (this.widgetStore.smoothingType === SmoothingType.SAVITZKY_GOLAY) {
+                        exportData.set("kernel", String(this.widgetStore.smoothingSavitzkyGolaySize));
+                        exportData.set("order", String(this.widgetStore.smoothingSavitzkyGolayOrder));
+                    }
+
+                    let smoothingPlotProps: MultiPlotProps = {
+                        data: currentPlotData.smoothingValues,
+                        type: this.widgetStore.smoothingLineType,
+                        borderColor: this.widgetStore.smoothingLineColor.colorHex,
+                        borderWidth: this.widgetStore.smoothingLineWidth,
+                        order: 0,
+                        exportData: exportData
+                    };
+                    linePlotProps.multiPlotPropsMap.set("smoothing", smoothingPlotProps);
                 }
 
                 // Determine scale in X and Y directions. If auto-scaling, use the bounds of the current data

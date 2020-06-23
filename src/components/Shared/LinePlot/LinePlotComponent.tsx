@@ -7,7 +7,7 @@ import {ChartArea} from "chart.js";
 import {Scatter} from "react-chartjs-2";
 import ReactResizeDetector from "react-resize-detector";
 import {Arrow, Group, Layer, Line, Rect, Stage, Text} from "react-konva";
-import {PlotContainerComponent, TickType} from "./PlotContainer/PlotContainerComponent";
+import {PlotContainerComponent, TickType, MultiPlotProps} from "./PlotContainer/PlotContainerComponent";
 import {ToolbarComponent} from "./Toolbar/ToolbarComponent";
 import {StokesCoordinate} from "stores/widgets/StokesAnalysisWidgetStore";
 import {Point2D} from "models";
@@ -61,10 +61,8 @@ export class LinePlotComponentProps {
     darkMode?: boolean;
     imageName?: string;
     plotName?: string;
-    usePointSymbols?: boolean;
     tickTypeX?: TickType;
     tickTypeY?: TickType;
-    interpolateLines?: boolean;
     markers?: LineMarker[];
     showTopAxis?: boolean;
     topAxisTickFormatter?: (value: number, index: number, values: number[]) => string | number;
@@ -76,7 +74,6 @@ export class LinePlotComponentProps {
     graphZoomReset?: () => void;
     graphCursorMoved?: (x: number) => void;
     scrollZoom?: boolean;
-    multiPlotData?: Map<string, { x: number, y: number }[]>;
     showXAxisTicks?: boolean;
     showXAxisLabel?: boolean;
     showYAxisTicks?: boolean;
@@ -85,11 +82,7 @@ export class LinePlotComponentProps {
     yZeroLineColor?: string;
     showLegend?: boolean;
     xTickMarkLength?: number;
-    multiPlotBorderColor?: Map<string, string>;
-    multiPlotLineType?: Map<string, PlotType>;
-    multiPlotLineWidth?: Map<string, number>;
-    multiPlotLineOrder?: Map<string, number>;
-    plotType?: string;
+    plotType?: PlotType;
     isGroupSubPlot?: boolean;
     zIndex?: boolean;
     pointRadius?: number;
@@ -99,6 +92,7 @@ export class LinePlotComponentProps {
     multiColorMultiLinesColors?: Map<string, Array<string>>;
     borderWidth?: number;
     order?: number;
+    multiPlotPropsMap?: Map<string, MultiPlotProps>;
 }
 
 // Maximum time between double clicks
@@ -327,7 +321,7 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
         if (mouseMoveDist.x < DRAG_THRESHOLD && mouseMoveDist.y < DRAG_THRESHOLD) {
             this.onStageClick(ev);
         } else {
-            if (this.props.data || (this.props.multiPlotData && this.props.multiPlotData.size > 0)) {
+            if (this.props.data || (this.props.multiPlotPropsMap && this.props.multiPlotPropsMap.size > 0)) {
                 this.stageClickStartX = undefined;
                 this.stageClickStartY = undefined;
                 if (this.isSelecting && this.zoomMode !== ZoomMode.NONE) {
@@ -365,7 +359,7 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
     }
 
     onStageMouseMove = (ev) => {
-        if (this.props.data || (this.props.multiPlotData && this.props.multiPlotData.size > 0)) {
+        if (this.props.data || (this.props.multiPlotPropsMap && this.props.multiPlotPropsMap.size > 0)) {
             const mouseEvent: MouseEvent = ev.evt;
             const chartArea = this.chartArea;
             let mousePosX = clamp(mouseEvent.offsetX, chartArea.left - 1, chartArea.right + 1);
@@ -438,7 +432,7 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
     };
 
     onStageWheel = (ev) => {
-        if ((this.props.data || (this.props.multiPlotData && this.props.multiPlotData.size > 0) ) && this.props.scrollZoom && this.props.graphZoomedX && this.chartArea) {
+        if ((this.props.data || (this.props.multiPlotPropsMap && this.props.multiPlotPropsMap.size > 0) ) && this.props.scrollZoom && this.props.graphZoomedX && this.chartArea) {
             const wheelEvent: WheelEvent = ev.evt;
             const chartArea = this.chartArea;
             const lineHeight = 15;
@@ -562,15 +556,25 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
                 } else {
                     rows = this.props.data.map(o => `${o.x}\t${toExponential(o.y, 10)}`);
                 }
-            } else if (this.props.multiPlotData && this.props.multiPlotData.size) {
-                this.props.multiPlotData.forEach((value, key) => {
+            }
+
+            if (this.props.multiPlotPropsMap && this.props.multiPlotPropsMap.size) {
+                this.props.multiPlotPropsMap.forEach((props, key) => {
                     if (key === StokesCoordinate.LinearPolarizationQ || key === StokesCoordinate.LinearPolarizationU) {
                         rows.push(`# ${key}\t`);
-                        value.forEach(o => {
+                    } else if (key === "smoothing") {
+                        if (props.exportData) {
+                            props.exportData.forEach((content, title) => {
+                                rows.push(`# ${title}: ${content}\t`);
+                            });
+                        }
+                        rows.push(`# smoothed_x\tsmoothed_y`);
+                    }
+
+                    if (props.data) {
+                        props.data.forEach(o => {
                             rows.push(`${o.x}\t${toExponential(o.y, 10)}`);
                         });
-                    } else {
-                        rows = value.map(o => `${o.x}\t${toExponential(o.y, 10)}`);
                     }
                 });
             }
@@ -854,7 +858,7 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
                 }
                 <ToolbarComponent
                     darkMode={this.props.darkMode}
-                    visible={this.isMouseEntered && (this.props.data !== undefined || (this.props.multiPlotData && this.props.multiPlotData.size > 0))}
+                    visible={this.isMouseEntered && (this.props.data !== undefined || (this.props.multiPlotPropsMap && this.props.multiPlotPropsMap.size > 0))}
                     exportImage={this.exportImage}
                     exportData={this.exportData}
                 />

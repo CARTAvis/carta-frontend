@@ -9,7 +9,7 @@ import {ChartArea} from "chart.js";
 import {CARTA} from "carta-protobuf";
 import {LinePlotComponent, LinePlotComponentProps, ProfilerInfoComponent, ScatterPlotComponent, ScatterPlotComponentProps, VERTICAL_RANGE_PADDING, PlotType} from "components/Shared";
 import {StokesAnalysisToolbarComponent} from "./StokesAnalysisToolbarComponent/StokesAnalysisToolbarComponent";
-import {TickType} from "../Shared/LinePlot/PlotContainer/PlotContainerComponent";
+import {TickType, MultiPlotProps} from "../Shared/LinePlot/PlotContainer/PlotContainerComponent";
 import {AnimationState, SpectralProfileStore, WidgetConfig, WidgetProps, HelpType, AnimatorStore, WidgetsStore, AppStore} from "stores";
 import {StokesAnalysisWidgetStore, StokesCoordinate} from "stores/widgets";
 import {Point2D} from "models";
@@ -765,11 +765,9 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
             tickTypeY: TickType.Scientific,
             showXAxisTicks: false,
             showXAxisLabel: false,
-            multiPlotData: new Map(),
             showLegend: true,
             xTickMarkLength: 0,
             graphCursorMoved: this.onGraphCursorMoved,
-            multiPlotBorderColor: new Map(),
             isGroupSubPlot: true,
             scrollZoom: true,
             graphZoomedX: this.widgetStore.setSharedXBounds,
@@ -781,10 +779,10 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
             mouseEntered: this.widgetStore.setMouseMoveIntoLinePlots,
             multiColorMultiLinesColors: new Map(),
             // settings
-            usePointSymbols: this.widgetStore.plotType === PlotType.POINTS,
-            interpolateLines: this.widgetStore.plotType === PlotType.LINES,
+            plotType: this.widgetStore.plotType,
             borderWidth: this.widgetStore.lineWidth,
             pointRadius: this.widgetStore.linePlotPointSize,
+            multiPlotPropsMap: new Map()
         };
 
         let piLinePlotProps: LinePlotComponentProps = {
@@ -808,8 +806,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
             markers: [],
             mouseEntered: this.widgetStore.setMouseMoveIntoLinePlots,
             // settings
-            usePointSymbols: this.widgetStore.plotType === PlotType.POINTS,
-            interpolateLines: this.widgetStore.plotType === PlotType.LINES,
+            plotType: this.widgetStore.plotType,
             borderWidth: this.widgetStore.lineWidth,
             pointRadius: this.widgetStore.linePlotPointSize,
         };
@@ -835,8 +832,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
             markers: [],
             mouseEntered: this.widgetStore.setMouseMoveIntoLinePlots,
             // settings
-            usePointSymbols: this.widgetStore.plotType === PlotType.POINTS,
-            interpolateLines: this.widgetStore.plotType === PlotType.LINES,
+            plotType: this.widgetStore.plotType,
             borderWidth: this.widgetStore.lineWidth,
             pointRadius: this.widgetStore.linePlotPointSize,
         };
@@ -851,7 +847,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
             tickTypeY: TickType.Scientific,
             showXAxisTicks: true,
             showXAxisLabel: true,
-            usePointSymbols: true,
+            plotType: PlotType.POINTS,
             zeroLineWidth: 2,
             isGroupSubPlot: true,
             colorRangeEnd: 240,
@@ -878,8 +874,6 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
             const currentPlotData = this.plotData;
             let channel = {channelCurrent: 0, channelHovered: 0};
             if (currentPlotData && currentPlotData.piValues && currentPlotData.paValues && currentPlotData.qValues && currentPlotData.uValues && currentPlotData.quValues) {
-                quLinePlotProps.multiPlotData.set(StokesCoordinate.LinearPolarizationQ, currentPlotData.qValues.dataset);
-                quLinePlotProps.multiPlotData.set(StokesCoordinate.LinearPolarizationU, currentPlotData.uValues.dataset);
                 piLinePlotProps.data = currentPlotData.piValues.dataset;
                 paLinePlotProps.data = currentPlotData.paValues.dataset;
                 quScatterPlotProps.data = currentPlotData.quValues.dataset;
@@ -902,8 +896,19 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
                 }
                 piLinePlotProps.lineColor = primaryLineColor;
                 paLinePlotProps.lineColor = primaryLineColor;
-                quLinePlotProps.multiPlotBorderColor.set(StokesCoordinate.LinearPolarizationQ, primaryLineColor);
-                quLinePlotProps.multiPlotBorderColor.set(StokesCoordinate.LinearPolarizationU, ulinePlotColor);
+
+                let qPlotProps: MultiPlotProps = {
+                    data: currentPlotData.qValues.dataset,
+                    type: this.widgetStore.plotType,
+                    borderColor: primaryLineColor
+                };
+                let uPlotProps: MultiPlotProps = {
+                    data: currentPlotData.uValues.dataset,
+                    type: this.widgetStore.plotType,
+                    borderColor: ulinePlotColor
+                };
+                quLinePlotProps.multiPlotPropsMap.set(StokesCoordinate.LinearPolarizationQ, qPlotProps);
+                quLinePlotProps.multiPlotPropsMap.set(StokesCoordinate.LinearPolarizationU, uPlotProps);
 
                 const loadData = (currentPlotData.qProgress === 1 && currentPlotData.uProgress === 1 && currentPlotData.iProgress === 1);
                 const qlinePlotWithInteractionColor = loadData ? this.fillLineColor(currentPlotData.qValues.dataset, primaryLineColor) : [];
