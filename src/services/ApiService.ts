@@ -17,6 +17,8 @@ export class ApiService {
 
     private static readonly ApiBase = process.env.REACT_APP_API_ADDRESS;
     private static readonly TokenRefreshUrl = process.env.REACT_APP_ACCESS_TOKEN_ADDRESS;
+    public static readonly LogoutUrl = process.env.REACT_APP_ACCESS_LOGOUT_ADDRESS;
+    private static readonly DashboardUrl = process.env.REACT_APP_ACCESS_DASHBOARD_ADDRESS;
     // Support for V4 JSON schemas
     private static PreferenceValidator = new Ajv({schemaId: "auto"}).addMetaSchema(require("ajv/lib/refs/json-schema-draft-04.json")).compile(preferencesSchema);
 
@@ -61,6 +63,20 @@ export class ApiService {
         } catch (err) {
             console.log(err);
             return false;
+        }
+    };
+
+    public logout = async () => {
+        this.authenticated = false;
+        this._accessToken = undefined;
+        try {
+            await this.axiosInstance.post(ApiService.LogoutUrl);
+        } catch (err) {
+            console.log(err);
+        }
+        // Redirect to dashboard URL if it exists
+        if (ApiService.DashboardUrl) {
+            window.open(ApiService.DashboardUrl, "_self");
         }
     };
 

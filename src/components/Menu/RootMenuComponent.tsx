@@ -4,8 +4,8 @@ import {observer} from "mobx-react";
 import {Alert, Icon, Menu, Popover, Position, Tooltip, Tag} from "@blueprintjs/core";
 import {ToolbarMenuComponent} from "./ToolbarMenu/ToolbarMenuComponent";
 import {PresetLayout} from "models";
-import {AppStore, BrowserMode, DialogStore, FileBrowserStore, OverlayStore, PreferenceKeys, PreferenceStore} from "stores";
-import {ConnectionStatus} from "services";
+import {AppStore, BrowserMode, PreferenceKeys} from "stores";
+import {ApiService, ConnectionStatus} from "services";
 import {toFixed} from "utilities";
 import {CustomIcon} from "icons/CustomIcons";
 import "./RootMenuComponent.css";
@@ -23,6 +23,20 @@ export class RootMenuComponent extends React.Component {
         let stokesClassName = "stokes-item";
         if (appStore.darkTheme) {
             stokesClassName += " bp3-dark";
+        }
+
+        let serverMenu: React.ReactNode;
+        if (ApiService.LogoutUrl) {
+            serverMenu = (
+                <React.Fragment>
+                    <Menu.Divider/>
+                    <Menu.Item
+                        text="Logout"
+                        disabled={!appStore.apiService.authenticated}
+                        onClick={appStore.apiService.logout}
+                    />
+                </React.Fragment>
+            );
         }
 
         const fileMenu = (
@@ -71,6 +85,7 @@ export class RootMenuComponent extends React.Component {
                     onClick={appStore.exportImage}
                 />
                 <Menu.Item text="Preferences" onClick={appStore.dialogStore.showPreferenceDialog} disabled={appStore.preferenceStore.supportsServer && connectionStatus !== ConnectionStatus.ACTIVE}/>
+                {serverMenu}
             </Menu>
         );
 
