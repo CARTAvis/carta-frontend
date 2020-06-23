@@ -38,7 +38,6 @@ export class ApiService {
             this.refreshAccessToken().then((res) => {
                 if (res) {
                     this.authenticated = true;
-                    AppToaster.show({message: "Authenticated with server", intent: "success", timeout: 1000});
                 } else {
                     // TODO: handle authentication error properly
                     AppToaster.show({icon: "warning-sign", message: "Could not authenticate with server", intent: "danger", timeout: 3000});
