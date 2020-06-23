@@ -4,7 +4,7 @@ import {CARTA} from "carta-protobuf";
 import {BeamType, ContourGeneratorType, FrameScaling} from "stores";
 import {CompressionQuality, CursorPosition, Event, PresetLayout, RegionCreationMode, SpectralType, Theme, TileCache, WCSMatchingType, WCSType, Zoom, ZoomPoint} from "models";
 import {parseBoolean} from "utilities";
-import {ApiService} from "../services/ApiService";
+import {ApiService} from "services";
 
 export enum PreferenceKeys {
     GLOBAL_THEME = "theme",
@@ -387,19 +387,19 @@ export class PreferenceStore {
                 eventList.push(value);
             }
             this.preferences.set(PreferenceKeys.LOG_EVENT, eventList);
-            return await ApiService.SetPreference(PreferenceKeys.LOG_EVENT, eventList);
+            return await ApiService.Instance.setPreference(PreferenceKeys.LOG_EVENT, eventList);
         } else {
             this.preferences.set(key, value);
         }
 
-        return await ApiService.SetPreference(key, value);
+        return await ApiService.Instance.setPreference(key, value);
     };
 
     @action clearPreferences = async (keys: PreferenceKeys[]) => {
         for (const key of keys) {
             this.preferences.delete(key);
         }
-        await ApiService.ClearPreferences(keys);
+        await ApiService.Instance.clearPreferences(keys);
     };
 
     // reset functions
@@ -455,8 +455,13 @@ export class PreferenceStore {
         this.clearPreferences([PreferenceKeys.LOG_EVENT]);
     };
 
+    @action fetchPreferences = async () => {
+        await this.upgradePreferences();
+        await this.getPreferences();
+    }
+
     private getPreferences = async () => {
-        const preferences = await ApiService.GetPreferences();
+        const preferences = await ApiService.Instance.getPreferences();
         if (preferences) {
             const keys = Object.keys(preferences);
             for (const key of keys) {
@@ -559,13 +564,11 @@ export class PreferenceStore {
             }
 
             preferenceObject["version"] = 1;
-            await ApiService.SetPreferences(preferenceObject);
+            await ApiService.Instance.setPreferences(preferenceObject);
         }
     };
 
     private constructor() {
         this.preferences = new Map<PreferenceKeys, any>();
-        this.upgradePreferences();
-        this.getPreferences();
     }
 }

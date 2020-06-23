@@ -35,7 +35,7 @@ import {
     WidgetsStore
 } from ".";
 import {distinct, GetRequiredTiles} from "utilities";
-import {BackendService, ConnectionStatus, ScriptingService, TileService, TileStreamDetails} from "services";
+import {ApiService, BackendService, ConnectionStatus, ScriptingService, TileService, TileStreamDetails} from "services";
 import {FrameView, Point2D, ProtobufProcessing, Theme, TileCoordinate, WCSMatchingType} from "models";
 import {CatalogInfo, CatalogUpdateMode, HistogramWidgetStore, RegionWidgetStore, SpatialProfileWidgetStore, SpectralProfileWidgetStore, StatsWidgetStore, StokesAnalysisWidgetStore} from "./widgets";
 import {CatalogOverlayComponent, CatalogScatterComponent, getImageCanvas} from "components";
@@ -53,6 +53,7 @@ export class AppStore {
     readonly backendService: BackendService;
     readonly tileService: TileService;
     readonly scriptingService: ScriptingService;
+    readonly apiService: ApiService;
 
     // Other stores
     readonly alertStore: AlertStore;
@@ -164,7 +165,12 @@ export class AppStore {
             }
         });
 
-        this.backendService.connect(wsURL).subscribe(ack => {
+        let fullUrl = wsURL;
+        if (this.apiService.accessToken) {
+            fullUrl += `?token=${this.apiService.accessToken}`;
+        }
+
+        this.backendService.connect(fullUrl).subscribe(ack => {
             console.log(`Connected with session ID ${ack.sessionId}`);
             connected = true;
             this.logStore.addInfo(`Connected to server ${wsURL} with session ID ${ack.sessionId}`, ["network"]);
@@ -761,6 +767,7 @@ export class AppStore {
         this.backendService = BackendService.Instance;
         this.tileService = TileService.Instance;
         this.scriptingService = ScriptingService.Instance;
+        this.apiService = ApiService.Instance;
 
         // Assign lower level store instances
         this.alertStore = AlertStore.Instance;
@@ -960,14 +967,16 @@ export class AppStore {
         // Auth and connection
         if (process.env.REACT_APP_AUTHENTICATION === "true") {
             this.dialogStore.showAuthDialog();
-        } else {
-            this.connectToServer();
         }
 
         // Splash screen mask
         autorun(() => {
-            if (this.astReady && this.zfpReady && this.cartaComputeReady) {
+            if (this.astReady && this.zfpReady && this.cartaComputeReady && this.apiService.authenticated) {
                 setTimeout(this.hideSplashScreen, 500);
+                this.preferenceStore.fetchPreferences().then(() => {
+                    // Attempt connection after authenticating
+                    this.connectToServer();
+                });
             }
         });
     }
