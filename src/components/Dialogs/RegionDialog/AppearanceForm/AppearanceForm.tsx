@@ -1,4 +1,5 @@
 import * as React from "react";
+import {observer} from "mobx-react";
 import * as _ from "lodash";
 import {ColorResult} from "react-color";
 import {FormGroup, H5} from "@blueprintjs/core";
@@ -8,6 +9,7 @@ import {CARTA} from "carta-protobuf";
 import {SWATCH_COLORS} from "utilities";
 import "./AppearanceForm.css";
 
+@observer
 export class AppearanceForm extends React.Component<{ region: RegionStore, darkTheme: boolean }> {
     private static readonly APPEARANCE_CHANGE_DELAY = 100;
 
