@@ -22,7 +22,7 @@ export class ContourConfigStore {
     @observable smoothingMode: CARTA.SmoothingMode;
     @observable smoothingFactor: number;
 
-    @observable color: RGBA;
+    @observable color: RGBA | string;
     @observable colormapEnabled: boolean;
     @observable colormap: string;
     @observable colormapContrast: number;
@@ -61,7 +61,7 @@ export class ContourConfigStore {
     };
 
     // Styling
-    @action setColor = (color: RGBA) => {
+    @action setColor = (color: RGBA | string) => {
         this.color = color;
     };
 

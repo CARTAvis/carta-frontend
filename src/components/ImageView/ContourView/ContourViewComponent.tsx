@@ -1,7 +1,7 @@
 import {observer} from "mobx-react";
 import * as React from "react";
 import {AppStore, ContourDashMode, FrameStore, OverlayStore, RenderConfigStore} from "stores";
-import {ceilToPower, GL, rotate2D, scale2D, subtract2D} from "utilities";
+import {ceilToPower, GL, rotate2D, scale2D, subtract2D, hexStringToRgba} from "utilities";
 import {ContourWebGLService} from "services";
 import "./ContourViewComponent.css";
 
@@ -150,7 +150,10 @@ export class ContourViewComponent extends React.Component<ContourViewComponentPr
 
             const color = frame.contourConfig.color;
             if (color) {
-                this.gl.uniform4f(this.contourWebGLService.shaderUniforms.LineColor, color.r / 255.0, color.g / 255.0, color.b / 255.0, color.a || 1.0);
+                const rgbaColor = typeof (color) === "string" ? hexStringToRgba(color) : color;
+                if (rgbaColor) {
+                    this.gl.uniform4f(this.contourWebGLService.shaderUniforms.LineColor, rgbaColor.r / 255.0, rgbaColor.g / 255.0, rgbaColor.b / 255.0, rgbaColor.a || 1.0);
+                }
             } else {
                 this.gl.uniform4f(this.contourWebGLService.shaderUniforms.LineColor, 1, 1, 1, 1);
             }
