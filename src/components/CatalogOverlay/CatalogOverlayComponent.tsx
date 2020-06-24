@@ -1,7 +1,7 @@
 import * as React from "react";
 import {action, autorun, computed, observable} from "mobx";
 import {observer} from "mobx-react";
-import {AnchorButton, FormGroup, Intent, HTMLSelect, NonIdealState, Switch, Tooltip, MenuItem, PopoverPosition, Button} from "@blueprintjs/core";
+import {AnchorButton, FormGroup, Intent, NonIdealState, Switch, Tooltip, MenuItem, PopoverPosition, Button} from "@blueprintjs/core";
 import {Cell, Column, Regions, RenderMode, SelectionModes, Table} from "@blueprintjs/table";
 import {Select, IItemRendererProps} from "@blueprintjs/select";
 import ReactResizeDetector from "react-resize-detector";
@@ -10,7 +10,7 @@ import {CARTA} from "carta-protobuf";
 import {TableComponent, TableComponentProps, TableType} from "components/Shared";
 import {CatalogOverlayPlotSettingsComponent} from "./CatalogOverlayPlotSettingsComponent/CatalogOverlayPlotSettingsComponent";
 import {AppStore, HelpType, WidgetConfig, WidgetProps, WidgetsStore} from "stores";
-import {CatalogOverlay, CatalogOverlayWidgetStore, CatalogPlotType, CatalogScatterWidgetStoreProps, CatalogUpdateMode} from "stores/widgets";
+import {CatalogOverlay, CatalogCoordinate, CatalogOverlayWidgetStore, CatalogPlotType, CatalogScatterWidgetStoreProps, CatalogUpdateMode} from "stores/widgets";
 import {toFixed} from "utilities";
 import "./CatalogOverlayComponent.css";
 import {ProcessedColumnData} from "../../models";
@@ -42,20 +42,20 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
     @observable catalogFileId: number;
 
     private catalogHeaderTableRef: Table;
-    private static readonly DataTypeRepresentationMap = new Map<CARTA.ColumnType, Array<CatalogOverlay>>([
-        [CARTA.ColumnType.Bool, [CatalogOverlay.NONE]],
-        [CARTA.ColumnType.Double, [CatalogOverlay.X, CatalogOverlay.Y, CatalogOverlay.NONE]],
-        [CARTA.ColumnType.Float, [CatalogOverlay.X, CatalogOverlay.Y, CatalogOverlay.NONE]],
-        [CARTA.ColumnType.Int8, [CatalogOverlay.X, CatalogOverlay.Y, CatalogOverlay.NONE]],
-        [CARTA.ColumnType.Uint8, [CatalogOverlay.X, CatalogOverlay.Y, CatalogOverlay.NONE]],
-        [CARTA.ColumnType.Int16, [CatalogOverlay.X, CatalogOverlay.Y, CatalogOverlay.NONE]],
-        [CARTA.ColumnType.Uint8, [CatalogOverlay.X, CatalogOverlay.Y, CatalogOverlay.NONE]],
-        [CARTA.ColumnType.Int32, [CatalogOverlay.X, CatalogOverlay.Y, CatalogOverlay.NONE]],
-        [CARTA.ColumnType.Uint32, [CatalogOverlay.X, CatalogOverlay.Y, CatalogOverlay.NONE]],
-        [CARTA.ColumnType.Int64, [CatalogOverlay.X, CatalogOverlay.Y, CatalogOverlay.NONE]],
-        [CARTA.ColumnType.Uint64, [CatalogOverlay.X, CatalogOverlay.Y, CatalogOverlay.NONE]],
-        [CARTA.ColumnType.String, [CatalogOverlay.NONE]],
-        [CARTA.ColumnType.UnsupportedType, [CatalogOverlay.NONE]]
+    private static readonly DataTypeRepresentationMap = new Map<CARTA.ColumnType, Array<CatalogCoordinate>>([
+        [CARTA.ColumnType.Bool, [CatalogCoordinate.NONE]],
+        [CARTA.ColumnType.Double, [CatalogCoordinate.X, CatalogCoordinate.Y, CatalogCoordinate.NONE]],
+        [CARTA.ColumnType.Float, [CatalogCoordinate.X, CatalogCoordinate.Y, CatalogCoordinate.NONE]],
+        [CARTA.ColumnType.Int8, [CatalogCoordinate.X, CatalogCoordinate.Y, CatalogCoordinate.NONE]],
+        [CARTA.ColumnType.Uint8, [CatalogCoordinate.X, CatalogCoordinate.Y, CatalogCoordinate.NONE]],
+        [CARTA.ColumnType.Int16, [CatalogCoordinate.X, CatalogCoordinate.Y, CatalogCoordinate.NONE]],
+        [CARTA.ColumnType.Uint8, [CatalogCoordinate.X, CatalogCoordinate.Y, CatalogCoordinate.NONE]],
+        [CARTA.ColumnType.Int32, [CatalogCoordinate.X, CatalogCoordinate.Y, CatalogCoordinate.NONE]],
+        [CARTA.ColumnType.Uint32, [CatalogCoordinate.X, CatalogCoordinate.Y, CatalogCoordinate.NONE]],
+        [CARTA.ColumnType.Int64, [CatalogCoordinate.X, CatalogCoordinate.Y, CatalogCoordinate.NONE]],
+        [CARTA.ColumnType.Uint64, [CatalogCoordinate.X, CatalogCoordinate.Y, CatalogCoordinate.NONE]],
+        [CARTA.ColumnType.String, [CatalogCoordinate.NONE]],
+        [CARTA.ColumnType.UnsupportedType, [CatalogCoordinate.NONE]]
     ]);
 
     public static get WIDGET_CONFIG(): WidgetConfig {
@@ -196,9 +196,8 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         }   
     }
 
-    private handleHeaderRepresentationChange(changeEvent: React.ChangeEvent<HTMLSelectElement>, columnName: string) {
-        const val = changeEvent.currentTarget.value as CatalogOverlay;
-        this.widgetStore.setHeaderRepresentation(val, columnName);
+    private handleHeaderRepresentationChange(option: {coordinate: CatalogCoordinate, coordinateType: CatalogOverlay}, columnName: string) {
+        this.widgetStore.setHeaderRepresentation(option, columnName);
     }
 
     private renderDataColumn(columnName: string, coloumnData: any) {
@@ -229,28 +228,70 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         );
     }
 
+    private renderSystemPopOver = (option: {coordinate: CatalogCoordinate, coordinateType: CatalogOverlay}, itemProps: IItemRendererProps) => {
+        return (
+            <MenuItem
+                key={option.coordinate}
+                text={option.coordinateType}
+                onClick={itemProps.handleClick}
+                active={itemProps.modifiers.active}
+            />
+        );
+    }
+
     private renderDropDownMenuCell(rowIndex: number, columnName: string) {
         const widgetStore = this.widgetStore;
-        const controlHeader = widgetStore.catalogControlHeader.get(columnName);
+        const controlHeader = this.widgetStore.catalogControlHeader.get(columnName);
         const dataType = widgetStore.catalogHeader[controlHeader.dataIndex].dataType;
         const supportedRepresentations = CatalogOverlayComponent.DataTypeRepresentationMap.get(dataType);
         const disabled = !controlHeader.display;
+        let options = [];
+        supportedRepresentations.forEach((representation) => {
+            let option = {};
+            if (representation === CatalogCoordinate.X) {
+                option = {
+                    coordinate: CatalogCoordinate.X, 
+                    coordinateType: this.coordinate.x
+                };
+            } else if (representation === CatalogCoordinate.Y) {
+                option = {
+                    coordinate: CatalogCoordinate.Y, 
+                    coordinateType: this.coordinate.y
+                };
+            } else {
+                option = {
+                    coordinate: CatalogCoordinate.NONE, 
+                    coordinateType: CatalogOverlay.NONE
+                };
+            } 
+            options.push(option);
+        });
+        let activeItem = CatalogOverlay.NONE;
+        let activeSystem = widgetStore.activedSystem;
+        switch (columnName) {
+            case widgetStore.xColumnRepresentation:
+                activeItem = activeSystem.x;
+                break;
+            case widgetStore.yColumnRepresentation:
+                activeItem = activeSystem.y;
+                break;
+            default:
+                break;
+        }
 
         return (
             <Cell className="cell-dropdown-menu" key={`cell_drop_down_${rowIndex}`}>
-                <React.Fragment>
-                    <HTMLSelect className="bp3-minimal bp3-fill" value={controlHeader.representAs} disabled={disabled} onChange={changeEvent => this.handleHeaderRepresentationChange(changeEvent, columnName)}>
-                        {supportedRepresentations.map( representation => {                           
-                            if (representation === CatalogOverlay.X) {
-                                return (<option key={representation} value={representation}>{this.coordinate.x}</option>);
-                            } else if (representation === CatalogOverlay.Y) {
-                                return (<option key={representation} value={representation}>{this.coordinate.y}</option>);
-                            } else {
-                                return (<option key={representation} value={representation}>{representation}</option>);
-                            }   
-                        })}
-                    </HTMLSelect>
-                </React.Fragment>
+                <Select
+                    filterable={false}
+                    items={options} 
+                    activeItem={activeItem}
+                    onItemSelect={(option) => this.handleHeaderRepresentationChange(option, columnName)}
+                    itemRenderer={this.renderSystemPopOver}
+                    disabled={disabled}
+                    popoverProps={{popoverClassName: "catalog-select", minimal: true , position: PopoverPosition.AUTO_END}}
+                >
+                    <Button className="bp3-minimal catalog-represent-as-select-button" text={activeItem} disabled={disabled} rightIcon="double-caret-vertical"/>
+                </Select>
             </Cell>
         );
     }
@@ -635,6 +676,16 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
                             <Button text={this.catalogFileId} rightIcon="double-caret-vertical"/>
                         </Select>
                     </FormGroup>
+                    <Select 
+                        filterable={false}
+                        items={Object.values(CatalogPlotType)} 
+                        activeItem={widgetStore.catalogPlotType}
+                        onItemSelect={this.handlePlotTypeChange}
+                        itemRenderer={this.renderPlotTypePopOver}
+                        popoverProps={{popoverClassName: "catalog-select", minimal: true , position: PopoverPosition.AUTO_END}}
+                    >
+                        <Button className="bp3-minimal" text={widgetStore.catalogPlotType} rightIcon="double-caret-vertical"/>
+                    </Select>
                     <CatalogOverlayPlotSettingsComponent widgetStore={this.widgetStore} id={this.widgetId}/>
                 </div>
                 <SplitPane 
@@ -693,16 +744,6 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
                             disabled={!widgetStore.enableLoadButton}
                         />
                         </Tooltip>
-                        <Select 
-                            filterable={false}
-                            items={Object.values(CatalogPlotType)} 
-                            activeItem={widgetStore.catalogPlotType}
-                            onItemSelect={this.handlePlotTypeChange}
-                            itemRenderer={this.renderPlotTypePopOver}
-                            popoverProps={{popoverClassName: "catalog-select", minimal: true , position: PopoverPosition.AUTO_END}}
-                        >
-                            <Button className="bp3-minimal" text={widgetStore.catalogPlotType} rightIcon="double-caret-vertical"/>
-                        </Select>
                     </div>
                 </div>
                 <ReactResizeDetector handleWidth handleHeight onResize={this.onResize} refreshMode={"throttle"} refreshRate={33}/>

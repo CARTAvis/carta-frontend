@@ -13,6 +13,14 @@ export interface CatalogInfo {
     dataSize: number;
 }
 
+export enum CatalogCoordinate {
+    X = "X",
+    Y = "Y",
+    PlotSize = "Size",
+    PlotShape = "Shape",
+    NONE = "None",
+}
+
 export enum CatalogOverlay {
     X = "X",
     Y = "Y",
@@ -55,7 +63,7 @@ export enum CatalogPlotType {
     // D3Scatter = "as 3D scatter",
 }
 
-export type ControlHeader = { columnIndex: number, dataIndex: number, display: boolean, representAs: CatalogOverlay, filter: string, columnWidth: number };
+export type ControlHeader = { columnIndex: number, dataIndex: number, display: boolean, representAs: CatalogCoordinate, filter: string, columnWidth: number };
 
 export class CatalogOverlayWidgetStore extends RegionWidgetStore {
 
@@ -191,16 +199,17 @@ export class CatalogOverlayWidgetStore extends RegionWidgetStore {
     }
 
     @action setCatalogCoordinateSystem(catalogSystem: SystemType) {
-        this.catalogCoordinateSystem.system = catalogSystem;
-        const x = this.xColumnRepresentation;
-        const y = this.yColumnRepresentation;
-        if (x) {
-            this.catalogControlHeader.get(x).representAs = CatalogOverlay.NONE;
-        }
-        if (y) {
-            this.catalogControlHeader.get(y).representAs = CatalogOverlay.NONE;
-        }
-        this.catalogCoordinateSystem.coordinate = this.systemCoordinateMap.get(catalogSystem);
+        const current = this.catalogCoordinateSystem;
+        this.catalogCoordinateSystem = {
+            system: catalogSystem,
+            equinox: current.equinox,
+            epoch: current.epoch,
+            coordinate: this.systemCoordinateMap.get(catalogSystem)
+        };
+    }
+
+    @computed get activedSystem(): {x: CatalogOverlay, y: CatalogOverlay} {
+        return this.systemCoordinateMap.get(this.catalogCoordinateSystem.system);
     }
 
     @action setUserFilter(userFilters: CARTA.CatalogFilterRequest) {
@@ -290,32 +299,32 @@ export class CatalogOverlayWidgetStore extends RegionWidgetStore {
         this.catalogControlHeader.get(columnName).display = val;
     }
 
-    @action setHeaderRepresentation(val: CatalogOverlay, columnName: string) {
+    @action setHeaderRepresentation(option: {coordinate: CatalogCoordinate, coordinateType: CatalogOverlay}, columnName: string) {
         const current = this.catalogControlHeader.get(columnName);
-        if (val !== current.representAs) {
-            switch (val) {
-                case CatalogOverlay.X:
+        if (option.coordinate !== current.representAs) {
+            switch (option.coordinate) {
+                case CatalogCoordinate.X:
                     const currentX = this.xColumnRepresentation;
                     if (currentX) {
-                        this.catalogControlHeader.get(currentX).representAs = CatalogOverlay.NONE;
+                        this.catalogControlHeader.get(currentX).representAs = CatalogCoordinate.NONE;
                     }
                     break;
-                case CatalogOverlay.Y:
+                case CatalogCoordinate.Y:
                     const currentY = this.yColumnRepresentation;
                     if (currentY) {
-                        this.catalogControlHeader.get(currentY).representAs = CatalogOverlay.NONE;
+                        this.catalogControlHeader.get(currentY).representAs = CatalogCoordinate.NONE;
                     }
                     break;
-                case CatalogOverlay.PlotSize:
+                case CatalogCoordinate.PlotSize:
                     const currentSize = this.sizeColumnRepresentation;
                     if (currentSize) {
-                        this.catalogControlHeader.get(currentSize).representAs = CatalogOverlay.NONE;
+                        this.catalogControlHeader.get(currentSize).representAs = CatalogCoordinate.NONE;
                     }
                     break;
-                case CatalogOverlay.PlotShape:
+                case CatalogCoordinate.PlotShape:
                     const currentShape = this.shapeColumnRepresentation;
                     if (currentShape) {
-                        this.catalogControlHeader.get(currentShape).representAs = CatalogOverlay.NONE;
+                        this.catalogControlHeader.get(currentShape).representAs = CatalogCoordinate.NONE;
                     }
                     break;
                 default:
@@ -325,7 +334,7 @@ export class CatalogOverlayWidgetStore extends RegionWidgetStore {
                 columnIndex: current.columnIndex,
                 dataIndex: current.dataIndex,
                 display: current.display,
-                representAs: val,
+                representAs: option.coordinate,
                 filter: current.filter,
                 columnWidth: current.columnWidth
             };
@@ -408,7 +417,7 @@ export class CatalogOverlayWidgetStore extends RegionWidgetStore {
                 if (index < CatalogOverlayWidgetStore.initDisplayedColumnSize) {
                     display = true;
                 }
-                let controlHeader: ControlHeader = {columnIndex: header.columnIndex, dataIndex: index, display: display, representAs: CatalogOverlay.NONE, filter: undefined, columnWidth: null};
+                let controlHeader: ControlHeader = {columnIndex: header.columnIndex, dataIndex: index, display: display, representAs: CatalogCoordinate.NONE, filter: undefined, columnWidth: null};
                 controlHeaders.set(header.name, controlHeader);
             }
         }
@@ -500,7 +509,7 @@ export class CatalogOverlayWidgetStore extends RegionWidgetStore {
     @computed get xColumnRepresentation(): string {
         let xColumn = null;
         this.catalogControlHeader.forEach((value, key) => {
-            if (value.representAs === CatalogOverlay.X) {
+            if (value.representAs === CatalogCoordinate.X) {
                 xColumn = key;
             }
         });
@@ -510,7 +519,7 @@ export class CatalogOverlayWidgetStore extends RegionWidgetStore {
     @computed get yColumnRepresentation(): string {
         let yColumn = null;
         this.catalogControlHeader.forEach((value, key) => {
-            if (value.representAs === CatalogOverlay.Y) {
+            if (value.representAs === CatalogCoordinate.Y) {
                 yColumn = key;
             }
         });
@@ -520,7 +529,7 @@ export class CatalogOverlayWidgetStore extends RegionWidgetStore {
     @computed get sizeColumnRepresentation(): string {
         let sizeColumn = null;
         this.catalogControlHeader.forEach((value, key) => {
-            if (value.representAs === CatalogOverlay.PlotSize) {
+            if (value.representAs === CatalogCoordinate.PlotSize) {
                 sizeColumn = key;
             }
         });
@@ -530,7 +539,7 @@ export class CatalogOverlayWidgetStore extends RegionWidgetStore {
     @computed get shapeColumnRepresentation(): string {
         let shapeColumn = null;
         this.catalogControlHeader.forEach((value, key) => {
-            if (value.representAs === CatalogOverlay.PlotShape) {
+            if (value.representAs === CatalogCoordinate.PlotShape) {
                 shapeColumn = key;
             }
         });
