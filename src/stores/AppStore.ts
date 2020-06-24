@@ -695,11 +695,23 @@ export class AppStore {
 
     @action requestMoment = (message: CARTA.IMomentRequest) => {
         this.fileLoading = true;
+
+        // clear previous generated moment images
+        const frame = this.activeFrame;
+        if (frame.momentImages && frame.momentImages.length > 0) {
+            frame.momentImages.forEach(momentFrame => this.closeFile(momentFrame));
+        }
+        frame.removeMomentImage();
+
         this.backendService.requestMoment(message).subscribe(ack => {
             if (ack.success && ack.openFileAcks) {
                 ack.openFileAcks.forEach(openFileAck => {
-                    this.addFrame(CARTA.OpenFileAck.create(openFileAck), "", "") ? this.fileCounter++ :
+                    if (this.addFrame(CARTA.OpenFileAck.create(openFileAck), "", "")) {
+                        this.fileCounter++;
+                        frame.addMomentImage(this.frames.find(f => f.frameInfo.fileId === openFileAck.fileId));
+                    } else {
                         AppToaster.show({icon: "warning-sign", message: "Load file failed.", intent: "danger", timeout: 3000});
+                    }
                 });
             }
             this.fileLoading = false;

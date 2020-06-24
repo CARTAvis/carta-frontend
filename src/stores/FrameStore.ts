@@ -84,6 +84,7 @@ export class FrameStore {
     @observable spectralReference: FrameStore;
     @observable secondarySpatialImages: FrameStore[];
     @observable secondarySpectralImages: FrameStore[];
+    @observable momentImages: FrameStore[];
 
     @observable isRequestingMoments: boolean;
     @observable requestingMomentsProgress: number;
@@ -569,6 +570,7 @@ export class FrameStore {
         this.controlMaps = new Map<FrameStore, ControlMap>();
         this.secondarySpatialImages = [];
         this.secondarySpectralImages = [];
+        this.momentImages = [];
 
         this.isRequestingMoments = false;
         this.requestingMomentsProgress = 0;
@@ -1365,6 +1367,16 @@ export class FrameStore {
 
     @action removeSecondarySpectralImage = (frame: FrameStore) => {
         this.secondarySpectralImages = this.secondarySpectralImages.filter(f => f.frameInfo.fileId !== frame.frameInfo.fileId);
+    };
+
+    @action addMomentImage = (frame: FrameStore) => {
+        if (frame && !this.momentImages.find(f => f.frameInfo.fileId === frame.frameInfo.fileId)) {
+            this.momentImages.push(frame);
+        }
+    };
+
+    @action removeMomentImage = () => {
+        this.momentImages = [];
     };
 
     @action setIsRequestingMoments = (val: boolean) => {
