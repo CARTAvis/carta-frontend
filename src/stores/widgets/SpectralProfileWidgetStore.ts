@@ -1,8 +1,9 @@
 import {action, computed, observable} from "mobx";
 import {Colors} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
-import {PlotType, LineSettings, SmoothingType} from "components/Shared";
+import {PlotType, LineSettings} from "components/Shared";
 import {RegionWidgetStore, RegionsType} from "./RegionWidgetStore";
+import {ProfileSmoothingStore} from "stores/ProfileSmoothingStore";
 import {AppStore, FrameStore} from "..";
 import {isColorValid} from "utilities";
 import {SpectralSystem, SpectralType, SpectralUnit} from "models";
@@ -26,18 +27,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
     @observable lineWidth: number;
     @observable linePlotPointSize: number;
     @observable linePlotInitXYBoundaries: { minXVal: number, maxXVal: number, minYVal: number, maxYVal: number };
-    @observable smoothingType: SmoothingType = SmoothingType.NONE;
-    @observable smoothingLineColor: { colorHex: string, fixed: boolean };
-    @observable smoothingLineType: PlotType = PlotType.STEPS;
-    @observable smoothingLineWidth: number = 1;
-    @observable isSmoothingOverlayOn: boolean = false;
-    @observable smoothingBoxcarSize: number = 2;
-    @observable smoothingGaussianSigma: number = 1.0;
-    @observable smoothingHanningSize: number = 3;
-    @observable smoothingDecimationValue: number = 2;
-    @observable smoothingBinWidth: number = 2;
-    @observable smoothingSavitzkyGolaySize: number = 5;
-    @observable smoothingSavitzkyGolayOrder: number = 0;
+    @observable smoothingStore: ProfileSmoothingStore;
 
     public static StatsTypeString(statsType: CARTA.StatsType) {
         switch (statsType) {
@@ -165,53 +155,6 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         this.isMouseMoveIntoLinePlots = val;
     };
 
-    @action setSmoothingType = (val: SmoothingType) => {
-        this.smoothingType = val;
-    }
-
-    @action setSmoothingLineColor = (colorHex: string, fixed: boolean) => {
-        this.smoothingLineColor = { colorHex: colorHex, fixed: fixed };
-    }
-
-    @action setSmoothingLineType = (val: PlotType) => {
-        this.smoothingLineType = val;
-    }
-
-    @action setSmoothingLineWidth = (val: number) => {
-        this.smoothingLineWidth = val;
-    }
-
-    @action setIsSmoothingOverlayOn = (val: boolean) => {
-        this.isSmoothingOverlayOn = val;
-    }
-
-    @action setSmoothingBoxcarSize = (val: number) => {
-        this.smoothingBoxcarSize = val;
-    }
-
-    @action setSmoothingGaussianSigma = (val: number) => {
-        this.smoothingGaussianSigma = val;
-    }
-
-    @action setSmoothingHanningSize = (val: number) => {
-        this.smoothingHanningSize = val;
-    }
-
-    @action setSmoothingDecimationValue = (val: number) => {
-        this.smoothingDecimationValue = val;
-    }
-
-    @action setSmoothingBinWidth = (val: number) => {
-        this.smoothingBinWidth = val;
-    }
-
-    @action setSmoothingSavitzkyGolaySize = (val: number) => {
-        this.smoothingSavitzkyGolaySize = val;
-    }
-
-    @action setSmoothingSavitzkyGolayOrder = (val: number) => {
-        this.smoothingSavitzkyGolayOrder = val;
-    }
     constructor(coordinate: string = "z") {
         super(RegionsType.CLOSED_AND_POINT);
         this.coordinate = coordinate;
@@ -225,7 +168,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         this.linePlotPointSize = 1.5;
         this.lineWidth = 1;
         this.linePlotInitXYBoundaries = { minXVal: 0, maxXVal: 0, minYVal: 0, maxYVal: 0 };
-        this.smoothingLineColor = { colorHex: Colors.ORANGE2, fixed: false };
+        this.smoothingStore = new ProfileSmoothingStore();
     }
 
     @computed get isAutoScaledX() {

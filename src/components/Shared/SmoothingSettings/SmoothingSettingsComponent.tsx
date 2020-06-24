@@ -1,7 +1,7 @@
 import * as React from "react";
 import {observer} from "mobx-react";
 import {FormGroup, HTMLSelect, IOptionProps, Switch} from "@blueprintjs/core";
-import {SpectralProfileWidgetStore} from "stores/widgets";
+import {ProfileSmoothingStore} from "stores";
 import {ColorPickerComponent, SafeNumericInput, PlotTypeSelectorComponent} from "components/Shared";
 import {ColorResult} from "react-color";
 import {SWATCH_COLORS} from "utilities";
@@ -18,10 +18,10 @@ export enum SmoothingType {
 }
 
 @observer
-export class SmoothingSettingsComponent extends React.Component<{widgetStore: SpectralProfileWidgetStore}> {
+export class SmoothingSettingsComponent extends React.Component<{smoothingStore: ProfileSmoothingStore}> {
 
     render() {
-        const widgetStore = this.props.widgetStore;
+        const smoothingStore = this.props.smoothingStore;
         const smoothingTypeOptions: IOptionProps[] = [
             {value: SmoothingType.NONE, label: "None"},
             {value: SmoothingType.BOXCAR, label: "Boxcar"},
@@ -36,120 +36,120 @@ export class SmoothingSettingsComponent extends React.Component<{widgetStore: Sp
             <React.Fragment>
                 <FormGroup label={"Method"} inline={true}>
                     <HTMLSelect
-                        value={widgetStore && widgetStore.smoothingType ? widgetStore.smoothingType : SmoothingType.NONE}
+                        value={smoothingStore && smoothingStore.type ? smoothingStore.type : SmoothingType.NONE}
                         options={smoothingTypeOptions}
-                        onChange={(event: React.FormEvent<HTMLSelectElement>) => widgetStore.setSmoothingType(event.currentTarget.value as SmoothingType)}
+                        onChange={(event: React.FormEvent<HTMLSelectElement>) => smoothingStore.setType(event.currentTarget.value as SmoothingType)}
                     />
                 </FormGroup>
-                {(widgetStore.smoothingType !== SmoothingType.NONE) &&
+                {(smoothingStore.type !== SmoothingType.NONE) &&
                 <React.Fragment>
                     <FormGroup inline={true} label="Color">
                         <ColorPickerComponent
-                            color={widgetStore.smoothingLineColor.colorHex}
+                            color={smoothingStore.lineColor.colorHex}
                             presetColors={SWATCH_COLORS}
                             setColor={(color: ColorResult) => {
-                                widgetStore.setSmoothingLineColor(color.hex, true);
+                                smoothingStore.setLineColor(color.hex, true);
                             }}
                             disableAlpha={true}
                             darkTheme={AppStore.Instance.darkTheme}
                         />
                     </FormGroup>
                     <FormGroup inline={true} label={"Line Style"}>
-                        <PlotTypeSelectorComponent value={widgetStore.smoothingLineType} onValueChanged={widgetStore.setSmoothingLineType}/>
+                        <PlotTypeSelectorComponent value={smoothingStore.lineType} onValueChanged={smoothingStore.setLineType}/>
                     </FormGroup>
                     <FormGroup  inline={true} label="Line Width" labelInfo="(px)">
                         <SafeNumericInput
                             placeholder="Line Width"
                             min={0.5}
                             max={10}
-                            value={widgetStore.smoothingLineWidth}
+                            value={smoothingStore.lineWidth}
                             stepSize={1}
                             // disabled={props.plotType === PlotType.POINTS}
-                            onValueChange={(value: number) => widgetStore.setSmoothingLineWidth(value)}
+                            onValueChange={(value: number) => smoothingStore.setLineWidth(value)}
                         />
                     </FormGroup>
                 </React.Fragment>
                 }
-                {(widgetStore.smoothingType !== SmoothingType.NONE) &&
+                {(smoothingStore.type !== SmoothingType.NONE) &&
                 <React.Fragment>
                     <FormGroup label={"Overlay"} inline={true}>
-                        <Switch checked={widgetStore.isSmoothingOverlayOn} onChange={(ev) => widgetStore.setIsSmoothingOverlayOn(ev.currentTarget.checked)}/>
+                        <Switch checked={smoothingStore.isOverlayOn} onChange={(ev) => smoothingStore.setIsOverlayOn(ev.currentTarget.checked)}/>
                     </FormGroup>
                 </React.Fragment>
                 }
-                {(widgetStore.smoothingType === SmoothingType.BOXCAR) &&
+                {(smoothingStore.type === SmoothingType.BOXCAR) &&
                 <FormGroup label={"Kernel"} inline={true}>
                     <SafeNumericInput
-                        value={widgetStore.smoothingBoxcarSize}
+                        value={smoothingStore.boxcarSize}
                         min={2}
                         stepSize={1}
                         className="narrow"
-                        onValueChange={val => widgetStore.setSmoothingBoxcarSize(Math.round(val))}
+                        onValueChange={val => smoothingStore.setBoxcarSize(Math.round(val))}
                     />
                 </FormGroup>
                 }
-                {(widgetStore.smoothingType === SmoothingType.GAUSSIAN) &&
+                {(smoothingStore.type === SmoothingType.GAUSSIAN) &&
                 <FormGroup label={"Sigma"} inline={true}>
                     <SafeNumericInput
-                        value={widgetStore.smoothingGaussianSigma}
+                        value={smoothingStore.gaussianSigma}
                         min={1}
                         className="narrow"
-                        onValueChange={val => widgetStore.setSmoothingGaussianSigma(Number.parseFloat(val))}
+                        onValueChange={val => smoothingStore.setGaussianSigma(Number.parseFloat(val))}
                     />
                 </FormGroup>
                 }
-                {(widgetStore.smoothingType === SmoothingType.HANNING) &&
+                {(smoothingStore.type === SmoothingType.HANNING) &&
                 <FormGroup label={"Kernel"} inline={true}>
                     <SafeNumericInput
-                        value={widgetStore.smoothingHanningSize}
+                        value={smoothingStore.hanningSize}
                         min={3}
                         stepSize={2}
                         className="narrow"
-                        onValueChange={val => widgetStore.setSmoothingHanningSize(Math.round(val))}
+                        onValueChange={val => smoothingStore.setHanningSize(Math.round(val))}
                     />
                 </FormGroup>
                 }
-                {(widgetStore.smoothingType === SmoothingType.DECIMATION) &&
+                {(smoothingStore.type === SmoothingType.DECIMATION) &&
                 <FormGroup label={"Decimation Value"} inline={true}>
                     <SafeNumericInput
-                        value={widgetStore.smoothingDecimationValue}
+                        value={smoothingStore.decimationValue}
                         min={2}
                         stepSize={1}
                         className="narrow"
-                        onValueChange={val => widgetStore.setSmoothingDecimationValue(Math.round(val))}
+                        onValueChange={val => smoothingStore.setDecimationValue(Math.round(val))}
                     />
                 </FormGroup>
                 }
-                {(widgetStore.smoothingType === SmoothingType.BINNING) &&
+                {(smoothingStore.type === SmoothingType.BINNING) &&
                 <FormGroup label={"Binning Width"} inline={true}>
                     <SafeNumericInput
-                        value={widgetStore.smoothingBinWidth}
+                        value={smoothingStore.binWidth}
                         min={2}
                         stepSize={1}
                         className="narrow"
-                        onValueChange={val => widgetStore.setSmoothingBinWidth(Math.round(val))}
+                        onValueChange={val => smoothingStore.setBinWidth(Math.round(val))}
                     />
                 </FormGroup>
                 }
-                {(widgetStore.smoothingType === SmoothingType.SAVITZKY_GOLAY) &&
+                {(smoothingStore.type === SmoothingType.SAVITZKY_GOLAY) &&
                 <React.Fragment>
                     <FormGroup label={"Kernel"} inline={true}>
                         <SafeNumericInput
-                            value={widgetStore.smoothingSavitzkyGolaySize}
+                            value={smoothingStore.savitzkyGolaySize}
                             min={5}
                             stepSize={2}
                             className="narrow"
-                            onValueChange={val => widgetStore.setSmoothingSavitzkyGolaySize(Math.round(val))}
+                            onValueChange={val => smoothingStore.setSavitzkyGolaySize(Math.round(val))}
                         />
                     </FormGroup>
                     <FormGroup label="Degree of Fitting" inline={true}>
                         <SafeNumericInput
-                            value={widgetStore.smoothingSavitzkyGolayOrder}
+                            value={smoothingStore.savitzkyGolayOrder}
                             min={0}
                             max={4}
                             stepSize={2}
                             className="narrow"
-                            onValueChange={val => widgetStore.setSmoothingSavitzkyGolayOrder(Math.round(val))}
+                            onValueChange={val => smoothingStore.setSavitzkyGolayOrder(Math.round(val))}
                         />
                     </FormGroup>
                 </React.Fragment>

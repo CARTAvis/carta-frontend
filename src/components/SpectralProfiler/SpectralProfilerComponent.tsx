@@ -7,7 +7,7 @@ import {observer} from "mobx-react";
 import {Colors, NonIdealState} from "@blueprintjs/core";
 import ReactResizeDetector from "react-resize-detector";
 import {CARTA} from "carta-protobuf";
-import {LinePlotComponent, LinePlotComponentProps, PlotType, ProfilerInfoComponent, VERTICAL_RANGE_PADDING, SmoothingType} from "components/Shared";
+import {LinePlotComponent, LinePlotComponentProps, ProfilerInfoComponent, VERTICAL_RANGE_PADDING, SmoothingType} from "components/Shared";
 import {TickType, MultiPlotProps} from "../Shared/LinePlot/PlotContainer/PlotContainerComponent";
 import {SpectralProfilerToolbarComponent} from "./SpectralProfilerToolbarComponent/SpectralProfilerToolbarComponent";
 import {AnimationState, SpectralProfileStore, WidgetConfig, WidgetProps, HelpType, AnimatorStore, WidgetsStore, AppStore} from "stores";
@@ -125,7 +125,8 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
                 }
             }
 
-            const smoothingType = this.widgetStore.smoothingType;
+            const smoothingStore = this.widgetStore.smoothingStore;
+            const smoothingType = smoothingStore.type;
             let smoothingValues: Point2D[] = [];
             if (smoothingType !== SmoothingType.NONE) {
 
@@ -134,24 +135,24 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
                 let smoothingXs: number[] = channelValues;
                 let decimatedIndexes: number[];
                 if (smoothingType === SmoothingType.BOXCAR) {
-                    smoothingYs = GSL.boxcarSmooth(coordinateData.values, this.widgetStore.smoothingBoxcarSize);
+                    smoothingYs = GSL.boxcarSmooth(coordinateData.values, smoothingStore.boxcarSize);
                 } else if (smoothingType === SmoothingType.GAUSSIAN) {
-                    if (this.widgetStore.smoothingGaussianSigma && this.widgetStore.smoothingGaussianSigma > 0.5) {
-                        let kernelSize = Math.ceil(this.widgetStore.smoothingGaussianSigma * 2);
-                        let alpha = (kernelSize - 1) / (2 * this.widgetStore.smoothingGaussianSigma);
+                    if (smoothingStore.gaussianSigma && smoothingStore.gaussianSigma > 0.5) {
+                        let kernelSize = Math.ceil(smoothingStore.gaussianSigma * 2);
+                        let alpha = (kernelSize - 1) / (2 * smoothingStore.gaussianSigma);
                         smoothingYs = GSL.gaussianSmooth(coordinateData.values, kernelSize, alpha);
                     } else {
                         smoothingYs = GSL.gaussianSmooth(coordinateData.values, 1, 1);
                     }
                 } else if (smoothingType === SmoothingType.HANNING) {
-                    smoothingYs = GSL.hanningSmooth(coordinateData.values, this.widgetStore.smoothingHanningSize);
+                    smoothingYs = GSL.hanningSmooth(coordinateData.values, smoothingStore.hanningSize);
                 } else if (smoothingType === SmoothingType.DECIMATION) {
-                    decimatedIndexes = GSL.decimation(coordinateData.values, this.widgetStore.smoothingDecimationValue);
+                    decimatedIndexes = GSL.decimation(coordinateData.values, smoothingStore.decimationValue);
                 } else if (smoothingType === SmoothingType.BINNING) {
-                    smoothingYs = GSL.binning(coordinateData.values, this.widgetStore.smoothingBinWidth);
-                    smoothingXs = GSL.binning(channelValues, this.widgetStore.smoothingBinWidth);
+                    smoothingYs = GSL.binning(coordinateData.values, smoothingStore.binWidth);
+                    smoothingXs = GSL.binning(channelValues, smoothingStore.binWidth);
                 } else if (smoothingType === SmoothingType.SAVITZKY_GOLAY) {
-                    smoothingYs = GSL.savitzkyGolaySmooth(channelValues, coordinateData.values, this.widgetStore.smoothingSavitzkyGolaySize, this.widgetStore.smoothingSavitzkyGolayOrder);
+                    smoothingYs = GSL.savitzkyGolaySmooth(channelValues, coordinateData.values, smoothingStore.savitzkyGolaySize, smoothingStore.savitzkyGolayOrder);
                 }
 
                 for (let i = 0; i < smoothingXs.length; i++) {
@@ -401,35 +402,19 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
                     }
                 }
                 linePlotProps.lineColor = primaryLineColor;
-                if (this.widgetStore.smoothingType !== SmoothingType.NONE) {
-                    if (!this.widgetStore.isSmoothingOverlayOn) {
+                const smoothingStore = this.widgetStore.smoothingStore;
+                if (smoothingStore.type !== SmoothingType.NONE) {
+                    if (!smoothingStore.isOverlayOn) {
                         linePlotProps.lineColor = "#00000000";
-                    }
-                    let exportData: Map<string, string> = new Map<string, string>();
-                    exportData.set("smooth", this.widgetStore.smoothingType);
-                    if (this.widgetStore.smoothingType === SmoothingType.BOXCAR) {
-                        exportData.set("kernel", String(this.widgetStore.smoothingBoxcarSize));
-                    } else if (this.widgetStore.smoothingType === SmoothingType.GAUSSIAN) {
-                        exportData.set("sigma", String(this.widgetStore.smoothingGaussianSigma));
-                        exportData.set("kernel", String(Math.ceil(this.widgetStore.smoothingGaussianSigma * 2)));
-                    } else if (this.widgetStore.smoothingType === SmoothingType.HANNING) {
-                        exportData.set("kernel", String(this.widgetStore.smoothingHanningSize));
-                    } else if (this.widgetStore.smoothingType === SmoothingType.DECIMATION) {
-                        exportData.set("decimation value", String(this.widgetStore.smoothingDecimationValue));
-                    } else if (this.widgetStore.smoothingType === SmoothingType.BINNING) {
-                        exportData.set("bin width", String(this.widgetStore.setSmoothingBinWidth));
-                    } else if (this.widgetStore.smoothingType === SmoothingType.SAVITZKY_GOLAY) {
-                        exportData.set("kernel", String(this.widgetStore.smoothingSavitzkyGolaySize));
-                        exportData.set("order", String(this.widgetStore.smoothingSavitzkyGolayOrder));
                     }
 
                     let smoothingPlotProps: MultiPlotProps = {
                         data: currentPlotData.smoothingValues,
-                        type: this.widgetStore.smoothingLineType,
-                        borderColor: this.widgetStore.smoothingLineColor.colorHex,
-                        borderWidth: this.widgetStore.smoothingLineWidth,
+                        type: smoothingStore.lineType,
+                        borderColor: smoothingStore.lineColor.colorHex,
+                        borderWidth: smoothingStore.lineWidth,
                         order: 0,
-                        exportData: exportData
+                        exportData: smoothingStore.exportData
                     };
                     linePlotProps.multiPlotPropsMap.set("smoothing", smoothingPlotProps);
                 }
