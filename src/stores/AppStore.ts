@@ -38,7 +38,7 @@ import {distinct, GetRequiredTiles} from "utilities";
 import {BackendService, ConnectionStatus, ScriptingService, TileService, TileStreamDetails} from "services";
 import {FrameView, Point2D, ProtobufProcessing, Theme, TileCoordinate, WCSMatchingType} from "models";
 import {CatalogInfo, CatalogUpdateMode, HistogramWidgetStore, RegionWidgetStore, SpatialProfileWidgetStore, SpectralProfileWidgetStore, StatsWidgetStore, StokesAnalysisWidgetStore} from "./widgets";
-import {CatalogOverlayComponent, CatalogScatterComponent, getImageCanvas} from "components";
+import {CatalogScatterComponent, getImageCanvas} from "components";
 import {AppToaster} from "components/Shared";
 import GitCommit from "../static/gitInfo";
 
@@ -77,8 +77,10 @@ export class AppStore {
     @observable syncContourToFrame: boolean;
     @observable syncFrameToContour: boolean;
 
-    // catalog map catalog widget store with file Id
+    // map catalog widget store with file Id
     @observable catalogs: Map<string, number>;
+    // map catalog component with file Id
+    @observable catalogProfiles: Map<string, number>;
 
     // Profiles and region data
     @observable spatialProfiles: Map<string, SpatialProfileStore>;
@@ -568,14 +570,16 @@ export class AppStore {
             if (frame && ack.success && ack.dataSize) {
                 let catalogInfo: CatalogInfo = {fileId: fileId, fileInfo: ack.fileInfo, dataSize: ack.dataSize};
                 let catalogWidgetId = null;
-                const config = CatalogOverlayComponent.WIDGET_CONFIG;
-                let floatingCatalogWidgets = this.widgetsStore.getFloatingWidgetByComponentId(config.componentId).length;
-                let dockedCatalogWidgets = this.widgetsStore.getDockedWidgetByType(config.type).length;
                 const columnData = ProtobufProcessing.ProcessCatalogData(ack.previewData);
-                if (floatingCatalogWidgets === 0 && dockedCatalogWidgets === 0) {
-                    catalogWidgetId = this.widgetsStore.createFloatingCatalogOverlayWidget(catalogInfo, ack.headers, columnData);
+                const catalogComponentSize = this.widgetsStore.catalogComponentSize();
+                if (catalogComponentSize === 0 ) {
+                    const catalog = this.widgetsStore.createFloatingCatalogOverlayWidget(catalogInfo, ack.headers, columnData);
+                    catalogWidgetId = catalog.widgetStoreId;
+                    this.catalogProfiles.set(catalog.widgetComponentId, fileId);
                 } else {
                     catalogWidgetId = this.widgetsStore.addCatalogOverlayWidget(catalogInfo, ack.headers, columnData);
+                    const key = this.catalogProfiles.keys().next().value;
+                    this.catalogProfiles.set(key, fileId);
                 }
                 if (catalogWidgetId) {
                     this.catalogs.set(catalogWidgetId, fileId);
@@ -609,13 +613,23 @@ export class AppStore {
                     }
                 });
             }
-            // close catalogOverlay
+
+            // remove catalog overlay widget store, remove catalog from image viewer 
             this.catalogs.delete(catalogWidgetId);
-            if (this.catalogs.size === 0) {
-                this.widgetsStore.removeFloatingWidgetComponent(catalogComponentId);
-            }
             this.widgetsStore.catalogOverlayWidgets.delete(catalogWidgetId);
             this.catalogStore.clearData(catalogWidgetId);
+
+            // update catalogProfiles fileId
+            if (this.catalogs.size > 0) {
+                const nextFileId = this.catalogs.values().next().value;
+                this.catalogProfiles.forEach((catalogFileId, componentId) => {
+                    if (catalogFileId === fileId) {
+                        this.catalogProfiles.set(componentId, nextFileId);     
+                    }
+                });
+            } else {
+                this.catalogProfiles.set(catalogComponentId, 1);
+            }
         }
     }
 
@@ -847,12 +861,13 @@ export class AppStore {
         this.pendingChannelHistograms = new Map<string, CARTA.IRegionHistogramData>();
 
         this.frames = [];
-        this.catalogs = new Map();
         this.activeFrame = null;
         this.contourDataSource = null;
         this.syncFrameToContour = true;
         this.syncContourToFrame = true;
         this.initRequirements();
+        this.catalogs = new Map<string, number>();
+        this.catalogProfiles = new Map<string, number>();
 
         AST.onReady.then(() => {
             AST.setPalette(this.darkTheme ? nightPalette : dayPalette);
@@ -1187,7 +1202,7 @@ export class AppStore {
             catalogWidgetStore.setProgress(progress);
             if (progress === 1) {
                 catalogWidgetStore.setLoadingDataStatus(false);
-                catalogWidgetStore.setPlotingData(false);
+                catalogWidgetStore.setUpdatingDataStream(false);
             }
 
             if (catalogWidgetStore.updateMode === CatalogUpdateMode.ViewUpdate) {
@@ -1664,4 +1679,15 @@ export class AppStore {
     }
 
     // endregion
+
+    // update associated catalogProfile fileId
+    @action updateCatalogProfiles = (catalogFileId: number) => {
+        if (this.catalogProfiles.size > 0) {
+            const componentIds = Array.from(this.catalogProfiles.keys());
+            const fileIds = Array.from(this.catalogProfiles.values());
+            if (!fileIds.includes(catalogFileId)) {
+                this.catalogProfiles.set(componentIds[0], catalogFileId);
+            }
+        }
+    }
 }

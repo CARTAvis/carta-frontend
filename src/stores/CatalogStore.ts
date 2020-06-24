@@ -8,6 +8,8 @@ type CatalogDataInfo = {
     fileId: number,
     xImageCoords: Array<number>,
     yImageCoords: Array<number>,
+    xSelectedCoords: Array<number>,
+    ySelectedCoords: Array<number>,
     showSelectedData: boolean;
 };
 
@@ -43,6 +45,8 @@ export class CatalogStore {
             fileId: fileId,
             xImageCoords: [],
             yImageCoords: [],
+            xSelectedCoords: [],
+            ySelectedCoords: [],
             showSelectedData: false
         });
         this.catalogColor.set(widgetId, Colors.TURQUOISE3);
@@ -54,18 +58,35 @@ export class CatalogStore {
         const pixelData = CatalogStore.TransformCatalogData(xWcsData, yWcsData, wcsInfo, xUnit, yUnit, catalogFrame);
         const catalogDataInfo = this.catalogData.get(widgetId);
         if (catalogDataInfo) {
-            console.time(`updatePixelCoordsArray_${xWcsData.length}`);
+            console.time(`updatePixelCoordsArray_${xWcsData?.length}`);
             for (let i = 0; i < pixelData.xImageCoords.length; i++) {
                 catalogDataInfo.xImageCoords.push(pixelData.xImageCoords[i]);
                 catalogDataInfo.yImageCoords.push(pixelData.yImageCoords[i]);
             }
-            console.timeEnd(`updatePixelCoordsArray_${xWcsData.length}`);
+            console.timeEnd(`updatePixelCoordsArray_${xWcsData?.length}`);
             this.catalogData.set(widgetId,
                 {
                     fileId: catalogDataInfo.fileId,
                     xImageCoords: catalogDataInfo.xImageCoords,
                     yImageCoords: catalogDataInfo.yImageCoords,
-                    showSelectedData: catalogDataInfo.showSelectedData
+                    xSelectedCoords: catalogDataInfo.xSelectedCoords,
+                    ySelectedCoords: catalogDataInfo.ySelectedCoords,
+                    showSelectedData: catalogDataInfo.showSelectedData,
+                });
+        }
+    }
+
+    @action updateSelectedPoints(widgetId: string, xSelectedCoords: Array<number>, ySelectedCoords: Array<number>) {
+        const catalogDataInfo = this.catalogData.get(widgetId);
+        if (catalogDataInfo) {
+            this.catalogData.set(widgetId,
+                {
+                    fileId: catalogDataInfo.fileId,
+                    xImageCoords: catalogDataInfo.xImageCoords,
+                    yImageCoords: catalogDataInfo.yImageCoords,
+                    xSelectedCoords: xSelectedCoords,
+                    ySelectedCoords: ySelectedCoords,
+                    showSelectedData: catalogDataInfo.showSelectedData,
                 });
         }
     }
@@ -117,7 +138,7 @@ export class CatalogStore {
     }
 
     private static TransformCatalogData(xWcsData: Array<number>, yWcsData: Array<number>, wcsInfo: number, xUnit: string, yUnit: string, catalogFrame: SystemType): { xImageCoords: Float64Array, yImageCoords: Float64Array } {
-        if (xWcsData.length === yWcsData.length) {
+        if (xWcsData?.length === yWcsData?.length && xWcsData?.length > 0) {
             const N = xWcsData.length;
 
             let xFraction = CatalogStore.GetFractionFromUnit(xUnit.toLocaleLowerCase());
