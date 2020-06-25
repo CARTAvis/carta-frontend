@@ -86,6 +86,7 @@ export class SpectralLineOverlayWidgetStore extends RegionWidgetStore {
     @observable queryResult: Map<number, ProcessedColumnData>;
     @observable private isLineSelectedArray: Array<boolean>;
     @observable originalFreqColumn: ProcessedColumnData;
+    @observable sortingInfo: {columnName: string, sortingType: CARTA.SortingType};
     @observable numDataRows: number;
     @observable selectedSpectralProfilerID: string;
 
@@ -370,6 +371,7 @@ export class SpectralLineOverlayWidgetStore extends RegionWidgetStore {
         this.numDataRows = 1;
         this.isLineSelectedArray = [];
         this.selectedSpectralProfilerID = "";
+        this.sortingInfo = {columnName: null, sortingType: null};
 
         // update frequency column when redshift changes
         autorun(() => {
