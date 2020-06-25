@@ -46,6 +46,7 @@ export class DebugExecutionDialogComponent extends React.Component {
             canEscapeKeyClose: true,
             canOutsideClickClose: false,
             isOpen: appStore.dialogStore.debugExecutionDialogVisible,
+            onClose: appStore.dialogStore.hideDebugExecutionDialog,
             isCloseButtonShown: true,
             title: "Execute a command"
         };

@@ -200,6 +200,7 @@ export class RootMenuComponent extends React.Component {
             <Menu>
                 <Menu.Item text="Online Manual" icon={"help"} onClick={this.handleDocumentationClicked}/>
                 <Menu.Item text="Controls and Shortcuts" label={"Shift + ?"} onClick={appStore.dialogStore.showHotkeyDialog}/>
+                <Menu.Item text="Debug Execution" icon={"console"} onClick={appStore.dialogStore.showDebugExecutionDialog}/>
                 <Menu.Item text="About" icon={"info-sign"} onClick={appStore.dialogStore.showAboutDialog}/>
             </Menu>
         );
