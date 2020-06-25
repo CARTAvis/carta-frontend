@@ -57,9 +57,9 @@ export enum CatalogUpdateMode {
 }
 
 export enum CatalogPlotType {
-    ImageOverlay = "as image overlay",
+    ImageOverlay = "As image overlay",
     // 1DHistogram = "as 1D histogram",
-    D2Scatter = "as 2D scatter",
+    D2Scatter = "As 2D scatter",
     // D3Scatter = "as 3D scatter",
 }
 
