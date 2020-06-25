@@ -2,6 +2,7 @@ import axios, {AxiosInstance} from "axios";
 import * as Ajv from "ajv";
 import {observable} from "mobx";
 import {AppToaster} from "components/Shared";
+import {AppStore} from "../stores";
 
 const preferencesSchema = require("models/preferences_schema_1.json");
 
@@ -18,7 +19,7 @@ export class ApiService {
     private static readonly ApiBase = process.env.REACT_APP_API_ADDRESS;
     private static readonly TokenRefreshUrl = process.env.REACT_APP_ACCESS_TOKEN_ADDRESS;
     public static readonly LogoutUrl = process.env.REACT_APP_ACCESS_LOGOUT_ADDRESS;
-    private static readonly DashboardUrl = process.env.REACT_APP_ACCESS_DASHBOARD_ADDRESS;
+    public static readonly DashboardUrl = process.env.REACT_APP_ACCESS_DASHBOARD_ADDRESS;
     // Support for V4 JSON schemas
     private static PreferenceValidator = new Ajv({schemaId: "auto"}).addMetaSchema(require("ajv/lib/refs/json-schema-draft-04.json")).compile(preferencesSchema);
 
@@ -40,8 +41,14 @@ export class ApiService {
             this.refreshAccessToken().then((res) => {
                 if (res) {
                     this.authenticated = true;
+                } else if (ApiService.DashboardUrl) {
+                    const redirectUrl = btoa(window.location.href);
+                    if (window.location.search) {
+                        window.open(`${ApiService.DashboardUrl}?redirectUrl=${redirectUrl}`, "_self");
+                    } else {
+                        window.open(ApiService.DashboardUrl, "_self");
+                    }
                 } else {
-                    // TODO: handle authentication error properly
                     AppToaster.show({icon: "warning-sign", message: "Could not authenticate with server", intent: "danger", timeout: 3000});
                 }
             });
@@ -77,6 +84,18 @@ export class ApiService {
         // Redirect to dashboard URL if it exists
         if (ApiService.DashboardUrl) {
             window.open(ApiService.DashboardUrl, "_self");
+        }
+    };
+
+    public stopServer = async () => {
+        if (ApiService.ApiBase) {
+            try {
+                const url = `${ApiService.ApiBase}/server/stop`;
+                await this.axiosInstance.post(url);
+            } catch (err) {
+                AppToaster.show({icon: "warning-sign", message: "Could not stop CARTA server", intent: "danger", timeout: 3000});
+                console.log(err);
+            }
         }
     };
 

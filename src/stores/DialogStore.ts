@@ -124,4 +124,17 @@ export class DialogStore {
     @action hideDebugExecutionDialog = () => {
         this.debugExecutionDialogVisible = false;
     };
+
+    // External page dialog
+    @observable externalPageDialogVisible: boolean = false;
+    @observable externalPageDialogUrl: string;
+    @observable externalPageDialogTitle: string;
+    @action showExternalPageDialog = (url: string, title: string) => {
+        this.externalPageDialogUrl = url;
+        this.externalPageDialogTitle = title;
+        this.externalPageDialogVisible = true;
+    };
+    @action hideExternalPageDialog = () => {
+        this.externalPageDialogVisible = false;
+    };
 }

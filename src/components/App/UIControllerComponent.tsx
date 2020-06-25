@@ -11,7 +11,7 @@ import {
     SaveLayoutDialogComponent,
     FileInfoDialogComponent,
     ContourDialogComponent,
-    DebugExecutionDialogComponent
+    DebugExecutionDialogComponent, ExternalPageDialogComponent
 } from "components/Dialogs";
 
 @observer
@@ -29,9 +29,10 @@ export class UIControllerComponent extends React.Component {
                 <RegionDialogComponent/>
                 <PreferenceDialogComponent/>
                 <SaveLayoutDialogComponent/>
-                <FileInfoDialogComponent/>
                 <ContourDialogComponent/>
+                <FileInfoDialogComponent/>
                 <DebugExecutionDialogComponent/>
+                <ExternalPageDialogComponent/>
                 <HelpDrawerComponent/>
             </React.Fragment>
         );

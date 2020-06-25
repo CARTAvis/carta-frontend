@@ -15,6 +15,11 @@ export class RootMenuComponent extends React.Component {
     @observable documentationAlertVisible: boolean;
     private documentationAlertTimeoutHandle;
 
+    private handleDashboardClicked = () => {
+        const appStore = AppStore.Instance;
+        appStore.dialogStore.showExternalPageDialog(`${ApiService.DashboardUrl}?popup=1`, "Dashboard");
+    };
+
     render() {
         const appStore = AppStore.Instance;
         const modString = appStore.modifierString;
@@ -25,17 +30,36 @@ export class RootMenuComponent extends React.Component {
             stokesClassName += " bp3-dark";
         }
 
-        let serverMenu: React.ReactNode;
+        let serverMenu: React.ReactNode[] = [];
+
+        const apiService = appStore.apiService;
+        if (apiService.authenticated) {
+            serverMenu.push(
+                <Menu.Item
+                    key="restart"
+                    text="Restart Server"
+                    disabled={!appStore.apiService.authenticated}
+                    onClick={appStore.apiService.stopServer}
+                />
+            );
+        }
         if (ApiService.LogoutUrl) {
-            serverMenu = (
-                <React.Fragment>
-                    <Menu.Divider/>
-                    <Menu.Item
-                        text="Logout"
-                        disabled={!appStore.apiService.authenticated}
-                        onClick={appStore.apiService.logout}
-                    />
-                </React.Fragment>
+            serverMenu.push(
+                <Menu.Item
+                    key="logout"
+                    text="Logout"
+                    disabled={!appStore.apiService.authenticated}
+                    onClick={appStore.apiService.logout}
+                />
+            );
+        }
+        if (ApiService.DashboardUrl) {
+            serverMenu.push(
+                <Menu.Item
+                    key="dashboard"
+                    text="Dashboard"
+                    onClick={this.handleDashboardClicked}
+                />
             );
         }
 
@@ -85,7 +109,14 @@ export class RootMenuComponent extends React.Component {
                     onClick={appStore.exportImage}
                 />
                 <Menu.Item text="Preferences" onClick={appStore.dialogStore.showPreferenceDialog} disabled={appStore.preferenceStore.supportsServer && connectionStatus !== ConnectionStatus.ACTIVE}/>
-                {serverMenu}
+                {serverMenu.length &&
+                <React.Fragment>
+                    <Menu.Divider/>
+                    <Menu.Item text="Server">
+                        {serverMenu}
+                    </Menu.Item>
+                </React.Fragment>
+                }
             </Menu>
         );
 
