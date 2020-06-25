@@ -173,12 +173,12 @@ export class CatalogOverlayPlotSettingsComponent extends React.Component<{widget
                 </FormGroup>
                 <FormGroup  inline={true} label="Size" labelInfo="(px)">
                     <NumericInput
-                            placeholder="Catalog Size"
-                            min={this.MinOverlaySize}
-                            max={this.MaxOverlaySize}
-                            value={widgetStore.catalogSize}
-                            stepSize={1}
-                            onValueChange={(value: number) => this.handleCatalogSizeChange(value)}
+                        placeholder="Catalog Size"
+                        min={this.MinOverlaySize}
+                        max={this.MaxOverlaySize}
+                        value={widgetStore.catalogSize}
+                        stepSize={1}
+                        onValueChange={(value: number) => this.handleCatalogSizeChange(value)}
                     />
                 </FormGroup>
             </div>
