@@ -9,7 +9,7 @@ import SplitPane, { Pane } from "react-split-pane";
 import {CARTA} from "carta-protobuf";
 import {TableComponent, TableComponentProps, TableType, ClearableNumericInputComponent} from "components/Shared";
 import {CatalogOverlayPlotSettingsComponent} from "./CatalogOverlayPlotSettingsComponent/CatalogOverlayPlotSettingsComponent";
-import {AppStore, HelpType, WidgetConfig, WidgetProps, WidgetsStore} from "stores";
+import {AppStore, HelpType, WidgetConfig, WidgetProps, WidgetsStore, SystemType} from "stores";
 import {CatalogOverlay, CatalogCoordinate, CatalogOverlayWidgetStore, CatalogPlotType, CatalogScatterWidgetStoreProps, CatalogUpdateMode} from "stores/widgets";
 import {toFixed} from "utilities";
 import {ProcessedColumnData} from "../../models";
@@ -37,7 +37,6 @@ enum ComparisonOperator {
 
 @observer
 export class CatalogOverlayComponent extends React.Component<WidgetProps> {
-    @observable coordinate: {x: CatalogOverlay, y: CatalogOverlay};
     @observable widgetId: string;
     @observable catalogFileId: number;
 
@@ -186,10 +185,17 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
 
     private handleHeaderDisplayChange(changeEvent: any, columnName: string) {
         const val = changeEvent.target.checked;
-        const withFilter = this.widgetStore.catalogControlHeader.get(columnName);
+        const header = this.widgetStore.catalogControlHeader.get(columnName);
         this.widgetStore.setHeaderDisplay(val, columnName);
-        if (val === true || (withFilter.filter !== undefined && val === false)) {
+        if (val === true || (header.filter !== "" && val === false)) {
             this.handleFilterRequest();   
+        }
+        if (header.representAs !== CatalogCoordinate.NONE) {
+            const option = {
+                coordinate: CatalogCoordinate.NONE, 
+                coordinateType: CatalogOverlay.NONE
+            };
+            this.widgetStore.setHeaderRepresentation(option, columnName);
         }   
     }
 
@@ -225,13 +231,12 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         );
     }
 
-    private renderSystemPopOver = (option: {coordinate: CatalogCoordinate, coordinateType: CatalogOverlay}, itemProps: IItemRendererProps) => {
+    private renderRepresentasPopOver = (option: {coordinate: CatalogCoordinate, coordinateType: CatalogOverlay}, itemProps: IItemRendererProps) => {
         return (
             <MenuItem
                 key={option.coordinate}
                 text={option.coordinateType}
                 onClick={itemProps.handleClick}
-                active={itemProps.modifiers.active}
             />
         );
     }
@@ -243,17 +248,29 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         const supportedRepresentations = CatalogOverlayComponent.DataTypeRepresentationMap.get(dataType);
         const disabled = !controlHeader.display;
         let options = [];
+        let activeSystemCoords = widgetStore.activedSystem;
+        switch (widgetStore.catalogPlotType) {
+            case CatalogPlotType.D2Scatter:
+                activeSystemCoords = {
+                    x: CatalogOverlay.X,
+                    y: CatalogOverlay.Y
+                };
+                break;
+            default:
+                break;
+        }
+
         supportedRepresentations.forEach((representation) => {
             let option = {};
             if (representation === CatalogCoordinate.X) {
                 option = {
                     coordinate: CatalogCoordinate.X, 
-                    coordinateType: this.coordinate.x
+                    coordinateType: activeSystemCoords.x
                 };
             } else if (representation === CatalogCoordinate.Y) {
                 option = {
                     coordinate: CatalogCoordinate.Y, 
-                    coordinateType: this.coordinate.y
+                    coordinateType: activeSystemCoords.y
                 };
             } else {
                 option = {
@@ -263,14 +280,14 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
             } 
             options.push(option);
         });
+
         let activeItem = CatalogOverlay.NONE;
-        let activeSystem = widgetStore.activedSystem;
         switch (columnName) {
             case widgetStore.xColumnRepresentation:
-                activeItem = activeSystem.x;
+                activeItem = activeSystemCoords.x;
                 break;
             case widgetStore.yColumnRepresentation:
-                activeItem = activeSystem.y;
+                activeItem = activeSystemCoords.y;
                 break;
             default:
                 break;
@@ -280,10 +297,10 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
             <Cell className="cell-dropdown-menu" key={`cell_drop_down_${rowIndex}`}>
                 <Select
                     filterable={false}
-                    items={options} 
-                    activeItem={activeItem}
+                    items={options}
+                    activeItem={null}
                     onItemSelect={(option) => this.handleHeaderRepresentationChange(option, columnName)}
-                    itemRenderer={this.renderSystemPopOver}
+                    itemRenderer={this.renderRepresentasPopOver}
                     disabled={disabled}
                     popoverProps={{popoverClassName: "catalog-select", minimal: true , position: PopoverPosition.AUTO_END}}
                 >
@@ -625,6 +642,17 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         }
     }
 
+    private renderSystemPopOver = (system: SystemType, itemProps: IItemRendererProps) => {
+        return (
+            <MenuItem
+                key={system}
+                text={this.widgetStore.CoordinateSystemName.get(system)}
+                onClick={itemProps.handleClick}
+                active={itemProps.modifiers.active}
+            />
+        );
+    }
+
     public render() {
         const appStore = AppStore.Instance;
         const widgetStore = this.widgetStore;
@@ -637,7 +665,6 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
             );
         }
 
-        this.coordinate = widgetStore.catalogCoordinateSystem.coordinate;
         const catalogTable = this.catalogDataInfo;
         const dataTableProps: TableComponentProps = {
             type: TableType.ColumnFilter,
@@ -693,6 +720,14 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
             catalogFiles.push(value);
         });
 
+        let systemOptions = [];
+        widgetStore.CoordinateSystemName.forEach((value, key) => {
+            systemOptions.push(key);
+        });
+
+        const activeSystem = widgetStore.CoordinateSystemName.get(widgetStore.catalogCoordinateSystem.system);
+        const systemActive = widgetStore.catalogPlotType === CatalogPlotType.ImageOverlay; 
+
         return (
             <div className={"catalog-overlay"}>
                 <div className={"catalog-overlay-filter-settings"}>
@@ -720,6 +755,20 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
                     >
                         <Button className="bp3-minimal" text={widgetStore.catalogPlotType} rightIcon="double-caret-vertical"/>
                     </Select>
+                    <FormGroup disabled={!systemActive} inline={true} label="System">
+                        <Select 
+                            className="bp3-fill"
+                            filterable={false}
+                            items={systemOptions} 
+                            activeItem={widgetStore.catalogCoordinateSystem.system}
+                            onItemSelect={system => widgetStore.setCatalogCoordinateSystem(system)}
+                            itemRenderer={this.renderSystemPopOver}
+                            disabled={!systemActive}
+                            popoverProps={{popoverClassName: "catalog-select", minimal: true , position: PopoverPosition.AUTO_END}}
+                        >
+                            <Button text={activeSystem} disabled={!systemActive} rightIcon="double-caret-vertical"/>
+                        </Select>
+                    </FormGroup>
                     <CatalogOverlayPlotSettingsComponent widgetStore={this.widgetStore} id={this.widgetId}/>
                 </div>
                 <SplitPane 

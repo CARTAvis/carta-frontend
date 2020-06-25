@@ -68,18 +68,18 @@ export type ControlHeader = { columnIndex: number, dataIndex: number, display: b
 export class CatalogOverlayWidgetStore extends RegionWidgetStore {
 
     public static readonly InitTableRows = 50;
-    private static readonly DataChunkSize = 50;
-    private static readonly InitDisplayedColumnSize = 10;
-    // Number.NEGATIVE_INFINITY -1.797693134862316E+308
-    private static readonly NEGATIVE_INFINITY = -1.7976931348623157e+308;
-    private static readonly POSITIVE_INFINITY = 1.7976931348623157e+308;
-    private readonly CoordinateSystemName = new Map<SystemType, string>([
+    public readonly CoordinateSystemName = new Map<SystemType, string>([
         [SystemType.FK5, "FK5"],
         [SystemType.FK4, "FK4"],
         [SystemType.Galactic, "GAL"],
         [SystemType.Ecliptic, "ECL"],
         [SystemType.ICRS, "ICRS"],
     ]);
+    private static readonly DataChunkSize = 50;
+    private static readonly InitDisplayedColumnSize = 10;
+    // Number.NEGATIVE_INFINITY -1.797693134862316E+308
+    private static readonly NEGATIVE_INFINITY = -1.7976931348623157e+308;
+    private static readonly POSITIVE_INFINITY = 1.7976931348623157e+308;
     private systemCoordinateMap = new Map<SystemType, { x: CatalogOverlay, y: CatalogOverlay }>([
         [SystemType.FK4, {x: CatalogOverlay.RA, y: CatalogOverlay.DEC}],
         [SystemType.FK5, {x: CatalogOverlay.RA, y: CatalogOverlay.DEC}],
