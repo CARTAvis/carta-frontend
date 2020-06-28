@@ -101,7 +101,8 @@ export class BackendService {
             [CARTA.EventType.CONTOUR_IMAGE_DATA, this.onStreamedContourData],
             [CARTA.EventType.CATALOG_FILTER_RESPONSE, this.onStreamedCatalogData],
             [CARTA.EventType.RASTER_TILE_SYNC, this.onStreamedRasterSync],
-            [CARTA.EventType.SCRIPTING_REQUEST, this.onScriptingRequest]
+            [CARTA.EventType.SCRIPTING_REQUEST, this.onScriptingRequest],
+            [CARTA.EventType.SPECTRAL_LINE_RESPONSE, this.onSimpleMappedResponse]
         ]);
 
         this.decoderMap = new Map<CARTA.EventType, any>([
@@ -130,7 +131,8 @@ export class BackendService {
             [CARTA.EventType.SET_USER_LAYOUT_ACK, CARTA.SetUserLayoutAck],
             [CARTA.EventType.SET_USER_PREFERENCES_ACK, CARTA.SetUserPreferencesAck],
             [CARTA.EventType.RASTER_TILE_SYNC, CARTA.RasterTileSync],
-            [CARTA.EventType.SCRIPTING_REQUEST, CARTA.ScriptingRequest]
+            [CARTA.EventType.SCRIPTING_REQUEST, CARTA.ScriptingRequest],
+            [CARTA.EventType.SPECTRAL_LINE_RESPONSE, CARTA.SpectralLineResponse]
         ]);
 
         // check ping every 5 seconds
@@ -676,6 +678,24 @@ export class BackendService {
     setAuthToken = (token: string) => {
         document.cookie = `CARTA-Authorization=${token}; path=/`;
     };
+
+    @action("request spectral line")
+    requestSpectralLine(frequencyRange: CARTA.DoubleBounds): Observable<CARTA.SpectralLineResponse> {
+        if (this.connectionStatus !== ConnectionStatus.ACTIVE) {
+            return throwError(new Error("Not connected"));
+        } else {
+            const message = CARTA.SpectralLineRequest.create({frequencyRange: frequencyRange});
+            const requestId = this.eventCounter;
+            this.logEvent(CARTA.EventType.SPECTRAL_LINE_REQUEST, requestId, message, false);
+            if (this.sendEvent(CARTA.EventType.SPECTRAL_LINE_REQUEST, CARTA.SpectralLineRequest.encode(message).finish())) {
+                return new Observable<CARTA.SpectralLineResponse>(observer => {
+                    this.observerRequestMap.set(requestId, observer);
+                });
+            } else {
+                return throwError(new Error("Could not send event"));
+            }
+        }
+    }
 
     sendScriptingResponse = (message: CARTA.IScriptingResponse) => {
         if (this.connectionStatus === ConnectionStatus.ACTIVE) {

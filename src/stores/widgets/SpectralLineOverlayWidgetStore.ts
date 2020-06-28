@@ -3,6 +3,7 @@ import {NumberRange} from "@blueprintjs/core";
 import {Table} from "@blueprintjs/table";
 import {CARTA} from "carta-protobuf";
 import {AppStore} from "stores";
+import {BackendService} from "services";
 import {RegionWidgetStore, RegionsType} from "./RegionWidgetStore";
 import {ProcessedColumnData} from "models";
 import {ControlHeader} from "stores/widgets";
@@ -165,6 +166,19 @@ export class SpectralLineOverlayWidgetStore extends RegionWidgetStore {
             AppStore.Instance.alertStore.showAlert("Frequency range is too wide. Please specify a frequency range within 10GHz.");
         } else {
             this.isQuerying = true;
+            const backendService = BackendService.Instance;
+            backendService.requestSpectralLine(new CARTA.DoubleBounds({min: freqMHzFrom, max: freqMHzTo})).subscribe(ack => {
+                this.isQuerying = false;
+                if (ack.success && ack.dataSize) {
+                    // TODO: handle headers & data
+                }
+            }, error => {
+                this.isQuerying = false;
+                console.error(error);
+                AppStore.Instance.alertStore.showAlert(error);
+            });
+
+            /*
             const data =
             `Species	Chemical Name	Freq-MHz(rest frame,redshifted)	Freq Err(rest frame,redshifted)	Meas Freq-MHz(rest frame,redshifted)	Meas Freq Err(rest frame,redshifted)	Resolved QNs	Unresolved Quantum Numbers	CDMS/JPL Intensity	S<sub>ij</sub>&#956;<sup>2</sup> (D<sup>2</sup>)	S<sub>ij</sub>	Log<sub>10</sub> (A<sub>ij</sub>)	Lovas/AST Intensity	E_L (cm^-1)	E_L (K)	E_U (cm^-1)	E_U (K)	Linelist
             H2CO	Formaldehyde	230530	0			6(5,1)-6(5,2)	 6 5 1       6 5 2    	-19.9244	109.59367	6.719	-29.67917		255.3456	367.38325	255.3456	367.38325	JPL
@@ -174,6 +188,7 @@ export class SpectralLineOverlayWidgetStore extends RegionWidgetStore {
             CH318OHvt=0,1&2	Methanol	230534	0			21(5,16)-21(5,17)A,vt=2	21 516 6    21 517 6  	-22.88	7.53846	0	-30.29231		956.585	1376.30452	956.585	1376.30452	CDMS\n`;
             this.parsingQueryResponse(data);
             this.isQuerying = false;
+            */
         }
     };
 
