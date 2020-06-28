@@ -153,18 +153,6 @@ export class SpectralLineOverlayComponent extends React.Component<WidgetProps> {
         }
     }
 
-    private updateByInfiniteScroll = () => {
-        const widgetStore = this.widgetStore;
-    }
-
-    private onQueryResultTableRefUpdated = (ref) => {
-        this.widgetStore.setQueryResultTableRef(ref);
-    }
-
-    private onQueryResultTableDataSelected = (selectedDataIndex: number[]) => {
-        const widgetsStore = this.widgetStore;
-    }
-
     private handleEnterWidgetOption = (isEntering: boolean, widgetID: string) => {
         if (widgetID) {
             const hoveredOverWidgetStore = AppStore.Instance.widgetsStore.getSpectralWidgetStoreByID(widgetID);
@@ -195,10 +183,6 @@ export class SpectralLineOverlayComponent extends React.Component<WidgetProps> {
                 selectedWidgetStore.clearSpectralLines();
             }
         }
-    };
-
-    private handleFilter = () => {
-        return;
     };
 
     render() {
@@ -312,15 +296,11 @@ export class SpectralLineOverlayComponent extends React.Component<WidgetProps> {
         );
 
         const queryResultTableProps: TableComponentProps = {
-            type: TableType.ColumnFilter,
+            type: TableType.Normal,
             dataset: widgetStore.queryResult,
             filter: widgetStore.controlHeaders,
             columnHeaders: widgetStore.displayedColumnHeaders,
             numVisibleRows: widgetStore.numDataRows,
-            updateTableRef: this.onQueryResultTableRefUpdated,
-            updateColumnFilter: widgetStore.setColumnFilter,
-            updateByInfiniteScroll: this.updateByInfiniteScroll,
-            updateSelectedRow: this.onQueryResultTableDataSelected,
             manualSelectionProps: {
                 isSelectingAll: widgetStore.isSelectingAllLines,
                 isSelectingIndeterminated: widgetStore.isSelectingIndeterminatedLines,
@@ -359,14 +339,6 @@ export class SpectralLineOverlayComponent extends React.Component<WidgetProps> {
                 <div className="bp3-dialog-footer">
                     <div className="bp3-dialog-footer-actions">
                         {widgetMenu}
-                        <Tooltip content={"Apply filter"}>
-                            <AnchorButton
-                                intent={Intent.PRIMARY}
-                                text="Filter"
-                                disabled={widgetStore.queryResult.size <= 0}
-                                onClick={this.handleFilter}
-                            />
-                        </Tooltip>
                         <Button intent={Intent.PRIMARY} disabled={!appStore.activeFrame || !isSelectedWidgetExisted || widgetStore.queryResult.size <= 0} onClick={this.handlePlot}>Plot</Button>
                         <Button intent={Intent.PRIMARY} disabled={!appStore.activeFrame || !isSelectedWidgetExisted || widgetStore.queryResult.size <= 0} onClick={this.handleClear}>Clear</Button>
                     </div>

@@ -55,8 +55,6 @@ export class TableComponent extends React.Component<TableComponentProps> {
         }
 
         const columnName = "select";
-        const controlheader = this.props.filter.get(columnName);
-        const filterSyntax = this.getfilterSyntax(CARTA.ColumnType.Bool);
         return (
             <Column
                 key={columnName}
@@ -64,27 +62,14 @@ export class TableComponent extends React.Component<TableComponentProps> {
                 columnHeaderCellRenderer={(columnIndex: number) => {
                     return (
                         <ColumnHeaderCell>
-                            <ColumnHeaderCell className={"column-name"} isActive={true}>
-                                <React.Fragment>
-                                    <Checkbox
-                                        indeterminate={manualSelectionProps.isSelectingIndeterminated}
-                                        checked={manualSelectionProps.isSelectingAll}
-                                        inline={true}
-                                        onChange={manualSelectionProps.selectAllLines}
-                                    />
-                                </React.Fragment>
-                            </ColumnHeaderCell>
-                            <ColumnHeaderCell>
-                                <Tooltip content={filterSyntax} position={PopoverPosition.BOTTOM} className={"column-filter"}>
-                                    <InputGroup
-                                        key={"column-filter-" + columnIndex}
-                                        small={true}
-                                        placeholder="Click to filter"
-                                        value={controlheader && controlheader.filter ? controlheader.filter : ""} 
-                                        onChange={ev => this.props.updateColumnFilter(ev.currentTarget.value, columnName)}
-                                    />
-                                </Tooltip>
-                            </ColumnHeaderCell>
+                            <React.Fragment>
+                                <Checkbox
+                                    indeterminate={manualSelectionProps.isSelectingIndeterminated}
+                                    checked={manualSelectionProps.isSelectingAll}
+                                    inline={true}
+                                    onChange={manualSelectionProps.selectAllLines}
+                                />
+                            </React.Fragment>
                         </ColumnHeaderCell>
                     );
                 }}
@@ -298,12 +283,12 @@ export class TableComponent extends React.Component<TableComponentProps> {
                 enableRowReordering={false}
                 selectionModes={SelectionModes.ROWS_AND_CELLS}
                 onVisibleCellsChange={this.infiniteScroll}
-                columnWidths={table.columnWidths}
                 onColumnWidthChanged={this.updateTableColumnWidth}
                 enableGhostCells={true}
                 onSelection={this.onRowIndexSelection}
                 enableMultipleSelection={true}
                 enableRowResizing={false}
+                columnWidths={columnWidths}
             >
                 {tableColumns}
             </Table>
@@ -315,6 +300,7 @@ export class TableComponent extends React.Component<TableComponentProps> {
                 selectionModes={SelectionModes.NONE}
                 enableGhostCells={true}
                 enableRowResizing={false}
+                columnWidths={columnWidths}
             >
                 {tableColumns}
             </Table>
