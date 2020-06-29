@@ -5,8 +5,9 @@ import {CARTA} from "carta-protobuf";
 import {PlotType, LineSettings, ScatterSettings} from "components/Shared";
 import {RegionWidgetStore, RegionsType} from "./RegionWidgetStore";
 import {AppStore, FrameStore} from "stores";
-import {getColorsForValues, isColorValid} from "utilities";
+import {getColorsForValues} from "utilities";
 import {SpectralSystem, SpectralType, SpectralUnit} from "models";
+import * as tinycolor from "tinycolor2";
 
 export enum StokesCoordinate {
     CurrentZ = "z",
@@ -372,11 +373,13 @@ export class StokesAnalysisWidgetStore extends RegionWidgetStore {
         if (!widgetSettings) {
             return;
         }
-        if (typeof widgetSettings.primaryLineColor === "string" && isColorValid(widgetSettings.primaryLineColor)) {
-            this.primaryLineColor.colorHex = widgetSettings.primaryLineColor;
+        const lineColor = tinycolor(widgetSettings.primaryLineColor);
+        if (lineColor.isValid()) {
+            this.primaryLineColor.colorHex = lineColor.toHexString();
         }
-        if (typeof widgetSettings.secondaryLineColor === "string" && isColorValid(widgetSettings.secondaryLineColor)) {
-            this.secondaryLineColor.colorHex = widgetSettings.secondaryLineColor;
+        const secondaryLineColor = tinycolor(widgetSettings.secondaryLineColor);
+        if (secondaryLineColor.isValid()) {
+            this.secondaryLineColor.colorHex = secondaryLineColor.toHexString();
         }
         if (typeof widgetSettings.lineWidth === "number" && widgetSettings.lineWidth >= LineSettings.MIN_WIDTH && widgetSettings.lineWidth <= LineSettings.MAX_WIDTH) {
             this.lineWidth = widgetSettings.lineWidth;
