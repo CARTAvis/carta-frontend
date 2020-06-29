@@ -1,5 +1,6 @@
 import * as React from "react";
 import * as AST from "ast_wrapper";
+import * as tinycolor from "tinycolor2";
 import {observer} from "mobx-react";
 import {observable} from "mobx";
 import {Select, ItemRenderer} from "@blueprintjs/select";
@@ -13,7 +14,7 @@ import {ColorComponent} from "./ColorComponent";
 import {ColorResult} from "react-color";
 import {ColorPickerComponent, SafeNumericInput} from "components/Shared";
 import {AppStore, BeamType, LabelType, SystemType, HelpType, DialogStore, OverlayStore} from "stores";
-import {hexStringToRgba, SWATCH_COLORS} from "utilities";
+import { SWATCH_COLORS} from "utilities";
 import "./OverlaySettingsDialogComponent.css";
 
 // Font selector
@@ -582,7 +583,7 @@ export class OverlaySettingsDialogComponent extends React.Component {
                 </FormGroup>
                 <FormGroup inline={true} label="Color">
                     <ColorPickerComponent
-                        color={hexStringToRgba(beamSettings.color)}
+                        color={tinycolor(beamSettings.color).toHexString()}
                         presetColors={SWATCH_COLORS}
                         setColor={(color: ColorResult) => beamSettings.setColor(color.hex)}
                         disableAlpha={true}
