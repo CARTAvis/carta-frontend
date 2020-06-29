@@ -3,7 +3,7 @@ import {Colors} from "@blueprintjs/core";
 import {Table, Regions, IRegion} from "@blueprintjs/table";
 import {CARTA} from "carta-protobuf";
 import {RegionWidgetStore, RegionsType} from "./RegionWidgetStore";
-import {AppStore, CatalogStore, SystemType} from "stores";
+import {AppStore, CatalogStore} from "stores";
 import {filterProcessedColumnData, minMaxArray} from "utilities";
 import {ProcessedColumnData} from "models";
 
@@ -32,7 +32,11 @@ export enum CatalogOverlay {
     GLAT = "GLAT",
     GLON = "GLON",
     ELON = "ELON",
-    ELAT = "ELAT"
+    ELAT = "ELAT",
+    X0 = "X0",
+    Y0 = "Y0",
+    X1 = "X1",
+    Y1 = "Y1",
 }
 
 export enum CatalogOverlayShape {
@@ -63,29 +67,43 @@ export enum CatalogPlotType {
     // D3Scatter = "as 3D scatter",
 }
 
+export enum CatalogSystemType {
+    Ecliptic = "ECLIPTIC",
+    FK4 = "FK4",
+    FK5 = "FK5",
+    Galactic = "GALACTIC",
+    ICRS = "ICRS",
+    Pixel0 = "Pixel0",
+    Pixel1 = "Pixel1",
+}
+
 export type ControlHeader = { columnIndex: number, dataIndex: number, display: boolean, representAs: CatalogCoordinate, filter: string, columnWidth: number };
 
 export class CatalogOverlayWidgetStore extends RegionWidgetStore {
 
     public static readonly InitTableRows = 50;
-    public readonly CoordinateSystemName = new Map<SystemType, string>([
-        [SystemType.FK5, "FK5"],
-        [SystemType.FK4, "FK4"],
-        [SystemType.Galactic, "GAL"],
-        [SystemType.Ecliptic, "ECL"],
-        [SystemType.ICRS, "ICRS"],
+    public readonly CoordinateSystemName = new Map<CatalogSystemType, string>([
+        [CatalogSystemType.FK5, "FK5"],
+        [CatalogSystemType.FK4, "FK4"],
+        [CatalogSystemType.Galactic, "GAL"],
+        [CatalogSystemType.Ecliptic, "ECL"],
+        [CatalogSystemType.ICRS, "ICRS"],
+        [CatalogSystemType.Pixel0, "PIX0"],
+        [CatalogSystemType.Pixel1, "PIX1"]
     ]);
     private static readonly DataChunkSize = 50;
     private static readonly InitDisplayedColumnSize = 10;
     // Number.NEGATIVE_INFINITY -1.797693134862316E+308
     private static readonly NEGATIVE_INFINITY = -1.7976931348623157e+308;
     private static readonly POSITIVE_INFINITY = 1.7976931348623157e+308;
-    private systemCoordinateMap = new Map<SystemType, { x: CatalogOverlay, y: CatalogOverlay }>([
-        [SystemType.FK4, {x: CatalogOverlay.RA, y: CatalogOverlay.DEC}],
-        [SystemType.FK5, {x: CatalogOverlay.RA, y: CatalogOverlay.DEC}],
-        [SystemType.ICRS, {x: CatalogOverlay.RA, y: CatalogOverlay.DEC}],
-        [SystemType.Galactic, {x: CatalogOverlay.GLON, y: CatalogOverlay.GLAT}],
-        [SystemType.Ecliptic, {x: CatalogOverlay.ELON, y: CatalogOverlay.ELAT}],
+    private systemCoordinateMap = new Map<CatalogSystemType, { x: CatalogOverlay, y: CatalogOverlay }>([
+        [CatalogSystemType.FK4, {x: CatalogOverlay.RA, y: CatalogOverlay.DEC}],
+        [CatalogSystemType.FK5, {x: CatalogOverlay.RA, y: CatalogOverlay.DEC}],
+        [CatalogSystemType.ICRS, {x: CatalogOverlay.RA, y: CatalogOverlay.DEC}],
+        [CatalogSystemType.Galactic, {x: CatalogOverlay.GLON, y: CatalogOverlay.GLAT}],
+        [CatalogSystemType.Ecliptic, {x: CatalogOverlay.ELON, y: CatalogOverlay.ELAT}],
+        [CatalogSystemType.Pixel0, {x: CatalogOverlay.X0, y: CatalogOverlay.Y0}],
+        [CatalogSystemType.Pixel1, {x: CatalogOverlay.X1, y: CatalogOverlay.Y1}],
     ]);
 
     private readonly InitialedColumnsKeyWords = [
@@ -121,7 +139,7 @@ export class CatalogOverlayWidgetStore extends RegionWidgetStore {
     @observable updatingDataStream: boolean;
     @observable updateMode: CatalogUpdateMode;
     @observable catalogFilterRequest: CARTA.CatalogFilterRequest;
-    @observable catalogCoordinateSystem: { system: SystemType, equinox: string, epoch: string, coordinate: { x: CatalogOverlay, y: CatalogOverlay } };
+    @observable catalogCoordinateSystem: { system: CatalogSystemType, equinox: string, epoch: string, coordinate: { x: CatalogOverlay, y: CatalogOverlay } };
     @observable catalogPlotType: CatalogPlotType;
     @observable catalogScatterWidgetsId: string[];
     @observable selectedPointIndices: number[];
@@ -167,14 +185,14 @@ export class CatalogOverlayWidgetStore extends RegionWidgetStore {
                 system: system,
                 equinox: coordinateSystem.equinox,
                 epoch: coordinateSystem.epoch,
-                coordinate: this.systemCoordinateMap.get(SystemType.ICRS)
+                coordinate: this.systemCoordinateMap.get(CatalogSystemType.ICRS)
             };
         } else {
             this.catalogCoordinateSystem = {
-                system: SystemType.ICRS,
+                system: CatalogSystemType.ICRS,
                 equinox: null,
                 epoch: null,
-                coordinate: this.systemCoordinateMap.get(SystemType.ICRS)
+                coordinate: this.systemCoordinateMap.get(CatalogSystemType.ICRS)
             };
         }
 
@@ -208,7 +226,7 @@ export class CatalogOverlayWidgetStore extends RegionWidgetStore {
         this.catalogPlotType = type;
     }
 
-    @action setCatalogCoordinateSystem(catalogSystem: SystemType) {
+    @action setCatalogCoordinateSystem(catalogSystem: CatalogSystemType) {
         const current = this.catalogCoordinateSystem;
         this.catalogCoordinateSystem = {
             system: catalogSystem,
@@ -761,8 +779,8 @@ export class CatalogOverlayWidgetStore extends RegionWidgetStore {
         return false;
     }
 
-    private getCatalogSystem(system: string): SystemType {
-        let catalogSystem = SystemType.ICRS;
+    private getCatalogSystem(system: string): CatalogSystemType {
+        let catalogSystem = CatalogSystemType.ICRS;
         const systemMap = this.CoordinateSystemName;
         systemMap.forEach((value, key) => {
             if (system.toUpperCase().includes(value.toUpperCase())) {

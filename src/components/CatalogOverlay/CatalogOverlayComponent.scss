@@ -66,6 +66,17 @@
                 }
             }
         }
+
+        .catalog-system {
+            width: 65px;
+            .bp3-popover-target {
+                width: inherit;
+                .bp3-button {
+                    width: 100%;
+                    justify-content: space-between;
+                }
+            }
+        }
     }
 
     .catalog-table {

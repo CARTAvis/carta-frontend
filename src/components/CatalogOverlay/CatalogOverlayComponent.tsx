@@ -9,8 +9,8 @@ import SplitPane, { Pane } from "react-split-pane";
 import {CARTA} from "carta-protobuf";
 import {TableComponent, TableComponentProps, TableType, ClearableNumericInputComponent} from "components/Shared";
 import {CatalogOverlayPlotSettingsComponent} from "./CatalogOverlayPlotSettingsComponent/CatalogOverlayPlotSettingsComponent";
-import {AppStore, HelpType, WidgetConfig, WidgetProps, WidgetsStore, SystemType} from "stores";
-import {CatalogOverlay, CatalogCoordinate, CatalogOverlayWidgetStore, CatalogPlotType, CatalogScatterWidgetStoreProps, CatalogUpdateMode} from "stores/widgets";
+import {AppStore, HelpType, WidgetConfig, WidgetProps, WidgetsStore} from "stores";
+import {CatalogOverlay, CatalogCoordinate, CatalogOverlayWidgetStore, CatalogPlotType, CatalogScatterWidgetStoreProps, CatalogUpdateMode, CatalogSystemType} from "stores/widgets";
 import {toFixed} from "utilities";
 import {ProcessedColumnData} from "../../models";
 import "./CatalogOverlayComponent.css";
@@ -63,7 +63,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
             type: "catalog-overlay",
             minWidth: 320,
             minHeight: 400,
-            defaultWidth: 720,
+            defaultWidth: 740,
             defaultHeight: 350,
             title: "Catalog Overlay",
             isCloseable: true,
@@ -642,7 +642,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         }
     }
 
-    private renderSystemPopOver = (system: SystemType, itemProps: IItemRendererProps) => {
+    private renderSystemPopOver = (system: CatalogSystemType, itemProps: IItemRendererProps) => {
         return (
             <MenuItem
                 key={system}
@@ -726,7 +726,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         });
 
         const activeSystem = widgetStore.CoordinateSystemName.get(widgetStore.catalogCoordinateSystem.system);
-        const systemActive = widgetStore.catalogPlotType === CatalogPlotType.ImageOverlay; 
+        const systemActive = widgetStore.catalogPlotType === CatalogPlotType.ImageOverlay;
 
         return (
             <div className={"catalog-overlay"}>
@@ -757,7 +757,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
                     </Select>
                     <FormGroup disabled={!systemActive} inline={true} label="System">
                         <Select 
-                            className="bp3-fill"
+                            className="catalog-system"
                             filterable={false}
                             items={systemOptions} 
                             activeItem={widgetStore.catalogCoordinateSystem.system}
