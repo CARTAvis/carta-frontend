@@ -1211,6 +1211,18 @@ export class AppStore {
                 };
             });
 
+            let contourSettings: CARTA.IContourSettings;
+            if (frame.contourConfig.enabled) {
+                contourSettings = {
+                    levels: frame.contourConfig.levels,
+                    smoothingMode: frame.contourConfig.smoothingMode,
+                    smoothingFactor: frame.contourConfig.smoothingFactor,
+                    decimationFactor: this.preferenceStore.contourDecimation,
+                    compressionLevel: this.preferenceStore.contourCompressionLevel,
+                    contourChunkSize: this.preferenceStore.contourChunkSize
+                };
+            }
+
             return {
                 file: info.fileInfo.name,
                 directory: info.directory,
@@ -1219,7 +1231,8 @@ export class AppStore {
                 renderMode: info.renderMode,
                 channel: frame.requiredChannel,
                 stokes: frame.requiredStokes,
-                regions
+                regions,
+                contourSettings
             };
         });
 
