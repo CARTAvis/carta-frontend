@@ -43,11 +43,7 @@ export class ApiService {
                     this.authenticated = true;
                 } else if (ApiService.DashboardUrl) {
                     const redirectUrl = btoa(window.location.href);
-                    if (window.location.search) {
-                        window.open(`${ApiService.DashboardUrl}?redirectUrl=${redirectUrl}`, "_self");
-                    } else {
-                        window.open(ApiService.DashboardUrl, "_self");
-                    }
+                    window.open(`${ApiService.DashboardUrl}?redirectUrl=${redirectUrl}`, "_self");
                 } else {
                     AppToaster.show({icon: "warning-sign", message: "Could not authenticate with server", intent: "danger", timeout: 3000});
                 }
