@@ -87,5 +87,5 @@ void main(void) {
 
     float cmapYVal = (float(uCmapIndex) + 0.5) / float(uNumCmaps);
     vec2 cmapCoords = vec2(x, cmapYVal);
-    gl_FragColor = isnan(rawVal) ? uNaNColor : texture2D(uCmapTexture, cmapCoords);
+    gl_FragColor = isnan(rawVal) ? uNaNColor * uNaNColor.a : texture2D(uCmapTexture, cmapCoords);
 }

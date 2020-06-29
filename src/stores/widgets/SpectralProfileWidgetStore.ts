@@ -5,8 +5,8 @@ import {PlotType, LineSettings} from "components/Shared";
 import {RegionWidgetStore, RegionsType} from "./RegionWidgetStore";
 import {SpectralLine} from "./SpectralLineOverlayWidgetStore";
 import {FrameStore} from "stores";
-import {isColorValid} from "utilities";
 import {SpectralSystem, SpectralType, SpectralUnit} from "models";
+import * as tinycolor from "tinycolor2";
 
 export class SpectralProfileWidgetStore extends RegionWidgetStore {
     @observable coordinate: string;
@@ -374,8 +374,9 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         if (!widgetSettings) {
             return;
         }
-        if (typeof widgetSettings.primaryLineColor === "string" && isColorValid(widgetSettings.primaryLineColor)) {
-            this.primaryLineColor.colorHex = widgetSettings.primaryLineColor;
+        const lineColor = tinycolor(widgetSettings.primaryLineColor);
+        if (lineColor.isValid()) {
+            this.primaryLineColor.colorHex = lineColor.toHexString();
         }
         if (typeof widgetSettings.lineWidth === "number" && widgetSettings.lineWidth >= LineSettings.MIN_WIDTH && widgetSettings.lineWidth <= LineSettings.MAX_WIDTH) {
             this.lineWidth = widgetSettings.lineWidth;
