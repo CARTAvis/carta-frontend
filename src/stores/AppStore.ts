@@ -1211,7 +1211,7 @@ export class AppStore {
                 };
             });
 
-            let contourSettings: CARTA.IContourSettings;
+            let contourSettings: CARTA.ISetContourParameters;
             if (frame.contourConfig.enabled) {
                 contourSettings = {
                     levels: frame.contourConfig.levels,
