@@ -1,5 +1,6 @@
 import * as React from "react";
 import * as _ from "lodash";
+import * as tinycolor from "tinycolor2";
 import {observable} from "mobx";
 import {observer} from "mobx-react";
 import {AnchorButton, Button, Checkbox, FormGroup, HTMLSelect, IDialogProps, Intent, MenuItem, Position, Radio, RadioGroup, Switch, Tab, TabId, Tabs, Tooltip} from "@blueprintjs/core";
@@ -12,7 +13,7 @@ import {ColorComponent} from "components/Dialogs/OverlaySettings/ColorComponent"
 import {ColormapComponent, ColorPickerComponent, SafeNumericInput} from "components/Shared";
 import {CompressionQuality, CursorPosition, Event, RegionCreationMode, SPECTRAL_MATCHING_TYPES, SPECTRAL_TYPE_STRING, Theme, TileCache, WCSMatchingType, WCSType, Zoom, ZoomPoint} from "models";
 import {AppStore, BeamType, ContourGeneratorType, DialogStore, FrameScaling, HelpType, PreferenceKeys, PreferenceStore, RegionStore, RenderConfigStore} from "stores";
-import {hexStringToRgba, SWATCH_COLORS} from "utilities";
+import {SWATCH_COLORS} from "utilities";
 import "./PreferenceDialogComponent.css";
 
 enum TABS {
@@ -204,7 +205,7 @@ export class PreferenceDialogComponent extends React.Component {
                 }
                 <FormGroup inline={true} label="NaN Color">
                     <ColorPickerComponent
-                        color={hexStringToRgba(preference.nanColorHex, preference.nanAlpha)}
+                        color={tinycolor(preference.nanColorHex).setAlpha(preference.nanAlpha).toRgb()}
                         presetColors={[...SWATCH_COLORS, "transparent"]}
                         setColor={(color: ColorResult) => {
                             preference.setPreference(PreferenceKeys.RENDER_CONFIG_NAN_COLOR_HEX, color.hex === "transparent" ? "#000000" : color.hex);
@@ -329,7 +330,7 @@ export class PreferenceDialogComponent extends React.Component {
                 </FormGroup>
                 <FormGroup inline={true} label="Beam Color">
                     <ColorPickerComponent
-                        color={hexStringToRgba(preference.beamColor)}
+                        color={tinycolor(preference.beamColor).toRgb()}
                         presetColors={SWATCH_COLORS}
                         setColor={(color: ColorResult) => preference.setPreference(PreferenceKeys.WCS_OVERLAY_BEAM_COLOR, color.hex)}
                         disableAlpha={true}

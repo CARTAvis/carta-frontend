@@ -1,7 +1,8 @@
 import {action, observable} from "mobx";
+import * as tinycolor from "tinycolor2";
 import {CARTA} from "carta-protobuf";
 import {PreferenceStore} from "./PreferenceStore";
-import {hexStringToRgba, RGBA} from "../utilities";
+import {RGBColor} from "react-color";
 
 export enum ContourGeneratorType {
     StartStepMultiplier = "start-step-multiplier",
@@ -22,7 +23,7 @@ export class ContourConfigStore {
     @observable smoothingMode: CARTA.SmoothingMode;
     @observable smoothingFactor: number;
 
-    @observable color: RGBA;
+    @observable color: RGBColor;
     @observable colormapEnabled: boolean;
     @observable colormap: string;
     @observable colormapContrast: number;
@@ -40,7 +41,7 @@ export class ContourConfigStore {
         this.smoothingMode = this.preferenceStore.contourSmoothingMode;
         this.smoothingFactor = this.preferenceStore.contourSmoothingFactor;
 
-        this.color = hexStringToRgba(this.preferenceStore.contourColor);
+        this.color = tinycolor(this.preferenceStore.contourColor).toRgb();
         this.colormapEnabled = this.preferenceStore.contourColormapEnabled;
         this.colormap = this.preferenceStore.contourColormap;
         this.colormapBias = 0.0;
@@ -61,8 +62,11 @@ export class ContourConfigStore {
     };
 
     // Styling
-    @action setColor = (color: RGBA) => {
-        this.color = color;
+    @action setColor = (color: tinycolor.ColorInput) => {
+        const colorObj = tinycolor(color);
+        if (colorObj.isValid()) {
+            this.color = colorObj.toRgb();
+        }
     };
 
     @action setDashMode = (mode: ContourDashMode) => {
