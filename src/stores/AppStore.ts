@@ -1214,6 +1214,7 @@ export class AppStore {
             let contourSettings: CARTA.ISetContourParameters;
             if (frame.contourConfig.enabled) {
                 contourSettings = {
+                    fileId: frame.frameInfo.fileId,
                     levels: frame.contourConfig.levels,
                     smoothingMode: frame.contourConfig.smoothingMode,
                     smoothingFactor: frame.contourConfig.smoothingFactor,
