@@ -159,7 +159,10 @@ export class BackendService {
         this.connection.binaryType = "arraybuffer";
         this.connection.onmessage = this.messageHandler.bind(this);
         this.connection.onclose = (ev: CloseEvent) => {
-            this.connectionStatus = ConnectionStatus.CLOSED;
+            // Only change to closed connection if the connection was originally active
+            if (this.connectionStatus === ConnectionStatus.ACTIVE) {
+                this.connectionStatus = ConnectionStatus.CLOSED;
+            }
             // Reconnect to the same URL if Websocket is closed
             if (!ev.wasClean && this.autoReconnect) {
                 setTimeout(() => {
@@ -174,7 +177,7 @@ export class BackendService {
             }
         };
 
-        const obs = new Observable<CARTA.RegisterViewerAck>(observer => {
+        return new Observable<CARTA.RegisterViewerAck>(observer => {
             this.connection.onopen = () => {
                 if (this.connectionStatus === ConnectionStatus.CLOSED) {
                     this.connectionDropped = true;
@@ -189,15 +192,11 @@ export class BackendService {
                 this.logEvent(CARTA.EventType.REGISTER_VIEWER, requestId, message, false);
                 if (this.sendEvent(CARTA.EventType.REGISTER_VIEWER, CARTA.RegisterViewer.encode(message).finish())) {
                     this.observerRequestMap.set(requestId, observer);
-                } else {
-                    observer.error("Could not connect");
                 }
             };
 
-            this.connection.onerror = (ev => observer.error(ev));
+            this.connection.onerror = (ev => console.log(ev));
         });
-
-        return obs;
     }
 
     sendPing = () => {
@@ -814,18 +813,7 @@ export class BackendService {
 
     private onStartAnimationAck(eventId: number, ack: CARTA.StartAnimationAck) {
         this.animationId = ack.success ? ack.animationId : INVALID_ANIMATION_ID;
-        const observer = this.observerRequestMap.get(eventId);
-        if (observer) {
-            if (ack.success) {
-                observer.next(ack);
-            } else {
-                observer.error(ack.message);
-            }
-            observer.complete();
-            this.observerRequestMap.delete(eventId);
-        } else {
-            console.log(`Can't find observable for request ${eventId}`);
-        }
+        this.onSimpleMappedResponse(eventId, ack);
     }
 
     private onStreamedRasterTileData(eventId: number, rasterTileData: CARTA.RasterTileData) {
