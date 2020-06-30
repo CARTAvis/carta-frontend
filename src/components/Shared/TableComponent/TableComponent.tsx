@@ -40,9 +40,22 @@ export class TableComponent extends React.Component<TableComponentProps> {
     private getfilterSyntax = (dataType: CARTA.ColumnType) => {
         switch (dataType) {
             case CARTA.ColumnType.String || CARTA.ColumnType.Bool:
-                return ("Filter by substring");
+                return (
+                    <div>
+                        <small>Filter by substring</small><br/>
+                        <small>e.g. gal (no quotation, entries contain the "gal" string)</small>
+                    </div>
+                );
             default:
-                return ("Operators  >, >=, <, <=, ==, !=, .., ...");
+                return (
+                    <div>
+                        <small>Operators: {">"}, {">="}, {"<"}, {"<="}, {"=="}, {"!="}, {".."}, {"..."}</small><br/>
+                        <small>e.g. {"<"} 10 (everything less then 10) </small><br/>
+                        <small>e.g. == 1.23 (entries equal to 1.23) </small><br/>
+                        <small>e.g. 10..50 (everything between 10 and 50, exclusive)) </small><br/>
+                        <small>e.g. 10...50 (everything between 10 and 50, inclusive) </small>
+                    </div>
+                );
         }
     }
 
@@ -121,7 +134,7 @@ export class TableComponent extends React.Component<TableComponentProps> {
             <ColumnHeaderCell>
                 <ColumnHeaderCell className={"column-name"} nameRenderer={nameRenderer} menuRenderer={menuRenderer}/>
                 <ColumnHeaderCell isActive={activeFilter}>
-                    <Tooltip content={filterSyntax} position={PopoverPosition.BOTTOM} className={"column-filter"}>
+                    <Tooltip content={filterSyntax} position={PopoverPosition.TOP} className={"column-filter"}>
                         <InputGroup
                             key={"column-filter-" + columnIndex}
                             small={true}
