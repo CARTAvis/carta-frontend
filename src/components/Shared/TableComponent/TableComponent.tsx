@@ -65,7 +65,7 @@ export class TableComponent extends React.Component<TableComponentProps> {
                 key={column.name}
                 name={column.name}
                 columnHeaderCellRenderer={(columnIndex: number) => this.renderColumnHeaderCell(columnIndex, column)}
-                cellRenderer={columnData ? (rowIndex, columnIndex) => this.renderCell(rowIndex, columnIndex, columnData) : undefined}
+                cellRenderer={columnData?.length ? (rowIndex, columnIndex) => this.renderCell(rowIndex, columnIndex, columnData) : undefined}
             />
         );
     };

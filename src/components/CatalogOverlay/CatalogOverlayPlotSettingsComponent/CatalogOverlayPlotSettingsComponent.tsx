@@ -101,7 +101,7 @@ export class CatalogOverlayPlotSettingsComponent extends React.Component<{widget
     }
 
     public render() {
-        const widgetStore = this.props.widgetStore; 
+        const widgetStore = this.props.widgetStore;
 
         return (
             <div className="catalog-overlay-plot-settings">

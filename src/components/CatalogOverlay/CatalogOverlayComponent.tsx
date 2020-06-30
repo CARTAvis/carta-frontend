@@ -755,6 +755,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
                     >
                         <Button className="bp3-minimal" text={widgetStore.catalogPlotType} rightIcon="double-caret-vertical"/>
                     </Select>
+                    {systemActive &&
                     <FormGroup disabled={!systemActive} inline={true} label="System">
                         <Select 
                             className="catalog-system"
@@ -769,7 +770,10 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
                             <Button text={activeSystem} disabled={!systemActive} rightIcon="double-caret-vertical"/>
                         </Select>
                     </FormGroup>
+                    }
+                    {systemActive &&
                     <CatalogOverlayPlotSettingsComponent widgetStore={this.widgetStore} id={this.widgetId}/>
+                    }
                 </div>
                 <SplitPane 
                     className="catalog-table" 
