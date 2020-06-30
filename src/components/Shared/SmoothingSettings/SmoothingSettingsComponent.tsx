@@ -6,6 +6,7 @@ import {ColorPickerComponent, SafeNumericInput, PlotTypeSelectorComponent} from 
 import {ColorResult} from "react-color";
 import {SWATCH_COLORS} from "utilities";
 import { AppStore } from "stores";
+import "./SmoothingSettingsComponent.css";
 
 export enum SmoothingType {
     NONE = "None",
@@ -33,7 +34,7 @@ export class SmoothingSettingsComponent extends React.Component<{smoothingStore:
         ];
 
         return (
-            <React.Fragment>
+            <div className="smoothing-settings-panel">
                 <FormGroup label={"Method"} inline={true}>
                     <HTMLSelect
                         value={smoothingStore && smoothingStore.type ? smoothingStore.type : SmoothingType.NONE}
@@ -154,7 +155,7 @@ export class SmoothingSettingsComponent extends React.Component<{smoothingStore:
                     </FormGroup>
                 </React.Fragment>
                 }
-            </React.Fragment>
+            </div>
         );
     }
 }

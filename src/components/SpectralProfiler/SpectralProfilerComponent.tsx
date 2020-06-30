@@ -1,7 +1,5 @@
 import * as React from "react";
 import * as _ from "lodash";
-import * as AST from "ast_wrapper";
-import * as GSL from "gsl_wrapper";
 import {autorun, computed, observable} from "mobx";
 import {observer} from "mobx-react";
 import {Colors, NonIdealState} from "@blueprintjs/core";
@@ -125,48 +123,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
                 }
             }
 
-            const smoothingStore = this.widgetStore.smoothingStore;
-            const smoothingType = smoothingStore.type;
-            let smoothingValues: Point2D[] = [];
-            if (smoothingType !== SmoothingType.NONE) {
-
-                let smoothingArray: Array<{x: number, y: number}> = [];
-                let smoothingYs: Float32Array | Float64Array;
-                let smoothingXs: number[] = channelValues;
-                let decimatedIndexes: number[];
-                if (smoothingType === SmoothingType.BOXCAR) {
-                    smoothingYs = GSL.boxcarSmooth(coordinateData.values, smoothingStore.boxcarSize);
-                } else if (smoothingType === SmoothingType.GAUSSIAN) {
-                    if (smoothingStore.gaussianSigma && smoothingStore.gaussianSigma > 0.5) {
-                        let kernelSize = Math.ceil(smoothingStore.gaussianSigma * 2);
-                        let alpha = (kernelSize - 1) / (2 * smoothingStore.gaussianSigma);
-                        smoothingYs = GSL.gaussianSmooth(coordinateData.values, kernelSize, alpha);
-                    } else {
-                        smoothingYs = GSL.gaussianSmooth(coordinateData.values, 1, 1);
-                    }
-                } else if (smoothingType === SmoothingType.HANNING) {
-                    smoothingYs = GSL.hanningSmooth(coordinateData.values, smoothingStore.hanningSize);
-                } else if (smoothingType === SmoothingType.DECIMATION) {
-                    decimatedIndexes = GSL.decimation(coordinateData.values, smoothingStore.decimationValue);
-                } else if (smoothingType === SmoothingType.BINNING) {
-                    smoothingYs = GSL.binning(coordinateData.values, smoothingStore.binWidth);
-                    smoothingXs = GSL.binning(channelValues, smoothingStore.binWidth);
-                } else if (smoothingType === SmoothingType.SAVITZKY_GOLAY) {
-                    smoothingYs = GSL.savitzkyGolaySmooth(channelValues, coordinateData.values, smoothingStore.savitzkyGolaySize, smoothingStore.savitzkyGolayOrder);
-                }
-
-                for (let i = 0; i < smoothingXs.length; i++) {
-                    if (smoothingType === SmoothingType.DECIMATION) {
-                        if (i === decimatedIndexes.length) {
-                            break;
-                        }
-                        smoothingArray.push({x: smoothingXs[decimatedIndexes[i]], y: coordinateData.values[decimatedIndexes[i]]});
-                    } else {
-                        smoothingArray.push({x: smoothingXs[i], y: smoothingYs[i]});
-                    }
-                }
-                smoothingValues = smoothingArray;
-            }
+            let smoothingValues: Point2D[] = this.widgetStore.smoothingStore.getSmoothingValues(channelValues, coordinateData.values);
 
             if (yCount > 0) {
                 yMean = ySum / yCount;

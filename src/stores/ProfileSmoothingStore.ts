@@ -1,6 +1,8 @@
 import {action, computed, observable} from "mobx";
 import {Colors} from "@blueprintjs/core";
 import {PlotType, SmoothingType} from "components/Shared";
+import {Point2D} from "models";
+import * as GSL from "gsl_wrapper";
 
 export class ProfileSmoothingStore {
     @observable type: SmoothingType;
@@ -98,6 +100,49 @@ export class ProfileSmoothingStore {
             exportData.set("order", String(this.savitzkyGolayOrder));
         }
         return exportData;
+    }
+
+    getSmoothingValues(x: number[], y: Float32Array|Float64Array): Point2D[] {
+        if (this.type === SmoothingType.NONE) {
+            return [];
+        }
+
+        let smoothingArray: Point2D[] = [];
+        let smoothingYs: Float32Array | Float64Array;
+        let smoothingXs: number[] = x;
+        let decimatedIndexes: number[];
+        if (this.type === SmoothingType.BOXCAR) {
+            smoothingYs = GSL.boxcarSmooth(y, this.boxcarSize);
+        } else if (this.type === SmoothingType.GAUSSIAN) {
+            if (this.gaussianSigma && this.gaussianSigma > 0.5) {
+                let kernelSize = Math.ceil(this.gaussianSigma * 2);
+                let alpha = (kernelSize - 1) / (2 * this.gaussianSigma);
+                smoothingYs = GSL.gaussianSmooth(y, kernelSize, alpha);
+            } else {
+                smoothingYs = GSL.gaussianSmooth(y, 1, 1);
+            }
+        } else if (this.type === SmoothingType.HANNING) {
+            smoothingYs = GSL.hanningSmooth(y, this.hanningSize);
+        } else if (this.type === SmoothingType.DECIMATION) {
+            decimatedIndexes = GSL.decimation(y, this.decimationValue);
+        } else if (this.type === SmoothingType.BINNING) {
+            smoothingYs = GSL.binning(y, this.binWidth);
+            smoothingXs = GSL.binning(x, this.binWidth);
+        } else if (this.type === SmoothingType.SAVITZKY_GOLAY) {
+            smoothingYs = GSL.savitzkyGolaySmooth(x, y, this.savitzkyGolaySize, this.savitzkyGolayOrder);
+        }
+
+        for (let i = 0; i < smoothingXs.length; i++) {
+            if (this.type === SmoothingType.DECIMATION) {
+                if (i === decimatedIndexes.length) {
+                    break;
+                }
+                smoothingArray.push({x: smoothingXs[decimatedIndexes[i]], y: y[decimatedIndexes[i]]});
+            } else {
+                smoothingArray.push({x: smoothingXs[i], y: smoothingYs[i]});
+            }
+        }
+        return smoothingArray;
     }
 
 }
