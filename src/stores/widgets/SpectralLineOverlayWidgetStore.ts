@@ -56,8 +56,8 @@ export interface SpectralLineHeader {
 }
 
 export enum RedshiftType {
-    V = "V",
-    Z = "Z"
+    V = "Velocity (km/s)",
+    Z = "Redshift"
 }
 
 export interface SpectralLine {
