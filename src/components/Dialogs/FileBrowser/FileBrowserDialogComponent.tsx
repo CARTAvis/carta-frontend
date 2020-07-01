@@ -3,11 +3,11 @@ import {observer} from "mobx-react";
 import {action, computed, observable} from "mobx";
 import {Alert, AnchorButton, Breadcrumb, Breadcrumbs, Button, IBreadcrumbProps, Icon, IDialogProps, InputGroup, Intent, Menu, MenuItem, NonIdealState, Popover, Position, Pre, Spinner, Tab, TabId, Tabs, Tooltip, Text, Switch} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
-import {FileListComponent} from "./FileList/FileListComponent";
 import {FileInfoComponent, FileInfoType} from "components/FileInfo/FileInfoComponent";
+import {FileListTableComponent} from "./FileListTable/FileListTableComponent";
 import {DraggableDialogComponent} from "components/Dialogs";
 import {TableComponentProps, TableType} from "components/Shared";
-import {AppStore, BrowserMode, DialogStore, FileBrowserStore, HelpType} from "stores";
+import {AppStore, BrowserMode, FileBrowserStore, HelpType} from "stores";
 import {CatalogOverlayWidgetStore} from "stores/widgets";
 import "./FileBrowserDialogComponent.css";
 
@@ -283,9 +283,9 @@ export class FileBrowserDialogComponent extends React.Component {
                 <div className="bp3-dialog-body">
                     <div className={paneClassName}>
                         <div className="file-list">
-                            <FileListComponent
+                            <FileListTableComponent
                                 darkTheme={appStore.darkTheme}
-                                files={fileBrowserStore.getfileListByMode}
+                                listResponse={fileBrowserStore.getfileListByMode}
                                 fileBrowserMode={fileBrowserStore.browserMode}
                                 selectedFile={fileBrowserStore.selectedFile}
                                 selectedHDU={fileBrowserStore.selectedHDU}
