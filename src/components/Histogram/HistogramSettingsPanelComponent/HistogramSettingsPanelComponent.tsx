@@ -1,12 +1,11 @@
 import * as React from "react";
 import {observer} from "mobx-react";
 import {computed, autorun} from "mobx";
-import {Colors, Tab, Tabs} from "@blueprintjs/core";
-import {LinePlotSettingsPanelComponentProps, LinePlotSettingsPanelComponent, SmoothingSettingsComponent} from "components/Shared";
+import {Colors} from "@blueprintjs/core";
+import {LinePlotSettingsPanelComponentProps, LinePlotSettingsPanelComponent} from "components/Shared";
 import {HistogramWidgetStore} from "stores/widgets";
 import {WidgetProps, WidgetConfig, HelpType, WidgetsStore, AppStore} from "stores";
 import {parseNumber} from "utilities";
-import "./HistogramSettingsPanelComponent.css";
 
 const KEYCODE_ENTER = 13;
 
@@ -170,12 +169,7 @@ export class HistogramSettingsPanelComponent extends React.Component<WidgetProps
         };
         
         return (
-            <div className="histogram-settings">
-                <Tabs id="histogramSettingTabs">
-                    <Tab id="styling" title="Styling" panel={<LinePlotSettingsPanelComponent {...lineSettingsProps}/>}/>
-                    <Tab id="smoothing" title="Smoothing" panel={<SmoothingSettingsComponent smoothingStore={widgetStore.smoothingStore}/>}/>
-                </Tabs>
-            </div>
+            <LinePlotSettingsPanelComponent {...lineSettingsProps}/>
         );
     }
 }

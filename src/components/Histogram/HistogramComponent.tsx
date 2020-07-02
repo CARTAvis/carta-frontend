@@ -6,8 +6,8 @@ import {observer} from "mobx-react";
 import {NonIdealState, Colors} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import {HistogramToolbarComponent} from "./HistogramToolbarComponent/HistogramToolbarComponent";
-import {LinePlotComponent, LinePlotComponentProps, SmoothingType} from "components/Shared";
-import {TickType, MultiPlotProps} from "../Shared/LinePlot/PlotContainer/PlotContainerComponent";
+import {LinePlotComponent, LinePlotComponentProps, PlotType} from "components/Shared";
+import {TickType} from "../Shared/LinePlot/PlotContainer/PlotContainerComponent";
 import {HistogramWidgetStore} from "stores/widgets";
 import {FrameStore, WidgetConfig, WidgetProps, HelpType, WidgetsStore, AppStore} from "stores";
 import {clamp} from "utilities";
@@ -74,7 +74,7 @@ export class HistogramComponent extends React.Component<WidgetProps> {
         return null;
     }
 
-    @computed get plotData(): { values: Array<Point2D>, smoothingValues: Array<Point2D>, xMin: number, xMax: number, yMin: number, yMax: number } {
+    @computed get plotData(): { values: Array<Point2D>, xMin: number, xMax: number, yMin: number, yMax: number } {
         const histogram = this.histogramData;
         if (histogram) {
             let minIndex = 0;
@@ -95,18 +95,16 @@ export class HistogramComponent extends React.Component<WidgetProps> {
 
             let values: Array<{ x: number, y: number }>;
             const N = maxIndex - minIndex;
-            let x: number[] = [];
             if (N > 0 && !isNaN(N)) {
                 values = new Array(maxIndex - minIndex);
+
                 for (let i = minIndex; i <= maxIndex; i++) {
                     values[i - minIndex] = {x: histogram.firstBinCenter + histogram.binWidth * i, y: histogram.bins[i]};
                     yMin = Math.min(yMin, histogram.bins[i]);
                     yMax = Math.max(yMax, histogram.bins[i]);
-                    x.push(histogram.firstBinCenter + histogram.binWidth * i);
                 }
             }
-            let smoothingValues = this.widgetStore.smoothingStore.getSmoothingValues(x, new Float32Array(histogram.bins).subarray(minIndex, maxIndex));
-            return {values, smoothingValues, xMin, xMax, yMin, yMax};
+            return {values, xMin, xMax, yMin, yMax};
         }
         return null;
     }
@@ -224,9 +222,7 @@ export class HistogramComponent extends React.Component<WidgetProps> {
             scrollZoom: true,
             borderWidth: this.widgetStore.lineWidth,
             pointRadius: this.widgetStore.linePlotPointSize,
-            zeroLineWidth: 2,
-            multiPlotPropsMap: new Map(),
-            order: 1
+            zeroLineWidth: 2
         };
 
         if (frame.renderConfig.histogram && frame.renderConfig.histogram.bins && frame.renderConfig.histogram.bins.length) {
@@ -242,22 +238,6 @@ export class HistogramComponent extends React.Component<WidgetProps> {
                     }
                 }
                 linePlotProps.lineColor = primaryLineColor;
-                const smoothingStore = this.widgetStore.smoothingStore;
-                if (smoothingStore.type !== SmoothingType.NONE) {
-                    if (!smoothingStore.isOverlayOn) {
-                        linePlotProps.lineColor = "#00000000";
-                    }
-
-                    let smoothingPlotProps: MultiPlotProps = {
-                        data: currentPlotData.smoothingValues,
-                        type: smoothingStore.lineType,
-                        borderColor: smoothingStore.lineColor.colorHex,
-                        borderWidth: smoothingStore.lineWidth,
-                        order: 0,
-                        exportData: smoothingStore.exportData
-                    };
-                    linePlotProps.multiPlotPropsMap.set("smoothing", smoothingPlotProps);
-                }
 
                 // Determine scale in X and Y directions. If auto-scaling, use the bounds of the current data
                 if (this.widgetStore.isAutoScaledX) {

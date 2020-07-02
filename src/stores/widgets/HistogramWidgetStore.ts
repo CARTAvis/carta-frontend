@@ -5,7 +5,6 @@ import {PlotType, LineSettings} from "components/Shared";
 import {AppStore} from "../AppStore";
 import {RegionWidgetStore, RegionsType} from "./RegionWidgetStore";
 import {isColorValid} from "utilities";
-import { ProfileSmoothingStore } from "stores/ProfileSmoothingStore";
 
 export class HistogramWidgetStore extends RegionWidgetStore {
     @observable minX: number;
@@ -22,7 +21,6 @@ export class HistogramWidgetStore extends RegionWidgetStore {
     @observable linePlotPointSize: number;
     @observable meanRmsVisible: boolean;
     @observable linePlotInitXYBoundaries: { minXVal: number, maxXVal: number, minYVal: number, maxYVal: number };
-    @observable smoothingStore: ProfileSmoothingStore;
 
     @action setXBounds = (minVal: number, maxVal: number) => {
         this.minX = minVal;
@@ -131,7 +129,6 @@ export class HistogramWidgetStore extends RegionWidgetStore {
         this.linePlotPointSize = 1.5;
         this.lineWidth = 1;
         this.linePlotInitXYBoundaries = { minXVal: 0, maxXVal: 0, minYVal: 0, maxYVal: 0 };
-        this.smoothingStore = new ProfileSmoothingStore();
     }
 
     // settings

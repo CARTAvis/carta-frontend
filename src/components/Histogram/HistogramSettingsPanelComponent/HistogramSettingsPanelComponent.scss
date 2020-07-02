@@ -1,14 +1,10 @@
-.histogram-settings {
-    margin: 20px;
-
-    .bp3-form-group {
-        &:first-of-type {
-            margin-left: 0px;
+.histogram-settings-panel-form {
+    .bp3-control-group {
+        margin-top: 10px;
+        margin-left: 2px;
+        margin-right: 5px;
+        .plot-type-selector {
+            margin: 0 auto 10px;
         }
-    }
-
-    .bp3-form-group .bp3-label {
-        width: 8em;
-        text-align: left;
     }
 }
