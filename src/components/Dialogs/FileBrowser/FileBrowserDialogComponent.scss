@@ -9,6 +9,10 @@
         display: flex;
     }
 
+    .refresh-button {
+        margin-right: 10px;
+    }
+
     .bp3-dialog-body {
         height: 100%;
         overflow: hidden;
@@ -41,4 +45,14 @@
         }
 
     }
+}
+
+.path-breadcrumbs {
+    li::after {
+        margin: 0 2px !important;
+    }
+}
+
+.folder-breadcrumb {
+    font-size: 14px !important;
 }

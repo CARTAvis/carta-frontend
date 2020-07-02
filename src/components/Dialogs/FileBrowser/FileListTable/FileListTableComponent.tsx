@@ -19,6 +19,7 @@ interface FileEntry {
 }
 
 export interface FileListTableComponentProps {
+    darkTheme: boolean;
     listResponse: CARTA.IFileListResponse | CARTA.ICatalogListResponse;
     selectedFile: CARTA.IFileInfo | CARTA.ICatalogFileInfo;
     selectedHDU: string;
@@ -211,7 +212,7 @@ export class FileListTableComponent extends React.Component<FileListTableCompone
         return (
             <Cell className="filename-cell" tooltip={entry?.filename}>
                 <React.Fragment>
-                    <Icon icon={entry?.isDirectory ? "folder-close" : "blank"}/>
+                    {entry?.isDirectory && <Icon icon="folder-close"/>}
                     {entry?.filename}
                 </React.Fragment>
             </Cell>
@@ -245,7 +246,7 @@ export class FileListTableComponent extends React.Component<FileListTableCompone
                 this.selectedRegion = [];
             } else {
                 this.props.onFileClicked(entry.file, entry.hdu);
-                this.selectedRegion =  [Regions.row(index)];
+                this.selectedRegion = [Regions.row(index)];
             }
         }
     };
@@ -258,9 +259,15 @@ export class FileListTableComponent extends React.Component<FileListTableCompone
         }
 
         const sorting = `${this.sortColumn} - ${this.sortDirection}`;
+
+        const classes = ["browser-table"];
+        if (this.props.darkTheme) {
+            classes.push("bp3-dark");
+        }
+
         return (
             <Table
-                className={"browser-table"}
+                className={classes.join(" ")}
                 enableRowReordering={false}
                 selectionModes={SelectionModes.ROWS_AND_CELLS}
                 enableGhostCells={true}

@@ -42,6 +42,8 @@ export class FileBrowserDialogComponent extends React.Component {
     @observable fileFilterString: string = "";
     @observable debouncedFilterString: string = "";
 
+    private static readonly BreadcrumbIconSize = 14;
+
     private handleTabChange = (newId: TabId) => {
         FileBrowserStore.Instance.setSelectedTab(newId);
     };
@@ -324,13 +326,14 @@ export class FileBrowserDialogComponent extends React.Component {
                     <React.Fragment>
                         <Tooltip content={"Refresh current directory"}>
                             <Button
+                                className="refresh-button"
                                 icon="repeat"
                                 onClick={() => fileBrowserStore.selectFolder(fileList.directory, true)}
                                 minimal={true}
-                                style={{marginRight: "10px"}}
                             />
                         </Tooltip>
                         <Breadcrumbs
+                            className="path-breadcrumbs"
                             breadcrumbRenderer={this.renderBreadcrumb}
                             items={this.pathItems}
                         />
@@ -341,6 +344,7 @@ export class FileBrowserDialogComponent extends React.Component {
                     <div className={paneClassName}>
                         <div className="file-list">
                             <FileListTableComponent
+                                darkTheme={appStore.darkTheme}
                                 listResponse={fileBrowserStore.getfileListByMode}
                                 fileBrowserMode={fileBrowserStore.browserMode}
                                 selectedFile={fileBrowserStore.selectedFile}
@@ -390,10 +394,8 @@ export class FileBrowserDialogComponent extends React.Component {
 
     private renderBreadcrumb = (props: IBreadcrumbProps) => {
         return (
-            <Breadcrumb onClick={props.onClick}>
-                {props.icon &&
-                <Icon icon={props.icon}/>
-                }
+            <Breadcrumb onClick={props.onClick} className="folder-breadcrumb">
+                {props.icon && <Icon iconSize={14} icon={props.icon}/>}
                 {props.text}
             </Breadcrumb>
         );
