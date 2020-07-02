@@ -117,13 +117,12 @@ export class FileListTableComponent extends React.Component<FileListTableCompone
             if (this.sortColumn === "Filename") {
                 filteredSubdirectories.sort((a, b) => this.sortDirection * (a.toLowerCase() < b.toLowerCase() ? -1 : 1));
             }
-        }
-
-        for (const directory of filteredSubdirectories) {
-            entries.push({
-                filename: directory,
-                isDirectory: true
-            });
+            for (const directory of filteredSubdirectories) {
+                entries.push({
+                    filename: directory,
+                    isDirectory: true
+                });
+            }
         }
 
         if (filteredFiles && filteredFiles.length) {
@@ -140,38 +139,38 @@ export class FileListTableComponent extends React.Component<FileListTableCompone
                 default:
                     break;
             }
-        }
 
-        if (fileBrowserMode === BrowserMode.Catalog) {
-            for (const file of filteredFiles as CARTA.ICatalogFileInfo[]) {
-                entries.push({
-                    filename: file.name,
-                    typeInfo: FileListTableComponent.GeCatalogFileTypeDisplay(file.type),
-                    size: file.fileSize as number,
-                    file
-                });
-            }
-        } else if (fileBrowserMode === BrowserMode.File) {
-            for (const file of filteredFiles as CARTA.IFileInfo[]) {
-                for (const hdu of file.HDUList) {
-                    const filename = file.HDUList.length > 1 ? `${file.name}: HDU ${hdu}` : file.name;
+            if (fileBrowserMode === BrowserMode.Catalog) {
+                for (const file of filteredFiles as CARTA.ICatalogFileInfo[]) {
                     entries.push({
-                        filename,
-                        typeInfo: FileListTableComponent.GetFileTypeDisplay(file.type),
-                        size: file.size as number,
-                        file,
-                        hdu
+                        filename: file.name,
+                        typeInfo: FileListTableComponent.GeCatalogFileTypeDisplay(file.type),
+                        size: file.fileSize as number,
+                        file
                     });
                 }
-            }
-        } else {
-            for (const file of filteredFiles as CARTA.IFileInfo[]) {
-                entries.push({
-                    filename: file.name,
-                    typeInfo: FileListTableComponent.GetFileTypeDisplay(file.type),
-                    size: file.size as number,
-                    file
-                });
+            } else if (fileBrowserMode === BrowserMode.File) {
+                for (const file of filteredFiles as CARTA.IFileInfo[]) {
+                    for (const hdu of file.HDUList) {
+                        const filename = file.HDUList.length > 1 ? `${file.name}: HDU ${hdu}` : file.name;
+                        entries.push({
+                            filename,
+                            typeInfo: FileListTableComponent.GetFileTypeDisplay(file.type),
+                            size: file.size as number,
+                            file,
+                            hdu
+                        });
+                    }
+                }
+            } else {
+                for (const file of filteredFiles as CARTA.IFileInfo[]) {
+                    entries.push({
+                        filename: file.name,
+                        typeInfo: FileListTableComponent.GetFileTypeDisplay(file.type),
+                        size: file.size as number,
+                        file
+                    });
+                }
             }
         }
 
