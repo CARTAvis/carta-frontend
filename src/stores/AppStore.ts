@@ -395,17 +395,13 @@ export class AppStore {
 
     @action appendFile = (directory: string, file: string, hdu: string) => {
         // Stop animations playing before loading a new frame
-        if (this.animatorStore.animationState === AnimationState.PLAYING) {
-            this.animatorStore.stopAnimation();
-        }
+        this.animatorStore.stopAnimation();
         return this.addFrame(directory, file, hdu);
     };
 
     @action openFile = (directory: string, file: string, hdu: string) => {
         // Stop animations playing before loading a new frame
-        if (this.animatorStore.animationState === AnimationState.PLAYING) {
-            this.animatorStore.stopAnimation();
-        }
+        this.animatorStore.stopAnimation();
         this.removeAllFrames();
         return this.addFrame(directory, file, hdu);
     };
