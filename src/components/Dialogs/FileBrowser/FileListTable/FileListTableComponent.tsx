@@ -1,13 +1,13 @@
 import * as React from "react";
 import {action, computed, observable} from "mobx";
 import {observer} from "mobx-react";
-import {Cell, Column, ColumnHeaderCell, RenderMode, SelectionModes, Table, Regions} from "@blueprintjs/table";
+import {Cell, Column, ColumnHeaderCell, Regions, RenderMode, SelectionModes, Table} from "@blueprintjs/table";
 import {IRegion} from "@blueprintjs/table/src/regions";
 import {Icon, Label, Menu, MenuItem} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import {BrowserMode} from "stores";
-import "./FileListTableComponent.css";
 import {toFixed} from "utilities";
+import "./FileListTableComponent.css";
 
 interface FileEntry {
     filename: string;
@@ -35,7 +35,7 @@ export class FileListTableComponent extends React.Component<FileListTableCompone
     @observable sortColumn: string = "Filename";
     @observable sortDirection: number = 1;
     @observable selectedRegion: IRegion[];
-    @observable columnWidths = [300, 80, 100];
+    @observable columnWidths = [300, 100, 100];
 
     private static readonly RowHeight = 24;
 
@@ -88,9 +88,14 @@ export class FileListTableComponent extends React.Component<FileListTableCompone
 
         const filterString = this.props.filterString?.toLowerCase();
         if (filterString) {
-            filteredSubdirectories = filteredSubdirectories?.filter(value => value.toLowerCase().includes(filterString));
-            // @ts-ignore
-            filteredFiles = filteredFiles?.filter(file => file.name.toLowerCase().includes(filterString));
+            try {
+                const regex = RegExp(filterString);
+                filteredSubdirectories = filteredSubdirectories?.filter(value => value.toLowerCase().match(regex));
+                // @ts-ignore
+                filteredFiles = filteredFiles?.filter(file => file.name.toLowerCase().match(regex));
+            } catch (e) {
+                console.log(e);
+            }
         }
 
         const entries: FileEntry[] = [];
@@ -320,6 +325,7 @@ export class FileListTableComponent extends React.Component<FileListTableCompone
             <Table
                 className={classes.join(" ")}
                 enableRowReordering={false}
+                renderMode={RenderMode.NONE}
                 selectionModes={SelectionModes.NONE}
                 enableGhostCells={true}
                 columnWidths={this.columnWidths}
