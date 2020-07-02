@@ -373,6 +373,20 @@ export class AppStore {
         return new Promise<number>((resolve, reject) => {
             this.fileLoading = true;
 
+            if (!file) {
+                const lastDirSeparator = directory.lastIndexOf("/");
+                if (lastDirSeparator >= 0) {
+                    file = directory.substring(lastDirSeparator + 1);
+                    directory = directory.substring(0, lastDirSeparator);
+                }
+            } else if (!directory && file.includes("/")) {
+                const lastDirSeparator = file.lastIndexOf("/");
+                if (lastDirSeparator >= 0) {
+                    directory = file.substring(0, lastDirSeparator);
+                    file = file.substring(lastDirSeparator + 1);
+                }
+            }
+
             this.backendService.loadFile(directory, file, hdu, this.fileCounter, CARTA.RenderMode.RASTER).subscribe(ack => {
                 if (!this.addFrame(ack, directory, hdu)) {
                     AppToaster.show({icon: "warning-sign", message: "Load file failed.", intent: "danger", timeout: 3000});
@@ -392,17 +406,13 @@ export class AppStore {
 
     @action appendFile = (directory: string, file: string, hdu: string) => {
         // Stop animations playing before loading a new frame
-        if (this.animatorStore.animationState === AnimationState.PLAYING) {
-            this.animatorStore.stopAnimation();
-        }
+        this.animatorStore.stopAnimation();
         return this.loadFile(directory, file, hdu);
     };
 
     @action openFile = (directory: string, file: string, hdu: string) => {
         // Stop animations playing before loading a new frame
-        if (this.animatorStore.animationState === AnimationState.PLAYING) {
-            this.animatorStore.stopAnimation();
-        }
+        this.animatorStore.stopAnimation();
         this.removeAllFrames();
         return this.loadFile(directory, file, hdu);
     };
