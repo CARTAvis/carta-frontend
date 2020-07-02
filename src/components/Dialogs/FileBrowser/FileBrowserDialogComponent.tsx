@@ -255,6 +255,7 @@ export class FileBrowserDialogComponent extends React.Component {
     // Refresh file list to trigger the Breadcrumb re-rendering
     @action
     private refreshFileList() {
+        this.clearFilterString();
         const fileBrowserStore = FileBrowserStore.Instance;
         switch (fileBrowserStore.browserMode) {
             case BrowserMode.Catalog:
