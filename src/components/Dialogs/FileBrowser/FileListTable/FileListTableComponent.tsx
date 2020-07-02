@@ -19,14 +19,14 @@ interface FileEntry {
 }
 
 export interface FileListTableComponentProps {
-    darkTheme: boolean;
     listResponse: CARTA.IFileListResponse | CARTA.ICatalogListResponse;
     selectedFile: CARTA.IFileInfo | CARTA.ICatalogFileInfo;
     selectedHDU: string;
+    filterString?: string;
     fileBrowserMode: BrowserMode;
     onFileClicked: (file: CARTA.IFileInfo | CARTA.ICatalogFileInfo, hdu?: string) => void;
     onFileDoubleClicked: (file: CARTA.FileInfo | CARTA.CatalogFileInfo, hdu?: string) => void;
-    onFolderClicked: (folder: string, absolute: boolean) => void;
+    onFolderClicked: (folder: string) => void;
 }
 
 @observer
@@ -75,35 +75,41 @@ export class FileListTableComponent extends React.Component<FileListTableCompone
         const fileResponse = this.props.listResponse;
         const fileBrowserMode = this.props.fileBrowserMode;
 
+        let filteredSubdirectories = fileResponse.subdirectories.slice();
+        let filteredFiles = fileResponse.files.slice();
+
+        const filterString = this.props.filterString?.toLowerCase();
+        if (filterString) {
+            filteredSubdirectories = filteredSubdirectories?.filter(value => value.toLowerCase().includes(filterString));
+            // @ts-ignore
+            filteredFiles = filteredFiles?.filter(file => file.name.toLowerCase().includes(filterString));
+        }
+
         const entries: FileEntry[] = [];
 
-        let sortedDirectories = [];
-        if (fileResponse.subdirectories && fileResponse.subdirectories.length) {
-            sortedDirectories = fileResponse.subdirectories.slice();
+        if (filteredSubdirectories && filteredSubdirectories.length) {
             if (this.sortColumn === "Filename") {
-                sortedDirectories.sort((a, b) => this.sortDirection * (a.toLowerCase() < b.toLowerCase() ? -1 : 1));
+                filteredSubdirectories.sort((a, b) => this.sortDirection * (a.toLowerCase() < b.toLowerCase() ? -1 : 1));
             }
         }
 
-        for (const directory of sortedDirectories) {
+        for (const directory of filteredSubdirectories) {
             entries.push({
                 filename: directory,
                 isDirectory: true
             });
         }
 
-        let sortedFiles = [];
-        if (fileResponse.files && fileResponse.files.length) {
-            sortedFiles = fileResponse.files.slice();
+        if (filteredFiles && filteredFiles.length) {
             switch (this.sortColumn) {
                 case "Filename":
-                    sortedFiles.sort((a, b) => this.sortDirection * (a.name.toLowerCase() < b.name.toLowerCase() ? -1 : 1));
+                    filteredFiles.sort((a, b) => this.sortDirection * (a.name.toLowerCase() < b.name.toLowerCase() ? -1 : 1));
                     break;
                 case "Type":
-                    sortedFiles.sort((a, b) => this.sortDirection * (a.type > b.type ? -1 : 1));
+                    filteredFiles.sort((a, b) => this.sortDirection * (a.type > b.type ? -1 : 1));
                     break;
                 case "Size":
-                    sortedFiles.sort((a, b) => this.sortDirection * (a.size < b.size ? -1 : 1));
+                    filteredFiles.sort((a, b) => this.sortDirection * (a.size < b.size ? -1 : 1));
                     break;
                 default:
                     break;
@@ -111,7 +117,7 @@ export class FileListTableComponent extends React.Component<FileListTableCompone
         }
 
         if (fileBrowserMode === BrowserMode.Catalog) {
-            for (const file of sortedFiles) {
+            for (const file of filteredFiles as CARTA.ICatalogFileInfo[]) {
                 entries.push({
                     filename: file.name,
                     typeInfo: FileListTableComponent.GeCatalogFileTypeDisplay(file.type),
@@ -119,7 +125,7 @@ export class FileListTableComponent extends React.Component<FileListTableCompone
                 });
             }
         } else if (fileBrowserMode === BrowserMode.File) {
-            for (const file of sortedFiles) {
+            for (const file of filteredFiles as CARTA.IFileInfo[]) {
                 for (const hdu of file.HDUList) {
                     const filename = file.HDUList.length > 1 ? `${file.name}: HDU ${hdu}` : file.name;
                     entries.push({
@@ -132,7 +138,7 @@ export class FileListTableComponent extends React.Component<FileListTableCompone
                 }
             }
         } else {
-            for (const file of sortedFiles) {
+            for (const file of filteredFiles as CARTA.IFileInfo[]) {
                 entries.push({
                     filename: file.name,
                     typeInfo: FileListTableComponent.GetFileTypeDisplay(file.type),
@@ -158,7 +164,7 @@ export class FileListTableComponent extends React.Component<FileListTableCompone
     @action selectEntry = (entry: FileEntry, index) => {
         if (entry) {
             if (entry.isDirectory) {
-                this.props.onFolderClicked(entry.filename, false);
+                this.props.onFolderClicked(entry.filename);
                 this.selectedRegion = undefined;
             } else {
                 this.props.onFileClicked(entry.file, entry.hdu);
@@ -202,11 +208,19 @@ export class FileListTableComponent extends React.Component<FileListTableCompone
 
     private renderFilenames = (rowIndex: number) => {
         const entry = this.tableEntries[rowIndex];
-        return <Cell>{entry.filename}</Cell>;
+        return (
+            <Cell className="filename-cell" tooltip={entry?.filename}>
+                <React.Fragment>
+                    <Icon icon={entry?.isDirectory ? "folder-close" : "blank"}/>
+                    {entry?.filename}
+                </React.Fragment>
+            </Cell>
+        );
     };
 
     private renderTypes = (rowIndex: number) => {
-        return <Cell>{this.tableEntries[rowIndex].typeInfo?.type}</Cell>;
+        const entry = this.tableEntries[rowIndex];
+        return <Cell tooltip={entry.typeInfo?.description}>{entry.typeInfo?.type}</Cell>;
     };
 
     private renderSizes = (rowIndex: number) => {
@@ -227,11 +241,11 @@ export class FileListTableComponent extends React.Component<FileListTableCompone
         const entry = this.tableEntries[index];
         if (entry) {
             if (entry.isDirectory) {
-                this.props.onFolderClicked(entry.filename, false);
+                this.props.onFolderClicked(entry.filename);
                 this.selectedRegion = [];
             } else {
                 this.props.onFileClicked(entry.file, entry.hdu);
-                this.selectedRegion = selectedRegions;
+                this.selectedRegion =  [Regions.row(index)];
             }
         }
     };
@@ -246,7 +260,7 @@ export class FileListTableComponent extends React.Component<FileListTableCompone
         const sorting = `${this.sortColumn} - ${this.sortDirection}`;
         return (
             <Table
-                className={"column-filter"}
+                className={"browser-table"}
                 enableRowReordering={false}
                 selectionModes={SelectionModes.ROWS_AND_CELLS}
                 enableGhostCells={true}

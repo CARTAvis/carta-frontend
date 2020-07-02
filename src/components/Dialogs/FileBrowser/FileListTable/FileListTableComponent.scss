@@ -14,35 +14,18 @@
     }
 }
 
+.filename-cell {
+    .bp3-icon {
+        margin-right: 5px;
+    }
+}
+
 .catalog-sort-menu-item {
     min-width: fit-content !important;
 }
 
-.column-filter {
-    .bp3-table-selection-region {
-        border: 0;
-        background-color: rgba(255, 255, 255, 0);
-    }
-
-    .bp3-table-region {
-        border: 0;
-        background-color: rgba(255, 255, 255, 0);
-    }
-
-    .bp3-table-header.bp3-table-header-selected::before {
-        background-image: none;
-    }
-
-    .bp3-popover-target {
-        width: inherit;
-
-        .bp3-input-group {
-            .bp3-input {
-                border-radius: 0;
-                vertical-align: baseline;
-                box-shadow: none;
-                background: #ffffff00;
-            }
-        }
+.browser-table {
+    .bp3-table-cell {
+        cursor: pointer;
     }
 }

@@ -1,7 +1,32 @@
 import * as React from "react";
+import * as _ from "lodash";
 import {observer} from "mobx-react";
 import {action, computed, observable} from "mobx";
-import {Alert, AnchorButton, Breadcrumb, Breadcrumbs, Button, IBreadcrumbProps, Icon, IDialogProps, InputGroup, Intent, Menu, MenuItem, NonIdealState, Popover, Position, Pre, Spinner, Tab, TabId, Tabs, Tooltip, Text, Switch} from "@blueprintjs/core";
+import {
+    Alert,
+    AnchorButton,
+    Breadcrumb,
+    Breadcrumbs,
+    Button,
+    IBreadcrumbProps,
+    Icon,
+    IDialogProps,
+    InputGroup,
+    Intent,
+    Menu,
+    MenuItem,
+    NonIdealState,
+    Popover,
+    Position,
+    Pre,
+    Spinner,
+    Tab,
+    TabId,
+    Tabs,
+    Tooltip,
+    Text,
+    Switch
+} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import {FileInfoComponent, FileInfoType} from "components/FileInfo/FileInfoComponent";
 import {FileListTableComponent} from "./FileListTable/FileListTableComponent";
@@ -14,6 +39,8 @@ import "./FileBrowserDialogComponent.css";
 @observer
 export class FileBrowserDialogComponent extends React.Component {
     @observable overwriteExistingFileAlertVisible: boolean;
+    @observable fileFilterString: string = "";
+    @observable debouncedFilterString: string = "";
 
     private handleTabChange = (newId: TabId) => {
         FileBrowserStore.Instance.setSelectedTab(newId);
@@ -86,6 +113,30 @@ export class FileBrowserDialogComponent extends React.Component {
     private handleExportInputChanged = (ev: React.ChangeEvent<HTMLInputElement>) => {
         const fileBrowserStore = FileBrowserStore.Instance;
         fileBrowserStore.setExportFilename(ev.target.value);
+    };
+
+    @action handleFilterStringInputChanged = (ev: React.ChangeEvent<HTMLInputElement>) => {
+        this.fileFilterString = ev.target.value;
+        this.setFilterString(this.fileFilterString);
+    };
+
+    @action setFilterString = _.debounce((filterString: string) => {
+        this.debouncedFilterString = filterString;
+    }, 500);
+
+    @action clearFilterString = () => {
+        this.fileFilterString = "";
+        this.debouncedFilterString = "";
+    };
+
+    @action handleFolderClicked = (folderName: string) => {
+        this.clearFilterString();
+        AppStore.Instance.fileBrowserStore.selectFolder(folderName);
+    };
+
+    @action handleBreadcrumbClicked = (path: string) => {
+        this.clearFilterString();
+        AppStore.Instance.fileBrowserStore.selectFolder(path, true);
     };
 
     private static ValidateFilename(filename: string) {
@@ -238,13 +289,19 @@ export class FileBrowserDialogComponent extends React.Component {
 
         const actionButton = this.renderActionButton(fileBrowserStore.browserMode, fileBrowserStore.appendingFrame);
 
-        let exportFileInput: React.ReactNode;
+        let fileInput: React.ReactNode;
         let paneClassName = "file-panes";
 
         if (fileBrowserStore.browserMode === BrowserMode.RegionExport) {
-            exportFileInput = this.renderExportFilenameInput();
+            fileInput = this.renderExportFilenameInput();
         } else {
-            paneClassName += " extended";
+            fileInput = (
+                <InputGroup
+                    autoFocus={true}
+                    placeholder="Filter by filename"
+                    value={this.fileFilterString}
+                    onChange={this.handleFilterStringInputChanged}
+                />);
         }
 
         let tableProps: TableComponentProps = null;
@@ -284,14 +341,14 @@ export class FileBrowserDialogComponent extends React.Component {
                     <div className={paneClassName}>
                         <div className="file-list">
                             <FileListTableComponent
-                                darkTheme={appStore.darkTheme}
                                 listResponse={fileBrowserStore.getfileListByMode}
                                 fileBrowserMode={fileBrowserStore.browserMode}
                                 selectedFile={fileBrowserStore.selectedFile}
                                 selectedHDU={fileBrowserStore.selectedHDU}
+                                filterString={this.debouncedFilterString}
                                 onFileClicked={fileBrowserStore.selectFile}
                                 onFileDoubleClicked={this.loadFile}
-                                onFolderClicked={fileBrowserStore.selectFolder}
+                                onFolderClicked={this.handleFolderClicked}
                             />
                         </div>
                         <div className="file-info-pane">
@@ -308,7 +365,7 @@ export class FileBrowserDialogComponent extends React.Component {
                             />
                         </div>
                     </div>
-                    {exportFileInput}
+                    {fileInput}
                 </div>
                 <div className="bp3-dialog-footer">
                     <div className="bp3-dialog-footer-actions">
@@ -355,7 +412,11 @@ export class FileBrowserDialogComponent extends React.Component {
 
     @computed get pathItems() {
         const fileBrowserStore = FileBrowserStore.Instance;
-        let pathItems: IBreadcrumbProps[] = [{icon: "desktop", onClick: () => fileBrowserStore.selectFolder(".", true)}];
+        let pathItems: IBreadcrumbProps[] = [{
+            icon: "desktop",
+            onClick: () => this.handleBreadcrumbClicked("")
+        }];
+
         const fileList = fileBrowserStore.getfileListByMode;
         if (fileList) {
             const path = fileList.directory;
@@ -371,7 +432,7 @@ export class FileBrowserDialogComponent extends React.Component {
                         const targetPath = parentPath;
                         pathItems.push({
                             text: dirName,
-                            onClick: () => fileBrowserStore.selectFolder(targetPath, true)
+                            onClick: () => this.handleBreadcrumbClicked(targetPath)
                         });
                     }
                 }
