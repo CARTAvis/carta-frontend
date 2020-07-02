@@ -26,7 +26,7 @@ export interface FileListTableComponentProps {
     filterString?: string;
     fileBrowserMode: BrowserMode;
     onFileClicked: (file: CARTA.IFileInfo | CARTA.ICatalogFileInfo, hdu?: string) => void;
-    onFileDoubleClicked: (file: CARTA.FileInfo | CARTA.CatalogFileInfo, hdu?: string) => void;
+    onFileDoubleClicked: (file: CARTA.IFileInfo | CARTA.ICatalogFileInfo, hdu?: string) => void;
     onFolderClicked: (folder: string) => void;
 }
 
@@ -35,6 +35,9 @@ export class FileListTableComponent extends React.Component<FileListTableCompone
     @observable sortColumn: string = "Filename";
     @observable sortDirection: number = 1;
     @observable selectedRegion: IRegion[];
+    @observable columnWidths = [300, 80, 100];
+
+    private static readonly RowHeight = 24;
 
     private static readonly FileTypeMap = new Map<CARTA.FileType, { type: string, description: string }>([
         [CARTA.FileType.FITS, {type: "FITS", description: "Flexible Image Transport System"}],
@@ -74,6 +77,10 @@ export class FileListTableComponent extends React.Component<FileListTableCompone
 
     @computed get tableEntries(): FileEntry[] {
         const fileResponse = this.props.listResponse;
+        if (!fileResponse) {
+            return [];
+        }
+
         const fileBrowserMode = this.props.fileBrowserMode;
 
         let filteredSubdirectories = fileResponse.subdirectories.slice();
@@ -174,6 +181,12 @@ export class FileListTableComponent extends React.Component<FileListTableCompone
         }
     };
 
+    @action handleColumnWidthChanged = (index: number, size: number) => {
+        if (index >= 0 && index < this.columnWidths.length) {
+            this.columnWidths[index] = size;
+        }
+    };
+
     private renderColumnHeader = (name: string, index?: number) => {
         const sortColumn = name === this.sortColumn;
         const sortDesc = this.sortDirection < 0;
@@ -212,8 +225,13 @@ export class FileListTableComponent extends React.Component<FileListTableCompone
         return (
             <Cell className="filename-cell" tooltip={entry?.filename}>
                 <React.Fragment>
-                    {entry?.isDirectory && <Icon icon="folder-close"/>}
-                    {entry?.filename}
+                    <div
+                        onClick={() => this.handleEntryClicked(entry, rowIndex)}
+                        onDoubleClick={() => this.handleEntryDoubleClicked(entry)}
+                    >
+                        {entry?.isDirectory && <Icon icon="folder-close"/>}
+                        {entry?.filename}
+                    </div>
                 </React.Fragment>
             </Cell>
         );
@@ -221,16 +239,35 @@ export class FileListTableComponent extends React.Component<FileListTableCompone
 
     private renderTypes = (rowIndex: number) => {
         const entry = this.tableEntries[rowIndex];
-        return <Cell tooltip={entry.typeInfo?.description}>{entry.typeInfo?.type}</Cell>;
+        return (
+            <Cell tooltip={entry.typeInfo?.description}>
+                <React.Fragment>
+                    <div
+                        onClick={() => this.handleEntryClicked(entry, rowIndex)}
+                        onDoubleClick={() => this.handleEntryDoubleClicked(entry)}
+                    >
+                        {entry.typeInfo?.type}
+                    </div>
+                </React.Fragment>
+            </Cell>
+        );
     };
 
     private renderSizes = (rowIndex: number) => {
-        const sizeInBytes = this.tableEntries[rowIndex].size;
-        if (isFinite(sizeInBytes)) {
-            return <Cell>{FileListTableComponent.GetFileSizeDisplay(sizeInBytes)}</Cell>;
-        } else {
-            return <Cell/>;
-        }
+        const entry = this.tableEntries[rowIndex];
+        const sizeInBytes = entry?.size;
+        return (
+            <Cell>
+                <React.Fragment>
+                    <div
+                        onClick={() => this.handleEntryClicked(entry, rowIndex)}
+                        onDoubleClick={() => this.handleEntryDoubleClicked(entry)}
+                    >
+                        {isFinite(sizeInBytes) && FileListTableComponent.GetFileSizeDisplay(sizeInBytes)}
+                    </div>
+                </React.Fragment>
+            </Cell>
+        );
     };
 
     private onSelection = (selectedRegions: IRegion[]) => {
@@ -251,13 +288,27 @@ export class FileListTableComponent extends React.Component<FileListTableCompone
         }
     };
 
+    private handleEntryDoubleClicked = (entry: FileEntry) => {
+        if (entry.isDirectory) {
+            return;
+        }
+        this.props.onFileDoubleClicked(entry.file, entry.hdu);
+    };
+
+    private handleEntryClicked = (entry: FileEntry, index) => {
+        if (entry) {
+            if (entry.isDirectory) {
+                this.props.onFolderClicked(entry.filename);
+                this.selectedRegion = [];
+            } else {
+                this.props.onFileClicked(entry.file, entry.hdu);
+                this.selectedRegion = [Regions.row(index)];
+            }
+        }
+    };
+
     render() {
         const fileResponse = this.props.listResponse;
-
-        if (!fileResponse?.files) {
-            return null;
-        }
-
         const sorting = `${this.sortColumn} - ${this.sortDirection}`;
 
         const classes = ["browser-table"];
@@ -269,12 +320,14 @@ export class FileListTableComponent extends React.Component<FileListTableCompone
             <Table
                 className={classes.join(" ")}
                 enableRowReordering={false}
-                selectionModes={SelectionModes.ROWS_AND_CELLS}
+                selectionModes={SelectionModes.NONE}
                 enableGhostCells={true}
+                columnWidths={this.columnWidths}
                 enableMultipleSelection={false}
                 enableRowResizing={false}
-                defaultRowHeight={24}
+                defaultRowHeight={FileListTableComponent.RowHeight}
                 onSelection={this.onSelection}
+                onColumnWidthChanged={this.handleColumnWidthChanged}
                 selectedRegions={this.selectedRegion}
                 enableRowHeader={false}
                 numRows={this.tableEntries.length}

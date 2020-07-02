@@ -42,8 +42,6 @@ export class FileBrowserDialogComponent extends React.Component {
     @observable fileFilterString: string = "";
     @observable debouncedFilterString: string = "";
 
-    private static readonly BreadcrumbIconSize = 14;
-
     private handleTabChange = (newId: TabId) => {
         FileBrowserStore.Instance.setSelectedTab(newId);
     };
