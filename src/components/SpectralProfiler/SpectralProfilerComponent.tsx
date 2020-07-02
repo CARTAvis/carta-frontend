@@ -332,7 +332,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
             borderWidth: this.widgetStore.lineWidth,
             pointRadius: this.widgetStore.linePlotPointSize,
             zeroLineWidth: 2,
-            order: 2,
+            order: 1,
             multiPlotPropsMap: new Map()
         };
 

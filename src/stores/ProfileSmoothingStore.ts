@@ -132,17 +132,33 @@ export class ProfileSmoothingStore {
             smoothingYs = GSL.savitzkyGolaySmooth(x, y, this.savitzkyGolaySize, this.savitzkyGolayOrder);
         }
 
-        for (let i = 0; i < smoothingXs.length; i++) {
-            if (this.type === SmoothingType.DECIMATION) {
-                if (i === decimatedIndexes.length) {
-                    break;
-                }
-                smoothingArray.push({x: smoothingXs[decimatedIndexes[i]], y: y[decimatedIndexes[i]]});
-            } else {
+        if (this.type !== SmoothingType.DECIMATION) {
+            for (let i = 0; i < smoothingXs.length; i++) {
                 smoothingArray.push({x: smoothingXs[i], y: smoothingYs[i]});
+            }
+        } else {
+            for (let i = 0; i < decimatedIndexes.length; i++) {
+                smoothingArray.push({x: x[decimatedIndexes[i]], y: y[decimatedIndexes[i]]});
             }
         }
         return smoothingArray;
+    }
+
+    getDecimatedValues(x: number[], y: Float32Array|Float64Array, decimationValue: number): Point2D[] {
+        if (!y) {
+            return[];
+        }
+
+        let decimatedArray: Point2D[] = [];
+        let decimatedIndexes: number[] = GSL.decimation(y, decimationValue);
+        for (let i = 0; i < decimatedIndexes.length; i++) {
+            if (x && x.length > 0) {
+                decimatedArray.push({x: x[decimatedIndexes[i]], y: y[decimatedIndexes[i]]});
+            } else {
+                decimatedArray.push({x: decimatedIndexes[i], y: y[decimatedIndexes[i]]});
+            }
+        }
+        return decimatedArray;
     }
 
 }

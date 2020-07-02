@@ -96,19 +96,16 @@ export class HistogramComponent extends React.Component<WidgetProps> {
             let values: Array<{ x: number, y: number }>;
             const N = maxIndex - minIndex;
             let x: number[] = [];
-            let y: number[] = [];
             if (N > 0 && !isNaN(N)) {
                 values = new Array(maxIndex - minIndex);
-
                 for (let i = minIndex; i <= maxIndex; i++) {
                     values[i - minIndex] = {x: histogram.firstBinCenter + histogram.binWidth * i, y: histogram.bins[i]};
                     yMin = Math.min(yMin, histogram.bins[i]);
                     yMax = Math.max(yMax, histogram.bins[i]);
                     x.push(histogram.firstBinCenter + histogram.binWidth * i);
-                    y.push(histogram.bins[i]);
                 }
             }
-            let smoothingValues = this.widgetStore.smoothingStore.getSmoothingValues(x, new Float32Array(y));
+            let smoothingValues = this.widgetStore.smoothingStore.getSmoothingValues(x, new Float32Array(histogram.bins).subarray(minIndex, maxIndex));
             return {values, smoothingValues, xMin, xMax, yMin, yMax};
         }
         return null;
@@ -228,7 +225,8 @@ export class HistogramComponent extends React.Component<WidgetProps> {
             borderWidth: this.widgetStore.lineWidth,
             pointRadius: this.widgetStore.linePlotPointSize,
             zeroLineWidth: 2,
-            multiPlotPropsMap: new Map()
+            multiPlotPropsMap: new Map(),
+            order: 1
         };
 
         if (frame.renderConfig.histogram && frame.renderConfig.histogram.bins && frame.renderConfig.histogram.bins.length) {

@@ -1,11 +1,12 @@
 import * as React from "react";
 import {computed, autorun} from "mobx";
 import {observer} from "mobx-react";
-import {Colors} from "@blueprintjs/core";
-import {LinePlotSettingsPanelComponentProps, LinePlotSettingsPanelComponent} from "components/Shared";
+import {Colors, Tabs, Tab} from "@blueprintjs/core";
+import {LinePlotSettingsPanelComponentProps, LinePlotSettingsPanelComponent, SmoothingSettingsComponent} from "components/Shared";
 import {SpatialProfileWidgetStore} from "stores/widgets";
 import {WidgetProps, WidgetConfig, HelpType, WidgetsStore, AppStore} from "stores";
 import {parseNumber} from "utilities";
+import "./SpatialProfilerSettingsPanelComponent.css";
 
 const KEYCODE_ENTER = 13;
 
@@ -173,7 +174,12 @@ export class SpatialProfilerSettingsPanelComponent extends React.Component<Widge
             handleYMaxChange: this.handleYMaxChange
         };
         return (
-            <LinePlotSettingsPanelComponent {...lineSettingsProps}/>
+        <div className="spatial-profiler-settings">
+            <Tabs id="spatialSettingTabs">
+                <Tab id="styling" title="Styling" panel={<LinePlotSettingsPanelComponent {...lineSettingsProps}/>}/>
+                <Tab id="smoothing" title="Smoothing" panel={<SmoothingSettingsComponent smoothingStore={widgetStore.smoothingStore}/>}/>
+            </Tabs>
+        </div>
         );
     }
 }

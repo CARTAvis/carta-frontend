@@ -4,6 +4,7 @@ import {FrameStore} from "../FrameStore";
 import {CARTA} from "carta-protobuf";
 import {PlotType, LineSettings} from "components/Shared";
 import {isColorValid} from "utilities";
+import { ProfileSmoothingStore } from "stores/ProfileSmoothingStore";
 
 export class SpatialProfileWidgetStore {
     @observable fileId: number;
@@ -25,6 +26,7 @@ export class SpatialProfileWidgetStore {
     @observable lineWidth: number;
     @observable linePlotPointSize: number;
     @observable linePlotInitXYBoundaries: { minXVal: number, maxXVal: number, minYVal: number, maxYVal: number };
+    @observable smoothingStore: ProfileSmoothingStore;
 
     private static ValidCoordinates = ["x", "y", "Ix", "Iy", "Qx", "Qy", "Ux", "Uy", "Vx", "Vz"];
 
@@ -122,6 +124,7 @@ export class SpatialProfileWidgetStore {
         this.linePlotPointSize = 1.5;
         this.lineWidth = 1;
         this.linePlotInitXYBoundaries = { minXVal: 0, maxXVal: 0, minYVal: 0, maxYVal: 0 };
+        this.smoothingStore = new ProfileSmoothingStore();
     }
 
     @computed get isAutoScaledX() {
