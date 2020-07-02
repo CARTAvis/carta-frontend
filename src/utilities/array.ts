@@ -44,6 +44,9 @@ export function binarySearchByX(sortedArray: readonly Point2D[], x: number): {po
             }
         }
     }
+    if (start >= sortedArray.length || start < 0 || end >= sortedArray.length || end < 0) {
+        return null;
+    }
     const closer = Math.abs(sortedArray[start].x - x) < Math.abs(x - sortedArray[end].x) ? start : end;
     return {point: sortedArray[closer], index: closer};
 }

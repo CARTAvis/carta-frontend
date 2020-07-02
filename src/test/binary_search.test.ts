@@ -11,6 +11,10 @@ test("test binarySearchByX with sorted array in incremental/decremental order", 
         {x: 4, y: 0}, {x: 3, y: 0}, {x: 2, y: 0}, {x: 1, y: 0}, {x: -15, y: 0}
     ];
 
+    const empty: Point2D[] = [
+        {x: NaN, y: NaN},{x: NaN, y: NaN},{x: NaN, y: NaN},{x: NaN, y: NaN}
+    ];
+
     expect(binarySearchByX(null, null)).toEqual(null);
     expect(binarySearchByX(null, 10)).toEqual(null);
     expect(binarySearchByX(incremental, null)).toEqual(null);
@@ -26,4 +30,9 @@ test("test binarySearchByX with sorted array in incremental/decremental order", 
     expect(binarySearchByX(decremental, 5)).toEqual({point: {x: 4, y: 0}, index: 5});
     expect(binarySearchByX(decremental, 0)).toEqual({point: {x: 1, y: 0}, index: 8});
     expect(binarySearchByX(decremental, -33)).toEqual({point: {x: -15, y: 0}, index: 9});
+
+    expect(binarySearchByX(empty, 999)).toEqual(null);
+    expect(binarySearchByX(empty, -33)).toEqual(null);
+    expect(binarySearchByX(empty, 5)).toEqual(null);
+    expect(binarySearchByX(empty, 0)).toEqual(null);
 });

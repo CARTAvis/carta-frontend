@@ -1,8 +1,9 @@
 import * as React from "react";
+import * as tinycolor from "tinycolor2";
 import {observer} from "mobx-react";
-import {AppStore, OverlayStore, PreferenceStore, RasterRenderType} from "stores";
+import {AppStore, RasterRenderType} from "stores";
 import {FrameView, Point2D, TileCoordinate} from "models";
-import {GetRequiredTiles, GL, LayerToMip, hexStringToRgba, add2D, scale2D} from "utilities";
+import {GetRequiredTiles, GL, LayerToMip, add2D, scale2D} from "utilities";
 import {RasterTile, TILE_SIZE, TileService, TileWebGLService} from "services";
 import "./RasterViewComponent.css";
 
@@ -66,8 +67,9 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
             this.gl.uniform1f(shaderUniforms.CanvasWidth, frame.renderWidth * devicePixelRatio);
             this.gl.uniform1f(shaderUniforms.CanvasHeight, frame.renderHeight * devicePixelRatio);
 
-            const rgba = hexStringToRgba(appStore.preferenceStore.nanColorHex, appStore.preferenceStore.nanAlpha);
-            if (rgba) {
+            const nanColor = tinycolor(appStore.preferenceStore.nanColorHex).setAlpha(appStore.preferenceStore.nanAlpha);
+            if (nanColor.isValid()) {
+                const rgba = nanColor.toRgb();
                 this.gl.uniform4f(shaderUniforms.NaNColor, rgba.r / 255, rgba.g / 255, rgba.b / 255, rgba.a);
             }
         }

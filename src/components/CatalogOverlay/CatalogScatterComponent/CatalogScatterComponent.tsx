@@ -147,7 +147,7 @@ export class CatalogScatterComponent extends React.Component<WidgetProps> {
 
         if (catalogOverlayWidgetStore.shouldUpdateData) {
             catalogOverlayWidgetStore.setUpdateMode(CatalogUpdateMode.PlotsUpdate);
-            catalogOverlayWidgetStore.setPlotingData(true);   
+            catalogOverlayWidgetStore.setUpdatingDataStream(true);   
             let catalogFilter = catalogOverlayWidgetStore.updateRequestDataSize;
             appStore.sendCatalogFilter(catalogFilter);
         }
@@ -156,19 +156,23 @@ export class CatalogScatterComponent extends React.Component<WidgetProps> {
     // region selection
     private onLassoSelected = (event: Plotly.PlotSelectionEvent) => {
         if (event && event.points && event.points.length > 0) {
+            const catalogFileId = this.widgetStore.catalogOverlayWidgetStore.catalogInfo.fileId;
+            AppStore.Instance.updateCatalogProfiles(catalogFileId);
             let selectedPointIndices = [];
             const points = event.points;
             for (let index = 0; index < points.length; index++) {
                 const selectedPoint = points[index];
                 selectedPointIndices.push(selectedPoint.pointIndex);
             }
-            this.widgetStore.catalogOverlayWidgetStore.setSelectedPointIndices(selectedPointIndices, true);
+            this.widgetStore.catalogOverlayWidgetStore.setSelectedPointIndices(selectedPointIndices, true, true);
         }
     }
 
     private onDeselect = () => {
+        const catalogFileId = this.widgetStore.catalogOverlayWidgetStore.catalogInfo.fileId;
+        AppStore.Instance.updateCatalogProfiles(catalogFileId);
         const catalogStore = CatalogStore.Instance;
-        this.widgetStore.catalogOverlayWidgetStore.setSelectedPointIndices([]);
+        this.widgetStore.catalogOverlayWidgetStore.setSelectedPointIndices([], false, false);
         const storeId = this.widgetStore.catalogOverlayWidgetStore.storeId;
         this.widgetStore.catalogOverlayWidgetStore.setShowSelectedData(false);
         catalogStore.updateShowSelectedData(storeId, false);
@@ -178,11 +182,13 @@ export class CatalogScatterComponent extends React.Component<WidgetProps> {
     private onSingleSourceClick = (event: Readonly<Plotly.PlotMouseEvent>) => {
         const dragmode: DragMode[] = ["select", "lasso"];
         const inDragmode = dragmode.includes(this.widgetStore.dragmode);
-        if (event && event.points && event.points.length > 0 && inDragmode) {
+        if (event?.points?.length > 0 && inDragmode) {
+            const catalogFileId = this.widgetStore.catalogOverlayWidgetStore.catalogInfo.fileId;
+            AppStore.Instance.updateCatalogProfiles(catalogFileId);
             let selectedPointIndex = [];
             const selectedPoint = event.points[0];
             selectedPointIndex.push(selectedPoint.pointIndex);
-            this.widgetStore.catalogOverlayWidgetStore.setSelectedPointIndices(selectedPointIndex, true);
+            this.widgetStore.catalogOverlayWidgetStore.setSelectedPointIndices(selectedPointIndex, true, true);
         }
     }
 

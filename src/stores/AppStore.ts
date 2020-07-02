@@ -38,7 +38,7 @@ import {distinct, GetRequiredTiles} from "utilities";
 import {BackendService, ConnectionStatus, ScriptingService, TileService, TileStreamDetails} from "services";
 import {FrameView, Point2D, ProtobufProcessing, Theme, TileCoordinate, WCSMatchingType} from "models";
 import {CatalogInfo, CatalogUpdateMode, HistogramWidgetStore, RegionWidgetStore, SpatialProfileWidgetStore, SpectralProfileWidgetStore, StatsWidgetStore, StokesAnalysisWidgetStore} from "./widgets";
-import {CatalogOverlayComponent, CatalogScatterComponent, getImageCanvas} from "components";
+import {CatalogScatterComponent, getImageCanvas} from "components";
 import {AppToaster} from "components/Shared";
 import GitCommit from "../static/gitInfo";
 
@@ -77,8 +77,10 @@ export class AppStore {
     @observable syncContourToFrame: boolean;
     @observable syncFrameToContour: boolean;
 
-    // catalog map catalog widget store with file Id
+    // map catalog widget store with file Id
     @observable catalogs: Map<string, number>;
+    // map catalog component with file Id
+    @observable catalogProfiles: Map<string, number>;
 
     // Profiles and region data
     @observable spatialProfiles: Map<string, SpatialProfileStore>;
@@ -312,6 +314,20 @@ export class AppStore {
         return new Promise<number>((resolve, reject) => {
             this.fileLoading = true;
 
+            if (!file) {
+                const lastDirSeparator = directory.lastIndexOf("/");
+                if (lastDirSeparator >= 0) {
+                    file = directory.substring(lastDirSeparator + 1);
+                    directory = directory.substring(0, lastDirSeparator);
+                }
+            } else if (!directory && file.includes("/")) {
+                const lastDirSeparator = file.lastIndexOf("/");
+                if (lastDirSeparator >= 0) {
+                    directory = file.substring(0, lastDirSeparator);
+                    file = file.substring(lastDirSeparator + 1);
+                }
+            }
+
             this.backendService.loadFile(directory, file, hdu, this.fileCounter, CARTA.RenderMode.RASTER).subscribe(ack => {
                 this.fileLoading = false;
                 let dimensionsString = `${ack.fileInfoExtended.width}\u00D7${ack.fileInfoExtended.height}`;
@@ -379,17 +395,13 @@ export class AppStore {
 
     @action appendFile = (directory: string, file: string, hdu: string) => {
         // Stop animations playing before loading a new frame
-        if (this.animatorStore.animationState === AnimationState.PLAYING) {
-            this.animatorStore.stopAnimation();
-        }
+        this.animatorStore.stopAnimation();
         return this.addFrame(directory, file, hdu);
     };
 
     @action openFile = (directory: string, file: string, hdu: string) => {
         // Stop animations playing before loading a new frame
-        if (this.animatorStore.animationState === AnimationState.PLAYING) {
-            this.animatorStore.stopAnimation();
-        }
+        this.animatorStore.stopAnimation();
         this.removeAllFrames();
         return this.addFrame(directory, file, hdu);
     };
@@ -541,16 +553,18 @@ export class AppStore {
             this.fileLoading = false;
             console.timeEnd(`CatalogLoad_${file}`);
             if (frame && ack.success && ack.dataSize) {
-                let catalogInfo: CatalogInfo = {fileId: fileId, fileInfo: ack.fileInfo, dataSize: ack.dataSize};
-                let catalogWidgetId = null;
-                const config = CatalogOverlayComponent.WIDGET_CONFIG;
-                let floatingCatalogWidgets = this.widgetsStore.getFloatingWidgetByComponentId(config.componentId).length;
-                let dockedCatalogWidgets = this.widgetsStore.getDockedWidgetByType(config.type).length;
+                let catalogInfo: CatalogInfo = {fileId, directory, fileInfo: ack.fileInfo, dataSize: ack.dataSize};
+                let catalogWidgetId;
                 const columnData = ProtobufProcessing.ProcessCatalogData(ack.previewData);
-                if (floatingCatalogWidgets === 0 && dockedCatalogWidgets === 0) {
-                    catalogWidgetId = this.widgetsStore.createFloatingCatalogOverlayWidget(catalogInfo, ack.headers, columnData);
+                const catalogComponentSize = this.widgetsStore.catalogComponentSize();
+                if (catalogComponentSize === 0) {
+                    const catalog = this.widgetsStore.createFloatingCatalogOverlayWidget(catalogInfo, ack.headers, columnData);
+                    catalogWidgetId = catalog.widgetStoreId;
+                    this.catalogProfiles.set(catalog.widgetComponentId, fileId);
                 } else {
                     catalogWidgetId = this.widgetsStore.addCatalogOverlayWidget(catalogInfo, ack.headers, columnData);
+                    const key = this.catalogProfiles.keys().next().value;
+                    this.catalogProfiles.set(key, fileId);
                 }
                 if (catalogWidgetId) {
                     this.catalogs.set(catalogWidgetId, fileId);
@@ -584,13 +598,23 @@ export class AppStore {
                     }
                 });
             }
-            // close catalogOverlay
+
+            // remove catalog overlay widget store, remove catalog from image viewer 
             this.catalogs.delete(catalogWidgetId);
-            if (this.catalogs.size === 0) {
-                this.widgetsStore.removeFloatingWidgetComponent(catalogComponentId);
-            }
             this.widgetsStore.catalogOverlayWidgets.delete(catalogWidgetId);
             this.catalogStore.clearData(catalogWidgetId);
+
+            // update catalogProfiles fileId
+            if (this.catalogs.size > 0) {
+                const nextFileId = this.catalogs.values().next().value;
+                this.catalogProfiles.forEach((catalogFileId, componentId) => {
+                    if (catalogFileId === fileId) {
+                        this.catalogProfiles.set(componentId, nextFileId);
+                    }
+                });
+            } else {
+                this.catalogProfiles.set(catalogComponentId, 1);
+            }
         }
     }
 
@@ -785,12 +809,13 @@ export class AppStore {
         this.pendingChannelHistograms = new Map<string, CARTA.IRegionHistogramData>();
 
         this.frames = [];
-        this.catalogs = new Map();
         this.activeFrame = null;
         this.contourDataSource = null;
         this.syncFrameToContour = true;
         this.syncContourToFrame = true;
         this.initRequirements();
+        this.catalogs = new Map<string, number>();
+        this.catalogProfiles = new Map<string, number>();
 
         AST.onReady.then(() => {
             AST.setPalette(this.darkTheme ? nightPalette : dayPalette);
@@ -1123,7 +1148,7 @@ export class AppStore {
             catalogWidgetStore.setProgress(progress);
             if (progress === 1) {
                 catalogWidgetStore.setLoadingDataStatus(false);
-                catalogWidgetStore.setPlotingData(false);
+                catalogWidgetStore.setUpdatingDataStream(false);
             }
 
             if (catalogWidgetStore.updateMode === CatalogUpdateMode.ViewUpdate) {
@@ -1196,6 +1221,19 @@ export class AppStore {
                 };
             });
 
+            let contourSettings: CARTA.ISetContourParameters;
+            if (frame.contourConfig.enabled) {
+                contourSettings = {
+                    fileId: frame.frameInfo.fileId,
+                    levels: frame.contourConfig.levels,
+                    smoothingMode: frame.contourConfig.smoothingMode,
+                    smoothingFactor: frame.contourConfig.smoothingFactor,
+                    decimationFactor: this.preferenceStore.contourDecimation,
+                    compressionLevel: this.preferenceStore.contourCompressionLevel,
+                    contourChunkSize: this.preferenceStore.contourChunkSize
+                };
+            }
+
             return {
                 file: info.fileInfo.name,
                 directory: info.directory,
@@ -1204,13 +1242,30 @@ export class AppStore {
                 renderMode: info.renderMode,
                 channel: frame.requiredChannel,
                 stokes: frame.requiredStokes,
-                regions
+                regions,
+                contourSettings
             };
+        });
+
+        const catalogFiles: CARTA.IOpenCatalogFile[] = [];
+
+        this.widgetsStore.catalogOverlayWidgets.forEach((widgetsStore) => {
+            const catalogInfo = widgetsStore.catalogInfo;
+            const existingEntry = catalogFiles.find(entry => entry.fileId === catalogInfo.fileId);
+            // Skip duplicates
+            if (existingEntry) {
+                return;
+            }
+            catalogFiles.push({
+                fileId: catalogInfo.fileId,
+                name: catalogInfo.fileInfo.name,
+                directory: catalogInfo.directory
+            });
         });
 
         this.resumingSession = true;
 
-        this.backendService.resumeSession({images}).subscribe(this.onSessionResumed, err => {
+        this.backendService.resumeSession({images, catalogFiles}).subscribe(this.onSessionResumed, err => {
             console.error(err);
             this.alertStore.showAlert("Error resuming session");
         });
@@ -1590,4 +1645,15 @@ export class AppStore {
     }
 
     // endregion
+
+    // update associated catalogProfile fileId
+    @action updateCatalogProfiles = (catalogFileId: number) => {
+        if (this.catalogProfiles.size > 0) {
+            const componentIds = Array.from(this.catalogProfiles.keys());
+            const fileIds = Array.from(this.catalogProfiles.values());
+            if (!fileIds.includes(catalogFileId)) {
+                this.catalogProfiles.set(componentIds[0], catalogFileId);
+            }
+        }
+    };
 }

@@ -116,6 +116,11 @@ export class AnimatorStore {
     };
 
     @action stopAnimation = () => {
+        // Ignore stop when not playing
+        if (this.animationState === AnimationState.STOPPED) {
+            return;
+        }
+
         const appStore = AppStore.Instance;
         const frame = appStore.activeFrame;
         if (!frame) {
