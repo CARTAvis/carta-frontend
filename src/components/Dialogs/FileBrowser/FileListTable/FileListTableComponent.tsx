@@ -38,7 +38,7 @@ export class FileListTableComponent extends React.Component<FileListTableCompone
     @observable selectedRegion: IRegion[];
     @observable columnWidths = [300, 100, 100];
 
-    private static readonly RowHeight = 24;
+    private static readonly RowHeight = 22;
 
     private static readonly FileTypeMap = new Map<CARTA.FileType, { type: string, description: string }>([
         [CARTA.FileType.FITS, {type: "FITS", description: "Flexible Image Transport System"}],
@@ -84,18 +84,30 @@ export class FileListTableComponent extends React.Component<FileListTableCompone
 
         const fileBrowserMode = this.props.fileBrowserMode;
 
-        let filteredSubdirectories = fileResponse.subdirectories.slice();
-        let filteredFiles = fileResponse.files.slice();
+        let filteredSubdirectories = fileResponse?.subdirectories?.slice();
+        let filteredFiles = fileResponse?.files?.slice();
 
-        const filterString = this.props.filterString?.toLowerCase();
+        const filterString = this.props.filterString;
         if (filterString) {
             try {
-                const regex = RegExp(globToRegExp(filterString));
-                filteredSubdirectories = filteredSubdirectories?.filter(value => value.toLowerCase().match(regex));
-                // @ts-ignore
-                filteredFiles = filteredFiles?.filter(file => file.name.toLowerCase().match(regex));
+                let regex: RegExp;
+                if (filterString.startsWith("/") && filterString.endsWith("/")) {
+                    // Strict regex search is case-sensitive
+                    regex = RegExp(filterString.substring(1, filterString.length - 1));
+                    filteredSubdirectories = filteredSubdirectories?.filter(value => value.match(regex));
+                    // @ts-ignore
+                    filteredFiles = filteredFiles?.filter(file => file.name.match(regex));
+                } else {
+                    // glob search case-insensitive
+                    regex = RegExp(globToRegExp(filterString.toLowerCase()));
+                    filteredSubdirectories = filteredSubdirectories?.filter(value => value.toLowerCase().match(regex));
+                    // @ts-ignore
+                    filteredFiles = filteredFiles?.filter(file => file.name.toLowerCase().match(regex));
+                }
             } catch (e) {
-                console.log(e);
+                if (e.name !== "SyntaxError") {
+                    console.log(e);
+                }
             }
         }
 
@@ -135,6 +147,7 @@ export class FileListTableComponent extends React.Component<FileListTableCompone
                 entries.push({
                     filename: file.name,
                     typeInfo: FileListTableComponent.GeCatalogFileTypeDisplay(file.type),
+                    size: file.fileSize as number,
                     file
                 });
             }
@@ -276,24 +289,6 @@ export class FileListTableComponent extends React.Component<FileListTableCompone
         );
     };
 
-    private onSelection = (selectedRegions: IRegion[]) => {
-        if (!selectedRegions?.length || !selectedRegions[0].rows?.length) {
-            return;
-        }
-        const index = selectedRegions[0].rows[0];
-
-        const entry = this.tableEntries[index];
-        if (entry) {
-            if (entry.isDirectory) {
-                this.props.onFolderClicked(entry.filename);
-                this.selectedRegion = [];
-            } else {
-                this.props.onFileClicked(entry.file, entry.hdu);
-                this.selectedRegion = [Regions.row(index)];
-            }
-        }
-    };
-
     private handleEntryDoubleClicked = (entry: FileEntry) => {
         if (entry.isDirectory) {
             return;
@@ -328,12 +323,12 @@ export class FileListTableComponent extends React.Component<FileListTableCompone
                 enableRowReordering={false}
                 renderMode={RenderMode.NONE}
                 selectionModes={SelectionModes.NONE}
-                enableGhostCells={true}
+                enableGhostCells={false}
                 columnWidths={this.columnWidths}
+                minColumnWidth={80}
                 enableMultipleSelection={false}
                 enableRowResizing={false}
                 defaultRowHeight={FileListTableComponent.RowHeight}
-                onSelection={this.onSelection}
                 onColumnWidthChanged={this.handleColumnWidthChanged}
                 selectedRegions={this.selectedRegion}
                 enableRowHeader={false}

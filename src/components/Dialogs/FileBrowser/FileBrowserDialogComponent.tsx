@@ -298,7 +298,7 @@ export class FileBrowserDialogComponent extends React.Component {
             fileInput = (
                 <InputGroup
                     autoFocus={true}
-                    placeholder="Filter by filename"
+                    placeholder="Filter by filename pattern (unix style) or regular expression (using /<expression>/)"
                     value={this.fileFilterString}
                     onChange={this.handleFilterStringInputChanged}
                 />);
@@ -355,7 +355,7 @@ export class FileBrowserDialogComponent extends React.Component {
                         </div>
                         <div className="file-info-pane">
                             <FileInfoComponent
-                                infoTypes={this.getFileInfoTypes(fileBrowserStore.browserMode)}
+                                infoTypes={FileBrowserDialogComponent.GetFileInfoTypes(fileBrowserStore.browserMode)}
                                 fileInfoExtended={fileBrowserStore.fileInfoExtended}
                                 regionFileInfo={fileBrowserStore.regionFileInfo ? fileBrowserStore.regionFileInfo.join("\n") : ""}
                                 catalogFileInfo={fileBrowserStore.catalogFileInfo}
@@ -399,7 +399,7 @@ export class FileBrowserDialogComponent extends React.Component {
         );
     };
 
-    private getFileInfoTypes(fileBrowserMode: BrowserMode): Array<FileInfoType> {
+    private static GetFileInfoTypes(fileBrowserMode: BrowserMode): Array<FileInfoType> {
         switch (fileBrowserMode) {
             case BrowserMode.File:
                 return [FileInfoType.IMAGE_FILE, FileInfoType.IMAGE_HEADER];
