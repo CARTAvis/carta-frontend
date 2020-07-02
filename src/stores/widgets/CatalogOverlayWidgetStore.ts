@@ -11,6 +11,7 @@ export interface CatalogInfo {
     fileId: number;
     fileInfo: CARTA.ICatalogFileInfo;
     dataSize: number;
+    directory: string;
 }
 
 export enum CatalogOverlay {

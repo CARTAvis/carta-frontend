@@ -319,6 +319,20 @@ export class AppStore {
         return new Promise<number>((resolve, reject) => {
             this.fileLoading = true;
 
+            if (!file) {
+                const lastDirSeparator = directory.lastIndexOf("/");
+                if (lastDirSeparator >= 0) {
+                    file = directory.substring(lastDirSeparator + 1);
+                    directory = directory.substring(0, lastDirSeparator);
+                }
+            } else if (!directory && file.includes("/")) {
+                const lastDirSeparator = file.lastIndexOf("/");
+                if (lastDirSeparator >= 0) {
+                    directory = file.substring(0, lastDirSeparator);
+                    file = file.substring(lastDirSeparator + 1);
+                }
+            }
+
             this.backendService.loadFile(directory, file, hdu, this.fileCounter, CARTA.RenderMode.RASTER).subscribe(ack => {
                 this.fileLoading = false;
                 let dimensionsString = `${ack.fileInfoExtended.width}\u00D7${ack.fileInfoExtended.height}`;
@@ -386,17 +400,13 @@ export class AppStore {
 
     @action appendFile = (directory: string, file: string, hdu: string) => {
         // Stop animations playing before loading a new frame
-        if (this.animatorStore.animationState === AnimationState.PLAYING) {
-            this.animatorStore.stopAnimation();
-        }
+        this.animatorStore.stopAnimation();
         return this.addFrame(directory, file, hdu);
     };
 
     @action openFile = (directory: string, file: string, hdu: string) => {
         // Stop animations playing before loading a new frame
-        if (this.animatorStore.animationState === AnimationState.PLAYING) {
-            this.animatorStore.stopAnimation();
-        }
+        this.animatorStore.stopAnimation();
         this.removeAllFrames();
         return this.addFrame(directory, file, hdu);
     };
@@ -548,11 +558,11 @@ export class AppStore {
             this.fileLoading = false;
             console.timeEnd(`CatalogLoad_${file}`);
             if (frame && ack.success && ack.dataSize) {
-                let catalogInfo: CatalogInfo = {fileId: fileId, fileInfo: ack.fileInfo, dataSize: ack.dataSize};
-                let catalogWidgetId = null;
+                let catalogInfo: CatalogInfo = {fileId, directory, fileInfo: ack.fileInfo, dataSize: ack.dataSize};
+                let catalogWidgetId;
                 const columnData = ProtobufProcessing.ProcessCatalogData(ack.previewData);
                 const catalogComponentSize = this.widgetsStore.catalogComponentSize();
-                if (catalogComponentSize === 0 ) {
+                if (catalogComponentSize === 0) {
                     const catalog = this.widgetsStore.createFloatingCatalogOverlayWidget(catalogInfo, ack.headers, columnData);
                     catalogWidgetId = catalog.widgetStoreId;
                     this.catalogProfiles.set(catalog.widgetComponentId, fileId);
@@ -604,7 +614,7 @@ export class AppStore {
                 const nextFileId = this.catalogs.values().next().value;
                 this.catalogProfiles.forEach((catalogFileId, componentId) => {
                     if (catalogFileId === fileId) {
-                        this.catalogProfiles.set(componentId, nextFileId);     
+                        this.catalogProfiles.set(componentId, nextFileId);
                     }
                 });
             } else {
@@ -1219,6 +1229,19 @@ export class AppStore {
                 };
             });
 
+            let contourSettings: CARTA.ISetContourParameters;
+            if (frame.contourConfig.enabled) {
+                contourSettings = {
+                    fileId: frame.frameInfo.fileId,
+                    levels: frame.contourConfig.levels,
+                    smoothingMode: frame.contourConfig.smoothingMode,
+                    smoothingFactor: frame.contourConfig.smoothingFactor,
+                    decimationFactor: this.preferenceStore.contourDecimation,
+                    compressionLevel: this.preferenceStore.contourCompressionLevel,
+                    contourChunkSize: this.preferenceStore.contourChunkSize
+                };
+            }
+
             return {
                 file: info.fileInfo.name,
                 directory: info.directory,
@@ -1227,13 +1250,30 @@ export class AppStore {
                 renderMode: info.renderMode,
                 channel: frame.requiredChannel,
                 stokes: frame.requiredStokes,
-                regions
+                regions,
+                contourSettings
             };
+        });
+
+        const catalogFiles: CARTA.IOpenCatalogFile[] = [];
+
+        this.widgetsStore.catalogOverlayWidgets.forEach((widgetsStore) => {
+            const catalogInfo = widgetsStore.catalogInfo;
+            const existingEntry = catalogFiles.find(entry => entry.fileId === catalogInfo.fileId);
+            // Skip duplicates
+            if (existingEntry) {
+                return;
+            }
+            catalogFiles.push({
+                fileId: catalogInfo.fileId,
+                name: catalogInfo.fileInfo.name,
+                directory: catalogInfo.directory
+            });
         });
 
         this.resumingSession = true;
 
-        this.backendService.resumeSession({images}).subscribe(this.onSessionResumed, err => {
+        this.backendService.resumeSession({images, catalogFiles}).subscribe(this.onSessionResumed, err => {
             console.error(err);
             this.alertStore.showAlert("Error resuming session");
         });
@@ -1623,5 +1663,5 @@ export class AppStore {
                 this.catalogProfiles.set(componentIds[0], catalogFileId);
             }
         }
-    }
+    };
 }
