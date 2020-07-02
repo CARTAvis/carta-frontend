@@ -4,6 +4,7 @@ import {observer} from "mobx-react";
 import {Cell, Column, ColumnHeaderCell, Regions, RenderMode, SelectionModes, Table} from "@blueprintjs/table";
 import {IRegion} from "@blueprintjs/table/src/regions";
 import {Icon, Label, Menu, MenuItem} from "@blueprintjs/core";
+import globToRegExp from "glob-to-regexp";
 import {CARTA} from "carta-protobuf";
 import {BrowserMode} from "stores";
 import {toFixed} from "utilities";
@@ -89,7 +90,7 @@ export class FileListTableComponent extends React.Component<FileListTableCompone
         const filterString = this.props.filterString?.toLowerCase();
         if (filterString) {
             try {
-                const regex = RegExp(filterString);
+                const regex = RegExp(globToRegExp(filterString));
                 filteredSubdirectories = filteredSubdirectories?.filter(value => value.toLowerCase().match(regex));
                 // @ts-ignore
                 filteredFiles = filteredFiles?.filter(file => file.name.toLowerCase().match(regex));
