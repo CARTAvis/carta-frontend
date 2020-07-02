@@ -1,10 +1,11 @@
 import * as React from "react";
-import {action, computed, observable} from "mobx";
+import {action, autorun, computed, observable} from "mobx";
 import {observer} from "mobx-react";
 import {Cell, Column, ColumnHeaderCell, Regions, RenderMode, SelectionModes, Table} from "@blueprintjs/table";
 import {IRegion} from "@blueprintjs/table/src/regions";
 import {Icon, Label, Menu, MenuItem} from "@blueprintjs/core";
 import globToRegExp from "glob-to-regexp";
+import * as moment from "moment";
 import {CARTA} from "carta-protobuf";
 import {BrowserMode} from "stores";
 import {toFixed} from "utilities";
@@ -15,6 +16,7 @@ interface FileEntry {
     typeInfo?: { type: string, description: string };
     isDirectory?: boolean;
     size?: number;
+    date?: number;
     file?: CARTA.IFileInfo | CARTA.ICatalogFileInfo;
     hdu?: string;
 }
@@ -36,9 +38,13 @@ export class FileListTableComponent extends React.Component<FileListTableCompone
     @observable sortColumn: string = "Filename";
     @observable sortDirection: number = 1;
     @observable selectedRegion: IRegion[];
-    @observable columnWidths = [300, 100, 100];
+    @observable columnWidths = [300, 90, 90, 90];
 
     private static readonly RowHeight = 22;
+    private tableRef: Table;
+    private cachedFilterString: string;
+    private cachedSortString: string;
+    private cachedFileResponse: CARTA.IFileListResponse | CARTA.ICatalogListResponse;
 
     private static readonly FileTypeMap = new Map<CARTA.FileType, { type: string, description: string }>([
         [CARTA.FileType.FITS, {type: "FITS", description: "Flexible Image Transport System"}],
@@ -136,6 +142,9 @@ export class FileListTableComponent extends React.Component<FileListTableCompone
                 case "Size":
                     filteredFiles.sort((a, b) => this.sortDirection * (a.size < b.size ? -1 : 1));
                     break;
+                case "Date":
+                    filteredFiles.sort((a, b) => this.sortDirection * (a.date < b.date ? -1 : 1));
+                    break;
                 default:
                     break;
             }
@@ -146,6 +155,7 @@ export class FileListTableComponent extends React.Component<FileListTableCompone
                         filename: file.name,
                         typeInfo: FileListTableComponent.GeCatalogFileTypeDisplay(file.type),
                         size: file.fileSize as number,
+                        date: file.date as number,
                         file
                     });
                 }
@@ -157,6 +167,7 @@ export class FileListTableComponent extends React.Component<FileListTableCompone
                             filename,
                             typeInfo: FileListTableComponent.GetFileTypeDisplay(file.type),
                             size: file.size as number,
+                            date: file.date as number,
                             file,
                             hdu
                         });
@@ -168,13 +179,31 @@ export class FileListTableComponent extends React.Component<FileListTableCompone
                         filename: file.name,
                         typeInfo: FileListTableComponent.GetFileTypeDisplay(file.type),
                         size: file.size as number,
+                        date: file.date as number,
                         file
                     });
                 }
             }
         }
-
         return entries;
+    }
+
+    constructor(props: FileListTableComponentProps) {
+        super(props);
+
+        // Automatically scroll to the top of the table when a new file response is received, or when filtering/sorting changes
+        autorun(() => {
+            const fileResponse = this.props.listResponse;
+            const sortString = `${this.sortColumn} - ${this.sortDirection}`;
+            const filterString = this.props.filterString;
+
+            if (fileResponse !== this.cachedFileResponse || sortString !== this.cachedSortString || filterString !== this.cachedFilterString) {
+                this.cachedSortString = sortString;
+                this.cachedFilterString = filterString;
+                this.cachedFileResponse = fileResponse;
+                this.tableRef?.scrollToRegion(Regions.row(0, 0));
+            }
+        });
     }
 
     @action setSorting = (columnName: string, direction: number) => {
@@ -288,6 +317,35 @@ export class FileListTableComponent extends React.Component<FileListTableCompone
         );
     };
 
+    private renderDates = (rowIndex: number) => {
+        const entry = this.tableEntries[rowIndex];
+        const unixDate = entry?.date;
+
+        let dateString: string;
+        if (unixDate > 0) {
+            const t = moment.unix(unixDate);
+            const isToday = moment(0, "HH").diff(t, "days") === 0;
+            if (isToday) {
+                dateString = t.format("HH:mm");
+            } else {
+                dateString = t.format("D MMM YYYY");
+            }
+        }
+
+        return (
+            <Cell className="time-cell">
+                <React.Fragment>
+                    <div
+                        onClick={() => this.handleEntryClicked(entry, rowIndex)}
+                        onDoubleClick={() => this.handleEntryDoubleClicked(entry)}
+                    >
+                        {dateString}
+                    </div>
+                </React.Fragment>
+            </Cell>
+        );
+    };
+
     private handleEntryDoubleClicked = (entry: FileEntry) => {
         if (entry.isDirectory) {
             return;
@@ -318,6 +376,7 @@ export class FileListTableComponent extends React.Component<FileListTableCompone
 
         return (
             <Table
+                ref={ref => this.tableRef = ref}
                 className={classes.join(" ")}
                 enableRowReordering={false}
                 renderMode={RenderMode.NONE}
@@ -336,6 +395,7 @@ export class FileListTableComponent extends React.Component<FileListTableCompone
                 <Column name="Filename" columnHeaderCellRenderer={() => this.renderColumnHeader("Filename")} cellRenderer={this.renderFilenames}/>
                 <Column name="Type" columnHeaderCellRenderer={() => this.renderColumnHeader("Type")} cellRenderer={this.renderTypes}/>
                 <Column name="Size" columnHeaderCellRenderer={() => this.renderColumnHeader("Size")} cellRenderer={this.renderSizes}/>
+                <Column name="Date" columnHeaderCellRenderer={() => this.renderColumnHeader("Date")} cellRenderer={this.renderDates}/>
             </Table>
         );
     }
