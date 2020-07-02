@@ -253,8 +253,7 @@ export class FileBrowserDialogComponent extends React.Component {
     }
 
     // Refresh file list to trigger the Breadcrumb re-rendering
-    @action
-    private refreshFileList() {
+    @action refreshFileList = () => {
         this.clearFilterString();
         const fileBrowserStore = FileBrowserStore.Instance;
         switch (fileBrowserStore.browserMode) {
@@ -265,7 +264,7 @@ export class FileBrowserDialogComponent extends React.Component {
                 fileBrowserStore.fileList = {...fileBrowserStore.fileList};
                 break;
         }
-    }
+    };
 
     public render() {
         const appStore = AppStore.Instance;
@@ -284,7 +283,7 @@ export class FileBrowserDialogComponent extends React.Component {
             lazy: true,
             isOpen: appStore.dialogStore.fileBrowserDialogVisible,
             onClose: fileBrowserStore.hideFileBrowser,
-            onOpened: () => this.refreshFileList(),
+            onOpened: this.refreshFileList,
             title: "File Browser",
         };
 
