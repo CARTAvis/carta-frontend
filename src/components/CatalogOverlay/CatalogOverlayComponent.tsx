@@ -1,8 +1,9 @@
 import * as React from "react";
 import {action, autorun, computed, observable} from "mobx";
 import {observer} from "mobx-react";
-import {AnchorButton, FormGroup, Intent, NonIdealState, Switch, Tooltip, MenuItem, PopoverPosition, Button, NumericInput, INumericInputProps} from "@blueprintjs/core";
+import {AnchorButton, FormGroup, Intent, NonIdealState, Switch, Tooltip, MenuItem, PopoverPosition, Button} from "@blueprintjs/core";
 import {Cell, Column, Regions, RenderMode, SelectionModes, Table} from "@blueprintjs/table";
+import * as ScrollUtils from "../../../node_modules/@blueprintjs/table/lib/esm/common/internal/scrollUtils";
 import {Select, IItemRendererProps} from "@blueprintjs/select";
 import ReactResizeDetector from "react-resize-detector";
 import SplitPane, { Pane } from "react-split-pane";
@@ -39,8 +40,9 @@ enum ComparisonOperator {
 export class CatalogOverlayComponent extends React.Component<WidgetProps> {
     @observable widgetId: string;
     @observable catalogFileId: number;
+    @observable catalogTableRef: Table = undefined;
 
-    private catalogHeaderTableRef: Table;
+    private catalogHeaderTableRef: Table = undefined;
     private static readonly DataTypeRepresentationMap = new Map<CARTA.ColumnType, Array<CatalogCoordinate>>([
         [CARTA.ColumnType.Bool, [CatalogCoordinate.NONE]],
         [CARTA.ColumnType.Double, [CatalogCoordinate.X, CatalogCoordinate.Y, CatalogCoordinate.NONE]],
@@ -115,6 +117,27 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         appStore.removeCatalog(this.widgetId, this.props.id);
     }
 
+    // overwrite scrollToRegion to avoid crush when _b is undefined (user pin action)
+    scrollToRegion = (ref, region) => {
+        var _a = ref.state, numFrozenColumns = _a?.numFrozenColumnsClamped, numFrozenRows = _a?.numFrozenRowsClamped;
+        var _b = ref.state.viewportRect;
+        if (!_b) {
+            _b = ref.locator.getViewportRect();
+        } 
+        var currScrollLeft = _b?.left, currScrollTop = _b?.top;
+        var _c = ScrollUtils.getScrollPositionForRegion(
+            region, 
+            currScrollLeft, 
+            currScrollTop, 
+            ref.grid.getCumulativeWidthBefore, 
+            ref.grid.getCumulativeHeightBefore, 
+            numFrozenRows, numFrozenColumns
+        ), scrollLeft = _c.scrollLeft, scrollTop = _c.scrollTop;
+        var correctedScrollLeft = ref.shouldDisableHorizontalScroll() ? 0 : scrollLeft;
+        var correctedScrollTop = ref.shouldDisableVerticalScroll() ? 0 : scrollTop;
+        ref.quadrantStackInstance.scrollToPosition(correctedScrollLeft, correctedScrollTop);
+    };
+
     @computed get catalogDataInfo(): {dataset: Map<number, ProcessedColumnData>, numVisibleRows: number} {
         const widgetStore = this.widgetStore;
         let dataset;
@@ -122,10 +145,20 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         if (widgetStore) {
             dataset = widgetStore.catalogData;
             numVisibleRows = widgetStore.numVisibleRows;
-            if (widgetStore.regionSelected && widgetStore.showSelectedData) {
-                dataset = widgetStore.selectedData;
-                numVisibleRows = widgetStore.regionSelected;
-            }
+            if (widgetStore.regionSelected) {
+                if (widgetStore.showSelectedData) {
+                    dataset = widgetStore.selectedData;
+                    numVisibleRows = widgetStore.regionSelected;
+                    // if the length of selected source is 4, only the 4th row displayed. Auto scroll to top fixed it (bug related to blueprintjs table).
+                    if (this.catalogTableRef) {
+                        this.scrollToRegion(this.catalogTableRef, Regions.row(0));   
+                    }  
+                } else {
+                    if (this.catalogTableRef && widgetStore.catalogTableAutoScroll) {
+                        this.scrollToRegion(this.catalogTableRef, widgetStore.autoScrollRowNumber);  
+                    }
+                }
+            } 
         }
         return {dataset, numVisibleRows};
     }
@@ -162,10 +195,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
     }
 
     onCatalogDataTableRefUpdated = (ref) => {
-        const widgetStore = this.widgetStore;
-        if (widgetStore) {
-            widgetStore.setCatalogTableRef(ref);
-        }
+        this.catalogTableRef = ref;
     }
 
     onControlHeaderTableRef = (ref) => {
@@ -178,10 +208,23 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         if (widgetStore && this.catalogHeaderTableRef) {
             this.updateTableSize(this.catalogHeaderTableRef, this.props.docked); 
         }
-        if (widgetStore && widgetStore.catalogTableRef) {
-            this.updateTableSize(widgetStore.catalogTableRef, this.props.docked);
+        if (widgetStore && this.catalogTableRef) {
+            this.updateTableSize(this.catalogTableRef, this.props.docked);
+            if (widgetStore.regionSelected && widgetStore.catalogTableAutoScroll && !widgetStore.showSelectedData) {
+                this.scrollToRegion(this.catalogTableRef, widgetStore.autoScrollRowNumber);
+            }
         }
     };
+
+    private updateTableSize(ref: any, docked: boolean) {
+        const viewportRect = ref.locator.getViewportRect();
+        ref.updateViewportRect(viewportRect);
+        // fixed bug for blueprint table, first column overlap with row index
+        // triger table update  
+        if (docked) {
+            ref.scrollToRegion(Regions.column(0));   
+        }
+    }
 
     private handleHeaderDisplayChange(changeEvent: any, columnName: string) {
         const val = changeEvent.target.checked;
@@ -370,16 +413,6 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         const widgetsStore = this.widgetStore;
         if (widgetsStore.headerTableColumnWidts) {
             widgetsStore.headerTableColumnWidts[index] = size;
-        }
-    }
-
-    private updateTableSize(ref: any, docked: boolean) {
-        const viewportRect = ref.locator.getViewportRect();
-        ref.updateViewportRect(viewportRect);
-        // fixed bug for blueprint table, first column overlap with row index
-        // triger table update  
-        if (docked) {
-            ref.scrollToRegion(Regions.column(0));   
         }
     }
 
@@ -627,8 +660,8 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         if (widgetStore && this.catalogHeaderTableRef) {
             this.updateTableSize(this.catalogHeaderTableRef, false); 
         }
-        if (widgetStore && widgetStore.catalogTableRef) {
-            this.updateTableSize(widgetStore.catalogTableRef, false);
+        if (widgetStore && this.catalogTableRef) {
+            this.updateTableSize(this.catalogTableRef, false);
         }
     }
     

@@ -1,6 +1,6 @@
 import {action, computed, observable} from "mobx";
 import {Colors} from "@blueprintjs/core";
-import {Table, Regions, IRegion} from "@blueprintjs/table";
+import {Regions, IRegion} from "@blueprintjs/table";
 import {CARTA} from "carta-protobuf";
 import {RegionWidgetStore, RegionsType} from "./RegionWidgetStore";
 import {AppStore, CatalogStore} from "stores";
@@ -145,10 +145,10 @@ export class CatalogOverlayWidgetStore extends RegionWidgetStore {
     @observable selectedPointIndices: number[];
     @observable filterDataSize: number;
     @observable showSelectedData: boolean;
-    @observable catalogTableRef: Table;
     @observable updateTableView: boolean;
     @observable sortingInfo: {columnName: string, sortingType: CARTA.SortingType};
     @observable maxRows: number;
+    @observable catalogTableAutoScroll: boolean;
 
     constructor(catalogInfo: CatalogInfo, catalogHeader: Array<CARTA.ICatalogHeader>, catalogData: Map<number, ProcessedColumnData>, id: string) {
         super(RegionsType.CLOSED_AND_POINT);
@@ -171,10 +171,10 @@ export class CatalogOverlayWidgetStore extends RegionWidgetStore {
         this.selectedPointIndices = [];
         this.filterDataSize = undefined;
         this.showSelectedData = false;
-        this.catalogTableRef = undefined;
         this.updateTableView = false;
         this.sortingInfo = {columnName: null, sortingType: null};
         this.maxRows = catalogInfo.dataSize;
+        this.catalogTableAutoScroll = false;
 
         this.catalogPlotType = CatalogPlotType.ImageOverlay;
         const coordinateSystem = catalogInfo.fileInfo.coosys[0];
@@ -204,10 +204,6 @@ export class CatalogOverlayWidgetStore extends RegionWidgetStore {
             this.numVisibleRows = initTableRows;
             this.subsetEndIndex = initTableRows;
         }
-    }
-
-    @action setCatalogTableRef(ref: Table) {
-        this.catalogTableRef = ref;
     }
 
     @action setShowSelectedData(val: boolean) {
@@ -493,10 +489,7 @@ export class CatalogOverlayWidgetStore extends RegionWidgetStore {
 
     @action setSelectedPointIndices = (pointIndices: Array<number>, autoScroll: boolean, autoPanZoom: boolean) => {
         this.selectedPointIndices = pointIndices;
-        const catalogComponentSize = AppStore.Instance.widgetsStore.catalogComponentSize();
-        if (pointIndices.length > 0 && this.catalogTableRef && autoScroll && catalogComponentSize) {
-            this.catalogTableRef.scrollToRegion(this.autoScrollRowNumber);
-        }
+        this.catalogTableAutoScroll = autoScroll;
 
         const coords = CatalogStore.Instance.catalogData.get(this.storeId);
         if (coords?.xImageCoords?.length) {
@@ -517,23 +510,21 @@ export class CatalogOverlayWidgetStore extends RegionWidgetStore {
             CatalogStore.Instance.updateSelectedPoints(this.storeId, selectedX, selectedY);
 
             if (autoPanZoom) {
-                if (pointIndices.length === 1) {
-                    const pointIndex = pointIndices[0];
-                    const x = xArray[pointIndex];
-                    const y = yArray[pointIndex];
-                    if (!this.isInfinite(x) && !this.isInfinite(y)) {
-                        AppStore.Instance.activeFrame.setCenter(x, y);      
-                    } 
+                const selectedDataLength = selectedX.length;
+                if (selectedDataLength === 1) {
+                    const x = selectedX[0];
+                    const y = selectedY[0];
+                    AppStore.Instance.activeFrame.setCenter(x, y);      
                 }
 
-                if (pointIndices.length > 1) {
+                if (selectedDataLength > 1) {
                     const minMaxX = minMaxArray(selectedX);
                     const minMaxY = minMaxArray(selectedY);
                     const width = minMaxX.maxVal - minMaxX.minVal;
                     const height = minMaxY.maxVal - minMaxY.minVal;
                     AppStore.Instance.activeFrame.setCenter(width / 2 + minMaxX.minVal, height / 2 + minMaxY.minVal);
                     const zoomLevel = Math.min(AppStore.Instance.activeFrame.renderWidth / width, AppStore.Instance.activeFrame.renderHeight / height);
-                    AppStore.Instance.activeFrame.setZoom(zoomLevel);
+                    AppStore.Instance.activeFrame.setZoom(zoomLevel);   
                 }
 
             }
@@ -708,7 +699,7 @@ export class CatalogOverlayWidgetStore extends RegionWidgetStore {
     }
 
     @computed get autoScrollRowNumber(): IRegion {
-        let singleRowRegion: IRegion = null;
+        let singleRowRegion: IRegion = Regions.row(0);
         if (this.selectedPointIndices.length > 0) {
             singleRowRegion = Regions.row(this.selectedPointIndices[0]);
         }
