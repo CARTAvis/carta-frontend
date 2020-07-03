@@ -14,7 +14,7 @@ export enum BrowserMode {
     Catalog
 }
 
-export type RegionFileType = CARTA.FileType.CRTF | CARTA.FileType.REG;
+export type RegionFileType = CARTA.FileType.CRTF | CARTA.FileType.DS9_REG;
 export type ImageFileType = CARTA.FileType.CASA | CARTA.FileType.FITS | CARTA.FileType.HDF5 | CARTA.FileType.MIRIAD;
 export type CatalogFileType = CARTA.CatalogFileType.VOTable | CARTA.CatalogFileType.FITSTable;
 export interface SortingConfig {

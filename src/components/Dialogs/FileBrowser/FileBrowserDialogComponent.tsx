@@ -232,7 +232,7 @@ export class FileBrowserDialogComponent extends React.Component {
                 content={
                     <Menu>
                         <MenuItem text="CRTF Region File" onClick={() => fileBrowserStore.setExportFileType(CARTA.FileType.CRTF)}/>
-                        <MenuItem text="DS9 Region File" onClick={() => fileBrowserStore.setExportFileType(CARTA.FileType.REG)}/>
+                        <MenuItem text="DS9 Region File" onClick={() => fileBrowserStore.setExportFileType(CARTA.FileType.DS9_REG)}/>
                     </Menu>
                 }
                 position={Position.BOTTOM_RIGHT}

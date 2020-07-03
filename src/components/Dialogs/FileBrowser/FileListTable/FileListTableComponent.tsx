@@ -48,17 +48,17 @@ export class FileListTableComponent extends React.Component<FileListTableCompone
     private cachedFileResponse: CARTA.IFileListResponse | CARTA.ICatalogListResponse;
 
     private static readonly FileTypeMap = new Map<CARTA.FileType, { type: string, description: string }>([
-        [CARTA.FileType.FITS, {type: "FITS", description: "Flexible Image Transport System"}],
         [CARTA.FileType.CASA, {type: "CASA", description: "CASA Image"}],
-        [CARTA.FileType.MIRIAD, {type: "Miriad", description: "Miriad Image"}],
-        [CARTA.FileType.HDF5, {type: "HDF5", description: "HDF5 File (IDIA Schema)"}],
         [CARTA.FileType.CRTF, {type: "CRTF", description: "CASA Region Text Format"}],
-        [CARTA.FileType.REG, {type: "DS9", description: "DS9 Region Format"}],
+        [CARTA.FileType.DS9_REG, {type: "DS9", description: "DS9 Region Format"}],
+        [CARTA.FileType.FITS, {type: "FITS", description: "Flexible Image Transport System"}],
+        [CARTA.FileType.HDF5, {type: "HDF5", description: "HDF5 File (IDIA Schema)"}],
+        [CARTA.FileType.MIRIAD, {type: "Miriad", description: "Miriad Image"}],
     ]);
 
     private static readonly CatalogFileTypeMap = new Map<CARTA.CatalogFileType, { type: string, description: string }>([
-        [CARTA.CatalogFileType.VOTable, {type: "VOTable", description: "XML-Based Table Format"}],
         [CARTA.CatalogFileType.FITSTable, {type: "FITS", description: "Flexible Image Transport System"}],
+        [CARTA.CatalogFileType.VOTable, {type: "VOTable", description: "XML-Based Table Format"}],
     ]);
 
     private static GetFileTypeDisplay(type: CARTA.FileType) {
