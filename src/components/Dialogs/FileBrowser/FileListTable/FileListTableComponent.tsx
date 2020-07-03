@@ -202,7 +202,7 @@ export class FileListTableComponent extends React.Component<FileListTableCompone
                 this.cachedSortingConfig = sortingConfig;
                 this.cachedFilterString = filterString;
                 this.cachedFileResponse = fileResponse;
-                this.tableRef?.scrollToRegion(Regions.row(0, 0));
+                setTimeout(() => this.tableRef?.scrollToRegion(Regions.row(0, 0)), 20);
             }
         });
     }
