@@ -50,7 +50,7 @@ export class TableComponent extends React.Component<TableComponentProps> {
                 return (
                     <div>
                         <small>Operators: {">"}, {">="}, {"<"}, {"<="}, {"=="}, {"!="}, {".."}, {"..."}</small><br/>
-                        <small>e.g. {"<"} 10 (everything less then 10) </small><br/>
+                        <small>e.g. {"<"} 10 (everything less than 10) </small><br/>
                         <small>e.g. == 1.23 (entries equal to 1.23) </small><br/>
                         <small>e.g. 10..50 (everything between 10 and 50, exclusive)) </small><br/>
                         <small>e.g. 10...50 (everything between 10 and 50, inclusive) </small>
