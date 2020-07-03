@@ -9,11 +9,14 @@
         display: flex;
     }
 
+    .refresh-button {
+        margin-right: 10px;
+    }
+
     .bp3-dialog-body {
         height: 100%;
         overflow: hidden;
         margin-top: 10px;
-        margin-left: 25px;
 
         .bp3-input-group {
             margin: 10px 5px 5px;
@@ -22,6 +25,8 @@
         .file-panes {
             display: flex;
             height: calc(100% - 45px);
+            margin-left: 5px;
+            margin-right: 5px;
 
             &.extended {
                 height: 100%;
@@ -41,4 +46,14 @@
         }
 
     }
+}
+
+.path-breadcrumbs {
+    li::after {
+        margin: 0 2px !important;
+    }
+}
+
+.folder-breadcrumb {
+    font-size: 14px !important;
 }
