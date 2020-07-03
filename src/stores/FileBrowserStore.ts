@@ -187,7 +187,7 @@ export class FileBrowserStore {
         }
     };
 
-    @action selectFolder = (folder: string, absolutePath: boolean) => {
+    @action selectFolder = (folder: string, absolutePath: boolean = false) => {
         if (absolutePath) {
             this.getFileList(folder);
             return;
