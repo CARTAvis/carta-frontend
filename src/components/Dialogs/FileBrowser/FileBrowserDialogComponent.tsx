@@ -297,7 +297,7 @@ export class FileBrowserDialogComponent extends React.Component {
         } else {
             fileInput = (
                 <InputGroup
-                    autoFocus={true}
+                    autoFocus={false}
                     placeholder="Filter by filename pattern (unix style) or regular expression (using /<expression>/)"
                     value={this.fileFilterString}
                     onChange={this.handleFilterStringInputChanged}
