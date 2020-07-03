@@ -3,7 +3,7 @@ import {action, autorun, computed, observable} from "mobx";
 import {observer} from "mobx-react";
 import {Cell, Column, ColumnHeaderCell, Regions, RenderMode, SelectionModes, Table} from "@blueprintjs/table";
 import {IRegion} from "@blueprintjs/table/src/regions";
-import {Icon, Label, Menu, MenuItem} from "@blueprintjs/core";
+import {Colors, Icon, Label, Menu, MenuItem, NonIdealState} from "@blueprintjs/core";
 import globToRegExp from "glob-to-regexp";
 import * as moment from "moment";
 import {CARTA} from "carta-protobuf";
@@ -244,19 +244,20 @@ export class FileListTableComponent extends React.Component<FileListTableCompone
             if (sortColumn) {
                 return (
                     <Label className="bp3-inline label">
-                        <Icon className="sort-icon" icon={sortDesc ? "sort-desc" : "sort-asc"}/>
+                        <Icon onClick={() => this.props.onSortingChanged(name, -sortingConfig.direction)} className="sort-icon" icon={sortDesc ? "sort-desc" : "sort-asc"}/>
                         {name}
                     </Label>
                 );
             } else {
                 return (
                     <Label className="bp3-inline label">
+                        <Icon onClick={() => this.props.onSortingChanged(name, 1)} className="sort-icon inactive" icon="sort"/>
                         {name}
                     </Label>
                 );
             }
         };
-        return <ColumnHeaderCell className={"column-name"} nameRenderer={nameRenderer} menuRenderer={menuRenderer}/>;
+        return <ColumnHeaderCell className={"column-name"} nameRenderer={nameRenderer}/>;
     };
 
     private renderFilenames = (rowIndex: number) => {
@@ -364,6 +365,15 @@ export class FileListTableComponent extends React.Component<FileListTableCompone
         const classes = ["browser-table"];
         if (this.props.darkTheme) {
             classes.push("bp3-dark");
+        }
+
+        const entryCount = this.tableEntries.length;
+        const unfilteredEntryCount = (fileResponse?.files?.length || 0) + (fileResponse?.subdirectories?.length || 0);
+        if (!unfilteredEntryCount) {
+            return <NonIdealState icon="folder-open" title="Empty folder" description="There are no files or subdirectories in this folder"/>;
+        } else if (!entryCount) {
+            return <NonIdealState icon="search" title="No results" description="There are no files or subdirectories matching the filter expression"/>;
+
         }
 
         return (

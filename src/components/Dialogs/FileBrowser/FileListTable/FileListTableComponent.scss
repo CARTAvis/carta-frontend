@@ -10,9 +10,13 @@
     }
 
     .sort-icon {
-        margin-right: 5px;
-        position: relative;
-        top: 5px;
+        pointer-events: all;
+        cursor: pointer;
+        margin-top: 2px;
+
+        &.inactive {
+            opacity: 0.25;
+        }
     }
 }
 

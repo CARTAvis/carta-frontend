@@ -301,6 +301,7 @@ export class FileBrowserDialogComponent extends React.Component {
                     placeholder="Filter by filename pattern (unix style) or regular expression (using /<expression>/)"
                     value={this.fileFilterString}
                     onChange={this.handleFilterStringInputChanged}
+                    leftIcon="search"
                 />);
         }
 
