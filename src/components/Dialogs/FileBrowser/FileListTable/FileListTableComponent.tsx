@@ -3,7 +3,7 @@ import {action, autorun, computed, observable} from "mobx";
 import {observer} from "mobx-react";
 import {Cell, Column, ColumnHeaderCell, Regions, RenderMode, SelectionModes, Table} from "@blueprintjs/table";
 import {IRegion} from "@blueprintjs/table/src/regions";
-import {Colors, Icon, Label, Menu, MenuItem, NonIdealState} from "@blueprintjs/core";
+import {Icon, Label, NonIdealState} from "@blueprintjs/core";
 import globToRegExp from "glob-to-regexp";
 import * as moment from "moment";
 import {CARTA} from "carta-protobuf";
@@ -229,16 +229,6 @@ export class FileListTableComponent extends React.Component<FileListTableCompone
         const sortingConfig = this.props.sortingConfig;
         const sortColumn = name === sortingConfig?.columnName;
         const sortDesc = sortingConfig?.direction < 0;
-
-        const menuRenderer = () => {
-            return (
-                <Menu className="catalog-sort-menu-item">
-                    <MenuItem icon="sort-asc" active={sortingConfig?.direction > 0} onClick={() => this.props.onSortingChanged(name, 1)} text="Sort Asc"/>
-                    <MenuItem icon="sort-desc" active={sortingConfig?.direction < 0} onClick={() => this.props.onSortingChanged(name, -1)} text="Sort Desc"/>
-                    <MenuItem icon="cross" onClick={this.props.onSortingCleared} text="Clear Sort"/>
-                </Menu>
-            );
-        };
 
         const nameRenderer = () => {
             if (sortColumn) {
