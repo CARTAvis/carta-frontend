@@ -348,6 +348,9 @@ export class FileBrowserDialogComponent extends React.Component {
                                 selectedFile={fileBrowserStore.selectedFile}
                                 selectedHDU={fileBrowserStore.selectedHDU}
                                 filterString={this.debouncedFilterString}
+                                sortingConfig={fileBrowserStore.sortingConfig}
+                                onSortingChanged={fileBrowserStore.setSortingConfig}
+                                onSortingCleared={fileBrowserStore.clearSortingConfig}
                                 onFileClicked={fileBrowserStore.selectFile}
                                 onFileDoubleClicked={this.loadFile}
                                 onFolderClicked={this.handleFolderClicked}

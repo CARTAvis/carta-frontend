@@ -7,7 +7,7 @@ import {Icon, Label, Menu, MenuItem} from "@blueprintjs/core";
 import globToRegExp from "glob-to-regexp";
 import * as moment from "moment";
 import {CARTA} from "carta-protobuf";
-import {BrowserMode} from "stores";
+import {BrowserMode, SortingConfig} from "stores";
 import {toFixed} from "utilities";
 import "./FileListTableComponent.css";
 
@@ -27,7 +27,10 @@ export interface FileListTableComponentProps {
     selectedFile: CARTA.IFileInfo | CARTA.ICatalogFileInfo;
     selectedHDU: string;
     filterString?: string;
+    sortingConfig?: SortingConfig;
     fileBrowserMode: BrowserMode;
+    onSortingChanged: (columnName: string, direction: number) => void;
+    onSortingCleared: () => void;
     onFileClicked: (file: CARTA.IFileInfo | CARTA.ICatalogFileInfo, hdu?: string) => void;
     onFileDoubleClicked: (file: CARTA.IFileInfo | CARTA.ICatalogFileInfo, hdu?: string) => void;
     onFolderClicked: (folder: string) => void;
@@ -35,15 +38,13 @@ export interface FileListTableComponentProps {
 
 @observer
 export class FileListTableComponent extends React.Component<FileListTableComponentProps> {
-    @observable sortColumn: string = "Filename";
-    @observable sortDirection: number = 1;
     @observable selectedRegion: IRegion[];
-    @observable columnWidths = [300, 90, 90, 90];
+    @observable columnWidths = [300, 90, 90, 95];
 
     private static readonly RowHeight = 22;
     private tableRef: Table;
     private cachedFilterString: string;
-    private cachedSortString: string;
+    private cachedSortingConfig: SortingConfig;
     private cachedFileResponse: CARTA.IFileListResponse | CARTA.ICatalogListResponse;
 
     private static readonly FileTypeMap = new Map<CARTA.FileType, { type: string, description: string }>([
@@ -118,10 +119,10 @@ export class FileListTableComponent extends React.Component<FileListTableCompone
         }
 
         const entries: FileEntry[] = [];
-
+        const sortingConfig = this.props.sortingConfig;
         if (filteredSubdirectories && filteredSubdirectories.length) {
-            if (this.sortColumn === "Filename") {
-                filteredSubdirectories.sort((a, b) => this.sortDirection * (a.toLowerCase() < b.toLowerCase() ? -1 : 1));
+            if (sortingConfig?.columnName === "Filename") {
+                filteredSubdirectories.sort((a, b) => sortingConfig.direction * (a.toLowerCase() < b.toLowerCase() ? -1 : 1));
             }
             for (const directory of filteredSubdirectories) {
                 entries.push({
@@ -132,18 +133,18 @@ export class FileListTableComponent extends React.Component<FileListTableCompone
         }
 
         if (filteredFiles && filteredFiles.length) {
-            switch (this.sortColumn) {
+            switch (sortingConfig?.columnName) {
                 case "Filename":
-                    filteredFiles.sort((a, b) => this.sortDirection * (a.name.toLowerCase() < b.name.toLowerCase() ? -1 : 1));
+                    filteredFiles.sort((a, b) => sortingConfig.direction * (a.name.toLowerCase() < b.name.toLowerCase() ? -1 : 1));
                     break;
                 case "Type":
-                    filteredFiles.sort((a, b) => this.sortDirection * (a.type > b.type ? -1 : 1));
+                    filteredFiles.sort((a, b) => sortingConfig.direction * (a.type > b.type ? -1 : 1));
                     break;
                 case "Size":
-                    filteredFiles.sort((a, b) => this.sortDirection * (a.size < b.size ? -1 : 1));
+                    filteredFiles.sort((a, b) => sortingConfig.direction * (a.size < b.size ? -1 : 1));
                     break;
                 case "Date":
-                    filteredFiles.sort((a, b) => this.sortDirection * (a.date < b.date ? -1 : 1));
+                    filteredFiles.sort((a, b) => sortingConfig.direction * (a.date < b.date ? -1 : 1));
                     break;
                 default:
                     break;
@@ -194,27 +195,17 @@ export class FileListTableComponent extends React.Component<FileListTableCompone
         // Automatically scroll to the top of the table when a new file response is received, or when filtering/sorting changes
         autorun(() => {
             const fileResponse = this.props.listResponse;
-            const sortString = `${this.sortColumn} - ${this.sortDirection}`;
+            const sortingConfig = this.props.sortingConfig;
             const filterString = this.props.filterString;
 
-            if (fileResponse !== this.cachedFileResponse || sortString !== this.cachedSortString || filterString !== this.cachedFilterString) {
-                this.cachedSortString = sortString;
+            if (fileResponse !== this.cachedFileResponse || sortingConfig !== this.cachedSortingConfig || filterString !== this.cachedFilterString) {
+                this.cachedSortingConfig = sortingConfig;
                 this.cachedFilterString = filterString;
                 this.cachedFileResponse = fileResponse;
                 this.tableRef?.scrollToRegion(Regions.row(0, 0));
             }
         });
     }
-
-    @action setSorting = (columnName: string, direction: number) => {
-        this.sortColumn = columnName;
-        this.sortDirection = Math.sign(direction);
-    };
-
-    @action clearSorting = () => {
-        this.sortColumn = undefined;
-        this.sortDirection = 0;
-    };
 
     @action selectEntry = (entry: FileEntry, index) => {
         if (entry) {
@@ -235,15 +226,16 @@ export class FileListTableComponent extends React.Component<FileListTableCompone
     };
 
     private renderColumnHeader = (name: string, index?: number) => {
-        const sortColumn = name === this.sortColumn;
-        const sortDesc = this.sortDirection < 0;
+        const sortingConfig = this.props.sortingConfig;
+        const sortColumn = name === sortingConfig?.columnName;
+        const sortDesc = sortingConfig?.direction < 0;
 
         const menuRenderer = () => {
             return (
                 <Menu className="catalog-sort-menu-item">
-                    <MenuItem icon="sort-asc" active={this.sortDirection > 0} onClick={() => this.setSorting(name, 1)} text="Sort Asc"/>
-                    <MenuItem icon="sort-desc" active={this.sortDirection < 0} onClick={() => this.setSorting(name, -1)} text="Sort Desc"/>
-                    <MenuItem icon="cross" onClick={this.clearSorting} text="Clear Sort"/>
+                    <MenuItem icon="sort-asc" active={sortingConfig?.direction > 0} onClick={() => this.props.onSortingChanged(name, 1)} text="Sort Asc"/>
+                    <MenuItem icon="sort-desc" active={sortingConfig?.direction < 0} onClick={() => this.props.onSortingChanged(name, -1)} text="Sort Desc"/>
+                    <MenuItem icon="cross" onClick={this.props.onSortingCleared} text="Clear Sort"/>
                 </Menu>
             );
         };
@@ -367,7 +359,7 @@ export class FileListTableComponent extends React.Component<FileListTableCompone
 
     render() {
         const fileResponse = this.props.listResponse;
-        const sorting = `${this.sortColumn} - ${this.sortDirection}`;
+        const sortingConfig = this.props.sortingConfig;
 
         const classes = ["browser-table"];
         if (this.props.darkTheme) {
