@@ -138,7 +138,7 @@ export class FileListTableComponent extends React.Component<FileListTableCompone
                     filteredFiles.sort((a, b) => sortingConfig.direction * (a.name.toLowerCase() < b.name.toLowerCase() ? -1 : 1));
                     break;
                 case "Type":
-                    filteredFiles.sort((a, b) => sortingConfig.direction * (a.type > b.type ? -1 : 1));
+                    filteredFiles.sort((a, b) => sortingConfig.direction * (a.type < b.type ? -1 : 1));
                     break;
                 case "Size":
                     filteredFiles.sort((a, b) => sortingConfig.direction * (a.size < b.size ? -1 : 1));
