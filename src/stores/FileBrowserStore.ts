@@ -14,9 +14,13 @@ export enum BrowserMode {
     Catalog
 }
 
-export type RegionFileType = CARTA.FileType.CRTF | CARTA.FileType.REG;
+export type RegionFileType = CARTA.FileType.CRTF | CARTA.FileType.DS9_REG;
 export type ImageFileType = CARTA.FileType.CASA | CARTA.FileType.FITS | CARTA.FileType.HDF5 | CARTA.FileType.MIRIAD;
 export type CatalogFileType = CARTA.CatalogFileType.VOTable | CARTA.CatalogFileType.FITSTable;
+export interface SortingConfig {
+    columnName: string;
+    direction: number;
+}
 
 export class FileBrowserStore {
     private static staticInstance: FileBrowserStore;
@@ -44,6 +48,7 @@ export class FileBrowserStore {
     @observable exportFilename: string;
     @observable exportCoordinateType: CARTA.CoordinateType;
     @observable exportFileType: RegionFileType;
+    @observable sortingConfig: SortingConfig = {columnName: "Date", direction: -1};
 
     @observable catalogFileList: CARTA.ICatalogListResponse;
     @observable selectedCatalogFile: CARTA.ICatalogFileInfo;
@@ -235,6 +240,14 @@ export class FileBrowserStore {
     @action setExportFileType = (fileType: RegionFileType) => {
         this.exportFileType = fileType;
     };
+
+    @action setSortingConfig = (columnName: string, direction: number) => {
+        this.sortingConfig = {columnName, direction: Math.sign(direction)};
+    }
+
+    @action clearSortingConfig = () => {
+        this.sortingConfig = undefined;
+    }
 
     @computed get fileInfo() {
         let fileInfo = "";
