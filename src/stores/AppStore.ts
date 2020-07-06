@@ -637,7 +637,7 @@ export class AppStore {
 
     // Region file actions
     @action importRegion = (directory: string, file: string, type: CARTA.FileType | CARTA.CatalogFileType) => {
-        if (!this.activeFrame || !(type === CARTA.FileType.CRTF || type === CARTA.FileType.REG)) {
+        if (!this.activeFrame || !(type === CARTA.FileType.CRTF || type === CARTA.FileType.DS9_REG)) {
             AppToaster.show({icon: "warning-sign", message: `Region type not supported`, intent: "danger", timeout: 3000});
             return;
         }
