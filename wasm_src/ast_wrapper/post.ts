@@ -93,7 +93,7 @@ Module.setCanvas = function (canvas) {
 
 Module.plot = Module.cwrap("plotGrid", "number", ["number", "number", "number", "number", "number", "number", "number", "number", "number", "number", "number", "string"]);
 Module.initFrame = Module.cwrap("initFrame", "number", ["string"]);
-Module.initSpectralFrame = Module.cwrap("initSpectralFrame", "number", ["string", "string", "string"]);
+Module.getSpectralFrame = Module.cwrap("getSpectralFrame", "number", ["number"]);
 Module.initDummyFrame = Module.cwrap("initDummyFrame", "number", []);
 Module.set = Module.cwrap("set", "number", ["number", "string"]);
 Module.clear = Module.cwrap("clear", "number", ["number", "string"]);
@@ -140,32 +140,35 @@ Module.getFormattedCoordinates = function (wcsInfo: number, x: number, y: number
     return {x: xFormat, y: yFormat};
 };
 
-Module.pixToWCSVector = function (wcsInfo, xIn, yIn) {
+Module.transformPointArrays = function (wcsInfo: number, xIn: Float64Array, yIn: Float64Array, forward: number) {
     // Return empty array if arguments are invalid
     if (!(xIn instanceof Float64Array) || !(yIn instanceof Float64Array) || xIn.length !== yIn.length) {
         return {x: new Float64Array(1), y: new Float64Array(1)};
     }
 
+    // Allocate and assign WASM memory
     const N = xIn.length;
-    // Return
-    if (N > Module.numArrayCoordinates) {
-        Module._free(Module.xIn);
-        Module._free(Module.yIn);
-        Module._free(Module.xOut);
-        Module._free(Module.yOut);
-        Module.numArrayCoordinates = N;
-        Module.xIn = Module._malloc(Module.numArrayCoordinates * 8);
-        Module.yIn = Module._malloc(Module.numArrayCoordinates * 8);
-        Module.xOut = Module._malloc(Module.numArrayCoordinates * 8);
-        Module.yOut = Module._malloc(Module.numArrayCoordinates * 8);
-    }
+    const xInPtr = Module._malloc(N * 8);
+    const yInPtr = Module._malloc(N * 8);
+    const xOutPtr = Module._malloc(N * 8);
+    const yOutPtr = Module._malloc(N * 8);
+    Module.HEAPF64.set(xIn, xInPtr / 8);
+    Module.HEAPF64.set(yIn, yInPtr / 8);
 
-    Module.HEAPF64.set(xIn, Module.xIn / 8);
-    Module.HEAPF64.set(yIn, Module.yIn / 8);
-    Module.transform(wcsInfo, N, Module.xIn, Module.yIn, 1, Module.xOut, Module.yOut);
-    const xOut = new Float64Array(Module.HEAPF64.buffer, Module.xOut, N);
-    const yOut = new Float64Array(Module.HEAPF64.buffer, Module.yOut, N);
-    return {x: xOut.slice(0), y: yOut.slice(0)};
+    // Perform the AST transform
+    Module.transform(wcsInfo, N, xInPtr, yInPtr, forward, xOutPtr, yOutPtr);
+
+    // Copy result out to an object
+    const xOut = new Float64Array(Module.HEAPF64.buffer, xOutPtr, N);
+    const yOut = new Float64Array(Module.HEAPF64.buffer, yOutPtr, N);
+    const result = {x: xOut.slice(0), y: yOut.slice(0)};
+
+    // Free WASM memory
+    Module._free(xInPtr);
+    Module._free(yInPtr);
+    Module._free(xOutPtr);
+    Module._free(yOutPtr);
+    return result;
 };
 
 Module.transformPoint = function (transformFrameSet: number, xIn: number, yIn: number, forward: boolean = true) {

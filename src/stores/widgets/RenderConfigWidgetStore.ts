@@ -1,7 +1,8 @@
 import {action, computed, observable} from "mobx";
 import {Colors} from "@blueprintjs/core";
+import * as tinycolor from "tinycolor2";
+
 import {PlotType, LineSettings} from "components/Shared";
-import {isColorValid} from "utilities";
 
 export class RenderConfigWidgetStore {
     @observable minX: number;
@@ -118,8 +119,9 @@ export class RenderConfigWidgetStore {
         if (!widgetSettings) {
             return;
         }
-        if (typeof widgetSettings.primaryLineColor === "string" && isColorValid(widgetSettings.primaryLineColor)) {
-            this.primaryLineColor.colorHex = widgetSettings.primaryLineColor;
+        const lineColor = tinycolor(widgetSettings.primaryLineColor);
+        if (lineColor.isValid()) {
+            this.primaryLineColor.colorHex = lineColor.toHexString();
         }
         if (typeof widgetSettings.lineWidth === "number" && widgetSettings.lineWidth >= LineSettings.MIN_WIDTH && widgetSettings.lineWidth <= LineSettings.MAX_WIDTH) {
             this.lineWidth = widgetSettings.lineWidth;

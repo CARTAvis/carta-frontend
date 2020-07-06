@@ -1,139 +1,189 @@
 import * as AST from "ast_wrapper";
 import {action, observable, ObservableMap} from "mobx";
 import {Colors} from "@blueprintjs/core";
-import {SystemType} from "stores";
-import {CatalogOverlayShape} from "stores/widgets";
+import {CatalogOverlayShape, CatalogSystemType} from "stores/widgets";
 
-type CatalogSettings = {
-    color: string,
-    size: number,
-    shape: CatalogOverlayShape,
-    xImageCoords: Array<number>[],
-    yImageCoords: Array<number>[],
-    selectedPointIndexs: Array<number>,
+type CatalogDataInfo = {
+    fileId: number,
+    xImageCoords: Array<number>,
+    yImageCoords: Array<number>,
+    xSelectedCoords: Array<number>,
+    ySelectedCoords: Array<number>,
     showSelectedData: boolean;
 };
 
 export class CatalogStore {
-    private readonly degreeUnits = ["deg", "degrees"];
-    private readonly arcsecUnits = ["arcsec", "arcsecond"];
-    private readonly arcminUnits = ["arcmin", "arcminute"];
+    private static staticInstance: CatalogStore;
 
-    @observable catalogs: ObservableMap<string, CatalogSettings>;
-
-    constructor() {
-        this.catalogs = new ObservableMap();
+    static get Instance() {
+        if (!CatalogStore.staticInstance) {
+            CatalogStore.staticInstance = new CatalogStore();
+        }
+        return CatalogStore.staticInstance;
     }
 
-    @action addCatalogs(widgetId: string) {
-        this.catalogs.set(widgetId, { 
-            color: Colors.RED2, 
-            size: 5, 
-            shape: CatalogOverlayShape.Circle, 
-            xImageCoords: [], 
-            yImageCoords: [], 
-            selectedPointIndexs: [],
-            showSelectedData: false 
+    private static readonly DegreeUnits = ["deg", "degrees"];
+    private static readonly ArcsecUnits = ["arcsec", "arcsecond"];
+    private static readonly ArcminUnits = ["arcmin", "arcminute"];
+
+    @observable catalogData: ObservableMap<string, CatalogDataInfo>;
+    @observable catalogColor: ObservableMap<string, string>;
+    @observable catalogSize: ObservableMap<string, number>;
+    @observable catalogShape: ObservableMap<string, CatalogOverlayShape>;
+
+    private constructor() {
+        this.catalogData = new ObservableMap();
+        this.catalogColor = new ObservableMap();
+        this.catalogSize = new ObservableMap();
+        this.catalogShape = new ObservableMap();
+    }
+
+    @action addCatalog(widgetId: string, fileId: number) {
+        // init catalog data
+        this.catalogData.set(widgetId, {
+            fileId: fileId,
+            xImageCoords: [],
+            yImageCoords: [],
+            xSelectedCoords: [],
+            ySelectedCoords: [],
+            showSelectedData: false
         });
+        this.catalogColor.set(widgetId, Colors.TURQUOISE3);
+        this.catalogSize.set(widgetId, 5);
+        this.catalogShape.set(widgetId, CatalogOverlayShape.Circle);
     }
 
-    @action updateCatalogData(widgetId: string, xWcsData: Array<any>, yWcsData: Array<any>, wcsInfo: number, xUnit: string, yUnit: string, catalogFrame: SystemType) {
-        const pixelData = this.transformCatalogData(xWcsData, yWcsData, wcsInfo, xUnit, yUnit, catalogFrame);
-        const catalogSettings = this.catalogs.get(widgetId);
-        if (catalogSettings) {
-            catalogSettings.xImageCoords.push(pixelData.xImageCoords);
-            catalogSettings.yImageCoords.push(pixelData.yImageCoords);   
+    @action updateCatalogData(widgetId: string, xData: Array<number>, yData: Array<number>, wcsInfo: number, xUnit: string, yUnit: string, catalogFrame: CatalogSystemType) {
+        const catalogDataInfo = this.catalogData.get(widgetId);
+        if (catalogDataInfo) {
+            switch (catalogFrame) {
+                case CatalogSystemType.Pixel0:
+                    for (let i = 0; i < xData.length; i++) {
+                        catalogDataInfo.xImageCoords.push(xData[i] + 1);
+                        catalogDataInfo.yImageCoords.push(yData[i] + 1);
+                    }
+                    break;
+                case CatalogSystemType.Pixel1:
+                    for (let i = 0; i < xData.length; i++) {
+                        catalogDataInfo.xImageCoords.push(xData[i]);
+                        catalogDataInfo.yImageCoords.push(yData[i]);
+                    }
+                    break;
+                default:
+                    const pixelData = CatalogStore.TransformCatalogData(xData, yData, wcsInfo, xUnit, yUnit, catalogFrame);
+                    console.time(`updatePixelCoordsArray_${xData?.length}`);
+                    for (let i = 0; i < pixelData.xImageCoords.length; i++) {
+                        catalogDataInfo.xImageCoords.push(pixelData.xImageCoords[i]);
+                        catalogDataInfo.yImageCoords.push(pixelData.yImageCoords[i]);
+                    }
+                    console.timeEnd(`updatePixelCoordsArray_${xData?.length}`);
+                    break;
+            }
+            this.catalogData.set(widgetId,
+                {
+                    fileId: catalogDataInfo.fileId,
+                    xImageCoords: catalogDataInfo.xImageCoords,
+                    yImageCoords: catalogDataInfo.yImageCoords,
+                    xSelectedCoords: catalogDataInfo.xSelectedCoords,
+                    ySelectedCoords: catalogDataInfo.ySelectedCoords,
+                    showSelectedData: catalogDataInfo.showSelectedData,
+                });
+        }
+    }
+
+    @action updateSelectedPoints(widgetId: string, xSelectedCoords: Array<number>, ySelectedCoords: Array<number>) {
+        const catalogDataInfo = this.catalogData.get(widgetId);
+        if (catalogDataInfo) {
+            this.catalogData.set(widgetId,
+                {
+                    fileId: catalogDataInfo.fileId,
+                    xImageCoords: catalogDataInfo.xImageCoords,
+                    yImageCoords: catalogDataInfo.yImageCoords,
+                    xSelectedCoords: xSelectedCoords,
+                    ySelectedCoords: ySelectedCoords,
+                    showSelectedData: catalogDataInfo.showSelectedData,
+                });
         }
     }
 
     @action updateCatalogSize(widgetId: string, size: number) {
-        this.catalogs.get(widgetId).size = size;
+        this.catalogSize.set(widgetId, size);
     }
 
     @action updateCatalogColor(widgetId: string, color: string) {
-        this.catalogs.get(widgetId).color = color;
+        this.catalogColor.set(widgetId, color);
     }
 
     @action updateCatalogShape(widgetId: string, shape: CatalogOverlayShape) {
-        this.catalogs.get(widgetId).shape = shape;
+        this.catalogShape.set(widgetId, shape);
     }
 
     @action clearData(widgetId: string) {
-        const catalogSettings = this.catalogs.get(widgetId);
-        if (catalogSettings) {
-            catalogSettings.xImageCoords = [];
-            catalogSettings.yImageCoords = [];   
+        const catalogData = this.catalogData.get(widgetId);
+        if (catalogData) {
+            catalogData.xImageCoords = [];
+            catalogData.yImageCoords = [];
+            catalogData.showSelectedData = false;
         }
     }
 
     @action removeCatalog(widgetId: string) {
-        this.catalogs.delete(widgetId);
-    }
-
-    @action updateSelectedPoints(widgetId: string, selectedPointIndexs: number[]) {
-        const catalog = this.catalogs.get(widgetId);
-        if (catalog) {
-            catalog.selectedPointIndexs = selectedPointIndexs;   
-        }
+        this.catalogData.delete(widgetId);
+        this.catalogColor.delete(widgetId);
+        this.catalogSize.delete(widgetId);
+        this.catalogShape.delete(widgetId);
     }
 
     @action updateShowSelectedData(widgetId: string, val: boolean) {
-        const catalog = this.catalogs.get(widgetId);
-        catalog.showSelectedData = val;
+        const catalog = this.catalogData.get(widgetId);
+        if (catalog) {
+            catalog.showSelectedData = val;
+        }
     }
 
-    private transformCatalogData(xWcsData: Array<any>, yWcsData: Array<any>, wcsInfo: number, xUnit: string, yUnit: string, catalogFrame: SystemType): {xImageCoords: Array<number>, yImageCoords: Array<number>} {
-        const xImageCoords = [];
-        const yImageCoords = [];
-        if (xWcsData.length === yWcsData.length) {
-            const xUnitLowerCase = xUnit.toLocaleLowerCase();
-            const yUnitLowerCase = yUnit.toLocaleLowerCase();
-            let xFraction = 1;
-            let yFraction = 1;
+    private static GetFractionFromUnit(unit: string): number {
+        if (CatalogStore.ArcminUnits.includes(unit)) {
+            return Math.PI / 10800.0;
+        } else if (CatalogStore.ArcsecUnits.includes(unit)) {
+            return Math.PI / 648000.0;
+        } else {
+            // if unit is null, using deg as default
+            return Math.PI / 180.0;
+        }
+    }
+
+    private static TransformCatalogData(xWcsData: Array<number>, yWcsData: Array<number>, wcsInfo: number, xUnit: string, yUnit: string, catalogFrame: CatalogSystemType): { xImageCoords: Float64Array, yImageCoords: Float64Array } {
+        if (xWcsData?.length === yWcsData?.length && xWcsData?.length > 0) {
+            const N = xWcsData.length;
+
+            let xFraction = CatalogStore.GetFractionFromUnit(xUnit.toLocaleLowerCase());
+            let yFraction = CatalogStore.GetFractionFromUnit(yUnit.toLocaleLowerCase());
 
             let wcsCopy = AST.copy(wcsInfo);
             let system = "System=" + catalogFrame;
             AST.set(wcsCopy, system);
-            if (catalogFrame === SystemType.FK4) {
+            if (catalogFrame === CatalogSystemType.FK4) {
                 AST.set(wcsCopy, "Epoch=B1950");
                 AST.set(wcsCopy, "Equinox=1950");
             }
 
-            if (catalogFrame === SystemType.FK5) {
+            if (catalogFrame === CatalogSystemType.FK5) {
                 AST.set(wcsCopy, "Epoch=J2000");
                 AST.set(wcsCopy, "Equinox=2000");
             }
 
-            if (this.degreeUnits.indexOf(xUnitLowerCase) !== -1) {
-                xFraction = Math.PI / 180.0;
-            } else if (this.arcminUnits.indexOf(xUnitLowerCase) !== -1) {
-                xFraction = Math.PI / 10800.0;
-            } else if (this.arcsecUnits.indexOf(xUnitLowerCase) !== -1) {
-                xFraction = Math.PI / 648000.0;
-            } else {
-                // if unit is null, using deg as default
-                xFraction = Math.PI / 180.0;
+            const xWCSValues = new Float64Array(N);
+            const yWCSValues = new Float64Array(N);
+
+            for (let i = 0; i < N; i++) {
+                xWCSValues[i] = xWcsData[i] * xFraction;
+                yWCSValues[i] = yWcsData[i] * yFraction;
             }
 
-            if (this.degreeUnits.indexOf(yUnitLowerCase) !== -1) {
-                yFraction = Math.PI / 180.0;
-            } else if (this.arcminUnits.indexOf(yUnitLowerCase) !== -1) {
-                yFraction = Math.PI / 10800.0;
-            } else if (this.arcsecUnits.indexOf(yUnitLowerCase) !== -1) {
-                yFraction = Math.PI / 648000.0;
-            } else {
-                yFraction = Math.PI / 180.0;
-            }
-
-            for (let index = 0; index < xWcsData.length; index++) {
-                const xWCSValue = xWcsData[index] * xFraction;
-                const yWCSValue = yWcsData[index] * yFraction;
-                const pixelValue = AST.transformPoint(wcsCopy, xWCSValue, yWCSValue, false);
-                xImageCoords.push(pixelValue.x);
-                yImageCoords.push(pixelValue.y);
-            }
+            const results = AST.transformPointArrays(wcsCopy, xWCSValues, yWCSValues, 0);
             AST.delete(wcsCopy);
+            return {xImageCoords: results.x, yImageCoords: results.y};
         }
-        return {xImageCoords: xImageCoords, yImageCoords: yImageCoords};
+        return {xImageCoords: new Float64Array(0), yImageCoords: new Float64Array(0)};
     }
 }

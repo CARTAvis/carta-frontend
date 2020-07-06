@@ -114,10 +114,10 @@ export class OverlayGlobalSettings {
         return this.system;
     }
 
-    constructor(readonly preferenceStore: PreferenceStore) {
+    constructor() {
         this.system = SystemType.Auto;
         this.labelType = LabelType.Exterior;
-        this.color = preferenceStore.astColor;
+        this.color = PreferenceStore.Instance.astColor;
         this.tolerance = 2; // percentage
 
         this.defaultSystem = SystemType.Auto;
@@ -236,8 +236,8 @@ export class OverlayGridSettings {
         return astString.toString();
     }
 
-    constructor(readonly preference: PreferenceStore) {
-        this.visible = preference.astGridVisible;
+    constructor() {
+        this.visible = PreferenceStore.Instance.astGridVisible;
         this.customColor = false;
         this.color = AST_DEFAULT_COLOR;
         this.width = 1;
@@ -468,8 +468,7 @@ export class OverlayNumberSettings {
         }
 
         let format = (this.customFormat ? this.formatX : this.defaultFormatX);
-        let precision = (this.customPrecision ? this.precision : "*");
-        return `${format}.${precision}`;
+        return `${format}${this.customPrecision ? "." + this.precision : ""}`;
     }
 
     @computed get formatStringY() {
@@ -478,8 +477,7 @@ export class OverlayNumberSettings {
         }
 
         let format = (this.customFormat ? this.formatY : this.defaultFormatY);
-        let precision = (this.customPrecision ? this.precision : "*");
-        return `${format}.${precision}`;
+        return `${format}${this.customPrecision ? "." + this.precision : ""}`;
     }
 
     cursorFormatStringX(precision: number) {
@@ -587,8 +585,8 @@ export class OverlayLabelSettings {
     @observable customLabelX: string;
     @observable customLabelY: string;
 
-    constructor(readonly preference: PreferenceStore) {
-        this.visible = preference.astLabelsVisible;
+    constructor() {
+        this.visible = PreferenceStore.Instance.astLabelsVisible;
         this.hidden = false;
         this.fontSize = 15;
         this.font = 0;
@@ -661,7 +659,8 @@ export class OverlayBeamStore {
     @observable shiftX: number;
     @observable shiftY: number;
 
-    constructor(readonly preference: PreferenceStore) {
+    constructor() {
+        const preference = PreferenceStore.Instance;
         this.visible = preference.beamVisible;
         this.color = preference.beamColor;
         this.type = preference.beamType;
@@ -695,19 +694,17 @@ export class OverlayBeamStore {
 }
 
 export class OverlayBeamSettings {
-    private readonly appStore: AppStore;
-
     @observable selectedFileId: number;
     @observable settingsForDisplay: OverlayBeamStore;
 
-    constructor(appStore: AppStore) {
-        this.appStore = appStore;
+    constructor() {
         this.selectedFileId = -1;
         this.settingsForDisplay = null;
 
         autorun(() => {
-            if (this.appStore.activeFrame && this.appStore.activeFrame.frameInfo && this.appStore.activeFrame.frameInfo.fileInfo) {
-                this.setSelectedFrame(this.appStore.activeFrame.frameInfo.fileId);
+            const appStore = AppStore.Instance;
+            if (appStore.activeFrame && appStore.activeFrame.frameInfo && appStore.activeFrame.frameInfo.fileInfo) {
+                this.setSelectedFrame(appStore.activeFrame.frameInfo.fileId);
             }
         });
     }
@@ -718,7 +715,7 @@ export class OverlayBeamSettings {
 
     @action setSelectedFrame = (selectedFileId: number) => {
         this.selectedFileId = selectedFileId;
-        const frame = this.appStore.getFrame(selectedFileId);
+        const frame = AppStore.Instance.getFrame(selectedFileId);
         if (frame && frame.overlayBeamSettings) {
             this.settingsForDisplay = frame.overlayBeamSettings;
         }
@@ -726,7 +723,14 @@ export class OverlayBeamSettings {
 }
 
 export class OverlayStore {
-    private readonly preference: PreferenceStore;
+    private static staticInstance: OverlayStore;
+
+    static get Instance() {
+        if (!OverlayStore.staticInstance) {
+            OverlayStore.staticInstance = new OverlayStore();
+        }
+        return OverlayStore.staticInstance;
+    }
 
     // View size options
     @observable viewWidth: number;
@@ -743,17 +747,16 @@ export class OverlayStore {
     @observable ticks: OverlayTickSettings;
     @observable beam: OverlayBeamSettings;
 
-    constructor(appStore: AppStore, preference: PreferenceStore) {
-        this.preference = preference;
-        this.global = new OverlayGlobalSettings(preference);
+    private constructor() {
+        this.global = new OverlayGlobalSettings();
         this.title = new OverlayTitleSettings();
-        this.grid = new OverlayGridSettings(preference);
+        this.grid = new OverlayGridSettings();
         this.border = new OverlayBorderSettings();
         this.axes = new OverlayAxisSettings();
         this.numbers = new OverlayNumberSettings();
-        this.labels = new OverlayLabelSettings(preference);
+        this.labels = new OverlayLabelSettings();
         this.ticks = new OverlayTickSettings();
-        this.beam = new OverlayBeamSettings(appStore);
+        this.beam = new OverlayBeamSettings();
         this.viewHeight = 1;
         this.viewWidth = 1;
 
@@ -775,7 +778,7 @@ export class OverlayStore {
             this.numbers.setDefaultFormatX(undefined);
             this.numbers.setDefaultFormatY(undefined);
         } else {
-            switch (this.preference.wcsType) {
+            switch (PreferenceStore.Instance.wcsType) {
                 case WCSType.DEGREES:
                     this.numbers.setDefaultFormatX("d");
                     this.numbers.setDefaultFormatY("d");

@@ -1,0 +1,71 @@
+@import "../../../../../node_modules/@blueprintjs/core/lib/scss/variables.scss";
+
+.column-name {
+    overflow: hidden;
+
+    .label {
+        margin: 0;
+        display: inline-flex;
+        position: absolute;
+    }
+
+    .sort-icon {
+        pointer-events: all;
+        cursor: pointer;
+        margin-top: 2px;
+
+        &.inactive {
+            opacity: 0.25;
+        }
+    }
+}
+
+.filename-cell {
+    .bp3-icon {
+        margin-right: 5px;
+    }
+}
+
+.catalog-sort-menu-item {
+    min-width: fit-content !important;
+}
+
+.browser-table {
+    box-shadow: inset 0 0 0 1px rgba($black, 0.15) !important;
+
+    .bp3-icon {
+        color: $gray2;
+    }
+
+    .bp3-table-cell {
+        cursor: pointer !important;
+        box-shadow: inset 0 -1px 0 rgba($black, 0.15), inset -1px 0 0 rgba($black, 0.05) !important;
+        line-height: 22px;
+        height: 22px;
+    }
+
+    &.bp3-dark {
+        box-shadow: inset 0 0 0 1px rgba($black, 0.4) !important;
+
+        .bp3-icon {
+            color: $gray4;
+        }
+
+        .bp3-table-cell {
+            cursor: pointer !important;
+            box-shadow: inset 0 -1px 0 rgba($black, 0.4), inset -1px 0 0 rgba($black, 0.1) !important;
+        }
+    }
+
+    .time-cell {
+        text-align: right;
+    }
+
+    padding: 1px;
+
+    .bp3-table-selection-region {
+        left: 0 !important;
+        right: 0 !important;
+        width: auto !important;
+    }
+}

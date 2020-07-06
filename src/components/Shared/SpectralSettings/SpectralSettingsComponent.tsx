@@ -4,13 +4,12 @@ import {FormGroup, HTMLSelect, IOptionProps} from "@blueprintjs/core";
 import {SpectralProfileWidgetStore, StokesAnalysisWidgetStore} from "stores/widgets";
 import {AppStore} from "stores";
 import {SpectralSystem} from "models";
-import "./SpectralSettingsComponent.css";
 
 @observer
-export class SpectralSettingsComponent extends React.Component<{appStore: AppStore, widgetStore: SpectralProfileWidgetStore|StokesAnalysisWidgetStore, disable: boolean}> {
+export class SpectralSettingsComponent extends React.Component<{widgetStore: SpectralProfileWidgetStore|StokesAnalysisWidgetStore, disable: boolean}> {
 
     render() {
-        const frame = this.props.appStore.activeFrame;
+        const frame = AppStore.Instance.activeFrame;
         const nativeSpectralCoordinate = frame ? frame.nativeSpectralCoordinate : undefined;
         const widgetStore = this.props.widgetStore;
         const spectralCoordinateOptions: IOptionProps[] = frame && frame.spectralCoordsSupported ?
@@ -22,24 +21,22 @@ export class SpectralSettingsComponent extends React.Component<{appStore: AppSto
 
         return (
             <React.Fragment>
-                <div className="spectral-settings">
-                    <FormGroup label={"Coordinate"} inline={true} disabled={disableCoordinateSetting}>
-                        <HTMLSelect
-                            disabled={disableCoordinateSetting}
-                            value={frame && frame.spectralCoordinate ? frame.spectralCoordinate : ""}
-                            options={spectralCoordinateOptions}
-                            onChange={(event: React.FormEvent<HTMLSelectElement>) => widgetStore.setSpectralCoordinate(event.currentTarget.value as string)}
-                        />
-                    </FormGroup>
-                    <FormGroup label={"System"} inline={true} disabled={disableSystemSetting}>
-                        <HTMLSelect
-                            disabled={disableSystemSetting}
-                            value={frame && frame.spectralSystem ? frame.spectralSystem : ""}
-                            options={spectralSystemOptions}
-                            onChange={(event: React.FormEvent<HTMLSelectElement>) => widgetStore.setSpectralSystem(event.currentTarget.value as SpectralSystem)}
-                        />
-                    </FormGroup>
-                </div>
+                <FormGroup label={"Coordinate"} inline={true} disabled={disableCoordinateSetting}>
+                    <HTMLSelect
+                        disabled={disableCoordinateSetting}
+                        value={frame && frame.spectralCoordinate ? frame.spectralCoordinate : ""}
+                        options={spectralCoordinateOptions}
+                        onChange={(event: React.FormEvent<HTMLSelectElement>) => widgetStore.setSpectralCoordinate(event.currentTarget.value as string)}
+                    />
+                </FormGroup>
+                <FormGroup label={"System"} inline={true} disabled={disableSystemSetting}>
+                    <HTMLSelect
+                        disabled={disableSystemSetting}
+                        value={frame && frame.spectralSystem ? frame.spectralSystem : ""}
+                        options={spectralSystemOptions}
+                        onChange={(event: React.FormEvent<HTMLSelectElement>) => widgetStore.setSpectralSystem(event.currentTarget.value as SpectralSystem)}
+                    />
+                </FormGroup>
             </React.Fragment>
         );
     }

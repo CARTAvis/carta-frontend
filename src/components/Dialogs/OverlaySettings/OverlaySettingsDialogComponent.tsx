@@ -1,5 +1,6 @@
 import * as React from "react";
 import * as AST from "ast_wrapper";
+import * as tinycolor from "tinycolor2";
 import {observer} from "mobx-react";
 import {observable} from "mobx";
 import {Select, ItemRenderer} from "@blueprintjs/select";
@@ -12,8 +13,8 @@ import {DraggableDialogComponent} from "components/Dialogs";
 import {ColorComponent} from "./ColorComponent";
 import {ColorResult} from "react-color";
 import {ColorPickerComponent, SafeNumericInput} from "components/Shared";
-import {AppStore, BeamType, LabelType, SystemType, HelpType} from "stores";
-import {hexStringToRgba, SWATCH_COLORS} from "utilities";
+import {AppStore, BeamType, LabelType, SystemType, HelpType, DialogStore, OverlayStore} from "stores";
+import { SWATCH_COLORS} from "utilities";
 import "./OverlaySettingsDialogComponent.css";
 
 // Font selector
@@ -64,7 +65,7 @@ export const renderFont: ItemRenderer<Font> = (font, {handleClick, modifiers, qu
 };
 
 @observer
-export class OverlaySettingsDialogComponent extends React.Component<{ appStore: AppStore }> {
+export class OverlaySettingsDialogComponent extends React.Component {
     @observable selectedTab: TabId = "global";
 
     private fontSelect(visible: boolean, currentFontId: number, fontSetter: Function) {
@@ -89,7 +90,7 @@ export class OverlaySettingsDialogComponent extends React.Component<{ appStore: 
     }
 
     public render() {
-        const appStore = this.props.appStore;
+        const appStore = AppStore.Instance;
         const overlayStore = appStore.overlayStore;
         const global = overlayStore.global;
         const title = overlayStore.title;
@@ -569,7 +570,7 @@ export class OverlaySettingsDialogComponent extends React.Component<{ appStore: 
             <div className="panel-container">
                 <FormGroup inline={true} label="Frame">
                     <HTMLSelect
-                        options={this.props.appStore.frameNames}
+                        options={appStore.frameNames}
                         value={beam.selectedFileId}
                         onChange={(event: React.FormEvent<HTMLSelectElement>) => beam.setSelectedFrame(parseInt(event.currentTarget.value))}
                     />
@@ -582,11 +583,11 @@ export class OverlaySettingsDialogComponent extends React.Component<{ appStore: 
                 </FormGroup>
                 <FormGroup inline={true} label="Color">
                     <ColorPickerComponent
-                        color={hexStringToRgba(beamSettings.color)}
+                        color={tinycolor(beamSettings.color).toHexString()}
                         presetColors={SWATCH_COLORS}
                         setColor={(color: ColorResult) => beamSettings.setColor(color.hex)}
                         disableAlpha={true}
-                        darkTheme={this.props.appStore.darkTheme}
+                        darkTheme={appStore.darkTheme}
                     />
                 </FormGroup>
                 <FormGroup inline={true} label="Type">
@@ -636,9 +637,11 @@ export class OverlaySettingsDialogComponent extends React.Component<{ appStore: 
         ) : null;
 
         let className = "overlay-settings-dialog";
-        if (this.props.appStore.darkTheme) {
+        if (appStore.darkTheme) {
             className += " bp3-dark";
         }
+
+        const dialogStore = DialogStore.Instance;
 
         const dialogProps: IDialogProps = {
             icon: "settings",
@@ -646,13 +649,13 @@ export class OverlaySettingsDialogComponent extends React.Component<{ appStore: 
             className: className,
             canOutsideClickClose: false,
             lazy: true,
-            isOpen: appStore.dialogStore.overlaySettingsDialogVisible,
-            onClose: appStore.dialogStore.hideOverlaySettings,
+            isOpen: dialogStore.overlaySettingsDialogVisible,
+            onClose: dialogStore.hideOverlaySettings,
             title: "Overlay Settings",
         };
 
         return (
-            <DraggableDialogComponent dialogProps={dialogProps} appStore={appStore} helpType={HelpType.OVERLAY_SETTINGS} minWidth={300} minHeight={300} defaultWidth={630} defaultHeight={425} enableResizing={true}>
+            <DraggableDialogComponent dialogProps={dialogProps} helpType={HelpType.OVERLAY_SETTINGS} minWidth={300} minHeight={300} defaultWidth={630} defaultHeight={425} enableResizing={true}>
                 <div className="bp3-dialog-body">
                     <Tabs
                         id="overlayTabs"
@@ -668,12 +671,12 @@ export class OverlaySettingsDialogComponent extends React.Component<{ appStore: 
                         <Tab id="axes" title="Axes" panel={axesPanel}/>
                         <Tab id="numbers" title="Numbers" panel={numbersPanel}/>
                         <Tab id="labels" title="Labels" panel={labelsPanel}/>
-                        <Tab id="beam" title="Beam" panel={beamPanel} disabled={this.props.appStore.frameNum <= 0}/>
+                        <Tab id="beam" title="Beam" panel={beamPanel} disabled={appStore.frameNum <= 0}/>
                     </Tabs>
                 </div>
                 <div className="bp3-dialog-footer">
                     <div className="bp3-dialog-footer-actions">
-                        <Button intent={Intent.PRIMARY} onClick={appStore.dialogStore.hideOverlaySettings} text="Close"/>
+                        <Button intent={Intent.PRIMARY} onClick={dialogStore.hideOverlaySettings} text="Close"/>
                     </div>
                 </div>
             </DraggableDialogComponent>

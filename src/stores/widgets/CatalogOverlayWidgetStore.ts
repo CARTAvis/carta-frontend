@@ -1,15 +1,25 @@
 import {action, computed, observable} from "mobx";
 import {Colors} from "@blueprintjs/core";
-import {Table, Regions, IRegion} from "@blueprintjs/table";
+import {Regions, IRegion} from "@blueprintjs/table";
 import {CARTA} from "carta-protobuf";
 import {RegionWidgetStore, RegionsType} from "./RegionWidgetStore";
-import {AppStore, SystemType} from "stores";
-import {getTableDataByType} from "utilities";
+import {AppStore, CatalogStore} from "stores";
+import {filterProcessedColumnData, minMaxArray} from "utilities";
+import {ProcessedColumnData} from "models";
 
 export interface CatalogInfo {
     fileId: number;
     fileInfo: CARTA.ICatalogFileInfo;
     dataSize: number;
+    directory: string;
+}
+
+export enum CatalogCoordinate {
+    X = "X",
+    Y = "Y",
+    PlotSize = "Size",
+    PlotShape = "Shape",
+    NONE = "None",
 }
 
 export enum CatalogOverlay {
@@ -23,12 +33,26 @@ export enum CatalogOverlay {
     GLAT = "GLAT",
     GLON = "GLON",
     ELON = "ELON",
-    ELAT = "ELAT"
+    ELAT = "ELAT",
+    X0 = "X0",
+    Y0 = "Y0",
+    X1 = "X1",
+    Y1 = "Y1",
 }
 
 export enum CatalogOverlayShape {
     Circle = "circle-open",
-    Square = "square-open"
+    FullCircle = "circle",
+    Star = "star-open",
+    FullStar = "star",
+    Square = "square-open",
+    Plus = "cross-thin-open",
+    Cross = "x-thin-open",
+    TriangleUp = "triangle-up-open",
+    TriangleDown = "triangle-down-open",
+    Diamond = "diamond-open",
+    hexagon2 = "hexagon2-open",
+    hexagon = "hexagon-open",
 }
 
 export enum CatalogUpdateMode {
@@ -38,37 +62,55 @@ export enum CatalogUpdateMode {
 }
 
 export enum CatalogPlotType {
-    ImageOverlay = "as image overlay",
-    D2Scatter = "as 2D scatter",
-    // D3Scatter = "as 3D scatter"
+    ImageOverlay = "Image overlay",
+    // 1DHistogram = "as 1D histogram",
+    D2Scatter = "2D scatter",
+    // D3Scatter = "as 3D scatter",
 }
 
-export type ControlHeader = { columnIndex: number, dataIndex: number, display: boolean, representAs: CatalogOverlay, filter: string, columnWidth: number };
+export enum CatalogSystemType {
+    Ecliptic = "ECLIPTIC",
+    FK4 = "FK4",
+    FK5 = "FK5",
+    Galactic = "GALACTIC",
+    ICRS = "ICRS",
+    Pixel0 = "Pixel0",
+    Pixel1 = "Pixel1",
+}
+
+export type ControlHeader = { columnIndex: number, dataIndex: number, display: boolean, representAs: CatalogCoordinate, filter: string, columnWidth: number };
 
 export class CatalogOverlayWidgetStore extends RegionWidgetStore {
 
     public static readonly InitTableRows = 50;
-    private static readonly DataChunkSize = 50;
-    private static readonly initDisplayedColumnSize = 10;
-    private readonly CoordinateSystemName = new Map<SystemType, string>([
-        [SystemType.FK5, "FK5"],
-        [SystemType.FK4, "FK4"],
-        [SystemType.Galactic, "GAL"],
-        [SystemType.Ecliptic, "ECL"],
-        [SystemType.ICRS, "ICRS"],
+    public readonly CoordinateSystemName = new Map<CatalogSystemType, string>([
+        [CatalogSystemType.FK5, "FK5"],
+        [CatalogSystemType.FK4, "FK4"],
+        [CatalogSystemType.Galactic, "GAL"],
+        [CatalogSystemType.Ecliptic, "ECL"],
+        [CatalogSystemType.ICRS, "ICRS"],
+        [CatalogSystemType.Pixel0, "PIX0"],
+        [CatalogSystemType.Pixel1, "PIX1"]
     ]);
-    private systemCoordinateMap = new Map<SystemType, {x: CatalogOverlay, y: CatalogOverlay}>([
-        [SystemType.FK4, {x : CatalogOverlay.RA, y : CatalogOverlay.DEC}],
-        [SystemType.FK5, {x : CatalogOverlay.RA, y : CatalogOverlay.DEC}],
-        [SystemType.ICRS, {x : CatalogOverlay.RA, y : CatalogOverlay.DEC}],
-        [SystemType.Galactic, {x : CatalogOverlay.GLON, y : CatalogOverlay.GLAT}],
-        [SystemType.Ecliptic, {x : CatalogOverlay.ELON, y : CatalogOverlay.ELAT}],
+    private static readonly DataChunkSize = 50;
+    private static readonly InitDisplayedColumnSize = 10;
+    // Number.NEGATIVE_INFINITY -1.797693134862316E+308
+    private static readonly NEGATIVE_INFINITY = -1.7976931348623157e+308;
+    private static readonly POSITIVE_INFINITY = 1.7976931348623157e+308;
+    private systemCoordinateMap = new Map<CatalogSystemType, { x: CatalogOverlay, y: CatalogOverlay }>([
+        [CatalogSystemType.FK4, {x: CatalogOverlay.RA, y: CatalogOverlay.DEC}],
+        [CatalogSystemType.FK5, {x: CatalogOverlay.RA, y: CatalogOverlay.DEC}],
+        [CatalogSystemType.ICRS, {x: CatalogOverlay.RA, y: CatalogOverlay.DEC}],
+        [CatalogSystemType.Galactic, {x: CatalogOverlay.GLON, y: CatalogOverlay.GLAT}],
+        [CatalogSystemType.Ecliptic, {x: CatalogOverlay.ELON, y: CatalogOverlay.ELAT}],
+        [CatalogSystemType.Pixel0, {x: CatalogOverlay.X0, y: CatalogOverlay.Y0}],
+        [CatalogSystemType.Pixel1, {x: CatalogOverlay.X1, y: CatalogOverlay.Y1}],
     ]);
 
     private readonly InitialedColumnsKeyWords = [
         "ANGULAR DISTANCE",
-        "MAIN IDENTIFIER", 
-        "RADIAL VELOCITY", 
+        "MAIN IDENTIFIER",
+        "RADIAL VELOCITY",
         "REDSHIFT"];
     private readonly InitialedExcludeColumnsKeyWords = [
         "PROPER MOTION",
@@ -80,13 +122,13 @@ export class CatalogOverlayWidgetStore extends RegionWidgetStore {
     private InitialedDECColumnsKeyWords = [
         "DECLINATION", "DEC", "Dec."
     ];
-    
+
     @observable storeId: string;
     @observable progress: number;
     @observable catalogInfo: CatalogInfo;
     @observable catalogControlHeader: Map<string, ControlHeader>;
     @observable catalogHeader: Array<CARTA.ICatalogHeader>;
-    @observable catalogData: CARTA.ICatalogColumnsData;
+    @observable catalogData: Map<number, ProcessedColumnData>;
     @observable loadingData: boolean;
     @observable numVisibleRows: number;
     @observable headerTableColumnWidts: Array<number>;
@@ -95,55 +137,64 @@ export class CatalogOverlayWidgetStore extends RegionWidgetStore {
     @observable catalogColor: string;
     @observable catalogShape: CatalogOverlayShape;
     @observable subsetEndIndex: number;
-    @observable plotingData: boolean;
+    @observable updatingDataStream: boolean;
     @observable updateMode: CatalogUpdateMode;
-    @observable userFilters: CARTA.CatalogFilterRequest;
-    @observable catalogCoordinateSystem: {system: SystemType, equinox: string, epoch: string, coordinate: {x: CatalogOverlay, y: CatalogOverlay}};
+    @observable catalogFilterRequest: CARTA.CatalogFilterRequest;
+    @observable catalogCoordinateSystem: { system: CatalogSystemType, equinox: string, epoch: string, coordinate: { x: CatalogOverlay, y: CatalogOverlay } };
     @observable catalogPlotType: CatalogPlotType;
     @observable catalogScatterWidgetsId: string[];
-    @observable selectedPointIndexs: number[];
+    @observable selectedPointIndices: number[];
     @observable filterDataSize: number;
     @observable showSelectedData: boolean;
-    @observable catalogTableRef: Table;
+    @observable updateTableView: boolean;
+    @observable sortingInfo: {columnName: string, sortingType: CARTA.SortingType};
+    @observable maxRows: number;
+    @observable catalogTableAutoScroll: boolean;
 
-    constructor(appStore: AppStore, catalogInfo: CatalogInfo, catalogHeader: Array<CARTA.ICatalogHeader>, catalogData: CARTA.ICatalogColumnsData, id: string) {
-        super(appStore, RegionsType.CLOSED_AND_POINT);
+    constructor(catalogInfo: CatalogInfo, catalogHeader: Array<CARTA.ICatalogHeader>, catalogData: Map<number, ProcessedColumnData>, id: string) {
+        super(RegionsType.CLOSED_AND_POINT);
         this.storeId = id;
         this.catalogInfo = catalogInfo;
-        this.catalogHeader = catalogHeader.sort((a, b) => { return (a.columnIndex - b.columnIndex); });
+        this.catalogHeader = catalogHeader.sort((a, b) => {
+            return (a.columnIndex - b.columnIndex);
+        });
         this.catalogData = catalogData;
         this.catalogControlHeader = this.initCatalogControlHeader;
         this.loadingData = false;
-        this.catalogColor = Colors.RED2;
+        this.catalogColor = Colors.TURQUOISE3;
         this.catalogSize = 5;
         this.catalogShape = CatalogOverlayShape.Circle;
-        this.userFilters = this.initUserFilters;
-        this.plotingData = false;
+        this.catalogFilterRequest = this.initCatalogFilterRequest;
+        this.updatingDataStream = false;
         this.updateMode = CatalogUpdateMode.TableUpdate;
         this.headerTableColumnWidts = [75, 75, 65, 100, null];
         this.catalogScatterWidgetsId = [];
-        this.selectedPointIndexs = [];
+        this.selectedPointIndices = [];
         this.filterDataSize = undefined;
         this.showSelectedData = false;
-        this.catalogTableRef = undefined;
+        this.updateTableView = false;
+        this.sortingInfo = {columnName: null, sortingType: null};
+        this.maxRows = catalogInfo.dataSize;
+        this.catalogTableAutoScroll = false;
 
         this.catalogPlotType = CatalogPlotType.ImageOverlay;
         const coordinateSystem = catalogInfo.fileInfo.coosys[0];
+
         if (coordinateSystem) {
             const system = this.getCatalogSystem(coordinateSystem.system);
             this.catalogCoordinateSystem = {
                 system: system,
                 equinox: coordinateSystem.equinox,
-                epoch: coordinateSystem.epoch, 
-                coordinate: this.systemCoordinateMap.get(SystemType.ICRS)
-            };   
+                epoch: coordinateSystem.epoch,
+                coordinate: this.systemCoordinateMap.get(CatalogSystemType.ICRS)
+            };
         } else {
             this.catalogCoordinateSystem = {
-                system: SystemType.ICRS,
+                system: CatalogSystemType.ICRS,
                 equinox: null,
-                epoch: null, 
-                coordinate: this.systemCoordinateMap.get(SystemType.ICRS)
-            }; 
+                epoch: null,
+                coordinate: this.systemCoordinateMap.get(CatalogSystemType.ICRS)
+            };
         }
 
         const initTableRows = CatalogOverlayWidgetStore.InitTableRows;
@@ -154,10 +205,6 @@ export class CatalogOverlayWidgetStore extends RegionWidgetStore {
             this.numVisibleRows = initTableRows;
             this.subsetEndIndex = initTableRows;
         }
-    }
-
-    @action setCatalogTableRef(ref: Table) {
-        this.catalogTableRef = ref;
     }
 
     @action setShowSelectedData(val: boolean) {
@@ -176,21 +223,22 @@ export class CatalogOverlayWidgetStore extends RegionWidgetStore {
         this.catalogPlotType = type;
     }
 
-    @action setCatalogCoordinateSystem(catalogSystem: SystemType) {
-        this.catalogCoordinateSystem.system = catalogSystem;
-        const x = this.xColumnRepresentation;
-        const y = this.yColumnRepresentation;
-        if (x) {
-            this.catalogControlHeader.get(x).representAs = CatalogOverlay.NONE;
-        }
-        if (y) {
-            this.catalogControlHeader.get(y).representAs = CatalogOverlay.NONE;
-        }
-        this.catalogCoordinateSystem.coordinate = this.systemCoordinateMap.get(catalogSystem);
+    @action setCatalogCoordinateSystem(catalogSystem: CatalogSystemType) {
+        const current = this.catalogCoordinateSystem;
+        this.catalogCoordinateSystem = {
+            system: catalogSystem,
+            equinox: current.equinox,
+            epoch: current.epoch,
+            coordinate: this.systemCoordinateMap.get(catalogSystem)
+        };
     }
 
-    @action setUserFilter(userFilters: CARTA.CatalogFilterRequest) {
-        this.userFilters = userFilters;
+    @computed get activedSystem(): {x: CatalogOverlay, y: CatalogOverlay} {
+        return this.systemCoordinateMap.get(this.catalogCoordinateSystem.system);
+    }
+
+    @action setUserFilter(catalogFilterRequest: CARTA.CatalogFilterRequest) {
+        this.catalogFilterRequest = catalogFilterRequest;
     }
 
     @action setProgress(val: number) {
@@ -205,77 +253,121 @@ export class CatalogOverlayWidgetStore extends RegionWidgetStore {
         this.updateMode = mode;
     }
 
-    @action updateCatalogData(catalogFilter: CARTA.CatalogFilterResponse) {
-        const catalogData = catalogFilter.columnsData;
-        let subsetDataSize = catalogFilter.subsetDataSize;
-        const subsetEndIndex = catalogFilter.subsetEndIndex;
-        if (this.subsetEndIndex <= this.catalogInfo.dataSize) {
-            let numVisibleRows = this.numVisibleRows + subsetDataSize;
-            this.addSubsetBoolData(this.catalogData.boolColumn, catalogData.boolColumn);
-            this.addSubsetDoubleData(this.catalogData.doubleColumn, catalogData.doubleColumn);
-            this.addSubsetFloatData(this.catalogData.floatColumn, catalogData.floatColumn);
-            this.addSubsetIntData(this.catalogData.intColumn, catalogData.intColumn);
-            this.addSubsetLLData(this.catalogData.llColumn, catalogData.llColumn);
-            this.addSubsetStringData(this.catalogData.stringColumn, catalogData.stringColumn);
-            this.setNumVisibleRows(numVisibleRows); 
-            this.subsetEndIndex = subsetEndIndex;
-            this.filterDataSize = catalogFilter.filterDataSize;
+    @action setSortingInfo(columnName: string, sortingType: CARTA.SortingType) {
+        this.sortingInfo = {columnName, sortingType};
+    }
+
+    private static  FillAllocatedArray<T>(existingArray: Array<T>, newArray: Array<T>, insertionIndex: number, allocationSize: number): Array<T> {
+        const newDataSize = newArray.length;
+        let destArr: Array<T>;
+        // fill in-place
+        if (existingArray.length === allocationSize) {
+            destArr = existingArray;
+            for (let i = 0; i < newDataSize; i++) {
+                destArr[i + insertionIndex] = newArray[i];
+            }
+        } else {
+            // Create a new array and copy across up to the insertion index
+            destArr = new Array<T>(allocationSize);
+            for (let i = 0; i < insertionIndex; i++) {
+                destArr[i] = existingArray[i];
+            }
+
+            for (let i = 0; i < newDataSize; i++) {
+                destArr[i + insertionIndex] = newArray[i];
+            }
         }
+        return destArr;
+    }
+
+    @action updateCatalogData(catalogFilter: CARTA.CatalogFilterResponse, catalogData: Map<number, ProcessedColumnData>) {
+        let subsetDataSize = catalogFilter.subsetDataSize;
+        console.time(`updateCatalogData_${subsetDataSize}`);
+        const subsetEndIndex = catalogFilter.subsetEndIndex;
+        const startIndex = subsetEndIndex - subsetDataSize;
+
+        const totalDataSize = catalogFilter.requestEndIndex;
+        this.filterDataSize = catalogFilter.filterDataSize;
+
+        if (this.subsetEndIndex <= this.filterDataSize) {
+            let numVisibleRows = this.numVisibleRows + subsetDataSize;
+            catalogData.forEach(((newData, key) => {
+                let currentData = this.catalogData.get(key);
+                if (!currentData) {
+                    this.catalogData.set(key, newData);
+                } else {
+                    if (currentData.dataType === CARTA.ColumnType.String) {
+                        const currentArr = currentData.data as Array<string>;
+                        const newArr = newData.data as Array<string>;
+                        currentData.data = CatalogOverlayWidgetStore.FillAllocatedArray<string>(currentArr, newArr, startIndex, totalDataSize);
+                    } else if (currentData.dataType === CARTA.ColumnType.Bool) {
+                        const currentArr = currentData.data as Array<boolean>;
+                        const newArr = newData.data as Array<boolean>;
+                        currentData.data = CatalogOverlayWidgetStore.FillAllocatedArray<boolean>(currentArr, newArr, startIndex, totalDataSize);
+                    } else if (currentData.dataType === CARTA.ColumnType.UnsupportedType) {
+                        return;
+                    } else {
+                        const currentArr = currentData.data as Array<number>;
+                        const newArr = newData.data as Array<number>;
+                        currentData.data = CatalogOverlayWidgetStore.FillAllocatedArray<number>(currentArr, newArr, startIndex, totalDataSize);
+                    }
+
+                }
+            }));
+            this.setNumVisibleRows(numVisibleRows);
+            this.subsetEndIndex = subsetEndIndex;
+        }
+        console.timeEnd(`updateCatalogData_${subsetDataSize}`);
     }
 
     @action clearData() {
-        this.catalogData.boolColumn.forEach(data => (data.boolColumn = []));
-        this.catalogData.doubleColumn.forEach(data => (data.doubleColumn = []));
-        this.catalogData.floatColumn.forEach(data => (data.floatColumn = []));
-        this.catalogData.intColumn.forEach(data => (data.intColumn = []));
-        this.catalogData.llColumn.forEach(data => (data.llColumn = []));
-        this.catalogData.stringColumn.forEach(data => (data.stringColumn = []));
+        this.catalogData.clear();
     }
 
     @action setHeaderDisplay(val: boolean, columnName: string) {
         this.catalogControlHeader.get(columnName).display = val;
     }
 
-    @action setHeaderRepresentation(val: CatalogOverlay, columnName: string) {
+    @action setHeaderRepresentation(option: {coordinate: CatalogCoordinate, coordinateType: CatalogOverlay}, columnName: string) {
         const current = this.catalogControlHeader.get(columnName);
-        if (val !== current.representAs) {
-            switch (val) {
-                case CatalogOverlay.X:
+        if (option.coordinate !== current.representAs) {
+            switch (option.coordinate) {
+                case CatalogCoordinate.X:
                     const currentX = this.xColumnRepresentation;
                     if (currentX) {
-                        this.catalogControlHeader.get(currentX).representAs = CatalogOverlay.NONE;
+                        this.catalogControlHeader.get(currentX).representAs = CatalogCoordinate.NONE;
                     }
                     break;
-                case CatalogOverlay.Y:
+                case CatalogCoordinate.Y:
                     const currentY = this.yColumnRepresentation;
                     if (currentY) {
-                        this.catalogControlHeader.get(currentY).representAs = CatalogOverlay.NONE;
+                        this.catalogControlHeader.get(currentY).representAs = CatalogCoordinate.NONE;
                     }
                     break;
-                case CatalogOverlay.PlotSize:
+                case CatalogCoordinate.PlotSize:
                     const currentSize = this.sizeColumnRepresentation;
                     if (currentSize) {
-                        this.catalogControlHeader.get(currentSize).representAs = CatalogOverlay.NONE;
+                        this.catalogControlHeader.get(currentSize).representAs = CatalogCoordinate.NONE;
                     }
                     break;
-                case CatalogOverlay.PlotShape:
+                case CatalogCoordinate.PlotShape:
                     const currentShape = this.shapeColumnRepresentation;
                     if (currentShape) {
-                        this.catalogControlHeader.get(currentShape).representAs = CatalogOverlay.NONE;
+                        this.catalogControlHeader.get(currentShape).representAs = CatalogCoordinate.NONE;
                     }
-                    break;     
+                    break;
                 default:
                     break;
             }
             const newHeader: ControlHeader = {
-                columnIndex: current.columnIndex, 
-                dataIndex: current.dataIndex, 
-                display: current.display, 
-                representAs: val, 
-                filter: current.filter, 
-                columnWidth: current.columnWidth  
+                columnIndex: current.columnIndex,
+                dataIndex: current.dataIndex,
+                display: current.display,
+                representAs: option.coordinate,
+                filter: current.filter,
+                columnWidth: current.columnWidth
             };
-            this.catalogControlHeader.set(columnName, newHeader); 
+            this.catalogControlHeader.set(columnName, newHeader);
         }
     }
 
@@ -283,15 +375,29 @@ export class CatalogOverlayWidgetStore extends RegionWidgetStore {
         this.catalogControlHeader.get(columnName).columnWidth = width;
     }
 
-    @action.bound setColumnFilter(filter: string, columnName: string) {
-        this.catalogControlHeader.get(columnName).filter = filter;
+    @action setColumnFilter = (filter: string, columnName: string) => {
+        const current = this.catalogControlHeader.get(columnName);
+        const newHeader: ControlHeader = {
+            columnIndex: current.columnIndex,
+            dataIndex: current.dataIndex,
+            display: current.display,
+            representAs: current.representAs,
+            filter: filter,
+            columnWidth: current.columnWidth
+        };
+        this.catalogControlHeader.set(columnName, newHeader);
+        this.updateTableStatus(true);
+    }
+
+    @action updateTableStatus(val: boolean) {
+        this.updateTableView = val;
     }
 
     @action.bound setNumVisibleRows(val: number) {
         this.numVisibleRows = val;
     }
 
-    @action setSubsetEndIndex(val: number)  {
+    @action setSubsetEndIndex(val: number) {
         this.subsetEndIndex = val;
     }
 
@@ -323,23 +429,36 @@ export class CatalogOverlayWidgetStore extends RegionWidgetStore {
         this.catalogShape = shape;
     }
 
-    @action setPlotingData(val: boolean) {
-        this.plotingData = val;
+    @action setUpdatingDataStream(val: boolean) {
+        this.updatingDataStream = val;
     }
 
-    @action.bound reset() {
+    @action resetCatalogFilterRequest = () => {
+        this.resetFilterRequestControlParams();
+        this.resetUserFilters();
+        this.loadingData = false;
+        this.catalogFilterRequest = this.initCatalogFilterRequest;
+        this.updatingDataStream = false;
+        this.sortingInfo.columnName = null;
+        this.sortingInfo.sortingType = null;
+        this.maxRows = this.catalogInfo.dataSize;
+    }
+
+    @action resetFilterRequestControlParams() {
+        this.setUpdateMode(CatalogUpdateMode.TableUpdate);
         this.clearData();
         this.setNumVisibleRows(0);
+        this.setSubsetEndIndex(0);
         this.setLoadingDataStatus(true);
-        this.resetFilter();
-        this.loadingData = false;
-        this.userFilters = this.initUserFilters;
-        this.updateMode = CatalogUpdateMode.TableUpdate;
-        this.plotingData = false;
     }
 
+    @action resetSelectedPointIndices () {
+        this.setSelectedPointIndices([], false, false);
+        this.setShowSelectedData(false);
+    } 
+
     @computed get loadOntoImage() {
-        return (this.loadingData || this.plotingData);
+        return (this.loadingData || this.updatingDataStream);
     }
 
     @computed get initCatalogControlHeader() {
@@ -351,29 +470,71 @@ export class CatalogOverlayWidgetStore extends RegionWidgetStore {
                 const header = catalogHeader[index];
                 let display = false;
                 // this.findKeywords(header.description) init displayed according discription
-                if (index < CatalogOverlayWidgetStore.initDisplayedColumnSize) {
+                if (index < CatalogOverlayWidgetStore.InitDisplayedColumnSize) {
                     display = true;
                 }
-                let controlHeader: ControlHeader = {columnIndex: header.columnIndex, dataIndex: index, display: display, representAs: CatalogOverlay.NONE, filter: undefined, columnWidth: null};
+                let controlHeader: ControlHeader = {columnIndex: header.columnIndex, dataIndex: index, display: display, representAs: CatalogCoordinate.NONE, filter: "", columnWidth: null};
                 controlHeaders.set(header.name, controlHeader);
             }
         }
         return controlHeaders;
     }
 
-    @action resetFilter() {
+    @action resetUserFilters() {
         const controlHeaders = this.catalogControlHeader;
         controlHeaders.forEach((value, key) => {
-            value.filter = undefined;
+            value.filter = "";
         });
         this.filterDataSize = undefined;
     }
 
-    @action setselectedPointIndexs = (pointIndexs: Array<number>, autoScroll: boolean = false) => {
-        this.selectedPointIndexs = pointIndexs;
-        if (pointIndexs.length > 0 && this.catalogTableRef && autoScroll) {
-            this.catalogTableRef.scrollToRegion(this.autoScrollRowNumber);   
+    @action setSelectedPointIndices = (pointIndices: Array<number>, autoScroll: boolean, autoPanZoom: boolean) => {
+        this.selectedPointIndices = pointIndices;
+        this.catalogTableAutoScroll = autoScroll;
+
+        const coords = CatalogStore.Instance.catalogData.get(this.storeId);
+        if (coords?.xImageCoords?.length) {
+            let selectedX = [];
+            let selectedY = [];
+            let xArray = coords.xImageCoords;
+            let yArray = coords.yImageCoords;
+
+            for (let index = 0; index < pointIndices.length; index++) {
+                const pointIndex = pointIndices[index];
+                const x = xArray[pointIndex];
+                const y = yArray[pointIndex];
+                if (!this.isInfinite(x) && !this.isInfinite(y)) {
+                    selectedX.push(x);
+                    selectedY.push(y);
+                }
+            }
+            CatalogStore.Instance.updateSelectedPoints(this.storeId, selectedX, selectedY);
+
+            if (autoPanZoom) {
+                const selectedDataLength = selectedX.length;
+                if (selectedDataLength === 1) {
+                    const x = selectedX[0];
+                    const y = selectedY[0];
+                    AppStore.Instance.activeFrame.setCenter(x, y);      
+                }
+
+                if (selectedDataLength > 1) {
+                    const minMaxX = minMaxArray(selectedX);
+                    const minMaxY = minMaxArray(selectedY);
+                    const width = minMaxX.maxVal - minMaxX.minVal;
+                    const height = minMaxY.maxVal - minMaxY.minVal;
+                    AppStore.Instance.activeFrame.setCenter(width / 2 + minMaxX.minVal, height / 2 + minMaxY.minVal);
+                    const zoomLevel = Math.min(AppStore.Instance.activeFrame.renderWidth / width, AppStore.Instance.activeFrame.renderHeight / height);
+                    AppStore.Instance.activeFrame.setZoom(zoomLevel);   
+                }
+
+            }
         }
+    };
+
+    @action setMaxRows(maxRows: number) {
+        this.updateTableStatus(true);   
+        this.maxRows = maxRows;
     }
 
     @computed get displayedColumnHeaders(): Array<CARTA.CatalogHeader> {
@@ -396,16 +557,22 @@ export class CatalogOverlayWidgetStore extends RegionWidgetStore {
         return columnWidts;
     }
 
-    @computed get initUserFilters(): CARTA.CatalogFilterRequest {
+    @computed get initCatalogFilterRequest(): CARTA.CatalogFilterRequest {
         let catalogFilter: CARTA.CatalogFilterRequest = new CARTA.CatalogFilterRequest();
         let imageBounds: CARTA.CatalogImageBounds = new CARTA.CatalogImageBounds();
-        const previewDatasize = CatalogOverlayWidgetStore.InitTableRows;
+        let previewDatasize = CatalogOverlayWidgetStore.InitTableRows;
         catalogFilter.fileId = this.catalogInfo.fileId;
         catalogFilter.filterConfigs = null;
-        catalogFilter.hidedHeaders = this.hidedHeaders;
+        catalogFilter.columnIndices = this.columnIndices;
         catalogFilter.subsetStartIndex = 0;
         catalogFilter.imageBounds = imageBounds;
         catalogFilter.regionId = null;
+        catalogFilter.sortColumn = null;
+        catalogFilter.sortingType = null;
+
+        if (previewDatasize > this.maxRows) {
+            previewDatasize = this.maxRows;
+        }
 
         if (this.catalogInfo.dataSize < previewDatasize) {
             catalogFilter.subsetDataSize = this.catalogInfo.dataSize;
@@ -417,35 +584,41 @@ export class CatalogOverlayWidgetStore extends RegionWidgetStore {
     }
 
     @computed get updateRequestDataSize() {
-        this.userFilters.subsetStartIndex = this.subsetEndIndex;
-        const dataSize = this.catalogInfo.dataSize - this.numVisibleRows;
+        this.catalogFilterRequest.subsetStartIndex = this.subsetEndIndex;
+        if (this.maxRows <= this.numVisibleRows) {
+            this.catalogFilterRequest.subsetStartIndex = 0;
+            this.catalogFilterRequest.subsetDataSize = this.maxRows;
+            return this.catalogFilterRequest;
+        }
+        const dataSize = this.maxRows - this.numVisibleRows;
         if (this.updateMode === CatalogUpdateMode.TableUpdate) {
-            let subsetDataSize = CatalogOverlayWidgetStore.DataChunkSize; 
-            if ( dataSize < subsetDataSize && dataSize > 0) {
+            let subsetDataSize = CatalogOverlayWidgetStore.DataChunkSize;
+            if (dataSize < subsetDataSize && dataSize > 0) {
                 subsetDataSize = dataSize;
             }
-            this.userFilters.subsetDataSize = subsetDataSize;
+            this.catalogFilterRequest.subsetDataSize = subsetDataSize;
         } else {
-            this.userFilters.subsetDataSize = dataSize;
+            this.catalogFilterRequest.subsetDataSize = dataSize;
         }
-        return this.userFilters;
+        return this.catalogFilterRequest;
     }
 
     @computed get shouldUpdateData(): boolean {
-        if (this.subsetEndIndex < this.catalogInfo.dataSize) {
-            return true;
+        if (isFinite(this.filterDataSize)) {
+            return this.subsetEndIndex < this.filterDataSize && this.subsetEndIndex < this.maxRows;
+        } else {
+            return this.subsetEndIndex < this.catalogInfo.dataSize && this.subsetEndIndex < this.maxRows;
         }
-        return false;
     }
 
     @computed get enableLoadButton(): boolean {
-        return (this.xColumnRepresentation !== null && this.yColumnRepresentation !== null && !this.loadingData && !this.plotingData);
+        return (this.xColumnRepresentation !== null && this.yColumnRepresentation !== null && !this.loadingData && !this.updatingDataStream);
     }
 
     @computed get xColumnRepresentation(): string {
         let xColumn = null;
         this.catalogControlHeader.forEach((value, key) => {
-            if (value.representAs === CatalogOverlay.X) {
+            if (value.representAs === CatalogCoordinate.X) {
                 xColumn = key;
             }
         });
@@ -455,7 +628,7 @@ export class CatalogOverlayWidgetStore extends RegionWidgetStore {
     @computed get yColumnRepresentation(): string {
         let yColumn = null;
         this.catalogControlHeader.forEach((value, key) => {
-            if (value.representAs === CatalogOverlay.Y) {
+            if (value.representAs === CatalogCoordinate.Y) {
                 yColumn = key;
             }
         });
@@ -465,7 +638,7 @@ export class CatalogOverlayWidgetStore extends RegionWidgetStore {
     @computed get sizeColumnRepresentation(): string {
         let sizeColumn = null;
         this.catalogControlHeader.forEach((value, key) => {
-            if (value.representAs === CatalogOverlay.PlotSize) {
+            if (value.representAs === CatalogCoordinate.PlotSize) {
                 sizeColumn = key;
             }
         });
@@ -475,119 +648,97 @@ export class CatalogOverlayWidgetStore extends RegionWidgetStore {
     @computed get shapeColumnRepresentation(): string {
         let shapeColumn = null;
         this.catalogControlHeader.forEach((value, key) => {
-            if (value.representAs === CatalogOverlay.PlotShape) {
+            if (value.representAs === CatalogCoordinate.PlotShape) {
                 shapeColumn = key;
             }
         });
         return shapeColumn;
     }
 
-    @computed get hidedHeaders(): Array<string> {
-        let header = [];
+    @computed get columnIndices(): Array<number> {
+        let indices = [];
         this.catalogControlHeader.forEach((value, key) => {
-            if (!value.display) {
-                header.push(key);
+            if (value.display) {
+                indices.push(value.columnIndex);
             }
         });
-        return header;
+        return indices;
     }
 
     @computed get hasFilter(): boolean {
         let filters = [];
         this.catalogControlHeader.forEach((value, key) => {
-            if (value.filter !== undefined) {
+            if (value.filter) {
                 filters.push(value);
             }
         });
         return filters.length > 0;
     }
 
-    @computed get selectedData(): CARTA.ICatalogColumnsData {
+    @computed get selectedData(): Map<number, ProcessedColumnData> {
         let catalogColumnsData = this.catalogData;
-        const selectedPointIndexs = this.selectedPointIndexs;
+        const selectedPointIndices = this.selectedPointIndices;
+        const displayed = this.displayedColumnHeaders.map(catalogHeader => {
+            return catalogHeader.columnIndex;
+        });
 
-        if (selectedPointIndexs.length > 0) {
-            let datas: CARTA.ICatalogColumnsData = new CARTA.CatalogColumnsData();
+        if (selectedPointIndices.length > 0) {
+            const selectedData = new Map<number, ProcessedColumnData>();
+            this.catalogData.forEach((data, i) => {
+                if (displayed.includes(i)) {
+                    selectedData.set(i, filterProcessedColumnData(data, selectedPointIndices));   
+                }
+            });
 
-            for (let index = 0; index < catalogColumnsData.boolColumn.length; index++) {
-                const data = catalogColumnsData.boolColumn[index];
-                datas.boolColumn[index] = new CARTA.BoolColumn();
-                datas.boolColumn[index].boolColumn = this.filterBySelectedDataIndexs(selectedPointIndexs, data.boolColumn);
-            }
-
-            for (let index = 0; index < catalogColumnsData.doubleColumn.length; index++) {
-                const data = catalogColumnsData.doubleColumn[index];
-                datas.doubleColumn[index] = new CARTA.DoubleColumn();
-                datas.doubleColumn[index].doubleColumn = this.filterBySelectedDataIndexs(selectedPointIndexs, data.doubleColumn);
-            }
-
-            for (let index = 0; index < catalogColumnsData.floatColumn.length; index++) {
-                const data = catalogColumnsData.floatColumn[index];
-                datas.floatColumn[index] = new CARTA.FloatColumn();
-                datas.floatColumn[index].floatColumn = this.filterBySelectedDataIndexs(selectedPointIndexs, data.floatColumn);
-            }
-
-            for (let index = 0; index < catalogColumnsData.intColumn.length; index++) {
-                const data = catalogColumnsData.intColumn[index];
-                datas.intColumn[index] = new CARTA.IntColumn();
-                datas.intColumn[index].intColumn = this.filterBySelectedDataIndexs(selectedPointIndexs, data.intColumn);
-            }
-
-            for (let index = 0; index < catalogColumnsData.llColumn.length; index++) {
-                const data = catalogColumnsData.llColumn[index];
-                datas.llColumn[index] = new CARTA.LLColumn();
-                datas.llColumn[index].llColumn = this.filterBySelectedDataIndexs(selectedPointIndexs, data.llColumn);
-            }
-
-            for (let index = 0; index < catalogColumnsData.stringColumn.length; index++) {
-                const data = catalogColumnsData.stringColumn[index];
-                datas.stringColumn[index] = new CARTA.StringColumn();
-                datas.stringColumn[index].stringColumn = this.filterBySelectedDataIndexs(selectedPointIndexs, data.stringColumn);
-            }
-            return datas;
+            return selectedData;
         }
         return catalogColumnsData;
     }
 
     @computed get regionSelected(): number {
-        return this.selectedPointIndexs.length;
+        return this.selectedPointIndices.length;
     }
 
     @computed get autoScrollRowNumber(): IRegion {
-        let singleRowRegion: IRegion = null;
-        const selectedPointIndex = this.selectedPointIndexs;
-        if (selectedPointIndex.length > 0) {
-            singleRowRegion = Regions.row(selectedPointIndex[0]);   
+        let singleRowRegion: IRegion = Regions.row(0);
+        if (this.selectedPointIndices.length > 0) {
+            singleRowRegion = Regions.row(this.selectedPointIndices[0]);
         }
         return singleRowRegion;
     }
 
-    public get2DPlotData(xColumn: string, yColumn: string, columnsData: CARTA.ICatalogColumnsData): {wcsX: Array<any>, wcsY: Array<any>, xHeaderInfo: CARTA.ICatalogHeader, yHeaderInfo: CARTA.ICatalogHeader} {
+    public get2DPlotData(xColumnName: string, yColumnName: string, columnsData: Map<number, ProcessedColumnData>): { wcsX?: Array<number>, wcsY?: Array<number>, xHeaderInfo: CARTA.ICatalogHeader, yHeaderInfo: CARTA.ICatalogHeader } {
         const controlHeader = this.catalogControlHeader;
-        const xHeader = controlHeader.get(xColumn);
-        const yHeader = controlHeader.get(yColumn);
+        const xHeader = controlHeader.get(xColumnName);
+        const yHeader = controlHeader.get(yColumnName);
         const xHeaderInfo = this.catalogHeader[xHeader.dataIndex];
         const yHeaderInfo = this.catalogHeader[yHeader.dataIndex];
-        const wcsX = getTableDataByType(columnsData, xHeaderInfo.dataType, xHeaderInfo.dataTypeIndex);
-        const wcsY = getTableDataByType(columnsData, yHeaderInfo.dataType, yHeaderInfo.dataTypeIndex);
-        return {wcsX: wcsX, wcsY: wcsY, xHeaderInfo: xHeaderInfo, yHeaderInfo: yHeaderInfo};
+
+        const xColumn = columnsData.get(xHeaderInfo.columnIndex);
+        const yColumn = columnsData.get(yHeaderInfo.columnIndex);
+
+        if (xColumn && xColumn.dataType !== CARTA.ColumnType.String && xColumn.dataType !== CARTA.ColumnType.Bool &&
+            yColumn && yColumn.dataType !== CARTA.ColumnType.String && yColumn.dataType !== CARTA.ColumnType.Bool) {
+            const wcsX = xColumn.data as Array<number>;
+            const wcsY = yColumn.data as Array<number>;
+            return {wcsX, wcsY, xHeaderInfo, yHeaderInfo};
+        } else {
+            return {xHeaderInfo, yHeaderInfo};
+        }
     }
 
-    public get1DPlotData(column: string): {wcsData: Array<any>, headerInfo: CARTA.ICatalogHeader} {
+    public get1DPlotData(column: string): { wcsData?: Array<number>, headerInfo: CARTA.ICatalogHeader } {
         const controlHeader = this.catalogControlHeader;
         const header = controlHeader.get(column);
         const headerInfo = this.catalogHeader[header.dataIndex];
-        const wcsData = getTableDataByType(this.catalogData, headerInfo.dataType, headerInfo.dataTypeIndex);
-        return {wcsData: wcsData, headerInfo: headerInfo};
-    }
+        const xColumn = this.catalogData.get(headerInfo.columnIndex);
 
-    private filterBySelectedDataIndexs(selectedPointIndexs: Array<number>, dataArray: any) {
-        let data = [];
-        for (let index = 0; index < selectedPointIndexs.length; index++) {
-            const dataIndex = selectedPointIndexs[index];
-            data.push(dataArray[dataIndex]);
+        if (xColumn && xColumn.dataType !== CARTA.ColumnType.String && xColumn.dataType !== CARTA.ColumnType.Bool) {
+            const wcsData = xColumn.data as Array<number>;
+            return {wcsData, headerInfo};
+        } else {
+            return {headerInfo};
         }
-        return data;
     }
 
     private findKeywords(val: string): boolean {
@@ -620,8 +771,8 @@ export class CatalogOverlayWidgetStore extends RegionWidgetStore {
         return false;
     }
 
-    private getCatalogSystem(system: string): SystemType {
-        let catalogSystem = SystemType.ICRS;
+    private getCatalogSystem(system: string): CatalogSystemType {
+        let catalogSystem = CatalogSystemType.ICRS;
         const systemMap = this.CoordinateSystemName;
         systemMap.forEach((value, key) => {
             if (system.toUpperCase().includes(value.toUpperCase())) {
@@ -631,63 +782,11 @@ export class CatalogOverlayWidgetStore extends RegionWidgetStore {
         return catalogSystem;
     }
 
-    private addSubsetDoubleData(initData: Array<CARTA.IDoubleColumn>, sourceData:  Array<CARTA.IDoubleColumn>) {
-        for (let index = 0; index < initData.length; index++) {
-            const init = initData[index];
-            const source = sourceData[index];
-            if (init && source) {
-                init.doubleColumn.push(...source.doubleColumn);
-            }
-        }
-    }
-
-    private addSubsetBoolData(initData: Array<CARTA.IBoolColumn>, sourceData:  Array<CARTA.IBoolColumn>) {
-        for (let index = 0; index < initData.length; index++) {
-            const init = initData[index];
-            const source = sourceData[index];
-            if (init && source) {
-                init.boolColumn.push(...source.boolColumn);
-            }
-        }
-    }
-
-    private addSubsetFloatData(initData: Array<CARTA.IFloatColumn>, sourceData:  Array<CARTA.IFloatColumn>) {
-        for (let index = 0; index < initData.length; index++) {
-            const init = initData[index];
-            const source = sourceData[index];
-            if (init && source) {
-                init.floatColumn.push(...source.floatColumn);
-            }
-        }
-    }
-
-    private addSubsetStringData(initData: Array<CARTA.IStringColumn>, sourceData:  Array<CARTA.IStringColumn>) {
-        for (let index = 0; index < initData.length; index++) {
-            const init = initData[index];
-            const source = sourceData[index];
-            if (init && source) {
-                init.stringColumn.push(...source.stringColumn);
-            }
-        }
-    }
-
-    private addSubsetIntData(initData: Array<CARTA.IIntColumn>, sourceData:  Array<CARTA.IIntColumn>) {
-        for (let index = 0; index < initData.length; index++) {
-            const init = initData[index];
-            const source = sourceData[index];
-            if (init && source) {
-                init.intColumn.push(...source.intColumn);
-            }
-        }
-    }
-
-    private addSubsetLLData(initData: Array<CARTA.ILLColumn>, sourceData:  Array<CARTA.ILLColumn>) {
-        for (let index = 0; index < initData.length; index++) {
-            const init = initData[index];
-            const source = sourceData[index];
-            if (init && source) {
-                init.llColumn.push(...source.llColumn);   
-            }
-        }
+    private isInfinite(value: number) {
+        return (
+            !isFinite(value) || 
+            value === CatalogOverlayWidgetStore.NEGATIVE_INFINITY || 
+            value === CatalogOverlayWidgetStore.POSITIVE_INFINITY
+        );
     }
 }

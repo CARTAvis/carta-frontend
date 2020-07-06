@@ -4,12 +4,11 @@ import {ImageComponent} from "./ImageComponent";
 import * as headAnimatorButton from "static/help/head_animator_button.png";
 import * as headAnimatorButton_d from "static/help/head_animator_button_d.png";
 
-export class AnimatorHelpComponent extends React.Component<{ appStore: AppStore }> {
+export class AnimatorHelpComponent extends React.Component {
     public render() {
-        const appStore = this.props.appStore;
         return (
             <div>
-                <p><ImageComponent appStore={appStore} light={headAnimatorButton} dark={headAnimatorButton_d} width="90%"/></p>
+                <p><ImageComponent light={headAnimatorButton} dark={headAnimatorButton_d} width="90%"/></p>
                 <p>The animator widget controls which frame (a.k.a image file), which channel (if exists per image file), and which
                 Stokes (if exists per image file) to view in the image viewer. Users may also enable animation playback for
                 frame, channel, or Stokes, via the &quot;Play&quot; button. The radio buttons control which one to animate. Playback mode includes</p>

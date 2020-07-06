@@ -3,7 +3,7 @@ import {AppStore} from "stores";
 import {ImageComponent} from "./ImageComponent";
 import * as underConstruction from "static/help/under_construction.png";
 
-export class SaveLayoutHelpComponent extends React.Component<{ appStore: AppStore }> {
+export class SaveLayoutHelpComponent extends React.Component {
     public render() {
         return (
             <div>

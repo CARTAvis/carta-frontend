@@ -3,9 +3,9 @@ import {Colors} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import {PlotType, LineSettings} from "components/Shared";
 import {RegionWidgetStore, RegionsType} from "./RegionWidgetStore";
-import {AppStore, FrameStore} from "..";
-import {isColorValid} from "utilities";
+import {FrameStore} from "stores";
 import {SpectralSystem, SpectralType, SpectralUnit} from "models";
+import * as tinycolor from "tinycolor2";
 
 export class SpectralProfileWidgetStore extends RegionWidgetStore {
     @observable coordinate: string;
@@ -153,8 +153,8 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         this.isMouseMoveIntoLinePlots = val;
     };
 
-    constructor(appStore: AppStore, coordinate: string = "z") {
-        super(appStore, RegionsType.CLOSED_AND_POINT);
+    constructor(coordinate: string = "z") {
+        super(RegionsType.CLOSED_AND_POINT);
         this.coordinate = coordinate;
         this.statsType = CARTA.StatsType.Mean;
 
@@ -340,8 +340,9 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         if (!widgetSettings) {
             return;
         }
-        if (typeof widgetSettings.primaryLineColor === "string" && isColorValid(widgetSettings.primaryLineColor)) {
-            this.primaryLineColor.colorHex = widgetSettings.primaryLineColor;
+        const lineColor = tinycolor(widgetSettings.primaryLineColor);
+        if (lineColor.isValid()) {
+            this.primaryLineColor.colorHex = lineColor.toHexString();
         }
         if (typeof widgetSettings.lineWidth === "number" && widgetSettings.lineWidth >= LineSettings.MIN_WIDTH && widgetSettings.lineWidth <= LineSettings.MAX_WIDTH) {
             this.lineWidth = widgetSettings.lineWidth;

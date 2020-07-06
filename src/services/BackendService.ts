@@ -1,7 +1,7 @@
 import {action, observable} from "mobx";
 import {CARTA} from "carta-protobuf";
 import {Observable, Observer, Subject, throwError} from "rxjs";
-import {LogStore, PreferenceStore, RegionStore} from "stores";
+import {PreferenceStore, RegionStore} from "stores";
 
 export enum ConnectionStatus {
     CLOSED = 0,
@@ -14,7 +14,16 @@ export const INVALID_ANIMATION_ID = -1;
 type HandlerFunction = (eventId: number, parsedMessage: any) => void;
 
 export class BackendService {
-    private static readonly IcdVersion = 12;
+    private static staticInstance: BackendService;
+
+    static get Instance() {
+        if (!BackendService.staticInstance) {
+            BackendService.staticInstance = new BackendService();
+        }
+        return BackendService.staticInstance;
+    }
+
+    private static readonly IcdVersion = 15;
     private static readonly DefaultFeatureFlags = CARTA.ClientFeatureFlags.WEB_ASSEMBLY | CARTA.ClientFeatureFlags.WEB_GL;
     @observable connectionStatus: ConnectionStatus;
     readonly loggingEnabled: boolean;
@@ -22,6 +31,7 @@ export class BackendService {
     @observable endToEndPing: number;
 
     public animationId: number;
+    public sessionId: number;
 
     private connection: WebSocket;
     private lastPingTime: number;
@@ -29,26 +39,22 @@ export class BackendService {
     private autoReconnect: boolean;
     private observerRequestMap: Map<number, Observer<any>>;
     private eventCounter: number;
-    private sessionId: number;
-    // TODO: These can be readonly instead of private to get rid of boilerplate gets
-    private readonly rasterTileStream: Subject<CARTA.RasterTileData>;
+
+    readonly rasterTileStream: Subject<CARTA.RasterTileData>;
     readonly rasterSyncStream: Subject<CARTA.RasterTileSync>;
-    private readonly histogramStream: Subject<CARTA.RegionHistogramData>;
-    private readonly errorStream: Subject<CARTA.ErrorData>;
-    private readonly spatialProfileStream: Subject<CARTA.SpatialProfileData>;
-    private readonly spectralProfileStream: Subject<CARTA.SpectralProfileData>;
-    private readonly statsStream: Subject<CARTA.RegionStatsData>;
-    private readonly contourStream: Subject<CARTA.ContourImageData>;
-    private readonly catalogStream: Subject<CARTA.CatalogFilterResponse>;
-    private readonly reconnectStream: Subject<void>;
-    private readonly logStore: LogStore;
-    private readonly preferenceStore: PreferenceStore;
+    readonly histogramStream: Subject<CARTA.RegionHistogramData>;
+    readonly errorStream: Subject<CARTA.ErrorData>;
+    readonly spatialProfileStream: Subject<CARTA.SpatialProfileData>;
+    readonly spectralProfileStream: Subject<CARTA.SpectralProfileData>;
+    readonly statsStream: Subject<CARTA.RegionStatsData>;
+    readonly contourStream: Subject<CARTA.ContourImageData>;
+    readonly catalogStream: Subject<CARTA.CatalogFilterResponse>;
+    readonly reconnectStream: Subject<void>;
+    readonly scriptingStream: Subject<CARTA.ScriptingRequest>;
     private readonly handlerMap: Map<CARTA.EventType, HandlerFunction>;
     private readonly decoderMap: Map<CARTA.EventType, any>;
 
-    constructor(logStore: LogStore, preferenceStore: PreferenceStore) {
-        this.logStore = logStore;
-        this.preferenceStore = preferenceStore;
+    private constructor() {
         this.loggingEnabled = true;
         this.observerRequestMap = new Map<number, Observer<any>>();
         this.eventCounter = 1;
@@ -64,6 +70,7 @@ export class BackendService {
         this.spectralProfileStream = new Subject<CARTA.SpectralProfileData>();
         this.statsStream = new Subject<CARTA.RegionStatsData>();
         this.contourStream = new Subject<CARTA.ContourImageData>();
+        this.scriptingStream = new Subject<CARTA.ScriptingRequest>();
         this.catalogStream = new Subject<CARTA.CatalogFilterResponse>();
         this.reconnectStream = new Subject<void>();
 
@@ -93,7 +100,8 @@ export class BackendService {
             [CARTA.EventType.REGION_STATS_DATA, this.onStreamedRegionStatsData],
             [CARTA.EventType.CONTOUR_IMAGE_DATA, this.onStreamedContourData],
             [CARTA.EventType.CATALOG_FILTER_RESPONSE, this.onStreamedCatalogData],
-            [CARTA.EventType.RASTER_TILE_SYNC, this.onStreamedRasterSync]
+            [CARTA.EventType.RASTER_TILE_SYNC, this.onStreamedRasterSync],
+            [CARTA.EventType.SCRIPTING_REQUEST, this.onScriptingRequest]
         ]);
 
         this.decoderMap = new Map<CARTA.EventType, any>([
@@ -121,47 +129,12 @@ export class BackendService {
             [CARTA.EventType.CATALOG_FILTER_RESPONSE, CARTA.CatalogFilterResponse],
             [CARTA.EventType.SET_USER_LAYOUT_ACK, CARTA.SetUserLayoutAck],
             [CARTA.EventType.SET_USER_PREFERENCES_ACK, CARTA.SetUserPreferencesAck],
-            [CARTA.EventType.RASTER_TILE_SYNC, CARTA.RasterTileSync]
+            [CARTA.EventType.RASTER_TILE_SYNC, CARTA.RasterTileSync],
+            [CARTA.EventType.SCRIPTING_REQUEST, CARTA.ScriptingRequest]
         ]);
 
         // check ping every 5 seconds
         setInterval(this.sendPing, 5000);
-    }
-
-    getRasterTileStream() {
-        return this.rasterTileStream;
-    }
-
-    getRegionHistogramStream() {
-        return this.histogramStream;
-    }
-
-    getErrorStream() {
-        return this.errorStream;
-    }
-
-    getSpatialProfileStream() {
-        return this.spatialProfileStream;
-    }
-
-    getSpectralProfileStream() {
-        return this.spectralProfileStream;
-    }
-
-    getRegionStatsStream() {
-        return this.statsStream;
-    }
-
-    getContourStream() {
-        return this.contourStream;
-    }
-
-    getCatalogStream() {
-        return this.catalogStream;
-    }
-
-    getReconnectStream() {
-        return this.reconnectStream;
     }
 
     @action("connect")
@@ -178,7 +151,10 @@ export class BackendService {
         this.connection.binaryType = "arraybuffer";
         this.connection.onmessage = this.messageHandler.bind(this);
         this.connection.onclose = (ev: CloseEvent) => {
-            this.connectionStatus = ConnectionStatus.CLOSED;
+            // Only change to closed connection if the connection was originally active
+            if (this.connectionStatus === ConnectionStatus.ACTIVE) {
+                this.connectionStatus = ConnectionStatus.CLOSED;
+            }
             // Reconnect to the same URL if Websocket is closed
             if (!ev.wasClean && this.autoReconnect) {
                 setTimeout(() => {
@@ -193,7 +169,7 @@ export class BackendService {
             }
         };
 
-        const obs = new Observable<CARTA.RegisterViewerAck>(observer => {
+        return new Observable<CARTA.RegisterViewerAck>(observer => {
             this.connection.onopen = () => {
                 if (this.connectionStatus === ConnectionStatus.CLOSED) {
                     this.connectionDropped = true;
@@ -208,15 +184,11 @@ export class BackendService {
                 this.logEvent(CARTA.EventType.REGISTER_VIEWER, requestId, message, false);
                 if (this.sendEvent(CARTA.EventType.REGISTER_VIEWER, CARTA.RegisterViewer.encode(message).finish())) {
                     this.observerRequestMap.set(requestId, observer);
-                } else {
-                    observer.error("Could not connect");
                 }
             };
 
-            this.connection.onerror = (ev => observer.error(ev));
+            this.connection.onerror = (ev => console.log(ev));
         });
-
-        return obs;
     }
 
     sendPing = () => {
@@ -505,7 +477,7 @@ export class BackendService {
             }
         }
         return false;
-    } 
+    }
 
     @action("set spatial requirements")
     setSpatialRequirements(requirementsMessage: CARTA.ISetSpectralRequirements) {
@@ -704,6 +676,16 @@ export class BackendService {
         document.cookie = `CARTA-Authorization=${token}; path=/`;
     };
 
+    sendScriptingResponse = (message: CARTA.IScriptingResponse) => {
+        if (this.connectionStatus === ConnectionStatus.ACTIVE) {
+            this.logEvent(CARTA.EventType.SCRIPTING_RESPONSE, this.eventCounter, message, false);
+            if (this.sendEvent(CARTA.EventType.SCRIPTING_RESPONSE, CARTA.ScriptingResponse.encode(message).finish())) {
+                return true;
+            }
+        }
+        return false;
+    };
+
     private messageHandler(event: MessageEvent) {
         if (event.data === "PONG") {
             this.lastPongTime = performance.now();
@@ -773,18 +755,7 @@ export class BackendService {
 
     private onStartAnimationAck(eventId: number, ack: CARTA.StartAnimationAck) {
         this.animationId = ack.success ? ack.animationId : INVALID_ANIMATION_ID;
-        const observer = this.observerRequestMap.get(eventId);
-        if (observer) {
-            if (ack.success) {
-                observer.next(ack);
-            } else {
-                observer.error(ack.message);
-            }
-            observer.complete();
-            this.observerRequestMap.delete(eventId);
-        } else {
-            console.log(`Can't find observable for request ${eventId}`);
-        }
+        this.onSimpleMappedResponse(eventId, ack);
     }
 
     private onStreamedRasterTileData(eventId: number, rasterTileData: CARTA.RasterTileData) {
@@ -819,6 +790,10 @@ export class BackendService {
         this.contourStream.next(contourData);
     }
 
+    private onScriptingRequest(eventId: number, scriptingRequest: CARTA.ScriptingRequest) {
+        this.scriptingStream.next(scriptingRequest);
+    }
+
     private onStreamedCatalogData(eventId: number, catalogFilter: CARTA.CatalogFilterResponse) {
         this.catalogStream.next(catalogFilter);
     }
@@ -845,7 +820,7 @@ export class BackendService {
 
     private logEvent(eventType: CARTA.EventType, eventId: number, message: any, incoming: boolean = true) {
         const eventName = CARTA.EventType[eventType];
-        if (this.loggingEnabled && this.preferenceStore.isEventLoggingEnabled(eventType)) {
+        if (this.loggingEnabled && PreferenceStore.Instance.isEventLoggingEnabled(eventType)) {
             if (incoming) {
                 if (eventId === 0) {
                     console.log(`<== ${eventName} [Stream]`);

@@ -1,10 +1,11 @@
 import {action, observable, computed} from "mobx";
 import {CatalogOverlayWidgetStore} from "./CatalogOverlayWidgetStore";
 import {Point2D} from "models";
+import {minMaxArray} from "utilities";
 
 export interface CatalogScatterWidgetStoreProps {
-    x: Array<any>;
-    y: Array<any>;
+    x: Array<number>;
+    y: Array<number>;
     catalogOverlayWidgetStore: CatalogOverlayWidgetStore;
 }
 
@@ -13,8 +14,8 @@ export type DragMode = "zoom" | "pan" | "select" | "lasso" | "orbit" | "turntabl
 
 export class CatalogScatterWidgetStore {
     private rangeOffset = 0.01;
-    @observable xDataset: Array<any>;
-    @observable yDataset: Array<any>;
+    @observable xDataset: Array<number>;
+    @observable yDataset: Array<number>;
     @observable catalogOverlayWidgetStore: CatalogOverlayWidgetStore;
     @observable columnsName: {x: string, y: string};
     @observable indicatorInfo: Point2D;
@@ -44,11 +45,11 @@ export class CatalogScatterWidgetStore {
         this.yDataset = this.catalogOverlayWidgetStore.get1DPlotData(columnName).wcsData;
     }
 
-    @action setXDataset(x: Array<any>) {
+    @action setXDataset(x: Array<number>) {
         this.xDataset = x;
     }
 
-    @action setYDataset(y: Array<any>) {
+    @action setYDataset(y: Array<number>) {
         this.yDataset = y;
     }
 
@@ -57,8 +58,8 @@ export class CatalogScatterWidgetStore {
         const columnsName = this.columnsName;
         if (columnsName.x && columnsName.y) {
             const coords = catalogOverlayWidgetStore.get2DPlotData(columnsName.x, columnsName.y, catalogOverlayWidgetStore.catalogData);
-            this.setXDataset(coords.wcsX);
-            this.setYDataset(coords.wcsY);
+            this.setXDataset(coords.wcsX.slice(0));
+            this.setYDataset(coords.wcsY.slice(0));
             this.border = this.initBorder;
         }
     }
@@ -76,11 +77,17 @@ export class CatalogScatterWidgetStore {
     }
 
     @computed get initBorder(): Border {
+        const xBounds = minMaxArray(this.xDataset);
+        const yBounds = minMaxArray(this.yDataset);
         return {
-            xMin: Math.min(...this.xDataset) - this.rangeOffset, 
-            xMax: Math.max(...this.xDataset) + this.rangeOffset,
-            yMin: Math.min(...this.yDataset) - this.rangeOffset,
-            yMax: Math.max(...this.yDataset) + this.rangeOffset
+            xMin: xBounds.minVal,
+            xMax: xBounds.maxVal,
+            yMin: yBounds.minVal,
+            yMax: yBounds.maxVal
         };
+    }
+
+    @computed get enablePlotButton(): boolean {
+        return (this.columnsName.x !== null && this.columnsName.y !== null && !this.catalogOverlayWidgetStore.loadingData && !this.catalogOverlayWidgetStore.updatingDataStream);
     }
 }
