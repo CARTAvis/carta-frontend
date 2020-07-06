@@ -3,19 +3,36 @@
 .column-name {
     overflow: hidden;
 
-    .label {
-        margin: 0;
-        display: inline-flex;
-        position: absolute;
-    }
+    .bp3-table-column-name {
+        width: 100%;
+        height: 100%;
 
-    .sort-icon {
-        pointer-events: all;
-        cursor: pointer;
-        margin-top: 2px;
+        .bp3-table-column-name-text {
+            width: 100%;
+            height: 100%;
 
-        &.inactive {
-            opacity: 0.25;
+            .sort-label {
+                width: 100%;
+                height: 100%;
+
+                pointer-events: all;
+                cursor: pointer;
+
+                .label {
+                    margin: 0;
+                    display: inline-flex;
+                    position: absolute;
+                    cursor: pointer;
+                }
+
+                .sort-icon {
+                    margin-top: 2px;
+
+                    &.inactive {
+                        opacity: 0.25;
+                    }
+                }
+            }
         }
     }
 }
