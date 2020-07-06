@@ -232,7 +232,7 @@ export class FileBrowserDialogComponent extends React.Component {
                 content={
                     <Menu>
                         <MenuItem text="CRTF Region File" onClick={() => fileBrowserStore.setExportFileType(CARTA.FileType.CRTF)}/>
-                        <MenuItem text="DS9 Region File" onClick={() => fileBrowserStore.setExportFileType(CARTA.FileType.REG)}/>
+                        <MenuItem text="DS9 Region File" onClick={() => fileBrowserStore.setExportFileType(CARTA.FileType.DS9_REG)}/>
                     </Menu>
                 }
                 position={Position.BOTTOM_RIGHT}
@@ -297,10 +297,11 @@ export class FileBrowserDialogComponent extends React.Component {
         } else {
             fileInput = (
                 <InputGroup
-                    autoFocus={true}
+                    autoFocus={false}
                     placeholder="Filter by filename pattern (unix style) or regular expression (using /<expression>/)"
                     value={this.fileFilterString}
                     onChange={this.handleFilterStringInputChanged}
+                    leftIcon="search"
                 />);
         }
 
@@ -348,6 +349,9 @@ export class FileBrowserDialogComponent extends React.Component {
                                 selectedFile={fileBrowserStore.selectedFile}
                                 selectedHDU={fileBrowserStore.selectedHDU}
                                 filterString={this.debouncedFilterString}
+                                sortingConfig={fileBrowserStore.sortingConfig}
+                                onSortingChanged={fileBrowserStore.setSortingConfig}
+                                onSortingCleared={fileBrowserStore.clearSortingConfig}
                                 onFileClicked={fileBrowserStore.selectFile}
                                 onFileDoubleClicked={this.loadFile}
                                 onFolderClicked={this.handleFolderClicked}
