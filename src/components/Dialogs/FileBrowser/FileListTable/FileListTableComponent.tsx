@@ -1,7 +1,7 @@
 import * as React from "react";
 import {action, autorun, computed, observable} from "mobx";
 import {observer} from "mobx-react";
-import {Cell, Column, ColumnHeaderCell, Regions, RenderMode, SelectionModes, Table} from "@blueprintjs/table";
+import {Cell, Column, ColumnHeaderCell, Regions, RenderMode, SelectionModes, Table, TableLoadingOption} from "@blueprintjs/table";
 import {IRegion} from "@blueprintjs/table/src/regions";
 import {Icon, Label, NonIdealState} from "@blueprintjs/core";
 import globToRegExp from "glob-to-regexp";
@@ -23,6 +23,7 @@ interface FileEntry {
 
 export interface FileListTableComponentProps {
     darkTheme: boolean;
+    loading?: boolean;
     listResponse: CARTA.IFileListResponse | CARTA.ICatalogListResponse;
     selectedFile: CARTA.IFileInfo | CARTA.ICatalogFileInfo;
     selectedHDU: string;
@@ -387,6 +388,7 @@ export class FileListTableComponent extends React.Component<FileListTableCompone
                 selectedRegions={this.selectedRegion}
                 enableRowHeader={false}
                 numRows={this.tableEntries.length}
+                loadingOptions={this.props.loading ? [TableLoadingOption.CELLS] : []}
             >
                 <Column name="Filename" columnHeaderCellRenderer={() => this.renderColumnHeader("Filename")} cellRenderer={this.renderFilenames}/>
                 <Column name="Type" columnHeaderCellRenderer={() => this.renderColumnHeader("Type")} cellRenderer={this.renderTypes}/>
