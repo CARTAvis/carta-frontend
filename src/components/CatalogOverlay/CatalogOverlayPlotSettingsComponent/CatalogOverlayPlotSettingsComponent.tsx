@@ -2,7 +2,7 @@ import {observer} from "mobx-react";
 import * as React from "react";
 import {FormGroup, NumericInput, Button, MenuItem, PopoverPosition, Icon} from "@blueprintjs/core";
 import {Select, IItemRendererProps} from "@blueprintjs/select";
-import {AppStore, CatalogStore, SystemType} from "stores";
+import {AppStore, CatalogStore} from "stores";
 import {CatalogOverlayWidgetStore, CatalogOverlayShape} from "stores/widgets";
 import {ColorResult} from "react-color";
 import {ColorPickerComponent} from "components/Shared";
@@ -39,14 +39,6 @@ export class CatalogOverlayPlotSettingsComponent extends React.Component<{widget
     private readonly MinOverlaySize = 1;
     private readonly MaxOverlaySize = 100;
 
-    private readonly CoordinateSystem = new Map<SystemType, string>([
-        [SystemType.FK5, "FK5"],
-        [SystemType.FK4, "FK4"],
-        [SystemType.Galactic, "GAL"],
-        [SystemType.Ecliptic, "ECL"],
-        [SystemType.ICRS, "ICRS"],
-    ]);
-
     private handleCatalogShapeChange = (item: CatalogOverlayShape) => {
         this.props.widgetStore.setCatalogShape(item);
         CatalogStore.Instance.updateCatalogShape(this.props.id, item);
@@ -64,27 +56,12 @@ export class CatalogOverlayPlotSettingsComponent extends React.Component<{widget
         CatalogStore.Instance.updateCatalogColor(this.props.id, color);
     }
 
-    private handleHeaderCatalogSystemChange = (system: SystemType) => {
-        this.props.widgetStore.setCatalogCoordinateSystem(system);
-    }
-
     private renderShapePopOver = (shape: CatalogOverlayShape, itemProps: IItemRendererProps) => {
         const shapeItem = this.getCatalogShape(shape);
         return (
             <MenuItem
                 icon={shapeItem}
                 key={shape}
-                onClick={itemProps.handleClick}
-                active={itemProps.modifiers.active}
-            />
-        );
-    }
-
-    private renderSystemPopOver = (system: SystemType, itemProps: IItemRendererProps) => {
-        return (
-            <MenuItem
-                key={system}
-                text={this.CoordinateSystem.get(system)}
                 onClick={itemProps.handleClick}
                 active={itemProps.modifiers.active}
             />
@@ -126,27 +103,8 @@ export class CatalogOverlayPlotSettingsComponent extends React.Component<{widget
     public render() {
         const widgetStore = this.props.widgetStore;
 
-        let systemOptions = [];
-        this.CoordinateSystem.forEach((value, key) => {
-            systemOptions.push(key);
-        });
-        const activeSystem = this.CoordinateSystem.get(widgetStore.catalogCoordinateSystem.system);
-
         return (
             <div className="catalog-overlay-plot-settings">
-                <FormGroup  inline={true} label="System">
-                    <Select 
-                        className="bp3-fill"
-                        filterable={false}
-                        items={systemOptions} 
-                        activeItem={widgetStore.catalogCoordinateSystem.system}
-                        onItemSelect={this.handleHeaderCatalogSystemChange}
-                        itemRenderer={this.renderSystemPopOver}
-                        popoverProps={{popoverClassName: "catalog-select", minimal: true , position: PopoverPosition.AUTO_END}}
-                    >
-                        <Button text={activeSystem} rightIcon="double-caret-vertical"/>
-                    </Select>
-                </FormGroup>
                 <FormGroup label={"Color"} inline={true}>
                     <ColorPickerComponent
                         color={widgetStore.catalogColor}
