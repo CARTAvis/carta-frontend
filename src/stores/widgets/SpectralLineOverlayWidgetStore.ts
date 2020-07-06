@@ -206,7 +206,9 @@ export class SpectralLineOverlayWidgetStore extends RegionWidgetStore {
     }
 
     @computed get redshiftFactor() {
-        return this.redshiftType === RedshiftType.V ? Math.sqrt((1 - this.redshiftInput / SPEED_OF_LIGHT) / (1 + this.redshiftInput / SPEED_OF_LIGHT)) : 1 / (this.redshiftInput + 1);
+        return this.redshiftType === RedshiftType.V ?
+            Math.sqrt((1 - (this.redshiftInput * 1e3) / SPEED_OF_LIGHT) / (1 + (this.redshiftInput * 1e3) / SPEED_OF_LIGHT)) :
+            1 / (this.redshiftInput + 1);
     }
 
     @computed get displayedColumnHeaders(): Array<CARTA.CatalogHeader> {
