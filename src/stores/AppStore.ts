@@ -183,7 +183,7 @@ export class AppStore {
                 autoFileLoaded = true;
                 this.loadFile(folderSearchParam, fileSearchParam, "");
             }
-            if (this.preferenceStore.autoLaunch) {
+            if (this.preferenceStore.autoLaunch && !fileSearchParam) {
                 this.fileBrowserStore.showFileBrowser(BrowserMode.File);
             }
         }, err => console.log(err));

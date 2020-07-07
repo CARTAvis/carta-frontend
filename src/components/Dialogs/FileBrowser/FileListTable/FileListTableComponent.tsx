@@ -1,7 +1,7 @@
 import * as React from "react";
 import {action, autorun, computed, observable} from "mobx";
 import {observer} from "mobx-react";
-import {Cell, Column, ColumnHeaderCell, Regions, RenderMode, SelectionModes, Table} from "@blueprintjs/table";
+import {Cell, Column, ColumnHeaderCell, Regions, RenderMode, SelectionModes, Table, TableLoadingOption} from "@blueprintjs/table";
 import {IRegion} from "@blueprintjs/table/src/regions";
 import {Icon, Label, NonIdealState} from "@blueprintjs/core";
 import globToRegExp from "glob-to-regexp";
@@ -23,6 +23,7 @@ interface FileEntry {
 
 export interface FileListTableComponentProps {
     darkTheme: boolean;
+    loading?: boolean;
     listResponse: CARTA.IFileListResponse | CARTA.ICatalogListResponse;
     selectedFile: CARTA.IFileInfo | CARTA.ICatalogFileInfo;
     selectedHDU: string;
@@ -233,17 +234,21 @@ export class FileListTableComponent extends React.Component<FileListTableCompone
         const nameRenderer = () => {
             if (sortColumn) {
                 return (
-                    <Label className="bp3-inline label">
-                        <Icon onClick={() => this.props.onSortingChanged(name, -sortingConfig.direction)} className="sort-icon" icon={sortDesc ? "sort-desc" : "sort-asc"}/>
-                        {name}
-                    </Label>
+                    <div className="sort-label" onClick={() => this.props.onSortingChanged(name, -sortingConfig.direction)}>
+                        <Label className="bp3-inline label">
+                            <Icon className="sort-icon" icon={sortDesc ? "sort-desc" : "sort-asc"}/>
+                            {name}
+                        </Label>
+                    </div>
                 );
             } else {
                 return (
-                    <Label className="bp3-inline label">
-                        <Icon onClick={() => this.props.onSortingChanged(name, 1)} className="sort-icon inactive" icon="sort"/>
-                        {name}
-                    </Label>
+                    <div className="sort-label" onClick={() => this.props.onSortingChanged(name, 1)}>
+                        <Label className="bp3-inline label">
+                            <Icon className="sort-icon inactive" icon="sort"/>
+                            {name}
+                        </Label>
+                    </div>
                 );
             }
         };
@@ -383,6 +388,7 @@ export class FileListTableComponent extends React.Component<FileListTableCompone
                 selectedRegions={this.selectedRegion}
                 enableRowHeader={false}
                 numRows={this.tableEntries.length}
+                loadingOptions={this.props.loading ? [TableLoadingOption.CELLS] : []}
             >
                 <Column name="Filename" columnHeaderCellRenderer={() => this.renderColumnHeader("Filename")} cellRenderer={this.renderFilenames}/>
                 <Column name="Type" columnHeaderCellRenderer={() => this.renderColumnHeader("Type")} cellRenderer={this.renderTypes}/>

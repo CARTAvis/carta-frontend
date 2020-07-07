@@ -108,14 +108,7 @@ export class CatalogScatterComponent extends React.Component<WidgetProps> {
         const points = event.points;
         if (points.length) {
             const point = points[0];
-            this.widgetStore.setIndicator({x: point.x as number, y: point.y as number});
-            const border: Border = {
-                xMin: point.xaxis.range[0],
-                xMax: point.xaxis.range[1],
-                yMin: point.yaxis.range[0],
-                yMax: point.yaxis.range[1]
-            };
-            this.widgetStore.setBorder(border);   
+            this.widgetStore.setIndicator({x: point.x as number, y: point.y as number});  
         }
     }
 
@@ -136,8 +129,20 @@ export class CatalogScatterComponent extends React.Component<WidgetProps> {
     }
 
     private onRelayout = (event: any) => {
-        if (event.dragmode) {
-            this.widgetStore.setDragmode(event.dragmode);
+        const widgetStore = this.widgetStore;
+        if (widgetStore) {
+            if (event.dragmode) {
+                widgetStore.setDragmode(event.dragmode);
+            }
+            if (isFinite(event["xaxis.range[0]"]) || isFinite(event["yaxis.range[0]"])) {
+                const border: Border = {
+                    xMin: isFinite(event["xaxis.range[0]"]) ? event["xaxis.range[0]"] : widgetStore.border.xMin,
+                    xMax: isFinite(event["xaxis.range[1]"]) ? event["xaxis.range[1]"] : widgetStore.border.xMax,
+                    yMin: isFinite(event["yaxis.range[0]"]) ? event["yaxis.range[0]"] : widgetStore.border.yMin,
+                    yMax: isFinite(event["yaxis.range[1]"]) ? event["yaxis.range[1]"] : widgetStore.border.yMax
+                };
+                this.widgetStore.setBorder(border);   
+            }
         }
     }
 
@@ -332,7 +337,7 @@ export class CatalogScatterComponent extends React.Component<WidgetProps> {
                 "hoverCompareCartesian",
             ],
         };
-        const disabled = !widgetStore.catalogOverlayWidgetStore.enableLoadButton;
+        const disabled = !widgetStore.enablePlotButton;
 
         return(
             <div className={"catalog-2D"}>

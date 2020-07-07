@@ -18,6 +18,7 @@ export enum BrowserMode {
 export type RegionFileType = CARTA.FileType.CRTF | CARTA.FileType.DS9_REG;
 export type ImageFileType = CARTA.FileType.CASA | CARTA.FileType.FITS | CARTA.FileType.HDF5 | CARTA.FileType.MIRIAD;
 export type CatalogFileType = CARTA.CatalogFileType.VOTable | CARTA.CatalogFileType.FITSTable;
+
 export interface SortingConfig {
     columnName: string;
     direction: number;
@@ -90,6 +91,7 @@ export class FileBrowserStore {
         if (this.browserMode === BrowserMode.File || this.browserMode === BrowserMode.SaveFile) {
             backendService.getFileList(directory).subscribe(res => {
                 this.fileList = res;
+                this.loadingList = false;
             }, err => {
                 console.log(err);
                 this.loadingList = false;
@@ -97,6 +99,7 @@ export class FileBrowserStore {
         } else if (this.browserMode === BrowserMode.Catalog) {
             backendService.getCatalogList(directory).subscribe(res => {
                 this.catalogFileList = res;
+                this.loadingList = false;
             }, err => {
                 console.log(err);
                 this.loadingList = false;
@@ -104,6 +107,7 @@ export class FileBrowserStore {
         } else {
             backendService.getRegionList(directory).subscribe(res => {
                 this.fileList = res;
+                this.loadingList = false;
             }, err => {
                 console.log(err);
                 this.loadingList = false;
@@ -261,11 +265,11 @@ export class FileBrowserStore {
 
     @action setSortingConfig = (columnName: string, direction: number) => {
         this.sortingConfig = {columnName, direction: Math.sign(direction)};
-    }
+    };
 
     @action clearSortingConfig = () => {
         this.sortingConfig = undefined;
-    }
+    };
 
     @computed get fileInfo() {
         let fileInfo = "";

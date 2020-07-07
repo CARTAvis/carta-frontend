@@ -1,9 +1,9 @@
 import {action, computed, observable} from "mobx";
 import {Colors} from "@blueprintjs/core";
-import {Table, Regions, IRegion} from "@blueprintjs/table";
+import {Regions, IRegion} from "@blueprintjs/table";
 import {CARTA} from "carta-protobuf";
 import {RegionWidgetStore, RegionsType} from "./RegionWidgetStore";
-import {AppStore, CatalogStore, SystemType} from "stores";
+import {AppStore, CatalogStore} from "stores";
 import {filterProcessedColumnData, minMaxArray} from "utilities";
 import {ProcessedColumnData} from "models";
 
@@ -12,6 +12,14 @@ export interface CatalogInfo {
     fileInfo: CARTA.ICatalogFileInfo;
     dataSize: number;
     directory: string;
+}
+
+export enum CatalogCoordinate {
+    X = "X",
+    Y = "Y",
+    PlotSize = "Size",
+    PlotShape = "Shape",
+    NONE = "None",
 }
 
 export enum CatalogOverlay {
@@ -25,7 +33,11 @@ export enum CatalogOverlay {
     GLAT = "GLAT",
     GLON = "GLON",
     ELON = "ELON",
-    ELAT = "ELAT"
+    ELAT = "ELAT",
+    X0 = "X0",
+    Y0 = "Y0",
+    X1 = "X1",
+    Y1 = "Y1",
 }
 
 export enum CatalogOverlayShape {
@@ -50,35 +62,49 @@ export enum CatalogUpdateMode {
 }
 
 export enum CatalogPlotType {
-    ImageOverlay = "as image overlay",
+    ImageOverlay = "Image overlay",
     // 1DHistogram = "as 1D histogram",
-    D2Scatter = "as 2D scatter",
+    D2Scatter = "2D scatter",
     // D3Scatter = "as 3D scatter",
 }
 
-export type ControlHeader = { columnIndex: number, dataIndex: number, display: boolean, representAs: CatalogOverlay, filter: string, columnWidth: number };
+export enum CatalogSystemType {
+    Ecliptic = "ECLIPTIC",
+    FK4 = "FK4",
+    FK5 = "FK5",
+    Galactic = "GALACTIC",
+    ICRS = "ICRS",
+    Pixel0 = "Pixel0",
+    Pixel1 = "Pixel1",
+}
+
+export type ControlHeader = { columnIndex: number, dataIndex: number, display: boolean, representAs: CatalogCoordinate, filter: string, columnWidth: number };
 
 export class CatalogOverlayWidgetStore extends RegionWidgetStore {
 
     public static readonly InitTableRows = 50;
+    public readonly CoordinateSystemName = new Map<CatalogSystemType, string>([
+        [CatalogSystemType.FK5, "FK5"],
+        [CatalogSystemType.FK4, "FK4"],
+        [CatalogSystemType.Galactic, "GAL"],
+        [CatalogSystemType.Ecliptic, "ECL"],
+        [CatalogSystemType.ICRS, "ICRS"],
+        [CatalogSystemType.Pixel0, "PIX0"],
+        [CatalogSystemType.Pixel1, "PIX1"]
+    ]);
     private static readonly DataChunkSize = 50;
     private static readonly InitDisplayedColumnSize = 10;
     // Number.NEGATIVE_INFINITY -1.797693134862316E+308
     private static readonly NEGATIVE_INFINITY = -1.7976931348623157e+308;
     private static readonly POSITIVE_INFINITY = 1.7976931348623157e+308;
-    private readonly CoordinateSystemName = new Map<SystemType, string>([
-        [SystemType.FK5, "FK5"],
-        [SystemType.FK4, "FK4"],
-        [SystemType.Galactic, "GAL"],
-        [SystemType.Ecliptic, "ECL"],
-        [SystemType.ICRS, "ICRS"],
-    ]);
-    private systemCoordinateMap = new Map<SystemType, { x: CatalogOverlay, y: CatalogOverlay }>([
-        [SystemType.FK4, {x: CatalogOverlay.RA, y: CatalogOverlay.DEC}],
-        [SystemType.FK5, {x: CatalogOverlay.RA, y: CatalogOverlay.DEC}],
-        [SystemType.ICRS, {x: CatalogOverlay.RA, y: CatalogOverlay.DEC}],
-        [SystemType.Galactic, {x: CatalogOverlay.GLON, y: CatalogOverlay.GLAT}],
-        [SystemType.Ecliptic, {x: CatalogOverlay.ELON, y: CatalogOverlay.ELAT}],
+    private systemCoordinateMap = new Map<CatalogSystemType, { x: CatalogOverlay, y: CatalogOverlay }>([
+        [CatalogSystemType.FK4, {x: CatalogOverlay.RA, y: CatalogOverlay.DEC}],
+        [CatalogSystemType.FK5, {x: CatalogOverlay.RA, y: CatalogOverlay.DEC}],
+        [CatalogSystemType.ICRS, {x: CatalogOverlay.RA, y: CatalogOverlay.DEC}],
+        [CatalogSystemType.Galactic, {x: CatalogOverlay.GLON, y: CatalogOverlay.GLAT}],
+        [CatalogSystemType.Ecliptic, {x: CatalogOverlay.ELON, y: CatalogOverlay.ELAT}],
+        [CatalogSystemType.Pixel0, {x: CatalogOverlay.X0, y: CatalogOverlay.Y0}],
+        [CatalogSystemType.Pixel1, {x: CatalogOverlay.X1, y: CatalogOverlay.Y1}],
     ]);
 
     private readonly InitialedColumnsKeyWords = [
@@ -114,16 +140,16 @@ export class CatalogOverlayWidgetStore extends RegionWidgetStore {
     @observable updatingDataStream: boolean;
     @observable updateMode: CatalogUpdateMode;
     @observable catalogFilterRequest: CARTA.CatalogFilterRequest;
-    @observable catalogCoordinateSystem: { system: SystemType, equinox: string, epoch: string, coordinate: { x: CatalogOverlay, y: CatalogOverlay } };
+    @observable catalogCoordinateSystem: { system: CatalogSystemType, equinox: string, epoch: string, coordinate: { x: CatalogOverlay, y: CatalogOverlay } };
     @observable catalogPlotType: CatalogPlotType;
     @observable catalogScatterWidgetsId: string[];
     @observable selectedPointIndices: number[];
     @observable filterDataSize: number;
     @observable showSelectedData: boolean;
-    @observable catalogTableRef: Table;
     @observable updateTableView: boolean;
     @observable sortingInfo: {columnName: string, sortingType: CARTA.SortingType};
     @observable maxRows: number;
+    @observable catalogTableAutoScroll: boolean;
 
     constructor(catalogInfo: CatalogInfo, catalogHeader: Array<CARTA.ICatalogHeader>, catalogData: Map<number, ProcessedColumnData>, id: string) {
         super(RegionsType.CLOSED_AND_POINT);
@@ -146,10 +172,10 @@ export class CatalogOverlayWidgetStore extends RegionWidgetStore {
         this.selectedPointIndices = [];
         this.filterDataSize = undefined;
         this.showSelectedData = false;
-        this.catalogTableRef = undefined;
         this.updateTableView = false;
         this.sortingInfo = {columnName: null, sortingType: null};
         this.maxRows = catalogInfo.dataSize;
+        this.catalogTableAutoScroll = false;
 
         this.catalogPlotType = CatalogPlotType.ImageOverlay;
         const coordinateSystem = catalogInfo.fileInfo.coosys[0];
@@ -160,14 +186,14 @@ export class CatalogOverlayWidgetStore extends RegionWidgetStore {
                 system: system,
                 equinox: coordinateSystem.equinox,
                 epoch: coordinateSystem.epoch,
-                coordinate: this.systemCoordinateMap.get(SystemType.ICRS)
+                coordinate: this.systemCoordinateMap.get(CatalogSystemType.ICRS)
             };
         } else {
             this.catalogCoordinateSystem = {
-                system: SystemType.ICRS,
+                system: CatalogSystemType.ICRS,
                 equinox: null,
                 epoch: null,
-                coordinate: this.systemCoordinateMap.get(SystemType.ICRS)
+                coordinate: this.systemCoordinateMap.get(CatalogSystemType.ICRS)
             };
         }
 
@@ -179,10 +205,6 @@ export class CatalogOverlayWidgetStore extends RegionWidgetStore {
             this.numVisibleRows = initTableRows;
             this.subsetEndIndex = initTableRows;
         }
-    }
-
-    @action setCatalogTableRef(ref: Table) {
-        this.catalogTableRef = ref;
     }
 
     @action setShowSelectedData(val: boolean) {
@@ -201,17 +223,18 @@ export class CatalogOverlayWidgetStore extends RegionWidgetStore {
         this.catalogPlotType = type;
     }
 
-    @action setCatalogCoordinateSystem(catalogSystem: SystemType) {
-        this.catalogCoordinateSystem.system = catalogSystem;
-        const x = this.xColumnRepresentation;
-        const y = this.yColumnRepresentation;
-        if (x) {
-            this.catalogControlHeader.get(x).representAs = CatalogOverlay.NONE;
-        }
-        if (y) {
-            this.catalogControlHeader.get(y).representAs = CatalogOverlay.NONE;
-        }
-        this.catalogCoordinateSystem.coordinate = this.systemCoordinateMap.get(catalogSystem);
+    @action setCatalogCoordinateSystem(catalogSystem: CatalogSystemType) {
+        const current = this.catalogCoordinateSystem;
+        this.catalogCoordinateSystem = {
+            system: catalogSystem,
+            equinox: current.equinox,
+            epoch: current.epoch,
+            coordinate: this.systemCoordinateMap.get(catalogSystem)
+        };
+    }
+
+    @computed get activedSystem(): {x: CatalogOverlay, y: CatalogOverlay} {
+        return this.systemCoordinateMap.get(this.catalogCoordinateSystem.system);
     }
 
     @action setUserFilter(catalogFilterRequest: CARTA.CatalogFilterRequest) {
@@ -305,32 +328,32 @@ export class CatalogOverlayWidgetStore extends RegionWidgetStore {
         this.catalogControlHeader.get(columnName).display = val;
     }
 
-    @action setHeaderRepresentation(val: CatalogOverlay, columnName: string) {
+    @action setHeaderRepresentation(option: {coordinate: CatalogCoordinate, coordinateType: CatalogOverlay}, columnName: string) {
         const current = this.catalogControlHeader.get(columnName);
-        if (val !== current.representAs) {
-            switch (val) {
-                case CatalogOverlay.X:
+        if (option.coordinate !== current.representAs) {
+            switch (option.coordinate) {
+                case CatalogCoordinate.X:
                     const currentX = this.xColumnRepresentation;
                     if (currentX) {
-                        this.catalogControlHeader.get(currentX).representAs = CatalogOverlay.NONE;
+                        this.catalogControlHeader.get(currentX).representAs = CatalogCoordinate.NONE;
                     }
                     break;
-                case CatalogOverlay.Y:
+                case CatalogCoordinate.Y:
                     const currentY = this.yColumnRepresentation;
                     if (currentY) {
-                        this.catalogControlHeader.get(currentY).representAs = CatalogOverlay.NONE;
+                        this.catalogControlHeader.get(currentY).representAs = CatalogCoordinate.NONE;
                     }
                     break;
-                case CatalogOverlay.PlotSize:
+                case CatalogCoordinate.PlotSize:
                     const currentSize = this.sizeColumnRepresentation;
                     if (currentSize) {
-                        this.catalogControlHeader.get(currentSize).representAs = CatalogOverlay.NONE;
+                        this.catalogControlHeader.get(currentSize).representAs = CatalogCoordinate.NONE;
                     }
                     break;
-                case CatalogOverlay.PlotShape:
+                case CatalogCoordinate.PlotShape:
                     const currentShape = this.shapeColumnRepresentation;
                     if (currentShape) {
-                        this.catalogControlHeader.get(currentShape).representAs = CatalogOverlay.NONE;
+                        this.catalogControlHeader.get(currentShape).representAs = CatalogCoordinate.NONE;
                     }
                     break;
                 default:
@@ -340,7 +363,7 @@ export class CatalogOverlayWidgetStore extends RegionWidgetStore {
                 columnIndex: current.columnIndex,
                 dataIndex: current.dataIndex,
                 display: current.display,
-                representAs: val,
+                representAs: option.coordinate,
                 filter: current.filter,
                 columnWidth: current.columnWidth
             };
@@ -450,7 +473,7 @@ export class CatalogOverlayWidgetStore extends RegionWidgetStore {
                 if (index < CatalogOverlayWidgetStore.InitDisplayedColumnSize) {
                     display = true;
                 }
-                let controlHeader: ControlHeader = {columnIndex: header.columnIndex, dataIndex: index, display: display, representAs: CatalogOverlay.NONE, filter: "", columnWidth: null};
+                let controlHeader: ControlHeader = {columnIndex: header.columnIndex, dataIndex: index, display: display, representAs: CatalogCoordinate.NONE, filter: "", columnWidth: null};
                 controlHeaders.set(header.name, controlHeader);
             }
         }
@@ -467,10 +490,7 @@ export class CatalogOverlayWidgetStore extends RegionWidgetStore {
 
     @action setSelectedPointIndices = (pointIndices: Array<number>, autoScroll: boolean, autoPanZoom: boolean) => {
         this.selectedPointIndices = pointIndices;
-        const catalogComponentSize = AppStore.Instance.widgetsStore.catalogComponentSize();
-        if (pointIndices.length > 0 && this.catalogTableRef && autoScroll && catalogComponentSize) {
-            this.catalogTableRef.scrollToRegion(this.autoScrollRowNumber);
-        }
+        this.catalogTableAutoScroll = autoScroll;
 
         const coords = CatalogStore.Instance.catalogData.get(this.storeId);
         if (coords?.xImageCoords?.length) {
@@ -491,23 +511,21 @@ export class CatalogOverlayWidgetStore extends RegionWidgetStore {
             CatalogStore.Instance.updateSelectedPoints(this.storeId, selectedX, selectedY);
 
             if (autoPanZoom) {
-                if (pointIndices.length === 1) {
-                    const pointIndex = pointIndices[0];
-                    const x = xArray[pointIndex];
-                    const y = yArray[pointIndex];
-                    if (!this.isInfinite(x) && !this.isInfinite(y)) {
-                        AppStore.Instance.activeFrame.setCenter(x, y);      
-                    } 
+                const selectedDataLength = selectedX.length;
+                if (selectedDataLength === 1) {
+                    const x = selectedX[0];
+                    const y = selectedY[0];
+                    AppStore.Instance.activeFrame.setCenter(x, y);      
                 }
 
-                if (pointIndices.length > 1) {
+                if (selectedDataLength > 1) {
                     const minMaxX = minMaxArray(selectedX);
                     const minMaxY = minMaxArray(selectedY);
                     const width = minMaxX.maxVal - minMaxX.minVal;
                     const height = minMaxY.maxVal - minMaxY.minVal;
                     AppStore.Instance.activeFrame.setCenter(width / 2 + minMaxX.minVal, height / 2 + minMaxY.minVal);
                     const zoomLevel = Math.min(AppStore.Instance.activeFrame.renderWidth / width, AppStore.Instance.activeFrame.renderHeight / height);
-                    AppStore.Instance.activeFrame.setZoom(zoomLevel);
+                    AppStore.Instance.activeFrame.setZoom(zoomLevel);   
                 }
 
             }
@@ -600,7 +618,7 @@ export class CatalogOverlayWidgetStore extends RegionWidgetStore {
     @computed get xColumnRepresentation(): string {
         let xColumn = null;
         this.catalogControlHeader.forEach((value, key) => {
-            if (value.representAs === CatalogOverlay.X) {
+            if (value.representAs === CatalogCoordinate.X) {
                 xColumn = key;
             }
         });
@@ -610,7 +628,7 @@ export class CatalogOverlayWidgetStore extends RegionWidgetStore {
     @computed get yColumnRepresentation(): string {
         let yColumn = null;
         this.catalogControlHeader.forEach((value, key) => {
-            if (value.representAs === CatalogOverlay.Y) {
+            if (value.representAs === CatalogCoordinate.Y) {
                 yColumn = key;
             }
         });
@@ -620,7 +638,7 @@ export class CatalogOverlayWidgetStore extends RegionWidgetStore {
     @computed get sizeColumnRepresentation(): string {
         let sizeColumn = null;
         this.catalogControlHeader.forEach((value, key) => {
-            if (value.representAs === CatalogOverlay.PlotSize) {
+            if (value.representAs === CatalogCoordinate.PlotSize) {
                 sizeColumn = key;
             }
         });
@@ -630,7 +648,7 @@ export class CatalogOverlayWidgetStore extends RegionWidgetStore {
     @computed get shapeColumnRepresentation(): string {
         let shapeColumn = null;
         this.catalogControlHeader.forEach((value, key) => {
-            if (value.representAs === CatalogOverlay.PlotShape) {
+            if (value.representAs === CatalogCoordinate.PlotShape) {
                 shapeColumn = key;
             }
         });
@@ -682,7 +700,7 @@ export class CatalogOverlayWidgetStore extends RegionWidgetStore {
     }
 
     @computed get autoScrollRowNumber(): IRegion {
-        let singleRowRegion: IRegion = null;
+        let singleRowRegion: IRegion = Regions.row(0);
         if (this.selectedPointIndices.length > 0) {
             singleRowRegion = Regions.row(this.selectedPointIndices[0]);
         }
@@ -753,8 +771,8 @@ export class CatalogOverlayWidgetStore extends RegionWidgetStore {
         return false;
     }
 
-    private getCatalogSystem(system: string): SystemType {
-        let catalogSystem = SystemType.ICRS;
+    private getCatalogSystem(system: string): CatalogSystemType {
+        let catalogSystem = CatalogSystemType.ICRS;
         const systemMap = this.CoordinateSystemName;
         systemMap.forEach((value, key) => {
             if (system.toUpperCase().includes(value.toUpperCase())) {
