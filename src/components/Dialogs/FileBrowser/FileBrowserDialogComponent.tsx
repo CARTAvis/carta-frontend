@@ -344,6 +344,7 @@ export class FileBrowserDialogComponent extends React.Component {
                         <div className="file-list">
                             <FileListTableComponent
                                 darkTheme={appStore.darkTheme}
+                                loading={fileBrowserStore.loadingList}
                                 listResponse={fileBrowserStore.getfileListByMode}
                                 fileBrowserMode={fileBrowserStore.browserMode}
                                 selectedFile={fileBrowserStore.selectedFile}

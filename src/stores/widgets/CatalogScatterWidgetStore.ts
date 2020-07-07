@@ -80,10 +80,14 @@ export class CatalogScatterWidgetStore {
         const xBounds = minMaxArray(this.xDataset);
         const yBounds = minMaxArray(this.yDataset);
         return {
-            xMin: xBounds.minVal - this.rangeOffset,
-            xMax: xBounds.maxVal + this.rangeOffset,
-            yMin: yBounds.minVal - this.rangeOffset,
-            yMax: yBounds.maxVal + this.rangeOffset
+            xMin: xBounds.minVal,
+            xMax: xBounds.maxVal,
+            yMin: yBounds.minVal,
+            yMax: yBounds.maxVal
         };
+    }
+
+    @computed get enablePlotButton(): boolean {
+        return (this.columnsName.x !== null && this.columnsName.y !== null && !this.catalogOverlayWidgetStore.loadingData && !this.catalogOverlayWidgetStore.updatingDataStream);
     }
 }
