@@ -1,19 +1,46 @@
 import * as React from "react";
+import * as _ from "lodash";
 import {observer} from "mobx-react";
 import {action, computed, observable} from "mobx";
-import {Alert, AnchorButton, Breadcrumb, Breadcrumbs, Button, IBreadcrumbProps, Icon, IDialogProps, InputGroup, Intent, Menu, MenuItem, NonIdealState, Popover, Position, Pre, Spinner, Tab, TabId, Tabs, Tooltip, Text, Switch} from "@blueprintjs/core";
+import {
+    Alert,
+    AnchorButton,
+    Breadcrumb,
+    Breadcrumbs,
+    Button,
+    IBreadcrumbProps,
+    Icon,
+    IDialogProps,
+    InputGroup,
+    Intent,
+    Menu,
+    MenuItem,
+    NonIdealState,
+    Popover,
+    Position,
+    Pre,
+    Spinner,
+    Tab,
+    TabId,
+    Tabs,
+    Tooltip,
+    Text,
+    Switch
+} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
-import {FileListComponent} from "./FileList/FileListComponent";
 import {FileInfoComponent, FileInfoType} from "components/FileInfo/FileInfoComponent";
+import {FileListTableComponent} from "./FileListTable/FileListTableComponent";
 import {DraggableDialogComponent} from "components/Dialogs";
 import {TableComponentProps, TableType} from "components/Shared";
-import {AppStore, BrowserMode, DialogStore, FileBrowserStore, HelpType} from "stores";
+import {AppStore, BrowserMode, FileBrowserStore, HelpType} from "stores";
 import {CatalogOverlayWidgetStore} from "stores/widgets";
 import "./FileBrowserDialogComponent.css";
 
 @observer
 export class FileBrowserDialogComponent extends React.Component {
     @observable overwriteExistingFileAlertVisible: boolean;
+    @observable fileFilterString: string = "";
+    @observable debouncedFilterString: string = "";
 
     private handleTabChange = (newId: TabId) => {
         FileBrowserStore.Instance.setSelectedTab(newId);
@@ -86,6 +113,30 @@ export class FileBrowserDialogComponent extends React.Component {
     private handleExportInputChanged = (ev: React.ChangeEvent<HTMLInputElement>) => {
         const fileBrowserStore = FileBrowserStore.Instance;
         fileBrowserStore.setExportFilename(ev.target.value);
+    };
+
+    @action handleFilterStringInputChanged = (ev: React.ChangeEvent<HTMLInputElement>) => {
+        this.fileFilterString = ev.target.value;
+        this.setFilterString(this.fileFilterString);
+    };
+
+    @action setFilterString = _.debounce((filterString: string) => {
+        this.debouncedFilterString = filterString;
+    }, 500);
+
+    @action clearFilterString = () => {
+        this.fileFilterString = "";
+        this.debouncedFilterString = "";
+    };
+
+    @action handleFolderClicked = (folderName: string) => {
+        this.clearFilterString();
+        AppStore.Instance.fileBrowserStore.selectFolder(folderName);
+    };
+
+    @action handleBreadcrumbClicked = (path: string) => {
+        this.clearFilterString();
+        AppStore.Instance.fileBrowserStore.selectFolder(path, true);
     };
 
     private static ValidateFilename(filename: string) {
@@ -181,7 +232,7 @@ export class FileBrowserDialogComponent extends React.Component {
                 content={
                     <Menu>
                         <MenuItem text="CRTF Region File" onClick={() => fileBrowserStore.setExportFileType(CARTA.FileType.CRTF)}/>
-                        <MenuItem text="DS9 Region File" onClick={() => fileBrowserStore.setExportFileType(CARTA.FileType.REG)}/>
+                        <MenuItem text="DS9 Region File" onClick={() => fileBrowserStore.setExportFileType(CARTA.FileType.DS9_REG)}/>
                     </Menu>
                 }
                 position={Position.BOTTOM_RIGHT}
@@ -202,8 +253,8 @@ export class FileBrowserDialogComponent extends React.Component {
     }
 
     // Refresh file list to trigger the Breadcrumb re-rendering
-    @action
-    private refreshFileList() {
+    @action refreshFileList = () => {
+        this.clearFilterString();
         const fileBrowserStore = FileBrowserStore.Instance;
         switch (fileBrowserStore.browserMode) {
             case BrowserMode.Catalog:
@@ -213,7 +264,7 @@ export class FileBrowserDialogComponent extends React.Component {
                 fileBrowserStore.fileList = {...fileBrowserStore.fileList};
                 break;
         }
-    }
+    };
 
     public render() {
         const appStore = AppStore.Instance;
@@ -232,19 +283,26 @@ export class FileBrowserDialogComponent extends React.Component {
             lazy: true,
             isOpen: appStore.dialogStore.fileBrowserDialogVisible,
             onClose: fileBrowserStore.hideFileBrowser,
-            onOpened: () => this.refreshFileList(),
+            onOpened: this.refreshFileList,
             title: "File Browser",
         };
 
         const actionButton = this.renderActionButton(fileBrowserStore.browserMode, fileBrowserStore.appendingFrame);
 
-        let exportFileInput: React.ReactNode;
+        let fileInput: React.ReactNode;
         let paneClassName = "file-panes";
 
         if (fileBrowserStore.browserMode === BrowserMode.RegionExport) {
-            exportFileInput = this.renderExportFilenameInput();
+            fileInput = this.renderExportFilenameInput();
         } else {
-            paneClassName += " extended";
+            fileInput = (
+                <InputGroup
+                    autoFocus={false}
+                    placeholder="Filter by filename pattern (unix style) or regular expression (using /<expression>/)"
+                    value={this.fileFilterString}
+                    onChange={this.handleFilterStringInputChanged}
+                    leftIcon="search"
+                />);
         }
 
         let tableProps: TableComponentProps = null;
@@ -267,13 +325,14 @@ export class FileBrowserDialogComponent extends React.Component {
                     <React.Fragment>
                         <Tooltip content={"Refresh current directory"}>
                             <Button
+                                className="refresh-button"
                                 icon="repeat"
                                 onClick={() => fileBrowserStore.selectFolder(fileList.directory, true)}
                                 minimal={true}
-                                style={{marginRight: "10px"}}
                             />
                         </Tooltip>
                         <Breadcrumbs
+                            className="path-breadcrumbs"
                             breadcrumbRenderer={this.renderBreadcrumb}
                             items={this.pathItems}
                         />
@@ -283,20 +342,25 @@ export class FileBrowserDialogComponent extends React.Component {
                 <div className="bp3-dialog-body">
                     <div className={paneClassName}>
                         <div className="file-list">
-                            <FileListComponent
+                            <FileListTableComponent
                                 darkTheme={appStore.darkTheme}
-                                files={fileBrowserStore.getfileListByMode}
+                                loading={fileBrowserStore.loadingList}
+                                listResponse={fileBrowserStore.getfileListByMode}
                                 fileBrowserMode={fileBrowserStore.browserMode}
                                 selectedFile={fileBrowserStore.selectedFile}
                                 selectedHDU={fileBrowserStore.selectedHDU}
+                                filterString={this.debouncedFilterString}
+                                sortingConfig={fileBrowserStore.sortingConfig}
+                                onSortingChanged={fileBrowserStore.setSortingConfig}
+                                onSortingCleared={fileBrowserStore.clearSortingConfig}
                                 onFileClicked={fileBrowserStore.selectFile}
                                 onFileDoubleClicked={this.loadFile}
-                                onFolderClicked={fileBrowserStore.selectFolder}
+                                onFolderClicked={this.handleFolderClicked}
                             />
                         </div>
                         <div className="file-info-pane">
                             <FileInfoComponent
-                                infoTypes={this.getFileInfoTypes(fileBrowserStore.browserMode)}
+                                infoTypes={FileBrowserDialogComponent.GetFileInfoTypes(fileBrowserStore.browserMode)}
                                 fileInfoExtended={fileBrowserStore.fileInfoExtended}
                                 regionFileInfo={fileBrowserStore.regionFileInfo ? fileBrowserStore.regionFileInfo.join("\n") : ""}
                                 catalogFileInfo={fileBrowserStore.catalogFileInfo}
@@ -308,7 +372,7 @@ export class FileBrowserDialogComponent extends React.Component {
                             />
                         </div>
                     </div>
-                    {exportFileInput}
+                    {fileInput}
                 </div>
                 <div className="bp3-dialog-footer">
                     <div className="bp3-dialog-footer-actions">
@@ -333,16 +397,14 @@ export class FileBrowserDialogComponent extends React.Component {
 
     private renderBreadcrumb = (props: IBreadcrumbProps) => {
         return (
-            <Breadcrumb onClick={props.onClick}>
-                {props.icon &&
-                <Icon icon={props.icon}/>
-                }
+            <Breadcrumb onClick={props.onClick} className="folder-breadcrumb">
+                {props.icon && <Icon iconSize={14} icon={props.icon}/>}
                 {props.text}
             </Breadcrumb>
         );
     };
 
-    private getFileInfoTypes(fileBrowserMode: BrowserMode): Array<FileInfoType> {
+    private static GetFileInfoTypes(fileBrowserMode: BrowserMode): Array<FileInfoType> {
         switch (fileBrowserMode) {
             case BrowserMode.File:
                 return [FileInfoType.IMAGE_FILE, FileInfoType.IMAGE_HEADER];
@@ -355,7 +417,11 @@ export class FileBrowserDialogComponent extends React.Component {
 
     @computed get pathItems() {
         const fileBrowserStore = FileBrowserStore.Instance;
-        let pathItems: IBreadcrumbProps[] = [{icon: "desktop", onClick: () => fileBrowserStore.selectFolder(".", true)}];
+        let pathItems: IBreadcrumbProps[] = [{
+            icon: "desktop",
+            onClick: () => this.handleBreadcrumbClicked("")
+        }];
+
         const fileList = fileBrowserStore.getfileListByMode;
         if (fileList) {
             const path = fileList.directory;
@@ -371,7 +437,7 @@ export class FileBrowserDialogComponent extends React.Component {
                         const targetPath = parentPath;
                         pathItems.push({
                             text: dirName,
-                            onClick: () => fileBrowserStore.selectFolder(targetPath, true)
+                            onClick: () => this.handleBreadcrumbClicked(targetPath)
                         });
                     }
                 }

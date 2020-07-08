@@ -1,8 +1,7 @@
 import * as AST from "ast_wrapper";
 import {action, observable, ObservableMap} from "mobx";
 import {Colors} from "@blueprintjs/core";
-import {SystemType} from "stores";
-import {CatalogOverlayShape} from "stores/widgets";
+import {CatalogOverlayShape, CatalogSystemType} from "stores/widgets";
 
 type CatalogDataInfo = {
     fileId: number,
@@ -54,16 +53,32 @@ export class CatalogStore {
         this.catalogShape.set(widgetId, CatalogOverlayShape.Circle);
     }
 
-    @action updateCatalogData(widgetId: string, xWcsData: Array<number>, yWcsData: Array<number>, wcsInfo: number, xUnit: string, yUnit: string, catalogFrame: SystemType) {
-        const pixelData = CatalogStore.TransformCatalogData(xWcsData, yWcsData, wcsInfo, xUnit, yUnit, catalogFrame);
+    @action updateCatalogData(widgetId: string, xData: Array<number>, yData: Array<number>, wcsInfo: number, xUnit: string, yUnit: string, catalogFrame: CatalogSystemType) {
         const catalogDataInfo = this.catalogData.get(widgetId);
         if (catalogDataInfo) {
-            console.time(`updatePixelCoordsArray_${xWcsData?.length}`);
-            for (let i = 0; i < pixelData.xImageCoords.length; i++) {
-                catalogDataInfo.xImageCoords.push(pixelData.xImageCoords[i]);
-                catalogDataInfo.yImageCoords.push(pixelData.yImageCoords[i]);
+            switch (catalogFrame) {
+                case CatalogSystemType.Pixel0:
+                    for (let i = 0; i < xData.length; i++) {
+                        catalogDataInfo.xImageCoords.push(xData[i] + 1);
+                        catalogDataInfo.yImageCoords.push(yData[i] + 1);
+                    }
+                    break;
+                case CatalogSystemType.Pixel1:
+                    for (let i = 0; i < xData.length; i++) {
+                        catalogDataInfo.xImageCoords.push(xData[i]);
+                        catalogDataInfo.yImageCoords.push(yData[i]);
+                    }
+                    break;
+                default:
+                    const pixelData = CatalogStore.TransformCatalogData(xData, yData, wcsInfo, xUnit, yUnit, catalogFrame);
+                    console.time(`updatePixelCoordsArray_${xData?.length}`);
+                    for (let i = 0; i < pixelData.xImageCoords.length; i++) {
+                        catalogDataInfo.xImageCoords.push(pixelData.xImageCoords[i]);
+                        catalogDataInfo.yImageCoords.push(pixelData.yImageCoords[i]);
+                    }
+                    console.timeEnd(`updatePixelCoordsArray_${xData?.length}`);
+                    break;
             }
-            console.timeEnd(`updatePixelCoordsArray_${xWcsData?.length}`);
             this.catalogData.set(widgetId,
                 {
                     fileId: catalogDataInfo.fileId,
@@ -137,7 +152,7 @@ export class CatalogStore {
         }
     }
 
-    private static TransformCatalogData(xWcsData: Array<number>, yWcsData: Array<number>, wcsInfo: number, xUnit: string, yUnit: string, catalogFrame: SystemType): { xImageCoords: Float64Array, yImageCoords: Float64Array } {
+    private static TransformCatalogData(xWcsData: Array<number>, yWcsData: Array<number>, wcsInfo: number, xUnit: string, yUnit: string, catalogFrame: CatalogSystemType): { xImageCoords: Float64Array, yImageCoords: Float64Array } {
         if (xWcsData?.length === yWcsData?.length && xWcsData?.length > 0) {
             const N = xWcsData.length;
 
@@ -147,12 +162,12 @@ export class CatalogStore {
             let wcsCopy = AST.copy(wcsInfo);
             let system = "System=" + catalogFrame;
             AST.set(wcsCopy, system);
-            if (catalogFrame === SystemType.FK4) {
+            if (catalogFrame === CatalogSystemType.FK4) {
                 AST.set(wcsCopy, "Epoch=B1950");
                 AST.set(wcsCopy, "Equinox=1950");
             }
 
-            if (catalogFrame === SystemType.FK5) {
+            if (catalogFrame === CatalogSystemType.FK5) {
                 AST.set(wcsCopy, "Epoch=J2000");
                 AST.set(wcsCopy, "Equinox=2000");
             }

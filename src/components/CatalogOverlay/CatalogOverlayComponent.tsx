@@ -1,15 +1,17 @@
 import * as React from "react";
 import {action, autorun, computed, observable} from "mobx";
 import {observer} from "mobx-react";
-import {AnchorButton, FormGroup, Intent, HTMLSelect, NonIdealState, Switch, Tooltip, MenuItem, PopoverPosition, Button, NumericInput, INumericInputProps} from "@blueprintjs/core";
+import {AnchorButton, FormGroup, Intent, NonIdealState, Switch, Tooltip, MenuItem, PopoverPosition, Button} from "@blueprintjs/core";
 import {Cell, Column, Regions, RenderMode, SelectionModes, Table} from "@blueprintjs/table";
+import * as ScrollUtils from "../../../node_modules/@blueprintjs/table/lib/esm/common/internal/scrollUtils";
 import {Select, IItemRendererProps} from "@blueprintjs/select";
 import ReactResizeDetector from "react-resize-detector";
+import SplitPane, { Pane } from "react-split-pane";
 import {CARTA} from "carta-protobuf";
 import {TableComponent, TableComponentProps, TableType, ClearableNumericInputComponent} from "components/Shared";
 import {CatalogOverlayPlotSettingsComponent} from "./CatalogOverlayPlotSettingsComponent/CatalogOverlayPlotSettingsComponent";
 import {AppStore, HelpType, WidgetConfig, WidgetProps, WidgetsStore} from "stores";
-import {CatalogOverlay, CatalogOverlayWidgetStore, CatalogPlotType, CatalogScatterWidgetStoreProps, CatalogUpdateMode} from "stores/widgets";
+import {CatalogOverlay, CatalogCoordinate, CatalogOverlayWidgetStore, CatalogPlotType, CatalogScatterWidgetStoreProps, CatalogUpdateMode, CatalogSystemType} from "stores/widgets";
 import {toFixed} from "utilities";
 import {ProcessedColumnData} from "../../models";
 import "./CatalogOverlayComponent.css";
@@ -36,27 +38,25 @@ enum ComparisonOperator {
 
 @observer
 export class CatalogOverlayComponent extends React.Component<WidgetProps> {
-    @observable width: number;
-    @observable height: number;
-    @observable coordinate: {x: CatalogOverlay, y: CatalogOverlay};
     @observable widgetId: string;
     @observable catalogFileId: number;
+    @observable catalogTableRef: Table = undefined;
 
-    private catalogHeaderTableRef: Table;
-    private static readonly DataTypeRepresentationMap = new Map<CARTA.ColumnType, Array<CatalogOverlay>>([
-        [CARTA.ColumnType.Bool, [CatalogOverlay.NONE]],
-        [CARTA.ColumnType.Double, [CatalogOverlay.X, CatalogOverlay.Y, CatalogOverlay.NONE]],
-        [CARTA.ColumnType.Float, [CatalogOverlay.X, CatalogOverlay.Y, CatalogOverlay.NONE]],
-        [CARTA.ColumnType.Int8, [CatalogOverlay.X, CatalogOverlay.Y, CatalogOverlay.NONE]],
-        [CARTA.ColumnType.Uint8, [CatalogOverlay.X, CatalogOverlay.Y, CatalogOverlay.NONE]],
-        [CARTA.ColumnType.Int16, [CatalogOverlay.X, CatalogOverlay.Y, CatalogOverlay.NONE]],
-        [CARTA.ColumnType.Uint8, [CatalogOverlay.X, CatalogOverlay.Y, CatalogOverlay.NONE]],
-        [CARTA.ColumnType.Int32, [CatalogOverlay.X, CatalogOverlay.Y, CatalogOverlay.NONE]],
-        [CARTA.ColumnType.Uint32, [CatalogOverlay.X, CatalogOverlay.Y, CatalogOverlay.NONE]],
-        [CARTA.ColumnType.Int64, [CatalogOverlay.X, CatalogOverlay.Y, CatalogOverlay.NONE]],
-        [CARTA.ColumnType.Uint64, [CatalogOverlay.X, CatalogOverlay.Y, CatalogOverlay.NONE]],
-        [CARTA.ColumnType.String, [CatalogOverlay.NONE]],
-        [CARTA.ColumnType.UnsupportedType, [CatalogOverlay.NONE]]
+    private catalogHeaderTableRef: Table = undefined;
+    private static readonly DataTypeRepresentationMap = new Map<CARTA.ColumnType, Array<CatalogCoordinate>>([
+        [CARTA.ColumnType.Bool, [CatalogCoordinate.NONE]],
+        [CARTA.ColumnType.Double, [CatalogCoordinate.X, CatalogCoordinate.Y, CatalogCoordinate.NONE]],
+        [CARTA.ColumnType.Float, [CatalogCoordinate.X, CatalogCoordinate.Y, CatalogCoordinate.NONE]],
+        [CARTA.ColumnType.Int8, [CatalogCoordinate.X, CatalogCoordinate.Y, CatalogCoordinate.NONE]],
+        [CARTA.ColumnType.Uint8, [CatalogCoordinate.X, CatalogCoordinate.Y, CatalogCoordinate.NONE]],
+        [CARTA.ColumnType.Int16, [CatalogCoordinate.X, CatalogCoordinate.Y, CatalogCoordinate.NONE]],
+        [CARTA.ColumnType.Uint8, [CatalogCoordinate.X, CatalogCoordinate.Y, CatalogCoordinate.NONE]],
+        [CARTA.ColumnType.Int32, [CatalogCoordinate.X, CatalogCoordinate.Y, CatalogCoordinate.NONE]],
+        [CARTA.ColumnType.Uint32, [CatalogCoordinate.X, CatalogCoordinate.Y, CatalogCoordinate.NONE]],
+        [CARTA.ColumnType.Int64, [CatalogCoordinate.X, CatalogCoordinate.Y, CatalogCoordinate.NONE]],
+        [CARTA.ColumnType.Uint64, [CatalogCoordinate.X, CatalogCoordinate.Y, CatalogCoordinate.NONE]],
+        [CARTA.ColumnType.String, [CatalogCoordinate.NONE]],
+        [CARTA.ColumnType.UnsupportedType, [CatalogCoordinate.NONE]]
     ]);
 
     public static get WIDGET_CONFIG(): WidgetConfig {
@@ -65,7 +65,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
             type: "catalog-overlay",
             minWidth: 320,
             minHeight: 400,
-            defaultWidth: 620,
+            defaultWidth: 740,
             defaultHeight: 350,
             title: "Catalog Overlay",
             isCloseable: true,
@@ -117,6 +117,27 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         appStore.removeCatalog(this.widgetId, this.props.id);
     }
 
+    // overwrite scrollToRegion to avoid crush when _b is undefined (user pin action)
+    scrollToRegion = (ref, region) => {
+        var _a = ref.state, numFrozenColumns = _a?.numFrozenColumnsClamped, numFrozenRows = _a?.numFrozenRowsClamped;
+        var _b = ref.state.viewportRect;
+        if (!_b) {
+            _b = ref.locator.getViewportRect();
+        } 
+        var currScrollLeft = _b?.left, currScrollTop = _b?.top;
+        var _c = ScrollUtils.getScrollPositionForRegion(
+            region, 
+            currScrollLeft, 
+            currScrollTop, 
+            ref.grid.getCumulativeWidthBefore, 
+            ref.grid.getCumulativeHeightBefore, 
+            numFrozenRows, numFrozenColumns
+        ), scrollLeft = _c.scrollLeft, scrollTop = _c.scrollTop;
+        var correctedScrollLeft = ref.shouldDisableHorizontalScroll() ? 0 : scrollLeft;
+        var correctedScrollTop = ref.shouldDisableVerticalScroll() ? 0 : scrollTop;
+        ref.quadrantStackInstance.scrollToPosition(correctedScrollLeft, correctedScrollTop);
+    };
+
     @computed get catalogDataInfo(): {dataset: Map<number, ProcessedColumnData>, numVisibleRows: number} {
         const widgetStore = this.widgetStore;
         let dataset;
@@ -124,10 +145,20 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         if (widgetStore) {
             dataset = widgetStore.catalogData;
             numVisibleRows = widgetStore.numVisibleRows;
-            if (widgetStore.regionSelected && widgetStore.showSelectedData) {
-                dataset = widgetStore.selectedData;
-                numVisibleRows = widgetStore.regionSelected;
-            }
+            if (widgetStore.regionSelected) {
+                if (widgetStore.showSelectedData) {
+                    dataset = widgetStore.selectedData;
+                    numVisibleRows = widgetStore.regionSelected;
+                    // if the length of selected source is 4, only the 4th row displayed. Auto scroll to top fixed it (bug related to blueprintjs table).
+                    if (this.catalogTableRef) {
+                        this.scrollToRegion(this.catalogTableRef, Regions.row(0));   
+                    }  
+                } else {
+                    if (this.catalogTableRef && widgetStore.catalogTableAutoScroll) {
+                        this.scrollToRegion(this.catalogTableRef, widgetStore.autoScrollRowNumber);  
+                    }
+                }
+            } 
         }
         return {dataset, numVisibleRows};
     }
@@ -164,10 +195,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
     }
 
     onCatalogDataTableRefUpdated = (ref) => {
-        const widgetStore = this.widgetStore;
-        if (widgetStore) {
-            widgetStore.setCatalogTableRef(ref);
-        }
+        this.catalogTableRef = ref;
     }
 
     onControlHeaderTableRef = (ref) => {
@@ -175,30 +203,47 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
     }
 
     onResize = (width: number, height: number) => {
-        this.width = width;
-        this.height = height;
         const widgetStore = this.widgetStore;
         // fixed bug from blueprintjs, only display 4 rows.
         if (widgetStore && this.catalogHeaderTableRef) {
             this.updateTableSize(this.catalogHeaderTableRef, this.props.docked); 
         }
-        if (widgetStore && widgetStore.catalogTableRef) {
-            this.updateTableSize(widgetStore.catalogTableRef, this.props.docked);
+        if (widgetStore && this.catalogTableRef) {
+            this.updateTableSize(this.catalogTableRef, this.props.docked);
+            if (widgetStore.regionSelected && widgetStore.catalogTableAutoScroll && !widgetStore.showSelectedData) {
+                this.scrollToRegion(this.catalogTableRef, widgetStore.autoScrollRowNumber);
+            }
         }
     };
 
+    private updateTableSize(ref: any, docked: boolean) {
+        const viewportRect = ref.locator.getViewportRect();
+        ref.updateViewportRect(viewportRect);
+        // fixed bug for blueprint table, first column overlap with row index
+        // triger table update  
+        if (docked) {
+            ref.scrollToRegion(Regions.column(0));   
+        }
+    }
+
     private handleHeaderDisplayChange(changeEvent: any, columnName: string) {
         const val = changeEvent.target.checked;
-        const withFilter = this.widgetStore.catalogControlHeader.get(columnName);
+        const header = this.widgetStore.catalogControlHeader.get(columnName);
         this.widgetStore.setHeaderDisplay(val, columnName);
-        if (val === true || (withFilter.filter !== undefined && val === false)) {
+        if (val === true || (header.filter !== "" && val === false)) {
             this.handleFilterRequest();   
+        }
+        if (header.representAs !== CatalogCoordinate.NONE) {
+            const option = {
+                coordinate: CatalogCoordinate.NONE, 
+                coordinateType: CatalogOverlay.NONE
+            };
+            this.widgetStore.setHeaderRepresentation(option, columnName);
         }   
     }
 
-    private handleHeaderRepresentationChange(changeEvent: React.ChangeEvent<HTMLSelectElement>, columnName: string) {
-        const val = changeEvent.currentTarget.value as CatalogOverlay;
-        this.widgetStore.setHeaderRepresentation(val, columnName);
+    private handleHeaderRepresentationChange(option: {coordinate: CatalogCoordinate, coordinateType: CatalogOverlay}, columnName: string) {
+        this.widgetStore.setHeaderRepresentation(option, columnName);
     }
 
     private renderDataColumn(columnName: string, coloumnData: any) {
@@ -229,28 +274,81 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         );
     }
 
+    private renderRepresentasPopOver = (option: {coordinate: CatalogCoordinate, coordinateType: CatalogOverlay}, itemProps: IItemRendererProps) => {
+        return (
+            <MenuItem
+                key={option.coordinate}
+                text={option.coordinateType}
+                onClick={itemProps.handleClick}
+            />
+        );
+    }
+
     private renderDropDownMenuCell(rowIndex: number, columnName: string) {
         const widgetStore = this.widgetStore;
-        const controlHeader = widgetStore.catalogControlHeader.get(columnName);
+        const controlHeader = this.widgetStore.catalogControlHeader.get(columnName);
         const dataType = widgetStore.catalogHeader[controlHeader.dataIndex].dataType;
         const supportedRepresentations = CatalogOverlayComponent.DataTypeRepresentationMap.get(dataType);
         const disabled = !controlHeader.display;
+        let options = [];
+        let activeSystemCoords = widgetStore.activedSystem;
+        switch (widgetStore.catalogPlotType) {
+            case CatalogPlotType.D2Scatter:
+                activeSystemCoords = {
+                    x: CatalogOverlay.X,
+                    y: CatalogOverlay.Y
+                };
+                break;
+            default:
+                break;
+        }
+
+        supportedRepresentations.forEach((representation) => {
+            let option = {};
+            if (representation === CatalogCoordinate.X) {
+                option = {
+                    coordinate: CatalogCoordinate.X, 
+                    coordinateType: activeSystemCoords.x
+                };
+            } else if (representation === CatalogCoordinate.Y) {
+                option = {
+                    coordinate: CatalogCoordinate.Y, 
+                    coordinateType: activeSystemCoords.y
+                };
+            } else {
+                option = {
+                    coordinate: CatalogCoordinate.NONE, 
+                    coordinateType: CatalogOverlay.NONE
+                };
+            } 
+            options.push(option);
+        });
+
+        let activeItem = CatalogOverlay.NONE;
+        switch (columnName) {
+            case widgetStore.xColumnRepresentation:
+                activeItem = activeSystemCoords.x;
+                break;
+            case widgetStore.yColumnRepresentation:
+                activeItem = activeSystemCoords.y;
+                break;
+            default:
+                break;
+        }
 
         return (
             <Cell className="cell-dropdown-menu" key={`cell_drop_down_${rowIndex}`}>
-                <React.Fragment>
-                    <HTMLSelect className="bp3-minimal bp3-fill" value={controlHeader.representAs} disabled={disabled} onChange={changeEvent => this.handleHeaderRepresentationChange(changeEvent, columnName)}>
-                        {supportedRepresentations.map( representation => {                           
-                            if (representation === CatalogOverlay.X) {
-                                return (<option key={representation} value={representation}>{this.coordinate.x}</option>);
-                            } else if (representation === CatalogOverlay.Y) {
-                                return (<option key={representation} value={representation}>{this.coordinate.y}</option>);
-                            } else {
-                                return (<option key={representation} value={representation}>{representation}</option>);
-                            }   
-                        })}
-                    </HTMLSelect>
-                </React.Fragment>
+                <Select
+                    filterable={false}
+                    items={options}
+                    activeItem={null}
+                    onItemSelect={(option) => this.handleHeaderRepresentationChange(option, columnName)}
+                    itemRenderer={this.renderRepresentasPopOver}
+                    disabled={disabled}
+                    popoverProps={{popoverClassName: "catalog-select", minimal: true , position: PopoverPosition.AUTO_END}}
+                >
+                    <Button className="bp3-minimal catalog-represent-as-select-button" text={activeItem} disabled={disabled} rightIcon="double-caret-vertical"/>
+                </Select>
             </Cell>
         );
     }
@@ -315,16 +413,6 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         const widgetsStore = this.widgetStore;
         if (widgetsStore.headerTableColumnWidts) {
             widgetsStore.headerTableColumnWidts[index] = size;
-        }
-    }
-
-    private updateTableSize(ref: any, docked: boolean) {
-        const viewportRect = ref.locator.getViewportRect();
-        ref.updateViewportRect(viewportRect);
-        // fixed bug for blueprint table, first column overlap with row index
-        // triger table update  
-        if (docked) {
-            ref.scrollToRegion(Regions.column(0));   
         }
     }
 
@@ -566,6 +654,17 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         );
     }
 
+    private onTableResize = () => {
+        // update table if resizing happend
+        const widgetStore = this.widgetStore;
+        if (widgetStore && this.catalogHeaderTableRef) {
+            this.updateTableSize(this.catalogHeaderTableRef, false); 
+        }
+        if (widgetStore && this.catalogTableRef) {
+            this.updateTableSize(this.catalogTableRef, false);
+        }
+    }
+    
     private onMaxRowsChange = (val: number) => {
         const widgetsStore = this.widgetStore;
         const dataSize = widgetsStore?.catalogInfo?.dataSize;
@@ -574,6 +673,17 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         } else {
             widgetsStore.setMaxRows(widgetsStore.catalogInfo.dataSize);
         }
+    }
+
+    private renderSystemPopOver = (system: CatalogSystemType, itemProps: IItemRendererProps) => {
+        return (
+            <MenuItem
+                key={system}
+                text={this.widgetStore.CoordinateSystemName.get(system)}
+                onClick={itemProps.handleClick}
+                active={itemProps.modifiers.active}
+            />
+        );
     }
 
     public render() {
@@ -588,7 +698,6 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
             );
         }
 
-        this.coordinate = widgetStore.catalogCoordinateSystem.coordinate;
         const catalogTable = this.catalogDataInfo;
         const dataTableProps: TableComponentProps = {
             type: TableType.ColumnFilter,
@@ -644,6 +753,14 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
             catalogFiles.push(value);
         });
 
+        let systemOptions = [];
+        widgetStore.CoordinateSystemName.forEach((value, key) => {
+            systemOptions.push(key);
+        });
+
+        const activeSystem = widgetStore.CoordinateSystemName.get(widgetStore.catalogCoordinateSystem.system);
+        const systemActive = widgetStore.catalogPlotType === CatalogPlotType.ImageOverlay;
+
         return (
             <div className={"catalog-overlay"}>
                 <div className={"catalog-overlay-filter-settings"}>
@@ -660,14 +777,52 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
                             <Button text={this.catalogFileId} rightIcon="double-caret-vertical"/>
                         </Select>
                     </FormGroup>
+                    <Select
+                        className="catalog-type-button" 
+                        filterable={false}
+                        items={Object.values(CatalogPlotType)} 
+                        activeItem={widgetStore.catalogPlotType}
+                        onItemSelect={this.handlePlotTypeChange}
+                        itemRenderer={this.renderPlotTypePopOver}
+                        popoverProps={{popoverClassName: "catalog-select", minimal: true , position: PopoverPosition.AUTO_END}}
+                    >
+                        <Button className="bp3-minimal" text={widgetStore.catalogPlotType} rightIcon="double-caret-vertical"/>
+                    </Select>
+                    {systemActive &&
+                    <FormGroup disabled={!systemActive} inline={true} label="System">
+                        <Select 
+                            className="catalog-system"
+                            filterable={false}
+                            items={systemOptions} 
+                            activeItem={widgetStore.catalogCoordinateSystem.system}
+                            onItemSelect={system => widgetStore.setCatalogCoordinateSystem(system)}
+                            itemRenderer={this.renderSystemPopOver}
+                            disabled={!systemActive}
+                            popoverProps={{popoverClassName: "catalog-select", minimal: true , position: PopoverPosition.AUTO_END}}
+                        >
+                            <Button text={activeSystem} disabled={!systemActive} rightIcon="double-caret-vertical"/>
+                        </Select>
+                    </FormGroup>
+                    }
+                    {systemActive &&
                     <CatalogOverlayPlotSettingsComponent widgetStore={this.widgetStore} id={this.widgetId}/>
+                    }
                 </div>
-                <div className={"catalog-overlay-column-header-container"}>
-                    {this.createHeaderTable()}
-                </div>
-                <div className={"catalog-overlay-data-container"}>
-                    <TableComponent {...dataTableProps}/>
-                </div>
+                <SplitPane 
+                    className="catalog-table" 
+                    split="horizontal" 
+                    primary={"second"} 
+                    defaultSize={"60%"} 
+                    minSize={"5%"}
+                    onChange={this.onTableResize}
+                >
+                    <Pane className={"catalog-overlay-column-header-container"}>
+                        {this.createHeaderTable()}
+                    </Pane>
+                    <Pane className={"catalog-overlay-data-container"}>
+                        <TableComponent {...dataTableProps}/>
+                    </Pane>
+                </SplitPane>
                 <div className="bp3-dialog-footer">
                     <div className={"table-info"}>
                         <table className="info-display">
@@ -719,16 +874,6 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
                             disabled={!widgetStore.enableLoadButton}
                         />
                         </Tooltip>
-                        <Select 
-                            filterable={false}
-                            items={Object.values(CatalogPlotType)} 
-                            activeItem={widgetStore.catalogPlotType}
-                            onItemSelect={this.handlePlotTypeChange}
-                            itemRenderer={this.renderPlotTypePopOver}
-                            popoverProps={{popoverClassName: "catalog-select", minimal: true , position: PopoverPosition.AUTO_END}}
-                        >
-                            <Button className="bp3-minimal catalog-display-button" text={widgetStore.catalogPlotType} rightIcon="double-caret-vertical"/>
-                        </Select>
                     </div>
                 </div>
                 <ReactResizeDetector handleWidth handleHeight onResize={this.onResize} refreshMode={"throttle"} refreshRate={33}/>
