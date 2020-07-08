@@ -70,6 +70,18 @@ const COMPONENT_CONFIG = new Map<string, any>([
         component: "log",
         title: "Log",
         id: "log"
+    }],
+    ["catalog-overlay", {
+        type: "react-component",
+        component: "catalog-overlay",
+        title: "Catalog Overlay",
+        id: "catalog-overlay"
+    }],
+    ["catalog-scatter", {
+        type: "react-component",
+        component: "catalog-scatter",
+        title: "Catalog Scatter",
+        id: "catalog-scatter"
     }]
 ]);
 
@@ -146,7 +158,7 @@ const DOCKED_SCHEMA = {
             },
             "id": {
                 "type": "string",
-                "pattern": "animator|histogram|image-view|layer-list|log|region\-list|render\-config|spatial\-profiler|spectral\-profiler|stats|stokes"
+                "pattern": "animator|histogram|image-view|layer-list|log|region\-list|render\-config|spatial\-profiler|spectral\-profiler|stats|stokes|catalog\-overlay|catalog\-scatter"
             },
             "widgetSettings": {
                 "type": "object"
@@ -204,7 +216,7 @@ const FLOATING_WIDGET_SCHEMA = {
         "properties": {
             "type": {
                 "type": "string",
-                "pattern": "animator|histogram|layer-list|log|region\-list|render\-config|spatial\-profiler|spectral\-profiler|stats|stokes"
+                "pattern": "animator|histogram|layer-list|log|region\-list|render\-config|spatial\-profiler|spectral\-profiler|stats|stokes|catalog\-overlay|catalog\-scatter"
             },
             "widgetSettings": {
                 "type": "object"
