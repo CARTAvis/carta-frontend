@@ -26,6 +26,7 @@ export class FileInfoComponent extends React.Component<{
     catalogHeaderTable?: TableComponentProps
 }> {
 
+    private static readonly MaxFormattedHeaders = 1000;
     private renderInfoTabs = () => {
         const infoTypes = this.props.infoTypes;
         const tabEntries = infoTypes.map(infoType => {
@@ -104,8 +105,13 @@ export class FileInfoComponent extends React.Component<{
 
     private getImageHeaders(fileInfoExtended: CARTA.IFileInfoExtended) {
         let headers = [];
-        if (fileInfoExtended && fileInfoExtended.headerEntries) {
-            fileInfoExtended.headerEntries.forEach(header => {
+        if (fileInfoExtended?.headerEntries) {
+            let overflowHeaderText = "";
+            const numFormattedHeaders = Math.min(fileInfoExtended.headerEntries.length, FileInfoComponent.MaxFormattedHeaders);
+
+            // Add formatted headers as separate spans for name, value and comment
+            for (let i = 0; i < numFormattedHeaders; i++) {
+                const header = fileInfoExtended.headerEntries[i];
                 if (header.name === "END") {
                     headers.push(<span key={headers.length} className="header-name">{`${header.name}`}</span>);
                 } else {
@@ -116,7 +122,24 @@ export class FileInfoComponent extends React.Component<{
                     }
                 }
                 headers.push(<br key={headers.length}/>);
-            });
+            }
+
+            // Add "overflow" headers into one long span
+            for (let i = FileInfoComponent.MaxFormattedHeaders; i < fileInfoExtended.headerEntries.length; i++) {
+                const header = fileInfoExtended.headerEntries[i];
+                if (header.name === "END") {
+                    overflowHeaderText += `${header.name}`;
+                } else {
+                    overflowHeaderText += `${header.name} = ${header.value}`;
+                    if (header.comment) {
+                        overflowHeaderText += ` / ${header.comment}`;
+                    }
+                }
+                overflowHeaderText += "\n";
+            }
+            if (overflowHeaderText) {
+                headers.push(<span key={headers.length} className="header-overflow">{overflowHeaderText}</span>);
+            }
         }
         return headers;
     }
