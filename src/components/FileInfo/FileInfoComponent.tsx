@@ -34,15 +34,14 @@ export class FileInfoComponent extends React.Component<{
             } else if (FileInfoType.IMAGE_HEADER === infoType) {
                 return <Tab key={infoType} id={infoType} title="Header"/>;
             } else if (FileInfoType.CATALOG_FILE === infoType) {
-                return <Tab key={infoType} id={infoType} title="Catalog Information"/>;    
+                return <Tab key={infoType} id={infoType} title="Catalog Information"/>;
             } else if (FileInfoType.CATALOG_HEADER === infoType) {
                 return <Tab key={infoType} id={infoType} title="Catalog Header"/>;
-            }
-            else {
+            } else {
                 return <Tab key={infoType} id={infoType} title="Region Information"/>;
             }
         });
-        return(
+        return (
             <Tabs id="file-info-tabs" onChange={(value) => this.props.handleTabChange(value)} selectedTabId={this.props.selectedTab}>
                 {tabEntries}
             </Tabs>
@@ -66,17 +65,17 @@ export class FileInfoComponent extends React.Component<{
                 return <Pre className="file-info-pre">{this.props.regionFileInfo}</Pre>;
             case FileInfoType.CATALOG_FILE:
                 return (
-                        <Pre className="file-info-pre">
-                            <Text>{this.props.catalogFileInfo.description}</Text>
-                        </Pre>
+                    <Pre className="file-info-pre">
+                        <Text>{this.props.catalogFileInfo.description}</Text>
+                    </Pre>
                 );
             case FileInfoType.CATALOG_HEADER:
-                if (this.props.catalogHeaderTable) {            
+                if (this.props.catalogHeaderTable) {
                     return (
                         <Pre className="file-header-table">
-                            <TableComponent {... this.props.catalogHeaderTable}/>
+                            <TableComponent {...this.props.catalogHeaderTable}/>
                         </Pre>
-                    ); 
+                    );
                 }
                 return "";
             default:
@@ -104,14 +103,19 @@ export class FileInfoComponent extends React.Component<{
     }
 
     private getImageHeaders(fileInfoExtended: CARTA.IFileInfoExtended) {
-        let headers = "";
+        let headers = [];
         if (fileInfoExtended && fileInfoExtended.headerEntries) {
             fileInfoExtended.headerEntries.forEach(header => {
                 if (header.name === "END") {
-                    headers += `${header.name}\n`;
+                    headers.push(<span key={headers.length} className="header-name">{`${header.name}`}</span>);
                 } else {
-                    headers += `${header.name} = ${header.value}\n`;
+                    headers.push(<span className="header-name" key={headers.length}>{header.name}</span>);
+                    headers.push(<span key={headers.length} className="header-value"> = {`${header.value}`}</span>);
+                    if (header.comment) {
+                        headers.push(<span key={headers.length} className="header-comment">{` / ${header.comment}`}</span>);
+                    }
                 }
+                headers.push(<br key={headers.length}/>);
             });
         }
         return headers;
