@@ -1207,19 +1207,23 @@ export class AppStore {
         const images: CARTA.IImageProperties[] = this.frames.map(frame => {
             const info = frame.frameInfo;
 
-            const regions: CARTA.IRegionProperties[] = frame.regionSet.regions.map(region => {
-                const regionInfo: CARTA.IRegionInfo = {
-                    regionName: region.name,
-                    regionType: region.regionType,
-                    controlPoints: region.controlPoints,
-                    rotation: region.rotation
-                };
+            let regions: CARTA.IRegionProperties[] = [];
+            // Spatially matched images don't have their own regions
+            if (!frame.spatialReference) {
+                regions = frame.regionSet.regions.map(region => {
+                    const regionInfo: CARTA.IRegionInfo = {
+                        regionName: region.name,
+                        regionType: region.regionType,
+                        controlPoints: region.controlPoints,
+                        rotation: region.rotation
+                    };
 
-                return {
-                    regionId: region.regionId,
-                    regionInfo
-                };
-            });
+                    return {
+                        regionId: region.regionId,
+                        regionInfo
+                    };
+                });
+            }
 
             let contourSettings: CARTA.ISetContourParameters;
             if (frame.contourConfig.enabled) {

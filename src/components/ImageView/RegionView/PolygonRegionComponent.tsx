@@ -6,7 +6,7 @@ import Konva from "konva";
 import {Colors} from "@blueprintjs/core";
 import {FrameStore, RegionStore} from "stores";
 import {Point2D} from "models";
-import {add2D, average2D, closestPointOnLine, rotate2D, scale2D, subtract2D} from "utilities";
+import {add2D, average2D, closestPointOnLine, getTransformedCoordinates, rotate2D, scale2D, subtract2D} from "utilities";
 import {canvasToTransformedImagePos, getUpdatedPosition, imageToCanvasPos, transformedImageToCanvasPos} from "./shared";
 
 export interface PolygonRegionComponentProps {
@@ -244,26 +244,34 @@ export class PolygonRegionComponent extends React.Component<PolygonRegionCompone
         let rotation = 0.0;
 
         let controlPoints = region.controlPoints;
+        let centerPointCanvasSpace: Point2D;
         if (frame.spatialReference) {
-            controlPoints = controlPoints.map(p => frame.spatialTransform.transformCoordinate(p, true));
+            controlPoints = controlPoints.map(p => {
+                const controlPointSecondaryImage = getTransformedCoordinates(frame.spatialTransformAST, p, false);
+                return transformedImageToCanvasPos(controlPointSecondaryImage.x, controlPointSecondaryImage.y, frame, this.props.layerWidth, this.props.layerHeight);
+            });
             rotation = -frame.spatialTransform.rotation * 180.0 / Math.PI;
+            centerPointCanvasSpace = average2D(controlPoints);
+        } else {
+            rotation = 0;
+            controlPoints = controlPoints.map(p => {
+                return centerPointCanvasSpace = imageToCanvasPos(p.x, p.y, frameView, this.props.layerWidth, this.props.layerHeight, frame.spatialTransform);
+            });
+            centerPointCanvasSpace = average2D(controlPoints);
         }
 
-        const centerPoint = average2D(controlPoints);
-        const centerPointCanvasSpace = imageToCanvasPos(centerPoint.x, centerPoint.y, frameView, this.props.layerWidth, this.props.layerHeight, frame.spatialTransform);
-        const pointArray = this.getCanvasPointArray(controlPoints);
-
+        const pointArray = new Array<number>(controlPoints.length * 2);
         for (let i = 0; i < pointArray.length / 2; i++) {
-            pointArray[i * 2] -= centerPointCanvasSpace.x;
-            pointArray[i * 2 + 1] -= centerPointCanvasSpace.y;
+            pointArray[i * 2] = controlPoints[i].x - centerPointCanvasSpace.x;
+            pointArray[i * 2 + 1] = controlPoints[i].y - centerPointCanvasSpace.y;
         }
 
         // Construct anchors if region is selected
         let anchors = null;
         if (this.props.selected && !region.locked) {
-            anchors = new Array<React.ReactNode>(pointArray.length / 2);
-            for (let i = 0; i < pointArray.length / 2; i++) {
-                anchors[i] = this.anchorNode(centerPointCanvasSpace.x + pointArray[i * 2], centerPointCanvasSpace.y + pointArray[i * 2 + 1], rotation, i, true);
+            anchors = new Array<React.ReactNode>(controlPoints.length);
+            for (let i = 0; i < controlPoints.length; i++) {
+                anchors[i] = this.anchorNode(controlPoints[i].x, controlPoints[i].y, rotation, i, true);
             }
         }
 

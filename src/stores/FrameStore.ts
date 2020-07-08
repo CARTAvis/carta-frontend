@@ -2,7 +2,7 @@ import {action, autorun, computed, observable} from "mobx";
 import {NumberRange} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import * as AST from "ast_wrapper";
-import {ASTSettingsString, ContourConfigStore, ContourStore, LogStore, OverlayBeamStore, OverlayStore, PreferenceStore, RegionSetStore, RenderConfigStore} from "stores";
+import {ASTSettingsString, ContourConfigStore, ContourStore, LogStore, OverlayBeamStore, OverlayStore, PreferenceStore, RegionSetStore, RegionStore, RenderConfigStore} from "stores";
 import {
     CHANNEL_TYPES,
     ChannelInfo,
@@ -45,10 +45,12 @@ export enum RasterRenderType {
 }
 
 export class FrameStore {
-    private astFrameSet: number;
-    private spectralFrame: number;
+    private readonly astFrameSet: number;
+    private readonly spectralFrame: number;
     public spectralCoordsSupported: Map<string, {type: SpectralType, unit: SpectralUnit}>;
     public spectralSystemsSupported: Array<SpectralSystem>;
+    // Region set for the current frame. Accessed via regionSet, to take into account region sharing
+    @observable private readonly frameRegionSet: RegionSetStore;
 
     @observable frameInfo: FrameInfo;
     @observable renderHiDPI: boolean;
@@ -78,12 +80,24 @@ export class FrameStore {
     @observable valid: boolean;
     @observable moving: boolean;
     @observable zooming: boolean;
-    @observable regionSet: RegionSetStore;
+
     @observable overlayBeamSettings: OverlayBeamStore;
     @observable spatialReference: FrameStore;
     @observable spectralReference: FrameStore;
     @observable secondarySpatialImages: FrameStore[];
     @observable secondarySpectralImages: FrameStore[];
+
+    @computed get regionSet(): RegionSetStore {
+        if (this.spatialReference) {
+            return this.spatialReference.regionSet;
+        } else {
+            return this.frameRegionSet;
+        }
+    }
+
+    @computed get sharedRegions(): boolean {
+        return !!this.spatialReference;
+    }
 
     @computed get requiredFrameView(): FrameView {
         // use spatial reference frame to calculate frame view, if it exists
@@ -243,6 +257,16 @@ export class FrameStore {
                     x: size.x * Math.abs(delta) * (unit === "deg" ? 3600 : (180 * 3600 / Math.PI)),
                     y: size.y * Math.abs(delta) * (unit === "deg" ? 3600 : (180 * 3600 / Math.PI))
                 };
+            }
+        }
+        return null;
+    }
+
+    public getTransformForRegion(region: RegionStore) {
+        if (this.spatialReference && this.spatialTransformAST && region.controlPoints?.length) {
+            const regionCenter = getTransformedCoordinates(this.spatialTransformAST, region.controlPoints[0], false);
+            if (!isAstBadPoint(regionCenter)) {
+                return new Transform2D(this.spatialTransformAST, regionCenter);
             }
         }
         return null;
@@ -527,7 +551,7 @@ export class FrameStore {
     private readonly logStore: LogStore;
     private readonly backendService: BackendService;
     private readonly controlMaps: Map<FrameStore, ControlMap>;
-    private spatialTransformAST: number;
+    public spatialTransformAST: number;
     private spectralTransformAST: number;
     private cachedTransformedWcsInfo: number = -1;
     private zoomTimeoutHandler;
@@ -584,7 +608,7 @@ export class FrameStore {
             this.overlayStore.labels.setVisible(astLabelsVisible);
         }
 
-        this.regionSet = new RegionSetStore(this, PreferenceStore.Instance, BackendService.Instance);
+        this.frameRegionSet = new RegionSetStore(this, PreferenceStore.Instance, BackendService.Instance);
         this.valid = true;
         this.currentFrameView = {
             xMin: 0,

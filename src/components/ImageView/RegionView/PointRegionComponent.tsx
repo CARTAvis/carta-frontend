@@ -4,6 +4,8 @@ import {Group, Rect} from "react-konva";
 import Konva from "konva";
 import {FrameStore, RegionStore} from "stores";
 import {getUpdatedPosition, transformedImageToCanvasPos} from "./shared";
+import {Point2D} from "models";
+import {getTransformedCoordinates} from "utilities";
 
 export interface PointRegionComponentProps {
     region: RegionStore;
@@ -54,7 +56,7 @@ export class PointRegionComponent extends React.Component<PointRegionComponentPr
             const region = this.props.region;
             const frame = this.props.frame;
             const zoomLevel = frame.spatialReference ? frame.spatialReference.zoomLevel : frame.zoomLevel;
-            const newPosition = getUpdatedPosition (region.controlPoints[0], node.position(), zoomLevel, frame, this.props.layerWidth, this.props.layerHeight);
+            const newPosition = getUpdatedPosition(region.controlPoints[0], node.position(), zoomLevel, frame, this.props.layerWidth, this.props.layerHeight);
             region.setControlPoint(0, newPosition);
         }
     };
@@ -63,8 +65,18 @@ export class PointRegionComponent extends React.Component<PointRegionComponentPr
         const region = this.props.region;
         const frame = this.props.frame;
 
-        const centerPixelSpace = transformedImageToCanvasPos(region.controlPoints[0].x, region.controlPoints[0].y, frame, this.props.layerWidth, this.props.layerHeight);
-        const rotation = frame.spatialReference ? frame.spatialTransform.rotation * 180.0 / Math.PI : 0.0;
+        let centerPixelSpace: Point2D;
+        let rotation: number;
+
+        if (frame.spatialReference) {
+            const centerReferenceImage = region.controlPoints[0];
+            const centerSecondaryImage = getTransformedCoordinates(frame.spatialTransformAST, centerReferenceImage, false);
+            centerPixelSpace = transformedImageToCanvasPos(centerSecondaryImage.x, centerSecondaryImage.y, frame, this.props.layerWidth, this.props.layerHeight);
+            rotation = frame.spatialTransform.rotation * 180.0;
+        } else {
+            centerPixelSpace = transformedImageToCanvasPos(region.controlPoints[0].x, region.controlPoints[0].y, frame, this.props.layerWidth, this.props.layerHeight);
+            rotation = 0;
+        }
 
         return (
             <Group>

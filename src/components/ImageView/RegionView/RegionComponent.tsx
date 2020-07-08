@@ -261,7 +261,7 @@ export class RegionComponent extends React.Component<RegionComponentProps> {
         const zoomLevel = frame.spatialReference ? frame.spatialReference.zoomLevel * frame.spatialTransform.scale : frame.zoomLevel;
         const rotation = frame.spatialReference ? frame.spatialTransform.rotation * 180.0 / Math.PI + region.rotation : region.rotation;
 
-        const centerPixelSpace = transformedImageToCanvasPos(region.controlPoints[0].x, region.controlPoints[0].y, frame, this.props.layerWidth, this.props.layerHeight);
+        const centerPixelSpace = transformedImageToCanvasPos(region.controlPoints[0].x, region.controlPoints[0].y, frame.spatialReference || frame, this.props.layerWidth, this.props.layerHeight);
         let width = (region.controlPoints[1].x * zoomLevel) / devicePixelRatio;
         let height = (region.controlPoints[1].y * zoomLevel) / devicePixelRatio;
 
