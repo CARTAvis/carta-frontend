@@ -965,8 +965,8 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
                 quLinePlotProps.multiPlotPropsMap.set(StokesCoordinate.LinearPolarizationQ, qPlotProps);
                 quLinePlotProps.multiPlotPropsMap.set(StokesCoordinate.LinearPolarizationU, uPlotProps);
 
-                if (currentPlotData.qSmoothedValues && currentPlotData.uSmoothedValues && currentPlotData.piSmoothedValues && currentPlotData.piSmoothedValues) {
-                    const smoothingStore = this.widgetStore.smoothingStore;
+                const smoothingStore = this.widgetStore.smoothingStore;
+                if (smoothingStore.type !== SmoothingType.NONE && currentPlotData.qSmoothedValues && currentPlotData.uSmoothedValues && currentPlotData.piSmoothedValues && currentPlotData.piSmoothedValues) {
                     let smoothedQPlotProps: MultiPlotProps = {
                         data: currentPlotData.qSmoothedValues.dataset,
                         type: smoothingStore.lineType,
@@ -1002,12 +1002,21 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
                 }
 
                 const loadData = (currentPlotData.qProgress === 1 && currentPlotData.uProgress === 1 && currentPlotData.iProgress === 1);
-                const qlinePlotWithInteractionColor = loadData ? this.fillLineColor(currentPlotData.qValues.dataset, primaryLineColor) : [];
-                const ulinePlotWithInteractionColor = loadData ? this.fillLineColor(currentPlotData.uValues.dataset, ulinePlotColor) : [];
+                let qlinePlotWithInteractionColor;
+                let ulinePlotWithInteractionColor;
+                if (smoothingStore.type !== SmoothingType.NONE && !smoothingStore.isOverlayOn) {
+                    qlinePlotWithInteractionColor = loadData ? this.fillLineColor(currentPlotData.qValues.dataset, "#00000000") : [];
+                    ulinePlotWithInteractionColor = loadData ? this.fillLineColor(currentPlotData.uValues.dataset, "#00000000") : [];
+                    piLinePlotProps.multiColorSingleLineColors = loadData ? this.fillLineColor(currentPlotData.piValues.dataset, "#00000000") : [];
+                    paLinePlotProps.multiColorSingleLineColors = loadData ? this.fillLineColor(currentPlotData.paValues.dataset, "#00000000") : [];
+                } else {
+                    qlinePlotWithInteractionColor = loadData ? this.fillLineColor(currentPlotData.qValues.dataset, primaryLineColor) : [];
+                    ulinePlotWithInteractionColor = loadData ? this.fillLineColor(currentPlotData.uValues.dataset, ulinePlotColor) : [];
+                    piLinePlotProps.multiColorSingleLineColors = loadData ? this.fillLineColor(currentPlotData.piValues.dataset, primaryLineColor) : [];
+                    paLinePlotProps.multiColorSingleLineColors = loadData ? this.fillLineColor(currentPlotData.paValues.dataset, primaryLineColor) : [];
+                }
                 quLinePlotProps.multiColorMultiLinesColors.set(StokesCoordinate.LinearPolarizationQ, qlinePlotWithInteractionColor);
                 quLinePlotProps.multiColorMultiLinesColors.set(StokesCoordinate.LinearPolarizationU, ulinePlotWithInteractionColor);
-                piLinePlotProps.multiColorSingleLineColors = loadData ? this.fillLineColor(currentPlotData.piValues.dataset, primaryLineColor) : [];
-                paLinePlotProps.multiColorSingleLineColors = loadData ? this.fillLineColor(currentPlotData.paValues.dataset, primaryLineColor) : [];
 
                 let qBorder = currentPlotData.qValues.border;
                 let uBorder = currentPlotData.uValues.border;
