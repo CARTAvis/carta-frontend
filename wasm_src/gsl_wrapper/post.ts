@@ -64,23 +64,29 @@ Module.hanningSmooth = function (yIn: Float64Array | Float32Array, kernelSize: n
     return yOut;
 };
 
-Module.decimation = function (yIn: Float64Array | Float32Array, decimationFactor: number) {
+Module.decimation = function (xIn: Float64Array | Float32Array, yIn: Float64Array | Float32Array, decimationFactor: number) {
     if (!yIn) {
         return new Float64Array(1);
     }
 
     const inN = yIn.length;
+    Module.xIn = Module._malloc(inN * 8);
     Module.yIn = Module._malloc(inN * 8);
-    const outN = 2 * Math.ceil(inN / decimationFactor);
-    Module.indexOut = Module._malloc(outN * 4);
+    const outN = (inN % decimationFactor === 1) ? 2 * Math.ceil(inN / decimationFactor) - 1 : 2 * Math.ceil(inN / decimationFactor);
+    Module.xOut = Module._malloc(inN * 8);
+    Module.yOut = Module._malloc(inN * 8);
 
+    Module.HEAPF64.set(new Float64Array(xIn), Module.xIn / 8);
     Module.HEAPF64.set(new Float64Array(yIn), Module.yIn / 8);
-    Module.filterDecimation(Module.yIn, inN, Module.indexOut, outN, decimationFactor);
-    const indexOut = new Int32Array(Module.HEAPF64.buffer, Module.indexOut, outN).slice();
+    Module.filterDecimation(Module.xIn, Module.yIn, inN, Module.xOut, Module.yOut, outN, decimationFactor);
+    const xOut = new Float64Array(Module.HEAPF64.buffer, Module.xOut, outN).slice();
+    const yOut = new Float64Array(Module.HEAPF64.buffer, Module.yOut, outN).slice();
 
+    Module._free(Module.xIn);
     Module._free(Module.yIn);
-    Module._free(Module.indexOut);
-    return indexOut;
+    Module._free(Module.xOut);
+    Module._free(Module.yOut);
+    return {x: xOut, y: yOut};
 };
 
 Module.binning = function (input: Float64Array | Float32Array, binWidth: number) {

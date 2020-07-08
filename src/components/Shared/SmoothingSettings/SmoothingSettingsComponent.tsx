@@ -2,7 +2,7 @@ import * as React from "react";
 import {observer} from "mobx-react";
 import {FormGroup, HTMLSelect, IOptionProps, Switch} from "@blueprintjs/core";
 import {ProfileSmoothingStore} from "stores";
-import {ColorPickerComponent, SafeNumericInput, PlotTypeSelectorComponent} from "components/Shared";
+import {ColorPickerComponent, SafeNumericInput, PlotTypeSelectorComponent, PlotType, LineSettings} from "components/Shared";
 import {ColorResult} from "react-color";
 import {SWATCH_COLORS} from "utilities";
 import { AppStore } from "stores";
@@ -19,7 +19,11 @@ export enum SmoothingType {
 }
 
 @observer
-export class SmoothingSettingsComponent extends React.Component<{smoothingStore: ProfileSmoothingStore}> {
+export class SmoothingSettingsComponent extends React.Component<{smoothingStore: ProfileSmoothingStore, diableDecimation?: boolean, diableStyle?: boolean}> {
+
+    private handleSelectedLineChanged = (changeEvent: React.ChangeEvent<HTMLSelectElement>) => {
+        this.props.smoothingStore.setSelectedLine(changeEvent.target.value);
+    }
 
     render() {
         const smoothingStore = this.props.smoothingStore;
@@ -28,10 +32,18 @@ export class SmoothingSettingsComponent extends React.Component<{smoothingStore:
             {value: SmoothingType.BOXCAR, label: "Boxcar"},
             {value: SmoothingType.GAUSSIAN, label: "Gaussian"},
             {value: SmoothingType.HANNING, label: "Hanning"},
-            {value: SmoothingType.DECIMATION, label: "Decimation"},
             {value: SmoothingType.BINNING, label: "Binning"},
             {value: SmoothingType.SAVITZKY_GOLAY, label: "Savitzky-Golay"}
         ];
+
+        if (!this.props.diableDecimation) {
+            smoothingTypeOptions.push({value: SmoothingType.DECIMATION, label: "Decimation"});
+        }
+
+        let colorKeys: IOptionProps[] = [];
+        if (smoothingStore.colorMap.size > 0 ) {
+            smoothingStore.colorMap.forEach((v, k) => {colorKeys = colorKeys.concat({value: k, label: k }); });
+        }
 
         return (
             <div className="smoothing-settings-panel">
@@ -42,14 +54,21 @@ export class SmoothingSettingsComponent extends React.Component<{smoothingStore:
                         onChange={(event: React.FormEvent<HTMLSelectElement>) => smoothingStore.setType(event.currentTarget.value as SmoothingType)}
                     />
                 </FormGroup>
-                {(smoothingStore.type !== SmoothingType.NONE) &&
+                {(smoothingStore.type !== SmoothingType.NONE) && !this.props.diableStyle &&
                 <React.Fragment>
                     <FormGroup inline={true} label="Color">
+                        {smoothingStore.colorMap.size > 0 &&
+                            <HTMLSelect value={smoothingStore.selectedLine} options={colorKeys} onChange={this.handleSelectedLineChanged}/>
+                        }
                         <ColorPickerComponent
-                            color={smoothingStore.lineColor.colorHex}
+                            color={smoothingStore.selectedLine && smoothingStore.colorMap.get(smoothingStore.selectedLine) ? smoothingStore.colorMap.get(smoothingStore.selectedLine).colorHex : smoothingStore.lineColor.colorHex}
                             presetColors={SWATCH_COLORS}
                             setColor={(color: ColorResult) => {
-                                smoothingStore.setLineColor(color.hex, true);
+                                if (smoothingStore.selectedLine && smoothingStore.colorMap.get(smoothingStore.selectedLine)) {
+                                    smoothingStore.setColorMap (smoothingStore.selectedLine, { colorHex: color.hex, fixed: true});
+                                } else {
+                                    smoothingStore.setLineColor(color.hex, true);
+                                }
                             }}
                             disableAlpha={true}
                             darkTheme={AppStore.Instance.darkTheme}
@@ -61,12 +80,23 @@ export class SmoothingSettingsComponent extends React.Component<{smoothingStore:
                     <FormGroup  inline={true} label="Line Width" labelInfo="(px)">
                         <SafeNumericInput
                             placeholder="Line Width"
-                            min={0.5}
-                            max={10}
+                            min={LineSettings.MIN_WIDTH}
+                            max={LineSettings.MAX_WIDTH}
                             value={smoothingStore.lineWidth}
                             stepSize={1}
-                            // disabled={props.plotType === PlotType.POINTS}
+                            disabled={smoothingStore.lineType === PlotType.POINTS}
                             onValueChange={(value: number) => smoothingStore.setLineWidth(value)}
+                        />
+                    </FormGroup>
+                    <FormGroup  inline={true} label="Point Size" labelInfo="(px)">
+                        <SafeNumericInput
+                            placeholder="Point Size"
+                            min={LineSettings.MIN_POINT_SIZE}
+                            max={LineSettings.MAX_POINT_SIZE}
+                            value={smoothingStore.pointRadius}
+                            stepSize={LineSettings.POINT_SIZE_STEP_SIZE}
+                            disabled={smoothingStore.lineType !== PlotType.POINTS}
+                            onValueChange={(value: number) => smoothingStore.setPointRadius(value)}
                         />
                     </FormGroup>
                 </React.Fragment>

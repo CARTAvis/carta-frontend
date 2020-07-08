@@ -123,7 +123,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
                 }
             }
 
-            let smoothingValues: Point2D[] = this.widgetStore.smoothingStore.getSmoothingValues(channelValues, coordinateData.values);
+            let smoothingValues: Point2D[] = this.widgetStore.smoothingStore.getSmoothingPoint2DArray(channelValues, coordinateData.values);
 
             if (yCount > 0) {
                 yMean = ySum / yCount;
@@ -370,10 +370,11 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
                         type: smoothingStore.lineType,
                         borderColor: smoothingStore.lineColor.colorHex,
                         borderWidth: smoothingStore.lineWidth,
+                        pointRadius: smoothingStore.pointRadius,
                         order: 0,
                         exportData: smoothingStore.exportData
                     };
-                    linePlotProps.multiPlotPropsMap.set("smoothing", smoothingPlotProps);
+                    linePlotProps.multiPlotPropsMap.set("smoothed", smoothingPlotProps);
                 }
 
                 // Determine scale in X and Y directions. If auto-scaling, use the bounds of the current data

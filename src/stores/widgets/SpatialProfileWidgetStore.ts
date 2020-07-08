@@ -4,7 +4,7 @@ import {Colors} from "@blueprintjs/core";
 import {FrameStore} from "../FrameStore";
 import {CARTA} from "carta-protobuf";
 import {PlotType, LineSettings} from "components/Shared";
-import { ProfileSmoothingStore } from "stores/ProfileSmoothingStore";
+import {ProfileSmoothingStore} from "stores/ProfileSmoothingStore";
 
 export class SpatialProfileWidgetStore {
     @observable fileId: number;

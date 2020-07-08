@@ -562,7 +562,7 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
                 this.props.multiPlotPropsMap.forEach((props, key) => {
                     if (key === StokesCoordinate.LinearPolarizationQ || key === StokesCoordinate.LinearPolarizationU) {
                         rows.push(`# ${key}\t`);
-                    } else if (key === "smoothing") {
+                    } else if (key.indexOf("smoothed") > -1) {
                         if (props.exportData) {
                             props.exportData.forEach((content, title) => {
                                 rows.push(`# ${title}: ${content}\t`);

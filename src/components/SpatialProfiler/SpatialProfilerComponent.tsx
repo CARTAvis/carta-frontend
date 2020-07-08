@@ -154,7 +154,7 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
                 for (let i = xMin; i < xMax; i++) {
                     xArray.push(i);
                 }
-                smoothingValues = this.widgetStore.smoothingStore.getSmoothingValues(xArray, coordinateData.values.subarray(xMin, xMax));
+                smoothingValues = this.widgetStore.smoothingStore.getSmoothingPoint2DArray(xArray, coordinateData.values.subarray(xMin, xMax));
             }
 
             if (yCount > 0) {
@@ -408,10 +408,11 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
                             type: smoothingStore.lineType,
                             borderColor: smoothingStore.lineColor.colorHex,
                             borderWidth: smoothingStore.lineWidth,
+                            pointRadius: smoothingStore.pointRadius,
                             order: 0,
                             exportData: smoothingStore.exportData
                         };
-                        linePlotProps.multiPlotPropsMap.set("smoothing", smoothingPlotProps);
+                        linePlotProps.multiPlotPropsMap.set("smoothed", smoothingPlotProps);
                     }
 
                     // Determine scale in X and Y directions. If auto-scaling, use the bounds of the current data

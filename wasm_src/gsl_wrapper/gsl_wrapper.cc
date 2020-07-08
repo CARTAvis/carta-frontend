@@ -76,35 +76,42 @@ int EMSCRIPTEN_KEEPALIVE filterHanning(double* yInArray, const int N, double* yO
     return status;
 }
 
-int EMSCRIPTEN_KEEPALIVE filterDecimation(double* yInArray, const int inN, int* indexOutArray, const int outN, const int decimationFactor) {
+int EMSCRIPTEN_KEEPALIVE filterDecimation(double* xInArray, double* yInArray, const int inN, double* xOutArray, double* yOutArray, const int outN, const int decimationFactor) {
     int status = 0;    /* return value: 0 = success */
-
+    int* indexArray = new int[outN];
     for (size_t i = 0; i <= inN/decimationFactor; i++) {
         if (i == inN/decimationFactor) {
             if (inN % decimationFactor == 0) {
                 break;
             } else if (inN % decimationFactor == 1) {
-                indexOutArray[i*2] = i * decimationFactor;
+                indexArray[i*2] = i * decimationFactor;
                 break;
             }
         }
 
-        size_t* maxIndex = new size_t[1];
         size_t* minIndex = new size_t[1];
+        size_t* maxIndex = new size_t[1];
         if (i == inN/decimationFactor && inN % decimationFactor != 0) {
             gsl_stats_minmax_index(maxIndex, minIndex, &yInArray[i * decimationFactor], 1, inN % decimationFactor);
         } else {
             gsl_stats_minmax_index(maxIndex, minIndex, &yInArray[i * decimationFactor], 1, decimationFactor);
         }
 
-        indexOutArray[i*2] = i * decimationFactor + minIndex[0];
-        indexOutArray[i*2 + 1] = i * decimationFactor + maxIndex[0];
+        indexArray[i*2] = i * decimationFactor + minIndex[0];
+        indexArray[i*2 + 1] = i * decimationFactor + maxIndex[0];
         if (minIndex[0] == maxIndex[0]) {
-            indexOutArray[i*2 + 1] = (i + 1) * decimationFactor - 1;
+            indexArray[i*2 + 1] = (i + 1) * decimationFactor - 1;
         }
     }
 
-    gsl_sort_int(indexOutArray, 1, outN);
+    gsl_sort_int(indexArray, 1, outN);
+
+    for (size_t i = 0; i < outN; i++) {
+        xOutArray[i] = xInArray[indexArray[i]];
+        yOutArray[i] = yInArray[indexArray[i]];
+    }
+
+    delete[] indexArray;
 
     return status;
 }

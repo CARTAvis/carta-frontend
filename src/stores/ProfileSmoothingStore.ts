@@ -1,14 +1,16 @@
 import {action, computed, observable} from "mobx";
 import {Colors} from "@blueprintjs/core";
-import {PlotType, SmoothingType} from "components/Shared";
+import {PlotType, SmoothingType, LineSettings} from "components/Shared";
 import {Point2D} from "models";
 import * as GSL from "gsl_wrapper";
 
 export class ProfileSmoothingStore {
     @observable type: SmoothingType;
     @observable lineColor: { colorHex: string, fixed: boolean };
+    @observable selectedLine: string;
     @observable lineType: PlotType;
     @observable lineWidth: number;
+    @observable pointRadius: number;
     @observable isOverlayOn: boolean;
     @observable boxcarSize: number;
     @observable gaussianSigma: number;
@@ -17,12 +19,14 @@ export class ProfileSmoothingStore {
     @observable binWidth: number;
     @observable savitzkyGolaySize: number;
     @observable savitzkyGolayOrder: number;
+    @observable colorMap: Map<string, { colorHex: string, fixed: boolean }>;
 
     constructor() {
         this.type = SmoothingType.NONE;
         this.lineColor = { colorHex: Colors.ORANGE2, fixed: false };
         this.lineType = PlotType.STEPS;
         this.lineWidth = 1;
+        this.pointRadius = 1;
         this.isOverlayOn = false;
         this.boxcarSize = 2;
         this.gaussianSigma = 1.0;
@@ -31,6 +35,7 @@ export class ProfileSmoothingStore {
         this.binWidth = 2;
         this.savitzkyGolaySize = 5;
         this.savitzkyGolayOrder = 0;
+        this.colorMap = new Map();
     }
 
     @action setType = (val: SmoothingType) => {
@@ -41,12 +46,24 @@ export class ProfileSmoothingStore {
         this.lineColor = { colorHex: colorHex, fixed: fixed };
     }
 
+    @action setSelectedLine = (key: string) => {
+        this.selectedLine = key;
+    }
+
     @action setLineType = (val: PlotType) => {
         this.lineType = val;
     }
 
     @action setLineWidth = (val: number) => {
-        this.lineWidth = val;
+        if (val >= LineSettings.MIN_WIDTH && val <= LineSettings.MIN_WIDTH) {
+            this.lineWidth = val;
+        }
+    }
+
+    @action setPointRadius = (val: number) => {
+        if (val >= LineSettings.MIN_POINT_SIZE && val <= LineSettings.MAX_POINT_SIZE) {
+            this.pointRadius = val;
+        }
     }
 
     @action setIsOverlayOn = (val: boolean) => {
@@ -81,6 +98,10 @@ export class ProfileSmoothingStore {
         this.savitzkyGolayOrder = val;
     }
 
+    @action setColorMap = (key: string, val: { colorHex: string, fixed: boolean }) => {
+        this.colorMap.set(key, val);
+    }
+
     @computed get exportData() {
         let exportData: Map<string, string> = new Map<string, string>();
         exportData.set("smooth", this.type);
@@ -102,15 +123,9 @@ export class ProfileSmoothingStore {
         return exportData;
     }
 
-    getSmoothingValues(x: number[], y: Float32Array|Float64Array): Point2D[] {
-        if (this.type === SmoothingType.NONE) {
-            return [];
-        }
-
-        let smoothingArray: Point2D[] = [];
+    getSmoothingValues(x: number[], y: Float32Array | Float64Array): { x: number[], y: Float32Array | Float64Array} {
         let smoothingYs: Float32Array | Float64Array;
-        let smoothingXs: number[] = x;
-        let decimatedIndexes: number[];
+        let smoothingXs = x;
         if (this.type === SmoothingType.BOXCAR) {
             smoothingYs = GSL.boxcarSmooth(y, this.boxcarSize);
         } else if (this.type === SmoothingType.GAUSSIAN) {
@@ -124,23 +139,29 @@ export class ProfileSmoothingStore {
         } else if (this.type === SmoothingType.HANNING) {
             smoothingYs = GSL.hanningSmooth(y, this.hanningSize);
         } else if (this.type === SmoothingType.DECIMATION) {
-            decimatedIndexes = GSL.decimation(y, this.decimationValue);
+            let decimationValues = GSL.decimation(x, y, this.decimationValue);
+            smoothingXs = decimationValues.x;
+            smoothingYs = decimationValues.y;
         } else if (this.type === SmoothingType.BINNING) {
-            smoothingYs = GSL.binning(y, this.binWidth);
             smoothingXs = GSL.binning(x, this.binWidth);
+            smoothingYs = GSL.binning(y, this.binWidth);
         } else if (this.type === SmoothingType.SAVITZKY_GOLAY) {
             smoothingYs = GSL.savitzkyGolaySmooth(x, y, this.savitzkyGolaySize, this.savitzkyGolayOrder);
         }
+        return {x: smoothingXs, y: smoothingYs};
+    }
 
-        if (this.type !== SmoothingType.DECIMATION) {
-            for (let i = 0; i < smoothingXs.length; i++) {
-                smoothingArray.push({x: smoothingXs[i], y: smoothingYs[i]});
-            }
-        } else {
-            for (let i = 0; i < decimatedIndexes.length; i++) {
-                smoothingArray.push({x: x[decimatedIndexes[i]], y: y[decimatedIndexes[i]]});
-            }
+    getSmoothingPoint2DArray(x: number[], y: Float32Array|Float64Array): Point2D[] {
+        if (this.type === SmoothingType.NONE) {
+            return [];
         }
+        let smoothingArray: Point2D[] = [];
+        const smoothingValues = this.getSmoothingValues(x, y);
+
+        for (let i = 0; i < smoothingValues.x.length; i++) {
+            smoothingArray.push({x: smoothingValues.x[i], y: smoothingValues.y[i]});
+        }
+
         return smoothingArray;
     }
 
