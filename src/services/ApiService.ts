@@ -16,6 +16,7 @@ export class ApiService {
         return ApiService.staticInstance;
     }
 
+    private static readonly GoogleClientId = process.env.REACT_APP_GOOGLE_CLIENT_ID;
     private static readonly ApiBase = process.env.REACT_APP_API_ADDRESS;
     private static readonly TokenRefreshUrl = process.env.REACT_APP_ACCESS_TOKEN_ADDRESS;
     public static readonly LogoutUrl = process.env.REACT_APP_ACCESS_LOGOUT_ADDRESS;
@@ -34,9 +35,29 @@ export class ApiService {
 
     constructor() {
         this.axiosInstance = axios.create();
-
-        // If there's a specified URL, we need to authenticate first
-        if (ApiService.TokenRefreshUrl) {
+        if (ApiService.GoogleClientId) {
+            gapi.load("auth2", () => {
+                console.log("Google auth loaded");
+                try {
+                    gapi.auth2.init({client_id: ApiService.GoogleClientId, scope: "profile email"}).then(() => {
+                        const authInstance = gapi.auth2.getAuthInstance();
+                        const currentUser = authInstance?.currentUser.get();
+                        if (currentUser?.isSignedIn()) {
+                            currentUser.reloadAuthResponse().then(res => {
+                                this._accessToken = res.id_token;
+                                this.axiosInstance.defaults.headers.common["Authorization"] = `Bearer ${res.id_token}`;
+                                this.authenticated = true;
+                            });
+                        } else {
+                            this.authenticated = false;
+                        }
+                    });
+                } catch (e) {
+                    console.log(e);
+                }
+            });
+        } else if (ApiService.TokenRefreshUrl) {
+            // If there's a specified URL, we need to authenticate first
             this.authenticated = false;
             this.refreshAccessToken().then((res) => {
                 if (res) {
