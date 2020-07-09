@@ -355,7 +355,7 @@ export class FrameStore {
                     if (this.isSpectralCoordinateConvertible && channelInfo.channelType.unit !== SPECTRAL_DEFAULT_UNIT.get(SpectralType.FREQ)) {
                         const freqGHz = this.astSpectralTransform(SpectralType.FREQ, SpectralUnit.GHZ, this.spectralSystem, freqVal);
                         if (isFinite(freqGHz)) {
-                            spectralInfo.spectralString = `Frequency (${spectralInfo.specsys}): ${formattedFrequency(freqGHz)}`;
+                            spectralInfo.spectralString = `Frequency (${this.spectralSystem}): ${formattedFrequency(freqGHz)}`;
                         }
                     }
                     // convert frequency to volecity
@@ -369,7 +369,7 @@ export class FrameStore {
                     if (this.isSpectralCoordinateConvertible && channelInfo.channelType.unit !== SPECTRAL_DEFAULT_UNIT.get(SpectralType.VRAD)) {
                         const volecityKMS = this.astSpectralTransform(SpectralType.VRAD, SpectralUnit.KMS, this.spectralSystem, velocityVal);
                         if (isFinite(volecityKMS)) {
-                            spectralInfo.spectralString = `Velocity (${spectralInfo.specsys}): ${toFixed(volecityKMS, 4)} km/s`;
+                            spectralInfo.spectralString = `Velocity (${this.spectralSystem}): ${toFixed(volecityKMS, 4)} km/s`;
                         }
                     }
                     // convert velocity to frequency
