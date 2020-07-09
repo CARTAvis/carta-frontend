@@ -350,7 +350,7 @@ export class WidgetsStore {
         // init docked widgets
         componentConfigs.forEach((componentConfig) => {
             if (componentConfig.id && componentConfig.props) {
-                const itemId =  this.addWidgetByType(componentConfig.id, "widgetSettings" in componentConfig ? componentConfig.widgetSettings : null);
+                const itemId = this.addWidgetByType(componentConfig.id, "widgetSettings" in componentConfig ? componentConfig.widgetSettings : null);
 
                 if (itemId) {
                     componentConfig.id = itemId;
@@ -363,7 +363,7 @@ export class WidgetsStore {
         floating.forEach((savedConfig) => {
             if (savedConfig.type) {
                 let config = WidgetsStore.getDefaultWidgetConfig(savedConfig.type);
-                config.id =  this.addWidgetByType(savedConfig.type, "widgetSettings" in savedConfig ? savedConfig.widgetSettings : null);
+                config.id = this.addWidgetByType(savedConfig.type, "widgetSettings" in savedConfig ? savedConfig.widgetSettings : null);
                 if ("defaultWidth" in savedConfig && savedConfig.defaultWidth > 0) {
                     config.defaultWidth = savedConfig.defaultWidth;
                 }
