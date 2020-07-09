@@ -340,13 +340,30 @@ export class WidgetsStore {
         return itemId;
     };
 
-    private isWidgetPositionValid = (config): boolean => {
-        return "defaultX" in config && isFinite(config.defaultX) && config.defaultX > 0 && "defaultY" in config && isFinite(config.defaultY) && config.defaultY > 0;
-    };
-
     public removeFloatingWidgets = () => {
         if (this.floatingWidgets) {
             this.floatingWidgets.forEach((widgetConfig) => this.removeFloatingWidget(widgetConfig.id));
+        }
+    };
+
+    createFloatingWidget = (config) => {
+        if (config?.type) {
+            let configTemplate = WidgetsStore.getDefaultWidgetConfig(config.type);
+            configTemplate.id = this.addWidgetByType(config.type, config?.widgetSettings);
+            console.log(configTemplate.id);
+            if (config?.defaultWidth > 0) {
+                configTemplate.defaultWidth = config.defaultWidth;
+            }
+            if (config?.defaultHeight > 0) {
+                configTemplate.defaultHeight = config.defaultHeight;
+            }
+            if (config?.defaultX > 0 && config?.defaultY > 0) {
+                configTemplate["defaultX"] = config.defaultX;
+                configTemplate["defaultY"] = config.defaultY;
+            } else {
+                configTemplate["defaultX"] = configTemplate["defaultY"] = this.getFloatingWidgetOffset();
+            }
+            this.addFloatingWidget(configTemplate);
         }
     };
 
@@ -364,25 +381,7 @@ export class WidgetsStore {
         });
 
         // init floating widgets
-        floating.forEach((savedConfig) => {
-            if (savedConfig.type) {
-                let config = WidgetsStore.getDefaultWidgetConfig(savedConfig.type);
-                config.id = this.addWidgetByType(savedConfig.type, "widgetSettings" in savedConfig ? savedConfig.widgetSettings : null);
-                if ("defaultWidth" in savedConfig && savedConfig.defaultWidth > 0) {
-                    config.defaultWidth = savedConfig.defaultWidth;
-                }
-                if ("defaultHeight" in savedConfig && savedConfig.defaultHeight > 0) {
-                    config.defaultHeight = savedConfig.defaultHeight;
-                }
-                if (this.isWidgetPositionValid(savedConfig)) {
-                    config["defaultX"] = savedConfig.defaultX;
-                    config["defaultY"] = savedConfig.defaultY;
-                } else {
-                    config["defaultX"] = config["defaultY"] = this.getFloatingWidgetOffset();
-                }
-                this.addFloatingWidget(config);
-            }
-        });
+        floating.forEach((savedConfig) => this.createFloatingWidget(savedConfig));
     };
 
     public initLayoutWithWidgets = (layout: GoldenLayout) => {
@@ -1052,7 +1051,7 @@ export class WidgetsStore {
     }
 
     @action addFloatingWidget = (widget: WidgetConfig) => {
-        if (!this.isWidgetPositionValid(widget)) {
+        if (!(widget?.defaultX > 0 && widget?.defaultY > 0)) {
             widget["defaultX"] = widget["defaultY"] = this.getFloatingWidgetOffset();
         }
         widget.zIndex = this.floatingWidgets.length + 1;
