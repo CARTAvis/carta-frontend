@@ -350,7 +350,11 @@ export class WidgetsStore {
         if (config?.type) {
             let configTemplate = WidgetsStore.getDefaultWidgetConfig(config.type);
             configTemplate.id = this.addWidgetByType(config.type, config?.widgetSettings);
-            console.log(configTemplate.id);
+            /*
+            if (config.type === CatalogOverlayComponent.WIDGET_CONFIG.type) {
+                configTemplate.componentId = configTemplate.id;
+            }
+            */
             if (config?.defaultWidth > 0) {
                 configTemplate.defaultWidth = config.defaultWidth;
             }
