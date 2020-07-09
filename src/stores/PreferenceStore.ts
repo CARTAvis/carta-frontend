@@ -1,10 +1,11 @@
 import {observable, computed, action} from "mobx";
 import {Colors} from "@blueprintjs/core";
+import * as tinycolor from "tinycolor2";
 import * as AST from "ast_wrapper";
 import {CARTA} from "carta-protobuf";
 import {AppStore, BeamType, ContourGeneratorType, FrameScaling, RenderConfigStore, RegionStore, AlertStore} from "stores";
 import {Theme, PresetLayout, CursorPosition, Zoom, ZoomPoint, WCSType, RegionCreationMode, CompressionQuality, TileCache, Event, ControlMap, SpectralType, IsSpectralMatchingTypeValid, WCSMatchingType, IsWCSMatchingTypeValid} from "models";
-import {isColorValid, parseBoolean} from "utilities";
+import {parseBoolean} from "utilities";
 
 export enum PreferenceKeys {
     GLOBAL_THEME = 1,
@@ -124,7 +125,7 @@ const KEY_TO_STRING = new Map<PreferenceKeys, string>([
 
 const DEFAULTS = {
     GLOBAL: {
-        theme: Theme.LIGHT,
+        theme: Theme.AUTO,
         autoLaunch: true,
         layout: PresetLayout.DEFAULT,
         cursorPosition: CursorPosition.TRACKING,
@@ -217,7 +218,7 @@ export class PreferenceStore {
         [PreferenceKeys.RENDER_CONFIG_PERCENTILE, (value: string): number => { return value && isFinite(Number(value)) && RenderConfigStore.IsPercentileValid(Number(value)) ? Number(value) : DEFAULTS.RENDER_CONFIG.percentile; }],
         [PreferenceKeys.RENDER_CONFIG_SCALING_ALPHA, (value: string): number => { return value && isFinite(Number(value)) ? Number(value) : DEFAULTS.RENDER_CONFIG.scalingAlpha; }],
         [PreferenceKeys.RENDER_CONFIG_SCALING_GAMMA, (value: string): number => { return value && isFinite(Number(value)) && RenderConfigStore.IsGammaValid(Number(value)) ? Number(value) : DEFAULTS.RENDER_CONFIG.scalingGamma; }],
-        [PreferenceKeys.RENDER_CONFIG_NAN_COLOR_HEX, (value: string): string => { return value && isColorValid(value) ? value : DEFAULTS.RENDER_CONFIG.nanColorHex; }],
+        [PreferenceKeys.RENDER_CONFIG_NAN_COLOR_HEX, (value: string): string => { return value && tinycolor(value).isValid() ? value : DEFAULTS.RENDER_CONFIG.nanColorHex; }],
         [PreferenceKeys.RENDER_CONFIG_NAN_ALPHA, (value: string): number => { return value && isFinite(Number(value)) && Number(value) >= 0 && Number(value) <= 1 ? Number(value) : DEFAULTS.RENDER_CONFIG.nanAlpha; }],
 
         [PreferenceKeys.CONTOUR_CONFIG_CONTOUR_GENERATOR_TYPE, (value: ContourGeneratorType): ContourGeneratorType => {
@@ -233,7 +234,7 @@ export class PreferenceStore {
         [PreferenceKeys.CONTOUR_CONFIG_CONTOUR_THICKNESS,
             (value: string): number => { return value && (isFinite(parseFloat(value)) && parseFloat(value) > 0 && parseFloat(value) <= 10) ? parseFloat(value) : DEFAULTS.CONTOUR_CONFIG.contourThickness; }],
         [PreferenceKeys.CONTOUR_CONFIG_CONTOUR_COLORMAP_ENABLED, (value: string): boolean => { return parseBoolean(value, DEFAULTS.CONTOUR_CONFIG.contourColormapEnabled); }],
-        [PreferenceKeys.CONTOUR_CONFIG_CONTOUR_COLOR, (value: string): string => { return value && isColorValid(value) ? value : DEFAULTS.CONTOUR_CONFIG.contourColor; }],
+        [PreferenceKeys.CONTOUR_CONFIG_CONTOUR_COLOR, (value: string): string => { return value && tinycolor(value).isValid() ? value : DEFAULTS.CONTOUR_CONFIG.contourColor; }],
         [PreferenceKeys.CONTOUR_CONFIG_CONTOUR_COLORMAP, (value: string): string => { return value && RenderConfigStore.IsColormapValid(value) ? value : DEFAULTS.CONTOUR_CONFIG.contourColormap; }],
 
         [PreferenceKeys.WCS_OVERLAY_AST_COLOR, (value: string): number => { return value && isFinite(Number(value)) && Number(value) >= 0 && Number(value) < AST.colors.length ? Number(value) : DEFAULTS.WCS_OVERLAY.astColor; }],
@@ -241,11 +242,11 @@ export class PreferenceStore {
         [PreferenceKeys.WCS_OVERLAY_AST_LABELS_VISIBLE, (value: string): boolean => { return parseBoolean(value, DEFAULTS.WCS_OVERLAY.astLabelsVisible); }],
         [PreferenceKeys.WCS_OVERLAY_WCS_TYPE, (value: string): string => { return value && WCSType.isValid(value) ? value : DEFAULTS.WCS_OVERLAY.wcsType; }],
         [PreferenceKeys.WCS_OVERLAY_BEAM_VISIBLE, (value: string): boolean => { return parseBoolean(value, DEFAULTS.WCS_OVERLAY.beamVisible); }],
-        [PreferenceKeys.WCS_OVERLAY_BEAM_COLOR, (value: string): string => { return value && isColorValid(value) ? value : DEFAULTS.WCS_OVERLAY.beamColor; }],
+        [PreferenceKeys.WCS_OVERLAY_BEAM_COLOR, (value: string): string => { return value && tinycolor(value).isValid() ? value : DEFAULTS.WCS_OVERLAY.beamColor; }],
         [PreferenceKeys.WCS_OVERLAY_BEAM_TYPE, (value: BeamType): BeamType => { return value && (value === BeamType.Open || value === BeamType.Solid) ? value : DEFAULTS.WCS_OVERLAY.beamType; }],
         [PreferenceKeys.WCS_OVERLAY_BEAM_WIDTH, (value: string): number => { return value && (isFinite(Number(value)) && Number(value) > 0 && Number(value) <= 10) ? Number(value) : DEFAULTS.WCS_OVERLAY.beamWidth; }],
 
-        [PreferenceKeys.REGION_COLOR, (value: string): string => { return value && isColorValid(value) ? value : DEFAULTS.REGION.regionColor; }],
+        [PreferenceKeys.REGION_COLOR, (value: string): string => { return value && tinycolor(value).isValid() ? value : DEFAULTS.REGION.regionColor; }],
         [PreferenceKeys.REGION_LINE_WIDTH, (value: string): number => { return value && isFinite(Number(value)) && RegionStore.IsRegionLineWidthValid(Number(value)) ? Number(value) : DEFAULTS.REGION.regionLineWidth; }],
         [PreferenceKeys.REGION_DASH_LENGTH, (value: string): number => { return value && isFinite(Number(value)) && RegionStore.IsRegionDashLengthValid(Number(value)) ? Number(value) : DEFAULTS.REGION.regionDashLength; }],
         [PreferenceKeys.REGION_TYPE, (value: string): number => { return value && isFinite(Number(value)) && RegionStore.IsRegionTypeValid(Number(value)) ? Number(value) : DEFAULTS.REGION.regionType; }],
@@ -472,11 +473,6 @@ export class PreferenceStore {
     public isEventLoggingEnabled = (eventType: CARTA.EventType): boolean => {
         return Event.isEventTypeValid(eventType) && this.preferences.get(PreferenceKeys.LOG_EVENT).get(eventType);
     };
-
-    // getters for boolean(convenient)
-    @computed get isDarkTheme(): boolean {
-        return this.theme === Theme.DARK;
-    }
 
     @computed get isZoomRAWMode(): boolean {
         return this.zoomMode === Zoom.RAW;

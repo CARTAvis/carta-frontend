@@ -4,7 +4,7 @@ import {observer} from "mobx-react";
 import {Alert, Icon, Menu, Popover, Position, Tooltip, Tag} from "@blueprintjs/core";
 import {ToolbarMenuComponent} from "./ToolbarMenu/ToolbarMenuComponent";
 import {PresetLayout} from "models";
-import {AppStore, BrowserMode, DialogStore, FileBrowserStore, OverlayStore, PreferenceKeys, PreferenceStore} from "stores";
+import {AppStore, BrowserMode, PreferenceKeys} from "stores";
 import {ConnectionStatus} from "services";
 import {toFixed} from "utilities";
 import {CustomIcon} from "icons/CustomIcons";
@@ -88,6 +88,7 @@ export class RootMenuComponent extends React.Component {
         const viewMenu = (
             <Menu>
                 <Menu.Item text="Interface" icon={"control"}>
+                    <Menu.Item text="Automatic" icon={"contrast"} onClick={appStore.setAutoTheme}/>
                     <Menu.Item text="Light" icon={"flash"} onClick={appStore.setLightTheme}/>
                     <Menu.Item text="Dark" icon={"moon"} onClick={appStore.setDarkTheme}/>
                 </Menu.Item>
@@ -184,6 +185,7 @@ export class RootMenuComponent extends React.Component {
             <Menu>
                 <Menu.Item text="Online Manual" icon={"help"} onClick={this.handleDocumentationClicked}/>
                 <Menu.Item text="Controls and Shortcuts" label={"Shift + ?"} onClick={appStore.dialogStore.showHotkeyDialog}/>
+                <Menu.Item text="Debug Execution" icon={"console"} onClick={appStore.dialogStore.showDebugExecutionDialog}/>
                 <Menu.Item text="About" icon={"info-sign"} onClick={appStore.dialogStore.showAboutDialog}/>
             </Menu>
         );

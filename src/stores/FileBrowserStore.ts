@@ -2,8 +2,10 @@ import {action, computed, observable} from "mobx";
 import {TabId} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import {BackendService} from "services";
-import {AppStore, DialogStore} from "stores";
+import {DialogStore} from "stores";
 import {FileInfoType} from "components";
+import {ProcessedColumnData} from "models";
+import {getDataTypeString} from "utilities";
 
 export enum BrowserMode {
     File,
@@ -12,9 +14,14 @@ export enum BrowserMode {
     Catalog
 }
 
-export type RegionFileType = CARTA.FileType.CRTF | CARTA.FileType.REG;
+export type RegionFileType = CARTA.FileType.CRTF | CARTA.FileType.DS9_REG;
 export type ImageFileType = CARTA.FileType.CASA | CARTA.FileType.FITS | CARTA.FileType.HDF5 | CARTA.FileType.MIRIAD;
-export type CatalogFileType = CARTA.CatalogFileType.VOTable;
+export type CatalogFileType = CARTA.CatalogFileType.VOTable | CARTA.CatalogFileType.FITSTable;
+
+export interface SortingConfig {
+    columnName: string;
+    direction: number;
+}
 
 export class FileBrowserStore {
     private static staticInstance: FileBrowserStore;
@@ -29,7 +36,7 @@ export class FileBrowserStore {
     @observable browserMode: BrowserMode = BrowserMode.File;
     @observable appendingFrame = false;
     @observable fileList: CARTA.IFileListResponse;
-    @observable selectedFile: CARTA.IFileInfo| CARTA.ICatalogFileInfo;
+    @observable selectedFile: CARTA.IFileInfo | CARTA.ICatalogFileInfo;
     @observable selectedHDU: string;
     @observable fileInfoExtended: CARTA.IFileInfoExtended;
     @observable regionFileInfo: string[];
@@ -42,6 +49,7 @@ export class FileBrowserStore {
     @observable exportFilename: string;
     @observable exportCoordinateType: CARTA.CoordinateType;
     @observable exportFileType: RegionFileType;
+    @observable sortingConfig: SortingConfig = {columnName: "Date", direction: -1};
 
     @observable catalogFileList: CARTA.ICatalogListResponse;
     @observable selectedCatalogFile: CARTA.ICatalogFileInfo;
@@ -76,6 +84,7 @@ export class FileBrowserStore {
         if (this.browserMode === BrowserMode.File) {
             backendService.getFileList(directory).subscribe(res => {
                 this.fileList = res;
+                this.loadingList = false;
             }, err => {
                 console.log(err);
                 this.loadingList = false;
@@ -83,6 +92,7 @@ export class FileBrowserStore {
         } else if (this.browserMode === BrowserMode.Catalog) {
             backendService.getCatalogList(directory).subscribe(res => {
                 this.catalogFileList = res;
+                this.loadingList = false;
             }, err => {
                 console.log(err);
                 this.loadingList = false;
@@ -90,6 +100,7 @@ export class FileBrowserStore {
         } else {
             backendService.getRegionList(directory).subscribe(res => {
                 this.fileList = res;
+                this.loadingList = false;
             }, err => {
                 console.log(err);
                 this.loadingList = false;
@@ -147,14 +158,17 @@ export class FileBrowserStore {
         this.fileInfoResp = false;
         this.catalogFileInfo = null;
         this.catalogHeaders = [];
+        this.responseErrorMessage = "";
 
         backendService.getCatalogFileInfo(directory, filename).subscribe((res: CARTA.ICatalogFileInfoResponse) => {
             if (res.fileInfo && this.selectedFile && res.fileInfo.name === this.selectedFile.name) {
                 this.loadingInfo = false;
                 this.catalogFileInfo = res.fileInfo;
-                this.catalogHeaders = res.headers.sort((a, b) => { return a.columnIndex - b.columnIndex; });
+                this.catalogHeaders = res.headers.sort((a, b) => {
+                    return a.columnIndex - b.columnIndex;
+                });
             }
-            this.fileInfoResp = res.success;
+            this.fileInfoResp = true;
         }, err => {
             console.log(err);
             this.responseErrorMessage = err;
@@ -169,7 +183,7 @@ export class FileBrowserStore {
         this.selectedFile = file;
 
         if (hdu) {
-            this.selectedHDU = hdu;   
+            this.selectedHDU = hdu;
         }
 
         if (this.browserMode === BrowserMode.File) {
@@ -182,7 +196,7 @@ export class FileBrowserStore {
         }
     };
 
-    @action selectFolder = (folder: string, absolutePath: boolean) => {
+    @action selectFolder = (folder: string, absolutePath: boolean = false) => {
         if (absolutePath) {
             this.getFileList(folder);
             return;
@@ -231,6 +245,14 @@ export class FileBrowserStore {
         this.exportFileType = fileType;
     };
 
+    @action setSortingConfig = (columnName: string, direction: number) => {
+        this.sortingConfig = {columnName, direction: Math.sign(direction)};
+    };
+
+    @action clearSortingConfig = () => {
+        this.sortingConfig = undefined;
+    };
+
     @computed get fileInfo() {
         let fileInfo = "";
         if (this.fileInfoExtended && this.fileInfoExtended.computedEntries) {
@@ -275,23 +297,34 @@ export class FileBrowserStore {
         }
     }
 
-    @computed get catalogHeaderDataset(): {columnHeaders: Array<CARTA.CatalogHeader>, columnsData: CARTA.CatalogColumnsData} {
-        let columnsData = new CARTA.CatalogColumnsData();
-        columnsData.stringColumn[0] = new CARTA.StringColumn();
-        columnsData.stringColumn[1] = new CARTA.StringColumn();
-        columnsData.stringColumn[2] = new CARTA.StringColumn();
+    @computed get catalogHeaderDataset(): { columnHeaders: Array<CARTA.CatalogHeader>, columnsData: Map<number, ProcessedColumnData> } {
+        let columnsData = new Map<number, ProcessedColumnData>();
 
-        let columnHeaders: Array<CARTA.CatalogHeader> = [];
+        const nameData = [];
+        const unitData = [];
+        const typeData = [];
+        const descriptionData = [];
+
         for (let index = 0; index < this.catalogHeaders.length; index++) {
             const catalogHeader = this.catalogHeaders[index];
-            columnsData.stringColumn[0].stringColumn.push(catalogHeader.name);
-            columnsData.stringColumn[1].stringColumn.push(catalogHeader.description);
-            columnsData.stringColumn[2].stringColumn.push(catalogHeader.units);
+            nameData.push(catalogHeader.name);
+            unitData.push(catalogHeader.units);
+            typeData.push(getDataTypeString(catalogHeader.dataType));
+            descriptionData.push(catalogHeader.description);
         }
-        const stringType = CARTA.EntryType.STRING;
-        columnHeaders[0] = new CARTA.CatalogHeader({name: "Name", dataType: stringType, columnIndex: 0, dataTypeIndex: 0});
-        columnHeaders[1] = new CARTA.CatalogHeader({name: "Description", dataType: stringType, columnIndex: 1, dataTypeIndex: 1});
-        columnHeaders[2] = new CARTA.CatalogHeader({name: "Unit", dataType: stringType, columnIndex: 2, dataTypeIndex: 2});
+
+        const dataType = CARTA.ColumnType.String;
+        columnsData.set(0, {dataType, data: nameData});
+        columnsData.set(1, {dataType, data: unitData});
+        columnsData.set(2, {dataType, data: typeData});
+        columnsData.set(3, {dataType, data: descriptionData});
+
+        let columnHeaders = [
+            new CARTA.CatalogHeader({name: "Name", dataType, columnIndex: 0}),
+            new CARTA.CatalogHeader({name: "Unit", dataType, columnIndex: 1}),
+            new CARTA.CatalogHeader({name: "Data Type", dataType, columnIndex: 2}),
+            new CARTA.CatalogHeader({name: "Description", dataType, columnIndex: 3})
+        ];
 
         return {columnHeaders: columnHeaders, columnsData: columnsData};
     }

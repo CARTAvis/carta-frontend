@@ -1,5 +1,6 @@
 import * as React from "react";
 import * as _ from "lodash";
+import * as tinycolor from "tinycolor2";
 import {observable} from "mobx";
 import {observer} from "mobx-react";
 import {AnchorButton, Button, Checkbox, FormGroup, HTMLSelect, IDialogProps, Intent, MenuItem, Position, Radio, RadioGroup, Switch, Tab, TabId, Tabs, Tooltip} from "@blueprintjs/core";
@@ -12,7 +13,7 @@ import {ColorComponent} from "components/Dialogs/OverlaySettings/ColorComponent"
 import {ColormapComponent, ColorPickerComponent, SafeNumericInput} from "components/Shared";
 import {CompressionQuality, CursorPosition, Event, RegionCreationMode, SPECTRAL_MATCHING_TYPES, SPECTRAL_TYPE_STRING, Theme, TileCache, WCSMatchingType, WCSType, Zoom, ZoomPoint} from "models";
 import {AppStore, BeamType, ContourGeneratorType, DialogStore, FrameScaling, HelpType, PreferenceKeys, PreferenceStore, RegionStore, RenderConfigStore} from "stores";
-import {hexStringToRgba, SWATCH_COLORS} from "utilities";
+import {SWATCH_COLORS} from "utilities";
 import "./PreferenceDialogComponent.css";
 
 enum TABS {
@@ -34,7 +35,7 @@ export class PreferenceDialogComponent extends React.Component {
     private renderPercentileSelectItem = (percentile: string, {handleClick, modifiers, query}) => {
         return <MenuItem text={percentile + "%"} onClick={handleClick} key={percentile}/>;
     };
-    
+
     private handleImageCompressionQualityChange = _.throttle((value: number) => {
         PreferenceStore.Instance.setPreference(PreferenceKeys.PERFORMANCE_IMAGE_COMPRESSION_QUALITY, value);
     }, 100);
@@ -87,16 +88,14 @@ export class PreferenceDialogComponent extends React.Component {
         const globalPanel = (
             <React.Fragment>
                 <FormGroup inline={true} label="Theme">
-                    <RadioGroup
-                        selectedValue={preference.theme}
-                        onChange={(ev) => {
-                            ev.currentTarget.value === Theme.LIGHT ? appStore.setLightTheme() : appStore.setDarkTheme();
-                        }}
-                        inline={true}
+                    <HTMLSelect
+                        value={preference.theme}
+                        onChange={(ev) => appStore.preferenceStore.setPreference(PreferenceKeys.GLOBAL_THEME, ev.currentTarget.value)}
                     >
-                        <Radio label="Light" value={Theme.LIGHT}/>
-                        <Radio label="Dark" value={Theme.DARK}/>
-                    </RadioGroup>
+                        <option value={Theme.AUTO}>Automatic</option>
+                        <option value={Theme.LIGHT}>Light</option>
+                        <option value={Theme.DARK}>Dark</option>
+                    </HTMLSelect>
                 </FormGroup>
                 <FormGroup inline={true} label="Auto-launch File Browser">
                     <Switch checked={preference.autoLaunch} onChange={(ev) => preference.setPreference(PreferenceKeys.GLOBAL_AUTOLAUNCH, ev.currentTarget.checked)}/>
@@ -206,7 +205,7 @@ export class PreferenceDialogComponent extends React.Component {
                 }
                 <FormGroup inline={true} label="NaN Color">
                     <ColorPickerComponent
-                        color={hexStringToRgba(preference.nanColorHex, preference.nanAlpha)}
+                        color={tinycolor(preference.nanColorHex).setAlpha(preference.nanAlpha).toRgb()}
                         presetColors={[...SWATCH_COLORS, "transparent"]}
                         setColor={(color: ColorResult) => {
                             preference.setPreference(PreferenceKeys.RENDER_CONFIG_NAN_COLOR_HEX, color.hex === "transparent" ? "#000000" : color.hex);
@@ -331,7 +330,7 @@ export class PreferenceDialogComponent extends React.Component {
                 </FormGroup>
                 <FormGroup inline={true} label="Beam Color">
                     <ColorPickerComponent
-                        color={hexStringToRgba(preference.beamColor)}
+                        color={tinycolor(preference.beamColor).toRgb()}
                         presetColors={SWATCH_COLORS}
                         setColor={(color: ColorResult) => preference.setPreference(PreferenceKeys.WCS_OVERLAY_BEAM_COLOR, color.hex)}
                         disableAlpha={true}

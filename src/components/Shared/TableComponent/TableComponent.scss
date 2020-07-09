@@ -1,0 +1,48 @@
+.column-name {
+    overflow: hidden;
+
+    .lable {
+        margin: 0px;
+        display: inline-flex;
+        position: absolute;
+    }
+
+    .sort-icon {
+        margin-right: 5px;
+        position: relative;
+        top: 5px;
+    }
+}
+
+.catalog-sort-menu-item {
+    min-width: fit-content !important;
+}
+
+.column-filter {
+    .bp3-table-selection-region {
+        border: 0px;
+        background-color: rgba(255, 255, 255, 0);
+    }
+
+    .bp3-table-region {
+        border: 0px;
+        background-color: rgba(255, 255, 255, 0);
+    }
+
+    .bp3-table-header.bp3-table-header-selected::before {
+        background-image: none;
+    }
+    
+    .bp3-popover-target {
+        width: inherit;
+
+        .bp3-input-group {
+            .bp3-input {
+                border-radius: 0px;
+                vertical-align: baseline;
+                box-shadow: none;
+                background: #ffffff00;
+            }
+        }
+    }
+}

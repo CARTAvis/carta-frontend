@@ -20,7 +20,7 @@ export class CatalogScatterComponent extends React.Component<WidgetProps> {
     @observable width: number;
     @observable height: number;
 
-    private readonly DataTypes = [CARTA.EntryType.DOUBLE, CARTA.EntryType.FLOAT, CARTA.EntryType.INT, CARTA.EntryType.LONGLONG];
+    private static readonly UnsupportedDataTypes = [CARTA.ColumnType.String, CARTA.ColumnType.Bool, CARTA.ColumnType.UnsupportedType];
 
     public static get WIDGET_CONFIG(): WidgetConfig {
         return {
@@ -108,14 +108,7 @@ export class CatalogScatterComponent extends React.Component<WidgetProps> {
         const points = event.points;
         if (points.length) {
             const point = points[0];
-            this.widgetStore.setIndicator({x: point.x as number, y: point.y as number});
-            const border: Border = {
-                xMin: point.xaxis.range[0],
-                xMax: point.xaxis.range[1],
-                yMin: point.yaxis.range[0],
-                yMax: point.yaxis.range[1]
-            };
-            this.widgetStore.setBorder(border);   
+            this.widgetStore.setIndicator({x: point.x as number, y: point.y as number});  
         }
     }
 
@@ -136,8 +129,20 @@ export class CatalogScatterComponent extends React.Component<WidgetProps> {
     }
 
     private onRelayout = (event: any) => {
-        if (event.dragmode) {
-            this.widgetStore.setDragmode(event.dragmode);
+        const widgetStore = this.widgetStore;
+        if (widgetStore) {
+            if (event.dragmode) {
+                widgetStore.setDragmode(event.dragmode);
+            }
+            if (isFinite(event["xaxis.range[0]"]) || isFinite(event["yaxis.range[0]"])) {
+                const border: Border = {
+                    xMin: isFinite(event["xaxis.range[0]"]) ? event["xaxis.range[0]"] : widgetStore.border.xMin,
+                    xMax: isFinite(event["xaxis.range[1]"]) ? event["xaxis.range[1]"] : widgetStore.border.xMax,
+                    yMin: isFinite(event["yaxis.range[0]"]) ? event["yaxis.range[0]"] : widgetStore.border.yMin,
+                    yMax: isFinite(event["yaxis.range[1]"]) ? event["yaxis.range[1]"] : widgetStore.border.yMax
+                };
+                this.widgetStore.setBorder(border);   
+            }
         }
     }
 
@@ -147,7 +152,7 @@ export class CatalogScatterComponent extends React.Component<WidgetProps> {
 
         if (catalogOverlayWidgetStore.shouldUpdateData) {
             catalogOverlayWidgetStore.setUpdateMode(CatalogUpdateMode.PlotsUpdate);
-            catalogOverlayWidgetStore.setPlotingData(true);   
+            catalogOverlayWidgetStore.setUpdatingDataStream(true);   
             let catalogFilter = catalogOverlayWidgetStore.updateRequestDataSize;
             appStore.sendCatalogFilter(catalogFilter);
         }
@@ -156,19 +161,23 @@ export class CatalogScatterComponent extends React.Component<WidgetProps> {
     // region selection
     private onLassoSelected = (event: Plotly.PlotSelectionEvent) => {
         if (event && event.points && event.points.length > 0) {
-            let selectedPointIndexs = [];
+            const catalogFileId = this.widgetStore.catalogOverlayWidgetStore.catalogInfo.fileId;
+            AppStore.Instance.updateCatalogProfiles(catalogFileId);
+            let selectedPointIndices = [];
             const points = event.points;
             for (let index = 0; index < points.length; index++) {
                 const selectedPoint = points[index];
-                selectedPointIndexs.push(selectedPoint.pointIndex);
+                selectedPointIndices.push(selectedPoint.pointIndex);
             }
-            this.widgetStore.catalogOverlayWidgetStore.setselectedPointIndexs(selectedPointIndexs, true);
+            this.widgetStore.catalogOverlayWidgetStore.setSelectedPointIndices(selectedPointIndices, true, true);
         }
     }
 
     private onDeselect = () => {
+        const catalogFileId = this.widgetStore.catalogOverlayWidgetStore.catalogInfo.fileId;
+        AppStore.Instance.updateCatalogProfiles(catalogFileId);
         const catalogStore = CatalogStore.Instance;
-        this.widgetStore.catalogOverlayWidgetStore.setselectedPointIndexs([]);
+        this.widgetStore.catalogOverlayWidgetStore.setSelectedPointIndices([], false, false);
         const storeId = this.widgetStore.catalogOverlayWidgetStore.storeId;
         this.widgetStore.catalogOverlayWidgetStore.setShowSelectedData(false);
         catalogStore.updateShowSelectedData(storeId, false);
@@ -178,11 +187,13 @@ export class CatalogScatterComponent extends React.Component<WidgetProps> {
     private onSingleSourceClick = (event: Readonly<Plotly.PlotMouseEvent>) => {
         const dragmode: DragMode[] = ["select", "lasso"];
         const inDragmode = dragmode.includes(this.widgetStore.dragmode);
-        if (event && event.points && event.points.length > 0 && inDragmode) {
+        if (event?.points?.length > 0 && inDragmode) {
+            const catalogFileId = this.widgetStore.catalogOverlayWidgetStore.catalogInfo.fileId;
+            AppStore.Instance.updateCatalogProfiles(catalogFileId);
             let selectedPointIndex = [];
             const selectedPoint = event.points[0];
             selectedPointIndex.push(selectedPoint.pointIndex);
-            this.widgetStore.catalogOverlayWidgetStore.setselectedPointIndexs(selectedPointIndex, true);
+            this.widgetStore.catalogOverlayWidgetStore.setSelectedPointIndices(selectedPointIndex, true, true);
         }
     }
 
@@ -210,7 +221,7 @@ export class CatalogScatterComponent extends React.Component<WidgetProps> {
         
         for (let index = 0; index < columnsName.length; index++) {
             const column = columnsName[index];
-            if (this.DataTypes.indexOf(column.dataType) !== -1) {
+            if (!CatalogScatterComponent.UnsupportedDataTypes.includes(column.dataType)) {
                 xyOptions.push(column.name); 
             }
         }
@@ -299,10 +310,10 @@ export class CatalogScatterComponent extends React.Component<WidgetProps> {
         };
         layout["hoverdistance"] = 5;
         let data = this.scatterData;
-        const selectedPointIndexs = widgetStore.catalogOverlayWidgetStore.selectedPointIndexs;
+        const selectedPointIndices = widgetStore.catalogOverlayWidgetStore.selectedPointIndices;
         let scatterDataMarker = data[0].marker;
-        if (selectedPointIndexs.length > 0) {
-            data[0]["selectedpoints"] = selectedPointIndexs;
+        if (selectedPointIndices.length > 0) {
+            data[0]["selectedpoints"] = selectedPointIndices;
             data[0]["selected"] = {"marker": {"color": Colors.RED2}};
             data[0]["unselected"] = {"marker": {"opacity": 0.5}};
         } else {
@@ -326,7 +337,7 @@ export class CatalogScatterComponent extends React.Component<WidgetProps> {
                 "hoverCompareCartesian",
             ],
         };
-        const disabled = !widgetStore.catalogOverlayWidgetStore.enableLoadButton;
+        const disabled = !widgetStore.enablePlotButton;
 
         return(
             <div className={"catalog-2D"}>

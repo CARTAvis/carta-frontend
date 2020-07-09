@@ -5,48 +5,6 @@
     border-radius: 3px;
     overflow-y: auto;
 
-    .catalog-overlay-column-header-container{
-        overflow: auto;
-        height: 40%;
-        width: 100%;
-        padding-left: 5px;
-        padding-right: 5px;
-        padding-top: 5px;
-        padding-bottom: 4px;
-        .bp3-table-container {
-            width: 100%;
-
-            .bp3-table-header {
-                line-height: 220%;
-            }
-
-            .header-table-cell {
-                line-height: 250%;
-            }
-
-            .cell-switch-button{
-                margin: 0;
-            }
-
-            .cell-dropdown-menu {
-                .bp3-table-truncated-text{
-                    width: 100%;
-                    height: 100%;
-
-                    .bp3-html-select {
-                        width: 100%;
-                        height: 100%;
-
-                        .bp3-icon{
-                            top: 9px;
-                            right: 9px;
-                        }
-                    }
-                }
-            }
-        }
-    }
-
     .catalog-overlay-filter-settings{
         height: 35px;
         width: 100%;
@@ -92,37 +50,151 @@
         .catalog-overlay-plot-settings{
             display: inline-flex;
             height: 100%;
-
             .bp3-form-content {
                 margin-right: 5px;
             }
         }
+
+        .catalog-type-button {
+            width: 155px;
+            height: 30px;
+            .bp3-popover-target {
+                width: inherit;
+                .bp3-button {
+                    width: 100%;
+                    justify-content: space-between;
+                }
+            }
+        }
+
+        .catalog-system {
+            width: 75px;
+            .bp3-popover-target {
+                width: inherit;
+                .bp3-button {
+                    width: 100%;
+                    justify-content: space-between;
+                }
+            }
+        }
     }
 
-    .catalog-overlay-data-container{
-        overflow: auto;
-        height: calc(60% - 85px);
-        width: 100%;
-        padding-left: 5px;
-        padding-right: 5px;
-        padding-bottom: 1px;
-        padding-top: 1px;
+    .catalog-table {
+        height:calc(100% - 85px) !important;
+        position: inherit !important;
+        min-height: calc(100% - 85px) !important;
 
-        .bp3-table-container{
+        .Resizer {
+            background: rgba(0, 0, 0, 0);
+            opacity: 0;
+            z-index: 1;
+            -moz-box-sizing: border-box;
+            -webkit-box-sizing: border-box;
+            box-sizing: border-box;
+            -moz-background-clip: padding;
+            -webkit-background-clip: padding;
+            background-clip: padding-box;
+          }
+          .Resizer.horizontal {
+            height: 11px;
+            margin: -5px 0;
+            border-top: 5px solid rgba(255, 255, 255, 0);
+            border-bottom: 5px solid rgba(255, 255, 255, 0);
+            cursor: row-resize;
             width: 100%;
+          }
+          .Resizer.disabled {
+            cursor: not-allowed;
+          }
+          .Resizer.disabled:hover {
+            border-color: transparent;
+          }
 
-            .bp3-table-editable-name.bp3-editable-text::before {
-                right: 0px;
-                left: 0px;
-            }
+          .Pane1  {
+            min-height: 10px !important;
+          }
 
-            .bp3-editable-text::before {
-                right: 0px;
-                left: 0px;
+          .Pane2  {
+            min-height: 10px !important;
+          }
+
+        .catalog-overlay-column-header-container{
+            overflow: auto;
+            height: 100%;
+            width: 100%;
+            padding-left: 5px;
+            padding-right: 5px;
+            padding-top: 5px;
+            padding-bottom: 4px;
+            .bp3-table-container {
+                width: 100%;
+    
+                .bp3-table-header {
+                    line-height: 220%;
+                }
+    
+                .header-table-cell {
+                    line-height: 250%;
+                }
+    
+                .cell-switch-button{
+                    margin: 0;
+                }
+    
+                .cell-dropdown-menu {
+                    .bp3-table-truncated-text{
+                        width: 100%;
+                        height: 100%;
+    
+                        .bp3-html-select {
+                            width: 100%;
+                            height: 100%;
+    
+                            .bp3-icon{
+                                top: 9px;
+                                right: 9px;
+                            }
+                        }
+                    }
+
+                    .bp3-popover-target{
+                        width: 100%;
+                        height: 100%;
+                        .catalog-represent-as-select-button{
+                            width: 100%;
+                            height: 100%;
+                            justify-content: space-between;
+                        }
+                    }
+                }
             }
-            .column-filter {
-                width: inherit;
-                height: inherit;
+        }
+
+        .catalog-overlay-data-container{
+            overflow: auto;
+            height: 100%;
+            width: 100%;
+            padding-left: 5px;
+            padding-right: 5px;
+            padding-bottom: 1px;
+            padding-top: 1px;
+    
+            .bp3-table-container{
+                width: 100%;
+    
+                .bp3-table-editable-name.bp3-editable-text::before {
+                    right: 0px;
+                    left: 0px;
+                }
+    
+                .bp3-editable-text::before {
+                    right: 0px;
+                    left: 0px;
+                }
+                .column-filter {
+                    width: inherit;
+                    height: inherit;
+                }
             }
         }
     }
@@ -159,6 +231,24 @@
 
         .bp3-dialog-footer-actions {
             padding-top: 2px;
+            height: 35px;
+
+            .catalog-max-rows {
+
+                .bp3-label {
+                    overflow: hidden;
+                    width: 65px;
+                    height: 30px;
+                }
+
+                .bp3-form-content {
+                    .bp3-control-group {
+                        .bp3-input-group {
+                            width: 110px;
+                        } 
+                    }
+                }
+            }
         }
     }
 }

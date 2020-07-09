@@ -1,9 +1,10 @@
 import * as React from "react";
 import * as _ from "lodash";
-import {ChartArea, ChartData, ChartDataSets, ChartOptions} from "chart.js";
+import * as tinycolor from "tinycolor2";
+import {ChartArea, ChartDataSets, ChartOptions} from "chart.js";
 import {Scatter} from "react-chartjs-2";
 import {Colors} from "@blueprintjs/core";
-import {clamp, hexStringToRgba, toExponential, toFixed} from "utilities";
+import {clamp, toExponential, toFixed} from "utilities";
 
 export enum TickType {
     Automatic,
@@ -321,10 +322,7 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
         let lineColor = this.props.lineColor || (this.props.darkMode ? Colors.BLUE4 : Colors.BLUE2);
         const opacity = clamp(this.props.opacity || 1.0, 0, 1);
         if (opacity < 1.0) {
-            const rgb = hexStringToRgba(lineColor);
-            if (rgb) {
-                lineColor = `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${opacity})`;
-            }
+            lineColor = tinycolor(lineColor).setAlpha(opacity).toRgbString();
         }
 
         // ChartJS plot
@@ -462,10 +460,7 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
             this.props.multiPlotData.forEach((value, key) => {
                 let currentLineColor = this.props.multiPlotBorderColor ? this.props.multiPlotBorderColor.get(key) : lineColor;
                 if (opacity < 1.0) {
-                    const rgb = hexStringToRgba(currentLineColor);
-                    if (rgb) {
-                        currentLineColor = `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${opacity})`;
-                    }
+                    currentLineColor = tinycolor(currentLineColor).setAlpha(opacity).toRgbString();
                 }
                 const multiPlotDatasetConfig: MulticolorLineChartDatasets = {
                     type: this.props.plotType ? this.props.plotType : "line",
