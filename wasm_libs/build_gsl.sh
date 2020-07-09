@@ -13,6 +13,9 @@ echo "Building GSL using Emscripten"
 ./autogen.sh
 echo "Configure host=wasm32"
 if CFLAGS="-g0 -O3 -s WASM=1" emconfigure ./configure --host=wasm32 --prefix=${PWD}/../built ; then
+    echo "host=wasm32 succeeded!"
+else
+    echo "host=wasm32 failed!"
     echo "Configure without host=wasm32"
     CFLAGS="-g0 -O3 -s WASM=1" emconfigure ./configure --prefix=${PWD}/../built
 fi
