@@ -76,31 +76,31 @@ int EMSCRIPTEN_KEEPALIVE filterHanning(double* yInArray, const int N, double* yO
     return status;
 }
 
-int EMSCRIPTEN_KEEPALIVE filterDecimation(double* xInArray, double* yInArray, const int inN, double* xOutArray, double* yOutArray, const int outN, const int decimationFactor) {
+int EMSCRIPTEN_KEEPALIVE filterDecimation(double* xInArray, double* yInArray, const int inN, double* xOutArray, double* yOutArray, const int outN, const int decimationWidth) {
     int status = 0;    /* return value: 0 = success */
     int* indexArray = new int[outN];
-    for (size_t i = 0; i <= inN/decimationFactor; i++) {
-        if (i == inN/decimationFactor) {
-            if (inN % decimationFactor == 0) {
+    for (size_t i = 0; i <= inN / decimationWidth; i++) {
+        if (i == inN / decimationWidth) {
+            if (inN % decimationWidth == 0) {
                 break;
-            } else if (inN % decimationFactor == 1) {
-                indexArray[i*2] = i * decimationFactor;
+            } else if (inN % decimationWidth == 1) {
+                indexArray[i*2] = i * decimationWidth;
                 break;
             }
         }
 
         size_t* minIndex = new size_t[1];
         size_t* maxIndex = new size_t[1];
-        if (i == inN/decimationFactor && inN % decimationFactor != 0) {
-            gsl_stats_minmax_index(maxIndex, minIndex, &yInArray[i * decimationFactor], 1, inN % decimationFactor);
+        if (i == inN / decimationWidth && inN % decimationWidth != 0) {
+            gsl_stats_minmax_index(maxIndex, minIndex, &yInArray[i * decimationWidth], 1, inN % decimationWidth);
         } else {
-            gsl_stats_minmax_index(maxIndex, minIndex, &yInArray[i * decimationFactor], 1, decimationFactor);
+            gsl_stats_minmax_index(maxIndex, minIndex, &yInArray[i * decimationWidth], 1, decimationWidth);
         }
 
-        indexArray[i*2] = i * decimationFactor + minIndex[0];
-        indexArray[i*2 + 1] = i * decimationFactor + maxIndex[0];
+        indexArray[i*2] = i * decimationWidth + minIndex[0];
+        indexArray[i*2 + 1] = i * decimationWidth + maxIndex[0];
         if (minIndex[0] == maxIndex[0]) {
-            indexArray[i*2 + 1] = (i + 1) * decimationFactor - 1;
+            indexArray[i*2 + 1] = (i + 1) * decimationWidth - 1;
         }
     }
 

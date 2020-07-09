@@ -15,7 +15,7 @@ export class ProfileSmoothingStore {
     @observable boxcarSize: number;
     @observable gaussianSigma: number;
     @observable hanningSize: number;
-    @observable decimationValue: number;
+    @observable decimationWidth: number;
     @observable binWidth: number;
     @observable savitzkyGolaySize: number;
     @observable savitzkyGolayOrder: number;
@@ -31,7 +31,7 @@ export class ProfileSmoothingStore {
         this.boxcarSize = 2;
         this.gaussianSigma = 1.0;
         this.hanningSize = 3;
-        this.decimationValue = 2;
+        this.decimationWidth = 3;
         this.binWidth = 2;
         this.savitzkyGolaySize = 5;
         this.savitzkyGolayOrder = 0;
@@ -55,7 +55,7 @@ export class ProfileSmoothingStore {
     }
 
     @action setLineWidth = (val: number) => {
-        if (val >= LineSettings.MIN_WIDTH && val <= LineSettings.MIN_WIDTH) {
+        if (val >= LineSettings.MIN_WIDTH && val <= LineSettings.MAX_WIDTH) {
             this.lineWidth = val;
         }
     }
@@ -82,8 +82,8 @@ export class ProfileSmoothingStore {
         this.hanningSize = val;
     }
 
-    @action setDecimationValue = (val: number) => {
-        this.decimationValue = val;
+    @action setDecimationWidth = (val: number) => {
+        this.decimationWidth = val;
     }
 
     @action setBinWidth = (val: number) => {
@@ -113,7 +113,7 @@ export class ProfileSmoothingStore {
         } else if (this.type === SmoothingType.HANNING) {
             exportData.set("kernel", String(this.hanningSize));
         } else if (this.type === SmoothingType.DECIMATION) {
-            exportData.set("decimation value", String(this.decimationValue));
+            exportData.set("decimation value", String(this.decimationWidth));
         } else if (this.type === SmoothingType.BINNING) {
             exportData.set("bin width", String(this.setBinWidth));
         } else if (this.type === SmoothingType.SAVITZKY_GOLAY) {
@@ -139,9 +139,9 @@ export class ProfileSmoothingStore {
         } else if (this.type === SmoothingType.HANNING) {
             smoothingYs = GSL.hanningSmooth(y, this.hanningSize);
         } else if (this.type === SmoothingType.DECIMATION) {
-            let decimationValues = GSL.decimation(x, y, this.decimationValue);
-            smoothingXs = decimationValues.x;
-            smoothingYs = decimationValues.y;
+            let decimatedValues = GSL.decimation(x, y, this.decimationWidth);
+            smoothingXs = decimatedValues.x;
+            smoothingYs = decimatedValues.y;
         } else if (this.type === SmoothingType.BINNING) {
             smoothingXs = GSL.binning(x, this.binWidth);
             smoothingYs = GSL.binning(y, this.binWidth);
@@ -165,19 +165,15 @@ export class ProfileSmoothingStore {
         return smoothingArray;
     }
 
-    getDecimatedValues(x: number[], y: Float32Array|Float64Array, decimationValue: number): Point2D[] {
-        if (!y) {
+    getDecimatedPoint2DArray(x: number[], y: Float32Array|Float64Array, decimationWidth: number): Point2D[] {
+        if (!x || !y || x.length !== y.length) {
             return[];
         }
 
         let decimatedArray: Point2D[] = [];
-        let decimatedIndexes: number[] = GSL.decimation(y, decimationValue);
-        for (let i = 0; i < decimatedIndexes.length; i++) {
-            if (x && x.length > 0) {
-                decimatedArray.push({x: x[decimatedIndexes[i]], y: y[decimatedIndexes[i]]});
-            } else {
-                decimatedArray.push({x: decimatedIndexes[i], y: y[decimatedIndexes[i]]});
-            }
+        let decimatedValues = GSL.decimation(x, y, decimationWidth);
+        for (let i = 0; i < x.length; i++) {
+            decimatedArray.push({x: decimatedValues.x[i], y: decimatedValues.y[i]});
         }
         return decimatedArray;
     }

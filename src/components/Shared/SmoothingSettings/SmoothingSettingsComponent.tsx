@@ -141,13 +141,13 @@ export class SmoothingSettingsComponent extends React.Component<{smoothingStore:
                 </FormGroup>
                 }
                 {(smoothingStore.type === SmoothingType.DECIMATION) &&
-                <FormGroup label={"Decimation Value"} inline={true}>
+                <FormGroup label={"Width"} inline={true}>
                     <SafeNumericInput
-                        value={smoothingStore.decimationValue}
+                        value={smoothingStore.decimationWidth}
                         min={2}
                         stepSize={1}
                         className="narrow"
-                        onValueChange={val => smoothingStore.setDecimationValue(Math.round(val))}
+                        onValueChange={val => smoothingStore.setDecimationWidth(Math.round(val))}
                     />
                 </FormGroup>
                 }
