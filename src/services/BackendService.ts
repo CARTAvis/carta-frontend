@@ -1,7 +1,7 @@
 import {action, observable} from "mobx";
 import {CARTA} from "carta-protobuf";
 import {Observable, Observer, Subject, throwError} from "rxjs";
-import {PreferenceStore, RegionStore} from "stores";
+import {AppStore, PreferenceStore, RegionStore} from "stores";
 
 export enum ConnectionStatus {
     CLOSED = 0,
@@ -165,6 +165,7 @@ export class BackendService {
                     newConnection.onclose = this.connection.onclose;
                     newConnection.onmessage = this.connection.onmessage;
                     this.connection = newConnection;
+                    AppStore.Instance.logStore.addInfo(`Connecting to server ${url}...`, ["network"]);
                 }, 1000);
             }
         };
