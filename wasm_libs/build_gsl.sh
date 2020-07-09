@@ -11,7 +11,7 @@ mkdir -p gsl; tar -xf gsl-2.6.tar.gz --directory ./gsl --strip-components=1
 cd gsl
 echo "Building GSL using Emscripten"
 ./autogen.sh
-CFLAGS="-g0 -O3 -s WASM=1" emconfigure ./configure --prefix=${PWD}/../built
+CFLAGS="-g0 -O3 -s WASM=1" emconfigure ./configure --host=wasm32 --prefix=${PWD}/../built
 emmake make -j4
 emmake make install
 echo "Checking for GSL static lib..."
@@ -19,4 +19,14 @@ if [[ $(find -L ../built/lib/libgsl.a -type f -size +192000c 2>/dev/null) ]]; th
     echo "Found"
 else
     echo "Not found!"
+    echo "Building GSL using Emscripten without host setting"
+    ./autogen.sh
+    CFLAGS="-g0 -O3 -s WASM=1" emconfigure ./configure --prefix=${PWD}/../built
+    emmake make -j4
+    emmake make install
+    if [[ $(find -L ../built/lib/libgsl.a -type f -size +192000c 2>/dev/null) ]]; then
+        echo "Found"
+    else
+        echo "Not found!"
+    fi
 fi
