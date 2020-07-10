@@ -332,6 +332,9 @@ export class WidgetsStore {
             case StokesAnalysisComponent.WIDGET_CONFIG.type:
                 itemId = this.addStokesWidget(null, widgetSettings);
                 break;
+            case SpectralLineOverlayComponent.WIDGET_CONFIG.type:
+                itemId = this.addSpectralLineOverlayWidget();
+                break;
             case CatalogOverlayComponent.WIDGET_CONFIG.type:
                 itemId = this.getNextComponentId(CatalogOverlayComponent.WIDGET_CONFIG);
                 AppStore.Instance.catalogProfiles.set(itemId, 1);
@@ -398,6 +401,7 @@ export class WidgetsStore {
         layout.registerComponent("image-view", ImageViewComponent);
         layout.registerComponent("spatial-profiler", SpatialProfilerComponent);
         layout.registerComponent("spectral-profiler", SpectralProfilerComponent);
+        layout.registerComponent("spectral-line-overlay", SpectralLineOverlayComponent);
         layout.registerComponent("stats", StatsComponent);
         layout.registerComponent("histogram", HistogramComponent);
         layout.registerComponent("render-config", RenderConfigComponent);
