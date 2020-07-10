@@ -994,6 +994,8 @@ export class AppStore {
         autorun(() => {
             if (this.astReady && this.zfpReady && this.cartaComputeReady && this.backendService.connectionStatus === ConnectionStatus.ACTIVE) {
                 setTimeout(this.hideSplashScreen, 500);
+            } else {
+                this.showSplashScreen();
             }
         });
     }
