@@ -2,6 +2,7 @@ import * as React from "react";
 import {observer} from "mobx-react";
 import {Pre, Tab, TabId, Tabs, NonIdealState, Spinner, Text} from "@blueprintjs/core";
 import {FixedSizeList as List} from "react-window";
+import AutoSizer from "react-virtualized-auto-sizer";
 import {CARTA} from "carta-protobuf";
 import {TableComponent, TableComponentProps} from "components/Shared";
 import "./FileInfoComponent.css";
@@ -62,7 +63,7 @@ export class FileInfoComponent extends React.Component<{
             case FileInfoType.IMAGE_FILE:
                 return <Pre className="file-info-pre">{this.getImageFileInfo(this.props.fileInfoExtended)}</Pre>;
             case FileInfoType.IMAGE_HEADER:
-                return this.renderImageHeaderList(this.props.fileInfoExtended);
+                return this.renderImageHeaderList();
             case FileInfoType.REGION_FILE:
                 return <Pre className="file-info-pre">{this.props.regionFileInfo}</Pre>;
             case FileInfoType.CATALOG_FILE:
@@ -104,24 +105,41 @@ export class FileInfoComponent extends React.Component<{
         return fileInfo;
     }
 
-    private renderImageHeaderList(fileInfoExtended: CARTA.IFileInfoExtended) {
-        const numHeaders = fileInfoExtended?.headerEntries?.length || 0;
-
-        const Row = ({index, style}) => (
-            <div style={style}>{fileInfoExtended.headerEntries[index].name}</div>
-        );
-
+    private renderHeaderRow = ({index, style}) => {
+        if (index < 0 || index >= this.props.fileInfoExtended?.headerEntries?.length) {
+            return null;
+        }
+        const header = this.props.fileInfoExtended.headerEntries[index];
+        if (header.name === "END") {
+            return <div style={style} className="header-name">{`${header.name}`}</div>;
+        } else {
+            return (
+                <div style={style}>
+                    <span className="header-name">{header.name}</span>
+                    <span className="header-value"> = {`${header.value}`}</span>
+                    {header.comment && <span className="header-comment"> / {header.comment} </span>}
+                </div>
+            );
+        }
+    };
+    
+    private renderImageHeaderList() {
+        const numHeaders = this.props.fileInfoExtended?.headerEntries?.length || 0;
         return (
-            <Pre>
-                <List
-                    itemCount={numHeaders}
-                    itemSize={20}
-                    height={200}
-                    width={400}
-                >
-                    {Row}
-                </List>
-            </Pre>
+            <AutoSizer>
+                {({height, width}) => (
+                    <Pre className="file-info-pre" style={{width, height}}>
+                        <List
+                            itemCount={numHeaders}
+                            itemSize={18}
+                            height={height}
+                            width={width}
+                        >
+                            {this.renderHeaderRow}
+                        </List>
+                    </Pre>
+                )}
+            </AutoSizer>
         );
     }
 
