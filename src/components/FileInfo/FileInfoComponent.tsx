@@ -28,7 +28,6 @@ export class FileInfoComponent extends React.Component<{
     catalogHeaderTable?: TableComponentProps
 }> {
 
-    private static readonly MaxFormattedHeaders = 1000;
     private renderInfoTabs = () => {
         const infoTypes = this.props.infoTypes;
         const tabEntries = infoTypes.map(infoType => {
@@ -61,9 +60,9 @@ export class FileInfoComponent extends React.Component<{
         }
         switch (this.props.selectedTab) {
             case FileInfoType.IMAGE_FILE:
-                return <Pre className="file-info-pre">{this.getImageFileInfo(this.props.fileInfoExtended)}</Pre>;
+                return this.renderImageHeaderList(this.props.fileInfoExtended.computedEntries);
             case FileInfoType.IMAGE_HEADER:
-                return this.renderImageHeaderList();
+                return this.renderImageHeaderList(this.props.fileInfoExtended.headerEntries);
             case FileInfoType.REGION_FILE:
                 return <Pre className="file-info-pre">{this.props.regionFileInfo}</Pre>;
             case FileInfoType.CATALOG_FILE:
@@ -86,6 +85,43 @@ export class FileInfoComponent extends React.Component<{
         }
     };
 
+    private renderImageHeaderList(entries: CARTA.IHeaderEntry[]) {
+        const renderHeaderRow = ({index, style}) => {
+            if (index < 0 || index >= entries?.length) {
+                return null;
+            }
+            const header = entries[index];
+            if (header.name === "END") {
+                return <div style={style} className="header-name">{`${header.name}`}</div>;
+            } else {
+                return (
+                    <div style={style} className="header-entry">
+                        <span className="header-name">{header.name}</span>
+                        <span className="header-value"> = {`${header.value}`}</span>
+                        {header.comment && <span className="header-comment"> / {header.comment} </span>}
+                    </div>
+                );
+            }
+        };
+
+        const numHeaders = entries?.length || 0;
+        return (
+            <AutoSizer>
+                {({height, width}) => (
+                    <List
+                        className="header-list bp3-code-block"
+                        itemCount={numHeaders}
+                        itemSize={18}
+                        height={height}
+                        width={width}
+                    >
+                        {renderHeaderRow}
+                    </List>
+                )}
+            </AutoSizer>
+        );
+    }
+
     render() {
         return (
             <div className="file-info">
@@ -93,94 +129,5 @@ export class FileInfoComponent extends React.Component<{
                 {this.renderInfoPanel()}
             </div>
         );
-    }
-
-    private getImageFileInfo(fileInfoExtended: CARTA.IFileInfoExtended) {
-        let fileInfo = "";
-        if (fileInfoExtended && fileInfoExtended.computedEntries) {
-            fileInfoExtended.computedEntries.forEach(header => {
-                fileInfo += `${header.name} = ${header.value}\n`;
-            });
-        }
-        return fileInfo;
-    }
-
-    private renderHeaderRow = ({index, style}) => {
-        if (index < 0 || index >= this.props.fileInfoExtended?.headerEntries?.length) {
-            return null;
-        }
-        const header = this.props.fileInfoExtended.headerEntries[index];
-        if (header.name === "END") {
-            return <div style={style} className="header-name">{`${header.name}`}</div>;
-        } else {
-            return (
-                <div style={style}>
-                    <span className="header-name">{header.name}</span>
-                    <span className="header-value"> = {`${header.value}`}</span>
-                    {header.comment && <span className="header-comment"> / {header.comment} </span>}
-                </div>
-            );
-        }
-    };
-    
-    private renderImageHeaderList() {
-        const numHeaders = this.props.fileInfoExtended?.headerEntries?.length || 0;
-        return (
-            <AutoSizer>
-                {({height, width}) => (
-                    <Pre className="file-info-pre" style={{width, height}}>
-                        <List
-                            itemCount={numHeaders}
-                            itemSize={18}
-                            height={height}
-                            width={width}
-                        >
-                            {this.renderHeaderRow}
-                        </List>
-                    </Pre>
-                )}
-            </AutoSizer>
-        );
-    }
-
-    private getImageHeaders(fileInfoExtended: CARTA.IFileInfoExtended) {
-        let headers = [];
-        if (fileInfoExtended?.headerEntries) {
-            let overflowHeaderText = "";
-            const numFormattedHeaders = Math.min(fileInfoExtended.headerEntries.length, FileInfoComponent.MaxFormattedHeaders);
-
-            // Add formatted headers as separate spans for name, value and comment
-            for (let i = 0; i < numFormattedHeaders; i++) {
-                const header = fileInfoExtended.headerEntries[i];
-                if (header.name === "END") {
-                    headers.push(<span key={headers.length} className="header-name">{`${header.name}`}</span>);
-                } else {
-                    headers.push(<span className="header-name" key={headers.length}>{header.name}</span>);
-                    headers.push(<span key={headers.length} className="header-value"> = {`${header.value}`}</span>);
-                    if (header.comment) {
-                        headers.push(<span key={headers.length} className="header-comment">{` / ${header.comment}`}</span>);
-                    }
-                }
-                headers.push(<br key={headers.length}/>);
-            }
-
-            // Add "overflow" headers into one long span
-            for (let i = FileInfoComponent.MaxFormattedHeaders; i < fileInfoExtended.headerEntries.length; i++) {
-                const header = fileInfoExtended.headerEntries[i];
-                if (header.name === "END") {
-                    overflowHeaderText += `${header.name}`;
-                } else {
-                    overflowHeaderText += `${header.name} = ${header.value}`;
-                    if (header.comment) {
-                        overflowHeaderText += ` / ${header.comment}`;
-                    }
-                }
-                overflowHeaderText += "\n";
-            }
-            if (overflowHeaderText) {
-                headers.push(<span key={headers.length} className="header-overflow">{overflowHeaderText}</span>);
-            }
-        }
-        return headers;
     }
 }

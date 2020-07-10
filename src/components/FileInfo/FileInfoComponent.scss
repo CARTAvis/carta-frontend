@@ -8,20 +8,30 @@
         overflow: auto;
         height: 100%;
         flex: 2 2 auto;
+    }
 
-        .header-name {
-            color: $blue2;
-            font-weight: bold;
+
+    .header-list {
+        display: block;
+        unicode-bidi: embed;
+        font-family: monospace;
+        white-space: pre;
+
+        .header-entry {
+            padding-left: 15px;
+            padding-right: 15px;
+            padding-top: 15px;
+            .header-name {
+                color: $blue2;
+                font-weight: bold;
+            }
+
+            .header-comment {
+                opacity: 0.5;
+                font-style: italic;
+            }
         }
 
-        .header-comment {
-            opacity: 0.5;
-            font-style: italic;
-        }
-
-        .header-overflow {
-            opacity: 0.8;
-        }
     }
 
     .bp3-heading {
