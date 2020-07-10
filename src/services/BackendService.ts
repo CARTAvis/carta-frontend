@@ -195,7 +195,10 @@ export class BackendService {
                 }
             };
 
-            this.connection.onerror = (ev => console.log(ev));
+            this.connection.onerror = (ev => {
+                AppStore.Instance.logStore.addInfo(`Connecting to server ${url} failed. Retrying...`, ["network"]);
+                console.log(ev);
+            });
         });
     }
 

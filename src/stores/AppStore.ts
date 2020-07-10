@@ -1055,8 +1055,10 @@ export class AppStore {
 
         // Splash screen mask
         autorun(() => {
-            if (this.astReady && this.zfpReady && this.cartaComputeReady) {
+            if (this.astReady && this.zfpReady && this.cartaComputeReady && this.backendService.connectionStatus === ConnectionStatus.ACTIVE) {
                 setTimeout(this.hideSplashScreen, 500);
+            } else {
+                this.showSplashScreen();
             }
         });
     }
