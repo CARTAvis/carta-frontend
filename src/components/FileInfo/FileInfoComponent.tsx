@@ -1,6 +1,7 @@
 import * as React from "react";
 import {observer} from "mobx-react";
 import {Pre, Tab, TabId, Tabs, NonIdealState, Spinner, Text} from "@blueprintjs/core";
+import {FixedSizeList as List} from "react-window";
 import {CARTA} from "carta-protobuf";
 import {TableComponent, TableComponentProps} from "components/Shared";
 import "./FileInfoComponent.css";
@@ -61,7 +62,7 @@ export class FileInfoComponent extends React.Component<{
             case FileInfoType.IMAGE_FILE:
                 return <Pre className="file-info-pre">{this.getImageFileInfo(this.props.fileInfoExtended)}</Pre>;
             case FileInfoType.IMAGE_HEADER:
-                return <Pre className="file-info-pre">{this.getImageHeaders(this.props.fileInfoExtended)}</Pre>;
+                return this.renderImageHeaderList(this.props.fileInfoExtended);
             case FileInfoType.REGION_FILE:
                 return <Pre className="file-info-pre">{this.props.regionFileInfo}</Pre>;
             case FileInfoType.CATALOG_FILE:
@@ -101,6 +102,27 @@ export class FileInfoComponent extends React.Component<{
             });
         }
         return fileInfo;
+    }
+
+    private renderImageHeaderList(fileInfoExtended: CARTA.IFileInfoExtended) {
+        const numHeaders = fileInfoExtended?.headerEntries?.length || 0;
+
+        const Row = ({index, style}) => (
+            <div style={style}>{fileInfoExtended.headerEntries[index].name}</div>
+        );
+
+        return (
+            <Pre>
+                <List
+                    itemCount={numHeaders}
+                    itemSize={20}
+                    height={200}
+                    width={400}
+                >
+                    {Row}
+                </List>
+            </Pre>
+        );
     }
 
     private getImageHeaders(fileInfoExtended: CARTA.IFileInfoExtended) {
