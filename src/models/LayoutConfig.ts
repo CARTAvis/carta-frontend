@@ -70,6 +70,12 @@ const COMPONENT_CONFIG = new Map<string, any>([
         component: "log",
         title: "Log",
         id: "log"
+    }],
+    ["spectral-line-overlay", {
+        type: "react-component",
+        component: "spectral-line-overlay",
+        title: "Spectral Line Overlay",
+        id: "spectral-line-overlay"
     }]
 ]);
 
@@ -146,7 +152,7 @@ const DOCKED_SCHEMA = {
             },
             "id": {
                 "type": "string",
-                "pattern": "animator|histogram|image-view|layer-list|log|region\-list|render\-config|spatial\-profiler|spectral\-profiler|stats|stokes"
+                "pattern": "animator|histogram|image-view|layer-list|log|region\-list|render\-config|spatial\-profiler|spectral\-profiler|stats|stokes|spectral\-line\-overlay"
             },
             "widgetSettings": {
                 "type": "object"
@@ -204,7 +210,7 @@ const FLOATING_WIDGET_SCHEMA = {
         "properties": {
             "type": {
                 "type": "string",
-                "pattern": "animator|histogram|layer-list|log|region\-list|render\-config|spatial\-profiler|spectral\-profiler|stats|stokes"
+                "pattern": "animator|histogram|layer-list|log|region\-list|render\-config|spatial\-profiler|spectral\-profiler|stats|stokes|spectral\-line\-overlay"
             },
             "widgetSettings": {
                 "type": "object"

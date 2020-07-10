@@ -33,8 +33,7 @@ export class SpectralLineOverlayComponent extends React.Component<WidgetProps> {
             defaultHeight: 600,
             title: "Spectral Line Overlay",
             isCloseable: true,
-            helpType: HelpType.SPECTRAL_LINE_OVERLAY,
-            componentId: "spectral-line-overlay-component"
+            helpType: HelpType.SPECTRAL_LINE_OVERLAY
         };
     }
 
