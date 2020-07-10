@@ -1,7 +1,7 @@
 import * as GoldenLayout from "golden-layout";
 import * as $ from "jquery";
 import {CARTA} from "carta-protobuf";
-import {action, observable, computed} from "mobx";
+import {action, observable} from "mobx";
 import {
     AnimatorComponent,
     HistogramComponent,
@@ -350,11 +350,10 @@ export class WidgetsStore {
         if (config?.type) {
             let configTemplate = WidgetsStore.getDefaultWidgetConfig(config.type);
             configTemplate.id = this.addWidgetByType(config.type, config?.widgetSettings);
-            /*
+            // instantiate catalog widget needs to specify componentId
             if (config.type === CatalogOverlayComponent.WIDGET_CONFIG.type) {
                 configTemplate.componentId = configTemplate.id;
             }
-            */
             if (config?.defaultWidth > 0) {
                 configTemplate.defaultWidth = config.defaultWidth;
             }
