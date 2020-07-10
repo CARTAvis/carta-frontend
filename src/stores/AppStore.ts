@@ -997,11 +997,18 @@ export class AppStore {
         // Splash screen mask
         autorun(() => {
             if (this.astReady && this.zfpReady && this.cartaComputeReady && this.apiService.authenticated) {
-                setTimeout(this.hideSplashScreen, 500);
                 this.preferenceStore.fetchPreferences().then(() => {
                     // Attempt connection after authenticating
                     this.connectToServer();
                 });
+            }
+        });
+
+        autorun(() => {
+            if (this.backendService.connectionStatus === ConnectionStatus.ACTIVE) {
+                setTimeout(this.hideSplashScreen, 500);
+            } else {
+                this.showSplashScreen();
             }
         });
     }

@@ -2,7 +2,6 @@ import axios, {AxiosInstance} from "axios";
 import * as Ajv from "ajv";
 import {observable} from "mobx";
 import {AppToaster} from "components/Shared";
-import {AppStore} from "../stores";
 
 const preferencesSchema = require("models/preferences_schema_1.json");
 
@@ -47,10 +46,14 @@ export class ApiService {
                                 this._accessToken = res.id_token;
                                 this.axiosInstance.defaults.headers.common["Authorization"] = `Bearer ${res.id_token}`;
                                 this.authenticated = true;
+                                console.log("Authenticated with google");
                             });
                         } else {
+                            console.log("Not authenticated!");
                             this.authenticated = false;
                         }
+                    }, reason => {
+                        console.log(reason);
                     });
                 } catch (e) {
                     console.log(e);
