@@ -103,8 +103,8 @@ export class ApiService {
     private handleAuthLost = () => {
         if (ApiService.DashboardUrl) {
             this.clearToken();
-            const redirectUrl = btoa(window.location.href);
-            window.open(`${ApiService.DashboardUrl}?redirectUrl=${redirectUrl}`, "_self");
+            const redirectParams = btoa(window.location.search);
+            window.open(`${ApiService.DashboardUrl}?redirectParams=${redirectParams}`, "_self");
         } else {
             this.clearToken();
             AppToaster.show({icon: "warning-sign", message: "Could not authenticate with server", intent: "danger", timeout: 3000});
