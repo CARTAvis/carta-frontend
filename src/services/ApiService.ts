@@ -1,6 +1,6 @@
 import axios, {AxiosInstance} from "axios";
 import * as Ajv from "ajv";
-import {observable} from "mobx";
+import {action, computed, observable} from "mobx";
 import {AppToaster} from "components/Shared";
 
 const preferencesSchema = require("models/preferences_schema_1.json");
@@ -23,13 +23,45 @@ export class ApiService {
     // Support for V4 JSON schemas
     private static PreferenceValidator = new Ajv({schemaId: "auto"}).addMetaSchema(require("ajv/lib/refs/json-schema-draft-04.json")).compile(preferencesSchema);
 
-    @observable authenticated: boolean;
-
-    private _accessToken: string;
+    @observable private _accessToken: string;
+    private _tokenExpiry: number;
+    private _tokenExpiryHandler: any;
     private axiosInstance: AxiosInstance;
+    private authInstance: gapi.auth2.GoogleAuth;
+
+    @action private setToken = (tokenString: string) => {
+        const decodedToken = ApiService.DecodeJWT(tokenString);
+        if (decodedToken && decodedToken.payload && decodedToken.payload.exp) {
+            this._tokenExpiry = parseInt(decodedToken.payload.exp);
+            const dt = this.tokenLifetime;
+            if (isFinite(dt) && dt > 0) {
+                console.log(`Token updated and valid for ${dt.toFixed()} seconds`);
+                this._accessToken = tokenString;
+                this.axiosInstance.defaults.headers.common["Authorization"] = `Bearer ${tokenString}`;
+                return true;
+            }
+        }
+        this.clearToken();
+        return false;
+    };
 
     get accessToken() {
         return this._accessToken;
+    }
+
+    get tokenLifetime() {
+        const currentTime = Date.now() / 1000;
+        return this._tokenExpiry - currentTime;
+    }
+
+    @action private clearToken = () => {
+        this._accessToken = undefined;
+        this._tokenExpiry = -1;
+        delete this.axiosInstance.defaults.headers.common["Authorization"];
+    };
+
+    @computed get authenticated() {
+        return (this._accessToken && this._tokenExpiry > 0);
     }
 
     constructor() {
@@ -38,68 +70,99 @@ export class ApiService {
             gapi.load("auth2", () => {
                 console.log("Google auth loaded");
                 try {
-                    gapi.auth2.init({client_id: ApiService.GoogleClientId, scope: "profile email"}).then(() => {
-                        const authInstance = gapi.auth2.getAuthInstance();
-                        const currentUser = authInstance?.currentUser.get();
-                        if (currentUser?.isSignedIn()) {
-                            currentUser.reloadAuthResponse().then(res => {
-                                this._accessToken = res.id_token;
-                                this.axiosInstance.defaults.headers.common["Authorization"] = `Bearer ${res.id_token}`;
-                                this.authenticated = true;
-                                console.log("Authenticated with google");
-                            });
-                        } else {
-                            console.log("Not authenticated!");
-                            this.authenticated = false;
-                        }
-                    }, reason => {
-                        console.log(reason);
+                    gapi.auth2.init({client_id: ApiService.GoogleClientId, scope: "profile email"}).then(this.onTokenExpired, failureReason => {
+                        console.log(failureReason);
+                        this.handleAuthLost();
                     });
                 } catch (e) {
                     console.log(e);
+                    this.handleAuthLost();
                 }
             });
         } else if (ApiService.TokenRefreshUrl) {
-            // If there's a specified URL, we need to authenticate first
-            this.authenticated = false;
-            this.refreshAccessToken().then((res) => {
-                if (res) {
-                    this.authenticated = true;
-                } else if (ApiService.DashboardUrl) {
-                    const redirectUrl = btoa(window.location.href);
-                    window.open(`${ApiService.DashboardUrl}?redirectUrl=${redirectUrl}`, "_self");
-                } else {
-                    AppToaster.show({icon: "warning-sign", message: "Could not authenticate with server", intent: "danger", timeout: 3000});
-                }
-            });
+            this.onTokenExpired();
         } else {
-            this.authenticated = true;
+            this._accessToken = "no_auth_configured";
+            this._tokenExpiry = Number.MAX_VALUE;
         }
     }
 
-    public refreshAccessToken = async () => {
-        try {
-            const response = await this.axiosInstance.post(ApiService.TokenRefreshUrl);
-            if (response?.data?.access_token) {
-                this._accessToken = response.data.access_token;
-                this.axiosInstance.defaults.headers.common["Authorization"] = `Bearer ${response.data.access_token}`;
-                return true;
-            } else {
+    private onTokenExpired = async () => {
+        clearTimeout(this._tokenExpiryHandler);
+        const tokenRefreshed = await this.refreshAccessToken();
+        if (tokenRefreshed) {
+            console.log("Authenticated");
+            const dt = this.tokenLifetime;
+            // Queue up an access token refresh 10 seconds before the current one expires
+            this._tokenExpiryHandler = setTimeout(this.onTokenExpired, (dt - 10) * 1000);
+        } else {
+            this.handleAuthLost();
+        }
+    };
+
+    private handleAuthLost = () => {
+        if (ApiService.DashboardUrl) {
+            this.clearToken();
+            const redirectUrl = btoa(window.location.href);
+            window.open(`${ApiService.DashboardUrl}?redirectUrl=${redirectUrl}`, "_self");
+        } else {
+            this.clearToken();
+            AppToaster.show({icon: "warning-sign", message: "Could not authenticate with server", intent: "danger", timeout: 3000});
+        }
+    };
+
+    private refreshAccessToken = async () => {
+        if (ApiService.GoogleClientId) {
+            try {
+                this.authInstance = gapi.auth2.getAuthInstance();
+                const currentUser = this.authInstance?.currentUser.get();
+                if (currentUser?.isSignedIn()) {
+                    const authResponse = await currentUser.reloadAuthResponse();
+                    if (this.setToken(authResponse.id_token)) {
+                        console.log("Authenticated with Google");
+                        return true;
+                    } else {
+                        console.log("Error parsing Google access token");
+                        return false;
+                    }
+                } else {
+                    console.log("Not authenticated!");
+                    this.clearToken();
+                    return false;
+                }
+            } catch (e) {
                 return false;
             }
-        } catch (err) {
-            console.log(err);
+        } else if (ApiService.TokenRefreshUrl) {
+            try {
+                const response = await this.axiosInstance.post(ApiService.TokenRefreshUrl);
+                if (response?.data?.access_token) {
+                    this.setToken(response.data.access_token);
+                    return true;
+                } else {
+                    this.clearToken();
+                    return false;
+                }
+            } catch (err) {
+                this.clearToken();
+                console.log(err);
+                return false;
+            }
+        } else {
             return false;
         }
     };
 
     public logout = async () => {
-        this.authenticated = false;
-        this._accessToken = undefined;
-        try {
-            await this.axiosInstance.post(ApiService.LogoutUrl);
-        } catch (err) {
-            console.log(err);
+        this.clearToken();
+        if (ApiService.GoogleClientId) {
+            this.authInstance?.signOut();
+        } else if (ApiService.LogoutUrl) {
+            try {
+                await this.axiosInstance.post(ApiService.LogoutUrl);
+            } catch (err) {
+                console.log(err);
+            }
         }
         // Redirect to dashboard URL if it exists
         if (ApiService.DashboardUrl) {
@@ -210,4 +273,16 @@ export class ApiService {
             }
         }
     };
+
+    private static DecodeJWT(tokenString: string) {
+        try {
+            const [header, payload] = tokenString.split(".");
+            return {
+                header: JSON.parse(atob(header)),
+                payload: JSON.parse(atob(payload))
+            };
+        } catch (e) {
+            return undefined;
+        }
+    }
 }
