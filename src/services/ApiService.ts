@@ -24,22 +24,18 @@ export class ApiService {
     private static PreferenceValidator = new Ajv({schemaId: "auto"}).addMetaSchema(require("ajv/lib/refs/json-schema-draft-04.json")).compile(preferencesSchema);
 
     @observable private _accessToken: string;
-    private _tokenExpiry: number;
+    private _tokenLifetime: number;
     private _tokenExpiryHandler: any;
     private axiosInstance: AxiosInstance;
     private authInstance: gapi.auth2.GoogleAuth;
 
-    @action private setToken = (tokenString: string) => {
-        const decodedToken = ApiService.DecodeJWT(tokenString);
-        if (decodedToken && decodedToken.payload && decodedToken.payload.exp) {
-            this._tokenExpiry = parseInt(decodedToken.payload.exp);
-            const dt = this.tokenLifetime;
-            if (isFinite(dt) && dt > 0) {
-                console.log(`Token updated and valid for ${dt.toFixed()} seconds`);
-                this._accessToken = tokenString;
-                this.axiosInstance.defaults.headers.common["Authorization"] = `Bearer ${tokenString}`;
-                return true;
-            }
+    @action private setToken = (tokenString: string, tokenLifetime: number) => {
+        if (isFinite(tokenLifetime) && tokenLifetime > 0) {
+            console.log(`Token updated and valid for ${tokenLifetime.toFixed()} seconds`);
+            this._accessToken = tokenString;
+            this.axiosInstance.defaults.headers.common["Authorization"] = `Bearer ${tokenString}`;
+            this._tokenLifetime = tokenLifetime;
+            return true;
         }
         this.clearToken();
         return false;
@@ -50,18 +46,17 @@ export class ApiService {
     }
 
     get tokenLifetime() {
-        const currentTime = Date.now() / 1000;
-        return this._tokenExpiry - currentTime;
+        return this._tokenLifetime;
     }
 
     @action private clearToken = () => {
         this._accessToken = undefined;
-        this._tokenExpiry = -1;
+        this._tokenLifetime = -1;
         delete this.axiosInstance.defaults.headers.common["Authorization"];
     };
 
     @computed get authenticated() {
-        return (this._accessToken && this._tokenExpiry > 0);
+        return (this._accessToken && this._tokenLifetime > 0);
     }
 
     constructor() {
@@ -83,7 +78,7 @@ export class ApiService {
             this.onTokenExpired();
         } else {
             this._accessToken = "no_auth_configured";
-            this._tokenExpiry = Number.MAX_VALUE;
+            this._tokenLifetime = Number.MAX_VALUE;
         }
     }
 
@@ -118,7 +113,7 @@ export class ApiService {
                 const currentUser = this.authInstance?.currentUser.get();
                 if (currentUser?.isSignedIn()) {
                     const authResponse = await currentUser.reloadAuthResponse();
-                    if (this.setToken(authResponse.id_token)) {
+                    if (this.setToken(authResponse.id_token, authResponse.expires_in)) {
                         console.log("Authenticated with Google");
                         return true;
                     } else {
@@ -137,7 +132,8 @@ export class ApiService {
             try {
                 const response = await this.axiosInstance.post(ApiService.TokenRefreshUrl);
                 if (response?.data?.access_token) {
-                    this.setToken(response.data.access_token);
+                    // If access token does not expire, set lifetime to maximum
+                    this.setToken(response.data.access_token, response.data.expires_in || Number.MAX_VALUE);
                     return true;
                 } else {
                     this.clearToken();
@@ -273,16 +269,4 @@ export class ApiService {
             }
         }
     };
-
-    private static DecodeJWT(tokenString: string) {
-        try {
-            const [header, payload] = tokenString.split(".");
-            return {
-                header: JSON.parse(atob(header)),
-                payload: JSON.parse(atob(payload))
-            };
-        } catch (e) {
-            return undefined;
-        }
-    }
 }
