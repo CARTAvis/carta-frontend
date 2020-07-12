@@ -167,12 +167,7 @@ export class AppStore {
             }
         });
 
-        let fullUrl = wsURL;
-        if (this.apiService.accessToken) {
-            fullUrl += `?token=${this.apiService.accessToken}`;
-        }
-
-        this.backendService.connect(fullUrl).subscribe(ack => {
+        this.backendService.connect(wsURL).subscribe(ack => {
             console.log(`Connected with session ID ${ack.sessionId}`);
             connected = true;
             this.logStore.addInfo(`Connected to server ${wsURL} with session ID ${ack.sessionId}`, ["network"]);
