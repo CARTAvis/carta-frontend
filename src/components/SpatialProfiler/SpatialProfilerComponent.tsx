@@ -365,7 +365,7 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
             };
             const nearest = binarySearchByX(this.plotData.values, this.widgetStore.isMouseMoveIntoLinePlots ? cursorX.profiler : cursorX.image);
             let cursorString = "";
-            if (nearest && nearest.point) {
+            if (nearest?.point) {
                 const pixelPoint = isXCoordinate ? {
                     x: this.widgetStore.isMouseMoveIntoLinePlots ? nearest.point.x : this.profileStore.x,
                     y: this.profileStore.y
@@ -377,12 +377,12 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
                 // find wcs
                 let wcsValue;
                 const cursorInfo = this.frame.getCursorInfo(pixelPoint);
-                if (cursorInfo && cursorInfo.infoWCS) {
+                if (cursorInfo?.infoWCS) {
                     wcsValue = isXCoordinate ? cursorInfo.infoWCS.x : cursorInfo.infoWCS.y;
                 }
                 const wcsLabel = `WCS: ${wcsValue}`;
 
-                const pixelLabel = `Image: ${nearest.point.x} ${cursorX.unit}`;
+                const pixelLabel = `Image: ${toFixed(nearest.point.x)} ${cursorX.unit}`;
                 const xLabel = `${pixelLabel}, ${wcsLabel}`;
                 cursorString =  "(" + xLabel + ", " + toExponential(nearest.point.y, 2) + ")";
             }
