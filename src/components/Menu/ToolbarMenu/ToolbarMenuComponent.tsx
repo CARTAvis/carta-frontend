@@ -51,7 +51,7 @@ export class ToolbarMenuComponent extends React.Component {
             <React.Fragment>
                 <ButtonGroup className={className}>
                     <Tooltip content={<span>Region List Widget{commonTooltip}</span>}>
-                        <Button icon={"th-list"} id="regionListButton" onClick={appStore.widgetsStore.createFloatingRegionListWidget}/>
+                        <Button icon={"list"} id="regionListButton" className={"profiler-button"} onClick={appStore.widgetsStore.createFloatingRegionListWidget}/>
                     </Tooltip>
                     <Tooltip content={<span>Log Widget{commonTooltip}</span>}>
                         <Button icon={"application"} id="logButton" onClick={appStore.widgetsStore.createFloatingLogWidget}/>
@@ -92,10 +92,10 @@ export class ToolbarMenuComponent extends React.Component {
                 </ButtonGroup>
                 <ButtonGroup className={dialogClassName}>
                     <Tooltip content={<span>File Info</span>}>
-                        <Button icon={"info-sign"} onClick={dialogStore.showFileInfoDialog} className={dialogStore.fileInfoDialogVisible ? "bp3-active" : ""}/>
+                        <Button icon={"app-header"} onClick={dialogStore.showFileInfoDialog} className={dialogStore.fileInfoDialogVisible ? "bp3-active" : ""}/>
                     </Tooltip>
                     <Tooltip content={<span>Preference</span>}>
-                        <Button icon={"properties"} onClick={dialogStore.showPreferenceDialog} className={dialogStore.preferenceDialogVisible ? "bp3-active" : ""}/>
+                        <Button icon={"wrench"} onClick={dialogStore.showPreferenceDialog} className={dialogStore.preferenceDialogVisible ? "bp3-active" : ""}/>
                     </Tooltip>
                     <Tooltip content={<span>Overlay Settings</span>}>
                         <Button icon={"settings"} onClick={dialogStore.showOverlaySettings} className={dialogStore.overlaySettingsDialogVisible ? "bp3-active" : ""}/>

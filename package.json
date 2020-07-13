@@ -5,7 +5,7 @@
     "homepage": "./",
     "dependencies": {
         "@blueprintjs/core": "^3.19.1",
-        "@blueprintjs/icons": "^3.11.0",
+        "@blueprintjs/icons": "^3.19.0",
         "@blueprintjs/select": "^3.11.1",
         "@blueprintjs/table": "3.7.1",
         "@types/tinycolor2": "^1.4.2",
