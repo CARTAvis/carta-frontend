@@ -10,7 +10,7 @@ import {TickType} from "../Shared/LinePlot/PlotContainer/PlotContainerComponent"
 import {ASTSettingsString, FrameStore, SpatialProfileStore, WidgetConfig, WidgetProps, HelpType, OverlayStore, WidgetsStore, AppStore} from "stores";
 import {SpatialProfileWidgetStore} from "stores/widgets";
 import {Point2D} from "models";
-import {binarySearchByX, clamp, formattedNotation, getFormattedWCSString, toExponential, toFixed} from "utilities";
+import {binarySearchByX, clamp, formattedNotation, toExponential, toFixed} from "utilities";
 import "./SpatialProfilerComponent.css";
 
 // The fixed size of the settings panel popover (excluding the show/hide button)
@@ -356,19 +356,33 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
 
     private genProfilerInfo = (): string[] => {
         let profilerInfo: string[] = [];
+        const isXCoordinate = this.widgetStore.coordinate.indexOf("x") >= 0;
         if (this.plotData) {
             const cursorX = {
                 profiler: this.widgetStore.cursorX,
-                image: this.widgetStore.coordinate.indexOf("x") >= 0 ? this.profileStore.x : this.profileStore.y,
+                image: isXCoordinate ? this.profileStore.x : this.profileStore.y,
                 unit: "px"
             };
             const nearest = binarySearchByX(this.plotData.values, this.widgetStore.isMouseMoveIntoLinePlots ? cursorX.profiler : cursorX.image);
             let cursorString = "";
             if (nearest && nearest.point) {
-                // TODO: update getFormattedWCSString() to getFormattedWCSPoint()
+                const pixelPoint = isXCoordinate ? {
+                    x: this.widgetStore.isMouseMoveIntoLinePlots ? cursorX.profiler : this.profileStore.x,
+                    y: this.profileStore.y
+                } : {
+                    x: this.profileStore.x,
+                    y: this.widgetStore.isMouseMoveIntoLinePlots ? cursorX.profiler : this.profileStore.y
+                };
+
+                // find wcs
+                let wcsValue;
+                const cursorInfo = this.frame.getCursorInfo(pixelPoint);
+                if (cursorInfo && cursorInfo.infoWCS) {
+                    wcsValue = isXCoordinate ? cursorInfo.infoWCS.x : cursorInfo.infoWCS.y;
+                }
+                const wcsLabel = `WCS: ${wcsValue}`;
+
                 const pixelLabel = `Image: ${nearest.point.x} ${cursorX.unit}`;
-                const wcsPoint = this.frame.wcsInfo ? getFormattedWCSString(this.frame.wcsInfo, ) : null;
-                const wcsLabel = `WCS: ${wcsPoint ? wcsPoint : ""}`;
                 const xLabel = `${pixelLabel}, ${wcsLabel}`;
                 cursorString =  "(" + xLabel + ", " + toExponential(nearest.point.y, 2) + ")";
             }
