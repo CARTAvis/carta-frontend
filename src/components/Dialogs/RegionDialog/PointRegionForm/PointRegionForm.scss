@@ -3,14 +3,18 @@
 
     .form-contents {
         .bp3-numeric-input {
-            width: 100px;
+            width: 125px;
 
             .bp3-input-group {
                 width: 100%;
             }
         }
 
-        .wcs-string {
+        .wcs-input {
+            width: 125px;
+        }
+
+        .info-string {
             margin-left: 5px;
             font-size: x-small;
             font-family: monospace;
