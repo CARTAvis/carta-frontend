@@ -10,7 +10,7 @@ import {TickType} from "../Shared/LinePlot/PlotContainer/PlotContainerComponent"
 import {ASTSettingsString, FrameStore, SpatialProfileStore, WidgetConfig, WidgetProps, HelpType, OverlayStore, WidgetsStore, AppStore} from "stores";
 import {SpatialProfileWidgetStore} from "stores/widgets";
 import {Point2D} from "models";
-import {binarySearchByX, clamp, formattedNotation, toExponential, toFixed} from "utilities";
+import {binarySearchByX, clamp, formattedNotation, getFormattedWCSString, toExponential, toFixed} from "utilities";
 import "./SpatialProfilerComponent.css";
 
 // The fixed size of the settings panel popover (excluding the show/hide button)
@@ -365,7 +365,11 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
             const nearest = binarySearchByX(this.plotData.values, this.widgetStore.isMouseMoveIntoLinePlots ? cursorX.profiler : cursorX.image);
             let cursorString = "";
             if (nearest && nearest.point) {
-                const xLabel = cursorX.unit === "Channel" ? "Channel " + toFixed(nearest.point.x) : nearest.point.x + " " + cursorX.unit;
+                // TODO: update getFormattedWCSString() to getFormattedWCSPoint()
+                const pixelLabel = `Image: ${nearest.point.x} ${cursorX.unit}`;
+                const wcsPoint = this.frame.wcsInfo ? getFormattedWCSString(this.frame.wcsInfo, ) : null;
+                const wcsLabel = `WCS: ${wcsPoint ? wcsPoint : ""}`;
+                const xLabel = `${pixelLabel}, ${wcsLabel}`;
                 cursorString =  "(" + xLabel + ", " + toExponential(nearest.point.y, 2) + ")";
             }
 
@@ -520,8 +524,8 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
                 <div className="profile-container">
                     <div className="profile-plot">
                         <LinePlotComponent {...linePlotProps}/>
-                        <ProfilerInfoComponent info={this.genProfilerInfo()}/>
                     </div>
+                    <ProfilerInfoComponent info={this.genProfilerInfo()}/>
                 </div>
                 <ReactResizeDetector handleWidth handleHeight onResize={this.onResize} refreshMode={"throttle"} refreshRate={33}/>
             </div>
