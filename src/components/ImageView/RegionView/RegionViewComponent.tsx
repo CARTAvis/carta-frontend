@@ -54,7 +54,7 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
         const frame = this.props.frame;
         if (frame.wcsInfo) {
             const imagePos = canvasToTransformedImagePos(x, y, frame, this.props.width, this.props.height);
-            this.props.frame.setCursorInfo(this.props.frame.getCursorInfo(imagePos));
+            this.props.frame.setCursorInfo(this.props.frame.getCursorInfo({x: Math.floor(imagePos.x), y: Math.floor(imagePos.y)}));
         }
     }, 100);
 

@@ -367,11 +367,11 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
             let cursorString = "";
             if (nearest && nearest.point) {
                 const pixelPoint = isXCoordinate ? {
-                    x: this.widgetStore.isMouseMoveIntoLinePlots ? cursorX.profiler : this.profileStore.x,
+                    x: this.widgetStore.isMouseMoveIntoLinePlots ? nearest.point.x : this.profileStore.x,
                     y: this.profileStore.y
                 } : {
                     x: this.profileStore.x,
-                    y: this.widgetStore.isMouseMoveIntoLinePlots ? cursorX.profiler : this.profileStore.y
+                    y: this.widgetStore.isMouseMoveIntoLinePlots ? nearest.point.x : this.profileStore.y
                 };
 
                 // find wcs
