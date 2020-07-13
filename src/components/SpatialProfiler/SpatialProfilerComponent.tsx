@@ -382,7 +382,7 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
                 }
                 const wcsLabel = `WCS: ${wcsValue}`;
 
-                const pixelLabel = `Image: ${toFixed(nearest.point.x)} ${cursorX.unit}`;
+                const pixelLabel = `Image: ${nearest.point.x} ${cursorX.unit}`;
                 const xLabel = `${pixelLabel}, ${wcsLabel}`;
                 cursorString =  "(" + xLabel + ", " + toExponential(nearest.point.y, 2) + ")";
             }
