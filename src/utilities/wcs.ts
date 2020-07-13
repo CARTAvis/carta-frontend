@@ -1,7 +1,7 @@
 import {CARTA} from "carta-protobuf";
 import * as AST from "ast_wrapper";
-import {Point2D, SpectralType} from "models";
-import {add2D} from "./math2d";
+import {Point2D, WCSPoint2D, SpectralType} from "models";
+import {add2D, subtract2D} from "./math2d";
 
 export function getHeaderNumericValue(headerEntry: CARTA.IHeaderEntry): number {
     if (!headerEntry) {
@@ -19,7 +19,7 @@ export function getTransformedCoordinates(astTransform: number, point: Point2D, 
     return AST.transformPoint(astTransform, point.x, point.y, forward);
 }
 
-export function getFormattedWCSString(astTransform: number, pixelCoords: Point2D, addPixelOffset: boolean = true) {
+export function getFormattedWCSPoint(astTransform: number, pixelCoords: Point2D, addPixelOffset: boolean = true): WCSPoint2D {
     if (addPixelOffset) {
         pixelCoords = add2D(pixelCoords, {x: 1, y: 1});
     }
@@ -28,10 +28,21 @@ export function getFormattedWCSString(astTransform: number, pixelCoords: Point2D
         const normVals = AST.normalizeCoordinates(astTransform, pointWCS.x, pointWCS.y);
         const wcsCoords = AST.getFormattedCoordinates(astTransform, normVals.x, normVals.y);
         if (wcsCoords) {
-            return `WCS: (${wcsCoords.x}, ${wcsCoords.y})`;
+            return wcsCoords;
         }
     }
-    return "";
+    return null;
+}
+
+export function getPixelValueFromWCS(astTransform: number, formattedWCSPoint: WCSPoint2D, addPixelOffset: boolean = true): Point2D {
+    if (astTransform) {
+        const pointWCS = AST.getWCSValueFromFormattedString(astTransform, formattedWCSPoint);
+        let pointImage = getTransformedCoordinates(astTransform, pointWCS, false);
+        if (pointImage) {
+            return addPixelOffset ? subtract2D(pointImage, {x: 1, y: 1}) : pointImage;
+        }
+    }
+    return null;
 }
 
 export function getTransformedChannel(srcTransform: number, destTransform: number, matchingType: SpectralType, srcChannel: number) {

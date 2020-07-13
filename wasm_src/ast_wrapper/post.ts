@@ -102,6 +102,7 @@ Module.dump = Module.cwrap("dump", null, ["number"]);
 Module.norm = Module.cwrap("norm", "number", ["number", "number"]);
 Module.axDistance = Module.cwrap("axDistance", "number", ["number", "number", "number", "number"]);
 Module.format = Module.cwrap("format", "string", ["number", "number", "number"]);
+Module.unformat = Module.cwrap("unformat", "number", ["number", "number", "string", "number"]);
 Module.transform = Module.cwrap("transform", "number", ["number", "number", "number", "number", "number", "number", "number"]);
 Module.transform3D = Module.cwrap("transform3D", "number", ["number", "number", "number", "number", "number", "number"]);
 Module.spectralTransform = Module.cwrap("spectralTransform", "number", ["number", "string", "string", "string", "number", "number", "number", "number"]);
@@ -139,6 +140,15 @@ Module.getFormattedCoordinates = function (wcsInfo: number, x: number, y: number
     }
     return {x: xFormat, y: yFormat};
 };
+
+Module.getWCSValueFromFormattedString = function (wcsInfo: number, formatString: {x: string, y: string}) {
+    const N = 1;
+    Module.unformat(wcsInfo, 1, formatString.x, Module.xOut);
+    Module.unformat(wcsInfo, 2, formatString.y, Module.yOut);
+    const xOut = new Float64Array(Module.HEAPF64.buffer, Module.xOut, N);
+    const yOut = new Float64Array(Module.HEAPF64.buffer, Module.yOut, N);
+    return {x: xOut[0], y: yOut[0]};
+}
 
 Module.transformPointArrays = function (wcsInfo: number, xIn: Float64Array, yIn: Float64Array, forward: number) {
     // Return empty array if arguments are invalid
