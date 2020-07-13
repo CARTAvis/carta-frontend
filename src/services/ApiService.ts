@@ -5,6 +5,14 @@ import {AppToaster} from "components/Shared";
 
 const preferencesSchema = require("models/preferences_schema_1.json");
 
+export interface RuntimeConfig {
+    dashboardAddress?: string;
+    apiAddress?: string;
+    googleClientId?: string;
+    tokenRefreshAddress?: string;
+    logoutAddress?: string;
+}
+
 export class ApiService {
     private static staticInstance: ApiService;
 
@@ -15,11 +23,7 @@ export class ApiService {
         return ApiService.staticInstance;
     }
 
-    private static readonly GoogleClientId = process.env.REACT_APP_GOOGLE_CLIENT_ID;
-    private static readonly ApiBase = process.env.REACT_APP_API_ADDRESS;
-    private static readonly TokenRefreshUrl = process.env.REACT_APP_ACCESS_TOKEN_ADDRESS;
-    public static readonly LogoutUrl = process.env.REACT_APP_ACCESS_LOGOUT_ADDRESS;
-    public static readonly DashboardUrl = process.env.REACT_APP_ACCESS_DASHBOARD_ADDRESS;
+    public static readonly RuntimeConfig = (window["cartaRuntimeConfig"] || {}) as RuntimeConfig;
     // Support for V4 JSON schemas
     private static PreferenceValidator = new Ajv({schemaId: "auto"}).addMetaSchema(require("ajv/lib/refs/json-schema-draft-04.json")).compile(preferencesSchema);
 
@@ -61,11 +65,11 @@ export class ApiService {
 
     constructor() {
         this.axiosInstance = axios.create();
-        if (ApiService.GoogleClientId) {
+        if (ApiService.RuntimeConfig.googleClientId) {
             gapi.load("auth2", () => {
                 console.log("Google auth loaded");
                 try {
-                    gapi.auth2.init({client_id: ApiService.GoogleClientId, scope: "profile email"}).then(this.onTokenExpired, failureReason => {
+                    gapi.auth2.init({client_id: ApiService.RuntimeConfig.googleClientId, scope: "profile email"}).then(this.onTokenExpired, failureReason => {
                         console.log(failureReason);
                         this.handleAuthLost();
                     });
@@ -74,7 +78,7 @@ export class ApiService {
                     this.handleAuthLost();
                 }
             });
-        } else if (ApiService.TokenRefreshUrl) {
+        } else if (ApiService.RuntimeConfig.tokenRefreshAddress) {
             this.onTokenExpired();
         } else {
             this._accessToken = "no_auth_configured";
@@ -96,10 +100,10 @@ export class ApiService {
     };
 
     private handleAuthLost = () => {
-        if (ApiService.DashboardUrl) {
+        if (ApiService.RuntimeConfig.dashboardAddress) {
             this.clearToken();
             const redirectParams = btoa(window.location.search);
-            window.open(`${ApiService.DashboardUrl}?redirectParams=${redirectParams}`, "_self");
+            window.open(`${ApiService.RuntimeConfig.dashboardAddress}?redirectParams=${redirectParams}`, "_self");
         } else {
             this.clearToken();
             AppToaster.show({icon: "warning-sign", message: "Could not authenticate with server", intent: "danger", timeout: 3000});
@@ -107,7 +111,7 @@ export class ApiService {
     };
 
     private refreshAccessToken = async () => {
-        if (ApiService.GoogleClientId) {
+        if (ApiService.RuntimeConfig.googleClientId) {
             try {
                 this.authInstance = gapi.auth2.getAuthInstance();
                 const currentUser = this.authInstance?.currentUser.get();
@@ -128,9 +132,9 @@ export class ApiService {
             } catch (e) {
                 return false;
             }
-        } else if (ApiService.TokenRefreshUrl) {
+        } else if (ApiService.RuntimeConfig.tokenRefreshAddress) {
             try {
-                const response = await this.axiosInstance.post(ApiService.TokenRefreshUrl);
+                const response = await this.axiosInstance.post(ApiService.RuntimeConfig.tokenRefreshAddress);
                 if (response?.data?.access_token) {
                     // If access token does not expire, set lifetime to maximum
                     this.setToken(response.data.access_token, response.data.expires_in || Number.MAX_VALUE);
@@ -151,25 +155,25 @@ export class ApiService {
 
     public logout = async () => {
         this.clearToken();
-        if (ApiService.GoogleClientId) {
+        if (ApiService.RuntimeConfig.googleClientId) {
             this.authInstance?.signOut();
-        } else if (ApiService.LogoutUrl) {
+        } else if (ApiService.RuntimeConfig.logoutAddress) {
             try {
-                await this.axiosInstance.post(ApiService.LogoutUrl);
+                await this.axiosInstance.post(ApiService.RuntimeConfig.logoutAddress);
             } catch (err) {
                 console.log(err);
             }
         }
         // Redirect to dashboard URL if it exists
-        if (ApiService.DashboardUrl) {
-            window.open(ApiService.DashboardUrl, "_self");
+        if (ApiService.RuntimeConfig.dashboardAddress) {
+            window.open(ApiService.RuntimeConfig.dashboardAddress, "_self");
         }
     };
 
     public stopServer = async () => {
-        if (ApiService.ApiBase) {
+        if (ApiService.RuntimeConfig.apiAddress) {
             try {
-                const url = `${ApiService.ApiBase}/server/stop`;
+                const url = `${ApiService.RuntimeConfig.apiAddress}/server/stop`;
                 await this.axiosInstance.post(url);
             } catch (err) {
                 AppToaster.show({icon: "warning-sign", message: "Could not stop CARTA server", intent: "danger", timeout: 3000});
@@ -180,9 +184,9 @@ export class ApiService {
 
     public getPreferences = async () => {
         let preferences;
-        if (ApiService.ApiBase) {
+        if (ApiService.RuntimeConfig.apiAddress) {
             try {
-                const url = `${ApiService.ApiBase}/database/preferences`;
+                const url = `${ApiService.RuntimeConfig.apiAddress}/database/preferences`;
                 const response = await this.axiosInstance.get(url);
                 if (response?.data?.success) {
                     preferences = response.data.preferences;
@@ -216,9 +220,9 @@ export class ApiService {
     };
 
     public setPreferences = async (preferences: any) => {
-        if (ApiService.ApiBase) {
+        if (ApiService.RuntimeConfig.apiAddress) {
             try {
-                const url = `${ApiService.ApiBase}/database/preferences`;
+                const url = `${ApiService.RuntimeConfig.apiAddress}/database/preferences`;
                 const response = await this.axiosInstance.put(url, preferences);
                 return response?.data?.success;
             } catch (err) {
@@ -246,9 +250,9 @@ export class ApiService {
     };
 
     public clearPreferences = async (keys: string[]) => {
-        if (ApiService.ApiBase) {
+        if (ApiService.RuntimeConfig.apiAddress) {
             try {
-                const url = `${ApiService.ApiBase}/database/preferences`;
+                const url = `${ApiService.RuntimeConfig.apiAddress}/database/preferences`;
                 const response = await this.axiosInstance.delete(url, {data: {keys}});
                 return response?.data?.success;
             } catch (err) {

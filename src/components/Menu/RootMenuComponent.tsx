@@ -17,7 +17,7 @@ export class RootMenuComponent extends React.Component {
 
     private handleDashboardClicked = () => {
         const appStore = AppStore.Instance;
-        appStore.dialogStore.showExternalPageDialog(`${ApiService.DashboardUrl}?popup=1`, "Dashboard");
+        appStore.dialogStore.showExternalPageDialog(`${ApiService.RuntimeConfig.dashboardAddress}?popup=1`, "Dashboard");
     };
 
     render() {
@@ -43,7 +43,7 @@ export class RootMenuComponent extends React.Component {
                 />
             );
         }
-        if (ApiService.LogoutUrl) {
+        if (ApiService.RuntimeConfig.logoutAddress) {
             serverMenu.push(
                 <Menu.Item
                     key="logout"
@@ -53,7 +53,7 @@ export class RootMenuComponent extends React.Component {
                 />
             );
         }
-        if (ApiService.DashboardUrl) {
+        if (ApiService.RuntimeConfig.dashboardAddress) {
             serverMenu.push(
                 <Menu.Item
                     key="dashboard"
