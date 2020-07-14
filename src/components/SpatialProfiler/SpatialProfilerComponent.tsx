@@ -10,7 +10,7 @@ import {TickType} from "../Shared/LinePlot/PlotContainer/PlotContainerComponent"
 import {ASTSettingsString, FrameStore, SpatialProfileStore, WidgetConfig, WidgetProps, HelpType, OverlayStore, WidgetsStore, AppStore} from "stores";
 import {SpatialProfileWidgetStore} from "stores/widgets";
 import {Point2D} from "models";
-import {binarySearchByX, clamp, formattedNotation, toExponential, toFixed} from "utilities";
+import {binarySearchByX, clamp, formattedExponential, formattedNotation, toExponential, toFixed} from "utilities";
 import "./SpatialProfilerComponent.css";
 
 // The fixed size of the settings panel popover (excluding the show/hide button)
@@ -356,38 +356,34 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
 
     private genProfilerInfo = (): string[] => {
         let profilerInfo: string[] = [];
-        const isXCoordinate = this.widgetStore.coordinate.indexOf("x") >= 0;
         if (this.plotData) {
-            const cursorX = {
-                profiler: this.widgetStore.cursorX,
-                image: isXCoordinate ? this.profileStore.x : this.profileStore.y,
-                unit: "px"
-            };
-            const nearest = binarySearchByX(this.plotData.values, this.widgetStore.isMouseMoveIntoLinePlots ? cursorX.profiler : cursorX.image);
-            let cursorString = "";
-            if (nearest?.point) {
-                const pixelPoint = isXCoordinate ? {
-                    x: this.widgetStore.isMouseMoveIntoLinePlots ? nearest.point.x : this.profileStore.x,
-                    y: this.profileStore.y
-                } : {
-                    x: this.profileStore.x,
-                    y: this.widgetStore.isMouseMoveIntoLinePlots ? nearest.point.x : this.profileStore.y
-                };
-
-                // find wcs
-                let wcsValue;
-                const cursorInfo = this.frame.getCursorInfo(pixelPoint);
-                if (cursorInfo?.infoWCS) {
-                    wcsValue = isXCoordinate ? cursorInfo.infoWCS.x : cursorInfo.infoWCS.y;
+            const isXCoordinate = this.widgetStore.coordinate.indexOf("x") >= 0;
+            if (this.widgetStore.isMouseMoveIntoLinePlots) { // handle the value when cursor is in profiler
+                const nearest = binarySearchByX(this.plotData.values, this.widgetStore.cursorX);
+                if (nearest?.point) {
+                    const pixelPoint = isXCoordinate ?
+                        {x: nearest.point.x, y: this.profileStore.y} :
+                        {x: this.profileStore.x, y: nearest.point.x};
+                    const cursorInfo = this.frame.getCursorInfo(pixelPoint);
+                    if (cursorInfo?.infoWCS) {
+                        profilerInfo.push(
+                            `Cursor: (WCS: ${isXCoordinate ? cursorInfo.infoWCS.x : cursorInfo.infoWCS.y}, ` +
+                            `Image: ${nearest.point.x} px, ` +
+                            `${nearest.point.y !== undefined ? formattedExponential(nearest.point.y, 5) : ""})`
+                        );
+                    }
                 }
-                const wcsLabel = `WCS: ${wcsValue}`;
-
-                const pixelLabel = `Image: ${nearest.point.x} ${cursorX.unit}`;
-                const xLabel = `${pixelLabel}, ${wcsLabel}`;
-                cursorString =  "(" + xLabel + ", " + toExponential(nearest.point.y, 2) + ")";
+            } else { // get value directly from frame when cursor is in image viewer
+                const cursorInfo = this.frame.cursorInfo;
+                const cursorValue = this.frame.cursorValue;
+                if (cursorInfo?.posImageSpace && cursorInfo?.infoWCS) {
+                    profilerInfo.push(
+                        `Cursor: (WCS: ${isXCoordinate ? cursorInfo.infoWCS.x : cursorInfo.infoWCS.y}, ` +
+                        `Image: ${isXCoordinate ? cursorInfo.posImageSpace.x : cursorInfo.posImageSpace.y} px, ` +
+                        `${cursorValue !== undefined ? formattedExponential(cursorValue, 5) : ""})`
+                    );
+                }
             }
-
-            profilerInfo.push(`${this.widgetStore.isMouseMoveIntoLinePlots ? "Cursor:" : "Data:"} ${cursorString}`);
             if (this.widgetStore.meanRmsVisible) {
                 profilerInfo.push(`Mean/RMS: ${formattedNotation(this.plotData.yMean) + " / " + formattedNotation(this.plotData.yRms)}`);
             }
