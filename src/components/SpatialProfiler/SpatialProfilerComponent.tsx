@@ -10,7 +10,7 @@ import {TickType} from "../Shared/LinePlot/PlotContainer/PlotContainerComponent"
 import {ASTSettingsString, FrameStore, SpatialProfileStore, WidgetConfig, WidgetProps, HelpType, OverlayStore, WidgetsStore, AppStore} from "stores";
 import {SpatialProfileWidgetStore} from "stores/widgets";
 import {Point2D} from "models";
-import {binarySearchByX, clamp, formattedExponential, formattedNotation, toExponential, toFixed} from "utilities";
+import {binarySearchByX, clamp, formattedExponential, formattedNotation, toFixed} from "utilities";
 import "./SpatialProfilerComponent.css";
 
 // The fixed size of the settings panel popover (excluding the show/hide button)
@@ -379,7 +379,7 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
                 if (cursorInfo?.posImageSpace && cursorInfo?.infoWCS) {
                     profilerInfo.push(
                         `Cursor: (WCS: ${isXCoordinate ? cursorInfo.infoWCS.x : cursorInfo.infoWCS.y}, ` +
-                        `Image: ${isXCoordinate ? cursorInfo.posImageSpace.x : cursorInfo.posImageSpace.y} px, ` +
+                        `Image: ${toFixed(isXCoordinate ? cursorInfo.posImageSpace.x : cursorInfo.posImageSpace.y)} px, ` +
                         `${cursorValue !== undefined ? formattedExponential(cursorValue, 5) : ""})`
                     );
                 }

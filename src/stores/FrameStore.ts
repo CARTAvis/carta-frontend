@@ -1091,8 +1091,8 @@ export class FrameStore {
     };
 
     @action private initCenter = () => {
-        this.center.x = Math.floor(this.frameInfo.fileInfoExtended.width / 2.0 + 0.5);
-        this.center.y = Math.floor(this.frameInfo.fileInfoExtended.height / 2.0 + 0.5);
+        this.center.x = this.frameInfo.fileInfoExtended.width / 2.0 + 0.5;
+        this.center.y = this.frameInfo.fileInfoExtended.height / 2.0 + 0.5;
     };
 
     @action fitZoom = () => {
