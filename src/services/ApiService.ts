@@ -23,7 +23,17 @@ export class ApiService {
         return ApiService.staticInstance;
     }
 
-    public static readonly RuntimeConfig = (window["cartaRuntimeConfig"] || {}) as RuntimeConfig;
+    public static RuntimeConfig: RuntimeConfig;
+
+    public static SetRuntimeConfig(data: any) {
+        console.log("Setting runtime config");
+        if (data) {
+            ApiService.RuntimeConfig = data as RuntimeConfig;
+        } else {
+            ApiService.RuntimeConfig = {};
+        }
+    }
+
     // Support for V4 JSON schemas
     private static PreferenceValidator = new Ajv({schemaId: "auto"}).addMetaSchema(require("ajv/lib/refs/json-schema-draft-04.json")).compile(preferencesSchema);
 
