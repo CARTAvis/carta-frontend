@@ -69,7 +69,7 @@ export class StokesAnalysisWidgetStore extends RegionWidgetStore {
     @observable colorMap: string;
     @observable colorPixel: { color: Uint8ClampedArray, size: number };
     @observable pointTransparency: number;
-    @observable smoothingStore: ProfileSmoothingStore;
+    readonly smoothingStore: ProfileSmoothingStore;
     
     private static requestDataType = [StokesCoordinate.LinearPolarizationQ, StokesCoordinate.LinearPolarizationU];
     private static ValidStatsTypes = [

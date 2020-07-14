@@ -18,6 +18,12 @@ export enum SmoothingType {
     SAVITZKY_GOLAY = "Savitzky-Golay"
 }
 
+export enum SmoothingEndType {
+    NONE = 0,
+    ZERO = 1,
+    VALUE = 2
+}
+
 @observer
 export class SmoothingSettingsComponent extends React.Component<{smoothingStore: ProfileSmoothingStore, diableDecimation?: boolean, diableStyle?: boolean}> {
 
@@ -39,6 +45,12 @@ export class SmoothingSettingsComponent extends React.Component<{smoothingStore:
         if (!this.props.diableDecimation) {
             smoothingTypeOptions.push({value: SmoothingType.DECIMATION, label: "Decimation"});
         }
+
+        const smoothingEndTypeOptions: IOptionProps[] = [
+            {value: SmoothingEndType.NONE, label: "None"},
+            {value: SmoothingEndType.ZERO, label: "Zero"},
+            {value: SmoothingEndType.VALUE, label: "Value"}
+        ];
 
         let colorKeys: IOptionProps[] = [];
         if (smoothingStore.colorMap.size > 0 ) {
@@ -102,11 +114,18 @@ export class SmoothingSettingsComponent extends React.Component<{smoothingStore:
                 </React.Fragment>
                 }
                 {(smoothingStore.type !== SmoothingType.NONE) &&
-                <React.Fragment>
-                    <FormGroup label={"Overlay"} inline={true}>
-                        <Switch checked={smoothingStore.isOverlayOn} onChange={(ev) => smoothingStore.setIsOverlayOn(ev.currentTarget.checked)}/>
-                    </FormGroup>
-                </React.Fragment>
+                <FormGroup label={"Overlay"} inline={true}>
+                    <Switch checked={smoothingStore.isOverlayOn} onChange={(ev) => smoothingStore.setIsOverlayOn(ev.currentTarget.checked)}/>
+                </FormGroup>
+                }
+                {(smoothingStore.type !== SmoothingType.NONE) && (smoothingStore.type !== SmoothingType.DECIMATION) && (smoothingStore.type !== SmoothingType.BINNING) &&
+                <FormGroup label={"EndType"} inline={true}>
+                    <HTMLSelect
+                        value={smoothingStore.endType}
+                        options={smoothingEndTypeOptions}
+                        onChange={(event: React.FormEvent<HTMLSelectElement>) => smoothingStore.setEndType(Number(event.currentTarget.value))}
+                    />
+                </FormGroup>
                 }
                 {(smoothingStore.type === SmoothingType.BOXCAR) &&
                 <FormGroup label={"Kernel"} inline={true}>
@@ -141,7 +160,7 @@ export class SmoothingSettingsComponent extends React.Component<{smoothingStore:
                 </FormGroup>
                 }
                 {(smoothingStore.type === SmoothingType.DECIMATION) &&
-                <FormGroup label={"Width"} inline={true}>
+                <FormGroup label={"Decimation Width"} inline={true}>
                     <SafeNumericInput
                         value={smoothingStore.decimationWidth}
                         min={2}

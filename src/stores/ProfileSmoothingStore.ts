@@ -1,11 +1,12 @@
 import {action, computed, observable} from "mobx";
 import {Colors} from "@blueprintjs/core";
-import {PlotType, SmoothingType, LineSettings} from "components/Shared";
+import {PlotType, SmoothingType, SmoothingEndType, LineSettings} from "components/Shared";
 import {Point2D} from "models";
 import * as GSL from "gsl_wrapper";
 
 export class ProfileSmoothingStore {
     @observable type: SmoothingType;
+    @observable endType: number;
     @observable lineColor: { colorHex: string, fixed: boolean };
     @observable selectedLine: string;
     @observable lineType: PlotType;
@@ -23,6 +24,7 @@ export class ProfileSmoothingStore {
 
     constructor() {
         this.type = SmoothingType.NONE;
+        this.endType = SmoothingEndType.NONE;
         this.lineColor = { colorHex: Colors.ORANGE2, fixed: false };
         this.lineType = PlotType.STEPS;
         this.lineWidth = 1;
@@ -40,6 +42,10 @@ export class ProfileSmoothingStore {
 
     @action setType = (val: SmoothingType) => {
         this.type = val;
+    }
+
+    @action setEndType = (val: SmoothingEndType) => {
+        this.endType = val;
     }
 
     @action setLineColor = (colorHex: string, fixed: boolean) => {
@@ -109,13 +115,12 @@ export class ProfileSmoothingStore {
             exportData.set("kernel", String(this.boxcarSize));
         } else if (this.type === SmoothingType.GAUSSIAN) {
             exportData.set("sigma", String(this.gaussianSigma));
-            exportData.set("kernel", String(Math.ceil(this.gaussianSigma * 2)));
         } else if (this.type === SmoothingType.HANNING) {
             exportData.set("kernel", String(this.hanningSize));
         } else if (this.type === SmoothingType.DECIMATION) {
-            exportData.set("decimation value", String(this.decimationWidth));
+            exportData.set("decimation width", String(this.decimationWidth));
         } else if (this.type === SmoothingType.BINNING) {
-            exportData.set("bin width", String(this.setBinWidth));
+            exportData.set("bin width", String(this.binWidth));
         } else if (this.type === SmoothingType.SAVITZKY_GOLAY) {
             exportData.set("kernel", String(this.savitzkyGolaySize));
             exportData.set("order", String(this.savitzkyGolayOrder));
@@ -123,21 +128,34 @@ export class ProfileSmoothingStore {
         return exportData;
     }
 
+    @computed get gaussianKernel(): number {
+        if (this.gaussianSigma < 3) {
+            return 3;
+        }
+        const ceilInt = Math.ceil(this.gaussianSigma);
+        if (ceilInt % 2 === 0) {
+            return ceilInt + 1;
+        }
+        return ceilInt;
+    }
+
+    // The parameter for GSL specifies the number of standard deviations sigma desired in the kernel.
+    @computed get gaussianAlpha(): number {
+        return (this.gaussianKernel - 1) / (2 * this.gaussianSigma);
+    }
+
     getSmoothingValues(x: number[], y: Float32Array | Float64Array): { x: number[], y: Float32Array | Float64Array} {
         let smoothingYs: Float32Array | Float64Array;
         let smoothingXs = x;
         if (this.type === SmoothingType.BOXCAR) {
-            smoothingYs = GSL.boxcarSmooth(y, this.boxcarSize);
+            smoothingYs = GSL.boxcarSmooth(this.endType, y, this.boxcarSize);
         } else if (this.type === SmoothingType.GAUSSIAN) {
-            if (this.gaussianSigma && this.gaussianSigma > 0.5) {
-                let kernelSize = Math.ceil(this.gaussianSigma * 2);
-                let alpha = (kernelSize - 1) / (2 * this.gaussianSigma);
-                smoothingYs = GSL.gaussianSmooth(y, kernelSize, alpha);
-            } else {
-                smoothingYs = GSL.gaussianSmooth(y, 1, 1);
+            if (this.gaussianSigma && this.gaussianSigma >= 1) {
+                console.log(this.gaussianKernel);
+                smoothingYs = GSL.gaussianSmooth(this.endType, y, this.gaussianKernel, this.gaussianAlpha);
             }
         } else if (this.type === SmoothingType.HANNING) {
-            smoothingYs = GSL.hanningSmooth(y, this.hanningSize);
+            smoothingYs = GSL.hanningSmooth(this.endType, y, this.hanningSize);
         } else if (this.type === SmoothingType.DECIMATION) {
             let decimatedValues = GSL.decimation(x, y, this.decimationWidth);
             smoothingXs = decimatedValues.x;
@@ -146,7 +164,7 @@ export class ProfileSmoothingStore {
             smoothingXs = GSL.binning(x, this.binWidth);
             smoothingYs = GSL.binning(y, this.binWidth);
         } else if (this.type === SmoothingType.SAVITZKY_GOLAY) {
-            smoothingYs = GSL.savitzkyGolaySmooth(x, y, this.savitzkyGolaySize, this.savitzkyGolayOrder);
+            smoothingYs = GSL.savitzkyGolaySmooth(this.endType, x, y, this.savitzkyGolaySize, this.savitzkyGolayOrder);
         }
         return {x: smoothingXs, y: smoothingYs};
     }
@@ -155,11 +173,11 @@ export class ProfileSmoothingStore {
         if (this.type === SmoothingType.NONE) {
             return [];
         }
-        let smoothingArray: Point2D[] = [];
         const smoothingValues = this.getSmoothingValues(x, y);
+        let smoothingArray: Point2D[] = new Array(smoothingValues.x.length);
 
         for (let i = 0; i < smoothingValues.x.length; i++) {
-            smoothingArray.push({x: smoothingValues.x[i], y: smoothingValues.y[i]});
+            smoothingArray[i] = {x: smoothingValues.x[i], y: smoothingValues.y[i]};
         }
 
         return smoothingArray;
@@ -170,10 +188,10 @@ export class ProfileSmoothingStore {
             return[];
         }
 
-        let decimatedArray: Point2D[] = [];
         let decimatedValues = GSL.decimation(x, y, decimationWidth);
-        for (let i = 0; i < x.length; i++) {
-            decimatedArray.push({x: decimatedValues.x[i], y: decimatedValues.y[i]});
+        let decimatedArray: Point2D[] = new Array(decimatedValues.x.length);
+        for (let i = 0; i < decimatedValues.x.length; i++) {
+            decimatedArray[i] = {x: decimatedValues.x[i], y: decimatedValues.y[i]};
         }
         return decimatedArray;
     }

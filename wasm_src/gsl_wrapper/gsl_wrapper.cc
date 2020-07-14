@@ -12,7 +12,25 @@
 
 extern "C" {
 
-int EMSCRIPTEN_KEEPALIVE filterBoxcar(double* yInArray, const int N, double* yOutArray, const int kernel) {
+gsl_movstat_end_t getMovstatEndType(int endType) {
+    if (endType == 1) {
+        return GSL_MOVSTAT_END_PADZERO;
+    } else if (endType == 2) {
+        return GSL_MOVSTAT_END_PADVALUE;
+    }
+    return GSL_MOVSTAT_END_PADVALUE;
+}
+
+gsl_filter_end_t getFilterEndType(int endType) {
+    if (endType == 1) {
+        return GSL_FILTER_END_PADZERO;
+    } else if (endType == 2) {
+        return GSL_FILTER_END_PADVALUE;
+    }
+    return GSL_FILTER_END_PADVALUE;
+}
+
+int EMSCRIPTEN_KEEPALIVE filterBoxcar(int endType, double* yInArray, const int N, double* yOutArray, const int kernel) {
     int status = 0;    /* return value: 0 = success */
     gsl_vector_view yIn = gsl_vector_view_array(yInArray, N);
     double* window = new double[kernel];
@@ -26,22 +44,34 @@ int EMSCRIPTEN_KEEPALIVE filterBoxcar(double* yInArray, const int N, double* yOu
     }
 
     for (size_t i = 0; i < N; ++i) {
-        size_t wsize = gsl_movstat_fill(GSL_MOVSTAT_END_PADVALUE, &yIn.vector, i, H, J, window);
+        if (endType == 0 && (i < H || i > N - 1 - J)) {
+            yOutArray[i] = NAN;
+            continue;
+        }
+        size_t wsize = gsl_movstat_fill(getMovstatEndType(endType), &yIn.vector, i, H, J, window);
         yOutArray[i] = gsl_stats_mean(window, 1, wsize);
     }
+
 
     delete[] window;
 
     return status;
 }
 
-int EMSCRIPTEN_KEEPALIVE filterGaussian(double* yInArray, const int N, double* yOutArray, const int kernel, const double alpha) {
+int EMSCRIPTEN_KEEPALIVE filterGaussian(int endType, double* yInArray, const int N, double* yOutArray, const int kernel, const double alpha) {
     int status = 0;    /* return value: 0 = success */
     gsl_vector_view yIn = gsl_vector_view_array(yInArray, N);
     gsl_vector_view yOut = gsl_vector_view_array(yOutArray, N);
     gsl_filter_gaussian_workspace* w = gsl_filter_gaussian_alloc(kernel);
 
-    gsl_filter_gaussian(GSL_FILTER_END_PADVALUE, alpha, 0, &yIn.vector, &yOut.vector, w);
+    gsl_filter_gaussian(getFilterEndType(endType), alpha, 0, &yIn.vector, &yOut.vector, w);
+
+    if (endType == 0) {
+        for (size_t i = 0; i < (kernel - 1) / 2; i++) {
+            yOutArray[i] = NAN;
+            yOutArray[N - 1 - i] = NAN;
+        }
+    }
 
     gsl_filter_gaussian_free(w);
 
@@ -61,7 +91,7 @@ double hanningWindow(const size_t n, double window[], void* params) {
     return val / sum;
 }
 
-int EMSCRIPTEN_KEEPALIVE filterHanning(double* yInArray, const int N, double* yOutArray, const int kernel) {
+int EMSCRIPTEN_KEEPALIVE filterHanning(int endType, double* yInArray, const int N, double* yOutArray, const int kernel) {
     int status = 0;    /* return value: 0 = success */
     gsl_vector_view yIn = gsl_vector_view_array(yInArray, N);
     gsl_vector_view yOut = gsl_vector_view_array(yOutArray, N);
@@ -69,7 +99,14 @@ int EMSCRIPTEN_KEEPALIVE filterHanning(double* yInArray, const int N, double* yO
     gsl_movstat_function F;
 
     F.function = hanningWindow;
-    gsl_movstat_apply(GSL_MOVSTAT_END_PADVALUE, &F, &yIn.vector, &yOut.vector, w);
+    gsl_movstat_apply(getMovstatEndType(endType), &F, &yIn.vector, &yOut.vector, w);
+
+    if (endType == 0) {
+        for (size_t i = 0; i < (kernel - 1) / 2; i++) {
+            yOutArray[i] = NAN;
+            yOutArray[N - 1 - i] = NAN;
+        }
+    }
 
     gsl_movstat_free(w);
 
@@ -89,17 +126,17 @@ int EMSCRIPTEN_KEEPALIVE filterDecimation(double* xInArray, double* yInArray, co
             }
         }
 
-        size_t* minIndex = new size_t[1];
-        size_t* maxIndex = new size_t[1];
+        size_t minIndex;
+        size_t maxIndex;
         if (i == inN / decimationWidth && inN % decimationWidth != 0) {
-            gsl_stats_minmax_index(maxIndex, minIndex, &yInArray[i * decimationWidth], 1, inN % decimationWidth);
+            gsl_stats_minmax_index(&maxIndex, &minIndex, &yInArray[i * decimationWidth], 1, inN % decimationWidth);
         } else {
-            gsl_stats_minmax_index(maxIndex, minIndex, &yInArray[i * decimationWidth], 1, decimationWidth);
+            gsl_stats_minmax_index(&maxIndex, &minIndex, &yInArray[i * decimationWidth], 1, decimationWidth);
         }
 
-        indexArray[i*2] = i * decimationWidth + minIndex[0];
-        indexArray[i*2 + 1] = i * decimationWidth + maxIndex[0];
-        if (minIndex[0] == maxIndex[0]) {
+        indexArray[i*2] = i * decimationWidth + minIndex;
+        indexArray[i*2 + 1] = i * decimationWidth + maxIndex;
+        if (minIndex == maxIndex) {
             indexArray[i*2 + 1] = (i + 1) * decimationWidth - 1;
         }
     }
@@ -131,7 +168,7 @@ int EMSCRIPTEN_KEEPALIVE filterBinning(double* inputArray, const int N, double* 
     return status;
 }
 
-int EMSCRIPTEN_KEEPALIVE filterSavitzkyGolay(double* xInArray, double* yInArray, const int N, double* yOutArray, const int kernel, const int order) {
+int EMSCRIPTEN_KEEPALIVE filterSavitzkyGolay(int endType, double* xInArray, double* yInArray, const int N, double* yOutArray, const int kernel, const int order) {
     int status = 0;    /* return value: 0 = success */
 
     gsl_vector_view yIn = gsl_vector_view_array(yInArray, N);
@@ -146,9 +183,9 @@ int EMSCRIPTEN_KEEPALIVE filterSavitzkyGolay(double* xInArray, double* yInArray,
     size_t cNum = order + 1;
 
     for (size_t i = 0; i < N; ++i) {
-        size_t wsize = gsl_movstat_fill(GSL_MOVSTAT_END_PADVALUE, &yIn.vector, i, H, H, window);
+        size_t wsize = gsl_movstat_fill(getMovstatEndType(endType), &yIn.vector, i, H, H, window);
 
-        if ( i < H || i > N - 1 - H) {
+        if ( endType == 0 && (i < H || i > N - 1 - H)) {
             yOutArray[i] = NAN;
             continue;
         }

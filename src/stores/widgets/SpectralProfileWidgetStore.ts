@@ -27,7 +27,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
     @observable lineWidth: number;
     @observable linePlotPointSize: number;
     @observable linePlotInitXYBoundaries: { minXVal: number, maxXVal: number, minYVal: number, maxYVal: number };
-    @observable smoothingStore: ProfileSmoothingStore;
+    readonly smoothingStore: ProfileSmoothingStore;
 
     public static StatsTypeString(statsType: CARTA.StatsType) {
         switch (statsType) {

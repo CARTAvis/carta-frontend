@@ -121,9 +121,9 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
             let values: Array<{ x: number, y: number }>;
             let smoothingValues: Array<{ x: number, y: number }>;
             if (N > 0) {
-                let xArray: number[] = [];
-                for (let i = xMin; i < xMax; i++) {
-                    xArray.push(i);
+                let xArray: number[] = new Array(N);
+                for (let i = 0; i < N; i++) {
+                    xArray[i] = xMin + i;
                 }
                 if (decimationFactor <= 1 || this.widgetStore.plotType === PlotType.POINTS) {
                     // full resolution data

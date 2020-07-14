@@ -26,7 +26,7 @@ export class SpatialProfileWidgetStore {
     @observable lineWidth: number;
     @observable linePlotPointSize: number;
     @observable linePlotInitXYBoundaries: { minXVal: number, maxXVal: number, minYVal: number, maxYVal: number };
-    @observable smoothingStore: ProfileSmoothingStore;
+    readonly smoothingStore: ProfileSmoothingStore;
 
     private static ValidCoordinates = ["x", "y", "Ix", "Iy", "Qx", "Qy", "Ux", "Uy", "Vx", "Vz"];
 
