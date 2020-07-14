@@ -367,7 +367,7 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
                     const cursorInfo = this.frame.getCursorInfo(pixelPoint);
                     if (cursorInfo?.infoWCS) {
                         profilerInfo.push(
-                            `Data: (WCS: ${isXCoordinate ? cursorInfo.infoWCS.x : cursorInfo.infoWCS.y}, ` +
+                            `Cursor: (WCS: ${isXCoordinate ? cursorInfo.infoWCS.x : cursorInfo.infoWCS.y}, ` +
                             `Image: ${nearest.point.x} px, ` +
                             `${nearest.point.y !== undefined ? formattedExponential(nearest.point.y, 5) : ""})`
                         );
@@ -378,7 +378,7 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
                 const cursorValue = this.frame.cursorValue;
                 if (cursorInfo?.posImageSpace && cursorInfo?.infoWCS) {
                     profilerInfo.push(
-                        `Cursor: (WCS: ${isXCoordinate ? cursorInfo.infoWCS.x : cursorInfo.infoWCS.y}, ` +
+                        `Data: (WCS: ${isXCoordinate ? cursorInfo.infoWCS.x : cursorInfo.infoWCS.y}, ` +
                         `Image: ${toFixed(isXCoordinate ? cursorInfo.posImageSpace.x : cursorInfo.posImageSpace.y)} px, ` +
                         `${cursorValue !== undefined ? formattedExponential(cursorValue, 5) : ""})`
                     );
