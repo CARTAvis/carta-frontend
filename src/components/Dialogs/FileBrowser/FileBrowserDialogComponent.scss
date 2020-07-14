@@ -29,14 +29,14 @@
             margin-right: 5px;
 
             .file-list {
-                width: 60%;
+                width: 55%;
                 flex: auto;
                 overflow-y: auto;
             }
 
             .file-info-pane {
-                width: 38%;
-                margin-left: 2%;
+                width: calc(45% - 10px);
+                margin-left: 10px;
             }
         }
 
