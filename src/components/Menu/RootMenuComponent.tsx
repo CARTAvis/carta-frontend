@@ -118,6 +118,11 @@ export class RootMenuComponent extends React.Component {
         const presetLayouts: string[] = PresetLayout.PRESETS;
         const layoutStore = appStore.layoutStore;
         const userLayouts: string[] = layoutStore.userLayouts;
+        const regionListIcon = (
+            <Tag icon={"equals"} className={"stokes-icon-button"}>
+                &nbsp;r
+            </Tag>
+        );
         const spatialProfilerIcon = (
             <Tag icon={"pulse"} className={"stokes-icon-button"}>
                 &nbsp;xy
@@ -174,7 +179,7 @@ export class RootMenuComponent extends React.Component {
                     </Menu.Item>
                 </Menu.Item>
                 <Menu.Item text="Info Panels" icon={"panel-stats"}>
-                    <Menu.Item text="Region List" icon={"list"} onClick={appStore.widgetsStore.createFloatingRegionListWidget}/>
+                    <Menu.Item className={stokesClassName} text="Region List" icon={regionListIcon} onClick={appStore.widgetsStore.createFloatingRegionListWidget}/>
                     <Menu.Item text="Program Log" icon={"application"} onClick={appStore.widgetsStore.createFloatingLogWidget}/>
                 </Menu.Item>
                 <Menu.Item text="Profiles" icon={"pulse"}>

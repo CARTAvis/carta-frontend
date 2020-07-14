@@ -51,7 +51,9 @@ export class ToolbarMenuComponent extends React.Component {
             <React.Fragment>
                 <ButtonGroup className={className}>
                     <Tooltip content={<span>Region List Widget{commonTooltip}</span>}>
-                        <Button icon={"list"} id="regionListButton" onClick={appStore.widgetsStore.createFloatingRegionListWidget}/>
+                        <Button icon={"equals"} id="regionListButton" className={"profiler-button"} onClick={appStore.widgetsStore.createFloatingRegionListWidget}>
+                            &nbsp;r
+                        </Button>
                     </Tooltip>
                     <Tooltip content={<span>Log Widget{commonTooltip}</span>}>
                         <Button icon={"application"} id="logButton" onClick={appStore.widgetsStore.createFloatingLogWidget}/>
