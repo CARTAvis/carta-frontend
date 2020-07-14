@@ -152,7 +152,7 @@ const DOCKED_SCHEMA = {
             },
             "id": {
                 "type": "string",
-                "pattern": "animator|histogram|image-view|layer-list|log|region\-list|render\-config|spatial\-profiler|spectral\-profiler|stats|stokes|spectral\-line\-overlay"
+                "pattern": "animator|histogram|image-view|layer-list|log|region\-list|render\-config|spatial\-profiler|spectral\-profiler|stats|stokes"
             },
             "widgetSettings": {
                 "type": "object"
@@ -210,7 +210,7 @@ const FLOATING_WIDGET_SCHEMA = {
         "properties": {
             "type": {
                 "type": "string",
-                "pattern": "animator|histogram|layer-list|log|region\-list|render\-config|spatial\-profiler|spectral\-profiler|stats|stokes|spectral\-line\-overlay"
+                "pattern": "animator|histogram|layer-list|log|region\-list|render\-config|spatial\-profiler|spectral\-profiler|stats|stokes"
             },
             "widgetSettings": {
                 "type": "object"
