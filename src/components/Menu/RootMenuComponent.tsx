@@ -118,6 +118,16 @@ export class RootMenuComponent extends React.Component {
         const presetLayouts: string[] = PresetLayout.PRESETS;
         const layoutStore = appStore.layoutStore;
         const userLayouts: string[] = layoutStore.userLayouts;
+        const spatialProfilerIcon = (
+            <Tag icon={"pulse"} className={"stokes-icon-button"}>
+                &nbsp;xy
+            </Tag>
+        );
+        const spectralProfiler = (
+            <Tag icon={"pulse"} className={"stokes-icon-button"}>
+                &nbsp;z
+            </Tag>
+        );
         const stokesIcon = (
             <Tag icon={"pulse"} className={"stokes-icon-button"}>
                 &nbsp;s
@@ -164,12 +174,12 @@ export class RootMenuComponent extends React.Component {
                     </Menu.Item>
                 </Menu.Item>
                 <Menu.Item text="Info Panels" icon={"panel-stats"}>
-                    <Menu.Item text="Region List" onClick={appStore.widgetsStore.createFloatingRegionListWidget}/>
-                    <Menu.Item text="Program Log" onClick={appStore.widgetsStore.createFloatingLogWidget}/>
+                    <Menu.Item text="Region List" icon={"list"} onClick={appStore.widgetsStore.createFloatingRegionListWidget}/>
+                    <Menu.Item text="Program Log" icon={"application"} onClick={appStore.widgetsStore.createFloatingLogWidget}/>
                 </Menu.Item>
                 <Menu.Item text="Profiles" icon={"pulse"}>
-                    <Menu.Item text="Spatial Profiler" onClick={appStore.widgetsStore.createFloatingSpatialProfilerWidget}/>
-                    <Menu.Item text="Spectral Profiler" onClick={appStore.widgetsStore.createFloatingSpectralProfilerWidget}/>
+                    <Menu.Item className={stokesClassName} text="Spatial Profiler" icon={spatialProfilerIcon} onClick={appStore.widgetsStore.createFloatingSpatialProfilerWidget}/>
+                    <Menu.Item className={stokesClassName} text="Spectral Profiler" icon={spectralProfiler} onClick={appStore.widgetsStore.createFloatingSpectralProfilerWidget}/>
                 </Menu.Item>
                 <Menu.Item text="Statistics" icon={"calculator"} onClick={appStore.widgetsStore.createFloatingStatsWidget}/>
                 <Menu.Item text="Histogram" icon={"timeline-bar-chart"} onClick={appStore.widgetsStore.createFloatingHistogramWidget}/>
