@@ -523,6 +523,41 @@ export class FrameStore {
         return totalProgress / (this.contourConfig.levels ? this.contourConfig.levels.length : 1);
     }
 
+    @computed get stokesInfo(): string[] {
+        if (this.frameInfo && this.frameInfo.fileInfoExtended && this.frameInfo.fileInfoExtended.headerEntries) {
+            const ctype = this.frameInfo.fileInfoExtended.headerEntries.find(entry => entry.value.toUpperCase() === "STOKES");
+            if (ctype && ctype.name.indexOf("CTYPE") !== -1) {
+                const index = ctype.name.substring(5);
+                const naxisHeader = this.frameInfo.fileInfoExtended.headerEntries.find(entry => entry.name.indexOf(`NAXIS${index}`) !== -1);
+                const crpixHeader = this.frameInfo.fileInfoExtended.headerEntries.find(entry => entry.name.indexOf(`CRPIX${index}`) !== -1);
+                const crvalHeader = this.frameInfo.fileInfoExtended.headerEntries.find(entry => entry.name.indexOf(`CRVAL${index}`) !== -1);
+                const cdeltHeader = this.frameInfo.fileInfoExtended.headerEntries.find(entry => entry.name.indexOf(`CDELT${index}`) !== -1);
+                let stokesInfo = [];
+                for (let i = 0; i < parseInt(naxisHeader.value); i++) {
+                    let val = getHeaderNumericValue(crvalHeader) + (i + 1 - getHeaderNumericValue(crpixHeader)) * getHeaderNumericValue(cdeltHeader);
+                    switch (val) {
+                        case 1:
+                            stokesInfo.push("Iz");
+                            break;
+                        case 2:
+                            stokesInfo.push("Qz");
+                            break;
+                        case 3:
+                            stokesInfo.push("Uz");
+                            break;
+                        case 4:
+                            stokesInfo.push("Vz");
+                            break;
+                        default:
+                            break;
+                    }
+                }
+                return stokesInfo;
+            }
+        }
+        return [];
+    }
+
     private readonly overlayStore: OverlayStore;
     private readonly logStore: LogStore;
     private readonly backendService: BackendService;
