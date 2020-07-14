@@ -27,7 +27,7 @@ export class SpectralLineOverlayComponent extends React.Component<WidgetProps> {
         return {
             id: "spectral-line-overlay",
             type: "spectral-line-overlay",
-            minWidth: 320,
+            minWidth: 500,
             minHeight: 400,
             defaultWidth: 600,
             defaultHeight: 600,
@@ -321,14 +321,14 @@ export class SpectralLineOverlayComponent extends React.Component<WidgetProps> {
                     <div className="query-section">
                         {queryPanel}
                         <div className="header-table">
-                            {this.createHeaderTable()}
+                            {this.width > 0 && this.createHeaderTable()}
                         </div>
                     </div>
                     <Divider/>
                     <div className="result-section">
                         {redshiftPanel}
                         <div className={"result-table"}>
-                            <TableComponent {...queryResultTableProps}/>
+                            {this.width > 0 && <TableComponent {...queryResultTableProps}/>}
                         </div>
                         <div className="result-table-info">
                             {tableInfo}
