@@ -365,23 +365,19 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
                         {x: nearest.point.x, y: this.profileStore.y} :
                         {x: this.profileStore.x, y: nearest.point.x};
                     const cursorInfo = this.frame.getCursorInfo(pixelPoint);
-                    if (cursorInfo?.infoWCS) {
-                        profilerInfo.push(
-                            `Cursor: (WCS: ${isXCoordinate ? cursorInfo.infoWCS.x : cursorInfo.infoWCS.y}, ` +
-                            `Image: ${nearest.point.x} px, ` +
-                            `${nearest.point.y !== undefined ? formattedExponential(nearest.point.y, 5) : ""})`
-                        );
-                    }
+                    const wcsLabel = cursorInfo?.infoWCS ? `WCS: ${isXCoordinate ? cursorInfo.infoWCS.x : cursorInfo.infoWCS.y}, ` : "";
+                    const imageLabel = `Image: ${nearest.point.x} px, `;
+                    const valueLabel = `${nearest.point.y !== undefined ? formattedExponential(nearest.point.y, 5) : ""}`;
+                    profilerInfo.push("Cursor: (" + wcsLabel + imageLabel + valueLabel + ")");
                 }
             } else { // get value directly from frame when cursor is in image viewer
                 const cursorInfo = this.frame.cursorInfo;
                 const cursorValue = this.frame.cursorValue;
-                if (cursorInfo?.posImageSpace && cursorInfo?.infoWCS) {
-                    profilerInfo.push(
-                        `Data: (WCS: ${isXCoordinate ? cursorInfo.infoWCS.x : cursorInfo.infoWCS.y}, ` +
-                        `Image: ${toFixed(isXCoordinate ? cursorInfo.posImageSpace.x : cursorInfo.posImageSpace.y)} px, ` +
-                        `${cursorValue !== undefined ? formattedExponential(cursorValue, 5) : ""})`
-                    );
+                if (cursorInfo?.posImageSpace) {
+                    const wcsLabel = cursorInfo?.infoWCS ? `WCS: ${isXCoordinate ? cursorInfo.infoWCS.x : cursorInfo.infoWCS.y}, ` : "";
+                    const imageLabel = `Image: ${toFixed(isXCoordinate ? cursorInfo.posImageSpace.x : cursorInfo.posImageSpace.y)} px, `;
+                    const valueLabel = `${cursorValue !== undefined ? formattedExponential(cursorValue, 5) : ""}`;
+                    profilerInfo.push("Data: (" + wcsLabel + imageLabel + valueLabel + ")");
                 }
             }
             if (this.widgetStore.meanRmsVisible) {
