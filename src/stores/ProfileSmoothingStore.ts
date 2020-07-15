@@ -144,36 +144,105 @@ export class ProfileSmoothingStore {
         return (this.gaussianKernel - 1) / (2 * this.gaussianSigma);
     }
 
-    getSmoothingValues(x: number[], y: Float32Array | Float64Array): { x: number[], y: Float32Array | Float64Array} {
+    private getLocalStartEndIndexes(fullLength: number, xMinIndex: number, xMaxIndex: number, kernelSize: number) {
+        let h: number, j: number;
+        if (kernelSize % 2 === 1) {
+            h = (kernelSize - 1) / 2;
+            j = (kernelSize - 1) / 2;
+        } else {
+            h = (kernelSize / 2 - 1);
+            j = (kernelSize / 2);
+        }
+        const startSmoothing = (xMinIndex < h) ? 0 : xMinIndex - h;
+        const endSmoothing = (xMaxIndex + j > fullLength - 1) ? fullLength - 1 : xMaxIndex + j;
+        const smoothedStart = (xMinIndex < h) ? xMinIndex : h;
+        const smoothedEnd = smoothedStart + xMaxIndex - xMinIndex;
+        return {startSmoothing, endSmoothing, smoothedStart, smoothedEnd};
+    }
+
+    private getLocalGroupStartEndIndexes(fullLength: number, xMinIndex: number, xMaxIndex: number, width: number) {
+        let firstGroupStartIndex = (xMinIndex % width === 0) ? xMinIndex : xMinIndex - xMinIndex % width;
+        let lastGroupEndIndex = (xMaxIndex % width === width - 1) ? xMaxIndex : xMaxIndex - xMaxIndex % width + (width - 1);
+        if (lastGroupEndIndex > fullLength - 1) {
+            lastGroupEndIndex = fullLength - 1;
+        }
+        return {firstIndex: firstGroupStartIndex, lastIndex: lastGroupEndIndex};
+    }
+
+    getSmoothingValues(x: number[], y: Float32Array | Float64Array, xMinIndex?: number, xMaxIndex?: number): { x: number[], y: Float32Array | Float64Array} {
         let smoothingYs: Float32Array | Float64Array;
         let smoothingXs = x;
         if (this.type === SmoothingType.BOXCAR) {
-            smoothingYs = GSL.boxcarSmooth(this.endType, y, this.boxcarSize);
+            if ((xMinIndex || xMaxIndex === 0) && xMaxIndex) {
+                const indexes = this.getLocalStartEndIndexes(x.length, xMinIndex, xMaxIndex, this.boxcarSize);
+                const localYs = y.subarray(indexes.startSmoothing, indexes.endSmoothing + 1);
+                smoothingYs = GSL.boxcarSmooth(this.endType, localYs, this.boxcarSize).subarray(indexes.smoothedStart, indexes.smoothedEnd + 1);
+                smoothingXs = x.slice(xMinIndex, xMaxIndex + 1);
+            } else {
+                smoothingYs = GSL.boxcarSmooth(this.endType, y, this.boxcarSize);
+            }
         } else if (this.type === SmoothingType.GAUSSIAN) {
             if (this.gaussianSigma && this.gaussianSigma >= 1) {
-                console.log(this.gaussianKernel);
-                smoothingYs = GSL.gaussianSmooth(this.endType, y, this.gaussianKernel, this.gaussianAlpha);
+                if ((xMinIndex || xMaxIndex === 0) && xMaxIndex) {
+                    const indexes = this.getLocalStartEndIndexes(x.length, xMinIndex, xMaxIndex, this.gaussianKernel);
+                    const localYs = y.subarray(indexes.startSmoothing, indexes.endSmoothing + 1);
+                    smoothingYs = GSL.gaussianSmooth(this.endType, localYs, this.gaussianKernel, this.gaussianAlpha).subarray(indexes.smoothedStart, indexes.smoothedEnd + 1);
+                    smoothingXs = x.slice(xMinIndex, xMaxIndex + 1);
+                } else {
+                    smoothingYs = GSL.gaussianSmooth(this.endType, y, this.gaussianKernel, this.gaussianAlpha);
+                }
             }
         } else if (this.type === SmoothingType.HANNING) {
-            smoothingYs = GSL.hanningSmooth(this.endType, y, this.hanningSize);
+            if ((xMinIndex || xMaxIndex === 0) && xMaxIndex) {
+                const indexes = this.getLocalStartEndIndexes(x.length, xMinIndex, xMaxIndex, this.hanningSize);
+                const localYs = y.subarray(indexes.startSmoothing, indexes.endSmoothing + 1);
+                smoothingYs = GSL.hanningSmooth(this.endType, localYs, this.hanningSize).subarray(indexes.smoothedStart, indexes.smoothedEnd + 1);
+                smoothingXs = x.slice(xMinIndex, xMaxIndex + 1);
+            } else {
+                smoothingYs = GSL.hanningSmooth(this.endType, y, this.hanningSize);
+            }
         } else if (this.type === SmoothingType.DECIMATION) {
-            let decimatedValues = GSL.decimation(x, y, this.decimationWidth);
-            smoothingXs = decimatedValues.x;
-            smoothingYs = decimatedValues.y;
+            if ((xMinIndex || xMaxIndex === 0) && xMaxIndex) {
+                const indexes = this.getLocalGroupStartEndIndexes(x.length, xMinIndex, xMaxIndex, this.decimationWidth);
+                const localYs = y.subarray(indexes.firstIndex, indexes.lastIndex + 1);
+                const localXs = x.slice(indexes.firstIndex, indexes.lastIndex + 1);
+                let decimatedValues = GSL.decimation(localXs, localYs, this.decimationWidth);
+                smoothingXs = decimatedValues.x;
+                smoothingYs = decimatedValues.y;
+            } else {
+                let decimatedValues = GSL.decimation(x, y, this.decimationWidth);
+                smoothingXs = decimatedValues.x;
+                smoothingYs = decimatedValues.y;
+            }
         } else if (this.type === SmoothingType.BINNING) {
-            smoothingXs = GSL.binning(x, this.binWidth);
-            smoothingYs = GSL.binning(y, this.binWidth);
+            if ((xMinIndex || xMaxIndex === 0) && xMaxIndex) {
+                const indexes = this.getLocalGroupStartEndIndexes(x.length, xMinIndex, xMaxIndex, this.binWidth);
+                const localYs = y.subarray(indexes.firstIndex, indexes.lastIndex + 1);
+                const localXs = x.slice(indexes.firstIndex, indexes.lastIndex + 1);
+                smoothingXs = GSL.binning(localXs, this.binWidth);
+                smoothingYs = GSL.binning(localYs, this.binWidth);
+            } else {
+                smoothingXs = GSL.binning(x, this.binWidth);
+                smoothingYs = GSL.binning(y, this.binWidth);
+            }
         } else if (this.type === SmoothingType.SAVITZKY_GOLAY) {
-            smoothingYs = GSL.savitzkyGolaySmooth(this.endType, x, y, this.savitzkyGolaySize, this.savitzkyGolayOrder);
+            if ((xMinIndex || xMaxIndex === 0) && xMaxIndex) {
+                const indexes = this.getLocalStartEndIndexes(x.length, xMinIndex, xMaxIndex, this.savitzkyGolaySize);
+                const localYs = y.subarray(indexes.startSmoothing, indexes.endSmoothing + 1);
+                smoothingYs = GSL.savitzkyGolaySmooth(this.endType, x, localYs, this.savitzkyGolaySize, this.savitzkyGolayOrder).subarray(indexes.smoothedStart, indexes.smoothedEnd + 1);
+                smoothingXs = x.slice(xMinIndex, xMaxIndex + 1);
+            } else {
+                smoothingYs = GSL.savitzkyGolaySmooth(this.endType, x, y, this.savitzkyGolaySize, this.savitzkyGolayOrder);
+            }
         }
         return {x: smoothingXs, y: smoothingYs};
     }
 
-    getSmoothingPoint2DArray(x: number[], y: Float32Array|Float64Array): Point2D[] {
+    getSmoothingPoint2DArray(x: number[], y: Float32Array|Float64Array, xMinIndex?: number, xMaxIndex?: number): Point2D[] {
         if (this.type === SmoothingType.NONE) {
             return [];
         }
-        const smoothingValues = this.getSmoothingValues(x, y);
+        const smoothingValues = this.getSmoothingValues(x, y, xMinIndex, xMaxIndex);
         let smoothingArray: Point2D[] = new Array(smoothingValues.x.length);
 
         for (let i = 0; i < smoothingValues.x.length; i++) {
@@ -183,12 +252,20 @@ export class ProfileSmoothingStore {
         return smoothingArray;
     }
 
-    getDecimatedPoint2DArray(x: number[], y: Float32Array|Float64Array, decimationWidth: number): Point2D[] {
+    getDecimatedPoint2DArray(x: number[], y: Float32Array|Float64Array, decimationWidth: number, xMinIndex?: number, xMaxIndex?: number): Point2D[] {
         if (!x || !y || x.length !== y.length) {
             return[];
         }
+        let decimatedValues;
+        if ((xMinIndex || xMaxIndex === 0) && xMaxIndex) {
+            const indexes = this.getLocalGroupStartEndIndexes(x.length, xMinIndex, xMaxIndex, decimationWidth);
+            const localYs = y.subarray(indexes.firstIndex, indexes.lastIndex + 1);
+            const localXs = x.slice(indexes.firstIndex, indexes.lastIndex + 1);
+            decimatedValues = GSL.decimation(localXs, localYs, decimationWidth);
+        } else {
+            decimatedValues = GSL.decimation(x, y, decimationWidth);
+        }
 
-        let decimatedValues = GSL.decimation(x, y, decimationWidth);
         let decimatedArray: Point2D[] = new Array(decimatedValues.x.length);
         for (let i = 0; i < decimatedValues.x.length; i++) {
             decimatedArray[i] = {x: decimatedValues.x[i], y: decimatedValues.y[i]};

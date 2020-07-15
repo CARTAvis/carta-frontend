@@ -121,9 +121,9 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
             let values: Array<{ x: number, y: number }>;
             let smoothingValues: Array<{ x: number, y: number }>;
             if (N > 0) {
-                let xArray: number[] = new Array(N);
-                for (let i = 0; i < N; i++) {
-                    xArray[i] = xMin + i;
+                let xArray: number[] = new Array(coordinateData.values.length);
+                for (let i = 0; i < coordinateData.values.length; i++) {
+                    xArray[i] = i;
                 }
                 if (decimationFactor <= 1 || this.widgetStore.plotType === PlotType.POINTS) {
                     // full resolution data
@@ -152,9 +152,9 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
                             ySum2 += val * val;
                         }
                     }
-                    values = this.widgetStore.smoothingStore.getDecimatedPoint2DArray(xArray, coordinateData.values.subarray(xMin, xMax), decimationFactor);
+                    values = this.widgetStore.smoothingStore.getDecimatedPoint2DArray(xArray, coordinateData.values, decimationFactor, xMin, xMax);
                 }
-                smoothingValues = this.widgetStore.smoothingStore.getSmoothingPoint2DArray(xArray, coordinateData.values.subarray(xMin, xMax));
+                smoothingValues = this.widgetStore.smoothingStore.getSmoothingPoint2DArray(xArray, coordinateData.values, xMin, xMax);
             }
 
             if (yCount > 0) {
