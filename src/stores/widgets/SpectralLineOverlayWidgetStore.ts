@@ -301,7 +301,9 @@ export class SpectralLineOverlayWidgetStore extends RegionWidgetStore {
             if (this.queryResult.size > 0 && this.originalFreqColumn && this.originalFreqColumn.data) {
                 this.queryResult.set(SHIFTIED_FREQUENCY_COLUMN_INDEX, {
                     dataType: CARTA.ColumnType.Double,
-                    data: (this.originalFreqColumn.data as Array<number>).map(val => val * this.redshiftFactor)
+                    data: (this.originalFreqColumn.data as Array<number>).map(val => {
+                        return isFinite(val) ? val * this.redshiftFactor : undefined;
+                    })
                 });
             }
         });
