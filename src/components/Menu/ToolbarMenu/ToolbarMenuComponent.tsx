@@ -96,7 +96,7 @@ export class ToolbarMenuComponent extends React.Component {
                     <Tooltip content={<span>File Info</span>}>
                         <Button icon={"app-header"} onClick={dialogStore.showFileInfoDialog} className={dialogStore.fileInfoDialogVisible ? "bp3-active" : ""}/>
                     </Tooltip>
-                    <Tooltip content={<span>Preference</span>}>
+                    <Tooltip content={<span>Preferences</span>}>
                         <Button icon={"wrench"} onClick={dialogStore.showPreferenceDialog} className={dialogStore.preferenceDialogVisible ? "bp3-active" : ""}/>
                     </Tooltip>
                     <Tooltip content={<span>Overlay Settings</span>}>
