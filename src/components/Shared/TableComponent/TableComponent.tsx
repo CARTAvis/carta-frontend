@@ -290,7 +290,7 @@ export class TableComponent extends React.Component<TableComponentProps> {
         return table.type === TableType.ColumnFilter ? (
             <Table
                 className={"column-filter"}
-                ref={(ref) => table.updateTableRef(ref)}
+                ref={table.updateTableRef ? (ref) => table.updateTableRef(ref) : null}
                 numRows={table.numVisibleRows}
                 renderMode={RenderMode.BATCH}
                 enableRowReordering={false}
@@ -307,6 +307,7 @@ export class TableComponent extends React.Component<TableComponentProps> {
             </Table>
         ) : (
             <Table
+                ref={table.updateTableRef ? (ref) => table.updateTableRef(ref) : null}
                 numRows={table.numVisibleRows}
                 renderMode={RenderMode.NONE}
                 enableRowReordering={false}

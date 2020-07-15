@@ -22,6 +22,7 @@ export class SpectralLineOverlayComponent extends React.Component<WidgetProps> {
     @observable widgetId: string;
     @observable headerTableColumnWidths: Array<number>;
     private headerTableRef: Table;
+    private resultTableRef: Table;
 
     public static get WIDGET_CONFIG(): WidgetConfig {
         return {
@@ -62,6 +63,9 @@ export class SpectralLineOverlayComponent extends React.Component<WidgetProps> {
         if (this.headerTableRef) {
             this.updateTableSize(this.headerTableRef, this.props.docked);
         }
+        if (this.resultTableRef) {
+            this.updateTableSize(this.resultTableRef, this.props.docked);
+        }
     };
 
     @action setHeaderTableColumnWidts(vals: Array<number>) {
@@ -96,10 +100,6 @@ export class SpectralLineOverlayComponent extends React.Component<WidgetProps> {
         return <Column key={columnName} name={columnName} cellRenderer={rowIndex => this.renderSwitchButtonCell(rowIndex, headerNames[rowIndex])}/>;
     }
 
-    onControlHeaderTableRef = (ref) => {
-        this.headerTableRef = ref;
-    }
-
     private createHeaderTable() {
         const headerNames = [];
         const headerDescriptions = [];
@@ -117,7 +117,7 @@ export class SpectralLineOverlayComponent extends React.Component<WidgetProps> {
 
         return (
             <Table
-                ref={(ref) => this.onControlHeaderTableRef(ref)}
+                ref={(ref) => this.headerTableRef = ref}
                 numRows={this.widgetStore.formalizedHeaders.length}
                 enableRowReordering={false}
                 renderMode={RenderMode.BATCH}
@@ -307,7 +307,8 @@ export class SpectralLineOverlayComponent extends React.Component<WidgetProps> {
                 selectSingleLine: widgetStore.selectSingleLine
             },
             manualSelectionData: widgetStore.manualSelectionData,
-            sortingInfo: widgetStore.sortingInfo
+            sortingInfo: widgetStore.sortingInfo,
+            updateTableRef: (ref) => {this.resultTableRef = ref;}
         };
 
         let className = "spectral-line-overlay-widget";
