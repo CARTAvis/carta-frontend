@@ -1,7 +1,7 @@
 import {action, observable} from "mobx";
 import {CARTA} from "carta-protobuf";
 import {Observable, Observer, Subject, throwError} from "rxjs";
-import {PreferenceStore, RegionStore} from "stores";
+import {AppStore, PreferenceStore, RegionStore} from "stores";
 
 export enum ConnectionStatus {
     CLOSED = 0,
@@ -187,7 +187,10 @@ export class BackendService {
                 }
             };
 
-            this.connection.onerror = (ev => console.log(ev));
+            this.connection.onerror = (ev => {
+                AppStore.Instance.logStore.addInfo(`Connecting to server ${url} failed. Retrying...`, ["network"]);
+                console.log(ev);
+            });
         });
     }
 
