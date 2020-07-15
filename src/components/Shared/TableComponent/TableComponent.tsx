@@ -287,37 +287,41 @@ export class TableComponent extends React.Component<TableComponentProps> {
             }
         }
 
-        return table.type === TableType.ColumnFilter ? (
-            <Table
-                className={"column-filter"}
-                ref={table.updateTableRef ? (ref) => table.updateTableRef(ref) : null}
-                numRows={table.numVisibleRows}
-                renderMode={RenderMode.BATCH}
-                enableRowReordering={false}
-                selectionModes={SelectionModes.ROWS_AND_CELLS}
-                onVisibleCellsChange={this.infiniteScroll}
-                onColumnWidthChanged={this.updateTableColumnWidth}
-                enableGhostCells={true}
-                onSelection={this.onRowIndexSelection}
-                enableMultipleSelection={true}
-                enableRowResizing={false}
-                columnWidths={columnWidths}
-            >
-                {tableColumns}
-            </Table>
-        ) : (
-            <Table
-                ref={table.updateTableRef ? (ref) => table.updateTableRef(ref) : null}
-                numRows={table.numVisibleRows}
-                renderMode={RenderMode.NONE}
-                enableRowReordering={false}
-                selectionModes={SelectionModes.NONE}
-                enableGhostCells={true}
-                enableRowResizing={false}
-                columnWidths={columnWidths}
-            >
-                {tableColumns}
-            </Table>
-        );
+        if (table.type === TableType.ColumnFilter) {
+            return (
+                <Table
+                    className={"column-filter"}
+                    ref={table.updateTableRef ? (ref) => table.updateTableRef(ref) : null}
+                    numRows={table.numVisibleRows}
+                    renderMode={RenderMode.BATCH}
+                    enableRowReordering={false}
+                    selectionModes={SelectionModes.ROWS_AND_CELLS}
+                    onVisibleCellsChange={this.infiniteScroll}
+                    onColumnWidthChanged={this.updateTableColumnWidth}
+                    enableGhostCells={true}
+                    onSelection={this.onRowIndexSelection}
+                    enableMultipleSelection={true}
+                    enableRowResizing={false}
+                    columnWidths={columnWidths}
+                >
+                    {tableColumns}
+                </Table>
+            );
+        } else {
+            return (
+                <Table
+                    ref={table.updateTableRef ? (ref) => table.updateTableRef(ref) : null}
+                    numRows={table.numVisibleRows}
+                    renderMode={RenderMode.NONE}
+                    enableRowReordering={false}
+                    selectionModes={SelectionModes.NONE}
+                    enableGhostCells={true}
+                    enableRowResizing={false}
+                    columnWidths={columnWidths}
+                >
+                    {tableColumns}
+                </Table>
+            );
+        }
     }
 }
