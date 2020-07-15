@@ -297,7 +297,6 @@ export class SpectralLineOverlayComponent extends React.Component<WidgetProps> {
         const queryResultTableProps: TableComponentProps = {
             type: TableType.Normal,
             dataset: widgetStore.queryResult,
-            filter: widgetStore.controlHeaders,
             columnHeaders: widgetStore.displayedColumnHeaders,
             numVisibleRows: widgetStore.numDataRows,
             manualSelectionProps: {
@@ -308,7 +307,7 @@ export class SpectralLineOverlayComponent extends React.Component<WidgetProps> {
             },
             manualSelectionData: widgetStore.manualSelectionData,
             sortingInfo: widgetStore.sortingInfo,
-            updateTableRef: (ref) => {this.resultTableRef = ref;}
+            updateTableRef: (ref) => { this.resultTableRef = ref; }
         };
 
         let className = "spectral-line-overlay-widget";

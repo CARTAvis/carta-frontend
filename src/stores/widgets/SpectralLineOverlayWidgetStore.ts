@@ -6,7 +6,6 @@ import {AppStore} from "stores";
 import {BackendService} from "services";
 import {RegionWidgetStore, RegionsType} from "./RegionWidgetStore";
 import {ProcessedColumnData, ProtobufProcessing} from "models";
-import {ControlHeader} from "stores/widgets";
 import {wavelengthToFrequency, SPEED_OF_LIGHT} from "utilities";
 
 export enum SpectralLineQueryRangeType {
@@ -84,7 +83,6 @@ export class SpectralLineOverlayWidgetStore extends RegionWidgetStore {
     @observable redshiftType: RedshiftType;
     @observable redshiftInput: number;
     @observable queryResultTableRef: Table;
-    @observable controlHeaders: Map<string, ControlHeader>;
     @observable queryResult: Map<number, ProcessedColumnData>;
     @observable private isLineSelectedArray: Array<boolean>;
     @observable originalFreqColumn: ProcessedColumnData;
@@ -186,10 +184,6 @@ export class SpectralLineOverlayWidgetStore extends RegionWidgetStore {
             });
         }
     };
-
-    @action.bound setColumnFilter(filter: string, columnName: string) {
-        this.controlHeaders.get(columnName).filter = filter;
-    }
 
     @action clearData() {
         this.queryResult.clear();
@@ -295,7 +289,6 @@ export class SpectralLineOverlayWidgetStore extends RegionWidgetStore {
         this.redshiftType = RedshiftType.V;
         this.redshiftInput = 0;
         this.queryResultTableRef = undefined;
-        this.controlHeaders = new Map<string, ControlHeader>();
         this.queryResult = new Map<number, ProcessedColumnData>();
         this.originalFreqColumn = undefined;
         this.numDataRows = 1;
