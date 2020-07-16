@@ -441,10 +441,15 @@ export class BackendService {
             const message = CARTA.SetRegion.create({
                 fileId,
                 regionId,
-                regionType: region.regionType,
-                regionName: region.name,
-                controlPoints: region.controlPoints.map(point => ({x: point.x, y: point.y})),
-                rotation: region.rotation
+                regionInfo: {
+                    regionType: region.regionType,
+                    regionName: region.name,
+                    rotation: region.rotation,
+                    controlPoints: region.controlPoints.slice(),
+                    color: region.color,
+                    lineWidth: region.lineWidth,
+                    dashList: region.dashLength > 0 ? [region.dashLength] : []
+                }
             });
 
             const requestId = this.eventCounter;
