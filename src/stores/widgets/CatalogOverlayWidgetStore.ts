@@ -63,9 +63,8 @@ export enum CatalogUpdateMode {
 
 export enum CatalogPlotType {
     ImageOverlay = "Image overlay",
-    // 1DHistogram = "as 1D histogram",
-    D2Scatter = "2D scatter",
-    // D3Scatter = "as 3D scatter",
+    Histogram = "Histogram",
+    D2Scatter = "2D scatter"
 }
 
 export enum CatalogSystemType {
@@ -330,6 +329,7 @@ export class CatalogOverlayWidgetStore extends RegionWidgetStore {
 
     @action setHeaderRepresentation(option: {coordinate: CatalogCoordinate, coordinateType: CatalogOverlay}, columnName: string) {
         const current = this.catalogControlHeader.get(columnName);
+        // console.log(option)
         if (option.coordinate !== current.representAs) {
             switch (option.coordinate) {
                 case CatalogCoordinate.X:
@@ -611,8 +611,12 @@ export class CatalogOverlayWidgetStore extends RegionWidgetStore {
         }
     }
 
-    @computed get enableLoadButton(): boolean {
-        return (this.xColumnRepresentation !== null && this.yColumnRepresentation !== null && !this.loadingData && !this.updatingDataStream);
+    @computed get enablePlotButton(): boolean {
+        if (this.catalogPlotType === CatalogPlotType.Histogram) {
+            return (this.xColumnRepresentation !== null && !this.loadingData && !this.updatingDataStream);
+        } else {
+            return (this.xColumnRepresentation !== null && this.yColumnRepresentation !== null && !this.loadingData && !this.updatingDataStream);
+        }
     }
 
     @computed get xColumnRepresentation(): string {

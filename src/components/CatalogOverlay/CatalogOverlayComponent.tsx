@@ -291,7 +291,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         const supportedRepresentations = CatalogOverlayComponent.DataTypeRepresentationMap.get(dataType);
         const disabled = !controlHeader.display;
         let options = [];
-        let activeSystemCoords = widgetStore.activedSystem;
+        let activeSystemCoords;
         switch (widgetStore.catalogPlotType) {
             case CatalogPlotType.D2Scatter:
                 activeSystemCoords = {
@@ -299,7 +299,14 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
                     y: CatalogOverlay.Y
                 };
                 break;
+            case CatalogPlotType.Histogram: 
+                activeSystemCoords = {
+                    x: CatalogOverlay.X,
+                    y: CatalogOverlay.NONE
+                };
+                break;
             default:
+                activeSystemCoords = widgetStore.activedSystem;
                 break;
         }
 
@@ -310,21 +317,27 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
                     coordinate: CatalogCoordinate.X, 
                     coordinateType: activeSystemCoords.x
                 };
-            } else if (representation === CatalogCoordinate.Y) {
+                options.push(option);
+            }
+            if (representation === CatalogCoordinate.Y) {
                 option = {
                     coordinate: CatalogCoordinate.Y, 
                     coordinateType: activeSystemCoords.y
                 };
-            } else {
+                if (widgetStore.catalogPlotType !== CatalogPlotType.Histogram) {
+                    options.push(option);
+                }
+            } 
+            if (representation === CatalogCoordinate.NONE) {
                 option = {
                     coordinate: CatalogCoordinate.NONE, 
                     coordinateType: CatalogOverlay.NONE
                 };
-            } 
-            options.push(option);
+                options.push(option);
+            }      
         });
 
-        let activeItem = CatalogOverlay.NONE;
+        let activeItem;
         switch (columnName) {
             case widgetStore.xColumnRepresentation:
                 activeItem = activeSystemCoords.x;
@@ -333,6 +346,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
                 activeItem = activeSystemCoords.y;
                 break;
             default:
+                activeItem = CatalogOverlay.NONE;
                 break;
         }
 
@@ -571,16 +585,16 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         const appStore = AppStore.Instance;
         const frame = appStore.activeFrame;
         // init plot data   
-        const coords = widgetStore.get2DPlotData(widgetStore.xColumnRepresentation, widgetStore.yColumnRepresentation, widgetStore.catalogData);
         switch (widgetStore.catalogPlotType) {
             case CatalogPlotType.ImageOverlay:
                 widgetStore.setUpdateMode(CatalogUpdateMode.ViewUpdate);
                 if (frame) {
+                    const imageCoords = widgetStore.get2DPlotData(widgetStore.xColumnRepresentation, widgetStore.yColumnRepresentation, widgetStore.catalogData);
                     const wcs = frame.validWcs ? frame.wcsInfo : 0;
                     const id = this.widgetId;
                     const catalogStore = appStore.catalogStore;
                     catalogStore.clearData(this.widgetId);
-                    catalogStore.updateCatalogData(id, coords.wcsX, coords.wcsY, wcs, coords.xHeaderInfo.units, coords.yHeaderInfo.units, widgetStore.catalogCoordinateSystem.system);
+                    catalogStore.updateCatalogData(id, imageCoords.wcsX, imageCoords.wcsY, wcs, imageCoords.xHeaderInfo.units, imageCoords.yHeaderInfo.units, widgetStore.catalogCoordinateSystem.system);
                     catalogStore.updateCatalogColor(id, widgetStore.catalogColor);
                     catalogStore.updateCatalogSize(id, widgetStore.catalogSize);
                     catalogStore.updateCatalogShape(id, widgetStore.catalogShape);
@@ -594,13 +608,25 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
 
                 break;
             case CatalogPlotType.D2Scatter:
+                const scatterCoords = widgetStore.get2DPlotData(widgetStore.xColumnRepresentation, widgetStore.yColumnRepresentation, widgetStore.catalogData);
                 const scatterProps: CatalogScatterWidgetStoreProps = {
-                    x: coords.wcsX,
-                    y: coords.wcsY,
-                    catalogOverlayWidgetStore: this.widgetStore
+                    x: scatterCoords.wcsX,
+                    y: scatterCoords.wcsY,
+                    catalogOverlayWidgetStore: this.widgetStore,
+                    plotType: widgetStore.catalogPlotType
                 };
                 const scatterWidgetId = appStore.widgetsStore.createFloatingCatalogScatterWidget(scatterProps);
                 widgetStore.setCatalogScatterWidget(scatterWidgetId);
+                break;
+            case CatalogPlotType.Histogram:
+                const historgramCoords = widgetStore.get1DPlotData(widgetStore.xColumnRepresentation);
+                const historgramProps: CatalogScatterWidgetStoreProps = {
+                    x: historgramCoords.wcsData,
+                    catalogOverlayWidgetStore: this.widgetStore,
+                    plotType: widgetStore.catalogPlotType
+                };
+                const widgetId = appStore.widgetsStore.createFloatingCatalogScatterWidget(historgramProps);
+                widgetStore.setCatalogScatterWidget(widgetId);
                 break;
             default:
                 break;
@@ -871,7 +897,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
                             intent={Intent.PRIMARY}
                             text="Plot"
                             onClick={this.handlePlotClick}
-                            disabled={!widgetStore.enableLoadButton}
+                            disabled={!widgetStore.enablePlotButton}
                         />
                         </Tooltip>
                     </div>

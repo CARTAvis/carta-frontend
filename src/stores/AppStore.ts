@@ -37,7 +37,7 @@ import {
 import {distinct, GetRequiredTiles} from "utilities";
 import {BackendService, ConnectionStatus, ScriptingService, TileService, TileStreamDetails} from "services";
 import {FrameView, Point2D, ProtobufProcessing, Theme, TileCoordinate, WCSMatchingType} from "models";
-import {CatalogInfo, CatalogUpdateMode, HistogramWidgetStore, RegionWidgetStore, SpatialProfileWidgetStore, SpectralProfileWidgetStore, StatsWidgetStore, StokesAnalysisWidgetStore} from "./widgets";
+import {CatalogInfo, CatalogUpdateMode, HistogramWidgetStore, RegionWidgetStore, SpatialProfileWidgetStore, SpectralProfileWidgetStore, StatsWidgetStore, StokesAnalysisWidgetStore, CatalogPlotType} from "./widgets";
 import {CatalogScatterComponent, getImageCanvas} from "components";
 import {AppToaster} from "components/Shared";
 import GitCommit from "../static/gitInfo";
@@ -1166,7 +1166,16 @@ export class AppStore {
                 const scatterWidgetStore = scatterWidgetsStore[index];
                 const scatterWidget = this.widgetsStore.catalogScatterWidgets.get(scatterWidgetStore);
                 if (scatterWidget) {
-                    scatterWidget.updateScatterData();
+                    switch (scatterWidget.plotType) {
+                        case CatalogPlotType.D2Scatter:
+                            scatterWidget.updateScatterData();
+                            break;
+                        case CatalogPlotType.Histogram:
+                            scatterWidget.updateHistogramData();
+                            break;
+                        default:
+                            break;
+                    }
                 }
             }
         }
