@@ -1,7 +1,7 @@
 import * as React from "react";
 import {action, computed, observable} from "mobx";
 import {observer} from "mobx-react";
-import {Button, Classes, Divider, FormGroup, HTMLSelect, Intent, Menu, MenuItem, Overlay, Popover, Position, Spinner, Switch} from "@blueprintjs/core";
+import {AnchorButton, Button, Classes, Divider, FormGroup, HTMLSelect, Intent, Menu, MenuItem, Overlay, Popover, Position, Spinner, Switch, Tooltip} from "@blueprintjs/core";
 import {Cell, Column, Regions, RenderMode, SelectionModes, Table} from "@blueprintjs/table";
 import ReactResizeDetector from "react-resize-detector";
 import {SafeNumericInput, TableComponent, TableComponentProps, TableType} from "components/Shared";
@@ -15,7 +15,7 @@ enum HeaderTableColumnName {
     Display = "Display"
 }
 
-const MINIMUM_WIDTH = 500;
+const MINIMUM_WIDTH = 450;
 
 @observer
 export class SpectralLineOverlayComponent extends React.Component<WidgetProps> {
@@ -291,8 +291,8 @@ export class SpectralLineOverlayComponent extends React.Component<WidgetProps> {
                 position={Position.BOTTOM}
                 minimal={true}
             >
-                <Button minimal={true} disabled={AppStore.Instance.widgetsStore.spectralProfilerList.length <= 0} rightIcon="caret-down">
-                    {isSelectedWidgetExisted ? widgetStore.selectedSpectralProfilerID : (this.width < MINIMUM_WIDTH ? "Select" : "-- Select a spectral profiler --")}
+                <Button disabled={AppStore.Instance.widgetsStore.spectralProfilerList.length <= 0} rightIcon="caret-down">
+                    {isSelectedWidgetExisted ? widgetStore.selectedSpectralProfilerID : "-- Select --"}
                 </Button>
             </Popover>
         );
@@ -343,8 +343,12 @@ export class SpectralLineOverlayComponent extends React.Component<WidgetProps> {
                         <FormGroup inline={true} label={this.width < MINIMUM_WIDTH ? "" : "Spectral Profiler"}>
                             {widgetMenu}
                         </FormGroup>
-                        <Button intent={Intent.PRIMARY} disabled={!appStore.activeFrame || !isSelectedWidgetExisted || widgetStore.queryResult.size <= 0} onClick={this.handlePlot}>Plot</Button>
-                        <Button intent={Intent.PRIMARY} disabled={!appStore.activeFrame || !isSelectedWidgetExisted || widgetStore.queryResult.size <= 0} onClick={this.handleClear}>Clear</Button>
+                        <Tooltip content="Plot lines to selected profiler" position={Position.BOTTOM}>
+                            <AnchorButton text="Plot" intent={Intent.PRIMARY} disabled={!appStore.activeFrame || !isSelectedWidgetExisted || widgetStore.queryResult.size <= 0} onClick={this.handlePlot}/>
+                        </Tooltip>
+                        <Tooltip content="Clear plotted lines" position={Position.BOTTOM}>
+                            <AnchorButton text="Clear" intent={Intent.PRIMARY} disabled={!appStore.activeFrame || !isSelectedWidgetExisted || widgetStore.queryResult.size <= 0} onClick={this.handleClear}/>
+                        </Tooltip>
                     </div>
                 </div>
                 <Overlay className={Classes.OVERLAY_SCROLL_CONTAINER} autoFocus={true} canEscapeKeyClose={false} canOutsideClickClose={false} isOpen={widgetStore.isQuerying} usePortal={false}>

@@ -293,7 +293,8 @@ export class SpectralLineOverlayWidgetStore extends RegionWidgetStore {
         this.originalFreqColumn = undefined;
         this.numDataRows = 1;
         this.isLineSelectedArray = [];
-        this.selectedSpectralProfilerID = "";
+        this.selectedSpectralProfilerID = AppStore.Instance.widgetsStore.spectralProfilerList.length > 0 ?
+            AppStore.Instance.widgetsStore.spectralProfilerList[0] : undefined;
         this.sortingInfo = {columnName: null, sortingType: null};
 
         // update frequency column when redshift changes
