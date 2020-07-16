@@ -120,6 +120,9 @@ export class CatalogScatterWidgetStore {
     }
 
     @computed get enablePlotButton(): boolean {
+        if (this.plotType === CatalogPlotType.Histogram) {
+            return (this.columnsName.x !== null && !this.catalogOverlayWidgetStore.loadingData && !this.catalogOverlayWidgetStore.updatingDataStream);
+        }
         return (this.columnsName.x !== null && this.columnsName.y !== null && !this.catalogOverlayWidgetStore.loadingData && !this.catalogOverlayWidgetStore.updatingDataStream);
     }
 }
