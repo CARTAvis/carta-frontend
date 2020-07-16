@@ -25,4 +25,4 @@ export * from "./FileInfo/FileInfoComponent";
 export * from "./App/UIControllerComponent";
 export * from "./RegionSelector/RegionSelectorComponent";
 export * from "./HelpDrawer/HelpDrawerComponent";
-export * from "./CatalogOverlay/CatalogScatterComponent/CatalogScatterComponent";
+export * from "./CatalogOverlay/CatalogSubplotComponent/CatalogSubplotComponent";
