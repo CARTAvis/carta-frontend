@@ -38,7 +38,7 @@ import {distinct, GetRequiredTiles} from "utilities";
 import {BackendService, ConnectionStatus, ScriptingService, TileService, TileStreamDetails} from "services";
 import {FrameView, Point2D, ProtobufProcessing, Theme, TileCoordinate, WCSMatchingType} from "models";
 import {CatalogInfo, CatalogUpdateMode, HistogramWidgetStore, RegionWidgetStore, SpatialProfileWidgetStore, SpectralProfileWidgetStore, StatsWidgetStore, StokesAnalysisWidgetStore, CatalogPlotType} from "./widgets";
-import {CatalogScatterComponent, getImageCanvas} from "components";
+import {CatalogSubplotComponent, getImageCanvas} from "components";
 import {AppToaster} from "components/Shared";
 import GitCommit from "../static/gitInfo";
 
@@ -583,7 +583,7 @@ export class AppStore {
         const fileId = this.catalogs.get(catalogWidgetId);
         if (fileId > -1 && this.backendService.closeCatalogFile(fileId)) {
             // close all associated scatter widgets
-            const config = CatalogScatterComponent.WIDGET_CONFIG;
+            const config = CatalogSubplotComponent.WIDGET_CONFIG;
             const catalogOverlayWidgetStore = this.widgetsStore.catalogOverlayWidgets.get(catalogWidgetId);
             let dockedCatalogScatterWidgets = this.widgetsStore.getDockedWidgetByType(config.type);
             const dockedScatterWidgetId = dockedCatalogScatterWidgets.map(contentItem => {

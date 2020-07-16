@@ -17,7 +17,7 @@ import {
     ToolbarMenuComponent,
     StokesAnalysisComponent,
     CatalogOverlayComponent,
-    CatalogScatterComponent,
+    CatalogSubplotComponent,
     // setting Panel
     StokesAnalysisSettingsPanelComponent,
     SpectralProfilerSettingsPanelComponent,
@@ -142,7 +142,7 @@ export class WidgetsStore {
             [RegionListComponent.WIDGET_CONFIG.type, this.regionListWidgets],
             [StokesAnalysisComponent.WIDGET_CONFIG.type, this.stokesAnalysisWidgets],
             [CatalogOverlayComponent.WIDGET_CONFIG.type, this.catalogOverlayWidgets],
-            [CatalogScatterComponent.WIDGET_CONFIG.type, this.catalogScatterWidgets]
+            [CatalogSubplotComponent.WIDGET_CONFIG.type, this.catalogScatterWidgets]
         ]);
 
         this.floatingWidgets = [];
@@ -175,8 +175,8 @@ export class WidgetsStore {
                 return StokesAnalysisComponent.WIDGET_CONFIG;
             case CatalogOverlayComponent.WIDGET_CONFIG.type:
                 return CatalogOverlayComponent.WIDGET_CONFIG;
-            case CatalogScatterComponent.WIDGET_CONFIG.type:
-                return CatalogScatterComponent.WIDGET_CONFIG;    
+            case CatalogSubplotComponent.WIDGET_CONFIG.type:
+                return CatalogSubplotComponent.WIDGET_CONFIG;    
             default:
                 return PlaceholderComponent.WIDGET_CONFIG;
         }
@@ -400,7 +400,7 @@ export class WidgetsStore {
         layout.registerComponent("animator", AnimatorComponent);
         layout.registerComponent("stokes", StokesAnalysisComponent);
         layout.registerComponent("catalog-overlay", CatalogOverlayComponent);
-        layout.registerComponent("catalog-scatter", CatalogScatterComponent);
+        layout.registerComponent("catalog-scatter", CatalogSubplotComponent);
 
         const showCogWidgets = ["spatial-profiler", "spectral-profiler", "histogram", "render-config", "stokes"];
         // add drag source buttons from ToolbarMenuComponent
@@ -818,7 +818,7 @@ export class WidgetsStore {
 
     // region Catalog Scatter Widgets
     createFloatingCatalogScatterWidget = (props: CatalogScatterWidgetStoreProps): string => {
-        let config = CatalogScatterComponent.WIDGET_CONFIG;
+        let config = CatalogSubplotComponent.WIDGET_CONFIG;
         config.id = this.addCatalogScatterWidget(props);
         this.addFloatingWidget(config);
         return config.id;
@@ -827,7 +827,7 @@ export class WidgetsStore {
     @action addCatalogScatterWidget(props: CatalogScatterWidgetStoreProps, id: string = null) {
         // Generate new id if none passed in
         if (!id) {
-            id = this.getNextId(CatalogScatterComponent.WIDGET_CONFIG.type);
+            id = this.getNextId(CatalogSubplotComponent.WIDGET_CONFIG.type);
         }
 
         if (id) {

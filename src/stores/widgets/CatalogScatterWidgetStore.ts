@@ -24,6 +24,7 @@ export class CatalogScatterWidgetStore {
     @observable dragmode: DragMode;
     @observable plotType: CatalogPlotType;
     @observable histogramBorder: XBorder;
+    @observable logScaleY: boolean;
 
     constructor(props: CatalogScatterWidgetStoreProps) {
         this.xDataset = props.x;
@@ -35,6 +36,7 @@ export class CatalogScatterWidgetStore {
         this.indicatorInfo = undefined;
         this.dragmode = "select";
         this.plotType = props.plotType;
+        this.logScaleY = true;
 
         if (props.plotType === CatalogPlotType.D2Scatter) {
             this.scatterborder = this.initScatterBorder;
@@ -100,6 +102,10 @@ export class CatalogScatterWidgetStore {
         this.dragmode = mode;
     }
 
+    @action setLogScaleY(val: boolean) {
+        this.logScaleY = val;
+    }
+
     @computed get initScatterBorder(): Border {
         const xBounds = minMaxArray(this.xDataset);
         const yBounds = minMaxArray(this.yDataset);
@@ -117,6 +123,10 @@ export class CatalogScatterWidgetStore {
             xMin: xBounds.minVal,
             xMax: xBounds.maxVal
         };
+    }
+
+    @computed get binSize(): number {
+        return  Math.ceil(Math.sqrt(this.xDataset.length));
     }
 
     @computed get enablePlotButton(): boolean {

@@ -13,10 +13,10 @@ import {CatalogScatterWidgetStore, Border, CatalogUpdateMode, DragMode, CatalogP
 import {ProfilerInfoComponent} from "components/Shared";
 import {Colors} from "@blueprintjs/core";
 import {toFixed} from "utilities";
-import "./CatalogScatterComponent.css";
+import "./CatalogSubplotComponent.css";
 
 @observer
-export class CatalogScatterComponent extends React.Component<WidgetProps> {
+export class CatalogSubplotComponent extends React.Component<WidgetProps> {
     @observable width: number;
     @observable height: number;
     private histogramY: {yMin: number, yMax: number};
@@ -94,12 +94,20 @@ export class CatalogScatterComponent extends React.Component<WidgetProps> {
         const widgetStore = this.widgetStore;
         let histogramDatasets: Plotly.Data[] = [];
         let data: Plotly.Data = {};
+        const binSize = widgetStore.binSize;
+        const xRange = widgetStore.initHistogramXBorder;
+        const binWidth = (xRange.xMax - xRange.xMin) / binSize;
         data.type = "histogram";
+        data.hoverinfo = "none";
+        data.x = widgetStore.xDataset;
         data.marker = {
             color: Colors.BLUE2
         };
-        data.hoverinfo = "none";
-        data.x = widgetStore.xDataset;
+        data.xbins = {
+            start: xRange.xMin,
+            size: binWidth,
+            end: xRange.xMax
+        };
         histogramDatasets.push(data);
         return histogramDatasets;
     }
@@ -123,6 +131,11 @@ export class CatalogScatterComponent extends React.Component<WidgetProps> {
         this.widgetStore.catalogOverlayWidgetStore.setShowSelectedData(val);
         const storeId = this.widgetStore.catalogOverlayWidgetStore.storeId;
         CatalogStore.Instance.updateShowSelectedData(storeId, val);
+    }
+
+    private handleLogScaleYChanged = (changeEvent: React.ChangeEvent<HTMLInputElement>) => {
+        const val = changeEvent.target.checked;
+        this.widgetStore.setLogScaleY(val);
     }
 
     private onHover = (event: Plotly.PlotMouseEvent) => {
@@ -278,7 +291,7 @@ export class CatalogScatterComponent extends React.Component<WidgetProps> {
         // fixed react plotlyjs bug with fixed range and changed x range 
         if (this.widgetStore.plotType === CatalogPlotType.Histogram) {
             const yaxis = figure.layout.yaxis.range;
-            this.histogramY = {yMin: yaxis[0], yMax: yaxis[1]};   
+            this.histogramY = {yMin: yaxis[0], yMax: yaxis[1]}; 
         }
 
     }
@@ -296,7 +309,7 @@ export class CatalogScatterComponent extends React.Component<WidgetProps> {
         
         for (let index = 0; index < columnsName.length; index++) {
             const column = columnsName[index];
-            if (!CatalogScatterComponent.UnsupportedDataTypes.includes(column.dataType)) {
+            if (!CatalogSubplotComponent.UnsupportedDataTypes.includes(column.dataType)) {
                 xyOptions.push(column.name); 
             }
         }
@@ -367,7 +380,6 @@ export class CatalogScatterComponent extends React.Component<WidgetProps> {
                 spikedash: "solid",
                 spikecolor: markerColor,
                 spikethickness: 1,
-                tickformat: ".2e",
             },
             margin: {
                 t: 5,
@@ -387,17 +399,21 @@ export class CatalogScatterComponent extends React.Component<WidgetProps> {
             layout.xaxis.range = [border.xMin, border.xMax];
             layout.yaxis.range = [border.yMin, border.yMax];
             layout.yaxis.title = widgetStore.columnsName.y;
+            layout.yaxis.tickformat = ".2e";
             layout["hoverdistance"] = 5;
         } else {
             data = this.histogramData;
             const border = widgetStore.histogramBorder;
             layout.xaxis.range = [border.xMin, border.xMax];
-            layout.yaxis.range = [0, this.histogramY?.yMax];
+            layout.yaxis.range = [this.histogramY?.yMin, this.histogramY?.yMax];
             layout.yaxis.fixedrange = true;
             // autorange will trigger y axis range change
             layout.yaxis.autorange = true;
-            // layout.yaxis.rangemode = "tozero";
+            layout.yaxis.rangemode = "tozero";
             layout.yaxis.title = "Count";
+            if (widgetStore.logScaleY) {
+                layout.yaxis.type = "log";   
+            }
         }
 
         const selectedPointIndices = widgetStore.catalogOverlayWidgetStore.selectedPointIndices;
@@ -429,6 +445,7 @@ export class CatalogScatterComponent extends React.Component<WidgetProps> {
         };
         const disabled = !widgetStore.enablePlotButton;
         const isScatterPlot = widgetStore.plotType === CatalogPlotType.D2Scatter;
+        const isHistogramPlot = widgetStore.plotType === CatalogPlotType.Histogram;
 
         return(
             <div className={"catalog-2D"}>
@@ -446,6 +463,11 @@ export class CatalogScatterComponent extends React.Component<WidgetProps> {
                             <Button text={widgetStore.columnsName.x} rightIcon="double-caret-vertical"/>
                         </Select>
                     </FormGroup>
+                    {isHistogramPlot &&
+                        <FormGroup label={"Log Scale"} inline={true} disabled={disabled}>
+                            <Switch checked={widgetStore.logScaleY} onChange={this.handleLogScaleYChanged} disabled={disabled}/>
+                        </FormGroup>
+                    }
                     {isScatterPlot &&
                         <FormGroup inline={true} label="Y">
                             <Select 
