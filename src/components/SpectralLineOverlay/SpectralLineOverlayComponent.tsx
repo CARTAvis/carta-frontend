@@ -292,7 +292,7 @@ export class SpectralLineOverlayComponent extends React.Component<WidgetProps> {
                 minimal={true}
             >
                 <Button disabled={AppStore.Instance.widgetsStore.spectralProfilerList.length <= 0} rightIcon="caret-down">
-                    {isSelectedWidgetExisted ? widgetStore.selectedSpectralProfilerID : "-- Select --"}
+                    {isSelectedWidgetExisted ? widgetStore.selectedSpectralProfilerID : "----"}
                 </Button>
             </Popover>
         );

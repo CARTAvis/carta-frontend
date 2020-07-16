@@ -308,5 +308,13 @@ export class SpectralLineOverlayWidgetStore extends RegionWidgetStore {
                 });
             }
         });
+
+        // update selected spectral profiler when currently selected is closed
+        autorun(() => {
+            if (!AppStore.Instance.widgetsStore.getSpectralWidgetStoreByID(this.selectedSpectralProfilerID)) {
+                this.selectedSpectralProfilerID = AppStore.Instance.widgetsStore.spectralProfilerList.length > 0 ?
+                AppStore.Instance.widgetsStore.spectralProfilerList[0] : undefined;
+            }
+        });
     }
 }
