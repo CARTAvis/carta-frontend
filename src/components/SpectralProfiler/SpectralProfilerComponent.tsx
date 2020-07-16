@@ -448,7 +448,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
         }
 
         let className = "spectral-profiler-widget";
-        if (this.widgetStore.isSelected) {
+        if (this.widgetStore.isHighlighted) {
             className += " linked-to-widget-selected";
         }
 

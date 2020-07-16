@@ -158,7 +158,7 @@ export class SpectralLineOverlayComponent extends React.Component<WidgetProps> {
         if (widgetID) {
             const hoveredOverWidgetStore = AppStore.Instance.widgetsStore.getSpectralWidgetStoreByID(widgetID);
             if (hoveredOverWidgetStore) {
-                hoveredOverWidgetStore.setSelected(isEntering);
+                hoveredOverWidgetStore.setHighlighted(isEntering);
             }
         }
     };
@@ -283,7 +283,10 @@ export class SpectralLineOverlayComponent extends React.Component<WidgetProps> {
                                 text={widgetID}
                                 onMouseEnter={() => this.handleEnterWidgetOption(true, widgetID)}
                                 onMouseLeave={() => this.handleEnterWidgetOption(false, widgetID)}
-                                onClick={() => widgetStore.setSelectedSpectralProfiler(widgetID)}
+                                onClick={() => {
+                                    this.handleEnterWidgetOption(false, widgetID);
+                                    widgetStore.setSelectedSpectralProfiler(widgetID);
+                                }}
                             />
                         )}
                     </Menu>

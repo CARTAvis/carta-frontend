@@ -19,7 +19,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
     @observable channel: number;
     @observable markerTextVisible: boolean;
     @observable isMouseMoveIntoLinePlots: boolean;
-    @observable isSelected: boolean;
+    @observable isHighlighted: boolean;
     @observable private spectralLinesMHz: SpectralLine[];
 
     // settings 
@@ -98,8 +98,8 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         }
     };
 
-    @action setSelected = (isSelected: boolean) => {
-       this.isSelected = isSelected;
+    @action setHighlighted = (isHighlighted: boolean) => {
+       this.isHighlighted = isHighlighted;
     };
 
     @action addSpectralLines = (spectralLines: SpectralLine[]) => {
@@ -174,7 +174,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         super(RegionsType.CLOSED_AND_POINT);
         this.coordinate = coordinate;
         this.statsType = CARTA.StatsType.Mean;
-        this.isSelected = false;
+        this.isHighlighted = false;
         this.spectralLinesMHz = [];
 
         // Describes how the data is visualised
