@@ -15,6 +15,8 @@ enum HeaderTableColumnName {
     Display = "Display"
 }
 
+const MINIMUM_WIDTH = 500;
+
 @observer
 export class SpectralLineOverlayComponent extends React.Component<WidgetProps> {
     @observable width: number;
@@ -290,7 +292,7 @@ export class SpectralLineOverlayComponent extends React.Component<WidgetProps> {
                 minimal={true}
             >
                 <Button minimal={true} disabled={AppStore.Instance.widgetsStore.spectralProfilerList.length <= 0} rightIcon="caret-down">
-                    {isSelectedWidgetExisted ? widgetStore.selectedSpectralProfilerID : (this.width < 400 ? "Select" : "-- Select a spectral profiler --")}
+                    {isSelectedWidgetExisted ? widgetStore.selectedSpectralProfilerID : (this.width < MINIMUM_WIDTH ? "Select" : "-- Select a spectral profiler --")}
                 </Button>
             </Popover>
         );
@@ -338,7 +340,9 @@ export class SpectralLineOverlayComponent extends React.Component<WidgetProps> {
                 </div>
                 <div className="bp3-dialog-footer">
                     <div className="bp3-dialog-footer-actions">
-                        {widgetMenu}
+                        <FormGroup inline={true} label={this.width < MINIMUM_WIDTH ? "" : "Spectral Profiler"}>
+                            {widgetMenu}
+                        </FormGroup>
                         <Button intent={Intent.PRIMARY} disabled={!appStore.activeFrame || !isSelectedWidgetExisted || widgetStore.queryResult.size <= 0} onClick={this.handlePlot}>Plot</Button>
                         <Button intent={Intent.PRIMARY} disabled={!appStore.activeFrame || !isSelectedWidgetExisted || widgetStore.queryResult.size <= 0} onClick={this.handleClear}>Clear</Button>
                     </div>
