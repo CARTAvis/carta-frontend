@@ -247,7 +247,7 @@ export class PolygonRegionComponent extends React.Component<PolygonRegionCompone
         let centerPointCanvasSpace: Point2D;
         if (frame.spatialReference) {
             controlPoints = controlPoints.map(p => {
-                const controlPointSecondaryImage = getTransformedCoordinates(frame.spatialTransformAST, p, false);
+                const controlPointSecondaryImage = getTransformedCoordinates(frame.spatialTransformAST, p, false, true);
                 return transformedImageToCanvasPos(controlPointSecondaryImage.x, controlPointSecondaryImage.y, frame, this.props.layerWidth, this.props.layerHeight);
             });
             rotation = -frame.spatialTransform.rotation * 180.0 / Math.PI;

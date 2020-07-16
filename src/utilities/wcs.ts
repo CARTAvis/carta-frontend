@@ -15,8 +15,14 @@ export function getHeaderNumericValue(headerEntry: CARTA.IHeaderEntry): number {
     }
 }
 
-export function getTransformedCoordinates(astTransform: number, point: Point2D, forward: boolean = true) {
-    return AST.transformPoint(astTransform, point.x, point.y, forward);
+export function getTransformedCoordinates(astTransform: number, point: Point2D, forward: boolean = true, offset: boolean = false) {
+    // When going from pixel coordinates to pixel coordinates, we need to add one first, to go to one-indexed FITS pixel coordinates
+    // Then need to subtract one after the transformation to return to zero-indexed CARTA pixel coordinates
+    const result = AST.transformPoint(astTransform, point.x + (offset ? 1 : 0), point.y + (offset ? 1 : 0), forward);
+    if (result) {
+        return {x: result.x - (offset ? 1 : 0), y: result.y - (offset ? 1 : 0)};
+    }
+    return result;
 }
 
 export function getFormattedWCSString(astTransform: number, pixelCoords: Point2D, addPixelOffset: boolean = true) {
