@@ -301,7 +301,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
         return profilerInfo;
     };
 
-    private fillSpectralLines = (): LineMarker[] => {
+    private fillVisibleSpectralLines = (): LineMarker[] => {
         let spectralLineMarkers: LineMarker[] = [];
         const spectralLines = this.widgetStore.transformedSpectralLines;
         if (spectralLines?.length > 0) {
@@ -354,7 +354,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
             graphZoomReset: this.widgetStore.clearXYBounds,
             graphCursorMoved: this.onGraphCursorMoved,
             scrollZoom: true,
-            markers: this.fillSpectralLines(),
+            markers: this.fillVisibleSpectralLines(),
             mouseEntered: this.widgetStore.setMouseMoveIntoLinePlots,
             borderWidth: this.widgetStore.lineWidth,
             pointRadius: this.widgetStore.linePlotPointSize,
