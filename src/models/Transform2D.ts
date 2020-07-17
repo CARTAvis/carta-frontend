@@ -1,5 +1,5 @@
 import {Point2D} from "./Point2D";
-import {add2D, getTransformedCoordinates, length2D, scaleAndRotateAboutPoint2D, subtract2D, TransformType} from "utilities";
+import {add2D, getTransformedCoordinates, length2D, scaleAndRotateAboutPoint2D, subtract2D} from "utilities";
 
 export class Transform2D {
     translation: Point2D;
@@ -8,13 +8,13 @@ export class Transform2D {
     origin: Point2D;
 
     constructor(astTransform: number, refPixel: Point2D) {
-        const transformedRef = getTransformedCoordinates(astTransform, refPixel, TransformType.PIX2PIX, true);
+        const transformedRef = getTransformedCoordinates(astTransform, refPixel, true);
         const delta = 1.0;
         const refTop = add2D(refPixel, {x: 0, y: delta / 2.0});
         const refBottom = add2D(refPixel, {x: 0, y: -delta / 2.0});
         const northVector = subtract2D(refTop, refBottom);
-        const transformedRefTop = getTransformedCoordinates(astTransform, refTop, TransformType.PIX2PIX, true);
-        const transformedRefBottom = getTransformedCoordinates(astTransform, refBottom, TransformType.PIX2PIX, true);
+        const transformedRefTop = getTransformedCoordinates(astTransform, refTop, true);
+        const transformedRefBottom = getTransformedCoordinates(astTransform, refBottom, true);
         const transformedNorthVector = subtract2D(transformedRefTop, transformedRefBottom);
         this.scale = length2D(transformedNorthVector) / length2D(northVector);
         this.rotation = Math.atan2(transformedNorthVector.y, transformedNorthVector.x) - Math.atan2(northVector.y, northVector.x);

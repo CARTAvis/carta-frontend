@@ -10,7 +10,7 @@ import {TickType} from "../Shared/LinePlot/PlotContainer/PlotContainerComponent"
 import {AppStore, ASTSettingsString, FrameStore, HelpType, OverlayStore, SpatialProfileStore, WidgetConfig, WidgetProps, WidgetsStore} from "stores";
 import {SpatialProfileWidgetStore} from "stores/widgets";
 import {Point2D} from "models";
-import {binarySearchByX, clamp, formattedNotation, getTransformedCoordinates, toExponential, toFixed, TransformType} from "utilities";
+import {binarySearchByX, clamp, formattedNotation, getTransformedCoordinates, toExponential, toFixed} from "utilities";
 import "./SpatialProfilerComponent.css";
 
 // The fixed size of the settings panel popover (excluding the show/hide button)
@@ -282,13 +282,13 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
 
         if (isXProfile) {
             for (let i = 0; i < values.length; i++) {
-                const pointWCS = getTransformedCoordinates(this.frame.wcsInfo, {x: values[i], y: this.profileStore.y}, TransformType.PIX2WCS);
+                const pointWCS = getTransformedCoordinates(this.frame.wcsInfo, {x: values[i], y: this.profileStore.y});
                 const normVals = AST.normalizeCoordinates(this.frame.wcsInfo, pointWCS.x, pointWCS.y);
                 this.cachedFormattedCoordinates[i] = AST.getFormattedCoordinates(this.frame.wcsInfo, normVals.x, undefined, astString.toString(), true).x;
             }
         } else {
             for (let i = 0; i < values.length; i++) {
-                const pointWCS = getTransformedCoordinates(this.frame.wcsInfo, {x: this.profileStore.x, y: values[i]}, TransformType.PIX2WCS);
+                const pointWCS = getTransformedCoordinates(this.frame.wcsInfo, {x: this.profileStore.x, y: values[i]});
                 const normVals = AST.normalizeCoordinates(this.frame.wcsInfo, pointWCS.x, pointWCS.y);
                 this.cachedFormattedCoordinates[i] = AST.getFormattedCoordinates(this.frame.wcsInfo, undefined, normVals.y, astString.toString(), true).y;
             }

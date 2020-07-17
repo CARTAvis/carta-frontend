@@ -26,7 +26,7 @@ import {
     Transform2D,
     ZoomPoint
 } from "models";
-import {clamp, formattedFrequency, getHeaderNumericValue, getTransformedChannel, getTransformedCoordinates, isAstBadPoint, minMax2D, rotate2D, toFixed, TransformType, trimFitsComment} from "utilities";
+import {clamp, formattedFrequency, getHeaderNumericValue, getTransformedChannel, getTransformedCoordinates, isAstBadPoint, minMax2D, rotate2D, toFixed, trimFitsComment} from "utilities";
 import {BackendService, ContourWebGLService} from "services";
 
 export interface FrameInfo {
@@ -163,7 +163,7 @@ export class FrameStore {
 
     @computed get spatialTransform() {
         if (this.spatialReference && this.spatialTransformAST) {
-            const center = getTransformedCoordinates(this.spatialTransformAST, this.spatialReference.center, TransformType.PIX2PIX, false);
+            const center = getTransformedCoordinates(this.spatialTransformAST, this.spatialReference.center, false);
             // Try use center of the screen as a reference point
             if (!isAstBadPoint(center)) {
                 return new Transform2D(this.spatialTransformAST, center);
@@ -266,7 +266,7 @@ export class FrameStore {
 
     public getTransformForRegion(region: RegionStore) {
         if (this.spatialReference && this.spatialTransformAST && region.controlPoints?.length) {
-            const regionCenter = getTransformedCoordinates(this.spatialTransformAST, region.controlPoints[0], TransformType.PIX2PIX, false);
+            const regionCenter = getTransformedCoordinates(this.spatialTransformAST, region.controlPoints[0], false);
             if (!isAstBadPoint(regionCenter)) {
                 return new Transform2D(this.spatialTransformAST, regionCenter);
             }
@@ -311,8 +311,7 @@ export class FrameStore {
                 const delta = getHeaderNumericValue(deltaHeader);
                 if (isFinite(refPix) && isFinite(refVal) && isFinite(delta)) {
                     for (let i = 0; i < N; i++) {
-                        // FITS standard uses 1 for the first pixel
-                        const channelOffset = i + 1 - refPix;
+                        const channelOffset = i - refPix;
                         indexes[i] = i;
                         rawValues[i] = (channelOffset * delta + refVal);
                         values[i] = rawValues[i];
@@ -328,7 +327,8 @@ export class FrameStore {
                                 return null;
                             }
 
-                            const index = (value - refVal) / delta + refPix - 1;
+                            // TODO: check if the -1 that was here should be have been kept
+                            const index = (value - refVal) / delta + refPix;
                             if (index < 0) {
                                 return 0;
                             } else if (index > values.length - 1) {
@@ -718,6 +718,15 @@ export class FrameStore {
                 name += " ";
             }
 
+            // Shift pixel axis by 1, so that it starts at 0, rather than 1
+            if (entry.name.match(/CRPIX\d+/)) {
+                const numericValue = parseFloat(entry.value);
+                if (isFinite(numericValue)) {
+                    value = (numericValue - 1).toString();
+                    console.log(`${entry.name}: Shifted from ${entry.value} to ${value}`);
+                }
+            }
+
             let entryString = `${name}=  ${value}`;
             while (entryString.length < 80) {
                 entryString += " ";
@@ -766,6 +775,15 @@ export class FrameStore {
             let name = entry.name;
             while (name.length < 8) {
                 name += " ";
+            }
+
+            // Shift pixel axis by 1, so that it starts at 0, rather than 1
+            if (entry.name.match(/CRPIX\d+/)) {
+                const numericValue = parseFloat(entry.value);
+                if (isFinite(numericValue)) {
+                    value = (numericValue - 1).toString();
+                    console.log(`${entry.name}: Shifted from ${entry.value} to ${value}`);
+                }
             }
 
             let entryString = `${name}=  ${value}`;
@@ -907,7 +925,7 @@ export class FrameStore {
             const offsetBlock = [[0, 0], [1, 1], [-1, -1]];
 
             // Shift image space coordinates to 1-indexed when passing to AST
-            const cursorNeighbourhood = offsetBlock.map((offset) => getTransformedCoordinates(this.wcsInfo, {x: cursorPosImageSpace.x + offset[0], y: cursorPosImageSpace.y + offset[1]}, TransformType.PIX2WCS));
+            const cursorNeighbourhood = offsetBlock.map((offset) => getTransformedCoordinates(this.wcsInfo, {x: cursorPosImageSpace.x + offset[0], y: cursorPosImageSpace.y + offset[1]}));
 
             cursorPosWCS = cursorNeighbourhood[0];
 
@@ -1096,7 +1114,7 @@ export class FrameStore {
         if (this.spatialReference) {
             // Adjust zoom by scaling factor if zoom level is not absolute
             const adjustedZoom = absolute ? zoom : zoom / this.spatialTransform.scale;
-            const pointRefImage = getTransformedCoordinates(this.spatialTransformAST, {x, y}, TransformType.PIX2PIX, true);
+            const pointRefImage = getTransformedCoordinates(this.spatialTransformAST, {x, y}, true);
             this.spatialReference.zoomToPoint(pointRefImage.x, pointRefImage.y, adjustedZoom);
         } else {
             if (PreferenceStore.Instance.zoomPoint === ZoomPoint.CURSOR) {
@@ -1129,7 +1147,7 @@ export class FrameStore {
         if (this.spatialReference) {
             // Calculate midpoint of image
             this.initCenter();
-            const imageCenterReferenceSpace = getTransformedCoordinates(this.spatialTransformAST, this.center, TransformType.PIX2PIX, true);
+            const imageCenterReferenceSpace = getTransformedCoordinates(this.spatialTransformAST, this.center, true);
             this.spatialReference.setCenter(imageCenterReferenceSpace.x, imageCenterReferenceSpace.y);
             // Calculate bounding box for transformed image
             const corners = [

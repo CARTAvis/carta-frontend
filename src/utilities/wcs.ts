@@ -1,14 +1,6 @@
 import {CARTA} from "carta-protobuf";
 import * as AST from "ast_wrapper";
 import {Point2D, SpectralType} from "models";
-import {add2D} from "./math2d";
-
-export enum TransformType {
-    PIX2PIX,
-    PIX2WCS,
-    WCS2PIX,
-    WCS2WCS
-}
 
 export function getHeaderNumericValue(headerEntry: CARTA.IHeaderEntry): number {
     if (!headerEntry) {
@@ -22,21 +14,13 @@ export function getHeaderNumericValue(headerEntry: CARTA.IHeaderEntry): number {
     }
 }
 
-export function getTransformedCoordinates(astTransform: number, point: Point2D, transformType: TransformType, forward: boolean = true) {
-    // When going from pixel coordinates to pixel coordinates, we need to add one first, to go to one-indexed FITS pixel coordinates
-    // Then need to subtract one after the transformation to return to zero-indexed CARTA pixel coordinates
-    const offsetInput = (transformType === TransformType.PIX2PIX || transformType === TransformType.PIX2WCS);
-    const offsetOutput = (transformType === TransformType.PIX2PIX || transformType === TransformType.WCS2PIX);
-    const result = AST.transformPoint(astTransform, point.x + (offsetInput ? 1 : 0), point.y + (offsetInput ? 1 : 0), forward);
-    if (result && offsetOutput) {
-        return {x: result.x - 1, y: result.y - 1};
-    }
-    return result;
+export function getTransformedCoordinates(astTransform: number, point: Point2D, forward: boolean = true) {
+    return AST.transformPoint(astTransform, point.x, point.y, forward);
 }
 
 export function getFormattedWCSString(astTransform: number, pixelCoords: Point2D) {
     if (astTransform) {
-        const pointWCS = getTransformedCoordinates(astTransform, pixelCoords, TransformType.PIX2WCS);
+        const pointWCS = getTransformedCoordinates(astTransform, pixelCoords);
         const normVals = AST.normalizeCoordinates(astTransform, pointWCS.x, pointWCS.y);
         const wcsCoords = AST.getFormattedCoordinates(astTransform, normVals.x, normVals.y);
         if (wcsCoords) {
@@ -54,22 +38,20 @@ export function getTransformedChannel(srcTransform: number, destTransform: numbe
     // Set spectral system for both transforms
     AST.set(srcTransform, `System=${matchingType}, StdOfRest=Helio`);
     AST.set(destTransform, `System=${matchingType}, StdOfRest=Helio`);
-    // Get spectral value from forward transform. Adjust for 1-based index
-    const sourceSpectralValue = AST.transform3DPoint(srcTransform, 1, 1, srcChannel + 1, true);
+    const sourceSpectralValue = AST.transform3DPoint(srcTransform, 0, 0, srcChannel, true);
     if (!sourceSpectralValue || !isFinite(sourceSpectralValue.z)) {
         return NaN;
     }
 
     // Get a sensible pixel coordinate for the reverse transform by forward transforming first pixel in image
-    const dummySpectralValue = AST.transform3DPoint(destTransform, 1, 1, 1, true);
+    const dummySpectralValue = AST.transform3DPoint(destTransform, 0, 0, 0, true);
     // Get pixel value from destination transform (reverse)
     const destPixelValue = AST.transform3DPoint(destTransform, dummySpectralValue.x, dummySpectralValue.y, sourceSpectralValue.z, false);
     if (!destPixelValue || !isFinite(destPixelValue.z)) {
         return NaN;
     }
 
-    // Revert back to 0-based index
-    return destPixelValue.z - 1;
+    return destPixelValue.z;
 }
 
 export function isAstBad(value: number) {

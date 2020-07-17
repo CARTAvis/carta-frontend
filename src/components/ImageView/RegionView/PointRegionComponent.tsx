@@ -5,7 +5,7 @@ import Konva from "konva";
 import {FrameStore, RegionStore} from "stores";
 import {getUpdatedPosition, transformedImageToCanvasPos} from "./shared";
 import {Point2D} from "models";
-import {getTransformedCoordinates, TransformType} from "utilities";
+import {getTransformedCoordinates} from "utilities";
 
 export interface PointRegionComponentProps {
     region: RegionStore;
@@ -70,7 +70,7 @@ export class PointRegionComponent extends React.Component<PointRegionComponentPr
 
         if (frame.spatialReference) {
             const pointReferenceImage = region.controlPoints[0];
-            const pointSecondaryImage = getTransformedCoordinates(frame.spatialTransformAST, pointReferenceImage, TransformType.PIX2PIX, false);
+            const pointSecondaryImage = getTransformedCoordinates(frame.spatialTransformAST, pointReferenceImage, false);
             centerPixelSpace = transformedImageToCanvasPos(pointSecondaryImage.x, pointSecondaryImage.y, frame, this.props.layerWidth, this.props.layerHeight);
             rotation = frame.spatialTransform.rotation * 180.0;
         } else {
