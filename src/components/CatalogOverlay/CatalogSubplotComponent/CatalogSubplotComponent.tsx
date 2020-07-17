@@ -9,7 +9,7 @@ import {Select, IItemRendererProps} from "@blueprintjs/select";
 import ReactResizeDetector from "react-resize-detector";
 import {CARTA} from "carta-protobuf";
 import {WidgetConfig, WidgetProps, HelpType, AppStore, WidgetsStore, CatalogStore} from "stores";
-import {CatalogScatterWidgetStore, Border, CatalogUpdateMode, DragMode, CatalogPlotType, XBorder} from "stores/widgets";
+import {CatalogSubplotWidgetStore, Border, CatalogUpdateMode, DragMode, CatalogPlotType, XBorder} from "stores/widgets";
 import {ProfilerInfoComponent, ClearableNumericInputComponent} from "components/Shared";
 import {Colors} from "@blueprintjs/core";
 import {toFixed} from "utilities";
@@ -66,7 +66,7 @@ export class CatalogSubplotComponent extends React.Component<WidgetProps> {
         this.height = height;
     };
 
-    @computed get widgetStore(): CatalogScatterWidgetStore {
+    @computed get widgetStore(): CatalogSubplotWidgetStore {
         const widgetStore = WidgetsStore.Instance.catalogScatterWidgets.get(this.props.id);
         return widgetStore;
     }

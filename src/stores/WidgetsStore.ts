@@ -1,7 +1,7 @@
 import * as GoldenLayout from "golden-layout";
 import * as $ from "jquery";
 import {CARTA} from "carta-protobuf";
-import {action, observable, computed} from "mobx";
+import {action, observable} from "mobx";
 import {
     AnimatorComponent,
     HistogramComponent,
@@ -35,7 +35,7 @@ import {
     SpectralProfileWidgetStore, 
     StatsWidgetStore, 
     StokesAnalysisWidgetStore, 
-    CatalogOverlayWidgetStore, CatalogInfo, CatalogScatterWidgetStore, CatalogScatterWidgetStoreProps
+    CatalogOverlayWidgetStore, CatalogInfo, CatalogSubplotWidgetStore, CatalogSubplotWidgetStoreProps
 } from "./widgets";
 import {ProcessedColumnData} from "../models";
 
@@ -88,7 +88,7 @@ export class WidgetsStore {
     @observable stokesAnalysisWidgets: Map<string, StokesAnalysisWidgetStore>;
     @observable floatingSettingsWidgets: Map<string, string>;
     @observable catalogOverlayWidgets: Map<string, CatalogOverlayWidgetStore>;
-    @observable catalogScatterWidgets: Map<string, CatalogScatterWidgetStore>;
+    @observable catalogScatterWidgets: Map<string, CatalogSubplotWidgetStore>;
 
     private widgetsMap: Map<string, Map<string, any>>;
     private defaultFloatingWidgetOffset: number;
@@ -128,7 +128,7 @@ export class WidgetsStore {
         this.stokesAnalysisWidgets = new Map<string, StokesAnalysisWidgetStore>();
         this.catalogOverlayWidgets = new Map<string, CatalogOverlayWidgetStore>();
         this.floatingSettingsWidgets = new Map<string, string>();
-        this.catalogScatterWidgets = new Map<string, CatalogScatterWidgetStore>();
+        this.catalogScatterWidgets = new Map<string, CatalogSubplotWidgetStore>();
 
         this.widgetsMap = new Map<string, Map<string, any>>([
             [SpatialProfilerComponent.WIDGET_CONFIG.type, this.spatialProfileWidgets],
@@ -817,21 +817,21 @@ export class WidgetsStore {
     // endregion 
 
     // region Catalog Scatter Widgets
-    createFloatingCatalogScatterWidget = (props: CatalogScatterWidgetStoreProps): string => {
+    createFloatingCatalogScatterWidget = (props: CatalogSubplotWidgetStoreProps): string => {
         let config = CatalogSubplotComponent.WIDGET_CONFIG;
         config.id = this.addCatalogScatterWidget(props);
         this.addFloatingWidget(config);
         return config.id;
     };
 
-    @action addCatalogScatterWidget(props: CatalogScatterWidgetStoreProps, id: string = null) {
+    @action addCatalogScatterWidget(props: CatalogSubplotWidgetStoreProps, id: string = null) {
         // Generate new id if none passed in
         if (!id) {
             id = this.getNextId(CatalogSubplotComponent.WIDGET_CONFIG.type);
         }
 
         if (id) {
-            this.catalogScatterWidgets.set(id, new CatalogScatterWidgetStore(props));
+            this.catalogScatterWidgets.set(id, new CatalogSubplotWidgetStore(props));
         }
         return id;
     }
