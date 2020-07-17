@@ -25,6 +25,7 @@ export class CatalogScatterWidgetStore {
     @observable plotType: CatalogPlotType;
     @observable histogramBorder: XBorder;
     @observable logScaleY: boolean;
+    @observable nBinx: number;
 
     constructor(props: CatalogScatterWidgetStoreProps) {
         this.xDataset = props.x;
@@ -44,6 +45,7 @@ export class CatalogScatterWidgetStore {
         } else {
             this.histogramBorder = this.initHistogramXBorder;
             this.yDataset = undefined;
+            this.nBinx = this.initnBinx;
         }
     }
 
@@ -83,6 +85,7 @@ export class CatalogScatterWidgetStore {
             const coords = catalogOverlayWidgetStore.get1DPlotData(columnsName.x);
             this.setXDataset(coords.wcsData.slice(0));
             this.histogramBorder = this.initHistogramXBorder;
+            this.nBinx = this.initnBinx;
         }
     }
 
@@ -106,6 +109,10 @@ export class CatalogScatterWidgetStore {
         this.logScaleY = val;
     }
 
+    @action setnBinx(val: number) {
+        this.nBinx = val;
+    }
+
     @computed get initScatterBorder(): Border {
         const xBounds = minMaxArray(this.xDataset);
         const yBounds = minMaxArray(this.yDataset);
@@ -125,7 +132,7 @@ export class CatalogScatterWidgetStore {
         };
     }
 
-    @computed get binSize(): number {
+    @computed get initnBinx(): number {
         return  Math.ceil(Math.sqrt(this.xDataset.length));
     }
 

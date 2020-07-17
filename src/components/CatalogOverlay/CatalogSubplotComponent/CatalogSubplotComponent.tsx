@@ -10,7 +10,7 @@ import ReactResizeDetector from "react-resize-detector";
 import {CARTA} from "carta-protobuf";
 import {WidgetConfig, WidgetProps, HelpType, AppStore, WidgetsStore, CatalogStore} from "stores";
 import {CatalogScatterWidgetStore, Border, CatalogUpdateMode, DragMode, CatalogPlotType, XBorder} from "stores/widgets";
-import {ProfilerInfoComponent} from "components/Shared";
+import {ProfilerInfoComponent, ClearableNumericInputComponent} from "components/Shared";
 import {Colors} from "@blueprintjs/core";
 import {toFixed} from "utilities";
 import "./CatalogSubplotComponent.css";
@@ -94,9 +94,10 @@ export class CatalogSubplotComponent extends React.Component<WidgetProps> {
         const widgetStore = this.widgetStore;
         let histogramDatasets: Plotly.Data[] = [];
         let data: Plotly.Data = {};
-        const binSize = widgetStore.binSize;
         const xRange = widgetStore.initHistogramXBorder;
-        const binWidth = (xRange.xMax - xRange.xMin) / binSize;
+        // increase x max to include border data
+        const fraction = 1.0001;
+        const binWidth = (xRange.xMax * fraction - xRange.xMin) / widgetStore.nBinx;
         data.type = "histogram";
         data.hoverinfo = "none";
         data.x = widgetStore.xDataset;
@@ -106,7 +107,7 @@ export class CatalogSubplotComponent extends React.Component<WidgetProps> {
         data.xbins = {
             start: xRange.xMin,
             size: binWidth,
-            end: xRange.xMax
+            end: xRange.xMax * fraction
         };
         histogramDatasets.push(data);
         return histogramDatasets;
@@ -296,6 +297,19 @@ export class CatalogSubplotComponent extends React.Component<WidgetProps> {
 
     }
 
+    private onBinWidthChange = (val: number) => {
+        const widgetStore = this.widgetStore;
+        let bins = val; 
+        if (!Number.isInteger(val)) {
+            bins = Math.round(val);
+        }
+        if (widgetStore && bins > 0) {
+            widgetStore.setnBinx(bins);
+        } else {
+            widgetStore.setnBinx(widgetStore.initnBinx);
+        }
+    }
+
     public render() {
         const widgetStore = this.widgetStore;
         const columnsName = widgetStore.catalogOverlayWidgetStore.displayedColumnHeaders;
@@ -305,7 +319,7 @@ export class CatalogSubplotComponent extends React.Component<WidgetProps> {
         let lableColor = Colors.GRAY1;
         let gridColor = Colors.LIGHT_GRAY1;
         let markerColor = Colors.GRAY2;
-        let spikeLineClass = "catalog-2D-scatter"; 
+        let spikeLineClass = "catalog-subplot"; 
         
         for (let index = 0; index < columnsName.length; index++) {
             const column = columnsName[index];
@@ -319,7 +333,7 @@ export class CatalogSubplotComponent extends React.Component<WidgetProps> {
             lableColor = Colors.LIGHT_GRAY5;
             themeColor = Colors.DARK_GRAY3;
             markerColor = Colors.GRAY4;
-            spikeLineClass = "catalog-2D-scatter-dark";
+            spikeLineClass = "catalog-subplot-dark";
         }
 
         let layout: Partial<Plotly.Layout> = {
@@ -448,8 +462,8 @@ export class CatalogSubplotComponent extends React.Component<WidgetProps> {
         const isHistogramPlot = widgetStore.plotType === CatalogPlotType.Histogram;
 
         return(
-            <div className={"catalog-2D"}>
-                <div className={"catalog-2D-option"}>
+            <div className={"catalog-subplot"}>
+                <div className={"catalog-subplot-option"}>
                     <FormGroup inline={true} label="X">
                         <Select 
                             className="bp3-fill"
@@ -463,6 +477,18 @@ export class CatalogSubplotComponent extends React.Component<WidgetProps> {
                             <Button text={widgetStore.columnsName.x} rightIcon="double-caret-vertical"/>
                         </Select>
                     </FormGroup>
+                    {isHistogramPlot &&
+                        <ClearableNumericInputComponent
+                            className={"catalog-bins"}
+                            label="Bins"
+                            value={widgetStore.nBinx}
+                            onValueChanged={val => this.onBinWidthChange(val)}
+                            onValueCleared={() => widgetStore.setnBinx(widgetStore.initnBinx)}
+                            displayExponential={true}
+                            updateValueOnKeyDown={true}
+                            disabled={disabled}
+                        />
+                    }
                     {isHistogramPlot &&
                         <FormGroup label={"Log Scale"} inline={true} disabled={disabled}>
                             <Switch checked={widgetStore.logScaleY} onChange={this.handleLogScaleYChanged} disabled={disabled}/>
@@ -499,7 +525,7 @@ export class CatalogSubplotComponent extends React.Component<WidgetProps> {
                         onUpdate={this.updateHistogramYrange}
                     />
                 </div>
-                <div className="catalog-2D-footer" >
+                <div className="catalog-subplot-footer">
                     <div className="scatter-info">
                         <ProfilerInfoComponent info={this.genProfilerInfo}/>
                     </div>
