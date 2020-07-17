@@ -10,7 +10,7 @@ import {TickType} from "../Shared/LinePlot/PlotContainer/PlotContainerComponent"
 import {AppStore, ASTSettingsString, FrameStore, HelpType, OverlayStore, SpatialProfileStore, WidgetConfig, WidgetProps, WidgetsStore} from "stores";
 import {SpatialProfileWidgetStore} from "stores/widgets";
 import {Point2D} from "models";
-import {binarySearchByX, clamp, formattedNotation, getTransformedCoordinates, toExponential, toFixed} from "utilities";
+import {binarySearchByX, clamp, formattedExponential, formattedNotation, getTransformedCoordinates, toFixed} from "utilities";
 import "./SpatialProfilerComponent.css";
 
 // The fixed size of the settings panel popover (excluding the show/hide button)
@@ -357,19 +357,29 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
     private genProfilerInfo = (): string[] => {
         let profilerInfo: string[] = [];
         if (this.plotData) {
-            const cursorX = {
-                profiler: this.widgetStore.cursorX,
-                image: this.widgetStore.coordinate.indexOf("x") >= 0 ? this.profileStore.x : this.profileStore.y,
-                unit: "px"
-            };
-            const nearest = binarySearchByX(this.plotData.values, this.widgetStore.isMouseMoveIntoLinePlots ? cursorX.profiler : cursorX.image);
-            let cursorString = "";
-            if (nearest && nearest.point) {
-                const xLabel = cursorX.unit === "Channel" ? "Channel " + toFixed(nearest.point.x) : nearest.point.x + " " + cursorX.unit;
-                cursorString =  "(" + xLabel + ", " + toExponential(nearest.point.y, 2) + ")";
+            const isXCoordinate = this.widgetStore.coordinate.indexOf("x") >= 0;
+            if (this.widgetStore.isMouseMoveIntoLinePlots) { // handle the value when cursor is in profiler
+                const nearest = binarySearchByX(this.plotData.values, this.widgetStore.cursorX);
+                if (nearest?.point) {
+                    const pixelPoint = isXCoordinate ?
+                        {x: nearest.point.x, y: this.profileStore.y} :
+                        {x: this.profileStore.x, y: nearest.point.x};
+                    const cursorInfo = this.frame.getCursorInfo(pixelPoint);
+                    const wcsLabel = cursorInfo?.infoWCS ? `WCS: ${isXCoordinate ? cursorInfo.infoWCS.x : cursorInfo.infoWCS.y}, ` : "";
+                    const imageLabel = `Image: ${nearest.point.x} px, `;
+                    const valueLabel = `${nearest.point.y !== undefined ? formattedExponential(nearest.point.y, 5) : ""}`;
+                    profilerInfo.push("Cursor: (" + wcsLabel + imageLabel + valueLabel + ")");
+                }
+            } else { // get value directly from frame when cursor is in image viewer
+                const cursorInfo = this.frame.cursorInfo;
+                const cursorValue = this.frame.cursorValue;
+                if (cursorInfo?.posImageSpace) {
+                    const wcsLabel = cursorInfo?.infoWCS ? `WCS: ${isXCoordinate ? cursorInfo.infoWCS.x : cursorInfo.infoWCS.y}, ` : "";
+                    const imageLabel = `Image: ${toFixed(isXCoordinate ? cursorInfo.posImageSpace.x : cursorInfo.posImageSpace.y)} px, `;
+                    const valueLabel = `${cursorValue !== undefined ? formattedExponential(cursorValue, 5) : ""}`;
+                    profilerInfo.push("Data: (" + wcsLabel + imageLabel + valueLabel + ")");
+                }
             }
-
-            profilerInfo.push(`${this.widgetStore.isMouseMoveIntoLinePlots ? "Cursor:" : "Data:"} ${cursorString}`);
             if (this.widgetStore.meanRmsVisible) {
                 profilerInfo.push(`Mean/RMS: ${formattedNotation(this.plotData.yMean) + " / " + formattedNotation(this.plotData.yRms)}`);
             }
@@ -520,8 +530,8 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
                 <div className="profile-container">
                     <div className="profile-plot">
                         <LinePlotComponent {...linePlotProps}/>
-                        <ProfilerInfoComponent info={this.genProfilerInfo()}/>
                     </div>
+                    <ProfilerInfoComponent info={this.genProfilerInfo()}/>
                 </div>
                 <ReactResizeDetector handleWidth handleHeight onResize={this.onResize} refreshMode={"throttle"} refreshRate={33}/>
             </div>
