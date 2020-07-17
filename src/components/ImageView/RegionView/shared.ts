@@ -15,15 +15,11 @@ export function canvasToImagePos(canvasX: number, canvasY: number, frameView: Fr
 }
 
 export function imageToCanvasPos(imageX: number, imageY: number, frameView: FrameView, layerWidth: number, layerHeight: number, spatialTransform: Transform2D = null): Point2D {
-    let offset = {x: 0.0, y: 0.0};
-    if (spatialTransform) {
-        offset = scale2D(rotate2D(offset, spatialTransform.rotation), spatialTransform.scale);
-    }
     const viewWidth = frameView.xMax - frameView.xMin;
     const viewHeight = frameView.yMax - frameView.yMin;
     return {
-        x: ((imageX + offset.x - frameView.xMin) / viewWidth * layerWidth),
-        y: layerHeight - ((imageY + offset.y - frameView.yMin) / viewHeight * layerHeight)
+        x: ((imageX - frameView.xMin) / viewWidth * layerWidth),
+        y: layerHeight - ((imageY - frameView.yMin) / viewHeight * layerHeight)
     };
 }
 

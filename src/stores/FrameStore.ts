@@ -1,4 +1,4 @@
-import {action, autorun, computed, observable, toJS} from "mobx";
+import {action, autorun, computed, observable} from "mobx";
 import {NumberRange} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import * as AST from "ast_wrapper";
@@ -149,15 +149,13 @@ export class FrameStore {
             const mipLog2Rounded = Math.round(mipLog2);
             const mipRoundedPow2 = Math.pow(2, mipLog2Rounded);
 
-            const reqView = {
+            return {
                 xMin: this.center.x - imageWidth / 2.0,
                 xMax: this.center.x + imageWidth / 2.0,
                 yMin: this.center.y - imageHeight / 2.0,
                 yMax: this.center.y + imageHeight / 2.0,
                 mip: mipRoundedPow2
             };
-            // console.log(reqView);
-            return reqView;
         }
     }
 
@@ -723,7 +721,6 @@ export class FrameStore {
                 const numericValue = parseFloat(entry.value);
                 if (isFinite(numericValue)) {
                     value = (numericValue - 1).toString();
-                    console.log(`${entry.name}: Shifted from ${entry.value} to ${value}`);
                 }
             }
 
@@ -782,7 +779,6 @@ export class FrameStore {
                 const numericValue = parseFloat(entry.value);
                 if (isFinite(numericValue)) {
                     value = (numericValue - 1).toString();
-                    console.log(`${entry.name}: Shifted from ${entry.value} to ${value}`);
                 }
             }
 
@@ -1140,7 +1136,6 @@ export class FrameStore {
     @action private initCenter = () => {
         this.center.x = (this.frameInfo.fileInfoExtended.width - 1) / 2.0;
         this.center.y = (this.frameInfo.fileInfoExtended.height - 1) / 2.0;
-        console.log(toJS(this.center));
     };
 
     @action fitZoom = () => {
