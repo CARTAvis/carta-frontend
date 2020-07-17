@@ -304,17 +304,26 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
     private fillSpectralLines = (): LineMarker[] => {
         let spectralLineMarkers: LineMarker[] = [];
         const spectralLines = this.widgetStore.transformedSpectralLines;
-        if (spectralLines) {
+        if (spectralLines?.length > 0) {
+            // find x range
+            let xMin, xMax;
+            if (this.plotData) {
+                xMin = this.widgetStore.isAutoScaledX ? this.plotData.xMin : this.widgetStore.minX;
+                xMax = this.widgetStore.isAutoScaledX ? this.plotData.xMax : this.widgetStore.maxX;
+            }
+            // only keep visible lines within x range
             for (let lineIndex = 0; lineIndex < spectralLines.length; lineIndex++) {
                 const line = spectralLines[lineIndex];
-                spectralLineMarkers.push({
-                    value: line.value,
-                    id: `spectral-line-${lineIndex}`,
-                    label: `${line.species} ${line.qn}`,
-                    draggable: false,
-                    horizontal: false,
-                    color: AppStore.Instance.darkTheme ? Colors.GREEN4 : Colors.GREEN2
-                });
+                if (isFinite(xMin) && isFinite(xMax) && line && isFinite(line.value) && line.value >= xMin && line.value <= xMax) {
+                    spectralLineMarkers.push({
+                        value: line.value,
+                        id: `spectral-line-${lineIndex}`,
+                        label: `${line.species} ${line.qn}`,
+                        draggable: false,
+                        horizontal: false,
+                        color: AppStore.Instance.darkTheme ? Colors.GREEN4 : Colors.GREEN2
+                    });
+                }
             }
         }
         return spectralLineMarkers;
