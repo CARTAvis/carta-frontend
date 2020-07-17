@@ -1,6 +1,7 @@
 declare var Module: any;
 declare var addOnPostRun: any;
 declare var Promise: PromiseConstructor;
+declare var SVG: any;
 
 addOnPostRun(function () {
     Module.numArrayCoordinates = 1;
@@ -83,12 +84,16 @@ Module.setFontList = function (fonts) {
     Module.fonts = fonts;
 };
 
-Module.setCanvas = function (canvas) {
+Module.setCanvas = function (canvas, svgRoot) {
     Module.gridContext = canvas.getContext("2d");
     Module.gridContext.imageSmoothingEnabled = false;
     Module.gridContext.scale(1, -1);
     Module.gridContext.translate(0, -canvas.height);
     Module.gridContext.font = Module.font;
+
+    Module.overlayHeight = canvas.height;
+    Module.overlayWidth = canvas.width;
+    Module.svgContext = SVG(svgRoot).size(canvas.width, canvas.height);
 };
 
 Module.plot = Module.cwrap("plotGrid", "number", ["number", "number", "number", "number", "number", "number", "number", "number", "number", "number", "number", "string"]);

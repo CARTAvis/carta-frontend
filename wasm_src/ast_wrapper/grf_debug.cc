@@ -44,6 +44,7 @@ void applyColor(int primType)
     EM_ASM_({
         Module.gridContext.strokeStyle = Module.colors[$0];
         Module.gridContext.fillStyle = Module.colors[$0];
+        Module.currentColor = Module.colors[$0];
     }, index);
     appliedColorVal = index;
 }
@@ -55,8 +56,13 @@ void applyFont(int primType)
 
     EM_ASM_({
         var font = Module.fonts[$0];
-        font = font.replace("{size}", $1 * devicePixelRatio + "px");
+        var size = $1 * devicePixelRatio;
+        font = font.replace("{size}", size + "px");
         Module.gridContext.font = font;
+
+        Module.currentFont = {};
+        Module.currentFont.family = Module.fonts[$0].replace("{size} ", "");
+        Module.currentFont.size = size;
     }, index, height);
 }
 
@@ -77,22 +83,35 @@ int astGLine(int n, const float* x, const float* y)
         Module.gridContext.moveTo($0, $1);
     }, x[0], y[0]);
 
+    EM_ASM_({Module.linePoints = [];});
     if (lineThickness <= 1)
     {
         // Round coordinates to the nearest pixel center for sharp lines
         for (int i = 0; i < n; i++)
         {
-            EM_ASM_({Module.gridContext.lineTo(Math.floor($0)+0.5, Math.floor($1)+0.5);}, x[i], y[i]);
+            //EM_ASM_({Module.gridContext.lineTo(Math.floor($0)+0.5, Math.floor($1)+0.5);}, x[i], y[i]);
+            EM_ASM_({
+                Module.linePoints.push(Math.floor($0)+0.5);
+                Module.linePoints.push(Math.floor(Module.overlayHeight - $1)+0.5);
+            }, x[i], y[i]);
         }
     }
     else
     {
         for (int i = 0; i < n; i++)
         {
-            EM_ASM_({Module.gridContext.lineTo($0, $1);}, x[i], y[i]);
+            //EM_ASM_({Module.gridContext.lineTo($0, $1);}, x[i], y[i]);
+            EM_ASM_({
+                Module.linePoints.push($0);
+                Module.linePoints.push(Module.overlayHeight - $1);
+            }, x[i], y[i]);
         }
     }
-    EM_ASM(Module.gridContext.stroke(););
+    //EM_ASM(Module.gridContext.stroke(););
+    EM_ASM({
+        Module.svgContext.polyline(Module.linePoints).fill('none').stroke({width: $0, color: Module.currentColor});
+    }, lineThickness);
+
     return 1;
 }
 
@@ -164,15 +183,15 @@ int astGText(const char* text, float x, float y, const char* just,
         char hJust = just[1];
         if (hJust == 'C')
         {
-            EM_ASM(Module.gridContext.textAlign = "center";);
+            EM_ASM(Module.currentFont.anchor = "middle";);
         }
         else if (hJust == 'L')
         {
-            EM_ASM(Module.gridContext.textAlign = "left";);
+            EM_ASM(Module.currentFont.anchor = "start";);
         }
         else if (hJust == 'R')
         {
-            EM_ASM(Module.gridContext.textAlign = "right";);
+            EM_ASM(Module.currentFont.anchor = "end";);
         }
         else
         {
@@ -183,15 +202,15 @@ int astGText(const char* text, float x, float y, const char* just,
     char vJust = just[0];
     if (vJust == 'T')
     {
-        EM_ASM(Module.gridContext.textBaseline = "top";);
+        EM_ASM(Module.textBaseline = "top";);
     }
     else if (vJust == 'C')
     {
-        EM_ASM(Module.gridContext.textBaseline = "middle";);
+        EM_ASM(Module.textBaseline = "middle";);
     }
     else if (vJust == 'B')
     {
-        EM_ASM(Module.gridContext.textBaseline = "bottom";);
+        EM_ASM(Module.textBaseline = "bottom";);
     }
     else
     {
@@ -199,14 +218,23 @@ int astGText(const char* text, float x, float y, const char* just,
     }
 
     float angle = atan2f(-upx, upy);
+//    EM_ASM_({
+//        Module.gridContext.save();
+//        Module.gridContext.translate($1, $2);
+//        Module.gridContext.rotate($3);
+//        Module.gridContext.scale(1, -1);
+//        Module.gridContext.fillText(UTF8ToString($0), 0, 0);
+//        Module.gridContext.restore();
+//    }, text, x, y, angle);
+
     EM_ASM_({
-        Module.gridContext.save();
-        Module.gridContext.translate($1, $2);
-        Module.gridContext.rotate($3);
-        Module.gridContext.scale(1, -1);
-        Module.gridContext.fillText(UTF8ToString($0), 0, 0);
-        Module.gridContext.restore();
-    }, text, x, y, angle);
+            Module.svgContext.text(UTF8ToString($0))
+                .x($1).y(Module.overlayHeight - $2)
+                .transform({rotate: $3})
+                .attr('vertical-align', Module.textBaseline)
+                .fill(Module.currentColor)
+                .font(Module.currentFont);
+        }, text, x, y, -angle * 180.0 / PI);
 
     return 1;
 }
@@ -362,6 +390,7 @@ int astGBBuf(void)
         Module.gridContext.lineWidth = $0 * devicePixelRatio;
         Module.gridContext.font = Module.fonts[0];
         Module.gridContext.clearRect(0, 0, Module.gridContext.canvas.width, Module.gridContext.canvas.height);
+        Module.svgContext.clear();
     }, lineThickness);
     fontSizeVals[0] = 20;
     fontSizeVals[1] = 20;

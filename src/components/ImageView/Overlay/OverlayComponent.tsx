@@ -16,7 +16,8 @@ export class OverlayComponentProps {
 
 @observer
 export class OverlayComponent extends React.Component<OverlayComponentProps> {
-    canvas: HTMLCanvasElement;
+    private canvas: HTMLCanvasElement;
+    private svgRoot: SVGSVGElement;
 
     componentDidMount() {
         if (this.canvas) {
@@ -45,7 +46,7 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
             const frameView = frame.spatialReference ? frame.spatialReference.requiredFrameView : frame.requiredFrameView;
 
             this.updateImageDimensions();
-            AST.setCanvas(this.canvas);
+            AST.setCanvas(this.canvas, this.svgRoot);
 
             const plot = (styleString: string) => {
                 AST.plot(
@@ -91,6 +92,11 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
         if (this.props.docked) {
             className += " docked";
         }
-        return <canvas className={className} id="overlay-canvas" key={styleString} ref={(ref) => this.canvas = ref}/>;
+        return (
+            <React.Fragment>
+                <canvas className={className} id="overlay-canvas" key={styleString} ref={(ref) => this.canvas = ref}/>
+                <svg ref={ref => this.svgRoot = ref}/>
+            </React.Fragment>
+        );
     }
 }
