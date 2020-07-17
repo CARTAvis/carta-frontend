@@ -232,8 +232,7 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
             yMax: (tile.y + 1) * tileSizeAdjusted,
             mip: 1
         };
-
-        let bottomLeft = {x: (0.5 + tileImageView.xMin - full.xMin), y: (0.5 + tileImageView.yMin - full.yMin)};
+        let bottomLeft = {x: (tileImageView.xMin - full.xMin) - 0.5, y: (tileImageView.yMin - full.yMin) - 0.5};
         let tileScaling = scale2D({x: 1, y: 1}, mip * spatialRef.zoomLevel);
 
         if (frame.spatialReference && frame.spatialTransform) {

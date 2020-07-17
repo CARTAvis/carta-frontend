@@ -118,8 +118,7 @@ export class ImageViewComponent extends React.Component<WidgetProps> {
     onClicked = (cursorInfo: CursorInfo) => {
         const frame = AppStore.Instance.activeFrame;
         if (frame) {
-            // Shift from one-indexed image space position to zero-indexed
-            frame.setCenter(cursorInfo.posImageSpace.x + 1, cursorInfo.posImageSpace.y + 1);
+            frame.setCenter(cursorInfo.posImageSpace.x, cursorInfo.posImageSpace.y);
         }
     };
 
@@ -131,12 +130,10 @@ export class ImageViewComponent extends React.Component<WidgetProps> {
             // If frame is spatially matched, apply zoom to the reference frame, rather than the active frame
             if (frame.spatialReference) {
                 const newZoom = frame.spatialReference.zoomLevel * (delta > 0 ? zoomSpeed : 1.0 / zoomSpeed);
-                // Shift from one-indexed image space position to zero-indexed
-                frame.zoomToPoint(cursorInfo.posImageSpace.x + 1, cursorInfo.posImageSpace.y + 1, newZoom, true);
+                frame.zoomToPoint(cursorInfo.posImageSpace.x, cursorInfo.posImageSpace.y, newZoom, true);
             } else {
                 const newZoom = frame.zoomLevel * (delta > 0 ? zoomSpeed : 1.0 / zoomSpeed);
-                // Shift from one-indexed image space position to zero-indexed
-                frame.zoomToPoint(cursorInfo.posImageSpace.x + 1, cursorInfo.posImageSpace.y + 1, newZoom, true);
+                frame.zoomToPoint(cursorInfo.posImageSpace.x, cursorInfo.posImageSpace.y, newZoom, true);
             }
         }
     };

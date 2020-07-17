@@ -3,6 +3,13 @@ import * as AST from "ast_wrapper";
 import {Point2D, SpectralType} from "models";
 import {add2D} from "./math2d";
 
+export enum TransformType {
+    PIX2PIX,
+    PIX2WCS,
+    WCS2PIX,
+    WCS2WCS
+}
+
 export function getHeaderNumericValue(headerEntry: CARTA.IHeaderEntry): number {
     if (!headerEntry) {
         return NaN;
@@ -15,22 +22,21 @@ export function getHeaderNumericValue(headerEntry: CARTA.IHeaderEntry): number {
     }
 }
 
-export function getTransformedCoordinates(astTransform: number, point: Point2D, forward: boolean = true, offset: boolean = false) {
+export function getTransformedCoordinates(astTransform: number, point: Point2D, transformType: TransformType, forward: boolean = true) {
     // When going from pixel coordinates to pixel coordinates, we need to add one first, to go to one-indexed FITS pixel coordinates
     // Then need to subtract one after the transformation to return to zero-indexed CARTA pixel coordinates
-    const result = AST.transformPoint(astTransform, point.x + (offset ? 1 : 0), point.y + (offset ? 1 : 0), forward);
-    if (result) {
-        return {x: result.x - (offset ? 1 : 0), y: result.y - (offset ? 1 : 0)};
+    const offsetInput = (transformType === TransformType.PIX2PIX || transformType === TransformType.PIX2WCS);
+    const offsetOutput = (transformType === TransformType.PIX2PIX || transformType === TransformType.WCS2PIX);
+    const result = AST.transformPoint(astTransform, point.x + (offsetInput ? 1 : 0), point.y + (offsetInput ? 1 : 0), forward);
+    if (result && offsetOutput) {
+        return {x: result.x - 1, y: result.y - 1};
     }
     return result;
 }
 
-export function getFormattedWCSString(astTransform: number, pixelCoords: Point2D, addPixelOffset: boolean = true) {
-    if (addPixelOffset) {
-        pixelCoords = add2D(pixelCoords, {x: 1, y: 1});
-    }
+export function getFormattedWCSString(astTransform: number, pixelCoords: Point2D) {
     if (astTransform) {
-        const pointWCS = getTransformedCoordinates(astTransform, pixelCoords);
+        const pointWCS = getTransformedCoordinates(astTransform, pixelCoords, TransformType.PIX2WCS);
         const normVals = AST.normalizeCoordinates(astTransform, pointWCS.x, pointWCS.y);
         const wcsCoords = AST.getFormattedCoordinates(astTransform, normVals.x, normVals.y);
         if (wcsCoords) {

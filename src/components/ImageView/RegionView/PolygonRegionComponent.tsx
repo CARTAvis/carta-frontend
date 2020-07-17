@@ -6,7 +6,7 @@ import Konva from "konva";
 import {Colors} from "@blueprintjs/core";
 import {FrameStore, RegionStore} from "stores";
 import {Point2D} from "models";
-import {add2D, average2D, closestPointOnLine, getTransformedCoordinates, rotate2D, scale2D, subtract2D} from "utilities";
+import {add2D, average2D, closestPointOnLine, getTransformedCoordinates, rotate2D, scale2D, subtract2D, TransformType} from "utilities";
 import {canvasToTransformedImagePos, getUpdatedPosition, imageToCanvasPos, transformedImageToCanvasPos} from "./shared";
 
 export interface PolygonRegionComponentProps {
@@ -247,7 +247,7 @@ export class PolygonRegionComponent extends React.Component<PolygonRegionCompone
         let centerPointCanvasSpace: Point2D;
         if (frame.spatialReference) {
             controlPoints = controlPoints.map(p => {
-                const controlPointSecondaryImage = getTransformedCoordinates(frame.spatialTransformAST, p, false, true);
+                const controlPointSecondaryImage = getTransformedCoordinates(frame.spatialTransformAST, p, TransformType.PIX2PIX, false);
                 return transformedImageToCanvasPos(controlPointSecondaryImage.x, controlPointSecondaryImage.y, frame, this.props.layerWidth, this.props.layerHeight);
             });
             rotation = -frame.spatialTransform.rotation * 180.0 / Math.PI;

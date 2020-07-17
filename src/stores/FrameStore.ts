@@ -1,4 +1,4 @@
-import {action, autorun, computed, observable} from "mobx";
+import {action, autorun, computed, observable, toJS} from "mobx";
 import {NumberRange} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import * as AST from "ast_wrapper";
@@ -26,7 +26,7 @@ import {
     Transform2D,
     ZoomPoint
 } from "models";
-import {clamp, formattedFrequency, getHeaderNumericValue, getTransformedChannel, getTransformedCoordinates, isAstBadPoint, minMax2D, rotate2D, toFixed, trimFitsComment} from "utilities";
+import {clamp, formattedFrequency, getHeaderNumericValue, getTransformedChannel, getTransformedCoordinates, isAstBadPoint, minMax2D, rotate2D, toFixed, TransformType, trimFitsComment} from "utilities";
 import {BackendService, ContourWebGLService} from "services";
 
 export interface FrameInfo {
@@ -47,7 +47,7 @@ export enum RasterRenderType {
 export class FrameStore {
     private readonly astFrameSet: number;
     private readonly spectralFrame: number;
-    public spectralCoordsSupported: Map<string, {type: SpectralType, unit: SpectralUnit}>;
+    public spectralCoordsSupported: Map<string, { type: SpectralType, unit: SpectralUnit }>;
     public spectralSystemsSupported: Array<SpectralSystem>;
     // Region set for the current frame. Accessed via regionSet, to take into account region sharing
     @observable private readonly frameRegionSet: RegionSetStore;
@@ -149,19 +149,21 @@ export class FrameStore {
             const mipLog2Rounded = Math.round(mipLog2);
             const mipRoundedPow2 = Math.pow(2, mipLog2Rounded);
 
-            return {
+            const reqView = {
                 xMin: this.center.x - imageWidth / 2.0,
                 xMax: this.center.x + imageWidth / 2.0,
                 yMin: this.center.y - imageHeight / 2.0,
                 yMax: this.center.y + imageHeight / 2.0,
                 mip: mipRoundedPow2
             };
+            // console.log(reqView);
+            return reqView;
         }
     }
 
     @computed get spatialTransform() {
         if (this.spatialReference && this.spatialTransformAST) {
-            const center = getTransformedCoordinates(this.spatialTransformAST, this.spatialReference.center, false);
+            const center = getTransformedCoordinates(this.spatialTransformAST, this.spatialReference.center, TransformType.PIX2PIX, false);
             // Try use center of the screen as a reference point
             if (!isAstBadPoint(center)) {
                 return new Transform2D(this.spatialTransformAST, center);
@@ -264,7 +266,7 @@ export class FrameStore {
 
     public getTransformForRegion(region: RegionStore) {
         if (this.spatialReference && this.spatialTransformAST && region.controlPoints?.length) {
-            const regionCenter = getTransformedCoordinates(this.spatialTransformAST, region.controlPoints[0], false);
+            const regionCenter = getTransformedCoordinates(this.spatialTransformAST, region.controlPoints[0], TransformType.PIX2PIX, false);
             if (!isAstBadPoint(regionCenter)) {
                 return new Transform2D(this.spatialTransformAST, regionCenter);
             }
@@ -408,7 +410,7 @@ export class FrameStore {
         return spectralInfo;
     }
 
-    @computed get spectralAxis(): {valid: boolean; dimension: number, type: ChannelType} {
+    @computed get spectralAxis(): { valid: boolean; dimension: number, type: ChannelType } {
         if (!this.frameInfo || !this.frameInfo.fileInfoExtended || this.frameInfo.fileInfoExtended.depth <= 1 || !this.frameInfo.fileInfoExtended.headerEntries) {
             return undefined;
         }
@@ -503,11 +505,13 @@ export class FrameStore {
         }
     }
 
-    @computed private get zoomLevelForFit() {
+    @computed
+    private get zoomLevelForFit() {
         return Math.min(this.calculateZoomX, this.calculateZoomY);
     }
 
-    @computed private get calculateZoomX() {
+    @computed
+    private get calculateZoomX() {
         const imageWidth = this.frameInfo.fileInfoExtended.width;
         const pixelRatio = this.renderHiDPI ? devicePixelRatio : 1.0;
 
@@ -517,7 +521,8 @@ export class FrameStore {
         return this.renderWidth * pixelRatio / imageWidth;
     }
 
-    @computed private get calculateZoomY() {
+    @computed
+    private get calculateZoomY() {
         const imageHeight = this.frameInfo.fileInfoExtended.height;
         const pixelRatio = this.renderHiDPI ? devicePixelRatio : 1.0;
         if (imageHeight <= 0) {
@@ -811,7 +816,7 @@ export class FrameStore {
     @action private initSupportedSpectralConversion = () => {
         if (this.spectralAxis && !this.spectralAxis.valid) {
             this.channelValues = this.channelInfo.values;
-            this.spectralCoordsSupported = new Map<string, {type: SpectralType, unit: SpectralUnit}>([
+            this.spectralCoordsSupported = new Map<string, { type: SpectralType, unit: SpectralUnit }>([
                 [this.nativeSpectralCoordinate, {type: null, unit: null}],
                 [SPECTRAL_TYPE_STRING.get(SpectralType.CHANNEL), {type: SpectralType.CHANNEL, unit: null}]
             ]);
@@ -832,7 +837,7 @@ export class FrameStore {
             if (restFrqHeader) {
                 this.spectralCoordsSupported = SPECTRAL_COORDS_SUPPORTED;
             } else {
-                this.spectralCoordsSupported = new Map<string, {type: SpectralType, unit: SpectralUnit}>();
+                this.spectralCoordsSupported = new Map<string, { type: SpectralType, unit: SpectralUnit }>();
                 Array.from(SPECTRAL_COORDS_SUPPORTED.keys()).forEach((key: string) => {
                     const value = SPECTRAL_COORDS_SUPPORTED.get(key);
                     const isVolecity = spectralType === SpectralType.VRAD || spectralType === SpectralType.VOPT;
@@ -847,7 +852,7 @@ export class FrameStore {
                 this.spectralCoordsSupported.set(SPECTRAL_TYPE_STRING.get(SpectralType.CHANNEL), {type: SpectralType.CHANNEL, unit: null});
             }
         } else {
-            this.spectralCoordsSupported = new Map<string, {type: SpectralType, unit: SpectralUnit}>([
+            this.spectralCoordsSupported = new Map<string, { type: SpectralType, unit: SpectralUnit }>([
                 [SPECTRAL_TYPE_STRING.get(SpectralType.CHANNEL), {type: SpectralType.CHANNEL, unit: null}]
             ]);
         }
@@ -902,7 +907,7 @@ export class FrameStore {
             const offsetBlock = [[0, 0], [1, 1], [-1, -1]];
 
             // Shift image space coordinates to 1-indexed when passing to AST
-            const cursorNeighbourhood = offsetBlock.map((offset) => AST.transformPoint(this.wcsInfo, cursorPosImageSpace.x + 1 + offset[0], cursorPosImageSpace.y + 1 + offset[1]));
+            const cursorNeighbourhood = offsetBlock.map((offset) => getTransformedCoordinates(this.wcsInfo, {x: cursorPosImageSpace.x + offset[0], y: cursorPosImageSpace.y + offset[1]}, TransformType.PIX2WCS));
 
             cursorPosWCS = cursorNeighbourhood[0];
 
@@ -1091,7 +1096,7 @@ export class FrameStore {
         if (this.spatialReference) {
             // Adjust zoom by scaling factor if zoom level is not absolute
             const adjustedZoom = absolute ? zoom : zoom / this.spatialTransform.scale;
-            const pointRefImage = getTransformedCoordinates(this.spatialTransformAST, {x, y}, true);
+            const pointRefImage = getTransformedCoordinates(this.spatialTransformAST, {x, y}, TransformType.PIX2PIX, true);
             this.spatialReference.zoomToPoint(pointRefImage.x, pointRefImage.y, adjustedZoom);
         } else {
             if (PreferenceStore.Instance.zoomPoint === ZoomPoint.CURSOR) {
@@ -1115,15 +1120,16 @@ export class FrameStore {
     };
 
     @action private initCenter = () => {
-        this.center.x = this.frameInfo.fileInfoExtended.width / 2.0 + 0.5;
-        this.center.y = this.frameInfo.fileInfoExtended.height / 2.0 + 0.5;
+        this.center.x = (this.frameInfo.fileInfoExtended.width - 1) / 2.0;
+        this.center.y = (this.frameInfo.fileInfoExtended.height - 1) / 2.0;
+        console.log(toJS(this.center));
     };
 
     @action fitZoom = () => {
         if (this.spatialReference) {
             // Calculate midpoint of image
             this.initCenter();
-            const imageCenterReferenceSpace = getTransformedCoordinates(this.spatialTransformAST, this.center, true);
+            const imageCenterReferenceSpace = getTransformedCoordinates(this.spatialTransformAST, this.center, TransformType.PIX2PIX, true);
             this.spatialReference.setCenter(imageCenterReferenceSpace.x, imageCenterReferenceSpace.y);
             // Calculate bounding box for transformed image
             const corners = [

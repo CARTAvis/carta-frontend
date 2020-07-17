@@ -47,11 +47,13 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
             this.updateImageDimensions();
             AST.setCanvas(this.canvas);
 
+            // FITS image coords start from one
+            const offset = (frame.spatialReference ? frame.spatialTransform.scale : 1.0);
             const plot = (styleString: string) => {
                 AST.plot(
                     wcsInfo,
-                    frameView.xMin, frameView.xMax,
-                    frameView.yMin, frameView.yMax,
+                    frameView.xMin + offset, frameView.xMax + offset,
+                    frameView.yMin + offset, frameView.yMax + offset,
                     settings.viewWidth * pixelRatio, settings.viewHeight * pixelRatio,
                     settings.padding.left * pixelRatio, settings.padding.right * pixelRatio, settings.padding.top * pixelRatio, settings.padding.bottom * pixelRatio,
                     styleString);

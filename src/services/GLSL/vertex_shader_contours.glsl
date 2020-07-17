@@ -119,7 +119,7 @@ void main(void) {
 
     // Scale and rotate
     vec2 posRefSpace = scaleAndRotate2D(posImageSpace, uRotationAngle, uScaleAdjustment);
-
+    posRefSpace -= 1.0;
     // Convert from image space to GL space [-1, 1]
     vec2 adjustedPosition = (posRefSpace * uRangeScale + uRangeOffset) * 2.0 - 1.0;
 

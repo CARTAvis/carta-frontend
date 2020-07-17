@@ -3,7 +3,7 @@ import {FrameStore} from "stores";
 import {rotate2D, scale2D} from "utilities";
 
 export function canvasToImagePos(canvasX: number, canvasY: number, frameView: FrameView, layerWidth: number, layerHeight: number, spatialTransform: Transform2D = null): Point2D {
-    let offset = {x: 1.0, y: 1.0};
+    let offset = {x: 0.0, y: 0.0};
     if (spatialTransform) {
         offset = scale2D(rotate2D(offset, spatialTransform.rotation), spatialTransform.scale);
     }
@@ -15,7 +15,7 @@ export function canvasToImagePos(canvasX: number, canvasY: number, frameView: Fr
 }
 
 export function imageToCanvasPos(imageX: number, imageY: number, frameView: FrameView, layerWidth: number, layerHeight: number, spatialTransform: Transform2D = null): Point2D {
-    let offset = {x: 1.0, y: 1.0};
+    let offset = {x: 0.0, y: 0.0};
     if (spatialTransform) {
         offset = scale2D(rotate2D(offset, spatialTransform.rotation), spatialTransform.scale);
     }
