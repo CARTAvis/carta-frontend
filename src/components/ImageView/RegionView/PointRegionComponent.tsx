@@ -5,7 +5,7 @@ import Konva from "konva";
 import {FrameStore, RegionStore} from "stores";
 import {getUpdatedPosition, transformedImageToCanvasPos} from "./shared";
 import {Point2D} from "models";
-import {getTransformedCoordinates} from "utilities";
+import {transformPoint} from "utilities";
 
 export interface PointRegionComponentProps {
     region: RegionStore;
@@ -70,9 +70,9 @@ export class PointRegionComponent extends React.Component<PointRegionComponentPr
 
         if (frame.spatialReference) {
             const pointReferenceImage = region.controlPoints[0];
-            const pointSecondaryImage = getTransformedCoordinates(frame.spatialTransformAST, pointReferenceImage, false);
+            const pointSecondaryImage = transformPoint(frame.spatialTransformAST, pointReferenceImage, false);
             centerPixelSpace = transformedImageToCanvasPos(pointSecondaryImage.x, pointSecondaryImage.y, frame, this.props.layerWidth, this.props.layerHeight);
-            rotation = frame.spatialTransform.rotation * 180.0;
+            rotation = -frame.spatialTransform.rotation * 180.0 / Math.PI;
         } else {
             centerPixelSpace = transformedImageToCanvasPos(region.controlPoints[0].x, region.controlPoints[0].y, frame, this.props.layerWidth, this.props.layerHeight);
             rotation = 0;
@@ -81,7 +81,7 @@ export class PointRegionComponent extends React.Component<PointRegionComponentPr
         return (
             <Group>
                 <Rect
-                    rotation={-rotation}
+                    rotation={rotation}
                     x={centerPixelSpace.x}
                     y={centerPixelSpace.y}
                     width={POINT_WIDTH}
@@ -91,7 +91,7 @@ export class PointRegionComponent extends React.Component<PointRegionComponentPr
                     fill={region.color}
                 />
                 <Rect
-                    rotation={-rotation}
+                    rotation={rotation}
                     x={centerPixelSpace.x}
                     y={centerPixelSpace.y}
                     width={POINT_DRAG_WIDTH}

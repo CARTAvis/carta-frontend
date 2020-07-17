@@ -14,13 +14,13 @@ export function getHeaderNumericValue(headerEntry: CARTA.IHeaderEntry): number {
     }
 }
 
-export function getTransformedCoordinates(astTransform: number, point: Point2D, forward: boolean = true) {
+export function transformPoint(astTransform: number, point: Point2D, forward: boolean = true) {
     return AST.transformPoint(astTransform, point.x, point.y, forward);
 }
 
 export function getFormattedWCSString(astTransform: number, pixelCoords: Point2D) {
     if (astTransform) {
-        const pointWCS = getTransformedCoordinates(astTransform, pixelCoords);
+        const pointWCS = transformPoint(astTransform, pixelCoords);
         const normVals = AST.normalizeCoordinates(astTransform, pointWCS.x, pointWCS.y);
         const wcsCoords = AST.getFormattedCoordinates(astTransform, normVals.x, normVals.y);
         if (wcsCoords) {

@@ -26,7 +26,7 @@ import {
     Transform2D,
     ZoomPoint
 } from "models";
-import {clamp, formattedFrequency, getHeaderNumericValue, getTransformedChannel, getTransformedCoordinates, isAstBadPoint, minMax2D, rotate2D, toFixed, trimFitsComment} from "utilities";
+import {clamp, formattedFrequency, getHeaderNumericValue, getTransformedChannel, transformPoint, isAstBadPoint, minMax2D, rotate2D, toFixed, trimFitsComment} from "utilities";
 import {BackendService, ContourWebGLService} from "services";
 
 export interface FrameInfo {
@@ -161,7 +161,7 @@ export class FrameStore {
 
     @computed get spatialTransform() {
         if (this.spatialReference && this.spatialTransformAST) {
-            const center = getTransformedCoordinates(this.spatialTransformAST, this.spatialReference.center, false);
+            const center = transformPoint(this.spatialTransformAST, this.spatialReference.center, false);
             // Try use center of the screen as a reference point
             if (!isAstBadPoint(center)) {
                 return new Transform2D(this.spatialTransformAST, center);
@@ -264,7 +264,7 @@ export class FrameStore {
 
     public getTransformForRegion(region: RegionStore) {
         if (this.spatialReference && this.spatialTransformAST && region.controlPoints?.length) {
-            const regionCenter = getTransformedCoordinates(this.spatialTransformAST, region.controlPoints[0], false);
+            const regionCenter = transformPoint(this.spatialTransformAST, region.controlPoints[0], false);
             if (!isAstBadPoint(regionCenter)) {
                 return new Transform2D(this.spatialTransformAST, regionCenter);
             }
@@ -921,7 +921,7 @@ export class FrameStore {
             const offsetBlock = [[0, 0], [1, 1], [-1, -1]];
 
             // Shift image space coordinates to 1-indexed when passing to AST
-            const cursorNeighbourhood = offsetBlock.map((offset) => getTransformedCoordinates(this.wcsInfo, {x: cursorPosImageSpace.x + offset[0], y: cursorPosImageSpace.y + offset[1]}));
+            const cursorNeighbourhood = offsetBlock.map((offset) => transformPoint(this.wcsInfo, {x: cursorPosImageSpace.x + offset[0], y: cursorPosImageSpace.y + offset[1]}));
 
             cursorPosWCS = cursorNeighbourhood[0];
 
@@ -1110,7 +1110,7 @@ export class FrameStore {
         if (this.spatialReference) {
             // Adjust zoom by scaling factor if zoom level is not absolute
             const adjustedZoom = absolute ? zoom : zoom / this.spatialTransform.scale;
-            const pointRefImage = getTransformedCoordinates(this.spatialTransformAST, {x, y}, true);
+            const pointRefImage = transformPoint(this.spatialTransformAST, {x, y}, true);
             this.spatialReference.zoomToPoint(pointRefImage.x, pointRefImage.y, adjustedZoom);
         } else {
             if (PreferenceStore.Instance.zoomPoint === ZoomPoint.CURSOR) {
@@ -1142,7 +1142,7 @@ export class FrameStore {
         if (this.spatialReference) {
             // Calculate midpoint of image
             this.initCenter();
-            const imageCenterReferenceSpace = getTransformedCoordinates(this.spatialTransformAST, this.center, true);
+            const imageCenterReferenceSpace = transformPoint(this.spatialTransformAST, this.center, true);
             this.spatialReference.setCenter(imageCenterReferenceSpace.x, imageCenterReferenceSpace.y);
             // Calculate bounding box for transformed image
             const corners = [
