@@ -166,15 +166,8 @@ export class RectangularRegionForm extends React.Component<{ region: RegionStore
         ev.currentTarget.value = existingValue;
     };
 
-    private handleLeftChange = (ev) => {
-        if (ev.type === "keydown" && ev.keyCode !== KEYCODE_ENTER) {
-            return;
-        }
-        const valueString = ev.currentTarget.value;
-        const value = parseFloat(valueString);
-        const existingValue = this.bottomLeftPoint.x;
-
-        if (isFinite(value) && !closeTo(value, existingValue, RectangularRegionForm.REGION_PIXEL_EPS)) {
+    private handleLeftValueChange = (value: number, existingValue: number): boolean => {
+        if (isFinite(value) && isFinite(existingValue) && !closeTo(value, existingValue, RectangularRegionForm.REGION_PIXEL_EPS)) {
             const region = this.props.region;
             const centerPoint = region.controlPoints[0];
             const sizeDims = region.controlPoints[1];
@@ -183,14 +176,55 @@ export class RectangularRegionForm extends React.Component<{ region: RegionStore
             const newDims = {x: Math.abs(value - rightValue), y: sizeDims.y};
             if (newDims.x > 0 && newDims.y > 0) {
                 region.setControlPoints([newCenter, newDims]);
-                return;
+                return true;
             }
+        }
+        return false;
+    };
+
+    private handleLeftChange = (ev) => {
+        if (ev.type === "keydown" && ev.keyCode !== KEYCODE_ENTER) {
+            return;
+        }
+        const valueString = ev.currentTarget.value;
+        const value = parseFloat(valueString);
+        const existingValue = this.bottomLeftPoint.x;
+        if (this.handleLeftValueChange(value, existingValue)) {
+            return;
         }
 
         ev.currentTarget.value = existingValue;
     };
 
     private handleLeftWCSChange = (ev) => {
+        if (ev.type === "keydown" && ev.keyCode !== KEYCODE_ENTER) {
+            return;
+        }
+        const wcsString = ev.currentTarget.value;
+        const newPoint = getPixelValueFromWCS(this.props.wcsInfo, {x: wcsString, y: this.bottomLeftWCSPoint.y});
+        const value = newPoint.x;
+        const existingValue = this.bottomLeftPoint.x;
+        if (this.handleLeftValueChange(value, existingValue)) {
+            return;
+        }
+
+        ev.currentTarget.value = existingValue;
+    };
+
+    private handleBottomValueChange = (value: number, existingValue: number): boolean => {
+        if (isFinite(value) && isFinite(existingValue) && !closeTo(value, existingValue, RectangularRegionForm.REGION_PIXEL_EPS)) {
+            const region = this.props.region;
+            const centerPoint = region.controlPoints[0];
+            const sizeDims = region.controlPoints[1];
+            const topValue = centerPoint.y + sizeDims.y / 2.0;
+            const newCenter = {x: centerPoint.x, y: (value + topValue) / 2.0};
+            const newDims = {x: sizeDims.x, y: Math.abs(value - topValue)};
+            if (newDims.x > 0 && newDims.y > 0) {
+                region.setControlPoints([newCenter, newDims]);
+                return true;
+            }
+        }
+        return false;
     };
 
     private handleBottomChange = (ev) => {
@@ -200,24 +234,26 @@ export class RectangularRegionForm extends React.Component<{ region: RegionStore
         const valueString = ev.currentTarget.value;
         const value = parseFloat(valueString);
         const existingValue = this.bottomLeftPoint.y;
-
-        if (isFinite(value) && !closeTo(value, existingValue, RectangularRegionForm.REGION_PIXEL_EPS)) {
-            const region = this.props.region;
-            const centerPoint = region.controlPoints[0];
-            const sizeDims = region.controlPoints[1];
-            const topValue = centerPoint.y + sizeDims.y / 2.0;
-            const newCenter = {x: centerPoint.x, y: (value + topValue) / 2.0};
-            const newDims = {x: sizeDims.x, y: Math.abs(value - topValue)};
-            if (newDims.x > 0 && newDims.y > 0) {
-                region.setControlPoints([newCenter, newDims]);
-                return;
-            }
+        if (this.handleBottomValueChange(value, existingValue)) {
+            return;
         }
 
         ev.currentTarget.value = existingValue;
     };
 
     private handleBottomWCSChange = (ev) => {
+        if (ev.type === "keydown" && ev.keyCode !== KEYCODE_ENTER) {
+            return;
+        }
+        const wcsString = ev.currentTarget.value;
+        const newPoint = getPixelValueFromWCS(this.props.wcsInfo, {x: this.bottomLeftWCSPoint.x, y: wcsString});
+        const value = newPoint.y;
+        const existingValue = this.bottomLeftPoint.y;
+        if (this.handleBottomValueChange(value, existingValue)) {
+            return;
+        }
+
+        ev.currentTarget.value = existingValue;
     };
 
     private handleRightChange = (ev) => {
