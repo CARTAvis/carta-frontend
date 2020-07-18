@@ -392,26 +392,27 @@ export class RectangularRegionForm extends React.Component<{ region: RegionStore
             <InputGroup className="wcs-input" placeholder="Y WCS Coordinate" disabled={!this.props.wcsInfo || !centerWCSPoint} value={centerWCSPoint ? centerWCSPoint.y : ""} onChange={this.handleCenterWCSYChange}/>;
         const centerInfoString = region.coordinate === RegionCoordinate.Image ? `WCS: ${WCSPoint2D.ToString(centerWCSPoint)}` : `Image: ${Point2D.ToString(centerPoint, "px", 3)}`;
 
+        const isRotated = Math.abs(region.rotation) > 1e-3;
         // bottom left
         const bottomLeftPoint = this.bottomLeftPoint;
         const bottomLeftWCSPoint = this.bottomLeftWCSPoint;
         const bottomLeftInputX = region.coordinate === RegionCoordinate.Image ?
-            <NumericInput {...commonProps} buttonPosition="none" placeholder="X Coordinate" value={bottomLeftPoint.x} onBlur={this.handleLeftChange} onKeyDown={this.handleLeftChange}/> :
-            <InputGroup className="wcs-input" placeholder="X WCS Coordinate" disabled={!this.props.wcsInfo || !bottomLeftWCSPoint} value={bottomLeftWCSPoint ? bottomLeftWCSPoint.x : ""} onChange={this.handleLeftWCSChange}/>;
+            <NumericInput {...commonProps} buttonPosition="none" placeholder="X Coordinate" value={bottomLeftPoint.x} onBlur={this.handleLeftChange} onKeyDown={this.handleLeftChange} disabled={isRotated}/> :
+            <InputGroup className="wcs-input" placeholder="X WCS Coordinate" disabled={!this.props.wcsInfo || !bottomLeftWCSPoint || isRotated} value={bottomLeftWCSPoint ? bottomLeftWCSPoint.x : ""} onChange={this.handleLeftWCSChange}/>;
         const bottomLeftInputY = region.coordinate === RegionCoordinate.Image ?
-            <NumericInput {...commonProps} buttonPosition="none" placeholder="Y Coordinate" value={bottomLeftPoint.y} onBlur={this.handleBottomChange} onKeyDown={this.handleBottomChange}/> :
-            <InputGroup className="wcs-input" placeholder="Y WCS Coordinate" disabled={!this.props.wcsInfo || !bottomLeftWCSPoint} value={bottomLeftWCSPoint ? bottomLeftWCSPoint.y : ""} onChange={this.handleBottomWCSChange}/>;
+            <NumericInput {...commonProps} buttonPosition="none" placeholder="Y Coordinate" value={bottomLeftPoint.y} onBlur={this.handleBottomChange} onKeyDown={this.handleBottomChange} disabled={isRotated}/> :
+            <InputGroup className="wcs-input" placeholder="Y WCS Coordinate" disabled={!this.props.wcsInfo || !bottomLeftWCSPoint || isRotated} value={bottomLeftWCSPoint ? bottomLeftWCSPoint.y : ""} onChange={this.handleBottomWCSChange}/>;
         const bottomLeftInfoString = region.coordinate === RegionCoordinate.Image ? `WCS: ${WCSPoint2D.ToString(bottomLeftWCSPoint)}` : `Image: ${Point2D.ToString(bottomLeftPoint, "px", 3)}`;
 
         // top right
         const topRightPoint = this.topRightPoint;
         const topRightWCSPoint = this.topRightWCSPoint;
         const topRightInputX = region.coordinate === RegionCoordinate.Image ?
-            <NumericInput {...commonProps} buttonPosition="none" placeholder="X Coordinate" value={topRightPoint.x} onBlur={this.handleRightChange} onKeyDown={this.handleRightChange}/> :
-            <InputGroup className="wcs-input" placeholder="X WCS Coordinate" disabled={!this.props.wcsInfo || !topRightWCSPoint} value={topRightWCSPoint ? topRightWCSPoint.x : ""} onChange={this.handleRightWCSChange}/>;
+            <NumericInput {...commonProps} buttonPosition="none" placeholder="X Coordinate" value={topRightPoint.x} onBlur={this.handleRightChange} onKeyDown={this.handleRightChange} disabled={isRotated}/> :
+            <InputGroup className="wcs-input" placeholder="X WCS Coordinate" disabled={!this.props.wcsInfo || !topRightWCSPoint || isRotated} value={topRightWCSPoint ? topRightWCSPoint.x : ""} onChange={this.handleRightWCSChange}/>;
         const topRightInputY = region.coordinate === RegionCoordinate.Image ?
-            <NumericInput {...commonProps} buttonPosition="none" placeholder="Y Coordinate" value={topRightPoint.y} onBlur={this.handleTopChange} onKeyDown={this.handleTopChange}/> :
-            <InputGroup className="wcs-input" placeholder="Y WCS Coordinate" disabled={!this.props.wcsInfo || !topRightWCSPoint} value={topRightWCSPoint ? topRightWCSPoint.y : ""} onChange={this.handleTopWCSChange}/>;
+            <NumericInput {...commonProps} buttonPosition="none" placeholder="Y Coordinate" value={topRightPoint.y} onBlur={this.handleTopChange} onKeyDown={this.handleTopChange} disabled={isRotated}/> :
+            <InputGroup className="wcs-input" placeholder="Y WCS Coordinate" disabled={!this.props.wcsInfo || !topRightWCSPoint || isRotated} value={topRightWCSPoint ? topRightWCSPoint.y : ""} onChange={this.handleTopWCSChange}/>;
         const topRightInfoString = region.coordinate === RegionCoordinate.Image ? `WCS: ${WCSPoint2D.ToString(topRightWCSPoint)}` : `Image: ${Point2D.ToString(topRightPoint, "px", 3)}`;
 
         // size
@@ -419,7 +420,6 @@ export class RectangularRegionForm extends React.Component<{ region: RegionStore
         const wcsStringSize = this.getSizeString(sizeDims);
 
         const pxUnitSpan = region.coordinate === RegionCoordinate.Image ? <span className={Classes.TEXT_MUTED}>(px)</span> : "";
-        const isRotated = Math.abs(region.rotation) > 1e-3;
         return (
             <div className="form-section rectangular-region-form">
                 <H5>Properties</H5>
@@ -465,26 +465,6 @@ export class RectangularRegionForm extends React.Component<{ region: RegionStore
                             <td>{topRightInputX}</td>
                             <td>{topRightInputY}</td>
                             <td><span className="info-string">{topRightInfoString}</span></td>
-                        </tr>
-                        <tr>
-                            <td>Bottom Left {<span className={Classes.TEXT_MUTED}>(px)</span>}</td>
-                            <td>
-                                <NumericInput {...commonProps} buttonPosition="none" placeholder="X Coordinate" value={bottomLeftPoint.x} onBlur={this.handleLeftChange} onKeyDown={this.handleLeftChange} disabled={isRotated}/>
-                            </td>
-                            <td>
-                                <NumericInput {...commonProps} buttonPosition="none" placeholder="Y Coordinate" value={bottomLeftPoint.y} onBlur={this.handleBottomChange} onKeyDown={this.handleBottomChange} disabled={isRotated}/>
-                            </td>
-                            <td><span className="info-string">{WCSPoint2D.ToString(this.bottomLeftWCSPoint)}</span></td>
-                        </tr>
-                        <tr>
-                            <td>Top Right {<span className={Classes.TEXT_MUTED}>(px)</span>}</td>
-                            <td>
-                                <NumericInput {...commonProps} buttonPosition="none" placeholder="X Coordinate" value={topRightPoint.x} onBlur={this.handleRightChange} onKeyDown={this.handleRightChange} disabled={isRotated}/>
-                            </td>
-                            <td>
-                                <NumericInput {...commonProps} buttonPosition="none" placeholder="Y Coordinate" value={topRightPoint.y} onBlur={this.handleTopChange} onKeyDown={this.handleTopChange} disabled={isRotated}/>
-                            </td>
-                            <td><span className="info-string">{WCSPoint2D.ToString(this.topRightWCSPoint)}</span></td>
                         </tr>
                         <tr>
                             <td>P.A. <span className={Classes.TEXT_MUTED}>(deg)</span></td>
