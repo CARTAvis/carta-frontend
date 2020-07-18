@@ -648,7 +648,16 @@ export class AppStore {
             if (frame && ack.success && ack.regions) {
                 const regionMap = new Map<string, CARTA.IRegionInfo>(Object.entries(ack.regions));
                 regionMap.forEach((regionInfo, regionIdString) => {
-                    frame.regionSet.addExistingRegion(regionInfo.controlPoints as Point2D[], regionInfo.rotation, regionInfo.regionType, parseInt(regionIdString), regionInfo.regionName);
+                    frame.regionSet.addExistingRegion(
+                        regionInfo.controlPoints as Point2D[],
+                        regionInfo.rotation,
+                        regionInfo.regionType,
+                        parseInt(regionIdString),
+                        regionInfo.regionName,
+                        regionInfo.color,
+                        regionInfo.lineWidth,
+                        regionInfo.dashList
+                    );
                 });
             }
             this.fileBrowserStore.hideFileBrowser();
