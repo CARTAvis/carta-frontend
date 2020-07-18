@@ -5,7 +5,7 @@ import {AppStore, RegionCoordinate, RegionStore, SystemType} from "stores";
 import "./CoordinateComponent.css";
 
 @observer
-export class CoordinateComponent extends React.Component<{region: RegionStore}> {
+export class CoordinateComponent extends React.Component<{region: RegionStore, disableCooridnate: boolean}> {
     public render() {
         const region = this.props.region;
         return (
@@ -14,6 +14,7 @@ export class CoordinateComponent extends React.Component<{region: RegionStore}> 
                     inline={true}
                     onChange={(ev) => region.setCoordinate(ev.currentTarget.value as RegionCoordinate)}
                     selectedValue={region.coordinate}
+                    disabled={this.props.disableCooridnate}
                 >
                         <Radio label={RegionCoordinate.Image} value={RegionCoordinate.Image}/>
                         <Radio label={RegionCoordinate.World} value={RegionCoordinate.World}/>

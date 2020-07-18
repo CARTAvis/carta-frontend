@@ -434,7 +434,7 @@ export class RectangularRegionForm extends React.Component<{ region: RegionStore
                         </tr>
                         <tr>
                             <td>Coordinate</td>
-                            <td colSpan={2}><CoordinateComponent region={region}/></td>
+                            <td colSpan={2}><CoordinateComponent region={region} disableCooridnate={!this.props.wcsInfo}/></td>
                         </tr>
                         <tr>
                             <td>Center {pxUnitSpan}</td>

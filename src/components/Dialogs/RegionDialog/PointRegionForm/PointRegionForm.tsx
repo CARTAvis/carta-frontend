@@ -132,7 +132,7 @@ export class PointRegionForm extends React.Component<{ region: RegionStore, wcsI
                         </tr>
                         <tr>
                             <td>Coordinate</td>
-                            <td colSpan={2}><CoordinateComponent region={region}/></td>
+                            <td colSpan={2}><CoordinateComponent region={region} disableCooridnate={!this.props.wcsInfo}/></td>
                         </tr>
                         <tr>
                             <td>Center {pxUnitSpan}</td>
