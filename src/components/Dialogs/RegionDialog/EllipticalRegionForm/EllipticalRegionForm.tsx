@@ -68,15 +68,16 @@ export class EllipticalRegionForm extends React.Component<{ region: RegionStore,
             return;
         }
         const wcsString = ev.currentTarget.value;
-        const newPoint = getPixelValueFromWCS(this.props.wcsInfo, {x: wcsString, y: this.centerWCSPoint.y});
-        const existingValue = this.props.region.controlPoints[0].x;
-
-        if (newPoint && isFinite(newPoint.x) && !closeTo(newPoint.x, existingValue, EllipticalRegionForm.REGION_PIXEL_EPS)) {
-            this.props.region.setControlPoint(0, newPoint);
-            return;
+        if (WCS_REGEXP.test(wcsString)) {
+            const newPoint = getPixelValueFromWCS(this.props.wcsInfo, {x: wcsString, y: this.centerWCSPoint.y});
+            const existingValue = this.props.region.controlPoints[0].x;
+            if (newPoint && isFinite(newPoint.x) && !closeTo(newPoint.x, existingValue, EllipticalRegionForm.REGION_PIXEL_EPS)) {
+                this.props.region.setControlPoint(0, newPoint);
+                return;
+            }
         }
 
-        ev.currentTarget.value = wcsString;
+        ev.currentTarget.value = this.centerWCSPoint.x;
     };
 
     private handleCenterWCSYChange = (ev) => {
@@ -87,15 +88,16 @@ export class EllipticalRegionForm extends React.Component<{ region: RegionStore,
             return;
         }
         const wcsString = ev.currentTarget.value;
-        const newPoint = getPixelValueFromWCS(this.props.wcsInfo, {x: this.centerWCSPoint.x, y: wcsString});
-        const existingValue = this.props.region.controlPoints[0].y;
-
-        if (newPoint && isFinite(newPoint.y) && !closeTo(newPoint.y, existingValue, EllipticalRegionForm.REGION_PIXEL_EPS)) {
-            this.props.region.setControlPoint(0, newPoint);
-            return;
+        if (WCS_REGEXP.test(wcsString)) {
+            const newPoint = getPixelValueFromWCS(this.props.wcsInfo, {x: this.centerWCSPoint.x, y: wcsString});
+            const existingValue = this.props.region.controlPoints[0].y;
+            if (newPoint && isFinite(newPoint.y) && !closeTo(newPoint.y, existingValue, EllipticalRegionForm.REGION_PIXEL_EPS)) {
+                this.props.region.setControlPoint(0, newPoint);
+                return;
+            }
         }
 
-        ev.currentTarget.value = wcsString;
+        ev.currentTarget.value = this.centerWCSPoint.y;
     };
 
     private handleMajorAxisChange = (ev) => {
