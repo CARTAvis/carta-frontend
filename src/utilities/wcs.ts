@@ -3,6 +3,8 @@ import * as AST from "ast_wrapper";
 import {Point2D, WCSPoint2D, SpectralType} from "models";
 import {add2D, subtract2D} from "./math2d";
 
+export const WCS_REGEXP = /^\-?\d+\:\d+\:\d+(\.\d+)?$/;
+
 export function getHeaderNumericValue(headerEntry: CARTA.IHeaderEntry): number {
     if (!headerEntry) {
         return NaN;
