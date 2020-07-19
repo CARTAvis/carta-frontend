@@ -423,7 +423,9 @@ export class RectangularRegionForm extends React.Component<{ region: RegionStore
         let bottomLeftInputX, bottomLeftInputY;
         if (region.coordinate === RegionCoordinate.Image) {
             bottomLeftInputX = <NumericInput selectAllOnFocus={true} buttonPosition="none" placeholder="X Coordinate" value={this.bottomLeftPoint.x} onBlur={this.handleLeftChange} onKeyDown={this.handleLeftChange} disabled={isRotated}/>;
-            bottomLeftInputY = <NumericInput selectAllOnFocus={true} buttonPosition="none" placeholder="Y Coordinate" value={this.bottomLeftPoint.y} onBlur={this.handleBottomChange} onKeyDown={this.handleBottomChange} disabled={isRotated}/>;
+            bottomLeftInputY = (
+                <NumericInput selectAllOnFocus={true} buttonPosition="none" placeholder="Y Coordinate" value={this.bottomLeftPoint.y} onBlur={this.handleBottomChange} onKeyDown={this.handleBottomChange} disabled={isRotated}/>
+            );
         } else {
             bottomLeftInputX = (
                 <NumericInput
