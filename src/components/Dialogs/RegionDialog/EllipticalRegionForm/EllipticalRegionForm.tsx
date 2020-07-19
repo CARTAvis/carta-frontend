@@ -5,7 +5,7 @@ import {H5, InputGroup, NumericInput, Classes} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import {FrameStore, RegionCoordinate, RegionStore} from "stores";
 import {Point2D, WCSPoint2D} from "models";
-import {closeTo, formattedArcsec, getFormattedWCSPoint, getPixelValueFromWCS} from "utilities";
+import {closeTo, formattedArcsec, getFormattedWCSPoint, getPixelValueFromWCS, WCS_REGEXP} from "utilities";
 import {CoordinateComponent} from "../CoordinateComponent/CoordinateComponent";
 import "./EllipticalRegionForm.css";
 
@@ -160,18 +160,35 @@ export class EllipticalRegionForm extends React.Component<{ region: RegionStore,
             return null;
         }
 
-        const commonProps = {
-            selectAllOnFocus: true,
-            allowNumericCharactersOnly: true
-        };
-
         const centerPoint = region.controlPoints[0];
-        const xInput = region.coordinate === RegionCoordinate.Image ?
-            <NumericInput {...commonProps} buttonPosition="none" placeholder="X Coordinate" value={centerPoint.x} onBlur={this.handleCenterXChange} onKeyDown={this.handleCenterXChange}/> :
-            <InputGroup className="wcs-input" placeholder="X WCS Coordinate" disabled={!this.props.wcsInfo || !this.centerWCSPoint} value={this.centerWCSPoint ? this.centerWCSPoint.x : ""} onChange={this.handleCenterWCSXChange}/>;
-        const yInput = region.coordinate === RegionCoordinate.Image ?
-            <NumericInput {...commonProps} buttonPosition="none" placeholder="Y Coordinate" value={centerPoint.y} onBlur={this.handleCenterYChange} onKeyDown={this.handleCenterYChange}/> :
-            <InputGroup className="wcs-input" placeholder="Y WCS Coordinate" disabled={!this.props.wcsInfo || !this.centerWCSPoint} value={this.centerWCSPoint ? this.centerWCSPoint.y : ""} onChange={this.handleCenterWCSYChange}/>;
+        let xInput, yInput;
+        if (region.coordinate === RegionCoordinate.Image) {
+            xInput = <NumericInput selectAllOnFocus={true} buttonPosition="none" placeholder="X Coordinate" value={centerPoint.x} onBlur={this.handleCenterXChange} onKeyDown={this.handleCenterXChange}/>;
+            yInput = <NumericInput selectAllOnFocus={true} buttonPosition="none" placeholder="Y Coordinate" value={centerPoint.y} onBlur={this.handleCenterYChange} onKeyDown={this.handleCenterYChange}/>;
+        } else {
+            xInput = (
+                <NumericInput
+                    allowNumericCharactersOnly={false}
+                    buttonPosition="none"
+                    placeholder="X WCS Coordinate"
+                    disabled={!this.props.wcsInfo || !this.centerWCSPoint}
+                    value={this.centerWCSPoint ? this.centerWCSPoint.x : ""}
+                    onBlur={this.handleCenterWCSXChange}
+                    onKeyDown={this.handleCenterWCSXChange}
+                />
+            );
+            yInput = (
+                <NumericInput
+                    allowNumericCharactersOnly={false}
+                    buttonPosition="none"
+                    placeholder="Y WCS Coordinate"
+                    disabled={!this.props.wcsInfo || !this.centerWCSPoint}
+                    value={this.centerWCSPoint ? this.centerWCSPoint.y : ""}
+                    onBlur={this.handleCenterWCSYChange}
+                    onKeyDown={this.handleCenterWCSYChange}
+                />
+            );
+        }
         const infoString = region.coordinate === RegionCoordinate.Image ? `WCS: ${WCSPoint2D.ToString(this.centerWCSPoint)}` : `Image: ${Point2D.ToString(centerPoint, "px", 3)}`;
         const pxUnitSpan = region.coordinate === RegionCoordinate.Image ? <span className={Classes.TEXT_MUTED}>(px)</span> : "";
         const sizeDims = region.controlPoints[1];
@@ -202,10 +219,10 @@ export class EllipticalRegionForm extends React.Component<{ region: RegionStore,
                         <tr>
                             <td>Axes {<span className={Classes.TEXT_MUTED}>(px)</span>}</td>
                             <td>
-                                <NumericInput {...commonProps} buttonPosition="none" placeholder="Semi-Major Axis" value={sizeDims.x} onBlur={this.handleMajorAxisChange} onKeyDown={this.handleMajorAxisChange}/>
+                                <NumericInput selectAllOnFocus={true} buttonPosition="none" placeholder="Semi-Major Axis" value={sizeDims.x} onBlur={this.handleMajorAxisChange} onKeyDown={this.handleMajorAxisChange}/>
                             </td>
                             <td>
-                                <NumericInput{...commonProps} buttonPosition="none" placeholder="Semi-Minor Axis" value={sizeDims.y} onBlur={this.handleMinorAxisChange} onKeyDown={this.handleMinorAxisChange}/>
+                                <NumericInput selectAllOnFocus={true} buttonPosition="none" placeholder="Semi-Minor Axis" value={sizeDims.y} onBlur={this.handleMinorAxisChange} onKeyDown={this.handleMinorAxisChange}/>
                             </td>
                             <td>
                                 <span className="info-string">{wcsStringSize}</span>
@@ -214,7 +231,7 @@ export class EllipticalRegionForm extends React.Component<{ region: RegionStore,
                         <tr>
                             <td>P.A. <span className={Classes.TEXT_MUTED}>(deg)</span></td>
                             <td>
-                                <NumericInput {...commonProps} buttonPosition="none" placeholder="P.A." value={region.rotation} onBlur={this.handleRotationChange} onKeyDown={this.handleRotationChange}/>
+                                <NumericInput selectAllOnFocus={true} buttonPosition="none" placeholder="P.A." value={region.rotation} onBlur={this.handleRotationChange} onKeyDown={this.handleRotationChange}/>
                             </td>
                         </tr>
                         </tbody>
