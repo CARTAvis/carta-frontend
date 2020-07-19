@@ -5,7 +5,7 @@ import {H5, InputGroup, NumericInput, Classes} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import {RegionCoordinate, RegionStore} from "stores";
 import {Point2D, WCSPoint2D} from "models";
-import {closeTo, getFormattedWCSPoint, getPixelValueFromWCS} from "utilities";
+import {closeTo, getFormattedWCSPoint, getPixelValueFromWCS, WCS_REGEXP} from "utilities";
 import {CoordinateComponent} from "../CoordinateComponent/CoordinateComponent";
 import "./PolygonRegionForm.css";
 
@@ -74,20 +74,55 @@ export class PolygonRegionForm extends React.Component<{ region: RegionStore, wc
             return null;
         }
 
-        const commonProps = {
-            selectAllOnFocus: true,
-            allowNumericCharactersOnly: true,
-        };
-
         const pxUnitSpan = region.coordinate === RegionCoordinate.Image ? <span className={Classes.TEXT_MUTED}>(px)</span> : "";
         const pointRows = region.controlPoints.map((point, index) => {
             const pointWCS = getFormattedWCSPoint(this.props.wcsInfo, point);
-            const xInput = region.coordinate === RegionCoordinate.Image ?
-                <NumericInput {...commonProps} buttonPosition="none" placeholder="X Coordinate" value={point.x} onBlur={(evt) => this.handlePointChange(index, true, evt)} onKeyDown={(evt) => this.handlePointChange(index, true, evt)}/> :
-                <InputGroup className="wcs-input" placeholder="X WCS Coordinate" disabled={!this.props.wcsInfo || !pointWCS} value={pointWCS ? pointWCS.x : ""} onChange={(evt) => this.handleWCSPointChange(index, true, evt)}/>;
-            const yInput = region.coordinate === RegionCoordinate.Image ?
-                <NumericInput {...commonProps} buttonPosition="none" placeholder="Y Coordinate" value={point.y} onBlur={(evt) => this.handlePointChange(index, false, evt)} onKeyDown={(evt) => this.handlePointChange(index, false, evt)}/> :
-                <InputGroup className="wcs-input" placeholder="Y WCS Coordinate" disabled={!this.props.wcsInfo || !pointWCS} value={pointWCS ? pointWCS.y : ""} onChange={(evt) => this.handleWCSPointChange(index, false, evt)}/>;
+            let xInput, yInput;
+            if (region.coordinate === RegionCoordinate.Image) {
+                xInput = (
+                    <NumericInput
+                        selectAllOnFocus={true}
+                        buttonPosition="none"
+                        placeholder="X Coordinate"
+                        value={point.x}
+                        onBlur={(evt) => this.handlePointChange(index, true, evt)}
+                        onKeyDown={(evt) => this.handlePointChange(index, true, evt)}
+                    />
+                );
+                yInput = (
+                    <NumericInput
+                        selectAllOnFocus={true}
+                        buttonPosition="none"
+                        placeholder="Y Coordinate"
+                        value={point.y}
+                        onBlur={(evt) => this.handlePointChange(index, false, evt)}
+                        onKeyDown={(evt) => this.handlePointChange(index, false, evt)}
+                    />
+                );
+            } else {
+                xInput = (
+                    <NumericInput
+                        allowNumericCharactersOnly={false}
+                        buttonPosition="none"
+                        placeholder="X WCS Coordinate"
+                        disabled={!this.props.wcsInfo || !pointWCS}
+                        value={pointWCS ? pointWCS.x : ""}
+                        onBlur={(evt) => this.handleWCSPointChange(index, true, evt)}
+                        onKeyDown={(evt) => this.handleWCSPointChange(index, true, evt)}
+                    />
+                );
+                yInput = (
+                    <NumericInput
+                        allowNumericCharactersOnly={false}
+                        buttonPosition="none"
+                        placeholder="Y WCS Coordinate"
+                        disabled={!this.props.wcsInfo || !pointWCS}
+                        value={pointWCS ? pointWCS.y : ""}
+                        onBlur={(evt) => this.handleWCSPointChange(index, false, evt)}
+                        onKeyDown={(evt) => this.handleWCSPointChange(index, false, evt)}
+                    />
+                );
+            }
             const infoString = region.coordinate === RegionCoordinate.Image ? `WCS: ${WCSPoint2D.ToString(pointWCS)}` : `Image: ${Point2D.ToString(point, "px", 3)}`;
             return (
                 <tr key={index}>
