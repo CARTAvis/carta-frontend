@@ -1,18 +1,19 @@
 import * as React from "react";
 import {CSSProperties} from "react";
 import {observer} from "mobx-react";
-import {Button, ButtonGroup, IconName, Menu, MenuItem, Popover, PopoverPosition, Position, Tooltip} from "@blueprintjs/core";
+import {Button, ButtonGroup, IconName, Menu, MenuItem, Popover, PopoverPosition, Position, Tooltip, AnchorButton} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
-import {exportImage} from "components";
-import {AppStore, RegionMode, SystemType} from "stores";
+import {AppStore, OverlayStore, PreferenceStore, RegionMode, SystemType} from "stores";
+import {ImageViewLayer} from "../ImageViewComponent";
 import {toFixed} from "utilities";
 import "./ToolbarComponent.css";
 
 export class ToolbarComponentProps {
-    appStore: AppStore;
     docked: boolean;
     visible: boolean;
     vertical: boolean;
+    onActiveLayerChange: (layer: ImageViewLayer) => void;
+    activeLayer: ImageViewLayer;
 }
 
 @observer
@@ -36,32 +37,43 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
     ]);
 
     handleZoomToActualSizeClicked = () => {
-        this.props.appStore.activeFrame.setZoom(1.0);
+        AppStore.Instance.activeFrame.setZoom(1.0);
     };
 
     handleZoomInClicked = () => {
-        const frame = this.props.appStore.activeFrame.spatialReference || this.props.appStore.activeFrame;
+        const appStore = AppStore.Instance;
+        const frame = appStore.activeFrame.spatialReference || appStore.activeFrame;
         frame.setZoom(frame.zoomLevel * 2.0, true);
     };
 
     handleZoomOutClicked = () => {
-        const frame = this.props.appStore.activeFrame.spatialReference || this.props.appStore.activeFrame;
+        const appStore = AppStore.Instance;
+        const frame = appStore.activeFrame.spatialReference || appStore.activeFrame;
         frame.setZoom(frame.zoomLevel / 2.0, true);
     };
 
     handleRegionTypeClicked = (type: CARTA.RegionType) => {
-        this.props.appStore.activeFrame.regionSet.setNewRegionType(type);
-        this.props.appStore.activeFrame.regionSet.setMode(RegionMode.CREATING);
+        const appStore = AppStore.Instance;
+        appStore.activeFrame.regionSet.setNewRegionType(type);
+        appStore.activeFrame.regionSet.setMode(RegionMode.CREATING);
     };
 
     handleCoordinateSystemClicked = (coordinateSystem: SystemType) => {
-        this.props.appStore.overlayStore.global.setSystem(coordinateSystem);
+        OverlayStore.Instance.global.setSystem(coordinateSystem);
     };
 
+    private handelActiveLayerClicked = (layer: ImageViewLayer) => {
+        this.props.onActiveLayerChange(layer);
+        if (layer === ImageViewLayer.RegionMoving) {
+            AppStore.Instance.activeFrame.regionSet.setMode(RegionMode.MOVING);
+        }
+    }
+
     render() {
-        const appStore = this.props.appStore;
-        const frame = appStore.activeFrame;
+        const appStore = AppStore.Instance;
+        const preferenceStore = appStore.preferenceStore;
         const overlay = appStore.overlayStore;
+        const frame = appStore.activeFrame;
         const grid = overlay.grid;
 
         let styleProps: CSSProperties = {
@@ -93,7 +105,7 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
             </Menu>
         );
 
-        let coordinateSystem = this.props.appStore.overlayStore.global.system;
+        let coordinateSystem = overlay.global.system;
 
         const coordinateSystemMenu = (
             <Menu>
@@ -131,7 +143,7 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
         const wcsButtonSuperscript = (spatialMatchingEnabled ? "x" : "") + (spectralMatchingEnabled ? "z" : "");
         const wcsButtonTooltipEntries = [];
         if (spectralMatchingEnabled) {
-            wcsButtonTooltipEntries.push(`Spectral (${appStore.preferenceStore.spectralMatchingType})`);
+            wcsButtonTooltipEntries.push(`Spectral (${preferenceStore.spectralMatchingType})`);
         }
         if (spatialMatchingEnabled) {
             wcsButtonTooltipEntries.push("Spatial");
@@ -141,13 +153,13 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
         const wcsMatchingMenu = (
             <Menu>
                 <MenuItem
-                    text={`Spectral (${appStore.preferenceStore.spectralMatchingType}) and Spatial`}
+                    text={`Spectral (${preferenceStore.spectralMatchingType}) and Spatial`}
                     disabled={!canEnableSpatialMatching || !canEnableSpectralMatching}
                     active={spectralMatchingEnabled && spatialMatchingEnabled}
                     onClick={() => appStore.setMatchingEnabled(true, true)}
                 />
                 <MenuItem
-                    text={`Spectral (${appStore.preferenceStore.spectralMatchingType})  only`}
+                    text={`Spectral (${preferenceStore.spectralMatchingType})  only`}
                     disabled={!canEnableSpectralMatching}
                     active={spectralMatchingEnabled && !spatialMatchingEnabled}
                     onClick={() => appStore.setMatchingEnabled(false, true)}
@@ -167,23 +179,28 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
             </Menu>
         );
 
+        const catalogOverlayEnabled = this.props.activeLayer === ImageViewLayer.Catalog;
+        const catalogSelectionDisabled = appStore.catalogs.size === 0;
+
         return (
             <ButtonGroup className={className} style={styleProps} vertical={this.props.vertical}>
-
+                <Tooltip position={tooltipPosition} content={<span>Catalog selection<br/><i><small>Click to select single catalog source</small></i></span>}>
+                    <AnchorButton icon={"locate"} active={catalogOverlayEnabled} onClick={() => this.handelActiveLayerClicked(ImageViewLayer.Catalog)} disabled={catalogSelectionDisabled}/>
+                </Tooltip>
                 {frame.regionSet.mode === RegionMode.CREATING &&
                 <Tooltip position={tooltipPosition} content={<span>Create region<br/><i><small>Click to select region type</small></i></span>}>
                     <Popover content={regionMenu} position={Position.TOP} minimal={true}>
-                        <Button icon={regionIcon} active={true}/>
+                        <Button icon={regionIcon} active={!catalogOverlayEnabled} onClick={() => this.handelActiveLayerClicked(ImageViewLayer.RegionCreating)}/>
                     </Popover>
                 </Tooltip>
                 }
                 {frame.regionSet.mode === RegionMode.MOVING &&
                 <Tooltip position={tooltipPosition} content={<span>Create region<br/><i><small>Double-click to select region type</small></i></span>}>
-                    <Button icon={regionIcon} onClick={() => this.props.appStore.activeFrame.regionSet.setMode(RegionMode.CREATING)}/>
+                    <Button icon={regionIcon} onClick={() => frame.regionSet.setMode(RegionMode.CREATING)}/>
                 </Tooltip>
                 }
                 <Tooltip position={tooltipPosition} content="Select and pan mode">
-                    <Button icon={"hand"} onClick={() => frame.regionSet.setMode(RegionMode.MOVING)} active={frame.regionSet.mode === RegionMode.MOVING}/>
+                    <Button icon={"hand"} onClick={() => this.handelActiveLayerClicked(ImageViewLayer.RegionMoving)} active={frame.regionSet.mode === RegionMode.MOVING && !catalogOverlayEnabled}/>
                 </Tooltip>
                 <Tooltip position={tooltipPosition} content={<span>Zoom in (Scroll wheel up){currentZoomSpan}</span>}>
                     <Button icon={"zoom-in"} onClick={this.handleZoomInClicked}/>
@@ -216,7 +233,7 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
                     <Button icon="numerical" active={!overlay.labelsHidden} onClick={overlay.toggleLabels}/>
                 </Tooltip>
                 <Tooltip position={tooltipPosition} content={`Export image (${appStore.modifierString}E)`}>
-                    <Button icon="floppy-disk" onClick={() => exportImage(overlay.padding, appStore.darkTheme, appStore.activeFrame.frameInfo.fileInfo.name)}/>
+                    <Button icon="floppy-disk" onClick={appStore.exportImage}/>
                 </Tooltip>
             </ButtonGroup>
         );

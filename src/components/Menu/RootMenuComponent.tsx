@@ -3,7 +3,6 @@ import {observable} from "mobx";
 import {observer} from "mobx-react";
 import {Alert, Icon, Menu, Popover, Position, Tooltip, Tag} from "@blueprintjs/core";
 import {ToolbarMenuComponent} from "./ToolbarMenu/ToolbarMenuComponent";
-import {exportImage} from "components";
 import {PresetLayout} from "models";
 import {AppStore, BrowserMode, PreferenceKeys} from "stores";
 import {ConnectionStatus} from "services";
@@ -12,17 +11,17 @@ import {CustomIcon} from "icons/CustomIcons";
 import "./RootMenuComponent.css";
 
 @observer
-export class RootMenuComponent extends React.Component<{ appStore: AppStore }> {
+export class RootMenuComponent extends React.Component {
     @observable documentationAlertVisible: boolean;
     private documentationAlertTimeoutHandle;
 
     render() {
-        const appStore = this.props.appStore;
+        const appStore = AppStore.Instance;
         const modString = appStore.modifierString;
         const connectionStatus = appStore.backendService.connectionStatus;
 
         let stokesClassName = "stokes-item";
-        if (this.props.appStore.darkTheme) {
+        if (appStore.darkTheme) {
             stokesClassName += " bp3-dark";
         }
 
@@ -59,10 +58,17 @@ export class RootMenuComponent extends React.Component<{ appStore: AppStore }> {
                 />
                 <Menu.Divider/>
                 <Menu.Item
+                    text="Append catalog"
+                    label={`${modString}C`}
+                    disabled={connectionStatus !== ConnectionStatus.ACTIVE || !appStore.activeFrame || appStore.fileLoading}
+                    onClick={() => appStore.fileBrowserStore.showFileBrowser(BrowserMode.Catalog, false)}
+                />
+                <Menu.Divider/>
+                <Menu.Item
                     text="Export image"
                     label={`${modString}E`}
                     disabled={!appStore.activeFrame}
-                    onClick={() => exportImage(appStore.overlayStore.padding, appStore.darkTheme, appStore.activeFrame.frameInfo.fileInfo.name)}
+                    onClick={appStore.exportImage}
                 />
                 <Menu.Item text="Preferences" onClick={appStore.dialogStore.showPreferenceDialog} disabled={appStore.preferenceStore.supportsServer && connectionStatus !== ConnectionStatus.ACTIVE}/>
             </Menu>
@@ -82,6 +88,7 @@ export class RootMenuComponent extends React.Component<{ appStore: AppStore }> {
         const viewMenu = (
             <Menu>
                 <Menu.Item text="Interface" icon={"control"}>
+                    <Menu.Item text="Automatic" icon={"contrast"} onClick={appStore.setAutoTheme}/>
                     <Menu.Item text="Light" icon={"flash"} onClick={appStore.setLightTheme}/>
                     <Menu.Item text="Dark" icon={"moon"} onClick={appStore.setDarkTheme}/>
                 </Menu.Item>
@@ -178,6 +185,7 @@ export class RootMenuComponent extends React.Component<{ appStore: AppStore }> {
             <Menu>
                 <Menu.Item text="Online Manual" icon={"help"} onClick={this.handleDocumentationClicked}/>
                 <Menu.Item text="Controls and Shortcuts" label={"Shift + ?"} onClick={appStore.dialogStore.showHotkeyDialog}/>
+                <Menu.Item text="Debug Execution" icon={"console"} onClick={appStore.dialogStore.showDebugExecutionDialog}/>
                 <Menu.Item text="About" icon={"info-sign"} onClick={appStore.dialogStore.showAboutDialog}/>
             </Menu>
         );
@@ -196,7 +204,7 @@ export class RootMenuComponent extends React.Component<{ appStore: AppStore }> {
                     connectivityTooltip = <span>Reconnected to server {userString} after disconnect. Some errors may occur<br/><i><small>Latency: {latencyString}</small></i></span>;
                     connectivityClass += " warning";
                 } else {
-                    connectivityTooltip = <span>Connected to server {userString}<br/><i><small>Latency: {latencyString}</small></i></span>;
+                    connectivityTooltip = <span>Connected to server {userString}<br/><i><small>Latency: {latencyString}<br/>Session ID: {appStore.backendService.sessionId}</small></i></span>;
                     connectivityClass += " online";
                 }
                 break;
@@ -266,7 +274,7 @@ export class RootMenuComponent extends React.Component<{ appStore: AppStore }> {
                         <Menu.Item text="Help"/>
                     </Menu>
                 </Popover>
-                <ToolbarMenuComponent appStore={appStore}/>
+                <ToolbarMenuComponent/>
                 <Alert isOpen={this.documentationAlertVisible} onClose={this.handleAlertDismissed} canEscapeKeyCancel={true} canOutsideClickCancel={true} confirmButtonText={"Dismiss"}>
                     Documentation will open in a new tab. Please ensure any popup blockers are disabled.
                 </Alert>
@@ -297,7 +305,7 @@ export class RootMenuComponent extends React.Component<{ appStore: AppStore }> {
     };
 
     handleFrameSelect = (fileId: number) => {
-        const appStore = this.props.appStore;
+        const appStore = AppStore.Instance;
         if (appStore.activeFrame && appStore.activeFrame.frameInfo.fileId === fileId) {
             return;
         } else {

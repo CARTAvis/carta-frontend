@@ -1,19 +1,20 @@
 import * as React from "react";
 import * as AST from "ast_wrapper";
+import * as tinycolor from "tinycolor2";
 import {observer} from "mobx-react";
 import {observable} from "mobx";
 import {Select, ItemRenderer} from "@blueprintjs/select";
 import {
-    AnchorButton, Button, Collapse, FormGroup, HTMLSelect,
-    IDialogProps, InputGroup, Intent, MenuItem, NumericInput,
-    Position, Switch, Tab, Tabs, TabId, Tooltip
+    Button, Collapse, FormGroup, HTMLSelect,
+    IDialogProps, InputGroup, Intent, MenuItem,
+    Switch, Tab, Tabs, TabId
 } from "@blueprintjs/core";
 import {DraggableDialogComponent} from "components/Dialogs";
 import {ColorComponent} from "./ColorComponent";
 import {ColorResult} from "react-color";
-import {ColorPickerComponent} from "components/Shared";
-import {AppStore, BeamType, LabelType, SystemType, HelpType} from "stores";
-import {hexStringToRgba, SWATCH_COLORS} from "utilities";
+import {ColorPickerComponent, SafeNumericInput} from "components/Shared";
+import {AppStore, BeamType, LabelType, SystemType, HelpType, DialogStore, OverlayStore} from "stores";
+import { SWATCH_COLORS} from "utilities";
 import "./OverlaySettingsDialogComponent.css";
 
 // Font selector
@@ -64,7 +65,7 @@ export const renderFont: ItemRenderer<Font> = (font, {handleClick, modifiers, qu
 };
 
 @observer
-export class OverlaySettingsDialogComponent extends React.Component<{ appStore: AppStore }> {
+export class OverlaySettingsDialogComponent extends React.Component {
     @observable selectedTab: TabId = "global";
 
     private fontSelect(visible: boolean, currentFontId: number, fontSetter: Function) {
@@ -89,7 +90,7 @@ export class OverlaySettingsDialogComponent extends React.Component<{ appStore: 
     }
 
     public render() {
-        const appStore = this.props.appStore;
+        const appStore = AppStore.Instance;
         const overlayStore = appStore.overlayStore;
         const global = overlayStore.global;
         const title = overlayStore.title;
@@ -114,7 +115,7 @@ export class OverlaySettingsDialogComponent extends React.Component<{ appStore: 
                     <ColorComponent selectedItem={global.color} onItemSelect={global.setColor}/>
                 </FormGroup>
                 <FormGroup inline={true} label="Tolerance" labelInfo="(%)">
-                    <NumericInput
+                    <SafeNumericInput
                         placeholder="Tolerance"
                         min={0.1}
                         value={global.tolerance}
@@ -157,7 +158,7 @@ export class OverlaySettingsDialogComponent extends React.Component<{ appStore: 
                 </FormGroup>
                 <FormGroup inline={true} className="font-group" label="Font" disabled={!title.visible}>
                     {this.fontSelect(title.visible, title.font, title.setFont)}
-                    <NumericInput
+                    <SafeNumericInput
                         min={7}
                         placeholder="Font size"
                         value={title.fontSize}
@@ -214,7 +215,7 @@ export class OverlaySettingsDialogComponent extends React.Component<{ appStore: 
                 </FormGroup>
                 <Collapse isOpen={ticks.customDensity}>
                     <FormGroup inline={true} label="Density" labelInfo="(X)">
-                        <NumericInput
+                        <SafeNumericInput
                             placeholder="Density"
                             min={0}
                             value={ticks.densityX}
@@ -222,7 +223,7 @@ export class OverlaySettingsDialogComponent extends React.Component<{ appStore: 
                         />
                     </FormGroup>
                     <FormGroup inline={true} label="Density" labelInfo="(Y)">
-                        <NumericInput
+                        <SafeNumericInput
                             placeholder="Density"
                             min={0}
                             value={ticks.densityY}
@@ -242,7 +243,7 @@ export class OverlaySettingsDialogComponent extends React.Component<{ appStore: 
                     </FormGroup>
                 </Collapse>
                 <FormGroup inline={true} label="Width" labelInfo="(px)">
-                    <NumericInput
+                    <SafeNumericInput
                         placeholder="Width"
                         min={0.001}
                         value={ticks.width}
@@ -253,7 +254,7 @@ export class OverlaySettingsDialogComponent extends React.Component<{ appStore: 
                     />
                 </FormGroup>
                 <FormGroup inline={true} label="Minor length" labelInfo="(%)">
-                    <NumericInput
+                    <SafeNumericInput
                         placeholder="Length"
                         min={0}
                         max={100}
@@ -265,7 +266,7 @@ export class OverlaySettingsDialogComponent extends React.Component<{ appStore: 
                     />
                 </FormGroup>
                 <FormGroup inline={true} label="Major length" labelInfo="(%)">
-                    <NumericInput
+                    <SafeNumericInput
                         placeholder="Length"
                         min={0}
                         max={100}
@@ -300,7 +301,7 @@ export class OverlaySettingsDialogComponent extends React.Component<{ appStore: 
                     </FormGroup>
                 </Collapse>
                 <FormGroup inline={true} label="Width" labelInfo="(px)" disabled={!grid.visible}>
-                    <NumericInput
+                    <SafeNumericInput
                         placeholder="Width"
                         min={0.001}
                         value={grid.width}
@@ -320,7 +321,7 @@ export class OverlaySettingsDialogComponent extends React.Component<{ appStore: 
                 </FormGroup>
                 <Collapse isOpen={grid.customGap}>
                     <FormGroup inline={true} label="Gap" labelInfo="(X)" disabled={!grid.visible}>
-                        <NumericInput
+                        <SafeNumericInput
                             placeholder="Gap"
                             min={0.001}
                             stepSize={0.01}
@@ -332,7 +333,7 @@ export class OverlaySettingsDialogComponent extends React.Component<{ appStore: 
                         />
                     </FormGroup>
                     <FormGroup inline={true} label="Gap" labelInfo="(Y)" disabled={!grid.visible}>
-                        <NumericInput
+                        <SafeNumericInput
                             placeholder="Gap"
                             min={0.001}
                             stepSize={0.01}
@@ -368,7 +369,7 @@ export class OverlaySettingsDialogComponent extends React.Component<{ appStore: 
                     </FormGroup>
                 </Collapse>
                 <FormGroup inline={true} label="Width" labelInfo="(px)" disabled={!border.visible}>
-                    <NumericInput
+                    <SafeNumericInput
                         placeholder="Width"
                         min={0.001}
                         value={border.width}
@@ -420,7 +421,7 @@ export class OverlaySettingsDialogComponent extends React.Component<{ appStore: 
                     disabled={!interior || !axes.visible}
                     helperText={disabledIfExterior}
                 >
-                    <NumericInput
+                    <SafeNumericInput
                         placeholder="Width"
                         min={0.001}
                         value={axes.width}
@@ -444,7 +445,7 @@ export class OverlaySettingsDialogComponent extends React.Component<{ appStore: 
                 </FormGroup>
                 <FormGroup inline={true} className="font-group" label="Font" disabled={!numbers.visible}>
                     {this.fontSelect(numbers.visible, numbers.font, numbers.setFont)}
-                    <NumericInput
+                    <SafeNumericInput
                         min={7}
                         placeholder="Font size"
                         value={numbers.fontSize}
@@ -506,7 +507,7 @@ export class OverlaySettingsDialogComponent extends React.Component<{ appStore: 
                 </FormGroup>
                 <Collapse isOpen={numbers.customPrecision && numbers.validWcs}>
                     <FormGroup inline={true} label="Precision">
-                        <NumericInput
+                        <SafeNumericInput
                             placeholder="Precision"
                             min={0}
                             value={numbers.precision}
@@ -527,7 +528,7 @@ export class OverlaySettingsDialogComponent extends React.Component<{ appStore: 
                 </FormGroup>
                 <FormGroup inline={true} className="font-group" label="Font" disabled={!labels.visible}>
                     {this.fontSelect(labels.visible, labels.font, labels.setFont)}
-                    <NumericInput
+                    <SafeNumericInput
                         min={7}
                         placeholder="Font size"
                         value={labels.fontSize}
@@ -569,7 +570,7 @@ export class OverlaySettingsDialogComponent extends React.Component<{ appStore: 
             <div className="panel-container">
                 <FormGroup inline={true} label="Frame">
                     <HTMLSelect
-                        options={this.props.appStore.frameNames}
+                        options={appStore.frameNames}
                         value={beam.selectedFileId}
                         onChange={(event: React.FormEvent<HTMLSelectElement>) => beam.setSelectedFrame(parseInt(event.currentTarget.value))}
                     />
@@ -582,11 +583,11 @@ export class OverlaySettingsDialogComponent extends React.Component<{ appStore: 
                 </FormGroup>
                 <FormGroup inline={true} label="Color">
                     <ColorPickerComponent
-                        color={hexStringToRgba(beamSettings.color)}
+                        color={tinycolor(beamSettings.color).toHexString()}
                         presetColors={SWATCH_COLORS}
                         setColor={(color: ColorResult) => beamSettings.setColor(color.hex)}
                         disableAlpha={true}
-                        darkTheme={this.props.appStore.darkTheme}
+                        darkTheme={appStore.darkTheme}
                     />
                 </FormGroup>
                 <FormGroup inline={true} label="Type">
@@ -597,19 +598,19 @@ export class OverlaySettingsDialogComponent extends React.Component<{ appStore: 
                     />
                 </FormGroup>
                 <FormGroup inline={true} label="Width" labelInfo="(px)">
-                    <NumericInput
-                            placeholder="Width"
-                            min={0.5}
-                            max={10}
-                            value={beamSettings.width}
-                            stepSize={0.5}
-                            minorStepSize={0.1}
-                            majorStepSize={1}
-                            onValueChange={(value: number) => beamSettings.setWidth(value)}
+                    <SafeNumericInput
+                        placeholder="Width"
+                        min={0.5}
+                        max={10}
+                        value={beamSettings.width}
+                        stepSize={0.5}
+                        minorStepSize={0.1}
+                        majorStepSize={1}
+                        onValueChange={(value: number) => beamSettings.setWidth(value)}
                     />
                 </FormGroup>
                 <FormGroup inline={true} label="Position (X)" labelInfo="(px)">
-                    <NumericInput
+                    <SafeNumericInput
                         placeholder="Position (X)"
                         min={0}
                         max={overlayStore.renderWidth}
@@ -621,7 +622,7 @@ export class OverlaySettingsDialogComponent extends React.Component<{ appStore: 
                     />
                 </FormGroup>
                 <FormGroup inline={true} label="Position (Y)" labelInfo="(px)">
-                    <NumericInput
+                    <SafeNumericInput
                         placeholder="Position (Y)"
                         min={0}
                         max={overlayStore.renderHeight}
@@ -636,9 +637,11 @@ export class OverlaySettingsDialogComponent extends React.Component<{ appStore: 
         ) : null;
 
         let className = "overlay-settings-dialog";
-        if (this.props.appStore.darkTheme) {
+        if (appStore.darkTheme) {
             className += " bp3-dark";
         }
+
+        const dialogStore = DialogStore.Instance;
 
         const dialogProps: IDialogProps = {
             icon: "settings",
@@ -646,13 +649,13 @@ export class OverlaySettingsDialogComponent extends React.Component<{ appStore: 
             className: className,
             canOutsideClickClose: false,
             lazy: true,
-            isOpen: appStore.dialogStore.overlaySettingsDialogVisible,
-            onClose: appStore.dialogStore.hideOverlaySettings,
+            isOpen: dialogStore.overlaySettingsDialogVisible,
+            onClose: dialogStore.hideOverlaySettings,
             title: "Overlay Settings",
         };
 
         return (
-            <DraggableDialogComponent dialogProps={dialogProps} appStore={appStore} helpType={HelpType.OVERLAY_SETTINGS} minWidth={300} minHeight={300} defaultWidth={630} defaultHeight={425} enableResizing={true}>
+            <DraggableDialogComponent dialogProps={dialogProps} helpType={HelpType.OVERLAY_SETTINGS} minWidth={300} minHeight={300} defaultWidth={630} defaultHeight={425} enableResizing={true}>
                 <div className="bp3-dialog-body">
                     <Tabs
                         id="overlayTabs"
@@ -668,12 +671,12 @@ export class OverlaySettingsDialogComponent extends React.Component<{ appStore: 
                         <Tab id="axes" title="Axes" panel={axesPanel}/>
                         <Tab id="numbers" title="Numbers" panel={numbersPanel}/>
                         <Tab id="labels" title="Labels" panel={labelsPanel}/>
-                        <Tab id="beam" title="Beam" panel={beamPanel} disabled={this.props.appStore.frameNum <= 0}/>
+                        <Tab id="beam" title="Beam" panel={beamPanel} disabled={appStore.frameNum <= 0}/>
                     </Tabs>
                 </div>
                 <div className="bp3-dialog-footer">
                     <div className="bp3-dialog-footer-actions">
-                        <Button intent={Intent.PRIMARY} onClick={appStore.dialogStore.hideOverlaySettings} text="Close"/>
+                        <Button intent={Intent.PRIMARY} onClick={dialogStore.hideOverlaySettings} text="Close"/>
                     </div>
                 </div>
             </DraggableDialogComponent>

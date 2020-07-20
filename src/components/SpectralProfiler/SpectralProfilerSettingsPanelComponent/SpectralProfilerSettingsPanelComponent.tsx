@@ -1,11 +1,12 @@
 import * as React from "react";
 import {computed, autorun} from "mobx";
 import {observer} from "mobx-react";
-import {Colors} from "@blueprintjs/core";
+import {Colors, Tab, Tabs} from "@blueprintjs/core";
 import {LinePlotSettingsPanelComponentProps, LinePlotSettingsPanelComponent, SpectralSettingsComponent} from "components/Shared";
 import {SpectralProfileWidgetStore} from "stores/widgets";
-import {WidgetProps, WidgetConfig, HelpType} from "stores";
+import {WidgetProps, WidgetConfig, HelpType, AppStore, WidgetsStore} from "stores";
 import {parseNumber} from "utilities";
+import "./SpectralProfilerSettingsPanelComponent.css";
 
 const KEYCODE_ENTER = 13;
 
@@ -18,8 +19,8 @@ export class SpectralProfilerSettingsPanelComponent extends React.Component<Widg
             type: "floating-settings",
             minWidth: 280,
             minHeight: 225,
-            defaultWidth: 450,
-            defaultHeight: 375,
+            defaultWidth: 550,
+            defaultHeight: 450,
             title: "spectral-profiler-settings",
             isCloseable: true,
             parentId: "spectal-profiler",
@@ -29,8 +30,9 @@ export class SpectralProfilerSettingsPanelComponent extends React.Component<Widg
     }
 
     @computed get widgetStore(): SpectralProfileWidgetStore {
-        if (this.props.appStore && this.props.appStore.widgetsStore.spectralProfileWidgets) {
-            const widgetStore = this.props.appStore.widgetsStore.spectralProfileWidgets.get(this.props.id);
+        const widgetsStore = WidgetsStore.Instance;
+        if (widgetsStore.spectralProfileWidgets) {
+            const widgetStore = widgetsStore.spectralProfileWidgets.get(this.props.id);
             if (widgetStore) {
                 return widgetStore;
             }
@@ -41,7 +43,7 @@ export class SpectralProfilerSettingsPanelComponent extends React.Component<Widg
 
     constructor(props: WidgetProps) {
         super(props);
-
+        const appStore = AppStore.Instance;
         autorun(() => {
             if (this.widgetStore) {
                 const frame = this.widgetStore.effectiveFrame;
@@ -56,7 +58,7 @@ export class SpectralProfilerSettingsPanelComponent extends React.Component<Widg
                     const regionId = this.widgetStore.effectiveRegionId;
                     const regionString = regionId === 0 ? "Cursor" : `Region #${regionId}`;
                     const selectedString = this.widgetStore.matchesSelectedRegion ? "(Active)" : "";
-                    this.props.appStore.widgetsStore.setWidgetTitle(this.props.floatingSettingsId, `${coordinateString} Settings: ${regionString} ${selectedString}`);
+                    appStore.widgetsStore.setWidgetTitle(this.props.floatingSettingsId, `${coordinateString} Settings: ${regionString} ${selectedString}`);
                 }
             }
         });
@@ -133,7 +135,7 @@ export class SpectralProfilerSettingsPanelComponent extends React.Component<Widg
     render() {
         const widgetStore = this.widgetStore;
         const lineSettingsProps: LinePlotSettingsPanelComponentProps = {
-            darkMode: this.props.appStore.darkTheme,
+            darkMode: AppStore.Instance.darkTheme,
             primaryDarkModeLineColor: Colors.BLUE4,
             primaryLineColor: widgetStore.primaryLineColor,
             lineWidth: widgetStore.lineWidth,
@@ -159,10 +161,12 @@ export class SpectralProfilerSettingsPanelComponent extends React.Component<Widg
         };
 
         return (
-            <React.Fragment>
-                <SpectralSettingsComponent appStore={this.props.appStore} widgetStore={widgetStore} disable={false}/>
-                <LinePlotSettingsPanelComponent {...lineSettingsProps}/>
-            </React.Fragment>
+            <div className="spectral-settings">
+                <Tabs id="spectralSettingTabs">
+                    <Tab id="conversion" title="Conversion" panel={<SpectralSettingsComponent widgetStore={widgetStore} disable={false}/>}/>
+                    <Tab id="styling" title="Styling" panel={<LinePlotSettingsPanelComponent {...lineSettingsProps}/>}/>
+                </Tabs>
+            </div>
         );
     }
 }

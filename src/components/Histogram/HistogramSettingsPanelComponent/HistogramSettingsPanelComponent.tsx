@@ -4,7 +4,7 @@ import {computed, autorun} from "mobx";
 import {Colors} from "@blueprintjs/core";
 import {LinePlotSettingsPanelComponentProps, LinePlotSettingsPanelComponent} from "components/Shared";
 import {HistogramWidgetStore} from "stores/widgets";
-import {WidgetProps, WidgetConfig, HelpType} from "stores";
+import {WidgetProps, WidgetConfig, HelpType, WidgetsStore, AppStore} from "stores";
 import {parseNumber} from "utilities";
 
 const KEYCODE_ENTER = 13;
@@ -29,8 +29,9 @@ export class HistogramSettingsPanelComponent extends React.Component<WidgetProps
     }
 
     @computed get widgetStore(): HistogramWidgetStore {
-        if (this.props.appStore && this.props.appStore.widgetsStore.histogramWidgets) {
-            const widgetStore = this.props.appStore.widgetsStore.histogramWidgets.get(this.props.id);
+        const widgetsStore = WidgetsStore.Instance;
+        if (widgetsStore.histogramWidgets) {
+            const widgetStore = widgetsStore.histogramWidgets.get(this.props.id);
             if (widgetStore) {
                 return widgetStore;
             }
@@ -44,7 +45,7 @@ export class HistogramSettingsPanelComponent extends React.Component<WidgetProps
 
         // Update widget title when region or coordinate changes
         autorun(() => {
-            const appStore = this.props.appStore;
+            const appStore = AppStore.Instance;
             if (this.widgetStore && this.widgetStore.effectiveFrame) {
                 let regionString = "Unknown";
                 const regionId = this.widgetStore.effectiveRegionId;
@@ -140,7 +141,7 @@ export class HistogramSettingsPanelComponent extends React.Component<WidgetProps
     render() {
         const widgetStore = this.widgetStore;
         const lineSettingsProps: LinePlotSettingsPanelComponentProps = {
-            darkMode: this.props.appStore.darkTheme,
+            darkMode: AppStore.Instance.darkTheme,
             primaryDarkModeLineColor: Colors.BLUE4,
             primaryLineColor: widgetStore.primaryLineColor,
             lineWidth: widgetStore.lineWidth,

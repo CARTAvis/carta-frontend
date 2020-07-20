@@ -1,10 +1,14 @@
 import * as React from "react";
-import * as underConstruction from "static/help/under_construction.png";
+import {AppStore} from "stores";
+import {ImageComponent} from "./ImageComponent";
+import * as headOverlayButton from "static/help/head_overlay_button.png";
+import * as headOverlayButton_d from "static/help/head_overlay_button_d.png";
 
 export class OverlaySettingsHelpComponent extends React.Component {
     public render() {
         return (
             <div>
+                <p><ImageComponent light={headOverlayButton} dark={headOverlayButton_d} width="90%"/></p>
                 <p>The overlay settings dialogue allows users to customize coordinate grid related properties in the image viewer.</p>
                 <h3 id="global">Global</h3>
                 <p>This section allows users to</p>
@@ -29,7 +33,7 @@ export class OverlaySettingsHelpComponent extends React.Component {
                 <h3 id="labels">Labels</h3>
                 <p>This section allows users to modify the style of x and y labels.</p>
                 <h3 id="beam">Beam</h3>
-                <p>This section allows users to change the appearace of a beam overlay and adjust its position in the image viewer.</p>
+                <p>This section allows users to change the appearance of a beam overlay and adjust its position in the image viewer.</p>
             </div>
         );
     }

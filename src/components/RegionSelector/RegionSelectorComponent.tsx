@@ -4,14 +4,13 @@ import {FormGroup, HTMLSelect, IOptionProps} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import {AppStore, RegionStore, FrameStore} from "stores";
 import {RegionWidgetStore, RegionsType, RegionId, ACTIVE_FILE_ID} from "stores/widgets";
-
 import "./RegionSelectorComponent.css";
 
 @observer
-export class RegionSelectorComponent extends React.Component<{ widgetStore: RegionWidgetStore, appStore: AppStore, onFrameChanged?: (newFrame: FrameStore) => void }> {
+export class RegionSelectorComponent extends React.Component<{ widgetStore: RegionWidgetStore, onFrameChanged?: (newFrame: FrameStore) => void }> {
 
     private handleFrameChanged = (changeEvent: React.ChangeEvent<HTMLSelectElement>) => {
-        const appStore = this.props.appStore;
+        const appStore = AppStore.Instance;
         const widgetStore = this.props.widgetStore;
         if (appStore.activeFrame) {
             const selectedFileId = parseInt(changeEvent.target.value);
@@ -24,7 +23,7 @@ export class RegionSelectorComponent extends React.Component<{ widgetStore: Regi
     };
 
     private handleRegionChanged = (changeEvent: React.ChangeEvent<HTMLSelectElement>) => {
-        const appStore = this.props.appStore;
+        const appStore = AppStore.Instance;
         const widgetStore = this.props.widgetStore;
         if (appStore.activeFrame) {
             const fileId = widgetStore.effectiveFrame.frameInfo.fileId;
@@ -34,7 +33,7 @@ export class RegionSelectorComponent extends React.Component<{ widgetStore: Regi
     };
 
     public render() {
-        const appStore = this.props.appStore;
+        const appStore = AppStore.Instance;
         const widgetStore = this.props.widgetStore;
 
         let enableFrameselect = false;

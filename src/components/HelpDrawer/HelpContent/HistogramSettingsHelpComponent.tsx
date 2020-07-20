@@ -1,5 +1,4 @@
 import * as React from "react";
-import * as underConstruction from "static/help/under_construction.png";
 
 export class HistogramSettingsHelpComponent extends React.Component {
     public render() {

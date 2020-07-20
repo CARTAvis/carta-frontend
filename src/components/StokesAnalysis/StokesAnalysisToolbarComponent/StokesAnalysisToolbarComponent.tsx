@@ -7,7 +7,7 @@ import {RegionSelectorComponent} from "components";
 import "./StokesAnalysisToolbarComponent.css";
 
 @observer
-export class StokesAnalysisToolbarComponent extends React.Component<{widgetStore: StokesAnalysisWidgetStore, appStore: AppStore}> {
+export class StokesAnalysisToolbarComponent extends React.Component<{widgetStore: StokesAnalysisWidgetStore}> {
 
     private handleFractionalPolChanged = (changeEvent: React.ChangeEvent<HTMLInputElement>) => {
         this.props.widgetStore.setFractionalPolVisible(changeEvent.target.checked);
@@ -21,6 +21,7 @@ export class StokesAnalysisToolbarComponent extends React.Component<{widgetStore
 
     public render() {
         const widgetStore = this.props.widgetStore;
+        const frame = AppStore.Instance.activeFrame;
 
         let enableFractionalPol = false;
         if (widgetStore.effectiveFrame && widgetStore.effectiveFrame.regionSet) {
@@ -29,7 +30,7 @@ export class StokesAnalysisToolbarComponent extends React.Component<{widgetStore
 
         return (
             <div className="stokes-analysis-toolbar">
-                <RegionSelectorComponent widgetStore={this.props.widgetStore} appStore={this.props.appStore} onFrameChanged={this.handleFrameChanged}/>
+                <RegionSelectorComponent widgetStore={this.props.widgetStore} onFrameChanged={this.handleFrameChanged}/>
                 <FormGroup label={"Frac. Pol."} inline={true} disabled={!enableFractionalPol}>
                     <Switch checked={widgetStore.fractionalPolVisible} onChange={this.handleFractionalPolChanged} disabled={!enableFractionalPol}/>
                 </FormGroup>

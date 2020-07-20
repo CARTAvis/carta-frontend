@@ -1,11 +1,23 @@
 import {action, observable} from "mobx";
+import {Position} from "@blueprintjs/core";
 
 export class HelpStore {
+    private static staticInstance: HelpStore;
+
+    static get Instance() {
+        if (!HelpStore.staticInstance) {
+            HelpStore.staticInstance = new HelpStore();
+        }
+        return HelpStore.staticInstance;
+    }
+
     @observable type: HelpType;
     @observable helpVisible: boolean = false;
+    @observable position: Position = Position.RIGHT;
 
-    @action showHelpDrawer = (helpType: HelpType) => {
+    @action showHelpDrawer = (helpType: HelpType, centerX: number) => {
         this.type = helpType;
+        this.position = centerX > document.body.clientWidth * 0.5 ? Position.LEFT : Position.RIGHT;
         this.helpVisible = true;
     };
 
@@ -41,5 +53,7 @@ export enum HelpType {
     SPECTRAL_PROFILER_SETTINGS = "spectral-profiler-settings",
     STATS = "stats",
     STOKES_ANALYSIS = "stoke-analysis",
-    STOKES_ANALYSIS_SETTINGS = "stoke-analysis-settings"
+    STOKES_ANALYSIS_SETTINGS = "stoke-analysis-settings",
+    CATALOG_OVERLAY = "catalog-overlay",
+    CATALOG_SCATTER = "catalog-scatter"
 }

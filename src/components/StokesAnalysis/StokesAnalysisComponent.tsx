@@ -10,10 +10,10 @@ import {CARTA} from "carta-protobuf";
 import {LinePlotComponent, LinePlotComponentProps, ProfilerInfoComponent, ScatterPlotComponent, ScatterPlotComponentProps, VERTICAL_RANGE_PADDING, PlotType} from "components/Shared";
 import {StokesAnalysisToolbarComponent} from "./StokesAnalysisToolbarComponent/StokesAnalysisToolbarComponent";
 import {TickType} from "../Shared/LinePlot/PlotContainer/PlotContainerComponent";
-import {AnimationState, SpectralProfileStore, WidgetConfig, WidgetProps, HelpType} from "stores";
+import {AnimationState, SpectralProfileStore, WidgetConfig, WidgetProps, HelpType, AnimatorStore, WidgetsStore, AppStore} from "stores";
 import {StokesAnalysisWidgetStore, StokesCoordinate} from "stores/widgets";
 import {Point2D} from "models";
-import {clamp, normalising, polarizationAngle, polarizedIntensity, binarySearchByX, closestPointIndexToCursor, toFixed, toExponential, minMaxPointArrayZ, formattedNotation} from "utilities";
+import {clamp, normalising, polarizationAngle, polarizedIntensity, binarySearchByX, closestPointIndexToCursor, toFixed, toExponential, minMaxPointArrayZ, formattedNotation, minMaxArray} from "utilities";
 import "./StokesAnalysisComponent.css";
 
 type Border = { xMin: number, xMax: number, yMin: number, yMax: number };
@@ -50,21 +50,23 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
     @observable height: number;
 
     @computed get widgetStore(): StokesAnalysisWidgetStore {
-        if (this.props.appStore && this.props.appStore.widgetsStore.stokesAnalysisWidgets) {
-            const widgetStore = this.props.appStore.widgetsStore.stokesAnalysisWidgets.get(this.props.id);
+        const widgetsStore = WidgetsStore.Instance;
+        if (widgetsStore.stokesAnalysisWidgets) {
+            const widgetStore = widgetsStore.stokesAnalysisWidgets.get(this.props.id);
             if (widgetStore) {
                 return widgetStore;
             }
         }
         console.log("can't find store for widget");
-        return new StokesAnalysisWidgetStore(this.props.appStore);
+        return new StokesAnalysisWidgetStore();
     }
 
     @computed get profileStore(): SpectralProfileStore {
-        if (this.props.appStore && this.widgetStore.effectiveFrame) {
+        const appStore = AppStore.Instance;
+        if (this.widgetStore.effectiveFrame) {
             let fileId = this.widgetStore.effectiveFrame.frameInfo.fileId;
             const regionId = this.widgetStore.effectiveRegionId;
-            const frameMap = this.props.appStore.spectralProfiles.get(fileId);
+            const frameMap = appStore.spectralProfiles.get(fileId);
             if (frameMap) {
                 return frameMap.get(regionId);
             }
@@ -88,13 +90,14 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
 
     constructor(props: WidgetProps) {
         super(props);
+        const appStore = AppStore.Instance;
         if (!props.docked && props.id === StokesAnalysisComponent.WIDGET_CONFIG.type) {
-            const id = props.appStore.widgetsStore.addStokesWidget();
-            props.appStore.widgetsStore.changeWidgetId(props.id, id);
+            const id = appStore.widgetsStore.addStokesWidget();
+            appStore.widgetsStore.changeWidgetId(props.id, id);
         } else {
-            if (!this.props.appStore.widgetsStore.stokesAnalysisWidgets.has(this.props.id)) {
+            if (!appStore.widgetsStore.stokesAnalysisWidgets.has(this.props.id)) {
                 console.log(`can't find store for widget with id=${this.props.id}`);
-                this.props.appStore.widgetsStore.stokesAnalysisWidgets.set(this.props.id, new StokesAnalysisWidgetStore(this.props.appStore));
+                appStore.widgetsStore.stokesAnalysisWidgets.set(this.props.id, new StokesAnalysisWidgetStore());
             }
         }
 
@@ -114,10 +117,10 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
                     const regionId = this.widgetStore.effectiveRegionId;
                     const regionString = regionId === 0 ? "Cursor" : `Region #${regionId}`;
                     const selectedString = this.widgetStore.matchesSelectedRegion ? "(Active)" : "";
-                    this.props.appStore.widgetsStore.setWidgetTitle(this.props.id, `Stokes Analysis : ${regionString} ${selectedString} ${progressString}`);
+                    appStore.widgetsStore.setWidgetTitle(this.props.id, `Stokes Analysis : ${regionString} ${selectedString} ${progressString}`);
                 }
             } else {
-                this.props.appStore.widgetsStore.setWidgetTitle(this.props.id, `Stokes Analysis: Cursor`);
+                appStore.widgetsStore.setWidgetTitle(this.props.id, `Stokes Analysis: Cursor`);
             }
         });
     }
@@ -152,14 +155,9 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
         return frame.isCoordChannel ? channel : frame.channelValues[channel];
     }
 
-    private getChannelUnit = (): string => {
-        const frame = this.widgetStore.effectiveFrame;
-        return frame && !frame.isCoordChannel ? frame.spectralUnit : "Channel";
-    };
-
     onChannelChanged = (x: number) => {
         const frame = this.widgetStore.effectiveFrame;
-        if (this.props.appStore.animatorStore.animationState === AnimationState.PLAYING) {
+        if (AnimatorStore.Instance.animationState === AnimationState.PLAYING) {
             return;
         }
 
@@ -169,12 +167,14 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
             if (frame.isCoordChannel) {
                 nearestIndex = channelInfo.getChannelIndexSimple(x);
             } else {
-                if (frame.isSpectralPropsEqual) {
+                if ((frame.spectralAxis && !frame.spectralAxis.valid) || frame.isSpectralPropsEqual) {
                     nearestIndex = channelInfo.getChannelIndexWCS(x);
                 } else {
                     // invert x in selected widget wcs to frame's default wcs
-                    const tx =  AST.transformSpectralPoint(frame.spectralFrame, frame.spectralType, frame.spectralUnit, frame.spectralSystem, x, false);
-                    nearestIndex = channelInfo.getChannelIndexWCS(tx);
+                    const nativeX = frame.convertToNativeWCS(x);
+                    if (isFinite(nativeX)) {
+                        nearestIndex = channelInfo.getChannelIndexWCS(nativeX);
+                    }
                 }
             }
             if (nearestIndex !== null && nearestIndex !== undefined) {
@@ -185,7 +185,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
 
     onScatterChannelChanged = (x: number, y: number, data: Point3D[]) => {
         const frame = this.widgetStore.effectiveFrame;
-        if (this.props.appStore.animatorStore.animationState === AnimationState.PLAYING) {
+        if (AnimatorStore.Instance.animationState === AnimationState.PLAYING) {
             return;
         }
         if (data.length > 0 && frame && frame.channelInfo) {
@@ -199,8 +199,10 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
                     nearestIndex = channelInfo.getChannelIndexWCS(zIndex);
                 } else {
                     // invert x in selected widget wcs to frame's default wcs
-                    const tx =  AST.transformSpectralPoint(frame.spectralFrame, frame.spectralType, frame.spectralUnit, frame.spectralSystem, zIndex, false);
-                    nearestIndex = channelInfo.getChannelIndexWCS(tx);
+                    const nativeX = frame.convertToNativeWCS(x);
+                    if (isFinite(nativeX)) {
+                        nearestIndex = channelInfo.getChannelIndexWCS(nativeX);
+                    }
                 }
             }
             if (nearestIndex !== null && nearestIndex !== undefined) {
@@ -350,14 +352,12 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
     }
 
     private calculateXYborder(xValues: Array<number>, yValues: Array<number>, isLinePlots: boolean, type: StokesCoordinate): Border {
-        let xMin = Math.min(...xValues.filter(n => {
-            return !isNaN(n);
-        }));
-        let xMax = Math.max(...xValues.filter(n => {
-            return !isNaN(n);
-        }));
-        let yMin = Number.MAX_VALUE;
-        let yMax = -Number.MAX_VALUE;
+        const xBounds = minMaxArray(xValues);
+        const yBounds = minMaxArray(yValues);
+        let xMin = xBounds.minVal;
+        let xMax = xBounds.maxVal;
+        let yMin = yBounds.minVal;
+        let yMax = yBounds.maxVal;
 
         if (!this.widgetStore.isLinePlotsAutoScaledX && isLinePlots) {
             const localXMin = clamp(this.widgetStore.sharedMinX, xMin, xMax);
@@ -372,13 +372,6 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
             xMin = localXMin;
             xMax = localXMax;
         }
-
-        yMin = Math.min(...yValues.filter(n => {
-            return !isNaN(n);
-        }));
-        yMax = Math.max(...yValues.filter(n => {
-            return !isNaN(n);
-        }));
 
         if (!this.widgetStore.isQUScatterPlotAutoScaledY && !isLinePlots && type === StokesCoordinate.PolarizationQU) {
             const localYMin = clamp(this.widgetStore.quScatterMinY, yMin, yMax);
@@ -431,11 +424,9 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
             const channelValues = frame.channelValues;
             let border = this.calculateXYborder(channelValues, profile, true, type);
             let values: Array<{ x: number, y: number }> = [];
-            const isIncremental = channelValues[0] <= channelValues[channelValues.length - 1];
             for (let i = 0; i < channelValues.length; i++) {
-                let index = isIncremental ? i : channelValues.length - 1 - i;
-                const x = channelValues[index];
-                const y = profile[index];
+                const x = channelValues[i];
+                const y = profile[i];
 
                 if (x < border.xMin || x > border.xMax || y < border.yMin || y > border.yMax) {
                     values.push({x: x, y: NaN});
@@ -459,15 +450,13 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
             const channelValues = frame.channelValues;
             let border = this.calculateXYborder(qProfile, uProfile, false, type);
             let values: Array<{ x: number, y: number, z: number }> = [];
-            const isIncremental = channelValues[0] <= channelValues[channelValues.length - 1] ? true : false;
             // centered origin and equal scaler
             let equalScalerBorder = this.resizeScatterData(border.xMin, border.xMax, border.yMin, border.yMax);
             this.widgetStore.scatterOutRangePointsZIndex = [];
             for (let i = 0; i < channelValues.length; i++) {
-                let index = isIncremental ? i : channelValues.length - 1 - i;
-                const x = qProfile[index];
-                const y = uProfile[index];
-                const z = channelValues[index];
+                const x = qProfile[i];
+                const y = uProfile[i];
+                const z = channelValues[i];
                 values.push({x, y, z});
 
                 // update line plot color array
@@ -702,7 +691,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
     ) => {
         let cursorInfo = null;
         const isMouseEntered = this.widgetStore.isMouseMoveIntoLinePlots || this.widgetStore.isMouseMoveIntoScatterPlots;
-        const xUnit =  this.getChannelUnit();
+        const xUnit =  AppStore.Instance.activeFrame ? AppStore.Instance.activeFrame.spectralUnitStr : "Channel";
         if (isMouseEntered) {
             let profilerData = {q: NaN, u: NaN, pi: NaN, pa: NaN, channel: NaN};
             if (this.widgetStore.isMouseMoveIntoLinePlots) {
@@ -740,25 +729,28 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
             isNaN(this.cursorInfo.quValue.x) || isNaN(this.cursorInfo.quValue.y)) {
             return profilerInfo;
         }
-        const xLabel = this.cursorInfo.xUnit === "Channel" ?
-                    "Channel " + toFixed(this.cursorInfo.channel) :
-                    formattedNotation(this.cursorInfo.channel) + " " + this.cursorInfo.xUnit;
-        const fractionalPol = this.widgetStore.fractionalPolVisible;
-        const qLabel = fractionalPol ? ", Q/I: " : ", Q: ";
-        const uLabel = fractionalPol ? ", U/I: " : ", U: ";
-        const piLabel = fractionalPol ? ", PI/I: " : ", PI: ";
-        const cursorString = "(" + xLabel
-            + qLabel + toExponential(this.cursorInfo.quValue.x, 2)
-            + uLabel + toExponential(this.cursorInfo.quValue.y, 2)
-            + piLabel + toExponential(this.cursorInfo.pi, 2)
-            + ", PA: " + toFixed(this.cursorInfo.pa, 2)
-            + ")";
-        profilerInfo.push(`${this.cursorInfo.isMouseEntered ? "Cursor:" : "Data:"} ${cursorString}`);
+        const frame = AppStore.Instance.activeFrame;
+        if (frame && this.plotData) {
+            const xLabel = this.cursorInfo.xUnit === "Channel" ?
+                        "Channel " + toFixed(this.cursorInfo.channel) :
+                        formattedNotation(this.cursorInfo.channel) + " " + this.cursorInfo.xUnit;
+            const fractionalPol = this.widgetStore.fractionalPolVisible;
+            const qLabel = fractionalPol ? ", Q/I: " : ", Q: ";
+            const uLabel = fractionalPol ? ", U/I: " : ", U: ";
+            const piLabel = fractionalPol ? ", PI/I: " : ", PI: ";
+            const cursorString = "(" + xLabel
+                + qLabel + toExponential(this.cursorInfo.quValue.x, 2)
+                + uLabel + toExponential(this.cursorInfo.quValue.y, 2)
+                + piLabel + toExponential(this.cursorInfo.pi, 2)
+                + ", PA: " + toFixed(this.cursorInfo.pa, 2)
+                + ")";
+            profilerInfo.push(`${this.cursorInfo.isMouseEntered ? "Cursor:" : "Data:"} ${cursorString}`);
+        }
         return profilerInfo;
     };
     
     render() {
-        const appStore = this.props.appStore;
+        const appStore = AppStore.Instance;
         if (!this.widgetStore) {
             return <NonIdealState icon={"error"} title={"Missing profile"} description={"Profile not found"}/>;
         }
@@ -829,6 +821,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
             imageName: imageName,
             plotName: "profile",
             tickTypeY: TickType.Integer,
+            // tickTypeY: TickType.Scientific,
             showXAxisTicks: true,
             showXAxisLabel: true,
             graphCursorMoved: this.onGraphCursorMoved,
@@ -876,11 +869,11 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
 
         let className = "profile-container-" + StokesAnalysisComponent.calculateLayout(this.width, this.height);
         let interactionBorder = {xMin: 0, xMax: 0};
-        if (this.profileStore && frame && frame.hasSpectralAxis) {
+        if (this.profileStore && frame) {
             const cursorX = {
                 profiler: this.widgetStore.linePlotcursorX,
                 image: this.currentChannelValue,
-                unit: this.getChannelUnit()
+                unit: frame.spectralUnitStr
             };
             const currentPlotData = this.plotData;
             let channel = {channelCurrent: 0, channelHovered: 0};
@@ -990,7 +983,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
                 let scatterCursorInfor = {
                     profiler: { x: this.widgetStore.scatterPlotCursorX, y: this.widgetStore.scatterPlotCursorY},
                     image: this.matchXYindex(cursorX.image, currentPlotData.quValues.dataset),
-                    unit: this.getChannelUnit()
+                    unit: frame.spectralUnitStr
                 };
                 quScatterPlotProps.cursorXY = scatterCursorInfor;
                 this.cursorInfo = this.getCursorInfo(
@@ -1019,10 +1012,9 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
                 quScatterPlotProps.yLabel = "Stokes U (" + frame.unit + ")";
             }
 
-            if (!frame.isCoordChannel) {
-                const spectralCoordinate = frame.isSpectralCoordinateConvertible ? frame.spectralCoordinate : `${frame.spectralInfo.channelType.code} (${frame.spectralInfo.channelType.unit})`;
+            if (frame.spectralAxis && !frame.isCoordChannel) {
                 const spectralSystem = frame.isSpectralSystemConvertible ? frame.spectralSystem : `${frame.spectralInfo.specsys}`;
-                paLinePlotProps.xLabel = piLinePlotProps.xLabel = quLinePlotProps.xLabel = `${spectralSystem && spectralSystem !== "" ? spectralSystem + ", " : ""}${spectralCoordinate}`;
+                paLinePlotProps.xLabel = piLinePlotProps.xLabel = quLinePlotProps.xLabel = `${spectralSystem && spectralSystem !== "" ? spectralSystem + ", " : ""}${frame.spectralCoordinate}`;
             }
 
             paLinePlotProps.markers = [];
@@ -1074,7 +1066,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
                 let channelRequired = {
                     value: this.requiredChannelValue,
                     id: "marker-channel-required",
-                    draggable: appStore.animatorStore.animationState !== AnimationState.PLAYING,
+                    draggable: AnimatorStore.Instance.animationState !== AnimationState.PLAYING,
                     dragMove: this.onChannelChanged,
                     horizontal: false,
                 };
@@ -1106,7 +1098,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
             <div className={"stokes-widget"}>
                 <div className={className}>
                     <div className="profile-plot-toolbar">
-                        <StokesAnalysisToolbarComponent widgetStore={this.widgetStore} appStore={appStore}/>
+                        <StokesAnalysisToolbarComponent widgetStore={this.widgetStore}/>
                     </div>
                     <div className="profile-plot-qup">
                         <div className="profile-plot-qu">

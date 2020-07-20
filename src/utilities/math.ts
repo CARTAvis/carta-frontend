@@ -1,5 +1,5 @@
 import {CARTA} from "carta-protobuf";
-import {FrameScaling} from "../stores";
+import {FrameScaling} from "stores";
 
 export function smoothStepOffset(val: number, edge0: number, edge1: number, level0: number, level1: number) {
     const stepVal = smoothStep(val, edge0, edge1);
@@ -103,4 +103,29 @@ export function ceilToPower(val: number, power: number) {
 
 export function floorToPower(val: number, power: number) {
     return Math.pow(power, Math.floor(Math.log(val) / Math.log(power)));
+}
+
+export function minMaxArray(data: Array<number>): {minVal: number, maxVal: number} {
+    if (data && data.length) {
+        let maxVal = -Number.MAX_VALUE;
+        let minVal = Number.MAX_VALUE;
+
+        for (let i = data.length - 1; i >= 0; i--) {
+            const val = data[i];
+            if (isNaN(val)) {
+                continue;
+            }
+            if (val > maxVal) {
+                maxVal = val;
+            }
+            if (val < minVal) {
+                minVal = val;
+            }
+        }
+
+        if (maxVal !== -Number.MAX_VALUE && minVal !== Number.MAX_VALUE) {
+            return {maxVal, minVal};
+        }
+    }
+    return {minVal: NaN, maxVal: NaN};
 }

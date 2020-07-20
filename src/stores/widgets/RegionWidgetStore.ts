@@ -20,8 +20,8 @@ export class RegionWidgetStore {
     @observable regionIdMap: Map<number, number>;
     @observable type: RegionsType;
 
-    constructor(appStore: AppStore, type: RegionsType) {
-        this.appStore = appStore;
+    constructor(type: RegionsType) {
+        this.appStore = AppStore.Instance;
         this.fileId = ACTIVE_FILE_ID;
         this.type = type;
         this.regionIdMap = new Map<number, number>();

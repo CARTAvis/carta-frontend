@@ -1,5 +1,4 @@
 import * as React from "react";
-import * as underConstruction from "static/help/under_construction.png";
 
 export class RenderConfigSettingsHelpComponent extends React.Component {
     public render() {
@@ -15,7 +14,6 @@ export class RenderConfigSettingsHelpComponent extends React.Component {
                     <li>display mean and RMS</li>
                     <li>display clip labels</li>
                 </ul>
-
             </div>
         );
     }

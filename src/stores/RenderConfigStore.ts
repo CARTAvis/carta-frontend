@@ -56,7 +56,7 @@ export class RenderConfigStore {
     static readonly GAMMA_MAX = 2;
 
     @observable scaling: FrameScaling;
-    @observable colorMap: number;
+    @observable colorMapIndex: number;
     @observable contrast: number;
     @observable bias: number;
     @observable gamma: number;
@@ -106,9 +106,9 @@ export class RenderConfigStore {
         return RenderConfigStore.PERCENTILE_RANKS.includes(percentile);
     }
 
-    @computed get colorMapName() {
-        if (this.colorMap >= 0 && this.colorMap <= RenderConfigStore.COLOR_MAPS_ALL.length - 1) {
-            return RenderConfigStore.COLOR_MAPS_ALL[this.colorMap];
+    @computed get colorMap() {
+        if (this.colorMapIndex >= 0 && this.colorMapIndex <= RenderConfigStore.COLOR_MAPS_ALL.length - 1) {
+            return RenderConfigStore.COLOR_MAPS_ALL[this.colorMapIndex];
         } else {
             return "Unknown";
         }
@@ -228,7 +228,7 @@ export class RenderConfigStore {
     };
 
     @action setColorMapIndex = (index: number) => {
-        this.colorMap = clamp(index, 0, RenderConfigStore.COLOR_MAPS_ALL.length - 1);
+        this.colorMapIndex = clamp(index, 0, RenderConfigStore.COLOR_MAPS_ALL.length - 1);
     };
 
     @action setColorMap = (colormap: string) => {

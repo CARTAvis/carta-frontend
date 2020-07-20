@@ -1,10 +1,10 @@
 import * as React from "react";
 import {observable} from "mobx";
 import {observer} from "mobx-react";
-import {Alert, Button, FormGroup, MenuItem, NumericInput, Switch} from "@blueprintjs/core";
+import {Alert, Button, FormGroup, MenuItem, Switch} from "@blueprintjs/core";
 import {Select} from "@blueprintjs/select";
 import {FrameScaling, RenderConfigStore} from "stores/RenderConfigStore";
-import {ColormapComponent, ScalingSelectComponent, SCALING_POPOVER_PROPS} from "components/Shared";
+import {ColormapComponent, ScalingSelectComponent, SCALING_POPOVER_PROPS, SafeNumericInput} from "components/Shared";
 
 const HistogramSelect = Select.ofType<boolean>();
 
@@ -25,18 +25,6 @@ export class ColormapConfigComponent extends React.Component<ColormapConfigProps
 
     renderHistogramSelectItem = (isCube: boolean, {handleClick, modifiers, query}) => {
         return <MenuItem text={isCube ? "Per-Cube" : "Per-Channel"} onClick={handleClick} key={isCube ? "cube" : "channel"}/>;
-    };
-
-    handleGammaChange = (value: number) => {
-        if (isFinite(value)) {
-            this.props.renderConfig.setGamma(value);
-        }
-    };
-
-    handleAlphaChange = (value: number) => {
-        if (isFinite(value)) {
-            this.props.renderConfig.setAlpha(value);
-        }
     };
 
     handleInvertedChanged: React.FormEventHandler<HTMLInputElement> = (evt) => {
@@ -87,7 +75,7 @@ export class ColormapConfigComponent extends React.Component<ColormapConfigProps
                 <FormGroup label={"Color map"} inline={true}>
                     <ColormapComponent
                         inverted={renderConfig.inverted}
-                        selectedItem={renderConfig.colorMapName}
+                        selectedItem={renderConfig.colorMap}
                         onItemSelect={renderConfig.setColorMap}
                     />
                 </FormGroup>
@@ -99,23 +87,23 @@ export class ColormapConfigComponent extends React.Component<ColormapConfigProps
                 </FormGroup>
                 {(renderConfig.scaling === FrameScaling.LOG || renderConfig.scaling === FrameScaling.POWER) &&
                 <FormGroup label={"Alpha"} inline={true}>
-                    <NumericInput
+                    <SafeNumericInput
                         buttonPosition={"none"}
                         value={renderConfig.alpha}
-                        onValueChange={this.handleAlphaChange}
+                        onValueChange={renderConfig.setAlpha}
                     />
                 </FormGroup>
                 }
                 {renderConfig.scaling === FrameScaling.GAMMA &&
                 <FormGroup label={"Gamma"} inline={true}>
-                    <NumericInput
+                    <SafeNumericInput
                         min={RenderConfigStore.GAMMA_MIN}
                         max={RenderConfigStore.GAMMA_MAX}
                         stepSize={0.1}
                         minorStepSize={0.01}
                         majorStepSize={0.5}
                         value={renderConfig.gamma}
-                        onValueChange={this.handleGammaChange}
+                        onValueChange={renderConfig.setGamma}
                     />
                 </FormGroup>
                 }

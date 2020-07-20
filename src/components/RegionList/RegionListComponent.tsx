@@ -1,10 +1,10 @@
 import * as React from "react";
 import { computed, observable } from "mobx";
 import { observer } from "mobx-react";
-import { HTMLTable, Icon, NonIdealState } from "@blueprintjs/core";
+import { HTMLTable, Icon, NonIdealState, Position, Tooltip } from "@blueprintjs/core";
 import ReactResizeDetector from "react-resize-detector";
 import { CARTA } from "carta-protobuf";
-import { RegionStore, WidgetConfig, WidgetProps, HelpType } from "stores";
+import {RegionStore, WidgetConfig, WidgetProps, HelpType, DialogStore, AppStore} from "stores";
 import { Point2D} from "models";
 import { toFixed } from "utilities";
 import "./RegionListComponent.css";
@@ -12,8 +12,9 @@ import "./RegionListComponent.css";
 @observer
 export class RegionListComponent extends React.Component<WidgetProps> {
     @computed get validRegions(): RegionStore[] {
-        if (this.props.appStore.activeFrame) {
-            return this.props.appStore.activeFrame.regionSet.regions.filter(r => !r.isTemporary);
+        const frame = AppStore.Instance.activeFrame;
+        if (frame) {
+            return frame.regionSet.regions.filter(r => !r.isTemporary);
         }
         return [];
     }
@@ -59,11 +60,12 @@ export class RegionListComponent extends React.Component<WidgetProps> {
     };
 
     private handleRegionListDoubleClick = () => {
-        this.props.appStore.dialogStore.showRegionDialog();
+        DialogStore.Instance.showRegionDialog();
     };
 
     render() {
-        const frame = this.props.appStore.activeFrame;
+        const appStore = AppStore.Instance;
+        const frame = appStore.activeFrame;
 
         if (!frame) {
             return (
@@ -112,7 +114,7 @@ export class RegionListComponent extends React.Component<WidgetProps> {
 
         const rows = this.validRegions.map(region => {
             let point: Point2D = region.center;
-            
+
             let pixelCenterEntry;
             if (isFinite(point.x) && isFinite(point.y)) {
                 pixelCenterEntry = <td style={{width: RegionListComponent.CENTER_COLUMN_DEFAULT_WIDTH}} onDoubleClick={this.handleRegionListDoubleClick} >{`(${toFixed(point.x, 1)}, ${toFixed(point.y, 1)})`}</td>;
@@ -124,10 +126,18 @@ export class RegionListComponent extends React.Component<WidgetProps> {
             if (showSizeColumn) {
                 if (region.regionType === CARTA.RegionType.RECTANGLE || region.regionType === CARTA.RegionType.POLYGON) {
                     const sizePoint = region.boundingBox;
-                    pixelSizeEntry = <td style={{width: RegionListComponent.SIZE_COLUMN_DEFAULT_WIDTH}} onDoubleClick={this.handleRegionListDoubleClick} >{`(${toFixed(sizePoint.x, 1)} \u00D7 ${toFixed(sizePoint.y, 1)})`}</td>;
+                    pixelSizeEntry = (
+                        <td style={{width: RegionListComponent.SIZE_COLUMN_DEFAULT_WIDTH}} onDoubleClick={this.handleRegionListDoubleClick} >
+                            <Tooltip content="Width and height" position={Position.BOTTOM}>{`(${toFixed(sizePoint.x, 1)}, ${toFixed(sizePoint.y, 1)})`}</Tooltip>
+                        </td>
+                    );
                 } else if (region.regionType === CARTA.RegionType.ELLIPSE) {
                     const sizePoint = region.controlPoints[1];
-                    pixelSizeEntry = <td style={{width: RegionListComponent.SIZE_COLUMN_DEFAULT_WIDTH}} onDoubleClick={this.handleRegionListDoubleClick} >{`maj: ${toFixed(sizePoint.x, 1)}; min: ${toFixed(sizePoint.y, 1)}`}</td>;
+                    pixelSizeEntry = (
+                        <td style={{width: RegionListComponent.SIZE_COLUMN_DEFAULT_WIDTH}} onDoubleClick={this.handleRegionListDoubleClick} >
+                            <Tooltip content="Semi-major and semi-minor axes" position={Position.BOTTOM}>{`(${toFixed(sizePoint.x, 1)}, ${toFixed(sizePoint.y, 1)})`}</Tooltip>
+                        </td>
+                    );
                 } else {
                     pixelSizeEntry = <td style={{width: RegionListComponent.SIZE_COLUMN_DEFAULT_WIDTH}} onDoubleClick={this.handleRegionListDoubleClick} />;
                 }
@@ -164,7 +174,7 @@ export class RegionListComponent extends React.Component<WidgetProps> {
         return (
             <div className="region-list-widget">
                 <HTMLTable style={{height: tableHeight}}>
-                    <thead className={this.props.appStore.darkTheme ? "dark-theme" : ""}>
+                    <thead className={appStore.darkTheme ? "dark-theme" : ""}>
                     <tr>
                         <th style={{width: RegionListComponent.ACTION_COLUMN_DEFAULT_WIDTH * 2}}><Icon icon={"blank"}/><Icon icon={"blank"}/></th>
                         <th style={{width: nameWidth}}>Name</th>
@@ -174,7 +184,7 @@ export class RegionListComponent extends React.Component<WidgetProps> {
                         {showRotationColumn && <th style={{width: RegionListComponent.ROTATION_COLUMN_DEFAULT_WIDTH}}>P.A. (deg)</th>}
                     </tr>
                     </thead>
-                    <tbody className={this.props.appStore.darkTheme ? "dark-theme" : ""}>
+                    <tbody className={appStore.darkTheme ? "dark-theme" : ""}>
                     {rows}
                     </tbody>
                 </HTMLTable>

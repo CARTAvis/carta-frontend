@@ -9,7 +9,7 @@ import {CARTA} from "carta-protobuf";
 import {LinePlotComponent, LinePlotComponentProps, PlotType, ProfilerInfoComponent, VERTICAL_RANGE_PADDING} from "components/Shared";
 import {TickType} from "../Shared/LinePlot/PlotContainer/PlotContainerComponent";
 import {SpectralProfilerToolbarComponent} from "./SpectralProfilerToolbarComponent/SpectralProfilerToolbarComponent";
-import {AnimationState, SpectralProfileStore, WidgetConfig, WidgetProps, HelpType} from "stores";
+import {AnimationState, SpectralProfileStore, WidgetConfig, WidgetProps, HelpType, AnimatorStore, WidgetsStore, AppStore} from "stores";
 import {SpectralProfileWidgetStore} from "stores/widgets";
 import {Point2D, ProcessedSpectralProfile} from "models";
 import {binarySearchByX, clamp, formattedNotation, toExponential, toFixed} from "utilities";
@@ -37,21 +37,22 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
     @observable height: number;
 
     @computed get widgetStore(): SpectralProfileWidgetStore {
-        if (this.props.appStore && this.props.appStore.widgetsStore.spectralProfileWidgets) {
-            const widgetStore = this.props.appStore.widgetsStore.spectralProfileWidgets.get(this.props.id);
+        const widgetsStore = WidgetsStore.Instance;
+        if (widgetsStore.spectralProfileWidgets) {
+            const widgetStore = widgetsStore.spectralProfileWidgets.get(this.props.id);
             if (widgetStore) {
                 return widgetStore;
             }
         }
         console.log("can't find store for widget");
-        return new SpectralProfileWidgetStore(this.props.appStore);
+        return new SpectralProfileWidgetStore();
     }
 
     @computed get profileStore(): SpectralProfileStore {
-        if (this.props.appStore && this.widgetStore.effectiveFrame) {
+        if (this.widgetStore.effectiveFrame) {
             let fileId = this.widgetStore.effectiveFrame.frameInfo.fileId;
             const regionId = this.widgetStore.effectiveRegionId;
-            const frameMap = this.props.appStore.spectralProfiles.get(fileId);
+            const frameMap = AppStore.Instance.spectralProfiles.get(fileId);
             if (frameMap) {
                 return frameMap.get(regionId);
             }
@@ -97,13 +98,10 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
             let ySum2 = 0;
             let yCount = 0;
 
-            // values are needed to be sorted in incremental order for binary search
             let values: Array<{ x: number, y: number }> = [];
-            const isIncremental = channelValues[0] <= channelValues[channelValues.length - 1];
             for (let i = 0; i < channelValues.length; i++) {
-                let index = isIncremental ? i : channelValues.length - 1 - i;
-                const x = channelValues[index];
-                const y = coordinateData.values[index];
+                const x = channelValues[i];
+                const y = coordinateData.values[i];
 
                 // Skip values outside of range. If array already contains elements, we've reached the end of the range, and can break
                 if (x < xMin || x > xMax) {
@@ -164,15 +162,16 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
 
     constructor(props: WidgetProps) {
         super(props);
+        const appStore = AppStore.Instance;
         // Check if this widget hasn't been assigned an ID yet
         if (!props.docked && props.id === SpectralProfilerComponent.WIDGET_CONFIG.type) {
             // Assign the next unique ID
-            const id = props.appStore.widgetsStore.addSpectralProfileWidget();
-            props.appStore.widgetsStore.changeWidgetId(props.id, id);
+            const id = appStore.widgetsStore.addSpectralProfileWidget();
+            appStore.widgetsStore.changeWidgetId(props.id, id);
         } else {
-            if (!this.props.appStore.widgetsStore.spectralProfileWidgets.has(this.props.id)) {
+            if (!appStore.widgetsStore.spectralProfileWidgets.has(this.props.id)) {
                 console.log(`can't find store for widget with id=${this.props.id}`);
-                this.props.appStore.widgetsStore.addSpectralProfileWidget(this.props.id);
+                appStore.widgetsStore.addSpectralProfileWidget(this.props.id);
             }
         }
         // Update widget title when region or coordinate changes
@@ -195,13 +194,13 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
                     const regionId = this.widgetStore.effectiveRegionId;
                     const regionString = regionId === 0 ? "Cursor" : `Region #${regionId}`;
                     const selectedString = this.widgetStore.matchesSelectedRegion ? "(Active)" : "";
-                    this.props.appStore.widgetsStore.setWidgetTitle(this.props.id, `${coordinateString}: ${regionString} ${selectedString} ${progressString}`);
+                    appStore.widgetsStore.setWidgetTitle(this.props.id, `${coordinateString}: ${regionString} ${selectedString} ${progressString}`);
                 }
                 if (currentData) {
                     this.widgetStore.initXYBoundaries(currentData.xMin, currentData.xMax, currentData.yMin, currentData.yMax);
                 }
             } else {
-                this.props.appStore.widgetsStore.setWidgetTitle(this.props.id, `Z Profile: Cursor`);
+                appStore.widgetsStore.setWidgetTitle(this.props.id, `Z Profile: Cursor`);
             }
         });
     }
@@ -213,7 +212,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
 
     onChannelChanged = (x: number) => {
         const frame = this.widgetStore.effectiveFrame;
-        if (this.props.appStore.animatorStore.animationState === AnimationState.PLAYING) {
+        if (AnimatorStore.Instance.animationState === AnimationState.PLAYING) {
             return;
         }
 
@@ -223,12 +222,14 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
             if (frame.isCoordChannel) {
                 nearestIndex = channelInfo.getChannelIndexSimple(x);
             } else {
-                if (frame.isSpectralPropsEqual) {
+                if ((frame.spectralAxis && !frame.spectralAxis.valid) || frame.isSpectralPropsEqual) {
                     nearestIndex = channelInfo.getChannelIndexWCS(x);
                 } else {
                     // invert x in selected widget wcs to frame's default wcs
-                    const tx =  AST.transformSpectralPoint(frame.spectralFrame, frame.spectralType, frame.spectralUnit, frame.spectralSystem, x, false);
-                    nearestIndex = channelInfo.getChannelIndexWCS(tx);
+                    const nativeX = frame.convertToNativeWCS(x);
+                    if (isFinite(nativeX)) {
+                        nearestIndex = channelInfo.getChannelIndexWCS(nativeX);
+                    }
                 }
             }
             if (nearestIndex !== null && nearestIndex !== undefined) {
@@ -261,11 +262,6 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
         return frame.isCoordChannel ? channel : frame.channelValues[channel];
     }
 
-    private getChannelUnit = (): string => {
-        const frame = this.widgetStore.effectiveFrame;
-        return frame && !frame.isCoordChannel ? frame.spectralUnit : "Channel";
-    };
-
     onGraphCursorMoved = _.throttle((x) => {
         this.widgetStore.setCursor(x);
     }, 33);
@@ -277,7 +273,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
             const cursorX = {
                 profiler: this.widgetStore.cursorX,
                 image: this.currentChannelValue,
-                unit: this.getChannelUnit()
+                unit: frame.spectralUnitStr
             };
             const data = this.plotData.values;
             const nearest = binarySearchByX(data, this.widgetStore.isMouseMoveIntoLinePlots ? cursorX.profiler : cursorX.image);
@@ -305,7 +301,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
     };
 
     render() {
-        const appStore = this.props.appStore;
+        const appStore = AppStore.Instance;
         if (!this.widgetStore) {
             return <NonIdealState icon={"error"} title={"Missing profile"} description={"Profile not found"}/>;
         }
@@ -336,11 +332,10 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
             zeroLineWidth: 2
         };
 
-        if (this.profileStore && frame && frame.hasSpectralAxis) {
-            if (!frame.isCoordChannel) {
-                const spectralCoordinate = frame.isSpectralCoordinateConvertible ? frame.spectralCoordinate : `${frame.spectralInfo.channelType.code} (${frame.spectralInfo.channelType.unit})`;
+        if (this.profileStore && frame) {
+            if (frame.spectralAxis && !frame.isCoordChannel) {
                 const spectralSystem = frame.isSpectralSystemConvertible ? frame.spectralSystem : `${frame.spectralInfo.specsys}`;
-                linePlotProps.xLabel = `${spectralSystem && spectralSystem !== "" ? spectralSystem + ", " : ""}${spectralCoordinate}`;
+                linePlotProps.xLabel = `${spectralSystem && spectralSystem !== "" ? spectralSystem + ", " : ""}${frame.spectralCoordinate}`;
             }
             if (frame.unit) {
                 linePlotProps.yLabel = `Value (${frame.unit})`;
@@ -403,7 +398,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
                 linePlotProps.markers.push({
                     value: this.requiredChannelValue,
                     id: "marker-channel-required",
-                    draggable: appStore.animatorStore.animationState !== AnimationState.PLAYING,
+                    draggable: AnimatorStore.Instance.animationState !== AnimationState.PLAYING,
                     dragMove: this.onChannelChanged,
                     horizontal: false,
                 });
@@ -445,7 +440,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
         return (
             <div className={className}>
                 <div className="profile-container">
-                    <SpectralProfilerToolbarComponent widgetStore={this.widgetStore} appStore={appStore}/>
+                    <SpectralProfilerToolbarComponent widgetStore={this.widgetStore}/>
                     <div className="profile-plot">
                         <LinePlotComponent {...linePlotProps}/>
                         <ProfilerInfoComponent info={this.genProfilerInfo()}/>

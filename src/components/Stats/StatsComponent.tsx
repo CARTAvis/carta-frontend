@@ -4,7 +4,7 @@ import {autorun, computed, observable} from "mobx";
 import {HTMLTable, NonIdealState} from "@blueprintjs/core";
 import ReactResizeDetector from "react-resize-detector";
 import {CARTA} from "carta-protobuf";
-import {WidgetConfig, WidgetProps, HelpType} from "stores";
+import {WidgetConfig, WidgetProps, HelpType, WidgetsStore, AppStore} from "stores";
 import {StatsWidgetStore} from "stores/widgets";
 import {toExponential} from "utilities";
 import {RegionSelectorComponent} from "components";
@@ -31,18 +31,19 @@ export class StatsComponent extends React.Component<WidgetProps> {
     @observable height: number = 0;
 
     @computed get widgetStore(): StatsWidgetStore {
-        if (this.props.appStore && this.props.appStore.widgetsStore.statsWidgets) {
-            const widgetStore = this.props.appStore.widgetsStore.statsWidgets.get(this.props.id);
+        const widgetsStore = WidgetsStore.Instance;
+        if (widgetsStore.statsWidgets) {
+            const widgetStore = widgetsStore.statsWidgets.get(this.props.id);
             if (widgetStore) {
                 return widgetStore;
             }
         }
         console.log("can't find store for widget");
-        return new StatsWidgetStore(this.props.appStore);
+        return new StatsWidgetStore();
     }
 
     @computed get statsData(): CARTA.RegionStatsData {
-        const appStore = this.props.appStore;
+        const appStore = AppStore.Instance;
         if (this.widgetStore.effectiveFrame) {
             let fileId = this.widgetStore.effectiveFrame.frameInfo.fileId;
             let regionId = this.widgetStore.effectiveRegionId;
@@ -72,20 +73,20 @@ export class StatsComponent extends React.Component<WidgetProps> {
 
     constructor(props: WidgetProps) {
         super(props);
+        const appStore = AppStore.Instance;
         // Check if this widget hasn't been assigned an ID yet
         if (!props.docked && props.id === StatsComponent.WIDGET_CONFIG.type) {
             // Assign the next unique ID
-            const id = props.appStore.widgetsStore.addStatsWidget();
-            props.appStore.widgetsStore.changeWidgetId(props.id, id);
+            const id = appStore.widgetsStore.addStatsWidget();
+            appStore.widgetsStore.changeWidgetId(props.id, id);
         } else {
-            if (!this.props.appStore.widgetsStore.statsWidgets.has(this.props.id)) {
+            if (!appStore.widgetsStore.statsWidgets.has(this.props.id)) {
                 console.log(`can't find store for widget with id=${this.props.id}`);
-                this.props.appStore.widgetsStore.statsWidgets.set(this.props.id, new StatsWidgetStore(this.props.appStore));
+                appStore.widgetsStore.statsWidgets.set(this.props.id, new StatsWidgetStore());
             }
         }
         // Update widget title when region or coordinate changes
         autorun(() => {
-            const appStore = this.props.appStore;
             if (this.widgetStore && this.widgetStore.effectiveFrame) {
                 let regionString = "Unknown";
 
@@ -112,7 +113,7 @@ export class StatsComponent extends React.Component<WidgetProps> {
     };
 
     public render() {
-        const appStore = this.props.appStore;
+        const appStore = AppStore.Instance;
 
         let formContent;
         if (this.statsData) {
@@ -155,13 +156,13 @@ export class StatsComponent extends React.Component<WidgetProps> {
 
             formContent = (
                 <HTMLTable>
-                    <thead className={this.props.appStore.darkTheme ? "dark-theme" : ""}>
+                    <thead className={appStore.darkTheme ? "dark-theme" : ""}>
                     <tr>
                         <th style={{width: StatsComponent.NAME_COLUMN_WIDTH}}>Statistic</th>
                         <th style={{width: valueWidth}}>Value</th>
                     </tr>
                     </thead>
-                    <tbody className={this.props.appStore.darkTheme ? "dark-theme" : ""}>
+                    <tbody className={appStore.darkTheme ? "dark-theme" : ""}>
                     {rows}
                     </tbody>
                 </HTMLTable>
@@ -182,7 +183,7 @@ export class StatsComponent extends React.Component<WidgetProps> {
         return (
             <div className={className}>
                 <div className="stats-toolbar">
-                    <RegionSelectorComponent widgetStore={this.widgetStore} appStore={this.props.appStore}/>
+                    <RegionSelectorComponent widgetStore={this.widgetStore}/>
                 </div>
                 <div className="stats-display">
                     {formContent}

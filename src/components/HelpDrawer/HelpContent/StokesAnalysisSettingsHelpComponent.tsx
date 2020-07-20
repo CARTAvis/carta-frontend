@@ -1,5 +1,4 @@
 import * as React from "react";
-import * as underConstruction from "static/help/under_construction.png";
 
 export class StokesAnalysisSettingsHelpComponent extends React.Component {
     public render() {

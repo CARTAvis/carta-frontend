@@ -1,18 +1,17 @@
 import * as React from "react";
-import * as AST from "ast_wrapper";
 import {observer} from "mobx-react";
 import {computed} from "mobx";
 import {H5, InputGroup, NumericInput, Classes} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
-import {RegionStore} from "stores";
+import {FrameStore, RegionStore} from "stores";
 import {Point2D} from "models";
-import {closeTo} from "utilities";
+import {closeTo, formattedArcsec, getFormattedWCSString} from "utilities";
 import "./RectangularRegionForm.css";
 
 const KEYCODE_ENTER = 13;
 
 @observer
-export class RectangularRegionForm extends React.Component<{ region: RegionStore, wcsInfo: number }> {
+export class RectangularRegionForm extends React.Component<{ region: RegionStore, frame: FrameStore, wcsInfo: number }> {
     @computed get topRightPoint(): Point2D {
         const region = this.props.region;
         if (!region || region.controlPoints.length !== 2) {
@@ -217,27 +216,10 @@ export class RectangularRegionForm extends React.Component<{ region: RegionStore
         ev.currentTarget.value = existingValue;
     };
 
-    private getFormattedString(wcsInfo: number, pixelCoords: Point2D) {
-        if (wcsInfo) {
-            const pointWCS = AST.transformPoint(this.props.wcsInfo, pixelCoords.x, pixelCoords.y);
-            const normVals = AST.normalizeCoordinates(this.props.wcsInfo, pointWCS.x, pointWCS.y);
-            const wcsCoords = AST.getFormattedCoordinates(this.props.wcsInfo, normVals.x, normVals.y);
-            if (wcsCoords) {
-                return `WCS: (${wcsCoords.x}, ${wcsCoords.y})`;
-            }
-        }
-        return null;
-    }
-
-    private getSizeString(wcsInfo: number, centerPixel: Point2D, cornerPixel: Point2D) {
-        if (wcsInfo) {
-            const centerWCS = AST.transformPoint(this.props.wcsInfo, centerPixel.x, centerPixel.y);
-            const horizontalEdgeWCS = AST.transformPoint(this.props.wcsInfo, cornerPixel.x, centerPixel.y);
-            const verticalEdgeWCS = AST.transformPoint(this.props.wcsInfo, centerPixel.x, cornerPixel.y);
-            const hDist = Math.abs(2 * AST.axDistance(this.props.wcsInfo, 1, centerWCS.x, horizontalEdgeWCS.x));
-            const vDist = Math.abs(2 * AST.axDistance(this.props.wcsInfo, 2, centerWCS.y, verticalEdgeWCS.y));
-            const wcsDistStrings = AST.getFormattedCoordinates(this.props.wcsInfo, hDist, vDist, "Format(1)=m.5, Format(2)=m.5", true);
-            return `${wcsDistStrings.x}' \u00D7 ${wcsDistStrings.y}'`;
+    private getSizeString(size: Point2D) {
+        const wcsSize = this.props.frame.getWcsSizeInArcsec(size);
+        if (wcsSize) {
+            return `${formattedArcsec(wcsSize.x)} \u00D7 ${formattedArcsec(wcsSize.y)}`;
         }
         return null;
     }
@@ -252,10 +234,10 @@ export class RectangularRegionForm extends React.Component<{ region: RegionStore
         const sizeDims = region.controlPoints[1];
         const bottomLeftPoint = this.bottomLeftPoint;
         const topRightPoint = this.topRightPoint;
-        const wcsStringCenter = this.getFormattedString(this.props.wcsInfo, centerPoint);
-        const wcsStringLeft = this.getFormattedString(this.props.wcsInfo, bottomLeftPoint);
-        const wcsStringRight = this.getFormattedString(this.props.wcsInfo, topRightPoint);
-        const wcsStringSize = this.getSizeString(this.props.wcsInfo, centerPoint, topRightPoint);
+        const wcsStringCenter = getFormattedWCSString(this.props.wcsInfo, centerPoint);
+        const wcsStringLeft = getFormattedWCSString(this.props.wcsInfo, bottomLeftPoint);
+        const wcsStringRight = getFormattedWCSString(this.props.wcsInfo, topRightPoint);
+        const wcsStringSize = this.getSizeString(sizeDims);
 
         const commonProps = {
             selectAllOnFocus: true,

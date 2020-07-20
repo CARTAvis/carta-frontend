@@ -6,7 +6,7 @@ import {AnchorButton, Menu, MenuDivider, MenuItem, NonIdealState, Tooltip} from 
 import {Cell, Column, ColumnHeaderCell, RowHeaderCell, SelectionModes, Table} from "@blueprintjs/table";
 import {IMenuContext} from "@blueprintjs/table/src/interactions/menus/menuContext";
 import ReactResizeDetector from "react-resize-detector";
-import {WidgetConfig, WidgetProps, HelpType} from "stores";
+import {WidgetConfig, WidgetProps, HelpType, AppStore} from "stores";
 import "./LayerListComponent.css";
 
 @observer
@@ -46,15 +46,15 @@ export class LayerListComponent extends React.Component<WidgetProps> {
         if (oldIndex === newIndex) {
             return;
         }
-        this.props.appStore.reorderFrame(oldIndex, newIndex, length);
+        AppStore.Instance.reorderFrame(oldIndex, newIndex, length);
     };
 
     private rowHeaderCellRenderer = (rowIndex: number) => {
-        return <RowHeaderCell name={rowIndex.toString()} className={rowIndex === this.props.appStore.activeFrameIndex ? "active-row-cell" : ""}/>;
+        return <RowHeaderCell name={rowIndex.toString()} className={rowIndex === AppStore.Instance.activeFrameIndex ? "active-row-cell" : ""}/>;
     };
 
     private fileNameRenderer = (rowIndex: number) => {
-        const appStore = this.props.appStore;
+        const appStore = AppStore.Instance;
         if (rowIndex < 0 || rowIndex >= appStore.frames.length) {
             return <Cell/>;
         }
@@ -73,7 +73,7 @@ export class LayerListComponent extends React.Component<WidgetProps> {
     };
 
     private channelRenderer = (rowIndex: number) => {
-        const appStore = this.props.appStore;
+        const appStore = AppStore.Instance;
         if (rowIndex < 0 || rowIndex >= appStore.frames.length) {
             return <Cell/>;
         }
@@ -81,7 +81,7 @@ export class LayerListComponent extends React.Component<WidgetProps> {
     };
 
     private stokesRenderer = (rowIndex: number) => {
-        const appStore = this.props.appStore;
+        const appStore = AppStore.Instance;
         if (rowIndex < 0 || rowIndex >= appStore.frames.length) {
             return <Cell/>;
         }
@@ -89,7 +89,7 @@ export class LayerListComponent extends React.Component<WidgetProps> {
     };
 
     private typeRenderer = (rowIndex: number) => {
-        const appStore = this.props.appStore;
+        const appStore = AppStore.Instance;
         if (rowIndex < 0 || rowIndex >= appStore.frames.length) {
             return <Cell/>;
         }
@@ -99,12 +99,12 @@ export class LayerListComponent extends React.Component<WidgetProps> {
         return (
             <Cell className={rowIndex === appStore.activeFrameIndex ? "active-row-cell" : ""}>
                 <React.Fragment>
-                    <Tooltip content={<span>Raster image<br/><i><small>Click to {frame.renderConfig.visible ? "hide" : "show"}</small></i></span>}>
-                        <AnchorButton minimal={true} small={true} intent={frame.renderConfig.visible ? "success" : "none"} onClick={frame.renderConfig.toggleVisibility}>R</AnchorButton>
+                    <Tooltip position={"bottom"} content={<span>Raster image<br/><i><small>Click to {frame.renderConfig.visible ? "hide" : "show"}</small></i></span>}>
+                        <AnchorButton minimal={true} small={true} active={frame.renderConfig.visible} intent={frame.renderConfig.visible ? "success" : "none"} onClick={frame.renderConfig.toggleVisibility}>R</AnchorButton>
                     </Tooltip>
                     {frame.contourConfig.enabled &&
-                    <Tooltip content={<span>Contour image<br/><i><small>Click to {frame.contourConfig.visible ? "hide" : "show"}</small></i></span>}>
-                        <AnchorButton minimal={true} small={true} intent={frame.contourConfig.visible ? "success" : "none"} onClick={frame.contourConfig.toggleVisibility}>C</AnchorButton>
+                    <Tooltip position={"bottom"} content={<span>Contour image<br/><i><small>Click to {frame.contourConfig.visible ? "hide" : "show"}</small></i></span>}>
+                        <AnchorButton minimal={true} small={true} active={frame.contourConfig.visible} intent={frame.contourConfig.visible ? "success" : "none"} onClick={frame.contourConfig.toggleVisibility}>C</AnchorButton>
                     </Tooltip>
                     }
                 </React.Fragment>
@@ -113,7 +113,7 @@ export class LayerListComponent extends React.Component<WidgetProps> {
     };
 
     private matchingRenderer = (rowIndex: number) => {
-        const appStore = this.props.appStore;
+        const appStore = AppStore.Instance;
         if (rowIndex < 0 || rowIndex >= appStore.frames.length) {
             return <Cell/>;
         }
@@ -129,8 +129,17 @@ export class LayerListComponent extends React.Component<WidgetProps> {
                 tooltipSubtitle = `Click to ${frame.spatialReference ? "disable" : "enable"} matching to ${appStore.spatialReference.frameInfo.fileInfo.name}`;
             }
             spatialMatchingButton = (
-                <Tooltip content={<span>Spatial matching<br/><i><small>{tooltipSubtitle}</small></i></span>}>
-                    <AnchorButton minimal={true} small={true} active={frame === appStore.spatialReference} intent={frame.spatialReference ? "primary" : "none"} onClick={() => appStore.toggleSpatialMatching(frame)}>XY</AnchorButton>
+                <Tooltip position={"bottom"} content={<span>Spatial matching<br/><i><small>{tooltipSubtitle}</small></i></span>}>
+                    <AnchorButton
+                        className={frame === appStore.spatialReference ? "outlined" : ""}
+                        minimal={true}
+                        small={true}
+                        active={!!frame.spatialReference}
+                        intent={frame.spatialReference ? "success" : "none"}
+                        onClick={() => appStore.toggleSpatialMatching(frame)}
+                    >
+                        XY
+                    </AnchorButton>
                 </Tooltip>
             );
         }
@@ -144,13 +153,13 @@ export class LayerListComponent extends React.Component<WidgetProps> {
                 tooltipSubtitle = `Click to ${frame.spectralReference ? "disable" : "enable"} matching to ${appStore.spectralReference.frameInfo.fileInfo.name}`;
             }
             spectralMatchingButton = (
-                <Tooltip content={<span>Spectral matching<br/><i><small>{tooltipSubtitle}</small></i></span>}>
+                <Tooltip position={"bottom"} content={<span>Spectral matching<br/><i><small>{tooltipSubtitle}</small></i></span>}>
                     <AnchorButton
-                        className="spectral-matching-button"
+                        className={frame === appStore.spectralReference ? "outlined" : ""}
                         minimal={true}
                         small={true}
-                        active={frame === appStore.spectralReference}
-                        intent={frame.spectralReference ? "primary" : "none"}
+                        active={!!frame.spectralReference}
+                        intent={frame.spectralReference ? "success" : "none"}
                         onClick={() => appStore.toggleSpectralMatching(frame)}
                     >
                         Z
@@ -201,7 +210,7 @@ export class LayerListComponent extends React.Component<WidgetProps> {
 
     private contextMenuRenderer = (context: IMenuContext) => {
         const rows = context.getTarget().rows;
-        const appStore = this.props.appStore;
+        const appStore = AppStore.Instance;
         if (rows && rows.length && appStore.frames[rows[0]]) {
             const frame = appStore.frames[rows[0]];
             if (frame) {
@@ -219,7 +228,7 @@ export class LayerListComponent extends React.Component<WidgetProps> {
     };
 
     render() {
-        const appStore = this.props.appStore;
+        const appStore = AppStore.Instance;
         const frameNum = appStore.frameNum;
 
         if (frameNum <= 0) {
@@ -235,7 +244,7 @@ export class LayerListComponent extends React.Component<WidgetProps> {
         // There is probably a neater way to do this, though
         const frameChannels = appStore.frameChannels;
         const frameStokes = appStore.frameStokes;
-        const activeFrameIndex = this.props.appStore.activeFrameIndex;
+        const activeFrameIndex = appStore.activeFrameIndex;
         const visibilityRaster = appStore.frames.map(f => f.renderConfig.visible);
         const visibilityContour = appStore.frames.map(f => f.contourConfig.visible && f.contourConfig.enabled);
         const matchingTypes = appStore.frames.map(f => f.spatialReference && f.spectralReference);
