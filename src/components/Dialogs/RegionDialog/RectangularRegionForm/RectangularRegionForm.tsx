@@ -59,7 +59,8 @@ export class RectangularRegionForm extends React.Component<{ region: RegionStore
     }
 
     @computed get sizeWCS(): WCSPoint2D {
-        if (!this.props.region || !this.props.frame) {
+        const region = this.props.region;
+        if (!region || region.controlPoints.length !== 2 || !region.controlPoints[1] || !this.props.frame) {
             return null;
         }
         const size = this.props.region.controlPoints[1];
@@ -419,14 +420,6 @@ export class RectangularRegionForm extends React.Component<{ region: RegionStore
 
         ev.currentTarget.value = existingValue;
     };
-
-    private getSizeString(size: Point2D) {
-        const wcsSize = this.props.frame.getWcsSizeInArcsec(size);
-        if (wcsSize) {
-            return `${formattedArcsec(wcsSize.x)} \u00D7 ${formattedArcsec(wcsSize.y)}`;
-        }
-        return null;
-    }
 
     public render() {
         const region = this.props.region;
