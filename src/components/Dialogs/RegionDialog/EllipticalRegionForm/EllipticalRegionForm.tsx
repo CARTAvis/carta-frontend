@@ -250,14 +250,14 @@ export class EllipticalRegionForm extends React.Component<{ region: RegionStore,
         const size = region.controlPoints[1];
         let sizeWidthInput, sizeHeightInput;
         if (region.coordinate === RegionCoordinate.Image) {
-            sizeWidthInput = <NumericInput selectAllOnFocus={true} buttonPosition="none" placeholder="Width" value={size.x} onBlur={this.handleMajorAxisChange} onKeyDown={this.handleMajorAxisChange}/>;
-            sizeHeightInput = <NumericInput selectAllOnFocus={true} buttonPosition="none" placeholder="Height" value={size.y} onBlur={this.handleMinorAxisChange} onKeyDown={this.handleMinorAxisChange}/>;
+            sizeWidthInput = <NumericInput selectAllOnFocus={true} buttonPosition="none" placeholder="Semi-major" value={size.x} onBlur={this.handleMajorAxisChange} onKeyDown={this.handleMajorAxisChange}/>;
+            sizeHeightInput = <NumericInput selectAllOnFocus={true} buttonPosition="none" placeholder="Semi-minor" value={size.y} onBlur={this.handleMinorAxisChange} onKeyDown={this.handleMinorAxisChange}/>;
         } else {
             sizeWidthInput = (
                 <NumericInput
                     allowNumericCharactersOnly={false}
                     buttonPosition="none"
-                    placeholder="Width"
+                    placeholder="Semi-major"
                     disabled={!this.props.wcsInfo}
                     value={this.sizeWCS ? this.sizeWCS.x : ""}
                     onBlur={this.handleMajorAxisWCSChange}
@@ -268,7 +268,7 @@ export class EllipticalRegionForm extends React.Component<{ region: RegionStore,
                 <NumericInput
                     allowNumericCharactersOnly={false}
                     buttonPosition="none"
-                    placeholder="Height"
+                    placeholder="Semi-minor"
                     disabled={!this.props.wcsInfo}
                     value={this.sizeWCS ? this.sizeWCS.y : ""}
                     onBlur={this.handleMinorAxisWCSChange}
