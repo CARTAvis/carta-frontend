@@ -228,8 +228,8 @@ int EMSCRIPTEN_KEEPALIVE filterSavitzkyGolay(int endType, double* xInArray, doub
             gsl_matrix_free (cov);
         } else {
             double c0, c1, cov00, cov01, cov11, chisq;
-            double *x = (double *) malloc(wsize * sizeof(double));
-            double *w = (double *) malloc(wsize * sizeof(double));
+            double* x = new double[wsize];
+            double* w = new double[wsize];;
             for (size_t s = 0; s < wsize; s++) {
                 x[s] = xInArray[(i - H) + s];
                 w[s] = 0.2;
@@ -238,8 +238,8 @@ int EMSCRIPTEN_KEEPALIVE filterSavitzkyGolay(int endType, double* xInArray, doub
             gsl_fit_wlinear (x, 1, w, 1, window, 1, wsize, &c0, &c1, &cov00, &cov01, &cov11, &chisq);
             yOutArray[i] = c0 + c1 * xInArray[i]; // best fit Y = c0 + c1 * X;
 
-            free(x);
-            free(w);
+            delete[] x;
+            delete[] w;
         }
     }
     delete[] window;
