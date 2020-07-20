@@ -86,7 +86,7 @@ export class ToolbarMenuComponent extends React.Component {
                             &nbsp;s
                         </Button>
                     </Tooltip>
-                    <Tooltip content={<span>Layer List Widget{commonTooltip}</span>}>
+                    <Tooltip content={<span>Image List Widget{commonTooltip}</span>}>
                         <Button icon={"layers"} id="layerListButton" onClick={appStore.widgetsStore.createFloatingLayerListWidget}/>
                     </Tooltip>
                     <Tooltip content={<span>Catalog Widget{commonTooltip}</span>}>
@@ -94,7 +94,7 @@ export class ToolbarMenuComponent extends React.Component {
                     </Tooltip>
                 </ButtonGroup>
                 <ButtonGroup className={dialogClassName}>
-                    <Tooltip content={<span>File Info</span>}>
+                    <Tooltip content={<span>File Header</span>}>
                         <Button icon={"app-header"} onClick={dialogStore.showFileInfoDialog} className={dialogStore.fileInfoDialogVisible ? "bp3-active" : ""}/>
                     </Tooltip>
                     <Tooltip content={<span>Preferences</span>}>
