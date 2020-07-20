@@ -1,6 +1,6 @@
 import * as React from "react";
 import {observer} from "mobx-react";
-import {Button, ButtonGroup, Tooltip} from "@blueprintjs/core";
+import {Button, ButtonGroup, Icon, Tooltip} from "@blueprintjs/core";
 import {AppStore, DialogStore, WidgetConfig} from "stores";
 import {
     AnimatorComponent, 
@@ -51,8 +51,9 @@ export class ToolbarMenuComponent extends React.Component {
             <React.Fragment>
                 <ButtonGroup className={className}>
                     <Tooltip content={<span>Region List Widget{commonTooltip}</span>}>
-                        <Button icon={"equals"} id="regionListButton" className={"profiler-button"} onClick={appStore.widgetsStore.createFloatingRegionListWidget}>
-                            &nbsp;r
+                        <Button id="regionListButton" onClick={appStore.widgetsStore.createFloatingRegionListWidget}>
+                            <Icon iconSize={12} icon="list"/>
+                            r
                         </Button>
                     </Tooltip>
                     <Tooltip content={<span>Log Widget{commonTooltip}</span>}>
