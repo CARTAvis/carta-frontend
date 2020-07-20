@@ -305,6 +305,8 @@ export class CatalogSubplotComponent extends React.Component<WidgetProps> {
         }
         if (widgetStore && bins > 0) {
             widgetStore.setnBinx(bins);
+        } else if (widgetStore && bins === 0) {
+            widgetStore.setnBinx(1);
         } else {
             widgetStore.setnBinx(widgetStore.initnBinx);
         }
@@ -484,8 +486,7 @@ export class CatalogSubplotComponent extends React.Component<WidgetProps> {
                             value={widgetStore.nBinx}
                             onValueChanged={val => this.onBinWidthChange(val)}
                             onValueCleared={() => widgetStore.setnBinx(widgetStore.initnBinx)}
-                            displayExponential={true}
-                            updateValueOnKeyDown={true}
+                            displayExponential={false}
                             disabled={disabled}
                         />
                     }

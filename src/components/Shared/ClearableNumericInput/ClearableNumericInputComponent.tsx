@@ -4,8 +4,6 @@ import {observer} from "mobx-react";
 import {observable} from "mobx";
 import {toExponential} from "utilities";
 
-const KEYCODE_ENTER = 13;
-
 export interface ClearableNumericInputProps extends INumericInputProps {
     label: string; 
     value: number; 
@@ -19,63 +17,34 @@ export interface ClearableNumericInputProps extends INumericInputProps {
 export class ClearableNumericInputComponent extends React.Component<ClearableNumericInputProps> {
 
     @observable private isFocused: boolean = false;
-    // trigger keydown update for value
-    @observable isKeyDown: boolean = false;
-
-    handleChange = (ev) => { 
-        if (ev.type === "keydown" && ev.keyCode !== KEYCODE_ENTER) {
-            return;
-        }
-        const val = parseFloat(ev.currentTarget.value);
-        if (isFinite(val) && val !== this.props.value) {
-            this.props.onValueChanged(val);
-        }
-        if (this.props.updateValueOnKeyDown) {
-            this.props.onValueChanged(val);
-            this.isKeyDown = true;   
-        }
-    };
 
     handleOnFocus = () => {
         if (this.props.displayExponential) {
             this.isFocused = true;
         }
-        if (this.props.updateValueOnKeyDown) {
-            this.isFocused = true;
-            this.isKeyDown = false;   
-        }
     };
 
-    handleOnBlur = (ev: React.FocusEvent<HTMLInputElement>) => {
-        this.handleChange(ev);
+    handleOnBlur = () => {
         if (this.props.displayExponential) {
-            this.isFocused = false;
-        }
-        if (this.props.updateValueOnKeyDown) {
-            this.isKeyDown = false;   
             this.isFocused = false;
         }
     }
 
-    handleOnValueChange = () => {
-        if (this.props.updateValueOnKeyDown) {
-            this.isKeyDown = false;   
-        } 
+    handleOnValueChange = (val) => {
+        if (isFinite(val)) {
+            this.props.onValueChanged(val);
+        }
     }
 
     render () {
         let value = this.props.displayExponential && !this.isFocused ? toExponential(this.props.value, 3) : this.props.value;
-        if (this.props.updateValueOnKeyDown) {
-            value = this.isFocused && !this.isKeyDown ? this.props.value.toString() : this.props.value;
-        }
         return (
         <FormGroup className={this.props.className} label={this.props.label} inline={true} disabled={this.props.disabled}>
             <NumericInput
                 value={value}
                 onFocus={this.handleOnFocus}
                 onBlur={this.handleOnBlur}
-                onKeyDown={this.handleChange}
-                onValueChange={this.handleOnValueChange}
+                onValueChange={(val) => this.handleOnValueChange(val)}
                 buttonPosition="none"
                 disabled={this.props.disabled}
                 rightElement={

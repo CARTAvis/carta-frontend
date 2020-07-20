@@ -692,12 +692,14 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
     }
     
     private onMaxRowsChange = (val: number) => {
-        const widgetsStore = this.widgetStore;
-        const dataSize = widgetsStore?.catalogInfo?.dataSize;
-        if (widgetsStore && val > 0 && val < dataSize) {
-            widgetsStore.setMaxRows(val);
-        } else {
-            widgetsStore.setMaxRows(widgetsStore.catalogInfo.dataSize);
+        const widgetStore = this.widgetStore;
+        const dataSize = widgetStore?.catalogInfo?.dataSize;
+        if (widgetStore && val > 0 && val < dataSize) {
+            widgetStore.setMaxRows(val);
+        } else if (widgetStore && val === 0) {
+            widgetStore.setMaxRows(1);
+        }else {
+            widgetStore.setMaxRows(widgetStore.catalogInfo.dataSize);
         }
     }
 
@@ -864,8 +866,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
                             value={widgetStore.maxRows}
                             onValueChanged={val => this.onMaxRowsChange(val)}
                             onValueCleared={() => widgetStore.setMaxRows(widgetStore.catalogInfo.dataSize)}
-                            displayExponential={true}
-                            updateValueOnKeyDown={true}
+                            displayExponential={false}
                             disabled={widgetStore.loadOntoImage}
                         />
                         <Tooltip content={"Apply filter"}>
