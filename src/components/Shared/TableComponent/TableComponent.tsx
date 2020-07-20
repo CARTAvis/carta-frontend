@@ -78,7 +78,7 @@ export class TableComponent extends React.Component<TableComponentProps> {
                         <Cell key={`cell_${columnIndex}_${rowIndex}`} interactive={false}>
                             <React.Fragment>
                                 <Checkbox
-                                    checked={manualSelectionData[rowIndex]}
+                                    checked={manualSelectionData[rowIndex] || false}
                                     onChange={() => manualSelectionProps.selectSingleLine(rowIndex)}
                                 />
                             </React.Fragment>
