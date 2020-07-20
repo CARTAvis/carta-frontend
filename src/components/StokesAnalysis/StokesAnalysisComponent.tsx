@@ -691,7 +691,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
     ) => {
         let cursorInfo = null;
         const isMouseEntered = this.widgetStore.isMouseMoveIntoLinePlots || this.widgetStore.isMouseMoveIntoScatterPlots;
-        const xUnit =  AppStore.Instance.activeFrame ? AppStore.Instance.activeFrame.spectralUnitStr : "Channel";
+        const xUnit =  this.widgetStore.effectiveFrame ? this.widgetStore.effectiveFrame.spectralUnitStr : "Channel";
         if (isMouseEntered) {
             let profilerData = {q: NaN, u: NaN, pi: NaN, pa: NaN, channel: NaN};
             if (this.widgetStore.isMouseMoveIntoLinePlots) {
@@ -729,7 +729,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
             isNaN(this.cursorInfo.quValue.x) || isNaN(this.cursorInfo.quValue.y)) {
             return profilerInfo;
         }
-        const frame = AppStore.Instance.activeFrame;
+        const frame = this.widgetStore.effectiveFrame;
         if (frame && this.plotData) {
             const xLabel = this.cursorInfo.xUnit === "Channel" ?
                         "Channel " + toFixed(this.cursorInfo.channel) :
