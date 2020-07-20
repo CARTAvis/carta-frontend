@@ -7,7 +7,8 @@ import Konva from "konva";
 import {CARTA} from "carta-protobuf";
 import {FrameStore, RegionStore} from "stores";
 import {Point2D} from "models";
-import {canvasToTransformedImagePos, getUpdatedPosition, transformedImageToCanvasPos} from "./shared";
+import {canvasToTransformedImagePos, transformedImageToCanvasPos} from "./shared";
+import {transformPoint} from "utilities";
 
 export interface RegionComponentProps {
     region: RegionStore;
@@ -116,8 +117,8 @@ export class RegionComponent extends React.Component<RegionComponentProps> {
             const frame = this.props.frame;
             const region = this.props.region;
             if (anchor.includes("rotater")) {
-                // handle rotation (canvas rotation is clockwise, CASA rotation is anti-clockwise)
-                const rotation = frame.spatialReference ? frame.spatialTransform.rotation * 180.0 / Math.PI + node.rotation() : node.rotation();
+                // TODO: take into account projection effects by rotating image properly
+                const rotation = node.rotation();
                 region.setRotation(-rotation);
             } else {
                 // revert node scaling and position before adjusting region control points
@@ -248,8 +249,10 @@ export class RegionComponent extends React.Component<RegionComponentProps> {
             const node = konvaEvent.target;
             const region = this.props.region;
             const frame = this.props.frame;
-            const zoomLevel = frame.spatialReference ? frame.spatialReference.zoomLevel : frame.zoomLevel;
-            const newPosition = getUpdatedPosition(region.controlPoints[0], node.position(), zoomLevel, frame, this.props.layerWidth, this.props.layerHeight);
+            let newPosition = canvasToTransformedImagePos(node.position().x, node.position().y, frame, this.props.layerWidth, this.props.layerHeight);
+            if (frame.spatialReference) {
+                newPosition = transformPoint(frame.spatialTransformAST, newPosition, true);
+            }
             region.setControlPoint(0, newPosition);
         }
     };
@@ -258,8 +261,8 @@ export class RegionComponent extends React.Component<RegionComponentProps> {
         const region = this.props.region;
         const frame = this.props.frame;
 
-        const zoomLevel = frame.spatialReference ? frame.spatialReference.zoomLevel * frame.spatialTransform.scale : frame.zoomLevel;
-        const rotation = frame.spatialReference ? frame.spatialTransform.rotation * 180.0 / Math.PI + region.rotation : region.rotation;
+        const zoomLevel = frame.spatialReference ? frame.spatialReference.zoomLevel : frame.zoomLevel;
+        const rotation = region.rotation;
 
         const centerPixelSpace = transformedImageToCanvasPos(region.controlPoints[0].x, region.controlPoints[0].y, frame.spatialReference || frame, this.props.layerWidth, this.props.layerHeight);
         let width = (region.controlPoints[1].x * zoomLevel) / devicePixelRatio;

@@ -11,7 +11,7 @@ import {PolygonRegionComponent} from "./PolygonRegionComponent";
 import {PointRegionComponent} from "./PointRegionComponent";
 import {canvasToImagePos, canvasToTransformedImagePos, imageToCanvasPos, transformedImageToCanvasPos} from "./shared";
 import {CursorInfo, Point2D} from "models";
-import {average2D, length2D, subtract2D, pointDistanceSquared} from "utilities";
+import {average2D, length2D, subtract2D, pointDistanceSquared, transformPoint} from "utilities";
 import "./RegionViewComponent.css";
 
 export interface RegionViewComponentProps {
@@ -79,7 +79,10 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
         const mouseEvent = konvaEvent.evt as MouseEvent;
         const frame = this.props.frame;
         const regionType = frame.regionSet.newRegionType;
-        const cursorPosImageSpace = canvasToTransformedImagePos(mouseEvent.offsetX, mouseEvent.offsetY, frame, this.props.width, this.props.height);
+        let cursorPosImageSpace = canvasToTransformedImagePos(mouseEvent.offsetX, mouseEvent.offsetY, frame, this.props.width, this.props.height);
+        if (frame.spatialReference) {
+            cursorPosImageSpace = transformPoint(frame.spatialTransformAST, cursorPosImageSpace, true);
+        }
 
         switch (regionType) {
             case CARTA.RegionType.POINT:
@@ -240,7 +243,10 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
     @action
     private handleMouseUpPolygonRegion(mouseEvent: MouseEvent) {
         const frame = this.props.frame;
-        const cursorPosImageSpace = canvasToTransformedImagePos(mouseEvent.offsetX, mouseEvent.offsetY, frame, this.props.width, this.props.height);
+        let cursorPosImageSpace = canvasToTransformedImagePos(mouseEvent.offsetX, mouseEvent.offsetY, frame, this.props.width, this.props.height);
+        if (frame.spatialReference) {
+            cursorPosImageSpace = transformPoint(frame.spatialTransformAST, cursorPosImageSpace, true);
+        }
         if (this.creatingRegion && this.creatingRegion.regionType === CARTA.RegionType.POLYGON) {
             if (this.creatingRegion.controlPoints.length) {
                 const previousPoint = this.creatingRegion.controlPoints[this.creatingRegion.controlPoints.length - 1];
@@ -493,13 +499,25 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
 
         let polygonCreatingLine = null;
         if (this.currentCursorPos && this.creatingRegion && this.creatingRegion.regionType === CARTA.RegionType.POLYGON && this.creatingRegion.isValid) {
-            const firstControlPoint = this.creatingRegion.controlPoints[0];
-            const lastControlPoint = this.creatingRegion.controlPoints[this.creatingRegion.controlPoints.length - 1];
-            const lineStart = this.getCursorCanvasPos(lastControlPoint.x, lastControlPoint.y);
-            const lineEnd = this.getCursorCanvasPos(firstControlPoint.x, firstControlPoint.y);
+            let firstControlPoint = this.creatingRegion.controlPoints[0];
+            let lastControlPoint = this.creatingRegion.controlPoints[this.creatingRegion.controlPoints.length - 1];
+
+            if (frame.spatialReference) {
+                firstControlPoint = transformPoint(frame.spatialTransformAST, firstControlPoint, false);
+                lastControlPoint = transformPoint(frame.spatialTransformAST, lastControlPoint, false);
+            }
+            const lineStart = this.getCursorCanvasPos(firstControlPoint.x, firstControlPoint.y);
+            const lineEnd = this.getCursorCanvasPos(lastControlPoint.x, lastControlPoint.y);
+            let points: number[];
+
+            if (this.creatingRegion.controlPoints.length > 1) {
+                points = [lineStart.x, lineStart.y, this.currentCursorPos.x, this.currentCursorPos.y, lineEnd.x, lineEnd.y];
+            } else {
+                points = [lineStart.x, lineStart.y, this.currentCursorPos.x, this.currentCursorPos.y];
+            }
             polygonCreatingLine = (
                 <Line
-                    points={[lineStart.x, lineStart.y, this.currentCursorPos.x, this.currentCursorPos.y, lineEnd.x, lineEnd.y]}
+                    points={points}
                     dash={[5]}
                     stroke={this.creatingRegion.color}
                     strokeWidth={this.creatingRegion.lineWidth}

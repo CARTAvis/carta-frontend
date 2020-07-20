@@ -3,7 +3,7 @@ import {observer} from "mobx-react";
 import {Group, Rect} from "react-konva";
 import Konva from "konva";
 import {FrameStore, RegionStore} from "stores";
-import {getUpdatedPosition, transformedImageToCanvasPos} from "./shared";
+import {canvasToTransformedImagePos, transformedImageToCanvasPos} from "./shared";
 import {Point2D} from "models";
 import {transformPoint} from "utilities";
 
@@ -55,9 +55,11 @@ export class PointRegionComponent extends React.Component<PointRegionComponentPr
             const node = konvaEvent.target;
             const region = this.props.region;
             const frame = this.props.frame;
-            const zoomLevel = frame.spatialReference ? frame.spatialReference.zoomLevel : frame.zoomLevel;
-            const newPosition = getUpdatedPosition(region.controlPoints[0], node.position(), zoomLevel, frame, this.props.layerWidth, this.props.layerHeight);
-            region.setControlPoint(0, newPosition);
+            let positionImageSpace = canvasToTransformedImagePos(node.position().x, node.position().y, frame, this.props.layerWidth, this.props.layerHeight);
+            if (frame.spatialReference) {
+                positionImageSpace = transformPoint(frame.spatialTransformAST, positionImageSpace, true);
+            }
+            region.setControlPoint(0, positionImageSpace);
         }
     };
 
