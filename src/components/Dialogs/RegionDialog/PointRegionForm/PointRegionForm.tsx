@@ -68,6 +68,9 @@ export class PointRegionForm extends React.Component<{ region: RegionStore, wcsI
             return;
         }
         const wcsString = ev.currentTarget.value;
+        if (wcsString === this.centerWCSPoint.x) {
+            return;
+        }
         if (WCS_REGEXP.test(wcsString)) {
             const newPoint = getPixelValueFromWCS(this.props.wcsInfo, {x: wcsString, y: this.centerWCSPoint.y});
             const existingValue = this.props.region.controlPoints[0].x;
@@ -88,6 +91,9 @@ export class PointRegionForm extends React.Component<{ region: RegionStore, wcsI
             return;
         }
         const wcsString = ev.currentTarget.value;
+        if (wcsString === this.centerWCSPoint.y) {
+            return;
+        }
         if (WCS_REGEXP.test(wcsString)) {
             const newPoint = getPixelValueFromWCS(this.props.wcsInfo, {x: this.centerWCSPoint.x, y: wcsString});
             const existingValue = this.props.region.controlPoints[0].y;

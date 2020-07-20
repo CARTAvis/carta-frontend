@@ -117,6 +117,9 @@ export class RectangularRegionForm extends React.Component<{ region: RegionStore
             return;
         }
         const wcsString = ev.currentTarget.value;
+        if (wcsString === this.centerWCSPoint.x) {
+            return;
+        }
         if (WCS_REGEXP.test(wcsString)) {
             const newPoint = getPixelValueFromWCS(this.props.wcsInfo, {x: wcsString, y: this.centerWCSPoint.y});
             const existingValue = this.props.region.controlPoints[0].x;
@@ -137,6 +140,9 @@ export class RectangularRegionForm extends React.Component<{ region: RegionStore
             return;
         }
         const wcsString = ev.currentTarget.value;
+        if (wcsString === this.centerWCSPoint.y) {
+            return;
+        }
         if (WCS_REGEXP.test(wcsString)) {
             const newPoint = getPixelValueFromWCS(this.props.wcsInfo, {x: this.centerWCSPoint.x, y: wcsString});
             const existingValue = this.props.region.controlPoints[0].y;
@@ -173,6 +179,9 @@ export class RectangularRegionForm extends React.Component<{ region: RegionStore
             return;
         }
         const wcsString = ev.currentTarget.value;
+        if (wcsString === this.sizeWCS.x) {
+            return;
+        }
         const value = this.props.frame.getImageValueFromArcsec(getValueFromArcsecString(wcsString));
         const existingValue = this.props.region.controlPoints[1].x;
         if (isFinite(value) && value > 0 && !closeTo(value, existingValue, RectangularRegionForm.REGION_PIXEL_EPS)) {
@@ -207,6 +216,9 @@ export class RectangularRegionForm extends React.Component<{ region: RegionStore
             return;
         }
         const wcsString = ev.currentTarget.value;
+        if (wcsString === this.sizeWCS.y) {
+            return;
+        }
         const value = this.props.frame.getImageValueFromArcsec(getValueFromArcsecString(wcsString));
         const existingValue = this.props.region.controlPoints[1].y;
         if (isFinite(value) && value > 0 && !closeTo(value, existingValue, RectangularRegionForm.REGION_PIXEL_EPS)) {
@@ -252,6 +264,9 @@ export class RectangularRegionForm extends React.Component<{ region: RegionStore
             return;
         }
         const wcsString = ev.currentTarget.value;
+        if (wcsString === this.bottomLeftWCSPoint.x) {
+            return;
+        }
         if (WCS_REGEXP.test(wcsString)) {
             const newPoint = getPixelValueFromWCS(this.props.wcsInfo, {x: wcsString, y: this.bottomLeftWCSPoint.y});
             const value = newPoint.x;
@@ -299,6 +314,9 @@ export class RectangularRegionForm extends React.Component<{ region: RegionStore
             return;
         }
         const wcsString = ev.currentTarget.value;
+        if (wcsString === this.bottomLeftWCSPoint.y) {
+            return;
+        }
         if (WCS_REGEXP.test(wcsString)) {
             const newPoint = getPixelValueFromWCS(this.props.wcsInfo, {x: this.bottomLeftWCSPoint.x, y: wcsString});
             const value = newPoint.y;
@@ -346,6 +364,9 @@ export class RectangularRegionForm extends React.Component<{ region: RegionStore
             return;
         }
         const wcsString = ev.currentTarget.value;
+        if (wcsString === this.topRightWCSPoint.x) {
+            return;
+        }
         if (WCS_REGEXP.test(wcsString)) {
             const newPoint = getPixelValueFromWCS(this.props.wcsInfo, {x: wcsString, y: this.topRightWCSPoint.y});
             const value = newPoint.x;
@@ -393,6 +414,9 @@ export class RectangularRegionForm extends React.Component<{ region: RegionStore
             return;
         }
         const wcsString = ev.currentTarget.value;
+        if (wcsString === this.topRightWCSPoint.y) {
+            return;
+        }
         if (WCS_REGEXP.test(wcsString)) {
             const newPoint = getPixelValueFromWCS(this.props.wcsInfo, {x: this.topRightWCSPoint.x, y: wcsString});
             const value = newPoint.y;

@@ -55,6 +55,9 @@ export class PolygonRegionForm extends React.Component<{ region: RegionStore, wc
         }
 
         const wcsString = ev.currentTarget.value;
+        if (wcsString === (isXCoordinate ? pointWCS.x : pointWCS.y)) {
+            return;
+        }
         if (WCS_REGEXP.test(wcsString)) {
             const newPoint = getPixelValueFromWCS(this.props.wcsInfo, isXCoordinate ? {x: wcsString, y: pointWCS.y} : {x: pointWCS.x, y: wcsString});
             if (!newPoint) {
