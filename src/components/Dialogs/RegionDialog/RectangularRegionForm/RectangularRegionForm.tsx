@@ -5,7 +5,7 @@ import {H5, InputGroup, NumericInput, Classes} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import {FrameStore, RegionCoordinate, RegionStore} from "stores";
 import {Point2D, WCSPoint2D} from "models";
-import {closeTo, formattedArcsec, getFormattedWCSPoint, getPixelValueFromWCS, WCS_REGEXP} from "utilities";
+import {closeTo, formattedArcsec, getFormattedWCSPoint, getPixelValueFromWCS, getValueFromArcsecString, WCS_REGEXP} from "utilities";
 import {CoordinateComponent} from "../CoordinateComponent/CoordinateComponent";
 import "./RectangularRegionForm.css";
 
@@ -56,6 +56,18 @@ export class RectangularRegionForm extends React.Component<{ region: RegionStore
             return null;
         }
         return getFormattedWCSPoint(this.props.wcsInfo, this.bottomLeftPoint);
+    }
+
+    @computed get sizeWCS(): WCSPoint2D {
+        if (!this.props.region || !this.props.frame) {
+            return null;
+        }
+        const size = this.props.region.controlPoints[1];
+        const wcsSize = this.props.frame.getWcsSizeInArcsec(size);
+        if (wcsSize) {
+            return {x: formattedArcsec(wcsSize.x), y: formattedArcsec(wcsSize.y)};
+        }
+        return null;
     }
 
     private static readonly REGION_PIXEL_EPS = 1.0e-3;
@@ -152,6 +164,24 @@ export class RectangularRegionForm extends React.Component<{ region: RegionStore
         ev.currentTarget.value = existingValue;
     };
 
+    private handleWidthWCSChange = (ev) => {
+        if (ev.type === "keydown" && ev.keyCode !== KEYCODE_ENTER) {
+            return;
+        }
+        if (!this.sizeWCS) {
+            return;
+        }
+        const wcsString = ev.currentTarget.value;
+        const value = this.props.frame.getImageValueFromArcsec(getValueFromArcsecString(wcsString));
+        const existingValue = this.props.region.controlPoints[1].x;
+        if (isFinite(value) && value > 0 && !closeTo(value, existingValue, RectangularRegionForm.REGION_PIXEL_EPS)) {
+            this.props.region.setControlPoint(1, {x: value, y: this.props.region.controlPoints[1].y});
+            return;
+        }
+
+        ev.currentTarget.value = this.sizeWCS.x;
+    };
+
     private handleHeightChange = (ev) => {
         if (ev.type === "keydown" && ev.keyCode !== KEYCODE_ENTER) {
             return;
@@ -166,6 +196,24 @@ export class RectangularRegionForm extends React.Component<{ region: RegionStore
         }
 
         ev.currentTarget.value = existingValue;
+    };
+
+    private handleHeightWCSChange = (ev) => {
+        if (ev.type === "keydown" && ev.keyCode !== KEYCODE_ENTER) {
+            return;
+        }
+        if (!this.sizeWCS) {
+            return;
+        }
+        const wcsString = ev.currentTarget.value;
+        const value = this.props.frame.getImageValueFromArcsec(getValueFromArcsecString(wcsString));
+        const existingValue = this.props.region.controlPoints[1].y;
+        if (isFinite(value) && value > 0 && !closeTo(value, existingValue, RectangularRegionForm.REGION_PIXEL_EPS)) {
+            this.props.region.setControlPoint(1, {x: this.props.region.controlPoints[1].x, y: value});
+            return;
+        }
+
+        ev.currentTarget.value = this.sizeWCS.y;
     };
 
     private handleLeftValueChange = (value: number, existingValue: number): boolean => {
@@ -484,8 +532,36 @@ export class RectangularRegionForm extends React.Component<{ region: RegionStore
         const topRightInfoString = region.coordinate === RegionCoordinate.Image ? `WCS: ${WCSPoint2D.ToString(this.topRightWCSPoint)}` : `Image: ${Point2D.ToString(this.topRightPoint, "px", 3)}`;
 
         // size
-        const sizeDims = region.controlPoints[1];
-        const wcsStringSize = this.getSizeString(sizeDims);
+        const size = region.controlPoints[1];
+        let sizeWidthInput, sizeHeightInput;
+        if (region.coordinate === RegionCoordinate.Image) {
+            sizeWidthInput = <NumericInput selectAllOnFocus={true} buttonPosition="none" placeholder="Width" value={size.x} onBlur={this.handleWidthChange} onKeyDown={this.handleWidthChange}/>;
+            sizeHeightInput = <NumericInput selectAllOnFocus={true} buttonPosition="none" placeholder="Height" value={size.y} onBlur={this.handleHeightChange} onKeyDown={this.handleHeightChange}/>;
+        } else {
+            sizeWidthInput = (
+                <NumericInput
+                    allowNumericCharactersOnly={false}
+                    buttonPosition="none"
+                    placeholder="Width"
+                    disabled={!this.props.wcsInfo}
+                    value={this.sizeWCS ? this.sizeWCS.x : ""}
+                    onBlur={this.handleWidthWCSChange}
+                    onKeyDown={this.handleWidthWCSChange}
+                />
+            );
+            sizeHeightInput = (
+                <NumericInput
+                    allowNumericCharactersOnly={false}
+                    buttonPosition="none"
+                    placeholder="Height"
+                    disabled={!this.props.wcsInfo}
+                    value={this.sizeWCS ? this.sizeWCS.y : ""}
+                    onBlur={this.handleHeightWCSChange}
+                    onKeyDown={this.handleHeightWCSChange}
+                />
+            );
+        }
+        const sizeInfoString = region.coordinate === RegionCoordinate.Image ? `WCS: ${WCSPoint2D.ToString(this.sizeWCS)}` : `Image: ${Point2D.ToString(size, "px", 3)}`;
 
         const pxUnitSpan = region.coordinate === RegionCoordinate.Image ? <span className={Classes.TEXT_MUTED}>(px)</span> : "";
         return (
@@ -511,16 +587,10 @@ export class RectangularRegionForm extends React.Component<{ region: RegionStore
                             <td><span className="info-string">{centerInfoString}</span></td>
                         </tr>
                         <tr>
-                            <td>Size {<span className={Classes.TEXT_MUTED}>(px)</span>}</td>
-                            <td>
-                                <NumericInput selectAllOnFocus={true} buttonPosition="none" placeholder="Width" value={sizeDims.x} onBlur={this.handleWidthChange} onKeyDown={this.handleWidthChange}/>
-                            </td>
-                            <td>
-                                <NumericInput selectAllOnFocus={true} buttonPosition="none" placeholder="Height" value={sizeDims.y} onBlur={this.handleHeightChange} onKeyDown={this.handleHeightChange}/>
-                            </td>
-                            <td>
-                                <span className="info-string">{wcsStringSize}</span>
-                            </td>
+                            <td>Size {pxUnitSpan}</td>
+                            <td>{sizeWidthInput}</td>
+                            <td>{sizeHeightInput}</td>
+                            <td><span className="info-string">{sizeInfoString}</span></td>
                         </tr>
                         <tr>
                             <td>Bottom Left {pxUnitSpan}</td>

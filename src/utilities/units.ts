@@ -98,3 +98,22 @@ export function formattedArcsec(arcsec: number): string {
     }
     return arcString;
 }
+
+export function getValueFromArcsecString(formattedString: string): number {
+    const trimmedString = formattedString?.trim();
+    if (!trimmedString) {
+        return null;
+    }
+
+    const arcsecRegExp = /^(\d+(\.\d+)?)\"?$/;
+    const arcminRegExp = /^(\d+(\.\d+)?)\'$/;
+    const degreeRegExp = /^(\d+(\.\d+)?)\s*deg(ree)?$/i;
+    if (arcsecRegExp.test(trimmedString)) {
+        return parseFloat(RegExp.$1);
+    } else if (arcminRegExp.test(trimmedString)) {
+        return parseFloat(RegExp.$1) * 60;
+    } else if (degreeRegExp.test(trimmedString)) {
+        return parseFloat(RegExp.$1) * 3600;
+    }
+    return null;
+}
