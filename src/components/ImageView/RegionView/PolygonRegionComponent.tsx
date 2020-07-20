@@ -81,7 +81,10 @@ export class PolygonRegionComponent extends React.Component<PolygonRegionCompone
             const frame = this.props.frame;
             const index = node.index;
             if (index >= 0 && index < region.controlPoints.length) {
-                const positionImageSpace = canvasToTransformedImagePos(node.position().x, node.position().y, frame, this.props.layerWidth, this.props.layerHeight);
+                let positionImageSpace = canvasToTransformedImagePos(node.position().x, node.position().y, frame, this.props.layerWidth, this.props.layerHeight);
+                if (frame.spatialReference) {
+                    positionImageSpace = transformPoint(frame.spatialTransformAST, positionImageSpace, true);
+                }
                 region.setControlPoint(index, positionImageSpace);
                 this.hoverIntersection = null;
             }
@@ -117,7 +120,10 @@ export class PolygonRegionComponent extends React.Component<PolygonRegionCompone
         const frame = this.props.frame;
 
         if (this.props.selected && region.controlPoints.length >= 2) {
-            const positionImageSpace = canvasToTransformedImagePos(mouseEvent.offsetX, mouseEvent.offsetY, frame, this.props.layerWidth, this.props.layerHeight);
+            let positionImageSpace = canvasToTransformedImagePos(mouseEvent.offsetX, mouseEvent.offsetY, frame, this.props.layerWidth, this.props.layerHeight);
+            if (frame.spatialReference) {
+                positionImageSpace = transformPoint(frame.spatialTransformAST, positionImageSpace, true);
+            }
             let minDistance = Number.MAX_VALUE;
             let closestIndex = -1;
             let closestPoint: Point2D = null;
@@ -277,7 +283,8 @@ export class PolygonRegionComponent extends React.Component<PolygonRegionCompone
 
         let newAnchor = null;
         if (this.hoverIntersection && !region.locked) {
-            const anchorPositionPixelSpace = transformedImageToCanvasPos(this.hoverIntersection.x, this.hoverIntersection.y, frame, this.props.layerWidth, this.props.layerHeight);
+            const anchorPositionSecondaryImage = frame.spatialReference ? transformPoint(frame.spatialTransformAST, this.hoverIntersection, false) : this.hoverIntersection;
+            const anchorPositionPixelSpace = transformedImageToCanvasPos(anchorPositionSecondaryImage.x, anchorPositionSecondaryImage.y, frame, this.props.layerWidth, this.props.layerHeight);
             newAnchor = this.anchorNode(anchorPositionPixelSpace.x, anchorPositionPixelSpace.y, rotation);
         }
 
