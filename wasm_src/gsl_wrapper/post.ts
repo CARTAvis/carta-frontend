@@ -1,14 +1,14 @@
 declare var Module: any;
 declare var addOnPostRun: any;
 
-Module.filterBoxcar = Module.cwrap("filterBoxcar", "number", ["number", "number", "number", "number", "number"]);
-Module.filterGaussian = Module.cwrap("filterGaussian", "number", ["number", "number", "number", "number", "number", "number"]);
-Module.filterHanning = Module.cwrap("filterHanning", "number", ["number", "number", "number", "number", "number"]);
+Module.filterBoxcar = Module.cwrap("filterBoxcar", "number", ["number", "number", "number", "number"]);
+Module.filterGaussian = Module.cwrap("filterGaussian", "number", ["number", "number", "number", "number", "number"]);
+Module.filterHanning = Module.cwrap("filterHanning", "number", ["number", "number", "number", "number"]);
 Module.filterDecimation = Module.cwrap("filterDecimation", "number", ["number", "number", "number", "number", "number"]);
 Module.filterBinning = Module.cwrap("filterBinning", "number", ["number", "number", "number", "number"]);
-Module.filterSavitzkyGolay = Module.cwrap("filterSavitzkyGolay", "number", ["number", "number", "number", "number", "number", "number", "number"]);
+Module.filterSavitzkyGolay = Module.cwrap("filterSavitzkyGolay", "number", ["number", "number", "number", "number", "number", "number"]);
 
-Module.boxcarSmooth = function (endType: number, yIn: Float64Array | Float32Array, kernelSize: number) {
+Module.boxcarSmooth = function (yIn: Float64Array | Float32Array, kernelSize: number) {
     // Return empty array if arguments are invalid
     if (!yIn) {
         return new Float64Array(1);
@@ -19,7 +19,7 @@ Module.boxcarSmooth = function (endType: number, yIn: Float64Array | Float32Arra
     Module.yOut = Module._malloc(N * 8);
 
     Module.HEAPF64.set(new Float64Array(yIn), Module.yIn / 8);
-    Module.filterBoxcar(endType, Module.yIn, N, Module.yOut, kernelSize);
+    Module.filterBoxcar(Module.yIn, N, Module.yOut, kernelSize);
     const yOut = new Float64Array(Module.HEAPF64.buffer, Module.yOut, N).slice();
 
     Module._free(Module.yIn);
@@ -27,7 +27,7 @@ Module.boxcarSmooth = function (endType: number, yIn: Float64Array | Float32Arra
     return yOut;
 };
 
-Module.gaussianSmooth = function (endType: number, yIn: Float64Array | Float32Array, kernelSize: number, alpha: number) {
+Module.gaussianSmooth = function (yIn: Float64Array | Float32Array, kernelSize: number, alpha: number) {
     // Return empty array if arguments are invalid
     if (!yIn) {
         return new Float64Array(1);
@@ -38,7 +38,7 @@ Module.gaussianSmooth = function (endType: number, yIn: Float64Array | Float32Ar
     Module.yOut = Module._malloc(N * 8);
 
     Module.HEAPF64.set(new Float64Array(yIn), Module.yIn / 8);
-    Module.filterGaussian(endType, Module.yIn, N, Module.yOut, kernelSize, alpha);
+    Module.filterGaussian(Module.yIn, N, Module.yOut, kernelSize, alpha);
     const yOut = new Float64Array(Module.HEAPF64.buffer, Module.yOut, N).slice();
 
     Module._free(Module.yIn);
@@ -46,7 +46,7 @@ Module.gaussianSmooth = function (endType: number, yIn: Float64Array | Float32Ar
     return yOut;
 };
 
-Module.hanningSmooth = function (endType: number, yIn: Float64Array | Float32Array, kernelSize: number) {
+Module.hanningSmooth = function (yIn: Float64Array | Float32Array, kernelSize: number) {
     if (!yIn) {
         return new Float64Array(1);
     }
@@ -56,7 +56,7 @@ Module.hanningSmooth = function (endType: number, yIn: Float64Array | Float32Arr
     Module.yOut = Module._malloc(N * 8);
 
     Module.HEAPF64.set(new Float64Array(yIn), Module.yIn / 8);
-    Module.filterHanning(endType, Module.yIn, N, Module.yOut, kernelSize);
+    Module.filterHanning(Module.yIn, N, Module.yOut, kernelSize);
     const yOut = new Float64Array(Module.HEAPF64.buffer, Module.yOut, N).slice();
 
     Module._free(Module.yIn);
@@ -108,7 +108,7 @@ Module.binning = function (input: Float64Array | Float32Array, binWidth: number)
     return output;
 };
 
-Module.savitzkyGolaySmooth = function (endType: number, xIn: Float64Array | Float32Array, yIn: Float64Array | Float32Array, kernelSize: number, order: number) {
+Module.savitzkyGolaySmooth = function (xIn: Float64Array | Float32Array, yIn: Float64Array | Float32Array, kernelSize: number, order: number) {
     if (!xIn || !yIn || order >= kernelSize) {
         return new Float64Array(1);
     }
@@ -120,7 +120,7 @@ Module.savitzkyGolaySmooth = function (endType: number, xIn: Float64Array | Floa
 
     Module.HEAPF64.set(new Float64Array(xIn), Module.xIn / 8);
     Module.HEAPF64.set(new Float64Array(yIn), Module.yIn / 8);
-    Module.filterSavitzkyGolay(endType, Module.xIn, Module.yIn, N, Module.yOut, kernelSize, order);
+    Module.filterSavitzkyGolay(Module.xIn, Module.yIn, N, Module.yOut, kernelSize, order);
     const yOut = new Float64Array(Module.HEAPF64.buffer, Module.yOut, N).slice();
 
     Module._free(Module.xIn);

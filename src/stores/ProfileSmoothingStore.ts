@@ -1,12 +1,11 @@
 import {action, computed, observable} from "mobx";
 import {Colors} from "@blueprintjs/core";
-import {PlotType, SmoothingType, SmoothingEndType, LineSettings} from "components/Shared";
+import {PlotType, SmoothingType, LineSettings} from "components/Shared";
 import {Point2D} from "models";
 import * as GSL from "gsl_wrapper";
 
 export class ProfileSmoothingStore {
     @observable type: SmoothingType;
-    @observable endType: number;
     @observable lineColor: { colorHex: string, fixed: boolean };
     @observable selectedLine: string;
     @observable lineType: PlotType;
@@ -24,7 +23,6 @@ export class ProfileSmoothingStore {
 
     constructor() {
         this.type = SmoothingType.NONE;
-        this.endType = SmoothingEndType.NONE;
         this.lineColor = { colorHex: Colors.ORANGE2, fixed: false };
         this.lineType = PlotType.STEPS;
         this.lineWidth = 1;
@@ -42,10 +40,6 @@ export class ProfileSmoothingStore {
 
     @action setType = (val: SmoothingType) => {
         this.type = val;
-    }
-
-    @action setEndType = (val: SmoothingEndType) => {
-        this.endType = val;
     }
 
     @action setLineColor = (colorHex: string, fixed: boolean) => {
@@ -176,30 +170,30 @@ export class ProfileSmoothingStore {
             if ((xMinIndex || xMaxIndex === 0) && xMaxIndex) {
                 const indexes = this.getLocalStartEndIndexes(x.length, xMinIndex, xMaxIndex, this.boxcarSize);
                 const localYs = y.subarray(indexes.startSmoothing, indexes.endSmoothing + 1);
-                smoothingYs = GSL.boxcarSmooth(this.endType, localYs, this.boxcarSize).subarray(indexes.smoothedStart, indexes.smoothedEnd + 1);
+                smoothingYs = GSL.boxcarSmooth(localYs, this.boxcarSize).subarray(indexes.smoothedStart, indexes.smoothedEnd + 1);
                 smoothingXs = x.slice(xMinIndex, xMaxIndex + 1);
             } else {
-                smoothingYs = GSL.boxcarSmooth(this.endType, y, this.boxcarSize);
+                smoothingYs = GSL.boxcarSmooth(y, this.boxcarSize);
             }
         } else if (this.type === SmoothingType.GAUSSIAN) {
             if (this.gaussianSigma && this.gaussianSigma >= 1) {
                 if ((xMinIndex || xMaxIndex === 0) && xMaxIndex) {
                     const indexes = this.getLocalStartEndIndexes(x.length, xMinIndex, xMaxIndex, this.gaussianKernel);
                     const localYs = y.subarray(indexes.startSmoothing, indexes.endSmoothing + 1);
-                    smoothingYs = GSL.gaussianSmooth(this.endType, localYs, this.gaussianKernel, this.gaussianAlpha).subarray(indexes.smoothedStart, indexes.smoothedEnd + 1);
+                    smoothingYs = GSL.gaussianSmooth(localYs, this.gaussianKernel, this.gaussianAlpha).subarray(indexes.smoothedStart, indexes.smoothedEnd + 1);
                     smoothingXs = x.slice(xMinIndex, xMaxIndex + 1);
                 } else {
-                    smoothingYs = GSL.gaussianSmooth(this.endType, y, this.gaussianKernel, this.gaussianAlpha);
+                    smoothingYs = GSL.gaussianSmooth(y, this.gaussianKernel, this.gaussianAlpha);
                 }
             }
         } else if (this.type === SmoothingType.HANNING) {
             if ((xMinIndex || xMaxIndex === 0) && xMaxIndex) {
                 const indexes = this.getLocalStartEndIndexes(x.length, xMinIndex, xMaxIndex, this.hanningSize);
                 const localYs = y.subarray(indexes.startSmoothing, indexes.endSmoothing + 1);
-                smoothingYs = GSL.hanningSmooth(this.endType, localYs, this.hanningSize).subarray(indexes.smoothedStart, indexes.smoothedEnd + 1);
+                smoothingYs = GSL.hanningSmooth(localYs, this.hanningSize).subarray(indexes.smoothedStart, indexes.smoothedEnd + 1);
                 smoothingXs = x.slice(xMinIndex, xMaxIndex + 1);
             } else {
-                smoothingYs = GSL.hanningSmooth(this.endType, y, this.hanningSize);
+                smoothingYs = GSL.hanningSmooth(y, this.hanningSize);
             }
         } else if (this.type === SmoothingType.DECIMATION) {
             if ((xMinIndex || xMaxIndex === 0) && xMaxIndex) {
@@ -229,10 +223,10 @@ export class ProfileSmoothingStore {
             if ((xMinIndex || xMaxIndex === 0) && xMaxIndex) {
                 const indexes = this.getLocalStartEndIndexes(x.length, xMinIndex, xMaxIndex, this.savitzkyGolaySize);
                 const localYs = y.subarray(indexes.startSmoothing, indexes.endSmoothing + 1);
-                smoothingYs = GSL.savitzkyGolaySmooth(this.endType, x, localYs, this.savitzkyGolaySize, this.savitzkyGolayOrder).subarray(indexes.smoothedStart, indexes.smoothedEnd + 1);
+                smoothingYs = GSL.savitzkyGolaySmooth(x, localYs, this.savitzkyGolaySize, this.savitzkyGolayOrder).subarray(indexes.smoothedStart, indexes.smoothedEnd + 1);
                 smoothingXs = x.slice(xMinIndex, xMaxIndex + 1);
             } else {
-                smoothingYs = GSL.savitzkyGolaySmooth(this.endType, x, y, this.savitzkyGolaySize, this.savitzkyGolayOrder);
+                smoothingYs = GSL.savitzkyGolaySmooth(x, y, this.savitzkyGolaySize, this.savitzkyGolayOrder);
             }
         }
         return {x: smoothingXs, y: smoothingYs};
