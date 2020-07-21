@@ -304,7 +304,8 @@ export class FrameStore {
             const deltaHeader = this.frameInfo.fileInfoExtended.headerEntries.find(entry => entry.name.indexOf(`CDELT${this.spectralAxis.dimension}`) !== -1);
 
             if (refPixHeader && refValHeader && deltaHeader) {
-                const refPix = getHeaderNumericValue(refPixHeader);
+                // Shift pixel coordinates by -1 to start at zero instead of 1
+                const refPix = getHeaderNumericValue(refPixHeader) - 1;
                 const refVal = getHeaderNumericValue(refValHeader);
                 const delta = getHeaderNumericValue(deltaHeader);
                 if (isFinite(refPix) && isFinite(refVal) && isFinite(delta)) {
