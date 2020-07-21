@@ -39,7 +39,7 @@ export const getImageCanvas = (padding: Padding, backgroundColor: string = "rgba
         regionCanvas = regionQuery[0] as HTMLCanvasElement;
     }
 
-    const catalogQuery = $(".catalog-plotly").children().children().children(".gl-container").children(".gl-canvas-context");
+    const catalogQuery = $(".catalog-plotly")?.children()?.children()?.children(".gl-container")?.children(".gl-canvas-context");
     if (catalogQuery && catalogQuery.length) {
         catalogCanvas = catalogQuery[0] as HTMLCanvasElement;
     }
