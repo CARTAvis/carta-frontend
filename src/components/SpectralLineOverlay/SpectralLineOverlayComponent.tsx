@@ -15,6 +15,7 @@ enum HeaderTableColumnName {
     Display = "Display"
 }
 
+const KEYCODE_ENTER = 13;
 const MINIMUM_WIDTH = 450;
 
 @observer
@@ -68,6 +69,24 @@ export class SpectralLineOverlayComponent extends React.Component<WidgetProps> {
         if (this.resultTableRef) {
             this.updateTableSize(this.resultTableRef, this.props.docked);
         }
+    };
+
+    private handleRedshiftChange = (ev) => {
+        if (ev.type === "keydown" && ev.keyCode !== KEYCODE_ENTER) {
+            return;
+        }
+        const valueString = ev.currentTarget.value;
+        const value = parseInt(valueString);
+        const existingValue = this.widgetStore.redshiftInput;
+        if (isFinite(value) && value !== existingValue) {
+            if ((this.widgetStore.redshiftType === RedshiftType.V && value >= 0) ||
+                this.widgetStore.redshiftType === RedshiftType.Z) {
+                this.widgetStore.setRedshiftInput(value);
+                return;
+            }
+        }
+
+        ev.currentTarget.value = existingValue;
     };
 
     @action setHeaderTableColumnWidts(vals: Array<number>) {
@@ -262,7 +281,8 @@ export class SpectralLineOverlayComponent extends React.Component<WidgetProps> {
                     <SafeNumericInput
                         value={widgetStore.redshiftInput}
                         buttonPosition="none"
-                        onValueChange={val => widgetStore.setRedshiftInput(val)}
+                        onBlur={this.handleRedshiftChange}
+                        onKeyDown={this.handleRedshiftChange}
                     />
                 </FormGroup>
             </div>
