@@ -537,16 +537,16 @@ export class FrameStore {
                     let val = getHeaderNumericValue(crvalHeader) + (i + 1 - getHeaderNumericValue(crpixHeader)) * getHeaderNumericValue(cdeltHeader);
                     switch (val) {
                         case 1:
-                            stokesInfo.push("Iz");
+                            stokesInfo.push("I");
                             break;
                         case 2:
-                            stokesInfo.push("Qz");
+                            stokesInfo.push("Q");
                             break;
                         case 3:
-                            stokesInfo.push("Uz");
+                            stokesInfo.push("U");
                             break;
                         case 4:
-                            stokesInfo.push("Vz");
+                            stokesInfo.push("V");
                             break;
                         default:
                             break;
