@@ -221,7 +221,7 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
                         disabled={appStore.animatorStore.animationState === AnimationState.PLAYING}
                         checked={appStore.animatorStore.animationMode === AnimationMode.FRAME}
                         onChange={this.onAnimationModeChanged}
-                        label="Frame"
+                        label="Image"
                     />
                     {hideSliders &&
                     <SafeNumericInput

@@ -1,6 +1,6 @@
 import * as React from "react";
 import {observer} from "mobx-react";
-import {Button, ButtonGroup, Tooltip} from "@blueprintjs/core";
+import {Button, ButtonGroup, Icon, Tooltip} from "@blueprintjs/core";
 import {AppStore, DialogStore, WidgetConfig} from "stores";
 import {
     AnimatorComponent, 
@@ -51,7 +51,10 @@ export class ToolbarMenuComponent extends React.Component {
             <React.Fragment>
                 <ButtonGroup className={className}>
                     <Tooltip content={<span>Region List Widget{commonTooltip}</span>}>
-                        <Button icon={"th-list"} id="regionListButton" onClick={appStore.widgetsStore.createFloatingRegionListWidget}/>
+                        <Button id="regionListButton" className={"regionList-button"} onClick={appStore.widgetsStore.createFloatingRegionListWidget}>
+                            <Icon iconSize={12} icon="list"/>
+                            r
+                        </Button>
                     </Tooltip>
                     <Tooltip content={<span>Log Widget{commonTooltip}</span>}>
                         <Button icon={"application"} id="logButton" onClick={appStore.widgetsStore.createFloatingLogWidget}/>
@@ -83,7 +86,7 @@ export class ToolbarMenuComponent extends React.Component {
                             &nbsp;s
                         </Button>
                     </Tooltip>
-                    <Tooltip content={<span>Layer List Widget{commonTooltip}</span>}>
+                    <Tooltip content={<span>Image List Widget{commonTooltip}</span>}>
                         <Button icon={"layers"} id="layerListButton" onClick={appStore.widgetsStore.createFloatingLayerListWidget}/>
                     </Tooltip>
                     <Tooltip content={<span>Catalog Widget{commonTooltip}</span>}>
@@ -91,11 +94,11 @@ export class ToolbarMenuComponent extends React.Component {
                     </Tooltip>
                 </ButtonGroup>
                 <ButtonGroup className={dialogClassName}>
-                    <Tooltip content={<span>File Info</span>}>
-                        <Button icon={"info-sign"} onClick={dialogStore.showFileInfoDialog} className={dialogStore.fileInfoDialogVisible ? "bp3-active" : ""}/>
+                    <Tooltip content={<span>File Header</span>}>
+                        <Button icon={"app-header"} onClick={dialogStore.showFileInfoDialog} className={dialogStore.fileInfoDialogVisible ? "bp3-active" : ""}/>
                     </Tooltip>
-                    <Tooltip content={<span>Preference</span>}>
-                        <Button icon={"properties"} onClick={dialogStore.showPreferenceDialog} className={dialogStore.preferenceDialogVisible ? "bp3-active" : ""}/>
+                    <Tooltip content={<span>Preferences</span>}>
+                        <Button icon={"wrench"} onClick={dialogStore.showPreferenceDialog} className={dialogStore.preferenceDialogVisible ? "bp3-active" : ""}/>
                     </Tooltip>
                     <Tooltip content={<span>Overlay Settings</span>}>
                         <Button icon={"settings"} onClick={dialogStore.showOverlaySettings} className={dialogStore.overlaySettingsDialogVisible ? "bp3-active" : ""}/>

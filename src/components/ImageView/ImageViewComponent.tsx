@@ -190,11 +190,13 @@ export class ImageViewComponent extends React.Component<WidgetProps> {
                         docked={this.props.docked}
                         unit={appStore.activeFrame.unit}
                         top={overlayStore.padding.top}
+                        currentStokes={appStore.activeFrame.hasStokes ? appStore.activeFrame.stokesInfo[appStore.activeFrame.requiredStokes] : ""}
                         showImage={true}
                         showWCS={true}
                         showValue={true}
                         showChannel={false}
                         showSpectral={true}
+                        showStokes={true}
                     />
                     }
                     {appStore.activeFrame.beamProperties &&
