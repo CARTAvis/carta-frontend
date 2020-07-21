@@ -744,19 +744,13 @@ export class FrameStore {
 
             if (entry.entryType === CARTA.EntryType.STRING) {
                 value = `'${value}'`;
+            } else {
+                value = FrameStore.ShiftASTCoords(entry, value);
             }
 
             let name = entry.name;
             while (name.length < 8) {
                 name += " ";
-            }
-
-            // Shift pixel axis by 1, so that it starts at 0, rather than 1
-            if (entry.name.match(/CRPIX\d+/)) {
-                const numericValue = parseFloat(entry.value);
-                if (isFinite(numericValue)) {
-                    value = (numericValue - 1).toString();
-                }
             }
 
             let entryString = `${name}=  ${value}`;
@@ -802,19 +796,13 @@ export class FrameStore {
 
             if (entry.entryType === CARTA.EntryType.STRING) {
                 value = `'${value}'`;
+            } else {
+                value = FrameStore.ShiftASTCoords(entry, value);
             }
 
             let name = entry.name;
             while (name.length < 8) {
                 name += " ";
-            }
-
-            // Shift pixel axis by 1, so that it starts at 0, rather than 1
-            if (entry.name.match(/CRPIX\d+/)) {
-                const numericValue = parseFloat(entry.value);
-                if (isFinite(numericValue)) {
-                    value = (numericValue - 1).toString();
-                }
             }
 
             let entryString = `${name}=  ${value}`;
@@ -833,6 +821,18 @@ export class FrameStore {
         }
     };
 
+    // This function shifts the pixel axis by 1, so that it starts at 0, rather than 1
+    // For entries that are not related to the reference pixel location, the current value is returned
+    private static ShiftASTCoords = (entry: CARTA.IHeaderEntry, currentValue: string) => {
+        if (entry.name.match(/CRPIX\d+/)) {
+            const numericValue = parseFloat(entry.value);
+            if (isFinite(numericValue)) {
+                return (numericValue - 1).toString();
+            }
+        }
+        return currentValue;
+    };
+
     private initFrame = (): number => {
         if (!this.spectralAxis || !this.spectralAxis.valid) {
             return null;
@@ -849,6 +849,8 @@ export class FrameStore {
             let value = trimFitsComment(entry.value);
             if (entry.entryType === CARTA.EntryType.STRING) {
                 value = `'${value}'`;
+            } else {
+                value = FrameStore.ShiftASTCoords(entry, value);
             }
             while (name.length < 8) {
                 name += " ";
