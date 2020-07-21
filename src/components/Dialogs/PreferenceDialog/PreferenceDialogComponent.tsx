@@ -536,7 +536,7 @@ export class PreferenceDialogComponent extends React.Component {
         }
 
         const dialogProps: IDialogProps = {
-            icon: "cog",
+            icon: "wrench",
             backdropClassName: "minimal-dialog-backdrop",
             className: className,
             canOutsideClickClose: false,

@@ -75,7 +75,7 @@ export class HelpDrawerComponent extends React.Component {
                 content: <FileBrowserHelpComponent/>
         }], [
             HelpType.FILE_INFO, {
-                title: "File Info",
+                title: "File Header",
                 content: <FileInfoHelpComponent/>
         }], [
             HelpType.SAVE_LAYOUT, {
@@ -114,7 +114,7 @@ export class HelpDrawerComponent extends React.Component {
                 content: <ImageViewHelpComponent/>
         }], [
             HelpType.LAYER_LIST, {
-                title: "Layer List",
+                title: "Image List",
                 content: <LayerListHelpComponent/>
         }], [
             HelpType.LOG, {
