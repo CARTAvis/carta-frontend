@@ -714,7 +714,7 @@ export class AppStore {
     };
 
     @action updateActiveLayer = (layer: ImageViewLayer) => {
-        this.activeLayer = layer;   
+        this.activeLayer = layer;
     }
 
     public static readonly DEFAULT_STATS_TYPES = [
