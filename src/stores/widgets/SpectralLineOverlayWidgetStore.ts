@@ -112,7 +112,7 @@ export class SpectralLineOverlayWidgetStore extends RegionWidgetStore {
 
     @action setRedshiftType = (redshiftType: RedshiftType) => {
         this.redshiftType = redshiftType;
-        if (redshiftType === RedshiftType.V && this.redshiftInput < 0) {
+        if (redshiftType === RedshiftType.Z && this.redshiftInput < 0) {
             this.redshiftInput = 0;
         }
      };
