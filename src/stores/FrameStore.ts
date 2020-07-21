@@ -326,7 +326,6 @@ export class FrameStore {
                                 return null;
                             }
 
-                            // TODO: check if the -1 that was here should be have been kept
                             const index = (value - refVal) / delta + refPix;
                             if (index < 0) {
                                 return 0;
