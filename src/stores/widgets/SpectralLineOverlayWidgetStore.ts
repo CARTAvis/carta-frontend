@@ -43,10 +43,21 @@ export enum SpectralLineHeaders {
 }
 
 const SPECTRAL_LINE_DESCRIPTION = new Map<SpectralLineHeaders, string>([
-    [SpectralLineHeaders.Species, "Name of the Species"],
-    [SpectralLineHeaders.ResolvedQN, "Resolved Quantum Number"],
-    [SpectralLineHeaders.IntensityCDMS, "Intensity(for JPL/CDMS)"],
-    [SpectralLineHeaders.IntensityLovas, "Intensity(for Lovas/AST)"]
+    [SpectralLineHeaders.Species, "Chemical formula of the species"],
+    [SpectralLineHeaders.ChemicalName, "Chemical name of the species"],
+    [SpectralLineHeaders.ShiftedFrequency, "Shifted frequency according to the input velocity or redshift"],
+    [SpectralLineHeaders.RestFrequency, "Frequency at the rest frame"],
+    [SpectralLineHeaders.FreqErr, "Frequency error at the rest frame"],
+    [SpectralLineHeaders.MeasFreqMHz, "Frequency measured from laboratories"],
+    [SpectralLineHeaders.MeasFreqErr, "Frequency error measured from laboratories"],
+    [SpectralLineHeaders.ResolvedQN, "Resolved Quantum Numbers"],
+    [SpectralLineHeaders.IntensityCDMS, "log10(intensity) at 300 K"],
+    [SpectralLineHeaders.IntensityLovas, "Intensity(for Lovas/AST)"],
+    [SpectralLineHeaders.EnergyLowerCM, "Lower level energy in wave number"],
+    [SpectralLineHeaders.EnergyLowerK, "Lower level energy in K"],
+    [SpectralLineHeaders.EnergyUpperCM, "Upper level energy in wave number"],
+    [SpectralLineHeaders.EnergyUpperK, "Upper level energy in K"],
+    [SpectralLineHeaders.LineList, "Originated catalogue"]
 ]);
 
 export interface SpectralLineHeader {

@@ -76,7 +76,7 @@ export class SpectralLineOverlayComponent extends React.Component<WidgetProps> {
             return;
         }
         const valueString = ev.currentTarget.value;
-        const value = parseInt(valueString);
+        const value = parseFloat(valueString);
         const existingValue = this.widgetStore.redshiftInput;
         if (isFinite(value) && value !== existingValue) {
             if ((this.widgetStore.redshiftType === RedshiftType.Z && value >= 0) ||
