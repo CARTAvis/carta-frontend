@@ -647,16 +647,19 @@ export class AppStore {
         this.backendService.importRegion(directory, file, type, frame.frameInfo.fileId).subscribe(ack => {
             if (frame && ack.success && ack.regions) {
                 const regionMap = new Map<string, CARTA.IRegionInfo>(Object.entries(ack.regions));
+                const regionStyles = new Map<string, CARTA.IRegionStyle>(Object.entries(ack.regionStyles));
                 regionMap.forEach((regionInfo, regionIdString) => {
+                    const styleInfo = regionStyles.get(regionIdString);
+
                     frame.regionSet.addExistingRegion(
                         regionInfo.controlPoints as Point2D[],
                         regionInfo.rotation,
                         regionInfo.regionType,
                         parseInt(regionIdString),
-                        regionInfo.regionName,
-                        regionInfo.color,
-                        regionInfo.lineWidth,
-                        regionInfo.dashList
+                        styleInfo?.name,
+                        styleInfo?.color,
+                        styleInfo?.lineWidth,
+                        styleInfo?.dashList
                     );
                 });
             }
@@ -675,7 +678,16 @@ export class AppStore {
         }
 
         const regionIds = frame.regionSet.regions.map(r => r.regionId).filter(id => id !== CURSOR_REGION_ID);
-        this.backendService.exportRegion(directory, file, fileType, coordType, frame.frameInfo.fileId, regionIds).subscribe(() => {
+        const regionStyles = new Map<number, CARTA.IRegionStyle>();
+        for (const region of frame.regionSet.regions) {
+            regionStyles.set(region.regionId, {
+                name: region.name,
+                color: region.color,
+                lineWidth: region.lineWidth,
+                dashList: region.dashLength ? [region.dashLength] : []
+            });
+        }
+        this.backendService.exportRegion(directory, file, fileType, coordType, frame.frameInfo.fileId, regionStyles).subscribe(() => {
             AppToaster.show({icon: "saved", message: `Exported regions for ${frame.frameInfo.fileInfo.name} using ${coordType === CARTA.CoordinateType.WORLD ? "world" : "pixel"} coordinates`, intent: "success", timeout: 3000});
             this.fileBrowserStore.hideFileBrowser();
         }, error => {
@@ -1221,13 +1233,9 @@ export class AppStore {
 
             for (const region of frame.regionSet.regions) {
                 regions.set(region.regionId.toFixed(), {
-                    regionName: region.name,
                     regionType: region.regionType,
                     controlPoints: region.controlPoints,
                     rotation: region.rotation,
-                    color: region.color,
-                    lineWidth: region.lineWidth,
-                    dashList: region.dashLength ? [region.dashLength] : []
                 });
             }
 
