@@ -5,7 +5,7 @@ import {H5, InputGroup, NumericInput, Classes} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import {AppStore, FrameStore, RegionCoordinate, RegionStore} from "stores";
 import {Point2D, WCSPoint2D} from "models";
-import {closeTo, formattedArcsec, getFormattedWCSPoint, getPixelValueFromWCS, getValueFromArcsecString, WCS_REGEXP} from "utilities";
+import {closeTo, formattedArcsec, getFormattedWCSPoint, getPixelValueFromWCS, getValueFromArcsecString, isWCSStringFormatValid} from "utilities";
 import {CoordinateComponent} from "../CoordinateComponent/CoordinateComponent";
 import "./EllipticalRegionForm.css";
 
@@ -76,7 +76,7 @@ export class EllipticalRegionForm extends React.Component<{ region: RegionStore,
         if (wcsString === centerWCSPoint.x) {
             return;
         }
-        if (WCS_REGEXP.test(wcsString)) {
+        if (isWCSStringFormatValid(wcsString, AppStore.Instance.overlayStore.numbers.formatTypeX)) {
             const newPoint = getPixelValueFromWCS(this.props.wcsInfo, {x: wcsString, y: centerWCSPoint.y});
             const existingValue = this.props.region.controlPoints[0].x;
             if (newPoint && isFinite(newPoint.x) && !closeTo(newPoint.x, existingValue, EllipticalRegionForm.REGION_PIXEL_EPS)) {
@@ -100,7 +100,7 @@ export class EllipticalRegionForm extends React.Component<{ region: RegionStore,
         if (wcsString === centerWCSPoint.y) {
             return;
         }
-        if (WCS_REGEXP.test(wcsString)) {
+        if (isWCSStringFormatValid(wcsString, AppStore.Instance.overlayStore.numbers.formatTypeY)) {
             const newPoint = getPixelValueFromWCS(this.props.wcsInfo, {x: centerWCSPoint.x, y: wcsString});
             const existingValue = this.props.region.controlPoints[0].y;
             if (newPoint && isFinite(newPoint.y) && !closeTo(newPoint.y, existingValue, EllipticalRegionForm.REGION_PIXEL_EPS)) {

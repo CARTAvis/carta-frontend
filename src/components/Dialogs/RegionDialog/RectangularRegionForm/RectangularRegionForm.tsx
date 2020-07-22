@@ -5,7 +5,7 @@ import {H5, InputGroup, NumericInput, Classes} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import {AppStore, FrameStore, RegionCoordinate, RegionStore} from "stores";
 import {Point2D, WCSPoint2D} from "models";
-import {closeTo, formattedArcsec, getFormattedWCSPoint, getPixelValueFromWCS, getValueFromArcsecString, WCS_REGEXP} from "utilities";
+import {closeTo, formattedArcsec, getFormattedWCSPoint, getPixelValueFromWCS, getValueFromArcsecString, isWCSStringFormatValid} from "utilities";
 import {CoordinateComponent} from "../CoordinateComponent/CoordinateComponent";
 import "./RectangularRegionForm.css";
 
@@ -98,7 +98,7 @@ export class RectangularRegionForm extends React.Component<{ region: RegionStore
         if (wcsString === centerWCSPoint.x) {
             return;
         }
-        if (WCS_REGEXP.test(wcsString)) {
+        if (isWCSStringFormatValid(wcsString, AppStore.Instance.overlayStore.numbers.formatTypeX)) {
             const newPoint = getPixelValueFromWCS(this.props.wcsInfo, {x: wcsString, y: centerWCSPoint.y});
             const existingValue = this.props.region.controlPoints[0].x;
             if (newPoint && isFinite(newPoint.x) && !closeTo(newPoint.x, existingValue, RectangularRegionForm.REGION_PIXEL_EPS)) {
@@ -122,7 +122,7 @@ export class RectangularRegionForm extends React.Component<{ region: RegionStore
         if (wcsString === centerWCSPoint.y) {
             return;
         }
-        if (WCS_REGEXP.test(wcsString)) {
+        if (isWCSStringFormatValid(wcsString, AppStore.Instance.overlayStore.numbers.formatTypeY)) {
             const newPoint = getPixelValueFromWCS(this.props.wcsInfo, {x: centerWCSPoint.x, y: wcsString});
             const existingValue = this.props.region.controlPoints[0].y;
             if (newPoint && isFinite(newPoint.y) && !closeTo(newPoint.y, existingValue, RectangularRegionForm.REGION_PIXEL_EPS)) {
@@ -247,7 +247,7 @@ export class RectangularRegionForm extends React.Component<{ region: RegionStore
         if (wcsString === bottomLeftWCSPoint.x) {
             return;
         }
-        if (WCS_REGEXP.test(wcsString)) {
+        if (isWCSStringFormatValid(wcsString, AppStore.Instance.overlayStore.numbers.formatTypeX)) {
             const newPoint = getPixelValueFromWCS(this.props.wcsInfo, {x: wcsString, y: bottomLeftWCSPoint.y});
             const value = newPoint.x;
             const existingValue = this.bottomLeftPoint.x;
@@ -298,7 +298,7 @@ export class RectangularRegionForm extends React.Component<{ region: RegionStore
         if (wcsString === bottomLeftWCSPoint.y) {
             return;
         }
-        if (WCS_REGEXP.test(wcsString)) {
+        if (isWCSStringFormatValid(wcsString, AppStore.Instance.overlayStore.numbers.formatTypeY)) {
             const newPoint = getPixelValueFromWCS(this.props.wcsInfo, {x: bottomLeftWCSPoint.x, y: wcsString});
             const value = newPoint.y;
             const existingValue = this.bottomLeftPoint.y;
@@ -349,7 +349,7 @@ export class RectangularRegionForm extends React.Component<{ region: RegionStore
         if (wcsString === topRightWCSPoint.x) {
             return;
         }
-        if (WCS_REGEXP.test(wcsString)) {
+        if (isWCSStringFormatValid(wcsString, AppStore.Instance.overlayStore.numbers.formatTypeX)) {
             const newPoint = getPixelValueFromWCS(this.props.wcsInfo, {x: wcsString, y: topRightWCSPoint.y});
             const value = newPoint.x;
             const existingValue = this.topRightPoint.x;
@@ -400,7 +400,7 @@ export class RectangularRegionForm extends React.Component<{ region: RegionStore
         if (wcsString === topRightWCSPoint.y) {
             return;
         }
-        if (WCS_REGEXP.test(wcsString)) {
+        if (isWCSStringFormatValid(wcsString, AppStore.Instance.overlayStore.numbers.formatTypeY)) {
             const newPoint = getPixelValueFromWCS(this.props.wcsInfo, {x: topRightWCSPoint.x, y: wcsString});
             const value = newPoint.y;
             const existingValue = this.topRightPoint.y;

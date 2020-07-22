@@ -4,7 +4,7 @@ import {H5, InputGroup, NumericInput, Classes} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import {AppStore, RegionCoordinate, RegionStore} from "stores";
 import {Point2D, WCSPoint2D} from "models";
-import {closeTo, getFormattedWCSPoint, getPixelValueFromWCS, WCS_REGEXP} from "utilities";
+import {closeTo, getFormattedWCSPoint, getPixelValueFromWCS, isWCSStringFormatValid} from "utilities";
 import {CoordinateComponent} from "../CoordinateComponent/CoordinateComponent";
 import "./PointRegionForm.css";
 
@@ -62,7 +62,7 @@ export class PointRegionForm extends React.Component<{ region: RegionStore, wcsI
         if (wcsString === centerWCSPoint.x) {
             return;
         }
-        if (WCS_REGEXP.test(wcsString)) {
+        if (isWCSStringFormatValid(wcsString, AppStore.Instance.overlayStore.numbers.formatTypeX)) {
             const newPoint = getPixelValueFromWCS(this.props.wcsInfo, {x: wcsString, y: centerWCSPoint.y});
             const existingValue = this.props.region.controlPoints[0].x;
             if (newPoint && isFinite(newPoint.x) && !closeTo(newPoint.x, existingValue, PointRegionForm.REGION_PIXEL_EPS)) {
@@ -86,7 +86,7 @@ export class PointRegionForm extends React.Component<{ region: RegionStore, wcsI
         if (wcsString === centerWCSPoint.y) {
             return;
         }
-        if (WCS_REGEXP.test(wcsString)) {
+        if (isWCSStringFormatValid(wcsString, AppStore.Instance.overlayStore.numbers.formatTypeY)) {
             const newPoint = getPixelValueFromWCS(this.props.wcsInfo, {x: centerWCSPoint.x, y: wcsString});
             const existingValue = this.props.region.controlPoints[0].y;
             if (newPoint && isFinite(newPoint.y) && !closeTo(newPoint.y, existingValue, PointRegionForm.REGION_PIXEL_EPS)) {

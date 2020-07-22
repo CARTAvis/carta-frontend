@@ -5,7 +5,7 @@ import {H5, InputGroup, NumericInput, Classes} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import {AppStore, RegionCoordinate, RegionStore} from "stores";
 import {Point2D, WCSPoint2D} from "models";
-import {closeTo, getFormattedWCSPoint, getPixelValueFromWCS, WCS_REGEXP} from "utilities";
+import {closeTo, getFormattedWCSPoint, getPixelValueFromWCS, isWCSStringFormatValid} from "utilities";
 import {CoordinateComponent} from "../CoordinateComponent/CoordinateComponent";
 import "./PolygonRegionForm.css";
 
@@ -58,7 +58,7 @@ export class PolygonRegionForm extends React.Component<{ region: RegionStore, wc
         if (wcsString === (isXCoordinate ? pointWCS.x : pointWCS.y)) {
             return;
         }
-        if (WCS_REGEXP.test(wcsString)) {
+        if (isWCSStringFormatValid(wcsString, isXCoordinate ? AppStore.Instance.overlayStore.numbers.formatTypeX : AppStore.Instance.overlayStore.numbers.formatTypeY)) {
             const newPoint = getPixelValueFromWCS(this.props.wcsInfo, isXCoordinate ? {x: wcsString, y: pointWCS.y} : {x: pointWCS.x, y: wcsString});
             if (!newPoint) {
                 return;

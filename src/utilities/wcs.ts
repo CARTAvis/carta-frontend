@@ -1,9 +1,17 @@
 import {CARTA} from "carta-protobuf";
 import * as AST from "ast_wrapper";
 import {Point2D, WCSPoint2D, SpectralType} from "models";
+import {NumberFormatType} from "stores";
 import {add2D, subtract2D} from "./math2d";
 
-export const WCS_REGEXP = /^\-?\d+\:\d+\:\d+(\.\d+)?$/;
+export function isWCSStringFormatValid(wcsString: string, format: NumberFormatType): boolean {
+    if (!wcsString || !format) {
+        return false;
+    }
+    const decimalRegExp = /^\-?\d+(\.\d+)?$/;
+    const sexagesimalRegExp = /^\-?\d+\:\d+\:\d+(\.\d+)?$/; // h:m:s or d:m:s
+    return format === NumberFormatType.Degrees ? decimalRegExp.test(wcsString) : sexagesimalRegExp.test(wcsString);
+}
 
 export function getHeaderNumericValue(headerEntry: CARTA.IHeaderEntry): number {
     if (!headerEntry) {
@@ -21,6 +29,7 @@ export function getTransformedCoordinates(astTransform: number, point: Point2D, 
     return AST.transformPoint(astTransform, point.x, point.y, forward);
 }
 
+// TODO: possibly move to region class since they are the only callers
 export function getFormattedWCSPoint(astTransform: number, pixelCoords: Point2D, addPixelOffset: boolean = true): WCSPoint2D {
     if (addPixelOffset) {
         pixelCoords = add2D(pixelCoords, {x: 1, y: 1});
