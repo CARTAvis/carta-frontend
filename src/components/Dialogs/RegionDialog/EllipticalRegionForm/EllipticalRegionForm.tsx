@@ -203,7 +203,7 @@ export class EllipticalRegionForm extends React.Component<{ region: RegionStore,
     };
 
     public render() {
-        // dummy variable related wcs to trigger re-render
+        // dummy variables related to wcs to trigger re-render
         const system = AppStore.Instance.overlayStore.global.explicitSystem;
         const formatX = AppStore.Instance.overlayStore.numbers.formatStringX;
         const formatY = AppStore.Instance.overlayStore.numbers.formatStringY;
