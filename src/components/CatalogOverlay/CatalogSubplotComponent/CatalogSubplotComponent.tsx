@@ -487,6 +487,7 @@ export class CatalogSubplotComponent extends React.Component<WidgetProps> {
                             onValueChanged={val => this.onBinWidthChange(val)}
                             onValueCleared={() => widgetStore.setnBinx(widgetStore.initnBinx)}
                             displayExponential={false}
+                            updateValueOnKeyDown={true}
                             disabled={disabled}
                         />
                     }

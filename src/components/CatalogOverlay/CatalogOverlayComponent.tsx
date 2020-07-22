@@ -867,6 +867,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
                             onValueChanged={val => this.onMaxRowsChange(val)}
                             onValueCleared={() => widgetStore.setMaxRows(widgetStore.catalogInfo.dataSize)}
                             displayExponential={false}
+                            updateValueOnKeyDown={true}
                             disabled={widgetStore.loadOntoImage}
                         />
                         <Tooltip content={"Apply filter"}>
