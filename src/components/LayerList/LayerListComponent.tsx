@@ -23,7 +23,7 @@ export class LayerListComponent extends React.Component<WidgetProps> {
             minHeight: 180,
             defaultWidth: 650,
             defaultHeight: 180,
-            title: "Layer List",
+            title: "Image List",
             isCloseable: true,
             helpType: HelpType.LAYER_LIST
         };
@@ -99,11 +99,11 @@ export class LayerListComponent extends React.Component<WidgetProps> {
         return (
             <Cell className={rowIndex === appStore.activeFrameIndex ? "active-row-cell" : ""}>
                 <React.Fragment>
-                    <Tooltip position={"bottom"} content={<span>Raster image<br/><i><small>Click to {frame.renderConfig.visible ? "hide" : "show"}</small></i></span>}>
+                    <Tooltip position={"bottom"} content={<span>Raster layer<br/><i><small>Click to {frame.renderConfig.visible ? "hide" : "show"}</small></i></span>}>
                         <AnchorButton minimal={true} small={true} active={frame.renderConfig.visible} intent={frame.renderConfig.visible ? "success" : "none"} onClick={frame.renderConfig.toggleVisibility}>R</AnchorButton>
                     </Tooltip>
                     {frame.contourConfig.enabled &&
-                    <Tooltip position={"bottom"} content={<span>Contour image<br/><i><small>Click to {frame.contourConfig.visible ? "hide" : "show"}</small></i></span>}>
+                    <Tooltip position={"bottom"} content={<span>Contour layer<br/><i><small>Click to {frame.contourConfig.visible ? "hide" : "show"}</small></i></span>}>
                         <AnchorButton minimal={true} small={true} active={frame.contourConfig.visible} intent={frame.contourConfig.visible ? "success" : "none"} onClick={frame.contourConfig.toggleVisibility}>C</AnchorButton>
                     </Tooltip>
                     }
@@ -182,10 +182,10 @@ export class LayerListComponent extends React.Component<WidgetProps> {
         let name: string;
         switch (columnIndex) {
             case 0:
-                name = "File name";
+                name = "Image";
                 break;
             case 1:
-                name = "Type";
+                name = "Layers";
                 break;
             case 2:
                 name = "Matching";

@@ -151,7 +151,7 @@ export class FileBrowserDialogComponent extends React.Component {
         if (browserMode === BrowserMode.File) {
             if (appending) {
                 return (
-                    <Tooltip content={"Append this file as a new frame"}>
+                    <Tooltip content={"Append this image while keeping other images open"}>
                         <AnchorButton
                             intent={Intent.PRIMARY}
                             disabled={appStore.fileLoading || !fileBrowserStore.selectedFile || !fileBrowserStore.fileInfoResp || fileBrowserStore.loadingInfo}
@@ -161,7 +161,7 @@ export class FileBrowserDialogComponent extends React.Component {
                     </Tooltip>);
             } else {
                 return (
-                    <Tooltip content={"Close any existing frames and load this file"}>
+                    <Tooltip content={"Close any existing images and load this image"}>
                         <AnchorButton
                             intent={Intent.PRIMARY}
                             disabled={appStore.fileLoading || !fileBrowserStore.selectedFile || !fileBrowserStore.fileInfoResp || fileBrowserStore.loadingInfo}
@@ -173,7 +173,7 @@ export class FileBrowserDialogComponent extends React.Component {
             }
         } else if (browserMode === BrowserMode.RegionImport) {
             return (
-                <Tooltip content={"Load a region file for the currently active frame"}>
+                <Tooltip content={"Load a region file for the currently active image"}>
                     <AnchorButton
                         intent={Intent.PRIMARY}
                         disabled={appStore.fileLoading || !fileBrowserStore.selectedFile || !fileBrowserStore.fileInfoResp || fileBrowserStore.loadingInfo || !appStore.activeFrame}
@@ -184,7 +184,7 @@ export class FileBrowserDialogComponent extends React.Component {
             );
         } else if (browserMode === BrowserMode.Catalog) {
             return (
-                <Tooltip content={"Load a catalog file for the currently active frame"}>
+                <Tooltip content={"Load a catalog file for the currently active image"}>
                     <AnchorButton
                         intent={Intent.PRIMARY}
                         disabled={appStore.fileLoading || !fileBrowserStore.selectedFile || !fileBrowserStore.fileInfoResp || fileBrowserStore.loadingInfo || !appStore.activeFrame}
@@ -196,7 +196,7 @@ export class FileBrowserDialogComponent extends React.Component {
         } else {
             const frame = appStore.activeFrame;
             return (
-                <Tooltip content={"Export all regions for the currently active frame"}>
+                <Tooltip content={"Export all regions for the currently active image"}>
                     <AnchorButton
                         intent={Intent.PRIMARY}
                         disabled={!FileBrowserDialogComponent.ValidateFilename(fileBrowserStore.exportFilename) || !frame || frame.regionSet.regions.length <= 1}

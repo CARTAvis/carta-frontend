@@ -85,7 +85,7 @@ export class DialogStore {
 
     // File Info
     @observable fileInfoDialogVisible: boolean = false;
-    @observable selectedFileInfoDialogTab: TabId = FileInfoType.IMAGE_FILE;
+    @observable selectedFileInfoDialogTab: TabId = FileInfoType.IMAGE_HEADER;
     @action showFileInfoDialog = () => {
         this.fileInfoDialogVisible = true;
     };

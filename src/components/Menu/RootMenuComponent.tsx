@@ -96,7 +96,7 @@ export class RootMenuComponent extends React.Component {
                 />
                 <Menu.Divider/>
                 <Menu.Item
-                    text="Append catalog"
+                    text="Import catalog"
                     label={`${modString}C`}
                     disabled={connectionStatus !== ConnectionStatus.ACTIVE || !appStore.activeFrame || appStore.fileLoading}
                     onClick={() => appStore.fileBrowserStore.showFileBrowser(BrowserMode.Catalog, false)}
@@ -133,25 +133,23 @@ export class RootMenuComponent extends React.Component {
 
         const viewMenu = (
             <Menu>
-                <Menu.Item text="Interface" icon={"control"}>
+                <Menu.Item text="Theme" icon={"media"}>
                     <Menu.Item text="Automatic" icon={"contrast"} onClick={appStore.setAutoTheme}/>
                     <Menu.Item text="Light" icon={"flash"} onClick={appStore.setLightTheme}/>
                     <Menu.Item text="Dark" icon={"moon"} onClick={appStore.setDarkTheme}/>
                 </Menu.Item>
-                <Menu.Item text="Overlay" icon={"widget"}>
-                    <Menu.Item text="Customize..." icon={"settings"} onClick={appStore.dialogStore.showOverlaySettings}/>
-                </Menu.Item>
+                <Menu.Item text="Overlay Settings" icon={"settings"} onClick={appStore.dialogStore.showOverlaySettings}/>
                 {layerItems.length > 0 &&
-                <Menu.Item text="Frames" icon={"layers"}>
+                <Menu.Item text="Images" icon={"multi-select"}>
                     {layerItems}
                     <Menu.Divider/>
-                    <Menu.Item text="Previous frame" icon={"chevron-backward"} disabled={layerItems.length < 2} onClick={appStore.prevFrame}/>
-                    <Menu.Item text="Next frame" icon={"chevron-forward"} disabled={layerItems.length < 2} onClick={appStore.nextFrame}/>
+                    <Menu.Item text="Previous image" icon={"step-backward"} disabled={layerItems.length < 2} onClick={appStore.prevFrame}/>
+                    <Menu.Item text="Next image" icon={"step-forward"} disabled={layerItems.length < 2} onClick={appStore.nextFrame}/>
                 </Menu.Item>
                 }
                 <Menu.Item
-                    text="File info"
-                    icon={"info-sign"}
+                    text="File header"
+                    icon={"app-header"}
                     disabled={!appStore.activeFrame}
                     onClick={appStore.dialogStore.showFileInfoDialog}
                 />
@@ -166,6 +164,21 @@ export class RootMenuComponent extends React.Component {
         const presetLayouts: string[] = PresetLayout.PRESETS;
         const layoutStore = appStore.layoutStore;
         const userLayouts: string[] = layoutStore.userLayouts;
+        const regionListIcon = (
+            <Tag icon={<Icon iconSize={12} icon="list"/>} className={"region-list-icon-button"}>
+                &nbsp;R
+            </Tag>
+        );
+        const spatialProfilerIcon = (
+            <Tag icon={"pulse"} className={"stokes-icon-button"}>
+                &nbsp;xy
+            </Tag>
+        );
+        const spectralProfiler = (
+            <Tag icon={"pulse"} className={"stokes-icon-button"}>
+                &nbsp;z
+            </Tag>
+        );
         const stokesIcon = (
             <Tag icon={"pulse"} className={"stokes-icon-button"}>
                 &nbsp;s
@@ -173,7 +186,7 @@ export class RootMenuComponent extends React.Component {
         );
         const layoutMenu = (
             <Menu className="layout-menu">
-                <Menu.Item text="Layouts" icon={"layout-grid"} disabled={layoutStore.supportsServer && connectionStatus !== ConnectionStatus.ACTIVE}>
+                <Menu.Item text="Layouts" icon={"page-layout"} disabled={layoutStore.supportsServer && connectionStatus !== ConnectionStatus.ACTIVE}>
                     <Menu.Item text="Existing Layouts" disabled={!presetLayouts && !userLayouts}>
                         <Menu.Item text="Presets" disabled={!presetLayouts || presetLayouts.length <= 0}>
                             {presetLayouts && presetLayouts.length > 0 && presetLayouts.map((value) =>
@@ -211,13 +224,13 @@ export class RootMenuComponent extends React.Component {
                         )}
                     </Menu.Item>
                 </Menu.Item>
-                <Menu.Item text="Info Panels" icon={"info-sign"}>
-                    <Menu.Item text="Region List" onClick={appStore.widgetsStore.createFloatingRegionListWidget}/>
-                    <Menu.Item text="Program Log" onClick={appStore.widgetsStore.createFloatingLogWidget}/>
+                <Menu.Item text="Info Panels" icon={"panel-stats"}>
+                    <Menu.Item className={stokesClassName} text="Region List" icon={regionListIcon} onClick={appStore.widgetsStore.createFloatingRegionListWidget}/>
+                    <Menu.Item text="Program Log" icon={"application"} onClick={appStore.widgetsStore.createFloatingLogWidget}/>
                 </Menu.Item>
-                <Menu.Item text="Profiles" icon={"timeline-line-chart"}>
-                    <Menu.Item text="Spatial Profiler" onClick={appStore.widgetsStore.createFloatingSpatialProfilerWidget}/>
-                    <Menu.Item text="Spectral Profiler" onClick={appStore.widgetsStore.createFloatingSpectralProfilerWidget}/>
+                <Menu.Item text="Profiles" icon={"pulse"}>
+                    <Menu.Item className={stokesClassName} text="Spatial Profiler" icon={spatialProfilerIcon} onClick={appStore.widgetsStore.createFloatingSpatialProfilerWidget}/>
+                    <Menu.Item className={stokesClassName} text="Spectral Profiler" icon={spectralProfiler} onClick={appStore.widgetsStore.createFloatingSpectralProfilerWidget}/>
                 </Menu.Item>
                 <Menu.Item text="Statistics" icon={"calculator"} onClick={appStore.widgetsStore.createFloatingStatsWidget}/>
                 <Menu.Item text="Histogram" icon={"timeline-bar-chart"} onClick={appStore.widgetsStore.createFloatingHistogramWidget}/>
@@ -229,8 +242,8 @@ export class RootMenuComponent extends React.Component {
 
         const helpMenu = (
             <Menu>
-                <Menu.Item text="Online Manual" icon={"help"} onClick={this.handleDocumentationClicked}/>
-                <Menu.Item text="Controls and Shortcuts" label={"Shift + ?"} onClick={appStore.dialogStore.showHotkeyDialog}/>
+                <Menu.Item text="Online Manual" icon={"manual"} onClick={this.handleDocumentationClicked}/>
+                <Menu.Item text="Controls and Shortcuts" icon={"key-control"} label={"Shift + ?"} onClick={appStore.dialogStore.showHotkeyDialog}/>
                 <Menu.Item text="Debug Execution" icon={"console"} onClick={appStore.dialogStore.showDebugExecutionDialog}/>
                 <Menu.Item text="About" icon={"info-sign"} onClick={appStore.dialogStore.showAboutDialog}/>
             </Menu>

@@ -18,14 +18,14 @@ export class FileInfoDialogComponent extends React.Component {
         }
 
         const dialogProps: IDialogProps = {
-            icon: "info-sign",
+            icon: "app-header",
             className: className,
             backdropClassName: "minimal-dialog-backdrop",
             canOutsideClickClose: false,
             lazy: true,
             isOpen: appStore.dialogStore.fileInfoDialogVisible,
             onClose: appStore.dialogStore.hideFileInfoDialog,
-            title: "File Info",
+            title: "File Header",
         };
 
         return (
