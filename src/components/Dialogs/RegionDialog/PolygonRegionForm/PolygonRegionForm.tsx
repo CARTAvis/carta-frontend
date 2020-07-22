@@ -1,9 +1,9 @@
 import * as React from "react";
 import {observer} from "mobx-react";
 import {observable} from "mobx";
-import {H5, InputGroup, NumericInput, Classes} from "@blueprintjs/core";
+import {Classes, H5, InputGroup, NumericInput, Position, Tooltip} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
-import {AppStore, RegionCoordinate, RegionStore} from "stores";
+import {AppStore, RegionCoordinate, RegionStore, NUMBER_FORMAT_LABEL} from "stores";
 import {Point2D, WCSPoint2D} from "models";
 import {closeTo, getFormattedWCSPoint, getPixelValueFromWCS, isWCSStringFormatValid} from "utilities";
 import {CoordinateComponent} from "../CoordinateComponent/CoordinateComponent";
@@ -112,26 +112,30 @@ export class PolygonRegionForm extends React.Component<{ region: RegionStore, wc
                 );
             } else {
                 xInput = (
-                    <NumericInput
-                        allowNumericCharactersOnly={false}
-                        buttonPosition="none"
-                        placeholder="X WCS Coordinate"
-                        disabled={!this.props.wcsInfo || !pointWCS}
-                        value={pointWCS ? pointWCS.x : ""}
-                        onBlur={(evt) => this.handleWCSPointChange(index, true, evt)}
-                        onKeyDown={(evt) => this.handleWCSPointChange(index, true, evt)}
-                    />
+                    <Tooltip content={`Enter value in ${NUMBER_FORMAT_LABEL.get(AppStore.Instance.overlayStore.numbers.formatTypeX)} format`} position={Position.BOTTOM}>
+                        <NumericInput
+                            allowNumericCharactersOnly={false}
+                            buttonPosition="none"
+                            placeholder="X WCS Coordinate"
+                            disabled={!this.props.wcsInfo || !pointWCS}
+                            value={pointWCS ? pointWCS.x : ""}
+                            onBlur={(evt) => this.handleWCSPointChange(index, true, evt)}
+                            onKeyDown={(evt) => this.handleWCSPointChange(index, true, evt)}
+                        />
+                    </Tooltip>
                 );
                 yInput = (
-                    <NumericInput
-                        allowNumericCharactersOnly={false}
-                        buttonPosition="none"
-                        placeholder="Y WCS Coordinate"
-                        disabled={!this.props.wcsInfo || !pointWCS}
-                        value={pointWCS ? pointWCS.y : ""}
-                        onBlur={(evt) => this.handleWCSPointChange(index, false, evt)}
-                        onKeyDown={(evt) => this.handleWCSPointChange(index, false, evt)}
-                    />
+                    <Tooltip content={`Enter value in ${NUMBER_FORMAT_LABEL.get(AppStore.Instance.overlayStore.numbers.formatTypeY)} format`} position={Position.BOTTOM}>
+                        <NumericInput
+                            allowNumericCharactersOnly={false}
+                            buttonPosition="none"
+                            placeholder="Y WCS Coordinate"
+                            disabled={!this.props.wcsInfo || !pointWCS}
+                            value={pointWCS ? pointWCS.y : ""}
+                            onBlur={(evt) => this.handleWCSPointChange(index, false, evt)}
+                            onKeyDown={(evt) => this.handleWCSPointChange(index, false, evt)}
+                        />
+                    </Tooltip>
                 );
             }
             const infoString = region.coordinate === RegionCoordinate.Image ? `WCS: ${WCSPoint2D.ToString(pointWCS)}` : `Image: ${Point2D.ToString(point, "px", 3)}`;

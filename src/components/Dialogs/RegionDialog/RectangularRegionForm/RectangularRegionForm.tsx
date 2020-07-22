@@ -1,9 +1,9 @@
 import * as React from "react";
 import {observer} from "mobx-react";
 import {computed} from "mobx";
-import {H5, InputGroup, NumericInput, Classes} from "@blueprintjs/core";
+import {Classes, H5, InputGroup, NumericInput, Position, Tooltip} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
-import {AppStore, FrameStore, RegionCoordinate, RegionStore} from "stores";
+import {AppStore, FrameStore, RegionCoordinate, RegionStore, NUMBER_FORMAT_LABEL} from "stores";
 import {Point2D, WCSPoint2D} from "models";
 import {closeTo, formattedArcsec, getFormattedWCSPoint, getPixelValueFromWCS, getValueFromArcsecString, isWCSStringFormatValid} from "utilities";
 import {CoordinateComponent} from "../CoordinateComponent/CoordinateComponent";
@@ -447,26 +447,30 @@ export class RectangularRegionForm extends React.Component<{ region: RegionStore
             centerInputY = <NumericInput selectAllOnFocus={true} buttonPosition="none" placeholder="Y Coordinate" value={centerPoint.y} onBlur={this.handleCenterYChange} onKeyDown={this.handleCenterYChange}/>;
         } else {
             centerInputX = (
-                <NumericInput
-                    allowNumericCharactersOnly={false}
-                    buttonPosition="none"
-                    placeholder="X WCS Coordinate"
-                    disabled={!this.props.wcsInfo || !centerWCSPoint}
-                    value={centerWCSPoint ? centerWCSPoint.x : ""}
-                    onBlur={this.handleCenterWCSXChange}
-                    onKeyDown={this.handleCenterWCSXChange}
-                />
+                <Tooltip content={`Enter value in ${NUMBER_FORMAT_LABEL.get(AppStore.Instance.overlayStore.numbers.formatTypeX)} format`} position={Position.BOTTOM}>
+                    <NumericInput
+                        allowNumericCharactersOnly={false}
+                        buttonPosition="none"
+                        placeholder="X WCS Coordinate"
+                        disabled={!this.props.wcsInfo || !centerWCSPoint}
+                        value={centerWCSPoint ? centerWCSPoint.x : ""}
+                        onBlur={this.handleCenterWCSXChange}
+                        onKeyDown={this.handleCenterWCSXChange}
+                    />
+                </Tooltip>
             );
             centerInputY = (
-                <NumericInput
-                    allowNumericCharactersOnly={false}
-                    buttonPosition="none"
-                    placeholder="Y WCS Coordinate"
-                    disabled={!this.props.wcsInfo || !centerWCSPoint}
-                    value={centerWCSPoint ? centerWCSPoint.y : ""}
-                    onBlur={this.handleCenterWCSYChange}
-                    onKeyDown={this.handleCenterWCSYChange}
-                />
+                <Tooltip content={`Enter value in ${NUMBER_FORMAT_LABEL.get(AppStore.Instance.overlayStore.numbers.formatTypeY)} format`} position={Position.BOTTOM}>
+                    <NumericInput
+                        allowNumericCharactersOnly={false}
+                        buttonPosition="none"
+                        placeholder="Y WCS Coordinate"
+                        disabled={!this.props.wcsInfo || !centerWCSPoint}
+                        value={centerWCSPoint ? centerWCSPoint.y : ""}
+                        onBlur={this.handleCenterWCSYChange}
+                        onKeyDown={this.handleCenterWCSYChange}
+                    />
+                </Tooltip>
             );
         }
         const centerInfoString = region.coordinate === RegionCoordinate.Image ? `WCS: ${WCSPoint2D.ToString(centerWCSPoint)}` : `Image: ${Point2D.ToString(centerPoint, "px", 3)}`;
@@ -482,26 +486,30 @@ export class RectangularRegionForm extends React.Component<{ region: RegionStore
             );
         } else {
             bottomLeftInputX = (
-                <NumericInput
-                    allowNumericCharactersOnly={false}
-                    buttonPosition="none"
-                    placeholder="X WCS Coordinate"
-                    disabled={!this.props.wcsInfo || !bottomLeftWCSPoint || isRotated}
-                    value={bottomLeftWCSPoint ? bottomLeftWCSPoint.x : ""}
-                    onBlur={this.handleLeftWCSChange}
-                    onKeyDown={this.handleLeftWCSChange}
-                />
+                <Tooltip content={`Enter value in ${NUMBER_FORMAT_LABEL.get(AppStore.Instance.overlayStore.numbers.formatTypeX)} format`} position={Position.BOTTOM}>
+                    <NumericInput
+                        allowNumericCharactersOnly={false}
+                        buttonPosition="none"
+                        placeholder="X WCS Coordinate"
+                        disabled={!this.props.wcsInfo || !bottomLeftWCSPoint || isRotated}
+                        value={bottomLeftWCSPoint ? bottomLeftWCSPoint.x : ""}
+                        onBlur={this.handleLeftWCSChange}
+                        onKeyDown={this.handleLeftWCSChange}
+                    />
+                </Tooltip>
             );
             bottomLeftInputY = (
-                <NumericInput
-                    allowNumericCharactersOnly={false}
-                    buttonPosition="none"
-                    placeholder="Y WCS Coordinate"
-                    disabled={!this.props.wcsInfo || !bottomLeftWCSPoint || isRotated}
-                    value={bottomLeftWCSPoint ? bottomLeftWCSPoint.y : ""}
-                    onBlur={this.handleBottomWCSChange}
-                    onKeyDown={this.handleBottomWCSChange}
-                />
+                <Tooltip content={`Enter value in ${NUMBER_FORMAT_LABEL.get(AppStore.Instance.overlayStore.numbers.formatTypeY)} format`} position={Position.BOTTOM}>
+                    <NumericInput
+                        allowNumericCharactersOnly={false}
+                        buttonPosition="none"
+                        placeholder="Y WCS Coordinate"
+                        disabled={!this.props.wcsInfo || !bottomLeftWCSPoint || isRotated}
+                        value={bottomLeftWCSPoint ? bottomLeftWCSPoint.y : ""}
+                        onBlur={this.handleBottomWCSChange}
+                        onKeyDown={this.handleBottomWCSChange}
+                    />
+                </Tooltip>
             );
         }
         const bottomLeftInfoString = region.coordinate === RegionCoordinate.Image ? `WCS: ${WCSPoint2D.ToString(bottomLeftWCSPoint)}` : `Image: ${Point2D.ToString(this.bottomLeftPoint, "px", 3)}`;
@@ -514,26 +522,30 @@ export class RectangularRegionForm extends React.Component<{ region: RegionStore
             topRightInputY = <NumericInput selectAllOnFocus={true} buttonPosition="none" placeholder="Y Coordinate" value={this.topRightPoint.y} onBlur={this.handleTopChange} onKeyDown={this.handleTopChange} disabled={isRotated}/>;
         } else {
             topRightInputX = (
-                <NumericInput
-                    allowNumericCharactersOnly={false}
-                    buttonPosition="none"
-                    placeholder="X WCS Coordinate"
-                    disabled={!this.props.wcsInfo || !topRightWCSPoint || isRotated}
-                    value={topRightWCSPoint ? topRightWCSPoint.x : ""}
-                    onBlur={this.handleRightWCSChange}
-                    onKeyDown={this.handleRightWCSChange}
-                />
+                <Tooltip content={`Enter value in ${NUMBER_FORMAT_LABEL.get(AppStore.Instance.overlayStore.numbers.formatTypeX)} format`} position={Position.BOTTOM}>
+                    <NumericInput
+                        allowNumericCharactersOnly={false}
+                        buttonPosition="none"
+                        placeholder="X WCS Coordinate"
+                        disabled={!this.props.wcsInfo || !topRightWCSPoint || isRotated}
+                        value={topRightWCSPoint ? topRightWCSPoint.x : ""}
+                        onBlur={this.handleRightWCSChange}
+                        onKeyDown={this.handleRightWCSChange}
+                    />
+                </Tooltip>
             );
             topRightInputY = (
-                <NumericInput
-                    allowNumericCharactersOnly={false}
-                    buttonPosition="none"
-                    placeholder="Y WCS Coordinate"
-                    disabled={!this.props.wcsInfo || !topRightWCSPoint || isRotated}
-                    value={topRightWCSPoint ? topRightWCSPoint.y : ""}
-                    onBlur={this.handleTopWCSChange}
-                    onKeyDown={this.handleTopWCSChange}
-                />
+                <Tooltip content={`Enter value in ${NUMBER_FORMAT_LABEL.get(AppStore.Instance.overlayStore.numbers.formatTypeY)} format`} position={Position.BOTTOM}>
+                    <NumericInput
+                        allowNumericCharactersOnly={false}
+                        buttonPosition="none"
+                        placeholder="Y WCS Coordinate"
+                        disabled={!this.props.wcsInfo || !topRightWCSPoint || isRotated}
+                        value={topRightWCSPoint ? topRightWCSPoint.y : ""}
+                        onBlur={this.handleTopWCSChange}
+                        onKeyDown={this.handleTopWCSChange}
+                    />
+                </Tooltip>
             );
         }
         const topRightInfoString = region.coordinate === RegionCoordinate.Image ? `WCS: ${WCSPoint2D.ToString(topRightWCSPoint)}` : `Image: ${Point2D.ToString(this.topRightPoint, "px", 3)}`;
