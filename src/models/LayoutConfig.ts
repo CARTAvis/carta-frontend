@@ -62,7 +62,7 @@ const COMPONENT_CONFIG = new Map<string, any>([
     ["layer-list", {
         type: "react-component",
         component: "layer-list",
-        title: "Layer List",
+        title: "Image List",
         id: "layer-list"
     }],
     ["log", {

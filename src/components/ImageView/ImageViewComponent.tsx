@@ -28,6 +28,7 @@ export const getImageCanvas = (padding: Padding, backgroundColor: string = "rgba
 
     let regionCanvas: HTMLCanvasElement;
     let beamProfileCanvas: HTMLCanvasElement;
+    let catalogCanvas: HTMLCanvasElement;
     const beamProfileQuery = $(".beam-profile-stage").children().children("canvas");
     if (beamProfileQuery && beamProfileQuery.length) {
         beamProfileCanvas = beamProfileQuery[0] as HTMLCanvasElement;
@@ -36,6 +37,11 @@ export const getImageCanvas = (padding: Padding, backgroundColor: string = "rgba
     const regionQuery = $(".region-stage").children().children("canvas");
     if (regionQuery && regionQuery.length) {
         regionCanvas = regionQuery[0] as HTMLCanvasElement;
+    }
+
+    const catalogQuery = $(".catalog-plotly")?.children()?.children()?.children(".gl-container")?.children(".gl-canvas-context");
+    if (catalogQuery && catalogQuery.length) {
+        catalogCanvas = catalogQuery[0] as HTMLCanvasElement;
     }
 
     const composedCanvas = document.createElement("canvas") as HTMLCanvasElement;
@@ -53,6 +59,10 @@ export const getImageCanvas = (padding: Padding, backgroundColor: string = "rgba
 
     if (regionCanvas) {
         ctx.drawImage(regionCanvas, padding.left * devicePixelRatio, padding.top * devicePixelRatio);
+    }
+
+    if (catalogCanvas) {
+        ctx.drawImage(catalogCanvas, padding.left * devicePixelRatio, padding.top * devicePixelRatio, catalogCanvas.width * devicePixelRatio, catalogCanvas.height * devicePixelRatio);
     }
 
     ctx.setTransform(1, 0, 0, 1, 0, 0);
@@ -193,11 +203,13 @@ export class ImageViewComponent extends React.Component<WidgetProps> {
                         docked={this.props.docked}
                         unit={appStore.activeFrame.unit}
                         top={overlayStore.padding.top}
+                        currentStokes={appStore.activeFrame.hasStokes ? appStore.activeFrame.stokesInfo[appStore.activeFrame.requiredStokes] : ""}
                         showImage={true}
                         showWCS={true}
                         showValue={true}
                         showChannel={false}
                         showSpectral={true}
+                        showStokes={true}
                     />
                     }
                     {appStore.activeFrame.beamProperties &&
