@@ -86,17 +86,6 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         return widgetStore;
     }
 
-    @computed get matchesSelectedRegion() {
-        const frame = AppStore.Instance.activeFrame;
-        if (frame) {
-            const widgetRegion = this.widgetStore.regionIdMap.get(frame.frameInfo.fileId);
-            if (frame.regionSet.selectedRegion && frame.regionSet.selectedRegion.regionId !== 0) {
-                return widgetRegion === frame.regionSet.selectedRegion.regionId;
-            }
-        }
-        return false;
-    }
-
     @computed get matchesSelectedCatalogFile(): string {
         let widgetId = undefined;
         AppStore.Instance.catalogs.forEach((value, key) => {
@@ -183,13 +172,10 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
                     progressString = `[${toFixed(progress * 100)}% complete]`;
                 }
                 if (frame) {
-                    const regionId = this.widgetStore.regionIdMap.get(frame.frameInfo.fileId) || 0;
-                    const regionString = regionId === 0 ? "Cursor" : `Region #${regionId}`;
-                    const selectedString = this.matchesSelectedRegion ? "(Selected)" : "";
-                    appStore.widgetsStore.setWidgetComponentTitle(this.props.id, `Catalog ${fileName} : ${regionString} ${selectedString} ${progressString}`);
+                    appStore.widgetsStore.setWidgetComponentTitle(this.props.id, `Catalog : ${fileName} ${progressString}`);
                 }
             } else {
-                WidgetsStore.Instance.setWidgetComponentTitle(this.props.id, `Catalog : Cursor`);
+                WidgetsStore.Instance.setWidgetComponentTitle(this.props.id, `Catalog`);
             }
         });
     }
@@ -693,7 +679,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         if (!widgetStore) {
             return (
                 <div className="catalog-overlay">
-                    <NonIdealState icon={"folder-open"} title={"No file loaded"} description={"Load a file using the menu"}/>;
+                    <NonIdealState icon={"folder-open"} title={"No catalog file loaded"} description={"Load a file using the menu"}/>;
                 </div>
             );
         }
