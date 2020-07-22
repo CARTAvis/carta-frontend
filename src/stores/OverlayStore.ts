@@ -762,10 +762,27 @@ export class OverlayStore {
         this.viewHeight = 1;
         this.viewWidth = 1;
 
-        // if the system is manually selected, set new default formats
+        // if the system is manually selected, set new default formats & update active frame's wcs settings
         autorun(() => {
             const _ = this.global.system;
             this.setFormatsFromSystem();
+            if (AppStore.Instance.activeFrame && AppStore.Instance.activeFrame.wcsInfo && this.global.validWcs) {
+                AST.set(AppStore.Instance.activeFrame.wcsInfo, `System=${this.global.explicitSystem}`);
+            }
+        });
+
+        autorun(() => {
+            const _ = this.numbers.formatStringX;
+            if (AppStore.Instance.activeFrame && AppStore.Instance.activeFrame.wcsInfo && this.global.validWcs) {
+                AST.set(AppStore.Instance.activeFrame.wcsInfo, `Format(1)=${this.numbers.formatStringX}`);
+            }
+        });
+
+        autorun(() => {
+            const _ = this.numbers.formatStringY;
+            if (AppStore.Instance.activeFrame && AppStore.Instance.activeFrame.wcsInfo && this.global.validWcs) {
+                AST.set(AppStore.Instance.activeFrame.wcsInfo, `Format(2)=${this.numbers.formatStringY}`);
+            }
         });
     }
 

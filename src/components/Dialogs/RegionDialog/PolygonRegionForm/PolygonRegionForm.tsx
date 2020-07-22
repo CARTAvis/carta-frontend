@@ -3,7 +3,7 @@ import {observer} from "mobx-react";
 import {observable} from "mobx";
 import {H5, InputGroup, NumericInput, Classes} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
-import {RegionCoordinate, RegionStore} from "stores";
+import {AppStore, RegionCoordinate, RegionStore} from "stores";
 import {Point2D, WCSPoint2D} from "models";
 import {closeTo, getFormattedWCSPoint, getPixelValueFromWCS, WCS_REGEXP} from "utilities";
 import {CoordinateComponent} from "../CoordinateComponent/CoordinateComponent";
@@ -76,6 +76,10 @@ export class PolygonRegionForm extends React.Component<{ region: RegionStore, wc
     };
 
     public render() {
+        // dummy variable related wcs to trigger re-render
+        const system = AppStore.Instance.overlayStore.global.explicitSystem;
+        const formatX = AppStore.Instance.overlayStore.numbers.formatStringX;
+        const formatY = AppStore.Instance.overlayStore.numbers.formatStringY;
         const region = this.props.region;
         if (!region || !region.isValid || region.regionType !== CARTA.RegionType.POLYGON) {
             return null;
