@@ -48,7 +48,7 @@
         "analyze": "source-map-explorer build/static/js/main.*",
         "build-css": "node-sass-chokidar -q src/ -o src/",
         "watch-css": "npm run build-css && node-sass-chokidar -q src/ -o src/ --watch --recursive",
-        "build-wrappers": "./wasm_src/build_wrappers.sh",
+        "build-wrappers": "./build_wasm_wrappers_docker.sh",
         "build-protobuf": "./protobuf/build_proto.sh",
         "start-js": "react-scripts-ts start",
         "start": "npm run git-info; npm-run-all -p watch-css start-js",
