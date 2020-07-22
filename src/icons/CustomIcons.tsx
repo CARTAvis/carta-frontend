@@ -1,9 +1,9 @@
 import * as React from "react";
-import { Icon } from "@blueprintjs/core";
+import {Icon} from "@blueprintjs/core";
 
-export declare type CustomIconName = "contour";
+export declare type CustomIconName = "contour" | "center";
 
-export class CustomIcon extends React.Component<{icon: CustomIconName, size?: number }> {
+export class CustomIcon extends React.Component<{ icon: CustomIconName, size?: number }> {
     static readonly SIZE_STANDARD = 16;
     static readonly SIZE_LARGE = 20;
 
@@ -16,15 +16,15 @@ export class CustomIcon extends React.Component<{icon: CustomIconName, size?: nu
                 </svg>
             </span>
         );
-        return <Icon icon={content} />;
+        return <Icon icon={content}/>;
     }
 }
 
 // copy content of tag <path/> in svg, and turn attributes fill-rule/clip-rule into fillRule/clipRule.
 const contourSvg = (
-    <path  
-        fillRule="evenodd" 
-        clipRule="evenodd" 
+    <path
+        fillRule="evenodd"
+        clipRule="evenodd"
         d="M 13.3086,13.326331 A 7.489923,8.4952736 45 0 1 2.0053593,14.037221 7.489923,8.4952736 45 0 1 2.7162497,2.7339802 7.489923,8.4952736 45 0 1 14.01949,2.02309 7.489923,8.4952736 45 0 1 13.3086,13.326331 Z
         M 13.148613,12.347604 A 6.6468272,7.6124401 40 0 1 3.1636657,13.906573 6.6468272,7.6124401 40 0 1 2.9650831,3.8026076 6.6468272,7.6124401 40 0 1 12.95003,2.2436383 6.6468272,7.6124401 40 0 1 13.148613,12.347604 Z
         M 10.882979,12.264102 A 4.8685541,5.7219758 50 0 1 3.3702451,12.212588 4.8685541,5.7219758 50 0 1 4.6240863,4.8050444 4.8685541,5.7219758 50 0 1 12.136821,4.8565581 4.8685541,5.7219758 50 0 1 10.882979,12.264102 Z
@@ -34,6 +34,21 @@ const contourSvg = (
     />
 );
 
+const centerSvg = (
+    <g fillRule="evenodd" clipRule="evenodd">
+        <circle className="st0" cx="8" cy="8" r="2"/>
+        <path className="st0" d="M2.6,4H2C1.4,4,1,4.4,1,5s0.4,1,1,1h3c0.1,0,0.3,0,0.4-0.1c0.2-0.1,0.4-0.3,0.5-0.5C6,5.2,6,5.1,6,5V2
+		c0-0.6-0.4-1-1-1S4,1.4,4,2v0.6L1.7,0.3c-0.4-0.4-1-0.4-1.4,0s-0.4,1,0,1.4L2.6,4z"/>
+        <path className="st0" d="M10.1,5.4c0.1,0.2,0.3,0.4,0.5,0.5S10.9,6,11.1,6h3c0.6,0,1-0.4,1-1s-0.4-1-1-1h-0.6l2.3-2.3
+		c0.4-0.4,0.4-1,0-1.4c-0.4-0.4-1-0.4-1.4,0L12,2.6V2c0-0.6-0.4-1-1-1s-1,0.4-1,1v3C10,5.1,10,5.2,10.1,5.4z"/>
+        <path className="st0" d="M13.4,12H14c0.6,0,1-0.4,1-1s-0.4-1-1-1h-3c-0.1,0-0.3,0-0.4,0.1c-0.2,0.1-0.4,0.3-0.5,0.5
+		C10,10.8,10,10.9,10,11v3c0,0.6,0.4,1,1,1s1-0.4,1-1v-0.6l2.3,2.3c0.4,0.4,1,0.4,1.4,0c0.4-0.4,0.4-1,0-1.4L13.4,12z"/>
+        <path className="st0" d="M5.9,10.6c-0.1-0.2-0.3-0.4-0.5-0.5C5.2,10,5.1,10,4.9,10H2c-0.6,0-1,0.4-1,1s0.4,1,1,1h0.6l-2.3,2.3
+		c-0.4,0.4-0.4,1,0,1.4c0.4,0.4,1,0.4,1.4,0L4,13.4V14c0,0.6,0.4,1,1,1s1-0.4,1-1v-3C6,10.9,6,10.8,5.9,10.6z"/>
+    </g>
+);
+
 const icons = {
     contour: contourSvg,
+    center: centerSvg
 };
