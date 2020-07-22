@@ -46,7 +46,7 @@ export function getColorsForValues(colorMap: string): { color: Uint8ClampedArray
     const colorMapIndex = colorMaps.indexOf(colorMap);
 
     if (colormapContext) {
-        const colorMapPixel = colormapContext?.getImageData(0, colorMapIndex * 10 + 5, imageObj.width - 1, 1);
+        const colorMapPixel = colormapContext?.getImageData(0, colorMapIndex * 5 + 2, imageObj.width - 1, 1);
         return {color: colorMapPixel?.data, size: colorMapPixel?.width};
     }
     return {color: new Uint8ClampedArray([0, 0, 0, 0]), size: 1};
