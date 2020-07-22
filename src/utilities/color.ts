@@ -27,28 +27,27 @@ export const SWATCH_COLORS = [
 
 function initContextWithSize(width: number, height: number) {
     const canvas = document.createElement("canvas") as HTMLCanvasElement;
-    canvas.width = width; 
+    canvas.width = width;
     canvas.height = height;
     return canvas.getContext("2d");
 }
 
 let colormapContext: CanvasRenderingContext2D | undefined;
+const imageObj = new Image();
+imageObj.src = allMaps;
+imageObj.onload = () => {
+    colormapContext = initContextWithSize(imageObj.width, imageObj.height);
+    colormapContext.drawImage(imageObj, 0, 0, imageObj.width, imageObj.height, 0, 0, imageObj.width, imageObj.height);
+};
 
 // return color map as Uint8ClampedArray according colorMap
-export function getColorsForValues (colorMap: string): {color: Uint8ClampedArray, size: number} {
+export function getColorsForValues(colorMap: string): { color: Uint8ClampedArray, size: number } {
     const colorMaps = RenderConfigStore.COLOR_MAPS_ALL;
     const colorMapIndex = colorMaps.indexOf(colorMap);
 
-    // the source image for colormaps is 1024x790, with each colormap taking a 1024x10 region
-    if (!colormapContext) {
-        colormapContext = initContextWithSize(1024, 1);
+    if (colormapContext) {
+        const colorMapPixel = colormapContext?.getImageData(0, colorMapIndex * 10 + 5, imageObj.width - 1, 1);
+        return {color: colorMapPixel?.data, size: colorMapPixel?.width};
     }
-    if (!allMaps) {
-        return null;
-    }
-    const imageObj = new Image();
-    imageObj.src = allMaps;
-    colormapContext.drawImage(imageObj, 0, 10 * colorMapIndex + 1, 1024, 1, 0, 0, 1024, 1);
-    const colorMapPixel = colormapContext.getImageData(0, 0, 1023, 1);
-    return {color: colorMapPixel.data, size: colorMapPixel.width}; 
+    return {color: new Uint8ClampedArray([0, 0, 0, 0]), size: 1};
 }
