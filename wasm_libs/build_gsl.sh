@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 command -v emcc >/dev/null 2>&1 || { echo "Script requires emcc but it's not installed or in PATH.Aborting." >&2; exit 1; }
-
+cd "${0%/*}"
 if ! [[ $(find gsl-2.6.tar.gz -type f 2>/dev/null && md5sum -c gsl.md5 &>/dev/null) ]]; then
     echo "Fetching GSL 2.6"
     wget http://ftpmirror.gnu.org/gsl/gsl-2.6.tar.gz
@@ -10,9 +10,7 @@ mkdir -p gsl; tar -xf gsl-2.6.tar.gz --directory ./gsl --strip-components=1
 
 cd gsl
 echo "Building GSL using Emscripten"
-./autogen.sh
-echo "Configure host=wasm32"
-CFLAGS="-g0 -O3 -s WASM=1" emconfigure ./configure --prefix=${PWD}/../built
+CFLAGS="-g0 -O3 -s WASM=1" emconfigure ./configure --enable-shared=no --prefix=${PWD}/../built
 
 emmake make -j4
 emmake make install
