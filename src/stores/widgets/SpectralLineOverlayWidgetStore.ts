@@ -300,8 +300,8 @@ export class SpectralLineOverlayWidgetStore extends RegionWidgetStore {
     }
 
     private calculateFreqMHz = (value: number, unit: SpectralLineQueryUnit): number => {
-        if (!isFinite(value) || !unit) {
-            return null;
+        if (!isFinite(value) || value < 0 || !unit) {
+            return undefined;
         }
         if (unit === SpectralLineQueryUnit.CM) {
             return wavelengthToFrequency(value / 10) / 1e6;
@@ -312,7 +312,7 @@ export class SpectralLineOverlayWidgetStore extends RegionWidgetStore {
         } else if (unit === SpectralLineQueryUnit.MHz) {
             return value;
         } else {
-            return null;
+            return undefined;
         }
     };
 
