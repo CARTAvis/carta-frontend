@@ -35,10 +35,13 @@ export enum SpectralLineHeaders {
     ResolvedQN = "Resolved QNs",
     UnresolvedQN = "Unresolved QNs",
     IntensityCDMS = "CDMS/JPL Intensity",
+    IntensitySijm2SPLA = "S<sub>ij</sub>&#956;<sup>2</sup> (D<sup>2</sup>)",
     IntensitySijm2 = "Sij Miu^2",
+    IntensitySijSPLA = "S<sub>ij</sub>",
     IntensitySij = "Sij",
+    IntensityAijSPLA = "Log<sub>10</sub> (A<sub>ij</sub>)",
     IntensityAij = "Aij",
-    IntensityLovas = "Lovas/AST",
+    IntensityLovas = "Lovas/AST Intensity",
     EnergyLowerCM = "E_L (cm^-1)",
     EnergyLowerK = "E_L (K)",
     EnergyUpperCM = "E_U (cm^-1)",
@@ -50,7 +53,10 @@ const SPLATALOG_HEADER_MAP = new Map<SpectralLineHeaders, SpectralLineHeaders>([
     [SpectralLineHeaders.RestFrequencySPLA, SpectralLineHeaders.RestFrequency],
     [SpectralLineHeaders.RestFrequencyErrSPLA, SpectralLineHeaders.RestFrequencyErr],
     [SpectralLineHeaders.MeasuredFrequencySPLA, SpectralLineHeaders.MeasuredFrequency],
-    [SpectralLineHeaders.MeasuredFrequencyErrSPLA, SpectralLineHeaders.MeasuredFrequencyErr]
+    [SpectralLineHeaders.MeasuredFrequencyErrSPLA, SpectralLineHeaders.MeasuredFrequencyErr],
+    [SpectralLineHeaders.IntensitySijm2SPLA, SpectralLineHeaders.IntensitySijm2],
+    [SpectralLineHeaders.IntensitySijSPLA, SpectralLineHeaders.IntensitySij],
+    [SpectralLineHeaders.IntensityAijSPLA, SpectralLineHeaders.IntensityAij]
 ]);
 
 const SPECTRAL_LINE_DESCRIPTION = new Map<SpectralLineHeaders, string>([
@@ -63,6 +69,9 @@ const SPECTRAL_LINE_DESCRIPTION = new Map<SpectralLineHeaders, string>([
     [SpectralLineHeaders.MeasuredFrequencyErr, "Frequency error measured from laboratories"],
     [SpectralLineHeaders.ResolvedQN, "Resolved Quantum Numbers"],
     [SpectralLineHeaders.IntensityCDMS, "log10(intensity) at 300 K"],
+    [SpectralLineHeaders.IntensitySijm2, "Sij Miu^2 Intensity"],
+    [SpectralLineHeaders.IntensitySij, "Sij Intensity"],
+    [SpectralLineHeaders.IntensityAij, "Aij Intensity"],
     [SpectralLineHeaders.IntensityLovas, "Intensity(for Lovas/AST)"],
     [SpectralLineHeaders.EnergyLowerCM, "Lower level energy in wave number"],
     [SpectralLineHeaders.EnergyLowerK, "Lower level energy in K"],
