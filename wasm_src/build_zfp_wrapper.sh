@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 command -v emcc >/dev/null 2>&1 || { echo "Script requires emcc but it's not installed or in PATH.Aborting." >&2; exit 1; }
+cd "${0%/*}"
 cd zfp_wrapper
 mkdir -p build
 printf "Building ZFP wrapper..."

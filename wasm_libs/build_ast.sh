@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 command -v emcc >/dev/null 2>&1 || { echo "Script requires emcc but it's not installed or in PATH.Aborting." >&2; exit 1; }
-
+cd "${0%/*}"
 if ! [[ $(find ast-9.1.1.tar.gz -type f 2>/dev/null && md5sum -c ast.md5 &>/dev/null) ]]; then
     echo "Fetching AST 9.1.1"
     wget https://github.com/Starlink/ast/releases/download/v9.1.1/ast-9.1.1.tar.gz
