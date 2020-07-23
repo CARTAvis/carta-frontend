@@ -138,8 +138,8 @@ export class RootMenuComponent extends React.Component {
                 &nbsp;s
             </Tag>
         );
-        const widgetMenu = (
-            <Menu className="widget-menu">
+        const widgetsMenu = (
+            <Menu className="widgets-menu">
                 <Menu.Item text="Layouts" icon={"page-layout"} disabled={layoutStore.supportsServer && connectionStatus !== ConnectionStatus.ACTIVE}>
                     <Menu.Item text="Existing Layouts" disabled={!presetLayouts && !userLayouts}>
                         <Menu.Item text="Presets" disabled={!presetLayouts || presetLayouts.length <= 0}>
@@ -277,9 +277,9 @@ export class RootMenuComponent extends React.Component {
                         <Menu.Item text="View"/>
                     </Menu>
                 </Popover>
-                <Popover autoFocus={false} minimal={true} content={widgetMenu} position={Position.BOTTOM_LEFT}>
+                <Popover autoFocus={false} minimal={true} content={widgetsMenu} position={Position.BOTTOM_LEFT}>
                     <Menu className="root-menu-entry">
-                        <Menu.Item text="Widget"/>
+                        <Menu.Item text="Widgets"/>
                     </Menu>
                 </Popover>
                 <Popover autoFocus={false} minimal={true} content={helpMenu} position={Position.BOTTOM_LEFT}>
