@@ -2,7 +2,7 @@
 
 ## Prerequisites
 The build process relies heavily on `npm` and `nodejs`, so make sure they are installed and accesible.
-WebAssembly compilation requires the Emscripten compiler (`emcc` version 1.39.0 or later) to be in the path. Details can be found [here](http://kripken.github.io/emscripten-site/docs/getting_started/downloads.html). The protocol buffer definitions reside in a git submodule that must be initialised as follows:
+WebAssembly compilation requires the Emscripten compiler (`emcc` version 1.39.18 has been tested. Currently, version 1.39.19 and later have problems with some dependency libraries) to be in the path. Details can be found [here](http://kripken.github.io/emscripten-site/docs/getting_started/downloads.html). The protocol buffer definitions reside in a git submodule that must be initialised as follows:
 ```
 cd protobuf
 git submodule init

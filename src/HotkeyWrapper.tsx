@@ -126,8 +126,8 @@ export class HotkeyContainer extends React.Component {
         ];
 
         const animatorHotkeys = [
-            <Hotkey key={0} group={animatorGroupTitle} global={true} combo={`${modString}]`} label="Next frame" onKeyDown={appStore.nextFrame}/>,
-            <Hotkey key={1} group={animatorGroupTitle} global={true} combo={`${modString}[`} label="Previous frame" onKeyDown={appStore.prevFrame}/>,
+            <Hotkey key={0} group={animatorGroupTitle} global={true} combo={`${modString}]`} label="Next image" onKeyDown={appStore.nextFrame}/>,
+            <Hotkey key={1} group={animatorGroupTitle} global={true} combo={`${modString}[`} label="Previous image" onKeyDown={appStore.prevFrame}/>,
             <Hotkey key={2} group={animatorGroupTitle} global={true} combo={`${modString}up`} label="Next channel" onKeyDown={HotkeyContainer.NextChannel}/>,
             <Hotkey key={3} group={animatorGroupTitle} global={true} combo={`${modString}down`} label="Previous channel" onKeyDown={HotkeyContainer.PrevChannel}/>,
             <Hotkey key={4} group={animatorGroupTitle} global={true} combo={`${modString}shift + up`} label="Next Stokes cube" onKeyDown={HotkeyContainer.NextStokes}/>,
@@ -139,7 +139,7 @@ export class HotkeyContainer extends React.Component {
             <Hotkey key={1} group={fileGroupTitle} global={true} combo={`${modString}L`} label="Append image" onKeyDown={() => appStore.fileBrowserStore.showFileBrowser(BrowserMode.File, true)}/>,
             <Hotkey key={2} group={fileGroupTitle} global={true} combo={`${modString}W`} label="Close image" onKeyDown={() => appStore.closeCurrentFile(true)}/>,
             <Hotkey key={3} group={fileGroupTitle} global={true} combo={`${modString}E`} label="Export image" onKeyDown={appStore.exportImage}/>,
-            <Hotkey key={4} group={fileGroupTitle} global={true} combo={`${modString}C`} label="Append catalog" onKeyDown={() => appStore.fileBrowserStore.showFileBrowser(BrowserMode.Catalog, false)}/>
+            <Hotkey key={4} group={fileGroupTitle} global={true} combo={`${modString}C`} label="Import catalog" onKeyDown={() => appStore.fileBrowserStore.showFileBrowser(BrowserMode.Catalog, false)}/>
         ];
 
         const otherHotKeys = [
