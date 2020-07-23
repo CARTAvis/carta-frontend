@@ -191,7 +191,7 @@ export class SpectralLineOverlayWidgetStore extends RegionWidgetStore {
         const freqMHzFrom = this.calculateFreqMHz(valueMin, this.queryUnit);
         const freqMHzTo = this.calculateFreqMHz(valueMax, this.queryUnit);
 
-        if (!isFinite(freqMHzFrom) || !isFinite(freqMHzTo)) {
+        if (!isFinite(freqMHzFrom) || !isFinite(freqMHzTo) || freqMHzFrom < 0 || freqMHzTo < 0) {
             AppStore.Instance.alertStore.showAlert("Invalid frequency range.");
         } else if (freqMHzFrom === freqMHzTo) {
             AppStore.Instance.alertStore.showAlert("Please specify a frequency range.");
