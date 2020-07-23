@@ -20,7 +20,7 @@ To run a development build server, simply run `npm run start`.
 ## Build process (without Docker)
 If your build environment does not have access to Docker, WebAssembly compilation must be performed in an environment with access to the Emscripten compiler. 
 
-Initialise submodules and install package dependncies:
+Initialise submodules and install package dependencies:
 ```
 git submodule init
 git submodule update
