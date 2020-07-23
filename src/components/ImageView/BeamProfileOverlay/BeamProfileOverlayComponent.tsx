@@ -79,7 +79,7 @@ export class BeamProfileOverlayComponent extends React.Component<BeamProfileOver
 
         return (
             <Stage className={className} width={this.props.width} height={this.props.height} style={{left: this.props.left, top: this.props.top}}>
-                <Layer hitGraphEnabled={false}>
+                <Layer listening={false}>
                     <Group
                         x={positionX}
                         y={positionY}

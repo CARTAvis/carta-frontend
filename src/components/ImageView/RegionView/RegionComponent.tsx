@@ -58,8 +58,8 @@ export class RegionComponent extends React.Component<RegionComponentProps> {
         }
     };
 
-    handleTransformStart = (konvaEvent) => {
-        this.editAnchor = konvaEvent.currentTarget.movingResizer;
+    handleTransformStart = (konvaEvent: Konva.KonvaEventObject<Event>) => {
+        this.editAnchor = (konvaEvent.currentTarget as Konva.Transformer).getActiveAnchor();
         const controlPoints = this.props.region.controlPoints;
 
         let w: number, h: number;
@@ -110,10 +110,11 @@ export class RegionComponent extends React.Component<RegionComponentProps> {
         this.props.region.endEditing();
     };
 
-    handleTransform = (konvaEvent) => {
-        if (konvaEvent.currentTarget && konvaEvent.currentTarget.node) {
-            const anchor = konvaEvent.currentTarget.movingResizer as string;
-            const node = konvaEvent.currentTarget.node() as Konva.Node;
+    handleTransform = (konvaEvent: Konva.KonvaEventObject<Event>) => {
+        if (konvaEvent.currentTarget) {
+            const transformer = konvaEvent.currentTarget as Konva.Transformer;
+            const anchor = transformer.getActiveAnchor();
+            const node = transformer.getNode();
             const frame = this.props.frame;
             const region = this.props.region;
             if (anchor.includes("rotater")) {
@@ -129,11 +130,12 @@ export class RegionComponent extends React.Component<RegionComponentProps> {
                 node.scaleX(1);
                 node.scaleY(1);
 
-                const isCtrlPressed = konvaEvent.evt.ctrlKey || konvaEvent.evt.metaKey;
+                const evt = konvaEvent.evt as any;
+                const isCtrlPressed = evt.ctrlKey || evt.metaKey;
                 if ((this.props.isRegionCornerMode && !isCtrlPressed) || (!this.props.isRegionCornerMode && isCtrlPressed)) {
-                    this.applyCornerScaling(region, konvaEvent.evt.offsetX, konvaEvent.evt.offsetY, anchor);
+                    this.applyCornerScaling(region, evt.offsetX, evt.offsetY, anchor);
                 } else {
-                    this.applyCenterScaling(region, konvaEvent.evt.offsetX, konvaEvent.evt.offsetY, anchor, konvaEvent.evt.shiftKey);
+                    this.applyCenterScaling(region, evt.offsetX, evt.offsetY, anchor, evt.shiftKey);
                 }
             }
         }
@@ -311,7 +313,7 @@ export class RegionComponent extends React.Component<RegionComponentProps> {
                 }
                 {this.selectedRegionRef && this.props.selected && this.props.listening &&
                 <Transformer
-                    node={this.selectedRegionRef}
+                    nodes={[this.selectedRegionRef]}
                     rotateAnchorOffset={15}
                     anchorSize={7}
                     anchorStroke={"black"}
