@@ -50,10 +50,37 @@
 }
 
 .bp3-portal {
-    .layout-menu {
+    .widgets-menu {
+
+        .region-item {
+
+        }
+
         .stokes-item {
             padding-left: 0;
             padding-right: 0;
+
+            .region-list-icon-button {
+                width: 30px;
+                background-color: #ffffff00;
+                background-image: none;
+                box-shadow: inset 0 0 0 0;
+                margin: 0;
+                color: $gray1;
+
+                .bp3-icon {
+                    margin: 0;
+                }
+
+                .bp3-text-overflow-ellipsis {
+                    position: absolute;
+                    top: -8px;
+                    right: 3px;
+                    font-variant: small-caps;
+                    font-size: xx-small;
+                    color: $gray1;
+                }
+            }
 
             .stokes-icon-button {
                 width: 30px;
@@ -81,6 +108,14 @@
             }
 
             &.bp3-dark {
+                .region-list-icon-button {
+                    color: $gray5;
+
+                    .bp3-text-overflow-ellipsis {
+                        color: $gray5;
+                    }
+                }
+
                 .stokes-icon-button {
                     color: $gray5;
 
