@@ -3,6 +3,7 @@ import {CARTA} from "carta-protobuf";
 import {Observable, Observer, Subject, throwError} from "rxjs";
 import {AppStore, PreferenceStore, RegionStore} from "stores";
 import {ApiService} from "./ApiService";
+import {mapToObject} from "utilities";
 
 export enum ConnectionStatus {
     CLOSED = 0,
@@ -24,7 +25,7 @@ export class BackendService {
         return BackendService.staticInstance;
     }
 
-    private static readonly IcdVersion = 15;
+    private static readonly IcdVersion = 16;
     private static readonly DefaultFeatureFlags = CARTA.ClientFeatureFlags.WEB_ASSEMBLY | CARTA.ClientFeatureFlags.WEB_GL;
     @observable connectionStatus: ConnectionStatus;
     readonly loggingEnabled: boolean;
@@ -334,11 +335,11 @@ export class BackendService {
     }
 
     @action("export regions")
-    exportRegion(directory: string, file: string, type: CARTA.FileType, coordType: CARTA.CoordinateType, fileId: number, regionId: number[]): Observable<CARTA.ExportRegionAck> {
+    exportRegion(directory: string, file: string, type: CARTA.FileType, coordType: CARTA.CoordinateType, fileId: number, regionStyles: Map<number, CARTA.IRegionStyle>): Observable<CARTA.ExportRegionAck> {
         if (this.connectionStatus !== ConnectionStatus.ACTIVE) {
             return throwError(new Error("Not connected"));
         } else {
-            const message = CARTA.ExportRegion.create({directory, file, type, fileId, regionId, coordType});
+            const message = CARTA.ExportRegion.create({directory, file, type, fileId, regionStyles: mapToObject(regionStyles), coordType});
             const requestId = this.eventCounter;
             this.logEvent(CARTA.EventType.EXPORT_REGION, requestId, message, false);
             if (this.sendEvent(CARTA.EventType.EXPORT_REGION, CARTA.ExportRegion.encode(message).finish())) {
@@ -443,10 +444,11 @@ export class BackendService {
             const message = CARTA.SetRegion.create({
                 fileId,
                 regionId,
-                regionType: region.regionType,
-                regionName: region.name,
-                controlPoints: region.controlPoints.map(point => ({x: point.x, y: point.y})),
-                rotation: region.rotation
+                regionInfo: {
+                    regionType: region.regionType,
+                    rotation: region.rotation,
+                    controlPoints: region.controlPoints.slice(),
+                }
             });
 
             const requestId = this.eventCounter;
