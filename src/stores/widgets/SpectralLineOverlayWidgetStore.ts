@@ -24,10 +24,14 @@ export enum SpectralLineHeaders {
     Species = "Species",
     ChemicalName = "Chemical Name",
     ShiftedFrequency = "Shifted Frequency",
-    RestFrequency = "Freq-MHz(rest frame,redshifted)",
-    FreqErr = "Freq Err(rest frame,redshifted)",
-    MeasFreqMHz = "Meas Freq-MHz(rest frame,redshifted)",
-    MeasFreqErr = "Meas Freq Err(rest frame,redshifted)",
+    RestFrequencySPLA = "Freq-MHz(rest frame,redshifted)",
+    RestFrequency = "Rest Frequency",
+    RestFrequencyErrSPLA = "Freq Err(rest frame,redshifted)",
+    RestFrequencyErr = "Rest Frequency Error",
+    MeasuredFrequencySPLA = "Meas Freq-MHz(rest frame,redshifted)",
+    MeasuredFrequency = "Measured Frequency",
+    MeasuredFrequencyErrSPLA = "Meas Freq Err(rest frame,redshifted)",
+    MeasuredFrequencyErr = "Measured Frequency Error",
     ResolvedQN = "Resolved QNs",
     UnresolvedQN = "Unresolved QNs",
     IntensityCDMS = "CDMS/JPL Intensity",
@@ -42,14 +46,21 @@ export enum SpectralLineHeaders {
     LineList = "Linelist"
 }
 
+const SPLATALOG_HEADER_MAP = new Map<SpectralLineHeaders, SpectralLineHeaders>([
+    [SpectralLineHeaders.RestFrequencySPLA, SpectralLineHeaders.RestFrequency],
+    [SpectralLineHeaders.RestFrequencyErrSPLA, SpectralLineHeaders.RestFrequencyErr],
+    [SpectralLineHeaders.MeasuredFrequencySPLA, SpectralLineHeaders.MeasuredFrequency],
+    [SpectralLineHeaders.MeasuredFrequencyErrSPLA, SpectralLineHeaders.MeasuredFrequencyErr]
+]);
+
 const SPECTRAL_LINE_DESCRIPTION = new Map<SpectralLineHeaders, string>([
     [SpectralLineHeaders.Species, "Chemical formula of the species"],
     [SpectralLineHeaders.ChemicalName, "Chemical name of the species"],
     [SpectralLineHeaders.ShiftedFrequency, "Shifted frequency according to the input velocity or redshift"],
     [SpectralLineHeaders.RestFrequency, "Frequency at the rest frame"],
-    [SpectralLineHeaders.FreqErr, "Frequency error at the rest frame"],
-    [SpectralLineHeaders.MeasFreqMHz, "Frequency measured from laboratories"],
-    [SpectralLineHeaders.MeasFreqErr, "Frequency error measured from laboratories"],
+    [SpectralLineHeaders.RestFrequencyErr, "Frequency error at the rest frame"],
+    [SpectralLineHeaders.MeasuredFrequency, "Frequency measured from laboratories"],
+    [SpectralLineHeaders.MeasuredFrequencyErr, "Frequency error measured from laboratories"],
     [SpectralLineHeaders.ResolvedQN, "Resolved Quantum Numbers"],
     [SpectralLineHeaders.IntensityCDMS, "log10(intensity) at 300 K"],
     [SpectralLineHeaders.IntensityLovas, "Intensity(for Lovas/AST)"],
@@ -185,6 +196,12 @@ export class SpectralLineOverlayWidgetStore extends RegionWidgetStore {
                 if (ack.success && ack.dataSize > 0) {
                     this.numDataRows = ack.dataSize;
                     this.isLineSelectedArray = new Array<boolean>(this.numDataRows).fill(false);
+                    // replace to comprehensive headers
+                    ack.headers.forEach((header) => {
+                        if (SPLATALOG_HEADER_MAP.has(header.name as SpectralLineHeaders)) {
+                            header.name = SPLATALOG_HEADER_MAP.get(header.name as SpectralLineHeaders);
+                        }
+                    });
                     this.queryResult = ProtobufProcessing.ProcessCatalogData(ack.spectralLineData);
                     this.originalFreqColumn = this.queryResult.get(REST_FREQUENCY_COLUMN_INDEX);
                     this.columnHeaders = ack.headers.sort((a, b) => {
