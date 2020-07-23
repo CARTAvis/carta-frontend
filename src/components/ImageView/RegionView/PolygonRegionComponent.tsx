@@ -297,7 +297,6 @@ export class PolygonRegionComponent extends React.Component<PolygonRegionCompone
                     lineJoin={"round"}
                     draggable={true}
                     points={pointArray}
-                    strokeHitEnabled={true}
                     hitStrokeWidth={NEW_ANCHOR_MAX_DISTANCE * 2}
                 />
                 <Group>
