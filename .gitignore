@@ -190,3 +190,5 @@ src/static/gitInfo.ts
 /package-lock.json
 
 /wasm_libs/built/
+
+emscripten*.simg
