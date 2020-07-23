@@ -8,9 +8,15 @@ export function isWCSStringFormatValid(wcsString: string, format: NumberFormatTy
     if (!wcsString || !format) {
         return false;
     }
+    const hmsRegExp = /^\-?\d{0,2}\:\d{0,2}\:(\d{1,2}(\.\d+)?)?$/;
+    const dmsRegExp = /^\-?\d*\:\d{0,2}\:(\d{1,2}(\.\d+)?)?$/;
     const decimalRegExp = /^\-?\d+(\.\d+)?$/;
-    const sexagesimalRegExp = /^\-?\d+\:\d+\:\d+(\.\d+)?$/; // h:m:s or d:m:s
-    return format === NumberFormatType.Degrees ? decimalRegExp.test(wcsString) : sexagesimalRegExp.test(wcsString);
+    if (format === NumberFormatType.HMS) {
+        return hmsRegExp.test(wcsString);
+    } else if (format === NumberFormatType.DMS) {
+        return dmsRegExp.test(wcsString);
+    }
+    return decimalRegExp.test(wcsString);
 }
 
 export function getHeaderNumericValue(headerEntry: CARTA.IHeaderEntry): number {
