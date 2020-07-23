@@ -99,11 +99,10 @@ export interface SpectralLine {
 const SPECIES_COLUMN_INDEX = 0;
 const SHIFTIED_FREQUENCY_COLUMN_INDEX = 2;
 const REST_FREQUENCY_COLUMN_INDEX = 3;
+const MEASURED_FREQUENCY_COLUMN_INDEX = 5;
 const RESOLVED_QN_COLUMN_INDEX = 7;
 
 export class SpectralLineQueryWidgetStore extends RegionWidgetStore {
-    private static readonly initDisplayedColumnSize = 6;
-
     @observable queryRangeType: SpectralLineQueryRangeType;
     @observable queryRange: NumberRange;
     @observable queryRangeByCenter: NumberRange;
@@ -116,7 +115,8 @@ export class SpectralLineQueryWidgetStore extends RegionWidgetStore {
     @observable queryResultTableRef: Table;
     @observable queryResult: Map<number, ProcessedColumnData>;
     @observable private isLineSelectedArray: Array<boolean>;
-    @observable originalFreqColumn: ProcessedColumnData;
+    @observable private restFreqColumn: ProcessedColumnData;
+    @observable private measuredFreqColumn: ProcessedColumnData;
     @observable sortingInfo: {columnName: string, sortingType: CARTA.SortingType};
     @observable numDataRows: number;
     @observable selectedSpectralProfilerID: string;
@@ -212,7 +212,8 @@ export class SpectralLineQueryWidgetStore extends RegionWidgetStore {
                         }
                     });
                     this.queryResult = ProtobufProcessing.ProcessCatalogData(ack.spectralLineData);
-                    this.originalFreqColumn = this.queryResult.get(REST_FREQUENCY_COLUMN_INDEX);
+                    this.restFreqColumn = this.queryResult.get(REST_FREQUENCY_COLUMN_INDEX);
+                    this.measuredFreqColumn = this.queryResult.get(MEASURED_FREQUENCY_COLUMN_INDEX);
                     this.columnHeaders = ack.headers.sort((a, b) => {
                         return (a.columnIndex - b.columnIndex);
                     });
@@ -330,7 +331,8 @@ export class SpectralLineQueryWidgetStore extends RegionWidgetStore {
         this.redshiftInput = 0;
         this.queryResultTableRef = undefined;
         this.queryResult = new Map<number, ProcessedColumnData>();
-        this.originalFreqColumn = undefined;
+        this.restFreqColumn = undefined;
+        this.measuredFreqColumn = undefined;
         this.numDataRows = 1;
         this.isLineSelectedArray = [];
         this.selectedSpectralProfilerID = AppStore.Instance.widgetsStore.spectralProfilerList.length > 0 ?
@@ -339,12 +341,19 @@ export class SpectralLineQueryWidgetStore extends RegionWidgetStore {
 
         // update frequency column when redshift changes
         autorun(() => {
-            if (this.queryResult.size > 0 && this.originalFreqColumn && this.originalFreqColumn.data) {
+            if (this.queryResult.size > 0 && this.restFreqColumn?.data && this.measuredFreqColumn?.data) {
+                const shiftedData = (this.restFreqColumn.data as Array<string>).map((valString, index) => {
+                    let value = parseFloat(valString);
+                    if (!isFinite(value) && index < this.measuredFreqColumn.data.length) {
+                        // compensate missing rest frequency value with measured frequency value
+                        value = parseFloat((this.measuredFreqColumn.data as Array<string>)[index]);
+                    }
+                    return isFinite(value) ? value * this.redshiftFactor : undefined;
+                });
+
                 this.queryResult.set(SHIFTIED_FREQUENCY_COLUMN_INDEX, {
                     dataType: CARTA.ColumnType.Double,
-                    data: (this.originalFreqColumn.data as Array<number>).map(val => {
-                        return isFinite(val) ? val * this.redshiftFactor : undefined;
-                    })
+                    data: shiftedData
                 });
             }
         });
