@@ -340,7 +340,13 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
                 linePlotProps.xLabel = `${spectralSystem && spectralSystem !== "" ? spectralSystem + ", " : ""}${frame.spectralCoordinate}`;
             }
             if (frame.unit) {
-                linePlotProps.yLabel = `Value (${frame.unit})`;
+                if (this.widgetStore.statsType === CARTA.StatsType.FluxDensity) {
+                    linePlotProps.yLabel = "Value (Jy)";
+                } else if (this.widgetStore.statsType === CARTA.StatsType.SumSq) {
+                    linePlotProps.yLabel = `Value (${frame.unit})^2`;
+                } else {
+                    linePlotProps.yLabel = `Value (${frame.unit})`;
+                }
             }
 
             const currentPlotData = this.plotData;
