@@ -2,7 +2,7 @@
 
 ## Prerequisites
 The build process relies heavily on `npm` and `nodejs`, so make sure they are installed and accessible.
-We recommend using [Docker](https://www.docker.com) to perform WebAssembly compilation. If Docker is unavailable, the emscripten compiler (`emcc` version 1.39.18 recommended) needs to be available in the build environment. 
+We recommend using [Docker](https://www.docker.com) to perform WebAssembly compilation. If Docker is unavailable, the Emscripten compiler (`emcc` version 1.39.18 recommended) needs to be available in the build environment. Installation instructions are available on the [Emscripten homepage](https://emscripten.org/docs/getting_started/downloads.html).
 
 ## Build process (using Docker)
 Initialise submodules and install package dependncies:
@@ -18,7 +18,7 @@ Additional build steps (building WebAssembly wrappers, protocol buffer modules a
 To run a development build server, simply run `npm run start`. 
 
 ## Build process (without Docker)
-If your build environment does not have access to Docker, WebAssembly compilation must be performed in an environment with access to the emscripten compiler. 
+If your build environment does not have access to Docker, WebAssembly compilation must be performed in an environment with access to the Emscripten compiler. 
 
 Initialise submodules and install package dependncies:
 ```
