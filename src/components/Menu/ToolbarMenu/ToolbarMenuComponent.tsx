@@ -62,6 +62,20 @@ export class ToolbarMenuComponent extends React.Component {
         const commonTooltip = <span><br/><i><small>Drag to place docked widget<br/>Click to place a floating widget</small></i></span>;
         return (
             <React.Fragment>
+                <ButtonGroup className={actionsClassName}>
+                    <Tooltip content={<span>Point</span>}>
+                        <AnchorButton icon={"symbol-square"} onClick={() => this.handleRegionTypeClicked(CARTA.RegionType.POINT)} active={isRegionCreating && newRegionType === CARTA.RegionType.POINT} disabled={regionButtonsDisabled}/>
+                    </Tooltip>
+                    <Tooltip content={<span>Rectangle</span>}>
+                        <AnchorButton icon={"square"} onClick={() => this.handleRegionTypeClicked(CARTA.RegionType.RECTANGLE)} active={isRegionCreating && newRegionType === CARTA.RegionType.RECTANGLE} disabled={regionButtonsDisabled}/>
+                    </Tooltip>
+                    <Tooltip content={<span>Ellipse</span>}>
+                        <AnchorButton icon={"circle"} onClick={() => this.handleRegionTypeClicked(CARTA.RegionType.ELLIPSE)} active={isRegionCreating && newRegionType === CARTA.RegionType.ELLIPSE} disabled={regionButtonsDisabled}/>
+                    </Tooltip>
+                    <Tooltip content={<span>Polygon</span>}>
+                        <AnchorButton icon={"polygon-filter"} onClick={() => this.handleRegionTypeClicked(CARTA.RegionType.POLYGON)} active={isRegionCreating && newRegionType === CARTA.RegionType.POLYGON} disabled={regionButtonsDisabled}/>
+                    </Tooltip>
+                </ButtonGroup>
                 <ButtonGroup className={className}>
                     <Tooltip content={<span>Region List Widget{commonTooltip}</span>}>
                         <Button id="regionListButton" className={"regionList-button"} onClick={appStore.widgetsStore.createFloatingRegionListWidget}>
@@ -118,20 +132,6 @@ export class ToolbarMenuComponent extends React.Component {
                     </Tooltip>
                     <Tooltip content={<span>Contours</span>}>
                         <Button icon={<CustomIcon icon={"contour"}/>} onClick={dialogStore.showContourDialog} active={dialogStore.contourDialogVisible}/>
-                    </Tooltip>
-                </ButtonGroup>
-                <ButtonGroup className={actionsClassName}>
-                    <Tooltip content={<span>Point</span>}>
-                        <AnchorButton icon={"symbol-square"} onClick={() => this.handleRegionTypeClicked(CARTA.RegionType.POINT)} active={isRegionCreating && newRegionType === CARTA.RegionType.POINT} disabled={regionButtonsDisabled}/>
-                    </Tooltip>
-                    <Tooltip content={<span>Rectangle</span>}>
-                        <AnchorButton icon={"square"} onClick={() => this.handleRegionTypeClicked(CARTA.RegionType.RECTANGLE)} active={isRegionCreating && newRegionType === CARTA.RegionType.RECTANGLE} disabled={regionButtonsDisabled}/>
-                    </Tooltip>
-                    <Tooltip content={<span>Ellipse</span>}>
-                        <AnchorButton icon={"circle"} onClick={() => this.handleRegionTypeClicked(CARTA.RegionType.ELLIPSE)} active={isRegionCreating && newRegionType === CARTA.RegionType.ELLIPSE} disabled={regionButtonsDisabled}/>
-                    </Tooltip>
-                    <Tooltip content={<span>Polygon</span>}>
-                        <AnchorButton icon={"polygon-filter"} onClick={() => this.handleRegionTypeClicked(CARTA.RegionType.POLYGON)} active={isRegionCreating && newRegionType === CARTA.RegionType.POLYGON} disabled={regionButtonsDisabled}/>
                     </Tooltip>
                 </ButtonGroup>
             </React.Fragment>

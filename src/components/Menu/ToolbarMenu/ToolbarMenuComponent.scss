@@ -1,5 +1,16 @@
 @import "../../../../node_modules/@blueprintjs/core/lib/scss/variables.scss";
 
+.actions-toolbar-menu {
+    margin: 4px 4px 4px 10px;
+    user-select: none;
+
+    &.bp3-dark {
+        .bp3-button-text {
+            color: $gray5;
+        }
+    }
+}
+
 .toolbar-menu {
     margin: 4px 4px 4px 10px;
     user-select: none;
@@ -43,17 +54,6 @@
 }
 
 .dialog-toolbar-menu {
-    margin: 4px 4px 4px 10px;
-    user-select: none;
-
-    &.bp3-dark {
-        .bp3-button-text {
-            color: $gray5;
-        }
-    }
-}
-
-.actions-toolbar-menu {
     margin: 4px auto 4px 10px;
     user-select: none;
 
