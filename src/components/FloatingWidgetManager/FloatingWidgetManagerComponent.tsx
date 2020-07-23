@@ -12,7 +12,7 @@ import {
     RenderConfigComponent,
     SpatialProfilerComponent,
     SpectralProfilerComponent,
-    SpectralLineOverlayComponent,
+    SpectralLineQueryComponent,
     StatsComponent,
     StokesAnalysisComponent,
     CatalogOverlayComponent,
@@ -63,8 +63,8 @@ export class FloatingWidgetManagerComponent extends React.Component {
                 return <SpatialProfilerComponent id={widgetConfig.id} docked={false}/>;
             case SpectralProfilerComponent.WIDGET_CONFIG.type:
                 return <SpectralProfilerComponent id={widgetConfig.id} docked={false}/>;
-            case SpectralLineOverlayComponent.WIDGET_CONFIG.type:
-                return <SpectralLineOverlayComponent id={widgetConfig.id} docked={false}/>;
+            case SpectralLineQueryComponent.WIDGET_CONFIG.type:
+                return <SpectralLineQueryComponent id={widgetConfig.id} docked={false}/>;
             case StatsComponent.WIDGET_CONFIG.type:
                 return <StatsComponent id={widgetConfig.id} docked={false}/>;
             case HistogramComponent.WIDGET_CONFIG.type:

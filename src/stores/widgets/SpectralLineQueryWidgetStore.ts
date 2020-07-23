@@ -101,7 +101,7 @@ const SHIFTIED_FREQUENCY_COLUMN_INDEX = 2;
 const REST_FREQUENCY_COLUMN_INDEX = 3;
 const RESOLVED_QN_COLUMN_INDEX = 7;
 
-export class SpectralLineOverlayWidgetStore extends RegionWidgetStore {
+export class SpectralLineQueryWidgetStore extends RegionWidgetStore {
     private static readonly initDisplayedColumnSize = 6;
 
     @observable queryRangeType: SpectralLineQueryRangeType;

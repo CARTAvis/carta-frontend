@@ -12,7 +12,7 @@ import {
     RegionListComponent,
     RenderConfigComponent,
     SpatialProfilerComponent,
-    SpectralLineOverlayComponent,
+    SpectralLineQueryComponent,
     SpectralProfilerComponent,
     StatsComponent,
     ToolbarMenuComponent,
@@ -33,7 +33,7 @@ import {
     RegionWidgetStore, 
     RenderConfigWidgetStore, 
     SpatialProfileWidgetStore,
-    SpectralLineOverlayWidgetStore,
+    SpectralLineQueryWidgetStore,
     SpectralProfileWidgetStore,
     StatsWidgetStore, 
     StokesAnalysisWidgetStore, 
@@ -91,7 +91,7 @@ export class WidgetsStore {
     @observable floatingSettingsWidgets: Map<string, string>;
     @observable catalogOverlayWidgets: Map<string, CatalogOverlayWidgetStore>;
     @observable catalogScatterWidgets: Map<string, CatalogScatterWidgetStore>;
-    @observable spectralLineOverlayWidgets: Map<string, SpectralLineOverlayWidgetStore>;
+    @observable spectralLineQueryWidgets: Map<string, SpectralLineQueryWidgetStore>;
 
     private widgetsMap: Map<string, Map<string, any>>;
     private defaultFloatingWidgetOffset: number;
@@ -132,7 +132,7 @@ export class WidgetsStore {
         this.catalogOverlayWidgets = new Map<string, CatalogOverlayWidgetStore>();
         this.floatingSettingsWidgets = new Map<string, string>();
         this.catalogScatterWidgets = new Map<string, CatalogScatterWidgetStore>();
-        this.spectralLineOverlayWidgets = new Map<string, SpectralLineOverlayWidgetStore>();
+        this.spectralLineQueryWidgets = new Map<string, SpectralLineQueryWidgetStore>();
 
         this.widgetsMap = new Map<string, Map<string, any>>([
             [SpatialProfilerComponent.WIDGET_CONFIG.type, this.spatialProfileWidgets],
@@ -147,7 +147,7 @@ export class WidgetsStore {
             [StokesAnalysisComponent.WIDGET_CONFIG.type, this.stokesAnalysisWidgets],
             [CatalogOverlayComponent.WIDGET_CONFIG.type, this.catalogOverlayWidgets],
             [CatalogScatterComponent.WIDGET_CONFIG.type, this.catalogScatterWidgets],
-            [SpectralLineOverlayComponent.WIDGET_CONFIG.type, this.spectralLineOverlayWidgets]
+            [SpectralLineQueryComponent.WIDGET_CONFIG.type, this.spectralLineQueryWidgets]
         ]);
 
         this.floatingWidgets = [];
@@ -182,8 +182,8 @@ export class WidgetsStore {
                 return CatalogOverlayComponent.WIDGET_CONFIG;
             case CatalogScatterComponent.WIDGET_CONFIG.type:
                 return CatalogScatterComponent.WIDGET_CONFIG;
-            case SpectralLineOverlayComponent.WIDGET_CONFIG.type:
-                return SpectralLineOverlayComponent.WIDGET_CONFIG;
+            case SpectralLineQueryComponent.WIDGET_CONFIG.type:
+                return SpectralLineQueryComponent.WIDGET_CONFIG;
             default:
                 return PlaceholderComponent.WIDGET_CONFIG;
         }
@@ -332,8 +332,8 @@ export class WidgetsStore {
             case StokesAnalysisComponent.WIDGET_CONFIG.type:
                 itemId = this.addStokesWidget(null, widgetSettings);
                 break;
-            case SpectralLineOverlayComponent.WIDGET_CONFIG.type:
-                itemId = this.addSpectralLineOverlayWidget();
+            case SpectralLineQueryComponent.WIDGET_CONFIG.type:
+                itemId = this.addSpectralLineQueryWidget();
                 break;
             case CatalogOverlayComponent.WIDGET_CONFIG.type:
                 itemId = this.getNextComponentId(CatalogOverlayComponent.WIDGET_CONFIG);
@@ -401,7 +401,7 @@ export class WidgetsStore {
         layout.registerComponent("image-view", ImageViewComponent);
         layout.registerComponent("spatial-profiler", SpatialProfilerComponent);
         layout.registerComponent("spectral-profiler", SpectralProfilerComponent);
-        layout.registerComponent("spectral-line-overlay", SpectralLineOverlayComponent);
+        layout.registerComponent("spectral-line-query", SpectralLineQueryComponent);
         layout.registerComponent("stats", StatsComponent);
         layout.registerComponent("histogram", HistogramComponent);
         layout.registerComponent("render-config", RenderConfigComponent);
@@ -860,25 +860,25 @@ export class WidgetsStore {
     }
     // endregion
 
-    // region Spectral Line Overlay Widgets
-    createFloatingSpectralLineOverlayWidget = (): string => {
-        let config = SpectralLineOverlayComponent.WIDGET_CONFIG;
-        const widgetId = this.addSpectralLineOverlayWidget();
+    // region Spectral Line Query Widgets
+    createFloatingSpectralLineQueryWidget = (): string => {
+        let config = SpectralLineQueryComponent.WIDGET_CONFIG;
+        const widgetId = this.addSpectralLineQueryWidget();
         config.id = widgetId;
         config.componentId = this.getNextComponentId(config);
         this.addFloatingWidget(config);
         return widgetId;
     };
 
-     // add spectral line overlay widget store
-     @action addSpectralLineOverlayWidget(id: string = null) {
+     // add spectral line query widget store
+     @action addSpectralLineQueryWidget(id: string = null) {
         // Generate new id if none passed in
         if (!id) {
-            id = this.getNextId(SpectralLineOverlayComponent.WIDGET_CONFIG.type);
+            id = this.getNextId(SpectralLineQueryComponent.WIDGET_CONFIG.type);
         }
 
         if (id) {
-            this.spectralLineOverlayWidgets.set(id, new SpectralLineOverlayWidgetStore());
+            this.spectralLineQueryWidgets.set(id, new SpectralLineQueryWidgetStore());
         }
         return id;
     }

@@ -11,7 +11,7 @@ import {
     RenderConfigComponent,
     SpatialProfilerComponent,
     SpectralProfilerComponent,
-    SpectralLineOverlayComponent,
+    SpectralLineQueryComponent,
     StatsComponent,
     StokesAnalysisComponent,
     CatalogOverlayComponent
@@ -29,7 +29,7 @@ export class ToolbarMenuComponent extends React.Component {
             ["regionListButton", RegionListComponent.WIDGET_CONFIG],
             ["spatialProfilerButton", SpatialProfilerComponent.WIDGET_CONFIG],
             ["spectralProfilerButton", SpectralProfilerComponent.WIDGET_CONFIG],
-            ["spectralLineOverlayButton", SpectralLineOverlayComponent.WIDGET_CONFIG],
+            ["spectralLineQueryButton", SpectralLineQueryComponent.WIDGET_CONFIG],
             ["statsButton", StatsComponent.WIDGET_CONFIG],
             ["histogramButton", HistogramComponent.WIDGET_CONFIG],
             ["stokesAnalysisButton", StokesAnalysisComponent.WIDGET_CONFIG],
@@ -94,8 +94,8 @@ export class ToolbarMenuComponent extends React.Component {
                     <Tooltip content={<span>Catalog Widget{commonTooltip}</span>}>
                         <Button icon={"heatmap"} id="catalogOverlayButton" onClick={appStore.widgetsStore.reloadFloatingCatalogOverlayWidget}/>
                     </Tooltip>
-                    <Tooltip content={<span>Spectral Line Widget{commonTooltip}</span>}>
-                        <Button icon={"geosearch"} id="spectralLineOverlayButton" onClick={appStore.widgetsStore.createFloatingSpectralLineOverlayWidget}/>
+                    <Tooltip content={<span>Spectral Line Query Widget{commonTooltip}</span>}>
+                        <Button icon={"geosearch"} id="spectralLineQueryButton" onClick={appStore.widgetsStore.createFloatingSpectralLineQueryWidget}/>
                     </Tooltip>
                 </ButtonGroup>
                 <ButtonGroup className={dialogClassName}>

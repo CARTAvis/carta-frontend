@@ -56,5 +56,5 @@ export enum HelpType {
     STOKES_ANALYSIS_SETTINGS = "stoke-analysis-settings",
     CATALOG_OVERLAY = "catalog-overlay",
     CATALOG_SCATTER = "catalog-scatter",
-    SPECTRAL_LINE_OVERLAY = "spectral-line-overlay"
+    SPECTRAL_LINE_QUERY = "spectral-line-query"
 }

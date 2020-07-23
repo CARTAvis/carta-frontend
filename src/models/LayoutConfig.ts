@@ -71,11 +71,11 @@ const COMPONENT_CONFIG = new Map<string, any>([
         title: "Log",
         id: "log"
     }],
-    ["spectral-line-overlay", {
+    ["spectral-line-query", {
         type: "react-component",
-        component: "spectral-line-overlay",
-        title: "Spectral Line Overlay",
-        id: "spectral-line-overlay"
+        component: "spectral-line-query",
+        title: "Spectral Line Query",
+        id: "spectral-line-query"
     }]
 ]);
 

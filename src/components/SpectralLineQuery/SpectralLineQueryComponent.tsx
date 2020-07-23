@@ -6,8 +6,8 @@ import {Cell, Column, Regions, RenderMode, SelectionModes, Table} from "@bluepri
 import ReactResizeDetector from "react-resize-detector";
 import {SafeNumericInput, TableComponent, TableComponentProps, TableType} from "components/Shared";
 import {AppStore, HelpType, WidgetConfig, WidgetProps, WidgetsStore} from "stores";
-import {RedshiftType, SpectralLineHeaders, SpectralLineOverlayWidgetStore, SpectralLineQueryRangeType, SpectralLineQueryUnit} from "stores/widgets";
-import "./SpectralLineOverlayComponent.css";
+import {RedshiftType, SpectralLineHeaders, SpectralLineQueryWidgetStore, SpectralLineQueryRangeType, SpectralLineQueryUnit} from "stores/widgets";
+import "./SpectralLineQueryComponent.css";
 
 enum HeaderTableColumnName {
     Name = "Name",
@@ -19,7 +19,7 @@ const KEYCODE_ENTER = 13;
 const MINIMUM_WIDTH = 450;
 
 @observer
-export class SpectralLineOverlayComponent extends React.Component<WidgetProps> {
+export class SpectralLineQueryComponent extends React.Component<WidgetProps> {
     @observable width: number;
     @observable height: number;
     @observable widgetId: string;
@@ -29,15 +29,15 @@ export class SpectralLineOverlayComponent extends React.Component<WidgetProps> {
 
     public static get WIDGET_CONFIG(): WidgetConfig {
         return {
-            id: "spectral-line-overlay",
-            type: "spectral-line-overlay",
+            id: "spectral-line-query",
+            type: "spectral-line-query",
             minWidth: 500,
             minHeight: 400,
             defaultWidth: 600,
             defaultHeight: 600,
-            title: "Spectral Line Overlay",
+            title: "Spectral Line Query",
             isCloseable: true,
-            helpType: HelpType.SPECTRAL_LINE_OVERLAY
+            helpType: HelpType.SPECTRAL_LINE_QUERY
         };
     }
 
@@ -46,16 +46,16 @@ export class SpectralLineOverlayComponent extends React.Component<WidgetProps> {
         this.headerTableColumnWidths = [150, 70, 300];
     }
 
-    @computed get widgetStore(): SpectralLineOverlayWidgetStore {
+    @computed get widgetStore(): SpectralLineQueryWidgetStore {
         const widgetsStore = WidgetsStore.Instance;
-        if (widgetsStore.spectralLineOverlayWidgets) {
-            const widgetStore = widgetsStore.spectralLineOverlayWidgets.get(this.props.id);
+        if (widgetsStore.spectralLineQueryWidgets) {
+            const widgetStore = widgetsStore.spectralLineQueryWidgets.get(this.props.id);
             if (widgetStore) {
                 return widgetStore;
             }
         }
         console.log("can't find store for widget");
-        return new SpectralLineOverlayWidgetStore();
+        return new SpectralLineQueryWidgetStore();
     }
 
     @action onResize = (width: number, height: number) => {
@@ -335,7 +335,7 @@ export class SpectralLineOverlayComponent extends React.Component<WidgetProps> {
             updateTableRef: (ref) => { this.resultTableRef = ref; }
         };
 
-        let className = "spectral-line-overlay-widget";
+        let className = "spectral-line-query-widget";
         if (appStore.darkTheme) {
             className += " dark-theme";
         }
