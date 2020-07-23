@@ -100,8 +100,8 @@ export function formattedArcsec(arcsec: number): string {
 }
 
 export function wavelengthToFrequency(meter: number) { // return in Hz
-    if (!isFinite(meter) || meter === 0) {
-        return null;
+    if (!isFinite(meter) || meter === 0 || meter === null) {
+        return undefined;
     }
     return SPEED_OF_LIGHT / meter;
 }
