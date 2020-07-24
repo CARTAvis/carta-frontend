@@ -1,5 +1,6 @@
 import * as React from "react";
 import {observer} from "mobx-react";
+import {toJS} from "mobx";
 import {Cell, Column, Table, SelectionModes, RenderMode, ColumnHeaderCell, IRegion} from "@blueprintjs/table";
 import {Checkbox, Tooltip, PopoverPosition, InputGroup, Menu, MenuItem, Icon, Label} from "@blueprintjs/core";
 import {IRowIndices} from "@blueprintjs/table/lib/esm/common/grid";
@@ -219,13 +220,13 @@ export class TableComponent extends React.Component<TableComponentProps> {
         }
     };
 
-    private renderDataColumn(columnName: string, coloumnData: any) {
+    private renderDataColumn(columnName: string, columnData: any) {
         return (
             <Column
                 key={columnName}
                 name={columnName}
                 cellRenderer={(rowIndex, columnIndex) => (
-                    <Cell key={`cell_${columnIndex}_${rowIndex}`} interactive={true}>{coloumnData[rowIndex]}</Cell>
+                    <Cell key={`cell_${columnIndex}_${rowIndex}`} interactive={true}>{rowIndex < columnData?.length ? columnData[rowIndex] : undefined}</Cell>
                 )}
             />
         );
