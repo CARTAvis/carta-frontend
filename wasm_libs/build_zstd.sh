@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 command -v emcc >/dev/null 2>&1 || { echo "Script requires emcc but it's not installed or in PATH.Aborting." >&2; exit 1; }
-
+cd "${0%/*}"
 if ! [[ $(find zstd-1.4.4.tar.gz -type f 2>/dev/null && md5sum -c zstd.md5 &>/dev/null) ]]; then
   echo "Fetching Zstd 0.4.4"
   wget https://github.com/facebook/zstd/releases/download/v1.4.4/zstd-1.4.4.tar.gz

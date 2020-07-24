@@ -24,3 +24,11 @@ export function trimFitsComment(val: string): string {
     // replace standard Fits header comments
     return val.replace(/\s\/\s?.*$/, "");
 }
+
+export function mapToObject<K, T>(map: Map<K, T>) {
+    const obj: { [k: string]: T } = {};
+    map.forEach((value, key) => {
+        obj[key.toString()] = value;
+    });
+    return obj;
+}

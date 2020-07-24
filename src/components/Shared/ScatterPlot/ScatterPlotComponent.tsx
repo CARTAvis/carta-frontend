@@ -7,12 +7,13 @@ import {Scatter} from "react-chartjs-2";
 import ReactResizeDetector from "react-resize-detector";
 import {Layer, Stage, Group, Line, Ring, Rect} from "react-konva";
 import {ChartArea} from "chart.js";
-import {PlotContainerComponent, TickType} from "components/Shared/LinePlot/PlotContainer/PlotContainerComponent";
+import {PlotContainerComponent, TickType, MultiPlotProps} from "components/Shared/LinePlot/PlotContainer/PlotContainerComponent";
 import {ToolbarComponent} from "components/Shared/LinePlot/Toolbar/ToolbarComponent";
 import {ZoomMode, InteractionMode} from "components/Shared/LinePlot/LinePlotComponent";
 import {Point2D} from "models";
 import {clamp, toExponential} from "utilities";
 import "./ScatterPlotComponent.css";
+import { PlotType } from "../PlotTypeSelector/PlotTypeSelectorComponent";
 
 type Point3D = { x: number, y: number, z?: number };
 
@@ -35,10 +36,8 @@ export class ScatterPlotComponentProps {
     darkMode?: boolean;
     imageName?: string;
     plotName?: string;
-    usePointSymbols?: boolean;
     tickTypeX?: TickType;
     tickTypeY?: TickType;
-    interpolateLines?: boolean;
     showTopAxis?: boolean;
     topAxisTickFormatter?: (value: number, index: number, values: number[]) => string | number;
     graphClicked?: (x: number, y: number, data: { x: number, y: number, z?: number }[]) => void;
@@ -50,7 +49,6 @@ export class ScatterPlotComponentProps {
     graphCursorMoved?: (x: number, y: number) => void;
     mouseEntered?: (value: boolean) => void;
     scrollZoom?: boolean;
-    multiPlotData?: Map<string, { x: number, y: number }[]>;
     colorRangeEnd?: number;
     showXAxisTicks?: boolean;
     showXAxisLabel?: boolean;
@@ -58,7 +56,7 @@ export class ScatterPlotComponentProps {
     yZeroLineColor?: string;
     showLegend?: boolean;
     xTickMarkLength?: number;
-    plotType?: string;
+    plotType?: PlotType;
     dataBackgroundColor?: Array<string>;
     isGroupSubPlot?: boolean;
     zIndex?: boolean;
@@ -67,6 +65,7 @@ export class ScatterPlotComponentProps {
     zeroLineWidth?: number;
     cursorNearestPoint?: { x: number, y: number };
     updateChartArea?: (chartArea: ChartArea) => void;
+    multiPlotPropsMap?: Map<string, MultiPlotProps>;
 }
 
 // Maximum time between double clicks
@@ -355,7 +354,7 @@ export class ScatterPlotComponent extends React.Component<ScatterPlotComponentPr
     };
 
     onStageMouseMove = (ev) => {
-        if (this.props.data || this.props.multiPlotData) {
+        if (this.props.data || this.props.multiPlotPropsMap && this.props.multiPlotPropsMap.size > 0) {
             const mouseEvent: MouseEvent = ev.evt;
             const chartArea = this.chartArea;
             let mousePosX = clamp(mouseEvent.offsetX, chartArea.left - 1, chartArea.right + 1);
@@ -615,7 +614,7 @@ export class ScatterPlotComponent extends React.Component<ScatterPlotComponentPr
                 }
                 <ToolbarComponent
                     darkMode={this.props.darkMode}
-                    visible={this.isMouseEntered && (this.props.data !== undefined || this.props.multiPlotData !== undefined)}
+                    visible={this.isMouseEntered && (this.props.data !== undefined || (this.props.multiPlotPropsMap && this.props.multiPlotPropsMap.size > 0))}
                     exportImage={this.exportImage}
                     exportData={this.exportData}
                 />

@@ -1,12 +1,13 @@
 import * as React from "react";
-import { computed, observable } from "mobx";
-import { observer } from "mobx-react";
-import { HTMLTable, Icon, NonIdealState, Position, Tooltip } from "@blueprintjs/core";
+import {computed, observable} from "mobx";
+import {observer} from "mobx-react";
+import {HTMLTable, Icon, NonIdealState, Position, Tooltip} from "@blueprintjs/core";
 import ReactResizeDetector from "react-resize-detector";
-import { CARTA } from "carta-protobuf";
+import {CARTA} from "carta-protobuf";
 import {RegionStore, WidgetConfig, WidgetProps, HelpType, DialogStore, AppStore} from "stores";
-import { Point2D} from "models";
-import { toFixed } from "utilities";
+import {Point2D} from "models";
+import {toFixed} from "utilities";
+import {CustomIcon} from "icons/CustomIcons";
 import "./RegionListComponent.css";
 
 @observer
@@ -117,7 +118,7 @@ export class RegionListComponent extends React.Component<WidgetProps> {
 
             let pixelCenterEntry;
             if (isFinite(point.x) && isFinite(point.y)) {
-                pixelCenterEntry = <td style={{width: RegionListComponent.CENTER_COLUMN_DEFAULT_WIDTH}} onDoubleClick={this.handleRegionListDoubleClick} >{`(${toFixed(point.x, 1)}, ${toFixed(point.y, 1)})`}</td>;
+                pixelCenterEntry = <td style={{width: RegionListComponent.CENTER_COLUMN_DEFAULT_WIDTH}} onDoubleClick={this.handleRegionListDoubleClick}>{`(${toFixed(point.x, 1)}, ${toFixed(point.y, 1)})`}</td>;
             } else {
                 pixelCenterEntry = <td style={{width: RegionListComponent.CENTER_COLUMN_DEFAULT_WIDTH}}>Invalid</td>;
             }
@@ -127,19 +128,19 @@ export class RegionListComponent extends React.Component<WidgetProps> {
                 if (region.regionType === CARTA.RegionType.RECTANGLE || region.regionType === CARTA.RegionType.POLYGON) {
                     const sizePoint = region.boundingBox;
                     pixelSizeEntry = (
-                        <td style={{width: RegionListComponent.SIZE_COLUMN_DEFAULT_WIDTH}} onDoubleClick={this.handleRegionListDoubleClick} >
+                        <td style={{width: RegionListComponent.SIZE_COLUMN_DEFAULT_WIDTH}} onDoubleClick={this.handleRegionListDoubleClick}>
                             <Tooltip content="Width and height" position={Position.BOTTOM}>{`(${toFixed(sizePoint.x, 1)}, ${toFixed(sizePoint.y, 1)})`}</Tooltip>
                         </td>
                     );
                 } else if (region.regionType === CARTA.RegionType.ELLIPSE) {
                     const sizePoint = region.controlPoints[1];
                     pixelSizeEntry = (
-                        <td style={{width: RegionListComponent.SIZE_COLUMN_DEFAULT_WIDTH}} onDoubleClick={this.handleRegionListDoubleClick} >
+                        <td style={{width: RegionListComponent.SIZE_COLUMN_DEFAULT_WIDTH}} onDoubleClick={this.handleRegionListDoubleClick}>
                             <Tooltip content="Semi-major and semi-minor axes" position={Position.BOTTOM}>{`(${toFixed(sizePoint.x, 1)}, ${toFixed(sizePoint.y, 1)})`}</Tooltip>
                         </td>
                     );
                 } else {
-                    pixelSizeEntry = <td style={{width: RegionListComponent.SIZE_COLUMN_DEFAULT_WIDTH}} onDoubleClick={this.handleRegionListDoubleClick} />;
+                    pixelSizeEntry = <td style={{width: RegionListComponent.SIZE_COLUMN_DEFAULT_WIDTH}} onDoubleClick={this.handleRegionListDoubleClick}/>;
                 }
             }
 
@@ -152,7 +153,11 @@ export class RegionListComponent extends React.Component<WidgetProps> {
 
             let focusEntry: React.ReactNode;
             if (region.regionId) {
-                focusEntry = <td style={{width: RegionListComponent.ACTION_COLUMN_DEFAULT_WIDTH}} onClick={(ev) => this.handleFocusClicked(ev, region)}><Icon icon={"eye-open"}/></td>;
+                focusEntry = (
+                    <td style={{width: RegionListComponent.ACTION_COLUMN_DEFAULT_WIDTH}} onClick={(ev) => this.handleFocusClicked(ev, region)}>
+                        <CustomIcon icon="center"/>
+                    </td>
+                );
             }
 
             return (
@@ -162,11 +167,11 @@ export class RegionListComponent extends React.Component<WidgetProps> {
                     onClick={() => frame.regionSet.selectRegion(region)}
                 >
                     {lockEntry}{focusEntry}
-                    <td style={{width: nameWidth}} onDoubleClick={this.handleRegionListDoubleClick} >{region.nameString}</td>
-                    <td style={{width: RegionListComponent.TYPE_COLUMN_DEFAULT_WIDTH}} onDoubleClick={this.handleRegionListDoubleClick} >{RegionStore.RegionTypeString(region.regionType)}</td>
+                    <td style={{width: nameWidth}} onDoubleClick={this.handleRegionListDoubleClick}>{region.nameString}</td>
+                    <td style={{width: RegionListComponent.TYPE_COLUMN_DEFAULT_WIDTH}} onDoubleClick={this.handleRegionListDoubleClick}>{RegionStore.RegionTypeString(region.regionType)}</td>
                     {pixelCenterEntry}
                     {showSizeColumn && pixelSizeEntry}
-                    {showRotationColumn && <td style={{width: RegionListComponent.ROTATION_COLUMN_DEFAULT_WIDTH}} onDoubleClick={this.handleRegionListDoubleClick} >{toFixed(region.rotation, 1)}</td>}
+                    {showRotationColumn && <td style={{width: RegionListComponent.ROTATION_COLUMN_DEFAULT_WIDTH}} onDoubleClick={this.handleRegionListDoubleClick}>{toFixed(region.rotation, 1)}</td>}
                 </tr>
             );
         });
