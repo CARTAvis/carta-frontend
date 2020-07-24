@@ -51,7 +51,7 @@ export class RegionWidgetStore {
     }
 
     @computed get matchActiveFrame() {
-        if ( this.fileId === ACTIVE_FILE_ID || (this.appStore.activeFrame && this.appStore.activeFrame.frameInfo.fileId === this.fileId )) {
+        if (this.effectiveFrame && this.appStore.activeFrame.frameInfo.fileId === this.effectiveFrame.frameInfo.fileId) {
             return true;
         }
         return false;
@@ -73,8 +73,14 @@ export class RegionWidgetStore {
     }
 
     @computed get matchesSelectedRegion() {
-        if (this.appStore.selectedRegion) {
-            return this.effectiveRegionId === this.appStore.selectedRegion.regionId;
+        if (this.matchActiveFrame) {
+            if (this.appStore.selectedRegion) {
+                return this.effectiveRegionId === this.appStore.selectedRegion.regionId;
+            } else {
+                if (this.effectiveRegionId === RegionId.CURSOR || this.effectiveRegionId === RegionId.IMAGE) {
+                    return true;
+                }
+            }
         }
         return false;
     }

@@ -78,13 +78,25 @@ export class RegionSelectorComponent extends React.Component<{ widgetStore: Regi
             enableRegionSelect = true;
         }
 
+        let frameClassName = "";
+        let regionClassName = "";
+        const linkedClass = "linked-to-selected";
+
+        if (widgetStore.matchActiveFrame) {
+            frameClassName = AppStore.Instance.darkTheme ? `${linkedClass} dark-theme` : linkedClass;
+        }
+
+        if (widgetStore.matchesSelectedRegion) {
+            regionClassName = AppStore.Instance.darkTheme ? `${linkedClass} dark-theme` : linkedClass;
+        }
+
         return (
             <React.Fragment>
                 <FormGroup label={"Frame"} inline={true} disabled={!enableFrameselect}>
-                    <HTMLSelect value={selectedFrameValue} options={frameOptions} onChange={this.handleFrameChanged} disabled={!enableFrameselect} style={{width: "100px"}}/>
+                    <HTMLSelect className={frameClassName} value={selectedFrameValue} options={frameOptions} onChange={this.handleFrameChanged} disabled={!enableFrameselect} style={{width: "100px"}}/>
                 </FormGroup>
                 <FormGroup label={"Region"} inline={true} disabled={!enableRegionSelect}>
-                    <HTMLSelect value={selectedValue} options={regionOptions} onChange={this.handleRegionChanged} disabled={!enableRegionSelect}/>
+                    <HTMLSelect className={regionClassName} value={selectedValue} options={regionOptions} onChange={this.handleRegionChanged} disabled={!enableRegionSelect}/>
                 </FormGroup>
             </React.Fragment>
         );

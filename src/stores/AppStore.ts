@@ -274,7 +274,7 @@ export class AppStore {
 
     @computed get frameNames(): IOptionProps [] {
         let names: IOptionProps [] = [];
-        this.frames.forEach(frame => names.push({label: frame.frameInfo.fileInfo.name, value: frame.frameInfo.fileId}));
+        this.frames.forEach((frame, index) => names.push({label: index + ": " + frame.frameInfo.fileInfo.name, value: frame.frameInfo.fileId}));
         return names;
     }
 
