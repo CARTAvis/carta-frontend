@@ -2,7 +2,7 @@ import * as React from "react";
 import {computed, autorun} from "mobx";
 import {observer} from "mobx-react";
 import {Colors, Tab, Tabs} from "@blueprintjs/core";
-import {LinePlotSettingsPanelComponentProps, LinePlotSettingsPanelComponent, SpectralSettingsComponent} from "components/Shared";
+import {LinePlotSettingsPanelComponentProps, LinePlotSettingsPanelComponent, SpectralSettingsComponent, SmoothingSettingsComponent} from "components/Shared";
 import {MomentGeneratorComponent} from "../MomentGeneratorComponent/MomentGeneratorComponent";
 import {SpectralProfileWidgetStore} from "stores/widgets";
 import {WidgetProps, WidgetConfig, HelpType, AppStore, WidgetsStore} from "stores";
@@ -166,6 +166,7 @@ export class SpectralProfilerSettingsPanelComponent extends React.Component<Widg
                 <Tabs id="spectralSettingTabs">
                     <Tab panelClassName="conversion-tab-panel" id="conversion" title="Conversion" panel={<SpectralSettingsComponent widgetStore={widgetStore} disable={false}/>}/>
                     <Tab panelClassName="styling-tab-panel" id="styling" title="Styling" panel={<LinePlotSettingsPanelComponent {...lineSettingsProps}/>}/>
+                    <Tab id="smoothing" title="Smoothing" panel={<SmoothingSettingsComponent smoothingStore={widgetStore.smoothingStore}/>}/>
                     <Tab panelClassName="moment-tab-panel" id="moments" title="Moments" panel={<MomentGeneratorComponent widgetStore={widgetStore}/>}/>
                 </Tabs>
             </div>
