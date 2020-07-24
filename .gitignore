@@ -191,4 +191,5 @@ src/static/gitInfo.ts
 
 /wasm_libs/built/
 
-emscripten*.simg
+/emscripten*.simg
+/emscripten.simg/
