@@ -1,13 +1,12 @@
 import * as React from "react";
 import * as _ from "lodash";
-import * as AST from "ast_wrapper";
 import {autorun, computed, observable} from "mobx";
 import {observer} from "mobx-react";
 import {Colors, NonIdealState} from "@blueprintjs/core";
 import ReactResizeDetector from "react-resize-detector";
 import {CARTA} from "carta-protobuf";
-import {LinePlotComponent, LinePlotComponentProps, PlotType, ProfilerInfoComponent, VERTICAL_RANGE_PADDING} from "components/Shared";
-import {TickType} from "../Shared/LinePlot/PlotContainer/PlotContainerComponent";
+import {LinePlotComponent, LinePlotComponentProps, ProfilerInfoComponent, VERTICAL_RANGE_PADDING, SmoothingType} from "components/Shared";
+import {TickType, MultiPlotProps} from "../Shared/LinePlot/PlotContainer/PlotContainerComponent";
 import {SpectralProfilerToolbarComponent} from "./SpectralProfilerToolbarComponent/SpectralProfilerToolbarComponent";
 import {AnimationState, SpectralProfileStore, WidgetConfig, WidgetProps, HelpType, AnimatorStore, WidgetsStore, AppStore} from "stores";
 import {SpectralProfileWidgetStore} from "stores/widgets";
@@ -15,7 +14,7 @@ import {Point2D, ProcessedSpectralProfile} from "models";
 import {binarySearchByX, clamp, formattedNotation, toExponential, toFixed} from "utilities";
 import "./SpectralProfilerComponent.css";
 
-type PlotData = { values: Point2D[], xMin: number, xMax: number, yMin: number, yMax: number, yMean: number, yRms: number, progress: number };
+type PlotData = { values: Point2D[], smoothingValues: Point2D[], xMin: number, xMax: number, yMin: number, yMax: number, yMean: number, yRms: number, progress: number };
 
 @observer
 export class SpectralProfilerComponent extends React.Component<WidgetProps> {
@@ -124,6 +123,8 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
                 }
             }
 
+            let smoothingValues: Point2D[] = this.widgetStore.smoothingStore.getSmoothingPoint2DArray(channelValues, coordinateData.values);
+
             if (yCount > 0) {
                 yMean = ySum / yCount;
                 yRms = Math.sqrt((ySum2 / yCount) - yMean * yMean);
@@ -138,7 +139,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
                 yMin -= range * VERTICAL_RANGE_PADDING;
                 yMax += range * VERTICAL_RANGE_PADDING;
             }
-            return {values, xMin, xMax, yMin, yMax, yMean, yRms, progress: coordinateData.progress};
+            return {values, smoothingValues, xMin, xMax, yMin, yMax, yMean, yRms, progress: coordinateData.progress};
         }
         return null;
     }
@@ -317,8 +318,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
             darkMode: appStore.darkTheme,
             imageName: imageName,
             plotName: `Z profile`,
-            usePointSymbols: this.widgetStore.plotType === PlotType.POINTS,
-            interpolateLines: this.widgetStore.plotType === PlotType.LINES,
+            plotType: this.widgetStore.plotType,
             tickTypeY: TickType.Scientific,
             graphClicked: this.onChannelChanged,
             graphZoomedX: this.widgetStore.setXBounds,
@@ -331,7 +331,9 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
             mouseEntered: this.widgetStore.setMouseMoveIntoLinePlots,
             borderWidth: this.widgetStore.lineWidth,
             pointRadius: this.widgetStore.linePlotPointSize,
-            zeroLineWidth: 2
+            zeroLineWidth: 2,
+            order: 1,
+            multiPlotPropsMap: new Map()
         };
 
         if (this.profileStore && frame) {
@@ -363,6 +365,24 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
                     }
                 }
                 linePlotProps.lineColor = primaryLineColor;
+                const smoothingStore = this.widgetStore.smoothingStore;
+                if (smoothingStore.type !== SmoothingType.NONE) {
+                    if (!smoothingStore.isOverlayOn) {
+                        linePlotProps.lineColor = "#00000000";
+                    }
+
+                    let smoothingPlotProps: MultiPlotProps = {
+                        data: currentPlotData.smoothingValues,
+                        type: smoothingStore.lineType,
+                        borderColor: smoothingStore.lineColor.colorHex,
+                        borderWidth: smoothingStore.lineWidth,
+                        pointRadius: smoothingStore.pointRadius,
+                        order: 0,
+                        exportData: smoothingStore.exportData
+                    };
+                    linePlotProps.multiPlotPropsMap.set("smoothed", smoothingPlotProps);
+                }
+
                 // Determine scale in X and Y directions. If auto-scaling, use the bounds of the current data
                 if (this.widgetStore.isAutoScaledX) {
                     linePlotProps.xMin = currentPlotData.xMin;

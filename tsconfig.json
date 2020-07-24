@@ -33,6 +33,7 @@
         "webpack",
         "jest",
         "src/setupTests.ts",
-        "src/test"
+        "src/test",
+        "emscripten.simg"
     ]
 }
