@@ -8,6 +8,7 @@ import {AppStore, FrameStore} from "stores";
 import {getColorsForValues} from "utilities";
 import {SpectralSystem, SpectralType, SpectralUnit} from "models";
 import * as tinycolor from "tinycolor2";
+import {ProfileSmoothingStore} from "stores/ProfileSmoothingStore";
 
 export enum StokesCoordinate {
     CurrentZ = "z",
@@ -68,6 +69,7 @@ export class StokesAnalysisWidgetStore extends RegionWidgetStore {
     @observable colorMap: string;
     @observable colorPixel: { color: Uint8ClampedArray, size: number };
     @observable pointTransparency: number;
+    readonly smoothingStore: ProfileSmoothingStore;
     
     private static requestDataType = [StokesCoordinate.LinearPolarizationQ, StokesCoordinate.LinearPolarizationU];
     private static ValidStatsTypes = [
@@ -230,6 +232,7 @@ export class StokesAnalysisWidgetStore extends RegionWidgetStore {
         this.scatterPlotPointSize = DEFAULTS.scatterPlotPointSize;
         this.equalAxes = DEFAULTS.equalAxes;
         this.pointTransparency = DEFAULTS.pointTransparency;
+        this.smoothingStore = new ProfileSmoothingStore();
     }
 
     @action setQUScatterPlotXBounds = (minVal: number, maxVal: number) => {

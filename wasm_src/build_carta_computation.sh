@@ -3,6 +3,7 @@ command -v emcc >/dev/null 2>&1 || {
   echo "Script requires emcc but it's not installed or in PATH.Aborting." >&2
   exit 1
 }
+cd "${0%/*}"
 cd carta_computation
 mkdir -p build
 printf "Building carta computation code..."
