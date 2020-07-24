@@ -79,8 +79,6 @@ export class AppStore {
 
     // map catalog widget store with catalog file Id
     @observable catalogs: Map<string, number>;
-    // // map catalog component with catalog file Id
-    // @observable catalogProfiles: Map<string, number>;
 
     // Profiles and region data
     @observable spatialProfiles: Map<string, SpatialProfileStore>;
@@ -407,9 +405,6 @@ export class AppStore {
         // Stop animations playing before loading a new frame
         this.animatorStore.stopAnimation();
         this.removeAllFrames();
-        // if (this.catalogs.size) {
-        //     CatalogStore.Instance.resetDisplayedData([]);
-        // }
         return this.addFrame(directory, file, hdu);
     };
 
@@ -518,7 +513,11 @@ export class AppStore {
             this.tileService.clearCompressedCache(-1);
             this.frames.forEach(frame => {
                 frame.clearContours(false);
-                this.tileService.handleFileClosed(frame.frameInfo.fileId);
+                const fileId = frame.frameInfo.fileId;
+                this.tileService.handleFileClosed(fileId);
+                if (this.catalogs.size) {
+                    CatalogStore.Instance.closeAssociatedCatalog(fileId);
+                }
             });
             this.frames = [];
             // adjust requirements for stores
@@ -854,8 +853,6 @@ export class AppStore {
         this.syncContourToFrame = true;
         this.initRequirements();
         this.catalogs = new Map<string, number>();
-        // this.catalogProfiles = new Map<string, number>();
-        // this.imageAssociatedCatalogId = new Map<number, Array<number>>();
 
         AST.onReady.then(() => {
             AST.setPalette(this.darkTheme ? nightPalette : dayPalette);
