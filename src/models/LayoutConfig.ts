@@ -457,7 +457,7 @@ export class LayoutConfig {
                         LayoutConfig.GenSimpleConfigToSave(appStore, simpleChild.content, child.content);
                     }
                 } else if (child.type === "component" && child.id) {
-                    const widgetType = (child.id).replace(/\-\d+$/, "");
+                    const widgetType = (child.id).replace(/(\-component)?\-\d+$/, "");
                     let simpleChild = {
                         type: child.type,
                         id: widgetType

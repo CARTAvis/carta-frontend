@@ -70,7 +70,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
             title: "Catalog Overlay",
             isCloseable: true,
             helpType: HelpType.CATALOG_OVERLAY,
-            componentId: "catalog-overlay"
+            componentId: "catalog-overlay-component"
         };
     }
 
