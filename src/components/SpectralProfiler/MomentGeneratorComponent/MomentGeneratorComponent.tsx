@@ -120,7 +120,7 @@ export class MomentGeneratorComponent extends React.Component<{widgetStore: Spec
             <React.Fragment>
                 <SpectralSettingsComponent widgetStore={this.props.widgetStore} disable={false}/>
                 {activeFrame && activeFrame.numChannels > 1 &&
-                    <FormGroup label="Range"  inline={true} labelInfo={`(${activeFrame.spectralUnit})`}>
+                    <FormGroup label="Range"  inline={true} labelInfo={activeFrame?.spectralUnit ? `(${activeFrame.spectralUnit})` : ""}>
                         <div className="range-select">
                             <FormGroup label="From" inline={true}>
                                 <SafeNumericInput

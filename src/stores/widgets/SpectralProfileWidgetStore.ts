@@ -123,6 +123,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
             this.channelValueRange[0] = min;
             this.channelValueRange[1] = max;
         }
+        this.selectingMode = MomentSelectingMode.NONE;
     };
 
     @action setSelectedMaskRange = (min: number, max: number) => {
@@ -130,6 +131,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
             this.maskRange[0] = min;
             this.maskRange[1] = max;
         }
+        this.selectingMode = MomentSelectingMode.NONE;
     };
 
     @action private updateRanges = () => {
