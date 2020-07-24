@@ -9,6 +9,7 @@ import {RectangularRegionForm} from "./RectangularRegionForm/RectangularRegionFo
 import {EllipticalRegionForm} from "./EllipticalRegionForm/EllipticalRegionForm";
 import {AppearanceForm} from "./AppearanceForm/AppearanceForm";
 import {PolygonRegionForm} from "./PolygonRegionForm/PolygonRegionForm";
+import {CustomIcon} from "icons/CustomIcons";
 import "./RegionDialogComponent.css";
 
 @observer
@@ -101,7 +102,7 @@ export class RegionDialogComponent extends React.Component {
                     <AnchorButton intent={Intent.WARNING} minimal={true} icon={region.locked ? "lock" : "unlock"} onClick={region.toggleLock}/>
                 </Tooltip>
                 <Tooltip content={"Focus"}>
-                    <AnchorButton intent={Intent.WARNING} minimal={true} icon={"eye-open"} onClick={this.handleFocusClicked}/>
+                    <AnchorButton intent={Intent.WARNING} minimal={true} icon={<CustomIcon icon="center"/>} onClick={this.handleFocusClicked}/>
                 </Tooltip>
             </React.Fragment>
         );
