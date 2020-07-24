@@ -204,7 +204,6 @@ export class CatalogScatterComponent extends React.Component<WidgetProps> {
 
     private updateActivedFrame = (catalogStore: CatalogStore, catalogFileId: number) => {
         const imageId = catalogStore.getImageIdbyCatalog(catalogFileId);
-        // AppStore.Instance.activeFrameIndex
         if (imageId !== undefined && imageId !== AppStore.Instance.activeFrame.frameInfo.fileId) {
             AppStore.Instance.setActiveFrame(imageId);
             catalogStore.resetActivedCatalogFile(imageId);   

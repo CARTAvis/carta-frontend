@@ -1,5 +1,5 @@
 import * as _ from "lodash";
-import {action, autorun, computed, observable, ObservableMap, when, values, keys} from "mobx";
+import {action, autorun, computed, observable, ObservableMap, when} from "mobx";
 import * as Long from "long";
 import {Classes, Colors, IOptionProps, setHotkeysDialogProps} from "@blueprintjs/core";
 import {Utils} from "@blueprintjs/table";
