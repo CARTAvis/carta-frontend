@@ -355,7 +355,7 @@ export class FrameStore {
                     if (this.isSpectralCoordinateConvertible && channelInfo.channelType.unit !== SPECTRAL_DEFAULT_UNIT.get(SpectralType.FREQ)) {
                         const freqGHz = this.astSpectralTransform(SpectralType.FREQ, SpectralUnit.GHZ, this.spectralSystem, freqVal);
                         if (isFinite(freqGHz)) {
-                            spectralInfo.spectralString = `Frequency (${spectralInfo.specsys}): ${formattedFrequency(freqGHz)}`;
+                            spectralInfo.spectralString = `Frequency (${this.spectralSystem}): ${formattedFrequency(freqGHz)}`;
                         }
                     }
                     // convert frequency to volecity
@@ -369,7 +369,7 @@ export class FrameStore {
                     if (this.isSpectralCoordinateConvertible && channelInfo.channelType.unit !== SPECTRAL_DEFAULT_UNIT.get(SpectralType.VRAD)) {
                         const volecityKMS = this.astSpectralTransform(SpectralType.VRAD, SpectralUnit.KMS, this.spectralSystem, velocityVal);
                         if (isFinite(volecityKMS)) {
-                            spectralInfo.spectralString = `Velocity (${spectralInfo.specsys}): ${toFixed(volecityKMS, 4)} km/s`;
+                            spectralInfo.spectralString = `Velocity (${this.spectralSystem}): ${toFixed(volecityKMS, 4)} km/s`;
                         }
                     }
                     // convert velocity to frequency
@@ -537,16 +537,16 @@ export class FrameStore {
                     let val = getHeaderNumericValue(crvalHeader) + (i + 1 - getHeaderNumericValue(crpixHeader)) * getHeaderNumericValue(cdeltHeader);
                     switch (val) {
                         case 1:
-                            stokesInfo.push("Iz");
+                            stokesInfo.push("I");
                             break;
                         case 2:
-                            stokesInfo.push("Qz");
+                            stokesInfo.push("Q");
                             break;
                         case 3:
-                            stokesInfo.push("Uz");
+                            stokesInfo.push("U");
                             break;
                         case 4:
-                            stokesInfo.push("Vz");
+                            stokesInfo.push("V");
                             break;
                         default:
                             break;

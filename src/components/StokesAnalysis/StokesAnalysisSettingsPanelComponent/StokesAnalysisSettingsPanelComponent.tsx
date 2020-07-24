@@ -2,7 +2,7 @@ import * as React from "react";
 import {computed, autorun} from "mobx";
 import {observer} from "mobx-react";
 import {Colors, Tab, Tabs} from "@blueprintjs/core";
-import {LinePlotSettingsPanelComponent, LinePlotSettingsPanelComponentProps, ScatterPlotSettingsPanelComponentProps, ScatterPlotSettingsPanelComponent, SpectralSettingsComponent} from "components/Shared";
+import {LinePlotSettingsPanelComponent, LinePlotSettingsPanelComponentProps, ScatterPlotSettingsPanelComponentProps, ScatterPlotSettingsPanelComponent, SpectralSettingsComponent, SmoothingSettingsComponent} from "components/Shared";
 import {StokesAnalysisWidgetStore} from "stores/widgets";
 import {WidgetProps, WidgetConfig, HelpType, WidgetsStore, AppStore} from "stores";
 import "./StokesAnalysisSettingsPanelComponent.css";
@@ -97,6 +97,7 @@ export class StokesAnalysisSettingsPanelComponent extends React.Component<Widget
                     <Tab id="conversion" title="Conversion" panel={<SpectralSettingsComponent widgetStore={widgetStore} disable={!hasStokes}/>}/>
                     <Tab id="linePlotStyling" title="Line Plot Styling" panel={<LinePlotSettingsPanelComponent {...lineSettingsProps}/>}/>
                     <Tab id="scatterPlotStyling" title="Scatter Plot Styling" panel={<ScatterPlotSettingsPanelComponent {...scatterSettingsProps}/>}/>
+                    <Tab id="smoothing" title="Smoothing" panel={<SmoothingSettingsComponent smoothingStore={widgetStore.smoothingStore} diableStyle={true} diableDecimation={true}/>}/>
                 </Tabs>
             </div>
         );

@@ -34,7 +34,7 @@ import {
     SpectralProfileStore,
     WidgetsStore
 } from ".";
-import {distinct, GetRequiredTiles} from "utilities";
+import {distinct, GetRequiredTiles, mapToObject} from "utilities";
 import {BackendService, ConnectionStatus, ScriptingService, TileService, TileStreamDetails} from "services";
 import {FrameView, Point2D, ProtobufProcessing, Theme, TileCoordinate, WCSMatchingType} from "models";
 import {CatalogInfo, CatalogUpdateMode, HistogramWidgetStore, RegionWidgetStore, SpatialProfileWidgetStore, SpectralProfileWidgetStore, StatsWidgetStore, StokesAnalysisWidgetStore} from "./widgets";
@@ -646,11 +646,22 @@ export class AppStore {
         const frame = this.activeFrame;
         this.backendService.importRegion(directory, file, type, frame.frameInfo.fileId).subscribe(ack => {
             if (frame && ack.success && ack.regions) {
-                for (const region of ack.regions) {
-                    if (region.regionInfo) {
-                        frame.regionSet.addExistingRegion(region.regionInfo.controlPoints as Point2D[], region.regionInfo.rotation, region.regionInfo.regionType, region.regionId, region.regionInfo.regionName);
-                    }
-                }
+                const regionMap = new Map<string, CARTA.IRegionInfo>(Object.entries(ack.regions));
+                const regionStyles = new Map<string, CARTA.IRegionStyle>(Object.entries(ack.regionStyles));
+                regionMap.forEach((regionInfo, regionIdString) => {
+                    const styleInfo = regionStyles.get(regionIdString);
+
+                    frame.regionSet.addExistingRegion(
+                        regionInfo.controlPoints as Point2D[],
+                        regionInfo.rotation,
+                        regionInfo.regionType,
+                        parseInt(regionIdString),
+                        styleInfo?.name,
+                        styleInfo?.color,
+                        styleInfo?.lineWidth,
+                        styleInfo?.dashList
+                    );
+                });
             }
             this.fileBrowserStore.hideFileBrowser();
         }, error => {
@@ -667,7 +678,16 @@ export class AppStore {
         }
 
         const regionIds = frame.regionSet.regions.map(r => r.regionId).filter(id => id !== CURSOR_REGION_ID);
-        this.backendService.exportRegion(directory, file, fileType, coordType, frame.frameInfo.fileId, regionIds).subscribe(() => {
+        const regionStyles = new Map<number, CARTA.IRegionStyle>();
+        for (const region of frame.regionSet.regions) {
+            regionStyles.set(region.regionId, {
+                name: region.name,
+                color: region.color,
+                lineWidth: region.lineWidth,
+                dashList: region.dashLength ? [region.dashLength] : []
+            });
+        }
+        this.backendService.exportRegion(directory, file, fileType, coordType, frame.frameInfo.fileId, regionStyles).subscribe(() => {
             AppToaster.show({icon: "saved", message: `Exported regions for ${frame.frameInfo.fileInfo.name} using ${coordType === CARTA.CoordinateType.WORLD ? "world" : "pixel"} coordinates`, intent: "success", timeout: 3000});
             this.fileBrowserStore.hideFileBrowser();
         }, error => {
@@ -1209,19 +1229,15 @@ export class AppStore {
         const images: CARTA.IImageProperties[] = this.frames.map(frame => {
             const info = frame.frameInfo;
 
-            const regions: CARTA.IRegionProperties[] = frame.regionSet.regions.map(region => {
-                const regionInfo: CARTA.IRegionInfo = {
-                    regionName: region.name,
+            const regions = new Map<string, CARTA.IRegionInfo>();
+
+            for (const region of frame.regionSet.regions) {
+                regions.set(region.regionId.toFixed(), {
                     regionType: region.regionType,
                     controlPoints: region.controlPoints,
-                    rotation: region.rotation
-                };
-
-                return {
-                    regionId: region.regionId,
-                    regionInfo
-                };
-            });
+                    rotation: region.rotation,
+                });
+            }
 
             let contourSettings: CARTA.ISetContourParameters;
             if (frame.contourConfig.enabled) {
@@ -1244,7 +1260,7 @@ export class AppStore {
                 renderMode: info.renderMode,
                 channel: frame.requiredChannel,
                 stokes: frame.requiredStokes,
-                regions,
+                regions: mapToObject(regions),
                 contourSettings
             };
         });
