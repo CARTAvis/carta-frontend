@@ -1,5 +1,5 @@
 import * as _ from "lodash";
-import {action, autorun, computed, observable, ObservableMap, when} from "mobx";
+import {action, autorun, computed, observable, ObservableMap, when, values, keys} from "mobx";
 import * as Long from "long";
 import {Classes, Colors, IOptionProps, setHotkeysDialogProps} from "@blueprintjs/core";
 import {Utils} from "@blueprintjs/table";
@@ -77,10 +77,10 @@ export class AppStore {
     @observable syncContourToFrame: boolean;
     @observable syncFrameToContour: boolean;
 
-    // map catalog widget store with file Id
+    // map catalog widget store with catalog file Id
     @observable catalogs: Map<string, number>;
-    // map catalog component with file Id
-    @observable catalogProfiles: Map<string, number>;
+    // // map catalog component with catalog file Id
+    // @observable catalogProfiles: Map<string, number>;
 
     // Profiles and region data
     @observable spatialProfiles: Map<string, SpatialProfileStore>;
@@ -396,6 +396,10 @@ export class AppStore {
     @action appendFile = (directory: string, file: string, hdu: string) => {
         // Stop animations playing before loading a new frame
         this.animatorStore.stopAnimation();
+        // hide all catalog data
+        if (this.catalogs.size) {
+            CatalogStore.Instance.resetDisplayedData([]);
+        }
         return this.addFrame(directory, file, hdu);
     };
 
@@ -403,6 +407,9 @@ export class AppStore {
         // Stop animations playing before loading a new frame
         this.animatorStore.stopAnimation();
         this.removeAllFrames();
+        // if (this.catalogs.size) {
+        //     CatalogStore.Instance.resetDisplayedData([]);
+        // }
         return this.addFrame(directory, file, hdu);
     };
 
@@ -410,7 +417,6 @@ export class AppStore {
         if (!frame) {
             return;
         }
-
         // Display confirmation if image has secondary images
         const secondaries = frame.secondarySpatialImages.concat(frame.secondarySpectralImages).filter(distinct);
         const numSecondaries = secondaries.length;
@@ -495,6 +501,13 @@ export class AppStore {
                         this.clearSpectralReference();
                     }
                 }
+                // Clean up if frame has associated catalog files
+                if (this.catalogs.size) {
+                    CatalogStore.Instance.closeAssociatedCatalog(fileId);
+                    if (firstFrame) {
+                        CatalogStore.Instance.resetActivedCatalogFile(firstFrame.frameInfo.fileId);   
+                    }
+                }
             }
         }
     };
@@ -557,14 +570,30 @@ export class AppStore {
                 let catalogWidgetId;
                 const columnData = ProtobufProcessing.ProcessCatalogData(ack.previewData);
                 const catalogComponentSize = this.widgetsStore.catalogComponentSize();
+
+                // update image associated catalog file
+                let associatedCatalogFiles = [];
+                const catalogStore = CatalogStore.Instance;
+                let currentAssociatedCatalogFile = catalogStore.activedCatalogFiles;
+                if (currentAssociatedCatalogFile?.length) {
+                    associatedCatalogFiles = currentAssociatedCatalogFile;
+                } else {
+                    // new image append
+                    catalogStore.catalogProfiles.forEach((value , componentId) => {
+                        catalogStore.catalogProfiles.set(componentId, fileId);
+                    });
+                }
+                associatedCatalogFiles.push(fileId);
+                catalogStore.updateImageAssociatedCatalogId(AppStore.Instance.activeFrame.frameInfo.fileId, associatedCatalogFiles);
+
                 if (catalogComponentSize === 0) {
                     const catalog = this.widgetsStore.createFloatingCatalogOverlayWidget(catalogInfo, ack.headers, columnData);
                     catalogWidgetId = catalog.widgetStoreId;
-                    this.catalogProfiles.set(catalog.widgetComponentId, fileId);
+                    catalogStore.catalogProfiles.set(catalog.widgetComponentId, fileId);
                 } else {
                     catalogWidgetId = this.widgetsStore.addCatalogOverlayWidget(catalogInfo, ack.headers, columnData);
-                    const key = this.catalogProfiles.keys().next().value;
-                    this.catalogProfiles.set(key, fileId);
+                    const key = catalogStore.catalogProfiles.keys().next().value;
+                    catalogStore.catalogProfiles.set(key, fileId);
                 }
                 if (catalogWidgetId) {
                     this.catalogs.set(catalogWidgetId, fileId);
@@ -579,7 +608,7 @@ export class AppStore {
         });
     };
 
-    @action removeCatalog(catalogWidgetId: string, catalogComponentId: string) {
+    @action removeCatalog(catalogWidgetId: string, catalogComponentId?: string) {
         const fileId = this.catalogs.get(catalogWidgetId);
         if (fileId > -1 && this.backendService.closeCatalogFile(fileId)) {
             // close all associated scatter widgets
@@ -599,21 +628,31 @@ export class AppStore {
                 });
             }
 
-            // remove catalog overlay widget store, remove catalog from image viewer 
+            // remove catalog overlay widget store, remove catalog from image viewer
+            const catalogStore = CatalogStore.Instance;
             this.catalogs.delete(catalogWidgetId);
             this.widgetsStore.catalogOverlayWidgets.delete(catalogWidgetId);
-            this.catalogStore.clearData(catalogWidgetId);
+            catalogStore.removeCatalog(catalogWidgetId);
+
+            if (!this.activeFrame) {
+                return;
+            }
+            // update associated image
+            const fileIds = catalogStore.activedCatalogFiles;
+            const associatedCatalogId = fileIds.filter(catalogFileId => { return catalogFileId !== fileId; });
+            catalogStore.updateImageAssociatedCatalogId(AppStore.Instance.activeFrame.frameInfo.fileId, associatedCatalogId);   
 
             // update catalogProfiles fileId
-            if (this.catalogs.size > 0) {
-                const nextFileId = this.catalogs.values().next().value;
-                this.catalogProfiles.forEach((catalogFileId, componentId) => {
-                    if (catalogFileId === fileId) {
-                        this.catalogProfiles.set(componentId, nextFileId);
-                    }
-                });
-            } else {
-                this.catalogProfiles.set(catalogComponentId, 1);
+            if (catalogComponentId) {
+                if (this.catalogs.size && associatedCatalogId.length) {
+                    catalogStore.catalogProfiles.forEach((catalogFileId, componentId) => {
+                        if (catalogFileId === fileId) {
+                            catalogStore.catalogProfiles.set(componentId, associatedCatalogId[0]);
+                        }
+                    });
+                } else {
+                    catalogStore.catalogProfiles.set(catalogComponentId, 1);
+                }   
             }
         }
     }
@@ -815,7 +854,8 @@ export class AppStore {
         this.syncContourToFrame = true;
         this.initRequirements();
         this.catalogs = new Map<string, number>();
-        this.catalogProfiles = new Map<string, number>();
+        // this.catalogProfiles = new Map<string, number>();
+        // this.imageAssociatedCatalogId = new Map<number, Array<number>>();
 
         AST.onReady.then(() => {
             AST.setPalette(this.darkTheme ? nightPalette : dayPalette);
@@ -1647,15 +1687,4 @@ export class AppStore {
     }
 
     // endregion
-
-    // update associated catalogProfile fileId
-    @action updateCatalogProfiles = (catalogFileId: number) => {
-        if (this.catalogProfiles.size > 0) {
-            const componentIds = Array.from(this.catalogProfiles.keys());
-            const fileIds = Array.from(this.catalogProfiles.values());
-            if (!fileIds.includes(catalogFileId)) {
-                this.catalogProfiles.set(componentIds[0], catalogFileId);
-            }
-        }
-    };
 }

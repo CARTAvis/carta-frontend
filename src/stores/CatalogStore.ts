@@ -1,7 +1,8 @@
 import * as AST from "ast_wrapper";
-import {action, observable, ObservableMap} from "mobx";
+import {action, observable, ObservableMap, computed} from "mobx";
 import {Colors} from "@blueprintjs/core";
 import {CatalogOverlayShape, CatalogSystemType} from "stores/widgets";
+import {AppStore} from "./AppStore";
 
 type CatalogDataInfo = {
     fileId: number,
@@ -10,6 +11,7 @@ type CatalogDataInfo = {
     xSelectedCoords: Array<number>,
     ySelectedCoords: Array<number>,
     showSelectedData: boolean;
+    displayed: boolean;
 };
 
 export class CatalogStore {
@@ -30,12 +32,18 @@ export class CatalogStore {
     @observable catalogColor: ObservableMap<string, string>;
     @observable catalogSize: ObservableMap<string, number>;
     @observable catalogShape: ObservableMap<string, CatalogOverlayShape>;
+    // map image file id with catalog file Id
+    @observable imageAssociatedCatalogId: Map<number, Array<number>>;
+    // map catalog component with catalog file Id
+    @observable catalogProfiles: Map<string, number>;
 
     private constructor() {
         this.catalogData = new ObservableMap();
         this.catalogColor = new ObservableMap();
         this.catalogSize = new ObservableMap();
         this.catalogShape = new ObservableMap();
+        this.imageAssociatedCatalogId = new Map<number, Array<number>>();
+        this.catalogProfiles = new Map<string, number>();
     }
 
     @action addCatalog(widgetId: string, fileId: number) {
@@ -46,7 +54,8 @@ export class CatalogStore {
             yImageCoords: [],
             xSelectedCoords: [],
             ySelectedCoords: [],
-            showSelectedData: false
+            showSelectedData: false,
+            displayed: true
         });
         this.catalogColor.set(widgetId, Colors.TURQUOISE3);
         this.catalogSize.set(widgetId, 5);
@@ -87,6 +96,7 @@ export class CatalogStore {
                     xSelectedCoords: catalogDataInfo.xSelectedCoords,
                     ySelectedCoords: catalogDataInfo.ySelectedCoords,
                     showSelectedData: catalogDataInfo.showSelectedData,
+                    displayed: catalogDataInfo.displayed
                 });
         }
     }
@@ -102,6 +112,7 @@ export class CatalogStore {
                     xSelectedCoords: xSelectedCoords,
                     ySelectedCoords: ySelectedCoords,
                     showSelectedData: catalogDataInfo.showSelectedData,
+                    displayed: catalogDataInfo.displayed
                 });
         }
     }
@@ -118,7 +129,7 @@ export class CatalogStore {
         this.catalogShape.set(widgetId, shape);
     }
 
-    @action clearData(widgetId: string) {
+    @action clearImageCoordsData(widgetId: string) {
         const catalogData = this.catalogData.get(widgetId);
         if (catalogData) {
             catalogData.xImageCoords = [];
@@ -138,6 +149,118 @@ export class CatalogStore {
         const catalog = this.catalogData.get(widgetId);
         if (catalog) {
             catalog.showSelectedData = val;
+        }
+    }
+
+    @action updateImageAssociatedCatalogId(activeFrameIndex: number, associatedCatalogFiles: number[]) {
+        this.imageAssociatedCatalogId.set(activeFrameIndex, associatedCatalogFiles);
+    }
+
+    @action resetActivedCatalogFile(imageFileId: number) {
+        const appStore = AppStore.Instance;
+        const activedCatalog = this.imageAssociatedCatalogId.get(imageFileId);
+        if (this.catalogProfiles.size && activedCatalog?.length) {
+            this.catalogProfiles.forEach((value , componentId) => {
+                this.catalogProfiles.set(componentId, activedCatalog[0]);
+            });  
+        }
+        let associatedWidgetsId = [];
+        activedCatalog?.forEach(fileId => {
+            appStore.catalogs.forEach((value, key) => {
+                if (value === fileId) {
+                    associatedWidgetsId.push(key);
+                }
+            });
+        });
+        this.resetDisplayedData(associatedWidgetsId); 
+    }
+
+    // update associated catalogProfile fileId
+    @action updateCatalogProfiles = (catalogFileId: number) => {
+        if (this.catalogProfiles.size > 0) {
+            const componentIds = Array.from(this.catalogProfiles.keys());
+            const fileIds = Array.from(this.catalogProfiles.values());
+            if (!fileIds.includes(catalogFileId)) {
+                this.catalogProfiles.set(componentIds[0], catalogFileId);
+            }
+        }
+    };
+
+    getImageIdbyCatalog(catalogFileId: number) {
+        let imagefileId = undefined;
+        this.imageAssociatedCatalogId.forEach((catalogFileList, imageId) => {
+            if (catalogFileList.includes(catalogFileId)) {
+                imagefileId = imageId;
+            }
+        });
+        return imagefileId;
+    }
+
+    getAssociatedWidgetsId(catalogFileId: number) {
+        let widget = undefined;
+        AppStore.Instance.catalogs.forEach((fileId, widgetId) => {
+            if (fileId === catalogFileId) {
+                widget = widgetId;
+            }
+        });
+        return widget;
+    }
+
+    @action resetDisplayedData(associatedWidgetId: Array<string>) {
+        if (associatedWidgetId.length) {
+            this.catalogData.forEach((catalogDataInfo, widgetId) => {
+                let displayed = true;
+                if (!associatedWidgetId.includes(widgetId)) {
+                    displayed = false;
+                }
+                this.catalogData.set(widgetId,
+                    {
+                        fileId: catalogDataInfo.fileId,
+                        xImageCoords: catalogDataInfo.xImageCoords,
+                        yImageCoords: catalogDataInfo.yImageCoords,
+                        xSelectedCoords: catalogDataInfo.xSelectedCoords,
+                        ySelectedCoords: catalogDataInfo.ySelectedCoords,
+                        showSelectedData: catalogDataInfo.showSelectedData,
+                        displayed: displayed
+                    }
+                );
+            });
+        } else {
+            this.catalogData.forEach((catalogDataInfo, widgetId) => {
+                this.catalogData.set(widgetId,
+                    {
+                        fileId: catalogDataInfo.fileId,
+                        xImageCoords: catalogDataInfo.xImageCoords,
+                        yImageCoords: catalogDataInfo.yImageCoords,
+                        xSelectedCoords: catalogDataInfo.xSelectedCoords,
+                        ySelectedCoords: catalogDataInfo.ySelectedCoords,
+                        showSelectedData: catalogDataInfo.showSelectedData,
+                        displayed: false
+                    });
+            });
+        }
+    }
+
+    @action closeAssociatedCatalog(imageFileId: number) {
+        const catalogFileIds = this.imageAssociatedCatalogId.get(imageFileId);
+        if (catalogFileIds?.length) {
+            catalogFileIds.forEach((catalogFileId) => {
+                const widgetId = this.getAssociatedWidgetsId(catalogFileId);
+                if (widgetId) {
+                    AppStore.Instance.removeCatalog(widgetId);   
+                }
+            });
+            this.imageAssociatedCatalogId.delete(imageFileId);
+        }
+    }
+
+    @computed get activedCatalogFiles() {
+        const activeFrame = AppStore.Instance.activeFrame;
+        if (activeFrame) {
+            const imageId = activeFrame.frameInfo.fileId;
+            return this.imageAssociatedCatalogId.get(imageId);
+        } else {
+            return [];
         }
     }
 

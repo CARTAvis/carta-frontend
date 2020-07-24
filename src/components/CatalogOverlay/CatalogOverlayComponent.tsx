@@ -10,7 +10,7 @@ import SplitPane, { Pane } from "react-split-pane";
 import {CARTA} from "carta-protobuf";
 import {TableComponent, TableComponentProps, TableType, ClearableNumericInputComponent} from "components/Shared";
 import {CatalogOverlayPlotSettingsComponent} from "./CatalogOverlayPlotSettingsComponent/CatalogOverlayPlotSettingsComponent";
-import {AppStore, HelpType, WidgetConfig, WidgetProps, WidgetsStore} from "stores";
+import {AppStore, HelpType, WidgetConfig, WidgetProps, WidgetsStore, CatalogStore} from "stores";
 import {CatalogOverlay, CatalogCoordinate, CatalogOverlayWidgetStore, CatalogPlotType, CatalogScatterWidgetStoreProps, CatalogUpdateMode, CatalogSystemType} from "stores/widgets";
 import {toFixed} from "utilities";
 import {ProcessedColumnData} from "../../models";
@@ -97,7 +97,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
     }
 
     @action handleCatalogFileChange = (fileId: number) => {
-        AppStore.Instance.catalogProfiles.set(this.props.id, fileId);
+        CatalogStore.Instance.catalogProfiles.set(this.props.id, fileId);
         this.widgetId = this.matchesSelectedCatalogFile;
     }
 
@@ -155,15 +155,15 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
     constructor(props: WidgetProps) {
         super(props);
         this.widgetId = "catalog-overlay-0";
-        if (!AppStore.Instance.catalogProfiles.has(this.props.id)) {
-            AppStore.Instance.catalogProfiles.set(this.props.id, 1);
+        if (!CatalogStore.Instance.catalogProfiles.has(this.props.id)) {
+            CatalogStore.Instance.catalogProfiles.set(this.props.id, 1);
         }
 
         autorun(() => {
-            if (this.widgetStore) {
-                const appStore = AppStore.Instance;
-                const frame = appStore.activeFrame;
-                this.catalogFileId = appStore.catalogProfiles.get(this.props.id);
+            const appStore = AppStore.Instance;
+            const frame = appStore.activeFrame;
+            if (this.widgetStore && frame) {
+                this.catalogFileId = CatalogStore.Instance.catalogProfiles.get(this.props.id);
                 this.widgetId = this.matchesSelectedCatalogFile;
                 let progressString = "";
                 const fileName = this.widgetStore.catalogInfo.fileInfo.name || "";
@@ -499,7 +499,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
             widgetStore.updateTableStatus(false);
             widgetStore.resetFilterRequestControlParams();
             widgetStore.resetSelectedPointIndices();
-            appStore.catalogStore.clearData(this.widgetId);
+            appStore.catalogStore.clearImageCoordsData(this.widgetId);
 
             let filter = widgetStore.updateRequestDataSize;
             // Todo filter by region Id and Imageview boundary
@@ -519,7 +519,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         if (widgetStore && appStore) {
             widgetStore.resetFilterRequestControlParams();
             widgetStore.resetSelectedPointIndices();
-            appStore.catalogStore.clearData(this.widgetId);
+            appStore.catalogStore.clearImageCoordsData(this.widgetId);
 
             let filter = widgetStore.updateRequestDataSize;
             filter.sortColumn = columnName;
@@ -547,7 +547,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         if (widgetStore) {
             widgetStore.resetCatalogFilterRequest();
             widgetStore.resetSelectedPointIndices();
-            appStore.catalogStore.clearData(this.widgetId);
+            appStore.catalogStore.clearImageCoordsData(this.widgetId);
             appStore.sendCatalogFilter(widgetStore.catalogFilterRequest); 
         }
     }
@@ -565,7 +565,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
                     const wcs = frame.validWcs ? frame.wcsInfo : 0;
                     const id = this.widgetId;
                     const catalogStore = appStore.catalogStore;
-                    catalogStore.clearData(this.widgetId);
+                    catalogStore.clearImageCoordsData(this.widgetId);
                     catalogStore.updateCatalogData(id, coords.wcsX, coords.wcsY, wcs, coords.xHeaderInfo.units, coords.yHeaderInfo.units, widgetStore.catalogCoordinateSystem.system);
                     catalogStore.updateCatalogColor(id, widgetStore.catalogColor);
                     catalogStore.updateCatalogSize(id, widgetStore.catalogSize);
@@ -673,10 +673,10 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
     }
 
     public render() {
-        const appStore = AppStore.Instance;
         const widgetStore = this.widgetStore;
+        const catalogFileIds = CatalogStore.Instance.activedCatalogFiles;
 
-        if (!widgetStore) {
+        if (!widgetStore || catalogFileIds === undefined || catalogFileIds?.length === 0) {
             return (
                 <div className="catalog-overlay">
                     <NonIdealState icon={"folder-open"} title={"No catalog file loaded"} description={"Load a file using the menu"}/>;
@@ -735,7 +735,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         ) : null;
 
         let catalogFiles = [];
-        appStore.catalogs.forEach((value, key) => {
+        catalogFileIds.forEach((value) => {
             catalogFiles.push(value);
         });
 

@@ -28,17 +28,18 @@ export class CatalogViewComponent extends React.Component<CatalogViewComponentPr
         let coordsData = new Map<string, Plotly.Data>();
         catalogStore.catalogData.forEach((catalog, key) => {
             if (!catalog.showSelectedData) {
-                let unSelectedata: Plotly.Data = {};
-                unSelectedata.type = "scattergl";
-                unSelectedata.mode = "markers";
-                unSelectedata.hoverinfo = "none";
-                unSelectedata.marker = {};
-                unSelectedata.marker.line = {};
+                let unSelecteData: Plotly.Data = {};
+                unSelecteData.type = "scattergl";
+                unSelecteData.mode = "markers";
+                unSelecteData.hoverinfo = "none";
+                unSelecteData.visible = catalog.displayed;
+                unSelecteData.marker = {};
+                unSelecteData.marker.line = {};
                 // copy data to trigger react-plotly js update. only update revision number not working. with layout["datarevision"] will slow down plotly;
-                unSelectedata.x = catalog.xImageCoords.slice(0);
-                unSelectedata.y = catalog.yImageCoords.slice(0);
-                unSelectedata.name = key;
-                coordsData.set(key, unSelectedata);
+                unSelecteData.x = catalog.xImageCoords.slice(0);
+                unSelecteData.y = catalog.yImageCoords.slice(0);
+                unSelecteData.name = key;
+                coordsData.set(key, unSelecteData);
             }
         });
         return coordsData;
@@ -59,6 +60,7 @@ export class CatalogViewComponent extends React.Component<CatalogViewComponentPr
                 selecteData.mode = "markers";
                 selecteData.hoverinfo = "none";
                 const coords = catalogStore.catalogData.get(widgetId);
+                selecteData.visible = coords.displayed;
                 if (coords?.xImageCoords?.length) {
                     selecteData.x = coords.xSelectedCoords.slice(0);
                     selecteData.y = coords.ySelectedCoords.slice(0);
@@ -106,7 +108,7 @@ export class CatalogViewComponent extends React.Component<CatalogViewComponentPr
             const catalogWidget = appStore.widgetsStore.catalogOverlayWidgets.get(catalogWidgetId);
             if (catalogWidget && !catalogWidget.showSelectedData) {
                 const catalogFileId = catalogWidget.catalogInfo.fileId;
-                AppStore.Instance.updateCatalogProfiles(catalogFileId);
+                CatalogStore.Instance.updateCatalogProfiles(catalogFileId);
                 let selectedPointIndex = [];
                 const selectedPoint = event.points[0];
                 selectedPointIndex.push(selectedPoint.pointIndex);

@@ -25,7 +25,7 @@ import {
     RenderConfigSettingsPanelComponent,
     HistogramSettingsPanelComponent
 } from "components";
-import {AppStore, HelpStore, HelpType, LayoutStore} from "stores";
+import {AppStore, HelpStore, HelpType, LayoutStore, CatalogStore} from "stores";
 import {
     EmptyWidgetStore, 
     HistogramWidgetStore, 
@@ -327,7 +327,7 @@ export class WidgetsStore {
                 break;
             case CatalogOverlayComponent.WIDGET_CONFIG.type:
                 itemId = this.getNextComponentId(CatalogOverlayComponent.WIDGET_CONFIG);
-                AppStore.Instance.catalogProfiles.set(itemId, 1);
+                CatalogStore.Instance.catalogProfiles.set(itemId, 1);
                 break;
             default:
                 // Remove it from the floating widget array, while preserving its store
@@ -566,7 +566,7 @@ export class WidgetsStore {
             }
 
             if (config.component === CatalogOverlayComponent.WIDGET_CONFIG.type) {
-                AppStore.Instance.catalogProfiles.delete(config.id as string);
+                CatalogStore.Instance.catalogProfiles.delete(config.id as string);
             }
         }
     };
@@ -797,7 +797,7 @@ export class WidgetsStore {
         config.componentId = componentId;
         config.id = componentId; 
         if (catalogFileNum) {
-            AppStore.Instance.catalogProfiles.set(componentId, catalogFileNum);   
+            CatalogStore.Instance.catalogProfiles.set(componentId, catalogFileNum);   
         }
         this.addFloatingWidget(config);
     };
@@ -1085,7 +1085,7 @@ export class WidgetsStore {
         if (widget) {
             this.updateFloatingWidgetzIndexOnRemove(widget.zIndex);
             this.floatingWidgets = this.floatingWidgets.filter(w => w.componentId !== componentId);
-            AppStore.Instance.catalogProfiles.delete(componentId);
+            CatalogStore.Instance.catalogProfiles.delete(componentId);
         }
     }
 }
