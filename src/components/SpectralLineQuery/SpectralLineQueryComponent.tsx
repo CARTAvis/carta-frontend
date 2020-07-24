@@ -3,6 +3,7 @@ import {action, computed, observable} from "mobx";
 import {observer} from "mobx-react";
 import {AnchorButton, Button, Classes, Divider, FormGroup, HTMLSelect, Intent, Menu, MenuItem, Overlay, Popover, Position, Spinner, Switch, Tooltip} from "@blueprintjs/core";
 import {Cell, Column, Regions, RenderMode, SelectionModes, Table} from "@blueprintjs/table";
+import SplitPane, { Pane } from "react-split-pane";
 import ReactResizeDetector from "react-resize-detector";
 import {SafeNumericInput, TableComponent, TableComponentProps, TableType} from "components/Shared";
 import {AppStore, HelpType, WidgetConfig, WidgetProps, WidgetsStore} from "stores";
@@ -343,22 +344,27 @@ export class SpectralLineQueryComponent extends React.Component<WidgetProps> {
         return (
             <div className={className}>
                 <div className="bp3-dialog-body">
-                    <div className="query-section">
-                        {queryPanel}
-                        <div className="header-table">
+                    {queryPanel}
+                    <SplitPane
+                        className="body-split-pane"
+                        split="horizontal"
+                        primary={"second"}
+                        defaultSize={"60%"}
+                        minSize={"5%"}
+                    >
+                        <Pane className={"header-table-container"}>
                             {this.width > 0 && this.createHeaderTable()}
-                        </div>
-                    </div>
-                    <Divider/>
-                    <div className="result-section">
-                        {redshiftPanel}
-                        <div className={"result-table"}>
-                            {this.width > 0 && <TableComponent {...queryResultTableProps}/>}
-                        </div>
-                        <div className="result-table-info">
-                            {tableInfo}
-                        </div>
-                    </div>
+                        </Pane>
+                        <Pane className={"result-table-container"}>
+                            {redshiftPanel}
+                            <div className="result-table">
+                                {this.width > 0 && <TableComponent {...queryResultTableProps}/>}
+                            </div>
+                            <div className="result-table-info">
+                                {tableInfo}
+                            </div>
+                        </Pane>
+                    </SplitPane>
                 </div>
                 <div className="bp3-dialog-footer">
                     <div className="bp3-dialog-footer-actions">

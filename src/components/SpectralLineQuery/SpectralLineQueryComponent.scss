@@ -4,7 +4,7 @@
     padding: 5px;
 
     .bp3-dialog-body {
-        height: calc(100% - 35px);
+        height: calc(100% - 45px);
         margin: 0;
 
         .bp3-numeric-input {
@@ -20,25 +20,62 @@
             }
         }
 
-        .query-section {
-            height: calc(45% - 11px);
-            .query-panel {
-                height: 30px;
+        .query-panel {
+            height: 30px;
+            display: flex;
+            flex-direction: row;
+            flex-wrap: nowrap;
+            justify-content: space-between;
+            margin: 0;
+            padding: 0 5px 0 5px;
+            .query-panel-input {
                 display: flex;
                 flex-direction: row;
-                flex-wrap: nowrap;
-                justify-content: space-between;
-                margin: 0;
-                padding: 0 5px 0 5px;
-                .query-panel-input {
-                    display: flex;
-                    flex-direction: row;
-                }
+            }
+        }
+
+        .body-split-pane {
+            height: calc(100% - 30px) !important;
+            position: inherit !important;
+            min-height: calc(100% - 30px) !important;
+
+            .Resizer {
+                background: rgba(0, 0, 0, 0);
+                opacity: 0;
+                z-index: 1;
+                -moz-box-sizing: border-box;
+                -webkit-box-sizing: border-box;
+                box-sizing: border-box;
+                -moz-background-clip: padding;
+                -webkit-background-clip: padding;
+                background-clip: padding-box;
+            }
+            .Resizer.horizontal {
+                height: 11px;
+                margin: -5px 0;
+                border-top: 5px solid rgba(255, 255, 255, 0);
+                border-bottom: 5px solid rgba(255, 255, 255, 0);
+                cursor: row-resize;
+                width: 100%;
+            }
+            .Resizer.disabled {
+                cursor: not-allowed;
+            }
+            .Resizer.disabled:hover {
+                border-color: transparent;
             }
 
-            .header-table {
+            .Pane1  {
+                min-height: 10px !important;
+            }
+
+            .Pane2  {
+                min-height: 10px !important;
+            }
+
+            .header-table-container {
                 overflow: auto;
-                height: calc(100% - 30px);
+                height: 100%;
                 width: 100%;
                 padding: 5px;
 
@@ -55,45 +92,46 @@
                     }
                 }
             }
-        }
 
-        .result-section {
-            height: 55%;
-            .redshift-panel {
-                height: 30px;
-                margin: 0;
-                padding: 0 5px 0 5px;
-                display: flex;
-            }
-
-            .result-table {
-                overflow: auto;
-                height: calc(100% - 50px);
+            .result-table-container {
+                height: 100%;
                 width: 100%;
-                padding: 5px;
+                padding: 5px 5px 0 5px;
 
-                .bp3-table-container{
+                .redshift-panel {
+                    height: 30px;
+                    margin: 0;
+                    margin: 0 0 5px 0;
+                    display: flex;
+                }
+
+                .result-table {
+                    height: calc(100% - 55px);
                     width: 100%;
-                    .bp3-table-editable-name.bp3-editable-text::before {
-                        right: 0px;
-                        left: 0px;
-                    }
-                    .bp3-editable-text::before {
-                        right: 0px;
-                        left: 0px;
-                    }
-                    .column-filter {
-                        width: inherit;
-                        height: inherit;
+                    .bp3-table-container {
+                        width: 100%;
+                        .bp3-table-editable-name.bp3-editable-text::before {
+                            right: 0px;
+                            left: 0px;
+                        }
+                        .bp3-editable-text::before {
+                            right: 0px;
+                            left: 0px;
+                        }
+                        .column-filter {
+                            width: inherit;
+                            height: inherit;
+                        }
                     }
                 }
-            }
 
-            .result-table-info {
-                height: 20px;
-                padding: 0 5px 0 5px;
-                pre {
-                    margin: 0;
+                .result-table-info {
+                    height: 20px;
+                    padding: 0 5px 0 5px;
+                    pre {
+                        font-size: x-small;
+                        margin: 0;
+                    }
                 }
             }
         }
