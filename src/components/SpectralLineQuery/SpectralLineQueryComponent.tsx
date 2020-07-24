@@ -1,7 +1,7 @@
 import * as React from "react";
 import {action, computed, observable} from "mobx";
 import {observer} from "mobx-react";
-import {AnchorButton, Button, Classes, Divider, FormGroup, HTMLSelect, Intent, Menu, MenuItem, Overlay, Popover, Position, Spinner, Switch, Tooltip} from "@blueprintjs/core";
+import {AnchorButton, Button, Classes, FormGroup, HTMLSelect, Intent, Menu, MenuItem, Overlay, Popover, Position, Spinner, Switch, Tooltip} from "@blueprintjs/core";
 import {Cell, Column, Regions, RenderMode, SelectionModes, Table} from "@blueprintjs/table";
 import SplitPane, { Pane } from "react-split-pane";
 import ReactResizeDetector from "react-resize-detector";

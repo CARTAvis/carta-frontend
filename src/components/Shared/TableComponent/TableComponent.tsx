@@ -1,6 +1,5 @@
 import * as React from "react";
 import {observer} from "mobx-react";
-import {toJS} from "mobx";
 import {Cell, Column, Table, SelectionModes, RenderMode, ColumnHeaderCell, IRegion} from "@blueprintjs/table";
 import {Checkbox, Tooltip, PopoverPosition, InputGroup, Menu, MenuItem, Icon, Label} from "@blueprintjs/core";
 import {IRowIndices} from "@blueprintjs/table/lib/esm/common/grid";
