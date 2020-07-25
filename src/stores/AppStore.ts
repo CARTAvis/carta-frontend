@@ -638,21 +638,21 @@ export class AppStore {
             }
             // update associated image
             const fileIds = catalogStore.activedCatalogFiles;
-            const associatedCatalogId = fileIds.filter(catalogFileId => { return catalogFileId !== fileId; });
-            catalogStore.updateImageAssociatedCatalogId(AppStore.Instance.activeFrame.frameInfo.fileId, associatedCatalogId);   
-
-            // update catalogProfiles fileId
-            if (catalogComponentId) {
-                if (this.catalogs.size && associatedCatalogId.length) {
-                    catalogStore.catalogProfiles.forEach((catalogFileId, componentId) => {
-                        if (catalogFileId === fileId) {
-                            catalogStore.catalogProfiles.set(componentId, associatedCatalogId[0]);
-                        }
-                    });
-                } else {
-                    catalogStore.catalogProfiles.set(catalogComponentId, 1);
-                }   
+            const activeImageId = AppStore.Instance.activeFrame.frameInfo.fileId;
+            let associatedCatalogId = [];
+            if (fileIds) {
+                associatedCatalogId = fileIds.filter(catalogFileId => { return catalogFileId !== fileId; });
+                catalogStore.updateImageAssociatedCatalogId(activeImageId, associatedCatalogId);    
             }
+
+            // update catalogProfiles fileId            
+            if (catalogComponentId && this.catalogs.size && associatedCatalogId.length) {
+                catalogStore.catalogProfiles.forEach((catalogFileId, componentId) => {
+                    if (catalogFileId === fileId) {
+                        catalogStore.catalogProfiles.set(componentId, associatedCatalogId[0]);
+                    }
+                });
+            } 
         }
     }
 
