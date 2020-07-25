@@ -5,8 +5,8 @@ import {autorun, computed, observable} from "mobx";
 import {observer} from "mobx-react";
 import {Colors, NonIdealState} from "@blueprintjs/core";
 import ReactResizeDetector from "react-resize-detector";
-import {LinePlotComponent, LinePlotComponentProps, PlotType, ProfilerInfoComponent, VERTICAL_RANGE_PADDING} from "components/Shared";
-import {TickType} from "../Shared/LinePlot/PlotContainer/PlotContainerComponent";
+import {LinePlotComponent, LinePlotComponentProps, PlotType, ProfilerInfoComponent, VERTICAL_RANGE_PADDING, SmoothingType} from "components/Shared";
+import {TickType, MultiPlotProps} from "../Shared/LinePlot/PlotContainer/PlotContainerComponent";
 import {AppStore, ASTSettingsString, FrameStore, HelpType, OverlayStore, SpatialProfileStore, WidgetConfig, WidgetProps, WidgetsStore} from "stores";
 import {SpatialProfileWidgetStore} from "stores/widgets";
 import {Point2D} from "models";
@@ -75,7 +75,7 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
         }
     }
 
-    @computed get plotData(): { values: Array<Point2D>, xMin: number, xMax: number, yMin: number, yMax: number, yMean: number, yRms: number } {
+    @computed get plotData(): { values: Array<Point2D>, smoothingValues: Array<Point2D> , xMin: number, xMax: number, yMin: number, yMax: number, yMean: number, yRms: number } {
         const isXProfile = this.widgetStore.coordinate.indexOf("x") >= 0;
         if (!this.frame || !this.width || !this.profileStore) {
             return null;
@@ -117,10 +117,14 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
 
             const numPixels = this.width;
             const decimationFactor = Math.round(N / numPixels);
-            const numDecimatedPoints = decimationFactor > 1 ? 2 * Math.ceil(N / decimationFactor) : N;
 
             let values: Array<{ x: number, y: number }>;
+            let smoothingValues: Array<{ x: number, y: number }>;
             if (N > 0) {
+                let xArray: number[] = new Array(coordinateData.values.length);
+                for (let i = 0; i < coordinateData.values.length; i++) {
+                    xArray[i] = i;
+                }
                 if (decimationFactor <= 1 || this.widgetStore.plotType === PlotType.POINTS) {
                     // full resolution data
                     values = new Array(N);
@@ -138,64 +142,19 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
                     }
                 } else {
                     // Decimated data
-                    values = new Array(numDecimatedPoints);
-                    let localMin = NaN, localMax = NaN;
-                    let posMin, posMax;
-                    let localCounter = 0;
                     for (let i = 0; i < N; i++) {
                         const val = coordinateData.values[i + xMin];
-                        const decimatedIndex = Math.floor(i / (decimationFactor));
                         if (isFinite(val)) {
                             yMin = Math.min(yMin, val);
                             yMax = Math.max(yMax, val);
                             yCount++;
                             ySum += val;
                             ySum2 += val * val;
-
-                            if (isNaN(localMin) || val < localMin) {
-                                localMin = val;
-                                posMin = i;
-                            }
-                            if (isNaN(localMax) || val > localMax) {
-                                localMax = val;
-                                posMax = i;
-                            }
-                        }
-
-                        localCounter++;
-                        if (localCounter === decimationFactor) {
-                            // Use the midpoint of the decimated data range as the x coordinate (rounded down to nearest pixel)
-                            const x1 = Math.floor(coordinateData.start + posMin + xMin);
-                            const x2 = Math.floor(coordinateData.start + posMax + xMin);
-
-                            if (posMin < posMax) {
-                                values[decimatedIndex * 2] = {x: x1, y: localMin};
-                                values[decimatedIndex * 2 + 1] = {x: x2, y: localMax};
-                            } else {
-                                values[decimatedIndex * 2] = {x: x2, y: localMax};
-                                values[decimatedIndex * 2 + 1] = {x: x1, y: localMin};
-                            }
-
-                            localMin = NaN;
-                            localMax = NaN;
-                            localCounter = 0;
                         }
                     }
-
-                    // Add last point if there is left over data
-                    if (localCounter > 0) {
-                        const x1 = Math.floor(coordinateData.start + posMin + xMin - decimationFactor / 2.0);
-                        const x2 = Math.floor(coordinateData.start + posMax + xMin - decimationFactor / 2.0);
-
-                        if (posMin < posMax) {
-                            values[values.length - 2] = {x: x1, y: localMin};
-                            values[values.length - 1] = {x: x2, y: localMax};
-                        } else {
-                            values[values.length - 2] = {x: x2, y: localMax};
-                            values[values.length - 1] = {x: x1, y: localMin};
-                        }
-                    }
+                    values = this.widgetStore.smoothingStore.getDecimatedPoint2DArray(xArray, coordinateData.values, decimationFactor, xMin, xMax);
                 }
+                smoothingValues = this.widgetStore.smoothingStore.getSmoothingPoint2DArray(xArray, coordinateData.values, xMin, xMax);
             }
 
             if (yCount > 0) {
@@ -212,7 +171,7 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
                 yMin -= range * VERTICAL_RANGE_PADDING;
                 yMax += range * VERTICAL_RANGE_PADDING;
             }
-            return {values: values, xMin, xMax, yMin, yMax, yMean, yRms};
+            return {values: values, smoothingValues, xMin, xMax, yMin, yMax, yMean, yRms};
         }
     }
 
@@ -407,8 +366,7 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
             darkMode: appStore.darkTheme,
             imageName: imageName,
             plotName: `${isXProfile ? "X" : "Y"} profile`,
-            usePointSymbols: this.widgetStore.plotType === PlotType.POINTS,
-            interpolateLines: this.widgetStore.plotType === PlotType.LINES,
+            plotType: this.widgetStore.plotType,
             tickTypeY: TickType.Scientific,
             graphZoomedX: this.widgetStore.setXBounds,
             graphZoomedY: this.widgetStore.setYBounds,
@@ -420,6 +378,8 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
             zeroLineWidth: 2,
             borderWidth: this.widgetStore.lineWidth,
             pointRadius: this.widgetStore.linePlotPointSize,
+            multiPlotPropsMap: new Map(),
+            order: 1
         };
 
         if (appStore.activeFrame) {
@@ -447,6 +407,23 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
                         }
                     }
                     linePlotProps.lineColor = primaryLineColor;
+                    const smoothingStore = this.widgetStore.smoothingStore;
+                    if (smoothingStore.type !== SmoothingType.NONE) {
+                        if (!smoothingStore.isOverlayOn) {
+                            linePlotProps.lineColor = "#00000000";
+                        }
+
+                        let smoothingPlotProps: MultiPlotProps = {
+                            data: currentPlotData.smoothingValues,
+                            type: smoothingStore.lineType,
+                            borderColor: smoothingStore.lineColor.colorHex,
+                            borderWidth: smoothingStore.lineWidth,
+                            pointRadius: smoothingStore.pointRadius,
+                            order: 0,
+                            exportData: smoothingStore.exportData
+                        };
+                        linePlotProps.multiPlotPropsMap.set("smoothed", smoothingPlotProps);
+                    }
 
                     // Determine scale in X and Y directions. If auto-scaling, use the bounds of the current data
                     if (this.widgetStore.isAutoScaledX) {
@@ -467,7 +444,7 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
 
                     // Use interpolated lines when decimating data to speed up rendering
                     if (currentPlotData.values && currentPlotData.values.length > this.width * 1.5) {
-                        linePlotProps.interpolateLines = true;
+                        linePlotProps.plotType = PlotType.LINES;
                     }
                 }
 
