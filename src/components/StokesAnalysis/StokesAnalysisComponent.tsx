@@ -7,9 +7,9 @@ import {Colors, NonIdealState} from "@blueprintjs/core";
 import ReactResizeDetector from "react-resize-detector";
 import {ChartArea} from "chart.js";
 import {CARTA} from "carta-protobuf";
-import {LinePlotComponent, LinePlotComponentProps, ProfilerInfoComponent, ScatterPlotComponent, ScatterPlotComponentProps, VERTICAL_RANGE_PADDING, PlotType} from "components/Shared";
+import {LinePlotComponent, LinePlotComponentProps, ProfilerInfoComponent, ScatterPlotComponent, ScatterPlotComponentProps, VERTICAL_RANGE_PADDING, PlotType, SmoothingType} from "components/Shared";
 import {StokesAnalysisToolbarComponent} from "./StokesAnalysisToolbarComponent/StokesAnalysisToolbarComponent";
-import {TickType} from "../Shared/LinePlot/PlotContainer/PlotContainerComponent";
+import {TickType, MultiPlotProps} from "../Shared/LinePlot/PlotContainer/PlotContainerComponent";
 import {AnimationState, SpectralProfileStore, WidgetConfig, WidgetProps, HelpType, AnimatorStore, WidgetsStore, AppStore} from "stores";
 import {StokesAnalysisWidgetStore, StokesCoordinate} from "stores/widgets";
 import {Point2D} from "models";
@@ -292,31 +292,65 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
         return vals;
     }
 
-    private calculateCompositeProfile(statsType: CARTA.StatsType): { qProfile: Array<number>, uProfile: Array<number>, piProfile: Array<number>, paProfile: Array<number>, qProgress: number, uProgress: number, iProgress: number } {
+    private calculateCompositeProfile(statsType: CARTA.StatsType): {
+        qProfile: Array<number>, qProfileSmoothed: Array<number>, qSmoothedX: Array<number>,
+        uProfile: Array<number>, uProfileSmoothed: Array<number>, uSmoothedX: Array<number>,
+        piProfile: Array<number>, piProfileSmoothed: Array<number>,
+        paProfile: Array<number>, paProfileSmoothed: Array<number>,
+        qProgress: number, uProgress: number, iProgress: number } {
         if (this.profileStore) {
             let qProfileOriginal = this.profileStore.getProfile(StokesCoordinate.LinearPolarizationQ, statsType);
             let uProfileOriginal = this.profileStore.getProfile(StokesCoordinate.LinearPolarizationU, statsType);
-            let piProfile = [];
-            let paProfile = [];
-            let qProfile = [];
-            let uProfile = [];
 
             if (qProfileOriginal && uProfileOriginal && qProfileOriginal.values && uProfileOriginal.values) {
+                let qProfileSmoothedValues = this.widgetStore.smoothingStore.getSmoothingValues(AppStore.Instance.activeFrame.channelValues, qProfileOriginal.values);
+                let uProfileSmoothedValues = this.widgetStore.smoothingStore.getSmoothingValues(AppStore.Instance.activeFrame.channelValues, uProfileOriginal.values);
+                let qProfile = [];
+                let uProfile = [];
+                let piProfile = [];
+                let paProfile = [];
+                let qProfileSmoothed = [];
+                let uProfileSmoothed = [];
+                let qSmoothedX = [];
+                let uSmoothedX = [];
+                let piProfileSmoothed = [];
+                let paProfileSmoothed = [];
                 qProfile = Array.prototype.slice.call(qProfileOriginal.values);
                 uProfile = Array.prototype.slice.call(uProfileOriginal.values);
                 piProfile = StokesAnalysisComponent.calculatePI(qProfileOriginal.values, uProfileOriginal.values);
                 paProfile = StokesAnalysisComponent.calculatePA(qProfileOriginal.values, uProfileOriginal.values);
-
+                if (this.widgetStore.smoothingStore.type !== SmoothingType.NONE) {
+                    qProfileSmoothed = Array.prototype.slice.call(qProfileSmoothedValues.y);
+                    uProfileSmoothed = Array.prototype.slice.call(uProfileSmoothedValues.y);
+                    qSmoothedX = qProfileSmoothedValues.x;
+                    uSmoothedX = uProfileSmoothedValues.x;
+                    piProfileSmoothed = StokesAnalysisComponent.calculatePI(qProfileSmoothedValues.y, uProfileSmoothedValues.y);
+                    paProfileSmoothed = StokesAnalysisComponent.calculatePA(qProfileSmoothedValues.y, uProfileSmoothedValues.y);
+                }
                 if (this.widgetStore.fractionalPolVisible) {
                     let iProfileOriginal = this.profileStore.getProfile(StokesCoordinate.TotalIntensity, statsType);
                     if (iProfileOriginal && iProfileOriginal.values) {
                         piProfile = StokesAnalysisComponent.calculateFractionalPol(piProfile, iProfileOriginal.values);
                         qProfile = StokesAnalysisComponent.calculateFractionalPol(qProfile, iProfileOriginal.values);
                         uProfile = StokesAnalysisComponent.calculateFractionalPol(uProfile, iProfileOriginal.values);
-                        return {qProfile, uProfile, piProfile, paProfile, qProgress: qProfileOriginal.progress, uProgress: uProfileOriginal.progress, iProgress: iProfileOriginal.progress};
+                        if (this.widgetStore.smoothingStore.type !== SmoothingType.NONE) {
+                            let iProfileSmoothedValues = this.widgetStore.smoothingStore.getSmoothingValues(AppStore.Instance.activeFrame.channelValues, iProfileOriginal.values);
+                            piProfileSmoothed = StokesAnalysisComponent.calculateFractionalPol(piProfileSmoothed, iProfileSmoothedValues.y);
+                            qProfileSmoothed = StokesAnalysisComponent.calculateFractionalPol(qProfileSmoothed, iProfileSmoothedValues.y);
+                            uProfileSmoothed = StokesAnalysisComponent.calculateFractionalPol(uProfileSmoothed, iProfileSmoothedValues.y);
+                        }
+                        return {
+                            qProfile, qProfileSmoothed, qSmoothedX, uProfile, uProfileSmoothed, uSmoothedX,
+                            piProfile, piProfileSmoothed, paProfile, paProfileSmoothed,
+                            qProgress: qProfileOriginal.progress, uProgress: uProfileOriginal.progress, iProgress: iProfileOriginal.progress
+                        };
                     }
                 }
-                return {qProfile, uProfile, piProfile, paProfile, qProgress: qProfileOriginal.progress, uProgress: uProfileOriginal.progress, iProgress: 1};
+                return {
+                    qProfile, qProfileSmoothed, qSmoothedX, uProfile, uProfileSmoothed, uSmoothedX,
+                    piProfile, piProfileSmoothed, paProfile, paProfileSmoothed,
+                    qProgress: qProfileOriginal.progress, uProgress: uProfileOriginal.progress, iProgress: 1
+                };
             }
         }
         return null;
@@ -413,15 +447,12 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
         return {xMin, xMax, yMin, yMax};
     }
 
-    private assembleLinePlotData(profile: Array<number>, type: StokesCoordinate): {
+    private assembleLinePlotData(profile: Array<number>, channelValues: Array<number>, type: StokesCoordinate): {
         dataset: Array<Point2D>,
         border: Border
     } {
-        const frame = AppStore.Instance.activeFrame;
-        if (profile && profile.length &&
-            frame.channelValues && frame.channelValues.length &&
-            profile.length === frame.channelValues.length) {
-            const channelValues = frame.channelValues;
+        if (profile && profile.length && channelValues &&
+            profile.length === channelValues.length) {
             let border = this.calculateXYborder(channelValues, profile, true, type);
             let values: Array<{ x: number, y: number }> = [];
             for (let i = 0; i < channelValues.length; i++) {
@@ -587,6 +618,10 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
         uValues: { dataset: Array<Point2D>, border: Border },
         piValues: { dataset: Array<Point2D>, border: Border },
         paValues: { dataset: Array<Point2D>, border: Border },
+        qSmoothedValues: { dataset: Array<Point2D>, border: Border },
+        uSmoothedValues: { dataset: Array<Point2D>, border: Border },
+        piSmoothedValues: { dataset: Array<Point2D>, border: Border },
+        paSmoothedValues: { dataset: Array<Point2D>, border: Border },
         quValues: { dataset: Array<{ x: number, y: number, z: number }>, border: Border },
         qProgress: number,
         uProgress: number,
@@ -603,6 +638,12 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
             uProfile: Array<number>,
             piProfile: Array<number>,
             paProfile: Array<number>,
+            qProfileSmoothed: Array<number>,
+            uProfileSmoothed: Array<number>,
+            qSmoothedX: Array<number>,
+            uSmoothedX: Array<number>,
+            piProfileSmoothed: Array<number>,
+            paProfileSmoothed: Array<number>,
             qProgress: number,
             uProgress: number,
             iProgress: number
@@ -618,16 +659,24 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
         let channelInfo = frame.channelInfo;
         if (compositeProfile && channelInfo) {
             let quDic = this.assembleScatterPlotData(compositeProfile.qProfile, compositeProfile.uProfile, StokesCoordinate.PolarizationQU);
-            let piDic = this.assembleLinePlotData(compositeProfile.piProfile, StokesCoordinate.PolarizedIntensity);
-            let paDic = this.assembleLinePlotData(compositeProfile.paProfile, StokesCoordinate.PolarizationAngle);
-            let qDic = this.assembleLinePlotData(compositeProfile.qProfile, StokesCoordinate.LinearPolarizationQ);
-            let uDic = this.assembleLinePlotData(compositeProfile.uProfile, StokesCoordinate.LinearPolarizationU);
+            let piDic = this.assembleLinePlotData(compositeProfile.piProfile, frame.channelValues, StokesCoordinate.PolarizedIntensity);
+            let paDic = this.assembleLinePlotData(compositeProfile.paProfile, frame.channelValues, StokesCoordinate.PolarizationAngle);
+            let qDic = this.assembleLinePlotData(compositeProfile.qProfile, frame.channelValues, StokesCoordinate.LinearPolarizationQ);
+            let uDic = this.assembleLinePlotData(compositeProfile.uProfile, frame.channelValues, StokesCoordinate.LinearPolarizationU);
+            let piSmoothedDic = this.assembleLinePlotData(compositeProfile.piProfileSmoothed, compositeProfile.qSmoothedX, StokesCoordinate.PolarizedIntensity);
+            let paSmoothedDic = this.assembleLinePlotData(compositeProfile.paProfileSmoothed, compositeProfile.qSmoothedX, StokesCoordinate.PolarizationAngle);
+            let qSmoothedDic = this.assembleLinePlotData(compositeProfile.qProfileSmoothed, compositeProfile.qSmoothedX, StokesCoordinate.LinearPolarizationQ);
+            let uSmoothedDic = this.assembleLinePlotData(compositeProfile.uProfileSmoothed, compositeProfile.uSmoothedX, StokesCoordinate.LinearPolarizationU);
 
             return {
                 qValues: qDic, 
                 uValues: uDic, 
                 piValues: piDic, 
                 paValues: paDic, 
+                qSmoothedValues: qSmoothedDic,
+                uSmoothedValues: uSmoothedDic,
+                piSmoothedValues: piSmoothedDic,
+                paSmoothedValues: paSmoothedDic,
                 quValues: quDic, 
                 qProgress: compositeProfile.qProgress, 
                 uProgress: compositeProfile.uProgress,
@@ -765,11 +814,9 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
             tickTypeY: TickType.Scientific,
             showXAxisTicks: false,
             showXAxisLabel: false,
-            multiPlotData: new Map(),
             showLegend: true,
             xTickMarkLength: 0,
             graphCursorMoved: this.onGraphCursorMoved,
-            multiPlotBorderColor: new Map(),
             isGroupSubPlot: true,
             scrollZoom: true,
             graphZoomedX: this.widgetStore.setSharedXBounds,
@@ -781,10 +828,10 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
             mouseEntered: this.widgetStore.setMouseMoveIntoLinePlots,
             multiColorMultiLinesColors: new Map(),
             // settings
-            usePointSymbols: this.widgetStore.plotType === PlotType.POINTS,
-            interpolateLines: this.widgetStore.plotType === PlotType.LINES,
+            plotType: this.widgetStore.plotType,
             borderWidth: this.widgetStore.lineWidth,
             pointRadius: this.widgetStore.linePlotPointSize,
+            multiPlotPropsMap: new Map()
         };
 
         let piLinePlotProps: LinePlotComponentProps = {
@@ -808,10 +855,11 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
             markers: [],
             mouseEntered: this.widgetStore.setMouseMoveIntoLinePlots,
             // settings
-            usePointSymbols: this.widgetStore.plotType === PlotType.POINTS,
-            interpolateLines: this.widgetStore.plotType === PlotType.LINES,
+            plotType: this.widgetStore.plotType,
             borderWidth: this.widgetStore.lineWidth,
             pointRadius: this.widgetStore.linePlotPointSize,
+            multiPlotPropsMap: new Map(),
+            order: 1
         };
 
         let paLinePlotProps: LinePlotComponentProps = {
@@ -835,10 +883,11 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
             markers: [],
             mouseEntered: this.widgetStore.setMouseMoveIntoLinePlots,
             // settings
-            usePointSymbols: this.widgetStore.plotType === PlotType.POINTS,
-            interpolateLines: this.widgetStore.plotType === PlotType.LINES,
+            plotType: this.widgetStore.plotType,
             borderWidth: this.widgetStore.lineWidth,
             pointRadius: this.widgetStore.linePlotPointSize,
+            multiPlotPropsMap: new Map(),
+            order: 1
         };
 
         let quScatterPlotProps: ScatterPlotComponentProps = {
@@ -851,7 +900,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
             tickTypeY: TickType.Scientific,
             showXAxisTicks: true,
             showXAxisLabel: true,
-            usePointSymbols: true,
+            plotType: PlotType.POINTS,
             zeroLineWidth: 2,
             isGroupSubPlot: true,
             colorRangeEnd: 240,
@@ -878,8 +927,6 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
             const currentPlotData = this.plotData;
             let channel = {channelCurrent: 0, channelHovered: 0};
             if (currentPlotData && currentPlotData.piValues && currentPlotData.paValues && currentPlotData.qValues && currentPlotData.uValues && currentPlotData.quValues) {
-                quLinePlotProps.multiPlotData.set(StokesCoordinate.LinearPolarizationQ, currentPlotData.qValues.dataset);
-                quLinePlotProps.multiPlotData.set(StokesCoordinate.LinearPolarizationU, currentPlotData.uValues.dataset);
                 piLinePlotProps.data = currentPlotData.piValues.dataset;
                 paLinePlotProps.data = currentPlotData.paValues.dataset;
                 quScatterPlotProps.data = currentPlotData.quValues.dataset;
@@ -902,16 +949,74 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
                 }
                 piLinePlotProps.lineColor = primaryLineColor;
                 paLinePlotProps.lineColor = primaryLineColor;
-                quLinePlotProps.multiPlotBorderColor.set(StokesCoordinate.LinearPolarizationQ, primaryLineColor);
-                quLinePlotProps.multiPlotBorderColor.set(StokesCoordinate.LinearPolarizationU, ulinePlotColor);
+
+                let qPlotProps: MultiPlotProps = {
+                    data: currentPlotData.qValues.dataset,
+                    type: this.widgetStore.plotType,
+                    borderColor: primaryLineColor,
+                    order: 1
+                };
+                let uPlotProps: MultiPlotProps = {
+                    data: currentPlotData.uValues.dataset,
+                    type: this.widgetStore.plotType,
+                    borderColor: ulinePlotColor,
+                    order: 1
+                };
+                quLinePlotProps.multiPlotPropsMap.set(StokesCoordinate.LinearPolarizationQ, qPlotProps);
+                quLinePlotProps.multiPlotPropsMap.set(StokesCoordinate.LinearPolarizationU, uPlotProps);
+
+                const smoothingStore = this.widgetStore.smoothingStore;
+                if (smoothingStore.type !== SmoothingType.NONE && currentPlotData.qSmoothedValues && currentPlotData.uSmoothedValues && currentPlotData.piSmoothedValues && currentPlotData.piSmoothedValues) {
+                    let smoothedQPlotProps: MultiPlotProps = {
+                        data: currentPlotData.qSmoothedValues.dataset,
+                        type: smoothingStore.lineType,
+                        borderColor: primaryLineColor,
+                        borderWidth: this.widgetStore.lineWidth + 1,
+                        pointRadius: this.widgetStore.linePlotPointSize + 1
+                    };
+                    let smoothedUPlotProps: MultiPlotProps = {
+                        data: currentPlotData.uSmoothedValues.dataset,
+                        type: smoothingStore.lineType,
+                        borderColor: ulinePlotColor,
+                        borderWidth: this.widgetStore.lineWidth + 1,
+                        pointRadius: this.widgetStore.linePlotPointSize + 1
+                    };
+                    let smoothedPiPlotProps: MultiPlotProps = {
+                        data: currentPlotData.piSmoothedValues.dataset,
+                        type: smoothingStore.lineType,
+                        borderColor: primaryLineColor,
+                        borderWidth: this.widgetStore.lineWidth + 1,
+                        pointRadius: this.widgetStore.linePlotPointSize + 1
+                    };
+                    let smoothedPaPlotProps: MultiPlotProps = {
+                        data: currentPlotData.paSmoothedValues.dataset,
+                        type: smoothingStore.lineType,
+                        borderColor: smoothingStore.colorMap.get(StokesCoordinate.PolarizationAngle) ? smoothingStore.colorMap.get(StokesCoordinate.PolarizationAngle).colorHex : primaryLineColor,
+                        borderWidth: this.widgetStore.lineWidth + 1,
+                        pointRadius: this.widgetStore.linePlotPointSize + 1
+                    };
+                    quLinePlotProps.multiPlotPropsMap.set(StokesCoordinate.LinearPolarizationQ + "_smoothed", smoothedQPlotProps);
+                    quLinePlotProps.multiPlotPropsMap.set(StokesCoordinate.LinearPolarizationU + "_smoothed", smoothedUPlotProps);
+                    piLinePlotProps.multiPlotPropsMap.set("smoothed", smoothedPiPlotProps);
+                    paLinePlotProps.multiPlotPropsMap.set("smoothed", smoothedPaPlotProps);
+                }
 
                 const loadData = (currentPlotData.qProgress === 1 && currentPlotData.uProgress === 1 && currentPlotData.iProgress === 1);
-                const qlinePlotWithInteractionColor = loadData ? this.fillLineColor(currentPlotData.qValues.dataset, primaryLineColor) : [];
-                const ulinePlotWithInteractionColor = loadData ? this.fillLineColor(currentPlotData.uValues.dataset, ulinePlotColor) : [];
+                let qlinePlotWithInteractionColor;
+                let ulinePlotWithInteractionColor;
+                if (smoothingStore.type !== SmoothingType.NONE && !smoothingStore.isOverlayOn) {
+                    qlinePlotWithInteractionColor = loadData ? this.fillLineColor(currentPlotData.qValues.dataset, "#00000000") : [];
+                    ulinePlotWithInteractionColor = loadData ? this.fillLineColor(currentPlotData.uValues.dataset, "#00000000") : [];
+                    piLinePlotProps.multiColorSingleLineColors = loadData ? this.fillLineColor(currentPlotData.piValues.dataset, "#00000000") : [];
+                    paLinePlotProps.multiColorSingleLineColors = loadData ? this.fillLineColor(currentPlotData.paValues.dataset, "#00000000") : [];
+                } else {
+                    qlinePlotWithInteractionColor = loadData ? this.fillLineColor(currentPlotData.qValues.dataset, primaryLineColor) : [];
+                    ulinePlotWithInteractionColor = loadData ? this.fillLineColor(currentPlotData.uValues.dataset, ulinePlotColor) : [];
+                    piLinePlotProps.multiColorSingleLineColors = loadData ? this.fillLineColor(currentPlotData.piValues.dataset, primaryLineColor) : [];
+                    paLinePlotProps.multiColorSingleLineColors = loadData ? this.fillLineColor(currentPlotData.paValues.dataset, primaryLineColor) : [];
+                }
                 quLinePlotProps.multiColorMultiLinesColors.set(StokesCoordinate.LinearPolarizationQ, qlinePlotWithInteractionColor);
                 quLinePlotProps.multiColorMultiLinesColors.set(StokesCoordinate.LinearPolarizationU, ulinePlotWithInteractionColor);
-                piLinePlotProps.multiColorSingleLineColors = loadData ? this.fillLineColor(currentPlotData.piValues.dataset, primaryLineColor) : [];
-                paLinePlotProps.multiColorSingleLineColors = loadData ? this.fillLineColor(currentPlotData.paValues.dataset, primaryLineColor) : [];
 
                 let qBorder = currentPlotData.qValues.border;
                 let uBorder = currentPlotData.uValues.border;

@@ -34,6 +34,6 @@
         "jest",
         "src/setupTests.ts",
         "src/test",
-        "public/runtimeConfig.js"
+        "emscripten.simg"
     ]
 }
