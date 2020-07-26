@@ -748,6 +748,7 @@ export class AppStore {
         frame.removeMomentImage();
 
         this.backendService.requestMoment(message).subscribe(ack => {
+            frame.resetMomentRequestState();
             if (ack.success && ack.openFileAcks) {
                 ack.openFileAcks.forEach(openFileAck => {
                     if (this.addFrame(CARTA.OpenFileAck.create(openFileAck), "", "")) {
@@ -760,6 +761,7 @@ export class AppStore {
             }
             this.fileLoading = false;
         }, error => {
+            frame.resetMomentRequestState();
             this.fileLoading = false;
             console.error(error);
         });
