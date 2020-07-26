@@ -1,7 +1,7 @@
 import * as AST from "ast_wrapper";
-import {Colors, IOptionProps} from "@blueprintjs/core";
+import {Colors} from "@blueprintjs/core";
 import {action, autorun, computed, observable} from "mobx";
-import {AppStore, FrameStore, PreferenceStore} from "stores";
+import {AppStore, FrameStore, PreferenceStore, WCS_PRECISION} from "stores";
 import {WCSType} from "models";
 import {toFixed} from "utilities";
 
@@ -793,24 +793,24 @@ export class OverlayStore {
             const _ = this.global.system;
             this.setFormatsFromSystem();
             const frame = AppStore.Instance.activeFrame;
-            if (frame && frame.wcsInfo && frame.validWcs) {
-                AST.set(AppStore.Instance.activeFrame.wcsInfo, `System=${this.global.explicitSystem}`);
+            if (frame && frame.wcsInfoForTransformation && frame.validWcs) {
+                AST.set(AppStore.Instance.activeFrame.wcsInfoForTransformation, `System=${this.global.explicitSystem}`);
             }
         });
 
         autorun(() => {
             const _ = this.numbers.formatStringX;
             const frame = AppStore.Instance.activeFrame;
-            if (frame && frame.wcsInfo && frame.validWcs) {
-                AST.set(AppStore.Instance.activeFrame.wcsInfo, `Format(1)=${this.numbers.formatStringX}`);
+            if (frame && frame.wcsInfoForTransformation && frame.validWcs) {
+                AST.set(AppStore.Instance.activeFrame.wcsInfoForTransformation, `Format(1)=${this.numbers.formatTypeX}.${WCS_PRECISION}`);
             }
         });
 
         autorun(() => {
             const _ = this.numbers.formatStringY;
             const frame = AppStore.Instance.activeFrame;
-            if (frame && frame.wcsInfo && frame.validWcs) {
-                AST.set(AppStore.Instance.activeFrame.wcsInfo, `Format(2)=${this.numbers.formatStringY}`);
+            if (frame && frame.wcsInfoForTransformation && frame.validWcs) {
+                AST.set(AppStore.Instance.activeFrame.wcsInfoForTransformation, `Format(2)=${this.numbers.formatStringY}.${WCS_PRECISION}`);
             }
         });
     }

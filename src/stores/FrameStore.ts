@@ -2,7 +2,7 @@ import {action, autorun, computed, observable} from "mobx";
 import {NumberRange} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import * as AST from "ast_wrapper";
-import {ASTSettingsString, ContourConfigStore, ContourStore, LogStore, OverlayBeamStore, OverlayStore, PreferenceStore, RegionSetStore, RenderConfigStore} from "stores";
+import {AppStore, ASTSettingsString, ContourConfigStore, ContourStore, LogStore, OverlayBeamStore, OverlayStore, PreferenceStore, RegionSetStore, RenderConfigStore} from "stores";
 import {
     CHANNEL_TYPES,
     ChannelInfo,
@@ -44,6 +44,8 @@ export enum RasterRenderType {
     TILED
 }
 
+export const WCS_PRECISION = 10;
+
 export class FrameStore {
     private astFrameSet: number;
     private spectralFrame: number;
@@ -53,6 +55,7 @@ export class FrameStore {
     @observable frameInfo: FrameInfo;
     @observable renderHiDPI: boolean;
     @observable wcsInfo: number;
+    @observable wcsInfoForTransformation: number;
     @observable spectralType: SpectralType;
     @observable spectralUnit: SpectralUnit;
     @observable spectralSystem: SpectralSystem;
@@ -597,6 +600,8 @@ export class FrameStore {
         this.channelValues = null;
         this.spectralCoordsSupported = null;
         this.spectralSystemsSupported = null;
+        this.wcsInfo = null;
+        this.wcsInfoForTransformation = null;
         this.fullWcsInfo = null;
         this.validWcs = false;
         this.frameInfo = frameInfo;
@@ -749,6 +754,10 @@ export class FrameStore {
             this.wcsInfo = AST.initDummyFrame();
         } else {
             this.wcsInfo = initResult;
+            // init wcs for transformation & precision
+            this.wcsInfoForTransformation = AST.copy(this.wcsInfo);
+            AST.set(this.wcsInfoForTransformation, `Format(1)=${AppStore.Instance.overlayStore.numbers.formatTypeX}.${WCS_PRECISION}`);
+            AST.set(this.wcsInfoForTransformation, `Format(2)=${AppStore.Instance.overlayStore.numbers.formatTypeY}.${WCS_PRECISION}`);
             this.validWcs = true;
             this.overlayStore.setDefaultsFromAST(this);
             console.log("Initialised WCS info from frame");

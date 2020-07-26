@@ -3,7 +3,7 @@ import {observer} from "mobx-react";
 import {computed} from "mobx";
 import {Classes, H5, InputGroup, NumericInput, Position, Tooltip} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
-import {AppStore, FrameStore, RegionCoordinate, RegionStore, NUMBER_FORMAT_LABEL} from "stores";
+import {AppStore, FrameStore, RegionCoordinate, RegionStore, NUMBER_FORMAT_LABEL, WCS_PRECISION} from "stores";
 import {Point2D, WCSPoint2D} from "models";
 import {closeTo, formattedArcsec, getFormattedWCSPoint, getPixelValueFromWCS, getValueFromArcsecString, isWCSStringFormatValid} from "utilities";
 import {CoordinateComponent} from "../CoordinateComponent/CoordinateComponent";
@@ -43,7 +43,7 @@ export class RectangularRegionForm extends React.Component<{ region: RegionStore
         const size = this.props.region.controlPoints[1];
         const wcsSize = this.props.frame.getWcsSizeInArcsec(size);
         if (wcsSize) {
-            return {x: formattedArcsec(wcsSize.x), y: formattedArcsec(wcsSize.y)};
+            return {x: formattedArcsec(wcsSize.x, WCS_PRECISION), y: formattedArcsec(wcsSize.y, WCS_PRECISION)};
         }
         return null;
     }
