@@ -910,6 +910,24 @@ export class FrameStore {
         return AST.transformSpectralPoint(this.spectralFrame, this.spectralType, this.spectralUnit, this.spectralSystem, value, false);
     };
 
+    public convertFreqMHzToSettingWCS = (value: number): number => {
+        if (!this.spectralFrame || !isFinite(value)) {
+            return undefined;
+        }
+
+        if (this.spectralType === SpectralType.FREQ && this.spectralUnit === SpectralUnit.MHZ) {
+            return value;
+        }
+
+        const nativeWCSValue = AST.transformSpectralPoint(this.spectralFrame, SpectralType.FREQ, SpectralUnit.MHZ, this.spectralSystem, value, false);
+        if (!isFinite(nativeWCSValue)) {
+            return undefined;
+        }
+
+        const settingWCSValue = this.astSpectralTransform(this.spectralType, this.spectralUnit, this.spectralSystem, nativeWCSValue);
+        return isFinite(settingWCSValue) ? settingWCSValue : undefined;
+    };
+
     public getCursorInfo(cursorPosImageSpace: Point2D) {
         let cursorPosWCS, cursorPosFormatted;
         if (this.validWcs) {

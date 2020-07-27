@@ -5,7 +5,7 @@ import {observer} from "mobx-react";
 import {Colors, NonIdealState} from "@blueprintjs/core";
 import ReactResizeDetector from "react-resize-detector";
 import {CARTA} from "carta-protobuf";
-import {LinePlotComponent, LinePlotComponentProps, LinePlotSelectingMode, ProfilerInfoComponent, VERTICAL_RANGE_PADDING, SmoothingType} from "components/Shared";
+import {LineMarker, LinePlotComponent, LinePlotComponentProps, LinePlotSelectingMode, ProfilerInfoComponent, VERTICAL_RANGE_PADDING, SmoothingType} from "components/Shared";
 import {TickType, MultiPlotProps} from "../Shared/LinePlot/PlotContainer/PlotContainerComponent";
 import {SpectralProfilerToolbarComponent} from "./SpectralProfilerToolbarComponent/SpectralProfilerToolbarComponent";
 import {AnimationState, SpectralProfileStore, WidgetConfig, WidgetProps, HelpType, AnimatorStore, WidgetsStore, AppStore} from "stores";
@@ -310,6 +310,34 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
         }
     };
 
+    private fillVisibleSpectralLines = (): LineMarker[] => {
+        let spectralLineMarkers: LineMarker[] = [];
+        const spectralLines = this.widgetStore.transformedSpectralLines;
+        if (spectralLines?.length > 0) {
+            // find x range
+            let xMin, xMax;
+            if (this.plotData) {
+                xMin = this.widgetStore.isAutoScaledX ? this.plotData.xMin : this.widgetStore.minX;
+                xMax = this.widgetStore.isAutoScaledX ? this.plotData.xMax : this.widgetStore.maxX;
+            }
+            // only keep visible lines within x range
+            for (let lineIndex = 0; lineIndex < spectralLines.length; lineIndex++) {
+                const line = spectralLines[lineIndex];
+                if (isFinite(xMin) && isFinite(xMax) && line && isFinite(line.value) && line.value >= xMin && line.value <= xMax) {
+                    spectralLineMarkers.push({
+                        value: line.value,
+                        id: `spectral-line-${lineIndex}`,
+                        label: `${line.species} ${line.qn}`,
+                        draggable: false,
+                        horizontal: false,
+                        color: AppStore.Instance.darkTheme ? Colors.GREEN4 : Colors.GREEN2
+                    });
+                }
+            }
+        }
+        return spectralLineMarkers;
+    };
+
     render() {
         const appStore = AppStore.Instance;
         if (!this.widgetStore) {
@@ -334,7 +362,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
             graphZoomReset: this.widgetStore.clearXYBounds,
             graphCursorMoved: this.onGraphCursorMoved,
             scrollZoom: true,
-            markers: [],
+            markers: this.fillVisibleSpectralLines(),
             mouseEntered: this.widgetStore.setMouseMoveIntoLinePlots,
             borderWidth: this.widgetStore.lineWidth,
             pointRadius: this.widgetStore.linePlotPointSize,
@@ -410,7 +438,6 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
                 }
             }
 
-            linePlotProps.markers = [];
             if (!isNaN(this.widgetStore.cursorX)) {
                 linePlotProps.markers.push({
                     value: this.widgetStore.cursorX,
@@ -479,8 +506,12 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
         }
 
         let className = "spectral-profiler-widget";
+        if (this.widgetStore.isHighlighted) {
+            className += " linked-to-widget-highlighted";
+        }
+
         if (this.widgetStore.matchesSelectedRegion) {
-            className += " linked-to-selected";
+            className += " linked-to-region-selected";
         }
 
         if (appStore.darkTheme) {

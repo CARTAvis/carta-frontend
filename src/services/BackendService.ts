@@ -24,7 +24,7 @@ export class BackendService {
         return BackendService.staticInstance;
     }
 
-    private static readonly IcdVersion = 16;
+    private static readonly IcdVersion = 17;
     private static readonly DefaultFeatureFlags = CARTA.ClientFeatureFlags.WEB_ASSEMBLY | CARTA.ClientFeatureFlags.WEB_GL;
     @observable connectionStatus: ConnectionStatus;
     readonly loggingEnabled: boolean;
@@ -107,7 +107,8 @@ export class BackendService {
             [CARTA.EventType.RASTER_TILE_SYNC, this.onStreamedRasterSync],
             [CARTA.EventType.MOMENT_PROGRESS, this.onStreamedMomentProgress],
             [CARTA.EventType.MOMENT_RESPONSE, this.onSimpleMappedResponse],
-            [CARTA.EventType.SCRIPTING_REQUEST, this.onScriptingRequest]
+            [CARTA.EventType.SCRIPTING_REQUEST, this.onScriptingRequest],
+            [CARTA.EventType.SPECTRAL_LINE_RESPONSE, this.onSimpleMappedResponse]
         ]);
 
         this.decoderMap = new Map<CARTA.EventType, any>([
@@ -139,7 +140,8 @@ export class BackendService {
             [CARTA.EventType.RASTER_TILE_SYNC, CARTA.RasterTileSync],
             [CARTA.EventType.MOMENT_PROGRESS, CARTA.MomentProgress],
             [CARTA.EventType.MOMENT_RESPONSE, CARTA.MomentResponse],
-            [CARTA.EventType.SCRIPTING_REQUEST, CARTA.ScriptingRequest]
+            [CARTA.EventType.SCRIPTING_REQUEST, CARTA.ScriptingRequest],
+            [CARTA.EventType.SPECTRAL_LINE_RESPONSE, CARTA.SpectralLineResponse]
         ]);
 
         // check ping every 5 seconds
@@ -736,6 +738,24 @@ export class BackendService {
             }
             console.log("Under construction!");
             return throwError(new Error("Under construction!"));
+        }
+    }
+
+    @action("request spectral line")
+    requestSpectralLine(frequencyRange: CARTA.DoubleBounds): Observable<CARTA.SpectralLineResponse> {
+        if (this.connectionStatus !== ConnectionStatus.ACTIVE) {
+            return throwError(new Error("Not connected"));
+        } else {
+            const message = CARTA.SpectralLineRequest.create({frequencyRange: frequencyRange});
+            const requestId = this.eventCounter;
+            this.logEvent(CARTA.EventType.SPECTRAL_LINE_REQUEST, requestId, message, false);
+            if (this.sendEvent(CARTA.EventType.SPECTRAL_LINE_REQUEST, CARTA.SpectralLineRequest.encode(message).finish())) {
+                return new Observable<CARTA.SpectralLineResponse>(observer => {
+                    this.observerRequestMap.set(requestId, observer);
+                });
+            } else {
+                return throwError(new Error("Could not send event"));
+            }
         }
     }
 

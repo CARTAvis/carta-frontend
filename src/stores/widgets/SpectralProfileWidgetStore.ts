@@ -3,6 +3,7 @@ import {Colors, NumberRange} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import {PlotType, LineSettings} from "components/Shared";
 import {RegionWidgetStore, RegionsType} from "./RegionWidgetStore";
+import {SpectralLine} from "./SpectralLineQueryWidgetStore";
 import {AppStore, FrameStore} from "stores";
 import {ProfileSmoothingStore} from "stores/ProfileSmoothingStore";
 import {SpectralSystem, SpectralType, SpectralUnit} from "models";
@@ -26,6 +27,8 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
     @observable markerTextVisible: boolean;
     @observable isMouseMoveIntoLinePlots: boolean;
     @observable isStreamingData: boolean;
+    @observable isHighlighted: boolean;
+    @observable private spectralLinesMHz: SpectralLine[];
 
     // style settings
     @observable plotType: PlotType;
@@ -211,6 +214,20 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         }
     };
 
+    @action setHighlighted = (isHighlighted: boolean) => {
+        this.isHighlighted = isHighlighted;
+     };
+ 
+     @action addSpectralLines = (spectralLines: SpectralLine[]) => {
+         if (spectralLines) {
+             this.spectralLinesMHz = spectralLines;
+         }
+     };
+ 
+     @action clearSpectralLines = () => {
+         this.spectralLinesMHz = [];
+     };
+
     @action setXBounds = (minVal: number, maxVal: number) => {
         this.minX = minVal;
         this.maxX = maxVal;
@@ -278,6 +295,8 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         this.coordinate = coordinate;
         this.statsType = CARTA.StatsType.Mean;
         this.isStreamingData = false;
+        this.isHighlighted = false;
+        this.spectralLinesMHz = [];
 
         // Describes how the data is visualised
         this.plotType = PlotType.STEPS;
@@ -333,6 +352,21 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
             };
         }
         return null;
+    }
+
+    @computed get transformedSpectralLines(): SpectralLine[] {
+        // transform to corresponding value according to current widget's spectral settings
+        let transformedSpectralLines: SpectralLine[] = [];
+        const frame = this.appStore.activeFrame;
+        if (frame && this.spectralLinesMHz) {
+            this.spectralLinesMHz.forEach(spectralLine => {
+                const transformedValue = frame.convertFreqMHzToSettingWCS(spectralLine.value);
+                if (isFinite(transformedValue)) {
+                    transformedSpectralLines.push({species: spectralLine.species, value: transformedValue, qn: spectralLine.qn});
+                }
+            });
+        }
+        return transformedSpectralLines;
     }
 
     public static CalculateRequirementsMap(frame: FrameStore, widgetsMap: Map<string, SpectralProfileWidgetStore>) {
