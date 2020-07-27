@@ -303,8 +303,8 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
             let uProfileOriginal = this.profileStore.getProfile(StokesCoordinate.LinearPolarizationU, statsType);
 
             if (qProfileOriginal && uProfileOriginal && qProfileOriginal.values && uProfileOriginal.values) {
-                let qProfileSmoothedValues = this.widgetStore.smoothingStore.getSmoothingValues(AppStore.Instance.activeFrame.channelValues, qProfileOriginal.values);
-                let uProfileSmoothedValues = this.widgetStore.smoothingStore.getSmoothingValues(AppStore.Instance.activeFrame.channelValues, uProfileOriginal.values);
+                let qProfileSmoothedValues = this.widgetStore.smoothingStore.getSmoothingValues(this.widgetStore.effectiveFrame.channelValues, qProfileOriginal.values);
+                let uProfileSmoothedValues = this.widgetStore.smoothingStore.getSmoothingValues(this.widgetStore.effectiveFrame.channelValues, uProfileOriginal.values);
                 let qProfile = [];
                 let uProfile = [];
                 let piProfile = [];
@@ -334,7 +334,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
                         qProfile = StokesAnalysisComponent.calculateFractionalPol(qProfile, iProfileOriginal.values);
                         uProfile = StokesAnalysisComponent.calculateFractionalPol(uProfile, iProfileOriginal.values);
                         if (this.widgetStore.smoothingStore.type !== SmoothingType.NONE) {
-                            let iProfileSmoothedValues = this.widgetStore.smoothingStore.getSmoothingValues(AppStore.Instance.activeFrame.channelValues, iProfileOriginal.values);
+                            let iProfileSmoothedValues = this.widgetStore.smoothingStore.getSmoothingValues(this.widgetStore.effectiveFrame.channelValues, iProfileOriginal.values);
                             piProfileSmoothed = StokesAnalysisComponent.calculateFractionalPol(piProfileSmoothed, iProfileSmoothedValues.y);
                             qProfileSmoothed = StokesAnalysisComponent.calculateFractionalPol(qProfileSmoothed, iProfileSmoothedValues.y);
                             uProfileSmoothed = StokesAnalysisComponent.calculateFractionalPol(uProfileSmoothed, iProfileSmoothedValues.y);

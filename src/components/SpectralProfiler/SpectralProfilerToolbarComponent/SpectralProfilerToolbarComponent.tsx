@@ -25,11 +25,11 @@ export class SpectralProfilerToolbarComponent extends React.Component<{ widgetSt
     }
 
     public render() {
-        const appStore = AppStore.Instance;
         const widgetStore = this.props.widgetStore;
 
         let enableStatsSelect = false;
         let enableStokesSelect = false;
+        let stokesClassName = "";
         let regionId = 0;
         const profileCoordinateOptions = [{value: "z", label: "Current"}];
         
@@ -38,20 +38,14 @@ export class SpectralProfilerToolbarComponent extends React.Component<{ widgetSt
 
             const selectedRegion = widgetStore.effectiveFrame.regionSet.regions.find(r => r.regionId === regionId);
             enableStatsSelect = (selectedRegion && selectedRegion.isClosedRegion);
-            enableStokesSelect = widgetStore.effectiveFrame.frameInfo.fileInfoExtended.stokes > 1;
+            enableStokesSelect = widgetStore.effectiveFrame.hasStokes;
             
             const stokesInfo = widgetStore.effectiveFrame.stokesInfo;
-            if (stokesInfo.includes("Iz")) {
-                profileCoordinateOptions.push({value: "Iz", label: "I"});
-            }
-            if (stokesInfo.includes("Qz")) {
-                profileCoordinateOptions.push({value: "Qz", label: "Q"});
-            }
-            if (stokesInfo.includes("Uz")) {
-                profileCoordinateOptions.push({value: "Uz", label: "U"});
-            }
-            if (stokesInfo.includes("Vz")) {
-                profileCoordinateOptions.push({value: "Vz", label: "V"});
+            stokesInfo.forEach(stokes => profileCoordinateOptions.push({value: `${stokes}z`, label: stokes}));
+
+            const linkedClass = "linked-to-selected";
+            if (enableStokesSelect && widgetStore.matchActiveFrame && (widgetStore.coordinate === "z" || widgetStore.coordinate === stokesInfo[widgetStore.effectiveFrame.requiredStokes] + "z")) {
+                stokesClassName = AppStore.Instance.darkTheme ? `${linkedClass} dark-theme` : linkedClass;
             }
         }
 
@@ -73,7 +67,7 @@ export class SpectralProfilerToolbarComponent extends React.Component<{ widgetSt
                     <HTMLSelect value={enableStatsSelect ? widgetStore.statsType : CARTA.StatsType.Mean} options={profileStatsOptions} onChange={this.handleStatsChanged} disabled={!enableStatsSelect}/>
                 </FormGroup>
                 <FormGroup label={"Stokes"} inline={true} disabled={!enableStokesSelect}>
-                    <HTMLSelect value={widgetStore.coordinate} options={profileCoordinateOptions} onChange={this.handleCoordinateChanged} disabled={!enableStokesSelect}/>
+                    <HTMLSelect className={stokesClassName} value={widgetStore.coordinate} options={profileCoordinateOptions} onChange={this.handleCoordinateChanged} disabled={!enableStokesSelect}/>
                 </FormGroup>
             </div>
         );
