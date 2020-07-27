@@ -1,10 +1,11 @@
-import { action, computed, observable } from "mobx";
-import { CARTA } from "carta-protobuf";
-import { Colors } from "@blueprintjs/core";
-import { Point2D } from "models";
-import { BackendService } from "services";
-import { minMax2D, midpoint2D, scale2D, subtract2D, simplePolygonTest, simplePolygonPointTest, toFixed } from "utilities";
-import { FrameStore } from "stores";
+import {action, computed, observable} from "mobx";
+import {Colors} from "@blueprintjs/core";
+import * as AST from "ast_wrapper";
+import {CARTA} from "carta-protobuf";
+import {Point2D} from "models";
+import {BackendService} from "services";
+import {minMax2D, midpoint2D, scale2D, subtract2D, simplePolygonTest, simplePolygonPointTest, toFixed, add2D, rotate2D, transformPoint} from "utilities";
+import {FrameStore} from "stores";
 
 export const CURSOR_REGION_ID = 0;
 export const FOCUS_REGION_RATIO = 0.4;
@@ -31,6 +32,7 @@ export class RegionStore {
     static readonly MAX_DASH_LENGTH = 50;
 
     private readonly backendService: BackendService;
+    private readonly regionApproximationMap: Map<number, Point2D[]>;
 
     public static RegionTypeString(regionType: CARTA.RegionType): string {
         switch (regionType) {
@@ -177,7 +179,36 @@ export class RegionStore {
         }
     }
 
-    constructor(backendService: BackendService, fileId: number, activeFrame: FrameStore,  controlPoints: Point2D[], regionType: CARTA.RegionType, regionId: number = -1,
+    public getRegionApproximation(astTransform: number): Point2D[] {
+        let approximatePoints = this.regionApproximationMap.get(astTransform);
+        if (!approximatePoints) {
+            // TODO: shapes other than ellipse
+            const radA = this.controlPoints[1].y;
+            const radB = this.controlPoints[1].x;
+            const centerReferenceImage = this.controlPoints[0];
+            const N = 500;
+            const dTheta = 2.0 * Math.PI / N;
+            const xCoords = new Float64Array(N);
+            const yCoords = new Float64Array(N);
+
+            for (let i = 0; i < N; i++) {
+                const theta = i * dTheta;
+                const approxPoint = add2D(centerReferenceImage, rotate2D({x: radA * Math.cos(theta), y: radB * Math.sin(theta)}, this.rotation * Math.PI / 180.0));
+                xCoords[i] = approxPoint.x;
+                yCoords[i] = approxPoint.y;
+            }
+
+            const results = AST.transformPointArrays(astTransform, xCoords, yCoords, 0) as { x: Float64Array, y: Float64Array };
+            approximatePoints = new Array<Point2D>(N);
+            for (let i = 0; i < N; i++) {
+                approximatePoints[i] = {x: results.x[i], y: results.y[i]};
+            }
+            this.regionApproximationMap.set(astTransform, approximatePoints);
+        }
+        return approximatePoints;
+    }
+
+    constructor(backendService: BackendService, fileId: number, activeFrame: FrameStore, controlPoints: Point2D[], regionType: CARTA.RegionType, regionId: number = -1,
                 color: string = Colors.TURQUOISE5, lineWidth: number = 2, dashLength: number = 0, rotation: number = 0, name: string = "") {
         this.fileId = fileId;
         this.activeFrame = activeFrame;
@@ -190,6 +221,7 @@ export class RegionStore {
         this.dashLength = dashLength;
         this.rotation = rotation;
         this.backendService = backendService;
+        this.regionApproximationMap = new Map<number, Point2D[]>();
         this.simplePolygonTest();
     }
 
@@ -199,6 +231,7 @@ export class RegionStore {
 
     @action setControlPoint = (index: number, p: Point2D, skipUpdate = false) => {
         if (index >= 0 && index < this.controlPoints.length) {
+            this.regionApproximationMap.clear();
             this.controlPoints[index] = p;
             if (!this.editing && !skipUpdate) {
                 this.updateRegion();
@@ -210,6 +243,7 @@ export class RegionStore {
     };
 
     @action setControlPoints = (points: Point2D[], skipUpdate = false, shapeChanged = true) => {
+        this.regionApproximationMap.clear();
         this.controlPoints = points;
         if (shapeChanged && this.regionType === CARTA.RegionType.POLYGON) {
             this.simplePolygonTest();
@@ -232,6 +266,7 @@ export class RegionStore {
 
     @action setRotation = (angle: number, skipUpdate = false) => {
         this.rotation = (angle + 360) % 360;
+        this.regionApproximationMap.clear();
         if (!this.editing && !skipUpdate) {
             this.updateRegion();
         }
@@ -296,7 +331,7 @@ export class RegionStore {
     @action focusCenter = () => {
         if (this.activeFrame) {
             this.activeFrame.setCenter(this.center.x, this.center.y);
-            
+
             if (this.activeFrame.renderWidth < this.activeFrame.zoomLevel * this.boundingBox.x || this.activeFrame.renderHeight < this.activeFrame.zoomLevel * this.boundingBox.y) {
                 const zoomLevel = FOCUS_REGION_RATIO * Math.min(this.activeFrame.renderWidth / this.boundingBox.x, this.activeFrame.renderHeight / this.boundingBox.y);
                 this.activeFrame.setZoom(zoomLevel);

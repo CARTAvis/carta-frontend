@@ -2,13 +2,13 @@ import * as React from "react";
 import {Colors} from "@blueprintjs/core";
 import {observable} from "mobx";
 import {observer} from "mobx-react";
-import {Ellipse, Group, Rect, Transformer} from "react-konva";
+import {Ellipse, Group, Line, Rect, Transformer} from "react-konva";
 import Konva from "konva";
 import {CARTA} from "carta-protobuf";
 import {FrameStore, RegionStore} from "stores";
 import {Point2D} from "models";
 import {canvasToTransformedImagePos, transformedImageToCanvasPos} from "./shared";
-import {transformPoint} from "utilities";
+import {add2D, rotate2D, transformPoint} from "utilities";
 
 export interface RegionComponentProps {
     region: RegionStore;
@@ -263,75 +263,124 @@ export class RegionComponent extends React.Component<RegionComponentProps> {
         const region = this.props.region;
         const frame = this.props.frame;
 
-        const zoomLevel = frame.spatialReference ? frame.spatialReference.zoomLevel : frame.zoomLevel;
-        const rotation = region.rotation;
+        if (frame.spatialReference) {
+            const centerReferenceImage = region.controlPoints[0];
+            const centerSecondaryImage = transformPoint(frame.spatialTransformAST, centerReferenceImage, false);
+            const centerPixelSpace = transformedImageToCanvasPos(centerSecondaryImage.x, centerSecondaryImage.y, frame, this.props.layerWidth, this.props.layerHeight);
+            // Ellipse axes swapped
+            const tStart = performance.now();
+            const pointsSecondaryImage = region.getRegionApproximation(frame.spatialTransformAST);
+            const N = pointsSecondaryImage.length;
+            const pointArray = new Array<number>(N * 2);
+            for (let i = 0; i < N; i++) {
+                const approxPointPixelSpace = transformedImageToCanvasPos(pointsSecondaryImage[i].x, pointsSecondaryImage[i].y, frame, this.props.layerWidth, this.props.layerHeight);
+                pointArray[i * 2] = approxPointPixelSpace.x - centerPixelSpace.x;
+                pointArray[i * 2 + 1] = approxPointPixelSpace.y - centerPixelSpace.y;
+            }
+            const tEnd = performance.now();
+            const dt = tEnd - tStart;
+            console.log(`Approximated ellipse with ${N} points in ${dt} ms`);
 
-        const centerPixelSpace = transformedImageToCanvasPos(region.controlPoints[0].x, region.controlPoints[0].y, frame.spatialReference || frame, this.props.layerWidth, this.props.layerHeight);
-        let width = (region.controlPoints[1].x * zoomLevel) / devicePixelRatio;
-        let height = (region.controlPoints[1].y * zoomLevel) / devicePixelRatio;
+            return (
+                <Group>
+                    <Line
+                        x={centerPixelSpace.x}
+                        y={centerPixelSpace.y}
+                        stroke={region.color}
+                        strokeWidth={region.lineWidth}
+                        opacity={region.isTemporary ? 0.5 : (region.locked ? 0.70 : 1)}
+                        dash={[region.dashLength]}
+                        closed={true}
+                        listening={this.props.listening && !region.locked}
+                        onClick={this.handleClick}
+                        onDblClick={this.handleDoubleClick}
+                        onContextMenu={this.handleContextMenu}
+                        // onMouseEnter={this.handleStrokeMouseEnter}
+                        // onMouseLeave={this.handleStrokeMouseLeave}
+                        // onMouseMove={this.handleMouseMove}
+                        onDragStart={this.handleDragStart}
+                        onDragEnd={this.handleDragEnd}
+                        onDragMove={this.handleDrag}
+                        perfectDrawEnabled={false}
+                        lineJoin={"round"}
+                        draggable={true}
+                        points={pointArray}
+                        // hitStrokeWidth={NEW_ANCHOR_MAX_DISTANCE * 2}
+                    />
+                </Group>
+            );
+        } else {
+            const rotation = region.rotation;
+            const zoomLevel = frame.zoomLevel;
 
-        // Adjusts the dash length to force the total number of dashes around the bounding box perimeter to 50
-        const borderDash = [(width + height) * 4 / 100.0];
+            const centerPixelSpace = transformedImageToCanvasPos(region.controlPoints[0].x, region.controlPoints[0].y, frame.spatialReference || frame, this.props.layerWidth, this.props.layerHeight);
+            let width = (region.controlPoints[1].x * zoomLevel) / devicePixelRatio;
+            let height = (region.controlPoints[1].y * zoomLevel) / devicePixelRatio;
 
-        const commonProps = {
-            rotation: -rotation,
-            x: centerPixelSpace.x,
-            y: centerPixelSpace.y,
-            stroke: region.color,
-            strokeWidth: region.lineWidth,
-            opacity: region.isTemporary ? 0.5 : (region.locked ? 0.70 : 1),
-            dash: [region.dashLength],
-            draggable: true,
-            listening: this.props.listening && !region.locked,
-            onDragStart: this.handleDragStart,
-            onDragEnd: this.handleDragEnd,
-            onDragMove: this.handleDrag,
-            onClick: this.handleClick,
-            onDblClick: this.handleDoubleClick,
-            onContextMenu: this.handleContextMenu,
-            perfectDrawEnabled: false,
-            ref: this.handleRef
-        };
+            // Adjusts the dash length to force the total number of dashes around the bounding box perimeter to 50
+            const borderDash = [(width + height) * 4 / 100.0];
 
-        return (
-            <Group>
-                {region.regionType === CARTA.RegionType.RECTANGLE &&
-                <Rect
-                    {...commonProps}
-                    width={width}
-                    height={height}
-                    offsetX={width / 2.0}
-                    offsetY={height / 2.0}
-                />
-                }
-                {region.regionType === CARTA.RegionType.ELLIPSE &&
-                <Ellipse
-                    {...commonProps}
-                    radiusY={width}
-                    radiusX={height}
-                />
-                }
-                {this.selectedRegionRef && this.props.selected && this.props.listening &&
-                <Transformer
-                    nodes={[this.selectedRegionRef]}
-                    rotateAnchorOffset={15}
-                    anchorSize={7}
-                    anchorStroke={"black"}
-                    borderStroke={Colors.TURQUOISE5}
-                    borderStrokeWidth={3}
-                    borderDash={borderDash}
-                    keepRatio={false}
-                    centeredScaling={true}
-                    draggable={false}
-                    borderEnabled={false}
-                    resizeEnabled={!region.locked}
-                    rotateEnabled={!region.locked}
-                    onTransformStart={this.handleTransformStart}
-                    onTransform={this.handleTransform}
-                    onTransformEnd={this.handleTransformEnd}
-                />
-                }
-            </Group>
-        );
+            const commonProps = {
+                rotation: -rotation,
+                x: centerPixelSpace.x,
+                y: centerPixelSpace.y,
+                stroke: region.color,
+                strokeWidth: region.lineWidth,
+                opacity: region.isTemporary ? 0.5 : (region.locked ? 0.70 : 1),
+                dash: [region.dashLength],
+                draggable: true,
+                listening: this.props.listening && !region.locked,
+                onDragStart: this.handleDragStart,
+                onDragEnd: this.handleDragEnd,
+                onDragMove: this.handleDrag,
+                onClick: this.handleClick,
+                onDblClick: this.handleDoubleClick,
+                onContextMenu: this.handleContextMenu,
+                perfectDrawEnabled: false,
+                ref: this.handleRef
+            };
+
+            return (
+                <Group>
+                    {region.regionType === CARTA.RegionType.RECTANGLE &&
+                    <Rect
+                        {...commonProps}
+                        width={width}
+                        height={height}
+                        offsetX={width / 2.0}
+                        offsetY={height / 2.0}
+                    />
+                    }
+                    {region.regionType === CARTA.RegionType.ELLIPSE &&
+                    <Ellipse
+                        {...commonProps}
+                        radiusY={width}
+                        radiusX={height}
+                    />
+                    }
+                    {this.selectedRegionRef && this.props.selected && this.props.listening &&
+                    <Transformer
+                        nodes={[this.selectedRegionRef]}
+                        rotateAnchorOffset={15}
+                        anchorSize={7}
+                        anchorStroke={"black"}
+                        borderStroke={Colors.TURQUOISE5}
+                        borderStrokeWidth={3}
+                        borderDash={borderDash}
+                        keepRatio={false}
+                        centeredScaling={true}
+                        draggable={false}
+                        borderEnabled={false}
+                        resizeEnabled={!region.locked}
+                        rotateEnabled={!region.locked}
+                        onTransformStart={this.handleTransformStart}
+                        onTransform={this.handleTransform}
+                        onTransformEnd={this.handleTransformEnd}
+                    />
+                    }
+                </Group>
+            );
+        }
+
     }
 }
