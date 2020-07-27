@@ -1,6 +1,7 @@
+export const SPEED_OF_LIGHT = 299792458;
+
 export function velocityFromFrequency(freq: number, refFreq: number): number {
-    const c = 299792458;
-    return c * (1.0 - freq / refFreq);
+    return SPEED_OF_LIGHT * (1.0 - freq / refFreq);
 }
 
 export function velocityStringFromFrequency(freq: number, refFreq: number): string {
@@ -12,8 +13,7 @@ export function velocityStringFromFrequency(freq: number, refFreq: number): stri
 }
 
 export function frequencyFromVelocity(velocity: number, refFreq: number): number {
-    const c = 299792458;
-    return refFreq * (1.0 - velocity / c);
+    return refFreq * (1.0 - velocity / SPEED_OF_LIGHT);
 }
 
 export function frequencyStringFromVelocity(velocity: number, refFreq: number): string {
@@ -98,6 +98,13 @@ export function formattedArcsec(arcsec: number, decimals: number = -1): string {
         arcString = `${decimals < 0 ? toFixed(arcsec / 3600.0, 3) : toFixed(arcsec / 3600.0, decimals)} deg`;
     }
     return arcString;
+}
+
+export function wavelengthToFrequency(meter: number) { // return in Hz
+    if (!isFinite(meter) || meter === 0 || meter === null) {
+        return undefined;
+    }
+    return SPEED_OF_LIGHT / meter;
 }
 
 export function getValueFromArcsecString(formattedString: string): number {
