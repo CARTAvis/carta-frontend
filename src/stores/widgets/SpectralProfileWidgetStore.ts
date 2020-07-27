@@ -25,6 +25,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
     @observable channel: number;
     @observable markerTextVisible: boolean;
     @observable isMouseMoveIntoLinePlots: boolean;
+    @observable isStreamingData: boolean;
 
     // style settings
     @observable plotType: PlotType;
@@ -268,10 +269,15 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         this.isMouseMoveIntoLinePlots = val;
     };
 
+    @action updateStreamingDataStatus = (val: boolean) => {
+        this.isStreamingData = val;
+    };
+
     constructor(coordinate: string = "z") {
         super(RegionsType.CLOSED_AND_POINT);
         this.coordinate = coordinate;
         this.statsType = CARTA.StatsType.Mean;
+        this.isStreamingData = false;
 
         // Describes how the data is visualised
         this.plotType = PlotType.STEPS;
