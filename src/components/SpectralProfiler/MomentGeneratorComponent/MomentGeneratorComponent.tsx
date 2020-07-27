@@ -1,13 +1,13 @@
 import * as React from "react";
 import {observer} from "mobx-react";
 import {CARTA} from "carta-protobuf";
-import {Button, Divider, FormGroup, HTMLSelect, MenuItem, Position, Tooltip} from "@blueprintjs/core";
+import {AnchorButton, Button, Divider, FormGroup, HTMLSelect, MenuItem, Position, Tooltip} from "@blueprintjs/core";
 import {ItemPredicate, ItemRenderer, MultiSelect} from "@blueprintjs/select";
 import {RegionSelectorComponent} from "components";
 import {TaskProgressDialogComponent} from "components/Dialogs";
 import {SafeNumericInput, SpectralSettingsComponent} from "components/Shared";
 import {MomentSelectingMode, SpectralProfileWidgetStore} from "stores/widgets";
-import {AppStore} from "stores";
+import {AnimationState, AppStore} from "stores";
 import {MOMENT_TEXT} from "models";
 import "./MomentGeneratorComponent.css";
 
@@ -138,7 +138,7 @@ export class MomentGeneratorComponent extends React.Component<{widgetStore: Spec
                             </FormGroup>
                             <div className="cursor-select">
                                 <Tooltip content="Use cursor to select channel range in profiler" position={Position.BOTTOM}>
-                                    <Button
+                                    <AnchorButton
                                         className={widgetStore.isSelectingMomentChannelRange ? "bp3-active" : ""}
                                         icon="select"
                                         onClick={this.handleChannelSelectionClicked}
@@ -180,7 +180,7 @@ export class MomentGeneratorComponent extends React.Component<{widgetStore: Spec
                             </FormGroup>
                             <div className="cursor-select">
                                 <Tooltip content="Use cursor to select mask range in profiler" position={Position.BOTTOM}>
-                                    <Button
+                                    <AnchorButton
                                         className={widgetStore.isSelectingMomentMaskRange ? "bp3-active" : ""}
                                         icon="select"
                                         onClick={this.handleMaskSelectionClicked}
@@ -193,6 +193,7 @@ export class MomentGeneratorComponent extends React.Component<{widgetStore: Spec
             </React.Fragment>
         );
 
+        const isAbleToGenerate = activeFrame && activeFrame.numChannels > 1 && appStore.animatorStore.animationState === AnimationState.STOPPED && !widgetStore.isStreamingData;
         const momentsPanel = (
             <React.Fragment>
                 <FormGroup label="Moments" inline={true}>
@@ -217,7 +218,15 @@ export class MomentGeneratorComponent extends React.Component<{widgetStore: Spec
                     />
                 </FormGroup>
                 <div className="moment-generate">
-                    <Button intent="success" onClick={this.handleRequestMoment} disabled={!(activeFrame && activeFrame.numChannels > 1 && !widgetStore.isStreamingData)}>Generate</Button>
+                    <Tooltip content={"Please generate moment when animation is stopped and streaming spectral data is finished."} position={Position.BOTTOM}>
+                        <AnchorButton
+                            intent="success"
+                            onClick={this.handleRequestMoment}
+                            disabled={!isAbleToGenerate}
+                        >
+                            Generate
+                        </AnchorButton>
+                    </Tooltip>
                 </div>
             </React.Fragment>
         );
