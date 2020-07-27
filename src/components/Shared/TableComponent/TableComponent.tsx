@@ -1,7 +1,7 @@
 import * as React from "react";
 import {observer} from "mobx-react";
 import {Cell, Column, Table, SelectionModes, RenderMode, ColumnHeaderCell, IRegion} from "@blueprintjs/table";
-import {Tooltip, PopoverPosition, InputGroup, Menu, MenuItem, Icon, Label} from "@blueprintjs/core";
+import {Checkbox, Tooltip, PopoverPosition, InputGroup, Menu, MenuItem, Icon, Label} from "@blueprintjs/core";
 import {IRowIndices} from "@blueprintjs/table/lib/esm/common/grid";
 import {CARTA} from "carta-protobuf";
 import {ControlHeader} from "stores/widgets";
@@ -15,6 +15,13 @@ export enum TableType {
     ColumnFilter
 }
 
+export interface ManualSelectionProps {
+    isSelectingAll: boolean;
+    isSelectingIndeterminated: boolean;
+    selectAllLines: () => void;
+    selectSingleLine: (rowIndex: number) => void;
+}
+
 export class TableComponentProps {
     dataset: Map<number, ProcessedColumnData>;
     filter?: Map<string, ControlHeader>;
@@ -25,6 +32,8 @@ export class TableComponentProps {
     loadingCell?: boolean;
     selectedDataIndex?: number[];
     showSelectedData?: boolean;
+    manualSelectionProps?: ManualSelectionProps;
+    manualSelectionData?: boolean[];
     updateTableRef?: (ref: Table) => void;
     updateColumnFilter?: (value: string, columnName: string) => void;
     updateByInfiniteScroll?: (rowIndexEnd: number) => void;
@@ -34,8 +43,51 @@ export class TableComponentProps {
     sortingInfo?: {columnName: string, sortingType: CARTA.SortingType};
 }
 
+const MANUAL_SELECTION_COLUMN_WIDTH = 50;
+const DEFAULT_COLUMN_WIDTH = 150;
+
 @observer
 export class TableComponent extends React.Component<TableComponentProps> {
+
+    private renderManualSelectionColumn = (manualSelectionProps: ManualSelectionProps, manualSelectionData: boolean[]) => {
+        if (!manualSelectionProps || !manualSelectionData || manualSelectionData.length <= 0) {
+            return null;
+        }
+
+        const columnName = "select";
+        return (
+            <Column
+                key={columnName}
+                name={columnName}
+                columnHeaderCellRenderer={(columnIndex: number) => {
+                    return (
+                        <ColumnHeaderCell>
+                            <React.Fragment>
+                                <Checkbox
+                                    indeterminate={manualSelectionProps.isSelectingIndeterminated}
+                                    checked={manualSelectionProps.isSelectingAll}
+                                    inline={true}
+                                    onChange={manualSelectionProps.selectAllLines}
+                                />
+                            </React.Fragment>
+                        </ColumnHeaderCell>
+                    );
+                }}
+                cellRenderer={(rowIndex, columnIndex) => {
+                    return (
+                        <Cell key={`cell_${columnIndex}_${rowIndex}`} interactive={false}>
+                            <React.Fragment>
+                                <Checkbox
+                                    checked={manualSelectionData[rowIndex] || false}
+                                    onChange={() => manualSelectionProps.selectSingleLine(rowIndex)}
+                                />
+                            </React.Fragment>
+                        </Cell>
+                    );
+                }}
+            />
+        );
+    };
 
     private getfilterSyntax = (dataType: CARTA.ColumnType) => {
         switch (dataType) {
@@ -80,6 +132,10 @@ export class TableComponent extends React.Component<TableComponentProps> {
     };
 
     private renderColumnHeaderCell = (columnIndex: number, column: CARTA.CatalogHeader) => {
+        if (!isFinite(columnIndex) || !column) {
+            return null;
+        }
+
         const controlheader = this.props.filter.get(column.name);
         const filterSyntax = this.getfilterSyntax(column.dataType);
         const sortingInfo = this.props.sortingInfo;
@@ -139,13 +195,12 @@ export class TableComponent extends React.Component<TableComponentProps> {
                             key={"column-filter-" + columnIndex}
                             small={true}
                             placeholder="Click to filter"
-                            value={controlheader.filter} 
+                            value={controlheader && controlheader.filter ? controlheader.filter : ""} 
                             onChange={ev => this.props.updateColumnFilter(ev.currentTarget.value, column.name)}
                         />
                     </Tooltip>
                 </ColumnHeaderCell>
             </ColumnHeaderCell>
-
         );
     };
 
@@ -164,13 +219,13 @@ export class TableComponent extends React.Component<TableComponentProps> {
         }
     };
 
-    private renderDataColumn(columnName: string, coloumnData: any) {
+    private renderDataColumn(columnName: string, columnData: any) {
         return (
             <Column
                 key={columnName}
                 name={columnName}
                 cellRenderer={(rowIndex, columnIndex) => (
-                    <Cell key={`cell_${columnIndex}_${rowIndex}`} interactive={true}>{coloumnData[rowIndex]}</Cell>
+                    <Cell key={`cell_${columnIndex}_${rowIndex}`} interactive={true}>{rowIndex < columnData?.length ? columnData[rowIndex] : undefined}</Cell>
                 )}
             />
         );
@@ -178,7 +233,7 @@ export class TableComponent extends React.Component<TableComponentProps> {
 
     private updateTableColumnWidth = (index: number, size: number) => {
         const header = this.props.columnHeaders[index];
-        if (header) {
+        if (header && this.props.updateTableColumnWidth) {
             this.props.updateTableColumnWidth(size, header.name);
         }
     };
@@ -206,6 +261,17 @@ export class TableComponent extends React.Component<TableComponentProps> {
         const table = this.props;
         const tableColumns = [];
         const tableData = table.dataset;
+        let columnWidths = table.columnWidths;
+
+        // Create manuanl selection checkbox column
+        if (table.manualSelectionProps && table.manualSelectionData && table.dataset && table.dataset.size > 0) {
+            const column = this.renderManualSelectionColumn(table.manualSelectionProps, table.manualSelectionData);
+            tableColumns.push(column);
+            if (!columnWidths) {
+                columnWidths = new Array<number>(table.columnHeaders.length).fill(DEFAULT_COLUMN_WIDTH);
+            }
+            columnWidths.splice(0, 0, MANUAL_SELECTION_COLUMN_WIDTH);
+        }
 
         for (let index = 0; index < table.columnHeaders.length; index++) {
             const header = table.columnHeaders[index];
@@ -225,18 +291,18 @@ export class TableComponent extends React.Component<TableComponentProps> {
             return (
                 <Table
                     className={"column-filter"}
-                    ref={(ref) => table.updateTableRef(ref)}
+                    ref={table.updateTableRef ? (ref) => table.updateTableRef(ref) : null}
                     numRows={table.numVisibleRows}
                     renderMode={RenderMode.BATCH}
                     enableRowReordering={false}
                     selectionModes={SelectionModes.ROWS_AND_CELLS}
                     onVisibleCellsChange={this.infiniteScroll}
-                    columnWidths={table.columnWidths}
                     onColumnWidthChanged={this.updateTableColumnWidth}
                     enableGhostCells={true}
                     onSelection={this.onRowIndexSelection}
                     enableMultipleSelection={true}
                     enableRowResizing={false}
+                    columnWidths={columnWidths}
                 >
                     {tableColumns}
                 </Table>
@@ -244,12 +310,14 @@ export class TableComponent extends React.Component<TableComponentProps> {
         } else {
             return (
                 <Table
+                    ref={table.updateTableRef ? (ref) => table.updateTableRef(ref) : null}
                     numRows={table.numVisibleRows}
                     renderMode={RenderMode.NONE}
                     enableRowReordering={false}
                     selectionModes={SelectionModes.NONE}
                     enableGhostCells={true}
                     enableRowResizing={false}
+                    columnWidths={columnWidths}
                 >
                     {tableColumns}
                 </Table>
