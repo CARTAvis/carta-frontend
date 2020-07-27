@@ -1,18 +1,19 @@
 import * as React from "react";
 import {observer} from "mobx-react";
 import {Button, ButtonGroup, Icon, Tooltip} from "@blueprintjs/core";
-import {AppStore, DialogStore, WidgetConfig} from "stores";
+import {AppStore, WidgetConfig} from "stores";
 import {
-    AnimatorComponent, 
-    HistogramComponent, 
-    LayerListComponent, 
-    LogComponent, 
-    RegionListComponent, 
-    RenderConfigComponent, 
-    SpatialProfilerComponent, 
-    SpectralProfilerComponent, 
-    StatsComponent, 
-    StokesAnalysisComponent, 
+    AnimatorComponent,
+    HistogramComponent,
+    LayerListComponent,
+    LogComponent,
+    RegionListComponent,
+    RenderConfigComponent,
+    SpatialProfilerComponent,
+    SpectralProfilerComponent,
+    SpectralLineQueryComponent,
+    StatsComponent,
+    StokesAnalysisComponent,
     CatalogOverlayComponent
 } from "components";
 import {CustomIcon} from "icons/CustomIcons";
@@ -28,6 +29,7 @@ export class ToolbarMenuComponent extends React.Component {
             ["regionListButton", RegionListComponent.WIDGET_CONFIG],
             ["spatialProfilerButton", SpatialProfilerComponent.WIDGET_CONFIG],
             ["spectralProfilerButton", SpectralProfilerComponent.WIDGET_CONFIG],
+            ["spectralLineQueryButton", SpectralLineQueryComponent.WIDGET_CONFIG],
             ["statsButton", StatsComponent.WIDGET_CONFIG],
             ["histogramButton", HistogramComponent.WIDGET_CONFIG],
             ["stokesAnalysisButton", StokesAnalysisComponent.WIDGET_CONFIG],
@@ -91,6 +93,9 @@ export class ToolbarMenuComponent extends React.Component {
                     </Tooltip>
                     <Tooltip content={<span>Catalog Widget{commonTooltip}</span>}>
                         <Button icon={"heatmap"} id="catalogOverlayButton" onClick={appStore.widgetsStore.reloadFloatingCatalogOverlayWidget}/>
+                    </Tooltip>
+                    <Tooltip content={<span>Spectral Line Query Widget{commonTooltip}</span>}>
+                        <Button icon={<CustomIcon icon={"spectralLineQuery"}/>} id="spectralLineQueryButton" onClick={appStore.widgetsStore.createFloatingSpectralLineQueryWidget}/>
                     </Tooltip>
                 </ButtonGroup>
                 <ButtonGroup className={dialogClassName}>
