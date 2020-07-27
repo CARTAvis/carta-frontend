@@ -12,6 +12,7 @@ import {
     RenderConfigComponent,
     SpatialProfilerComponent,
     SpectralProfilerComponent,
+    SpectralLineQueryComponent,
     StatsComponent,
     StokesAnalysisComponent,
     CatalogOverlayComponent,
@@ -22,7 +23,7 @@ import {
     RenderConfigSettingsPanelComponent,
     HistogramSettingsPanelComponent
 } from "components";
-import {AppStore, WidgetConfig, WidgetsStore} from "stores";
+import {WidgetConfig, WidgetsStore} from "stores";
 
 @observer
 export class FloatingWidgetManagerComponent extends React.Component {
@@ -62,6 +63,8 @@ export class FloatingWidgetManagerComponent extends React.Component {
                 return <SpatialProfilerComponent id={widgetConfig.id} docked={false}/>;
             case SpectralProfilerComponent.WIDGET_CONFIG.type:
                 return <SpectralProfilerComponent id={widgetConfig.id} docked={false}/>;
+            case SpectralLineQueryComponent.WIDGET_CONFIG.type:
+                return <SpectralLineQueryComponent id={widgetConfig.id} docked={false}/>;
             case StatsComponent.WIDGET_CONFIG.type:
                 return <StatsComponent id={widgetConfig.id} docked={false}/>;
             case HistogramComponent.WIDGET_CONFIG.type:
