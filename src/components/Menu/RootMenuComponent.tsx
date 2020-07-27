@@ -191,6 +191,7 @@ export class RootMenuComponent extends React.Component {
                 <Menu.Item text="Animator" icon={"video"} onClick={appStore.widgetsStore.createFloatingAnimatorWidget}/>
                 <Menu.Item text="Render Config" icon={"style"} onClick={appStore.widgetsStore.createFloatingRenderWidget}/>
                 <Menu.Item className={stokesClassName} text="Stokes Analysis" icon={stokesIcon} onClick={appStore.widgetsStore.createFloatingStokesWidget}/>
+                <Menu.Item text="Spectral Line Query" icon={<CustomIcon icon={"spectralLineQuery"}/>} onClick={appStore.widgetsStore.createFloatingSpectralLineQueryWidget}/>
             </Menu>
         );
 
