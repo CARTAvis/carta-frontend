@@ -39,7 +39,7 @@ import {BackendService, ConnectionStatus, ScriptingService, TileService, TileStr
 import {FrameView, Point2D, ProtobufProcessing, Theme, TileCoordinate, WCSMatchingType} from "models";
 import {CatalogInfo, CatalogUpdateMode, HistogramWidgetStore, RegionWidgetStore, SpatialProfileWidgetStore, SpectralProfileWidgetStore, StatsWidgetStore, StokesAnalysisWidgetStore} from "./widgets";
 import {CatalogScatterComponent, getImageCanvas} from "components";
-import {AppToaster} from "components/Shared";
+import {AppToaster, SuccessToast, ErrorToast, WarningToast} from "components/Shared";
 import GitCommit from "../static/gitInfo";
 
 export class AppStore {
@@ -536,11 +536,11 @@ export class AppStore {
     // Open catalog file
     @action appendCatalog = (directory: string, file: string, previewDataSize: number, type: CARTA.CatalogFileType) => {
         if (!this.activeFrame) {
-            AppToaster.show({icon: "warning-sign", message: `Please load the image file`, intent: "danger", timeout: 3000});
+            AppToaster.show(ErrorToast("Please load the image file"));
             return;
         }
         if (!(type === CARTA.CatalogFileType.VOTable)) {
-            AppToaster.show({icon: "warning-sign", message: `Catalog type not supported`, intent: "danger", timeout: 3000});
+            AppToaster.show(ErrorToast("`Catalog type not supported"));
             return;
         }
         this.fileLoading = true;
@@ -574,7 +574,7 @@ export class AppStore {
             }
         }, error => {
             console.error(error);
-            AppToaster.show({icon: "warning-sign", message: error, intent: "danger", timeout: 3000});
+            AppToaster.show(ErrorToast(error));
             this.fileLoading = false;
         });
     };
@@ -638,7 +638,7 @@ export class AppStore {
     // Region file actions
     @action importRegion = (directory: string, file: string, type: CARTA.FileType | CARTA.CatalogFileType) => {
         if (!this.activeFrame || !(type === CARTA.FileType.CRTF || type === CARTA.FileType.DS9_REG)) {
-            AppToaster.show({icon: "warning-sign", message: `Region type not supported`, intent: "danger", timeout: 3000});
+            AppToaster.show(ErrorToast("Region type not supported"));
             return;
         }
 
@@ -666,7 +666,7 @@ export class AppStore {
             this.fileBrowserStore.hideFileBrowser();
         }, error => {
             console.error(error);
-            AppToaster.show({icon: "warning-sign", message: error, intent: "danger", timeout: 3000});
+            AppToaster.show(ErrorToast(error));
         });
     };
 
@@ -688,11 +688,11 @@ export class AppStore {
             });
         }
         this.backendService.exportRegion(directory, file, fileType, coordType, frame.frameInfo.fileId, regionStyles).subscribe(() => {
-            AppToaster.show({icon: "saved", message: `Exported regions for ${frame.frameInfo.fileInfo.name} using ${coordType === CARTA.CoordinateType.WORLD ? "world" : "pixel"} coordinates`, intent: "success", timeout: 3000});
+            AppToaster.show(SuccessToast("saved", `Exported regions for ${frame.frameInfo.fileInfo.name} using ${coordType === CARTA.CoordinateType.WORLD ? "world" : "pixel"} coordinates`));
             this.fileBrowserStore.hideFileBrowser();
         }, error => {
             console.error(error);
-            AppToaster.show({icon: "warning-sign", message: error, intent: "danger", timeout: 3000});
+            AppToaster.show(ErrorToast(error));
         });
     };
 
@@ -883,14 +883,14 @@ export class AppStore {
             switch (newConnectionStatus) {
                 case ConnectionStatus.ACTIVE:
                     if (this.backendService.connectionDropped) {
-                        AppToaster.show({icon: "warning-sign", message: `Reconnected to server${userString}. Some errors may occur`, intent: "warning", timeout: 3000});
+                        AppToaster.show(WarningToast(`Reconnected to server${userString}. Some errors may occur`));
                     } else {
-                        AppToaster.show({icon: "swap-vertical", message: `Connected to CARTA server${userString}`, intent: "success", timeout: 3000});
+                        AppToaster.show(SuccessToast("swap-vertical", `Connected to CARTA server${userString}`));
                     }
                     break;
                 case ConnectionStatus.CLOSED:
                     if (this.previousConnectionStatus === ConnectionStatus.ACTIVE) {
-                        AppToaster.show({icon: "error", message: "Disconnected from server", intent: "danger", timeout: 3000});
+                        AppToaster.show(ErrorToast("Disconnected from server"));
                     }
                     break;
                 default:
@@ -1437,12 +1437,7 @@ export class AppStore {
 
         if (val) {
             if (!frame.setSpatialReference(this.spatialReference)) {
-                AppToaster.show({
-                    icon: "warning-sign",
-                    message: `Could not enable spatial matching of ${frame.frameInfo.fileInfo.name} to reference image ${this.spatialReference.frameInfo.fileInfo.name}. No valid transform was found`,
-                    intent: "warning",
-                    timeout: 3000
-                });
+                AppToaster.show(WarningToast(`Could not enable spatial matching of ${frame.frameInfo.fileInfo.name} to reference image ${this.spatialReference.frameInfo.fileInfo.name}. No valid transform was found`));
             }
         } else {
             frame.clearSpatialReference();
@@ -1494,12 +1489,7 @@ export class AppStore {
 
         if (val) {
             if (!frame.setSpectralReference(this.spectralReference)) {
-                AppToaster.show({
-                    icon: "warning-sign",
-                    message: `Could not enable spectral matching (velocity system) of ${frame.frameInfo.fileInfo.name} to reference image ${this.spectralReference.frameInfo.fileInfo.name}. No valid transform was found`,
-                    intent: "warning",
-                    timeout: 3000
-                });
+                AppToaster.show(WarningToast(`Could not enable spectral matching (velocity system) of ${frame.frameInfo.fileInfo.name} to reference image ${this.spectralReference.frameInfo.fileInfo.name}. No valid transform was found`));
             }
         } else {
             frame.clearSpectralReference();
