@@ -82,6 +82,12 @@ const COMPONENT_CONFIG = new Map<string, any>([
         component: "catalog-scatter",
         title: "Catalog Scatter",
         id: "catalog-scatter"
+    }],
+    ["spectral-line-query", {
+        type: "react-component",
+        component: "spectral-line-query",
+        title: "Spectral Line Query",
+        id: "spectral-line-query"
     }]
 ]);
 
@@ -119,6 +125,7 @@ const LAYOUT_SCHEMA = {
     }
 };
 
+// CARTA 1.4: add catalog-overlay, spectral-line-query widgets
 const DOCKED_SCHEMA = {
     "1": {
         "required": ["type"],
@@ -158,7 +165,7 @@ const DOCKED_SCHEMA = {
             },
             "id": {
                 "type": "string",
-                "pattern": "animator|histogram|image-view|layer-list|log|region\-list|render\-config|spatial\-profiler|spectral\-profiler|stats|stokes|catalog\-overlay|catalog\-scatter"
+                "pattern": "animator|histogram|image-view|layer-list|log|region\-list|render\-config|spatial\-profiler|spectral\-profiler|stats|stokes|catalog\-overlay|catalog\-scatter|spectral\-line\-query"
             },
             "widgetSettings": {
                 "type": "object"
@@ -216,7 +223,7 @@ const FLOATING_WIDGET_SCHEMA = {
         "properties": {
             "type": {
                 "type": "string",
-                "pattern": "animator|histogram|layer-list|log|region\-list|render\-config|spatial\-profiler|spectral\-profiler|stats|stokes|catalog\-overlay|catalog\-scatter"
+                "pattern": "animator|histogram|layer-list|log|region\-list|render\-config|spatial\-profiler|spectral\-profiler|stats|stokes|catalog\-overlay|catalog\-scatter|spectral\-line\-query"
             },
             "widgetSettings": {
                 "type": "object"
@@ -288,8 +295,10 @@ export class LayoutConfig {
         const version = layoutConfig.layoutVersion;
         if (version === 1) {
             return LayoutConfig.LayoutHandlerV1(layoutConfig);
-        } else {
+        } else if (version === 2) {
             return LayoutConfig.LayoutHandlerV2(layoutConfig);
+        } else {
+            return false;
         }
     };
 
@@ -306,17 +315,18 @@ export class LayoutConfig {
         // validate floating part & convert v1 to v2
         const floatingV1 = config.floating;
         let floatingV2 = [];
-        floatingV1.forEach((widgetConfig) => {
-            if (true === LayoutConfig.jsonValidator.validate(FLOATING_WIDGET_SCHEMA["1"], widgetConfig)) {
-                if (widgetConfig.type === "spatial-profiler") {
-                    widgetConfig["widgetSettings"] = widgetConfig.coord === "y" ? {coordinate: "y"} : {coordinate: "x"};
-                    if (widgetConfig.coord) {
-                        delete widgetConfig.coord;
-                    }
-                }
-                floatingV2.push(widgetConfig);
+        for (let widgetConfig of floatingV1) {
+            if (false === LayoutConfig.jsonValidator.validate(FLOATING_WIDGET_SCHEMA["1"], widgetConfig)) {
+                return false;
             }
-        });
+            if (widgetConfig.type === "spatial-profiler") {
+                widgetConfig["widgetSettings"] = widgetConfig.coord === "y" ? {coordinate: "y"} : {coordinate: "x"};
+                if (widgetConfig.coord) {
+                    delete widgetConfig.coord;
+                }
+            }
+            floatingV2.push(widgetConfig);
+        }
         config.floating = floatingV2;
         config.layoutVersion = 2;
 
@@ -363,14 +373,15 @@ export class LayoutConfig {
             return false;
         }
 
-        // validate floating part & remove invalid widget config
+        // validate floating part
         const floating = config.floating;
         let floatingValid = [];
-        floating.forEach((widgetConfig) => {
-            if (true === LayoutConfig.jsonValidator.validate(FLOATING_WIDGET_SCHEMA["2"], widgetConfig)) {
-                floatingValid.push(widgetConfig);
+        for (let widgetConfig of floating) {
+            if (false === LayoutConfig.jsonValidator.validate(FLOATING_WIDGET_SCHEMA["2"], widgetConfig)) {
+                return false;
             }
-        });
+            floatingValid.push(widgetConfig);
+        }
         config.floating = floatingValid;
         return true;
     };
