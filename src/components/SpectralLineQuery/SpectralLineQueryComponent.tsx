@@ -72,6 +72,16 @@ export class SpectralLineQueryComponent extends React.Component<WidgetProps> {
         }
     };
 
+    private updateTableSize(ref: any, docked: boolean) {
+        const viewportRect = ref.locator.getViewportRect();
+        ref.updateViewportRect(viewportRect);
+        // fixed bug for blueprint table, first column overlap with row index
+        // triger table update
+        if (docked) {
+            ref.scrollToRegion(Regions.column(0));
+        }
+    }
+
     private onTableResize = () => {
         // update table if resizing happend
         if (this.headerTableRef) {
@@ -170,16 +180,6 @@ export class SpectralLineQueryComponent extends React.Component<WidgetProps> {
     private updateHeaderTableColumnSize = (index: number, size: number) => {
         if (this.headerTableColumnWidths) {
             this.headerTableColumnWidths[index] = size;
-        }
-    }
-
-    private updateTableSize(ref: any, docked: boolean) {
-        const viewportRect = ref.locator.getViewportRect();
-        ref.updateViewportRect(viewportRect);
-        // fixed bug for blueprint table, first column overlap with row index
-        // triger table update
-        if (docked) {
-            ref.scrollToRegion(Regions.column(0));
         }
     }
 
@@ -298,10 +298,6 @@ export class SpectralLineQueryComponent extends React.Component<WidgetProps> {
             </div>
         );
 
-        const tableInfo = (widgetStore.queryResult.size > 0) ? (
-            <pre>Showing {widgetStore.numDataRows} entries.</pre>
-        ) : null;
-
         const isSelectedWidgetExisted = widgetStore.selectedSpectralProfilerID && AppStore.Instance.widgetsStore.getSpectralWidgetStoreByID(widgetStore.selectedSpectralProfilerID);
         const widgetMenu = (
             <Popover
@@ -375,7 +371,7 @@ export class SpectralLineQueryComponent extends React.Component<WidgetProps> {
                     </SplitPane>
                 </div>
                 <div className="bp3-dialog-footer">
-                    <div className="result-table-info">{tableInfo}</div>
+                    <div className="result-table-info"><pre>Showing {widgetStore.numDataRows} entries.</pre></div>
                     <div className="bp3-dialog-footer-actions">
                         <FormGroup inline={true} label={this.width < MINIMUM_WIDTH ? "" : "Spectral Profiler"}>
                             {widgetMenu}
