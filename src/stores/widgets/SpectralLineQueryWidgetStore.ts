@@ -301,13 +301,13 @@ export class SpectralLineQueryWidgetStore extends RegionWidgetStore {
     }
 
     private calculateFreqMHz = (value: number, unit: SpectralLineQueryUnit): number => {
-        if (!isFinite(value) || value < 0 || !unit) {
+        if (!isFinite(value) || value === null || value < 0 || !unit) {
             return undefined;
         }
         if (unit === SpectralLineQueryUnit.CM) {
-            return wavelengthToFrequency(value / 10) / 1e6;
-        } else if (unit === SpectralLineQueryUnit.MM) {
             return wavelengthToFrequency(value / 100) / 1e6;
+        } else if (unit === SpectralLineQueryUnit.MM) {
+            return wavelengthToFrequency(value / 1000) / 1e6;
         } else if (unit === SpectralLineQueryUnit.GHz) {
             return value * 1000;
         } else if (unit === SpectralLineQueryUnit.MHz) {
