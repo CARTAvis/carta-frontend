@@ -704,7 +704,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
     }
 
     private renderSystemPopOver = (system: CatalogSystemType, itemProps: IItemRendererProps) => {
-        return (
+        const menuItem = (
             <MenuItem
                 key={system}
                 text={this.widgetStore.CoordinateSystemName.get(system)}
@@ -712,6 +712,26 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
                 active={itemProps.modifiers.active}
             />
         );
+        switch (system) {
+            case CatalogSystemType.Pixel0:
+                return (
+                    <div key={system}>
+                        <Tooltip position="auto-end" content={<small>PIX0: 0-based image coordinates</small>}>
+                            {menuItem}
+                        </Tooltip>
+                    </div>
+                );
+            case CatalogSystemType.Pixel1:
+                return (
+                    <div key={system}>
+                        <Tooltip position="auto-end" content={<small>PIX1:  1-based image coordinates</small>}>
+                            {menuItem}
+                        </Tooltip>
+                    </div>
+                );
+            default:
+                return menuItem;
+        }
     }
 
     public render() {

@@ -20,3 +20,4 @@ export * from "./ContourConfigStore";
 export * from "./DialogStore";
 export * from "./CatalogStore";
 export * from "./HelpStore";
+export * from "./ProfileSmoothingStore";
