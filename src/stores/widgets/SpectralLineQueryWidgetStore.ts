@@ -203,11 +203,19 @@ export class SpectralLineQueryWidgetStore extends RegionWidgetStore {
             backendService.requestSpectralLine(new CARTA.DoubleBounds({min: freqMHzFrom, max: freqMHzTo})).subscribe(ack => {
                 this.isQuerying = false;
                 if (ack.success && ack.dataSize >= 0) {
-                    this.numDataRows = ack.dataSize;
-                    this.isLineSelectedArray = ack.dataSize > 0 ? new Array<boolean>(this.numDataRows).fill(false) : [];
-                    this.queryResult = ack.dataSize > 0 ? ProtobufProcessing.ProcessCatalogData(ack.spectralLineData) : new Map<number, ProcessedColumnData>();
-                    this.restFreqColumn = this.queryResult.get(REST_FREQUENCY_COLUMN_INDEX);
-                    this.measuredFreqColumn = this.queryResult.get(MEASURED_FREQUENCY_COLUMN_INDEX);
+                    if (ack.dataSize > 0) {
+                        this.numDataRows = ack.dataSize;
+                        this.isLineSelectedArray = new Array<boolean>(this.numDataRows).fill(false);
+                        this.queryResult = ProtobufProcessing.ProcessCatalogData(ack.spectralLineData);
+                        this.restFreqColumn = this.queryResult.get(REST_FREQUENCY_COLUMN_INDEX);
+                        this.measuredFreqColumn = this.queryResult.get(MEASURED_FREQUENCY_COLUMN_INDEX);
+                    } else {
+                        this.numDataRows = 0;
+                        this.isLineSelectedArray = [];
+                        this.queryResult = new Map<number, ProcessedColumnData>();
+                        this.restFreqColumn = undefined;
+                        this.measuredFreqColumn = undefined;
+                    }
                     // replace to comprehensive headers
                     ack.headers.forEach((header) => {
                         if (SPLATALOG_HEADER_MAP.has(header.name as SpectralLineHeaders)) {

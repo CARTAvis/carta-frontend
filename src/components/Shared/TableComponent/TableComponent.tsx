@@ -261,15 +261,12 @@ export class TableComponent extends React.Component<TableComponentProps> {
         const table = this.props;
         const tableColumns = [];
         const tableData = table.dataset;
-        let columnWidths = table.columnWidths;
+        let columnWidths = table.columnWidths ? table.columnWidths : new Array<number>(table.columnHeaders?.length).fill(DEFAULT_COLUMN_WIDTH);
 
         // Create manuanl selection checkbox column
-        if (table.manualSelectionProps && table.manualSelectionData && table.dataset && table.dataset.size > 0) {
+        if (table.manualSelectionProps && table.manualSelectionData?.length > 0) {
             const column = this.renderManualSelectionColumn(table.manualSelectionProps, table.manualSelectionData);
             tableColumns.push(column);
-            if (!columnWidths) {
-                columnWidths = new Array<number>(table.columnHeaders.length).fill(DEFAULT_COLUMN_WIDTH);
-            }
             columnWidths.splice(0, 0, MANUAL_SELECTION_COLUMN_WIDTH);
         }
 
