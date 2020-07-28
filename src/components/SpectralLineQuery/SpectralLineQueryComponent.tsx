@@ -72,6 +72,16 @@ export class SpectralLineQueryComponent extends React.Component<WidgetProps> {
         }
     };
 
+    private onTableResize = () => {
+        // update table if resizing happend
+        if (this.headerTableRef) {
+            this.updateTableSize(this.headerTableRef, false);
+        }
+        if (this.resultTableRef) {
+            this.updateTableSize(this.resultTableRef, false);
+        }
+    }
+
     private handleRedshiftChange = (ev) => {
         if (ev.type === "keydown" && ev.keyCode !== KEYCODE_ENTER) {
             return;
@@ -351,6 +361,7 @@ export class SpectralLineQueryComponent extends React.Component<WidgetProps> {
                         primary={"second"}
                         defaultSize={"60%"}
                         minSize={"5%"}
+                        onChange={this.onTableResize}
                     >
                         <Pane className={"header-table-container"}>
                             {this.width > 0 && this.createHeaderTable()}
