@@ -1,4 +1,4 @@
-import { Position, Toaster, IToastProps, IconName, Tooltip} from "@blueprintjs/core";
+import { Position, Toaster, IToastProps, IconName} from "@blueprintjs/core";
 
 export const AppToaster = Toaster.create({
     className: "app-toaster",
@@ -19,7 +19,7 @@ export function ErrorToast(message: string): IToastProps {
         icon: "error",
         intent: "danger",
         message: message,
-        timeout: 10000,
+        timeout: 30000,
         action: {
             onClick: () => navigator.clipboard.writeText(message),
             icon: "clipboard"
@@ -32,7 +32,7 @@ export function WarningToast(message: string): IToastProps {
         icon: "warning-sign",
         intent: "warning",
         message: message,
-        timeout: 10000,
+        timeout: 30000,
         action: {
             onClick: () => navigator.clipboard.writeText(message),
             icon: "clipboard"
