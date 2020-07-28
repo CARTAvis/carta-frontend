@@ -186,7 +186,7 @@ export class RegionStore {
             const radA = this.controlPoints[1].y;
             const radB = this.controlPoints[1].x;
             const centerReferenceImage = this.controlPoints[0];
-            const N = 500;
+            const N = 50;
             const dTheta = 2.0 * Math.PI / N;
             const xCoords = new Float64Array(N);
             const yCoords = new Float64Array(N);

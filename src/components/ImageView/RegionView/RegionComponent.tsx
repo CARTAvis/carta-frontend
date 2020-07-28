@@ -286,6 +286,7 @@ export class RegionComponent extends React.Component<RegionComponentProps> {
                     <Line
                         x={centerPixelSpace.x}
                         y={centerPixelSpace.y}
+                        tension={Math.random() > 0.5 ? 0.5 : 0}
                         stroke={region.color}
                         strokeWidth={region.lineWidth}
                         opacity={region.isTemporary ? 0.5 : (region.locked ? 0.70 : 1)}
