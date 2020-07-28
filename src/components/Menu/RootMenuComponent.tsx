@@ -156,6 +156,7 @@ export class RootMenuComponent extends React.Component {
                 </Menu.Item>
                 <Menu.Item text="Info Panels" icon={"panel-stats"}>
                     <Menu.Item text="Region List" icon={<CustomIcon icon="regionList"/>} onClick={appStore.widgetsStore.createFloatingRegionListWidget}/>
+                    <Menu.Item text="Image List" icon={"layers"} onClick={appStore.widgetsStore.createFloatingLayerListWidget}/>
                     <Menu.Item text="Program Log" icon={"application"} onClick={appStore.widgetsStore.createFloatingLogWidget}/>
                 </Menu.Item>
                 <Menu.Item text="Profiles" icon={"pulse"}>
@@ -167,6 +168,7 @@ export class RootMenuComponent extends React.Component {
                 <Menu.Item text="Animator" icon={"video"} onClick={appStore.widgetsStore.createFloatingAnimatorWidget}/>
                 <Menu.Item text="Render Config" icon={"style"} onClick={appStore.widgetsStore.createFloatingRenderWidget}/>
                 <Menu.Item text="Stokes Analysis" icon={<CustomIcon icon="stokes"/>} onClick={appStore.widgetsStore.createFloatingStokesWidget}/>
+                <Menu.Item text="Catalog" icon={"heatmap"} onClick={appStore.widgetsStore.reloadFloatingCatalogOverlayWidget}/>
                 <Menu.Item text="Spectral Line Query" icon={<CustomIcon icon={"spectralLineQuery"}/>} onClick={appStore.widgetsStore.createFloatingSpectralLineQueryWidget}/>
             </Menu>
         );
