@@ -72,6 +72,16 @@ export class SpectralLineQueryComponent extends React.Component<WidgetProps> {
         }
     };
 
+    private updateTableSize(ref: any, docked: boolean) {
+        const viewportRect = ref.locator.getViewportRect();
+        ref.updateViewportRect(viewportRect);
+        // fixed bug for blueprint table, first column overlap with row index
+        // triger table update
+        if (docked) {
+            ref.scrollToRegion(Regions.column(0));
+        }
+    }
+
     private handleRedshiftChange = (ev) => {
         if (ev.type === "keydown" && ev.keyCode !== KEYCODE_ENTER) {
             return;
@@ -160,16 +170,6 @@ export class SpectralLineQueryComponent extends React.Component<WidgetProps> {
     private updateHeaderTableColumnSize = (index: number, size: number) => {
         if (this.headerTableColumnWidths) {
             this.headerTableColumnWidths[index] = size;
-        }
-    }
-
-    private updateTableSize(ref: any, docked: boolean) {
-        const viewportRect = ref.locator.getViewportRect();
-        ref.updateViewportRect(viewportRect);
-        // fixed bug for blueprint table, first column overlap with row index
-        // triger table update
-        if (docked) {
-            ref.scrollToRegion(Regions.column(0));
         }
     }
 
@@ -288,10 +288,6 @@ export class SpectralLineQueryComponent extends React.Component<WidgetProps> {
             </div>
         );
 
-        const tableInfo = (widgetStore.queryResult.size > 0) ? (
-            <pre>Showing {widgetStore.numDataRows} entries.</pre>
-        ) : null;
-
         const isSelectedWidgetExisted = widgetStore.selectedSpectralProfilerID && AppStore.Instance.widgetsStore.getSpectralWidgetStoreByID(widgetStore.selectedSpectralProfilerID);
         const widgetMenu = (
             <Popover
@@ -361,7 +357,7 @@ export class SpectralLineQueryComponent extends React.Component<WidgetProps> {
                                 {this.width > 0 && <TableComponent {...queryResultTableProps}/>}
                             </div>
                             <div className="result-table-info">
-                                {tableInfo}
+                                <pre>Showing {widgetStore.numDataRows} entries.</pre>
                             </div>
                         </Pane>
                     </SplitPane>

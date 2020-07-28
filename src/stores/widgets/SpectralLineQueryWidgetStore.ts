@@ -168,7 +168,7 @@ export class SpectralLineQueryWidgetStore extends RegionWidgetStore {
     };
 
     @action selectSingleLine = (rowIndex: number) => {
-        if (this.isLineSelectedArray && isFinite(rowIndex) && rowIndex >= 0 && rowIndex < this.isLineSelectedArray.length) {
+        if (this.isLineSelectedArray && this.isLineSelectedArray.length > 0 && isFinite(rowIndex) && rowIndex >= 0 && rowIndex < this.isLineSelectedArray.length) {
             this.isLineSelectedArray[rowIndex] = !this.isLineSelectedArray[rowIndex];
         }
     };
@@ -202,18 +202,18 @@ export class SpectralLineQueryWidgetStore extends RegionWidgetStore {
             const backendService = BackendService.Instance;
             backendService.requestSpectralLine(new CARTA.DoubleBounds({min: freqMHzFrom, max: freqMHzTo})).subscribe(ack => {
                 this.isQuerying = false;
-                if (ack.success && ack.dataSize > 0) {
+                if (ack.success && ack.dataSize >= 0) {
                     this.numDataRows = ack.dataSize;
-                    this.isLineSelectedArray = new Array<boolean>(this.numDataRows).fill(false);
+                    this.isLineSelectedArray = ack.dataSize > 0 ? new Array<boolean>(this.numDataRows).fill(false) : [];
+                    this.queryResult = ack.dataSize > 0 ? ProtobufProcessing.ProcessCatalogData(ack.spectralLineData) : new Map<number, ProcessedColumnData>();
+                    this.restFreqColumn = this.queryResult.get(REST_FREQUENCY_COLUMN_INDEX);
+                    this.measuredFreqColumn = this.queryResult.get(MEASURED_FREQUENCY_COLUMN_INDEX);
                     // replace to comprehensive headers
                     ack.headers.forEach((header) => {
                         if (SPLATALOG_HEADER_MAP.has(header.name as SpectralLineHeaders)) {
                             header.name = SPLATALOG_HEADER_MAP.get(header.name as SpectralLineHeaders);
                         }
                     });
-                    this.queryResult = ProtobufProcessing.ProcessCatalogData(ack.spectralLineData);
-                    this.restFreqColumn = this.queryResult.get(REST_FREQUENCY_COLUMN_INDEX);
-                    this.measuredFreqColumn = this.queryResult.get(MEASURED_FREQUENCY_COLUMN_INDEX);
                     this.columnHeaders = ack.headers.sort((a, b) => {
                         return (a.columnIndex - b.columnIndex);
                     });
@@ -278,12 +278,12 @@ export class SpectralLineQueryWidgetStore extends RegionWidgetStore {
 
     @computed get manualSelectionData(): boolean[] {
         // Create new instance for trigger re-rendering
-        return [...this.isLineSelectedArray];
+        return this.isLineSelectedArray && this.isLineSelectedArray.length > 0 ? [...this.isLineSelectedArray] : [];
     }
 
     @computed get selectedLines(): SpectralLine[] {
         const selectedLines: SpectralLine[] = [];
-        if (this.isLineSelectedArray) {
+        if (this.isLineSelectedArray && this.isLineSelectedArray.length > 0) {
             for (let rowIndex = 0; rowIndex < this.isLineSelectedArray.length; rowIndex++) {
                 if (this.isLineSelectedArray[rowIndex]) {
                     const speciesColumn = this.queryResult.get(SPECIES_COLUMN_INDEX);
@@ -333,7 +333,7 @@ export class SpectralLineQueryWidgetStore extends RegionWidgetStore {
         this.queryResult = new Map<number, ProcessedColumnData>();
         this.restFreqColumn = undefined;
         this.measuredFreqColumn = undefined;
-        this.numDataRows = 1;
+        this.numDataRows = 0;
         this.isLineSelectedArray = [];
         this.selectedSpectralProfilerID = AppStore.Instance.widgetsStore.spectralProfilerList.length > 0 ?
             AppStore.Instance.widgetsStore.spectralProfilerList[0] : undefined;
