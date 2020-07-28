@@ -1,5 +1,6 @@
 export * from "./RenderConfigWidgetStore";
 export * from "./SpatialProfileWidgetStore";
+export * from "./SpectralLineQueryWidgetStore";
 export * from "./SpectralProfileWidgetStore";
 export * from "./RegionWidgetStore";
 export * from "./StatsWidgetStore";

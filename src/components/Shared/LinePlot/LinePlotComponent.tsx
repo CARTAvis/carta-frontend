@@ -104,6 +104,9 @@ const MARKER_HITBOX_THICKNESS = 16;
 // Maximum pixel distance before turing an X or Y zoom into an XY zoom
 const XY_ZOOM_THRESHOLD = 20;
 
+// Default text size in pixels
+const DEFAULT_FONT_SIZE = 12;
+
 export const VERTICAL_RANGE_PADDING = 0.05;
 
 @observer
@@ -652,7 +655,7 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
         }
     };
 
-    private genVerticalLines = (marker: LineMarker, isHovering: boolean, markerColor: string, markerOpacity: number, valueCanvasSpace: number) => {
+    private genVerticalLines = (marker: LineMarker, isHovering: boolean, markerColor: string, markerOpacity: number, valueCanvasSpace: number, isShowingLabels?: boolean) => {
         const chartArea = this.chartArea;
         const lineHeight = chartArea.bottom - chartArea.top;
         const isHoverMarker = isHovering && this.hoveredMarker.id === marker.id;
@@ -680,7 +683,7 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
                 lineSegments = [<Line listening={false} key={0} points={[0, chartArea.top, 0, chartArea.bottom]} strokeWidth={1} stroke={markerColor} opacity={markerOpacity} dash={marker.dash}/>];
             }
         }
-        if (marker.label) {
+        if (isShowingLabels && marker.label) {
             lineSegments.push(<Text align={"left"} fill={markerColor} key={lineSegments.length} text={marker.label} rotation={-90} x={0} y={chartArea.bottom}/>);
         }
 
@@ -722,6 +725,10 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
 
         let lines = [];
         if (this.props.markers && this.props.markers.length && chartArea) {
+            // TODO: refactoring to pull out this logic from horizontal lines
+            const chartAreaWidth = Math.abs(chartArea.right - chartArea.left);
+            const verticalLabelsTotalWidth = this.props.markers.length * DEFAULT_FONT_SIZE;
+            const isShowingVerticalLabels = (verticalLabelsTotalWidth / 2) < chartAreaWidth;
             for (let i = 0; i < this.props.markers.length; i++) {
                 const marker = this.props.markers[i];
                 const markerColor = marker.color || (this.props.darkMode ? Colors.RED4 : Colors.RED2);
@@ -741,7 +748,7 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
                         const markerOpacityInteraction = (!marker.isMouseMove && (this.isMouseEntered)) ? 0 : (marker.opacity || 1);
                         lines.push(this.genVerticalLines(marker, isHovering, markerColor, markerOpacityInteraction, valueCanvasSpace));
                     } else {
-                        lines.push(this.genVerticalLines(marker, isHovering, markerColor, markerOpacity, valueCanvasSpace));
+                        lines.push(this.genVerticalLines(marker, isHovering, markerColor, markerOpacity, valueCanvasSpace, isShowingVerticalLabels));
                     }
                 }
             }
