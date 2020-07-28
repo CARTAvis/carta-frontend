@@ -95,9 +95,11 @@ export class CatalogSubplotComponent extends React.Component<WidgetProps> {
         let histogramDatasets: Plotly.Data[] = [];
         let data: Plotly.Data = {};
         const xRange = widgetStore.initHistogramXBorder;
-        // increase x max to include border data
-        const fraction = 1.0001;
-        const binWidth = (xRange.xMax * fraction - xRange.xMin) / widgetStore.nBinx;
+        // increase x range to include border data
+        const fraction = 1.001;
+        const start = xRange.xMin;
+        const end = start + (xRange.xMax - xRange.xMin) * fraction;
+        const size = (end - start) / widgetStore.nBinx;
         data.type = "histogram";
         data.hoverinfo = "none";
         data.x = widgetStore.xDataset;
@@ -105,9 +107,9 @@ export class CatalogSubplotComponent extends React.Component<WidgetProps> {
             color: Colors.BLUE2
         };
         data.xbins = {
-            start: xRange.xMin,
-            size: binWidth,
-            end: xRange.xMax * fraction
+            start: start,
+            size: size,
+            end: end
         };
         histogramDatasets.push(data);
         return histogramDatasets;
@@ -155,10 +157,10 @@ export class CatalogSubplotComponent extends React.Component<WidgetProps> {
         const indicatorInfo = widgetStore.indicatorInfo;
         if (indicatorInfo) {
             if (widgetStore.plotType === CatalogPlotType.D2Scatter) {
-                profilerInfo.push(column.x + ": " + indicatorInfo.x + ", " + column.y + ": " + indicatorInfo.y);      
+                profilerInfo.push(`${column.x}: ${indicatorInfo.x}, ${column.y}: ${indicatorInfo.y}`);      
             } 
             if (widgetStore.plotType === CatalogPlotType.Histogram) {
-                profilerInfo.push(column.x + ": " + indicatorInfo.x + ", " + "Count: " + indicatorInfo.y);
+                profilerInfo.push(`${column.x}: ${indicatorInfo.x}, Count: ${indicatorInfo.y}`);
             }
         }
         return profilerInfo;
@@ -180,12 +182,16 @@ export class CatalogSubplotComponent extends React.Component<WidgetProps> {
                 widgetStore.setDragmode(event.dragmode);
             }
             if (widgetStore.plotType === CatalogPlotType.D2Scatter) {
-                if (isFinite(event["xaxis.range[0]"]) || isFinite(event["yaxis.range[0]"])) {
+                const xMin = event["xaxis.range[0]"];
+                const xMax = event["xaxis.range[1]"];
+                const yMin = event["yaxis.range[0]"];
+                const yMax = event["yaxis.range[1]"];
+                if (isFinite(xMin) || isFinite(yMin)) {
                     const scatterBorder: Border = {
-                        xMin: isFinite(event["xaxis.range[0]"]) ? event["xaxis.range[0]"] : widgetStore.scatterborder.xMin,
-                        xMax: isFinite(event["xaxis.range[1]"]) ? event["xaxis.range[1]"] : widgetStore.scatterborder.xMax,
-                        yMin: isFinite(event["yaxis.range[0]"]) ? event["yaxis.range[0]"] : widgetStore.scatterborder.yMin,
-                        yMax: isFinite(event["yaxis.range[1]"]) ? event["yaxis.range[1]"] : widgetStore.scatterborder.yMax
+                        xMin: isFinite(xMin) ? xMin : widgetStore.scatterborder.xMin,
+                        xMax: isFinite(xMax) ? xMax : widgetStore.scatterborder.xMax,
+                        yMin: isFinite(yMin) ? yMin : widgetStore.scatterborder.yMin,
+                        yMax: isFinite(yMax) ? yMax : widgetStore.scatterborder.yMax
                     };
                     widgetStore.setScatterborder(scatterBorder);   
                 }
@@ -195,10 +201,12 @@ export class CatalogSubplotComponent extends React.Component<WidgetProps> {
                 }
             } 
             if (widgetStore.plotType === CatalogPlotType.Histogram) {
-                if (isFinite(event["xaxis.range[0]"]) || isFinite(event["yaxis.range[0]"])) {
+                const xMin = event["xaxis.range[0]"];
+                const xMax = event["xaxis.range[1]"];
+                if (isFinite(xMin) || isFinite(xMax)) {
                     const histogramBorder: XBorder = {
-                        xMin: isFinite(event["xaxis.range[0]"]) ? event["xaxis.range[0]"] : widgetStore.histogramBorder.xMin,
-                        xMax: isFinite(event["xaxis.range[1]"]) ? event["xaxis.range[1]"] : widgetStore.histogramBorder.xMax,
+                        xMin: isFinite(xMin) ? xMin : widgetStore.histogramBorder.xMin,
+                        xMax: isFinite(xMax) ? xMax : widgetStore.histogramBorder.xMax,
                     };
                     this.widgetStore.setHistogramXBorder(histogramBorder);   
                 }
@@ -227,22 +235,35 @@ export class CatalogSubplotComponent extends React.Component<WidgetProps> {
         if (event && event.points && event.points.length > 0) {
             const catalogFileId = this.widgetStore.catalogOverlayWidgetStore.catalogInfo.fileId;
             AppStore.Instance.updateCatalogProfiles(catalogFileId);
-            let selectedPointIndices = [];
-            const points = event.points as any;
-            for (let index = 0; index < points.length; index++) {
-                const selectedPoint = points[index];
-                if (this.widgetStore.plotType === CatalogPlotType.D2Scatter) {
-                    selectedPointIndices.push(selectedPoint.pointIndex);   
+            let selectedPointIndices;
+            if (this.widgetStore.plotType === CatalogPlotType.D2Scatter) {
+                const points = event.points;
+                selectedPointIndices = Array(points.length);
+                for (let index = 0; index < points.length; index++) {
+                    selectedPointIndices[index] = points[index].pointIndex;
                 }
-    
-                if (this.widgetStore.plotType === CatalogPlotType.Histogram) {
-                    for (let i = 0; i < selectedPoint.pointIndices.length; i++) {
-                        selectedPointIndices.push(selectedPoint.pointIndices[i]);   
+            }
+
+            if (this.widgetStore.plotType === CatalogPlotType.Histogram) {
+                const points = event.points as any;
+                let arraySize = 0;
+                for (let i = 0; i < points.length; i++) {
+                    const count = points[i].pointIndices.length;
+                    arraySize = arraySize + count;   
+                }
+                selectedPointIndices = Array(arraySize);
+                for (let i = 0; i < points.length; i++) {
+                    const selectedPoints = points[i].pointIndices;
+                    const size = selectedPoints.length;
+                    for (let j = 0; j < size; j++) {
+                        selectedPointIndices[i * size + j] = selectedPoints[j]; 
                     }
                 }
-
             }
-            this.widgetStore.catalogOverlayWidgetStore.setSelectedPointIndices(selectedPointIndices, true, true);
+
+            if (selectedPointIndices?.length) {
+                this.widgetStore.catalogOverlayWidgetStore.setSelectedPointIndices(selectedPointIndices, true, true);   
+            }
         }
     }
 
