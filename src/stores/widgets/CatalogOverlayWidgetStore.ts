@@ -141,7 +141,7 @@ export class CatalogOverlayWidgetStore extends RegionWidgetStore {
     @observable catalogFilterRequest: CARTA.CatalogFilterRequest;
     @observable catalogCoordinateSystem: { system: CatalogSystemType, equinox: string, epoch: string, coordinate: { x: CatalogOverlay, y: CatalogOverlay } };
     @observable catalogPlotType: CatalogPlotType;
-    @observable catalogScatterWidgetsId: string[];
+    @observable catalogSubplotWidgetsId: string[];
     @observable selectedPointIndices: number[];
     @observable filterDataSize: number;
     @observable showSelectedData: boolean;
@@ -167,7 +167,7 @@ export class CatalogOverlayWidgetStore extends RegionWidgetStore {
         this.updatingDataStream = false;
         this.updateMode = CatalogUpdateMode.TableUpdate;
         this.headerTableColumnWidts = [75, 75, 65, 100, null];
-        this.catalogScatterWidgetsId = [];
+        this.catalogSubplotWidgetsId = [];
         this.selectedPointIndices = [];
         this.filterDataSize = undefined;
         this.showSelectedData = false;
@@ -211,11 +211,11 @@ export class CatalogOverlayWidgetStore extends RegionWidgetStore {
     }
 
     @action setCatalogScatterWidget(id: string) {
-        this.catalogScatterWidgetsId.push(id);
+        this.catalogSubplotWidgetsId.push(id);
     }
 
     @action updateCatalogScatterWidget(id: string) {
-        this.catalogScatterWidgetsId = this.catalogScatterWidgetsId.filter(scatterWidgetsId => scatterWidgetsId !== id);
+        this.catalogSubplotWidgetsId = this.catalogSubplotWidgetsId.filter(scatterWidgetsId => scatterWidgetsId !== id);
     }
 
     @action setCatalogPlotType(type: CatalogPlotType) {

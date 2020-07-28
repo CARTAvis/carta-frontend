@@ -67,7 +67,7 @@ export class CatalogSubplotComponent extends React.Component<WidgetProps> {
     };
 
     @computed get widgetStore(): CatalogSubplotWidgetStore {
-        const widgetStore = WidgetsStore.Instance.catalogScatterWidgets.get(this.props.id);
+        const widgetStore = WidgetsStore.Instance.catalogSubplotWidgets.get(this.props.id);
         return widgetStore;
     }
 

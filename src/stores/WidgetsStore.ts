@@ -90,7 +90,7 @@ export class WidgetsStore {
     @observable stokesAnalysisWidgets: Map<string, StokesAnalysisWidgetStore>;
     @observable floatingSettingsWidgets: Map<string, string>;
     @observable catalogOverlayWidgets: Map<string, CatalogOverlayWidgetStore>;
-    @observable catalogScatterWidgets: Map<string, CatalogSubplotWidgetStore>;
+    @observable catalogSubplotWidgets: Map<string, CatalogSubplotWidgetStore>;
     @observable spectralLineQueryWidgets: Map<string, SpectralLineQueryWidgetStore>;
 
     private widgetsMap: Map<string, Map<string, any>>;
@@ -131,7 +131,7 @@ export class WidgetsStore {
         this.stokesAnalysisWidgets = new Map<string, StokesAnalysisWidgetStore>();
         this.catalogOverlayWidgets = new Map<string, CatalogOverlayWidgetStore>();
         this.floatingSettingsWidgets = new Map<string, string>();
-        this.catalogScatterWidgets = new Map<string, CatalogSubplotWidgetStore>();
+        this.catalogSubplotWidgets = new Map<string, CatalogSubplotWidgetStore>();
         this.spectralLineQueryWidgets = new Map<string, SpectralLineQueryWidgetStore>();
 
         this.widgetsMap = new Map<string, Map<string, any>>([
@@ -146,7 +146,7 @@ export class WidgetsStore {
             [RegionListComponent.WIDGET_CONFIG.type, this.regionListWidgets],
             [StokesAnalysisComponent.WIDGET_CONFIG.type, this.stokesAnalysisWidgets],
             [CatalogOverlayComponent.WIDGET_CONFIG.type, this.catalogOverlayWidgets],
-            [CatalogSubplotComponent.WIDGET_CONFIG.type, this.catalogScatterWidgets],
+            [CatalogSubplotComponent.WIDGET_CONFIG.type, this.catalogSubplotWidgets],
             [SpectralLineQueryComponent.WIDGET_CONFIG.type, this.spectralLineQueryWidgets]
         ]);
 
@@ -854,7 +854,7 @@ export class WidgetsStore {
         }
 
         if (id) {
-            this.catalogScatterWidgets.set(id, new CatalogSubplotWidgetStore(props));
+            this.catalogSubplotWidgets.set(id, new CatalogSubplotWidgetStore(props));
         }
         return id;
     }
@@ -1115,7 +1115,7 @@ export class WidgetsStore {
             }
             
             // update scatter widget id with associated scatter store.
-            const catalogScatterWidget = this.catalogScatterWidgets.get(id);
+            const catalogScatterWidget = this.catalogSubplotWidgets.get(id);
             if (catalogScatterWidget) {
                 catalogScatterWidget.catalogOverlayWidgetStore.updateCatalogScatterWidget(id);
             }
