@@ -371,13 +371,11 @@ export class SpectralLineQueryComponent extends React.Component<WidgetProps> {
                             <div className="result-table">
                                 {this.width > 0 && <TableComponent {...queryResultTableProps}/>}
                             </div>
-                            <div className="result-table-info">
-                                {tableInfo}
-                            </div>
                         </Pane>
                     </SplitPane>
                 </div>
                 <div className="bp3-dialog-footer">
+                    <div className="result-table-info">{tableInfo}</div>
                     <div className="bp3-dialog-footer-actions">
                         <FormGroup inline={true} label={this.width < MINIMUM_WIDTH ? "" : "Spectral Profiler"}>
                             {widgetMenu}
