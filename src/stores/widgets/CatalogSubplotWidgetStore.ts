@@ -40,12 +40,12 @@ export class CatalogSubplotWidgetStore {
         this.logScaleY = true;
 
         if (props.plotType === CatalogPlotType.D2Scatter) {
-            this.scatterborder = this.initScatterBorder;
-            this.yDataset = props.y;   
+            this.yDataset = props.y; 
+            this.scatterborder = this.initScatterBorder;  
         } else {
-            this.histogramBorder = this.initHistogramXBorder;
             this.yDataset = undefined;
             this.nBinx = this.initnBinx;
+            this.histogramBorder = this.initHistogramXBorder;
         }
     }
 

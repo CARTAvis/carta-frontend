@@ -294,7 +294,6 @@ export class CatalogSubplotComponent extends React.Component<WidgetProps> {
             const yaxis = figure.layout.yaxis.range;
             this.histogramY = {yMin: yaxis[0], yMax: yaxis[1]}; 
         }
-
     }
 
     private onBinWidthChange = (val: number) => {
