@@ -196,7 +196,7 @@ export class SpectralLineQueryWidgetStore extends RegionWidgetStore {
         } else if (freqMHzFrom === freqMHzTo) {
             AppStore.Instance.alertStore.showAlert("Please specify a frequency range.");
         } else if (Math.abs(freqMHzTo - freqMHzFrom) > 1e4) {
-            AppStore.Instance.alertStore.showAlert("Frequency range is too wide. Please specify a frequency range within 10 GHz or wavelength range larger than 2.99792458 cm.");
+            AppStore.Instance.alertStore.showAlert(`Frequency range ${freqMHzFrom <= freqMHzTo ? freqMHzFrom : freqMHzTo} MHz to ${freqMHzFrom <= freqMHzTo ? freqMHzTo : freqMHzFrom} MHz is too wide. Please specify a frequency range within 10 GHz.`);
         } else {
             this.isQuerying = true;
             const backendService = BackendService.Instance;
