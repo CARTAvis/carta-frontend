@@ -698,7 +698,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
             widgetStore.setMaxRows(val);
         } else if (widgetStore && val === 0) {
             widgetStore.setMaxRows(1);
-        }else {
+        } else {
             widgetStore.setMaxRows(widgetStore.catalogInfo.dataSize);
         }
     }
