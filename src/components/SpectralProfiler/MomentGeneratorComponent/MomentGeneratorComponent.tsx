@@ -194,6 +194,7 @@ export class MomentGeneratorComponent extends React.Component<{widgetStore: Spec
         );
 
         const isAbleToGenerate = activeFrame && activeFrame.numChannels > 1 && appStore.animatorStore.animationState === AnimationState.STOPPED && !widgetStore.isStreamingData;
+        const msg = <pre>To generate moment images, please ensure<br/>1. Animation playback is stopped.<br/>2. There is no streaming spectral profile.</pre>;
         const momentsPanel = (
             <React.Fragment>
                 <FormGroup label="Moments" inline={true}>
@@ -218,7 +219,7 @@ export class MomentGeneratorComponent extends React.Component<{widgetStore: Spec
                     />
                 </FormGroup>
                 <div className="moment-generate">
-                    <Tooltip content={"Please generate moment when animation is stopped and streaming spectral data is finished."} position={Position.BOTTOM}>
+                    <Tooltip disabled={isAbleToGenerate} content={msg} position={Position.BOTTOM}>
                         <AnchorButton
                             intent="success"
                             onClick={this.handleRequestMoment}
