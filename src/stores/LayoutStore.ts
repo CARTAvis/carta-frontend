@@ -2,7 +2,7 @@ import {observable, computed, action} from "mobx";
 import {AppStore, AlertStore, WidgetsStore} from "stores";
 import * as GoldenLayout from "golden-layout";
 import {LayoutConfig, PresetLayout} from "models";
-import {AppToaster} from "components/Shared";
+import {AppToaster, SuccessToast} from "components/Shared";
 
 const KEY = "savedLayouts";
 const MAX_LAYOUT = 10;
@@ -230,7 +230,7 @@ export class LayoutStore {
 
     private handleSaveResult = (success: boolean) => {
         if (success) {
-            AppToaster.show({icon: "layout-grid", message: `Layout ${this.layoutNameToBeSaved} saved successfully.`, intent: "success", timeout: LayoutStore.TOASTER_TIMEOUT});
+            AppToaster.show(SuccessToast("layout-grid", `Layout ${this.layoutNameToBeSaved} saved successfully.`, LayoutStore.TOASTER_TIMEOUT));
             this.currentLayoutName = this.layoutNameToBeSaved;
         } else {
             delete this.layouts[this.layoutNameToBeSaved];
@@ -265,7 +265,7 @@ export class LayoutStore {
 
     private handleDeleteResult = (layoutName: string, success: boolean) => {
         if (success) {
-            AppToaster.show({icon: "layout-grid", message: `Layout ${layoutName} deleted successfully.`, intent: "success", timeout: LayoutStore.TOASTER_TIMEOUT});
+            AppToaster.show(SuccessToast("layout-grid", `Layout ${layoutName} deleted successfully.`, LayoutStore.TOASTER_TIMEOUT));
             if (layoutName === this.currentLayoutName) {
                 this.currentLayoutName = "";
             }
