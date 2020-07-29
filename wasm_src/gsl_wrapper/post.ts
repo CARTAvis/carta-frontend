@@ -73,8 +73,8 @@ Module.decimation = function (xIn: Float64Array | Float32Array, yIn: Float64Arra
     Module.xIn = Module._malloc(inN * 8);
     Module.yIn = Module._malloc(inN * 8);
     const outN = (inN % decimationWidth === 1) ? 2 * Math.ceil(inN / decimationWidth) - 1 : 2 * Math.ceil(inN / decimationWidth);
-    Module.xOut = Module._malloc(inN * 8);
-    Module.yOut = Module._malloc(inN * 8);
+    Module.xOut = Module._malloc(outN * 8);
+    Module.yOut = Module._malloc(outN * 8);
 
     Module.HEAPF64.set(new Float64Array(xIn), Module.xIn / 8);
     Module.HEAPF64.set(new Float64Array(yIn), Module.yIn / 8);

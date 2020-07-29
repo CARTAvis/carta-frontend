@@ -83,6 +83,16 @@ export class SpectralLineQueryComponent extends React.Component<WidgetProps> {
         }
     }
 
+    private onTableResize = () => {
+        // update table if resizing happend
+        if (this.headerTableRef) {
+            this.updateTableSize(this.headerTableRef, false);
+        }
+        if (this.resultTableRef) {
+            this.updateTableSize(this.resultTableRef, false);
+        }
+    }
+
     private handleRedshiftChange = (ev) => {
         if (ev.type === "keydown" && ev.keyCode !== KEYCODE_ENTER) {
             return;
@@ -338,7 +348,7 @@ export class SpectralLineQueryComponent extends React.Component<WidgetProps> {
             className += " dark-theme";
         }
 
-        const hint = <span><br/><i><small>Please select less than {PLOT_LINES_LIMIT} spectral lines.</small></i></span>;
+        const hint = <span><br/><i><small>Please select fewer than {PLOT_LINES_LIMIT} spectral lines.</small></i></span>;
         const plotTip = <span>Plot lines to selected profiler{hint}</span>;
 
         return (
@@ -351,6 +361,7 @@ export class SpectralLineQueryComponent extends React.Component<WidgetProps> {
                         primary={"second"}
                         defaultSize={"60%"}
                         minSize={"5%"}
+                        onChange={this.onTableResize}
                     >
                         <Pane className={"header-table-container"}>
                             {this.width > 0 && this.createHeaderTable()}
@@ -360,13 +371,11 @@ export class SpectralLineQueryComponent extends React.Component<WidgetProps> {
                             <div className="result-table">
                                 {this.width > 0 && <TableComponent {...queryResultTableProps}/>}
                             </div>
-                            <div className="result-table-info">
-                                <pre>Showing {widgetStore.numDataRows} entries.{widgetStore.selectedLines?.length > 0 ? ` Selected ${widgetStore.selectedLines.length} lines.` : ""}</pre>
-                            </div>
                         </Pane>
                     </SplitPane>
                 </div>
                 <div className="bp3-dialog-footer">
+                    <div className="result-table-info"><pre>Showing {widgetStore.numDataRows} entries.{widgetStore.selectedLines?.length > 0 ? ` Selected ${widgetStore.selectedLines.length} lines.` : ""}</pre></div>
                     <div className="bp3-dialog-footer-actions">
                         <FormGroup inline={true} label={this.width < MINIMUM_WIDTH ? "" : "Spectral Profiler"}>
                             {widgetMenu}
