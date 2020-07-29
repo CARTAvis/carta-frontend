@@ -225,6 +225,8 @@ export class SpectralLineQueryWidgetStore extends RegionWidgetStore {
                     this.columnHeaders = ack.headers.sort((a, b) => {
                         return (a.columnIndex - b.columnIndex);
                     });
+                } else {
+                    AppStore.Instance.alertStore.showAlert(ack.message);
                 }
             }, error => {
                 this.isQuerying = false;

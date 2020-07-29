@@ -4,7 +4,7 @@
     padding: 5px;
 
     .bp3-dialog-body {
-        height: calc(100% - 45px);
+        height: calc(100% - 65px);
         margin: 0;
 
         .bp3-numeric-input {
@@ -96,7 +96,7 @@
             .result-table-container {
                 height: 100%;
                 width: 100%;
-                padding: 5px 5px 0 5px;
+                padding: 5px;
 
                 .redshift-panel {
                     height: 30px;
@@ -106,7 +106,7 @@
                 }
 
                 .result-table {
-                    height: calc(100% - 55px);
+                    height: calc(100% - 35px);
                     width: 100%;
                     .bp3-table-container {
                         width: 100%;
@@ -124,21 +124,12 @@
                         }
                     }
                 }
-
-                .result-table-info {
-                    height: 20px;
-                    padding: 0 5px 0 5px;
-                    pre {
-                        font-size: x-small;
-                        margin: 0;
-                    }
-                }
             }
         }
     }
 
     .bp3-dialog-footer {
-        height: 35px;
+        height: 65px;
         margin: 0px;
         padding: 0 5px 5px 5px;
         .bp3-button {
@@ -146,6 +137,15 @@
         }
         .bp3-form-group {
             .bp3-label {
+                margin: 0;
+            }
+        }
+
+        .result-table-info {
+            height: 20px;
+            padding: 0 5px 0 5px;
+            pre {
+                font-size: x-small;
                 margin: 0;
             }
         }

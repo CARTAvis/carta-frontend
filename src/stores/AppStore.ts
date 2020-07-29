@@ -38,7 +38,7 @@ import {distinct, GetRequiredTiles, mapToObject} from "utilities";
 import {BackendService, ConnectionStatus, ScriptingService, TileService, TileStreamDetails} from "services";
 import {FrameView, Point2D, ProtobufProcessing, Theme, TileCoordinate, WCSMatchingType} from "models";
 import {CatalogInfo, CatalogUpdateMode, HistogramWidgetStore, RegionWidgetStore, SpatialProfileWidgetStore, SpectralProfileWidgetStore, StatsWidgetStore, StokesAnalysisWidgetStore, CatalogPlotType} from "./widgets";
-import {CatalogSubplotComponent, getImageCanvas} from "components";
+import {CatalogSubplotComponent, getImageCanvas, ImageViewLayer} from "components";
 import {AppToaster} from "components/Shared";
 import GitCommit from "../static/gitInfo";
 
@@ -91,6 +91,9 @@ export class AppStore {
     // Spatial and spectral WCS references
     @observable spatialReference: FrameStore;
     @observable spectralReference: FrameStore;
+
+    // ImageViewer
+    @observable activeLayer: ImageViewLayer;
 
     private appContainer: HTMLElement;
     private fileCounter = 0;
@@ -730,6 +733,10 @@ export class AppStore {
         }
     };
 
+    @action updateActiveLayer = (layer: ImageViewLayer) => {
+        this.activeLayer = layer;
+    }
+
     public static readonly DEFAULT_STATS_TYPES = [
         CARTA.StatsType.NumPixels,
         CARTA.StatsType.Sum,
@@ -836,6 +843,7 @@ export class AppStore {
         this.initRequirements();
         this.catalogs = new Map<string, number>();
         this.catalogProfiles = new Map<string, number>();
+        this.activeLayer = ImageViewLayer.RegionMoving;
 
         AST.onReady.then(() => {
             AST.setPalette(this.darkTheme ? nightPalette : dayPalette);
