@@ -20,11 +20,6 @@ export class RootMenuComponent extends React.Component {
         const modString = appStore.modifierString;
         const connectionStatus = appStore.backendService.connectionStatus;
 
-        let stokesClassName = "stokes-item";
-        if (appStore.darkTheme) {
-            stokesClassName += " bp3-dark";
-        }
-
         const fileMenu = (
             <Menu>
                 <Menu.Item
@@ -118,26 +113,7 @@ export class RootMenuComponent extends React.Component {
         const presetLayouts: string[] = PresetLayout.PRESETS;
         const layoutStore = appStore.layoutStore;
         const userLayouts: string[] = layoutStore.userLayouts;
-        const regionListIcon = (
-            <Tag icon={<Icon iconSize={12} icon="list"/>} className={"region-list-icon-button"}>
-                &nbsp;R
-            </Tag>
-        );
-        const spatialProfilerIcon = (
-            <Tag icon={"pulse"} className={"stokes-icon-button"}>
-                &nbsp;xy
-            </Tag>
-        );
-        const spectralProfiler = (
-            <Tag icon={"pulse"} className={"stokes-icon-button"}>
-                &nbsp;z
-            </Tag>
-        );
-        const stokesIcon = (
-            <Tag icon={"pulse"} className={"stokes-icon-button"}>
-                &nbsp;s
-            </Tag>
-        );
+
         const widgetsMenu = (
             <Menu className="widgets-menu">
                 <Menu.Item text="Layouts" icon={"page-layout"} disabled={layoutStore.supportsServer && connectionStatus !== ConnectionStatus.ACTIVE}>
@@ -179,18 +155,20 @@ export class RootMenuComponent extends React.Component {
                     </Menu.Item>
                 </Menu.Item>
                 <Menu.Item text="Info Panels" icon={"panel-stats"}>
-                    <Menu.Item className={stokesClassName} text="Region List" icon={regionListIcon} onClick={appStore.widgetsStore.createFloatingRegionListWidget}/>
+                    <Menu.Item text="Region List" icon={<CustomIcon icon="regionList"/>} onClick={appStore.widgetsStore.createFloatingRegionListWidget}/>
+                    <Menu.Item text="Image List" icon={"layers"} onClick={appStore.widgetsStore.createFloatingLayerListWidget}/>
                     <Menu.Item text="Program Log" icon={"application"} onClick={appStore.widgetsStore.createFloatingLogWidget}/>
                 </Menu.Item>
                 <Menu.Item text="Profiles" icon={"pulse"}>
-                    <Menu.Item className={stokesClassName} text="Spatial Profiler" icon={spatialProfilerIcon} onClick={appStore.widgetsStore.createFloatingSpatialProfilerWidget}/>
-                    <Menu.Item className={stokesClassName} text="Spectral Profiler" icon={spectralProfiler} onClick={appStore.widgetsStore.createFloatingSpectralProfilerWidget}/>
+                    <Menu.Item text="Spatial Profiler" icon={<CustomIcon icon="spatialProfiler"/>} onClick={appStore.widgetsStore.createFloatingSpatialProfilerWidget}/>
+                    <Menu.Item text="Spectral Profiler" icon={<CustomIcon icon="spectralProfiler"/>} onClick={appStore.widgetsStore.createFloatingSpectralProfilerWidget}/>
                 </Menu.Item>
                 <Menu.Item text="Statistics" icon={"calculator"} onClick={appStore.widgetsStore.createFloatingStatsWidget}/>
                 <Menu.Item text="Histogram" icon={"timeline-bar-chart"} onClick={appStore.widgetsStore.createFloatingHistogramWidget}/>
                 <Menu.Item text="Animator" icon={"video"} onClick={appStore.widgetsStore.createFloatingAnimatorWidget}/>
                 <Menu.Item text="Render Config" icon={"style"} onClick={appStore.widgetsStore.createFloatingRenderWidget}/>
-                <Menu.Item className={stokesClassName} text="Stokes Analysis" icon={stokesIcon} onClick={appStore.widgetsStore.createFloatingStokesWidget}/>
+                <Menu.Item text="Stokes Analysis" icon={<CustomIcon icon="stokes"/>} onClick={appStore.widgetsStore.createFloatingStokesWidget}/>
+                <Menu.Item text="Catalog" icon={"heatmap"} onClick={appStore.widgetsStore.reloadFloatingCatalogOverlayWidget}/>
                 <Menu.Item text="Spectral Line Query" icon={<CustomIcon icon={"spectralLineQuery"}/>} onClick={appStore.widgetsStore.createFloatingSpectralLineQueryWidget}/>
             </Menu>
         );

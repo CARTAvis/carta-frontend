@@ -427,7 +427,7 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
                     {frameControl}
                 </div>
                 }
-                {activeFrame &&
+                {activeFrame && this.width > 0 && // temporary fix for broken range slider, issue #1078
                 <div className="animator-sliders">
                     {frameSlider}
                     {channelSlider}
