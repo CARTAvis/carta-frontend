@@ -194,7 +194,8 @@ export class MomentGeneratorComponent extends React.Component<{widgetStore: Spec
         );
 
         const isAbleToGenerate = activeFrame && activeFrame.numChannels > 1 && appStore.animatorStore.animationState === AnimationState.STOPPED && !widgetStore.isStreamingData;
-        const msg = <pre>To generate moment images, please ensure<br/>1. Animation playback is stopped.<br/>2. There is no streaming spectral profile.</pre>;
+        const hint = <span><br/><i><small>Please ensure<br/>1. Animation playback is stopped.<br/>2. Spectral profile generation is complete.</small></i></span>;
+        const msg = <span>Unable to generate moment images{hint}</span>;
         const momentsPanel = (
             <React.Fragment>
                 <FormGroup label="Moments" inline={true}>
