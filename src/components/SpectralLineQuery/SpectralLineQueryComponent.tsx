@@ -348,7 +348,14 @@ export class SpectralLineQueryComponent extends React.Component<WidgetProps> {
             className += " dark-theme";
         }
 
-        const hint = <span><br/><i><small>Please select fewer than {PLOT_LINES_LIMIT} spectral lines.</small></i></span>;
+        const isSelectedLinesUnderLimit = widgetStore.selectedLines?.length < PLOT_LINES_LIMIT;
+        const hint = (
+            <span><br/><i><small>
+                {!isSelectedLinesUnderLimit ? `Please select fewer than ${PLOT_LINES_LIMIT} lines.` : ""}
+                {!isSelectedLinesUnderLimit && !isSelectedWidgetExisted ? <br/> : ""}
+                {!isSelectedWidgetExisted ? "Please select one spectral profiler." : ""}
+            </small></i></span>
+        );
         const plotTip = <span>Plot lines to selected profiler{hint}</span>;
 
         return (
@@ -384,7 +391,7 @@ export class SpectralLineQueryComponent extends React.Component<WidgetProps> {
                             <AnchorButton
                                 text="Plot"
                                 intent={Intent.PRIMARY}
-                                disabled={!appStore.activeFrame || !isSelectedWidgetExisted || widgetStore.queryResult.size <= 0 || widgetStore.selectedLines?.length >= PLOT_LINES_LIMIT}
+                                disabled={!appStore.activeFrame || widgetStore.queryResult.size <= 0 || !isSelectedWidgetExisted || !isSelectedLinesUnderLimit}
                                 onClick={this.handlePlot}
                             />
                         </Tooltip>
