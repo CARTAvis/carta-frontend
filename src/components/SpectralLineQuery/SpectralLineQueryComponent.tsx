@@ -18,6 +18,7 @@ enum HeaderTableColumnName {
 
 const KEYCODE_ENTER = 13;
 const MINIMUM_WIDTH = 450;
+const PLOT_LINES_LIMIT = 1000;
 
 @observer
 export class SpectralLineQueryComponent extends React.Component<WidgetProps> {
@@ -337,6 +338,9 @@ export class SpectralLineQueryComponent extends React.Component<WidgetProps> {
             className += " dark-theme";
         }
 
+        const hint = <span><br/><i><small>Please select less than {PLOT_LINES_LIMIT} spectral lines.</small></i></span>;
+        const plotTip = <span>Plot lines to selected profiler{hint}</span>;
+
         return (
             <div className={className}>
                 <div className="bp3-dialog-body">
@@ -367,8 +371,13 @@ export class SpectralLineQueryComponent extends React.Component<WidgetProps> {
                         <FormGroup inline={true} label={this.width < MINIMUM_WIDTH ? "" : "Spectral Profiler"}>
                             {widgetMenu}
                         </FormGroup>
-                        <Tooltip content="Plot lines to selected profiler" position={Position.BOTTOM}>
-                            <AnchorButton text="Plot" intent={Intent.PRIMARY} disabled={!appStore.activeFrame || !isSelectedWidgetExisted || widgetStore.queryResult.size <= 0} onClick={this.handlePlot}/>
+                        <Tooltip content={plotTip} position={Position.BOTTOM}>
+                            <AnchorButton
+                                text="Plot"
+                                intent={Intent.PRIMARY}
+                                disabled={!appStore.activeFrame || !isSelectedWidgetExisted || widgetStore.queryResult.size <= 0 || widgetStore.selectedLines?.length >= PLOT_LINES_LIMIT}
+                                onClick={this.handlePlot}
+                            />
                         </Tooltip>
                         <Tooltip content="Clear plotted lines" position={Position.BOTTOM}>
                             <AnchorButton text="Clear" intent={Intent.PRIMARY} disabled={!appStore.activeFrame || !isSelectedWidgetExisted || widgetStore.queryResult.size <= 0} onClick={this.handleClear}/>
