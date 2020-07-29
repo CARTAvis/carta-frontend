@@ -168,7 +168,7 @@ export class SpectralLineQueryWidgetStore extends RegionWidgetStore {
     };
 
     @action selectSingleLine = (rowIndex: number) => {
-        if (this.isLineSelectedArray && isFinite(rowIndex) && rowIndex >= 0 && rowIndex < this.isLineSelectedArray.length) {
+        if (this.isLineSelectedArray && this.isLineSelectedArray.length > 0 && isFinite(rowIndex) && rowIndex >= 0 && rowIndex < this.isLineSelectedArray.length) {
             this.isLineSelectedArray[rowIndex] = !this.isLineSelectedArray[rowIndex];
         }
     };
@@ -196,27 +196,37 @@ export class SpectralLineQueryWidgetStore extends RegionWidgetStore {
         } else if (freqMHzFrom === freqMHzTo) {
             AppStore.Instance.alertStore.showAlert("Please specify a frequency range.");
         } else if (Math.abs(freqMHzTo - freqMHzFrom) > 1e4) {
-            AppStore.Instance.alertStore.showAlert("Frequency range is too wide. Please specify a frequency range within 10GHz.");
+            AppStore.Instance.alertStore.showAlert(`Frequency range ${freqMHzFrom <= freqMHzTo ? freqMHzFrom : freqMHzTo} MHz to ${freqMHzFrom <= freqMHzTo ? freqMHzTo : freqMHzFrom} MHz is too wide. Please specify a frequency range within 10 GHz.`);
         } else {
             this.isQuerying = true;
             const backendService = BackendService.Instance;
             backendService.requestSpectralLine(new CARTA.DoubleBounds({min: freqMHzFrom, max: freqMHzTo})).subscribe(ack => {
                 this.isQuerying = false;
-                if (ack.success && ack.dataSize > 0) {
-                    this.numDataRows = ack.dataSize;
-                    this.isLineSelectedArray = new Array<boolean>(this.numDataRows).fill(false);
+                if (ack.success && ack.dataSize >= 0) {
+                    if (ack.dataSize > 0) {
+                        this.numDataRows = ack.dataSize;
+                        this.isLineSelectedArray = new Array<boolean>(this.numDataRows).fill(false);
+                        this.queryResult = ProtobufProcessing.ProcessCatalogData(ack.spectralLineData);
+                        this.restFreqColumn = this.queryResult.get(REST_FREQUENCY_COLUMN_INDEX);
+                        this.measuredFreqColumn = this.queryResult.get(MEASURED_FREQUENCY_COLUMN_INDEX);
+                    } else {
+                        this.numDataRows = 0;
+                        this.isLineSelectedArray = [];
+                        this.queryResult = new Map<number, ProcessedColumnData>();
+                        this.restFreqColumn = undefined;
+                        this.measuredFreqColumn = undefined;
+                    }
                     // replace to comprehensive headers
                     ack.headers.forEach((header) => {
                         if (SPLATALOG_HEADER_MAP.has(header.name as SpectralLineHeaders)) {
                             header.name = SPLATALOG_HEADER_MAP.get(header.name as SpectralLineHeaders);
                         }
                     });
-                    this.queryResult = ProtobufProcessing.ProcessCatalogData(ack.spectralLineData);
-                    this.restFreqColumn = this.queryResult.get(REST_FREQUENCY_COLUMN_INDEX);
-                    this.measuredFreqColumn = this.queryResult.get(MEASURED_FREQUENCY_COLUMN_INDEX);
                     this.columnHeaders = ack.headers.sort((a, b) => {
                         return (a.columnIndex - b.columnIndex);
                     });
+                } else {
+                    AppStore.Instance.alertStore.showAlert(ack.message);
                 }
             }, error => {
                 this.isQuerying = false;
@@ -278,12 +288,12 @@ export class SpectralLineQueryWidgetStore extends RegionWidgetStore {
 
     @computed get manualSelectionData(): boolean[] {
         // Create new instance for trigger re-rendering
-        return [...this.isLineSelectedArray];
+        return this.isLineSelectedArray && this.isLineSelectedArray.length > 0 ? [...this.isLineSelectedArray] : [];
     }
 
     @computed get selectedLines(): SpectralLine[] {
         const selectedLines: SpectralLine[] = [];
-        if (this.isLineSelectedArray) {
+        if (this.isLineSelectedArray && this.isLineSelectedArray.length > 0) {
             for (let rowIndex = 0; rowIndex < this.isLineSelectedArray.length; rowIndex++) {
                 if (this.isLineSelectedArray[rowIndex]) {
                     const speciesColumn = this.queryResult.get(SPECIES_COLUMN_INDEX);
@@ -301,13 +311,13 @@ export class SpectralLineQueryWidgetStore extends RegionWidgetStore {
     }
 
     private calculateFreqMHz = (value: number, unit: SpectralLineQueryUnit): number => {
-        if (!isFinite(value) || value < 0 || !unit) {
+        if (!isFinite(value) || value === null || value < 0 || !unit) {
             return undefined;
         }
         if (unit === SpectralLineQueryUnit.CM) {
-            return wavelengthToFrequency(value / 10) / 1e6;
-        } else if (unit === SpectralLineQueryUnit.MM) {
             return wavelengthToFrequency(value / 100) / 1e6;
+        } else if (unit === SpectralLineQueryUnit.MM) {
+            return wavelengthToFrequency(value / 1000) / 1e6;
         } else if (unit === SpectralLineQueryUnit.GHz) {
             return value * 1000;
         } else if (unit === SpectralLineQueryUnit.MHz) {
@@ -333,7 +343,7 @@ export class SpectralLineQueryWidgetStore extends RegionWidgetStore {
         this.queryResult = new Map<number, ProcessedColumnData>();
         this.restFreqColumn = undefined;
         this.measuredFreqColumn = undefined;
-        this.numDataRows = 1;
+        this.numDataRows = 0;
         this.isLineSelectedArray = [];
         this.selectedSpectralProfilerID = AppStore.Instance.widgetsStore.spectralProfilerList.length > 0 ?
             AppStore.Instance.widgetsStore.spectralProfilerList[0] : undefined;
