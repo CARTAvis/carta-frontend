@@ -37,8 +37,8 @@ import {
 import {distinct, GetRequiredTiles, mapToObject} from "utilities";
 import {BackendService, ConnectionStatus, ScriptingService, TileService, TileStreamDetails} from "services";
 import {FrameView, Point2D, ProtobufProcessing, Theme, TileCoordinate, WCSMatchingType} from "models";
-import {CatalogInfo, CatalogUpdateMode, HistogramWidgetStore, RegionWidgetStore, SpatialProfileWidgetStore, SpectralProfileWidgetStore, StatsWidgetStore, StokesAnalysisWidgetStore} from "./widgets";
-import {CatalogScatterComponent, getImageCanvas, ImageViewLayer} from "components";
+import {CatalogInfo, CatalogUpdateMode, HistogramWidgetStore, RegionWidgetStore, SpatialProfileWidgetStore, SpectralProfileWidgetStore, StatsWidgetStore, StokesAnalysisWidgetStore, CatalogPlotType} from "./widgets";
+import {CatalogSubplotComponent, getImageCanvas, ImageViewLayer} from "components";
 import {AppToaster} from "components/Shared";
 import GitCommit from "../static/gitInfo";
 
@@ -586,14 +586,14 @@ export class AppStore {
         const fileId = this.catalogs.get(catalogWidgetId);
         if (fileId > -1 && this.backendService.closeCatalogFile(fileId)) {
             // close all associated scatter widgets
-            const config = CatalogScatterComponent.WIDGET_CONFIG;
+            const config = CatalogSubplotComponent.WIDGET_CONFIG;
             const catalogOverlayWidgetStore = this.widgetsStore.catalogOverlayWidgets.get(catalogWidgetId);
-            let dockedCatalogScatterWidgets = this.widgetsStore.getDockedWidgetByType(config.type);
-            const dockedScatterWidgetId = dockedCatalogScatterWidgets.map(contentItem => {
+            let dockedcatalogSubplotWidgets = this.widgetsStore.getDockedWidgetByType(config.type);
+            const dockedScatterWidgetId = dockedcatalogSubplotWidgets.map(contentItem => {
                 return contentItem.config.id;
             });
-            if (catalogOverlayWidgetStore.catalogScatterWidgetsId.length) {
-                catalogOverlayWidgetStore.catalogScatterWidgetsId.forEach(scatterWidgetsId => {
+            if (catalogOverlayWidgetStore.catalogSubplotWidgetsId.length) {
+                catalogOverlayWidgetStore.catalogSubplotWidgetsId.forEach(scatterWidgetsId => {
                     if (dockedScatterWidgetId.includes(scatterWidgetsId)) {
                         LayoutStore.Instance.dockedLayout.root.getItemsById(scatterWidgetsId)[0].remove();
                     } else {
@@ -1191,12 +1191,21 @@ export class AppStore {
                 }
             }
             // update scatter plot
-            const scatterWidgetsStore = catalogWidgetStore.catalogScatterWidgetsId;
+            const scatterWidgetsStore = catalogWidgetStore.catalogSubplotWidgetsId;
             for (let index = 0; index < scatterWidgetsStore.length; index++) {
                 const scatterWidgetStore = scatterWidgetsStore[index];
-                const scatterWidget = this.widgetsStore.catalogScatterWidgets.get(scatterWidgetStore);
+                const scatterWidget = this.widgetsStore.catalogSubplotWidgets.get(scatterWidgetStore);
                 if (scatterWidget) {
-                    scatterWidget.updateScatterData();
+                    switch (scatterWidget.plotType) {
+                        case CatalogPlotType.D2Scatter:
+                            scatterWidget.updateScatterData();
+                            break;
+                        case CatalogPlotType.Histogram:
+                            scatterWidget.updateHistogramData();
+                            break;
+                        default:
+                            break;
+                    }
                 }
             }
         }

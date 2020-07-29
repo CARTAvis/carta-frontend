@@ -1,38 +1,52 @@
 import {action, observable, computed} from "mobx";
-import {CatalogOverlayWidgetStore} from "./CatalogOverlayWidgetStore";
+import {CatalogOverlayWidgetStore, CatalogPlotType} from "./CatalogOverlayWidgetStore";
 import {Point2D} from "models";
 import {minMaxArray} from "utilities";
 
-export interface CatalogScatterWidgetStoreProps {
+export interface CatalogSubplotWidgetStoreProps {
     x: Array<number>;
-    y: Array<number>;
+    y?: Array<number>;
     catalogOverlayWidgetStore: CatalogOverlayWidgetStore;
+    plotType: CatalogPlotType;
 }
 
 export type Border = { xMin: number, xMax: number, yMin: number, yMax: number };
+export type XBorder = { xMin: number, xMax: number };
 export type DragMode = "zoom" | "pan" | "select" | "lasso" | "orbit" | "turntable" | false;
 
-export class CatalogScatterWidgetStore {
-    private rangeOffset = 0.01;
+export class CatalogSubplotWidgetStore {
     @observable xDataset: Array<number>;
     @observable yDataset: Array<number>;
     @observable catalogOverlayWidgetStore: CatalogOverlayWidgetStore;
     @observable columnsName: {x: string, y: string};
     @observable indicatorInfo: Point2D;
-    @observable border: Border;
+    @observable scatterborder: Border;
     @observable dragmode: DragMode;
+    @observable plotType: CatalogPlotType;
+    @observable histogramBorder: XBorder;
+    @observable logScaleY: boolean;
+    @observable nBinx: number;
 
-    constructor(props: CatalogScatterWidgetStoreProps) {
+    constructor(props: CatalogSubplotWidgetStoreProps) {
         this.xDataset = props.x;
-        this.yDataset = props.y;
         this.catalogOverlayWidgetStore = props.catalogOverlayWidgetStore;
         this.columnsName = { 
             x: this.catalogOverlayWidgetStore.xColumnRepresentation, 
             y: this.catalogOverlayWidgetStore.yColumnRepresentation 
         };
         this.indicatorInfo = undefined;
-        this.border = this.initBorder;
         this.dragmode = "select";
+        this.plotType = props.plotType;
+        this.logScaleY = true;
+
+        if (props.plotType === CatalogPlotType.D2Scatter) {
+            this.yDataset = props.y; 
+            this.scatterborder = this.initScatterBorder;  
+        } else {
+            this.yDataset = undefined;
+            this.nBinx = this.initnBinx;
+            this.histogramBorder = this.initHistogramXBorder;
+        }
     }
 
     @action setColumnX(columnName: string) {
@@ -60,7 +74,18 @@ export class CatalogScatterWidgetStore {
             const coords = catalogOverlayWidgetStore.get2DPlotData(columnsName.x, columnsName.y, catalogOverlayWidgetStore.catalogData);
             this.setXDataset(coords.wcsX.slice(0));
             this.setYDataset(coords.wcsY.slice(0));
-            this.border = this.initBorder;
+            this.scatterborder = this.initScatterBorder;
+        }
+    }
+
+    @action updateHistogramData() {
+        const catalogOverlayWidgetStore = this.catalogOverlayWidgetStore;
+        const columnsName = this.columnsName;
+        if (columnsName.x) {
+            const coords = catalogOverlayWidgetStore.get1DPlotData(columnsName.x);
+            this.setXDataset(coords.wcsData.slice(0));
+            this.histogramBorder = this.initHistogramXBorder;
+            this.nBinx = this.initnBinx;
         }
     }
 
@@ -68,15 +93,27 @@ export class CatalogScatterWidgetStore {
         this.indicatorInfo = val;
     }
 
-    @action setBorder(border: Border) {
-        this.border = border;
+    @action setScatterborder(border: Border) {
+        this.scatterborder = border;
+    }
+
+    @action setHistogramXBorder(xborder: XBorder) {
+        this.histogramBorder = xborder;
     }
 
     @action setDragmode(mode: DragMode) {
         this.dragmode = mode;
     }
 
-    @computed get initBorder(): Border {
+    @action setLogScaleY(val: boolean) {
+        this.logScaleY = val;
+    }
+
+    @action setnBinx(val: number) {
+        this.nBinx = val;
+    }
+
+    @computed get initScatterBorder(): Border {
         const xBounds = minMaxArray(this.xDataset);
         const yBounds = minMaxArray(this.yDataset);
         return {
@@ -87,7 +124,22 @@ export class CatalogScatterWidgetStore {
         };
     }
 
+    @computed get initHistogramXBorder(): XBorder {
+        const xBounds = minMaxArray(this.xDataset);
+        return {
+            xMin: xBounds.minVal,
+            xMax: xBounds.maxVal
+        };
+    }
+
+    @computed get initnBinx(): number {
+        return  Math.ceil(Math.sqrt(this.xDataset.length));
+    }
+
     @computed get enablePlotButton(): boolean {
+        if (this.plotType === CatalogPlotType.Histogram) {
+            return (this.columnsName.x !== null && !this.catalogOverlayWidgetStore.loadingData && !this.catalogOverlayWidgetStore.updatingDataStream);
+        }
         return (this.columnsName.x !== null && this.columnsName.y !== null && !this.catalogOverlayWidgetStore.loadingData && !this.catalogOverlayWidgetStore.updatingDataStream);
     }
 }

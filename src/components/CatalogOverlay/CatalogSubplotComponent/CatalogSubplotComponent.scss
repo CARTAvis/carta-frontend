@@ -1,10 +1,10 @@
 @import "../../../../node_modules/@blueprintjs/core/lib/scss/variables.scss";
 
-.catalog-2D {
+.catalog-subplot {
     width: 100%;
     height: 100%;
 
-    .catalog-2D-option {
+    .catalog-subplot-option {
         width: 100%;
         height: 40px;
         display: inline-flex;
@@ -14,9 +14,19 @@
         .bp3-form-content {
             margin-right: 5px;
         }
+
+        .catalog-bins {
+            .bp3-form-content {
+                .bp3-control-group {
+                    .bp3-input-group {
+                        width: 100px;
+                    } 
+                }
+            }
+        }
     }
 
-    .catalog-2D-scatter {
+    .catalog-subplot {
         width: 100%;
         height: calc(100% - 90px);
         position: relative;
@@ -27,9 +37,9 @@
         }
     }
 
-    .catalog-2D-scatter-dark {
+    .catalog-subplot-dark {
         width: calc(100% - 10px);
-        height: calc(100% - 85px);
+        height: calc(100% - 90px);
         position: relative;
         
         .js-plotly-plot .plotly .hoverlayer .spikeline {
@@ -38,7 +48,7 @@
         }
     }
 
-    .catalog-2D-footer {
+    .catalog-subplot-footer {
         width: 100%;
         height: 50px;
 
