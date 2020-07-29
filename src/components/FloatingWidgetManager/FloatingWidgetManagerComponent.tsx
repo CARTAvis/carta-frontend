@@ -12,17 +12,18 @@ import {
     RenderConfigComponent,
     SpatialProfilerComponent,
     SpectralProfilerComponent,
+    SpectralLineQueryComponent,
     StatsComponent,
     StokesAnalysisComponent,
     CatalogOverlayComponent,
-    CatalogScatterComponent,
+    CatalogSubplotComponent,
     StokesAnalysisSettingsPanelComponent,
     SpectralProfilerSettingsPanelComponent,
     SpatialProfilerSettingsPanelComponent,
     RenderConfigSettingsPanelComponent,
     HistogramSettingsPanelComponent
 } from "components";
-import {AppStore, WidgetConfig, WidgetsStore} from "stores";
+import {WidgetConfig, WidgetsStore} from "stores";
 
 @observer
 export class FloatingWidgetManagerComponent extends React.Component {
@@ -62,6 +63,8 @@ export class FloatingWidgetManagerComponent extends React.Component {
                 return <SpatialProfilerComponent id={widgetConfig.id} docked={false}/>;
             case SpectralProfilerComponent.WIDGET_CONFIG.type:
                 return <SpectralProfilerComponent id={widgetConfig.id} docked={false}/>;
+            case SpectralLineQueryComponent.WIDGET_CONFIG.type:
+                return <SpectralLineQueryComponent id={widgetConfig.id} docked={false}/>;
             case StatsComponent.WIDGET_CONFIG.type:
                 return <StatsComponent id={widgetConfig.id} docked={false}/>;
             case HistogramComponent.WIDGET_CONFIG.type:
@@ -72,8 +75,8 @@ export class FloatingWidgetManagerComponent extends React.Component {
                 return <StokesAnalysisComponent id={widgetConfig.id} docked={false}/>;
             case CatalogOverlayComponent.WIDGET_CONFIG.type:
                 return <CatalogOverlayComponent id={widgetConfig.componentId} docked={false}/>;
-            case CatalogScatterComponent.WIDGET_CONFIG.type:
-                return <CatalogScatterComponent id={widgetConfig.id} docked={false}/>;
+            case CatalogSubplotComponent.WIDGET_CONFIG.type:
+                return <CatalogSubplotComponent id={widgetConfig.id} docked={false}/>;
             default:
                 return <PlaceholderComponent id={widgetConfig.id} docked={false} label={widgetConfig.title}/>;
         }

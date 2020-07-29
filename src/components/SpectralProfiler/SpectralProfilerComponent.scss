@@ -10,7 +10,15 @@
 
     user-select: none;
 
-    &.linked-to-selected {
+    &.linked-to-widget-highlighted {
+        background-color: $gray4;
+
+        &.dark-theme {
+            background-color: $gray2;
+        }
+    }
+
+    &.linked-to-region-selected {
         border: 1px solid $blue2;
 
         &.dark-theme {
