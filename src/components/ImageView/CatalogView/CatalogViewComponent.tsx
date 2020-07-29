@@ -1,7 +1,7 @@
 import * as React from "react";
 import * as Plotly from "plotly.js";
 import {observer} from "mobx-react";
-import {computed, action} from "mobx";
+import {computed} from "mobx";
 import Plot from "react-plotly.js";
 import {Colors} from "@blueprintjs/core";
 import {AppStore, WidgetsStore, CatalogStore} from "stores";
