@@ -242,9 +242,7 @@ export class CatalogSubplotComponent extends React.Component<WidgetProps> {
                 for (let index = 0; index < points.length; index++) {
                     selectedPointIndices[index] = points[index].pointIndex;
                 }
-            }
-
-            if (this.widgetStore.plotType === CatalogPlotType.Histogram) {
+            } else if (this.widgetStore.plotType === CatalogPlotType.Histogram) {
                 const points = event.points as any;
                 let arraySize = 0;
                 for (let i = 0; i < points.length; i++) {
