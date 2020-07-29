@@ -98,28 +98,31 @@ int EMSCRIPTEN_KEEPALIVE filterHanning(double* yInArray, const int N, double* yO
 int EMSCRIPTEN_KEEPALIVE filterDecimation(double* xInArray, double* yInArray, const int inN, double* xOutArray, double* yOutArray, const int outN, const int decimationWidth) {
     int status = 0;    /* return value: 0 = success */
     int* indexArray = new int[outN];
+    int remainder = inN % decimationWidth;
+
     for (size_t i = 0; i <= inN / decimationWidth; i++) {
-        if (i == inN / decimationWidth) {
-            if (inN % decimationWidth == 0) {
-                break;
-            } else if (inN % decimationWidth == 1) {
-                indexArray[i*2] = i * decimationWidth;
-                break;
+
+        if (i == inN / decimationWidth && (remainder == 0 || remainder == 1)) {
+            // remainder = 0, the last data of yIn has already been handled when i = inN / decimationWidth - 1
+            // remainder = 1, only 1 data remains, so there is no need to perform min/max search
+            if (remainder == 1) {
+                indexArray[outN - 1] = inN - 1;
             }
+            break;
         }
 
-        size_t minIndex;
-        size_t maxIndex;
-        if (i == inN / decimationWidth && inN % decimationWidth != 0) {
-            gsl_stats_minmax_index(&maxIndex, &minIndex, &yInArray[i * decimationWidth], 1, inN % decimationWidth);
-        } else {
-            gsl_stats_minmax_index(&maxIndex, &minIndex, &yInArray[i * decimationWidth], 1, decimationWidth);
+        int localWidth = decimationWidth;
+        if (i == inN / decimationWidth && remainder > 1) {
+            localWidth = remainder;
         }
+
+        size_t minIndex, maxIndex;
+        gsl_stats_minmax_index(&maxIndex, &minIndex, &yInArray[i * decimationWidth], 1, localWidth);
 
         indexArray[i*2] = i * decimationWidth + minIndex;
         indexArray[i*2 + 1] = i * decimationWidth + maxIndex;
         if (minIndex == maxIndex) {
-            indexArray[i*2 + 1] = (i + 1) * decimationWidth - 1;
+            indexArray[i*2 + 1] = i * decimationWidth + (localWidth - 1);
         }
     }
 
