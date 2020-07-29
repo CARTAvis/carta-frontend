@@ -18,6 +18,7 @@ enum HeaderTableColumnName {
 
 const KEYCODE_ENTER = 13;
 const MINIMUM_WIDTH = 450;
+const PLOT_LINES_LIMIT = 1000;
 
 @observer
 export class SpectralLineQueryComponent extends React.Component<WidgetProps> {
@@ -347,6 +348,16 @@ export class SpectralLineQueryComponent extends React.Component<WidgetProps> {
             className += " dark-theme";
         }
 
+        const isSelectedLinesUnderLimit = widgetStore.selectedLines?.length < PLOT_LINES_LIMIT;
+        const hint = (
+            <span><br/><i><small>
+                {!isSelectedLinesUnderLimit ? `Please select fewer than ${PLOT_LINES_LIMIT} lines.` : ""}
+                {!isSelectedLinesUnderLimit && !isSelectedWidgetExisted ? <br/> : ""}
+                {!isSelectedWidgetExisted ? "Please select one spectral profiler." : ""}
+            </small></i></span>
+        );
+        const plotTip = <span>Plot lines to selected profiler{hint}</span>;
+
         return (
             <div className={className}>
                 <div className="bp3-dialog-body">
@@ -371,13 +382,18 @@ export class SpectralLineQueryComponent extends React.Component<WidgetProps> {
                     </SplitPane>
                 </div>
                 <div className="bp3-dialog-footer">
-                    <div className="result-table-info"><pre>Showing {widgetStore.numDataRows} entries.</pre></div>
+                    <div className="result-table-info"><pre>Showing {widgetStore.numDataRows} entries.{widgetStore.selectedLines?.length > 0 ? ` Selected ${widgetStore.selectedLines.length} lines.` : ""}</pre></div>
                     <div className="bp3-dialog-footer-actions">
                         <FormGroup inline={true} label={this.width < MINIMUM_WIDTH ? "" : "Spectral Profiler"}>
                             {widgetMenu}
                         </FormGroup>
-                        <Tooltip content="Plot lines to selected profiler" position={Position.BOTTOM}>
-                            <AnchorButton text="Plot" intent={Intent.PRIMARY} disabled={!appStore.activeFrame || !isSelectedWidgetExisted || widgetStore.queryResult.size <= 0} onClick={this.handlePlot}/>
+                        <Tooltip content={plotTip} position={Position.BOTTOM}>
+                            <AnchorButton
+                                text="Plot"
+                                intent={Intent.PRIMARY}
+                                disabled={!appStore.activeFrame || widgetStore.queryResult.size <= 0 || !isSelectedWidgetExisted || !isSelectedLinesUnderLimit}
+                                onClick={this.handlePlot}
+                            />
                         </Tooltip>
                         <Tooltip content="Clear plotted lines" position={Position.BOTTOM}>
                             <AnchorButton text="Clear" intent={Intent.PRIMARY} disabled={!appStore.activeFrame || !isSelectedWidgetExisted || widgetStore.queryResult.size <= 0} onClick={this.handleClear}/>
