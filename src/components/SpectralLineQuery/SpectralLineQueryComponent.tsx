@@ -361,7 +361,7 @@ export class SpectralLineQueryComponent extends React.Component<WidgetProps> {
                                 {this.width > 0 && <TableComponent {...queryResultTableProps}/>}
                             </div>
                             <div className="result-table-info">
-                                <pre>Showing {widgetStore.numDataRows} entries.</pre>
+                                <pre>Showing {widgetStore.numDataRows} entries.{widgetStore.selectedLines?.length > 0 ? ` Selected ${widgetStore.selectedLines.length} lines.` : ""}</pre>
                             </div>
                         </Pane>
                     </SplitPane>
