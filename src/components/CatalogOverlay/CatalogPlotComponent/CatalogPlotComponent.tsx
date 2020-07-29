@@ -9,14 +9,14 @@ import {Select, IItemRendererProps} from "@blueprintjs/select";
 import ReactResizeDetector from "react-resize-detector";
 import {CARTA} from "carta-protobuf";
 import {WidgetConfig, WidgetProps, HelpType, AppStore, WidgetsStore, CatalogStore} from "stores";
-import {CatalogSubplotWidgetStore, Border, CatalogUpdateMode, DragMode, CatalogPlotType, XBorder} from "stores/widgets";
+import {CatalogPlotWidgetStore, Border, CatalogUpdateMode, DragMode, CatalogPlotType, XBorder} from "stores/widgets";
 import {ProfilerInfoComponent, ClearableNumericInputComponent} from "components/Shared";
 import {Colors} from "@blueprintjs/core";
 import {toFixed} from "utilities";
-import "./CatalogSubplotComponent.css";
+import "./CatalogPlotComponent.css";
 
 @observer
-export class CatalogSubplotComponent extends React.Component<WidgetProps> {
+export class CatalogPlotComponent extends React.Component<WidgetProps> {
     @observable width: number;
     @observable height: number;
     private histogramY: {yMin: number, yMax: number};
@@ -25,13 +25,13 @@ export class CatalogSubplotComponent extends React.Component<WidgetProps> {
 
     public static get WIDGET_CONFIG(): WidgetConfig {
         return {
-            id: "catalog-scatter",
-            type: "catalog-scatter",
+            id: "catalog-plot",
+            type: "catalog-plot",
             minWidth: 320,
             minHeight: 400,
             defaultWidth: 600,
             defaultHeight: 350,
-            title: "Catalog Scatter",
+            title: "Catalog Plot",
             isCloseable: true,
             helpType: HelpType.CATALOG_SCATTER
         };
@@ -66,8 +66,8 @@ export class CatalogSubplotComponent extends React.Component<WidgetProps> {
         this.height = height;
     };
 
-    @computed get widgetStore(): CatalogSubplotWidgetStore {
-        const widgetStore = WidgetsStore.Instance.catalogSubplotWidgets.get(this.props.id);
+    @computed get widgetStore(): CatalogPlotWidgetStore {
+        const widgetStore = WidgetsStore.Instance.catalogPlotWidgets.get(this.props.id);
         return widgetStore;
     }
 
@@ -356,7 +356,7 @@ export class CatalogSubplotComponent extends React.Component<WidgetProps> {
         
         for (let index = 0; index < columnsName.length; index++) {
             const column = columnsName[index];
-            if (!CatalogSubplotComponent.UnsupportedDataTypes.includes(column.dataType)) {
+            if (!CatalogPlotComponent.UnsupportedDataTypes.includes(column.dataType)) {
                 xyOptions.push(column.name); 
             }
         }

@@ -16,7 +16,7 @@ import {
     StatsComponent,
     StokesAnalysisComponent,
     CatalogOverlayComponent,
-    CatalogSubplotComponent,
+    CatalogPlotComponent,
     StokesAnalysisSettingsPanelComponent,
     SpectralProfilerSettingsPanelComponent,
     SpatialProfilerSettingsPanelComponent,
@@ -75,8 +75,8 @@ export class FloatingWidgetManagerComponent extends React.Component {
                 return <StokesAnalysisComponent id={widgetConfig.id} docked={false}/>;
             case CatalogOverlayComponent.WIDGET_CONFIG.type:
                 return <CatalogOverlayComponent id={widgetConfig.componentId} docked={false}/>;
-            case CatalogSubplotComponent.WIDGET_CONFIG.type:
-                return <CatalogSubplotComponent id={widgetConfig.id} docked={false}/>;
+            case CatalogPlotComponent.WIDGET_CONFIG.type:
+                return <CatalogPlotComponent id={widgetConfig.id} docked={false}/>;
             default:
                 return <PlaceholderComponent id={widgetConfig.id} docked={false} label={widgetConfig.title}/>;
         }

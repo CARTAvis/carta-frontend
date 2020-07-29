@@ -18,7 +18,7 @@ import {
     ToolbarMenuComponent,
     StokesAnalysisComponent,
     CatalogOverlayComponent,
-    CatalogSubplotComponent,
+    CatalogPlotComponent,
     // setting Panel
     StokesAnalysisSettingsPanelComponent,
     SpectralProfilerSettingsPanelComponent,
@@ -37,7 +37,7 @@ import {
     SpectralProfileWidgetStore,
     StatsWidgetStore, 
     StokesAnalysisWidgetStore, 
-    CatalogOverlayWidgetStore, CatalogInfo, CatalogSubplotWidgetStore, CatalogSubplotWidgetStoreProps
+    CatalogOverlayWidgetStore, CatalogInfo, CatalogPlotWidgetStore, CatalogPlotWidgetStoreProps
 } from "./widgets";
 import {ProcessedColumnData} from "../models";
 
@@ -90,7 +90,7 @@ export class WidgetsStore {
     @observable stokesAnalysisWidgets: Map<string, StokesAnalysisWidgetStore>;
     @observable floatingSettingsWidgets: Map<string, string>;
     @observable catalogOverlayWidgets: Map<string, CatalogOverlayWidgetStore>;
-    @observable catalogSubplotWidgets: Map<string, CatalogSubplotWidgetStore>;
+    @observable catalogPlotWidgets: Map<string, CatalogPlotWidgetStore>;
     @observable spectralLineQueryWidgets: Map<string, SpectralLineQueryWidgetStore>;
 
     private widgetsMap: Map<string, Map<string, any>>;
@@ -131,7 +131,7 @@ export class WidgetsStore {
         this.stokesAnalysisWidgets = new Map<string, StokesAnalysisWidgetStore>();
         this.catalogOverlayWidgets = new Map<string, CatalogOverlayWidgetStore>();
         this.floatingSettingsWidgets = new Map<string, string>();
-        this.catalogSubplotWidgets = new Map<string, CatalogSubplotWidgetStore>();
+        this.catalogPlotWidgets = new Map<string, CatalogPlotWidgetStore>();
         this.spectralLineQueryWidgets = new Map<string, SpectralLineQueryWidgetStore>();
 
         this.widgetsMap = new Map<string, Map<string, any>>([
@@ -146,7 +146,7 @@ export class WidgetsStore {
             [RegionListComponent.WIDGET_CONFIG.type, this.regionListWidgets],
             [StokesAnalysisComponent.WIDGET_CONFIG.type, this.stokesAnalysisWidgets],
             [CatalogOverlayComponent.WIDGET_CONFIG.type, this.catalogOverlayWidgets],
-            [CatalogSubplotComponent.WIDGET_CONFIG.type, this.catalogSubplotWidgets],
+            [CatalogPlotComponent.WIDGET_CONFIG.type, this.catalogPlotWidgets],
             [SpectralLineQueryComponent.WIDGET_CONFIG.type, this.spectralLineQueryWidgets]
         ]);
 
@@ -180,8 +180,8 @@ export class WidgetsStore {
                 return StokesAnalysisComponent.WIDGET_CONFIG;
             case CatalogOverlayComponent.WIDGET_CONFIG.type:
                 return CatalogOverlayComponent.WIDGET_CONFIG;
-            case CatalogSubplotComponent.WIDGET_CONFIG.type:
-                return CatalogSubplotComponent.WIDGET_CONFIG;
+            case CatalogPlotComponent.WIDGET_CONFIG.type:
+                return CatalogPlotComponent.WIDGET_CONFIG;
             case SpectralLineQueryComponent.WIDGET_CONFIG.type:
                 return SpectralLineQueryComponent.WIDGET_CONFIG;
             default:
@@ -411,7 +411,7 @@ export class WidgetsStore {
         layout.registerComponent("animator", AnimatorComponent);
         layout.registerComponent("stokes", StokesAnalysisComponent);
         layout.registerComponent("catalog-overlay", CatalogOverlayComponent);
-        layout.registerComponent("catalog-scatter", CatalogSubplotComponent);
+        layout.registerComponent("catalog-plot", CatalogPlotComponent);
 
         const showCogWidgets = ["spatial-profiler", "spectral-profiler", "histogram", "render-config", "stokes"];
         // add drag source buttons from ToolbarMenuComponent
@@ -840,21 +840,21 @@ export class WidgetsStore {
     // endregion 
 
     // region Catalog Scatter Widgets
-    createFloatingCatalogScatterWidget = (props: CatalogSubplotWidgetStoreProps): string => {
-        let config = CatalogSubplotComponent.WIDGET_CONFIG;
+    createFloatingCatalogScatterWidget = (props: CatalogPlotWidgetStoreProps): string => {
+        let config = CatalogPlotComponent.WIDGET_CONFIG;
         config.id = this.addCatalogScatterWidget(props);
         this.addFloatingWidget(config);
         return config.id;
     };
 
-    @action addCatalogScatterWidget(props: CatalogSubplotWidgetStoreProps, id: string = null) {
+    @action addCatalogScatterWidget(props: CatalogPlotWidgetStoreProps, id: string = null) {
         // Generate new id if none passed in
         if (!id) {
-            id = this.getNextId(CatalogSubplotComponent.WIDGET_CONFIG.type);
+            id = this.getNextId(CatalogPlotComponent.WIDGET_CONFIG.type);
         }
 
         if (id) {
-            this.catalogSubplotWidgets.set(id, new CatalogSubplotWidgetStore(props));
+            this.catalogPlotWidgets.set(id, new CatalogPlotWidgetStore(props));
         }
         return id;
     }
@@ -1114,8 +1114,8 @@ export class WidgetsStore {
                 return;
             }
             
-            // update scatter widget id with associated scatter store.
-            const catalogScatterWidget = this.catalogSubplotWidgets.get(id);
+            // update catalogOverlayWidgetStore with associated catalog plots store.
+            const catalogScatterWidget = this.catalogPlotWidgets.get(id);
             if (catalogScatterWidget) {
                 catalogScatterWidget.catalogOverlayWidgetStore.updateCatalogScatterWidget(id);
             }

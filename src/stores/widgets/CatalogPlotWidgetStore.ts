@@ -3,7 +3,7 @@ import {CatalogOverlayWidgetStore, CatalogPlotType} from "./CatalogOverlayWidget
 import {Point2D} from "models";
 import {minMaxArray} from "utilities";
 
-export interface CatalogSubplotWidgetStoreProps {
+export interface CatalogPlotWidgetStoreProps {
     x: Array<number>;
     y?: Array<number>;
     catalogOverlayWidgetStore: CatalogOverlayWidgetStore;
@@ -14,7 +14,7 @@ export type Border = { xMin: number, xMax: number, yMin: number, yMax: number };
 export type XBorder = { xMin: number, xMax: number };
 export type DragMode = "zoom" | "pan" | "select" | "lasso" | "orbit" | "turntable" | false;
 
-export class CatalogSubplotWidgetStore {
+export class CatalogPlotWidgetStore {
     @observable xDataset: Array<number>;
     @observable yDataset: Array<number>;
     @observable catalogOverlayWidgetStore: CatalogOverlayWidgetStore;
@@ -27,7 +27,7 @@ export class CatalogSubplotWidgetStore {
     @observable logScaleY: boolean;
     @observable nBinx: number;
 
-    constructor(props: CatalogSubplotWidgetStoreProps) {
+    constructor(props: CatalogPlotWidgetStoreProps) {
         this.xDataset = props.x;
         this.catalogOverlayWidgetStore = props.catalogOverlayWidgetStore;
         this.columnsName = { 

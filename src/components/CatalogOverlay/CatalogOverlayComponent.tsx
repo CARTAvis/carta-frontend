@@ -11,7 +11,7 @@ import {CARTA} from "carta-protobuf";
 import {TableComponent, TableComponentProps, TableType, ClearableNumericInputComponent} from "components/Shared";
 import {CatalogOverlayPlotSettingsComponent} from "./CatalogOverlayPlotSettingsComponent/CatalogOverlayPlotSettingsComponent";
 import {AppStore, HelpType, WidgetConfig, WidgetProps, WidgetsStore, CatalogStore} from "stores";
-import {CatalogOverlay, CatalogCoordinate, CatalogOverlayWidgetStore, CatalogPlotType, CatalogSubplotWidgetStoreProps, CatalogUpdateMode, CatalogSystemType} from "stores/widgets";
+import {CatalogOverlay, CatalogCoordinate, CatalogOverlayWidgetStore, CatalogPlotType, CatalogPlotWidgetStoreProps, CatalogUpdateMode, CatalogSystemType} from "stores/widgets";
 import {toFixed} from "utilities";
 import {ProcessedColumnData} from "../../models";
 import "./CatalogOverlayComponent.css";
@@ -595,7 +595,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
                 break;
             case CatalogPlotType.D2Scatter:
                 const scatterCoords = widgetStore.get2DPlotData(widgetStore.xColumnRepresentation, widgetStore.yColumnRepresentation, widgetStore.catalogData);
-                const scatterProps: CatalogSubplotWidgetStoreProps = {
+                const scatterProps: CatalogPlotWidgetStoreProps = {
                     x: scatterCoords.wcsX,
                     y: scatterCoords.wcsY,
                     catalogOverlayWidgetStore: this.widgetStore,
@@ -606,7 +606,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
                 break;
             case CatalogPlotType.Histogram:
                 const historgramCoords = widgetStore.get1DPlotData(widgetStore.xColumnRepresentation);
-                const historgramProps: CatalogSubplotWidgetStoreProps = {
+                const historgramProps: CatalogPlotWidgetStoreProps = {
                     x: historgramCoords.wcsData,
                     catalogOverlayWidgetStore: this.widgetStore,
                     plotType: widgetStore.catalogPlotType
