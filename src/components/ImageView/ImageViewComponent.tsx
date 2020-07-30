@@ -83,7 +83,7 @@ export class ImageViewComponent extends React.Component<WidgetProps> {
     private cachedImageSize: Point2D;
 
     @observable showRatioIndicator: boolean;
-    @observable activeLayer: ImageViewLayer;
+    readonly activeLayer: ImageViewLayer;
 
     public static get WIDGET_CONFIG(): WidgetConfig {
         return {
@@ -101,7 +101,8 @@ export class ImageViewComponent extends React.Component<WidgetProps> {
 
     constructor(props: WidgetProps) {
         super(props);
-        this.activeLayer = ImageViewLayer.RegionMoving;
+
+        this.activeLayer = AppStore.Instance.activeLayer;
         autorun(() => {
             const frame = AppStore.Instance.activeFrame;
             if (frame) {
@@ -158,10 +159,6 @@ export class ImageViewComponent extends React.Component<WidgetProps> {
     onMouseLeave = () => {
         AppStore.Instance.hideImageToolbar();
     };
-
-    @action updateActiveLayer = (layer: ImageViewLayer) => {
-        this.activeLayer = layer;
-    }
 
     private handleRegionDoubleClicked = (region: RegionStore) => {
         const appStore = AppStore.Instance;
@@ -258,7 +255,7 @@ export class ImageViewComponent extends React.Component<WidgetProps> {
                         docked={this.props.docked}
                         visible={appStore.imageToolbarVisible}
                         vertical={false}
-                        onActiveLayerChange={this.updateActiveLayer}
+                        onActiveLayerChange={appStore.updateActiveLayer}
                         activeLayer={this.activeLayer}
                     />
                     <div style={{opacity: this.showRatioIndicator ? 1 : 0, left: imageRatioTagOffset.x, top: imageRatioTagOffset.y}} className={"tag-image-ratio"}>

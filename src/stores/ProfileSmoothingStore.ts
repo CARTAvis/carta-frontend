@@ -23,7 +23,7 @@ export class ProfileSmoothingStore {
 
     constructor() {
         this.type = SmoothingType.NONE;
-        this.lineColor = { colorHex: Colors.ORANGE2, fixed: false };
+        this.lineColor = { colorHex: Colors.ROSE3, fixed: false };
         this.lineType = PlotType.STEPS;
         this.lineWidth = 1;
         this.pointRadius = 1;

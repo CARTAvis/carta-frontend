@@ -8,4 +8,4 @@ export * from "./HistogramWidgetStore";
 export * from "./EmptyWidgetStore";
 export * from "./StokesAnalysisWidgetStore";
 export * from "./CatalogOverlayWidgetStore";
-export * from "./CatalogScatterWidgetStore";
+export * from "./CatalogSubplotWidgetStore";
