@@ -11,19 +11,13 @@
         text-align: left;
     }
 
-    .conversion-tab-panel{
+    .conversion-tab-panel {
         .bp3-form-group .bp3-label {
             width: 6em;
         }
     }
 
-    .moment-tab-panel{
-        .bp3-form-group .bp3-label {
-            width: 8em;
-        }
-    }
-
-    .styling-tab-panel {
+    .styling-tab-panel, .moment-tab-panel {
         .bp3-form-group .bp3-label {
             width: 8em;
         }
