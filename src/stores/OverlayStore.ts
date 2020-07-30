@@ -493,9 +493,8 @@ export class OverlayNumberSettings {
             return undefined;
         }
 
-        let format = (this.customFormat ? this.formatX : this.defaultFormatX);
-        let precision = (this.customPrecision ? this.precision : "*");
-        return `${format}.${precision}`;
+        const precision = (this.customPrecision ? this.precision : "*");
+        return `${this.formatTypeX}.${precision}`;
     }
 
     @computed get formatStringY() {
@@ -503,9 +502,8 @@ export class OverlayNumberSettings {
             return undefined;
         }
 
-        let format = (this.customFormat ? this.formatY : this.defaultFormatY);
-        let precision = (this.customPrecision ? this.precision : "*");
-        return `${format}.${precision}`;
+        const precision = (this.customPrecision ? this.precision : "*");
+        return `${this.formatTypeY}.${precision}`;
     }
 
     cursorFormatStringX(precision: number) {
@@ -799,7 +797,7 @@ export class OverlayStore {
         });
 
         autorun(() => {
-            const _ = this.numbers.formatStringX;
+            const _ = this.numbers.formatTypeX;
             const frame = AppStore.Instance.activeFrame;
             if (frame && frame.wcsInfoForTransformation && frame.validWcs) {
                 AST.set(AppStore.Instance.activeFrame.wcsInfoForTransformation, `Format(1)=${this.numbers.formatTypeX}.${WCS_PRECISION}`);
@@ -807,10 +805,10 @@ export class OverlayStore {
         });
 
         autorun(() => {
-            const _ = this.numbers.formatStringY;
+            const _ = this.numbers.formatTypeY;
             const frame = AppStore.Instance.activeFrame;
             if (frame && frame.wcsInfoForTransformation && frame.validWcs) {
-                AST.set(AppStore.Instance.activeFrame.wcsInfoForTransformation, `Format(2)=${this.numbers.formatStringY}.${WCS_PRECISION}`);
+                AST.set(AppStore.Instance.activeFrame.wcsInfoForTransformation, `Format(2)=${this.numbers.formatTypeY}.${WCS_PRECISION}`);
             }
         });
     }
