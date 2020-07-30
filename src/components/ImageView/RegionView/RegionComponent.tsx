@@ -268,7 +268,6 @@ export class RegionComponent extends React.Component<RegionComponentProps> {
             const centerSecondaryImage = transformPoint(frame.spatialTransformAST, centerReferenceImage, false);
             const centerPixelSpace = transformedImageToCanvasPos(centerSecondaryImage.x, centerSecondaryImage.y, frame, this.props.layerWidth, this.props.layerHeight);
             // Ellipse axes swapped
-            const tStart = performance.now();
             const pointsSecondaryImage = region.getRegionApproximation(frame.spatialTransformAST);
             const N = pointsSecondaryImage.length;
             const pointArray = new Array<number>(N * 2);
@@ -277,16 +276,12 @@ export class RegionComponent extends React.Component<RegionComponentProps> {
                 pointArray[i * 2] = approxPointPixelSpace.x - centerPixelSpace.x;
                 pointArray[i * 2 + 1] = approxPointPixelSpace.y - centerPixelSpace.y;
             }
-            const tEnd = performance.now();
-            const dt = tEnd - tStart;
-            console.log(`Approximated ellipse with ${N} points in ${dt} ms`);
 
             return (
                 <Group>
                     <Line
                         x={centerPixelSpace.x}
                         y={centerPixelSpace.y}
-                        tension={Math.random() > 0.5 ? 0.5 : 0}
                         stroke={region.color}
                         strokeWidth={region.lineWidth}
                         opacity={region.isTemporary ? 0.5 : (region.locked ? 0.70 : 1)}

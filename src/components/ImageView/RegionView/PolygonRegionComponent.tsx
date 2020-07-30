@@ -254,41 +254,61 @@ export class PolygonRegionComponent extends React.Component<PolygonRegionCompone
 
         let controlPoints = region.controlPoints;
         let centerPointCanvasSpace: Point2D;
+        let anchors = null;
+        let newAnchor = null;
+        let pointArray: Array<number>;
+
         if (frame.spatialReference) {
-            controlPoints = controlPoints.map(p => {
-                const controlPointSecondaryImage = transformPoint(frame.spatialTransformAST, p, false);
-                return transformedImageToCanvasPos(controlPointSecondaryImage.x, controlPointSecondaryImage.y, frame, this.props.layerWidth, this.props.layerHeight);
-            });
+            const centerReferenceImage = average2D(controlPoints);
+            const centerSecondaryImage = transformPoint(frame.spatialTransformAST, centerReferenceImage, false);
+            centerPointCanvasSpace = transformedImageToCanvasPos(centerSecondaryImage.x, centerSecondaryImage.y, frame, this.props.layerWidth, this.props.layerHeight);
+            const pointsSecondaryImage = region.getRegionApproximation(frame.spatialTransformAST);
+            const N = pointsSecondaryImage.length;
+            pointArray = new Array<number>(N * 2);
+            for (let i = 0; i < N; i++) {
+                const approxPointPixelSpace = transformedImageToCanvasPos(pointsSecondaryImage[i].x, pointsSecondaryImage[i].y, frame, this.props.layerWidth, this.props.layerHeight);
+                pointArray[i * 2] = approxPointPixelSpace.x - centerPointCanvasSpace.x;
+                pointArray[i * 2 + 1] = approxPointPixelSpace.y - centerPointCanvasSpace.y;
+            }
+
+            // Construct anchors if region is selected
+            if (this.props.selected && !region.locked) {
+                anchors = controlPoints.map((p, i) => {
+                    const pSecondaryImage = transformPoint(frame.spatialTransformAST, p, false);
+                    const pCanvasPos = transformedImageToCanvasPos(pSecondaryImage.x, pSecondaryImage.y, frame, this.props.layerWidth, this.props.layerHeight);
+                    return this.anchorNode(pCanvasPos.x, pCanvasPos.y, rotation, i, true);
+                });
+            }
+
+            if (this.hoverIntersection && !region.locked) {
+                const pSecondaryImage = transformPoint(frame.spatialTransformAST, this.hoverIntersection, false);
+                const pCanvasPos = transformedImageToCanvasPos(pSecondaryImage.x, pSecondaryImage.y, frame, this.props.layerWidth, this.props.layerHeight);
+                newAnchor = this.anchorNode(pCanvasPos.x, pCanvasPos.y, rotation);
+            }
+
             rotation = -frame.spatialTransform.rotation * 180.0 / Math.PI;
-            centerPointCanvasSpace = average2D(controlPoints);
         } else {
             rotation = 0;
-            controlPoints = controlPoints.map(p => {
-                return centerPointCanvasSpace = imageToCanvasPos(p.x, p.y, frameView, this.props.layerWidth, this.props.layerHeight, frame.spatialTransform);
-            });
+            controlPoints = controlPoints.map(p => imageToCanvasPos(p.x, p.y, frameView, this.props.layerWidth, this.props.layerHeight, frame.spatialTransform));
             centerPointCanvasSpace = average2D(controlPoints);
-        }
-
-        const pointArray = new Array<number>(controlPoints.length * 2);
-        for (let i = 0; i < pointArray.length / 2; i++) {
-            pointArray[i * 2] = controlPoints[i].x - centerPointCanvasSpace.x;
-            pointArray[i * 2 + 1] = controlPoints[i].y - centerPointCanvasSpace.y;
-        }
-
-        // Construct anchors if region is selected
-        let anchors = null;
-        if (this.props.selected && !region.locked) {
-            anchors = new Array<React.ReactNode>(controlPoints.length);
-            for (let i = 0; i < controlPoints.length; i++) {
-                anchors[i] = this.anchorNode(controlPoints[i].x, controlPoints[i].y, rotation, i, true);
+            // Construct anchors if region is selected
+            if (this.props.selected && !region.locked) {
+                anchors = new Array<React.ReactNode>(controlPoints.length);
+                for (let i = 0; i < controlPoints.length; i++) {
+                    anchors[i] = this.anchorNode(controlPoints[i].x, controlPoints[i].y, rotation, i, true);
+                }
             }
-        }
 
-        let newAnchor = null;
-        if (this.hoverIntersection && !region.locked) {
-            const anchorPositionSecondaryImage = frame.spatialReference ? transformPoint(frame.spatialTransformAST, this.hoverIntersection, false) : this.hoverIntersection;
-            const anchorPositionPixelSpace = transformedImageToCanvasPos(anchorPositionSecondaryImage.x, anchorPositionSecondaryImage.y, frame, this.props.layerWidth, this.props.layerHeight);
-            newAnchor = this.anchorNode(anchorPositionPixelSpace.x, anchorPositionPixelSpace.y, rotation);
+            if (this.hoverIntersection && !region.locked) {
+                const anchorPositionPixelSpace = transformedImageToCanvasPos(this.hoverIntersection.x, this.hoverIntersection.y, frame, this.props.layerWidth, this.props.layerHeight);
+                newAnchor = this.anchorNode(anchorPositionPixelSpace.x, anchorPositionPixelSpace.y, rotation);
+            }
+
+            pointArray = new Array<number>(controlPoints.length * 2);
+            for (let i = 0; i < pointArray.length / 2; i++) {
+                pointArray[i * 2] = controlPoints[i].x - centerPointCanvasSpace.x;
+                pointArray[i * 2 + 1] = controlPoints[i].y - centerPointCanvasSpace.y;
+            }
         }
 
         return (

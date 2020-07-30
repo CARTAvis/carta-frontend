@@ -1,11 +1,11 @@
 import {action, computed, observable} from "mobx";
 import {Colors} from "@blueprintjs/core";
-import * as AST from "ast_wrapper";
 import {CARTA} from "carta-protobuf";
 import {Point2D} from "models";
 import {BackendService} from "services";
-import {minMax2D, midpoint2D, scale2D, subtract2D, simplePolygonTest, simplePolygonPointTest, toFixed, add2D, rotate2D, transformPoint} from "utilities";
+import {add2D, getApproximateEllipsePoints, getApproximatePolygonPoints, midpoint2D, minMax2D, rotate2D, scale2D, simplePolygonPointTest, simplePolygonTest, subtract2D, toFixed} from "utilities";
 import {FrameStore} from "stores";
+import RegionType = CARTA.RegionType;
 
 export const CURSOR_REGION_ID = 0;
 export const FOCUS_REGION_RATIO = 0.4;
@@ -30,6 +30,7 @@ export class RegionStore {
     static readonly MIN_LINE_WIDTH = 0.5;
     static readonly MAX_LINE_WIDTH = 10;
     static readonly MAX_DASH_LENGTH = 50;
+    static readonly TARGET_VERTEX_COUNT = 100;
 
     private readonly backendService: BackendService;
     private readonly regionApproximationMap: Map<number, Point2D[]>;
@@ -183,25 +184,25 @@ export class RegionStore {
         let approximatePoints = this.regionApproximationMap.get(astTransform);
         if (!approximatePoints) {
             // TODO: shapes other than ellipse
-            const radA = this.controlPoints[1].y;
-            const radB = this.controlPoints[1].x;
-            const centerReferenceImage = this.controlPoints[0];
-            const N = 50;
-            const dTheta = 2.0 * Math.PI / N;
-            const xCoords = new Float64Array(N);
-            const yCoords = new Float64Array(N);
-
-            for (let i = 0; i < N; i++) {
-                const theta = i * dTheta;
-                const approxPoint = add2D(centerReferenceImage, rotate2D({x: radA * Math.cos(theta), y: radB * Math.sin(theta)}, this.rotation * Math.PI / 180.0));
-                xCoords[i] = approxPoint.x;
-                yCoords[i] = approxPoint.y;
+            if (this.regionType === RegionType.POINT) {
+                // TODO: just a single point approximation
             }
-
-            const results = AST.transformPointArrays(astTransform, xCoords, yCoords, 0) as { x: Float64Array, y: Float64Array };
-            approximatePoints = new Array<Point2D>(N);
-            for (let i = 0; i < N; i++) {
-                approximatePoints[i] = {x: results.x[i], y: results.y[i]};
+            if (this.regionType === RegionType.ELLIPSE) {
+                approximatePoints = getApproximateEllipsePoints(astTransform, this.controlPoints[0], this.controlPoints[1].y, this.controlPoints[1].x, this.rotation, RegionStore.TARGET_VERTEX_COUNT);
+            } else if (this.regionType === RegionType.RECTANGLE) {
+                const center = this.controlPoints[0];
+                let halfWidth = this.controlPoints[1].x / 2;
+                let halfHeight = this.controlPoints[1].y / 2;
+                const rotation = this.rotation * Math.PI / 180.0;
+                const points: Point2D[] = [
+                    add2D(center, rotate2D({x: -halfWidth, y: -halfHeight}, rotation)),
+                    add2D(center, rotate2D({x: +halfWidth, y: -halfHeight}, rotation)),
+                    add2D(center, rotate2D({x: +halfWidth, y: +halfHeight}, rotation)),
+                    add2D(center, rotate2D({x: -halfWidth, y: +halfHeight}, rotation)),
+                ];
+                approximatePoints = getApproximatePolygonPoints(astTransform, points, RegionStore.TARGET_VERTEX_COUNT);
+            } else {
+                approximatePoints = getApproximatePolygonPoints(astTransform, this.controlPoints, RegionStore.TARGET_VERTEX_COUNT);
             }
             this.regionApproximationMap.set(astTransform, approximatePoints);
         }
