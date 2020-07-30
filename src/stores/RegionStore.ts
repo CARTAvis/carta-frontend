@@ -3,7 +3,7 @@ import {Colors} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import {Point2D} from "models";
 import {BackendService} from "services";
-import {add2D, getApproximateEllipsePoints, getApproximatePolygonPoints, midpoint2D, minMax2D, rotate2D, scale2D, simplePolygonPointTest, simplePolygonTest, subtract2D, toFixed} from "utilities";
+import {add2D, getApproximateEllipsePoints, getApproximatePolygonPoints, isAstBadPoint, midpoint2D, minMax2D, rotate2D, scale2D, simplePolygonPointTest, simplePolygonTest, subtract2D, toFixed} from "utilities";
 import {FrameStore} from "stores";
 import RegionType = CARTA.RegionType;
 
@@ -231,7 +231,8 @@ export class RegionStore {
     };
 
     @action setControlPoint = (index: number, p: Point2D, skipUpdate = false) => {
-        if (index >= 0 && index < this.controlPoints.length) {
+        // Check for control point NaN values
+        if (index >= 0 && index < this.controlPoints.length && !isAstBadPoint(p) && isFinite(p?.x) && isFinite(p?.y)) {
             this.regionApproximationMap.clear();
             this.controlPoints[index] = p;
             if (!this.editing && !skipUpdate) {
@@ -244,6 +245,17 @@ export class RegionStore {
     };
 
     @action setControlPoints = (points: Point2D[], skipUpdate = false, shapeChanged = true) => {
+        // Check for control point NaN values
+        if (!points.length) {
+            return;
+        }
+
+        for (const p of points) {
+            if (isAstBadPoint(p) || !isFinite(p?.x) || !isFinite(p?.y)) {
+                return;
+            }
+        }
+
         this.regionApproximationMap.clear();
         this.controlPoints = points;
         if (shapeChanged && this.regionType === CARTA.RegionType.POLYGON) {
