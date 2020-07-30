@@ -1,7 +1,7 @@
 import * as React from "react";
 import {observer} from "mobx-react";
-import {Button, ButtonGroup, Icon, Tooltip} from "@blueprintjs/core";
-import {AppStore, WidgetConfig} from "stores";
+import {Button, ButtonGroup, Icon, Tooltip, AnchorButton} from "@blueprintjs/core";
+import {AppStore, WidgetConfig, RegionMode} from "stores";
 import {
     AnimatorComponent,
     HistogramComponent,
@@ -14,9 +14,12 @@ import {
     SpectralLineQueryComponent,
     StatsComponent,
     StokesAnalysisComponent,
-    CatalogOverlayComponent
+    CatalogOverlayComponent,
+    ImageViewLayer
 } from "components";
+import {RegionCreationMode} from "models";
 import {CustomIcon} from "icons/CustomIcons";
+import {CARTA} from "carta-protobuf";
 import "./ToolbarMenuComponent.css";
 @observer
 export class ToolbarMenuComponent extends React.Component {
@@ -37,20 +40,57 @@ export class ToolbarMenuComponent extends React.Component {
         ]);
     }
 
+    handleRegionTypeClicked = (type: CARTA.RegionType) => {
+        const appStore = AppStore.Instance;
+        appStore.activeFrame.regionSet.setNewRegionType(type);
+        appStore.activeFrame.regionSet.setMode(RegionMode.CREATING);
+    };
+
+    regionTooltip = (shape: string) => {
+        const regionModeIsCenter = AppStore.Instance.preferenceStore.regionCreationMode === RegionCreationMode.CENTER;
+        return(
+            <span><br/><i><small>
+                Click-and-drag to define a region ({regionModeIsCenter ? "center to corner" : "corner to corner"}).<br/>
+                Hold Ctrl to define a region ({regionModeIsCenter ? "corner to corner" : "center to corner"}).<br/>
+                Change the default creation mode in Preferences.<br/>
+                Hold shift key to create a {shape}.
+            </small></i></span>
+        );
+    }
+
     public render() {
         const appStore = AppStore.Instance;
         const dialogStore = appStore.dialogStore;
 
         let className = "toolbar-menu";
         let dialogClassName = "dialog-toolbar-menu";
+        let actionsClassName = "actions-toolbar-menu";
         if (appStore.darkTheme) {
             className += " bp3-dark";
             dialogClassName += " bp3-dark";
+            actionsClassName += " bp3-dark";
         }
+        const isRegionCreating = appStore.activeFrame ? appStore.activeFrame.regionSet.mode === RegionMode.CREATING : false;
+        const newRegionType = appStore.activeFrame ? appStore.activeFrame.regionSet.newRegionType : CARTA.RegionType.RECTANGLE;
+        const regionButtonsDisabled = !appStore.activeFrame || appStore.activeLayer === ImageViewLayer.Catalog;
 
         const commonTooltip = <span><br/><i><small>Drag to place docked widget<br/>Click to place a floating widget</small></i></span>;
         return (
             <React.Fragment>
+                <ButtonGroup className={actionsClassName}>
+                    <Tooltip content={<span>Point</span>}>
+                        <AnchorButton icon={"symbol-square"} onClick={() => this.handleRegionTypeClicked(CARTA.RegionType.POINT)} active={isRegionCreating && newRegionType === CARTA.RegionType.POINT} disabled={regionButtonsDisabled}/>
+                    </Tooltip>
+                    <Tooltip content={<span>Rectangle{this.regionTooltip("square")}</span>}>
+                        <AnchorButton icon={"square"} onClick={() => this.handleRegionTypeClicked(CARTA.RegionType.RECTANGLE)} active={isRegionCreating && newRegionType === CARTA.RegionType.RECTANGLE} disabled={regionButtonsDisabled}/>
+                    </Tooltip>
+                    <Tooltip content={<span>Ellipse{this.regionTooltip("circle")}</span>}>
+                        <AnchorButton icon={"circle"} onClick={() => this.handleRegionTypeClicked(CARTA.RegionType.ELLIPSE)} active={isRegionCreating && newRegionType === CARTA.RegionType.ELLIPSE} disabled={regionButtonsDisabled}/>
+                    </Tooltip>
+                    <Tooltip content={<span>Polygon<span><br/><i><small>Define control points with a series of clicks.<br/>Double-click to close the loop and finish polygon creation</small></i></span></span>}>
+                        <AnchorButton icon={"polygon-filter"} onClick={() => this.handleRegionTypeClicked(CARTA.RegionType.POLYGON)} active={isRegionCreating && newRegionType === CARTA.RegionType.POLYGON} disabled={regionButtonsDisabled}/>
+                    </Tooltip>
+                </ButtonGroup>
                 <ButtonGroup className={className}>
                     <Tooltip content={<span>Region List Widget{commonTooltip}</span>}>
                         <Button icon={<CustomIcon icon={"regionList"}/>} id="regionListButton" onClick={appStore.widgetsStore.createFloatingRegionListWidget}/>
@@ -91,16 +131,16 @@ export class ToolbarMenuComponent extends React.Component {
                 </ButtonGroup>
                 <ButtonGroup className={dialogClassName}>
                     <Tooltip content={<span>File Header</span>}>
-                        <Button icon={"app-header"} onClick={dialogStore.showFileInfoDialog} className={dialogStore.fileInfoDialogVisible ? "bp3-active" : ""}/>
+                        <Button icon={"app-header"} onClick={dialogStore.showFileInfoDialog} active={dialogStore.fileInfoDialogVisible}/>
                     </Tooltip>
                     <Tooltip content={<span>Preferences</span>}>
-                        <Button icon={"wrench"} onClick={dialogStore.showPreferenceDialog} className={dialogStore.preferenceDialogVisible ? "bp3-active" : ""}/>
+                        <Button icon={"wrench"} onClick={dialogStore.showPreferenceDialog} active={dialogStore.preferenceDialogVisible}/>
                     </Tooltip>
                     <Tooltip content={<span>Overlay Settings</span>}>
-                        <Button icon={"settings"} onClick={dialogStore.showOverlaySettings} className={dialogStore.overlaySettingsDialogVisible ? "bp3-active" : ""}/>
+                        <Button icon={"settings"} onClick={dialogStore.showOverlaySettings} active={dialogStore.overlaySettingsDialogVisible}/>
                     </Tooltip>
                     <Tooltip content={<span>Contours</span>}>
-                        <Button icon={<CustomIcon icon={"contour"}/>} onClick={dialogStore.showContourDialog} className={dialogStore.contourDialogVisible ? "bp3-active" : ""}/>
+                        <Button icon={<CustomIcon icon={"contour"}/>} onClick={dialogStore.showContourDialog} active={dialogStore.contourDialogVisible}/>
                     </Tooltip>
                 </ButtonGroup>
             </React.Fragment>
