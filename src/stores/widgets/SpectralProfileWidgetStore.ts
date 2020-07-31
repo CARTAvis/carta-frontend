@@ -9,6 +9,13 @@ import {ProfileSmoothingStore} from "stores/ProfileSmoothingStore";
 import {SpectralSystem, SpectralType, SpectralUnit} from "models";
 import * as tinycolor from "tinycolor2";
 
+export enum SpectralProfilerSettingsTabs {
+    CONVERSION,
+    STYLING,
+    SMOOTHING,
+    MOMENTS
+}
+
 export class SpectralProfileWidgetStore extends RegionWidgetStore {
     @observable coordinate: string;
     @observable statsType: CARTA.StatsType;
@@ -31,6 +38,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
     @observable linePlotPointSize: number;
     @observable linePlotInitXYBoundaries: { minXVal: number, maxXVal: number, minYVal: number, maxYVal: number };
     readonly smoothingStore: ProfileSmoothingStore;
+    @observable settingsTabId: SpectralProfilerSettingsTabs;
 
     public static StatsTypeString(statsType: CARTA.StatsType) {
         switch (statsType) {
@@ -172,6 +180,10 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         this.isMouseMoveIntoLinePlots = val;
     };
 
+    @action setSettingsTabId = (tabId: SpectralProfilerSettingsTabs) => {
+        this.settingsTabId = tabId;
+    }
+
     constructor(coordinate: string = "z") {
         super(RegionsType.CLOSED_AND_POINT);
         this.coordinate = coordinate;
@@ -188,6 +200,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         this.lineWidth = 1;
         this.linePlotInitXYBoundaries = { minXVal: 0, maxXVal: 0, minYVal: 0, maxYVal: 0 };
         this.smoothingStore = new ProfileSmoothingStore();
+        this.settingsTabId = SpectralProfilerSettingsTabs.CONVERSION;
     }
 
     @computed get isAutoScaledX() {
