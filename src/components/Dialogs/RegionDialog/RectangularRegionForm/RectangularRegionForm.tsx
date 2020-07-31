@@ -431,8 +431,8 @@ export class RectangularRegionForm extends React.Component<{ region: RegionStore
     public render() {
         // dummy variables related to wcs to trigger re-render
         const system = AppStore.Instance.overlayStore.global.explicitSystem;
-        const formatX = AppStore.Instance.overlayStore.numbers.formatStringX;
-        const formatY = AppStore.Instance.overlayStore.numbers.formatStringY;
+        const formatX = AppStore.Instance.overlayStore.numbers.formatTypeX;
+        const formatY = AppStore.Instance.overlayStore.numbers.formatTypeY;
         const region = this.props.region;
         if (!region || region.controlPoints.length !== 2 || region.regionType !== CARTA.RegionType.RECTANGLE) {
             return null;
@@ -447,7 +447,7 @@ export class RectangularRegionForm extends React.Component<{ region: RegionStore
             centerInputY = <NumericInput selectAllOnFocus={true} buttonPosition="none" placeholder="Y Coordinate" value={centerPoint.y} onBlur={this.handleCenterYChange} onKeyDown={this.handleCenterYChange}/>;
         } else {
             centerInputX = (
-                <Tooltip content={`Enter value in ${NUMBER_FORMAT_LABEL.get(AppStore.Instance.overlayStore.numbers.formatTypeX)} format`} position={Position.BOTTOM}>
+                <Tooltip content={`Format: ${NUMBER_FORMAT_LABEL.get(formatX)}`} position={Position.BOTTOM}>
                     <NumericInput
                         allowNumericCharactersOnly={false}
                         buttonPosition="none"
@@ -460,7 +460,7 @@ export class RectangularRegionForm extends React.Component<{ region: RegionStore
                 </Tooltip>
             );
             centerInputY = (
-                <Tooltip content={`Enter value in ${NUMBER_FORMAT_LABEL.get(AppStore.Instance.overlayStore.numbers.formatTypeY)} format`} position={Position.BOTTOM}>
+                <Tooltip content={`Format: ${NUMBER_FORMAT_LABEL.get(formatY)}`} position={Position.BOTTOM}>
                     <NumericInput
                         allowNumericCharactersOnly={false}
                         buttonPosition="none"
@@ -486,7 +486,7 @@ export class RectangularRegionForm extends React.Component<{ region: RegionStore
             );
         } else {
             bottomLeftInputX = (
-                <Tooltip content={`Enter value in ${NUMBER_FORMAT_LABEL.get(AppStore.Instance.overlayStore.numbers.formatTypeX)} format`} position={Position.BOTTOM}>
+                <Tooltip content={`Format: ${NUMBER_FORMAT_LABEL.get(formatX)}`} position={Position.BOTTOM}>
                     <NumericInput
                         allowNumericCharactersOnly={false}
                         buttonPosition="none"
@@ -499,7 +499,7 @@ export class RectangularRegionForm extends React.Component<{ region: RegionStore
                 </Tooltip>
             );
             bottomLeftInputY = (
-                <Tooltip content={`Enter value in ${NUMBER_FORMAT_LABEL.get(AppStore.Instance.overlayStore.numbers.formatTypeY)} format`} position={Position.BOTTOM}>
+                <Tooltip content={`Format: ${NUMBER_FORMAT_LABEL.get(formatY)}`} position={Position.BOTTOM}>
                     <NumericInput
                         allowNumericCharactersOnly={false}
                         buttonPosition="none"
@@ -522,7 +522,7 @@ export class RectangularRegionForm extends React.Component<{ region: RegionStore
             topRightInputY = <NumericInput selectAllOnFocus={true} buttonPosition="none" placeholder="Y Coordinate" value={this.topRightPoint.y} onBlur={this.handleTopChange} onKeyDown={this.handleTopChange} disabled={isRotated}/>;
         } else {
             topRightInputX = (
-                <Tooltip content={`Enter value in ${NUMBER_FORMAT_LABEL.get(AppStore.Instance.overlayStore.numbers.formatTypeX)} format`} position={Position.BOTTOM}>
+                <Tooltip content={`Format: ${NUMBER_FORMAT_LABEL.get(formatX)}`} position={Position.BOTTOM}>
                     <NumericInput
                         allowNumericCharactersOnly={false}
                         buttonPosition="none"
@@ -535,7 +535,7 @@ export class RectangularRegionForm extends React.Component<{ region: RegionStore
                 </Tooltip>
             );
             topRightInputY = (
-                <Tooltip content={`Enter value in ${NUMBER_FORMAT_LABEL.get(AppStore.Instance.overlayStore.numbers.formatTypeY)} format`} position={Position.BOTTOM}>
+                <Tooltip content={`Format: ${NUMBER_FORMAT_LABEL.get(formatY)}`} position={Position.BOTTOM}>
                     <NumericInput
                         allowNumericCharactersOnly={false}
                         buttonPosition="none"
@@ -558,26 +558,30 @@ export class RectangularRegionForm extends React.Component<{ region: RegionStore
             sizeHeightInput = <NumericInput selectAllOnFocus={true} buttonPosition="none" placeholder="Height" value={size.y} onBlur={this.handleHeightChange} onKeyDown={this.handleHeightChange}/>;
         } else {
             sizeWidthInput = (
-                <NumericInput
-                    allowNumericCharactersOnly={false}
-                    buttonPosition="none"
-                    placeholder="Width"
-                    disabled={!this.props.wcsInfo}
-                    value={this.sizeWCS ? this.sizeWCS.x : ""}
-                    onBlur={this.handleWidthWCSChange}
-                    onKeyDown={this.handleWidthWCSChange}
-                />
+                <Tooltip content={"Format: arcsec(\"), arcmin('), or degrees(deg)"} position={Position.BOTTOM}>
+                    <NumericInput
+                        allowNumericCharactersOnly={false}
+                        buttonPosition="none"
+                        placeholder="Width"
+                        disabled={!this.props.wcsInfo}
+                        value={this.sizeWCS ? this.sizeWCS.x : ""}
+                        onBlur={this.handleWidthWCSChange}
+                        onKeyDown={this.handleWidthWCSChange}
+                    />
+                </Tooltip>
             );
             sizeHeightInput = (
-                <NumericInput
-                    allowNumericCharactersOnly={false}
-                    buttonPosition="none"
-                    placeholder="Height"
-                    disabled={!this.props.wcsInfo}
-                    value={this.sizeWCS ? this.sizeWCS.y : ""}
-                    onBlur={this.handleHeightWCSChange}
-                    onKeyDown={this.handleHeightWCSChange}
-                />
+                <Tooltip content={"Format: arcsec(\"), arcmin('), or degrees(deg)"} position={Position.BOTTOM}>
+                    <NumericInput
+                        allowNumericCharactersOnly={false}
+                        buttonPosition="none"
+                        placeholder="Height"
+                        disabled={!this.props.wcsInfo}
+                        value={this.sizeWCS ? this.sizeWCS.y : ""}
+                        onBlur={this.handleHeightWCSChange}
+                        onKeyDown={this.handleHeightWCSChange}
+                    />
+                </Tooltip>
             );
         }
         const sizeInfoString = region.coordinate === RegionCoordinate.Image ? `WCS: ${WCSPoint2D.ToString(this.sizeWCS)}` : `Image: ${Point2D.ToString(size, "px", 3)}`;

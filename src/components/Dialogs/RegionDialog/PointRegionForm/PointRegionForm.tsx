@@ -101,8 +101,8 @@ export class PointRegionForm extends React.Component<{ region: RegionStore, wcsI
     public render() {
         // dummy variables related to wcs to trigger re-render
         const system = AppStore.Instance.overlayStore.global.explicitSystem;
-        const formatX = AppStore.Instance.overlayStore.numbers.formatStringX;
-        const formatY = AppStore.Instance.overlayStore.numbers.formatStringY;
+        const formatX = AppStore.Instance.overlayStore.numbers.formatTypeX;
+        const formatY = AppStore.Instance.overlayStore.numbers.formatTypeY;
         const region = this.props.region;
         if (!region  || region.regionType !== CARTA.RegionType.POINT) {
             return null;
@@ -116,7 +116,7 @@ export class PointRegionForm extends React.Component<{ region: RegionStore, wcsI
             yInput = <NumericInput selectAllOnFocus={true} buttonPosition="none" placeholder="Y Coordinate" value={centerPoint.y} onBlur={this.handleCenterYChange} onKeyDown={this.handleCenterYChange}/>;
         } else {
             xInput = (
-                <Tooltip content={`Enter value in ${NUMBER_FORMAT_LABEL.get(AppStore.Instance.overlayStore.numbers.formatTypeX)} format`} position={Position.BOTTOM}>
+                <Tooltip content={`Format: ${NUMBER_FORMAT_LABEL.get(formatX)}`} position={Position.BOTTOM}>
                     <NumericInput
                         allowNumericCharactersOnly={false}
                         buttonPosition="none"
@@ -129,7 +129,7 @@ export class PointRegionForm extends React.Component<{ region: RegionStore, wcsI
                 </Tooltip>
             );
             yInput = (
-                <Tooltip content={`Enter value in ${NUMBER_FORMAT_LABEL.get(AppStore.Instance.overlayStore.numbers.formatTypeY)} format`} position={Position.BOTTOM}>
+                <Tooltip content={`Format: ${NUMBER_FORMAT_LABEL.get(formatY)}`} position={Position.BOTTOM}>
                     <NumericInput
                         allowNumericCharactersOnly={false}
                         buttonPosition="none"

@@ -205,8 +205,8 @@ export class EllipticalRegionForm extends React.Component<{ region: RegionStore,
     public render() {
         // dummy variables related to wcs to trigger re-render
         const system = AppStore.Instance.overlayStore.global.explicitSystem;
-        const formatX = AppStore.Instance.overlayStore.numbers.formatStringX;
-        const formatY = AppStore.Instance.overlayStore.numbers.formatStringY;
+        const formatX = AppStore.Instance.overlayStore.numbers.formatTypeX;
+        const formatY = AppStore.Instance.overlayStore.numbers.formatTypeY;
         const region = this.props.region;
         if (!region || region.controlPoints.length !== 2 || region.regionType !== CARTA.RegionType.ELLIPSE) {
             return null;
@@ -220,7 +220,7 @@ export class EllipticalRegionForm extends React.Component<{ region: RegionStore,
             yInput = <NumericInput selectAllOnFocus={true} buttonPosition="none" placeholder="Y Coordinate" value={centerPoint.y} onBlur={this.handleCenterYChange} onKeyDown={this.handleCenterYChange}/>;
         } else {
             xInput = (
-                <Tooltip content={`Enter value in ${NUMBER_FORMAT_LABEL.get(AppStore.Instance.overlayStore.numbers.formatTypeX)} format`} position={Position.BOTTOM}>
+                <Tooltip content={`Format: ${NUMBER_FORMAT_LABEL.get(formatX)}`} position={Position.BOTTOM}>
                     <NumericInput
                         allowNumericCharactersOnly={false}
                         buttonPosition="none"
@@ -233,7 +233,7 @@ export class EllipticalRegionForm extends React.Component<{ region: RegionStore,
                 </Tooltip>
             );
             yInput = (
-                <Tooltip content={`Enter value in ${NUMBER_FORMAT_LABEL.get(AppStore.Instance.overlayStore.numbers.formatTypeY)} format`} position={Position.BOTTOM}>
+                <Tooltip content={`Format: ${NUMBER_FORMAT_LABEL.get(formatY)}`} position={Position.BOTTOM}>
                     <NumericInput
                         allowNumericCharactersOnly={false}
                         buttonPosition="none"
@@ -256,26 +256,30 @@ export class EllipticalRegionForm extends React.Component<{ region: RegionStore,
             sizeHeightInput = <NumericInput selectAllOnFocus={true} buttonPosition="none" placeholder="Semi-minor" value={size.y} onBlur={this.handleMinorAxisChange} onKeyDown={this.handleMinorAxisChange}/>;
         } else {
             sizeWidthInput = (
-                <NumericInput
-                    allowNumericCharactersOnly={false}
-                    buttonPosition="none"
-                    placeholder="Semi-major"
-                    disabled={!this.props.wcsInfo}
-                    value={this.sizeWCS ? this.sizeWCS.x : ""}
-                    onBlur={this.handleMajorAxisWCSChange}
-                    onKeyDown={this.handleMajorAxisWCSChange}
-                />
+                <Tooltip content={"Format: arcsec(\"), arcmin('), or degrees(deg)"} position={Position.BOTTOM}>
+                    <NumericInput
+                        allowNumericCharactersOnly={false}
+                        buttonPosition="none"
+                        placeholder="Semi-major"
+                        disabled={!this.props.wcsInfo}
+                        value={this.sizeWCS ? this.sizeWCS.x : ""}
+                        onBlur={this.handleMajorAxisWCSChange}
+                        onKeyDown={this.handleMajorAxisWCSChange}
+                    />
+                </Tooltip>
             );
             sizeHeightInput = (
-                <NumericInput
-                    allowNumericCharactersOnly={false}
-                    buttonPosition="none"
-                    placeholder="Semi-minor"
-                    disabled={!this.props.wcsInfo}
-                    value={this.sizeWCS ? this.sizeWCS.y : ""}
-                    onBlur={this.handleMinorAxisWCSChange}
-                    onKeyDown={this.handleMinorAxisWCSChange}
-                />
+                <Tooltip content={"Format: arcsec(\"), arcmin('), or degrees(deg)"} position={Position.BOTTOM}>
+                    <NumericInput
+                        allowNumericCharactersOnly={false}
+                        buttonPosition="none"
+                        placeholder="Semi-minor"
+                        disabled={!this.props.wcsInfo}
+                        value={this.sizeWCS ? this.sizeWCS.y : ""}
+                        onBlur={this.handleMinorAxisWCSChange}
+                        onKeyDown={this.handleMinorAxisWCSChange}
+                    />
+                </Tooltip>
             );
         }
         const sizeInfoString = region.coordinate === RegionCoordinate.Image ? `(Semi-major, Semi-minor): ${WCSPoint2D.ToString(this.sizeWCS)}` : `Image: ${Point2D.ToString(size, "px", 3)}`;
