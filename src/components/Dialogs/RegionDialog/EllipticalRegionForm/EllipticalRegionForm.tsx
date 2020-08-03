@@ -220,7 +220,7 @@ export class EllipticalRegionForm extends React.Component<{ region: RegionStore,
             yInput = <NumericInput selectAllOnFocus={true} buttonPosition="none" placeholder="Y Coordinate" value={centerPoint.y} onBlur={this.handleCenterYChange} onKeyDown={this.handleCenterYChange}/>;
         } else {
             xInput = (
-                <Tooltip content={`Format: ${NUMBER_FORMAT_LABEL.get(formatX)}`} position={Position.BOTTOM}>
+                <Tooltip content={`Format: ${NUMBER_FORMAT_LABEL.get(formatX)}`} position={Position.BOTTOM}> hoverOpenDelay={200}
                     <NumericInput
                         allowNumericCharactersOnly={false}
                         buttonPosition="none"
@@ -233,7 +233,7 @@ export class EllipticalRegionForm extends React.Component<{ region: RegionStore,
                 </Tooltip>
             );
             yInput = (
-                <Tooltip content={`Format: ${NUMBER_FORMAT_LABEL.get(formatY)}`} position={Position.BOTTOM}>
+                <Tooltip content={`Format: ${NUMBER_FORMAT_LABEL.get(formatY)}`} position={Position.BOTTOM}> hoverOpenDelay={200}
                     <NumericInput
                         allowNumericCharactersOnly={false}
                         buttonPosition="none"
@@ -256,7 +256,7 @@ export class EllipticalRegionForm extends React.Component<{ region: RegionStore,
             sizeHeightInput = <NumericInput selectAllOnFocus={true} buttonPosition="none" placeholder="Semi-minor" value={size.y} onBlur={this.handleMinorAxisChange} onKeyDown={this.handleMinorAxisChange}/>;
         } else {
             sizeWidthInput = (
-                <Tooltip content={"Format: arcsec(\"), arcmin('), or degrees(deg)"} position={Position.BOTTOM}>
+                <Tooltip content={"Format: arcsec(\"), arcmin('), or degrees(deg)"} position={Position.BOTTOM}> hoverOpenDelay={200}
                     <NumericInput
                         allowNumericCharactersOnly={false}
                         buttonPosition="none"
@@ -269,7 +269,7 @@ export class EllipticalRegionForm extends React.Component<{ region: RegionStore,
                 </Tooltip>
             );
             sizeHeightInput = (
-                <Tooltip content={"Format: arcsec(\"), arcmin('), or degrees(deg)"} position={Position.BOTTOM}>
+                <Tooltip content={"Format: arcsec(\"), arcmin('), or degrees(deg)"} position={Position.BOTTOM}> hoverOpenDelay={200}
                     <NumericInput
                         allowNumericCharactersOnly={false}
                         buttonPosition="none"

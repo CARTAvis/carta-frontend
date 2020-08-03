@@ -112,7 +112,7 @@ export class PolygonRegionForm extends React.Component<{ region: RegionStore, wc
                 );
             } else {
                 xInput = (
-                    <Tooltip content={`Format: ${NUMBER_FORMAT_LABEL.get(formatX)}`} position={Position.BOTTOM}>
+                    <Tooltip content={`Format: ${NUMBER_FORMAT_LABEL.get(formatX)}`} position={Position.BOTTOM}> hoverOpenDelay={200}
                         <NumericInput
                             allowNumericCharactersOnly={false}
                             buttonPosition="none"
@@ -125,7 +125,7 @@ export class PolygonRegionForm extends React.Component<{ region: RegionStore, wc
                     </Tooltip>
                 );
                 yInput = (
-                    <Tooltip content={`Format: ${NUMBER_FORMAT_LABEL.get(formatY)}`} position={Position.BOTTOM}>
+                    <Tooltip content={`Format: ${NUMBER_FORMAT_LABEL.get(formatY)}`} position={Position.BOTTOM}> hoverOpenDelay={200}
                         <NumericInput
                             allowNumericCharactersOnly={false}
                             buttonPosition="none"
