@@ -33,7 +33,7 @@ export class LayoutStore {
         this.initLayoutsFromPresets();
     }
 
-    public layoutExist = (layoutName: string): boolean => {
+    public layoutExists = (layoutName: string): boolean => {
         return layoutName && this.allLayouts.includes(layoutName);
     };
 
@@ -104,28 +104,6 @@ export class LayoutStore {
         });
     };
 
-    private saveLayoutToLocalStorage = (): boolean => {
-        if (this.userLayouts) {
-            // save only user layouts to local storage, excluding presets
-            let userLayouts = {};
-            this.userLayouts.forEach((layoutName) => {
-                if (!PresetLayout.isPreset(layoutName)) {
-                    userLayouts[layoutName] = this.layouts[layoutName];
-                }
-            });
-
-            try {
-                const serializedJson = JSON.stringify(userLayouts);
-                localStorage.setItem(KEY, serializedJson);
-            } catch (e) {
-                AlertStore.Instance.showAlert("Saving user-defined layout failed! " + e.message);
-                return false;
-            }
-        }
-
-        return true;
-    };
-
     @computed get allLayouts(): string[] {
         return this.layouts ? Object.keys(this.layouts) : [];
     }
@@ -135,8 +113,8 @@ export class LayoutStore {
     }
 
     @computed get orderedLayouts(): string[] {
-        let oderedLayouts = [...PresetLayout.PRESETS];
-        return this.userLayouts && this.userLayouts.length > 0 ? oderedLayouts.concat(this.userLayouts) : oderedLayouts;
+        let orderedLayouts = [...PresetLayout.PRESETS];
+        return this.userLayouts?.length ? orderedLayouts.concat(this.userLayouts) : orderedLayouts;
     }
 
     @computed get savedUserLayoutNumber(): number {
@@ -144,7 +122,7 @@ export class LayoutStore {
     }
 
     @action applyLayout = (layoutName: string): boolean => {
-        if (!layoutName || !this.layoutExist(layoutName)) {
+        if (!layoutName || !this.layoutExists(layoutName)) {
             AlertStore.Instance.showAlert(`Applying layout failed! Layout ${layoutName} not found.`);
             return false;
         }
@@ -201,7 +179,7 @@ export class LayoutStore {
             return;
         }
 
-        if (!this.layoutExist(this.layoutNameToBeSaved) && this.savedUserLayoutNumber >= MAX_LAYOUT) {
+        if (!this.layoutExists(this.layoutNameToBeSaved) && this.savedUserLayoutNumber >= MAX_LAYOUT) {
             appStore.alertStore.showAlert(`Maximum user-defined layout quota exceeded! (${MAX_LAYOUT} layouts)`);
             return;
         }
@@ -220,15 +198,13 @@ export class LayoutStore {
 
         // save layout to layouts[] & server/local storage
         this.layouts[this.layoutNameToBeSaved] = configToSave;
-        if (this.supportsServer) {
-            appStore.backendService.setUserLayout(this.layoutNameToBeSaved, JSON.stringify(configToSave)).subscribe(() => {
-                this.handleSaveResult(true);
+        if (!PresetLayout.isPreset(this.layoutNameToBeSaved)) {
+            appStore.apiService.setLayout(this.layoutNameToBeSaved, configToSave).then(success => {
+                this.handleSaveResult(success);
             }, err => {
                 console.log(err);
                 this.handleSaveResult(false);
             });
-        } else {
-            this.handleSaveResult(this.saveLayoutToLocalStorage());
         }
     };
 
@@ -244,23 +220,19 @@ export class LayoutStore {
 
     @action deleteLayout = (layoutName: string) => {
         const appStore = AppStore.Instance;
-        if (!layoutName || !this.layoutExist(layoutName)) {
+        if (!layoutName || !this.layoutExists(layoutName)) {
             appStore.alertStore.showAlert(`Cannot delete layout ${layoutName}! It does not exist.`);
             return;
         }
 
         delete this.layouts[layoutName];
 
-        if (this.supportsServer) {
-            appStore.backendService.setUserLayout(layoutName, "").subscribe(() => {
-                this.handleDeleteResult(layoutName, true);
-            }, err => {
-                console.log(err);
-                this.handleDeleteResult(layoutName, false);
-            });
-        } else {
-            this.handleDeleteResult(layoutName, this.saveLayoutToLocalStorage());
-        }
+        appStore.apiService.clearLayout(layoutName).then(success => {
+            this.handleDeleteResult(layoutName, success);
+        }, err => {
+            console.log(err);
+            this.handleDeleteResult(layoutName, false);
+        });
 
         if (layoutName === this.currentLayoutName) {
             this.currentLayoutName = "";
@@ -274,7 +246,7 @@ export class LayoutStore {
                 this.currentLayoutName = "";
             }
         } else {
-            AlertStore.Instance.showAlert("Saving user-defined layout failed! ");
+            AlertStore.Instance.showAlert("Deleting user-defined layout failed!");
         }
     };
 }

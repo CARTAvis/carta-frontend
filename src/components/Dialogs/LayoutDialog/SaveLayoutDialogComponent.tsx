@@ -32,7 +32,7 @@ export class SaveLayoutDialogComponent extends React.Component {
 
         appStore.dialogStore.hideSaveLayoutDialog();
         appStore.layoutStore.setLayoutToBeSaved(this.layoutName);
-        if (appStore.layoutStore.layoutExist(this.layoutName)) {
+        if (appStore.layoutStore.layoutExists(this.layoutName)) {
             if (PresetLayout.isPreset(this.layoutName)) {
                 appStore.alertStore.showAlert("Layout name cannot be the same as system presets.");
             } else {

@@ -82,8 +82,8 @@ const COMPONENT_CONFIG = new Map<string, any>([
 ]);
 
 export class LayoutConfig {
-    private static LayoutValidator = new Ajv({useDefaults: "empty"}).compile(layoutSchema);
-    private static CurrentSchemaVersion = 2;
+    public static LayoutValidator = new Ajv({useDefaults: "empty"}).compile(layoutSchema);
+    public static CurrentSchemaVersion = 2;
 
     public static GetPresetConfig = (presetName: string) => {
         if (!presetName) {
@@ -122,7 +122,6 @@ export class LayoutConfig {
             return false;
         }
 
-        console.log(layoutConfig);
         const validLayout = LayoutConfig.LayoutValidator(layoutConfig);
         if (validLayout) {
             return true;
@@ -237,7 +236,7 @@ export class LayoutConfig {
                         LayoutConfig.CreateConfigToApply(simpleChild.content, child.content, componentConfigs);
                     }
                 } else if (child.type === "component" && child.id) {
-                    const widgetType = (child.id).replace(/\-\d+$/, "");
+                    const widgetType = (child.id).replace(/-\d+$/, "");
                     if (COMPONENT_CONFIG.has(widgetType)) {
                         let componentConfig = Object.assign({}, COMPONENT_CONFIG.get(widgetType));
                         if (child.width) {

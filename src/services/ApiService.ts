@@ -2,6 +2,7 @@ import axios, {AxiosInstance} from "axios";
 import * as Ajv from "ajv";
 import {action, computed, observable} from "mobx";
 import {AppToaster} from "components/Shared";
+import {LayoutConfig} from "../models";
 
 const preferencesSchema = require("models/preferences_schema_1.json");
 
@@ -275,6 +276,90 @@ export class ApiService {
                     delete obj[key];
                 }
                 localStorage.setItem("preferences", JSON.stringify(obj));
+                return true;
+            } catch (err) {
+                return false;
+            }
+        }
+    };
+
+    public getLayouts = async () => {
+        let savedLayouts: { [name: string]: any };
+        if (ApiService.RuntimeConfig.apiAddress) {
+            try {
+                const url = `${ApiService.RuntimeConfig.apiAddress}/database/layouts`;
+                const response = await this.axiosInstance.get(url);
+                if (response?.data?.success) {
+                    savedLayouts = response.data.layouts;
+                } else {
+                    return undefined;
+                }
+            } catch (err) {
+                console.log(err);
+                return undefined;
+            }
+        } else {
+            try {
+                savedLayouts = JSON.parse(localStorage.getItem("savedLayouts")) ?? {};
+            } catch (err) {
+                console.log(err);
+                return undefined;
+            }
+        }
+        if (savedLayouts) {
+            const validLayouts = {};
+            for (const layoutName of Object.keys(savedLayouts)) {
+                const layout = savedLayouts[layoutName];
+                const valid = LayoutConfig.LayoutValidator(layout);
+                if (!valid) {
+                    console.log(LayoutConfig.LayoutValidator.errors);
+                } else {
+                    validLayouts[layoutName] = layout;
+                }
+            }
+            return validLayouts;
+        } else {
+            return undefined;
+        }
+    };
+
+    public setLayout = async (layoutName: string, layout: any) => {
+        if (ApiService.RuntimeConfig.apiAddress) {
+            try {
+                const url = `${ApiService.RuntimeConfig.apiAddress}/database/layout`;
+                const response = await this.axiosInstance.put(url, {layoutName, layout});
+                return response?.data?.success;
+            } catch (err) {
+                console.log(err);
+                return false;
+            }
+        } else {
+            try {
+                const obj = JSON.parse(localStorage.getItem("savedLayouts")) ?? {};
+                obj[layoutName] = layout;
+                localStorage.setItem("savedLayouts", JSON.stringify(obj));
+                return true;
+            } catch (err) {
+                return false;
+            }
+        }
+    };
+
+    public clearLayout = async (layoutName: string) => {
+        if (ApiService.RuntimeConfig.apiAddress) {
+            try {
+                const url = `${ApiService.RuntimeConfig.apiAddress}/database/layout`;
+                const response = await this.axiosInstance.delete(url, {data: layoutName});
+                return response?.data?.success;
+            } catch (err) {
+                console.log(err);
+                return false;
+            }
+        } else {
+            try {
+                const obj = JSON.parse(localStorage.getItem("savedLayouts")) ?? {};
+                delete obj[layoutName];
+                localStorage.setItem("savedLayouts", JSON.stringify(obj));
                 return true;
             } catch (err) {
                 return false;
