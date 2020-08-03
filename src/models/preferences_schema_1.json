@@ -1,5 +1,5 @@
 {
-    "$schema": "http://json-schema.org/draft-04/schema#",
+    "$schema": "http://json-schema.org/draft-07/schema#",
     "title": "Preferences",
     "description": "Schema for CARTA Preferences (Version 1)",
     "required": [
@@ -80,10 +80,8 @@
         },
         "percentile": {
             "type": "number",
-            "maximum": 100,
-            "exclusiveMaximum": true,
-            "minimum": 0,
-            "exclusiveMinimum": true
+            "exclusiveMaximum": 100,
+            "exclusiveMinimum": 0
         },
         "scalingAlpha": {
             "type": "number",
@@ -91,8 +89,7 @@
         },
         "scalingGamma": {
             "type": "number",
-            "minimum": 0,
-            "exclusiveMinimum": true
+            "exclusiveMinimum": 0
         },
         "nanColorHex": {
             "type": "string",

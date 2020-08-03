@@ -35,7 +35,7 @@ export class ApiService {
     }
 
     // Support for V4 JSON schemas
-    private static PreferenceValidator = new Ajv({schemaId: "auto"}).addMetaSchema(require("ajv/lib/refs/json-schema-draft-04.json")).compile(preferencesSchema);
+    private static PreferenceValidator = new Ajv().compile(preferencesSchema);
 
     @observable private _accessToken: string;
     private _tokenLifetime: number;
