@@ -34,7 +34,6 @@ export class ApiService {
         }
     }
 
-    // Support for V4 JSON schemas
     private static PreferenceValidator = new Ajv().compile(preferencesSchema);
 
     @observable private _accessToken: string;
@@ -271,7 +270,6 @@ export class ApiService {
             }
         } else {
             try {
-                // TODO: Dexie!
                 const obj = JSON.parse(localStorage.getItem("preferences")) ?? {};
                 for (const key of keys) {
                     delete obj[key];

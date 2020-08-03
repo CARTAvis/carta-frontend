@@ -2,18 +2,15 @@
     "$schema": "http://json-schema.org/draft-07/schema#",
     "title": "Layout",
     "description": "Schema for CARTA Layout (Version 2)",
-    "$id": "#carta-layout-2",
     "definitions": {
         "percentage-value": {
             "description": "Describes a percentage value from 0 to 100",
-            "$id": "#percentage-value",
             "type": "number",
             "minimum": 0,
             "maximum": 100
         },
         "plot-type": {
             "description": "Describes a plot type",
-            "$id": "#plot-type",
             "enum": [
                 "Steps",
                 "Lines",
@@ -22,28 +19,24 @@
         },
         "line-width": {
             "description": "Describes a plot line width",
-            "$id": "#line-width",
             "type": "number",
             "minimum": 0.5,
             "maximum": 10.0
         },
         "point-size": {
             "description": "Describes a plot point size",
-            "$id": "#point-size",
             "type": "number",
             "minimum": 0.5,
             "maximum": 10.0
         },
         "opacity": {
             "description": "Describes an opacity value between zero and one",
-            "$id": "#opacity",
             "type": "number",
             "minimum": 0,
             "maximum": 1
         },
         "basic-widget": {
             "description": "Widgets that have no associated settings",
-            "$id": "#basic-widget",
             "required": [
                 "type",
                 "id"
@@ -67,16 +60,15 @@
                     ]
                 },
                 "width": {
-                    "$ref": "#percentage-value"
+                    "$ref": "#/definitions/percentage-value"
                 },
                 "height": {
-                    "$ref": "#percentage-value"
+                    "$ref": "#/definitions/percentage-value"
                 }
             }
         },
         "spectral-profiler": {
             "description": "Spectral profiler widgets",
-            "$id": "#spectral-profiler",
             "required": [
                 "type",
                 "id"
@@ -103,16 +95,16 @@
                             "type": "string"
                         },
                         "lineWidth": {
-                            "$ref": "#line-width"
+                            "$ref": "#/definitions/line-width"
                         },
                         "linePlotPointSize": {
-                            "$ref": "#point-size"
+                            "$ref": "#/definitions/point-size"
                         },
                         "meanRmsVisible": {
                             "type": "boolean"
                         },
                         "plotType": {
-                            "$ref": "#plot-type"
+                            "$ref": "#/definitions/plot-type"
                         },
                         "minXVal": {
                             "type": "number"
@@ -129,16 +121,15 @@
                     }
                 },
                 "width": {
-                    "$ref": "#percentage-value"
+                    "$ref": "#/definitions/percentage-value"
                 },
                 "height": {
-                    "$ref": "#percentage-value"
+                    "$ref": "#/definitions/percentage-value"
                 }
             }
         },
         "spatial-profiler": {
             "description": "Spatial profiler widgets",
-            "$id": "#spatial-profiler",
             "required": [
                 "type",
                 "id"
@@ -164,16 +155,17 @@
                                 "Qy",
                                 "Uy",
                                 "Vy"
-                            ]
+                            ],
+                            "default": "x"
                         },
                         "primaryLineColor": {
                             "type": "string"
                         },
                         "lineWidth": {
-                            "$ref": "#line-width"
+                            "$ref": "#/definitions/line-width"
                         },
                         "linePlotPointSize": {
-                            "$ref": "#point-size"
+                            "$ref": "#/definitions/point-size"
                         },
                         "wcsAxisVisible": {
                             "type": "boolean"
@@ -182,7 +174,7 @@
                             "type": "boolean"
                         },
                         "plotType": {
-                            "$ref": "#plot-type"
+                            "$ref": "#/definitions/plot-type"
                         },
                         "minXVal": {
                             "type": "number"
@@ -199,16 +191,15 @@
                     }
                 },
                 "width": {
-                    "$ref": "#percentage-value"
+                    "$ref": "#/definitions/percentage-value"
                 },
                 "height": {
-                    "$ref": "#percentage-value"
+                    "$ref": "#/definitions/percentage-value"
                 }
             }
         },
         "render-config": {
             "description": "Render config widgets",
-            "$id": "#render-config",
             "required": [
                 "type",
                 "id"
@@ -226,10 +217,10 @@
                             "type": "string"
                         },
                         "lineWidth": {
-                            "$ref": "#line-width"
+                            "$ref": "#/definitions/line-width"
                         },
                         "linePlotPointSize": {
-                            "$ref": "#point-size"
+                            "$ref": "#/definitions/point-size"
                         },
                         "logScaleY": {
                             "type": "boolean"
@@ -241,7 +232,7 @@
                             "type": "boolean"
                         },
                         "plotType": {
-                            "$ref": "#plot-type"
+                            "$ref": "#/definitions/plot-type"
                         },
                         "minXVal": {
                             "type": "number"
@@ -258,16 +249,15 @@
                     }
                 },
                 "width": {
-                    "$ref": "#percentage-value"
+                    "$ref": "#/definitions/percentage-value"
                 },
                 "height": {
-                    "$ref": "#percentage-value"
+                    "$ref": "#/definitions/percentage-value"
                 }
             }
         },
         "histogram": {
             "description": "Histogram widgets",
-            "$id": "#histogram",
             "required": [
                 "type",
                 "id"
@@ -285,16 +275,16 @@
                             "type": "string"
                         },
                         "lineWidth": {
-                            "$ref": "#line-width"
+                            "$ref": "#/definitions/line-width"
                         },
                         "linePlotPointSize": {
-                            "$ref": "#point-size"
+                            "$ref": "#/definitions/point-size"
                         },
                         "logScaleY": {
                             "type": "boolean"
                         },
                         "plotType": {
-                            "$ref": "#plot-type"
+                            "$ref": "#/definitions/plot-type"
                         },
                         "minXVal": {
                             "type": "number"
@@ -311,16 +301,15 @@
                     }
                 },
                 "width": {
-                    "$ref": "#percentage-value"
+                    "$ref": "#/definitions/percentage-value"
                 },
                 "height": {
-                    "$ref": "#percentage-value"
+                    "$ref": "#/definitions/percentage-value"
                 }
             }
         },
         "stokes": {
             "description": "Stokes analysis widgets",
-            "$id": "#stokes",
             "required": [
                 "type",
                 "id"
@@ -341,22 +330,22 @@
                             "type": "string"
                         },
                         "lineWidth": {
-                            "$ref": "#line-width"
+                            "$ref": "#/definitions/line-width"
                         },
                         "linePlotPointSize": {
-                            "$ref": "#point-size"
+                            "$ref": "#/definitions/point-size"
                         },
                         "plotType": {
-                            "$ref": "#plot-type"
+                            "$ref": "#/definitions/plot-type"
                         },
                         "colorMap": {
                             "type": "string"
                         },
                         "scatterPlotPointSize": {
-                            "$ref": "#point-size"
+                            "$ref": "#/definitions/point-size"
                         },
                         "pointTransparency": {
-                            "$ref": "#opacity"
+                            "$ref": "#/definitions/opacity"
                         },
                         "equalAxes": {
                             "type": "boolean"
@@ -364,40 +353,38 @@
                     }
                 },
                 "width": {
-                    "$ref": "#percentage-value"
+                    "$ref": "#/definitions/percentage-value"
                 },
                 "height": {
-                    "$ref": "#percentage-value"
+                    "$ref": "#/definitions/percentage-value"
                 }
             }
         },
         "carta-widget": {
             "description": "A CARTA widget",
-            "$id": "#carta-widget",
             "oneOf": [
                 {
-                    "$ref": "#basic-widget"
+                    "$ref": "#/definitions/basic-widget"
                 },
                 {
-                    "$ref": "#spectral-profiler"
+                    "$ref": "#/definitions/spectral-profiler"
                 },
                 {
-                    "$ref": "#spatial-profiler"
+                    "$ref": "#/definitions/spatial-profiler"
                 },
                 {
-                    "$ref": "#render-config"
+                    "$ref": "#/definitions/render-config"
                 },
                 {
-                    "$ref": "#histogram"
+                    "$ref": "#/definitions/histogram"
                 },
                 {
-                    "$ref": "#stokes"
+                    "$ref": "#/definitions/stokes"
                 }
             ]
         },
         "gl-container": {
             "description": "A GoldenLayout container",
-            "$id": "#gl-container",
             "type": "object",
             "required": [
                 "type",
@@ -418,19 +405,19 @@
                     "items": {
                         "oneOf": [
                             {
-                                "$ref": "#gl-container"
+                                "$ref": "#/definitions/gl-container"
                             },
                             {
-                                "$ref": "#carta-widget"
+                                "$ref": "#/definitions/carta-widget"
                             }
                         ]
                     }
                 },
                 "width": {
-                    "$ref": "#percentage-value"
+                    "$ref": "#/definitions/percentage-value"
                 },
                 "height": {
-                    "$ref": "#percentage-value"
+                    "$ref": "#/definitions/percentage-value"
                 }
             }
         }
@@ -449,13 +436,13 @@
         },
         "docked": {
             "description": "GoldenLayout widget hierarchy",
-            "$ref": "#gl-container"
+            "$ref": "#/definitions/gl-container"
         },
         "floating": {
             "description": "List of floating widgets",
             "type": "array",
             "items": {
-                "$ref": "#carta-widget"
+                "$ref": "#/definitions/carta-widget"
             }
         }
     }

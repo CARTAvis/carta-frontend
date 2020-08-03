@@ -1,5 +1,5 @@
 import {observable, computed, action} from "mobx";
-import {AppStore, AlertStore, WidgetsStore} from "stores";
+import {AppStore, AlertStore} from "stores";
 import * as GoldenLayout from "golden-layout";
 import {LayoutConfig, PresetLayout} from "models";
 import {AppToaster, SuccessToast} from "components/Shared";
@@ -17,7 +17,7 @@ export class LayoutStore {
         return LayoutStore.staticInstance;
     }
 
-    public static readonly TOASTER_TIMEOUT = 1500;
+    public static readonly ToasterTimeout = 1500;
     private layoutNameToBeSaved: string;
 
     // self-defined structure: {layoutName: config, layoutName: config, ...}
@@ -94,8 +94,12 @@ export class LayoutStore {
         const layoutNames = Object.keys(userLayouts);
         layoutNames.forEach((layoutName) => {
             const layoutConfig = userLayouts[layoutName];
-            if (layoutConfig && LayoutConfig.IsUserLayoutValid(layoutName, layoutConfig)) {
-                this.layouts[layoutName] = layoutConfig;
+            try {
+                if (layoutConfig && LayoutConfig.IsUserLayoutValid(layoutName, layoutConfig)) {
+                    this.layouts[layoutName] = layoutConfig;
+                }
+            } catch (err) {
+                console.log(err);
             }
         });
     };
@@ -230,7 +234,7 @@ export class LayoutStore {
 
     private handleSaveResult = (success: boolean) => {
         if (success) {
-            AppToaster.show(SuccessToast("layout-grid", `Layout ${this.layoutNameToBeSaved} saved successfully.`, LayoutStore.TOASTER_TIMEOUT));
+            AppToaster.show(SuccessToast("layout-grid", `Layout ${this.layoutNameToBeSaved} saved successfully.`, LayoutStore.ToasterTimeout));
             this.currentLayoutName = this.layoutNameToBeSaved;
         } else {
             delete this.layouts[this.layoutNameToBeSaved];
@@ -265,7 +269,7 @@ export class LayoutStore {
 
     private handleDeleteResult = (layoutName: string, success: boolean) => {
         if (success) {
-            AppToaster.show(SuccessToast("layout-grid", `Layout ${layoutName} deleted successfully.`, LayoutStore.TOASTER_TIMEOUT));
+            AppToaster.show(SuccessToast("layout-grid", `Layout ${layoutName} deleted successfully.`, LayoutStore.ToasterTimeout));
             if (layoutName === this.currentLayoutName) {
                 this.currentLayoutName = "";
             }
