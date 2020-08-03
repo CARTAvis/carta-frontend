@@ -239,35 +239,6 @@ export class FrameStore {
         return null;
     }
 
-    public getWcsSizeInArcsec(size: Point2D): Point2D {
-        const deltaHeader = this.frameInfo.fileInfoExtended.headerEntries.find(entry => entry.name.indexOf("CDELT1") !== -1);
-        const unitHeader = this.frameInfo.fileInfoExtended.headerEntries.find(entry => entry.name.indexOf("CUNIT1") !== -1);
-        if (size && deltaHeader && unitHeader) {
-            const delta = getHeaderNumericValue(deltaHeader);
-            const unit = unitHeader.value.trim();
-            if (isFinite(delta) && unit === "deg" || unit === "rad") {
-                return {
-                    x: size.x * Math.abs(delta) * (unit === "deg" ? 3600 : (180 * 3600 / Math.PI)),
-                    y: size.y * Math.abs(delta) * (unit === "deg" ? 3600 : (180 * 3600 / Math.PI))
-                };
-            }
-        }
-        return null;
-    }
-
-    public getImageValueFromArcsec(arcsecValue: number): number {
-        const deltaHeader = this.frameInfo.fileInfoExtended.headerEntries.find(entry => entry.name.indexOf("CDELT1") !== -1);
-        const unitHeader = this.frameInfo.fileInfoExtended.headerEntries.find(entry => entry.name.indexOf("CUNIT1") !== -1);
-        if (isFinite(arcsecValue) && deltaHeader && unitHeader) {
-            const delta = getHeaderNumericValue(deltaHeader);
-            const unit = unitHeader.value.trim();
-            if (isFinite(delta) && delta !== 0 && unit === "deg" || unit === "rad") {
-                return arcsecValue / Math.abs(delta) / (unit === "deg" ? 3600 : (180 * 3600 / Math.PI));
-            }
-        }
-        return null;
-    }
-
     @computed get channelInfo(): ChannelInfo {
         if (!this.frameInfo || !this.frameInfo.fileInfoExtended || this.frameInfo.fileInfoExtended.depth <= 1 || !this.frameInfo.fileInfoExtended.headerEntries) {
             return undefined;
@@ -1054,6 +1025,19 @@ export class FrameStore {
                     x: size.x * Math.abs(delta) * (unit === "deg" ? 3600 : (180 * 3600 / Math.PI)),
                     y: size.y * Math.abs(delta) * (unit === "deg" ? 3600 : (180 * 3600 / Math.PI))
                 };
+            }
+        }
+        return null;
+    }
+
+    public getImageValueFromArcsec(arcsecValue: number): number {
+        const deltaHeader = this.frameInfo.fileInfoExtended.headerEntries.find(entry => entry.name.indexOf("CDELT1") !== -1);
+        const unitHeader = this.frameInfo.fileInfoExtended.headerEntries.find(entry => entry.name.indexOf("CUNIT1") !== -1);
+        if (isFinite(arcsecValue) && deltaHeader && unitHeader) {
+            const delta = getHeaderNumericValue(deltaHeader);
+            const unit = unitHeader.value.trim();
+            if (isFinite(delta) && delta !== 0 && unit === "deg" || unit === "rad") {
+                return arcsecValue / Math.abs(delta) / (unit === "deg" ? 3600 : (180 * 3600 / Math.PI));
             }
         }
         return null;
