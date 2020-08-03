@@ -1,7 +1,23 @@
 import {CARTA} from "carta-protobuf";
 import * as AST from "ast_wrapper";
-import {Point2D, SpectralType} from "models";
+import {Point2D, WCSPoint2D, SpectralType} from "models";
+import {NumberFormatType} from "stores";
 import {add2D, length2D, normalize2D, pointDistance, polygonPerimeter, rotate2D, scale2D, subtract2D, magDir2D} from "./math2d";
+
+export function isWCSStringFormatValid(wcsString: string, format: NumberFormatType): boolean {
+    if (!wcsString || !format) {
+        return false;
+    }
+    const hmsRegExp = /^\-?\d{0,2}\:\d{0,2}\:(\d{1,2}(\.\d+)?)?$/;
+    const dmsRegExp = /^\-?\d*\:\d{0,2}\:(\d{1,2}(\.\d+)?)?$/;
+    const decimalRegExp = /^\-?\d+(\.\d+)?$/;
+    if (format === NumberFormatType.HMS) {
+        return hmsRegExp.test(wcsString);
+    } else if (format === NumberFormatType.DMS) {
+        return dmsRegExp.test(wcsString);
+    }
+    return decimalRegExp.test(wcsString);
+}
 
 export function getHeaderNumericValue(headerEntry: CARTA.IHeaderEntry): number {
     if (!headerEntry) {
@@ -19,16 +35,25 @@ export function transformPoint(astTransform: number, point: Point2D, forward: bo
     return AST.transformPoint(astTransform, point.x, point.y, forward);
 }
 
-export function getFormattedWCSString(astTransform: number, pixelCoords: Point2D) {
+// TODO: possibly move to region class since they are the only callers
+export function getFormattedWCSPoint(astTransform: number, pixelCoords: Point2D) {
     if (astTransform) {
         const pointWCS = transformPoint(astTransform, pixelCoords);
         const normVals = AST.normalizeCoordinates(astTransform, pointWCS.x, pointWCS.y);
         const wcsCoords = AST.getFormattedCoordinates(astTransform, normVals.x, normVals.y);
         if (wcsCoords) {
-            return `WCS: (${wcsCoords.x}, ${wcsCoords.y})`;
+            return wcsCoords;
         }
     }
-    return "";
+    return null;
+}
+
+export function getPixelValueFromWCS(astTransform: number, formattedWCSPoint: WCSPoint2D): Point2D {
+    if (astTransform) {
+        const pointWCS = AST.getWCSValueFromFormattedString(astTransform, formattedWCSPoint);
+        return transformPoint(astTransform, pointWCS, false);
+    }
+    return null;
 }
 
 export function getTransformedChannel(srcTransform: number, destTransform: number, matchingType: SpectralType, srcChannel: number) {

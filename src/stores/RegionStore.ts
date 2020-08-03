@@ -10,6 +10,11 @@ import RegionType = CARTA.RegionType;
 export const CURSOR_REGION_ID = 0;
 export const FOCUS_REGION_RATIO = 0.4;
 
+export enum RegionCoordinate {
+    Image = "Image",
+    World = "World"
+}
+
 export class RegionStore {
     readonly fileId: number;
     @observable regionId: number;
@@ -18,6 +23,7 @@ export class RegionStore {
     @observable lineWidth: number;
     @observable dashLength: number;
     @observable regionType: CARTA.RegionType;
+    @observable coordinate: RegionCoordinate;
     // Shallow observable, since control point updates are atomic
     @observable.shallow controlPoints: Point2D[];
     @observable rotation: number;
@@ -222,6 +228,7 @@ export class RegionStore {
         this.dashLength = dashLength;
         this.rotation = rotation;
         this.backendService = backendService;
+        this.coordinate = RegionCoordinate.Image;
         this.regionApproximationMap = new Map<number, Point2D[]>();
         this.simplePolygonTest();
     }
@@ -349,6 +356,12 @@ export class RegionStore {
                 const zoomLevel = FOCUS_REGION_RATIO * Math.min(this.activeFrame.renderWidth / this.boundingBox.x, this.activeFrame.renderHeight / this.boundingBox.y);
                 this.activeFrame.setZoom(zoomLevel);
             }
+        }
+    };
+
+    @action setCoordinate = (coordinate: RegionCoordinate) => {
+        if (coordinate) {
+            this.coordinate = coordinate;
         }
     };
 

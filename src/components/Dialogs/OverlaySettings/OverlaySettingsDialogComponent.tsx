@@ -13,7 +13,7 @@ import {DraggableDialogComponent} from "components/Dialogs";
 import {ColorComponent} from "./ColorComponent";
 import {ColorResult} from "react-color";
 import {ColorPickerComponent, SafeNumericInput} from "components/Shared";
-import {AppStore, BeamType, LabelType, SystemType, HelpType, DialogStore, OverlayStore} from "stores";
+import {AppStore, BeamType, LabelType, SystemType, HelpType, DialogStore, NumberFormatType, NUMBER_FORMAT_LABEL} from "stores";
 import { SWATCH_COLORS} from "utilities";
 import "./OverlaySettingsDialogComponent.css";
 
@@ -480,16 +480,24 @@ export class OverlaySettingsDialogComponent extends React.Component {
                 <Collapse isOpen={numbers.customFormat && numbers.validWcs}>
                     <FormGroup inline={true} label="Format" labelInfo="(X)">
                         <HTMLSelect
-                            options={[{label: "H:M:S", value: "hms"}, {label: "D:M:S", value: "dms"}, {label: "Degrees", value: "d"}]}
+                            options={[
+                                {label: NUMBER_FORMAT_LABEL.get(NumberFormatType.HMS), value: NumberFormatType.HMS},
+                                {label: NUMBER_FORMAT_LABEL.get(NumberFormatType.DMS), value: NumberFormatType.DMS},
+                                {label: NUMBER_FORMAT_LABEL.get(NumberFormatType.Degrees), value: NumberFormatType.Degrees}
+                            ]}
                             value={numbers.formatX}
-                            onChange={(event: React.FormEvent<HTMLSelectElement>) => numbers.setFormatX(event.currentTarget.value)}
+                            onChange={(event: React.FormEvent<HTMLSelectElement>) => numbers.setFormatX(event.currentTarget.value as NumberFormatType)}
                         />
                     </FormGroup>
                     <FormGroup inline={true} label="Format" labelInfo="(Y)">
                         <HTMLSelect
-                            options={[{label: "H:M:S", value: "hms"}, {label: "D:M:S", value: "dms"}, {label: "Degrees", value: "d"}]}
+                            options={[
+                                {label: NUMBER_FORMAT_LABEL.get(NumberFormatType.HMS), value: NumberFormatType.HMS},
+                                {label: NUMBER_FORMAT_LABEL.get(NumberFormatType.DMS), value: NumberFormatType.DMS},
+                                {label: NUMBER_FORMAT_LABEL.get(NumberFormatType.Degrees), value: NumberFormatType.Degrees}
+                            ]}
                             value={numbers.formatY}
-                            onChange={(event: React.FormEvent<HTMLSelectElement>) => numbers.setFormatY(event.currentTarget.value)}
+                            onChange={(event: React.FormEvent<HTMLSelectElement>) => numbers.setFormatY(event.currentTarget.value as NumberFormatType)}
                         />
                     </FormGroup>
                 </Collapse>
