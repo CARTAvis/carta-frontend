@@ -447,7 +447,7 @@ export class RectangularRegionForm extends React.Component<{ region: RegionStore
             centerInputY = <NumericInput selectAllOnFocus={true} buttonPosition="none" placeholder="Y Coordinate" value={centerPoint.y} onBlur={this.handleCenterYChange} onKeyDown={this.handleCenterYChange}/>;
         } else {
             centerInputX = (
-                <Tooltip content={`Format: ${NUMBER_FORMAT_LABEL.get(formatX)}`} position={Position.BOTTOM}> hoverOpenDelay={200}
+                <Tooltip content={`Format: ${NUMBER_FORMAT_LABEL.get(formatX)}`} position={Position.BOTTOM} hoverOpenDelay={300}>
                     <NumericInput
                         allowNumericCharactersOnly={false}
                         buttonPosition="none"
@@ -460,7 +460,7 @@ export class RectangularRegionForm extends React.Component<{ region: RegionStore
                 </Tooltip>
             );
             centerInputY = (
-                <Tooltip content={`Format: ${NUMBER_FORMAT_LABEL.get(formatY)}`} position={Position.BOTTOM}> hoverOpenDelay={200}
+                <Tooltip content={`Format: ${NUMBER_FORMAT_LABEL.get(formatY)}`} position={Position.BOTTOM} hoverOpenDelay={300}>
                     <NumericInput
                         allowNumericCharactersOnly={false}
                         buttonPosition="none"
@@ -486,7 +486,7 @@ export class RectangularRegionForm extends React.Component<{ region: RegionStore
             );
         } else {
             bottomLeftInputX = (
-                <Tooltip content={`Format: ${NUMBER_FORMAT_LABEL.get(formatX)}`} position={Position.BOTTOM}> hoverOpenDelay={200}
+                <Tooltip content={`Format: ${NUMBER_FORMAT_LABEL.get(formatX)}`} position={Position.BOTTOM} hoverOpenDelay={300}>
                     <NumericInput
                         allowNumericCharactersOnly={false}
                         buttonPosition="none"
@@ -499,7 +499,7 @@ export class RectangularRegionForm extends React.Component<{ region: RegionStore
                 </Tooltip>
             );
             bottomLeftInputY = (
-                <Tooltip content={`Format: ${NUMBER_FORMAT_LABEL.get(formatY)}`} position={Position.BOTTOM}> hoverOpenDelay={200}
+                <Tooltip content={`Format: ${NUMBER_FORMAT_LABEL.get(formatY)}`} position={Position.BOTTOM} hoverOpenDelay={300}>
                     <NumericInput
                         allowNumericCharactersOnly={false}
                         buttonPosition="none"
@@ -522,7 +522,7 @@ export class RectangularRegionForm extends React.Component<{ region: RegionStore
             topRightInputY = <NumericInput selectAllOnFocus={true} buttonPosition="none" placeholder="Y Coordinate" value={this.topRightPoint.y} onBlur={this.handleTopChange} onKeyDown={this.handleTopChange} disabled={isRotated}/>;
         } else {
             topRightInputX = (
-                <Tooltip content={`Format: ${NUMBER_FORMAT_LABEL.get(formatX)}`} position={Position.BOTTOM}> hoverOpenDelay={200}
+                <Tooltip content={`Format: ${NUMBER_FORMAT_LABEL.get(formatX)}`} position={Position.BOTTOM} hoverOpenDelay={300}>
                     <NumericInput
                         allowNumericCharactersOnly={false}
                         buttonPosition="none"
@@ -535,7 +535,7 @@ export class RectangularRegionForm extends React.Component<{ region: RegionStore
                 </Tooltip>
             );
             topRightInputY = (
-                <Tooltip content={`Format: ${NUMBER_FORMAT_LABEL.get(formatY)}`} position={Position.BOTTOM}> hoverOpenDelay={200}
+                <Tooltip content={`Format: ${NUMBER_FORMAT_LABEL.get(formatY)}`} position={Position.BOTTOM} hoverOpenDelay={300}>
                     <NumericInput
                         allowNumericCharactersOnly={false}
                         buttonPosition="none"
@@ -558,7 +558,7 @@ export class RectangularRegionForm extends React.Component<{ region: RegionStore
             sizeHeightInput = <NumericInput selectAllOnFocus={true} buttonPosition="none" placeholder="Height" value={size.y} onBlur={this.handleHeightChange} onKeyDown={this.handleHeightChange}/>;
         } else {
             sizeWidthInput = (
-                <Tooltip content={"Format: arcsec(\"), arcmin('), or degrees(deg)"} position={Position.BOTTOM}> hoverOpenDelay={200}
+                <Tooltip content={"Format: arcsec(\"), arcmin('), or degrees(deg)"} position={Position.BOTTOM} hoverOpenDelay={300}>
                     <NumericInput
                         allowNumericCharactersOnly={false}
                         buttonPosition="none"
@@ -571,7 +571,7 @@ export class RectangularRegionForm extends React.Component<{ region: RegionStore
                 </Tooltip>
             );
             sizeHeightInput = (
-                <Tooltip content={"Format: arcsec(\"), arcmin('), or degrees(deg)"} position={Position.BOTTOM}> hoverOpenDelay={200}
+                <Tooltip content={"Format: arcsec(\"), arcmin('), or degrees(deg)"} position={Position.BOTTOM} hoverOpenDelay={300}>
                     <NumericInput
                         allowNumericCharactersOnly={false}
                         buttonPosition="none"
