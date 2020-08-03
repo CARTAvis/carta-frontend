@@ -63,7 +63,7 @@
                         "image-view",
                         "stats",
                         "spectral-line-query",
-                        "catalog"
+                        "catalog-overlay"
                     ]
                 },
                 "width": {
