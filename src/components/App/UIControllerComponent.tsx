@@ -11,12 +11,12 @@ import {
     SaveLayoutDialogComponent,
     FileInfoDialogComponent,
     ContourDialogComponent,
-    DebugExecutionDialogComponent, ExternalPageDialogComponent
+    DebugExecutionDialogComponent,
+    ExternalPageDialogComponent
 } from "components/Dialogs";
 
 @observer
 export class UIControllerComponent extends React.Component {
- 
     render() {
         return (
             <React.Fragment>
