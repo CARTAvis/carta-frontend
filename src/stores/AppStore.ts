@@ -174,14 +174,6 @@ export class AppStore {
             console.log(`Connected with session ID ${ack.sessionId}`);
             connected = true;
             this.logStore.addInfo(`Connected to server ${wsURL} with session ID ${ack.sessionId}`, ["network"]);
-
-            // Init layout/preference store after connection is built
-            const supportsServerLayout = !!(ack.serverFeatureFlags & CARTA.ServerFeatureFlags.USER_LAYOUTS);
-            this.layoutStore.initUserDefinedLayouts(supportsServerLayout, ack.userLayouts);
-            // this.preferenceStore.initUserDefinedPreferences(supportsServerPreference, ack.userPreferences);
-            this.tileService.setCache(this.preferenceStore.gpuTileCache, this.preferenceStore.systemTileCache);
-            this.layoutStore.applyLayout(this.preferenceStore.layout);
-
             if (this.astReady && fileSearchParam) {
                 autoFileLoaded = true;
                 this.addFrame(folderSearchParam, fileSearchParam, "");
@@ -735,7 +727,7 @@ export class AppStore {
 
     @action updateActiveLayer = (layer: ImageViewLayer) => {
         this.activeLayer = layer;
-    }
+    };
 
     public static readonly DEFAULT_STATS_TYPES = [
         CARTA.StatsType.NumPixels,
@@ -1021,8 +1013,12 @@ export class AppStore {
         autorun(() => {
             if (this.astReady && this.zfpReady && this.cartaComputeReady && this.apiService.authenticated) {
                 this.preferenceStore.fetchPreferences().then(() => {
-                    // Attempt connection after authenticating
-                    this.connectToServer();
+                    this.layoutStore.fetchLayouts().then(() => {
+                        // Attempt connection after authenticating
+                        this.tileService.setCache(this.preferenceStore.gpuTileCache, this.preferenceStore.systemTileCache);
+                        this.layoutStore.applyLayout(this.preferenceStore.layout);
+                        this.connectToServer();
+                    });
                 });
             }
         });

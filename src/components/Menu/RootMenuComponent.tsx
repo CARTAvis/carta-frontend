@@ -133,7 +133,7 @@ export class RootMenuComponent extends React.Component {
 
         const presetLayouts: string[] = PresetLayout.PRESETS;
         const layoutStore = appStore.layoutStore;
-        const userLayouts: string[] = layoutStore.userLayouts;
+        const userLayouts: string[] = layoutStore.userLayoutNames;
 
         const viewMenu = (
             <Menu>
