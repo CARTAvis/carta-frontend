@@ -21,7 +21,7 @@ export function ErrorToast(message: string): IToastProps {
         message: message,
         timeout: 30000,
         action: {
-            onClick: () => navigator.clipboard.writeText(message),
+            onClick: () => navigator.clipboard?.writeText(message),
             icon: "clipboard"
         }
     });
@@ -34,7 +34,7 @@ export function WarningToast(message: string): IToastProps {
         message: message,
         timeout: 30000,
         action: {
-            onClick: () => navigator.clipboard.writeText(message),
+            onClick: () => navigator.clipboard?.writeText(message),
             icon: "clipboard"
         }
     });
