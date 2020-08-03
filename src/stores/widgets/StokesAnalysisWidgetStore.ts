@@ -361,7 +361,6 @@ export class StokesAnalysisWidgetStore extends RegionWidgetStore {
         this.settingsTabId = tabId;
     }
 
-
     @computed get isLinePlotsAutoScaledX() {
         return (this.sharedMinX === undefined || this.sharedMaxX === undefined);
     }

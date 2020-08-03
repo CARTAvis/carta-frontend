@@ -7,6 +7,7 @@ import {SpectralProfileWidgetStore, SpectralProfilerSettingsTabs} from "stores/w
 import {RegionSelectorComponent} from "components";
 import "./SpectralProfilerToolbarComponent.css";
 import {SpectralProfilerComponent} from "../SpectralProfilerComponent";
+import {CustomIcon} from "icons/CustomIcons";
 
 @observer
 export class SpectralProfilerToolbarComponent extends React.Component<{ widgetStore: SpectralProfileWidgetStore, id: string }> {
@@ -75,10 +76,10 @@ export class SpectralProfilerToolbarComponent extends React.Component<{ widgetSt
                 </FormGroup>
                 <ButtonGroup className="profile-buttons">
                     <Tooltip content="Smoothing">
-                        <Button icon="step-chart" onClick={this.smoothingShortcutClick}/>
+                        <Button icon={<CustomIcon icon="smoothing"/>} onClick={this.smoothingShortcutClick}/>
                     </Tooltip>
                     <Tooltip content="Moments">
-                        <Button icon="numbered-list" onClick={this.momentsShortcutClick}/>
+                        <Button icon={<CustomIcon icon="moments"/>} onClick={this.momentsShortcutClick}/>
                     </Tooltip>
                 </ButtonGroup>
             </div>

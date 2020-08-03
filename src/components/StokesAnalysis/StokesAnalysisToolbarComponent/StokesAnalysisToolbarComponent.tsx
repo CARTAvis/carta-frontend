@@ -4,6 +4,7 @@ import {FormGroup, Switch, ButtonGroup, Button, Tooltip} from "@blueprintjs/core
 import {AppStore} from "stores";
 import {StokesAnalysisWidgetStore, StokesAnalysisSettingsTabs} from "stores/widgets";
 import {StokesAnalysisComponent, RegionSelectorComponent} from "components";
+import {CustomIcon} from "icons/CustomIcons";
 import "./StokesAnalysisToolbarComponent.css";
 
 @observer
@@ -35,7 +36,7 @@ export class StokesAnalysisToolbarComponent extends React.Component<{widgetStore
                 </FormGroup>
                 <ButtonGroup className="profile-buttons">
                     <Tooltip content="Smoothing">
-                        <Button icon="step-chart" onClick={this.smoothingShortcutClick}/>
+                        <Button icon={<CustomIcon icon="smoothing"/>} onClick={this.smoothingShortcutClick}/>
                     </Tooltip>
                 </ButtonGroup>
             </div>
