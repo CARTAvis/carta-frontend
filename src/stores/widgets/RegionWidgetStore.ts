@@ -45,7 +45,7 @@ export class RegionWidgetStore {
 
     @computed get effectiveFrame() {
         if (this.appStore.activeFrame && this.appStore.frames && this.appStore.frames.length > 0) {
-            return this.fileId === ACTIVE_FILE_ID ? this.appStore.activeFrame : this.appStore.getFrame(this.fileId);
+            return this.fileId === ACTIVE_FILE_ID || !this.appStore.getFrame(this.fileId) ? this.appStore.activeFrame : this.appStore.getFrame(this.fileId);
         }
         return null;
     }
