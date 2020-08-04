@@ -122,6 +122,7 @@ export class LayoutConfig {
                     delete widget.widgetSettings.coord;
                 }
             }
+            layout.layoutVersion = 2;
         }
     };
 
