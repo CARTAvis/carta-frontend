@@ -2,6 +2,7 @@
     "$schema": "http://json-schema.org/draft-07/schema#",
     "title": "Layout",
     "description": "Schema for CARTA Layout (Version 2)",
+    "$id": "carta_layout_2",
     "definitions": {
         "percentage-value": {
             "description": "Describes a percentage value from 0 to 100",

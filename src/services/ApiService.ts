@@ -3,6 +3,7 @@ import * as Ajv from "ajv";
 import {action, computed, observable} from "mobx";
 import {AppToaster} from "components/Shared";
 import {LayoutConfig} from "../models";
+import {findDeep} from "../utilities";
 
 const preferencesSchema = require("models/preferences_schema_1.json");
 
@@ -314,6 +315,7 @@ export class ApiService {
                 if (!valid) {
                     console.log(LayoutConfig.LayoutValidator.errors);
                 } else {
+                    LayoutConfig.UpgradeLayout(layout);
                     validLayouts[layoutName] = layout;
                 }
             }

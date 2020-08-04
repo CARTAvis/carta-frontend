@@ -1,7 +1,7 @@
 import * as Ajv from "ajv";
 import {AppStore, WidgetConfig} from "stores";
 import {PresetLayout} from "models";
-import {smoothStepOffset} from "utilities";
+import {findDeep, smoothStepOffset} from "utilities";
 
 const layoutSchema = require("models/layout_schema_2.json");
 
@@ -110,6 +110,19 @@ export class LayoutConfig {
             },
             floating: []
         };
+    };
+
+    public static UpgradeLayout = (layout: { layoutVersion: 1 | 2, docked: any, floating: any }) => {
+        // Upgrade to V2 if required
+        if (layout.layoutVersion === 1) {
+            const spatialProfileWidgets = findDeep(layout, item => item.id === "spatial-profiler");
+            for (const widget of spatialProfileWidgets) {
+                if (widget.widgetSettings?.coord) {
+                    widget.widgetSettings.coordinate = widget.widgetSettings.coord;
+                    delete widget.widgetSettings.coord;
+                }
+            }
+        }
     };
 
     // Note: layoutConfig is formalized(modified) during validation if valid
