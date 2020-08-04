@@ -2,18 +2,17 @@ import * as React from "react";
 import {observer} from "mobx-react";
 import {Ellipse, Group, Layer, Line, Stage} from "react-konva";
 import {Colors} from "@blueprintjs/core";
-import {BeamType, FrameStore, OverlayBeamStore} from "stores";
+import {BeamType, FrameStore} from "stores";
+import {Point2D} from "models";
 import "./BeamProfileOverlayComponent.css";
 
 interface BeamProfileOverlayComponentProps {
     frame: FrameStore;
     docked: boolean;
-    width: number;
-    height: number;
     top: number;
     left: number;
-    overlayBeamSettings: OverlayBeamStore;
     padding?: number;
+    referencedCenter?: Point2D;
 }
 
 @observer
@@ -30,8 +29,7 @@ export class BeamProfileOverlayComponent extends React.Component<BeamProfileOver
             return null;
         }
 
-        const zoomLevel = frame.spatialReference ? frame.spatialReference.zoomLevel * frame.spatialTransform.scale : frame.zoomLevel;
-        const beamSettings = this.props.overlayBeamSettings;
+        const beamSettings = frame.overlayBeamSettings;
         const color = beamSettings.color;
         const axisColor = beamSettings.type === BeamType.Solid ? Colors.WHITE : color;
         const type = beamSettings.type;
@@ -39,29 +37,26 @@ export class BeamProfileOverlayComponent extends React.Component<BeamProfileOver
         const paddingOffset = this.props.padding ? this.props.padding * devicePixelRatio : 0;
         const shiftX = beamSettings.shiftX;
         const shiftY = beamSettings.shiftY;
-        const a = frame.beamProperties.x / 2.0 * zoomLevel / devicePixelRatio;
-        const b = frame.beamProperties.y / 2.0 * zoomLevel / devicePixelRatio;
-        let theta = (90.0 - frame.beamProperties.angle) * Math.PI / 180.0;
-        if (frame.spatialTransform) {
-            theta -= frame.spatialTransform.rotation;
+
+        const a = frame.beamPlotProps.a;
+        const b = frame.beamPlotProps.b;
+        let theta = frame.beamPlotProps.theta;
+
+        let positionX, positionY;
+        if (this.props.referencedCenter) {
+            positionX = this.props.referencedCenter.x + paddingOffset + shiftX;
+            positionY = this.props.referencedCenter.y - paddingOffset - shiftY;
+        } else {
+            positionX = frame.beamPlotProps.center.x + paddingOffset + shiftX;
+            positionY = frame.beamPlotProps.center.y - paddingOffset - shiftY;
         }
 
-        // Bounding box of a rotated ellipse: https://math.stackexchange.com/questions/91132/how-to-get-the-limits-of-rotated-ellipse
-        const sinTheta = Math.sin(theta);
-        const cosTheta = Math.cos(theta);
-        const boundingBox = {
-            x: 2 * Math.sqrt(a * a * cosTheta * cosTheta + b * b * sinTheta * sinTheta),
-            y: 2 * Math.sqrt(a * a * sinTheta * sinTheta + b * b * cosTheta * cosTheta)
-        };
-
         // limit the beam inside the beam overlay
-        const rightMost = this.props.width - boundingBox.x / 2.0;
-        let positionX = boundingBox.x / 2.0 + paddingOffset + shiftX;
+        const rightMost = frame.renderWidth - frame.beamPlotProps.boundingBox.x / 2;
         if (positionX > rightMost) {
             positionX = rightMost;
         }
-        const upMost = boundingBox.y / 2.0;
-        let positionY = this.props.height - boundingBox.y / 2.0 - paddingOffset - shiftY;
+        const upMost = frame.beamPlotProps.boundingBox.y / 2;
         if (positionY < upMost) {
             positionY = upMost;
         }
@@ -78,7 +73,7 @@ export class BeamProfileOverlayComponent extends React.Component<BeamProfileOver
         }
 
         return (
-            <Stage className={className} width={this.props.width} height={this.props.height} style={{left: this.props.left, top: this.props.top}}>
+            <Stage className={className} width={frame.renderWidth} height={frame.renderHeight} style={{left: this.props.left, top: this.props.top}}>
                 <Layer listening={false}>
                     <Group
                         x={positionX}

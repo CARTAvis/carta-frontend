@@ -183,21 +183,20 @@ export class ImageViewComponent extends React.Component<WidgetProps> {
             const effectiveHeight = appStore.activeFrame.renderHeight * (appStore.activeFrame.renderHiDPI ? devicePixelRatio : 1);
             const imageRatioTagOffset = {x: overlayStore.padding.left + overlayStore.viewWidth / 2.0, y: overlayStore.padding.top + overlayStore.viewHeight / 2.0};
 
+            let currentBeamCenter = (appStore.activeFrame.beamProperties?.overlayBeamSettings?.visible) ? appStore.activeFrame.beamPlotProps.center : null;
             const otherContourBeams = [];
             if (appStore.contourFrames) {
                 appStore.contourFrames.forEach((frame, index) => {
                     if (frame.frameInfo.fileId !== appStore.activeFrame.frameInfo.fileId && frame.beamProperties?.overlayBeamSettings?.visible) {
                         otherContourBeams.push (
                             <BeamProfileOverlayComponent
-                                width={frame.renderWidth}
-                                height={frame.renderHeight}
                                 top={overlayStore.padding.top}
                                 left={overlayStore.padding.left}
                                 frame={frame}
                                 docked={this.props.docked}
                                 padding={10}
-                                overlayBeamSettings={frame.beamProperties.overlayBeamSettings}
                                 key={index}
+                                referencedCenter={currentBeamCenter}
                             />
                         );
                     }
@@ -233,18 +232,13 @@ export class ImageViewComponent extends React.Component<WidgetProps> {
                         showStokes={true}
                     />
                     }
-                    {appStore.activeFrame.beamProperties &&
-                    appStore.activeFrame.beamProperties.overlayBeamSettings &&
-                    appStore.activeFrame.beamProperties.overlayBeamSettings.visible &&
+                    {appStore.activeFrame.beamProperties?.overlayBeamSettings?.visible &&
                     <BeamProfileOverlayComponent
-                        width={appStore.activeFrame.renderWidth}
-                        height={appStore.activeFrame.renderHeight}
                         top={overlayStore.padding.top}
                         left={overlayStore.padding.left}
                         frame={appStore.activeFrame}
                         docked={this.props.docked}
                         padding={10}
-                        overlayBeamSettings={appStore.activeFrame.beamProperties.overlayBeamSettings}
                     />
                     }
                     {appStore.contourFrames && otherContourBeams}
