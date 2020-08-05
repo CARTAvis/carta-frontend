@@ -36,6 +36,33 @@
             "minimum": 0,
             "maximum": 1
         },
+        "spatial-coord": {
+            "description": "Spatial coordinate",
+            "type": "string",
+            "enum": [
+                "x",
+                "Ix",
+                "Qx",
+                "Ux",
+                "Vx",
+                "y",
+                "Iy",
+                "Qy",
+                "Uy",
+                "Vy"
+            ]
+        },
+        "spectral-coord": {
+            "description": "Spectral coordinate",
+            "type": "string",
+            "enum": [
+                "z",
+                "Iz",
+                "Qz",
+                "Uz",
+                "Vz"
+            ]
+        },
         "basic-widget": {
             "description": "Widgets that have no associated settings",
             "required": [
@@ -84,13 +111,7 @@
                 "widgetSettings": {
                     "properties": {
                         "coordinate": {
-                            "enum": [
-                                "z",
-                                "Iz",
-                                "Qz",
-                                "Uz",
-                                "Vz"
-                            ]
+                            "$ref": "#/definitions/spectral-coord"
                         },
                         "primaryLineColor": {
                             "type": "string"
@@ -145,19 +166,7 @@
                 "widgetSettings": {
                     "properties": {
                         "coordinate": {
-                            "enum": [
-                                "x",
-                                "Ix",
-                                "Qx",
-                                "Ux",
-                                "Vx",
-                                "y",
-                                "Iy",
-                                "Qy",
-                                "Uy",
-                                "Vy"
-                            ],
-                            "default": "x"
+                            "$ref": "#/definitions/spatial-coord"
                         },
                         "primaryLineColor": {
                             "type": "string"
@@ -190,6 +199,10 @@
                             "type": "number"
                         }
                     }
+                },
+                "coord": {
+                    "description": "Legacy V1 entry (replaced by widgetSettings.coordinate",
+                    "$ref": "#/definitions/spatial-coord"
                 },
                 "width": {
                     "$ref": "#/definitions/percentage-value"

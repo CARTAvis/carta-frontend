@@ -117,9 +117,9 @@ export class LayoutConfig {
         if (layout.layoutVersion === 1) {
             const spatialProfileWidgets = findDeep(layout, item => item.id === "spatial-profiler");
             for (const widget of spatialProfileWidgets) {
-                if (widget.widgetSettings?.coord) {
-                    widget.widgetSettings.coordinate = widget.widgetSettings.coord;
-                    delete widget.widgetSettings.coord;
+                if (widget.coord) {
+                    widget.widgetSettings.coordinate = widget.coord;
+                    delete widget.coord;
                 }
             }
             layout.layoutVersion = 2;
