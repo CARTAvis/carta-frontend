@@ -27,13 +27,11 @@ export const getImageCanvas = (padding: Padding, backgroundColor: string = "rgba
     }
 
     let regionCanvas: HTMLCanvasElement;
-    let beamProfileCanvases = [];
+    let beamProfileCanvas: HTMLCanvasElement;
     let catalogCanvas: HTMLCanvasElement;
     const beamProfileQuery = $(".beam-profile-stage").children().children("canvas");
     if (beamProfileQuery && beamProfileQuery.length) {
-        for (let i = 0; i < beamProfileQuery.length; i++ ) {
-            beamProfileCanvases.push(beamProfileQuery[i] as HTMLCanvasElement);
-        }
+        beamProfileCanvas = beamProfileQuery[0] as HTMLCanvasElement;
     }
 
     const regionQuery = $(".region-stage").children().children("canvas");
@@ -55,10 +53,8 @@ export const getImageCanvas = (padding: Padding, backgroundColor: string = "rgba
     ctx.fillRect(0, 0, composedCanvas.width, composedCanvas.height);
     ctx.drawImage(rasterCanvas, padding.left * devicePixelRatio, padding.top * devicePixelRatio);
     ctx.drawImage(contourCanvas, padding.left * devicePixelRatio, padding.top * devicePixelRatio);
-    if (beamProfileCanvases) {
-        beamProfileCanvases.forEach( beamProfileCanvas => {
-            ctx.drawImage(beamProfileCanvas, padding.left * devicePixelRatio, padding.top * devicePixelRatio);
-        });
+    if (beamProfileCanvas) {
+        ctx.drawImage(beamProfileCanvas, padding.left * devicePixelRatio, padding.top * devicePixelRatio);
     }
 
     if (regionCanvas) {
@@ -184,26 +180,6 @@ export class ImageViewComponent extends React.Component<WidgetProps> {
             const effectiveHeight = appStore.activeFrame.renderHeight * (appStore.activeFrame.renderHiDPI ? devicePixelRatio : 1);
             const imageRatioTagOffset = {x: overlayStore.padding.left + overlayStore.viewWidth / 2.0, y: overlayStore.padding.top + overlayStore.viewHeight / 2.0};
 
-            let currentBeamCenter = (appStore.activeFrame.beamProperties?.overlayBeamSettings?.visible) ? appStore.activeFrame.beamPlotProps.center : null;
-            const otherContourBeams = [];
-            if (appStore.contourFrames) {
-                appStore.contourFrames.forEach((frame, index) => {
-                    if (frame.frameInfo.fileId !== appStore.activeFrame.frameInfo.fileId && frame.beamProperties?.overlayBeamSettings?.visible) {
-                        otherContourBeams.push (
-                            <BeamProfileOverlayComponent
-                                top={overlayStore.padding.top}
-                                left={overlayStore.padding.left}
-                                frame={frame}
-                                docked={this.props.docked}
-                                padding={10}
-                                key={index}
-                                referencedCenter={currentBeamCenter}
-                            />
-                        );
-                    }
-                });
-            }
-
             divContents = (
                 <React.Fragment>
                     {appStore.activeFrame.valid &&
@@ -233,16 +209,14 @@ export class ImageViewComponent extends React.Component<WidgetProps> {
                         showStokes={true}
                     />
                     }
-                    {appStore.activeFrame.beamProperties?.overlayBeamSettings?.visible &&
+                    {appStore.activeFrame &&
                     <BeamProfileOverlayComponent
                         top={overlayStore.padding.top}
                         left={overlayStore.padding.left}
-                        frame={appStore.activeFrame}
                         docked={this.props.docked}
                         padding={10}
                     />
                     }
-                    {appStore.contourFrames && otherContourBeams}
                     {appStore.activeFrame &&
                     <RegionViewComponent
                         frame={appStore.activeFrame}

@@ -235,30 +235,6 @@ export class FrameStore {
         return null;
     }
 
-    @computed get beamPlotProps(): {center: Point2D, a: number, b: number, theta: number, boundingBox: {x: number, y: number}} {
-        const zoomLevel = this.spatialReference ? this.spatialReference.zoomLevel * this.spatialTransform.scale : this.zoomLevel;
-        const a = this.beamProperties.x / 2.0 * zoomLevel / devicePixelRatio;
-        const b = this.beamProperties.y / 2.0 * zoomLevel / devicePixelRatio;
-
-        let theta = (90.0 - this.beamProperties.angle) * Math.PI / 180.0;
-        if (this.spatialTransform) {
-            theta -= this.spatialTransform.rotation;
-        }
-
-        // Bounding box of a rotated ellipse: https://math.stackexchange.com/questions/91132/how-to-get-the-limits-of-rotated-ellipse
-        const sinTheta = Math.sin(theta);
-        const cosTheta = Math.cos(theta);
-        const boundingBox = {
-            x: 2 * Math.sqrt(a * a * cosTheta * cosTheta + b * b * sinTheta * sinTheta),
-            y: 2 * Math.sqrt(a * a * sinTheta * sinTheta + b * b * cosTheta * cosTheta)
-        };
-
-        const x = boundingBox.x / 2.0;
-        const y = this.renderHeight - boundingBox.y / 2.0;
-
-        return {center: {x, y}, a, b, theta, boundingBox};
-    }
-
     public getWcsSizeInArcsec(size: Point2D): Point2D {
         const deltaHeader = this.frameInfo.fileInfoExtended.headerEntries.find(entry => entry.name.indexOf("CDELT1") !== -1);
         const unitHeader = this.frameInfo.fileInfoExtended.headerEntries.find(entry => entry.name.indexOf("CUNIT1") !== -1);

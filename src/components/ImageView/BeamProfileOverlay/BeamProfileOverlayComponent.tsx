@@ -2,33 +2,37 @@ import * as React from "react";
 import {observer} from "mobx-react";
 import {Ellipse, Group, Layer, Line, Stage} from "react-konva";
 import {Colors} from "@blueprintjs/core";
-import {BeamType, FrameStore} from "stores";
-import {Point2D} from "models";
+import {AppStore, BeamType, FrameStore} from "stores";
 import "./BeamProfileOverlayComponent.css";
+import { Point2D } from "models";
 
 interface BeamProfileOverlayComponentProps {
-    frame: FrameStore;
     docked: boolean;
     top: number;
     left: number;
     padding?: number;
-    referencedCenter?: Point2D;
+}
+
+interface BeamPlotProps {
+    position: Point2D;
+    a: number;
+    b: number;
+    theta: number;
+    type: BeamType;
+    color: string;
+    axisColor: string;
+    strokeWidth: number;
 }
 
 @observer
 export class BeamProfileOverlayComponent extends React.Component<BeamProfileOverlayComponentProps> {
-    render() {
-        let className = "beam-profile-stage";
-        if (this.props.docked) {
-            className += " docked";
-        }
 
-        const frame = this.props.frame;
-
-        if (!frame.beamProperties) {
+    private getPlotProps = (frame: FrameStore, basePosition?: Point2D): BeamPlotProps => {
+        if (!frame) {
             return null;
         }
 
+        const zoomLevel = frame.spatialReference ? frame.spatialReference.zoomLevel * frame.spatialTransform.scale : frame.zoomLevel;
         const beamSettings = frame.overlayBeamSettings;
         const color = beamSettings.color;
         const axisColor = beamSettings.type === BeamType.Solid ? Colors.WHITE : color;
@@ -37,53 +41,90 @@ export class BeamProfileOverlayComponent extends React.Component<BeamProfileOver
         const paddingOffset = this.props.padding ? this.props.padding * devicePixelRatio : 0;
         const shiftX = beamSettings.shiftX;
         const shiftY = beamSettings.shiftY;
-
-        const a = frame.beamPlotProps.a;
-        const b = frame.beamPlotProps.b;
-        let theta = frame.beamPlotProps.theta;
-
-        let positionX, positionY;
-        if (this.props.referencedCenter) {
-            positionX = this.props.referencedCenter.x + paddingOffset + shiftX;
-            positionY = this.props.referencedCenter.y - paddingOffset - shiftY;
-        } else {
-            positionX = frame.beamPlotProps.center.x + paddingOffset + shiftX;
-            positionY = frame.beamPlotProps.center.y - paddingOffset - shiftY;
+        const a = frame.beamProperties.x / 2.0 * zoomLevel / devicePixelRatio;
+        const b = frame.beamProperties.y / 2.0 * zoomLevel / devicePixelRatio;
+        let theta = (90.0 - frame.beamProperties.angle) * Math.PI / 180.0;
+        if (frame.spatialTransform) {
+            theta -= frame.spatialTransform.rotation;
         }
 
+        // Bounding box of a rotated ellipse: https://math.stackexchange.com/questions/91132/how-to-get-the-limits-of-rotated-ellipse
+        const sinTheta = Math.sin(theta);
+        const cosTheta = Math.cos(theta);
+        const boundingBox = {
+            x: 2 * Math.sqrt(a * a * cosTheta * cosTheta + b * b * sinTheta * sinTheta),
+            y: 2 * Math.sqrt(a * a * sinTheta * sinTheta + b * b * cosTheta * cosTheta)
+        };
+
         // limit the beam inside the beam overlay
-        const rightMost = frame.renderWidth - frame.beamPlotProps.boundingBox.x / 2;
+        const rightMost = frame.renderWidth - boundingBox.x / 2.0;
+        let positionX = basePosition ? basePosition.x : boundingBox.x / 2.0 + paddingOffset + shiftX;
         if (positionX > rightMost) {
             positionX = rightMost;
         }
-        const upMost = frame.beamPlotProps.boundingBox.y / 2;
+        const upMost = boundingBox.y / 2.0;
+        let positionY = basePosition ? basePosition.y : frame.renderHeight - boundingBox.y / 2.0 - paddingOffset - shiftY;
         if (positionY < upMost) {
             positionY = upMost;
         }
 
-        let ellipse;
-        switch (type) {
-            case BeamType.Open:
-            default:
-                ellipse = <Ellipse radiusX={a} radiusY={b} stroke={color} strokeWidth={strokeWidth}/>;
-                break;
-            case  BeamType.Solid:
-                ellipse = <Ellipse radiusX={a} radiusY={b} fill={color} stroke={color} strokeWidth={strokeWidth}/>;
-                break;
+        return {position: {x: positionX, y: positionY}, a, b, theta, type, color, axisColor, strokeWidth};
+    }
+
+    private plotBeam(plotProps: BeamPlotProps) {
+        if (!plotProps) {
+            return null;
         }
 
+        let ellipse;
+        switch (plotProps.type) {
+            case BeamType.Open:
+            default:
+                ellipse = <Ellipse radiusX={plotProps.a} radiusY={plotProps.b} stroke={plotProps.color} strokeWidth={plotProps.strokeWidth}/>;
+                break;
+            case  BeamType.Solid:
+                ellipse = <Ellipse radiusX={plotProps.a} radiusY={plotProps.b} fill={plotProps.color} stroke={plotProps.color} strokeWidth={plotProps.strokeWidth}/>;
+                break;
+        }
         return (
-            <Stage className={className} width={frame.renderWidth} height={frame.renderHeight} style={{left: this.props.left, top: this.props.top}}>
+            <Group
+                x={plotProps.position.x}
+                y={plotProps.position.y}
+                rotation={plotProps.theta * 180.0 / Math.PI}
+            >
+                {plotProps.a > 0 && plotProps.b > 0 && ellipse}
+                <Line points={[-plotProps.a, 0, plotProps.a, 0]} stroke={plotProps.axisColor} strokeWidth={plotProps.strokeWidth}/>
+                <Line points={[0, -plotProps.b, 0, plotProps.b]} stroke={plotProps.axisColor} strokeWidth={plotProps.strokeWidth}/>
+            </Group>
+        );
+    }
+
+    render() {
+        let className = "beam-profile-stage";
+        if (this.props.docked) {
+            className += " docked";
+        }
+
+        const appStore = AppStore.Instance;
+        const baseFrame = appStore.activeFrame?.beamProperties?.overlayBeamSettings?.visible ? appStore.activeFrame : null;
+        const contourFrames = appStore.contourFrames.filter(frame => frame.beamProperties?.overlayBeamSettings?.visible);
+
+        if (!baseFrame && !contourFrames) {
+            return null;
+        }
+
+        const baseBeamPlotProps = this.getPlotProps(baseFrame);
+        const contourBeams = [];
+        contourFrames.forEach(contourFrame => {
+            const plotProps = this.getPlotProps(contourFrame, baseBeamPlotProps ? baseBeamPlotProps.position : null);
+            contourBeams.push(this.plotBeam(plotProps));
+        });
+
+        return (
+            <Stage className={className} width={baseFrame.renderWidth} height={baseFrame.renderHeight} style={{left: this.props.left, top: this.props.top}}>
                 <Layer listening={false}>
-                    <Group
-                        x={positionX}
-                        y={positionY}
-                        rotation={theta * 180.0 / Math.PI}
-                    >
-                        {a > 0 && b > 0 && ellipse}
-                        <Line points={[-a, 0, a, 0]} stroke={axisColor} strokeWidth={strokeWidth}/>
-                        <Line points={[0, -b, 0, b]} stroke={axisColor} strokeWidth={strokeWidth}/>
-                    </Group>
+                    {this.plotBeam(baseBeamPlotProps)}
+                    {contourBeams}
                 </Layer>
             </Stage>
         );
