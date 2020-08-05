@@ -43,7 +43,7 @@ export class RegionWidgetStore {
         this.fileId = fileId;
     }
 
-    @computed get effectiveFrame() {
+    @computed get effectiveFrame(): FrameStore {
         if (this.appStore.activeFrame && this.appStore.frames && this.appStore.frames.length > 0) {
             return this.fileId === ACTIVE_FILE_ID || !this.appStore.getFrame(this.fileId) ? this.appStore.activeFrame : this.appStore.getFrame(this.fileId);
         }
@@ -58,13 +58,13 @@ export class RegionWidgetStore {
     }
 
     @computed get effectiveRegionId() {
-        if (this.appStore.activeFrame) {
+        if (this.effectiveFrame) {
             const regionId = this.regionIdMap.get(this.fileId);
             if (regionId !== RegionId.ACTIVE && regionId !== undefined) {
                 return regionId;
             } else {
-                const selectedRegion = this.appStore.selectedRegion;
-                if (this.matchActiveFrame && selectedRegion) {
+                const selectedRegion = this.effectiveFrame.regionSet.selectedRegion;
+                if (selectedRegion) {
                     return (this.type === RegionsType.CLOSED && !selectedRegion.isClosedRegion) ? RegionId.IMAGE : selectedRegion.regionId;
                 }
             }
