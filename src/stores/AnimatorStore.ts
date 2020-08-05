@@ -1,7 +1,7 @@
 import {action, computed, observable} from "mobx";
 import {CARTA} from "carta-protobuf";
 import {AppStore, FrameStore, PreferenceStore} from "stores";
-import {clamp, GetRequiredTiles} from "utilities";
+import {clamp, GetRequiredTiles, getTransformedChannelList, mapToObject} from "utilities";
 import {FrameView, Point2D} from "models";
 
 export enum AnimationMode {
@@ -90,6 +90,18 @@ export class AnimatorStore {
             compressionQuality: preferenceStore.animationCompressionQuality,
         };
 
+        // Calculate matched frames for the animation range
+        const matchedFrames = new Map<number, CARTA.IMatchedFrameList>();
+        for (const sibling of frame.spectralSiblings) {
+            const frameNumbers = getTransformedChannelList(
+                frame.fullWcsInfo,
+                sibling.fullWcsInfo,
+                preferenceStore.spectralMatchingType,
+                animationFrames.firstFrame.channel,
+                animationFrames.lastFrame.channel);
+            matchedFrames.set(sibling.frameInfo.fileId, {frameNumbers});
+        }
+
         const animationMessage: CARTA.IStartAnimation = {
             fileId: frame.frameInfo.fileId,
             startFrame: animationFrames.startFrame,
@@ -99,7 +111,8 @@ export class AnimatorStore {
             requiredTiles: requiredTiles,
             looping: true,
             reverse: this.playMode === PlayMode.BOUNCING,
-            frameRate: this.frameRate
+            frameRate: this.frameRate,
+            matchedFrames: mapToObject(matchedFrames)
         };
 
         appStore.backendService.startAnimation(animationMessage).subscribe(() => {

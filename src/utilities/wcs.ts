@@ -88,6 +88,40 @@ export function getTransformedChannel(srcTransform: number, destTransform: numbe
     return destPixelValue.z - 1;
 }
 
+export function getTransformedChannelList(srcTransform: number, destTransform: number, matchingType: SpectralType, firstChannel: number, lastChannel: number) {
+    if (matchingType === SpectralType.CHANNEL || firstChannel > lastChannel) {
+        return [];
+    }
+
+    // Set spectral system for both transforms
+    AST.set(srcTransform, `System=${matchingType}, StdOfRest=Helio`);
+    AST.set(destTransform, `System=${matchingType}, StdOfRest=Helio`);
+
+    const N = lastChannel - firstChannel + 1;
+    const destChannels = new Array<number>(N);
+    for (let i = 0; i < N; i++) {
+        // Get spectral value from forward transform. Adjust for 1-based index
+        const sourceSpectralValue = AST.transform3DPoint(srcTransform, 1, 1, firstChannel + i + 1, true);
+        if (!sourceSpectralValue || !isFinite(sourceSpectralValue.z) || isAstBad(sourceSpectralValue.z)) {
+            destChannels[i] = NaN;
+            continue;
+        }
+
+        // Get a sensible pixel coordinate for the reverse transform by forward transforming first pixel in image
+        const dummySpectralValue = AST.transform3DPoint(destTransform, 1, 1, 1, true);
+        // Get pixel value from destination transform (reverse)
+        const destPixelValue = AST.transform3DPoint(destTransform, dummySpectralValue.x, dummySpectralValue.y, sourceSpectralValue.z, false);
+        if (!destPixelValue || !isFinite(destPixelValue.z) || isAstBad(sourceSpectralValue.z)) {
+            destChannels[i] = NaN;
+            continue;
+        }
+
+        // Revert back to 0-based index
+        destChannels[i] = destPixelValue.z - 1;
+    }
+    return destChannels;
+}
+
 export function isAstBad(value: number) {
     return !isFinite(value) || value === -Number.MAX_VALUE;
 }
