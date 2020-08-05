@@ -27,11 +27,13 @@ export const getImageCanvas = (padding: Padding, backgroundColor: string = "rgba
     }
 
     let regionCanvas: HTMLCanvasElement;
-    let beamProfileCanvas: HTMLCanvasElement;
+    let beamProfileCanvases = [];
     let catalogCanvas: HTMLCanvasElement;
     const beamProfileQuery = $(".beam-profile-stage").children().children("canvas");
     if (beamProfileQuery && beamProfileQuery.length) {
-        beamProfileCanvas = beamProfileQuery[0] as HTMLCanvasElement;
+        for (let i = 0; i < beamProfileQuery.length; i++ ) {
+            beamProfileCanvases.push(beamProfileQuery[i] as HTMLCanvasElement);
+        }
     }
 
     const regionQuery = $(".region-stage").children().children("canvas");
@@ -53,8 +55,10 @@ export const getImageCanvas = (padding: Padding, backgroundColor: string = "rgba
     ctx.fillRect(0, 0, composedCanvas.width, composedCanvas.height);
     ctx.drawImage(rasterCanvas, padding.left * devicePixelRatio, padding.top * devicePixelRatio);
     ctx.drawImage(contourCanvas, padding.left * devicePixelRatio, padding.top * devicePixelRatio);
-    if (beamProfileCanvas) {
-        ctx.drawImage(beamProfileCanvas, padding.left * devicePixelRatio, padding.top * devicePixelRatio);
+    if (beamProfileCanvases) {
+        beamProfileCanvases.forEach( beamProfileCanvas => {
+            ctx.drawImage(beamProfileCanvas, padding.left * devicePixelRatio, padding.top * devicePixelRatio);
+        });
     }
 
     if (regionCanvas) {
