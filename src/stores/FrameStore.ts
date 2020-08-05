@@ -2,7 +2,7 @@ import {action, autorun, computed, observable} from "mobx";
 import {NumberRange} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import * as AST from "ast_wrapper";
-import {AppStore, ASTSettingsString, ContourConfigStore, ContourStore, LogStore, OverlayBeamStore, OverlayStore, PreferenceStore, RegionSetStore, RenderConfigStore} from "stores";
+import {AnimatorStore, AppStore, ASTSettingsString, ContourConfigStore, ContourStore, LogStore, OverlayBeamStore, OverlayStore, PreferenceStore, RegionSetStore, RenderConfigStore} from "stores";
 import {
     CHANNEL_TYPES,
     ChannelInfo,
@@ -49,7 +49,7 @@ export const WCS_PRECISION = 10;
 export class FrameStore {
     private astFrameSet: number;
     private spectralFrame: number;
-    public spectralCoordsSupported: Map<string, {type: SpectralType, unit: SpectralUnit}>;
+    public spectralCoordsSupported: Map<string, { type: SpectralType, unit: SpectralUnit }>;
     public spectralSystemsSupported: Array<SpectralSystem>;
 
     @observable frameInfo: FrameInfo;
@@ -400,7 +400,7 @@ export class FrameStore {
         return spectralInfo;
     }
 
-    @computed get spectralAxis(): {valid: boolean; dimension: number, type: ChannelType} {
+    @computed get spectralAxis(): { valid: boolean; dimension: number, type: ChannelType } {
         if (!this.frameInfo || !this.frameInfo.fileInfoExtended || this.frameInfo.fileInfoExtended.depth <= 1 || !this.frameInfo.fileInfoExtended.headerEntries) {
             return undefined;
         }
@@ -495,11 +495,13 @@ export class FrameStore {
         }
     }
 
-    @computed private get zoomLevelForFit() {
+    @computed
+    private get zoomLevelForFit() {
         return Math.min(this.calculateZoomX, this.calculateZoomY);
     }
 
-    @computed private get calculateZoomX() {
+    @computed
+    private get calculateZoomX() {
         const imageWidth = this.frameInfo.fileInfoExtended.width;
         const pixelRatio = this.renderHiDPI ? devicePixelRatio : 1.0;
 
@@ -509,7 +511,8 @@ export class FrameStore {
         return this.renderWidth * pixelRatio / imageWidth;
     }
 
-    @computed private get calculateZoomY() {
+    @computed
+    private get calculateZoomY() {
         const imageHeight = this.frameInfo.fileInfoExtended.height;
         const pixelRatio = this.renderHiDPI ? devicePixelRatio : 1.0;
         if (imageHeight <= 0) {
@@ -844,7 +847,7 @@ export class FrameStore {
     @action private initSupportedSpectralConversion = () => {
         if (this.spectralAxis && !this.spectralAxis.valid) {
             this.channelValues = this.channelInfo.values;
-            this.spectralCoordsSupported = new Map<string, {type: SpectralType, unit: SpectralUnit}>([
+            this.spectralCoordsSupported = new Map<string, { type: SpectralType, unit: SpectralUnit }>([
                 [this.nativeSpectralCoordinate, {type: null, unit: null}],
                 [SPECTRAL_TYPE_STRING.get(SpectralType.CHANNEL), {type: SpectralType.CHANNEL, unit: null}]
             ]);
@@ -865,7 +868,7 @@ export class FrameStore {
             if (restFrqHeader) {
                 this.spectralCoordsSupported = SPECTRAL_COORDS_SUPPORTED;
             } else {
-                this.spectralCoordsSupported = new Map<string, {type: SpectralType, unit: SpectralUnit}>();
+                this.spectralCoordsSupported = new Map<string, { type: SpectralType, unit: SpectralUnit }>();
                 Array.from(SPECTRAL_COORDS_SUPPORTED.keys()).forEach((key: string) => {
                     const value = SPECTRAL_COORDS_SUPPORTED.get(key);
                     const isVolecity = spectralType === SpectralType.VRAD || spectralType === SpectralType.VOPT;
@@ -880,7 +883,7 @@ export class FrameStore {
                 this.spectralCoordsSupported.set(SPECTRAL_TYPE_STRING.get(SpectralType.CHANNEL), {type: SpectralType.CHANNEL, unit: null});
             }
         } else {
-            this.spectralCoordsSupported = new Map<string, {type: SpectralType, unit: SpectralUnit}>([
+            this.spectralCoordsSupported = new Map<string, { type: SpectralType, unit: SpectralUnit }>([
                 [SPECTRAL_TYPE_STRING.get(SpectralType.CHANNEL), {type: SpectralType.CHANNEL, unit: null}]
             ]);
         }
@@ -1031,6 +1034,12 @@ export class FrameStore {
         }
         this.stokes = processedData.stokes;
         this.channel = processedData.channel;
+
+        const animatorStore = AnimatorStore.Instance;
+        if (animatorStore.serverAnimationActive) {
+            this.requiredChannel = processedData.channel;
+            this.requiredStokes = processedData.stokes;
+        }
 
         for (const contourSet of processedData.contourSets) {
             let contourStore = this.contourStores.get(contourSet.level);

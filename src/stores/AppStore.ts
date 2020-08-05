@@ -1098,7 +1098,7 @@ export class AppStore {
     };
 
     @action handleTileStream = (tileStreamDetails: TileStreamDetails) => {
-        if (this.animatorStore.animationState === AnimationState.PLAYING && this.animatorStore.animationMode !== AnimationMode.FRAME) {
+        if (this.animatorStore.serverAnimationActive) {
             // Flow control
             const flowControlMessage: CARTA.IAnimationFlowControl = {
                 fileId: tileStreamDetails.fileId,

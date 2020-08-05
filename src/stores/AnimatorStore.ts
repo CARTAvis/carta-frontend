@@ -161,7 +161,7 @@ export class AnimatorStore {
     };
 
     @action animate = () => {
-        if (this.animationState === AnimationState.PLAYING && this.animationMode === AnimationMode.FRAME) {
+        if (this.serverAnimationActive) {
             // Do animation
             AppStore.Instance.nextFrame();
         }
@@ -182,6 +182,10 @@ export class AnimatorStore {
 
     @computed get frameInterval() {
         return 1000.0 / clamp(this.frameRate, this.minFrameRate, this.maxFrameRate);
+    }
+
+    @computed get serverAnimationActive() {
+        return this.animationState === AnimationState.PLAYING && this.animationMode !== AnimationMode.FRAME;
     }
 
     private genAnimationFrames = (frame: FrameStore): {
