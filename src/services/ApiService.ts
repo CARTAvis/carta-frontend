@@ -351,7 +351,7 @@ export class ApiService {
         if (ApiService.RuntimeConfig.apiAddress) {
             try {
                 const url = `${ApiService.RuntimeConfig.apiAddress}/database/layout`;
-                const response = await this.axiosInstance.delete(url, {data: layoutName});
+                const response = await this.axiosInstance.delete(url, {data: {layoutName}});
                 return response?.data?.success;
             } catch (err) {
                 console.log(err);
