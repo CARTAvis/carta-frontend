@@ -14,6 +14,7 @@ interface BeamProfileOverlayComponentProps {
 }
 
 interface BeamPlotProps {
+    id: number;
     position: Point2D;
     a: number;
     b: number;
@@ -32,6 +33,7 @@ export class BeamProfileOverlayComponent extends React.Component<BeamProfileOver
             return null;
         }
 
+        const id = frame.frameInfo.fileId;
         const zoomLevel = frame.spatialReference ? frame.spatialReference.zoomLevel * frame.spatialTransform.scale : frame.zoomLevel;
         const beamSettings = frame.overlayBeamSettings;
         const color = beamSettings.color;
@@ -68,7 +70,7 @@ export class BeamProfileOverlayComponent extends React.Component<BeamProfileOver
             positionY = upMost;
         }
 
-        return {position: {x: positionX, y: positionY}, a, b, theta, type, color, axisColor, strokeWidth};
+        return {id, position: {x: positionX, y: positionY}, a, b, theta, type, color, axisColor, strokeWidth};
     }
 
     private plotBeam(plotProps: BeamPlotProps) {
@@ -91,6 +93,7 @@ export class BeamProfileOverlayComponent extends React.Component<BeamProfileOver
                 x={plotProps.position.x}
                 y={plotProps.position.y}
                 rotation={plotProps.theta * 180.0 / Math.PI}
+                key={plotProps.id}
             >
                 {plotProps.a > 0 && plotProps.b > 0 && ellipse}
                 <Line points={[-plotProps.a, 0, plotProps.a, 0]} stroke={plotProps.axisColor} strokeWidth={plotProps.strokeWidth}/>
@@ -106,10 +109,10 @@ export class BeamProfileOverlayComponent extends React.Component<BeamProfileOver
         }
 
         const appStore = AppStore.Instance;
-        const baseFrame = appStore.activeFrame?.beamProperties?.overlayBeamSettings?.visible ? appStore.activeFrame : null;
-        const contourFrames = appStore.contourFrames.filter(frame => frame.beamProperties?.overlayBeamSettings?.visible);
+        const baseFrame = appStore.activeFrame;
+        const contourFrames = appStore.contourFrames.filter(frame => frame.frameInfo.fileId !== appStore.activeFrame.frameInfo.fileId && frame.beamProperties?.overlayBeamSettings?.visible);
 
-        if (!baseFrame && !contourFrames) {
+        if (!baseFrame.beamProperties?.overlayBeamSettings?.visible && !contourFrames.length) {
             return null;
         }
 
