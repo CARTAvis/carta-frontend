@@ -266,10 +266,6 @@ export class HistogramComponent extends React.Component<WidgetProps> {
         }
 
         let className = "histogram-widget";
-        if (this.widgetStore.matchesSelectedRegion) {
-            className += " linked-to-selected";
-        }
-
         if (appStore.darkTheme) {
             className += " dark-theme";
         }

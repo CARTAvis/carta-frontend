@@ -29,7 +29,7 @@ export class SpectralProfilerToolbarComponent extends React.Component<{ widgetSt
 
         let enableStatsSelect = false;
         let enableStokesSelect = false;
-        let stokesClassName = "";
+        let stokesClassName = "unlinked-to-selected";
         let regionId = 0;
         const profileCoordinateOptions = [{value: "z", label: "Current"}];
         
@@ -43,8 +43,8 @@ export class SpectralProfilerToolbarComponent extends React.Component<{ widgetSt
             const stokesInfo = widgetStore.effectiveFrame.stokesInfo;
             stokesInfo.forEach(stokes => profileCoordinateOptions.push({value: `${stokes}z`, label: stokes}));
 
-            const linkedClass = "linked-to-selected";
-            if (enableStokesSelect && widgetStore.matchActiveFrame && (widgetStore.coordinate === "z" || widgetStore.coordinate === stokesInfo[widgetStore.effectiveFrame.requiredStokes] + "z")) {
+            const linkedClass = "linked-to-selected-stokes";
+            if (enableStokesSelect && widgetStore.matchActiveFrame && (widgetStore.coordinate === stokesInfo[widgetStore.effectiveFrame.requiredStokes] + "z")) {
                 stokesClassName = AppStore.Instance.darkTheme ? `${linkedClass} dark-theme` : linkedClass;
             }
         }

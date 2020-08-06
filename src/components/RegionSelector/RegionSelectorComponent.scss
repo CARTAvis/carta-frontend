@@ -10,6 +10,10 @@
     }
 }
 
+.unlinked-to-selected {
+    border: 1px solid transparent;
+}
+
 .linked-to-selected {
     border: 1px solid $blue2;
 

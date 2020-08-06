@@ -9,16 +9,6 @@
 
     user-select: none;
 
-    &.linked-to-selected {
-        border: 1px solid $blue2;
-
-        &.dark-theme {
-            border: 1px solid $blue4;
-        }
-
-        transition: border 250ms linear;
-    }
-
     .stats-toolbar {
         overflow: hidden;
         display: flex;

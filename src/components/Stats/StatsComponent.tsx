@@ -172,10 +172,6 @@ export class StatsComponent extends React.Component<WidgetProps> {
         }
 
         let className = "stats-widget";
-        if (this.widgetStore.matchesSelectedRegion) {
-            className += " linked-to-selected";
-        }
-
         if (appStore.darkTheme) {
             className += " dark-theme";
         }
