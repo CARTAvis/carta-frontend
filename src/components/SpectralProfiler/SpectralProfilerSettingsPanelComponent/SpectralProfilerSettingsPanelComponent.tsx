@@ -171,7 +171,7 @@ export class SpectralProfilerSettingsPanelComponent extends React.Component<Widg
                     <Tab id={SpectralProfilerSettingsTabs.CONVERSION} panelClassName="conversion-tab-panel" title="Conversion" panel={<SpectralSettingsComponent widgetStore={widgetStore} disable={false}/>}/>
                     <Tab id={SpectralProfilerSettingsTabs.STYLING} panelClassName="styling-tab-panel" title="Styling" panel={<LinePlotSettingsPanelComponent {...lineSettingsProps}/>}/>
                     <Tab id={SpectralProfilerSettingsTabs.SMOOTHING} title="Smoothing" panel={<SmoothingSettingsComponent smoothingStore={widgetStore.smoothingStore}/>}/>
-                    <Tab id={SpectralProfilerSettingsTabs.MOMENT} panelClassName="moment-tab-panel" title="Moments" panel={<MomentGeneratorComponent widgetStore={widgetStore}/>}/>
+                    <Tab id={SpectralProfilerSettingsTabs.MOMENTS} panelClassName="moment-tab-panel" title="Moments" panel={<MomentGeneratorComponent widgetStore={widgetStore}/>}/>
                 </Tabs>
             </div>
         );

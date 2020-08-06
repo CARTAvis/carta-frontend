@@ -19,7 +19,7 @@ export enum SpectralProfilerSettingsTabs {
     CONVERSION,
     STYLING,
     SMOOTHING,
-    MOMENT
+    MOMENTS
 }
 
 export class SpectralProfileWidgetStore extends RegionWidgetStore {

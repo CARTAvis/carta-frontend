@@ -26,7 +26,7 @@ export class SpectralProfilerToolbarComponent extends React.Component<{ widgetSt
     }
 
     private momentsShortcutClick = () => {
-        this.props.widgetStore.setSettingsTabId(SpectralProfilerSettingsTabs.MOMENT);
+        this.props.widgetStore.setSettingsTabId(SpectralProfilerSettingsTabs.MOMENTS);
         AppStore.Instance.widgetsStore.createFloatingSettingsWidget(SpectralProfilerComponent.WIDGET_CONFIG.title, this.props.id, SpectralProfilerComponent.WIDGET_CONFIG.type);
     }
 
