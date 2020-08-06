@@ -1,16 +1,22 @@
 import * as React from "react";
 import {Icon} from "@blueprintjs/core";
+import {AppStore} from "stores";
+import "./CustomIcons.css";
 
-export declare type CustomIconName = "contour" | "center" | "regionList" | "spatialProfiler" | "spectralProfiler" | "stokes" | "spectralLineQuery";
+export declare type CustomIconName = "contour" | "center" | "regionList" | "spatialProfiler" | "spectralProfiler" | "stokes" | "spectralLineQuery" | "smoothing" | "moments";
 
 export class CustomIcon extends React.Component<{ icon: CustomIconName, size?: number }> {
     static readonly SIZE_STANDARD = 16;
     static readonly SIZE_LARGE = 20;
 
     public render() {
+        let className = "custom-icon bp3-icon";
+        if (AppStore.Instance.darkTheme) {
+            className += " dark-theme";
+        }
         const size = (this.props.size ? this.props.size : CustomIcon.SIZE_STANDARD) + "px";
         const content = (
-            <span className="bp3-icon">
+            <span className={className}>
                 <svg width={size} height={size} viewBox="0 0 16 16">
                     {icons[this.props.icon]}
                 </svg>
@@ -138,6 +144,23 @@ const spectralLineQuerySvg = (
     />
 );
 
+const profileSmoothingSvg = (
+    <path
+        strokeWidth="2.42095"
+        strokeLinecap="round"
+        fill="none"
+        d="M 1.413244,14.6062 H 3.9277429 V 8.378223 H 6.9751347 V 1.4946692 H 9.5085614 L 14.575415,14.576401"
+    />
+);
+
+const momentGeneratorSvg = (
+    <path
+        fillRule="evenodd"
+        clipRule="evenodd"
+        d="M 0.81609227,1.2562455 V 14.58427 H 3.5600972 V 5.2322526 h 0.037333 L 6.8641032,14.58427 H 9.1227739 L 12.389446,5.1389191 h 0.03733 V 14.58427 h 2.744005 V 1.2562455 H 11.045444 L 8.0961054,10.421595 H 8.058772 L 4.941433,1.2562455 Z"
+    />
+);
+
 const icons = {
     contour: contourSvg,
     center: centerSvg,
@@ -145,5 +168,7 @@ const icons = {
     spatialProfiler: spatialProfilerSvg,
     spectralProfiler: spectralProfilerSvg,
     stokes: stokesSvg,
-    spectralLineQuery: spectralLineQuerySvg
+    spectralLineQuery: spectralLineQuerySvg,
+    smoothing: profileSmoothingSvg,
+    moments: momentGeneratorSvg
 };

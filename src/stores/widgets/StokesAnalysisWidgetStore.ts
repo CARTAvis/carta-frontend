@@ -21,6 +21,13 @@ export enum StokesCoordinate {
     PolarizationQU = "QvsU",
 }
 
+export enum StokesAnalysisSettingsTabs {
+    CONVERSION,
+    LINE_PLOT_STYLING,
+    SCATTER_PLOT_STYLING,
+    SMOOTHING,
+}
+
 const DEFAULTS = {
         fractionalPolVisible: false,
         scatterOutRangePointsZIndex: [],
@@ -70,6 +77,7 @@ export class StokesAnalysisWidgetStore extends RegionWidgetStore {
     @observable colorPixel: { color: Uint8ClampedArray, size: number };
     @observable pointTransparency: number;
     readonly smoothingStore: ProfileSmoothingStore;
+    @observable settingsTabId: StokesAnalysisSettingsTabs;
     
     private static requestDataType = [StokesCoordinate.LinearPolarizationQ, StokesCoordinate.LinearPolarizationU];
     private static ValidStatsTypes = [
@@ -233,6 +241,7 @@ export class StokesAnalysisWidgetStore extends RegionWidgetStore {
         this.equalAxes = DEFAULTS.equalAxes;
         this.pointTransparency = DEFAULTS.pointTransparency;
         this.smoothingStore = new ProfileSmoothingStore();
+        this.settingsTabId = StokesAnalysisSettingsTabs.CONVERSION;
     }
 
     @action setQUScatterPlotXBounds = (minVal: number, maxVal: number) => {
@@ -346,6 +355,10 @@ export class StokesAnalysisWidgetStore extends RegionWidgetStore {
         if (val >= ScatterSettings.MIN_TRANSPARENCY && val <= ScatterSettings.MAX_TRANSPARENCY) {
             this.pointTransparency = val;   
         }
+    }
+
+    @action setSettingsTabId = (tabId: StokesAnalysisSettingsTabs) => {
+        this.settingsTabId = tabId;
     }
 
     @computed get isLinePlotsAutoScaledX() {

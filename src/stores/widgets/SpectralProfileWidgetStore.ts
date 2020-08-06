@@ -15,6 +15,13 @@ export enum MomentSelectingMode {
     MASK
 }
 
+export enum SpectralProfilerSettingsTabs {
+    CONVERSION,
+    STYLING,
+    SMOOTHING,
+    MOMENT
+}
+
 export class SpectralProfileWidgetStore extends RegionWidgetStore {
     @observable coordinate: string;
     @observable statsType: CARTA.StatsType;
@@ -38,6 +45,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
     @observable linePlotPointSize: number;
     @observable linePlotInitXYBoundaries: { minXVal: number, maxXVal: number, minYVal: number, maxYVal: number };
     readonly smoothingStore: ProfileSmoothingStore;
+    @observable settingsTabId: SpectralProfilerSettingsTabs;
 
     // moment settings
     @observable selectingMode: MomentSelectingMode;
@@ -290,6 +298,10 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         this.isStreamingData = val;
     };
 
+    @action setSettingsTabId = (tabId: SpectralProfilerSettingsTabs) => {
+        this.settingsTabId = tabId;
+    };
+
     constructor(coordinate: string = "z") {
         super(RegionsType.CLOSED_AND_POINT);
         this.coordinate = coordinate;
@@ -313,6 +325,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         this.momentMask = CARTA.MomentMask.None;
         this.maskRange = [0, 1];
         this.selectedMoments = [CARTA.Moment.INTEGRATED_OF_THE_SPECTRUM];
+        this.settingsTabId = SpectralProfilerSettingsTabs.CONVERSION;
 
         autorun(() => {
             if (AppStore.Instance.activeFrame) {
