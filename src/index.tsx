@@ -1,7 +1,10 @@
 import * as React from "react";
 import * as ReactDOM from "react-dom";
+import axios from "axios";
 import {FocusStyleManager} from "@blueprintjs/core";
 import {App} from "./App";
+import {ApiService} from "./services";
+
 import {unregister} from "./registerServiceWorker";
 import "./index.css";
 import "@blueprintjs/core/lib/css/blueprint.css";
@@ -28,10 +31,22 @@ FocusStyleManager.onlyShowFocusOnTabs();
 window["React"] = React; // tslint:disable-line
 window["ReactDOM"] = ReactDOM; // tslint:disable-line
 
-ReactDOM.render(
-    <App/>,
-    document.getElementById("root") as HTMLElement
-);
+async function fetchConfig() {
+    const baseUrl = window.location.href.replace(window.location.search, "");
+    const configUrl = baseUrl + (baseUrl.endsWith("/") ? "" : "/") + "config";
+    try {
+        const res = await axios.get(configUrl);
+        ApiService.SetRuntimeConfig(res?.data);
+    } catch (e) {
+        console.log("No runtime config provided. Using default configuration");
+        ApiService.SetRuntimeConfig({});
+    }
+    ReactDOM.render(<App/>, document.getElementById("root") as HTMLElement
+    );
+}
 
+fetchConfig().then(() => {
+    console.log("Configuration complete. Rendering frontend");
+});
 // remove service worker if it exists
 unregister();
