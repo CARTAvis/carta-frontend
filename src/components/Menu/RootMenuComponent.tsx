@@ -16,8 +16,7 @@ export class RootMenuComponent extends React.Component {
     private documentationAlertTimeoutHandle;
 
     private handleDashboardClicked = () => {
-        const appStore = AppStore.Instance;
-        appStore.dialogStore.showExternalPageDialog(`${ApiService.RuntimeConfig.dashboardAddress}?popup=1`, "Dashboard");
+        window.open(ApiService.RuntimeConfig.dashboardAddress, "_blank");
     };
 
     render() {
@@ -33,7 +32,7 @@ export class RootMenuComponent extends React.Component {
         let serverMenu: React.ReactNode[] = [];
 
         const apiService = appStore.apiService;
-        if (apiService.authenticated) {
+        if (apiService.authenticated && ApiService.RuntimeConfig.apiAddress) {
             serverMenu.push(
                 <Menu.Item
                     key="restart"
@@ -43,7 +42,7 @@ export class RootMenuComponent extends React.Component {
                 />
             );
         }
-        if (ApiService.RuntimeConfig.logoutAddress) {
+        if (ApiService.RuntimeConfig.logoutAddress || ApiService.RuntimeConfig.googleClientId) {
             serverMenu.push(
                 <Menu.Item
                     key="logout"
@@ -60,6 +59,18 @@ export class RootMenuComponent extends React.Component {
                     text="Dashboard"
                     onClick={this.handleDashboardClicked}
                 />
+            );
+        }
+
+        let serverSubMenu: React.ReactNode;
+        if (serverMenu.length) {
+            serverSubMenu = (
+                <React.Fragment>
+                    <Menu.Divider/>
+                    <Menu.Item text="Server">
+                        {serverMenu}
+                    </Menu.Item>
+                </React.Fragment>
             );
         }
 
@@ -109,14 +120,7 @@ export class RootMenuComponent extends React.Component {
                     onClick={appStore.exportImage}
                 />
                 <Menu.Item text="Preferences" onClick={appStore.dialogStore.showPreferenceDialog} disabled={appStore.preferenceStore.supportsServer && connectionStatus !== ConnectionStatus.ACTIVE}/>
-                {serverMenu.length &&
-                <React.Fragment>
-                    <Menu.Divider/>
-                    <Menu.Item text="Server">
-                        {serverMenu}
-                    </Menu.Item>
-                </React.Fragment>
-                }
+                {serverSubMenu}
             </Menu>
         );
 
