@@ -413,7 +413,7 @@ export class WidgetsStore {
         layout.registerComponent("catalog-overlay", CatalogOverlayComponent);
         layout.registerComponent("catalog-scatter", CatalogSubplotComponent);
 
-        const showCogWidgets = ["spatial-profiler", "spectral-profiler", "histogram", "render-config", "stokes"];
+        const showCogWidgets = ["image-view", "spatial-profiler", "spectral-profiler", "histogram", "render-config", "stokes"];
         // add drag source buttons from ToolbarMenuComponent
         ToolbarMenuComponent.DRAGSOURCE_WIDGETCONFIG_MAP.forEach((widgetConfig, id) => WidgetsStore.CreateDragSource(layout, widgetConfig, id));
 
@@ -479,6 +479,11 @@ export class WidgetsStore {
         const parentId = parentItemConfig.id as string;
         const parentType = parentItemConfig.component;
         const parentTitle = parentItemConfig.title;
+
+        if (parentType === ImageViewComponent.WIDGET_CONFIG.type) {
+            AppStore.Instance.dialogStore.showOverlaySettings();
+            return;
+        }
 
         // apply for stokes, spectral profiler, spatial profiler, Render Config, Histogram
         const floatingSettingsApplyedWidgets = [
