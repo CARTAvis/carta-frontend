@@ -28,7 +28,7 @@ export class SpatialProfileWidgetStore {
     @observable linePlotInitXYBoundaries: { minXVal: number, maxXVal: number, minYVal: number, maxYVal: number };
     readonly smoothingStore: ProfileSmoothingStore;
 
-    private static ValidCoordinates = ["x", "y", "Ix", "Iy", "Qx", "Qy", "Ux", "Uy", "Vx", "Vz"];
+    private static ValidCoordinates = ["x", "y", "Ix", "Iy", "Qx", "Qy", "Ux", "Uy", "Vx", "Vy"];
 
     @action setFileId = (fileId: number) => {
         // Reset zoom when changing between files
