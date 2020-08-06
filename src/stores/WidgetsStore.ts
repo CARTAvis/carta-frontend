@@ -471,7 +471,7 @@ export class WidgetsStore {
                 break;
         }
 
-        return widgetStore &&  widgetStore.toConfig ? widgetStore.toConfig() : null;
+        return widgetStore?.toConfig?.();
     };
 
     @action onCogPinedClick = (item: GoldenLayout.ContentItem) => {
