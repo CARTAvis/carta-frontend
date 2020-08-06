@@ -23,7 +23,7 @@ import {
     RenderConfigSettingsPanelComponent,
     HistogramSettingsPanelComponent
 } from "components";
-import {WidgetConfig, WidgetsStore} from "stores";
+import {WidgetConfig, WidgetsStore, CatalogStore} from "stores";
 
 @observer
 export class FloatingWidgetManagerComponent extends React.Component {
@@ -40,6 +40,11 @@ export class FloatingWidgetManagerComponent extends React.Component {
             case CatalogOverlayComponent.WIDGET_CONFIG.type:
                 // remove widget component only
                 widgetsStore.removeFloatingWidgetComponent(widget.componentId);
+                CatalogStore.Instance.catalogProfiles.delete(widget.componentId);
+                break;
+            case CatalogPlotComponent.WIDGET_CONFIG.type:
+                widgetsStore.removeFloatingWidgetComponent(widget.componentId);
+                CatalogStore.Instance.clearCatalogPlotsByComponentId(widget.componentId);
                 break;
             default:
                 widgetsStore.removeFloatingWidget(widget.id);

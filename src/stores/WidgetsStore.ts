@@ -1,7 +1,7 @@
 import * as GoldenLayout from "golden-layout";
 import * as $ from "jquery";
 import {CARTA} from "carta-protobuf";
-import {action, observable, computed} from "mobx";
+import {action, observable, computed, ObservableMap} from "mobx";
 import {
     AnimatorComponent,
     HistogramComponent,
@@ -569,15 +569,22 @@ export class WidgetsStore {
     @action handleItemRemoval = (item: GoldenLayout.ContentItem) => {
         if (item.config.type === "component") {
             const config = item.config as GoldenLayout.ReactComponentConfig;
-
+            const isCatalogTable = config.component === CatalogOverlayComponent.WIDGET_CONFIG.type;
+            const isCatalogPlot = config.component === CatalogPlotComponent.WIDGET_CONFIG.type;
             // Clean up removed widget's store (ignoring items that have been floated)
-            if (config.component !== "floated" && config.component !== CatalogOverlayComponent.WIDGET_CONFIG.type) {
+            if (config.component !== "floated" && !isCatalogTable && !isCatalogPlot) {
                 const id = config.id as string;
                 this.removeWidget(id, config.component);
             }
 
-            if (config.component === CatalogOverlayComponent.WIDGET_CONFIG.type) {
+            // close UI, keep catalog file alive
+            if (isCatalogTable) {
                 CatalogStore.Instance.catalogProfiles.delete(config.id as string);
+            }
+
+            // remove all catalog plots associated to current catalog plot widget
+            if (isCatalogPlot) {
+                CatalogStore.Instance.clearCatalogPlotsByWidgetId(config.id as string);
             }
         }
     };
@@ -755,12 +762,18 @@ export class WidgetsStore {
         const floatingCatalogWidgets = this.getFloatingWidgetByComponentId(config.componentId);
         const dockedCatalogWidgets = this.getDockedWidgetByType(config.type);
         
-        floatingCatalogWidgets.forEach(floatingConfig => {
-            componentIds.push(floatingConfig.componentId);
-        });
-        dockedCatalogWidgets.forEach(contentItem => {
-            componentIds.push(contentItem.config.id);
-        });
+        if (config.type === CatalogPlotComponent.WIDGET_CONFIG.type) {
+            CatalogStore.Instance.catalogPlots.forEach((catalogWidgetMap, componentId) => {
+                componentIds.push(componentId);
+            });
+        } else {
+            floatingCatalogWidgets.forEach(floatingConfig => {
+                componentIds.push(floatingConfig.componentId);
+            });
+            dockedCatalogWidgets.forEach(contentItem => {
+                componentIds.push(contentItem.config.id);
+            });
+        }
         
         while (true) {
             const nextId = `${config.componentId}-${nextIndex}`;
@@ -839,15 +852,20 @@ export class WidgetsStore {
     }
     // endregion 
 
-    // region Catalog Scatter Widgets
-    createFloatingCatalogScatterWidget = (props: CatalogPlotWidgetStoreProps): string => {
+    // region Catalog Plot Widgets
+
+    createFloatingCatalogPlotWidget = (props: CatalogPlotWidgetStoreProps): {widgetStoreId: string, widgetComponentId: string} => {
         let config = CatalogPlotComponent.WIDGET_CONFIG;
-        config.id = this.addCatalogScatterWidget(props);
+        const widgetStoreId = this.addCatalogPlotWidget(props);
+        const widgetComponentId = this.getNextComponentId(config);
+        config.id = widgetStoreId;
+        // config.id = widgetComponentId;
+        config.componentId = widgetComponentId;
         this.addFloatingWidget(config);
-        return config.id;
+        return {widgetStoreId: widgetStoreId, widgetComponentId: widgetComponentId};  
     };
 
-    @action addCatalogScatterWidget(props: CatalogPlotWidgetStoreProps, id: string = null) {
+    @action addCatalogPlotWidget(props: CatalogPlotWidgetStoreProps, id: string = null) {
         // Generate new id if none passed in
         if (!id) {
             id = this.getNextId(CatalogPlotComponent.WIDGET_CONFIG.type);
@@ -858,6 +876,25 @@ export class WidgetsStore {
         }
         return id;
     }
+
+    // createFloatingCatalogPlotWidget = (props: CatalogPlotWidgetStoreProps): string => {
+    //     let config = CatalogPlotComponent.WIDGET_CONFIG;
+    //     config.id = this.addCatalogPlotWidget(props);
+    //     this.addFloatingWidget(config);
+    //     return config.id;
+    // };
+
+    // @action addCatalogPlotWidget(props: CatalogPlotWidgetStoreProps, id: string = null) {
+    //     // Generate new id if none passed in
+    //     if (!id) {
+    //         id = this.getNextId(CatalogPlotComponent.WIDGET_CONFIG.type);
+    //     }
+
+    //     if (id) {
+    //         this.catalogPlotWidgets.set(id, new CatalogPlotWidgetStore(props));
+    //     }
+    //     return id;
+    // }
     // endregion
 
     // region Spectral Line Query Widgets
@@ -1110,15 +1147,15 @@ export class WidgetsStore {
                 return;
             }
 
-            if (widget.type === CatalogOverlayComponent.WIDGET_CONFIG.type) {
-                return;
-            }
+            // if (widget.type === CatalogOverlayComponent.WIDGET_CONFIG.type) {
+            //     return;
+            // }
             
             // update catalogOverlayWidgetStore with associated catalog plots store.
-            const catalogScatterWidget = this.catalogPlotWidgets.get(id);
-            if (catalogScatterWidget) {
-                catalogScatterWidget.catalogOverlayWidgetStore.updateCatalogScatterWidget(id);
-            }
+            // const catalogPlotWidget = this.catalogPlotWidgets.get(id);
+            // if (catalogPlotWidget) {
+            //     catalogPlotWidget.catalogOverlayWidgetStore.updateCatalogPlotWidget(id);
+            // }
 
             this.removeWidget(id, widget.type);
         }
@@ -1127,12 +1164,10 @@ export class WidgetsStore {
 
     // remove a widget component by componentId
     @action removeFloatingWidgetComponent = (componentId: string) => {
-
         const widget = this.floatingWidgets.find(w => w.componentId === componentId);
         if (widget) {
             this.updateFloatingWidgetzIndexOnRemove(widget.zIndex);
             this.floatingWidgets = this.floatingWidgets.filter(w => w.componentId !== componentId);
-            CatalogStore.Instance.catalogProfiles.delete(componentId);
         }
     }
 }

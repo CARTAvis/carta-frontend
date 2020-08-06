@@ -179,7 +179,7 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
             </Menu>
         );
 
-        const catalogOverlayEnabled = this.props.activeLayer === ImageViewLayer.Catalog;
+        const catalogOverlayEnabled = appStore.activeLayer === ImageViewLayer.Catalog;
         const catalogSelectionDisabled = appStore.catalogs.size === 0;
 
         return (

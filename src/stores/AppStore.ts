@@ -613,25 +613,10 @@ export class AppStore {
     @action removeCatalog(catalogWidgetId: string, catalogComponentId?: string) {
         const fileId = this.catalogs.get(catalogWidgetId);
         if (fileId > -1 && this.backendService.closeCatalogFile(fileId)) {
-            // close all associated scatter widgets
-            const config = CatalogPlotComponent.WIDGET_CONFIG;
-            const catalogOverlayWidgetStore = this.widgetsStore.catalogOverlayWidgets.get(catalogWidgetId);
-            let dockedCatalogPlotWidgets = this.widgetsStore.getDockedWidgetByType(config.type);
-            const dockedScatterWidgetId = dockedCatalogPlotWidgets.map(contentItem => {
-                return contentItem.config.id;
-            });
-            if (catalogOverlayWidgetStore.catalogPlotWidgetsId.length) {
-                catalogOverlayWidgetStore.catalogPlotWidgetsId.forEach(scatterWidgetsId => {
-                    if (dockedScatterWidgetId.includes(scatterWidgetsId)) {
-                        LayoutStore.Instance.dockedLayout.root.getItemsById(scatterWidgetsId)[0].remove();
-                    } else {
-                        this.widgetsStore.removeFloatingWidget(scatterWidgetsId);
-                    }
-                });
-            }
-
-            // remove catalog overlay widget store, remove catalog from image viewer
             const catalogStore = CatalogStore.Instance;
+            // close all associated catalog plots widgets
+            catalogStore.clearCatalogPlotsByFileId(fileId);
+            // remove catalog overlay widget store, remove catalog from image viewer
             this.catalogs.delete(catalogWidgetId);
             this.widgetsStore.catalogOverlayWidgets.delete(catalogWidgetId);
             catalogStore.removeCatalog(catalogWidgetId);
@@ -655,7 +640,7 @@ export class AppStore {
                         catalogStore.catalogProfiles.set(componentId, associatedCatalogId[0]);
                     }
                 });
-            } 
+            }
         }
     }
 
@@ -1225,24 +1210,6 @@ export class AppStore {
                     const coords = catalogWidgetStore.get2DPlotData(xColumn, yColumn, catalogData);
                     const wcs = this.activeFrame.validWcs ? this.activeFrame.wcsInfo : 0;
                     this.catalogStore.updateCatalogData(catalogWidgetId, coords.wcsX, coords.wcsY, wcs, coords.xHeaderInfo.units, coords.yHeaderInfo.units, catalogWidgetStore.catalogCoordinateSystem.system);
-                }
-            }
-            // update scatter plot
-            const scatterWidgetsStore = catalogWidgetStore.catalogPlotWidgetsId;
-            for (let index = 0; index < scatterWidgetsStore.length; index++) {
-                const scatterWidgetStore = scatterWidgetsStore[index];
-                const scatterWidget = this.widgetsStore.catalogPlotWidgets.get(scatterWidgetStore);
-                if (scatterWidget) {
-                    switch (scatterWidget.plotType) {
-                        case CatalogPlotType.D2Scatter:
-                            scatterWidget.updateScatterData();
-                            break;
-                        case CatalogPlotType.Histogram:
-                            scatterWidget.updateHistogramData();
-                            break;
-                        default:
-                            break;
-                    }
                 }
             }
         }

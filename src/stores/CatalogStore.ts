@@ -3,6 +3,7 @@ import {action, observable, ObservableMap, computed} from "mobx";
 import {Colors} from "@blueprintjs/core";
 import {CatalogOverlayShape, CatalogSystemType} from "stores/widgets";
 import {AppStore} from "./AppStore";
+import {WidgetsStore} from "./WidgetsStore";
 
 type CatalogDataInfo = {
     fileId: number,
@@ -34,8 +35,10 @@ export class CatalogStore {
     @observable catalogShape: ObservableMap<string, CatalogOverlayShape>;
     // map image file id with catalog file Id
     @observable imageAssociatedCatalogId: Map<number, Array<number>>;
-    // map catalog component with catalog file Id
+    // map catalog component Id with catalog file Id
     @observable catalogProfiles: Map<string, number>;
+    // map catalog plot component Id with catalog file Id and associated catalog plot widget id
+    @observable catalogPlots: Map<string, ObservableMap<number, string>>;
 
     private constructor() {
         this.catalogData = new ObservableMap();
@@ -44,6 +47,7 @@ export class CatalogStore {
         this.catalogShape = new ObservableMap();
         this.imageAssociatedCatalogId = new Map<number, Array<number>>();
         this.catalogProfiles = new Map<string, number>();
+        this.catalogPlots = new Map<string, ObservableMap<number, string>>();
     }
 
     @action addCatalog(widgetId: string, fileId: number) {
@@ -239,6 +243,57 @@ export class CatalogStore {
                     });
             });
         }
+    }
+
+    @action setCatalogPlots(componentId: string, fileId: number, widgetId: string) {
+        let catalogWidgetMap = this.catalogPlots.get(componentId);
+        if (catalogWidgetMap) {
+            catalogWidgetMap.set(fileId, widgetId);
+        } else {
+            catalogWidgetMap = new ObservableMap<number, string>();
+            catalogWidgetMap.set(fileId, widgetId);
+            this.catalogPlots.set(componentId, catalogWidgetMap);
+        }
+    }
+
+    // remove catalog plot widget, keep placeholder
+    @action clearCatalogPlotsByFileId(fileId: number) {
+        this.catalogPlots.forEach((catalogWidgetMap, componentId) => {
+            const widgetId = catalogWidgetMap.get(fileId);
+            WidgetsStore.Instance.catalogPlotWidgets.delete(widgetId);
+            catalogWidgetMap.delete(fileId);
+        });
+    }
+
+    @action clearCatalogPlotsByComponentId(componentId: string) {
+        const catalogWidgetMap = this.catalogPlots.get(componentId);
+        if (catalogWidgetMap) {
+            catalogWidgetMap.forEach((widgetId, catalogFileId) => {
+                WidgetsStore.Instance.catalogPlotWidgets.delete(widgetId);
+            });
+            this.catalogPlots.delete(componentId);
+        }
+    }
+
+    @action clearCatalogPlotsByWidgetId(widgetId: string) {
+        const catalogs = this.getAssociatedIdByWidgetId(widgetId);
+        if (catalogs.catalogPlotComponentId) {
+            this.clearCatalogPlotsByComponentId(catalogs.catalogPlotComponentId);
+        }
+    }
+
+    getAssociatedIdByWidgetId(catalogPlotWidgetId: string): {catalogPlotComponentId: string, catalogFileId: number} {
+        let catalogPlotComponentId;
+        let catalogFileId;
+        this.catalogPlots.forEach((catalogWidgetMap, componentId) => {
+            catalogWidgetMap.forEach((widgetId, fileId) => {
+                if (widgetId === catalogPlotWidgetId) {
+                    catalogPlotComponentId = componentId;
+                    catalogFileId = fileId;
+                }
+            });
+        });
+        return {catalogPlotComponentId: catalogPlotComponentId, catalogFileId: catalogFileId};
     }
 
     @action closeAssociatedCatalog(imageFileId: number) {

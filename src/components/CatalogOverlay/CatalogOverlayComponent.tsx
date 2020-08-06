@@ -162,6 +162,8 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         autorun(() => {
             const appStore = AppStore.Instance;
             const frame = appStore.activeFrame;
+            const catalogFileIds = CatalogStore.Instance.activedCatalogFiles;
+
             if (this.widgetStore && frame) {
                 this.catalogFileId = CatalogStore.Instance.catalogProfiles.get(this.props.id);
                 this.widgetId = this.matchesSelectedCatalogFile;
@@ -171,8 +173,10 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
                 if (progress && isFinite(progress) && progress < 1) {
                     progressString = `[${toFixed(progress * 100)}% complete]`;
                 }
-                if (frame) {
+                if (frame && catalogFileIds?.length) {
                     appStore.widgetsStore.setWidgetComponentTitle(this.props.id, `Catalog : ${fileName} ${progressString}`);
+                } else {
+                    WidgetsStore.Instance.setWidgetComponentTitle(this.props.id, `Catalog`);
                 }
             } else {
                 WidgetsStore.Instance.setWidgetComponentTitle(this.props.id, `Catalog`);
@@ -570,6 +574,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         const widgetStore = this.widgetStore;
         const appStore = AppStore.Instance;
         const frame = appStore.activeFrame;
+        const catalogStore = CatalogStore.Instance;
         // init plot data   
         switch (widgetStore.catalogPlotType) {
             case CatalogPlotType.ImageOverlay:
@@ -578,7 +583,6 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
                     const imageCoords = widgetStore.get2DPlotData(widgetStore.xColumnRepresentation, widgetStore.yColumnRepresentation, widgetStore.catalogData);
                     const wcs = frame.validWcs ? frame.wcsInfo : 0;
                     const id = this.widgetId;
-                    const catalogStore = appStore.catalogStore;
                     catalogStore.clearImageCoordsData(this.widgetId);
                     catalogStore.updateCatalogData(id, imageCoords.wcsX, imageCoords.wcsY, wcs, imageCoords.xHeaderInfo.units, imageCoords.yHeaderInfo.units, widgetStore.catalogCoordinateSystem.system);
                     catalogStore.updateCatalogColor(id, widgetStore.catalogColor);
@@ -591,28 +595,23 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
                     let catalogFilter = widgetStore.updateRequestDataSize;
                     appStore.sendCatalogFilter(catalogFilter);
                 }
-
                 break;
             case CatalogPlotType.D2Scatter:
-                const scatterCoords = widgetStore.get2DPlotData(widgetStore.xColumnRepresentation, widgetStore.yColumnRepresentation, widgetStore.catalogData);
                 const scatterProps: CatalogPlotWidgetStoreProps = {
-                    x: scatterCoords.wcsX,
-                    y: scatterCoords.wcsY,
-                    catalogOverlayWidgetStore: this.widgetStore,
+                    xColumnName: widgetStore.xColumnRepresentation,
+                    yColumnName: widgetStore.yColumnRepresentation,
                     plotType: widgetStore.catalogPlotType
                 };
-                const scatterWidgetId = appStore.widgetsStore.createFloatingCatalogScatterWidget(scatterProps);
-                widgetStore.setCatalogScatterWidget(scatterWidgetId);
+                const scatterPlot = appStore.widgetsStore.createFloatingCatalogPlotWidget(scatterProps);
+                catalogStore.setCatalogPlots(scatterPlot.widgetComponentId, this.catalogFileId, scatterPlot.widgetStoreId);
                 break;
             case CatalogPlotType.Histogram:
-                const historgramCoords = widgetStore.get1DPlotData(widgetStore.xColumnRepresentation);
                 const historgramProps: CatalogPlotWidgetStoreProps = {
-                    x: historgramCoords.wcsData,
-                    catalogOverlayWidgetStore: this.widgetStore,
+                    xColumnName: widgetStore.xColumnRepresentation,
                     plotType: widgetStore.catalogPlotType
                 };
-                const widgetId = appStore.widgetsStore.createFloatingCatalogScatterWidget(historgramProps);
-                widgetStore.setCatalogScatterWidget(widgetId);
+                const histogramPlot = appStore.widgetsStore.createFloatingCatalogPlotWidget(historgramProps);
+                catalogStore.setCatalogPlots(histogramPlot.widgetComponentId, this.catalogFileId, histogramPlot.widgetStoreId);
                 break;
             default:
                 break;
@@ -727,7 +726,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         if (!widgetStore || catalogFileIds === undefined || catalogFileIds?.length === 0) {
             return (
                 <div className="catalog-overlay">
-                    <NonIdealState icon={"folder-open"} title={"No catalog file loaded"} description={"Load a file using the menu"}/>;
+                    <NonIdealState icon={"folder-open"} title={"No catalog file loaded"} description={"Load a catalog file using the menu"}/>;
                 </div>
             );
         }

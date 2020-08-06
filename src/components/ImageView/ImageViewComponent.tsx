@@ -246,7 +246,7 @@ export class ImageViewComponent extends React.Component<WidgetProps> {
                         width={appStore.activeFrame.renderWidth}
                         height={appStore.activeFrame.renderHeight}
                         activeLayer={this.activeLayer}
-                        docked={this.props.docked && this.activeLayer === ImageViewLayer.Catalog}
+                        docked={this.props.docked && appStore.activeLayer === ImageViewLayer.Catalog}
                         onClicked={this.onClicked}
                         onZoomed={this.onZoomed}
                     />

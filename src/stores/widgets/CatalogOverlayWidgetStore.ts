@@ -62,9 +62,9 @@ export enum CatalogUpdateMode {
 }
 
 export enum CatalogPlotType {
-    ImageOverlay = "Image overlay",
+    ImageOverlay = "Image Overlay",
     Histogram = "Histogram",
-    D2Scatter = "2D scatter"
+    D2Scatter = "2D Scatter"
 }
 
 export enum CatalogSystemType {
@@ -141,7 +141,7 @@ export class CatalogOverlayWidgetStore extends RegionWidgetStore {
     @observable catalogFilterRequest: CARTA.CatalogFilterRequest;
     @observable catalogCoordinateSystem: { system: CatalogSystemType, equinox: string, epoch: string, coordinate: { x: CatalogOverlay, y: CatalogOverlay } };
     @observable catalogPlotType: CatalogPlotType;
-    @observable catalogPlotWidgetsId: string[];
+    // @observable catalogPlotWidgetsId: string[];
     @observable selectedPointIndices: number[];
     @observable filterDataSize: number;
     @observable showSelectedData: boolean;
@@ -167,7 +167,7 @@ export class CatalogOverlayWidgetStore extends RegionWidgetStore {
         this.updatingDataStream = false;
         this.updateMode = CatalogUpdateMode.TableUpdate;
         this.headerTableColumnWidts = [75, 75, 65, 100, null];
-        this.catalogPlotWidgetsId = [];
+        // this.catalogPlotWidgetsId = [];
         this.selectedPointIndices = [];
         this.filterDataSize = undefined;
         this.showSelectedData = false;
@@ -210,13 +210,13 @@ export class CatalogOverlayWidgetStore extends RegionWidgetStore {
         this.showSelectedData = val;
     }
 
-    @action setCatalogScatterWidget(id: string) {
-        this.catalogPlotWidgetsId.push(id);
-    }
+    // @action setCatalogPlotWidget(id: string) {
+    //     this.catalogPlotWidgetsId.push(id);
+    // }
 
-    @action updateCatalogScatterWidget(id: string) {
-        this.catalogPlotWidgetsId = this.catalogPlotWidgetsId.filter(scatterWidgetsId => scatterWidgetsId !== id);
-    }
+    // @action updateCatalogPlotWidget(id: string) {
+    //     this.catalogPlotWidgetsId = this.catalogPlotWidgetsId.filter(plotWidgetsId => plotWidgetsId !== id);
+    // }
 
     @action setCatalogPlotType(type: CatalogPlotType) {
         this.catalogPlotType = type;
@@ -329,7 +329,6 @@ export class CatalogOverlayWidgetStore extends RegionWidgetStore {
 
     @action setHeaderRepresentation(option: {coordinate: CatalogCoordinate, coordinateType: CatalogOverlay}, columnName: string) {
         const current = this.catalogControlHeader.get(columnName);
-        // console.log(option)
         if (option.coordinate !== current.representAs) {
             switch (option.coordinate) {
                 case CatalogCoordinate.X:
