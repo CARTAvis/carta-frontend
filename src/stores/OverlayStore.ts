@@ -58,8 +58,8 @@ export const NUMBER_FORMAT_LABEL = new Map<NumberFormatType, string>([
 ]);
 
 export enum BeamType {
-    Open = "Open",
-    Solid = "Solid"
+    Open = "open",
+    Solid = "solid"
 }
 
 export class Padding {

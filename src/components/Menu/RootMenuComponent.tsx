@@ -1,11 +1,11 @@
 import * as React from "react";
 import {observable} from "mobx";
 import {observer} from "mobx-react";
-import {Alert, Icon, Menu, Popover, Position, Tooltip, Tag} from "@blueprintjs/core";
+import {Alert, Icon, Menu, Popover, Position, Tooltip, Tag, MenuDivider} from "@blueprintjs/core";
 import {ToolbarMenuComponent} from "./ToolbarMenu/ToolbarMenuComponent";
 import {PresetLayout} from "models";
 import {AppStore, BrowserMode, PreferenceKeys} from "stores";
-import {ConnectionStatus} from "services";
+import {ApiService, ConnectionStatus} from "services";
 import {toFixed} from "utilities";
 import {CustomIcon} from "icons/CustomIcons";
 import "./RootMenuComponent.css";
@@ -15,10 +15,64 @@ export class RootMenuComponent extends React.Component {
     @observable documentationAlertVisible: boolean;
     private documentationAlertTimeoutHandle;
 
+    private handleDashboardClicked = () => {
+        window.open(ApiService.RuntimeConfig.dashboardAddress, "_blank");
+    };
+
     render() {
         const appStore = AppStore.Instance;
         const modString = appStore.modifierString;
         const connectionStatus = appStore.backendService.connectionStatus;
+
+        let stokesClassName = "stokes-item";
+        if (appStore.darkTheme) {
+            stokesClassName += " bp3-dark";
+        }
+
+        let serverMenu: React.ReactNode[] = [];
+
+        const apiService = appStore.apiService;
+        if (apiService.authenticated && ApiService.RuntimeConfig.apiAddress) {
+            serverMenu.push(
+                <Menu.Item
+                    key="restart"
+                    text="Restart Service"
+                    disabled={!appStore.apiService.authenticated}
+                    onClick={appStore.apiService.stopServer}
+                />
+            );
+        }
+        if (ApiService.RuntimeConfig.logoutAddress || ApiService.RuntimeConfig.googleClientId) {
+            serverMenu.push(
+                <Menu.Item
+                    key="logout"
+                    text="Logout"
+                    disabled={!appStore.apiService.authenticated}
+                    onClick={appStore.apiService.logout}
+                />
+            );
+        }
+        if (ApiService.RuntimeConfig.dashboardAddress) {
+            serverMenu.push(
+                <Menu.Item
+                    key="dashboard"
+                    text="Dashboard"
+                    onClick={this.handleDashboardClicked}
+                />
+            );
+        }
+
+        let serverSubMenu: React.ReactNode;
+        if (serverMenu.length) {
+            serverSubMenu = (
+                <React.Fragment>
+                    <Menu.Divider/>
+                    <Menu.Item text="Server">
+                        {serverMenu}
+                    </Menu.Item>
+                </React.Fragment>
+            );
+        }
 
         const fileMenu = (
             <Menu>
@@ -66,6 +120,7 @@ export class RootMenuComponent extends React.Component {
                     onClick={appStore.exportImage}
                 />
                 <Menu.Item text="Preferences" onClick={appStore.dialogStore.showPreferenceDialog} disabled={appStore.preferenceStore.supportsServer && connectionStatus !== ConnectionStatus.ACTIVE}/>
+                {serverSubMenu}
             </Menu>
         );
 
@@ -80,12 +135,57 @@ export class RootMenuComponent extends React.Component {
             );
         });
 
+        const presetLayouts: string[] = PresetLayout.PRESETS;
+        const layoutStore = appStore.layoutStore;
+        const userLayouts: string[] = layoutStore.userLayoutNames;
+
         const viewMenu = (
             <Menu>
                 <Menu.Item text="Theme" icon={"media"}>
                     <Menu.Item text="Automatic" icon={"contrast"} onClick={appStore.setAutoTheme}/>
                     <Menu.Item text="Light" icon={"flash"} onClick={appStore.setLightTheme}/>
                     <Menu.Item text="Dark" icon={"moon"} onClick={appStore.setDarkTheme}/>
+                </Menu.Item>
+                <Menu.Item text="Layouts" icon={"page-layout"} disabled={layoutStore.supportsServer && connectionStatus !== ConnectionStatus.ACTIVE}>
+                    <Menu.Item text="Existing Layouts" disabled={!presetLayouts && !userLayouts}>
+                        {presetLayouts && presetLayouts.length > 0 && presetLayouts.map((value) =>
+                            <Menu.Item
+                                key={value}
+                                text={value}
+                                active={value === appStore.layoutStore.currentLayoutName}
+                                onClick={() => appStore.layoutStore.applyLayout(value)}
+                            />
+                        )}
+                        {userLayouts && userLayouts.length > 0 && (
+                            <React.Fragment>
+                                <MenuDivider/>
+                                {userLayouts.map((value) =>
+                                    <Menu.Item
+                                        key={value}
+                                        text={value}
+                                        active={value === appStore.layoutStore.currentLayoutName}
+                                        onClick={() => appStore.layoutStore.applyLayout(value)}
+                                    />
+                                )}
+                            </React.Fragment>
+                        )}
+                    </Menu.Item>
+                    <Menu.Item text="Save Layout" onClick={appStore.dialogStore.showSaveLayoutDialog}/>
+                    <Menu.Item text="Delete Layout" disabled={!userLayouts || userLayouts.length <= 0}>
+                        {userLayouts && userLayouts.length > 0 && userLayouts.map((value) =>
+                            <Menu.Item
+                                key={value}
+                                text={value}
+                                active={value === appStore.layoutStore.currentLayoutName}
+                                onClick={() => {
+                                    appStore.layoutStore.deleteLayout(value);
+                                    if (value === appStore.preferenceStore.layout) {
+                                        appStore.preferenceStore.setPreference(PreferenceKeys.GLOBAL_LAYOUT, PresetLayout.DEFAULT);
+                                    }
+                                }}
+                            />
+                        )}
+                    </Menu.Item>
                 </Menu.Item>
                 <Menu.Item text="Overlay Settings" icon={"settings"} onClick={appStore.dialogStore.showOverlaySettings}/>
                 {layerItems.length > 0 &&
@@ -110,50 +210,8 @@ export class RootMenuComponent extends React.Component {
             </Menu>
         );
 
-        const presetLayouts: string[] = PresetLayout.PRESETS;
-        const layoutStore = appStore.layoutStore;
-        const userLayouts: string[] = layoutStore.userLayouts;
-
         const widgetsMenu = (
             <Menu className="widgets-menu">
-                <Menu.Item text="Layouts" icon={"page-layout"} disabled={layoutStore.supportsServer && connectionStatus !== ConnectionStatus.ACTIVE}>
-                    <Menu.Item text="Existing Layouts" disabled={!presetLayouts && !userLayouts}>
-                        <Menu.Item text="Presets" disabled={!presetLayouts || presetLayouts.length <= 0}>
-                            {presetLayouts && presetLayouts.length > 0 && presetLayouts.map((value) =>
-                                <Menu.Item
-                                    key={value}
-                                    text={value}
-                                    active={value === appStore.layoutStore.currentLayoutName}
-                                    onClick={() => appStore.layoutStore.applyLayout(value)}
-                                />
-                            )}
-                        </Menu.Item>
-                        {userLayouts && userLayouts.length > 0 && userLayouts.map((value) =>
-                            <Menu.Item
-                                key={value}
-                                text={value}
-                                active={value === appStore.layoutStore.currentLayoutName}
-                                onClick={() => appStore.layoutStore.applyLayout(value)}
-                            />
-                        )}
-                    </Menu.Item>
-                    <Menu.Item text="Save Layout" onClick={appStore.dialogStore.showSaveLayoutDialog}/>
-                    <Menu.Item text="Delete Layout" disabled={!userLayouts || userLayouts.length <= 0}>
-                        {userLayouts && userLayouts.length > 0 && userLayouts.map((value) =>
-                            <Menu.Item
-                                key={value}
-                                text={value}
-                                active={value === appStore.layoutStore.currentLayoutName}
-                                onClick={() => {
-                                    appStore.layoutStore.deleteLayout(value);
-                                    if (value === appStore.preferenceStore.layout) {
-                                        appStore.preferenceStore.setPreference(PreferenceKeys.GLOBAL_LAYOUT, PresetLayout.DEFAULT);
-                                    }
-                                }}
-                            />
-                        )}
-                    </Menu.Item>
-                </Menu.Item>
                 <Menu.Item text="Info Panels" icon={"panel-stats"}>
                     <Menu.Item text="Region List" icon={<CustomIcon icon="regionList"/>} onClick={appStore.widgetsStore.createFloatingRegionListWidget}/>
                     <Menu.Item text="Image List" icon={"layers"} onClick={appStore.widgetsStore.createFloatingLayerListWidget}/>
