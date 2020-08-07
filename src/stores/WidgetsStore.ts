@@ -105,7 +105,9 @@ export class WidgetsStore {
         } else {
             storeMap.forEach(widgetStore => {
                 widgetStore.clearFrameEntry(fileId);
-                widgetStore.setFileId(ACTIVE_FILE_ID);
+                if (widgetStore.fileId === fileId) {
+                    widgetStore.setFileId(ACTIVE_FILE_ID);
+                }
             });
         }
     }
