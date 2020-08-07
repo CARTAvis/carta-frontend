@@ -67,7 +67,6 @@ export class RegionComponent extends React.Component<RegionComponentProps> {
     };
 
     startEditing = (anchor: string) => {
-        console.log(anchor);
         this.editAnchor = anchor;
         const controlPoints = this.props.region.controlPoints;
 
@@ -138,9 +137,13 @@ export class RegionComponent extends React.Component<RegionComponentProps> {
         }
     };
 
-    applyCornerScaling = (region: RegionStore, canvasX: number, canvasY: number, anchor: string, siblingRegion: boolean = false) => {
+    applyCornerScaling = (region: RegionStore, canvasX: number, canvasY: number, anchor: string) => {
         const frame = this.props.frame;
         let newAnchorPoint = canvasToTransformedImagePos(canvasX, canvasY, frame, this.props.layerWidth, this.props.layerHeight);
+
+        if (frame.spatialReference) {
+            newAnchorPoint = transformPoint(frame.spatialTransformAST, newAnchorPoint, true);
+        }
 
         let w: number, h: number;
         let sizeFactor: number;
@@ -182,9 +185,13 @@ export class RegionComponent extends React.Component<RegionComponentProps> {
         }
     };
 
-    applyCenterScaling = (region: RegionStore, canvasX: number, canvasY: number, anchor: string, keepAspect: boolean, siblingRegion: boolean = false) => {
+    applyCenterScaling = (region: RegionStore, canvasX: number, canvasY: number, anchor: string, keepAspect: boolean) => {
         const frame = this.props.frame;
         let newAnchorPoint = canvasToTransformedImagePos(canvasX, canvasY, frame, this.props.layerWidth, this.props.layerHeight);
+
+        if (frame.spatialReference) {
+            newAnchorPoint = transformPoint(frame.spatialTransformAST, newAnchorPoint, true);
+        }
 
         const centerPoint = region.controlPoints[0];
 
@@ -331,9 +338,9 @@ export class RegionComponent extends React.Component<RegionComponentProps> {
                 const evt = konvaEvent.evt;
                 const isCtrlPressed = evt.ctrlKey || evt.metaKey;
                 if ((this.props.isRegionCornerMode && !isCtrlPressed) || (!this.props.isRegionCornerMode && isCtrlPressed)) {
-                    this.applyCornerScaling(region, evt.offsetX, evt.offsetY, anchor, true);
+                    this.applyCornerScaling(region, evt.offsetX, evt.offsetY, anchor);
                 } else {
-                    this.applyCenterScaling(region, evt.offsetX, evt.offsetY, anchor, evt.shiftKey, true);
+                    this.applyCenterScaling(region, evt.offsetX, evt.offsetY, anchor, evt.shiftKey);
                 }
             }
         }
@@ -385,18 +392,26 @@ export class RegionComponent extends React.Component<RegionComponentProps> {
             let anchors: React.ReactNode[];
 
             if (this.props.selected && this.props.listening) {
-                const width = region.controlPoints[1].x;
-                const height = region.controlPoints[1].y;
+                let offsetX: number;
+                let offsetY: number;
+                if (region.regionType === CARTA.RegionType.RECTANGLE) {
+                    offsetX = region.controlPoints[1].x / 2;
+                    offsetY = region.controlPoints[1].y / 2;
+                } else {
+                    // Ellipse has swapped axes
+                    offsetX = region.controlPoints[1].y;
+                    offsetY = region.controlPoints[1].x;
+                }
 
                 const anchorConfigs = [
-                    {anchor: "top", offset: {x: 0, y: height / 2}},
-                    {anchor: "bottom", offset: {x: 0, y: -height / 2}},
-                    {anchor: "left", offset: {x: -width / 2, y: 0}},
-                    {anchor: "right", offset: {x: width / 2, y: 0}},
-                    {anchor: "top-left", offset: {x: -width / 2, y: height / 2}},
-                    {anchor: "bottom-left", offset: {x: -width / 2, y: -height / 2}},
-                    {anchor: "top-right", offset: {x: width / 2, y: height / 2}},
-                    {anchor: "bottom-right", offset: {x: width / 2, y: -height / 2}}
+                    {anchor: "top", offset: {x: 0, y: offsetY}},
+                    {anchor: "bottom", offset: {x: 0, y: -offsetY}},
+                    {anchor: "left", offset: {x: -offsetX, y: 0}},
+                    {anchor: "right", offset: {x: offsetX, y: 0}},
+                    {anchor: "top-left", offset: {x: -offsetX, y: offsetY}},
+                    {anchor: "bottom-left", offset: {x: -offsetX, y: -offsetY}},
+                    {anchor: "top-right", offset: {x: offsetX, y: offsetY}},
+                    {anchor: "bottom-right", offset: {x: offsetX, y: -offsetY}}
                 ];
 
                 anchors = anchorConfigs.map((config) => {
