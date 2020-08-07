@@ -37,7 +37,8 @@ import {
     SpectralProfileWidgetStore,
     StatsWidgetStore, 
     StokesAnalysisWidgetStore, 
-    CatalogOverlayWidgetStore, CatalogInfo, CatalogSubplotWidgetStore, CatalogSubplotWidgetStoreProps
+    CatalogOverlayWidgetStore, CatalogInfo, CatalogSubplotWidgetStore, CatalogSubplotWidgetStoreProps,
+    ACTIVE_FILE_ID
 } from "./widgets";
 import {ProcessedColumnData} from "../models";
 
@@ -96,14 +97,15 @@ export class WidgetsStore {
     private widgetsMap: Map<string, Map<string, any>>;
     private defaultFloatingWidgetOffset: number;
 
-    public static RemoveFrameFromRegionWidgets(storeMap: Map<string, RegionWidgetStore>, fileId: number = -1) {
-        if (fileId === -1) {
+    public static RemoveFrameFromRegionWidgets(storeMap: Map<string, RegionWidgetStore>, fileId: number = ACTIVE_FILE_ID) {
+        if (fileId === ACTIVE_FILE_ID) {
             storeMap.forEach(widgetStore => {
                 widgetStore.clearRegionMap();
             });
         } else {
             storeMap.forEach(widgetStore => {
                 widgetStore.clearFrameEntry(fileId);
+                widgetStore.setFileId(ACTIVE_FILE_ID);
             });
         }
     }
