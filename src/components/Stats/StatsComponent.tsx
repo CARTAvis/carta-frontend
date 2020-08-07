@@ -19,7 +19,7 @@ export class StatsComponent extends React.Component<WidgetProps> {
             type: "stats",
             minWidth: 300,
             minHeight: 200,
-            defaultWidth: 300,
+            defaultWidth: 325,
             defaultHeight: 250,
             title: "Statistics",
             isCloseable: true,
