@@ -342,7 +342,7 @@ export class RootMenuComponent extends React.Component {
     }
 
     handleDocumentationClicked = () => {
-        window.open("https://carta.readthedocs.io/en/1.3", "_blank", "width=1024");
+        window.open("https://carta.readthedocs.io/en/1.4", "_blank", "width=1024");
         if (process.env.REACT_APP_TARGET !== "linux" && process.env.REACT_APP_TARGET !== "darwin") {
             this.documentationAlertVisible = true;
             clearTimeout(this.documentationAlertTimeoutHandle);
