@@ -36,7 +36,7 @@ export class RootMenuComponent extends React.Component {
             serverMenu.push(
                 <Menu.Item
                     key="restart"
-                    text="Restart Server"
+                    text="Restart Service"
                     disabled={!appStore.apiService.authenticated}
                     onClick={appStore.apiService.stopServer}
                 />
