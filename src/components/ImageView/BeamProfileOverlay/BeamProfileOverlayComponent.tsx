@@ -29,7 +29,7 @@ interface BeamPlotProps {
 export class BeamProfileOverlayComponent extends React.Component<BeamProfileOverlayComponentProps> {
 
     private getPlotProps = (frame: FrameStore, basePosition?: Point2D): BeamPlotProps => {
-        if (!frame) {
+        if (!frame.hasVisibleBeam) {
             return null;
         }
 
@@ -110,13 +110,17 @@ export class BeamProfileOverlayComponent extends React.Component<BeamProfileOver
 
         const appStore = AppStore.Instance;
         const baseFrame = appStore.activeFrame;
-        const contourFrames = appStore.contourFrames.filter(frame => frame.frameInfo.fileId !== appStore.activeFrame.frameInfo.fileId && frame.beamProperties?.overlayBeamSettings?.visible);
+        const contourFrames = appStore.contourFrames.filter(frame => frame.frameInfo.fileId !== appStore.activeFrame.frameInfo.fileId && frame.hasVisibleBeam);
 
-        if (!baseFrame.beamProperties?.overlayBeamSettings?.visible && !contourFrames.length) {
+        if (!baseFrame.hasVisibleBeam && !contourFrames.length) {
             return null;
         }
 
-        const baseBeamPlotProps = this.getPlotProps(baseFrame);
+        let baseBeamPlotProps: BeamPlotProps;
+        if (!baseFrame.hasVisibleBeam) {
+            baseBeamPlotProps = this.getPlotProps(baseFrame);
+        }
+
         const contourBeams = [];
         contourFrames.forEach(contourFrame => {
             const plotProps = this.getPlotProps(contourFrame, baseBeamPlotProps ? baseBeamPlotProps.position : null);

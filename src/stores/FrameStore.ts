@@ -235,6 +235,10 @@ export class FrameStore {
         return null;
     }
 
+    @computed get hasVisibleBeam(): boolean {
+        return this.beamProperties?.overlayBeamSettings?.visible;
+    }
+
     public getWcsSizeInArcsec(size: Point2D): Point2D {
         const deltaHeader = this.frameInfo.fileInfoExtended.headerEntries.find(entry => entry.name.indexOf("CDELT1") !== -1);
         const unitHeader = this.frameInfo.fileInfoExtended.headerEntries.find(entry => entry.name.indexOf("CUNIT1") !== -1);
