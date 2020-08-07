@@ -597,7 +597,7 @@ export class FrameStore {
                 }
                 return stokesInfo;
             }
-        }
+        } 
         return [];
     }
 
