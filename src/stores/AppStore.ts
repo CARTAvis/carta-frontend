@@ -376,6 +376,7 @@ export class AppStore {
                     }
                 }
 
+                this.fileBrowserStore.saveStartingDirectory(newFrame.frameInfo.directory);
                 this.fileBrowserStore.hideFileBrowser();
                 resolve(ack.fileId);
             }, err => {
@@ -1084,6 +1085,8 @@ export class AppStore {
         frameHistogramMap.set(regionHistogramData.regionId, regionHistogramData);
 
         const updatedFrame = this.getFrame(regionHistogramData.fileId);
+
+        // TODO: update histograms directly if the image is not active!
 
         // Add histogram to pending histogram list
         if (updatedFrame && regionHistogramData.regionId === -1) {
