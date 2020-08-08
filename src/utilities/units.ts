@@ -83,18 +83,19 @@ export function formattedFrequency(freqGHz: number): string {
     return freqString;
 }
 
-export function formattedArcsec(arcsec: number): string {
+// TODO: possibly move to region class since they are the only callers
+export function formattedArcsec(arcsec: number, decimals: number = -1): string {
     if (!isFinite(arcsec)) {
         return null;
     }
 
     let arcString = "";
     if (arcsec < 120) {
-        arcString = `${toFixed(arcsec, 6)}"`;
+        arcString = `${decimals < 0 ? toFixed(arcsec, 6) : toFixed(arcsec, decimals)}"`;
     } else if (arcsec >= 120 && arcsec < 7200) {
-        arcString = `${toFixed(arcsec / 60.0, 3)}'`;
+        arcString = `${decimals < 0 ? toFixed(arcsec / 60.0, 3) : toFixed(arcsec / 60.0, decimals)}'`;
     } else {
-        arcString = `${toFixed(arcsec / 3600.0, 3)} deg`;
+        arcString = `${decimals < 0 ? toFixed(arcsec / 3600.0, 3) : toFixed(arcsec / 3600.0, decimals)} deg`;
     }
     return arcString;
 }
@@ -104,4 +105,23 @@ export function wavelengthToFrequency(meter: number) { // return in Hz
         return undefined;
     }
     return SPEED_OF_LIGHT / meter;
+}
+
+export function getValueFromArcsecString(formattedString: string): number {
+    const trimmedString = formattedString?.trim();
+    if (!trimmedString) {
+        return null;
+    }
+
+    const arcsecRegExp = /^(\d+(\.\d+)?)\"?$/;
+    const arcminRegExp = /^(\d+(\.\d+)?)\'$/;
+    const degreeRegExp = /^(\d+(\.\d+)?)\s*deg(ree)?$/i;
+    if (arcsecRegExp.test(trimmedString)) {
+        return parseFloat(RegExp.$1);
+    } else if (arcminRegExp.test(trimmedString)) {
+        return parseFloat(RegExp.$1) * 60;
+    } else if (degreeRegExp.test(trimmedString)) {
+        return parseFloat(RegExp.$1) * 3600;
+    }
+    return null;
 }

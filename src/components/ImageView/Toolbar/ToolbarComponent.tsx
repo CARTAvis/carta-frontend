@@ -223,7 +223,7 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
                 </Tooltip>
                 <Tooltip position={tooltipPosition} content={<span>Overlay Coordinate <br/><small><i>Current: {ToolbarComponent.CoordinateSystemTooltip.get(coordinateSystem)}</i></small></span>}>
                     <Popover content={coordinateSystemMenu} position={Position.TOP} minimal={true}>
-                        <Button text={ToolbarComponent.CoordinateSystemName.get(coordinateSystem)}/>
+                        <Button disabled={!frame.validWcs} text={ToolbarComponent.CoordinateSystemName.get(coordinateSystem)}/>
                     </Popover>
                 </Tooltip>
                 <Tooltip position={tooltipPosition} content="Toggle grid">

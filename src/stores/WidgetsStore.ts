@@ -37,7 +37,8 @@ import {
     SpectralProfileWidgetStore,
     StatsWidgetStore, 
     StokesAnalysisWidgetStore, 
-    CatalogWidgetStore, CatalogPlotWidgetStore, CatalogPlotWidgetStoreProps
+    CatalogWidgetStore, CatalogPlotWidgetStore, CatalogPlotWidgetStoreProps,
+    ACTIVE_FILE_ID
 } from "./widgets";
 import {ProcessedColumnData} from "../models";
 
@@ -96,14 +97,17 @@ export class WidgetsStore {
     private widgetsMap: Map<string, Map<string, any>>;
     private defaultFloatingWidgetOffset: number;
 
-    public static RemoveFrameFromRegionWidgets(storeMap: Map<string, RegionWidgetStore>, fileId: number = -1) {
-        if (fileId === -1) {
+    public static RemoveFrameFromRegionWidgets(storeMap: Map<string, RegionWidgetStore>, fileId: number = ACTIVE_FILE_ID) {
+        if (fileId === ACTIVE_FILE_ID) {
             storeMap.forEach(widgetStore => {
                 widgetStore.clearRegionMap();
             });
         } else {
             storeMap.forEach(widgetStore => {
                 widgetStore.clearFrameEntry(fileId);
+                if (widgetStore.fileId === fileId) {
+                    widgetStore.setFileId(ACTIVE_FILE_ID);
+                }
             });
         }
     }
@@ -471,7 +475,7 @@ export class WidgetsStore {
                 break;
         }
 
-        return widgetStore &&  widgetStore.toConfig ? widgetStore.toConfig() : null;
+        return widgetStore?.toConfig?.();
     };
 
     @action onCogPinedClick = (item: GoldenLayout.ContentItem) => {
@@ -1125,17 +1129,7 @@ export class WidgetsStore {
             if (preserveStore) {
                 return;
             }
-
-            // if (widget.type === CatalogOverlayComponent.WIDGET_CONFIG.type) {
-            //     return;
-            // }
             
-            // update catalogWidgetStore with associated catalog plots store.
-            // const catalogPlotWidget = this.catalogPlotWidgets.get(id);
-            // if (catalogPlotWidget) {
-            //     catalogPlotWidget.catalogWidgetStore.updateCatalogPlotWidget(id);
-            // }
-
             this.removeWidget(id, widget.type);
         }
     };

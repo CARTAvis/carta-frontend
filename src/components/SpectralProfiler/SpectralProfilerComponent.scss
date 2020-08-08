@@ -18,16 +18,6 @@
         }
     }
 
-    &.linked-to-region-selected {
-        border: 1px solid $blue2;
-
-        &.dark-theme {
-            border: 1px solid $blue4;
-        }
-
-        transition: border 250ms linear;
-    }
-
     .profile-container {
         flex: 3 3 auto;
         min-width: 0;

@@ -189,6 +189,22 @@ EMSCRIPTEN_KEEPALIVE const char* format(AstFrameSet* wcsinfo, int axis, double v
     return formattedVal;
 }
 
+EMSCRIPTEN_KEEPALIVE int unformat(AstFrameSet* wcsinfo, int axis, const char* formattedString, double *value)
+{
+    if (!wcsinfo)
+    {
+        return 1;
+    }
+
+    astUnformat(wcsinfo, axis, formattedString, value);
+    if (!astOK)
+    {
+        astClearStatus;
+        return 1;
+    }
+    return 0;
+}
+
 EMSCRIPTEN_KEEPALIVE int set(AstFrameSet* wcsinfo, const char* attrib)
 {
     if (!wcsinfo)
