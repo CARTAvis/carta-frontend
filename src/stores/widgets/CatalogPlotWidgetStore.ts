@@ -1,5 +1,5 @@
 import {action, observable, computed} from "mobx";
-import {CatalogPlotType} from "./CatalogOverlayWidgetStore";
+import {CatalogPlotType} from "stores/widgets";
 import {Point2D} from "models";
 
 export interface CatalogPlotWidgetStoreProps {

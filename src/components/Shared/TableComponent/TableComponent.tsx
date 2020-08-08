@@ -4,7 +4,7 @@ import {Cell, Column, Table, SelectionModes, RenderMode, ColumnHeaderCell, IRegi
 import {Checkbox, Tooltip, PopoverPosition, InputGroup, Menu, MenuItem, Icon, Label} from "@blueprintjs/core";
 import {IRowIndices} from "@blueprintjs/table/lib/esm/common/grid";
 import {CARTA} from "carta-protobuf";
-import {ControlHeader} from "stores/widgets";
+import {ControlHeader} from "stores";
 import {ProcessedColumnData} from "models";
 import "./TableComponent.css";
 
@@ -41,6 +41,7 @@ export class TableComponentProps {
     updateSelectedRow?: (dataIndex: number[]) => void;
     updateSortRequest?: (columnName: string, sortingType: CARTA.SortingType) => void;
     sortingInfo?: {columnName: string, sortingType: CARTA.SortingType};
+    disable?: boolean;
 }
 
 const MANUAL_SELECTION_COLUMN_WIDTH = 50;
@@ -145,6 +146,7 @@ export class TableComponent extends React.Component<TableComponentProps> {
         if (controlheader.filter !== "") {
             activeFilter = true;
         }
+        const disable = this.props.disable;
 
         const menuRenderer = () => {
             let activeAsc = false;
@@ -158,9 +160,9 @@ export class TableComponent extends React.Component<TableComponentProps> {
             }
             return(
                 <Menu className="catalog-sort-menu-item">
-                    <MenuItem icon="sort-asc" active={activeAsc} onClick={() => this.props.updateSortRequest(column.name, CARTA.SortingType.Ascending)} text="Sort Asc" />
-                    <MenuItem icon="sort-desc" active={activeDesc} onClick={() => this.props.updateSortRequest(column.name, CARTA.SortingType.Descending)} text="Sort Desc" />
-                    <MenuItem icon="cross" onClick={() => this.props.updateSortRequest(null, null)} text="Clear Sort" />
+                    <MenuItem icon="sort-asc" active={activeAsc} disabled={disable} onClick={() => this.props.updateSortRequest(column.name, CARTA.SortingType.Ascending)} text="Sort Asc" />
+                    <MenuItem icon="sort-desc" active={activeDesc} disabled={disable} onClick={() => this.props.updateSortRequest(column.name, CARTA.SortingType.Descending)} text="Sort Desc" />
+                    <MenuItem icon="cross"  disabled={disable} onClick={() => this.props.updateSortRequest(null, null)} text="Clear Sort" />
                 </Menu>
             );
         };

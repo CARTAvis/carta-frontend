@@ -8,8 +8,8 @@ import {FormGroup, AnchorButton, Intent, Tooltip, Switch, Button, MenuItem, Popo
 import {Select, IItemRendererProps} from "@blueprintjs/select";
 import ReactResizeDetector from "react-resize-detector";
 import {CARTA} from "carta-protobuf";
-import {WidgetConfig, WidgetProps, HelpType, AppStore, WidgetsStore, CatalogStore} from "stores";
-import {CatalogPlotWidgetStore, Border, CatalogUpdateMode, DragMode, CatalogPlotType, XBorder, CatalogOverlayWidgetStore, CatalogPlotWidgetStoreProps} from "stores/widgets";
+import {CatalogUpdateMode, WidgetConfig, WidgetProps, HelpType, AppStore, WidgetsStore, CatalogStore, CatalogProfileStore} from "stores";
+import {CatalogPlotWidgetStore, Border, DragMode, XBorder, CatalogPlotWidgetStoreProps, CatalogWidgetStore, CatalogPlotType} from "stores/widgets";
 import {ProfilerInfoComponent, ClearableNumericInputComponent} from "components/Shared";
 import {Colors} from "@blueprintjs/core";
 import {toFixed, minMaxArray} from "utilities";
@@ -98,37 +98,23 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
         return widgetStore;
     }
 
-    @computed get profileStore(): CatalogOverlayWidgetStore {
-        const widgetsStore = WidgetsStore.Instance;
-        let profileStore;
-        let profileId = this.matchesSelectedCatalogProfile;
-        if (profileId) {
-            profileStore = widgetsStore.catalogOverlayWidgets.get(profileId);
-        } else {
-            profileStore = widgetsStore.catalogOverlayWidgets.values().next().value;
-        }
-        return profileStore;
+    @computed get profileStore(): CatalogProfileStore {
+        return CatalogStore.Instance.getCatalogProfileStore(this.catalogFileId);
     }
 
-    @computed get matchesSelectedCatalogProfile(): string {
-        let profileId = undefined;
-        AppStore.Instance.catalogs.forEach((value, key) => {
-            if (value === this.catalogFileId) {
-                profileId = key;
-            }
-        });
-        return profileId;
+    @computed get catalogWidgetStore(): CatalogWidgetStore {
+        const widgetStoreId = CatalogStore.Instance.catalogWidgets.get(this.catalogFileId);
+        return WidgetsStore.Instance.catalogWidgets.get(widgetStoreId);
     }
 
     @action handleCatalogFileChange = (fileId: number) => {
         this.catalogFileId = fileId;
         const widgetStore = WidgetsStore.Instance;
-        this.profileId = this.matchesSelectedCatalogProfile;
         const catalogWidgetMap = CatalogStore.Instance.catalogPlots.get(this.componentId);
         const plotWidgetStoreId = catalogWidgetMap.get(fileId);
         if (plotWidgetStoreId) {
             const plotWidgetStore = widgetStore.catalogPlotWidgets.get(plotWidgetStoreId);
-            const profileStore = widgetStore.catalogOverlayWidgets.get(this.profileId);
+            const profileStore = CatalogStore.Instance.getCatalogProfileStore(this.catalogFileId);
             const xColumn = plotWidgetStore.xColumnName === CatalogPlotComponent.emptyColumn;
             const yColumn = plotWidgetStore.yColumnName === CatalogPlotComponent.emptyColumn;
             switch (plotWidgetStore.plotType) {
@@ -320,12 +306,11 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
 
     private handleShowSelectedDataChanged = (changeEvent: React.ChangeEvent<HTMLInputElement>) => {
         const widgetsStore = this.widgetStore;
-        const profileStore = this.profileStore;
+        const catalogWidgetStore = this.catalogWidgetStore;
         const val = changeEvent.target.checked;
-        if (widgetsStore && profileStore) {
-            profileStore.setShowSelectedData(val);
-            const storeId = profileStore.storeId;
-            CatalogStore.Instance.updateShowSelectedData(storeId, val);   
+        if (widgetsStore && catalogWidgetStore) {
+            catalogWidgetStore.setShowSelectedData(val);
+            CatalogStore.Instance.updateShowSelectedData(this.catalogFileId, val);   
         }
     }
 
@@ -412,6 +397,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
             const catalogStore = CatalogStore.Instance;
             const profileStore = this.profileStore;
             const catalogFileId = profileStore.catalogInfo.fileId;
+            const catalogWidgetStore = this.catalogWidgetStore;
             catalogStore.updateCatalogProfiles(catalogFileId);
 
             let selectedPointIndices;
@@ -439,7 +425,8 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
             }
 
             if (selectedPointIndices?.length) {
-                profileStore.setSelectedPointIndices(selectedPointIndices, true, true);   
+                profileStore.setSelectedPointIndices(selectedPointIndices, true);
+                catalogWidgetStore.setCatalogTableAutoScroll(true);   
             }
         }
     }
@@ -447,12 +434,12 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
     private onDeselect = () => {
         const catalogStore = CatalogStore.Instance;
         const profileStore = this.profileStore;
-        const catalogFileId = profileStore.catalogInfo.fileId;
-        CatalogStore.Instance.updateCatalogProfiles(catalogFileId);
-        profileStore.setSelectedPointIndices([], false, false);
-        const storeId = profileStore.storeId;
-        profileStore.setShowSelectedData(false);
-        catalogStore.updateShowSelectedData(storeId, false);
+        const catalogWidgetStore = this.catalogWidgetStore;
+        CatalogStore.Instance.updateCatalogProfiles(this.catalogFileId);
+        profileStore.setSelectedPointIndices([], false);
+        catalogWidgetStore.setCatalogTableAutoScroll(false);
+        catalogWidgetStore.setShowSelectedData(false);
+        catalogStore.updateShowSelectedData(this.catalogFileId, false);
     }
 
     // Single source selected
@@ -460,6 +447,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
         const selectionMode: DragMode[] = ["select", "lasso"];
         const inDragmode = selectionMode.includes(this.widgetStore.dragmode);
         const profileStore = this.profileStore;
+        const catalogWidgetStore = this.catalogWidgetStore;
         if (event?.points?.length > 0 && inDragmode) {
             const catalogStore = CatalogStore.Instance;
             const catalogFileId = profileStore.catalogInfo.fileId;
@@ -472,7 +460,8 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
                 selectedPointIndex = selectedPoint.pointIndices;
             }
             
-            profileStore.setSelectedPointIndices(selectedPointIndex, true, true);
+            profileStore.setSelectedPointIndices(selectedPointIndex, true);
+            catalogWidgetStore.setCatalogTableAutoScroll(true);
         }
     }
 
@@ -524,8 +513,9 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
     public render() {
         const profileStore = this.profileStore;
         const widgetStore = this.widgetStore;
+        const catalogWidgetStore = this.catalogWidgetStore;
         const catalogFileIds = CatalogStore.Instance.activedCatalogFiles;
-        if (!widgetStore || !profileStore || catalogFileIds === undefined || catalogFileIds?.length === 0) {
+        if (!widgetStore || !profileStore || !catalogWidgetStore || catalogFileIds === undefined || catalogFileIds?.length === 0) {
             return (
                 <div className="catalog-plot">
                     <NonIdealState icon={"folder-open"} title={"No catalog file loaded"} description={"Load a catalog file using the menu"}/>;
@@ -813,7 +803,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
                     </div>
                     <div className="actions">
                         <FormGroup label={"Show only selected sources"} inline={true} disabled={disabled}>
-                            <Switch checked={profileStore.showSelectedData} onChange={this.handleShowSelectedDataChanged} disabled={disabled}/>
+                            <Switch checked={catalogWidgetStore.showSelectedData} onChange={this.handleShowSelectedDataChanged} disabled={disabled}/>
                         </FormGroup>
                         <Tooltip className="plot-button" content={"Update plots with data"}>
                             <AnchorButton

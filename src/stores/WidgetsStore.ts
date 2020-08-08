@@ -1,7 +1,7 @@
 import * as GoldenLayout from "golden-layout";
 import * as $ from "jquery";
 import {CARTA} from "carta-protobuf";
-import {action, observable, computed, ObservableMap} from "mobx";
+import {action, observable, computed} from "mobx";
 import {
     AnimatorComponent,
     HistogramComponent,
@@ -37,7 +37,7 @@ import {
     SpectralProfileWidgetStore,
     StatsWidgetStore, 
     StokesAnalysisWidgetStore, 
-    CatalogOverlayWidgetStore, CatalogInfo, CatalogPlotWidgetStore, CatalogPlotWidgetStoreProps
+    CatalogWidgetStore, CatalogPlotWidgetStore, CatalogPlotWidgetStoreProps
 } from "./widgets";
 import {ProcessedColumnData} from "../models";
 
@@ -89,7 +89,7 @@ export class WidgetsStore {
     @observable animatorWidgets: Map<string, EmptyWidgetStore>;
     @observable stokesAnalysisWidgets: Map<string, StokesAnalysisWidgetStore>;
     @observable floatingSettingsWidgets: Map<string, string>;
-    @observable catalogOverlayWidgets: Map<string, CatalogOverlayWidgetStore>;
+    @observable catalogWidgets: Map<string, CatalogWidgetStore>;
     @observable catalogPlotWidgets: Map<string, CatalogPlotWidgetStore>;
     @observable spectralLineQueryWidgets: Map<string, SpectralLineQueryWidgetStore>;
 
@@ -129,7 +129,7 @@ export class WidgetsStore {
         this.logWidgets = new Map<string, EmptyWidgetStore>();
         this.regionListWidgets = new Map<string, EmptyWidgetStore>();
         this.stokesAnalysisWidgets = new Map<string, StokesAnalysisWidgetStore>();
-        this.catalogOverlayWidgets = new Map<string, CatalogOverlayWidgetStore>();
+        this.catalogWidgets = new Map<string, CatalogWidgetStore>();
         this.floatingSettingsWidgets = new Map<string, string>();
         this.catalogPlotWidgets = new Map<string, CatalogPlotWidgetStore>();
         this.spectralLineQueryWidgets = new Map<string, SpectralLineQueryWidgetStore>();
@@ -145,7 +145,7 @@ export class WidgetsStore {
             [LogComponent.WIDGET_CONFIG.type, this.logWidgets],
             [RegionListComponent.WIDGET_CONFIG.type, this.regionListWidgets],
             [StokesAnalysisComponent.WIDGET_CONFIG.type, this.stokesAnalysisWidgets],
-            [CatalogOverlayComponent.WIDGET_CONFIG.type, this.catalogOverlayWidgets],
+            [CatalogOverlayComponent.WIDGET_CONFIG.type, this.catalogWidgets],
             [CatalogPlotComponent.WIDGET_CONFIG.type, this.catalogPlotWidgets],
             [SpectralLineQueryComponent.WIDGET_CONFIG.type, this.spectralLineQueryWidgets]
         ]);
@@ -815,9 +815,9 @@ export class WidgetsStore {
         return (floatingCatalogWidgets + dockedCatalogWidgets);
     };
 
-    createFloatingCatalogOverlayWidget = (catalogInfo: CatalogInfo, catalogHeader: Array<CARTA.ICatalogHeader>, catalogData: Map<number, ProcessedColumnData>): {widgetStoreId: string, widgetComponentId: string} => {
+    createFloatingCatalogWidget = (catalogFileId: number): {widgetStoreId: string, widgetComponentId: string} => {
         let config = CatalogOverlayComponent.WIDGET_CONFIG;
-        const widgetStoreId = this.addCatalogOverlayWidget(catalogInfo, catalogHeader, catalogData);
+        const widgetStoreId = this.addCatalogWidget(catalogFileId);
         const widgetComponentId = this.getNextComponentId(config);
         config.id = widgetComponentId;
         config.componentId = widgetComponentId;
@@ -825,9 +825,9 @@ export class WidgetsStore {
         return {widgetStoreId: widgetStoreId, widgetComponentId: widgetComponentId};  
     };
 
-    reloadFloatingCatalogOverlayWidget = () => {
+    reloadFloatingCatalogWidget = () => {
         const appStore = AppStore.Instance;
-        const catalogFileNum = appStore.catalogs.size;
+        const catalogFileNum = appStore.catalogNum;
         let config = CatalogOverlayComponent.WIDGET_CONFIG;
         const componentId = this.getNextComponentId(config);
         config.componentId = componentId;
@@ -839,27 +839,25 @@ export class WidgetsStore {
     };
 
     // add catalog overlay widget store
-    @action addCatalogOverlayWidget(catalogInfo: CatalogInfo, catalogHeader: Array<CARTA.ICatalogHeader>, catalogData: Map<number, ProcessedColumnData>, id: string = null) {
+    @action addCatalogWidget(catalogFileId: number, id: string = null) {
         // Generate new id if none passed in
         if (!id) {
             id = this.getNextId(CatalogOverlayComponent.WIDGET_CONFIG.type);
         }
 
         if (id) {
-            this.catalogOverlayWidgets.set(id, new CatalogOverlayWidgetStore(catalogInfo, catalogHeader, catalogData, id));
+            this.catalogWidgets.set(id, new CatalogWidgetStore(catalogFileId));
         }
         return id;
     }
     // endregion 
 
     // region Catalog Plot Widgets
-
     createFloatingCatalogPlotWidget = (props: CatalogPlotWidgetStoreProps): {widgetStoreId: string, widgetComponentId: string} => {
         let config = CatalogPlotComponent.WIDGET_CONFIG;
         const widgetStoreId = this.addCatalogPlotWidget(props);
         const widgetComponentId = this.getNextComponentId(config);
         config.id = widgetStoreId;
-        // config.id = widgetComponentId;
         config.componentId = widgetComponentId;
         this.addFloatingWidget(config);
         return {widgetStoreId: widgetStoreId, widgetComponentId: widgetComponentId};  
@@ -876,25 +874,6 @@ export class WidgetsStore {
         }
         return id;
     }
-
-    // createFloatingCatalogPlotWidget = (props: CatalogPlotWidgetStoreProps): string => {
-    //     let config = CatalogPlotComponent.WIDGET_CONFIG;
-    //     config.id = this.addCatalogPlotWidget(props);
-    //     this.addFloatingWidget(config);
-    //     return config.id;
-    // };
-
-    // @action addCatalogPlotWidget(props: CatalogPlotWidgetStoreProps, id: string = null) {
-    //     // Generate new id if none passed in
-    //     if (!id) {
-    //         id = this.getNextId(CatalogPlotComponent.WIDGET_CONFIG.type);
-    //     }
-
-    //     if (id) {
-    //         this.catalogPlotWidgets.set(id, new CatalogPlotWidgetStore(props));
-    //     }
-    //     return id;
-    // }
     // endregion
 
     // region Spectral Line Query Widgets
@@ -1151,10 +1130,10 @@ export class WidgetsStore {
             //     return;
             // }
             
-            // update catalogOverlayWidgetStore with associated catalog plots store.
+            // update catalogWidgetStore with associated catalog plots store.
             // const catalogPlotWidget = this.catalogPlotWidgets.get(id);
             // if (catalogPlotWidget) {
-            //     catalogPlotWidget.catalogOverlayWidgetStore.updateCatalogPlotWidget(id);
+            //     catalogPlotWidget.catalogWidgetStore.updateCatalogPlotWidget(id);
             // }
 
             this.removeWidget(id, widget.type);

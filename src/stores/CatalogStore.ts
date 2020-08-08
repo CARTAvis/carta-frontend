@@ -1,12 +1,9 @@
 import * as AST from "ast_wrapper";
 import {action, observable, ObservableMap, computed} from "mobx";
-import {Colors} from "@blueprintjs/core";
-import {CatalogOverlayShape, CatalogSystemType} from "stores/widgets";
-import {AppStore} from "./AppStore";
-import {WidgetsStore} from "./WidgetsStore";
+import {AppStore, WidgetsStore, CatalogProfileStore, CatalogSystemType} from "stores";
+import {CatalogWidgetStore} from "stores/widgets";
 
-type CatalogDataInfo = {
-    fileId: number,
+type CatalogOverlayDataInfo = {
     xImageCoords: Array<number>,
     yImageCoords: Array<number>,
     xSelectedCoords: Array<number>,
@@ -29,31 +26,30 @@ export class CatalogStore {
     private static readonly ArcsecUnits = ["arcsec", "arcsecond"];
     private static readonly ArcminUnits = ["arcmin", "arcminute"];
 
-    @observable catalogData: ObservableMap<string, CatalogDataInfo>;
-    @observable catalogColor: ObservableMap<string, string>;
-    @observable catalogSize: ObservableMap<string, number>;
-    @observable catalogShape: ObservableMap<string, CatalogOverlayShape>;
+    @observable catalogData: ObservableMap<number, CatalogOverlayDataInfo>;
     // map image file id with catalog file Id
     @observable imageAssociatedCatalogId: Map<number, Array<number>>;
     // map catalog component Id with catalog file Id
     @observable catalogProfiles: Map<string, number>;
     // map catalog plot component Id with catalog file Id and associated catalog plot widget id
     @observable catalogPlots: Map<string, ObservableMap<number, string>>;
+    // catalog Profile store
+    @observable catalogProfileStores: CatalogProfileStore[];
+    // catalog file Id with catalog widget storeId
+    @observable catalogWidgets: Map<number, string>;
 
     private constructor() {
         this.catalogData = new ObservableMap();
-        this.catalogColor = new ObservableMap();
-        this.catalogSize = new ObservableMap();
-        this.catalogShape = new ObservableMap();
         this.imageAssociatedCatalogId = new Map<number, Array<number>>();
         this.catalogProfiles = new Map<string, number>();
         this.catalogPlots = new Map<string, ObservableMap<number, string>>();
+        this.catalogProfileStores = [];
+        this.catalogWidgets = new Map<number, string>();
     }
 
-    @action addCatalog(widgetId: string, fileId: number) {
-        // init catalog data
-        this.catalogData.set(widgetId, {
-            fileId: fileId,
+    @action addCatalog(fileId: number) {
+        // init catalog overlay data
+        this.catalogData.set(fileId, {
             xImageCoords: [],
             yImageCoords: [],
             xSelectedCoords: [],
@@ -61,13 +57,10 @@ export class CatalogStore {
             showSelectedData: false,
             displayed: true
         });
-        this.catalogColor.set(widgetId, Colors.TURQUOISE3);
-        this.catalogSize.set(widgetId, 5);
-        this.catalogShape.set(widgetId, CatalogOverlayShape.Circle);
     }
 
-    @action updateCatalogData(widgetId: string, xData: Array<number>, yData: Array<number>, wcsInfo: number, xUnit: string, yUnit: string, catalogFrame: CatalogSystemType) {
-        const catalogDataInfo = this.catalogData.get(widgetId);
+    @action updateCatalogData(fileId: number, xData: Array<number>, yData: Array<number>, wcsInfo: number, xUnit: string, yUnit: string, catalogFrame: CatalogSystemType) {
+        const catalogDataInfo = this.catalogData.get(fileId);
         if (catalogDataInfo) {
             switch (catalogFrame) {
                 case CatalogSystemType.Pixel0:
@@ -92,9 +85,8 @@ export class CatalogStore {
                     console.timeEnd(`updatePixelCoordsArray_${xData?.length}`);
                     break;
             }
-            this.catalogData.set(widgetId,
+            this.catalogData.set(fileId,
                 {
-                    fileId: catalogDataInfo.fileId,
                     xImageCoords: catalogDataInfo.xImageCoords,
                     yImageCoords: catalogDataInfo.yImageCoords,
                     xSelectedCoords: catalogDataInfo.xSelectedCoords,
@@ -105,12 +97,11 @@ export class CatalogStore {
         }
     }
 
-    @action updateSelectedPoints(widgetId: string, xSelectedCoords: Array<number>, ySelectedCoords: Array<number>) {
-        const catalogDataInfo = this.catalogData.get(widgetId);
+    @action updateSelectedPoints(fileId: number, xSelectedCoords: Array<number>, ySelectedCoords: Array<number>) {
+        const catalogDataInfo = this.catalogData.get(fileId);
         if (catalogDataInfo) {
-            this.catalogData.set(widgetId,
+            this.catalogData.set(fileId,
                 {
-                    fileId: catalogDataInfo.fileId,
                     xImageCoords: catalogDataInfo.xImageCoords,
                     yImageCoords: catalogDataInfo.yImageCoords,
                     xSelectedCoords: xSelectedCoords,
@@ -121,20 +112,8 @@ export class CatalogStore {
         }
     }
 
-    @action updateCatalogSize(widgetId: string, size: number) {
-        this.catalogSize.set(widgetId, size);
-    }
-
-    @action updateCatalogColor(widgetId: string, color: string) {
-        this.catalogColor.set(widgetId, color);
-    }
-
-    @action updateCatalogShape(widgetId: string, shape: CatalogOverlayShape) {
-        this.catalogShape.set(widgetId, shape);
-    }
-
-    @action clearImageCoordsData(widgetId: string) {
-        const catalogData = this.catalogData.get(widgetId);
+    @action clearImageCoordsData(fileId: number) {
+        const catalogData = this.catalogData.get(fileId);
         if (catalogData) {
             catalogData.xImageCoords = [];
             catalogData.yImageCoords = [];
@@ -142,15 +121,12 @@ export class CatalogStore {
         }
     }
 
-    @action removeCatalog(widgetId: string) {
-        this.catalogData.delete(widgetId);
-        this.catalogColor.delete(widgetId);
-        this.catalogSize.delete(widgetId);
-        this.catalogShape.delete(widgetId);
+    @action removeCatalog(fileId: number) {
+        this.catalogData.delete(fileId);
     }
 
-    @action updateShowSelectedData(widgetId: string, val: boolean) {
-        const catalog = this.catalogData.get(widgetId);
+    @action updateShowSelectedData(fileId: number, val: boolean) {
+        const catalog = this.catalogData.get(fileId);
         if (catalog) {
             catalog.showSelectedData = val;
         }
@@ -161,22 +137,14 @@ export class CatalogStore {
     }
 
     @action resetActivedCatalogFile(imageFileId: number) {
-        const appStore = AppStore.Instance;
-        const activedCatalog = this.imageAssociatedCatalogId.get(imageFileId);
-        if (this.catalogProfiles.size && activedCatalog?.length) {
+        const fileIds = this.imageAssociatedCatalogId.get(imageFileId);
+        const activedCatalogFileIds = fileIds ? fileIds : [];
+        if (this.catalogProfiles.size && activedCatalogFileIds?.length) {
             this.catalogProfiles.forEach((value , componentId) => {
-                this.catalogProfiles.set(componentId, activedCatalog[0]);
+                this.catalogProfiles.set(componentId, activedCatalogFileIds[0]);
             });  
         }
-        let associatedWidgetsId = [];
-        activedCatalog?.forEach(fileId => {
-            appStore.catalogs.forEach((value, key) => {
-                if (value === fileId) {
-                    associatedWidgetsId.push(key);
-                }
-            });
-        });
-        this.resetDisplayedData(associatedWidgetsId); 
+        this.resetDisplayedData(activedCatalogFileIds); 
     }
 
     // update associated catalogProfile fileId
@@ -200,26 +168,15 @@ export class CatalogStore {
         return imagefileId;
     }
 
-    getAssociatedWidgetsId(catalogFileId: number) {
-        let widget = undefined;
-        AppStore.Instance.catalogs.forEach((fileId, widgetId) => {
-            if (fileId === catalogFileId) {
-                widget = widgetId;
-            }
-        });
-        return widget;
-    }
-
-    @action resetDisplayedData(associatedWidgetId: Array<string>) {
-        if (associatedWidgetId.length) {
-            this.catalogData.forEach((catalogDataInfo, widgetId) => {
+    @action resetDisplayedData(associatedCatalogFileId: Array<number>) {
+        if (associatedCatalogFileId.length) {
+            this.catalogData.forEach((catalogDataInfo, fileId) => {
                 let displayed = true;
-                if (!associatedWidgetId.includes(widgetId)) {
+                if (!associatedCatalogFileId.includes(fileId)) {
                     displayed = false;
                 }
-                this.catalogData.set(widgetId,
+                this.catalogData.set(fileId,
                     {
-                        fileId: catalogDataInfo.fileId,
                         xImageCoords: catalogDataInfo.xImageCoords,
                         yImageCoords: catalogDataInfo.yImageCoords,
                         xSelectedCoords: catalogDataInfo.xSelectedCoords,
@@ -230,10 +187,9 @@ export class CatalogStore {
                 );
             });
         } else {
-            this.catalogData.forEach((catalogDataInfo, widgetId) => {
-                this.catalogData.set(widgetId,
+            this.catalogData.forEach((catalogDataInfo, fileId) => {
+                this.catalogData.set(fileId,
                     {
-                        fileId: catalogDataInfo.fileId,
                         xImageCoords: catalogDataInfo.xImageCoords,
                         yImageCoords: catalogDataInfo.yImageCoords,
                         xSelectedCoords: catalogDataInfo.xSelectedCoords,
@@ -300,9 +256,9 @@ export class CatalogStore {
         const catalogFileIds = this.imageAssociatedCatalogId.get(imageFileId);
         if (catalogFileIds?.length) {
             catalogFileIds.forEach((catalogFileId) => {
-                const widgetId = this.getAssociatedWidgetsId(catalogFileId);
+                const widgetId = this.catalogWidgets.get(catalogFileId);
                 if (widgetId) {
-                    AppStore.Instance.removeCatalog(widgetId);   
+                    AppStore.Instance.removeCatalog(catalogFileId, widgetId);   
                 }
             });
             this.imageAssociatedCatalogId.delete(imageFileId);
@@ -318,6 +274,23 @@ export class CatalogStore {
             return [];
         }
     }
+
+    // catalog profile store
+    getCatalogProfileStore(fileId: number): CatalogProfileStore {
+        let catalogProfileStore;
+        this.catalogProfileStores.forEach(store => {
+            if (store.catalogFileId === fileId) {
+                catalogProfileStore = store;
+            }
+        });
+        return catalogProfileStore;
+    }
+
+    // catalog widget store
+    getCatalogWidgetStore(fileId: number): CatalogWidgetStore {
+        const widgetStoreId = CatalogStore.Instance.catalogWidgets.get(fileId);
+        return WidgetsStore.Instance.catalogWidgets.get(widgetStoreId);    
+    } 
 
     private static GetFractionFromUnit(unit: string): number {
         if (CatalogStore.ArcminUnits.includes(unit)) {
