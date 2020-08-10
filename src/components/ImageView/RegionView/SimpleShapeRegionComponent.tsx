@@ -22,7 +22,7 @@ export interface RegionComponentProps {
 }
 
 @observer
-export class RegionComponent extends React.Component<RegionComponentProps> {
+export class SimpleShapeRegionComponent extends React.Component<RegionComponentProps> {
     private editAnchor: string;
     private editOppositeAnchorPoint: Point2D;
     private editStartCenterPoint: Point2D;
@@ -260,7 +260,7 @@ export class RegionComponent extends React.Component<RegionComponentProps> {
         const stage = target?.getStage();
         if (stage) {
             this.previousCursorStyle = stage.container().style.cursor;
-            stage.container().style.cursor = RegionComponent.GetCursor(target.id(), this.props.region.rotation);
+            stage.container().style.cursor = SimpleShapeRegionComponent.GetCursor(target.id(), this.props.region.rotation);
         }
     };
 
@@ -326,9 +326,9 @@ export class RegionComponent extends React.Component<RegionComponentProps> {
         };
         if (anchor === "rotator") {
             // Circle radius adjusted so that it circumscribes the other anchor squares
-            return <Circle {...commonProps} radius={RegionComponent.AnchorWidth / Math.sqrt(2)}/>;
+            return <Circle {...commonProps} radius={SimpleShapeRegionComponent.AnchorWidth / Math.sqrt(2)}/>;
         }
-        const offset = RegionComponent.AnchorWidth / 2.0;
+        const offset = SimpleShapeRegionComponent.AnchorWidth / 2.0;
         return <Rect {...commonProps} offsetX={offset} offsetY={offset} width={offset * 2} height={offset * 2}/>;
     }
 

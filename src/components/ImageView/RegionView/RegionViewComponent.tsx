@@ -6,7 +6,7 @@ import {Group, Layer, Line, Rect, Stage} from "react-konva";
 import Konva from "konva";
 import {CARTA} from "carta-protobuf";
 import {FrameStore, OverlayStore, RegionMode, RegionStore} from "stores";
-import {RegionComponent} from "./RegionComponent";
+import {SimpleShapeRegionComponent} from "./SimpleShapeRegionComponent";
 import {PolygonRegionComponent} from "./PolygonRegionComponent";
 import {PointRegionComponent} from "./PointRegionComponent";
 import {canvasToImagePos, canvasToTransformedImagePos, imageToCanvasPos, transformedImageToCanvasPos} from "./shared";
@@ -451,7 +451,7 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
                         );
                     } else {
                         return (
-                            <RegionComponent
+                            <SimpleShapeRegionComponent
                                 key={r.regionId}
                                 region={r}
                                 frame={frame}
