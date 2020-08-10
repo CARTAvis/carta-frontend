@@ -15,10 +15,6 @@ const MomentMultiSelect = MultiSelect.ofType<CARTA.Moment>();
 
 @observer
 export class MomentGeneratorComponent extends React.Component<{widgetStore: SpectralProfileWidgetStore}> {
-    private handleSelectedDataSource = (selectedFileId: number) => {
-        return;
-    };
-
     private onChannelFromChanged = (from: number) => {
         const frame = AppStore.Instance.activeFrame;
         const widgetStore = this.props.widgetStore;
@@ -104,16 +100,6 @@ export class MomentGeneratorComponent extends React.Component<{widgetStore: Spec
         const activeFrame = appStore.activeFrame;
         const widgetStore = this.props.widgetStore;
 
-        const dataSourcePanel = (
-            <FormGroup inline={true} label="Data Source" disabled={true}>
-                <HTMLSelect
-                    options={appStore.frameNames}
-                    value={activeFrame ? activeFrame.frameInfo.fileId : ""}
-                    onChange={(event: React.FormEvent<HTMLSelectElement>) => { this.handleSelectedDataSource(parseInt(event.currentTarget.value)); }}
-                    disabled={true}
-                />
-            </FormGroup>
-        );
         const regionPanel = <RegionSelectorComponent widgetStore={this.props.widgetStore}/>;
 
         const spectralPanel = (
@@ -236,8 +222,6 @@ export class MomentGeneratorComponent extends React.Component<{widgetStore: Spec
         return (
             <div className="moment-generator">
                 <div className="moment-panel">
-                    {dataSourcePanel}
-                    <Divider/>
                     {regionPanel}
                     <Divider/>
                     {spectralPanel}
