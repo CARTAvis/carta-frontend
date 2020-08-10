@@ -9,7 +9,7 @@ import {SpectralSystem} from "models";
 export class SpectralSettingsComponent extends React.Component<{widgetStore: SpectralProfileWidgetStore|StokesAnalysisWidgetStore, disable: boolean}> {
 
     render() {
-        const frame = AppStore.Instance.activeFrame;
+        const frame = this.props.widgetStore.effectiveFrame;
         const nativeSpectralCoordinate = frame ? frame.nativeSpectralCoordinate : undefined;
         const widgetStore = this.props.widgetStore;
         const spectralCoordinateOptions: IOptionProps[] = frame && frame.spectralCoordsSupported ?
