@@ -3,8 +3,8 @@ import {observer} from "mobx-react";
 import {Ellipse, Group, Layer, Line, Stage} from "react-konva";
 import {Colors} from "@blueprintjs/core";
 import {AppStore, BeamType, FrameStore} from "stores";
-import "./BeamProfileOverlayComponent.css";
 import { Point2D } from "models";
+import "./BeamProfileOverlayComponent.css";
 
 interface BeamProfileOverlayComponentProps {
     docked: boolean;
