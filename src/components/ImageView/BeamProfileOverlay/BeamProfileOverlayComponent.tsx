@@ -117,7 +117,7 @@ export class BeamProfileOverlayComponent extends React.Component<BeamProfileOver
         }
 
         let baseBeamPlotProps: BeamPlotProps;
-        if (!baseFrame.hasVisibleBeam) {
+        if (baseFrame.hasVisibleBeam) {
             baseBeamPlotProps = this.getPlotProps(baseFrame);
         }
 
