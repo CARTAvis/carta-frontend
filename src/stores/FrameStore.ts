@@ -26,7 +26,7 @@ import {
     Transform2D,
     ZoomPoint
 } from "models";
-import {clamp, formattedFrequency, getHeaderNumericValue, getTransformedChannel, transformPoint, isAstBadPoint, minMax2D, rotate2D, toFixed, trimFitsComment} from "utilities";
+import {clamp, formattedFrequency, getHeaderNumericValue, getTransformedChannel, transformPoint, isAstBadPoint, minMax2D, rotate2D, toFixed, trimFitsComment, round2D} from "utilities";
 import {BackendService, ContourWebGLService} from "services";
 
 export interface FrameInfo {
@@ -66,8 +66,7 @@ export class FrameStore {
     @observable validWcs: boolean;
     @observable center: Point2D;
     @observable cursorInfo: CursorInfo;
-    @observable cursorValue: number;
-    @observable cursorFrozen: boolean;
+    @observable cursorValue: { position: Point2D, channel: number, value: number };
     @observable zoomLevel: number;
     @observable stokes: number;
     @observable channel: number;
@@ -523,6 +522,28 @@ export class FrameStore {
         }
     }
 
+    @computed get spatialSiblings(): FrameStore[] {
+        if (this.spatialReference) {
+            let siblings = [];
+            siblings.push(this.spatialReference);
+            siblings.push(...this.spatialReference.secondarySpatialImages.slice().filter(f => f !== this));
+            return siblings;
+        } else {
+            return this.secondarySpatialImages.slice();
+        }
+    }
+
+    @computed get isCursorValueCurrent(): boolean {
+        if (!this.cursorValue || !this.cursorInfo) {
+            return false;
+        }
+
+        const roundedPosInfo = round2D(this.cursorInfo.posImageSpace);
+        const roundedPosValue = round2D(this.cursorValue.position);
+
+        return this.cursorValue.channel === this.channel && roundedPosInfo.x === roundedPosValue.x && roundedPosInfo.y === roundedPosValue.y;
+    }
+
     @computed
     private get zoomLevelForFit() {
         return Math.min(this.calculateZoomX, this.calculateZoomY);
@@ -601,7 +622,7 @@ export class FrameStore {
                 }
                 return stokesInfo;
             }
-        } 
+        }
         return [];
     }
 
@@ -703,8 +724,7 @@ export class FrameStore {
 
         // need initialized wcs to get correct cursor info
         this.cursorInfo = this.getCursorInfo(this.center);
-        this.cursorValue = 0;
-        this.cursorFrozen = preferenceStore.isCursorFrozen;
+        this.cursorValue = {position: {x: NaN, y: NaN}, channel: 0, value: NaN};
 
         autorun(() => {
             // update zoomLevel when image viewer is available for drawing
@@ -1176,15 +1196,35 @@ export class FrameStore {
         }
     }
 
-    @action setCursorInfo(cursorInfo: CursorInfo) {
-        if (!this.cursorFrozen) {
-            this.cursorInfo = cursorInfo;
+    @action setCursorPosition(posImageSpace: Point2D) {
+        if (this.spatialReference) {
+            this.spatialReference.setCursorPosition(transformPoint(this.spatialTransformAST, posImageSpace, true));
+        } else {
+            this.cursorInfo = this.getCursorInfo(posImageSpace);
+            for (const frame of this.secondarySpatialImages) {
+                const posSecondaryImage = transformPoint(frame.spatialTransformAST, posImageSpace, false);
+                frame.cursorInfo = frame.getCursorInfo(posSecondaryImage);
+            }
         }
     }
 
-    @action setCursorValue(cursorValue: number) {
-        this.cursorValue = cursorValue;
+    @action setCursorValue(position: Point2D, channel: number, value: number) {
+        this.cursorValue = {position, channel, value};
     }
+
+    @action updateCursorRegion = (pos: Point2D) => {
+        if (this.spatialReference) {
+            const pointRefImage = transformPoint(this.spatialTransformAST, pos, true);
+            this.spatialReference.updateCursorRegion(pointRefImage);
+        } else {
+            this.frameRegionSet.regions?.[0].setControlPoint(0, pos);
+        }
+
+        for (const frame of this.secondarySpatialImages) {
+            const pointSecondaryImage = transformPoint(frame.spatialTransformAST, pos, false);
+            frame.frameRegionSet.regions?.[0].setControlPoint(0, pointSecondaryImage);
+        }
+    };
 
     // Sets a new zoom level and pans to keep the given point fixed
     @action zoomToPoint(x: number, y: number, zoom: number, absolute: boolean = false) {
@@ -1344,6 +1384,12 @@ export class FrameStore {
         }
 
         this.spatialReference.addSecondarySpatialImage(this);
+        // Update cursor position
+        const spatialRefCursorPos = this.spatialReference.cursorInfo?.posImageSpace;
+        if (spatialRefCursorPos) {
+            const cursorPosImage = transformPoint(this.spatialTransformAST, spatialRefCursorPos, false);
+            this.cursorInfo = this.getCursorInfo(cursorPosImage);
+        }
         return true;
     };
 

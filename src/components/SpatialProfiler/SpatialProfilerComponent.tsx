@@ -331,7 +331,7 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
                 }
             } else { // get value directly from frame when cursor is in image viewer
                 const cursorInfo = this.frame.cursorInfo;
-                const cursorValue = this.frame.cursorValue;
+                const cursorValue = this.frame.cursorValue?.value;
                 if (cursorInfo?.posImageSpace) {
                     const wcsLabel = cursorInfo?.infoWCS ? `WCS: ${isXCoordinate ? cursorInfo.infoWCS.x : cursorInfo.infoWCS.y}, ` : "";
                     const imageLabel = `Image: ${toFixed(isXCoordinate ? cursorInfo.posImageSpace.x : cursorInfo.posImageSpace.y)} px, `;

@@ -189,7 +189,8 @@ export class ImageViewComponent extends React.Component<WidgetProps> {
                     {appStore.activeFrame.cursorInfo &&
                     <CursorOverlayComponent
                         cursorInfo={appStore.activeFrame.cursorInfo}
-                        cursorValue={appStore.activeFrame.cursorValue}
+                        cursorValue={appStore.activeFrame.cursorValue.value}
+                        isValueCurrent={appStore.activeFrame.isCursorValueCurrent}
                         spectralInfo={appStore.activeFrame.spectralInfo}
                         width={overlayStore.viewWidth}
                         left={overlayStore.padding.left}
@@ -227,7 +228,7 @@ export class ImageViewComponent extends React.Component<WidgetProps> {
                         overlaySettings={overlayStore}
                         isRegionCornerMode={appStore.preferenceStore.isRegionCornerMode}
                         dragPanningEnabled={appStore.preferenceStore.dragPanning}
-                        cursorFrozen={appStore.activeFrame.cursorFrozen}
+                        cursorFrozen={appStore.cursorFrozen}
                         cursorPoint={appStore.activeFrame.cursorInfo.posImageSpace}
                         docked={this.props.docked && (this.activeLayer === ImageViewLayer.RegionMoving || this.activeLayer === ImageViewLayer.RegionCreating)}
                     />

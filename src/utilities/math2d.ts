@@ -249,3 +249,7 @@ export function angle2D(a: Point2D, b: Point2D) {
     b = normalize2D(b);
     return Math.asin(cross2D(a, b));
 }
+
+export function round2D(a: Point2D) {
+    return {x: Math.round(a.x), y: Math.round(a.y)};
+}
