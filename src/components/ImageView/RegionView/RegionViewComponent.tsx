@@ -330,7 +330,10 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
 
     private handleRegularRegionMouseMove(mouseEvent: MouseEvent) {
         const frame = this.props.frame;
-        const cursorPosImageSpace = canvasToTransformedImagePos(mouseEvent.offsetX, mouseEvent.offsetY, frame, this.props.width, this.props.height);
+        let cursorPosImageSpace = canvasToTransformedImagePos(mouseEvent.offsetX, mouseEvent.offsetY, frame, this.props.width, this.props.height);
+        if (frame.spatialReference) {
+            cursorPosImageSpace = transformPoint(frame.spatialTransformAST, cursorPosImageSpace, true);
+        }
         let dx = (cursorPosImageSpace.x - this.regionStartPoint.x);
         let dy = (cursorPosImageSpace.y - this.regionStartPoint.y);
         if (mouseEvent.shiftKey) {
