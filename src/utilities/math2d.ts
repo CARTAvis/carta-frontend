@@ -243,3 +243,9 @@ export function polygonPerimeter(points: Point2D[], closed: boolean = true): num
     }
     return totalLength;
 }
+
+export function angle2D(a: Point2D, b: Point2D) {
+    a = normalize2D(a);
+    b = normalize2D(b);
+    return Math.asin(cross2D(a, b));
+}

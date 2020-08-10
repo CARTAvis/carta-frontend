@@ -1,14 +1,13 @@
 import * as React from "react";
-import {Colors} from "@blueprintjs/core";
-import {action, observable} from "mobx";
+import {action} from "mobx";
 import {observer} from "mobx-react";
-import {Ellipse, Group, Line, Rect, Transformer} from "react-konva";
+import {Circle, Ellipse, Group, Line, Rect} from "react-konva";
 import Konva from "konva";
 import {CARTA} from "carta-protobuf";
 import {FrameStore, RegionStore} from "stores";
 import {Point2D} from "models";
 import {canvasToTransformedImagePos, transformedImageToCanvasPos} from "./shared";
-import {add2D, rotate2D, scale2D, subtract2D, transformPoint} from "utilities";
+import {add2D, angle2D, rotate2D, scale2D, subtract2D, transformPoint} from "utilities";
 
 export interface RegionComponentProps {
     region: RegionStore;
@@ -22,23 +21,13 @@ export interface RegionComponentProps {
     onDoubleClick?: (region: RegionStore) => void;
 }
 
-const ANCHOR_WIDTH = 7;
-
 @observer
 export class RegionComponent extends React.Component<RegionComponentProps> {
-    @observable selectedRegionRef;
-
     private editAnchor: string;
     private editOppositeAnchorPoint: Point2D;
     private editStartCenterPoint: Point2D;
-
     private previousCursorStyle: string;
-
-    handleRef = (ref) => {
-        if (ref && this.selectedRegionRef !== ref) {
-            this.selectedRegionRef = ref;
-        }
-    };
+    private static readonly AnchorWidth = 7;
 
     handleContextMenu = (konvaEvent: Konva.KonvaEventObject<MouseEvent>) => {
         konvaEvent.evt.preventDefault();
@@ -60,10 +49,6 @@ export class RegionComponent extends React.Component<RegionComponentProps> {
                 this.props.onSelect(this.props.region);
             }
         }
-    };
-
-    handleTransformStart = (konvaEvent: Konva.KonvaEventObject<Event>) => {
-        this.startEditing((konvaEvent.currentTarget as Konva.Transformer).getActiveAnchor());
     };
 
     startEditing = (anchor: string) => {
@@ -103,38 +88,8 @@ export class RegionComponent extends React.Component<RegionComponentProps> {
         this.props.region.beginEditing();
     };
 
-    handleTransformEnd = () => {
+    handleAnchorDragEnd = () => {
         this.props.region.endEditing();
-    };
-
-    handleTransform = (konvaEvent: Konva.KonvaEventObject<MouseEvent>) => {
-        if (konvaEvent.currentTarget) {
-            const transformer = konvaEvent.currentTarget as Konva.Transformer;
-            const anchor = transformer.getActiveAnchor();
-            const node = transformer.getNode();
-            const frame = this.props.frame;
-            const region = this.props.region;
-            if (anchor.includes("rotater")) {
-                const rotation = node.rotation();
-                region.setRotation(-rotation);
-            } else {
-                // revert node scaling and position before adjusting region control points
-                let centerImageSpace = region.controlPoints[0];
-                const centerCanvasPos = transformedImageToCanvasPos(centerImageSpace.x, centerImageSpace.y, frame, this.props.layerWidth, this.props.layerHeight);
-                node.x(centerCanvasPos.x);
-                node.y(centerCanvasPos.y);
-                node.scaleX(1);
-                node.scaleY(1);
-
-                const evt = konvaEvent.evt;
-                const isCtrlPressed = evt.ctrlKey || evt.metaKey;
-                if ((this.props.isRegionCornerMode && !isCtrlPressed) || (!this.props.isRegionCornerMode && isCtrlPressed)) {
-                    this.applyCornerScaling(region, evt.offsetX, evt.offsetY, anchor);
-                } else {
-                    this.applyCenterScaling(region, evt.offsetX, evt.offsetY, anchor, evt.shiftKey);
-                }
-            }
-        }
     };
 
     applyCornerScaling = (region: RegionStore, canvasX: number, canvasY: number, anchor: string) => {
@@ -254,60 +209,58 @@ export class RegionComponent extends React.Component<RegionComponentProps> {
         }
     };
 
+    private static GetCursor(anchor: string, rotation: number) {
+        let anchorAngle: number;
+
+        switch (anchor) {
+            case "rotator":
+                return "all-scroll";
+            case "top":
+            case "bottom":
+                anchorAngle = 0;
+                break;
+            case "left":
+            case "right":
+                anchorAngle = 90;
+                break;
+            case "top-left":
+            case "bottom-right":
+                anchorAngle = 45;
+                break;
+            default:
+                anchorAngle = 135;
+        }
+
+        // Add region rotation and round to nearest 45 degrees
+        anchorAngle += rotation;
+        anchorAngle = Math.round(anchorAngle / 45.0) * 45.0;
+
+        // Clamp between 0 and 135
+        while (anchorAngle < 0) {
+            anchorAngle += 180;
+        }
+        while (anchorAngle >= 180) {
+            anchorAngle -= 180;
+        }
+
+        switch (anchorAngle) {
+            case 45:
+                return "nwse-resize";
+            case 90:
+                return "ew-resize";
+            case 135:
+                return "nesw-resize";
+            default:
+                return "ns-resize";
+        }
+    }
+
     private handleAnchorMouseEnter = (konvaEvent: Konva.KonvaEventObject<MouseEvent>) => {
         const target = konvaEvent.target;
         const stage = target?.getStage();
         if (stage) {
-            const anchor = target.id();
-            let anchorAngle: number;
-
-            switch (anchor) {
-                case "top":
-                case "bottom":
-                    anchorAngle = 0;
-                    break;
-                case "left":
-                case "right":
-                    anchorAngle = 90;
-                    break;
-                case "top-left":
-                case "bottom-right":
-                    anchorAngle = 45;
-                    break;
-                default:
-                    anchorAngle = 135;
-            }
-
-            // Add region rotation and round to nearest 45 degrees
-            anchorAngle += this.props.region.rotation;
-            anchorAngle = Math.round(anchorAngle / 45.0) * 45.0;
-
-            // Clamp between 0 and 135
-            while (anchorAngle < 0) {
-                anchorAngle += 180;
-            }
-            while (anchorAngle >= 180) {
-                anchorAngle -= 180;
-            }
-
-            let cursorStyle: string;
-
-            switch (anchorAngle) {
-                case 45:
-                    cursorStyle = "nwse-resize";
-                    break;
-                case 90:
-                    cursorStyle = "ew-resize";
-                    break;
-                case 135:
-                    cursorStyle = "nesw-resize";
-                    break;
-                default:
-                    cursorStyle = "ns-resize";
-            }
-
             this.previousCursorStyle = stage.container().style.cursor;
-            stage.container().style.cursor = cursorStyle;
+            stage.container().style.cursor = RegionComponent.GetCursor(target.id(), this.props.region.rotation);
         }
     };
 
@@ -329,13 +282,21 @@ export class RegionComponent extends React.Component<RegionComponentProps> {
         if (konvaEvent.currentTarget) {
             const node = konvaEvent.target;
             const anchor = node.id();
-            const frame = this.props.frame;
             const region = this.props.region;
-            if (anchor.includes("rotater")) {
-                const rotation = node.rotation();
-                region.setRotation(-rotation);
+            const frame = this.props.frame;
+            const evt = konvaEvent.evt;
+            const offsetPoint = {x: evt.offsetX, y: evt.offsetY};
+            if (anchor.includes("rotator")) {
+                // Calculate rotation from anchor position
+                let newAnchorPoint = canvasToTransformedImagePos(offsetPoint.x, offsetPoint.y, frame, this.props.layerWidth, this.props.layerHeight);
+                if (frame.spatialReference) {
+                    newAnchorPoint = transformPoint(frame.spatialTransformAST, newAnchorPoint, true);
+                }
+                const delta = subtract2D(newAnchorPoint, region.center);
+                const topAnchorPosition = rotate2D({x: 0, y: 1}, region.rotation * Math.PI / 180.0);
+                const angle = 180.0 / Math.PI * angle2D(topAnchorPosition, delta);
+                region.setRotation(region.rotation + angle);
             } else {
-                const evt = konvaEvent.evt;
                 const isCtrlPressed = evt.ctrlKey || evt.metaKey;
                 if ((this.props.isRegionCornerMode && !isCtrlPressed) || (!this.props.isRegionCornerMode && isCtrlPressed)) {
                     this.applyCornerScaling(region, evt.offsetX, evt.offsetY, anchor);
@@ -347,36 +308,38 @@ export class RegionComponent extends React.Component<RegionComponentProps> {
     };
 
     private anchorNode(x: number, y: number, anchor: string, rotation: number = 0) {
-        return (
-            <Rect
-                x={x}
-                y={y}
-                offsetX={ANCHOR_WIDTH / 2.0}
-                offsetY={ANCHOR_WIDTH / 2.0}
-                width={ANCHOR_WIDTH}
-                height={ANCHOR_WIDTH}
-                fill="white"
-                strokeWidth={1}
-                stroke="black"
-                rotation={rotation}
-                draggable={true}
-                key={anchor}
-                id={anchor}
-                onMouseEnter={this.handleAnchorMouseEnter}
-                onMouseOut={this.handleAnchorMouseOut}
-                onDragStart={this.handleAnchorDragStart}
-                onDragEnd={this.handleTransformEnd}
-                onDragMove={this.handleAnchorDrag}
-            />
-        );
+        const commonProps = {
+            x,
+            y,
+            rotation,
+            fill: "white",
+            strokeWidth: 1,
+            stroke: "black",
+            draggable: true,
+            key: anchor,
+            id: anchor,
+            onMouseEnter: this.handleAnchorMouseEnter,
+            onMouseOut: this.handleAnchorMouseOut,
+            onDragStart: this.handleAnchorDragStart,
+            onDragEnd: this.handleAnchorDragEnd,
+            onDragMove: this.handleAnchorDrag,
+        };
+        if (anchor === "rotator") {
+            // Circle radius adjusted so that it circumscribes the other anchor squares
+            return <Circle {...commonProps} radius={RegionComponent.AnchorWidth / Math.sqrt(2)}/>;
+        }
+        const offset = RegionComponent.AnchorWidth / 2.0;
+        return <Rect {...commonProps} offsetX={offset} offsetY={offset} width={offset * 2} height={offset * 2}/>;
     }
 
     render() {
         const region = this.props.region;
         const frame = this.props.frame;
 
+        let shapeNode: React.ReactNode;
+        const centerReferenceImage = region.center;
+
         if (frame.spatialReference) {
-            const centerReferenceImage = region.controlPoints[0];
             const centerSecondaryImage = transformPoint(frame.spatialTransformAST, centerReferenceImage, false);
             const centerPixelSpace = transformedImageToCanvasPos(centerSecondaryImage.x, centerSecondaryImage.y, frame, this.props.layerWidth, this.props.layerHeight);
             // Ellipse axes swapped
@@ -389,68 +352,33 @@ export class RegionComponent extends React.Component<RegionComponentProps> {
                 pointArray[i * 2 + 1] = approxPointPixelSpace.y - centerPixelSpace.y;
             }
 
-            let anchors: React.ReactNode[];
-
-            if (this.props.selected && this.props.listening) {
-                let offsetX: number;
-                let offsetY: number;
-                if (region.regionType === CARTA.RegionType.RECTANGLE) {
-                    offsetX = region.controlPoints[1].x / 2;
-                    offsetY = region.controlPoints[1].y / 2;
-                } else {
-                    // Ellipse has swapped axes
-                    offsetX = region.controlPoints[1].y;
-                    offsetY = region.controlPoints[1].x;
-                }
-
-                const anchorConfigs = [
-                    {anchor: "top", offset: {x: 0, y: offsetY}},
-                    {anchor: "bottom", offset: {x: 0, y: -offsetY}},
-                    {anchor: "left", offset: {x: -offsetX, y: 0}},
-                    {anchor: "right", offset: {x: offsetX, y: 0}},
-                    {anchor: "top-left", offset: {x: -offsetX, y: offsetY}},
-                    {anchor: "bottom-left", offset: {x: -offsetX, y: -offsetY}},
-                    {anchor: "top-right", offset: {x: offsetX, y: offsetY}},
-                    {anchor: "bottom-right", offset: {x: offsetX, y: -offsetY}}
-                ];
-
-                anchors = anchorConfigs.map((config) => {
-                    const posSecondaryImage = transformPoint(frame.spatialTransformAST, add2D(centerReferenceImage, rotate2D(config.offset, region.rotation * Math.PI / 180)), false);
-                    const posCanvas = transformedImageToCanvasPos(posSecondaryImage.x, posSecondaryImage.y, frame, this.props.layerWidth, this.props.layerHeight);
-                    return this.anchorNode(posCanvas.x, posCanvas.y, config.anchor, -region.rotation);
-                });
-            }
-
-            return (
-                <Group>
-                    <Line
-                        x={centerPixelSpace.x}
-                        y={centerPixelSpace.y}
-                        stroke={region.color}
-                        strokeWidth={region.lineWidth}
-                        opacity={region.isTemporary ? 0.5 : (region.locked ? 0.70 : 1)}
-                        dash={[region.dashLength]}
-                        closed={true}
-                        listening={this.props.listening && !region.locked}
-                        onClick={this.handleClick}
-                        onDblClick={this.handleDoubleClick}
-                        onContextMenu={this.handleContextMenu}
-                        onDragStart={this.handleDragStart}
-                        onDragEnd={this.handleDragEnd}
-                        onDragMove={this.handleDrag}
-                        perfectDrawEnabled={false}
-                        lineJoin={"round"}
-                        draggable={true}
-                        points={pointArray}
-                    />
-                    {anchors}
-                </Group>
+            shapeNode = (
+                <Line
+                    x={centerPixelSpace.x}
+                    y={centerPixelSpace.y}
+                    stroke={region.color}
+                    strokeWidth={region.lineWidth}
+                    opacity={region.isTemporary ? 0.5 : (region.locked ? 0.70 : 1)}
+                    dash={[region.dashLength]}
+                    closed={true}
+                    listening={this.props.listening && !region.locked}
+                    onClick={this.handleClick}
+                    onDblClick={this.handleDoubleClick}
+                    onContextMenu={this.handleContextMenu}
+                    onDragStart={this.handleDragStart}
+                    onDragEnd={this.handleDragEnd}
+                    onDragMove={this.handleDrag}
+                    perfectDrawEnabled={false}
+                    lineJoin={"round"}
+                    draggable={true}
+                    points={pointArray}
+                />
             );
         } else {
             const rotation = region.rotation;
             const zoomLevel = frame.zoomLevel;
 
-            const centerPixelSpace = transformedImageToCanvasPos(region.controlPoints[0].x, region.controlPoints[0].y, frame.spatialReference || frame, this.props.layerWidth, this.props.layerHeight);
+            const centerPixelSpace = transformedImageToCanvasPos(centerReferenceImage.x, centerReferenceImage.y, frame, this.props.layerWidth, this.props.layerHeight);
             let width = (region.controlPoints[1].x * zoomLevel) / devicePixelRatio;
             let height = (region.controlPoints[1].y * zoomLevel) / devicePixelRatio;
 
@@ -474,12 +402,10 @@ export class RegionComponent extends React.Component<RegionComponentProps> {
                 onDblClick: this.handleDoubleClick,
                 onContextMenu: this.handleContextMenu,
                 perfectDrawEnabled: false,
-                ref: this.handleRef
             };
 
-            return (
-                <Group>
-                    {region.regionType === CARTA.RegionType.RECTANGLE &&
+            if (region.regionType === CARTA.RegionType.RECTANGLE) {
+                shapeNode = (
                     <Rect
                         {...commonProps}
                         width={width}
@@ -487,37 +413,62 @@ export class RegionComponent extends React.Component<RegionComponentProps> {
                         offsetX={width / 2.0}
                         offsetY={height / 2.0}
                     />
-                    }
-                    {region.regionType === CARTA.RegionType.ELLIPSE &&
+                );
+            } else {
+                shapeNode = (
                     <Ellipse
                         {...commonProps}
                         radiusY={width}
                         radiusX={height}
                     />
-                    }
-                    {this.selectedRegionRef && this.props.selected && this.props.listening &&
-                    <Transformer
-                        nodes={[this.selectedRegionRef]}
-                        rotateAnchorOffset={15}
-                        anchorSize={7}
-                        anchorStroke={"black"}
-                        borderStroke={Colors.TURQUOISE5}
-                        borderStrokeWidth={3}
-                        borderDash={borderDash}
-                        keepRatio={false}
-                        centeredScaling={true}
-                        draggable={false}
-                        borderEnabled={false}
-                        resizeEnabled={!region.locked}
-                        rotateEnabled={!region.locked}
-                        onTransformStart={this.handleTransformStart}
-                        onTransform={this.handleTransform}
-                        onTransformEnd={this.handleTransformEnd}
-                    />
-                    }
-                </Group>
-            );
+                );
+            }
         }
 
+        let anchors: React.ReactNode[];
+
+        if (this.props.selected && this.props.listening) {
+            let offsetX: number;
+            let offsetY: number;
+            if (region.regionType === CARTA.RegionType.RECTANGLE) {
+                offsetX = region.controlPoints[1].x / 2;
+                offsetY = region.controlPoints[1].y / 2;
+            } else {
+                // Ellipse has swapped axes
+                offsetX = region.controlPoints[1].y;
+                offsetY = region.controlPoints[1].x;
+            }
+
+            const zoomLevel = (frame.spatialReference ?? frame).zoomLevel;
+            let rotatorOffset = (15 / zoomLevel) * devicePixelRatio;
+
+            const anchorConfigs = [
+                {anchor: "rotator", offset: {x: 0, y: offsetY + rotatorOffset}},
+                {anchor: "top", offset: {x: 0, y: offsetY}},
+                {anchor: "bottom", offset: {x: 0, y: -offsetY}},
+                {anchor: "left", offset: {x: -offsetX, y: 0}},
+                {anchor: "right", offset: {x: offsetX, y: 0}},
+                {anchor: "top-left", offset: {x: -offsetX, y: offsetY}},
+                {anchor: "bottom-left", offset: {x: -offsetX, y: -offsetY}},
+                {anchor: "top-right", offset: {x: offsetX, y: offsetY}},
+                {anchor: "bottom-right", offset: {x: offsetX, y: -offsetY}}
+            ];
+
+            anchors = anchorConfigs.map((config) => {
+                let posImage = add2D(centerReferenceImage, rotate2D(config.offset, region.rotation * Math.PI / 180));
+                if (frame.spatialReference) {
+                    posImage = transformPoint(frame.spatialTransformAST, posImage, false);
+                }
+                const posCanvas = transformedImageToCanvasPos(posImage.x, posImage.y, frame, this.props.layerWidth, this.props.layerHeight);
+                return this.anchorNode(posCanvas.x, posCanvas.y, config.anchor, -region.rotation);
+            });
+        }
+
+        return (
+            <Group>
+                {shapeNode}
+                {anchors}
+            </Group>
+        );
     }
 }
