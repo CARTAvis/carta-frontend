@@ -36,7 +36,7 @@ export class RegionStore {
     static readonly MIN_LINE_WIDTH = 0.5;
     static readonly MAX_LINE_WIDTH = 10;
     static readonly MAX_DASH_LENGTH = 50;
-    static readonly TARGET_VERTEX_COUNT = 100;
+    static readonly TARGET_VERTEX_COUNT = 200;
 
     private readonly backendService: BackendService;
     private readonly regionApproximationMap: Map<number, Point2D[]>;
@@ -208,7 +208,7 @@ export class RegionStore {
                 ];
                 approximatePoints = getApproximatePolygonPoints(astTransform, points, RegionStore.TARGET_VERTEX_COUNT);
             } else {
-                approximatePoints = getApproximatePolygonPoints(astTransform, this.controlPoints, RegionStore.TARGET_VERTEX_COUNT);
+                approximatePoints = getApproximatePolygonPoints(astTransform, this.controlPoints, RegionStore.TARGET_VERTEX_COUNT, !this.creating);
             }
             this.regionApproximationMap.set(astTransform, approximatePoints);
         }
