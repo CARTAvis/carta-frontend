@@ -3,7 +3,7 @@ import {Colors} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import {Point2D} from "models";
 import {BackendService} from "services";
-import {add2D, getApproximateEllipsePoints, getApproximatePolygonPoints, isAstBadPoint, midpoint2D, minMax2D, rotate2D, scale2D, simplePolygonPointTest, simplePolygonTest, subtract2D, toFixed} from "utilities";
+import {add2D, getApproximateEllipsePoints, getApproximatePolygonPoints, isAstBadPoint, midpoint2D, minMax2D, rotate2D, scale2D, simplePolygonPointTest, simplePolygonTest, subtract2D, toFixed, transformPoint} from "utilities";
 import {FrameStore} from "stores";
 import RegionType = CARTA.RegionType;
 
@@ -189,22 +189,20 @@ export class RegionStore {
     public getRegionApproximation(astTransform: number): Point2D[] {
         let approximatePoints = this.regionApproximationMap.get(astTransform);
         if (!approximatePoints) {
-            // TODO: shapes other than ellipse
             if (this.regionType === RegionType.POINT) {
-                // TODO: just a single point approximation
+                approximatePoints = [transformPoint(astTransform, this.center, false)];
             }
             if (this.regionType === RegionType.ELLIPSE) {
-                approximatePoints = getApproximateEllipsePoints(astTransform, this.controlPoints[0], this.controlPoints[1].y, this.controlPoints[1].x, this.rotation, RegionStore.TARGET_VERTEX_COUNT);
+                approximatePoints = getApproximateEllipsePoints(astTransform, this.center, this.controlPoints[1].y, this.controlPoints[1].x, this.rotation, RegionStore.TARGET_VERTEX_COUNT);
             } else if (this.regionType === RegionType.RECTANGLE) {
-                const center = this.controlPoints[0];
                 let halfWidth = this.controlPoints[1].x / 2;
                 let halfHeight = this.controlPoints[1].y / 2;
                 const rotation = this.rotation * Math.PI / 180.0;
                 const points: Point2D[] = [
-                    add2D(center, rotate2D({x: -halfWidth, y: -halfHeight}, rotation)),
-                    add2D(center, rotate2D({x: +halfWidth, y: -halfHeight}, rotation)),
-                    add2D(center, rotate2D({x: +halfWidth, y: +halfHeight}, rotation)),
-                    add2D(center, rotate2D({x: -halfWidth, y: +halfHeight}, rotation)),
+                    add2D(this.center, rotate2D({x: -halfWidth, y: -halfHeight}, rotation)),
+                    add2D(this.center, rotate2D({x: +halfWidth, y: -halfHeight}, rotation)),
+                    add2D(this.center, rotate2D({x: +halfWidth, y: +halfHeight}, rotation)),
+                    add2D(this.center, rotate2D({x: -halfWidth, y: +halfHeight}, rotation)),
                 ];
                 approximatePoints = getApproximatePolygonPoints(astTransform, points, RegionStore.TARGET_VERTEX_COUNT);
             } else {
