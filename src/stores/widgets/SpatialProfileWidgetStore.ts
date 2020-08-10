@@ -170,7 +170,6 @@ export class SpatialProfileWidgetStore {
                 }
             }
         });
-
         return updatedRequirements;
     }
 

@@ -7,15 +7,6 @@
     border: 1px solid transparent;
     border-radius: 3px;
     user-select: none;
-    &.linked-to-selected {
-        border: 1px solid $blue2;
-
-        &.dark-theme {
-            border: 1px solid $blue4;
-        }
-
-        transition: border 250ms linear;
-    }
 
     .histogram-container {
         flex: 3 3 auto;
