@@ -239,6 +239,10 @@ export class FrameStore {
         return null;
     }
 
+    @computed get hasVisibleBeam(): boolean {
+        return this.beamProperties?.overlayBeamSettings?.visible;
+    }
+
     @computed get channelInfo(): ChannelInfo {
         if (!this.frameInfo || !this.frameInfo.fileInfoExtended || this.frameInfo.fileInfoExtended.depth <= 1 || !this.frameInfo.fileInfoExtended.headerEntries) {
             return undefined;
@@ -558,7 +562,7 @@ export class FrameStore {
                 }
                 return stokesInfo;
             }
-        }
+        } 
         return [];
     }
 

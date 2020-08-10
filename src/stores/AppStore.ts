@@ -35,7 +35,7 @@ import {
     WidgetsStore
 } from ".";
 import {distinct, GetRequiredTiles, mapToObject} from "utilities";
-import {BackendService, ConnectionStatus, ScriptingService, TileService, TileStreamDetails} from "services";
+import {ApiService, BackendService, ConnectionStatus, ScriptingService, TileService, TileStreamDetails} from "services";
 import {FrameView, Point2D, ProtobufProcessing, Theme, TileCoordinate, WCSMatchingType} from "models";
 import {CatalogInfo, CatalogUpdateMode, HistogramWidgetStore, RegionWidgetStore, SpatialProfileWidgetStore, SpectralProfileWidgetStore, StatsWidgetStore, StokesAnalysisWidgetStore, CatalogPlotType} from "./widgets";
 import {CatalogSubplotComponent, getImageCanvas, ImageViewLayer} from "components";
@@ -53,6 +53,7 @@ export class AppStore {
     readonly backendService: BackendService;
     readonly tileService: TileService;
     readonly scriptingService: ScriptingService;
+    readonly apiService: ApiService;
 
     // Other stores
     readonly alertStore: AlertStore;
@@ -173,15 +174,6 @@ export class AppStore {
             console.log(`Connected with session ID ${ack.sessionId}`);
             connected = true;
             this.logStore.addInfo(`Connected to server ${wsURL} with session ID ${ack.sessionId}`, ["network"]);
-
-            // Init layout/preference store after connection is built
-            const supportsServerLayout = ack.serverFeatureFlags & CARTA.ServerFeatureFlags.USER_LAYOUTS ? true : false;
-            this.layoutStore.initUserDefinedLayouts(supportsServerLayout, ack.userLayouts);
-            const supportsServerPreference = ack.serverFeatureFlags & CARTA.ServerFeatureFlags.USER_PREFERENCES ? true : false;
-            this.preferenceStore.initUserDefinedPreferences(supportsServerPreference, ack.userPreferences);
-            this.tileService.setCache(this.preferenceStore.gpuTileCache, this.preferenceStore.systemTileCache);
-            this.layoutStore.applyLayout(this.preferenceStore.layout);
-
             if (this.astReady && fileSearchParam) {
                 autoFileLoaded = true;
                 this.loadFile(folderSearchParam, fileSearchParam, "");
@@ -277,7 +269,7 @@ export class AppStore {
 
     @computed get frameNames(): IOptionProps [] {
         let names: IOptionProps [] = [];
-        this.frames.forEach(frame => names.push({label: frame.frameInfo.fileInfo.name, value: frame.frameInfo.fileId}));
+        this.frames.forEach((frame, index) => names.push({label: index + ": " + frame.frameInfo.fileInfo.name, value: frame.frameInfo.fileId}));
         return names;
     }
 
@@ -799,7 +791,7 @@ export class AppStore {
 
     @action updateActiveLayer = (layer: ImageViewLayer) => {
         this.activeLayer = layer;
-    }
+    };
 
     public static readonly DEFAULT_STATS_TYPES = [
         CARTA.StatsType.NumPixels,
@@ -877,6 +869,7 @@ export class AppStore {
         this.backendService = BackendService.Instance;
         this.tileService = TileService.Instance;
         this.scriptingService = ScriptingService.Instance;
+        this.apiService = ApiService.Instance;
 
         // Assign lower level store instances
         this.alertStore = AlertStore.Instance;
@@ -1079,13 +1072,24 @@ export class AppStore {
         // Auth and connection
         if (process.env.REACT_APP_AUTHENTICATION === "true") {
             this.dialogStore.showAuthDialog();
-        } else {
-            this.connectToServer();
         }
 
         // Splash screen mask
         autorun(() => {
-            if (this.astReady && this.zfpReady && this.cartaComputeReady && this.backendService.connectionStatus === ConnectionStatus.ACTIVE) {
+            if (this.astReady && this.zfpReady && this.cartaComputeReady && this.apiService.authenticated) {
+                this.preferenceStore.fetchPreferences().then(() => {
+                    this.layoutStore.fetchLayouts().then(() => {
+                        // Attempt connection after authenticating
+                        this.tileService.setCache(this.preferenceStore.gpuTileCache, this.preferenceStore.systemTileCache);
+                        this.layoutStore.applyLayout(this.preferenceStore.layout);
+                        this.connectToServer();
+                    });
+                });
+            }
+        });
+
+        autorun(() => {
+            if (this.backendService.connectionStatus === ConnectionStatus.ACTIVE) {
                 setTimeout(this.hideSplashScreen, 500);
             } else {
                 this.showSplashScreen();
@@ -1687,7 +1691,7 @@ export class AppStore {
             return;
         }
 
-        const updatedRequirements = RegionWidgetStore.CalculateRequirementsArray(this.activeFrame, this.widgetsStore.statsWidgets);
+        const updatedRequirements = RegionWidgetStore.CalculateRequirementsArray(this.widgetsStore.statsWidgets);
         const diffList = StatsWidgetStore.DiffRequirementsArray(this.statsRequirements, updatedRequirements);
         this.statsRequirements = updatedRequirements;
 
@@ -1703,7 +1707,7 @@ export class AppStore {
             return;
         }
 
-        const updatedRequirements = RegionWidgetStore.CalculateRequirementsArray(this.activeFrame, this.widgetsStore.histogramWidgets);
+        const updatedRequirements = RegionWidgetStore.CalculateRequirementsArray(this.widgetsStore.histogramWidgets);
         const diffList = HistogramWidgetStore.DiffRequirementsArray(this.histogramRequirements, updatedRequirements);
         this.histogramRequirements = updatedRequirements;
 
@@ -1719,9 +1723,9 @@ export class AppStore {
             return;
         }
 
-        const updatedRequirements = SpectralProfileWidgetStore.CalculateRequirementsMap(this.activeFrame, this.widgetsStore.spectralProfileWidgets);
-        if (this.activeFrame.hasStokes && this.widgetsStore.stokesAnalysisWidgets.size > 0) {
-            StokesAnalysisWidgetStore.addToRequirementsMap(this.activeFrame, updatedRequirements, this.widgetsStore.stokesAnalysisWidgets);
+        const updatedRequirements = SpectralProfileWidgetStore.CalculateRequirementsMap(this.widgetsStore.spectralProfileWidgets);
+        if (this.widgetsStore.stokesAnalysisWidgets.size > 0) {
+            StokesAnalysisWidgetStore.addToRequirementsMap(updatedRequirements, this.widgetsStore.stokesAnalysisWidgets);
         }
         const diffList = SpectralProfileWidgetStore.DiffSpectralRequirements(this.spectralRequirements, updatedRequirements);
         this.spectralRequirements = updatedRequirements;

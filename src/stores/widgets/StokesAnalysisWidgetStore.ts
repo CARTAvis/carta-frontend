@@ -96,50 +96,53 @@ export class StokesAnalysisWidgetStore extends RegionWidgetStore {
         return requiredCoordinate;
     }
 
-    public static addToRequirementsMap(frame: FrameStore, updatedRequirements: Map<number, Map<number, CARTA.SetSpectralRequirements>>, widgetsMap: Map<string, StokesAnalysisWidgetStore>)
+    public static addToRequirementsMap(updatedRequirements: Map<number, Map<number, CARTA.SetSpectralRequirements>>, widgetsMap: Map<string, StokesAnalysisWidgetStore>)
         : Map<number, Map<number, CARTA.SetSpectralRequirements>> {
         widgetsMap.forEach(widgetStore => {
-            const fileId = frame.frameInfo.fileId;
-            const regionId = widgetStore.effectiveRegionId;
-            const coordinates = StokesAnalysisWidgetStore.requiredCoordinate(widgetStore);
-            let statsType = widgetStore.statsType;
+            const frame = widgetStore.effectiveFrame;
+            if (frame && frame.hasStokes) {
+                const fileId = frame.frameInfo.fileId;
+                const regionId = widgetStore.effectiveRegionId;
+                const coordinates = StokesAnalysisWidgetStore.requiredCoordinate(widgetStore);
+                let statsType = widgetStore.statsType;
 
-            if (!frame.regionSet) {
-                return;
-            }
-            const region = frame.regionSet.regions.find(r => r.regionId === regionId);
-            if (region) {
-                // Point regions have no meaningful stats type, default to Sum
-                if (region.regionType === CARTA.RegionType.POINT) {
-                    statsType = CARTA.StatsType.Sum;
+                if (!frame.regionSet) {
+                    return;
                 }
-
-                let frameRequirements = updatedRequirements.get(fileId);
-                if (!frameRequirements) {
-                    frameRequirements = new Map<number, CARTA.SetSpectralRequirements>();
-                    updatedRequirements.set(fileId, frameRequirements);
-                }
-
-                let regionRequirements = frameRequirements.get(regionId);
-                if (!regionRequirements) {
-                    regionRequirements = new CARTA.SetSpectralRequirements({regionId, fileId});
-                    frameRequirements.set(regionId, regionRequirements);
-                }
-
-                if (!regionRequirements.spectralProfiles) {
-                    regionRequirements.spectralProfiles = [];
-                }
-
-                coordinates.forEach(coordinate => {
-                    let spectralConfig = regionRequirements.spectralProfiles.find(profiles => profiles.coordinate === coordinate);
-                    if (!spectralConfig) {
-                        // create new spectral config
-                        regionRequirements.spectralProfiles.push({coordinate, statsTypes: [statsType]});
-                    } else if (spectralConfig.statsTypes.indexOf(statsType) === -1) {
-                        // add to the stats type array
-                        spectralConfig.statsTypes.push(statsType);
+                const region = frame.regionSet.regions.find(r => r.regionId === regionId);
+                if (region) {
+                    // Point regions have no meaningful stats type, default to Sum
+                    if (region.regionType === CARTA.RegionType.POINT) {
+                        statsType = CARTA.StatsType.Sum;
                     }
-                });
+
+                    let frameRequirements = updatedRequirements.get(fileId);
+                    if (!frameRequirements) {
+                        frameRequirements = new Map<number, CARTA.SetSpectralRequirements>();
+                        updatedRequirements.set(fileId, frameRequirements);
+                    }
+
+                    let regionRequirements = frameRequirements.get(regionId);
+                    if (!regionRequirements) {
+                        regionRequirements = new CARTA.SetSpectralRequirements({regionId, fileId});
+                        frameRequirements.set(regionId, regionRequirements);
+                    }
+
+                    if (!regionRequirements.spectralProfiles) {
+                        regionRequirements.spectralProfiles = [];
+                    }
+
+                    coordinates.forEach(coordinate => {
+                        let spectralConfig = regionRequirements.spectralProfiles.find(profiles => profiles.coordinate === coordinate);
+                        if (!spectralConfig) {
+                            // create new spectral config
+                            regionRequirements.spectralProfiles.push({coordinate, statsTypes: [statsType]});
+                        } else if (spectralConfig.statsTypes.indexOf(statsType) === -1) {
+                            // add to the stats type array
+                            spectralConfig.statsTypes.push(statsType);
+                        }
+                    });
+                }
             }
         });
         return updatedRequirements;
@@ -164,7 +167,7 @@ export class StokesAnalysisWidgetStore extends RegionWidgetStore {
     };
 
     @action setSpectralCoordinate = (coordStr: string) => {
-        const frame = this.appStore.activeFrame;
+        const frame = this.effectiveFrame;
         if (frame && frame.spectralCoordsSupported && frame.spectralCoordsSupported.has(coordStr)) {
             const coord: {type: SpectralType, unit: SpectralUnit} = frame.spectralCoordsSupported.get(coordStr);
             frame.spectralType = coord.type;
@@ -174,7 +177,7 @@ export class StokesAnalysisWidgetStore extends RegionWidgetStore {
     };
 
     @action setSpectralSystem = (specsys: SpectralSystem) => {
-        const frame = this.appStore.activeFrame;
+        const frame = this.effectiveFrame;
         if (frame && frame.spectralSystemsSupported && frame.spectralSystemsSupported.includes(specsys)) {
             frame.spectralSystem = specsys;
             this.clearSharedXBounds();

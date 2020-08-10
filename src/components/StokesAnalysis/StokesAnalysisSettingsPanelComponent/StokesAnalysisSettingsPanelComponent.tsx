@@ -44,7 +44,7 @@ export class StokesAnalysisSettingsPanelComponent extends React.Component<Widget
 
         autorun(() => {
             if (this.widgetStore) {
-                const frame = appStore.activeFrame;
+                const frame = this.widgetStore.effectiveFrame;
                 if (frame) {
                     const regionId = this.widgetStore.effectiveRegionId;
                     const regionString = regionId === 0 ? "Cursor" : `Region #${regionId}`;
@@ -93,7 +93,7 @@ export class StokesAnalysisSettingsPanelComponent extends React.Component<Widget
             handleEqualAxesValuesChanged: this.handleEqualAxesValuesChanged
         };
 
-        const hasStokes = appStore.activeFrame && appStore.activeFrame.hasStokes;
+        const hasStokes = widgetStore.effectiveFrame && widgetStore.effectiveFrame.hasStokes;
 
         return (
             <div className="stokes-settings">

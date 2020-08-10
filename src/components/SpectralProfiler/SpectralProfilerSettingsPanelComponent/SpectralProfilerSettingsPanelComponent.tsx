@@ -47,7 +47,7 @@ export class SpectralProfilerSettingsPanelComponent extends React.Component<Widg
         const appStore = AppStore.Instance;
         autorun(() => {
             if (this.widgetStore) {
-                const frame = appStore.activeFrame;
+                const frame = this.widgetStore.effectiveFrame;
                 const coordinate = this.widgetStore.coordinate;
                 if (frame && coordinate) {
                     let coordinateString: string;
