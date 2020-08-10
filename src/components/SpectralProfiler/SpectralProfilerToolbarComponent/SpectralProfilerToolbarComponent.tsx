@@ -2,8 +2,8 @@ import {observer} from "mobx-react";
 import * as React from "react";
 import {FormGroup, HTMLSelect, IOptionProps, ButtonGroup, Button, Tooltip} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
-import {AppStore} from "stores";
-import {SpectralProfileWidgetStore, SpectralProfilerSettingsTabs} from "stores/widgets";
+import {AppStore, WidgetTabs} from "stores";
+import {SpectralProfileWidgetStore} from "stores/widgets";
 import {RegionSelectorComponent} from "components";
 import "./SpectralProfilerToolbarComponent.css";
 import {SpectralProfilerComponent} from "../SpectralProfilerComponent";
@@ -21,12 +21,12 @@ export class SpectralProfilerToolbarComponent extends React.Component<{ widgetSt
     };
 
     private smoothingShortcutClick = () => {
-        this.props.widgetStore.setSettingsTabId(SpectralProfilerSettingsTabs.SMOOTHING);
+        this.props.widgetStore.setSettingsTabId(WidgetTabs.SMOOTHING);
         AppStore.Instance.widgetsStore.createFloatingSettingsWidget(SpectralProfilerComponent.WIDGET_CONFIG.title, this.props.id, SpectralProfilerComponent.WIDGET_CONFIG.type);
     }
 
     private momentsShortcutClick = () => {
-        this.props.widgetStore.setSettingsTabId(SpectralProfilerSettingsTabs.MOMENTS);
+        this.props.widgetStore.setSettingsTabId(WidgetTabs.MOMENTS);
         AppStore.Instance.widgetsStore.createFloatingSettingsWidget(SpectralProfilerComponent.WIDGET_CONFIG.title, this.props.id, SpectralProfilerComponent.WIDGET_CONFIG.type);
     }
 

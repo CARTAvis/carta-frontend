@@ -4,7 +4,7 @@ import {Colors} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import {PlotType, LineSettings, ScatterSettings} from "components/Shared";
 import {RegionWidgetStore, RegionsType} from "./RegionWidgetStore";
-import {AppStore, FrameStore} from "stores";
+import {AppStore, FrameStore, WidgetTabs} from "stores";
 import {getColorsForValues} from "utilities";
 import {SpectralSystem, SpectralType, SpectralUnit} from "models";
 import * as tinycolor from "tinycolor2";
@@ -19,13 +19,6 @@ export enum StokesCoordinate {
     PolarizedIntensity = "PIz",
     PolarizationAngle = "PAz",
     PolarizationQU = "QvsU",
-}
-
-export enum StokesAnalysisSettingsTabs {
-    CONVERSION,
-    LINE_PLOT_STYLING,
-    SCATTER_PLOT_STYLING,
-    SMOOTHING,
 }
 
 const DEFAULTS = {
@@ -77,7 +70,7 @@ export class StokesAnalysisWidgetStore extends RegionWidgetStore {
     @observable colorPixel: { color: Uint8ClampedArray, size: number };
     @observable pointTransparency: number;
     readonly smoothingStore: ProfileSmoothingStore;
-    @observable settingsTabId: StokesAnalysisSettingsTabs;
+    @observable settingsTabId: WidgetTabs;
     
     private static requestDataType = [StokesCoordinate.LinearPolarizationQ, StokesCoordinate.LinearPolarizationU];
     private static ValidStatsTypes = [
@@ -241,7 +234,7 @@ export class StokesAnalysisWidgetStore extends RegionWidgetStore {
         this.equalAxes = DEFAULTS.equalAxes;
         this.pointTransparency = DEFAULTS.pointTransparency;
         this.smoothingStore = new ProfileSmoothingStore();
-        this.settingsTabId = StokesAnalysisSettingsTabs.CONVERSION;
+        this.settingsTabId = WidgetTabs.CONVERSION;
     }
 
     @action setQUScatterPlotXBounds = (minVal: number, maxVal: number) => {
@@ -357,7 +350,7 @@ export class StokesAnalysisWidgetStore extends RegionWidgetStore {
         }
     }
 
-    @action setSettingsTabId = (tabId: StokesAnalysisSettingsTabs) => {
+    @action setSettingsTabId = (tabId: WidgetTabs) => {
         this.settingsTabId = tabId;
     }
 

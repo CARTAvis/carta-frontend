@@ -4,7 +4,7 @@ import {observer} from "mobx-react";
 import {Colors, Tabs, Tab} from "@blueprintjs/core";
 import {LinePlotSettingsPanelComponentProps, LinePlotSettingsPanelComponent, SmoothingSettingsComponent} from "components/Shared";
 import {SpatialProfileWidgetStore} from "stores/widgets";
-import {WidgetProps, WidgetConfig, HelpType, WidgetsStore, AppStore} from "stores";
+import {WidgetProps, WidgetConfig, HelpType, WidgetsStore, AppStore, WidgetTabs} from "stores";
 import {parseNumber} from "utilities";
 import "./SpatialProfilerSettingsPanelComponent.css";
 
@@ -135,6 +135,10 @@ export class SpatialProfilerSettingsPanelComponent extends React.Component<Widge
         }
     };
 
+    handleSelectedTabChanged = (newTabId: React.ReactText) => {
+        this.widgetStore.setSettingsTabId(Number.parseInt(newTabId.toString()));
+    }
+
     render() {
         const widgetStore = this.widgetStore;
         const profileCoordinateOptions = [{
@@ -175,9 +179,9 @@ export class SpatialProfilerSettingsPanelComponent extends React.Component<Widge
         };
         return (
         <div className="spatial-profiler-settings">
-            <Tabs id="spatialSettingTabs">
-                <Tab id="styling" title="Styling" panel={<LinePlotSettingsPanelComponent {...lineSettingsProps}/>}/>
-                <Tab id="smoothing" title="Smoothing" panel={<SmoothingSettingsComponent smoothingStore={widgetStore.smoothingStore}/>}/>
+            <Tabs id="spatialSettingTabs" selectedTabId={widgetStore.settingsTabId} onChange={this.handleSelectedTabChanged}>
+                <Tab id={WidgetTabs.STYLING} title="Styling" panel={<LinePlotSettingsPanelComponent {...lineSettingsProps}/>}/>
+                <Tab id={WidgetTabs.SMOOTHING} title="Smoothing" panel={<SmoothingSettingsComponent smoothingStore={widgetStore.smoothingStore}/>}/>
             </Tabs>
         </div>
         );

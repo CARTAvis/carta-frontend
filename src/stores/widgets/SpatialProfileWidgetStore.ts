@@ -1,10 +1,9 @@
 import * as tinycolor from "tinycolor2";
 import {action, computed, observable} from "mobx";
 import {Colors} from "@blueprintjs/core";
-import {FrameStore} from "../FrameStore";
+import {FrameStore, ProfileSmoothingStore, WidgetTabs} from "stores";
 import {CARTA} from "carta-protobuf";
 import {PlotType, LineSettings} from "components/Shared";
-import {ProfileSmoothingStore} from "stores/ProfileSmoothingStore";
 
 export class SpatialProfileWidgetStore {
     @observable fileId: number;
@@ -27,6 +26,7 @@ export class SpatialProfileWidgetStore {
     @observable linePlotPointSize: number;
     @observable linePlotInitXYBoundaries: { minXVal: number, maxXVal: number, minYVal: number, maxYVal: number };
     readonly smoothingStore: ProfileSmoothingStore;
+    @observable settingsTabId: WidgetTabs;
 
     private static ValidCoordinates = ["x", "y", "Ix", "Iy", "Qx", "Qy", "Ux", "Uy", "Vx", "Vz"];
 
@@ -108,6 +108,10 @@ export class SpatialProfileWidgetStore {
     @action setMouseMoveIntoLinePlots = (val: boolean) => {
         this.isMouseMoveIntoLinePlots = val;
     };
+
+    @action setSettingsTabId = (val: WidgetTabs) => {
+        this.settingsTabId = val;
+    }
 
     constructor(coordinate: string = "x", fileId: number = -1, regionId: number = 0) {
         // Describes which data is being visualised

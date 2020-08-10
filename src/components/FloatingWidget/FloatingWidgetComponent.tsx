@@ -4,7 +4,7 @@ import {observer} from "mobx-react";
 import {Rnd} from "react-rnd";
 import {Icon, Position, Tooltip} from "@blueprintjs/core";
 import {PlaceholderComponent} from "components";
-import {AppStore, HelpStore, LayoutStore, WidgetConfig} from "stores";
+import {AppStore, HelpStore, LayoutStore, WidgetConfig, WidgetTabs, HelpType} from "stores";
 import "./FloatingWidgetComponent.css";
 
 class FloatingWidgetComponentProps {
@@ -72,7 +72,49 @@ export class FloatingWidgetComponent extends React.Component<FloatingWidgetCompo
 
     private onClickHelpButton = () => {
         const centerX = this.rnd.draggable.state.x + this.rnd.resizable.size.width * 0.5;
-        HelpStore.Instance.showHelpDrawer(this.props.widgetConfig.helpType, centerX);
+        if (this.props.widgetConfig.hasTabs) {
+            const widgetsStore = AppStore.Instance.widgetsStore;
+            const widgetParentType = this.props.widgetConfig.parentType;
+            const parentId = widgetsStore.floatingSettingsWidgets.get(this.props.widgetConfig.id);
+            let settingsTab: WidgetTabs;
+            switch (widgetParentType) {
+                case "spatial-profiler":
+                    settingsTab = widgetsStore.spatialProfileWidgets.get(parentId).settingsTabId;
+                    break;
+                case "spectral-profiler":
+                    settingsTab = widgetsStore.spectralProfileWidgets.get(parentId).settingsTabId;
+                    break;
+                case "stokes":
+                default:
+                    settingsTab = widgetsStore.stokesAnalysisWidgets.get(parentId).settingsTabId;
+                    break;
+            }
+
+            switch (settingsTab) {
+                case WidgetTabs.CONVERSION:
+                    HelpStore.Instance.showHelpDrawer(HelpType.CONVERSION, centerX);
+                    break;
+                case WidgetTabs.STYLING:
+                    HelpStore.Instance.showHelpDrawer(HelpType.STYLING, centerX);
+                    break;
+                case WidgetTabs.LINE_PLOT_STYLING:
+                    HelpStore.Instance.showHelpDrawer(HelpType.LINE_PLOT_STYLING, centerX);
+                    break;
+                case WidgetTabs.SCATTER_PLOT_STYLING:
+                    HelpStore.Instance.showHelpDrawer(HelpType.SCATTER_PLOT_STYLING, centerX);
+                    break;
+                case WidgetTabs.SMOOTHING:
+                    HelpStore.Instance.showHelpDrawer(HelpType.SMOOTHING, centerX);
+                    break;
+                case WidgetTabs.MOMENTS:
+                default:
+                    HelpStore.Instance.showHelpDrawer(HelpType.MOMENTS, centerX);
+                    break;
+            }
+
+        } else {
+            HelpStore.Instance.showHelpDrawer(this.props.widgetConfig.helpType, centerX);
+        }
     }
 
     constructor(props: FloatingWidgetComponentProps) {

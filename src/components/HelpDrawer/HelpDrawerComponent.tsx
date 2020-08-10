@@ -25,7 +25,13 @@ import {
     SpectralProfilerSettingsHelpComponent,
     StatsHelpComponent,
     StokesAnalysisHelpComponent,
-    StokesAnalysisSettingsHelpComponent
+    StokesAnalysisSettingsHelpComponent,
+    ConversionHelpComponent,
+    StylingHelpComponent,
+    LinePlotStylingHelpComponent,
+    ScatterPlotStylingHelpComponent,
+    ProfileSmoothingHelpComponent,
+    MomentsHelpComponent
 } from "./HelpContent";
 import {AppStore, HelpStore, HelpType} from "stores";
 
@@ -164,6 +170,33 @@ export class HelpDrawerComponent extends React.Component {
             HelpType.STOKES_ANALYSIS_SETTINGS, {
                 title: "Stokes Settings",
                 content: <StokesAnalysisSettingsHelpComponent/>
+        }],
+
+        // Tabs
+        [
+            HelpType.CONVERSION, {
+                title: "Conversion",
+                content: <ConversionHelpComponent/>
+        }], [
+            HelpType.STYLING, {
+                title: "Styling",
+                content: <StylingHelpComponent/>
+        }], [
+            HelpType.LINE_PLOT_STYLING, {
+                title: "Line Plot Styling",
+                content: <LinePlotStylingHelpComponent/>
+        }], [
+            HelpType.SCATTER_PLOT_STYLING, {
+                title: "Scatter Plot Styling",
+                content: <ScatterPlotStylingHelpComponent/>
+        }], [
+            HelpType.SMOOTHING, {
+                title: "Profile Smoothing",
+                content: <ProfileSmoothingHelpComponent/>
+        }], [
+            HelpType.MOMENTS, {
+                title: "Moments",
+                content: <MomentsHelpComponent/>
         }]
     ]);
 }
