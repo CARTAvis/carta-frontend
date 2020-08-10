@@ -2,36 +2,40 @@ import * as React from "react";
 import {observer} from "mobx-react";
 import {Ellipse, Group, Layer, Line, Stage} from "react-konva";
 import {Colors} from "@blueprintjs/core";
-import {BeamType, FrameStore, OverlayBeamStore} from "stores";
+import {AppStore, BeamType, FrameStore} from "stores";
+import { Point2D } from "models";
 import "./BeamProfileOverlayComponent.css";
 
 interface BeamProfileOverlayComponentProps {
-    frame: FrameStore;
     docked: boolean;
-    width: number;
-    height: number;
     top: number;
     left: number;
-    overlayBeamSettings: OverlayBeamStore;
     padding?: number;
+}
+
+interface BeamPlotProps {
+    id: number;
+    position: Point2D;
+    a: number;
+    b: number;
+    theta: number;
+    type: BeamType;
+    color: string;
+    axisColor: string;
+    strokeWidth: number;
 }
 
 @observer
 export class BeamProfileOverlayComponent extends React.Component<BeamProfileOverlayComponentProps> {
-    render() {
-        let className = "beam-profile-stage";
-        if (this.props.docked) {
-            className += " docked";
-        }
 
-        const frame = this.props.frame;
-
-        if (!frame.beamProperties) {
+    private getPlotProps = (frame: FrameStore, basePosition?: Point2D): BeamPlotProps => {
+        if (!frame.hasVisibleBeam) {
             return null;
         }
 
+        const id = frame.frameInfo.fileId;
         const zoomLevel = frame.spatialReference ? frame.spatialReference.zoomLevel * frame.spatialTransform.scale : frame.zoomLevel;
-        const beamSettings = this.props.overlayBeamSettings;
+        const beamSettings = frame.overlayBeamSettings;
         const color = beamSettings.color;
         const axisColor = beamSettings.type === BeamType.Solid ? Colors.WHITE : color;
         const type = beamSettings.type;
@@ -55,40 +59,79 @@ export class BeamProfileOverlayComponent extends React.Component<BeamProfileOver
         };
 
         // limit the beam inside the beam overlay
-        const rightMost = this.props.width - boundingBox.x / 2.0;
-        let positionX = boundingBox.x / 2.0 + paddingOffset + shiftX;
+        const rightMost = frame.renderWidth - boundingBox.x / 2.0;
+        let positionX = basePosition ? basePosition.x : boundingBox.x / 2.0 + paddingOffset + shiftX;
         if (positionX > rightMost) {
             positionX = rightMost;
         }
         const upMost = boundingBox.y / 2.0;
-        let positionY = this.props.height - boundingBox.y / 2.0 - paddingOffset - shiftY;
+        let positionY = basePosition ? basePosition.y : frame.renderHeight - boundingBox.y / 2.0 - paddingOffset - shiftY;
         if (positionY < upMost) {
             positionY = upMost;
         }
 
-        let ellipse;
-        switch (type) {
-            case BeamType.Open:
-            default:
-                ellipse = <Ellipse radiusX={a} radiusY={b} stroke={color} strokeWidth={strokeWidth}/>;
-                break;
-            case  BeamType.Solid:
-                ellipse = <Ellipse radiusX={a} radiusY={b} fill={color} stroke={color} strokeWidth={strokeWidth}/>;
-                break;
+        return {id, position: {x: positionX, y: positionY}, a, b, theta, type, color, axisColor, strokeWidth};
+    }
+
+    private plotBeam(plotProps: BeamPlotProps) {
+        if (!plotProps) {
+            return null;
         }
 
+        let ellipse;
+        switch (plotProps.type) {
+            case BeamType.Open:
+            default:
+                ellipse = <Ellipse radiusX={plotProps.a} radiusY={plotProps.b} stroke={plotProps.color} strokeWidth={plotProps.strokeWidth}/>;
+                break;
+            case  BeamType.Solid:
+                ellipse = <Ellipse radiusX={plotProps.a} radiusY={plotProps.b} fill={plotProps.color} stroke={plotProps.color} strokeWidth={plotProps.strokeWidth}/>;
+                break;
+        }
         return (
-            <Stage className={className} width={this.props.width} height={this.props.height} style={{left: this.props.left, top: this.props.top}}>
+            <Group
+                x={plotProps.position.x}
+                y={plotProps.position.y}
+                rotation={plotProps.theta * 180.0 / Math.PI}
+                key={plotProps.id}
+            >
+                {plotProps.a > 0 && plotProps.b > 0 && ellipse}
+                <Line points={[-plotProps.a, 0, plotProps.a, 0]} stroke={plotProps.axisColor} strokeWidth={plotProps.strokeWidth}/>
+                <Line points={[0, -plotProps.b, 0, plotProps.b]} stroke={plotProps.axisColor} strokeWidth={plotProps.strokeWidth}/>
+            </Group>
+        );
+    }
+
+    render() {
+        let className = "beam-profile-stage";
+        if (this.props.docked) {
+            className += " docked";
+        }
+
+        const appStore = AppStore.Instance;
+        const baseFrame = appStore.activeFrame;
+        const contourFrames = appStore.contourFrames.filter(frame => frame.frameInfo.fileId !== appStore.activeFrame.frameInfo.fileId && frame.hasVisibleBeam);
+
+        if (!baseFrame.hasVisibleBeam && !contourFrames.length) {
+            return null;
+        }
+
+        let baseBeamPlotProps: BeamPlotProps;
+        if (baseFrame.hasVisibleBeam) {
+            baseBeamPlotProps = this.getPlotProps(baseFrame);
+        }
+
+        const contourBeams = [];
+        contourFrames.forEach(contourFrame => {
+            const plotProps = this.getPlotProps(contourFrame, baseBeamPlotProps ? baseBeamPlotProps.position : null);
+            contourBeams.push(this.plotBeam(plotProps));
+        });
+
+        return (
+            <Stage className={className} width={baseFrame.renderWidth} height={baseFrame.renderHeight} style={{left: this.props.left, top: this.props.top}}>
                 <Layer listening={false}>
-                    <Group
-                        x={positionX}
-                        y={positionY}
-                        rotation={theta * 180.0 / Math.PI}
-                    >
-                        {a > 0 && b > 0 && ellipse}
-                        <Line points={[-a, 0, a, 0]} stroke={axisColor} strokeWidth={strokeWidth}/>
-                        <Line points={[0, -b, 0, b]} stroke={axisColor} strokeWidth={strokeWidth}/>
-                    </Group>
+                    {this.plotBeam(baseBeamPlotProps)}
+                    {contourBeams}
                 </Layer>
             </Stage>
         );

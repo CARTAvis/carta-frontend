@@ -269,7 +269,7 @@ export class AppStore {
 
     @computed get frameNames(): IOptionProps [] {
         let names: IOptionProps [] = [];
-        this.frames.forEach(frame => names.push({label: frame.frameInfo.fileInfo.name, value: frame.frameInfo.fileId}));
+        this.frames.forEach((frame, index) => names.push({label: index + ": " + frame.frameInfo.fileInfo.name, value: frame.frameInfo.fileId}));
         return names;
     }
 
@@ -1618,7 +1618,7 @@ export class AppStore {
             return;
         }
 
-        const updatedRequirements = RegionWidgetStore.CalculateRequirementsArray(this.activeFrame, this.widgetsStore.statsWidgets);
+        const updatedRequirements = RegionWidgetStore.CalculateRequirementsArray(this.widgetsStore.statsWidgets);
         const diffList = StatsWidgetStore.DiffRequirementsArray(this.statsRequirements, updatedRequirements);
         this.statsRequirements = updatedRequirements;
 
@@ -1634,7 +1634,7 @@ export class AppStore {
             return;
         }
 
-        const updatedRequirements = RegionWidgetStore.CalculateRequirementsArray(this.activeFrame, this.widgetsStore.histogramWidgets);
+        const updatedRequirements = RegionWidgetStore.CalculateRequirementsArray(this.widgetsStore.histogramWidgets);
         const diffList = HistogramWidgetStore.DiffRequirementsArray(this.histogramRequirements, updatedRequirements);
         this.histogramRequirements = updatedRequirements;
 
@@ -1650,9 +1650,9 @@ export class AppStore {
             return;
         }
 
-        const updatedRequirements = SpectralProfileWidgetStore.CalculateRequirementsMap(this.activeFrame, this.widgetsStore.spectralProfileWidgets);
-        if (this.activeFrame.hasStokes && this.widgetsStore.stokesAnalysisWidgets.size > 0) {
-            StokesAnalysisWidgetStore.addToRequirementsMap(this.activeFrame, updatedRequirements, this.widgetsStore.stokesAnalysisWidgets);
+        const updatedRequirements = SpectralProfileWidgetStore.CalculateRequirementsMap(this.widgetsStore.spectralProfileWidgets);
+        if (this.widgetsStore.stokesAnalysisWidgets.size > 0) {
+            StokesAnalysisWidgetStore.addToRequirementsMap(updatedRequirements, this.widgetsStore.stokesAnalysisWidgets);
         }
         const diffList = SpectralProfileWidgetStore.DiffSpectralRequirements(this.spectralRequirements, updatedRequirements);
         this.spectralRequirements = updatedRequirements;

@@ -209,18 +209,12 @@ export class ImageViewComponent extends React.Component<WidgetProps> {
                         showStokes={true}
                     />
                     }
-                    {appStore.activeFrame.beamProperties &&
-                    appStore.activeFrame.beamProperties.overlayBeamSettings &&
-                    appStore.activeFrame.beamProperties.overlayBeamSettings.visible &&
+                    {appStore.activeFrame &&
                     <BeamProfileOverlayComponent
-                        width={appStore.activeFrame.renderWidth}
-                        height={appStore.activeFrame.renderHeight}
                         top={overlayStore.padding.top}
                         left={overlayStore.padding.left}
-                        frame={appStore.activeFrame}
                         docked={this.props.docked}
                         padding={10}
-                        overlayBeamSettings={appStore.activeFrame.beamProperties.overlayBeamSettings}
                     />
                     }
                     {appStore.activeFrame &&
