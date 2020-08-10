@@ -6,6 +6,7 @@ import {IRegion} from "@blueprintjs/table/src/regions";
 import {Icon, Label, NonIdealState} from "@blueprintjs/core";
 import globToRegExp from "glob-to-regexp";
 import * as moment from "moment";
+import FuzzySearch from "fuzzy-search";
 import {CARTA} from "carta-protobuf";
 import {BrowserMode, SortingConfig} from "stores";
 import {toFixed} from "utilities";
@@ -99,7 +100,13 @@ export class FileListTableComponent extends React.Component<FileListTableCompone
         if (filterString) {
             try {
                 let regex: RegExp;
-                if (filterString.startsWith("/") && filterString.endsWith("/")) {
+                if (filterString.startsWith("+")) {
+                    const searchString = filterString.slice(1);
+                    const folderSearcher = new FuzzySearch(filteredSubdirectories);
+                    filteredSubdirectories = folderSearcher.search(searchString);
+                    const fileSearcher = new FuzzySearch(filteredFiles, ["name"]);
+                    filteredFiles = fileSearcher.search(searchString);
+                } else if (filterString.startsWith("/") && filterString.endsWith("/")) {
                     // Strict regex search is case-sensitive
                     regex = RegExp(filterString.substring(1, filterString.length - 1));
                     filteredSubdirectories = filteredSubdirectories?.filter(value => value.match(regex));
