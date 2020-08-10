@@ -100,24 +100,24 @@ export class FileListTableComponent extends React.Component<FileListTableCompone
         if (filterString) {
             try {
                 let regex: RegExp;
-                if (filterString.startsWith("+")) {
-                    const searchString = filterString.slice(1);
-                    const folderSearcher = new FuzzySearch(filteredSubdirectories);
-                    filteredSubdirectories = folderSearcher.search(searchString);
-                    const fileSearcher = new FuzzySearch(filteredFiles, ["name"]);
-                    filteredFiles = fileSearcher.search(searchString);
-                } else if (filterString.startsWith("/") && filterString.endsWith("/")) {
+                if (filterString.startsWith("/") && filterString.endsWith("/")) {
                     // Strict regex search is case-sensitive
                     regex = RegExp(filterString.substring(1, filterString.length - 1));
                     filteredSubdirectories = filteredSubdirectories?.filter(value => value.match(regex));
                     // @ts-ignore
                     filteredFiles = filteredFiles?.filter(file => file.name.match(regex));
-                } else {
+                } else if (filterString.startsWith("+")) {
+                    const searchString = filterString.slice(1);
                     // glob search case-insensitive
-                    regex = RegExp(globToRegExp(filterString.toLowerCase()));
+                    regex = RegExp(globToRegExp(searchString.toLowerCase()));
                     filteredSubdirectories = filteredSubdirectories?.filter(value => value.toLowerCase().match(regex));
                     // @ts-ignore
                     filteredFiles = filteredFiles?.filter(file => file.name.toLowerCase().match(regex));
+                } else {
+                    const folderSearcher = new FuzzySearch(filteredSubdirectories);
+                    filteredSubdirectories = folderSearcher.search(filterString);
+                    const fileSearcher = new FuzzySearch(filteredFiles, ["name"]);
+                    filteredFiles = fileSearcher.search(filterString);
                 }
             } catch (e) {
                 if (e.name !== "SyntaxError") {
