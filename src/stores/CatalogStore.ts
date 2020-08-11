@@ -59,14 +59,14 @@ export class CatalogStore {
             switch (catalogFrame) {
                 case CatalogSystemType.Pixel0:
                     for (let i = 0; i < xData.length; i++) {
-                        catalogDataInfo.xImageCoords.push(xData[i] + 1);
-                        catalogDataInfo.yImageCoords.push(yData[i] + 1);
+                        catalogDataInfo.xImageCoords.push(xData[i]);
+                        catalogDataInfo.yImageCoords.push(yData[i]);
                     }
                     break;
                 case CatalogSystemType.Pixel1:
                     for (let i = 0; i < xData.length; i++) {
-                        catalogDataInfo.xImageCoords.push(xData[i]);
-                        catalogDataInfo.yImageCoords.push(yData[i]);
+                        catalogDataInfo.xImageCoords.push(xData[i] - 1);
+                        catalogDataInfo.yImageCoords.push(yData[i] - 1);
                     }
                     break;
                 default:

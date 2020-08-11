@@ -3,7 +3,9 @@ import {observer} from "mobx-react";
 import {Group, Rect} from "react-konva";
 import Konva from "konva";
 import {FrameStore, RegionStore} from "stores";
-import {getUpdatedPosition, transformedImageToCanvasPos} from "./shared";
+import {canvasToTransformedImagePos, transformedImageToCanvasPos} from "./shared";
+import {Point2D} from "models";
+import {transformPoint} from "utilities";
 
 export interface PointRegionComponentProps {
     region: RegionStore;
@@ -53,9 +55,11 @@ export class PointRegionComponent extends React.Component<PointRegionComponentPr
             const node = konvaEvent.target;
             const region = this.props.region;
             const frame = this.props.frame;
-            const zoomLevel = frame.spatialReference ? frame.spatialReference.zoomLevel : frame.zoomLevel;
-            const newPosition = getUpdatedPosition (region.controlPoints[0], node.position(), zoomLevel, frame, this.props.layerWidth, this.props.layerHeight);
-            region.setControlPoint(0, newPosition);
+            let positionImageSpace = canvasToTransformedImagePos(node.position().x, node.position().y, frame, this.props.layerWidth, this.props.layerHeight);
+            if (frame.spatialReference) {
+                positionImageSpace = transformPoint(frame.spatialTransformAST, positionImageSpace, true);
+            }
+            region.setControlPoint(0, positionImageSpace);
         }
     };
 
@@ -63,13 +67,23 @@ export class PointRegionComponent extends React.Component<PointRegionComponentPr
         const region = this.props.region;
         const frame = this.props.frame;
 
-        const centerPixelSpace = transformedImageToCanvasPos(region.controlPoints[0].x, region.controlPoints[0].y, frame, this.props.layerWidth, this.props.layerHeight);
-        const rotation = frame.spatialReference ? frame.spatialTransform.rotation * 180.0 / Math.PI : 0.0;
+        let centerPixelSpace: Point2D;
+        let rotation: number;
+
+        if (frame.spatialReference) {
+            const pointReferenceImage = region.controlPoints[0];
+            const pointSecondaryImage = transformPoint(frame.spatialTransformAST, pointReferenceImage, false);
+            centerPixelSpace = transformedImageToCanvasPos(pointSecondaryImage.x, pointSecondaryImage.y, frame, this.props.layerWidth, this.props.layerHeight);
+            rotation = -frame.spatialTransform.rotation * 180.0 / Math.PI;
+        } else {
+            centerPixelSpace = transformedImageToCanvasPos(region.controlPoints[0].x, region.controlPoints[0].y, frame, this.props.layerWidth, this.props.layerHeight);
+            rotation = 0;
+        }
 
         return (
             <Group>
                 <Rect
-                    rotation={-rotation}
+                    rotation={rotation}
                     x={centerPixelSpace.x}
                     y={centerPixelSpace.y}
                     width={POINT_WIDTH}
@@ -79,7 +93,7 @@ export class PointRegionComponent extends React.Component<PointRegionComponentPr
                     fill={region.color}
                 />
                 <Rect
-                    rotation={-rotation}
+                    rotation={rotation}
                     x={centerPixelSpace.x}
                     y={centerPixelSpace.y}
                     width={POINT_DRAG_WIDTH}
