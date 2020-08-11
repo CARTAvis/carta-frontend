@@ -95,7 +95,7 @@ vec2 controlMapLookup(vec2 pos) {
 void main(void) {
 
     // Shift by half a pixel to account for position of pixel center
-    vec2 posImageSpace = aVertexPosition.xy + 0.5;
+    vec2 posImageSpace = aVertexPosition.xy - 0.5;
 
     // Calculate extrusion vector and distance
     vec2 extrudeOffet = (aVertexNormal / 16384.0) * uLineThickness * 0.5;
@@ -119,7 +119,6 @@ void main(void) {
 
     // Scale and rotate
     vec2 posRefSpace = scaleAndRotate2D(posImageSpace, uRotationAngle, uScaleAdjustment);
-
     // Convert from image space to GL space [-1, 1]
     vec2 adjustedPosition = (posRefSpace * uRangeScale + uRangeOffset) * 2.0 - 1.0;
 
