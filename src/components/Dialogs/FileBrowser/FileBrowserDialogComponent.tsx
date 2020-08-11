@@ -298,7 +298,7 @@ export class FileBrowserDialogComponent extends React.Component {
             fileInput = (
                 <InputGroup
                     autoFocus={false}
-                    placeholder="Filter by filename pattern (unix style) or regular expression (using /<expression>/)"
+                    placeholder="Filter by filename with fuzzy search. To apply a unix-style pattern, use +<expression>. To apply a regular expression, use /<expression>/"
                     value={this.fileFilterString}
                     onChange={this.handleFilterStringInputChanged}
                     leftIcon="search"
