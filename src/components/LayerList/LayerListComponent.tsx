@@ -56,7 +56,6 @@ export class LayerListComponent extends React.Component<WidgetProps> {
     private onFileSelected = (appStore: AppStore, frame: FrameStore) => {
         const fileId = frame.frameInfo.fileId;
         appStore.setActiveFrame(fileId);
-        CatalogStore.Instance.resetActivedCatalogFile(fileId);   
     }
 
     private fileNameRenderer = (rowIndex: number) => {

@@ -136,15 +136,15 @@ export class CatalogStore {
         this.imageAssociatedCatalogId.set(activeFrameIndex, associatedCatalogFiles);
     }
 
-    @action resetActivedCatalogFile(imageFileId: number) {
+    @action resetActiveCatalogFile(imageFileId: number) {
         const fileIds = this.imageAssociatedCatalogId.get(imageFileId);
-        const activedCatalogFileIds = fileIds ? fileIds : [];
-        if (this.catalogProfiles.size && activedCatalogFileIds?.length) {
+        const activeCatalogFileIds = fileIds ? fileIds : [];
+        if (this.catalogProfiles.size && activeCatalogFileIds?.length) {
             this.catalogProfiles.forEach((value , componentId) => {
-                this.catalogProfiles.set(componentId, activedCatalogFileIds[0]);
+                this.catalogProfiles.set(componentId, activeCatalogFileIds[0]);
             });  
         }
-        this.resetDisplayedData(activedCatalogFileIds); 
+        this.resetDisplayedData(activeCatalogFileIds);
     }
 
     // update associated catalogProfile fileId
@@ -265,7 +265,7 @@ export class CatalogStore {
         }
     }
 
-    @computed get activedCatalogFiles() {
+    @computed get activeCatalogFiles() {
         const activeFrame = AppStore.Instance.activeFrame;
         if (activeFrame) {
             const imageId = activeFrame.frameInfo.fileId;

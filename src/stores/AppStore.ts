@@ -492,7 +492,7 @@ export class AppStore {
                 if (this.catalogNum) {
                     CatalogStore.Instance.closeAssociatedCatalog(fileId);
                     if (firstFrame) {
-                        CatalogStore.Instance.resetActivedCatalogFile(firstFrame.frameInfo.fileId);   
+                        CatalogStore.Instance.resetActiveCatalogFile(firstFrame.frameInfo.fileId);
                     }
                 }
             }
@@ -565,7 +565,7 @@ export class AppStore {
                 // update image associated catalog file
                 let associatedCatalogFiles = [];
                 const catalogStore = CatalogStore.Instance;
-                let currentAssociatedCatalogFile = catalogStore.activedCatalogFiles;
+                let currentAssociatedCatalogFile = catalogStore.activeCatalogFiles;
                 if (currentAssociatedCatalogFile?.length) {
                     associatedCatalogFiles = currentAssociatedCatalogFile;
                 } else {
@@ -621,7 +621,7 @@ export class AppStore {
                 return;
             }
             // update associated image
-            const fileIds = catalogStore.activedCatalogFiles;
+            const fileIds = catalogStore.activeCatalogFiles;
             const activeImageId = AppStore.Instance.activeFrame.frameInfo.fileId;
             let associatedCatalogId = [];
             if (fileIds) {
@@ -1383,6 +1383,7 @@ export class AppStore {
         }
         this.activeFrame = frame;
         this.widgetsStore.updateImageWidgetTitle();
+        this.catalogStore.resetActiveCatalogFile(frame.frameInfo.fileId);
         if (this.syncContourToFrame) {
             this.contourDataSource = frame;
         }

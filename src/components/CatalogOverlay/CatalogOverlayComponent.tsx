@@ -159,7 +159,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         autorun(() => {
             const appStore = AppStore.Instance;
             const frame = appStore.activeFrame;
-            const catalogFileIds = CatalogStore.Instance.activedCatalogFiles;
+            const catalogFileIds = CatalogStore.Instance.activeCatalogFiles;
             this.catalogFileId = CatalogStore.Instance.catalogProfiles.get(this.props.id);
             if (this.profileStore && frame) {
                 let progressString = "";
@@ -727,7 +727,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
     public render() {
         const catalogWidgetStore = this.widgetStore;
         const profileStore = this.profileStore;
-        const catalogFileIds = CatalogStore.Instance.activedCatalogFiles;
+        const catalogFileIds = CatalogStore.Instance.activeCatalogFiles;
 
         if (!profileStore || catalogFileIds === undefined || catalogFileIds?.length === 0) {
             return (

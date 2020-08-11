@@ -52,7 +52,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
         autorun(() => {
             const profileStore = this.profileStore;
             const widgetStore =  this.widgetStore;
-            const catalogFileIds = CatalogStore.Instance.activedCatalogFiles;
+            const catalogFileIds = CatalogStore.Instance.activeCatalogFiles;
             if (!catalogFileIds?.includes(this.catalogFileId) && catalogFileIds?.length > 0) {
                 this.catalogFileId = catalogFileIds[0];
             }
@@ -519,7 +519,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
         const profileStore = this.profileStore;
         const widgetStore = this.widgetStore;
         const catalogWidgetStore = this.catalogWidgetStore;
-        const catalogFileIds = CatalogStore.Instance.activedCatalogFiles;
+        const catalogFileIds = CatalogStore.Instance.activeCatalogFiles;
         if (!widgetStore || !profileStore || !catalogWidgetStore || catalogFileIds === undefined || catalogFileIds?.length === 0) {
             return (
                 <div className="catalog-plot">
