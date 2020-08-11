@@ -16,16 +16,16 @@ const MomentMultiSelect = MultiSelect.ofType<CARTA.Moment>();
 @observer
 export class MomentGeneratorComponent extends React.Component<{widgetStore: SpectralProfileWidgetStore}> {
     private onChannelFromChanged = (from: number) => {
-        const frame = AppStore.Instance.activeFrame;
         const widgetStore = this.props.widgetStore;
+        const frame = widgetStore.effectiveFrame;
         if (frame && isFinite(from)) {
             widgetStore.setSelectedChannelRange(from, widgetStore.channelValueRange[1]);
         }
     };
 
     private onChannelToChanged = (to: number) => {
-        const frame = AppStore.Instance.activeFrame;
         const widgetStore = this.props.widgetStore;
+        const frame = widgetStore.effectiveFrame;
         if (frame && isFinite(to)) {
             widgetStore.setSelectedChannelRange(widgetStore.channelValueRange[0], to);
         }
@@ -37,16 +37,16 @@ export class MomentGeneratorComponent extends React.Component<{widgetStore: Spec
     };
 
     private onMaskFromChanged = (from: number) => {
-        const frame = AppStore.Instance.activeFrame;
         const widgetStore = this.props.widgetStore;
+        const frame = widgetStore.effectiveFrame;
         if (frame && isFinite(from)) {
             widgetStore.setSelectedMaskRange(from, widgetStore.maskRange[1]);
         }
     };
 
     private onMaskToChanged = (to: number) => {
-        const frame = AppStore.Instance.activeFrame;
         const widgetStore = this.props.widgetStore;
+        const frame = widgetStore.effectiveFrame;
         if (frame && isFinite(to)) {
             widgetStore.setSelectedMaskRange(widgetStore.maskRange[0], to);
         }
@@ -54,7 +54,7 @@ export class MomentGeneratorComponent extends React.Component<{widgetStore: Spec
 
     private handleMaskSelectionClicked = () => {
         const widgetStore = this.props.widgetStore;
-        widgetStore.setMomentRangeSelectingMode(widgetStore.isSelectingMomentMaskRange ?  MomentSelectingMode.NONE : MomentSelectingMode.MASK);
+        widgetStore.setMomentRangeSelectingMode(widgetStore.isSelectingMomentMaskRange ? MomentSelectingMode.NONE : MomentSelectingMode.MASK);
     };
 
     private filterMoment: ItemPredicate<CARTA.Moment> = (query, moment, index, exactMatch) => {
@@ -97,16 +97,16 @@ export class MomentGeneratorComponent extends React.Component<{widgetStore: Spec
 
     render() {
         const appStore = AppStore.Instance;
-        const activeFrame = appStore.activeFrame;
         const widgetStore = this.props.widgetStore;
+        const frame = widgetStore.effectiveFrame;
 
         const regionPanel = <RegionSelectorComponent widgetStore={this.props.widgetStore}/>;
 
         const spectralPanel = (
             <React.Fragment>
                 <SpectralSettingsComponent widgetStore={this.props.widgetStore} disable={false}/>
-                {activeFrame && activeFrame.numChannels > 1 &&
-                    <FormGroup label="Range"  inline={true} labelInfo={activeFrame?.spectralUnit ? `(${activeFrame.spectralUnit})` : ""}>
+                {frame && frame.numChannels > 1 &&
+                    <FormGroup label="Range" inline={true} labelInfo={frame?.spectralUnit ? `(${frame.spectralUnit})` : ""}>
                         <div className="range-select">
                             <FormGroup label="From" inline={true}>
                                 <SafeNumericInput
@@ -139,16 +139,16 @@ export class MomentGeneratorComponent extends React.Component<{widgetStore: Spec
 
         const maskPanel = (
             <React.Fragment>
-                <FormGroup label="Mask" inline={true} disabled={!activeFrame}>
+                <FormGroup label="Mask" inline={true} disabled={!frame}>
                     <HTMLSelect
                         value={widgetStore.momentMask}
                         options={Object.keys(CARTA.MomentMask).map((key) => ({label: key, value: CARTA.MomentMask[key]}))}
                         onChange={(event: React.FormEvent<HTMLSelectElement>) => widgetStore.setMomentMask(parseInt(event.currentTarget.value) as CARTA.MomentMask)}
-                        disabled={!activeFrame}
+                        disabled={!frame}
                     />
                 </FormGroup>
-                {activeFrame && activeFrame.numChannels > 1 &&
-                    <FormGroup label="Range"  inline={true} labelInfo={`(${activeFrame.unit})`}>
+                {frame && frame.numChannels > 1 &&
+                    <FormGroup label="Range"  inline={true} labelInfo={`(${frame.unit})`}>
                         <div className="range-select">
                             <FormGroup label="From" inline={true}>
                                 <SafeNumericInput
@@ -179,7 +179,7 @@ export class MomentGeneratorComponent extends React.Component<{widgetStore: Spec
             </React.Fragment>
         );
 
-        const isAbleToGenerate = activeFrame && activeFrame.numChannels > 1 && appStore.animatorStore.animationState === AnimationState.STOPPED && !widgetStore.isStreamingData;
+        const isAbleToGenerate = frame && frame.numChannels > 1 && appStore.animatorStore.animationState === AnimationState.STOPPED && !widgetStore.isStreamingData;
         const hint = <span><br/><i><small>Please ensure<br/>1. Animation playback is stopped.<br/>2. Spectral profile generation is complete.</small></i></span>;
         const msg = <span>Unable to generate moment images{hint}</span>;
         const momentsPanel = (
@@ -231,8 +231,8 @@ export class MomentGeneratorComponent extends React.Component<{widgetStore: Spec
                     {momentsPanel}
                 </div>
                 <TaskProgressDialogComponent
-                    isOpen={activeFrame && activeFrame.isRequestingMoments && activeFrame.requestingMomentsProgress < 1}
-                    progress={activeFrame ? activeFrame.requestingMomentsProgress : 0}
+                    isOpen={frame && frame.isRequestingMoments && frame.requestingMomentsProgress < 1}
+                    progress={frame ? frame.requestingMomentsProgress : 0}
                     timeRemaining={appStore.estimatedTaskRemainingTime}
                     cancellable={true}
                     onCancel={this.handleRequestingMomentCancelled}

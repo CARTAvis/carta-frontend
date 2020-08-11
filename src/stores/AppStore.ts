@@ -732,11 +732,13 @@ export class AppStore {
         }
     };
 
-    @action requestMoment = (message: CARTA.IMomentRequest) => {
-        this.fileLoading = true;
+    @action requestMoment = (message: CARTA.IMomentRequest, frame: FrameStore) => {
+        if (!message || !frame) {
+            return;
+        }
 
-        // clear previous generated moment images
-        const frame = this.activeFrame;
+        this.fileLoading = true;
+        // clear previously generated moment images under this frame
         if (frame.momentImages && frame.momentImages.length > 0) {
             frame.momentImages.forEach(momentFrame => this.closeFile(momentFrame));
         }

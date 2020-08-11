@@ -4,7 +4,7 @@ import {CARTA} from "carta-protobuf";
 import {PlotType, LineSettings} from "components/Shared";
 import {RegionWidgetStore, RegionsType} from "./RegionWidgetStore";
 import {SpectralLine} from "./SpectralLineQueryWidgetStore";
-import {AppStore, FrameStore} from "stores";
+import {AppStore} from "stores";
 import {ProfileSmoothingStore} from "stores/ProfileSmoothingStore";
 import {SpectralSystem, SpectralType, SpectralUnit} from "models";
 import * as tinycolor from "tinycolor2";
@@ -149,7 +149,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
     };
 
     @action private updateRanges = () => {
-        const frame = AppStore.Instance.activeFrame;
+        const frame = this.effectiveFrame;
         if (frame && frame.channelValueBounds) {
             this.channelValueRange[0] = frame.channelValueBounds.min;
             this.channelValueRange[1] = frame.channelValueBounds.max;
@@ -189,8 +189,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
     };
 
     @action requestMoment = () => {
-        const appStore = AppStore.Instance;
-        const frame = appStore.activeFrame;
+        const frame = this.effectiveFrame;
         const channelIndex1 = frame.findChannelIndexByValue(this.channelValueRange[0]);
         const channelIndex2 = frame.findChannelIndexByValue(this.channelValueRange[1]);
         if (frame && isFinite(channelIndex1) && isFinite(channelIndex2)) {
@@ -207,18 +206,17 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
                 mask: this.momentMask,
                 pixelRange: new CARTA.FloatBounds({min: this.maskRange[0], max: this.maskRange[1]})
             };
-            appStore.requestMoment(requestMessage);
+            AppStore.Instance.requestMoment(requestMessage, frame);
             frame.resetMomentRequestState();
             frame.setIsRequestingMoments(true);
         }
     };
 
     @action requestingMomentCancelled = () => {
-        const appStore = AppStore.Instance;
-        const frame = appStore.activeFrame;
+        const frame = this.effectiveFrame;
         if (frame) {
             frame.resetMomentRequestState();
-            appStore.cancelRequestingMoment(frame.frameInfo.fileId);
+            AppStore.Instance.cancelRequestingMoment(frame.frameInfo.fileId);
         }
     };
 
@@ -328,7 +326,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         this.settingsTabId = SpectralProfilerSettingsTabs.CONVERSION;
 
         autorun(() => {
-            if (AppStore.Instance.activeFrame) {
+            if (this.effectiveFrame) {
                 this.updateRanges();
             }
         });
@@ -370,7 +368,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
     @computed get transformedSpectralLines(): SpectralLine[] {
         // transform to corresponding value according to current widget's spectral settings
         let transformedSpectralLines: SpectralLine[] = [];
-        const frame = this.appStore.activeFrame;
+        const frame = this.effectiveFrame;
         if (frame && this.spectralLinesMHz) {
             this.spectralLinesMHz.forEach(spectralLine => {
                 const transformedValue = frame.convertFreqMHzToSettingWCS(spectralLine.value);
