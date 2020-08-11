@@ -1129,7 +1129,7 @@ export class WidgetsStore {
             if (preserveStore) {
                 return;
             }
-            
+
             this.removeWidget(id, widget.type);
         }
     };

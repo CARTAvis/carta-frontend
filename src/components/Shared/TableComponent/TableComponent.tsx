@@ -2,6 +2,7 @@ import * as React from "react";
 import {observer} from "mobx-react";
 import {Cell, Column, Table, SelectionModes, RenderMode, ColumnHeaderCell, IRegion} from "@blueprintjs/table";
 import {Checkbox, Tooltip, PopoverPosition, InputGroup, Menu, MenuItem, Icon, Label} from "@blueprintjs/core";
+import {IconName} from "@blueprintjs/icons";
 import {IRowIndices} from "@blueprintjs/table/lib/esm/common/grid";
 import {CARTA} from "carta-protobuf";
 import {ControlHeader} from "stores";
@@ -49,6 +50,18 @@ const DEFAULT_COLUMN_WIDTH = 150;
 
 @observer
 export class TableComponent extends React.Component<TableComponentProps> {
+    private readonly SortingTypelinkedList = {
+        head: {
+            value: null,
+            next: {
+                value: CARTA.SortingType.Ascending,                                             
+                next: {
+                    value: CARTA.SortingType.Descending,
+                    next: null
+                }
+            }
+        }
+    };
 
     private renderManualSelectionColumn = (manualSelectionProps: ManualSelectionProps, manualSelectionData: boolean[]) => {
         if (!manualSelectionProps || !manualSelectionData || manualSelectionData.length <= 0) {
@@ -132,65 +145,60 @@ export class TableComponent extends React.Component<TableComponentProps> {
         }
     };
 
+    private getNextSortingType = () => {
+        const sortingInfo = this.props.sortingInfo;
+        let currentNode = this.SortingTypelinkedList.head;
+        while (currentNode.next) {
+            if (currentNode.value === sortingInfo.sortingType) {
+                return currentNode.next.value;
+            }
+            currentNode = currentNode.next;
+        }
+        return null;
+    }
+
     private renderColumnHeaderCell = (columnIndex: number, column: CARTA.CatalogHeader) => {
         if (!isFinite(columnIndex) || !column) {
             return null;
         }
-
         const controlheader = this.props.filter.get(column.name);
         const filterSyntax = this.getfilterSyntax(column.dataType);
         const sortingInfo = this.props.sortingInfo;
         const sortColumn = sortingInfo.columnName === column.name;
-        const sortDesc = sortingInfo.sortingType === CARTA.SortingType.Descending;
         let activeFilter = false;
         if (controlheader.filter !== "") {
             activeFilter = true;
         }
         const disable = this.props.disable;
 
-        const menuRenderer = () => {
-            let activeAsc = false;
-            let activeDesc = false;
+        const nameRenderer = () => {
+            // sharing css with fileList table
+            let sortIcon = "sort";
+            let iconClass = "sort-icon inactive";
+            let nextSortType = 0;
             if (sortColumn) {
-                if (sortDesc) {
-                    activeDesc = true;
-                } else {
-                    activeAsc = true;
+                nextSortType = this.getNextSortingType();
+                if (sortingInfo.sortingType === CARTA.SortingType.Descending) {
+                    sortIcon = "sort-desc";
+                    iconClass = "sort-icon";
+                } else if (sortingInfo.sortingType === CARTA.SortingType.Ascending) {
+                    sortIcon = "sort-asc";
+                    iconClass = "sort-icon";
                 }
             }
-            return(
-                <Menu className="catalog-sort-menu-item">
-                    <MenuItem icon="sort-asc" active={activeAsc} disabled={disable} onClick={() => this.props.updateSortRequest(column.name, CARTA.SortingType.Ascending)} text="Sort Asc" />
-                    <MenuItem icon="sort-desc" active={activeDesc} disabled={disable} onClick={() => this.props.updateSortRequest(column.name, CARTA.SortingType.Descending)} text="Sort Desc" />
-                    <MenuItem icon="cross"  disabled={disable} onClick={() => this.props.updateSortRequest(null, null)} text="Clear Sort" />
-                </Menu>
+            return (
+                <div className="sort-label" onClick={() => disable ? null : this.props.updateSortRequest(column.name, nextSortType)}>
+                    <Label disabled={disable} className="bp3-inline label">
+                        <Icon className={iconClass} icon={sortIcon as IconName}/>
+                        {column.name}
+                    </Label>
+                </div>
             );
-        };
-
-        const nameRenderer = () => {
-            if (sortColumn) {
-                return (
-                    <Label className="bp3-inline lable">
-                        {sortDesc ? 
-                            <Icon className="sort-icon" icon={"sort-desc"} />
-                            :
-                            <Icon className="sort-icon" icon={"sort-asc"} />
-                        }   
-                        {column.name}
-                    </Label>
-                );
-            } else {
-                return (
-                    <Label className="bp3-inline lable">
-                        {column.name}
-                    </Label>
-                );
-            }
         };
 
         return (
             <ColumnHeaderCell>
-                <ColumnHeaderCell className={"column-name"} nameRenderer={nameRenderer} menuRenderer={menuRenderer}/>
+                <ColumnHeaderCell className={"column-name"} nameRenderer={nameRenderer}/>
                 <ColumnHeaderCell isActive={activeFilter}>
                     <Tooltip content={filterSyntax} position={PopoverPosition.TOP} className={"column-filter"}>
                         <InputGroup
