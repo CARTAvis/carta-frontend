@@ -1287,8 +1287,9 @@ export class AppStore {
         if (!momentProgress) {
             return;
         }
-        if (this.activeFrame) {
-            this.activeFrame.updateRequestingMomentsProgress(momentProgress.progress);
+        const frame = this.getFrame(momentProgress.fileId);
+        if (frame) {
+            frame.updateRequestingMomentsProgress(momentProgress.progress);
             this.updateTaskProgress(momentProgress.progress);
         }
     };
