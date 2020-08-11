@@ -1,10 +1,11 @@
-import { action, computed, observable } from "mobx";
-import { CARTA } from "carta-protobuf";
-import { Colors } from "@blueprintjs/core";
-import { Point2D } from "models";
-import { BackendService } from "services";
-import { minMax2D, midpoint2D, scale2D, subtract2D, simplePolygonTest, simplePolygonPointTest, toFixed } from "utilities";
-import { FrameStore } from "stores";
+import {action, computed, observable} from "mobx";
+import {Colors} from "@blueprintjs/core";
+import {CARTA} from "carta-protobuf";
+import {Point2D} from "models";
+import {BackendService} from "services";
+import {add2D, getApproximateEllipsePoints, getApproximatePolygonPoints, isAstBadPoint, midpoint2D, minMax2D, rotate2D, scale2D, simplePolygonPointTest, simplePolygonTest, subtract2D, toFixed, transformPoint} from "utilities";
+import {FrameStore} from "stores";
+import RegionType = CARTA.RegionType;
 
 export const CURSOR_REGION_ID = 0;
 export const FOCUS_REGION_RATIO = 0.4;
@@ -35,8 +36,10 @@ export class RegionStore {
     static readonly MIN_LINE_WIDTH = 0.5;
     static readonly MAX_LINE_WIDTH = 10;
     static readonly MAX_DASH_LENGTH = 50;
+    static readonly TARGET_VERTEX_COUNT = 200;
 
     private readonly backendService: BackendService;
+    private readonly regionApproximationMap: Map<number, Point2D[]>;
 
     public static RegionTypeString(regionType: CARTA.RegionType): string {
         switch (regionType) {
@@ -183,7 +186,34 @@ export class RegionStore {
         }
     }
 
-    constructor(backendService: BackendService, fileId: number, activeFrame: FrameStore,  controlPoints: Point2D[], regionType: CARTA.RegionType, regionId: number = -1,
+    public getRegionApproximation(astTransform: number): Point2D[] {
+        let approximatePoints = this.regionApproximationMap.get(astTransform);
+        if (!approximatePoints) {
+            if (this.regionType === RegionType.POINT) {
+                approximatePoints = [transformPoint(astTransform, this.center, false)];
+            }
+            if (this.regionType === RegionType.ELLIPSE) {
+                approximatePoints = getApproximateEllipsePoints(astTransform, this.center, this.controlPoints[1].y, this.controlPoints[1].x, this.rotation, RegionStore.TARGET_VERTEX_COUNT);
+            } else if (this.regionType === RegionType.RECTANGLE) {
+                let halfWidth = this.controlPoints[1].x / 2;
+                let halfHeight = this.controlPoints[1].y / 2;
+                const rotation = this.rotation * Math.PI / 180.0;
+                const points: Point2D[] = [
+                    add2D(this.center, rotate2D({x: -halfWidth, y: -halfHeight}, rotation)),
+                    add2D(this.center, rotate2D({x: +halfWidth, y: -halfHeight}, rotation)),
+                    add2D(this.center, rotate2D({x: +halfWidth, y: +halfHeight}, rotation)),
+                    add2D(this.center, rotate2D({x: -halfWidth, y: +halfHeight}, rotation)),
+                ];
+                approximatePoints = getApproximatePolygonPoints(astTransform, points, RegionStore.TARGET_VERTEX_COUNT);
+            } else {
+                approximatePoints = getApproximatePolygonPoints(astTransform, this.controlPoints, RegionStore.TARGET_VERTEX_COUNT, !this.creating);
+            }
+            this.regionApproximationMap.set(astTransform, approximatePoints);
+        }
+        return approximatePoints;
+    }
+
+    constructor(backendService: BackendService, fileId: number, activeFrame: FrameStore, controlPoints: Point2D[], regionType: CARTA.RegionType, regionId: number = -1,
                 color: string = Colors.TURQUOISE5, lineWidth: number = 2, dashLength: number = 0, rotation: number = 0, name: string = "") {
         this.fileId = fileId;
         this.activeFrame = activeFrame;
@@ -197,6 +227,7 @@ export class RegionStore {
         this.rotation = rotation;
         this.backendService = backendService;
         this.coordinate = RegionCoordinate.Image;
+        this.regionApproximationMap = new Map<number, Point2D[]>();
         this.simplePolygonTest();
     }
 
@@ -205,7 +236,9 @@ export class RegionStore {
     };
 
     @action setControlPoint = (index: number, p: Point2D, skipUpdate = false) => {
-        if (index >= 0 && index < this.controlPoints.length) {
+        // Check for control point NaN values
+        if (index >= 0 && index < this.controlPoints.length && !isAstBadPoint(p) && isFinite(p?.x) && isFinite(p?.y)) {
+            this.regionApproximationMap.clear();
             this.controlPoints[index] = p;
             if (!this.editing && !skipUpdate) {
                 this.updateRegion();
@@ -217,6 +250,18 @@ export class RegionStore {
     };
 
     @action setControlPoints = (points: Point2D[], skipUpdate = false, shapeChanged = true) => {
+        // Check for control point NaN values
+        if (!points.length) {
+            return;
+        }
+
+        for (const p of points) {
+            if (isAstBadPoint(p) || !isFinite(p?.x) || !isFinite(p?.y)) {
+                return;
+            }
+        }
+
+        this.regionApproximationMap.clear();
         this.controlPoints = points;
         if (shapeChanged && this.regionType === CARTA.RegionType.POLYGON) {
             this.simplePolygonTest();
@@ -239,6 +284,7 @@ export class RegionStore {
 
     @action setRotation = (angle: number, skipUpdate = false) => {
         this.rotation = (angle + 360) % 360;
+        this.regionApproximationMap.clear();
         if (!this.editing && !skipUpdate) {
             this.updateRegion();
         }
@@ -303,7 +349,7 @@ export class RegionStore {
     @action focusCenter = () => {
         if (this.activeFrame) {
             this.activeFrame.setCenter(this.center.x, this.center.y);
-            
+
             if (this.activeFrame.renderWidth < this.activeFrame.zoomLevel * this.boundingBox.x || this.activeFrame.renderHeight < this.activeFrame.zoomLevel * this.boundingBox.y) {
                 const zoomLevel = FOCUS_REGION_RATIO * Math.min(this.activeFrame.renderWidth / this.boundingBox.x, this.activeFrame.renderHeight / this.boundingBox.y);
                 this.activeFrame.setZoom(zoomLevel);

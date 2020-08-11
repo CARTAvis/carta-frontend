@@ -2,6 +2,7 @@ export * from "./Animator/AnimatorComponent";
 export * from "./FloatingWidget/FloatingWidgetComponent";
 export * from "./FloatingWidgetManager/FloatingWidgetManagerComponent";
 export * from "./ImageView/ImageViewComponent";
+export * from "./ImageView/ImageViewSettingsPanel/ImageViewSettingsPanelComponent";
 export * from "./Log/LogComponent";
 export * from "./LayerList/LayerListComponent";
 export * from "./Menu/RootMenuComponent";

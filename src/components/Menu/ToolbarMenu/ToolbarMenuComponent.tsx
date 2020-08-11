@@ -136,9 +136,6 @@ export class ToolbarMenuComponent extends React.Component {
                     <Tooltip content={<span>Preferences</span>}>
                         <Button icon={"wrench"} onClick={dialogStore.showPreferenceDialog} active={dialogStore.preferenceDialogVisible}/>
                     </Tooltip>
-                    <Tooltip content={<span>Overlay Settings</span>}>
-                        <Button icon={"settings"} onClick={dialogStore.showOverlaySettings} active={dialogStore.overlaySettingsDialogVisible}/>
-                    </Tooltip>
                     <Tooltip content={<span>Contours</span>}>
                         <Button icon={<CustomIcon icon={"contour"}/>} onClick={dialogStore.showContourDialog} active={dialogStore.contourDialogVisible}/>
                     </Tooltip>

@@ -24,7 +24,8 @@ import {
     SpectralProfilerSettingsPanelComponent,
     SpatialProfilerSettingsPanelComponent,
     RenderConfigSettingsPanelComponent,
-    HistogramSettingsPanelComponent
+    HistogramSettingsPanelComponent,
+    ImageViewSettingsPanelComponent
 } from "components";
 import {AppStore, HelpStore, HelpType, LayoutStore, CatalogStore} from "stores";
 import {
@@ -195,6 +196,8 @@ export class WidgetsStore {
 
     private static getDefaultWidgetSettingsConfig(type: string) {
         switch (type) {
+            case ImageViewComponent.WIDGET_CONFIG.type:
+                return ImageViewSettingsPanelComponent.WIDGET_CONFIG;
             case StokesAnalysisComponent.WIDGET_CONFIG.type:
                 return StokesAnalysisSettingsPanelComponent.WIDGET_CONFIG;
             case SpectralProfilerComponent.WIDGET_CONFIG.type:
@@ -417,7 +420,7 @@ export class WidgetsStore {
         layout.registerComponent("catalog-overlay", CatalogOverlayComponent);
         layout.registerComponent("catalog-plot", CatalogPlotComponent);
 
-        const showCogWidgets = ["spatial-profiler", "spectral-profiler", "histogram", "render-config", "stokes"];
+        const showCogWidgets = ["image-view", "spatial-profiler", "spectral-profiler", "histogram", "render-config", "stokes"];
         // add drag source buttons from ToolbarMenuComponent
         ToolbarMenuComponent.DRAGSOURCE_WIDGETCONFIG_MAP.forEach((widgetConfig, id) => WidgetsStore.CreateDragSource(layout, widgetConfig, id));
 
@@ -484,8 +487,9 @@ export class WidgetsStore {
         const parentType = parentItemConfig.component;
         const parentTitle = parentItemConfig.title;
 
-        // apply for stokes, spectral profiler, spatial profiler, Render Config, Histogram
+        // apply for image viewer, stokes, spectral profiler, spatial profiler, Render Config, Histogram
         const floatingSettingsApplyedWidgets = [
+            ImageViewComponent.WIDGET_CONFIG.type,
             StokesAnalysisComponent.WIDGET_CONFIG.type,
             SpectralProfilerComponent.WIDGET_CONFIG.type,
             SpatialProfilerComponent.WIDGET_CONFIG.type,
@@ -498,7 +502,7 @@ export class WidgetsStore {
         // Get floating settings config
         let widgetConfig = WidgetsStore.getDefaultWidgetSettingsConfig(parentType);
         widgetConfig.id = this.addFloatingSettingsWidget(null, parentId, widgetConfig.type);
-        widgetConfig.title = parentTitle + " Settings";
+        widgetConfig.title = (parentType === "image-view") ? "Image View Settings" : parentTitle + " Settings";
         widgetConfig.parentId = parentId;
         widgetConfig.parentType = parentType;
         if (widgetConfig.id) {
@@ -908,7 +912,7 @@ export class WidgetsStore {
     createFloatingSettingsWidget = (title: string, parentId: string, parentType: string) => {
         let config = WidgetsStore.getDefaultWidgetSettingsConfig(parentType);
         config.id = this.addFloatingSettingsWidget(null, parentId, config.type);
-        config.title = title + " Settings";
+        config.title =  title + " Settings";
         config.parentId = parentId;
         config.parentType = parentType;
         if (config.id) {

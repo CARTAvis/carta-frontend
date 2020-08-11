@@ -24,6 +24,7 @@ import {
     HistogramSettingsPanelComponent
 } from "components";
 import {WidgetConfig, WidgetsStore, CatalogStore} from "stores";
+import { ImageViewSettingsPanelComponent } from "components/ImageView/ImageViewSettingsPanel/ImageViewSettingsPanelComponent";
 
 @observer
 export class FloatingWidgetManagerComponent extends React.Component {
@@ -90,6 +91,8 @@ export class FloatingWidgetManagerComponent extends React.Component {
     private getWidgetSettings(widgetConfig: WidgetConfig) {
         if (widgetConfig.parentId) {
             switch (widgetConfig.parentType) {
+                case ImageViewComponent.WIDGET_CONFIG.type:
+                    return <ImageViewSettingsPanelComponent id={widgetConfig.parentId} docked={false} floatingSettingsId={widgetConfig.id}/>;
                 case StokesAnalysisComponent.WIDGET_CONFIG.type:
                     return <StokesAnalysisSettingsPanelComponent id={widgetConfig.parentId} docked={false} floatingSettingsId={widgetConfig.id}/>;
                 case SpectralProfilerComponent.WIDGET_CONFIG.type:

@@ -8,6 +8,7 @@ import "./CursorOverlayComponent.css";
 class CursorOverlayProps {
     cursorInfo: CursorInfo;
     cursorValue: number;
+    isValueCurrent: boolean;
     spectralInfo: SpectralInfo;
     docked: boolean;
     width: number;
@@ -43,6 +44,11 @@ export class CursorOverlayComponent extends React.Component<CursorOverlayProps> 
             let valueString = `Value:\u00a0${formattedExponential(this.props.cursorValue, 5, this.props.unit, true, true)}`;
             if (isNaN(this.props.cursorValue)) {
                 valueString = "NaN";
+            }
+            if (!this.props.isValueCurrent) {
+                valueString += "*";
+            } else {
+                valueString += " ";
             }
             infoStrings.push(valueString);
         }

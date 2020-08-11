@@ -187,7 +187,6 @@ export class RootMenuComponent extends React.Component {
                         )}
                     </Menu.Item>
                 </Menu.Item>
-                <Menu.Item text="Overlay Settings" icon={"settings"} onClick={appStore.dialogStore.showOverlaySettings}/>
                 {layerItems.length > 0 &&
                 <Menu.Item text="Images" icon={"multi-select"}>
                     {layerItems}

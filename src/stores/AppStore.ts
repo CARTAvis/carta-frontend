@@ -93,6 +93,7 @@ export class AppStore {
 
     // ImageViewer
     @observable activeLayer: ImageViewLayer;
+    @observable cursorFrozen: boolean;
 
     private appContainer: HTMLElement;
     private fileCounter = 0;
@@ -746,9 +747,7 @@ export class AppStore {
     };
 
     @action toggleCursorFrozen = () => {
-        if (this.activeFrame) {
-            this.activeFrame.cursorFrozen = !this.activeFrame.cursorFrozen;
-        }
+        this.cursorFrozen = !this.cursorFrozen;
     };
 
     @action updateActiveLayer = (layer: ImageViewLayer) => {
@@ -988,15 +987,15 @@ export class AppStore {
 
         // Update cursor profiles
         autorun(() => {
-            if (this.activeFrame && this.activeFrame.cursorInfo && this.activeFrame.cursorInfo.posImageSpace) {
+            if (this.activeFrame?.cursorInfo?.posImageSpace) {
                 const pos = {x: Math.round(this.activeFrame.cursorInfo.posImageSpace.x), y: Math.round(this.activeFrame.cursorInfo.posImageSpace.y)};
                 if (pos.x >= 0 && pos.x <= this.activeFrame.frameInfo.fileInfoExtended.width - 1 && pos.y >= 0 && pos.y <= this.activeFrame.frameInfo.fileInfoExtended.height - 1) {
                     if (this.preferenceStore.lowBandwidthMode) {
-                        throttledSetCursorLowBandwidth(this.activeFrame.frameInfo.fileId, pos.x, pos.y);
+                        throttledSetCursorLowBandwidth(this.activeFrame.frameInfo.fileId, pos);
                     } else if (this.activeFrame.frameInfo.fileFeatureFlags & CARTA.FileFeatureFlags.ROTATED_DATASET) {
-                        throttledSetCursorRotated(this.activeFrame.frameInfo.fileId, pos.x, pos.y);
+                        throttledSetCursorRotated(this.activeFrame.frameInfo.fileId, pos);
                     } else {
-                        throttledSetCursor(this.activeFrame.frameInfo.fileId, pos.x, pos.y);
+                        throttledSetCursor(this.activeFrame.frameInfo.fileId, pos);
                     }
                 }
             }
@@ -1042,6 +1041,7 @@ export class AppStore {
                         // Attempt connection after authenticating
                         this.tileService.setCache(this.preferenceStore.gpuTileCache, this.preferenceStore.systemTileCache);
                         this.layoutStore.applyLayout(this.preferenceStore.layout);
+                        this.cursorFrozen = this.preferenceStore.isCursorFrozen;
                         this.connectToServer();
                     });
                 });
@@ -1070,7 +1070,7 @@ export class AppStore {
 
             // Update cursor value from profile if it matches the file and is the cursor data
             if (this.activeFrame && this.activeFrame.frameInfo.fileId === spatialProfileData.fileId && spatialProfileData.regionId === 0) {
-                this.activeFrame.setCursorValue(spatialProfileData.value);
+                this.activeFrame.setCursorValue({x: spatialProfileData.x, y: spatialProfileData.y}, spatialProfileData.channel, spatialProfileData.value);
             }
         }
     };
@@ -1278,14 +1278,18 @@ export class AppStore {
         const images: CARTA.IImageProperties[] = this.frames.map(frame => {
             const info = frame.frameInfo;
 
-            const regions = new Map<string, CARTA.IRegionInfo>();
+            let regions = new Map<string, CARTA.IRegionInfo>();
+            // Spatially matched images don't have their own regions
+            if (!frame.spatialReference) {
+                regions = new Map<string, CARTA.IRegionInfo>();
 
-            for (const region of frame.regionSet.regions) {
-                regions.set(region.regionId.toFixed(), {
-                    regionType: region.regionType,
-                    controlPoints: region.controlPoints,
-                    rotation: region.rotation,
-                });
+                for (const region of frame.regionSet.regions) {
+                    regions.set(region.regionId.toFixed(), {
+                        regionType: region.regionType,
+                        controlPoints: region.controlPoints,
+                        rotation: region.rotation,
+                    });
+                }
             }
 
             let contourSettings: CARTA.ISetContourParameters;
@@ -1441,11 +1445,9 @@ export class AppStore {
         }
     };
 
-    private setCursor = (fileId: number, x: number, y: number) => {
+    private setCursor = (fileId: number, pos: Point2D) => {
         const frame = this.getFrame(fileId);
-        if (frame && frame.regionSet.regions[0]) {
-            frame.regionSet.regions[0].setControlPoint(0, {x, y});
-        }
+        frame?.updateCursorRegion(pos);
     };
 
     @action setSpatialReference = (frame: FrameStore) => {
