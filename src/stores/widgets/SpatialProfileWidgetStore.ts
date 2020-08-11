@@ -29,7 +29,7 @@ export class SpatialProfileWidgetStore {
     readonly smoothingStore: ProfileSmoothingStore;
     @observable settingsTabId: SpatialProfilerSettingsTabs;
 
-    private static ValidCoordinates = ["x", "y", "Ix", "Iy", "Qx", "Qy", "Ux", "Uy", "Vx", "Vz"];
+    private static ValidCoordinates = ["x", "y", "Ix", "Iy", "Qx", "Qy", "Ux", "Uy", "Vx", "Vy"];
 
     @action setFileId = (fileId: number) => {
         // Reset zoom when changing between files
@@ -176,7 +176,6 @@ export class SpatialProfileWidgetStore {
                 }
             }
         });
-
         return updatedRequirements;
     }
 

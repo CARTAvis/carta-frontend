@@ -85,7 +85,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
     };
 
     @action setSpectralCoordinate = (coordStr: string) => {
-        const frame = this.appStore.activeFrame;
+        const frame = this.effectiveFrame;
         if (frame && frame.spectralCoordsSupported && frame.spectralCoordsSupported.has(coordStr)) {
             const coord: {type: SpectralType, unit: SpectralUnit} = frame.spectralCoordsSupported.get(coordStr);
             frame.spectralType = coord.type;
@@ -95,7 +95,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
     };
 
     @action setSpectralSystem = (specsys: SpectralSystem) => {
-        const frame = this.appStore.activeFrame;
+        const frame = this.effectiveFrame;
         if (frame && frame.spectralSystemsSupported && frame.spectralSystemsSupported.includes(specsys)) {
             frame.spectralSystem = specsys;
             this.clearXBounds();
@@ -220,17 +220,19 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         return transformedSpectralLines;
     }
 
-    public static CalculateRequirementsMap(frame: FrameStore, widgetsMap: Map<string, SpectralProfileWidgetStore>) {
+    public static CalculateRequirementsMap(widgetsMap: Map<string, SpectralProfileWidgetStore>) {
         const updatedRequirements = new Map<number, Map<number, CARTA.SetSpectralRequirements>>();
+
         widgetsMap.forEach(widgetStore => {
+            const frame = widgetStore.effectiveFrame;
+            if (!frame || !frame.regionSet) {
+                return;
+            }
             const fileId = frame.frameInfo.fileId;
             const regionId = widgetStore.effectiveRegionId;
             const coordinate = widgetStore.coordinate;
             let statsType = widgetStore.statsType;
 
-            if (!frame.regionSet) {
-                return;
-            }
             const region = frame.regionSet.regions.find(r => r.regionId === regionId);
             if (region) {
                 // Point regions have no meaningful stats type, default to Sum

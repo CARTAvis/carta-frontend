@@ -63,8 +63,8 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
 
     @computed get profileStore(): SpectralProfileStore {
         const appStore = AppStore.Instance;
-        if (appStore.activeFrame) {
-            let fileId = appStore.activeFrame.frameInfo.fileId;
+        if (this.widgetStore.effectiveFrame) {
+            let fileId = this.widgetStore.effectiveFrame.frameInfo.fileId;
             const regionId = this.widgetStore.effectiveRegionId;
             const frameMap = appStore.spectralProfiles.get(fileId);
             if (frameMap) {
@@ -76,7 +76,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
 
     @computed get exportHeaders(): string[] {
         let headerString = [];
-        const frame = AppStore.Instance.activeFrame;
+        const frame = this.widgetStore.effectiveFrame;
         if (frame && frame.frameInfo && frame.regionSet) {
             const regionId = this.widgetStore.effectiveRegionId;
             const region = frame.regionSet.regions.find(r => r.regionId === regionId);
@@ -103,7 +103,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
 
         autorun(() => {
             if (this.widgetStore) {
-                const frame = appStore.activeFrame;
+                const frame = this.widgetStore.effectiveFrame;
                 let progressString = "";
                 const currentData = this.plotData;
                 if (currentData && isFinite(currentData.qProgress) && isFinite(currentData.uProgress)) {
@@ -132,7 +132,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
     };
 
     @computed get currentChannelValue(): number {
-        const frame = AppStore.Instance.activeFrame;
+        const frame = this.widgetStore.effectiveFrame;
         if (!frame || !frame.channelValues) {
             return null;
         }
@@ -144,7 +144,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
     }
 
     @computed get requiredChannelValue(): number {
-        const frame = AppStore.Instance.activeFrame;
+        const frame = this.widgetStore.effectiveFrame;
         if (!frame || !frame.channelValues) {
             return null;
         }
@@ -156,7 +156,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
     }
 
     onChannelChanged = (x: number) => {
-        const frame = AppStore.Instance.activeFrame;
+        const frame = this.widgetStore.effectiveFrame;
         if (AnimatorStore.Instance.animationState === AnimationState.PLAYING) {
             return;
         }
@@ -184,7 +184,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
     };
 
     onScatterChannelChanged = (x: number, y: number, data: Point3D[]) => {
-        const frame = AppStore.Instance.activeFrame;
+        const frame = this.widgetStore.effectiveFrame;
         if (AnimatorStore.Instance.animationState === AnimationState.PLAYING) {
             return;
         }
@@ -303,8 +303,8 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
             let uProfileOriginal = this.profileStore.getProfile(StokesCoordinate.LinearPolarizationU, statsType);
 
             if (qProfileOriginal && uProfileOriginal && qProfileOriginal.values && uProfileOriginal.values) {
-                let qProfileSmoothedValues = this.widgetStore.smoothingStore.getSmoothingValues(AppStore.Instance.activeFrame.channelValues, qProfileOriginal.values);
-                let uProfileSmoothedValues = this.widgetStore.smoothingStore.getSmoothingValues(AppStore.Instance.activeFrame.channelValues, uProfileOriginal.values);
+                let qProfileSmoothedValues = this.widgetStore.smoothingStore.getSmoothingValues(this.widgetStore.effectiveFrame.channelValues, qProfileOriginal.values);
+                let uProfileSmoothedValues = this.widgetStore.smoothingStore.getSmoothingValues(this.widgetStore.effectiveFrame.channelValues, uProfileOriginal.values);
                 let qProfile = [];
                 let uProfile = [];
                 let piProfile = [];
@@ -334,7 +334,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
                         qProfile = StokesAnalysisComponent.calculateFractionalPol(qProfile, iProfileOriginal.values);
                         uProfile = StokesAnalysisComponent.calculateFractionalPol(uProfile, iProfileOriginal.values);
                         if (this.widgetStore.smoothingStore.type !== SmoothingType.NONE) {
-                            let iProfileSmoothedValues = this.widgetStore.smoothingStore.getSmoothingValues(AppStore.Instance.activeFrame.channelValues, iProfileOriginal.values);
+                            let iProfileSmoothedValues = this.widgetStore.smoothingStore.getSmoothingValues(this.widgetStore.effectiveFrame.channelValues, iProfileOriginal.values);
                             piProfileSmoothed = StokesAnalysisComponent.calculateFractionalPol(piProfileSmoothed, iProfileSmoothedValues.y);
                             qProfileSmoothed = StokesAnalysisComponent.calculateFractionalPol(qProfileSmoothed, iProfileSmoothedValues.y);
                             uProfileSmoothed = StokesAnalysisComponent.calculateFractionalPol(uProfileSmoothed, iProfileSmoothedValues.y);
@@ -474,7 +474,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
         dataset: Array<{ x: number, y: number, z: number }>,
         border: Border
     } {
-        const frame = AppStore.Instance.activeFrame;
+        const frame = this.widgetStore.effectiveFrame;
         if (qProfile && qProfile.length && uProfile && uProfile.length &&
             frame.channelValues && frame.channelValues.length &&
             qProfile.length === uProfile.length && qProfile.length === frame.channelValues.length) {
@@ -627,7 +627,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
         uProgress: number,
         iProgress: number
     } {
-        const frame = AppStore.Instance.activeFrame;
+        const frame = this.widgetStore.effectiveFrame;
         if (!frame) {
             return null;
         }
@@ -740,7 +740,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
     ) => {
         let cursorInfo = null;
         const isMouseEntered = this.widgetStore.isMouseMoveIntoLinePlots || this.widgetStore.isMouseMoveIntoScatterPlots;
-        const xUnit =  AppStore.Instance.activeFrame ? AppStore.Instance.activeFrame.spectralUnitStr : "Channel";
+        const xUnit =  this.widgetStore.effectiveFrame ? this.widgetStore.effectiveFrame.spectralUnitStr : "Channel";
         if (isMouseEntered) {
             let profilerData = {q: NaN, u: NaN, pi: NaN, pa: NaN, channel: NaN};
             if (this.widgetStore.isMouseMoveIntoLinePlots) {
@@ -778,7 +778,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
             isNaN(this.cursorInfo.quValue.x) || isNaN(this.cursorInfo.quValue.y)) {
             return profilerInfo;
         }
-        const frame = AppStore.Instance.activeFrame;
+        const frame = this.widgetStore.effectiveFrame;
         if (frame && this.plotData) {
             const xLabel = this.cursorInfo.xUnit === "Channel" ?
                         "Channel " + toFixed(this.cursorInfo.channel) :
@@ -803,8 +803,8 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
         if (!this.widgetStore) {
             return <NonIdealState icon={"error"} title={"Missing profile"} description={"Profile not found"}/>;
         }
-        const frame = appStore.activeFrame;
-        const imageName = (appStore.activeFrame ? appStore.activeFrame.frameInfo.fileInfo.name : undefined);
+        const frame = this.widgetStore.effectiveFrame;
+        const imageName = (this.widgetStore.effectiveFrame ? this.widgetStore.effectiveFrame.frameInfo.fileInfo.name : undefined);
         let quLinePlotProps: LinePlotComponentProps = {
             xLabel: "Channel",
             yLabel: "Value",
