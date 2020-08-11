@@ -4,7 +4,7 @@ import {ImageComponent} from "./ImageComponent";
 import * as headOverlayButton from "static/help/head_overlay_button.png";
 import * as headOverlayButton_d from "static/help/head_overlay_button_d.png";
 
-export class OverlaySettingsHelpComponent extends React.Component {
+export class ImageViewSettingsHelpComponent extends React.Component {
     public render() {
         return (
             <div>
