@@ -1326,6 +1326,10 @@ export class AppStore {
     }
 
     @action setActiveFrame(fileId: number) {
+        // Ignore changes when animating
+        if (this.animatorStore.serverAnimationActive) {
+            return;
+        }
         // Disable rendering of old frame
         if (this.activeFrame && this.activeFrame.frameInfo.fileId !== fileId) {
             this.activeFrame.renderType = RasterRenderType.NONE;
@@ -1340,6 +1344,10 @@ export class AppStore {
     }
 
     @action setActiveFrameByIndex(index: number) {
+        // Ignore changes when animating
+        if (this.animatorStore.serverAnimationActive) {
+            return;
+        }
         if (index >= 0 && this.frames.length > index) {
             this.changeActiveFrame(this.frames[index]);
         } else {
