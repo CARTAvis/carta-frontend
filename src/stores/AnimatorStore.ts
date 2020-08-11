@@ -156,7 +156,15 @@ export class AnimatorStore {
                 endFrame
             };
             appStore.backendService.stopAnimation(stopMessage);
-            appStore.throttledSetChannels([{frame, channel: frame.requiredChannel, stokes: frame.requiredStokes}]);
+
+            frame.setChannels(frame.channel, frame.stokes, true);
+
+            const updates = [{frame, channel: frame.requiredChannel, stokes: frame.requiredStokes}];
+            // Update any sibling channels
+            frame.spectralSiblings.forEach(siblingFrame => {
+                updates.push({frame: siblingFrame, channel: siblingFrame.requiredChannel, stokes: siblingFrame.requiredStokes});
+            });
+            appStore.throttledSetChannels(updates);
         }
     };
 
