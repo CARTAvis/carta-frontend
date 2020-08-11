@@ -435,7 +435,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
         const catalogStore = CatalogStore.Instance;
         const profileStore = this.profileStore;
         const catalogWidgetStore = this.catalogWidgetStore;
-        CatalogStore.Instance.updateCatalogProfiles(this.catalogFileId);
+        catalogStore.updateCatalogProfiles(this.catalogFileId);
         profileStore.setSelectedPointIndices([], false);
         catalogWidgetStore.setCatalogTableAutoScroll(false);
         catalogWidgetStore.setShowSelectedData(false);
@@ -484,19 +484,24 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
         }
     }
 
-    private onBinWidthChange = (val: number) => {
+    private onBinWidthChange = (val: number, reset: boolean = false) => {
         const widgetStore = this.widgetStore;
-        let bins = val; 
+        let bins = val;
         if (!Number.isInteger(val)) {
             bins = Math.round(val);
         }
-        if (widgetStore && bins > 0) {
+        if (reset) {
             widgetStore.setnBinx(bins);
-        } else if (widgetStore && bins === 0) {
-            widgetStore.setnBinx(1);
         } else {
-            widgetStore.setnBinx(this.initnBinx);
+            if (widgetStore && bins > 0) {
+                widgetStore.setnBinx(bins);
+            } else if (widgetStore && bins === 0) {
+                widgetStore.setnBinx(1);
+            } else {
+                widgetStore.setnBinx(this.initnBinx);
+            }
         }
+        this.onDeselect();
     }
 
     private renderFileIdPopOver = (fileId: number, itemProps: IItemRendererProps) => {
@@ -766,7 +771,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
                 label="Bins"
                 value={bins}
                 onValueChanged={val => this.onBinWidthChange(val)}
-                onValueCleared={() => widgetStore.setnBinx(this.initnBinx)}
+                onValueCleared={() => this.onBinWidthChange(this.initnBinx, true)}
                 displayExponential={false}
                 updateValueOnKeyDown={true}
                 disabled={disabled}
