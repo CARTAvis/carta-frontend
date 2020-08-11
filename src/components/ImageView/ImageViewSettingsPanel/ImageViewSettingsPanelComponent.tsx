@@ -9,11 +9,10 @@ import {
     IDialogProps, InputGroup, Intent, MenuItem,
     Switch, Tab, Tabs, TabId
 } from "@blueprintjs/core";
-import {DraggableDialogComponent} from "components/Dialogs";
 import {ColorComponent} from "./ColorComponent";
 import {ColorResult} from "react-color";
 import {ColorPickerComponent, SafeNumericInput} from "components/Shared";
-import {AppStore, BeamType, LabelType, SystemType, HelpType, DialogStore, NumberFormatType, NUMBER_FORMAT_LABEL} from "stores";
+import {AppStore, BeamType, LabelType, SystemType, HelpType, DialogStore, NumberFormatType, NUMBER_FORMAT_LABEL, WidgetConfig, WidgetProps} from "stores";
 import { SWATCH_COLORS} from "utilities";
 import "./ImageViewSettingsPanelComponent.css";
 
@@ -65,7 +64,7 @@ export const renderFont: ItemRenderer<Font> = (font, {handleClick, modifiers, qu
 };
 
 @observer
-export class ImageViewSettingsPanelComponent extends React.Component {
+export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps> {
     @observable selectedTab: TabId = "global";
 
     private fontSelect(visible: boolean, currentFontId: number, fontSetter: Function) {
@@ -87,6 +86,22 @@ export class ImageViewSettingsPanelComponent extends React.Component {
                 <Button text={(<span style={{fontFamily: currentFont.family, fontWeight: currentFont.weight, fontStyle: currentFont.style}}>{currentFont.name}</span>)} disabled={!visible} rightIcon="double-caret-vertical"/>
             </FontSelect>
         );
+    }
+
+    public static get WIDGET_CONFIG(): WidgetConfig {
+        return {
+            id: "image-view-floating-settings",
+            type: "floating-settings",
+            minWidth: 280,
+            minHeight: 225,
+            defaultWidth: 550,
+            defaultHeight: 420,
+            title: "image-view-settings",
+            isCloseable: true,
+            parentId: "image-view",
+            parentType: "image-view",
+            helpType: HelpType.IMAGE_VIEW_SETTINGS
+        };
     }
 
     public render() {
@@ -644,50 +659,30 @@ export class ImageViewSettingsPanelComponent extends React.Component {
             </div>
         ) : null;
 
-        let className = "overlay-settings-dialog";
+        let className = "image-view-settings";
         if (appStore.darkTheme) {
             className += " bp3-dark";
         }
 
-        const dialogStore = DialogStore.Instance;
-
-        const dialogProps: IDialogProps = {
-            icon: "settings",
-            backdropClassName: "minimal-dialog-backdrop",
-            className: className,
-            canOutsideClickClose: false,
-            lazy: true,
-            isOpen: dialogStore.overlaySettingsDialogVisible,
-            onClose: dialogStore.hideOverlaySettings,
-            title: "Overlay Settings",
-        };
-
         return (
-            <DraggableDialogComponent dialogProps={dialogProps} helpType={HelpType.OVERLAY_SETTINGS} minWidth={300} minHeight={300} defaultWidth={630} defaultHeight={500} enableResizing={true}>
-                <div className="bp3-dialog-body">
-                    <Tabs
-                        id="overlayTabs"
-                        vertical={true}
-                        selectedTabId={this.selectedTab}
-                        onChange={(tabId) => this.selectedTab = tabId}
-                    >
-                        <Tab id="global" title="Global" panel={globalPanel}/>
-                        <Tab id="title" title="Title" panel={titlePanel}/>
-                        <Tab id="ticks" title="Ticks" panel={ticksPanel}/>
-                        <Tab id="grid" title="Grid" panel={gridPanel}/>
-                        <Tab id="border" title="Border" panel={borderPanel}/>
-                        <Tab id="axes" title="Axes" panel={axesPanel}/>
-                        <Tab id="numbers" title="Numbers" panel={numbersPanel}/>
-                        <Tab id="labels" title="Labels" panel={labelsPanel}/>
-                        <Tab id="beam" title="Beam" panel={beamPanel} disabled={appStore.frameNum <= 0}/>
-                    </Tabs>
-                </div>
-                <div className="bp3-dialog-footer">
-                    <div className="bp3-dialog-footer-actions">
-                        <Button intent={Intent.PRIMARY} onClick={dialogStore.hideOverlaySettings} text="Close"/>
-                    </div>
-                </div>
-            </DraggableDialogComponent>
+            <div className={className}>
+                <Tabs
+                    id="imageViewSettingsTabs"
+                    vertical={true}
+                    selectedTabId={this.selectedTab}
+                    onChange={(tabId) => this.selectedTab = tabId}
+                >
+                    <Tab id="global" title="Global" panel={globalPanel}/>
+                    <Tab id="title" title="Title" panel={titlePanel}/>
+                    <Tab id="ticks" title="Ticks" panel={ticksPanel}/>
+                    <Tab id="grid" title="Grid" panel={gridPanel}/>
+                    <Tab id="border" title="Border" panel={borderPanel}/>
+                    <Tab id="axes" title="Axes" panel={axesPanel}/>
+                    <Tab id="numbers" title="Numbers" panel={numbersPanel}/>
+                    <Tab id="labels" title="Labels" panel={labelsPanel}/>
+                    <Tab id="beam" title="Beam" panel={beamPanel} disabled={appStore.frameNum <= 0}/>
+                </Tabs>
+            </div>
         );
     }
 }
