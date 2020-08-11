@@ -56,7 +56,7 @@ export class LayerListComponent extends React.Component<WidgetProps> {
     private onFileSelected = (appStore: AppStore, frame: FrameStore) => {
         const fileId = frame.frameInfo.fileId;
         appStore.setActiveFrame(fileId);
-    }
+    };
 
     private fileNameRenderer = (rowIndex: number) => {
         const appStore = AppStore.Instance;
@@ -221,6 +221,7 @@ export class LayerListComponent extends React.Component<WidgetProps> {
             if (frame) {
                 return (
                     <Menu>
+                        <MenuDivider title={frame.frameInfo.fileInfo.name}/>
                         <MenuItem disabled={appStore.spatialReference === frame} text="Set as spatial reference" onClick={() => appStore.setSpatialReference(frame)}/>
                         <MenuItem disabled={appStore.spectralReference === frame || frame.frameInfo.fileInfoExtended.depth <= 1} text="Set as spectral reference" onClick={() => appStore.setSpectralReference(frame)}/>
                         <MenuDivider/>
