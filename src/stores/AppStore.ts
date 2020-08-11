@@ -371,6 +371,7 @@ export class AppStore {
                     }
                 }
 
+                this.fileBrowserStore.saveStartingDirectory(newFrame.frameInfo.directory);
                 this.fileBrowserStore.hideFileBrowser();
                 resolve(ack.fileId);
             }, err => {
@@ -1110,6 +1111,8 @@ export class AppStore {
 
         const updatedFrame = this.getFrame(regionHistogramData.fileId);
 
+        // TODO: update histograms directly if the image is not active!
+
         // Add histogram to pending histogram list
         if (updatedFrame && regionHistogramData.regionId === -1) {
             regionHistogramData.histograms.forEach(histogram => {
@@ -1127,7 +1130,7 @@ export class AppStore {
     };
 
     @action handleTileStream = (tileStreamDetails: TileStreamDetails) => {
-        if (this.animatorStore.animationState === AnimationState.PLAYING && this.animatorStore.animationMode !== AnimationMode.FRAME) {
+        if (this.animatorStore.serverAnimationActive) {
             // Flow control
             const flowControlMessage: CARTA.IAnimationFlowControl = {
                 fileId: tileStreamDetails.fileId,
@@ -1355,6 +1358,10 @@ export class AppStore {
     }
 
     @action setActiveFrame(fileId: number) {
+        // Ignore changes when animating
+        if (this.animatorStore.serverAnimationActive) {
+            return;
+        }
         // Disable rendering of old frame
         if (this.activeFrame && this.activeFrame.frameInfo.fileId !== fileId) {
             this.activeFrame.renderType = RasterRenderType.NONE;
@@ -1369,6 +1376,10 @@ export class AppStore {
     }
 
     @action setActiveFrameByIndex(index: number) {
+        // Ignore changes when animating
+        if (this.animatorStore.serverAnimationActive) {
+            return;
+        }
         if (index >= 0 && this.frames.length > index) {
             this.changeActiveFrame(this.frames[index]);
         } else {

@@ -2,7 +2,7 @@ import {action, autorun, computed, observable} from "mobx";
 import {NumberRange} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import * as AST from "ast_wrapper";
-import {AppStore, ASTSettingsString, ContourConfigStore, ContourStore, LogStore, OverlayBeamStore, OverlayStore, PreferenceStore, RegionSetStore, RegionStore, RenderConfigStore} from "stores";
+import {AnimatorStore, AppStore, ASTSettingsString, ContourConfigStore, ContourStore, LogStore, OverlayBeamStore, OverlayStore, PreferenceStore, RegionSetStore, RegionStore, RenderConfigStore} from "stores";
 import {
     CHANNEL_TYPES,
     ChannelInfo,
@@ -1100,6 +1100,12 @@ export class FrameStore {
         }
         this.stokes = processedData.stokes;
         this.channel = processedData.channel;
+
+        const animatorStore = AnimatorStore.Instance;
+        if (animatorStore.serverAnimationActive) {
+            this.requiredChannel = processedData.channel;
+            this.requiredStokes = processedData.stokes;
+        }
 
         for (const contourSet of processedData.contourSets) {
             let contourStore = this.contourStores.get(contourSet.level);
