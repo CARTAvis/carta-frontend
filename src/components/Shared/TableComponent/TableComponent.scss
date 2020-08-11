@@ -2,22 +2,6 @@
     margin: 0 0 0 10px;
 }
 
-.column-name {
-    overflow: hidden;
-
-    .lable {
-        margin: 0px;
-        display: inline-flex;
-        position: absolute;
-    }
-
-    .sort-icon {
-        margin-right: 5px;
-        position: relative;
-        top: 5px;
-    }
-}
-
 .catalog-sort-menu-item {
     min-width: fit-content !important;
 }

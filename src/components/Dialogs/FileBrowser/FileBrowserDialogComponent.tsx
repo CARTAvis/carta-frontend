@@ -32,8 +32,7 @@ import {FileInfoComponent, FileInfoType} from "components/FileInfo/FileInfoCompo
 import {FileListTableComponent} from "./FileListTable/FileListTableComponent";
 import {DraggableDialogComponent} from "components/Dialogs";
 import {TableComponentProps, TableType} from "components/Shared";
-import {AppStore, BrowserMode, FileBrowserStore, HelpType} from "stores";
-import {CatalogOverlayWidgetStore} from "stores/widgets";
+import {AppStore, BrowserMode, CatalogProfileStore, FileBrowserStore, HelpType} from "stores";
 import "./FileBrowserDialogComponent.css";
 
 @observer
@@ -68,7 +67,7 @@ export class FileBrowserDialogComponent extends React.Component {
                 appStore.appendFile(fileBrowserStore.fileList.directory, fileInfo.name, hdu);
             }
         } else if (fileBrowserStore.browserMode === BrowserMode.Catalog) {
-            appStore.appendCatalog(fileBrowserStore.catalogFileList.directory, fileInfo.name, CatalogOverlayWidgetStore.InitTableRows, CARTA.CatalogFileType.VOTable);
+            appStore.appendCatalog(fileBrowserStore.catalogFileList.directory, fileInfo.name, CatalogProfileStore.InitTableRows, CARTA.CatalogFileType.VOTable);
         } else {
             appStore.importRegion(fileBrowserStore.fileList.directory, fileInfo.name, fileInfo.type);
         }

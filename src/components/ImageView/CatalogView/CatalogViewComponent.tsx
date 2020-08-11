@@ -23,94 +23,69 @@ export interface CatalogViewComponentProps {
 @observer
 export class CatalogViewComponent extends React.Component<CatalogViewComponentProps> {
 
-    @computed get unSelectedData(): Map<string, Plotly.Data> {
+    @computed get unSelectedData(): Map<number, Plotly.Data> {
         const catalogStore = CatalogStore.Instance;
-        let coordsData = new Map<string, Plotly.Data>();
+        let coordsData = new Map<number, Plotly.Data>();
         catalogStore.catalogData.forEach((catalog, key) => {
             if (!catalog.showSelectedData) {
-                let unSelectedata: Plotly.Data = {};
-                unSelectedata.type = "scattergl";
-                unSelectedata.mode = "markers";
-                unSelectedata.hoverinfo = "none";
-                unSelectedata.marker = {};
-                unSelectedata.marker.line = {};
+                let unSelecteData: Plotly.Data = {};
+                unSelecteData.type = "scattergl";
+                unSelecteData.mode = "markers";
+                unSelecteData.hoverinfo = "none";
+                unSelecteData.visible = catalog.displayed;
+                unSelecteData.marker = {};
+                unSelecteData.marker.line = {};
                 // copy data to trigger react-plotly js update. only update revision number not working. with layout["datarevision"] will slow down plotly;
-                unSelectedata.x = catalog.xImageCoords.slice(0);
-                unSelectedata.y = catalog.yImageCoords.slice(0);
-                unSelectedata.name = key;
-                coordsData.set(key, unSelectedata);
+                unSelecteData.x = catalog.xImageCoords.slice(0);
+                unSelecteData.y = catalog.yImageCoords.slice(0);
+                unSelecteData.name = key.toString();
+                coordsData.set(key, unSelecteData);
             }
         });
         return coordsData;
     }
 
-    @computed get selectedData(): Map<string, Plotly.Data> {
+    @computed get selectedData(): Map<number, Plotly.Data> {
         const catalogStore = CatalogStore.Instance;   
-        const appStore = AppStore.Instance;
-        const widgetsStore = WidgetsStore.Instance;
-        let coordsData = new Map<string, Plotly.Data>(); 
-        appStore.catalogs.forEach((fileId, widgetId) => {
-            const catalogOverlayStore = widgetsStore.catalogOverlayWidgets.get(widgetId);
-            const selectedPoints = catalogOverlayStore.selectedPointIndices;
+        let coordsData = new Map<number, Plotly.Data>(); 
+        catalogStore.catalogProfileStores.forEach((profileStore) => {    
+            const selectedPoints = profileStore.selectedPointIndices;
             const selectedPointSize = selectedPoints.length;
+            const fileId = profileStore.catalogFileId;
             let selecteData: Plotly.Data = {};
             if (selectedPointSize > 0) {
                 selecteData.type = "scattergl";
                 selecteData.mode = "markers";
                 selecteData.hoverinfo = "none";
-                const coords = catalogStore.catalogData.get(widgetId);
+                const coords = catalogStore.catalogData.get(fileId);
+                selecteData.visible = coords.displayed;
                 if (coords?.xImageCoords?.length) {
                     selecteData.x = coords.xSelectedCoords.slice(0);
                     selecteData.y = coords.ySelectedCoords.slice(0);
-                    selecteData.name = widgetId;
+                    selecteData.name = fileId.toString();
                     selecteData.marker = {};
                     selecteData.marker.line = {};
-                    coordsData.set(widgetId, selecteData);
+                    coordsData.set(fileId, selecteData);
                 }
             }
         });
         return coordsData;
     }
 
-    @computed get catalogColor() {
-        const catalogStore = CatalogStore.Instance;
-        let catalogColor = new Map<string, string>();
-        catalogStore.catalogColor.forEach((color, key) => {
-            catalogColor.set(key, color);
-        });
-        return catalogColor;
-    }
-
-    @computed get catalogShape() {
-        const catalogStore = CatalogStore.Instance;
-        let catalogShape = new Map<string, string>();
-        catalogStore.catalogShape.forEach((shape, key) => {
-            catalogShape.set(key, shape);
-        });
-        return catalogShape;
-    }
-
-    @computed get catalogSize() {
-        const catalogStore = CatalogStore.Instance;
-        let catalogSize = new Map<string, number>();
-        catalogStore.catalogSize.forEach((size, key) => {
-            catalogSize.set(key, size);
-        });
-        return catalogSize;
-    }
-
     private onClick = (event: Readonly<Plotly.PlotMouseEvent>) => {
-        const appStore = AppStore.Instance;
         if (event && event.points && event.points.length > 0) {
-            const catalogWidgetId = event.points[0].data.name;
-            const catalogWidget = appStore.widgetsStore.catalogOverlayWidgets.get(catalogWidgetId);
-            if (catalogWidget && !catalogWidget.showSelectedData) {
-                const catalogFileId = catalogWidget.catalogInfo.fileId;
-                AppStore.Instance.updateCatalogProfiles(catalogFileId);
+            const catalogFileId = Number(event.points[0].data.name);
+            const catalogProfileStore = CatalogStore.Instance.getCatalogProfileStore(catalogFileId);
+            const widgetStoreId = CatalogStore.Instance.catalogWidgets.get(catalogFileId);
+            const catalogWidgetStore =  WidgetsStore.Instance.catalogWidgets.get(widgetStoreId);
+
+            if (catalogFileId && !catalogWidgetStore.showSelectedData) {
+                CatalogStore.Instance.updateCatalogProfiles(catalogFileId);
                 let selectedPointIndex = [];
                 const selectedPoint = event.points[0];
                 selectedPointIndex.push(selectedPoint.pointIndex);
-                catalogWidget.setSelectedPointIndices(selectedPointIndex, true, false);
+                catalogProfileStore.setSelectedPointIndices(selectedPointIndex, false);
+                catalogWidgetStore.setCatalogTableAutoScroll(true);
             }
         }
     };
@@ -118,11 +93,10 @@ export class CatalogViewComponent extends React.Component<CatalogViewComponentPr
     private onDoubleClick() {
         const catalogStore = CatalogStore.Instance;
         if (catalogStore.catalogData.size) {   
-            const appStore = AppStore.Instance;
-            const widgetsStore = WidgetsStore.Instance;
-            appStore.catalogs.forEach((fileId, widgetId) => {
-                const catalogOverlayStore = widgetsStore.catalogOverlayWidgets.get(widgetId);
-                catalogOverlayStore.setSelectedPointIndices([], false, false);
+            catalogStore.catalogProfileStores.forEach((profileStore) => {   
+                const widgetStoreId = CatalogStore.Instance.catalogWidgets.get(profileStore.catalogFileId);
+                profileStore.setSelectedPointIndices([], false);
+                WidgetsStore.Instance.catalogWidgets.get(widgetStoreId)?.setCatalogTableAutoScroll(false);
             });
         }
     }
@@ -146,6 +120,7 @@ export class CatalogViewComponent extends React.Component<CatalogViewComponentPr
         const width = this.props.width;
         const height = this.props.height;
         const padding = appStore.overlayStore.padding;
+        const catalogStore = CatalogStore.Instance;
         let className = "catalog-div";
         if (this.props.docked) {
             className += " docked";
@@ -199,23 +174,21 @@ export class CatalogViewComponent extends React.Component<CatalogViewComponentPr
         let scatterData: Plotly.Data[] = [];
         const unSelectedData = this.unSelectedData;
         const selectedData = this.selectedData;
-        const catalogColor = this.catalogColor;
-        const catalogSize = this.catalogSize;
-        const catalogShape = this.catalogShape;
-        unSelectedData.forEach((data, widgetId) => {
-            const color = catalogColor.get(widgetId);
+        unSelectedData.forEach((data, fileId) => {
+            const catalogWidgetStore = catalogStore.getCatalogWidgetStore(fileId);
+            const color = catalogWidgetStore.catalogColor;
             if (color) {
                 data.marker.color = color;
                 data.marker.line.color = color;
                 data.marker.line.width = 2;
             }
 
-            const size = catalogSize.get(widgetId);
+            const size = catalogWidgetStore.catalogSize;
             if (size) {
                 data.marker.size = size * devicePixelRatio;
             }
 
-            const shape = catalogShape.get(widgetId);
+            const shape = catalogWidgetStore.catalogShape;
             if (shape) {
                 data.marker.symbol = shape;
             }
@@ -223,16 +196,16 @@ export class CatalogViewComponent extends React.Component<CatalogViewComponentPr
         });
 
         if (selectedData) {
-            selectedData.forEach((data, widgetId) => {
+            selectedData.forEach((data, fileId) => {
                 data.marker.color = Colors.RED2;
                 data.marker.line.color = Colors.RED2;
                 data.marker.line.width = 2;
-    
-                const size = catalogSize.get(widgetId);
+                const catalogWidgetStore = catalogStore.getCatalogWidgetStore(fileId);
+                const size = catalogWidgetStore.catalogSize;
                 if (size) {
                     data.marker.size = size * devicePixelRatio + 4;
                 }
-                let outlineShape = catalogShape.get(widgetId);
+                let outlineShape = catalogWidgetStore.catalogShape;
                 if (outlineShape) {
                     if (outlineShape === CatalogOverlayShape.FullCircle) {
                         outlineShape = CatalogOverlayShape.Circle;
