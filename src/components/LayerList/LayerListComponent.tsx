@@ -226,6 +226,7 @@ export class LayerListComponent extends React.Component<WidgetProps> {
                         <MenuItem disabled={appStore.spectralReference === frame || frame.frameInfo.fileInfoExtended.depth <= 1} text="Set as spectral reference" onClick={() => appStore.setSpectralReference(frame)}/>
                         <MenuDivider/>
                         <MenuItem text="Close image" onClick={() => appStore.closeFile(frame)}/>
+                        <MenuItem text="Close all other images" disabled={appStore.frames?.length <= 1} onClick={() => appStore.closeOtherFiles(frame)}/>
                     </Menu>
                 );
             }
