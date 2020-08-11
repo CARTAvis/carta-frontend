@@ -15,7 +15,7 @@ import {ColorResult} from "react-color";
 import {ColorPickerComponent, SafeNumericInput} from "components/Shared";
 import {AppStore, BeamType, LabelType, SystemType, HelpType, DialogStore, NumberFormatType, NUMBER_FORMAT_LABEL} from "stores";
 import { SWATCH_COLORS} from "utilities";
-import "./OverlaySettingsDialogComponent.css";
+import "./ImageViewSettingsPanelComponent.css";
 
 // Font selector
 export class Font {
@@ -65,7 +65,7 @@ export const renderFont: ItemRenderer<Font> = (font, {handleClick, modifiers, qu
 };
 
 @observer
-export class OverlaySettingsDialogComponent extends React.Component {
+export class ImageViewSettingsPanelComponent extends React.Component {
     @observable selectedTab: TabId = "global";
 
     private fontSelect(visible: boolean, currentFontId: number, fontSetter: Function) {

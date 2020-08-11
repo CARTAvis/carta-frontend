@@ -9,7 +9,7 @@ import {ColorResult} from "react-color";
 import {CARTA} from "carta-protobuf";
 import {DraggableDialogComponent} from "components/Dialogs";
 import {ScalingSelectComponent} from "components/Shared/ScalingSelectComponent/ScalingSelectComponent";
-import {ColorComponent} from "components/Dialogs/OverlaySettings/ColorComponent";
+import {ColorComponent} from "components/ImageView/ImageViewSettingsPanel/ColorComponent";
 import {ColormapComponent, ColorPickerComponent, SafeNumericInput} from "components/Shared";
 import {CompressionQuality, CursorPosition, Event, RegionCreationMode, SPECTRAL_MATCHING_TYPES, SPECTRAL_TYPE_STRING, Theme, TileCache, WCSMatchingType, WCSType, Zoom, ZoomPoint} from "models";
 import {AppStore, BeamType, ContourGeneratorType, DialogStore, FrameScaling, HelpType, PreferenceKeys, PreferenceStore, RegionStore, RenderConfigStore} from "stores";
