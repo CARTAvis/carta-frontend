@@ -4,11 +4,16 @@ import {observer} from "mobx-react";
 import {Colors, Tabs, Tab} from "@blueprintjs/core";
 import {LinePlotSettingsPanelComponentProps, LinePlotSettingsPanelComponent, SmoothingSettingsComponent} from "components/Shared";
 import {SpatialProfileWidgetStore} from "stores/widgets";
-import {WidgetProps, WidgetConfig, HelpType, WidgetsStore, AppStore, WidgetTabs} from "stores";
+import {WidgetProps, WidgetConfig, HelpType, WidgetsStore, AppStore} from "stores";
 import {parseNumber} from "utilities";
 import "./SpatialProfilerSettingsPanelComponent.css";
 
 const KEYCODE_ENTER = 13;
+
+export enum SpatialProfilerSettingsTabs {
+    STYLING,
+    SMOOTHING
+}
 
 @observer
 export class SpatialProfilerSettingsPanelComponent extends React.Component<WidgetProps> {
@@ -25,7 +30,7 @@ export class SpatialProfilerSettingsPanelComponent extends React.Component<Widge
             isCloseable: true,
             parentId: "spatial-profiler",
             parentType: "spatial-profiler",
-            helpType: HelpType.SPATIAL_PROFILER_SETTINGS
+            tabsHelpTypes: [HelpType.SPATIAL_PROFILER_SETTINGS_STYLING, HelpType.SPATIAL_PROFILER_SETTINGS_SMOOTHING]
         };
     }
 
@@ -180,8 +185,8 @@ export class SpatialProfilerSettingsPanelComponent extends React.Component<Widge
         return (
         <div className="spatial-profiler-settings">
             <Tabs id="spatialSettingTabs" selectedTabId={widgetStore.settingsTabId} onChange={this.handleSelectedTabChanged}>
-                <Tab id={WidgetTabs.STYLING} title="Styling" panel={<LinePlotSettingsPanelComponent {...lineSettingsProps}/>}/>
-                <Tab id={WidgetTabs.SMOOTHING} title="Smoothing" panel={<SmoothingSettingsComponent smoothingStore={widgetStore.smoothingStore}/>}/>
+                <Tab id={SpatialProfilerSettingsTabs.STYLING} title="Styling" panel={<LinePlotSettingsPanelComponent {...lineSettingsProps}/>}/>
+                <Tab id={SpatialProfilerSettingsTabs.SMOOTHING} title="Smoothing" panel={<SmoothingSettingsComponent smoothingStore={widgetStore.smoothingStore}/>}/>
             </Tabs>
         </div>
         );

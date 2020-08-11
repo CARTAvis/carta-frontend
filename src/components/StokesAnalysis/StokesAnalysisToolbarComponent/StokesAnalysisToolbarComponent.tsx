@@ -1,9 +1,9 @@
 import {observer} from "mobx-react";
 import * as React from "react";
 import {FormGroup, Switch, ButtonGroup, Button, Tooltip} from "@blueprintjs/core";
-import {AppStore, WidgetTabs} from "stores";
+import {AppStore} from "stores";
 import {StokesAnalysisWidgetStore} from "stores/widgets";
-import {StokesAnalysisComponent, RegionSelectorComponent} from "components";
+import {StokesAnalysisComponent, RegionSelectorComponent, StokesAnalysisSettingsTabs} from "components";
 import {CustomIcon} from "icons/CustomIcons";
 import "./StokesAnalysisToolbarComponent.css";
 
@@ -15,7 +15,7 @@ export class StokesAnalysisToolbarComponent extends React.Component<{widgetStore
     };
 
     private smoothingShortcutClick = () => {
-        this.props.widgetStore.setSettingsTabId(WidgetTabs.SMOOTHING);
+        this.props.widgetStore.setSettingsTabId(StokesAnalysisSettingsTabs.SMOOTHING);
         AppStore.Instance.widgetsStore.createFloatingSettingsWidget(StokesAnalysisComponent.WIDGET_CONFIG.title, this.props.id, StokesAnalysisComponent.WIDGET_CONFIG.type);
     }
 

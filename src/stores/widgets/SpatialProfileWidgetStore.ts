@@ -1,9 +1,10 @@
 import * as tinycolor from "tinycolor2";
 import {action, computed, observable} from "mobx";
 import {Colors} from "@blueprintjs/core";
-import {FrameStore, ProfileSmoothingStore, WidgetTabs} from "stores";
+import {FrameStore, ProfileSmoothingStore} from "stores";
 import {CARTA} from "carta-protobuf";
 import {PlotType, LineSettings} from "components/Shared";
+import {SpatialProfilerSettingsTabs} from "components";
 
 export class SpatialProfileWidgetStore {
     @observable fileId: number;
@@ -26,7 +27,7 @@ export class SpatialProfileWidgetStore {
     @observable linePlotPointSize: number;
     @observable linePlotInitXYBoundaries: { minXVal: number, maxXVal: number, minYVal: number, maxYVal: number };
     readonly smoothingStore: ProfileSmoothingStore;
-    @observable settingsTabId: WidgetTabs;
+    @observable settingsTabId: SpatialProfilerSettingsTabs;
 
     private static ValidCoordinates = ["x", "y", "Ix", "Iy", "Qx", "Qy", "Ux", "Uy", "Vx", "Vz"];
 
@@ -109,7 +110,7 @@ export class SpatialProfileWidgetStore {
         this.isMouseMoveIntoLinePlots = val;
     };
 
-    @action setSettingsTabId = (val: WidgetTabs) => {
+    @action setSettingsTabId = (val: SpatialProfilerSettingsTabs) => {
         this.settingsTabId = val;
     }
 
@@ -129,6 +130,7 @@ export class SpatialProfileWidgetStore {
         this.lineWidth = 1;
         this.linePlotInitXYBoundaries = { minXVal: 0, maxXVal: 0, minYVal: 0, maxYVal: 0 };
         this.smoothingStore = new ProfileSmoothingStore();
+        this.settingsTabId = SpatialProfilerSettingsTabs.STYLING;
     }
 
     @computed get isAutoScaledX() {

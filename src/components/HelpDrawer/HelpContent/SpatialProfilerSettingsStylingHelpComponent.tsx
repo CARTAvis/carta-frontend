@@ -1,6 +1,6 @@
 import * as React from "react";
 
-export class SpatialProfilerSettingsHelpComponent extends React.Component {
+export class SpatialProfilerSettingsStylingHelpComponent extends React.Component {
     public render() {
         return (
             <div>

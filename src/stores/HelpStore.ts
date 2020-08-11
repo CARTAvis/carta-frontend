@@ -48,21 +48,20 @@ export enum HelpType {
     RENDER_CONFIG = "render-config",
     RENDER_CONFIG_SETTINGS = "render-config-settings",
     SPATIAL_PROFILER = "spatial-profiler",
-    SPATIAL_PROFILER_SETTINGS = "spatial-profiler-settings",
+    SPATIAL_PROFILER_SETTINGS_STYLING = "spatial-profiler-settings-styling",
+    SPATIAL_PROFILER_SETTINGS_SMOOTHING = "spatial-profiler-settings-smoothing",
     SPECTRAL_PROFILER = "spectral-profiler",
-    SPECTRAL_PROFILER_SETTINGS = "spectral-profiler-settings",
+    SPECTRAL_PROFILER_SETTINGS_CONVERSION = "spectral-profiler-settings-conversion",
+    SPECTRAL_PROFILER_SETTINGS_STYLING = "spectral-profiler-settings-styling",
+    SPECTRAL_PROFILER_SETTINGS_SMOOTHING = "spectral-profiler-settings-smoothing",
+    SPECTRAL_PROFILER_SETTINGS_MOMENTS = "spectral-profiler-settings-moments",
     STATS = "stats",
     STOKES_ANALYSIS = "stoke-analysis",
-    STOKES_ANALYSIS_SETTINGS = "stoke-analysis-settings",
+    STOKES_ANALYSIS_SETTINGS_CONVERSION = "stoke-analysis-settings-conversion",
+    STOKES_ANALYSIS_SETTINGS_LINE_PLOT_STYLING = "stoke-analysis-settings-line-plot-styling",
+    STOKES_ANALYSIS_SETTINGS_SCATTER_PLOT_STYLING = "stoke-analysis-settings-scatter-plot-styling",
+    STOKES_ANALYSIS_SETTINGS_SMOOTHING = "stoke-analysis-settings-smoothing",
     CATALOG_OVERLAY = "catalog-overlay",
     CATALOG_SCATTER = "catalog-scatter",
-    SPECTRAL_LINE_QUERY = "spectral-line-query",
-
-    // Tabs
-    CONVERSION = "conversion",
-    STYLING = "styling",
-    LINE_PLOT_STYLING = "line-plot-styling",
-    SCATTER_PLOT_STYLING = "scatter-plot-styling",
-    SMOOTHING = "smoothing",
-    MOMENTS = "moments"
+    SPECTRAL_LINE_QUERY = "spectral-line-query"
 }

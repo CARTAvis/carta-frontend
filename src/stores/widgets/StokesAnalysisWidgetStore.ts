@@ -4,11 +4,12 @@ import {Colors} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import {PlotType, LineSettings, ScatterSettings} from "components/Shared";
 import {RegionWidgetStore, RegionsType} from "./RegionWidgetStore";
-import {AppStore, FrameStore, WidgetTabs} from "stores";
+import {AppStore, FrameStore} from "stores";
 import {getColorsForValues} from "utilities";
 import {SpectralSystem, SpectralType, SpectralUnit} from "models";
 import * as tinycolor from "tinycolor2";
 import {ProfileSmoothingStore} from "stores/ProfileSmoothingStore";
+import {StokesAnalysisSettingsTabs} from "components";
 
 export enum StokesCoordinate {
     CurrentZ = "z",
@@ -70,7 +71,7 @@ export class StokesAnalysisWidgetStore extends RegionWidgetStore {
     @observable colorPixel: { color: Uint8ClampedArray, size: number };
     @observable pointTransparency: number;
     readonly smoothingStore: ProfileSmoothingStore;
-    @observable settingsTabId: WidgetTabs;
+    @observable settingsTabId: StokesAnalysisSettingsTabs;
     
     private static requestDataType = [StokesCoordinate.LinearPolarizationQ, StokesCoordinate.LinearPolarizationU];
     private static ValidStatsTypes = [
@@ -234,7 +235,7 @@ export class StokesAnalysisWidgetStore extends RegionWidgetStore {
         this.equalAxes = DEFAULTS.equalAxes;
         this.pointTransparency = DEFAULTS.pointTransparency;
         this.smoothingStore = new ProfileSmoothingStore();
-        this.settingsTabId = WidgetTabs.CONVERSION;
+        this.settingsTabId = StokesAnalysisSettingsTabs.CONVERSION;
     }
 
     @action setQUScatterPlotXBounds = (minVal: number, maxVal: number) => {
@@ -350,7 +351,7 @@ export class StokesAnalysisWidgetStore extends RegionWidgetStore {
         }
     }
 
-    @action setSettingsTabId = (tabId: WidgetTabs) => {
+    @action setSettingsTabId = (tabId: StokesAnalysisSettingsTabs) => {
         this.settingsTabId = tabId;
     }
 

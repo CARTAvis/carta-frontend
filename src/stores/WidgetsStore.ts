@@ -54,25 +54,16 @@ export class WidgetConfig {
     @observable title: string;
     parentId?: string;
     parentType?: string;
-    helpType: HelpType;
+    helpType?: HelpType;
+    tabsHelpTypes?: HelpType[];
     componentId?: string;
     zIndex?: number = 0;
-    hasTabs?: boolean;
 }
 
 export class WidgetProps {
     id: string;
     docked: boolean;
     floatingSettingsId?: string;
-}
-
-export enum WidgetTabs {
-    STYLING,
-    LINE_PLOT_STYLING,
-    SCATTER_PLOT_STYLING,
-    SMOOTHING,
-    CONVERSION,
-    MOMENTS
 }
 
 export class WidgetsStore {

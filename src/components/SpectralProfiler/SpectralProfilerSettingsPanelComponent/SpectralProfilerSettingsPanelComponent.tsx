@@ -4,12 +4,18 @@ import {observer} from "mobx-react";
 import {Colors, Tab, Tabs} from "@blueprintjs/core";
 import {LinePlotSettingsPanelComponentProps, LinePlotSettingsPanelComponent, SpectralSettingsComponent, SmoothingSettingsComponent} from "components/Shared";
 import {SpectralProfileWidgetStore} from "stores/widgets";
-import {WidgetProps, WidgetConfig, HelpType, AppStore, WidgetsStore, WidgetTabs} from "stores";
+import {WidgetProps, WidgetConfig, HelpType, AppStore, WidgetsStore} from "stores";
 import {parseNumber} from "utilities";
 import "./SpectralProfilerSettingsPanelComponent.css";
 
 const KEYCODE_ENTER = 13;
 
+export enum SpectralProfilerSettingsTabs {
+    CONVERSION,
+    STYLING,
+    SMOOTHING,
+    MOMENTS
+}
 @observer
 export class SpectralProfilerSettingsPanelComponent extends React.Component<WidgetProps> {
 
@@ -25,7 +31,7 @@ export class SpectralProfilerSettingsPanelComponent extends React.Component<Widg
             isCloseable: true,
             parentId: "spectal-profiler",
             parentType: "spectral-profiler",
-            helpType: HelpType.SPECTRAL_PROFILER_SETTINGS
+            tabsHelpTypes: [HelpType.SPECTRAL_PROFILER_SETTINGS_CONVERSION, HelpType.SPECTRAL_PROFILER_SETTINGS_STYLING, HelpType.SPECTRAL_PROFILER_SETTINGS_SMOOTHING, HelpType.SPECTRAL_PROFILER_SETTINGS_MOMENTS]
         };
     }
 
@@ -167,9 +173,9 @@ export class SpectralProfilerSettingsPanelComponent extends React.Component<Widg
         return (
             <div className="spectral-settings">
                 <Tabs id="spectralSettingTabs" selectedTabId={widgetStore.settingsTabId} onChange={this.handleSelectedTabChanged}>
-                    <Tab id={WidgetTabs.CONVERSION} title="Conversion" panel={<SpectralSettingsComponent widgetStore={widgetStore} disable={false}/>}/>
-                    <Tab id={WidgetTabs.STYLING} title="Styling" panel={<LinePlotSettingsPanelComponent {...lineSettingsProps}/>}/>
-                    <Tab id={WidgetTabs.SMOOTHING} title="Smoothing" panel={<SmoothingSettingsComponent smoothingStore={widgetStore.smoothingStore}/>}/>
+                    <Tab id={SpectralProfilerSettingsTabs.CONVERSION} title="Conversion" panel={<SpectralSettingsComponent widgetStore={widgetStore} disable={false}/>}/>
+                    <Tab id={SpectralProfilerSettingsTabs.STYLING} title="Styling" panel={<LinePlotSettingsPanelComponent {...lineSettingsProps}/>}/>
+                    <Tab id={SpectralProfilerSettingsTabs.SMOOTHING} title="Smoothing" panel={<SmoothingSettingsComponent smoothingStore={widgetStore.smoothingStore}/>}/>
                 </Tabs>
             </div>
         );
