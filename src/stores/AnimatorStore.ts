@@ -169,7 +169,7 @@ export class AnimatorStore {
     };
 
     @action animate = () => {
-        if (this.serverAnimationActive) {
+        if (this.animationState === AnimationState.PLAYING && this.animationMode === AnimationMode.FRAME) {
             // Do animation
             AppStore.Instance.nextFrame();
         }
