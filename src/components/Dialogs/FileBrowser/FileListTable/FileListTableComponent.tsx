@@ -6,6 +6,7 @@ import {IRegion} from "@blueprintjs/table/src/regions";
 import {Icon, Label, NonIdealState} from "@blueprintjs/core";
 import globToRegExp from "glob-to-regexp";
 import * as moment from "moment";
+import FuzzySearch from "fuzzy-search";
 import {CARTA} from "carta-protobuf";
 import {BrowserMode, SortingConfig} from "stores";
 import {toFixed} from "utilities";
@@ -105,12 +106,18 @@ export class FileListTableComponent extends React.Component<FileListTableCompone
                     filteredSubdirectories = filteredSubdirectories?.filter(value => value.match(regex));
                     // @ts-ignore
                     filteredFiles = filteredFiles?.filter(file => file.name.match(regex));
-                } else {
+                } else if (filterString.startsWith("+")) {
+                    const searchString = filterString.slice(1);
                     // glob search case-insensitive
-                    regex = RegExp(globToRegExp(filterString.toLowerCase()));
+                    regex = RegExp(globToRegExp(searchString.toLowerCase()));
                     filteredSubdirectories = filteredSubdirectories?.filter(value => value.toLowerCase().match(regex));
                     // @ts-ignore
                     filteredFiles = filteredFiles?.filter(file => file.name.toLowerCase().match(regex));
+                } else {
+                    const folderSearcher = new FuzzySearch(filteredSubdirectories);
+                    filteredSubdirectories = folderSearcher.search(filterString);
+                    const fileSearcher = new FuzzySearch(filteredFiles, ["name"]);
+                    filteredFiles = fileSearcher.search(filterString);
                 }
             } catch (e) {
                 if (e.name !== "SyntaxError") {
