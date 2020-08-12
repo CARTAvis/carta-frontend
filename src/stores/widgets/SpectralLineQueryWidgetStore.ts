@@ -108,7 +108,7 @@ export class SpectralLineQueryWidgetStore extends RegionWidgetStore {
     @observable queryRange: NumberRange;
     @observable queryRangeByCenter: NumberRange;
     @observable queryUnit: SpectralLineQueryUnit;
-    @observable isApplyingIntensityLimit: boolean;
+    @observable intensityLimitEnabled: boolean;
     @observable intensityLimitValue: number;
     @observable isQuerying: boolean;
     @observable columnHeaders: Array<CARTA.ICatalogHeader>;
@@ -140,8 +140,8 @@ export class SpectralLineQueryWidgetStore extends RegionWidgetStore {
         this.queryUnit = queryUnit;
     };
 
-    @action setIntensityLimitState = () => {
-        this.isApplyingIntensityLimit = !this.isApplyingIntensityLimit;
+    @action toggleIntensityLimit = () => {
+        this.intensityLimitEnabled = !this.intensityLimitEnabled;
     };
 
     @action setIntensityLimitValue = (intensityLimitValue: number) => {
@@ -214,7 +214,7 @@ export class SpectralLineQueryWidgetStore extends RegionWidgetStore {
         } else {
             this.isQuerying = true;
             const backendService = BackendService.Instance;
-            backendService.requestSpectralLine(new CARTA.DoubleBounds({min: freqMHzFrom, max: freqMHzTo}), this.isApplyingIntensityLimit ? this.intensityLimitValue : 0).subscribe(ack => {
+            backendService.requestSpectralLine(new CARTA.DoubleBounds({min: freqMHzFrom, max: freqMHzTo}), this.intensityLimitEnabled ? this.intensityLimitValue : 0).subscribe(ack => {
                 this.isQuerying = false;
                 if (ack.success && ack.dataSize >= 0) {
                     if (ack.dataSize > 0) {
@@ -347,7 +347,7 @@ export class SpectralLineQueryWidgetStore extends RegionWidgetStore {
         this.queryRange = [0, 0];
         this.queryRangeByCenter = [0, 0];
         this.queryUnit = SpectralLineQueryUnit.MHz;
-        this.isApplyingIntensityLimit = true;
+        this.intensityLimitEnabled = true;
         this.intensityLimitValue = -5;
         this.isQuerying = false;
         this.columnHeaders = [];
