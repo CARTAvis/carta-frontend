@@ -79,11 +79,11 @@ const COMPONENT_CONFIG = new Map<string, any>([
         title: "Catalog Overlay",
         id: "catalog-overlay"
     }],
-    ["catalog-scatter", {
+    ["catalog-plot", {
         type: "react-component",
-        component: "catalog-scatter",
-        title: "Catalog Scatter",
-        id: "catalog-scatter"
+        component: "catalog-plot",
+        title: "Catalog Plot",
+        id: "catalog-plot"
     }],
     ["spectral-line-query", {
         type: "react-component",
