@@ -96,17 +96,6 @@ export class DialogStore {
         this.selectedFileInfoDialogTab = newId;
     };
 
-    // Overlay Settings
-    @observable overlaySettingsDialogVisible = false;
-
-    @action showOverlaySettings = () => {
-        this.overlaySettingsDialogVisible = true;
-    };
-
-    @action hideOverlaySettings = () => {
-        this.overlaySettingsDialogVisible = false;
-    };
-
     // Contour dialog
     @observable contourDialogVisible: boolean = false;
     @action showContourDialog = () => {

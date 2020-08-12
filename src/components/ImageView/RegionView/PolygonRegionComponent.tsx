@@ -6,8 +6,8 @@ import Konva from "konva";
 import {Colors} from "@blueprintjs/core";
 import {FrameStore, RegionStore} from "stores";
 import {Point2D} from "models";
-import {add2D, average2D, closestPointOnLine, rotate2D, scale2D, subtract2D} from "utilities";
-import {canvasToTransformedImagePos, getUpdatedPosition, imageToCanvasPos, transformedImageToCanvasPos} from "./shared";
+import {add2D, average2D, closestPointOnLine, transformPoint, rotate2D, scale2D, subtract2D} from "utilities";
+import {canvasToTransformedImagePos, imageToCanvasPos, transformedImageToCanvasPos} from "./shared";
 
 export interface PolygonRegionComponentProps {
     region: RegionStore;
@@ -81,7 +81,10 @@ export class PolygonRegionComponent extends React.Component<PolygonRegionCompone
             const frame = this.props.frame;
             const index = node.index;
             if (index >= 0 && index < region.controlPoints.length) {
-                const positionImageSpace = canvasToTransformedImagePos(node.position().x, node.position().y, frame, this.props.layerWidth, this.props.layerHeight);
+                let positionImageSpace = canvasToTransformedImagePos(node.position().x, node.position().y, frame, this.props.layerWidth, this.props.layerHeight);
+                if (frame.spatialReference) {
+                    positionImageSpace = transformPoint(frame.spatialTransformAST, positionImageSpace, true);
+                }
                 region.setControlPoint(index, positionImageSpace);
                 this.hoverIntersection = null;
             }
@@ -117,7 +120,10 @@ export class PolygonRegionComponent extends React.Component<PolygonRegionCompone
         const frame = this.props.frame;
 
         if (this.props.selected && region.controlPoints.length >= 2) {
-            const positionImageSpace = canvasToTransformedImagePos(mouseEvent.offsetX, mouseEvent.offsetY, frame, this.props.layerWidth, this.props.layerHeight);
+            let positionImageSpace = canvasToTransformedImagePos(mouseEvent.offsetX, mouseEvent.offsetY, frame, this.props.layerWidth, this.props.layerHeight);
+            if (frame.spatialReference) {
+                positionImageSpace = transformPoint(frame.spatialTransformAST, positionImageSpace, true);
+            }
             let minDistance = Number.MAX_VALUE;
             let closestIndex = -1;
             let closestPoint: Point2D = null;
@@ -172,7 +178,10 @@ export class PolygonRegionComponent extends React.Component<PolygonRegionCompone
             const frame = this.props.frame;
             const centerImageSpace = average2D(region.controlPoints);
             const zoomLevel = frame.spatialReference ? frame.spatialReference.zoomLevel : frame.zoomLevel;
-            const newPosition = getUpdatedPosition(centerImageSpace, node.position(), zoomLevel, frame, this.props.layerWidth, this.props.layerHeight);
+            let newPosition = canvasToTransformedImagePos(node.position().x, node.position().y, frame, this.props.layerWidth, this.props.layerHeight);
+            if (frame.spatialReference) {
+                newPosition = transformPoint(frame.spatialTransformAST, newPosition, true);
+            }
             const deltaPosition = subtract2D(newPosition, centerImageSpace);
             const newPoints = region.controlPoints.map(p => add2D(p, deltaPosition));
             region.setControlPoints(newPoints, false, false);
@@ -244,33 +253,62 @@ export class PolygonRegionComponent extends React.Component<PolygonRegionCompone
         let rotation = 0.0;
 
         let controlPoints = region.controlPoints;
-        if (frame.spatialReference) {
-            controlPoints = controlPoints.map(p => frame.spatialTransform.transformCoordinate(p, true));
-            rotation = -frame.spatialTransform.rotation * 180.0 / Math.PI;
-        }
-
-        const centerPoint = average2D(controlPoints);
-        const centerPointCanvasSpace = imageToCanvasPos(centerPoint.x, centerPoint.y, frameView, this.props.layerWidth, this.props.layerHeight, frame.spatialTransform);
-        const pointArray = this.getCanvasPointArray(controlPoints);
-
-        for (let i = 0; i < pointArray.length / 2; i++) {
-            pointArray[i * 2] -= centerPointCanvasSpace.x;
-            pointArray[i * 2 + 1] -= centerPointCanvasSpace.y;
-        }
-
-        // Construct anchors if region is selected
+        let centerPointCanvasSpace: Point2D;
         let anchors = null;
-        if (this.props.selected && !region.locked) {
-            anchors = new Array<React.ReactNode>(pointArray.length / 2);
-            for (let i = 0; i < pointArray.length / 2; i++) {
-                anchors[i] = this.anchorNode(centerPointCanvasSpace.x + pointArray[i * 2], centerPointCanvasSpace.y + pointArray[i * 2 + 1], rotation, i, true);
-            }
-        }
-
         let newAnchor = null;
-        if (this.hoverIntersection && !region.locked) {
-            const anchorPositionPixelSpace = transformedImageToCanvasPos(this.hoverIntersection.x, this.hoverIntersection.y, frame, this.props.layerWidth, this.props.layerHeight);
-            newAnchor = this.anchorNode(anchorPositionPixelSpace.x, anchorPositionPixelSpace.y, rotation);
+        let pointArray: Array<number>;
+
+        if (frame.spatialReference) {
+            const centerReferenceImage = average2D(controlPoints);
+            const centerSecondaryImage = transformPoint(frame.spatialTransformAST, centerReferenceImage, false);
+            centerPointCanvasSpace = transformedImageToCanvasPos(centerSecondaryImage.x, centerSecondaryImage.y, frame, this.props.layerWidth, this.props.layerHeight);
+            const pointsSecondaryImage = region.getRegionApproximation(frame.spatialTransformAST);
+            const N = pointsSecondaryImage.length;
+            pointArray = new Array<number>(N * 2);
+            for (let i = 0; i < N; i++) {
+                const approxPointPixelSpace = transformedImageToCanvasPos(pointsSecondaryImage[i].x, pointsSecondaryImage[i].y, frame, this.props.layerWidth, this.props.layerHeight);
+                pointArray[i * 2] = approxPointPixelSpace.x - centerPointCanvasSpace.x;
+                pointArray[i * 2 + 1] = approxPointPixelSpace.y - centerPointCanvasSpace.y;
+            }
+
+            // Construct anchors if region is selected
+            if (this.props.selected && !region.locked) {
+                anchors = controlPoints.map((p, i) => {
+                    const pSecondaryImage = transformPoint(frame.spatialTransformAST, p, false);
+                    const pCanvasPos = transformedImageToCanvasPos(pSecondaryImage.x, pSecondaryImage.y, frame, this.props.layerWidth, this.props.layerHeight);
+                    return this.anchorNode(pCanvasPos.x, pCanvasPos.y, rotation, i, true);
+                });
+            }
+
+            if (this.hoverIntersection && !region.locked) {
+                const pSecondaryImage = transformPoint(frame.spatialTransformAST, this.hoverIntersection, false);
+                const pCanvasPos = transformedImageToCanvasPos(pSecondaryImage.x, pSecondaryImage.y, frame, this.props.layerWidth, this.props.layerHeight);
+                newAnchor = this.anchorNode(pCanvasPos.x, pCanvasPos.y, rotation);
+            }
+
+            rotation = -frame.spatialTransform.rotation * 180.0 / Math.PI;
+        } else {
+            rotation = 0;
+            controlPoints = controlPoints.map(p => imageToCanvasPos(p.x, p.y, frameView, this.props.layerWidth, this.props.layerHeight, frame.spatialTransform));
+            centerPointCanvasSpace = average2D(controlPoints);
+            // Construct anchors if region is selected
+            if (this.props.selected && !region.locked) {
+                anchors = new Array<React.ReactNode>(controlPoints.length);
+                for (let i = 0; i < controlPoints.length; i++) {
+                    anchors[i] = this.anchorNode(controlPoints[i].x, controlPoints[i].y, rotation, i, true);
+                }
+            }
+
+            if (this.hoverIntersection && !region.locked) {
+                const anchorPositionPixelSpace = transformedImageToCanvasPos(this.hoverIntersection.x, this.hoverIntersection.y, frame, this.props.layerWidth, this.props.layerHeight);
+                newAnchor = this.anchorNode(anchorPositionPixelSpace.x, anchorPositionPixelSpace.y, rotation);
+            }
+
+            pointArray = new Array<number>(controlPoints.length * 2);
+            for (let i = 0; i < pointArray.length / 2; i++) {
+                pointArray[i * 2] = controlPoints[i].x - centerPointCanvasSpace.x;
+                pointArray[i * 2 + 1] = controlPoints[i].y - centerPointCanvasSpace.y;
+            }
         }
 
         return (

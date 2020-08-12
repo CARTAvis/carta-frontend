@@ -9,7 +9,7 @@ import "./DebugExecutionDialogComponent.css";
 
 @observer
 export class DebugExecutionDialogComponent extends React.Component {
-    @observable inputString: string = "";
+    @observable inputString: string = localStorage.getItem("debugString") ?? "";
     @observable isExecuting: boolean;
     @observable errorString: string = "";
 
@@ -54,7 +54,7 @@ export class DebugExecutionDialogComponent extends React.Component {
         const validInput = (this.executionEntries && this.executionEntries.length);
 
         return (
-            <DraggableDialogComponent dialogProps={dialogProps} defaultWidth={500} defaultHeight={300} enableResizing={true}>
+            <DraggableDialogComponent dialogProps={dialogProps} defaultWidth={700} defaultHeight={400} enableResizing={true}>
                 <div className={Classes.DIALOG_BODY}>
                     <EditableText className="input-text" onChange={this.handleActionInput} value={this.inputString} minLines={5} intent={!validInput ? "warning" : "success"} placeholder="Enter execution string" multiline={true}/>
                 </div>
@@ -76,6 +76,7 @@ export class DebugExecutionDialogComponent extends React.Component {
     onExecuteClicked = async () => {
         this.isExecuting = true;
         await ScriptingService.Instance.executeEntries(this.executionEntries);
+        localStorage.setItem("debugString", this.inputString);
         this.isExecuting = false;
     };
 }

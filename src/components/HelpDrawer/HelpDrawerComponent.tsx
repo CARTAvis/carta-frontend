@@ -6,13 +6,13 @@ import {
     FileBrowserHelpComponent,
     FileInfoHelpComponent,
     SaveLayoutHelpComponent,
-    OverlaySettingsHelpComponent,
     PreferencesHelpComponent,
     RegionDialogHelpComponent,
     AnimatorHelpComponent,
     HistogramHelpComponent,
     HistogramSettingsHelpComponent,
     ImageViewHelpComponent,
+    ImageViewSettingsHelpComponent,
     LayerListHelpComponent,
     LogHelpComponent,
     PlaceholderHelpComponent,
@@ -92,10 +92,6 @@ export class HelpDrawerComponent extends React.Component {
                 title: "Save Layout",
                 content: <SaveLayoutHelpComponent/>
         }], [
-            HelpType.OVERLAY_SETTINGS, {
-                title: "Overlay Settings",
-                content: <OverlaySettingsHelpComponent/>
-        }], [
             HelpType.PREFERENCES, {
                 title: "Preferences",
                 content: <PreferencesHelpComponent/>
@@ -122,6 +118,10 @@ export class HelpDrawerComponent extends React.Component {
             HelpType.IMAGE_VIEW, {
                 title: "Image View",
                 content: <ImageViewHelpComponent/>
+        }], [
+            HelpType.IMAGE_VIEW_SETTINGS, {
+                title: "Image view Settings",
+                content: <ImageViewSettingsHelpComponent/>
         }], [
             HelpType.LAYER_LIST, {
                 title: "Image List",

@@ -33,7 +33,6 @@ export enum HelpType {
     FILE_Browser = "file-browser",
     FILE_INFO = "file-info",
     SAVE_LAYOUT = "save-layout",
-    OVERLAY_SETTINGS  = "overlay-settings",
     REGION_DIALOG = "region-dialog",
 
     // Widgets
@@ -41,6 +40,7 @@ export enum HelpType {
     HISTOGRAM = "histogram",
     HISTOGRAM_SETTINGS = "histogram-settings",
     IMAGE_VIEW = "image-view",
+    IMAGE_VIEW_SETTINGS  = "image-view-settings",
     LAYER_LIST = "layer-list",
     LOG = "log",
     PLACEHOLDER = "placeholder",
@@ -62,6 +62,6 @@ export enum HelpType {
     STOKES_ANALYSIS_SETTINGS_SCATTER_PLOT_STYLING = "stoke-analysis-settings-scatter-plot-styling",
     STOKES_ANALYSIS_SETTINGS_SMOOTHING = "stoke-analysis-settings-smoothing",
     CATALOG_OVERLAY = "catalog-overlay",
-    CATALOG_SCATTER = "catalog-scatter",
+    CATALOG_PLOT = "catalog-plot",
     SPECTRAL_LINE_QUERY = "spectral-line-query"
 }

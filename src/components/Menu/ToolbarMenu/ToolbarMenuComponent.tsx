@@ -123,7 +123,7 @@ export class ToolbarMenuComponent extends React.Component {
                         <Button icon={"layers"} id="layerListButton" onClick={appStore.widgetsStore.createFloatingLayerListWidget}/>
                     </Tooltip>
                     <Tooltip content={<span>Catalog Widget{commonTooltip}</span>}>
-                        <Button icon={"heatmap"} id="catalogOverlayButton" onClick={appStore.widgetsStore.reloadFloatingCatalogOverlayWidget}/>
+                        <Button icon={"heatmap"} id="catalogOverlayButton" onClick={appStore.widgetsStore.reloadFloatingCatalogWidget}/>
                     </Tooltip>
                     <Tooltip content={<span>Spectral Line Query Widget{commonTooltip}</span>}>
                         <Button icon={<CustomIcon icon={"spectralLineQuery"}/>} id="spectralLineQueryButton" onClick={appStore.widgetsStore.createFloatingSpectralLineQueryWidget}/>
@@ -135,9 +135,6 @@ export class ToolbarMenuComponent extends React.Component {
                     </Tooltip>
                     <Tooltip content={<span>Preferences</span>}>
                         <Button icon={"wrench"} onClick={dialogStore.showPreferenceDialog} active={dialogStore.preferenceDialogVisible}/>
-                    </Tooltip>
-                    <Tooltip content={<span>Overlay Settings</span>}>
-                        <Button icon={"settings"} onClick={dialogStore.showOverlaySettings} active={dialogStore.overlaySettingsDialogVisible}/>
                     </Tooltip>
                     <Tooltip content={<span>Contours</span>}>
                         <Button icon={<CustomIcon icon={"contour"}/>} onClick={dialogStore.showContourDialog} active={dialogStore.contourDialogVisible}/>

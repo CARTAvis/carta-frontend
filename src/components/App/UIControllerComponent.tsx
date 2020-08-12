@@ -5,7 +5,6 @@ import {
     AboutDialogComponent,
     AuthDialogComponent,
     FileBrowserDialogComponent,
-    OverlaySettingsDialogComponent,
     PreferenceDialogComponent,
     RegionDialogComponent,
     SaveLayoutDialogComponent,
@@ -22,7 +21,6 @@ export class UIControllerComponent extends React.Component {
             <React.Fragment>
                 <SplashScreenComponent/>
                 <RootMenuComponent/>
-                <OverlaySettingsDialogComponent/>
                 <AuthDialogComponent/>
                 <FileBrowserDialogComponent/>
                 <AboutDialogComponent/>
