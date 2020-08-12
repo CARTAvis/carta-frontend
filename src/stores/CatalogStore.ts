@@ -275,6 +275,18 @@ export class CatalogStore {
         }
     }
 
+    getCatalogFileNames(fileIds: Array<number>) {
+        let fileList = new Map<number, string>();
+        fileIds.forEach(catalogFileId => {
+            const catalogProfileStore = this.getCatalogProfileStore(catalogFileId);
+            if (catalogProfileStore) {
+                const catalogFile = catalogProfileStore.catalogInfo;
+                fileList.set(catalogFile.fileId, catalogFile.fileInfo.name);
+            }
+        });
+        return fileList;
+    }
+
     // catalog profile store
     getCatalogProfileStore(fileId: number): CatalogProfileStore {
         let catalogProfileStore;

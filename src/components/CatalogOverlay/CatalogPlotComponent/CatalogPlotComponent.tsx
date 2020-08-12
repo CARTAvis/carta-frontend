@@ -25,6 +25,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
     private plotType: CatalogPlotType;
     private histogramY: {yMin: number, yMax: number};
     private static emptyColumn = "None";
+    private catalogFiles: Map<number, string>;
 
     private static readonly UnsupportedDataTypes = [CARTA.ColumnType.String, CARTA.ColumnType.Bool, CARTA.ColumnType.UnsupportedType];
 
@@ -49,6 +50,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
         const catalogPlot = CatalogStore.Instance.getAssociatedIdByWidgetId(this.props.id);
         this.componentId = catalogPlot.catalogPlotComponentId;
         this.catalogFileId = catalogPlot.catalogFileId;
+        this.catalogFiles = new Map<number, string>();
         autorun(() => {
             const profileStore = this.profileStore;
             const widgetStore =  this.widgetStore;
@@ -504,11 +506,13 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
         this.onDeselect();
     }
 
-    private renderFileIdPopOver = (fileId: number, itemProps: IItemRendererProps) => {
+    private renderFilePopOver = (fileId: number, itemProps: IItemRendererProps) => {
+        const fileName = this.catalogFiles.get(fileId);
+        let text = `${fileId}: ${fileName}`;
         return (
             <MenuItem
                 key={fileId}
-                text={fileId}
+                text={text}
                 onClick={itemProps.handleClick}
                 active={itemProps.modifiers.active}
             />
@@ -540,10 +544,11 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
         let markerColor = Colors.GRAY2;
         let spikeLineClass = "catalog-plotly";
 
-        let catalogFiles = [];
+        let catalogFileItems = [];
         catalogFileIds.forEach((value) => {
-            catalogFiles.push(value);
+            catalogFileItems.push(value);
         });
+        this.catalogFiles = CatalogStore.Instance.getCatalogFileNames(catalogFileIds);
 
         for (let index = 0; index < columnsName.length; index++) {
             const column = columnsName[index];
@@ -557,10 +562,10 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
                 <Select 
                     className="bp3-fill"
                     filterable={false}
-                    items={catalogFiles} 
+                    items={catalogFileItems} 
                     activeItem={this.catalogFileId}
                     onItemSelect={this.handleCatalogFileChange}
-                    itemRenderer={this.renderFileIdPopOver}
+                    itemRenderer={this.renderFilePopOver}
                     popoverProps={{popoverClassName: "catalog-select", minimal: true , position: PopoverPosition.AUTO_END}}
                 >
                     <Button text={this.catalogFileId} rightIcon="double-caret-vertical"/>

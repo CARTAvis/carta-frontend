@@ -42,6 +42,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
     @observable catalogTableRef: Table = undefined;
 
     private catalogHeaderTableRef: Table = undefined;
+    private catalogFiles: Map<number, string>;
     private static readonly DataTypeRepresentationMap = new Map<CARTA.ColumnType, Array<CatalogCoordinate>>([
         [CARTA.ColumnType.Bool, [CatalogCoordinate.NONE]],
         [CARTA.ColumnType.Double, [CatalogCoordinate.X, CatalogCoordinate.Y, CatalogCoordinate.NONE]],
@@ -155,6 +156,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         if (!CatalogStore.Instance.catalogProfiles.has(this.props.id)) {
             CatalogStore.Instance.catalogProfiles.set(this.props.id, 1);
         }
+        this.catalogFiles = new Map<number, string>();
 
         autorun(() => {
             const appStore = AppStore.Instance;
@@ -649,10 +651,12 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
     }
 
     private renderFileIdPopOver = (fileId: number, itemProps: IItemRendererProps) => {
+        const fileName = this.catalogFiles.get(fileId);
+        let text = `${fileId}: ${fileName}`;
         return (
             <MenuItem
                 key={fileId}
-                text={fileId}
+                text={text}
                 onClick={itemProps.handleClick}
                 active={itemProps.modifiers.active}
             />
@@ -788,11 +792,12 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
             </tr>
         ) : null;
 
-        let catalogFiles = [];
+        let catalogFileItems = [];
         catalogFileIds.forEach((value) => {
-            catalogFiles.push(value);
+            catalogFileItems.push(value);
         });
-
+        this.catalogFiles = CatalogStore.Instance.getCatalogFileNames(catalogFileIds);
+        
         let systemOptions = [];
         profileStore.CoordinateSystemName.forEach((value, key) => {
             systemOptions.push(key);
@@ -808,7 +813,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
                         <Select 
                             className="bp3-fill"
                             filterable={false}
-                            items={catalogFiles} 
+                            items={catalogFileItems} 
                             activeItem={this.catalogFileId}
                             onItemSelect={this.handleCatalogFileChange}
                             itemRenderer={this.renderFileIdPopOver}

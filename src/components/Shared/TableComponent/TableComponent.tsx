@@ -1,7 +1,7 @@
 import * as React from "react";
 import {observer} from "mobx-react";
 import {Cell, Column, Table, SelectionModes, RenderMode, ColumnHeaderCell, IRegion} from "@blueprintjs/table";
-import {Checkbox, Tooltip, PopoverPosition, Popover, PopoverInteractionKind, InputGroup, Icon, Label} from "@blueprintjs/core";
+import {Checkbox, PopoverPosition, Popover, PopoverInteractionKind, InputGroup, Icon, Label} from "@blueprintjs/core";
 import {IconName} from "@blueprintjs/icons";
 import {IRowIndices} from "@blueprintjs/table/lib/esm/common/grid";
 import {CARTA} from "carta-protobuf";
