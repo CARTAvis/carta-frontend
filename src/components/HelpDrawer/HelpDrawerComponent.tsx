@@ -152,11 +152,11 @@ export class HelpDrawerComponent extends React.Component {
                 content: <SpatialProfilerHelpComponent/>
         }], [
             HelpType.SPATIAL_PROFILER_SETTINGS_STYLING, {
-                title: "Spatial Profiler Settings Styling",
+                title: "Spatial Profiler Settings",
                 content: <SpatialProfilerSettingsStylingHelpComponent/>
         }], [
             HelpType.SPATIAL_PROFILER_SETTINGS_SMOOTHING, {
-                title: "Spatial Profiler Settings Smoothing",
+                title: "Spatial Profiler Settings",
                 content: <SpatialProfilerSettingsSmoothingHelpComponent/>
         }], [
             HelpType.SPECTRAL_PROFILER, {
@@ -188,19 +188,19 @@ export class HelpDrawerComponent extends React.Component {
                 content: <StokesAnalysisHelpComponent/>
         }], [
             HelpType.STOKES_ANALYSIS_SETTINGS_CONVERSION, {
-                title: "Stokes Settings Conversion",
+                title: "Stokes Settings",
                 content: <StokesAnalysisSettingsConversionHelpComponent/>
         }], [
             HelpType.STOKES_ANALYSIS_SETTINGS_LINE_PLOT_STYLING, {
-                title: "Stokes Settings Line Plot Styling",
+                title: "Stokes Settings",
                 content: <StokesAnalysisSettingsLinePlotStylingHelpComponent/>
         }], [
             HelpType.STOKES_ANALYSIS_SETTINGS_SCATTER_PLOT_STYLING, {
-                title: "Stokes Settings Scatter Plot Styling",
+                title: "Stokes Settings",
                 content: <StokesAnalysisSettingsScatterPlotStylingHelpComponent/>
         }], [
             HelpType.STOKES_ANALYSIS_SETTINGS_SMOOTHING, {
-                title: "Stokes Settings Smoothing",
+                title: "Stokes Settings",
                 content: <StokesAnalysisSettingsSmoothingHelpComponent/>
         }], [
             HelpType.CATALOG_OVERLAY, {
