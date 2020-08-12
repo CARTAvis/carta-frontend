@@ -208,7 +208,7 @@ export class HelpDrawerComponent extends React.Component {
                 content: <CatalogOverlayHelpComponent/>
         }], [
             HelpType.CATALOG_PLOT, {
-                title: "Catalog Scatter",
+                title: "Catalog 2D Scatter",
                 content: <CatalogPlotHelpComponent/>
         }], [
             HelpType.SPECTRAL_LINE_QUERY, {
