@@ -1,9 +1,14 @@
 import * as React from "react";
+import {ImageComponent} from "./ImageComponent";
+import * as headLineQueryButton from "static/help/head_linequery_button.png";
+import * as headLineQueryButton_d from "static/help/head_linequery_button_d.png";
+
 
 export class SpectralLineQueryHelpComponent extends React.Component {
     public render() {
         return (
             <div>
+                <p><ImageComponent light={headLineQueryButton} dark={headLineQueryButton_d} width="90%"/></p>
                 <p>CARTA supports spectral line ID overlay on a spectral 
                     profiler widget with a query from the Splatalogue service 
                     (http://www.cv.nrao.edu/php/splat/). The query is made by 
