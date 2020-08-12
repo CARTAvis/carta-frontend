@@ -1,9 +1,10 @@
 @import "../../../../node_modules/@blueprintjs/core/lib/scss/variables.scss";
 
-.overlay-settings-dialog {
+.image-view-settings {
+    margin: 20px;
 
     .bp3-tab-panel {
-        height: 20em;
+        height: 25em;
         overflow: auto;
         width: 100%;
 	user-select: none;

@@ -235,11 +235,15 @@ export class FileBrowserStore {
         this.selectedTab = newId;
     }
 
-    @action saveStartingDirectory() {
-        if (this.browserMode === BrowserMode.Catalog) {
-            this.startingDirectory = this.catalogFileList.directory;
+    @action saveStartingDirectory(directory?: string) {
+        if (directory !== undefined) {
+            this.startingDirectory = directory;
         } else {
-            this.startingDirectory = this.fileList.directory;
+            if (this.browserMode === BrowserMode.Catalog) {
+                this.startingDirectory = this.catalogFileList.directory;
+            } else {
+                this.startingDirectory = this.fileList.directory;
+            }
         }
     }
 

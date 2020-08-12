@@ -1,5 +1,7 @@
 import {Point2D} from "../models";
 
+type Point3D = { x: number, y: number, z?: number };
+
 export function dot2D(a: Point2D, b: Point2D): number {
     return a.x * b.x + a.y * b.y;
 }
@@ -40,6 +42,11 @@ export function length2D(a: Point2D): number {
 export function normalize2D(a: Point2D): Point2D {
     const size = length2D(a);
     return {x: a.x / size, y: a.y / size};
+}
+
+export function magDir2D(a: Point2D) {
+    const size = length2D(a);
+    return {mag: size, dir: {x: a.x / size, y: a.y / size}};
 }
 
 export function average2D(points: Point2D[]) {
@@ -199,16 +206,19 @@ export function simplePolygonPointTest(points: Point2D[], pointIndex: number) {
     return true;
 }
 
-type Point3D = { x: number, y: number, z?: number };
-
 // get distance between two points
-export function pointDistanceSquared(p1: Point3D, p2: Point3D) {
+export function pointDistance(p1: Point2D, p2: Point2D) {
+    const distance = subtract2D(p1, p2);
+    return Math.sqrt(distance.x * distance.x + distance.y * distance.y);
+}
+
+export function pointDistanceSquared(p1: Point2D, p2: Point2D) {
     const distance = subtract2D(p1, p2);
     return distance.x * distance.x + distance.y * distance.y;
 }
 
 // Returns the closest point index from a points array to current cursor point. 
-export function closestPointIndexToCursor(cursor: Point3D, points: readonly Point3D[]) {
+export function closestPointIndexToCursor(cursor: Point2D, points: readonly Point2D[]) {
     let minDistanceSquared = Number.MAX_VALUE;
     let minIndex = 0;
     for (let index = 0; index < points.length; index++) {
@@ -220,4 +230,26 @@ export function closestPointIndexToCursor(cursor: Point3D, points: readonly Poin
         }
     }
     return minIndex;
+}
+
+export function polygonPerimeter(points: Point2D[], closed: boolean = true): number {
+    let totalLength = 0;
+    const N = points.length;
+    for (let i = 1; i < N; i++) {
+        totalLength += pointDistance(points[i], points[i - 1]);
+    }
+    if (closed) {
+        totalLength += pointDistance(points[N - 1], points[0]);
+    }
+    return totalLength;
+}
+
+export function angle2D(a: Point2D, b: Point2D) {
+    a = normalize2D(a);
+    b = normalize2D(b);
+    return Math.asin(cross2D(a, b));
+}
+
+export function round2D(a: Point2D) {
+    return {x: Math.round(a.x), y: Math.round(a.y)};
 }

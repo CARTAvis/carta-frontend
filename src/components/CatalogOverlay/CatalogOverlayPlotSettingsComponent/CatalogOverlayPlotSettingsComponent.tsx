@@ -2,8 +2,8 @@ import {observer} from "mobx-react";
 import * as React from "react";
 import {FormGroup, NumericInput, Button, MenuItem, PopoverPosition, Icon} from "@blueprintjs/core";
 import {Select, IItemRendererProps} from "@blueprintjs/select";
-import {AppStore, CatalogStore} from "stores";
-import {CatalogOverlayWidgetStore, CatalogOverlayShape} from "stores/widgets";
+import {AppStore} from "stores";
+import {CatalogOverlayShape, CatalogWidgetStore} from "stores/widgets";
 import {ColorResult} from "react-color";
 import {ColorPickerComponent} from "components/Shared";
 import {SWATCH_COLORS} from "utilities";
@@ -34,26 +34,29 @@ const diamond = <path d="M 8 14 L 14 8 L 8 2 L 2 8 Z"/>;
 const hexagon = <path d="M 12.33 5.5 L 12.33 10.5 L 8 13 L 3.67 10.5 L 3.67 5.5 L 8 3 Z"/>;
 const hexagon2 = <path d="M 3 8 L 5.5 3.67 L 10.5 3.67 L 13 8 L 10.5 12.33 L 5.5 12.33 Z"/>;
 
+export class CatalogOverlayPlotSettingProps {
+    catalogSize: number;
+    catalogColor: string;
+    catalogFileId: number;
+    catalogShape: CatalogOverlayShape;
+    setCatalogShape: (item: CatalogOverlayShape) => void;
+    setCatalogSize: (val: number) => void;
+    setCatalogColor: (color: string) => void;
+}
+
 @observer
-export class CatalogOverlayPlotSettingsComponent extends React.Component<{widgetStore: CatalogOverlayWidgetStore, id: string}> {
-    private readonly MinOverlaySize = 1;
-    private readonly MaxOverlaySize = 100;
+export class CatalogOverlayPlotSettingsComponent extends React.Component<CatalogOverlayPlotSettingProps> {
 
     private handleCatalogShapeChange = (item: CatalogOverlayShape) => {
-        this.props.widgetStore.setCatalogShape(item);
-        CatalogStore.Instance.updateCatalogShape(this.props.id, item);
+        this.props.setCatalogShape(item);
     }
 
-    private handleCatalogSizeChange(val: number) {
-        this.props.widgetStore.setCatalogSize(val);
-        if (val >= this.MinOverlaySize && val <= this.MaxOverlaySize) {
-            CatalogStore.Instance.updateCatalogSize(this.props.id, val);
-        }
+    private handleCatalogSizeChange = (val: number) => {
+        this.props.setCatalogSize(val);
     }
 
-    private handleCatalogColorChange(color: string) {
-        this.props.widgetStore.setCatalogColor(color);
-        CatalogStore.Instance.updateCatalogColor(this.props.id, color);
+    private handleCatalogColorChange = (color: string) => {
+        this.props.setCatalogColor(color);
     }
 
     private renderShapePopOver = (shape: CatalogOverlayShape, itemProps: IItemRendererProps) => {
@@ -69,7 +72,7 @@ export class CatalogOverlayPlotSettingsComponent extends React.Component<{widget
     }
 
     private getCatalogShape = (shape: CatalogOverlayShape) => {
-        const color = this.props.widgetStore.catalogColor;
+        const color = this.props.catalogColor;
         switch (shape) {
             case CatalogOverlayShape.Circle:
                 return <Icon icon="circle" color={color}/>;
@@ -101,13 +104,13 @@ export class CatalogOverlayPlotSettingsComponent extends React.Component<{widget
     }
 
     public render() {
-        const widgetStore = this.props.widgetStore;
+        const prop = this.props;
 
         return (
             <div className="catalog-overlay-plot-settings">
                 <FormGroup label={"Color"} inline={true}>
                     <ColorPickerComponent
-                        color={widgetStore.catalogColor}
+                        color={prop.catalogColor}
                         presetColors={[...SWATCH_COLORS, "transparent"]}
                         setColor={(color: ColorResult) => {
                             this.handleCatalogColorChange(color.hex === "transparent" ? "#000000" : color.hex);
@@ -121,20 +124,20 @@ export class CatalogOverlayPlotSettingsComponent extends React.Component<{widget
                         className="bp3-fill" 
                         filterable={false}
                         items={Object.values(CatalogOverlayShape)} 
-                        activeItem={widgetStore.catalogShape} 
+                        activeItem={prop.catalogShape} 
                         onItemSelect={this.handleCatalogShapeChange}
                         itemRenderer={this.renderShapePopOver}
                         popoverProps={{popoverClassName: "catalog-select", minimal: true , position: PopoverPosition.AUTO_END}}
                     >
-                        <Button icon={this.getCatalogShape(widgetStore.catalogShape)} rightIcon="double-caret-vertical"/>
+                        <Button icon={this.getCatalogShape(prop.catalogShape)} rightIcon="double-caret-vertical"/>
                     </Select>
                 </FormGroup>
                 <FormGroup  inline={true} label="Size" labelInfo="(px)">
                     <NumericInput
                         placeholder="Catalog Size"
-                        min={this.MinOverlaySize}
-                        max={this.MaxOverlaySize}
-                        value={widgetStore.catalogSize}
+                        min={CatalogWidgetStore.MinOverlaySize}
+                        max={CatalogWidgetStore.MaxOverlaySize}
+                        value={prop.catalogSize}
                         stepSize={1}
                         onValueChange={(value: number) => this.handleCatalogSizeChange(value)}
                     />
