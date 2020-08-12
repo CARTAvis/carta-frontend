@@ -214,7 +214,7 @@ export class SpectralLineQueryWidgetStore extends RegionWidgetStore {
         } else {
             this.isQuerying = true;
             const backendService = BackendService.Instance;
-            backendService.requestSpectralLine(new CARTA.DoubleBounds({min: freqMHzFrom, max: freqMHzTo}), this.intensityLimitEnabled ? this.intensityLimitValue : 0).subscribe(ack => {
+            backendService.requestSpectralLine(new CARTA.DoubleBounds({min: freqMHzFrom, max: freqMHzTo}), this.intensityLimitEnabled ? this.intensityLimitValue : NaN).subscribe(ack => {
                 this.isQuerying = false;
                 if (ack.success && ack.dataSize >= 0) {
                     if (ack.dataSize > 0) {
