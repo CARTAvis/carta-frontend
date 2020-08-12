@@ -4,13 +4,7 @@ export class StokesAnalysisSettingsConversionHelpComponent extends React.Compone
     public render() {
         return (
             <div>
-                <p>The Stokes analysis settings dialogue allows users to</p>
-                <ul>
-                    <li>change the spectral convention and reference frame</li>
-                    <li>customize profile plot appearance</li>
-                    <li>customize scatter plot appearance</li>
-                </ul>
-                <h3 id="spectral-conventions-and-reference-frame">Spectral conventions and reference frame</h3>
+                <h3>Conversion</h3>
                 <p>With the spectral profiler settings dialogue, users can change the spectral convention, including:</p>
                 <ul>
                     <li>Radio velocity (km/s, m/s)</li>
@@ -28,21 +22,6 @@ export class StokesAnalysisSettingsConversionHelpComponent extends React.Compone
                     <li>TOPO: topocentric, the observer's rest-frame on Earth</li>
                 </ul>
                 <p>Note that depending on the integrity of image headers, some conversions may not be possible.</p>
-                <h3 id="plot-cosmetics">Plot cosmetics</h3>
-                <p>The appearance of the spectral profile plot is customizable via the spectral profile settings dialogue (the cog icon). Supported options are:</p>
-                <ul>
-                    <li>color of the plot</li>
-                    <li>plot styles including steps (default), lines, and dots</li>
-                    <li>line width for steps or lines</li>
-                    <li>point size for dots</li>
-                </ul>
-                <p>In addition, the appearance of the scatter plot can be customized too, including:</p>
-                <ul>
-                    <li>Colormap</li>
-                    <li>Symbol size</li>
-                    <li>Symbol transparency</li>
-                    <li>Q-to-U scale ratio as unity</li>
-                </ul>
             </div>
         );
     }

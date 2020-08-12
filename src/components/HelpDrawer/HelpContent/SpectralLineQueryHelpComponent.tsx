@@ -16,7 +16,8 @@ export class SpectralLineQueryHelpComponent extends React.Component {
                     optionally a lower limit of CDMS/JPL line intensity (log). 
                     The spectral range can be defined as from-to or a center 
                     with a width. The allowed maximum query range, equivalent 
-                    in frequency, is 20 GHz.</p>
+                    in frequency, is 20 GHz.</p>                
+                <h4>NOTE</h4>
                 <p>Currently, there is a known issue if the number of the returned 
                     entries are more than ~65000 (unable to load or truncated). 
                     If a query is successful and the displayed total number of 

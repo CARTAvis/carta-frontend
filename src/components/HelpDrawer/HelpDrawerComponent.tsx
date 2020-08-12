@@ -120,7 +120,7 @@ export class HelpDrawerComponent extends React.Component {
                 content: <ImageViewHelpComponent/>
         }], [
             HelpType.IMAGE_VIEW_SETTINGS, {
-                title: "Image view Settings",
+                title: "Image View Settings",
                 content: <ImageViewSettingsHelpComponent/>
         }], [
             HelpType.LAYER_LIST, {
