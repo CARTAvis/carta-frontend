@@ -107,6 +107,8 @@ export class SpectralLineQueryWidgetStore extends RegionWidgetStore {
     @observable queryRange: NumberRange;
     @observable queryRangeByCenter: NumberRange;
     @observable queryUnit: SpectralLineQueryUnit;
+    @observable isApplyingIntensityLimit: boolean;
+    @observable intensityLimitValue: number;
     @observable isQuerying: boolean;
     @observable columnHeaders: Array<CARTA.ICatalogHeader>;
     @observable headerDisplay: Map<SpectralLineHeaders, boolean>;
@@ -135,6 +137,14 @@ export class SpectralLineQueryWidgetStore extends RegionWidgetStore {
 
     @action setQueryUnit = (queryUnit: SpectralLineQueryUnit) => {
         this.queryUnit = queryUnit;
+    };
+
+    @action setIntensityLimitState = () => {
+        this.isApplyingIntensityLimit = !this.isApplyingIntensityLimit;
+    };
+
+    @action setIntensityLimitValue = (intensityLimitValue: number) => {
+        this.intensityLimitValue = intensityLimitValue;
     };
 
     @action setHeaderDisplay = (header: SpectralLineHeaders) => {
@@ -333,6 +343,8 @@ export class SpectralLineQueryWidgetStore extends RegionWidgetStore {
         this.queryRange = [0, 0];
         this.queryRangeByCenter = [0, 0];
         this.queryUnit = SpectralLineQueryUnit.MHz;
+        this.isApplyingIntensityLimit = true;
+        this.intensityLimitValue = -5;
         this.isQuerying = false;
         this.columnHeaders = [];
         this.headerDisplay = new Map<SpectralLineHeaders, boolean>();
