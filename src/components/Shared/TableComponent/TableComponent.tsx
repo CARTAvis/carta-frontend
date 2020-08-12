@@ -1,7 +1,7 @@
 import * as React from "react";
 import {observer} from "mobx-react";
 import {Cell, Column, Table, SelectionModes, RenderMode, ColumnHeaderCell, IRegion} from "@blueprintjs/table";
-import {Checkbox, Tooltip, PopoverPosition, InputGroup, Menu, MenuItem, Icon, Label} from "@blueprintjs/core";
+import {Checkbox, Tooltip, PopoverPosition, Popover, PopoverInteractionKind, InputGroup, Icon, Label} from "@blueprintjs/core";
 import {IconName} from "@blueprintjs/icons";
 import {IRowIndices} from "@blueprintjs/table/lib/esm/common/grid";
 import {CARTA} from "carta-protobuf";
@@ -107,14 +107,14 @@ export class TableComponent extends React.Component<TableComponentProps> {
         switch (dataType) {
             case CARTA.ColumnType.String || CARTA.ColumnType.Bool:
                 return (
-                    <div>
+                    <div className={"column-filter-popover"}>
                         <small>Filter by substring</small><br/>
                         <small>e.g. gal (no quotation, entries contain the "gal" string)</small>
                     </div>
                 );
             default:
                 return (
-                    <div>
+                    <div className={"column-filter-popover"}>
                         <small>Operators: {">"}, {">="}, {"<"}, {"<="}, {"=="}, {"!="}, {".."}, {"..."}</small><br/>
                         <small>e.g. {"<"} 10 (everything less than 10) </small><br/>
                         <small>e.g. == 1.23 (entries equal to 1.23) </small><br/>
@@ -200,7 +200,7 @@ export class TableComponent extends React.Component<TableComponentProps> {
             <ColumnHeaderCell>
                 <ColumnHeaderCell className={"column-name"} nameRenderer={nameRenderer}/>
                 <ColumnHeaderCell isActive={activeFilter}>
-                    <Tooltip content={filterSyntax} position={PopoverPosition.TOP} className={"column-filter"}>
+                    <Popover className={"column-filter"} content={filterSyntax} minimal={true} position={PopoverPosition.AUTO_END} interactionKind={PopoverInteractionKind.HOVER}>
                         <InputGroup
                             key={"column-filter-" + columnIndex}
                             small={true}
@@ -208,7 +208,7 @@ export class TableComponent extends React.Component<TableComponentProps> {
                             value={controlheader && controlheader.filter ? controlheader.filter : ""} 
                             onChange={ev => this.props.updateColumnFilter(ev.currentTarget.value, column.name)}
                         />
-                    </Tooltip>
+                    </Popover>
                 </ColumnHeaderCell>
             </ColumnHeaderCell>
         );
