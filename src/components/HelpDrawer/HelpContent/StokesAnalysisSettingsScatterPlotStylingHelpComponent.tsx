@@ -4,7 +4,7 @@ export class StokesAnalysisSettingsScatterPlotStylingHelpComponent extends React
     public render() {
         return (
             <div>
-                <h3>Scatter plot styling</h3>
+                <h3>Scatter Plot Styling</h3>
                 <p>The appearance of the scatter plot is customizable via the spectral profile settings dialogue (the cog icon). Supported options are:
                     <ul>
                         <li>Colormap</li>

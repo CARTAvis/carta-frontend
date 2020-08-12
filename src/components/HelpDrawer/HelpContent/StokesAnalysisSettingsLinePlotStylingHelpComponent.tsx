@@ -4,7 +4,7 @@ export class StokesAnalysisSettingsLinePlotStylingHelpComponent extends React.Co
     public render() {
         return (
             <div>
-                <h3>Line plot styling</h3>
+                <h3>Line Plot Styling</h3>
                 <p>The appearance of the spectral profile plot is customizable via the spectral profile settings dialogue (the cog icon). Supported options are:
                     <ul>
                         <li>color of the plot</li>
