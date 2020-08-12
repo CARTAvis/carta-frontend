@@ -5,13 +5,13 @@ import {observer} from "mobx-react";
 import {Group, Layer, Line, Rect, Stage} from "react-konva";
 import Konva from "konva";
 import {CARTA} from "carta-protobuf";
-import {FrameStore, OverlayStore, RegionMode, RegionStore} from "stores";
+import {FrameStore, OverlayStore, PreferenceStore, RegionMode, RegionStore} from "stores";
 import {SimpleShapeRegionComponent} from "./SimpleShapeRegionComponent";
 import {PolygonRegionComponent} from "./PolygonRegionComponent";
 import {PointRegionComponent} from "./PointRegionComponent";
 import {canvasToImagePos, canvasToTransformedImagePos, imageToCanvasPos, transformedImageToCanvasPos} from "./shared";
 import {CursorInfo, Point2D} from "models";
-import {average2D, length2D, subtract2D, pointDistanceSquared, transformPoint} from "utilities";
+import {average2D, length2D, pointDistanceSquared, scale2D, subtract2D, transformPoint} from "utilities";
 import "./RegionViewComponent.css";
 
 export interface RegionViewComponentProps {
@@ -225,9 +225,13 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
     };
 
     private handleMouseUpRegularRegion() {
-        const frame = this.props.frame;
+        const frame = this.props.frame.spatialReference || this.props.frame;
 
         if (this.creatingRegion) {
+            if (this.creatingRegion.controlPoints.length > 1 && length2D(this.creatingRegion.controlPoints[1]) === 0) {
+                const scaleFactor = PreferenceStore.Instance.regionRadius * (this.creatingRegion.regionType === CARTA.RegionType.RECTANGLE ? 2.0 : 1.0) / frame.zoomLevel;
+                this.creatingRegion.setControlPoint(1, scale2D({x: 1, y: 1}, scaleFactor));
+            }
             if (this.creatingRegion.isValid) {
                 this.creatingRegion.endCreating();
                 frame.regionSet.selectRegion(this.creatingRegion);
