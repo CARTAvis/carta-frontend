@@ -4,28 +4,29 @@ export class SpectralProfilerSettingsMomentsHelpComponent extends React.Componen
     public render() {
         return (
             <div>
+                <h3>Moments</h3>
                 <p>Moment images can be generated and viewed with CARTA. 
                     The dialogue provides several control parameters to define 
                     how moment images are calculated, including: 
                     <ul>
-                        <li>Image: the image file for moment calculations. &quot;Active&quot; 
+                        <li><b>Image</b>: the image file for moment calculations. &quot;Active&quot; 
                             refers to the image displayed in the image viewer.</li>
-                        <li>Region: a region can be selected so that moment calculations 
+                        <li><b>Region</b>: a region can be selected so that moment calculations 
                             are limited inside the region. &quot;Active&quot; refers to the 
                             selected region in the image viewer. If no region is selected, 
                             full image is included in the moment calculations.</li>
-                        <li>Coordinate, System, and Range: the spectral range (e.g., velocity range) 
+                        <li><b>Coordinate, System, and Range</b>: the spectral range (e.g., velocity range) 
                             used for moment calculations is defined with these options. The range 
                             can be defined either via the text input fields, or via the cursor by 
                             dragging horizontally in the spectral profiler widget.</li>
-                        <li>Mask and Range: these options define a pixel value range used for 
+                        <li><b>Mask and Range</b>: these options define a pixel value range used for 
                             moment calculations. If mask is &quot;None&quot;, all pixels are 
                             included. If mask is &quot;Include&quot; or &quot;Exclude&quot;, 
                             the pixel value range defined in the text input fields is included 
                             or excluded, respectively. Alternatively, the pixel value range can 
                             be defined via the cursor by dragging vertically  in the spectral 
                             profiler widget.</li>
-                        <li>Moments: which moment images to be calculated are defined here. 
+                        <li><b>Moments</b>: which moment images to be calculated are defined here. 
                             Supported options are:
                             <ul>
                                 <li>-1: Mean value of the spectrum</li>
@@ -50,7 +51,7 @@ export class SpectralProfilerSettingsMomentsHelpComponent extends React.Componen
                     calculations may take a while. If that happens, users may consider to cancel 
                     the calculations and re-define a proper region and/or spectral range.</p>
                 <p>Once moment images are generated, they will be loaded and displayed in the 
-                    image viewer. They are named as $data_source.$moment_keyword. For example, 
+                    image viewer. They are named as $image_filename.moment.$keyword. For example, 
                     if moment 0, 1 and 2 images are generated from the image M51.fits, they 
                     will be named as M51.fits.moment.integrated, M51.fits.moment.weighted_coord, 
                     and M51.fits.moment.weighted_dispersion_coord, respectively. These images are 
