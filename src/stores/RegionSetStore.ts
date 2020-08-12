@@ -129,17 +129,21 @@ export class RegionSetStore {
         this.mode = (this.mode === RegionMode.MOVING) ? RegionMode.CREATING : RegionMode.MOVING;
     };
 
-    @action migrateRegionsFromReference = () => {
-        if (this.frame.spatialReference?.regionSet?.regions?.length <= 1) {
+    @action migrateRegionsFromExistingSet = (sourceRegionSet: RegionSetStore, spatialTransformAST: number, forward: boolean = false) => {
+        if (sourceRegionSet?.regions?.length <= 1) {
             return;
         }
 
-        const spatialTransformAST = this.frame.spatialTransformAST;
-
         let newId = -1;
-        for (const region of this.frame.spatialReference.regionSet.regions) {
+        for (const region of sourceRegionSet.regions) {
+            // skip duplicates
+            const duplicateRegion = this.regions.find(r => r.modifiedTimestamp === region.modifiedTimestamp);
+            if (duplicateRegion) {
+                continue;
+            }
+
             if (region.regionId === CURSOR_REGION_ID) {
-                const centerNewFrame = transformPoint(spatialTransformAST, region.center, false);
+                const centerNewFrame = transformPoint(spatialTransformAST, region.center, forward);
                 if (this.regions.length && this.regions[0].regionId === CURSOR_REGION_ID) {
                     this.regions[0].setControlPoint(0, centerNewFrame);
                 }
@@ -149,16 +153,16 @@ export class RegionSetStore {
                 let rotation: number = 0;
 
                 if (region.regionType === CARTA.RegionType.RECTANGLE || region.regionType === CARTA.RegionType.ELLIPSE) {
-                    const centerNewFrame = transformPoint(spatialTransformAST, region.center, false);
+                    const centerNewFrame = transformPoint(spatialTransformAST, region.center, forward);
                     if (!isAstBadPoint(centerNewFrame)) {
                         const transform = new Transform2D(spatialTransformAST, centerNewFrame);
-                        const size = scale2D(region.controlPoints[1], 1.0 / transform.scale);
-                        rotation = region.rotation - transform.rotation * 180 / Math.PI;
+                        const size = scale2D(region.controlPoints[1], forward ? transform.scale : 1.0 / transform.scale);
+                        rotation = region.rotation + (forward ? 1 : -1) * transform.rotation * 180 / Math.PI;
                         newControlPoints = [centerNewFrame, size];
                     }
                 } else if (region.regionType === CARTA.RegionType.POINT || region.regionType === CARTA.RegionType.POLYGON) {
                     for (const point of region.controlPoints) {
-                        const pointNewFrame = transformPoint(spatialTransformAST, point, false);
+                        const pointNewFrame = transformPoint(spatialTransformAST, point, forward);
                         if (!isAstBadPoint(pointNewFrame)) {
                             newControlPoints.push(pointNewFrame);
                         }
@@ -176,10 +180,11 @@ export class RegionSetStore {
                         newRegion.endCreating();
                     }
                     newRegion.setLocked(region.locked);
+                    // Link the two regions together
+                    newRegion.modifiedTimestamp = region.modifiedTimestamp;
                     newId--;
                 }
             }
         }
-
     };
 }

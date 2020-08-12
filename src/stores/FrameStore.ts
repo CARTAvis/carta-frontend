@@ -1397,7 +1397,8 @@ export class FrameStore {
             this.cursorInfo = this.getCursorInfo(cursorPosImage);
         }
 
-        // Remove old regions. TODO: Migrate them to the reference
+        this.spatialReference.frameRegionSet.migrateRegionsFromExistingSet(this.frameRegionSet, this.spatialTransformAST, true);
+        // Remove old regions after migration
         for (const region of this.frameRegionSet.regions) {
             this.frameRegionSet.deleteRegion(region);
         }
@@ -1408,7 +1409,7 @@ export class FrameStore {
     @action clearSpatialReference = () => {
         // Adjust center and zoom based on existing spatial reference
         if (this.spatialReference) {
-            this.frameRegionSet.migrateRegionsFromReference();
+            this.frameRegionSet.migrateRegionsFromExistingSet(this.spatialReference.frameRegionSet, this.spatialTransformAST);
             this.center = this.spatialTransform.transformCoordinate(this.spatialReference.center, false);
             this.zoomLevel = this.spatialReference.zoomLevel * this.spatialTransform.scale;
             this.spatialReference.removeSecondarySpatialImage(this);
