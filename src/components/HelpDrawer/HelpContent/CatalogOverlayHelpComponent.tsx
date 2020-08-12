@@ -37,17 +37,17 @@ export class CatalogOverlayHelpComponent extends React.Component {
                     string match or value range. For numeric columns, supported 
                     operators are:
                     <ul>
-                        <li><code>&gt;</code>: greater than</li>
-                        <li><code>&gt;=</code>: greater than or equal to</li>
-                        <li><code>&lt;</code>: less than</li>
-                        <li><code>&lt;=</code>: less than or equal to</li>
-                        <li><code>==</code>: equal to</li>
-                        <li><code>!=</code>: not equal to</li>
-                        <li><code>..</code>: between (exclusive)</li>
-                        <li><code>...</code>: between (inclusive)</li>
+                        <li><code>&gt;</code> greater than</li>
+                        <li><code>&gt;=</code> greater than or equal to</li>
+                        <li><code>&lt;</code> less than</li>
+                        <li><code>&lt;=</code> less than or equal to</li>
+                        <li><code>==</code> equal to</li>
+                        <li><code>!=</code> not equal to</li>
+                        <li><code>..</code> between (exclusive)</li>
+                        <li><code>...</code> between (inclusive)</li>
                     </ul>
                 </p>
-                <p>Example:
+                <p>Examples:
                     <ul>
                         <li><code>&lt; 10</code> (everything less than 10)</li>
                         <li><code>== 1.23</code> (entries equal to 1.23)</li>
