@@ -34,7 +34,7 @@ import {
     SpectralProfileStore,
     WidgetsStore,
     CatalogProfileStore,
-    CatalogInfo, 
+    CatalogInfo,
     CatalogUpdateMode
 } from ".";
 import {distinct, GetRequiredTiles, mapToObject} from "utilities";
@@ -423,6 +423,13 @@ export class AppStore {
         this.closeFile(this.activeFrame, confirmClose);
     };
 
+    @action closeOtherFiles = (frame: FrameStore, confirmClose: boolean = true) => {
+        const otherFiles = this.frames.filter(f => f !== frame);
+        for (const f of otherFiles) {
+            this.closeFile(f, confirmClose);
+        }
+    };
+
     @action removeFrame = (frame: FrameStore) => {
         if (frame) {
             // Unlink any associated secondary images
@@ -571,7 +578,7 @@ export class AppStore {
                     associatedCatalogFiles = currentAssociatedCatalogFile;
                 } else {
                     // new image append
-                    catalogStore.catalogProfiles.forEach((value , componentId) => {
+                    catalogStore.catalogProfiles.forEach((value, componentId) => {
                         catalogStore.catalogProfiles.set(componentId, fileId);
                     });
                 }
@@ -616,7 +623,9 @@ export class AppStore {
             // remove overlay
             catalogStore.removeCatalog(fileId);
             // remove profile store
-            catalogStore.catalogProfileStores = catalogStore.catalogProfileStores.filter(catalogProfileStore => { return catalogProfileStore.catalogFileId !== fileId; });
+            catalogStore.catalogProfileStores = catalogStore.catalogProfileStores.filter(catalogProfileStore => {
+                return catalogProfileStore.catalogFileId !== fileId;
+            });
 
             if (!this.activeFrame) {
                 return;
@@ -626,8 +635,10 @@ export class AppStore {
             const activeImageId = AppStore.Instance.activeFrame.frameInfo.fileId;
             let associatedCatalogId = [];
             if (fileIds) {
-                associatedCatalogId = fileIds.filter(catalogFileId => { return catalogFileId !== fileId; });
-                catalogStore.updateImageAssociatedCatalogId(activeImageId, associatedCatalogId);    
+                associatedCatalogId = fileIds.filter(catalogFileId => {
+                    return catalogFileId !== fileId;
+                });
+                catalogStore.updateImageAssociatedCatalogId(activeImageId, associatedCatalogId);
             }
 
             // update catalogProfiles fileId            
