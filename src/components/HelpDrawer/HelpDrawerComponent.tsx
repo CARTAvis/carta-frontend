@@ -164,19 +164,19 @@ export class HelpDrawerComponent extends React.Component {
                 content: <SpectralProfilerHelpComponent/>
         }], [
             HelpType.SPECTRAL_PROFILER_SETTINGS_CONVERSION, {
-                title: "Spectral Profiler Settings Conversion",
+                title: "Spectral Profiler Settings",
                 content: <SpectralProfilerSettingsConversionHelpComponent/>
         }], [
             HelpType.SPECTRAL_PROFILER_SETTINGS_STYLING, {
-                title: "Spectral Profiler Settings Styling",
+                title: "Spectral Profiler Settings",
                 content: <SpectralProfilerSettingsStylingHelpComponent/>
         }], [
             HelpType.SPECTRAL_PROFILER_SETTINGS_SMOOTHING, {
-                title: "Spectral Profiler Settings Smoothing",
+                title: "Spectral Profiler Settings",
                 content: <SpectralProfilerSettingsSmoothingHelpComponent/>
         }], [
             HelpType.SPECTRAL_PROFILER_SETTINGS_MOMENTS, {
-                title: "Spectral Profiler Settings Moments",
+                title: "Spectral Profiler Settings",
                 content: <SpectralProfilerSettingsMomentsHelpComponent/>
         }], [
             HelpType.STATS, {
