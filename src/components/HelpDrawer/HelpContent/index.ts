@@ -31,5 +31,5 @@ export * from "./StokesAnalysisSettingsLinePlotStylingHelpComponent";
 export * from "./StokesAnalysisSettingsScatterPlotStylingHelpComponent";
 export * from "./StokesAnalysisSettingsSmoothingHelpComponent";
 export * from "./CatalogOverlayHelpComponent";
-export * from "./CatalogScatterHelpComponent";
+export * from "./CatalogPlotHelpComponent";
 export * from "./SpectralLineQueryHelpComponent";

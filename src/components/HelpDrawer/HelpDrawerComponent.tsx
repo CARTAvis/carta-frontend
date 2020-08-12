@@ -34,7 +34,7 @@ import {
     StokesAnalysisSettingsScatterPlotStylingHelpComponent,
     StokesAnalysisSettingsSmoothingHelpComponent,
     CatalogOverlayHelpComponent,
-    CatalogScatterHelpComponent,
+    CatalogPlotHelpComponent,
     SpectralLineQueryHelpComponent
 } from "./HelpContent";
 import {AppStore, HelpStore, HelpType} from "stores";
@@ -207,9 +207,9 @@ export class HelpDrawerComponent extends React.Component {
                 title: "Catalog Overlay",
                 content: <CatalogOverlayHelpComponent/>
         }], [
-            HelpType.CATALOG_SCATTER, {
+            HelpType.CATALOG_PLOT, {
                 title: "Catalog Scatter",
-                content: <CatalogScatterHelpComponent/>
+                content: <CatalogPlotHelpComponent/>
         }], [
             HelpType.SPECTRAL_LINE_QUERY, {
                 title: "Spectral Line Query",

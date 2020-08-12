@@ -1,6 +1,6 @@
 import * as React from "react";
 
-export class CatalogScatterHelpComponent extends React.Component {
+export class CatalogPlotHelpComponent extends React.Component {
     public render() {
         return (
             <React.Fragment/>
