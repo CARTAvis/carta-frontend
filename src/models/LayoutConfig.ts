@@ -118,11 +118,25 @@ export class LayoutConfig {
             const spatialProfileWidgets = findDeep(layout, item => item.id === "spatial-profiler");
             for (const widget of spatialProfileWidgets) {
                 if (widget.coord) {
+                    if (!widget.widgetSettings) {
+                        widget.widgetSettings = {};
+                    }
                     widget.widgetSettings.coordinate = widget.coord;
                     delete widget.coord;
                 }
             }
             layout.layoutVersion = 2;
+        }
+
+        // Upgrade floating widgets to consistent type
+        if (layout.floating && Array.isArray(layout.floating)) {
+            for (const widget of layout.floating) {
+                if (widget.type !== "component") {
+                    // Store widget type as id, to be consistent with docked widgets
+                    widget.id = widget.type;
+                    widget.type = "component";
+                }
+            }
         }
     };
 
@@ -165,7 +179,8 @@ export class LayoutConfig {
         // 2. handle floating widgets
         appStore.widgetsStore.floatingWidgets.forEach((config: WidgetConfig) => {
             let floatingConfig = {
-                type: config.type,
+                type: "component",
+                id: config.type,
                 defaultWidth: config.defaultWidth ? config.defaultWidth : "",
                 defaultHeight: config.defaultHeight ? config.defaultHeight : "",
                 defaultX: config.defaultX ? config.defaultX : "",

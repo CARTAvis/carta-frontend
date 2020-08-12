@@ -311,11 +311,11 @@ export class ApiService {
             const validLayouts = {};
             for (const layoutName of Object.keys(savedLayouts)) {
                 const layout = savedLayouts[layoutName];
+                LayoutConfig.UpgradeLayout(layout);
                 const valid = LayoutConfig.LayoutValidator(layout);
                 if (!valid) {
                     console.log(LayoutConfig.LayoutValidator.errors);
                 } else {
-                    LayoutConfig.UpgradeLayout(layout);
                     validLayouts[layoutName] = layout;
                 }
             }
