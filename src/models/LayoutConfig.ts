@@ -165,7 +165,8 @@ export class LayoutConfig {
         // 2. handle floating widgets
         appStore.widgetsStore.floatingWidgets.forEach((config: WidgetConfig) => {
             let floatingConfig = {
-                type: config.type,
+                type: "component",
+                id: config.type,
                 defaultWidth: config.defaultWidth ? config.defaultWidth : "",
                 defaultHeight: config.defaultHeight ? config.defaultHeight : "",
                 defaultX: config.defaultX ? config.defaultX : "",

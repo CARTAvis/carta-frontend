@@ -69,7 +69,6 @@
                 "type",
                 "id"
             ],
-            "additionalProperties": false,
             "properties": {
                 "type": {
                     "const": "component"
@@ -456,7 +455,27 @@
             "description": "List of floating widgets",
             "type": "array",
             "items": {
-                "$ref": "#/definitions/carta-widget"
+                "allOf": [
+                    {
+                        "$ref": "#/definitions/carta-widget"
+                    },
+                    {
+                        "properties": {
+                            "defaultX": {
+                                "type": "number"
+                            },
+                            "defaultY": {
+                                "type": "number"
+                            },
+                            "defaultWidth": {
+                                "type": "number"
+                            },
+                            "defaultHeight": {
+                                "type": "number"
+                            }
+                        }
+                    }
+                ]
             }
         }
     }
