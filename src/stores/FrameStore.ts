@@ -26,7 +26,7 @@ import {
     Transform2D,
     ZoomPoint
 } from "models";
-import {clamp, formattedFrequency, getHeaderNumericValue, getTransformedChannel, transformPoint, isAstBadPoint, minMax2D, rotate2D, toFixed, trimFitsComment, round2D} from "utilities";
+import {clamp, formattedFrequency, getHeaderNumericValue, getTransformedChannel, transformPoint, isAstBadPoint, minMax2D, rotate2D, toFixed, trimFitsComment, round2D, scale2D} from "utilities";
 import {BackendService, ContourWebGLService} from "services";
 
 export interface FrameInfo {
@@ -1396,12 +1396,20 @@ export class FrameStore {
             const cursorPosImage = transformPoint(this.spatialTransformAST, spatialRefCursorPos, false);
             this.cursorInfo = this.getCursorInfo(cursorPosImage);
         }
+
+        this.spatialReference.frameRegionSet.migrateRegionsFromExistingSet(this.frameRegionSet, this.spatialTransformAST, true);
+        // Remove old regions after migration
+        for (const region of this.frameRegionSet.regions) {
+            this.frameRegionSet.deleteRegion(region);
+        }
+
         return true;
     };
 
     @action clearSpatialReference = () => {
         // Adjust center and zoom based on existing spatial reference
         if (this.spatialReference) {
+            this.frameRegionSet.migrateRegionsFromExistingSet(this.spatialReference.frameRegionSet, this.spatialTransformAST);
             this.center = this.spatialTransform.transformCoordinate(this.spatialReference.center, false);
             this.zoomLevel = this.spatialReference.zoomLevel * this.spatialTransform.scale;
             this.spatialReference.removeSecondarySpatialImage(this);
