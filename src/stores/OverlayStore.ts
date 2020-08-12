@@ -1,7 +1,7 @@
 import * as AST from "ast_wrapper";
-import {Colors, IOptionProps} from "@blueprintjs/core";
+import {Colors} from "@blueprintjs/core";
 import {action, autorun, computed, observable} from "mobx";
-import {AppStore, FrameStore, PreferenceStore} from "stores";
+import {AppStore, FrameStore, PreferenceStore, WCS_PRECISION} from "stores";
 import {WCSType} from "models";
 import {toFixed} from "utilities";
 
@@ -45,9 +45,21 @@ export enum SystemType {
     ICRS = "ICRS",
 }
 
+export enum NumberFormatType {
+    HMS = "hms",
+    DMS = "dms",
+    Degrees = "d"
+}
+
+export const NUMBER_FORMAT_LABEL = new Map<NumberFormatType, string>([
+    [NumberFormatType.HMS, "H:M:S"],
+    [NumberFormatType.DMS, "D:M:S"],
+    [NumberFormatType.Degrees, "Degrees"],
+]);
+
 export enum BeamType {
-    Open = "Open",
-    Solid = "Solid"
+    Open = "open",
+    Solid = "solid"
 }
 
 export class Padding {
@@ -433,16 +445,16 @@ export class OverlayNumberSettings {
     @observable customColor: boolean;
     @observable color: number;
     @observable customFormat: boolean;
-    @observable formatX: string;
-    @observable formatY: string;
+    @observable formatX: NumberFormatType;
+    @observable formatY: NumberFormatType;
     @observable customPrecision: boolean;
     @observable precision: number;
 
     // Unlike most default values, we calculate and set these explicitly, instead of
     // leaving them unset and letting AST pick a default. We have to save these so that
     // we can revert to default values after setting custom values.
-    @observable defaultFormatX: string;
-    @observable defaultFormatY: string;
+    @observable defaultFormatX: NumberFormatType;
+    @observable defaultFormatY: NumberFormatType;
     @observable validWcs: boolean;
 
     constructor() {
@@ -453,13 +465,27 @@ export class OverlayNumberSettings {
         this.customColor = false;
         this.color = AST_DEFAULT_COLOR;
         this.customFormat = false;
-        this.defaultFormatX = "d";
-        this.defaultFormatY = "d";
-        this.formatX = "d";
-        this.formatY = "d";
+        this.defaultFormatX = NumberFormatType.Degrees;
+        this.defaultFormatY = NumberFormatType.Degrees;
+        this.formatX = NumberFormatType.Degrees;
+        this.formatY = NumberFormatType.Degrees;
         this.customPrecision = false;
         this.precision = 3;
         this.validWcs = false;
+    }
+
+    @computed get formatTypeX(): NumberFormatType {
+        if (!this.validWcs) {
+            return undefined;
+        }
+        return this.customFormat ? this.formatX : this.defaultFormatX;
+    }
+
+    @computed get formatTypeY(): NumberFormatType {
+        if (!this.validWcs) {
+            return undefined;
+        }
+        return this.customFormat ? this.formatY : this.defaultFormatY;
     }
 
     @computed get formatStringX() {
@@ -467,9 +493,8 @@ export class OverlayNumberSettings {
             return undefined;
         }
 
-        let format = (this.customFormat ? this.formatX : this.defaultFormatX);
-        let precision = (this.customPrecision ? this.precision : "*");
-        return `${format}.${precision}`;
+        const precision = (this.customPrecision ? this.precision : "*");
+        return `${this.formatTypeX}.${precision}`;
     }
 
     @computed get formatStringY() {
@@ -477,9 +502,8 @@ export class OverlayNumberSettings {
             return undefined;
         }
 
-        let format = (this.customFormat ? this.formatY : this.defaultFormatY);
-        let precision = (this.customPrecision ? this.precision : "*");
-        return `${format}.${precision}`;
+        const precision = (this.customPrecision ? this.precision : "*");
+        return `${this.formatTypeY}.${precision}`;
     }
 
     cursorFormatStringX(precision: number) {
@@ -547,19 +571,19 @@ export class OverlayNumberSettings {
         this.customFormat = customFormat;
     }
 
-    @action setFormatX(format: string) {
+    @action setFormatX(format: NumberFormatType) {
         this.formatX = format;
     }
 
-    @action setFormatY(format: string) {
+    @action setFormatY(format: NumberFormatType) {
         this.formatY = format;
     }
 
-    @action setDefaultFormatX(format: string) {
+    @action setDefaultFormatX(format: NumberFormatType) {
         this.defaultFormatX = format;
     }
 
-    @action setDefaultFormatY(format: string) {
+    @action setDefaultFormatY(format: NumberFormatType) {
         this.defaultFormatY = format;
     }
 
@@ -762,10 +786,30 @@ export class OverlayStore {
         this.viewHeight = 1;
         this.viewWidth = 1;
 
-        // if the system is manually selected, set new default formats
+        // if the system is manually selected, set new default formats & update active frame's wcs settings
         autorun(() => {
             const _ = this.global.system;
             this.setFormatsFromSystem();
+            const frame = AppStore.Instance.activeFrame;
+            if (frame && frame.wcsInfoForTransformation && frame.validWcs) {
+                AST.set(AppStore.Instance.activeFrame.wcsInfoForTransformation, `System=${this.global.explicitSystem}`);
+            }
+        });
+
+        autorun(() => {
+            const _ = this.numbers.formatTypeX;
+            const frame = AppStore.Instance.activeFrame;
+            if (frame && frame.wcsInfoForTransformation && frame.validWcs) {
+                AST.set(AppStore.Instance.activeFrame.wcsInfoForTransformation, `Format(1)=${this.numbers.formatTypeX}.${WCS_PRECISION}`);
+            }
+        });
+
+        autorun(() => {
+            const _ = this.numbers.formatTypeY;
+            const frame = AppStore.Instance.activeFrame;
+            if (frame && frame.wcsInfoForTransformation && frame.validWcs) {
+                AST.set(AppStore.Instance.activeFrame.wcsInfoForTransformation, `Format(2)=${this.numbers.formatTypeY}.${WCS_PRECISION}`);
+            }
         });
     }
 
@@ -782,22 +826,22 @@ export class OverlayStore {
         } else {
             switch (PreferenceStore.Instance.wcsType) {
                 case WCSType.DEGREES:
-                    this.numbers.setDefaultFormatX("d");
-                    this.numbers.setDefaultFormatY("d");
+                    this.numbers.setDefaultFormatX(NumberFormatType.Degrees);
+                    this.numbers.setDefaultFormatY(NumberFormatType.Degrees);
                     break;
                 case WCSType.SEXAGESIMAL:
-                    this.numbers.setDefaultFormatX("hms");
-                    this.numbers.setDefaultFormatY("dms");
+                    this.numbers.setDefaultFormatX(NumberFormatType.HMS);
+                    this.numbers.setDefaultFormatY(NumberFormatType.DMS);
                     break;
                 case WCSType.AUTOMATIC:
                 default:
                     if ([SystemType.FK4, SystemType.FK5, SystemType.ICRS].indexOf(this.global.explicitSystem) > -1) {
-                        this.numbers.setDefaultFormatX("hms");
-                        this.numbers.setDefaultFormatY("dms");
+                        this.numbers.setDefaultFormatX(NumberFormatType.HMS);
+                        this.numbers.setDefaultFormatY(NumberFormatType.DMS);
                     } else {
                         // Fall back to degrees by default
-                        this.numbers.setDefaultFormatX("d");
-                        this.numbers.setDefaultFormatY("d");
+                        this.numbers.setDefaultFormatX(NumberFormatType.Degrees);
+                        this.numbers.setDefaultFormatY(NumberFormatType.Degrees);
                     }
                     break;
             }

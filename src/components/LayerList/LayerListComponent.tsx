@@ -6,7 +6,7 @@ import {AnchorButton, Menu, MenuDivider, MenuItem, NonIdealState, Tooltip} from 
 import {Cell, Column, ColumnHeaderCell, RowHeaderCell, SelectionModes, Table} from "@blueprintjs/table";
 import {IMenuContext} from "@blueprintjs/table/src/interactions/menus/menuContext";
 import ReactResizeDetector from "react-resize-detector";
-import {WidgetConfig, WidgetProps, HelpType, AppStore} from "stores";
+import {WidgetConfig, WidgetProps, HelpType, AppStore, FrameStore, CatalogStore} from "stores";
 import "./LayerListComponent.css";
 
 @observer
@@ -53,6 +53,11 @@ export class LayerListComponent extends React.Component<WidgetProps> {
         return <RowHeaderCell name={rowIndex.toString()} className={rowIndex === AppStore.Instance.activeFrameIndex ? "active-row-cell" : ""}/>;
     };
 
+    private onFileSelected = (appStore: AppStore, frame: FrameStore) => {
+        const fileId = frame.frameInfo.fileId;
+        appStore.setActiveFrame(fileId);
+    }
+
     private fileNameRenderer = (rowIndex: number) => {
         const appStore = AppStore.Instance;
         if (rowIndex < 0 || rowIndex >= appStore.frames.length) {
@@ -64,7 +69,7 @@ export class LayerListComponent extends React.Component<WidgetProps> {
         return (
             <Cell className={rowIndex === appStore.activeFrameIndex ? "active-row-cell" : ""}>
                 <React.Fragment>
-                    <div className="name-cell" onClick={() => appStore.setActiveFrame(frame.frameInfo.fileId)}>
+                    <div className="name-cell" onClick={() => this.onFileSelected(appStore, frame)}>
                         {frame.frameInfo.fileInfo.name}
                     </div>
                 </React.Fragment>

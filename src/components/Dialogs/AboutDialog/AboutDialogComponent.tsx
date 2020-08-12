@@ -45,7 +45,7 @@ export class AboutDialogComponent extends React.Component {
                         <li>Source code for CARTA is available on <a href="https://github.com/cartavis" target="_blank">GitHub</a></li>
                         {/* tslint:disable-next-line:max-line-length */}
                         <li>Please report bugs or suggestions to the <a href="mailto:carta_helpdesk@asiaa.sinica.edu.tw" target="_blank">CARTA helpdesk</a> or file a <a href="https://github.com/CARTAvis/carta/issues" target="_blank">GitHub issue</a></li>
-                        <li>Documentation is available <a href="https://carta.readthedocs.io/en/1.3" target="_blank">online</a></li>
+                        <li>Documentation is available <a href="https://carta.readthedocs.io/en/1.4" target="_blank">online</a></li>
                     </ul>
                     <h3>License</h3>
                     <p className={Classes.TEXT_SMALL}>

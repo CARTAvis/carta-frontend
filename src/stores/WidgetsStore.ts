@@ -18,15 +18,16 @@ import {
     ToolbarMenuComponent,
     StokesAnalysisComponent,
     CatalogOverlayComponent,
-    CatalogScatterComponent,
+    CatalogPlotComponent,
     // setting Panel
     StokesAnalysisSettingsPanelComponent,
     SpectralProfilerSettingsPanelComponent,
     SpatialProfilerSettingsPanelComponent,
     RenderConfigSettingsPanelComponent,
-    HistogramSettingsPanelComponent
+    HistogramSettingsPanelComponent,
+    ImageViewSettingsPanelComponent
 } from "components";
-import {AppStore, HelpStore, HelpType, LayoutStore} from "stores";
+import {AppStore, HelpStore, HelpType, LayoutStore, CatalogStore} from "stores";
 import {
     EmptyWidgetStore, 
     HistogramWidgetStore, 
@@ -37,7 +38,8 @@ import {
     SpectralProfileWidgetStore,
     StatsWidgetStore, 
     StokesAnalysisWidgetStore, 
-    CatalogOverlayWidgetStore, CatalogInfo, CatalogScatterWidgetStore, CatalogScatterWidgetStoreProps
+    CatalogWidgetStore, CatalogPlotWidgetStore, CatalogPlotWidgetStoreProps,
+    ACTIVE_FILE_ID
 } from "./widgets";
 import {ProcessedColumnData} from "../models";
 
@@ -89,21 +91,24 @@ export class WidgetsStore {
     @observable animatorWidgets: Map<string, EmptyWidgetStore>;
     @observable stokesAnalysisWidgets: Map<string, StokesAnalysisWidgetStore>;
     @observable floatingSettingsWidgets: Map<string, string>;
-    @observable catalogOverlayWidgets: Map<string, CatalogOverlayWidgetStore>;
-    @observable catalogScatterWidgets: Map<string, CatalogScatterWidgetStore>;
+    @observable catalogWidgets: Map<string, CatalogWidgetStore>;
+    @observable catalogPlotWidgets: Map<string, CatalogPlotWidgetStore>;
     @observable spectralLineQueryWidgets: Map<string, SpectralLineQueryWidgetStore>;
 
     private widgetsMap: Map<string, Map<string, any>>;
     private defaultFloatingWidgetOffset: number;
 
-    public static RemoveFrameFromRegionWidgets(storeMap: Map<string, RegionWidgetStore>, fileId: number = -1) {
-        if (fileId === -1) {
+    public static RemoveFrameFromRegionWidgets(storeMap: Map<string, RegionWidgetStore>, fileId: number = ACTIVE_FILE_ID) {
+        if (fileId === ACTIVE_FILE_ID) {
             storeMap.forEach(widgetStore => {
                 widgetStore.clearRegionMap();
             });
         } else {
             storeMap.forEach(widgetStore => {
                 widgetStore.clearFrameEntry(fileId);
+                if (widgetStore.fileId === fileId) {
+                    widgetStore.setFileId(ACTIVE_FILE_ID);
+                }
             });
         }
     }
@@ -129,9 +134,9 @@ export class WidgetsStore {
         this.logWidgets = new Map<string, EmptyWidgetStore>();
         this.regionListWidgets = new Map<string, EmptyWidgetStore>();
         this.stokesAnalysisWidgets = new Map<string, StokesAnalysisWidgetStore>();
-        this.catalogOverlayWidgets = new Map<string, CatalogOverlayWidgetStore>();
+        this.catalogWidgets = new Map<string, CatalogWidgetStore>();
         this.floatingSettingsWidgets = new Map<string, string>();
-        this.catalogScatterWidgets = new Map<string, CatalogScatterWidgetStore>();
+        this.catalogPlotWidgets = new Map<string, CatalogPlotWidgetStore>();
         this.spectralLineQueryWidgets = new Map<string, SpectralLineQueryWidgetStore>();
 
         this.widgetsMap = new Map<string, Map<string, any>>([
@@ -145,8 +150,8 @@ export class WidgetsStore {
             [LogComponent.WIDGET_CONFIG.type, this.logWidgets],
             [RegionListComponent.WIDGET_CONFIG.type, this.regionListWidgets],
             [StokesAnalysisComponent.WIDGET_CONFIG.type, this.stokesAnalysisWidgets],
-            [CatalogOverlayComponent.WIDGET_CONFIG.type, this.catalogOverlayWidgets],
-            [CatalogScatterComponent.WIDGET_CONFIG.type, this.catalogScatterWidgets],
+            [CatalogOverlayComponent.WIDGET_CONFIG.type, this.catalogWidgets],
+            [CatalogPlotComponent.WIDGET_CONFIG.type, this.catalogPlotWidgets],
             [SpectralLineQueryComponent.WIDGET_CONFIG.type, this.spectralLineQueryWidgets]
         ]);
 
@@ -180,8 +185,8 @@ export class WidgetsStore {
                 return StokesAnalysisComponent.WIDGET_CONFIG;
             case CatalogOverlayComponent.WIDGET_CONFIG.type:
                 return CatalogOverlayComponent.WIDGET_CONFIG;
-            case CatalogScatterComponent.WIDGET_CONFIG.type:
-                return CatalogScatterComponent.WIDGET_CONFIG;
+            case CatalogPlotComponent.WIDGET_CONFIG.type:
+                return CatalogPlotComponent.WIDGET_CONFIG;
             case SpectralLineQueryComponent.WIDGET_CONFIG.type:
                 return SpectralLineQueryComponent.WIDGET_CONFIG;
             default:
@@ -191,6 +196,8 @@ export class WidgetsStore {
 
     private static getDefaultWidgetSettingsConfig(type: string) {
         switch (type) {
+            case ImageViewComponent.WIDGET_CONFIG.type:
+                return ImageViewSettingsPanelComponent.WIDGET_CONFIG;
             case StokesAnalysisComponent.WIDGET_CONFIG.type:
                 return StokesAnalysisSettingsPanelComponent.WIDGET_CONFIG;
             case SpectralProfilerComponent.WIDGET_CONFIG.type:
@@ -337,7 +344,7 @@ export class WidgetsStore {
                 break;
             case CatalogOverlayComponent.WIDGET_CONFIG.type:
                 itemId = this.getNextComponentId(CatalogOverlayComponent.WIDGET_CONFIG);
-                AppStore.Instance.catalogProfiles.set(itemId, 1);
+                CatalogStore.Instance.catalogProfiles.set(itemId, 1);
                 break;
             default:
                 // Remove it from the floating widget array, while preserving its store
@@ -417,9 +424,9 @@ export class WidgetsStore {
         layout.registerComponent("animator", AnimatorComponent);
         layout.registerComponent("stokes", StokesAnalysisComponent);
         layout.registerComponent("catalog-overlay", CatalogOverlayComponent);
-        layout.registerComponent("catalog-scatter", CatalogScatterComponent);
+        layout.registerComponent("catalog-plot", CatalogPlotComponent);
 
-        const showCogWidgets = ["spatial-profiler", "spectral-profiler", "histogram", "render-config", "stokes"];
+        const showCogWidgets = ["image-view", "spatial-profiler", "spectral-profiler", "histogram", "render-config", "stokes"];
         // add drag source buttons from ToolbarMenuComponent
         ToolbarMenuComponent.DRAGSOURCE_WIDGETCONFIG_MAP.forEach((widgetConfig, id) => WidgetsStore.CreateDragSource(layout, widgetConfig, id));
 
@@ -477,7 +484,7 @@ export class WidgetsStore {
                 break;
         }
 
-        return widgetStore &&  widgetStore.toConfig ? widgetStore.toConfig() : null;
+        return widgetStore?.toConfig?.();
     };
 
     @action onCogPinedClick = (item: GoldenLayout.ContentItem) => {
@@ -486,8 +493,9 @@ export class WidgetsStore {
         const parentType = parentItemConfig.component;
         const parentTitle = parentItemConfig.title;
 
-        // apply for stokes, spectral profiler, spatial profiler, Render Config, Histogram
+        // apply for image viewer, stokes, spectral profiler, spatial profiler, Render Config, Histogram
         const floatingSettingsApplyedWidgets = [
+            ImageViewComponent.WIDGET_CONFIG.type,
             StokesAnalysisComponent.WIDGET_CONFIG.type,
             SpectralProfilerComponent.WIDGET_CONFIG.type,
             SpatialProfilerComponent.WIDGET_CONFIG.type,
@@ -500,7 +508,7 @@ export class WidgetsStore {
         // Get floating settings config
         let widgetConfig = WidgetsStore.getDefaultWidgetSettingsConfig(parentType);
         widgetConfig.id = this.addFloatingSettingsWidget(null, parentId, widgetConfig.type);
-        widgetConfig.title = parentTitle + " Settings";
+        widgetConfig.title = (parentType === "image-view") ? "Image View Settings" : parentTitle + " Settings";
         widgetConfig.parentId = parentId;
         widgetConfig.parentType = parentType;
         if (widgetConfig.id) {
@@ -575,15 +583,22 @@ export class WidgetsStore {
     @action handleItemRemoval = (item: GoldenLayout.ContentItem) => {
         if (item.config.type === "component") {
             const config = item.config as GoldenLayout.ReactComponentConfig;
-
+            const isCatalogTable = config.component === CatalogOverlayComponent.WIDGET_CONFIG.type;
+            const isCatalogPlot = config.component === CatalogPlotComponent.WIDGET_CONFIG.type;
             // Clean up removed widget's store (ignoring items that have been floated)
-            if (config.component !== "floated" && config.component !== CatalogOverlayComponent.WIDGET_CONFIG.type) {
+            if (config.component !== "floated" && !isCatalogTable && !isCatalogPlot) {
                 const id = config.id as string;
                 this.removeWidget(id, config.component);
             }
 
-            if (config.component === CatalogOverlayComponent.WIDGET_CONFIG.type) {
-                AppStore.Instance.catalogProfiles.delete(config.id as string);
+            // close UI, keep catalog file alive
+            if (isCatalogTable) {
+                CatalogStore.Instance.catalogProfiles.delete(config.id as string);
+            }
+
+            // remove all catalog plots associated to current catalog plot widget
+            if (isCatalogPlot) {
+                CatalogStore.Instance.clearCatalogPlotsByWidgetId(config.id as string);
             }
         }
     };
@@ -761,12 +776,18 @@ export class WidgetsStore {
         const floatingCatalogWidgets = this.getFloatingWidgetByComponentId(config.componentId);
         const dockedCatalogWidgets = this.getDockedWidgetByType(config.type);
         
-        floatingCatalogWidgets.forEach(floatingConfig => {
-            componentIds.push(floatingConfig.componentId);
-        });
-        dockedCatalogWidgets.forEach(contentItem => {
-            componentIds.push(contentItem.config.id);
-        });
+        if (config.type === CatalogPlotComponent.WIDGET_CONFIG.type) {
+            CatalogStore.Instance.catalogPlots.forEach((catalogWidgetMap, componentId) => {
+                componentIds.push(componentId);
+            });
+        } else {
+            floatingCatalogWidgets.forEach(floatingConfig => {
+                componentIds.push(floatingConfig.componentId);
+            });
+            dockedCatalogWidgets.forEach(contentItem => {
+                componentIds.push(contentItem.config.id);
+            });
+        }
         
         while (true) {
             const nextId = `${config.componentId}-${nextIndex}`;
@@ -808,9 +829,9 @@ export class WidgetsStore {
         return (floatingCatalogWidgets + dockedCatalogWidgets);
     };
 
-    createFloatingCatalogOverlayWidget = (catalogInfo: CatalogInfo, catalogHeader: Array<CARTA.ICatalogHeader>, catalogData: Map<number, ProcessedColumnData>): {widgetStoreId: string, widgetComponentId: string} => {
+    createFloatingCatalogWidget = (catalogFileId: number): {widgetStoreId: string, widgetComponentId: string} => {
         let config = CatalogOverlayComponent.WIDGET_CONFIG;
-        const widgetStoreId = this.addCatalogOverlayWidget(catalogInfo, catalogHeader, catalogData);
+        const widgetStoreId = this.addCatalogWidget(catalogFileId);
         const widgetComponentId = this.getNextComponentId(config);
         config.id = widgetComponentId;
         config.componentId = widgetComponentId;
@@ -818,49 +839,52 @@ export class WidgetsStore {
         return {widgetStoreId: widgetStoreId, widgetComponentId: widgetComponentId};  
     };
 
-    reloadFloatingCatalogOverlayWidget = () => {
+    reloadFloatingCatalogWidget = () => {
         const appStore = AppStore.Instance;
-        const catalogFileNum = appStore.catalogs.size;
+        const catalogFileNum = appStore.catalogNum;
         let config = CatalogOverlayComponent.WIDGET_CONFIG;
         const componentId = this.getNextComponentId(config);
         config.componentId = componentId;
         config.id = componentId; 
         if (catalogFileNum) {
-            AppStore.Instance.catalogProfiles.set(componentId, catalogFileNum);   
+            CatalogStore.Instance.catalogProfiles.set(componentId, catalogFileNum);   
         }
         this.addFloatingWidget(config);
     };
 
     // add catalog overlay widget store
-    @action addCatalogOverlayWidget(catalogInfo: CatalogInfo, catalogHeader: Array<CARTA.ICatalogHeader>, catalogData: Map<number, ProcessedColumnData>, id: string = null) {
+    @action addCatalogWidget(catalogFileId: number, id: string = null) {
         // Generate new id if none passed in
         if (!id) {
             id = this.getNextId(CatalogOverlayComponent.WIDGET_CONFIG.type);
         }
 
         if (id) {
-            this.catalogOverlayWidgets.set(id, new CatalogOverlayWidgetStore(catalogInfo, catalogHeader, catalogData, id));
+            this.catalogWidgets.set(id, new CatalogWidgetStore(catalogFileId));
         }
         return id;
     }
     // endregion 
 
-    // region Catalog Scatter Widgets
-    createFloatingCatalogScatterWidget = (props: CatalogScatterWidgetStoreProps): string => {
-        let config = CatalogScatterComponent.WIDGET_CONFIG;
-        config.id = this.addCatalogScatterWidget(props);
+    // region Catalog Plot Widgets
+    createFloatingCatalogPlotWidget = (props: CatalogPlotWidgetStoreProps): {widgetStoreId: string, widgetComponentId: string} => {
+        let config = CatalogPlotComponent.WIDGET_CONFIG;
+        const widgetStoreId = this.addCatalogPlotWidget(props);
+        const widgetComponentId = this.getNextComponentId(config);
+        config.id = widgetStoreId;
+        config.componentId = widgetComponentId;
         this.addFloatingWidget(config);
-        return config.id;
+        return {widgetStoreId: widgetStoreId, widgetComponentId: widgetComponentId};  
     };
 
-    @action addCatalogScatterWidget(props: CatalogScatterWidgetStoreProps, id: string = null) {
+    @action addCatalogPlotWidget(props: CatalogPlotWidgetStoreProps, id: string = null) {
         // Generate new id if none passed in
         if (!id) {
-            id = this.getNextId(CatalogScatterComponent.WIDGET_CONFIG.type);
+            id = this.getNextId(CatalogPlotComponent.WIDGET_CONFIG.type);
         }
 
         if (id) {
-            this.catalogScatterWidgets.set(id, new CatalogScatterWidgetStore(props));
+            this.catalogPlotWidgets.set(id, new CatalogPlotWidgetStore(props));
         }
         return id;
     }
@@ -894,7 +918,7 @@ export class WidgetsStore {
     createFloatingSettingsWidget = (title: string, parentId: string, parentType: string) => {
         let config = WidgetsStore.getDefaultWidgetSettingsConfig(parentType);
         config.id = this.addFloatingSettingsWidget(null, parentId, config.type);
-        config.title = title + " Settings";
+        config.title =  title + " Settings";
         config.parentId = parentId;
         config.parentType = parentType;
         if (config.id) {
@@ -1118,16 +1142,6 @@ export class WidgetsStore {
                 return;
             }
 
-            if (widget.type === CatalogOverlayComponent.WIDGET_CONFIG.type) {
-                return;
-            }
-            
-            // update scatter widget id with associated scatter store.
-            const catalogScatterWidget = this.catalogScatterWidgets.get(id);
-            if (catalogScatterWidget) {
-                catalogScatterWidget.catalogOverlayWidgetStore.updateCatalogScatterWidget(id);
-            }
-
             this.removeWidget(id, widget.type);
         }
     };
@@ -1135,12 +1149,10 @@ export class WidgetsStore {
 
     // remove a widget component by componentId
     @action removeFloatingWidgetComponent = (componentId: string) => {
-
         const widget = this.floatingWidgets.find(w => w.componentId === componentId);
         if (widget) {
             this.updateFloatingWidgetzIndexOnRemove(widget.zIndex);
             this.floatingWidgets = this.floatingWidgets.filter(w => w.componentId !== componentId);
-            AppStore.Instance.catalogProfiles.delete(componentId);
         }
     }
 }

@@ -18,6 +18,7 @@ enum HeaderTableColumnName {
 
 const KEYCODE_ENTER = 13;
 const MINIMUM_WIDTH = 450;
+const PLOT_LINES_LIMIT = 1000;
 
 @observer
 export class SpectralLineQueryComponent extends React.Component<WidgetProps> {
@@ -71,6 +72,26 @@ export class SpectralLineQueryComponent extends React.Component<WidgetProps> {
             this.updateTableSize(this.resultTableRef, this.props.docked);
         }
     };
+
+    private updateTableSize(ref: any, docked: boolean) {
+        const viewportRect = ref.locator.getViewportRect();
+        ref.updateViewportRect(viewportRect);
+        // fixed bug for blueprint table, first column overlap with row index
+        // triger table update
+        if (docked) {
+            ref.scrollToRegion(Regions.column(0));
+        }
+    }
+
+    private onTableResize = () => {
+        // update table if resizing happend
+        if (this.headerTableRef) {
+            this.updateTableSize(this.headerTableRef, false);
+        }
+        if (this.resultTableRef) {
+            this.updateTableSize(this.resultTableRef, false);
+        }
+    }
 
     private handleRedshiftChange = (ev) => {
         if (ev.type === "keydown" && ev.keyCode !== KEYCODE_ENTER) {
@@ -160,16 +181,6 @@ export class SpectralLineQueryComponent extends React.Component<WidgetProps> {
     private updateHeaderTableColumnSize = (index: number, size: number) => {
         if (this.headerTableColumnWidths) {
             this.headerTableColumnWidths[index] = size;
-        }
-    }
-
-    private updateTableSize(ref: any, docked: boolean) {
-        const viewportRect = ref.locator.getViewportRect();
-        ref.updateViewportRect(viewportRect);
-        // fixed bug for blueprint table, first column overlap with row index
-        // triger table update
-        if (docked) {
-            ref.scrollToRegion(Regions.column(0));
         }
     }
 
@@ -288,10 +299,6 @@ export class SpectralLineQueryComponent extends React.Component<WidgetProps> {
             </div>
         );
 
-        const tableInfo = (widgetStore.queryResult.size > 0) ? (
-            <pre>Showing {widgetStore.numDataRows} entries.</pre>
-        ) : null;
-
         const isSelectedWidgetExisted = widgetStore.selectedSpectralProfilerID && AppStore.Instance.widgetsStore.getSpectralWidgetStoreByID(widgetStore.selectedSpectralProfilerID);
         const widgetMenu = (
             <Popover
@@ -341,6 +348,16 @@ export class SpectralLineQueryComponent extends React.Component<WidgetProps> {
             className += " dark-theme";
         }
 
+        const isSelectedLinesUnderLimit = widgetStore.selectedLines?.length < PLOT_LINES_LIMIT;
+        const hint = (
+            <span><br/><i><small>
+                {!isSelectedLinesUnderLimit ? `Please select fewer than ${PLOT_LINES_LIMIT} lines.` : ""}
+                {!isSelectedLinesUnderLimit && !isSelectedWidgetExisted ? <br/> : ""}
+                {!isSelectedWidgetExisted ? "Please select one spectral profiler." : ""}
+            </small></i></span>
+        );
+        const plotTip = <span>Plot lines to selected profiler{hint}</span>;
+
         return (
             <div className={className}>
                 <div className="bp3-dialog-body">
@@ -351,6 +368,7 @@ export class SpectralLineQueryComponent extends React.Component<WidgetProps> {
                         primary={"second"}
                         defaultSize={"60%"}
                         minSize={"5%"}
+                        onChange={this.onTableResize}
                     >
                         <Pane className={"header-table-container"}>
                             {this.width > 0 && this.createHeaderTable()}
@@ -360,19 +378,22 @@ export class SpectralLineQueryComponent extends React.Component<WidgetProps> {
                             <div className="result-table">
                                 {this.width > 0 && <TableComponent {...queryResultTableProps}/>}
                             </div>
-                            <div className="result-table-info">
-                                {tableInfo}
-                            </div>
                         </Pane>
                     </SplitPane>
                 </div>
                 <div className="bp3-dialog-footer">
+                    <div className="result-table-info"><pre>Showing {widgetStore.numDataRows} entries.{widgetStore.selectedLines?.length > 0 ? ` Selected ${widgetStore.selectedLines.length} lines.` : ""}</pre></div>
                     <div className="bp3-dialog-footer-actions">
                         <FormGroup inline={true} label={this.width < MINIMUM_WIDTH ? "" : "Spectral Profiler"}>
                             {widgetMenu}
                         </FormGroup>
-                        <Tooltip content="Plot lines to selected profiler" position={Position.BOTTOM}>
-                            <AnchorButton text="Plot" intent={Intent.PRIMARY} disabled={!appStore.activeFrame || !isSelectedWidgetExisted || widgetStore.queryResult.size <= 0} onClick={this.handlePlot}/>
+                        <Tooltip content={plotTip} position={Position.BOTTOM}>
+                            <AnchorButton
+                                text="Plot"
+                                intent={Intent.PRIMARY}
+                                disabled={!appStore.activeFrame || widgetStore.queryResult.size <= 0 || !isSelectedWidgetExisted || !isSelectedLinesUnderLimit}
+                                onClick={this.handlePlot}
+                            />
                         </Tooltip>
                         <Tooltip content="Clear plotted lines" position={Position.BOTTOM}>
                             <AnchorButton text="Clear" intent={Intent.PRIMARY} disabled={!appStore.activeFrame || !isSelectedWidgetExisted || widgetStore.queryResult.size <= 0} onClick={this.handleClear}/>

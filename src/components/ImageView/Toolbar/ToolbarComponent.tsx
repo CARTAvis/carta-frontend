@@ -179,8 +179,8 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
             </Menu>
         );
 
-        const catalogOverlayEnabled = this.props.activeLayer === ImageViewLayer.Catalog;
-        const catalogSelectionDisabled = appStore.catalogs.size === 0;
+        const catalogOverlayEnabled = appStore.activeLayer === ImageViewLayer.Catalog;
+        const catalogSelectionDisabled = appStore.catalogNum === 0;
 
         return (
             <ButtonGroup className={className} style={styleProps} vertical={this.props.vertical}>
@@ -223,7 +223,7 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
                 </Tooltip>
                 <Tooltip position={tooltipPosition} content={<span>Overlay Coordinate <br/><small><i>Current: {ToolbarComponent.CoordinateSystemTooltip.get(coordinateSystem)}</i></small></span>}>
                     <Popover content={coordinateSystemMenu} position={Position.TOP} minimal={true}>
-                        <Button text={ToolbarComponent.CoordinateSystemName.get(coordinateSystem)}/>
+                        <Button disabled={!frame.validWcs} text={ToolbarComponent.CoordinateSystemName.get(coordinateSystem)}/>
                     </Popover>
                 </Tooltip>
                 <Tooltip position={tooltipPosition} content="Toggle grid">

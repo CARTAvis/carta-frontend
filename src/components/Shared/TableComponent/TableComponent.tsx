@@ -2,9 +2,10 @@ import * as React from "react";
 import {observer} from "mobx-react";
 import {Cell, Column, Table, SelectionModes, RenderMode, ColumnHeaderCell, IRegion} from "@blueprintjs/table";
 import {Checkbox, Tooltip, PopoverPosition, InputGroup, Menu, MenuItem, Icon, Label} from "@blueprintjs/core";
+import {IconName} from "@blueprintjs/icons";
 import {IRowIndices} from "@blueprintjs/table/lib/esm/common/grid";
 import {CARTA} from "carta-protobuf";
-import {ControlHeader} from "stores/widgets";
+import {ControlHeader} from "stores";
 import {ProcessedColumnData} from "models";
 import "./TableComponent.css";
 
@@ -41,6 +42,7 @@ export class TableComponentProps {
     updateSelectedRow?: (dataIndex: number[]) => void;
     updateSortRequest?: (columnName: string, sortingType: CARTA.SortingType) => void;
     sortingInfo?: {columnName: string, sortingType: CARTA.SortingType};
+    disable?: boolean;
 }
 
 const MANUAL_SELECTION_COLUMN_WIDTH = 50;
@@ -48,6 +50,18 @@ const DEFAULT_COLUMN_WIDTH = 150;
 
 @observer
 export class TableComponent extends React.Component<TableComponentProps> {
+    private readonly SortingTypelinkedList = {
+        head: {
+            value: null,
+            next: {
+                value: CARTA.SortingType.Ascending,                                             
+                next: {
+                    value: CARTA.SortingType.Descending,
+                    next: null
+                }
+            }
+        }
+    };
 
     private renderManualSelectionColumn = (manualSelectionProps: ManualSelectionProps, manualSelectionData: boolean[]) => {
         if (!manualSelectionProps || !manualSelectionData || manualSelectionData.length <= 0) {
@@ -131,64 +145,60 @@ export class TableComponent extends React.Component<TableComponentProps> {
         }
     };
 
+    private getNextSortingType = () => {
+        const sortingInfo = this.props.sortingInfo;
+        let currentNode = this.SortingTypelinkedList.head;
+        while (currentNode.next) {
+            if (currentNode.value === sortingInfo.sortingType) {
+                return currentNode.next.value;
+            }
+            currentNode = currentNode.next;
+        }
+        return null;
+    }
+
     private renderColumnHeaderCell = (columnIndex: number, column: CARTA.CatalogHeader) => {
         if (!isFinite(columnIndex) || !column) {
             return null;
         }
-
         const controlheader = this.props.filter.get(column.name);
         const filterSyntax = this.getfilterSyntax(column.dataType);
         const sortingInfo = this.props.sortingInfo;
         const sortColumn = sortingInfo.columnName === column.name;
-        const sortDesc = sortingInfo.sortingType === CARTA.SortingType.Descending;
         let activeFilter = false;
         if (controlheader.filter !== "") {
             activeFilter = true;
         }
-
-        const menuRenderer = () => {
-            let activeAsc = false;
-            let activeDesc = false;
-            if (sortColumn) {
-                if (sortDesc) {
-                    activeDesc = true;
-                } else {
-                    activeAsc = true;
-                }
-            }
-            return(
-                <Menu className="catalog-sort-menu-item">
-                    <MenuItem icon="sort-asc" active={activeAsc} onClick={() => this.props.updateSortRequest(column.name, CARTA.SortingType.Ascending)} text="Sort Asc" />
-                    <MenuItem icon="sort-desc" active={activeDesc} onClick={() => this.props.updateSortRequest(column.name, CARTA.SortingType.Descending)} text="Sort Desc" />
-                    <MenuItem icon="cross" onClick={() => this.props.updateSortRequest(null, null)} text="Clear Sort" />
-                </Menu>
-            );
-        };
+        const disable = this.props.disable;
 
         const nameRenderer = () => {
+            // sharing css with fileList table
+            let sortIcon = "sort";
+            let iconClass = "sort-icon inactive";
+            let nextSortType = 0;
             if (sortColumn) {
-                return (
-                    <Label className="bp3-inline lable">
-                        {sortDesc ? 
-                            <Icon className="sort-icon" icon={"sort-desc"} />
-                            :
-                            <Icon className="sort-icon" icon={"sort-asc"} />
-                        }   
-                        {column.name}
-                    </Label>
-                );
-            } else {
-                return (
-                    <Label className="bp3-inline lable">
-                        {column.name}
-                    </Label>
-                );
+                nextSortType = this.getNextSortingType();
+                if (sortingInfo.sortingType === CARTA.SortingType.Descending) {
+                    sortIcon = "sort-desc";
+                    iconClass = "sort-icon";
+                } else if (sortingInfo.sortingType === CARTA.SortingType.Ascending) {
+                    sortIcon = "sort-asc";
+                    iconClass = "sort-icon";
+                }
             }
+            return (
+                <div className="sort-label" onClick={() => disable ? null : this.props.updateSortRequest(column.name, nextSortType)}>
+                    <Label disabled={disable} className="bp3-inline label">
+                        <Icon className={iconClass} icon={sortIcon as IconName}/>
+                        {column.name}
+                    </Label>
+                </div>
+            );
         };
 
         return (
             <ColumnHeaderCell>
-                <ColumnHeaderCell className={"column-name"} nameRenderer={nameRenderer} menuRenderer={menuRenderer}/>
+                <ColumnHeaderCell className={"column-name"} nameRenderer={nameRenderer}/>
                 <ColumnHeaderCell isActive={activeFilter}>
                     <Tooltip content={filterSyntax} position={PopoverPosition.TOP} className={"column-filter"}>
                         <InputGroup
@@ -261,15 +271,12 @@ export class TableComponent extends React.Component<TableComponentProps> {
         const table = this.props;
         const tableColumns = [];
         const tableData = table.dataset;
-        let columnWidths = table.columnWidths;
+        let columnWidths = table.columnWidths ? table.columnWidths : new Array<number>(table.columnHeaders?.length).fill(DEFAULT_COLUMN_WIDTH);
 
         // Create manuanl selection checkbox column
-        if (table.manualSelectionProps && table.manualSelectionData && table.dataset && table.dataset.size > 0) {
+        if (table.manualSelectionProps && table.manualSelectionData?.length > 0) {
             const column = this.renderManualSelectionColumn(table.manualSelectionProps, table.manualSelectionData);
             tableColumns.push(column);
-            if (!columnWidths) {
-                columnWidths = new Array<number>(table.columnHeaders.length).fill(DEFAULT_COLUMN_WIDTH);
-            }
             columnWidths.splice(0, 0, MANUAL_SELECTION_COLUMN_WIDTH);
         }
 
