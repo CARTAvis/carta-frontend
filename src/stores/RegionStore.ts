@@ -227,7 +227,11 @@ export class RegionStore {
         this.dashLength = dashLength;
         this.rotation = rotation;
         this.backendService = backendService;
-        this.coordinate = RegionCoordinate.Image;
+        if (activeFrame.validWcs) {
+            this.coordinate = RegionCoordinate.World;
+        } else {
+            this.coordinate = RegionCoordinate.Image;
+        }
         this.regionApproximationMap = new Map<number, Point2D[]>();
         this.simplePolygonTest();
         this.modifiedTimestamp = performance.now();
