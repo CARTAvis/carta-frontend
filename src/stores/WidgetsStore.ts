@@ -846,7 +846,7 @@ export class WidgetsStore {
         this.addFloatingWidget(config);
     };
 
-    // add catalog overlay widget store
+    // add catalog widget store
     @action addCatalogWidget(catalogFileId: number, id: string = null) {
         // Generate new id if none passed in
         if (!id) {

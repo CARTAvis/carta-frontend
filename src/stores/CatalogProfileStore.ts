@@ -380,7 +380,6 @@ export class CatalogProfileStore {
             for (let index = 0; index < catalogHeader.length; index++) {
                 const header = catalogHeader[index];
                 let display = false;
-                // this.findKeywords(header.description) init displayed according discription
                 if (index < CatalogProfileStore.InitDisplayedColumnSize) {
                     display = true;
                 }

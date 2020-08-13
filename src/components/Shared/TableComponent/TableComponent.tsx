@@ -43,6 +43,7 @@ export class TableComponentProps {
     updateSortRequest?: (columnName: string, sortingType: CARTA.SortingType) => void;
     sortingInfo?: {columnName: string, sortingType: CARTA.SortingType};
     disable?: boolean;
+    darkTheme?: boolean;
 }
 
 const MANUAL_SELECTION_COLUMN_WIDTH = 50;
@@ -107,14 +108,14 @@ export class TableComponent extends React.Component<TableComponentProps> {
         switch (dataType) {
             case CARTA.ColumnType.String || CARTA.ColumnType.Bool:
                 return (
-                    <div className={"column-filter-popover"}>
+                    <div className={"column-filter-popover-content"}>
                         <small>Filter by substring</small><br/>
                         <small>e.g. gal (no quotation, entries contain the "gal" string)</small>
                     </div>
                 );
             default:
                 return (
-                    <div className={"column-filter-popover"}>
+                    <div className={"column-filter-popover-content"}>
                         <small>Operators: {">"}, {">="}, {"<"}, {"<="}, {"=="}, {"!="}, {".."}, {"..."}</small><br/>
                         <small>e.g. {"<"} 10 (everything less than 10) </small><br/>
                         <small>e.g. == 1.23 (entries equal to 1.23) </small><br/>
@@ -170,6 +171,7 @@ export class TableComponent extends React.Component<TableComponentProps> {
             activeFilter = true;
         }
         const disable = this.props.disable;
+        let popOverClass = this.props.darkTheme ? "column-filter-popover-dark" : "column-filter-popover";
 
         const nameRenderer = () => {
             // sharing css with fileList table
@@ -200,7 +202,7 @@ export class TableComponent extends React.Component<TableComponentProps> {
             <ColumnHeaderCell>
                 <ColumnHeaderCell className={"column-name"} nameRenderer={nameRenderer}/>
                 <ColumnHeaderCell isActive={activeFilter}>
-                    <Popover className={"column-filter"} content={filterSyntax} minimal={true} position={PopoverPosition.AUTO_END} interactionKind={PopoverInteractionKind.HOVER}>
+                    <Popover className={"column-filter"} popoverClassName={popOverClass} content={filterSyntax} position={PopoverPosition.AUTO_END} interactionKind={PopoverInteractionKind.HOVER}>
                         <InputGroup
                             key={"column-filter-" + columnIndex}
                             small={true}

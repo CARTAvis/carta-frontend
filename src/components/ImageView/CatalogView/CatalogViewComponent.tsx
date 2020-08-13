@@ -74,13 +74,14 @@ export class CatalogViewComponent extends React.Component<CatalogViewComponentPr
 
     private onClick = (event: Readonly<Plotly.PlotMouseEvent>) => {
         if (event && event.points && event.points.length > 0) {
+            const catalogStore = CatalogStore.Instance;
             const catalogFileId = Number(event.points[0].data.name);
-            const catalogProfileStore = CatalogStore.Instance.getCatalogProfileStore(catalogFileId);
-            const widgetStoreId = CatalogStore.Instance.catalogWidgets.get(catalogFileId);
-            const catalogWidgetStore =  WidgetsStore.Instance.catalogWidgets.get(widgetStoreId);
+            const catalogProfileStore = catalogStore.catalogProfileStores.get(catalogFileId);
+            const widgetStoreId = catalogStore.catalogWidgets.get(catalogFileId);
+            const catalogWidgetStore = WidgetsStore.Instance.catalogWidgets.get(widgetStoreId);
 
             if (catalogFileId && !catalogWidgetStore.showSelectedData) {
-                CatalogStore.Instance.updateCatalogProfiles(catalogFileId);
+                catalogStore.updateCatalogProfiles(catalogFileId);
                 let selectedPointIndex = [];
                 const selectedPoint = event.points[0];
                 selectedPointIndex.push(selectedPoint.pointIndex);

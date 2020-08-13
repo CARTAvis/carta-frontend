@@ -25,7 +25,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
     private plotType: CatalogPlotType;
     private histogramY: {yMin: number, yMax: number};
     private static emptyColumn = "None";
-    private catalogFiles: Map<number, string>;
+    private catalogFileNames: Map<number, string>;
 
     private static readonly UnsupportedDataTypes = [CARTA.ColumnType.String, CARTA.ColumnType.Bool, CARTA.ColumnType.UnsupportedType];
 
@@ -50,7 +50,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
         const catalogPlot = CatalogStore.Instance.getAssociatedIdByWidgetId(this.props.id);
         this.componentId = catalogPlot.catalogPlotComponentId;
         this.catalogFileId = catalogPlot.catalogFileId;
-        this.catalogFiles = new Map<number, string>();
+        this.catalogFileNames = new Map<number, string>();
         autorun(() => {
             const profileStore = this.profileStore;
             const widgetStore =  this.widgetStore;
@@ -101,7 +101,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
     }
 
     @computed get profileStore(): CatalogProfileStore {
-        return CatalogStore.Instance.getCatalogProfileStore(this.catalogFileId);
+        return CatalogStore.Instance.catalogProfileStores.get(this.catalogFileId);
     }
 
     @computed get catalogWidgetStore(): CatalogWidgetStore {
@@ -112,11 +112,12 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
     @action handleCatalogFileChange = (fileId: number) => {
         this.catalogFileId = fileId;
         const widgetStore = WidgetsStore.Instance;
-        const catalogWidgetMap = CatalogStore.Instance.catalogPlots.get(this.componentId);
+        const catalogStore = CatalogStore.Instance;
+        const catalogWidgetMap = catalogStore.catalogPlots.get(this.componentId);
         const plotWidgetStoreId = catalogWidgetMap.get(fileId);
         if (plotWidgetStoreId) {
             const plotWidgetStore = widgetStore.catalogPlotWidgets.get(plotWidgetStoreId);
-            const profileStore = CatalogStore.Instance.getCatalogProfileStore(this.catalogFileId);
+            const profileStore = catalogStore.catalogProfileStores.get(this.catalogFileId);
             const xColumn = plotWidgetStore.xColumnName === CatalogPlotComponent.emptyColumn;
             const yColumn = plotWidgetStore.yColumnName === CatalogPlotComponent.emptyColumn;
             switch (plotWidgetStore.plotType) {
@@ -507,7 +508,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
     }
 
     private renderFilePopOver = (fileId: number, itemProps: IItemRendererProps) => {
-        const fileName = this.catalogFiles.get(fileId);
+        const fileName = this.catalogFileNames.get(fileId);
         let text = `${fileId}: ${fileName}`;
         return (
             <MenuItem
@@ -548,7 +549,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
         catalogFileIds.forEach((value) => {
             catalogFileItems.push(value);
         });
-        this.catalogFiles = CatalogStore.Instance.getCatalogFileNames(catalogFileIds);
+        this.catalogFileNames = CatalogStore.Instance.getCatalogFileNames(catalogFileIds);
 
         for (let index = 0; index < columnsName.length; index++) {
             const column = columnsName[index];

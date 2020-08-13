@@ -259,7 +259,7 @@ export class AppStore {
 
     // catalog
     @computed get catalogNum(): number {
-        return this.catalogStore.catalogProfileStores.length;
+        return this.catalogStore.catalogProfileStores.size;
     }
 
     @computed get frameNames(): IOptionProps [] {
@@ -588,14 +588,12 @@ export class AppStore {
                     catalogStore.catalogProfiles.set(key, fileId);
                 }
                 if (catalogWidgetId) {
-                    // this.catalogs.set(catalogWidgetId, fileId);
                     this.catalogStore.catalogWidgets.set(fileId, catalogWidgetId);
                     this.catalogStore.addCatalog(fileId);
                     this.fileBrowserStore.hideFileBrowser();
 
-                    // todo remove catalogWidgetId
                     const catalogProfileStore = new CatalogProfileStore(catalogInfo, ack.headers, columnData);
-                    catalogStore.catalogProfileStores.push(catalogProfileStore);
+                    catalogStore.catalogProfileStores.set(fileId, catalogProfileStore);
                 }
             }
         }, error => {
@@ -616,7 +614,7 @@ export class AppStore {
             // remove overlay
             catalogStore.removeCatalog(fileId);
             // remove profile store
-            catalogStore.catalogProfileStores = catalogStore.catalogProfileStores.filter(catalogProfileStore => { return catalogProfileStore.catalogFileId !== fileId; });
+            catalogStore.catalogProfileStores.delete(fileId);
 
             if (!this.activeFrame) {
                 return;
@@ -860,7 +858,6 @@ export class AppStore {
         this.syncFrameToContour = true;
         this.syncContourToFrame = true;
         this.initRequirements();
-        // this.catalogs = new Map<string, number>();
         this.activeLayer = ImageViewLayer.RegionMoving;
 
         AST.onReady.then(() => {
@@ -1195,14 +1192,8 @@ export class AppStore {
     };
 
     @action handleCatalogFilterStream = (catalogFilter: CARTA.CatalogFilterResponse) => {
-        // let catalogWidgetId = null;
-        // this.catalogs.forEach((value, key) => {
-        //     if (value === catalogFilter.fileId) {
-        //         catalogWidgetId = key;
-        //     }
-        // });
         const catalogFileId = catalogFilter.fileId;
-        const catalogProfileStore = CatalogStore.Instance.getCatalogProfileStore(catalogFileId);
+        const catalogProfileStore = this.catalogStore.catalogProfileStores.get(catalogFileId);
 
         const progress = catalogFilter.progress;
         if (catalogProfileStore) {
@@ -1224,26 +1215,6 @@ export class AppStore {
                 }
             }
         }
-        // const catalogWidgetStore = this.widgetsStore.catalogOverlayWidgets.get(catalogWidgetId);
-        // if (catalogWidgetStore) {
-        //     const catalogData = ProtobufProcessing.ProcessCatalogData(catalogFilter.columns);
-        //     catalogWidgetStore.updateCatalogData(catalogFilter, catalogData);
-        //     catalogWidgetStore.setProgress(progress);
-        //     if (progress === 1) {
-        //         catalogWidgetStore.setLoadingDataStatus(false);
-        //         catalogWidgetStore.setUpdatingDataStream(false);
-        //     }
-
-        //     if (catalogWidgetStore.updateMode === CatalogUpdateMode.ViewUpdate) {
-        //         const xColumn = catalogWidgetStore.xColumnRepresentation;
-        //         const yColumn = catalogWidgetStore.yColumnRepresentation;
-        //         if (xColumn && yColumn) {
-        //             const coords = catalogWidgetStore.get2DPlotData(xColumn, yColumn, catalogData);
-        //             const wcs = this.activeFrame.validWcs ? this.activeFrame.wcsInfo : 0;
-        //             this.catalogStore.updateCatalogData(catalogWidgetId, coords.wcsX, coords.wcsY, wcs, coords.xHeaderInfo.units, coords.yHeaderInfo.units, catalogWidgetStore.catalogCoordinateSystem.system);
-        //         }
-        //     }
-        // }
     };
 
     handleErrorStream = (errorData: CARTA.ErrorData) => {

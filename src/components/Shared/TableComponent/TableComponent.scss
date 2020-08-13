@@ -36,6 +36,40 @@
 }
 
 .column-filter-popover {
-    padding: 5px;
+    .bp3-popover-arrow {
+        .bp3-popover-arrow-fill {
+            fill: #394b59;
+        }
+    
+        .bp3-popover-arrow-border {
+            fill: #10161a;
+            fill-opacity: 0.1;
+        }
+    }
+    .column-filter-popover-content {
+        padding: 10px 12px;
+        background: #394b59;
+        color: #f5f8fa;
+        border-radius: 3px;
+    }
+}
+
+.column-filter-popover-dark {
+    .bp3-popover-arrow {
+        .bp3-popover-arrow-fill {
+            fill: #e1e8ed !important;
+        }
+    
+        .bp3-popover-arrow-border {
+            fill: #10161a;
+            fill-opacity: 0.2;
+        }
+    }
+    .column-filter-popover-content {
+        padding: 10px 12px;
+        background: #e1e8ed;
+        color: #394b59;
+        border-radius: 3px;
+    }
 }
 
