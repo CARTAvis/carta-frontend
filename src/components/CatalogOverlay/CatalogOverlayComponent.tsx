@@ -202,9 +202,11 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         // fixed bug from blueprintjs, only display 4 rows.
         if (profileStore && this.catalogHeaderTableRef) {
             this.updateTableSize(this.catalogHeaderTableRef, this.props.docked);
-            const fileName = profileStore.catalogInfo.fileInfo.name;
             // hack way to update catalog title
-            WidgetsStore.Instance.setWidgetComponentTitle(this.props.id, `Catalog : ${fileName}`); 
+            if (profileStore.progress === 1 || profileStore.progress === undefined) {
+                const fileName = profileStore.catalogInfo.fileInfo.name;
+                WidgetsStore.Instance.setWidgetComponentTitle(this.props.id, `Catalog : ${fileName}`);    
+            }
         }
         if (profileStore && this.catalogTableRef && catalogWidgetStore) {
             this.updateTableSize(this.catalogTableRef, this.props.docked);

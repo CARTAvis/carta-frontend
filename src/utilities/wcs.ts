@@ -162,17 +162,22 @@ export function getApproximatePolygonPoints(astTransform: number, controlPoints:
     }
 
     const N = approxPointsOriginalSpace.length;
-    const xCoords = new Float64Array(N);
-    const yCoords = new Float64Array(N);
-    for (let i = 0; i < N; i++) {
-        xCoords[i] = approxPointsOriginalSpace[i].x;
-        yCoords[i] = approxPointsOriginalSpace[i].y;
-    }
 
-    const results = AST.transformPointArrays(astTransform, xCoords, yCoords, 0) as { x: Float64Array, y: Float64Array };
-    const approximatePoints = new Array<Point2D>(N);
-    for (let i = 0; i < N; i++) {
-        approximatePoints[i] = {x: results.x[i], y: results.y[i]};
+    if (N) {
+        const xCoords = new Float64Array(N);
+        const yCoords = new Float64Array(N);
+        for (let i = 0; i < N; i++) {
+            xCoords[i] = approxPointsOriginalSpace[i].x;
+            yCoords[i] = approxPointsOriginalSpace[i].y;
+        }
+
+        const results = AST.transformPointArrays(astTransform, xCoords, yCoords, 0) as { x: Float64Array, y: Float64Array };
+        const approximatePoints = new Array<Point2D>(N);
+        for (let i = 0; i < N; i++) {
+            approximatePoints[i] = {x: results.x[i], y: results.y[i]};
+        }
+        return approximatePoints;
+    } else {
+        return [];
     }
-    return approximatePoints;
 }

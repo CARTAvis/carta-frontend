@@ -40,6 +40,7 @@ export class RegionStore {
 
     private readonly backendService: BackendService;
     private readonly regionApproximationMap: Map<number, Point2D[]>;
+    public modifiedTimestamp: number;
 
     public static RegionTypeString(regionType: CARTA.RegionType): string {
         switch (regionType) {
@@ -229,6 +230,7 @@ export class RegionStore {
         this.coordinate = RegionCoordinate.Image;
         this.regionApproximationMap = new Map<number, Point2D[]>();
         this.simplePolygonTest();
+        this.modifiedTimestamp = performance.now();
     }
 
     @action setRegionId = (id: number) => {
@@ -240,6 +242,7 @@ export class RegionStore {
         if (index >= 0 && index < this.controlPoints.length && !isAstBadPoint(p) && isFinite(p?.x) && isFinite(p?.y)) {
             this.regionApproximationMap.clear();
             this.controlPoints[index] = p;
+            this.modifiedTimestamp = performance.now();
             if (!this.editing && !skipUpdate) {
                 this.updateRegion();
             }
@@ -263,6 +266,7 @@ export class RegionStore {
 
         this.regionApproximationMap.clear();
         this.controlPoints = points;
+        this.modifiedTimestamp = performance.now();
         if (shapeChanged && this.regionType === CARTA.RegionType.POLYGON) {
             this.simplePolygonTest();
         }
