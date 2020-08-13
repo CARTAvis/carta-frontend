@@ -25,6 +25,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
     private plotType: CatalogPlotType;
     private histogramY: {yMin: number, yMax: number};
     private static emptyColumn = "None";
+    private catalogFileNames: Map<number, string>;
 
     private static readonly UnsupportedDataTypes = [CARTA.ColumnType.String, CARTA.ColumnType.Bool, CARTA.ColumnType.UnsupportedType];
 
@@ -49,6 +50,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
         const catalogPlot = CatalogStore.Instance.getAssociatedIdByWidgetId(this.props.id);
         this.componentId = catalogPlot.catalogPlotComponentId;
         this.catalogFileId = catalogPlot.catalogFileId;
+        this.catalogFileNames = new Map<number, string>();
         autorun(() => {
             const profileStore = this.profileStore;
             const widgetStore =  this.widgetStore;
@@ -99,7 +101,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
     }
 
     @computed get profileStore(): CatalogProfileStore {
-        return CatalogStore.Instance.getCatalogProfileStore(this.catalogFileId);
+        return CatalogStore.Instance.catalogProfileStores.get(this.catalogFileId);
     }
 
     @computed get catalogWidgetStore(): CatalogWidgetStore {
@@ -110,11 +112,12 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
     @action handleCatalogFileChange = (fileId: number) => {
         this.catalogFileId = fileId;
         const widgetStore = WidgetsStore.Instance;
-        const catalogWidgetMap = CatalogStore.Instance.catalogPlots.get(this.componentId);
+        const catalogStore = CatalogStore.Instance;
+        const catalogWidgetMap = catalogStore.catalogPlots.get(this.componentId);
         const plotWidgetStoreId = catalogWidgetMap.get(fileId);
         if (plotWidgetStoreId) {
             const plotWidgetStore = widgetStore.catalogPlotWidgets.get(plotWidgetStoreId);
-            const profileStore = CatalogStore.Instance.getCatalogProfileStore(this.catalogFileId);
+            const profileStore = catalogStore.catalogProfileStores.get(this.catalogFileId);
             const xColumn = plotWidgetStore.xColumnName === CatalogPlotComponent.emptyColumn;
             const yColumn = plotWidgetStore.yColumnName === CatalogPlotComponent.emptyColumn;
             switch (plotWidgetStore.plotType) {
@@ -504,11 +507,13 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
         this.onDeselect();
     }
 
-    private renderFileIdPopOver = (fileId: number, itemProps: IItemRendererProps) => {
+    private renderFilePopOver = (fileId: number, itemProps: IItemRendererProps) => {
+        const fileName = this.catalogFileNames.get(fileId);
+        let text = `${fileId}: ${fileName}`;
         return (
             <MenuItem
                 key={fileId}
-                text={fileId}
+                text={text}
                 onClick={itemProps.handleClick}
                 active={itemProps.modifiers.active}
             />
@@ -540,10 +545,11 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
         let markerColor = Colors.GRAY2;
         let spikeLineClass = "catalog-plotly";
 
-        let catalogFiles = [];
+        let catalogFileItems = [];
         catalogFileIds.forEach((value) => {
-            catalogFiles.push(value);
+            catalogFileItems.push(value);
         });
+        this.catalogFileNames = CatalogStore.Instance.getCatalogFileNames(catalogFileIds);
 
         for (let index = 0; index < columnsName.length; index++) {
             const column = columnsName[index];
@@ -557,10 +563,10 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
                 <Select 
                     className="bp3-fill"
                     filterable={false}
-                    items={catalogFiles} 
+                    items={catalogFileItems} 
                     activeItem={this.catalogFileId}
                     onItemSelect={this.handleCatalogFileChange}
-                    itemRenderer={this.renderFileIdPopOver}
+                    itemRenderer={this.renderFilePopOver}
                     popoverProps={{popoverClassName: "catalog-select", minimal: true , position: PopoverPosition.AUTO_END}}
                 >
                     <Button text={this.catalogFileId} rightIcon="double-caret-vertical"/>

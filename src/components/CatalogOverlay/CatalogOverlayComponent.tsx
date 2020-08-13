@@ -42,6 +42,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
     @observable catalogTableRef: Table = undefined;
 
     private catalogHeaderTableRef: Table = undefined;
+    private catalogFileNames: Map<number, string>;
     private static readonly DataTypeRepresentationMap = new Map<CARTA.ColumnType, Array<CatalogCoordinate>>([
         [CARTA.ColumnType.Bool, [CatalogCoordinate.NONE]],
         [CARTA.ColumnType.Double, [CatalogCoordinate.X, CatalogCoordinate.Y, CatalogCoordinate.NONE]],
@@ -66,7 +67,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
             minHeight: 400,
             defaultWidth: 740,
             defaultHeight: 350,
-            title: "Catalog Overlay",
+            title: "Catalog",
             isCloseable: true,
             helpType: HelpType.CATALOG_OVERLAY,
             componentId: "catalog-overlay-component"
@@ -79,11 +80,10 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
     }
 
     @computed get profileStore(): CatalogProfileStore {
-        return CatalogStore.Instance.getCatalogProfileStore(this.catalogFileId);
+        return CatalogStore.Instance.catalogProfileStores.get(this.catalogFileId);
     }
 
     @action handleCatalogFileChange = (fileId: number) => {
-        this.catalogFileId = fileId;
         CatalogStore.Instance.catalogProfiles.set(this.props.id, fileId);
     }
 
@@ -93,24 +93,29 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         appStore.removeCatalog(this.catalogFileId, widgetId, this.props.id);
     }
 
-    // overwrite scrollToRegion to avoid crush when _b is undefined (user pin action)
+    // overwrite scrollToRegion to avoid crush when viewportRect is undefined (unpin action with goldenLayout)
+    // https://github.com/palantir/blueprint/blob/841b2e12fec1970704b754f7794c683c735d0439/packages/table/src/table.tsx#L761
     scrollToRegion = (ref, region) => {
-        var _a = ref.state, numFrozenColumns = _a?.numFrozenColumnsClamped, numFrozenRows = _a?.numFrozenRowsClamped;
-        var _b = ref.state.viewportRect;
-        if (!_b) {
-            _b = ref.locator.getViewportRect();
-        } 
-        var currScrollLeft = _b?.left, currScrollTop = _b?.top;
-        var _c = ScrollUtils.getScrollPositionForRegion(
-            region, 
-            currScrollLeft, 
-            currScrollTop, 
-            ref.grid.getCumulativeWidthBefore, 
-            ref.grid.getCumulativeHeightBefore, 
-            numFrozenRows, numFrozenColumns
-        ), scrollLeft = _c.scrollLeft, scrollTop = _c.scrollTop;
-        var correctedScrollLeft = ref.shouldDisableHorizontalScroll() ? 0 : scrollLeft;
-        var correctedScrollTop = ref.shouldDisableVerticalScroll() ? 0 : scrollTop;
+        const state = ref.state;
+        const numFrozenColumns = state?.numFrozenColumnsClamped;
+        const numFrozenRows = state?.numFrozenRowsClamped;
+        let viewportRect = ref.state.viewportRect;
+        if (!viewportRect) {
+            viewportRect = ref.locator.getViewportRect();
+        }
+        const currScrollLeft = viewportRect?.left;
+        const currScrollTop = viewportRect?.top;
+        const {scrollLeft, scrollTop} = ScrollUtils.getScrollPositionForRegion(
+            region,
+            currScrollLeft,
+            currScrollTop,
+            ref.grid.getCumulativeWidthBefore,
+            ref.grid.getCumulativeHeightBefore,
+            numFrozenRows,
+            numFrozenColumns,
+        );
+        const correctedScrollLeft = ref.shouldDisableHorizontalScroll() ? 0 : scrollLeft;
+        const correctedScrollTop = ref.shouldDisableVerticalScroll() ? 0 : scrollTop;
         ref.quadrantStackInstance.scrollToPosition(correctedScrollLeft, correctedScrollTop);
     };
 
@@ -155,21 +160,25 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         if (!CatalogStore.Instance.catalogProfiles.has(this.props.id)) {
             CatalogStore.Instance.catalogProfiles.set(this.props.id, 1);
         }
+        this.catalogFileNames = new Map<number, string>();
 
         autorun(() => {
             const appStore = AppStore.Instance;
             const frame = appStore.activeFrame;
             const catalogFileIds = CatalogStore.Instance.activeCatalogFiles;
             this.catalogFileId = CatalogStore.Instance.catalogProfiles.get(this.props.id);
-            if (this.profileStore && frame) {
+            const profileStore = this.profileStore;
+
+            if (profileStore) {
                 let progressString = "";
-                const fileName = this.profileStore.catalogInfo.fileInfo.name || "";
-                const progress = this.profileStore.progress;
+                const fileName = profileStore.catalogInfo.fileInfo.name;
+                const progress = profileStore.progress;
                 if (progress && isFinite(progress) && progress < 1) {
                     progressString = `[${toFixed(progress * 100)}% complete]`;
                 }
+
                 if (frame && catalogFileIds?.length) {
-                    appStore.widgetsStore.setWidgetComponentTitle(this.props.id, `Catalog : ${fileName} ${progressString}`);
+                    WidgetsStore.Instance.setWidgetComponentTitle(this.props.id, `Catalog : ${fileName} ${progressString}`);
                 } else {
                     WidgetsStore.Instance.setWidgetComponentTitle(this.props.id, `Catalog`);
                 }
@@ -192,7 +201,12 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         const catalogWidgetStore = this.widgetStore;
         // fixed bug from blueprintjs, only display 4 rows.
         if (profileStore && this.catalogHeaderTableRef) {
-            this.updateTableSize(this.catalogHeaderTableRef, this.props.docked); 
+            this.updateTableSize(this.catalogHeaderTableRef, this.props.docked);
+            // hack way to update catalog title
+            if (profileStore.progress === 1 || profileStore.progress === undefined) {
+                const fileName = profileStore.catalogInfo.fileInfo.name;
+                WidgetsStore.Instance.setWidgetComponentTitle(this.props.id, `Catalog : ${fileName}`);    
+            }
         }
         if (profileStore && this.catalogTableRef && catalogWidgetStore) {
             this.updateTableSize(this.catalogTableRef, this.props.docked);
@@ -649,10 +663,12 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
     }
 
     private renderFileIdPopOver = (fileId: number, itemProps: IItemRendererProps) => {
+        const fileName = this.catalogFileNames.get(fileId);
+        let text = `${fileId}: ${fileName}`;
         return (
             <MenuItem
                 key={fileId}
-                text={fileId}
+                text={text}
                 onClick={itemProps.handleClick}
                 active={itemProps.modifiers.active}
             />
@@ -755,7 +771,8 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
             updateSelectedRow: this.onCatalogTableDataSelected,
             updateSortRequest: this.updateSortRequest,
             sortingInfo: profileStore.sortingInfo,
-            disable: profileStore.disableWithDataLoading
+            disable: profileStore.disableWithDataLoading,
+            darkTheme: AppStore.Instance.darkTheme
         };
 
         let startIndex = 0;
@@ -788,11 +805,12 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
             </tr>
         ) : null;
 
-        let catalogFiles = [];
+        let catalogFileItems = [];
         catalogFileIds.forEach((value) => {
-            catalogFiles.push(value);
+            catalogFileItems.push(value);
         });
-
+        this.catalogFileNames = CatalogStore.Instance.getCatalogFileNames(catalogFileIds);
+        
         let systemOptions = [];
         profileStore.CoordinateSystemName.forEach((value, key) => {
             systemOptions.push(key);
@@ -808,7 +826,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
                         <Select 
                             className="bp3-fill"
                             filterable={false}
-                            items={catalogFiles} 
+                            items={catalogFileItems} 
                             activeItem={this.catalogFileId}
                             onItemSelect={this.handleCatalogFileChange}
                             itemRenderer={this.renderFileIdPopOver}
