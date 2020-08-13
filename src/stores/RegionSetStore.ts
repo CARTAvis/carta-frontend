@@ -1,8 +1,9 @@
 import {action, observable} from "mobx";
 import {CARTA} from "carta-protobuf";
 import {CURSOR_REGION_ID, FrameStore, PreferenceStore, RegionStore} from "stores";
-import {Point2D} from "models";
+import {Point2D, Transform2D} from "models";
 import {BackendService} from "../services";
+import {isAstBadPoint, scale2D, transformPoint} from "../utilities";
 
 export enum RegionMode {
     MOVING,
@@ -126,5 +127,64 @@ export class RegionSetStore {
 
     @action toggleMode = () => {
         this.mode = (this.mode === RegionMode.MOVING) ? RegionMode.CREATING : RegionMode.MOVING;
+    };
+
+    @action migrateRegionsFromExistingSet = (sourceRegionSet: RegionSetStore, spatialTransformAST: number, forward: boolean = false) => {
+        if (sourceRegionSet?.regions?.length <= 1) {
+            return;
+        }
+
+        let newId = -1;
+        for (const region of sourceRegionSet.regions) {
+            // skip duplicates
+            const duplicateRegion = this.regions.find(r => r.modifiedTimestamp === region.modifiedTimestamp);
+            if (duplicateRegion) {
+                continue;
+            }
+
+            if (region.regionId === CURSOR_REGION_ID) {
+                const centerNewFrame = transformPoint(spatialTransformAST, region.center, forward);
+                if (this.regions.length && this.regions[0].regionId === CURSOR_REGION_ID) {
+                    this.regions[0].setControlPoint(0, centerNewFrame);
+                }
+            } else {
+
+                let newControlPoints: Point2D[] = [];
+                let rotation: number = 0;
+
+                if (region.regionType === CARTA.RegionType.RECTANGLE || region.regionType === CARTA.RegionType.ELLIPSE) {
+                    const centerNewFrame = transformPoint(spatialTransformAST, region.center, forward);
+                    if (!isAstBadPoint(centerNewFrame)) {
+                        const transform = new Transform2D(spatialTransformAST, centerNewFrame);
+                        const size = scale2D(region.controlPoints[1], forward ? transform.scale : 1.0 / transform.scale);
+                        rotation = region.rotation + (forward ? 1 : -1) * transform.rotation * 180 / Math.PI;
+                        newControlPoints = [centerNewFrame, size];
+                    }
+                } else if (region.regionType === CARTA.RegionType.POINT || region.regionType === CARTA.RegionType.POLYGON) {
+                    for (const point of region.controlPoints) {
+                        const pointNewFrame = transformPoint(spatialTransformAST, point, forward);
+                        if (!isAstBadPoint(pointNewFrame)) {
+                            newControlPoints.push(pointNewFrame);
+                        }
+                    }
+                }
+
+                if (newControlPoints.length) {
+                    let newRegion: RegionStore;
+                    if (region.regionType === CARTA.RegionType.POINT) {
+                        newRegion = this.addRegion(newControlPoints, 0, CARTA.RegionType.POINT);
+                        newRegion.setName(region.name);
+                        newRegion.setColor(region.color);
+                    } else {
+                        newRegion = this.addExistingRegion(newControlPoints, rotation, region.regionType, newId, region.name, region.color, region.lineWidth, region.dashLength ? [region.dashLength] : []);
+                        newRegion.endCreating();
+                    }
+                    newRegion.setLocked(region.locked);
+                    // Link the two regions together
+                    newRegion.modifiedTimestamp = region.modifiedTimestamp;
+                    newId--;
+                }
+            }
+        }
     };
 }

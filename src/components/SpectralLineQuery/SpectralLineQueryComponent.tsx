@@ -1,7 +1,7 @@
 import * as React from "react";
 import {action, computed, observable} from "mobx";
 import {observer} from "mobx-react";
-import {AnchorButton, Button, Classes, FormGroup, HTMLSelect, Intent, Menu, MenuItem, Overlay, Popover, Position, Spinner, Switch, Tooltip} from "@blueprintjs/core";
+import {AnchorButton, Button, Classes, ControlGroup, FormGroup, HTMLSelect, Intent, Menu, MenuItem, Overlay, Popover, Position, Spinner, Switch, Tooltip} from "@blueprintjs/core";
 import {Cell, Column, Regions, RenderMode, SelectionModes, Table} from "@blueprintjs/table";
 import SplitPane, { Pane } from "react-split-pane";
 import ReactResizeDetector from "react-resize-detector";
@@ -35,7 +35,7 @@ export class SpectralLineQueryComponent extends React.Component<WidgetProps> {
             type: "spectral-line-query",
             minWidth: 500,
             minHeight: 400,
-            defaultWidth: 600,
+            defaultWidth: 750,
             defaultHeight: 600,
             title: "Spectral Line Query",
             isCloseable: true,
@@ -276,6 +276,20 @@ export class SpectralLineQueryComponent extends React.Component<WidgetProps> {
                             onChange={(ev) => widgetStore.setQueryUnit(ev.currentTarget.value as SpectralLineQueryUnit)}
                         />
                     </FormGroup>
+                    <ControlGroup className="intensity-limit">
+                        <FormGroup label={"Intensity Limit"} inline={true}>
+                            <Switch checked={widgetStore.intensityLimitEnabled} onChange={() => widgetStore.toggleIntensityLimit()}/>
+                        </FormGroup>
+                        {widgetStore.intensityLimitEnabled &&
+                        <Tooltip content="CDMS/JPL intensity (log)" position={Position.BOTTOM}>
+                            <SafeNumericInput
+                                value={widgetStore.intensityLimitValue}
+                                buttonPosition="none"
+                                onValueChange={val => widgetStore.setIntensityLimitValue(val)}
+                            />
+                        </Tooltip>
+                        }
+                    </ControlGroup>
                 </div>
                 <div>
                     <Button intent={Intent.PRIMARY} onClick={widgetStore.query}>Query</Button>
