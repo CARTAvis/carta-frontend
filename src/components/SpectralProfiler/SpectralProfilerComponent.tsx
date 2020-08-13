@@ -493,7 +493,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
         return (
             <div className={className}>
                 <div className="profile-container">
-                    <SpectralProfilerToolbarComponent widgetStore={this.widgetStore}/>
+                    <SpectralProfilerToolbarComponent widgetStore={this.widgetStore} id={this.props.id}/>
                     <div className="profile-plot">
                         <LinePlotComponent {...linePlotProps}/>
                         <ProfilerInfoComponent info={this.genProfilerInfo()}/>

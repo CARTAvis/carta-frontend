@@ -56,7 +56,8 @@ export class WidgetConfig {
     @observable title: string;
     parentId?: string;
     parentType?: string;
-    helpType: HelpType;
+    helpType?: HelpType;
+    tabsHelpTypes?: HelpType[];
     componentId?: string;
     zIndex?: number = 0;
 }

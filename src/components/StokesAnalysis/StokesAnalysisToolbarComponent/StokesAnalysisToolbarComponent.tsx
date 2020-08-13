@@ -1,13 +1,14 @@
 import {observer} from "mobx-react";
 import * as React from "react";
-import {FormGroup, Switch} from "@blueprintjs/core";
+import {FormGroup, Switch, ButtonGroup, Button, Tooltip} from "@blueprintjs/core";
 import {AppStore, FrameStore} from "stores";
 import {StokesAnalysisWidgetStore} from "stores/widgets";
-import {RegionSelectorComponent} from "components";
+import {StokesAnalysisComponent, RegionSelectorComponent, StokesAnalysisSettingsTabs} from "components";
+import {CustomIcon} from "icons/CustomIcons";
 import "./StokesAnalysisToolbarComponent.css";
 
 @observer
-export class StokesAnalysisToolbarComponent extends React.Component<{widgetStore: StokesAnalysisWidgetStore}> {
+export class StokesAnalysisToolbarComponent extends React.Component<{widgetStore: StokesAnalysisWidgetStore, id: string}> {
 
     private handleFractionalPolChanged = (changeEvent: React.ChangeEvent<HTMLInputElement>) => {
         this.props.widgetStore.setFractionalPolVisible(changeEvent.target.checked);
@@ -17,6 +18,11 @@ export class StokesAnalysisToolbarComponent extends React.Component<{widgetStore
         if (newFrame && newFrame.regionSet && !(newFrame.frameInfo.fileInfoExtended.stokes > 1)) {
             this.props.widgetStore.setFractionalPolVisible(false);
         }
+    }
+
+    private smoothingShortcutClick = () => {
+        this.props.widgetStore.setSettingsTabId(StokesAnalysisSettingsTabs.SMOOTHING);
+        AppStore.Instance.widgetsStore.createFloatingSettingsWidget(StokesAnalysisComponent.WIDGET_CONFIG.title, this.props.id, StokesAnalysisComponent.WIDGET_CONFIG.type);
     }
 
     public render() {
@@ -34,6 +40,11 @@ export class StokesAnalysisToolbarComponent extends React.Component<{widgetStore
                 <FormGroup label={"Frac. Pol."} inline={true} disabled={!enableFractionalPol}>
                     <Switch checked={widgetStore.fractionalPolVisible} onChange={this.handleFractionalPolChanged} disabled={!enableFractionalPol}/>
                 </FormGroup>
+                <ButtonGroup className="profile-buttons">
+                    <Tooltip content="Smoothing">
+                        <Button icon={<CustomIcon icon="smoothing"/>} onClick={this.smoothingShortcutClick}/>
+                    </Tooltip>
+                </ButtonGroup>
             </div>
         );
     }

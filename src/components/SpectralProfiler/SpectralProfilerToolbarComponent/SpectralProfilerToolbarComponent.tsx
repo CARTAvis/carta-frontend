@@ -1,14 +1,15 @@
 import {observer} from "mobx-react";
 import * as React from "react";
-import {FormGroup, HTMLSelect, IOptionProps} from "@blueprintjs/core";
+import {FormGroup, HTMLSelect, IOptionProps, ButtonGroup, Button, Tooltip} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import {AppStore, FrameStore} from "stores";
 import {SpectralProfileWidgetStore} from "stores/widgets";
-import {RegionSelectorComponent} from "components";
+import {RegionSelectorComponent, SpectralProfilerComponent, SpectralProfilerSettingsTabs} from "components";
 import "./SpectralProfilerToolbarComponent.css";
+import {CustomIcon} from "icons/CustomIcons";
 
 @observer
-export class SpectralProfilerToolbarComponent extends React.Component<{ widgetStore: SpectralProfileWidgetStore }> {
+export class SpectralProfilerToolbarComponent extends React.Component<{ widgetStore: SpectralProfileWidgetStore, id: string }> {
 
     private handleStatsChanged = (changeEvent: React.ChangeEvent<HTMLSelectElement>) => {
         this.props.widgetStore.setStatsType(parseInt(changeEvent.target.value));
@@ -17,11 +18,21 @@ export class SpectralProfilerToolbarComponent extends React.Component<{ widgetSt
     private handleCoordinateChanged = (changeEvent: React.ChangeEvent<HTMLSelectElement>) => {
         this.props.widgetStore.setCoordinate(changeEvent.target.value);
     };
-
+    
     private handleFrameChanged = (newFrame: FrameStore) => {
         if (newFrame && !newFrame.stokesInfo.includes(this.props.widgetStore.coordinate)) {
             this.props.widgetStore.setCoordinate("z");
         }
+    }
+
+    private smoothingShortcutClick = () => {
+        this.props.widgetStore.setSettingsTabId(SpectralProfilerSettingsTabs.SMOOTHING);
+        AppStore.Instance.widgetsStore.createFloatingSettingsWidget(SpectralProfilerComponent.WIDGET_CONFIG.title, this.props.id, SpectralProfilerComponent.WIDGET_CONFIG.type);
+    }
+
+    private momentsShortcutClick = () => {
+        this.props.widgetStore.setSettingsTabId(SpectralProfilerSettingsTabs.MOMENTS);
+        AppStore.Instance.widgetsStore.createFloatingSettingsWidget(SpectralProfilerComponent.WIDGET_CONFIG.title, this.props.id, SpectralProfilerComponent.WIDGET_CONFIG.type);
     }
 
     public render() {
@@ -69,6 +80,14 @@ export class SpectralProfilerToolbarComponent extends React.Component<{ widgetSt
                 <FormGroup label={"Stokes"} inline={true} disabled={!enableStokesSelect}>
                     <HTMLSelect className={stokesClassName} value={widgetStore.coordinate} options={profileCoordinateOptions} onChange={this.handleCoordinateChanged} disabled={!enableStokesSelect}/>
                 </FormGroup>
+                <ButtonGroup className="profile-buttons">
+                    <Tooltip content="Smoothing">
+                        <Button icon={<CustomIcon icon="smoothing"/>} onClick={this.smoothingShortcutClick}/>
+                    </Tooltip>
+                    <Tooltip content="Moments">
+                        <Button icon={<CustomIcon icon="moments"/>} onClick={this.momentsShortcutClick}/>
+                    </Tooltip>
+                </ButtonGroup>
             </div>
         );
     }
