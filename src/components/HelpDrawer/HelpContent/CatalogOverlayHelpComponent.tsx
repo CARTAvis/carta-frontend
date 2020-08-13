@@ -33,26 +33,24 @@ export class CatalogOverlayHelpComponent extends React.Component {
                     are needed.</p>
                 <p>The source catalogue table accepts sub-filters such as partial 
                     string match or value range. For numeric columns, supported 
-                    operators are:
-                    <ul>
-                        <li><code>&gt;</code> greater than</li>
-                        <li><code>&gt;=</code> greater than or equal to</li>
-                        <li><code>&lt;</code> less than</li>
-                        <li><code>&lt;=</code> less than or equal to</li>
-                        <li><code>==</code> equal to</li>
-                        <li><code>!=</code> not equal to</li>
-                        <li><code>..</code> between (exclusive)</li>
-                        <li><code>...</code> between (inclusive)</li>
-                    </ul>
-                </p>
-                <p>Examples:
-                    <ul>
-                        <li><code>&lt; 10</code> (everything less than 10)</li>
-                        <li><code>== 1.23</code> (entries equal to 1.23)</li>
-                        <li><code>10..50</code> (everything between 10 and 50, exclusive)</li>
-                        <li><code>10...50</code> (everything between 10 and 50, inclusive)</li>
-                    </ul>
-                </p>
+                    operators are:</p>
+                <ul>
+                    <li><code>&gt;</code> greater than</li>
+                    <li><code>&gt;=</code> greater than or equal to</li>
+                    <li><code>&lt;</code> less than</li>
+                    <li><code>&lt;=</code> less than or equal to</li>
+                    <li><code>==</code> equal to</li>
+                    <li><code>!=</code> not equal to</li>
+                    <li><code>..</code> between (exclusive)</li>
+                    <li><code>...</code> between (inclusive)</li>
+                </ul>
+                <p>Examples:</p>
+                <ul>
+                    <li><code>&lt; 10</code> (everything less than 10)</li>
+                    <li><code>== 1.23</code> (entries equal to 1.23)</li>
+                    <li><code>10..50</code> (everything between 10 and 50, exclusive)</li>
+                    <li><code>10...50</code> (everything between 10 and 50, inclusive)</li>
+                </ul>
                 <p>For string columns, partial match is adopted. For 
                     example, <code>gal</code> (no quotation) will return entries 
                     containing the &quot;gal&quot; string.</p>
