@@ -646,11 +646,11 @@ export class BackendService {
     };
 
     @action("request spectral line")
-    requestSpectralLine(frequencyRange: CARTA.DoubleBounds): Observable<CARTA.SpectralLineResponse> {
+    requestSpectralLine(frequencyRange: CARTA.DoubleBounds, intensityLimit: number): Observable<CARTA.SpectralLineResponse> {
         if (this.connectionStatus !== ConnectionStatus.ACTIVE) {
             return throwError(new Error("Not connected"));
         } else {
-            const message = CARTA.SpectralLineRequest.create({frequencyRange: frequencyRange});
+            const message = CARTA.SpectralLineRequest.create({frequencyRange: frequencyRange, lineIntensityLowerLimit: intensityLimit});
             const requestId = this.eventCounter;
             this.logEvent(CARTA.EventType.SPECTRAL_LINE_REQUEST, requestId, message, false);
             if (this.sendEvent(CARTA.EventType.SPECTRAL_LINE_REQUEST, CARTA.SpectralLineRequest.encode(message).finish())) {

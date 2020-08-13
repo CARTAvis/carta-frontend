@@ -101,12 +101,15 @@ const SHIFTIED_FREQUENCY_COLUMN_INDEX = 2;
 const REST_FREQUENCY_COLUMN_INDEX = 3;
 const MEASURED_FREQUENCY_COLUMN_INDEX = 5;
 const RESOLVED_QN_COLUMN_INDEX = 7;
+const FREQUENCY_RANGE_LIMIT = 2 * 1e4; // 20000 MHz
 
 export class SpectralLineQueryWidgetStore extends RegionWidgetStore {
     @observable queryRangeType: SpectralLineQueryRangeType;
     @observable queryRange: NumberRange;
     @observable queryRangeByCenter: NumberRange;
     @observable queryUnit: SpectralLineQueryUnit;
+    @observable intensityLimitEnabled: boolean;
+    @observable intensityLimitValue: number;
     @observable isQuerying: boolean;
     @observable columnHeaders: Array<CARTA.ICatalogHeader>;
     @observable headerDisplay: Map<SpectralLineHeaders, boolean>;
@@ -135,6 +138,14 @@ export class SpectralLineQueryWidgetStore extends RegionWidgetStore {
 
     @action setQueryUnit = (queryUnit: SpectralLineQueryUnit) => {
         this.queryUnit = queryUnit;
+    };
+
+    @action toggleIntensityLimit = () => {
+        this.intensityLimitEnabled = !this.intensityLimitEnabled;
+    };
+
+    @action setIntensityLimitValue = (intensityLimitValue: number) => {
+        this.intensityLimitValue = intensityLimitValue;
     };
 
     @action setHeaderDisplay = (header: SpectralLineHeaders) => {
@@ -195,12 +206,15 @@ export class SpectralLineQueryWidgetStore extends RegionWidgetStore {
             AppStore.Instance.alertStore.showAlert("Invalid frequency range.");
         } else if (freqMHzFrom === freqMHzTo) {
             AppStore.Instance.alertStore.showAlert("Please specify a frequency range.");
-        } else if (Math.abs(freqMHzTo - freqMHzFrom) > 1e4) {
-            AppStore.Instance.alertStore.showAlert(`Frequency range ${freqMHzFrom <= freqMHzTo ? freqMHzFrom : freqMHzTo} MHz to ${freqMHzFrom <= freqMHzTo ? freqMHzTo : freqMHzFrom} MHz is too wide. Please specify a frequency range within 10 GHz.`);
+        } else if (Math.abs(freqMHzTo - freqMHzFrom) > FREQUENCY_RANGE_LIMIT) {
+            AppStore.Instance.alertStore.showAlert(
+                `Frequency range ${freqMHzFrom <= freqMHzTo ? freqMHzFrom : freqMHzTo} MHz to ${freqMHzFrom <= freqMHzTo ? freqMHzTo : freqMHzFrom} MHz is too wide.` +
+                `Please specify a frequency range within ${FREQUENCY_RANGE_LIMIT / 1e3} GHz.`
+            );
         } else {
             this.isQuerying = true;
             const backendService = BackendService.Instance;
-            backendService.requestSpectralLine(new CARTA.DoubleBounds({min: freqMHzFrom, max: freqMHzTo})).subscribe(ack => {
+            backendService.requestSpectralLine(new CARTA.DoubleBounds({min: freqMHzFrom, max: freqMHzTo}), this.intensityLimitEnabled ? this.intensityLimitValue : NaN).subscribe(ack => {
                 this.isQuerying = false;
                 if (ack.success && ack.dataSize >= 0) {
                     if (ack.dataSize > 0) {
@@ -333,6 +347,8 @@ export class SpectralLineQueryWidgetStore extends RegionWidgetStore {
         this.queryRange = [0, 0];
         this.queryRangeByCenter = [0, 0];
         this.queryUnit = SpectralLineQueryUnit.MHz;
+        this.intensityLimitEnabled = true;
+        this.intensityLimitValue = -5;
         this.isQuerying = false;
         this.columnHeaders = [];
         this.headerDisplay = new Map<SpectralLineHeaders, boolean>();
