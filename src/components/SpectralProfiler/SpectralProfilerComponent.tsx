@@ -5,7 +5,7 @@ import {observer} from "mobx-react";
 import {Colors, NonIdealState} from "@blueprintjs/core";
 import ReactResizeDetector from "react-resize-detector";
 import {CARTA} from "carta-protobuf";
-import {LineMarker, LinePlotComponent, LinePlotComponentProps, ProfilerInfoComponent, VERTICAL_RANGE_PADDING, SmoothingType} from "components/Shared";
+import {LineMarker, LinePlotComponent, LinePlotComponentProps, LinePlotSelectingMode, ProfilerInfoComponent, VERTICAL_RANGE_PADDING, SmoothingType} from "components/Shared";
 import {TickType, MultiPlotProps} from "../Shared/LinePlot/PlotContainer/PlotContainerComponent";
 import {SpectralProfilerToolbarComponent} from "./SpectralProfilerToolbarComponent/SpectralProfilerToolbarComponent";
 import {AnimationState, SpectralProfileStore, WidgetConfig, WidgetProps, HelpType, AnimatorStore, WidgetsStore, AppStore} from "stores";
@@ -182,8 +182,13 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
                 const frame = this.widgetStore.effectiveFrame;
                 let progressString = "";
                 const currentData = this.plotData;
-                if (currentData && isFinite(currentData.progress) && currentData.progress < 1.0) {
-                    progressString = `[${toFixed(currentData.progress * 100)}% complete]`;
+                if (currentData && isFinite(currentData.progress)) {
+                    if (currentData.progress < 1.0) {
+                        progressString = `[${toFixed(currentData.progress * 100)}% complete]`;
+                        this.widgetStore.updateStreamingDataStatus(true);
+                    } else {
+                        this.widgetStore.updateStreamingDataStatus(false);
+                    }
                 }
                 if (frame && coordinate) {
                     let coordinateString: string;
@@ -213,29 +218,12 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
 
     onChannelChanged = (x: number) => {
         const frame = this.widgetStore.effectiveFrame;
-        if (AnimatorStore.Instance.animationState === AnimationState.PLAYING) {
+        if (x === null || x === undefined || !isFinite(x) || AnimatorStore.Instance.animationState === AnimationState.PLAYING) {
             return;
         }
-
-        if (frame && frame.channelInfo) {
-            let channelInfo = frame.channelInfo;
-            let nearestIndex;
-            if (frame.isCoordChannel) {
-                nearestIndex = channelInfo.getChannelIndexSimple(x);
-            } else {
-                if ((frame.spectralAxis && !frame.spectralAxis.valid) || frame.isSpectralPropsEqual) {
-                    nearestIndex = channelInfo.getChannelIndexWCS(x);
-                } else {
-                    // invert x in selected widget wcs to frame's default wcs
-                    const nativeX = frame.convertToNativeWCS(x);
-                    if (isFinite(nativeX)) {
-                        nearestIndex = channelInfo.getChannelIndexWCS(nativeX);
-                    }
-                }
-            }
-            if (nearestIndex !== null && nearestIndex !== undefined) {
-                frame.setChannels(nearestIndex, frame.requiredStokes, true);
-            }
+        const nearestIndex = frame.findChannelIndexByValue(x);
+        if (frame && isFinite(nearestIndex) && nearestIndex >= 0 && nearestIndex < frame.numChannels) {
+            frame.setChannels(nearestIndex, frame.requiredStokes, true);
         }
     };
 
@@ -261,6 +249,15 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
             return null;
         }
         return frame.isCoordChannel ? channel : frame.channelValues[channel];
+    }
+
+    @computed get linePlotSelectingMode(): LinePlotSelectingMode {
+        if (this.widgetStore.isSelectingMomentChannelRange) {
+            return LinePlotSelectingMode.HORIZONTAL;
+        } else if (this.widgetStore.isSelectingMomentMaskRange) {
+            return LinePlotSelectingMode.VERTICAL;
+        }
+        return LinePlotSelectingMode.BOX;
     }
 
     onGraphCursorMoved = _.throttle((x) => {
@@ -299,6 +296,16 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
             }
         }
         return profilerInfo;
+    };
+
+    private setSelectedRange = (min: number, max: number) => {
+        if (isFinite(min) && isFinite(max)) {
+            if (this.widgetStore.isSelectingMomentChannelRange) {
+                this.widgetStore.setSelectedChannelRange(min, max);
+            } else if (this.widgetStore.isSelectingMomentMaskRange) {
+                this.widgetStore.setSelectedMaskRange(min, max);
+            }
+        }
     };
 
     private fillVisibleSpectralLines = (): LineMarker[] => {
@@ -357,6 +364,8 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
             mouseEntered: this.widgetStore.setMouseMoveIntoLinePlots,
             borderWidth: this.widgetStore.lineWidth,
             pointRadius: this.widgetStore.linePlotPointSize,
+            selectingMode: this.linePlotSelectingMode,
+            setSelectedRange: this.setSelectedRange,
             zeroLineWidth: 2,
             order: 1,
             multiPlotPropsMap: new Map()
@@ -475,6 +484,19 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
                     width: currentPlotData.yRms,
                     opacity: 0.2,
                     color: appStore.darkTheme ? Colors.GREEN4 : Colors.GREEN2
+                });
+            }
+
+            const selectedRange = this.widgetStore.selectedRange;
+            if (selectedRange && isFinite(selectedRange.center) && isFinite(selectedRange.width)) {
+                linePlotProps.markers.push({
+                    value: selectedRange.center,
+                    id: "marker-range",
+                    draggable: false,
+                    horizontal: selectedRange.isHorizontal,
+                    width: selectedRange.width / 2,
+                    opacity: 0.2,
+                    color: appStore.darkTheme ? Colors.GRAY4 : Colors.GRAY2
                 });
             }
 

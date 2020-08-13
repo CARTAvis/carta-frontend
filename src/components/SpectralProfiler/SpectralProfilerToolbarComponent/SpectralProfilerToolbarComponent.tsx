@@ -18,22 +18,22 @@ export class SpectralProfilerToolbarComponent extends React.Component<{ widgetSt
     private handleCoordinateChanged = (changeEvent: React.ChangeEvent<HTMLSelectElement>) => {
         this.props.widgetStore.setCoordinate(changeEvent.target.value);
     };
-    
-    private handleFrameChanged = (newFrame: FrameStore) => {
-        if (newFrame && !newFrame.stokesInfo.includes(this.props.widgetStore.coordinate)) {
-            this.props.widgetStore.setCoordinate("z");
-        }
-    }
 
     private smoothingShortcutClick = () => {
         this.props.widgetStore.setSettingsTabId(SpectralProfilerSettingsTabs.SMOOTHING);
         AppStore.Instance.widgetsStore.createFloatingSettingsWidget(SpectralProfilerComponent.WIDGET_CONFIG.title, this.props.id, SpectralProfilerComponent.WIDGET_CONFIG.type);
-    }
+    };
 
     private momentsShortcutClick = () => {
         this.props.widgetStore.setSettingsTabId(SpectralProfilerSettingsTabs.MOMENTS);
         AppStore.Instance.widgetsStore.createFloatingSettingsWidget(SpectralProfilerComponent.WIDGET_CONFIG.title, this.props.id, SpectralProfilerComponent.WIDGET_CONFIG.type);
-    }
+    };
+
+    private handleFrameChanged = (newFrame: FrameStore) => {
+        if (newFrame && !newFrame.stokesInfo.includes(this.props.widgetStore.coordinate)) {
+            this.props.widgetStore.setCoordinate("z");
+        }
+    };
 
     public render() {
         const widgetStore = this.props.widgetStore;

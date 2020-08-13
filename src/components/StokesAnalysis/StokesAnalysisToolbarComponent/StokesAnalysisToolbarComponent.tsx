@@ -14,16 +14,16 @@ export class StokesAnalysisToolbarComponent extends React.Component<{widgetStore
         this.props.widgetStore.setFractionalPolVisible(changeEvent.target.checked);
     };
 
-    private handleFrameChanged = (newFrame: FrameStore) => {
-        if (newFrame && newFrame.regionSet && !(newFrame.frameInfo.fileInfoExtended.stokes > 1)) {
-            this.props.widgetStore.setFractionalPolVisible(false);
-        }
-    }
-
     private smoothingShortcutClick = () => {
         this.props.widgetStore.setSettingsTabId(StokesAnalysisSettingsTabs.SMOOTHING);
         AppStore.Instance.widgetsStore.createFloatingSettingsWidget(StokesAnalysisComponent.WIDGET_CONFIG.title, this.props.id, StokesAnalysisComponent.WIDGET_CONFIG.type);
     }
+
+    private handleFrameChanged = (newFrame: FrameStore) => {
+        if (newFrame && newFrame.regionSet && !(newFrame.frameInfo.fileInfoExtended.stokes > 1)) {
+            this.props.widgetStore.setFractionalPolVisible(false);
+        }
+    };
 
     public render() {
         const widgetStore = this.props.widgetStore;
