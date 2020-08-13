@@ -202,7 +202,7 @@ export class TableComponent extends React.Component<TableComponentProps> {
             <ColumnHeaderCell>
                 <ColumnHeaderCell className={"column-name"} nameRenderer={nameRenderer}/>
                 <ColumnHeaderCell isActive={activeFilter}>
-                    <Popover className={"column-filter"} popoverClassName={popOverClass} content={filterSyntax} interactionKind={PopoverInteractionKind.HOVER}>
+                    <Popover hoverOpenDelay={250} hoverCloseDelay={0} className={"column-filter"} popoverClassName={popOverClass} content={filterSyntax} interactionKind={PopoverInteractionKind.HOVER}>
                         <InputGroup
                             key={"column-filter-" + columnIndex}
                             small={true}
