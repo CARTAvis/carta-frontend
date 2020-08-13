@@ -3,15 +3,13 @@ import {ImageComponent} from "./ImageComponent";
 import * as headCatalogueButton from "static/help/head_catalogue_button.png";
 import * as headCatalogueButton_d from "static/help/head_catalogue_button_d.png";
 
-
 export class CatalogOverlayHelpComponent extends React.Component {
     public render() {
         return (
             <div>
                 <p><ImageComponent light={headCatalogueButton} dark={headCatalogueButton_d} width="90%"/></p>
                 <p>Source catalogue files in the VOTable or FITS format 
-                    can be loaded in CARTA (via &quot;File&quot; 
-                    -> &quot;Import catalog&quot;) for visualization 
+                    can be loaded in CARTA (via &quot;File&quot;-&gt; &quot;Import catalog&quot;) for visualization
                     as an image overlay, or a 2D scatter plot, or a histogram.</p>
                 <p>Once a source catalogue file is loaded, the information of 
                     each column will be shown in the upper table, while the 

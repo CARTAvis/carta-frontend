@@ -58,7 +58,7 @@ export class SpectralProfilerSettingsMomentsHelpComponent extends React.Componen
                     kept in RAM per session and if there is a new request of moment calculations, 
                     these images will be deleted first. Optionally, calculated moment images 
                     can be exported in CASA or FITS format via 
-                    &quot;File&quot; -> &quot;Save image&quot;.</p>    
+                    &quot;File&quot; -&gt; &quot;Save image&quot;.</p>
             </div>
         );
     }
