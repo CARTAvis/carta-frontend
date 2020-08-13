@@ -51,6 +51,7 @@ export class BackendService {
     readonly statsStream: Subject<CARTA.RegionStatsData>;
     readonly contourStream: Subject<CARTA.ContourImageData>;
     readonly catalogStream: Subject<CARTA.CatalogFilterResponse>;
+    readonly momentProgressStream: Subject<CARTA.MomentProgress>;
     readonly reconnectStream: Subject<void>;
     readonly scriptingStream: Subject<CARTA.ScriptingRequest>;
     private readonly handlerMap: Map<CARTA.EventType, HandlerFunction>;
@@ -74,6 +75,7 @@ export class BackendService {
         this.contourStream = new Subject<CARTA.ContourImageData>();
         this.scriptingStream = new Subject<CARTA.ScriptingRequest>();
         this.catalogStream = new Subject<CARTA.CatalogFilterResponse>();
+        this.momentProgressStream = new Subject<CARTA.MomentProgress>();
         this.reconnectStream = new Subject<void>();
 
         // Construct handler and decoder maps
@@ -86,6 +88,7 @@ export class BackendService {
             [CARTA.EventType.REGION_FILE_INFO_RESPONSE, this.onSimpleMappedResponse],
             [CARTA.EventType.CATALOG_FILE_INFO_RESPONSE, this.onSimpleMappedResponse],
             [CARTA.EventType.OPEN_FILE_ACK, this.onSimpleMappedResponse],
+            [CARTA.EventType.SAVE_FILE_ACK, this.onSimpleMappedResponse],
             [CARTA.EventType.OPEN_CATALOG_FILE_ACK, this.onSimpleMappedResponse],
             [CARTA.EventType.IMPORT_REGION_ACK, this.onSimpleMappedResponse],
             [CARTA.EventType.EXPORT_REGION_ACK, this.onSimpleMappedResponse],
@@ -101,6 +104,8 @@ export class BackendService {
             [CARTA.EventType.CONTOUR_IMAGE_DATA, this.onStreamedContourData],
             [CARTA.EventType.CATALOG_FILTER_RESPONSE, this.onStreamedCatalogData],
             [CARTA.EventType.RASTER_TILE_SYNC, this.onStreamedRasterSync],
+            [CARTA.EventType.MOMENT_PROGRESS, this.onStreamedMomentProgress],
+            [CARTA.EventType.MOMENT_RESPONSE, this.onSimpleMappedResponse],
             [CARTA.EventType.SCRIPTING_REQUEST, this.onScriptingRequest],
             [CARTA.EventType.SPECTRAL_LINE_RESPONSE, this.onSimpleMappedResponse]
         ]);
@@ -114,6 +119,7 @@ export class BackendService {
             [CARTA.EventType.REGION_FILE_INFO_RESPONSE, CARTA.RegionFileInfoResponse],
             [CARTA.EventType.CATALOG_FILE_INFO_RESPONSE, CARTA.CatalogFileInfoResponse],
             [CARTA.EventType.OPEN_FILE_ACK, CARTA.OpenFileAck],
+            [CARTA.EventType.SAVE_FILE_ACK, CARTA.SaveFileAck],
             [CARTA.EventType.OPEN_CATALOG_FILE_ACK, CARTA.OpenCatalogFileAck],
             [CARTA.EventType.IMPORT_REGION_ACK, CARTA.ImportRegionAck],
             [CARTA.EventType.EXPORT_REGION_ACK, CARTA.ExportRegionAck],
@@ -129,6 +135,8 @@ export class BackendService {
             [CARTA.EventType.CONTOUR_IMAGE_DATA, CARTA.ContourImageData],
             [CARTA.EventType.CATALOG_FILTER_RESPONSE, CARTA.CatalogFilterResponse],
             [CARTA.EventType.RASTER_TILE_SYNC, CARTA.RasterTileSync],
+            [CARTA.EventType.MOMENT_PROGRESS, CARTA.MomentProgress],
+            [CARTA.EventType.MOMENT_RESPONSE, CARTA.MomentResponse],
             [CARTA.EventType.SCRIPTING_REQUEST, CARTA.ScriptingRequest],
             [CARTA.EventType.SPECTRAL_LINE_RESPONSE, CARTA.SpectralLineResponse]
         ]);
@@ -398,6 +406,24 @@ export class BackendService {
         return false;
     }
 
+    @action("save file")
+    saveFile(fileId: number, outputFileDirectory: string, outputFileName: string, outputFileType: CARTA.FileType): Observable<CARTA.SaveFileAck> {
+        if (this.connectionStatus !== ConnectionStatus.ACTIVE) {
+            return throwError(new Error("Not connected"));
+        } else {
+            const message = CARTA.SaveFile.create({fileId, outputFileDirectory, outputFileName, outputFileType});
+            const requestId = this.eventCounter;
+            this.logEvent(CARTA.EventType.SAVE_FILE, this.eventCounter, message, false);
+            if (this.sendEvent(CARTA.EventType.SAVE_FILE, CARTA.SaveFile.encode(message).finish())) {
+                return new Observable<CARTA.SaveFileAck>(observer => {
+                    this.observerRequestMap.set(requestId, observer);
+                });
+            } else {
+                return throwError(new Error("Could not send event"));
+            }
+        }
+    }
+
     @action("close file")
     closeFile(fileId: number): boolean {
         if (this.connectionStatus === ConnectionStatus.ACTIVE) {
@@ -645,6 +671,38 @@ export class BackendService {
         document.cookie = `CARTA-Authorization=${token}; path=/`;
     };
 
+    @action("request moment")
+    requestMoment(message: CARTA.IMomentRequest): Observable<CARTA.MomentResponse> {
+        if (this.connectionStatus !== ConnectionStatus.ACTIVE) {
+            return throwError(new Error("Not connected"));
+        } else {
+            const requestId = this.eventCounter;
+            this.logEvent(CARTA.EventType.MOMENT_REQUEST, requestId, message, false);
+            if (this.sendEvent(CARTA.EventType.MOMENT_REQUEST, CARTA.MomentRequest.encode(message).finish())) {
+                return new Observable<CARTA.MomentResponse>(observer => {
+                    this.observerRequestMap.set(requestId, observer);
+                });
+            } else {
+                return throwError(new Error("Could not send event"));
+            }
+        }
+    }
+
+    @action("cancel requesting moment")
+    cancelRequestingMoment(fileId: number) {
+        if (this.connectionStatus !== ConnectionStatus.ACTIVE) {
+            return throwError(new Error("Not connected"));
+        } else {
+            const message = CARTA.StopMomentCalc.create({fileId});
+            this.logEvent(CARTA.EventType.STOP_MOMENT_CALC, this.eventCounter, message, false);
+            if (this.sendEvent(CARTA.EventType.STOP_MOMENT_CALC, CARTA.StopMomentCalc.encode(message).finish())) {
+                return true;
+            }
+            console.log("Under construction!");
+            return throwError(new Error("Under construction!"));
+        }
+    }
+
     @action("request spectral line")
     requestSpectralLine(frequencyRange: CARTA.DoubleBounds, intensityLimit: number): Observable<CARTA.SpectralLineResponse> {
         if (this.connectionStatus !== ConnectionStatus.ACTIVE) {
@@ -783,6 +841,10 @@ export class BackendService {
 
     private onStreamedCatalogData(eventId: number, catalogFilter: CARTA.CatalogFilterResponse) {
         this.catalogStream.next(catalogFilter);
+    }
+
+    private onStreamedMomentProgress(eventId: number, momentProgress: CARTA.MomentProgress) {
+        this.momentProgressStream.next(momentProgress);
     }
 
     private sendEvent(eventType: CARTA.EventType, payload: Uint8Array): boolean {

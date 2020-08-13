@@ -402,6 +402,15 @@ export class PreferenceDialogComponent extends React.Component {
                         {regionTypes}
                     </HTMLSelect>
                 </FormGroup>
+                <FormGroup inline={true} label="Region size" labelInfo="(px)">
+                    <SafeNumericInput
+                        placeholder="Region size"
+                        min={1}
+                        value={preference.regionSize}
+                        stepSize={1}
+                        onValueChange={(value: number) => preference.setPreference(PreferenceKeys.REGION_SIZE, Math.max(1, value))}
+                    />
+                </FormGroup>
                 <FormGroup inline={true} label="Creation Mode">
                     <RadioGroup
                         selectedValue={preference.regionCreationMode}

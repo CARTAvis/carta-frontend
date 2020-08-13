@@ -56,7 +56,8 @@ export class WidgetConfig {
     @observable title: string;
     parentId?: string;
     parentType?: string;
-    helpType: HelpType;
+    helpType?: HelpType;
+    tabsHelpTypes?: HelpType[];
     componentId?: string;
     zIndex?: number = 0;
 }
@@ -842,7 +843,7 @@ export class WidgetsStore {
         this.addFloatingWidget(config);
     };
 
-    // add catalog overlay widget store
+    // add catalog widget store
     @action addCatalogWidget(catalogFileId: number, id: string = null) {
         // Generate new id if none passed in
         if (!id) {

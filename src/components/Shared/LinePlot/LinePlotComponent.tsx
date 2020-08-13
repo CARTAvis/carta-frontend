@@ -28,6 +28,12 @@ export enum InteractionMode {
     PANNING
 }
 
+export enum LinePlotSelectingMode {
+    BOX,
+    HORIZONTAL,
+    VERTICAL
+}
+
 export interface LineMarker {
     value: number;
     id: string;
@@ -91,6 +97,8 @@ export class LinePlotComponentProps {
     multiColorSingleLineColors?: Array<string>;
     multiColorMultiLinesColors?: Map<string, Array<string>>;
     borderWidth?: number;
+    selectingMode?: LinePlotSelectingMode;
+    setSelectedRange?: (min: number, max: number) => void;
     order?: number;
     multiPlotPropsMap?: Map<string, MultiPlotProps>;
 }
@@ -151,6 +159,18 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
         } else {
             return ZoomMode.NONE;
         }
+    }
+
+    @computed get cursorShape(): string {
+        const isHovering = this.hoveredMarker !== undefined && !this.isSelecting;
+        if (this.isPanning || isHovering) {
+            return "move";
+        } else if (this.props.selectingMode === LinePlotSelectingMode.HORIZONTAL) {
+            return "ew-resize";
+        } else if (this.props.selectingMode === LinePlotSelectingMode.VERTICAL) {
+            return "ns-resize";
+        }
+        return "crosshair";
     }
 
     private getValueForPixelX(pixel: number) {
@@ -339,13 +359,19 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
                     let minY = this.getValueForPixelY(maxCanvasSpace, this.props.logY);
                     let maxY = this.getValueForPixelY(minCanvasSpace, this.props.logY);
 
-                    if (this.zoomMode === ZoomMode.X) {
-                        this.props.graphZoomedX(minX, maxX);
-                    }
-                    if (this.zoomMode === ZoomMode.Y) {
-                        this.props.graphZoomedY(minY, maxY);
-                    } else if (this.zoomMode === ZoomMode.XY) {
-                        this.props.graphZoomedXY(minX, maxX, minY, maxY);
+                    if (this.props.setSelectedRange && this.props.selectingMode === LinePlotSelectingMode.HORIZONTAL) {
+                        this.props.setSelectedRange(minX, maxX);
+                    } else if (this.props.setSelectedRange && this.props.selectingMode === LinePlotSelectingMode.VERTICAL) {
+                        this.props.setSelectedRange(minY, maxY);
+                    } else {
+                        if (this.zoomMode === ZoomMode.X) {
+                            this.props.graphZoomedX(minX, maxX);
+                        }
+                        if (this.zoomMode === ZoomMode.Y) {
+                            this.props.graphZoomedY(minY, maxY);
+                        } else if (this.zoomMode === ZoomMode.XY) {
+                            this.props.graphZoomedXY(minX, maxX, minY, maxY);
+                        }
                     }
                 }
             }
@@ -735,13 +761,13 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
                 const markerOpacity = (marker.isMouseMove && (!this.isMouseEntered || this.isMarkerDragging)) ? 0 : (marker.opacity || 1);
                 if (marker.horizontal) {
                     let valueCanvasSpace = this.getCanvasSpaceY(marker.value);
-                    if (valueCanvasSpace < Math.floor(chartArea.top - 1) || valueCanvasSpace > Math.ceil(chartArea.bottom + 1) || isNaN(valueCanvasSpace)) {
+                    if (isNaN(valueCanvasSpace)) {
                         continue;
                     }
                     lines.push(this.genHorizontalLines(marker, isHovering, markerColor, markerOpacity, valueCanvasSpace));
                 } else {
                     let valueCanvasSpace = this.getCanvasSpaceX(marker.value);
-                    if (valueCanvasSpace < Math.floor(chartArea.left - 1) || valueCanvasSpace > Math.ceil(chartArea.right + 1) || isNaN(valueCanvasSpace)) {
+                    if (isNaN(valueCanvasSpace)) {
                         continue;
                     }
                     if (marker.interactionMarker) {
@@ -823,11 +849,10 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
     };
 
     render() {
-        const isHovering = this.hoveredMarker !== undefined && !this.isSelecting;
         return (
             <div
                 className={"line-plot-component"}
-                style={{cursor: this.isPanning || isHovering ? "move" : "crosshair"}}
+                style={{cursor: this.cursorShape}}
                 onKeyDown={this.onKeyDown}
                 onMouseEnter={this.onMouseEnter}
                 onMouseMove={this.onMouseMove}
