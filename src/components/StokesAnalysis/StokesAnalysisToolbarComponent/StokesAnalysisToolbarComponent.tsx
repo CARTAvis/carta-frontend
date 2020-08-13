@@ -2,8 +2,8 @@ import {observer} from "mobx-react";
 import * as React from "react";
 import {FormGroup, Switch, ButtonGroup, Button, Tooltip} from "@blueprintjs/core";
 import {AppStore, FrameStore} from "stores";
-import {StokesAnalysisWidgetStore, StokesAnalysisSettingsTabs} from "stores/widgets";
-import {StokesAnalysisComponent, RegionSelectorComponent} from "components";
+import {StokesAnalysisWidgetStore} from "stores/widgets";
+import {StokesAnalysisComponent, RegionSelectorComponent, StokesAnalysisSettingsTabs} from "components";
 import {CustomIcon} from "icons/CustomIcons";
 import "./StokesAnalysisToolbarComponent.css";
 

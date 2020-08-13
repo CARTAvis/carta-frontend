@@ -1,5 +1,5 @@
 import * as React from "react";
-import {computed, observable} from "mobx";
+import {autorun, computed, observable} from "mobx";
 import {observer} from "mobx-react";
 import {HTMLTable, Icon, NonIdealState, Position, Tooltip} from "@blueprintjs/core";
 import ReactResizeDetector from "react-resize-detector";
@@ -63,6 +63,21 @@ export class RegionListComponent extends React.Component<WidgetProps> {
     private handleRegionListDoubleClick = () => {
         DialogStore.Instance.showRegionDialog();
     };
+
+    constructor(props: WidgetProps) {
+        super(props);
+
+        const appStore = AppStore.Instance;
+        // update widget title to include region's associated file name
+        autorun(() => {
+            const frame = appStore.activeFrame?.spatialReference ?? appStore.activeFrame;
+            if (frame) {
+                appStore.widgetsStore.setWidgetTitle(this.props.id, `Region List (${frame.frameInfo.fileInfo.name})`);
+            } else {
+                appStore.widgetsStore.setWidgetTitle(this.props.id, "Region List");
+            }
+        });
+    }
 
     render() {
         const appStore = AppStore.Instance;

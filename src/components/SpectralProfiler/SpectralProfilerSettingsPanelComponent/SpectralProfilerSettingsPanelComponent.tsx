@@ -4,12 +4,19 @@ import {observer} from "mobx-react";
 import {Colors, Tab, Tabs} from "@blueprintjs/core";
 import {LinePlotSettingsPanelComponentProps, LinePlotSettingsPanelComponent, SpectralSettingsComponent, SmoothingSettingsComponent} from "components/Shared";
 import {MomentGeneratorComponent} from "../MomentGeneratorComponent/MomentGeneratorComponent";
-import {SpectralProfileWidgetStore, SpectralProfilerSettingsTabs} from "stores/widgets";
+import {SpectralProfileWidgetStore} from "stores/widgets";
 import {WidgetProps, WidgetConfig, HelpType, AppStore, WidgetsStore} from "stores";
 import {parseNumber} from "utilities";
 import "./SpectralProfilerSettingsPanelComponent.css";
 
 const KEYCODE_ENTER = 13;
+
+export enum SpectralProfilerSettingsTabs {
+    CONVERSION,
+    STYLING,
+    SMOOTHING,
+    MOMENTS
+}
 
 @observer
 export class SpectralProfilerSettingsPanelComponent extends React.Component<WidgetProps> {
@@ -26,7 +33,7 @@ export class SpectralProfilerSettingsPanelComponent extends React.Component<Widg
             isCloseable: true,
             parentId: "spectal-profiler",
             parentType: "spectral-profiler",
-            helpType: HelpType.SPECTRAL_PROFILER_SETTINGS
+            tabsHelpTypes: [HelpType.SPECTRAL_PROFILER_SETTINGS_CONVERSION, HelpType.SPECTRAL_PROFILER_SETTINGS_STYLING, HelpType.SPECTRAL_PROFILER_SETTINGS_SMOOTHING, HelpType.SPECTRAL_PROFILER_SETTINGS_MOMENTS]
         };
     }
 

@@ -3,9 +3,16 @@ import {computed, autorun} from "mobx";
 import {observer} from "mobx-react";
 import {Colors, Tab, Tabs} from "@blueprintjs/core";
 import {LinePlotSettingsPanelComponent, LinePlotSettingsPanelComponentProps, ScatterPlotSettingsPanelComponentProps, ScatterPlotSettingsPanelComponent, SpectralSettingsComponent, SmoothingSettingsComponent} from "components/Shared";
-import {StokesAnalysisWidgetStore, StokesAnalysisSettingsTabs} from "stores/widgets";
+import {StokesAnalysisWidgetStore} from "stores/widgets";
 import {WidgetProps, WidgetConfig, HelpType, WidgetsStore, AppStore} from "stores";
 import "./StokesAnalysisSettingsPanelComponent.css";
+
+export enum StokesAnalysisSettingsTabs {
+    CONVERSION,
+    LINE_PLOT_STYLING,
+    SCATTER_PLOT_STYLING,
+    SMOOTHING
+}
 
 @observer
 export class StokesAnalysisSettingsPanelComponent extends React.Component<WidgetProps> {
@@ -22,7 +29,7 @@ export class StokesAnalysisSettingsPanelComponent extends React.Component<Widget
             isCloseable: true,
             parentId: "stokes",
             parentType: "stokes",
-            helpType: HelpType.STOKES_ANALYSIS_SETTINGS
+            tabsHelpTypes: [HelpType.STOKES_ANALYSIS_SETTINGS_CONVERSION, HelpType.STOKES_ANALYSIS_SETTINGS_LINE_PLOT_STYLING, HelpType.STOKES_ANALYSIS_SETTINGS_SCATTER_PLOT_STYLING, HelpType.STOKES_ANALYSIS_SETTINGS_SMOOTHING]
         };
     }
 

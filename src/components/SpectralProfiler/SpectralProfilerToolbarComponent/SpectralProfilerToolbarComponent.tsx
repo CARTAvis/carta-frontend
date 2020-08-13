@@ -3,10 +3,9 @@ import * as React from "react";
 import {FormGroup, HTMLSelect, IOptionProps, ButtonGroup, Button, Tooltip} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import {AppStore, FrameStore} from "stores";
-import {SpectralProfileWidgetStore, SpectralProfilerSettingsTabs} from "stores/widgets";
-import {RegionSelectorComponent} from "components";
+import {SpectralProfileWidgetStore} from "stores/widgets";
+import {RegionSelectorComponent, SpectralProfilerComponent, SpectralProfilerSettingsTabs} from "components";
 import "./SpectralProfilerToolbarComponent.css";
-import {SpectralProfilerComponent} from "../SpectralProfilerComponent";
 import {CustomIcon} from "icons/CustomIcons";
 
 @observer

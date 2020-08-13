@@ -194,6 +194,10 @@
                 "corner"
             ]
         },
+        "regionSize": {
+            "type": "number",
+            "minimum": 1
+        },
         "imageCompressionQuality": {
             "type": "integer",
             "minimum": 4,

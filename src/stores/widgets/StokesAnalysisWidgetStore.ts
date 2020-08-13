@@ -9,6 +9,7 @@ import {getColorsForValues} from "utilities";
 import {SpectralSystem, SpectralType, SpectralUnit} from "models";
 import * as tinycolor from "tinycolor2";
 import {ProfileSmoothingStore} from "stores/ProfileSmoothingStore";
+import {StokesAnalysisSettingsTabs} from "components";
 
 export enum StokesCoordinate {
     CurrentZ = "z",
@@ -19,13 +20,6 @@ export enum StokesCoordinate {
     PolarizedIntensity = "PIz",
     PolarizationAngle = "PAz",
     PolarizationQU = "QvsU",
-}
-
-export enum StokesAnalysisSettingsTabs {
-    CONVERSION,
-    LINE_PLOT_STYLING,
-    SCATTER_PLOT_STYLING,
-    SMOOTHING,
 }
 
 const DEFAULTS = {
