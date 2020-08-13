@@ -67,7 +67,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
             minHeight: 400,
             defaultWidth: 740,
             defaultHeight: 350,
-            title: "Catalog Overlay",
+            title: "Catalog",
             isCloseable: true,
             helpType: HelpType.CATALOG_OVERLAY,
             componentId: "catalog-overlay-component"
@@ -169,7 +169,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
             this.catalogFileId = CatalogStore.Instance.catalogProfiles.get(this.props.id);
             const profileStore = this.profileStore;
 
-            if (profileStore && frame) {
+            if (profileStore) {
                 let progressString = "";
                 const fileName = profileStore.catalogInfo.fileInfo.name;
                 const progress = profileStore.progress;
@@ -177,8 +177,8 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
                     progressString = `[${toFixed(progress * 100)}% complete]`;
                 }
 
-                if (catalogFileIds?.length) {
-                    appStore.widgetsStore.setWidgetComponentTitle(this.props.id, `Catalog : ${fileName} ${progressString}`);
+                if (frame && catalogFileIds?.length) {
+                    WidgetsStore.Instance.setWidgetComponentTitle(this.props.id, `Catalog : ${fileName} ${progressString}`);
                 } else {
                     WidgetsStore.Instance.setWidgetComponentTitle(this.props.id, `Catalog`);
                 }
@@ -201,7 +201,10 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         const catalogWidgetStore = this.widgetStore;
         // fixed bug from blueprintjs, only display 4 rows.
         if (profileStore && this.catalogHeaderTableRef) {
-            this.updateTableSize(this.catalogHeaderTableRef, this.props.docked); 
+            this.updateTableSize(this.catalogHeaderTableRef, this.props.docked);
+            const fileName = profileStore.catalogInfo.fileInfo.name;
+            // hack way to update catalog title
+            WidgetsStore.Instance.setWidgetComponentTitle(this.props.id, `Catalog : ${fileName}`); 
         }
         if (profileStore && this.catalogTableRef && catalogWidgetStore) {
             this.updateTableSize(this.catalogTableRef, this.props.docked);
