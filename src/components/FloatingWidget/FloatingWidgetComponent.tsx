@@ -4,7 +4,7 @@ import {observer} from "mobx-react";
 import {Rnd} from "react-rnd";
 import {Icon, Position, Tooltip} from "@blueprintjs/core";
 import {PlaceholderComponent} from "components";
-import {AppStore, HelpStore, LayoutStore, WidgetConfig} from "stores";
+import {AppStore, HelpStore, LayoutStore, WidgetConfig, HelpType} from "stores";
 import "./FloatingWidgetComponent.css";
 
 class FloatingWidgetComponentProps {
@@ -72,7 +72,28 @@ export class FloatingWidgetComponent extends React.Component<FloatingWidgetCompo
 
     private onClickHelpButton = () => {
         const centerX = this.rnd.draggable.state.x + this.rnd.resizable.size.width * 0.5;
-        HelpStore.Instance.showHelpDrawer(this.props.widgetConfig.helpType, centerX);
+        if (this.props.widgetConfig.tabsHelpTypes) {
+            const widgetsStore = AppStore.Instance.widgetsStore;
+            const widgetParentType = this.props.widgetConfig.parentType;
+            const parentId = widgetsStore.floatingSettingsWidgets.get(this.props.widgetConfig.id);
+            let settingsTab: number;
+            switch (widgetParentType) {
+                case "spatial-profiler":
+                    settingsTab = widgetsStore.spatialProfileWidgets.get(parentId).settingsTabId;
+                    break;
+                case "spectral-profiler":
+                    settingsTab = widgetsStore.spectralProfileWidgets.get(parentId).settingsTabId;
+                    break;
+                case "stokes":
+                default:
+                    settingsTab = widgetsStore.stokesAnalysisWidgets.get(parentId).settingsTabId;
+                    break;
+            }
+
+            HelpStore.Instance.showHelpDrawer(this.props.widgetConfig.tabsHelpTypes[settingsTab], centerX);
+        } else {
+            HelpStore.Instance.showHelpDrawer(this.props.widgetConfig.helpType, centerX);
+        }
     }
 
     constructor(props: FloatingWidgetComponentProps) {
@@ -137,7 +158,7 @@ export class FloatingWidgetComponent extends React.Component<FloatingWidgetCompo
                         </Tooltip>
                     </div>
                     }
-                    {widgetConfig.helpType &&
+                    {(widgetConfig.helpType || widgetConfig.tabsHelpTypes) &&
                     <div className={buttonClass} onClick={this.onClickHelpButton}>
                         <Tooltip content="Help" position={Position.BOTTOM_RIGHT}>
                             <Icon icon={"help"}/>

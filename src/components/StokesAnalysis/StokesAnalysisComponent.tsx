@@ -1203,7 +1203,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
             <div className={"stokes-widget"}>
                 <div className={className}>
                     <div className="profile-plot-toolbar">
-                        <StokesAnalysisToolbarComponent widgetStore={this.widgetStore}/>
+                        <StokesAnalysisToolbarComponent widgetStore={this.widgetStore} id={this.props.id}/>
                     </div>
                     <div className="profile-plot-qup">
                         <div className="profile-plot-qu">

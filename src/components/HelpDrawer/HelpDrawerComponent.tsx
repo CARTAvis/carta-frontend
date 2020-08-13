@@ -20,12 +20,22 @@ import {
     RenderConfigHelpComponent,
     RenderConfigSettingsHelpComponent,
     SpatialProfilerHelpComponent,
-    SpatialProfilerSettingsHelpComponent,
+    SpatialProfilerSettingsStylingHelpComponent,
+    SpatialProfilerSettingsSmoothingHelpComponent,
     SpectralProfilerHelpComponent,
-    SpectralProfilerSettingsHelpComponent,
+    SpectralProfilerSettingsConversionHelpComponent,
+    SpectralProfilerSettingsStylingHelpComponent,
+    SpectralProfilerSettingsSmoothingHelpComponent,
+    SpectralProfilerSettingsMomentsHelpComponent,
     StatsHelpComponent,
     StokesAnalysisHelpComponent,
-    StokesAnalysisSettingsHelpComponent
+    StokesAnalysisSettingsConversionHelpComponent,
+    StokesAnalysisSettingsLinePlotStylingHelpComponent,
+    StokesAnalysisSettingsScatterPlotStylingHelpComponent,
+    StokesAnalysisSettingsSmoothingHelpComponent,
+    CatalogOverlayHelpComponent,
+    CatalogPlotHelpComponent,
+    SpectralLineQueryHelpComponent
 } from "./HelpContent";
 import {AppStore, HelpStore, HelpType} from "stores";
 
@@ -110,7 +120,7 @@ export class HelpDrawerComponent extends React.Component {
                 content: <ImageViewHelpComponent/>
         }], [
             HelpType.IMAGE_VIEW_SETTINGS, {
-                title: "Image view Settings",
+                title: "Image View Settings",
                 content: <ImageViewSettingsHelpComponent/>
         }], [
             HelpType.LAYER_LIST, {
@@ -141,17 +151,33 @@ export class HelpDrawerComponent extends React.Component {
                 title: "Spatial Profiler",
                 content: <SpatialProfilerHelpComponent/>
         }], [
-            HelpType.SPATIAL_PROFILER_SETTINGS, {
+            HelpType.SPATIAL_PROFILER_SETTINGS_STYLING, {
                 title: "Spatial Profiler Settings",
-                content: <SpatialProfilerSettingsHelpComponent/>
+                content: <SpatialProfilerSettingsStylingHelpComponent/>
+        }], [
+            HelpType.SPATIAL_PROFILER_SETTINGS_SMOOTHING, {
+                title: "Spatial Profiler Settings",
+                content: <SpatialProfilerSettingsSmoothingHelpComponent/>
         }], [
             HelpType.SPECTRAL_PROFILER, {
                 title: "Spectral Profiler",
                 content: <SpectralProfilerHelpComponent/>
         }], [
-            HelpType.SPECTRAL_PROFILER_SETTINGS, {
+            HelpType.SPECTRAL_PROFILER_SETTINGS_CONVERSION, {
                 title: "Spectral Profiler Settings",
-                content: <SpectralProfilerSettingsHelpComponent/>
+                content: <SpectralProfilerSettingsConversionHelpComponent/>
+        }], [
+            HelpType.SPECTRAL_PROFILER_SETTINGS_STYLING, {
+                title: "Spectral Profiler Settings",
+                content: <SpectralProfilerSettingsStylingHelpComponent/>
+        }], [
+            HelpType.SPECTRAL_PROFILER_SETTINGS_SMOOTHING, {
+                title: "Spectral Profiler Settings",
+                content: <SpectralProfilerSettingsSmoothingHelpComponent/>
+        }], [
+            HelpType.SPECTRAL_PROFILER_SETTINGS_MOMENTS, {
+                title: "Spectral Profiler Settings",
+                content: <SpectralProfilerSettingsMomentsHelpComponent/>
         }], [
             HelpType.STATS, {
                 title: "Statistics",
@@ -161,9 +187,33 @@ export class HelpDrawerComponent extends React.Component {
                 title: "Stokes Analysis",
                 content: <StokesAnalysisHelpComponent/>
         }], [
-            HelpType.STOKES_ANALYSIS_SETTINGS, {
+            HelpType.STOKES_ANALYSIS_SETTINGS_CONVERSION, {
                 title: "Stokes Settings",
-                content: <StokesAnalysisSettingsHelpComponent/>
+                content: <StokesAnalysisSettingsConversionHelpComponent/>
+        }], [
+            HelpType.STOKES_ANALYSIS_SETTINGS_LINE_PLOT_STYLING, {
+                title: "Stokes Settings",
+                content: <StokesAnalysisSettingsLinePlotStylingHelpComponent/>
+        }], [
+            HelpType.STOKES_ANALYSIS_SETTINGS_SCATTER_PLOT_STYLING, {
+                title: "Stokes Settings",
+                content: <StokesAnalysisSettingsScatterPlotStylingHelpComponent/>
+        }], [
+            HelpType.STOKES_ANALYSIS_SETTINGS_SMOOTHING, {
+                title: "Stokes Settings",
+                content: <StokesAnalysisSettingsSmoothingHelpComponent/>
+        }], [
+            HelpType.CATALOG_OVERLAY, {
+                title: "Catalog Overlay",
+                content: <CatalogOverlayHelpComponent/>
+        }], [
+            HelpType.CATALOG_PLOT, {
+                title: "Catalog 2D Scatter",
+                content: <CatalogPlotHelpComponent/>
+        }], [
+            HelpType.SPECTRAL_LINE_QUERY, {
+                title: "Spectral Line Query",
+                content: <SpectralLineQueryHelpComponent/>
         }]
     ]);
 }

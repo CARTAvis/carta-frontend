@@ -165,7 +165,7 @@ export class AppStore {
             AST.setPalette(this.darkTheme ? nightPalette : dayPalette);
             this.astReady = true;
             if (this.backendService.connectionStatus === ConnectionStatus.ACTIVE && !autoFileLoaded && fileSearchParam) {
-                this.addFrame(folderSearchParam, fileSearchParam, "");
+                this.loadFile(folderSearchParam, fileSearchParam, "");
             }
         });
 
@@ -175,7 +175,7 @@ export class AppStore {
             this.logStore.addInfo(`Connected to server ${wsURL} with session ID ${ack.sessionId}`, ["network"]);
             if (this.astReady && fileSearchParam) {
                 autoFileLoaded = true;
-                this.addFrame(folderSearchParam, fileSearchParam, "");
+                this.loadFile(folderSearchParam, fileSearchParam, "");
             }
             if (this.preferenceStore.autoLaunch && !fileSearchParam) {
                 this.fileBrowserStore.showFileBrowser(BrowserMode.File);
@@ -300,7 +300,67 @@ export class AppStore {
         return this.spatialGroup.filter(f => f.contourConfig.enabled && f.contourConfig.visible);
     }
 
-    @action addFrame = (directory: string, file: string, hdu: string) => {
+    @action addFrame = (ack: CARTA.OpenFileAck, directory: string, hdu: string): boolean => {
+        if (!ack) {
+            return false;
+        }
+
+        let dimensionsString = `${ack.fileInfoExtended.width}\u00D7${ack.fileInfoExtended.height}`;
+        if (ack.fileInfoExtended.dimensions > 2) {
+            dimensionsString += `\u00D7${ack.fileInfoExtended.depth}`;
+            if (ack.fileInfoExtended.dimensions > 3) {
+                dimensionsString += ` (${ack.fileInfoExtended.stokes} Stokes cubes)`;
+            }
+        }
+        this.logStore.addInfo(`Loaded file ${ack.fileInfo.name} with dimensions ${dimensionsString}`, ["file"]);
+        const frameInfo: FrameInfo = {
+            fileId: ack.fileId,
+            directory,
+            hdu,
+            fileInfo: new CARTA.FileInfo(ack.fileInfo),
+            fileInfoExtended: new CARTA.FileInfoExtended(ack.fileInfoExtended),
+            fileFeatureFlags: ack.fileFeatureFlags,
+            renderMode: CARTA.RenderMode.RASTER
+        };
+
+        let newFrame = new FrameStore(frameInfo);
+
+        // Place frame in frame array (replace frame with the same ID if it exists)
+        const existingFrameIndex = this.frames.findIndex(f => f.frameInfo.fileId === ack.fileId);
+        if (existingFrameIndex !== -1) {
+            this.frames[existingFrameIndex].clearContours(false);
+            this.frames[existingFrameIndex] = newFrame;
+        } else {
+            this.frames.push(newFrame);
+        }
+
+        // First image defaults to spatial reference and contour source
+        if (this.frames.length === 1) {
+            this.setSpatialReference(this.frames[0]);
+            this.setContourDataSource(this.frames[0]);
+        }
+
+        // Use this image as a spectral reference if it has a spectral axis and there isn't an existing spectral reference
+        if (newFrame.frameInfo.fileInfoExtended.depth > 1 && (this.frames.length === 1 || !this.spectralReference)) {
+            this.setSpectralReference(newFrame);
+        }
+
+        this.setActiveFrame(newFrame.frameInfo.fileId);
+
+        if (this.frames.length > 1) {
+            if ((this.preferenceStore.autoWCSMatching & WCSMatchingType.SPATIAL) && this.spatialReference !== newFrame) {
+                this.setSpatialMatchingEnabled(newFrame, true);
+            }
+            if ((this.preferenceStore.autoWCSMatching & WCSMatchingType.SPECTRAL) && this.spectralReference !== newFrame && newFrame.frameInfo.fileInfoExtended.depth > 1) {
+                this.setSpectralMatchingEnabled(newFrame, true);
+            }
+        }
+        this.fileBrowserStore.saveStartingDirectory(newFrame.frameInfo.directory);
+
+        return true;
+    };
+
+    @action loadFile = (directory: string, file: string, hdu: string) => {
         return new Promise<number>((resolve, reject) => {
             this.fileLoading = true;
 
@@ -319,59 +379,10 @@ export class AppStore {
             }
 
             this.backendService.loadFile(directory, file, hdu, this.fileCounter, CARTA.RenderMode.RASTER).subscribe(ack => {
+                if (!this.addFrame(ack, directory, hdu)) {
+                    AppToaster.show({icon: "warning-sign", message: "Load file failed.", intent: "danger", timeout: 3000});
+                }
                 this.fileLoading = false;
-                let dimensionsString = `${ack.fileInfoExtended.width}\u00D7${ack.fileInfoExtended.height}`;
-                if (ack.fileInfoExtended.dimensions > 2) {
-                    dimensionsString += `\u00D7${ack.fileInfoExtended.depth}`;
-                    if (ack.fileInfoExtended.dimensions > 3) {
-                        dimensionsString += ` (${ack.fileInfoExtended.stokes} Stokes cubes)`;
-                    }
-                }
-                this.logStore.addInfo(`Loaded file ${ack.fileInfo.name} with dimensions ${dimensionsString}`, ["file"]);
-                const frameInfo: FrameInfo = {
-                    fileId: ack.fileId,
-                    directory,
-                    hdu,
-                    fileInfo: new CARTA.FileInfo(ack.fileInfo),
-                    fileInfoExtended: new CARTA.FileInfoExtended(ack.fileInfoExtended),
-                    fileFeatureFlags: ack.fileFeatureFlags,
-                    renderMode: CARTA.RenderMode.RASTER
-                };
-
-                let newFrame = new FrameStore(frameInfo);
-
-                // Place frame in frame array (replace frame with the same ID if it exists)
-                const existingFrameIndex = this.frames.findIndex(f => f.frameInfo.fileId === ack.fileId);
-                if (existingFrameIndex !== -1) {
-                    this.frames[existingFrameIndex].clearContours(false);
-                    this.frames[existingFrameIndex] = newFrame;
-                } else {
-                    this.frames.push(newFrame);
-                }
-
-                // First image defaults to spatial reference and contour source
-                if (this.frames.length === 1) {
-                    this.setSpatialReference(this.frames[0]);
-                    this.setContourDataSource(this.frames[0]);
-                }
-
-                // Use this image as a spectral reference if it has a spectral axis and there isn't an existing spectral reference
-                if (newFrame.frameInfo.fileInfoExtended.depth > 1 && (this.frames.length === 1 || !this.spectralReference)) {
-                    this.setSpectralReference(newFrame);
-                }
-
-                this.setActiveFrame(newFrame.frameInfo.fileId);
-
-                if (this.frames.length > 1) {
-                    if ((this.preferenceStore.autoWCSMatching & WCSMatchingType.SPATIAL) && this.spatialReference !== newFrame) {
-                        this.setSpatialMatchingEnabled(newFrame, true);
-                    }
-                    if ((this.preferenceStore.autoWCSMatching & WCSMatchingType.SPECTRAL) && this.spectralReference !== newFrame && newFrame.frameInfo.fileInfoExtended.depth > 1) {
-                        this.setSpectralMatchingEnabled(newFrame, true);
-                    }
-                }
-
-                this.fileBrowserStore.saveStartingDirectory(newFrame.frameInfo.directory);
                 this.fileBrowserStore.hideFileBrowser();
                 resolve(ack.fileId);
             }, err => {
@@ -391,14 +402,28 @@ export class AppStore {
         if (this.catalogNum) {
             CatalogStore.Instance.resetDisplayedData([]);
         }
-        return this.addFrame(directory, file, hdu);
+        return this.loadFile(directory, file, hdu);
     };
 
     @action openFile = (directory: string, file: string, hdu: string) => {
         // Stop animations playing before loading a new frame
         this.animatorStore.stopAnimation();
         this.removeAllFrames();
-        return this.addFrame(directory, file, hdu);
+        return this.loadFile(directory, file, hdu);
+    };
+
+    @action saveFile = (directory: string, filename: string, fileType: CARTA.FileType) => {
+        if (!this.activeFrame) {
+            return;
+        }
+        const fileId = this.activeFrame.frameInfo.fileId;
+        this.backendService.saveFile(fileId, directory, filename, fileType).subscribe(() => {
+            AppToaster.show({icon: "saved", message: `${filename} saved.`, intent: "success", timeout: 3000});
+            this.fileBrowserStore.hideFileBrowser();
+        }, error => {
+            console.error(error);
+            AppToaster.show({icon: "warning-sign", message: error, intent: "danger", timeout: 3000});
+        });
     };
 
     @action closeFile = (frame: FrameStore, confirmClose: boolean = true) => {
@@ -740,6 +765,47 @@ export class AppStore {
         }
     };
 
+    @action requestMoment = (message: CARTA.IMomentRequest, frame: FrameStore) => {
+        if (!message || !frame) {
+            return;
+        }
+
+        this.fileLoading = true;
+        // clear previously generated moment images under this frame
+        if (frame.momentImages && frame.momentImages.length > 0) {
+            frame.momentImages.forEach(momentFrame => this.closeFile(momentFrame));
+        }
+        frame.removeMomentImage();
+
+        this.backendService.requestMoment(message).subscribe(ack => {
+            frame.resetMomentRequestState();
+            if (ack.success && ack.openFileAcks) {
+                ack.openFileAcks.forEach(openFileAck => {
+                    if (this.addFrame(CARTA.OpenFileAck.create(openFileAck), "", "")) {
+                        this.fileCounter++;
+                        frame.addMomentImage(this.frames.find(f => f.frameInfo.fileId === openFileAck.fileId));
+                    } else {
+                        AppToaster.show({icon: "warning-sign", message: "Load file failed.", intent: "danger", timeout: 3000});
+                    }
+                });
+            }
+            this.fileLoading = false;
+        }, error => {
+            frame.resetMomentRequestState();
+            this.fileLoading = false;
+            console.error(error);
+        });
+        this.restartTaskProgress();
+    };
+
+    @action cancelRequestingMoment = (fileId: number = -1) => {
+        const frame = this.getFrame(fileId);
+        if (frame && frame.requestingMomentsProgress < 1.0) {
+            frame.resetMomentRequestState();
+            this.backendService.cancelRequestingMoment(fileId);
+        }
+    };
+
     @action setDarkTheme = () => {
         this.preferenceStore.setPreference(PreferenceKeys.GLOBAL_THEME, Theme.DARK);
     };
@@ -1029,6 +1095,7 @@ export class AppStore {
         this.backendService.catalogStream.subscribe(this.handleCatalogFilterStream);
         this.backendService.errorStream.subscribe(this.handleErrorStream);
         this.backendService.statsStream.subscribe(this.handleRegionStatsStream);
+        this.backendService.momentProgressStream.subscribe(this.handleMomentProgressStream);
         this.backendService.reconnectStream.subscribe(this.handleReconnectStream);
         this.backendService.scriptingStream.subscribe(this.handleScriptingRequest);
         this.tileService.tileStream.subscribe(this.handleTileStream);
@@ -1113,22 +1180,23 @@ export class AppStore {
 
         frameHistogramMap.set(regionHistogramData.regionId, regionHistogramData);
 
-        const updatedFrame = this.getFrame(regionHistogramData.fileId);
-
         // TODO: update histograms directly if the image is not active!
 
         // Add histogram to pending histogram list
-        if (updatedFrame && regionHistogramData.regionId === -1) {
+        if (regionHistogramData.regionId === -1) {
             regionHistogramData.histograms.forEach(histogram => {
                 const key = `${regionHistogramData.fileId}_${regionHistogramData.stokes}_${histogram.channel}`;
                 this.pendingChannelHistograms.set(key, regionHistogramData);
             });
-        } else if (updatedFrame && regionHistogramData.regionId === -2) {
+        } else if (regionHistogramData.regionId === -2) {
             // Update cube histogram if it is still required
-            const cubeHist = regionHistogramData.histograms[0];
-            if (cubeHist && (updatedFrame.renderConfig.useCubeHistogram || updatedFrame.renderConfig.useCubeHistogramContours)) {
-                updatedFrame.renderConfig.updateCubeHistogram(cubeHist, regionHistogramData.progress);
-                this.updateTaskProgress(regionHistogramData.progress);
+            const updatedFrame = this.getFrame(regionHistogramData.fileId);
+            if (updatedFrame) {
+                const cubeHist = regionHistogramData.histograms[0];
+                if (cubeHist && (updatedFrame.renderConfig.useCubeHistogram || updatedFrame.renderConfig.useCubeHistogramContours)) {
+                    updatedFrame.renderConfig.updateCubeHistogram(cubeHist, regionHistogramData.progress);
+                    this.updateTaskProgress(regionHistogramData.progress);
+                }
             }
         }
     };
@@ -1221,6 +1289,17 @@ export class AppStore {
                     this.catalogStore.updateCatalogData(catalogFileId, coords.wcsX, coords.wcsY, wcs, coords.xHeaderInfo.units, coords.yHeaderInfo.units, catalogProfileStore.catalogCoordinateSystem.system);
                 }
             }
+        }
+    };
+
+    handleMomentProgressStream = (momentProgress: CARTA.MomentProgress) => {
+        if (!momentProgress) {
+            return;
+        }
+        const frame = this.getFrame(momentProgress.fileId);
+        if (frame) {
+            frame.updateRequestingMomentsProgress(momentProgress.progress);
+            this.updateTaskProgress(momentProgress.progress);
         }
     };
 

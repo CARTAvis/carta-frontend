@@ -89,6 +89,12 @@ export class RootMenuComponent extends React.Component {
                     onClick={() => appStore.fileBrowserStore.showFileBrowser(BrowserMode.File, true)}
                 />
                 <Menu.Item
+                    text="Save image"
+                    label={`${modString}S`}
+                    disabled={connectionStatus !== ConnectionStatus.ACTIVE || !appStore.activeFrame || appStore.fileLoading}
+                    onClick={() => appStore.fileBrowserStore.showFileBrowser(BrowserMode.SaveFile, false)}
+                />
+                <Menu.Item
                     text="Close image"
                     label={`${modString}W`}
                     disabled={connectionStatus !== ConnectionStatus.ACTIVE || !appStore.activeFrame || appStore.fileLoading}
