@@ -48,7 +48,7 @@ export enum PreferenceKeys {
     REGION_DASH_LENGTH = "regionDashLength",
     REGION_TYPE = "regionType",
     REGION_CREATION_MODE = "regionCreationMode",
-    REGION_RADIUS = "regionRadius",
+    REGION_SIZE = "regionSize",
 
     PERFORMANCE_IMAGE_COMPRESSION_QUALITY = "imageCompressionQuality",
     PERFORMANCE_ANIMATION_COMPRESSION_QUALITY = "animationCompressionQuality",
@@ -112,7 +112,7 @@ const DEFAULTS = {
         regionDashLength: 0,
         regionType: CARTA.RegionType.RECTANGLE,
         regionCreationMode: RegionCreationMode.CENTER,
-        regionRadius: 15
+        regionSize: 30
     },
     PERFORMANCE: {
         imageCompressionQuality: CompressionQuality.IMAGE_DEFAULT,
@@ -310,8 +310,8 @@ export class PreferenceStore {
         return this.preferences.get(PreferenceKeys.REGION_CREATION_MODE) ?? DEFAULTS.REGION.regionCreationMode;
     }
 
-    @computed get regionRadius(): number {
-        return this.preferences.get(PreferenceKeys.REGION_RADIUS) ?? DEFAULTS.REGION.regionRadius;
+    @computed get regionSize(): number {
+        return this.preferences.get(PreferenceKeys.REGION_SIZE) ?? DEFAULTS.REGION.regionSize;
     }
 
     // getters for performance
@@ -444,7 +444,7 @@ export class PreferenceStore {
     @action resetRegionSettings = () => {
         this.clearPreferences([
             PreferenceKeys.REGION_COLOR, PreferenceKeys.REGION_CREATION_MODE, PreferenceKeys.REGION_DASH_LENGTH,
-            PreferenceKeys.REGION_LINE_WIDTH, PreferenceKeys.REGION_TYPE, PreferenceKeys.REGION_RADIUS
+            PreferenceKeys.REGION_LINE_WIDTH, PreferenceKeys.REGION_TYPE, PreferenceKeys.REGION_SIZE
         ]);
     };
 

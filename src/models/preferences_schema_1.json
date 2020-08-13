@@ -194,7 +194,7 @@
                 "corner"
             ]
         },
-        "regionRadius": {
+        "regionSize": {
             "type": "number",
             "minimum": 1
         },

@@ -229,7 +229,7 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
 
         if (this.creatingRegion) {
             if (this.creatingRegion.controlPoints.length > 1 && length2D(this.creatingRegion.controlPoints[1]) === 0) {
-                const scaleFactor = PreferenceStore.Instance.regionRadius * (this.creatingRegion.regionType === CARTA.RegionType.RECTANGLE ? 2.0 : 1.0) / frame.zoomLevel;
+                const scaleFactor = PreferenceStore.Instance.regionSize * (this.creatingRegion.regionType === CARTA.RegionType.RECTANGLE ? 1.0 : 0.5) / frame.zoomLevel;
                 this.creatingRegion.setControlPoint(1, scale2D({x: 1, y: 1}, scaleFactor));
             }
             if (this.creatingRegion.isValid) {
