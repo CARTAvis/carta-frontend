@@ -560,10 +560,8 @@ export class AppStore {
         const frame = this.activeFrame;
         const fileId = this.catalogNum + 1;
 
-        console.time(`CatalogLoad_${file}`);
         this.backendService.loadCatalogFile(directory, file, fileId, previewDataSize).subscribe(ack => {
             this.fileLoading = false;
-            console.timeEnd(`CatalogLoad_${file}`);
             if (frame && ack.success && ack.dataSize) {
                 let catalogInfo: CatalogInfo = {fileId, directory, fileInfo: ack.fileInfo, dataSize: ack.dataSize};
                 let catalogWidgetId;

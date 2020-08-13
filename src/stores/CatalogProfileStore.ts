@@ -222,7 +222,6 @@ export class CatalogProfileStore {
 
     @action updateCatalogData(catalogFilter: CARTA.CatalogFilterResponse, catalogData: Map<number, ProcessedColumnData>) {
         let subsetDataSize = catalogFilter.subsetDataSize;
-        console.time(`updateCatalogData_${subsetDataSize}`);
         const subsetEndIndex = catalogFilter.subsetEndIndex;
         const startIndex = subsetEndIndex - subsetDataSize;
 
@@ -257,7 +256,6 @@ export class CatalogProfileStore {
             this.setNumVisibleRows(numVisibleRows);
             this.subsetEndIndex = subsetEndIndex;
         }
-        console.timeEnd(`updateCatalogData_${subsetDataSize}`);
     }
 
     @action clearData() {
