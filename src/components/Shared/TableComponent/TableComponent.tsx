@@ -201,7 +201,8 @@ export class TableComponent extends React.Component<TableComponentProps> {
                         hoverCloseDelay={0}
                         className={"column-filter"}
                         popoverClassName={this.props.darkTheme ? "column-filter-popover-dark" : "column-filter-popover"}
-                        content={filterSyntax} interactionKind={PopoverInteractionKind.HOVER}
+                        content={filterSyntax}
+                        interactionKind={PopoverInteractionKind.HOVER}
                     >
                         <InputGroup
                             key={"column-filter-" + columnIndex}
