@@ -342,7 +342,8 @@ export class SpectralLineQueryComponent extends React.Component<WidgetProps> {
         );
 
         const queryResultTableProps: TableComponentProps = {
-            type: TableType.Normal,
+            type: TableType.ColumnFilter,
+            filter: widgetStore.controlHeader,
             dataset: widgetStore.queryResult,
             columnHeaders: widgetStore.displayedColumnHeaders,
             numVisibleRows: widgetStore.numDataRows,

@@ -2,7 +2,7 @@ import {action, autorun, computed, observable} from "mobx";
 import {NumberRange} from "@blueprintjs/core";
 import {Table} from "@blueprintjs/table";
 import {CARTA} from "carta-protobuf";
-import {AppStore} from "stores";
+import {AppStore, ControlHeader} from "stores";
 import {BackendService} from "services";
 import {RegionWidgetStore, RegionsType} from "./RegionWidgetStore";
 import {ProcessedColumnData, ProtobufProcessing} from "models";
@@ -123,6 +123,7 @@ export class SpectralLineQueryWidgetStore extends RegionWidgetStore {
     @observable sortingInfo: {columnName: string, sortingType: CARTA.SortingType};
     @observable numDataRows: number;
     @observable selectedSpectralProfilerID: string;
+    @observable controlHeader: Map<string, ControlHeader>;
 
     @action setQueryRangeType = (queryRangeType: SpectralLineQueryRangeType) => {
         this.queryRangeType = queryRangeType;
@@ -364,6 +365,7 @@ export class SpectralLineQueryWidgetStore extends RegionWidgetStore {
         this.selectedSpectralProfilerID = AppStore.Instance.widgetsStore.spectralProfilerList.length > 0 ?
             AppStore.Instance.widgetsStore.spectralProfilerList[0] : undefined;
         this.sortingInfo = {columnName: null, sortingType: null};
+        this.controlHeader = new Map<string, ControlHeader>();
 
         // update frequency column when redshift changes
         autorun(() => {

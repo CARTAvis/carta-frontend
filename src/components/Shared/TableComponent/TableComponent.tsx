@@ -1,7 +1,7 @@
 import * as React from "react";
 import {observer} from "mobx-react";
 import {Cell, Column, Table, SelectionModes, RenderMode, ColumnHeaderCell, IRegion} from "@blueprintjs/table";
-import {Checkbox, PopoverPosition, Popover, PopoverInteractionKind, InputGroup, Icon, Label} from "@blueprintjs/core";
+import {Checkbox, Popover, PopoverInteractionKind, InputGroup, Icon, Label} from "@blueprintjs/core";
 import {IconName} from "@blueprintjs/icons";
 import {IRowIndices} from "@blueprintjs/table/lib/esm/common/grid";
 import {CARTA} from "carta-protobuf";
@@ -162,28 +162,22 @@ export class TableComponent extends React.Component<TableComponentProps> {
         if (!isFinite(columnIndex) || !column) {
             return null;
         }
-        const controlheader = this.props.filter.get(column.name);
+        const controlheader = this.props.filter?.get(column.name);
         const filterSyntax = this.getfilterSyntax(column.dataType);
         const sortingInfo = this.props.sortingInfo;
-        const sortColumn = sortingInfo.columnName === column.name;
-        let activeFilter = false;
-        if (controlheader.filter !== "") {
-            activeFilter = true;
-        }
         const disable = this.props.disable;
-        let popOverClass = this.props.darkTheme ? "column-filter-popover-dark" : "column-filter-popover";
 
         const nameRenderer = () => {
             // sharing css with fileList table
             let sortIcon = "sort";
             let iconClass = "sort-icon inactive";
             let nextSortType = 0;
-            if (sortColumn) {
+            if (sortingInfo?.columnName === column.name) {
                 nextSortType = this.getNextSortingType();
-                if (sortingInfo.sortingType === CARTA.SortingType.Descending) {
+                if (sortingInfo?.sortingType === CARTA.SortingType.Descending) {
                     sortIcon = "sort-desc";
                     iconClass = "sort-icon";
-                } else if (sortingInfo.sortingType === CARTA.SortingType.Ascending) {
+                } else if (sortingInfo?.sortingType === CARTA.SortingType.Ascending) {
                     sortIcon = "sort-asc";
                     iconClass = "sort-icon";
                 }
@@ -201,13 +195,19 @@ export class TableComponent extends React.Component<TableComponentProps> {
         return (
             <ColumnHeaderCell>
                 <ColumnHeaderCell className={"column-name"} nameRenderer={nameRenderer}/>
-                <ColumnHeaderCell isActive={activeFilter}>
-                    <Popover hoverOpenDelay={250} hoverCloseDelay={0} className={"column-filter"} popoverClassName={popOverClass} content={filterSyntax} interactionKind={PopoverInteractionKind.HOVER}>
+                <ColumnHeaderCell isActive={controlheader?.filter !== ""}>
+                    <Popover
+                        hoverOpenDelay={250}
+                        hoverCloseDelay={0}
+                        className={"column-filter"}
+                        popoverClassName={this.props.darkTheme ? "column-filter-popover-dark" : "column-filter-popover"}
+                        content={filterSyntax} interactionKind={PopoverInteractionKind.HOVER}
+                    >
                         <InputGroup
                             key={"column-filter-" + columnIndex}
                             small={true}
                             placeholder="Click to filter"
-                            value={controlheader && controlheader.filter ? controlheader.filter : ""} 
+                            value={controlheader?.filter ? controlheader.filter : ""}
                             onChange={ev => this.props.updateColumnFilter(ev.currentTarget.value, column.name)}
                         />
                     </Popover>
