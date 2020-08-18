@@ -42,7 +42,7 @@ export class TableComponentProps {
     updateSelectedRow?: (dataIndex: number[]) => void;
     updateSortRequest?: (columnName: string, sortingType: CARTA.SortingType) => void;
     sortingInfo?: {columnName: string, sortingType: CARTA.SortingType};
-    disable?: boolean;
+    disable?: boolean; // disable sort, TODO: rename to disableSort
     darkTheme?: boolean;
 }
 
