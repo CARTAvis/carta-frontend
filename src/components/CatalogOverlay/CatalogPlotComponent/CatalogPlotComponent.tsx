@@ -39,7 +39,6 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
             defaultHeight: 350,
             title: "Catalog Plot",
             isCloseable: true,
-            helpType: HelpType.CATALOG_PLOT,
             componentId: "catalog-plot-component"
         };
     }

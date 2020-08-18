@@ -39,7 +39,8 @@ import {
     StatsWidgetStore,
     StokesAnalysisWidgetStore,
     CatalogWidgetStore, CatalogPlotWidgetStore, CatalogPlotWidgetStoreProps,
-    ACTIVE_FILE_ID
+    ACTIVE_FILE_ID,
+    CatalogPlotType
 } from "./widgets";
 import {ProcessedColumnData} from "../models";
 
@@ -865,6 +866,7 @@ export class WidgetsStore {
         const widgetComponentId = this.getNextComponentId(config);
         config.id = widgetStoreId;
         config.componentId = widgetComponentId;
+        config.helpType = props.plotType === CatalogPlotType.Histogram ? HelpType.CATALOG_HISTOGRAM_PLOT : HelpType.CATALOG_SCATTER_PLOT;
         this.addFloatingWidget(config);
         return {widgetStoreId: widgetStoreId, widgetComponentId: widgetComponentId};
     };
