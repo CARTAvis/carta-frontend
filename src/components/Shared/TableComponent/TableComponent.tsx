@@ -126,12 +126,12 @@ export class TableComponent extends React.Component<TableComponentProps> {
         }
     }
 
-    private renderDataColumnWithFilter = (column: CARTA.CatalogHeader, columnData: any) => {
+    private renderDataColumnWithFilter = (columnHeader: CARTA.CatalogHeader, columnData: any) => {
         return (
             <Column
-                key={column.name}
-                name={column.name}
-                columnHeaderCellRenderer={(columnIndex: number) => this.renderColumnHeaderCell(columnIndex, column)}
+                key={columnHeader.name}
+                name={columnHeader.name}
+                columnHeaderCellRenderer={(columnIndex: number) => this.renderColumnHeaderCell(columnIndex, columnHeader)}
                 cellRenderer={columnData?.length ? (rowIndex, columnIndex) => this.renderCell(rowIndex, columnIndex, columnData) : undefined}
             />
         );
