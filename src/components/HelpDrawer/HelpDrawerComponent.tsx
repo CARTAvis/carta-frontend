@@ -209,11 +209,11 @@ export class HelpDrawerComponent extends React.Component {
                 content: <CatalogOverlayHelpComponent/>
         }], [
                 HelpType.CATALOG_HISTOGRAM_PLOT, {
-                title: "Catalog Histogram",
+                title: "Catalog Histogram Plot",
                 content: <CatalogHistogramPlotHelpComponent/>
         }], [
             HelpType.CATALOG_SCATTER_PLOT, {
-                title: "Catalog 2D Scatter",
+                title: "Catalog Scatter Plot",
                 content: <CatalogScatterPlotHelpComponent/>
         }], [
             HelpType.SPECTRAL_LINE_QUERY, {
