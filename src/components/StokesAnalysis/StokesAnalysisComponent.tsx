@@ -530,7 +530,14 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
             let xlinePlotRange = interactionBorder;
             const outOfRangeColor = `hsla(0, 0%, 50%, ${this.opacityOutRange})`;
             const zOrder = this.frequencyIncreases(data);
-            const minMaxZ = minMaxPointArrayZ(data);
+            const localPoints = [];
+            for (let index = 0; index < data.length; index++) {
+                const point = data[index];
+                if (point.z >= xlinePlotRange.xMin && point.z <= xlinePlotRange.xMax) {
+                    localPoints.push(point);
+                }
+            }
+            const minMaxZ = minMaxPointArrayZ(localPoints);
             for (let index = 0; index < data.length; index++) {
                 const point = data[index];
                 let pointColor = this.pointDefaultColor;
