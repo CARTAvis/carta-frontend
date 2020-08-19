@@ -354,11 +354,13 @@ export class SpectralLineQueryComponent extends React.Component<WidgetProps> {
                 selectSingleLine: widgetStore.selectSingleLine
             },
             manualSelectionData: widgetStore.manualSelectionData,
-            sortingInfo: widgetStore.sortingInfo,
             updateTableRef: (ref) => { this.resultTableRef = ref; },
+            updateByInfiniteScroll: (rowIndexEnd: number) => {}, // TODO
+            // sorting part
             disable: true,
-            updateColumnFilter: (value: string, columnName: string) => {}, // TODO
-            updateByInfiniteScroll: (rowIndexEnd: number) => {} // TODO
+            sortingInfo: widgetStore.sortingInfo,
+            // filtering part
+            updateColumnFilter: widgetStore.setColumnFilter
         };
 
         let className = "spectral-line-query-widget";

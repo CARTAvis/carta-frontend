@@ -256,6 +256,24 @@ export class SpectralLineQueryWidgetStore extends RegionWidgetStore {
         this.queryResult.clear();
     }
 
+    @action setColumnFilter = (filterInput: string, columnName: string) => {
+        console.log(`setColumnFilter ${filterInput} ${columnName}`);
+        if (!filterInput || !columnName || !this.controlHeader.has(columnName)) {
+            return;
+        }
+        const current = this.controlHeader.get(columnName);
+        const newHeader: ControlHeader = {
+            columnIndex: current.columnIndex,
+            dataIndex: current.dataIndex,
+            display: current.display,
+            representAs: current.representAs,
+            filter: filterInput,
+            columnWidth: current.columnWidth
+        };
+        this.controlHeader.set(columnName, newHeader);
+        // this.updateTableStatus(true);
+    }
+
     @computed get formalizedHeaders(): SpectralLineHeader[] {
         let formalizedHeaders: SpectralLineHeader[] = [];
         this.columnHeaders.forEach(header => {
@@ -326,6 +344,27 @@ export class SpectralLineQueryWidgetStore extends RegionWidgetStore {
         return selectedLines;
     }
 
+    @computed get initControlHeader(): Map<string, ControlHeader> {
+        const controlHeaders = new Map<string, ControlHeader>();
+        const columnHeaders = this.columnHeaders;
+        if (columnHeaders.length > 0) {
+            for (let index = 0; index < columnHeaders.length; index++) {
+                const header = columnHeaders[index];
+                let display = false;
+                let controlHeader: ControlHeader = {
+                    columnIndex: header.columnIndex,
+                    dataIndex: index,
+                    display: display,
+                    representAs: undefined,
+                    filter: "",
+                    columnWidth: null
+                };
+                controlHeaders.set(header.name, controlHeader);
+            }
+        }
+        return controlHeaders;
+    }
+
     private calculateFreqMHz = (value: number, unit: SpectralLineQueryUnit): number => {
         if (!isFinite(value) || value === null || value < 0 || !unit) {
             return undefined;
@@ -366,7 +405,7 @@ export class SpectralLineQueryWidgetStore extends RegionWidgetStore {
         this.selectedSpectralProfilerID = AppStore.Instance.widgetsStore.spectralProfilerList.length > 0 ?
             AppStore.Instance.widgetsStore.spectralProfilerList[0] : undefined;
         this.sortingInfo = {columnName: null, sortingType: null};
-        this.controlHeader = new Map<string, ControlHeader>();
+        this.controlHeader = this.initControlHeader;
 
         // update frequency column when redshift changes
         autorun(() => {
