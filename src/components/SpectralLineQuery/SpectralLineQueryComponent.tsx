@@ -193,6 +193,10 @@ export class SpectralLineQueryComponent extends React.Component<WidgetProps> {
         }
     };
 
+    // TODO: filtering
+    private handleFilter = () => {
+    };
+
     private handlePlot = () => {
         const widgetStore = this.widgetStore;
         const appStore = AppStore.Instance;
@@ -407,6 +411,9 @@ export class SpectralLineQueryComponent extends React.Component<WidgetProps> {
                         <FormGroup inline={true} label={this.width < MINIMUM_WIDTH ? "" : "Spectral Profiler"}>
                             {widgetMenu}
                         </FormGroup>
+                        <Tooltip content="Apply filter to query result" position={Position.BOTTOM}>
+                            <AnchorButton text="Filter" intent={Intent.PRIMARY} disabled={widgetStore.queryResult.size <= 0} onClick={this.handleFilter}/>
+                        </Tooltip>
                         <Tooltip content={plotTip} position={Position.BOTTOM}>
                             <AnchorButton
                                 text="Plot"
