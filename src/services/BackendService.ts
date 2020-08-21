@@ -698,8 +698,7 @@ export class BackendService {
             if (this.sendEvent(CARTA.EventType.STOP_MOMENT_CALC, CARTA.StopMomentCalc.encode(message).finish())) {
                 return true;
             }
-            console.log("Under construction!");
-            return throwError(new Error("Under construction!"));
+            return throwError(new Error("Could not send event"));
         }
     }
 
