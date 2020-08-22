@@ -10,7 +10,7 @@ export class SpectralLineQueryHelpComponent extends React.Component {
                 <p><ImageComponent light={headLineQueryButton} dark={headLineQueryButton_d} width="90%"/></p>
                 <p>CARTA supports spectral line ID overlay on a spectral 
                     profiler widget with a query from the Splatalogue service 
-                    (http://www.cv.nrao.edu/php/splat/). The query is made by 
+                    (https://splatalogue.online). The query is made by 
                     defining a spectral range in frequency or wavelength and 
                     optionally a lower limit of CDMS/JPL line intensity (log). 
                     The spectral range can be defined as from-to or a center 
