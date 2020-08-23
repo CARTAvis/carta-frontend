@@ -193,10 +193,6 @@ export class SpectralLineQueryComponent extends React.Component<WidgetProps> {
         }
     };
 
-    // TODO: filtering
-    private handleFilter = () => {
-    };
-
     private handlePlot = () => {
         const widgetStore = this.widgetStore;
         const appStore = AppStore.Instance;
@@ -348,7 +344,7 @@ export class SpectralLineQueryComponent extends React.Component<WidgetProps> {
         const queryResultTableProps: TableComponentProps = {
             type: TableType.ColumnFilter,
             filter: widgetStore.controlHeader,
-            dataset: widgetStore.queryResult,
+            dataset: widgetStore.filterResult,
             columnHeaders: widgetStore.displayedColumnHeaders,
             numVisibleRows: widgetStore.numDataRows,
             manualSelectionProps: {
@@ -412,18 +408,18 @@ export class SpectralLineQueryComponent extends React.Component<WidgetProps> {
                             {widgetMenu}
                         </FormGroup>
                         <Tooltip content="Apply filter to query result" position={Position.BOTTOM}>
-                            <AnchorButton text="Filter" intent={Intent.PRIMARY} disabled={widgetStore.queryResult.size <= 0} onClick={this.handleFilter}/>
+                            <AnchorButton text="Filter" intent={Intent.PRIMARY} disabled={widgetStore.filterResult.size <= 0} onClick={() => this.widgetStore.filter()}/>
                         </Tooltip>
                         <Tooltip content={plotTip} position={Position.BOTTOM}>
                             <AnchorButton
                                 text="Plot"
                                 intent={Intent.PRIMARY}
-                                disabled={!appStore.activeFrame || widgetStore.queryResult.size <= 0 || !isSelectedWidgetExisted || !isSelectedLinesUnderLimit}
+                                disabled={!appStore.activeFrame || widgetStore.filterResult.size <= 0 || !isSelectedWidgetExisted || !isSelectedLinesUnderLimit}
                                 onClick={this.handlePlot}
                             />
                         </Tooltip>
                         <Tooltip content="Clear plotted lines" position={Position.BOTTOM}>
-                            <AnchorButton text="Clear" intent={Intent.PRIMARY} disabled={!appStore.activeFrame || !isSelectedWidgetExisted || widgetStore.queryResult.size <= 0} onClick={this.handleClear}/>
+                            <AnchorButton text="Clear" intent={Intent.PRIMARY} disabled={!appStore.activeFrame || !isSelectedWidgetExisted || widgetStore.filterResult.size <= 0} onClick={this.handleClear}/>
                         </Tooltip>
                     </div>
                 </div>
