@@ -4,7 +4,7 @@ export class CatalogHistogramPlotHelpComponent extends React.Component {
     public render() {
         return (
             <div>
-                <p>The Catalog histogram plot widget shows a histogram of a numeric column 
+                <p>The Catalog histogram plot widget shows a histogram of one numeric column 
                     of a catalog file. The available numeric columns are determined by the 
                     &quot;Display&quot; column of the upper table in the Catalog widget.</p>
                 <p>The data used for plotting the histogram is determined by the lower table 
