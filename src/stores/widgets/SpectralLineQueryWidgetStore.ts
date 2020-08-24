@@ -314,6 +314,7 @@ export class SpectralLineQueryWidgetStore extends RegionWidgetStore {
         });
         this.filterResult = filtered;
         this.isDataFiltered = true;
+        this.numDataRows = dataIndexes.length;
     };
 
     @action resetFilter = () => {
@@ -322,6 +323,7 @@ export class SpectralLineQueryWidgetStore extends RegionWidgetStore {
         });
         this.filterResult = _.cloneDeep(this.queryResult);
         this.isDataFiltered = false;
+        this.numDataRows = this.filterResult.get(0).data.length;
     };
 
     @computed get formalizedHeaders(): SpectralLineHeader[] {
