@@ -392,11 +392,13 @@ export class SpectralLineQueryWidgetStore extends RegionWidgetStore {
                     const speciesColumn = this.filterResult.get(SPECIES_COLUMN_INDEX);
                     const freqeuncyColumn = this.filterResult.get(SHIFTIED_FREQUENCY_COLUMN_INDEX);
                     const QNColumn = this.filterResult.get(RESOLVED_QN_COLUMN_INDEX);
-                    selectedLines.push({
-                        species: speciesColumn.data[rowIndex] as string,
-                        value: freqeuncyColumn.data[rowIndex] as number,
-                        qn: QNColumn.data[rowIndex] as string
-                    });
+                    if (rowIndex < speciesColumn.data.length) {
+                        selectedLines.push({
+                            species: speciesColumn.data[rowIndex] as string,
+                            value: freqeuncyColumn.data[rowIndex] as number,
+                            qn: QNColumn.data[rowIndex] as string
+                        });
+                    }
                 }
             }
         }
