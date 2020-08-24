@@ -356,6 +356,7 @@ export class SpectralLineQueryComponent extends React.Component<WidgetProps> {
             manualSelectionData: widgetStore.manualSelectionData,
             updateTableRef: (ref) => { this.resultTableRef = ref; },
             updateByInfiniteScroll: (rowIndexEnd: number) => {}, // TODO
+            updateSelectedRow: (dataIndex: number[]) => {}, // TODO
             // sorting part
             disable: true,
             sortingInfo: widgetStore.sortingInfo,
