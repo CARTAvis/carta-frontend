@@ -7,7 +7,7 @@ import {AppStore, ControlHeader} from "stores";
 import {BackendService} from "services";
 import {RegionWidgetStore, RegionsType} from "./RegionWidgetStore";
 import {ProcessedColumnData, ProtobufProcessing} from "models";
-import {wavelengthToFrequency, SPEED_OF_LIGHT} from "utilities";
+import {getComparisonOperatorAndValue, wavelengthToFrequency, SPEED_OF_LIGHT} from "utilities";
 
 export enum SpectralLineQueryRangeType {
     Range = "Range",
@@ -226,17 +226,16 @@ export class SpectralLineQueryWidgetStore extends RegionWidgetStore {
                         this.numDataRows = ack.dataSize;
                         this.isLineSelectedArray = new Array<boolean>(this.numDataRows).fill(false);
                         this.queryResult = ProtobufProcessing.ProcessCatalogData(ack.spectralLineData);
-                        this.filterResult = this.queryResult;
                         this.restFreqColumn = this.filterResult.get(REST_FREQUENCY_COLUMN_INDEX);
                         this.measuredFreqColumn = this.filterResult.get(MEASURED_FREQUENCY_COLUMN_INDEX);
                     } else {
                         this.numDataRows = 0;
                         this.isLineSelectedArray = [];
                         this.queryResult = new Map<number, ProcessedColumnData>();
-                        this.filterResult = this.queryResult;
                         this.restFreqColumn = undefined;
                         this.measuredFreqColumn = undefined;
                     }
+
                     // replace to comprehensive headers
                     ack.headers.forEach((header) => {
                         if (SPLATALOG_HEADER_MAP.has(header.name as SpectralLineHeaders)) {
@@ -247,6 +246,16 @@ export class SpectralLineQueryWidgetStore extends RegionWidgetStore {
                         return (a.columnIndex - b.columnIndex);
                     });
                     this.initControlHeader();
+
+                    // update column data type
+                    this.columnHeaders.forEach(header => {
+                        if (header.dataType === CARTA.ColumnType.Double) {
+                            const column = this.queryResult.get(header.columnIndex);
+                            column.dataType = CARTA.ColumnType.Double;
+                            column.data = column.data as Array<number>;
+                        }
+                    });
+                    this.filterResult = this.queryResult;
                 } else {
                     AppStore.Instance.alertStore.showAlert(ack.message);
                 }
@@ -288,9 +297,7 @@ export class SpectralLineQueryWidgetStore extends RegionWidgetStore {
                 const data = column.data;
                 let filteredDataIndexes = [];
                 if (dataType === CARTA.ColumnType.Double) {
-                    dataIndexes.forEach(dataIndex => {
-                        // TODO: add numeric logic
-                    });
+                    filteredDataIndexes = this.numericFiltering(data as Array<number>, dataIndexes, filterString);
                 } else if (dataType === CARTA.ColumnType.String) {
                     dataIndexes.forEach(dataIndex => {
                         if ((data[dataIndex] as string).match(filterString)) {
@@ -412,6 +419,50 @@ export class SpectralLineQueryWidgetStore extends RegionWidgetStore {
                 this.controlHeader.set(header.name, controlHeader);
             }
         }
+    };
+
+    private numericFiltering = (columnData: Array<number>, dataIndexes: number[], filterString: string): number[] => {
+        if (columnData?.length <= 0 || dataIndexes?.length <= 0 || !filterString) {
+            return [];
+        }
+
+        const filter = getComparisonOperatorAndValue(filterString);
+        if (filter?.operator === -1 || filter?.values.length <= 0) {
+            return [];
+        }
+
+        let compareFunction = undefined;
+        if (filter.operator === CARTA.ComparisonOperator.Equal && filter.values.length === 1) {
+            compareFunction = (data: number): boolean => { return data === filter.values[0]; };
+        } else if (filter.operator === CARTA.ComparisonOperator.NotEqual && filter.values.length === 1) {
+            compareFunction = (data: number): boolean => { return data !== filter.values[0]; };
+        } else if (filter.operator === CARTA.ComparisonOperator.Lesser && filter.values.length === 1) {
+            compareFunction = (data: number): boolean => { return data < filter.values[0]; };
+        } else if (filter.operator === CARTA.ComparisonOperator.LessorOrEqual && filter.values.length === 1) {
+            compareFunction = (data: number): boolean => { return data <= filter.values[0]; };
+        } else if (filter.operator === CARTA.ComparisonOperator.Greater && filter.values.length === 1) {
+            compareFunction = (data: number): boolean => { return data > filter.values[0]; };
+        } else if (filter.operator === CARTA.ComparisonOperator.GreaterOrEqual && filter.values.length === 1) {
+            compareFunction = (data: number): boolean => { return data >= filter.values[0]; };
+        } else if (filter.operator === CARTA.ComparisonOperator.RangeOpen && filter.values.length === 2) {
+            const min = Math.min(filter.values[0], filter.values[1]);
+            const max = Math.max(filter.values[0], filter.values[1]);
+            compareFunction = (data: number): boolean => { return data >= min && data <= max; };
+        } else if (filter.operator === CARTA.ComparisonOperator.RangeClosed && filter.values.length === 2) {
+            const min = Math.min(filter.values[0], filter.values[1]);
+            const max = Math.max(filter.values[0], filter.values[1]);
+            compareFunction = (data: number): boolean => { return data > min && data < max; };
+        } else {
+            return [];
+        }
+
+        let filteredDataIndexes = [];
+        dataIndexes.forEach(dataIndex => {
+            if (compareFunction(columnData[dataIndex] as number)) {
+                filteredDataIndexes.push(dataIndex);
+            }
+        });
+        return filteredDataIndexes;
     };
 
     private calculateFreqMHz = (value: number, unit: SpectralLineQueryUnit): number => {
