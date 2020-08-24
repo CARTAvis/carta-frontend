@@ -401,7 +401,7 @@ export class SpectralLineQueryComponent extends React.Component<WidgetProps> {
                     </SplitPane>
                 </div>
                 <div className="bp3-dialog-footer">
-                    <div className="result-table-info"><pre>Showing {widgetStore.numDataRows} entries.{widgetStore.selectedLines?.length > 0 ? ` Selected ${widgetStore.selectedLines.length} lines.` : ""}</pre></div>
+                    <div className="result-table-info"><pre>Showing {widgetStore.numDataRows} entries.{widgetStore.selectedLines?.length > 0 ? ` Selected ${widgetStore.selectedLines.length} line${widgetStore.selectedLines.length > 1 ? "s" : ""}.` : ""}</pre></div>
                     <div className="bp3-dialog-footer-actions">
                         <FormGroup inline={true} label={this.width < MINIMUM_WIDTH ? "" : "Spectral Profiler"}>
                             {widgetMenu}
