@@ -1,14 +1,12 @@
 import * as React from "react";
 import {AppStore} from "stores";
 import {ImageComponent} from "./ImageComponent";
-import * as headOverlayButton from "static/help/head_overlay_button.png";
-import * as headOverlayButton_d from "static/help/head_overlay_button_d.png";
+
 
 export class ImageViewSettingsHelpComponent extends React.Component {
     public render() {
         return (
             <div>
-                <p><ImageComponent light={headOverlayButton} dark={headOverlayButton_d} width="90%"/></p>
                 <p>The overlay settings dialogue allows users to customize coordinate grid related properties in the image viewer.</p>
                 <h3 id="global">Global</h3>
                 <p>This section allows users to</p>
