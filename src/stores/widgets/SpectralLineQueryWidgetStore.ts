@@ -458,7 +458,7 @@ export class SpectralLineQueryWidgetStore extends RegionWidgetStore {
 
         let filteredDataIndexes = [];
         dataIndexes.forEach(dataIndex => {
-            if (compareFunction(columnData[dataIndex] as number)) {
+            if (dataIndex < columnData.length && compareFunction(columnData[dataIndex] as number)) {
                 filteredDataIndexes.push(dataIndex);
             }
         });
