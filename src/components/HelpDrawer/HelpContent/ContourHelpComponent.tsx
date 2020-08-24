@@ -25,8 +25,8 @@ export class ContourHelpComponent extends React.Component {
                             various ways to define levels:</p>
                         <ul>
                             <li><code>Click</code> on the histogram plot to create a level. 
-                                <code>Right-Click</code> on a line to remove a level. Numerical values 
-                            of levels are displayed in the &quot;Levels&quot; field.</li>
+                                &nbsp;<code>Right-Click</code> on a line to remove a level. Numerical values 
+                                of levels are displayed in the &quot;Levels&quot; field.</li>
                             <li>Use the level generator. There are four preset generators. The generator 
                                 will create a set of levels based on the control parameters by clicking 
                                 the &quot;Generate&quot; button.</li>
