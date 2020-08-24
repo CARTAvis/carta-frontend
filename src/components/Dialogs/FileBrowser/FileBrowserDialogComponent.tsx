@@ -437,6 +437,7 @@ export class FileBrowserDialogComponent extends React.Component {
                     </div>
                 </div>
                 <Alert
+                    className={appStore.darkTheme ? "bp3-dark" : ""}
                     isOpen={this.overwriteExistingFileAlertVisible}
                     confirmButtonText="Yes"
                     cancelButtonText="Cancel"
