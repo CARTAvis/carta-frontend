@@ -67,7 +67,7 @@ export class ImageViewHelpComponent extends React.Component {
                 <p><ImageComponent light={regionButton} dark={regionButton_d} width="70%"/></p>
                 <p>The default region type and the default region creation mode are customizable in the preferences dialogue.</p>
                 <h3 id="customizing-the-image-plot">Customizing the image plot</h3>
-                <p>The image overlay can be customized via the overlay settings dialogue. Plenty amounts of options are provided.</p>
+                <p> UPDATE. The image overlay can be customized via the overlay settings dialogue. Plenty amounts of options are provided.</p>
                 <h3 id="exports">Exports</h3>
                 <p>What users see in the current image view can be exported as a PNG file with the &quot;Export image&quot; button in the image tool bar.</p>
                 <p><ImageComponent light={exportPNGButton} dark={exportPNGButton_d} width="70%"/></p>
