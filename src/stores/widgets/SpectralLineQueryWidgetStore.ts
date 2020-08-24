@@ -2,6 +2,7 @@ import {action, autorun, computed, observable} from "mobx";
 import {NumberRange} from "@blueprintjs/core";
 import {Table} from "@blueprintjs/table";
 import {CARTA} from "carta-protobuf";
+import * as _ from "lodash";
 import {AppStore, ControlHeader} from "stores";
 import {BackendService} from "services";
 import {RegionWidgetStore, RegionsType} from "./RegionWidgetStore";
@@ -126,6 +127,7 @@ export class SpectralLineQueryWidgetStore extends RegionWidgetStore {
     @observable numDataRows: number;
     @observable selectedSpectralProfilerID: string;
     @observable controlHeader: Map<string, ControlHeader>;
+    @observable isDataFiltered: boolean;
 
     @action setQueryRangeType = (queryRangeType: SpectralLineQueryRangeType) => {
         this.queryRangeType = queryRangeType;
@@ -311,6 +313,15 @@ export class SpectralLineQueryWidgetStore extends RegionWidgetStore {
             });
         });
         this.filterResult = filtered;
+        this.isDataFiltered = true;
+    };
+
+    @action resetFilter = () => {
+        this.controlHeader.forEach((controlHeader) => {
+            controlHeader.filter = "";
+        });
+        this.filterResult = _.cloneDeep(this.queryResult);
+        this.isDataFiltered = false;
     };
 
     @computed get formalizedHeaders(): SpectralLineHeader[] {
@@ -443,6 +454,7 @@ export class SpectralLineQueryWidgetStore extends RegionWidgetStore {
             AppStore.Instance.widgetsStore.spectralProfilerList[0] : undefined;
         this.sortingInfo = {columnName: null, sortingType: null};
         this.controlHeader = new Map<string, ControlHeader>();
+        this.isDataFiltered = false;
 
         // update frequency column when redshift changes
         autorun(() => {
