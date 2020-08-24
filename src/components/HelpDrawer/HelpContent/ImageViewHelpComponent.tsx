@@ -55,7 +55,7 @@ export class ImageViewHelpComponent extends React.Component {
                     lines are still accurate per image. If contour layers exist, they will match the raster image in the current image view with high position accuracy. Spectral matching is performed with nearest interpolation.</p>
                 <h3 id="contour-layers">Contour layers</h3>
                 <p>A contour layer can be generated via the contour configuration dialogue. Contours of spatially matched image are re-projected to other spatially matched raster image.</p>
-                <p><ImageComponent light={contourButton} dark={contourButton_d} width="70%"/></p>
+                <p><ImageComponent light={contourButton} dark={contourButton_d} width="80%"/></p>
                 <h3 id="region-of-interest">Region of interest</h3>
                 <p>Four types of region of interest are supported, including:</p>
                 <ul>
@@ -73,7 +73,7 @@ export class ImageViewHelpComponent extends React.Component {
                 <p><ImageComponent light={exportPNGButton} dark={exportPNGButton_d} width="70%"/></p>
                 <h3 id="image-information-and-header">Image information and header</h3>
                 <p>Basic image information and full image headers are displayed in the image information dialogue.</p>
-                <p><ImageComponent light={imageInfoButton} dark={imageInfoButton_d} width="70%"/></p>
+                <p><ImageComponent light={imageInfoButton} dark={imageInfoButton_d} width="80%"/></p>
             </div>
         );
     }
