@@ -222,22 +222,8 @@ export class SpectralLineQueryWidgetStore extends RegionWidgetStore {
             backendService.requestSpectralLine(new CARTA.DoubleBounds({min: freqMHzFrom, max: freqMHzTo}), this.intensityLimitEnabled ? this.intensityLimitValue : NaN).subscribe(ack => {
                 this.isQuerying = false;
                 if (ack.success && ack.dataSize >= 0) {
-                    if (ack.dataSize > 0) {
-                        this.numDataRows = ack.dataSize;
-                        this.isLineSelectedArray = new Array<boolean>(this.numDataRows).fill(false);
-                        this.queryResult = ProtobufProcessing.ProcessCatalogData(ack.spectralLineData);
-                        this.restFreqColumn = this.filterResult.get(REST_FREQUENCY_COLUMN_INDEX);
-                        this.measuredFreqColumn = this.filterResult.get(MEASURED_FREQUENCY_COLUMN_INDEX);
-                    } else {
-                        this.numDataRows = 0;
-                        this.isLineSelectedArray = [];
-                        this.queryResult = new Map<number, ProcessedColumnData>();
-                        this.restFreqColumn = undefined;
-                        this.measuredFreqColumn = undefined;
-                    }
-
-                    // replace to comprehensive headers
-                    ack.headers.forEach((header) => {
+                    // 1. header part
+                    ack.headers.forEach((header) => { // replace to comprehensive headers
                         if (SPLATALOG_HEADER_MAP.has(header.name as SpectralLineHeaders)) {
                             header.name = SPLATALOG_HEADER_MAP.get(header.name as SpectralLineHeaders);
                         }
@@ -247,14 +233,28 @@ export class SpectralLineQueryWidgetStore extends RegionWidgetStore {
                     });
                     this.initControlHeader();
 
-                    // update column data type
-                    this.columnHeaders.forEach(header => {
-                        if (header.dataType === CARTA.ColumnType.Double) {
-                            const column = this.queryResult.get(header.columnIndex);
-                            column.dataType = CARTA.ColumnType.Double;
-                            column.data = column.data as Array<number>;
-                        }
-                    });
+                    // 2. data part
+                    if (ack.dataSize > 0) {
+                        this.numDataRows = ack.dataSize;
+                        this.isLineSelectedArray = new Array<boolean>(this.numDataRows).fill(false);
+                        this.queryResult = ProtobufProcessing.ProcessCatalogData(ack.spectralLineData);
+                        this.restFreqColumn = this.filterResult.get(REST_FREQUENCY_COLUMN_INDEX);
+                        this.measuredFreqColumn = this.filterResult.get(MEASURED_FREQUENCY_COLUMN_INDEX);
+                        this.columnHeaders.forEach(header => { // update column data type
+                            if (header.dataType === CARTA.ColumnType.Double) {
+                                const column = this.queryResult.get(header.columnIndex);
+                                column.dataType = CARTA.ColumnType.Double;
+                                column.data = column.data as Array<number>;
+                            }
+                        });
+                    } else {
+                        this.numDataRows = 0;
+                        this.isLineSelectedArray = [];
+                        this.queryResult = new Map<number, ProcessedColumnData>();
+                        this.restFreqColumn = undefined;
+                        this.measuredFreqColumn = undefined;
+                    }
+
                     this.filterResult = this.queryResult;
                 } else {
                     AppStore.Instance.alertStore.showAlert(ack.message);
@@ -328,9 +328,11 @@ export class SpectralLineQueryWidgetStore extends RegionWidgetStore {
         this.controlHeader.forEach((controlHeader) => {
             controlHeader.filter = "";
         });
-        this.filterResult = _.cloneDeep(this.queryResult);
+        if (this.isDataFiltered) {
+            this.filterResult = _.cloneDeep(this.queryResult);
+            this.numDataRows = this.filterResult.get(0).data.length;
+        }
         this.isDataFiltered = false;
-        this.numDataRows = this.filterResult.get(0).data.length;
     };
 
     @computed get formalizedHeaders(): SpectralLineHeader[] {
