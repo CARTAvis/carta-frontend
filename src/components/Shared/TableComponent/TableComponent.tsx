@@ -228,7 +228,7 @@ export class TableComponent extends React.Component<TableComponentProps> {
         // rowIndices offset around 5 form blueprintjs tabel
         const currentIndex = rowIndices.rowIndexEnd + 1;
         if (rowIndices.rowIndexEnd > 0 && currentIndex >= this.props.numVisibleRows && !this.props.loadingCell && !this.props.showSelectedData) {
-            this.props.updateByInfiniteScroll(rowIndices.rowIndexEnd);
+            this.props.updateByInfiniteScroll?.(rowIndices.rowIndexEnd);
         }
     };
 
@@ -266,7 +266,7 @@ export class TableComponent extends React.Component<TableComponentProps> {
                     }
                 } 
             }
-            this.props.updateSelectedRow(selectedDataIndex);
+            this.props.updateSelectedRow?.(selectedDataIndex);
         }
     };
 
