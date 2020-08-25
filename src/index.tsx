@@ -41,8 +41,18 @@ async function fetchConfig() {
         console.log("No runtime config provided. Using default configuration");
         ApiService.SetRuntimeConfig({});
     }
-    ReactDOM.render(<App/>, document.getElementById("root") as HTMLElement
-    );
+
+    if (ApiService.RuntimeConfig.googleClientId) {
+        // Lazy load google API script only when the config requires it
+        const script = document.createElement("script");
+        script.src = "https://apis.google.com/js/client.js";
+        script.onload = () => {
+            ReactDOM.render(<App/>, document.getElementById("root") as HTMLElement);
+        };
+        document.body.appendChild(script);
+    } else {
+        ReactDOM.render(<App/>, document.getElementById("root") as HTMLElement);
+    }
 }
 
 fetchConfig().then(() => {
