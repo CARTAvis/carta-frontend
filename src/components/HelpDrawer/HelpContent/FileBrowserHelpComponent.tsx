@@ -19,9 +19,9 @@ export class FileBrowserHelpComponent extends React.Component {
                 <ul>
                     <li>Fuzzy search (free typing)</li>
                     <li>Unix-style search (e.g., *.fits) with the syntax <code>+&lt;expression&gt;</code> 
-                        (e.g., <code>+*.fits</code>)</li>
+                        &nbsp;(e.g., <code>+*.fits</code>)</li>
                     <li>Regular expression search (e.g., colou?r) with the syntax <code>/&lt;expression&gt;/</code> 
-                        (e.g., <code>/colou?r/</code>)</li>
+                        &nbsp;(e.g., <code>/colou?r/</code>)</li>
                 </ul>
                 <h3 id="images">Images</h3>
                 <p>Images can be loaded as raster via 
