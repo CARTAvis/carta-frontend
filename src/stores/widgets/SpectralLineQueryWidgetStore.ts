@@ -333,7 +333,7 @@ export class SpectralLineQueryWidgetStore extends RegionWidgetStore {
                     filteredDataIndexes = this.numericFiltering(data as Array<number>, dataIndexes, filterString);
                 } else if (dataType === CARTA.ColumnType.String) {
                     dataIndexes.forEach(dataIndex => {
-                        if ((data[dataIndex] as string).match(filterString)) {
+                        if ((data[dataIndex] as string).includes(filterString)) {
                             filteredDataIndexes.push(dataIndex);
                         }
                     });
