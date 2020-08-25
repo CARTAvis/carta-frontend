@@ -1,12 +1,12 @@
 import * as React from "react";
-import {autorun, computed, observable} from "mobx";
+import {computed, observable} from "mobx";
 import {observer} from "mobx-react";
 import {HTMLTable, Icon, NonIdealState, Position, Tooltip} from "@blueprintjs/core";
 import ReactResizeDetector from "react-resize-detector";
 import {CARTA} from "carta-protobuf";
 import {RegionStore, WidgetConfig, WidgetProps, HelpType, DialogStore, AppStore} from "stores";
 import {Point2D} from "models";
-import {toFixed} from "utilities";
+import {toFixed, getFormattedWCSPoint} from "utilities";
 import {CustomIcon} from "icons/CustomIcons";
 import "./RegionListComponent.css";
 
@@ -64,21 +64,6 @@ export class RegionListComponent extends React.Component<WidgetProps> {
         DialogStore.Instance.showRegionDialog();
     };
 
-    constructor(props: WidgetProps) {
-        super(props);
-
-        const appStore = AppStore.Instance;
-        // update widget title to include region's associated file name
-        autorun(() => {
-            const frame = appStore.activeFrame?.spatialReference ?? appStore.activeFrame;
-            if (frame) {
-                appStore.widgetsStore.setWidgetTitle(this.props.id, `Region List (${frame.frameInfo.fileInfo.name})`);
-            } else {
-                appStore.widgetsStore.setWidgetTitle(this.props.id, "Region List");
-            }
-        });
-    }
-
     render() {
         const appStore = AppStore.Instance;
         const frame = appStore.activeFrame;
@@ -133,6 +118,9 @@ export class RegionListComponent extends React.Component<WidgetProps> {
 
             let pixelCenterEntry;
             if (isFinite(point.x) && isFinite(point.y)) {
+                if (frame.validWcs) {
+                    point = getFormattedWCSPoint(frame.wcsInfo, point);
+                }
                 pixelCenterEntry = <td style={{width: RegionListComponent.CENTER_COLUMN_DEFAULT_WIDTH}} onDoubleClick={this.handleRegionListDoubleClick}>{`(${toFixed(point.x, 1)}, ${toFixed(point.y, 1)})`}</td>;
             } else {
                 pixelCenterEntry = <td style={{width: RegionListComponent.CENTER_COLUMN_DEFAULT_WIDTH}}>Invalid</td>;
@@ -140,23 +128,27 @@ export class RegionListComponent extends React.Component<WidgetProps> {
 
             let pixelSizeEntry;
             if (showSizeColumn) {
-                if (region.regionType === CARTA.RegionType.RECTANGLE || region.regionType === CARTA.RegionType.POLYGON) {
-                    const sizePoint = region.boundingBox;
-                    pixelSizeEntry = (
-                        <td style={{width: RegionListComponent.SIZE_COLUMN_DEFAULT_WIDTH}} onDoubleClick={this.handleRegionListDoubleClick}>
-                            <Tooltip content="Width and height" position={Position.BOTTOM}>{`(${toFixed(sizePoint.x, 1)}, ${toFixed(sizePoint.y, 1)})`}</Tooltip>
-                        </td>
-                    );
-                } else if (region.regionType === CARTA.RegionType.ELLIPSE) {
-                    const sizePoint = region.controlPoints[1];
-                    pixelSizeEntry = (
-                        <td style={{width: RegionListComponent.SIZE_COLUMN_DEFAULT_WIDTH}} onDoubleClick={this.handleRegionListDoubleClick}>
-                            <Tooltip content="Semi-major and semi-minor axes" position={Position.BOTTOM}>{`(${toFixed(sizePoint.x, 1)}, ${toFixed(sizePoint.y, 1)})`}</Tooltip>
-                        </td>
-                    );
-                } else {
-                    pixelSizeEntry = <td style={{width: RegionListComponent.SIZE_COLUMN_DEFAULT_WIDTH}} onDoubleClick={this.handleRegionListDoubleClick}/>;
+                let sizePoint: Point2D;
+                let tooltipString: string;
+                switch (region.regionType) {
+                    case CARTA.RegionType.RECTANGLE:
+                    case CARTA.RegionType.POLYGON:
+                        sizePoint = frame.validWcs ? frame.getWcsSizeInArcsec(region.boundingBox) : region.boundingBox;
+                        tooltipString = "Width and height";
+                        break;
+                    case CARTA.RegionType.ELLIPSE:
+                        sizePoint = frame.validWcs ? frame.getWcsSizeInArcsec(region.controlPoints[1]) : region.controlPoints[1];
+                        tooltipString = "Semi-major and semi-minor axes";
+                        break;
+                    default:
                 }
+                pixelSizeEntry = (
+                    <td style={{width: RegionListComponent.SIZE_COLUMN_DEFAULT_WIDTH}} onDoubleClick={this.handleRegionListDoubleClick}>
+                        {region.regionType !== CARTA.RegionType.POINT &&
+                            <Tooltip content={tooltipString} position={Position.BOTTOM}>{`(${toFixed(sizePoint.x, 1)}, ${toFixed(sizePoint.y, 1)})`}</Tooltip>
+                        }
+                    </td>
+                );
             }
 
             let lockEntry: React.ReactNode;
@@ -199,8 +191,8 @@ export class RegionListComponent extends React.Component<WidgetProps> {
                         <th style={{width: RegionListComponent.ACTION_COLUMN_DEFAULT_WIDTH * 2}}><Icon icon={"blank"}/><Icon icon={"blank"}/></th>
                         <th style={{width: nameWidth}}>Name</th>
                         <th style={{width: RegionListComponent.TYPE_COLUMN_DEFAULT_WIDTH}}>Type</th>
-                        <th style={{width: RegionListComponent.CENTER_COLUMN_DEFAULT_WIDTH}}>Pixel Center</th>
-                        {showSizeColumn && <th style={{width: RegionListComponent.SIZE_COLUMN_DEFAULT_WIDTH}}>Size (px)</th>}
+                        <th style={{width: RegionListComponent.CENTER_COLUMN_DEFAULT_WIDTH}}>{frame.validWcs ? "Center" : "Pixel Center"}</th>
+                        {showSizeColumn && <th style={{width: RegionListComponent.SIZE_COLUMN_DEFAULT_WIDTH}}>{frame.validWcs ? "Size" : "Size (px)"}</th>}
                         {showRotationColumn && <th style={{width: RegionListComponent.ROTATION_COLUMN_DEFAULT_WIDTH}}>P.A. (deg)</th>}
                     </tr>
                     </thead>
