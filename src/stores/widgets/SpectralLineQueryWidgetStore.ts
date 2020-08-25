@@ -321,20 +321,7 @@ export class SpectralLineQueryWidgetStore extends RegionWidgetStore {
         });
 
         // set up filtered columns
-        let filtered = new Map<number, ProcessedColumnData>();
-        this.queryResult.forEach((column, columnIndex) => {
-            let filteredData = [];
-            dataIndexes.forEach(dataIndex => {
-                if (dataIndex < column.data.length) {
-                    filteredData.push(column.data[dataIndex]);
-                }
-            });
-            filtered.set(columnIndex, {
-                dataType: column.dataType,
-                data: filteredData
-            });
-        });
-        this.filterResult = filtered;
+        this.filterResult = this.getFilteredColumns(dataIndexes);
         this.isDataFiltered = true;
         this.numDataRows = dataIndexes.length;
     };
@@ -493,6 +480,23 @@ export class SpectralLineQueryWidgetStore extends RegionWidgetStore {
             }
         });
         return filteredDataIndexes;
+    };
+
+    private getFilteredColumns = (filteredIndexes: Array<number>): Map<number, ProcessedColumnData> => {
+        let filteredColumns = new Map<number, ProcessedColumnData>();
+        this.queryResult.forEach((column, columnIndex) => {
+            let filteredData = [];
+            filteredIndexes?.forEach(dataIndex => {
+                if (dataIndex < column.data.length) {
+                    filteredData.push(column.data[dataIndex]);
+                }
+            });
+            filteredColumns.set(columnIndex, {
+                dataType: column.dataType,
+                data: filteredData
+            });
+        });
+        return filteredColumns;
     };
 
     private calculateFreqMHz = (value: number, unit: SpectralLineQueryUnit): number => {
