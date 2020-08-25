@@ -447,9 +447,6 @@ export class SpectralLineQueryWidgetStore extends RegionWidgetStore {
     }
 
     private updateShiftedColumn = () => {
-        if (this.redshiftFactor === 1) {
-            return;
-        }
         const shiftedData = this.originalShiftedData.map((value) => {
             return isFinite(value) ? value * this.redshiftFactor : undefined;
         });
