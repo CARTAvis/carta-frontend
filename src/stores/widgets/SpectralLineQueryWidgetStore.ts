@@ -268,7 +268,7 @@ export class SpectralLineQueryWidgetStore extends RegionWidgetStore {
     };
 
     @action setColumnFilter = (filterInput: string, columnName: string) => {
-        if (!filterInput || !columnName || !this.controlHeader.has(columnName)) {
+        if (!this.controlHeader.has(columnName)) {
             return;
         }
         const current = this.controlHeader.get(columnName);
@@ -281,7 +281,6 @@ export class SpectralLineQueryWidgetStore extends RegionWidgetStore {
             columnWidth: current.columnWidth
         };
         this.controlHeader.set(columnName, newHeader);
-        // this.updateTableStatus(true);
     };
 
     @action filter = () => {
