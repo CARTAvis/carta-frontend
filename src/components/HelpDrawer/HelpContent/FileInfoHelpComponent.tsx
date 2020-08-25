@@ -9,8 +9,9 @@ export class FileInfoHelpComponent extends React.Component {
         return (
             <div>
                 <p><ImageComponent light={headFileinfoButton} dark={headFileinfoButton_d} width="90%"/></p>
-                <p>File information dialogue provides a summary of the properties and the full image header of the image in the current
-        image viewer. To switch to other images, use the frame slider in the animator widget.</p>
+                <p>File header dialogue provides full image header and a summary of the 
+                    properties of the image in the current image view. To switch to other 
+                    images, use the image slider in the animator widget, or use the image list widget.</p>
             </div>
         );
     }
