@@ -143,7 +143,7 @@ export class SpectralLineQueryWidgetStore extends RegionWidgetStore {
         this.redshiftInput = 0;
         this.queryResultTableRef = undefined;
         this.queryResult = new Map<number, ProcessedColumnData>();
-        this.filterResult = this.queryResult;
+        this.filterResult = new Map<number, ProcessedColumnData>();
         this.originalShiftedData = [];
         this.numDataRows = 0;
         this.isLineSelectedArray = [];
@@ -279,14 +279,14 @@ export class SpectralLineQueryWidgetStore extends RegionWidgetStore {
                                 column.data = column.data as Array<number>;
                             }
                         });
-                        this.filterResult = this.queryResult;
+                        this.filterResult = _.cloneDeep(this.queryResult);
                         this.originalShiftedData = this.filterResult.get(SHIFTIED_FREQUENCY_COLUMN_INDEX).data as Array<number>;
                         this.updateShiftedColumn();
                     } else {
                         this.numDataRows = 0;
                         this.isLineSelectedArray = [];
                         this.queryResult = new Map<number, ProcessedColumnData>();
-                        this.filterResult = this.queryResult;
+                        this.filterResult = new Map<number, ProcessedColumnData>();
                         this.originalShiftedData = [];
                     }
                 } else {
@@ -355,7 +355,7 @@ export class SpectralLineQueryWidgetStore extends RegionWidgetStore {
             controlHeader.filter = "";
         });
         if (this.isDataFiltered) {
-            this.filterResult =  _.cloneDeep(this.queryResult);
+            this.filterResult = _.cloneDeep(this.queryResult);
             this.originalShiftedData = this.filterResult.get(SHIFTIED_FREQUENCY_COLUMN_INDEX).data as Array<number>;
             this.updateShiftedColumn();
             this.numDataRows = this.filterResult.get(0).data.length;
