@@ -126,6 +126,40 @@ export class SpectralLineQueryWidgetStore extends RegionWidgetStore {
     @observable controlHeader: Map<string, ControlHeader>;
     @observable isDataFiltered: boolean;
 
+    constructor() {
+        super(RegionsType.CLOSED);
+        this.queryRangeType = SpectralLineQueryRangeType.Range;
+        this.queryRange = [0, 0];
+        this.queryRangeByCenter = [0, 0];
+        this.queryUnit = SpectralLineQueryUnit.MHz;
+        this.intensityLimitEnabled = true;
+        this.intensityLimitValue = -5;
+        this.isQuerying = false;
+        this.columnHeaders = [];
+        this.headerDisplay = new Map<SpectralLineHeaders, boolean>();
+        Object.values(SpectralLineHeaders).forEach(header => this.headerDisplay.set(header, true));
+        this.redshiftType = RedshiftType.V;
+        this.redshiftInput = 0;
+        this.queryResultTableRef = undefined;
+        this.queryResult = new Map<number, ProcessedColumnData>();
+        this.filterResult = this.queryResult;
+        this.numDataRows = 0;
+        this.isLineSelectedArray = [];
+        this.selectedSpectralProfilerID = AppStore.Instance.widgetsStore.spectralProfilerList.length > 0 ?
+            AppStore.Instance.widgetsStore.spectralProfilerList[0] : undefined;
+        this.sortingInfo = {columnName: null, sortingType: null};
+        this.controlHeader = new Map<string, ControlHeader>();
+        this.isDataFiltered = false;
+
+        // update selected spectral profiler when currently selected is closed
+        autorun(() => {
+            if (!AppStore.Instance.widgetsStore.getSpectralWidgetStoreByID(this.selectedSpectralProfilerID)) {
+                this.selectedSpectralProfilerID = AppStore.Instance.widgetsStore.spectralProfilerList.length > 0 ?
+                AppStore.Instance.widgetsStore.spectralProfilerList[0] : undefined;
+            }
+        });
+    }
+
     @action setQueryRangeType = (queryRangeType: SpectralLineQueryRangeType) => {
         this.queryRangeType = queryRangeType;
     };
@@ -234,32 +268,14 @@ export class SpectralLineQueryWidgetStore extends RegionWidgetStore {
                         this.numDataRows = ack.dataSize;
                         this.isLineSelectedArray = new Array<boolean>(this.numDataRows).fill(false);
                         this.queryResult = ProtobufProcessing.ProcessCatalogData(ack.spectralLineData);
-
-                        // compensate missing rest frequency value with measured frequency value in shifted column
-                        // TODO: move to backend
-                        const shiftedFreqData = this.queryResult.get(SHIFTIED_FREQUENCY_COLUMN_INDEX)?.data;
-                        const measuredFreqData = this.queryResult.get(MEASURED_FREQUENCY_COLUMN_INDEX)?.data;
-                        const compensatedData = (shiftedFreqData as Array<string>)?.map((valString, index) => {
-                            let value = parseFloat(valString);
-                            if (!isFinite(value) && index < measuredFreqData?.length) {
-                                value = parseFloat((measuredFreqData as Array<string>)[index]);
-                            }
-                            return isFinite(value) ? value : undefined;
-                        });
-                        this.queryResult.set(SHIFTIED_FREQUENCY_COLUMN_INDEX, {
-                            dataType: CARTA.ColumnType.Double,
-                            data: compensatedData
-                        });
-
-                        // update column data type
-                        this.columnHeaders.forEach(header => {
+                        this.initShiftedColumn();
+                        this.columnHeaders.forEach(header => { // update column data type
                             if (header.dataType === CARTA.ColumnType.Double) {
                                 const column = this.queryResult.get(header.columnIndex);
                                 column.dataType = CARTA.ColumnType.Double;
                                 column.data = column.data as Array<number>;
                             }
                         });
-
                         this.filterResult = this.queryResult;
                     } else {
                         this.numDataRows = 0;
@@ -516,37 +532,21 @@ export class SpectralLineQueryWidgetStore extends RegionWidgetStore {
         }
     };
 
-    constructor() {
-        super(RegionsType.CLOSED);
-        this.queryRangeType = SpectralLineQueryRangeType.Range;
-        this.queryRange = [0, 0];
-        this.queryRangeByCenter = [0, 0];
-        this.queryUnit = SpectralLineQueryUnit.MHz;
-        this.intensityLimitEnabled = true;
-        this.intensityLimitValue = -5;
-        this.isQuerying = false;
-        this.columnHeaders = [];
-        this.headerDisplay = new Map<SpectralLineHeaders, boolean>();
-        Object.values(SpectralLineHeaders).forEach(header => this.headerDisplay.set(header, true));
-        this.redshiftType = RedshiftType.V;
-        this.redshiftInput = 0;
-        this.queryResultTableRef = undefined;
-        this.queryResult = new Map<number, ProcessedColumnData>();
-        this.filterResult = this.queryResult;
-        this.numDataRows = 0;
-        this.isLineSelectedArray = [];
-        this.selectedSpectralProfilerID = AppStore.Instance.widgetsStore.spectralProfilerList.length > 0 ?
-            AppStore.Instance.widgetsStore.spectralProfilerList[0] : undefined;
-        this.sortingInfo = {columnName: null, sortingType: null};
-        this.controlHeader = new Map<string, ControlHeader>();
-        this.isDataFiltered = false;
-
-        // update selected spectral profiler when currently selected is closed
-        autorun(() => {
-            if (!AppStore.Instance.widgetsStore.getSpectralWidgetStoreByID(this.selectedSpectralProfilerID)) {
-                this.selectedSpectralProfilerID = AppStore.Instance.widgetsStore.spectralProfilerList.length > 0 ?
-                AppStore.Instance.widgetsStore.spectralProfilerList[0] : undefined;
+    // compensate missing rest frequency value with measured frequency value in shifted column
+    // TODO: move to backend
+    private initShiftedColumn = () => {
+        const shiftedFreqData = this.queryResult.get(SHIFTIED_FREQUENCY_COLUMN_INDEX)?.data;
+        const measuredFreqData = this.queryResult.get(MEASURED_FREQUENCY_COLUMN_INDEX)?.data;
+        const compensatedData = (shiftedFreqData as Array<string>)?.map((valString, index) => {
+            let value = parseFloat(valString);
+            if (!isFinite(value) && index < measuredFreqData?.length) {
+                value = parseFloat((measuredFreqData as Array<string>)[index]);
             }
+            return isFinite(value) ? value : undefined;
         });
-    }
+        this.queryResult.set(SHIFTIED_FREQUENCY_COLUMN_INDEX, {
+            dataType: CARTA.ColumnType.Double,
+            data: compensatedData
+        });
+    };
 }
