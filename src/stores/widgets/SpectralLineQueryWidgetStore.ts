@@ -119,6 +119,7 @@ export class SpectralLineQueryWidgetStore extends RegionWidgetStore {
     @observable queryResultTableRef: Table;
     private queryResult: Map<number, ProcessedColumnData>;
     @observable filterResult: Map<number, ProcessedColumnData>;
+    private originalShiftedData: Array<number>;
     @observable private isLineSelectedArray: Array<boolean>;
     @observable sortingInfo: {columnName: string, sortingType: CARTA.SortingType};
     @observable numDataRows: number;
@@ -143,6 +144,7 @@ export class SpectralLineQueryWidgetStore extends RegionWidgetStore {
         this.queryResultTableRef = undefined;
         this.queryResult = new Map<number, ProcessedColumnData>();
         this.filterResult = this.queryResult;
+        this.originalShiftedData = [];
         this.numDataRows = 0;
         this.isLineSelectedArray = [];
         this.selectedSpectralProfilerID = AppStore.Instance.widgetsStore.spectralProfilerList.length > 0 ?
@@ -199,6 +201,7 @@ export class SpectralLineQueryWidgetStore extends RegionWidgetStore {
         if (isFinite(input)) {
             this.redshiftInput = input;
         }
+        this.updateShiftedColumn();
     };
 
     @action setQueryResultTableRef(ref: Table) {
@@ -277,11 +280,14 @@ export class SpectralLineQueryWidgetStore extends RegionWidgetStore {
                             }
                         });
                         this.filterResult = this.queryResult;
+                        this.originalShiftedData = this.filterResult.get(SHIFTIED_FREQUENCY_COLUMN_INDEX).data as Array<number>;
+                        this.updateShiftedColumn();
                     } else {
                         this.numDataRows = 0;
                         this.isLineSelectedArray = [];
                         this.queryResult = new Map<number, ProcessedColumnData>();
                         this.filterResult = this.queryResult;
+                        this.originalShiftedData = [];
                     }
                 } else {
                     AppStore.Instance.alertStore.showAlert(ack.message);
@@ -338,6 +344,8 @@ export class SpectralLineQueryWidgetStore extends RegionWidgetStore {
 
         // set up filtered columns
         this.filterResult = this.getFilteredColumns(dataIndexes);
+        this.originalShiftedData = this.filterResult.get(SHIFTIED_FREQUENCY_COLUMN_INDEX).data as Array<number>;
+        this.updateShiftedColumn();
         this.isDataFiltered = true;
         this.numDataRows = dataIndexes.length;
     };
@@ -348,6 +356,8 @@ export class SpectralLineQueryWidgetStore extends RegionWidgetStore {
         });
         if (this.isDataFiltered) {
             this.filterResult =  _.cloneDeep(this.queryResult);
+            this.originalShiftedData = this.filterResult.get(SHIFTIED_FREQUENCY_COLUMN_INDEX).data as Array<number>;
+            this.updateShiftedColumn();
             this.numDataRows = this.filterResult.get(0).data.length;
         }
         this.isDataFiltered = false;
@@ -435,6 +445,19 @@ export class SpectralLineQueryWidgetStore extends RegionWidgetStore {
         });
         return filters;
     }
+
+    private updateShiftedColumn = () => {
+        if (this.redshiftFactor === 1) {
+            return;
+        }
+        const shiftedData = this.originalShiftedData.map((value) => {
+            return isFinite(value) ? value * this.redshiftFactor : undefined;
+        });
+        this.filterResult.set(SHIFTIED_FREQUENCY_COLUMN_INDEX, {
+            dataType: CARTA.ColumnType.Double,
+            data: shiftedData
+        });
+    };
 
     private initControlHeader = () => {
         if (this.columnHeaders.length > 0) {
