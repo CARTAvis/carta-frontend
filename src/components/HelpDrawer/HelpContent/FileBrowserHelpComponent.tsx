@@ -9,19 +9,19 @@ export class FileBrowserHelpComponent extends React.Component {
             <div>
                 <p>File browser allows users to</p>
                 <ul>
-                    <li>Load images in CASA, FITS, MIRIAD, and HDF5-IDIA schema formats as raster</li>
-                    <li>Save images in CASA and FITS formats</li>
-                    <li>Import and export region text files in CASA (.crtf) and ds9 (.reg) formats</li>
-                    <li>Import catalogue files in VOTable and FITS formats</li>
+                    <li>Load images in CASA, FITS, MIRIAD, or HDF5-IDIA schema formats as raster</li>
+                    <li>Save images in CASA or FITS formats</li>
+                    <li>Import and export region text files in CASA (.crtf) or ds9 (.reg) formats</li>
+                    <li>Import catalogue files in VOTable or FITS formats</li>
                 </ul>
                 <h3 id="fileFiltering">File filtering</h3>
                 <p>A file filter can be applied to the current directory. Three methods are provided:</p>
                 <ul>
                     <li>Fuzzy search (free typing)</li>
-                    <li>Unix-style search (e.g., *.fits) with the syntax +&lt;expression&gt; 
-                        (e.g., +*.fits)</li>
-                    <li>Regular expression search (e.g., colou?r) with the syntax /&lt;expression&gt;/ 
-                        (e.g., /colou?r/)</li>
+                    <li>Unix-style search (e.g., *.fits) with the syntax <code>+&lt;expression&gt;</code> 
+                        (e.g., <code>+*.fits</code>)</li>
+                    <li>Regular expression search (e.g., colou?r) with the syntax <code>/&lt;expression&gt;/</code> 
+                        (e.g., <code>/colou?r/</code>)</li>
                 </ul>
                 <h3 id="images">Images</h3>
                 <p>Images can be loaded as raster via 
