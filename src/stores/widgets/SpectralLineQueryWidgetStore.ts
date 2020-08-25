@@ -407,6 +407,17 @@ export class SpectralLineQueryWidgetStore extends RegionWidgetStore {
         return selectedLines;
     }
 
+    // trigger re-render of SpectralLineQueryComponent while typing filter string
+    @computed get filters(): string[] {
+        let filters = [];
+        this.controlHeader.forEach((value, key) => {
+            if (value.filter) {
+                filters.push(value);
+            }
+        });
+        return filters;
+    }
+
     private initControlHeader = () => {
         if (this.columnHeaders.length > 0) {
             for (let index = 0; index < this.columnHeaders.length; index++) {
