@@ -781,7 +781,7 @@ export class AppStore {
             frame.resetMomentRequestState();
             if (ack.success && ack.openFileAcks) {
                 ack.openFileAcks.forEach(openFileAck => {
-                    if (this.addFrame(CARTA.OpenFileAck.create(openFileAck), "", "")) {
+                    if (this.addFrame(CARTA.OpenFileAck.create(openFileAck), this.fileBrowserStore.startingDirectory, "")) {
                         this.fileCounter++;
                         frame.addMomentImage(this.frames.find(f => f.frameInfo.fileId === openFileAck.fileId));
                     } else {
