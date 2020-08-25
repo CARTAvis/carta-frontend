@@ -352,7 +352,7 @@ export class AppStore {
             this.animatorStore.setAnimationMode(AnimationMode.FRAME);
         } else if (this.frames.length === 1 && newFrame.frameInfo.fileInfoExtended.depth) {
             this.animatorStore.setAnimationMode(AnimationMode.CHANNEL);
-        } else if(this.frames.length === 1 && newFrame.frameInfo.fileInfoExtended.stokes) {
+        } else if (this.frames.length === 1 && newFrame.frameInfo.fileInfoExtended.stokes) {
             this.animatorStore.setAnimationMode(AnimationMode.STOKES);
         }
 
