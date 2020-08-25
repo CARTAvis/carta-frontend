@@ -3,7 +3,7 @@ import {observable} from "mobx";
 import {observer} from "mobx-react";
 import {Alert, Button, FormGroup, MenuItem, Switch} from "@blueprintjs/core";
 import {Select} from "@blueprintjs/select";
-import {FrameScaling, RenderConfigStore} from "stores/RenderConfigStore";
+import {AppStore, FrameScaling, RenderConfigStore} from "stores";
 import {ColormapComponent, ScalingSelectComponent, SCALING_POPOVER_PROPS, SafeNumericInput} from "components/Shared";
 
 const HistogramSelect = Select.ofType<boolean>();
@@ -107,7 +107,7 @@ export class ColormapConfigComponent extends React.Component<ColormapConfigProps
                     />
                 </FormGroup>
                 }
-                <Alert icon={"time"} isOpen={this.showCubeHistogramAlert} onCancel={this.handleAlertCancel} onConfirm={this.handleAlertConfirm} cancelButtonText={"Cancel"}>
+                <Alert className={AppStore.Instance.darkTheme ? "bp3-dark" : ""} icon={"time"} isOpen={this.showCubeHistogramAlert} onCancel={this.handleAlertCancel} onConfirm={this.handleAlertConfirm} cancelButtonText={"Cancel"}>
                     <p>
                         Calculating a cube histogram may take a long time, depending on the size of the file. Are you sure you want to continue?
                     </p>
