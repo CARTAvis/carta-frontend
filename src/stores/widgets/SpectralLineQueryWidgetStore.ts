@@ -2,7 +2,6 @@ import {action, autorun, computed, observable} from "mobx";
 import {NumberRange} from "@blueprintjs/core";
 import {Table} from "@blueprintjs/table";
 import {CARTA} from "carta-protobuf";
-import * as _ from "lodash";
 import {AppStore, ControlHeader} from "stores";
 import {BackendService} from "services";
 import {RegionWidgetStore, RegionsType} from "./RegionWidgetStore";
@@ -118,7 +117,7 @@ export class SpectralLineQueryWidgetStore extends RegionWidgetStore {
     @observable redshiftType: RedshiftType;
     @observable redshiftInput: number;
     @observable queryResultTableRef: Table;
-    @observable queryResult: Map<number, ProcessedColumnData>; // change to private
+    @observable private queryResult: Map<number, ProcessedColumnData>;
     @observable filterResult: Map<number, ProcessedColumnData>;
     @observable private isLineSelectedArray: Array<boolean>;
     @observable private restFreqColumn: ProcessedColumnData;
@@ -238,11 +237,12 @@ export class SpectralLineQueryWidgetStore extends RegionWidgetStore {
                         this.numDataRows = ack.dataSize;
                         this.isLineSelectedArray = new Array<boolean>(this.numDataRows).fill(false);
                         this.queryResult = ProtobufProcessing.ProcessCatalogData(ack.spectralLineData);
+                        this.filterResult = this.queryResult;
                         this.restFreqColumn = this.filterResult.get(REST_FREQUENCY_COLUMN_INDEX);
                         this.measuredFreqColumn = this.filterResult.get(MEASURED_FREQUENCY_COLUMN_INDEX);
                         this.columnHeaders.forEach(header => { // update column data type
                             if (header.dataType === CARTA.ColumnType.Double) {
-                                const column = this.queryResult.get(header.columnIndex);
+                                const column = this.filterResult.get(header.columnIndex);
                                 column.dataType = CARTA.ColumnType.Double;
                                 column.data = column.data as Array<number>;
                             }
@@ -251,11 +251,10 @@ export class SpectralLineQueryWidgetStore extends RegionWidgetStore {
                         this.numDataRows = 0;
                         this.isLineSelectedArray = [];
                         this.queryResult = new Map<number, ProcessedColumnData>();
+                        this.filterResult = this.queryResult;
                         this.restFreqColumn = undefined;
                         this.measuredFreqColumn = undefined;
                     }
-
-                    this.filterResult = this.queryResult;
                 } else {
                     AppStore.Instance.alertStore.showAlert(ack.message);
                 }
@@ -332,7 +331,7 @@ export class SpectralLineQueryWidgetStore extends RegionWidgetStore {
             controlHeader.filter = "";
         });
         if (this.isDataFiltered) {
-            this.filterResult = _.cloneDeep(this.queryResult);
+            this.filterResult = this.queryResult;
             this.numDataRows = this.filterResult.get(0).data.length;
         }
         this.isDataFiltered = false;
