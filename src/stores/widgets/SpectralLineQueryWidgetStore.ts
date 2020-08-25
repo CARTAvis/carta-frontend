@@ -312,7 +312,11 @@ export class SpectralLineQueryWidgetStore extends RegionWidgetStore {
         let filtered = new Map<number, ProcessedColumnData>();
         this.queryResult.forEach((column, columnIndex) => {
             let filteredData = [];
-            dataIndexes.forEach(dataIndex => filteredData.push(column.data[dataIndex]));
+            dataIndexes.forEach(dataIndex => {
+                if (dataIndex < column.data.length) {
+                    filteredData.push(column.data[dataIndex]);
+                }
+            });
             filtered.set(columnIndex, {
                 dataType: column.dataType,
                 data: filteredData
