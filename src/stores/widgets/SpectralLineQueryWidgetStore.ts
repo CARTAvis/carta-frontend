@@ -34,7 +34,8 @@ export enum SpectralLineHeaders {
     MeasuredFrequencyErrSPLA = "Meas Freq Err(rest frame,redshifted)",
     MeasuredFrequencyErr = "Measured Frequency Error",
     ResolvedQN = "Resolved QNs",
-    UnresolvedQN = "Unresolved Quantum Numbers",
+    UnresolvedQNSPLA = "Unresolved Quantum Numbers",
+    UnresolvedQN = "Unresolved QNs",
     IntensityCDMS = "CDMS/JPL Intensity",
     IntensitySijm2SPLA = "S<sub>ij</sub>&#956;<sup>2</sup> (D<sup>2</sup>)",
     IntensitySijm2 = "Sij \u03BC^2",
@@ -50,11 +51,13 @@ export enum SpectralLineHeaders {
     LineList = "Linelist"
 }
 
-const SPLATALOG_HEADER_MAP = new Map<SpectralLineHeaders, SpectralLineHeaders>([
+// map for replacing original Splatalogue header to comprehensive header
+const SPLA_HEADER_MAP = new Map<SpectralLineHeaders, SpectralLineHeaders>([
     [SpectralLineHeaders.RestFrequencySPLA, SpectralLineHeaders.RestFrequency],
     [SpectralLineHeaders.RestFrequencyErrSPLA, SpectralLineHeaders.RestFrequencyErr],
     [SpectralLineHeaders.MeasuredFrequencySPLA, SpectralLineHeaders.MeasuredFrequency],
     [SpectralLineHeaders.MeasuredFrequencyErrSPLA, SpectralLineHeaders.MeasuredFrequencyErr],
+    [SpectralLineHeaders.UnresolvedQNSPLA, SpectralLineHeaders.UnresolvedQN],
     [SpectralLineHeaders.IntensitySijm2SPLA, SpectralLineHeaders.IntensitySijm2],
     [SpectralLineHeaders.IntensitySijSPLA, SpectralLineHeaders.IntensitySij],
     [SpectralLineHeaders.IntensityAijSPLA, SpectralLineHeaders.IntensityAij]
@@ -257,8 +260,8 @@ export class SpectralLineQueryWidgetStore extends RegionWidgetStore {
                 if (ack.success && ack.dataSize >= 0) {
                     // 1. header part
                     ack.headers.forEach((header) => { // replace to comprehensive headers
-                        if (SPLATALOG_HEADER_MAP.has(header.name as SpectralLineHeaders)) {
-                            header.name = SPLATALOG_HEADER_MAP.get(header.name as SpectralLineHeaders);
+                        if (SPLA_HEADER_MAP.has(header.name as SpectralLineHeaders)) {
+                            header.name = SPLA_HEADER_MAP.get(header.name as SpectralLineHeaders);
                         }
                     });
                     this.columnHeaders = ack.headers.sort((a, b) => {
