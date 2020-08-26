@@ -352,7 +352,6 @@ export class SpectralLineQueryWidgetStore extends RegionWidgetStore {
         this.originalShiftedData = this.filterResult.get(SHIFTIED_FREQUENCY_COLUMN_INDEX).data as Array<number>;
         this.updateShiftedColumn();
         this.isDataFiltered = true;
-        this.numDataRows = this.filteredRowIndexes.length;
     };
 
     @action resetFilter = () => {
@@ -363,7 +362,6 @@ export class SpectralLineQueryWidgetStore extends RegionWidgetStore {
             this.filterResult = _.cloneDeep(this.queryResult);
             this.originalShiftedData = this.filterResult.get(SHIFTIED_FREQUENCY_COLUMN_INDEX).data as Array<number>;
             this.updateShiftedColumn();
-            this.numDataRows = this.filterResult.get(0).data.length;
         }
         this.isDataFiltered = false;
     };
@@ -440,7 +438,6 @@ export class SpectralLineQueryWidgetStore extends RegionWidgetStore {
         return selectedLines;
     }
 
-    // trigger re-render of SpectralLineQueryComponent while typing filter string
     @computed get filters(): string[] {
         let filters = [];
         this.controlHeader.forEach((value, key) => {
@@ -449,6 +446,13 @@ export class SpectralLineQueryWidgetStore extends RegionWidgetStore {
             }
         });
         return filters;
+    }
+
+    @computed get resultTableInfo(): string {
+        const info = `Showing ${this.numDataRows} line(s).`;
+        const filteredInfo = `Showing ${this.filteredRowIndexes.length} filtered line(s) of total ${this.numDataRows} line(s).`;
+        const lineSelectionInfo = this.selectedLines.length > 0 ? ` Selected ${this.selectedLines.length} line(s).` : "";
+        return (this.isDataFiltered ? filteredInfo : info) + lineSelectionInfo;
     }
 
     private updateShiftedColumn = () => {

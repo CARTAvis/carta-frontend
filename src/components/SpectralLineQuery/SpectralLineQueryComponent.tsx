@@ -219,6 +219,8 @@ export class SpectralLineQueryComponent extends React.Component<WidgetProps> {
     render() {
         const appStore = AppStore.Instance;
         const widgetStore = this.widgetStore;
+        // trigger re-render of SpectralLineQueryComponent while typing filter string
+        const filters = widgetStore.filters;
 
         const inputByRange = (
             <React.Fragment>
@@ -402,10 +404,7 @@ export class SpectralLineQueryComponent extends React.Component<WidgetProps> {
                 </div>
                 <div className="bp3-dialog-footer">
                     <div className="result-table-info">
-                        <pre>
-                            Showing {widgetStore.numDataRows} {widgetStore.filters.length > 0 && widgetStore.isDataFiltered ? "filtered " : ""}entries.
-                            {widgetStore.selectedLines?.length > 0 ? ` Selected ${widgetStore.selectedLines.length} line${widgetStore.selectedLines.length > 1 ? "s" : ""}.` : ""}
-                        </pre>
+                        <pre>{widgetStore.resultTableInfo}</pre>
                     </div>
                     <div className="bp3-dialog-footer-actions">
                         <FormGroup inline={true} label={this.width < MINIMUM_WIDTH ? "" : "Spectral Profiler"}>
