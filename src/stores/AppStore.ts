@@ -350,9 +350,9 @@ export class AppStore {
         // Set animation mode to frame if the new image is 2D, or to channel if the image is 3D and there are no other frames
         if (newFrame.frameInfo.fileInfoExtended.depth <= 1 && newFrame.frameInfo.fileInfoExtended.stokes <= 1) {
             this.animatorStore.setAnimationMode(AnimationMode.FRAME);
-        } else if (this.frames.length === 1 && newFrame.frameInfo.fileInfoExtended.depth) {
+        } else if (newFrame.frameInfo.fileInfoExtended.depth > 1) {
             this.animatorStore.setAnimationMode(AnimationMode.CHANNEL);
-        } else if (this.frames.length === 1 && newFrame.frameInfo.fileInfoExtended.stokes) {
+        } else if (newFrame.frameInfo.fileInfoExtended.stokes > 1) {
             this.animatorStore.setAnimationMode(AnimationMode.STOKES);
         }
 
