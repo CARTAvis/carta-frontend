@@ -120,15 +120,17 @@ export class SpectralLineQueryWidgetStore extends RegionWidgetStore {
     @observable redshiftType: RedshiftType;
     @observable redshiftInput: number;
     @observable queryResultTableRef: Table;
-    private queryResult: Map<number, ProcessedColumnData>;
     @observable filterResult: Map<number, ProcessedColumnData>;
-    private originalShiftedData: Array<number>;
     @observable private isLineSelectedArray: Array<boolean>;
     @observable sortingInfo: {columnName: string, sortingType: CARTA.SortingType};
     @observable numDataRows: number;
     @observable selectedSpectralProfilerID: string;
     @observable controlHeader: Map<string, ControlHeader>;
     @observable isDataFiltered: boolean;
+
+    private queryResult: Map<number, ProcessedColumnData>;
+    private originalShiftedData: Array<number>;
+    private filteredRowIndexes: Array<number>;
 
     constructor() {
         super(RegionsType.CLOSED);
@@ -148,6 +150,7 @@ export class SpectralLineQueryWidgetStore extends RegionWidgetStore {
         this.queryResult = new Map<number, ProcessedColumnData>();
         this.filterResult = new Map<number, ProcessedColumnData>();
         this.originalShiftedData = [];
+        this.filteredRowIndexes = [];
         this.numDataRows = 0;
         this.isLineSelectedArray = [];
         this.selectedSpectralProfilerID = AppStore.Instance.widgetsStore.spectralProfilerList.length > 0 ?
@@ -273,6 +276,7 @@ export class SpectralLineQueryWidgetStore extends RegionWidgetStore {
                     if (ack.dataSize > 0) {
                         this.numDataRows = ack.dataSize;
                         this.isLineSelectedArray = new Array<boolean>(this.numDataRows).fill(false);
+                        this.filteredRowIndexes = Array.from(Array(this.numDataRows).keys()); // [0...N-1]
                         this.queryResult = ProtobufProcessing.ProcessCatalogData(ack.spectralLineData);
                         this.initShiftedColumn();
                         this.columnHeaders.forEach(header => { // update column data type
@@ -288,6 +292,7 @@ export class SpectralLineQueryWidgetStore extends RegionWidgetStore {
                     } else {
                         this.numDataRows = 0;
                         this.isLineSelectedArray = [];
+                        this.filteredRowIndexes = [];
                         this.queryResult = new Map<number, ProcessedColumnData>();
                         this.filterResult = new Map<number, ProcessedColumnData>();
                         this.originalShiftedData = [];
@@ -321,9 +326,6 @@ export class SpectralLineQueryWidgetStore extends RegionWidgetStore {
     };
 
     @action filter = () => {
-        // [0, 1, ..., this.numDataRows - 1]
-        let dataIndexes = [...Array(this.numDataRows).keys()];
-
         // find intersections of indexes from filter criteria
         this.controlHeader.forEach((controlHeader) => {
             const filterString = controlHeader.filter;
@@ -331,26 +333,26 @@ export class SpectralLineQueryWidgetStore extends RegionWidgetStore {
                 const column = this.filterResult.get(controlHeader.columnIndex);
                 const dataType = column.dataType;
                 const data = column.data;
-                let filteredDataIndexes = [];
+                let indexAfterFiltering = [];
                 if (dataType === CARTA.ColumnType.Double) {
-                    filteredDataIndexes = this.numericFiltering(data as Array<number>, dataIndexes, filterString);
+                    indexAfterFiltering = this.numericFiltering(data as Array<number>, this.filteredRowIndexes, filterString);
                 } else if (dataType === CARTA.ColumnType.String) {
-                    dataIndexes.forEach(dataIndex => {
+                    this.filteredRowIndexes.forEach(dataIndex => {
                         if ((data[dataIndex] as string).includes(filterString)) {
-                            filteredDataIndexes.push(dataIndex);
+                            indexAfterFiltering.push(dataIndex);
                         }
                     });
                 }
-                dataIndexes = filteredDataIndexes;
+                this.filteredRowIndexes = indexAfterFiltering;
             }
         });
 
         // set up filtered columns
-        this.filterResult = this.getFilteredColumns(dataIndexes);
+        this.filterResult = this.getFilteredColumns();
         this.originalShiftedData = this.filterResult.get(SHIFTIED_FREQUENCY_COLUMN_INDEX).data as Array<number>;
         this.updateShiftedColumn();
         this.isDataFiltered = true;
-        this.numDataRows = dataIndexes.length;
+        this.numDataRows = this.filteredRowIndexes.length;
     };
 
     @action resetFilter = () => {
@@ -521,11 +523,11 @@ export class SpectralLineQueryWidgetStore extends RegionWidgetStore {
         return filteredDataIndexes;
     };
 
-    private getFilteredColumns = (filteredIndexes: Array<number>): Map<number, ProcessedColumnData> => {
+    private getFilteredColumns = (): Map<number, ProcessedColumnData> => {
         let filteredColumns = new Map<number, ProcessedColumnData>();
         this.queryResult.forEach((column, columnIndex) => {
             let filteredData = [];
-            filteredIndexes?.forEach(dataIndex => {
+            this.filteredRowIndexes.forEach(dataIndex => {
                 if (dataIndex < column.data.length) {
                     filteredData.push(column.data[dataIndex]);
                 }
