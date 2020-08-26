@@ -12,7 +12,10 @@ import {
     AnimationState,
     AnimatorStore,
     BrowserMode,
+    CatalogInfo,
+    CatalogProfileStore,
     CatalogStore,
+    CatalogUpdateMode,
     CURSOR_REGION_ID,
     dayPalette,
     DialogStore,
@@ -32,17 +35,14 @@ import {
     RegionStore,
     SpatialProfileStore,
     SpectralProfileStore,
-    WidgetsStore,
-    CatalogProfileStore,
-    CatalogInfo,
-    CatalogUpdateMode
+    WidgetsStore
 } from ".";
 import {distinct, GetRequiredTiles, mapToObject} from "utilities";
 import {ApiService, BackendService, ConnectionStatus, ScriptingService, TileService, TileStreamDetails} from "services";
 import {FrameView, Point2D, ProtobufProcessing, Theme, TileCoordinate, WCSMatchingType} from "models";
 import {HistogramWidgetStore, RegionWidgetStore, SpatialProfileWidgetStore, SpectralProfileWidgetStore, StatsWidgetStore, StokesAnalysisWidgetStore} from "./widgets";
 import {getImageCanvas, ImageViewLayer} from "components";
-import {AppToaster, SuccessToast, ErrorToast, WarningToast} from "components/Shared";
+import {AppToaster, ErrorToast, SuccessToast, WarningToast} from "components/Shared";
 import GitCommit from "../static/gitInfo";
 
 export class AppStore {
@@ -346,6 +346,15 @@ export class AppStore {
         }
 
         this.setActiveFrame(newFrame.frameInfo.fileId);
+
+        // Set animation mode to frame if the new image is 2D, or to channel if the image is 3D and there are no other frames
+        if (newFrame.frameInfo.fileInfoExtended.depth <= 1 && newFrame.frameInfo.fileInfoExtended.stokes <= 1) {
+            this.animatorStore.setAnimationMode(AnimationMode.FRAME);
+        } else if (newFrame.frameInfo.fileInfoExtended.depth > 1) {
+            this.animatorStore.setAnimationMode(AnimationMode.CHANNEL);
+        } else if (newFrame.frameInfo.fileInfoExtended.stokes > 1) {
+            this.animatorStore.setAnimationMode(AnimationMode.STOKES);
+        }
 
         if (this.frames.length > 1) {
             if ((this.preferenceStore.autoWCSMatching & WCSMatchingType.SPATIAL) && this.spatialReference !== newFrame) {
