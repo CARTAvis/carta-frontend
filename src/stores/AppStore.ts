@@ -415,8 +415,6 @@ export class AppStore {
     };
 
     @action openFile = (directory: string, file: string, hdu: string) => {
-        // Stop animations playing before loading a new frame
-        this.animatorStore.stopAnimation();
         this.removeAllFrames();
         return this.loadFile(directory, file, hdu);
     };
@@ -466,6 +464,8 @@ export class AppStore {
 
     @action removeFrame = (frame: FrameStore) => {
         if (frame) {
+            // Stop animations playing before removing frame
+            this.animatorStore.stopAnimation();
             // Unlink any associated secondary images
             // Create a copy of the array, since clearing the spatial reference will modify it
             const secondarySpatialImages = frame.secondarySpatialImages.slice();
@@ -542,6 +542,8 @@ export class AppStore {
     };
 
     @action removeAllFrames = () => {
+        // Stop animations playing before removing frames
+        this.animatorStore.stopAnimation();
         if (this.backendService.closeFile(-1)) {
             this.activeFrame = null;
             this.tileService.clearCompressedCache(-1);
