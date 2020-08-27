@@ -1,7 +1,7 @@
 import * as React from "react";
 import {ImageComponent} from "./ImageComponent";
-import * as catalogButton from "static/help/catalog_button.png";
-import * as catalogButton_d from "static/help/catalog_button_d.png";
+import * as catalogSelectionButton from "static/help/catalog_selection_button.png";
+import * as catalogSelectionButton_d from "static/help/catalog_selection_button_d.png";
 import * as contourButton from "static/help/contour_button.png";
 import * as contourButton_d from "static/help/contour_button_d.png";
 import * as exportPNGButton from "static/help/export_png_button.png";
@@ -111,7 +111,7 @@ export class ImageViewHelpComponent extends React.Component {
                 <p><ImageComponent light={headCatalogueButton} dark={headCatalogueButton_d} width="85%"/></p>
                 <p>To select a source, use the Catalog selection button. The selected source will 
                     be highlighted in the table of the Catalog widget.</p>
-                <p><ImageComponent light={catalogButton} dark={catalogButton_d} width="70%"/></p>
+                <p><ImageComponent light={catalogSelectionButton} dark={catalogSelectionButton_d} width="70%"/></p>
                 
                 <h3 id="customizing-the-image-plot">Customizing the image plot</h3>
                 <p> The image overlay can be customized via the image view settings dialogue. Plenty 
