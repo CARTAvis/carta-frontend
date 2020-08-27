@@ -1,6 +1,7 @@
 import * as React from "react";
 import {AppStore} from "stores";
 import {ImageComponent} from "./ImageComponent";
+import * as imageOverlayDemo from "static/help/image_overlay_demo.png";
 
 
 export class ImageViewSettingsHelpComponent extends React.Component {
@@ -49,6 +50,10 @@ export class ImageViewSettingsHelpComponent extends React.Component {
                 <p>This section allows users to change the appearance of a beam 
                     overlay (color, type, and line width) and adjust its position in the 
                     image viewer.</p>
+                
+                <br/>
+                <p><ImageComponent light={imageOverlayDemo} dark={imageOverlayDemo} width="90%"/></p>
+
             </div>
         );
     }
