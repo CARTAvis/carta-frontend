@@ -30,8 +30,8 @@ export class SpectralProfilerHelpComponent extends React.Component {
                     will be terminated immediately and calculations of the new region spectral profile 
                     will start and users will see a partial profile in seconds.</p>
                 <h3 id="spectral-conventions-and-reference-frame">Spectral conventions and reference frame</h3>
-                <p>With the Conversion tab of the spectral profiler settings dialogue, users can change 
-                    the spectral convention, including:</p>
+                <p>With the &quot;Conversion&quot; tab of the spectral profiler settings dialogue, users 
+                    can change the spectral convention, including:</p>
                 <ul>
                     <li>Radio velocity (km/s, m/s)</li>
                     <li>Optical velocity (km/s, m/s)</li>
@@ -51,19 +51,19 @@ export class SpectralProfilerHelpComponent extends React.Component {
                     be possible.</p>
                 <h3 id="profile-smoothing">Profile smoothing</h3>
                 <p>The displayed profile can be smoothed via the &quot;Smoothing&quot; tab of the 
-                    spectral profiler settings dialogue (the cog icon). A shortcut button of the Smoothing 
-                    tab can be found at the top-right corner of the widget.</p>                
+                    spectral profiler settings dialogue (the cog icon). A shortcut button 
+                    of the &quot;Smoothing&quot; tab can be found at the top-right corner of the widget.</p>                
                 <h3 id="profile-mean-and-rms">Profile mean and RMS</h3>
-                <p>As an option in the Styling tab of the spectral profiler settings dialogue, mean 
-                    and RMS values of the profile can be visualized as a green dashed line and a 
-                    shaded area in the profile plot. Numerical values are displayed at the bottom-left 
-                    corner. Note that CARTA includes all data in the current zoom level of the profile 
-                    plot to perform the calculations. If zoom level changes, mean and RMS values will 
-                    be updated too.</p>
+                <p>As an option in the &quot;Styling&quot; tab of the spectral profiler settings 
+                    dialogue, mean and RMS values of the profile can be visualized as a green dashed 
+                    line and a shaded area in the profile plot. Numerical values are displayed at the 
+                    bottom-left corner. Note that CARTA includes all data in the current zoom level of 
+                    the profile plot to perform the calculations. If zoom level changes, mean and RMS 
+                    values will be updated too.</p>
                 <h3 id="moment-image-generator">Moment image generator</h3>
                 <p>Moment images can be generated via the &quot;Moments&quot; tab of the 
-                    spectral profiler settings dialogue (the cog icon). A shortcut button of the Moments 
-                    tab can be found at the top-right corner of the widget.</p>    
+                    spectral profiler settings dialogue (the cog icon). A shortcut button of 
+                    the &quot;Moments&quot; tab can be found at the top-right corner of the widget.</p>    
                 <h3 id="interactivity-zoom-pan-changing-channel">Interactivity: zoom, pan, changing channel</h3>
                 <p>The x and y ranges of the spectral profile plot can be modified by</p>
                 <ul>
@@ -75,8 +75,8 @@ export class SpectralProfilerHelpComponent extends React.Component {
                     <li><code>double-click</code> to reset x and y ranges</li>
                     <li><code>shift + click-and-drag</code> to pan in x</li>
                 </ul>
-                <p>In addition, the x and y ranges can be explicitly set in the Styling tab of the 
-                    spectral profile settings dialogue.</p>
+                <p>In addition, the x and y ranges can be explicitly set in 
+                    the &quot;Styling&quot; tab of the spectral profile settings dialogue.</p>
                 <p>Users may click on the spectral profile plot to switch to a channel (as indicated 
                     by a red vertical line) and view the image in the image viewer. The red line is 
                     draggable and acts equivalently like the channel slider in the animator widget.</p>
@@ -84,8 +84,9 @@ export class SpectralProfilerHelpComponent extends React.Component {
                 <p>The spectral profile plot can be exported as a png file or a text file in tsv 
                     format via the buttons at the bottom-right corner (shown when hovering over the plot).</p>
                 <h3 id="plot-cosmetics">Plot cosmetics</h3>
-                <p>The appearance of the spectral profile plot is customizable via the Styling tab of the 
-                    spectral profile settings dialogue (the cog icon). Supported options are:</p>
+                <p>The appearance of the spectral profile plot is customizable via 
+                    the &quot;Styling&quot; tab of the spectral profile settings 
+                    dialogue (the cog icon). Supported options are:</p>
                 <ul>
                     <li>color of the plot</li>
                     <li>plot styles including steps (default), lines, and dots</li>
@@ -102,7 +103,7 @@ export class SpectralProfilerHelpComponent extends React.Component {
                     setting in the spectral profiler settings dialogue. When no decimation is 
                     applied (e.g., at higher profile zoom level, or profile has fewer points than 
                     the screen resolution), the line style becomes &quot;step&quot; (as default in 
-                    the Styling tab of the settings dialogue).</p>
+                    the &quot;Styling&quot; tab of the settings dialogue).</p>
 
             </div>
         );
