@@ -62,11 +62,11 @@ export class ImageViewSettingsHelpComponent extends React.Component {
                     <li>coordinate precision</li>
                 </ul> 
                 <h3 id="labels">Labels</h3>
-                <p>This section allows users to modify the style of x and y labels, such as font 
+                <p>This section allows users to modify the styles of x and y labels, such as font 
                     type, font size, and color. A custom label can be defined.</p>
                 <h3 id="beam">Beam</h3>
                 <p>This section allows users to change the appearance of a beam 
-                    overlay (color, style, and line width) and adjust its position in the 
+                    overlay (color, type, and line width) and adjust its position in the 
                     image viewer.</p>
             </div>
         );
