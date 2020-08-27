@@ -24,11 +24,6 @@ export class RootMenuComponent extends React.Component {
         const modString = appStore.modifierString;
         const connectionStatus = appStore.backendService.connectionStatus;
 
-        let stokesClassName = "stokes-item";
-        if (appStore.darkTheme) {
-            stokesClassName += " bp3-dark";
-        }
-
         let serverMenu: React.ReactNode[] = [];
 
         const apiService = appStore.apiService;
@@ -330,7 +325,7 @@ export class RootMenuComponent extends React.Component {
                     </Menu>
                 </Popover>
                 <ToolbarMenuComponent/>
-                <Alert isOpen={this.documentationAlertVisible} onClose={this.handleAlertDismissed} canEscapeKeyCancel={true} canOutsideClickCancel={true} confirmButtonText={"Dismiss"}>
+                <Alert className={appStore.darkTheme ? "bp3-dark" : ""} isOpen={this.documentationAlertVisible} onClose={this.handleAlertDismissed} canEscapeKeyCancel={true} canOutsideClickCancel={true} confirmButtonText={"Dismiss"}>
                     Documentation will open in a new tab. Please ensure any popup blockers are disabled.
                 </Alert>
                 {loadingIndicator}
