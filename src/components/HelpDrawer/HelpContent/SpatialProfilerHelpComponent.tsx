@@ -20,11 +20,12 @@ export class SpatialProfilerHelpComponent extends React.Component {
                     the profile at the cursor position (displayed as a grey vertical line) will be 
                     reported instead.</p>
                 <h3 id="profile-mean-and-rms">Profile mean and RMS</h3>
-                <p>As an option in the spatial profiler settings dialogue, mean and RMS values of the 
-                    profile can be visualized as a green dashed line and a shaded area in the profile 
-                    plot. Numerical values are displayed at the bottom-left corner. Note that CARTA 
-                    includes all data in the current zoom level of the profile plot to perform the 
-                    calculations. If zoom level changes, mean and RMS values will be updated too.</p>
+                <p>As an option in the Styling tab of the spatial profiler settings dialogue, mean and 
+                    RMS values of the profile can be visualized as a green dashed line and a shaded 
+                    area in the profile plot. Numerical values are displayed at the bottom-left 
+                    corner. Note that CARTA includes all data in the current zoom level of the profile 
+                    plot to perform the calculations. If zoom level changes, mean and RMS values will 
+                    be updated too.</p>
                 <h3 id="profile-smoothing">Profile smoothing</h3>
                 <p>The displayed profile can be smoothed via the &quot;Smoothing&quot; tab of the 
                     spatial profiler settings dialogue (the cog icon).</p>
