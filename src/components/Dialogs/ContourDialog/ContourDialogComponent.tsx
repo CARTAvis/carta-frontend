@@ -8,7 +8,7 @@ import {DraggableDialogComponent, TaskProgressDialogComponent} from "components/
 import {LinePlotComponent, LinePlotComponentProps, PlotType, SafeNumericInput, SCALING_POPOVER_PROPS} from "components/Shared";
 import {ContourStylePanelComponent} from "./ContourStylePanel/ContourStylePanelComponent";
 import {ContourGeneratorPanelComponent} from "./ContourGeneratorPanel/ContourGeneratorPanelComponent";
-import {AppStore, DialogStore, FrameStore, HelpType, PreferenceStore} from "stores";
+import {AppStore, DialogStore, FrameStore, HelpType, PreferenceStore, AnimationState} from "stores";
 import {RenderConfigWidgetStore} from "stores/widgets";
 import {Point2D} from "models";
 import {clamp, toExponential, toFixed} from "utilities";
@@ -476,8 +476,9 @@ export class ContourDialogComponent extends React.Component {
                             filterable={false}
                             items={appStore.frames}
                             itemRenderer={this.renderDataSourceSelectItem}
+                            disabled={appStore.animatorStore.animationState === AnimationState.PLAYING}
                         >
-                            <Button text={dataSource.frameInfo.fileInfo.name} rightIcon="double-caret-vertical" alignText={"right"}/>
+                            <Button text={dataSource.frameInfo.fileInfo.name} rightIcon="double-caret-vertical" alignText={"right"} disabled={appStore.animatorStore.animationState === AnimationState.PLAYING}/>
                         </DataSourceSelect>
                         <Tooltip content={appStore.frameLockedToContour ? "Data source is locked to active image" : "Data source is independent of active image"}>
                             <Button className="lock-button" icon={appStore.frameLockedToContour ? "lock" : "unlock"} minimal={true} onClick={appStore.toggleFrameContourLock}/>
@@ -496,7 +497,7 @@ export class ContourDialogComponent extends React.Component {
                         <AnchorButton intent={Intent.NONE} onClick={appStore.dialogStore.hideContourDialog} text="Close"/>
                     </div>
                 </div>
-                <Alert icon={"time"} isOpen={this.showCubeHistogramAlert} onCancel={this.handleAlertCancel} onConfirm={this.handleAlertConfirm} cancelButtonText={"Cancel"}>
+                <Alert className={appStore.darkTheme ? "bp3-dark" : ""} icon={"time"} isOpen={this.showCubeHistogramAlert} onCancel={this.handleAlertCancel} onConfirm={this.handleAlertConfirm} cancelButtonText={"Cancel"}>
                     <p>
                         Calculating a cube histogram may take a long time, depending on the size of the file. Are you sure you want to continue?
                     </p>
