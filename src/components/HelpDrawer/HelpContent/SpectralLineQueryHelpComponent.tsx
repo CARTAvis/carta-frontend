@@ -9,8 +9,8 @@ export class SpectralLineQueryHelpComponent extends React.Component {
             <div>
                 <p><ImageComponent light={headLineQueryButton} dark={headLineQueryButton_d} width="90%"/></p>
                 <p>CARTA supports spectral line ID overlay on a spectral 
-                    profiler widget with a query from the Splatalogue service 
-                    (http://www.cv.nrao.edu/php/splat/). The query is made by 
+                    profiler widget with a query to the Splatalogue service 
+                    (https://splatalogue.online). The query is made by 
                     defining a spectral range in frequency or wavelength and 
                     optionally a lower limit of CDMS/JPL line intensity (log). 
                     The spectral range can be defined as from-to or a center 
@@ -18,9 +18,9 @@ export class SpectralLineQueryHelpComponent extends React.Component {
                     in frequency, is 20 GHz.</p>                
                 <h4>NOTE</h4>
                 <p>Currently, there is a known issue if the number of the returned 
-                    entries are more than ~65000 (unable to load or truncated). 
+                    entries are more than ~27000 (unable to load or truncated). 
                     If a query is successful and the displayed total number of 
-                    entries is close to 65000, the returned entries may be truncated, 
+                    entries is close to 27000, the returned entries may be truncated, 
                     thus the query result may not be fully displayed. In this case, 
                     please consider to apply a higher CDMS/JPL line intensity limit 
                     and/or apply a narrower spectral range. This issue will be 
