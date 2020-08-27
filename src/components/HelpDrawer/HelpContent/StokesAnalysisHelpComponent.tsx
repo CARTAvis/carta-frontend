@@ -55,10 +55,11 @@ export class StokesAnalysisHelpComponent extends React.Component {
                 </ul>
                 <p>Note that depending on the integrity of image headers, some conversions may not be 
                     possible.</p>
-                <h3 id="profile-smoothing">Profile smoothing</h3>
-                <p>The displayed profiles can be smoothed via the &quot;Smoothing&quot; tab of the 
-                    Stokes analysis settings dialogue (the cog icon). A shortcut button 
-                    of the &quot;Smoothing&quot; tab can be found at the top-right corner of the widget.</p>    
+                <h3 id="data-smoothing">Data smoothing</h3>
+                <p>The displayed profiles and the scatter plot can be smoothed via 
+                    the &quot;Smoothing&quot; tab of the Stokes analysis settings 
+                    dialogue (the cog icon). A shortcut button of the &quot;Smoothing&quot; tab can be 
+                    found at the top-right corner of the widget.</p>    
                 <h3 id="interactivity-zoom-pan-changing-channel">Interactivity: zoom, pan, changing channel</h3>
                 <p>The x and y ranges of the Stokes profile plot can be modified by</p>
                 <ul>

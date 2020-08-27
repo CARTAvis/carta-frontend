@@ -34,7 +34,7 @@ export class SpectralProfilerSettingsSmoothingHelpComponent extends React.Compon
                     smoothed profile. The appearance of the smoothed profile, 
                     including color, style, width, and size, can be customized.</p>
                 <p>The data of the smoothed profile is appended in the exported 
-                    tsv file if a smooth method is applied.</p>
+                    tsv file if smoothing is applied.</p>
                 
                 <h3>Examples</h3>
                 <p>Boxcar: Kernel = 2</p>
