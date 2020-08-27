@@ -16,11 +16,12 @@
         unicode-bidi: embed;
         font-family: monospace;
         white-space: pre;
+        cursor: text;
 
         .header-entry {
-            padding-left: 15px;
             padding-right: 15px;
-            padding-top: 15px;
+            margin-top: 10px;
+            padding-left: 15px;
             .header-name {
                 color: $blue2;
                 font-weight: bold;
