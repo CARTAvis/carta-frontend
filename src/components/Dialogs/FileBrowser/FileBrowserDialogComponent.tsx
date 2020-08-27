@@ -75,6 +75,22 @@ export class FileBrowserDialogComponent extends React.Component {
         fileBrowserStore.saveStartingDirectory();
     };
 
+    private handleSaveFileClicked = () => {
+        const appStore = AppStore.Instance;
+        const fileBrowserStore = FileBrowserStore.Instance;
+        const filename = fileBrowserStore.saveFilename.trim();
+        if (fileBrowserStore.fileList && fileBrowserStore.fileList.files && fileBrowserStore.fileList.files.find(f => f.name.trim() === filename)) {
+            this.overwriteExistingFileAlertVisible = true;
+        } else {
+            appStore.saveFile(fileBrowserStore.fileList.directory, filename, fileBrowserStore.saveFileType);
+        }
+    };
+
+    private handleSaveFileNameChanged = (ev: React.ChangeEvent<HTMLInputElement>) => {
+        const fileBrowserStore = FileBrowserStore.Instance;
+        fileBrowserStore.setSaveFilename(ev.target.value);
+    };
+
     private handleExportRegionsClicked = () => {
         const fileBrowserStore = FileBrowserStore.Instance;
         const filename = fileBrowserStore.exportFilename.trim();
@@ -101,8 +117,14 @@ export class FileBrowserDialogComponent extends React.Component {
     private handleOverwriteAlertConfirmed = () => {
         this.overwriteExistingFileAlertVisible = false;
         const fileBrowserStore = FileBrowserStore.Instance;
-        const filename = fileBrowserStore.exportFilename.trim();
-        this.exportRegion(fileBrowserStore.fileList.directory, filename);
+        if (fileBrowserStore.browserMode === BrowserMode.RegionExport) {
+            const filename = fileBrowserStore.exportFilename.trim();
+            this.exportRegion(fileBrowserStore.fileList.directory, filename);
+        } else if (fileBrowserStore.browserMode === BrowserMode.SaveFile) {
+            const appStore = AppStore.Instance;
+            const filename = fileBrowserStore.saveFilename.trim();
+            appStore.saveFile(fileBrowserStore.fileList.directory, filename, fileBrowserStore.saveFileType);
+        }
     };
 
     private handleOverwriteAlertDismissed = () => {
@@ -170,6 +192,17 @@ export class FileBrowserDialogComponent extends React.Component {
                     </Tooltip>
                 );
             }
+        } else if (browserMode === BrowserMode.SaveFile) {
+            return (
+                <Tooltip content={"Save this file"}>
+                    <AnchorButton
+                        intent={Intent.PRIMARY}
+                        disabled={appStore.fileLoading || fileBrowserStore.loadingInfo}
+                        onClick={this.handleSaveFileClicked}
+                        text="Save"
+                    />
+                </Tooltip>
+            );
         } else if (browserMode === BrowserMode.RegionImport) {
             return (
                 <Tooltip content={"Load a region file for the currently active image"}>
@@ -251,6 +284,28 @@ export class FileBrowserDialogComponent extends React.Component {
         return <InputGroup autoFocus={true} placeholder="Enter file name" value={fileBrowserStore.exportFilename} onChange={this.handleExportInputChanged} rightElement={sideMenu}/>;
     }
 
+    private renderSaveFilenameInput() {
+        const fileBrowserStore = FileBrowserStore.Instance;
+
+        const fileTypeMenu = (
+            <Popover
+                content={
+                    <Menu>
+                        <MenuItem text="CASA" onClick={() => fileBrowserStore.setSaveFileType(CARTA.FileType.CASA)}/>
+                        <MenuItem text="FITS" onClick={() => fileBrowserStore.setSaveFileType(CARTA.FileType.FITS)}/>
+                    </Menu>
+                }
+                position={Position.BOTTOM_RIGHT}
+            >
+                <Button minimal={true} rightIcon="caret-down">
+                    {fileBrowserStore.saveFileType === CARTA.FileType.CASA ? "CASA" : "FITS"}
+                </Button>
+            </Popover>
+        );
+
+        return <InputGroup autoFocus={true} placeholder="Enter file name" value={fileBrowserStore.saveFilename} onChange={this.handleSaveFileNameChanged} rightElement={fileTypeMenu}/>;
+    }
+
     // Refresh file list to trigger the Breadcrumb re-rendering
     @action refreshFileList = () => {
         this.clearFilterString();
@@ -291,7 +346,9 @@ export class FileBrowserDialogComponent extends React.Component {
         let fileInput: React.ReactNode;
         let paneClassName = "file-panes";
 
-        if (fileBrowserStore.browserMode === BrowserMode.RegionExport) {
+        if (fileBrowserStore.browserMode === BrowserMode.SaveFile) {
+            fileInput = this.renderSaveFilenameInput();
+        } else if (fileBrowserStore.browserMode === BrowserMode.RegionExport) {
             fileInput = this.renderExportFilenameInput();
         } else {
             fileInput = (
@@ -380,6 +437,7 @@ export class FileBrowserDialogComponent extends React.Component {
                     </div>
                 </div>
                 <Alert
+                    className={appStore.darkTheme ? "bp3-dark" : ""}
                     isOpen={this.overwriteExistingFileAlertVisible}
                     confirmButtonText="Yes"
                     cancelButtonText="Cancel"
@@ -406,6 +464,7 @@ export class FileBrowserDialogComponent extends React.Component {
     private static GetFileInfoTypes(fileBrowserMode: BrowserMode): Array<FileInfoType> {
         switch (fileBrowserMode) {
             case BrowserMode.File:
+            case BrowserMode.SaveFile:
                 return [FileInfoType.IMAGE_FILE, FileInfoType.IMAGE_HEADER];
             case BrowserMode.Catalog:
                 return [FileInfoType.CATALOG_FILE, FileInfoType.CATALOG_HEADER];

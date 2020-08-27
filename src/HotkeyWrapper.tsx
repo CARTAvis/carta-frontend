@@ -10,9 +10,13 @@ import {AppStore, BrowserMode, RegionMode} from "./stores";
 export class HotkeyContainer extends React.Component {
     public render() {
         const appStore = AppStore.Instance;
+        let className = "bp3-hotkey-dialog";
+        if (appStore.darkTheme) {
+            className += " bp3-dark";
+        }
 
         return (
-            <Dialog isOpen={appStore.dialogStore.hotkeyDialogVisible} className={"bp3-hotkey-dialog"} canEscapeKeyClose={true} canOutsideClickClose={true} onClose={appStore.dialogStore.hideHotkeyDialog}>
+            <Dialog isOpen={appStore.dialogStore.hotkeyDialogVisible} className={className} canEscapeKeyClose={true} canOutsideClickClose={true} onClose={appStore.dialogStore.hideHotkeyDialog}>
                 <div className={Classes.DIALOG_BODY}>
                     {HotkeyContainer.RenderHotkeys()}
                 </div>
@@ -148,7 +152,7 @@ export class HotkeyContainer extends React.Component {
         ];
 
         return (
-            <Hotkeys className={Classes.DARK}>
+            <Hotkeys>
                 {regionHotKeys}
                 {navigationHotKeys}
                 {animatorHotkeys}

@@ -1,9 +1,10 @@
 import * as React from "react";
 
-export class SpatialProfilerSettingsHelpComponent extends React.Component {
+export class SpatialProfilerSettingsStylingHelpComponent extends React.Component {
     public render() {
         return (
             <div>
+                <h3>Styling</h3>
                 <p>The spatial profiler settings dialogue allows users to adjust the appearance of the profile plot, and set x and y ranges of the plot explicitly. In addition, users can select which cut (horizontal or vertical) at cursor
                     to use to generate a spatial profile. Users may also enable visualization of mean and RMS values of the current profile in the plot.</p>
                 <p>Supported options for plot appearance are:</p>

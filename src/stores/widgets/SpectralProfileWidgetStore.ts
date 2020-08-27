@@ -1,13 +1,20 @@
-import {action, computed, observable} from "mobx";
-import {Colors} from "@blueprintjs/core";
+import {action, autorun, computed, observable} from "mobx";
+import {Colors, NumberRange} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import {PlotType, LineSettings} from "components/Shared";
 import {RegionWidgetStore, RegionsType} from "./RegionWidgetStore";
 import {SpectralLine} from "./SpectralLineQueryWidgetStore";
-import {FrameStore} from "stores";
+import {AppStore} from "stores";
 import {ProfileSmoothingStore} from "stores/ProfileSmoothingStore";
 import {SpectralSystem, SpectralType, SpectralUnit} from "models";
 import * as tinycolor from "tinycolor2";
+import {SpectralProfilerSettingsTabs} from "components";
+
+export enum MomentSelectingMode {
+    NONE = 1,
+    CHANNEL,
+    MASK
+}
 
 export class SpectralProfileWidgetStore extends RegionWidgetStore {
     @observable coordinate: string;
@@ -20,10 +27,11 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
     @observable channel: number;
     @observable markerTextVisible: boolean;
     @observable isMouseMoveIntoLinePlots: boolean;
+    @observable isStreamingData: boolean;
     @observable isHighlighted: boolean;
     @observable private spectralLinesMHz: SpectralLine[];
 
-    // settings 
+    // style settings
     @observable plotType: PlotType;
     @observable meanRmsVisible: boolean;
     @observable primaryLineColor: { colorHex: string, fixed: boolean };
@@ -31,6 +39,14 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
     @observable linePlotPointSize: number;
     @observable linePlotInitXYBoundaries: { minXVal: number, maxXVal: number, minYVal: number, maxYVal: number };
     readonly smoothingStore: ProfileSmoothingStore;
+    @observable settingsTabId: SpectralProfilerSettingsTabs;
+
+    // moment settings
+    @observable selectingMode: MomentSelectingMode;
+    @observable channelValueRange: NumberRange;
+    @observable momentMask: CARTA.MomentMask;
+    @observable maskRange: NumberRange;
+    @observable selectedMoments: CARTA.Moment[];
 
     public static StatsTypeString(statsType: CARTA.StatsType) {
         switch (statsType) {
@@ -100,19 +116,117 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         }
     };
 
-    @action setHighlighted = (isHighlighted: boolean) => {
-       this.isHighlighted = isHighlighted;
-    };
-
-    @action addSpectralLines = (spectralLines: SpectralLine[]) => {
-        if (spectralLines) {
-            this.spectralLinesMHz = spectralLines;
+    @action setMomentRangeSelectingMode = (mode: MomentSelectingMode) => {
+        if (mode) {
+            this.selectingMode = mode;
         }
     };
 
-    @action clearSpectralLines = () => {
-        this.spectralLinesMHz = [];
+    @action clearMomentRangeSelectingMode = () => {
+        this.selectingMode = MomentSelectingMode.NONE;
     };
+
+    @action setSelectedChannelRange = (min: number, max: number) => {
+        if (isFinite(min) && isFinite(max)) {
+            this.channelValueRange[0] = min;
+            this.channelValueRange[1] = max;
+        }
+        this.selectingMode = MomentSelectingMode.NONE;
+    };
+
+    @action setSelectedMaskRange = (min: number, max: number) => {
+        if (isFinite(min) && isFinite(max)) {
+            this.maskRange[0] = min;
+            this.maskRange[1] = max;
+        }
+        this.selectingMode = MomentSelectingMode.NONE;
+    };
+
+    @action private updateRanges = () => {
+        const frame = this.effectiveFrame;
+        if (frame && frame.channelValueBounds) {
+            this.channelValueRange[0] = frame.channelValueBounds.min;
+            this.channelValueRange[1] = frame.channelValueBounds.max;
+            this.maskRange[0] = 0;
+            this.maskRange[1] = 1;
+        }
+    };
+
+    @action setMomentMask = (momentMask: CARTA.MomentMask) => {
+            this.momentMask = momentMask;
+    };
+
+    @action selectMoment = (selected: CARTA.Moment) => {
+        if (!this.selectedMoments.includes(selected)) {
+            this.selectedMoments.push(selected);
+        }
+    };
+
+    @action deselectMoment = (deselected: CARTA.Moment) => {
+        if (this.selectedMoments.includes(deselected)) {
+            this.selectedMoments = this.selectedMoments.filter((momentType) => momentType !== deselected);
+        }
+    };
+
+    @action removeMomentByIndex = (removeIndex: number) => {
+        if (removeIndex >= 0 && removeIndex < this.selectedMoments.length) {
+            this.selectedMoments = this.selectedMoments.filter((momentType, index) => index !== removeIndex);
+        }
+    };
+
+    @action clearSelectedMoments = () => {
+        this.selectedMoments = [];
+    };
+
+    @action isMomentSelected = (momentType: CARTA.Moment): boolean => {
+        return this.selectedMoments.includes(momentType);
+    };
+
+    @action requestMoment = () => {
+        const frame = this.effectiveFrame;
+        const channelIndex1 = frame.findChannelIndexByValue(this.channelValueRange[0]);
+        const channelIndex2 = frame.findChannelIndexByValue(this.channelValueRange[1]);
+        if (frame && isFinite(channelIndex1) && isFinite(channelIndex2)) {
+            const channelIndexRange: CARTA.IIntBounds = {
+                min: channelIndex1 <= channelIndex2 ? channelIndex1 : channelIndex2,
+                max: channelIndex1 <= channelIndex2 ? channelIndex2 : channelIndex1
+            };
+            const requestMessage: CARTA.IMomentRequest = {
+                fileId: frame.frameInfo.fileId,
+                moments: this.selectedMoments,
+                axis: CARTA.MomentAxis.SPECTRAL,
+                regionId: this.effectiveRegionId,
+                spectralRange: channelIndexRange,
+                mask: this.momentMask,
+                pixelRange: new CARTA.FloatBounds({min: this.maskRange[0], max: this.maskRange[1]})
+            };
+            AppStore.Instance.requestMoment(requestMessage, frame);
+            frame.resetMomentRequestState();
+            frame.setIsRequestingMoments(true);
+        }
+    };
+
+    @action requestingMomentCancelled = () => {
+        const frame = this.effectiveFrame;
+        if (frame) {
+            frame.resetMomentRequestState();
+            AppStore.Instance.cancelRequestingMoment(frame.frameInfo.fileId);
+        }
+    };
+
+    @action setHighlighted = (isHighlighted: boolean) => {
+        this.isHighlighted = isHighlighted;
+     };
+ 
+     @action addSpectralLines = (spectralLines: SpectralLine[]) => {
+         if (spectralLines) {
+             this.spectralLinesMHz = spectralLines;
+         }
+     };
+ 
+     @action clearSpectralLines = () => {
+         this.spectralLinesMHz = [];
+     };
 
     @action setXBounds = (minVal: number, maxVal: number) => {
         this.minX = minVal;
@@ -172,10 +286,19 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         this.isMouseMoveIntoLinePlots = val;
     };
 
+    @action updateStreamingDataStatus = (val: boolean) => {
+        this.isStreamingData = val;
+    };
+
+    @action setSettingsTabId = (tabId: SpectralProfilerSettingsTabs) => {
+        this.settingsTabId = tabId;
+    };
+
     constructor(coordinate: string = "z") {
         super(RegionsType.CLOSED_AND_POINT);
         this.coordinate = coordinate;
         this.statsType = CARTA.StatsType.Mean;
+        this.isStreamingData = false;
         this.isHighlighted = false;
         this.spectralLinesMHz = [];
 
@@ -187,7 +310,20 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         this.linePlotPointSize = 1.5;
         this.lineWidth = 1;
         this.linePlotInitXYBoundaries = { minXVal: 0, maxXVal: 0, minYVal: 0, maxYVal: 0 };
+
         this.smoothingStore = new ProfileSmoothingStore();
+        this.selectingMode = MomentSelectingMode.NONE;
+        this.channelValueRange = [0, 0];
+        this.momentMask = CARTA.MomentMask.None;
+        this.maskRange = [0, 1];
+        this.selectedMoments = [CARTA.Moment.INTEGRATED_OF_THE_SPECTRUM];
+        this.settingsTabId = SpectralProfilerSettingsTabs.CONVERSION;
+
+        autorun(() => {
+            if (this.effectiveFrame) {
+                this.updateRanges();
+            }
+        });
     }
 
     @computed get isAutoScaledX() {
@@ -198,10 +334,35 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         return (this.minY === undefined || this.maxY === undefined);
     }
 
+    @computed get isSelectingMomentChannelRange() {
+        return this.selectingMode === MomentSelectingMode.CHANNEL;
+    }
+
+    @computed get isSelectingMomentMaskRange() {
+        return this.selectingMode === MomentSelectingMode.MASK;
+    }
+
+    @computed get selectedRange(): {isHorizontal: boolean, center: number, width: number} {
+        if (this.isSelectingMomentChannelRange) {
+            return {
+                isHorizontal: false,
+                center: (this.channelValueRange[0] + this.channelValueRange[1]) / 2,
+                width: Math.abs(this.channelValueRange[0] - this.channelValueRange[1])
+            };
+        } else if (this.isSelectingMomentMaskRange) {
+            return {
+                isHorizontal: true,
+                center: (this.maskRange[0] + this.maskRange[1]) / 2,
+                width: Math.abs(this.maskRange[0] - this.maskRange[1])
+            };
+        }
+        return null;
+    }
+
     @computed get transformedSpectralLines(): SpectralLine[] {
         // transform to corresponding value according to current widget's spectral settings
         let transformedSpectralLines: SpectralLine[] = [];
-        const frame = this.appStore.activeFrame;
+        const frame = this.effectiveFrame;
         if (frame && this.spectralLinesMHz) {
             this.spectralLinesMHz.forEach(spectralLine => {
                 const transformedValue = frame.convertFreqMHzToSettingWCS(spectralLine.value);

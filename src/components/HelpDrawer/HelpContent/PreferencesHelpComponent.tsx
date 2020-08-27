@@ -70,7 +70,6 @@ export class PreferencesHelpComponent extends React.Component {
                     mode&quot; which reduces displayed image resolution and cursor responsiveness.</p>
                 <h3 id="log-events">Log events</h3>
                 <p>This is for development and debugging purpose. General users should not enable anything here.</p>
-
             </div>
         );
     }

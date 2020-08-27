@@ -88,6 +88,10 @@ export class FrameStore {
     @observable spectralReference: FrameStore;
     @observable secondarySpatialImages: FrameStore[];
     @observable secondarySpectralImages: FrameStore[];
+    @observable momentImages: FrameStore[];
+
+    @observable isRequestingMoments: boolean;
+    @observable requestingMomentsProgress: number;
 
     @computed get regionSet(): RegionSetStore {
         if (this.spatialReference) {
@@ -250,45 +254,6 @@ export class FrameStore {
 
     @computed get hasVisibleBeam(): boolean {
         return this.beamProperties?.overlayBeamSettings?.visible;
-    }
-
-    public getWcsSizeInArcsec(size: Point2D): Point2D {
-        const deltaHeader = this.frameInfo.fileInfoExtended.headerEntries.find(entry => entry.name.indexOf("CDELT1") !== -1);
-        const unitHeader = this.frameInfo.fileInfoExtended.headerEntries.find(entry => entry.name.indexOf("CUNIT1") !== -1);
-        if (size && deltaHeader && unitHeader) {
-            const delta = getHeaderNumericValue(deltaHeader);
-            const unit = unitHeader.value.trim();
-            if (isFinite(delta) && unit === "deg" || unit === "rad") {
-                return {
-                    x: size.x * Math.abs(delta) * (unit === "deg" ? 3600 : (180 * 3600 / Math.PI)),
-                    y: size.y * Math.abs(delta) * (unit === "deg" ? 3600 : (180 * 3600 / Math.PI))
-                };
-            }
-        }
-        return null;
-    }
-
-    public getTransformForRegion(region: RegionStore) {
-        if (this.spatialReference && this.spatialTransformAST && region.controlPoints?.length) {
-            const regionCenter = transformPoint(this.spatialTransformAST, region.controlPoints[0], false);
-            if (!isAstBadPoint(regionCenter)) {
-                return new Transform2D(this.spatialTransformAST, regionCenter);
-            }
-        }
-        return null;
-    }
-
-    public getImageValueFromArcsec(arcsecValue: number): number {
-        const deltaHeader = this.frameInfo.fileInfoExtended.headerEntries.find(entry => entry.name.indexOf("CDELT1") !== -1);
-        const unitHeader = this.frameInfo.fileInfoExtended.headerEntries.find(entry => entry.name.indexOf("CUNIT1") !== -1);
-        if (isFinite(arcsecValue) && deltaHeader && unitHeader) {
-            const delta = getHeaderNumericValue(deltaHeader);
-            const unit = unitHeader.value.trim();
-            if (isFinite(delta) && delta !== 0 && unit === "deg" || unit === "rad") {
-                return arcsecValue / Math.abs(delta) / (unit === "deg" ? 3600 : (180 * 3600 / Math.PI));
-            }
-        }
-        return null;
     }
 
     @computed get channelInfo(): ChannelInfo {
@@ -511,6 +476,19 @@ export class FrameStore {
         return this.frameInfo && this.frameInfo.fileInfoExtended && this.frameInfo.fileInfoExtended.stokes > 1;
     }
 
+    @computed get numChannels(): number {
+        return this.frameInfo.fileInfoExtended.depth;
+    }
+
+    @computed get channelValueBounds(): CARTA.FloatBounds {
+        if (this.numChannels > 1 && this.channelValues) {
+            const head = this.channelValues[0];
+            const tail = this.channelValues[this.numChannels - 1];
+            return new CARTA.FloatBounds(head <=  tail ?  {min: head, max: tail} : {min: tail, max: head});
+        }
+        return null;
+    }
+
     @computed get spectralSiblings(): FrameStore[] {
         if (this.spectralReference) {
             let siblings = [];
@@ -674,6 +652,10 @@ export class FrameStore {
         this.controlMaps = new Map<FrameStore, ControlMap>();
         this.secondarySpatialImages = [];
         this.secondarySpectralImages = [];
+        this.momentImages = [];
+
+        this.isRequestingMoments = false;
+        this.requestingMomentsProgress = 0;
 
         // synchronize AST overlay's color/grid/label with preference when frame is created
         const astColor = preferenceStore.astColor;
@@ -1090,6 +1072,56 @@ export class FrameStore {
         }
         this.controlMaps.delete(frame);
     }
+
+    public getWcsSizeInArcsec(size: Point2D): Point2D {
+        const deltaHeader = this.frameInfo.fileInfoExtended.headerEntries.find(entry => entry.name.indexOf("CDELT1") !== -1);
+        const unitHeader = this.frameInfo.fileInfoExtended.headerEntries.find(entry => entry.name.indexOf("CUNIT1") !== -1);
+        if (size && deltaHeader && unitHeader) {
+            const delta = getHeaderNumericValue(deltaHeader);
+            const unit = unitHeader.value.trim();
+            if (isFinite(delta) && unit === "deg" || unit === "rad") {
+                return {
+                    x: size.x * Math.abs(delta) * (unit === "deg" ? 3600 : (180 * 3600 / Math.PI)),
+                    y: size.y * Math.abs(delta) * (unit === "deg" ? 3600 : (180 * 3600 / Math.PI))
+                };
+            }
+        }
+        return null;
+    }
+
+    public getImageValueFromArcsec(arcsecValue: number): number {
+        const deltaHeader = this.frameInfo.fileInfoExtended.headerEntries.find(entry => entry.name.indexOf("CDELT1") !== -1);
+        const unitHeader = this.frameInfo.fileInfoExtended.headerEntries.find(entry => entry.name.indexOf("CUNIT1") !== -1);
+        if (isFinite(arcsecValue) && deltaHeader && unitHeader) {
+            const delta = getHeaderNumericValue(deltaHeader);
+            const unit = unitHeader.value.trim();
+            if (isFinite(delta) && delta !== 0 && unit === "deg" || unit === "rad") {
+                return arcsecValue / Math.abs(delta) / (unit === "deg" ? 3600 : (180 * 3600 / Math.PI));
+            }
+        }
+        return null;
+    }
+
+    public findChannelIndexByValue = (x: number): number => {
+        if (x === null || x === undefined || !isFinite(x)) {
+            return undefined;
+        }
+
+        if (this.channelInfo) {
+            if (this.isCoordChannel) {
+                return this.channelInfo.getChannelIndexSimple(x);
+            } else {
+                if ((this.spectralAxis && !this.spectralAxis.valid) || this.isSpectralPropsEqual) {
+                    return this.channelInfo.getChannelIndexWCS(x);
+                } else {
+                    // invert x in selected widget wcs to frame's default wcs
+                    const tx =  AST.transformSpectralPoint(this.spectralFrame, this.spectralType, this.spectralUnit, this.spectralSystem, x, false);
+                    return this.channelInfo.getChannelIndexWCS(tx);
+                }
+            }
+        }
+        return undefined;
+    };
 
     @action updateFromContourData(contourImageData: CARTA.ContourImageData) {
         let vertexCounter = 0;
@@ -1509,5 +1541,28 @@ export class FrameStore {
 
     @action removeSecondarySpectralImage = (frame: FrameStore) => {
         this.secondarySpectralImages = this.secondarySpectralImages.filter(f => f.frameInfo.fileId !== frame.frameInfo.fileId);
+    };
+
+    @action addMomentImage = (frame: FrameStore) => {
+        if (frame && !this.momentImages.find(f => f.frameInfo.fileId === frame.frameInfo.fileId)) {
+            this.momentImages.push(frame);
+        }
+    };
+
+    @action removeMomentImage = () => {
+        this.momentImages = [];
+    };
+
+    @action setIsRequestingMoments = (val: boolean) => {
+        this.isRequestingMoments = val;
+    };
+
+    @action updateRequestingMomentsProgress = (progress: number) => {
+        this.requestingMomentsProgress = progress;
+    };
+
+    @action resetMomentRequestState = () => {
+        this.setIsRequestingMoments(false);
+        this.updateRequestingMomentsProgress(0);
     };
 }

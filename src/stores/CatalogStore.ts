@@ -33,8 +33,8 @@ export class CatalogStore {
     @observable catalogProfiles: Map<string, number>;
     // map catalog plot component Id with catalog file Id and associated catalog plot widget id
     @observable catalogPlots: Map<string, ObservableMap<number, string>>;
-    // catalog Profile store
-    @observable catalogProfileStores: CatalogProfileStore[];
+    // catalog Profile store with catalog file Id
+    @observable catalogProfileStores: Map<number, CatalogProfileStore>;
     // catalog file Id with catalog widget storeId
     @observable catalogWidgets: Map<number, string>;
 
@@ -43,7 +43,7 @@ export class CatalogStore {
         this.imageAssociatedCatalogId = new Map<number, Array<number>>();
         this.catalogProfiles = new Map<string, number>();
         this.catalogPlots = new Map<string, ObservableMap<number, string>>();
-        this.catalogProfileStores = [];
+        this.catalogProfileStores = new Map<number, CatalogProfileStore>();
         this.catalogWidgets = new Map<number, string>();
     }
 
@@ -77,12 +77,10 @@ export class CatalogStore {
                     break;
                 default:
                     const pixelData = CatalogStore.TransformCatalogData(xData, yData, wcsInfo, xUnit, yUnit, catalogFrame);
-                    console.time(`updatePixelCoordsArray_${xData?.length}`);
                     for (let i = 0; i < pixelData.xImageCoords.length; i++) {
                         catalogDataInfo.xImageCoords.push(pixelData.xImageCoords[i]);
                         catalogDataInfo.yImageCoords.push(pixelData.yImageCoords[i]);
                     }
-                    console.timeEnd(`updatePixelCoordsArray_${xData?.length}`);
                     break;
             }
             this.catalogData.set(fileId,
@@ -275,21 +273,29 @@ export class CatalogStore {
         }
     }
 
-    // catalog profile store
-    getCatalogProfileStore(fileId: number): CatalogProfileStore {
-        let catalogProfileStore;
-        this.catalogProfileStores.forEach(store => {
-            if (store.catalogFileId === fileId) {
-                catalogProfileStore = store;
+    getCatalogFileNames(fileIds: Array<number>) {
+        let fileList = new Map<number, string>();
+        fileIds.forEach(catalogFileId => {
+            const catalogProfileStore = this.catalogProfileStores.get(catalogFileId);
+            if (catalogProfileStore) {
+                const catalogFile = catalogProfileStore.catalogInfo;
+                fileList.set(catalogFile.fileId, catalogFile.fileInfo.name);
             }
         });
-        return catalogProfileStore;
+        return fileList;
     }
 
     // catalog widget store
     getCatalogWidgetStore(fileId: number): CatalogWidgetStore {
-        const widgetStoreId = CatalogStore.Instance.catalogWidgets.get(fileId);
-        return WidgetsStore.Instance.catalogWidgets.get(widgetStoreId);    
+        const widgetsStore = WidgetsStore.Instance;
+        if (this.catalogWidgets.has(fileId)) {
+            const widgetStoreId = this.catalogWidgets.get(fileId);
+            return widgetsStore.catalogWidgets.get(widgetStoreId);     
+        } else {
+            const widgetId = widgetsStore.addCatalogWidget(fileId);
+            this.catalogWidgets.set(fileId, widgetId);
+            return widgetsStore.catalogWidgets.get(widgetId);
+        }
     } 
 
     private static GetFractionFromUnit(unit: string): number {

@@ -7,6 +7,13 @@ import {StokesAnalysisWidgetStore} from "stores/widgets";
 import {WidgetProps, WidgetConfig, HelpType, WidgetsStore, AppStore} from "stores";
 import "./StokesAnalysisSettingsPanelComponent.css";
 
+export enum StokesAnalysisSettingsTabs {
+    CONVERSION,
+    LINE_PLOT_STYLING,
+    SCATTER_PLOT_STYLING,
+    SMOOTHING
+}
+
 @observer
 export class StokesAnalysisSettingsPanelComponent extends React.Component<WidgetProps> {
 
@@ -22,7 +29,7 @@ export class StokesAnalysisSettingsPanelComponent extends React.Component<Widget
             isCloseable: true,
             parentId: "stokes",
             parentType: "stokes",
-            helpType: HelpType.STOKES_ANALYSIS_SETTINGS
+            tabsHelpTypes: [HelpType.STOKES_ANALYSIS_SETTINGS_CONVERSION, HelpType.STOKES_ANALYSIS_SETTINGS_LINE_PLOT_STYLING, HelpType.STOKES_ANALYSIS_SETTINGS_SCATTER_PLOT_STYLING, HelpType.STOKES_ANALYSIS_SETTINGS_SMOOTHING]
         };
     }
 
@@ -59,6 +66,10 @@ export class StokesAnalysisSettingsPanelComponent extends React.Component<Widget
         this.widgetStore.setEqualAxesValue(changeEvent.target.checked);
     };
 
+    handleSelectedTabChanged = (newTabId: React.ReactText) => {
+        this.widgetStore.setSettingsTabId(Number.parseInt(newTabId.toString()));
+    }
+
     render() {
         const appStore = AppStore.Instance;
         const widgetStore = this.widgetStore;
@@ -93,11 +104,11 @@ export class StokesAnalysisSettingsPanelComponent extends React.Component<Widget
 
         return (
             <div className="stokes-settings">
-                <Tabs id="spectralSettingTabs">
-                    <Tab id="conversion" title="Conversion" panel={<SpectralSettingsComponent widgetStore={widgetStore} disable={!hasStokes}/>}/>
-                    <Tab id="linePlotStyling" title="Line Plot Styling" panel={<LinePlotSettingsPanelComponent {...lineSettingsProps}/>}/>
-                    <Tab id="scatterPlotStyling" title="Scatter Plot Styling" panel={<ScatterPlotSettingsPanelComponent {...scatterSettingsProps}/>}/>
-                    <Tab id="smoothing" title="Smoothing" panel={<SmoothingSettingsComponent smoothingStore={widgetStore.smoothingStore} diableStyle={true} diableDecimation={true}/>}/>
+                <Tabs id="spectralSettingTabs" selectedTabId={widgetStore.settingsTabId} onChange={this.handleSelectedTabChanged}>
+                    <Tab id={StokesAnalysisSettingsTabs.CONVERSION} title="Conversion" panel={<SpectralSettingsComponent widgetStore={widgetStore} disable={!hasStokes}/>}/>
+                    <Tab id={StokesAnalysisSettingsTabs.LINE_PLOT_STYLING} title="Line Plot Styling" panel={<LinePlotSettingsPanelComponent {...lineSettingsProps}/>}/>
+                    <Tab id={StokesAnalysisSettingsTabs.SCATTER_PLOT_STYLING} title="Scatter Plot Styling" panel={<ScatterPlotSettingsPanelComponent {...scatterSettingsProps}/>}/>
+                    <Tab id={StokesAnalysisSettingsTabs.SMOOTHING} title="Smoothing" panel={<SmoothingSettingsComponent smoothingStore={widgetStore.smoothingStore} diableStyle={true} diableDecimation={true}/>}/>
                 </Tabs>
             </div>
         );
