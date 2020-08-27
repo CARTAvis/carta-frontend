@@ -6,7 +6,7 @@ export class SpectralProfilerSettingsMomentsHelpComponent extends React.Componen
             <div>
                 <h3>Moments</h3>
                 <p>Moment images can be generated and viewed with CARTA. 
-                    The dialogue provides several control parameters to define 
+                    The &quot;Moments&quot; tab provides several control parameters to define 
                     how moment images are calculated, including:</p>
                 <ul>
                     <li><b>Image</b>: the image file for moment calculations. &quot;Active&quot; 
@@ -58,6 +58,10 @@ export class SpectralProfilerSettingsMomentsHelpComponent extends React.Componen
                     these images will be deleted first. Optionally, calculated moment images 
                     can be exported in CASA or FITS format via 
                     &quot;File&quot; -&gt; &quot;Save image&quot;.</p>
+
+                <h4>NOTE</h4>
+                <p>Due to a CASA issue, image of &quot;Median coordinate&quot; cannot be 
+                    generated. The request of &quot;Median coordinate&quot; is ignored automatically.</p>    
             </div>
         );
     }
