@@ -36,6 +36,7 @@ export class ImageViewHelpComponent extends React.Component {
                 <p>Information of world coordinates and image coordinates at the cursor position 
                     is shown at the top of the image viewer. To freeze/unfreeze the cursor 
                     position, press <code>F</code> key.</p>
+                
                 <h3 id="image-tool-buttons">Image tool buttons</h3>
                 <p>A set of tool buttons is provided at the bottom-right corner when hovering over 
                     the image viewer. Users may use these buttons to</p>
@@ -49,6 +50,7 @@ export class ImageViewHelpComponent extends React.Component {
                     <li>Export image</li>
                 </ul>
                 <p><ImageComponent light={imageTools} dark={imageTools_d} width="90%"/></p>
+                
                 <h3 id="zoom-and-pan">Zoom and pan</h3>
                 <p>Zoom actions can be triggered in different ways. The most common one is to use mouse 
                     and scroll wheel. By scrolling up, image is zoomed in, while by scrolling down, image 
@@ -61,6 +63,7 @@ export class ImageViewHelpComponent extends React.Component {
                    (<strong>File</strong> -&gt; <strong>Preferences</strong> -&gt; <strong>Global</strong>). The 
                    alternative mode is <code>Click</code> and the clicked pixel will be centered in the 
                    image viewer.</p>
+                
                 <h3 id="matching-image-spatially-and-spectrally">Matching image spatially and spectrally</h3>
                 <p>Appended images may be matched in world coordinate spatially and/or spectrally. This can be 
                     triggered by the &quot;WCS matching&quot; button. Matching WCS on appending can be 
@@ -83,10 +86,12 @@ export class ImageViewHelpComponent extends React.Component {
                     accurate per image. If contour layers exist, they will match the raster image 
                     in the current image view with high position accuracy. Spectral matching is 
                     performed with nearest interpolation.</p>
+                
                 <h3 id="contour-layers">Contour layers</h3>
                 <p>A contour layer can be generated via the contour configuration dialogue. Contours 
                     of spatially matched image are re-projected to other spatially matched raster image.</p>
                 <p><ImageComponent light={contourButton} dark={contourButton_d} width="85%"/></p>
+                
                 <h3 id="region-of-interest">Region of interest</h3>
                 <p>Four types of region of interest are supported, including:</p>
                 <ul>
@@ -100,19 +105,23 @@ export class ImageViewHelpComponent extends React.Component {
                     in the preferences dialogue. Region shortcut buttons are available at the top of 
                     the CARTA GUI. The tooltip of the region shortcut button provides 
                     instructions to create a region.</p>
+                
                 <h3 id="catalog-overlay">Catalog overlay</h3>
                 <p>A catalog overlay can be generated via the Catalog widget.</p> 
                 <p><ImageComponent light={headCatalogueButton} dark={headCatalogueButton_d} width="85%"/></p>
                 <p>To select a source, use the Catalog selection button. The selected source will 
                     be highlighted in the table of the Catalog widget.</p>
                 <p><ImageComponent light={catalogButton} dark={catalogButton_d} width="70%"/></p>
+                
                 <h3 id="customizing-the-image-plot">Customizing the image plot</h3>
                 <p> The image overlay can be customized via the image view settings dialogue. Plenty 
                     amounts of options are provided.</p>
+                
                 <h3 id="exports">Exports</h3>
                 <p>What users see in the current image view can be exported as a PNG file with 
                     the &quot;Export image&quot; button in the image tool bar.</p>
                 <p><ImageComponent light={exportPNGButton} dark={exportPNGButton_d} width="70%"/></p>
+                
                 <h3 id="image-information-and-header">Image information and header</h3>
                 <p>Basic image information and full image headers are displayed in the file header dialogue.</p>
                 <p><ImageComponent light={imageInfoButton} dark={imageInfoButton_d} width="85%"/></p>
