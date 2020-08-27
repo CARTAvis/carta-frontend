@@ -22,6 +22,7 @@ export enum SpectralLineQueryUnit {
 }
 
 export enum SpectralLineHeaders {
+    LineSelection = "Line selection",
     Species = "Species",
     ChemicalName = "Chemical Name",
     ShiftedFrequency = "Shifted Frequency",
@@ -64,6 +65,7 @@ const SPLA_HEADER_MAP = new Map<SpectralLineHeaders, SpectralLineHeaders>([
 ]);
 
 const SPECTRAL_LINE_DESCRIPTION = new Map<SpectralLineHeaders, string>([
+    [SpectralLineHeaders.LineSelection, "Column for line selection"],
     [SpectralLineHeaders.Species, "Descriptive formula of molecular species"],
     [SpectralLineHeaders.ChemicalName, "Common chemical name for species"],
     [SpectralLineHeaders.ShiftedFrequency, "Shifted frequency according to the input velocity or redshift"],
@@ -101,6 +103,7 @@ export interface SpectralLine {
     qn: string;
 }
 
+const LINE_SELECTION_COLUMN_INDEX = -1;
 const SPECIES_COLUMN_INDEX = 0;
 const SHIFTIED_FREQUENCY_COLUMN_INDEX = 2;
 const MEASURED_FREQUENCY_COLUMN_INDEX = 5;
@@ -121,7 +124,6 @@ export class SpectralLineQueryWidgetStore extends RegionWidgetStore {
     @observable redshiftInput: number;
     @observable queryResultTableRef: Table;
     @observable filterResult: Map<number, ProcessedColumnData>;
-    @observable private isLineSelectedArray: Array<boolean>;
     @observable sortingInfo: {columnName: string, sortingType: CARTA.SortingType};
     @observable numDataRows: number;
     @observable selectedSpectralProfilerID: string;
@@ -152,7 +154,6 @@ export class SpectralLineQueryWidgetStore extends RegionWidgetStore {
         this.originalShiftedData = [];
         this.filteredRowIndexes = [];
         this.numDataRows = 0;
-        this.isLineSelectedArray = [];
         this.selectedSpectralProfilerID = AppStore.Instance.widgetsStore.spectralProfilerList.length > 0 ?
             AppStore.Instance.widgetsStore.spectralProfilerList[0] : undefined;
         this.sortingInfo = {columnName: null, sortingType: null};
@@ -261,42 +262,14 @@ export class SpectralLineQueryWidgetStore extends RegionWidgetStore {
             const backendService = BackendService.Instance;
             backendService.requestSpectralLine(new CARTA.DoubleBounds({min: freqMHzFrom, max: freqMHzTo}), this.intensityLimitEnabled ? this.intensityLimitValue : NaN).subscribe(ack => {
                 if (ack.success && ack.dataSize >= 0) {
-                    // 1. header part
-                    ack.headers.forEach((header) => { // replace to comprehensive headers
-                        if (SPLA_HEADER_MAP.has(header.name as SpectralLineHeaders)) {
-                            header.name = SPLA_HEADER_MAP.get(header.name as SpectralLineHeaders);
-                        }
-                    });
-                    this.columnHeaders = ack.headers.sort((a, b) => {
-                        return (a.columnIndex - b.columnIndex);
-                    });
-                    this.initControlHeader();
-
-                    // 2. data part
-                    if (ack.dataSize > 0) {
-                        this.numDataRows = ack.dataSize;
-                        this.isLineSelectedArray = new Array<boolean>(this.numDataRows).fill(false);
-                        this.filteredRowIndexes = Array.from(Array(this.numDataRows).keys()); // [0...N-1]
-                        this.queryResult = ProtobufProcessing.ProcessCatalogData(ack.spectralLineData);
-                        this.initShiftedFreqColumn();
-                        this.columnHeaders.forEach(header => { // update column data type
-                            if (header.dataType === CARTA.ColumnType.Double) {
-                                const column = this.queryResult.get(header.columnIndex);
-                                column.dataType = CARTA.ColumnType.Double;
-                                column.data = column.data as Array<number>;
-                            }
-                        });
-                        this.filterResult = _.cloneDeep(this.queryResult);
-                        this.originalShiftedData = this.filterResult.get(SHIFTIED_FREQUENCY_COLUMN_INDEX).data as Array<number>;
-                        this.updateShiftedColumn();
-                    } else {
-                        this.numDataRows = 0;
-                        this.isLineSelectedArray = [];
-                        this.filteredRowIndexes = [];
-                        this.queryResult = new Map<number, ProcessedColumnData>();
-                        this.filterResult = new Map<number, ProcessedColumnData>();
-                        this.originalShiftedData = [];
-                    }
+                    this.numDataRows = ack.dataSize;
+                    this.columnHeaders = this.initHeaders(ack.headers);
+                    this.queryResult = this.initColumnData(ack.spectralLineData, ack.dataSize, this.columnHeaders);
+                    this.filterResult = _.cloneDeep(this.queryResult);
+                    this.controlHeader = this.initControlHeader(this.columnHeaders);
+                    this.originalShiftedData = this.filterResult.get(SHIFTIED_FREQUENCY_COLUMN_INDEX).data as Array<number>;
+                    this.filteredRowIndexes = Array.from(Array(ack.dataSize).keys());
+                    this.updateShiftedColumn();
                 } else {
                     AppStore.Instance.alertStore.showAlert(ack.message);
                 }
@@ -366,6 +339,10 @@ export class SpectralLineQueryWidgetStore extends RegionWidgetStore {
         this.isDataFiltered = false;
     };
 
+    @action.bound setResultTableColumnWidth(width: number, columnName: string) {
+        this.controlHeader.get(columnName).columnWidth = width;
+    }
+
     @computed get formalizedHeaders(): SpectralLineHeader[] {
         let formalizedHeaders: SpectralLineHeader[] = [];
         this.columnHeaders.forEach(header => {
@@ -392,34 +369,33 @@ export class SpectralLineQueryWidgetStore extends RegionWidgetStore {
         return displayedColumnHeaders;
     }
 
+    @computed get isLineSelectedArray(): boolean[] {
+        return this.filterResult?.get(LINE_SELECTION_COLUMN_INDEX)?.data as Array<boolean>;
+    }
+
     @computed get isSelectingAllLines(): boolean {
-        let result = true;
-        if (this.isLineSelectedArray && this.isLineSelectedArray.length > 0) {
-            for (let rowIndex = 0; rowIndex < this.isLineSelectedArray.length; rowIndex++) {
-                result = result && this.isLineSelectedArray[rowIndex];
-            }
+        if (this.isLineSelectedArray?.length <= 0) {
+            return false;
         }
+        let result = true;
+        this.isLineSelectedArray?.forEach(isSelected => result = result && isSelected);
         return result;
     }
 
     @computed get isSelectingIndeterminatedLines(): boolean {
         let result = false;
-        if (this.isLineSelectedArray && this.isLineSelectedArray.length > 0) {
-            for (let rowIndex = 0; rowIndex < this.isLineSelectedArray.length; rowIndex++) {
-                result = result || this.isLineSelectedArray[rowIndex];
-            }
-        }
+        this.isLineSelectedArray?.forEach(isSelected => result = result || isSelected);
         return result && !this.isSelectingAllLines;
     }
 
     @computed get manualSelectionData(): boolean[] {
         // Create new instance for trigger re-rendering
-        return this.isLineSelectedArray && this.isLineSelectedArray.length > 0 ? [...this.isLineSelectedArray] : [];
+        return this.isLineSelectedArray?.length > 0 ? [...this.isLineSelectedArray] : [];
     }
 
     @computed get selectedLines(): SpectralLine[] {
         const selectedLines: SpectralLine[] = [];
-        if (this.isLineSelectedArray && this.isLineSelectedArray.length > 0) {
+        if (this.isLineSelectedArray?.length > 0) {
             for (let rowIndex = 0; rowIndex < this.isLineSelectedArray.length; rowIndex++) {
                 if (this.isLineSelectedArray[rowIndex]) {
                     const speciesColumn = this.filterResult.get(SPECIES_COLUMN_INDEX);
@@ -455,6 +431,86 @@ export class SpectralLineQueryWidgetStore extends RegionWidgetStore {
         return (this.isDataFiltered ? filteredInfo : info) + lineSelectionInfo;
     }
 
+    @computed get resultTableColumnWidths(): Array<number> {
+        const columnWidths = [];
+        this.controlHeader.forEach((value) => {
+            if (value.display) {
+                columnWidths.push(value.columnWidth);
+            }
+        });
+        return columnWidths;
+    }
+
+    // TODO: move to backend
+    private initHeaders = (ackHeaders) => {
+        // rename to comprehensive headers
+        ackHeaders.forEach((header) => {
+            if (SPLA_HEADER_MAP.has(header.name as SpectralLineHeaders)) {
+                // replace to comprehensive headers
+                header.name = SPLA_HEADER_MAP.get(header.name as SpectralLineHeaders);
+            }
+        });
+        // insert line selection column header
+        ackHeaders.splice(0, 0, new CARTA.CatalogHeader({
+            name: SpectralLineHeaders.LineSelection,
+            dataType: CARTA.ColumnType.Bool,
+            columnIndex: LINE_SELECTION_COLUMN_INDEX
+        }));
+        return ackHeaders.sort((a, b) => {
+            return (a.columnIndex - b.columnIndex);
+        });
+    };
+
+    // TODO: move to backend
+    private initColumnData = (ackData, size: number, headers): Map<number, ProcessedColumnData> => {
+        const columns = ProtobufProcessing.ProcessCatalogData(ackData);
+        // 1. insert line selection boolean column
+        const lineSelectionData = new Array<boolean>(size).fill(false);
+        columns.set(LINE_SELECTION_COLUMN_INDEX, {
+            dataType: CARTA.ColumnType.Bool,
+            data: lineSelectionData
+        });
+        // 2. compensate missing rest frequency value with measured frequency value in shifted column
+        const shiftedFreqData = columns.get(SHIFTIED_FREQUENCY_COLUMN_INDEX)?.data;
+        const measuredFreqData = columns.get(MEASURED_FREQUENCY_COLUMN_INDEX)?.data;
+        const compensatedData = (shiftedFreqData as Array<string>)?.map((valString, index) => {
+            let value = parseFloat(valString);
+            if (!isFinite(value) && index < measuredFreqData?.length) {
+                value = parseFloat((measuredFreqData as Array<string>)[index]);
+            }
+            return isFinite(value) ? value : undefined;
+        });
+        columns.set(SHIFTIED_FREQUENCY_COLUMN_INDEX, {
+            dataType: CARTA.ColumnType.Double,
+            data: compensatedData
+        });
+        // 3. update column data type
+        headers.forEach(header => {
+            if (header.dataType === CARTA.ColumnType.Double) {
+                const column = columns.get(header.columnIndex);
+                column.dataType = CARTA.ColumnType.Double;
+                column.data = column.data as Array<number>;
+            }
+        });
+        return columns;
+    };
+
+    private initControlHeader = (headers): Map<string, ControlHeader> => {
+        const controlHeaders = new Map<string, ControlHeader>();
+        headers?.forEach(header => {
+            const controlHeader: ControlHeader = {
+                columnIndex: header.columnIndex,
+                dataIndex: undefined,
+                display: false,
+                representAs: undefined,
+                filter: "",
+                columnWidth: header.name === SpectralLineHeaders.LineSelection ? 50 : 150
+            };
+            controlHeaders.set(header.name, controlHeader);
+        });
+        return controlHeaders;
+    };
+
     private updateShiftedColumn = () => {
         const shiftedData = this.originalShiftedData.map((value) => {
             return isFinite(value) ? value * this.redshiftFactor : undefined;
@@ -463,24 +519,6 @@ export class SpectralLineQueryWidgetStore extends RegionWidgetStore {
             dataType: CARTA.ColumnType.Double,
             data: shiftedData
         });
-    };
-
-    private initControlHeader = () => {
-        if (this.columnHeaders.length > 0) {
-            for (let index = 0; index < this.columnHeaders.length; index++) {
-                const header = this.columnHeaders[index];
-                let display = false;
-                let controlHeader: ControlHeader = {
-                    columnIndex: header.columnIndex,
-                    dataIndex: index,
-                    display: display,
-                    representAs: undefined,
-                    filter: "",
-                    columnWidth: null
-                };
-                this.controlHeader.set(header.name, controlHeader);
-            }
-        }
     };
 
     private numericFiltering = (columnData: Array<number>, dataIndexes: number[], filterString: string): number[] => {
@@ -559,23 +597,5 @@ export class SpectralLineQueryWidgetStore extends RegionWidgetStore {
         } else {
             return undefined;
         }
-    };
-
-    // compensate missing rest frequency value with measured frequency value in shifted column
-    // TODO: move to backend
-    private initShiftedFreqColumn = () => {
-        const shiftedFreqData = this.queryResult.get(SHIFTIED_FREQUENCY_COLUMN_INDEX)?.data;
-        const measuredFreqData = this.queryResult.get(MEASURED_FREQUENCY_COLUMN_INDEX)?.data;
-        const compensatedData = (shiftedFreqData as Array<string>)?.map((valString, index) => {
-            let value = parseFloat(valString);
-            if (!isFinite(value) && index < measuredFreqData?.length) {
-                value = parseFloat((measuredFreqData as Array<string>)[index]);
-            }
-            return isFinite(value) ? value : undefined;
-        });
-        this.queryResult.set(SHIFTIED_FREQUENCY_COLUMN_INDEX, {
-            dataType: CARTA.ColumnType.Double,
-            data: compensatedData
-        });
     };
 }

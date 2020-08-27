@@ -6,6 +6,7 @@ import {IconName} from "@blueprintjs/icons";
 import {IRowIndices} from "@blueprintjs/table/lib/esm/common/grid";
 import {CARTA} from "carta-protobuf";
 import {ControlHeader} from "stores";
+import {SpectralLineHeaders} from "stores/widgets";
 import {ProcessedColumnData} from "models";
 import "./TableComponent.css";
 
@@ -64,55 +65,23 @@ export class TableComponent extends React.Component<TableComponentProps> {
         }
     };
 
-    private renderManualSelectionColumn = (manualSelectionProps: ManualSelectionProps, manualSelectionData: boolean[]) => {
-        if (!manualSelectionProps || !manualSelectionData || manualSelectionData.length <= 0) {
-            return null;
-        }
-
-        const columnName = "select";
-        return (
-            <Column
-                key={columnName}
-                name={columnName}
-                columnHeaderCellRenderer={(columnIndex: number) => {
-                    return (
-                        <ColumnHeaderCell>
-                            <React.Fragment>
-                                <Checkbox
-                                    indeterminate={manualSelectionProps.isSelectingIndeterminated}
-                                    checked={manualSelectionProps.isSelectingAll}
-                                    inline={true}
-                                    onChange={manualSelectionProps.selectAllLines}
-                                />
-                            </React.Fragment>
-                        </ColumnHeaderCell>
-                    );
-                }}
-                cellRenderer={(rowIndex, columnIndex) => {
-                    return (
-                        <Cell key={`cell_${columnIndex}_${rowIndex}`} interactive={false}>
-                            <React.Fragment>
-                                <Checkbox
-                                    checked={manualSelectionData[rowIndex] || false}
-                                    onChange={() => manualSelectionProps.selectSingleLine(rowIndex)}
-                                />
-                            </React.Fragment>
-                        </Cell>
-                    );
-                }}
-            />
-        );
-    };
-
     private getfilterSyntax = (dataType: CARTA.ColumnType) => {
         switch (dataType) {
-            case CARTA.ColumnType.String || CARTA.ColumnType.Bool:
+            case CARTA.ColumnType.String:
                 return (
                     <div className={"column-filter-popover-content"}>
                         <small>Filter by substring</small><br/>
                         <small>e.g. gal (no quotation, entries contain the "gal" string)</small>
                     </div>
                 );
+            case CARTA.ColumnType.Bool:
+                return (
+                    <div className={"column-filter-popover-content"}>
+                        <small>Filter by boolean value</small><br/>
+                        <small>e.g. "True" or "T", "False" or "F")</small>
+                    </div>
+                );
+            case CARTA.ColumnType.Double:
             default:
                 return (
                     <div className={"column-filter-popover-content"}>
@@ -125,6 +94,65 @@ export class TableComponent extends React.Component<TableComponentProps> {
                 );
         }
     }
+
+    private renderLineSelectionrColumnHeaderCell = (columnIndex: number, columnHeader: CARTA.CatalogHeader) => {
+        const controlheader = this.props.filter?.get(columnHeader.name);
+        const filterSyntax = this.getfilterSyntax(columnHeader.dataType);
+        return (
+            <ColumnHeaderCell>
+                <ColumnHeaderCell>
+                    <React.Fragment>
+                        <Checkbox
+                            indeterminate={this.props.manualSelectionProps.isSelectingIndeterminated}
+                            checked={this.props.manualSelectionProps.isSelectingAll}
+                            inline={true}
+                            onChange={this.props.manualSelectionProps.selectAllLines}
+                        />
+                    </React.Fragment>
+                </ColumnHeaderCell>
+                <ColumnHeaderCell isActive={controlheader?.filter !== ""}>
+                    <Popover
+                        hoverOpenDelay={250}
+                        hoverCloseDelay={0}
+                        className={"column-filter"}
+                        popoverClassName={this.props.darkTheme ? "column-filter-popover-dark" : "column-filter-popover"}
+                        content={filterSyntax}
+                        interactionKind={PopoverInteractionKind.HOVER}
+                    >
+                        <InputGroup
+                            key={"column-filter-" + columnIndex}
+                            small={true}
+                            placeholder="Click to filter"
+                            value={controlheader?.filter ? controlheader.filter : ""}
+                            onChange={ev => this.props.updateColumnFilter(ev.currentTarget.value, columnHeader.name)}
+                        />
+                    </Popover>
+                </ColumnHeaderCell>
+            </ColumnHeaderCell>
+        );
+    };
+
+    private renderLineSelectionColumn = (columnHeader: CARTA.CatalogHeader) => {
+        return (
+            <Column
+                key={"line-select"}
+                name={"line-select"}
+                columnHeaderCellRenderer={(columnIndex: number) => this.renderLineSelectionrColumnHeaderCell(columnIndex, columnHeader)}
+                cellRenderer={(rowIndex, columnIndex) => {
+                    return (
+                        <Cell key={`cell_${columnIndex}_${rowIndex}`} interactive={false}>
+                            <React.Fragment>
+                                <Checkbox
+                                    checked={this.props.manualSelectionData[rowIndex] || false}
+                                    onChange={() => this.props.manualSelectionProps.selectSingleLine(rowIndex)}
+                                />
+                            </React.Fragment>
+                        </Cell>
+                    );
+                }}
+            />
+        );
+    };
 
     private renderDataColumnWithFilter = (columnHeader: CARTA.CatalogHeader, columnData: any) => {
         return (
@@ -276,26 +304,21 @@ export class TableComponent extends React.Component<TableComponentProps> {
         const tableData = table.dataset;
         let columnWidths = table.columnWidths ? table.columnWidths : new Array<number>(table.columnHeaders?.length).fill(DEFAULT_COLUMN_WIDTH);
 
-        // Create manuanl selection checkbox column
-        if (table.manualSelectionProps && table.manualSelectionData?.length > 0) {
-            const column = this.renderManualSelectionColumn(table.manualSelectionProps, table.manualSelectionData);
-            tableColumns.push(column);
-            columnWidths.splice(0, 0, MANUAL_SELECTION_COLUMN_WIDTH);
-        }
-
-        for (let index = 0; index < table.columnHeaders.length; index++) {
-            const header = table.columnHeaders[index];
+        table.columnHeaders?.forEach(header => {
             const columnIndex = header.columnIndex;
             let dataArray = tableData.get(columnIndex)?.data;
 
             if (table.type === TableType.ColumnFilter) {
-                const column = this.renderDataColumnWithFilter(header, dataArray);
+                // TODO: create SpectralLineTableComponent inherited from TableComponent
+                const column = header.name === SpectralLineHeaders.LineSelection ?
+                this.renderLineSelectionColumn(header) :
+                this.renderDataColumnWithFilter(header, dataArray);
                 tableColumns.push(column);
             } else if (table.type === TableType.Normal) {
                 const column = this.renderDataColumn(header.name, dataArray);
                 tableColumns.push(column);
             }
-        }
+        });
 
         if (table.type === TableType.ColumnFilter) {
             return (
