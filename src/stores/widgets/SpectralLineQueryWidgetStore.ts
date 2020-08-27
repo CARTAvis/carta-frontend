@@ -265,7 +265,7 @@ export class SpectralLineQueryWidgetStore extends RegionWidgetStore {
                     this.filterResult = _.cloneDeep(this.queryResult);
                     this.controlHeader = this.initControlHeader(this.columnHeaders);
                     this.originalShiftedData = this.filterResult.get(SHIFTIED_FREQUENCY_COLUMN_INDEX).data as Array<number>;
-                    this.filteredRowIndexes = Array.from(Array(ack.dataSize).keys());
+                    this.filteredRowIndexes = Array.from(Array(this.numDataRows).keys());
                     this.updateShiftedColumn();
                 } else {
                     AppStore.Instance.alertStore.showAlert(ack.message);
@@ -306,6 +306,21 @@ export class SpectralLineQueryWidgetStore extends RegionWidgetStore {
                 let indexAfterFiltering = [];
                 if (dataType === CARTA.ColumnType.Double) {
                     indexAfterFiltering = this.numericFiltering(data as Array<number>, this.filteredRowIndexes, filterString);
+                } else if (dataType === CARTA.ColumnType.Bool) {
+                    const trimmedLowercase = filterString?.trim()?.toLowerCase();
+                    if (trimmedLowercase === "t" || trimmedLowercase === "true") {
+                        this.filteredRowIndexes.forEach(dataIndex => {
+                            if (data[dataIndex]) {
+                                indexAfterFiltering.push(dataIndex);
+                            }
+                        });
+                    } else if (trimmedLowercase === "f" || trimmedLowercase === "false") {
+                        this.filteredRowIndexes.forEach(dataIndex => {
+                            if (!data[dataIndex]) {
+                                indexAfterFiltering.push(dataIndex);
+                            }
+                        });
+                    }
                 } else if (dataType === CARTA.ColumnType.String) {
                     this.filteredRowIndexes.forEach(dataIndex => {
                         if ((data[dataIndex] as string).includes(filterString)) {
@@ -331,6 +346,7 @@ export class SpectralLineQueryWidgetStore extends RegionWidgetStore {
         if (this.isDataFiltered) {
             this.filterResult = _.cloneDeep(this.queryResult);
             this.originalShiftedData = this.filterResult.get(SHIFTIED_FREQUENCY_COLUMN_INDEX).data as Array<number>;
+            this.filteredRowIndexes = Array.from(Array(this.numDataRows).keys());
             this.updateShiftedColumn();
         }
         this.isDataFiltered = false;
