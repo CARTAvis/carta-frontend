@@ -78,7 +78,7 @@ export class TableComponent extends React.Component<TableComponentProps> {
                 return (
                     <div className={"column-filter-popover-content"}>
                         <small>Filter by boolean value</small><br/>
-                        <small>e.g. "True" or "T", "False" or "F")</small>
+                        <small>e.g. "True" or "T", "False" or "F", case insensitive</small>
                     </div>
                 );
             case CARTA.ColumnType.Double:
