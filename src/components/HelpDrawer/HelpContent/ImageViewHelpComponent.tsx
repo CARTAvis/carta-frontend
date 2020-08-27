@@ -1,7 +1,7 @@
 import * as React from "react";
 import {ImageComponent} from "./ImageComponent";
-import * as catalogSelectionButton from "static/help/catalog_selection_button.png";
-import * as catalogSelectionButton_d from "static/help/catalog_selection_button_d.png";
+import * as catalogSelectionButton from "static/help/catalogue_selection_button.png";
+import * as catalogSelectionButton_d from "static/help/catalogue_selection_button_d.png";
 import * as contourButton from "static/help/contour_button.png";
 import * as contourButton_d from "static/help/contour_button_d.png";
 import * as exportPNGButton from "static/help/export_png_button.png";
