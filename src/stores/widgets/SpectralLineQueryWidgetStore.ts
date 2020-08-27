@@ -278,7 +278,7 @@ export class SpectralLineQueryWidgetStore extends RegionWidgetStore {
                         this.isLineSelectedArray = new Array<boolean>(this.numDataRows).fill(false);
                         this.filteredRowIndexes = Array.from(Array(this.numDataRows).keys()); // [0...N-1]
                         this.queryResult = ProtobufProcessing.ProcessCatalogData(ack.spectralLineData);
-                        this.initShiftedColumn();
+                        this.initShiftedFreqColumn();
                         this.columnHeaders.forEach(header => { // update column data type
                             if (header.dataType === CARTA.ColumnType.Double) {
                                 const column = this.queryResult.get(header.columnIndex);
@@ -563,7 +563,7 @@ export class SpectralLineQueryWidgetStore extends RegionWidgetStore {
 
     // compensate missing rest frequency value with measured frequency value in shifted column
     // TODO: move to backend
-    private initShiftedColumn = () => {
+    private initShiftedFreqColumn = () => {
         const shiftedFreqData = this.queryResult.get(SHIFTIED_FREQUENCY_COLUMN_INDEX)?.data;
         const measuredFreqData = this.queryResult.get(MEASURED_FREQUENCY_COLUMN_INDEX)?.data;
         const compensatedData = (shiftedFreqData as Array<string>)?.map((valString, index) => {
