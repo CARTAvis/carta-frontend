@@ -30,8 +30,8 @@ export class SpectralProfilerHelpComponent extends React.Component {
                     will be terminated immediately and calculations of the new region spectral profile 
                     will start and users will see a partial profile in seconds.</p>
                 <h3 id="spectral-conventions-and-reference-frame">Spectral conventions and reference frame</h3>
-                <p>With the spectral profiler settings dialogue, users can change the spectral 
-                    convention, including:</p>
+                <p>With the Conversion tab of the spectral profiler settings dialogue, users can change 
+                    the spectral convention, including:</p>
                 <ul>
                     <li>Radio velocity (km/s, m/s)</li>
                     <li>Optical velocity (km/s, m/s)</li>
