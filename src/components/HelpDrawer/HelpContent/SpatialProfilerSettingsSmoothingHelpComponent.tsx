@@ -1,4 +1,18 @@
 import * as React from "react";
+import {AppStore} from "stores";
+import {ImageComponent} from "./ImageComponent";
+import * as smoothingBoxcar from "static/help/smoothing_boxcar.png";
+import * as smoothingGaussian from "static/help/smoothing_gaussian.png";
+import * as smoothingHanning from "static/help/smoothing_hanning.png";
+import * as smoothingBinning from "static/help/smoothing_binning.png";
+import * as smoothingSG from "static/help/smoothing_SG.png";
+import * as smoothingDecimation from "static/help/smoothing_decimation.png";
+import * as smoothingBoxcar_d from "static/help/smoothing_boxcar_d.png";
+import * as smoothingGaussian_d from "static/help/smoothing_gaussian_d.png";
+import * as smoothingHanning_d from "static/help/smoothing_hanning_d.png";
+import * as smoothingBinning_d from "static/help/smoothing_binning_d.png";
+import * as smoothingSG_d from "static/help/smoothing_SG_d.png";
+import * as smoothingDecimation_d from "static/help/smoothing_decimation_d.png";
 
 export class SpatialProfilerSettingsSmoothingHelpComponent extends React.Component {
     public render() {
@@ -21,7 +35,22 @@ export class SpatialProfilerSettingsSmoothingHelpComponent extends React.Compone
                     smoothed profile. The appearance of the smoothed profile, 
                     including color, style, width, and size, can be customized.</p>
                 <p>The data of the smoothed profile is appended in the exported 
-                    tsv file if a smooth method is applied.</p>    
+                    tsv file if a smooth method is applied.</p>
+
+                <h3>Examples</h3>
+                <p>Boxcar: Kernel = 2</p>
+                <p><ImageComponent light={smoothingBoxcar} dark={smoothingBoxcar_d} width="90%"/></p>
+                <p>Gaussian: Sigma = 1</p>
+                <p><ImageComponent light={smoothingGaussian} dark={smoothingGaussian_d} width="90%"/></p>
+                <p>Hanning: Kernel = 5</p>
+                <p><ImageComponent light={smoothingHanning} dark={smoothingHanning_d} width="90%"/></p>
+                <p>Binning: Binning width = 3</p>
+                <p><ImageComponent light={smoothingBinning} dark={smoothingBinning_d} width="90%"/></p>
+                <p>Savitzky-Golay: Kernel = 5, Degree of fitting = 0</p>
+                <p><ImageComponent light={smoothingSG} dark={smoothingSG_d} width="90%"/></p>
+                <p>Decimation: Decimation width = 3</p>
+                <p><ImageComponent light={smoothingDecimation} dark={smoothingDecimation_d} width="90%"/></p>
+                
             </div>
         );
     }
