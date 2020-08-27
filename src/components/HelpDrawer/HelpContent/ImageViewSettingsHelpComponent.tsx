@@ -62,7 +62,7 @@ export class ImageViewSettingsHelpComponent extends React.Component {
                     image viewer.</p>
                 
                 
-                <p>An example</p>
+                <h4>EXAMPLE</h4>
                 <p><ImageComponent light={imageOverlayDemo} dark={imageOverlayDemo_d} width="90%"/></p>
 
             </div>

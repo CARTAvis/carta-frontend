@@ -41,7 +41,7 @@ export class ImageViewHelpComponent extends React.Component {
                 <p>A set of tool buttons is provided at the bottom-right corner when hovering over 
                     the image viewer. Users may use these buttons to</p>
                 <ul>
-                    <li>Select a catalog overlay</li>
+                    <li>Select a source from catalog overlay</li>
                     <li>Create regions</li>
                     <li>Change image zoom scale</li>
                     <li>Trigger WCS matching</li>
@@ -59,8 +59,7 @@ export class ImageViewHelpComponent extends React.Component {
                     zoom to fit image view.</p>
                 <p><ImageComponent light={zoomButton} dark={zoomButton_d} width="70%"/></p>
                 <p>Pan action is achieved by <code>Click-and-drag</code> as default. This default can be 
-                   changed via the preferences dialogue 
-                   (<strong>File</strong> -&gt; <strong>Preferences</strong> -&gt; <strong>Global</strong>). The 
+                   changed via the preferences dialogue (<strong>File</strong> -&gt; <strong>Preferences</strong> -&gt; <strong>Global</strong>). The 
                    alternative mode is <code>Click</code> and the clicked pixel will be centered in the 
                    image viewer.</p>
                 
@@ -103,10 +102,10 @@ export class ImageViewHelpComponent extends React.Component {
                 <p><ImageComponent light={regionButton} dark={regionButton_d} width="70%"/></p>
                 <p>The default region type and the default region creation mode are customizable 
                     in the preferences dialogue. Region shortcut buttons are available at the top of 
-                    the CARTA GUI. The tooltip of the region shortcut button provides 
+                    the CARTA GUI. The tooltip of a region shortcut button provides 
                     instructions to create a region.</p>
                 
-                <h3 id="catalog-overlay">Catalog overlay</h3>
+                <h3 id="catalogue-layers">Catalog overlay</h3>
                 <p>A catalog overlay can be generated via the Catalog widget.</p> 
                 <p><ImageComponent light={headCatalogueButton} dark={headCatalogueButton_d} width="85%"/></p>
                 <p>To select a source, use the Catalog selection button. The selected source will 
