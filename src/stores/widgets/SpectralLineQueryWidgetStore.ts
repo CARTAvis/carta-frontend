@@ -119,7 +119,6 @@ export class SpectralLineQueryWidgetStore extends RegionWidgetStore {
     @observable intensityLimitValue: number;
     @observable isQuerying: boolean;
     @observable columnHeaders: Array<CARTA.ICatalogHeader>;
-    @observable headerDisplay: Map<SpectralLineHeaders, boolean>;
     @observable redshiftType: RedshiftType;
     @observable redshiftInput: number;
     @observable queryResultTableRef: Table;
@@ -144,8 +143,6 @@ export class SpectralLineQueryWidgetStore extends RegionWidgetStore {
         this.intensityLimitValue = -5;
         this.isQuerying = false;
         this.columnHeaders = [];
-        this.headerDisplay = new Map<SpectralLineHeaders, boolean>();
-        Object.values(SpectralLineHeaders).forEach(header => this.headerDisplay.set(header, true));
         this.redshiftType = RedshiftType.V;
         this.redshiftInput = 0;
         this.queryResultTableRef = undefined;
@@ -193,8 +190,8 @@ export class SpectralLineQueryWidgetStore extends RegionWidgetStore {
         this.intensityLimitValue = intensityLimitValue;
     };
 
-    @action setHeaderDisplay = (header: SpectralLineHeaders) => {
-        this.headerDisplay.set(header, !this.headerDisplay.get(header));
+    @action setHeaderDisplay = (val: boolean, columnName: string) => {
+        this.controlHeader.get(columnName).display = val;
     };
 
     @action setRedshiftType = (redshiftType: RedshiftType) => {
@@ -361,9 +358,9 @@ export class SpectralLineQueryWidgetStore extends RegionWidgetStore {
 
     @computed get displayedColumnHeaders(): Array<CARTA.CatalogHeader> {
         let displayedColumnHeaders = [];
-        this.columnHeaders.forEach(columnHeader => {
-            if (this.headerDisplay.get(columnHeader.name as SpectralLineHeaders)) {
-                displayedColumnHeaders.push(columnHeader);
+        this.controlHeader?.forEach(controlHeader => {
+            if (controlHeader.display && controlHeader.dataIndex < this.columnHeaders?.length) {
+                displayedColumnHeaders.push(this.columnHeaders[controlHeader.dataIndex]);
             }
         });
         return displayedColumnHeaders;
@@ -497,11 +494,11 @@ export class SpectralLineQueryWidgetStore extends RegionWidgetStore {
 
     private initControlHeader = (headers): Map<string, ControlHeader> => {
         const controlHeaders = new Map<string, ControlHeader>();
-        headers?.forEach(header => {
+        headers?.forEach((header, index) => {
             const controlHeader: ControlHeader = {
                 columnIndex: header.columnIndex,
-                dataIndex: undefined,
-                display: false,
+                dataIndex: index,
+                display: true,
                 representAs: undefined,
                 filter: "",
                 columnWidth: header.name === SpectralLineHeaders.LineSelection ? 50 : 150

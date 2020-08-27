@@ -126,13 +126,17 @@ export class SpectralLineQueryComponent extends React.Component<WidgetProps> {
         );
     }
 
-    private renderSwitchButtonCell(rowIndex: number, columnName: SpectralLineHeaders) {
+    private handleHeaderDisplayChange = (changeEvent: any, columnName: string) => {
         const widgetStore = this.widgetStore;
-        const display = widgetStore.headerDisplay.get(columnName);
+        widgetStore.setHeaderDisplay(changeEvent.target.checked, columnName);
+    };
+
+    private renderSwitchButtonCell(rowIndex: number, columnName: SpectralLineHeaders) {
+        const display = this.widgetStore.controlHeader?.get(columnName)?.display;
         return (
             <Cell className="header-table-cell" key={`cell_switch_${rowIndex}`}>
                 <React.Fragment>
-                    <Switch className="cell-switch-button" key={`cell_switch_button_${rowIndex}`} checked={display} onChange={() => widgetStore.setHeaderDisplay(columnName)}/>
+                    <Switch className="cell-switch-button" key={`cell_switch_button_${rowIndex}`} checked={display ?? false} onChange={changeEvent => this.handleHeaderDisplayChange(changeEvent, columnName)}/>
                 </React.Fragment>
             </Cell>
         );
@@ -362,8 +366,8 @@ export class SpectralLineQueryComponent extends React.Component<WidgetProps> {
             sortingInfo: widgetStore.sortingInfo,
             // filtering part
             updateColumnFilter: widgetStore.setColumnFilter,
-            // columnWidths: widgetStore.resultTableColumnWidths,
-            // updateTableColumnWidth: widgetStore.setResultTableColumnWidth,
+            columnWidths: widgetStore.resultTableColumnWidths,
+            updateTableColumnWidth: widgetStore.setResultTableColumnWidth,
         };
 
         let className = "spectral-line-query-widget";

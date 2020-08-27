@@ -302,12 +302,10 @@ export class TableComponent extends React.Component<TableComponentProps> {
         const table = this.props;
         const tableColumns = [];
         const tableData = table.dataset;
-        let columnWidths = table.columnWidths ? table.columnWidths : new Array<number>(table.columnHeaders?.length).fill(DEFAULT_COLUMN_WIDTH);
 
         table.columnHeaders?.forEach(header => {
             const columnIndex = header.columnIndex;
             let dataArray = tableData.get(columnIndex)?.data;
-
             if (table.type === TableType.ColumnFilter) {
                 // TODO: create SpectralLineTableComponent inherited from TableComponent
                 const column = header.name === SpectralLineHeaders.LineSelection ?
@@ -335,7 +333,7 @@ export class TableComponent extends React.Component<TableComponentProps> {
                     onSelection={this.onRowIndexSelection}
                     enableMultipleSelection={true}
                     enableRowResizing={false}
-                    columnWidths={columnWidths}
+                    columnWidths={table.columnWidths}
                 >
                     {tableColumns}
                 </Table>
@@ -350,7 +348,7 @@ export class TableComponent extends React.Component<TableComponentProps> {
                     selectionModes={SelectionModes.NONE}
                     enableGhostCells={true}
                     enableRowResizing={false}
-                    columnWidths={columnWidths}
+                    columnWidths={table.columnWidths}
                 >
                     {tableColumns}
                 </Table>
