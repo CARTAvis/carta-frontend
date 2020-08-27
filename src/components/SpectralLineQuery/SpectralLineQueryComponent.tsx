@@ -126,17 +126,13 @@ export class SpectralLineQueryComponent extends React.Component<WidgetProps> {
         );
     }
 
-    private handleHeaderDisplayChange = (changeEvent: any, columnName: string) => {
-        const widgetStore = this.widgetStore;
-        widgetStore.setHeaderDisplay(changeEvent.target.checked, columnName);
-    };
-
     private renderSwitchButtonCell(rowIndex: number, columnName: SpectralLineHeaders) {
-        const display = this.widgetStore.controlHeader?.get(columnName)?.display;
+        const widgetStore = this.widgetStore;
+        const display = widgetStore.controlHeader?.get(columnName)?.display;
         return (
             <Cell className="header-table-cell" key={`cell_switch_${rowIndex}`}>
                 <React.Fragment>
-                    <Switch className="cell-switch-button" key={`cell_switch_button_${rowIndex}`} checked={display ?? false} onChange={changeEvent => this.handleHeaderDisplayChange(changeEvent, columnName)}/>
+                    <Switch className="cell-switch-button" key={`cell_switch_button_${rowIndex}`} checked={display ?? false} onChange={(ev) => widgetStore.setHeaderDisplay(ev.currentTarget.checked, columnName)}/>
                 </React.Fragment>
             </Cell>
         );
