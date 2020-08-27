@@ -51,7 +51,7 @@ export class ImageViewSettingsHelpComponent extends React.Component {
                     overlay (color, type, and line width) and adjust its position in the 
                     image viewer.</p>
                 
-                <br/>
+                
                 <p>An example</p>
                 <p><ImageComponent light={imageOverlayDemo} dark={imageOverlayDemo} width="90%"/></p>
 
