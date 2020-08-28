@@ -128,10 +128,10 @@ export class SpectralLineQueryWidgetStore extends RegionWidgetStore {
     @observable selectedSpectralProfilerID: string;
     @observable controlHeader: Map<string, ControlHeader>;
     @observable isDataFiltered: boolean;
+    @observable private filteredRowIndexes: Array<number>;
 
     private queryResult: Map<number, ProcessedColumnData>;
     private originalShiftedData: Array<number>;
-    private filteredRowIndexes: Array<number>;
 
     constructor() {
         super(RegionsType.CLOSED);
@@ -300,7 +300,7 @@ export class SpectralLineQueryWidgetStore extends RegionWidgetStore {
         this.controlHeader.forEach((controlHeader) => {
             const filterString = controlHeader.filter;
             if (filterString !== "") {
-                const column = this.filterResult.get(controlHeader.columnIndex);
+                const column = this.queryResult.get(controlHeader.columnIndex);
                 const dataType = column.dataType;
                 const data = column.data;
                 let indexAfterFiltering = [];
@@ -435,6 +435,10 @@ export class SpectralLineQueryWidgetStore extends RegionWidgetStore {
             }
         });
         return filters;
+    }
+
+    @computed get filteredRowNumber(): number {
+        return this.filteredRowIndexes.length;
     }
 
     @computed get resultTableInfo(): string {
