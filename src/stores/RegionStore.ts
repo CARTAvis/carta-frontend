@@ -1,11 +1,13 @@
 import {action, computed, observable} from "mobx";
 import {Colors} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
-import {Point2D} from "models";
+import {Point2D, WCSPoint2D} from "models";
 import {BackendService} from "services";
 import {add2D, getApproximateEllipsePoints, getApproximatePolygonPoints, isAstBadPoint, midpoint2D, minMax2D, rotate2D, scale2D, simplePolygonPointTest, simplePolygonTest, subtract2D, toFixed, transformPoint} from "utilities";
-import {FrameStore} from "stores";
+import {FrameStore, AppStore, SystemType, WCS_PRECISION} from "stores";
 import RegionType = CARTA.RegionType;
+import {getFormattedWCSPoint, formattedArcsec} from "utilities";
+import { OverlayStore } from "./OverlayStore";
 
 export const CURSOR_REGION_ID = 0;
 export const FOCUS_REGION_RATIO = 0.4;
@@ -182,6 +184,56 @@ export class RegionStore {
                 return `polygon[[${center}], ` +
                     `[${toFixed(bounds.maxPoint.x, 1)}pix, ${toFixed(bounds.maxPoint.y, 1)}pix], ` +
                     `${toFixed(this.rotation, 1)}deg]`;
+            default:
+                return "Not Implemented";
+        }
+    }
+
+    @action getWcsCenter(frame: FrameStore): WCSPoint2D {
+        if (isFinite(this.center.x) && isFinite(this.center.y) && this.activeFrame.validWcs) {
+            return getFormattedWCSPoint(frame.wcsInfoForTransformation, this.center);
+        }
+        return null;
+    }
+
+    @computed get size(): Point2D {
+        switch (this.regionType) {
+            case CARTA.RegionType.RECTANGLE:
+            case CARTA.RegionType.ELLIPSE:
+                return this.controlPoints[1];
+            case CARTA.RegionType.POLYGON:
+                return this.boundingBox;
+            default:
+                return null;
+        }
+    }
+
+    @action getWcsSize(frame: FrameStore): Point2D {
+        if (this.size && frame.validWcs) {
+            return frame.getWcsSizeInArcsec(this.size);
+        }
+        return null;
+    }
+
+    @action getRegionWcsProperties(frame: FrameStore): string {
+        const wcsCenter = this.getWcsCenter(frame);
+        const wcsSize = this.getWcsSize(frame);
+        if (!wcsCenter) {
+            return null;
+        }
+        const center = `${wcsCenter.x}, ${wcsCenter.y}`;
+        const size = wcsSize;
+        const systemType = OverlayStore.Instance.global.explicitSystem;
+
+        switch (this.regionType) {
+            case CARTA.RegionType.POINT:
+                return `Point (wcs:${systemType}) [${center}]`;
+            case CARTA.RegionType.RECTANGLE:
+                return `rotbox(wcs:${systemType})[[${center}], [${size.x}, ${size.y}], ${toFixed(this.rotation, 1)}deg]`;
+            case CARTA.RegionType.ELLIPSE:
+                return `ellipse(wcs:${systemType})[[${center}], [${size.x}, ${size.y}], ${toFixed(this.rotation, 1)}deg]`;
+            case CARTA.RegionType.POLYGON:
+                return `polygon(wcs:${systemType})[[${center}], [${size.x}, ${size.y}], ${toFixed(this.rotation, 1)}deg]`;
             default:
                 return "Not Implemented";
         }
