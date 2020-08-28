@@ -35,7 +35,6 @@ export class TableComponentProps {
     selectedDataIndex?: number[];
     showSelectedData?: boolean;
     manualSelectionProps?: ManualSelectionProps;
-    manualSelectionData?: boolean[];
     updateTableRef?: (ref: Table) => void;
     updateColumnFilter?: (value: string, columnName: string) => void;
     updateByInfiniteScroll?: (rowIndexEnd: number) => void;
@@ -92,7 +91,7 @@ export class TableComponent extends React.Component<TableComponentProps> {
         }
     }
 
-    private renderLineSelectionrColumnHeaderCell = (columnIndex: number, columnHeader: CARTA.CatalogHeader) => {
+    private renderLineSelectionColumnHeaderCell = (columnIndex: number, columnHeader: CARTA.CatalogHeader) => {
         const controlheader = this.props.filter?.get(columnHeader.name);
         const filterSyntax = this.getfilterSyntax(columnHeader.dataType);
         return (
@@ -129,24 +128,29 @@ export class TableComponent extends React.Component<TableComponentProps> {
         );
     };
 
-    private renderLineSelectionColumn = (columnHeader: CARTA.CatalogHeader) => {
+    private renderLineSelectionCell = (rowIndex: number, columnIndex: number, columnData: any) => {
+        return (
+            <Cell key={`cell_${columnIndex}_${rowIndex}`} interactive={false}>
+                <React.Fragment>
+                    {rowIndex < columnData?.length ?
+                        <Checkbox
+                            checked={columnData[rowIndex]}
+                            onChange={() => this.props.manualSelectionProps.selectSingleLine(rowIndex)}
+                        /> :
+                        null
+                    }
+                </React.Fragment>
+            </Cell>
+        );
+    };
+
+    private renderLineSelectionColumn = (columnHeader: CARTA.CatalogHeader, columnData: any) => {
         return (
             <Column
-                key={"line-select"}
-                name={"line-select"}
-                columnHeaderCellRenderer={(columnIndex: number) => this.renderLineSelectionrColumnHeaderCell(columnIndex, columnHeader)}
-                cellRenderer={(rowIndex, columnIndex) => {
-                    return (
-                        <Cell key={`cell_${columnIndex}_${rowIndex}`} interactive={false}>
-                            <React.Fragment>
-                                <Checkbox
-                                    checked={this.props.manualSelectionData[rowIndex] || false}
-                                    onChange={() => this.props.manualSelectionProps.selectSingleLine(rowIndex)}
-                                />
-                            </React.Fragment>
-                        </Cell>
-                    );
-                }}
+                key={columnHeader.name}
+                name={columnHeader.name}
+                columnHeaderCellRenderer={(columnIndex: number) => this.renderLineSelectionColumnHeaderCell(columnIndex, columnHeader)}
+                cellRenderer={columnData?.length ? (rowIndex, columnIndex) => this.renderLineSelectionCell(rowIndex, columnIndex, columnData) : undefined}
             />
         );
     };
@@ -165,9 +169,9 @@ export class TableComponent extends React.Component<TableComponentProps> {
     private renderCell = (rowIndex: number, columnIndex: number, columnData: any) => {
         const dataIndex = this.props.selectedDataIndex;
         if (dataIndex && dataIndex.includes(rowIndex) && !this.props.showSelectedData) {
-            return <Cell key={`cell_${columnIndex}_${rowIndex}`} intent={"danger"} loading={this.isLoading(rowIndex)} interactive={false}>{columnData[rowIndex]}</Cell>;
+            return <Cell key={`cell_${columnIndex}_${rowIndex}`} intent={"danger"} loading={this.isLoading(rowIndex)} interactive={false}>{rowIndex < columnData.length ? columnData[rowIndex] : ""}</Cell>;
         } else {
-            return <Cell key={`cell_${columnIndex}_${rowIndex}`} loading={this.isLoading(rowIndex)} interactive={false}>{columnData[rowIndex]}</Cell>;
+            return <Cell key={`cell_${columnIndex}_${rowIndex}`} loading={this.isLoading(rowIndex)} interactive={false}>{rowIndex < columnData.length ? columnData[rowIndex] : ""}</Cell>;
         }
     };
 
@@ -306,7 +310,7 @@ export class TableComponent extends React.Component<TableComponentProps> {
             if (table.type === TableType.ColumnFilter) {
                 // TODO: create SpectralLineTableComponent inherited from TableComponent to pull out this logic
                 const column = header.name === SpectralLineHeaders.LineSelection ?
-                this.renderLineSelectionColumn(header) :
+                this.renderLineSelectionColumn(header, dataArray) :
                 this.renderDataColumnWithFilter(header, dataArray);
                 tableColumns.push(column);
             } else if (table.type === TableType.Normal) {

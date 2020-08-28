@@ -401,11 +401,6 @@ export class SpectralLineQueryWidgetStore extends RegionWidgetStore {
         return result && !this.isSelectingAllLines;
     }
 
-    @computed get manualSelectionData(): boolean[] {
-        // Create new instance for trigger re-rendering
-        return this.isLineSelectedArray?.length > 0 ? [...this.isLineSelectedArray] : [];
-    }
-
     @computed get selectedLines(): SpectralLine[] {
         const selectedLines: SpectralLine[] = [];
         if (this.isLineSelectedArray?.length > 0) {

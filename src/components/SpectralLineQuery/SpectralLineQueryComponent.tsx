@@ -355,7 +355,6 @@ export class SpectralLineQueryComponent extends React.Component<WidgetProps> {
                 selectAllLines: widgetStore.selectAllLines,
                 selectSingleLine: widgetStore.selectSingleLine
             },
-            manualSelectionData: widgetStore.manualSelectionData,
             updateTableRef: (ref) => { this.resultTableRef = ref; },
             // sorting part
             disable: true,
