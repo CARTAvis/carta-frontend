@@ -214,16 +214,24 @@ export class SpectralLineQueryWidgetStore extends RegionWidgetStore {
 
     @action selectAllLines = () => {
         if (this.isLineSelectedArray && this.isLineSelectedArray.length > 0) {
-            const isSelectAll = this.isSelectingAllLines;
+            const isSelectedAll = this.isSelectingAllLines;
+            const queryResultData = this.queryResult.get(LINE_SELECTION_COLUMN_INDEX).data;
             for (let rowIndex = 0; rowIndex < this.isLineSelectedArray.length; rowIndex++) {
-                this.isLineSelectedArray[rowIndex] = isSelectAll ? false : true;
+                // update both queryResult & filterResult
+                this.isLineSelectedArray[rowIndex] = !isSelectedAll;
+                const realRowIndex = this.filteredRowIndexes[rowIndex];
+                queryResultData[realRowIndex] = !isSelectedAll;
             }
         }
     };
 
     @action selectSingleLine = (rowIndex: number) => {
         if (this.isLineSelectedArray && this.isLineSelectedArray.length > 0 && isFinite(rowIndex) && rowIndex >= 0 && rowIndex < this.isLineSelectedArray.length) {
-            this.isLineSelectedArray[rowIndex] = !this.isLineSelectedArray[rowIndex];
+            const isSelected = this.isLineSelectedArray[rowIndex];
+            this.isLineSelectedArray[rowIndex] = !isSelected;
+            // update both queryResult & filterResult
+            const realRowIndex = this.filteredRowIndexes[rowIndex];
+            this.queryResult.get(LINE_SELECTION_COLUMN_INDEX).data[realRowIndex] = !isSelected;
         }
     };
 
