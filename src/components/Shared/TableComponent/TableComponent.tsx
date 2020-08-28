@@ -47,9 +47,6 @@ export class TableComponentProps {
     darkTheme?: boolean;
 }
 
-const MANUAL_SELECTION_COLUMN_WIDTH = 50;
-const DEFAULT_COLUMN_WIDTH = 150;
-
 @observer
 export class TableComponent extends React.Component<TableComponentProps> {
     private readonly SortingTypelinkedList = {
@@ -307,7 +304,7 @@ export class TableComponent extends React.Component<TableComponentProps> {
             const columnIndex = header.columnIndex;
             let dataArray = tableData.get(columnIndex)?.data;
             if (table.type === TableType.ColumnFilter) {
-                // TODO: create SpectralLineTableComponent inherited from TableComponent
+                // TODO: create SpectralLineTableComponent inherited from TableComponent to pull out this logic
                 const column = header.name === SpectralLineHeaders.LineSelection ?
                 this.renderLineSelectionColumn(header) :
                 this.renderDataColumnWithFilter(header, dataArray);
