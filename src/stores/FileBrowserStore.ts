@@ -272,10 +272,6 @@ export class FileBrowserStore {
         PreferenceStore.Instance.setPreference(PreferenceKeys.SILENT_FILE_SORTING_STRING, sortingString);
     };
 
-    @action clearSortingConfig = () => {
-        PreferenceStore.Instance.setPreference(PreferenceKeys.SILENT_FILE_SORTING_STRING, undefined);
-    };
-
     @computed get fileInfo() {
         let fileInfo = "";
         if (this.fileInfoExtended && this.fileInfoExtended.computedEntries) {
