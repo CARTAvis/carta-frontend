@@ -2,7 +2,7 @@ import {action, computed, observable} from "mobx";
 import {TabId} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import {BackendService} from "services";
-import {AppStore, DialogStore} from "stores";
+import {AppStore, DialogStore, PreferenceKeys, PreferenceStore} from "stores";
 import {FileInfoType} from "components";
 import {ProcessedColumnData} from "models";
 import {getDataTypeString} from "utilities";
@@ -15,14 +15,15 @@ export enum BrowserMode {
     Catalog
 }
 
+export enum FileFilteringType {
+    Fuzzy = "fuzzy",
+    Unix = "unix",
+    Regex = "regex"
+}
+
 export type RegionFileType = CARTA.FileType.CRTF | CARTA.FileType.DS9_REG;
 export type ImageFileType = CARTA.FileType.CASA | CARTA.FileType.FITS | CARTA.FileType.HDF5 | CARTA.FileType.MIRIAD;
 export type CatalogFileType = CARTA.CatalogFileType.VOTable | CARTA.CatalogFileType.FITSTable;
-
-export interface SortingConfig {
-    columnName: string;
-    direction: number;
-}
 
 export class FileBrowserStore {
     private static staticInstance: FileBrowserStore;
@@ -50,7 +51,6 @@ export class FileBrowserStore {
     @observable exportFilename: string;
     @observable exportCoordinateType: CARTA.CoordinateType;
     @observable exportFileType: RegionFileType;
-    @observable sortingConfig: SortingConfig = {columnName: "Date", direction: -1};
 
     @observable catalogFileList: CARTA.ICatalogListResponse;
     @observable selectedCatalogFile: CARTA.ICatalogFileInfo;
@@ -268,11 +268,12 @@ export class FileBrowserStore {
     };
 
     @action setSortingConfig = (columnName: string, direction: number) => {
-        this.sortingConfig = {columnName, direction: Math.sign(direction)};
+        const sortingString = (direction >= 0 ? "+" : "-") + columnName.toLowerCase();
+        PreferenceStore.Instance.setPreference(PreferenceKeys.SILENT_FILE_SORTING_STRING, sortingString);
     };
 
     @action clearSortingConfig = () => {
-        this.sortingConfig = undefined;
+        PreferenceStore.Instance.setPreference(PreferenceKeys.SILENT_FILE_SORTING_STRING, undefined);
     };
 
     @computed get fileInfo() {

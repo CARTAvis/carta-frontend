@@ -8,7 +8,7 @@ import globToRegExp from "glob-to-regexp";
 import * as moment from "moment";
 import FuzzySearch from "fuzzy-search";
 import {CARTA} from "carta-protobuf";
-import {BrowserMode, SortingConfig} from "stores";
+import {BrowserMode} from "stores";
 import {toFixed} from "utilities";
 import "./FileListTableComponent.css";
 
@@ -29,7 +29,7 @@ export interface FileListTableComponentProps {
     selectedFile: CARTA.IFileInfo | CARTA.ICatalogFileInfo;
     selectedHDU: string;
     filterString?: string;
-    sortingConfig?: SortingConfig;
+    sortingString?: string;
     fileBrowserMode: BrowserMode;
     onSortingChanged: (columnName: string, direction: number) => void;
     onSortingCleared: () => void;
@@ -46,7 +46,7 @@ export class FileListTableComponent extends React.Component<FileListTableCompone
     private static readonly RowHeight = 22;
     private tableRef: Table;
     private cachedFilterString: string;
-    private cachedSortingConfig: SortingConfig;
+    private cachedSortingConfig: string;
     private cachedFileResponse: CARTA.IFileListResponse | CARTA.ICatalogListResponse;
 
     private static readonly FileTypeMap = new Map<CARTA.FileType, { type: string, description: string }>([
@@ -127,9 +127,9 @@ export class FileListTableComponent extends React.Component<FileListTableCompone
         }
 
         const entries: FileEntry[] = [];
-        const sortingConfig = this.props.sortingConfig;
+        const sortingConfig = {direction: this.props.sortingString.startsWith("+") ? 1 : -1, columnName: this.props.sortingString.substring(1).toLowerCase()};
         if (filteredSubdirectories && filteredSubdirectories.length) {
-            if (sortingConfig?.columnName === "Filename") {
+            if (sortingConfig?.columnName === "filename") {
                 filteredSubdirectories.sort((a, b) => sortingConfig.direction * (a.toLowerCase() < b.toLowerCase() ? -1 : 1));
             }
             for (const directory of filteredSubdirectories) {
@@ -142,16 +142,16 @@ export class FileListTableComponent extends React.Component<FileListTableCompone
 
         if (filteredFiles && filteredFiles.length) {
             switch (sortingConfig?.columnName) {
-                case "Filename":
+                case "filename":
                     filteredFiles.sort((a, b) => sortingConfig.direction * (a.name.toLowerCase() < b.name.toLowerCase() ? -1 : 1));
                     break;
-                case "Type":
+                case "type":
                     filteredFiles.sort((a, b) => sortingConfig.direction * (a.type < b.type ? -1 : 1));
                     break;
-                case "Size":
+                case "size":
                     filteredFiles.sort((a, b) => sortingConfig.direction * (a.size < b.size ? -1 : 1));
                     break;
-                case "Date":
+                case "date":
                     filteredFiles.sort((a, b) => sortingConfig.direction * (a.date < b.date ? -1 : 1));
                     break;
                 default:
@@ -203,7 +203,7 @@ export class FileListTableComponent extends React.Component<FileListTableCompone
         // Automatically scroll to the top of the table when a new file response is received, or when filtering/sorting changes
         autorun(() => {
             const fileResponse = this.props.listResponse;
-            const sortingConfig = this.props.sortingConfig;
+            const sortingConfig = this.props.sortingString;
             const filterString = this.props.filterString;
 
             if (fileResponse !== this.cachedFileResponse || sortingConfig !== this.cachedSortingConfig || filterString !== this.cachedFilterString) {
@@ -234,8 +234,8 @@ export class FileListTableComponent extends React.Component<FileListTableCompone
     };
 
     private renderColumnHeader = (name: string, index?: number) => {
-        const sortingConfig = this.props.sortingConfig;
-        const sortColumn = name === sortingConfig?.columnName;
+        const sortingConfig = {direction: this.props.sortingString.startsWith("+") ? 1 : -1, columnName: this.props.sortingString.substring(1).toLowerCase()};
+        const sortColumn = name.toLowerCase() === sortingConfig?.columnName;
         const sortDesc = sortingConfig?.direction < 0;
 
         const nameRenderer = () => {
@@ -362,7 +362,7 @@ export class FileListTableComponent extends React.Component<FileListTableCompone
 
     render() {
         const fileResponse = this.props.listResponse;
-        const sortingConfig = this.props.sortingConfig;
+        const sortingConfig = this.props.sortingString;
 
         const classes = ["browser-table"];
         if (this.props.darkTheme) {
