@@ -26,6 +26,18 @@
         "autoLaunch": {
             "type": "boolean"
         },
+        "fileSortingString": {
+            "type": "string",
+            "pattern": "^([+\\-])(date|filename|type|size)$"
+        },
+        "fileFilteringType": {
+            "type": "string",
+            "enum": [
+                "fuzzy",
+                "unix",
+                "regex"
+            ]
+        },
         "layout": {
             "type": "string"
         },
