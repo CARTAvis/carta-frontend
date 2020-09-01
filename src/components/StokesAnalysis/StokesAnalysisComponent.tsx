@@ -477,7 +477,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
         const frame = this.widgetStore.effectiveFrame;
         if (qProfile && qProfile.length && uProfile && uProfile.length &&
             frame.channelValues && frame.channelValues.length &&
-            qProfile.length === uProfile.length && qProfile.length === frame.channelValues.length) {
+            qProfile.length === uProfile.length && (qProfile.length === frame.channelValues.length || this.widgetStore.smoothingStore.type === SmoothingType.BINNING)) {
             const channelValues = frame.channelValues;
             let border = this.calculateXYborder(qProfile, uProfile, false, type);
             let values: Array<{ x: number, y: number, z: number }> = [];
@@ -630,6 +630,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
         piSmoothedValues: { dataset: Array<Point2D>, border: Border },
         paSmoothedValues: { dataset: Array<Point2D>, border: Border },
         quValues: { dataset: Array<{ x: number, y: number, z: number }>, border: Border },
+        quSmoothedValues: { dataset: Array<{ x: number, y: number, z: number }>, border: Border },
         qProgress: number,
         uProgress: number,
         iProgress: number
@@ -666,6 +667,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
         let channelInfo = frame.channelInfo;
         if (compositeProfile && channelInfo) {
             let quDic = this.assembleScatterPlotData(compositeProfile.qProfile, compositeProfile.uProfile, StokesCoordinate.PolarizationQU);
+            let quSmoothedDic = this.assembleScatterPlotData(compositeProfile.qProfileSmoothed, compositeProfile.uProfileSmoothed, StokesCoordinate.PolarizationQU);
             let piDic = this.assembleLinePlotData(compositeProfile.piProfile, frame.channelValues, StokesCoordinate.PolarizedIntensity);
             let paDic = this.assembleLinePlotData(compositeProfile.paProfile, frame.channelValues, StokesCoordinate.PolarizationAngle);
             let qDic = this.assembleLinePlotData(compositeProfile.qProfile, frame.channelValues, StokesCoordinate.LinearPolarizationQ);
@@ -685,6 +687,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
                 piSmoothedValues: piSmoothedDic,
                 paSmoothedValues: paSmoothedDic,
                 quValues: quDic, 
+                quSmoothedValues: quSmoothedDic,
                 qProgress: compositeProfile.qProgress, 
                 uProgress: compositeProfile.uProgress,
                 iProgress: compositeProfile.iProgress
@@ -936,7 +939,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
             if (currentPlotData && currentPlotData.piValues && currentPlotData.paValues && currentPlotData.qValues && currentPlotData.uValues && currentPlotData.quValues) {
                 piLinePlotProps.data = currentPlotData.piValues.dataset;
                 paLinePlotProps.data = currentPlotData.paValues.dataset;
-                quScatterPlotProps.data = currentPlotData.quValues.dataset;
+                quScatterPlotProps.data = (this.widgetStore.smoothingStore.type === SmoothingType.NONE ) ? currentPlotData.quValues.dataset : currentPlotData.quSmoothedValues.dataset;
  
                 const lineOpacity = this.minProgress < 1.0 ? 0.15 + this.minProgress / 4.0 : 1.0;
                 quLinePlotProps.opacity = lineOpacity;
@@ -1094,14 +1097,14 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
                 }
                 let scatterCursorInfor = {
                     profiler: { x: this.widgetStore.scatterPlotCursorX, y: this.widgetStore.scatterPlotCursorY},
-                    image: this.matchXYindex(cursorX.image, currentPlotData.quValues.dataset),
+                    image: this.matchXYindex(cursorX.image, quScatterPlotProps.data),
                     unit: frame.spectralUnitStr
                 };
                 quScatterPlotProps.cursorXY = scatterCursorInfor;
                 this.cursorInfo = this.getCursorInfo(
-                    currentPlotData.quValues.dataset, 
-                    currentPlotData.piValues.dataset, 
-                    currentPlotData.paValues.dataset, 
+                    quScatterPlotProps.data,
+                    this.widgetStore.smoothingStore.type === SmoothingType.NONE ? currentPlotData.piValues.dataset : currentPlotData.piSmoothedValues.dataset,
+                    this.widgetStore.smoothingStore.type === SmoothingType.NONE ? currentPlotData.paValues.dataset : currentPlotData.paSmoothedValues.dataset,
                     scatterCursorInfor.profiler,
                     cursorX.profiler,
                     scatterCursorInfor.image,
@@ -1203,7 +1206,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
             paLinePlotProps.comments = this.exportHeaders;
             piLinePlotProps.comments = this.exportHeaders;
             quLinePlotProps.comments = this.exportHeaders;
-            quScatterPlotProps.comments = this.exportHeaders;
+            quScatterPlotProps.comments = this.widgetStore.smoothingStore.type === SmoothingType.NONE ? this.exportHeaders : this.exportHeaders.concat(this.widgetStore.smoothingStore.comments);
         }
 
         return (
