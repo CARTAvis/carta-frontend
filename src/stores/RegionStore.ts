@@ -189,13 +189,6 @@ export class RegionStore {
         }
     }
 
-    @action getWcsCenter(frame: FrameStore): WCSPoint2D {
-        if (isFinite(this.center.x) && isFinite(this.center.y) && this.activeFrame.validWcs) {
-            return getFormattedWCSPoint(frame.wcsInfoForTransformation, this.center);
-        }
-        return null;
-    }
-
     @computed get size(): Point2D {
         switch (this.regionType) {
             case CARTA.RegionType.RECTANGLE:
@@ -205,37 +198,6 @@ export class RegionStore {
                 return this.boundingBox;
             default:
                 return null;
-        }
-    }
-
-    @action getWcsSize(frame: FrameStore): Point2D {
-        if (this.size && frame.validWcs) {
-            return frame.getWcsSizeInArcsec(this.size);
-        }
-        return null;
-    }
-
-    @action getRegionWcsProperties(frame: FrameStore): string {
-        const wcsCenter = this.getWcsCenter(frame);
-        const wcsSize = this.getWcsSize(frame);
-        if (!wcsCenter) {
-            return null;
-        }
-        const center = `${wcsCenter.x}, ${wcsCenter.y}`;
-        const size = wcsSize;
-        const systemType = OverlayStore.Instance.global.explicitSystem;
-
-        switch (this.regionType) {
-            case CARTA.RegionType.POINT:
-                return `Point (wcs:${systemType}) [${center}]`;
-            case CARTA.RegionType.RECTANGLE:
-                return `rotbox(wcs:${systemType})[[${center}], [${size.x}, ${size.y}], ${toFixed(this.rotation, 1)}deg]`;
-            case CARTA.RegionType.ELLIPSE:
-                return `ellipse(wcs:${systemType})[[${center}], [${size.x}, ${size.y}], ${toFixed(this.rotation, 1)}deg]`;
-            case CARTA.RegionType.POLYGON:
-                return `polygon(wcs:${systemType})[[${center}], [${size.x}, ${size.y}], ${toFixed(this.rotation, 1)}deg]`;
-            default:
-                return "Not Implemented";
         }
     }
 

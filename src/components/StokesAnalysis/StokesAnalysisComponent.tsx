@@ -83,6 +83,9 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
 
             if (region) {
                 headerString.push(region.regionProperties);
+                if (frame.validWcs) {
+                    headerString.push(frame.getRegionWcsProperties(region));
+                }
             }
         }
         return headerString;

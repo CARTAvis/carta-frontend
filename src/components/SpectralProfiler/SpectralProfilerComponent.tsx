@@ -157,7 +157,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
             if (region) {
                 headerString.push(region.regionProperties);
                 if (frame.validWcs) {
-                    headerString.push(region.getRegionWcsProperties(frame));
+                    headerString.push(frame.getRegionWcsProperties(region));
                 }
             }
         }
