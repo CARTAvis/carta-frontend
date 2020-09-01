@@ -432,7 +432,7 @@ export class SpectralLineQueryWidgetStore extends RegionWidgetStore {
 
     @computed get filters(): string[] {
         let filters = [];
-        this.controlHeader.forEach((value, key) => {
+        this.controlHeader.forEach((value) => {
             if (value.filter) {
                 filters.push(value);
             }
