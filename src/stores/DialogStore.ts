@@ -64,16 +64,7 @@ export class DialogStore {
     @action hideDeleteLayoutDialog = () => {
         this.deleteLayoutDialogVisible = false;
     };
-    
-    // Auth
-    @observable authDialogVisible: boolean = false;
-    @action showAuthDialog = () => {
-        this.authDialogVisible = true;
-    };
-    @action hideAuthDialog = () => {
-        this.authDialogVisible = false;
-    };
-    
+
     // File Browser
     @observable fileBrowserDialogVisible: boolean = false;
     @action showFileBrowserDialog = () => {
