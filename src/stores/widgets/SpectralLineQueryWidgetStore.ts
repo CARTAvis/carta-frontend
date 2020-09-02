@@ -122,6 +122,7 @@ export class SpectralLineQueryWidgetStore extends RegionWidgetStore {
     @observable redshiftType: RedshiftType;
     @observable redshiftInput: number;
     @observable queryResultTableRef: Table;
+    @observable private queryResult: Map<number, ProcessedColumnData>;
     @observable filterResult: Map<number, ProcessedColumnData>;
     @observable sortingInfo: {columnName: string, sortingType: CARTA.SortingType};
     @observable numDataRows: number;
@@ -130,7 +131,6 @@ export class SpectralLineQueryWidgetStore extends RegionWidgetStore {
     @observable isDataFiltered: boolean;
     @observable private filteredRowIndexes: Array<number>;
 
-    private queryResult: Map<number, ProcessedColumnData>;
     private originalShiftedData: Array<number>;
 
     constructor() {
@@ -411,22 +411,19 @@ export class SpectralLineQueryWidgetStore extends RegionWidgetStore {
 
     @computed get selectedLines(): SpectralLine[] {
         const selectedLines: SpectralLine[] = [];
-        if (this.isLineSelectedArray?.length > 0) {
-            for (let rowIndex = 0; rowIndex < this.isLineSelectedArray.length; rowIndex++) {
-                if (this.isLineSelectedArray[rowIndex]) {
-                    const speciesColumn = this.filterResult.get(SPECIES_COLUMN_INDEX);
-                    const freqeuncyColumn = this.filterResult.get(SHIFTIED_FREQUENCY_COLUMN_INDEX);
-                    const QNColumn = this.filterResult.get(RESOLVED_QN_COLUMN_INDEX);
-                    if (rowIndex < speciesColumn.data.length) {
-                        selectedLines.push({
-                            species: speciesColumn.data[rowIndex] as string,
-                            value: freqeuncyColumn.data[rowIndex] as number,
-                            qn: QNColumn.data[rowIndex] as string
-                        });
-                    }
-                }
+        const speciesColumn = this.queryResult.get(SPECIES_COLUMN_INDEX);
+        const frequencyColumn = this.queryResult.get(SHIFTIED_FREQUENCY_COLUMN_INDEX);
+        const QNColumn = this.queryResult.get(RESOLVED_QN_COLUMN_INDEX);
+        const lineSelectionData = this.queryResult.get(LINE_SELECTION_COLUMN_INDEX)?.data;
+        lineSelectionData?.forEach((isSelected, index) => {
+            if (isSelected) {
+                selectedLines.push({
+                    species: speciesColumn.data[index] as string,
+                    value: (frequencyColumn.data[index] as number) * this.redshiftFactor, // update shifted value
+                    qn: QNColumn.data[index] as string
+                });
             }
-        }
+        });
         return selectedLines;
     }
 
