@@ -197,11 +197,9 @@ export class SpectralLineQueryComponent extends React.Component<WidgetProps> {
         const widgetStore = this.widgetStore;
         const appStore = AppStore.Instance;
         const frame = appStore.activeFrame;
-        if (widgetStore.selectedSpectralProfilerID && frame) {
-            const selectedWidgetStore = appStore.widgetsStore.getSpectralWidgetStoreByID(widgetStore.selectedSpectralProfilerID);
-            if (selectedWidgetStore) {
-                selectedWidgetStore.addSpectralLines(widgetStore.selectedLines);
-            }
+        const lines = widgetStore.getSelectedLines();
+        if (widgetStore.selectedSpectralProfilerID && frame && lines?.length > 0) {
+            appStore.widgetsStore.getSpectralWidgetStoreByID(widgetStore.selectedSpectralProfilerID)?.addSpectralLines(lines);
         }
     };
 
@@ -370,7 +368,7 @@ export class SpectralLineQueryComponent extends React.Component<WidgetProps> {
             className += " dark-theme";
         }
 
-        const isSelectedLinesUnderLimit = widgetStore.selectedLines?.length <= PLOT_LINES_LIMIT;
+        const isSelectedLinesUnderLimit = widgetStore.numSelectedLines <= PLOT_LINES_LIMIT;
         const hint = (
             <span><br/><i><small>
                 {!isSelectedLinesUnderLimit ? `Please select no greater than ${PLOT_LINES_LIMIT} lines.` : ""}

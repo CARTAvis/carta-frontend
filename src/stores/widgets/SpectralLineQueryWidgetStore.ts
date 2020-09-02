@@ -409,22 +409,14 @@ export class SpectralLineQueryWidgetStore extends RegionWidgetStore {
         return result && !this.isSelectingAllLines;
     }
 
-    @computed get selectedLines(): SpectralLine[] {
-        const selectedLines: SpectralLine[] = [];
-        const speciesColumn = this.queryResult.get(SPECIES_COLUMN_INDEX);
-        const frequencyColumn = this.queryResult.get(SHIFTIED_FREQUENCY_COLUMN_INDEX);
-        const QNColumn = this.queryResult.get(RESOLVED_QN_COLUMN_INDEX);
-        const lineSelectionData = this.queryResult.get(LINE_SELECTION_COLUMN_INDEX)?.data;
-        lineSelectionData?.forEach((isSelected, index) => {
-            if (isSelected) {
-                selectedLines.push({
-                    species: speciesColumn.data[index] as string,
-                    value: (frequencyColumn.data[index] as number) * this.redshiftFactor, // update shifted value
-                    qn: QNColumn.data[index] as string
-                });
-            }
-        });
-        return selectedLines;
+    @computed get numSelectedLines(): number {
+        const lineSelectionData = this.queryResult.get(LINE_SELECTION_COLUMN_INDEX)?.data as Array<boolean>;
+        if (lineSelectionData?.length <= 0) {
+            return 0;
+        }
+        let numSelected = 0;
+        lineSelectionData?.forEach(isSelected => numSelected += (isSelected ? 1 : 0));
+        return numSelected;
     }
 
     @computed get filters(): string[] {
@@ -444,7 +436,7 @@ export class SpectralLineQueryWidgetStore extends RegionWidgetStore {
     @computed get resultTableInfo(): string {
         const info = `Showing ${this.numDataRows} line(s).`;
         const filteredInfo = `Showing ${this.filteredRowIndexes.length} filtered line(s) of total ${this.numDataRows} line(s).`;
-        const lineSelectionInfo = this.selectedLines.length > 0 ? ` Selected ${this.selectedLines.length} line(s).` : "";
+        const lineSelectionInfo = this.numSelectedLines > 0 ? ` Selected ${this.numSelectedLines} line(s).` : "";
         return (this.isDataFiltered ? filteredInfo : info) + lineSelectionInfo;
     }
 
@@ -456,6 +448,24 @@ export class SpectralLineQueryWidgetStore extends RegionWidgetStore {
             }
         });
         return columnWidths;
+    }
+
+    public getSelectedLines(): SpectralLine[] {
+        const selectedLines: SpectralLine[] = [];
+        const speciesColumn = this.queryResult.get(SPECIES_COLUMN_INDEX);
+        const frequencyColumn = this.queryResult.get(SHIFTIED_FREQUENCY_COLUMN_INDEX);
+        const QNColumn = this.queryResult.get(RESOLVED_QN_COLUMN_INDEX);
+        const lineSelectionData = this.queryResult.get(LINE_SELECTION_COLUMN_INDEX)?.data;
+        lineSelectionData?.forEach((isSelected, index) => {
+            if (isSelected) {
+                selectedLines.push({
+                    species: speciesColumn.data[index] as string,
+                    value: (frequencyColumn.data[index] as number) * this.redshiftFactor, // update shifted value
+                    qn: QNColumn.data[index] as string
+                });
+            }
+        });
+        return selectedLines;
     }
 
     // TODO: move to backend
