@@ -28,6 +28,8 @@ import {
 } from "models";
 import {clamp, formattedFrequency, getHeaderNumericValue, getTransformedChannel, transformPoint, isAstBadPoint, minMax2D, rotate2D, toFixed, trimFitsComment, round2D, scale2D, getFormattedWCSPoint} from "utilities";
 import {BackendService, ContourWebGLService} from "services";
+import {RegionId} from "stores/widgets";
+import {formattedArcsec} from "utilities";
 
 export interface FrameInfo {
     fileId: number;
@@ -614,19 +616,20 @@ export class FrameStore {
             return "Invalid";
         }
 
-        const center = `${wcsCenter.x}, ${wcsCenter.y}`;
+        const center = region.regionId === RegionId.CURSOR ? `${this.cursorInfo.infoWCS.x}, ${this.cursorInfo.infoWCS.y}` : `${wcsCenter.x}, ${wcsCenter.y}`;
         const wcsSize = this.getWcsSizeInArcsec(region.size);
+        const size = wcsSize ? {x: formattedArcsec(wcsSize.x, WCS_PRECISION), y: formattedArcsec(wcsSize.y, WCS_PRECISION)} : null;
         const systemType = OverlayStore.Instance.global.explicitSystem;
 
         switch (region.regionType) {
             case CARTA.RegionType.POINT:
                 return `Point (wcs:${systemType}) [${center}]`;
             case CARTA.RegionType.RECTANGLE:
-                return `rotbox(wcs:${systemType})[[${center}], [${wcsSize.x}, ${wcsSize.y}], ${toFixed(region.rotation, 1)}deg]`;
+                return `rotbox(wcs:${systemType})[[${center}], [${size.x}, ${size.y}], ${toFixed(region.rotation, 1)}deg]`;
             case CARTA.RegionType.ELLIPSE:
-                return `ellipse(wcs:${systemType})[[${center}], [${wcsSize.x}, ${wcsSize.y}], ${toFixed(region.rotation, 1)}deg]`;
+                return `ellipse(wcs:${systemType})[[${center}], [${size.x}, ${size.y}], ${toFixed(region.rotation, 1)}deg]`;
             case CARTA.RegionType.POLYGON:
-                return `polygon(wcs:${systemType})[[${center}], [${wcsSize.x}, ${wcsSize.y}], ${toFixed(region.rotation, 1)}deg]`;
+                return `polygon(wcs:${systemType})[[${center}], [${size.x}, ${size.y}], ${toFixed(region.rotation, 1)}deg]`;
             default:
                 return "Not Implemented";
         }

@@ -142,7 +142,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
         return null;
     }
 
-    @computed get exportHeaders(): string[] {
+    private exportHeaders = (): string[] => {
         let headerString = [];
         const frame = this.widgetStore.effectiveFrame;
         if (frame && frame.frameInfo && frame.regionSet) {

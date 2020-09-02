@@ -109,7 +109,7 @@ export class HistogramComponent extends React.Component<WidgetProps> {
         return null;
     }
 
-    @computed get exportHeaders(): string[] {
+    private exportHeaders = (): string[] => {
         let headerString = [];
 
         // region info
