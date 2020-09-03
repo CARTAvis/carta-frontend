@@ -543,6 +543,17 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
         ctx.fillRect(0, 0, composedCanvas.width, composedCanvas.height);
         ctx.drawImage(canvas, 0, 0);
 
+        // plot spectral lines
+        const spectralLines = this.genSpectralLinesForPngPlot();
+        spectralLines?.forEach(spectralLine => {
+            ctx.beginPath();
+            ctx.strokeStyle = spectralLine.color;
+            ctx.lineWidth = 1;
+            ctx.moveTo(spectralLine.x, spectralLine.yFrom);
+            ctx.lineTo(spectralLine.x, spectralLine.yTo);
+            ctx.stroke();
+        });
+
         composedCanvas.toBlob((blob) => {
             const link = document.createElement("a") as HTMLAnchorElement;
             link.download = `${imageName}-${plotName.replace(" ", "-")}-${this.getTimestamp()}.png`;
@@ -743,6 +754,22 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
                 </Group>
             );
         }
+    };
+
+    private genSpectralLinesForPngPlot = (): {color: string, x: number, yFrom: number, yTo: number}[] => {
+        let spectralLines = [];
+        const chartArea = this.chartArea;
+        this.props.markers?.forEach(marker => {
+            if (marker?.id.match(/^spectral-line-/)) {
+                spectralLines.push({
+                    color: marker.color,
+                    x: this.getCanvasSpaceX(marker.value),
+                    yFrom: chartArea.bottom,
+                    yTo: chartArea.top
+                });
+            }
+        });
+        return spectralLines;
     };
 
     private genLines = () => {
