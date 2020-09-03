@@ -546,12 +546,20 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
         // plot spectral lines
         const spectralLines = this.genSpectralLinesForPngPlot();
         spectralLines?.forEach(spectralLine => {
+            // plot line
             ctx.beginPath();
             ctx.strokeStyle = spectralLine.color;
             ctx.lineWidth = 1;
-            ctx.moveTo(spectralLine.x, spectralLine.yFrom);
-            ctx.lineTo(spectralLine.x, spectralLine.yTo);
+            ctx.moveTo(spectralLine.x, spectralLine.yBottom);
+            ctx.lineTo(spectralLine.x, spectralLine.yTop);
             ctx.stroke();
+            // plot rotated text
+            ctx.save();
+            ctx.font = "12px Arial";
+            ctx.translate(spectralLine.x, spectralLine.yBottom);
+            ctx.rotate(-Math.PI / 2);
+            ctx.strokeText(spectralLine.text, 0, 10);
+            ctx.restore();
         });
 
         composedCanvas.toBlob((blob) => {
@@ -756,22 +764,6 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
         }
     };
 
-    private genSpectralLinesForPngPlot = (): {color: string, x: number, yFrom: number, yTo: number}[] => {
-        let spectralLines = [];
-        const chartArea = this.chartArea;
-        this.props.markers?.forEach(marker => {
-            if (marker?.id.match(/^spectral-line-/)) {
-                spectralLines.push({
-                    color: marker.color,
-                    x: this.getCanvasSpaceX(marker.value),
-                    yFrom: chartArea.bottom,
-                    yTo: chartArea.top
-                });
-            }
-        });
-        return spectralLines;
-    };
-
     private genLines = () => {
         const chartArea = this.chartArea;
         const isHovering = this.hoveredMarker !== undefined && !this.isSelecting;
@@ -873,6 +865,23 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
             );
         }
         return borderRect;
+    };
+
+    private genSpectralLinesForPngPlot = (): {color: string, text: string, x: number, yBottom: number, yTop: number}[] => {
+        let spectralLines = [];
+        const chartArea = this.chartArea;
+        this.props.markers?.forEach(marker => {
+            if (marker?.id.match(/^spectral-line-/)) {
+                spectralLines.push({
+                    color: marker?.color,
+                    text: marker?.label,
+                    x: this.getCanvasSpaceX(marker.value),
+                    yBottom: chartArea.bottom,
+                    yTop: chartArea.top
+                });
+            }
+        });
+        return spectralLines;
     };
 
     render() {
