@@ -872,11 +872,12 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
         let spectralLines = [];
         const chartArea = this.chartArea;
         this.props.markers?.forEach(marker => {
-            if (marker?.id.match(/^spectral-line-/)) {
+            const canvasX = this.getCanvasSpaceX(marker.value);
+            if (marker?.id.match(/^spectral-line-/) && !isNaN(canvasX)) {
                 spectralLines.push({
                     color: marker?.color,
                     text: marker?.label,
-                    x: this.getCanvasSpaceX(marker.value),
+                    x: canvasX,
                     yBottom: chartArea.bottom,
                     yTop: chartArea.top
                 });
