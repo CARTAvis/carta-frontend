@@ -558,7 +558,8 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
             ctx.font = "12px Arial";
             ctx.translate(spectralLine.x, spectralLine.yBottom);
             ctx.rotate(-Math.PI / 2);
-            ctx.strokeText(spectralLine.text, 0, 10);
+            ctx.fillStyle = spectralLine.color;
+            ctx.fillText(spectralLine.text, 0, 10);
             ctx.restore();
         });
 
