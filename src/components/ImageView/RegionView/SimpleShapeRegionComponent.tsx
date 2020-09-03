@@ -427,7 +427,7 @@ export class SimpleShapeRegionComponent extends React.Component<RegionComponentP
 
         let anchors: React.ReactNode[];
 
-        if (this.props.selected && this.props.listening) {
+        if (this.props.selected && this.props.listening && !region.locked) {
             let offsetX: number;
             let offsetY: number;
             if (region.regionType === CARTA.RegionType.RECTANGLE) {

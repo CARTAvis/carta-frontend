@@ -122,6 +122,16 @@ export class ProfileSmoothingStore {
         return exportData;
     }
 
+    @computed get comments(): string[] {
+        let comments: string[] = [];
+        if (this.exportData) {
+            this.exportData.forEach((content, title) => {
+                comments.push(`${title}: ${content}`);
+            });
+        }
+        return comments;
+    }
+
     @computed get gaussianKernel(): number {
         if (this.gaussianSigma < 3) {
             return 3;
