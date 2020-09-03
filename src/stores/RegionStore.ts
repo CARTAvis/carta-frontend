@@ -189,6 +189,10 @@ export class RegionStore {
     }
 
     @computed get wcsCenter(): WCSPoint2D {
+        // dummy variables related to wcs to trigger re-render
+        const system = AppStore.Instance.overlayStore.global.explicitSystem;
+        const formatX = AppStore.Instance.overlayStore.numbers.formatTypeX;
+        const formatY = AppStore.Instance.overlayStore.numbers.formatTypeY;
         if (isFinite(this.center.x) && isFinite(this.center.y) && this.activeFrame.validWcs) {
             return getFormattedWCSPoint(this.activeFrame.wcsInfoForTransformation, this.center);
         }
