@@ -277,8 +277,8 @@ export class RegionStore {
         // Check for control point NaN values
         if (index >= 0 && index < this.controlPoints.length && !isAstBadPoint(p) && isFinite(p?.x) && isFinite(p?.y)) {
             this.regionApproximationMap.clear();
-            this.controlPoints[index] = p;
             this.modifiedTimestamp = performance.now();
+            this.controlPoints[index] = p;
             if (!this.editing && !skipUpdate) {
                 this.updateRegion();
             }
@@ -301,8 +301,8 @@ export class RegionStore {
         }
 
         this.regionApproximationMap.clear();
-        this.controlPoints = points;
         this.modifiedTimestamp = performance.now();
+        this.controlPoints = points;
         if (shapeChanged && this.regionType === CARTA.RegionType.POLYGON) {
             this.simplePolygonTest();
         }
@@ -325,6 +325,7 @@ export class RegionStore {
     @action setRotation = (angle: number, skipUpdate = false) => {
         this.rotation = (angle + 360) % 360;
         this.regionApproximationMap.clear();
+        this.modifiedTimestamp = performance.now();
         if (!this.editing && !skipUpdate) {
             this.updateRegion();
         }
