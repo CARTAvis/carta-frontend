@@ -591,7 +591,7 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
 
         const beamPanel = beam.isSelectedFrameValid ? (
             <div className="panel-container">
-                <FormGroup inline={true} label="Frame">
+                <FormGroup inline={true} label="Image">
                     <HTMLSelect
                         options={appStore.frameNames}
                         value={beam.selectedFileId}
