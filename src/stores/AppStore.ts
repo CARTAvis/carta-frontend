@@ -791,17 +791,21 @@ export class AppStore {
         frame.removeMomentImage();
 
         this.backendService.requestMoment(message).subscribe(ack => {
-            frame.resetMomentRequestState();
-            if (ack.success && ack.openFileAcks) {
-                ack.openFileAcks.forEach(openFileAck => {
-                    if (this.addFrame(CARTA.OpenFileAck.create(openFileAck), this.fileBrowserStore.startingDirectory, "")) {
-                        this.fileCounter++;
-                        frame.addMomentImage(this.frames.find(f => f.frameInfo.fileId === openFileAck.fileId));
-                    } else {
-                        AppToaster.show({icon: "warning-sign", message: "Load file failed.", intent: "danger", timeout: 3000});
-                    }
-                });
+            if (ack.success) {
+                if (!ack.cancel && ack.openFileAcks) {
+                    ack.openFileAcks.forEach(openFileAck => {
+                        if (this.addFrame(CARTA.OpenFileAck.create(openFileAck), this.fileBrowserStore.startingDirectory, "")) {
+                            this.fileCounter++;
+                            frame.addMomentImage(this.frames.find(f => f.frameInfo.fileId === openFileAck.fileId));
+                        } else {
+                            AppToaster.show({icon: "warning-sign", message: "Load file failed.", intent: "danger", timeout: 3000});
+                        }
+                    });
+                }
+            } else {
+                AppToaster.show({icon: "warning-sign", message: `Moment generation failed. ${ack?.message}`, intent: "danger", timeout: 3000});
             }
+            frame.resetMomentRequestState();
             this.fileLoading = false;
         }, error => {
             frame.resetMomentRequestState();
@@ -814,7 +818,6 @@ export class AppStore {
     @action cancelRequestingMoment = (fileId: number = -1) => {
         const frame = this.getFrame(fileId);
         if (frame && frame.requestingMomentsProgress < 1.0) {
-            frame.resetMomentRequestState();
             this.backendService.cancelRequestingMoment(fileId);
         }
     };
