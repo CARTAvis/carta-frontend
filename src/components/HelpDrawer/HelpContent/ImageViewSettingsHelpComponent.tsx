@@ -9,8 +9,7 @@ export class ImageViewSettingsHelpComponent extends React.Component {
     public render() {
         return (
             <div>
-                <p>The image view settings dialogue allows users to customize coordinate 
-                    grid related properties in the image viewer.</p>
+                <p>The image view settings dialogue allows users to customize coordinate grid related properties in the image viewer.</p>
                 
                 <h3 id="global">Global</h3>
                 <p>This section allows users to</p>
@@ -22,24 +21,19 @@ export class ImageViewSettingsHelpComponent extends React.Component {
                 </ul>
                 
                 <h3 id="title">Title</h3>
-                <p>A custom title can be added in the image view. Its font type, font size, and 
-                    color are configurable.</p>
+                <p>A custom title can be added in the image view. Its font type, font size, and color are configurable.</p>
                 
                 <h3 id="ticks">Ticks</h3>
-                <p>This section allows users to changes the ticks properties, including location, 
-                    density, color, line width, and length of major and minor ticks</p>
+                <p>This section allows users to changes the ticks properties, including location, density, color, line width, and length of major and minor ticks</p>
                 
                 <h3 id="grid">Grid</h3>
-                <p>The appearance of the coordinate grid lines is customizable, including 
-                    visibility, color, and line width.</p>
+                <p>The appearance of the coordinate grid lines is customizable, including visibility, color, and line width.</p>
                 
                 <h3 id="border">Border</h3>
-                <p>This section allows users to change the style of the axis border, including 
-                    visibility, color, and width.</p>
+                <p>This section allows users to change the style of the axis border, including visibility, color, and width.</p>
                 
                 <h3 id="axes">Axes</h3>
-                <p>This section allows users to adjust the appearance of an interior 
-                    axis overlay, including visibility, color, and line width.</p> 
+                <p>This section allows users to adjust the appearance of an interior axis overlay, including visibility, color, and line width.</p> 
                 
                 <h3 id="numbers">Numbers</h3>
                 <p>This sections allows users to customize the appearance of tick values, including:</p>
@@ -53,14 +47,10 @@ export class ImageViewSettingsHelpComponent extends React.Component {
                 </ul> 
                 
                 <h3 id="labels">Labels</h3>
-                <p>This section allows users to modify the styles of the x and y labels, such as font 
-                    type, font size, and color. A custom label can be defined.</p>
+                <p>This section allows users to modify the styles of the x and y labels, such as font type, font size, and color. A custom label can be defined.</p>
                 
                 <h3 id="beam">Beam</h3>
-                <p>This section allows users to change the appearance of a beam 
-                    overlay (color, type, and line width) and adjust its position in the 
-                    image viewer.</p>
-                
+                <p>This section allows users to change the appearance of a beam overlay (color, type, and line width) and adjust its position in the image viewer.</p>
                 
                 <h4>EXAMPLE</h4>
                 <p><ImageComponent light={imageOverlayDemo} dark={imageOverlayDemo_d} width="90%"/></p>

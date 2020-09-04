@@ -5,8 +5,7 @@ export class StokesAnalysisSettingsConversionHelpComponent extends React.Compone
         return (
             <div>
                 <h3>Conversion</h3>
-                <p>With the &quot;Conversion&quot; tab, users can change the spectral 
-                    convention, including:</p>
+                <p>With the &quot;Conversion&quot; tab, users can change the spectral convention, including:</p>
                 <ul>
                     <li>Radio velocity (km/s, m/s)</li>
                     <li>Optical velocity (km/s, m/s)</li>
@@ -22,8 +21,7 @@ export class StokesAnalysisSettingsConversionHelpComponent extends React.Compone
                     <li>BARY: barycentric, the rest-frame of the solar-system barycenter</li>
                     <li>TOPO: topocentric, the observer's rest-frame on Earth</li>
                 </ul>
-                <p>Note that depending on the integrity of image headers, some conversions 
-                    may not be possible.</p>
+                <p>Note that depending on the integrity of image headers, some conversions may not be possible.</p>
             </div>
         );
     }

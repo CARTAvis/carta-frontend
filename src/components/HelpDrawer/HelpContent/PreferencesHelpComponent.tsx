@@ -9,8 +9,7 @@ export class PreferencesHelpComponent extends React.Component {
         return (
             <div>
                 <p><ImageComponent light={headPreferenceButton} dark={headPreferenceButton_d} width="90%"/></p>
-                <p>The preferences dialogue provides a centralized place to customize the entire graphical user interface and performance control parameters. All settings are recorded and applied to new CARTA sessions. Some settings are
-                    effective immediately.</p>
+                <p>The preferences dialogue provides a centralized place to customize the entire graphical user interface and performance control parameters. All settings are recorded and applied to new CARTA sessions. Some settings are effective immediately.</p>
                 <h3 id="global">Global</h3>
                 <p>This section provides usability customization.</p>
                 <ul>
@@ -66,8 +65,7 @@ export class PreferencesHelpComponent extends React.Component {
                     <li>Creation mode: the way how rectangle and ellipse regions are created with cursor</li>
                 </ul>
                 <h3 id="performance">Performance</h3>
-                <p>Performance related control parameters are included here. We do not recommend users to change the settings here. If the bandwidth connecting to a CARTA server is limited, users may enable the &quot;low bandwidth
-                    mode&quot; which reduces displayed image resolution and cursor responsiveness.</p>
+                <p>Performance related control parameters are included here. We do not recommend users to change the settings here. If the bandwidth connecting to a CARTA server is limited, users may enable the &quot;low bandwidth mode&quot; which reduces displayed image resolution and cursor responsiveness.</p>
                 <h3 id="log-events">Log events</h3>
                 <p>This is for development and debugging purpose. General users should not enable anything here.</p>
             </div>
