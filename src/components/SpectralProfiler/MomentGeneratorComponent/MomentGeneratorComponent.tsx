@@ -100,7 +100,7 @@ export class MomentGeneratorComponent extends React.Component<{widgetStore: Spec
         const widgetStore = this.props.widgetStore;
         const frame = widgetStore.effectiveFrame;
 
-        const regionPanel = <RegionSelectorComponent widgetStore={this.props.widgetStore}/>;
+        const regionPanel = <RegionSelectorComponent widgetStore={this.props.widgetStore} nonClosedDisabled={true}/>;
 
         const spectralPanel = (
             <React.Fragment>
@@ -179,8 +179,10 @@ export class MomentGeneratorComponent extends React.Component<{widgetStore: Spec
             </React.Fragment>
         );
 
-        const isAbleToGenerate = frame && frame.numChannels > 1 && appStore.animatorStore.animationState === AnimationState.STOPPED && !widgetStore.isStreamingData;
-        const hint = <span><br/><i><small>Please ensure<br/>1. Animation playback is stopped.<br/>2. Spectral profile generation is complete.</small></i></span>;
+        const effectiveRegion = (frame?.regionSet?.regions) ? frame.regionSet.regions.find(r => r.regionId === widgetStore.effectiveRegionId) : null;
+        const isEnabledRegion = (widgetStore.effectiveRegionId !== 0 && effectiveRegion && effectiveRegion.isClosedRegion);
+        const isAbleToGenerate = frame && frame.numChannels > 1 && appStore.animatorStore.animationState === AnimationState.STOPPED && !widgetStore.isStreamingData && isEnabledRegion;
+        const hint = <span><br/><i><small>Please ensure<br/>1. Animation playback is stopped.<br/>2. Spectral profile generation is complete.<br/>3. Closed region is selected.</small></i></span>;
         const msg = <span>Unable to generate moment images{hint}</span>;
         const momentsPanel = (
             <React.Fragment>
