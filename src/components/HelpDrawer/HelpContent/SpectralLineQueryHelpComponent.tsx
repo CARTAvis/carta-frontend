@@ -16,15 +16,11 @@ export class SpectralLineQueryHelpComponent extends React.Component {
                     The spectral range can be defined as from-to or a center 
                     with a width. The allowed maximum query range, equivalent 
                     in frequency, is 20 GHz.</p>                
-                <h4>NOTE</h4>
-                <p>Currently, there is a known issue if the number of the returned 
-                    entries are more than ~27000 (unable to load or truncated). 
-                    If a query is successful and the displayed total number of 
-                    entries is close to 27000, the returned entries may be truncated, 
-                    thus the query result may not be fully displayed. In this case, 
-                    please consider to apply a higher CDMS/JPL line intensity limit 
-                    and/or apply a narrower spectral range. This issue will be 
-                    addressed in a future release.</p>
+                <h4>IMPORTANT NOTE</h4>
+                <p>Currently, the Splatalogue query service is under active 
+                    development. Unexpected query results might happen. Please report 
+                    issues to https://github.com/CARTAvis/carta/issues or send an email 
+                    to carta_helpdesk@asiaa.sinica.edu.tw.</p>
                 <p>Once a query is successfully made, the line catalogue will be 
                     displayed in the tables. The upper table shows the column 
                     information in the catalogue with options to show or hide a 
