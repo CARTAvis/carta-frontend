@@ -3,7 +3,6 @@ import {observer} from "mobx-react";
 import {RootMenuComponent, SplashScreenComponent, HelpDrawerComponent} from "components";
 import {
     AboutDialogComponent,
-    AuthDialogComponent,
     FileBrowserDialogComponent,
     PreferenceDialogComponent,
     RegionDialogComponent,
@@ -21,7 +20,6 @@ export class UIControllerComponent extends React.Component {
             <React.Fragment>
                 <SplashScreenComponent/>
                 <RootMenuComponent/>
-                <AuthDialogComponent/>
                 <FileBrowserDialogComponent/>
                 <AboutDialogComponent/>
                 <RegionDialogComponent/>

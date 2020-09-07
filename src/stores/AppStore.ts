@@ -137,7 +137,9 @@ export class AppStore {
     };
 
     @action connectToServer = (socketName: string = "socket") => {
-        let wsURL = `${location.protocol === "https:" ? "wss:" : "ws:"}//${window.location.hostname}/${socketName}`;
+        // Remove query parameters, replace protocol and remove trailing /
+        const baseUrl = location.href.replace(location.search, "").replace(/^http/, "ws").replace(/\/$/, "");
+        let wsURL = `${baseUrl}/${socketName}`;
         if (process.env.NODE_ENV === "development") {
             wsURL = process.env.REACT_APP_DEFAULT_ADDRESS ? process.env.REACT_APP_DEFAULT_ADDRESS : wsURL;
         } else {
@@ -789,17 +791,21 @@ export class AppStore {
         frame.removeMomentImage();
 
         this.backendService.requestMoment(message).subscribe(ack => {
-            frame.resetMomentRequestState();
-            if (ack.success && ack.openFileAcks) {
-                ack.openFileAcks.forEach(openFileAck => {
-                    if (this.addFrame(CARTA.OpenFileAck.create(openFileAck), this.fileBrowserStore.startingDirectory, "")) {
-                        this.fileCounter++;
-                        frame.addMomentImage(this.frames.find(f => f.frameInfo.fileId === openFileAck.fileId));
-                    } else {
-                        AppToaster.show({icon: "warning-sign", message: "Load file failed.", intent: "danger", timeout: 3000});
-                    }
-                });
+            if (ack.success) {
+                if (!ack.cancel && ack.openFileAcks) {
+                    ack.openFileAcks.forEach(openFileAck => {
+                        if (this.addFrame(CARTA.OpenFileAck.create(openFileAck), this.fileBrowserStore.startingDirectory, "")) {
+                            this.fileCounter++;
+                            frame.addMomentImage(this.frames.find(f => f.frameInfo.fileId === openFileAck.fileId));
+                        } else {
+                            AppToaster.show({icon: "warning-sign", message: "Load file failed.", intent: "danger", timeout: 3000});
+                        }
+                    });
+                }
+            } else {
+                AppToaster.show({icon: "warning-sign", message: `Moment generation failed. ${ack?.message}`, intent: "danger", timeout: 3000});
             }
+            frame.resetMomentRequestState();
             this.fileLoading = false;
         }, error => {
             frame.resetMomentRequestState();
@@ -812,7 +818,6 @@ export class AppStore {
     @action cancelRequestingMoment = (fileId: number = -1) => {
         const frame = this.getFrame(fileId);
         if (frame && frame.requestingMomentsProgress < 1.0) {
-            frame.resetMomentRequestState();
             this.backendService.cancelRequestingMoment(fileId);
         }
     };
@@ -1110,11 +1115,6 @@ export class AppStore {
         this.backendService.reconnectStream.subscribe(this.handleReconnectStream);
         this.backendService.scriptingStream.subscribe(this.handleScriptingRequest);
         this.tileService.tileStream.subscribe(this.handleTileStream);
-
-        // Auth and connection
-        if (process.env.REACT_APP_AUTHENTICATION === "true") {
-            this.dialogStore.showAuthDialog();
-        }
 
         // Splash screen mask
         autorun(() => {
