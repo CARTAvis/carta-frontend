@@ -60,6 +60,10 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
 
     handleCoordinateSystemClicked = (coordinateSystem: SystemType) => {
         OverlayStore.Instance.global.setSystem(coordinateSystem);
+        const appStore = AppStore.Instance;
+        if (appStore?.activeFrame?.cursorInfo) {
+            appStore.activeFrame.setCursorPosition(appStore.activeFrame.cursorInfo.posImageSpace); // update cursor wcs info
+        }
     };
 
     private handelActiveLayerClicked = (layer: ImageViewLayer) => {

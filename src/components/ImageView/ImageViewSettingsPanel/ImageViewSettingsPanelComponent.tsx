@@ -104,6 +104,14 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
         };
     }
 
+    handleCoordinateChanged = (coordinateSystem: SystemType) => {
+        AppStore.Instance.overlayStore.global.setSystem(coordinateSystem);
+        const appStore = AppStore.Instance;
+        if (appStore?.activeFrame?.cursorInfo) {
+            appStore.activeFrame.setCursorPosition(appStore.activeFrame.cursorInfo.posImageSpace); // update cursor wcs info
+        }
+    }
+
     public render() {
         const appStore = AppStore.Instance;
         const overlayStore = appStore.overlayStore;
@@ -158,6 +166,8 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
                         value={global.system}
                         disabled={!global.validWcs}
                         onChange={(event: React.FormEvent<HTMLSelectElement>) => global.setSystem(event.currentTarget.value as SystemType)}
+
+                        // onChange={(event: React.FormEvent<HTMLSelectElement>) => this.handleCoordinateChanged(event.currentTarget.value as SystemType)}
                     />
                 </FormGroup>
             </div>

@@ -4,8 +4,8 @@ import {observer} from "mobx-react";
 import {HTMLTable, Icon, NonIdealState, Position, Tooltip} from "@blueprintjs/core";
 import ReactResizeDetector from "react-resize-detector";
 import {CARTA} from "carta-protobuf";
-import {RegionStore, WidgetConfig, WidgetProps, HelpType, DialogStore, AppStore, WCS_PRECISION} from "stores";
-import {toFixed, formattedArcsec} from "utilities";
+import {RegionStore, WidgetConfig, WidgetProps, HelpType, DialogStore, AppStore, FrameStore, WCS_PRECISION} from "stores";
+import {toFixed, getFormattedWCSPoint, formattedArcsec} from "utilities";
 import {CustomIcon} from "icons/CustomIcons";
 import "./RegionListComponent.css";
 
@@ -117,8 +117,8 @@ export class RegionListComponent extends React.Component<WidgetProps> {
             if (region.regionId === 0 && frame.validWcs) {
                 centerContent = <React.Fragment>{frame.cursorInfo.infoWCS.x}<br/>{frame.cursorInfo.infoWCS.y}</React.Fragment>;
             } else if (isFinite(region.center.x) && isFinite(region.center.y)) {
-                if (region.wcsCenter) {
-                    centerContent = <React.Fragment>{region.wcsCenter.x}<br/>{region.wcsCenter.y}</React.Fragment>;
+                if (frame.validWcs) {
+                    centerContent = <RegionWcsCenter region={region} frame={frame}/>;
                 } else {
                     centerContent = `(${toFixed(region.center.x, 1)}, ${toFixed(region.center.y, 1)})`;
                 }
@@ -200,5 +200,26 @@ export class RegionListComponent extends React.Component<WidgetProps> {
                 <ReactResizeDetector handleWidth handleHeight onResize={this.onResize}/>
             </div>
         );
+    }
+}
+@observer
+export class RegionWcsCenter extends React.Component<{ region: RegionStore, frame: FrameStore}> {
+
+    public render() {
+        // dummy variables related to wcs to trigger re-render
+        const system = AppStore.Instance.overlayStore.global.explicitSystem;
+        const formatX = AppStore.Instance.overlayStore.numbers.formatTypeX;
+        const formatY = AppStore.Instance.overlayStore.numbers.formatTypeY;
+        const region = this.props.region;
+        if (!region || !region.center || !(isFinite(region.center.x) && isFinite(region.center.y) && this.props.frame.validWcs)) {
+            return null;
+        }
+
+        const centerWCSPoint = getFormattedWCSPoint(this.props.frame.wcsInfoForTransformation, region.center);
+        if (centerWCSPoint) {
+            return (<>{centerWCSPoint.x}<br/>{centerWCSPoint.y}</>);
+        }
+
+        return null;
     }
 }
