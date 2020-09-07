@@ -131,7 +131,7 @@ export class RegionListComponent extends React.Component<WidgetProps> {
             if (showSizeColumn) {
                 let sizeContent: React.ReactNode;
                 if (region.size) {
-                    if (region.wcsSize) {
+                    if (frame.validWcs) {
                         sizeContent = <React.Fragment>{formattedArcsec(region.wcsSize.x, WCS_PRECISION)}<br/>{formattedArcsec(region.wcsSize.y, WCS_PRECISION)}</React.Fragment>;
                     } else {
                         sizeContent = `(${toFixed(region.size.x, 1)}, ${toFixed(region.size.y, 1)})`;
