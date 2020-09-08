@@ -604,11 +604,11 @@ export class AppStore {
                 let catalogInfo: CatalogInfo = {fileId, directory, fileInfo: ack.fileInfo, dataSize: ack.dataSize};
                 let catalogWidgetId;
                 const columnData = ProtobufProcessing.ProcessCatalogData(ack.previewData);
-                const catalogComponentSize = this.widgetsStore.catalogComponentSize();
 
                 // update image associated catalog file
                 let associatedCatalogFiles = [];
                 const catalogStore = CatalogStore.Instance;
+                const catalogComponentSize = catalogStore.catalogProfiles.size;
                 let currentAssociatedCatalogFile = catalogStore.activeCatalogFiles;
                 if (currentAssociatedCatalogFile?.length) {
                     associatedCatalogFiles = currentAssociatedCatalogFile;
