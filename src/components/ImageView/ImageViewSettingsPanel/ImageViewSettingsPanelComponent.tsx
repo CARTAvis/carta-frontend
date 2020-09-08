@@ -157,7 +157,7 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
                         options={Object.keys(SystemType).map((key) => ({label: key, value: SystemType[key]}))}
                         value={global.system}
                         disabled={!global.validWcs}
-                        onChange={(event: React.FormEvent<HTMLSelectElement>) => AppStore.Instance.overlayStore.global.setSystem(event.currentTarget.value as SystemType)}
+                        onChange={(event: React.FormEvent<HTMLSelectElement>) => global.setSystem(event.currentTarget.value as SystemType)}
                     />
                 </FormGroup>
             </div>
