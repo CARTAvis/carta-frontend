@@ -761,6 +761,15 @@ export class WidgetsStore {
         return this.spectralProfileWidgets && this.spectralProfileWidgets.size > 0;
     }
 
+    // check whether any spectral widget is streaming data
+    @computed get isSpectralWidgetStreamingData(): boolean {
+        let result = false;
+        this.spectralProfileWidgets.forEach(widgetStore => {
+            result = result || widgetStore.isStreamingData;
+        });
+        return result;
+    }
+
     public getSpectralWidgetStoreByID = (id: string): SpectralProfileWidgetStore => {
         return this.spectralProfileWidgets.get(id);
     };
