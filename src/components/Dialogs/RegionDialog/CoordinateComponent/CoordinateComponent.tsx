@@ -6,15 +6,6 @@ import "./CoordinateComponent.css";
 
 @observer
 export class CoordinateComponent extends React.Component<{region: RegionStore, disableCooridnate: boolean}> {
-
-    handleCoordinateChanged = (coordinateSystem: SystemType) => {
-        AppStore.Instance.overlayStore.global.setSystem(coordinateSystem);
-        const appStore = AppStore.Instance;
-        if (appStore?.activeFrame?.cursorInfo) {
-            appStore.activeFrame.setCursorPosition(appStore.activeFrame.cursorInfo.posImageSpace); // update cursor wcs info
-        }
-    }
-
     public render() {
         const region = this.props.region;
         return (
@@ -31,7 +22,7 @@ export class CoordinateComponent extends React.Component<{region: RegionStore, d
                 <HTMLSelect
                     options={Object.keys(SystemType).map((key) => ({label: key, value: SystemType[key]}))}
                     value={AppStore.Instance.overlayStore.global.system}
-                    onChange={(ev) => this.handleCoordinateChanged(ev.currentTarget.value as SystemType)}
+                    onChange={(ev) => AppStore.Instance.overlayStore.global.setSystem(ev.currentTarget.value as SystemType)}
                 />
             </div>
         );

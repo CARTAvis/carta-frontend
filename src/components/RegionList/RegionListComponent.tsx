@@ -114,9 +114,7 @@ export class RegionListComponent extends React.Component<WidgetProps> {
 
         const rows = this.validRegions.map(region => {
             let centerContent: React.ReactNode;
-            if (region.regionId === 0 && frame.validWcs) {
-                centerContent = <React.Fragment>{frame.cursorInfo.infoWCS.x}<br/>{frame.cursorInfo.infoWCS.y}</React.Fragment>;
-            } else if (isFinite(region.center.x) && isFinite(region.center.y)) {
+            if (isFinite(region.center.x) && isFinite(region.center.y)) {
                 if (frame.validWcs) {
                     centerContent = <RegionWcsCenter region={region} frame={frame}/>;
                 } else {
@@ -210,14 +208,19 @@ export class RegionWcsCenter extends React.Component<{ region: RegionStore, fram
         const system = AppStore.Instance.overlayStore.global.explicitSystem;
         const formatX = AppStore.Instance.overlayStore.numbers.formatTypeX;
         const formatY = AppStore.Instance.overlayStore.numbers.formatTypeY;
+        const frame = this.props.frame;
         const region = this.props.region;
         if (!region || !region.center || !(isFinite(region.center.x) && isFinite(region.center.y) && this.props.frame.validWcs)) {
             return null;
         }
 
+        if (region.regionId === 0) {
+            return (<React.Fragment>{frame.cursorInfo.infoWCS.x}<br/>{frame.cursorInfo.infoWCS.y}</React.Fragment>);
+        }
+
         const centerWCSPoint = getFormattedWCSPoint(this.props.frame.wcsInfoForTransformation, region.center);
         if (centerWCSPoint) {
-            return (<>{centerWCSPoint.x}<br/>{centerWCSPoint.y}</>);
+            return (<React.Fragment>{centerWCSPoint.x}<br/>{centerWCSPoint.y}</React.Fragment>);
         }
 
         return null;
