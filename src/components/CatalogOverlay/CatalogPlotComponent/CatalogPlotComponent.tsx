@@ -623,7 +623,6 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
                     <NonIdealState className={"non-ideal-state"} icon={"folder-open"} title={"No column selected"} description={"Please select columns"}/>;
                 </div>
             );
-            
         }
 
         if (AppStore.Instance.darkTheme) {

@@ -1,6 +1,7 @@
 import * as Ajv from "ajv";
 import {AppStore, WidgetConfig} from "stores";
 import {PresetLayout} from "models";
+import {CatalogPlotComponent} from "components";
 import {findDeep, smoothStepOffset} from "utilities";
 
 const layoutSchema = require("models/layout_schema_2.json");
@@ -203,6 +204,11 @@ export class LayoutConfig {
             if (widgetSettingsConfig) {
                 floatingConfig["widgetSettings"] = widgetSettingsConfig;
             }
+            // add plot type
+            const plotWidget = appStore.widgetsStore.catalogPlotWidgets.get(config.id);
+            if (plotWidget) {
+                floatingConfig["plotType"] = plotWidget.plotType;
+            }
             configToSave.floating.push(floatingConfig);
         });
 
@@ -248,6 +254,11 @@ export class LayoutConfig {
                     if (widgetSettingsConfig) {
                         simpleChild["widgetSettings"] = widgetSettingsConfig;
                     }
+                    // add plot type
+                    const plotWidget = appStore.widgetsStore.catalogPlotWidgets.get(child.id);
+                    if (plotWidget) {
+                        simpleChild["plotType"] = plotWidget.plotType;
+                    }
                     newParentContent.push(simpleChild);
                 }
             }
@@ -288,6 +299,9 @@ export class LayoutConfig {
                         }
                         if ("widgetSettings" in child) {
                             componentConfig["widgetSettings"] = child.widgetSettings;
+                        }
+                        if ("plotType" in child) {
+                            componentConfig["plotType"] = child.plotType;
                         }
                         componentConfig.props = {appStore: AppStore.Instance, id: "", docked: true};
                         componentConfigs.push(componentConfig);
