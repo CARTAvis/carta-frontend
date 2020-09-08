@@ -83,7 +83,8 @@
                         "image-view",
                         "stats",
                         "spectral-line-query",
-                        "catalog-overlay"
+                        "catalog-overlay",
+                        "catalog-plot"
                     ]
                 },
                 "width": {
