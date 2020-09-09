@@ -200,16 +200,15 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
                 mask: this.momentMask,
                 pixelRange: new CARTA.FloatBounds({min: this.maskRange[0], max: this.maskRange[1]})
             };
-            AppStore.Instance.requestMoment(requestMessage, frame);
             frame.resetMomentRequestState();
             frame.setIsRequestingMoments(true);
+            AppStore.Instance.requestMoment(requestMessage, frame);
         }
     };
 
     @action requestingMomentCancelled = () => {
         const frame = this.effectiveFrame;
         if (frame) {
-            frame.resetMomentRequestState();
             AppStore.Instance.cancelRequestingMoment(frame.frameInfo.fileId);
         }
     };
