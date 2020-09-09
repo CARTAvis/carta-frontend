@@ -103,10 +103,8 @@ export class LayoutStore {
         };
         let dockedComponentConfigs = [];
         LayoutConfig.CreateConfigToApply(dockedConfig.content, config.docked.content, dockedComponentConfigs);
-
         // use component configs to init widget stores, IDs in componentConfigs will be updated
         appStore.widgetsStore.initWidgets(dockedComponentConfigs, config.floating);
-
         // generate new layout config & apply
         this.dockedLayout = new GoldenLayout({
             settings: {
