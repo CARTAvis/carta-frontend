@@ -21,6 +21,7 @@ export class SpectralLineQueryHelpComponent extends React.Component {
                 <p>Once a query is successfully made, the line catalogue will be displayed in the tables. The upper table shows the column information in the catalogue with options to show or hide a specific column. The actually line catalogue is displayed in the lower table.</p>
                 <p>The &quot;Shifted Frequency&quot; column is computed based on the user input of a velocity or a redshift. This &quot;Shifted Frequency&quot; is adopted for line ID overlay on a spectral profiler widget.</p>
                 <p>The line catalogue table accepts sub-filters such as partial string match or value range. This would allow users to select potential target lines quickly. Users can use the checkbox to select a set of lines to be overplotted on a spectral profiler widget. The maximum number of line ID overlay is 1000.</p>
+                <p>The sorting function will be available in a future release.</p>
                 <p>The text labels of the line ID overlay are shown dynamically based on the zoom level of a profile. Different line ID overlays (with different velocity shifts) can be created on different spectral profilers widgets via the &quot;Spectral Profiler&quot; dropdown. By clicking the &quot;Clear&quot; button, the line ID overlay on the selected &quot;Spectral Profiler&quot; will be removed.</p>                    
             </div>
         );
