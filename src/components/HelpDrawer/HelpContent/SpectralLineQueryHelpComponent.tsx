@@ -13,6 +13,7 @@ export class SpectralLineQueryHelpComponent extends React.Component {
                 <ul>
                     <li>The allowed maximum query range, equivalent in frequency, is 20 GHz.</li>
                     <li>The actual query is made with a frequency range in MHz rounded to integer.</li>
+                    <li>Up to 100000 lines are displayed.</li>
                 </ul>                
                 <h4>IMPORTANT NOTE</h4>
                 <p>Currently, the Splatalogue query service is under active development. Unexpected query results might happen. When users believe there is something wrong, please contact the <a href="mailto:carta_helpdesk@asiaa.sinica.edu.tw">helpdesk</a> or file an issue on <a href="https://github.com/CARTAvis/carta/issues">Github</a> (recommended).</p>
