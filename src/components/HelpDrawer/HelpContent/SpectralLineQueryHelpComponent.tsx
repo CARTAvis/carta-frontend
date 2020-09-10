@@ -13,6 +13,7 @@ export class SpectralLineQueryHelpComponent extends React.Component {
                 <ul>
                     <li>The allowed maximum query range, equivalent in frequency, is 20 GHz.</li>
                     <li>The actual query is made with a frequency range in MHz rounded to integer.</li>
+                    <li>When an intensity limit is applied, only the lines from CDMS and JPL catalogues will be returned.</li>
                     <li>Up to 100000 lines are displayed.</li>
                 </ul>                
                 <h4>IMPORTANT NOTE</h4>
