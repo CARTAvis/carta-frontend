@@ -83,9 +83,16 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
 
             if (region) {
                 headerString.push(region.regionProperties);
+                if (frame.validWcs) {
+                    headerString.push(frame.getRegionWcsProperties(region));
+                }
             }
         }
         return headerString;
+    }
+
+    @computed get exportQUScatterHeaders(): string[] {
+        return this.widgetStore.smoothingStore.type === SmoothingType.NONE ? this.exportHeaders : this.exportHeaders.concat(this.widgetStore.smoothingStore.comments);
     }
 
     constructor(props: WidgetProps) {
@@ -1206,7 +1213,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
             paLinePlotProps.comments = this.exportHeaders;
             piLinePlotProps.comments = this.exportHeaders;
             quLinePlotProps.comments = this.exportHeaders;
-            quScatterPlotProps.comments = this.widgetStore.smoothingStore.type === SmoothingType.NONE ? this.exportHeaders : this.exportHeaders.concat(this.widgetStore.smoothingStore.comments);
+            quScatterPlotProps.comments = this.exportQUScatterHeaders;
         }
 
         return (
