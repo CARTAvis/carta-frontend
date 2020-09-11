@@ -1,12 +1,11 @@
 import * as React from "react";
-import {autorun, computed, observable} from "mobx";
+import {computed, observable} from "mobx";
 import {observer} from "mobx-react";
 import {HTMLTable, Icon, NonIdealState, Position, Tooltip} from "@blueprintjs/core";
 import ReactResizeDetector from "react-resize-detector";
 import {CARTA} from "carta-protobuf";
-import {RegionStore, WidgetConfig, WidgetProps, HelpType, DialogStore, AppStore} from "stores";
-import {Point2D} from "models";
-import {toFixed} from "utilities";
+import {RegionStore, WidgetConfig, WidgetProps, HelpType, DialogStore, AppStore, FrameStore, WCS_PRECISION} from "stores";
+import {toFixed, getFormattedWCSPoint, formattedArcsec} from "utilities";
 import {CustomIcon} from "icons/CustomIcons";
 import "./RegionListComponent.css";
 
@@ -27,7 +26,7 @@ export class RegionListComponent extends React.Component<WidgetProps> {
     private static readonly NAME_COLUMN_MIN_WIDTH = 50;
     private static readonly NAME_COLUMN_DEFAULT_WIDTH = 150;
     private static readonly TYPE_COLUMN_DEFAULT_WIDTH = 90;
-    private static readonly CENTER_COLUMN_DEFAULT_WIDTH = 120;
+    private static readonly CENTER_COLUMN_DEFAULT_WIDTH = 140;
     private static readonly SIZE_COLUMN_DEFAULT_WIDTH = 160;
     private static readonly ROTATION_COLUMN_DEFAULT_WIDTH = 80;
 
@@ -63,21 +62,6 @@ export class RegionListComponent extends React.Component<WidgetProps> {
     private handleRegionListDoubleClick = () => {
         DialogStore.Instance.showRegionDialog();
     };
-
-    constructor(props: WidgetProps) {
-        super(props);
-
-        const appStore = AppStore.Instance;
-        // update widget title to include region's associated file name
-        autorun(() => {
-            const frame = appStore.activeFrame?.spatialReference ?? appStore.activeFrame;
-            if (frame) {
-                appStore.widgetsStore.setWidgetTitle(this.props.id, `Region List (${frame.frameInfo.fileInfo.name})`);
-            } else {
-                appStore.widgetsStore.setWidgetTitle(this.props.id, "Region List");
-            }
-        });
-    }
 
     render() {
         const appStore = AppStore.Instance;
@@ -129,34 +113,37 @@ export class RegionListComponent extends React.Component<WidgetProps> {
         const selectedRegion = frame.regionSet.selectedRegion;
 
         const rows = this.validRegions.map(region => {
-            let point: Point2D = region.center;
-
-            let pixelCenterEntry;
-            if (isFinite(point.x) && isFinite(point.y)) {
-                pixelCenterEntry = <td style={{width: RegionListComponent.CENTER_COLUMN_DEFAULT_WIDTH}} onDoubleClick={this.handleRegionListDoubleClick}>{`(${toFixed(point.x, 1)}, ${toFixed(point.y, 1)})`}</td>;
-            } else {
-                pixelCenterEntry = <td style={{width: RegionListComponent.CENTER_COLUMN_DEFAULT_WIDTH}}>Invalid</td>;
-            }
-
-            let pixelSizeEntry;
-            if (showSizeColumn) {
-                if (region.regionType === CARTA.RegionType.RECTANGLE || region.regionType === CARTA.RegionType.POLYGON) {
-                    const sizePoint = region.boundingBox;
-                    pixelSizeEntry = (
-                        <td style={{width: RegionListComponent.SIZE_COLUMN_DEFAULT_WIDTH}} onDoubleClick={this.handleRegionListDoubleClick}>
-                            <Tooltip content="Width and height" position={Position.BOTTOM}>{`(${toFixed(sizePoint.x, 1)}, ${toFixed(sizePoint.y, 1)})`}</Tooltip>
-                        </td>
-                    );
-                } else if (region.regionType === CARTA.RegionType.ELLIPSE) {
-                    const sizePoint = region.controlPoints[1];
-                    pixelSizeEntry = (
-                        <td style={{width: RegionListComponent.SIZE_COLUMN_DEFAULT_WIDTH}} onDoubleClick={this.handleRegionListDoubleClick}>
-                            <Tooltip content="Semi-major and semi-minor axes" position={Position.BOTTOM}>{`(${toFixed(sizePoint.x, 1)}, ${toFixed(sizePoint.y, 1)})`}</Tooltip>
-                        </td>
-                    );
+            let centerContent: React.ReactNode;
+            if (isFinite(region.center.x) && isFinite(region.center.y)) {
+                if (frame.validWcs) {
+                    centerContent = <RegionWcsCenter region={region} frame={frame}/>;
                 } else {
-                    pixelSizeEntry = <td style={{width: RegionListComponent.SIZE_COLUMN_DEFAULT_WIDTH}} onDoubleClick={this.handleRegionListDoubleClick}/>;
+                    centerContent = `(${toFixed(region.center.x, 1)}, ${toFixed(region.center.y, 1)})`;
                 }
+            } else {
+                centerContent = "Invalid";
+            }
+            const centerEntry = <td style={{width: RegionListComponent.CENTER_COLUMN_DEFAULT_WIDTH}} onDoubleClick={this.handleRegionListDoubleClick}>{centerContent}</td>;
+
+            let sizeEntry: React.ReactNode;
+            if (showSizeColumn) {
+                let sizeContent: React.ReactNode;
+                if (region.size) {
+                    if (frame.validWcs) {
+                        sizeContent = <React.Fragment>{formattedArcsec(region.wcsSize.x, WCS_PRECISION)}<br/>{formattedArcsec(region.wcsSize.y, WCS_PRECISION)}</React.Fragment>;
+                    } else {
+                        sizeContent = `(${toFixed(region.size.x, 1)}, ${toFixed(region.size.y, 1)})`;
+                    }
+                }
+                sizeEntry = (
+                    <td style={{width: RegionListComponent.SIZE_COLUMN_DEFAULT_WIDTH}} onDoubleClick={this.handleRegionListDoubleClick}>
+                        {region.regionType !== CARTA.RegionType.POINT &&
+                            <Tooltip content={region.regionType === CARTA.RegionType.ELLIPSE ? "Semi-major and semi-minor axes" : "Width and height"} position={Position.BOTTOM}>
+                                {sizeContent}
+                            </Tooltip>
+                        }
+                    </td>
+                );
             }
 
             let lockEntry: React.ReactNode;
@@ -184,8 +171,8 @@ export class RegionListComponent extends React.Component<WidgetProps> {
                     {lockEntry}{focusEntry}
                     <td style={{width: nameWidth}} onDoubleClick={this.handleRegionListDoubleClick}>{region.nameString}</td>
                     <td style={{width: RegionListComponent.TYPE_COLUMN_DEFAULT_WIDTH}} onDoubleClick={this.handleRegionListDoubleClick}>{RegionStore.RegionTypeString(region.regionType)}</td>
-                    {pixelCenterEntry}
-                    {showSizeColumn && pixelSizeEntry}
+                    {centerEntry}
+                    {showSizeColumn && sizeEntry}
                     {showRotationColumn && <td style={{width: RegionListComponent.ROTATION_COLUMN_DEFAULT_WIDTH}} onDoubleClick={this.handleRegionListDoubleClick}>{toFixed(region.rotation, 1)}</td>}
                 </tr>
             );
@@ -199,8 +186,8 @@ export class RegionListComponent extends React.Component<WidgetProps> {
                         <th style={{width: RegionListComponent.ACTION_COLUMN_DEFAULT_WIDTH * 2}}><Icon icon={"blank"}/><Icon icon={"blank"}/></th>
                         <th style={{width: nameWidth}}>Name</th>
                         <th style={{width: RegionListComponent.TYPE_COLUMN_DEFAULT_WIDTH}}>Type</th>
-                        <th style={{width: RegionListComponent.CENTER_COLUMN_DEFAULT_WIDTH}}>Pixel Center</th>
-                        {showSizeColumn && <th style={{width: RegionListComponent.SIZE_COLUMN_DEFAULT_WIDTH}}>Size (px)</th>}
+                        <th style={{width: RegionListComponent.CENTER_COLUMN_DEFAULT_WIDTH}}>{frame.validWcs ? "Center" : "Pixel Center"}</th>
+                        {showSizeColumn && <th style={{width: RegionListComponent.SIZE_COLUMN_DEFAULT_WIDTH}}>{frame.validWcs ? "Size" : "Size (px)"}</th>}
                         {showRotationColumn && <th style={{width: RegionListComponent.ROTATION_COLUMN_DEFAULT_WIDTH}}>P.A. (deg)</th>}
                     </tr>
                     </thead>
@@ -211,5 +198,31 @@ export class RegionListComponent extends React.Component<WidgetProps> {
                 <ReactResizeDetector handleWidth handleHeight onResize={this.onResize}/>
             </div>
         );
+    }
+}
+@observer
+export class RegionWcsCenter extends React.Component<{ region: RegionStore, frame: FrameStore}> {
+
+    public render() {
+        // dummy variables related to wcs to trigger re-render
+        const system = AppStore.Instance.overlayStore.global.explicitSystem;
+        const formatX = AppStore.Instance.overlayStore.numbers.formatTypeX;
+        const formatY = AppStore.Instance.overlayStore.numbers.formatTypeY;
+        const frame = this.props.frame;
+        const region = this.props.region;
+        if (!region || !region.center || !(isFinite(region.center.x) && isFinite(region.center.y) && this.props.frame.validWcs)) {
+            return null;
+        }
+
+        if (region.regionId === 0) {
+            return (<React.Fragment>{frame.cursorInfo.infoWCS.x}<br/>{frame.cursorInfo.infoWCS.y}</React.Fragment>);
+        }
+
+        const centerWCSPoint = getFormattedWCSPoint(this.props.frame.wcsInfoForTransformation, region.center);
+        if (centerWCSPoint) {
+            return (<React.Fragment>{centerWCSPoint.x}<br/>{centerWCSPoint.y}</React.Fragment>);
+        }
+
+        return null;
     }
 }
