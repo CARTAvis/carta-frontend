@@ -148,7 +148,7 @@ export class RegionListComponent extends React.Component<WidgetProps> {
 
             let lockEntry: React.ReactNode;
             if (region.regionId) {
-                lockEntry = <td style={{width: RegionListComponent.ACTION_COLUMN_DEFAULT_WIDTH}} onClick={(ev) => this.handleRegionLockClicked(ev, region)}><Icon icon={region.locked ? "lock" : "unlock"}/></td>;
+                lockEntry = <td style={{width: RegionListComponent.ACTION_COLUMN_DEFAULT_WIDTH, verticalAlign: "middle"}} onClick={(ev) => this.handleRegionLockClicked(ev, region)}><Icon icon={region.locked ? "lock" : "unlock"}/></td>;
             } else {
                 lockEntry = <td colSpan={2} style={{width: RegionListComponent.ACTION_COLUMN_DEFAULT_WIDTH * 2}}><Icon icon={"blank"}/><Icon icon={"blank"}/></td>;
             }
@@ -156,7 +156,7 @@ export class RegionListComponent extends React.Component<WidgetProps> {
             let focusEntry: React.ReactNode;
             if (region.regionId) {
                 focusEntry = (
-                    <td style={{width: RegionListComponent.ACTION_COLUMN_DEFAULT_WIDTH}} onClick={(ev) => this.handleFocusClicked(ev, region)}>
+                    <td style={{width: RegionListComponent.ACTION_COLUMN_DEFAULT_WIDTH, verticalAlign: "middle"}} onClick={(ev) => this.handleFocusClicked(ev, region)}>
                         <CustomIcon icon="center"/>
                     </td>
                 );
