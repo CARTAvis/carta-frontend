@@ -12,7 +12,8 @@ export class StatsHelpComponent extends React.Component {
                 <h3 id="images">Images</h3>
                 <p>The image dropdown defaults to &quot;Active&quot; image which means the current image in the image viewer.</p>
                 <h3 id="regions">Regions</h3>
-                <p>The region dropdown defaults to &quot;Active&quot; region which means a selected region in the image viewer. Users can select a region by clicking one on the image viewer, or by clicking a region entry on the region list widget. Statistics of the selected region will be updated accordingly.</p>
+                <p>The region dropdown defaults to &quot;Active&quot; region which means a selected region in the image viewer. Users can select a region by clicking one on the image viewer, or by clicking a region entry on the region list
+                    widget. Statistics of the selected region will be updated accordingly.</p>
                 <h3 id="statistic">Statistic</h3>
                 <p>CARTA provides the following statistical quantities:</p>
                 <ul>

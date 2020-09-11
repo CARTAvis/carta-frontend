@@ -12,8 +12,9 @@ export class HistogramHelpComponent extends React.Component {
                 <p>Histogram widget displays a histogram plot derived from a 2D region. When no region is created or selected, it displays a histogram derived from the current full image in the image viewer.</p>
                 <h3 id="images">Images</h3>
                 <p>The image dropdown defaults to &quot;Active&quot; image which means the current image in the image viewer.</p>
-                <h3 id="regions">Regions</h3> 
-                <p>The region dropdown defaults to &quot;Active&quot; region which means a selected region in the image viewer. Users can select a region by clicking one in the image viewer, or by clicking a region entry on the region list widget. Histogram plot of the selected region will be updated accordingly.</p>
+                <h3 id="regions">Regions</h3>
+                <p>The region dropdown defaults to &quot;Active&quot; region which means a selected region in the image viewer. Users can select a region by clicking one in the image viewer, or by clicking a region entry on the region list
+                    widget. Histogram plot of the selected region will be updated accordingly.</p>
                 <h3 id="interactivity-zoom-and-pan">Interactivity: zoom and pan</h3>
                 <p>The x and y ranges of the histogram plot can be modified by</p>
                 <ul>
@@ -36,7 +37,7 @@ export class HistogramHelpComponent extends React.Component {
                     <li>point size for dots</li>
                     <li>display y in logarithmic scale (default)</li>
                 </ul>
-                <br />
+                <br/>
                 <h4 id="note">Note</h4>
                 <p>In the current release, the number of histogram bins is automatically derived as the square root of the product of region bound box sizes in x and y. The development team will improve this in future releases.</p>
                 <h4 id="tip">TIP</h4>

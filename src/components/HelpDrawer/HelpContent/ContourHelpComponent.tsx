@@ -12,7 +12,8 @@ export class ContourHelpComponent extends React.Component {
                 <p>Contour configuration dialogue allows users to generate a contour layer on top of a raster image in the image viewer. Steps to create a contour layer with the &quot;Levels&quot; tab are:</p>
                 <ol>
                     <li>
-                        <p>Select an image from the &quot;Data source&quot; dropdown. A per-channel histogram of the current channel and current Stokes as indicated in the animator will be displayed with visualization of mean (in dashed line) and mean +/- one standard deviation (in shaded area). Optionally, users can request per-cube histogram if necessary.</p>
+                        <p>Select an image from the &quot;Data source&quot; dropdown. A per-channel histogram of the current channel and current Stokes as indicated in the animator will be displayed with visualization of mean (in dashed
+                            line) and mean +/- one standard deviation (in shaded area). Optionally, users can request per-cube histogram if necessary.</p>
                     </li>
                     <li>
                         <p>Define a set of contour levels to be calculated and rendered. There are various ways to define levels:</p>
@@ -46,7 +47,7 @@ export class ContourHelpComponent extends React.Component {
                 </ul>
                 <p>Note that changes in styling will be applied immediately if the contour levels set does not change.</p>
                 <h3 id="customizing-the-contour-configuration-dialogue">Customizing the contour configuration dialogue</h3>
-                <p>The defaults of many options in the contour configuration dialogue are customizable via the &quot;Contour configuration&quot; tab in the preference dialogue.</p> 
+                <p>The defaults of many options in the contour configuration dialogue are customizable via the &quot;Contour configuration&quot; tab in the preference dialogue.</p>
                 <p>Performance related options are included in the &quot;Performance&quot; tab of the preference dialogue. <em>Note that we do not recommend to modify the factory defaults. Change with cautions.</em></p>
             </div>
         );

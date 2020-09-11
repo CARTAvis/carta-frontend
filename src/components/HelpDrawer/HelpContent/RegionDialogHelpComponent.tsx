@@ -19,7 +19,8 @@ export class RegionDialogHelpComponent extends React.Component {
                     <li>region name</li>
                     <li>region location and shape properties in image or world coordinate</li>
                 </ul>
-                <p>Region properties can be defined in world coordinate. If the coordinate reference system is FK4, FK5, or ICRS, the coordinate format is sexagesimal. If the coordinate system is Galactic or Ecliptic, the coordinate format is decimal degree. Region size can be defined in arcsecond with <code>&quot;</code>, in arcminute with <code>&apos;</code>, or in degree with <code>deg</code>.</p>
+                <p>Region properties can be defined in world coordinate. If the coordinate reference system is FK4, FK5, or ICRS, the coordinate format is sexagesimal. If the coordinate system is Galactic or Ecliptic, the coordinate format
+                    is decimal degree. Region size can be defined in arcsecond with <code>&quot;</code>, in arcminute with <code>&apos;</code>, or in degree with <code>deg</code>.</p>
                 <br/>
                 <h4 id="note">NOTE</h4>
                 <p>The displayed image coordinates refer to the spatial reference image as indicated in the title of the dialogue.</p>
