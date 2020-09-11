@@ -324,9 +324,8 @@ export class ScatterPlotComponent extends React.Component<ScatterPlotComponentPr
             comment += `\n# yLabel: ${this.props.yLabel}`;
         }
 
-        const comments = this.props.comments;
-        if (comments && comments.length) {
-            comment += "\n" + comments.map(c => "# " + c).join("\n");
+        if (this.props.comments && this.props.comments.length) {
+            comment += "\n" + this.props.comments.map(c => "# " + c).join("\n");
         }
 
         const header = "# x\ty";
