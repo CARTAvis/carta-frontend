@@ -1,11 +1,12 @@
 import {action, computed, observable} from "mobx";
 import {Colors} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
-import {Point2D} from "models";
+import {Point2D, WCSPoint2D} from "models";
 import {BackendService} from "services";
 import {add2D, getApproximateEllipsePoints, getApproximatePolygonPoints, isAstBadPoint, midpoint2D, minMax2D, rotate2D, scale2D, simplePolygonPointTest, simplePolygonTest, subtract2D, toFixed, transformPoint} from "utilities";
-import {FrameStore} from "stores";
+import {FrameStore, AppStore, SystemType, WCS_PRECISION} from "stores";
 import RegionType = CARTA.RegionType;
+import {getFormattedWCSPoint, formattedArcsec} from "utilities";
 
 export const CURSOR_REGION_ID = 0;
 export const FOCUS_REGION_RATIO = 0.4;
@@ -187,6 +188,26 @@ export class RegionStore {
         }
     }
 
+    @computed get size(): Point2D {
+        switch (this.regionType) {
+            case CARTA.RegionType.RECTANGLE:
+            case CARTA.RegionType.ELLIPSE:
+                return this.controlPoints[1];
+            case CARTA.RegionType.POLYGON:
+                return this.boundingBox;
+            default:
+                return null;
+        }
+    }
+
+    @computed get wcsSize(): Point2D {
+        const frame = this.activeFrame;
+        if (this.size && frame.validWcs) {
+            return frame.getWcsSizeInArcsec(this.size);
+        }
+        return null;
+    }
+
     public getRegionApproximation(astTransform: number): Point2D[] {
         let approximatePoints = this.regionApproximationMap.get(astTransform);
         if (!approximatePoints) {
@@ -245,8 +266,8 @@ export class RegionStore {
         // Check for control point NaN values
         if (index >= 0 && index < this.controlPoints.length && !isAstBadPoint(p) && isFinite(p?.x) && isFinite(p?.y)) {
             this.regionApproximationMap.clear();
-            this.controlPoints[index] = p;
             this.modifiedTimestamp = performance.now();
+            this.controlPoints[index] = p;
             if (!this.editing && !skipUpdate) {
                 this.updateRegion();
             }
@@ -269,8 +290,8 @@ export class RegionStore {
         }
 
         this.regionApproximationMap.clear();
-        this.controlPoints = points;
         this.modifiedTimestamp = performance.now();
+        this.controlPoints = points;
         if (shapeChanged && this.regionType === CARTA.RegionType.POLYGON) {
             this.simplePolygonTest();
         }
@@ -293,6 +314,7 @@ export class RegionStore {
     @action setRotation = (angle: number, skipUpdate = false) => {
         this.rotation = (angle + 360) % 360;
         this.regionApproximationMap.clear();
+        this.modifiedTimestamp = performance.now();
         if (!this.editing && !skipUpdate) {
             this.updateRegion();
         }

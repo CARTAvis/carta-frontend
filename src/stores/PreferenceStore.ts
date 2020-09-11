@@ -1,12 +1,15 @@
 import {action, computed, observable} from "mobx";
 import {Colors} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
-import {BeamType, ContourGeneratorType, FrameScaling} from "stores";
+import {BeamType, ContourGeneratorType, FileFilteringType, FrameScaling} from "stores";
 import {CompressionQuality, CursorPosition, Event, PresetLayout, RegionCreationMode, SpectralType, Theme, TileCache, WCSMatchingType, WCSType, Zoom, ZoomPoint} from "models";
 import {parseBoolean} from "utilities";
 import {ApiService} from "services";
 
 export enum PreferenceKeys {
+    SILENT_FILE_SORTING_STRING = "fileSortingString",
+    SILENT_FILE_FILTERING_TYPE = "fileFilteringType",
+
     GLOBAL_THEME = "theme",
     GLOBAL_AUTOLAUNCH = "autoLaunch",
     GLOBAL_LAYOUT = "layout",
@@ -66,6 +69,10 @@ export enum PreferenceKeys {
 }
 
 const DEFAULTS = {
+    SILENT: {
+        fileSortingString: "-date",
+        fileFilteringType: FileFilteringType.Fuzzy,
+    },
     GLOBAL: {
         theme: Theme.AUTO,
         autoLaunch: true,
@@ -152,6 +159,14 @@ export class PreferenceStore {
 
     @computed get autoLaunch(): boolean {
         return this.preferences.get(PreferenceKeys.GLOBAL_AUTOLAUNCH) ?? DEFAULTS.GLOBAL.autoLaunch;
+    }
+
+    @computed get fileSortingString(): string {
+        return this.preferences.get(PreferenceKeys.SILENT_FILE_SORTING_STRING) ?? DEFAULTS.SILENT.fileSortingString;
+    }
+
+    @computed get fileFilteringType(): FileFilteringType {
+        return this.preferences.get(PreferenceKeys.SILENT_FILE_FILTERING_TYPE) ?? DEFAULTS.SILENT.fileFilteringType;
     }
 
     @computed get layout(): string {
@@ -409,6 +424,10 @@ export class PreferenceStore {
     };
 
     // reset functions
+    @action resetSilentSettings = () => {
+        this.clearPreferences([PreferenceKeys.SILENT_FILE_SORTING_STRING, PreferenceKeys.SILENT_FILE_FILTERING_TYPE]);
+    };
+
     @action resetGlobalSettings = () => {
         this.clearPreferences([
             PreferenceKeys.GLOBAL_THEME, PreferenceKeys.GLOBAL_AUTOLAUNCH, PreferenceKeys.GLOBAL_LAYOUT,
@@ -464,7 +483,7 @@ export class PreferenceStore {
     @action fetchPreferences = async () => {
         await this.upgradePreferences();
         await this.getPreferences();
-    }
+    };
 
     private getPreferences = async () => {
         const preferences = await ApiService.Instance.getPreferences();

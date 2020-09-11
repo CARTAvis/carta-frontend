@@ -12,7 +12,10 @@ import {
     AnimationState,
     AnimatorStore,
     BrowserMode,
+    CatalogInfo,
+    CatalogProfileStore,
     CatalogStore,
+    CatalogUpdateMode,
     CURSOR_REGION_ID,
     dayPalette,
     DialogStore,
@@ -32,17 +35,14 @@ import {
     RegionStore,
     SpatialProfileStore,
     SpectralProfileStore,
-    WidgetsStore,
-    CatalogProfileStore,
-    CatalogInfo,
-    CatalogUpdateMode
+    WidgetsStore
 } from ".";
 import {distinct, GetRequiredTiles, mapToObject} from "utilities";
 import {ApiService, BackendService, ConnectionStatus, ScriptingService, TileService, TileStreamDetails} from "services";
 import {FrameView, Point2D, ProtobufProcessing, Theme, TileCoordinate, WCSMatchingType} from "models";
 import {HistogramWidgetStore, RegionWidgetStore, SpatialProfileWidgetStore, SpectralProfileWidgetStore, StatsWidgetStore, StokesAnalysisWidgetStore} from "./widgets";
 import {getImageCanvas, ImageViewLayer} from "components";
-import {AppToaster, SuccessToast, ErrorToast, WarningToast} from "components/Shared";
+import {AppToaster, ErrorToast, SuccessToast, WarningToast} from "components/Shared";
 import GitCommit from "../static/gitInfo";
 
 export class AppStore {
@@ -137,7 +137,9 @@ export class AppStore {
     };
 
     @action connectToServer = (socketName: string = "socket") => {
-        let wsURL = `${location.protocol === "https:" ? "wss:" : "ws:"}//${window.location.hostname}/${socketName}`;
+        // Remove query parameters, replace protocol and remove trailing /
+        const baseUrl = location.href.replace(location.search, "").replace(/^http/, "ws").replace(/\/$/, "");
+        let wsURL = `${baseUrl}/${socketName}`;
         if (process.env.NODE_ENV === "development") {
             wsURL = process.env.REACT_APP_DEFAULT_ADDRESS ? process.env.REACT_APP_DEFAULT_ADDRESS : wsURL;
         } else {
@@ -347,6 +349,15 @@ export class AppStore {
 
         this.setActiveFrame(newFrame.frameInfo.fileId);
 
+        // Set animation mode to frame if the new image is 2D, or to channel if the image is 3D and there are no other frames
+        if (newFrame.frameInfo.fileInfoExtended.depth <= 1 && newFrame.frameInfo.fileInfoExtended.stokes <= 1) {
+            this.animatorStore.setAnimationMode(AnimationMode.FRAME);
+        } else if (newFrame.frameInfo.fileInfoExtended.depth > 1) {
+            this.animatorStore.setAnimationMode(AnimationMode.CHANNEL);
+        } else if (newFrame.frameInfo.fileInfoExtended.stokes > 1) {
+            this.animatorStore.setAnimationMode(AnimationMode.STOKES);
+        }
+
         if (this.frames.length > 1) {
             if ((this.preferenceStore.autoWCSMatching & WCSMatchingType.SPATIAL) && this.spatialReference !== newFrame) {
                 this.setSpatialMatchingEnabled(newFrame, true);
@@ -406,8 +417,6 @@ export class AppStore {
     };
 
     @action openFile = (directory: string, file: string, hdu: string) => {
-        // Stop animations playing before loading a new frame
-        this.animatorStore.stopAnimation();
         this.removeAllFrames();
         return this.loadFile(directory, file, hdu);
     };
@@ -457,6 +466,8 @@ export class AppStore {
 
     @action removeFrame = (frame: FrameStore) => {
         if (frame) {
+            // Stop animations playing before removing frame
+            this.animatorStore.stopAnimation();
             // Unlink any associated secondary images
             // Create a copy of the array, since clearing the spatial reference will modify it
             const secondarySpatialImages = frame.secondarySpatialImages.slice();
@@ -533,6 +544,8 @@ export class AppStore {
     };
 
     @action removeAllFrames = () => {
+        // Stop animations playing before removing frames
+        this.animatorStore.stopAnimation();
         if (this.backendService.closeFile(-1)) {
             this.activeFrame = null;
             this.tileService.clearCompressedCache(-1);
@@ -591,11 +604,11 @@ export class AppStore {
                 let catalogInfo: CatalogInfo = {fileId, directory, fileInfo: ack.fileInfo, dataSize: ack.dataSize};
                 let catalogWidgetId;
                 const columnData = ProtobufProcessing.ProcessCatalogData(ack.previewData);
-                const catalogComponentSize = this.widgetsStore.catalogComponentSize();
 
                 // update image associated catalog file
                 let associatedCatalogFiles = [];
                 const catalogStore = CatalogStore.Instance;
+                const catalogComponentSize = catalogStore.catalogProfiles.size;
                 let currentAssociatedCatalogFile = catalogStore.activeCatalogFiles;
                 if (currentAssociatedCatalogFile?.length) {
                     associatedCatalogFiles = currentAssociatedCatalogFile;
@@ -778,17 +791,21 @@ export class AppStore {
         frame.removeMomentImage();
 
         this.backendService.requestMoment(message).subscribe(ack => {
-            frame.resetMomentRequestState();
-            if (ack.success && ack.openFileAcks) {
-                ack.openFileAcks.forEach(openFileAck => {
-                    if (this.addFrame(CARTA.OpenFileAck.create(openFileAck), "", "")) {
-                        this.fileCounter++;
-                        frame.addMomentImage(this.frames.find(f => f.frameInfo.fileId === openFileAck.fileId));
-                    } else {
-                        AppToaster.show({icon: "warning-sign", message: "Load file failed.", intent: "danger", timeout: 3000});
-                    }
-                });
+            if (ack.success) {
+                if (!ack.cancel && ack.openFileAcks) {
+                    ack.openFileAcks.forEach(openFileAck => {
+                        if (this.addFrame(CARTA.OpenFileAck.create(openFileAck), this.fileBrowserStore.startingDirectory, "")) {
+                            this.fileCounter++;
+                            frame.addMomentImage(this.frames.find(f => f.frameInfo.fileId === openFileAck.fileId));
+                        } else {
+                            AppToaster.show({icon: "warning-sign", message: "Load file failed.", intent: "danger", timeout: 3000});
+                        }
+                    });
+                }
+            } else {
+                AppToaster.show({icon: "warning-sign", message: `Moment generation failed. ${ack?.message}`, intent: "danger", timeout: 3000});
             }
+            frame.resetMomentRequestState();
             this.fileLoading = false;
         }, error => {
             frame.resetMomentRequestState();
@@ -801,7 +818,6 @@ export class AppStore {
     @action cancelRequestingMoment = (fileId: number = -1) => {
         const frame = this.getFrame(fileId);
         if (frame && frame.requestingMomentsProgress < 1.0) {
-            frame.resetMomentRequestState();
             this.backendService.cancelRequestingMoment(fileId);
         }
     };
@@ -1099,11 +1115,6 @@ export class AppStore {
         this.backendService.reconnectStream.subscribe(this.handleReconnectStream);
         this.backendService.scriptingStream.subscribe(this.handleScriptingRequest);
         this.tileService.tileStream.subscribe(this.handleTileStream);
-
-        // Auth and connection
-        if (process.env.REACT_APP_AUTHENTICATION === "true") {
-            this.dialogStore.showAuthDialog();
-        }
 
         // Splash screen mask
         autorun(() => {

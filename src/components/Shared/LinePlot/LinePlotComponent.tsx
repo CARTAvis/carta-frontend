@@ -543,6 +543,26 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
         ctx.fillRect(0, 0, composedCanvas.width, composedCanvas.height);
         ctx.drawImage(canvas, 0, 0);
 
+        // plot spectral lines
+        const spectralLines = this.genSpectralLinesForPngPlot();
+        spectralLines?.forEach(spectralLine => {
+            // plot line
+            ctx.beginPath();
+            ctx.strokeStyle = spectralLine.color;
+            ctx.lineWidth = 1;
+            ctx.moveTo(spectralLine.x, spectralLine.yBottom);
+            ctx.lineTo(spectralLine.x, spectralLine.yTop);
+            ctx.stroke();
+            // plot rotated text
+            ctx.save();
+            ctx.font = "12px Arial";
+            ctx.translate(spectralLine.x, spectralLine.yBottom);
+            ctx.rotate(-Math.PI / 2);
+            ctx.fillStyle = spectralLine.color;
+            ctx.fillText(spectralLine.text, 0, 10);
+            ctx.restore();
+        });
+
         composedCanvas.toBlob((blob) => {
             const link = document.createElement("a") as HTMLAnchorElement;
             link.download = `${imageName}-${plotName.replace(" ", "-")}-${this.getTimestamp()}.png`;
@@ -846,6 +866,24 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
             );
         }
         return borderRect;
+    };
+
+    private genSpectralLinesForPngPlot = (): {color: string, text: string, x: number, yBottom: number, yTop: number}[] => {
+        let spectralLines = [];
+        const chartArea = this.chartArea;
+        this.props.markers?.forEach(marker => {
+            const canvasX = this.getCanvasSpaceX(marker.value);
+            if (marker?.id.match(/^spectral-line-/) && !isNaN(canvasX)) {
+                spectralLines.push({
+                    color: marker?.color,
+                    text: marker?.label,
+                    x: canvasX,
+                    yBottom: chartArea.bottom,
+                    yTop: chartArea.top
+                });
+            }
+        });
+        return spectralLines;
     };
 
     render() {

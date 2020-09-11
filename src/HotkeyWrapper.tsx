@@ -10,9 +10,13 @@ import {AppStore, BrowserMode, RegionMode} from "./stores";
 export class HotkeyContainer extends React.Component {
     public render() {
         const appStore = AppStore.Instance;
+        let className = "bp3-hotkey-dialog";
+        if (appStore.darkTheme) {
+            className += " bp3-dark";
+        }
 
         return (
-            <Dialog isOpen={appStore.dialogStore.hotkeyDialogVisible} className={"bp3-hotkey-dialog"} canEscapeKeyClose={true} canOutsideClickClose={true} onClose={appStore.dialogStore.hideHotkeyDialog}>
+            <Dialog isOpen={appStore.dialogStore.hotkeyDialogVisible} className={className} canEscapeKeyClose={true} canOutsideClickClose={true} onClose={appStore.dialogStore.hideHotkeyDialog}>
                 <div className={Classes.DIALOG_BODY}>
                     {HotkeyContainer.RenderHotkeys()}
                 </div>
@@ -138,8 +142,9 @@ export class HotkeyContainer extends React.Component {
             <Hotkey key={0} group={fileGroupTitle} global={true} combo={`${modString}O`} label="Open image" onKeyDown={() => appStore.fileBrowserStore.showFileBrowser(BrowserMode.File)}/>,
             <Hotkey key={1} group={fileGroupTitle} global={true} combo={`${modString}L`} label="Append image" onKeyDown={() => appStore.fileBrowserStore.showFileBrowser(BrowserMode.File, true)}/>,
             <Hotkey key={2} group={fileGroupTitle} global={true} combo={`${modString}W`} label="Close image" onKeyDown={() => appStore.closeCurrentFile(true)}/>,
-            <Hotkey key={3} group={fileGroupTitle} global={true} combo={`${modString}E`} label="Export image" onKeyDown={appStore.exportImage}/>,
-            <Hotkey key={4} group={fileGroupTitle} global={true} combo={`${modString}C`} label="Import catalog" onKeyDown={() => appStore.fileBrowserStore.showFileBrowser(BrowserMode.Catalog, false)}/>
+            <Hotkey key={3} group={fileGroupTitle} global={true} combo={`${modString}S`} label="Save image" onKeyDown={() => appStore.fileBrowserStore.showFileBrowser(BrowserMode.SaveFile, false)}/>,
+            <Hotkey key={4} group={fileGroupTitle} global={true} combo={`${modString}C`} label="Import catalog" onKeyDown={() => appStore.fileBrowserStore.showFileBrowser(BrowserMode.Catalog, false)}/>,
+            <Hotkey key={5} group={fileGroupTitle} global={true} combo={`${modString}E`} label="Export image" onKeyDown={appStore.exportImage}/>
         ];
 
         const otherHotKeys = [
@@ -148,7 +153,7 @@ export class HotkeyContainer extends React.Component {
         ];
 
         return (
-            <Hotkeys className={Classes.DARK}>
+            <Hotkeys>
                 {regionHotKeys}
                 {navigationHotKeys}
                 {animatorHotkeys}
@@ -159,7 +164,8 @@ export class HotkeyContainer extends React.Component {
     }
 }
 
-function HotkeyWrapper() {} // tslint:disable-line
+function HotkeyWrapper() {
+} // tslint:disable-line
 HotkeyWrapper.prototype = Object.create(HotkeyContainer.prototype);
 HotkeyWrapper.prototype.renderHotkeys = HotkeyContainer.RenderHotkeys;
 export const HotkeyTargetContainer = HotkeysTarget(HotkeyWrapper as any);

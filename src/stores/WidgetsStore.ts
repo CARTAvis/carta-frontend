@@ -1,7 +1,7 @@
 import * as GoldenLayout from "golden-layout";
 import * as $ from "jquery";
 import {CARTA} from "carta-protobuf";
-import {action, observable, computed} from "mobx";
+import {action, computed, observable, values} from "mobx";
 import {
     AnimatorComponent,
     HistogramComponent,
@@ -42,7 +42,6 @@ import {
     ACTIVE_FILE_ID,
     CatalogPlotType
 } from "./widgets";
-import {ProcessedColumnData} from "../models";
 
 export class WidgetConfig {
     id: string;
@@ -348,6 +347,26 @@ export class WidgetsStore {
                 itemId = this.getNextComponentId(CatalogOverlayComponent.WIDGET_CONFIG);
                 CatalogStore.Instance.catalogProfiles.set(itemId, 1);
                 break;
+            case CatalogPlotType.D2Scatter:
+                const scatterProps: CatalogPlotWidgetStoreProps = {
+                    xColumnName: "None",
+                    yColumnName: "None",
+                    plotType: CatalogPlotType.D2Scatter
+                };
+                itemId = this.addCatalogPlotWidget(scatterProps);
+                const scatterComponentId = this.getNextComponentId(CatalogPlotComponent.WIDGET_CONFIG);
+                CatalogStore.Instance.setCatalogPlots(scatterComponentId, 1, itemId);
+                break;
+            case CatalogPlotType.Histogram:
+                const histogramProps: CatalogPlotWidgetStoreProps = {
+                    xColumnName: "None",
+                    yColumnName: undefined,
+                    plotType: CatalogPlotType.Histogram
+                };
+                itemId = this.addCatalogPlotWidget(histogramProps);
+                const histogramComponentId = this.getNextComponentId(CatalogPlotComponent.WIDGET_CONFIG);
+                CatalogStore.Instance.setCatalogPlots(histogramComponentId, 1, itemId);
+                break;
             default:
                 // Remove it from the floating widget array, while preserving its store
                 if (this.floatingWidgets.find(w => w.id === widgetType)) {
@@ -365,12 +384,38 @@ export class WidgetsStore {
         }
     };
 
+    createFloatingWidget = (savedConfig) => {
+        if (savedConfig.id) {
+            let config = WidgetsStore.getDefaultWidgetConfig(savedConfig.id);
+            let savedConfigId = savedConfig.id;
+            if (savedConfig.plotType) {
+                savedConfigId = savedConfig.plotType;
+            }
+            config.id = this.addWidgetByType(savedConfigId, savedConfig.widgetSettings);
+            config.defaultWidth = savedConfig.defaultWidth || config.defaultWidth;
+            config.defaultHeight = savedConfig.defaultHeight || config.defaultHeight;
+            if (config.componentId) {
+                config.componentId = config.id;
+            }
+            if (savedConfig.defaultX > 0 && savedConfig.defaultY > 0) {
+                config.defaultX = savedConfig.defaultX;
+                config.defaultY = savedConfig.defaultY;
+            } else {
+                config.defaultX = config.defaultY = this.getFloatingWidgetOffset();
+            }
+            this.floatingWidgets.push(config);
+        }
+    };
+
     public initWidgets = (componentConfigs: any[], floating: any[]) => {
         // init docked widgets
         componentConfigs.forEach((componentConfig) => {
             if (componentConfig.id && componentConfig.props) {
-                const itemId = this.addWidgetByType(componentConfig.id, "widgetSettings" in componentConfig ? componentConfig.widgetSettings : null);
-
+                let componentConfigId = componentConfig.id;
+                if ("plotType" in componentConfig) {
+                    componentConfigId = componentConfig.plotType;
+                }
+                const itemId = this.addWidgetByType(componentConfigId, "widgetSettings" in componentConfig ? componentConfig.widgetSettings : null);
                 if (itemId) {
                     componentConfig.id = itemId;
                     componentConfig.props.id = itemId;
@@ -379,21 +424,7 @@ export class WidgetsStore {
         });
 
         // init floating widgets
-        floating.forEach((savedConfig) => {
-            if (savedConfig.id) {
-                let config = WidgetsStore.getDefaultWidgetConfig(savedConfig.id);
-                config.id = this.addWidgetByType(savedConfig.id, savedConfig.widgetSettings);
-                config.defaultWidth = savedConfig.defaultWidth || config.defaultWidth;
-                config.defaultHeight = savedConfig.defaultHeight || config.defaultHeight;
-                if (savedConfig.defaultX > 0 && savedConfig.defaultY > 0) {
-                    config.defaultX = savedConfig.defaultX;
-                    config.defaultY = savedConfig.defaultY;
-                } else {
-                    config.defaultX = config.defaultY = this.getFloatingWidgetOffset();
-                }
-                this.floatingWidgets.push(config);
-            }
-        });
+        floating.forEach((savedConfig) => this.createFloatingWidget(savedConfig));
     };
 
     public initLayoutWithWidgets = (layout: GoldenLayout) => {
@@ -730,6 +761,15 @@ export class WidgetsStore {
         return this.spectralProfileWidgets && this.spectralProfileWidgets.size > 0;
     }
 
+    // check whether any spectral widget is streaming data
+    @computed get isSpectralWidgetStreamingData(): boolean {
+        let result = false;
+        this.spectralProfileWidgets.forEach(widgetStore => {
+            result = result || widgetStore.isStreamingData;
+        });
+        return result;
+    }
+
     public getSpectralWidgetStoreByID = (id: string): SpectralProfileWidgetStore => {
         return this.spectralProfileWidgets.get(id);
     };
@@ -765,19 +805,14 @@ export class WidgetsStore {
         // Find the next appropriate ID
         let nextIndex = 0;
         let componentIds = [];
-        const floatingCatalogWidgets = this.getFloatingWidgetByComponentId(config.componentId);
-        const dockedCatalogWidgets = this.getDockedWidgetByType(config.type);
 
         if (config.type === CatalogPlotComponent.WIDGET_CONFIG.type) {
             CatalogStore.Instance.catalogPlots.forEach((catalogWidgetMap, componentId) => {
                 componentIds.push(componentId);
             });
-        } else {
-            floatingCatalogWidgets.forEach(floatingConfig => {
-                componentIds.push(floatingConfig.componentId);
-            });
-            dockedCatalogWidgets.forEach(contentItem => {
-                componentIds.push(contentItem.config.id);
+        } else if (config.type === CatalogOverlayComponent.WIDGET_CONFIG.type) {
+            CatalogStore.Instance.catalogProfiles.forEach((value, componentId) => {
+                componentIds.push(componentId);
             });
         }
 
@@ -788,37 +823,6 @@ export class WidgetsStore {
             }
             nextIndex++;
         }
-    };
-
-    getDockedWidgetByType(type: string): GoldenLayout.ContentItem[] {
-        const layoutStore = LayoutStore.Instance;
-        let matchingComponents = [];
-        if (layoutStore?.dockedLayout?.root) {
-            matchingComponents = layoutStore.dockedLayout.root.getItemsByFilter(
-                item => {
-                    const config = item.config as GoldenLayout.ReactComponentConfig;
-                    return config.component === type;
-                }
-            );
-        }
-        return matchingComponents;
-    }
-
-    getFloatingWidgetByComponentId(componentId: string): WidgetConfig[] {
-        let floatingCatalogWidgetComponent = [];
-        this.floatingWidgets.forEach(widgetConfig => {
-            if (widgetConfig.componentId && widgetConfig.componentId.includes(componentId)) {
-                floatingCatalogWidgetComponent.push(widgetConfig);
-            }
-        });
-        return floatingCatalogWidgetComponent;
-    }
-
-    catalogComponentSize = (): number => {
-        const config = CatalogOverlayComponent.WIDGET_CONFIG;
-        const floatingCatalogWidgets = this.getFloatingWidgetByComponentId(config.componentId).length;
-        const dockedCatalogWidgets = this.getDockedWidgetByType(config.type).length;
-        return (floatingCatalogWidgets + dockedCatalogWidgets);
     };
 
     createFloatingCatalogWidget = (catalogFileId: number): { widgetStoreId: string, widgetComponentId: string } => {
@@ -1122,7 +1126,9 @@ export class WidgetsStore {
     }
 
     @action addFloatingWidget = (widget: WidgetConfig) => {
-        widget["defaultX"] = widget["defaultY"] = this.getFloatingWidgetOffset();
+        if (!(widget?.defaultX > 0 && widget?.defaultY > 0)) {
+            widget["defaultX"] = widget["defaultY"] = this.getFloatingWidgetOffset();
+        }
         widget.zIndex = this.floatingWidgets.length + 1;
         this.floatingWidgets.push(widget);
     };

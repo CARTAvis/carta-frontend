@@ -2,37 +2,13 @@ import * as React from "react";
 import * as _ from "lodash";
 import {observer} from "mobx-react";
 import {action, computed, observable} from "mobx";
-import {
-    Alert,
-    AnchorButton,
-    Breadcrumb,
-    Breadcrumbs,
-    Button,
-    IBreadcrumbProps,
-    Icon,
-    IDialogProps,
-    InputGroup,
-    Intent,
-    Menu,
-    MenuItem,
-    NonIdealState,
-    Popover,
-    Position,
-    Pre,
-    Spinner,
-    Tab,
-    TabId,
-    Tabs,
-    Tooltip,
-    Text,
-    Switch
-} from "@blueprintjs/core";
+import {Alert, AnchorButton, Breadcrumb, Breadcrumbs, Button, IBreadcrumbProps, Icon, IDialogProps, InputGroup, Intent, Menu, MenuItem, Popover, Position, TabId, Tooltip} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import {FileInfoComponent, FileInfoType} from "components/FileInfo/FileInfoComponent";
 import {FileListTableComponent} from "./FileListTable/FileListTableComponent";
 import {DraggableDialogComponent} from "components/Dialogs";
 import {TableComponentProps, TableType} from "components/Shared";
-import {AppStore, BrowserMode, CatalogProfileStore, FileBrowserStore, HelpType} from "stores";
+import {AppStore, BrowserMode, CatalogProfileStore, FileBrowserStore, FileFilteringType, HelpType, PreferenceKeys, PreferenceStore} from "stores";
 import "./FileBrowserDialogComponent.css";
 
 @observer
@@ -261,6 +237,7 @@ export class FileBrowserDialogComponent extends React.Component {
 
         const fileTypeMenu = (
             <Popover
+                minimal={true}
                 content={
                     <Menu>
                         <MenuItem text="CRTF Region File" onClick={() => fileBrowserStore.setExportFileType(CARTA.FileType.CRTF)}/>
@@ -289,6 +266,7 @@ export class FileBrowserDialogComponent extends React.Component {
 
         const fileTypeMenu = (
             <Popover
+                minimal={true}
                 content={
                     <Menu>
                         <MenuItem text="CASA" onClick={() => fileBrowserStore.setSaveFileType(CARTA.FileType.CASA)}/>
@@ -305,6 +283,57 @@ export class FileBrowserDialogComponent extends React.Component {
 
         return <InputGroup autoFocus={true} placeholder="Enter file name" value={fileBrowserStore.saveFilename} onChange={this.handleSaveFileNameChanged} rightElement={fileTypeMenu}/>;
     }
+
+    private renderOpenFilenameInput() {
+        const preferenceStore = PreferenceStore.Instance;
+
+        let filterName: string;
+        let filterDescription: string;
+
+        if (preferenceStore.fileFilteringType === FileFilteringType.Fuzzy) {
+            filterName = "Fuzzy search";
+            filterDescription = "Filter by filename with fuzzy search";
+        } else if (preferenceStore.fileFilteringType === FileFilteringType.Unix) {
+            filterName = "Unix pattern";
+            filterDescription = "Filter by filename using unix-style pattern";
+        } else {
+            filterName = "Regular expression";
+            filterDescription = "Filter by filename using regular expression";
+        }
+
+        const filterTypeMenu = (
+            <Popover
+                minimal={true}
+                content={
+                    <Menu>
+                        <MenuItem text="Fuzzy search" onClick={() => this.setFilterType(FileFilteringType.Fuzzy)}/>
+                        <MenuItem text="Unix pattern" onClick={() => this.setFilterType(FileFilteringType.Unix)}/>
+                        <MenuItem text="Regular expression" onClick={() => this.setFilterType(FileFilteringType.Regex)}/>
+                    </Menu>
+                }
+                position={Position.BOTTOM_RIGHT}
+            >
+                <Button minimal={true} icon="filter" rightIcon="caret-down">
+                    {filterName}
+                </Button>
+            </Popover>
+        );
+
+        return (
+            <InputGroup
+                autoFocus={false}
+                placeholder={filterDescription}
+                value={this.fileFilterString}
+                onChange={this.handleFilterStringInputChanged}
+                leftIcon="search"
+                rightElement={filterTypeMenu}
+            />);
+    }
+
+    @action setFilterType = (type: FileFilteringType) => {
+        this.clearFilterString();
+        PreferenceStore.Instance.setPreference(PreferenceKeys.SILENT_FILE_FILTERING_TYPE, type);
+    };
 
     // Refresh file list to trigger the Breadcrumb re-rendering
     @action refreshFileList = () => {
@@ -351,14 +380,7 @@ export class FileBrowserDialogComponent extends React.Component {
         } else if (fileBrowserStore.browserMode === BrowserMode.RegionExport) {
             fileInput = this.renderExportFilenameInput();
         } else {
-            fileInput = (
-                <InputGroup
-                    autoFocus={false}
-                    placeholder="Filter by filename with fuzzy search. To apply a unix-style pattern, use +<expression>. To apply a regular expression, use /<expression>/"
-                    value={this.fileFilterString}
-                    onChange={this.handleFilterStringInputChanged}
-                    leftIcon="search"
-                />);
+            fileInput = this.renderOpenFilenameInput();
         }
 
         let tableProps: TableComponentProps = null;
@@ -406,9 +428,9 @@ export class FileBrowserDialogComponent extends React.Component {
                                 selectedFile={fileBrowserStore.selectedFile}
                                 selectedHDU={fileBrowserStore.selectedHDU}
                                 filterString={this.debouncedFilterString}
-                                sortingConfig={fileBrowserStore.sortingConfig}
+                                filterType={appStore.preferenceStore.fileFilteringType}
+                                sortingString={appStore.preferenceStore.fileSortingString}
                                 onSortingChanged={fileBrowserStore.setSortingConfig}
-                                onSortingCleared={fileBrowserStore.clearSortingConfig}
                                 onFileClicked={fileBrowserStore.selectFile}
                                 onFileDoubleClicked={this.loadFile}
                                 onFolderClicked={this.handleFolderClicked}
@@ -437,6 +459,7 @@ export class FileBrowserDialogComponent extends React.Component {
                     </div>
                 </div>
                 <Alert
+                    className={appStore.darkTheme ? "bp3-dark" : ""}
                     isOpen={this.overwriteExistingFileAlertVisible}
                     confirmButtonText="Yes"
                     cancelButtonText="Cancel"
