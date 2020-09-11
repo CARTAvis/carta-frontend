@@ -23,7 +23,7 @@ export class ScatterPlotComponentProps {
     data?: { x: number, y: number, z?: number }[];
     dataStat?: { mean: number, rms: number };
     cursorXY?: { profiler: Point3D, image: Point3D, unit: string };
-    comments?: () => string[];
+    comments?: string[];
     xMin?: number;
     xMax?: number;
     yMin?: number;
@@ -324,7 +324,7 @@ export class ScatterPlotComponent extends React.Component<ScatterPlotComponentPr
             comment += `\n# yLabel: ${this.props.yLabel}`;
         }
 
-        const comments = this.props.comments();
+        const comments = this.props.comments;
         if (comments && comments.length) {
             comment += "\n" + comments.map(c => "# " + c).join("\n");
         }

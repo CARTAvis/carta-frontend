@@ -74,7 +74,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
         return null;
     }
 
-    private exportHeaders = (): string[] => {
+    @computed get exportHeaders(): string[] {
         let headerString = [];
         const frame = this.widgetStore.effectiveFrame;
         if (frame && frame.frameInfo && frame.regionSet) {
@@ -91,8 +91,8 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
         return headerString;
     }
 
-    private exportQUScatterHeaders = (): string[] => {
-        return this.widgetStore.smoothingStore.type === SmoothingType.NONE ? this.exportHeaders() : this.exportHeaders().concat(this.widgetStore.smoothingStore.comments);
+    @computed get exportQUScatterHeaders(): string[] {
+        return this.widgetStore.smoothingStore.type === SmoothingType.NONE ? this.exportHeaders : this.exportHeaders.concat(this.widgetStore.smoothingStore.comments);
     }
 
     constructor(props: WidgetProps) {

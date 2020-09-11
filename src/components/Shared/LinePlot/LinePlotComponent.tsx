@@ -54,7 +54,7 @@ export class LinePlotComponentProps {
     width?: number;
     height?: number;
     data?: { x: number, y: number, z?: number }[];
-    comments?: () => string[];
+    comments?: string[];
     xMin?: number;
     xMax?: number;
     yMin?: number;
@@ -589,7 +589,7 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
         }
 
         // add comments from properties
-        const comments = this.props.comments();
+        const comments = this.props.comments;
         if (comments && comments.length) {
             comment += "\n" + comments.map(c => "# " + c).join("\n");
         }
