@@ -18,8 +18,8 @@ export class SpectralLineQueryHelpComponent extends React.Component {
                     <li>Up to 100000 lines are displayed.</li>
                 </ul>
                 <h4>IMPORTANT NOTE</h4>
-                <p>Currently, the Splatalogue query service is under active development. Unexpected query results might happen. When users believe there is something wrong, please contact the
-                    <a href="mailto:carta_helpdesk@asiaa.sinica.edu.tw">helpdesk</a> or file an issue on <a href="https://github.com/CARTAvis/carta/issues">Github</a> (recommended).
+                <p>Currently, the Splatalogue query service is under active development. Unexpected query results might happen. When users believe there is something wrong, please contact 
+                    the <a href="mailto:carta_helpdesk@asiaa.sinica.edu.tw">helpdesk</a> or file an issue on <a href="https://github.com/CARTAvis/carta/issues">Github</a> (recommended).
                 </p>
                 <br/>
                 <p>Once a query is successfully made, the line catalogue will be displayed in the tables. The upper table shows the column information in the catalogue with options to show or hide a specific column. The actual line
