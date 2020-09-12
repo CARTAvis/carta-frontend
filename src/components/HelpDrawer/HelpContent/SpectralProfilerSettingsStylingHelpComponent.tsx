@@ -5,7 +5,7 @@ export class SpectralProfilerSettingsStylingHelpComponent extends React.Componen
         return (
             <div>
                 <h3>Styling</h3>
-                <p>The appearance of the spectral profile plot is customizable via the spectral profile settings dialogue (the cog icon). Supported options are:</p>
+                <p>The appearance of a spectral profile plot is customizable via the &quot;Styling&quot; tab. Supported options are:</p>
                 <ul>
                     <li>color of the plot</li>
                     <li>plot styles including steps (default), lines, and dots</li>
