@@ -17,9 +17,9 @@ export class FileBrowserHelpComponent extends React.Component {
                 <h3 id="fileFiltering">File filtering</h3>
                 <p>A file filter can be applied to the current directory. Three methods are provided:</p>
                 <ul>
-                    <li>Fuzzy search (free typing)</li>
-                    <li>Unix-style search (e.g., *.fits) with the syntax <code>+&lt;expression&gt;</code> (e.g., <code>+*.fits</code>)</li>
-                    <li>Regular expression search (e.g., colou?r) with the syntax <code>/&lt;expression&gt;/</code> (e.g., <code>/colou?r/</code>)</li>
+                    <li>Fuzzy search: free typing</li>
+                    <li>Unix-style search: e.g., *.fits</li>
+                    <li>Regular expression search: e.g., colou?r</li>
                 </ul>
                 <h3 id="images">Images</h3>
                 <p>Images can be loaded as raster via <strong>File</strong> -&gt; <strong>Load image</strong>, or appended as raster via <strong>File</strong> -&gt; <strong>Append image</strong>. All loaded images will be closed if users
