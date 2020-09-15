@@ -214,7 +214,7 @@ export class RegionWcsCenter extends React.Component<{ region: RegionStore, fram
             return null;
         }
 
-        if (region.regionId === 0) {
+        if (region.regionId === 0 && frame.cursorInfo?.infoWCS) {
             return (<React.Fragment>{frame.cursorInfo.infoWCS.x}<br/>{frame.cursorInfo.infoWCS.y}</React.Fragment>);
         }
 
