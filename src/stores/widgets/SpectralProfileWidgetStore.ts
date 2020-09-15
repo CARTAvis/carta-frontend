@@ -2,7 +2,7 @@ import {action, autorun, computed, observable} from "mobx";
 import {Colors, NumberRange} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import {PlotType, LineSettings} from "components/Shared";
-import {RegionWidgetStore, RegionsType} from "./RegionWidgetStore";
+import {RegionWidgetStore, RegionsType, ACTIVE_FILE_ID} from "./RegionWidgetStore";
 import {SpectralLine} from "./SpectralLineQueryWidgetStore";
 import {AppStore} from "stores";
 import {ProfileSmoothingStore} from "stores/ProfileSmoothingStore";
@@ -195,7 +195,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
                 fileId: frame.frameInfo.fileId,
                 moments: this.selectedMoments,
                 axis: CARTA.MomentAxis.SPECTRAL,
-                regionId: this.effectiveRegionId,
+                regionId: (this.fileId === ACTIVE_FILE_ID && this.effectiveRegionId === 0) ? -1 : this.effectiveRegionId, // request image when region dropdown is active with no region selected
                 spectralRange: channelIndexRange,
                 mask: this.momentMask,
                 pixelRange: new CARTA.FloatBounds({min: this.maskRange[0], max: this.maskRange[1]})

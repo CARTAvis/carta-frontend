@@ -24,7 +24,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
             type: "spectral-profiler",
             minWidth: 250,
             minHeight: 225,
-            defaultWidth: 650,
+            defaultWidth: 720,
             defaultHeight: 275,
             title: "Z Profile: Cursor",
             isCloseable: true,
@@ -156,6 +156,9 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
             // region info
             if (region) {
                 headerString.push(region.regionProperties);
+                if (frame.validWcs) {
+                    headerString.push(frame.getRegionWcsProperties(region));
+                }
             }
         }
         return headerString;

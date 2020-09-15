@@ -175,6 +175,16 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
         }
     }
 
+    @computed get exportHeader(): string[] {
+        const appStore = AppStore.Instance;
+        const headerString: string[] = [];
+        headerString.push(`region (pixel): Point[${toFixed(appStore.activeFrame.cursorInfo.posImageSpace.x)}, ${toFixed(appStore.activeFrame.cursorInfo.posImageSpace.y)}]`);
+        if (appStore.activeFrame.cursorInfo.infoWCS) {
+            headerString.push(`region (world): Point[${appStore.activeFrame.cursorInfo.infoWCS.x}, ${appStore.activeFrame.cursorInfo.infoWCS.y}]`);
+        }
+        return headerString;
+    }
+
     constructor(props: WidgetProps) {
         super(props);
         const appStore = AppStore.Instance;
@@ -492,12 +502,7 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
 
                 // TODO: Get comments from region info, rather than directly from cursor position
                 if (appStore.activeFrame.cursorInfo) {
-                    const comments: string[] = [];
-                    comments.push(`region (pixel): Point[${toFixed(appStore.activeFrame.cursorInfo.posImageSpace.x)}, ${toFixed(appStore.activeFrame.cursorInfo.posImageSpace.y)}]`);
-                    if (appStore.activeFrame.cursorInfo.infoWCS) {
-                        comments.push(`region (world): Point[${appStore.activeFrame.cursorInfo.infoWCS.x}, ${appStore.activeFrame.cursorInfo.infoWCS.y}]`);
-                    }
-                    linePlotProps.comments = comments;
+                    linePlotProps.comments = this.exportHeader;
                 }
             }
         }

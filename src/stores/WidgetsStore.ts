@@ -38,10 +38,10 @@ import {
     SpectralProfileWidgetStore,
     StatsWidgetStore,
     StokesAnalysisWidgetStore,
-    CatalogWidgetStore, CatalogPlotWidgetStore, CatalogPlotWidgetStoreProps, CatalogPlotType,
-    ACTIVE_FILE_ID
+    CatalogWidgetStore, CatalogPlotWidgetStore, CatalogPlotWidgetStoreProps,
+    ACTIVE_FILE_ID,
+    CatalogPlotType
 } from "./widgets";
-import {ProcessedColumnData} from "../models";
 
 export class WidgetConfig {
     id: string;
@@ -366,7 +366,7 @@ export class WidgetsStore {
                 itemId = this.addCatalogPlotWidget(histogramProps);
                 const histogramComponentId = this.getNextComponentId(CatalogPlotComponent.WIDGET_CONFIG);
                 CatalogStore.Instance.setCatalogPlots(histogramComponentId, 1, itemId);
-                break;    
+                break;
             default:
                 // Remove it from the floating widget array, while preserving its store
                 if (this.floatingWidgets.find(w => w.id === widgetType)) {
@@ -870,6 +870,7 @@ export class WidgetsStore {
         const widgetComponentId = this.getNextComponentId(config);
         config.id = widgetStoreId;
         config.componentId = widgetComponentId;
+        config.helpType = props.plotType === CatalogPlotType.Histogram ? HelpType.CATALOG_HISTOGRAM_PLOT : HelpType.CATALOG_SCATTER_PLOT;
         this.addFloatingWidget(config);
         return {widgetStoreId: widgetStoreId, widgetComponentId: widgetComponentId};
     };
