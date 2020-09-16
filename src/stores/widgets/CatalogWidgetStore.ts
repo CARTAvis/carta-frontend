@@ -1,5 +1,6 @@
-import {action, observable} from "mobx";
+import {action, observable, computed} from "mobx";
 import {Colors} from "@blueprintjs/core";
+import {CatalogCoordinate, CatalogOverlay} from "stores";
 
 export enum CatalogPlotType {
     ImageOverlay = "Image Overlay",
@@ -35,6 +36,8 @@ export class CatalogWidgetStore {
     @observable catalogSize: number;
     @observable catalogColor: string;
     @observable catalogShape: CatalogOverlayShape;
+    @observable xAxis: string;
+    @observable yAxis: string;
 
     constructor(catalogFileId: number) {
         this.catalogFileId = catalogFileId;
@@ -45,6 +48,8 @@ export class CatalogWidgetStore {
         this.catalogColor = Colors.TURQUOISE3;
         this.catalogSize = 5;
         this.catalogShape = CatalogOverlayShape.Circle;
+        this.xAxis = CatalogOverlay.NONE;
+        this.yAxis = CatalogOverlay.NONE;
     }
 
     @action setHeaderTableColumnWidts(vals: Array<number>) {
@@ -79,5 +84,13 @@ export class CatalogWidgetStore {
 
     @action setCatalogShape(shape: CatalogOverlayShape) {
         this.catalogShape = shape;
+    }
+
+    @action setxAxis(xColumnName: string) {
+        this.xAxis = xColumnName;
+    }
+
+    @action setyAxis(yColumnName: string) {
+        this.yAxis = yColumnName;
     }
 }

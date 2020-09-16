@@ -1280,6 +1280,7 @@ export class AppStore {
     @action handleCatalogFilterStream = (catalogFilter: CARTA.CatalogFilterResponse) => {
         const catalogFileId = catalogFilter.fileId;
         const catalogProfileStore = this.catalogStore.catalogProfileStores.get(catalogFileId);
+        const catalogWidgetStoreId = this.catalogStore.catalogWidgets.get(catalogFileId);
 
         const progress = catalogFilter.progress;
         if (catalogProfileStore) {
@@ -1292,8 +1293,9 @@ export class AppStore {
             }
 
             if (catalogProfileStore.updateMode === CatalogUpdateMode.ViewUpdate) {
-                const xColumn = catalogProfileStore.xColumnRepresentation;
-                const yColumn = catalogProfileStore.yColumnRepresentation;
+                const catalogWidgetStore = this.widgetsStore.catalogWidgets.get(catalogWidgetStoreId);
+                const xColumn = catalogWidgetStore.xAxis;
+                const yColumn = catalogWidgetStore.yAxis;
                 if (xColumn && yColumn) {
                     const coords = catalogProfileStore.get2DPlotData(xColumn, yColumn, catalogData);
                     const wcs = this.activeFrame.validWcs ? this.activeFrame.wcsInfo : 0;
