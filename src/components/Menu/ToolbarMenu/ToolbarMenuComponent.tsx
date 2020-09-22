@@ -87,7 +87,7 @@ export class ToolbarMenuComponent extends React.Component {
                     <Tooltip content={<span>Ellipse{this.regionTooltip("circle")}</span>}>
                         <AnchorButton icon={"circle"} onClick={() => this.handleRegionTypeClicked(CARTA.RegionType.ELLIPSE)} active={isRegionCreating && newRegionType === CARTA.RegionType.ELLIPSE} disabled={regionButtonsDisabled}/>
                     </Tooltip>
-                    <Tooltip content={<span>Polygon<span><br/><i><small>Define control points with a series of clicks.<br/>Double-click to close the loop and finish polygon creation</small></i></span></span>}>
+                    <Tooltip content={<span>Polygon<span><br/><i><small>Define control points with a series of clicks.<br/>Double-click to close the loop and finish polygon creation.<br/>Double-click on a control point to delete it.<br/>Click on a side to create a new control point.</small></i></span></span>}>
                         <AnchorButton icon={"polygon-filter"} onClick={() => this.handleRegionTypeClicked(CARTA.RegionType.POLYGON)} active={isRegionCreating && newRegionType === CARTA.RegionType.POLYGON} disabled={regionButtonsDisabled}/>
                     </Tooltip>
                 </ButtonGroup>
