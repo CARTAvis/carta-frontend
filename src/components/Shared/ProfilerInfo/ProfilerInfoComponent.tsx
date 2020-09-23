@@ -9,7 +9,7 @@ export const ProfilerInfoComponent: React.FC<ProfilerInfoComponentProps> = (prop
     let infoString = "";
     if (props.info?.length > 0) {
         props.info.forEach((info, index) => {
-            infoString = index === 0 ? info : infoString + ", " + info;
+            infoString = index === 0 ? info : (infoString + ", " + info);
         });
     }
 
