@@ -454,14 +454,14 @@ export class WidgetsStore {
         ToolbarMenuComponent.DRAGSOURCE_WIDGETCONFIG_MAP.forEach((widgetConfig, id) => WidgetsStore.CreateDragSource(layout, widgetConfig, id));
 
         layout.on("stackCreated", (stack) => {
-            let unpinButton = $(`<li class="lm-pin" title="detach"><span class="bp3-icon-standard bp3-icon-unpin"/></li>`);
+            const unpinButton = $(`<li class="lm-pin" title="detach"><span class="bp3-icon-standard bp3-icon-unpin"/></li>`);
             unpinButton.on("click", () => this.unpinWidget(stack.getActiveContentItem()));
             stack.header.controlsContainer.prepend(unpinButton);
-            let helpButton = $(`<li class="lm-help" title="help"><span class="bp3-icon-standard bp3-icon-help"/></li>`);
+            const helpButton = $(`<li class="lm-help" title="help"><span class="bp3-icon-standard bp3-icon-help"/></li>`);
             helpButton.on("click", (ev) => this.onHelpPinedClick(ev, stack.getActiveContentItem()));
             stack.header.controlsContainer.prepend(helpButton);
 
-            stack.on("activeContentItemChanged", function (contentItem: any) {
+            stack.on("activeContentItemChanged", (contentItem: any) => {
                 if (stack && stack.config && stack.header.controlsContainer && stack.config.content.length) {
                     const activeTabItem = stack.getActiveContentItem();
                     const component = activeTabItem.config.component;
@@ -471,7 +471,7 @@ export class WidgetsStore {
                         cogPinedButton.on("click", () => WidgetsStore.Instance.onCogPinedClick(stack.getActiveContentItem()));
                         stack.header.controlsContainer.prepend(cogPinedButton);
                     } else if (!showCogWidgets.includes(component) && stackHeaderControlButtons && stackHeaderControlButtons.childElementCount === 5) {
-                        stack.header.controlsContainer[0].children[0].remove();
+                        stackHeaderControlButtons.children[0].remove();
                     }
                 }
             });
