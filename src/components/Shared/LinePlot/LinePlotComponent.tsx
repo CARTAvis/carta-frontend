@@ -639,13 +639,17 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
         a.dispatchEvent(new MouseEvent("click"));
     };
 
-    private genHorizontalLines = (marker: LineMarker, isHovering: boolean, markerColor: string, markerOpacity: number, valueCanvasSpace: number) => {
+    private genHorizontalLine = (marker: LineMarker, isHovering: boolean, markerColor: string, markerOpacity: number, valueCanvasSpace: number) => {
         const chartArea = this.chartArea;
         const lineWidth = chartArea.right - chartArea.left;
         const isHoverMarker = isHovering && this.hoveredMarker.id === marker.id;
         const midPoint = (chartArea.left + chartArea.right) / 2.0;
 
         let lineSegments = null;
+        // TODO: sort out hover marker, marker with width, draggable marker
+        if (!marker.width && (valueCanvasSpace < Math.floor(chartArea.top - 1) || valueCanvasSpace > Math.ceil(chartArea.bottom + 1))) {
+            return undefined;
+        }
         if (isHoverMarker) {
             const arrowSize = MARKER_HITBOX_THICKNESS / 1.5;
             const arrowStart = 3;
@@ -701,13 +705,17 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
         }
     };
 
-    private genVerticalLines = (marker: LineMarker, isHovering: boolean, markerColor: string, markerOpacity: number, valueCanvasSpace: number, isShowingLabels?: boolean) => {
+    private genVerticalLine = (marker: LineMarker, isHovering: boolean, markerColor: string, markerOpacity: number, valueCanvasSpace: number, isShowingLabels?: boolean) => {
         const chartArea = this.chartArea;
         const lineHeight = chartArea.bottom - chartArea.top;
         const isHoverMarker = isHovering && this.hoveredMarker.id === marker.id;
         const midPoint = (chartArea.top + chartArea.bottom) / 2.0;
 
         let lineSegments = null;
+        // TODO: sort out hover marker, marker with width, draggable marker
+        if (!marker.width && (valueCanvasSpace < Math.floor(chartArea.left - 1) || valueCanvasSpace > Math.ceil(chartArea.right + 1))) {
+            return undefined;
+        }
         if (isHoverMarker) {
             const arrowSize = MARKER_HITBOX_THICKNESS / 1.5;
             const arrowStart = 3;
@@ -784,7 +792,7 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
                     if (isNaN(valueCanvasSpace)) {
                         continue;
                     }
-                    lines.push(this.genHorizontalLines(marker, isHovering, markerColor, markerOpacity, valueCanvasSpace));
+                    lines.push(this.genHorizontalLine(marker, isHovering, markerColor, markerOpacity, valueCanvasSpace));
                 } else {
                     let valueCanvasSpace = this.getCanvasSpaceX(marker.value);
                     if (isNaN(valueCanvasSpace)) {
@@ -792,9 +800,9 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
                     }
                     if (marker.interactionMarker) {
                         const markerOpacityInteraction = (!marker.isMouseMove && (this.isMouseEntered)) ? 0 : (marker.opacity || 1);
-                        lines.push(this.genVerticalLines(marker, isHovering, markerColor, markerOpacityInteraction, valueCanvasSpace));
+                        lines.push(this.genVerticalLine(marker, isHovering, markerColor, markerOpacityInteraction, valueCanvasSpace));
                     } else {
-                        lines.push(this.genVerticalLines(marker, isHovering, markerColor, markerOpacity, valueCanvasSpace, isShowingVerticalLabels));
+                        lines.push(this.genVerticalLine(marker, isHovering, markerColor, markerOpacity, valueCanvasSpace, isShowingVerticalLabels));
                     }
                 }
             }
