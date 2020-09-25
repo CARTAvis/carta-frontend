@@ -21,6 +21,7 @@ import {RegionCreationMode} from "models";
 import {CustomIcon} from "icons/CustomIcons";
 import {CARTA} from "carta-protobuf";
 import "./ToolbarMenuComponent.css";
+
 @observer
 export class ToolbarMenuComponent extends React.Component {
     public static get DRAGSOURCE_WIDGETCONFIG_MAP(): Map<string, WidgetConfig> {
@@ -48,7 +49,7 @@ export class ToolbarMenuComponent extends React.Component {
 
     regionTooltip = (shape: string) => {
         const regionModeIsCenter = AppStore.Instance.preferenceStore.regionCreationMode === RegionCreationMode.CENTER;
-        return(
+        return (
             <span><br/><i><small>
                 Click-and-drag to define a region ({regionModeIsCenter ? "center to corner" : "corner to corner"}).<br/>
                 Hold Ctrl to define a region ({regionModeIsCenter ? "corner to corner" : "center to corner"}).<br/>
@@ -56,7 +57,7 @@ export class ToolbarMenuComponent extends React.Component {
                 Hold shift key to create a {shape}.
             </small></i></span>
         );
-    }
+    };
 
     public render() {
         const appStore = AppStore.Instance;
@@ -87,7 +88,14 @@ export class ToolbarMenuComponent extends React.Component {
                     <Tooltip content={<span>Ellipse{this.regionTooltip("circle")}</span>}>
                         <AnchorButton icon={"circle"} onClick={() => this.handleRegionTypeClicked(CARTA.RegionType.ELLIPSE)} active={isRegionCreating && newRegionType === CARTA.RegionType.ELLIPSE} disabled={regionButtonsDisabled}/>
                     </Tooltip>
-                    <Tooltip content={<span>Polygon<span><br/><i><small>Define control points with a series of clicks.<br/>Double-click to close the loop and finish polygon creation.<br/>Double-click on a control point to delete it.<br/>Click on a side to create a new control point.</small></i></span></span>}>
+                    <Tooltip
+                        content={
+                            <span>Polygon<span><br/><i><small>Define control points with a series of clicks.<br/>
+                            Double-click to close the loop and finish polygon creation.<br/>
+                            Double-click on a control point to delete it.<br/>
+                            Click on a side to create a new control point.</small></i></span></span>
+                        }
+                    >
                         <AnchorButton icon={"polygon-filter"} onClick={() => this.handleRegionTypeClicked(CARTA.RegionType.POLYGON)} active={isRegionCreating && newRegionType === CARTA.RegionType.POLYGON} disabled={regionButtonsDisabled}/>
                     </Tooltip>
                 </ButtonGroup>
