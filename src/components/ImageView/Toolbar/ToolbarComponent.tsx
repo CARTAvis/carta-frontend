@@ -195,7 +195,7 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
                 </Tooltip>
                 }
                 {frame.regionSet.mode === RegionMode.MOVING &&
-                <Tooltip position={tooltipPosition} content={<span>Create region<br/><i><small>Double-click to select region type</small></i></span>}>
+                <Tooltip position={tooltipPosition} content={<span>Create region<br/><i><small>Double-click to select region type.<br/>Press C to enter creation mode.</small></i></span>}>
                     <Button icon={regionIcon} onClick={() => frame.regionSet.setMode(RegionMode.CREATING)}/>
                 </Tooltip>
                 }
