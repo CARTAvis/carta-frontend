@@ -466,13 +466,16 @@ export class WidgetsStore {
                     const activeTabItem = stack.getActiveContentItem();
                     const component = activeTabItem.config.component;
                     const stackHeaderControlButtons = stack.header.controlsContainer[0];
-                    if (component && showCogWidgets.includes(component) && stackHeaderControlButtons && stackHeaderControlButtons.childElementCount < 5) {
+                    if (component && showCogWidgets.includes(component) && stackHeaderControlButtons?.childElementCount < 5) {
                         const cogPinedButton = $(`<li class="lm_settings" title="settings"><span class="bp3-icon-standard bp3-icon-cog"/></li>`);
                         cogPinedButton.on("click", () => WidgetsStore.Instance.onCogPinedClick(stack.getActiveContentItem()));
                         stack.header.controlsContainer.prepend(cogPinedButton);
-                    } else if (!showCogWidgets.includes(component) && stackHeaderControlButtons && stackHeaderControlButtons.childElementCount === 5) {
+                    } else if (!showCogWidgets.includes(component) && stackHeaderControlButtons?.childElementCount === 5) {
                         stackHeaderControlButtons.children[0].remove();
                     }
+
+                    // disable unpin button when active tab is image-view
+                    $(stackHeaderControlButtons)?.find("li.lm-pin")?.attr("style", component === "image-view" ? "display:none;" : "");
                 }
             });
         });
