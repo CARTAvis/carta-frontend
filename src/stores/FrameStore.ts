@@ -1072,10 +1072,14 @@ export class FrameStore {
             }
         }
 
+        const isInsideImage = cursorPosImageSpace.x > 0 && cursorPosImageSpace.x < this.frameInfo.fileInfoExtended.width &&
+                                cursorPosImageSpace.y > 0 && cursorPosImageSpace.y < this.frameInfo.fileInfoExtended.height;
+
         return {
             posImageSpace: cursorPosImageSpace,
+            isInsideImage: isInsideImage,
             posWCS: cursorPosWCS,
-            infoWCS: cursorPosFormatted,
+            infoWCS: cursorPosFormatted
         };
     }
 
