@@ -1,6 +1,6 @@
 import {action, observable, computed} from "mobx";
 import {Colors} from "@blueprintjs/core";
-import {CatalogCoordinate, CatalogOverlay} from "stores";
+import {CatalogOverlay} from "stores/CatalogProfileStore";
 
 export enum CatalogPlotType {
     ImageOverlay = "Image Overlay",
@@ -23,6 +23,18 @@ export enum CatalogOverlayShape {
     hexagon = "hexagon-open",
 }
 
+export const DEFAULTS = {
+    headerTableColumnWidts: [75, 75, 65, 100, null],
+    showSelectedData: false,
+    catalogTableAutoScroll: false,
+    catalogPlotType: CatalogPlotType.ImageOverlay,
+    catalogColor: Colors.TURQUOISE3,
+    catalogSize: 10,
+    catalogShape: CatalogOverlayShape.Circle,
+    xAxis: CatalogOverlay.NONE,
+    yAxis: CatalogOverlay.NONE
+};
+
 export class CatalogWidgetStore {
     public static readonly MinOverlaySize = 1;
     public static readonly MaxOverlaySize = 100;
@@ -41,15 +53,15 @@ export class CatalogWidgetStore {
 
     constructor(catalogFileId: number) {
         this.catalogFileId = catalogFileId;
-        this.headerTableColumnWidts = [75, 75, 65, 100, null];
-        this.showSelectedData = false;
-        this.catalogTableAutoScroll = false;
-        this.catalogPlotType = CatalogPlotType.ImageOverlay;
-        this.catalogColor = Colors.TURQUOISE3;
-        this.catalogSize = 5;
-        this.catalogShape = CatalogOverlayShape.Circle;
-        this.xAxis = CatalogOverlay.NONE;
-        this.yAxis = CatalogOverlay.NONE;
+        this.headerTableColumnWidts = DEFAULTS.headerTableColumnWidts;
+        this.showSelectedData = DEFAULTS.showSelectedData;
+        this.catalogTableAutoScroll = DEFAULTS.catalogTableAutoScroll;
+        this.catalogPlotType = DEFAULTS.catalogPlotType;
+        this.catalogColor = DEFAULTS.catalogColor;
+        this.catalogSize = DEFAULTS.catalogSize;
+        this.catalogShape = DEFAULTS.catalogShape;
+        this.xAxis = DEFAULTS.xAxis;
+        this.yAxis = DEFAULTS.yAxis;
     }
 
     @action setHeaderTableColumnWidts(vals: Array<number>) {

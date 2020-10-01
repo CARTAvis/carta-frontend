@@ -186,7 +186,7 @@ export class CatalogViewComponent extends React.Component<CatalogViewComponentPr
 
             const size = catalogWidgetStore.catalogSize;
             if (size) {
-                data.marker.size = size * devicePixelRatio;
+                data.marker.size = size;
             }
 
             const shape = catalogWidgetStore.catalogShape;
@@ -204,7 +204,7 @@ export class CatalogViewComponent extends React.Component<CatalogViewComponentPr
                 const catalogWidgetStore = catalogStore.getCatalogWidgetStore(fileId);
                 const size = catalogWidgetStore.catalogSize;
                 if (size) {
-                    data.marker.size = size * devicePixelRatio + 4;
+                    data.marker.size = size + 4;
                 }
                 let outlineShape = catalogWidgetStore.catalogShape;
                 if (outlineShape) {

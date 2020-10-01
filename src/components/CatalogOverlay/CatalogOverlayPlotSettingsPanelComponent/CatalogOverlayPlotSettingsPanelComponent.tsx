@@ -1,12 +1,14 @@
 import {observer} from "mobx-react";
+import {computed, autorun} from "mobx";
 import * as React from "react";
-import {FormGroup, NumericInput, Button, MenuItem, PopoverPosition, Icon} from "@blueprintjs/core";
+import {Button, FormGroup, NumericInput, NonIdealState, MenuItem, PopoverPosition, Icon} from "@blueprintjs/core";
 import {Select, IItemRendererProps} from "@blueprintjs/select";
-import {AppStore} from "stores";
+import {WidgetProps, WidgetConfig, HelpType, WidgetsStore, AppStore, CatalogStore} from "stores";
 import {CatalogOverlayShape, CatalogWidgetStore} from "stores/widgets";
 import {ColorResult} from "react-color";
 import {ColorPickerComponent} from "components/Shared";
 import {SWATCH_COLORS} from "utilities";
+import "./CatalogOverlayPlotSettingsPanelComponent.css";
 
 const IconWrapper = (path: React.SVGProps<SVGPathElement>, color: string, fill: boolean, strokeWidth = 2, viewboxDefault = 16) => {
     let fillColor = color;
@@ -34,29 +36,68 @@ const diamond = <path d="M 8 14 L 14 8 L 8 2 L 2 8 Z"/>;
 const hexagon = <path d="M 12.33 5.5 L 12.33 10.5 L 8 13 L 3.67 10.5 L 3.67 5.5 L 8 3 Z"/>;
 const hexagon2 = <path d="M 3 8 L 5.5 3.67 L 10.5 3.67 L 13 8 L 10.5 12.33 L 5.5 12.33 Z"/>;
 
-export class CatalogOverlayPlotSettingProps {
-    catalogSize: number;
-    catalogColor: string;
-    catalogFileId: number;
-    catalogShape: CatalogOverlayShape;
-    setCatalogShape: (item: CatalogOverlayShape) => void;
-    setCatalogSize: (val: number) => void;
-    setCatalogColor: (color: string) => void;
-}
-
 @observer
-export class CatalogOverlayPlotSettingsComponent extends React.Component<CatalogOverlayPlotSettingProps> {
+export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<WidgetProps> {
+
+    public static get WIDGET_CONFIG(): WidgetConfig {
+        return {
+            id: "catalog-overlay-floating-settings",
+            type: "floating-settings",
+            minWidth: 280,
+            minHeight: 225,
+            defaultWidth: 300,
+            defaultHeight: 375,
+            title: "catalog-overlay-settings",
+            isCloseable: true,
+            parentId: "catalog-overlay",
+            parentType: "catalog-overlay",
+            helpType: HelpType.CATALOG_OVERLAY_SETTINGS
+        };
+    }
+
+    @computed get widgetStore(): CatalogWidgetStore {
+        const catalogStore = CatalogStore.Instance;
+        const catalogFileId = catalogStore.catalogProfiles.get(this.props.id);
+        const catalogWidgetStoreId = catalogStore.catalogWidgets.get(catalogFileId);
+        return WidgetsStore.Instance.catalogWidgets.get(catalogWidgetStoreId);
+    }
+
+    constructor(props: WidgetProps) {
+        super(props);
+        const appStore = AppStore.Instance;
+        autorun(() => {
+            const catalogStore = CatalogStore.Instance;
+            const catalogFileId = catalogStore.catalogProfiles.get(this.props.id);
+            const catalogWidgetStoreId = catalogStore.catalogWidgets.get(catalogFileId);
+            const activeFiles = catalogStore.activeCatalogFiles;
+            if (!catalogWidgetStoreId) {
+                WidgetsStore.Instance.addCatalogWidget(catalogFileId);
+            }
+
+            if (activeFiles?.includes(catalogFileId)) {
+                const fileName = catalogStore.getCatalogFileNames([catalogFileId]).get(catalogFileId);
+                if (fileName) {
+                    appStore.widgetsStore.setWidgetTitle(this.props.floatingSettingsId, `Catalog Settings: ${fileName}`);
+                }
+            } else {
+                appStore.widgetsStore.setWidgetTitle(this.props.floatingSettingsId, `Catalog Settings`);
+            }
+        });
+    }
 
     private handleCatalogShapeChange = (item: CatalogOverlayShape) => {
-        this.props.setCatalogShape(item);
+        const widgetStore = this.widgetStore;
+        widgetStore.setCatalogShape(item);
     }
 
     private handleCatalogSizeChange = (val: number) => {
-        this.props.setCatalogSize(val);
+        const widgetStore = this.widgetStore;
+        widgetStore.setCatalogSize(val);
     }
 
     private handleCatalogColorChange = (color: string) => {
-        this.props.setCatalogColor(color);
+        const widgetStore = this.widgetStore;
+        widgetStore.setCatalogColor(color);
     }
 
     private renderShapePopOver = (shape: CatalogOverlayShape, itemProps: IItemRendererProps) => {
@@ -72,7 +113,8 @@ export class CatalogOverlayPlotSettingsComponent extends React.Component<Catalog
     }
 
     private getCatalogShape = (shape: CatalogOverlayShape) => {
-        const color = this.props.catalogColor;
+        const widgetStore = this.widgetStore;
+        let color = widgetStore.catalogColor;
         switch (shape) {
             case CatalogOverlayShape.Circle:
                 return <Icon icon="circle" color={color}/>;
@@ -104,13 +146,23 @@ export class CatalogOverlayPlotSettingsComponent extends React.Component<Catalog
     }
 
     public render() {
-        const prop = this.props;
+        const widgetStore = this.widgetStore;
+        const catalogStore = CatalogStore.Instance;
+        const catalogFileIds = catalogStore.activeCatalogFiles;
+
+        if (catalogFileIds?.length === 0) {
+            return (
+                <div className="catalog-overlay">
+                    <NonIdealState icon={"folder-open"} title={"No catalog file loaded"} description={"Load a catalog file using the menu"}/>;
+                </div>
+            );
+        }
 
         return (
             <div className="catalog-overlay-plot-settings">
                 <FormGroup label={"Color"} inline={true}>
                     <ColorPickerComponent
-                        color={prop.catalogColor}
+                        color={widgetStore.catalogColor}
                         presetColors={[...SWATCH_COLORS, "transparent"]}
                         setColor={(color: ColorResult) => {
                             this.handleCatalogColorChange(color.hex === "transparent" ? "#000000" : color.hex);
@@ -121,15 +173,15 @@ export class CatalogOverlayPlotSettingsComponent extends React.Component<Catalog
                 </FormGroup>
                 <FormGroup  inline={true} label="Shape">
                     <Select 
-                        className="bp3-fill" 
+                        className="bp3-fill"
                         filterable={false}
                         items={Object.values(CatalogOverlayShape)} 
-                        activeItem={prop.catalogShape} 
+                        activeItem={widgetStore.catalogShape} 
                         onItemSelect={this.handleCatalogShapeChange}
                         itemRenderer={this.renderShapePopOver}
                         popoverProps={{popoverClassName: "catalog-select", minimal: true , position: PopoverPosition.AUTO_END}}
                     >
-                        <Button icon={this.getCatalogShape(prop.catalogShape)} rightIcon="double-caret-vertical"/>
+                        <Button icon={this.getCatalogShape(widgetStore.catalogShape)} rightIcon="double-caret-vertical"/>
                     </Select>
                 </FormGroup>
                 <FormGroup  inline={true} label="Size" labelInfo="(px)">
@@ -137,7 +189,7 @@ export class CatalogOverlayPlotSettingsComponent extends React.Component<Catalog
                         placeholder="Catalog Size"
                         min={CatalogWidgetStore.MinOverlaySize}
                         max={CatalogWidgetStore.MaxOverlaySize}
-                        value={prop.catalogSize}
+                        value={widgetStore.catalogSize}
                         stepSize={1}
                         onValueChange={(value: number) => this.handleCatalogSizeChange(value)}
                     />

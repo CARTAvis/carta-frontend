@@ -9,8 +9,7 @@ import ReactResizeDetector from "react-resize-detector";
 import SplitPane, { Pane } from "react-split-pane";
 import {CARTA} from "carta-protobuf";
 import {TableComponent, TableComponentProps, TableType, ClearableNumericInputComponent} from "components/Shared";
-import {CatalogOverlayPlotSettingsComponent} from "./CatalogOverlayPlotSettingsComponent/CatalogOverlayPlotSettingsComponent";
-import {AppStore, CatalogStore, CatalogProfileStore, CatalogOverlay, CatalogCoordinate, CatalogUpdateMode, CatalogSystemType, HelpType, WidgetConfig, WidgetProps, WidgetsStore} from "stores";
+import {AppStore, CatalogStore, CatalogProfileStore, CatalogOverlay, CatalogUpdateMode, CatalogSystemType, HelpType, WidgetConfig, WidgetProps, WidgetsStore} from "stores";
 import {CatalogWidgetStore, CatalogPlotWidgetStoreProps, CatalogPlotType} from "stores/widgets";
 import {toFixed} from "utilities";
 import {ProcessedColumnData} from "../../models";
@@ -824,17 +823,6 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
                             <Button text={activeSystem} disabled={!isImageOverlay} rightIcon="double-caret-vertical"/>
                         </Select>
                     </FormGroup>
-                    }
-                    {isImageOverlay && 
-                        <CatalogOverlayPlotSettingsComponent 
-                            catalogSize={catalogWidgetStore.catalogSize}
-                            catalogColor={catalogWidgetStore.catalogColor}
-                            catalogFileId={catalogWidgetStore.catalogFileId}
-                            catalogShape={catalogWidgetStore.catalogShape}
-                            setCatalogShape={shape => catalogWidgetStore.setCatalogShape(shape)}
-                            setCatalogSize={size => catalogWidgetStore.setCatalogSize(size)}
-                            setCatalogColor={color => catalogWidgetStore.setCatalogColor(color)}
-                        />
                     }
                 </div>
                 <SplitPane 

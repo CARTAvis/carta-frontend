@@ -347,7 +347,10 @@ export class AppStore {
             this.setSpectralReference(newFrame);
         }
 
-        this.setActiveFrame(newFrame.frameInfo.fileId);
+        const imageFileId = newFrame.frameInfo.fileId;
+        this.setActiveFrame(imageFileId);
+        // init image associated catalog
+        this.catalogStore.updateImageAssociatedCatalogId(imageFileId, []);
 
         // Set animation mode to frame if the new image is 2D, or to channel if the image is 3D and there are no other frames
         if (newFrame.frameInfo.fileInfoExtended.depth <= 1 && newFrame.frameInfo.fileInfoExtended.stokes <= 1) {
@@ -630,14 +633,10 @@ export class AppStore {
                     const key = catalogStore.catalogProfiles.keys().next().value;
                     catalogStore.catalogProfiles.set(key, fileId);
                 }
-                if (catalogWidgetId) {
-                    this.catalogStore.catalogWidgets.set(fileId, catalogWidgetId);
-                    this.catalogStore.addCatalog(fileId);
-                    this.fileBrowserStore.hideFileBrowser();
-
-                    const catalogProfileStore = new CatalogProfileStore(catalogInfo, ack.headers, columnData);
-                    catalogStore.catalogProfileStores.set(fileId, catalogProfileStore);
-                }
+                catalogStore.addCatalog(fileId);
+                this.fileBrowserStore.hideFileBrowser();
+                const catalogProfileStore = new CatalogProfileStore(catalogInfo, ack.headers, columnData);
+                catalogStore.catalogProfileStores.set(fileId, catalogProfileStore);
             }
         }, error => {
             console.error(error);
