@@ -1072,8 +1072,10 @@ export class FrameStore {
             }
         }
 
-        const isInsideImage = cursorPosImageSpace.x > 0 && cursorPosImageSpace.x < this.frameInfo.fileInfoExtended.width &&
-                                cursorPosImageSpace.y > 0 && cursorPosImageSpace.y < this.frameInfo.fileInfoExtended.height;
+        const imageX = Math.round(cursorPosImageSpace.x);
+        const imageY = Math.round(cursorPosImageSpace.y);
+        const isInsideImage = imageX >= 0 && imageX < this.frameInfo.fileInfoExtended.width &&
+                                imageY >= 0 && imageY < this.frameInfo.fileInfoExtended.height;
 
         return {
             posImageSpace: cursorPosImageSpace,
