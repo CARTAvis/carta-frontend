@@ -33,7 +33,8 @@ const DEFAULTS = {
     catalogShape: CatalogOverlayShape.Circle,
     xAxis: CatalogOverlay.NONE,
     yAxis: CatalogOverlay.NONE,
-    tableSeparatorPosition: "60%"
+    tableSeparatorPosition: "60%",
+    highlightColor: Colors.RED2
 };
 
 export class CatalogWidgetStore {
@@ -54,6 +55,7 @@ export class CatalogWidgetStore {
     @observable xAxis: string;
     @observable yAxis: string;
     @observable tableSeparatorPosition: string;
+    @observable highlightColor: string;
 
     constructor(catalogFileId: number) {
         this.catalogFileId = catalogFileId;
@@ -67,6 +69,7 @@ export class CatalogWidgetStore {
         this.xAxis = DEFAULTS.xAxis;
         this.yAxis = DEFAULTS.yAxis;
         this.tableSeparatorPosition = DEFAULTS.tableSeparatorPosition;
+        this.highlightColor = DEFAULTS.highlightColor;
     }
 
     @action setHeaderTableColumnWidts(vals: Array<number>) {
@@ -113,5 +116,9 @@ export class CatalogWidgetStore {
 
     @action setTableSeparatorPosition(position: string) {
         this.tableSeparatorPosition = position;
+    }
+
+    @action setHighlightColor(color: string) {
+        this.highlightColor = color;
     }
 }

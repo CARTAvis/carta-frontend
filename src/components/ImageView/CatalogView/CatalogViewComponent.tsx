@@ -198,11 +198,13 @@ export class CatalogViewComponent extends React.Component<CatalogViewComponentPr
 
         if (selectedData) {
             selectedData.forEach((data, fileId) => {
-                data.marker.color = Colors.RED2;
-                data.marker.line.color = Colors.RED2;
-                data.marker.line.width = 2;
                 const catalogWidgetStore = catalogStore.getCatalogWidgetStore(fileId);
                 const size = catalogWidgetStore.catalogSize;
+                const highlightColor = catalogWidgetStore.highlightColor;
+                data.marker.color = highlightColor;
+                data.marker.line.color = highlightColor;
+                data.marker.line.width = 2;
+
                 if (size) {
                     data.marker.size = size + 4;
                 }

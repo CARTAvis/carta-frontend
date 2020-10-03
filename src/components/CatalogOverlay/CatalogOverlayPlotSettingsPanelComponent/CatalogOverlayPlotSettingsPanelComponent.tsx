@@ -158,6 +158,17 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
                         darkTheme={AppStore.Instance.darkTheme}
                     />
                 </FormGroup>
+                <FormGroup label={"Overlay Highlight"} inline={true}>
+                    <ColorPickerComponent
+                        color={widgetStore.highlightColor}
+                        presetColors={[...SWATCH_COLORS, "transparent"]}
+                        setColor={(color: ColorResult) => {
+                            widgetStore.setHighlightColor(color.hex === "transparent" ? "#000000" : color.hex);
+                        }}
+                        disableAlpha={true}
+                        darkTheme={AppStore.Instance.darkTheme}
+                    />
+                </FormGroup>
                 <FormGroup  inline={true} label="Shape">
                     <Select 
                         className="bp3-fill"
