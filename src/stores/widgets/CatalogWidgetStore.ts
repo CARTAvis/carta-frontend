@@ -23,7 +23,7 @@ export enum CatalogOverlayShape {
     hexagon = "hexagon-open",
 }
 
-export const DEFAULTS = {
+const DEFAULTS = {
     headerTableColumnWidts: [75, 75, 65, 100, null],
     showSelectedData: false,
     catalogTableAutoScroll: false,
@@ -32,12 +32,15 @@ export const DEFAULTS = {
     catalogSize: 10,
     catalogShape: CatalogOverlayShape.Circle,
     xAxis: CatalogOverlay.NONE,
-    yAxis: CatalogOverlay.NONE
+    yAxis: CatalogOverlay.NONE,
+    tableSeparatorPosition: "60%"
 };
 
 export class CatalogWidgetStore {
     public static readonly MinOverlaySize = 1;
     public static readonly MaxOverlaySize = 100;
+    public static readonly MinTableSeparatorPosition = 5;
+    public static readonly MaxTableSeparatorPosition = 95;
 
     @observable catalogFileId: number;
     @observable headerTableColumnWidts: Array<number>;
@@ -50,6 +53,7 @@ export class CatalogWidgetStore {
     @observable catalogShape: CatalogOverlayShape;
     @observable xAxis: string;
     @observable yAxis: string;
+    @observable tableSeparatorPosition: string;
 
     constructor(catalogFileId: number) {
         this.catalogFileId = catalogFileId;
@@ -62,6 +66,7 @@ export class CatalogWidgetStore {
         this.catalogShape = DEFAULTS.catalogShape;
         this.xAxis = DEFAULTS.xAxis;
         this.yAxis = DEFAULTS.yAxis;
+        this.tableSeparatorPosition = DEFAULTS.tableSeparatorPosition;
     }
 
     @action setHeaderTableColumnWidts(vals: Array<number>) {
@@ -104,5 +109,9 @@ export class CatalogWidgetStore {
 
     @action setyAxis(yColumnName: string) {
         this.yAxis = yColumnName;
+    }
+
+    @action setTableSeparatorPosition(position: string) {
+        this.tableSeparatorPosition = position;
     }
 }

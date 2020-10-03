@@ -3,7 +3,7 @@ import {computed, autorun} from "mobx";
 import * as React from "react";
 import {Button, FormGroup, NumericInput, NonIdealState, MenuItem, PopoverPosition, Icon} from "@blueprintjs/core";
 import {Select, IItemRendererProps} from "@blueprintjs/select";
-import {WidgetProps, WidgetConfig, HelpType, WidgetsStore, AppStore, CatalogStore} from "stores";
+import {AppStore, CatalogStore, WidgetProps, WidgetConfig, HelpType, WidgetsStore} from "stores";
 import {CatalogOverlayShape, CatalogWidgetStore} from "stores/widgets";
 import {ColorResult} from "react-color";
 import {ColorPickerComponent} from "components/Shared";
@@ -85,21 +85,6 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
         });
     }
 
-    private handleCatalogShapeChange = (item: CatalogOverlayShape) => {
-        const widgetStore = this.widgetStore;
-        widgetStore.setCatalogShape(item);
-    }
-
-    private handleCatalogSizeChange = (val: number) => {
-        const widgetStore = this.widgetStore;
-        widgetStore.setCatalogSize(val);
-    }
-
-    private handleCatalogColorChange = (color: string) => {
-        const widgetStore = this.widgetStore;
-        widgetStore.setCatalogColor(color);
-    }
-
     private renderShapePopOver = (shape: CatalogOverlayShape, itemProps: IItemRendererProps) => {
         const shapeItem = this.getCatalogShape(shape);
         return (
@@ -158,6 +143,8 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
             );
         }
 
+        const tableSeparatorPosition = (100 - parseInt(widgetStore.tableSeparatorPosition));
+
         return (
             <div className="catalog-overlay-plot-settings">
                 <FormGroup label={"Color"} inline={true}>
@@ -165,7 +152,7 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
                         color={widgetStore.catalogColor}
                         presetColors={[...SWATCH_COLORS, "transparent"]}
                         setColor={(color: ColorResult) => {
-                            this.handleCatalogColorChange(color.hex === "transparent" ? "#000000" : color.hex);
+                            widgetStore.setCatalogColor(color.hex === "transparent" ? "#000000" : color.hex);
                         }}
                         disableAlpha={true}
                         darkTheme={AppStore.Instance.darkTheme}
@@ -177,7 +164,7 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
                         filterable={false}
                         items={Object.values(CatalogOverlayShape)} 
                         activeItem={widgetStore.catalogShape} 
-                        onItemSelect={this.handleCatalogShapeChange}
+                        onItemSelect={(item) => widgetStore.setCatalogShape(item)}
                         itemRenderer={this.renderShapePopOver}
                         popoverProps={{popoverClassName: "catalog-select", minimal: true , position: PopoverPosition.AUTO_END}}
                     >
@@ -191,7 +178,16 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
                         max={CatalogWidgetStore.MaxOverlaySize}
                         value={widgetStore.catalogSize}
                         stepSize={1}
-                        onValueChange={(value: number) => this.handleCatalogSizeChange(value)}
+                        onValueChange={(value: number) => widgetStore.setCatalogSize(value)}
+                    />
+                </FormGroup>
+                <FormGroup  inline={true} label="Separator" labelInfo="(%)">
+                    <NumericInput
+                        min={CatalogWidgetStore.MinTableSeparatorPosition}
+                        max={CatalogWidgetStore.MaxTableSeparatorPosition}
+                        value={tableSeparatorPosition}
+                        stepSize={1}
+                        onValueChange={(value: number) => widgetStore.setTableSeparatorPosition(`${100 - value}%`)}
                     />
                 </FormGroup>
             </div>

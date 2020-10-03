@@ -39,6 +39,7 @@ enum ComparisonOperator {
 export class CatalogOverlayComponent extends React.Component<WidgetProps> {
     @observable catalogFileId: number;
     @observable catalogTableRef: Table = undefined;
+    @observable height: number;
 
     private catalogHeaderTableRef: Table = undefined;
     private catalogFileNames: Map<number, string>;
@@ -59,10 +60,10 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         return {
             id: "catalog-overlay",
             type: "catalog-overlay",
-            minWidth: 320,
+            minWidth: 400,
             minHeight: 400,
-            defaultWidth: 875,
-            defaultHeight: 350,
+            defaultWidth: 600,
+            defaultHeight: 400,
             title: "Catalog",
             isCloseable: true,
             helpType: HelpType.CATALOG_OVERLAY,
@@ -195,6 +196,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
     onResize = (width: number, height: number) => {
         const profileStore = this.profileStore;
         const catalogWidgetStore = this.widgetStore;
+        this.height = height;
         // fixed bug from blueprintjs, only display 4 rows.
         if (profileStore && this.catalogHeaderTableRef) {
             this.updateTableSize(this.catalogHeaderTableRef, this.props.docked);
@@ -658,8 +660,12 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         );
     }
 
-    private onTableResize = () => {
+    private onTableResize = (newSize: number) => {
         // update table if resizing happend
+        const position = Math.floor((newSize / (this.height - 120)) * 100);
+        if (position <= CatalogWidgetStore.MaxTableSeparatorPosition && position >= CatalogWidgetStore.MinTableSeparatorPosition) {
+            this.widgetStore.setTableSeparatorPosition(`${position}%`);   
+        }
         const profileStore = this.profileStore;
         if (profileStore && this.catalogHeaderTableRef) {
             this.updateTableSize(this.catalogHeaderTableRef, false); 
@@ -809,7 +815,6 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
                             <Button text={this.catalogFileId} rightIcon="double-caret-vertical"/>
                         </Select>
                     </FormGroup>
-                    {isImageOverlay &&
                     <FormGroup className="catalog-system" disabled={!isImageOverlay} inline={true} label="System">
                         <Select 
                             filterable={false}
@@ -823,14 +828,14 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
                             <Button text={activeSystem} disabled={!isImageOverlay} rightIcon="double-caret-vertical"/>
                         </Select>
                     </FormGroup>
-                    }
                 </div>
                 <SplitPane 
                     className="catalog-table" 
                     split="horizontal" 
                     primary={"second"} 
-                    defaultSize={"60%"} 
-                    minSize={"5%"}
+                    minSize={`${CatalogWidgetStore.MinTableSeparatorPosition}%`}
+                    maxSize={`${CatalogWidgetStore.MaxTableSeparatorPosition}%`}
+                    size={catalogWidgetStore.tableSeparatorPosition}
                     onChange={this.onTableResize}
                 >
                     <Pane className={"catalog-overlay-column-header-container"}>
@@ -848,7 +853,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
                             </tbody>
                         </table>
                     </div>
-                    <div className="bp3-dialog-footer-actions">
+                    <div className="bp3-dialog-footer-action">
                         <Select
                             className="catalog-type-button" 
                             filterable={false}
@@ -901,6 +906,8 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
                             updateValueOnKeyDown={true}
                             disabled={disable}
                         />
+                    </div>
+                    <div className="bp3-dialog-footer-button">
                         <Tooltip content={"Apply filter"}>
                         <AnchorButton
                             intent={Intent.PRIMARY}
