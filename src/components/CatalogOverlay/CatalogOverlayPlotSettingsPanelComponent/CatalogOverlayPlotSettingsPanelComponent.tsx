@@ -1,5 +1,5 @@
 import {observer} from "mobx-react";
-import {computed, autorun} from "mobx";
+import {action, autorun, computed, observable} from "mobx";
 import * as React from "react";
 import {Button, FormGroup, NumericInput, NonIdealState, MenuItem, PopoverPosition, Icon} from "@blueprintjs/core";
 import {Select, IItemRendererProps} from "@blueprintjs/select";
@@ -38,6 +38,9 @@ const hexagon2 = <path d="M 3 8 L 5.5 3.67 L 10.5 3.67 L 13 8 L 10.5 12.33 L 5.5
 
 @observer
 export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<WidgetProps> {
+    @observable catalogFileId: number;
+
+    private catalogFileNames: Map<number, string>;
 
     public static get WIDGET_CONFIG(): WidgetConfig {
         return {
@@ -57,25 +60,26 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
 
     @computed get widgetStore(): CatalogWidgetStore {
         const catalogStore = CatalogStore.Instance;
-        const catalogFileId = catalogStore.catalogProfiles.get(this.props.id);
-        const catalogWidgetStoreId = catalogStore.catalogWidgets.get(catalogFileId);
+        // const catalogFileId = catalogStore.catalogProfiles.get(this.props.id);
+        const catalogWidgetStoreId = catalogStore.catalogWidgets.get(this.catalogFileId);
         return WidgetsStore.Instance.catalogWidgets.get(catalogWidgetStoreId);
     }
 
     constructor(props: WidgetProps) {
         super(props);
         const appStore = AppStore.Instance;
+        this.catalogFileNames = new Map<number, string>();
         autorun(() => {
             const catalogStore = CatalogStore.Instance;
-            const catalogFileId = catalogStore.catalogProfiles.get(this.props.id);
-            const catalogWidgetStoreId = catalogStore.catalogWidgets.get(catalogFileId);
+            this.catalogFileId = catalogStore.catalogProfiles.get(this.props.id);
+            const catalogWidgetStoreId = catalogStore.catalogWidgets.get(this.catalogFileId);
             const activeFiles = catalogStore.activeCatalogFiles;
             if (!catalogWidgetStoreId) {
-                WidgetsStore.Instance.addCatalogWidget(catalogFileId);
+                WidgetsStore.Instance.addCatalogWidget(this.catalogFileId);
             }
 
-            if (activeFiles?.includes(catalogFileId)) {
-                const fileName = catalogStore.getCatalogFileNames([catalogFileId]).get(catalogFileId);
+            if (activeFiles?.includes(this.catalogFileId)) {
+                const fileName = catalogStore.getCatalogFileNames([this.catalogFileId]).get(this.catalogFileId);
                 if (fileName) {
                     appStore.widgetsStore.setWidgetTitle(this.props.floatingSettingsId, `Catalog Settings: ${fileName}`);
                 }
@@ -83,6 +87,23 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
                 appStore.widgetsStore.setWidgetTitle(this.props.floatingSettingsId, `Catalog Settings`);
             }
         });
+    }
+
+    @action handleCatalogFileChange = (fileId: number) => {
+        CatalogStore.Instance.catalogProfiles.set(this.props.id, fileId);
+    }
+
+    private renderFileIdPopOver = (fileId: number, itemProps: IItemRendererProps) => {
+        const fileName = this.catalogFileNames.get(fileId);
+        let text = `${fileId}: ${fileName}`;
+        return (
+            <MenuItem
+                key={fileId}
+                text={text}
+                onClick={itemProps.handleClick}
+                active={itemProps.modifiers.active}
+            />
+        );
     }
 
     private renderShapePopOver = (shape: CatalogOverlayShape, itemProps: IItemRendererProps) => {
@@ -145,8 +166,27 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
 
         const tableSeparatorPosition = (100 - parseInt(widgetStore.tableSeparatorPosition));
 
+        let catalogFileItems = [];
+        catalogFileIds.forEach((value) => {
+            catalogFileItems.push(value);
+        });
+        this.catalogFileNames = CatalogStore.Instance.getCatalogFileNames(catalogFileIds);
+
         return (
             <div className="catalog-overlay-plot-settings">
+                 <FormGroup  inline={true} label="File">
+                    <Select 
+                        className="bp3-fill"
+                        filterable={false}
+                        items={catalogFileItems} 
+                        activeItem={this.catalogFileId}
+                        onItemSelect={this.handleCatalogFileChange}
+                        itemRenderer={this.renderFileIdPopOver}
+                        popoverProps={{popoverClassName: "catalog-select", minimal: true , position: PopoverPosition.AUTO_END}}
+                    >
+                        <Button text={this.catalogFileId} rightIcon="double-caret-vertical"/>
+                    </Select>
+                </FormGroup>
                 <FormGroup label={"Color"} inline={true}>
                     <ColorPickerComponent
                         color={widgetStore.catalogColor}
