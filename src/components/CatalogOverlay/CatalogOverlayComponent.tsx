@@ -916,7 +916,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
                             disabled={disable || !profileStore.updateTableView}
                         />
                         </Tooltip>
-                        <Tooltip content={"Reset table view and remove catalog overlay"}>
+                        <Tooltip content={"Reset view"}>
                         <AnchorButton
                             intent={Intent.PRIMARY}
                             text="Reset"

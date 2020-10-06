@@ -1,20 +1,28 @@
-.catalog-overlay-plot-settings{
+.catalog-settings{
     margin: 20px;
+
+    .bp3-tab-panel {
+        height: 25em;
+        overflow: auto;
+        width: 100%;
+	user-select: none;
+    }
+
+    .bp3-tab-list {
+        width: 10em;
+    }
+
+    .bp3-numeric-input input {
+        width: 100px ! important;
+    }
 
     .bp3-form-group {
         &:first-of-type {
             margin-left: 0px;
         }
-    }
-
-    .bp3-form-group .bp3-label {
-        width: 8em;
-        text-align: left;
-    }
-
-    .bp3-numeric-input {
-        .bp3-input-group {
-            width: 60px;
+        .bp3-label {
+            width: 8em;
+            text-align: right;
         }
     }
 }

@@ -66,7 +66,6 @@ export class CatalogProfileStore {
         [CatalogSystemType.Pixel1, "PIX1"]
     ]);
     private static readonly DataChunkSize = 50;
-    private static readonly InitDisplayedColumnSize = 10;
     // Number.NEGATIVE_INFINITY -1.797693134862316E+308
     private static readonly NEGATIVE_INFINITY = -1.7976931348623157e+308;
     private static readonly POSITIVE_INFINITY = 1.7976931348623157e+308;
@@ -332,7 +331,7 @@ export class CatalogProfileStore {
             for (let index = 0; index < catalogHeader.length; index++) {
                 const header = catalogHeader[index];
                 let display = false;
-                if (index < CatalogProfileStore.InitDisplayedColumnSize) {
+                if (index < CatalogStore.Instance.initDisplayedColumnSize) {
                     display = true;
                 }
                 let controlHeader: ControlHeader = {columnIndex: header.columnIndex, dataIndex: index, display: display, filter: "", columnWidth: null};
