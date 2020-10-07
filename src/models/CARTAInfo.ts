@@ -1,6 +1,6 @@
 export const CARTA_INFO = {
     acronym: "CARTA",
-    version: "1.4.0-alpha.6",
-    date: "20200813",
+    version: "2.0.0-dev.1",
+    date: "20201007",
     fullName: "Cube Analysis and Rendering Tool for Astronomy"
 };
