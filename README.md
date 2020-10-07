@@ -1,37 +1,44 @@
-# CARTA Frontend
+This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
 
-## Prerequisites
-The build process relies heavily on `npm` and `nodejs`, so make sure they are installed and accessible.
-We recommend using [Docker](https://www.docker.com) or [Singularity](https://singularity.lbl.gov/index.html) to perform WebAssembly compilation. If neither is available, the Emscripten compiler (`emcc` version 1.39.18 recommended) needs to be available in the build environment. Installation instructions are available on the [Emscripten homepage](https://emscripten.org/docs/getting_started/downloads.html).
+## Available Scripts
 
-## Build process (using Docker/Singularity)
-Initialise submodules and install package dependencies:
-```
-git submodule init
-git submodule update
-npm install
-```
+In the project directory, you can run:
 
-WebAssembly libraries can be built with `npm run build-libs-docker` or `npm run build-libs-singularity`.
-Additional build steps (building WebAssembly wrappers, protocol buffer modules and compiling the Typescript code) are performed by `npm run build-docker` or `npm run build-singularity`. This produces a production build in the `build` folder.
+### `npm start`
 
-To run a development build server, simply run `npm run start`. 
+Runs the app in the development mode.<br />
+Open [http://localhost:3000](http://localhost:3000) to view it in the browser.
 
-## Build process (without Docker/Singularity)
-If your build environment does not have access to Docker or Singularity, WebAssembly compilation must be performed in an environment with access to the Emscripten compiler. 
+The page will reload if you make edits.<br />
+You will also see any lint errors in the console.
 
-Initialise submodules and install package dependencies:
-```
-git submodule init
-git submodule update
-npm install
-```
+### `npm test`
 
-WebAssembly libraries can be built with `npm run build-libs`.
-Additional build steps (building WebAssembly wrappers, protocol buffer modules and compiling the Typescript code) are performed by `npm run build`. This produces a production build in the `build` folder.
+Launches the test runner in the interactive watch mode.<br />
+See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
 
-To run a development build server, simply run `npm run start`. 
+### `npm run build`
 
+Builds the app for production to the `build` folder.<br />
+It correctly bundles React in production mode and optimizes the build for the best performance.
 
-[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.3377984.svg)](https://doi.org/10.5281/zenodo.3377984)
+The build is minified and the filenames include the hashes.<br />
+Your app is ready to be deployed!
 
+See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+
+### `npm run eject`
+
+**Note: this is a one-way operation. Once you `eject`, you can’t go back!**
+
+If you aren’t satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+
+Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you’re on your own.
+
+You don’t have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn’t feel obligated to use this feature. However we understand that this tool wouldn’t be useful if you couldn’t customize it when you are ready for it.
+
+## Learn More
+
+You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+
+To learn React, check out the [React documentation](https://reactjs.org/).

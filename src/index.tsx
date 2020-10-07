@@ -5,11 +5,8 @@ import {FocusStyleManager} from "@blueprintjs/core";
 import {App} from "./App";
 import {ApiService} from "./services";
 
-import {unregister} from "./registerServiceWorker";
-import "./index.css";
-import "@blueprintjs/core/lib/css/blueprint.css";
+import "./index.scss";
 import "@blueprintjs/icons/lib/css/blueprint-icons.css";
-import "@blueprintjs/table/lib/css/table.css";
 
 // Pre-load static assets
 import allMaps from "./static/allmaps.png";
@@ -58,5 +55,3 @@ async function fetchConfig() {
 fetchConfig().then(() => {
     console.log("Configuration complete. Rendering frontend");
 });
-// remove service worker if it exists
-unregister();

@@ -2,10 +2,10 @@ import * as React from "react";
 import * as _ from "lodash";
 import {observer} from "mobx-react";
 import {observable} from "mobx";
-import * as tinycolor from "tinycolor2";
+import tinycolor from "tinycolor2";
 import {SketchPicker, ColorResult, RGBColor} from "react-color";
 import {Button, Popover, PopoverPosition} from "@blueprintjs/core";
-import "./ColorPickerComponent.css";
+import "./ColorPickerComponent.scss";
 
 interface ColorPickerComponentProps {
     color: string | RGBColor;

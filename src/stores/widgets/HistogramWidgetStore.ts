@@ -3,7 +3,7 @@ import {CARTA} from "carta-protobuf";
 import {Colors} from "@blueprintjs/core";
 import {PlotType, LineSettings} from "components/Shared";
 import {RegionWidgetStore, RegionsType} from "./RegionWidgetStore";
-import * as tinycolor from "tinycolor2";
+import tinycolor from "tinycolor2";
 
 export class HistogramWidgetStore extends RegionWidgetStore {
     @observable minX: number;

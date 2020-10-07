@@ -4,7 +4,7 @@ import {FormGroup, Switch, NumericInput, Button, HTMLSelect} from "@blueprintjs/
 import {ColorResult} from "react-color";
 import {ColorPickerComponent, PlotTypeSelectorComponent, PlotType, SafeNumericInput} from "components/Shared";
 import {SWATCH_COLORS} from "utilities";
-import "./LinePlotSettingsPanelComponent.css";
+import "./LinePlotSettingsPanelComponent.scss";
 
 export class LinePlotSettingsPanelComponentProps {
     darkMode: boolean;

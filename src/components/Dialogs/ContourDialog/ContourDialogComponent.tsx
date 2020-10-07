@@ -13,7 +13,7 @@ import {RenderConfigWidgetStore} from "stores/widgets";
 import {Point2D} from "models";
 import {clamp, toExponential, toFixed} from "utilities";
 import {CustomIcon} from "icons/CustomIcons";
-import "./ContourDialogComponent.css";
+import "./ContourDialogComponent.scss";
 
 enum ContourDialogTabs {
     Levels,

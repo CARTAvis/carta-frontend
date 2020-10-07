@@ -1,19 +1,23 @@
 import * as React from "react";
-import "./ProfilerInfoComponent.css";
+import "./ProfilerInfoComponent.scss";
 
 interface ProfilerInfoComponentProps {
     info: string[];
 }
 
 export const ProfilerInfoComponent: React.FC<ProfilerInfoComponentProps> = (props) => {
-    let infoString = "";
-    props.info?.forEach((info, index) => {
-        infoString = index === 0 ? info : (infoString + ", " + info);
-    });
+    let infoTags = null;
+    if (props.info && props.info.length > 0) {
+        infoTags = props.info.map((infoString, index) => <tr key={index}><td><pre>{infoString}</pre></td></tr>);
+    }
 
     return (
         <div className="profiler-info">
-            <pre>{infoString}</pre>
+            <table className="info-display">
+                <tbody>
+                    {infoTags}
+                </tbody>
+            </table>
         </div>
     );
 };

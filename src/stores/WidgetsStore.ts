@@ -1,6 +1,5 @@
 import * as GoldenLayout from "golden-layout";
-import * as $ from "jquery";
-import {CARTA} from "carta-protobuf";
+import $ from "jquery";
 import {action, computed, observable, values} from "mobx";
 import {
     AnimatorComponent,

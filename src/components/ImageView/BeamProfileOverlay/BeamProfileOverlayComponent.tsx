@@ -4,7 +4,7 @@ import {Ellipse, Group, Layer, Line, Stage} from "react-konva";
 import {Colors} from "@blueprintjs/core";
 import {AppStore, BeamType, FrameStore} from "stores";
 import { Point2D } from "models";
-import "./BeamProfileOverlayComponent.css";
+import "./BeamProfileOverlayComponent.scss";
 
 interface BeamProfileOverlayComponentProps {
     docked: boolean;

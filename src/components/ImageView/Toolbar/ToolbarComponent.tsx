@@ -6,7 +6,7 @@ import {CARTA} from "carta-protobuf";
 import {AppStore, OverlayStore, PreferenceStore, RegionMode, SystemType} from "stores";
 import {ImageViewLayer} from "../ImageViewComponent";
 import {toFixed} from "utilities";
-import "./ToolbarComponent.css";
+import "./ToolbarComponent.scss";
 
 export class ToolbarComponentProps {
     docked: boolean;

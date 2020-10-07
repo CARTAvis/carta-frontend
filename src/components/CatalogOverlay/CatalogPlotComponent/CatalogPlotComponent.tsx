@@ -13,7 +13,7 @@ import {CatalogPlotWidgetStore, Border, DragMode, XBorder, CatalogPlotWidgetStor
 import {ProfilerInfoComponent, ClearableNumericInputComponent} from "components/Shared";
 import {Colors} from "@blueprintjs/core";
 import {toFixed, minMaxArray} from "utilities";
-import "./CatalogPlotComponent.css";
+import "./CatalogPlotComponent.scss";
 
 @observer
 export class CatalogPlotComponent extends React.Component<WidgetProps> {

@@ -8,7 +8,7 @@ import {AppStore, BrowserMode, PreferenceKeys} from "stores";
 import {ApiService, ConnectionStatus} from "services";
 import {toFixed} from "utilities";
 import {CustomIcon} from "icons/CustomIcons";
-import "./RootMenuComponent.css";
+import "./RootMenuComponent.scss";
 
 @observer
 export class RootMenuComponent extends React.Component {

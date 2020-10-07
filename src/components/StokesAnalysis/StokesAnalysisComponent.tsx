@@ -14,7 +14,7 @@ import {AnimationState, SpectralProfileStore, WidgetConfig, WidgetProps, HelpTyp
 import {StokesAnalysisWidgetStore, StokesCoordinate} from "stores/widgets";
 import {Point2D} from "models";
 import {clamp, normalising, polarizationAngle, polarizedIntensity, binarySearchByX, closestPointIndexToCursor, toFixed, toExponential, minMaxPointArrayZ, formattedNotation, minMaxArray} from "utilities";
-import "./StokesAnalysisComponent.css";
+import "./StokesAnalysisComponent.scss";
 
 type Border = { xMin: number, xMax: number, yMin: number, yMax: number };
 type Point3D = { x: number, y: number, z?: number };

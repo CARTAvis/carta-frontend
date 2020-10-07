@@ -1,6 +1,6 @@
 import * as React from "react";
 import * as AST from "ast_wrapper";
-import * as tinycolor from "tinycolor2";
+import tinycolor from "tinycolor2";
 import {observer} from "mobx-react";
 import {observable} from "mobx";
 import {Select, ItemRenderer} from "@blueprintjs/select";
@@ -14,7 +14,7 @@ import {ColorResult} from "react-color";
 import {ColorPickerComponent, SafeNumericInput} from "components/Shared";
 import {AppStore, BeamType, LabelType, SystemType, HelpType, DialogStore, NumberFormatType, NUMBER_FORMAT_LABEL, WidgetConfig, WidgetProps} from "stores";
 import { SWATCH_COLORS} from "utilities";
-import "./ImageViewSettingsPanelComponent.css";
+import "./ImageViewSettingsPanelComponent.scss";
 
 // Font selector
 export class Font {

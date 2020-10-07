@@ -5,7 +5,6 @@ import {Point2D, WCSPoint2D} from "models";
 import {BackendService} from "services";
 import {add2D, getApproximateEllipsePoints, getApproximatePolygonPoints, isAstBadPoint, midpoint2D, minMax2D, rotate2D, scale2D, simplePolygonPointTest, simplePolygonTest, subtract2D, toFixed, transformPoint} from "utilities";
 import {FrameStore, AppStore, SystemType, WCS_PRECISION} from "stores";
-import RegionType = CARTA.RegionType;
 import {getFormattedWCSPoint, formattedArcsec} from "utilities";
 
 export const CURSOR_REGION_ID = 0;
@@ -211,12 +210,12 @@ export class RegionStore {
     public getRegionApproximation(astTransform: number): Point2D[] {
         let approximatePoints = this.regionApproximationMap.get(astTransform);
         if (!approximatePoints) {
-            if (this.regionType === RegionType.POINT) {
+            if (this.regionType === CARTA.RegionType.POINT) {
                 approximatePoints = [transformPoint(astTransform, this.center, false)];
             }
-            if (this.regionType === RegionType.ELLIPSE) {
+            if (this.regionType === CARTA.RegionType.ELLIPSE) {
                 approximatePoints = getApproximateEllipsePoints(astTransform, this.center, this.controlPoints[1].y, this.controlPoints[1].x, this.rotation, RegionStore.TARGET_VERTEX_COUNT);
-            } else if (this.regionType === RegionType.RECTANGLE) {
+            } else if (this.regionType === CARTA.RegionType.RECTANGLE) {
                 let halfWidth = this.controlPoints[1].x / 2;
                 let halfHeight = this.controlPoints[1].y / 2;
                 const rotation = this.rotation * Math.PI / 180.0;

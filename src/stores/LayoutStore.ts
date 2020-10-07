@@ -106,6 +106,8 @@ export class LayoutStore {
         // use component configs to init widget stores, IDs in componentConfigs will be updated
         appStore.widgetsStore.initWidgets(dockedComponentConfigs, config.floating);
         // generate new layout config & apply
+        // Does this work?
+        // @ts-ignore
         this.dockedLayout = new GoldenLayout({
             settings: {
                 showPopoutIcon: false,

@@ -3,15 +3,15 @@ import {MenuItem, IPopoverProps, Button} from "@blueprintjs/core";
 import {Select} from "@blueprintjs/select";
 import {RenderConfigStore} from "stores/RenderConfigStore";
 
+// Static assets
+import allMaps from "static/allmaps.png";
+
 interface ColormapComponentProps {
     selectedItem: string;
     inverted: boolean;
     disabled?: boolean;
     onItemSelect: (selected: string) => void;
 }
-
-// Static assets
-import allMaps from "static/allmaps.png";
 
 const ColorMapSelect = Select.ofType<string>();
 const COLORMAP_POPOVER_PROPS: Partial<IPopoverProps> = {minimal: true, position: "auto-end", popoverClassName: "colormap-select-popover"};

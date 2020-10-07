@@ -13,8 +13,8 @@ import {CatalogOverlayPlotSettingsComponent} from "./CatalogOverlayPlotSettingsC
 import {AppStore, CatalogStore, CatalogProfileStore, CatalogOverlay, CatalogCoordinate, CatalogUpdateMode, CatalogSystemType, HelpType, WidgetConfig, WidgetProps, WidgetsStore} from "stores";
 import {CatalogWidgetStore, CatalogPlotWidgetStoreProps, CatalogPlotType} from "stores/widgets";
 import {toFixed} from "utilities";
-import {ProcessedColumnData} from "../../models";
-import "./CatalogOverlayComponent.css";
+import {ProcessedColumnData} from "models";
+import "./CatalogOverlayComponent.scss";
 
 enum HeaderTableColumnName {
     Name = "Name",

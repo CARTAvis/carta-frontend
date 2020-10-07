@@ -20,7 +20,7 @@ import {
 import {RegionCreationMode} from "models";
 import {CustomIcon} from "icons/CustomIcons";
 import {CARTA} from "carta-protobuf";
-import "./ToolbarMenuComponent.css";
+import "./ToolbarMenuComponent.scss";
 
 @observer
 export class ToolbarMenuComponent extends React.Component {

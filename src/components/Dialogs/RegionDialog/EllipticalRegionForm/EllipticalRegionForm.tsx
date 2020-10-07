@@ -7,7 +7,7 @@ import {AppStore, FrameStore, RegionCoordinate, RegionStore, NUMBER_FORMAT_LABEL
 import {Point2D, WCSPoint2D} from "models";
 import {closeTo, formattedArcsec, getFormattedWCSPoint, getPixelValueFromWCS, getValueFromArcsecString, isWCSStringFormatValid} from "utilities";
 import {CoordinateComponent} from "../CoordinateComponent/CoordinateComponent";
-import "./EllipticalRegionForm.css";
+import "./EllipticalRegionForm.scss";
 
 const KEYCODE_ENTER = 13;
 

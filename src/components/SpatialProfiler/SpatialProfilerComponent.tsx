@@ -11,7 +11,7 @@ import {AppStore, ASTSettingsString, FrameStore, HelpType, OverlayStore, Spatial
 import {SpatialProfileWidgetStore} from "stores/widgets";
 import {Point2D} from "models";
 import {binarySearchByX, clamp, formattedExponential, formattedNotation, transformPoint, toFixed} from "utilities";
-import "./SpatialProfilerComponent.css";
+import "./SpatialProfilerComponent.scss";
 
 // The fixed size of the settings panel popover (excluding the show/hide button)
 const AUTOSCALE_THROTTLE_TIME = 100;
@@ -350,7 +350,7 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
                 }
             }
             if (this.widgetStore.meanRmsVisible) {
-                profilerInfo.push(`Mean/RMS: ${formattedExponential(this.plotData.yMean, 2) + " / " + formattedExponential(this.plotData.yRms, 2)}`);
+                profilerInfo.push(`Mean/RMS: ${formattedNotation(this.plotData.yMean) + " / " + formattedNotation(this.plotData.yRms)}`);
             }
         }
         return profilerInfo;

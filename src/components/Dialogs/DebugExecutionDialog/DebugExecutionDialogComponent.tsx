@@ -5,7 +5,7 @@ import {AnchorButton, Classes, EditableText, IDialogProps, Intent} from "@bluepr
 import {DraggableDialogComponent} from "components/Dialogs";
 import {ExecutionEntry, ScriptingService} from "services";
 import {AppStore} from "stores";
-import "./DebugExecutionDialogComponent.css";
+import "./DebugExecutionDialogComponent.scss";
 
 @observer
 export class DebugExecutionDialogComponent extends React.Component {

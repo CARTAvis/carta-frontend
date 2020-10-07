@@ -2,7 +2,7 @@ import * as React from "react";
 import * as AST from "ast_wrapper";
 import {MenuItem, Button, IPopoverProps} from "@blueprintjs/core";
 import {Select} from "@blueprintjs/select";
-import "./ColorComponent.css";
+import "./ColorComponent.scss";
 
 interface ColorComponentProps {
     selectedItem: number;

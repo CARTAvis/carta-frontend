@@ -10,10 +10,11 @@ import {ChartArea} from "chart.js";
 import {PlotContainerComponent, TickType, MultiPlotProps} from "components/Shared/LinePlot/PlotContainer/PlotContainerComponent";
 import {ToolbarComponent} from "components/Shared/LinePlot/Toolbar/ToolbarComponent";
 import {ZoomMode, InteractionMode} from "components/Shared/LinePlot/LinePlotComponent";
+import { PlotType } from "../PlotTypeSelector/PlotTypeSelectorComponent";
 import {Point2D} from "models";
 import {clamp, toExponential} from "utilities";
-import "./ScatterPlotComponent.css";
-import { PlotType } from "../PlotTypeSelector/PlotTypeSelectorComponent";
+import "./ScatterPlotComponent.scss";
+
 
 type Point3D = { x: number, y: number, z?: number };
 

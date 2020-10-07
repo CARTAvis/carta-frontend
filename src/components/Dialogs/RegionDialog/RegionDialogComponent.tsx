@@ -10,7 +10,7 @@ import {EllipticalRegionForm} from "./EllipticalRegionForm/EllipticalRegionForm"
 import {AppearanceForm} from "./AppearanceForm/AppearanceForm";
 import {PolygonRegionForm} from "./PolygonRegionForm/PolygonRegionForm";
 import {CustomIcon} from "icons/CustomIcons";
-import "./RegionDialogComponent.css";
+import "./RegionDialogComponent.scss";
 
 @observer
 export class RegionDialogComponent extends React.Component {

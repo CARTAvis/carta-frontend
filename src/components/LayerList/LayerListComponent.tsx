@@ -7,7 +7,7 @@ import {Cell, Column, ColumnHeaderCell, RowHeaderCell, SelectionModes, Table} fr
 import {IMenuContext} from "@blueprintjs/table/src/interactions/menus/menuContext";
 import ReactResizeDetector from "react-resize-detector";
 import {WidgetConfig, WidgetProps, HelpType, AppStore, FrameStore, CatalogStore} from "stores";
-import "./LayerListComponent.css";
+import "./LayerListComponent.scss";
 
 @observer
 export class LayerListComponent extends React.Component<WidgetProps> {

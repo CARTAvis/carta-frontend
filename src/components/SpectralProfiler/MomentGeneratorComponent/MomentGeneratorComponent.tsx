@@ -9,7 +9,7 @@ import {SafeNumericInput, SpectralSettingsComponent} from "components/Shared";
 import {MomentSelectingMode, SpectralProfileWidgetStore, RegionId} from "stores/widgets";
 import {AnimationState, AppStore} from "stores";
 import {MOMENT_TEXT} from "models";
-import "./MomentGeneratorComponent.css";
+import "./MomentGeneratorComponent.scss";
 
 const MomentMultiSelect = MultiSelect.ofType<CARTA.Moment>();
 

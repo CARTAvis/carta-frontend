@@ -21,12 +21,11 @@
     .profile-container {
         flex: 3 3 auto;
         min-width: 0;
-        .profile-toolbar {
-            height: 42px;
-        }
+        padding-bottom: 5px;
+        margin-right: 5px;
 
         .profile-plot {
-            height: calc(100% - 57px);
+            height: calc(100% - 35px);
             position: relative;
         }
     }

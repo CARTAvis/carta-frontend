@@ -3,7 +3,7 @@ import * as React from "react";
 import {AppStore, ContourDashMode, FrameStore, OverlayStore, RenderConfigStore} from "stores";
 import {ceilToPower, GL, rotate2D, scale2D, subtract2D} from "utilities";
 import {ContourWebGLService} from "services";
-import "./ContourViewComponent.css";
+import "./ContourViewComponent.scss";
 
 export interface ContourViewComponentProps {
     docked: boolean;

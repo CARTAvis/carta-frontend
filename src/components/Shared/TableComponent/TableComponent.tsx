@@ -7,7 +7,7 @@ import {IRowIndices} from "@blueprintjs/table/lib/esm/common/grid";
 import {CARTA} from "carta-protobuf";
 import {ControlHeader} from "stores";
 import {ProcessedColumnData} from "models";
-import "./TableComponent.css";
+import "./TableComponent.scss";
 
 export type ColumnFilter = { index: number, columnFilter: string };
 

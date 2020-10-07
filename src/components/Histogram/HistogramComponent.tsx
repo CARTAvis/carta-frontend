@@ -12,7 +12,7 @@ import {HistogramWidgetStore} from "stores/widgets";
 import {FrameStore, WidgetConfig, WidgetProps, HelpType, WidgetsStore, AppStore} from "stores";
 import {clamp} from "utilities";
 import {Point2D} from "models";
-import "./HistogramComponent.css";
+import "./HistogramComponent.scss";
 
 @observer
 export class HistogramComponent extends React.Component<WidgetProps> {

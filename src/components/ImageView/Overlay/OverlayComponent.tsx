@@ -4,7 +4,7 @@ import * as _ from "lodash";
 import {observer} from "mobx-react";
 import {FrameStore, OverlayStore} from "stores";
 import {CursorInfo} from "models";
-import "./OverlayComponent.css";
+import "./OverlayComponent.scss";
 
 export class OverlayComponentProps {
     overlaySettings: OverlayStore;

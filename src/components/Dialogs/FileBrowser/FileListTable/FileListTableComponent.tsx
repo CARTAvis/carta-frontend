@@ -5,12 +5,12 @@ import {Cell, Column, ColumnHeaderCell, Regions, RenderMode, SelectionModes, Tab
 import {IRegion} from "@blueprintjs/table/src/regions";
 import {Icon, Label, NonIdealState} from "@blueprintjs/core";
 import globToRegExp from "glob-to-regexp";
-import * as moment from "moment";
+import moment from "moment"
 import FuzzySearch from "fuzzy-search";
 import {CARTA} from "carta-protobuf";
 import {BrowserMode, FileFilteringType} from "stores";
 import {toFixed} from "utilities";
-import "./FileListTableComponent.css";
+import "./FileListTableComponent.scss";
 
 interface FileEntry {
     filename: string;

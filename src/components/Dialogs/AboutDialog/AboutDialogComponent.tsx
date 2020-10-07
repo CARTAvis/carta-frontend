@@ -4,7 +4,7 @@ import {AnchorButton, Classes, IDialogProps, Intent} from "@blueprintjs/core";
 import {DraggableDialogComponent} from "components/Dialogs";
 import {DialogStore} from "stores";
 import {CARTA_INFO} from "models";
-import "./AboutDialogComponent.css";
+import "./AboutDialogComponent.scss";
 import * as logoPng from "static/carta_logo.png";
 
 @observer

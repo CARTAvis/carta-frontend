@@ -1,6 +1,6 @@
 import * as React from "react";
 import * as _ from "lodash";
-import * as tinycolor from "tinycolor2";
+import tinycolor from "tinycolor2";
 import {ChartArea, ChartDataSets, ChartOptions} from "chart.js";
 import {Scatter} from "react-chartjs-2";
 import {Colors} from "@blueprintjs/core";

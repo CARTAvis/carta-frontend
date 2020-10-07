@@ -138,7 +138,7 @@ export class AppStore {
 
     @action connectToServer = (socketName: string = "socket") => {
         // Remove query parameters, replace protocol and remove trailing /
-        const baseUrl = location.href.replace(location.search, "").replace(/^http/, "ws").replace(/\/$/, "");
+        const baseUrl = window.location.href.replace(window.location.search, "").replace(/^http/, "ws").replace(/\/$/, "");
         let wsURL = `${baseUrl}/${socketName}`;
         if (process.env.NODE_ENV === "development") {
             wsURL = process.env.REACT_APP_DEFAULT_ADDRESS ? process.env.REACT_APP_DEFAULT_ADDRESS : wsURL;

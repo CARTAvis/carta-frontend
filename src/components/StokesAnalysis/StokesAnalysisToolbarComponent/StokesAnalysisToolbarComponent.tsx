@@ -5,7 +5,7 @@ import {AppStore, FrameStore} from "stores";
 import {StokesAnalysisWidgetStore} from "stores/widgets";
 import {StokesAnalysisComponent, RegionSelectorComponent, StokesAnalysisSettingsTabs} from "components";
 import {CustomIcon} from "icons/CustomIcons";
-import "./StokesAnalysisToolbarComponent.css";
+import "./StokesAnalysisToolbarComponent.scss";
 
 @observer
 export class StokesAnalysisToolbarComponent extends React.Component<{widgetStore: StokesAnalysisWidgetStore, id: string}> {

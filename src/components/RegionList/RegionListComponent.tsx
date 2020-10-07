@@ -7,7 +7,7 @@ import {CARTA} from "carta-protobuf";
 import {RegionStore, WidgetConfig, WidgetProps, HelpType, DialogStore, AppStore, FrameStore, WCS_PRECISION} from "stores";
 import {toFixed, getFormattedWCSPoint, formattedArcsec} from "utilities";
 import {CustomIcon} from "icons/CustomIcons";
-import "./RegionListComponent.css";
+import "./RegionListComponent.scss";
 
 @observer
 export class RegionListComponent extends React.Component<WidgetProps> {

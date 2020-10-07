@@ -7,7 +7,7 @@ import {AppStore, RegionCoordinate, RegionStore, NUMBER_FORMAT_LABEL} from "stor
 import {Point2D, WCSPoint2D} from "models";
 import {closeTo, getFormattedWCSPoint, getPixelValueFromWCS, isWCSStringFormatValid} from "utilities";
 import {CoordinateComponent} from "../CoordinateComponent/CoordinateComponent";
-import "./PolygonRegionForm.css";
+import "./PolygonRegionForm.scss";
 
 const KEYCODE_ENTER = 13;
 

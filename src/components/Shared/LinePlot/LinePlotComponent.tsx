@@ -13,7 +13,7 @@ import {StokesCoordinate} from "stores/widgets/StokesAnalysisWidgetStore";
 import {Point2D} from "models";
 import {clamp, toExponential} from "utilities";
 import {PlotType} from "components/Shared";
-import "./LinePlotComponent.css";
+import "./LinePlotComponent.scss";
 
 export enum ZoomMode {
     NONE,
