@@ -1,7 +1,7 @@
 import * as React from "react";
 import $ from "jquery";
 import {observer} from "mobx-react";
-import {autorun, observable, action} from "mobx";
+import {autorun, observable} from "mobx";
 import {NonIdealState, Spinner, Tag} from "@blueprintjs/core";
 import ReactResizeDetector from "react-resize-detector";
 import {OverlayComponent} from "./Overlay/OverlayComponent";

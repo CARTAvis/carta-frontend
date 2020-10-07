@@ -14,7 +14,6 @@ export class DebugExecutionDialogComponent extends React.Component {
     @observable errorString: string = "";
 
     @computed get executionEntries() {
-        const appStore = AppStore.Instance;
         let entries = this.inputString.split("\n");
         let executionStrings = new Array<ExecutionEntry>();
 

@@ -27,8 +27,6 @@ export class StokesAnalysisToolbarComponent extends React.Component<{widgetStore
 
     public render() {
         const widgetStore = this.props.widgetStore;
-        const frame = AppStore.Instance.activeFrame;
-
         let enableFractionalPol = false;
         if (widgetStore.effectiveFrame && widgetStore.effectiveFrame.regionSet) {
             enableFractionalPol = widgetStore.effectiveFrame.frameInfo.fileInfoExtended.stokes > 1;

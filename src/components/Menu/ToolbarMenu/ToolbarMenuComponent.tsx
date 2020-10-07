@@ -1,6 +1,6 @@
 import * as React from "react";
 import {observer} from "mobx-react";
-import {Button, ButtonGroup, Icon, Tooltip, AnchorButton} from "@blueprintjs/core";
+import {Button, ButtonGroup, Tooltip, AnchorButton} from "@blueprintjs/core";
 import {AppStore, WidgetConfig, RegionMode} from "stores";
 import {
     AnimatorComponent,

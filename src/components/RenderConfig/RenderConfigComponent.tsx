@@ -9,7 +9,7 @@ import {ColormapConfigComponent} from "./ColormapConfigComponent/ColormapConfigC
 import {LinePlotComponent, LinePlotComponentProps, ProfilerInfoComponent} from "components/Shared";
 import {TaskProgressDialogComponent} from "components/Dialogs";
 import {RenderConfigWidgetStore} from "stores/widgets";
-import {AnimationState, FrameStore, RenderConfigStore, WidgetConfig, WidgetProps, HelpType, AlertStore, LogStore, AppStore, AnimatorStore, WidgetsStore} from "stores";
+import {AnimationState, FrameStore, RenderConfigStore, WidgetConfig, WidgetProps, HelpType, AppStore, AnimatorStore, WidgetsStore} from "stores";
 import {Point2D} from "models";
 import {clamp, toExponential, toFixed} from "utilities";
 import "./RenderConfigComponent.scss";
@@ -356,7 +356,6 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
         const percentileButtonCutoff = 600;
         const histogramCutoff = 430;
         const displayRankButtons = this.width > percentileButtonCutoff;
-        const stokes = frame.renderConfig.stokes;
         let percentileButtonsDiv, percentileSelectDiv;
         if (displayRankButtons) {
             const percentileRankButtons = RenderConfigStore.PERCENTILE_RANKS.map(rank => (

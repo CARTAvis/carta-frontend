@@ -262,6 +262,7 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
 
     render() {
         // dummy values to trigger React's componentDidUpdate()
+        /* eslint-disable @typescript-eslint/no-unused-vars */
         const appStore = AppStore.Instance;
         const frame = appStore.activeFrame;
         if (frame) {
@@ -285,6 +286,8 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
                 nanAlpha: appStore.preferenceStore.nanAlpha
             };
         }
+        /* eslint-enable @typescript-eslint/no-unused-vars */
+
         const padding = appStore.overlayStore.padding;
         let className = "raster-div";
         if (this.props.docked) {

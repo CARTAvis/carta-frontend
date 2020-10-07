@@ -1,6 +1,6 @@
 import {observer} from "mobx-react";
 import * as React from "react";
-import {AppStore, ContourDashMode, FrameStore, OverlayStore, RenderConfigStore} from "stores";
+import {AppStore, ContourDashMode, FrameStore, RenderConfigStore} from "stores";
 import {ceilToPower, GL, rotate2D, scale2D, subtract2D} from "utilities";
 import {ContourWebGLService} from "services";
 import "./ContourViewComponent.scss";
@@ -185,6 +185,7 @@ export class ContourViewComponent extends React.Component<ContourViewComponentPr
 
     render() {
         // dummy values to trigger React's componentDidUpdate()
+        /* eslint-disable @typescript-eslint/no-unused-vars */
         const appStore = AppStore.Instance;
         const baseFrame = appStore.activeFrame;
         if (baseFrame) {
@@ -203,6 +204,7 @@ export class ContourViewComponent extends React.Component<ContourViewComponentPr
                 const numVertices = contourStore.vertexCount;
             });
         }
+        /* eslint-enable @typescript-eslint/no-unused-vars */
 
         const padding = appStore.overlayStore.padding;
         let className = "contour-div";

@@ -1,5 +1,4 @@
 import * as React from "react";
-import {AppStore} from "stores";
 import {ImageComponent} from "./ImageComponent";
 import * as headPreferenceButton from "static/help/head_preference_button.png";
 import * as headPreferenceButton_d from "static/help/head_preference_button_d.png";

@@ -6,7 +6,7 @@ import {AnchorButton, Menu, MenuDivider, MenuItem, NonIdealState, Tooltip} from 
 import {Cell, Column, ColumnHeaderCell, RowHeaderCell, SelectionModes, Table} from "@blueprintjs/table";
 import {IMenuContext} from "@blueprintjs/table/src/interactions/menus/menuContext";
 import ReactResizeDetector from "react-resize-detector";
-import {WidgetConfig, WidgetProps, HelpType, AppStore, FrameStore, CatalogStore} from "stores";
+import {WidgetConfig, WidgetProps, HelpType, AppStore, FrameStore} from "stores";
 import "./LayerListComponent.scss";
 
 @observer
@@ -250,6 +250,7 @@ export class LayerListComponent extends React.Component<WidgetProps> {
 
         // This is a necessary hack in order to trigger a re-rendering when values change, because the cell renderer is in its own function
         // There is probably a neater way to do this, though
+        /* eslint-disable @typescript-eslint/no-unused-vars */
         const frameChannels = appStore.frameChannels;
         const frameStokes = appStore.frameStokes;
         const activeFrameIndex = appStore.activeFrameIndex;
@@ -258,7 +259,7 @@ export class LayerListComponent extends React.Component<WidgetProps> {
         const matchingTypes = appStore.frames.map(f => f.spatialReference && f.spectralReference);
         const currentSpectralReference = appStore.spectralReference;
         const currentSpatialReference = appStore.spatialReference;
-
+        /* eslint-enable @typescript-eslint/no-unused-vars */
         return (
             <div className="layer-list-widget">
                 {this.width > 0 &&

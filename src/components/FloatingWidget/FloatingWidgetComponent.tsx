@@ -96,10 +96,6 @@ export class FloatingWidgetComponent extends React.Component<FloatingWidgetCompo
         }
     }
 
-    constructor(props: FloatingWidgetComponentProps) {
-        super(props);
-    }
-
     public render() {
         const headerHeight = 25;
         const appStore = AppStore.Instance;

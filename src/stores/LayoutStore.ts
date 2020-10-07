@@ -5,7 +5,6 @@ import {LayoutConfig, PresetLayout} from "models";
 import {AppToaster, SuccessToast} from "components/Shared";
 import {ApiService} from "../services";
 
-const KEY = "savedLayouts";
 const MAX_LAYOUT = 10;
 
 export class LayoutStore {

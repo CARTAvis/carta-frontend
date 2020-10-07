@@ -6,7 +6,7 @@ import {observer} from "mobx-react";
 import {NonIdealState, Colors} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import {HistogramToolbarComponent} from "./HistogramToolbarComponent/HistogramToolbarComponent";
-import {LinePlotComponent, LinePlotComponentProps, PlotType} from "components/Shared";
+import {LinePlotComponent, LinePlotComponentProps} from "components/Shared";
 import {TickType} from "../Shared/LinePlot/PlotContainer/PlotContainerComponent";
 import {HistogramWidgetStore} from "stores/widgets";
 import {FrameStore, WidgetConfig, WidgetProps, HelpType, WidgetsStore, AppStore} from "stores";

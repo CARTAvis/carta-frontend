@@ -1,6 +1,5 @@
 import * as React from "react";
 import * as _ from "lodash";
-import * as AST from "ast_wrapper";
 import {autorun, computed, observable} from "mobx";
 import {observer} from "mobx-react";
 import {Colors, NonIdealState} from "@blueprintjs/core";
@@ -647,7 +646,6 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
             return null;
         }
 
-        const fileId = frame.frameInfo.fileId;
         let compositeProfile: {
             qProfile: Array<number>,
             uProfile: Array<number>,

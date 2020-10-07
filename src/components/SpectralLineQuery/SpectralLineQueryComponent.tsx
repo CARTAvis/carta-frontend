@@ -348,7 +348,7 @@ export class SpectralLineQueryComponent extends React.Component<WidgetProps> {
             numVisibleRows: widgetStore.numDataRows,
             manualSelectionProps: {
                 isSelectingAll: widgetStore.isSelectingAllLines,
-                isSelectingIndeterminated: widgetStore.isSelectingIndeterminatedLines,
+                isSelectingIndeterminate: widgetStore.isSelectingIndeterminatedLines,
                 selectAllLines: widgetStore.selectAllLines,
                 selectSingleLine: widgetStore.selectSingleLine
             },

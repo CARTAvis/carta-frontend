@@ -5,10 +5,10 @@ import {Alert, AnchorButton, Button, Classes, Colors, FormGroup, HTMLSelect, IDi
 import {Select} from "@blueprintjs/select";
 import {CARTA} from "carta-protobuf";
 import {DraggableDialogComponent, TaskProgressDialogComponent} from "components/Dialogs";
-import {LinePlotComponent, LinePlotComponentProps, PlotType, SafeNumericInput, SCALING_POPOVER_PROPS} from "components/Shared";
+import {LinePlotComponent, LinePlotComponentProps, SafeNumericInput, SCALING_POPOVER_PROPS} from "components/Shared";
 import {ContourStylePanelComponent} from "./ContourStylePanel/ContourStylePanelComponent";
 import {ContourGeneratorPanelComponent} from "./ContourGeneratorPanel/ContourGeneratorPanelComponent";
-import {AppStore, DialogStore, FrameStore, HelpType, PreferenceStore, AnimationState} from "stores";
+import {AppStore, FrameStore, HelpType, AnimationState} from "stores";
 import {RenderConfigWidgetStore} from "stores/widgets";
 import {Point2D} from "models";
 import {clamp, toExponential, toFixed} from "utilities";

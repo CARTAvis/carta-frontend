@@ -26,7 +26,7 @@ import {
     Transform2D,
     ZoomPoint
 } from "models";
-import {clamp, formattedFrequency, getHeaderNumericValue, getTransformedChannel, transformPoint, isAstBadPoint, minMax2D, rotate2D, toFixed, trimFitsComment, round2D, scale2D, getFormattedWCSPoint} from "utilities";
+import {clamp, formattedFrequency, getHeaderNumericValue, getTransformedChannel, transformPoint, isAstBadPoint, minMax2D, rotate2D, toFixed, trimFitsComment, round2D, getFormattedWCSPoint} from "utilities";
 import {BackendService, ContourWebGLService} from "services";
 import {RegionId} from "stores/widgets";
 import {formattedArcsec} from "utilities";
@@ -241,7 +241,7 @@ export class FrameStore {
             const unit = unitHeader.value.trim();
             const delta = getHeaderNumericValue(deltaHeader);
 
-            if (isFinite(bMaj) && bMaj > 0 && isFinite(bMin) && bMin > 0 && isFinite(bpa) && isFinite(delta) && unit === "deg" || unit === "rad") {
+            if (isFinite(bMaj) && bMaj > 0 && isFinite(bMin) && bMin > 0 && isFinite(bpa) && isFinite(delta) && (unit === "deg" || unit === "rad")) {
                 return {
                     x: bMaj / Math.abs(delta),
                     y: bMin / Math.abs(delta),
@@ -750,6 +750,7 @@ export class FrameStore {
         autorun(() => {
             const type = this.spectralType;
             const unit = this.spectralUnit;
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
             const specsys = this.spectralSystem;
             if (this.channelInfo) {
                 if (!type && !unit) {
@@ -1110,7 +1111,7 @@ export class FrameStore {
         if (size && deltaHeader && unitHeader) {
             const delta = getHeaderNumericValue(deltaHeader);
             const unit = unitHeader.value.trim();
-            if (isFinite(delta) && unit === "deg" || unit === "rad") {
+            if (isFinite(delta) && (unit === "deg" || unit === "rad")) {
                 return {
                     x: size.x * Math.abs(delta) * (unit === "deg" ? 3600 : (180 * 3600 / Math.PI)),
                     y: size.y * Math.abs(delta) * (unit === "deg" ? 3600 : (180 * 3600 / Math.PI))
@@ -1126,7 +1127,7 @@ export class FrameStore {
         if (isFinite(arcsecValue) && deltaHeader && unitHeader) {
             const delta = getHeaderNumericValue(deltaHeader);
             const unit = unitHeader.value.trim();
-            if (isFinite(delta) && delta !== 0 && unit === "deg" || unit === "rad") {
+            if (isFinite(delta) && delta !== 0 && (unit === "deg" || unit === "rad")) {
                 return arcsecValue / Math.abs(delta) / (unit === "deg" ? 3600 : (180 * 3600 / Math.PI));
             }
         }
@@ -1155,12 +1156,7 @@ export class FrameStore {
     };
 
     @action updateFromContourData(contourImageData: CARTA.ContourImageData) {
-        let vertexCounter = 0;
-
         const processedData = ProtobufProcessing.ProcessContourData(contourImageData);
-        for (const contourSet of processedData.contourSets) {
-            vertexCounter += contourSet.coordinates.length / 2;
-        }
         this.stokes = processedData.stokes;
         this.channel = processedData.channel;
 
@@ -1184,17 +1180,10 @@ export class FrameStore {
             }
         }
 
-        let totalProgress = 0;
-        let totalVertices = 0;
-        let totalChunks = 0;
         // Clear up stale contour levels by checking against the config, and update total contour progress
         this.contourStores.forEach((contourStore, level) => {
             if (this.contourConfig.levels.indexOf(level) === -1) {
                 this.contourStores.delete(level);
-            } else {
-                totalProgress += contourStore.progress;
-                totalVertices += contourStore.vertexCount;
-                totalChunks += contourStore.chunkCount;
             }
         });
     }

@@ -362,6 +362,9 @@ export class FileListTableComponent extends React.Component<FileListTableCompone
 
     render() {
         const fileResponse = this.props.listResponse;
+        // Dummy variable to trigger re-render on sorting change
+        // TODO: is this needed?
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
         const sortingConfig = this.props.sortingString;
 
         const classes = ["browser-table"];

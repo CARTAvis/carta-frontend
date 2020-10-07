@@ -1,7 +1,7 @@
 import * as React from "react";
 import {observer} from "mobx-react";
 import {Cell, Column, Table, SelectionModes, RenderMode, ColumnHeaderCell, IRegion} from "@blueprintjs/table";
-import {Checkbox, PopoverPosition, Popover, PopoverInteractionKind, InputGroup, Icon, Label} from "@blueprintjs/core";
+import {Checkbox, Popover, PopoverInteractionKind, InputGroup, Icon, Label} from "@blueprintjs/core";
 import {IconName} from "@blueprintjs/icons";
 import {IRowIndices} from "@blueprintjs/table/lib/esm/common/grid";
 import {CARTA} from "carta-protobuf";
@@ -18,7 +18,7 @@ export enum TableType {
 
 export interface ManualSelectionProps {
     isSelectingAll: boolean;
-    isSelectingIndeterminated: boolean;
+    isSelectingIndeterminate: boolean;
     selectAllLines: () => void;
     selectSingleLine: (rowIndex: number) => void;
 }
@@ -74,12 +74,12 @@ export class TableComponent extends React.Component<TableComponentProps> {
             <Column
                 key={columnName}
                 name={columnName}
-                columnHeaderCellRenderer={(columnIndex: number) => {
+                columnHeaderCellRenderer={() => {
                     return (
                         <ColumnHeaderCell>
                             <React.Fragment>
                                 <Checkbox
-                                    indeterminate={manualSelectionProps.isSelectingIndeterminated}
+                                    indeterminate={manualSelectionProps.isSelectingIndeterminate}
                                     checked={manualSelectionProps.isSelectingAll}
                                     inline={true}
                                     onChange={manualSelectionProps.selectAllLines}
