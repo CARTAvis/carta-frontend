@@ -71,7 +71,7 @@
         "worker-loader": "^2.0.0"
     },
     "scripts": {
-        "git-info": "echo export default {logMessage: \\\"$(git log -41 --oneline)\\\"}\\;  > src/static/gitInfo.ts",
+        "git-info": "echo export default {logMessage: \\\"$(git log -1 --oneline)\\\"}\\;  > src/static/gitInfo.ts",
         "analyze": "source-map-explorer build/static/js/main.*",
         "start": "npm run git-info; react-scripts start",
         "build": "npm run git-info; npm-run-all build-wrappers build-protobuf build-ts; ./crumbs-fix.sh",
