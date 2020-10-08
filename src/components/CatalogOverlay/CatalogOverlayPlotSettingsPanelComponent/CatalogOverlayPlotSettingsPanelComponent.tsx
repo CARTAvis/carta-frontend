@@ -47,9 +47,9 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
         return {
             id: "catalog-overlay-floating-settings",
             type: "floating-settings",
-            minWidth: 280,
+            minWidth: 350,
             minHeight: 225,
-            defaultWidth: 550,
+            defaultWidth: 375,
             defaultHeight: 375,
             title: "catalog-overlay-settings",
             isCloseable: true,
@@ -67,13 +67,24 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
 
     constructor(props: WidgetProps) {
         super(props);
+        const appStore = AppStore.Instance;
         this.catalogFileNames = new Map<number, string>();
         autorun(() => {
             const catalogStore = CatalogStore.Instance;
             this.catalogFileId = catalogStore.catalogProfiles.get(this.props.id);
             const catalogWidgetStoreId = catalogStore.catalogWidgets.get(this.catalogFileId);
+            const activeFiles = catalogStore.activeCatalogFiles;
             if (!catalogWidgetStoreId) {
                 WidgetsStore.Instance.addCatalogWidget(this.catalogFileId);
+            }
+
+            if (activeFiles?.includes(this.catalogFileId)) {
+                const fileName = catalogStore.getCatalogFileNames([this.catalogFileId]).get(this.catalogFileId);
+                if (fileName) {
+                    appStore.widgetsStore.setWidgetTitle(this.props.floatingSettingsId, `Catalog Settings: ${fileName}`);
+                }
+            } else {
+                appStore.widgetsStore.setWidgetTitle(this.props.floatingSettingsId, `Catalog Settings`);
             }
         });
     }
@@ -165,7 +176,7 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
                 <FormGroup  inline={true} label="Displayed columns">
                     <NumericInput
                         placeholder="Default Displayed Columns"
-                        min={0}
+                        min={1}
                         value={catalogStore.initDisplayedColumnSize}
                         stepSize={1}
                         onValueChange={(value: number) => catalogStore.setInitDisplayedColumnSize(value)}
@@ -176,59 +187,59 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
 
         const overlayPanel = (
             <div className="panel-container">
-                 <FormGroup  inline={true} label="File" disabled={disabledOverlayPanel}>
+                 <FormGroup  inline={true} label="File"  disabled={disabledOverlayPanel}>
                     <Select 
                         className="bp3-fill"
-                        filterable={false}
                         disabled={disabledOverlayPanel}
+                        filterable={false}
                         items={catalogFileItems} 
                         activeItem={this.catalogFileId}
                         onItemSelect={this.handleCatalogFileChange}
                         itemRenderer={this.renderFileIdPopOver}
                         popoverProps={{popoverClassName: "catalog-select", minimal: true , position: PopoverPosition.AUTO_END}}
                     >
-                        <Button text={activeFileName} rightIcon="double-caret-vertical"/>
+                        <Button text={activeFileName} rightIcon="double-caret-vertical"  disabled={disabledOverlayPanel}/>
                     </Select>
                 </FormGroup>
-                <FormGroup label={"Color"} inline={true} disabled={disabledOverlayPanel}>
+                <FormGroup label={"Color"} inline={true}  disabled={disabledOverlayPanel}>
                     <ColorPickerComponent
                         color={widgetStore.catalogColor}
-                        disabled={disabledOverlayPanel}
                         presetColors={[...SWATCH_COLORS, "transparent"]}
                         setColor={(color: ColorResult) => {
                             widgetStore.setCatalogColor(color.hex === "transparent" ? "#000000" : color.hex);
                         }}
                         disableAlpha={true}
                         darkTheme={AppStore.Instance.darkTheme}
+                        disabled={disabledOverlayPanel}
                     />
                 </FormGroup>
-                <FormGroup label={"Overlay Highlight"} inline={true} disabled={disabledOverlayPanel}>
+                <FormGroup label={"Overlay Highlight"} inline={true}  disabled={disabledOverlayPanel}>
                     <ColorPickerComponent
                         color={widgetStore.highlightColor}
-                        disabled={disabledOverlayPanel}
                         presetColors={[...SWATCH_COLORS, "transparent"]}
                         setColor={(color: ColorResult) => {
                             widgetStore.setHighlightColor(color.hex === "transparent" ? "#000000" : color.hex);
                         }}
                         disableAlpha={true}
                         darkTheme={AppStore.Instance.darkTheme}
+                        disabled={disabledOverlayPanel}
                     />
                 </FormGroup>
-                <FormGroup  inline={true} label="Shape" disabled={disabledOverlayPanel}>
+                <FormGroup  inline={true} label="Shape"  disabled={disabledOverlayPanel}>
                     <Select 
                         className="bp3-fill"
-                        filterable={false}
                         disabled={disabledOverlayPanel}
+                        filterable={false}
                         items={Object.values(CatalogOverlayShape)} 
                         activeItem={widgetStore.catalogShape} 
                         onItemSelect={(item) => widgetStore.setCatalogShape(item)}
                         itemRenderer={this.renderShapePopOver}
                         popoverProps={{popoverClassName: "catalog-select", minimal: true , position: PopoverPosition.AUTO_END}}
                     >
-                        <Button icon={this.getCatalogShape(widgetStore.catalogShape)} rightIcon="double-caret-vertical"/>
+                        <Button icon={this.getCatalogShape(widgetStore.catalogShape)} rightIcon="double-caret-vertical"  disabled={disabledOverlayPanel}/>
                     </Select>
                 </FormGroup>
-                <FormGroup  inline={true} label="Size" labelInfo="(px)" disabled={disabledOverlayPanel}>
+                <FormGroup  inline={true} label="Size" labelInfo="(px)"  disabled={disabledOverlayPanel}>
                     <NumericInput
                         placeholder="Catalog Size"
                         disabled={disabledOverlayPanel}
@@ -239,7 +250,7 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
                         onValueChange={(value: number) => widgetStore.setCatalogSize(value)}
                     />
                 </FormGroup>
-                <FormGroup  inline={true} label="Separator" labelInfo="(%)" disabled={disabledOverlayPanel}>
+                <FormGroup  inline={true} label="Separator" labelInfo="(%)"  disabled={disabledOverlayPanel}>
                     <NumericInput
                         disabled={disabledOverlayPanel}
                         min={CatalogWidgetStore.MinTableSeparatorPosition}
@@ -261,12 +272,12 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
             <div className={className}>
                 <Tabs
                     id="catalogSettings"
-                    vertical={true}
+                    vertical={false}
                     selectedTabId={this.selectedTab}
                     onChange={(tabId) => this.selectedTab = tabId}
                 >
                     <Tab id="global" title="Global" panel={globalPanel}/>
-                    <Tab id="overlay" title="Overlay" panel={overlayPanel} disabled={disabledOverlayPanel}/>
+                    <Tab id="image-overlay" title="Image Overlay" panel={overlayPanel} disabled={disabledOverlayPanel}/>
                 </Tabs>
             </div>
         );

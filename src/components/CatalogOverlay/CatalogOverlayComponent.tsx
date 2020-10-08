@@ -40,6 +40,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
     @observable catalogFileId: number;
     @observable catalogTableRef: Table = undefined;
     @observable height: number;
+    @observable width: number;
 
     private catalogHeaderTableRef: Table = undefined;
     private catalogFileNames: Map<number, string>;
@@ -197,6 +198,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         const profileStore = this.profileStore;
         const catalogWidgetStore = this.widgetStore;
         this.height = height;
+        this.width = width;
         // fixed bug from blueprintjs, only display 4 rows.
         if (profileStore && this.catalogHeaderTableRef) {
             this.updateTableSize(this.catalogHeaderTableRef, this.props.docked);
@@ -799,6 +801,11 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         const isHistogram = catalogWidgetStore.catalogPlotType === CatalogPlotType.Histogram;
         const disable = profileStore.loadOntoImage;
 
+        let footerDropdownClass = "footer-action-large";
+        if (this.width <= 600 ) {
+            footerDropdownClass = "footer-action-small";
+        }
+
         return (
             <div className={"catalog-overlay"}>
                 <div className={"catalog-overlay-filter-settings"}>
@@ -853,93 +860,97 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
                             </tbody>
                         </table>
                     </div>
-                    <div className="bp3-dialog-footer-action">
-                        <Select
-                            className="catalog-type-button" 
-                            filterable={false}
-                            items={Object.values(CatalogPlotType)} 
-                            activeItem={catalogWidgetStore.catalogPlotType}
-                            onItemSelect={this.handlePlotTypeChange}
-                            itemRenderer={this.renderPlotTypePopOver}
-                            popoverProps={{popoverClassName: "catalog-select", minimal: true , position: PopoverPosition.AUTO_END}}
-                        >
-                            <Button className="bp3-minimal" text={catalogWidgetStore.catalogPlotType} rightIcon="double-caret-vertical"/>
-                        </Select>
-
-                        <FormGroup className="catalog-xaxis" inline={true} label={this.xAxisLable} disabled={disable}>
+                    <div className="footer-action-container">
+                        <div className={footerDropdownClass}>
                             <Select
-                                className="catalog-xaxis-select"
+                                className="catalog-type-button" 
                                 filterable={false}
-                                items={this.axisOption}
-                                activeItem={null}
-                                onItemSelect={(columnName) => catalogWidgetStore.setxAxis(columnName)}
-                                itemRenderer={this.renderAxisPopOver}
+                                items={Object.values(CatalogPlotType)} 
+                                activeItem={catalogWidgetStore.catalogPlotType}
+                                onItemSelect={this.handlePlotTypeChange}
+                                itemRenderer={this.renderPlotTypePopOver}
+                                popoverProps={{popoverClassName: "catalog-select", minimal: true , position: PopoverPosition.AUTO_END}}
+                            >
+                                <Button className="bp3" text={catalogWidgetStore.catalogPlotType} rightIcon="double-caret-vertical"/>
+                            </Select>
+
+                            <FormGroup className="catalog-xaxis" inline={true} label={this.xAxisLable} disabled={disable}>
+                                <Select
+                                    className="catalog-xaxis-select"
+                                    filterable={false}
+                                    items={this.axisOption}
+                                    activeItem={null}
+                                    onItemSelect={(columnName) => catalogWidgetStore.setxAxis(columnName)}
+                                    itemRenderer={this.renderAxisPopOver}
+                                    disabled={disable}
+                                    popoverProps={{popoverClassName: "catalog-select", minimal: true , position: PopoverPosition.AUTO_END}}
+                                >
+                                    <Button className="catalog-xaxis-button" text={catalogWidgetStore.xAxis} disabled={disable} rightIcon="double-caret-vertical"/>
+                                </Select>
+                            </FormGroup>
+
+                            <FormGroup className="catalog-yaxis" inline={true} label={this.yAxisLable} disabled={isHistogram || disable}>
+                                <Select
+                                    className="catalog-yaxis-select"
+                                    filterable={false}
+                                    items={this.axisOption}
+                                    activeItem={null}
+                                    onItemSelect={(columnName) => catalogWidgetStore.setyAxis(columnName)}
+                                    itemRenderer={this.renderAxisPopOver}
+                                    disabled={isHistogram || disable}
+                                    popoverProps={{popoverClassName: "catalog-select", minimal: true , position: PopoverPosition.AUTO_END}}
+                                >
+                                    <Button className="catalog-yaxis-button" text={catalogWidgetStore.yAxis} disabled={isHistogram || disable} rightIcon="double-caret-vertical"/>
+                                </Select>
+                            </FormGroup>
+
+                            <ClearableNumericInputComponent
+                                className={"catalog-max-rows"}
+                                label="Max Rows"
+                                value={profileStore.maxRows}
+                                onValueChanged={val => this.onMaxRowsChange(val)}
+                                onValueCleared={() => profileStore.setMaxRows(profileStore.catalogInfo.dataSize)}
+                                displayExponential={false}
+                                updateValueOnKeyDown={true}
                                 disabled={disable}
-                                popoverProps={{popoverClassName: "catalog-select", minimal: true , position: PopoverPosition.AUTO_END}}
-                            >
-                                <Button className="catalog-xaxis-button" text={catalogWidgetStore.xAxis} disabled={disable} rightIcon="double-caret-vertical"/>
-                            </Select>
-                        </FormGroup>
-
-                        <FormGroup className="catalog-yaxis" inline={true} label={this.yAxisLable} disabled={isHistogram || disable}>
-                            <Select
-                                className="catalog-yaxis-select"
-                                filterable={false}
-                                items={this.axisOption}
-                                activeItem={null}
-                                onItemSelect={(columnName) => catalogWidgetStore.setyAxis(columnName)}
-                                itemRenderer={this.renderAxisPopOver}
-                                disabled={isHistogram || disable}
-                                popoverProps={{popoverClassName: "catalog-select", minimal: true , position: PopoverPosition.AUTO_END}}
-                            >
-                                <Button className="catalog-yaxis-button" text={catalogWidgetStore.yAxis} disabled={isHistogram || disable} rightIcon="double-caret-vertical"/>
-                            </Select>
-                        </FormGroup>
-
-                        <ClearableNumericInputComponent
-                            className={"catalog-max-rows"}
-                            label="Max Rows"
-                            value={profileStore.maxRows}
-                            onValueChanged={val => this.onMaxRowsChange(val)}
-                            onValueCleared={() => profileStore.setMaxRows(profileStore.catalogInfo.dataSize)}
-                            displayExponential={false}
-                            updateValueOnKeyDown={true}
-                            disabled={disable}
-                        />
+                            />
+                        </div>
                     </div>
-                    <div className="bp3-dialog-footer-button">
-                        <Tooltip content={"Apply filter"}>
-                        <AnchorButton
-                            intent={Intent.PRIMARY}
-                            text="Update"
-                            onClick={this.handleFilterRequest}
-                            disabled={disable || !profileStore.updateTableView}
-                        />
-                        </Tooltip>
-                        <Tooltip content={"Reset view"}>
-                        <AnchorButton
-                            intent={Intent.PRIMARY}
-                            text="Reset"
-                            onClick={this.handleResetClick}
-                            disabled={disable}
-                        />
-                        </Tooltip>
-                        <Tooltip content={"Close file"}>
-                        <AnchorButton
-                            intent={Intent.PRIMARY}
-                            text="Close"
-                            onClick={this.handleFileCloseClick}
-                            disabled={disable}
-                        />
-                        </Tooltip>
-                        <Tooltip content={"Plot data"}>
-                        <AnchorButton
-                            intent={Intent.PRIMARY}
-                            text="Plot"
-                            onClick={this.handlePlotClick}
-                            disabled={!this.enablePlotButton}
-                        />
-                        </Tooltip>
+                    <div className="footer-button-container">
+                        <div className="footer-button">
+                            <Tooltip content={"Apply filter"}>
+                            <AnchorButton
+                                intent={Intent.PRIMARY}
+                                text="Update"
+                                onClick={this.handleFilterRequest}
+                                disabled={disable || !profileStore.updateTableView}
+                            />
+                            </Tooltip>
+                            <Tooltip content={"Reset view"}>
+                            <AnchorButton
+                                intent={Intent.PRIMARY}
+                                text="Reset"
+                                onClick={this.handleResetClick}
+                                disabled={disable}
+                            />
+                            </Tooltip>
+                            <Tooltip content={"Close file"}>
+                            <AnchorButton
+                                intent={Intent.PRIMARY}
+                                text="Close"
+                                onClick={this.handleFileCloseClick}
+                                disabled={disable}
+                            />
+                            </Tooltip>
+                            <Tooltip content={"Plot data"}>
+                            <AnchorButton
+                                intent={Intent.PRIMARY}
+                                text="Plot"
+                                onClick={this.handlePlotClick}
+                                disabled={!this.enablePlotButton}
+                            />
+                            </Tooltip>
+                        </div>
                     </div>
                 </div>
                 <ReactResizeDetector handleWidth handleHeight onResize={this.onResize} refreshMode={"throttle"} refreshRate={33}/>
