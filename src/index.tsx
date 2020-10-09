@@ -6,7 +6,6 @@ import {App} from "./App";
 import {ApiService} from "./services";
 
 import "./index.scss";
-import "@blueprintjs/icons/lib/css/blueprint-icons.css";
 
 // Pre-load static assets
 import allMaps from "./static/allmaps.png";
