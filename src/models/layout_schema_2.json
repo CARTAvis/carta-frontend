@@ -432,6 +432,9 @@
                 },
                 "height": {
                     "$ref": "#/definitions/percentage-value"
+                },
+                "activeItemIndex": {
+                    "type": "integer"
                 }
             }
         }

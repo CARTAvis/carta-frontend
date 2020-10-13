@@ -227,6 +227,9 @@ export class LayoutConfig {
                         type: child.type,
                         content: []
                     };
+                    if (child.type === "stack" && child.activeItemIndex) { // save active tab
+                        simpleChild["activeItemIndex"] = child.activeItemIndex;
+                    }
                     if (child.width) {
                         simpleChild["width"] = child.width;
                     }
@@ -277,6 +280,9 @@ export class LayoutConfig {
                         type: child.type,
                         content: []
                     };
+                    if (child.type === "stack" && child.activeItemIndex && child.activeItemIndex >= 0) { // load active tab
+                        simpleChild["activeItemIndex"] = child.activeItemIndex;
+                    }
                     if (child.width) {
                         simpleChild["width"] = child.width;
                     }
