@@ -380,12 +380,19 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
                 linePlotProps.xLabel = `${spectralSystem && spectralSystem !== "" ? spectralSystem + ", " : ""}${frame.spectralCoordinate}`;
             }
             if (frame.unit) {
+                let yLabelName = "Value";
+                if (frame.regionSet) {
+                    const region = frame.regionSet.regions.find(r => r.regionId === this.widgetStore.effectiveRegionId);
+                    if (region.isClosedRegion) {
+                        yLabelName = SpectralProfileWidgetStore.StatsTypeString(this.widgetStore.statsType);
+                    }
+                }
                 if (this.widgetStore.statsType === CARTA.StatsType.FluxDensity) {
-                    linePlotProps.yLabel = "Value (Jy)";
+                    linePlotProps.yLabel = `${yLabelName} (Jy)`;
                 } else if (this.widgetStore.statsType === CARTA.StatsType.SumSq) {
-                    linePlotProps.yLabel = `Value (${frame.unit})^2`;
+                    linePlotProps.yLabel = `${yLabelName} (${frame.unit})^2`;
                 } else {
-                    linePlotProps.yLabel = `Value (${frame.unit})`;
+                    linePlotProps.yLabel = `${yLabelName} (${frame.unit})`;
                 }
             }
 
