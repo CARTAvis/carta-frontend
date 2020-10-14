@@ -113,8 +113,8 @@ export function getValueFromArcsecString(formattedString: string): number {
         return null;
     }
 
-    const arcsecRegExp = /^(\d+(\.\d+)?)\"?$/;
-    const arcminRegExp = /^(\d+(\.\d+)?)\'$/;
+    const arcsecRegExp = /^(\d+(\.\d+)?)"?$/;
+    const arcminRegExp = /^(\d+(\.\d+)?)'$/;
     const degreeRegExp = /^(\d+(\.\d+)?)\s*deg(ree)?$/i;
     if (arcsecRegExp.test(trimmedString)) {
         return parseFloat(RegExp.$1);

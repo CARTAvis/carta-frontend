@@ -177,7 +177,6 @@ export class PolygonRegionComponent extends React.Component<PolygonRegionCompone
             const region = this.props.region;
             const frame = this.props.frame;
             const centerImageSpace = average2D(region.controlPoints);
-            const zoomLevel = frame.spatialReference ? frame.spatialReference.zoomLevel : frame.zoomLevel;
             let newPosition = canvasToTransformedImagePos(node.position().x, node.position().y, frame, this.props.layerWidth, this.props.layerHeight);
             if (frame.spatialReference) {
                 newPosition = transformPoint(frame.spatialTransformAST, newPosition, true);

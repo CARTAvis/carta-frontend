@@ -1,6 +1,5 @@
 import * as React from "react";
 import * as _ from "lodash";
-import * as AST from "ast_wrapper";
 import {autorun, computed, observable} from "mobx";
 import {observer} from "mobx-react";
 import {Colors, NonIdealState} from "@blueprintjs/core";
@@ -14,7 +13,7 @@ import {AnimationState, SpectralProfileStore, WidgetConfig, WidgetProps, HelpTyp
 import {StokesAnalysisWidgetStore, StokesCoordinate} from "stores/widgets";
 import {Point2D} from "models";
 import {clamp, normalising, polarizationAngle, polarizedIntensity, binarySearchByX, closestPointIndexToCursor, toFixed, toExponential, minMaxPointArrayZ, formattedNotation, minMaxArray} from "utilities";
-import "./StokesAnalysisComponent.css";
+import "./StokesAnalysisComponent.scss";
 
 type Border = { xMin: number, xMax: number, yMin: number, yMax: number };
 type Point3D = { x: number, y: number, z?: number };
@@ -647,7 +646,6 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
             return null;
         }
 
-        const fileId = frame.frameInfo.fileId;
         let compositeProfile: {
             qProfile: Array<number>,
             uProfile: Array<number>,

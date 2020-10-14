@@ -7,7 +7,7 @@ import {CARTA} from "carta-protobuf";
 import {RegionStore, WidgetConfig, WidgetProps, HelpType, DialogStore, AppStore, FrameStore, WCS_PRECISION} from "stores";
 import {toFixed, getFormattedWCSPoint, formattedArcsec} from "utilities";
 import {CustomIcon} from "icons/CustomIcons";
-import "./RegionListComponent.css";
+import "./RegionListComponent.scss";
 
 @observer
 export class RegionListComponent extends React.Component<WidgetProps> {
@@ -205,9 +205,12 @@ export class RegionWcsCenter extends React.Component<{ region: RegionStore, fram
 
     public render() {
         // dummy variables related to wcs to trigger re-render
+        /* eslint-disable @typescript-eslint/no-unused-vars */
         const system = AppStore.Instance.overlayStore.global.explicitSystem;
         const formatX = AppStore.Instance.overlayStore.numbers.formatTypeX;
         const formatY = AppStore.Instance.overlayStore.numbers.formatTypeY;
+        /* eslint-enable @typescript-eslint/no-unused-vars */
+
         const frame = this.props.frame;
         const region = this.props.region;
         if (!region || !region.center || !(isFinite(region.center.x) && isFinite(region.center.y) && this.props.frame.validWcs)) {

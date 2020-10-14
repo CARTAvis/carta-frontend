@@ -1,5 +1,4 @@
 import * as React from "react";
-import {AppStore} from "stores";
 import {ImageComponent} from "./ImageComponent";
 import * as smoothingBoxcar from "static/help/smoothing_boxcar.png";
 import * as smoothingGaussian from "static/help/smoothing_gaussian.png";

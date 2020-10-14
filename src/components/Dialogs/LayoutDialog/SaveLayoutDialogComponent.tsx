@@ -3,9 +3,9 @@ import {observable, computed} from "mobx";
 import {observer} from "mobx-react";
 import {FormGroup, InputGroup, IDialogProps, Button, Intent, Classes, Tooltip} from "@blueprintjs/core";
 import {DraggableDialogComponent} from "components/Dialogs";
-import {AlertStore, AppStore, DialogStore, HelpType} from "stores";
+import {AppStore, HelpType} from "stores";
 import {PresetLayout} from "models";
-import "./SaveLayoutDialogComponent.css";
+import "./SaveLayoutDialogComponent.scss";
 
 const KEYCODE_ENTER = 13;
 

@@ -7,7 +7,7 @@ import {SpectralLine} from "./SpectralLineQueryWidgetStore";
 import {AppStore} from "stores";
 import {ProfileSmoothingStore} from "stores/ProfileSmoothingStore";
 import {SpectralSystem, SpectralType, SpectralUnit} from "models";
-import * as tinycolor from "tinycolor2";
+import tinycolor from "tinycolor2";
 import {SpectralProfilerSettingsTabs} from "components";
 
 export enum MomentSelectingMode {

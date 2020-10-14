@@ -3,14 +3,14 @@ import {observer} from "mobx-react";
 import {AnchorButton, Classes, IDialogProps, Intent, NonIdealState, Tooltip} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import {DraggableDialogComponent} from "components/Dialogs";
-import {AppStore, RegionStore, HelpType, DialogStore} from "stores";
+import {AppStore, RegionStore, HelpType} from "stores";
 import {PointRegionForm} from "./PointRegionForm/PointRegionForm";
 import {RectangularRegionForm} from "./RectangularRegionForm/RectangularRegionForm";
 import {EllipticalRegionForm} from "./EllipticalRegionForm/EllipticalRegionForm";
 import {AppearanceForm} from "./AppearanceForm/AppearanceForm";
 import {PolygonRegionForm} from "./PolygonRegionForm/PolygonRegionForm";
 import {CustomIcon} from "icons/CustomIcons";
-import "./RegionDialogComponent.css";
+import "./RegionDialogComponent.scss";
 
 @observer
 export class RegionDialogComponent extends React.Component {

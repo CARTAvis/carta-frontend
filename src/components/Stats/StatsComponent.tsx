@@ -8,7 +8,7 @@ import {WidgetConfig, WidgetProps, HelpType, WidgetsStore, AppStore} from "store
 import {StatsWidgetStore} from "stores/widgets";
 import {toExponential} from "utilities";
 import {RegionSelectorComponent} from "components";
-import "./StatsComponent.css";
+import "./StatsComponent.scss";
 
 @observer
 export class StatsComponent extends React.Component<WidgetProps> {

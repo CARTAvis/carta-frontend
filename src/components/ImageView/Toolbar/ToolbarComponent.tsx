@@ -3,10 +3,10 @@ import {CSSProperties} from "react";
 import {observer} from "mobx-react";
 import {Button, ButtonGroup, IconName, Menu, MenuItem, Popover, PopoverPosition, Position, Tooltip, AnchorButton} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
-import {AppStore, OverlayStore, PreferenceStore, RegionMode, SystemType} from "stores";
+import {AppStore, OverlayStore, RegionMode, SystemType} from "stores";
 import {ImageViewLayer} from "../ImageViewComponent";
 import {toFixed} from "utilities";
-import "./ToolbarComponent.css";
+import "./ToolbarComponent.scss";
 
 export class ToolbarComponentProps {
     docked: boolean;

@@ -1,5 +1,4 @@
 import * as React from "react";
-import {AppStore} from "stores";
 import {ImageComponent} from "./ImageComponent";
 import * as headAnimatorButton from "static/help/head_animator_button.png";
 import * as headAnimatorButton_d from "static/help/head_animator_button_d.png";

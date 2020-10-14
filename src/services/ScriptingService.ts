@@ -12,7 +12,7 @@ export class ExecutionEntry {
         const executionEntry = new ExecutionEntry();
         entryString = entryString.trim();
 
-        const entryRegex = /^(\+?)((?:[\w\[\]]+\.)*)(\w+)\(([^)]*)\);?$/gm;
+        const entryRegex = /^(\+?)((?:[\w[\]]+\.)*)(\w+)\(([^)]*)\);?$/gm;
         const matches = entryRegex.exec(entryString);
         // Four matching groups, first entry is the full match
         if (matches && matches.length === 5 && matches[3].length) {
@@ -44,7 +44,7 @@ export class ExecutionEntry {
         }
         try {
             let substitutedParameterString = parameterString.replace(
-                /\$((?:[\w\[\]]+\.)*)([\w\[\]]+)/gm,
+                /\$((?:[\w[\]]+\.)*)([\w[\]]+)/gm,
                 (_match, target, variable) => {
                     return `{"macroTarget": "${target.slice(0, -1)}", "macroVariable": "${variable}"}`;
                 }
@@ -63,12 +63,12 @@ export class ExecutionEntry {
     async execute() {
         const targetObject = ExecutionEntry.GetTargetObject(AppStore.Instance, this.target);
         if (targetObject == null) {
-            throw(`Missing target object: ${this.target}`);
+            throw new Error(`Missing target object: ${this.target}`);
         }
         const currentParameters = this.parameters.map(this.mapMacro);
         let actionFunction = targetObject[this.action];
         if (!actionFunction || typeof (actionFunction) !== "function") {
-            throw(`Missing action function: ${this.action}`);
+            throw new Error(`Missing action function: ${this.action}`);
         }
         actionFunction = actionFunction.bind(targetObject);
         let response;
@@ -91,7 +91,7 @@ export class ExecutionEntry {
         console.log(targetNameArray);
 
         for (const targetEntry of targetNameArray) {
-            const arrayRegex = /(\w+)(?:\[(\d+)\])?/gm;
+            const arrayRegex = /(\w+)(?:\[(\d+)])?/gm;
             const matches = arrayRegex.exec(targetEntry);
             // Check if there's an array index in this parameter
             if (matches && matches.length === 3 && matches[2] !== undefined) {

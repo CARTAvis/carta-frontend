@@ -1,5 +1,4 @@
 import {action, observable} from "mobx";
-import {AppStore} from "stores";
 import {TabId} from "@blueprintjs/core";
 import {FileInfoType} from "../components";
 

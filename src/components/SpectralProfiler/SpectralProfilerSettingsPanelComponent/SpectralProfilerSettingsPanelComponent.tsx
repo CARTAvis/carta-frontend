@@ -7,7 +7,7 @@ import {MomentGeneratorComponent} from "../MomentGeneratorComponent/MomentGenera
 import {SpectralProfileWidgetStore} from "stores/widgets";
 import {WidgetProps, WidgetConfig, HelpType, AppStore, WidgetsStore} from "stores";
 import {parseNumber} from "utilities";
-import "./SpectralProfilerSettingsPanelComponent.css";
+import "./SpectralProfilerSettingsPanelComponent.scss";
 
 const KEYCODE_ENTER = 13;
 

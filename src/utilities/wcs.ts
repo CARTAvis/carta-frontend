@@ -2,15 +2,15 @@ import {CARTA} from "carta-protobuf";
 import * as AST from "ast_wrapper";
 import {Point2D, WCSPoint2D, SpectralType} from "models";
 import {NumberFormatType} from "stores";
-import {add2D, length2D, normalize2D, pointDistance, polygonPerimeter, rotate2D, scale2D, subtract2D, magDir2D} from "./math2d";
+import {add2D, polygonPerimeter, rotate2D, scale2D, subtract2D, magDir2D} from "./math2d";
 
 export function isWCSStringFormatValid(wcsString: string, format: NumberFormatType): boolean {
     if (!wcsString || !format) {
         return false;
     }
-    const hmsRegExp = /^\-?\d{0,2}\:\d{0,2}\:(\d{1,2}(\.\d+)?)?$/;
-    const dmsRegExp = /^\-?\d*\:\d{0,2}\:(\d{1,2}(\.\d+)?)?$/;
-    const decimalRegExp = /^\-?\d+(\.\d+)?$/;
+    const hmsRegExp = /^-?\d{0,2}:\d{0,2}:(\d{1,2}(\.\d+)?)?$/;
+    const dmsRegExp = /^-?\d*:\d{0,2}:(\d{1,2}(\.\d+)?)?$/;
+    const decimalRegExp = /^-?\d+(\.\d+)?$/;
     if (format === NumberFormatType.HMS) {
         return hmsRegExp.test(wcsString);
     } else if (format === NumberFormatType.DMS) {

@@ -1,7 +1,7 @@
 import * as React from "react";
 import {Icon} from "@blueprintjs/core";
 import {AppStore} from "stores";
-import "./CustomIcons.css";
+import "./CustomIcons.scss";
 
 export declare type CustomIconName = "contour" | "center" | "regionList" | "spatialProfiler" | "spectralProfiler" | "stokes" | "spectralLineQuery" | "smoothing" | "moments";
 

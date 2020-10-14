@@ -1,7 +1,6 @@
 import * as GoldenLayout from "golden-layout";
-import * as $ from "jquery";
-import {CARTA} from "carta-protobuf";
-import {action, computed, observable, values} from "mobx";
+import $ from "jquery";
+import {action, computed, observable} from "mobx";
 import {
     AnimatorComponent,
     HistogramComponent,
@@ -646,7 +645,7 @@ export class WidgetsStore {
 
     // endregion
 
-    @action updateImageWidgetTitle() {
+    @action updateImageWidgetTitle(layout: GoldenLayout) {
         const appStore = AppStore.Instance;
         let newTitle;
         if (appStore.activeFrame) {
@@ -656,9 +655,8 @@ export class WidgetsStore {
         }
 
         // Update GL title by searching for image-view components
-        const layoutStore = appStore.layoutStore;
-        if (layoutStore.dockedLayout && layoutStore.dockedLayout.root) {
-            const imageViewComponents = layoutStore.dockedLayout.root.getItemsByFilter((item: any) => item.config.component === ImageViewComponent.WIDGET_CONFIG.type);
+        if (layout?.root) {
+            const imageViewComponents = layout.root.getItemsByFilter((item: any) => item.config.component === ImageViewComponent.WIDGET_CONFIG.type);
             if (imageViewComponents.length) {
                 if (imageViewComponents[0].config && imageViewComponents[0].config.title !== newTitle) {
                     imageViewComponents[0].setTitle(newTitle);

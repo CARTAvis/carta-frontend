@@ -51,10 +51,7 @@ export class RegionWidgetStore {
     }
 
     @computed get matchActiveFrame() {
-        if (this.effectiveFrame && this.appStore.activeFrame.frameInfo.fileId === this.effectiveFrame.frameInfo.fileId) {
-            return true;
-        }
-        return false;
+        return this.effectiveFrame && this.appStore.activeFrame.frameInfo.fileId === this.effectiveFrame.frameInfo.fileId;
     }
 
     @computed get effectiveRegionId() {
@@ -96,7 +93,7 @@ export class RegionWidgetStore {
             const fileId = frame.frameInfo.fileId;
             const regionId = widgetStore.effectiveRegionId;
             const region = frame.regionSet.regions.find(r => r.regionId === regionId);
-            if (regionId === -1 || region && region.isClosedRegion) {
+            if (regionId === -1 || (region && region.isClosedRegion)) {
                 let frameRequirementsArray = updatedRequirements.get(fileId);
                 if (!frameRequirementsArray) {
                     frameRequirementsArray = [];

@@ -4,7 +4,7 @@ import {IDialogProps} from "@blueprintjs/core";
 import Iframe from "react-iframe";
 import {DraggableDialogComponent} from "components/Dialogs";
 import {AppStore} from "stores";
-import "./ExternalPageDialogComponent.css";
+import "./ExternalPageDialogComponent.scss";
 
 @observer
 export class ExternalPageDialogComponent extends React.Component {

@@ -7,7 +7,7 @@ import {AppStore, FrameStore, RegionCoordinate, RegionStore, NUMBER_FORMAT_LABEL
 import {Point2D, WCSPoint2D} from "models";
 import {closeTo, formattedArcsec, getFormattedWCSPoint, getPixelValueFromWCS, getValueFromArcsecString, isWCSStringFormatValid} from "utilities";
 import {CoordinateComponent} from "../CoordinateComponent/CoordinateComponent";
-import "./EllipticalRegionForm.css";
+import "./EllipticalRegionForm.scss";
 
 const KEYCODE_ENTER = 13;
 
@@ -204,6 +204,7 @@ export class EllipticalRegionForm extends React.Component<{ region: RegionStore,
 
     public render() {
         // dummy variables related to wcs to trigger re-render
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
         const system = AppStore.Instance.overlayStore.global.explicitSystem;
         const formatX = AppStore.Instance.overlayStore.numbers.formatTypeX;
         const formatY = AppStore.Instance.overlayStore.numbers.formatTypeY;
