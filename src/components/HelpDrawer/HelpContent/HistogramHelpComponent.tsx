@@ -1,5 +1,4 @@
 import * as React from "react";
-import {AppStore} from "stores";
 import {ImageComponent} from "./ImageComponent";
 import * as headHistogramButton from "static/help/head_histogram_button.png";
 import * as headHistogramButton_d from "static/help/head_histogram_button_d.png";

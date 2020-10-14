@@ -13,7 +13,7 @@ import {StokesCoordinate} from "stores/widgets/StokesAnalysisWidgetStore";
 import {Point2D} from "models";
 import {clamp, toExponential} from "utilities";
 import {PlotType} from "components/Shared";
-import "./LinePlotComponent.css";
+import "./LinePlotComponent.scss";
 
 export enum ZoomMode {
     NONE,
@@ -84,7 +84,6 @@ export class LinePlotComponentProps {
     showXAxisLabel?: boolean;
     showYAxisTicks?: boolean;
     showYAxisLabel?: boolean;
-    xZeroLineColor?: string;
     yZeroLineColor?: string;
     showLegend?: boolean;
     xTickMarkLength?: number;
@@ -495,7 +494,7 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
         this.hideMouseEnterWidget();
     };
 
-    private getTimestamp() {
+    private static GetTimestamp() {
         const now = new Date();
         return `${now.getFullYear()}-${now.getMonth() + 1}-${now.getDate()}-${now.getHours()}-${now.getMinutes()}-${now.getSeconds()}`;
     }
@@ -565,7 +564,7 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
 
         composedCanvas.toBlob((blob) => {
             const link = document.createElement("a") as HTMLAnchorElement;
-            link.download = `${imageName}-${plotName.replace(" ", "-")}-${this.getTimestamp()}.png`;
+            link.download = `${imageName}-${plotName.replace(" ", "-")}-${LinePlotComponent.GetTimestamp()}.png`;
             link.href = URL.createObjectURL(blob);
             link.dispatchEvent(new MouseEvent("click"));
         }, "image/png");
@@ -631,11 +630,11 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
 
         const tsvData = `data:text/tab-separated-values;charset=utf-8,${comment}\n${header}\n${rows.join("\n")}\n`;
 
-        const dataURL = encodeURI(tsvData).replace(/\#/g, "%23");
+        const dataURL = encodeURI(tsvData).replace(/#/g, "%23");
 
         const a = document.createElement("a") as HTMLAnchorElement;
         a.href = dataURL;
-        a.download = `${imageName}-${plotName.replace(" ", "-")}-${this.getTimestamp()}.tsv`;
+        a.download = `${imageName}-${plotName.replace(" ", "-")}-${LinePlotComponent.GetTimestamp()}.tsv`;
         a.dispatchEvent(new MouseEvent("click"));
     };
 

@@ -6,7 +6,7 @@ import {LinePlotSettingsPanelComponentProps, LinePlotSettingsPanelComponent, Smo
 import {SpatialProfileWidgetStore} from "stores/widgets";
 import {WidgetProps, WidgetConfig, HelpType, WidgetsStore, AppStore} from "stores";
 import {parseNumber} from "utilities";
-import "./SpatialProfilerSettingsPanelComponent.css";
+import "./SpatialProfilerSettingsPanelComponent.scss";
 
 const KEYCODE_ENTER = 13;
 

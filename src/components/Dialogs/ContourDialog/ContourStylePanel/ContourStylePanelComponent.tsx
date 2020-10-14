@@ -6,7 +6,7 @@ import {ColorResult} from "react-color";
 import {ContourDashMode, FrameStore} from "stores";
 import {ColormapComponent, ColorPickerComponent, SafeNumericInput} from "components/Shared";
 import {SWATCH_COLORS} from "utilities";
-import "./ContourStylePanelComponent.css";
+import "./ContourStylePanelComponent.scss";
 
 const DashModeSelect = Select.ofType<ContourDashMode>();
 

@@ -383,7 +383,8 @@ export class SimpleShapeRegionComponent extends React.Component<RegionComponentP
             let height = (region.controlPoints[1].y * zoomLevel) / devicePixelRatio;
 
             // Adjusts the dash length to force the total number of dashes around the bounding box perimeter to 50
-            const borderDash = [(width + height) * 4 / 100.0];
+            // TODO: Is this needed anywhere?
+            // const borderDash = [(width + height) * 4 / 100.0];
 
             const commonProps = {
                 rotation: -rotation,

@@ -788,6 +788,7 @@ export class OverlayStore {
 
         // if the system is manually selected, set new default formats & update active frame's wcs settings
         autorun(() => {
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
             const _ = this.global.system;
             this.setFormatsFromSystem();
             const frame = AppStore.Instance.activeFrame;
@@ -797,6 +798,7 @@ export class OverlayStore {
         });
 
         autorun(() => {
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
             const _ = this.numbers.formatTypeX;
             const frame = AppStore.Instance.activeFrame;
             if (frame && frame.wcsInfoForTransformation && frame.validWcs) {
@@ -805,6 +807,7 @@ export class OverlayStore {
         });
 
         autorun(() => {
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
             const _ = this.numbers.formatTypeY;
             const frame = AppStore.Instance.activeFrame;
             if (frame && frame.wcsInfoForTransformation && frame.validWcs) {

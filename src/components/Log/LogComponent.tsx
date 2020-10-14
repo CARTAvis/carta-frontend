@@ -4,7 +4,7 @@ import {Button, Code, Colors, FormGroup, HTMLSelect, NonIdealState, Tag, Intent}
 import ScrollToBottom from "react-scroll-to-bottom";
 import {CARTA} from "carta-protobuf";
 import {WidgetConfig, WidgetProps, HelpType, LogStore} from "stores";
-import "./LogComponent.css";
+import "./LogComponent.scss";
 
 @observer
 export class LogComponent extends React.Component<WidgetProps> {

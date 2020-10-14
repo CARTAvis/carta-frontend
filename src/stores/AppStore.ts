@@ -16,7 +16,6 @@ import {
     CatalogProfileStore,
     CatalogStore,
     CatalogUpdateMode,
-    CURSOR_REGION_ID,
     dayPalette,
     DialogStore,
     FileBrowserStore,
@@ -138,7 +137,7 @@ export class AppStore {
 
     @action connectToServer = (socketName: string = "socket") => {
         // Remove query parameters, replace protocol and remove trailing /
-        const baseUrl = location.href.replace(location.search, "").replace(/^http/, "ws").replace(/\/$/, "");
+        const baseUrl = window.location.href.replace(window.location.search, "").replace(/^http/, "ws").replace(/\/$/, "");
         let wsURL = `${baseUrl}/${socketName}`;
         if (process.env.NODE_ENV === "development") {
             wsURL = process.env.REACT_APP_DEFAULT_ADDRESS ? process.env.REACT_APP_DEFAULT_ADDRESS : wsURL;
@@ -160,7 +159,6 @@ export class AppStore {
         const folderSearchParam = url.searchParams.get("folder");
         const fileSearchParam = url.searchParams.get("file");
 
-        let connected = false;
         let autoFileLoaded = false;
 
         AST.onReady.then(() => {
@@ -173,7 +171,6 @@ export class AppStore {
 
         this.backendService.connect(wsURL).subscribe(ack => {
             console.log(`Connected with session ID ${ack.sessionId}`);
-            connected = true;
             this.logStore.addInfo(`Connected to server ${wsURL} with session ID ${ack.sessionId}`, ["network"]);
             if (this.astReady && fileSearchParam) {
                 autoFileLoaded = true;
@@ -743,7 +740,6 @@ export class AppStore {
             return;
         }
 
-        const regionIds = frame.regionSet.regions.map(r => r.regionId).filter(id => id !== CURSOR_REGION_ID);
         const regionStyles = new Map<number, CARTA.IRegionStyle>();
         for (const region of frame.regionSet.regions) {
             regionStyles.set(region.regionId, {
@@ -855,7 +851,6 @@ export class AppStore {
     ];
     private static readonly CursorThrottleTime = 200;
     private static readonly CursorThrottleTimeRotated = 100;
-    private static readonly ImageThrottleTime = 200;
     private static readonly ImageChannelThrottleTime = 500;
     private static readonly RequirementsCheckInterval = 200;
 
@@ -1020,8 +1015,7 @@ export class AppStore {
         autorun(() => {
             if (this.activeFrame && (this.preferenceStore.streamContoursWhileZooming || !this.activeFrame.zooming)) {
                 // Trigger update raster view/title when switching layout
-                const layout = this.layoutStore.dockedLayout;
-                this.widgetsStore.updateImageWidgetTitle();
+                this.widgetsStore.updateImageWidgetTitle(this.layoutStore.dockedLayout);
 
                 const reqView = this.activeFrame.requiredFrameView;
                 let croppedReq: FrameView = {
@@ -1042,7 +1036,7 @@ export class AppStore {
             }
 
             if (!this.activeFrame) {
-                this.widgetsStore.updateImageWidgetTitle();
+                this.widgetsStore.updateImageWidgetTitle(this.layoutStore.dockedLayout);
             }
         });
 
@@ -1461,7 +1455,7 @@ export class AppStore {
             this.tileService.clearRequestQueue();
         }
         this.activeFrame = frame;
-        this.widgetsStore.updateImageWidgetTitle();
+        this.widgetsStore.updateImageWidgetTitle(this.layoutStore.dockedLayout);
         this.catalogStore.resetActiveCatalogFile(frame.frameInfo.fileId);
         if (this.syncContourToFrame) {
             this.contourDataSource = frame;

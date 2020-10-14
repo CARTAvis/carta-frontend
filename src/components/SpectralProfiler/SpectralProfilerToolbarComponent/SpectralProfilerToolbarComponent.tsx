@@ -5,7 +5,7 @@ import {CARTA} from "carta-protobuf";
 import {AppStore, FrameStore} from "stores";
 import {SpectralProfileWidgetStore} from "stores/widgets";
 import {RegionSelectorComponent, SpectralProfilerComponent, SpectralProfilerSettingsTabs} from "components";
-import "./SpectralProfilerToolbarComponent.css";
+import "./SpectralProfilerToolbarComponent.scss";
 import {CustomIcon} from "icons/CustomIcons";
 
 @observer

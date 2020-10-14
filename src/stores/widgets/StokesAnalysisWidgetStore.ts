@@ -4,10 +4,9 @@ import {Colors} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import {PlotType, LineSettings, ScatterSettings} from "components/Shared";
 import {RegionWidgetStore, RegionsType} from "./RegionWidgetStore";
-import {AppStore, FrameStore} from "stores";
 import {getColorsForValues} from "utilities";
 import {SpectralSystem, SpectralType, SpectralUnit} from "models";
-import * as tinycolor from "tinycolor2";
+import tinycolor from "tinycolor2";
 import {ProfileSmoothingStore} from "stores/ProfileSmoothingStore";
 import {StokesAnalysisSettingsTabs} from "components";
 
