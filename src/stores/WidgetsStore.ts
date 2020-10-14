@@ -1,7 +1,6 @@
 import * as GoldenLayout from "golden-layout";
-import * as $ from "jquery";
-import {CARTA} from "carta-protobuf";
-import {action, computed, observable, values} from "mobx";
+import $ from "jquery";
+import {action, computed, observable} from "mobx";
 import {
     AnimatorComponent,
     HistogramComponent,
@@ -39,10 +38,10 @@ import {
     SpectralProfileWidgetStore,
     StatsWidgetStore,
     StokesAnalysisWidgetStore,
-    CatalogWidgetStore, CatalogPlotWidgetStore, CatalogPlotWidgetStoreProps, CatalogPlotType,
-    ACTIVE_FILE_ID
+    CatalogWidgetStore, CatalogPlotWidgetStore, CatalogPlotWidgetStoreProps,
+    ACTIVE_FILE_ID,
+    CatalogPlotType
 } from "./widgets";
-import {ProcessedColumnData} from "../models";
 
 export class WidgetConfig {
     id: string;
@@ -358,7 +357,7 @@ export class WidgetsStore {
                 itemId = this.addCatalogPlotWidget(histogramProps);
                 const histogramComponentId = this.getNextComponentId(CatalogPlotComponent.WIDGET_CONFIG);
                 CatalogStore.Instance.setCatalogPlots(histogramComponentId, 1, itemId);
-                break;    
+                break;
             default:
                 // Remove it from the floating widget array, while preserving its store
                 if (this.floatingWidgets.find(w => w.id === widgetType)) {
@@ -446,25 +445,28 @@ export class WidgetsStore {
         ToolbarMenuComponent.DRAGSOURCE_WIDGETCONFIG_MAP.forEach((widgetConfig, id) => WidgetsStore.CreateDragSource(layout, widgetConfig, id));
 
         layout.on("stackCreated", (stack) => {
-            let unpinButton = $(`<li class="lm-pin" title="detach"><span class="bp3-icon-standard bp3-icon-unpin"/></li>`);
+            const unpinButton = $(`<li class="lm-pin" title="detach"><span class="bp3-icon-standard bp3-icon-unpin"/></li>`);
             unpinButton.on("click", () => this.unpinWidget(stack.getActiveContentItem()));
             stack.header.controlsContainer.prepend(unpinButton);
-            let helpButton = $(`<li class="lm-help" title="help"><span class="bp3-icon-standard bp3-icon-help"/></li>`);
+            const helpButton = $(`<li class="lm-help" title="help"><span class="bp3-icon-standard bp3-icon-help"/></li>`);
             helpButton.on("click", (ev) => this.onHelpPinedClick(ev, stack.getActiveContentItem()));
             stack.header.controlsContainer.prepend(helpButton);
 
-            stack.on("activeContentItemChanged", function (contentItem: any) {
+            stack.on("activeContentItemChanged", (contentItem: any) => {
                 if (stack && stack.config && stack.header.controlsContainer && stack.config.content.length) {
                     const activeTabItem = stack.getActiveContentItem();
                     const component = activeTabItem.config.component;
                     const stackHeaderControlButtons = stack.header.controlsContainer[0];
-                    if (component && showCogWidgets.includes(component) && stackHeaderControlButtons && stackHeaderControlButtons.childElementCount < 5) {
+                    if (component && showCogWidgets.includes(component) && stackHeaderControlButtons?.childElementCount < 5) {
                         const cogPinedButton = $(`<li class="lm_settings" title="settings"><span class="bp3-icon-standard bp3-icon-cog"/></li>`);
                         cogPinedButton.on("click", () => WidgetsStore.Instance.onCogPinedClick(stack.getActiveContentItem()));
                         stack.header.controlsContainer.prepend(cogPinedButton);
-                    } else if (!showCogWidgets.includes(component) && stackHeaderControlButtons && stackHeaderControlButtons.childElementCount === 5) {
-                        stack.header.controlsContainer[0].children[0].remove();
+                    } else if (!showCogWidgets.includes(component) && stackHeaderControlButtons?.childElementCount === 5) {
+                        stackHeaderControlButtons.children[0].remove();
                     }
+
+                    // disable unpin button when active tab is image-view
+                    $(stackHeaderControlButtons)?.find("li.lm-pin")?.attr("style", component === "image-view" ? "display:none;" : "");
                 }
             });
         });
@@ -637,7 +639,7 @@ export class WidgetsStore {
 
     // endregion
 
-    @action updateImageWidgetTitle() {
+    @action updateImageWidgetTitle(layout: GoldenLayout) {
         const appStore = AppStore.Instance;
         let newTitle;
         if (appStore.activeFrame) {
@@ -647,9 +649,8 @@ export class WidgetsStore {
         }
 
         // Update GL title by searching for image-view components
-        const layoutStore = appStore.layoutStore;
-        if (layoutStore.dockedLayout && layoutStore.dockedLayout.root) {
-            const imageViewComponents = layoutStore.dockedLayout.root.getItemsByFilter((item: any) => item.config.component === ImageViewComponent.WIDGET_CONFIG.type);
+        if (layout?.root) {
+            const imageViewComponents = layout.root.getItemsByFilter((item: any) => item.config.component === ImageViewComponent.WIDGET_CONFIG.type);
             if (imageViewComponents.length) {
                 if (imageViewComponents[0].config && imageViewComponents[0].config.title !== newTitle) {
                     imageViewComponents[0].setTitle(newTitle);
@@ -872,6 +873,7 @@ export class WidgetsStore {
         const widgetComponentId = this.getNextComponentId(config);
         config.id = widgetStoreId;
         config.componentId = widgetComponentId;
+        config.helpType = props.plotType === CatalogPlotType.Histogram ? HelpType.CATALOG_HISTOGRAM_PLOT : HelpType.CATALOG_SCATTER_PLOT;
         this.addFloatingWidget(config);
         return {widgetStoreId: widgetStoreId, widgetComponentId: widgetComponentId};
     };

@@ -1,5 +1,5 @@
 import axios, {AxiosInstance} from "axios";
-import * as Ajv from "ajv";
+import Ajv from "ajv";
 import {action, computed, observable} from "mobx";
 import {AppToaster} from "components/Shared";
 import {LayoutConfig} from "../models";

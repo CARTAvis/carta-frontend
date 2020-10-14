@@ -1,7 +1,7 @@
 import * as React from "react";
-import * as $ from "jquery";
+import $ from "jquery";
 import {observer} from "mobx-react";
-import {autorun, observable, action} from "mobx";
+import {autorun, observable} from "mobx";
 import {NonIdealState, Spinner, Tag} from "@blueprintjs/core";
 import ReactResizeDetector from "react-resize-detector";
 import {OverlayComponent} from "./Overlay/OverlayComponent";
@@ -15,7 +15,7 @@ import {CatalogViewComponent} from "./CatalogView/CatalogViewComponent";
 import {AppStore, RegionStore, WidgetConfig, WidgetProps, HelpType, Padding} from "stores";
 import {CursorInfo, Point2D} from "models";
 import {toFixed} from "utilities";
-import "./ImageViewComponent.css";
+import "./ImageViewComponent.scss";
 
 export const getImageCanvas = (padding: Padding, backgroundColor: string = "rgba(255, 255, 255, 0)"): HTMLCanvasElement => {
     const rasterCanvas = document.getElementById("raster-canvas") as HTMLCanvasElement;
@@ -189,7 +189,7 @@ export class ImageViewComponent extends React.Component<WidgetProps> {
                     {appStore.activeFrame.cursorInfo &&
                     <CursorOverlayComponent
                         cursorInfo={appStore.activeFrame.cursorInfo}
-                        cursorValue={appStore.activeFrame.cursorValue.value}
+                        cursorValue={appStore.activeFrame.cursorInfo.isInsideImage ? appStore.activeFrame.cursorValue.value : undefined}
                         isValueCurrent={appStore.activeFrame.isCursorValueCurrent}
                         spectralInfo={appStore.activeFrame.spectralInfo}
                         width={overlayStore.viewWidth}

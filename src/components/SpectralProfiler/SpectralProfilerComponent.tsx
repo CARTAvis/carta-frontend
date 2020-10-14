@@ -11,8 +11,8 @@ import {SpectralProfilerToolbarComponent} from "./SpectralProfilerToolbarCompone
 import {AnimationState, SpectralProfileStore, WidgetConfig, WidgetProps, HelpType, AnimatorStore, WidgetsStore, AppStore} from "stores";
 import {SpectralProfileWidgetStore} from "stores/widgets";
 import {Point2D, ProcessedSpectralProfile} from "models";
-import {binarySearchByX, clamp, formattedNotation, toExponential, toFixed} from "utilities";
-import "./SpectralProfilerComponent.css";
+import {binarySearchByX, clamp, formattedExponential, formattedNotation, toExponential, toFixed} from "utilities";
+import "./SpectralProfilerComponent.scss";
 
 type PlotData = { values: Point2D[], smoothingValues: Point2D[], xMin: number, xMax: number, yMin: number, yMax: number, yMean: number, yRms: number, progress: number };
 
@@ -24,7 +24,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
             type: "spectral-profiler",
             minWidth: 250,
             minHeight: 225,
-            defaultWidth: 650,
+            defaultWidth: 720,
             defaultHeight: 275,
             title: "Z Profile: Cursor",
             isCloseable: true,
@@ -156,6 +156,9 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
             // region info
             if (region) {
                 headerString.push(region.regionProperties);
+                if (frame.validWcs) {
+                    headerString.push(frame.getRegionWcsProperties(region));
+                }
             }
         }
         return headerString;
@@ -292,7 +295,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
 
             profilerInfo.push(`${this.widgetStore.isMouseMoveIntoLinePlots ? "Cursor:" : "Data:"} ${cursorString}`);
             if (this.widgetStore.meanRmsVisible) {
-                profilerInfo.push(`Mean/RMS: ${formattedNotation(this.plotData.yMean) + " / " + formattedNotation(this.plotData.yRms)}`);
+                profilerInfo.push(`Mean/RMS: ${formattedExponential(this.plotData.yMean, 2) + " / " + formattedExponential(this.plotData.yRms, 2)}`);
             }
         }
         return profilerInfo;
@@ -515,11 +518,13 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
         return (
             <div className={className}>
                 <div className="profile-container">
-                    <SpectralProfilerToolbarComponent widgetStore={this.widgetStore} id={this.props.id}/>
+                    <div className="profile-toolbar">
+                        <SpectralProfilerToolbarComponent widgetStore={this.widgetStore} id={this.props.id}/>
+                    </div>
                     <div className="profile-plot">
                         <LinePlotComponent {...linePlotProps}/>
-                        <ProfilerInfoComponent info={this.genProfilerInfo()}/>
                     </div>
+                    <ProfilerInfoComponent info={this.genProfilerInfo()}/>
                 </div>
                 <ReactResizeDetector handleWidth handleHeight onResize={this.onResize} refreshMode={"throttle"} refreshRate={33}/>
             </div>

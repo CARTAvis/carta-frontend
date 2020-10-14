@@ -13,7 +13,7 @@ import {StokesCoordinate} from "stores/widgets/StokesAnalysisWidgetStore";
 import {Point2D} from "models";
 import {clamp, toExponential} from "utilities";
 import {PlotType} from "components/Shared";
-import "./LinePlotComponent.css";
+import "./LinePlotComponent.scss";
 
 export enum ZoomMode {
     NONE,
@@ -84,7 +84,6 @@ export class LinePlotComponentProps {
     showXAxisLabel?: boolean;
     showYAxisTicks?: boolean;
     showYAxisLabel?: boolean;
-    xZeroLineColor?: string;
     yZeroLineColor?: string;
     showLegend?: boolean;
     xTickMarkLength?: number;
@@ -495,7 +494,7 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
         this.hideMouseEnterWidget();
     };
 
-    private getTimestamp() {
+    private static GetTimestamp() {
         const now = new Date();
         return `${now.getFullYear()}-${now.getMonth() + 1}-${now.getDate()}-${now.getHours()}-${now.getMinutes()}-${now.getSeconds()}`;
     }
@@ -565,7 +564,7 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
 
         composedCanvas.toBlob((blob) => {
             const link = document.createElement("a") as HTMLAnchorElement;
-            link.download = `${imageName}-${plotName.replace(" ", "-")}-${this.getTimestamp()}.png`;
+            link.download = `${imageName}-${plotName.replace(" ", "-")}-${LinePlotComponent.GetTimestamp()}.png`;
             link.href = URL.createObjectURL(blob);
             link.dispatchEvent(new MouseEvent("click"));
         }, "image/png");
@@ -631,21 +630,25 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
 
         const tsvData = `data:text/tab-separated-values;charset=utf-8,${comment}\n${header}\n${rows.join("\n")}\n`;
 
-        const dataURL = encodeURI(tsvData).replace(/\#/g, "%23");
+        const dataURL = encodeURI(tsvData).replace(/#/g, "%23");
 
         const a = document.createElement("a") as HTMLAnchorElement;
         a.href = dataURL;
-        a.download = `${imageName}-${plotName.replace(" ", "-")}-${this.getTimestamp()}.tsv`;
+        a.download = `${imageName}-${plotName.replace(" ", "-")}-${LinePlotComponent.GetTimestamp()}.tsv`;
         a.dispatchEvent(new MouseEvent("click"));
     };
 
-    private genHorizontalLines = (marker: LineMarker, isHovering: boolean, markerColor: string, markerOpacity: number, valueCanvasSpace: number) => {
+    private genHorizontalLine = (marker: LineMarker, isHovering: boolean, markerColor: string, markerOpacity: number, valueCanvasSpace: number) => {
         const chartArea = this.chartArea;
         const lineWidth = chartArea.right - chartArea.left;
         const isHoverMarker = isHovering && this.hoveredMarker.id === marker.id;
         const midPoint = (chartArea.left + chartArea.right) / 2.0;
 
         let lineSegments = null;
+        // TODO: sort out hover marker, marker with width, draggable marker
+        if (!marker.width && (valueCanvasSpace < Math.floor(chartArea.top - 1) || valueCanvasSpace > Math.ceil(chartArea.bottom + 1))) {
+            return undefined;
+        }
         if (isHoverMarker) {
             const arrowSize = MARKER_HITBOX_THICKNESS / 1.5;
             const arrowStart = 3;
@@ -701,13 +704,17 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
         }
     };
 
-    private genVerticalLines = (marker: LineMarker, isHovering: boolean, markerColor: string, markerOpacity: number, valueCanvasSpace: number, isShowingLabels?: boolean) => {
+    private genVerticalLine = (marker: LineMarker, isHovering: boolean, markerColor: string, markerOpacity: number, valueCanvasSpace: number, isShowingLabels?: boolean) => {
         const chartArea = this.chartArea;
         const lineHeight = chartArea.bottom - chartArea.top;
         const isHoverMarker = isHovering && this.hoveredMarker.id === marker.id;
         const midPoint = (chartArea.top + chartArea.bottom) / 2.0;
 
         let lineSegments = null;
+        // TODO: sort out hover marker, marker with width, draggable marker
+        if (!marker.width && (valueCanvasSpace < Math.floor(chartArea.left - 1) || valueCanvasSpace > Math.ceil(chartArea.right + 1))) {
+            return undefined;
+        }
         if (isHoverMarker) {
             const arrowSize = MARKER_HITBOX_THICKNESS / 1.5;
             const arrowStart = 3;
@@ -784,7 +791,7 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
                     if (isNaN(valueCanvasSpace)) {
                         continue;
                     }
-                    lines.push(this.genHorizontalLines(marker, isHovering, markerColor, markerOpacity, valueCanvasSpace));
+                    lines.push(this.genHorizontalLine(marker, isHovering, markerColor, markerOpacity, valueCanvasSpace));
                 } else {
                     let valueCanvasSpace = this.getCanvasSpaceX(marker.value);
                     if (isNaN(valueCanvasSpace)) {
@@ -792,9 +799,9 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
                     }
                     if (marker.interactionMarker) {
                         const markerOpacityInteraction = (!marker.isMouseMove && (this.isMouseEntered)) ? 0 : (marker.opacity || 1);
-                        lines.push(this.genVerticalLines(marker, isHovering, markerColor, markerOpacityInteraction, valueCanvasSpace));
+                        lines.push(this.genVerticalLine(marker, isHovering, markerColor, markerOpacityInteraction, valueCanvasSpace));
                     } else {
-                        lines.push(this.genVerticalLines(marker, isHovering, markerColor, markerOpacity, valueCanvasSpace, isShowingVerticalLabels));
+                        lines.push(this.genVerticalLine(marker, isHovering, markerColor, markerOpacity, valueCanvasSpace, isShowingVerticalLabels));
                     }
                 }
             }

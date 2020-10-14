@@ -3,11 +3,6 @@ import {MenuItem, IPopoverProps, Button} from "@blueprintjs/core";
 import {Select} from "@blueprintjs/select";
 import {FrameScaling, RenderConfigStore} from "stores/RenderConfigStore";
 
-interface ScalingComponentProps {
-    selectedItem: FrameScaling;
-    onItemSelect: (selected: FrameScaling) => void;
-}
-
 // Equation PNG images
 import linearPng from "static/equations/linear.png";
 import logPng from "static/equations/log.png";
@@ -15,6 +10,11 @@ import sqrtPng from "static/equations/sqrt.png";
 import squaredPng from "static/equations/squared.png";
 import gammaPng from "static/equations/gamma.png";
 import powerPng from "static/equations/power.png";
+
+interface ScalingComponentProps {
+    selectedItem: FrameScaling;
+    onItemSelect: (selected: FrameScaling) => void;
+}
 
 const equationPngMap = new Map([
     [FrameScaling.LINEAR, linearPng],

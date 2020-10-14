@@ -4,10 +4,10 @@ import {FormGroup, HTMLSelect, IOptionProps} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import {AppStore, RegionStore, FrameStore} from "stores";
 import {RegionWidgetStore, RegionsType, RegionId, ACTIVE_FILE_ID} from "stores/widgets";
-import "./RegionSelectorComponent.css";
+import "./RegionSelectorComponent.scss";
 
 @observer
-export class RegionSelectorComponent extends React.Component<{ widgetStore: RegionWidgetStore, onFrameChanged?: (newFrame: FrameStore) => void }> {
+export class RegionSelectorComponent extends React.Component<{ widgetStore: RegionWidgetStore, onFrameChanged?: (newFrame: FrameStore) => void, nonClosedDisabled?: boolean }> {
 
     private handleFrameChanged = (changeEvent: React.ChangeEvent<HTMLSelectElement>) => {
         const appStore = AppStore.Instance;
@@ -68,7 +68,7 @@ export class RegionSelectorComponent extends React.Component<{ widgetStore: Regi
                 default:
                     fiteredRegions = regions;
             }
-            regionOptions = regionOptions.concat(fiteredRegions.map(r => {return {value: r.regionId, label: r.nameString}; }));
+            regionOptions = regionOptions.concat(fiteredRegions.map(r => {return {value: r.regionId, label: r.nameString, disabled: this.props.nonClosedDisabled ? !r.isClosedRegion : false}; }));
 
             if (widgetStore.type === RegionsType.CLOSED_AND_POINT && regionOptions.length === 1) {
                 regionOptions = regionOptions.concat([{value: RegionId.CURSOR, label: "Cursor"}]);

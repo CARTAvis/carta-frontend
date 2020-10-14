@@ -1,5 +1,4 @@
 import * as React from "react";
-import {AppStore} from "stores";
 import {ImageComponent} from "./ImageComponent";
 import * as headPreferenceButton from "static/help/head_preference_button.png";
 import * as headPreferenceButton_d from "static/help/head_preference_button_d.png";
@@ -16,12 +15,12 @@ export class PreferencesHelpComponent extends React.Component {
                 <ul>
                     <li>Theme: the color theme of the graphical user interface (effective immediately)</li>
                     <li>Auto-launch file browser: launch file browser when CARTA is initialized</li>
-                    <li>Initial layout: the default layout for new CARTA session</li>
+                    <li>Initial layout: the default layout for a new CARTA session</li>
                     <li>Initial cursor position: fix cursor at the image center or have cursor free to move</li>
                     <li>Initial zoom level: view full image or view image with one image pixel to one screen pixel ratio</li>
                     <li>Zoom to: control the focus of zooming with scrolling wheel</li>
                     <li>Enable drag-to-pan: when enabled, pan action is achieved by click-and-dragging. When disabled, pan action is achieved by a click where the clicked pixel will be centered in the image viewer.</li>
-                    <li>WCS matching on append: trigger WCS matching automatically for appended images</li>
+                    <li>WCS matching on append: trigger WCS matching automatically for newly appended images</li>
                     <li>Spectral matching: spectral convention to be used for spectral matching of image cubes</li>
                 </ul>
                 <h3 id="render-configuration">Render configuration</h3>
@@ -54,7 +53,7 @@ export class PreferencesHelpComponent extends React.Component {
                     <li>Beam visible: beam rendering at the bottom-left corner of the image viewer</li>
                     <li>Beam color: the color to render a beam element</li>
                     <li>Beam type: render a beam as open shape or filled shape</li>
-                    <li>Beam width: line width to render a open-shape beam</li>
+                    <li>Beam width: line width to render an open-shape beam</li>
                 </ul>
                 <h3 id="region">Region</h3>
                 <p>This section provides customization of region rendering properties and region creation interactivity.</p>

@@ -1,7 +1,6 @@
-import * as Ajv from "ajv";
+import Ajv from "ajv";
 import {AppStore, WidgetConfig} from "stores";
 import {PresetLayout} from "models";
-import {CatalogPlotComponent} from "components";
 import {findDeep, smoothStepOffset} from "utilities";
 
 const layoutSchema = require("models/layout_schema_2.json");

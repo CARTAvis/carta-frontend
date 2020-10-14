@@ -3,7 +3,7 @@ import {observer} from "mobx-react";
 import {CSSProperties} from "react";
 import {CursorInfo, SpectralInfo} from "models";
 import {formattedExponential, toFixed} from "utilities";
-import "./CursorOverlayComponent.css";
+import "./CursorOverlayComponent.scss";
 
 class CursorOverlayProps {
     cursorInfo: CursorInfo;

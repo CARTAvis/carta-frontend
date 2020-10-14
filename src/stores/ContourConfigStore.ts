@@ -1,5 +1,5 @@
 import {action, observable} from "mobx";
-import * as tinycolor from "tinycolor2";
+import tinycolor from "tinycolor2";
 import {CARTA} from "carta-protobuf";
 import {PreferenceStore} from "./PreferenceStore";
 import {RGBColor} from "react-color";

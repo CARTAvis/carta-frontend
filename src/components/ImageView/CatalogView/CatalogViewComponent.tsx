@@ -9,7 +9,7 @@ import {CatalogOverlayShape} from "stores/widgets";
 import {canvasToTransformedImagePos} from "components/ImageView/RegionView/shared";
 import {ImageViewLayer} from "../ImageViewComponent";
 import {CursorInfo} from "models";
-import "./CatalogViewComponent.css";
+import "./CatalogViewComponent.scss";
 
 export interface CatalogViewComponentProps {
     docked: boolean;

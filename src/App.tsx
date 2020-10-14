@@ -7,9 +7,9 @@ import {UIControllerComponent, FloatingWidgetManagerComponent} from "./component
 import {TaskProgressDialogComponent} from "./components/Dialogs";
 import {AppStore} from "./stores";
 import {HotkeyTargetContainer} from "./HotkeyWrapper";
-import "./App.css";
-import "./layout-base.css";
-import "./layout-theme.css";
+import "./App.scss";
+import "./layout-base.scss";
+import "./layout-theme.scss";
 
 @observer
 export class App extends React.Component {

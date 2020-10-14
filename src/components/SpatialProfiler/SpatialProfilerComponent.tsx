@@ -10,8 +10,8 @@ import {TickType, MultiPlotProps} from "../Shared/LinePlot/PlotContainer/PlotCon
 import {AppStore, ASTSettingsString, FrameStore, HelpType, OverlayStore, SpatialProfileStore, WidgetConfig, WidgetProps, WidgetsStore} from "stores";
 import {SpatialProfileWidgetStore} from "stores/widgets";
 import {Point2D} from "models";
-import {binarySearchByX, clamp, formattedExponential, formattedNotation, transformPoint, toFixed} from "utilities";
-import "./SpatialProfilerComponent.css";
+import {binarySearchByX, clamp, formattedExponential, transformPoint, toFixed} from "utilities";
+import "./SpatialProfilerComponent.scss";
 
 // The fixed size of the settings panel popover (excluding the show/hide button)
 const AUTOSCALE_THROTTLE_TIME = 100;
@@ -173,6 +173,16 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
             }
             return {values: values, smoothingValues, xMin, xMax, yMin, yMax, yMean, yRms};
         }
+    }
+
+    @computed get exportHeader(): string[] {
+        const appStore = AppStore.Instance;
+        const headerString: string[] = [];
+        headerString.push(`region (pixel): Point[${toFixed(appStore.activeFrame.cursorInfo.posImageSpace.x)}, ${toFixed(appStore.activeFrame.cursorInfo.posImageSpace.y)}]`);
+        if (appStore.activeFrame.cursorInfo.infoWCS) {
+            headerString.push(`region (world): Point[${appStore.activeFrame.cursorInfo.infoWCS.x}, ${appStore.activeFrame.cursorInfo.infoWCS.y}]`);
+        }
+        return headerString;
     }
 
     constructor(props: WidgetProps) {
@@ -340,7 +350,7 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
                 }
             }
             if (this.widgetStore.meanRmsVisible) {
-                profilerInfo.push(`Mean/RMS: ${formattedNotation(this.plotData.yMean) + " / " + formattedNotation(this.plotData.yRms)}`);
+                profilerInfo.push(`Mean/RMS: ${formattedExponential(this.plotData.yMean, 2) + " / " + formattedExponential(this.plotData.yRms, 2)}`);
             }
         }
         return profilerInfo;
@@ -492,12 +502,7 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
 
                 // TODO: Get comments from region info, rather than directly from cursor position
                 if (appStore.activeFrame.cursorInfo) {
-                    const comments: string[] = [];
-                    comments.push(`region (pixel): Point[${toFixed(appStore.activeFrame.cursorInfo.posImageSpace.x)}, ${toFixed(appStore.activeFrame.cursorInfo.posImageSpace.y)}]`);
-                    if (appStore.activeFrame.cursorInfo.infoWCS) {
-                        comments.push(`region (world): Point[${appStore.activeFrame.cursorInfo.infoWCS.x}, ${appStore.activeFrame.cursorInfo.infoWCS.y}]`);
-                    }
-                    linePlotProps.comments = comments;
+                    linePlotProps.comments = this.exportHeader;
                 }
             }
         }

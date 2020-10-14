@@ -7,7 +7,7 @@ import {IRowIndices} from "@blueprintjs/table/lib/esm/common/grid";
 import {CARTA} from "carta-protobuf";
 import {ControlHeader} from "stores";
 import {ProcessedColumnData} from "models";
-import "./TableComponent.css";
+import "./TableComponent.scss";
 
 export type ColumnFilter = { index: number, columnFilter: string };
 
@@ -18,7 +18,7 @@ export enum TableType {
 
 export interface ManualSelectionProps {
     isSelectingAll: boolean;
-    isSelectingIndeterminated: boolean;
+    isSelectingIndeterminate: boolean;
     selectAllLines: () => void;
     selectSingleLine: (rowIndex: number) => void;
 }
@@ -74,12 +74,12 @@ export class TableComponent extends React.Component<TableComponentProps> {
             <Column
                 key={columnName}
                 name={columnName}
-                columnHeaderCellRenderer={(columnIndex: number) => {
+                columnHeaderCellRenderer={() => {
                     return (
                         <ColumnHeaderCell>
                             <React.Fragment>
                                 <Checkbox
-                                    indeterminate={manualSelectionProps.isSelectingIndeterminated}
+                                    indeterminate={manualSelectionProps.isSelectingIndeterminate}
                                     checked={manualSelectionProps.isSelectingAll}
                                     inline={true}
                                     onChange={manualSelectionProps.selectAllLines}

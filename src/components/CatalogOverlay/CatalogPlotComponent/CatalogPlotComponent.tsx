@@ -1,5 +1,4 @@
 import * as React from "react";
-import * as _ from "lodash";
 import * as Plotly from "plotly.js";
 import Plot from "react-plotly.js";
 import {autorun, computed, observable, action} from "mobx";
@@ -8,12 +7,12 @@ import {FormGroup, AnchorButton, Intent, Tooltip, Switch, Button, MenuItem, Popo
 import {Select, IItemRendererProps} from "@blueprintjs/select";
 import ReactResizeDetector from "react-resize-detector";
 import {CARTA} from "carta-protobuf";
-import {CatalogUpdateMode, WidgetConfig, WidgetProps, HelpType, AppStore, WidgetsStore, CatalogStore, CatalogProfileStore} from "stores";
+import {CatalogUpdateMode, WidgetConfig, WidgetProps, AppStore, WidgetsStore, CatalogStore, CatalogProfileStore} from "stores";
 import {CatalogPlotWidgetStore, Border, DragMode, XBorder, CatalogPlotWidgetStoreProps, CatalogWidgetStore, CatalogPlotType} from "stores/widgets";
 import {ProfilerInfoComponent, ClearableNumericInputComponent} from "components/Shared";
 import {Colors} from "@blueprintjs/core";
 import {toFixed, minMaxArray} from "utilities";
-import "./CatalogPlotComponent.css";
+import "./CatalogPlotComponent.scss";
 
 @observer
 export class CatalogPlotComponent extends React.Component<WidgetProps> {
@@ -39,7 +38,6 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
             defaultHeight: 350,
             title: "Catalog Plot",
             isCloseable: true,
-            helpType: HelpType.CATALOG_PLOT,
             componentId: "catalog-plot-component"
         };
     }

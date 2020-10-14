@@ -6,7 +6,7 @@ import {Select} from "@blueprintjs/select";
 import {ContourGeneratorType, FrameScaling, FrameStore} from "stores";
 import {ScalingSelectComponent, ClearableNumericInputComponent, SCALING_POPOVER_PROPS, SafeNumericInput} from "components/Shared";
 import {getPercentiles, scaleValue} from "utilities";
-import "./ContourGeneratorPanelComponent.css";
+import "./ContourGeneratorPanelComponent.scss";
 
 const GeneratorSelect = Select.ofType<ContourGeneratorType>();
 

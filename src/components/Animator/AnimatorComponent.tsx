@@ -5,7 +5,7 @@ import {Button, ButtonGroup, FormGroup, IconName, Menu, MenuItem, NonIdealState,
 import ReactResizeDetector from "react-resize-detector";
 import {AnimationMode, AnimationState, PlayMode, WidgetConfig, WidgetProps, HelpType, AnimatorStore, AppStore} from "stores";
 import {SafeNumericInput} from "components/Shared";
-import "./AnimatorComponent.css";
+import "./AnimatorComponent.scss";
 
 @observer
 export class AnimatorComponent extends React.Component<WidgetProps> {
@@ -203,7 +203,6 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
     public render() {
         const appStore = AppStore.Instance;
         const activeFrame = appStore.activeFrame;
-        const dims = activeFrame ? activeFrame.frameInfo.fileInfoExtended.dimensions : 0;
         const numChannels = activeFrame ? activeFrame.frameInfo.fileInfoExtended.depth : 0;
         const numStokes = activeFrame ? activeFrame.frameInfo.fileInfoExtended.stokes : 0;
 

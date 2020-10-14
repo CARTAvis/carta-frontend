@@ -1,6 +1,6 @@
 import * as React from "react";
 import * as _ from "lodash";
-import * as tinycolor from "tinycolor2";
+import tinycolor from "tinycolor2";
 import {observable} from "mobx";
 import {observer} from "mobx-react";
 import {AnchorButton, Button, Checkbox, FormGroup, HTMLSelect, IDialogProps, Intent, MenuItem, Position, Radio, RadioGroup, Switch, Tab, TabId, Tabs, Tooltip} from "@blueprintjs/core";
@@ -12,9 +12,9 @@ import {ScalingSelectComponent} from "components/Shared/ScalingSelectComponent/S
 import {ColorComponent} from "components/ImageView/ImageViewSettingsPanel/ColorComponent";
 import {ColormapComponent, ColorPickerComponent, SafeNumericInput} from "components/Shared";
 import {CompressionQuality, CursorPosition, Event, RegionCreationMode, SPECTRAL_MATCHING_TYPES, SPECTRAL_TYPE_STRING, Theme, TileCache, WCSMatchingType, WCSType, Zoom, ZoomPoint} from "models";
-import {AppStore, BeamType, ContourGeneratorType, DialogStore, FrameScaling, HelpType, PreferenceKeys, PreferenceStore, RegionStore, RenderConfigStore} from "stores";
+import {AppStore, BeamType, ContourGeneratorType, FrameScaling, HelpType, PreferenceKeys, PreferenceStore, RegionStore, RenderConfigStore} from "stores";
 import {SWATCH_COLORS} from "utilities";
-import "./PreferenceDialogComponent.css";
+import "./PreferenceDialogComponent.scss";
 
 enum TABS {
     GLOBAL,

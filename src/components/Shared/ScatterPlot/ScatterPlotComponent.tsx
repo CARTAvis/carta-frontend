@@ -10,10 +10,11 @@ import {ChartArea} from "chart.js";
 import {PlotContainerComponent, TickType, MultiPlotProps} from "components/Shared/LinePlot/PlotContainer/PlotContainerComponent";
 import {ToolbarComponent} from "components/Shared/LinePlot/Toolbar/ToolbarComponent";
 import {ZoomMode, InteractionMode} from "components/Shared/LinePlot/LinePlotComponent";
+import { PlotType } from "../PlotTypeSelector/PlotTypeSelectorComponent";
 import {Point2D} from "models";
 import {clamp, toExponential} from "utilities";
-import "./ScatterPlotComponent.css";
-import { PlotType } from "../PlotTypeSelector/PlotTypeSelectorComponent";
+import "./ScatterPlotComponent.scss";
+
 
 type Point3D = { x: number, y: number, z?: number };
 
@@ -72,8 +73,6 @@ export class ScatterPlotComponentProps {
 const DOUBLE_CLICK_THRESHOLD = 300;
 // Minimum pixel distance before turning a click into a drag event
 const DRAG_THRESHOLD = 3;
-// Thickness of the rectangle used for detecting hits
-const MARKER_HITBOX_THICKNESS = 16;
 // Maximum pixel distance before turing an X or Y zoom into an XY zoom
 const XY_ZOOM_THRESHOLD = 20;
 // indicator default Radius
@@ -345,7 +344,7 @@ export class ScatterPlotComponent extends React.Component<ScatterPlotComponentPr
 
         const tsvData = `data:text/tab-separated-values;charset=utf-8,${comment}\n${header}\n${rows.join("\n")}\n`;
 
-        const dataURL = encodeURI(tsvData).replace(/\#/g, "%23");
+        const dataURL = encodeURI(tsvData).replace(/#/g, "%23");
 
         const a = document.createElement("a") as HTMLAnchorElement;
         a.href = dataURL;
@@ -354,7 +353,7 @@ export class ScatterPlotComponent extends React.Component<ScatterPlotComponentPr
     };
 
     onStageMouseMove = (ev) => {
-        if (this.props.data || this.props.multiPlotPropsMap && this.props.multiPlotPropsMap.size > 0) {
+        if (this.props.data || this.props.multiPlotPropsMap?.size > 0) {
             const mouseEvent: MouseEvent = ev.evt;
             const chartArea = this.chartArea;
             let mousePosX = clamp(mouseEvent.offsetX, chartArea.left - 1, chartArea.right + 1);

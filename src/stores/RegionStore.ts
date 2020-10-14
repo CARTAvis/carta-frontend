@@ -5,7 +5,6 @@ import {Point2D} from "models";
 import {BackendService} from "services";
 import {add2D, getApproximateEllipsePoints, getApproximatePolygonPoints, isAstBadPoint, midpoint2D, minMax2D, rotate2D, scale2D, simplePolygonPointTest, simplePolygonTest, subtract2D, toFixed, transformPoint} from "utilities";
 import {FrameStore} from "stores";
-import RegionType = CARTA.RegionType;
 
 export const CURSOR_REGION_ID = 0;
 export const FOCUS_REGION_RATIO = 0.4;
@@ -187,15 +186,35 @@ export class RegionStore {
         }
     }
 
+    @computed get size(): Point2D {
+        switch (this.regionType) {
+            case CARTA.RegionType.RECTANGLE:
+            case CARTA.RegionType.ELLIPSE:
+                return this.controlPoints[1];
+            case CARTA.RegionType.POLYGON:
+                return this.boundingBox;
+            default:
+                return null;
+        }
+    }
+
+    @computed get wcsSize(): Point2D {
+        const frame = this.activeFrame;
+        if (this.size && frame.validWcs) {
+            return frame.getWcsSizeInArcsec(this.size);
+        }
+        return null;
+    }
+
     public getRegionApproximation(astTransform: number): Point2D[] {
         let approximatePoints = this.regionApproximationMap.get(astTransform);
         if (!approximatePoints) {
-            if (this.regionType === RegionType.POINT) {
+            if (this.regionType === CARTA.RegionType.POINT) {
                 approximatePoints = [transformPoint(astTransform, this.center, false)];
             }
-            if (this.regionType === RegionType.ELLIPSE) {
+            if (this.regionType === CARTA.RegionType.ELLIPSE) {
                 approximatePoints = getApproximateEllipsePoints(astTransform, this.center, this.controlPoints[1].y, this.controlPoints[1].x, this.rotation, RegionStore.TARGET_VERTEX_COUNT);
-            } else if (this.regionType === RegionType.RECTANGLE) {
+            } else if (this.regionType === CARTA.RegionType.RECTANGLE) {
                 let halfWidth = this.controlPoints[1].x / 2;
                 let halfHeight = this.controlPoints[1].y / 2;
                 const rotation = this.rotation * Math.PI / 180.0;

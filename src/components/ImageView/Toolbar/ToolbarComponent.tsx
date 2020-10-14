@@ -3,10 +3,10 @@ import {CSSProperties} from "react";
 import {observer} from "mobx-react";
 import {Button, ButtonGroup, IconName, Menu, MenuItem, Popover, PopoverPosition, Position, Tooltip, AnchorButton} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
-import {AppStore, OverlayStore, PreferenceStore, RegionMode, SystemType} from "stores";
+import {AppStore, OverlayStore, RegionMode, SystemType} from "stores";
 import {ImageViewLayer} from "../ImageViewComponent";
 import {toFixed} from "utilities";
-import "./ToolbarComponent.css";
+import "./ToolbarComponent.scss";
 
 export class ToolbarComponentProps {
     docked: boolean;
@@ -195,7 +195,7 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
                 </Tooltip>
                 }
                 {frame.regionSet.mode === RegionMode.MOVING &&
-                <Tooltip position={tooltipPosition} content={<span>Create region<br/><i><small>Double-click to select region type</small></i></span>}>
+                <Tooltip position={tooltipPosition} content={<span>Create region<br/><i><small>Double-click to select region type.<br/>Press C to enter creation mode.</small></i></span>}>
                     <Button icon={regionIcon} onClick={() => frame.regionSet.setMode(RegionMode.CREATING)}/>
                 </Tooltip>
                 }

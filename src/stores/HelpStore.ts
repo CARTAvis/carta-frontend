@@ -62,7 +62,8 @@ export enum HelpType {
     STOKES_ANALYSIS_SETTINGS_SCATTER_PLOT_STYLING = "stoke-analysis-settings-scatter-plot-styling",
     STOKES_ANALYSIS_SETTINGS_SMOOTHING = "stoke-analysis-settings-smoothing",
     CATALOG_OVERLAY = "catalog-overlay",
-    CATALOG_PLOT = "catalog-plot",
-    SPECTRAL_LINE_QUERY = "spectral-line-query",
-    CATALOG_OVERLAY_SETTINGS = "catalog-overlay-settings"
+    CATALOG_OVERLAY_SETTINGS = "catalog-overlay-settings",
+    CATALOG_HISTOGRAM_PLOT = "catalog-histogram-plot",
+    CATALOG_SCATTER_PLOT = "catalog-scatter-plot",
+    SPECTRAL_LINE_QUERY = "spectral-line-query"
 }

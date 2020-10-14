@@ -1,4 +1,4 @@
-import * as tinycolor from "tinycolor2";
+import tinycolor from "tinycolor2";
 import {action, computed, observable} from "mobx";
 import {Colors} from "@blueprintjs/core";
 import {FrameStore, ProfileSmoothingStore} from "stores";

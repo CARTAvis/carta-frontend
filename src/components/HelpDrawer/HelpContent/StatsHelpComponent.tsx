@@ -9,6 +9,8 @@ export class StatsHelpComponent extends React.Component {
             <div>
                 <p><ImageComponent light={headStatisticsButton} dark={headStatisticsButton_d} width="90%"/></p>
                 <p>Statistics widget allows users to view statistical quantities over a 2D region. When no region is created or selected, it displays statistical quantities of the full image in the image viewer.</p>
+                <h3 id="images">Images</h3>
+                <p>The image dropdown defaults to &quot;Active&quot; image which means the current image in the image viewer.</p>
                 <h3 id="regions">Regions</h3>
                 <p>The region dropdown defaults to &quot;Active&quot; region which means a selected region in the image viewer. Users can select a region by clicking one on the image viewer, or by clicking a region entry on the region list
                     widget. Statistics of the selected region will be updated accordingly.</p>
@@ -27,7 +29,7 @@ export class StatsHelpComponent extends React.Component {
                 </ul>
                 <br/>
                 <h4 id="tip">TIP</h4>
-                <p>Multiple statistics widgets can be created to show statistics for different regions.</p>
+                <p>Multiple statistics widgets can be created to show statistics for different images and different regions.</p>
             </div>
         );
     }

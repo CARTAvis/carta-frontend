@@ -12,7 +12,7 @@ import {PointRegionComponent} from "./PointRegionComponent";
 import {canvasToImagePos, canvasToTransformedImagePos, imageToCanvasPos, transformedImageToCanvasPos} from "./shared";
 import {CursorInfo, Point2D} from "models";
 import {average2D, length2D, pointDistanceSquared, scale2D, subtract2D, transformPoint} from "utilities";
-import "./RegionViewComponent.css";
+import "./RegionViewComponent.scss";
 
 export interface RegionViewComponentProps {
     frame: FrameStore;

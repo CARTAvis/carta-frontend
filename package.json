@@ -1,6 +1,6 @@
 {
     "name": "carta-frontend",
-    "version": "1.4.0-alpha.6",
+    "version": "2.0.0-dev.1",
     "repository": "https://github.com/CARTAvis/carta-frontend",
     "description": "The browser-based frontend component of CARTA, a radio-astronomy visualization tool designed for the ALMA, the VLA and the SKA pathfinders.",
     "homepage": "./",
@@ -9,17 +9,20 @@
         "@blueprintjs/icons": "^3.19.0",
         "@blueprintjs/select": "^3.11.1",
         "@blueprintjs/table": "3.7.1",
+        "@testing-library/jest-dom": "^4.2.4",
+        "@testing-library/react": "^9.5.0",
+        "@testing-library/user-event": "^7.2.1",
         "@types/chart.js": "^2.9.20",
         "@types/gapi": "0.0.39",
         "@types/gapi.auth2": "0.0.52",
-        "@types/jest": "^24.0.19",
+        "@types/jest": "^24.9.1",
         "@types/jquery": "^3.3.30",
         "@types/lodash": "^4.14.144",
-        "@types/node": "^11.13.22",
+        "@types/node": "^12.12.62",
         "@types/plotly.js": "^1.44.33",
-        "@types/react": "^16.9.43",
+        "@types/react": "^16.9.49",
         "@types/react-color": "^3.0.1",
-        "@types/react-dom": "^16.9.2",
+        "@types/react-dom": "^16.9.8",
         "@types/react-plotly.js": "^2.2.4",
         "@types/react-resize-detector": "^3.1.1",
         "@types/react-virtualized-auto-sizer": "^1.0.0",
@@ -29,7 +32,6 @@
         "axios": "^0.19.2",
         "chart.js": "^2.9.3",
         "chartjs-plugin-annotation": "^0.5.7",
-        "chokidar-cli": "^1.2.2",
         "fuzzy-search": "^3.2.1",
         "glob-to-regexp": "^0.4.1",
         "golden-layout": "^1.5.9",
@@ -40,7 +42,7 @@
         "mobx-react": "^5.4.4",
         "mobx-react-devtools": "^6.1.1",
         "moment": "^2.27.0",
-        "node-sass-chokidar": "^1.3.5",
+        "node-sass": "^4.14.1",
         "npm-run-all": "^4.1.3",
         "plotly.js": "^1.54.6",
         "protobufjs": "6.9.0",
@@ -48,15 +50,14 @@
         "react": "^16.13.1",
         "react-chartjs-2": "^2.8.0",
         "react-color": "^2.17.3",
-        "react-dom": "^16.10.2",
+        "react-dom": "^16.13.1",
         "react-flexbox-grid": "^2.1.2",
-        "react-google-login": "^5.1.20",
         "react-iframe": "^1.8.0",
         "react-konva": "^16.13.0-3",
         "react-plotly.js": "^2.4.0",
         "react-resize-detector": "^4.2.1",
         "react-rnd": "^9.2.0",
-        "react-scripts-ts": "^2.17.0",
+        "react-scripts": "3.4.3",
         "react-scroll-to-bottom": "^1.3.2",
         "react-split-pane": "^0.1.91",
         "react-transition-group": "^2.9.0",
@@ -65,14 +66,17 @@
         "rxjs": "^6.5.2",
         "source-map-explorer": "^2.1.0",
         "tinycolor2": "^1.4.1",
-        "typescript": "^3.8.3",
+        "typescript": "^3.9.7",
         "worker-loader": "^2.0.0"
     },
     "scripts": {
         "git-info": "echo export default {logMessage: \\\"$(git log -1 --oneline)\\\"}\\;  > src/static/gitInfo.ts",
         "analyze": "source-map-explorer build/static/js/main.*",
-        "build-css": "node-sass-chokidar -q src/ -o src/",
-        "watch-css": "npm run build-css && node-sass-chokidar -q src/ -o src/ --watch --recursive",
+        "start": "npm run git-info; react-scripts start",
+        "build": "npm run git-info; npm-run-all build-wrappers build-protobuf build-ts",
+        "build-docker": "npm run git-info; npm-run-all build-wrappers-docker build-protobuf build-ts",
+        "build-singularity": "npm run git-info; npm-run-all build-wrappers-singularity build-protobuf build-ts",
+        "build-ts": "react-scripts --max_old_space_size=4096 build",
         "build-libs": "./wasm_libs/build_libs.sh",
         "build-libs-docker": "./build_wasm_libs_docker.sh",
         "build-libs-singularity": "./build_wasm_libs_singularity.sh",
@@ -80,14 +84,36 @@
         "build-wrappers-docker": "./build_wasm_wrappers_docker.sh",
         "build-wrappers-singularity": "./build_wasm_wrappers_singularity.sh",
         "build-protobuf": "./protobuf/build_proto.sh",
-        "start-js": "react-scripts-ts start",
-        "start": "npm run git-info; npm-run-all -p watch-css start-js",
-        "build-js": "react-scripts-ts --max_old_space_size=4096 build",
-        "build": "npm run git-info; npm-run-all build-wrappers build-protobuf build-css build-js; ./crumbs-fix.sh",
-        "build-docker": "npm run git-info; npm-run-all build-wrappers-docker build-protobuf build-css build-js; ./crumbs-fix.sh",
-        "build-singularity": "npm run git-info; npm-run-all build-wrappers-singularity build-protobuf build-css build-js; ./crumbs-fix.sh",
-        "test": "react-scripts-ts test --env=jsdom",
-        "eject": "react-scripts-ts eject",
+        "test": "react-scripts test --env=jsdom",
+        "eject": "react-scripts eject",
         "prepack": "npm run build-libs-docker; npm run build-docker"
+    },
+    "eslintConfig": {
+        "extends": "react-app",
+        "rules": {
+            "no-unused-expressions": "off",
+            "@typescript-eslint/no-unused-expressions": "error",
+            "import/no-webpack-loader-syntax": "off",
+            "no-unused-vars": "off",
+            "@typescript-eslint/no-unused-vars": [
+                "error",
+                {
+                    "args": "none"
+                }
+            ],
+            "jsx-a11y/alt-text": "off"
+        }
+    },
+    "browserslist": {
+        "production": [
+            "last 2 chrome versions",
+            "last 2 firefox versions",
+            "last 2 safari versions"
+        ],
+        "development": [
+            "last 1 chrome version",
+            "last 1 firefox version",
+            "last 1 safari version"
+        ]
     }
 }

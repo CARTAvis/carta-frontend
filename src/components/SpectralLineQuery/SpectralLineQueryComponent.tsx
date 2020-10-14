@@ -8,7 +8,7 @@ import ReactResizeDetector from "react-resize-detector";
 import {SafeNumericInput, TableComponent, TableComponentProps, TableType} from "components/Shared";
 import {AppStore, HelpType, WidgetConfig, WidgetProps, WidgetsStore} from "stores";
 import {RedshiftType, SpectralLineHeaders, SpectralLineQueryWidgetStore, SpectralLineQueryRangeType, SpectralLineQueryUnit} from "stores/widgets";
-import "./SpectralLineQueryComponent.css";
+import "./SpectralLineQueryComponent.scss";
 
 enum HeaderTableColumnName {
     Name = "Name",
@@ -348,7 +348,7 @@ export class SpectralLineQueryComponent extends React.Component<WidgetProps> {
             numVisibleRows: widgetStore.numDataRows,
             manualSelectionProps: {
                 isSelectingAll: widgetStore.isSelectingAllLines,
-                isSelectingIndeterminated: widgetStore.isSelectingIndeterminatedLines,
+                isSelectingIndeterminate: widgetStore.isSelectingIndeterminatedLines,
                 selectAllLines: widgetStore.selectAllLines,
                 selectSingleLine: widgetStore.selectSingleLine
             },
