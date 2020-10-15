@@ -1,5 +1,5 @@
 import * as React from "react";
-import {action, autorun, computed, observable} from "mobx";
+import {action, autorun, computed, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 import {Cell, Column, ColumnHeaderCell, Regions, RenderMode, SelectionModes, Table, TableLoadingOption} from "@blueprintjs/table";
 import {IRegion} from "@blueprintjs/table/src/regions";
@@ -199,6 +199,7 @@ export class FileListTableComponent extends React.Component<FileListTableCompone
 
     constructor(props: FileListTableComponentProps) {
         super(props);
+        makeObservable(this);
 
         // Automatically scroll to the top of the table when a new file response is received, or when filtering/sorting changes
         autorun(() => {

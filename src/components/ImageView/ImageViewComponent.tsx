@@ -1,7 +1,7 @@
 import * as React from "react";
 import $ from "jquery";
 import {observer} from "mobx-react";
-import {autorun, observable} from "mobx";
+import {autorun, makeObservable, observable} from "mobx";
 import {NonIdealState, Spinner, Tag} from "@blueprintjs/core";
 import ReactResizeDetector from "react-resize-detector";
 import {OverlayComponent} from "./Overlay/OverlayComponent";
@@ -101,6 +101,7 @@ export class ImageViewComponent extends React.Component<WidgetProps> {
 
     constructor(props: WidgetProps) {
         super(props);
+        makeObservable(this);
 
         this.activeLayer = AppStore.Instance.activeLayer;
         autorun(() => {

@@ -1,7 +1,7 @@
 import * as React from "react";
 import * as _ from "lodash";
 import tinycolor from "tinycolor2";
-import {observable} from "mobx";
+import {makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 import {AnchorButton, Button, Checkbox, FormGroup, HTMLSelect, IDialogProps, Intent, MenuItem, Position, Radio, RadioGroup, Switch, Tab, TabId, Tabs, Tooltip} from "@blueprintjs/core";
 import {Select} from "@blueprintjs/select";
@@ -32,6 +32,10 @@ const PercentileSelect = Select.ofType<string>();
 export class PreferenceDialogComponent extends React.Component {
     @observable selectedTab: TabId = TABS.GLOBAL;
 
+    constructor(props: any) {
+        super(props);
+        makeObservable(this);
+    }
     private renderPercentileSelectItem = (percentile: string, {handleClick, modifiers, query}) => {
         return <MenuItem text={percentile + "%"} onClick={handleClick} key={percentile}/>;
     };

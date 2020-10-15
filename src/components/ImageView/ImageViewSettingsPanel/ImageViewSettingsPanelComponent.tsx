@@ -2,7 +2,7 @@ import * as React from "react";
 import * as AST from "ast_wrapper";
 import tinycolor from "tinycolor2";
 import {observer} from "mobx-react";
-import {observable} from "mobx";
+import {makeObservable, observable} from "mobx";
 import {Select, ItemRenderer} from "@blueprintjs/select";
 import {
     Button, Collapse, FormGroup, HTMLSelect,
@@ -66,6 +66,11 @@ export const renderFont: ItemRenderer<Font> = (font, {handleClick, modifiers, qu
 @observer
 export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps> {
     @observable selectedTab: TabId = "global";
+
+    constructor(props: any) {
+        super(props);
+        makeObservable(this);
+    }
 
     private fontSelect(visible: boolean, currentFontId: number, fontSetter: Function) {
         let currentFont: Font = astFonts[currentFontId];

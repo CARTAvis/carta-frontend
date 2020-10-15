@@ -1,5 +1,5 @@
 import * as React from "react";
-import {action, autorun, computed, observable} from "mobx";
+import {action, autorun, computed, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 import {Alert, AnchorButton, Button, Classes, Colors, FormGroup, HTMLSelect, IDialogProps, Intent, MenuItem, NonIdealState, Tab, Tabs, TagInput, Tooltip} from "@blueprintjs/core";
 import {Select} from "@blueprintjs/select";
@@ -41,6 +41,8 @@ export class ContourDialogComponent extends React.Component {
 
     constructor(props: { appStore: AppStore }) {
         super(props);
+        makeObservable(this);
+
         this.widgetStore = new RenderConfigWidgetStore();
         this.setDefaultContourParameters();
 

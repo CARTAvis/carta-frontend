@@ -1,5 +1,5 @@
 import {Subject} from "rxjs";
-import {action, computed, observable} from "mobx";
+import { action, computed, observable, makeObservable } from "mobx";
 import LRUCache from "mnemonist/lru-cache";
 import {CARTA} from "carta-protobuf";
 import {Point2D, TileCoordinate} from "models";
@@ -95,6 +95,7 @@ export class TileService {
     };
 
     private constructor() {
+        makeObservable(this);
         this.backendService = BackendService.Instance;
         this.gl = TileWebGLService.Instance.gl;
 

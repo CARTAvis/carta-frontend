@@ -1,4 +1,4 @@
-import {action, computed, observable} from "mobx";
+import { action, computed, observable, makeObservable } from "mobx";
 import {ChartArea} from "chart.js";
 import {Colors} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
@@ -223,6 +223,7 @@ export class StokesAnalysisWidgetStore extends RegionWidgetStore {
 
     constructor() {
         super(RegionsType.CLOSED_AND_POINT);
+        makeObservable(this);
         this.colorMap = DEFAULTS.colorMap;
         this.colorPixel = getColorsForValues(DEFAULTS.colorMap);
         this.statsType = CARTA.StatsType.Mean;

@@ -1,6 +1,6 @@
 import * as React from "react";
 import {observer} from "mobx-react";
-import {action, observable} from "mobx";
+import {action, makeObservable, observable} from "mobx";
 import {Button, ButtonGroup, FormGroup, IconName, Menu, MenuItem, NonIdealState, NumberRange, Popover, Position, Radio, RangeSlider, Slider, Tooltip} from "@blueprintjs/core";
 import ReactResizeDetector from "react-resize-detector";
 import {AnimationMode, AnimationState, PlayMode, WidgetConfig, WidgetProps, HelpType, AnimatorStore, AppStore} from "stores";
@@ -25,6 +25,11 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
 
     @observable width: number;
     @observable height: number;
+
+    constructor(props: any) {
+        super(props);
+        makeObservable(this);
+    }
 
     @action onResize = (width: number, height: number) => {
         this.width = width;

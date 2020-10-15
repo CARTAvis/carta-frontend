@@ -1,6 +1,6 @@
 import * as React from "react";
 import {CSSProperties} from "react";
-import {observable} from "mobx";
+import {makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 import {AnchorButton, Menu, MenuDivider, MenuItem, NonIdealState, Tooltip} from "@blueprintjs/core";
 import {Cell, Column, ColumnHeaderCell, RowHeaderCell, SelectionModes, Table} from "@blueprintjs/table";
@@ -11,10 +11,6 @@ import "./LayerListComponent.scss";
 
 @observer
 export class LayerListComponent extends React.Component<WidgetProps> {
-    @observable width: number = 0;
-    @observable height: number = 0;
-    @observable columnWidths = [150, 75, 85, 77, 68];
-
     public static get WIDGET_CONFIG(): WidgetConfig {
         return {
             id: "layer-list",
@@ -27,6 +23,15 @@ export class LayerListComponent extends React.Component<WidgetProps> {
             isCloseable: true,
             helpType: HelpType.LAYER_LIST
         };
+    }
+
+    @observable width: number = 0;
+    @observable height: number = 0;
+    @observable columnWidths = [150, 75, 85, 77, 68];
+
+    constructor(props: any) {
+        super(props);
+        makeObservable(this);
     }
 
     private onColumnWidthsChange = (index: number, size: number) => {

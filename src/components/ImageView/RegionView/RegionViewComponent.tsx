@@ -1,6 +1,6 @@
 import * as React from "react";
 import * as _ from "lodash";
-import {action, observable} from "mobx";
+import {action, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 import {Group, Layer, Line, Rect, Stage} from "react-konva";
 import Konva from "konva";
@@ -49,6 +49,11 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
     private initialDragCenter: Point2D;
     private initialPinchZoom: number;
     private initialPinchDistance: number;
+
+    constructor(props: any) {
+        super(props);
+        makeObservable(this);
+    }
 
     updateCursorPos = _.throttle((x: number, y: number) => {
         const frame = this.props.frame;

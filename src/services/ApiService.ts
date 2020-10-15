@@ -1,6 +1,6 @@
 import axios, {AxiosInstance} from "axios";
 import Ajv from "ajv";
-import {action, computed, observable} from "mobx";
+import { action, computed, observable, makeObservable } from "mobx";
 import {AppToaster} from "components/Shared";
 import {LayoutConfig} from "../models";
 
@@ -74,6 +74,7 @@ export class ApiService {
     }
 
     constructor() {
+        makeObservable<ApiService, "_accessToken" | "setToken" | "clearToken">(this);
         this.axiosInstance = axios.create();
         if (ApiService.RuntimeConfig.googleClientId) {
             gapi.load("auth2", () => {

@@ -1,4 +1,4 @@
-import {action, observable} from "mobx";
+import { action, observable, makeObservable } from "mobx";
 import tinycolor from "tinycolor2";
 import {CARTA} from "carta-protobuf";
 import {PreferenceStore} from "./PreferenceStore";
@@ -35,6 +35,7 @@ export class ContourConfigStore {
     private readonly preferenceStore: PreferenceStore;
 
     constructor(preferenceStore: PreferenceStore) {
+        makeObservable(this);
         this.preferenceStore = preferenceStore;
         this.enabled = false;
         this.levels = [];

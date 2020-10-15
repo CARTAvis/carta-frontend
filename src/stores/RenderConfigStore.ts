@@ -1,4 +1,4 @@
-import {action, computed, observable} from "mobx";
+import { action, computed, observable, makeObservable } from "mobx";
 import {PreferenceStore} from "stores";
 import {CARTA} from "carta-protobuf";
 import {clamp, getPercentiles} from "utilities";
@@ -74,6 +74,7 @@ export class RenderConfigStore {
     @observable visible: boolean;
 
     constructor(readonly preference: PreferenceStore) {
+        makeObservable(this);
         const percentile = preference.percentile;
         this.selectedPercentile = [percentile, percentile, percentile, percentile];
         this.bias = 0;

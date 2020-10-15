@@ -1,5 +1,5 @@
 import * as React from "react";
-import {observable} from "mobx";
+import {makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 import {Alert, Icon, Menu, Popover, Position, Tooltip, MenuDivider} from "@blueprintjs/core";
 import {ToolbarMenuComponent} from "./ToolbarMenu/ToolbarMenuComponent";
@@ -14,6 +14,11 @@ import "./RootMenuComponent.scss";
 export class RootMenuComponent extends React.Component {
     @observable documentationAlertVisible: boolean;
     private documentationAlertTimeoutHandle;
+
+    constructor(props: any) {
+        super(props);
+        makeObservable(this);
+    }
 
     private handleDashboardClicked = () => {
         window.open(ApiService.RuntimeConfig.dashboardAddress, "_blank");

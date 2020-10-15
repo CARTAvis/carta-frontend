@@ -1,4 +1,4 @@
-import {action, observable, ObservableMap} from "mobx";
+import { action, observable, ObservableMap, makeObservable } from "mobx";
 import {CARTA} from "carta-protobuf";
 import {ProcessedSpectralProfile} from "models";
 
@@ -11,6 +11,7 @@ export class SpectralProfileStore {
     @observable profiles: Map<string, ObservableMap<CARTA.StatsType, ProcessedSpectralProfile>>;
 
     constructor(fileId: number = 0, regionId: number = 0) {
+        makeObservable(this);
         this.fileId = fileId;
         this.regionId = regionId;
         this.profiles = new Map<string, ObservableMap<CARTA.StatsType, ProcessedSpectralProfile>>();

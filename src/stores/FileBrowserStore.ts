@@ -1,4 +1,4 @@
-import {action, computed, observable} from "mobx";
+import {action, computed, observable, makeObservable, runInAction} from "mobx";
 import {TabId} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import {BackendService} from "services";
@@ -89,29 +89,29 @@ export class FileBrowserStore {
         this.catalogFileInfo = null;
 
         if (this.browserMode === BrowserMode.File || this.browserMode === BrowserMode.SaveFile) {
-            backendService.getFileList(directory).subscribe(res => {
+            backendService.getFileList(directory).subscribe(res => runInAction(() => {
                 this.fileList = res;
                 this.loadingList = false;
-            }, err => {
+            }), err => runInAction(() => {
                 console.log(err);
                 this.loadingList = false;
-            });
+            }));
         } else if (this.browserMode === BrowserMode.Catalog) {
-            backendService.getCatalogList(directory).subscribe(res => {
+            backendService.getCatalogList(directory).subscribe(res => runInAction(() => {
                 this.catalogFileList = res;
                 this.loadingList = false;
-            }, err => {
+            }), err => runInAction(() => {
                 console.log(err);
                 this.loadingList = false;
-            });
+            }));
         } else {
-            backendService.getRegionList(directory).subscribe(res => {
+            backendService.getRegionList(directory).subscribe(res => runInAction(() => {
                 this.fileList = res;
                 this.loadingList = false;
-            }, err => {
+            }), err => runInAction(() => {
                 console.log(err);
                 this.loadingList = false;
-            });
+            }));
         }
     };
 
@@ -350,6 +350,7 @@ export class FileBrowserStore {
     }
 
     constructor() {
+        makeObservable(this);
         this.exportCoordinateType = CARTA.CoordinateType.WORLD;
         this.exportFileType = CARTA.FileType.CRTF;
     }

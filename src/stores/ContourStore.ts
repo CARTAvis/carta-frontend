@@ -1,4 +1,4 @@
-import {action, computed, observable} from "mobx";
+import { action, computed, observable, makeObservable } from "mobx";
 import * as CARTACompute from "carta_computation";
 import {ContourWebGLService} from "../services";
 
@@ -30,6 +30,7 @@ export class ContourStore {
     }
 
     constructor() {
+        makeObservable(this);
         this.gl = ContourWebGLService.Instance.gl;
     }
 

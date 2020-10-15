@@ -1,4 +1,4 @@
-import {action, observable} from "mobx";
+import { action, observable, makeObservable } from "mobx";
 import {Colors} from "@blueprintjs/core";
 
 export enum CatalogPlotType {
@@ -37,6 +37,7 @@ export class CatalogWidgetStore {
     @observable catalogShape: CatalogOverlayShape;
 
     constructor(catalogFileId: number) {
+        makeObservable(this);
         this.catalogFileId = catalogFileId;
         this.headerTableColumnWidts = [75, 75, 65, 100, null];
         this.showSelectedData = false;

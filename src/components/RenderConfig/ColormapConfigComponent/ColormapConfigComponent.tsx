@@ -1,5 +1,5 @@
 import * as React from "react";
-import {observable} from "mobx";
+import {makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 import {Alert, Button, FormGroup, MenuItem, Switch} from "@blueprintjs/core";
 import {Select} from "@blueprintjs/select";
@@ -20,8 +20,12 @@ interface ColormapConfigProps {
 
 @observer
 export class ColormapConfigComponent extends React.Component<ColormapConfigProps> {
-
     @observable showCubeHistogramAlert: boolean;
+
+    constructor(props: any) {
+        super(props);
+        makeObservable(this);
+    }
 
     renderHistogramSelectItem = (isCube: boolean, {handleClick, modifiers, query}) => {
         return <MenuItem text={isCube ? "Per-Cube" : "Per-Channel"} onClick={handleClick} key={isCube ? "cube" : "channel"}/>;

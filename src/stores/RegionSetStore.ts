@@ -1,4 +1,4 @@
-import {action, observable} from "mobx";
+import { action, observable, makeObservable } from "mobx";
 import {CARTA} from "carta-protobuf";
 import {CURSOR_REGION_ID, FrameStore, PreferenceStore, RegionStore} from "stores";
 import {Point2D, Transform2D} from "models";
@@ -21,6 +21,7 @@ export class RegionSetStore {
     private readonly preference: PreferenceStore;
 
     constructor(frame: FrameStore, preference: PreferenceStore, backendService: BackendService) {
+        makeObservable(this);
         this.frame = frame;
         this.backendService = backendService;
         this.preference = preference;

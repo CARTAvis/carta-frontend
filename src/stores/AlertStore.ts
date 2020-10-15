@@ -1,4 +1,4 @@
-import {action, observable} from "mobx";
+import { action, observable, makeObservable } from "mobx";
 
 export class AlertStore {
     private static staticInstance: AlertStore;
@@ -43,6 +43,7 @@ export class AlertStore {
     }
 
     private constructor() {
+        makeObservable(this);
         this.alertVisible = false;
         this.interactiveAlertVisible = false;
     }

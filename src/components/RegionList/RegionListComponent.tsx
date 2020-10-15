@@ -1,5 +1,5 @@
 import * as React from "react";
-import {computed, observable} from "mobx";
+import {computed, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 import {HTMLTable, Icon, NonIdealState, Position, Tooltip} from "@blueprintjs/core";
 import ReactResizeDetector from "react-resize-detector";
@@ -11,17 +11,6 @@ import "./RegionListComponent.scss";
 
 @observer
 export class RegionListComponent extends React.Component<WidgetProps> {
-    @computed get validRegions(): RegionStore[] {
-        const frame = AppStore.Instance.activeFrame;
-        if (frame) {
-            return frame.regionSet.regions.filter(r => !r.isTemporary);
-        }
-        return [];
-    }
-
-    @observable width: number = 0;
-    @observable height: number = 0;
-
     private static readonly ACTION_COLUMN_DEFAULT_WIDTH = 25;
     private static readonly NAME_COLUMN_MIN_WIDTH = 50;
     private static readonly NAME_COLUMN_DEFAULT_WIDTH = 150;
@@ -42,6 +31,22 @@ export class RegionListComponent extends React.Component<WidgetProps> {
             isCloseable: true,
             helpType: HelpType.REGION_LIST
         };
+    }
+
+    @computed get validRegions(): RegionStore[] {
+        const frame = AppStore.Instance.activeFrame;
+        if (frame) {
+            return frame.regionSet.regions.filter(r => !r.isTemporary);
+        }
+        return [];
+    }
+
+    @observable width: number = 0;
+    @observable height: number = 0;
+
+    constructor(props: any) {
+        super(props);
+        makeObservable(this);
     }
 
     private onResize = (width: number, height: number) => {

@@ -1,5 +1,5 @@
 import * as AST from "ast_wrapper";
-import {action, observable, ObservableMap, computed} from "mobx";
+import { action, observable, ObservableMap, computed, makeObservable } from "mobx";
 import {AppStore, WidgetsStore, CatalogProfileStore, CatalogSystemType} from "stores";
 import {CatalogWidgetStore} from "stores/widgets";
 
@@ -39,6 +39,7 @@ export class CatalogStore {
     @observable catalogWidgets: Map<number, string>;
 
     private constructor() {
+        makeObservable(this);
         this.catalogData = new ObservableMap();
         this.imageAssociatedCatalogId = new Map<number, Array<number>>();
         this.catalogProfiles = new Map<string, number>();

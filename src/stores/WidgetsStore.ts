@@ -1,6 +1,6 @@
 import * as GoldenLayout from "golden-layout";
 import $ from "jquery";
-import {action, computed, observable} from "mobx";
+import { action, computed, observable, makeObservable } from "mobx";
 import {
     AnimatorComponent,
     HistogramComponent,
@@ -59,6 +59,10 @@ export class WidgetConfig {
     tabsHelpTypes?: HelpType[];
     componentId?: string;
     zIndex?: number = 0;
+
+    constructor() {
+        makeObservable(this);
+    }
 }
 
 export class WidgetProps {
@@ -124,6 +128,7 @@ export class WidgetsStore {
     };
 
     private constructor() {
+        makeObservable(this);
         this.spatialProfileWidgets = new Map<string, SpatialProfileWidgetStore>();
         this.spectralProfileWidgets = new Map<string, SpectralProfileWidgetStore>();
         this.statsWidgets = new Map<string, StatsWidgetStore>();

@@ -1,6 +1,6 @@
 import * as React from "react";
 import {observer} from "mobx-react";
-import {action, computed, observable} from "mobx";
+import {action, computed, makeObservable, observable} from "mobx";
 import {ESCAPE} from "@blueprintjs/core/lib/cjs/common/keys";
 import {Colors} from "@blueprintjs/core";
 import {Scatter} from "react-chartjs-2";
@@ -104,6 +104,11 @@ export class ScatterPlotComponent extends React.Component<ScatterPlotComponentPr
 
     @computed get isPanning() {
         return this.interactionMode === InteractionMode.PANNING;
+    }
+
+    constructor(props: ScatterPlotComponentProps) {
+        super(props);
+        makeObservable(this);
     }
 
     onPlotRefUpdated = (plotRef) => {

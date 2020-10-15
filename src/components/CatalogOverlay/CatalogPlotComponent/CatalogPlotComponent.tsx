@@ -1,7 +1,7 @@
 import * as React from "react";
 import * as Plotly from "plotly.js";
 import Plot from "react-plotly.js";
-import {autorun, computed, observable, action} from "mobx";
+import {autorun, computed, observable, action, makeObservable} from "mobx";
 import {observer} from "mobx-react";
 import {FormGroup, AnchorButton, Intent, Tooltip, Switch, Button, MenuItem, PopoverPosition, NonIdealState} from "@blueprintjs/core";
 import {Select, IItemRendererProps} from "@blueprintjs/select";
@@ -44,6 +44,8 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
 
     constructor(props: WidgetProps) {
         super(props);
+        makeObservable(this)
+
         this.histogramY = {yMin: undefined, yMax: undefined};
         const catalogPlot = CatalogStore.Instance.getAssociatedIdByWidgetId(this.props.id);
         this.componentId = catalogPlot.catalogPlotComponentId;

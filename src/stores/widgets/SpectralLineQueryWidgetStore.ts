@@ -1,4 +1,4 @@
-import {action, autorun, computed, observable} from "mobx";
+import { action, autorun, computed, observable, makeObservable } from "mobx";
 import {NumberRange} from "@blueprintjs/core";
 import {Table} from "@blueprintjs/table";
 import {CARTA} from "carta-protobuf";
@@ -343,6 +343,7 @@ export class SpectralLineQueryWidgetStore extends RegionWidgetStore {
 
     constructor() {
         super(RegionsType.CLOSED);
+        makeObservable<SpectralLineQueryWidgetStore, "isLineSelectedArray" | "restFreqColumn" | "measuredFreqColumn">(this);
         this.queryRangeType = SpectralLineQueryRangeType.Range;
         this.queryRange = [0, 0];
         this.queryRangeByCenter = [0, 0];

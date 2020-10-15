@@ -1,5 +1,5 @@
 import * as React from "react";
-import {action, observable} from "mobx";
+import {action, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 import {Group, Line, Rect} from "react-konva";
 import Konva from "konva";
@@ -28,7 +28,13 @@ const INVALID_POLYGON_COLOR = Colors.ROSE4;
 export class PolygonRegionComponent extends React.Component<PolygonRegionComponentProps> {
     @observable hoverIndex: number;
     @observable hoverIntersection: Point2D;
+
     private previousCursorStyle: string;
+
+    constructor(props: any) {
+        super(props);
+        makeObservable(this);
+    }
 
     private handleContextMenu = (konvaEvent: Konva.KonvaEventObject<MouseEvent>) => {
         konvaEvent.evt.preventDefault();
