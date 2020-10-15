@@ -434,7 +434,8 @@
                     "$ref": "#/definitions/percentage-value"
                 },
                 "activeItemIndex": {
-                    "type": "integer"
+                    "type": "integer",
+                    "minimum": 0
                 }
             }
         }
