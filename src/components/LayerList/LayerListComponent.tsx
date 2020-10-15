@@ -1,6 +1,6 @@
 import * as React from "react";
 import {CSSProperties} from "react";
-import {makeObservable, observable} from "mobx";
+import {action, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 import {AnchorButton, Menu, MenuDivider, MenuItem, NonIdealState, Tooltip} from "@blueprintjs/core";
 import {Cell, Column, ColumnHeaderCell, RowHeaderCell, SelectionModes, Table} from "@blueprintjs/table";
@@ -34,7 +34,7 @@ export class LayerListComponent extends React.Component<WidgetProps> {
         makeObservable(this);
     }
 
-    private onColumnWidthsChange = (index: number, size: number) => {
+    @action private onColumnWidthsChange = (index: number, size: number) => {
         if (!Number.isInteger(index) || index < 0 || index >= this.columnWidths.length || size <= 0) {
             return;
         }
@@ -42,7 +42,7 @@ export class LayerListComponent extends React.Component<WidgetProps> {
         this.forceUpdate();
     };
 
-    private onResize = (width: number, height: number) => {
+    @action private onResize = (width: number, height: number) => {
         this.width = width;
         this.height = height;
     };

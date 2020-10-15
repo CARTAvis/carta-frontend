@@ -82,7 +82,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
         });
     }
 
-    onResize = (width: number, height: number) => {
+    @action private onResize = (width: number, height: number) => {
         this.width = width;
         this.height = height;
     };

@@ -349,7 +349,7 @@ export class FileListTableComponent extends React.Component<FileListTableCompone
         this.props.onFileDoubleClicked(entry.file, entry.hdu);
     };
 
-    private handleEntryClicked = (entry: FileEntry, index) => {
+    @action private handleEntryClicked = (entry: FileEntry, index) => {
         if (entry) {
             if (entry.isDirectory) {
                 this.props.onFolderClicked(entry.filename);

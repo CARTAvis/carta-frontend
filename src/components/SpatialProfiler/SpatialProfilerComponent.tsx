@@ -1,7 +1,7 @@
 import * as React from "react";
 import * as _ from "lodash";
 import * as AST from "ast_wrapper";
-import {autorun, computed, makeObservable, observable} from "mobx";
+import {action, autorun, computed, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 import {Colors, NonIdealState} from "@blueprintjs/core";
 import ReactResizeDetector from "react-resize-detector";
@@ -234,7 +234,7 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
         }, {delay: AUTOSCALE_THROTTLE_TIME});
     }
 
-    onResize = (width: number, height: number) => {
+    @action private onResize = (width: number, height: number) => {
         this.width = width;
         this.height = height;
     };

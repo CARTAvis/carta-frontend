@@ -198,7 +198,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         this.catalogHeaderTableRef = ref;
     }
 
-    onResize = (width: number, height: number) => {
+    @action private onResize = (width: number, height: number) => {
         const profileStore = this.profileStore;
         const catalogWidgetStore = this.widgetStore;
         // fixed bug from blueprintjs, only display 4 rows.

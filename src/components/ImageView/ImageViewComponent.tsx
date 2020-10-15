@@ -1,7 +1,7 @@
 import * as React from "react";
 import $ from "jquery";
 import {observer} from "mobx-react";
-import {autorun, makeObservable, observable} from "mobx";
+import {autorun, makeObservable, observable, runInAction} from "mobx";
 import {NonIdealState, Spinner, Tag} from "@blueprintjs/core";
 import ReactResizeDetector from "react-resize-detector";
 import {OverlayComponent} from "./Overlay/OverlayComponent";
@@ -113,9 +113,9 @@ export class ImageViewComponent extends React.Component<WidgetProps> {
                     this.cachedImageSize = imageSize;
                     clearTimeout(this.ratioIndicatorTimeoutHandle);
                     this.showRatioIndicator = true;
-                    this.ratioIndicatorTimeoutHandle = setTimeout(() => {
+                    this.ratioIndicatorTimeoutHandle = setTimeout(() => runInAction(() => {
                         this.showRatioIndicator = false;
-                    }, 1000);
+                    }), 1000);
                 }
             }
         });

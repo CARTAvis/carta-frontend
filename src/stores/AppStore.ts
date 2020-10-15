@@ -390,18 +390,18 @@ export class AppStore {
                 }
             }
 
-            this.backendService.loadFile(directory, file, hdu, this.fileCounter, CARTA.RenderMode.RASTER).subscribe(ack => {
+            this.backendService.loadFile(directory, file, hdu, this.fileCounter, CARTA.RenderMode.RASTER).subscribe(ack => runInAction(() => {
                 if (!this.addFrame(ack, directory, hdu)) {
                     AppToaster.show({icon: "warning-sign", message: "Load file failed.", intent: "danger", timeout: 3000});
                 }
                 this.fileLoading = false;
                 this.fileBrowserStore.hideFileBrowser();
                 resolve(ack.fileId);
-            }, err => {
+            }), err => runInAction(() => {
                 this.alertStore.showAlert(`Error loading file: ${err}`);
                 this.fileLoading = false;
                 reject(err);
-            });
+            }));
 
             this.fileCounter++;
         });

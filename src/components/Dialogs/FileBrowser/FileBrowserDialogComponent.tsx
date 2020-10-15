@@ -1,7 +1,7 @@
 import * as React from "react";
 import * as _ from "lodash";
 import {observer} from "mobx-react";
-import {action, computed, makeObservable, observable} from "mobx";
+import {action, computed, makeObservable, observable, runInAction} from "mobx";
 import {Alert, AnchorButton, Breadcrumb, Breadcrumbs, Button, IBreadcrumbProps, Icon, IDialogProps, InputGroup, Intent, Menu, MenuItem, Popover, Position, TabId, Tooltip} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import {FileInfoComponent, FileInfoType} from "components/FileInfo/FileInfoComponent";
@@ -122,9 +122,9 @@ export class FileBrowserDialogComponent extends React.Component {
         this.setFilterString(this.fileFilterString);
     };
 
-    @action setFilterString = _.debounce((filterString: string) => {
+    setFilterString = _.debounce((filterString: string) => runInAction(() => {
         this.debouncedFilterString = filterString;
-    }, 500);
+    }), 500);
 
     @action clearFilterString = () => {
         this.fileFilterString = "";

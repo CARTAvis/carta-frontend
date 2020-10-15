@@ -1,5 +1,5 @@
 import * as React from "react";
-import {computed, makeObservable, observable} from "mobx";
+import {action, computed, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 import {HTMLTable, Icon, NonIdealState, Position, Tooltip} from "@blueprintjs/core";
 import ReactResizeDetector from "react-resize-detector";
@@ -49,7 +49,7 @@ export class RegionListComponent extends React.Component<WidgetProps> {
         makeObservable(this);
     }
 
-    private onResize = (width: number, height: number) => {
+    @action private onResize = (width: number, height: number) => {
         this.width = width;
         this.height = height;
     };
