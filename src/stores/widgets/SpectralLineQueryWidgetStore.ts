@@ -367,7 +367,7 @@ export class SpectralLineQueryWidgetStore extends RegionWidgetStore {
     @computed get formalizedHeaders(): SpectralLineHeader[] {
         let formalizedHeaders: SpectralLineHeader[] = [];
         this.columnHeaders.forEach(header => {
-            if ((<any> Object).values(SpectralLineHeaders).includes(header.name)) {
+            if (Object.values(SpectralLineHeaders).includes(header.name as SpectralLineHeaders)) {
                 formalizedHeaders.push({name: header.name as SpectralLineHeaders, desc: SPECTRAL_LINE_DESCRIPTION.get(header.name as SpectralLineHeaders)});
             }
         });

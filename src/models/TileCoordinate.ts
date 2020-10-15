@@ -38,13 +38,13 @@ export class TileCoordinate {
     // Decode all three coordinates from an encoded coordinate using bitwise operators
     public static Decode(encodedCoordinate: number): TileCoordinate {
         const x = encodedCoordinate & 4095;
-        const layer = encodedCoordinate >> 24 & 127;
-        const y = encodedCoordinate >> 12 & 4095;
+        const layer = (encodedCoordinate >> 24) & 127;
+        const y = (encodedCoordinate >> 12) & 4095;
         return new TileCoordinate(x, y, layer);
     }
 
     // Shortcut to quickly decode just the layer from an encoded coordinate
     public static GetLayer(encodedCoordinate: number): number {
-        return encodedCoordinate >> 24 & 127;
+        return (encodedCoordinate >> 24) & 127;
     }
 }

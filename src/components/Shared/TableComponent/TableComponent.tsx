@@ -8,7 +8,7 @@ import {CARTA} from "carta-protobuf";
 import {ControlHeader} from "stores";
 import {SpectralLineHeaders} from "stores/widgets";
 import {ProcessedColumnData} from "models";
-import "./TableComponent.css";
+import "./TableComponent.scss";
 
 export type ColumnFilter = { index: number, columnFilter: string };
 
@@ -19,7 +19,7 @@ export enum TableType {
 
 export interface ManualSelectionProps {
     isSelectingAll: boolean;
-    isSelectingIndeterminated: boolean;
+    isSelectingIndeterminate: boolean;
     selectAllLines: () => void;
     selectSingleLine: (rowIndex: number) => void;
 }
@@ -99,7 +99,7 @@ export class TableComponent extends React.Component<TableComponentProps> {
                 <ColumnHeaderCell>
                     <React.Fragment>
                         <Checkbox
-                            indeterminate={this.props.manualSelectionProps.isSelectingIndeterminated}
+                            indeterminate={this.props.manualSelectionProps.isSelectingIndeterminate}
                             checked={this.props.manualSelectionProps.isSelectingAll}
                             inline={true}
                             onChange={this.props.manualSelectionProps.selectAllLines}

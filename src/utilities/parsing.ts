@@ -2,7 +2,7 @@ import * as _ from "lodash";
 import {CARTA} from "carta-protobuf";
 
 // order matters, since ... and .. both having .. (same for < and <=, > and >=)
-enum ComparisonOperator {
+export enum ComparisonOperator {
     Equal = "==",
     NotEqual = "!=",
     LessorOrEqual = "<=",
@@ -59,7 +59,7 @@ export function findDeep(obj: any, pred: (obj: any) => boolean) {
 
 // parsing filter string for TableComponent filter function
 function getNumberFromFilterString(filterString: string): number {
-    return Number(filterString.replace(/[^0-9.+-\.]+/g, ""));
+    return Number(filterString.replace(/[^0-9.+-.]+/g, ""));
 }
 
 export function getComparisonOperatorAndValue(filterString: string): {operator: CARTA.ComparisonOperator, values: number[]} {

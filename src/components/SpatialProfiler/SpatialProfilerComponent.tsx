@@ -10,8 +10,8 @@ import {TickType, MultiPlotProps} from "../Shared/LinePlot/PlotContainer/PlotCon
 import {AppStore, ASTSettingsString, FrameStore, HelpType, OverlayStore, SpatialProfileStore, WidgetConfig, WidgetProps, WidgetsStore} from "stores";
 import {SpatialProfileWidgetStore} from "stores/widgets";
 import {Point2D} from "models";
-import {binarySearchByX, clamp, formattedExponential, formattedNotation, transformPoint, toFixed} from "utilities";
-import "./SpatialProfilerComponent.css";
+import {binarySearchByX, clamp, formattedExponential, transformPoint, toFixed} from "utilities";
+import "./SpatialProfilerComponent.scss";
 
 // The fixed size of the settings panel popover (excluding the show/hide button)
 const AUTOSCALE_THROTTLE_TIME = 100;

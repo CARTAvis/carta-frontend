@@ -5,7 +5,7 @@ import {AppStore, FrameStore} from "stores";
 import {StokesAnalysisWidgetStore} from "stores/widgets";
 import {StokesAnalysisComponent, RegionSelectorComponent, StokesAnalysisSettingsTabs} from "components";
 import {CustomIcon} from "icons/CustomIcons";
-import "./StokesAnalysisToolbarComponent.css";
+import "./StokesAnalysisToolbarComponent.scss";
 
 @observer
 export class StokesAnalysisToolbarComponent extends React.Component<{widgetStore: StokesAnalysisWidgetStore, id: string}> {
@@ -27,8 +27,6 @@ export class StokesAnalysisToolbarComponent extends React.Component<{widgetStore
 
     public render() {
         const widgetStore = this.props.widgetStore;
-        const frame = AppStore.Instance.activeFrame;
-
         let enableFractionalPol = false;
         if (widgetStore.effectiveFrame && widgetStore.effectiveFrame.regionSet) {
             enableFractionalPol = widgetStore.effectiveFrame.frameInfo.fileInfoExtended.stokes > 1;

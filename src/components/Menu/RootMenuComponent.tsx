@@ -1,14 +1,14 @@
 import * as React from "react";
 import {observable} from "mobx";
 import {observer} from "mobx-react";
-import {Alert, Icon, Menu, Popover, Position, Tooltip, Tag, MenuDivider} from "@blueprintjs/core";
+import {Alert, Icon, Menu, Popover, Position, Tooltip, MenuDivider} from "@blueprintjs/core";
 import {ToolbarMenuComponent} from "./ToolbarMenu/ToolbarMenuComponent";
 import {PresetLayout} from "models";
 import {AppStore, BrowserMode, PreferenceKeys} from "stores";
 import {ApiService, ConnectionStatus} from "services";
 import {toFixed} from "utilities";
 import {CustomIcon} from "icons/CustomIcons";
-import "./RootMenuComponent.css";
+import "./RootMenuComponent.scss";
 
 @observer
 export class RootMenuComponent extends React.Component {

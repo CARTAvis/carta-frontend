@@ -1,5 +1,5 @@
 import * as React from "react";
-import "./ProfilerInfoComponent.css";
+import "./ProfilerInfoComponent.scss";
 
 interface ProfilerInfoComponentProps {
     info: string[];

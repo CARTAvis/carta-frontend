@@ -7,7 +7,7 @@ import {ColorPickerComponent, SafeNumericInput} from "components/Shared";
 import {RegionStore} from "stores";
 import {CARTA} from "carta-protobuf";
 import {SWATCH_COLORS} from "utilities";
-import "./AppearanceForm.css";
+import "./AppearanceForm.scss";
 
 @observer
 export class AppearanceForm extends React.Component<{ region: RegionStore, darkTheme: boolean }> {

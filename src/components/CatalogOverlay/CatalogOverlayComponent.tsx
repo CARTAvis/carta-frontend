@@ -12,9 +12,9 @@ import {TableComponent, TableComponentProps, TableType, ClearableNumericInputCom
 import {CatalogOverlayPlotSettingsComponent} from "./CatalogOverlayPlotSettingsComponent/CatalogOverlayPlotSettingsComponent";
 import {AppStore, CatalogStore, CatalogProfileStore, CatalogOverlay, CatalogCoordinate, CatalogUpdateMode, CatalogSystemType, HelpType, WidgetConfig, WidgetProps, WidgetsStore} from "stores";
 import {CatalogWidgetStore, CatalogPlotWidgetStoreProps, CatalogPlotType} from "stores/widgets";
-import {toFixed, getComparisonOperatorAndValue} from "utilities";
-import {ProcessedColumnData} from "../../models";
-import "./CatalogOverlayComponent.css";
+import {toFixed, ComparisonOperator} from "utilities";
+import {ProcessedColumnData} from "models";
+import "./CatalogOverlayComponent.scss";
 
 enum HeaderTableColumnName {
     Name = "Name",
@@ -428,8 +428,8 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
                     filter.subString = value.filter;
                     userFilters.push(filter);
                 } else {
-                    const result = getComparisonOperatorAndValue(value.filter);
-                    if (result?.operator !== -1 && result?.values.length > 0) {
+                    const result = CatalogOverlayComponent.GetComparisonOperatorAndValue(value.filter);
+                    if (result.operator !== -1 && result.values.length > 0) {
                         filter.comparisonOperator = result.operator;
                         if (result.values.length > 1) {
                             filter.value =  Math.min(result.values[0], result.values[1]);
@@ -444,6 +444,66 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
             
         });
         return userFilters;
+    }
+
+    private static GetNumberFromFilter(filterString: string): number {
+        return Number(filterString.replace(/[^0-9.+-.]+/g, ""));
+    }
+
+    private static GetComparisonOperatorAndValue(filterString: string): {operator: CARTA.ComparisonOperator, values: number[]} {
+        const filter = filterString.replace(/\s/g, "");
+        let result = {operator: -1, values: []};
+        // order matters, since ... and .. both include .. (same for < and <=, > and >=)
+        for (const key of Object.keys(ComparisonOperator)) {
+            const operator = ComparisonOperator[key];
+            const found = filter.includes(operator);
+            if (found) {
+                if (operator === ComparisonOperator.Equal) {
+                    const equalTo = CatalogOverlayComponent.GetNumberFromFilter(filter);
+                    result.operator = CARTA.ComparisonOperator.Equal;
+                    result.values.push(equalTo);
+                    return result;
+                } else if (operator === ComparisonOperator.NotEqual) {
+                    const notEqualTo = CatalogOverlayComponent.GetNumberFromFilter(filter);
+                    result.operator = CARTA.ComparisonOperator.NotEqual;
+                    result.values.push(notEqualTo);
+                    return result;
+                } else if (operator === ComparisonOperator.Lesser) {
+                    const lessThan = CatalogOverlayComponent.GetNumberFromFilter(filter);
+                    result.operator = CARTA.ComparisonOperator.Lesser;
+                    result.values.push(lessThan);
+                    return result;
+                } else if (operator === ComparisonOperator.LessorOrEqual) {
+                    const lessThanOrEqualTo = CatalogOverlayComponent.GetNumberFromFilter(filter);
+                    result.values.push(lessThanOrEqualTo);
+                    result.operator = CARTA.ComparisonOperator.LessorOrEqual;
+                    return result;
+                } else if (operator === ComparisonOperator.Greater) {
+                    const greaterThan = CatalogOverlayComponent.GetNumberFromFilter(filter);
+                    result.operator = CARTA.ComparisonOperator.Greater;
+                    result.values.push(greaterThan);
+                    return result;
+                } else if (operator === ComparisonOperator.GreaterOrEqual) {
+                    const greaterThanOrEqualTo = CatalogOverlayComponent.GetNumberFromFilter(filter);
+                    result.values.push(greaterThanOrEqualTo);
+                    result.operator = CARTA.ComparisonOperator.GreaterOrEqual;
+                    return result;
+                } else if (operator === ComparisonOperator.RangeOpen) {
+                    const fromTo = filter.split(ComparisonOperator.RangeOpen, 2);
+                    result.values.push(Number(fromTo[0]));
+                    result.values.push(Number(fromTo[1]));
+                    result.operator = CARTA.ComparisonOperator.RangeOpen;
+                    return result;
+                } else if (operator === ComparisonOperator.RangeClosed) {
+                    const betweenAnd = filter.split(ComparisonOperator.RangeClosed, 2);
+                    result.values.push(Number(betweenAnd[0]));
+                    result.values.push(Number(betweenAnd[1]));
+                    result.operator = CARTA.ComparisonOperator.RangeClosed;
+                    return result;
+                }
+            }
+        }
+        return result;
     }
 
     private resetSelectedPointIndices = () => {

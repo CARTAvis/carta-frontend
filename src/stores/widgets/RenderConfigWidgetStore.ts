@@ -1,6 +1,6 @@
 import {action, computed, observable} from "mobx";
 import {Colors} from "@blueprintjs/core";
-import * as tinycolor from "tinycolor2";
+import tinycolor from "tinycolor2";
 
 import {PlotType, LineSettings} from "components/Shared";
 

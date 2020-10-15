@@ -1,9 +1,8 @@
 import {observer} from "mobx-react";
 import * as React from "react";
-import {AppStore} from "stores";
 import {HistogramWidgetStore} from "stores/widgets";
 import {RegionSelectorComponent} from "components";
-import "./HistogramToolbarComponent.css";
+import "./HistogramToolbarComponent.scss";
 
 @observer
 export class HistogramToolbarComponent extends React.Component<{ widgetStore: HistogramWidgetStore}> {

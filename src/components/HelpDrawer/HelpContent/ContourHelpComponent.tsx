@@ -1,5 +1,4 @@
 import * as React from "react";
-import {AppStore} from "stores";
 import {ImageComponent} from "./ImageComponent";
 import * as headContourButton from "static/help/head_contour_button.png";
 import * as headContourButton_d from "static/help/head_contour_button_d.png";

@@ -429,7 +429,7 @@ export class TileService {
         }
 
         // If there are pending tiles to be synchronized, don't send tiles one-by-one
-        if (this.animationEnabled || this.pendingSynchronisedTiles && this.pendingSynchronisedTiles.length) {
+        if (this.animationEnabled || this.pendingSynchronisedTiles?.length) {
             // remove coordinate from pending list
             this.pendingSynchronisedTiles = this.pendingSynchronisedTiles.filter(v => v !== encodedCoordinate);
             const nextTile: RasterTile = {

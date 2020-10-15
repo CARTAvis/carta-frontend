@@ -6,7 +6,7 @@ import {ColorPickerComponent, SafeNumericInput, PlotTypeSelectorComponent, PlotT
 import {ColorResult} from "react-color";
 import {SWATCH_COLORS} from "utilities";
 import { AppStore } from "stores";
-import "./SmoothingSettingsComponent.css";
+import "./SmoothingSettingsComponent.scss";
 
 export enum SmoothingType {
     NONE = "None",

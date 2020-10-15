@@ -2,7 +2,7 @@ import * as React from "react";
 import {observer} from "mobx-react";
 import {HTMLSelect, Radio, RadioGroup} from "@blueprintjs/core";
 import {AppStore, RegionCoordinate, RegionStore, SystemType} from "stores";
-import "./CoordinateComponent.css";
+import "./CoordinateComponent.scss";
 
 @observer
 export class CoordinateComponent extends React.Component<{region: RegionStore, disableCooridnate: boolean}> {

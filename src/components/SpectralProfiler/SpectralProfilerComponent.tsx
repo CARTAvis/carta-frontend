@@ -12,7 +12,7 @@ import {AnimationState, SpectralProfileStore, WidgetConfig, WidgetProps, HelpTyp
 import {SpectralProfileWidgetStore} from "stores/widgets";
 import {Point2D, ProcessedSpectralProfile} from "models";
 import {binarySearchByX, clamp, formattedExponential, formattedNotation, toExponential, toFixed} from "utilities";
-import "./SpectralProfilerComponent.css";
+import "./SpectralProfilerComponent.scss";
 
 type PlotData = { values: Point2D[], smoothingValues: Point2D[], xMin: number, xMax: number, yMin: number, yMax: number, yMean: number, yRms: number, progress: number };
 

@@ -5,7 +5,7 @@ import {Colors, Tab, Tabs} from "@blueprintjs/core";
 import {LinePlotSettingsPanelComponent, LinePlotSettingsPanelComponentProps, ScatterPlotSettingsPanelComponentProps, ScatterPlotSettingsPanelComponent, SpectralSettingsComponent, SmoothingSettingsComponent} from "components/Shared";
 import {StokesAnalysisWidgetStore} from "stores/widgets";
 import {WidgetProps, WidgetConfig, HelpType, WidgetsStore, AppStore} from "stores";
-import "./StokesAnalysisSettingsPanelComponent.css";
+import "./StokesAnalysisSettingsPanelComponent.scss";
 
 export enum StokesAnalysisSettingsTabs {
     CONVERSION,

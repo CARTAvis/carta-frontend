@@ -1,6 +1,6 @@
 import * as React from "react";
 import {Button, Divider, NonIdealState} from "@blueprintjs/core";
-import "./PopoverSettingsComponent.css";
+import "./PopoverSettingsComponent.scss";
 
 export interface PopoverSettingsComponentProps {
     isOpen: boolean;

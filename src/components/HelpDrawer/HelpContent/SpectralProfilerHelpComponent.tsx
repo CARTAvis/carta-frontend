@@ -1,5 +1,4 @@
 import * as React from "react";
-import {AppStore} from "stores";
 import {ImageComponent} from "./ImageComponent";
 import * as headSpectralButton from "static/help/head_spectral_button.png";
 import * as headSpectralButton_d from "static/help/head_spectral_button_d.png";
