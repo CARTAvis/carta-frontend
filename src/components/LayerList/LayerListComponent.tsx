@@ -6,12 +6,12 @@ import {AnchorButton, Menu, MenuDivider, MenuItem, NonIdealState, Tooltip} from 
 import {Cell, Column, ColumnHeaderCell, RowHeaderCell, SelectionModes, Table} from "@blueprintjs/table";
 import {IMenuContext} from "@blueprintjs/table/src/interactions/menus/menuContext";
 import ReactResizeDetector from "react-resize-detector";
-import {WidgetConfig, WidgetProps, HelpType, AppStore, FrameStore} from "stores";
+import {DefaultWidgetConfig, WidgetProps, HelpType, AppStore, FrameStore} from "stores";
 import "./LayerListComponent.scss";
 
 @observer
 export class LayerListComponent extends React.Component<WidgetProps> {
-    public static get WIDGET_CONFIG(): WidgetConfig {
+    public static get WIDGET_CONFIG(): DefaultWidgetConfig {
         return {
             id: "layer-list",
             type: "layer-list",

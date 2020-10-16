@@ -10,7 +10,7 @@ import SplitPane, { Pane } from "react-split-pane";
 import {CARTA} from "carta-protobuf";
 import {TableComponent, TableComponentProps, TableType, ClearableNumericInputComponent} from "components/Shared";
 import {CatalogOverlayPlotSettingsComponent} from "./CatalogOverlayPlotSettingsComponent/CatalogOverlayPlotSettingsComponent";
-import {AppStore, CatalogStore, CatalogProfileStore, CatalogOverlay, CatalogCoordinate, CatalogUpdateMode, CatalogSystemType, HelpType, WidgetConfig, WidgetProps, WidgetsStore} from "stores";
+import {AppStore, CatalogStore, CatalogProfileStore, CatalogOverlay, CatalogCoordinate, CatalogUpdateMode, CatalogSystemType, HelpType, WidgetProps, WidgetsStore, DefaultWidgetConfig} from "stores";
 import {CatalogWidgetStore, CatalogPlotWidgetStoreProps, CatalogPlotType} from "stores/widgets";
 import {toFixed} from "utilities";
 import {ProcessedColumnData} from "models";
@@ -38,7 +38,10 @@ enum ComparisonOperator {
 
 @observer
 export class CatalogOverlayComponent extends React.Component<WidgetProps> {
-    @observable catalogFileId: number;
+    @computed get catalogFileId() {
+        return CatalogStore.Instance.catalogProfiles?.get(this.props.id);
+    }
+
     @observable catalogTableRef: Table = undefined;
 
     private catalogHeaderTableRef: Table = undefined;
@@ -59,7 +62,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         [CARTA.ColumnType.UnsupportedType, [CatalogCoordinate.NONE]]
     ]);
 
-    public static get WIDGET_CONFIG(): WidgetConfig {
+    public static get WIDGET_CONFIG(): DefaultWidgetConfig {
         return {
             id: "catalog-overlay",
             type: "catalog-overlay",
@@ -168,7 +171,6 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
             const appStore = AppStore.Instance;
             const frame = appStore.activeFrame;
             const catalogFileIds = CatalogStore.Instance.activeCatalogFiles;
-            this.catalogFileId = CatalogStore.Instance.catalogProfiles.get(this.props.id);
             const profileStore = this.profileStore;
 
             if (profileStore) {

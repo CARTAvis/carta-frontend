@@ -47,7 +47,7 @@ export class PolygonRegionComponent extends React.Component<PolygonRegionCompone
         }
     };
 
-    private handleClick = (konvaEvent: Konva.KonvaEventObject<MouseEvent>) => {
+    @action private handleClick = (konvaEvent: Konva.KonvaEventObject<MouseEvent>) => {
         const mouseEvent = konvaEvent.evt;
 
         if (mouseEvent.button === 0 && !(mouseEvent.ctrlKey || mouseEvent.metaKey)) {

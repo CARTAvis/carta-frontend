@@ -1,4 +1,4 @@
-import { action, autorun, computed, observable, makeObservable } from "mobx";
+import {action, autorun, computed, observable, makeObservable, runInAction} from "mobx";
 import {NumberRange} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import * as AST from "ast_wrapper";
@@ -648,7 +648,7 @@ export class FrameStore {
     private static readonly ZoomInertiaDuration = 250;
 
     constructor(frameInfo: FrameInfo) {
-        makeObservable<FrameStore, "frameRegionSet" | "zoomLevelForFit" | "calculateZoomX" | "calculateZoomY" | "initSkyWCS" | "initFullWCS" | "initSupportedSpectralConversion" | "initCenter">(this);
+        makeObservable(this);
         this.overlayStore = OverlayStore.Instance;
         this.logStore = LogStore.Instance;
         this.backendService = BackendService.Instance;
@@ -1314,9 +1314,9 @@ export class FrameStore {
             clearTimeout(this.zoomTimeoutHandler);
         }
 
-        this.zoomTimeoutHandler = setTimeout(() => {
+        this.zoomTimeoutHandler = setTimeout(() => runInAction(() => {
             this.zooming = false;
-        }, FrameStore.ZoomInertiaDuration);
+        }), FrameStore.ZoomInertiaDuration);
     };
 
     @action private initCenter = () => {

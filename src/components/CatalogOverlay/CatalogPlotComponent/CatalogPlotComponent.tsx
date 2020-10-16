@@ -7,7 +7,7 @@ import {FormGroup, AnchorButton, Intent, Tooltip, Switch, Button, MenuItem, Popo
 import {Select, IItemRendererProps} from "@blueprintjs/select";
 import ReactResizeDetector from "react-resize-detector";
 import {CARTA} from "carta-protobuf";
-import {CatalogUpdateMode, WidgetConfig, WidgetProps, AppStore, WidgetsStore, CatalogStore, CatalogProfileStore} from "stores";
+import {CatalogUpdateMode, WidgetProps, AppStore, WidgetsStore, CatalogStore, CatalogProfileStore, DefaultWidgetConfig} from "stores";
 import {CatalogPlotWidgetStore, Border, DragMode, XBorder, CatalogPlotWidgetStoreProps, CatalogWidgetStore, CatalogPlotType} from "stores/widgets";
 import {ProfilerInfoComponent, ClearableNumericInputComponent} from "components/Shared";
 import {Colors} from "@blueprintjs/core";
@@ -28,7 +28,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
 
     private static readonly UnsupportedDataTypes = [CARTA.ColumnType.String, CARTA.ColumnType.Bool, CARTA.ColumnType.UnsupportedType];
 
-    public static get WIDGET_CONFIG(): WidgetConfig {
+    public static get WIDGET_CONFIG(): DefaultWidgetConfig {
         return {
             id: "catalog-plot",
             type: "catalog-plot",

@@ -9,14 +9,14 @@ import {HistogramToolbarComponent} from "./HistogramToolbarComponent/HistogramTo
 import {LinePlotComponent, LinePlotComponentProps} from "components/Shared";
 import {TickType} from "../Shared/LinePlot/PlotContainer/PlotContainerComponent";
 import {HistogramWidgetStore} from "stores/widgets";
-import {FrameStore, WidgetConfig, WidgetProps, HelpType, WidgetsStore, AppStore} from "stores";
+import {FrameStore, WidgetProps, HelpType, WidgetsStore, AppStore, DefaultWidgetConfig} from "stores";
 import {clamp} from "utilities";
 import {Point2D} from "models";
 import "./HistogramComponent.scss";
 
 @observer
 export class HistogramComponent extends React.Component<WidgetProps> {
-    public static get WIDGET_CONFIG(): WidgetConfig {
+    public static get WIDGET_CONFIG(): DefaultWidgetConfig {
         return {
             id: "histogram",
             type: "histogram",

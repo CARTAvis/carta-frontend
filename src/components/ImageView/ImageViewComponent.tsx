@@ -12,7 +12,7 @@ import {BeamProfileOverlayComponent} from "./BeamProfileOverlay/BeamProfileOverl
 import {RegionViewComponent} from "./RegionView/RegionViewComponent";
 import {ContourViewComponent} from "./ContourView/ContourViewComponent";
 import {CatalogViewComponent} from "./CatalogView/CatalogViewComponent";
-import {AppStore, RegionStore, WidgetConfig, WidgetProps, HelpType, Padding} from "stores";
+import {AppStore, RegionStore, DefaultWidgetConfig, WidgetProps, HelpType, Padding} from "stores";
 import {CursorInfo, Point2D} from "models";
 import {toFixed} from "utilities";
 import "./ImageViewComponent.scss";
@@ -85,7 +85,7 @@ export class ImageViewComponent extends React.Component<WidgetProps> {
     @observable showRatioIndicator: boolean;
     readonly activeLayer: ImageViewLayer;
 
-    public static get WIDGET_CONFIG(): WidgetConfig {
+    public static get WIDGET_CONFIG(): DefaultWidgetConfig {
         return {
             id: "image-view",
             type: "image-view",
@@ -112,7 +112,7 @@ export class ImageViewComponent extends React.Component<WidgetProps> {
                 if (!this.cachedImageSize || this.cachedImageSize.x !== imageSize.x || this.cachedImageSize.y !== imageSize.y) {
                     this.cachedImageSize = imageSize;
                     clearTimeout(this.ratioIndicatorTimeoutHandle);
-                    this.showRatioIndicator = true;
+                    runInAction(() => this.showRatioIndicator = true);
                     this.ratioIndicatorTimeoutHandle = setTimeout(() => runInAction(() => {
                         this.showRatioIndicator = false;
                     }), 1000);

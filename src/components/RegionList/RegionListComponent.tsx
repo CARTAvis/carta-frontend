@@ -4,7 +4,7 @@ import {observer} from "mobx-react";
 import {HTMLTable, Icon, NonIdealState, Position, Tooltip} from "@blueprintjs/core";
 import ReactResizeDetector from "react-resize-detector";
 import {CARTA} from "carta-protobuf";
-import {RegionStore, WidgetConfig, WidgetProps, HelpType, DialogStore, AppStore, FrameStore, WCS_PRECISION} from "stores";
+import {RegionStore, DefaultWidgetConfig, WidgetProps, HelpType, DialogStore, AppStore, FrameStore, WCS_PRECISION} from "stores";
 import {toFixed, getFormattedWCSPoint, formattedArcsec} from "utilities";
 import {CustomIcon} from "icons/CustomIcons";
 import "./RegionListComponent.scss";
@@ -19,7 +19,7 @@ export class RegionListComponent extends React.Component<WidgetProps> {
     private static readonly SIZE_COLUMN_DEFAULT_WIDTH = 160;
     private static readonly ROTATION_COLUMN_DEFAULT_WIDTH = 80;
 
-    public static get WIDGET_CONFIG(): WidgetConfig {
+    public static get WIDGET_CONFIG(): DefaultWidgetConfig {
         return {
             id: "region-list",
             type: "region-list",

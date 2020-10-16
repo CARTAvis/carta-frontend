@@ -9,7 +9,7 @@ import {ColormapConfigComponent} from "./ColormapConfigComponent/ColormapConfigC
 import {LinePlotComponent, LinePlotComponentProps, ProfilerInfoComponent} from "components/Shared";
 import {TaskProgressDialogComponent} from "components/Dialogs";
 import {RenderConfigWidgetStore} from "stores/widgets";
-import {AnimationState, FrameStore, RenderConfigStore, WidgetConfig, WidgetProps, HelpType, AppStore, AnimatorStore, WidgetsStore} from "stores";
+import {AnimationState, FrameStore, RenderConfigStore, DefaultWidgetConfig, WidgetProps, HelpType, AppStore, AnimatorStore, WidgetsStore} from "stores";
 import {Point2D} from "models";
 import {clamp, toExponential, toFixed} from "utilities";
 import "./RenderConfigComponent.scss";
@@ -18,7 +18,7 @@ const KEYCODE_ENTER = 13;
 
 @observer
 export class RenderConfigComponent extends React.Component<WidgetProps> {
-    public static get WIDGET_CONFIG(): WidgetConfig {
+    public static get WIDGET_CONFIG(): DefaultWidgetConfig {
         return {
             id: "render-config",
             type: "render-config",

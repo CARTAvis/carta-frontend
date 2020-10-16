@@ -42,7 +42,7 @@ import {
     CatalogPlotType
 } from "./widgets";
 
-export class WidgetConfig {
+export interface DefaultWidgetConfig {
     id: string;
     type: string;
     minWidth: number;
@@ -52,16 +52,58 @@ export class WidgetConfig {
     defaultX?: number;
     defaultY?: number;
     isCloseable: boolean;
+    title: string;
+    parentId?: string;
+    parentType?: string;
+    helpType?: HelpType | HelpType[];
+    componentId?: string;
+}
+
+export class WidgetConfig implements DefaultWidgetConfig {
+    id: string;
+    readonly type: string;
+    readonly minWidth: number;
+    readonly minHeight: number;
+    @observable defaultWidth: number;
+    @observable defaultHeight: number;
+    @observable defaultX?: number;
+    @observable defaultY?: number;
+    readonly isCloseable: boolean;
     @observable title: string;
     parentId?: string;
     parentType?: string;
-    helpType?: HelpType;
-    tabsHelpTypes?: HelpType[];
+    helpType?: HelpType | HelpType[];
     componentId?: string;
     zIndex?: number = 0;
 
-    constructor() {
+    @action setDefaultPosition = (x: number, y: number) =>{
+        this.defaultX = x;
+        this.defaultY = y;
+    }
+
+    @action setDefaultSize = (w: number, h: number) => {
+        this.defaultWidth = w;
+        this.defaultHeight = h;
+    }
+
+    constructor(id: string, defaultConfig: DefaultWidgetConfig) {
         makeObservable(this);
+
+        this.id = id;
+        this.type = defaultConfig.type;
+        this.minWidth = defaultConfig.minWidth;
+        this.minHeight = defaultConfig.minHeight;
+        this.defaultWidth = defaultConfig.defaultWidth || defaultConfig.minWidth;
+        this.defaultHeight = defaultConfig.defaultHeight || defaultConfig.minHeight;
+        this.defaultX = defaultConfig.defaultX;
+        this.defaultY = defaultConfig.defaultY;
+        this.isCloseable = defaultConfig.isCloseable;
+        this.title = defaultConfig.title;
+        this.parentId = defaultConfig.parentId;
+        this.parentType = defaultConfig.parentType;
+        this.helpType = defaultConfig.helpType;
+        this.componentId = defaultConfig.componentId;
+
     }
 }
 
@@ -164,7 +206,7 @@ export class WidgetsStore {
         this.defaultFloatingWidgetOffset = 100;
     }
 
-    private static getDefaultWidgetConfig(type: string) {
+    private static GetDefaultWidgetConfig(type: string): DefaultWidgetConfig {
         switch (type) {
             case ImageViewComponent.WIDGET_CONFIG.type:
                 return ImageViewComponent.WIDGET_CONFIG;
@@ -199,7 +241,7 @@ export class WidgetsStore {
         }
     }
 
-    private static getDefaultWidgetSettingsConfig(type: string) {
+    private static GetDefaultWidgetSettingsConfig(type: string): DefaultWidgetConfig {
         switch (type) {
             case ImageViewComponent.WIDGET_CONFIG.type:
                 return ImageViewSettingsPanelComponent.WIDGET_CONFIG;
@@ -219,7 +261,7 @@ export class WidgetsStore {
     }
 
     // create drag source for ToolbarMenuComponent
-    private static CreateDragSource(layout: GoldenLayout, widgetConfig: WidgetConfig, elementId: string) {
+    private static CreateDragSource(layout: GoldenLayout, widgetConfig: DefaultWidgetConfig, elementId: string) {
         const glConfig: GoldenLayout.ReactComponentConfig = {
             type: "react-component",
             component: widgetConfig.type,
@@ -390,22 +432,21 @@ export class WidgetsStore {
 
     createFloatingWidget = (savedConfig) => {
         if (savedConfig.id) {
-            let config = WidgetsStore.getDefaultWidgetConfig(savedConfig.id);
             let savedConfigId = savedConfig.id;
             if (savedConfig.plotType) {
                 savedConfigId = savedConfig.plotType;
             }
-            config.id = this.addWidgetByType(savedConfigId, savedConfig.widgetSettings);
-            config.defaultWidth = savedConfig.defaultWidth || config.defaultWidth;
-            config.defaultHeight = savedConfig.defaultHeight || config.defaultHeight;
+            const id = this.addWidgetByType(savedConfigId, savedConfig.widgetSettings);
+            let config = new WidgetConfig(id, WidgetsStore.GetDefaultWidgetConfig(savedConfig.id));
+            config.setDefaultSize(savedConfig.defaultWidth || config.defaultWidth, savedConfig.defaultHeight || config.defaultHeight);
             if (config.componentId) {
                 config.componentId = config.id;
             }
             if (savedConfig.defaultX > 0 && savedConfig.defaultY > 0) {
-                config.defaultX = savedConfig.defaultX;
-                config.defaultY = savedConfig.defaultY;
+                config.setDefaultPosition(savedConfig.defaultX, savedConfig.defaultY);
             } else {
-                config.defaultX = config.defaultY = this.getFloatingWidgetOffset();
+                const offset = this.getFloatingWidgetOffset();
+                config.setDefaultPosition(offset, offset);
             }
             this.floatingWidgets.push(config);
         }
@@ -536,8 +577,8 @@ export class WidgetsStore {
             return;
         }
         // Get floating settings config
-        let widgetConfig = WidgetsStore.getDefaultWidgetSettingsConfig(parentType);
-        widgetConfig.id = this.addFloatingSettingsWidget(null, parentId, widgetConfig.type);
+        const defaultConfig = WidgetsStore.GetDefaultWidgetSettingsConfig(parentType);
+        let widgetConfig = new WidgetConfig(this.addFloatingSettingsWidget(null, parentId, defaultConfig.type), defaultConfig);
         widgetConfig.title = (parentType === "image-view") ? "Image View Settings" : parentTitle + " Settings";
         widgetConfig.parentId = parentId;
         widgetConfig.parentType = parentType;
@@ -558,8 +599,7 @@ export class WidgetsStore {
         }
 
         // Get widget type from config
-        let widgetConfig = WidgetsStore.getDefaultWidgetConfig(type);
-        widgetConfig.id = id;
+        let widgetConfig = new WidgetConfig(id, WidgetsStore.GetDefaultWidgetConfig(type));
         widgetConfig.title = title;
 
         if (type === CatalogOverlayComponent.WIDGET_CONFIG.type) {
@@ -570,12 +610,10 @@ export class WidgetsStore {
         const container = item["container"] as GoldenLayout.Container;
         if (container && container.width && container.height) {
             // Snap size to grid
-            widgetConfig.defaultWidth = Math.round(container.width / 25.0) * 25;
-            widgetConfig.defaultHeight = Math.round(container.height / 25.0) * 25;
+            widgetConfig.setDefaultSize(Math.round(container.width / 25.0) * 25, Math.round(container.height / 25.0) * 25);
             const el = container["_element"][0] as HTMLElement;
             // Snap position to grid and adjust for title and container offset
-            widgetConfig.defaultX = Math.round(el.offsetLeft / 25.0) * 25 + 5;
-            widgetConfig.defaultY = Math.round(el.offsetTop / 25.0) * 25 - 25;
+            widgetConfig.setDefaultSize(Math.round(el.offsetLeft / 25.0) * 25 + 5, Math.round(el.offsetTop / 25.0) * 25 - 25);
         }
 
         this.addFloatingWidget(widgetConfig);
@@ -588,8 +626,8 @@ export class WidgetsStore {
         const itemConfig = item.config as GoldenLayout.ReactComponentConfig;
         const type = itemConfig.component;
         // Get widget config from type
-        let widgetConfig = WidgetsStore.getDefaultWidgetConfig(type);
-        if (widgetConfig.helpType) {
+        let widgetConfig = WidgetsStore.GetDefaultWidgetConfig(type);
+        if (widgetConfig.helpType && !Array.isArray(widgetConfig.helpType)) {
             const container = item["container"] as GoldenLayout.Container;
             let centerX = 0;
             if (container && container.width) {
@@ -715,9 +753,7 @@ export class WidgetsStore {
 
     // region Spatial Profile Widgets
     createFloatingSpatialProfilerWidget = () => {
-        let config = SpatialProfilerComponent.WIDGET_CONFIG;
-        config.id = this.addSpatialProfileWidget();
-        this.addFloatingWidget(config);
+        this.addFloatingWidget(new WidgetConfig(this.addSpatialProfileWidget(), SpatialProfilerComponent.WIDGET_CONFIG));
     };
 
     @action addSpatialProfileWidget(id: string = null, widgetSettings: object = null) {
@@ -739,9 +775,7 @@ export class WidgetsStore {
 
     // region Spectral Profile Widgets
     createFloatingSpectralProfilerWidget = () => {
-        let config = SpectralProfilerComponent.WIDGET_CONFIG;
-        config.id = this.addSpectralProfileWidget();
-        this.addFloatingWidget(config);
+        this.addFloatingWidget(new WidgetConfig(this.addSpectralProfileWidget(), SpectralProfilerComponent.WIDGET_CONFIG));
     };
 
     @action addSpectralProfileWidget(id: string = null, widgetSettings: object = null) {
@@ -784,9 +818,7 @@ export class WidgetsStore {
 
     // region Stokes Profile Widgets
     createFloatingStokesWidget = () => {
-        let config = StokesAnalysisComponent.WIDGET_CONFIG;
-        config.id = this.addStokesWidget();
-        this.addFloatingWidget(config);
+        this.addFloatingWidget(new WidgetConfig(this.addStokesWidget(), StokesAnalysisComponent.WIDGET_CONFIG));
     };
 
     @action addStokesWidget(id: string = null, widgetSettings: object = null) {
@@ -807,7 +839,7 @@ export class WidgetsStore {
     // endregion
 
     // region Catalog Overlay Widgets
-    private getNextComponentId = (config: WidgetConfig) => {
+    private getNextComponentId = (config: DefaultWidgetConfig) => {
         // Find the next appropriate ID
         let nextIndex = 0;
         let componentIds = [];
@@ -832,10 +864,9 @@ export class WidgetsStore {
     };
 
     createFloatingCatalogWidget = (catalogFileId: number): { widgetStoreId: string, widgetComponentId: string } => {
-        let config = CatalogOverlayComponent.WIDGET_CONFIG;
         const widgetStoreId = this.addCatalogWidget(catalogFileId);
-        const widgetComponentId = this.getNextComponentId(config);
-        config.id = widgetComponentId;
+        const widgetComponentId = this.getNextComponentId(CatalogOverlayComponent.WIDGET_CONFIG);
+        let config = new WidgetConfig(widgetComponentId, CatalogOverlayComponent.WIDGET_CONFIG);
         config.componentId = widgetComponentId;
         this.addFloatingWidget(config);
         return {widgetStoreId: widgetStoreId, widgetComponentId: widgetComponentId};
@@ -844,10 +875,9 @@ export class WidgetsStore {
     reloadFloatingCatalogWidget = () => {
         const appStore = AppStore.Instance;
         const catalogFileNum = appStore.catalogNum;
-        let config = CatalogOverlayComponent.WIDGET_CONFIG;
-        const componentId = this.getNextComponentId(config);
+        const componentId = this.getNextComponentId(CatalogOverlayComponent.WIDGET_CONFIG);
+        let config = new WidgetConfig(componentId, CatalogOverlayComponent.WIDGET_CONFIG);
         config.componentId = componentId;
-        config.id = componentId;
         if (catalogFileNum) {
             CatalogStore.Instance.catalogProfiles.set(componentId, catalogFileNum);
         }
@@ -871,9 +901,10 @@ export class WidgetsStore {
 
     // region Catalog Plot Widgets
     createFloatingCatalogPlotWidget = (props: CatalogPlotWidgetStoreProps): { widgetStoreId: string, widgetComponentId: string } => {
-        let config = CatalogPlotComponent.WIDGET_CONFIG;
+        const defaultConfig = CatalogPlotComponent.WIDGET_CONFIG;
         const widgetStoreId = this.addCatalogPlotWidget(props);
-        const widgetComponentId = this.getNextComponentId(config);
+        const widgetComponentId = this.getNextComponentId(defaultConfig);
+        const config = new WidgetConfig(widgetStoreId, defaultConfig);
         config.id = widgetStoreId;
         config.componentId = widgetComponentId;
         config.helpType = props.plotType === CatalogPlotType.Histogram ? HelpType.CATALOG_HISTOGRAM_PLOT : HelpType.CATALOG_SCATTER_PLOT;
@@ -897,12 +928,10 @@ export class WidgetsStore {
 
     // region Spectral Line Query Widgets
     createFloatingSpectralLineQueryWidget = (): string => {
-        let config = SpectralLineQueryComponent.WIDGET_CONFIG;
-        const widgetId = this.addSpectralLineQueryWidget();
-        config.id = widgetId;
+        const config = new WidgetConfig(this.addSpectralLineQueryWidget(), SpectralLineQueryComponent.WIDGET_CONFIG);
         config.componentId = this.getNextComponentId(config);
         this.addFloatingWidget(config);
-        return widgetId;
+        return config.id;
     };
 
     // add spectral line query widget store
@@ -922,8 +951,8 @@ export class WidgetsStore {
 
     // region Floating Settings
     createFloatingSettingsWidget = (title: string, parentId: string, parentType: string) => {
-        let config = WidgetsStore.getDefaultWidgetSettingsConfig(parentType);
-        config.id = this.addFloatingSettingsWidget(null, parentId, config.type);
+        const defaultConfig = WidgetsStore.GetDefaultWidgetSettingsConfig(parentType);
+        const config = new WidgetConfig(this.addFloatingSettingsWidget(null, parentId, defaultConfig.type), defaultConfig);
         config.title = title + " Settings";
         config.parentId = parentId;
         config.parentType = parentType;
@@ -947,9 +976,7 @@ export class WidgetsStore {
 
     // region Stats Widgets
     createFloatingStatsWidget = () => {
-        let config = StatsComponent.WIDGET_CONFIG;
-        config.id = this.addStatsWidget();
-        this.addFloatingWidget(config);
+        this.addFloatingWidget(new WidgetConfig(this.addStatsWidget(), StatsComponent.WIDGET_CONFIG));
     };
 
     @action addStatsWidget(id: string = null) {
@@ -968,9 +995,7 @@ export class WidgetsStore {
 
     // region Histogram Widgets
     createFloatingHistogramWidget = () => {
-        let config = HistogramComponent.WIDGET_CONFIG;
-        config.id = this.addHistogramWidget();
-        this.addFloatingWidget(config);
+        this.addFloatingWidget(new WidgetConfig(this.addHistogramWidget(), HistogramComponent.WIDGET_CONFIG));
     };
 
     @action addHistogramWidget(id: string = null, widgetSettings: object = null) {
@@ -992,9 +1017,7 @@ export class WidgetsStore {
 
     // region Render Config Widgets
     createFloatingRenderWidget = () => {
-        let config = RenderConfigComponent.WIDGET_CONFIG;
-        config.id = this.addRenderConfigWidget();
-        this.addFloatingWidget(config);
+        this.addFloatingWidget(new WidgetConfig(this.addRenderConfigWidget(), RenderConfigComponent.WIDGET_CONFIG));
     };
 
     @action addRenderConfigWidget(id: string = null, widgetSettings: object = null) {
@@ -1017,9 +1040,7 @@ export class WidgetsStore {
     // region Basic widget types (log, animator, region list, layer list)
 
     createFloatingLogWidget = () => {
-        const config = LogComponent.WIDGET_CONFIG;
-        config.id = this.addLogWidget();
-        this.addFloatingWidget(config);
+        this.addFloatingWidget(new WidgetConfig(this.addLogWidget(), LogComponent.WIDGET_CONFIG));
     };
 
     @action addLogWidget(id: string = null) {
@@ -1034,9 +1055,7 @@ export class WidgetsStore {
     }
 
     createFloatingAnimatorWidget = () => {
-        const config = AnimatorComponent.WIDGET_CONFIG;
-        config.id = this.addAnimatorWidget();
-        this.addFloatingWidget(config);
+        this.addFloatingWidget(new WidgetConfig(this.addAnimatorWidget(), AnimatorComponent.WIDGET_CONFIG));
     };
 
     @action addAnimatorWidget(id: string = null) {
@@ -1051,9 +1070,7 @@ export class WidgetsStore {
     }
 
     createFloatingRegionListWidget = () => {
-        const config = RegionListComponent.WIDGET_CONFIG;
-        config.id = this.addRegionListWidget();
-        this.addFloatingWidget(config);
+        this.addFloatingWidget(new WidgetConfig(this.addRegionListWidget(), RegionListComponent.WIDGET_CONFIG));
     };
 
     @action addRegionListWidget(id: string = null) {
@@ -1068,9 +1085,7 @@ export class WidgetsStore {
     }
 
     createFloatingLayerListWidget = () => {
-        const config = LayerListComponent.WIDGET_CONFIG;
-        config.id = this.addLayerListWidget();
-        this.addFloatingWidget(config);
+        this.addFloatingWidget(new WidgetConfig(this.addLayerListWidget(), LayerListComponent.WIDGET_CONFIG));
     };
 
     @action addLayerListWidget(id: string = null) {
@@ -1133,7 +1148,8 @@ export class WidgetsStore {
 
     @action addFloatingWidget = (widget: WidgetConfig) => {
         if (!(widget?.defaultX > 0 && widget?.defaultY > 0)) {
-            widget["defaultX"] = widget["defaultY"] = this.getFloatingWidgetOffset();
+            const offset = this.getFloatingWidgetOffset();
+            widget.setDefaultPosition(offset, offset);
         }
         widget.zIndex = this.floatingWidgets.length + 1;
         this.floatingWidgets.push(widget);

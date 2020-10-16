@@ -212,6 +212,14 @@ export class AppStore {
         return estimatedFinishTime - dt;
     }
 
+    @action startFileLoading = () => {
+        this.fileLoading = true;
+    };
+
+    @action endFileLoading = () => {
+        this.fileLoading = false;
+    };
+
     // Keyboard shortcuts
     @computed get modifierString() {
         // Modifier string for shortcut keys.
@@ -374,7 +382,7 @@ export class AppStore {
 
     @action loadFile = (directory: string, file: string, hdu: string) => {
         return new Promise<number>((resolve, reject) => {
-            this.fileLoading = true;
+            this.startFileLoading();
 
             if (!file) {
                 const lastDirSeparator = directory.lastIndexOf("/");
@@ -390,18 +398,18 @@ export class AppStore {
                 }
             }
 
-            this.backendService.loadFile(directory, file, hdu, this.fileCounter, CARTA.RenderMode.RASTER).subscribe(ack => runInAction(() => {
+            this.backendService.loadFile(directory, file, hdu, this.fileCounter, CARTA.RenderMode.RASTER).subscribe(ack => {
                 if (!this.addFrame(ack, directory, hdu)) {
                     AppToaster.show({icon: "warning-sign", message: "Load file failed.", intent: "danger", timeout: 3000});
                 }
-                this.fileLoading = false;
+                this.endFileLoading();
                 this.fileBrowserStore.hideFileBrowser();
                 resolve(ack.fileId);
-            }), err => runInAction(() => {
+            }, err => {
                 this.alertStore.showAlert(`Error loading file: ${err}`);
-                this.fileLoading = false;
+                this.endFileLoading();
                 reject(err);
-            }));
+            });
 
             this.fileCounter++;
         });
@@ -594,13 +602,13 @@ export class AppStore {
             AppToaster.show(ErrorToast("`Catalog type not supported"));
             return;
         }
-        this.fileLoading = true;
+        this.startFileLoading();
 
         const frame = this.activeFrame;
         const fileId = this.catalogNum + 1;
 
-        this.backendService.loadCatalogFile(directory, file, fileId, previewDataSize).subscribe(ack => {
-            this.fileLoading = false;
+        this.backendService.loadCatalogFile(directory, file, fileId, previewDataSize).subscribe(ack => runInAction(() => {
+            this.endFileLoading();
             if (frame && ack.success && ack.dataSize) {
                 let catalogInfo: CatalogInfo = {fileId, directory, fileInfo: ack.fileInfo, dataSize: ack.dataSize};
                 let catalogWidgetId;
@@ -640,10 +648,10 @@ export class AppStore {
                     catalogStore.catalogProfileStores.set(fileId, catalogProfileStore);
                 }
             }
-        }, error => {
+        }), error => {
             console.error(error);
             AppToaster.show(ErrorToast(error));
-            this.fileLoading = false;
+            this.endFileLoading();
         });
     };
 
@@ -783,7 +791,7 @@ export class AppStore {
             return;
         }
 
-        this.fileLoading = true;
+        this.startFileLoading();
         // clear previously generated moment images under this frame
         if (frame.momentImages && frame.momentImages.length > 0) {
             frame.momentImages.forEach(momentFrame => this.closeFile(momentFrame));
@@ -806,10 +814,10 @@ export class AppStore {
                 AppToaster.show({icon: "warning-sign", message: `Moment generation failed. ${ack?.message}`, intent: "danger", timeout: 3000});
             }
             frame.resetMomentRequestState();
-            this.fileLoading = false;
+            this.endFileLoading();
         }, error => {
             frame.resetMomentRequestState();
-            this.fileLoading = false;
+            this.endFileLoading();
             console.error(error);
         });
         this.restartTaskProgress();
@@ -912,7 +920,7 @@ export class AppStore {
     }, AppStore.ImageChannelThrottleTime);
 
     private constructor() {
-        makeObservable<AppStore, "onSessionResumed">(this);
+        makeObservable(this);
         AppStore.staticInstance = this;
         // Assign service instances
         this.backendService = BackendService.Instance;
