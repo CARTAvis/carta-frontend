@@ -4,9 +4,10 @@ import {observer} from "mobx-react";
 import {AnchorButton, FormGroup, Intent, NonIdealState, Switch, Tooltip, MenuItem, PopoverPosition, Button} from "@blueprintjs/core";
 import {Cell, Column, Regions, RenderMode, SelectionModes, Table} from "@blueprintjs/table";
 import * as ScrollUtils from "../../../node_modules/@blueprintjs/table/lib/esm/common/internal/scrollUtils";
-import {Select, IItemRendererProps} from "@blueprintjs/select";
+import {Select, IItemRendererProps, ItemPredicate} from "@blueprintjs/select";
 import ReactResizeDetector from "react-resize-detector";
 import SplitPane, { Pane } from "react-split-pane";
+import FuzzySearch from "fuzzy-search";
 import {CARTA} from "carta-protobuf";
 import {TableComponent, TableComponentProps, TableType, ClearableNumericInputComponent} from "components/Shared";
 import {AppStore, CatalogStore, CatalogProfileStore, CatalogOverlay, CatalogUpdateMode, CatalogSystemType, HelpType, WidgetConfig, WidgetProps, WidgetsStore} from "stores";
@@ -19,8 +20,7 @@ enum HeaderTableColumnName {
     Name = "Name",
     Unit = "Unit",
     Type = "Type",
-    Display = "Display",
-    Description = "Description"
+    Display = "Display"
 }
 
 // order matters, since ... and .. both having .. (same for < and <=, > and >=)
@@ -291,6 +291,11 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         );
     }
 
+    private filterColumn: ItemPredicate<string> = (query: string, columnName: string) => {
+        const fileSearcher = new FuzzySearch([columnName]);
+        return fileSearcher.search(query).length > 0;
+    };
+
     @computed get xAxisLable() {
         const catalogWidgetStore = this.widgetStore;
         const plotType = catalogWidgetStore.catalogPlotType;
@@ -352,7 +357,6 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
     private createHeaderTable() {
         const tableColumns = [];
         const headerNames = [];
-        const headerDescriptions = [];
         const units = [];
         const types = [];
         const headerDataset = this.profileStore.catalogHeader;
@@ -360,7 +364,6 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         for (let index = 0; index < headerDataset.length; index++) {
             const header = headerDataset[index];
             headerNames.push(header.name);
-            headerDescriptions.push(header.description);
             units.push(header.units);
             types.push(this.getDataType(header.dataType));
         }
@@ -372,8 +375,6 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         tableColumns.push(columnType);
         const columnDisplaySwitch = this.renderButtonColumns(HeaderTableColumnName.Display, headerNames);
         tableColumns.push(columnDisplaySwitch);
-        const columnDescription = this.renderDataColumn(HeaderTableColumnName.Description, headerDescriptions);
-        tableColumns.push(columnDescription);
 
         return (
             <Table 
@@ -752,7 +753,8 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
             updateSortRequest: this.updateSortRequest,
             sortingInfo: profileStore.sortingInfo,
             disable: profileStore.loadOntoImage,
-            darkTheme: AppStore.Instance.darkTheme
+            darkTheme: AppStore.Instance.darkTheme,
+            tableHeaders: profileStore.catalogHeader
         };
 
         let startIndex = 0;
@@ -777,7 +779,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
                 info = `Showing ${startIndex} to ${tableVisibleRows} of ${profileStore.filterDataSize} filtered entries. Total ${catalogFileDataSize} entries`;
             }
         }
-        let tableInfo = (catalogFileDataSize) ? (
+        const tableInfo = (catalogFileDataSize) ? (
             <tr>
                 <td className="td-label">
                     <pre>{info}</pre>
@@ -805,6 +807,8 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         if (this.width <= 600 ) {
             footerDropdownClass = "footer-action-small";
         }
+
+        const noResults = (<MenuItem disabled={true} text="No results" />);
 
         return (
             <div className={"catalog-overlay"}>
@@ -877,13 +881,16 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
                             <FormGroup className="catalog-xaxis" inline={true} label={this.xAxisLable} disabled={disable}>
                                 <Select
                                     className="catalog-xaxis-select"
-                                    filterable={false}
                                     items={this.axisOption}
                                     activeItem={null}
                                     onItemSelect={(columnName) => catalogWidgetStore.setxAxis(columnName)}
                                     itemRenderer={this.renderAxisPopOver}
                                     disabled={disable}
                                     popoverProps={{popoverClassName: "catalog-select", minimal: true , position: PopoverPosition.AUTO_END}}
+                                    filterable={true}
+                                    noResults={noResults}
+                                    itemPredicate={this.filterColumn}
+                                    resetOnSelect={true}
                                 >
                                     <Button className="catalog-xaxis-button" text={catalogWidgetStore.xAxis} disabled={disable} rightIcon="double-caret-vertical"/>
                                 </Select>
@@ -892,13 +899,16 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
                             <FormGroup className="catalog-yaxis" inline={true} label={this.yAxisLable} disabled={isHistogram || disable}>
                                 <Select
                                     className="catalog-yaxis-select"
-                                    filterable={false}
                                     items={this.axisOption}
                                     activeItem={null}
                                     onItemSelect={(columnName) => catalogWidgetStore.setyAxis(columnName)}
                                     itemRenderer={this.renderAxisPopOver}
                                     disabled={isHistogram || disable}
                                     popoverProps={{popoverClassName: "catalog-select", minimal: true , position: PopoverPosition.AUTO_END}}
+                                    filterable={true}
+                                    noResults={noResults}
+                                    itemPredicate={this.filterColumn}
+                                    resetOnSelect={true}
                                 >
                                     <Button className="catalog-yaxis-button" text={catalogWidgetStore.yAxis} disabled={isHistogram || disable} rightIcon="double-caret-vertical"/>
                                 </Select>

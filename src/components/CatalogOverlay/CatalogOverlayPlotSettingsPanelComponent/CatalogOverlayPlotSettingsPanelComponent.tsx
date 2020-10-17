@@ -1,12 +1,12 @@
 import {observer} from "mobx-react";
 import {action, autorun, computed, observable} from "mobx";
 import * as React from "react";
-import {Button, FormGroup, Icon, MenuItem, NumericInput, PopoverPosition, Tab, Tabs, TabId} from "@blueprintjs/core";
+import {Button, FormGroup, Icon, MenuItem, PopoverPosition, Tab, Tabs, TabId} from "@blueprintjs/core";
 import {Select, IItemRendererProps} from "@blueprintjs/select";
 import {AppStore, CatalogStore, WidgetProps, WidgetConfig, HelpType, WidgetsStore} from "stores";
 import {CatalogOverlayShape, CatalogWidgetStore} from "stores/widgets";
 import {ColorResult} from "react-color";
-import {ColorPickerComponent} from "components/Shared";
+import {ColorPickerComponent, SafeNumericInput} from "components/Shared";
 import {SWATCH_COLORS} from "utilities";
 import "./CatalogOverlayPlotSettingsPanelComponent.css";
 
@@ -157,8 +157,6 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
         const catalogStore = CatalogStore.Instance;
         const catalogFileIds = catalogStore.activeCatalogFiles;
 
-        const tableSeparatorPosition = (100 - parseInt(widgetStore.tableSeparatorPosition));
-
         let catalogFileItems = [];
         catalogFileIds.forEach((value) => {
             catalogFileItems.push(value);
@@ -174,7 +172,7 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
         const globalPanel = (
             <div className="panel-container">
                 <FormGroup  inline={true} label="Displayed columns">
-                    <NumericInput
+                    <SafeNumericInput
                         placeholder="Default Displayed Columns"
                         min={1}
                         value={catalogStore.initDisplayedColumnSize}
@@ -209,7 +207,7 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
                             widgetStore.setCatalogColor(color.hex === "transparent" ? "#000000" : color.hex);
                         }}
                         disableAlpha={true}
-                        darkTheme={AppStore.Instance.darkTheme}
+                        darkTheme={appStore.darkTheme}
                         disabled={disabledOverlayPanel}
                     />
                 </FormGroup>
@@ -221,7 +219,7 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
                             widgetStore.setHighlightColor(color.hex === "transparent" ? "#000000" : color.hex);
                         }}
                         disableAlpha={true}
-                        darkTheme={AppStore.Instance.darkTheme}
+                        darkTheme={appStore.darkTheme}
                         disabled={disabledOverlayPanel}
                     />
                 </FormGroup>
@@ -240,7 +238,7 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
                     </Select>
                 </FormGroup>
                 <FormGroup  inline={true} label="Size" labelInfo="(px)"  disabled={disabledOverlayPanel}>
-                    <NumericInput
+                    <SafeNumericInput
                         placeholder="Catalog Size"
                         disabled={disabledOverlayPanel}
                         min={CatalogWidgetStore.MinOverlaySize}
@@ -248,16 +246,6 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
                         value={widgetStore.catalogSize}
                         stepSize={1}
                         onValueChange={(value: number) => widgetStore.setCatalogSize(value)}
-                    />
-                </FormGroup>
-                <FormGroup  inline={true} label="Separator" labelInfo="(%)"  disabled={disabledOverlayPanel}>
-                    <NumericInput
-                        disabled={disabledOverlayPanel}
-                        min={CatalogWidgetStore.MinTableSeparatorPosition}
-                        max={CatalogWidgetStore.MaxTableSeparatorPosition}
-                        value={tableSeparatorPosition}
-                        stepSize={1}
-                        onValueChange={(value: number) => widgetStore.setTableSeparatorPosition(`${100 - value}%`)}
                     />
                 </FormGroup>
             </div>

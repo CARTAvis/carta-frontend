@@ -12,7 +12,7 @@ import {ScalingSelectComponent} from "components/Shared/ScalingSelectComponent/S
 import {ColorComponent} from "components/ImageView/ImageViewSettingsPanel/ColorComponent";
 import {ColormapComponent, ColorPickerComponent, SafeNumericInput} from "components/Shared";
 import {CompressionQuality, CursorPosition, Event, RegionCreationMode, SPECTRAL_MATCHING_TYPES, SPECTRAL_TYPE_STRING, Theme, TileCache, WCSMatchingType, WCSType, Zoom, ZoomPoint} from "models";
-import {AppStore, BeamType, ContourGeneratorType, FrameScaling, HelpType, PreferenceKeys, PreferenceStore, RegionStore, RenderConfigStore} from "stores";
+import {AppStore, BeamType, ContourGeneratorType, CatalogStore, FrameScaling, HelpType, PreferenceKeys, PreferenceStore, RegionStore, RenderConfigStore} from "stores";
 import {SWATCH_COLORS} from "utilities";
 import "./PreferenceDialogComponent.scss";
 
@@ -23,7 +23,8 @@ enum TABS {
     OVERLAY_CONFIG,
     REGION,
     PERFORMANCE,
-    LOG_EVENT
+    LOG_EVENT,
+    CATALOG
 }
 
 const PercentileSelect = Select.ofType<string>();
@@ -72,6 +73,9 @@ export class PreferenceDialogComponent extends React.Component {
                 break;
             case TABS.LOG_EVENT:
                 preference.resetLogEventSettings();
+                break;
+            case TABS.CATALOG:
+                CatalogStore.Instance.setInitDisplayedColumnSize(CatalogStore.DisplayedColumnSize);
                 break;
             case TABS.GLOBAL:
             default:
@@ -541,6 +545,20 @@ export class PreferenceDialogComponent extends React.Component {
             </div>
         );
 
+        const catalogPanel = (            
+            <div className="panel-container">
+                <FormGroup  inline={true} label="Displayed columns">
+                    <SafeNumericInput
+                        placeholder="Default Displayed Columns"
+                        min={1}
+                        value={CatalogStore.Instance.initDisplayedColumnSize}
+                        stepSize={1}
+                        onValueChange={(value: number) => CatalogStore.Instance.setInitDisplayedColumnSize(value)}
+                    />
+                </FormGroup>
+            </div>
+        );
+
         let className = "preference-dialog";
         if (appStore.darkTheme) {
             className += " bp3-dark";
@@ -571,6 +589,7 @@ export class PreferenceDialogComponent extends React.Component {
                         <Tab id={TABS.CONTOUR_CONFIG} title="Contour Configuration" panel={contourConfigPanel}/>
                         <Tab id={TABS.OVERLAY_CONFIG} title="Overlay Configuration" panel={overlayConfigPanel}/>
                         <Tab id={TABS.REGION} title="Region" panel={regionSettingsPanel}/>
+                        <Tab id={TABS.CATALOG} title="Catalog" panel={catalogPanel}/>
                         <Tab id={TABS.PERFORMANCE} title="Performance" panel={performancePanel}/>
                         <Tab id={TABS.LOG_EVENT} title="Log Events" panel={logEventsPanel}/>
                     </Tabs>

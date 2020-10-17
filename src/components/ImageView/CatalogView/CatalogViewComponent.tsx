@@ -3,7 +3,6 @@ import * as Plotly from "plotly.js";
 import {observer} from "mobx-react";
 import {computed} from "mobx";
 import Plot from "react-plotly.js";
-import {Colors} from "@blueprintjs/core";
 import {AppStore, WidgetsStore, CatalogStore} from "stores";
 import {CatalogOverlayShape} from "stores/widgets";
 import {canvasToTransformedImagePos} from "components/ImageView/RegionView/shared";

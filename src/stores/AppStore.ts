@@ -602,7 +602,6 @@ export class AppStore {
             this.fileLoading = false;
             if (frame && ack.success && ack.dataSize) {
                 let catalogInfo: CatalogInfo = {fileId, directory, fileInfo: ack.fileInfo, dataSize: ack.dataSize};
-                let catalogWidgetId;
                 const columnData = ProtobufProcessing.ProcessCatalogData(ack.previewData);
 
                 // update image associated catalog file
@@ -620,7 +619,7 @@ export class AppStore {
                 }
                 associatedCatalogFiles.push(fileId);
                 catalogStore.updateImageAssociatedCatalogId(AppStore.Instance.activeFrame.frameInfo.fileId, associatedCatalogFiles);
-
+                let catalogWidgetId;
                 if (catalogComponentSize === 0) {
                     const catalog = this.widgetsStore.createFloatingCatalogWidget(fileId);
                     catalogWidgetId = catalog.widgetStoreId;

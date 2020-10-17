@@ -14,6 +14,7 @@ type CatalogOverlayDataInfo = {
 
 export class CatalogStore {
     private static staticInstance: CatalogStore;
+    public static DisplayedColumnSize = 10;
 
     static get Instance() {
         if (!CatalogStore.staticInstance) {
@@ -37,7 +38,7 @@ export class CatalogStore {
     @observable catalogProfileStores: Map<number, CatalogProfileStore>;
     // catalog file Id with catalog widget storeId
     @observable catalogWidgets: Map<number, string>;
-    @observable initDisplayedColumnSize;
+    @observable initDisplayedColumnSize: number;
 
     private constructor() {
         this.catalogData = new ObservableMap();
@@ -46,7 +47,7 @@ export class CatalogStore {
         this.catalogPlots = new Map<string, ObservableMap<number, string>>();
         this.catalogProfileStores = new Map<number, CatalogProfileStore>();
         this.catalogWidgets = new Map<number, string>();
-        this.initDisplayedColumnSize = 10;
+        this.initDisplayedColumnSize = CatalogStore.DisplayedColumnSize;
     }
 
     @action addCatalog(fileId: number) {

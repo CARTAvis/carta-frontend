@@ -290,6 +290,8 @@
 .catalog-select {
     .bp3-popover-content {
         .bp3-menu {
+            max-height: 300px;
+            overflow: auto;
             min-width: fit-content;
         }
     }

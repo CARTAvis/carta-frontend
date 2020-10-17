@@ -1,4 +1,4 @@
-import {action, observable, computed} from "mobx";
+import {action, observable} from "mobx";
 import {Colors} from "@blueprintjs/core";
 import {CatalogOverlay} from "stores/CatalogProfileStore";
 
@@ -24,7 +24,7 @@ export enum CatalogOverlayShape {
 }
 
 const DEFAULTS = {
-    headerTableColumnWidts: [75, 75, 65, 100, null],
+    headerTableColumnWidts: [150, 150, 150, 150],
     showSelectedData: false,
     catalogTableAutoScroll: false,
     catalogPlotType: CatalogPlotType.ImageOverlay,

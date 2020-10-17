@@ -4,8 +4,9 @@ import Plot from "react-plotly.js";
 import {autorun, computed, observable, action} from "mobx";
 import {observer} from "mobx-react";
 import {FormGroup, AnchorButton, Intent, Tooltip, Switch, Button, MenuItem, PopoverPosition, NonIdealState} from "@blueprintjs/core";
-import {Select, IItemRendererProps} from "@blueprintjs/select";
+import {Select, IItemRendererProps, ItemPredicate} from "@blueprintjs/select";
 import ReactResizeDetector from "react-resize-detector";
+import FuzzySearch from "fuzzy-search";
 import {CARTA} from "carta-protobuf";
 import {CatalogUpdateMode, WidgetConfig, WidgetProps, AppStore, WidgetsStore, CatalogStore, CatalogProfileStore} from "stores";
 import {CatalogPlotWidgetStore, Border, DragMode, XBorder, CatalogPlotWidgetStoreProps, CatalogWidgetStore, CatalogPlotType} from "stores/widgets";
@@ -477,6 +478,11 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
         );
     }
 
+    private filterColumn: ItemPredicate<string> = (query: string, columnName: string) => {
+        const fileSearcher = new FuzzySearch([columnName]);
+        return fileSearcher.search(query).length > 0;
+    }
+
     private updateHistogramYrange = (figure: any, graphDiv: any) => {
         // fixed react plotlyjs bug with fixed range and changed x range 
         if (this.widgetStore.plotType === CatalogPlotType.Histogram) {
@@ -556,6 +562,8 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
             }
         }
 
+        const noResults = (<MenuItem disabled={true} text="No results" />);
+
         const renderFileSelect = (
             <FormGroup  inline={true} label="File">
                 <Select 
@@ -576,12 +584,15 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
             <FormGroup inline={true} label="X">
                 <Select 
                     className="bp3-fill"
-                    filterable={false}
                     items={xyOptions} 
                     activeItem={widgetStore.xColumnName}
                     onItemSelect={item => this.handleColumnNameChange("x", item)}
                     itemRenderer={this.renderColumnNamePopOver}
                     popoverProps={{popoverClassName: "catalog-select", minimal: true , position: PopoverPosition.AUTO_END}}
+                    filterable={true}
+                    noResults={noResults}
+                    itemPredicate={this.filterColumn}
+                    resetOnSelect={true}
                 >
                     <Button text={widgetStore.xColumnName} rightIcon="double-caret-vertical"/>
                 </Select>
@@ -598,12 +609,15 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
             <FormGroup inline={true} label="Y">
                 <Select 
                     className="bp3-fill"
-                    filterable={false}
                     items={xyOptions} 
                     activeItem={widgetStore.yColumnName}
                     onItemSelect={item => this.handleColumnNameChange("y", item)}
                     itemRenderer={this.renderColumnNamePopOver}
                     popoverProps={{popoverClassName: "catalog-select", minimal: true , position: PopoverPosition.AUTO_END}}
+                    filterable={true}
+                    noResults={noResults}
+                    itemPredicate={this.filterColumn}
+                    resetOnSelect={true}
                 >
                     <Button text={widgetStore.yColumnName} rightIcon="double-caret-vertical"/>
                 </Select>
