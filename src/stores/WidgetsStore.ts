@@ -1,6 +1,6 @@
 import * as GoldenLayout from "golden-layout";
 import $ from "jquery";
-import { action, computed, observable, makeObservable } from "mobx";
+import {action, computed, observable, makeObservable} from "mobx";
 import {
     AnimatorComponent,
     HistogramComponent,

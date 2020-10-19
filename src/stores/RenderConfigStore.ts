@@ -1,4 +1,4 @@
-import { action, computed, observable, makeObservable } from "mobx";
+import {action, computed, observable, makeObservable} from "mobx";
 import {PreferenceStore} from "stores";
 import {CARTA} from "carta-protobuf";
 import {clamp, getPercentiles} from "utilities";

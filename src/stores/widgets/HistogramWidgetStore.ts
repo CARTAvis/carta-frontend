@@ -1,4 +1,4 @@
-import { action, computed, observable, makeObservable } from "mobx";
+import {action, computed, observable, makeObservable} from "mobx";
 import {CARTA} from "carta-protobuf";
 import {Colors} from "@blueprintjs/core";
 import {PlotType, LineSettings} from "components/Shared";

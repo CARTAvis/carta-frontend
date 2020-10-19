@@ -1,4 +1,4 @@
-import { action, computed, observable, makeObservable } from "mobx";
+import {action, computed, observable, makeObservable} from "mobx";
 import {CARTA} from "carta-protobuf";
 
 export class LogEntry {

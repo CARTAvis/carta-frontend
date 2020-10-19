@@ -1,4 +1,4 @@
-import { action, computed, observable, makeObservable } from "mobx";
+import {action, computed, observable, makeObservable} from "mobx";
 import {Regions, IRegion} from "@blueprintjs/table";
 import {CARTA} from "carta-protobuf";
 import {AppStore, CatalogStore} from "stores";

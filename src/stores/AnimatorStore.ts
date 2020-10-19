@@ -1,4 +1,4 @@
-import { action, computed, observable, makeObservable } from "mobx";
+import {action, computed, observable, makeObservable} from "mobx";
 import {CARTA} from "carta-protobuf";
 import {AppStore, FrameStore, PreferenceStore} from "stores";
 import {clamp, GetRequiredTiles, getTransformedChannelList, mapToObject} from "utilities";

@@ -1,4 +1,4 @@
-import { action, autorun, computed, observable, makeObservable } from "mobx";
+import {action, autorun, computed, observable, makeObservable} from "mobx";
 import {NumberRange} from "@blueprintjs/core";
 import {Table} from "@blueprintjs/table";
 import {CARTA} from "carta-protobuf";

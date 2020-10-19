@@ -1,5 +1,5 @@
 import tinycolor from "tinycolor2";
-import { action, computed, observable, makeObservable } from "mobx";
+import {action, computed, observable, makeObservable} from "mobx";
 import {Colors} from "@blueprintjs/core";
 import {FrameStore, ProfileSmoothingStore} from "stores";
 import {CARTA} from "carta-protobuf";
