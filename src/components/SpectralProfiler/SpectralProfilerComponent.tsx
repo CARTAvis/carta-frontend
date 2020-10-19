@@ -8,7 +8,7 @@ import {CARTA} from "carta-protobuf";
 import {LineMarker, LinePlotComponent, LinePlotComponentProps, LinePlotSelectingMode, ProfilerInfoComponent, VERTICAL_RANGE_PADDING, SmoothingType} from "components/Shared";
 import {TickType, MultiPlotProps} from "../Shared/LinePlot/PlotContainer/PlotContainerComponent";
 import {SpectralProfilerToolbarComponent} from "./SpectralProfilerToolbarComponent/SpectralProfilerToolbarComponent";
-import {AnimationState, SpectralProfileStore, WidgetConfig, WidgetProps, HelpType, AnimatorStore, WidgetsStore, AppStore} from "stores";
+import {AnimationState, SpectralProfileStore, WidgetConfig, WidgetProps, HelpType, AnimatorStore, WidgetsStore, AppStore, RegionStore} from "stores";
 import {SpectralProfileWidgetStore} from "stores/widgets";
 import {Point2D, ProcessedSpectralProfile} from "models";
 import {binarySearchByX, clamp, formattedExponential, formattedNotation, toExponential, toFixed} from "utilities";
@@ -381,19 +381,24 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
             }
             if (frame.unit) {
                 let yLabelName = "Value";
+                let yLabelUnit = "";
+                let region: RegionStore;
                 if (frame.regionSet) {
-                    const region = frame.regionSet.regions.find(r => r.regionId === this.widgetStore.effectiveRegionId);
-                    if (region.isClosedRegion) {
+                    region = frame.regionSet.regions.find(r => r.regionId === this.widgetStore.effectiveRegionId);
+                    if (region.regionType !== CARTA.RegionType.POINT) {
                         yLabelName = SpectralProfileWidgetStore.StatsTypeString(this.widgetStore.statsType);
                     }
                 }
-                if (this.widgetStore.statsType === CARTA.StatsType.FluxDensity) {
-                    linePlotProps.yLabel = `${yLabelName} (Jy)`;
+                if (region && region.regionType === CARTA.RegionType.POINT) {
+                    yLabelUnit =  `(${frame.unit})`;
+                } else if (this.widgetStore.statsType === CARTA.StatsType.FluxDensity) {
+                    yLabelUnit =  "(Jy)";
                 } else if (this.widgetStore.statsType === CARTA.StatsType.SumSq) {
-                    linePlotProps.yLabel = `${yLabelName} (${frame.unit})^2`;
+                    yLabelUnit = `(${frame.unit})^2`;
                 } else {
-                    linePlotProps.yLabel = `${yLabelName} (${frame.unit})`;
+                    yLabelUnit = `(${frame.unit})`;
                 }
+                linePlotProps.yLabel = `${yLabelName} ${yLabelUnit}`;
             }
 
             const currentPlotData = this.plotData;
