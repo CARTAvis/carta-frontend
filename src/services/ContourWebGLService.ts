@@ -1,8 +1,7 @@
 import {getShaderFromString, loadImageTexture} from "utilities";
 import allMaps from "../static/allmaps.png";
-
-const vertexShaderLine = require("!raw-loader!./GLSL/vertex_shader_contours.glsl");
-const pixelShaderDashed = require("!raw-loader!./GLSL/pixel_shader_contours.glsl");
+import vertexShaderLine from "!raw-loader!./GLSL/vertex_shader_contours.glsl";
+import pixelShaderDashed from "!raw-loader!./GLSL/pixel_shader_contours.glsl";
 
 interface ShaderUniforms {
     RangeScale: WebGLUniformLocation;
