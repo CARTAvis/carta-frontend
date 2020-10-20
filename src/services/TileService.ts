@@ -6,6 +6,8 @@ import {Point2D, TileCoordinate} from "models";
 import {BackendService, TileWebGLService} from "services";
 import {copyToFP32Texture, createFP32Texture} from "utilities";
 
+import ZFPWorker from "!worker-loader!zfp_wrapper";
+
 export interface RasterTile {
     data: Float32Array;
     width: number;
@@ -113,8 +115,6 @@ export class TileService {
         this.tileStream = new Subject<TileStreamDetails>();
         this.backendService.rasterTileStream.subscribe(this.handleStreamedTiles);
         this.backendService.rasterSyncStream.subscribe(this.handleStreamSync);
-
-        const ZFPWorker = require("worker-loader!zfp_wrapper");
         this.workers = new Array<Worker>(Math.min(navigator.hardwareConcurrency || 4, 4));
         this.workersReady = new Array<boolean>(this.workers.length);
 
