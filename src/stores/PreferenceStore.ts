@@ -65,7 +65,9 @@ export enum PreferenceKeys {
     PERFORMANCE_LOW_BAND_WIDTH_MODE = "lowBandwidthMode",
     PERFORMANCE_STOP_ANIMATION_PLAYBACK_MINUTES = "stopAnimationPlaybackMinutes",
 
-    LOG_EVENT = "logEventList"
+    LOG_EVENT = "logEventList",
+
+    CATALOG_DISPLAYED_COLUMN_SIZE = "catalogDisplayedColumnSize"
 }
 
 const DEFAULTS = {
@@ -136,6 +138,9 @@ const DEFAULTS = {
     },
     LOG_EVENT: {
         eventLoggingEnabled: []
+    },
+    CATALOG: {
+        catalogDisplayedColumnSize: 10
     }
 };
 
@@ -388,6 +393,10 @@ export class PreferenceStore {
         return this.preferences.get(PreferenceKeys.LOG_EVENT) ?? [];
     }
 
+    @computed get catalogDisplayedColumnSize(): number {
+        return this.preferences.get(PreferenceKeys.CATALOG_DISPLAYED_COLUMN_SIZE) ?? DEFAULTS.CATALOG.catalogDisplayedColumnSize;
+    }
+
     @action setPreference = async (key: PreferenceKeys, value: any) => {
         if (!key) {
             return false;
@@ -480,6 +489,10 @@ export class PreferenceStore {
         this.clearPreferences([PreferenceKeys.LOG_EVENT]);
     };
 
+    @action resetCatalogSettings = () => {
+        this.clearPreferences([PreferenceKeys.CATALOG_DISPLAYED_COLUMN_SIZE]);
+    }
+
     @action fetchPreferences = async () => {
         await this.upgradePreferences();
         await this.getPreferences();
@@ -515,7 +528,8 @@ export class PreferenceStore {
                 PreferenceKeys.REGION_DASH_LENGTH, PreferenceKeys.REGION_TYPE, PreferenceKeys.PERFORMANCE_IMAGE_COMPRESSION_QUALITY, PreferenceKeys.PERFORMANCE_ANIMATION_COMPRESSION_QUALITY,
                 PreferenceKeys.PERFORMANCE_GPU_TILE_CACHE, PreferenceKeys.PERFORMANCE_SYSTEM_TILE_CACHE, PreferenceKeys.PERFORMANCE_CONTOUR_DECIMATION,
                 PreferenceKeys.PERFORMANCE_CONTOUR_COMPRESSION_LEVEL, PreferenceKeys.PERFORMANCE_CONTOUR_CHUNK_SIZE, PreferenceKeys.PERFORMANCE_CONTOUR_CONTROL_MAP_WIDTH,
-                PreferenceKeys.PERFORMANCE_STOP_ANIMATION_PLAYBACK_MINUTES
+                PreferenceKeys.PERFORMANCE_STOP_ANIMATION_PLAYBACK_MINUTES,
+                PreferenceKeys.CATALOG_DISPLAYED_COLUMN_SIZE
             ];
 
             const numberKeys = [

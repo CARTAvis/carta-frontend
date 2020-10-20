@@ -1,7 +1,7 @@
 import {action, computed, observable} from "mobx";
 import {Regions, IRegion} from "@blueprintjs/table";
 import {CARTA} from "carta-protobuf";
-import {AppStore, CatalogStore} from "stores";
+import {AppStore, CatalogStore, PreferenceStore} from "stores";
 import {filterProcessedColumnData, minMaxArray} from "utilities";
 import {ProcessedColumnData} from "models";
 
@@ -331,7 +331,7 @@ export class CatalogProfileStore {
             for (let index = 0; index < catalogHeader.length; index++) {
                 const header = catalogHeader[index];
                 let display = false;
-                if (index < CatalogStore.Instance.initDisplayedColumnSize) {
+                if (index < PreferenceStore.Instance.catalogDisplayedColumnSize) {
                     display = true;
                 }
                 let controlHeader: ControlHeader = {columnIndex: header.columnIndex, dataIndex: index, display: display, filter: "", columnWidth: null};

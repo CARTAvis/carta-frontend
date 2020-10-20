@@ -3,7 +3,7 @@ import {action, autorun, computed, observable} from "mobx";
 import * as React from "react";
 import {Button, FormGroup, Icon, MenuItem, PopoverPosition, Tab, Tabs, TabId} from "@blueprintjs/core";
 import {Select, IItemRendererProps} from "@blueprintjs/select";
-import {AppStore, CatalogStore, WidgetProps, WidgetConfig, HelpType, WidgetsStore} from "stores";
+import {AppStore, CatalogStore, HelpType, PreferenceStore, PreferenceKeys, WidgetProps, WidgetConfig, WidgetsStore} from "stores";
 import {CatalogOverlayShape, CatalogWidgetStore} from "stores/widgets";
 import {ColorResult} from "react-color";
 import {ColorPickerComponent, SafeNumericInput} from "components/Shared";
@@ -175,9 +175,9 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
                     <SafeNumericInput
                         placeholder="Default Displayed Columns"
                         min={1}
-                        value={catalogStore.initDisplayedColumnSize}
+                        value={PreferenceStore.Instance.catalogDisplayedColumnSize}
                         stepSize={1}
-                        onValueChange={(value: number) => catalogStore.setInitDisplayedColumnSize(value)}
+                        onValueChange={(value: number) => PreferenceStore.Instance.setPreference(PreferenceKeys.CATALOG_DISPLAYED_COLUMN_SIZE, value)}
                     />
                 </FormGroup>
             </div>

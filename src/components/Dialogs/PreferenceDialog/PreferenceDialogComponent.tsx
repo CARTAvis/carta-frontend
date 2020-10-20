@@ -12,7 +12,7 @@ import {ScalingSelectComponent} from "components/Shared/ScalingSelectComponent/S
 import {ColorComponent} from "components/ImageView/ImageViewSettingsPanel/ColorComponent";
 import {ColormapComponent, ColorPickerComponent, SafeNumericInput} from "components/Shared";
 import {CompressionQuality, CursorPosition, Event, RegionCreationMode, SPECTRAL_MATCHING_TYPES, SPECTRAL_TYPE_STRING, Theme, TileCache, WCSMatchingType, WCSType, Zoom, ZoomPoint} from "models";
-import {AppStore, BeamType, ContourGeneratorType, CatalogStore, FrameScaling, HelpType, PreferenceKeys, PreferenceStore, RegionStore, RenderConfigStore} from "stores";
+import {AppStore, BeamType, ContourGeneratorType, FrameScaling, HelpType, PreferenceKeys, PreferenceStore, RegionStore, RenderConfigStore} from "stores";
 import {SWATCH_COLORS} from "utilities";
 import "./PreferenceDialogComponent.scss";
 
@@ -75,7 +75,7 @@ export class PreferenceDialogComponent extends React.Component {
                 preference.resetLogEventSettings();
                 break;
             case TABS.CATALOG:
-                CatalogStore.Instance.setInitDisplayedColumnSize(CatalogStore.DisplayedColumnSize);
+                preference.resetCatalogSettings();
                 break;
             case TABS.GLOBAL:
             default:
@@ -551,9 +551,9 @@ export class PreferenceDialogComponent extends React.Component {
                     <SafeNumericInput
                         placeholder="Default Displayed Columns"
                         min={1}
-                        value={CatalogStore.Instance.initDisplayedColumnSize}
+                        value={preference.catalogDisplayedColumnSize}
                         stepSize={1}
-                        onValueChange={(value: number) => CatalogStore.Instance.setInitDisplayedColumnSize(value)}
+                        onValueChange={(value: number) => preference.setPreference(PreferenceKeys.CATALOG_DISPLAYED_COLUMN_SIZE, value)}
                     />
                 </FormGroup>
             </div>
