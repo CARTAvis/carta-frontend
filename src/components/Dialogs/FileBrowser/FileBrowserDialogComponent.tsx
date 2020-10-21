@@ -402,7 +402,7 @@ export class FileBrowserDialogComponent extends React.Component {
                     {this.pathItems &&
                     <React.Fragment>
                         <Tooltip content={"Refresh current directory"}>
-                            <Button
+                            <AnchorButton
                                 className="refresh-button"
                                 icon="repeat"
                                 onClick={() => fileBrowserStore.selectFolder(fileList.directory, true)}
