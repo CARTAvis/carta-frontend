@@ -619,13 +619,10 @@ export class AppStore {
                 }
                 associatedCatalogFiles.push(fileId);
                 catalogStore.updateImageAssociatedCatalogId(AppStore.Instance.activeFrame.frameInfo.fileId, associatedCatalogFiles);
-                let catalogWidgetId;
                 if (catalogComponentSize === 0) {
                     const catalog = this.widgetsStore.createFloatingCatalogWidget(fileId);
-                    catalogWidgetId = catalog.widgetStoreId;
                     catalogStore.catalogProfiles.set(catalog.widgetComponentId, fileId);
                 } else {
-                    catalogWidgetId = this.widgetsStore.addCatalogWidget(fileId);
                     const key = catalogStore.catalogProfiles.keys().next().value;
                     catalogStore.catalogProfiles.set(key, fileId);
                 }

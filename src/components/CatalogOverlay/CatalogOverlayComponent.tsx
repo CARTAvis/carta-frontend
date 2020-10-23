@@ -10,7 +10,7 @@ import SplitPane, { Pane } from "react-split-pane";
 import FuzzySearch from "fuzzy-search";
 import {CARTA} from "carta-protobuf";
 import {TableComponent, TableComponentProps, TableType, ClearableNumericInputComponent} from "components/Shared";
-import {AppStore, CatalogStore, CatalogProfileStore, CatalogOverlay, CatalogUpdateMode, CatalogSystemType, HelpType, WidgetConfig, WidgetProps, WidgetsStore} from "stores";
+import {AppStore, CatalogStore, CatalogProfileStore, CatalogOverlay, CatalogUpdateMode, CatalogSystemType, HelpType, WidgetConfig, WidgetProps, WidgetsStore, PreferenceStore, PreferenceKeys} from "stores";
 import {CatalogWidgetStore, CatalogPlotWidgetStoreProps, CatalogPlotType} from "stores/widgets";
 import {toFixed} from "utilities";
 import {ProcessedColumnData} from "models";
@@ -61,9 +61,9 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         return {
             id: "catalog-overlay",
             type: "catalog-overlay",
-            minWidth: 400,
+            minWidth: 620,
             minHeight: 400,
-            defaultWidth: 600,
+            defaultWidth: 620,
             defaultHeight: 400,
             title: "Catalog",
             isCloseable: true,
@@ -665,9 +665,10 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
 
     private onTableResize = (newSize: number) => {
         // update table if resizing happend
-        const position = Math.floor((newSize / (this.height - 120)) * 100);
+        const position = Math.floor((newSize / (this.height - 130)) * 100);
         if (position <= CatalogWidgetStore.MaxTableSeparatorPosition && position >= CatalogWidgetStore.MinTableSeparatorPosition) {
-            this.widgetStore.setTableSeparatorPosition(`${position}%`);   
+            this.widgetStore.setTableSeparatorPosition(`${position}%`);  
+            PreferenceStore.Instance.setPreference(PreferenceKeys.CATALOG_TABLE_SEPARATOR_POSITION, `${position}%`); 
         }
         const profileStore = this.profileStore;
         if (profileStore && this.catalogHeaderTableRef) {

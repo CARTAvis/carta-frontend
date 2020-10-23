@@ -1,6 +1,7 @@
 import {action, observable} from "mobx";
 import {Colors} from "@blueprintjs/core";
 import {CatalogOverlay} from "stores/CatalogProfileStore";
+import {PreferenceStore} from "stores";
 
 export enum CatalogPlotType {
     ImageOverlay = "Image Overlay",
@@ -33,7 +34,6 @@ const DEFAULTS = {
     catalogShape: CatalogOverlayShape.Circle,
     xAxis: CatalogOverlay.NONE,
     yAxis: CatalogOverlay.NONE,
-    tableSeparatorPosition: "60%",
     highlightColor: Colors.RED2
 };
 
@@ -68,7 +68,7 @@ export class CatalogWidgetStore {
         this.catalogShape = DEFAULTS.catalogShape;
         this.xAxis = DEFAULTS.xAxis;
         this.yAxis = DEFAULTS.yAxis;
-        this.tableSeparatorPosition = DEFAULTS.tableSeparatorPosition;
+        this.tableSeparatorPosition = PreferenceStore.Instance.catalogTableSeparatorPosition;
         this.highlightColor = DEFAULTS.highlightColor;
     }
 
@@ -121,4 +121,33 @@ export class CatalogWidgetStore {
     @action setHighlightColor(color: string) {
         this.highlightColor = color;
     }
+
+    public init = (widgetSettings): void => {
+        if (!widgetSettings) {
+            return;
+        }
+        const catalogFileId = widgetSettings.catalogFileId;
+        if (typeof catalogFileId === "number" && catalogFileId >0) {
+            this.catalogFileId = catalogFileId;
+        }
+        const catalogSize = widgetSettings.catalogSize;
+        if (typeof catalogSize === "number" && catalogSize >= CatalogWidgetStore.MinOverlaySize && catalogSize <= CatalogWidgetStore.MaxOverlaySize) {
+            this.catalogSize = catalogSize;
+        }
+        this.catalogShape =  widgetSettings.catalogShape;
+        this.catalogColor = widgetSettings.catalogColor;
+        this.highlightColor = widgetSettings.highlightColor;
+        this.tableSeparatorPosition = widgetSettings.tableSeparatorPosition;
+    };
+
+    public toConfig = () => {
+        return {
+            catalogFileId: this.catalogFileId,
+            catalogColor: this.catalogColor,
+            highlightColor: this.highlightColor,
+            catalogSize: this.catalogSize,
+            catalogShape: this.catalogShape,
+            tableSeparatorPosition: this.tableSeparatorPosition
+        };
+    };
 }

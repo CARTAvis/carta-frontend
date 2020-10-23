@@ -67,7 +67,8 @@ export enum PreferenceKeys {
 
     LOG_EVENT = "logEventList",
 
-    CATALOG_DISPLAYED_COLUMN_SIZE = "catalogDisplayedColumnSize"
+    CATALOG_DISPLAYED_COLUMN_SIZE = "catalogDisplayedColumnSize",
+    CATALOG_TABLE_SEPARATOR_POSITION = "catalogTableSeparatorPosition"
 }
 
 const DEFAULTS = {
@@ -140,7 +141,8 @@ const DEFAULTS = {
         eventLoggingEnabled: []
     },
     CATALOG: {
-        catalogDisplayedColumnSize: 10
+        catalogDisplayedColumnSize: 10,
+        catalogTableSeparatorPosition: "60%"
     }
 };
 
@@ -397,6 +399,10 @@ export class PreferenceStore {
         return this.preferences.get(PreferenceKeys.CATALOG_DISPLAYED_COLUMN_SIZE) ?? DEFAULTS.CATALOG.catalogDisplayedColumnSize;
     }
 
+    @computed get catalogTableSeparatorPosition(): string {
+        return this.preferences.get(PreferenceKeys.CATALOG_TABLE_SEPARATOR_POSITION) ?? DEFAULTS.CATALOG.catalogTableSeparatorPosition;
+    }
+
     @action setPreference = async (key: PreferenceKeys, value: any) => {
         if (!key) {
             return false;
@@ -490,7 +496,7 @@ export class PreferenceStore {
     };
 
     @action resetCatalogSettings = () => {
-        this.clearPreferences([PreferenceKeys.CATALOG_DISPLAYED_COLUMN_SIZE]);
+        this.clearPreferences([PreferenceKeys.CATALOG_DISPLAYED_COLUMN_SIZE, PreferenceKeys.CATALOG_TABLE_SEPARATOR_POSITION]);
     }
 
     @action fetchPreferences = async () => {
@@ -519,7 +525,8 @@ export class PreferenceStore {
                 PreferenceKeys.GLOBAL_ZOOM_POINT, PreferenceKeys.GLOBAL_SPECTRAL_MATCHING_TYPE, PreferenceKeys.RENDER_CONFIG_COLORMAP, PreferenceKeys.RENDER_CONFIG_NAN_COLOR_HEX,
                 PreferenceKeys.CONTOUR_CONFIG_CONTOUR_GENERATOR_TYPE, PreferenceKeys.CONTOUR_CONFIG_CONTOUR_COLOR, PreferenceKeys.CONTOUR_CONFIG_CONTOUR_COLORMAP,
                 PreferenceKeys.WCS_OVERLAY_WCS_TYPE, PreferenceKeys.WCS_OVERLAY_BEAM_COLOR, PreferenceKeys.WCS_OVERLAY_BEAM_TYPE, PreferenceKeys.REGION_COLOR,
-                PreferenceKeys.REGION_CREATION_MODE
+                PreferenceKeys.REGION_CREATION_MODE,
+                PreferenceKeys.CATALOG_TABLE_SEPARATOR_POSITION
             ];
 
             const intKeys = [

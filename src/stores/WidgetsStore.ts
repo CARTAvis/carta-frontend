@@ -337,6 +337,9 @@ export class WidgetsStore {
             case CatalogOverlayComponent.WIDGET_CONFIG.type:
                 itemId = this.getNextComponentId(CatalogOverlayComponent.WIDGET_CONFIG);
                 CatalogStore.Instance.catalogProfiles.set(itemId, 1);
+                if (widgetSettings) {
+                    this.addCatalogWidget(widgetSettings["catalogFileId"], null, widgetSettings);   
+                }
                 break;
             case CatalogPlotType.D2Scatter:
                 const scatterProps: CatalogPlotWidgetStoreProps = {
@@ -479,7 +482,7 @@ export class WidgetsStore {
         if (!widgetType || !widgetID) {
             return null;
         }
-
+        
         let widgetStore = null;
         switch (widgetType) {
             case RenderConfigComponent.WIDGET_CONFIG.type:
@@ -496,6 +499,9 @@ export class WidgetsStore {
                 break;
             case StokesAnalysisComponent.WIDGET_CONFIG.type:
                 widgetStore = this.stokesAnalysisWidgets.get(widgetID);
+                break;
+            case CatalogOverlayComponent.WIDGET_CONFIG.type:
+                widgetStore = this.catalogWidgets.get(widgetID);
                 break;
             default:
                 break;
@@ -844,7 +850,7 @@ export class WidgetsStore {
     };
 
     // add catalog widget store
-    @action addCatalogWidget(catalogFileId: number, id: string = null) {
+    @action addCatalogWidget(catalogFileId: number, id: string = null, widgetSettings: object = null) {
         // return widget id if store already exsit
         const catalogStore = CatalogStore.Instance;        
         const catalogWidgetId = catalogStore.catalogWidgets.get(catalogFileId);
@@ -858,7 +864,11 @@ export class WidgetsStore {
         }
 
         if (id) {
-            this.catalogWidgets.set(id, new CatalogWidgetStore(catalogFileId));
+            const catalogWidgetStore = new CatalogWidgetStore(catalogFileId);
+            if (widgetSettings) {
+                catalogWidgetStore.init(widgetSettings);
+            }
+            this.catalogWidgets.set(id, catalogWidgetStore);
         }
         catalogStore.catalogWidgets.set(catalogFileId, id);
         return id;
