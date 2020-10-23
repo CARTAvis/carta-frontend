@@ -8,7 +8,7 @@ import {CatalogOverlayShape, CatalogWidgetStore} from "stores/widgets";
 import {ColorResult} from "react-color";
 import {ColorPickerComponent, SafeNumericInput} from "components/Shared";
 import {SWATCH_COLORS} from "utilities";
-import "./CatalogOverlayPlotSettingsPanelComponent.css";
+import "./CatalogOverlayPlotSettingsPanelComponent.scss";
 
 const IconWrapper = (path: React.SVGProps<SVGPathElement>, color: string, fill: boolean, strokeWidth = 2, viewboxDefault = 16) => {
     let fillColor = color;
