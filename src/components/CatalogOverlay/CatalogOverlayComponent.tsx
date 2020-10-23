@@ -20,7 +20,8 @@ enum HeaderTableColumnName {
     Name = "Name",
     Unit = "Unit",
     Type = "Type",
-    Display = "Display"
+    Display = "Display",
+    Description = "Description"
 }
 
 // order matters, since ... and .. both having .. (same for < and <=, > and >=)
@@ -357,6 +358,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
     private createHeaderTable() {
         const tableColumns = [];
         const headerNames = [];
+        const headerDescriptions = [];
         const units = [];
         const types = [];
         const headerDataset = this.profileStore.catalogHeader;
@@ -364,6 +366,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         for (let index = 0; index < headerDataset.length; index++) {
             const header = headerDataset[index];
             headerNames.push(header.name);
+            headerDescriptions.push(header.description);
             units.push(header.units);
             types.push(this.getDataType(header.dataType));
         }
@@ -375,6 +378,8 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         tableColumns.push(columnType);
         const columnDisplaySwitch = this.renderButtonColumns(HeaderTableColumnName.Display, headerNames);
         tableColumns.push(columnDisplaySwitch);
+        const columnDescription = this.renderDataColumn(HeaderTableColumnName.Description, headerDescriptions);
+        tableColumns.push(columnDescription);
 
         return (
             <Table 

@@ -25,7 +25,7 @@ export enum CatalogOverlayShape {
 }
 
 const DEFAULTS = {
-    headerTableColumnWidts: [150, 150, 150, 150],
+    headerTableColumnWidts: [75, 75, 65, 100, null],
     showSelectedData: false,
     catalogTableAutoScroll: false,
     catalogPlotType: CatalogPlotType.ImageOverlay,
