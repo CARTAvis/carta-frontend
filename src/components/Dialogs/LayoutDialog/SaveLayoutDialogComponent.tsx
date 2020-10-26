@@ -1,7 +1,7 @@
 import * as React from "react";
 import {observable, computed, makeObservable} from "mobx";
 import {observer} from "mobx-react";
-import {FormGroup, InputGroup, IDialogProps, Button, Intent, Classes, Tooltip} from "@blueprintjs/core";
+import {AnchorButton, FormGroup, InputGroup, IDialogProps, Button, Intent, Classes, Tooltip} from "@blueprintjs/core";
 import {DraggableDialogComponent} from "components/Dialogs";
 import {AppStore, HelpType} from "stores";
 import {PresetLayout} from "models";
@@ -86,7 +86,7 @@ export class SaveLayoutDialogComponent extends React.Component {
                 <div className={Classes.DIALOG_FOOTER}>
                     <div className={Classes.DIALOG_FOOTER_ACTIONS}>
                         <Tooltip content="Layout name cannot be empty!" disabled={!this.isEmpty}>
-                            <Button intent={Intent.PRIMARY} onClick={this.saveLayout} text="Save" disabled={this.isEmpty}/>
+                            <AnchorButton intent={Intent.PRIMARY} onClick={this.saveLayout} text="Save" disabled={this.isEmpty}/>
                         </Tooltip>
                         <Button
                             intent={Intent.NONE}

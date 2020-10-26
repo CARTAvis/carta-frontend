@@ -1,7 +1,7 @@
 import * as React from "react";
 import {observer} from "mobx-react";
 import {action, makeObservable, observable} from "mobx";
-import {Button, ButtonGroup, FormGroup, IconName, Menu, MenuItem, NonIdealState, NumberRange, Popover, Position, Radio, RangeSlider, Slider, Tooltip} from "@blueprintjs/core";
+import {AnchorButton, Button, ButtonGroup, FormGroup, IconName, Menu, MenuItem, NonIdealState, NumberRange, Popover, Position, Radio, RangeSlider, Slider, Tooltip} from "@blueprintjs/core";
 import ReactResizeDetector from "react-resize-detector";
 import {AnimationMode, AnimationState, PlayMode, DefaultWidgetConfig, WidgetProps, HelpType, AnimatorStore, AppStore} from "stores";
 import {SafeNumericInput} from "components/Shared";
@@ -383,7 +383,7 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
                 position={Position.TOP}
             >
                 <Tooltip content="Playback Mode" position={Position.TOP}>
-                    <Button icon={this.getPlayModeIcon()} disabled={appStore.animatorStore.animationState === AnimationState.PLAYING}>{!iconOnly && "Mode"}</Button>
+                    <AnchorButton icon={this.getPlayModeIcon()} disabled={appStore.animatorStore.animationState === AnimationState.PLAYING}>{!iconOnly && "Mode"}</AnchorButton>
                 </Tooltip>
             </Popover>
         );
