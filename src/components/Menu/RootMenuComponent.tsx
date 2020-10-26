@@ -354,9 +354,9 @@ export class RootMenuComponent extends React.Component {
                     <Icon icon={"symbol-circle"} className={connectivityClass}/>
                 </Tooltip>
                 <div id="hidden-status-info">
-                    <span id="session-id-span">{appStore.backendService.sessionId}</span>
-                    <span id="grpc-port-span">{appStore.backendService.grpcPort}</span>
-                    <span id="server-url-span">{appStore.backendService.serverUrl}</span>
+                    <span id="info-session-id">{appStore.backendService.sessionId}</span>
+                    <span id="info-grpc-port">{appStore.backendService.grpcPort}</span>
+                    <span id="info-server-url">{appStore.backendService.serverUrl}</span>
                 </div>
             </div>
         );
