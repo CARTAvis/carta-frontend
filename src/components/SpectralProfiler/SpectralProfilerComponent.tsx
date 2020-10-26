@@ -381,22 +381,18 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
             }
             if (frame.unit) {
                 let yLabelName = "Value";
-                let yLabelUnit = "";
+                let yLabelUnit = `(${frame.unit})`;
                 let region: RegionStore;
                 if (frame.regionSet) {
                     region = frame.regionSet.regions.find(r => r.regionId === this.widgetStore.effectiveRegionId);
-                    if (region.regionType !== CARTA.RegionType.POINT) {
+                    if (region && region.regionType !== CARTA.RegionType.POINT) {
                         yLabelName = SpectralProfileWidgetStore.StatsTypeString(this.widgetStore.statsType);
+                        if (this.widgetStore.statsType === CARTA.StatsType.FluxDensity) {
+                            yLabelUnit =  "(Jy)";
+                        } else if (this.widgetStore.statsType === CARTA.StatsType.SumSq) {
+                            yLabelUnit = `(${frame.unit})^2`;
+                        }
                     }
-                }
-                if (region && region.regionType === CARTA.RegionType.POINT) {
-                    yLabelUnit =  `(${frame.unit})`;
-                } else if (this.widgetStore.statsType === CARTA.StatsType.FluxDensity) {
-                    yLabelUnit =  "(Jy)";
-                } else if (this.widgetStore.statsType === CARTA.StatsType.SumSq) {
-                    yLabelUnit = `(${frame.unit})^2`;
-                } else {
-                    yLabelUnit = `(${frame.unit})`;
                 }
                 linePlotProps.yLabel = `${yLabelName} ${yLabelUnit}`;
             }
