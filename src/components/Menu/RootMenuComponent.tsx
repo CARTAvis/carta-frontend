@@ -259,7 +259,18 @@ export class RootMenuComponent extends React.Component {
                     connectivityTooltip = <span>Reconnected to server {userString} after disconnect. Some errors may occur<br/><i><small>Latency: {latencyString}</small></i></span>;
                     connectivityClass += " warning";
                 } else {
-                    connectivityTooltip = <span>Connected to server {userString}<br/><i><small>Latency: {latencyString}<br/>Session ID: {appStore.backendService.sessionId}</small></i></span>;
+                    connectivityTooltip = (
+                        <span>
+                            Connected to server {userString}<br/>
+                            <i>
+                                <small>
+                                    Latency: {latencyString}<br/>
+                                    Session ID: {appStore.backendService.sessionId}<br/>
+                                    {appStore.backendService.grpcPort >= 0 && <span>GRPC Port: {appStore.backendService.grpcPort}</span>}
+                                </small>
+                            </i>
+                        </span>
+                    );
                     connectivityClass += " online";
                 }
                 break;
@@ -342,6 +353,11 @@ export class RootMenuComponent extends React.Component {
                 <Tooltip content={connectivityTooltip}>
                     <Icon icon={"symbol-circle"} className={connectivityClass}/>
                 </Tooltip>
+                <div id="hidden-status-info">
+                    <span id="session-id-span">{appStore.backendService.sessionId}</span>
+                    <span id="grpc-port-span">{appStore.backendService.grpcPort}</span>
+                    <span id="server-url-span">{appStore.backendService.serverUrl}</span>
+                </div>
             </div>
         );
     }
