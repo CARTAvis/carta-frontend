@@ -1,5 +1,5 @@
 import * as React from "react";
-import {Button, FormGroup, NumericInput, Tooltip, INumericInputProps} from "@blueprintjs/core";
+import {AnchorButton, FormGroup, NumericInput, Tooltip, INumericInputProps} from "@blueprintjs/core";
 import {observer} from "mobx-react";
 import {observable} from "mobx";
 import {toExponential} from "utilities";
@@ -80,7 +80,7 @@ export class ClearableNumericInputComponent extends React.Component<ClearableNum
                 disabled={this.props.disabled}
                 rightElement={
                     <Tooltip content="Reset value to default">
-                        <Button icon="refresh" minimal={true} onClick={this.props.onValueCleared} disabled={this.props.disabled}/>
+                        <AnchorButton icon="refresh" minimal={true} onClick={this.props.onValueCleared} disabled={this.props.disabled}/>
                     </Tooltip>
                 }
             />

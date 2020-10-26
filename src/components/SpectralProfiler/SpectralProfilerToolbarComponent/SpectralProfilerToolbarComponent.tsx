@@ -1,6 +1,6 @@
 import {observer} from "mobx-react";
 import * as React from "react";
-import {FormGroup, HTMLSelect, IOptionProps, ButtonGroup, Button, Tooltip} from "@blueprintjs/core";
+import {AnchorButton, FormGroup, HTMLSelect, IOptionProps, ButtonGroup, Tooltip} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import {AppStore, FrameStore} from "stores";
 import {SpectralProfileWidgetStore} from "stores/widgets";
@@ -82,10 +82,10 @@ export class SpectralProfilerToolbarComponent extends React.Component<{ widgetSt
                 </FormGroup>
                 <ButtonGroup className="profile-buttons">
                     <Tooltip content="Smoothing">
-                        <Button icon={<CustomIcon icon="smoothing"/>} onClick={this.smoothingShortcutClick}/>
+                        <AnchorButton icon={<CustomIcon icon="smoothing"/>} onClick={this.smoothingShortcutClick}/>
                     </Tooltip>
                     <Tooltip content="Moments">
-                        <Button icon={<CustomIcon icon="moments"/>} onClick={this.momentsShortcutClick}/>
+                        <AnchorButton icon={<CustomIcon icon="moments"/>} onClick={this.momentsShortcutClick}/>
                     </Tooltip>
                 </ButtonGroup>
             </div>
