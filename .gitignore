@@ -173,7 +173,7 @@ wasm_libs/zfp/*
 wasm_libs/zfp-*.tar.gz
 wasm_src/zfp_wrapper/build/*
 wasm_src/zfp_wrapper/post.js
-public/zfp_wrapper.wasm
+public/static/js/zfp_wrapper.wasm
 # ZSTD
 wasm_libs/zstd/*
 wasm_libs/zstd-1.4.4.tar.gz

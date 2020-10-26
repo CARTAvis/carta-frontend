@@ -1,6 +1,6 @@
 import * as React from "react";
 import * as _ from "lodash";
-import {action, observable} from "mobx";
+import {action, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 import {Group, Layer, Line, Rect, Stage} from "react-konva";
 import Konva from "konva";
@@ -50,6 +50,11 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
     private initialPinchZoom: number;
     private initialPinchDistance: number;
 
+    constructor(props: any) {
+        super(props);
+        makeObservable(this);
+    }
+
     updateCursorPos = _.throttle((x: number, y: number) => {
         const frame = this.props.frame;
         if (frame.wcsInfo) {
@@ -71,7 +76,7 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
         return posCanvasSpace;
     }
 
-    regionCreationStart = (konvaEvent: Konva.KonvaEventObject<MouseEvent>) => {
+    @action regionCreationStart = (konvaEvent: Konva.KonvaEventObject<MouseEvent>) => {
         if (this.creatingRegion) {
             return;
         }
@@ -241,11 +246,10 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
             this.creatingRegion = null;
         }
         // Switch to moving mode after region creation. Use a timeout to allow the handleClick function to execute first
-        setTimeout(() => this.props.frame.regionSet.mode = RegionMode.MOVING, 1);
+        setTimeout(() => this.props.frame.regionSet.setMode(RegionMode.MOVING), 1);
     }
 
-    @action
-    private handleMouseUpPolygonRegion(mouseEvent: MouseEvent) {
+    @action private handleMouseUpPolygonRegion = (mouseEvent: MouseEvent) => {
         const frame = this.props.frame;
         let cursorPosImageSpace = canvasToTransformedImagePos(mouseEvent.offsetX, mouseEvent.offsetY, frame, this.props.width, this.props.height);
         if (frame.spatialReference) {
@@ -375,10 +379,9 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
         }
     }
 
-    @action
-    private handlePolygonRegionMouseMove(mouseEvent: MouseEvent) {
+    @action private handlePolygonRegionMouseMove = (mouseEvent: MouseEvent) => {
         this.currentCursorPos = {x: mouseEvent.offsetX, y: mouseEvent.offsetY};
-    }
+    };
 
     private handleRegionDoubleClick = (region: RegionStore) => {
         if (this.props.onRegionDoubleClicked) {
@@ -386,7 +389,7 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
         }
     };
 
-    private handleStageDoubleClick = (konvaEvent: Konva.KonvaEventObject<MouseEvent>) => {
+    @action private handleStageDoubleClick = (konvaEvent: Konva.KonvaEventObject<MouseEvent>) => {
         const frame = this.props.frame;
         if (this.mouseClickDistance > DOUBLE_CLICK_DISTANCE * DOUBLE_CLICK_DISTANCE) {
             // Ignore the double click distance longer than DOUBLE_CLICK_DISTANCE
@@ -404,11 +407,11 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
                 this.creatingRegion = null;
             }
             // Switch to moving mode after region creation. Use a timeout to allow the handleClick function to execute first
-            setTimeout(() => this.props.frame.regionSet.mode = RegionMode.MOVING, 1);
+            setTimeout(() => this.props.frame.regionSet.setMode(RegionMode.MOVING), 1);
         }
     };
 
-    onKeyDown = (ev: React.KeyboardEvent) => {
+    @action onKeyDown = (ev: React.KeyboardEvent) => {
         const frame = this.props.frame;
         if (frame && frame.regionSet.mode === RegionMode.CREATING && this.creatingRegion && ev.keyCode === KEYCODE_ESC) {
             frame.regionSet.deleteRegion(this.creatingRegion);

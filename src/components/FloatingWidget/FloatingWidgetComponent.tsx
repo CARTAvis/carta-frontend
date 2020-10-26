@@ -72,7 +72,7 @@ export class FloatingWidgetComponent extends React.Component<FloatingWidgetCompo
 
     private onClickHelpButton = () => {
         const centerX = this.rnd.draggable.state.x + this.rnd.resizable.size.width * 0.5;
-        if (this.props.widgetConfig.tabsHelpTypes) {
+        if (Array.isArray(this.props.widgetConfig.helpType)) {
             const widgetsStore = AppStore.Instance.widgetsStore;
             const widgetParentType = this.props.widgetConfig.parentType;
             const parentId = widgetsStore.floatingSettingsWidgets.get(this.props.widgetConfig.id);
@@ -89,8 +89,7 @@ export class FloatingWidgetComponent extends React.Component<FloatingWidgetCompo
                     settingsTab = widgetsStore.stokesAnalysisWidgets.get(parentId).settingsTabId;
                     break;
             }
-
-            HelpStore.Instance.showHelpDrawer(this.props.widgetConfig.tabsHelpTypes[settingsTab], centerX);
+            HelpStore.Instance.showHelpDrawer(this.props.widgetConfig.helpType[settingsTab], centerX);
         } else {
             HelpStore.Instance.showHelpDrawer(this.props.widgetConfig.helpType, centerX);
         }
@@ -133,14 +132,11 @@ export class FloatingWidgetComponent extends React.Component<FloatingWidgetCompo
                 dragHandleClassName={"floating-title"}
                 onMouseDown={this.props.onSelected}
                 onDragStop={(e, data) => {
-                    widgetConfig["defaultX"] = data.lastX;
-                    widgetConfig["defaultY"] = data.lastY;
+                    widgetConfig.setDefaultPosition(data.lastX, data.lastY);
                 }}
                 onResizeStop={(e, direction, element, delta, position) => {
-                    widgetConfig["defaultX"] = position.x;
-                    widgetConfig["defaultY"] = position.y;
-                    widgetConfig.defaultWidth += delta.width;
-                    widgetConfig.defaultHeight += delta.height;
+                    widgetConfig.setDefaultPosition(position.x, position.y);
+                    widgetConfig.setDefaultSize(widgetConfig.defaultWidth + delta.width, widgetConfig.defaultHeight + delta.height);
                 }}
             >
                 <div className={titleClass}>
@@ -154,7 +150,7 @@ export class FloatingWidgetComponent extends React.Component<FloatingWidgetCompo
                         </Tooltip>
                     </div>
                     }
-                    {(widgetConfig.helpType || widgetConfig.tabsHelpTypes) &&
+                    {widgetConfig.helpType &&
                     <div className={buttonClass} onClick={this.onClickHelpButton}>
                         <Tooltip content="Help" position={Position.BOTTOM_RIGHT}>
                             <Icon icon={"help"}/>

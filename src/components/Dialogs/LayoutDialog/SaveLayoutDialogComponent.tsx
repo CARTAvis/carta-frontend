@@ -1,5 +1,5 @@
 import * as React from "react";
-import {observable, computed} from "mobx";
+import {observable, computed, makeObservable} from "mobx";
 import {observer} from "mobx-react";
 import {AnchorButton, FormGroup, InputGroup, IDialogProps, Button, Intent, Classes, Tooltip} from "@blueprintjs/core";
 import {DraggableDialogComponent} from "components/Dialogs";
@@ -12,6 +12,11 @@ const KEYCODE_ENTER = 13;
 @observer
 export class SaveLayoutDialogComponent extends React.Component {
     @observable private layoutName: string = "";
+
+    constructor(props: any) {
+        super(props);
+        makeObservable(this);
+    }
 
     private handleInput = (ev: React.FormEvent<HTMLInputElement>) => {
         this.layoutName = ev.currentTarget.value;

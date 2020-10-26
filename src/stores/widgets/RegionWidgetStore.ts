@@ -1,4 +1,4 @@
-import {action, observable, computed} from "mobx";
+import { action, observable, computed, makeObservable } from "mobx";
 import {AppStore} from "../AppStore";
 import {FrameStore} from "../FrameStore";
 
@@ -21,6 +21,7 @@ export class RegionWidgetStore {
     @observable type: RegionsType;
 
     constructor(type: RegionsType) {
+        makeObservable(this);
         this.appStore = AppStore.Instance;
         this.fileId = ACTIVE_FILE_ID;
         this.type = type;

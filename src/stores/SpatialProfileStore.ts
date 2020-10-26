@@ -1,4 +1,4 @@
-import {action, observable} from "mobx";
+import { action, observable, makeObservable } from "mobx";
 import {CARTA} from "carta-protobuf";
 import {ProcessedSpatialProfile, ProtobufProcessing} from "models";
 
@@ -12,6 +12,7 @@ export class SpatialProfileStore {
     @observable profiles: Map<string, ProcessedSpatialProfile>;
 
     constructor(fileId: number = 0, regionId: number = 0) {
+        makeObservable(this);
         this.fileId = fileId;
         this.regionId = regionId;
         this.profiles = new Map<string, ProcessedSpatialProfile>();

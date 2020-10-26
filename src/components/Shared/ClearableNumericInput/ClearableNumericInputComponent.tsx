@@ -1,7 +1,7 @@
 import * as React from "react";
 import {AnchorButton, FormGroup, NumericInput, Tooltip, INumericInputProps} from "@blueprintjs/core";
 import {observer} from "mobx-react";
-import {observable} from "mobx";
+import {makeObservable, observable} from "mobx";
 import {toExponential} from "utilities";
 
 const KEYCODE_ENTER = 13;
@@ -17,10 +17,14 @@ export interface ClearableNumericInputProps extends INumericInputProps {
 
 @observer
 export class ClearableNumericInputComponent extends React.Component<ClearableNumericInputProps> {
-
     @observable private isFocused: boolean = false;
     // trigger keydown update for value
     @observable isKeyDown: boolean = false;
+
+    constructor(props: ClearableNumericInputProps) {
+        super(props);
+        makeObservable(this);
+    }
 
     handleChange = (ev) => { 
         if (ev.type === "keydown" && ev.keyCode !== KEYCODE_ENTER) {

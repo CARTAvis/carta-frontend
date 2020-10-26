@@ -2,8 +2,8 @@ import allMaps from "static/allmaps.png";
 import {getShaderProgram, loadImageTexture} from "utilities";
 import {TEXTURE_SIZE, TILE_SIZE} from "./TileService";
 
-const vertexShader = require("!raw-loader!./GLSL/vertex_shader_raster.glsl");
-const pixelShader = require("!raw-loader!./GLSL/pixel_shader_raster.glsl");
+import vertexShader from "!raw-loader!./GLSL/vertex_shader_raster.glsl";
+import pixelShader from "!raw-loader!./GLSL/pixel_shader_raster.glsl";
 
 interface ShaderUniforms {
     MinVal: WebGLUniformLocation;

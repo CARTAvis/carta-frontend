@@ -1,7 +1,7 @@
 import * as React from "react";
 import {observer} from "mobx-react";
 import {AnchorButton, ButtonGroup, Tooltip} from "@blueprintjs/core";
-import {AppStore, WidgetConfig, RegionMode} from "stores";
+import {AppStore, RegionMode, DefaultWidgetConfig} from "stores";
 import {
     AnimatorComponent,
     HistogramComponent,
@@ -24,8 +24,8 @@ import "./ToolbarMenuComponent.scss";
 
 @observer
 export class ToolbarMenuComponent extends React.Component {
-    public static get DRAGSOURCE_WIDGETCONFIG_MAP(): Map<string, WidgetConfig> {
-        return new Map<string, WidgetConfig>([
+    public static get DRAGSOURCE_WIDGETCONFIG_MAP(): Map<string, DefaultWidgetConfig> {
+        return new Map<string, DefaultWidgetConfig>([
             ["renderConfigButton", RenderConfigComponent.WIDGET_CONFIG],
             ["layerListButton", LayerListComponent.WIDGET_CONFIG],
             ["logButton", LogComponent.WIDGET_CONFIG],

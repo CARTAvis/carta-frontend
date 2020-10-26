@@ -1,27 +1,16 @@
 import * as React from "react";
-import {computed, observable} from "mobx";
+import {action, computed, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 import {HTMLTable, Icon, NonIdealState, Position, Tooltip} from "@blueprintjs/core";
 import ReactResizeDetector from "react-resize-detector";
 import {CARTA} from "carta-protobuf";
-import {RegionStore, WidgetConfig, WidgetProps, HelpType, DialogStore, AppStore, FrameStore, WCS_PRECISION} from "stores";
+import {RegionStore, DefaultWidgetConfig, WidgetProps, HelpType, DialogStore, AppStore, FrameStore, WCS_PRECISION} from "stores";
 import {toFixed, getFormattedWCSPoint, formattedArcsec} from "utilities";
 import {CustomIcon} from "icons/CustomIcons";
 import "./RegionListComponent.scss";
 
 @observer
 export class RegionListComponent extends React.Component<WidgetProps> {
-    @computed get validRegions(): RegionStore[] {
-        const frame = AppStore.Instance.activeFrame;
-        if (frame) {
-            return frame.regionSet.regions.filter(r => !r.isTemporary);
-        }
-        return [];
-    }
-
-    @observable width: number = 0;
-    @observable height: number = 0;
-
     private static readonly ACTION_COLUMN_DEFAULT_WIDTH = 25;
     private static readonly NAME_COLUMN_MIN_WIDTH = 50;
     private static readonly NAME_COLUMN_DEFAULT_WIDTH = 150;
@@ -30,7 +19,7 @@ export class RegionListComponent extends React.Component<WidgetProps> {
     private static readonly SIZE_COLUMN_DEFAULT_WIDTH = 160;
     private static readonly ROTATION_COLUMN_DEFAULT_WIDTH = 80;
 
-    public static get WIDGET_CONFIG(): WidgetConfig {
+    public static get WIDGET_CONFIG(): DefaultWidgetConfig {
         return {
             id: "region-list",
             type: "region-list",
@@ -44,7 +33,23 @@ export class RegionListComponent extends React.Component<WidgetProps> {
         };
     }
 
-    private onResize = (width: number, height: number) => {
+    @computed get validRegions(): RegionStore[] {
+        const frame = AppStore.Instance.activeFrame;
+        if (frame) {
+            return frame.regionSet.regions.filter(r => !r.isTemporary);
+        }
+        return [];
+    }
+
+    @observable width: number = 0;
+    @observable height: number = 0;
+
+    constructor(props: any) {
+        super(props);
+        makeObservable(this);
+    }
+
+    @action private onResize = (width: number, height: number) => {
         this.width = width;
         this.height = height;
     };

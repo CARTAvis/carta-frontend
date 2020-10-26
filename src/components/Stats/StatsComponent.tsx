@@ -1,10 +1,10 @@
 import * as React from "react";
 import {observer} from "mobx-react";
-import {autorun, computed, observable} from "mobx";
+import {action, autorun, computed, makeObservable, observable} from "mobx";
 import {HTMLTable, NonIdealState} from "@blueprintjs/core";
 import ReactResizeDetector from "react-resize-detector";
 import {CARTA} from "carta-protobuf";
-import {WidgetConfig, WidgetProps, HelpType, WidgetsStore, AppStore} from "stores";
+import {DefaultWidgetConfig, WidgetProps, HelpType, WidgetsStore, AppStore} from "stores";
 import {StatsWidgetStore} from "stores/widgets";
 import {toExponential} from "utilities";
 import {RegionSelectorComponent} from "components";
@@ -13,7 +13,7 @@ import "./StatsComponent.scss";
 @observer
 export class StatsComponent extends React.Component<WidgetProps> {
 
-    public static get WIDGET_CONFIG(): WidgetConfig {
+    public static get WIDGET_CONFIG(): DefaultWidgetConfig {
         return {
             id: "stats",
             type: "stats",
@@ -73,6 +73,8 @@ export class StatsComponent extends React.Component<WidgetProps> {
 
     constructor(props: WidgetProps) {
         super(props);
+        makeObservable(this);
+
         const appStore = AppStore.Instance;
         // Check if this widget hasn't been assigned an ID yet
         if (!props.docked && props.id === StatsComponent.WIDGET_CONFIG.type) {
@@ -107,7 +109,7 @@ export class StatsComponent extends React.Component<WidgetProps> {
         });
     }
 
-    private onResize = (width: number, height: number) => {
+    @action private onResize = (width: number, height: number) => {
         this.width = width;
         this.height = height;
     };

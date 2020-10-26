@@ -1,4 +1,4 @@
-import {action, observable} from "mobx";
+import {action, observable, makeObservable, runInAction} from "mobx";
 import {CARTA} from "carta-protobuf";
 import {Observable, Observer, Subject, throwError} from "rxjs";
 import {AppStore, PreferenceStore, RegionStore} from "stores";
@@ -58,6 +58,7 @@ export class BackendService {
     private readonly decoderMap: Map<CARTA.EventType, any>;
 
     private constructor() {
+        makeObservable(this);
         this.loggingEnabled = true;
         this.observerRequestMap = new Map<number, Observer<any>>();
         this.eventCounter = 1;
@@ -159,7 +160,7 @@ export class BackendService {
         this.connection = new WebSocket(apiService.accessToken ? url + `?token=${apiService.accessToken}` : url);
         this.connection.binaryType = "arraybuffer";
         this.connection.onmessage = this.messageHandler.bind(this);
-        this.connection.onclose = (ev: CloseEvent) => {
+        this.connection.onclose = (ev: CloseEvent) => runInAction(()=>{
             // Only change to closed connection if the connection was originally active
             if (this.connectionStatus === ConnectionStatus.ACTIVE) {
                 this.connectionStatus = ConnectionStatus.CLOSED;
@@ -176,10 +177,10 @@ export class BackendService {
                     this.connection = newConnection;
                 }, 1000);
             }
-        };
+        });
 
         return new Observable<CARTA.RegisterViewerAck>(observer => {
-            this.connection.onopen = () => {
+            this.connection.onopen = action(() => {
                 if (this.connectionStatus === ConnectionStatus.CLOSED) {
                     this.connectionDropped = true;
                 }
@@ -194,7 +195,7 @@ export class BackendService {
                 if (this.sendEvent(CARTA.EventType.REGISTER_VIEWER, CARTA.RegisterViewer.encode(message).finish())) {
                     this.observerRequestMap.set(requestId, observer);
                 }
-            };
+            });
 
             this.connection.onerror = (ev => {
                 AppStore.Instance.logStore.addInfo(`Connecting to server ${url} failed. Retrying...`, ["network"]);
