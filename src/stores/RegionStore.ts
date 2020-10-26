@@ -1,4 +1,4 @@
-import {action, computed, observable} from "mobx";
+import {action, computed, observable, makeObservable} from "mobx";
 import {Colors} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import {Point2D} from "models";
@@ -235,6 +235,7 @@ export class RegionStore {
 
     constructor(backendService: BackendService, fileId: number, activeFrame: FrameStore, controlPoints: Point2D[], regionType: CARTA.RegionType, regionId: number = -1,
                 color: string = Colors.TURQUOISE5, lineWidth: number = 2, dashLength: number = 0, rotation: number = 0, name: string = "") {
+        makeObservable(this);
         this.fileId = fileId;
         this.activeFrame = activeFrame;
         this.controlPoints = controlPoints;

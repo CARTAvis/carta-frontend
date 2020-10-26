@@ -1,5 +1,5 @@
 import * as _ from "lodash";
-import {action, autorun, computed, observable, ObservableMap, when} from "mobx";
+import {action, autorun, computed, observable, ObservableMap, when, makeObservable, runInAction} from "mobx";
 import * as Long from "long";
 import {Classes, Colors, IOptionProps, setHotkeysDialogProps} from "@blueprintjs/core";
 import {Utils} from "@blueprintjs/table";
@@ -161,13 +161,13 @@ export class AppStore {
 
         let autoFileLoaded = false;
 
-        AST.onReady.then(() => {
+        AST.onReady.then(runInAction(() => {
             AST.setPalette(this.darkTheme ? nightPalette : dayPalette);
             this.astReady = true;
             if (this.backendService.connectionStatus === ConnectionStatus.ACTIVE && !autoFileLoaded && fileSearchParam) {
                 this.loadFile(folderSearchParam, fileSearchParam, "");
             }
-        });
+        }));
 
         this.backendService.connect(wsURL).subscribe(ack => {
             console.log(`Connected with session ID ${ack.sessionId}`);
@@ -180,6 +180,10 @@ export class AppStore {
                 this.fileBrowserStore.showFileBrowser(BrowserMode.File);
             }
         }, err => console.log(err));
+    };
+
+    @action handleThemeChange = (darkMode: boolean) => {
+        this.systemTheme = darkMode ? "dark" : "light";
     };
 
     // Tasks
@@ -207,6 +211,14 @@ export class AppStore {
         const estimatedFinishTime = dt / this.taskProgress;
         return estimatedFinishTime - dt;
     }
+
+    @action startFileLoading = () => {
+        this.fileLoading = true;
+    };
+
+    @action endFileLoading = () => {
+        this.fileLoading = false;
+    };
 
     // Keyboard shortcuts
     @computed get modifierString() {
@@ -373,7 +385,7 @@ export class AppStore {
 
     @action loadFile = (directory: string, file: string, hdu: string) => {
         return new Promise<number>((resolve, reject) => {
-            this.fileLoading = true;
+            this.startFileLoading();
 
             if (!file) {
                 const lastDirSeparator = directory.lastIndexOf("/");
@@ -393,12 +405,12 @@ export class AppStore {
                 if (!this.addFrame(ack, directory, hdu)) {
                     AppToaster.show({icon: "warning-sign", message: "Load file failed.", intent: "danger", timeout: 3000});
                 }
-                this.fileLoading = false;
+                this.endFileLoading();
                 this.fileBrowserStore.hideFileBrowser();
                 resolve(ack.fileId);
             }, err => {
                 this.alertStore.showAlert(`Error loading file: ${err}`);
-                this.fileLoading = false;
+                this.endFileLoading();
                 reject(err);
             });
 
@@ -593,13 +605,13 @@ export class AppStore {
             AppToaster.show(ErrorToast("`Catalog type not supported"));
             return;
         }
-        this.fileLoading = true;
+        this.startFileLoading();
 
         const frame = this.activeFrame;
         const fileId = this.catalogNum + 1;
 
-        this.backendService.loadCatalogFile(directory, file, fileId, previewDataSize).subscribe(ack => {
-            this.fileLoading = false;
+        this.backendService.loadCatalogFile(directory, file, fileId, previewDataSize).subscribe(ack => runInAction(() => {
+            this.endFileLoading();
             if (frame && ack.success && ack.dataSize) {
                 let catalogInfo: CatalogInfo = {fileId, directory, fileInfo: ack.fileInfo, dataSize: ack.dataSize};
                 const columnData = ProtobufProcessing.ProcessCatalogData(ack.previewData);
@@ -631,10 +643,10 @@ export class AppStore {
                 const catalogProfileStore = new CatalogProfileStore(catalogInfo, ack.headers, columnData);
                 catalogStore.catalogProfileStores.set(fileId, catalogProfileStore);
             }
-        }, error => {
+        }), error => {
             console.error(error);
             AppToaster.show(ErrorToast(error));
-            this.fileLoading = false;
+            this.endFileLoading();
         });
     };
 
@@ -774,7 +786,7 @@ export class AppStore {
             return;
         }
 
-        this.fileLoading = true;
+        this.startFileLoading();
         // clear previously generated moment images under this frame
         if (frame.momentImages && frame.momentImages.length > 0) {
             frame.momentImages.forEach(momentFrame => this.closeFile(momentFrame));
@@ -797,10 +809,10 @@ export class AppStore {
                 AppToaster.show({icon: "warning-sign", message: `Moment generation failed. ${ack?.message}`, intent: "danger", timeout: 3000});
             }
             frame.resetMomentRequestState();
-            this.fileLoading = false;
+            this.endFileLoading();
         }, error => {
             frame.resetMomentRequestState();
-            this.fileLoading = false;
+            this.endFileLoading();
             console.error(error);
         });
         this.restartTaskProgress();
@@ -903,6 +915,7 @@ export class AppStore {
     }, AppStore.ImageChannelThrottleTime);
 
     private constructor() {
+        makeObservable(this);
         AppStore.staticInstance = this;
         // Assign service instances
         this.backendService = BackendService.Instance;
@@ -939,16 +952,16 @@ export class AppStore {
         this.initRequirements();
         this.activeLayer = ImageViewLayer.RegionMoving;
 
-        AST.onReady.then(() => {
+        AST.onReady.then(runInAction(() => {
             AST.setPalette(this.darkTheme ? nightPalette : dayPalette);
             this.astReady = true;
             this.logStore.addInfo("AST library loaded", ["ast"]);
-        });
+        }));
 
-        CARTACompute.onReady.then(() => {
+        CARTACompute.onReady.then(action(() => {
             this.cartaComputeReady = true;
             this.logStore.addInfo("Compute module loaded", ["compute"]);
-        });
+        }));
 
         // Log the frontend git commit hash
         this.logStore.addDebug(`Current frontend version: ${GitCommit.logMessage}`, ["version"]);
@@ -962,21 +975,17 @@ export class AppStore {
         });
 
         // Watch for system theme preference changes
-        const handleThemeChange = (darkMode: boolean) => {
-            this.systemTheme = darkMode ? "dark" : "light";
-        };
-
         const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
         if (mediaQuery) {
             if (mediaQuery.addEventListener) {
-                mediaQuery.addEventListener("change", changeEvent => handleThemeChange(changeEvent.matches));
+                mediaQuery.addEventListener("change", changeEvent => this.handleThemeChange(changeEvent.matches));
             } else if (mediaQuery.addListener) {
                 // Workaround for Safari
                 // @ts-ignore
                 mediaQuery.addListener(changeEvent => handleThemeChange(changeEvent.matches));
             }
         }
-        handleThemeChange(mediaQuery.matches);
+        this.handleThemeChange(mediaQuery.matches);
 
         // Display toasts when connection status changes
         autorun(() => {

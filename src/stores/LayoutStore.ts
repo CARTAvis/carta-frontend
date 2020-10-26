@@ -1,4 +1,4 @@
-import {observable, computed, action} from "mobx";
+import { observable, computed, action, makeObservable } from "mobx";
 import {AppStore, AlertStore} from "stores";
 import * as GoldenLayout from "golden-layout";
 import {LayoutConfig, PresetLayout} from "models";
@@ -27,6 +27,7 @@ export class LayoutStore {
     @observable supportsServer: boolean;
 
     private constructor() {
+        makeObservable<LayoutStore, "layouts">(this);
         this.dockedLayout = null;
         this.layouts = {};
         this.supportsServer = false;

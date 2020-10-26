@@ -1,4 +1,4 @@
-import {action, observable} from "mobx";
+import { action, observable, makeObservable } from "mobx";
 import {Colors} from "@blueprintjs/core";
 import {CatalogOverlay} from "stores/CatalogProfileStore";
 import {PreferenceStore} from "stores";
@@ -25,7 +25,7 @@ export enum CatalogOverlayShape {
 }
 
 const DEFAULTS = {
-    headerTableColumnWidts: [75, 75, 65, 100, null],
+    headerTableColumnWidts: [150, 75, 65, 100, 230],
     showSelectedData: false,
     catalogTableAutoScroll: false,
     catalogPlotType: CatalogPlotType.ImageOverlay,
@@ -58,6 +58,7 @@ export class CatalogWidgetStore {
     @observable highlightColor: string;
 
     constructor(catalogFileId: number) {
+        makeObservable(this);
         this.catalogFileId = catalogFileId;
         this.headerTableColumnWidts = DEFAULTS.headerTableColumnWidts;
         this.showSelectedData = DEFAULTS.showSelectedData;

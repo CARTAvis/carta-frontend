@@ -1,9 +1,13 @@
-import {action, observable} from "mobx";
+import { action, observable, makeObservable } from "mobx";
 import {TabId} from "@blueprintjs/core";
 import {FileInfoType} from "../components";
 
 export class DialogStore {
     private static staticInstance: DialogStore;
+
+    constructor() {
+        makeObservable(this);
+    }
 
     static get Instance() {
         if (!DialogStore.staticInstance) {
@@ -20,7 +24,7 @@ export class DialogStore {
     @action hideRegionDialog = () => {
         this.regionDialogVisible = false;
     };
-    
+
     // Hotkey
     @observable hotkeyDialogVisible: boolean;
     @action showHotkeyDialog = () => {
@@ -29,7 +33,7 @@ export class DialogStore {
     @action hideHotkeyDialog = () => {
         this.hotkeyDialogVisible = false;
     };
-    
+
     // About
     @observable aboutDialogVisible: boolean;
     @action showAboutDialog = () => {
@@ -38,7 +42,7 @@ export class DialogStore {
     @action hideAboutDialog = () => {
         this.aboutDialogVisible = false;
     };
-    
+
     // Preference
     @observable preferenceDialogVisible: boolean;
     @action showPreferenceDialog = () => {
@@ -47,7 +51,7 @@ export class DialogStore {
     @action hidePreferenceDialog = () => {
         this.preferenceDialogVisible = false;
     };
-    
+
     // Layout
     @observable saveLayoutDialogVisible: boolean;
     @observable deleteLayoutDialogVisible: boolean;

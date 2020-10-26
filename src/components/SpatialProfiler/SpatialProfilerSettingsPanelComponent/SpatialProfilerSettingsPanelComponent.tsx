@@ -4,7 +4,7 @@ import {observer} from "mobx-react";
 import {Colors, Tabs, Tab} from "@blueprintjs/core";
 import {LinePlotSettingsPanelComponentProps, LinePlotSettingsPanelComponent, SmoothingSettingsComponent} from "components/Shared";
 import {SpatialProfileWidgetStore} from "stores/widgets";
-import {WidgetProps, WidgetConfig, HelpType, WidgetsStore, AppStore} from "stores";
+import {WidgetProps, DefaultWidgetConfig, HelpType, WidgetsStore, AppStore} from "stores";
 import {parseNumber} from "utilities";
 import "./SpatialProfilerSettingsPanelComponent.scss";
 
@@ -18,7 +18,7 @@ export enum SpatialProfilerSettingsTabs {
 @observer
 export class SpatialProfilerSettingsPanelComponent extends React.Component<WidgetProps> {
 
-    public static get WIDGET_CONFIG(): WidgetConfig {
+    public static get WIDGET_CONFIG(): DefaultWidgetConfig {
         return {
             id: "spatial-profiler-floating-settings",
             type: "floating-settings",
@@ -30,7 +30,7 @@ export class SpatialProfilerSettingsPanelComponent extends React.Component<Widge
             isCloseable: true,
             parentId: "spatial-profiler",
             parentType: "spatial-profiler",
-            tabsHelpTypes: [HelpType.SPATIAL_PROFILER_SETTINGS_STYLING, HelpType.SPATIAL_PROFILER_SETTINGS_SMOOTHING]
+            helpType: [HelpType.SPATIAL_PROFILER_SETTINGS_STYLING, HelpType.SPATIAL_PROFILER_SETTINGS_SMOOTHING]
         };
     }
 

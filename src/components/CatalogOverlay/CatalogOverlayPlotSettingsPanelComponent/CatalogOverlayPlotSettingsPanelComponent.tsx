@@ -3,7 +3,7 @@ import {action, autorun, computed, observable} from "mobx";
 import * as React from "react";
 import {Button, FormGroup, Icon, MenuItem, PopoverPosition, Tab, Tabs, TabId} from "@blueprintjs/core";
 import {Select, IItemRendererProps} from "@blueprintjs/select";
-import {AppStore, CatalogStore, HelpType, PreferenceStore, PreferenceKeys, WidgetProps, WidgetConfig, WidgetsStore} from "stores";
+import {AppStore, CatalogStore, DefaultWidgetConfig, HelpType, PreferenceStore, PreferenceKeys, WidgetProps, WidgetsStore} from "stores";
 import {CatalogOverlayShape, CatalogWidgetStore} from "stores/widgets";
 import {ColorResult} from "react-color";
 import {ColorPickerComponent, SafeNumericInput} from "components/Shared";
@@ -43,7 +43,7 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
 
     private catalogFileNames: Map<number, string>;
 
-    public static get WIDGET_CONFIG(): WidgetConfig {
+    public static get WIDGET_CONFIG(): DefaultWidgetConfig {
         return {
             id: "catalog-overlay-floating-settings",
             type: "floating-settings",

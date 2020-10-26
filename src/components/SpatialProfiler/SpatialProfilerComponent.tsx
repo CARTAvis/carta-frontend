@@ -1,13 +1,13 @@
 import * as React from "react";
 import * as _ from "lodash";
 import * as AST from "ast_wrapper";
-import {autorun, computed, observable} from "mobx";
+import {action, autorun, computed, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 import {Colors, NonIdealState} from "@blueprintjs/core";
 import ReactResizeDetector from "react-resize-detector";
 import {LinePlotComponent, LinePlotComponentProps, PlotType, ProfilerInfoComponent, VERTICAL_RANGE_PADDING, SmoothingType} from "components/Shared";
 import {TickType, MultiPlotProps} from "../Shared/LinePlot/PlotContainer/PlotContainerComponent";
-import {AppStore, ASTSettingsString, FrameStore, HelpType, OverlayStore, SpatialProfileStore, WidgetConfig, WidgetProps, WidgetsStore} from "stores";
+import {AppStore, ASTSettingsString, DefaultWidgetConfig, FrameStore, HelpType, OverlayStore, SpatialProfileStore, WidgetProps, WidgetsStore} from "stores";
 import {SpatialProfileWidgetStore} from "stores/widgets";
 import {Point2D} from "models";
 import {binarySearchByX, clamp, formattedExponential, transformPoint, toFixed} from "utilities";
@@ -18,7 +18,7 @@ const AUTOSCALE_THROTTLE_TIME = 100;
 
 @observer
 export class SpatialProfilerComponent extends React.Component<WidgetProps> {
-    public static get WIDGET_CONFIG(): WidgetConfig {
+    public static get WIDGET_CONFIG(): DefaultWidgetConfig {
         return {
             id: "spatial-profiler",
             type: "spatial-profiler",
@@ -187,6 +187,8 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
 
     constructor(props: WidgetProps) {
         super(props);
+        makeObservable(this);
+
         const appStore = AppStore.Instance;
         // Check if this widget hasn't been assigned an ID yet
         if (!props.docked && props.id === SpatialProfilerComponent.WIDGET_CONFIG.type) {
@@ -223,16 +225,19 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
                 return null;
             }
             if (isXProfile) {
-                this.autoScaleHorizontalMin = clamp(this.frame.requiredFrameView.xMin, 0, this.frame.frameInfo.fileInfoExtended.width);
-                this.autoScaleHorizontalMax = clamp(this.frame.requiredFrameView.xMax, 0, this.frame.frameInfo.fileInfoExtended.width);
+                this.setAutoScaleBounds(clamp(this.frame.requiredFrameView.xMin, 0, this.frame.frameInfo.fileInfoExtended.width), clamp(this.frame.requiredFrameView.xMax, 0, this.frame.frameInfo.fileInfoExtended.width));
             } else {
-                this.autoScaleHorizontalMin = clamp(this.frame.requiredFrameView.yMin, 0, this.frame.frameInfo.fileInfoExtended.height);
-                this.autoScaleHorizontalMax = clamp(this.frame.requiredFrameView.yMax, 0, this.frame.frameInfo.fileInfoExtended.height);
+                this.setAutoScaleBounds(clamp(this.frame.requiredFrameView.yMin, 0, this.frame.frameInfo.fileInfoExtended.height), clamp(this.frame.requiredFrameView.yMax, 0, this.frame.frameInfo.fileInfoExtended.height));
             }
         }, {delay: AUTOSCALE_THROTTLE_TIME});
     }
 
-    onResize = (width: number, height: number) => {
+    @action private setAutoScaleBounds = (min: number, max: number) => {
+        this.autoScaleHorizontalMin = min;
+        this.autoScaleHorizontalMax = max;
+    }
+
+    @action private onResize = (width: number, height: number) => {
         this.width = width;
         this.height = height;
     };
@@ -413,7 +418,7 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
                     let primaryLineColor = this.widgetStore.primaryLineColor.colorHex;
                     if (appStore.darkTheme) {
                         if (!this.widgetStore.primaryLineColor.fixed) {
-                            primaryLineColor = Colors.BLUE4;   
+                            primaryLineColor = Colors.BLUE4;
                         }
                     }
                     linePlotProps.lineColor = primaryLineColor;

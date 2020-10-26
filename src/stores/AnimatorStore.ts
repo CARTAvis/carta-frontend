@@ -1,4 +1,4 @@
-import {action, computed, observable} from "mobx";
+import {action, computed, observable, makeObservable} from "mobx";
 import {CARTA} from "carta-protobuf";
 import {AppStore, FrameStore, PreferenceStore} from "stores";
 import {clamp, GetRequiredTiles, getTransformedChannelList, mapToObject} from "utilities";
@@ -179,6 +179,7 @@ export class AnimatorStore {
     private stopHandle;
 
     constructor() {
+        makeObservable(this);
         this.frameRate = 5;
         this.maxFrameRate = 15;
         this.minFrameRate = 1;

@@ -1,5 +1,5 @@
 import * as React from "react";
-import {Button, ButtonGroup, Tooltip} from "@blueprintjs/core";
+import {AnchorButton, ButtonGroup, Tooltip} from "@blueprintjs/core";
 
 export enum PlotType {
     STEPS = "Steps",
@@ -29,7 +29,7 @@ export class PlotTypeSelectorComponent extends React.Component<PlotTypeSelectCom
     private plotTypeButton = (value: PlotType) => {
         return (
             <Tooltip content={value}>
-                <Button icon={PlotTypeSelectorComponent.getIconForType(value)} active={this.props.value === value} onClick={() => this.props.onValueChanged(value)}/>
+                <AnchorButton icon={PlotTypeSelectorComponent.getIconForType(value)} active={this.props.value === value} onClick={() => this.props.onValueChanged(value)}/>
             </Tooltip>
         );
     };

@@ -1,6 +1,6 @@
 import * as AST from "ast_wrapper";
 import {Colors} from "@blueprintjs/core";
-import {action, autorun, computed, observable} from "mobx";
+import { action, autorun, computed, observable, makeObservable } from "mobx";
 import {AppStore, FrameStore, PreferenceStore, WCS_PRECISION} from "stores";
 import {WCSType} from "models";
 import {toFixed} from "utilities";
@@ -127,6 +127,7 @@ export class OverlayGlobalSettings {
     }
 
     constructor() {
+        makeObservable(this);
         this.system = SystemType.Auto;
         this.labelType = LabelType.Exterior;
         this.color = PreferenceStore.Instance.astColor;
@@ -182,6 +183,7 @@ export class OverlayTitleSettings {
     }
 
     constructor() {
+        makeObservable(this);
         this.visible = false;
         this.hidden = false;
         this.customColor = false;
@@ -249,6 +251,7 @@ export class OverlayGridSettings {
     }
 
     constructor() {
+        makeObservable(this);
         this.visible = PreferenceStore.Instance.astGridVisible;
         this.customColor = false;
         this.color = AST_DEFAULT_COLOR;
@@ -302,6 +305,7 @@ export class OverlayBorderSettings {
     }
 
     constructor() {
+        makeObservable(this);
         this.visible = true;
         this.customColor = false;
         this.color = AST_DEFAULT_COLOR;
@@ -349,6 +353,7 @@ export class OverlayTickSettings {
     }
 
     constructor() {
+        makeObservable(this);
         this.drawAll = true;
         this.customDensity = false;
         this.densityX = 4;
@@ -404,6 +409,7 @@ export class OverlayAxisSettings {
     @observable width: number;
 
     constructor() {
+        makeObservable(this);
         this.visible = false;
         this.customColor = false;
         this.color = AST_DEFAULT_COLOR;
@@ -458,6 +464,7 @@ export class OverlayNumberSettings {
     @observable validWcs: boolean;
 
     constructor() {
+        makeObservable(this);
         this.visible = true;
         this.hidden = false;
         this.fontSize = 12;
@@ -612,6 +619,7 @@ export class OverlayLabelSettings {
     @observable customLabelY: string;
 
     constructor() {
+        makeObservable(this);
         this.visible = PreferenceStore.Instance.astLabelsVisible;
         this.hidden = false;
         this.fontSize = 15;
@@ -686,6 +694,7 @@ export class OverlayBeamStore {
     @observable shiftY: number;
 
     constructor() {
+        makeObservable(this);
         const preference = PreferenceStore.Instance;
         this.visible = preference.beamVisible;
         this.color = preference.beamColor;
@@ -724,6 +733,7 @@ export class OverlayBeamSettings {
     @observable settingsForDisplay: OverlayBeamStore;
 
     constructor() {
+        makeObservable(this);
         this.selectedFileId = -1;
         this.settingsForDisplay = null;
 
@@ -774,6 +784,7 @@ export class OverlayStore {
     @observable beam: OverlayBeamSettings;
 
     private constructor() {
+        makeObservable(this);
         this.global = new OverlayGlobalSettings();
         this.title = new OverlayTitleSettings();
         this.grid = new OverlayGridSettings();

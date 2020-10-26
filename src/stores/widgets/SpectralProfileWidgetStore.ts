@@ -1,4 +1,4 @@
-import {action, autorun, computed, observable} from "mobx";
+import { action, autorun, computed, observable, makeObservable } from "mobx";
 import {Colors, NumberRange} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import {PlotType, LineSettings} from "components/Shared";
@@ -295,6 +295,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
 
     constructor(coordinate: string = "z") {
         super(RegionsType.CLOSED_AND_POINT);
+        makeObservable<SpectralProfileWidgetStore, "spectralLinesMHz" | "updateRanges">(this);
         this.coordinate = coordinate;
         this.statsType = CARTA.StatsType.Mean;
         this.isStreamingData = false;

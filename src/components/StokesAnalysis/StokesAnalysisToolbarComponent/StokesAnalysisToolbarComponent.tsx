@@ -1,6 +1,6 @@
 import {observer} from "mobx-react";
 import * as React from "react";
-import {FormGroup, Switch, ButtonGroup, Button, Tooltip} from "@blueprintjs/core";
+import {AnchorButton, FormGroup, Switch, ButtonGroup, Tooltip} from "@blueprintjs/core";
 import {AppStore, FrameStore} from "stores";
 import {StokesAnalysisWidgetStore} from "stores/widgets";
 import {StokesAnalysisComponent, RegionSelectorComponent, StokesAnalysisSettingsTabs} from "components";
@@ -40,7 +40,7 @@ export class StokesAnalysisToolbarComponent extends React.Component<{widgetStore
                 </FormGroup>
                 <ButtonGroup className="profile-buttons">
                     <Tooltip content="Smoothing">
-                        <Button icon={<CustomIcon icon="smoothing"/>} onClick={this.smoothingShortcutClick}/>
+                        <AnchorButton icon={<CustomIcon icon="smoothing"/>} onClick={this.smoothingShortcutClick}/>
                     </Tooltip>
                 </ButtonGroup>
             </div>

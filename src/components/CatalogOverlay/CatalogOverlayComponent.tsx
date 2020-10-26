@@ -1,5 +1,5 @@
 import * as React from "react";
-import {action, autorun, computed, observable} from "mobx";
+import {action, autorun, computed, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 import {AnchorButton, FormGroup, Intent, NonIdealState, Switch, Tooltip, MenuItem, PopoverPosition, Button} from "@blueprintjs/core";
 import {Cell, Column, Regions, RenderMode, SelectionModes, Table} from "@blueprintjs/table";
@@ -10,7 +10,7 @@ import SplitPane, { Pane } from "react-split-pane";
 import FuzzySearch from "fuzzy-search";
 import {CARTA} from "carta-protobuf";
 import {TableComponent, TableComponentProps, TableType, ClearableNumericInputComponent} from "components/Shared";
-import {AppStore, CatalogStore, CatalogProfileStore, CatalogOverlay, CatalogUpdateMode, CatalogSystemType, HelpType, WidgetConfig, WidgetProps, WidgetsStore, PreferenceStore, PreferenceKeys} from "stores";
+import {AppStore, CatalogStore, CatalogProfileStore, CatalogOverlay, CatalogUpdateMode, CatalogSystemType, DefaultWidgetConfig, HelpType, WidgetProps, WidgetsStore, PreferenceStore, PreferenceKeys} from "stores";
 import {CatalogWidgetStore, CatalogPlotWidgetStoreProps, CatalogPlotType} from "stores/widgets";
 import {toFixed} from "utilities";
 import {ProcessedColumnData} from "models";
@@ -38,7 +38,10 @@ enum ComparisonOperator {
 
 @observer
 export class CatalogOverlayComponent extends React.Component<WidgetProps> {
-    @observable catalogFileId: number;
+    @computed get catalogFileId() {
+        return CatalogStore.Instance.catalogProfiles?.get(this.props.id);
+    }
+
     @observable catalogTableRef: Table = undefined;
     @observable height: number;
     @observable width: number;
@@ -58,7 +61,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         CARTA.ColumnType.Uint64
     ];
 
-    public static get WIDGET_CONFIG(): WidgetConfig {
+    public static get WIDGET_CONFIG(): DefaultWidgetConfig {
         return {
             id: "catalog-overlay",
             type: "catalog-overlay",
@@ -156,6 +159,8 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
 
     constructor(props: WidgetProps) {
         super(props);
+        makeObservable(this);
+
         if (!CatalogStore.Instance.catalogProfiles.has(this.props.id)) {
             CatalogStore.Instance.catalogProfiles.set(this.props.id, 1);
         }
@@ -165,7 +170,6 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
             const appStore = AppStore.Instance;
             const frame = appStore.activeFrame;
             const catalogFileIds = CatalogStore.Instance.activeCatalogFiles;
-            this.catalogFileId = CatalogStore.Instance.catalogProfiles.get(this.props.id);
             const profileStore = this.profileStore;
 
             if (profileStore) {
@@ -195,7 +199,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         this.catalogHeaderTableRef = ref;
     }
 
-    onResize = (width: number, height: number) => {
+    @action private onResize = (width: number, height: number) => {
         const profileStore = this.profileStore;
         const catalogWidgetStore = this.widgetStore;
         this.height = height;

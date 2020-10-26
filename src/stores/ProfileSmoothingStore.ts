@@ -1,4 +1,4 @@
-import {action, computed, observable} from "mobx";
+import {action, computed, observable, makeObservable} from "mobx";
 import {Colors} from "@blueprintjs/core";
 import {PlotType, SmoothingType, LineSettings} from "components/Shared";
 import {Point2D} from "models";
@@ -22,6 +22,7 @@ export class ProfileSmoothingStore {
     @observable colorMap: Map<string, { colorHex: string, fixed: boolean }>;
 
     constructor() {
+        makeObservable(this);
         this.type = SmoothingType.NONE;
         this.lineColor = { colorHex: Colors.ROSE3, fixed: false };
         this.lineType = PlotType.STEPS;
