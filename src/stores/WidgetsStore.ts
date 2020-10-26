@@ -613,7 +613,7 @@ export class WidgetsStore {
             widgetConfig.setDefaultSize(Math.round(container.width / 25.0) * 25, Math.round(container.height / 25.0) * 25);
             const el = container["_element"][0] as HTMLElement;
             // Snap position to grid and adjust for title and container offset
-            widgetConfig.setDefaultSize(Math.round(el.offsetLeft / 25.0) * 25 + 5, Math.round(el.offsetTop / 25.0) * 25 - 25);
+            widgetConfig.setDefaultPosition(Math.round(el.offsetLeft / 25.0) * 25 + 5, Math.round(el.offsetTop / 25.0) * 25 - 25);
         }
 
         this.addFloatingWidget(widgetConfig);
