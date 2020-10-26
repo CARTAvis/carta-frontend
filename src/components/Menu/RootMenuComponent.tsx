@@ -266,7 +266,7 @@ export class RootMenuComponent extends React.Component {
                                 <small>
                                     Latency: {latencyString}<br/>
                                     Session ID: {appStore.backendService.sessionId}<br/>
-                                    {appStore.backendService.grpcPort >= 0 && <span>GRPC Port: {appStore.backendService.grpcPort}</span>}
+                                    {appStore.backendService.grpcPort > 0 && <span>GRPC Port: {appStore.backendService.grpcPort}</span>}
                                 </small>
                             </i>
                         </span>
