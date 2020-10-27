@@ -27,7 +27,7 @@ export class LayerListComponent extends React.Component<WidgetProps> {
 
     @observable width: number = 0;
     @observable height: number = 0;
-    @observable columnWidths = [150, 75, 85, 77, 68];
+    @observable columnWidths = [132, 70, 110, 75, 67];
 
     constructor(props: any) {
         super(props);
