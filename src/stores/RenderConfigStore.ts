@@ -1,5 +1,5 @@
 import {action, computed, observable, makeObservable} from "mobx";
-import {PreferenceStore} from "stores";
+import {FrameStore, PreferenceStore} from "stores";
 import {CARTA} from "carta-protobuf";
 import {clamp, getPercentiles} from "utilities";
 
@@ -73,8 +73,11 @@ export class RenderConfigStore {
     @observable scaleMax: number[];
     @observable visible: boolean;
 
-    constructor(readonly preference: PreferenceStore) {
+    private frame: FrameStore;
+
+    constructor(readonly preference: PreferenceStore, frame: FrameStore) {
         makeObservable(this);
+        this.frame = frame;
         const percentile = preference.percentile;
         this.selectedPercentile = [percentile, percentile, percentile, percentile];
         this.bias = 0;
@@ -189,6 +192,7 @@ export class RenderConfigStore {
         if (rank === 100) {
             this.scaleMin[this.stokes] = this.histogramMin;
             this.scaleMax[this.stokes] = this.histogramMax;
+            this.updateSiblings();
             return true;
         }
 
@@ -201,6 +205,7 @@ export class RenderConfigStore {
         if (percentiles.length === 2) {
             this.scaleMin[this.stokes] = percentiles[0];
             this.scaleMax[this.stokes] = percentiles[1];
+            this.updateSiblings();
             return true;
         } else {
             return false;
@@ -226,6 +231,7 @@ export class RenderConfigStore {
         this.scaleMin[this.stokes] = minVal;
         this.scaleMax[this.stokes] = maxVal;
         this.selectedPercentile[this.stokes] = -1;
+        this.updateSiblings();
     };
 
     @action setColorMapIndex = (index: number) => {
@@ -242,15 +248,18 @@ export class RenderConfigStore {
     @action setScaling = (newScaling: FrameScaling) => {
         if (RenderConfigStore.SCALING_TYPES.has(newScaling)) {
             this.scaling = newScaling;
+            this.updateSiblings();
         }
     };
 
     @action setGamma = (gamma: number) => {
         this.gamma = gamma;
+        this.updateSiblings();
     };
 
     @action setAlpha = (alpha: number) => {
         this.alpha = alpha;
+        this.updateSiblings();
     };
 
     @action setInverted = (inverted: boolean) => {
@@ -264,4 +273,20 @@ export class RenderConfigStore {
     @action toggleVisibility = () => {
         this.visible = !this.visible;
     };
+
+    @action updateSiblings = () => {
+        const siblings = this.frame?.renderConfigSiblings;
+        for (const frame of siblings) {
+            frame.renderConfig.updateFrom(this);
+        }
+    }
+
+    @action updateFrom = (other: RenderConfigStore) => {
+        this.scaling = other.scaling;
+        this.alpha = other.alpha;
+        this.gamma = other.gamma;
+        this.scaleMin[this.stokes] = other.scaleMinVal;
+        this.scaleMax[this.stokes] = other.scaleMaxVal;
+        this.selectedPercentile[this.stokes] = -1;
+    }
 }

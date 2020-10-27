@@ -178,11 +178,36 @@ export class LayerListComponent extends React.Component<WidgetProps> {
             );
         }
 
+        let renderConfigMatchingButton: React.ReactNode;
+        if (appStore.renderConfigReference) {
+            let tooltipSubtitle: string;
+            if (frame === appStore.renderConfigReference) {
+                tooltipSubtitle = `${frame.frameInfo.fileInfo.name} is the current render config reference`;
+            } else {
+                tooltipSubtitle = `Click to ${frame.renderConfigReference ? "disable" : "enable"} matching to ${appStore.renderConfigReference.frameInfo.fileInfo.name}`;
+            }
+            renderConfigMatchingButton = (
+                <Tooltip position={"bottom"} content={<span>Render config matching<br/><i><small>{tooltipSubtitle}</small></i></span>}>
+                    <AnchorButton
+                        className={frame === appStore.renderConfigReference ? "outlined" : ""}
+                        minimal={true}
+                        small={true}
+                        active={!!frame.renderConfigReference}
+                        intent={frame.renderConfigReference ? "success" : "none"}
+                        onClick={() => appStore.toggleRenderConfigMatching(frame)}
+                    >
+                        R
+                    </AnchorButton>
+                </Tooltip>
+            );
+        }
+
         return (
             <Cell className={rowIndex === appStore.activeFrameIndex ? "active-row-cell" : ""}>
                 <React.Fragment>
                     {spatialMatchingButton}
                     {spectralMatchingButton}
+                    {renderConfigMatchingButton}
                 </React.Fragment>
             </Cell>
         );
@@ -261,9 +286,11 @@ export class LayerListComponent extends React.Component<WidgetProps> {
         const activeFrameIndex = appStore.activeFrameIndex;
         const visibilityRaster = appStore.frames.map(f => f.renderConfig.visible);
         const visibilityContour = appStore.frames.map(f => f.contourConfig.visible && f.contourConfig.enabled);
-        const matchingTypes = appStore.frames.map(f => f.spatialReference && f.spectralReference);
+        const matchingTypes = appStore.frames.map(f => f.spatialReference && f.spectralReference && f.renderConfigReference);
         const currentSpectralReference = appStore.spectralReference;
         const currentSpatialReference = appStore.spatialReference;
+        const currentRenderConfigReference = appStore.renderConfigReference;
+
         /* eslint-enable @typescript-eslint/no-unused-vars */
         return (
             <div className="layer-list-widget">

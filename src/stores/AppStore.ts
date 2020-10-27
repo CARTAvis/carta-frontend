@@ -86,9 +86,10 @@ export class AppStore {
     @observable regionStats: Map<number, ObservableMap<number, CARTA.RegionStatsData>>;
     @observable regionHistograms: Map<number, ObservableMap<number, CARTA.IRegionHistogramData>>;
 
-    // Spatial and spectral WCS references
+    // Reference images
     @observable spatialReference: FrameStore;
     @observable spectralReference: FrameStore;
+    @observable renderConfigReference: FrameStore;
 
     // ImageViewer
     @observable activeLayer: ImageViewLayer;
@@ -348,6 +349,7 @@ export class AppStore {
         // First image defaults to spatial reference and contour source
         if (this.frames.length === 1) {
             this.setSpatialReference(this.frames[0]);
+            this.setRenderConfigReference(this.frames[0]);
             this.setContourDataSource(this.frames[0]);
         }
 
@@ -491,6 +493,7 @@ export class AppStore {
 
             const removedFrameIsSpatialReference = frame === this.spatialReference;
             const removedFrameIsSpectralReference = frame === this.spectralReference;
+            const removedFrameIsRenderConfigReference = frame === this.renderConfigReference;
             const fileId = frame.frameInfo.fileId;
 
             // adjust requirements for stores
@@ -541,6 +544,16 @@ export class AppStore {
                         this.clearSpectralReference();
                     }
                 }
+
+                if (removedFrameIsRenderConfigReference) {
+                    const newReference = firstFrame;
+                    if (newReference) {
+                        this.setRenderConfigReference(newReference);
+                    } else {
+                        this.clearRenderConfigReference();
+                    }
+                }
+
                 // Clean up if frame has associated catalog files
                 if (this.catalogNum) {
                     CatalogStore.Instance.closeAssociatedCatalog(fileId);
@@ -1636,6 +1649,56 @@ export class AppStore {
         }
 
         this.setSpectralMatchingEnabled(frame, !frame.spectralReference);
+    };
+
+    @action setRenderConfigReference = (frame: FrameStore) => {
+        const oldRef = this.renderConfigReference;
+
+        // check if the new reference is currently a secondary image of the existing reference
+        const newRefIsSecondary = oldRef && oldRef.secondaryRenderConfigImages.includes(frame);
+
+        this.renderConfigReference = frame;
+
+        // Maintain link between old and new references
+        if (newRefIsSecondary) {
+            oldRef.setRenderConfigReference(frame);
+        }
+
+        for (const f of this.frames) {
+            // The reference image can't reference itself
+            if (f === frame) {
+                f.clearRenderConfigReference();
+            } else if (f.renderConfigReference) {
+                f.setRenderConfigReference(frame);
+            }
+        }
+    };
+
+    @action clearRenderConfigReference = () => {
+        this.renderConfigReference = null;
+        for (const f of this.frames) {
+            f.clearRenderConfigReference();
+        }
+    };
+
+    @action setRenderConfigMatchingEnabled = (frame: FrameStore, val: boolean) => {
+        if (!frame || frame === this.renderConfigReference) {
+            return;
+        }
+
+        if (val) {
+            frame.setRenderConfigReference(this.renderConfigReference);
+        } else {
+            frame.clearRenderConfigReference();
+        }
+    };
+
+    @action toggleRenderConfigMatching = (frame: FrameStore) => {
+        if (!frame || frame === this.renderConfigReference) {
+            return;
+        }
+
+        this.setRenderConfigMatchingEnabled(frame, !frame.renderConfigReference);
     };
 
     @action setMatchingEnabled = (spatial: boolean, spectral: boolean) => {
