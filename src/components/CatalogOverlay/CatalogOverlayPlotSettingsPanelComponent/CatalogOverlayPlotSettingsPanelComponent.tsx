@@ -1,5 +1,5 @@
 import {observer} from "mobx-react";
-import {action, autorun, computed, observable} from "mobx";
+import {action, autorun, computed, makeObservable, observable, runInAction} from "mobx";
 import * as React from "react";
 import {Button, FormGroup, Icon, MenuItem, PopoverPosition, Tab, Tabs, TabId} from "@blueprintjs/core";
 import {Select, IItemRendererProps} from "@blueprintjs/select";
@@ -67,11 +67,13 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
 
     constructor(props: WidgetProps) {
         super(props);
+        makeObservable(this);
+
         const appStore = AppStore.Instance;
         this.catalogFileNames = new Map<number, string>();
         autorun(() => {
             const catalogStore = CatalogStore.Instance;
-            this.catalogFileId = catalogStore.catalogProfiles.get(this.props.id);
+            runInAction(() => this.catalogFileId = catalogStore.catalogProfiles.get(this.props.id));
             const catalogWidgetStoreId = catalogStore.catalogWidgets.get(this.catalogFileId);
             const activeFiles = catalogStore.activeCatalogFiles;
             if (!catalogWidgetStoreId) {
@@ -262,7 +264,7 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
                     id="catalogSettings"
                     vertical={false}
                     selectedTabId={this.selectedTab}
-                    onChange={(tabId) => this.selectedTab = tabId}
+                    onChange={(tabId) => runInAction(()=> (this.selectedTab = tabId))}
                 >
                     <Tab id="global" title="Global" panel={globalPanel}/>
                     <Tab id="image-overlay" title="Image Overlay" panel={overlayPanel} disabled={disabledOverlayPanel}/>
