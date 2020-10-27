@@ -83,10 +83,6 @@ export class TileService {
         return this.workersReady && this.workersReady.every(v => v);
     }
 
-    public GetTileStream() {
-        return this.tileStream;
-    }
-
     public setAnimationEnabled = (val: boolean) => {
         this.animationEnabled = val;
     };
@@ -340,14 +336,9 @@ export class TileService {
     }
 
     uploadTileToGPU(tile: RasterTile) {
-        const numTilesPerTexture = (TEXTURE_SIZE * TEXTURE_SIZE) / (TILE_SIZE * TILE_SIZE);
-        const localOffset = tile.textureCoordinate % numTilesPerTexture;
-        const textureIndex = Math.floor((tile.textureCoordinate - localOffset) / numTilesPerTexture);
-        const tilesPerRow = TEXTURE_SIZE / TILE_SIZE;
-        const xOffset = (localOffset % tilesPerRow) * TILE_SIZE;
-        const yOffset = Math.floor(localOffset / tilesPerRow) * TILE_SIZE;
         console.log(`Uploading tile ${tile.textureCoordinate} to GPU`);
-        copyToFP32Texture(this.gl, this.textureArray[textureIndex], tile.data, WebGLRenderingContext.TEXTURE0, tile.width, tile.height, xOffset, yOffset);
+        const textureParameters = this.getTileTextureParameters(tile);
+        copyToFP32Texture(this.gl, textureParameters.texture, tile.data, WebGLRenderingContext.TEXTURE0, tile.width, tile.height, textureParameters.offset.x, textureParameters.offset.y);
     }
 
     getTileTextureParameters(tile: RasterTile) {
@@ -369,7 +360,7 @@ export class TileService {
         this.remainingTiles = remainingTiles;
     };
 
-    private clearTile = (tile: RasterTile, key: number) => {
+    private clearTile = (tile: RasterTile, _key: number) => {
         if (tile.data) {
             delete tile.data;
         }
@@ -431,7 +422,7 @@ export class TileService {
             const encodedCoordinate = TileCoordinate.Encode(tile.x, tile.y, tile.layer);
             // Remove from the requested tile map. If in animation mode, don't check if we're still requesting tiles
             const pendingRequestsMap = this.pendingRequests.get(key);
-            if (pendingRequestsMap && pendingRequestsMap.has(encodedCoordinate) || this.animationEnabled) {
+            if (pendingRequestsMap?.has(encodedCoordinate) || this.animationEnabled) {
                 if (pendingRequestsMap) {
                     pendingRequestsMap.delete(encodedCoordinate);
                 }
@@ -481,7 +472,7 @@ export class TileService {
         this.compressionRequestCounter++;
     }
 
-    private updateStream(fileId: number, channel: number, stokes: number, decompressedData: Float32Array, width: number, height: number, layer: number, encodedCoordinate: number) {
+    private updateStream(fileId: number, channel: number, stokes: number, decompressedData: Float32Array, width: number, height: number, _layer: number, encodedCoordinate: number) {
         const key = `${fileId}_${stokes}_${channel}`;
         const pendingCompressionMap = this.pendingDecompressions.get(key);
         if (!pendingCompressionMap) {
