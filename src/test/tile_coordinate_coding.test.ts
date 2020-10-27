@@ -1,4 +1,4 @@
-import {TileCoordinate} from "../models";
+import {TileCoordinate} from "models/TileCoordinate";
 
 test("returns -1 for invalid coordinates", () => {
     expect(TileCoordinate.Encode(-1, 0, 3)).toBe(-1);
