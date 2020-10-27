@@ -1,6 +1,6 @@
 import * as React from "react";
 import {observer} from "mobx-react";
-import {action, computed, observable} from "mobx";
+import {action, computed, makeObservable, observable} from "mobx";
 import {ESCAPE} from "@blueprintjs/core/lib/cjs/common/keys";
 import {Colors} from "@blueprintjs/core";
 import {ChartArea} from "chart.js";
@@ -170,6 +170,11 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
             return "ns-resize";
         }
         return "crosshair";
+    }
+
+    constructor(props: LinePlotComponentProps) {
+        super(props);
+        makeObservable(this);
     }
 
     private getValueForPixelX(pixel: number) {

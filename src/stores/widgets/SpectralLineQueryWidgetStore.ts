@@ -1,4 +1,4 @@
-import {action, autorun, computed, observable} from "mobx";
+import {action, autorun, computed, observable, makeObservable} from "mobx";
 import {NumberRange} from "@blueprintjs/core";
 import {Table} from "@blueprintjs/table";
 import {CARTA} from "carta-protobuf";
@@ -132,39 +132,6 @@ export class SpectralLineQueryWidgetStore extends RegionWidgetStore {
     @observable private filteredRowIndexes: Array<number>;
 
     private originalShiftedData: Array<number>;
-
-    constructor() {
-        super(RegionsType.CLOSED);
-        this.queryRangeType = SpectralLineQueryRangeType.Range;
-        this.queryRange = [0, 0];
-        this.queryRangeByCenter = [0, 0];
-        this.queryUnit = SpectralLineQueryUnit.MHz;
-        this.intensityLimitEnabled = true;
-        this.intensityLimitValue = -5;
-        this.isQuerying = false;
-        this.columnHeaders = [];
-        this.redshiftType = RedshiftType.V;
-        this.redshiftInput = 0;
-        this.queryResultTableRef = undefined;
-        this.queryResult = new Map<number, ProcessedColumnData>();
-        this.filterResult = new Map<number, ProcessedColumnData>();
-        this.originalShiftedData = [];
-        this.filteredRowIndexes = [];
-        this.numDataRows = 0;
-        this.selectedSpectralProfilerID = AppStore.Instance.widgetsStore.spectralProfilerList.length > 0 ?
-            AppStore.Instance.widgetsStore.spectralProfilerList[0] : undefined;
-        this.sortingInfo = {columnName: null, sortingType: null};
-        this.controlHeader = new Map<string, ControlHeader>();
-        this.isDataFiltered = false;
-
-        // update selected spectral profiler when currently selected is closed
-        autorun(() => {
-            if (!AppStore.Instance.widgetsStore.getSpectralWidgetStoreByID(this.selectedSpectralProfilerID)) {
-                this.selectedSpectralProfilerID = AppStore.Instance.widgetsStore.spectralProfilerList.length > 0 ?
-                AppStore.Instance.widgetsStore.spectralProfilerList[0] : undefined;
-            }
-        });
-    }
 
     @action setQueryRangeType = (queryRangeType: SpectralLineQueryRangeType) => {
         this.queryRangeType = queryRangeType;
@@ -625,4 +592,38 @@ export class SpectralLineQueryWidgetStore extends RegionWidgetStore {
             return undefined;
         }
     };
+
+    constructor() {
+        super(RegionsType.CLOSED);
+        makeObservable<SpectralLineQueryWidgetStore, "isLineSelectedArray" | "restFreqColumn" | "measuredFreqColumn">(this);
+        this.queryRangeType = SpectralLineQueryRangeType.Range;
+        this.queryRange = [0, 0];
+        this.queryRangeByCenter = [0, 0];
+        this.queryUnit = SpectralLineQueryUnit.MHz;
+        this.intensityLimitEnabled = true;
+        this.intensityLimitValue = -5;
+        this.isQuerying = false;
+        this.columnHeaders = [];
+        this.redshiftType = RedshiftType.V;
+        this.redshiftInput = 0;
+        this.queryResultTableRef = undefined;
+        this.queryResult = new Map<number, ProcessedColumnData>();
+        this.filterResult = new Map<number, ProcessedColumnData>();
+        this.originalShiftedData = [];
+        this.filteredRowIndexes = [];
+        this.numDataRows = 0;
+        this.selectedSpectralProfilerID = AppStore.Instance.widgetsStore.spectralProfilerList.length > 0 ?
+            AppStore.Instance.widgetsStore.spectralProfilerList[0] : undefined;
+        this.sortingInfo = {columnName: null, sortingType: null};
+        this.controlHeader = new Map<string, ControlHeader>();
+        this.isDataFiltered = false;
+
+        // update selected spectral profiler when currently selected is closed
+        autorun(() => {
+            if (!AppStore.Instance.widgetsStore.getSpectralWidgetStoreByID(this.selectedSpectralProfilerID)) {
+                this.selectedSpectralProfilerID = AppStore.Instance.widgetsStore.spectralProfilerList.length > 0 ?
+                AppStore.Instance.widgetsStore.spectralProfilerList[0] : undefined;
+            }
+        });
+    }
 }

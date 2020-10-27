@@ -1,6 +1,6 @@
 import * as React from "react";
 import {observer} from "mobx-react";
-import {observable} from "mobx";
+import {makeObservable, observable} from "mobx";
 import {Classes, H5, InputGroup, NumericInput, Position, Tooltip} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import {AppStore, RegionCoordinate, RegionStore, NUMBER_FORMAT_LABEL} from "stores";
@@ -13,9 +13,14 @@ const KEYCODE_ENTER = 13;
 
 @observer
 export class PolygonRegionForm extends React.Component<{ region: RegionStore, wcsInfo: number }> {
+    private static readonly REGION_PIXEL_EPS = 1.0e-3;
+
     @observable displayColorPicker: boolean;
 
-    private static readonly REGION_PIXEL_EPS = 1.0e-3;
+    constructor(props: any) {
+        super(props);
+        makeObservable(this);
+    }
 
     private handleNameChange = (ev) => {
         this.props.region.setName(ev.currentTarget.value);

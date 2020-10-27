@@ -1,6 +1,6 @@
 import * as React from "react";
 import * as _ from "lodash";
-import {autorun, computed, observable} from "mobx";
+import {action, autorun, computed, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 import {Colors, NonIdealState} from "@blueprintjs/core";
 import ReactResizeDetector from "react-resize-detector";
@@ -9,7 +9,7 @@ import {CARTA} from "carta-protobuf";
 import {LinePlotComponent, LinePlotComponentProps, ProfilerInfoComponent, ScatterPlotComponent, ScatterPlotComponentProps, VERTICAL_RANGE_PADDING, PlotType, SmoothingType} from "components/Shared";
 import {StokesAnalysisToolbarComponent} from "./StokesAnalysisToolbarComponent/StokesAnalysisToolbarComponent";
 import {TickType, MultiPlotProps} from "../Shared/LinePlot/PlotContainer/PlotContainerComponent";
-import {AnimationState, SpectralProfileStore, WidgetConfig, WidgetProps, HelpType, AnimatorStore, WidgetsStore, AppStore} from "stores";
+import {AnimationState, SpectralProfileStore, DefaultWidgetConfig, WidgetProps, HelpType, AnimatorStore, WidgetsStore, AppStore} from "stores";
 import {StokesAnalysisWidgetStore, StokesCoordinate} from "stores/widgets";
 import {Point2D} from "models";
 import {clamp, normalising, polarizationAngle, polarizedIntensity, binarySearchByX, closestPointIndexToCursor, toFixed, toExponential, minMaxPointArrayZ, formattedNotation, minMaxArray} from "utilities";
@@ -31,7 +31,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
     };
     private multicolorLineColorOutRange = "hsla(0, 0%, 50%, 0.5)";
 
-    public static get WIDGET_CONFIG(): WidgetConfig {
+    public static get WIDGET_CONFIG(): DefaultWidgetConfig {
         return {
             id: "stokes",
             type: "stokes",
@@ -96,6 +96,8 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
 
     constructor(props: WidgetProps) {
         super(props);
+        makeObservable(this);
+
         const appStore = AppStore.Instance;
         if (!props.docked && props.id === StokesAnalysisComponent.WIDGET_CONFIG.type) {
             const id = appStore.widgetsStore.addStokesWidget();
@@ -131,7 +133,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
         });
     }
 
-    onResize = (width: number, height: number) => {
+    @action private onResize = (width: number, height: number) => {
         this.width = width;
         this.height = height;
         this.widgetStore.clearScatterPlotXYBounds();

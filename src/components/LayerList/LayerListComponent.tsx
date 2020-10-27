@@ -1,21 +1,17 @@
 import * as React from "react";
 import {CSSProperties} from "react";
-import {observable} from "mobx";
+import {action, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 import {AnchorButton, Menu, MenuDivider, MenuItem, NonIdealState, Tooltip} from "@blueprintjs/core";
 import {Cell, Column, ColumnHeaderCell, RowHeaderCell, SelectionModes, Table} from "@blueprintjs/table";
 import {IMenuContext} from "@blueprintjs/table/src/interactions/menus/menuContext";
 import ReactResizeDetector from "react-resize-detector";
-import {WidgetConfig, WidgetProps, HelpType, AppStore, FrameStore} from "stores";
+import {DefaultWidgetConfig, WidgetProps, HelpType, AppStore, FrameStore} from "stores";
 import "./LayerListComponent.scss";
 
 @observer
 export class LayerListComponent extends React.Component<WidgetProps> {
-    @observable width: number = 0;
-    @observable height: number = 0;
-    @observable columnWidths = [150, 75, 85, 77, 68];
-
-    public static get WIDGET_CONFIG(): WidgetConfig {
+    public static get WIDGET_CONFIG(): DefaultWidgetConfig {
         return {
             id: "layer-list",
             type: "layer-list",
@@ -29,7 +25,16 @@ export class LayerListComponent extends React.Component<WidgetProps> {
         };
     }
 
-    private onColumnWidthsChange = (index: number, size: number) => {
+    @observable width: number = 0;
+    @observable height: number = 0;
+    @observable columnWidths = [150, 75, 85, 77, 68];
+
+    constructor(props: any) {
+        super(props);
+        makeObservable(this);
+    }
+
+    @action private onColumnWidthsChange = (index: number, size: number) => {
         if (!Number.isInteger(index) || index < 0 || index >= this.columnWidths.length || size <= 0) {
             return;
         }
@@ -37,7 +42,7 @@ export class LayerListComponent extends React.Component<WidgetProps> {
         this.forceUpdate();
     };
 
-    private onResize = (width: number, height: number) => {
+    @action private onResize = (width: number, height: number) => {
         this.width = width;
         this.height = height;
     };

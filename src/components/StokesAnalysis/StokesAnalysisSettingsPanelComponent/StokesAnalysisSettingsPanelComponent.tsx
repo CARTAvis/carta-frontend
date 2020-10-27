@@ -4,7 +4,7 @@ import {observer} from "mobx-react";
 import {Colors, Tab, Tabs} from "@blueprintjs/core";
 import {LinePlotSettingsPanelComponent, LinePlotSettingsPanelComponentProps, ScatterPlotSettingsPanelComponentProps, ScatterPlotSettingsPanelComponent, SpectralSettingsComponent, SmoothingSettingsComponent} from "components/Shared";
 import {StokesAnalysisWidgetStore} from "stores/widgets";
-import {WidgetProps, WidgetConfig, HelpType, WidgetsStore, AppStore} from "stores";
+import {WidgetProps, DefaultWidgetConfig, HelpType, WidgetsStore, AppStore} from "stores";
 import "./StokesAnalysisSettingsPanelComponent.scss";
 
 export enum StokesAnalysisSettingsTabs {
@@ -17,7 +17,7 @@ export enum StokesAnalysisSettingsTabs {
 @observer
 export class StokesAnalysisSettingsPanelComponent extends React.Component<WidgetProps> {
 
-    public static get WIDGET_CONFIG(): WidgetConfig {
+    public static get WIDGET_CONFIG(): DefaultWidgetConfig {
         return {
             id: "stokes-floating-settings",
             type: "floating-settings",
@@ -29,7 +29,7 @@ export class StokesAnalysisSettingsPanelComponent extends React.Component<Widget
             isCloseable: true,
             parentId: "stokes",
             parentType: "stokes",
-            tabsHelpTypes: [HelpType.STOKES_ANALYSIS_SETTINGS_CONVERSION, HelpType.STOKES_ANALYSIS_SETTINGS_LINE_PLOT_STYLING, HelpType.STOKES_ANALYSIS_SETTINGS_SCATTER_PLOT_STYLING, HelpType.STOKES_ANALYSIS_SETTINGS_SMOOTHING]
+            helpType: [HelpType.STOKES_ANALYSIS_SETTINGS_CONVERSION, HelpType.STOKES_ANALYSIS_SETTINGS_LINE_PLOT_STYLING, HelpType.STOKES_ANALYSIS_SETTINGS_SCATTER_PLOT_STYLING, HelpType.STOKES_ANALYSIS_SETTINGS_SMOOTHING]
         };
     }
 

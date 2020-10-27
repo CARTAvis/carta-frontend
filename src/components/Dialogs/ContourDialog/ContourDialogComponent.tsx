@@ -1,5 +1,5 @@
 import * as React from "react";
-import {action, autorun, computed, observable} from "mobx";
+import {action, autorun, computed, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 import {Alert, AnchorButton, Button, Classes, Colors, FormGroup, HTMLSelect, IDialogProps, Intent, MenuItem, NonIdealState, Tab, Tabs, TagInput, Tooltip} from "@blueprintjs/core";
 import {Select} from "@blueprintjs/select";
@@ -41,6 +41,8 @@ export class ContourDialogComponent extends React.Component {
 
     constructor(props: { appStore: AppStore }) {
         super(props);
+        makeObservable(this);
+
         this.widgetStore = new RenderConfigWidgetStore();
         this.setDefaultContourParameters();
 
@@ -481,7 +483,7 @@ export class ContourDialogComponent extends React.Component {
                             <Button text={dataSource.frameInfo.fileInfo.name} rightIcon="double-caret-vertical" alignText={"right"} disabled={appStore.animatorStore.animationState === AnimationState.PLAYING}/>
                         </DataSourceSelect>
                         <Tooltip content={appStore.frameLockedToContour ? "Data source is locked to active image" : "Data source is independent of active image"}>
-                            <Button className="lock-button" icon={appStore.frameLockedToContour ? "lock" : "unlock"} minimal={true} onClick={appStore.toggleFrameContourLock}/>
+                            <AnchorButton className="lock-button" icon={appStore.frameLockedToContour ? "lock" : "unlock"} minimal={true} onClick={appStore.toggleFrameContourLock}/>
                         </Tooltip>
                     </FormGroup>
                     <Tabs defaultSelectedTabId={ContourDialogTabs.Levels} renderActiveTabPanelOnly={false}>
