@@ -9,7 +9,6 @@ import {ColorResult} from "react-color";
 import {CARTA} from "carta-protobuf";
 import {DraggableDialogComponent} from "components/Dialogs";
 import {ScalingSelectComponent} from "components/Shared/ScalingSelectComponent/ScalingSelectComponent";
-import {ColorComponent} from "components/ImageView/ImageViewSettingsPanel/ColorComponent";
 import {ColormapComponent, ColorPickerComponent, SafeNumericInput} from "components/Shared";
 import {CompressionQuality, CursorPosition, Event, RegionCreationMode, SPECTRAL_MATCHING_TYPES, SPECTRAL_TYPE_STRING, Theme, TileCache, WCSMatchingType, WCSType, Zoom, ZoomPoint} from "models";
 import {AppStore, BeamType, ContourGeneratorType, FrameScaling, HelpType, PreferenceKeys, PreferenceStore, RegionStore, RenderConfigStore} from "stores";
@@ -298,9 +297,12 @@ export class PreferenceDialogComponent extends React.Component {
         const overlayConfigPanel = (
             <React.Fragment>
                 <FormGroup inline={true} label="AST Color">
-                    <ColorComponent
-                        selectedItem={preference.astColor}
-                        onItemSelect={(selected) => preference.setPreference(PreferenceKeys.WCS_OVERLAY_AST_COLOR, selected)}
+                    <ColorPickerComponent
+                        color={preference.astColor}
+                        presetColors={SWATCH_COLORS}
+                        setColor={(color: ColorResult) => preference.setPreference(PreferenceKeys.WCS_OVERLAY_AST_COLOR, color.hex)}
+                        disableAlpha={true}
+                        darkTheme={appStore.darkTheme}
                     />
                 </FormGroup>
                 <FormGroup inline={true} label="AST Grid Visible">

@@ -9,7 +9,6 @@ import {
     InputGroup, MenuItem,
     Switch, Tab, Tabs, TabId
 } from "@blueprintjs/core";
-import {ColorComponent} from "./ColorComponent";
 import {ColorResult} from "react-color";
 import {ColorPickerComponent, SafeNumericInput} from "components/Shared";
 import {AppStore, BeamType, LabelType, SystemType, HelpType, NumberFormatType, NUMBER_FORMAT_LABEL, WidgetConfig, WidgetProps} from "stores";
@@ -127,7 +126,13 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
         const globalPanel = (
             <div className="panel-container">
                 <FormGroup inline={true} label="Color">
-                    <ColorComponent selectedItem={global.color} onItemSelect={global.setColor}/>
+                    <ColorPickerComponent
+                        color={global.color}
+                        presetColors={SWATCH_COLORS}
+                        setColor={(color: ColorResult) => global.setColor(color.hex)}
+                        disableAlpha={true}
+                        darkTheme={appStore.darkTheme}
+                    />
                 </FormGroup>
                 <FormGroup inline={true} label="Tolerance" labelInfo="(%)">
                     <SafeNumericInput
@@ -202,7 +207,15 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
                 </FormGroup>
                 <Collapse isOpen={title.customColor}>
                     <FormGroup inline={true} label="Color" disabled={!title.visible}>
-                        {title.visible && <ColorComponent selectedItem={title.color} onItemSelect={title.setColor}/>}
+                        {title.visible &&
+                            <ColorPickerComponent
+                                color={title.color}
+                                presetColors={SWATCH_COLORS}
+                                setColor={(color: ColorResult) => title.setColor(color.hex)}
+                                disableAlpha={true}
+                                darkTheme={appStore.darkTheme}
+                            />
+                        }
                     </FormGroup>
                 </Collapse>
             </div>
@@ -254,7 +267,13 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
                 </FormGroup>
                 <Collapse isOpen={ticks.customColor}>
                     <FormGroup inline={true} label="Color">
-                        <ColorComponent selectedItem={ticks.color} onItemSelect={ticks.setColor}/>
+                        <ColorPickerComponent
+                            color={ticks.color}
+                            presetColors={SWATCH_COLORS}
+                            setColor={(color: ColorResult) => ticks.setColor(color.hex)}
+                            disableAlpha={true}
+                            darkTheme={appStore.darkTheme}
+                        />
                     </FormGroup>
                 </Collapse>
                 <FormGroup inline={true} label="Width" labelInfo="(px)">
@@ -312,7 +331,15 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
                 </FormGroup>
                 <Collapse isOpen={grid.customColor}>
                     <FormGroup inline={true} label="Color" disabled={!grid.visible}>
-                        {grid.visible && <ColorComponent selectedItem={grid.color} onItemSelect={grid.setColor}/>}
+                        {grid.visible &&
+                            <ColorPickerComponent
+                                color={grid.color}
+                                presetColors={SWATCH_COLORS}
+                                setColor={(color: ColorResult) => grid.setColor(color.hex)}
+                                disableAlpha={true}
+                                darkTheme={appStore.darkTheme}
+                            />
+                        }
                     </FormGroup>
                 </Collapse>
                 <FormGroup inline={true} label="Width" labelInfo="(px)" disabled={!grid.visible}>
@@ -380,7 +407,15 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
                 </FormGroup>
                 <Collapse isOpen={border.customColor}>
                     <FormGroup inline={true} label="Color" disabled={!border.visible}>
-                        {border.visible && <ColorComponent selectedItem={border.color} onItemSelect={border.setColor}/>}
+                        {border.visible &&
+                            <ColorPickerComponent
+                                color={border.color}
+                                presetColors={SWATCH_COLORS}
+                                setColor={(color: ColorResult) => border.setColor(color.hex)}
+                                disableAlpha={true}
+                                darkTheme={appStore.darkTheme}
+                            />
+                        }
                     </FormGroup>
                 </Collapse>
                 <FormGroup inline={true} label="Width" labelInfo="(px)" disabled={!border.visible}>
@@ -426,7 +461,15 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
                         disabled={!interior || !axes.visible}
                         helperText={disabledIfExterior}
                     >
-                        {interior && axes.visible && <ColorComponent selectedItem={axes.color} onItemSelect={axes.setColor}/>}
+                        {interior && axes.visible &&
+                            <ColorPickerComponent
+                                color={axes.color}
+                                presetColors={SWATCH_COLORS}
+                                setColor={(color: ColorResult) => axes.setColor(color.hex)}
+                                disableAlpha={true}
+                                darkTheme={appStore.darkTheme}
+                            />
+                        }
                     </FormGroup>
                 </Collapse>
                 <FormGroup
@@ -477,7 +520,15 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
                 </FormGroup>
                 <Collapse isOpen={numbers.customColor}>
                     <FormGroup inline={true} label="Color" disabled={!numbers.visible}>
-                        {numbers.visible && <ColorComponent selectedItem={numbers.color} onItemSelect={numbers.setColor}/>}
+                        {numbers.visible &&
+                            <ColorPickerComponent
+                                color={numbers.color}
+                                presetColors={SWATCH_COLORS}
+                                setColor={(color: ColorResult) => numbers.setColor(color.hex)}
+                                disableAlpha={true}
+                                darkTheme={appStore.darkTheme}
+                            />
+                        }
                     </FormGroup>
                 </Collapse>
                 <FormGroup
@@ -583,7 +634,15 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
                 </FormGroup>
                 <Collapse isOpen={labels.customColor}>
                     <FormGroup inline={true} label="Color" disabled={!labels.visible}>
-                        {labels.visible && <ColorComponent selectedItem={labels.color} onItemSelect={labels.setColor}/>}
+                        {labels.visible &&
+                            <ColorPickerComponent
+                                color={labels.color}
+                                presetColors={SWATCH_COLORS}
+                                setColor={(color: ColorResult) => labels.setColor(color.hex)}
+                                disableAlpha={true}
+                                darkTheme={appStore.darkTheme}
+                            />
+                        }
                     </FormGroup>
                 </Collapse>
             </div>

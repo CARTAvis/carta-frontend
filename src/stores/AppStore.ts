@@ -16,7 +16,6 @@ import {
     CatalogProfileStore,
     CatalogStore,
     CatalogUpdateMode,
-    dayPalette,
     DialogStore,
     FileBrowserStore,
     FrameInfo,
@@ -25,7 +24,6 @@ import {
     LayoutStore,
     LogEntry,
     LogStore,
-    nightPalette,
     OverlayStore,
     PreferenceKeys,
     PreferenceStore,
@@ -162,7 +160,6 @@ export class AppStore {
         let autoFileLoaded = false;
 
         AST.onReady.then(() => {
-            AST.setPalette(this.darkTheme ? nightPalette : dayPalette);
             this.astReady = true;
             if (this.backendService.connectionStatus === ConnectionStatus.ACTIVE && !autoFileLoaded && fileSearchParam) {
                 this.loadFile(folderSearchParam, fileSearchParam, "");
@@ -945,7 +942,6 @@ export class AppStore {
         this.activeLayer = ImageViewLayer.RegionMoving;
 
         AST.onReady.then(() => {
-            AST.setPalette(this.darkTheme ? nightPalette : dayPalette);
             this.astReady = true;
             this.logStore.addInfo("AST library loaded", ["ast"]);
         });
@@ -1089,9 +1085,19 @@ export class AppStore {
             }
         });
 
-        // Set palette if theme changes
+        // update ast palette
         autorun(() => {
-            AST.setPalette(this.darkTheme ? nightPalette : dayPalette);
+            const colors = [
+                this.overlayStore.global.color,
+                this.overlayStore.title.color,
+                this.overlayStore.grid.color,
+                this.overlayStore.border.color,
+                this.overlayStore.ticks.color,
+                this.overlayStore.axes.color,
+                this.overlayStore.numbers.color,
+                this.overlayStore.labels.color
+            ]
+            AST.setPalette(colors);
         });
 
         // Update requirements every 200 ms

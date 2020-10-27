@@ -104,7 +104,7 @@ const DEFAULTS = {
         contourColormap: "viridis",
     },
     WCS_OVERLAY: {
-        astColor: 4,
+        astColor: Colors.BLUE3,
         astGridVisible: false,
         astLabelsVisible: true,
         wcsType: WCSType.AUTOMATIC,
@@ -272,7 +272,7 @@ export class PreferenceStore {
     }
 
     // getters for WCS overlay
-    @computed get astColor(): number {
+    @computed get astColor(): string {
         return this.preferences.get(PreferenceKeys.WCS_OVERLAY_AST_COLOR) ?? DEFAULTS.WCS_OVERLAY.astColor;
     }
 
