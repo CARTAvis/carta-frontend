@@ -1,7 +1,7 @@
 import * as React from "react";
 import * as _ from "lodash";
 import {observer} from "mobx-react";
-import {observable} from "mobx";
+import {makeObservable, observable} from "mobx";
 import tinycolor from "tinycolor2";
 import {SketchPicker, ColorResult, RGBColor} from "react-color";
 import {Button, Popover, PopoverPosition} from "@blueprintjs/core";
@@ -21,6 +21,11 @@ export class ColorPickerComponent extends React.Component<ColorPickerComponentPr
     private static readonly CHANGE_DELAY = 100;
 
     @observable displayColorPicker: boolean;
+
+    constructor(props: ColorPickerComponentProps) {
+        super(props);
+        makeObservable(this);
+    }
 
     private handleColorClick = () => {
         this.displayColorPicker = true;

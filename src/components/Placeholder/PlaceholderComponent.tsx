@@ -1,6 +1,6 @@
 import * as React from "react";
 import {observer} from "mobx-react";
-import {WidgetConfig, HelpType} from "stores";
+import {HelpType, DefaultWidgetConfig} from "stores";
 import "./PlaceholderComponent.scss";
 
 class PlaceholderComponentProps {
@@ -12,7 +12,7 @@ class PlaceholderComponentProps {
 @observer
 export class PlaceholderComponent extends React.Component<PlaceholderComponentProps> {
 
-    public static get WIDGET_CONFIG(): WidgetConfig {
+    public static get WIDGET_CONFIG(): DefaultWidgetConfig {
         return {
             id: "placeholder",
             type: "placeholder",

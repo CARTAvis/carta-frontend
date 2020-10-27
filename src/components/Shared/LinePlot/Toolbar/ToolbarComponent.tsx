@@ -1,7 +1,7 @@
 import * as React from "react";
 import {CSSProperties} from "react";
 import {observer} from "mobx-react";
-import {Button, ButtonGroup, Tooltip} from "@blueprintjs/core";
+import {AnchorButton, ButtonGroup, Tooltip} from "@blueprintjs/core";
 import "./ToolbarComponent.scss";
 
 export class ToolbarComponentProps {
@@ -28,10 +28,10 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
         return (
             <ButtonGroup className={className} style={styleProps}>
                 <Tooltip content="Export image">
-                    <Button icon="floppy-disk" onClick={this.props.exportImage}/>
+                    <AnchorButton icon="floppy-disk" onClick={this.props.exportImage}/>
                 </Tooltip>
                 <Tooltip content="Export data">
-                    <Button icon="th" onClick={this.props.exportData}/>
+                    <AnchorButton icon="th" onClick={this.props.exportData}/>
                 </Tooltip>
             </ButtonGroup>
         );

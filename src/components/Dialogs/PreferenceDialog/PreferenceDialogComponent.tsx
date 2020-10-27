@@ -1,9 +1,9 @@
 import * as React from "react";
 import * as _ from "lodash";
 import tinycolor from "tinycolor2";
-import {observable} from "mobx";
+import {action, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
-import {AnchorButton, Button, Checkbox, FormGroup, HTMLSelect, IDialogProps, Intent, MenuItem, Position, Radio, RadioGroup, Switch, Tab, TabId, Tabs, Tooltip} from "@blueprintjs/core";
+import {AnchorButton, Button, Checkbox, FormGroup, HTMLSelect, IDialogProps, Intent, MenuItem, Position, Radio, RadioGroup, Switch, Tab, Tabs, Tooltip} from "@blueprintjs/core";
 import {Select} from "@blueprintjs/select";
 import {ColorResult} from "react-color";
 import {CARTA} from "carta-protobuf";
@@ -15,7 +15,7 @@ import {AppStore, BeamType, ContourGeneratorType, FrameScaling, HelpType, Prefer
 import {SWATCH_COLORS} from "utilities";
 import "./PreferenceDialogComponent.scss";
 
-enum TABS {
+enum PreferenceDialogTabs {
     GLOBAL,
     RENDER_CONFIG,
     CONTOUR_CONFIG,
@@ -29,7 +29,16 @@ const PercentileSelect = Select.ofType<string>();
 
 @observer
 export class PreferenceDialogComponent extends React.Component {
-    @observable selectedTab: TabId = TABS.GLOBAL;
+    @observable selectedTab: PreferenceDialogTabs = PreferenceDialogTabs.GLOBAL;
+
+    @action private setSelectedTab = (tab: PreferenceDialogTabs) => {
+        this.selectedTab = tab;
+    };
+
+    constructor(props: any) {
+        super(props);
+        makeObservable(this);
+    }
 
     private renderPercentileSelectItem = (percentile: string, {handleClick, modifiers, query}) => {
         return <MenuItem text={percentile + "%"} onClick={handleClick} key={percentile}/>;
@@ -54,25 +63,25 @@ export class PreferenceDialogComponent extends React.Component {
     private reset = () => {
         const preference = PreferenceStore.Instance;
         switch (this.selectedTab) {
-            case TABS.RENDER_CONFIG:
+            case PreferenceDialogTabs.RENDER_CONFIG:
                 preference.resetRenderConfigSettings();
                 break;
-            case TABS.CONTOUR_CONFIG:
+            case PreferenceDialogTabs.CONTOUR_CONFIG:
                 preference.resetContourConfigSettings();
                 break;
-            case TABS.OVERLAY_CONFIG:
+            case PreferenceDialogTabs.OVERLAY_CONFIG:
                 preference.resetOverlayConfigSettings();
                 break;
-            case TABS.REGION:
+            case PreferenceDialogTabs.REGION:
                 preference.resetRegionSettings();
                 break;
-            case TABS.PERFORMANCE:
+            case PreferenceDialogTabs.PERFORMANCE:
                 preference.resetPerformanceSettings();
                 break;
-            case TABS.LOG_EVENT:
+            case PreferenceDialogTabs.LOG_EVENT:
                 preference.resetLogEventSettings();
                 break;
-            case TABS.GLOBAL:
+            case PreferenceDialogTabs.GLOBAL:
             default:
                 preference.resetGlobalSettings();
                 break;
@@ -566,15 +575,15 @@ export class PreferenceDialogComponent extends React.Component {
                         id="preferenceTabs"
                         vertical={true}
                         selectedTabId={this.selectedTab}
-                        onChange={(tabId) => this.selectedTab = tabId}
+                        onChange={this.setSelectedTab}
                     >
-                        <Tab id={TABS.GLOBAL} title="Global" panel={globalPanel}/>
-                        <Tab id={TABS.RENDER_CONFIG} title="Render Configuration" panel={renderConfigPanel}/>
-                        <Tab id={TABS.CONTOUR_CONFIG} title="Contour Configuration" panel={contourConfigPanel}/>
-                        <Tab id={TABS.OVERLAY_CONFIG} title="Overlay Configuration" panel={overlayConfigPanel}/>
-                        <Tab id={TABS.REGION} title="Region" panel={regionSettingsPanel}/>
-                        <Tab id={TABS.PERFORMANCE} title="Performance" panel={performancePanel}/>
-                        <Tab id={TABS.LOG_EVENT} title="Log Events" panel={logEventsPanel}/>
+                        <Tab id={PreferenceDialogTabs.GLOBAL} title="Global" panel={globalPanel}/>
+                        <Tab id={PreferenceDialogTabs.RENDER_CONFIG} title="Render Configuration" panel={renderConfigPanel}/>
+                        <Tab id={PreferenceDialogTabs.CONTOUR_CONFIG} title="Contour Configuration" panel={contourConfigPanel}/>
+                        <Tab id={PreferenceDialogTabs.OVERLAY_CONFIG} title="Overlay Configuration" panel={overlayConfigPanel}/>
+                        <Tab id={PreferenceDialogTabs.REGION} title="Region" panel={regionSettingsPanel}/>
+                        <Tab id={PreferenceDialogTabs.PERFORMANCE} title="Performance" panel={performancePanel}/>
+                        <Tab id={PreferenceDialogTabs.LOG_EVENT} title="Log Events" panel={logEventsPanel}/>
                     </Tabs>
                 </div>
                 <div className="bp3-dialog-footer">

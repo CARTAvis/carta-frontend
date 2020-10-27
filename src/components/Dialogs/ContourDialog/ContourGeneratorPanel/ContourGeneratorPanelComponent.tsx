@@ -1,6 +1,6 @@
 import * as React from "react";
 import {observer} from "mobx-react";
-import {action, computed, observable} from "mobx";
+import {action, computed, makeObservable, observable} from "mobx";
 import {Button, FormGroup, MenuItem, TagInput} from "@blueprintjs/core";
 import {Select} from "@blueprintjs/select";
 import {ContourGeneratorType, FrameScaling, FrameStore} from "stores";
@@ -35,6 +35,11 @@ export class ContourGeneratorPanelComponent extends React.Component<{ frame: Fra
         } else {
             return this.enteredMaxValue;
         }
+    }
+
+    constructor(props: any) {
+        super(props);
+        makeObservable(this);
     }
 
     private renderMinMaxParameterRow() {

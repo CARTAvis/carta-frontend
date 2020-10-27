@@ -2,7 +2,7 @@ import * as React from "react";
 import * as AST from "ast_wrapper";
 import tinycolor from "tinycolor2";
 import {observer} from "mobx-react";
-import {observable} from "mobx";
+import {action, makeObservable, observable} from "mobx";
 import {Select, ItemRenderer} from "@blueprintjs/select";
 import {
     Button, Collapse, FormGroup, HTMLSelect,
@@ -11,7 +11,7 @@ import {
 } from "@blueprintjs/core";
 import {ColorResult} from "react-color";
 import {ColorPickerComponent, SafeNumericInput} from "components/Shared";
-import {AppStore, BeamType, LabelType, SystemType, HelpType, NumberFormatType, NUMBER_FORMAT_LABEL, WidgetConfig, WidgetProps} from "stores";
+import {AppStore, BeamType, LabelType, SystemType, HelpType, NumberFormatType, NUMBER_FORMAT_LABEL, DefaultWidgetConfig, WidgetProps} from "stores";
 import { SWATCH_COLORS} from "utilities";
 import "./ImageViewSettingsPanelComponent.scss";
 
@@ -66,6 +66,15 @@ export const renderFont: ItemRenderer<Font> = (font, {handleClick, modifiers, qu
 export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps> {
     @observable selectedTab: TabId = "global";
 
+    @action private setSelectedTab = (tab: TabId) => {
+        this.selectedTab = tab;
+    };
+
+    constructor(props: any) {
+        super(props);
+        makeObservable(this);
+    }
+
     private fontSelect(visible: boolean, currentFontId: number, fontSetter: Function) {
         let currentFont: Font = astFonts[currentFontId];
         if (typeof currentFont === "undefined") {
@@ -87,7 +96,7 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
         );
     }
 
-    public static get WIDGET_CONFIG(): WidgetConfig {
+    public static get WIDGET_CONFIG(): DefaultWidgetConfig {
         return {
             id: "image-view-floating-settings",
             type: "floating-settings",
@@ -729,7 +738,7 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
                     id="imageViewSettingsTabs"
                     vertical={true}
                     selectedTabId={this.selectedTab}
-                    onChange={(tabId) => this.selectedTab = tabId}
+                    onChange={this.setSelectedTab}
                 >
                     <Tab id="global" title="Global" panel={globalPanel}/>
                     <Tab id="title" title="Title" panel={titlePanel}/>

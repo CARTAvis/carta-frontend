@@ -1,4 +1,4 @@
-import {action, observable, computed} from "mobx";
+import { action, observable, computed, makeObservable } from "mobx";
 import {CatalogPlotType} from "stores/widgets";
 import {Point2D} from "models";
 
@@ -24,6 +24,7 @@ export class CatalogPlotWidgetStore {
     @observable yColumnName: string;
 
     constructor(props: CatalogPlotWidgetStoreProps) {
+        makeObservable(this);
         this.indicatorInfo = undefined;
         this.dragmode = "select";
         this.plotType = props.plotType;

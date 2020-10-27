@@ -1,4 +1,4 @@
-import {action, computed, observable} from "mobx";
+import {action, computed, observable, makeObservable, runInAction} from "mobx";
 import {TabId} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import {BackendService} from "services";
@@ -89,29 +89,29 @@ export class FileBrowserStore {
         this.catalogFileInfo = null;
 
         if (this.browserMode === BrowserMode.File || this.browserMode === BrowserMode.SaveFile) {
-            backendService.getFileList(directory).subscribe(res => {
+            backendService.getFileList(directory).subscribe(res => runInAction(() => {
                 this.fileList = res;
                 this.loadingList = false;
-            }, err => {
+            }), err => runInAction(() => {
                 console.log(err);
                 this.loadingList = false;
-            });
+            }));
         } else if (this.browserMode === BrowserMode.Catalog) {
-            backendService.getCatalogList(directory).subscribe(res => {
+            backendService.getCatalogList(directory).subscribe(res => runInAction(() => {
                 this.catalogFileList = res;
                 this.loadingList = false;
-            }, err => {
+            }), err => runInAction(() => {
                 console.log(err);
                 this.loadingList = false;
-            });
+            }));
         } else {
-            backendService.getRegionList(directory).subscribe(res => {
+            backendService.getRegionList(directory).subscribe(res => runInAction(() => {
                 this.fileList = res;
                 this.loadingList = false;
-            }, err => {
+            }), err => runInAction(() => {
                 console.log(err);
                 this.loadingList = false;
-            });
+            }));
         }
     };
 
@@ -122,19 +122,19 @@ export class FileBrowserStore {
         this.fileInfoExtended = null;
         this.responseErrorMessage = "";
 
-        backendService.getFileInfo(directory, file, hdu).subscribe((res: CARTA.FileInfoResponse) => {
+        backendService.getFileInfo(directory, file, hdu).subscribe((res: CARTA.FileInfoResponse) => runInAction(() => {
             if (res.fileInfo && this.selectedFile && res.fileInfo.name === this.selectedFile.name) {
                 this.fileInfoExtended = res.fileInfoExtended;
                 this.loadingInfo = false;
             }
             this.fileInfoResp = true;
-        }, err => {
+        }), err => runInAction(() => {
             console.log(err);
             this.responseErrorMessage = err;
             this.fileInfoResp = false;
             this.fileInfoExtended = null;
             this.loadingInfo = false;
-        });
+        }));
     };
 
     @action getRegionFileInfo = (directory: string, file: string) => {
@@ -144,19 +144,19 @@ export class FileBrowserStore {
         this.regionFileInfo = null;
         this.responseErrorMessage = "";
 
-        backendService.getRegionFileInfo(directory, file).subscribe((res: CARTA.IRegionFileInfoResponse) => {
+        backendService.getRegionFileInfo(directory, file).subscribe((res: CARTA.IRegionFileInfoResponse) => runInAction(() => {
             if (res.fileInfo && this.selectedFile && res.fileInfo.name === this.selectedFile.name) {
                 this.loadingInfo = false;
                 this.regionFileInfo = res.contents;
             }
             this.fileInfoResp = true;
-        }, err => {
+        }), err => runInAction(() => {
             console.log(err);
             this.responseErrorMessage = err;
             this.fileInfoResp = false;
             this.regionFileInfo = null;
             this.loadingInfo = false;
-        });
+        }));
     };
 
     @action getCatalogFileInfo = (directory: string, filename: string) => {
@@ -167,7 +167,7 @@ export class FileBrowserStore {
         this.catalogHeaders = [];
         this.responseErrorMessage = "";
 
-        backendService.getCatalogFileInfo(directory, filename).subscribe((res: CARTA.ICatalogFileInfoResponse) => {
+        backendService.getCatalogFileInfo(directory, filename).subscribe((res: CARTA.ICatalogFileInfoResponse) => runInAction(() => {
             if (res.fileInfo && this.selectedFile && res.fileInfo.name === this.selectedFile.name) {
                 this.loadingInfo = false;
                 this.catalogFileInfo = res.fileInfo;
@@ -176,13 +176,13 @@ export class FileBrowserStore {
                 });
             }
             this.fileInfoResp = true;
-        }, err => {
+        }), err => runInAction(() => {
             console.log(err);
             this.responseErrorMessage = err;
             this.fileInfoResp = false;
             this.catalogFileInfo = null;
             this.loadingInfo = false;
-        });
+        }));
     };
 
     @action selectFile = (file: CARTA.IFileInfo | CARTA.ICatalogFileInfo, hdu?: string) => {
@@ -350,6 +350,7 @@ export class FileBrowserStore {
     }
 
     constructor() {
+        makeObservable(this);
         this.exportCoordinateType = CARTA.CoordinateType.WORLD;
         this.exportFileType = CARTA.FileType.CRTF;
     }

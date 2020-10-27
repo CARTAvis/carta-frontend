@@ -1,7 +1,7 @@
 import * as React from "react";
 import {CSSProperties} from "react";
 import {observer} from "mobx-react";
-import {Button, ButtonGroup, IconName, Menu, MenuItem, Popover, PopoverPosition, Position, Tooltip, AnchorButton} from "@blueprintjs/core";
+import {AnchorButton, ButtonGroup, IconName, Menu, MenuItem, Popover, PopoverPosition, Position, Tooltip} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import {AppStore, OverlayStore, RegionMode, SystemType} from "stores";
 import {ImageViewLayer} from "../ImageViewComponent";
@@ -190,50 +190,50 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
                 {frame.regionSet.mode === RegionMode.CREATING &&
                 <Tooltip position={tooltipPosition} content={<span>Create region<br/><i><small>Click to select region type</small></i></span>}>
                     <Popover content={regionMenu} position={Position.TOP} minimal={true}>
-                        <Button icon={regionIcon} active={!catalogOverlayEnabled} onClick={() => this.handelActiveLayerClicked(ImageViewLayer.RegionCreating)}/>
+                        <AnchorButton icon={regionIcon} active={!catalogOverlayEnabled} onClick={() => this.handelActiveLayerClicked(ImageViewLayer.RegionCreating)}/>
                     </Popover>
                 </Tooltip>
                 }
                 {frame.regionSet.mode === RegionMode.MOVING &&
                 <Tooltip position={tooltipPosition} content={<span>Create region<br/><i><small>Double-click to select region type.<br/>Press C to enter creation mode.</small></i></span>}>
-                    <Button icon={regionIcon} onClick={() => frame.regionSet.setMode(RegionMode.CREATING)}/>
+                    <AnchorButton icon={regionIcon} onClick={() => frame.regionSet.setMode(RegionMode.CREATING)}/>
                 </Tooltip>
                 }
                 <Tooltip position={tooltipPosition} content="Select and pan mode">
-                    <Button icon={"hand"} onClick={() => this.handelActiveLayerClicked(ImageViewLayer.RegionMoving)} active={frame.regionSet.mode === RegionMode.MOVING && !catalogOverlayEnabled}/>
+                    <AnchorButton icon={"hand"} onClick={() => this.handelActiveLayerClicked(ImageViewLayer.RegionMoving)} active={frame.regionSet.mode === RegionMode.MOVING && !catalogOverlayEnabled}/>
                 </Tooltip>
                 <Tooltip position={tooltipPosition} content={<span>Zoom in (Scroll wheel up){currentZoomSpan}</span>}>
-                    <Button icon={"zoom-in"} onClick={this.handleZoomInClicked}/>
+                    <AnchorButton icon={"zoom-in"} onClick={this.handleZoomInClicked}/>
                 </Tooltip>
                 <Tooltip position={tooltipPosition} content={<span>Zoom out (Scroll wheel down){currentZoomSpan}</span>}>
-                    <Button icon={"zoom-out"} onClick={this.handleZoomOutClicked}/>
+                    <AnchorButton icon={"zoom-out"} onClick={this.handleZoomOutClicked}/>
                 </Tooltip>
                 <Tooltip position={tooltipPosition} content={<span>Zoom to 1.0x{currentZoomSpan}</span>}>
-                    <Button className={"full-zoom-button"} onClick={this.handleZoomToActualSizeClicked}>1.0x</Button>
+                    <AnchorButton className={"full-zoom-button"} onClick={this.handleZoomToActualSizeClicked}>1.0x</AnchorButton>
                 </Tooltip>
                 <Tooltip position={tooltipPosition} content={<span>Zoom to fit{currentZoomSpan}</span>}>
-                    <Button icon="zoom-to-fit" onClick={frame.fitZoom}/>
+                    <AnchorButton icon="zoom-to-fit" onClick={frame.fitZoom}/>
                 </Tooltip>
                 <Tooltip position={tooltipPosition} content={<span>WCS Matching <br/><small><i>Current: {wcsButtonTooltip}</i></small></span>}>
                     <Popover content={wcsMatchingMenu} position={Position.TOP} minimal={true}>
-                        <Button icon="link" className="link-button">
+                        <AnchorButton icon="link" className="link-button">
                             {wcsButtonSuperscript}
-                        </Button>
+                        </AnchorButton>
                     </Popover>
                 </Tooltip>
                 <Tooltip position={tooltipPosition} content={<span>Overlay Coordinate <br/><small><i>Current: {ToolbarComponent.CoordinateSystemTooltip.get(coordinateSystem)}</i></small></span>}>
                     <Popover content={coordinateSystemMenu} position={Position.TOP} minimal={true}>
-                        <Button disabled={!frame.validWcs} text={ToolbarComponent.CoordinateSystemName.get(coordinateSystem)}/>
+                        <AnchorButton disabled={!frame.validWcs} text={ToolbarComponent.CoordinateSystemName.get(coordinateSystem)}/>
                     </Popover>
                 </Tooltip>
                 <Tooltip position={tooltipPosition} content="Toggle grid">
-                    <Button icon="grid" active={grid.visible} onClick={() => grid.setVisible(!grid.visible)}/>
+                    <AnchorButton icon="grid" active={grid.visible} onClick={() => grid.setVisible(!grid.visible)}/>
                 </Tooltip>
                 <Tooltip position={tooltipPosition} content="Toggle labels">
-                    <Button icon="numerical" active={!overlay.labelsHidden} onClick={overlay.toggleLabels}/>
+                    <AnchorButton icon="numerical" active={!overlay.labelsHidden} onClick={overlay.toggleLabels}/>
                 </Tooltip>
                 <Tooltip position={tooltipPosition} content={`Export image (${appStore.modifierString}E)`}>
-                    <Button icon="floppy-disk" onClick={appStore.exportImage}/>
+                    <AnchorButton icon="floppy-disk" onClick={appStore.exportImage}/>
                 </Tooltip>
             </ButtonGroup>
         );

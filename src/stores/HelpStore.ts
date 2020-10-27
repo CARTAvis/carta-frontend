@@ -1,8 +1,12 @@
-import {action, observable} from "mobx";
+import { action, observable, makeObservable } from "mobx";
 import {Position} from "@blueprintjs/core";
 
 export class HelpStore {
     private static staticInstance: HelpStore;
+
+    constructor() {
+        makeObservable(this);
+    }
 
     static get Instance() {
         if (!HelpStore.staticInstance) {

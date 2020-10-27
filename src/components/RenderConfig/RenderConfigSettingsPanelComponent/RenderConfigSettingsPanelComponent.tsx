@@ -4,7 +4,7 @@ import {computed} from "mobx";
 import {Colors} from "@blueprintjs/core";
 import {LinePlotSettingsPanelComponentProps, LinePlotSettingsPanelComponent} from "components/Shared";
 import {RenderConfigWidgetStore} from "stores/widgets/RenderConfigWidgetStore";
-import {WidgetProps, WidgetConfig, HelpType, WidgetsStore, AppStore} from "stores";
+import {WidgetProps, DefaultWidgetConfig, HelpType, WidgetsStore, AppStore} from "stores";
 import {parseNumber} from "utilities";
 
 const KEYCODE_ENTER = 13;
@@ -12,7 +12,7 @@ const KEYCODE_ENTER = 13;
 @observer
 export class RenderConfigSettingsPanelComponent extends React.Component<WidgetProps> {
 
-    public static get WIDGET_CONFIG(): WidgetConfig {
+    public static get WIDGET_CONFIG(): DefaultWidgetConfig {
         return {
             id: "render-config-floating-settings",
             type: "floating-settings",
