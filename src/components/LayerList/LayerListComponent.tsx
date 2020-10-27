@@ -286,7 +286,9 @@ export class LayerListComponent extends React.Component<WidgetProps> {
         const activeFrameIndex = appStore.activeFrameIndex;
         const visibilityRaster = appStore.frames.map(f => f.renderConfig.visible);
         const visibilityContour = appStore.frames.map(f => f.contourConfig.visible && f.contourConfig.enabled);
-        const matchingTypes = appStore.frames.map(f => f.spatialReference && f.spectralReference && f.renderConfigReference);
+        const f1 = appStore.frames.map(f => f.spatialReference);
+        const f2 = appStore.frames.map(f => f.spectralReference);
+        const f3 = appStore.frames.map(f => f.renderConfigReference);
         const currentSpectralReference = appStore.spectralReference;
         const currentSpatialReference = appStore.spatialReference;
         const currentRenderConfigReference = appStore.renderConfigReference;
