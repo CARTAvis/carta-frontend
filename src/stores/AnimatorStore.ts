@@ -164,7 +164,7 @@ export class AnimatorStore {
             frame.spectralSiblings.forEach(siblingFrame => {
                 updates.push({frame: siblingFrame, channel: siblingFrame.requiredChannel, stokes: siblingFrame.requiredStokes});
             });
-            appStore.throttledSetChannels(updates);
+            appStore.updateChannels(updates);
         }
     };
 

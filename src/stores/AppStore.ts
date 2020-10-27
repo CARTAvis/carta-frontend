@@ -865,10 +865,8 @@ export class AppStore {
     ];
     private static readonly CursorThrottleTime = 200;
     private static readonly CursorThrottleTimeRotated = 100;
-    //private static readonly ImageChannelThrottleTime = 500;
-    private static readonly ImageThrottleTime = 200;
-    // TODO: Check this
-    private static readonly ImageChannelThrottleTime = 33;
+    private static readonly ImageThrottleTime = 50;
+    private static readonly ImageChannelThrottleTime = 500;
     private static readonly RequirementsCheckInterval = 200;
 
     private spectralRequirements: Map<number, Map<number, CARTA.SetSpectralRequirements>>;
@@ -877,7 +875,7 @@ export class AppStore {
     private histogramRequirements: Map<number, Array<number>>;
     private pendingChannelHistograms: Map<string, CARTA.IRegionHistogramData>;
 
-    throttledSetChannels = _.throttle((updates: { frame: FrameStore, channel: number, stokes: number }[]) => {
+    public updateChannels = (updates: { frame: FrameStore, channel: number, stokes: number }[]) => {
         if (!updates || !updates.length) {
             return;
         }
@@ -913,16 +911,16 @@ export class AppStore {
                 this.tileService.updateInactiveFileChannel(frame.frameInfo.fileId, frame.channel, frame.stokes);
             }
         });
-    }, AppStore.ImageChannelThrottleTime);
+    };
 
-    throttledSetView = _.throttle((tiles: TileCoordinate[], fileId: number, channel: number, stokes: number, focusPoint: Point2D) => {
+    private updateView = (tiles: TileCoordinate[], fileId: number, channel: number, stokes: number, focusPoint: Point2D) => {
         const isAnimating = (this.animatorStore.animationState !== AnimationState.STOPPED && this.animatorStore.animationMode !== AnimationMode.FRAME);
         if (isAnimating) {
             this.backendService.addRequiredTiles(fileId, tiles.map(t => t.encode()), this.preferenceStore.animationCompressionQuality);
         } else {
             this.tileService.requestTiles(tiles, fileId, channel, stokes, focusPoint, this.preferenceStore.imageCompressionQuality);
         }
-    }, AppStore.ImageThrottleTime);
+    };
 
     private constructor() {
         makeObservable(this);
@@ -1020,6 +1018,9 @@ export class AppStore {
             this.previousConnectionStatus = newConnectionStatus;
         });
 
+        // Throttled functions for use in autoruns
+        const throttledSetView = _.throttle(this.updateView, AppStore.ImageThrottleTime);
+        const throttledSetChannels = _.throttle(this.updateChannels, AppStore.ImageChannelThrottleTime);
         const throttledSetCursorRotated = _.throttle(this.setCursor, AppStore.CursorThrottleTimeRotated);
         const throttledSetCursor = _.throttle(this.setCursor, AppStore.CursorThrottleTime);
         // Low-bandwidth mode
@@ -1046,7 +1047,7 @@ export class AppStore {
                 // TODO: dynamic tile size
                 const tileSizeFullRes = reqView.mip * 256;
                 const midPointTileCoords = {x: midPointImageCoords.x / tileSizeFullRes - 0.5, y: midPointImageCoords.y / tileSizeFullRes - 0.5};
-                this.throttledSetView(tiles, this.activeFrame.frameInfo.fileId, this.activeFrame.channel, this.activeFrame.stokes, midPointTileCoords);
+                throttledSetView(tiles, this.activeFrame.frameInfo.fileId, this.activeFrame.channel, this.activeFrame.stokes, midPointTileCoords);
             }
 
             if (!this.activeFrame) {
@@ -1075,7 +1076,7 @@ export class AppStore {
                 });
 
                 if (updates.length) {
-                    this.throttledSetChannels(updates);
+                    throttledSetChannels(updates);
                 }
             }
         });
@@ -1093,13 +1094,6 @@ export class AppStore {
                         throttledSetCursor(this.activeFrame.frameInfo.fileId, pos);
                     }
                 }
-            }
-        });
-
-        // Set overlay defaults from current frame
-        autorun(() => {
-            if (this.activeFrame) {
-                this.overlayStore.setDefaultsFromAST(this.activeFrame);
             }
         });
 
@@ -1466,6 +1460,8 @@ export class AppStore {
     private changeActiveFrame(frame: FrameStore) {
         if (frame !== this.activeFrame) {
             this.tileService.clearRequestQueue(frame.frameInfo.fileId);
+            // Set overlay defaults from current frame
+            this.overlayStore.setDefaultsFromAST(frame);
         }
         this.activeFrame = frame;
         this.widgetsStore.updateImageWidgetTitle(this.layoutStore.dockedLayout);
