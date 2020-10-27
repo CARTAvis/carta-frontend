@@ -2,14 +2,13 @@ import * as React from "react";
 import {observer} from "mobx-react";
 import {FormGroup, HTMLSelect, IOptionProps} from "@blueprintjs/core";
 import {SpectralProfileWidgetStore, StokesAnalysisWidgetStore} from "stores/widgets";
-import {AppStore} from "stores";
 import {SpectralSystem} from "models";
 
 @observer
 export class SpectralSettingsComponent extends React.Component<{widgetStore: SpectralProfileWidgetStore|StokesAnalysisWidgetStore, disable: boolean}> {
 
     render() {
-        const frame = AppStore.Instance.activeFrame;
+        const frame = this.props.widgetStore.effectiveFrame;
         const nativeSpectralCoordinate = frame ? frame.nativeSpectralCoordinate : undefined;
         const widgetStore = this.props.widgetStore;
         const spectralCoordinateOptions: IOptionProps[] = frame && frame.spectralCoordsSupported ?

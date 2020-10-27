@@ -1,25 +1,25 @@
 import * as React from "react";
 import {observer} from "mobx-react";
-import {autorun, computed, observable} from "mobx";
+import {action, autorun, computed, makeObservable, observable} from "mobx";
 import {HTMLTable, NonIdealState} from "@blueprintjs/core";
 import ReactResizeDetector from "react-resize-detector";
 import {CARTA} from "carta-protobuf";
-import {WidgetConfig, WidgetProps, HelpType, WidgetsStore, AppStore} from "stores";
+import {DefaultWidgetConfig, WidgetProps, HelpType, WidgetsStore, AppStore} from "stores";
 import {StatsWidgetStore} from "stores/widgets";
 import {toExponential} from "utilities";
 import {RegionSelectorComponent} from "components";
-import "./StatsComponent.css";
+import "./StatsComponent.scss";
 
 @observer
 export class StatsComponent extends React.Component<WidgetProps> {
 
-    public static get WIDGET_CONFIG(): WidgetConfig {
+    public static get WIDGET_CONFIG(): DefaultWidgetConfig {
         return {
             id: "stats",
             type: "stats",
             minWidth: 300,
             minHeight: 200,
-            defaultWidth: 300,
+            defaultWidth: 325,
             defaultHeight: 250,
             title: "Statistics",
             isCloseable: true,
@@ -44,9 +44,8 @@ export class StatsComponent extends React.Component<WidgetProps> {
 
     @computed get statsData(): CARTA.RegionStatsData {
         const appStore = AppStore.Instance;
-
-        if (appStore.activeFrame) {
-            let fileId = appStore.activeFrame.frameInfo.fileId;
+        if (this.widgetStore.effectiveFrame) {
+            let fileId = this.widgetStore.effectiveFrame.frameInfo.fileId;
             let regionId = this.widgetStore.effectiveRegionId;
 
             const frameMap = appStore.regionStats.get(fileId);
@@ -74,6 +73,8 @@ export class StatsComponent extends React.Component<WidgetProps> {
 
     constructor(props: WidgetProps) {
         super(props);
+        makeObservable(this);
+
         const appStore = AppStore.Instance;
         // Check if this widget hasn't been assigned an ID yet
         if (!props.docked && props.id === StatsComponent.WIDGET_CONFIG.type) {
@@ -88,15 +89,15 @@ export class StatsComponent extends React.Component<WidgetProps> {
         }
         // Update widget title when region or coordinate changes
         autorun(() => {
-            if (this.widgetStore && appStore.activeFrame) {
+            if (this.widgetStore && this.widgetStore.effectiveFrame) {
                 let regionString = "Unknown";
 
                 const regionId = this.widgetStore.effectiveRegionId;
                 const selectedString = this.widgetStore.matchesSelectedRegion ? "(Active)" : "";
                 if (regionId === -1) {
                     regionString = "Image";
-                } else if (appStore.activeFrame && appStore.activeFrame.regionSet) {
-                    const region = appStore.activeFrame.regionSet.regions.find(r => r.regionId === regionId);
+                } else if (this.widgetStore.effectiveFrame.regionSet) {
+                    const region = this.widgetStore.effectiveFrame.regionSet.regions.find(r => r.regionId === regionId);
                     if (region) {
                         regionString = region.nameString;
                     }
@@ -108,7 +109,7 @@ export class StatsComponent extends React.Component<WidgetProps> {
         });
     }
 
-    private onResize = (width: number, height: number) => {
+    @action private onResize = (width: number, height: number) => {
         this.width = width;
         this.height = height;
     };
@@ -126,8 +127,9 @@ export class StatsComponent extends React.Component<WidgetProps> {
                 const index = this.statsData.statistics.findIndex(s => s.statsType === type);
                 if (index >= 0) {
                     let unitString = "";
-                    if (appStore.activeFrame && appStore.activeFrame.unit) {
-                        const unit = appStore.activeFrame.unit;
+                    const frame = this.widgetStore.effectiveFrame;
+                    if (frame && frame.unit) {
+                        const unit = frame.unit;
                         if (type === CARTA.StatsType.NumPixels) {
                             unitString = "pixel(s)";
                         } else if (type === CARTA.StatsType.SumSq) {
@@ -172,17 +174,15 @@ export class StatsComponent extends React.Component<WidgetProps> {
         }
 
         let className = "stats-widget";
-        if (this.widgetStore.matchesSelectedRegion) {
-            className += " linked-to-selected";
-        }
-
         if (appStore.darkTheme) {
             className += " dark-theme";
         }
 
         return (
             <div className={className}>
-                <RegionSelectorComponent widgetStore={this.widgetStore}/>
+                <div className="stats-toolbar">
+                    <RegionSelectorComponent widgetStore={this.widgetStore}/>
+                </div>
                 <div className="stats-display">
                     {formContent}
                 </div>

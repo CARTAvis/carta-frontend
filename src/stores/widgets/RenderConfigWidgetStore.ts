@@ -1,6 +1,6 @@
-import {action, computed, observable} from "mobx";
+import {action, computed, observable, makeObservable} from "mobx";
 import {Colors} from "@blueprintjs/core";
-import * as tinycolor from "tinycolor2";
+import tinycolor from "tinycolor2";
 
 import {PlotType, LineSettings} from "components/Shared";
 
@@ -76,6 +76,7 @@ export class RenderConfigWidgetStore {
     };
 
     constructor() {
+        makeObservable(this);
         this.logScaleY = true;
         this.plotType = PlotType.STEPS;
         this.markerTextVisible = true;

@@ -1,7 +1,9 @@
-import {action, observable} from "mobx";
+import {action, observable, makeObservable, runInAction} from "mobx";
 import {CARTA} from "carta-protobuf";
 import {Observable, Observer, Subject, throwError} from "rxjs";
-import {PreferenceStore, RegionStore} from "stores";
+import {AppStore, PreferenceStore, RegionStore} from "stores";
+import {ApiService} from "./ApiService";
+import {mapToObject} from "utilities";
 
 export enum ConnectionStatus {
     CLOSED = 0,
@@ -23,7 +25,7 @@ export class BackendService {
         return BackendService.staticInstance;
     }
 
-    private static readonly IcdVersion = 15;
+    private static readonly IcdVersion = 17;
     private static readonly DefaultFeatureFlags = CARTA.ClientFeatureFlags.WEB_ASSEMBLY | CARTA.ClientFeatureFlags.WEB_GL;
     @observable connectionStatus: ConnectionStatus;
     readonly loggingEnabled: boolean;
@@ -49,12 +51,14 @@ export class BackendService {
     readonly statsStream: Subject<CARTA.RegionStatsData>;
     readonly contourStream: Subject<CARTA.ContourImageData>;
     readonly catalogStream: Subject<CARTA.CatalogFilterResponse>;
+    readonly momentProgressStream: Subject<CARTA.MomentProgress>;
     readonly reconnectStream: Subject<void>;
     readonly scriptingStream: Subject<CARTA.ScriptingRequest>;
     private readonly handlerMap: Map<CARTA.EventType, HandlerFunction>;
     private readonly decoderMap: Map<CARTA.EventType, any>;
 
     private constructor() {
+        makeObservable(this);
         this.loggingEnabled = true;
         this.observerRequestMap = new Map<number, Observer<any>>();
         this.eventCounter = 1;
@@ -72,6 +76,7 @@ export class BackendService {
         this.contourStream = new Subject<CARTA.ContourImageData>();
         this.scriptingStream = new Subject<CARTA.ScriptingRequest>();
         this.catalogStream = new Subject<CARTA.CatalogFilterResponse>();
+        this.momentProgressStream = new Subject<CARTA.MomentProgress>();
         this.reconnectStream = new Subject<void>();
 
         // Construct handler and decoder maps
@@ -84,12 +89,11 @@ export class BackendService {
             [CARTA.EventType.REGION_FILE_INFO_RESPONSE, this.onSimpleMappedResponse],
             [CARTA.EventType.CATALOG_FILE_INFO_RESPONSE, this.onSimpleMappedResponse],
             [CARTA.EventType.OPEN_FILE_ACK, this.onSimpleMappedResponse],
+            [CARTA.EventType.SAVE_FILE_ACK, this.onSimpleMappedResponse],
             [CARTA.EventType.OPEN_CATALOG_FILE_ACK, this.onSimpleMappedResponse],
             [CARTA.EventType.IMPORT_REGION_ACK, this.onSimpleMappedResponse],
             [CARTA.EventType.EXPORT_REGION_ACK, this.onSimpleMappedResponse],
             [CARTA.EventType.SET_REGION_ACK, this.onSimpleMappedResponse],
-            [CARTA.EventType.SET_USER_LAYOUT_ACK, this.onSimpleMappedResponse],
-            [CARTA.EventType.SET_USER_PREFERENCES_ACK, this.onSimpleMappedResponse],
             [CARTA.EventType.RESUME_SESSION_ACK, this.onSimpleMappedResponse],
             [CARTA.EventType.START_ANIMATION_ACK, this.onStartAnimationAck],
             [CARTA.EventType.RASTER_TILE_DATA, this.onStreamedRasterTileData],
@@ -101,7 +105,10 @@ export class BackendService {
             [CARTA.EventType.CONTOUR_IMAGE_DATA, this.onStreamedContourData],
             [CARTA.EventType.CATALOG_FILTER_RESPONSE, this.onStreamedCatalogData],
             [CARTA.EventType.RASTER_TILE_SYNC, this.onStreamedRasterSync],
-            [CARTA.EventType.SCRIPTING_REQUEST, this.onScriptingRequest]
+            [CARTA.EventType.MOMENT_PROGRESS, this.onStreamedMomentProgress],
+            [CARTA.EventType.MOMENT_RESPONSE, this.onSimpleMappedResponse],
+            [CARTA.EventType.SCRIPTING_REQUEST, this.onScriptingRequest],
+            [CARTA.EventType.SPECTRAL_LINE_RESPONSE, this.onSimpleMappedResponse]
         ]);
 
         this.decoderMap = new Map<CARTA.EventType, any>([
@@ -113,6 +120,7 @@ export class BackendService {
             [CARTA.EventType.REGION_FILE_INFO_RESPONSE, CARTA.RegionFileInfoResponse],
             [CARTA.EventType.CATALOG_FILE_INFO_RESPONSE, CARTA.CatalogFileInfoResponse],
             [CARTA.EventType.OPEN_FILE_ACK, CARTA.OpenFileAck],
+            [CARTA.EventType.SAVE_FILE_ACK, CARTA.SaveFileAck],
             [CARTA.EventType.OPEN_CATALOG_FILE_ACK, CARTA.OpenCatalogFileAck],
             [CARTA.EventType.IMPORT_REGION_ACK, CARTA.ImportRegionAck],
             [CARTA.EventType.EXPORT_REGION_ACK, CARTA.ExportRegionAck],
@@ -127,10 +135,11 @@ export class BackendService {
             [CARTA.EventType.REGION_STATS_DATA, CARTA.RegionStatsData],
             [CARTA.EventType.CONTOUR_IMAGE_DATA, CARTA.ContourImageData],
             [CARTA.EventType.CATALOG_FILTER_RESPONSE, CARTA.CatalogFilterResponse],
-            [CARTA.EventType.SET_USER_LAYOUT_ACK, CARTA.SetUserLayoutAck],
-            [CARTA.EventType.SET_USER_PREFERENCES_ACK, CARTA.SetUserPreferencesAck],
             [CARTA.EventType.RASTER_TILE_SYNC, CARTA.RasterTileSync],
-            [CARTA.EventType.SCRIPTING_REQUEST, CARTA.ScriptingRequest]
+            [CARTA.EventType.MOMENT_PROGRESS, CARTA.MomentProgress],
+            [CARTA.EventType.MOMENT_RESPONSE, CARTA.MomentResponse],
+            [CARTA.EventType.SCRIPTING_REQUEST, CARTA.ScriptingRequest],
+            [CARTA.EventType.SPECTRAL_LINE_RESPONSE, CARTA.SpectralLineResponse]
         ]);
 
         // check ping every 5 seconds
@@ -144,13 +153,14 @@ export class BackendService {
             this.connection.close();
         }
 
+        const apiService = ApiService.Instance;
         this.autoReconnect = autoConnect;
         this.connectionDropped = false;
         this.connectionStatus = ConnectionStatus.PENDING;
-        this.connection = new WebSocket(url);
+        this.connection = new WebSocket(apiService.accessToken ? url + `?token=${apiService.accessToken}` : url);
         this.connection.binaryType = "arraybuffer";
         this.connection.onmessage = this.messageHandler.bind(this);
-        this.connection.onclose = (ev: CloseEvent) => {
+        this.connection.onclose = (ev: CloseEvent) => runInAction(()=>{
             // Only change to closed connection if the connection was originally active
             if (this.connectionStatus === ConnectionStatus.ACTIVE) {
                 this.connectionStatus = ConnectionStatus.CLOSED;
@@ -158,7 +168,7 @@ export class BackendService {
             // Reconnect to the same URL if Websocket is closed
             if (!ev.wasClean && this.autoReconnect) {
                 setTimeout(() => {
-                    const newConnection = new WebSocket(url);
+                    const newConnection = new WebSocket(apiService.accessToken ? url + `?token=${apiService.accessToken}` : url);
                     newConnection.binaryType = "arraybuffer";
                     newConnection.onopen = this.connection.onopen;
                     newConnection.onerror = this.connection.onerror;
@@ -167,10 +177,10 @@ export class BackendService {
                     this.connection = newConnection;
                 }, 1000);
             }
-        };
+        });
 
         return new Observable<CARTA.RegisterViewerAck>(observer => {
-            this.connection.onopen = () => {
+            this.connection.onopen = action(() => {
                 if (this.connectionStatus === ConnectionStatus.CLOSED) {
                     this.connectionDropped = true;
                 }
@@ -185,9 +195,12 @@ export class BackendService {
                 if (this.sendEvent(CARTA.EventType.REGISTER_VIEWER, CARTA.RegisterViewer.encode(message).finish())) {
                     this.observerRequestMap.set(requestId, observer);
                 }
-            };
+            });
 
-            this.connection.onerror = (ev => console.log(ev));
+            this.connection.onerror = (ev => {
+                AppStore.Instance.logStore.addInfo(`Connecting to server ${url} failed. Retrying...`, ["network"]);
+                console.log(ev);
+            });
         });
     }
 
@@ -329,11 +342,11 @@ export class BackendService {
     }
 
     @action("export regions")
-    exportRegion(directory: string, file: string, type: CARTA.FileType, coordType: CARTA.CoordinateType, fileId: number, regionId: number[]): Observable<CARTA.ExportRegionAck> {
+    exportRegion(directory: string, file: string, type: CARTA.FileType, coordType: CARTA.CoordinateType, fileId: number, regionStyles: Map<number, CARTA.IRegionStyle>): Observable<CARTA.ExportRegionAck> {
         if (this.connectionStatus !== ConnectionStatus.ACTIVE) {
             return throwError(new Error("Not connected"));
         } else {
-            const message = CARTA.ExportRegion.create({directory, file, type, fileId, regionId, coordType});
+            const message = CARTA.ExportRegion.create({directory, file, type, fileId, regionStyles: mapToObject(regionStyles), coordType});
             const requestId = this.eventCounter;
             this.logEvent(CARTA.EventType.EXPORT_REGION, requestId, message, false);
             if (this.sendEvent(CARTA.EventType.EXPORT_REGION, CARTA.ExportRegion.encode(message).finish())) {
@@ -394,6 +407,24 @@ export class BackendService {
         return false;
     }
 
+    @action("save file")
+    saveFile(fileId: number, outputFileDirectory: string, outputFileName: string, outputFileType: CARTA.FileType): Observable<CARTA.SaveFileAck> {
+        if (this.connectionStatus !== ConnectionStatus.ACTIVE) {
+            return throwError(new Error("Not connected"));
+        } else {
+            const message = CARTA.SaveFile.create({fileId, outputFileDirectory, outputFileName, outputFileType});
+            const requestId = this.eventCounter;
+            this.logEvent(CARTA.EventType.SAVE_FILE, this.eventCounter, message, false);
+            if (this.sendEvent(CARTA.EventType.SAVE_FILE, CARTA.SaveFile.encode(message).finish())) {
+                return new Observable<CARTA.SaveFileAck>(observer => {
+                    this.observerRequestMap.set(requestId, observer);
+                });
+            } else {
+                return throwError(new Error("Could not send event"));
+            }
+        }
+    }
+
     @action("close file")
     closeFile(fileId: number): boolean {
         if (this.connectionStatus === ConnectionStatus.ACTIVE) {
@@ -438,10 +469,11 @@ export class BackendService {
             const message = CARTA.SetRegion.create({
                 fileId,
                 regionId,
-                regionType: region.regionType,
-                regionName: region.name,
-                controlPoints: region.controlPoints.map(point => ({x: point.x, y: point.y})),
-                rotation: region.rotation
+                regionInfo: {
+                    regionType: region.regionType,
+                    rotation: region.rotation,
+                    controlPoints: region.controlPoints.slice(),
+                }
             });
 
             const requestId = this.eventCounter;
@@ -598,42 +630,6 @@ export class BackendService {
         return false;
     }
 
-    @action("set user preferences")
-    setUserPreferences(preferencesMap: { [k: string]: string }): Observable<CARTA.SetUserPreferencesAck> {
-        if (this.connectionStatus !== ConnectionStatus.ACTIVE) {
-            return throwError(new Error("Not connected"));
-        } else {
-            const message = CARTA.SetUserPreferences.create({preferenceMap: preferencesMap});
-            const requestId = this.eventCounter;
-            this.logEvent(CARTA.EventType.SET_USER_PREFERENCES, requestId, message, false);
-            if (this.sendEvent(CARTA.EventType.SET_USER_PREFERENCES, CARTA.SetUserPreferences.encode(message).finish())) {
-                return new Observable<CARTA.SetUserPreferencesAck>(observer => {
-                    this.observerRequestMap.set(requestId, observer);
-                });
-            } else {
-                return throwError(new Error("Could not send event"));
-            }
-        }
-    }
-
-    @action("set user layout")
-    setUserLayout(name: string, value: string): Observable<CARTA.SetUserLayoutAck> {
-        if (this.connectionStatus !== ConnectionStatus.ACTIVE) {
-            return throwError(new Error("Not connected"));
-        } else {
-            const message = CARTA.SetUserLayout.create({name, value});
-            const requestId = this.eventCounter;
-            this.logEvent(CARTA.EventType.SET_USER_LAYOUT, requestId, message, false);
-            if (this.sendEvent(CARTA.EventType.SET_USER_LAYOUT, CARTA.SetUserLayout.encode(message).finish())) {
-                return new Observable<CARTA.SetUserLayoutAck>(observer => {
-                    this.observerRequestMap.set(requestId, observer);
-                });
-            } else {
-                return throwError(new Error("Could not send event"));
-            }
-        }
-    }
-
     @action("resume session")
     resumeSession(message: CARTA.IResumeSession): Observable<CARTA.ResumeSessionAck> {
         if (this.connectionStatus !== ConnectionStatus.ACTIVE) {
@@ -651,30 +647,59 @@ export class BackendService {
         }
     }
 
-    @action("authenticate")
-    authenticate = (username: string, password: string) => {
-        let authUrl = `${window.location.protocol}//${window.location.hostname}/carta_auth/`;
-        // Check for URL query parameters as a final override
-        const url = new URL(window.location.href);
-        const queryUrl = url.searchParams.get("authUrl");
-
-        if (queryUrl) {
-            authUrl = queryUrl;
-        }
-
-        return fetch(authUrl, {
-            headers: {
-                "Content-Type": "application/json"
-            },
-            method: "POST",
-            body: JSON.stringify({username, password})
-        });
-    };
-
     @action("set auth token")
     setAuthToken = (token: string) => {
         document.cookie = `CARTA-Authorization=${token}; path=/`;
     };
+
+    @action("request moment")
+    requestMoment(message: CARTA.IMomentRequest): Observable<CARTA.MomentResponse> {
+        if (this.connectionStatus !== ConnectionStatus.ACTIVE) {
+            return throwError(new Error("Not connected"));
+        } else {
+            const requestId = this.eventCounter;
+            this.logEvent(CARTA.EventType.MOMENT_REQUEST, requestId, message, false);
+            if (this.sendEvent(CARTA.EventType.MOMENT_REQUEST, CARTA.MomentRequest.encode(message).finish())) {
+                return new Observable<CARTA.MomentResponse>(observer => {
+                    this.observerRequestMap.set(requestId, observer);
+                });
+            } else {
+                return throwError(new Error("Could not send event"));
+            }
+        }
+    }
+
+    @action("cancel requesting moment")
+    cancelRequestingMoment(fileId: number) {
+        if (this.connectionStatus !== ConnectionStatus.ACTIVE) {
+            return throwError(new Error("Not connected"));
+        } else {
+            const message = CARTA.StopMomentCalc.create({fileId});
+            this.logEvent(CARTA.EventType.STOP_MOMENT_CALC, this.eventCounter, message, false);
+            if (this.sendEvent(CARTA.EventType.STOP_MOMENT_CALC, CARTA.StopMomentCalc.encode(message).finish())) {
+                return true;
+            }
+            return throwError(new Error("Could not send event"));
+        }
+    }
+
+    @action("request spectral line")
+    requestSpectralLine(frequencyRange: CARTA.DoubleBounds, intensityLimit: number): Observable<CARTA.SpectralLineResponse> {
+        if (this.connectionStatus !== ConnectionStatus.ACTIVE) {
+            return throwError(new Error("Not connected"));
+        } else {
+            const message = CARTA.SpectralLineRequest.create({frequencyRange: frequencyRange, lineIntensityLowerLimit: intensityLimit});
+            const requestId = this.eventCounter;
+            this.logEvent(CARTA.EventType.SPECTRAL_LINE_REQUEST, requestId, message, false);
+            if (this.sendEvent(CARTA.EventType.SPECTRAL_LINE_REQUEST, CARTA.SpectralLineRequest.encode(message).finish())) {
+                return new Observable<CARTA.SpectralLineResponse>(observer => {
+                    this.observerRequestMap.set(requestId, observer);
+                });
+            } else {
+                return throwError(new Error("Could not send event"));
+            }
+        }
+    }
 
     sendScriptingResponse = (message: CARTA.IScriptingResponse) => {
         if (this.connectionStatus === ConnectionStatus.ACTIVE) {
@@ -796,6 +821,10 @@ export class BackendService {
 
     private onStreamedCatalogData(eventId: number, catalogFilter: CARTA.CatalogFilterResponse) {
         this.catalogStream.next(catalogFilter);
+    }
+
+    private onStreamedMomentProgress(eventId: number, momentProgress: CARTA.MomentProgress) {
+        this.momentProgressStream.next(momentProgress);
     }
 
     private sendEvent(eventType: CARTA.EventType, payload: Uint8Array): boolean {

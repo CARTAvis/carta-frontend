@@ -7,9 +7,9 @@ import {UIControllerComponent, FloatingWidgetManagerComponent} from "./component
 import {TaskProgressDialogComponent} from "./components/Dialogs";
 import {AppStore} from "./stores";
 import {HotkeyTargetContainer} from "./HotkeyWrapper";
-import "./App.css";
-import "./layout-base.css";
-import "./layout-theme.css";
+import "./App.scss";
+import "./layout-base.scss";
+import "./layout-theme.scss";
 
 @observer
 export class App extends React.Component {
@@ -33,10 +33,11 @@ export class App extends React.Component {
         return (
             <div className={className}>
                 <UIControllerComponent/>
-                <Alert isOpen={appStore.alertStore.alertVisible} onClose={appStore.alertStore.dismissAlert} canEscapeKeyCancel={true}>
+                <Alert className={appStore.darkTheme ? "bp3-dark" : ""} isOpen={appStore.alertStore.alertVisible} onClose={appStore.alertStore.dismissAlert} canEscapeKeyCancel={true}>
                     <p>{appStore.alertStore.alertText}</p>
                 </Alert>
                 <Alert
+                    className={appStore.darkTheme ? "bp3-dark" : ""}
                     isOpen={appStore.alertStore.interactiveAlertVisible}
                     confirmButtonText="OK"
                     cancelButtonText="Cancel"

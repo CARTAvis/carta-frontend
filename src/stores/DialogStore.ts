@@ -1,10 +1,13 @@
-import {action, observable} from "mobx";
-import {AppStore} from "stores";
+import { action, observable, makeObservable } from "mobx";
 import {TabId} from "@blueprintjs/core";
 import {FileInfoType} from "../components";
 
 export class DialogStore {
     private static staticInstance: DialogStore;
+
+    constructor() {
+        makeObservable(this);
+    }
 
     static get Instance() {
         if (!DialogStore.staticInstance) {
@@ -21,7 +24,7 @@ export class DialogStore {
     @action hideRegionDialog = () => {
         this.regionDialogVisible = false;
     };
-    
+
     // Hotkey
     @observable hotkeyDialogVisible: boolean;
     @action showHotkeyDialog = () => {
@@ -30,7 +33,7 @@ export class DialogStore {
     @action hideHotkeyDialog = () => {
         this.hotkeyDialogVisible = false;
     };
-    
+
     // About
     @observable aboutDialogVisible: boolean;
     @action showAboutDialog = () => {
@@ -39,7 +42,7 @@ export class DialogStore {
     @action hideAboutDialog = () => {
         this.aboutDialogVisible = false;
     };
-    
+
     // Preference
     @observable preferenceDialogVisible: boolean;
     @action showPreferenceDialog = () => {
@@ -48,7 +51,7 @@ export class DialogStore {
     @action hidePreferenceDialog = () => {
         this.preferenceDialogVisible = false;
     };
-    
+
     // Layout
     @observable saveLayoutDialogVisible: boolean;
     @observable deleteLayoutDialogVisible: boolean;
@@ -64,16 +67,7 @@ export class DialogStore {
     @action hideDeleteLayoutDialog = () => {
         this.deleteLayoutDialogVisible = false;
     };
-    
-    // Auth
-    @observable authDialogVisible: boolean = false;
-    @action showAuthDialog = () => {
-        this.authDialogVisible = true;
-    };
-    @action hideAuthDialog = () => {
-        this.authDialogVisible = false;
-    };
-    
+
     // File Browser
     @observable fileBrowserDialogVisible: boolean = false;
     @action showFileBrowserDialog = () => {
@@ -85,7 +79,7 @@ export class DialogStore {
 
     // File Info
     @observable fileInfoDialogVisible: boolean = false;
-    @observable selectedFileInfoDialogTab: TabId = FileInfoType.IMAGE_FILE;
+    @observable selectedFileInfoDialogTab: TabId = FileInfoType.IMAGE_HEADER;
     @action showFileInfoDialog = () => {
         this.fileInfoDialogVisible = true;
     };
@@ -94,17 +88,6 @@ export class DialogStore {
     };
     @action setSelectedFileInfoDialogTab = (newId: TabId) => {
         this.selectedFileInfoDialogTab = newId;
-    };
-
-    // Overlay Settings
-    @observable overlaySettingsDialogVisible = false;
-
-    @action showOverlaySettings = () => {
-        this.overlaySettingsDialogVisible = true;
-    };
-
-    @action hideOverlaySettings = () => {
-        this.overlaySettingsDialogVisible = false;
     };
 
     // Contour dialog
@@ -123,5 +106,18 @@ export class DialogStore {
     };
     @action hideDebugExecutionDialog = () => {
         this.debugExecutionDialogVisible = false;
+    };
+
+    // External page dialog
+    @observable externalPageDialogVisible: boolean = false;
+    @observable externalPageDialogUrl: string;
+    @observable externalPageDialogTitle: string;
+    @action showExternalPageDialog = (url: string, title: string) => {
+        this.externalPageDialogUrl = url;
+        this.externalPageDialogTitle = title;
+        this.externalPageDialogVisible = true;
+    };
+    @action hideExternalPageDialog = () => {
+        this.externalPageDialogVisible = false;
     };
 }

@@ -1,7 +1,7 @@
 import * as React from "react";
-import * as $ from "jquery";
+import $ from "jquery";
 import {observer} from "mobx-react";
-import {autorun, observable, action} from "mobx";
+import {autorun, makeObservable, observable, runInAction} from "mobx";
 import {NonIdealState, Spinner, Tag} from "@blueprintjs/core";
 import ReactResizeDetector from "react-resize-detector";
 import {OverlayComponent} from "./Overlay/OverlayComponent";
@@ -12,10 +12,10 @@ import {BeamProfileOverlayComponent} from "./BeamProfileOverlay/BeamProfileOverl
 import {RegionViewComponent} from "./RegionView/RegionViewComponent";
 import {ContourViewComponent} from "./ContourView/ContourViewComponent";
 import {CatalogViewComponent} from "./CatalogView/CatalogViewComponent";
-import {AppStore, RegionStore, WidgetConfig, WidgetProps, HelpType, Padding} from "stores";
+import {AppStore, RegionStore, DefaultWidgetConfig, WidgetProps, HelpType, Padding} from "stores";
 import {CursorInfo, Point2D} from "models";
 import {toFixed} from "utilities";
-import "./ImageViewComponent.css";
+import "./ImageViewComponent.scss";
 
 export const getImageCanvas = (padding: Padding, backgroundColor: string = "rgba(255, 255, 255, 0)"): HTMLCanvasElement => {
     const rasterCanvas = document.getElementById("raster-canvas") as HTMLCanvasElement;
@@ -28,6 +28,7 @@ export const getImageCanvas = (padding: Padding, backgroundColor: string = "rgba
 
     let regionCanvas: HTMLCanvasElement;
     let beamProfileCanvas: HTMLCanvasElement;
+    let catalogCanvas: HTMLCanvasElement;
     const beamProfileQuery = $(".beam-profile-stage").children().children("canvas");
     if (beamProfileQuery && beamProfileQuery.length) {
         beamProfileCanvas = beamProfileQuery[0] as HTMLCanvasElement;
@@ -36,6 +37,11 @@ export const getImageCanvas = (padding: Padding, backgroundColor: string = "rgba
     const regionQuery = $(".region-stage").children().children("canvas");
     if (regionQuery && regionQuery.length) {
         regionCanvas = regionQuery[0] as HTMLCanvasElement;
+    }
+
+    const catalogQuery = $(".catalog-plotly")?.children()?.children()?.children(".gl-container")?.children(".gl-canvas-context");
+    if (catalogQuery && catalogQuery.length) {
+        catalogCanvas = catalogQuery[0] as HTMLCanvasElement;
     }
 
     const composedCanvas = document.createElement("canvas") as HTMLCanvasElement;
@@ -53,6 +59,10 @@ export const getImageCanvas = (padding: Padding, backgroundColor: string = "rgba
 
     if (regionCanvas) {
         ctx.drawImage(regionCanvas, padding.left * devicePixelRatio, padding.top * devicePixelRatio);
+    }
+
+    if (catalogCanvas) {
+        ctx.drawImage(catalogCanvas, padding.left * devicePixelRatio, padding.top * devicePixelRatio, catalogCanvas.width * devicePixelRatio, catalogCanvas.height * devicePixelRatio);
     }
 
     ctx.setTransform(1, 0, 0, 1, 0, 0);
@@ -73,9 +83,9 @@ export class ImageViewComponent extends React.Component<WidgetProps> {
     private cachedImageSize: Point2D;
 
     @observable showRatioIndicator: boolean;
-    @observable activeLayer: ImageViewLayer;
+    readonly activeLayer: ImageViewLayer;
 
-    public static get WIDGET_CONFIG(): WidgetConfig {
+    public static get WIDGET_CONFIG(): DefaultWidgetConfig {
         return {
             id: "image-view",
             type: "image-view",
@@ -91,7 +101,9 @@ export class ImageViewComponent extends React.Component<WidgetProps> {
 
     constructor(props: WidgetProps) {
         super(props);
-        this.activeLayer = ImageViewLayer.RegionMoving;
+        makeObservable(this);
+
+        this.activeLayer = AppStore.Instance.activeLayer;
         autorun(() => {
             const frame = AppStore.Instance.activeFrame;
             if (frame) {
@@ -100,10 +112,10 @@ export class ImageViewComponent extends React.Component<WidgetProps> {
                 if (!this.cachedImageSize || this.cachedImageSize.x !== imageSize.x || this.cachedImageSize.y !== imageSize.y) {
                     this.cachedImageSize = imageSize;
                     clearTimeout(this.ratioIndicatorTimeoutHandle);
-                    this.showRatioIndicator = true;
-                    this.ratioIndicatorTimeoutHandle = setTimeout(() => {
+                    runInAction(() => this.showRatioIndicator = true);
+                    this.ratioIndicatorTimeoutHandle = setTimeout(() => runInAction(() => {
                         this.showRatioIndicator = false;
-                    }, 1000);
+                    }), 1000);
                 }
             }
         });
@@ -118,8 +130,7 @@ export class ImageViewComponent extends React.Component<WidgetProps> {
     onClicked = (cursorInfo: CursorInfo) => {
         const frame = AppStore.Instance.activeFrame;
         if (frame) {
-            // Shift from one-indexed image space position to zero-indexed
-            frame.setCenter(cursorInfo.posImageSpace.x + 1, cursorInfo.posImageSpace.y + 1);
+            frame.setCenter(cursorInfo.posImageSpace.x, cursorInfo.posImageSpace.y);
         }
     };
 
@@ -131,12 +142,10 @@ export class ImageViewComponent extends React.Component<WidgetProps> {
             // If frame is spatially matched, apply zoom to the reference frame, rather than the active frame
             if (frame.spatialReference) {
                 const newZoom = frame.spatialReference.zoomLevel * (delta > 0 ? zoomSpeed : 1.0 / zoomSpeed);
-                // Shift from one-indexed image space position to zero-indexed
-                frame.zoomToPoint(cursorInfo.posImageSpace.x + 1, cursorInfo.posImageSpace.y + 1, newZoom, true);
+                frame.zoomToPoint(cursorInfo.posImageSpace.x, cursorInfo.posImageSpace.y, newZoom, true);
             } else {
                 const newZoom = frame.zoomLevel * (delta > 0 ? zoomSpeed : 1.0 / zoomSpeed);
-                // Shift from one-indexed image space position to zero-indexed
-                frame.zoomToPoint(cursorInfo.posImageSpace.x + 1, cursorInfo.posImageSpace.y + 1, newZoom, true);
+                frame.zoomToPoint(cursorInfo.posImageSpace.x, cursorInfo.posImageSpace.y, newZoom, true);
             }
         }
     };
@@ -148,10 +157,6 @@ export class ImageViewComponent extends React.Component<WidgetProps> {
     onMouseLeave = () => {
         AppStore.Instance.hideImageToolbar();
     };
-
-    @action updateActiveLayer = (layer: ImageViewLayer) => {
-        this.activeLayer = layer;
-    }
 
     private handleRegionDoubleClicked = (region: RegionStore) => {
         const appStore = AppStore.Instance;
@@ -185,7 +190,8 @@ export class ImageViewComponent extends React.Component<WidgetProps> {
                     {appStore.activeFrame.cursorInfo &&
                     <CursorOverlayComponent
                         cursorInfo={appStore.activeFrame.cursorInfo}
-                        cursorValue={appStore.activeFrame.cursorValue}
+                        cursorValue={appStore.activeFrame.cursorInfo.isInsideImage ? appStore.activeFrame.cursorValue.value : undefined}
+                        isValueCurrent={appStore.activeFrame.isCursorValueCurrent}
                         spectralInfo={appStore.activeFrame.spectralInfo}
                         width={overlayStore.viewWidth}
                         left={overlayStore.padding.left}
@@ -193,25 +199,21 @@ export class ImageViewComponent extends React.Component<WidgetProps> {
                         docked={this.props.docked}
                         unit={appStore.activeFrame.unit}
                         top={overlayStore.padding.top}
+                        currentStokes={appStore.activeFrame.hasStokes ? appStore.activeFrame.stokesInfo[appStore.activeFrame.requiredStokes] : ""}
                         showImage={true}
                         showWCS={true}
                         showValue={true}
                         showChannel={false}
                         showSpectral={true}
+                        showStokes={true}
                     />
                     }
-                    {appStore.activeFrame.beamProperties &&
-                    appStore.activeFrame.beamProperties.overlayBeamSettings &&
-                    appStore.activeFrame.beamProperties.overlayBeamSettings.visible &&
+                    {appStore.activeFrame &&
                     <BeamProfileOverlayComponent
-                        width={appStore.activeFrame.renderWidth}
-                        height={appStore.activeFrame.renderHeight}
                         top={overlayStore.padding.top}
                         left={overlayStore.padding.left}
-                        frame={appStore.activeFrame}
                         docked={this.props.docked}
                         padding={10}
-                        overlayBeamSettings={appStore.activeFrame.beamProperties.overlayBeamSettings}
                     />
                     }
                     {appStore.activeFrame &&
@@ -227,7 +229,7 @@ export class ImageViewComponent extends React.Component<WidgetProps> {
                         overlaySettings={overlayStore}
                         isRegionCornerMode={appStore.preferenceStore.isRegionCornerMode}
                         dragPanningEnabled={appStore.preferenceStore.dragPanning}
-                        cursorFrozen={appStore.activeFrame.cursorFrozen}
+                        cursorFrozen={appStore.cursorFrozen}
                         cursorPoint={appStore.activeFrame.cursorInfo.posImageSpace}
                         docked={this.props.docked && (this.activeLayer === ImageViewLayer.RegionMoving || this.activeLayer === ImageViewLayer.RegionCreating)}
                     />
@@ -237,7 +239,7 @@ export class ImageViewComponent extends React.Component<WidgetProps> {
                         width={appStore.activeFrame.renderWidth}
                         height={appStore.activeFrame.renderHeight}
                         activeLayer={this.activeLayer}
-                        docked={this.props.docked && this.activeLayer === ImageViewLayer.Catalog}
+                        docked={this.props.docked && appStore.activeLayer === ImageViewLayer.Catalog}
                         onClicked={this.onClicked}
                         onZoomed={this.onZoomed}
                     />
@@ -246,7 +248,7 @@ export class ImageViewComponent extends React.Component<WidgetProps> {
                         docked={this.props.docked}
                         visible={appStore.imageToolbarVisible}
                         vertical={false}
-                        onActiveLayerChange={this.updateActiveLayer}
+                        onActiveLayerChange={appStore.updateActiveLayer}
                         activeLayer={this.activeLayer}
                     />
                     <div style={{opacity: this.showRatioIndicator ? 1 : 0, left: imageRatioTagOffset.x, top: imageRatioTagOffset.y}} className={"tag-image-ratio"}>

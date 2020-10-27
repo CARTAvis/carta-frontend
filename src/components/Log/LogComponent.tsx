@@ -3,12 +3,12 @@ import {observer} from "mobx-react";
 import {Button, Code, Colors, FormGroup, HTMLSelect, NonIdealState, Tag, Intent} from "@blueprintjs/core";
 import ScrollToBottom from "react-scroll-to-bottom";
 import {CARTA} from "carta-protobuf";
-import {WidgetConfig, WidgetProps, HelpType, LogStore} from "stores";
-import "./LogComponent.css";
+import {DefaultWidgetConfig, WidgetProps, HelpType, LogStore} from "stores";
+import "./LogComponent.scss";
 
 @observer
 export class LogComponent extends React.Component<WidgetProps> {
-    public static get WIDGET_CONFIG(): WidgetConfig {
+    public static get WIDGET_CONFIG(): DefaultWidgetConfig {
         return {
             id: "log",
             type: "log",

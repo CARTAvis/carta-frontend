@@ -1,9 +1,9 @@
-import {action, computed, observable} from "mobx";
+import {action, computed, observable, makeObservable} from "mobx";
 import {CARTA} from "carta-protobuf";
 import {Colors} from "@blueprintjs/core";
 import {PlotType, LineSettings} from "components/Shared";
 import {RegionWidgetStore, RegionsType} from "./RegionWidgetStore";
-import * as tinycolor from "tinycolor2";
+import tinycolor from "tinycolor2";
 
 export class HistogramWidgetStore extends RegionWidgetStore {
     @observable minX: number;
@@ -122,6 +122,7 @@ export class HistogramWidgetStore extends RegionWidgetStore {
 
     constructor() {
         super(RegionsType.CLOSED);
+        makeObservable(this);
         this.logScaleY = true;
         this.plotType = PlotType.STEPS;
         this.primaryLineColor = { colorHex: Colors.BLUE2, fixed: false };

@@ -4,7 +4,7 @@ import * as _ from "lodash";
 import {observer} from "mobx-react";
 import {FrameStore, OverlayStore} from "stores";
 import {CursorInfo} from "models";
-import "./OverlayComponent.css";
+import "./OverlayComponent.scss";
 
 export class OverlayComponentProps {
     overlaySettings: OverlayStore;
@@ -80,12 +80,15 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
 
         const refFrame = this.props.frame.spatialReference || this.props.frame;
         // changing the frame view, padding or width/height triggers a re-render
-        const frameView = refFrame.requiredFrameView;
 
+        // Dummy variables for triggering re-render
+        /* eslint-disable no-unused-vars, @typescript-eslint/no-unused-vars */
+        const frameView = refFrame.requiredFrameView;
         const framePadding = this.props.overlaySettings.padding;
         const w = this.props.overlaySettings.viewWidth;
         const h = this.props.overlaySettings.viewHeight;
         const moving = this.props.frame.moving;
+        /* eslint-enable no-unused-vars, @typescript-eslint/no-unused-vars */
 
         let className = "overlay-canvas";
         if (this.props.docked) {

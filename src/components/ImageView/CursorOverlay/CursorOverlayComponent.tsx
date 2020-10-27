@@ -3,11 +3,12 @@ import {observer} from "mobx-react";
 import {CSSProperties} from "react";
 import {CursorInfo, SpectralInfo} from "models";
 import {formattedExponential, toFixed} from "utilities";
-import "./CursorOverlayComponent.css";
+import "./CursorOverlayComponent.scss";
 
 class CursorOverlayProps {
     cursorInfo: CursorInfo;
     cursorValue: number;
+    isValueCurrent: boolean;
     spectralInfo: SpectralInfo;
     docked: boolean;
     width: number;
@@ -17,12 +18,14 @@ class CursorOverlayProps {
     right?: number;
     height?: number;
     unit?: string;
+    currentStokes?: string;
 
     showWCS?: boolean;
     showImage?: boolean;
     showValue?: boolean;
     showChannel?: boolean;
     showSpectral?: boolean;
+    showStokes?: boolean;
 }
 
 @observer
@@ -42,6 +45,11 @@ export class CursorOverlayComponent extends React.Component<CursorOverlayProps> 
             if (isNaN(this.props.cursorValue)) {
                 valueString = "NaN";
             }
+            if (!this.props.isValueCurrent) {
+                valueString += "*";
+            } else {
+                valueString += " ";
+            }
             infoStrings.push(valueString);
         }
         if (this.props.showChannel && this.props.spectralInfo.channel !== undefined) {
@@ -55,6 +63,9 @@ export class CursorOverlayComponent extends React.Component<CursorOverlayProps> 
             if (this.props.spectralInfo.velocityString) {
                 infoStrings.push(this.props.spectralInfo.velocityString.replace(/\s/g, "\u00a0"));
             }
+        }
+        if (this.props.showStokes && this.props.currentStokes) {
+            infoStrings.push(`Stokes:\u00a0${this.props.currentStokes}`);
         }
 
         const height = (this.props.height !== undefined && this.props.height >= 0) ? this.props.height : 20;

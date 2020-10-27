@@ -1,28 +1,77 @@
 import * as React from "react";
-import {observable} from "mobx";
+import {makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
-import {Alert, Icon, Menu, Popover, Position, Tooltip, Tag} from "@blueprintjs/core";
+import {Alert, Icon, Menu, Popover, Position, Tooltip, MenuDivider} from "@blueprintjs/core";
 import {ToolbarMenuComponent} from "./ToolbarMenu/ToolbarMenuComponent";
 import {PresetLayout} from "models";
 import {AppStore, BrowserMode, PreferenceKeys} from "stores";
-import {ConnectionStatus} from "services";
+import {ApiService, ConnectionStatus} from "services";
 import {toFixed} from "utilities";
 import {CustomIcon} from "icons/CustomIcons";
-import "./RootMenuComponent.css";
+import "./RootMenuComponent.scss";
 
 @observer
 export class RootMenuComponent extends React.Component {
     @observable documentationAlertVisible: boolean;
     private documentationAlertTimeoutHandle;
 
+    constructor(props: any) {
+        super(props);
+        makeObservable(this);
+    }
+
+    private handleDashboardClicked = () => {
+        window.open(ApiService.RuntimeConfig.dashboardAddress, "_blank");
+    };
+
     render() {
         const appStore = AppStore.Instance;
         const modString = appStore.modifierString;
         const connectionStatus = appStore.backendService.connectionStatus;
 
-        let stokesClassName = "stokes-item";
-        if (appStore.darkTheme) {
-            stokesClassName += " bp3-dark";
+        let serverMenu: React.ReactNode[] = [];
+
+        const apiService = appStore.apiService;
+        if (apiService.authenticated && ApiService.RuntimeConfig.apiAddress) {
+            serverMenu.push(
+                <Menu.Item
+                    key="restart"
+                    text="Restart Service"
+                    disabled={!appStore.apiService.authenticated}
+                    onClick={appStore.apiService.stopServer}
+                />
+            );
+        }
+        if (ApiService.RuntimeConfig.logoutAddress || ApiService.RuntimeConfig.googleClientId) {
+            serverMenu.push(
+                <Menu.Item
+                    key="logout"
+                    text="Logout"
+                    disabled={!appStore.apiService.authenticated}
+                    onClick={appStore.apiService.logout}
+                />
+            );
+        }
+        if (ApiService.RuntimeConfig.dashboardAddress) {
+            serverMenu.push(
+                <Menu.Item
+                    key="dashboard"
+                    text="Dashboard"
+                    onClick={this.handleDashboardClicked}
+                />
+            );
+        }
+
+        let serverSubMenu: React.ReactNode;
+        if (serverMenu.length) {
+            serverSubMenu = (
+                <React.Fragment>
+                    <Menu.Divider/>
+                    <Menu.Item text="Server">
+                        {serverMenu}
+                    </Menu.Item>
+                </React.Fragment>
+            );
         }
 
         const fileMenu = (
@@ -38,6 +87,12 @@ export class RootMenuComponent extends React.Component {
                     label={`${modString}L`}
                     disabled={connectionStatus !== ConnectionStatus.ACTIVE || !appStore.activeFrame || appStore.fileLoading}
                     onClick={() => appStore.fileBrowserStore.showFileBrowser(BrowserMode.File, true)}
+                />
+                <Menu.Item
+                    text="Save image"
+                    label={`${modString}S`}
+                    disabled={connectionStatus !== ConnectionStatus.ACTIVE || !appStore.activeFrame || appStore.fileLoading}
+                    onClick={() => appStore.fileBrowserStore.showFileBrowser(BrowserMode.SaveFile, false)}
                 />
                 <Menu.Item
                     text="Close image"
@@ -58,7 +113,7 @@ export class RootMenuComponent extends React.Component {
                 />
                 <Menu.Divider/>
                 <Menu.Item
-                    text="Append catalog"
+                    text="Import catalog"
                     label={`${modString}C`}
                     disabled={connectionStatus !== ConnectionStatus.ACTIVE || !appStore.activeFrame || appStore.fileLoading}
                     onClick={() => appStore.fileBrowserStore.showFileBrowser(BrowserMode.Catalog, false)}
@@ -71,6 +126,7 @@ export class RootMenuComponent extends React.Component {
                     onClick={appStore.exportImage}
                 />
                 <Menu.Item text="Preferences" onClick={appStore.dialogStore.showPreferenceDialog} disabled={appStore.preferenceStore.supportsServer && connectionStatus !== ConnectionStatus.ACTIVE}/>
+                {serverSubMenu}
             </Menu>
         );
 
@@ -85,67 +141,39 @@ export class RootMenuComponent extends React.Component {
             );
         });
 
+        const presetLayouts: string[] = PresetLayout.PRESETS;
+        const layoutStore = appStore.layoutStore;
+        const userLayouts: string[] = layoutStore.userLayoutNames;
+
         const viewMenu = (
             <Menu>
-                <Menu.Item text="Interface" icon={"control"}>
+                <Menu.Item text="Theme" icon={"media"}>
                     <Menu.Item text="Automatic" icon={"contrast"} onClick={appStore.setAutoTheme}/>
                     <Menu.Item text="Light" icon={"flash"} onClick={appStore.setLightTheme}/>
                     <Menu.Item text="Dark" icon={"moon"} onClick={appStore.setDarkTheme}/>
                 </Menu.Item>
-                <Menu.Item text="Overlay" icon={"widget"}>
-                    <Menu.Item text="Customize..." icon={"settings"} onClick={appStore.dialogStore.showOverlaySettings}/>
-                </Menu.Item>
-                {layerItems.length > 0 &&
-                <Menu.Item text="Frames" icon={"layers"}>
-                    {layerItems}
-                    <Menu.Divider/>
-                    <Menu.Item text="Previous frame" icon={"chevron-backward"} disabled={layerItems.length < 2} onClick={appStore.prevFrame}/>
-                    <Menu.Item text="Next frame" icon={"chevron-forward"} disabled={layerItems.length < 2} onClick={appStore.nextFrame}/>
-                </Menu.Item>
-                }
-                <Menu.Item
-                    text="File info"
-                    icon={"info-sign"}
-                    disabled={!appStore.activeFrame}
-                    onClick={appStore.dialogStore.showFileInfoDialog}
-                />
-                <Menu.Item
-                    text="Contours"
-                    icon={<CustomIcon icon="contour"/>}
-                    onClick={appStore.dialogStore.showContourDialog}
-                />
-            </Menu>
-        );
-
-        const presetLayouts: string[] = PresetLayout.PRESETS;
-        const layoutStore = appStore.layoutStore;
-        const userLayouts: string[] = layoutStore.userLayouts;
-        const stokesIcon = (
-            <Tag icon={"pulse"} className={"stokes-icon-button"}>
-                &nbsp;s
-            </Tag>
-        );
-        const layoutMenu = (
-            <Menu className="layout-menu">
-                <Menu.Item text="Layouts" icon={"layout-grid"} disabled={layoutStore.supportsServer && connectionStatus !== ConnectionStatus.ACTIVE}>
+                <Menu.Item text="Layouts" icon={"page-layout"} disabled={layoutStore.supportsServer && connectionStatus !== ConnectionStatus.ACTIVE}>
                     <Menu.Item text="Existing Layouts" disabled={!presetLayouts && !userLayouts}>
-                        <Menu.Item text="Presets" disabled={!presetLayouts || presetLayouts.length <= 0}>
-                            {presetLayouts && presetLayouts.length > 0 && presetLayouts.map((value) =>
-                                <Menu.Item
-                                    key={value}
-                                    text={value}
-                                    active={value === appStore.layoutStore.currentLayoutName}
-                                    onClick={() => appStore.layoutStore.applyLayout(value)}
-                                />
-                            )}
-                        </Menu.Item>
-                        {userLayouts && userLayouts.length > 0 && userLayouts.map((value) =>
+                        {presetLayouts && presetLayouts.length > 0 && presetLayouts.map((value) =>
                             <Menu.Item
                                 key={value}
                                 text={value}
                                 active={value === appStore.layoutStore.currentLayoutName}
                                 onClick={() => appStore.layoutStore.applyLayout(value)}
                             />
+                        )}
+                        {userLayouts && userLayouts.length > 0 && (
+                            <React.Fragment>
+                                <MenuDivider/>
+                                {userLayouts.map((value) =>
+                                    <Menu.Item
+                                        key={value}
+                                        text={value}
+                                        active={value === appStore.layoutStore.currentLayoutName}
+                                        onClick={() => appStore.layoutStore.applyLayout(value)}
+                                    />
+                                )}
+                            </React.Fragment>
                         )}
                     </Menu.Item>
                     <Menu.Item text="Save Layout" onClick={appStore.dialogStore.showSaveLayoutDialog}/>
@@ -165,26 +193,53 @@ export class RootMenuComponent extends React.Component {
                         )}
                     </Menu.Item>
                 </Menu.Item>
-                <Menu.Item text="Info Panels" icon={"info-sign"}>
-                    <Menu.Item text="Region List" onClick={appStore.widgetsStore.createFloatingRegionListWidget}/>
-                    <Menu.Item text="Program Log" onClick={appStore.widgetsStore.createFloatingLogWidget}/>
+                {layerItems.length > 0 &&
+                <Menu.Item text="Images" icon={"multi-select"}>
+                    {layerItems}
+                    <Menu.Divider/>
+                    <Menu.Item text="Previous image" icon={"step-backward"} disabled={layerItems.length < 2} onClick={appStore.prevFrame}/>
+                    <Menu.Item text="Next image" icon={"step-forward"} disabled={layerItems.length < 2} onClick={appStore.nextFrame}/>
                 </Menu.Item>
-                <Menu.Item text="Profiles" icon={"timeline-line-chart"}>
-                    <Menu.Item text="Spatial Profiler" onClick={appStore.widgetsStore.createFloatingSpatialProfilerWidget}/>
-                    <Menu.Item text="Spectral Profiler" onClick={appStore.widgetsStore.createFloatingSpectralProfilerWidget}/>
+                }
+                <Menu.Item
+                    text="File header"
+                    icon={"app-header"}
+                    disabled={!appStore.activeFrame}
+                    onClick={appStore.dialogStore.showFileInfoDialog}
+                />
+                <Menu.Item
+                    text="Contours"
+                    icon={<CustomIcon icon="contour"/>}
+                    onClick={appStore.dialogStore.showContourDialog}
+                />
+            </Menu>
+        );
+
+        const widgetsMenu = (
+            <Menu className="widgets-menu">
+                <Menu.Item text="Info Panels" icon={"panel-stats"}>
+                    <Menu.Item text="Region List" icon={<CustomIcon icon="regionList"/>} onClick={appStore.widgetsStore.createFloatingRegionListWidget}/>
+                    <Menu.Item text="Image List" icon={"layers"} onClick={appStore.widgetsStore.createFloatingLayerListWidget}/>
+                    <Menu.Item text="Program Log" icon={"application"} onClick={appStore.widgetsStore.createFloatingLogWidget}/>
+                </Menu.Item>
+                <Menu.Item text="Profiles" icon={"pulse"}>
+                    <Menu.Item text="Spatial Profiler" icon={<CustomIcon icon="spatialProfiler"/>} onClick={appStore.widgetsStore.createFloatingSpatialProfilerWidget}/>
+                    <Menu.Item text="Spectral Profiler" icon={<CustomIcon icon="spectralProfiler"/>} onClick={appStore.widgetsStore.createFloatingSpectralProfilerWidget}/>
                 </Menu.Item>
                 <Menu.Item text="Statistics" icon={"calculator"} onClick={appStore.widgetsStore.createFloatingStatsWidget}/>
                 <Menu.Item text="Histogram" icon={"timeline-bar-chart"} onClick={appStore.widgetsStore.createFloatingHistogramWidget}/>
                 <Menu.Item text="Animator" icon={"video"} onClick={appStore.widgetsStore.createFloatingAnimatorWidget}/>
                 <Menu.Item text="Render Config" icon={"style"} onClick={appStore.widgetsStore.createFloatingRenderWidget}/>
-                <Menu.Item className={stokesClassName} text="Stokes Analysis" icon={stokesIcon} onClick={appStore.widgetsStore.createFloatingStokesWidget}/>
+                <Menu.Item text="Stokes Analysis" icon={<CustomIcon icon="stokes"/>} onClick={appStore.widgetsStore.createFloatingStokesWidget}/>
+                <Menu.Item text="Catalog" icon={"heatmap"} onClick={appStore.widgetsStore.reloadFloatingCatalogWidget}/>
+                <Menu.Item text="Spectral Line Query" icon={<CustomIcon icon={"spectralLineQuery"}/>} onClick={appStore.widgetsStore.createFloatingSpectralLineQueryWidget}/>
             </Menu>
         );
 
         const helpMenu = (
             <Menu>
-                <Menu.Item text="Online Manual" icon={"help"} onClick={this.handleDocumentationClicked}/>
-                <Menu.Item text="Controls and Shortcuts" label={"Shift + ?"} onClick={appStore.dialogStore.showHotkeyDialog}/>
+                <Menu.Item text="Online Manual" icon={"manual"} onClick={this.handleDocumentationClicked}/>
+                <Menu.Item text="Controls and Shortcuts" icon={"key-control"} label={"Shift + ?"} onClick={appStore.dialogStore.showHotkeyDialog}/>
                 <Menu.Item text="Debug Execution" icon={"console"} onClick={appStore.dialogStore.showDebugExecutionDialog}/>
                 <Menu.Item text="About" icon={"info-sign"} onClick={appStore.dialogStore.showAboutDialog}/>
             </Menu>
@@ -264,9 +319,9 @@ export class RootMenuComponent extends React.Component {
                         <Menu.Item text="View"/>
                     </Menu>
                 </Popover>
-                <Popover autoFocus={false} minimal={true} content={layoutMenu} position={Position.BOTTOM_LEFT}>
+                <Popover autoFocus={false} minimal={true} content={widgetsMenu} position={Position.BOTTOM_LEFT}>
                     <Menu className="root-menu-entry">
-                        <Menu.Item text="Layout"/>
+                        <Menu.Item text="Widgets"/>
                     </Menu>
                 </Popover>
                 <Popover autoFocus={false} minimal={true} content={helpMenu} position={Position.BOTTOM_LEFT}>
@@ -275,7 +330,7 @@ export class RootMenuComponent extends React.Component {
                     </Menu>
                 </Popover>
                 <ToolbarMenuComponent/>
-                <Alert isOpen={this.documentationAlertVisible} onClose={this.handleAlertDismissed} canEscapeKeyCancel={true} canOutsideClickCancel={true} confirmButtonText={"Dismiss"}>
+                <Alert className={appStore.darkTheme ? "bp3-dark" : ""} isOpen={this.documentationAlertVisible} onClose={this.handleAlertDismissed} canEscapeKeyCancel={true} canOutsideClickCancel={true} confirmButtonText={"Dismiss"}>
                     Documentation will open in a new tab. Please ensure any popup blockers are disabled.
                 </Alert>
                 {loadingIndicator}
@@ -292,7 +347,7 @@ export class RootMenuComponent extends React.Component {
     }
 
     handleDocumentationClicked = () => {
-        window.open("https://carta.readthedocs.io/en/1.3", "_blank", "width=1024");
+        window.open("https://carta.readthedocs.io/en/1.4", "_blank", "width=1024");
         if (process.env.REACT_APP_TARGET !== "linux" && process.env.REACT_APP_TARGET !== "darwin") {
             this.documentationAlertVisible = true;
             clearTimeout(this.documentationAlertTimeoutHandle);

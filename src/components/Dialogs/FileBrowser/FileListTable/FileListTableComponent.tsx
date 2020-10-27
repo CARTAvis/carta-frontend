@@ -1,15 +1,16 @@
 import * as React from "react";
-import {action, autorun, computed, observable} from "mobx";
+import {action, autorun, computed, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 import {Cell, Column, ColumnHeaderCell, Regions, RenderMode, SelectionModes, Table, TableLoadingOption} from "@blueprintjs/table";
 import {IRegion} from "@blueprintjs/table/src/regions";
 import {Icon, Label, NonIdealState} from "@blueprintjs/core";
 import globToRegExp from "glob-to-regexp";
-import * as moment from "moment";
+import moment from "moment"
+import FuzzySearch from "fuzzy-search";
 import {CARTA} from "carta-protobuf";
-import {BrowserMode, SortingConfig} from "stores";
+import {BrowserMode, FileFilteringType} from "stores";
 import {toFixed} from "utilities";
-import "./FileListTableComponent.css";
+import "./FileListTableComponent.scss";
 
 interface FileEntry {
     filename: string;
@@ -27,11 +28,11 @@ export interface FileListTableComponentProps {
     listResponse: CARTA.IFileListResponse | CARTA.ICatalogListResponse;
     selectedFile: CARTA.IFileInfo | CARTA.ICatalogFileInfo;
     selectedHDU: string;
+    filterType: FileFilteringType;
     filterString?: string;
-    sortingConfig?: SortingConfig;
+    sortingString?: string;
     fileBrowserMode: BrowserMode;
     onSortingChanged: (columnName: string, direction: number) => void;
-    onSortingCleared: () => void;
     onFileClicked: (file: CARTA.IFileInfo | CARTA.ICatalogFileInfo, hdu?: string) => void;
     onFileDoubleClicked: (file: CARTA.IFileInfo | CARTA.ICatalogFileInfo, hdu?: string) => void;
     onFolderClicked: (folder: string) => void;
@@ -40,12 +41,12 @@ export interface FileListTableComponentProps {
 @observer
 export class FileListTableComponent extends React.Component<FileListTableComponentProps> {
     @observable selectedRegion: IRegion[];
-    @observable columnWidths = [300, 90, 90, 95];
+    @observable columnWidths = [350, 80, 90, 95];
 
     private static readonly RowHeight = 22;
     private tableRef: Table;
     private cachedFilterString: string;
-    private cachedSortingConfig: SortingConfig;
+    private cachedSortingString: string;
     private cachedFileResponse: CARTA.IFileListResponse | CARTA.ICatalogListResponse;
 
     private static readonly FileTypeMap = new Map<CARTA.FileType, { type: string, description: string }>([
@@ -96,21 +97,27 @@ export class FileListTableComponent extends React.Component<FileListTableCompone
         let filteredFiles = fileResponse?.files?.slice();
 
         const filterString = this.props.filterString;
+        const filterType = this.props.filterType;
         if (filterString) {
             try {
                 let regex: RegExp;
-                if (filterString.startsWith("/") && filterString.endsWith("/")) {
-                    // Strict regex search is case-sensitive
-                    regex = RegExp(filterString.substring(1, filterString.length - 1));
-                    filteredSubdirectories = filteredSubdirectories?.filter(value => value.match(regex));
-                    // @ts-ignore
-                    filteredFiles = filteredFiles?.filter(file => file.name.match(regex));
-                } else {
+                if (filterType === FileFilteringType.Fuzzy) {
+                    const folderSearcher = new FuzzySearch(filteredSubdirectories);
+                    filteredSubdirectories = folderSearcher.search(filterString);
+                    const fileSearcher = new FuzzySearch(filteredFiles, ["name"]);
+                    filteredFiles = fileSearcher.search(filterString);
+                } else if (filterType === FileFilteringType.Unix) {
                     // glob search case-insensitive
                     regex = RegExp(globToRegExp(filterString.toLowerCase()));
                     filteredSubdirectories = filteredSubdirectories?.filter(value => value.toLowerCase().match(regex));
                     // @ts-ignore
                     filteredFiles = filteredFiles?.filter(file => file.name.toLowerCase().match(regex));
+                } else {
+                    // Strict regex search is case-sensitive
+                    regex = RegExp(filterString);
+                    filteredSubdirectories = filteredSubdirectories?.filter(value => value.match(regex));
+                    // @ts-ignore
+                    filteredFiles = filteredFiles?.filter(file => file.name.match(regex));
                 }
             } catch (e) {
                 if (e.name !== "SyntaxError") {
@@ -120,9 +127,9 @@ export class FileListTableComponent extends React.Component<FileListTableCompone
         }
 
         const entries: FileEntry[] = [];
-        const sortingConfig = this.props.sortingConfig;
+        const sortingConfig = {direction: this.props.sortingString.startsWith("+") ? 1 : -1, columnName: this.props.sortingString.substring(1).toLowerCase()};
         if (filteredSubdirectories && filteredSubdirectories.length) {
-            if (sortingConfig?.columnName === "Filename") {
+            if (sortingConfig?.columnName === "filename") {
                 filteredSubdirectories.sort((a, b) => sortingConfig.direction * (a.toLowerCase() < b.toLowerCase() ? -1 : 1));
             }
             for (const directory of filteredSubdirectories) {
@@ -135,16 +142,16 @@ export class FileListTableComponent extends React.Component<FileListTableCompone
 
         if (filteredFiles && filteredFiles.length) {
             switch (sortingConfig?.columnName) {
-                case "Filename":
+                case "filename":
                     filteredFiles.sort((a, b) => sortingConfig.direction * (a.name.toLowerCase() < b.name.toLowerCase() ? -1 : 1));
                     break;
-                case "Type":
+                case "type":
                     filteredFiles.sort((a, b) => sortingConfig.direction * (a.type < b.type ? -1 : 1));
                     break;
-                case "Size":
+                case "size":
                     filteredFiles.sort((a, b) => sortingConfig.direction * (a.size < b.size ? -1 : 1));
                     break;
-                case "Date":
+                case "date":
                     filteredFiles.sort((a, b) => sortingConfig.direction * (a.date < b.date ? -1 : 1));
                     break;
                 default:
@@ -192,15 +199,16 @@ export class FileListTableComponent extends React.Component<FileListTableCompone
 
     constructor(props: FileListTableComponentProps) {
         super(props);
+        makeObservable(this);
 
         // Automatically scroll to the top of the table when a new file response is received, or when filtering/sorting changes
         autorun(() => {
             const fileResponse = this.props.listResponse;
-            const sortingConfig = this.props.sortingConfig;
+            const sortingString = this.props.sortingString;
             const filterString = this.props.filterString;
 
-            if (fileResponse !== this.cachedFileResponse || sortingConfig !== this.cachedSortingConfig || filterString !== this.cachedFilterString) {
-                this.cachedSortingConfig = sortingConfig;
+            if (fileResponse !== this.cachedFileResponse || sortingString !== this.cachedSortingString || filterString !== this.cachedFilterString) {
+                this.cachedSortingString = sortingString;
                 this.cachedFilterString = filterString;
                 this.cachedFileResponse = fileResponse;
                 setTimeout(() => this.tableRef?.scrollToRegion(Regions.row(0, 0)), 20);
@@ -227,8 +235,8 @@ export class FileListTableComponent extends React.Component<FileListTableCompone
     };
 
     private renderColumnHeader = (name: string, index?: number) => {
-        const sortingConfig = this.props.sortingConfig;
-        const sortColumn = name === sortingConfig?.columnName;
+        const sortingConfig = {direction: this.props.sortingString.startsWith("+") ? 1 : -1, columnName: this.props.sortingString.substring(1).toLowerCase()};
+        const sortColumn = name.toLowerCase() === sortingConfig?.columnName;
         const sortDesc = sortingConfig?.direction < 0;
 
         const nameRenderer = () => {
@@ -341,7 +349,7 @@ export class FileListTableComponent extends React.Component<FileListTableCompone
         this.props.onFileDoubleClicked(entry.file, entry.hdu);
     };
 
-    private handleEntryClicked = (entry: FileEntry, index) => {
+    @action private handleEntryClicked = (entry: FileEntry, index) => {
         if (entry) {
             if (entry.isDirectory) {
                 this.props.onFolderClicked(entry.filename);
@@ -355,7 +363,10 @@ export class FileListTableComponent extends React.Component<FileListTableCompone
 
     render() {
         const fileResponse = this.props.listResponse;
-        const sortingConfig = this.props.sortingConfig;
+        // Dummy variable to trigger re-render on sorting change
+        // TODO: is this needed?
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        const sortingConfig = this.props.sortingString;
 
         const classes = ["browser-table"];
         if (this.props.darkTheme) {

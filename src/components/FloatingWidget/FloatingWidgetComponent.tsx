@@ -5,7 +5,7 @@ import {Rnd} from "react-rnd";
 import {Icon, Position, Tooltip} from "@blueprintjs/core";
 import {PlaceholderComponent} from "components";
 import {AppStore, HelpStore, LayoutStore, WidgetConfig} from "stores";
-import "./FloatingWidgetComponent.css";
+import "./FloatingWidgetComponent.scss";
 
 class FloatingWidgetComponentProps {
     widgetConfig: WidgetConfig;
@@ -72,11 +72,27 @@ export class FloatingWidgetComponent extends React.Component<FloatingWidgetCompo
 
     private onClickHelpButton = () => {
         const centerX = this.rnd.draggable.state.x + this.rnd.resizable.size.width * 0.5;
-        HelpStore.Instance.showHelpDrawer(this.props.widgetConfig.helpType, centerX);
-    }
-
-    constructor(props: FloatingWidgetComponentProps) {
-        super(props);
+        if (Array.isArray(this.props.widgetConfig.helpType)) {
+            const widgetsStore = AppStore.Instance.widgetsStore;
+            const widgetParentType = this.props.widgetConfig.parentType;
+            const parentId = widgetsStore.floatingSettingsWidgets.get(this.props.widgetConfig.id);
+            let settingsTab: number;
+            switch (widgetParentType) {
+                case "spatial-profiler":
+                    settingsTab = widgetsStore.spatialProfileWidgets.get(parentId).settingsTabId;
+                    break;
+                case "spectral-profiler":
+                    settingsTab = widgetsStore.spectralProfileWidgets.get(parentId).settingsTabId;
+                    break;
+                case "stokes":
+                default:
+                    settingsTab = widgetsStore.stokesAnalysisWidgets.get(parentId).settingsTabId;
+                    break;
+            }
+            HelpStore.Instance.showHelpDrawer(this.props.widgetConfig.helpType[settingsTab], centerX);
+        } else {
+            HelpStore.Instance.showHelpDrawer(this.props.widgetConfig.helpType, centerX);
+        }
     }
 
     public render() {
@@ -116,14 +132,11 @@ export class FloatingWidgetComponent extends React.Component<FloatingWidgetCompo
                 dragHandleClassName={"floating-title"}
                 onMouseDown={this.props.onSelected}
                 onDragStop={(e, data) => {
-                    widgetConfig["defaultX"] = data.lastX;
-                    widgetConfig["defaultY"] = data.lastY;
+                    widgetConfig.setDefaultPosition(data.lastX, data.lastY);
                 }}
                 onResizeStop={(e, direction, element, delta, position) => {
-                    widgetConfig["defaultX"] = position.x;
-                    widgetConfig["defaultY"] = position.y;
-                    widgetConfig.defaultWidth += delta.width;
-                    widgetConfig.defaultHeight += delta.height;
+                    widgetConfig.setDefaultPosition(position.x, position.y);
+                    widgetConfig.setDefaultSize(widgetConfig.defaultWidth + delta.width, widgetConfig.defaultHeight + delta.height);
                 }}
             >
                 <div className={titleClass}>

@@ -3,8 +3,8 @@ import {observer} from "mobx-react";
 import {IDialogProps} from "@blueprintjs/core";
 import {DraggableDialogComponent} from "components/Dialogs";
 import {FileInfoComponent, FileInfoType} from "components/FileInfo/FileInfoComponent";
-import {AppStore, DialogStore, HelpType} from "stores";
-import "./FileInfoDialogComponent.css";
+import {AppStore, HelpType} from "stores";
+import "./FileInfoDialogComponent.scss";
 
 @observer
 export class FileInfoDialogComponent extends React.Component {
@@ -18,14 +18,14 @@ export class FileInfoDialogComponent extends React.Component {
         }
 
         const dialogProps: IDialogProps = {
-            icon: "info-sign",
+            icon: "app-header",
             className: className,
             backdropClassName: "minimal-dialog-backdrop",
             canOutsideClickClose: false,
             lazy: true,
             isOpen: appStore.dialogStore.fileInfoDialogVisible,
             onClose: appStore.dialogStore.hideFileInfoDialog,
-            title: "File Info",
+            title: "File Header",
         };
 
         return (

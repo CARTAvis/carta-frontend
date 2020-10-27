@@ -1,6 +1,8 @@
-import {action, observable, computed} from "mobx";
+import { action, observable, computed, makeObservable } from "mobx";
 import {AppStore} from "../AppStore";
 import {FrameStore} from "../FrameStore";
+
+export const ACTIVE_FILE_ID = -1;
 
 export enum RegionId {
     ACTIVE = -3,
@@ -14,12 +16,14 @@ export enum RegionsType {
 }
 export class RegionWidgetStore {
     protected readonly appStore: AppStore;
+    @observable fileId: number;
     @observable regionIdMap: Map<number, number>;
     @observable type: RegionsType;
 
     constructor(type: RegionsType) {
-        // TODO: Do we need a ref here?
+        makeObservable(this);
         this.appStore = AppStore.Instance;
+        this.fileId = ACTIVE_FILE_ID;
         this.type = type;
         this.regionIdMap = new Map<number, number>();
     }
@@ -36,40 +40,61 @@ export class RegionWidgetStore {
         this.regionIdMap.set(fileId, regionId);
     };
 
+    @action setFileId = (fileId: number) => {
+        this.fileId = fileId;
+    }
+
+    @computed get effectiveFrame(): FrameStore {
+        if (this.appStore.activeFrame && this.appStore.frames && this.appStore.frames.length > 0) {
+            return this.fileId === ACTIVE_FILE_ID || !this.appStore.getFrame(this.fileId) ? this.appStore.activeFrame : this.appStore.getFrame(this.fileId);
+        }
+        return null;
+    }
+
+    @computed get matchActiveFrame() {
+        return this.effectiveFrame && this.appStore.activeFrame.frameInfo.fileId === this.effectiveFrame.frameInfo.fileId;
+    }
+
     @computed get effectiveRegionId() {
-        if (this.appStore.activeFrame) {
-            const regionId = this.regionIdMap.get(this.appStore.activeFrame.frameInfo.fileId);
-            if (regionId === RegionId.ACTIVE || regionId === undefined) {
-                const selectedRegion = this.appStore.selectedRegion;
+        if (this.effectiveFrame) {
+            const regionId = this.regionIdMap.get(this.fileId);
+            if (regionId !== RegionId.ACTIVE && regionId !== undefined) {
+                return regionId;
+            } else {
+                const selectedRegion = this.effectiveFrame.regionSet.selectedRegion;
                 if (selectedRegion) {
                     return (this.type === RegionsType.CLOSED && !selectedRegion.isClosedRegion) ? RegionId.IMAGE : selectedRegion.regionId;
-                } else {
-                    return this.type === RegionsType.CLOSED ? RegionId.IMAGE : RegionId.CURSOR;
                 }
             }
-            return regionId;
         }
         return this.type === RegionsType.CLOSED ? RegionId.IMAGE : RegionId.CURSOR;
     }
 
     @computed get matchesSelectedRegion() {
-        if (this.appStore.selectedRegion) {
-            return this.effectiveRegionId === this.appStore.selectedRegion.regionId;
+        if (this.matchActiveFrame) {
+            if (this.appStore.selectedRegion) {
+                return this.effectiveRegionId === this.appStore.selectedRegion.regionId;
+            } else {
+                if (this.effectiveRegionId === RegionId.CURSOR || this.effectiveRegionId === RegionId.IMAGE) {
+                    return true;
+                }
+            }
         }
         return false;
     }
 
-    public static CalculateRequirementsArray(frame: FrameStore, widgetsMap: Map<string, RegionWidgetStore>) {
+    public static CalculateRequirementsArray(widgetsMap: Map<string, RegionWidgetStore>) {
         const updatedRequirements = new Map<number, Array<number>>();
-        const fileId = frame.frameInfo.fileId;
 
         widgetsMap.forEach(widgetStore => {
-            const regionId = widgetStore.effectiveRegionId;
-            if (!frame.regionSet) {
-                return;
+            const frame = widgetStore.effectiveFrame;
+            if (!frame || !frame.regionSet) {
+            return;
             }
+            const fileId = frame.frameInfo.fileId;
+            const regionId = widgetStore.effectiveRegionId;
             const region = frame.regionSet.regions.find(r => r.regionId === regionId);
-            if (regionId === -1 || region && region.isClosedRegion) {
+            if (regionId === -1 || (region && region.isClosedRegion)) {
                 let frameRequirementsArray = updatedRequirements.get(fileId);
                 if (!frameRequirementsArray) {
                     frameRequirementsArray = [];

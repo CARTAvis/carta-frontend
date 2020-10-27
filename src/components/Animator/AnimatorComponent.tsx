@@ -1,15 +1,15 @@
 import * as React from "react";
 import {observer} from "mobx-react";
-import {action, observable} from "mobx";
-import {Button, ButtonGroup, FormGroup, IconName, Menu, MenuItem, NonIdealState, NumberRange, Popover, Position, Radio, RangeSlider, Slider, Tooltip} from "@blueprintjs/core";
+import {action, makeObservable, observable} from "mobx";
+import {AnchorButton, Button, ButtonGroup, FormGroup, IconName, Menu, MenuItem, NonIdealState, NumberRange, Popover, Position, Radio, RangeSlider, Slider, Tooltip} from "@blueprintjs/core";
 import ReactResizeDetector from "react-resize-detector";
-import {AnimationMode, AnimationState, PlayMode, WidgetConfig, WidgetProps, HelpType, AnimatorStore, AppStore} from "stores";
+import {AnimationMode, AnimationState, PlayMode, DefaultWidgetConfig, WidgetProps, HelpType, AnimatorStore, AppStore} from "stores";
 import {SafeNumericInput} from "components/Shared";
-import "./AnimatorComponent.css";
+import "./AnimatorComponent.scss";
 
 @observer
 export class AnimatorComponent extends React.Component<WidgetProps> {
-    public static get WIDGET_CONFIG(): WidgetConfig {
+    public static get WIDGET_CONFIG(): DefaultWidgetConfig {
         return {
             id: "animator",
             type: "animator",
@@ -25,6 +25,11 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
 
     @observable width: number;
     @observable height: number;
+
+    constructor(props: any) {
+        super(props);
+        makeObservable(this);
+    }
 
     @action onResize = (width: number, height: number) => {
         this.width = width;
@@ -203,7 +208,6 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
     public render() {
         const appStore = AppStore.Instance;
         const activeFrame = appStore.activeFrame;
-        const dims = activeFrame ? activeFrame.frameInfo.fileInfoExtended.dimensions : 0;
         const numChannels = activeFrame ? activeFrame.frameInfo.fileInfoExtended.depth : 0;
         const numStokes = activeFrame ? activeFrame.frameInfo.fileInfoExtended.stokes : 0;
 
@@ -221,7 +225,7 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
                         disabled={appStore.animatorStore.animationState === AnimationState.PLAYING}
                         checked={appStore.animatorStore.animationMode === AnimationMode.FRAME}
                         onChange={this.onAnimationModeChanged}
-                        label="Frame"
+                        label="Image"
                     />
                     {hideSliders &&
                     <SafeNumericInput
@@ -379,7 +383,7 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
                 position={Position.TOP}
             >
                 <Tooltip content="Playback Mode" position={Position.TOP}>
-                    <Button icon={this.getPlayModeIcon()} disabled={appStore.animatorStore.animationState === AnimationState.PLAYING}>{!iconOnly && "Mode"}</Button>
+                    <AnchorButton icon={this.getPlayModeIcon()} disabled={appStore.animatorStore.animationState === AnimationState.PLAYING}>{!iconOnly && "Mode"}</AnchorButton>
                 </Tooltip>
             </Popover>
         );
@@ -427,7 +431,7 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
                     {frameControl}
                 </div>
                 }
-                {activeFrame &&
+                {activeFrame && this.width > 0 && // temporary fix for broken range slider, issue #1078
                 <div className="animator-sliders">
                     {frameSlider}
                     {channelSlider}

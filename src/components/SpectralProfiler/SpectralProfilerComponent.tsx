@@ -1,31 +1,30 @@
 import * as React from "react";
 import * as _ from "lodash";
-import * as AST from "ast_wrapper";
-import {autorun, computed, observable} from "mobx";
+import {action, autorun, computed, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 import {Colors, NonIdealState} from "@blueprintjs/core";
 import ReactResizeDetector from "react-resize-detector";
 import {CARTA} from "carta-protobuf";
-import {LinePlotComponent, LinePlotComponentProps, PlotType, ProfilerInfoComponent, VERTICAL_RANGE_PADDING} from "components/Shared";
-import {TickType} from "../Shared/LinePlot/PlotContainer/PlotContainerComponent";
+import {LineMarker, LinePlotComponent, LinePlotComponentProps, LinePlotSelectingMode, ProfilerInfoComponent, VERTICAL_RANGE_PADDING, SmoothingType} from "components/Shared";
+import {TickType, MultiPlotProps} from "../Shared/LinePlot/PlotContainer/PlotContainerComponent";
 import {SpectralProfilerToolbarComponent} from "./SpectralProfilerToolbarComponent/SpectralProfilerToolbarComponent";
-import {AnimationState, SpectralProfileStore, WidgetConfig, WidgetProps, HelpType, AnimatorStore, WidgetsStore, AppStore} from "stores";
+import {AnimationState, SpectralProfileStore, WidgetProps, HelpType, AnimatorStore, WidgetsStore, AppStore, DefaultWidgetConfig} from "stores";
 import {SpectralProfileWidgetStore} from "stores/widgets";
 import {Point2D, ProcessedSpectralProfile} from "models";
-import {binarySearchByX, clamp, formattedNotation, toExponential, toFixed} from "utilities";
-import "./SpectralProfilerComponent.css";
+import {binarySearchByX, clamp, formattedExponential, formattedNotation, toExponential, toFixed} from "utilities";
+import "./SpectralProfilerComponent.scss";
 
-type PlotData = { values: Point2D[], xMin: number, xMax: number, yMin: number, yMax: number, yMean: number, yRms: number, progress: number };
+type PlotData = { values: Point2D[], smoothingValues: Point2D[], xMin: number, xMax: number, yMin: number, yMax: number, yMean: number, yRms: number, progress: number };
 
 @observer
 export class SpectralProfilerComponent extends React.Component<WidgetProps> {
-    public static get WIDGET_CONFIG(): WidgetConfig {
+    public static get WIDGET_CONFIG(): DefaultWidgetConfig {
         return {
             id: "spectral-profiler",
             type: "spectral-profiler",
             minWidth: 250,
             minHeight: 225,
-            defaultWidth: 650,
+            defaultWidth: 720,
             defaultHeight: 275,
             title: "Z Profile: Cursor",
             isCloseable: true,
@@ -49,11 +48,10 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
     }
 
     @computed get profileStore(): SpectralProfileStore {
-        const appStore = AppStore.Instance;
-        if (appStore.activeFrame) {
-            let fileId = appStore.activeFrame.frameInfo.fileId;
+        if (this.widgetStore.effectiveFrame) {
+            let fileId = this.widgetStore.effectiveFrame.frameInfo.fileId;
             const regionId = this.widgetStore.effectiveRegionId;
-            const frameMap = appStore.spectralProfiles.get(fileId);
+            const frameMap = AppStore.Instance.spectralProfiles.get(fileId);
             if (frameMap) {
                 return frameMap.get(regionId);
             }
@@ -62,12 +60,11 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
     }
 
     @computed get plotData(): PlotData {
-        const frame = AppStore.Instance.activeFrame;
+        const frame = this.widgetStore.effectiveFrame;
         if (!frame) {
             return null;
         }
 
-        const fileId = frame.frameInfo.fileId;
         let coordinateData: ProcessedSpectralProfile;
         let regionId = this.widgetStore.effectiveRegionId;
         if (frame.regionSet) {
@@ -124,6 +121,8 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
                 }
             }
 
+            let smoothingValues: Point2D[] = this.widgetStore.smoothingStore.getSmoothingPoint2DArray(channelValues, coordinateData.values);
+
             if (yCount > 0) {
                 yMean = ySum / yCount;
                 yRms = Math.sqrt((ySum2 / yCount) - yMean * yMean);
@@ -138,14 +137,14 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
                 yMin -= range * VERTICAL_RANGE_PADDING;
                 yMax += range * VERTICAL_RANGE_PADDING;
             }
-            return {values, xMin, xMax, yMin, yMax, yMean, yRms, progress: coordinateData.progress};
+            return {values, smoothingValues, xMin, xMax, yMin, yMax, yMean, yRms, progress: coordinateData.progress};
         }
         return null;
     }
 
     @computed get exportHeaders(): string[] {
         let headerString = [];
-        const frame = AppStore.Instance.activeFrame;
+        const frame = this.widgetStore.effectiveFrame;
         if (frame && frame.frameInfo && frame.regionSet) {
             const regionId = this.widgetStore.effectiveRegionId;
             const region = frame.regionSet.regions.find(r => r.regionId === regionId);
@@ -157,6 +156,9 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
             // region info
             if (region) {
                 headerString.push(region.regionProperties);
+                if (frame.validWcs) {
+                    headerString.push(frame.getRegionWcsProperties(region));
+                }
             }
         }
         return headerString;
@@ -164,6 +166,8 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
 
     constructor(props: WidgetProps) {
         super(props);
+        makeObservable(this);
+
         const appStore = AppStore.Instance;
         // Check if this widget hasn't been assigned an ID yet
         if (!props.docked && props.id === SpectralProfilerComponent.WIDGET_CONFIG.type) {
@@ -178,13 +182,18 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
         }
         // Update widget title when region or coordinate changes
         autorun(() => {
-            if (this.widgetStore) {
+            if (this.widgetStore && this.widgetStore.effectiveFrame) {
                 const coordinate = this.widgetStore.coordinate;
-                const frame = appStore.activeFrame;
+                const frame = this.widgetStore.effectiveFrame;
                 let progressString = "";
                 const currentData = this.plotData;
-                if (currentData && isFinite(currentData.progress) && currentData.progress < 1.0) {
-                    progressString = `[${toFixed(currentData.progress * 100)}% complete]`;
+                if (currentData && isFinite(currentData.progress)) {
+                    if (currentData.progress < 1.0) {
+                        progressString = `[${toFixed(currentData.progress * 100)}% complete]`;
+                        this.widgetStore.updateStreamingDataStatus(true);
+                    } else {
+                        this.widgetStore.updateStreamingDataStatus(false);
+                    }
                 }
                 if (frame && coordinate) {
                     let coordinateString: string;
@@ -207,41 +216,24 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
         });
     }
 
-    onResize = (width: number, height: number) => {
+    @action private onResize = (width: number, height: number) => {
         this.width = width;
         this.height = height;
     };
 
     onChannelChanged = (x: number) => {
-        const frame = AppStore.Instance.activeFrame;
-        if (AnimatorStore.Instance.animationState === AnimationState.PLAYING) {
+        const frame = this.widgetStore.effectiveFrame;
+        if (x === null || x === undefined || !isFinite(x) || AnimatorStore.Instance.animationState === AnimationState.PLAYING) {
             return;
         }
-
-        if (frame && frame.channelInfo) {
-            let channelInfo = frame.channelInfo;
-            let nearestIndex;
-            if (frame.isCoordChannel) {
-                nearestIndex = channelInfo.getChannelIndexSimple(x);
-            } else {
-                if ((frame.spectralAxis && !frame.spectralAxis.valid) || frame.isSpectralPropsEqual) {
-                    nearestIndex = channelInfo.getChannelIndexWCS(x);
-                } else {
-                    // invert x in selected widget wcs to frame's default wcs
-                    const nativeX = frame.convertToNativeWCS(x);
-                    if (isFinite(nativeX)) {
-                        nearestIndex = channelInfo.getChannelIndexWCS(nativeX);
-                    }
-                }
-            }
-            if (nearestIndex !== null && nearestIndex !== undefined) {
-                frame.setChannels(nearestIndex, frame.requiredStokes, true);
-            }
+        const nearestIndex = frame.findChannelIndexByValue(x);
+        if (frame && isFinite(nearestIndex) && nearestIndex >= 0 && nearestIndex < frame.numChannels) {
+            frame.setChannels(nearestIndex, frame.requiredStokes, true);
         }
     };
 
     @computed get currentChannelValue(): number {
-        const frame = AppStore.Instance.activeFrame;
+        const frame = this.widgetStore.effectiveFrame;
         if (!frame || !frame.channelValues) {
             return null;
         }
@@ -253,7 +245,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
     }
 
     @computed get requiredChannelValue(): number {
-        const frame = AppStore.Instance.activeFrame;
+        const frame = this.widgetStore.effectiveFrame;
         if (!frame || !frame.channelValues) {
             return null;
         }
@@ -264,13 +256,22 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
         return frame.isCoordChannel ? channel : frame.channelValues[channel];
     }
 
+    @computed get linePlotSelectingMode(): LinePlotSelectingMode {
+        if (this.widgetStore.isSelectingMomentChannelRange) {
+            return LinePlotSelectingMode.HORIZONTAL;
+        } else if (this.widgetStore.isSelectingMomentMaskRange) {
+            return LinePlotSelectingMode.VERTICAL;
+        }
+        return LinePlotSelectingMode.BOX;
+    }
+
     onGraphCursorMoved = _.throttle((x) => {
         this.widgetStore.setCursor(x);
     }, 33);
 
     private genProfilerInfo = (): string[] => {
         let profilerInfo: string[] = [];
-        const frame = AppStore.Instance.activeFrame;
+        const frame = this.widgetStore.effectiveFrame;
         if (frame && this.plotData) {
             const cursorX = {
                 profiler: this.widgetStore.cursorX,
@@ -296,10 +297,48 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
 
             profilerInfo.push(`${this.widgetStore.isMouseMoveIntoLinePlots ? "Cursor:" : "Data:"} ${cursorString}`);
             if (this.widgetStore.meanRmsVisible) {
-                profilerInfo.push(`Mean/RMS: ${formattedNotation(this.plotData.yMean) + " / " + formattedNotation(this.plotData.yRms)}`);
+                profilerInfo.push(`Mean/RMS: ${formattedExponential(this.plotData.yMean, 2) + " / " + formattedExponential(this.plotData.yRms, 2)}`);
             }
         }
         return profilerInfo;
+    };
+
+    private setSelectedRange = (min: number, max: number) => {
+        if (isFinite(min) && isFinite(max)) {
+            if (this.widgetStore.isSelectingMomentChannelRange) {
+                this.widgetStore.setSelectedChannelRange(min, max);
+            } else if (this.widgetStore.isSelectingMomentMaskRange) {
+                this.widgetStore.setSelectedMaskRange(min, max);
+            }
+        }
+    };
+
+    private fillVisibleSpectralLines = (): LineMarker[] => {
+        let spectralLineMarkers: LineMarker[] = [];
+        const spectralLines = this.widgetStore.transformedSpectralLines;
+        if (spectralLines?.length > 0) {
+            // find x range
+            let xMin, xMax;
+            if (this.plotData) {
+                xMin = this.widgetStore.isAutoScaledX ? this.plotData.xMin : this.widgetStore.minX;
+                xMax = this.widgetStore.isAutoScaledX ? this.plotData.xMax : this.widgetStore.maxX;
+            }
+            // only keep visible lines within x range
+            for (let lineIndex = 0; lineIndex < spectralLines.length; lineIndex++) {
+                const line = spectralLines[lineIndex];
+                if (isFinite(xMin) && isFinite(xMax) && line && isFinite(line.value) && line.value >= xMin && line.value <= xMax) {
+                    spectralLineMarkers.push({
+                        value: line.value,
+                        id: `spectral-line-${lineIndex}`,
+                        label: `${line.species} ${line.qn}`,
+                        draggable: false,
+                        horizontal: false,
+                        color: AppStore.Instance.darkTheme ? Colors.GREEN4 : Colors.GREEN2
+                    });
+                }
+            }
+        }
+        return spectralLineMarkers;
     };
 
     render() {
@@ -308,7 +347,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
             return <NonIdealState icon={"error"} title={"Missing profile"} description={"Profile not found"}/>;
         }
 
-        const frame = appStore.activeFrame;
+        const frame = this.widgetStore.effectiveFrame;
         const imageName = (frame ? frame.frameInfo.fileInfo.name : undefined);
 
         let linePlotProps: LinePlotComponentProps = {
@@ -317,8 +356,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
             darkMode: appStore.darkTheme,
             imageName: imageName,
             plotName: `Z profile`,
-            usePointSymbols: this.widgetStore.plotType === PlotType.POINTS,
-            interpolateLines: this.widgetStore.plotType === PlotType.LINES,
+            plotType: this.widgetStore.plotType,
             tickTypeY: TickType.Scientific,
             graphClicked: this.onChannelChanged,
             graphZoomedX: this.widgetStore.setXBounds,
@@ -327,11 +365,15 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
             graphZoomReset: this.widgetStore.clearXYBounds,
             graphCursorMoved: this.onGraphCursorMoved,
             scrollZoom: true,
-            markers: [],
+            markers: this.fillVisibleSpectralLines(),
             mouseEntered: this.widgetStore.setMouseMoveIntoLinePlots,
             borderWidth: this.widgetStore.lineWidth,
             pointRadius: this.widgetStore.linePlotPointSize,
-            zeroLineWidth: 2
+            selectingMode: this.linePlotSelectingMode,
+            setSelectedRange: this.setSelectedRange,
+            zeroLineWidth: 2,
+            order: 1,
+            multiPlotPropsMap: new Map()
         };
 
         if (this.profileStore && frame) {
@@ -340,7 +382,13 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
                 linePlotProps.xLabel = `${spectralSystem && spectralSystem !== "" ? spectralSystem + ", " : ""}${frame.spectralCoordinate}`;
             }
             if (frame.unit) {
-                linePlotProps.yLabel = `Value (${frame.unit})`;
+                if (this.widgetStore.statsType === CARTA.StatsType.FluxDensity) {
+                    linePlotProps.yLabel = "Value (Jy)";
+                } else if (this.widgetStore.statsType === CARTA.StatsType.SumSq) {
+                    linePlotProps.yLabel = `Value (${frame.unit})^2`;
+                } else {
+                    linePlotProps.yLabel = `Value (${frame.unit})`;
+                }
             }
 
             const currentPlotData = this.plotData;
@@ -357,6 +405,24 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
                     }
                 }
                 linePlotProps.lineColor = primaryLineColor;
+                const smoothingStore = this.widgetStore.smoothingStore;
+                if (smoothingStore.type !== SmoothingType.NONE) {
+                    if (!smoothingStore.isOverlayOn) {
+                        linePlotProps.lineColor = "#00000000";
+                    }
+
+                    let smoothingPlotProps: MultiPlotProps = {
+                        data: currentPlotData.smoothingValues,
+                        type: smoothingStore.lineType,
+                        borderColor: smoothingStore.lineColor.colorHex,
+                        borderWidth: smoothingStore.lineWidth,
+                        pointRadius: smoothingStore.pointRadius,
+                        order: 0,
+                        exportData: smoothingStore.exportData
+                    };
+                    linePlotProps.multiPlotPropsMap.set("smoothed", smoothingPlotProps);
+                }
+
                 // Determine scale in X and Y directions. If auto-scaling, use the bounds of the current data
                 if (this.widgetStore.isAutoScaledX) {
                     linePlotProps.xMin = currentPlotData.xMin;
@@ -375,7 +441,6 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
                 }
             }
 
-            linePlotProps.markers = [];
             if (!isNaN(this.widgetStore.cursorX)) {
                 linePlotProps.markers.push({
                     value: this.widgetStore.cursorX,
@@ -427,12 +492,25 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
                 });
             }
 
+            const selectedRange = this.widgetStore.selectedRange;
+            if (selectedRange && isFinite(selectedRange.center) && isFinite(selectedRange.width)) {
+                linePlotProps.markers.push({
+                    value: selectedRange.center,
+                    id: "marker-range",
+                    draggable: false,
+                    horizontal: selectedRange.isHorizontal,
+                    width: selectedRange.width / 2,
+                    opacity: 0.2,
+                    color: appStore.darkTheme ? Colors.GRAY4 : Colors.GRAY2
+                });
+            }
+
             linePlotProps.comments = this.exportHeaders;
         }
 
         let className = "spectral-profiler-widget";
-        if (this.widgetStore.matchesSelectedRegion) {
-            className += " linked-to-selected";
+        if (this.widgetStore.isHighlighted) {
+            className += " linked-to-widget-highlighted";
         }
 
         if (appStore.darkTheme) {
@@ -442,11 +520,13 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
         return (
             <div className={className}>
                 <div className="profile-container">
-                    <SpectralProfilerToolbarComponent widgetStore={this.widgetStore}/>
+                    <div className="profile-toolbar">
+                        <SpectralProfilerToolbarComponent widgetStore={this.widgetStore} id={this.props.id}/>
+                    </div>
                     <div className="profile-plot">
                         <LinePlotComponent {...linePlotProps}/>
-                        <ProfilerInfoComponent info={this.genProfilerInfo()}/>
                     </div>
+                    <ProfilerInfoComponent info={this.genProfilerInfo()}/>
                 </div>
                 <ReactResizeDetector handleWidth handleHeight onResize={this.onResize} refreshMode={"throttle"} refreshRate={33}/>
             </div>

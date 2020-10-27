@@ -1,46 +1,26 @@
 import * as React from "react";
 import * as _ from "lodash";
 import {observer} from "mobx-react";
-import {action, computed, observable} from "mobx";
-import {
-    Alert,
-    AnchorButton,
-    Breadcrumb,
-    Breadcrumbs,
-    Button,
-    IBreadcrumbProps,
-    Icon,
-    IDialogProps,
-    InputGroup,
-    Intent,
-    Menu,
-    MenuItem,
-    NonIdealState,
-    Popover,
-    Position,
-    Pre,
-    Spinner,
-    Tab,
-    TabId,
-    Tabs,
-    Tooltip,
-    Text,
-    Switch
-} from "@blueprintjs/core";
+import {action, computed, makeObservable, observable, runInAction} from "mobx";
+import {Alert, AnchorButton, Breadcrumb, Breadcrumbs, Button, IBreadcrumbProps, Icon, IDialogProps, InputGroup, Intent, Menu, MenuItem, Popover, Position, TabId, Tooltip} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import {FileInfoComponent, FileInfoType} from "components/FileInfo/FileInfoComponent";
 import {FileListTableComponent} from "./FileListTable/FileListTableComponent";
 import {DraggableDialogComponent} from "components/Dialogs";
 import {TableComponentProps, TableType} from "components/Shared";
-import {AppStore, BrowserMode, FileBrowserStore, HelpType} from "stores";
-import {CatalogOverlayWidgetStore} from "stores/widgets";
-import "./FileBrowserDialogComponent.css";
+import {AppStore, BrowserMode, CatalogProfileStore, FileBrowserStore, FileFilteringType, HelpType, PreferenceKeys, PreferenceStore} from "stores";
+import "./FileBrowserDialogComponent.scss";
 
 @observer
 export class FileBrowserDialogComponent extends React.Component {
     @observable overwriteExistingFileAlertVisible: boolean;
     @observable fileFilterString: string = "";
     @observable debouncedFilterString: string = "";
+
+    constructor(props: any) {
+        super(props);
+        makeObservable(this);
+    }
 
     private handleTabChange = (newId: TabId) => {
         FileBrowserStore.Instance.setSelectedTab(newId);
@@ -68,12 +48,28 @@ export class FileBrowserDialogComponent extends React.Component {
                 appStore.appendFile(fileBrowserStore.fileList.directory, fileInfo.name, hdu);
             }
         } else if (fileBrowserStore.browserMode === BrowserMode.Catalog) {
-            appStore.appendCatalog(fileBrowserStore.catalogFileList.directory, fileInfo.name, CatalogOverlayWidgetStore.InitTableRows, CARTA.CatalogFileType.VOTable);
+            appStore.appendCatalog(fileBrowserStore.catalogFileList.directory, fileInfo.name, CatalogProfileStore.InitTableRows, CARTA.CatalogFileType.VOTable);
         } else {
             appStore.importRegion(fileBrowserStore.fileList.directory, fileInfo.name, fileInfo.type);
         }
 
         fileBrowserStore.saveStartingDirectory();
+    };
+
+    private handleSaveFileClicked = () => {
+        const appStore = AppStore.Instance;
+        const fileBrowserStore = FileBrowserStore.Instance;
+        const filename = fileBrowserStore.saveFilename.trim();
+        if (fileBrowserStore.fileList && fileBrowserStore.fileList.files && fileBrowserStore.fileList.files.find(f => f.name.trim() === filename)) {
+            this.overwriteExistingFileAlertVisible = true;
+        } else {
+            appStore.saveFile(fileBrowserStore.fileList.directory, filename, fileBrowserStore.saveFileType);
+        }
+    };
+
+    private handleSaveFileNameChanged = (ev: React.ChangeEvent<HTMLInputElement>) => {
+        const fileBrowserStore = FileBrowserStore.Instance;
+        fileBrowserStore.setSaveFilename(ev.target.value);
     };
 
     private handleExportRegionsClicked = () => {
@@ -102,8 +98,14 @@ export class FileBrowserDialogComponent extends React.Component {
     private handleOverwriteAlertConfirmed = () => {
         this.overwriteExistingFileAlertVisible = false;
         const fileBrowserStore = FileBrowserStore.Instance;
-        const filename = fileBrowserStore.exportFilename.trim();
-        this.exportRegion(fileBrowserStore.fileList.directory, filename);
+        if (fileBrowserStore.browserMode === BrowserMode.RegionExport) {
+            const filename = fileBrowserStore.exportFilename.trim();
+            this.exportRegion(fileBrowserStore.fileList.directory, filename);
+        } else if (fileBrowserStore.browserMode === BrowserMode.SaveFile) {
+            const appStore = AppStore.Instance;
+            const filename = fileBrowserStore.saveFilename.trim();
+            appStore.saveFile(fileBrowserStore.fileList.directory, filename, fileBrowserStore.saveFileType);
+        }
     };
 
     private handleOverwriteAlertDismissed = () => {
@@ -120,9 +122,9 @@ export class FileBrowserDialogComponent extends React.Component {
         this.setFilterString(this.fileFilterString);
     };
 
-    @action setFilterString = _.debounce((filterString: string) => {
+    setFilterString = _.debounce((filterString: string) => runInAction(() => {
         this.debouncedFilterString = filterString;
-    }, 500);
+    }), 500);
 
     @action clearFilterString = () => {
         this.fileFilterString = "";
@@ -151,7 +153,7 @@ export class FileBrowserDialogComponent extends React.Component {
         if (browserMode === BrowserMode.File) {
             if (appending) {
                 return (
-                    <Tooltip content={"Append this file as a new frame"}>
+                    <Tooltip content={"Append this image while keeping other images open"}>
                         <AnchorButton
                             intent={Intent.PRIMARY}
                             disabled={appStore.fileLoading || !fileBrowserStore.selectedFile || !fileBrowserStore.fileInfoResp || fileBrowserStore.loadingInfo}
@@ -161,7 +163,7 @@ export class FileBrowserDialogComponent extends React.Component {
                     </Tooltip>);
             } else {
                 return (
-                    <Tooltip content={"Close any existing frames and load this file"}>
+                    <Tooltip content={"Close any existing images and load this image"}>
                         <AnchorButton
                             intent={Intent.PRIMARY}
                             disabled={appStore.fileLoading || !fileBrowserStore.selectedFile || !fileBrowserStore.fileInfoResp || fileBrowserStore.loadingInfo}
@@ -171,9 +173,20 @@ export class FileBrowserDialogComponent extends React.Component {
                     </Tooltip>
                 );
             }
+        } else if (browserMode === BrowserMode.SaveFile) {
+            return (
+                <Tooltip content={"Save this file"}>
+                    <AnchorButton
+                        intent={Intent.PRIMARY}
+                        disabled={appStore.fileLoading || fileBrowserStore.loadingInfo}
+                        onClick={this.handleSaveFileClicked}
+                        text="Save"
+                    />
+                </Tooltip>
+            );
         } else if (browserMode === BrowserMode.RegionImport) {
             return (
-                <Tooltip content={"Load a region file for the currently active frame"}>
+                <Tooltip content={"Load a region file for the currently active image"}>
                     <AnchorButton
                         intent={Intent.PRIMARY}
                         disabled={appStore.fileLoading || !fileBrowserStore.selectedFile || !fileBrowserStore.fileInfoResp || fileBrowserStore.loadingInfo || !appStore.activeFrame}
@@ -184,7 +197,7 @@ export class FileBrowserDialogComponent extends React.Component {
             );
         } else if (browserMode === BrowserMode.Catalog) {
             return (
-                <Tooltip content={"Load a catalog file for the currently active frame"}>
+                <Tooltip content={"Load a catalog file for the currently active image"}>
                     <AnchorButton
                         intent={Intent.PRIMARY}
                         disabled={appStore.fileLoading || !fileBrowserStore.selectedFile || !fileBrowserStore.fileInfoResp || fileBrowserStore.loadingInfo || !appStore.activeFrame}
@@ -196,7 +209,7 @@ export class FileBrowserDialogComponent extends React.Component {
         } else {
             const frame = appStore.activeFrame;
             return (
-                <Tooltip content={"Export all regions for the currently active frame"}>
+                <Tooltip content={"Export all regions for the currently active image"}>
                     <AnchorButton
                         intent={Intent.PRIMARY}
                         disabled={!FileBrowserDialogComponent.ValidateFilename(fileBrowserStore.exportFilename) || !frame || frame.regionSet.regions.length <= 1}
@@ -229,6 +242,7 @@ export class FileBrowserDialogComponent extends React.Component {
 
         const fileTypeMenu = (
             <Popover
+                minimal={true}
                 content={
                     <Menu>
                         <MenuItem text="CRTF Region File" onClick={() => fileBrowserStore.setExportFileType(CARTA.FileType.CRTF)}/>
@@ -251,6 +265,80 @@ export class FileBrowserDialogComponent extends React.Component {
         );
         return <InputGroup autoFocus={true} placeholder="Enter file name" value={fileBrowserStore.exportFilename} onChange={this.handleExportInputChanged} rightElement={sideMenu}/>;
     }
+
+    private renderSaveFilenameInput() {
+        const fileBrowserStore = FileBrowserStore.Instance;
+
+        const fileTypeMenu = (
+            <Popover
+                minimal={true}
+                content={
+                    <Menu>
+                        <MenuItem text="CASA" onClick={() => fileBrowserStore.setSaveFileType(CARTA.FileType.CASA)}/>
+                        <MenuItem text="FITS" onClick={() => fileBrowserStore.setSaveFileType(CARTA.FileType.FITS)}/>
+                    </Menu>
+                }
+                position={Position.BOTTOM_RIGHT}
+            >
+                <Button minimal={true} rightIcon="caret-down">
+                    {fileBrowserStore.saveFileType === CARTA.FileType.CASA ? "CASA" : "FITS"}
+                </Button>
+            </Popover>
+        );
+
+        return <InputGroup autoFocus={true} placeholder="Enter file name" value={fileBrowserStore.saveFilename} onChange={this.handleSaveFileNameChanged} rightElement={fileTypeMenu}/>;
+    }
+
+    private renderOpenFilenameInput() {
+        const preferenceStore = PreferenceStore.Instance;
+
+        let filterName: string;
+        let filterDescription: string;
+
+        if (preferenceStore.fileFilteringType === FileFilteringType.Fuzzy) {
+            filterName = "Fuzzy search";
+            filterDescription = "Filter by filename with fuzzy search";
+        } else if (preferenceStore.fileFilteringType === FileFilteringType.Unix) {
+            filterName = "Unix pattern";
+            filterDescription = "Filter by filename using unix-style pattern";
+        } else {
+            filterName = "Regular expression";
+            filterDescription = "Filter by filename using regular expression";
+        }
+
+        const filterTypeMenu = (
+            <Popover
+                minimal={true}
+                content={
+                    <Menu>
+                        <MenuItem text="Fuzzy search" onClick={() => this.setFilterType(FileFilteringType.Fuzzy)}/>
+                        <MenuItem text="Unix pattern" onClick={() => this.setFilterType(FileFilteringType.Unix)}/>
+                        <MenuItem text="Regular expression" onClick={() => this.setFilterType(FileFilteringType.Regex)}/>
+                    </Menu>
+                }
+                position={Position.BOTTOM_RIGHT}
+            >
+                <Button minimal={true} icon="filter" rightIcon="caret-down">
+                    {filterName}
+                </Button>
+            </Popover>
+        );
+
+        return (
+            <InputGroup
+                autoFocus={false}
+                placeholder={filterDescription}
+                value={this.fileFilterString}
+                onChange={this.handleFilterStringInputChanged}
+                leftIcon="search"
+                rightElement={filterTypeMenu}
+            />);
+    }
+
+    @action setFilterType = (type: FileFilteringType) => {
+        this.clearFilterString();
+        PreferenceStore.Instance.setPreference(PreferenceKeys.SILENT_FILE_FILTERING_TYPE, type);
+    };
 
     // Refresh file list to trigger the Breadcrumb re-rendering
     @action refreshFileList = () => {
@@ -292,17 +380,12 @@ export class FileBrowserDialogComponent extends React.Component {
         let fileInput: React.ReactNode;
         let paneClassName = "file-panes";
 
-        if (fileBrowserStore.browserMode === BrowserMode.RegionExport) {
+        if (fileBrowserStore.browserMode === BrowserMode.SaveFile) {
+            fileInput = this.renderSaveFilenameInput();
+        } else if (fileBrowserStore.browserMode === BrowserMode.RegionExport) {
             fileInput = this.renderExportFilenameInput();
         } else {
-            fileInput = (
-                <InputGroup
-                    autoFocus={false}
-                    placeholder="Filter by filename pattern (unix style) or regular expression (using /<expression>/)"
-                    value={this.fileFilterString}
-                    onChange={this.handleFilterStringInputChanged}
-                    leftIcon="search"
-                />);
+            fileInput = this.renderOpenFilenameInput();
         }
 
         let tableProps: TableComponentProps = null;
@@ -324,7 +407,7 @@ export class FileBrowserDialogComponent extends React.Component {
                     {this.pathItems &&
                     <React.Fragment>
                         <Tooltip content={"Refresh current directory"}>
-                            <Button
+                            <AnchorButton
                                 className="refresh-button"
                                 icon="repeat"
                                 onClick={() => fileBrowserStore.selectFolder(fileList.directory, true)}
@@ -350,9 +433,9 @@ export class FileBrowserDialogComponent extends React.Component {
                                 selectedFile={fileBrowserStore.selectedFile}
                                 selectedHDU={fileBrowserStore.selectedHDU}
                                 filterString={this.debouncedFilterString}
-                                sortingConfig={fileBrowserStore.sortingConfig}
+                                filterType={appStore.preferenceStore.fileFilteringType}
+                                sortingString={appStore.preferenceStore.fileSortingString}
                                 onSortingChanged={fileBrowserStore.setSortingConfig}
-                                onSortingCleared={fileBrowserStore.clearSortingConfig}
                                 onFileClicked={fileBrowserStore.selectFile}
                                 onFileDoubleClicked={this.loadFile}
                                 onFolderClicked={this.handleFolderClicked}
@@ -381,6 +464,7 @@ export class FileBrowserDialogComponent extends React.Component {
                     </div>
                 </div>
                 <Alert
+                    className={appStore.darkTheme ? "bp3-dark" : ""}
                     isOpen={this.overwriteExistingFileAlertVisible}
                     confirmButtonText="Yes"
                     cancelButtonText="Cancel"
@@ -407,6 +491,7 @@ export class FileBrowserDialogComponent extends React.Component {
     private static GetFileInfoTypes(fileBrowserMode: BrowserMode): Array<FileInfoType> {
         switch (fileBrowserMode) {
             case BrowserMode.File:
+            case BrowserMode.SaveFile:
                 return [FileInfoType.IMAGE_FILE, FileInfoType.IMAGE_HEADER];
             case BrowserMode.Catalog:
                 return [FileInfoType.CATALOG_FILE, FileInfoType.CATALOG_HEADER];

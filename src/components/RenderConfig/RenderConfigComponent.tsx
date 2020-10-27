@@ -1,24 +1,24 @@
 import * as React from "react";
 import * as _ from "lodash";
 import ReactResizeDetector from "react-resize-detector";
-import {action, autorun, computed, observable} from "mobx";
+import {action, autorun, computed, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 import {Button, ButtonGroup, FormGroup, HTMLSelect, IOptionProps, NonIdealState, NumericInput, Colors} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import {ColormapConfigComponent} from "./ColormapConfigComponent/ColormapConfigComponent";
-import {LinePlotComponent, LinePlotComponentProps, PlotType, ProfilerInfoComponent} from "components/Shared";
+import {LinePlotComponent, LinePlotComponentProps, ProfilerInfoComponent} from "components/Shared";
 import {TaskProgressDialogComponent} from "components/Dialogs";
 import {RenderConfigWidgetStore} from "stores/widgets";
-import {AnimationState, FrameScaling, FrameStore, RenderConfigStore, WidgetConfig, WidgetProps, HelpType, AlertStore, LogStore, AppStore, AnimatorStore, WidgetsStore} from "stores";
+import {AnimationState, FrameStore, RenderConfigStore, DefaultWidgetConfig, WidgetProps, HelpType, AppStore, AnimatorStore, WidgetsStore} from "stores";
 import {Point2D} from "models";
 import {clamp, toExponential, toFixed} from "utilities";
-import "./RenderConfigComponent.css";
+import "./RenderConfigComponent.scss";
 
 const KEYCODE_ENTER = 13;
 
 @observer
 export class RenderConfigComponent extends React.Component<WidgetProps> {
-    public static get WIDGET_CONFIG(): WidgetConfig {
+    public static get WIDGET_CONFIG(): DefaultWidgetConfig {
         return {
             id: "render-config",
             type: "render-config",
@@ -88,6 +88,8 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
 
     constructor(props: WidgetProps) {
         super(props);
+        makeObservable(this);
+
         const appStore = AppStore.Instance;
         // Check if this widget hasn't been assigned an ID yet
         if (!props.docked && props.id === RenderConfigComponent.WIDGET_CONFIG.type) {
@@ -259,8 +261,7 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
             imageName: imageName,
             plotName: plotName,
             logY: this.widgetStore.logScaleY,
-            usePointSymbols: this.widgetStore.plotType === PlotType.POINTS,
-            interpolateLines: this.widgetStore.plotType === PlotType.LINES,
+            plotType: this.widgetStore.plotType,
             showYAxisTicks: false,
             showYAxisLabel: false,
             graphClicked: this.onMinMoved,
@@ -357,7 +358,6 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
         const percentileButtonCutoff = 600;
         const histogramCutoff = 430;
         const displayRankButtons = this.width > percentileButtonCutoff;
-        const stokes = frame.renderConfig.stokes;
         let percentileButtonsDiv, percentileSelectDiv;
         if (displayRankButtons) {
             const percentileRankButtons = RenderConfigStore.PERCENTILE_RANKS.map(rank => (

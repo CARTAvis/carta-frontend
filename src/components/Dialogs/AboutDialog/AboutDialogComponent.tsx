@@ -4,7 +4,7 @@ import {AnchorButton, Classes, IDialogProps, Intent} from "@blueprintjs/core";
 import {DraggableDialogComponent} from "components/Dialogs";
 import {DialogStore} from "stores";
 import {CARTA_INFO} from "models";
-import "./AboutDialogComponent.css";
+import "./AboutDialogComponent.scss";
 import * as logoPng from "static/carta_logo.png";
 
 @observer
@@ -35,22 +35,22 @@ export class AboutDialogComponent extends React.Component {
                     <h3>Development team:</h3>
                     <p>The development of the CARTA project is a joint effort from:</p>
                     <ul>
-                        <li><a href="https://www.asiaa.sinica.edu.tw/" target="_blank">Academia Sinica, Institute of Astronomy and Astrophysics (ASIAA)</a></li>
-                        <li><a href="https://idia.ac.za/" target="_blank">Inter-University Institute for Data Intensive Astronomy (IDIA)</a></li>
-                        <li><a href="https://science.nrao.edu/" target="_blank">National Radio Astronomy Observatory (NRAO)</a></li>
-                        <li><a href="https://www.ualberta.ca/physics" target="_blank">Department of Physics, University of Alberta</a></li>
+                        <li><a href="https://www.asiaa.sinica.edu.tw/" rel="noopener noreferrer" target="_blank">Academia Sinica, Institute of Astronomy and Astrophysics (ASIAA)</a></li>
+                        <li><a href="https://idia.ac.za/" rel="noopener noreferrer" target="_blank">Inter-University Institute for Data Intensive Astronomy (IDIA)</a></li>
+                        <li><a href="https://science.nrao.edu/" rel="noopener noreferrer" target="_blank">National Radio Astronomy Observatory (NRAO)</a></li>
+                        <li><a href="https://www.ualberta.ca/physics" rel="noopener noreferrer" target="_blank">Department of Physics, University of Alberta</a></li>
                     </ul>
                     <h3>Useful links:</h3>
                     <ul>
-                        <li>Source code for CARTA is available on <a href="https://github.com/cartavis" target="_blank">GitHub</a></li>
+                        <li>Source code for CARTA is available on <a href="https://github.com/cartavis" rel="noopener noreferrer" target="_blank">GitHub</a></li>
                         {/* tslint:disable-next-line:max-line-length */}
-                        <li>Please report bugs or suggestions to the <a href="mailto:carta_helpdesk@asiaa.sinica.edu.tw" target="_blank">CARTA helpdesk</a> or file a <a href="https://github.com/CARTAvis/carta/issues" target="_blank">GitHub issue</a></li>
-                        <li>Documentation is available <a href="https://carta.readthedocs.io/en/1.3" target="_blank">online</a></li>
+                        <li>Please report bugs or suggestions to the <a href="mailto:carta_helpdesk@asiaa.sinica.edu.tw" rel="noopener noreferrer" target="_blank">CARTA helpdesk</a> or file a <a href="https://github.com/CARTAvis/carta/issues" rel="noopener noreferrer" target="_blank">GitHub issue</a></li>
+                        <li>Documentation is available <a href="https://carta.readthedocs.io/en/1.4" rel="noopener noreferrer" target="_blank">online</a></li>
                     </ul>
                     <h3>License</h3>
                     <p className={Classes.TEXT_SMALL}>
                         Copyright (C) 2018-2020 ASIAA, IDIA, NRAO, and Department of Physics, University of Alberta. This program is free software; you can redistribute it and/or modify it under the terms of the&#160;
-                        <a href="http://www.gnu.org/copyleft/gpl.html" target="_blank">GNU General Public License version 3</a>&#160;
+                        <a href="http://www.gnu.org/copyleft/gpl.html" rel="noopener noreferrer" target="_blank">GNU General Public License version 3</a>&#160;
                         as published by the Free Software Foundation.
                     </p>
                 </div>

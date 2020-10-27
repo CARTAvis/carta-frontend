@@ -1,13 +1,14 @@
-import {action, computed, observable} from "mobx";
+import {action, computed, observable, makeObservable} from "mobx";
 import {ChartArea} from "chart.js";
 import {Colors} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import {PlotType, LineSettings, ScatterSettings} from "components/Shared";
 import {RegionWidgetStore, RegionsType} from "./RegionWidgetStore";
-import {AppStore, FrameStore} from "stores";
 import {getColorsForValues} from "utilities";
 import {SpectralSystem, SpectralType, SpectralUnit} from "models";
-import * as tinycolor from "tinycolor2";
+import tinycolor from "tinycolor2";
+import {ProfileSmoothingStore} from "stores/ProfileSmoothingStore";
+import {StokesAnalysisSettingsTabs} from "components";
 
 export enum StokesCoordinate {
     CurrentZ = "z",
@@ -68,6 +69,8 @@ export class StokesAnalysisWidgetStore extends RegionWidgetStore {
     @observable colorMap: string;
     @observable colorPixel: { color: Uint8ClampedArray, size: number };
     @observable pointTransparency: number;
+    readonly smoothingStore: ProfileSmoothingStore;
+    @observable settingsTabId: StokesAnalysisSettingsTabs;
     
     private static requestDataType = [StokesCoordinate.LinearPolarizationQ, StokesCoordinate.LinearPolarizationU];
     private static ValidStatsTypes = [
@@ -86,50 +89,53 @@ export class StokesAnalysisWidgetStore extends RegionWidgetStore {
         return requiredCoordinate;
     }
 
-    public static addToRequirementsMap(frame: FrameStore, updatedRequirements: Map<number, Map<number, CARTA.SetSpectralRequirements>>, widgetsMap: Map<string, StokesAnalysisWidgetStore>)
+    public static addToRequirementsMap(updatedRequirements: Map<number, Map<number, CARTA.SetSpectralRequirements>>, widgetsMap: Map<string, StokesAnalysisWidgetStore>)
         : Map<number, Map<number, CARTA.SetSpectralRequirements>> {
         widgetsMap.forEach(widgetStore => {
-            const fileId = frame.frameInfo.fileId;
-            const regionId = widgetStore.effectiveRegionId;
-            const coordinates = StokesAnalysisWidgetStore.requiredCoordinate(widgetStore);
-            let statsType = widgetStore.statsType;
+            const frame = widgetStore.effectiveFrame;
+            if (frame && frame.hasStokes) {
+                const fileId = frame.frameInfo.fileId;
+                const regionId = widgetStore.effectiveRegionId;
+                const coordinates = StokesAnalysisWidgetStore.requiredCoordinate(widgetStore);
+                let statsType = widgetStore.statsType;
 
-            if (!frame.regionSet) {
-                return;
-            }
-            const region = frame.regionSet.regions.find(r => r.regionId === regionId);
-            if (region) {
-                // Point regions have no meaningful stats type, default to Sum
-                if (region.regionType === CARTA.RegionType.POINT) {
-                    statsType = CARTA.StatsType.Sum;
+                if (!frame.regionSet) {
+                    return;
                 }
-
-                let frameRequirements = updatedRequirements.get(fileId);
-                if (!frameRequirements) {
-                    frameRequirements = new Map<number, CARTA.SetSpectralRequirements>();
-                    updatedRequirements.set(fileId, frameRequirements);
-                }
-
-                let regionRequirements = frameRequirements.get(regionId);
-                if (!regionRequirements) {
-                    regionRequirements = new CARTA.SetSpectralRequirements({regionId, fileId});
-                    frameRequirements.set(regionId, regionRequirements);
-                }
-
-                if (!regionRequirements.spectralProfiles) {
-                    regionRequirements.spectralProfiles = [];
-                }
-
-                coordinates.forEach(coordinate => {
-                    let spectralConfig = regionRequirements.spectralProfiles.find(profiles => profiles.coordinate === coordinate);
-                    if (!spectralConfig) {
-                        // create new spectral config
-                        regionRequirements.spectralProfiles.push({coordinate, statsTypes: [statsType]});
-                    } else if (spectralConfig.statsTypes.indexOf(statsType) === -1) {
-                        // add to the stats type array
-                        spectralConfig.statsTypes.push(statsType);
+                const region = frame.regionSet.regions.find(r => r.regionId === regionId);
+                if (region) {
+                    // Point regions have no meaningful stats type, default to Sum
+                    if (region.regionType === CARTA.RegionType.POINT) {
+                        statsType = CARTA.StatsType.Sum;
                     }
-                });
+
+                    let frameRequirements = updatedRequirements.get(fileId);
+                    if (!frameRequirements) {
+                        frameRequirements = new Map<number, CARTA.SetSpectralRequirements>();
+                        updatedRequirements.set(fileId, frameRequirements);
+                    }
+
+                    let regionRequirements = frameRequirements.get(regionId);
+                    if (!regionRequirements) {
+                        regionRequirements = new CARTA.SetSpectralRequirements({regionId, fileId});
+                        frameRequirements.set(regionId, regionRequirements);
+                    }
+
+                    if (!regionRequirements.spectralProfiles) {
+                        regionRequirements.spectralProfiles = [];
+                    }
+
+                    coordinates.forEach(coordinate => {
+                        let spectralConfig = regionRequirements.spectralProfiles.find(profiles => profiles.coordinate === coordinate);
+                        if (!spectralConfig) {
+                            // create new spectral config
+                            regionRequirements.spectralProfiles.push({coordinate, statsTypes: [statsType]});
+                        } else if (spectralConfig.statsTypes.indexOf(statsType) === -1) {
+                            // add to the stats type array
+                            spectralConfig.statsTypes.push(statsType);
+                        }
+                    });
+                }
             }
         });
         return updatedRequirements;
@@ -154,7 +160,7 @@ export class StokesAnalysisWidgetStore extends RegionWidgetStore {
     };
 
     @action setSpectralCoordinate = (coordStr: string) => {
-        const frame = this.appStore.activeFrame;
+        const frame = this.effectiveFrame;
         if (frame && frame.spectralCoordsSupported && frame.spectralCoordsSupported.has(coordStr)) {
             const coord: {type: SpectralType, unit: SpectralUnit} = frame.spectralCoordsSupported.get(coordStr);
             frame.spectralType = coord.type;
@@ -164,7 +170,7 @@ export class StokesAnalysisWidgetStore extends RegionWidgetStore {
     };
 
     @action setSpectralSystem = (specsys: SpectralSystem) => {
-        const frame = this.appStore.activeFrame;
+        const frame = this.effectiveFrame;
         if (frame && frame.spectralSystemsSupported && frame.spectralSystemsSupported.includes(specsys)) {
             frame.spectralSystem = specsys;
             this.clearSharedXBounds();
@@ -217,6 +223,7 @@ export class StokesAnalysisWidgetStore extends RegionWidgetStore {
 
     constructor() {
         super(RegionsType.CLOSED_AND_POINT);
+        makeObservable(this);
         this.colorMap = DEFAULTS.colorMap;
         this.colorPixel = getColorsForValues(DEFAULTS.colorMap);
         this.statsType = CARTA.StatsType.Mean;
@@ -230,6 +237,8 @@ export class StokesAnalysisWidgetStore extends RegionWidgetStore {
         this.scatterPlotPointSize = DEFAULTS.scatterPlotPointSize;
         this.equalAxes = DEFAULTS.equalAxes;
         this.pointTransparency = DEFAULTS.pointTransparency;
+        this.smoothingStore = new ProfileSmoothingStore();
+        this.settingsTabId = StokesAnalysisSettingsTabs.CONVERSION;
     }
 
     @action setQUScatterPlotXBounds = (minVal: number, maxVal: number) => {
@@ -343,6 +352,10 @@ export class StokesAnalysisWidgetStore extends RegionWidgetStore {
         if (val >= ScatterSettings.MIN_TRANSPARENCY && val <= ScatterSettings.MAX_TRANSPARENCY) {
             this.pointTransparency = val;   
         }
+    }
+
+    @action setSettingsTabId = (tabId: StokesAnalysisSettingsTabs) => {
+        this.settingsTabId = tabId;
     }
 
     @computed get isLinePlotsAutoScaledX() {

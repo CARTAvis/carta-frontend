@@ -3,13 +3,14 @@ import {observer} from "mobx-react";
 import {AnchorButton, Classes, IDialogProps, Intent, NonIdealState, Tooltip} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import {DraggableDialogComponent} from "components/Dialogs";
-import {AppStore, RegionStore, HelpType, DialogStore} from "stores";
+import {AppStore, RegionStore, HelpType} from "stores";
 import {PointRegionForm} from "./PointRegionForm/PointRegionForm";
 import {RectangularRegionForm} from "./RectangularRegionForm/RectangularRegionForm";
 import {EllipticalRegionForm} from "./EllipticalRegionForm/EllipticalRegionForm";
 import {AppearanceForm} from "./AppearanceForm/AppearanceForm";
 import {PolygonRegionForm} from "./PolygonRegionForm/PolygonRegionForm";
-import "./RegionDialogComponent.css";
+import {CustomIcon} from "icons/CustomIcons";
+import "./RegionDialogComponent.scss";
 
 @observer
 export class RegionDialogComponent extends React.Component {
@@ -50,15 +51,14 @@ export class RegionDialogComponent extends React.Component {
             bodyContent = RegionDialogComponent.InvalidRegionNode;
         } else {
             region = appStore.activeFrame.regionSet.selectedRegion;
-            const frame = appStore.activeFrame;
-
-            dialogProps.title = `Editing ${region.nameString}`;
+            const frame = appStore.activeFrame.spatialReference ?? appStore.activeFrame;
+            dialogProps.title = `Editing ${region.nameString} (${frame.frameInfo.fileInfo.name})`;
             switch (region.regionType) {
                 case CARTA.RegionType.POINT:
                     bodyContent = (
                         <React.Fragment>
                             <AppearanceForm region={region} darkTheme={appStore.darkTheme}/>
-                            <PointRegionForm region={region} wcsInfo={frame.validWcs ? frame.wcsInfo : 0}/>
+                            <PointRegionForm region={region} wcsInfo={frame.validWcs ? frame.wcsInfoForTransformation : 0}/>
                         </React.Fragment>
                     );
                     editableRegion = true;
@@ -67,7 +67,7 @@ export class RegionDialogComponent extends React.Component {
                     bodyContent = (
                         <React.Fragment>
                             <AppearanceForm region={region} darkTheme={appStore.darkTheme}/>
-                            <RectangularRegionForm region={region} frame={frame} wcsInfo={frame.validWcs ? frame.wcsInfo : 0}/>
+                            <RectangularRegionForm region={region} frame={frame} wcsInfo={frame.validWcs ? frame.wcsInfoForTransformation : 0}/>
                         </React.Fragment>
                     );
                     editableRegion = true;
@@ -76,7 +76,7 @@ export class RegionDialogComponent extends React.Component {
                     bodyContent = (
                         <React.Fragment>
                             <AppearanceForm region={region} darkTheme={appStore.darkTheme}/>
-                            <EllipticalRegionForm region={region} frame={frame} wcsInfo={frame.validWcs ? frame.wcsInfo : 0}/>
+                            <EllipticalRegionForm region={region} frame={frame} wcsInfo={frame.validWcs ? frame.wcsInfoForTransformation : 0}/>
                         </React.Fragment>
                     );
                     editableRegion = true;
@@ -85,7 +85,7 @@ export class RegionDialogComponent extends React.Component {
                     bodyContent = (
                         <React.Fragment>
                             <AppearanceForm region={region} darkTheme={appStore.darkTheme}/>
-                            <PolygonRegionForm region={region} wcsInfo={frame.validWcs ? frame.wcsInfo : 0}/>
+                            <PolygonRegionForm region={region} wcsInfo={frame.validWcs ? frame.wcsInfoForTransformation : 0}/>
                         </React.Fragment>
                     );
                     editableRegion = true;
@@ -101,13 +101,13 @@ export class RegionDialogComponent extends React.Component {
                     <AnchorButton intent={Intent.WARNING} minimal={true} icon={region.locked ? "lock" : "unlock"} onClick={region.toggleLock}/>
                 </Tooltip>
                 <Tooltip content={"Focus"}>
-                    <AnchorButton intent={Intent.WARNING} minimal={true} icon={"eye-open"} onClick={this.handleFocusClicked}/>
+                    <AnchorButton intent={Intent.WARNING} minimal={true} icon={<CustomIcon icon="center"/>} onClick={this.handleFocusClicked}/>
                 </Tooltip>
             </React.Fragment>
         );
 
         return (
-            <DraggableDialogComponent dialogProps={dialogProps} helpType={HelpType.REGION_DIALOG} defaultWidth={650} defaultHeight={450} minHeight={300} minWidth={400} enableResizing={true}>
+            <DraggableDialogComponent dialogProps={dialogProps} helpType={HelpType.REGION_DIALOG} defaultWidth={775} defaultHeight={475} minHeight={300} minWidth={400} enableResizing={true}>
                 <div className={Classes.DIALOG_BODY}>
                     {bodyContent}
                 </div>

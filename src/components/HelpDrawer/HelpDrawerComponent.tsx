@@ -6,13 +6,13 @@ import {
     FileBrowserHelpComponent,
     FileInfoHelpComponent,
     SaveLayoutHelpComponent,
-    OverlaySettingsHelpComponent,
     PreferencesHelpComponent,
     RegionDialogHelpComponent,
     AnimatorHelpComponent,
     HistogramHelpComponent,
     HistogramSettingsHelpComponent,
     ImageViewHelpComponent,
+    ImageViewSettingsHelpComponent,
     LayerListHelpComponent,
     LogHelpComponent,
     PlaceholderHelpComponent,
@@ -20,12 +20,23 @@ import {
     RenderConfigHelpComponent,
     RenderConfigSettingsHelpComponent,
     SpatialProfilerHelpComponent,
-    SpatialProfilerSettingsHelpComponent,
+    SpatialProfilerSettingsStylingHelpComponent,
+    SpatialProfilerSettingsSmoothingHelpComponent,
     SpectralProfilerHelpComponent,
-    SpectralProfilerSettingsHelpComponent,
+    SpectralProfilerSettingsConversionHelpComponent,
+    SpectralProfilerSettingsStylingHelpComponent,
+    SpectralProfilerSettingsSmoothingHelpComponent,
+    SpectralProfilerSettingsMomentsHelpComponent,
     StatsHelpComponent,
     StokesAnalysisHelpComponent,
-    StokesAnalysisSettingsHelpComponent
+    StokesAnalysisSettingsConversionHelpComponent,
+    StokesAnalysisSettingsLinePlotStylingHelpComponent,
+    StokesAnalysisSettingsScatterPlotStylingHelpComponent,
+    StokesAnalysisSettingsSmoothingHelpComponent,
+    CatalogOverlayHelpComponent,
+    CatalogHistogramPlotHelpComponent,
+    CatalogScatterPlotHelpComponent,
+    SpectralLineQueryHelpComponent
 } from "./HelpContent";
 import {AppStore, HelpStore, HelpType} from "stores";
 
@@ -75,16 +86,12 @@ export class HelpDrawerComponent extends React.Component {
                 content: <FileBrowserHelpComponent/>
         }], [
             HelpType.FILE_INFO, {
-                title: "File Info",
+                title: "File Header",
                 content: <FileInfoHelpComponent/>
         }], [
             HelpType.SAVE_LAYOUT, {
                 title: "Save Layout",
                 content: <SaveLayoutHelpComponent/>
-        }], [
-            HelpType.OVERLAY_SETTINGS, {
-                title: "Overlay Settings",
-                content: <OverlaySettingsHelpComponent/>
         }], [
             HelpType.PREFERENCES, {
                 title: "Preferences",
@@ -113,8 +120,12 @@ export class HelpDrawerComponent extends React.Component {
                 title: "Image View",
                 content: <ImageViewHelpComponent/>
         }], [
+            HelpType.IMAGE_VIEW_SETTINGS, {
+                title: "Image View Settings",
+                content: <ImageViewSettingsHelpComponent/>
+        }], [
             HelpType.LAYER_LIST, {
-                title: "Layer List",
+                title: "Image List",
                 content: <LayerListHelpComponent/>
         }], [
             HelpType.LOG, {
@@ -141,17 +152,33 @@ export class HelpDrawerComponent extends React.Component {
                 title: "Spatial Profiler",
                 content: <SpatialProfilerHelpComponent/>
         }], [
-            HelpType.SPATIAL_PROFILER_SETTINGS, {
+            HelpType.SPATIAL_PROFILER_SETTINGS_STYLING, {
                 title: "Spatial Profiler Settings",
-                content: <SpatialProfilerSettingsHelpComponent/>
+                content: <SpatialProfilerSettingsStylingHelpComponent/>
+        }], [
+            HelpType.SPATIAL_PROFILER_SETTINGS_SMOOTHING, {
+                title: "Spatial Profiler Settings",
+                content: <SpatialProfilerSettingsSmoothingHelpComponent/>
         }], [
             HelpType.SPECTRAL_PROFILER, {
                 title: "Spectral Profiler",
                 content: <SpectralProfilerHelpComponent/>
         }], [
-            HelpType.SPECTRAL_PROFILER_SETTINGS, {
+            HelpType.SPECTRAL_PROFILER_SETTINGS_CONVERSION, {
                 title: "Spectral Profiler Settings",
-                content: <SpectralProfilerSettingsHelpComponent/>
+                content: <SpectralProfilerSettingsConversionHelpComponent/>
+        }], [
+            HelpType.SPECTRAL_PROFILER_SETTINGS_STYLING, {
+                title: "Spectral Profiler Settings",
+                content: <SpectralProfilerSettingsStylingHelpComponent/>
+        }], [
+            HelpType.SPECTRAL_PROFILER_SETTINGS_SMOOTHING, {
+                title: "Spectral Profiler Settings",
+                content: <SpectralProfilerSettingsSmoothingHelpComponent/>
+        }], [
+            HelpType.SPECTRAL_PROFILER_SETTINGS_MOMENTS, {
+                title: "Spectral Profiler Settings",
+                content: <SpectralProfilerSettingsMomentsHelpComponent/>
         }], [
             HelpType.STATS, {
                 title: "Statistics",
@@ -161,9 +188,37 @@ export class HelpDrawerComponent extends React.Component {
                 title: "Stokes Analysis",
                 content: <StokesAnalysisHelpComponent/>
         }], [
-            HelpType.STOKES_ANALYSIS_SETTINGS, {
+            HelpType.STOKES_ANALYSIS_SETTINGS_CONVERSION, {
                 title: "Stokes Settings",
-                content: <StokesAnalysisSettingsHelpComponent/>
+                content: <StokesAnalysisSettingsConversionHelpComponent/>
+        }], [
+            HelpType.STOKES_ANALYSIS_SETTINGS_LINE_PLOT_STYLING, {
+                title: "Stokes Settings",
+                content: <StokesAnalysisSettingsLinePlotStylingHelpComponent/>
+        }], [
+            HelpType.STOKES_ANALYSIS_SETTINGS_SCATTER_PLOT_STYLING, {
+                title: "Stokes Settings",
+                content: <StokesAnalysisSettingsScatterPlotStylingHelpComponent/>
+        }], [
+            HelpType.STOKES_ANALYSIS_SETTINGS_SMOOTHING, {
+                title: "Stokes Settings",
+                content: <StokesAnalysisSettingsSmoothingHelpComponent/>
+        }], [
+            HelpType.CATALOG_OVERLAY, {
+                title: "Catalog Overlay",
+                content: <CatalogOverlayHelpComponent/>
+        }], [
+                HelpType.CATALOG_HISTOGRAM_PLOT, {
+                title: "Catalog Histogram Plot",
+                content: <CatalogHistogramPlotHelpComponent/>
+        }], [
+            HelpType.CATALOG_SCATTER_PLOT, {
+                title: "Catalog Scatter Plot",
+                content: <CatalogScatterPlotHelpComponent/>
+        }], [
+            HelpType.SPECTRAL_LINE_QUERY, {
+                title: "Spectral Line Query",
+                content: <SpectralLineQueryHelpComponent/>
         }]
     ]);
 }

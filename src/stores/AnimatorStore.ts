@@ -1,7 +1,7 @@
-import {action, computed, observable} from "mobx";
+import {action, computed, observable, makeObservable} from "mobx";
 import {CARTA} from "carta-protobuf";
 import {AppStore, FrameStore, PreferenceStore} from "stores";
-import {clamp, GetRequiredTiles} from "utilities";
+import {clamp, GetRequiredTiles, getTransformedChannelList, mapToObject} from "utilities";
 import {FrameView, Point2D} from "models";
 
 export enum AnimationMode {
@@ -90,6 +90,18 @@ export class AnimatorStore {
             compressionQuality: preferenceStore.animationCompressionQuality,
         };
 
+        // Calculate matched frames for the animation range
+        const matchedFrames = new Map<number, CARTA.IMatchedFrameList>();
+        for (const sibling of frame.spectralSiblings) {
+            const frameNumbers = getTransformedChannelList(
+                frame.fullWcsInfo,
+                sibling.fullWcsInfo,
+                preferenceStore.spectralMatchingType,
+                animationFrames.firstFrame.channel,
+                animationFrames.lastFrame.channel);
+            matchedFrames.set(sibling.frameInfo.fileId, {frameNumbers});
+        }
+
         const animationMessage: CARTA.IStartAnimation = {
             fileId: frame.frameInfo.fileId,
             startFrame: animationFrames.startFrame,
@@ -99,7 +111,8 @@ export class AnimatorStore {
             requiredTiles: requiredTiles,
             looping: true,
             reverse: this.playMode === PlayMode.BOUNCING,
-            frameRate: this.frameRate
+            frameRate: this.frameRate,
+            matchedFrames: mapToObject(matchedFrames)
         };
 
         appStore.backendService.startAnimation(animationMessage).subscribe(() => {
@@ -143,7 +156,15 @@ export class AnimatorStore {
                 endFrame
             };
             appStore.backendService.stopAnimation(stopMessage);
-            appStore.throttledSetChannels([{frame, channel: frame.requiredChannel, stokes: frame.requiredStokes}]);
+
+            frame.setChannels(frame.channel, frame.stokes, true);
+
+            const updates = [{frame, channel: frame.requiredChannel, stokes: frame.requiredStokes}];
+            // Update any sibling channels
+            frame.spectralSiblings.forEach(siblingFrame => {
+                updates.push({frame: siblingFrame, channel: siblingFrame.requiredChannel, stokes: siblingFrame.requiredStokes});
+            });
+            appStore.throttledSetChannels(updates);
         }
     };
 
@@ -158,6 +179,7 @@ export class AnimatorStore {
     private stopHandle;
 
     constructor() {
+        makeObservable(this);
         this.frameRate = 5;
         this.maxFrameRate = 15;
         this.minFrameRate = 1;
@@ -169,6 +191,10 @@ export class AnimatorStore {
 
     @computed get frameInterval() {
         return 1000.0 / clamp(this.frameRate, this.minFrameRate, this.maxFrameRate);
+    }
+
+    @computed get serverAnimationActive() {
+        return this.animationState === AnimationState.PLAYING && this.animationMode !== AnimationMode.FRAME;
     }
 
     private genAnimationFrames = (frame: FrameStore): {

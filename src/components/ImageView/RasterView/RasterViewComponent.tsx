@@ -1,11 +1,11 @@
 import * as React from "react";
-import * as tinycolor from "tinycolor2";
+import tinycolor from "tinycolor2";
 import {observer} from "mobx-react";
 import {AppStore, RasterRenderType} from "stores";
 import {FrameView, Point2D, TileCoordinate} from "models";
 import {GetRequiredTiles, GL, LayerToMip, add2D, scale2D} from "utilities";
 import {RasterTile, TILE_SIZE, TileService, TileWebGLService} from "services";
-import "./RasterViewComponent.css";
+import "./RasterViewComponent.scss";
 
 export class RasterViewComponentProps {
     docked: boolean;
@@ -232,8 +232,7 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
             yMax: (tile.y + 1) * tileSizeAdjusted,
             mip: 1
         };
-
-        let bottomLeft = {x: (0.5 + tileImageView.xMin - full.xMin), y: (0.5 + tileImageView.yMin - full.yMin)};
+        let bottomLeft = {x: (tileImageView.xMin - full.xMin) - 0.5, y: (tileImageView.yMin - full.yMin) - 0.5};
         let tileScaling = scale2D({x: 1, y: 1}, mip * spatialRef.zoomLevel);
 
         if (frame.spatialReference && frame.spatialTransform) {
@@ -263,6 +262,7 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
 
     render() {
         // dummy values to trigger React's componentDidUpdate()
+        /* eslint-disable @typescript-eslint/no-unused-vars */
         const appStore = AppStore.Instance;
         const frame = appStore.activeFrame;
         if (frame) {
@@ -286,6 +286,8 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
                 nanAlpha: appStore.preferenceStore.nanAlpha
             };
         }
+        /* eslint-enable @typescript-eslint/no-unused-vars */
+
         const padding = appStore.overlayStore.padding;
         let className = "raster-div";
         if (this.props.docked) {

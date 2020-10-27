@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 command -v emcc >/dev/null 2>&1 || { echo "Script requires emcc but it's not installed or in PATH.Aborting." >&2; exit 1; }
+cd "${0%/*}"
 cd zfp_wrapper
 mkdir -p build
 printf "Building ZFP wrapper..."
@@ -14,7 +15,8 @@ printf "Checking for ZFP wrapper WASM..."
 if [[ $(find build/zfp_wrapper.js -type f -size +10000c 2>/dev/null) ]]; then
     echo "Found"
     # copy WASM module to public folder for serving
-    cp build/zfp_wrapper.wasm ../../public/
+    mkdir -p ../../public/static/js
+    cp build/zfp_wrapper.wasm ../../public/static/js
     # link wrapper to node modules
     mv build/zfp_wrapper.js build/index.js
     cd ../../node_modules

@@ -1,129 +1,78 @@
-import {observable, computed, action} from "mobx";
+import {action, computed, observable, makeObservable} from "mobx";
 import {Colors} from "@blueprintjs/core";
-import * as tinycolor from "tinycolor2";
-import * as AST from "ast_wrapper";
 import {CARTA} from "carta-protobuf";
-import {AppStore, BeamType, ContourGeneratorType, FrameScaling, RenderConfigStore, RegionStore, AlertStore} from "stores";
-import {Theme, PresetLayout, CursorPosition, Zoom, ZoomPoint, WCSType, RegionCreationMode, CompressionQuality, TileCache, Event, ControlMap, SpectralType, IsSpectralMatchingTypeValid, WCSMatchingType, IsWCSMatchingTypeValid} from "models";
+import {BeamType, ContourGeneratorType, FileFilteringType, FrameScaling} from "stores";
+import {CompressionQuality, CursorPosition, Event, PresetLayout, RegionCreationMode, SpectralType, Theme, TileCache, WCSMatchingType, WCSType, Zoom, ZoomPoint} from "models";
 import {parseBoolean} from "utilities";
+import {ApiService} from "services";
 
 export enum PreferenceKeys {
-    GLOBAL_THEME = 1,
-    GLOBAL_AUTOLAUNCH,
-    GLOBAL_LAYOUT,
-    GLOBAL_CURSOR_POSITION,
-    GLOBAL_ZOOM_MODE,
-    GLOBAL_ZOOM_POINT,
-    GLOBAL_DRAG_PANNING,
-    GLOBAL_SPECTRAL_MATCHING_TYPE,
-    GLOBAL_AUTO_WCS_MATCHING,
+    SILENT_FILE_SORTING_STRING = "fileSortingString",
+    SILENT_FILE_FILTERING_TYPE = "fileFilteringType",
 
-    RENDER_CONFIG_SCALING,
-    RENDER_CONFIG_COLORMAP,
-    RENDER_CONFIG_PERCENTILE,
-    RENDER_CONFIG_SCALING_ALPHA,
-    RENDER_CONFIG_SCALING_GAMMA,
-    RENDER_CONFIG_NAN_COLOR_HEX,
-    RENDER_CONFIG_NAN_ALPHA,
+    GLOBAL_THEME = "theme",
+    GLOBAL_AUTOLAUNCH = "autoLaunch",
+    GLOBAL_LAYOUT = "layout",
+    GLOBAL_CURSOR_POSITION = "cursorPosition",
+    GLOBAL_ZOOM_MODE = "zoomMode",
+    GLOBAL_ZOOM_POINT = "zoomPoint",
+    GLOBAL_DRAG_PANNING = "dragPanning",
+    GLOBAL_SPECTRAL_MATCHING_TYPE = "spectralMatchingType",
+    GLOBAL_AUTO_WCS_MATCHING = "autoWCSMatching",
 
-    CONTOUR_CONFIG_CONTOUR_GENERATOR_TYPE,
-    CONTOUR_CONFIG_CONTOUR_SMOOTHING_MODE,
-    CONTOUR_CONFIG_CONTOUR_SMOOTHING_FACTOR,
-    CONTOUR_CONFIG_CONTOUR_NUM_LEVELS,
-    CONTOUR_CONFIG_CONTOUR_THICKNESS,
-    CONTOUR_CONFIG_CONTOUR_COLORMAP_ENABLED,
-    CONTOUR_CONFIG_CONTOUR_COLOR,
-    CONTOUR_CONFIG_CONTOUR_COLORMAP,
+    RENDER_CONFIG_SCALING = "scaling",
+    RENDER_CONFIG_COLORMAP = "colormap",
+    RENDER_CONFIG_PERCENTILE = "percentile",
+    RENDER_CONFIG_SCALING_ALPHA = "scalingAlpha",
+    RENDER_CONFIG_SCALING_GAMMA = "scalingGamma",
+    RENDER_CONFIG_NAN_COLOR_HEX = "nanColorHex",
+    RENDER_CONFIG_NAN_ALPHA = "nanAlpha",
 
-    WCS_OVERLAY_AST_COLOR,
-    WCS_OVERLAY_AST_GRID_VISIBLE,
-    WCS_OVERLAY_AST_LABELS_VISIBLE,
-    WCS_OVERLAY_WCS_TYPE,
-    WCS_OVERLAY_BEAM_VISIBLE,
-    WCS_OVERLAY_BEAM_COLOR,
-    WCS_OVERLAY_BEAM_TYPE,
-    WCS_OVERLAY_BEAM_WIDTH,
+    CONTOUR_CONFIG_CONTOUR_GENERATOR_TYPE = "contourGeneratorType",
+    CONTOUR_CONFIG_CONTOUR_SMOOTHING_MODE = "contourSmoothingMode",
+    CONTOUR_CONFIG_CONTOUR_SMOOTHING_FACTOR = "contourSmoothingFactor",
+    CONTOUR_CONFIG_CONTOUR_NUM_LEVELS = "contourNumLevels",
+    CONTOUR_CONFIG_CONTOUR_THICKNESS = "contourThickness",
+    CONTOUR_CONFIG_CONTOUR_COLORMAP_ENABLED = "contourColormapEnabled",
+    CONTOUR_CONFIG_CONTOUR_COLOR = "contourColor",
+    CONTOUR_CONFIG_CONTOUR_COLORMAP = "contourColormap",
 
-    REGION_COLOR,
-    REGION_LINE_WIDTH,
-    REGION_DASH_LENGTH,
-    REGION_TYPE,
-    REGION_CREATION_MODE,
+    WCS_OVERLAY_AST_COLOR = "astColor",
+    WCS_OVERLAY_AST_GRID_VISIBLE = "astGridVisible",
+    WCS_OVERLAY_AST_LABELS_VISIBLE = "astLabelsVisible",
+    WCS_OVERLAY_WCS_TYPE = "wcsType",
+    WCS_OVERLAY_BEAM_VISIBLE = "beamVisible",
+    WCS_OVERLAY_BEAM_COLOR = "beamColor",
+    WCS_OVERLAY_BEAM_TYPE = "beamType",
+    WCS_OVERLAY_BEAM_WIDTH = "beamWidth",
 
-    PERFORMANCE_IMAGE_COMPRESSION_QUALITY,
-    PERFORMANCE_ANIMATION_COMPRESSION_QUALITY,
-    PERFORMANCE_GPU_TILE_CACHE,
-    PERFORMANCE_SYSTEM_TILE_CACHE,
-    PERFORMANCE_CONTOUR_DECIMATION,
-    PERFORMANCE_CONTOUR_COMPRESSION_LEVEL,
-    PERFORMANCE_CONTOUR_CHUNK_SIZE,
-    PERFORMANCE_CONTOUR_CONTROL_MAP_WIDTH,
-    PERFORMANCE_STREAM_CONTOURS_WHILE_ZOOMING,
-    PERFORMANCE_LOW_BAND_WIDTH_MODE,
-    PERFORMANCE_STOP_ANIMATION_PLAYBACK_MINUTES,
+    REGION_COLOR = "regionColor",
+    REGION_LINE_WIDTH = "regionLineWidth",
+    REGION_DASH_LENGTH = "regionDashLength",
+    REGION_TYPE = "regionType",
+    REGION_CREATION_MODE = "regionCreationMode",
+    REGION_SIZE = "regionSize",
 
-    LOG_EVENT
+    PERFORMANCE_IMAGE_COMPRESSION_QUALITY = "imageCompressionQuality",
+    PERFORMANCE_ANIMATION_COMPRESSION_QUALITY = "animationCompressionQuality",
+    PERFORMANCE_GPU_TILE_CACHE = "GPUTileCache",
+    PERFORMANCE_SYSTEM_TILE_CACHE = "systemTileCache",
+    PERFORMANCE_CONTOUR_DECIMATION = "contourDecimation",
+    PERFORMANCE_CONTOUR_COMPRESSION_LEVEL = "contourCompressionLevel",
+    PERFORMANCE_CONTOUR_CHUNK_SIZE = "contourChunkSize",
+    PERFORMANCE_CONTOUR_CONTROL_MAP_WIDTH = "contourControlMapWidth",
+    PERFORMANCE_STREAM_CONTOURS_WHILE_ZOOMING = "streamContoursWhileZooming",
+    PERFORMANCE_LOW_BAND_WIDTH_MODE = "lowBandwidthMode",
+    PERFORMANCE_STOP_ANIMATION_PLAYBACK_MINUTES = "stopAnimationPlaybackMinutes",
+
+    LOG_EVENT = "logEventList"
 }
 
-const KEY_TO_STRING = new Map<PreferenceKeys, string>([
-    [PreferenceKeys.GLOBAL_THEME, "theme"],
-    [PreferenceKeys.GLOBAL_AUTOLAUNCH, "autoLaunch"],
-    [PreferenceKeys.GLOBAL_LAYOUT, "layout"],
-    [PreferenceKeys.GLOBAL_CURSOR_POSITION, "cursorPosition"],
-    [PreferenceKeys.GLOBAL_ZOOM_MODE, "zoomMode"],
-    [PreferenceKeys.GLOBAL_ZOOM_POINT, "zoomPoint"],
-    [PreferenceKeys.GLOBAL_DRAG_PANNING, "dragPanning"],
-    [PreferenceKeys.GLOBAL_SPECTRAL_MATCHING_TYPE, "spectralMatchingType"],
-    [PreferenceKeys.GLOBAL_AUTO_WCS_MATCHING, "autoWCSMatching"],
-
-    [PreferenceKeys.RENDER_CONFIG_SCALING, "scaling"],
-    [PreferenceKeys.RENDER_CONFIG_COLORMAP, "colormap"],
-    [PreferenceKeys.RENDER_CONFIG_PERCENTILE, "percentile"],
-    [PreferenceKeys.RENDER_CONFIG_SCALING_ALPHA, "scalingAlpha"],
-    [PreferenceKeys.RENDER_CONFIG_SCALING_GAMMA, "scalingGamma"],
-    [PreferenceKeys.RENDER_CONFIG_NAN_COLOR_HEX, "nanColorHex"],
-    [PreferenceKeys.RENDER_CONFIG_NAN_ALPHA, "nanAlpha"],
-
-    [PreferenceKeys.CONTOUR_CONFIG_CONTOUR_GENERATOR_TYPE, "contourGeneratorType"],
-    [PreferenceKeys.CONTOUR_CONFIG_CONTOUR_SMOOTHING_MODE, "contourSmoothingMode"],
-    [PreferenceKeys.CONTOUR_CONFIG_CONTOUR_SMOOTHING_FACTOR, "contourSmoothingFactor"],
-    [PreferenceKeys.CONTOUR_CONFIG_CONTOUR_NUM_LEVELS, "contourNumLevels"],
-    [PreferenceKeys.CONTOUR_CONFIG_CONTOUR_THICKNESS, "contourThickness"],
-    [PreferenceKeys.CONTOUR_CONFIG_CONTOUR_COLORMAP_ENABLED, "contourColormapEnabled"],
-    [PreferenceKeys.CONTOUR_CONFIG_CONTOUR_COLOR, "contourColor"],
-    [PreferenceKeys.CONTOUR_CONFIG_CONTOUR_COLORMAP, "contourColormap"],
-
-    [PreferenceKeys.WCS_OVERLAY_AST_COLOR, "astColor"],
-    [PreferenceKeys.WCS_OVERLAY_AST_GRID_VISIBLE, "astGridVisible"],
-    [PreferenceKeys.WCS_OVERLAY_AST_LABELS_VISIBLE, "astLabelsVisible"],
-    [PreferenceKeys.WCS_OVERLAY_WCS_TYPE, "wcsType"],
-    [PreferenceKeys.WCS_OVERLAY_BEAM_VISIBLE, "beamVisible"],
-    [PreferenceKeys.WCS_OVERLAY_BEAM_COLOR, "beamColor"],
-    [PreferenceKeys.WCS_OVERLAY_BEAM_TYPE, "beamType"],
-    [PreferenceKeys.WCS_OVERLAY_BEAM_WIDTH, "beamWidth"],
-
-    [PreferenceKeys.REGION_COLOR, "regionColor"],
-    [PreferenceKeys.REGION_LINE_WIDTH, "regionLineWidth"],
-    [PreferenceKeys.REGION_DASH_LENGTH, "regionDashLength"],
-    [PreferenceKeys.REGION_TYPE, "regionType"],
-    [PreferenceKeys.REGION_CREATION_MODE, "regionCreationMode"],
-
-    [PreferenceKeys.PERFORMANCE_IMAGE_COMPRESSION_QUALITY, "imageCompressionQuality"],
-    [PreferenceKeys.PERFORMANCE_ANIMATION_COMPRESSION_QUALITY, "animationCompressionQuality"],
-    [PreferenceKeys.PERFORMANCE_GPU_TILE_CACHE, "GPUTileCache"],
-    [PreferenceKeys.PERFORMANCE_SYSTEM_TILE_CACHE, "systemTileCache"],
-    [PreferenceKeys.PERFORMANCE_CONTOUR_DECIMATION, "contourDecimation"],
-    [PreferenceKeys.PERFORMANCE_CONTOUR_COMPRESSION_LEVEL, "contourCompressionLevel"],
-    [PreferenceKeys.PERFORMANCE_CONTOUR_CHUNK_SIZE, "contourChunkSize"],
-    [PreferenceKeys.PERFORMANCE_CONTOUR_CONTROL_MAP_WIDTH, "contourControlMapWidth"],
-    [PreferenceKeys.PERFORMANCE_STREAM_CONTOURS_WHILE_ZOOMING, "streamContoursWhileZooming"],
-    [PreferenceKeys.PERFORMANCE_LOW_BAND_WIDTH_MODE, "lowBandwidthMode"],
-    [PreferenceKeys.PERFORMANCE_STOP_ANIMATION_PLAYBACK_MINUTES, "stopAnimationPlaybackMinutes"],
-
-    [PreferenceKeys.LOG_EVENT, "logEventList"]
-]);
-
 const DEFAULTS = {
+    SILENT: {
+        fileSortingString: "-date",
+        fileFilteringType: FileFilteringType.Fuzzy,
+    },
     GLOBAL: {
         theme: Theme.AUTO,
         autoLaunch: true,
@@ -170,6 +119,7 @@ const DEFAULTS = {
         regionDashLength: 0,
         regionType: CARTA.RegionType.RECTANGLE,
         regionCreationMode: RegionCreationMode.CENTER,
+        regionSize: 30
     },
     PERFORMANCE: {
         imageCompressionQuality: CompressionQuality.IMAGE_DEFAULT,
@@ -185,7 +135,7 @@ const DEFAULTS = {
         stopAnimationPlaybackMinutes: 5
     },
     LOG_EVENT: {
-        eventLoggingEnabled: false
+        eventLoggingEnabled: []
     }
 };
 
@@ -202,280 +152,228 @@ export class PreferenceStore {
     @observable preferences: Map<PreferenceKeys, any>;
     @observable supportsServer: boolean;
 
-    private PREFERENCE_VALIDATORS = new Map<PreferenceKeys, (values: string) => any>([
-        [PreferenceKeys.GLOBAL_THEME, (value: string): string => { return value && Theme.isValid(value) ? value : DEFAULTS.GLOBAL.theme; }],
-        [PreferenceKeys.GLOBAL_AUTOLAUNCH, (value: string): boolean => { return parseBoolean(value, DEFAULTS.GLOBAL.autoLaunch); }],
-        [PreferenceKeys.GLOBAL_LAYOUT, (value: string): string => { return value && AppStore.Instance.layoutStore.layoutExist(value) ? value : DEFAULTS.GLOBAL.layout; }],
-        [PreferenceKeys.GLOBAL_CURSOR_POSITION, (value: string): string => { return value && CursorPosition.isValid(value) ? value : DEFAULTS.GLOBAL.cursorPosition; }],
-        [PreferenceKeys.GLOBAL_ZOOM_MODE, (value: string): string => { return value && Zoom.isValid(value) ? value : DEFAULTS.GLOBAL.zoomMode; }],
-        [PreferenceKeys.GLOBAL_ZOOM_POINT, (value: string): string => { return value && ZoomPoint.isValid(value) ? value : DEFAULTS.GLOBAL.zoomPoint; }],
-        [PreferenceKeys.GLOBAL_DRAG_PANNING, (value: string): boolean => { return value === "false" ? false : DEFAULTS.GLOBAL.dragPanning; }],
-        [PreferenceKeys.GLOBAL_SPECTRAL_MATCHING_TYPE, (value: SpectralType): string => { return IsSpectralMatchingTypeValid(value) ? value : DEFAULTS.GLOBAL.spectralMatchingType; }],
-        [PreferenceKeys.GLOBAL_AUTO_WCS_MATCHING, (value: string): WCSMatchingType => { return IsWCSMatchingTypeValid(value) ? parseInt(value) : DEFAULTS.GLOBAL.autoWCSMatching; }],
-
-        [PreferenceKeys.RENDER_CONFIG_SCALING, (value: string): number => { return value && isFinite(Number(value)) && RenderConfigStore.IsScalingValid(Number(value)) ? Number(value) : DEFAULTS.RENDER_CONFIG.scaling; }],
-        [PreferenceKeys.RENDER_CONFIG_COLORMAP, (value: string): string => { return value && RenderConfigStore.IsColormapValid(value) ? value : DEFAULTS.RENDER_CONFIG.colormap; }],
-        [PreferenceKeys.RENDER_CONFIG_PERCENTILE, (value: string): number => { return value && isFinite(Number(value)) && RenderConfigStore.IsPercentileValid(Number(value)) ? Number(value) : DEFAULTS.RENDER_CONFIG.percentile; }],
-        [PreferenceKeys.RENDER_CONFIG_SCALING_ALPHA, (value: string): number => { return value && isFinite(Number(value)) ? Number(value) : DEFAULTS.RENDER_CONFIG.scalingAlpha; }],
-        [PreferenceKeys.RENDER_CONFIG_SCALING_GAMMA, (value: string): number => { return value && isFinite(Number(value)) && RenderConfigStore.IsGammaValid(Number(value)) ? Number(value) : DEFAULTS.RENDER_CONFIG.scalingGamma; }],
-        [PreferenceKeys.RENDER_CONFIG_NAN_COLOR_HEX, (value: string): string => { return value && tinycolor(value).isValid() ? value : DEFAULTS.RENDER_CONFIG.nanColorHex; }],
-        [PreferenceKeys.RENDER_CONFIG_NAN_ALPHA, (value: string): number => { return value && isFinite(Number(value)) && Number(value) >= 0 && Number(value) <= 1 ? Number(value) : DEFAULTS.RENDER_CONFIG.nanAlpha; }],
-
-        [PreferenceKeys.CONTOUR_CONFIG_CONTOUR_GENERATOR_TYPE, (value: ContourGeneratorType): ContourGeneratorType => {
-            return value && (value === ContourGeneratorType.StartStepMultiplier || value === ContourGeneratorType.MinMaxNScaling || value === ContourGeneratorType.PercentagesRefValue ||
-                value === ContourGeneratorType.MeanSigmaList) ? value : DEFAULTS.CONTOUR_CONFIG.contourGeneratorType;
-        }],
-        [PreferenceKeys.CONTOUR_CONFIG_CONTOUR_SMOOTHING_MODE,
-            (value: string): number => { return value && isFinite(Number(value)) && Number(value) >= 0 && Number(value) <= 2 ? Number(value) : DEFAULTS.CONTOUR_CONFIG.contourSmoothingMode; }],
-        [PreferenceKeys.CONTOUR_CONFIG_CONTOUR_SMOOTHING_FACTOR,
-            (value: string): number => { return value && (isFinite(parseInt(value)) && parseInt(value) >= 1 && parseInt(value) <= 33) ? parseInt(value) : DEFAULTS.CONTOUR_CONFIG.contourSmoothingFactor; }],
-        [PreferenceKeys.CONTOUR_CONFIG_CONTOUR_NUM_LEVELS,
-            (value: string): number => { return value && (isFinite(parseInt(value)) && parseInt(value) >= 1 && parseInt(value) <= 15) ? parseInt(value) : DEFAULTS.CONTOUR_CONFIG.contourNumLevels; }],
-        [PreferenceKeys.CONTOUR_CONFIG_CONTOUR_THICKNESS,
-            (value: string): number => { return value && (isFinite(parseFloat(value)) && parseFloat(value) > 0 && parseFloat(value) <= 10) ? parseFloat(value) : DEFAULTS.CONTOUR_CONFIG.contourThickness; }],
-        [PreferenceKeys.CONTOUR_CONFIG_CONTOUR_COLORMAP_ENABLED, (value: string): boolean => { return parseBoolean(value, DEFAULTS.CONTOUR_CONFIG.contourColormapEnabled); }],
-        [PreferenceKeys.CONTOUR_CONFIG_CONTOUR_COLOR, (value: string): string => { return value && tinycolor(value).isValid() ? value : DEFAULTS.CONTOUR_CONFIG.contourColor; }],
-        [PreferenceKeys.CONTOUR_CONFIG_CONTOUR_COLORMAP, (value: string): string => { return value && RenderConfigStore.IsColormapValid(value) ? value : DEFAULTS.CONTOUR_CONFIG.contourColormap; }],
-
-        [PreferenceKeys.WCS_OVERLAY_AST_COLOR, (value: string): number => { return value && isFinite(Number(value)) && Number(value) >= 0 && Number(value) < AST.colors.length ? Number(value) : DEFAULTS.WCS_OVERLAY.astColor; }],
-        [PreferenceKeys.WCS_OVERLAY_AST_GRID_VISIBLE, (value: string): boolean => { return parseBoolean(value, DEFAULTS.WCS_OVERLAY.astGridVisible); }],
-        [PreferenceKeys.WCS_OVERLAY_AST_LABELS_VISIBLE, (value: string): boolean => { return parseBoolean(value, DEFAULTS.WCS_OVERLAY.astLabelsVisible); }],
-        [PreferenceKeys.WCS_OVERLAY_WCS_TYPE, (value: string): string => { return value && WCSType.isValid(value) ? value : DEFAULTS.WCS_OVERLAY.wcsType; }],
-        [PreferenceKeys.WCS_OVERLAY_BEAM_VISIBLE, (value: string): boolean => { return parseBoolean(value, DEFAULTS.WCS_OVERLAY.beamVisible); }],
-        [PreferenceKeys.WCS_OVERLAY_BEAM_COLOR, (value: string): string => { return value && tinycolor(value).isValid() ? value : DEFAULTS.WCS_OVERLAY.beamColor; }],
-        [PreferenceKeys.WCS_OVERLAY_BEAM_TYPE, (value: BeamType): BeamType => { return value && (value === BeamType.Open || value === BeamType.Solid) ? value : DEFAULTS.WCS_OVERLAY.beamType; }],
-        [PreferenceKeys.WCS_OVERLAY_BEAM_WIDTH, (value: string): number => { return value && (isFinite(Number(value)) && Number(value) > 0 && Number(value) <= 10) ? Number(value) : DEFAULTS.WCS_OVERLAY.beamWidth; }],
-
-        [PreferenceKeys.REGION_COLOR, (value: string): string => { return value && tinycolor(value).isValid() ? value : DEFAULTS.REGION.regionColor; }],
-        [PreferenceKeys.REGION_LINE_WIDTH, (value: string): number => { return value && isFinite(Number(value)) && RegionStore.IsRegionLineWidthValid(Number(value)) ? Number(value) : DEFAULTS.REGION.regionLineWidth; }],
-        [PreferenceKeys.REGION_DASH_LENGTH, (value: string): number => { return value && isFinite(Number(value)) && RegionStore.IsRegionDashLengthValid(Number(value)) ? Number(value) : DEFAULTS.REGION.regionDashLength; }],
-        [PreferenceKeys.REGION_TYPE, (value: string): number => { return value && isFinite(Number(value)) && RegionStore.IsRegionTypeValid(Number(value)) ? Number(value) : DEFAULTS.REGION.regionType; }],
-        [PreferenceKeys.REGION_CREATION_MODE, (value: string): string => { return value && RegionCreationMode.isValid(value) ? value : DEFAULTS.REGION.regionCreationMode; }],
-
-        [PreferenceKeys.PERFORMANCE_IMAGE_COMPRESSION_QUALITY,
-            (value: string): number => { return value && isFinite(Number(value)) && CompressionQuality.isImageCompressionQualityValid(Number(value)) ? Number(value) : DEFAULTS.PERFORMANCE.imageCompressionQuality; }],
-        [PreferenceKeys.PERFORMANCE_ANIMATION_COMPRESSION_QUALITY,
-            (value: string): number => { return value && isFinite(Number(value)) && CompressionQuality.isAnimationCompressionQualityValid(Number(value)) ? Number(value) : DEFAULTS.PERFORMANCE.animationCompressionQuality; }],
-        [PreferenceKeys.PERFORMANCE_GPU_TILE_CACHE, (value: string): number => { return value && isFinite(Number(value)) && TileCache.isGPUTileCacheValid(Number(value)) ? Number(value) : DEFAULTS.PERFORMANCE.GPUTileCache; }],
-        [PreferenceKeys.PERFORMANCE_SYSTEM_TILE_CACHE, (value: string): number => { return value && isFinite(Number(value)) && TileCache.isSystemTileCacheValid(Number(value)) ? Number(value) : DEFAULTS.PERFORMANCE.systemTileCache; }],
-        [PreferenceKeys.PERFORMANCE_CONTOUR_DECIMATION,
-            (value: string): number => { return value && (isFinite(parseInt(value)) && parseInt(value) >= 1 && parseInt(value) <= 32) ? parseInt(value) : DEFAULTS.PERFORMANCE.contourDecimation; }],
-        [PreferenceKeys.PERFORMANCE_CONTOUR_COMPRESSION_LEVEL,
-            (value: string): number => { return value && (isFinite(parseInt(value)) && parseInt(value) >= 0 && parseInt(value) <= 19) ? parseInt(value) : DEFAULTS.PERFORMANCE.contourCompressionLevel; }],
-        [PreferenceKeys.PERFORMANCE_CONTOUR_CHUNK_SIZE,
-            (value: string): number => { return value && (isFinite(parseInt(value)) && parseInt(value) >= 1000 && parseInt(value) <= 1000000) ? parseInt(value) : DEFAULTS.PERFORMANCE.contourChunkSize; }],
-        [PreferenceKeys.PERFORMANCE_CONTOUR_CONTROL_MAP_WIDTH,
-            (value: string): number => { return value && isFinite(parseInt(value)) && ControlMap.IsWidthValid(parseInt(value)) ? parseInt(value) : DEFAULTS.PERFORMANCE.contourControlMapWidth; }],
-        [PreferenceKeys.PERFORMANCE_STREAM_CONTOURS_WHILE_ZOOMING, (value: string): boolean => { return parseBoolean(value, DEFAULTS.PERFORMANCE.streamContoursWhileZooming); }],
-        [PreferenceKeys.PERFORMANCE_LOW_BAND_WIDTH_MODE, (value: string): boolean => { return parseBoolean(value, DEFAULTS.PERFORMANCE.lowBandwidthMode); }],
-        [PreferenceKeys.PERFORMANCE_STOP_ANIMATION_PLAYBACK_MINUTES,
-            (value: string): number => { return value && (isFinite(parseInt(value)) && parseInt(value) > 0  && parseInt(value) <= 30) ? parseInt(value) : DEFAULTS.PERFORMANCE.stopAnimationPlaybackMinutes; }]
-    ]);
-
     // getters for global settings
     @computed get theme(): string {
-        return this.preferences.get(PreferenceKeys.GLOBAL_THEME);
+        return this.preferences.get(PreferenceKeys.GLOBAL_THEME) ?? DEFAULTS.GLOBAL.theme;
     }
 
     @computed get autoLaunch(): boolean {
-        return this.preferences.get(PreferenceKeys.GLOBAL_AUTOLAUNCH);
+        return this.preferences.get(PreferenceKeys.GLOBAL_AUTOLAUNCH) ?? DEFAULTS.GLOBAL.autoLaunch;
+    }
+
+    @computed get fileSortingString(): string {
+        return this.preferences.get(PreferenceKeys.SILENT_FILE_SORTING_STRING) ?? DEFAULTS.SILENT.fileSortingString;
+    }
+
+    @computed get fileFilteringType(): FileFilteringType {
+        return this.preferences.get(PreferenceKeys.SILENT_FILE_FILTERING_TYPE) ?? DEFAULTS.SILENT.fileFilteringType;
     }
 
     @computed get layout(): string {
-        return this.preferences.get(PreferenceKeys.GLOBAL_LAYOUT);
+        return this.preferences.get(PreferenceKeys.GLOBAL_LAYOUT) ?? DEFAULTS.GLOBAL.layout;
     }
 
     @computed get cursorPosition(): string {
-        return this.preferences.get(PreferenceKeys.GLOBAL_CURSOR_POSITION);
+        return this.preferences.get(PreferenceKeys.GLOBAL_CURSOR_POSITION) ?? DEFAULTS.GLOBAL.cursorPosition;
     }
 
     @computed get zoomMode(): string {
-        return this.preferences.get(PreferenceKeys.GLOBAL_ZOOM_MODE);
+        return this.preferences.get(PreferenceKeys.GLOBAL_ZOOM_MODE) ?? DEFAULTS.GLOBAL.zoomMode;
     }
 
     @computed get zoomPoint(): string {
-        return this.preferences.get(PreferenceKeys.GLOBAL_ZOOM_POINT);
+        return this.preferences.get(PreferenceKeys.GLOBAL_ZOOM_POINT) ?? DEFAULTS.GLOBAL.zoomPoint;
     }
 
     @computed get dragPanning(): boolean {
-        return this.preferences.get(PreferenceKeys.GLOBAL_DRAG_PANNING);
+        return this.preferences.get(PreferenceKeys.GLOBAL_DRAG_PANNING) ?? DEFAULTS.GLOBAL.dragPanning;
     }
 
     @computed get spectralMatchingType(): SpectralType {
-        return this.preferences.get(PreferenceKeys.GLOBAL_SPECTRAL_MATCHING_TYPE);
+        return this.preferences.get(PreferenceKeys.GLOBAL_SPECTRAL_MATCHING_TYPE) ?? DEFAULTS.GLOBAL.spectralMatchingType;
     }
 
     @computed get autoWCSMatching(): WCSMatchingType {
-        return this.preferences.get(PreferenceKeys.GLOBAL_AUTO_WCS_MATCHING);
+        return this.preferences.get(PreferenceKeys.GLOBAL_AUTO_WCS_MATCHING) ?? DEFAULTS.GLOBAL.autoWCSMatching;
     }
 
     // getters for render config
     @computed get scaling(): FrameScaling {
-        return this.preferences.get(PreferenceKeys.RENDER_CONFIG_SCALING);
+        return this.preferences.get(PreferenceKeys.RENDER_CONFIG_SCALING) ?? DEFAULTS.RENDER_CONFIG.scaling;
     }
 
     @computed get colormap(): string {
-        return this.preferences.get(PreferenceKeys.RENDER_CONFIG_COLORMAP);
+        return this.preferences.get(PreferenceKeys.RENDER_CONFIG_COLORMAP) ?? DEFAULTS.RENDER_CONFIG.colormap;
     }
 
     @computed get percentile(): number {
-        return this.preferences.get(PreferenceKeys.RENDER_CONFIG_PERCENTILE);
+        return this.preferences.get(PreferenceKeys.RENDER_CONFIG_PERCENTILE) ?? DEFAULTS.RENDER_CONFIG.percentile;
     }
 
     @computed get scalingAlpha(): number {
-        return this.preferences.get(PreferenceKeys.RENDER_CONFIG_SCALING_ALPHA);
+        return this.preferences.get(PreferenceKeys.RENDER_CONFIG_SCALING_ALPHA) ?? DEFAULTS.RENDER_CONFIG.scalingAlpha;
     }
 
     @computed get scalingGamma(): number {
-        return this.preferences.get(PreferenceKeys.RENDER_CONFIG_SCALING_GAMMA);
+        return this.preferences.get(PreferenceKeys.RENDER_CONFIG_SCALING_GAMMA) ?? DEFAULTS.RENDER_CONFIG.scalingGamma;
     }
 
     @computed get nanColorHex(): string {
-        return this.preferences.get(PreferenceKeys.RENDER_CONFIG_NAN_COLOR_HEX);
+        return this.preferences.get(PreferenceKeys.RENDER_CONFIG_NAN_COLOR_HEX) ?? DEFAULTS.RENDER_CONFIG.nanColorHex;
     }
 
     @computed get nanAlpha(): number {
-        return this.preferences.get(PreferenceKeys.RENDER_CONFIG_NAN_ALPHA);
+        return this.preferences.get(PreferenceKeys.RENDER_CONFIG_NAN_ALPHA) ?? DEFAULTS.RENDER_CONFIG.nanAlpha;
     }
 
     // getters for Contour Config
     @computed get contourGeneratorType(): ContourGeneratorType {
-        return this.preferences.get(PreferenceKeys.CONTOUR_CONFIG_CONTOUR_GENERATOR_TYPE);
+        return this.preferences.get(PreferenceKeys.CONTOUR_CONFIG_CONTOUR_GENERATOR_TYPE) ?? DEFAULTS.CONTOUR_CONFIG.contourGeneratorType;
     }
 
     @computed get contourColormapEnabled(): boolean {
-        return this.preferences.get(PreferenceKeys.CONTOUR_CONFIG_CONTOUR_COLORMAP_ENABLED);
+        return this.preferences.get(PreferenceKeys.CONTOUR_CONFIG_CONTOUR_COLORMAP_ENABLED) ?? DEFAULTS.CONTOUR_CONFIG.contourColormapEnabled;
     }
 
     @computed get contourColormap(): string {
-        return this.preferences.get(PreferenceKeys.CONTOUR_CONFIG_CONTOUR_COLORMAP);
+        return this.preferences.get(PreferenceKeys.CONTOUR_CONFIG_CONTOUR_COLORMAP) ?? DEFAULTS.CONTOUR_CONFIG.contourColormap;
     }
 
     @computed get contourColor(): string {
-        return this.preferences.get(PreferenceKeys.CONTOUR_CONFIG_CONTOUR_COLOR);
+        return this.preferences.get(PreferenceKeys.CONTOUR_CONFIG_CONTOUR_COLOR) ?? DEFAULTS.CONTOUR_CONFIG.contourColor;
     }
 
     @computed get contourSmoothingMode(): CARTA.SmoothingMode {
-        return this.preferences.get(PreferenceKeys.CONTOUR_CONFIG_CONTOUR_SMOOTHING_MODE);
+        return this.preferences.get(PreferenceKeys.CONTOUR_CONFIG_CONTOUR_SMOOTHING_MODE) ?? DEFAULTS.CONTOUR_CONFIG.contourSmoothingMode;
     }
 
     @computed get contourSmoothingFactor(): number {
-        return this.preferences.get(PreferenceKeys.CONTOUR_CONFIG_CONTOUR_SMOOTHING_FACTOR);
+        return this.preferences.get(PreferenceKeys.CONTOUR_CONFIG_CONTOUR_SMOOTHING_FACTOR) ?? DEFAULTS.CONTOUR_CONFIG.contourSmoothingFactor;
     }
 
     @computed get contourNumLevels(): number {
-        return this.preferences.get(PreferenceKeys.CONTOUR_CONFIG_CONTOUR_NUM_LEVELS);
+        return this.preferences.get(PreferenceKeys.CONTOUR_CONFIG_CONTOUR_NUM_LEVELS) ?? DEFAULTS.CONTOUR_CONFIG.contourNumLevels;
     }
 
     @computed get contourThickness(): number {
-        return this.preferences.get(PreferenceKeys.CONTOUR_CONFIG_CONTOUR_THICKNESS);
+        return this.preferences.get(PreferenceKeys.CONTOUR_CONFIG_CONTOUR_THICKNESS) ?? DEFAULTS.CONTOUR_CONFIG.contourThickness;
     }
 
     @computed get contourDecimation(): number {
-        return this.preferences.get(PreferenceKeys.PERFORMANCE_CONTOUR_DECIMATION);
+        return this.preferences.get(PreferenceKeys.PERFORMANCE_CONTOUR_DECIMATION) ?? DEFAULTS.PERFORMANCE.contourDecimation;
     }
 
     @computed get contourCompressionLevel(): number {
-        return this.preferences.get(PreferenceKeys.PERFORMANCE_CONTOUR_COMPRESSION_LEVEL);
+        return this.preferences.get(PreferenceKeys.PERFORMANCE_CONTOUR_COMPRESSION_LEVEL) ?? DEFAULTS.PERFORMANCE.contourCompressionLevel;
     }
 
     @computed get contourChunkSize(): number {
-        return this.preferences.get(PreferenceKeys.PERFORMANCE_CONTOUR_CHUNK_SIZE);
+        return this.preferences.get(PreferenceKeys.PERFORMANCE_CONTOUR_CHUNK_SIZE) ?? DEFAULTS.PERFORMANCE.contourChunkSize;
     }
 
     // getters for WCS overlay
     @computed get astColor(): number {
-        return this.preferences.get(PreferenceKeys.WCS_OVERLAY_AST_COLOR);
+        return this.preferences.get(PreferenceKeys.WCS_OVERLAY_AST_COLOR) ?? DEFAULTS.WCS_OVERLAY.astColor;
     }
 
     @computed get astGridVisible(): boolean {
-        return this.preferences.get(PreferenceKeys.WCS_OVERLAY_AST_GRID_VISIBLE);
+        return this.preferences.get(PreferenceKeys.WCS_OVERLAY_AST_GRID_VISIBLE) ?? DEFAULTS.WCS_OVERLAY.astGridVisible;
     }
 
     @computed get astLabelsVisible(): boolean {
-        return this.preferences.get(PreferenceKeys.WCS_OVERLAY_AST_LABELS_VISIBLE);
+        return this.preferences.get(PreferenceKeys.WCS_OVERLAY_AST_LABELS_VISIBLE) ?? DEFAULTS.WCS_OVERLAY.astLabelsVisible;
     }
 
     @computed get wcsType(): string {
-        return this.preferences.get(PreferenceKeys.WCS_OVERLAY_WCS_TYPE);
+        return this.preferences.get(PreferenceKeys.WCS_OVERLAY_WCS_TYPE) ?? DEFAULTS.WCS_OVERLAY.wcsType;
     }
 
     @computed get beamVisible(): boolean {
-        return this.preferences.get(PreferenceKeys.WCS_OVERLAY_BEAM_VISIBLE);
+        return this.preferences.get(PreferenceKeys.WCS_OVERLAY_BEAM_VISIBLE) ?? DEFAULTS.WCS_OVERLAY.beamVisible;
     }
 
     @computed get beamColor(): string {
-        return this.preferences.get(PreferenceKeys.WCS_OVERLAY_BEAM_COLOR);
+        return this.preferences.get(PreferenceKeys.WCS_OVERLAY_BEAM_COLOR) ?? DEFAULTS.WCS_OVERLAY.beamColor;
     }
 
     @computed get beamType(): BeamType {
-        return this.preferences.get(PreferenceKeys.WCS_OVERLAY_BEAM_TYPE);
+        return this.preferences.get(PreferenceKeys.WCS_OVERLAY_BEAM_TYPE) ?? DEFAULTS.WCS_OVERLAY.beamType;
     }
 
     @computed get beamWidth(): number {
-        return this.preferences.get(PreferenceKeys.WCS_OVERLAY_BEAM_WIDTH);
+        return this.preferences.get(PreferenceKeys.WCS_OVERLAY_BEAM_WIDTH) ?? DEFAULTS.WCS_OVERLAY.beamWidth;
     }
 
     // getters for region
     @computed get regionColor(): string {
-        return this.preferences.get(PreferenceKeys.REGION_COLOR);
+        return this.preferences.get(PreferenceKeys.REGION_COLOR) ?? DEFAULTS.REGION.regionColor;
     }
 
     @computed get regionLineWidth(): number {
-        return this.preferences.get(PreferenceKeys.REGION_LINE_WIDTH);
+        return this.preferences.get(PreferenceKeys.REGION_LINE_WIDTH) ?? DEFAULTS.REGION.regionLineWidth;
     }
 
     @computed get regionDashLength(): number {
-        return this.preferences.get(PreferenceKeys.REGION_DASH_LENGTH);
+        return this.preferences.get(PreferenceKeys.REGION_DASH_LENGTH) ?? DEFAULTS.REGION.regionDashLength;
     }
 
     @computed get regionType(): CARTA.RegionType {
-        return this.preferences.get(PreferenceKeys.REGION_TYPE);
+        return this.preferences.get(PreferenceKeys.REGION_TYPE) ?? DEFAULTS.REGION.regionType;
     }
 
     @computed get regionCreationMode(): string {
-        return this.preferences.get(PreferenceKeys.REGION_CREATION_MODE);
+        return this.preferences.get(PreferenceKeys.REGION_CREATION_MODE) ?? DEFAULTS.REGION.regionCreationMode;
+    }
+
+    @computed get regionSize(): number {
+        return this.preferences.get(PreferenceKeys.REGION_SIZE) ?? DEFAULTS.REGION.regionSize;
     }
 
     // getters for performance
     @computed get imageCompressionQuality(): number {
-        return this.preferences.get(PreferenceKeys.PERFORMANCE_IMAGE_COMPRESSION_QUALITY);
+        return this.preferences.get(PreferenceKeys.PERFORMANCE_IMAGE_COMPRESSION_QUALITY) ?? DEFAULTS.PERFORMANCE.imageCompressionQuality;
     }
 
     @computed get animationCompressionQuality(): number {
-        return this.preferences.get(PreferenceKeys.PERFORMANCE_ANIMATION_COMPRESSION_QUALITY);
+        return this.preferences.get(PreferenceKeys.PERFORMANCE_ANIMATION_COMPRESSION_QUALITY) ?? DEFAULTS.PERFORMANCE.animationCompressionQuality;
     }
 
     @computed get gpuTileCache(): number {
-        return this.preferences.get(PreferenceKeys.PERFORMANCE_GPU_TILE_CACHE);
+        return this.preferences.get(PreferenceKeys.PERFORMANCE_GPU_TILE_CACHE) ?? DEFAULTS.PERFORMANCE.GPUTileCache;
     }
 
     @computed get systemTileCache(): number {
-        return this.preferences.get(PreferenceKeys.PERFORMANCE_SYSTEM_TILE_CACHE);
+        return this.preferences.get(PreferenceKeys.PERFORMANCE_SYSTEM_TILE_CACHE) ?? DEFAULTS.PERFORMANCE.systemTileCache;
     }
 
     @computed get contourControlMapWidth(): number {
-        return this.preferences.get(PreferenceKeys.PERFORMANCE_CONTOUR_CONTROL_MAP_WIDTH);
+        return this.preferences.get(PreferenceKeys.PERFORMANCE_CONTOUR_CONTROL_MAP_WIDTH) ?? DEFAULTS.PERFORMANCE.contourControlMapWidth;
     }
 
     @computed get streamContoursWhileZooming(): boolean {
-        return this.preferences.get(PreferenceKeys.PERFORMANCE_STREAM_CONTOURS_WHILE_ZOOMING);
+        return this.preferences.get(PreferenceKeys.PERFORMANCE_STREAM_CONTOURS_WHILE_ZOOMING) ?? DEFAULTS.PERFORMANCE.streamContoursWhileZooming;
     }
 
     @computed get lowBandwidthMode(): boolean {
-        return this.preferences.get(PreferenceKeys.PERFORMANCE_LOW_BAND_WIDTH_MODE);
+        return this.preferences.get(PreferenceKeys.PERFORMANCE_LOW_BAND_WIDTH_MODE) ?? DEFAULTS.PERFORMANCE.lowBandwidthMode;
     }
 
     @computed get stopAnimationPlaybackMinutes(): number {
-        return this.preferences.get(PreferenceKeys.PERFORMANCE_STOP_ANIMATION_PLAYBACK_MINUTES);
+        return this.preferences.get(PreferenceKeys.PERFORMANCE_STOP_ANIMATION_PLAYBACK_MINUTES) ?? DEFAULTS.PERFORMANCE.stopAnimationPlaybackMinutes;
     }
 
     public isEventLoggingEnabled = (eventType: CARTA.EventType): boolean => {
-        return Event.isEventTypeValid(eventType) && this.preferences.get(PreferenceKeys.LOG_EVENT).get(eventType);
+        if (Event.isEventTypeValid(eventType)) {
+            const logEvents = this.preferences.get(PreferenceKeys.LOG_EVENT);
+            if (logEvents && Array.isArray(logEvents)) {
+                return logEvents.includes(eventType);
+            }
+        }
+        return false;
     };
 
     @computed get isZoomRAWMode(): boolean {
-        return this.zoomMode === Zoom.RAW;
+        return this.zoomMode === Zoom.FULL;
     }
 
     @computed get isRegionCornerMode(): boolean {
@@ -487,296 +385,216 @@ export class PreferenceStore {
     }
 
     @computed get enabledLoggingEventNames(): string[] {
-        let eventNames: string[] = [];
-        this.preferences.get(PreferenceKeys.LOG_EVENT).forEach((isChecked, eventType) => {
-            if (isChecked) {
-                eventNames.push(Event.getEventNameFromType(eventType));
-            }
-        });
-        return eventNames;
+        return this.preferences.get(PreferenceKeys.LOG_EVENT) ?? [];
     }
 
-    @action setPreference = (key: PreferenceKeys, value: any): void => {
-        if (key === null || value === null) {
-            return;
-        }
-
-        if (!this.preferences.has(key)) {
-            return;
+    @action setPreference = async (key: PreferenceKeys, value: any) => {
+        if (!key) {
+            return false;
         }
 
         // set preference in variable
         if (key === PreferenceKeys.LOG_EVENT) {
             if (!Event.isEventTypeValid(value)) {
-                return;
+                return false;
             }
-            const eventMap = this.preferences.get(PreferenceKeys.LOG_EVENT);
-            eventMap.set(value, !eventMap.get(value));
+            let eventList = this.preferences.get(PreferenceKeys.LOG_EVENT);
+            if (!eventList || !Array.isArray(eventList)) {
+                eventList = [];
+            }
+            if (eventList.includes(value)) {
+                eventList = eventList.filter(e => e !== value);
+            } else {
+                eventList.push(value);
+            }
+            this.preferences.set(PreferenceKeys.LOG_EVENT, eventList);
+            return await ApiService.Instance.setPreference(PreferenceKeys.LOG_EVENT, eventList);
         } else {
             this.preferences.set(key, value);
         }
 
-        // save prefernce to local storage/server db
-        const keyStr: string = KEY_TO_STRING.get(key);
-        if (!keyStr) {
-            return;
-        }
-        let valueStr: string;
-        if (key === PreferenceKeys.LOG_EVENT) {
-            valueStr = JSON.stringify(this.enabledLoggingEventNames);
-        } else {
-            switch (typeof value) {
-                case "boolean":
-                    valueStr = value ? "true" : "false";
-                    break;
-                case "number":
-                    valueStr = value.toString(10);
-                    break;
-                case "string":
-                    valueStr = value;
-                    break;
-                default:
-                    return;
-            }
-        }
+        return await ApiService.Instance.setPreference(key, value);
+    };
 
-        if (this.supportsServer) {
-            this.savePreferencesToServer(keyStr, valueStr);
-        } else {
-            localStorage.setItem(keyStr, valueStr);
+    @action clearPreferences = async (keys: PreferenceKeys[]) => {
+        for (const key of keys) {
+            this.preferences.delete(key);
         }
+        await ApiService.Instance.clearPreferences(keys);
     };
 
     // reset functions
+    @action resetSilentSettings = () => {
+        this.clearPreferences([PreferenceKeys.SILENT_FILE_SORTING_STRING, PreferenceKeys.SILENT_FILE_FILTERING_TYPE]);
+    };
+
     @action resetGlobalSettings = () => {
-        this.setPreference(PreferenceKeys.GLOBAL_THEME, DEFAULTS.GLOBAL.theme);
-        this.setPreference(PreferenceKeys.GLOBAL_AUTOLAUNCH, DEFAULTS.GLOBAL.autoLaunch);
-        this.setPreference(PreferenceKeys.GLOBAL_LAYOUT, DEFAULTS.GLOBAL.layout);
-        this.setPreference(PreferenceKeys.GLOBAL_CURSOR_POSITION, DEFAULTS.GLOBAL.cursorPosition);
-        this.setPreference(PreferenceKeys.GLOBAL_ZOOM_MODE, DEFAULTS.GLOBAL.zoomMode);
-        this.setPreference(PreferenceKeys.GLOBAL_ZOOM_POINT, DEFAULTS.GLOBAL.zoomPoint);
-        this.setPreference(PreferenceKeys.GLOBAL_DRAG_PANNING, DEFAULTS.GLOBAL.dragPanning);
-        this.setPreference(PreferenceKeys.GLOBAL_SPECTRAL_MATCHING_TYPE, DEFAULTS.GLOBAL.spectralMatchingType);
-        this.setPreference(PreferenceKeys.GLOBAL_AUTO_WCS_MATCHING, DEFAULTS.GLOBAL.autoWCSMatching);
+        this.clearPreferences([
+            PreferenceKeys.GLOBAL_THEME, PreferenceKeys.GLOBAL_AUTOLAUNCH, PreferenceKeys.GLOBAL_LAYOUT,
+            PreferenceKeys.GLOBAL_CURSOR_POSITION, PreferenceKeys.GLOBAL_ZOOM_MODE, PreferenceKeys.GLOBAL_ZOOM_POINT,
+            PreferenceKeys.GLOBAL_DRAG_PANNING, PreferenceKeys.GLOBAL_SPECTRAL_MATCHING_TYPE, PreferenceKeys.GLOBAL_AUTO_WCS_MATCHING]);
     };
 
     @action resetRenderConfigSettings = () => {
-        this.setPreference(PreferenceKeys.RENDER_CONFIG_SCALING, DEFAULTS.RENDER_CONFIG.scaling);
-        this.setPreference(PreferenceKeys.RENDER_CONFIG_COLORMAP, DEFAULTS.RENDER_CONFIG.colormap);
-        this.setPreference(PreferenceKeys.RENDER_CONFIG_PERCENTILE, DEFAULTS.RENDER_CONFIG.percentile);
-        this.setPreference(PreferenceKeys.RENDER_CONFIG_SCALING_ALPHA, DEFAULTS.RENDER_CONFIG.scalingAlpha);
-        this.setPreference(PreferenceKeys.RENDER_CONFIG_SCALING_GAMMA, DEFAULTS.RENDER_CONFIG.scalingGamma);
-        this.setPreference(PreferenceKeys.RENDER_CONFIG_NAN_COLOR_HEX, DEFAULTS.RENDER_CONFIG.nanColorHex);
-        this.setPreference(PreferenceKeys.RENDER_CONFIG_NAN_ALPHA, DEFAULTS.RENDER_CONFIG.nanAlpha);
+        this.clearPreferences([
+            PreferenceKeys.RENDER_CONFIG_COLORMAP, PreferenceKeys.RENDER_CONFIG_NAN_ALPHA, PreferenceKeys.RENDER_CONFIG_NAN_COLOR_HEX,
+            PreferenceKeys.RENDER_CONFIG_PERCENTILE, PreferenceKeys.RENDER_CONFIG_SCALING, PreferenceKeys.RENDER_CONFIG_SCALING_ALPHA,
+            PreferenceKeys.RENDER_CONFIG_SCALING_GAMMA
+        ]);
     };
 
     @action resetContourConfigSettings = () => {
-        this.setPreference(PreferenceKeys.CONTOUR_CONFIG_CONTOUR_GENERATOR_TYPE, DEFAULTS.CONTOUR_CONFIG.contourGeneratorType);
-        this.setPreference(PreferenceKeys.CONTOUR_CONFIG_CONTOUR_SMOOTHING_MODE, DEFAULTS.CONTOUR_CONFIG.contourSmoothingMode);
-        this.setPreference(PreferenceKeys.CONTOUR_CONFIG_CONTOUR_SMOOTHING_FACTOR, DEFAULTS.CONTOUR_CONFIG.contourSmoothingFactor);
-        this.setPreference(PreferenceKeys.CONTOUR_CONFIG_CONTOUR_NUM_LEVELS, DEFAULTS.CONTOUR_CONFIG.contourNumLevels);
-        this.setPreference(PreferenceKeys.CONTOUR_CONFIG_CONTOUR_THICKNESS, DEFAULTS.CONTOUR_CONFIG.contourThickness);
-        this.setPreference(PreferenceKeys.CONTOUR_CONFIG_CONTOUR_COLOR, DEFAULTS.CONTOUR_CONFIG.contourColor);
-        this.setPreference(PreferenceKeys.CONTOUR_CONFIG_CONTOUR_COLORMAP, DEFAULTS.CONTOUR_CONFIG.contourColormap);
-        this.setPreference(PreferenceKeys.CONTOUR_CONFIG_CONTOUR_COLORMAP_ENABLED, DEFAULTS.CONTOUR_CONFIG.contourColormapEnabled);
+        this.clearPreferences([
+            PreferenceKeys.CONTOUR_CONFIG_CONTOUR_COLOR, PreferenceKeys.CONTOUR_CONFIG_CONTOUR_COLORMAP, PreferenceKeys.CONTOUR_CONFIG_CONTOUR_COLORMAP_ENABLED,
+            PreferenceKeys.CONTOUR_CONFIG_CONTOUR_GENERATOR_TYPE, PreferenceKeys.CONTOUR_CONFIG_CONTOUR_NUM_LEVELS,
+            PreferenceKeys.CONTOUR_CONFIG_CONTOUR_SMOOTHING_FACTOR, PreferenceKeys.CONTOUR_CONFIG_CONTOUR_SMOOTHING_MODE,
+            PreferenceKeys.CONTOUR_CONFIG_CONTOUR_THICKNESS
+        ]);
     };
 
     @action resetOverlayConfigSettings = () => {
-        this.setPreference(PreferenceKeys.WCS_OVERLAY_AST_COLOR, DEFAULTS.WCS_OVERLAY.astColor);
-        this.setPreference(PreferenceKeys.WCS_OVERLAY_AST_GRID_VISIBLE, DEFAULTS.WCS_OVERLAY.astGridVisible);
-        this.setPreference(PreferenceKeys.WCS_OVERLAY_AST_LABELS_VISIBLE, DEFAULTS.WCS_OVERLAY.astLabelsVisible);
-        this.setPreference(PreferenceKeys.WCS_OVERLAY_WCS_TYPE, DEFAULTS.WCS_OVERLAY.wcsType);
-        this.setPreference(PreferenceKeys.WCS_OVERLAY_BEAM_VISIBLE, DEFAULTS.WCS_OVERLAY.beamVisible);
-        this.setPreference(PreferenceKeys.WCS_OVERLAY_BEAM_COLOR, DEFAULTS.WCS_OVERLAY.beamColor);
-        this.setPreference(PreferenceKeys.WCS_OVERLAY_BEAM_TYPE, DEFAULTS.WCS_OVERLAY.beamType);
-        this.setPreference(PreferenceKeys.WCS_OVERLAY_BEAM_WIDTH, DEFAULTS.WCS_OVERLAY.beamWidth);
+        this.clearPreferences([
+            PreferenceKeys.WCS_OVERLAY_AST_COLOR, PreferenceKeys.WCS_OVERLAY_AST_GRID_VISIBLE, PreferenceKeys.WCS_OVERLAY_AST_LABELS_VISIBLE,
+            PreferenceKeys.WCS_OVERLAY_BEAM_COLOR, PreferenceKeys.WCS_OVERLAY_BEAM_TYPE, PreferenceKeys.WCS_OVERLAY_BEAM_VISIBLE,
+            PreferenceKeys.WCS_OVERLAY_BEAM_WIDTH, PreferenceKeys.WCS_OVERLAY_WCS_TYPE
+        ]);
     };
 
     @action resetRegionSettings = () => {
-        this.setPreference(PreferenceKeys.REGION_COLOR, DEFAULTS.REGION.regionColor);
-        this.setPreference(PreferenceKeys.REGION_LINE_WIDTH, DEFAULTS.REGION.regionLineWidth);
-        this.setPreference(PreferenceKeys.REGION_DASH_LENGTH, DEFAULTS.REGION.regionDashLength);
-        this.setPreference(PreferenceKeys.REGION_TYPE, DEFAULTS.REGION.regionType);
-        this.setPreference(PreferenceKeys.REGION_CREATION_MODE, DEFAULTS.REGION.regionCreationMode);
+        this.clearPreferences([
+            PreferenceKeys.REGION_COLOR, PreferenceKeys.REGION_CREATION_MODE, PreferenceKeys.REGION_DASH_LENGTH,
+            PreferenceKeys.REGION_LINE_WIDTH, PreferenceKeys.REGION_TYPE, PreferenceKeys.REGION_SIZE
+        ]);
     };
 
     @action resetPerformanceSettings = () => {
-        this.setPreference(PreferenceKeys.PERFORMANCE_IMAGE_COMPRESSION_QUALITY, DEFAULTS.PERFORMANCE.imageCompressionQuality);
-        this.setPreference(PreferenceKeys.PERFORMANCE_ANIMATION_COMPRESSION_QUALITY, DEFAULTS.PERFORMANCE.animationCompressionQuality);
-        this.setPreference(PreferenceKeys.PERFORMANCE_GPU_TILE_CACHE, DEFAULTS.PERFORMANCE.GPUTileCache);
-        this.setPreference(PreferenceKeys.PERFORMANCE_SYSTEM_TILE_CACHE, DEFAULTS.PERFORMANCE.systemTileCache);
-        this.setPreference(PreferenceKeys.PERFORMANCE_CONTOUR_DECIMATION, DEFAULTS.PERFORMANCE.contourDecimation);
-        this.setPreference(PreferenceKeys.PERFORMANCE_CONTOUR_COMPRESSION_LEVEL, DEFAULTS.PERFORMANCE.contourCompressionLevel);
-        this.setPreference(PreferenceKeys.PERFORMANCE_CONTOUR_CHUNK_SIZE, DEFAULTS.PERFORMANCE.contourChunkSize);
-        this.setPreference(PreferenceKeys.PERFORMANCE_CONTOUR_CONTROL_MAP_WIDTH, DEFAULTS.PERFORMANCE.contourControlMapWidth);
-        this.setPreference(PreferenceKeys.PERFORMANCE_STREAM_CONTOURS_WHILE_ZOOMING, DEFAULTS.PERFORMANCE.streamContoursWhileZooming);
-        this.setPreference(PreferenceKeys.PERFORMANCE_LOW_BAND_WIDTH_MODE, DEFAULTS.PERFORMANCE.lowBandwidthMode);
-        this.setPreference(PreferenceKeys.PERFORMANCE_STOP_ANIMATION_PLAYBACK_MINUTES, DEFAULTS.PERFORMANCE.stopAnimationPlaybackMinutes);
+        this.clearPreferences([
+            PreferenceKeys.PERFORMANCE_ANIMATION_COMPRESSION_QUALITY, PreferenceKeys.PERFORMANCE_CONTOUR_CHUNK_SIZE, PreferenceKeys.PERFORMANCE_CONTOUR_COMPRESSION_LEVEL,
+            PreferenceKeys.PERFORMANCE_CONTOUR_CONTROL_MAP_WIDTH, PreferenceKeys.PERFORMANCE_CONTOUR_DECIMATION, PreferenceKeys.PERFORMANCE_GPU_TILE_CACHE,
+            PreferenceKeys.PERFORMANCE_IMAGE_COMPRESSION_QUALITY, PreferenceKeys.PERFORMANCE_LOW_BAND_WIDTH_MODE, PreferenceKeys.PERFORMANCE_STOP_ANIMATION_PLAYBACK_MINUTES,
+            PreferenceKeys.PERFORMANCE_STREAM_CONTOURS_WHILE_ZOOMING, PreferenceKeys.PERFORMANCE_SYSTEM_TILE_CACHE
+        ]);
     };
 
     @action resetLogEventSettings = () => {
-        this.preferences.get(PreferenceKeys.LOG_EVENT).forEach((value, key, map) => map.set(key, DEFAULTS.LOG_EVENT.eventLoggingEnabled));
-        if (this.supportsServer) {
-            this.savePreferencesToServer(KEY_TO_STRING.get(PreferenceKeys.LOG_EVENT), JSON.stringify(this.enabledLoggingEventNames));
-        } else {
-            localStorage.setItem(KEY_TO_STRING.get(PreferenceKeys.LOG_EVENT), JSON.stringify(this.enabledLoggingEventNames));
+        this.clearPreferences([PreferenceKeys.LOG_EVENT]);
+    };
+
+    @action fetchPreferences = async () => {
+        await this.upgradePreferences();
+        await this.getPreferences();
+    };
+
+    private getPreferences = async () => {
+        const preferences = await ApiService.Instance.getPreferences();
+        if (preferences) {
+            const keys = Object.keys(preferences);
+            for (const key of keys) {
+                const val = preferences[key];
+                this.preferences.set(key as PreferenceKeys, val);
+            }
         }
     };
 
-    public initUserDefinedPreferences = (supportsServer: boolean, serverPreference: { [k: string]: string; }) => {
-        this.supportsServer = supportsServer;
-        if (supportsServer) {
-            this.initPreferenceFromServer(serverPreference);
-        } else {
-            this.initPreferenceFromLocalStorage();
-        }
-    }
+    private upgradePreferences = async () => {
+        if (!localStorage.getItem("preferences")) {
+            // perform localstorage upgrade
 
-    private initPreferenceFromDefault = () => {
-        this.preferences = new Map<PreferenceKeys, any>([
-            [PreferenceKeys.GLOBAL_THEME, DEFAULTS.GLOBAL.theme],
-            [PreferenceKeys.GLOBAL_AUTOLAUNCH, DEFAULTS.GLOBAL.autoLaunch],
-            [PreferenceKeys.GLOBAL_LAYOUT, DEFAULTS.GLOBAL.layout],
-            [PreferenceKeys.GLOBAL_CURSOR_POSITION, DEFAULTS.GLOBAL.cursorPosition],
-            [PreferenceKeys.GLOBAL_ZOOM_MODE, DEFAULTS.GLOBAL.zoomMode],
-            [PreferenceKeys.GLOBAL_ZOOM_POINT, DEFAULTS.GLOBAL.zoomPoint],
-            [PreferenceKeys.GLOBAL_DRAG_PANNING, DEFAULTS.GLOBAL.dragPanning],
-            [PreferenceKeys.GLOBAL_SPECTRAL_MATCHING_TYPE, DEFAULTS.GLOBAL.spectralMatchingType],
-            [PreferenceKeys.GLOBAL_AUTO_WCS_MATCHING, DEFAULTS.GLOBAL.autoWCSMatching],
+            // Strings
+            const stringKeys = [
+                PreferenceKeys.GLOBAL_THEME, PreferenceKeys.GLOBAL_LAYOUT, PreferenceKeys.GLOBAL_CURSOR_POSITION, PreferenceKeys.GLOBAL_ZOOM_MODE,
+                PreferenceKeys.GLOBAL_ZOOM_POINT, PreferenceKeys.GLOBAL_SPECTRAL_MATCHING_TYPE, PreferenceKeys.RENDER_CONFIG_COLORMAP, PreferenceKeys.RENDER_CONFIG_NAN_COLOR_HEX,
+                PreferenceKeys.CONTOUR_CONFIG_CONTOUR_GENERATOR_TYPE, PreferenceKeys.CONTOUR_CONFIG_CONTOUR_COLOR, PreferenceKeys.CONTOUR_CONFIG_CONTOUR_COLORMAP,
+                PreferenceKeys.WCS_OVERLAY_WCS_TYPE, PreferenceKeys.WCS_OVERLAY_BEAM_COLOR, PreferenceKeys.WCS_OVERLAY_BEAM_TYPE, PreferenceKeys.REGION_COLOR,
+                PreferenceKeys.REGION_CREATION_MODE
+            ];
 
-            [PreferenceKeys.RENDER_CONFIG_SCALING, DEFAULTS.RENDER_CONFIG.scaling],
-            [PreferenceKeys.RENDER_CONFIG_COLORMAP, DEFAULTS.RENDER_CONFIG.colormap],
-            [PreferenceKeys.RENDER_CONFIG_PERCENTILE, DEFAULTS.RENDER_CONFIG.percentile],
-            [PreferenceKeys.RENDER_CONFIG_SCALING_ALPHA, DEFAULTS.RENDER_CONFIG.scalingAlpha],
-            [PreferenceKeys.RENDER_CONFIG_SCALING_GAMMA, DEFAULTS.RENDER_CONFIG.scalingGamma],
-            [PreferenceKeys.RENDER_CONFIG_NAN_COLOR_HEX, DEFAULTS.RENDER_CONFIG.nanColorHex],
-            [PreferenceKeys.RENDER_CONFIG_NAN_ALPHA, DEFAULTS.RENDER_CONFIG.nanAlpha],
+            const intKeys = [
+                PreferenceKeys.GLOBAL_AUTO_WCS_MATCHING, PreferenceKeys.RENDER_CONFIG_SCALING, PreferenceKeys.CONTOUR_CONFIG_CONTOUR_SMOOTHING_MODE,
+                PreferenceKeys.CONTOUR_CONFIG_CONTOUR_SMOOTHING_FACTOR, PreferenceKeys.CONTOUR_CONFIG_CONTOUR_NUM_LEVELS, PreferenceKeys.WCS_OVERLAY_AST_COLOR,
+                PreferenceKeys.REGION_DASH_LENGTH, PreferenceKeys.REGION_TYPE, PreferenceKeys.PERFORMANCE_IMAGE_COMPRESSION_QUALITY, PreferenceKeys.PERFORMANCE_ANIMATION_COMPRESSION_QUALITY,
+                PreferenceKeys.PERFORMANCE_GPU_TILE_CACHE, PreferenceKeys.PERFORMANCE_SYSTEM_TILE_CACHE, PreferenceKeys.PERFORMANCE_CONTOUR_DECIMATION,
+                PreferenceKeys.PERFORMANCE_CONTOUR_COMPRESSION_LEVEL, PreferenceKeys.PERFORMANCE_CONTOUR_CHUNK_SIZE, PreferenceKeys.PERFORMANCE_CONTOUR_CONTROL_MAP_WIDTH,
+                PreferenceKeys.PERFORMANCE_STOP_ANIMATION_PLAYBACK_MINUTES
+            ];
 
-            [PreferenceKeys.CONTOUR_CONFIG_CONTOUR_GENERATOR_TYPE, DEFAULTS.CONTOUR_CONFIG.contourGeneratorType],
-            [PreferenceKeys.CONTOUR_CONFIG_CONTOUR_SMOOTHING_MODE, DEFAULTS.CONTOUR_CONFIG.contourSmoothingMode],
-            [PreferenceKeys.CONTOUR_CONFIG_CONTOUR_SMOOTHING_FACTOR, DEFAULTS.CONTOUR_CONFIG.contourSmoothingFactor],
-            [PreferenceKeys.CONTOUR_CONFIG_CONTOUR_NUM_LEVELS, DEFAULTS.CONTOUR_CONFIG.contourNumLevels],
-            [PreferenceKeys.CONTOUR_CONFIG_CONTOUR_THICKNESS, DEFAULTS.CONTOUR_CONFIG.contourThickness],
-            [PreferenceKeys.CONTOUR_CONFIG_CONTOUR_COLORMAP_ENABLED, DEFAULTS.CONTOUR_CONFIG.contourColormapEnabled],
-            [PreferenceKeys.CONTOUR_CONFIG_CONTOUR_COLOR, DEFAULTS.CONTOUR_CONFIG.contourColor],
-            [PreferenceKeys.CONTOUR_CONFIG_CONTOUR_COLORMAP, DEFAULTS.CONTOUR_CONFIG.contourColormap],
+            const numberKeys = [
+                PreferenceKeys.RENDER_CONFIG_PERCENTILE, PreferenceKeys.RENDER_CONFIG_SCALING_ALPHA, PreferenceKeys.RENDER_CONFIG_SCALING_GAMMA,
+                PreferenceKeys.RENDER_CONFIG_NAN_ALPHA, PreferenceKeys.CONTOUR_CONFIG_CONTOUR_THICKNESS, PreferenceKeys.WCS_OVERLAY_BEAM_WIDTH,
+                PreferenceKeys.REGION_LINE_WIDTH,
+            ];
 
-            [PreferenceKeys.WCS_OVERLAY_AST_COLOR, DEFAULTS.WCS_OVERLAY.astColor],
-            [PreferenceKeys.WCS_OVERLAY_AST_GRID_VISIBLE, DEFAULTS.WCS_OVERLAY.astGridVisible],
-            [PreferenceKeys.WCS_OVERLAY_AST_LABELS_VISIBLE, DEFAULTS.WCS_OVERLAY.astLabelsVisible],
-            [PreferenceKeys.WCS_OVERLAY_WCS_TYPE, DEFAULTS.WCS_OVERLAY.wcsType],
-            [PreferenceKeys.WCS_OVERLAY_BEAM_VISIBLE, DEFAULTS.WCS_OVERLAY.beamVisible],
-            [PreferenceKeys.WCS_OVERLAY_BEAM_COLOR, DEFAULTS.WCS_OVERLAY.beamColor],
-            [PreferenceKeys.WCS_OVERLAY_BEAM_TYPE, DEFAULTS.WCS_OVERLAY.beamType],
-            [PreferenceKeys.WCS_OVERLAY_BEAM_WIDTH, DEFAULTS.WCS_OVERLAY.beamWidth],
+            const booleanKeys = [
+                PreferenceKeys.GLOBAL_AUTOLAUNCH, PreferenceKeys.GLOBAL_DRAG_PANNING, PreferenceKeys.CONTOUR_CONFIG_CONTOUR_COLORMAP_ENABLED,
+                PreferenceKeys.WCS_OVERLAY_AST_GRID_VISIBLE, PreferenceKeys.WCS_OVERLAY_AST_LABELS_VISIBLE, PreferenceKeys.WCS_OVERLAY_BEAM_VISIBLE,
+                PreferenceKeys.PERFORMANCE_STREAM_CONTOURS_WHILE_ZOOMING, PreferenceKeys.PERFORMANCE_LOW_BAND_WIDTH_MODE
+            ];
 
-            [PreferenceKeys.REGION_COLOR, DEFAULTS.REGION.regionColor],
-            [PreferenceKeys.REGION_LINE_WIDTH, DEFAULTS.REGION.regionLineWidth],
-            [PreferenceKeys.REGION_DASH_LENGTH, DEFAULTS.REGION.regionDashLength],
-            [PreferenceKeys.REGION_TYPE, DEFAULTS.REGION.regionType],
-            [PreferenceKeys.REGION_CREATION_MODE, DEFAULTS.REGION.regionCreationMode],
+            const preferenceObject = {};
 
-            [PreferenceKeys.PERFORMANCE_IMAGE_COMPRESSION_QUALITY, DEFAULTS.PERFORMANCE.imageCompressionQuality],
-            [PreferenceKeys.PERFORMANCE_ANIMATION_COMPRESSION_QUALITY, DEFAULTS.PERFORMANCE.animationCompressionQuality],
-            [PreferenceKeys.PERFORMANCE_GPU_TILE_CACHE, DEFAULTS.PERFORMANCE.GPUTileCache],
-            [PreferenceKeys.PERFORMANCE_SYSTEM_TILE_CACHE, DEFAULTS.PERFORMANCE.systemTileCache],
-            [PreferenceKeys.PERFORMANCE_CONTOUR_DECIMATION, DEFAULTS.PERFORMANCE.contourDecimation],
-            [PreferenceKeys.PERFORMANCE_CONTOUR_COMPRESSION_LEVEL, DEFAULTS.PERFORMANCE.contourCompressionLevel],
-            [PreferenceKeys.PERFORMANCE_CONTOUR_CHUNK_SIZE, DEFAULTS.PERFORMANCE.contourChunkSize],
-            [PreferenceKeys.PERFORMANCE_CONTOUR_CONTROL_MAP_WIDTH, DEFAULTS.PERFORMANCE.contourControlMapWidth],
-            [PreferenceKeys.PERFORMANCE_STREAM_CONTOURS_WHILE_ZOOMING, DEFAULTS.PERFORMANCE.streamContoursWhileZooming],
-            [PreferenceKeys.PERFORMANCE_LOW_BAND_WIDTH_MODE, DEFAULTS.PERFORMANCE.lowBandwidthMode],
-            [PreferenceKeys.PERFORMANCE_STOP_ANIMATION_PLAYBACK_MINUTES, DEFAULTS.PERFORMANCE.stopAnimationPlaybackMinutes],
-
-            [PreferenceKeys.LOG_EVENT, new Map<CARTA.EventType, boolean>()]
-        ]);
-        Event.EVENT_TYPES.forEach(eventType => this.preferences.get(PreferenceKeys.LOG_EVENT).set(eventType, DEFAULTS.LOG_EVENT.eventLoggingEnabled));
-    };
-
-    private initPreferenceFromServer = (serverPreference: { [k: string]: string; }) => {
-        const keys: PreferenceKeys[] = Object.values(PreferenceKeys).filter(value => typeof value === "number") as PreferenceKeys[];
-        keys.forEach((key) => {
-            if (key === PreferenceKeys.LOG_EVENT) {
-                this.initLogEventsFromServer(serverPreference);
-            } else {
-                const keyStr: string = KEY_TO_STRING.get(key);
-                if (keyStr && serverPreference.hasOwnProperty(keyStr)) {
-                    this.setPreference(key, this.PREFERENCE_VALIDATORS.get(key)(serverPreference[keyStr]));
+            for (const key of stringKeys) {
+                const entry = localStorage.getItem(key);
+                if (entry) {
+                    preferenceObject[key] = entry;
                 }
             }
-        });
-    };
 
-    private initLogEventsFromServer = (serverPreference: { [k: string]: string; }) => {
-        const keyStr = KEY_TO_STRING.get(PreferenceKeys.LOG_EVENT);
-        if (keyStr && serverPreference.hasOwnProperty(keyStr)) {
-            const serverEventList = serverPreference[keyStr];
-            try {
-                const eventNameList = JSON.parse(serverEventList);
-                if (eventNameList && Array.isArray(eventNameList) && eventNameList.length) {
-                    eventNameList.forEach((eventName) => {
-                        const eventType = Event.getEventTypeFromName(eventName);
-                        if (eventType !== undefined) {
-                            this.preferences.get(PreferenceKeys.LOG_EVENT).set(eventType, true);
-                        }
-                    });
+            for (const key of intKeys) {
+                const entry = parseInt(localStorage.getItem(key));
+                if (isFinite(entry)) {
+                    preferenceObject[key] = entry;
                 }
-            } catch (e) {
-                console.log("Invalid event list read from server");
             }
-        }
-    };
 
-    private initPreferenceFromLocalStorage = () => {
-        const keys: PreferenceKeys[] = Object.values(PreferenceKeys).filter(value => typeof value === "number") as PreferenceKeys[];
-        keys.forEach((key) => {
-            if (key === PreferenceKeys.LOG_EVENT) {
-                this.initLogEventsFromLocalStorage();
-            } else {
-                const value = localStorage.getItem(KEY_TO_STRING.get(key));
-                this.setPreference(key, this.PREFERENCE_VALIDATORS.get(key)(value));
-            }
-        });
-    };
-
-    // getters for log event, the list saved in local storage should be a string array like ["REGISTER_VIEWER", "OPEN_FILE_ACK", ...]
-    private initLogEventsFromLocalStorage = () => {
-        const localStorageEventList = localStorage.getItem(KEY_TO_STRING.get(PreferenceKeys.LOG_EVENT));
-        if (localStorageEventList && localStorageEventList.length) {
-            try {
-                const eventNameList = JSON.parse(localStorageEventList);
-                if (eventNameList && Array.isArray(eventNameList) && eventNameList.length) {
-                    eventNameList.forEach((eventName) => {
-                        const eventType = Event.getEventTypeFromName(eventName);
-                        if (eventType !== undefined) {
-                            this.preferences.get(PreferenceKeys.LOG_EVENT).set(eventType, true);
-                        }
-                    });
+            for (const key of numberKeys) {
+                const entry = parseFloat(localStorage.getItem(key));
+                if (isFinite(entry)) {
+                    preferenceObject[key] = entry;
                 }
-            } catch (e) {
-                console.log("Invalid event list read from local storage");
             }
-        }
-    };
 
-    private savePreferencesToServer = (key: string, value: string): boolean => {
-        let result = false;
-        let obj = {};
-        obj[key] = value;
-        const appStore = AppStore.Instance;
-        appStore.backendService.setUserPreferences(obj).subscribe(ack => {
-            if (ack.success) {
-                result = true;
-            } else {
-                AlertStore.Instance.showAlert("Saving user-defined preferences to server failed! ");
-                result = false;
+            for (const key of booleanKeys) {
+                const entryString = localStorage.getItem(key);
+                if (entryString) {
+                    preferenceObject[key] = parseBoolean(localStorage.getItem(key), false);
+                }
             }
-        });
-        return result;
+
+            const logEntryString = localStorage.getItem(PreferenceKeys.LOG_EVENT);
+            if (logEntryString) {
+                try {
+                    const logEntries = JSON.parse(logEntryString);
+                    if (logEntries && Array.isArray(logEntries)) {
+                        preferenceObject[PreferenceKeys.LOG_EVENT] = logEntries;
+                    }
+                } catch (e) {
+                    console.log("Problem parsing log events");
+                }
+            }
+
+            // Manual schema adjustments
+
+            // Beam -> beam and Solid -> solid
+            if (preferenceObject[PreferenceKeys.WCS_OVERLAY_BEAM_TYPE]) {
+                preferenceObject[PreferenceKeys.WCS_OVERLAY_BEAM_TYPE] = preferenceObject[PreferenceKeys.WCS_OVERLAY_BEAM_TYPE].toLowerCase();
+            }
+
+            // 1.0x to full
+            if (preferenceObject[PreferenceKeys.GLOBAL_ZOOM_MODE] === "1.0x") {
+                preferenceObject[PreferenceKeys.GLOBAL_ZOOM_MODE] = "full";
+            }
+
+            for (const key of Object.keys(preferenceObject)) {
+                this.preferences.set(key as PreferenceKeys, preferenceObject[key]);
+            }
+
+            preferenceObject["version"] = 1;
+            await ApiService.Instance.setPreferences(preferenceObject);
+        }
     };
 
     private constructor() {
-        this.supportsServer = false;
-        this.initPreferenceFromDefault();
+        makeObservable(this);
+        this.preferences = new Map<PreferenceKeys, any>();
     }
 }

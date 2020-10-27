@@ -4,7 +4,7 @@ import {computed, autorun} from "mobx";
 import {Colors} from "@blueprintjs/core";
 import {LinePlotSettingsPanelComponentProps, LinePlotSettingsPanelComponent} from "components/Shared";
 import {HistogramWidgetStore} from "stores/widgets";
-import {WidgetProps, WidgetConfig, HelpType, WidgetsStore, AppStore} from "stores";
+import {WidgetProps, DefaultWidgetConfig, HelpType, WidgetsStore, AppStore} from "stores";
 import {parseNumber} from "utilities";
 
 const KEYCODE_ENTER = 13;
@@ -12,7 +12,7 @@ const KEYCODE_ENTER = 13;
 @observer
 export class HistogramSettingsPanelComponent extends React.Component<WidgetProps> {
 
-    public static get WIDGET_CONFIG(): WidgetConfig {
+    public static get WIDGET_CONFIG(): DefaultWidgetConfig {
         return {
             id: "histogram-floating-settings",
             type: "floating-settings",
@@ -46,14 +46,14 @@ export class HistogramSettingsPanelComponent extends React.Component<WidgetProps
         // Update widget title when region or coordinate changes
         autorun(() => {
             const appStore = AppStore.Instance;
-            if (this.widgetStore && appStore.activeFrame) {
+            if (this.widgetStore && this.widgetStore.effectiveFrame) {
                 let regionString = "Unknown";
                 const regionId = this.widgetStore.effectiveRegionId;
 
                 if (regionId === -1) {
                     regionString = "Image";
-                } else if (appStore.activeFrame.regionSet) {
-                    const region = appStore.activeFrame.regionSet.regions.find(r => r.regionId === regionId);
+                } else if (this.widgetStore.effectiveFrame.regionSet) {
+                    const region = this.widgetStore.effectiveFrame.regionSet.regions.find(r => r.regionId === regionId);
                     if (region) {
                         regionString = region.nameString;
                     }

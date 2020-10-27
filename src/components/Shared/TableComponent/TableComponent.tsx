@@ -1,18 +1,26 @@
 import * as React from "react";
 import {observer} from "mobx-react";
 import {Cell, Column, Table, SelectionModes, RenderMode, ColumnHeaderCell, IRegion} from "@blueprintjs/table";
-import {Tooltip, PopoverPosition, InputGroup, Menu, MenuItem, Icon, Label} from "@blueprintjs/core";
+import {Checkbox, Popover, PopoverInteractionKind, InputGroup, Icon, Label} from "@blueprintjs/core";
+import {IconName} from "@blueprintjs/icons";
 import {IRowIndices} from "@blueprintjs/table/lib/esm/common/grid";
 import {CARTA} from "carta-protobuf";
-import {ControlHeader} from "stores/widgets";
+import {ControlHeader} from "stores";
 import {ProcessedColumnData} from "models";
-import "./TableComponent.css";
+import "./TableComponent.scss";
 
 export type ColumnFilter = { index: number, columnFilter: string };
 
 export enum TableType {
     Normal,
     ColumnFilter
+}
+
+export interface ManualSelectionProps {
+    isSelectingAll: boolean;
+    isSelectingIndeterminate: boolean;
+    selectAllLines: () => void;
+    selectSingleLine: (rowIndex: number) => void;
 }
 
 export class TableComponentProps {
@@ -25,6 +33,8 @@ export class TableComponentProps {
     loadingCell?: boolean;
     selectedDataIndex?: number[];
     showSelectedData?: boolean;
+    manualSelectionProps?: ManualSelectionProps;
+    manualSelectionData?: boolean[];
     updateTableRef?: (ref: Table) => void;
     updateColumnFilter?: (value: string, columnName: string) => void;
     updateByInfiniteScroll?: (rowIndexEnd: number) => void;
@@ -32,23 +42,80 @@ export class TableComponentProps {
     updateSelectedRow?: (dataIndex: number[]) => void;
     updateSortRequest?: (columnName: string, sortingType: CARTA.SortingType) => void;
     sortingInfo?: {columnName: string, sortingType: CARTA.SortingType};
+    disable?: boolean;
+    darkTheme?: boolean;
 }
+
+const MANUAL_SELECTION_COLUMN_WIDTH = 50;
+const DEFAULT_COLUMN_WIDTH = 150;
 
 @observer
 export class TableComponent extends React.Component<TableComponentProps> {
+    private readonly SortingTypelinkedList = {
+        head: {
+            value: null,
+            next: {
+                value: CARTA.SortingType.Ascending,                                             
+                next: {
+                    value: CARTA.SortingType.Descending,
+                    next: null
+                }
+            }
+        }
+    };
+
+    private renderManualSelectionColumn = (manualSelectionProps: ManualSelectionProps, manualSelectionData: boolean[]) => {
+        if (!manualSelectionProps || !manualSelectionData || manualSelectionData.length <= 0) {
+            return null;
+        }
+
+        const columnName = "select";
+        return (
+            <Column
+                key={columnName}
+                name={columnName}
+                columnHeaderCellRenderer={() => {
+                    return (
+                        <ColumnHeaderCell>
+                            <React.Fragment>
+                                <Checkbox
+                                    indeterminate={manualSelectionProps.isSelectingIndeterminate}
+                                    checked={manualSelectionProps.isSelectingAll}
+                                    inline={true}
+                                    onChange={manualSelectionProps.selectAllLines}
+                                />
+                            </React.Fragment>
+                        </ColumnHeaderCell>
+                    );
+                }}
+                cellRenderer={(rowIndex, columnIndex) => {
+                    return (
+                        <Cell key={`cell_${columnIndex}_${rowIndex}`} interactive={false}>
+                            <React.Fragment>
+                                <Checkbox
+                                    checked={manualSelectionData[rowIndex] || false}
+                                    onChange={() => manualSelectionProps.selectSingleLine(rowIndex)}
+                                />
+                            </React.Fragment>
+                        </Cell>
+                    );
+                }}
+            />
+        );
+    };
 
     private getfilterSyntax = (dataType: CARTA.ColumnType) => {
         switch (dataType) {
             case CARTA.ColumnType.String || CARTA.ColumnType.Bool:
                 return (
-                    <div>
+                    <div className={"column-filter-popover-content"}>
                         <small>Filter by substring</small><br/>
                         <small>e.g. gal (no quotation, entries contain the "gal" string)</small>
                     </div>
                 );
             default:
                 return (
-                    <div>
+                    <div className={"column-filter-popover-content"}>
                         <small>Operators: {">"}, {">="}, {"<"}, {"<="}, {"=="}, {"!="}, {".."}, {"..."}</small><br/>
                         <small>e.g. {"<"} 10 (everything less than 10) </small><br/>
                         <small>e.g. == 1.23 (entries equal to 1.23) </small><br/>
@@ -79,73 +146,73 @@ export class TableComponent extends React.Component<TableComponentProps> {
         }
     };
 
+    private getNextSortingType = () => {
+        const sortingInfo = this.props.sortingInfo;
+        let currentNode = this.SortingTypelinkedList.head;
+        while (currentNode.next) {
+            if (currentNode.value === sortingInfo.sortingType) {
+                return currentNode.next.value;
+            }
+            currentNode = currentNode.next;
+        }
+        return null;
+    }
+
     private renderColumnHeaderCell = (columnIndex: number, column: CARTA.CatalogHeader) => {
+        if (!isFinite(columnIndex) || !column) {
+            return null;
+        }
         const controlheader = this.props.filter.get(column.name);
         const filterSyntax = this.getfilterSyntax(column.dataType);
         const sortingInfo = this.props.sortingInfo;
         const sortColumn = sortingInfo.columnName === column.name;
-        const sortDesc = sortingInfo.sortingType === CARTA.SortingType.Descending;
         let activeFilter = false;
         if (controlheader.filter !== "") {
             activeFilter = true;
         }
-
-        const menuRenderer = () => {
-            let activeAsc = false;
-            let activeDesc = false;
-            if (sortColumn) {
-                if (sortDesc) {
-                    activeDesc = true;
-                } else {
-                    activeAsc = true;
-                }
-            }
-            return(
-                <Menu className="catalog-sort-menu-item">
-                    <MenuItem icon="sort-asc" active={activeAsc} onClick={() => this.props.updateSortRequest(column.name, CARTA.SortingType.Ascending)} text="Sort Asc" />
-                    <MenuItem icon="sort-desc" active={activeDesc} onClick={() => this.props.updateSortRequest(column.name, CARTA.SortingType.Descending)} text="Sort Desc" />
-                    <MenuItem icon="cross" onClick={() => this.props.updateSortRequest(null, null)} text="Clear Sort" />
-                </Menu>
-            );
-        };
+        const disable = this.props.disable;
+        let popOverClass = this.props.darkTheme ? "column-filter-popover-dark" : "column-filter-popover";
 
         const nameRenderer = () => {
+            // sharing css with fileList table
+            let sortIcon = "sort";
+            let iconClass = "sort-icon inactive";
+            let nextSortType = 0;
             if (sortColumn) {
-                return (
-                    <Label className="bp3-inline lable">
-                        {sortDesc ? 
-                            <Icon className="sort-icon" icon={"sort-desc"} />
-                            :
-                            <Icon className="sort-icon" icon={"sort-asc"} />
-                        }   
-                        {column.name}
-                    </Label>
-                );
-            } else {
-                return (
-                    <Label className="bp3-inline lable">
-                        {column.name}
-                    </Label>
-                );
+                nextSortType = this.getNextSortingType();
+                if (sortingInfo.sortingType === CARTA.SortingType.Descending) {
+                    sortIcon = "sort-desc";
+                    iconClass = "sort-icon";
+                } else if (sortingInfo.sortingType === CARTA.SortingType.Ascending) {
+                    sortIcon = "sort-asc";
+                    iconClass = "sort-icon";
+                }
             }
+            return (
+                <div className="sort-label" onClick={() => disable ? null : this.props.updateSortRequest(column.name, nextSortType)}>
+                    <Label disabled={disable} className="bp3-inline label">
+                        <Icon className={iconClass} icon={sortIcon as IconName}/>
+                        {column.name}
+                    </Label>
+                </div>
+            );
         };
 
         return (
             <ColumnHeaderCell>
-                <ColumnHeaderCell className={"column-name"} nameRenderer={nameRenderer} menuRenderer={menuRenderer}/>
+                <ColumnHeaderCell className={"column-name"} nameRenderer={nameRenderer}/>
                 <ColumnHeaderCell isActive={activeFilter}>
-                    <Tooltip content={filterSyntax} position={PopoverPosition.TOP} className={"column-filter"}>
+                    <Popover hoverOpenDelay={250} hoverCloseDelay={0} className={"column-filter"} popoverClassName={popOverClass} content={filterSyntax} interactionKind={PopoverInteractionKind.HOVER}>
                         <InputGroup
                             key={"column-filter-" + columnIndex}
                             small={true}
                             placeholder="Click to filter"
-                            value={controlheader.filter} 
+                            value={controlheader && controlheader.filter ? controlheader.filter : ""} 
                             onChange={ev => this.props.updateColumnFilter(ev.currentTarget.value, column.name)}
                         />
-                    </Tooltip>
+                    </Popover>
                 </ColumnHeaderCell>
             </ColumnHeaderCell>
-
         );
     };
 
@@ -164,13 +231,13 @@ export class TableComponent extends React.Component<TableComponentProps> {
         }
     };
 
-    private renderDataColumn(columnName: string, coloumnData: any) {
+    private renderDataColumn(columnName: string, columnData: any) {
         return (
             <Column
                 key={columnName}
                 name={columnName}
                 cellRenderer={(rowIndex, columnIndex) => (
-                    <Cell key={`cell_${columnIndex}_${rowIndex}`} interactive={true}>{coloumnData[rowIndex]}</Cell>
+                    <Cell key={`cell_${columnIndex}_${rowIndex}`} interactive={true}>{rowIndex < columnData?.length ? columnData[rowIndex] : undefined}</Cell>
                 )}
             />
         );
@@ -178,7 +245,7 @@ export class TableComponent extends React.Component<TableComponentProps> {
 
     private updateTableColumnWidth = (index: number, size: number) => {
         const header = this.props.columnHeaders[index];
-        if (header) {
+        if (header && this.props.updateTableColumnWidth) {
             this.props.updateTableColumnWidth(size, header.name);
         }
     };
@@ -206,6 +273,14 @@ export class TableComponent extends React.Component<TableComponentProps> {
         const table = this.props;
         const tableColumns = [];
         const tableData = table.dataset;
+        let columnWidths = table.columnWidths ? table.columnWidths : new Array<number>(table.columnHeaders?.length).fill(DEFAULT_COLUMN_WIDTH);
+
+        // Create manuanl selection checkbox column
+        if (table.manualSelectionProps && table.manualSelectionData?.length > 0) {
+            const column = this.renderManualSelectionColumn(table.manualSelectionProps, table.manualSelectionData);
+            tableColumns.push(column);
+            columnWidths.splice(0, 0, MANUAL_SELECTION_COLUMN_WIDTH);
+        }
 
         for (let index = 0; index < table.columnHeaders.length; index++) {
             const header = table.columnHeaders[index];
@@ -225,18 +300,18 @@ export class TableComponent extends React.Component<TableComponentProps> {
             return (
                 <Table
                     className={"column-filter"}
-                    ref={(ref) => table.updateTableRef(ref)}
+                    ref={table.updateTableRef ? (ref) => table.updateTableRef(ref) : null}
                     numRows={table.numVisibleRows}
                     renderMode={RenderMode.BATCH}
                     enableRowReordering={false}
                     selectionModes={SelectionModes.ROWS_AND_CELLS}
                     onVisibleCellsChange={this.infiniteScroll}
-                    columnWidths={table.columnWidths}
                     onColumnWidthChanged={this.updateTableColumnWidth}
                     enableGhostCells={true}
                     onSelection={this.onRowIndexSelection}
                     enableMultipleSelection={true}
                     enableRowResizing={false}
+                    columnWidths={columnWidths}
                 >
                     {tableColumns}
                 </Table>
@@ -244,12 +319,14 @@ export class TableComponent extends React.Component<TableComponentProps> {
         } else {
             return (
                 <Table
+                    ref={table.updateTableRef ? (ref) => table.updateTableRef(ref) : null}
                     numRows={table.numVisibleRows}
                     renderMode={RenderMode.NONE}
                     enableRowReordering={false}
                     selectionModes={SelectionModes.NONE}
                     enableGhostCells={true}
                     enableRowResizing={false}
+                    columnWidths={columnWidths}
                 >
                     {tableColumns}
                 </Table>
