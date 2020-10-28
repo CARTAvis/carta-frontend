@@ -1,5 +1,6 @@
 import * as React from "react";
 import * as _ from "lodash";
+import {action} from "mobx";
 import {observer} from "mobx-react";
 import {makeObservable, observable} from "mobx";
 import tinycolor from "tinycolor2";
@@ -27,11 +28,11 @@ export class ColorPickerComponent extends React.Component<ColorPickerComponentPr
         makeObservable(this);
     }
 
-    private handleColorClick = () => {
+    @action private handleColorClick = () => {
         this.displayColorPicker = true;
     };
 
-    private handleColorClose = () => {
+    @action private handleColorClose = () => {
         this.displayColorPicker = false;
     };
 
