@@ -307,7 +307,7 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
                             disabled={appStore.animatorStore.animationState === AnimationState.PLAYING}
                         />
                         <div className="slider-info">
-                            {`Req: ${activeFrame.requiredChannel}; Current: ${activeFrame.channel}`}
+                            {activeFrame.simpleSpectralInfo}
                         </div>
                     </React.Fragment>
                     }
@@ -367,7 +367,7 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
                             disabled={appStore.animatorStore.animationState === AnimationState.PLAYING}
                         />
                         <div className="slider-info">
-                            {`Req: ${activeFrame.requiredStokes}; Current: ${activeFrame.stokes}`}
+                            {activeFrame.simpleSpectralInfo}
                         </div>
                     </React.Fragment>
                     }
