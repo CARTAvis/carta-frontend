@@ -88,10 +88,10 @@ export class FrameStore {
     @observable overlayBeamSettings: OverlayBeamStore;
     @observable spatialReference: FrameStore;
     @observable spectralReference: FrameStore;
-    @observable renderConfigReference: FrameStore;
+    @observable rasterScalingReference: FrameStore;
     @observable secondarySpatialImages: FrameStore[];
     @observable secondarySpectralImages: FrameStore[];
-    @observable secondaryRenderConfigImages: FrameStore[];
+    @observable secondaryRasterScalingImages: FrameStore[];
     @observable momentImages: FrameStore[];
 
     @observable isRequestingMoments: boolean;
@@ -516,13 +516,13 @@ export class FrameStore {
     }
 
     @computed get renderConfigSiblings(): FrameStore[] {
-        if (this.renderConfigReference) {
+        if (this.rasterScalingReference) {
             let siblings = [];
-            siblings.push(this.renderConfigReference);
-            siblings.push(...this.renderConfigReference.secondaryRenderConfigImages.slice().filter(f => f !== this));
+            siblings.push(this.rasterScalingReference);
+            siblings.push(...this.rasterScalingReference.secondaryRasterScalingImages.slice().filter(f => f !== this));
             return siblings;
         } else {
-            return this.secondaryRenderConfigImages.slice();
+            return this.secondaryRasterScalingImages.slice();
         }
     }
 
@@ -697,7 +697,7 @@ export class FrameStore {
         this.controlMaps = new Map<FrameStore, ControlMap>();
         this.secondarySpatialImages = [];
         this.secondarySpectralImages = [];
-        this.secondaryRenderConfigImages = [];
+        this.secondaryRasterScalingImages = [];
         this.momentImages = [];
 
         this.isRequestingMoments = false;
@@ -1584,33 +1584,33 @@ export class FrameStore {
         this.secondarySpectralImages = this.secondarySpectralImages.filter(f => f.frameInfo.fileId !== frame.frameInfo.fileId);
     };
 
-    @action setRenderConfigReference = (frame: FrameStore) => {
+    @action setRasterScalingReference = (frame: FrameStore) => {
         if (frame === this) {
-            this.clearRenderConfigReference();
+            this.clearRasterScalingReference();
             console.log(`Skipping RenderConfig self-reference`);
             return;
         }
 
-        this.renderConfigReference = frame;
-        this.renderConfigReference.addSecondaryRenderConfigImage(this);
+        this.rasterScalingReference = frame;
+        this.rasterScalingReference.addSecondaryRasterScalingImage(this);
         this.renderConfig.updateFrom(frame.renderConfig);
     }
 
-    @action clearRenderConfigReference() {
-        if (this.renderConfigReference) {
-            this.renderConfigReference.removeSecondaryRenderConfigImage(this);
-            this.renderConfigReference = null;
+    @action clearRasterScalingReference() {
+        if (this.rasterScalingReference) {
+            this.rasterScalingReference.removeSecondaryRasterScalingImage(this);
+            this.rasterScalingReference = null;
         }
     }
 
-    @action addSecondaryRenderConfigImage = (frame: FrameStore) => {
-        if (!this.secondaryRenderConfigImages.find(f => f.frameInfo.fileId === frame.frameInfo.fileId)) {
-            this.secondaryRenderConfigImages.push(frame);
+    @action addSecondaryRasterScalingImage = (frame: FrameStore) => {
+        if (!this.secondaryRasterScalingImages.find(f => f.frameInfo.fileId === frame.frameInfo.fileId)) {
+            this.secondaryRasterScalingImages.push(frame);
         }
     };
 
-    @action removeSecondaryRenderConfigImage = (frame: FrameStore) => {
-        this.secondaryRenderConfigImages = this.secondaryRenderConfigImages.filter(f => f.frameInfo.fileId !== frame.frameInfo.fileId);
+    @action removeSecondaryRasterScalingImage = (frame: FrameStore) => {
+        this.secondaryRasterScalingImages = this.secondaryRasterScalingImages.filter(f => f.frameInfo.fileId !== frame.frameInfo.fileId);
     };
 
     @action addMomentImage = (frame: FrameStore) => {

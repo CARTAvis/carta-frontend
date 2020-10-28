@@ -179,22 +179,22 @@ export class LayerListComponent extends React.Component<WidgetProps> {
         }
 
         let renderConfigMatchingButton: React.ReactNode;
-        if (appStore.renderConfigReference) {
+        if (appStore.rasterScalingReference) {
             let tooltipSubtitle: string;
-            if (frame === appStore.renderConfigReference) {
-                tooltipSubtitle = `${frame.frameInfo.fileInfo.name} is the current render config reference`;
+            if (frame === appStore.rasterScalingReference) {
+                tooltipSubtitle = `${frame.frameInfo.fileInfo.name} is the current raster scaling reference`;
             } else {
-                tooltipSubtitle = `Click to ${frame.renderConfigReference ? "disable" : "enable"} matching to ${appStore.renderConfigReference.frameInfo.fileInfo.name}`;
+                tooltipSubtitle = `Click to ${frame.rasterScalingReference ? "disable" : "enable"} matching to ${appStore.rasterScalingReference.frameInfo.fileInfo.name}`;
             }
             renderConfigMatchingButton = (
-                <Tooltip position={"bottom"} content={<span>Render config matching<br/><i><small>{tooltipSubtitle}</small></i></span>}>
+                <Tooltip position={"bottom"} content={<span>Raster scaling matching<br/><i><small>{tooltipSubtitle}</small></i></span>}>
                     <AnchorButton
-                        className={frame === appStore.renderConfigReference ? "outlined" : ""}
+                        className={frame === appStore.rasterScalingReference ? "outlined" : ""}
                         minimal={true}
                         small={true}
-                        active={!!frame.renderConfigReference}
-                        intent={frame.renderConfigReference ? "success" : "none"}
-                        onClick={() => appStore.toggleRenderConfigMatching(frame)}
+                        active={!!frame.rasterScalingReference}
+                        intent={frame.rasterScalingReference ? "success" : "none"}
+                        onClick={() => appStore.toggleRasterScalingMatching(frame)}
                     >
                         R
                     </AnchorButton>
@@ -254,7 +254,7 @@ export class LayerListComponent extends React.Component<WidgetProps> {
                         <MenuDivider title={frame.frameInfo.fileInfo.name}/>
                         <MenuItem disabled={appStore.spatialReference === frame} text="Set as spatial reference" onClick={() => appStore.setSpatialReference(frame)}/>
                         <MenuItem disabled={appStore.spectralReference === frame || frame.frameInfo.fileInfoExtended.depth <= 1} text="Set as spectral reference" onClick={() => appStore.setSpectralReference(frame)}/>
-                        <MenuItem disabled={appStore.renderConfigReference === frame} text="Set as render config reference" onClick={() => appStore.setRenderConfigReference(frame)}/>
+                        <MenuItem disabled={appStore.rasterScalingReference === frame} text="Set as raster scaling reference" onClick={() => appStore.setRasterScalingReference(frame)}/>
                         <MenuDivider/>
                         <MenuItem text="Close image" onClick={() => appStore.closeFile(frame)}/>
                         <MenuItem text="Close other images" disabled={appStore.frames?.length <= 1} onClick={() => appStore.closeOtherFiles(frame)}/>
@@ -289,10 +289,10 @@ export class LayerListComponent extends React.Component<WidgetProps> {
         const visibilityContour = appStore.frames.map(f => f.contourConfig.visible && f.contourConfig.enabled);
         const f1 = appStore.frames.map(f => f.spatialReference);
         const f2 = appStore.frames.map(f => f.spectralReference);
-        const f3 = appStore.frames.map(f => f.renderConfigReference);
+        const f3 = appStore.frames.map(f => f.rasterScalingReference);
         const currentSpectralReference = appStore.spectralReference;
         const currentSpatialReference = appStore.spatialReference;
-        const currentRenderConfigReference = appStore.renderConfigReference;
+        const currentRasterScalingReference = appStore.rasterScalingReference;
 
         /* eslint-enable @typescript-eslint/no-unused-vars */
         return (
