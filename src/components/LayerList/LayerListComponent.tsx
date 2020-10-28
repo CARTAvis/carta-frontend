@@ -27,7 +27,7 @@ export class LayerListComponent extends React.Component<WidgetProps> {
 
     @observable width: number = 0;
     @observable height: number = 0;
-    @observable columnWidths = [150, 75, 85, 77, 68];
+    @observable columnWidths = [132, 70, 110, 75, 67];
 
     constructor(props: any) {
         super(props);
@@ -178,11 +178,36 @@ export class LayerListComponent extends React.Component<WidgetProps> {
             );
         }
 
+        let renderConfigMatchingButton: React.ReactNode;
+        if (appStore.rasterScalingReference) {
+            let tooltipSubtitle: string;
+            if (frame === appStore.rasterScalingReference) {
+                tooltipSubtitle = `${frame.frameInfo.fileInfo.name} is the current raster scaling reference`;
+            } else {
+                tooltipSubtitle = `Click to ${frame.rasterScalingReference ? "disable" : "enable"} matching to ${appStore.rasterScalingReference.frameInfo.fileInfo.name}`;
+            }
+            renderConfigMatchingButton = (
+                <Tooltip position={"bottom"} content={<span>Raster scaling matching<br/><i><small>{tooltipSubtitle}</small></i></span>}>
+                    <AnchorButton
+                        className={frame === appStore.rasterScalingReference ? "outlined" : ""}
+                        minimal={true}
+                        small={true}
+                        active={!!frame.rasterScalingReference}
+                        intent={frame.rasterScalingReference ? "success" : "none"}
+                        onClick={() => appStore.toggleRasterScalingMatching(frame)}
+                    >
+                        R
+                    </AnchorButton>
+                </Tooltip>
+            );
+        }
+
         return (
             <Cell className={rowIndex === appStore.activeFrameIndex ? "active-row-cell" : ""}>
                 <React.Fragment>
                     {spatialMatchingButton}
                     {spectralMatchingButton}
+                    {renderConfigMatchingButton}
                 </React.Fragment>
             </Cell>
         );
@@ -229,6 +254,7 @@ export class LayerListComponent extends React.Component<WidgetProps> {
                         <MenuDivider title={frame.frameInfo.fileInfo.name}/>
                         <MenuItem disabled={appStore.spatialReference === frame} text="Set as spatial reference" onClick={() => appStore.setSpatialReference(frame)}/>
                         <MenuItem disabled={appStore.spectralReference === frame || frame.frameInfo.fileInfoExtended.depth <= 1} text="Set as spectral reference" onClick={() => appStore.setSpectralReference(frame)}/>
+                        <MenuItem disabled={appStore.rasterScalingReference === frame} text="Set as raster scaling reference" onClick={() => appStore.setRasterScalingReference(frame)}/>
                         <MenuDivider/>
                         <MenuItem text="Close image" onClick={() => appStore.closeFile(frame)}/>
                         <MenuItem text="Close other images" disabled={appStore.frames?.length <= 1} onClick={() => appStore.closeOtherFiles(frame)}/>
@@ -261,9 +287,13 @@ export class LayerListComponent extends React.Component<WidgetProps> {
         const activeFrameIndex = appStore.activeFrameIndex;
         const visibilityRaster = appStore.frames.map(f => f.renderConfig.visible);
         const visibilityContour = appStore.frames.map(f => f.contourConfig.visible && f.contourConfig.enabled);
-        const matchingTypes = appStore.frames.map(f => f.spatialReference && f.spectralReference);
+        const f1 = appStore.frames.map(f => f.spatialReference);
+        const f2 = appStore.frames.map(f => f.spectralReference);
+        const f3 = appStore.frames.map(f => f.rasterScalingReference);
         const currentSpectralReference = appStore.spectralReference;
         const currentSpatialReference = appStore.spatialReference;
+        const currentRasterScalingReference = appStore.rasterScalingReference;
+
         /* eslint-enable @typescript-eslint/no-unused-vars */
         return (
             <div className="layer-list-widget">
