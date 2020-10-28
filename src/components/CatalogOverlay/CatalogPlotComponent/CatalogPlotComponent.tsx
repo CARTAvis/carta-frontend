@@ -246,7 +246,6 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
         const end = start + (xRange.xMax - xRange.xMin) * fraction;
         const size = (end - start) / widgetStore.nBinx;
         data.type = "histogram";
-
         data.hoverinfo = "none";
         data.x = coords.wcsData?.slice(0);
         data.marker = {
