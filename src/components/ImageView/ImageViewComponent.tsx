@@ -1,7 +1,7 @@
 import * as React from "react";
 import $ from "jquery";
 import {observer} from "mobx-react";
-import {autorun, observable} from "mobx";
+import {autorun, makeObservable, observable, runInAction} from "mobx";
 import {NonIdealState, Spinner, Tag} from "@blueprintjs/core";
 import ReactResizeDetector from "react-resize-detector";
 import {OverlayComponent} from "./Overlay/OverlayComponent";
@@ -12,7 +12,7 @@ import {BeamProfileOverlayComponent} from "./BeamProfileOverlay/BeamProfileOverl
 import {RegionViewComponent} from "./RegionView/RegionViewComponent";
 import {ContourViewComponent} from "./ContourView/ContourViewComponent";
 import {CatalogViewComponent} from "./CatalogView/CatalogViewComponent";
-import {AppStore, RegionStore, WidgetConfig, WidgetProps, HelpType, Padding} from "stores";
+import {AppStore, RegionStore, DefaultWidgetConfig, WidgetProps, HelpType, Padding} from "stores";
 import {CursorInfo, Point2D} from "models";
 import {toFixed} from "utilities";
 import "./ImageViewComponent.scss";
@@ -85,7 +85,7 @@ export class ImageViewComponent extends React.Component<WidgetProps> {
     @observable showRatioIndicator: boolean;
     readonly activeLayer: ImageViewLayer;
 
-    public static get WIDGET_CONFIG(): WidgetConfig {
+    public static get WIDGET_CONFIG(): DefaultWidgetConfig {
         return {
             id: "image-view",
             type: "image-view",
@@ -101,6 +101,7 @@ export class ImageViewComponent extends React.Component<WidgetProps> {
 
     constructor(props: WidgetProps) {
         super(props);
+        makeObservable(this);
 
         this.activeLayer = AppStore.Instance.activeLayer;
         autorun(() => {
@@ -111,10 +112,10 @@ export class ImageViewComponent extends React.Component<WidgetProps> {
                 if (!this.cachedImageSize || this.cachedImageSize.x !== imageSize.x || this.cachedImageSize.y !== imageSize.y) {
                     this.cachedImageSize = imageSize;
                     clearTimeout(this.ratioIndicatorTimeoutHandle);
-                    this.showRatioIndicator = true;
-                    this.ratioIndicatorTimeoutHandle = setTimeout(() => {
+                    runInAction(() => this.showRatioIndicator = true);
+                    this.ratioIndicatorTimeoutHandle = setTimeout(() => runInAction(() => {
                         this.showRatioIndicator = false;
-                    }, 1000);
+                    }), 1000);
                 }
             }
         });

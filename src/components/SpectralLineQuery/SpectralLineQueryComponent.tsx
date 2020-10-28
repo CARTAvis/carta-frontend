@@ -1,12 +1,12 @@
 import * as React from "react";
-import {action, computed, observable} from "mobx";
+import {action, computed, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 import {AnchorButton, Button, Classes, ControlGroup, FormGroup, HTMLSelect, Intent, Menu, MenuItem, Overlay, Popover, Position, Spinner, Switch, Tooltip} from "@blueprintjs/core";
 import {Cell, Column, Regions, RenderMode, SelectionModes, Table} from "@blueprintjs/table";
 import SplitPane, { Pane } from "react-split-pane";
 import ReactResizeDetector from "react-resize-detector";
 import {SafeNumericInput, TableComponent, TableComponentProps, TableType} from "components/Shared";
-import {AppStore, HelpType, WidgetConfig, WidgetProps, WidgetsStore} from "stores";
+import {AppStore, HelpType, DefaultWidgetConfig, WidgetProps, WidgetsStore} from "stores";
 import {RedshiftType, SpectralLineHeaders, SpectralLineQueryWidgetStore, SpectralLineQueryRangeType, SpectralLineQueryUnit} from "stores/widgets";
 import "./SpectralLineQueryComponent.scss";
 
@@ -29,7 +29,7 @@ export class SpectralLineQueryComponent extends React.Component<WidgetProps> {
     private headerTableRef: Table;
     private resultTableRef: Table;
 
-    public static get WIDGET_CONFIG(): WidgetConfig {
+    public static get WIDGET_CONFIG(): DefaultWidgetConfig {
         return {
             id: "spectral-line-query",
             type: "spectral-line-query",
@@ -45,6 +45,8 @@ export class SpectralLineQueryComponent extends React.Component<WidgetProps> {
 
     constructor(props: WidgetProps) {
         super(props);
+        makeObservable(this);
+
         this.headerTableColumnWidths = [150, 70, 300];
     }
 

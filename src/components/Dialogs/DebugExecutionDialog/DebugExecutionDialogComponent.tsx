@@ -1,6 +1,6 @@
 import * as React from "react";
 import {observer} from "mobx-react";
-import {action, computed, observable} from "mobx";
+import {action, computed, makeObservable, observable} from "mobx";
 import {AnchorButton, Classes, EditableText, IDialogProps, Intent} from "@blueprintjs/core";
 import {DraggableDialogComponent} from "components/Dialogs";
 import {ExecutionEntry, ScriptingService} from "services";
@@ -30,6 +30,11 @@ export class DebugExecutionDialogComponent extends React.Component {
         }
 
         return executionStrings;
+    }
+
+    constructor(props: any) {
+        super(props);
+        makeObservable(this);
     }
 
     public render() {

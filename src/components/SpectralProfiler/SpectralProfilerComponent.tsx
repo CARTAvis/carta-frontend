@@ -1,6 +1,6 @@
 import * as React from "react";
 import * as _ from "lodash";
-import {autorun, computed, observable} from "mobx";
+import {action, autorun, computed, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 import {Colors, NonIdealState} from "@blueprintjs/core";
 import ReactResizeDetector from "react-resize-detector";
@@ -8,7 +8,7 @@ import {CARTA} from "carta-protobuf";
 import {LineMarker, LinePlotComponent, LinePlotComponentProps, LinePlotSelectingMode, ProfilerInfoComponent, VERTICAL_RANGE_PADDING, SmoothingType} from "components/Shared";
 import {TickType, MultiPlotProps} from "../Shared/LinePlot/PlotContainer/PlotContainerComponent";
 import {SpectralProfilerToolbarComponent} from "./SpectralProfilerToolbarComponent/SpectralProfilerToolbarComponent";
-import {AnimationState, SpectralProfileStore, WidgetConfig, WidgetProps, HelpType, AnimatorStore, WidgetsStore, AppStore, RegionStore} from "stores";
+import {AnimationState, SpectralProfileStore, WidgetProps, HelpType, AnimatorStore, WidgetsStore, AppStore, DefaultWidgetConfig, RegionStore} from "stores";
 import {SpectralProfileWidgetStore} from "stores/widgets";
 import {Point2D, ProcessedSpectralProfile} from "models";
 import {binarySearchByX, clamp, formattedExponential, formattedNotation, toExponential, toFixed} from "utilities";
@@ -18,7 +18,7 @@ type PlotData = { values: Point2D[], smoothingValues: Point2D[], xMin: number, x
 
 @observer
 export class SpectralProfilerComponent extends React.Component<WidgetProps> {
-    public static get WIDGET_CONFIG(): WidgetConfig {
+    public static get WIDGET_CONFIG(): DefaultWidgetConfig {
         return {
             id: "spectral-profiler",
             type: "spectral-profiler",
@@ -166,6 +166,8 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
 
     constructor(props: WidgetProps) {
         super(props);
+        makeObservable(this);
+
         const appStore = AppStore.Instance;
         // Check if this widget hasn't been assigned an ID yet
         if (!props.docked && props.id === SpectralProfilerComponent.WIDGET_CONFIG.type) {
@@ -214,7 +216,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
         });
     }
 
-    onResize = (width: number, height: number) => {
+    @action private onResize = (width: number, height: number) => {
         this.width = width;
         this.height = height;
     };

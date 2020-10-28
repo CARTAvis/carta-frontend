@@ -1,7 +1,7 @@
 import * as React from "react";
 import * as _ from "lodash";
 import ReactResizeDetector from "react-resize-detector";
-import {action, autorun, computed, observable} from "mobx";
+import {action, autorun, computed, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 import {NonIdealState, Colors} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
@@ -9,14 +9,14 @@ import {HistogramToolbarComponent} from "./HistogramToolbarComponent/HistogramTo
 import {LinePlotComponent, LinePlotComponentProps} from "components/Shared";
 import {TickType} from "../Shared/LinePlot/PlotContainer/PlotContainerComponent";
 import {HistogramWidgetStore} from "stores/widgets";
-import {FrameStore, WidgetConfig, WidgetProps, HelpType, WidgetsStore, AppStore} from "stores";
+import {FrameStore, WidgetProps, HelpType, WidgetsStore, AppStore, DefaultWidgetConfig} from "stores";
 import {clamp} from "utilities";
 import {Point2D} from "models";
 import "./HistogramComponent.scss";
 
 @observer
 export class HistogramComponent extends React.Component<WidgetProps> {
-    public static get WIDGET_CONFIG(): WidgetConfig {
+    public static get WIDGET_CONFIG(): DefaultWidgetConfig {
         return {
             id: "histogram",
             type: "histogram",
@@ -127,6 +127,8 @@ export class HistogramComponent extends React.Component<WidgetProps> {
 
     constructor(props: WidgetProps) {
         super(props);
+        makeObservable(this);
+
         const appStore = AppStore.Instance;
         // Check if this widget hasn't been assigned an ID yet
         if (!props.docked && props.id === HistogramComponent.WIDGET_CONFIG.type) {

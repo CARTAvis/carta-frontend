@@ -10,3 +10,9 @@ declare module "*.jpg" {
     const value: any;
     export = value;
 }
+
+declare module '*.glsl';
+declare module '*.frag';
+declare module '*.vert';
+
+declare module '!worker-loader*';

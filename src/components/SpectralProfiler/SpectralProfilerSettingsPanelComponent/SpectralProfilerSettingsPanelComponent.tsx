@@ -5,7 +5,7 @@ import {Colors, Tab, Tabs} from "@blueprintjs/core";
 import {LinePlotSettingsPanelComponentProps, LinePlotSettingsPanelComponent, SpectralSettingsComponent, SmoothingSettingsComponent} from "components/Shared";
 import {MomentGeneratorComponent} from "../MomentGeneratorComponent/MomentGeneratorComponent";
 import {SpectralProfileWidgetStore} from "stores/widgets";
-import {WidgetProps, WidgetConfig, HelpType, AppStore, WidgetsStore} from "stores";
+import {WidgetProps, DefaultWidgetConfig, HelpType, AppStore, WidgetsStore} from "stores";
 import {parseNumber} from "utilities";
 import "./SpectralProfilerSettingsPanelComponent.scss";
 
@@ -21,7 +21,7 @@ export enum SpectralProfilerSettingsTabs {
 @observer
 export class SpectralProfilerSettingsPanelComponent extends React.Component<WidgetProps> {
 
-    public static get WIDGET_CONFIG(): WidgetConfig {
+    public static get WIDGET_CONFIG(): DefaultWidgetConfig {
         return {
             id: "spectral-profiler-floating-settings",
             type: "floating-settings",
@@ -33,7 +33,7 @@ export class SpectralProfilerSettingsPanelComponent extends React.Component<Widg
             isCloseable: true,
             parentId: "spectal-profiler",
             parentType: "spectral-profiler",
-            tabsHelpTypes: [HelpType.SPECTRAL_PROFILER_SETTINGS_CONVERSION, HelpType.SPECTRAL_PROFILER_SETTINGS_STYLING, HelpType.SPECTRAL_PROFILER_SETTINGS_SMOOTHING, HelpType.SPECTRAL_PROFILER_SETTINGS_MOMENTS]
+            helpType: [HelpType.SPECTRAL_PROFILER_SETTINGS_CONVERSION, HelpType.SPECTRAL_PROFILER_SETTINGS_STYLING, HelpType.SPECTRAL_PROFILER_SETTINGS_SMOOTHING, HelpType.SPECTRAL_PROFILER_SETTINGS_MOMENTS]
         };
     }
 

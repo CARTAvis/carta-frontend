@@ -1,7 +1,7 @@
 import * as React from "react";
 import {observer} from "mobx-react";
-import {Button, ButtonGroup, Tooltip, AnchorButton} from "@blueprintjs/core";
-import {AppStore, WidgetConfig, RegionMode} from "stores";
+import {AnchorButton, ButtonGroup, Tooltip} from "@blueprintjs/core";
+import {AppStore, RegionMode, DefaultWidgetConfig} from "stores";
 import {
     AnimatorComponent,
     HistogramComponent,
@@ -24,8 +24,8 @@ import "./ToolbarMenuComponent.scss";
 
 @observer
 export class ToolbarMenuComponent extends React.Component {
-    public static get DRAGSOURCE_WIDGETCONFIG_MAP(): Map<string, WidgetConfig> {
-        return new Map<string, WidgetConfig>([
+    public static get DRAGSOURCE_WIDGETCONFIG_MAP(): Map<string, DefaultWidgetConfig> {
+        return new Map<string, DefaultWidgetConfig>([
             ["renderConfigButton", RenderConfigComponent.WIDGET_CONFIG],
             ["layerListButton", LayerListComponent.WIDGET_CONFIG],
             ["logButton", LogComponent.WIDGET_CONFIG],
@@ -101,51 +101,51 @@ export class ToolbarMenuComponent extends React.Component {
                 </ButtonGroup>
                 <ButtonGroup className={className}>
                     <Tooltip content={<span>Region List Widget{commonTooltip}</span>}>
-                        <Button icon={<CustomIcon icon={"regionList"}/>} id="regionListButton" onClick={appStore.widgetsStore.createFloatingRegionListWidget}/>
+                        <AnchorButton icon={<CustomIcon icon={"regionList"}/>} id="regionListButton" onClick={appStore.widgetsStore.createFloatingRegionListWidget}/>
                     </Tooltip>
                     <Tooltip content={<span>Log Widget{commonTooltip}</span>}>
-                        <Button icon={"application"} id="logButton" onClick={appStore.widgetsStore.createFloatingLogWidget}/>
+                        <AnchorButton icon={"application"} id="logButton" onClick={appStore.widgetsStore.createFloatingLogWidget}/>
                     </Tooltip>
                     <Tooltip content={<span>Spatial Profiler{commonTooltip}</span>}>
-                        <Button icon={<CustomIcon icon={"spatialProfiler"}/>} id="spatialProfilerButton" onClick={appStore.widgetsStore.createFloatingSpatialProfilerWidget}/>
+                        <AnchorButton icon={<CustomIcon icon={"spatialProfiler"}/>} id="spatialProfilerButton" onClick={appStore.widgetsStore.createFloatingSpatialProfilerWidget}/>
                     </Tooltip>
                     <Tooltip content={<span>Spectral Profiler{commonTooltip}</span>}>
-                        <Button icon={<CustomIcon icon={"spectralProfiler"}/>} id="spectralProfilerButton" onClick={appStore.widgetsStore.createFloatingSpectralProfilerWidget}/>
+                        <AnchorButton icon={<CustomIcon icon={"spectralProfiler"}/>} id="spectralProfilerButton" onClick={appStore.widgetsStore.createFloatingSpectralProfilerWidget}/>
                     </Tooltip>
                     <Tooltip content={<span>Statistics Widget{commonTooltip}</span>}>
-                        <Button icon={"calculator"} id="statsButton" onClick={appStore.widgetsStore.createFloatingStatsWidget}/>
+                        <AnchorButton icon={"calculator"} id="statsButton" onClick={appStore.widgetsStore.createFloatingStatsWidget}/>
                     </Tooltip>
                     <Tooltip content={<span>Histogram Widget{commonTooltip}</span>}>
-                        <Button icon={"timeline-bar-chart"} id="histogramButton" onClick={appStore.widgetsStore.createFloatingHistogramWidget}/>
+                        <AnchorButton icon={"timeline-bar-chart"} id="histogramButton" onClick={appStore.widgetsStore.createFloatingHistogramWidget}/>
                     </Tooltip>
                     <Tooltip content={<span>Animator Widget{commonTooltip}</span>}>
-                        <Button icon={"video"} id="animatorButton" onClick={appStore.widgetsStore.createFloatingAnimatorWidget}/>
+                        <AnchorButton icon={"video"} id="animatorButton" onClick={appStore.widgetsStore.createFloatingAnimatorWidget}/>
                     </Tooltip>
                     <Tooltip content={<span>Render Config Widget{commonTooltip}</span>}>
-                        <Button icon={"style"} id="renderConfigButton" onClick={appStore.widgetsStore.createFloatingRenderWidget}/>
+                        <AnchorButton icon={"style"} id="renderConfigButton" onClick={appStore.widgetsStore.createFloatingRenderWidget}/>
                     </Tooltip>
                     <Tooltip content={<span>Stokes Analysis Widget{commonTooltip}</span>}>
-                        <Button icon={<CustomIcon icon={"stokes"}/>} id="stokesAnalysisButton" onClick={appStore.widgetsStore.createFloatingStokesWidget}/>
+                        <AnchorButton icon={<CustomIcon icon={"stokes"}/>} id="stokesAnalysisButton" onClick={appStore.widgetsStore.createFloatingStokesWidget}/>
                     </Tooltip>
                     <Tooltip content={<span>Image List Widget{commonTooltip}</span>}>
-                        <Button icon={"layers"} id="layerListButton" onClick={appStore.widgetsStore.createFloatingLayerListWidget}/>
+                        <AnchorButton icon={"layers"} id="layerListButton" onClick={appStore.widgetsStore.createFloatingLayerListWidget}/>
                     </Tooltip>
                     <Tooltip content={<span>Catalog Widget{commonTooltip}</span>}>
-                        <Button icon={"heatmap"} id="catalogOverlayButton" onClick={appStore.widgetsStore.reloadFloatingCatalogWidget}/>
+                        <AnchorButton icon={"heatmap"} id="catalogOverlayButton" onClick={appStore.widgetsStore.reloadFloatingCatalogWidget}/>
                     </Tooltip>
                     <Tooltip content={<span>Spectral Line Query Widget{commonTooltip}</span>}>
-                        <Button icon={<CustomIcon icon={"spectralLineQuery"}/>} id="spectralLineQueryButton" onClick={appStore.widgetsStore.createFloatingSpectralLineQueryWidget}/>
+                        <AnchorButton icon={<CustomIcon icon={"spectralLineQuery"}/>} id="spectralLineQueryButton" onClick={appStore.widgetsStore.createFloatingSpectralLineQueryWidget}/>
                     </Tooltip>
                 </ButtonGroup>
                 <ButtonGroup className={dialogClassName}>
                     <Tooltip content={<span>File Header</span>}>
-                        <Button icon={"app-header"} onClick={dialogStore.showFileInfoDialog} active={dialogStore.fileInfoDialogVisible}/>
+                        <AnchorButton icon={"app-header"} onClick={dialogStore.showFileInfoDialog} active={dialogStore.fileInfoDialogVisible}/>
                     </Tooltip>
                     <Tooltip content={<span>Preferences</span>}>
-                        <Button icon={"wrench"} onClick={dialogStore.showPreferenceDialog} active={dialogStore.preferenceDialogVisible}/>
+                        <AnchorButton icon={"wrench"} onClick={dialogStore.showPreferenceDialog} active={dialogStore.preferenceDialogVisible}/>
                     </Tooltip>
                     <Tooltip content={<span>Contours</span>}>
-                        <Button icon={<CustomIcon icon={"contour"}/>} onClick={dialogStore.showContourDialog} active={dialogStore.contourDialogVisible}/>
+                        <AnchorButton icon={<CustomIcon icon={"contour"}/>} onClick={dialogStore.showContourDialog} active={dialogStore.contourDialogVisible}/>
                     </Tooltip>
                 </ButtonGroup>
             </React.Fragment>
