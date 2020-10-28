@@ -27,7 +27,7 @@ export class CatalogViewComponent extends React.Component<CatalogViewComponentPr
         let coordsData = new Map<number, Plotly.Data>();
         catalogStore.catalogData.forEach((catalog, key) => {
             if (!catalog.showSelectedData) {
-                let unSelecteData: Plotly.Data = {};
+                let unSelecteData: Partial<Plotly.PlotData> = {};
                 unSelecteData.type = "scattergl";
                 unSelecteData.mode = "markers";
                 unSelecteData.hoverinfo = "none";
@@ -51,7 +51,7 @@ export class CatalogViewComponent extends React.Component<CatalogViewComponentPr
             const selectedPoints = profileStore.selectedPointIndices;
             const selectedPointSize = selectedPoints.length;
             const fileId = profileStore.catalogFileId;
-            let selecteData: Plotly.Data = {};
+            let selecteData: Partial<Plotly.PlotData> = {};
             if (selectedPointSize > 0) {
                 selecteData.type = "scattergl";
                 selecteData.mode = "markers";

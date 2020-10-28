@@ -635,6 +635,7 @@ export class AppStore {
                     const catalog = this.widgetsStore.createFloatingCatalogWidget(fileId);
                     catalogStore.catalogProfiles.set(catalog.widgetComponentId, fileId);
                 } else {
+                    this.widgetsStore.addCatalogWidget(fileId);
                     const key = catalogStore.catalogProfiles.keys().next().value;
                     catalogStore.catalogProfiles.set(key, fileId);
                 }

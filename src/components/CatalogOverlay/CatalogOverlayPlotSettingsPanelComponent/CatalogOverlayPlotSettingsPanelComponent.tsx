@@ -38,7 +38,6 @@ const hexagon2 = <path d="M 3 8 L 5.5 3.67 L 10.5 3.67 L 13 8 L 10.5 12.33 L 5.5
 
 @observer
 export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<WidgetProps> {
-    @observable catalogFileId: number;
     @observable selectedTab: TabId = "global";
 
     private catalogFileNames: Map<number, string>;
@@ -65,6 +64,10 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
         return WidgetsStore.Instance.catalogWidgets.get(catalogWidgetStoreId);
     }
 
+    @computed get catalogFileId() {
+        return CatalogStore.Instance.catalogProfiles?.get(this.props.id);
+    }
+
     constructor(props: WidgetProps) {
         super(props);
         makeObservable(this);
@@ -73,7 +76,6 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
         this.catalogFileNames = new Map<number, string>();
         autorun(() => {
             const catalogStore = CatalogStore.Instance;
-            runInAction(() => this.catalogFileId = catalogStore.catalogProfiles.get(this.props.id));
             const catalogWidgetStoreId = catalogStore.catalogWidgets.get(this.catalogFileId);
             const activeFiles = catalogStore.activeCatalogFiles;
             if (!catalogWidgetStoreId) {
