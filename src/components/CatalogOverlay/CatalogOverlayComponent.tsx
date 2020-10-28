@@ -191,7 +191,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         });
     }
 
-    onCatalogDataTableRefUpdated = (ref) => {
+    @action private onCatalogDataTableRefUpdated = (ref) => {
         this.catalogTableRef = ref;
     }
 
