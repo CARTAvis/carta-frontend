@@ -215,7 +215,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
         const profileStore = this.profileStore;
         const coords = profileStore.get2DPlotData(widgetStore.xColumnName, widgetStore.yColumnName, profileStore.catalogData);
         let scatterDatasets: Plotly.Data[] = [];
-        let data: Plotly.Data = {};
+        let data: Partial<Plotly.PlotData> = {};
         data.type = "scattergl";
         data.mode = "markers";
         data.marker = {
@@ -238,7 +238,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
         const profileStore = this.profileStore;
         const coords = profileStore.get1DPlotData(widgetStore.xColumnName);
         let histogramDatasets: Plotly.Data[] = [];
-        let data: Plotly.Data = {};
+        let data: Partial<Plotly.PlotData> = {};
         const xRange = this.getHistogramXBorder(coords.wcsData);
         // increase x range to include border data
         const fraction = 1.001;

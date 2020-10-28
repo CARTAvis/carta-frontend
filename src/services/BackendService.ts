@@ -34,6 +34,9 @@ export class BackendService {
 
     public animationId: number;
     public sessionId: number;
+    public serverFeatureFlags: number;
+    public grpcPort: number;
+    public serverUrl: string;
 
     private connection: WebSocket;
     private lastPingTime: number;
@@ -157,6 +160,7 @@ export class BackendService {
         this.autoReconnect = autoConnect;
         this.connectionDropped = false;
         this.connectionStatus = ConnectionStatus.PENDING;
+        this.serverUrl = url;
         this.connection = new WebSocket(apiService.accessToken ? url + `?token=${apiService.accessToken}` : url);
         this.connection.binaryType = "arraybuffer";
         this.connection.onmessage = this.messageHandler.bind(this);
@@ -701,6 +705,7 @@ export class BackendService {
         }
     }
 
+    @action("send scripting response")
     sendScriptingResponse = (message: CARTA.IScriptingResponse) => {
         if (this.connectionStatus === ConnectionStatus.ACTIVE) {
             this.logEvent(CARTA.EventType.SCRIPTING_RESPONSE, this.eventCounter, message, false);
@@ -710,6 +715,10 @@ export class BackendService {
         }
         return false;
     };
+
+    public serverHasFeature(feature: CARTA.ServerFeatureFlags): boolean {
+        return (this.serverFeatureFlags & feature) !== 0;
+    }
 
     private messageHandler(event: MessageEvent) {
         if (event.data === "PONG") {
@@ -770,6 +779,9 @@ export class BackendService {
 
     private onRegisterViewerAck(eventId: number, ack: CARTA.RegisterViewerAck) {
         this.sessionId = ack.sessionId;
+        this.serverFeatureFlags = ack.serverFeatureFlags;
+        this.grpcPort = ack.grpcPort;
+
         this.onSimpleMappedResponse(eventId, ack);
 
         // use the reconnect stream when the session type is resumed
