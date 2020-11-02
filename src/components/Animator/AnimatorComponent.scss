@@ -76,19 +76,17 @@
                 margin-top: 10px;
             }
         }
+
+        .bp3-numeric-input {
+            .bp3-input-group {
+                width: 40px;
+            }
+        }
     }
 
     .playback-framerate {
         min-width: 150px;
         flex: 1 1 150px;
-    }
-
-    #framerate-numeric {
-        width: 40px;
-    }
-
-    #step-numeric {
-        width: 40px;
     }
 
     .playback-mode {

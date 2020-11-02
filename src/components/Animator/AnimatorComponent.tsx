@@ -419,7 +419,6 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
                 <HTMLSelect options={[NumericInputType.FrameRate, NumericInputType.Step]} onChange={(ev) => this.onNumericInputTypeChange(ev.currentTarget.value as NumericInputType)}/>
                 {this.numericInputType === NumericInputType.FrameRate ?
                 <SafeNumericInput
-                    id="framerate-numeric"
                     value={appStore.animatorStore.frameRate}
                     min={appStore.animatorStore.minFrameRate}
                     max={appStore.animatorStore.maxFrameRate}
@@ -430,7 +429,6 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
                     disabled={appStore.animatorStore.animationState === AnimationState.PLAYING}
                 /> :
                 <SafeNumericInput
-                    id="step-numeric"
                     value={appStore.animatorStore.step}
                     min={appStore.animatorStore.minStep}
                     max={appStore.animatorStore.maxStep}
