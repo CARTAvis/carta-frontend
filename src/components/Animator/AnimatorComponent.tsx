@@ -415,7 +415,7 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
         );
 
         const numericControl = (
-            <ControlGroup>
+            <ControlGroup className="playback-numeric-control">
                 <HTMLSelect options={[NumericInputType.FrameRate, NumericInputType.Step]} onChange={(ev) => this.onNumericInputTypeChange(ev.currentTarget.value as NumericInputType)}/>
                 {this.numericInputType === NumericInputType.FrameRate ?
                 <SafeNumericInput
