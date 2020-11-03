@@ -398,7 +398,7 @@ export class FrameStore {
 
     @computed get simpleSpectralInfo(): string {
         const infoString = this.spectralInfo.freqString ? this.spectralInfo.freqString : this.spectralInfo.velocityString;
-        return `${this.spectralInfo.spectralString?.replace(/\w+\s\(/, "")?.replace(/\):/, ",")}${infoString?.replace(/\w+:/, ",")}`;
+        return `${this.spectralInfo.spectralString?.replace(/\w+\s\(/, "")?.replace(/\):\s/, "\u000A")}${infoString?.replace(/\w+:\s/, "\u000A")}`;
     }
 
     @computed get spectralAxis(): { valid: boolean; dimension: number, type: ChannelType } {

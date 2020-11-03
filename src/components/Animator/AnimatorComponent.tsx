@@ -19,9 +19,9 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
             id: "animator",
             type: "animator",
             minWidth: 250,
-            minHeight: 180,
+            minHeight: 200,
             defaultWidth: 650,
-            defaultHeight: 180,
+            defaultHeight: 200,
             title: "Animator",
             isCloseable: true,
             helpType: HelpType.ANIMATOR
@@ -307,7 +307,7 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
                             disabled={appStore.animatorStore.animationState === AnimationState.PLAYING}
                         />
                         <div className="slider-info">
-                            {activeFrame.simpleSpectralInfo}
+                            <pre>{activeFrame.simpleSpectralInfo}</pre>
                         </div>
                     </React.Fragment>
                     }
@@ -367,7 +367,7 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
                             disabled={appStore.animatorStore.animationState === AnimationState.PLAYING}
                         />
                         <div className="slider-info">
-                            {activeFrame.simpleSpectralInfo}
+                            <pre>{activeFrame.simpleSpectralInfo}</pre>
                         </div>
                     </React.Fragment>
                     }

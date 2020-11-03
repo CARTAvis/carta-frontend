@@ -29,9 +29,10 @@
             .slider-info {
                 overflow-x: hidden;
                 flex: 1 1 180px;
-            }
-
-            .channel-slider {
+                pre {
+                    margin: 0px;
+                    font-size: x-small;
+                }
             }
 
             &.range-slider {
