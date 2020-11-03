@@ -94,7 +94,7 @@ export class AnimatorStore {
             fileId: frame.frameInfo.fileId,
             tiles: tiles,
             compressionType: CARTA.CompressionType.ZFP,
-            compressionQuality: preferenceStore.animationCompressionQuality,
+            compressionQuality: preferenceStore.animationCompressionQuality
         };
 
         // Calculate matched frames for the animation range
@@ -105,7 +105,8 @@ export class AnimatorStore {
                 sibling.fullWcsInfo,
                 preferenceStore.spectralMatchingType,
                 animationFrames.firstFrame.channel,
-                animationFrames.lastFrame.channel);
+                animationFrames.lastFrame.channel
+            );
             matchedFrames.set(sibling.frameInfo.fileId, {frameNumbers});
         }
 
@@ -177,7 +178,6 @@ export class AnimatorStore {
 
     @action animate = () => {
         if (this.animationState === AnimationState.PLAYING && this.animationMode === AnimationMode.FRAME) {
-            // Do animation
             AppStore.Instance.nextFrame();
         }
     };
@@ -191,7 +191,7 @@ export class AnimatorStore {
         this.maxFrameRate = 15;
         this.minFrameRate = 1;
         this.step = 1;
-        this.maxStep = 5;
+        this.maxStep = 50;
         this.minStep = 1;
         this.animationMode = AnimationMode.CHANNEL;
         this.animationState = AnimationState.STOPPED;
@@ -226,7 +226,7 @@ export class AnimatorStore {
         if (this.animationMode === AnimationMode.CHANNEL) {
             firstFrame = {
                 channel: frame.animationChannelRange[0],
-                stokes: frame.stokes,
+                stokes: frame.stokes
             };
             lastFrame = {
                 channel: frame.animationChannelRange[1],
@@ -239,7 +239,7 @@ export class AnimatorStore {
         } else if (this.animationMode === AnimationMode.STOKES) {
             firstFrame = {
                 channel: frame.channel,
-                stokes: 0,
+                stokes: 0
             };
             lastFrame = {
                 channel: frame.channel,
@@ -297,7 +297,7 @@ export class AnimatorStore {
             startFrame: startFrame,
             firstFrame: firstFrame,
             lastFrame: lastFrame,
-            deltaFrame: deltaFrame,
+            deltaFrame: deltaFrame
         };
     };
 }
