@@ -261,7 +261,7 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
                             disabled={appStore.animatorStore.animationState === AnimationState.PLAYING}
                         />
                         <div className="slider-info">
-                            {activeFrame.frameInfo.fileInfo.name}
+                            <pre>{activeFrame.frameInfo.fileInfo.name}</pre>
                         </div>
                     </React.Fragment>
                     }
@@ -366,9 +366,7 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
                             onChange={this.onStokesChanged}
                             disabled={appStore.animatorStore.animationState === AnimationState.PLAYING}
                         />
-                        <div className="slider-info">
-                            <pre>{activeFrame.simpleSpectralInfo}</pre>
-                        </div>
+                        <div className="slider-info"/>
                     </React.Fragment>
                     }
                 </div>
