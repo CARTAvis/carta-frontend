@@ -547,6 +547,11 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
         ctx.fillRect(0, 0, composedCanvas.width, composedCanvas.height);
         ctx.drawImage(canvas, 0, 0);
 
+        // plot Mean/RMS
+        const meanRMS = this.genMeanRMSForPngPlot();
+        meanRMS?.forEach(line => {
+        });
+
         // plot spectral lines
         const spectralLines = this.genSpectralLinesForPngPlot();
         spectralLines?.forEach(spectralLine => {
@@ -878,6 +883,24 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
             );
         }
         return borderRect;
+    };
+
+    private genMeanRMSForPngPlot = (): {color: string, text: string, x: number, yBottom: number, yTop: number}[] => {
+        let meanRMS = [];
+        const chartArea = this.chartArea;
+        this.props.markers?.forEach(marker => {
+            const canvasX = this.getCanvasSpaceX(marker.value);
+            if ((marker?.id.match(/^marker-mean/) || marker?.id.match(/^marker-rms/)) && !isNaN(canvasX)) {
+                meanRMS.push({
+                    color: marker?.color,
+                    text: marker?.label,
+                    x: canvasX,
+                    yBottom: chartArea.bottom,
+                    yTop: chartArea.top
+                });
+            }
+        });
+        return meanRMS;
     };
 
     private genSpectralLinesForPngPlot = (): {color: string, text: string, x: number, yBottom: number, yTop: number}[] => {
