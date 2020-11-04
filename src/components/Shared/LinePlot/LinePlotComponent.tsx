@@ -549,8 +549,19 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
 
         // plot Mean/RMS
         const meanRMS = this.genMeanRMSForPngPlot();
-        meanRMS?.forEach(line => {
-        });
+        if (meanRMS.mean) {
+            // plot mean
+            ctx.beginPath();
+            ctx.setLineDash([meanRMS.mean.dash]);
+            ctx.strokeStyle = meanRMS.mean.color;
+            ctx.lineWidth = 1;
+            ctx.moveTo(meanRMS.mean.xLeft, meanRMS.mean.y);
+            ctx.lineTo(meanRMS.mean.xRight, meanRMS.mean.y);
+            ctx.stroke();
+        }
+        if (meanRMS.RMS) {
+            // plot RMS
+        }
 
         // plot spectral lines
         const spectralLines = this.genSpectralLinesForPngPlot();
@@ -885,19 +896,35 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
         return borderRect;
     };
 
-    private genMeanRMSForPngPlot = (): {color: string, text: string, x: number, yBottom: number, yTop: number}[] => {
-        let meanRMS = [];
+    private genMeanRMSForPngPlot = (): {
+        mean: {color: string, dash: number, y: number, xLeft: number, xRight: number},
+        RMS: {color: string, yTop: number, yBottom: number, y: number, xLeft: number, xRight: number}
+    } => {
+        let meanRMS = {
+            mean: undefined,
+            RMS: undefined
+        };
         const chartArea = this.chartArea;
         this.props.markers?.forEach(marker => {
-            const canvasX = this.getCanvasSpaceX(marker.value);
-            if ((marker?.id.match(/^marker-mean/) || marker?.id.match(/^marker-rms/)) && !isNaN(canvasX)) {
-                meanRMS.push({
+            const canvasY = this.getCanvasSpaceY(marker.value);
+            if (marker?.id.match(/^marker-mean/) && !isNaN(canvasY)) {
+                meanRMS.mean = {
                     color: marker?.color,
-                    text: marker?.label,
-                    x: canvasX,
-                    yBottom: chartArea.bottom,
-                    yTop: chartArea.top
-                });
+                    dash: marker.dash,
+                    y: canvasY,
+                    xLeft: chartArea.left,
+                    xRight: chartArea.right
+                };
+            }
+            if (marker?.id.match(/^marker-rms/) && !isNaN(canvasY)) {
+                meanRMS.RMS = {
+                    color: marker?.color,
+                    y: canvasY,
+                    yTop: undefined,
+                    yBottom: undefined,
+                    xLeft: chartArea.left,
+                    xRight: chartArea.right
+                };
             }
         });
         return meanRMS;
