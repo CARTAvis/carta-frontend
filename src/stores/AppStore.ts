@@ -1119,7 +1119,7 @@ export class AppStore {
                 this.overlayStore.numbers.color,
                 this.overlayStore.labels.color
             ]
-            AST.setPalette(colors);
+            AST.setColors(colors);
         });
 
         // Update requirements every 200 ms
