@@ -78,6 +78,10 @@ Module.setColors = function (colors) {
     Module.colors = colors;
 };
 
+Module.setColor = function (color, index) {
+    Module.colors[index] = color;
+};
+
 Module.setFontList = function (fonts) {
     Module.fonts = fonts;
 };

@@ -126,6 +126,7 @@ export class OverlayGlobalSettings {
 
     @action setColor = (color: string) => {
         this.color = color;
+        AST.setColor(color, AstColorsIndex.GLOBAL);
     };
 
     @action setTolerance(tolerance: number) {
@@ -207,6 +208,7 @@ export class OverlayTitleSettings {
 
     @action setColor = (color: string) => {
         this.color = color;
+        AST.setColor(color, AstColorsIndex.TITLE);
     };
 
     @action setCustomText = (customTitle: boolean) => {
@@ -258,6 +260,7 @@ export class OverlayGridSettings {
 
     @action setColor = (color: string) => {
         this.color = color;
+        AST.setColor(color, AstColorsIndex.GRID);
     };
 
     @action setWidth(width: number) {
@@ -309,6 +312,7 @@ export class OverlayBorderSettings {
 
     @action setColor = (color: string) => {
         this.color = color;
+        AST.setColor(color, AstColorsIndex.BORDER);
     };
 
     @action setWidth(width: number) {
@@ -374,6 +378,7 @@ export class OverlayTickSettings {
 
     @action setColor = (color: string) => {
         this.color = color;
+        AST.setColor(color, AstColorsIndex.TICK);
     };
 
     @action setWidth(width: number) {
@@ -423,6 +428,7 @@ export class OverlayAxisSettings {
 
     @action setColor = (color: string) => {
         this.color = color;
+        AST.setColor(color, AstColorsIndex.AXIS);
     };
 
     @action setWidth(width: number) {
@@ -559,6 +565,7 @@ export class OverlayNumberSettings {
 
     @action setColor = (color: string) => {
         this.color = color;
+        AST.setColor(color, AstColorsIndex.NUMBER);
     };
 
     @action setCustomFormat(customFormat: boolean) {
@@ -649,6 +656,7 @@ export class OverlayLabelSettings {
 
     @action setColor = (color: string) => {
         this.color = color;
+        AST.setColor(color, AstColorsIndex.LABEL);
     };
 
     @action setFont = (font: number) => {

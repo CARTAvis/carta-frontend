@@ -970,6 +970,17 @@ export class AppStore {
         AST.onReady.then(runInAction(() => {
             this.astReady = true;
             this.logStore.addInfo("AST library loaded", ["ast"]);
+            const colors = [
+                this.overlayStore.global.color,
+                this.overlayStore.title.color,
+                this.overlayStore.grid.color,
+                this.overlayStore.border.color,
+                this.overlayStore.ticks.color,
+                this.overlayStore.axes.color,
+                this.overlayStore.numbers.color,
+                this.overlayStore.labels.color
+            ]
+            AST.setColors(colors);
         }));
 
         CARTACompute.onReady.then(action(() => {
@@ -1105,21 +1116,6 @@ export class AppStore {
             if (this.activeFrame) {
                 this.overlayStore.setDefaultsFromAST(this.activeFrame);
             }
-        });
-
-        // update ast palette
-        autorun(() => {
-            const colors = [
-                this.overlayStore.global.color,
-                this.overlayStore.title.color,
-                this.overlayStore.grid.color,
-                this.overlayStore.border.color,
-                this.overlayStore.ticks.color,
-                this.overlayStore.axes.color,
-                this.overlayStore.numbers.color,
-                this.overlayStore.labels.color
-            ]
-            AST.setColors(colors);
         });
 
         // Update requirements every 200 ms
