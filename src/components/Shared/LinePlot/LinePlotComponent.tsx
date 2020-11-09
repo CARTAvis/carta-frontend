@@ -561,6 +561,10 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
         }
         if (meanRMS.RMS) {
             // plot RMS
+            ctx.fillStyle = meanRMS.RMS.color;
+            ctx.globalAlpha = meanRMS.RMS.opacity;
+            ctx.fillRect(meanRMS.RMS.xLeft, meanRMS.RMS.yTop, meanRMS.RMS.width, meanRMS.RMS.height);
+            ctx.globalAlpha = 1.0;
         }
 
         // plot spectral lines
@@ -659,6 +663,19 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
         a.dispatchEvent(new MouseEvent("click"));
     };
 
+    private calcBoxMarker = (marker: LineMarker): {lowerBound: number, height: number} => {
+        const chartArea = this.chartArea;
+        const thickness = this.getPixelForValueY(marker.value - marker.width / 2.0, this.props.logY) - this.getPixelForValueY(marker.value + marker.width / 2.0, this.props.logY);
+        const valueCanvasSpace = this.getCanvasSpaceY(marker.value)
+        const lowerBound = clamp(valueCanvasSpace - thickness, chartArea.top, chartArea.bottom);
+        const upperBound = clamp(valueCanvasSpace + thickness, chartArea.top, chartArea.bottom);
+        const hight = upperBound - lowerBound;
+        return {
+            lowerBound: lowerBound,
+            height: hight
+        };
+    };
+
     private genHorizontalLine = (marker: LineMarker, isHovering: boolean, markerColor: string, markerOpacity: number, valueCanvasSpace: number) => {
         const chartArea = this.chartArea;
         const lineWidth = chartArea.right - chartArea.left;
@@ -680,12 +697,10 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
             ];
         } else {
             if (marker.width) {
-                const thickness = this.getPixelForValueY(marker.value - marker.width / 2.0, this.props.logY) - this.getPixelForValueY(marker.value + marker.width / 2.0, this.props.logY);
-                let lowerBound = clamp(valueCanvasSpace - thickness, chartArea.top, chartArea.bottom);
-                let upperBound = clamp(valueCanvasSpace + thickness, chartArea.top, chartArea.bottom);
-                let croppedThickness = upperBound - lowerBound;
+                const boxInfo = this.calcBoxMarker(marker);
+                const yTop = boxInfo.lowerBound - valueCanvasSpace;
                 lineSegments = [(
-                    <Rect listening={false} key={0} x={chartArea.left} y={lowerBound - valueCanvasSpace} width={lineWidth} height={croppedThickness} fill={markerColor} opacity={markerOpacity}/>
+                    <Rect listening={false} key={0} x={chartArea.left} y={yTop} width={lineWidth} height={boxInfo.height} fill={markerColor} opacity={markerOpacity}/>
                 )];
             } else {
                 lineSegments = [<Line listening={false} key={0} points={[chartArea.left, 0, chartArea.right, 0]} strokeWidth={1} stroke={markerColor} opacity={markerOpacity} dash={marker.dash}/>];
@@ -898,7 +913,7 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
 
     private genMeanRMSForPngPlot = (): {
         mean: {color: string, dash: number, y: number, xLeft: number, xRight: number},
-        RMS: {color: string, yTop: number, yBottom: number, y: number, xLeft: number, xRight: number}
+        RMS: {color: string, opacity: number, xLeft: number, yTop: number, width: number, height: number}
     } => {
         let meanRMS = {
             mean: undefined,
@@ -917,13 +932,14 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
                 };
             }
             if (marker?.id.match(/^marker-rms/) && !isNaN(canvasY)) {
+                const boxInfo = this.calcBoxMarker(marker);
                 meanRMS.RMS = {
                     color: marker?.color,
-                    y: canvasY,
-                    yTop: undefined,
-                    yBottom: undefined,
+                    opacity: marker?.opacity,
                     xLeft: chartArea.left,
-                    xRight: chartArea.right
+                    yTop: boxInfo.lowerBound,
+                    width: chartArea.right - chartArea.left,
+                    height: boxInfo.height
                 };
             }
         });
