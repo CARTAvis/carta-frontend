@@ -547,9 +547,19 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
         ctx.fillRect(0, 0, composedCanvas.width, composedCanvas.height);
         ctx.drawImage(canvas, 0, 0);
 
+        // plot chart border
+        const chartBorder = this.genChartBorder();
+        if (chartBorder) {
+            ctx.beginPath();
+            ctx.strokeStyle = this.props.darkMode ? Colors.DARK_GRAY5 : Colors.LIGHT_GRAY1;
+            ctx.lineWidth = 1;
+            ctx.rect(chartBorder.x, chartBorder.y, chartBorder.width, chartBorder.height);
+            ctx.stroke();
+        }
+
         // plot Mean/RMS
         const meanRMS = this.genMeanRMSForPngPlot();
-        if (meanRMS.mean) {
+        if (meanRMS?.mean) {
             // plot mean
             ctx.beginPath();
             ctx.setLineDash([meanRMS.mean.dash]);
@@ -559,7 +569,7 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
             ctx.lineTo(meanRMS.mean.xRight, meanRMS.mean.y);
             ctx.stroke();
         }
-        if (meanRMS.RMS) {
+        if (meanRMS?.RMS) {
             // plot RMS
             ctx.fillStyle = meanRMS.RMS.color;
             ctx.globalAlpha = meanRMS.RMS.opacity;
@@ -597,7 +607,6 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
         if (showPlotxAxes) {
             this.exportSubPlotImage(false);
         }
-
     };
 
     exportData = () => {
@@ -663,7 +672,7 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
         a.dispatchEvent(new MouseEvent("click"));
     };
 
-    private calcBoxMarker = (marker: LineMarker): {lowerBound: number, height: number} => {
+    private calcMarkerBox = (marker: LineMarker): {lowerBound: number, height: number} => {
         const chartArea = this.chartArea;
         const thickness = this.getPixelForValueY(marker.value - marker.width / 2.0, this.props.logY) - this.getPixelForValueY(marker.value + marker.width / 2.0, this.props.logY);
         const valueCanvasSpace = this.getCanvasSpaceY(marker.value)
@@ -697,7 +706,7 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
             ];
         } else {
             if (marker.width) {
-                const boxInfo = this.calcBoxMarker(marker);
+                const boxInfo = this.calcMarkerBox(marker);
                 const yTop = boxInfo.lowerBound - valueCanvasSpace;
                 lineSegments = [(
                     <Rect listening={false} key={0} x={chartArea.left} y={yTop} width={lineWidth} height={boxInfo.height} fill={markerColor} opacity={markerOpacity}/>
@@ -891,17 +900,31 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
         return selectionRect;
     };
 
-    private genBorderRect = () => {
+    private genChartBorder = (): {x: number, y: number, width: number, height: number} => {
         const chartArea = this.chartArea;
+        let border = undefined;
+        if (chartArea) {
+            border = {
+                x: Math.floor(chartArea.left) - 0.5 * devicePixelRatio,
+                y: Math.floor(chartArea.top) - 0.5 * devicePixelRatio,
+                width: Math.ceil(chartArea.right - chartArea.left + 1),
+                height: Math.ceil(chartArea.bottom - chartArea.top + 1)
+            }
+        }
+        return border;
+    };
+
+    private genBorderRect = () => {
+        const chartBorder = this.genChartBorder();
         let borderRect = null;
-        if (this.chartArea) {
+        if (chartBorder) {
             borderRect = (
                 // Shift by half a pixel for sharp 1px lines
                 <Rect
-                    x={Math.floor(chartArea.left) - 0.5 * devicePixelRatio}
-                    y={Math.floor(chartArea.top) - 0.5 * devicePixelRatio}
-                    width={Math.ceil(chartArea.right - chartArea.left + 1)}
-                    height={Math.ceil(chartArea.bottom - chartArea.top + 1)}
+                    x={chartBorder.x}
+                    y={chartBorder.y}
+                    width={chartBorder.width}
+                    height={chartBorder.height}
                     listening={false}
                     stroke={this.props.darkMode ? Colors.DARK_GRAY5 : Colors.LIGHT_GRAY1}
                     strokeWidth={1}
@@ -932,7 +955,7 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
                 };
             }
             if (marker?.id.match(/^marker-rms/) && !isNaN(canvasY)) {
-                const boxInfo = this.calcBoxMarker(marker);
+                const boxInfo = this.calcMarkerBox(marker);
                 meanRMS.RMS = {
                     color: marker?.color,
                     opacity: marker?.opacity,
