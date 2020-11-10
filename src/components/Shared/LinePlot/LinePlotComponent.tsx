@@ -673,6 +673,9 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
     };
 
     private calcMarkerBox = (marker: LineMarker): {lowerBound: number, height: number} => {
+        if (!marker) {
+            return undefined;
+        }
         const chartArea = this.chartArea;
         const thickness = this.getPixelForValueY(marker.value - marker.width / 2.0, this.props.logY) - this.getPixelForValueY(marker.value + marker.width / 2.0, this.props.logY);
         const valueCanvasSpace = this.getCanvasSpaceY(marker.value)
@@ -707,7 +710,7 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
         } else {
             if (marker.width) {
                 const boxInfo = this.calcMarkerBox(marker);
-                const yTop = boxInfo.lowerBound - valueCanvasSpace;
+                const yTop = boxInfo?.lowerBound - valueCanvasSpace;
                 lineSegments = [(
                     <Rect listening={false} key={0} x={chartArea.left} y={yTop} width={lineWidth} height={boxInfo.height} fill={markerColor} opacity={markerOpacity}/>
                 )];
@@ -960,9 +963,9 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
                     color: marker?.color,
                     opacity: marker?.opacity,
                     xLeft: chartArea.left,
-                    yTop: boxInfo.lowerBound,
+                    yTop: boxInfo?.lowerBound,
                     width: chartArea.right - chartArea.left,
-                    height: boxInfo.height
+                    height: boxInfo?.height
                 };
             }
         });
