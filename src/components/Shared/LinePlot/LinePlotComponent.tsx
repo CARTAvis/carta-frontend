@@ -712,7 +712,7 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
                 const boxInfo = this.calcMarkerBox(marker);
                 const yTop = boxInfo?.lowerBound - valueCanvasSpace;
                 lineSegments = [(
-                    <Rect listening={false} key={0} x={chartArea.left} y={yTop} width={lineWidth} height={boxInfo.height} fill={markerColor} opacity={markerOpacity}/>
+                    <Rect listening={false} key={0} x={chartArea.left} y={yTop} width={lineWidth} height={boxInfo?.height} fill={markerColor} opacity={markerOpacity}/>
                 )];
             } else {
                 lineSegments = [<Line listening={false} key={0} points={[chartArea.left, 0, chartArea.right, 0]} strokeWidth={1} stroke={markerColor} opacity={markerOpacity} dash={marker.dash}/>];
