@@ -908,10 +908,10 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
         let border = undefined;
         if (chartArea) {
             border = {
-                x: Math.floor(chartArea.left) - 0.5 * devicePixelRatio,
-                y: Math.floor(chartArea.top) - 0.5 * devicePixelRatio,
-                width: Math.ceil(chartArea.right - chartArea.left + 1),
-                height: Math.ceil(chartArea.bottom - chartArea.top + 1)
+                x: (Math.floor(chartArea.left) - 0.5) * devicePixelRatio,
+                y: (Math.floor(chartArea.top) - 0.5) * devicePixelRatio,
+                width: Math.ceil(chartArea.right - chartArea.left + 1) * devicePixelRatio,
+                height: Math.ceil(chartArea.bottom - chartArea.top + 1) * devicePixelRatio
             }
         }
         return border;
@@ -952,9 +952,9 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
                 meanRMS.mean = {
                     color: marker?.color,
                     dash: marker.dash,
-                    y: canvasY,
-                    xLeft: chartArea.left,
-                    xRight: chartArea.right
+                    y: canvasY * devicePixelRatio,
+                    xLeft: chartArea.left * devicePixelRatio,
+                    xRight: chartArea.right * devicePixelRatio
                 };
             }
             if (marker?.id.match(/^marker-rms/) && !isNaN(canvasY)) {
@@ -962,10 +962,10 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
                 meanRMS.RMS = {
                     color: marker?.color,
                     opacity: marker?.opacity,
-                    xLeft: chartArea.left,
-                    yTop: boxInfo?.lowerBound,
-                    width: chartArea.right - chartArea.left,
-                    height: boxInfo?.height
+                    xLeft: chartArea.left * devicePixelRatio,
+                    yTop: boxInfo?.lowerBound * devicePixelRatio,
+                    width: (chartArea.right - chartArea.left) * devicePixelRatio,
+                    height: boxInfo?.height * devicePixelRatio
                 };
             }
         });
