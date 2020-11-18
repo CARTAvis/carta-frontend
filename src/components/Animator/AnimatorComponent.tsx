@@ -222,7 +222,7 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
         const numChannels = activeFrame ? activeFrame.frameInfo.fileInfoExtended.depth : 0;
         const numStokes = activeFrame ? activeFrame.frameInfo.fileInfoExtended.stokes : 0;
 
-        const iconOnly = this.width < 600;
+        const iconOnly = this.width < 625;
         const hideSliders = this.width < 450;
 
         let channelSlider, channelRangeSlider, stokesSlider, frameSlider;
