@@ -65,6 +65,7 @@ export class StatsComponent extends React.Component<WidgetProps> {
         [CARTA.StatsType.Sigma, "StdDev"],
         [CARTA.StatsType.Min, "Min"],
         [CARTA.StatsType.Max, "Max"],
+        [CARTA.StatsType.Extrema, "Extrema"],
         [CARTA.StatsType.RMS, "RMS"],
         [CARTA.StatsType.SumSq, "SumSq"]
     ]);
