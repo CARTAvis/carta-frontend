@@ -1,11 +1,16 @@
 import * as React from "react";
 import {observer} from "mobx-react";
 import {action, makeObservable, observable} from "mobx";
-import {AnchorButton, Button, ButtonGroup, FormGroup, IconName, Menu, MenuItem, NonIdealState, NumberRange, Popover, Position, Radio, RangeSlider, Slider, Tooltip} from "@blueprintjs/core";
+import {AnchorButton, Button, ButtonGroup, ControlGroup, HTMLSelect, IconName, Menu, MenuItem, NonIdealState, NumberRange, Popover, Position, Radio, RangeSlider, Slider, Tooltip} from "@blueprintjs/core";
 import ReactResizeDetector from "react-resize-detector";
 import {AnimationMode, AnimationState, PlayMode, DefaultWidgetConfig, WidgetProps, HelpType, AnimatorStore, AppStore} from "stores";
 import {SafeNumericInput} from "components/Shared";
 import "./AnimatorComponent.scss";
+
+enum NumericInputType {
+    FrameRate = "Frame Rate",
+    Step = "Step"
+}
 
 @observer
 export class AnimatorComponent extends React.Component<WidgetProps> {
@@ -14,9 +19,9 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
             id: "animator",
             type: "animator",
             minWidth: 250,
-            minHeight: 180,
+            minHeight: 200,
             defaultWidth: 650,
-            defaultHeight: 180,
+            defaultHeight: 200,
             title: "Animator",
             isCloseable: true,
             helpType: HelpType.ANIMATOR
@@ -25,15 +30,21 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
 
     @observable width: number;
     @observable height: number;
+    @observable numericInputType: NumericInputType;
 
     constructor(props: any) {
         super(props);
         makeObservable(this);
+        this.numericInputType = NumericInputType.FrameRate;
     }
 
     @action onResize = (width: number, height: number) => {
         this.width = width;
         this.height = height;
+    };
+
+    @action onNumericInputTypeChange = (type: NumericInputType) => {
+        this.numericInputType = type;
     };
 
     onChannelChanged = (val: number) => {
@@ -211,7 +222,7 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
         const numChannels = activeFrame ? activeFrame.frameInfo.fileInfoExtended.depth : 0;
         const numStokes = activeFrame ? activeFrame.frameInfo.fileInfoExtended.stokes : 0;
 
-        const iconOnly = this.width < 600;
+        const iconOnly = this.width < 625;
         const hideSliders = this.width < 450;
 
         let channelSlider, channelRangeSlider, stokesSlider, frameSlider;
@@ -250,7 +261,7 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
                             disabled={appStore.animatorStore.animationState === AnimationState.PLAYING}
                         />
                         <div className="slider-info">
-                            {activeFrame.frameInfo.fileInfo.name}
+                            <pre>{activeFrame.frameInfo.fileInfo.name}</pre>
                         </div>
                     </React.Fragment>
                     }
@@ -296,7 +307,7 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
                             disabled={appStore.animatorStore.animationState === AnimationState.PLAYING}
                         />
                         <div className="slider-info">
-                            {`Req: ${activeFrame.requiredChannel}; Current: ${activeFrame.channel}`}
+                            <pre>{activeFrame.simpleSpectralInfo}</pre>
                         </div>
                     </React.Fragment>
                     }
@@ -355,9 +366,7 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
                             onChange={this.onStokesChanged}
                             disabled={appStore.animatorStore.animationState === AnimationState.PLAYING}
                         />
-                        <div className="slider-info">
-                            {`Req: ${activeFrame.requiredStokes}; Current: ${activeFrame.stokes}`}
-                        </div>
+                        <div className="slider-info"/>
                     </React.Fragment>
                     }
                 </div>
@@ -403,10 +412,11 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
             </ButtonGroup>
         );
 
-        const frameControl = (
-            <FormGroup label="Frame rate" inline={true} className="playback-framerate">
+        const numericControl = (
+            <ControlGroup className="playback-numeric-control">
+                <HTMLSelect options={[NumericInputType.FrameRate, NumericInputType.Step]} onChange={(ev) => this.onNumericInputTypeChange(ev.currentTarget.value as NumericInputType)}/>
+                {this.numericInputType === NumericInputType.FrameRate ?
                 <SafeNumericInput
-                    id="framerate-numeric"
                     value={appStore.animatorStore.frameRate}
                     min={appStore.animatorStore.minFrameRate}
                     max={appStore.animatorStore.maxFrameRate}
@@ -415,8 +425,19 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
                     majorStepSize={1}
                     onValueChange={appStore.animatorStore.setFrameRate}
                     disabled={appStore.animatorStore.animationState === AnimationState.PLAYING}
+                /> :
+                <SafeNumericInput
+                    value={appStore.animatorStore.step}
+                    min={appStore.animatorStore.minStep}
+                    max={appStore.animatorStore.maxStep}
+                    stepSize={1}
+                    minorStepSize={1}
+                    majorStepSize={1}
+                    onValueChange={appStore.animatorStore.setStep}
+                    disabled={appStore.animatorStore.animationState === AnimationState.PLAYING}
                 />
-            </FormGroup>
+                }
+            </ControlGroup>
         );
 
         return (
@@ -428,7 +449,7 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
                 <div className={playbackClass}>
                     {playbackButtons}
                     {playbackModeButton}
-                    {frameControl}
+                    {numericControl}
                 </div>
                 }
                 {activeFrame && this.width > 0 && // temporary fix for broken range slider, issue #1078
