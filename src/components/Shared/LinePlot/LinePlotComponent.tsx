@@ -918,16 +918,16 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
     };
 
     private genBorderRect = () => {
-        const chartBorder = this.genChartBorder();
+        const chartArea = this.chartArea;
         let borderRect = null;
-        if (chartBorder) {
+        if (chartArea) {
             borderRect = (
                 // Shift by half a pixel for sharp 1px lines
                 <Rect
-                    x={chartBorder.x}
-                    y={chartBorder.y}
-                    width={chartBorder.width}
-                    height={chartBorder.height}
+                    x={Math.floor(chartArea.left) - 0.5 * devicePixelRatio}
+                    y={Math.floor(chartArea.top) - 0.5 * devicePixelRatio}
+                    width={Math.ceil(chartArea.right - chartArea.left + 1)}
+                    height={Math.ceil(chartArea.bottom - chartArea.top + 1)}
                     listening={false}
                     stroke={this.props.darkMode ? Colors.DARK_GRAY5 : Colors.LIGHT_GRAY1}
                     strokeWidth={1}
