@@ -407,6 +407,11 @@ export class FrameStore {
         return spectralInfo;
     }
 
+    @computed get simpleSpectralInfo(): string {
+        const infoString = this.spectralInfo.freqString ? this.spectralInfo.freqString : this.spectralInfo.velocityString;
+        return `${this.spectralInfo.spectralString?.replace(/\w+\s\(/, "")?.replace(/\):\s/, "\u000A")}${infoString?.replace(/\w+:\s/, "\u000A")}`;
+    }
+
     @computed get spectralAxis(): { valid: boolean; dimension: number, type: ChannelType } {
         if (!this.frameInfo || !this.frameInfo.fileInfoExtended || this.frameInfo.fileInfoExtended.depth <= 1 || !this.frameInfo.fileInfoExtended.headerEntries) {
             return undefined;
