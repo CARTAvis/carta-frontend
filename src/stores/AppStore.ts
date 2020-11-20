@@ -325,6 +325,12 @@ export class AppStore {
             }
         }
         this.logStore.addInfo(`Loaded file ${ack.fileInfo.name} with dimensions ${dimensionsString}`, ["file"]);
+        const beamTable: CARTA.Beam[] = [];
+        if(ack.beamTable && ack.beamTable.length > 0) {
+            for (const beam of ack.beamTable) {
+                beamTable.push(new CARTA.Beam(beam));
+            }
+        }
         const frameInfo: FrameInfo = {
             fileId: ack.fileId,
             directory,
@@ -332,7 +338,8 @@ export class AppStore {
             fileInfo: new CARTA.FileInfo(ack.fileInfo),
             fileInfoExtended: new CARTA.FileInfoExtended(ack.fileInfoExtended),
             fileFeatureFlags: ack.fileFeatureFlags,
-            renderMode: CARTA.RenderMode.RASTER
+            renderMode: CARTA.RenderMode.RASTER,
+            beamTable: beamTable
         };
 
         let newFrame = new FrameStore(frameInfo);
