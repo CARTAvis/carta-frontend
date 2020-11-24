@@ -39,7 +39,7 @@ export interface FrameInfo {
     fileInfoExtended: CARTA.FileInfoExtended;
     fileFeatureFlags: number;
     renderMode: CARTA.RenderMode;
-    beamTable: CARTA.Beam[];
+    beamTable: CARTA.IBeam[];
 }
 
 export enum RasterRenderType {
