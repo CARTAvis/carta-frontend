@@ -84,8 +84,9 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
     }
 
     @action private onResize = (width: number, height: number) => {
-        this.width = width;
-        this.height = height;
+        const ratio = this.plotType === CatalogPlotType.D2Scatter? devicePixelRatio : 1;
+        this.width = width * ratio;
+        this.height = height * ratio;
     };
 
     @computed get widgetStore(): CatalogPlotWidgetStore {
@@ -222,7 +223,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
         data.marker = {
             symbol: "circle", 
             color: Colors.BLUE2,
-            size: 5,
+            size: 5 * devicePixelRatio,
             opacity: 1
         };
         data.hoverinfo = "none";
@@ -531,6 +532,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
         const widgetStore = this.widgetStore;
         const catalogWidgetStore = this.catalogWidgetStore;
         const catalogFileIds = CatalogStore.Instance.activeCatalogFiles;
+        const scale = 1 / devicePixelRatio;
         if (!widgetStore || !profileStore || !catalogWidgetStore || catalogFileIds === undefined || catalogFileIds?.length === 0) {
             return (
                 <div className="catalog-plot">
@@ -544,6 +546,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
         const disabled = !this.enablePlotButton;
         const isScatterPlot = this.plotType === CatalogPlotType.D2Scatter;
         const isHistogramPlot = this.plotType === CatalogPlotType.Histogram;
+        const ratio = isScatterPlot? devicePixelRatio : 1;
         const fontFamily = "'Helvetica Neue', 'Helvetica', 'Arial', sans-serif";
         let themeColor = Colors.LIGHT_GRAY5;
         let lableColor = Colors.GRAY1;
@@ -649,7 +652,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
 
         let layout: Partial<Plotly.Layout> = {
             width: this.width, 
-            height: this.height - 85,
+            height: this.height - 85 * ratio,
             paper_bgcolor: themeColor, 
             plot_bgcolor: themeColor,
             hovermode: "closest" ,
@@ -657,19 +660,19 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
                 title: widgetStore.xColumnName,
                 titlefont: {
                     family: fontFamily,
-                    size: 12,
+                    size: 12 * ratio,
                     color: lableColor
                 },
                 showticklabels: true,
                 tickfont: {
                     family: fontFamily,
-                    size: 12,
+                    size: 12 * ratio,
                     color: lableColor
                 },
                 tickcolor: gridColor,
                 gridcolor: gridColor,
                 zerolinecolor: gridColor,
-                zerolinewidth: 2,
+                zerolinewidth: 2 * ratio,
                 // box boreder
                 mirror: true,
                 linecolor: gridColor,
@@ -678,39 +681,39 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
                 spikemode: "across",
                 spikedash: "solid",
                 spikecolor: markerColor,
-                spikethickness: 1,
+                spikethickness: 1 * ratio,
                 // d3 format
                 tickformat: ".2e",
             },
             yaxis: {
                 titlefont: {
                     family: fontFamily,
-                    size: 12,
+                    size: 12 * ratio,
                     color: lableColor
                 },
                 showticklabels: true,
                 tickfont: {
                     family: fontFamily,
-                    size: 12,
+                    size: 12 * ratio,
                     color: lableColor
                 },
                 tickcolor: gridColor,
                 gridcolor: gridColor,
                 zerolinecolor: gridColor,
-                zerolinewidth: 2,
+                zerolinewidth: 2 * ratio,
                 mirror: true,
                 linecolor: gridColor,
                 showline: true,
                 spikemode: "across",
                 spikedash: "solid",
                 spikecolor: markerColor,
-                spikethickness: 1,
+                spikethickness: 1 * ratio,
             },
             margin: {
-                t: 5,
-                b: 40,
-                l: 80,
-                r: 5,
+                t: 5 * ratio,
+                b: 40 * ratio,
+                l: 80 * ratio,
+                r: 5 * ratio,
                 pad: 0
             },
             showlegend: false,
@@ -819,6 +822,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
                         onClick={this.onSingleSourceClick}
                         onInitialized={this.updateHistogramYrange}
                         onUpdate={this.updateHistogramYrange}
+                        style={{transform: isScatterPlot? `scale(${scale})` : "scale(1)", transformOrigin: "top left"}}
                     />
                 </div>
                 <div className="catalog-plot-footer">
