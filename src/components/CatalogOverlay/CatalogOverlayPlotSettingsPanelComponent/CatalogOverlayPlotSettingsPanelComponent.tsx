@@ -1,10 +1,10 @@
 import {observer} from "mobx-react";
-import {action, autorun, computed, makeObservable, observable, runInAction} from "mobx";
+import {action, autorun, computed, makeObservable} from "mobx";
 import * as React from "react";
-import {Button, FormGroup, Icon, MenuItem, PopoverPosition, Tab, Tabs, TabId} from "@blueprintjs/core";
+import {Button, FormGroup, Icon, MenuItem, PopoverPosition, Tab, Tabs} from "@blueprintjs/core";
 import {Select, IItemRendererProps} from "@blueprintjs/select";
 import {AppStore, CatalogStore, DefaultWidgetConfig, HelpType, PreferenceStore, PreferenceKeys, WidgetProps, WidgetsStore} from "stores";
-import {CatalogOverlayShape, CatalogWidgetStore} from "stores/widgets";
+import {CatalogOverlayShape, CatalogWidgetStore, CatalogSettingsTabs} from "stores/widgets";
 import {ColorResult} from "react-color";
 import {ColorPickerComponent, SafeNumericInput} from "components/Shared";
 import {SWATCH_COLORS} from "utilities";
@@ -38,7 +38,6 @@ const hexagon2 = <path d="M 3 8 L 5.5 3.67 L 10.5 3.67 L 13 8 L 10.5 12.33 L 5.5
 
 @observer
 export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<WidgetProps> {
-    @observable selectedTab: TabId = "global";
 
     private catalogFileNames: Map<number, string>;
 
@@ -54,7 +53,7 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
             isCloseable: true,
             parentId: "catalog-overlay",
             parentType: "catalog-overlay",
-            helpType: HelpType.CATALOG_OVERLAY_SETTINGS
+            helpType: [HelpType.CATALOG_SETTINGS_GOLBAL, HelpType.CATALOG_SETTINGS_OVERLAY, HelpType.CATALOG_SETTINGS_COLOR]
         };
     }
 
@@ -120,6 +119,10 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
                 active={itemProps.modifiers.active}
             />
         );
+    }
+
+    private handleSelectedTabChanged = (newTabId: React.ReactText) => {
+        this.widgetStore.setSettingsTabId(Number.parseInt(newTabId.toString()));
     }
 
     private getCatalogShape = (shape: CatalogOverlayShape) => {
@@ -265,11 +268,11 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
                 <Tabs
                     id="catalogSettings"
                     vertical={false}
-                    selectedTabId={this.selectedTab}
-                    onChange={(tabId) => runInAction(()=> (this.selectedTab = tabId))}
+                    selectedTabId={widgetStore.settingsTabId}
+                    onChange={(tabId) => this.handleSelectedTabChanged(tabId)}
                 >
-                    <Tab id="global" title="Global" panel={globalPanel}/>
-                    <Tab id="image-overlay" title="Image Overlay" panel={overlayPanel} disabled={disabledOverlayPanel}/>
+                    <Tab id={CatalogSettingsTabs.GLOBAL} title="Global" panel={globalPanel}/>
+                    <Tab id={CatalogSettingsTabs.IMAGE_OVERLAY} title="Image Overlay" panel={overlayPanel} disabled={disabledOverlayPanel}/>
                 </Tabs>
             </div>
         );

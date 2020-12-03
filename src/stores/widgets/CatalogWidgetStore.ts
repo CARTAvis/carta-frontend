@@ -24,6 +24,12 @@ export enum CatalogOverlayShape {
     hexagon = "hexagon-open",
 }
 
+export enum CatalogSettingsTabs {
+    GLOBAL,
+    IMAGE_OVERLAY,
+    COLOR,
+}
+
 const DEFAULTS = {
     headerTableColumnWidts: [150, 75, 65, 100, 230],
     showSelectedData: false,
@@ -34,7 +40,8 @@ const DEFAULTS = {
     catalogShape: CatalogOverlayShape.Circle,
     xAxis: CatalogOverlay.NONE,
     yAxis: CatalogOverlay.NONE,
-    highlightColor: Colors.RED2
+    highlightColor: Colors.RED2,
+    settingsTabId: CatalogSettingsTabs.GLOBAL
 };
 
 export class CatalogWidgetStore {
@@ -56,6 +63,7 @@ export class CatalogWidgetStore {
     @observable yAxis: string;
     @observable tableSeparatorPosition: string;
     @observable highlightColor: string;
+    @observable settingsTabId: CatalogSettingsTabs;
 
     constructor(catalogFileId: number) {
         makeObservable(this);
@@ -71,6 +79,7 @@ export class CatalogWidgetStore {
         this.yAxis = DEFAULTS.yAxis;
         this.tableSeparatorPosition = PreferenceStore.Instance.catalogTableSeparatorPosition;
         this.highlightColor = DEFAULTS.highlightColor;
+        this.settingsTabId = DEFAULTS.settingsTabId;
     }
 
     @action setHeaderTableColumnWidts(vals: Array<number>) {
@@ -121,6 +130,10 @@ export class CatalogWidgetStore {
 
     @action setHighlightColor(color: string) {
         this.highlightColor = color;
+    }
+
+    @action setSettingsTabId = (tabId: CatalogSettingsTabs) => {
+        this.settingsTabId = tabId;
     }
 
     public init = (widgetSettings): void => {
