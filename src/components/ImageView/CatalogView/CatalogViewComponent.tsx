@@ -108,7 +108,7 @@ export class CatalogViewComponent extends React.Component<CatalogViewComponentPr
             const lineHeight = 15;
             const delta = wheelEvent.deltaMode === WheelEvent.DOM_DELTA_PIXEL ? wheelEvent.deltaY : wheelEvent.deltaY * lineHeight;
             if (frame.wcsInfo && this.props.onZoomed) {
-                const cursorPosImageSpace = canvasToTransformedImagePos(wheelEvent.offsetX, wheelEvent.offsetY, frame, this.props.width, this.props.height);
+                const cursorPosImageSpace = canvasToTransformedImagePos(wheelEvent.offsetX, wheelEvent.offsetY, frame, this.props.width * devicePixelRatio, this.props.height * devicePixelRatio);
                 this.props.onZoomed(frame.getCursorInfo(cursorPosImageSpace), -delta);
             }
         }
@@ -117,8 +117,9 @@ export class CatalogViewComponent extends React.Component<CatalogViewComponentPr
     render() {
         const appStore = AppStore.Instance;
         const frame = appStore.activeFrame;
-        const width = this.props.width;
-        const height = this.props.height;
+        const width = this.props.width * devicePixelRatio;
+        const height = this.props.height * devicePixelRatio;
+        const scale = 1 / devicePixelRatio;
         const padding = appStore.overlayStore.padding;
         const catalogStore = CatalogStore.Instance;
         let className = "catalog-div";
@@ -176,50 +177,35 @@ export class CatalogViewComponent extends React.Component<CatalogViewComponentPr
         const selectedData = this.selectedData;
         unSelectedData.forEach((data, fileId) => {
             const catalogWidgetStore = catalogStore.getCatalogWidgetStore(fileId);
-            const color = catalogWidgetStore.catalogColor;
-            if (color) {
-                data.marker.color = color;
-                data.marker.line.color = color;
-                data.marker.line.width = 2;
-            }
-
-            const size = catalogWidgetStore.catalogSize;
-            if (size) {
-                data.marker.size = size;
-            }
-
-            const shape = catalogWidgetStore.catalogShape;
-            if (shape) {
-                data.marker.symbol = shape;
-            }
+            const color = catalogWidgetStore.catalogColor;            
+            data.marker.color = color;
+            data.marker.line.color = color;
+            data.marker.line.width = 2 * devicePixelRatio;
+            data.marker.size = catalogWidgetStore.catalogSize * devicePixelRatio;
+            data.marker.symbol = catalogWidgetStore.catalogShape;
             scatterData.push(data);   
         });
 
         if (selectedData) {
             selectedData.forEach((data, fileId) => {
                 const catalogWidgetStore = catalogStore.getCatalogWidgetStore(fileId);
-                const size = catalogWidgetStore.catalogSize;
-                const highlightColor = catalogWidgetStore.highlightColor;
-                data.marker.color = highlightColor;
-                data.marker.line.color = highlightColor;
-                data.marker.line.width = 2;
+                data.marker.color = catalogWidgetStore.highlightColor;
+                data.marker.line.color = catalogWidgetStore.highlightColor;
+                data.marker.line.width = 2 * devicePixelRatio;
+                data.marker.size = catalogWidgetStore.catalogSize * devicePixelRatio + 5;
 
-                if (size) {
-                    data.marker.size = size + 4;
-                }
                 let outlineShape = catalogWidgetStore.catalogShape;
-                if (outlineShape) {
-                    if (outlineShape === CatalogOverlayShape.FullCircle) {
-                        outlineShape = CatalogOverlayShape.Circle;
-                    } else if (outlineShape === CatalogOverlayShape.FullStar) {
-                        outlineShape = CatalogOverlayShape.Star;
-                    } else if (outlineShape === CatalogOverlayShape.Plus) {
-                        outlineShape = "cross-open" as CatalogOverlayShape;
-                    } else if (outlineShape === CatalogOverlayShape.Cross) {
-                        outlineShape = "x-open" as CatalogOverlayShape;
-                    }
-                    data.marker.symbol = outlineShape;
+                if (outlineShape === CatalogOverlayShape.FullCircle) {
+                    outlineShape = CatalogOverlayShape.Circle;
+                } else if (outlineShape === CatalogOverlayShape.FullStar) {
+                    outlineShape = CatalogOverlayShape.Star;
+                } else if (outlineShape === CatalogOverlayShape.Plus) {
+                    outlineShape = "cross-open" as CatalogOverlayShape;
+                } else if (outlineShape === CatalogOverlayShape.Cross) {
+                    outlineShape = "x-open" as CatalogOverlayShape;
                 }
+                data.marker.symbol = outlineShape;
+
                 scatterData.push(data);
             });
         }
@@ -233,6 +219,7 @@ export class CatalogViewComponent extends React.Component<CatalogViewComponentPr
                     config={config}
                     onClick={this.onClick}
                     onDoubleClick={this.onDoubleClick}
+                    style={{transform: `scale(${scale})`, transformOrigin: "top left"}}
                 />
             </div>
         );
