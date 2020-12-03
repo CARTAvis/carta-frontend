@@ -86,9 +86,10 @@ export class AppStore {
     @observable regionStats: Map<number, ObservableMap<number, CARTA.RegionStatsData>>;
     @observable regionHistograms: Map<number, ObservableMap<number, CARTA.IRegionHistogramData>>;
 
-    // Spatial and spectral WCS references
+    // Reference images
     @observable spatialReference: FrameStore;
     @observable spectralReference: FrameStore;
+    @observable rasterScalingReference: FrameStore;
 
     // ImageViewer
     @observable activeLayer: ImageViewLayer;
@@ -348,6 +349,7 @@ export class AppStore {
         // First image defaults to spatial reference and contour source
         if (this.frames.length === 1) {
             this.setSpatialReference(this.frames[0]);
+            this.setRasterScalingReference(this.frames[0]);
             this.setContourDataSource(this.frames[0]);
         }
 
@@ -494,6 +496,7 @@ export class AppStore {
 
             const removedFrameIsSpatialReference = frame === this.spatialReference;
             const removedFrameIsSpectralReference = frame === this.spectralReference;
+            const removedFrameIsRasterScalingReference = frame === this.rasterScalingReference;
             const fileId = frame.frameInfo.fileId;
 
             // adjust requirements for stores
@@ -544,6 +547,16 @@ export class AppStore {
                         this.clearSpectralReference();
                     }
                 }
+
+                if (removedFrameIsRasterScalingReference) {
+                    const newReference = firstFrame;
+                    if (newReference) {
+                        this.setRasterScalingReference(newReference);
+                    } else {
+                        this.clearRasterScalingReference();
+                    }
+                }
+
                 // Clean up if frame has associated catalog files
                 if (this.catalogNum) {
                     CatalogStore.Instance.closeAssociatedCatalog(fileId);
@@ -1634,6 +1647,56 @@ export class AppStore {
         }
 
         this.setSpectralMatchingEnabled(frame, !frame.spectralReference);
+    };
+
+    @action setRasterScalingReference = (frame: FrameStore) => {
+        const oldRef = this.rasterScalingReference;
+
+        // check if the new reference is currently a secondary image of the existing reference
+        const newRefIsSecondary = oldRef && oldRef.secondaryRasterScalingImages.includes(frame);
+
+        this.rasterScalingReference = frame;
+
+        // Maintain link between old and new references
+        if (newRefIsSecondary) {
+            oldRef.setRasterScalingReference(frame);
+        }
+
+        for (const f of this.frames) {
+            // The reference image can't reference itself
+            if (f === frame) {
+                f.clearRasterScalingReference();
+            } else if (f.rasterScalingReference) {
+                f.setRasterScalingReference(frame);
+            }
+        }
+    };
+
+    @action clearRasterScalingReference = () => {
+        this.rasterScalingReference = null;
+        for (const f of this.frames) {
+            f.clearRasterScalingReference();
+        }
+    };
+
+    @action setRasterScalingMatchingEnabled = (frame: FrameStore, val: boolean) => {
+        if (!frame || frame === this.rasterScalingReference) {
+            return;
+        }
+
+        if (val) {
+            frame.setRasterScalingReference(this.rasterScalingReference);
+        } else {
+            frame.clearRasterScalingReference();
+        }
+    };
+
+    @action toggleRasterScalingMatching = (frame: FrameStore) => {
+        if (!frame || frame === this.rasterScalingReference) {
+            return;
+        }
+
+        this.setRasterScalingMatchingEnabled(frame, !frame.rasterScalingReference);
     };
 
     @action setMatchingEnabled = (spatial: boolean, spectral: boolean) => {
