@@ -84,9 +84,8 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
     }
 
     @action private onResize = (width: number, height: number) => {
-        const ratio = this.plotType === CatalogPlotType.D2Scatter? devicePixelRatio : 1;
-        this.width = width * ratio;
-        this.height = height * ratio;
+        this.width = width;
+        this.height = height;
     };
 
     @computed get widgetStore(): CatalogPlotWidgetStore {
@@ -223,7 +222,6 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
         data.marker = {
             symbol: "circle", 
             color: Colors.BLUE2,
-            size: 5 * devicePixelRatio,
             opacity: 1
         };
         data.hoverinfo = "none";
@@ -553,6 +551,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
         let gridColor = Colors.LIGHT_GRAY1;
         let markerColor = Colors.GRAY2;
         let spikeLineClass = "catalog-plotly";
+        let catalogScatterClass = "catalog-scatter";
 
         let catalogFileItems = [];
         catalogFileIds.forEach((value) => {
@@ -651,8 +650,8 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
         }
 
         let layout: Partial<Plotly.Layout> = {
-            width: this.width, 
-            height: this.height - 85 * ratio,
+            width: this.width * ratio, 
+            height: (this.height - 85) * ratio,
             paper_bgcolor: themeColor, 
             plot_bgcolor: themeColor,
             hovermode: "closest" ,
@@ -724,6 +723,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
         let bins = widgetStore.nBinx;
         if (widgetStore.plotType === CatalogPlotType.D2Scatter) {
             data = this.scatterData.data;
+            data[0].marker.size = 5 * ratio;
             let border;
             if (widgetStore.isScatterAutoScaled) {
                 border = this.scatterData.border;
@@ -809,7 +809,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
                     {isHistogramPlot && renderHistogramLog}
                     {isScatterPlot && renderYSelect}
                 </div>
-                <div className={spikeLineClass}>
+                <div className={`${spikeLineClass} ${isScatterPlot && devicePixelRatio > 1? catalogScatterClass : ""}`}>
                     <Plot
                         data={data}
                         layout={layout}
