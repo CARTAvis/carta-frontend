@@ -62,7 +62,7 @@ export const getImageCanvas = (padding: Padding, backgroundColor: string = "rgba
     }
 
     if (catalogCanvas) {
-        ctx.drawImage(catalogCanvas, padding.left * devicePixelRatio, padding.top * devicePixelRatio, catalogCanvas.width * devicePixelRatio, catalogCanvas.height * devicePixelRatio);
+        ctx.drawImage(catalogCanvas, padding.left * devicePixelRatio, padding.top * devicePixelRatio);
     }
 
     ctx.setTransform(1, 0, 0, 1, 0, 0);
