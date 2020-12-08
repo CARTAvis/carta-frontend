@@ -108,7 +108,7 @@ export class CatalogViewComponent extends React.Component<CatalogViewComponentPr
             const lineHeight = 15;
             const delta = wheelEvent.deltaMode === WheelEvent.DOM_DELTA_PIXEL ? wheelEvent.deltaY : wheelEvent.deltaY * lineHeight;
             if (frame.wcsInfo && this.props.onZoomed) {
-                const cursorPosImageSpace = canvasToTransformedImagePos(wheelEvent.offsetX, wheelEvent.offsetY, frame, this.props.width * devicePixelRatio, this.props.height * devicePixelRatio);
+                const cursorPosImageSpace = canvasToTransformedImagePos(wheelEvent.offsetX, wheelEvent.offsetY, frame, this.props.width * 2, this.props.height * 2);
                 this.props.onZoomed(frame.getCursorInfo(cursorPosImageSpace), -delta);
             }
         }
@@ -117,9 +117,11 @@ export class CatalogViewComponent extends React.Component<CatalogViewComponentPr
     render() {
         const appStore = AppStore.Instance;
         const frame = appStore.activeFrame;
-        const width = this.props.width * devicePixelRatio;
-        const height = this.props.height * devicePixelRatio;
-        const scale = 1 / devicePixelRatio;
+        const width = this.props.width * 2;
+        const height = this.props.height * 2;
+        // fixed devicePixelRatio 2, 1 / devicePixelRatio will cause point selection bug
+        // when user swith devices from devicePixelRatio = 1 to 2
+        const scale = 1 / 2;
         const padding = appStore.overlayStore.padding;
         const catalogStore = CatalogStore.Instance;
         let className = "catalog-div";
@@ -180,8 +182,8 @@ export class CatalogViewComponent extends React.Component<CatalogViewComponentPr
             const color = catalogWidgetStore.catalogColor;            
             data.marker.color = color;
             data.marker.line.color = color;
-            data.marker.line.width = 2 * devicePixelRatio;
-            data.marker.size = catalogWidgetStore.catalogSize * devicePixelRatio;
+            data.marker.line.width = 4;
+            data.marker.size = catalogWidgetStore.catalogSize * 2;
             data.marker.symbol = catalogWidgetStore.catalogShape;
             scatterData.push(data);   
         });
@@ -191,8 +193,8 @@ export class CatalogViewComponent extends React.Component<CatalogViewComponentPr
                 const catalogWidgetStore = catalogStore.getCatalogWidgetStore(fileId);
                 data.marker.color = catalogWidgetStore.highlightColor;
                 data.marker.line.color = catalogWidgetStore.highlightColor;
-                data.marker.line.width = 2 * devicePixelRatio;
-                data.marker.size = catalogWidgetStore.catalogSize * devicePixelRatio + 5;
+                data.marker.line.width = 4;
+                data.marker.size = catalogWidgetStore.catalogSize * 2 + 5;
 
                 let outlineShape = catalogWidgetStore.catalogShape;
                 if (outlineShape === CatalogOverlayShape.FullCircle) {
@@ -209,7 +211,7 @@ export class CatalogViewComponent extends React.Component<CatalogViewComponentPr
                 scatterData.push(data);
             });
         }
-
+        
         return (
             <div className={className} style={{left: padding.left, top: padding.top}} onWheelCapture={this.onWheelCaptured}>
                 <Plot
