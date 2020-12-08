@@ -1,6 +1,6 @@
 import * as React from "react";
 import {observer} from "mobx-react";
-import {Divider, FormGroup, HTMLSelect, NonIdealState, Pre, Spinner, Tab, TabId, Tabs, Text} from "@blueprintjs/core";
+import {ControlGroup, Divider, FormGroup, HTMLSelect, NonIdealState, Pre, Spinner, Tab, TabId, Tabs, Text} from "@blueprintjs/core";
 import {FixedSizeList as List} from "react-window";
 import AutoSizer from "react-virtualized-auto-sizer";
 import {CARTA} from "carta-protobuf";
@@ -18,11 +18,13 @@ export enum FileInfoType {
 @observer
 export class FileInfoComponent extends React.Component<{
     infoTypes: FileInfoType[],
+    HDUList?: string[],
     fileInfoExtended: CARTA.IFileInfoExtended,
     regionFileInfo: string,
     catalogFileInfo: CARTA.ICatalogFileInfo,
     selectedTab: TabId,
     handleTabChange: (tab: TabId) => void;
+    handleSelectedHDUChange?: (hdu: string) => void;
     isLoading: boolean,
     errorMessage: string,
     catalogHeaderTable?: TableComponentProps
@@ -51,11 +53,14 @@ export class FileInfoComponent extends React.Component<{
     };
 
     private renderHDUList = () => {
-        return (
-            <FormGroup inline={true} label="HDU List">
-                <HTMLSelect options={["a" , "b"]} onChange={(ev) => {}}/>
-            </FormGroup>
-        );
+        return this.props.HDUList?.length > 1 ? (
+            <ControlGroup vertical={false}>
+                <Divider/>
+                <FormGroup inline={true} label="HDU List">
+                    <HTMLSelect options={this.props.HDUList} onChange={(ev) => this.props.handleSelectedHDUChange(ev.currentTarget.value)}/>
+                </FormGroup>
+            </ControlGroup>
+        ) : undefined;
     };
 
     private renderInfoPanel = () => {
@@ -135,7 +140,6 @@ export class FileInfoComponent extends React.Component<{
             <div className="file-info">
                 <div className="file-info-panel-top">
                     {this.renderInfoTabs()}
-                    <Divider/>
                     {this.renderHDUList()}
                 </div>
                 {this.renderInfoPanel()}
