@@ -444,13 +444,12 @@ export class FileBrowserDialogComponent extends React.Component {
                         <div className="file-info-pane">
                             <FileInfoComponent
                                 infoTypes={FileBrowserDialogComponent.GetFileInfoTypes(fileBrowserStore.browserMode)}
-                                HDUList={fileBrowserStore.HDUList}
+                                HDUOptions={{HDUList: fileBrowserStore.HDUList, handleSelectedHDUChange: fileBrowserStore.selectHDU}}
                                 fileInfoExtended={fileBrowserStore.fileInfoExtended}
                                 regionFileInfo={fileBrowserStore.regionFileInfo ? fileBrowserStore.regionFileInfo.join("\n") : ""}
                                 catalogFileInfo={fileBrowserStore.catalogFileInfo}
                                 selectedTab={fileBrowserStore.selectedTab as FileInfoType}
                                 handleTabChange={this.handleTabChange}
-                                handleSelectedHDUChange={fileBrowserStore.selectHDU}
                                 isLoading={fileBrowserStore.loadingInfo}
                                 errorMessage={fileBrowserStore.responseErrorMessage}
                                 catalogHeaderTable={tableProps}

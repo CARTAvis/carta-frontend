@@ -18,13 +18,12 @@ export enum FileInfoType {
 @observer
 export class FileInfoComponent extends React.Component<{
     infoTypes: FileInfoType[],
-    HDUList?: IOptionProps[],
+    HDUOptions?: {HDUList: IOptionProps[], handleSelectedHDUChange: (hdu: string) => void;},
     fileInfoExtended: CARTA.IFileInfoExtended,
     regionFileInfo: string,
     catalogFileInfo: CARTA.ICatalogFileInfo,
     selectedTab: TabId,
     handleTabChange: (tab: TabId) => void;
-    handleSelectedHDUChange?: (hdu: string) => void;
     isLoading: boolean,
     errorMessage: string,
     catalogHeaderTable?: TableComponentProps
@@ -53,11 +52,11 @@ export class FileInfoComponent extends React.Component<{
     };
 
     private renderHDUList = () => {
-        return this.props.HDUList?.length > 1 ? (
+        return this.props.HDUOptions && this.props.HDUOptions.HDUList?.length > 1 ? (
             <ControlGroup vertical={false}>
                 <Divider/>
                 <FormGroup inline={true} label="HDU List">
-                    <HTMLSelect options={this.props.HDUList} onChange={(ev) => this.props.handleSelectedHDUChange(ev.currentTarget.value)}/>
+                    <HTMLSelect options={this.props.HDUOptions.HDUList} onChange={(ev) => this.props.HDUOptions.handleSelectedHDUChange(ev.currentTarget.value)}/>
                 </FormGroup>
             </ControlGroup>
         ) : undefined;
