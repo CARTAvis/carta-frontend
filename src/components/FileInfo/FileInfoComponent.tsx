@@ -55,7 +55,7 @@ export class FileInfoComponent extends React.Component<{
         return this.props.HDUOptions && this.props.HDUOptions.HDUList?.length > 1 ? (
             <ControlGroup vertical={false}>
                 <Divider/>
-                <FormGroup inline={true} label="HDU List">
+                <FormGroup inline={true} label="HDU">
                     <HTMLSelect options={this.props.HDUOptions.HDUList} onChange={(ev) => this.props.HDUOptions.handleSelectedHDUChange(ev.currentTarget.value)}/>
                 </FormGroup>
             </ControlGroup>
