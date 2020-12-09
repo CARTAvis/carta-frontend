@@ -1,5 +1,5 @@
 import {action, computed, observable, makeObservable, runInAction} from "mobx";
-import {TabId} from "@blueprintjs/core";
+import {IOptionProps, TabId} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import {BackendService} from "services";
 import {AppStore, DialogStore, PreferenceKeys, PreferenceStore} from "stores";
@@ -125,8 +125,9 @@ export class FileBrowserStore {
         backendService.getFileInfo(directory, file, hdu).subscribe((res: CARTA.FileInfoResponse) => runInAction(() => {
             if (res.fileInfo && this.selectedFile && res.fileInfo.name === this.selectedFile.name) {
                 this.HDUfileInfoExtended = res.fileInfoExtended;
-                if (this.HDUList?.length >= 1) {
-                    this.selectedHDU = this.HDUList[0];
+                const HDUList = Object.keys(this.HDUfileInfoExtended);
+                if (HDUList?.length >= 1) {
+                    this.selectedHDU = HDUList[0];
                 }
                 this.loadingInfo = false;
             }
@@ -235,7 +236,7 @@ export class FileBrowserStore {
     }
 
     @action selectHDU = (hdu: string) => {
-        if (this.HDUList?.includes(hdu)) {
+        if (hdu in this.HDUfileInfoExtended) {
             this.selectedHDU = hdu;
         }
     };
@@ -281,12 +282,19 @@ export class FileBrowserStore {
         PreferenceStore.Instance.setPreference(PreferenceKeys.SILENT_FILE_SORTING_STRING, sortingString);
     };
 
-    @computed get HDUList() {
-        return this.HDUfileInfoExtended ? Object.keys(this.HDUfileInfoExtended) : null;
+    @computed get HDUList(): IOptionProps[] {
+        return this.HDUfileInfoExtended ?
+            Object.keys(this.HDUfileInfoExtended)?.map(hdu => {
+                return {
+                    label: `${hdu}: ${this.HDUfileInfoExtended[hdu]?.computedEntries?.length > 0 ? this.HDUfileInfoExtended[hdu].computedEntries[0]?.value : undefined}`,
+                    value: hdu
+                }
+            }) :
+            null;
     }
 
     @computed get fileInfoExtended(): CARTA.IFileInfoExtended {
-        return this.HDUfileInfoExtended && this.HDUList.includes(this.selectedHDU) ? this.HDUfileInfoExtended[this.selectedHDU] : null;
+        return this.HDUfileInfoExtended && this.selectedHDU in this.HDUfileInfoExtended ? this.HDUfileInfoExtended[this.selectedHDU] : null;
     }
 
     @computed get fileInfo() {

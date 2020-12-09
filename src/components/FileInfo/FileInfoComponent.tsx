@@ -1,6 +1,6 @@
 import * as React from "react";
 import {observer} from "mobx-react";
-import {ControlGroup, Divider, FormGroup, HTMLSelect, NonIdealState, Pre, Spinner, Tab, TabId, Tabs, Text} from "@blueprintjs/core";
+import {ControlGroup, Divider, FormGroup, HTMLSelect, IOptionProps, NonIdealState, Pre, Spinner, Tab, TabId, Tabs, Text} from "@blueprintjs/core";
 import {FixedSizeList as List} from "react-window";
 import AutoSizer from "react-virtualized-auto-sizer";
 import {CARTA} from "carta-protobuf";
@@ -18,7 +18,7 @@ export enum FileInfoType {
 @observer
 export class FileInfoComponent extends React.Component<{
     infoTypes: FileInfoType[],
-    HDUList?: string[],
+    HDUList?: IOptionProps[],
     fileInfoExtended: CARTA.IFileInfoExtended,
     regionFileInfo: string,
     catalogFileInfo: CARTA.ICatalogFileInfo,
