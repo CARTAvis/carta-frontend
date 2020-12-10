@@ -5,7 +5,7 @@ import {Cell, Column, ColumnHeaderCell, Regions, RenderMode, SelectionModes, Tab
 import {IRegion} from "@blueprintjs/table/src/regions";
 import {Icon, Label, NonIdealState} from "@blueprintjs/core";
 import globToRegExp from "glob-to-regexp";
-import moment from "moment"
+import moment from "moment";
 import FuzzySearch from "fuzzy-search";
 import {CARTA} from "carta-protobuf";
 import {BrowserMode, FileFilteringType} from "stores";
@@ -269,7 +269,7 @@ export class FileListTableComponent extends React.Component<FileListTableCompone
             <Cell className="filename-cell" tooltip={entry?.filename}>
                 <React.Fragment>
                     <div
-                        onClick={() => this.handleEntryClicked(entry, rowIndex)}
+                        onClick={event => this.handleEntryClicked(event, entry, rowIndex)}
                         onDoubleClick={() => this.handleEntryDoubleClicked(entry)}
                     >
                         {entry?.isDirectory && <Icon icon="folder-close"/>}
@@ -286,7 +286,7 @@ export class FileListTableComponent extends React.Component<FileListTableCompone
             <Cell tooltip={entry.typeInfo?.description}>
                 <React.Fragment>
                     <div
-                        onClick={() => this.handleEntryClicked(entry, rowIndex)}
+                        onClick={event => this.handleEntryClicked(event, entry, rowIndex)}
                         onDoubleClick={() => this.handleEntryDoubleClicked(entry)}
                     >
                         {entry.typeInfo?.type}
@@ -303,7 +303,7 @@ export class FileListTableComponent extends React.Component<FileListTableCompone
             <Cell>
                 <React.Fragment>
                     <div
-                        onClick={() => this.handleEntryClicked(entry, rowIndex)}
+                        onClick={event => this.handleEntryClicked(event, entry, rowIndex)}
                         onDoubleClick={() => this.handleEntryDoubleClicked(entry)}
                     >
                         {isFinite(sizeInBytes) && FileListTableComponent.GetFileSizeDisplay(sizeInBytes)}
@@ -332,7 +332,7 @@ export class FileListTableComponent extends React.Component<FileListTableCompone
             <Cell className="time-cell">
                 <React.Fragment>
                     <div
-                        onClick={() => this.handleEntryClicked(entry, rowIndex)}
+                        onClick={event => this.handleEntryClicked(event, entry, rowIndex)}
                         onDoubleClick={() => this.handleEntryDoubleClicked(entry)}
                     >
                         {dateString}
@@ -349,14 +349,24 @@ export class FileListTableComponent extends React.Component<FileListTableCompone
         this.props.onFileDoubleClicked(entry.file, entry.hdu);
     };
 
-    @action private handleEntryClicked = (entry: FileEntry, index) => {
+    @action private handleEntryClicked = (event: React.MouseEvent, entry: FileEntry, index) => {
         if (entry) {
             if (entry.isDirectory) {
                 this.props.onFolderClicked(entry.filename);
                 this.selectedRegion = [];
             } else {
                 this.props.onFileClicked(entry.file, entry.hdu);
-                this.selectedRegion = [Regions.row(index)];
+                if (event.ctrlKey && this.selectedRegion.length) {
+                    const currentRow = Regions.row(index);
+                    const rowIndex = Regions.findMatchingRegion(this.selectedRegion, currentRow);
+                    if (rowIndex === -1) {
+                        this.selectedRegion.push(currentRow);
+                    } else {
+                        this.selectedRegion = this.selectedRegion.filter(r => r !== this.selectedRegion[rowIndex]);
+                    }
+                } else {
+                    this.selectedRegion = [Regions.row(index)];
+                }
             }
         }
     };
@@ -392,7 +402,7 @@ export class FileListTableComponent extends React.Component<FileListTableCompone
                 enableGhostCells={false}
                 columnWidths={this.columnWidths}
                 minColumnWidth={80}
-                enableMultipleSelection={false}
+                enableMultipleSelection={true}
                 enableRowResizing={false}
                 defaultRowHeight={FileListTableComponent.RowHeight}
                 onColumnWidthChanged={this.handleColumnWidthChanged}
