@@ -286,7 +286,8 @@ export class FileBrowserStore {
         return this.HDUfileInfoExtended ?
             Object.keys(this.HDUfileInfoExtended)?.map(hdu => {
                 return {
-                    label: `${hdu}: ${this.HDUfileInfoExtended[hdu]?.computedEntries?.length > 0 ? this.HDUfileInfoExtended[hdu].computedEntries[0]?.value : undefined}`,
+                    // hdu extension name is in field 3 of fileInfoExtended computed entries
+                    label: `${hdu}: ${this.HDUfileInfoExtended[hdu]?.computedEntries?.length >= 3 ? this.HDUfileInfoExtended[hdu].computedEntries[2]?.value : undefined}`,
                     value: hdu
                 }
             }) :
