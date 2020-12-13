@@ -75,7 +75,7 @@ export class LayerListComponent extends React.Component<WidgetProps> {
             <Cell className={rowIndex === appStore.activeFrameIndex ? "active-row-cell" : ""}>
                 <React.Fragment>
                     <div className="name-cell" onClick={() => this.onFileSelected(appStore, frame)}>
-                        {frame.frameInfo.fileInfo.name}
+                        {frame.filename}
                     </div>
                 </React.Fragment>
             </Cell>
