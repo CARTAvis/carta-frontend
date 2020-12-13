@@ -97,6 +97,13 @@ export class FrameStore {
     @observable isRequestingMoments: boolean;
     @observable requestingMomentsProgress: number;
 
+    @computed get filename(): string {
+        // hdu extension name is in field 3 of fileInfoExtended computed entries
+        return this.frameInfo?.hdu !== "" && this.frameInfo?.fileInfoExtended?.computedEntries?.length >= 3 ?
+            `${this.frameInfo.fileInfo.name}_HDU_${this.frameInfo.hdu}_${this.frameInfo.fileInfoExtended.computedEntries[2]?.value}` :
+            this.frameInfo.fileInfo.name;
+    }
+
     @computed get regionSet(): RegionSetStore {
         if (this.spatialReference) {
             return this.spatialReference.regionSet;

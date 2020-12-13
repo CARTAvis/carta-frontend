@@ -692,7 +692,7 @@ export class WidgetsStore {
         const appStore = AppStore.Instance;
         let newTitle;
         if (appStore.activeFrame) {
-            newTitle = appStore.activeFrame.frameInfo.fileInfo.name;
+            newTitle = appStore.activeFrame.filename;
         } else {
             newTitle = "No image loaded";
         }
