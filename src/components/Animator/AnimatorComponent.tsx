@@ -261,7 +261,7 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
                             disabled={appStore.animatorStore.animationState === AnimationState.PLAYING}
                         />
                         <div className="slider-info">
-                            <pre>{activeFrame.frameInfo.fileInfo.name}</pre>
+                            <pre>{activeFrame.filename}</pre>
                         </div>
                     </React.Fragment>
                     }

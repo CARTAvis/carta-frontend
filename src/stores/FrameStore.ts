@@ -844,7 +844,7 @@ export class FrameStore {
         }
         const initResult = AST.initFrame(headerString);
         if (!initResult) {
-            this.logStore.addWarning(`Problem processing WCS info in file ${this.frameInfo.fileInfo.name}`, ["ast"]);
+            this.logStore.addWarning(`Problem processing WCS info in file ${this.filename}`, ["ast"]);
             this.wcsInfo = AST.initDummyFrame();
         } else {
             this.wcsInfo = initResult;
@@ -900,7 +900,7 @@ export class FrameStore {
         }
         const initResult = AST.initFrame(headerString);
         if (!initResult) {
-            this.logStore.addWarning(`Problem processing WCS info in file ${this.frameInfo.fileInfo.name}`, ["ast"]);
+            this.logStore.addWarning(`Problem processing WCS info in file ${this.filename}`, ["ast"]);
             this.fullWcsInfo = null;
         } else {
             this.fullWcsInfo = initResult;
