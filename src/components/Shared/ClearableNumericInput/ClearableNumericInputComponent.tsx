@@ -97,7 +97,7 @@ export class ClearableNumericInputComponent extends React.Component<ClearableNum
         return (
         <FormGroup className={this.props.className} label={this.props.label} inline={true} disabled={this.props.disabled}>
             <NumericInput
-                stepSize = {this.props.stepSize}
+                stepSize={this.props.stepSize}
                 value={value}
                 onFocus={this.handleOnFocus}
                 onBlur={this.handleOnBlur}
