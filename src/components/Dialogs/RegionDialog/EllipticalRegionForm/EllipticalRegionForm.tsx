@@ -217,13 +217,14 @@ export class EllipticalRegionForm extends React.Component<{ region: RegionStore,
         const centerWCSPoint = getFormattedWCSPoint(this.props.wcsInfo, centerPoint);
         let xInput, yInput;
         if (region.coordinate === RegionCoordinate.Image) {
-            xInput = <NumericInput selectAllOnFocus={true} buttonPosition="none" placeholder="X Coordinate" value={centerPoint.x} onBlur={this.handleCenterXChange} onKeyDown={this.handleCenterXChange}/>;
-            yInput = <NumericInput selectAllOnFocus={true} buttonPosition="none" placeholder="Y Coordinate" value={centerPoint.y} onBlur={this.handleCenterYChange} onKeyDown={this.handleCenterYChange}/>;
+            xInput = <NumericInput asyncControl={true} selectAllOnFocus={true} buttonPosition="none" placeholder="X Coordinate" value={centerPoint.x} onBlur={this.handleCenterXChange} onKeyDown={this.handleCenterXChange}/>;
+            yInput = <NumericInput asyncControl={true} selectAllOnFocus={true} buttonPosition="none" placeholder="Y Coordinate" value={centerPoint.y} onBlur={this.handleCenterYChange} onKeyDown={this.handleCenterYChange}/>;
         } else {
             xInput = (
                 <Tooltip content={`Format: ${NUMBER_FORMAT_LABEL.get(formatX)}`} position={Position.BOTTOM} hoverOpenDelay={300}>
                     <NumericInput
                         allowNumericCharactersOnly={false}
+                        asyncControl={true}
                         buttonPosition="none"
                         placeholder="X WCS Coordinate"
                         disabled={!this.props.wcsInfo || !centerWCSPoint}
@@ -237,6 +238,7 @@ export class EllipticalRegionForm extends React.Component<{ region: RegionStore,
                 <Tooltip content={`Format: ${NUMBER_FORMAT_LABEL.get(formatY)}`} position={Position.BOTTOM} hoverOpenDelay={300}>
                     <NumericInput
                         allowNumericCharactersOnly={false}
+                        asyncControl={true}
                         buttonPosition="none"
                         placeholder="Y WCS Coordinate"
                         disabled={!this.props.wcsInfo || !centerWCSPoint}
@@ -253,13 +255,14 @@ export class EllipticalRegionForm extends React.Component<{ region: RegionStore,
         const size = region.controlPoints[1];
         let sizeWidthInput, sizeHeightInput;
         if (region.coordinate === RegionCoordinate.Image) {
-            sizeWidthInput = <NumericInput selectAllOnFocus={true} buttonPosition="none" placeholder="Semi-major" value={size.x} onBlur={this.handleMajorAxisChange} onKeyDown={this.handleMajorAxisChange}/>;
-            sizeHeightInput = <NumericInput selectAllOnFocus={true} buttonPosition="none" placeholder="Semi-minor" value={size.y} onBlur={this.handleMinorAxisChange} onKeyDown={this.handleMinorAxisChange}/>;
+            sizeWidthInput = <NumericInput asyncControl={true} selectAllOnFocus={true} buttonPosition="none" placeholder="Semi-major" value={size.x} onBlur={this.handleMajorAxisChange} onKeyDown={this.handleMajorAxisChange}/>;
+            sizeHeightInput = <NumericInput asyncControl={true} selectAllOnFocus={true} buttonPosition="none" placeholder="Semi-minor" value={size.y} onBlur={this.handleMinorAxisChange} onKeyDown={this.handleMinorAxisChange}/>;
         } else {
             sizeWidthInput = (
                 <Tooltip content={"Format: arcsec(\"), arcmin('), or degrees(deg)"} position={Position.BOTTOM} hoverOpenDelay={300}>
                     <NumericInput
                         allowNumericCharactersOnly={false}
+                        asyncControl={true}
                         buttonPosition="none"
                         placeholder="Semi-major"
                         disabled={!this.props.wcsInfo}
@@ -273,6 +276,7 @@ export class EllipticalRegionForm extends React.Component<{ region: RegionStore,
                 <Tooltip content={"Format: arcsec(\"), arcmin('), or degrees(deg)"} position={Position.BOTTOM} hoverOpenDelay={300}>
                     <NumericInput
                         allowNumericCharactersOnly={false}
+                        asyncControl={true}
                         buttonPosition="none"
                         placeholder="Semi-minor"
                         disabled={!this.props.wcsInfo}
@@ -316,7 +320,7 @@ export class EllipticalRegionForm extends React.Component<{ region: RegionStore,
                         <tr>
                             <td>P.A. <span className={Classes.TEXT_MUTED}>(deg)</span></td>
                             <td>
-                                <NumericInput selectAllOnFocus={true} buttonPosition="none" placeholder="P.A." value={region.rotation} onBlur={this.handleRotationChange} onKeyDown={this.handleRotationChange}/>
+                                <NumericInput asyncControl={true} selectAllOnFocus={true} buttonPosition="none" placeholder="P.A." value={region.rotation} onBlur={this.handleRotationChange} onKeyDown={this.handleRotationChange}/>
                             </td>
                         </tr>
                         </tbody>

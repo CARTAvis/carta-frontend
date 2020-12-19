@@ -4,7 +4,7 @@ import {NumericInput, INumericInputProps} from "@blueprintjs/core";
 export interface SafeNumericInputProps extends INumericInputProps {
     integerOnly?: boolean;
     handleBlur? (ev: React.FocusEvent<HTMLInputElement>) : void;
-    handleKeyDown? (ev: React.KeyboardEvent<HTMLInputElement>) : void; 
+    handleKeyDown? (ev: React.KeyboardEvent<HTMLInputElement>) : void;
 }
 
 export class SafeNumericInput extends React.Component<SafeNumericInputProps> {

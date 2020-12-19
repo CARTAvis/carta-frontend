@@ -113,13 +113,14 @@ export class PointRegionForm extends React.Component<{ region: RegionStore, wcsI
         const centerWCSPoint = getFormattedWCSPoint(this.props.wcsInfo, centerPoint);
         let xInput, yInput;
         if (region.coordinate === RegionCoordinate.Image) {
-            xInput = <NumericInput selectAllOnFocus={true} buttonPosition="none" placeholder="X Coordinate" value={centerPoint.x} onBlur={this.handleCenterXChange} onKeyDown={this.handleCenterXChange}/>;
-            yInput = <NumericInput selectAllOnFocus={true} buttonPosition="none" placeholder="Y Coordinate" value={centerPoint.y} onBlur={this.handleCenterYChange} onKeyDown={this.handleCenterYChange}/>;
+            xInput = <NumericInput asyncControl={true} selectAllOnFocus={true} buttonPosition="none" placeholder="X Coordinate" value={centerPoint.x} onBlur={this.handleCenterXChange} onKeyDown={this.handleCenterXChange}/>;
+            yInput = <NumericInput asyncControl={true} selectAllOnFocus={true} buttonPosition="none" placeholder="Y Coordinate" value={centerPoint.y} onBlur={this.handleCenterYChange} onKeyDown={this.handleCenterYChange}/>;
         } else {
             xInput = (
                 <Tooltip content={`Format: ${NUMBER_FORMAT_LABEL.get(formatX)}`} position={Position.BOTTOM} hoverOpenDelay={300}>
                     <NumericInput
                         allowNumericCharactersOnly={false}
+                        asyncControl={true}
                         buttonPosition="none"
                         placeholder="X WCS Coordinate"
                         disabled={!this.props.wcsInfo || !centerWCSPoint}
@@ -133,6 +134,7 @@ export class PointRegionForm extends React.Component<{ region: RegionStore, wcsI
                 <Tooltip content={`Format: ${NUMBER_FORMAT_LABEL.get(formatY)}`} position={Position.BOTTOM} hoverOpenDelay={300}>
                     <NumericInput
                         allowNumericCharactersOnly={false}
+                        asyncControl={true}
                         buttonPosition="none"
                         placeholder="Y WCS Coordinate"
                         disabled={!this.props.wcsInfo || !centerWCSPoint}

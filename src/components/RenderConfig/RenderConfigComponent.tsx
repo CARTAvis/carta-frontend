@@ -411,6 +411,7 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
                     />
                     <FormGroup label={"Clip Min"} inline={true}>
                         <NumericInput
+                            asyncControl={true}
                             value={frame.renderConfig.scaleMinVal}
                             selectAllOnFocus={true}
                             buttonPosition={"none"}
@@ -421,6 +422,7 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
                     </FormGroup>
                     <FormGroup label={"Clip Max"} inline={true}>
                         <NumericInput
+                            asyncControl={true}
                             value={frame.renderConfig.scaleMaxVal}
                             selectAllOnFocus={true}
                             buttonPosition={"none"}

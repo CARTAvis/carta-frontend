@@ -444,13 +444,14 @@ export class RectangularRegionForm extends React.Component<{ region: RegionStore
         const centerWCSPoint = getFormattedWCSPoint(this.props.wcsInfo, centerPoint);
         let centerInputX, centerInputY;
         if (region.coordinate === RegionCoordinate.Image) {
-            centerInputX = <NumericInput selectAllOnFocus={true} buttonPosition="none" placeholder="X Coordinate" value={centerPoint.x} onBlur={this.handleCenterXChange} onKeyDown={this.handleCenterXChange}/>;
-            centerInputY = <NumericInput selectAllOnFocus={true} buttonPosition="none" placeholder="Y Coordinate" value={centerPoint.y} onBlur={this.handleCenterYChange} onKeyDown={this.handleCenterYChange}/>;
+            centerInputX = <NumericInput asyncControl={true} selectAllOnFocus={true} buttonPosition="none" placeholder="X Coordinate" value={centerPoint.x} onBlur={this.handleCenterXChange} onKeyDown={this.handleCenterXChange}/>;
+            centerInputY = <NumericInput asyncControl={true} selectAllOnFocus={true} buttonPosition="none" placeholder="Y Coordinate" value={centerPoint.y} onBlur={this.handleCenterYChange} onKeyDown={this.handleCenterYChange}/>;
         } else {
             centerInputX = (
                 <Tooltip content={`Format: ${NUMBER_FORMAT_LABEL.get(formatX)}`} position={Position.BOTTOM} hoverOpenDelay={300}>
                     <NumericInput
                         allowNumericCharactersOnly={false}
+                        asyncControl={true}
                         buttonPosition="none"
                         placeholder="X WCS Coordinate"
                         disabled={!this.props.wcsInfo || !centerWCSPoint}
@@ -464,6 +465,7 @@ export class RectangularRegionForm extends React.Component<{ region: RegionStore
                 <Tooltip content={`Format: ${NUMBER_FORMAT_LABEL.get(formatY)}`} position={Position.BOTTOM} hoverOpenDelay={300}>
                     <NumericInput
                         allowNumericCharactersOnly={false}
+                        asyncControl={true}
                         buttonPosition="none"
                         placeholder="Y WCS Coordinate"
                         disabled={!this.props.wcsInfo || !centerWCSPoint}
@@ -481,15 +483,16 @@ export class RectangularRegionForm extends React.Component<{ region: RegionStore
         const bottomLeftWCSPoint = getFormattedWCSPoint(this.props.wcsInfo, this.bottomLeftPoint);
         let bottomLeftInputX, bottomLeftInputY;
         if (region.coordinate === RegionCoordinate.Image) {
-            bottomLeftInputX = <NumericInput selectAllOnFocus={true} buttonPosition="none" placeholder="X Coordinate" value={this.bottomLeftPoint.x} onBlur={this.handleLeftChange} onKeyDown={this.handleLeftChange} disabled={isRotated}/>;
+            bottomLeftInputX = <NumericInput asyncControl={true} selectAllOnFocus={true} buttonPosition="none" placeholder="X Coordinate" value={this.bottomLeftPoint.x} onBlur={this.handleLeftChange} onKeyDown={this.handleLeftChange} disabled={isRotated}/>;
             bottomLeftInputY = (
-                <NumericInput selectAllOnFocus={true} buttonPosition="none" placeholder="Y Coordinate" value={this.bottomLeftPoint.y} onBlur={this.handleBottomChange} onKeyDown={this.handleBottomChange} disabled={isRotated}/>
+                <NumericInput asyncControl={true} selectAllOnFocus={true} buttonPosition="none" placeholder="Y Coordinate" value={this.bottomLeftPoint.y} onBlur={this.handleBottomChange} onKeyDown={this.handleBottomChange} disabled={isRotated}/>
             );
         } else {
             bottomLeftInputX = (
                 <Tooltip content={`Format: ${NUMBER_FORMAT_LABEL.get(formatX)}`} position={Position.BOTTOM} hoverOpenDelay={300}>
                     <NumericInput
                         allowNumericCharactersOnly={false}
+                        asyncControl={true}
                         buttonPosition="none"
                         placeholder="X WCS Coordinate"
                         disabled={!this.props.wcsInfo || !bottomLeftWCSPoint || isRotated}
@@ -503,6 +506,7 @@ export class RectangularRegionForm extends React.Component<{ region: RegionStore
                 <Tooltip content={`Format: ${NUMBER_FORMAT_LABEL.get(formatY)}`} position={Position.BOTTOM} hoverOpenDelay={300}>
                     <NumericInput
                         allowNumericCharactersOnly={false}
+                        asyncControl={true}
                         buttonPosition="none"
                         placeholder="Y WCS Coordinate"
                         disabled={!this.props.wcsInfo || !bottomLeftWCSPoint || isRotated}
@@ -519,13 +523,14 @@ export class RectangularRegionForm extends React.Component<{ region: RegionStore
         const topRightWCSPoint = getFormattedWCSPoint(this.props.wcsInfo, this.topRightPoint);
         let topRightInputX, topRightInputY;
         if (region.coordinate === RegionCoordinate.Image) {
-            topRightInputX = <NumericInput selectAllOnFocus={true} buttonPosition="none" placeholder="X Coordinate" value={this.topRightPoint.x} onBlur={this.handleRightChange} onKeyDown={this.handleRightChange} disabled={isRotated}/>;
-            topRightInputY = <NumericInput selectAllOnFocus={true} buttonPosition="none" placeholder="Y Coordinate" value={this.topRightPoint.y} onBlur={this.handleTopChange} onKeyDown={this.handleTopChange} disabled={isRotated}/>;
+            topRightInputX = <NumericInput asyncControl={true} selectAllOnFocus={true} buttonPosition="none" placeholder="X Coordinate" value={this.topRightPoint.x} onBlur={this.handleRightChange} onKeyDown={this.handleRightChange} disabled={isRotated}/>;
+            topRightInputY = <NumericInput asyncControl={true} selectAllOnFocus={true} buttonPosition="none" placeholder="Y Coordinate" value={this.topRightPoint.y} onBlur={this.handleTopChange} onKeyDown={this.handleTopChange} disabled={isRotated}/>;
         } else {
             topRightInputX = (
                 <Tooltip content={`Format: ${NUMBER_FORMAT_LABEL.get(formatX)}`} position={Position.BOTTOM} hoverOpenDelay={300}>
                     <NumericInput
                         allowNumericCharactersOnly={false}
+                        asyncControl={true}
                         buttonPosition="none"
                         placeholder="X WCS Coordinate"
                         disabled={!this.props.wcsInfo || !topRightWCSPoint || isRotated}
@@ -539,6 +544,7 @@ export class RectangularRegionForm extends React.Component<{ region: RegionStore
                 <Tooltip content={`Format: ${NUMBER_FORMAT_LABEL.get(formatY)}`} position={Position.BOTTOM} hoverOpenDelay={300}>
                     <NumericInput
                         allowNumericCharactersOnly={false}
+                        asyncControl={true}
                         buttonPosition="none"
                         placeholder="Y WCS Coordinate"
                         disabled={!this.props.wcsInfo || !topRightWCSPoint || isRotated}
@@ -555,13 +561,14 @@ export class RectangularRegionForm extends React.Component<{ region: RegionStore
         const size = region.controlPoints[1];
         let sizeWidthInput, sizeHeightInput;
         if (region.coordinate === RegionCoordinate.Image) {
-            sizeWidthInput = <NumericInput selectAllOnFocus={true} buttonPosition="none" placeholder="Width" value={size.x} onBlur={this.handleWidthChange} onKeyDown={this.handleWidthChange}/>;
-            sizeHeightInput = <NumericInput selectAllOnFocus={true} buttonPosition="none" placeholder="Height" value={size.y} onBlur={this.handleHeightChange} onKeyDown={this.handleHeightChange}/>;
+            sizeWidthInput = <NumericInput asyncControl={true} selectAllOnFocus={true} buttonPosition="none" placeholder="Width" value={size.x} onBlur={this.handleWidthChange} onKeyDown={this.handleWidthChange}/>;
+            sizeHeightInput = <NumericInput asyncControl={true} selectAllOnFocus={true} buttonPosition="none" placeholder="Height" value={size.y} onBlur={this.handleHeightChange} onKeyDown={this.handleHeightChange}/>;
         } else {
             sizeWidthInput = (
                 <Tooltip content={"Format: arcsec(\"), arcmin('), or degrees(deg)"} position={Position.BOTTOM} hoverOpenDelay={300}>
                     <NumericInput
                         allowNumericCharactersOnly={false}
+                        asyncControl={true}
                         buttonPosition="none"
                         placeholder="Width"
                         disabled={!this.props.wcsInfo}
@@ -575,6 +582,7 @@ export class RectangularRegionForm extends React.Component<{ region: RegionStore
                 <Tooltip content={"Format: arcsec(\"), arcmin('), or degrees(deg)"} position={Position.BOTTOM} hoverOpenDelay={300}>
                     <NumericInput
                         allowNumericCharactersOnly={false}
+                        asyncControl={true}
                         buttonPosition="none"
                         placeholder="Height"
                         disabled={!this.props.wcsInfo}
@@ -631,7 +639,7 @@ export class RectangularRegionForm extends React.Component<{ region: RegionStore
                         <tr>
                             <td>P.A. <span className={Classes.TEXT_MUTED}>(deg)</span></td>
                             <td>
-                                <NumericInput selectAllOnFocus={true} buttonPosition="none" placeholder="P.A." value={region.rotation} onBlur={this.handleRotationChange} onKeyDown={this.handleRotationChange}/>
+                                <NumericInput asyncControl={true} selectAllOnFocus={true} buttonPosition="none" placeholder="P.A." value={region.rotation} onBlur={this.handleRotationChange} onKeyDown={this.handleRotationChange}/>
                             </td>
                         </tr>
                         </tbody>

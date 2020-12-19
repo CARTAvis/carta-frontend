@@ -156,6 +156,7 @@ export class LinePlotSettingsPanelComponent extends React.Component<LinePlotSett
                     <FormGroup label={"X Min"} inline={true}>
                         <NumericInput
                             className="line-boundary"
+                            asyncControl={true}
                             value={props.xMinVal}
                             selectAllOnFocus={true}
                             buttonPosition={"none"}
@@ -169,6 +170,7 @@ export class LinePlotSettingsPanelComponent extends React.Component<LinePlotSett
                     <FormGroup label={"X Max"} inline={true}>
                         <NumericInput
                             className="line-boundary"
+                            asyncControl={true}
                             value={props.xMaxVal}
                             selectAllOnFocus={true}
                             buttonPosition={"none"}
@@ -182,6 +184,7 @@ export class LinePlotSettingsPanelComponent extends React.Component<LinePlotSett
                     <FormGroup label={"Y Min"} inline={true}>
                         <NumericInput
                             className="line-boundary"
+                            asyncControl={true}
                             value={props.yMinVal}
                             selectAllOnFocus={true}
                             buttonPosition={"none"}
@@ -195,6 +198,7 @@ export class LinePlotSettingsPanelComponent extends React.Component<LinePlotSett
                     <FormGroup label={"Y Max"} inline={true}>
                         <NumericInput
                             className="line-boundary"
+                            asyncControl={true}
                             value={props.yMaxVal}
                             selectAllOnFocus={true}
                             buttonPosition={"none"}

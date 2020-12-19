@@ -98,6 +98,7 @@ export class PolygonRegionForm extends React.Component<{ region: RegionStore, wc
             if (region.coordinate === RegionCoordinate.Image) {
                 xInput = (
                     <NumericInput
+                        asyncControl={true}
                         selectAllOnFocus={true}
                         buttonPosition="none"
                         placeholder="X Coordinate"
@@ -108,6 +109,7 @@ export class PolygonRegionForm extends React.Component<{ region: RegionStore, wc
                 );
                 yInput = (
                     <NumericInput
+                        asyncControl={true}
                         selectAllOnFocus={true}
                         buttonPosition="none"
                         placeholder="Y Coordinate"
@@ -121,6 +123,7 @@ export class PolygonRegionForm extends React.Component<{ region: RegionStore, wc
                     <Tooltip content={`Format: ${NUMBER_FORMAT_LABEL.get(formatX)}`} position={Position.BOTTOM} hoverOpenDelay={300}>
                         <NumericInput
                             allowNumericCharactersOnly={false}
+                            asyncControl={true}
                             buttonPosition="none"
                             placeholder="X WCS Coordinate"
                             disabled={!this.props.wcsInfo || !pointWCS}
@@ -134,6 +137,7 @@ export class PolygonRegionForm extends React.Component<{ region: RegionStore, wc
                     <Tooltip content={`Format: ${NUMBER_FORMAT_LABEL.get(formatY)}`} position={Position.BOTTOM} hoverOpenDelay={300}>
                         <NumericInput
                             allowNumericCharactersOnly={false}
+                            asyncControl={true}
                             buttonPosition="none"
                             placeholder="Y WCS Coordinate"
                             disabled={!this.props.wcsInfo || !pointWCS}
