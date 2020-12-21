@@ -1,11 +1,12 @@
 import * as React from "react";
 import {observer} from "mobx-react";
-import {Classes, H5, InputGroup, NumericInput, Position, Tooltip} from "@blueprintjs/core";
+import {Classes, H5, InputGroup, Position, Tooltip} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import {AppStore, RegionCoordinate, RegionStore, NUMBER_FORMAT_LABEL} from "stores";
 import {Point2D, WCSPoint2D} from "models";
 import {closeTo, getFormattedWCSPoint, getPixelValueFromWCS, isWCSStringFormatValid} from "utilities";
 import {CoordinateComponent} from "../CoordinateComponent/CoordinateComponent";
+import {SafeNumericInput} from "components/Shared";
 import "./PointRegionForm.scss";
 
 const KEYCODE_ENTER = 13;
@@ -113,34 +114,32 @@ export class PointRegionForm extends React.Component<{ region: RegionStore, wcsI
         const centerWCSPoint = getFormattedWCSPoint(this.props.wcsInfo, centerPoint);
         let xInput, yInput;
         if (region.coordinate === RegionCoordinate.Image) {
-            xInput = <NumericInput asyncControl={true} selectAllOnFocus={true} buttonPosition="none" placeholder="X Coordinate" value={centerPoint.x} onBlur={this.handleCenterXChange} onKeyDown={this.handleCenterXChange}/>;
-            yInput = <NumericInput asyncControl={true} selectAllOnFocus={true} buttonPosition="none" placeholder="Y Coordinate" value={centerPoint.y} onBlur={this.handleCenterYChange} onKeyDown={this.handleCenterYChange}/>;
+            xInput = <SafeNumericInput selectAllOnFocus={true} buttonPosition="none" placeholder="X Coordinate" value={centerPoint.x} handleBlur={this.handleCenterXChange} handleKeyDown={this.handleCenterXChange}/>;
+            yInput = <SafeNumericInput selectAllOnFocus={true} buttonPosition="none" placeholder="Y Coordinate" value={centerPoint.y} handleBlur={this.handleCenterYChange} handleKeyDown={this.handleCenterYChange}/>;
         } else {
             xInput = (
                 <Tooltip content={`Format: ${NUMBER_FORMAT_LABEL.get(formatX)}`} position={Position.BOTTOM} hoverOpenDelay={300}>
-                    <NumericInput
+                    <SafeNumericInput
                         allowNumericCharactersOnly={false}
-                        asyncControl={true}
                         buttonPosition="none"
                         placeholder="X WCS Coordinate"
                         disabled={!this.props.wcsInfo || !centerWCSPoint}
                         value={centerWCSPoint ? centerWCSPoint.x : ""}
-                        onBlur={this.handleCenterWCSXChange}
-                        onKeyDown={this.handleCenterWCSXChange}
+                        handleBlur={this.handleCenterWCSXChange}
+                        handleKeyDown={this.handleCenterWCSXChange}
                     />
                 </Tooltip>
             );
             yInput = (
                 <Tooltip content={`Format: ${NUMBER_FORMAT_LABEL.get(formatY)}`} position={Position.BOTTOM} hoverOpenDelay={300}>
-                    <NumericInput
+                    <SafeNumericInput
                         allowNumericCharactersOnly={false}
-                        asyncControl={true}
                         buttonPosition="none"
                         placeholder="Y WCS Coordinate"
                         disabled={!this.props.wcsInfo || !centerWCSPoint}
                         value={centerWCSPoint ? centerWCSPoint.y : ""}
-                        onBlur={this.handleCenterWCSYChange}
-                        onKeyDown={this.handleCenterWCSYChange}
+                        handleBlur={this.handleCenterWCSYChange}
+                        handleKeyDown={this.handleCenterWCSYChange}
                     />
                 </Tooltip>
             );

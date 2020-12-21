@@ -8,6 +8,8 @@ export interface SafeNumericInputProps extends INumericInputProps {
 }
 
 export class SafeNumericInput extends React.Component<SafeNumericInputProps> {
+    private static minorStepSize = 0.001;
+
     safeHandleValueChanged = (valueAsNumber: number, valueAsString: string, inputElement: HTMLInputElement) => {
         if (this.props.integerOnly) {
             const roundValue = Math.ceil(valueAsNumber);
@@ -42,7 +44,7 @@ export class SafeNumericInput extends React.Component<SafeNumericInputProps> {
                 majorStepSize={this.props.majorStepSize}
                 max={this.props.max}
                 min={this.props.min}
-                minorStepSize={this.props.minorStepSize}
+                minorStepSize={this.props.minorStepSize ? this.props.minorStepSize : SafeNumericInput.minorStepSize}
                 onButtonClick={this.props.onButtonClick}
                 onValueChange={this.safeHandleValueChanged}
                 placeholder={this.props.placeholder}

@@ -1,12 +1,13 @@
 import * as React from "react";
 import {observer} from "mobx-react";
 import {makeObservable, observable} from "mobx";
-import {Classes, H5, InputGroup, NumericInput, Position, Tooltip} from "@blueprintjs/core";
+import {Classes, H5, InputGroup, Position, Tooltip} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import {AppStore, RegionCoordinate, RegionStore, NUMBER_FORMAT_LABEL} from "stores";
 import {Point2D, WCSPoint2D} from "models";
 import {closeTo, getFormattedWCSPoint, getPixelValueFromWCS, isWCSStringFormatValid} from "utilities";
 import {CoordinateComponent} from "../CoordinateComponent/CoordinateComponent";
+import {SafeNumericInput} from "components/Shared";
 import "./PolygonRegionForm.scss";
 
 const KEYCODE_ENTER = 13;
@@ -97,53 +98,49 @@ export class PolygonRegionForm extends React.Component<{ region: RegionStore, wc
             let xInput, yInput;
             if (region.coordinate === RegionCoordinate.Image) {
                 xInput = (
-                    <NumericInput
-                        asyncControl={true}
+                    <SafeNumericInput
                         selectAllOnFocus={true}
                         buttonPosition="none"
                         placeholder="X Coordinate"
                         value={point.x}
-                        onBlur={(evt) => this.handlePointChange(index, true, evt)}
-                        onKeyDown={(evt) => this.handlePointChange(index, true, evt)}
+                        handleBlur={(evt) => this.handlePointChange(index, true, evt)}
+                        handleKeyDown={(evt) => this.handlePointChange(index, true, evt)}
                     />
                 );
                 yInput = (
-                    <NumericInput
-                        asyncControl={true}
+                    <SafeNumericInput
                         selectAllOnFocus={true}
                         buttonPosition="none"
                         placeholder="Y Coordinate"
                         value={point.y}
-                        onBlur={(evt) => this.handlePointChange(index, false, evt)}
-                        onKeyDown={(evt) => this.handlePointChange(index, false, evt)}
+                        handleBlur={(evt) => this.handlePointChange(index, false, evt)}
+                        handleKeyDown={(evt) => this.handlePointChange(index, false, evt)}
                     />
                 );
             } else {
                 xInput = (
                     <Tooltip content={`Format: ${NUMBER_FORMAT_LABEL.get(formatX)}`} position={Position.BOTTOM} hoverOpenDelay={300}>
-                        <NumericInput
+                        <SafeNumericInput
                             allowNumericCharactersOnly={false}
-                            asyncControl={true}
                             buttonPosition="none"
                             placeholder="X WCS Coordinate"
                             disabled={!this.props.wcsInfo || !pointWCS}
                             value={pointWCS ? pointWCS.x : ""}
-                            onBlur={(evt) => this.handleWCSPointChange(index, true, evt)}
-                            onKeyDown={(evt) => this.handleWCSPointChange(index, true, evt)}
+                            handleBlur={(evt) => this.handleWCSPointChange(index, true, evt)}
+                            handleKeyDown={(evt) => this.handleWCSPointChange(index, true, evt)}
                         />
                     </Tooltip>
                 );
                 yInput = (
                     <Tooltip content={`Format: ${NUMBER_FORMAT_LABEL.get(formatY)}`} position={Position.BOTTOM} hoverOpenDelay={300}>
-                        <NumericInput
+                        <SafeNumericInput
                             allowNumericCharactersOnly={false}
-                            asyncControl={true}
                             buttonPosition="none"
                             placeholder="Y WCS Coordinate"
                             disabled={!this.props.wcsInfo || !pointWCS}
                             value={pointWCS ? pointWCS.y : ""}
-                            onBlur={(evt) => this.handleWCSPointChange(index, false, evt)}
-                            onKeyDown={(evt) => this.handleWCSPointChange(index, false, evt)}
+                            handleBlur={(evt) => this.handleWCSPointChange(index, false, evt)}
+                            handleKeyDown={(evt) => this.handleWCSPointChange(index, false, evt)}
                         />
                     </Tooltip>
                 );

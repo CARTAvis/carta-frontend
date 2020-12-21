@@ -1,6 +1,6 @@
 import * as React from "react";
 import {observer} from "mobx-react";
-import {FormGroup, Switch, NumericInput, Button, HTMLSelect} from "@blueprintjs/core";
+import {FormGroup, Switch, Button, HTMLSelect} from "@blueprintjs/core";
 import {ColorResult} from "react-color";
 import {ColorPickerComponent, PlotTypeSelectorComponent, PlotType, SafeNumericInput} from "components/Shared";
 import {SWATCH_COLORS} from "utilities";
@@ -154,57 +154,55 @@ export class LinePlotSettingsPanelComponent extends React.Component<LinePlotSett
                     </FormGroup>
                     { typeof props.xMinVal !== "undefined"  && props.handleXMinChange &&
                     <FormGroup label={"X Min"} inline={true}>
-                        <NumericInput
+                        <SafeNumericInput
                             className="line-boundary"
-                            asyncControl={true}
                             value={props.xMinVal}
                             selectAllOnFocus={true}
                             buttonPosition={"none"}
                             allowNumericCharactersOnly={true}
-                            onBlur={props.handleXMinChange}
-                            onKeyDown={props.handleXMinChange}
+                            handleBlur={props.handleXMinChange}
+                            handleKeyDown={props.handleXMinChange}
                         />
                     </FormGroup>
                     }
                     { typeof props.xMaxVal !== "undefined"  && props.handleXMaxChange &&
                     <FormGroup label={"X Max"} inline={true}>
-                        <NumericInput
+                        <SafeNumericInput
                             className="line-boundary"
-                            asyncControl={true}
                             value={props.xMaxVal}
                             selectAllOnFocus={true}
                             buttonPosition={"none"}
                             allowNumericCharactersOnly={true}
-                            onBlur={props.handleXMaxChange}
-                            onKeyDown={props.handleXMaxChange}
+                            handleBlur={props.handleXMaxChange}
+                            handleKeyDown={props.handleXMaxChange}
                         />
                     </FormGroup>
                     }
                     { typeof props.yMinVal !== "undefined"  && props.handleYMinChange &&
                     <FormGroup label={"Y Min"} inline={true}>
-                        <NumericInput
+                        <SafeNumericInput
                             className="line-boundary"
                             asyncControl={true}
                             value={props.yMinVal}
                             selectAllOnFocus={true}
                             buttonPosition={"none"}
                             allowNumericCharactersOnly={true}
-                            onBlur={props.handleYMinChange}
-                            onKeyDown={props.handleYMinChange}
+                            handleBlur={props.handleYMinChange}
+                            handleKeyDown={props.handleYMinChange}
                         />
                     </FormGroup>
                     }
                     { typeof props.yMaxVal !== "undefined"  && props.handleYMaxChange &&
                     <FormGroup label={"Y Max"} inline={true}>
-                        <NumericInput
+                        <SafeNumericInput
                             className="line-boundary"
                             asyncControl={true}
                             value={props.yMaxVal}
                             selectAllOnFocus={true}
                             buttonPosition={"none"}
                             allowNumericCharactersOnly={true}
-                            onBlur={props.handleYMaxChange}
-                            onKeyDown={props.handleYMaxChange}
+                            handleBlur={props.handleYMaxChange}
+                            handleKeyDown={props.handleYMaxChange}
                         />
                     </FormGroup>
                     }

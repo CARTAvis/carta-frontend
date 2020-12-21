@@ -20,6 +20,8 @@ export interface ClearableNumericInputProps extends INumericInputProps {
 
 @observer
 export class ClearableNumericInputComponent extends React.Component<ClearableNumericInputProps> {
+    private static minorStepSize = 0.001;
+
     private defaulteValue: string;
     @observable value: string;
     @observable private isFocused: boolean = false;
@@ -99,6 +101,7 @@ export class ClearableNumericInputComponent extends React.Component<ClearableNum
             <NumericInput
                 stepSize={this.props.stepSize}
                 value={value}
+                minorStepSize={this.props.minorStepSize ? this.props.minorStepSize : ClearableNumericInputComponent.minorStepSize}
                 onFocus={this.handleOnFocus}
                 onBlur={this.handleOnBlur}
                 onKeyDown={this.handleChange}

@@ -1,12 +1,13 @@
 import * as React from "react";
 import {observer} from "mobx-react";
 import {computed} from "mobx";
-import {Classes, H5, InputGroup, NumericInput, Position, Tooltip} from "@blueprintjs/core";
+import {Classes, H5, InputGroup, Position, Tooltip} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import {AppStore, FrameStore, RegionCoordinate, RegionStore, NUMBER_FORMAT_LABEL, WCS_PRECISION} from "stores";
 import {Point2D, WCSPoint2D} from "models";
 import {closeTo, formattedArcsec, getFormattedWCSPoint, getPixelValueFromWCS, getValueFromArcsecString, isWCSStringFormatValid} from "utilities";
 import {CoordinateComponent} from "../CoordinateComponent/CoordinateComponent";
+import {SafeNumericInput} from "components/Shared";
 import "./EllipticalRegionForm.scss";
 
 const KEYCODE_ENTER = 13;
@@ -217,34 +218,32 @@ export class EllipticalRegionForm extends React.Component<{ region: RegionStore,
         const centerWCSPoint = getFormattedWCSPoint(this.props.wcsInfo, centerPoint);
         let xInput, yInput;
         if (region.coordinate === RegionCoordinate.Image) {
-            xInput = <NumericInput asyncControl={true} selectAllOnFocus={true} buttonPosition="none" placeholder="X Coordinate" value={centerPoint.x} onBlur={this.handleCenterXChange} onKeyDown={this.handleCenterXChange}/>;
-            yInput = <NumericInput asyncControl={true} selectAllOnFocus={true} buttonPosition="none" placeholder="Y Coordinate" value={centerPoint.y} onBlur={this.handleCenterYChange} onKeyDown={this.handleCenterYChange}/>;
+            xInput = <SafeNumericInput selectAllOnFocus={true} buttonPosition="none" placeholder="X Coordinate" value={centerPoint.x} handleBlur={this.handleCenterXChange} handleKeyDown={this.handleCenterXChange}/>;
+            yInput = <SafeNumericInput selectAllOnFocus={true} buttonPosition="none" placeholder="Y Coordinate" value={centerPoint.y} handleBlur={this.handleCenterYChange} handleKeyDown={this.handleCenterYChange}/>;
         } else {
             xInput = (
                 <Tooltip content={`Format: ${NUMBER_FORMAT_LABEL.get(formatX)}`} position={Position.BOTTOM} hoverOpenDelay={300}>
-                    <NumericInput
+                    <SafeNumericInput
                         allowNumericCharactersOnly={false}
-                        asyncControl={true}
                         buttonPosition="none"
                         placeholder="X WCS Coordinate"
                         disabled={!this.props.wcsInfo || !centerWCSPoint}
                         value={centerWCSPoint ? centerWCSPoint.x : ""}
-                        onBlur={this.handleCenterWCSXChange}
-                        onKeyDown={this.handleCenterWCSXChange}
+                        handleBlur={this.handleCenterWCSXChange}
+                        handleKeyDown={this.handleCenterWCSXChange}
                     />
                 </Tooltip>
             );
             yInput = (
                 <Tooltip content={`Format: ${NUMBER_FORMAT_LABEL.get(formatY)}`} position={Position.BOTTOM} hoverOpenDelay={300}>
-                    <NumericInput
+                    <SafeNumericInput
                         allowNumericCharactersOnly={false}
-                        asyncControl={true}
                         buttonPosition="none"
                         placeholder="Y WCS Coordinate"
                         disabled={!this.props.wcsInfo || !centerWCSPoint}
                         value={centerWCSPoint ? centerWCSPoint.y : ""}
-                        onBlur={this.handleCenterWCSYChange}
-                        onKeyDown={this.handleCenterWCSYChange}
+                        handleBlur={this.handleCenterWCSYChange}
+                        handleKeyDown={this.handleCenterWCSYChange}
                     />
                 </Tooltip>
             );
@@ -255,34 +254,32 @@ export class EllipticalRegionForm extends React.Component<{ region: RegionStore,
         const size = region.controlPoints[1];
         let sizeWidthInput, sizeHeightInput;
         if (region.coordinate === RegionCoordinate.Image) {
-            sizeWidthInput = <NumericInput asyncControl={true} selectAllOnFocus={true} buttonPosition="none" placeholder="Semi-major" value={size.x} onBlur={this.handleMajorAxisChange} onKeyDown={this.handleMajorAxisChange}/>;
-            sizeHeightInput = <NumericInput asyncControl={true} selectAllOnFocus={true} buttonPosition="none" placeholder="Semi-minor" value={size.y} onBlur={this.handleMinorAxisChange} onKeyDown={this.handleMinorAxisChange}/>;
+            sizeWidthInput = <SafeNumericInput selectAllOnFocus={true} buttonPosition="none" placeholder="Semi-major" value={size.x} handleBlur={this.handleMajorAxisChange} handleKeyDown={this.handleMajorAxisChange}/>;
+            sizeHeightInput = <SafeNumericInput selectAllOnFocus={true} buttonPosition="none" placeholder="Semi-minor" value={size.y} handleBlur={this.handleMinorAxisChange} handleKeyDown={this.handleMinorAxisChange}/>;
         } else {
             sizeWidthInput = (
                 <Tooltip content={"Format: arcsec(\"), arcmin('), or degrees(deg)"} position={Position.BOTTOM} hoverOpenDelay={300}>
-                    <NumericInput
+                    <SafeNumericInput
                         allowNumericCharactersOnly={false}
-                        asyncControl={true}
                         buttonPosition="none"
                         placeholder="Semi-major"
                         disabled={!this.props.wcsInfo}
                         value={this.sizeWCS ? this.sizeWCS.x : ""}
-                        onBlur={this.handleMajorAxisWCSChange}
-                        onKeyDown={this.handleMajorAxisWCSChange}
+                        handleBlur={this.handleMajorAxisWCSChange}
+                        handleKeyDown={this.handleMajorAxisWCSChange}
                     />
                 </Tooltip>
             );
             sizeHeightInput = (
                 <Tooltip content={"Format: arcsec(\"), arcmin('), or degrees(deg)"} position={Position.BOTTOM} hoverOpenDelay={300}>
-                    <NumericInput
+                    <SafeNumericInput
                         allowNumericCharactersOnly={false}
-                        asyncControl={true}
                         buttonPosition="none"
                         placeholder="Semi-minor"
                         disabled={!this.props.wcsInfo}
                         value={this.sizeWCS ? this.sizeWCS.y : ""}
-                        onBlur={this.handleMinorAxisWCSChange}
-                        onKeyDown={this.handleMinorAxisWCSChange}
+                        handleBlur={this.handleMinorAxisWCSChange}
+                        handleKeyDown={this.handleMinorAxisWCSChange}
                     />
                 </Tooltip>
             );
@@ -320,7 +317,7 @@ export class EllipticalRegionForm extends React.Component<{ region: RegionStore,
                         <tr>
                             <td>P.A. <span className={Classes.TEXT_MUTED}>(deg)</span></td>
                             <td>
-                                <NumericInput asyncControl={true} selectAllOnFocus={true} buttonPosition="none" placeholder="P.A." value={region.rotation} onBlur={this.handleRotationChange} onKeyDown={this.handleRotationChange}/>
+                                <SafeNumericInput selectAllOnFocus={true} buttonPosition="none" placeholder="P.A." value={region.rotation} handleBlur={this.handleRotationChange} handleKeyDown={this.handleRotationChange}/>
                             </td>
                         </tr>
                         </tbody>
