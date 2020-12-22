@@ -586,6 +586,9 @@ export class PreferenceDialogComponent extends React.Component {
                 </div>
                 <div className="bp3-dialog-footer">
                     <div className="bp3-dialog-footer-actions">
+                        {(this.selectedTab === 6) &&<Button intent={Intent.NONE} 
+                        onClick={()=>{this.reset() 
+                        Event.EVENT_TYPES.map((eventType)=>{preference.setPreference(PreferenceKeys.LOG_EVENT, eventType)})}} text="Select all"/>}
                         <Tooltip content="Apply to current tab only." position={Position.TOP}>
                             <AnchorButton intent={Intent.WARNING} icon={"refresh"} onClick={this.reset} text="Restore defaults"/>
                         </Tooltip>
