@@ -1,7 +1,7 @@
 import * as React from "react";
 import {observer} from "mobx-react";
 import {AnchorButton, ButtonGroup, Tooltip} from "@blueprintjs/core";
-import {AppStore, RegionMode, DefaultWidgetConfig, WidgetsStore, WidgetType} from "stores";
+import {AppStore, RegionMode, DefaultWidgetConfig, WidgetsStore} from "stores";
 import {
     AnimatorComponent,
     HistogramComponent,
@@ -101,17 +101,16 @@ export class ToolbarMenuComponent extends React.Component {
                     </Tooltip>
                 </ButtonGroup>
                 <ButtonGroup className={className}>
-                    {WidgetsStore.Instance.CARTAWidgets.forEach((widgetConfig, widgetType) => {
+                    {Array.from(WidgetsStore.Instance.CARTAWidgets.keys()).map(widgetType => {
+                        const widgetConfig = WidgetsStore.Instance.CARTAWidgets.get(widgetType);
                         return (
-                            /*
-                            <Tooltip content={<span>{widgetType}{commonTooltip}</span>}>
+                            <Tooltip key={`${widgetType.trim()}Tooltip`} content={<span>{widgetType}{commonTooltip}</span>}>
                                 <AnchorButton
                                     icon={widgetConfig.isCustomIcon ? <CustomIcon icon={widgetConfig.icon as CustomIconName}/> : widgetConfig.icon as IconName}
                                     id={`${widgetType.trim()}Button`}
                                     onClick={widgetConfig.onClick}
                                 />
                             </Tooltip>
-                            */
                         );
                     })}
                 </ButtonGroup>
