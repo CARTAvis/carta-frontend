@@ -12,7 +12,7 @@ import {ScalingSelectComponent} from "components/Shared/ScalingSelectComponent/S
 import {ColorComponent} from "components/ImageView/ImageViewSettingsPanel/ColorComponent";
 import {ColormapComponent, ColorPickerComponent, SafeNumericInput} from "components/Shared";
 import {CompressionQuality, CursorPosition, Event, RegionCreationMode, SPECTRAL_MATCHING_TYPES, SPECTRAL_TYPE_STRING, Theme, TileCache, WCSMatchingType, WCSType, Zoom, ZoomPoint} from "models";
-import {AppStore, BeamType, ContourGeneratorType, FrameScaling, HelpType, PreferenceKeys, PreferenceStore, RegionStore, RenderConfigStore} from "stores";
+import {AppStore, BeamType, ContourGeneratorType, FrameScaling, HelpType, PreferenceKeys, PreferenceStore, PreferenceLogEventSelection, RegionStore, RenderConfigStore} from "stores";
 import {SWATCH_COLORS} from "utilities";
 import "./PreferenceDialogComponent.scss";
 
@@ -539,7 +539,9 @@ export class PreferenceDialogComponent extends React.Component {
                 <FormGroup inline={true} label="Enable logged event type" className="log-event-header">
                     <Checkbox
                         label="Select all"
-                        onChange={() => {}}
+                        checked={preference.logEventSelection === PreferenceLogEventSelection.ALL}
+                        indeterminate={preference.logEventSelection === PreferenceLogEventSelection.INDETERMINATE}
+                        onChange={() => preference.selectAllLogEvents()}
                     />
                 </FormGroup>
                 <FormGroup inline={false} className="log-event-list">
