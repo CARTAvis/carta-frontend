@@ -27,6 +27,13 @@
         }
     }
 
+    .log-event-header {
+        margin: 0;
+        .bp3-form-group {
+            margin: 0;
+        }
+    }
+
     .log-event-list {
         .bp3-form-content {
             display: flex;
