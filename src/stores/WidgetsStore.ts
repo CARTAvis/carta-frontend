@@ -41,8 +41,6 @@ import {
     ACTIVE_FILE_ID,
     CatalogPlotType
 } from "./widgets";
-import {IconName} from "@blueprintjs/icons";
-import {CustomIconName} from "icons/CustomIcons";
 
 export enum WidgetType {
     Region = "Region List Widget",
@@ -161,7 +159,7 @@ export class WidgetsStore {
     private widgetsMap: Map<string, Map<string, any>>;
     private defaultFloatingWidgetOffset: number;
 
-    public CARTAWidgets = new Map<WidgetType, {isCustomIcon: boolean, icon: IconName | CustomIconName, onClick: () => void}>([
+    public CARTAWidgets = new Map<WidgetType, {isCustomIcon: boolean, icon: string, onClick: () => void}>([
         [WidgetType.Region, {isCustomIcon: true, icon: "regionList", onClick: () => WidgetsStore.Instance.createFloatingRegionListWidget()}],
         [WidgetType.Log, {isCustomIcon: false, icon: "application", onClick: () => WidgetsStore.Instance.createFloatingLogWidget()}],
         [WidgetType.SpatialProfiler, {isCustomIcon: true, icon: "spatialProfiler", onClick: () => WidgetsStore.Instance.createFloatingSpatialProfilerWidget()}],
