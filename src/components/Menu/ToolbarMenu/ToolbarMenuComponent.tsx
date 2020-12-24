@@ -103,11 +103,12 @@ export class ToolbarMenuComponent extends React.Component {
                 <ButtonGroup className={className}>
                     {Array.from(WidgetsStore.Instance.CARTAWidgets.keys()).map(widgetType => {
                         const widgetConfig = WidgetsStore.Instance.CARTAWidgets.get(widgetType);
+                        const trimmedStr = widgetType.trim();
                         return (
-                            <Tooltip key={`${widgetType.trim()}Tooltip`} content={<span>{widgetType}{commonTooltip}</span>}>
+                            <Tooltip key={`${trimmedStr}Tooltip`} content={<span>{widgetType}{commonTooltip}</span>}>
                                 <AnchorButton
                                     icon={widgetConfig.isCustomIcon ? <CustomIcon icon={widgetConfig.icon as CustomIconName}/> : widgetConfig.icon as IconName}
-                                    id={`${widgetType.trim()}Button`}
+                                    id={`${trimmedStr}Button`}
                                     onClick={widgetConfig.onClick}
                                 />
                             </Tooltip>
