@@ -68,12 +68,6 @@ export enum PreferenceKeys {
     LOG_EVENT = "logEventList"
 }
 
-export enum PreferenceLogEventSelection {
-    ALL,
-    INDETERMINATE,
-    NONE
-}
-
 const DEFAULTS = {
     SILENT: {
         fileSortingString: "-date",
@@ -157,7 +151,6 @@ export class PreferenceStore {
 
     @observable preferences: Map<PreferenceKeys, any>;
     @observable supportsServer: boolean;
-    @observable logEventSelection: PreferenceLogEventSelection;
 
     // getters for global settings
     @computed get theme(): string {
@@ -369,6 +362,15 @@ export class PreferenceStore {
         return this.preferences.get(PreferenceKeys.PERFORMANCE_STOP_ANIMATION_PLAYBACK_MINUTES) ?? DEFAULTS.PERFORMANCE.stopAnimationPlaybackMinutes;
     }
 
+    @computed get isSelectingAllLogEvents(): boolean {
+        return this.preferences.get(PreferenceKeys.LOG_EVENT)?.length === Event.EVENT_NUMBER;
+    }
+
+    @computed get isSelectingIndeterminateLogEvents(): boolean {
+        const selected = this.preferences.get(PreferenceKeys.LOG_EVENT)?.length;
+        return selected > 0 && selected < Event.EVENT_NUMBER;
+    }
+
     public isEventLoggingEnabled = (eventType: CARTA.EventType): boolean => {
         if (Event.isEventTypeValid(eventType)) {
             const logEvents = this.preferences.get(PreferenceKeys.LOG_EVENT);
@@ -411,7 +413,6 @@ export class PreferenceStore {
                 eventList.push(value);
             }
             this.preferences.set(PreferenceKeys.LOG_EVENT, eventList);
-            this.updateLogEventSelection(eventList);
             return await ApiService.Instance.setPreference(PreferenceKeys.LOG_EVENT, eventList);
         } else {
             this.preferences.set(key, value);
@@ -481,16 +482,15 @@ export class PreferenceStore {
     };
 
     @action selectAllLogEvents = () => {
-        if (this.logEventSelection === PreferenceLogEventSelection.NONE) {
-            Event.EVENT_TYPES.forEach((eventType) => this.setPreference(PreferenceKeys.LOG_EVENT, eventType));
-        } else {
+        if (this.isSelectingAllLogEvents || this.isSelectingIndeterminateLogEvents) {
             this.resetLogEventSettings();
+        } else {
+            Event.EVENT_TYPES.forEach((eventType) => this.setPreference(PreferenceKeys.LOG_EVENT, eventType));
         }
     };
 
     @action resetLogEventSettings = () => {
         this.clearPreferences([PreferenceKeys.LOG_EVENT]);
-        this.logEventSelection = PreferenceLogEventSelection.NONE;
     };
 
     @action fetchPreferences = async () => {
@@ -505,10 +505,6 @@ export class PreferenceStore {
             for (const key of keys) {
                 const val = preferences[key];
                 this.preferences.set(key as PreferenceKeys, val);
-
-                if (key === PreferenceKeys.LOG_EVENT) {
-                    this.updateLogEventSelection(val);
-                }
             }
         }
     };
@@ -583,7 +579,6 @@ export class PreferenceStore {
                     const logEntries = JSON.parse(logEntryString);
                     if (logEntries && Array.isArray(logEntries)) {
                         preferenceObject[PreferenceKeys.LOG_EVENT] = logEntries;
-                        this.updateLogEventSelection(logEntries);
                     }
                 } catch (e) {
                     console.log("Problem parsing log events");
@@ -611,19 +606,8 @@ export class PreferenceStore {
         }
     };
 
-    private updateLogEventSelection = (eventList: any[]) => {
-        if (eventList.length === 0) {
-            this.logEventSelection = PreferenceLogEventSelection.NONE;
-        } else if (eventList.length > 0 && eventList.length < Event.EVENT_NUMBER) {
-            this.logEventSelection = PreferenceLogEventSelection.INDETERMINATE;
-        } else {
-            this.logEventSelection = PreferenceLogEventSelection.ALL;
-        }
-    };
-
     private constructor() {
         makeObservable(this);
         this.preferences = new Map<PreferenceKeys, any>();
-        this.logEventSelection = PreferenceLogEventSelection.NONE;
     }
 }
