@@ -144,16 +144,14 @@ export class FileInfoComponent extends React.Component<{
         const fileBrowser = AppStore.Instance.fileBrowserStore;
         const activeFrame = AppStore.Instance.activeFrame;
         const closedRegions = activeFrame.regionSet.regions.filter(region => region.regionId > 0 && region.isClosedRegion);
-        const regionOptions: IOptionProps[] = closedRegions.map(region => ({ value: region.regionId, label: `${region.name ? region.name : region.regionId} (${CARTA.RegionType[region.regionType]})` }));
+        const regionOptions: IOptionProps[] = [{ value: 0, label: "Image" }].concat(closedRegions.map(region => ({ value: region.regionId, label: `${region.name ? region.name : region.regionId} (${CARTA.RegionType[region.regionType]})` })));
         return (
             <div className="save-chop">
                 <Pre>
                     <Label>{"Source file name: " + activeFrame.frameInfo.fileInfo.name}</Label>
-                    {fileBrowser.saveRegionId > 0 &&
-                        <Label>{"Region: "}
-                            <HTMLSelect value={fileBrowser.saveRegionId} onChange={this.handleRegionChanged} options={regionOptions} />
-                        </Label>
-                    }
+                    <Label>{"Region: "}
+                        <HTMLSelect value={fileBrowser.saveRegionId} onChange={this.handleRegionChanged} options={regionOptions} />
+                    </Label>
                     {activeFrame && activeFrame.numChannels > 1 &&
                         <Divider />
                     }

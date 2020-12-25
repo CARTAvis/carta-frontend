@@ -85,7 +85,7 @@ export class FileBrowserStore {
         }
         this.saveChannelStart = AppStore.Instance.activeFrame?.animationChannelRange[0];
         this.saveChannelEnd = AppStore.Instance.activeFrame?.animationChannelRange[1];
-        this.saveRegionId = AppStore.Instance.activeFrame?.regionSet.selectedRegion.regionId;
+        this.saveRegionId = 0;
     };
 
     @action hideFileBrowser = () => {
