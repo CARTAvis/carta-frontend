@@ -9,6 +9,9 @@ import {FrameStore} from "stores";
 export const CURSOR_REGION_ID = 0;
 export const FOCUS_REGION_RATIO = 0.4;
 
+const CENTER_POINT_INDEX = 0;
+const SIZE_POINT_INDEX = 1;
+
 export enum RegionCoordinate {
     Image = "Image",
     World = "World"
@@ -81,24 +84,47 @@ export class RegionStore {
 
     @computed get center(): Point2D {
         if (!this.isValid) {
-            return {x: 0, y: 0};
+            return {x: 0, y: 0}; // TODO: should we replace {x: 0, y: 0} with undefined?
         }
         switch (this.regionType) {
             case CARTA.RegionType.POINT:
             case CARTA.RegionType.RECTANGLE:
             case CARTA.RegionType.ELLIPSE:
-                return this.controlPoints[0];
+                return this.controlPoints[CENTER_POINT_INDEX];
             case CARTA.RegionType.POLYGON:
                 const bounds = minMax2D(this.controlPoints);
                 return midpoint2D(bounds.minPoint, bounds.maxPoint);
             default:
-                return {x: 0, y: 0};
+                return {x: 0, y: 0}; // TODO: should we replace {x: 0, y: 0} with undefined?
         }
+    }
+
+    @computed get size(): Point2D {
+        if (!this.isValid) {
+            return {x: 0, y: 0}; // TODO: should we replace {x: 0, y: 0} with undefined?
+        }
+        switch (this.regionType) {
+            case CARTA.RegionType.RECTANGLE:
+            case CARTA.RegionType.ELLIPSE:
+                return this.controlPoints[SIZE_POINT_INDEX];
+            case CARTA.RegionType.POLYGON:
+                return this.boundingBox;
+            default:
+                return {x: 0, y: 0}; // TODO: should we replace {x: 0, y: 0} with undefined?
+        }
+    }
+
+    @computed get wcsSize(): Point2D {
+        const frame = this.activeFrame;
+        if (!this.isValid || !this.size || !frame?.validWcs) {
+            return {x: 0, y: 0}; // TODO: should we replace {x: 0, y: 0} with undefined?
+        }
+        return frame.getWcsSizeInArcsec(this.size);
     }
 
     @computed get boundingBox(): Point2D {
         if (!this.isValid) {
-            return {x: 0, y: 0};
+            return {x: 0, y: 0}; // TODO: should we replace {x: 0, y: 0} with undefined?
         }
         switch (this.regionType) {
             case CARTA.RegionType.RECTANGLE:
@@ -109,7 +135,7 @@ export class RegionStore {
                 const boundingBox = minMax2D(this.controlPoints);
                 return subtract2D(boundingBox.maxPoint, boundingBox.minPoint);
             default:
-                return {x: 0, y: 0};
+                return {x: 0, y: 0}; // TODO: should we replace {x: 0, y: 0} with undefined?
         }
     }
 
@@ -186,26 +212,6 @@ export class RegionStore {
         }
     }
 
-    @computed get size(): Point2D {
-        switch (this.regionType) {
-            case CARTA.RegionType.RECTANGLE:
-            case CARTA.RegionType.ELLIPSE:
-                return this.controlPoints[1];
-            case CARTA.RegionType.POLYGON:
-                return this.boundingBox;
-            default:
-                return null;
-        }
-    }
-
-    @computed get wcsSize(): Point2D {
-        const frame = this.activeFrame;
-        if (this.size && frame.validWcs) {
-            return frame.getWcsSizeInArcsec(this.size);
-        }
-        return null;
-    }
-
     public getRegionApproximation(astTransform: number): Point2D[] {
         let approximatePoints = this.regionApproximationMap.get(astTransform);
         if (!approximatePoints) {
@@ -259,6 +265,14 @@ export class RegionStore {
 
     @action setRegionId = (id: number) => {
         this.regionId = id;
+    };
+
+    @action setCenter = (p: Point2D, skipUpdate = false) => {
+        this.setControlPoint(CENTER_POINT_INDEX, p, skipUpdate);
+    };
+
+    @action setSize = (p: Point2D, skipUpdate = false) => {
+        this.setControlPoint(SIZE_POINT_INDEX, p, skipUpdate);
     };
 
     @action setControlPoint = (index: number, p: Point2D, skipUpdate = false) => {
