@@ -1,11 +1,18 @@
-import {action, computed, observable, makeObservable, runInAction} from "mobx";
-import {TabId} from "@blueprintjs/core";
-import {CARTA} from "carta-protobuf";
-import {BackendService} from "services";
-import {AppStore, DialogStore, PreferenceKeys, PreferenceStore} from "stores";
-import {FileInfoType} from "components";
-import {ProcessedColumnData} from "models";
-import {getDataTypeString} from "utilities";
+import { TabId } from "@blueprintjs/core";
+
+import { action, computed, observable, makeObservable, runInAction } from "mobx";
+
+import { CARTA } from "carta-protobuf";
+
+import { BackendService } from "services";
+
+import { AppStore, DialogStore, PreferenceKeys, PreferenceStore } from "stores";
+
+import { FileInfoType } from "components";
+
+import { ProcessedColumnData } from "models";
+
+import { getDataTypeString } from "utilities";
 
 export enum BrowserMode {
     File,
@@ -59,6 +66,9 @@ export class FileBrowserStore {
 
     @observable saveFilename: string = "";
     @observable saveFileType: CARTA.FileType = CARTA.FileType.CASA;
+    @observable saveChannelStart: number = 0;
+    @observable saveChannelEnd: number;
+    @observable saveRegionId: number;
 
     @action showFileBrowser = (mode: BrowserMode, append = false) => {
         this.appendingFrame = append;
@@ -73,6 +83,9 @@ export class FileBrowserStore {
         if (AppStore.Instance.activeFrame && mode === BrowserMode.SaveFile) {
             this.saveFilename = AppStore.Instance.activeFrame.frameInfo.fileInfo.name;
         }
+        this.saveChannelStart = AppStore.Instance.activeFrame?.animationChannelRange[0];
+        this.saveChannelEnd = AppStore.Instance.activeFrame?.animationChannelRange[1];
+        this.saveRegionId = AppStore.Instance.activeFrame?.regionSet.selectedRegion.regionId;
     };
 
     @action hideFileBrowser = () => {
@@ -308,8 +321,9 @@ export class FileBrowserStore {
     @computed get getBrowserMode(): FileInfoType {
         switch (this.browserMode) {
             case BrowserMode.File:
-            case BrowserMode.SaveFile:
                 return FileInfoType.IMAGE_FILE;
+            case BrowserMode.SaveFile:
+                return FileInfoType.CHOP_IMAGE;
             case BrowserMode.Catalog:
                 return FileInfoType.CATALOG_FILE;
             default:
@@ -334,19 +348,19 @@ export class FileBrowserStore {
         }
 
         const dataType = CARTA.ColumnType.String;
-        columnsData.set(0, {dataType, data: nameData});
-        columnsData.set(1, {dataType, data: unitData});
-        columnsData.set(2, {dataType, data: typeData});
-        columnsData.set(3, {dataType, data: descriptionData});
+        columnsData.set(0, { dataType, data: nameData });
+        columnsData.set(1, { dataType, data: unitData });
+        columnsData.set(2, { dataType, data: typeData });
+        columnsData.set(3, { dataType, data: descriptionData });
 
         let columnHeaders = [
-            new CARTA.CatalogHeader({name: "Name", dataType, columnIndex: 0}),
-            new CARTA.CatalogHeader({name: "Unit", dataType, columnIndex: 1}),
-            new CARTA.CatalogHeader({name: "Data Type", dataType, columnIndex: 2}),
-            new CARTA.CatalogHeader({name: "Description", dataType, columnIndex: 3})
+            new CARTA.CatalogHeader({ name: "Name", dataType, columnIndex: 0 }),
+            new CARTA.CatalogHeader({ name: "Unit", dataType, columnIndex: 1 }),
+            new CARTA.CatalogHeader({ name: "Data Type", dataType, columnIndex: 2 }),
+            new CARTA.CatalogHeader({ name: "Description", dataType, columnIndex: 3 })
         ];
 
-        return {columnHeaders: columnHeaders, columnsData: columnsData};
+        return { columnHeaders: columnHeaders, columnsData: columnsData };
     }
 
     constructor() {

@@ -1,15 +1,17 @@
 import * as React from "react";
-import {observer} from "mobx-react";
-import {Pre, Tab, TabId, Tabs, NonIdealState, Spinner, Text} from "@blueprintjs/core";
-import {FixedSizeList as List} from "react-window";
+import { observer } from "mobx-react";
+import { Pre, Tab, TabId, Tabs, NonIdealState, Spinner, Text, Label, FormGroup, Divider, IOptionProps, HTMLSelect } from "@blueprintjs/core";
+import { FixedSizeList as List } from "react-window";
 import AutoSizer from "react-virtualized-auto-sizer";
-import {CARTA} from "carta-protobuf";
-import {TableComponent, TableComponentProps} from "components/Shared";
+import { CARTA } from "carta-protobuf";
+import { TableComponent, TableComponentProps } from "components/Shared";
 import "./FileInfoComponent.scss";
+import { AppStore } from "stores";
 
 export enum FileInfoType {
     IMAGE_FILE = "image-file",
     IMAGE_HEADER = "image-header",
+    CHOP_IMAGE = "chop-image",
     REGION_FILE = "region-file",
     CATALOG_FILE = "catalog-file",
     CATALOG_HEADER = "catalog-header"
@@ -31,16 +33,21 @@ export class FileInfoComponent extends React.Component<{
     private renderInfoTabs = () => {
         const infoTypes = this.props.infoTypes;
         const tabEntries = infoTypes.map(infoType => {
-            if (FileInfoType.IMAGE_FILE === infoType) {
-                return <Tab key={infoType} id={infoType} title="File Information"/>;
-            } else if (FileInfoType.IMAGE_HEADER === infoType) {
-                return <Tab key={infoType} id={infoType} title="Header"/>;
-            } else if (FileInfoType.CATALOG_FILE === infoType) {
-                return <Tab key={infoType} id={infoType} title="Catalog Information"/>;
-            } else if (FileInfoType.CATALOG_HEADER === infoType) {
-                return <Tab key={infoType} id={infoType} title="Catalog Header"/>;
-            } else {
-                return <Tab key={infoType} id={infoType} title="Region Information"/>;
+            switch (infoType) {
+                case (FileInfoType.IMAGE_FILE):
+                    return <Tab key={infoType} id={infoType} title="File Information" />;
+                case (FileInfoType.IMAGE_HEADER):
+                    return <Tab key={infoType} id={infoType} title="Header" />;
+                case (FileInfoType.CHOP_IMAGE):
+                    return <Tab key={infoType} id={infoType} title="Save Image" />;
+                case (FileInfoType.CATALOG_FILE):
+                    return <Tab key={infoType} id={infoType} title="Catalog Information" />;
+                case (FileInfoType.CATALOG_HEADER):
+                    return <Tab key={infoType} id={infoType} title="Catalog Header" />;
+                case (FileInfoType.REGION_FILE):
+                    return <Tab key={infoType} id={infoType} title="Region Information" />;
+                default:
+                    return "";
             }
         });
         return (
@@ -51,12 +58,18 @@ export class FileInfoComponent extends React.Component<{
     };
 
     private renderInfoPanel = () => {
+        switch (this.props.selectedTab) {
+            case FileInfoType.CHOP_IMAGE:
+                return this.renderSaveImageControl();
+            default:
+                break;
+        }
         if (this.props.isLoading) {
-            return <NonIdealState className="non-ideal-state-file" icon={<Spinner className="astLoadingSpinner"/>} title="Loading file info..."/>;
+            return <NonIdealState className="non-ideal-state-file" icon={<Spinner className="astLoadingSpinner" />} title="Loading file info..." />;
         } else if (this.props.errorMessage) {
-            return <NonIdealState className="non-ideal-state-file" icon="document" title="Cannot open file!" description={this.props.errorMessage + " Select another file from the folder."}/>;
+            return <NonIdealState className="non-ideal-state-file" icon="document" title="Cannot open file!" description={this.props.errorMessage + " Select another file from the folder."} />;
         } else if (!this.props.fileInfoExtended && !this.props.regionFileInfo && !this.props.catalogFileInfo) {
-            return <NonIdealState className="non-ideal-state-file" icon="document" title="No file selected." description="Select a file from the folder."/>;
+            return <NonIdealState className="non-ideal-state-file" icon="document" title="No file selected." description="Select a file from the folder." />;
         }
         switch (this.props.selectedTab) {
             case FileInfoType.IMAGE_FILE:
@@ -75,7 +88,7 @@ export class FileInfoComponent extends React.Component<{
                 if (this.props.catalogHeaderTable) {
                     return (
                         <Pre className="file-header-table">
-                            <TableComponent {...this.props.catalogHeaderTable}/>
+                            <TableComponent {...this.props.catalogHeaderTable} />
                         </Pre>
                     );
                 }
@@ -86,7 +99,7 @@ export class FileInfoComponent extends React.Component<{
     };
 
     private renderImageHeaderList(entries: CARTA.IHeaderEntry[]) {
-        const renderHeaderRow = ({index, style}) => {
+        const renderHeaderRow = ({ index, style }) => {
             if (index < 0 || index >= entries?.length) {
                 return null;
             }
@@ -107,7 +120,7 @@ export class FileInfoComponent extends React.Component<{
         const numHeaders = entries?.length || 0;
         return (
             <AutoSizer>
-                {({height, width}) => (
+                {({ height, width }) => (
                     <List
                         className="header-list bp3-code-block"
                         itemCount={numHeaders}
@@ -119,6 +132,45 @@ export class FileInfoComponent extends React.Component<{
                     </List>
                 )}
             </AutoSizer>
+        );
+    }
+
+    private handleRegionChanged = (changeEvent: React.ChangeEvent<HTMLSelectElement>) => {
+        const fileBrowser = AppStore.Instance.fileBrowserStore;
+        fileBrowser.saveRegionId = parseInt(changeEvent.target.value);
+    };
+
+    private renderSaveImageControl() {
+        const fileBrowser = AppStore.Instance.fileBrowserStore;
+        const activeFrame = AppStore.Instance.activeFrame;
+        const closedRegions = activeFrame.regionSet.regions.filter(region => region.regionId > 0 && region.isClosedRegion);
+        const regionOptions: IOptionProps[] = closedRegions.map(region => ({ value: region.regionId, label: `${region.name ? region.name : region.regionId} (${CARTA.RegionType[region.regionType]})` }));
+        return (
+            <div className="save-chop">
+                <Pre>
+                    <Label>{"Source file name: " + activeFrame.frameInfo.fileInfo.name}</Label>
+                    {fileBrowser.saveRegionId > 0 &&
+                        <Label>{"Region: "}
+                            <HTMLSelect value={fileBrowser.saveRegionId} onChange={this.handleRegionChanged} options={regionOptions} />
+                        </Label>
+                    }
+                    {activeFrame && activeFrame.numChannels > 1 &&
+                        <Divider />
+                    }
+                    {activeFrame && activeFrame.numChannels > 1 &&
+                        <FormGroup label={"Channel range: "} inline={false} >
+                            <Label>{"From  "}
+                                <input value={fileBrowser.saveChannelStart} placeholder="First channel" />
+                                {"  To  "}
+                                <input value={fileBrowser.saveChannelEnd} placeholder="Number of channels" />
+                            </Label>
+                        </FormGroup>
+                    }
+                    {activeFrame && activeFrame.numChannels > 1 &&
+                        <Divider />
+                    }
+                </Pre>
+            </div >
         );
     }
 
