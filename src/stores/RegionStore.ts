@@ -128,9 +128,9 @@ export class RegionStore {
         }
         switch (this.regionType) {
             case CARTA.RegionType.RECTANGLE:
-                return this.controlPoints[1];
+                return this.size;
             case CARTA.RegionType.ELLIPSE:
-                return scale2D(this.controlPoints[1], 2);
+                return scale2D(this.size, 2);
             case CARTA.RegionType.POLYGON:
                 const boundingBox = minMax2D(this.controlPoints);
                 return subtract2D(boundingBox.maxPoint, boundingBox.minPoint);
@@ -168,7 +168,7 @@ export class RegionStore {
                 return this.controlPoints.length === 1;
             case CARTA.RegionType.RECTANGLE:
             case CARTA.RegionType.ELLIPSE:
-                return this.controlPoints.length === 2 && this.controlPoints[1].x > 0 && this.controlPoints[1].y > 0;
+                return this.controlPoints.length === 2 && this.size.x > 0 && this.size.y > 0;
             case CARTA.RegionType.POLYGON:
                 return this.controlPoints.length >= 1;
             default:
@@ -187,7 +187,7 @@ export class RegionStore {
     }
 
     @computed get regionProperties(): string {
-        const point = this.controlPoints[0];
+        const point = this.center;
         const center = isFinite(point.x) && isFinite(point.y) ? `${toFixed(point.x, 1)}pix, ${toFixed(point.y, 1)}pix` : "Invalid";
 
         switch (this.regionType) {
@@ -195,11 +195,11 @@ export class RegionStore {
                 return `Point (pixel) [${center}]`;
             case CARTA.RegionType.RECTANGLE:
                 return `rotbox[[${center}], ` +
-                    `[${toFixed(this.controlPoints[1].x, 1)}pix, ${toFixed(this.controlPoints[1].y, 1)}pix], ` +
+                    `[${toFixed(this.size.x, 1)}pix, ${toFixed(this.size.y, 1)}pix], ` +
                     `${toFixed(this.rotation, 1)}deg]`;
             case CARTA.RegionType.ELLIPSE:
                 return `ellipse[[${center}], ` +
-                    `[${toFixed(this.controlPoints[1].x, 1)}pix, ${toFixed(this.controlPoints[1].y, 1)}pix], ` +
+                    `[${toFixed(this.size.x, 1)}pix, ${toFixed(this.size.y, 1)}pix], ` +
                     `${toFixed(this.rotation, 1)}deg]`;
             case CARTA.RegionType.POLYGON:
                 // TODO: Region properties
@@ -219,10 +219,10 @@ export class RegionStore {
                 approximatePoints = [transformPoint(astTransform, this.center, false)];
             }
             if (this.regionType === CARTA.RegionType.ELLIPSE) {
-                approximatePoints = getApproximateEllipsePoints(astTransform, this.center, this.controlPoints[1].y, this.controlPoints[1].x, this.rotation, RegionStore.TARGET_VERTEX_COUNT);
+                approximatePoints = getApproximateEllipsePoints(astTransform, this.center, this.size.y, this.size.x, this.rotation, RegionStore.TARGET_VERTEX_COUNT);
             } else if (this.regionType === CARTA.RegionType.RECTANGLE) {
-                let halfWidth = this.controlPoints[1].x / 2;
-                let halfHeight = this.controlPoints[1].y / 2;
+                let halfWidth = this.size.x / 2;
+                let halfHeight = this.size.y / 2;
                 const rotation = this.rotation * Math.PI / 180.0;
                 const points: Point2D[] = [
                     add2D(this.center, rotate2D({x: -halfWidth, y: -halfHeight}, rotation)),
@@ -410,7 +410,7 @@ export class RegionStore {
     private updateRegion = () => {
         if (this.isValid) {
             if (this.regionId === CURSOR_REGION_ID && this.regionType === CARTA.RegionType.POINT) {
-                this.backendService.setCursor(this.fileId, this.controlPoints[0].x, this.controlPoints[0].y);
+                this.backendService.setCursor(this.fileId, this.center.x, this.center.y);
             } else {
                 this.backendService.setRegion(this.fileId, this.regionId, this).subscribe(ack => {
                     if (ack.success) {

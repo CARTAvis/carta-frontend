@@ -157,7 +157,7 @@ export class RegionSetStore {
                     const centerNewFrame = transformPoint(spatialTransformAST, region.center, forward);
                     if (!isAstBadPoint(centerNewFrame)) {
                         const transform = new Transform2D(spatialTransformAST, centerNewFrame);
-                        const size = scale2D(region.controlPoints[1], forward ? transform.scale : 1.0 / transform.scale);
+                        const size = scale2D(region.size, forward ? transform.scale : 1.0 / transform.scale);
                         rotation = region.rotation + (forward ? 1 : -1) * transform.rotation * 180 / Math.PI;
                         newControlPoints = [centerNewFrame, size];
                     }
