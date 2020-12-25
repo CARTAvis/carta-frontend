@@ -27,7 +27,7 @@ export class PointRegionForm extends React.Component<{ region: RegionStore, wcsI
         const existingValue = this.props.region.center.x;
 
         if (isFinite(value) && !closeTo(value, existingValue, PointRegionForm.REGION_PIXEL_EPS)) {
-            this.props.region.setControlPoint(0, {x: value, y: this.props.region.center.y});
+            this.props.region.setCenter({x: value, y: this.props.region.center.y});
             return;
         }
 
@@ -43,7 +43,7 @@ export class PointRegionForm extends React.Component<{ region: RegionStore, wcsI
         const existingValue = this.props.region.center.y;
 
         if (isFinite(value) && !closeTo(value, existingValue, PointRegionForm.REGION_PIXEL_EPS)) {
-            this.props.region.setControlPoint(0, {x: this.props.region.center.x, y: value});
+            this.props.region.setCenter({x: this.props.region.center.x, y: value});
             return;
         }
 
@@ -66,7 +66,7 @@ export class PointRegionForm extends React.Component<{ region: RegionStore, wcsI
             const newPoint = getPixelValueFromWCS(this.props.wcsInfo, {x: wcsString, y: centerWCSPoint.y});
             const existingValue = this.props.region.center.x;
             if (newPoint && isFinite(newPoint.x) && !closeTo(newPoint.x, existingValue, PointRegionForm.REGION_PIXEL_EPS)) {
-                this.props.region.setControlPoint(0, newPoint);
+                this.props.region.setCenter(newPoint);
                 return;
             }
         }
@@ -90,7 +90,7 @@ export class PointRegionForm extends React.Component<{ region: RegionStore, wcsI
             const newPoint = getPixelValueFromWCS(this.props.wcsInfo, {x: centerWCSPoint.x, y: wcsString});
             const existingValue = this.props.region.center.y;
             if (newPoint && isFinite(newPoint.y) && !closeTo(newPoint.y, existingValue, PointRegionForm.REGION_PIXEL_EPS)) {
-                this.props.region.setControlPoint(0, newPoint);
+                this.props.region.setCenter(newPoint);
                 return;
             }
         }

@@ -146,7 +146,7 @@ export class RegionSetStore {
             if (region.regionId === CURSOR_REGION_ID) {
                 const centerNewFrame = transformPoint(spatialTransformAST, region.center, forward);
                 if (this.regions.length && this.regions[0].regionId === CURSOR_REGION_ID) {
-                    this.regions[0].setControlPoint(0, centerNewFrame);
+                    this.regions[0].setCenter(centerNewFrame);
                 }
             } else {
 

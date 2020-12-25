@@ -41,7 +41,7 @@ export class EllipticalRegionForm extends React.Component<{ region: RegionStore,
         const existingValue = this.props.region.center.x;
 
         if (isFinite(value) && !closeTo(value, existingValue, EllipticalRegionForm.REGION_PIXEL_EPS)) {
-            this.props.region.setControlPoint(0, {x: value, y: this.props.region.center.y});
+            this.props.region.setCenter({x: value, y: this.props.region.center.y});
             return;
         }
 
@@ -57,7 +57,7 @@ export class EllipticalRegionForm extends React.Component<{ region: RegionStore,
         const existingValue = this.props.region.center.y;
 
         if (isFinite(value) && !closeTo(value, existingValue, EllipticalRegionForm.REGION_PIXEL_EPS)) {
-            this.props.region.setControlPoint(0, {x: this.props.region.center.x, y: value});
+            this.props.region.setCenter({x: this.props.region.center.x, y: value});
             return;
         }
 
@@ -80,7 +80,7 @@ export class EllipticalRegionForm extends React.Component<{ region: RegionStore,
             const newPoint = getPixelValueFromWCS(this.props.wcsInfo, {x: wcsString, y: centerWCSPoint.y});
             const existingValue = this.props.region.center.x;
             if (newPoint && isFinite(newPoint.x) && !closeTo(newPoint.x, existingValue, EllipticalRegionForm.REGION_PIXEL_EPS)) {
-                this.props.region.setControlPoint(0, newPoint);
+                this.props.region.setCenter(newPoint);
                 return;
             }
         }
@@ -104,7 +104,7 @@ export class EllipticalRegionForm extends React.Component<{ region: RegionStore,
             const newPoint = getPixelValueFromWCS(this.props.wcsInfo, {x: centerWCSPoint.x, y: wcsString});
             const existingValue = this.props.region.center.y;
             if (newPoint && isFinite(newPoint.y) && !closeTo(newPoint.y, existingValue, EllipticalRegionForm.REGION_PIXEL_EPS)) {
-                this.props.region.setControlPoint(0, newPoint);
+                this.props.region.setCenter(newPoint);
                 return;
             }
         }
@@ -121,7 +121,7 @@ export class EllipticalRegionForm extends React.Component<{ region: RegionStore,
         const existingValue = this.props.region.size.x;
 
         if (isFinite(value) && value > 0 && !closeTo(value, existingValue, EllipticalRegionForm.REGION_PIXEL_EPS)) {
-            this.props.region.setControlPoint(1, {x: value, y: this.props.region.size.y});
+            this.props.region.setSize({x: value, y: this.props.region.size.y});
             return;
         }
 
@@ -142,7 +142,7 @@ export class EllipticalRegionForm extends React.Component<{ region: RegionStore,
         const value = this.props.frame.getImageValueFromArcsec(getValueFromArcsecString(wcsString));
         const existingValue = this.props.region.size.x;
         if (isFinite(value) && value > 0 && !closeTo(value, existingValue, EllipticalRegionForm.REGION_PIXEL_EPS)) {
-            this.props.region.setControlPoint(1, {x: value, y: this.props.region.size.y});
+            this.props.region.setSize({x: value, y: this.props.region.size.y});
             return;
         }
 
@@ -158,7 +158,7 @@ export class EllipticalRegionForm extends React.Component<{ region: RegionStore,
         const existingValue = this.props.region.size.y;
 
         if (isFinite(value) && value > 0 && !closeTo(value, existingValue, EllipticalRegionForm.REGION_PIXEL_EPS)) {
-            this.props.region.setControlPoint(1, {x: this.props.region.size.x, y: value});
+            this.props.region.setSize({x: this.props.region.size.x, y: value});
             return;
         }
 
@@ -179,7 +179,7 @@ export class EllipticalRegionForm extends React.Component<{ region: RegionStore,
         const value = this.props.frame.getImageValueFromArcsec(getValueFromArcsecString(wcsString));
         const existingValue = this.props.region.size.y;
         if (isFinite(value) && value > 0 && !closeTo(value, existingValue, EllipticalRegionForm.REGION_PIXEL_EPS)) {
-            this.props.region.setControlPoint(1, {x: this.props.region.size.x, y: value});
+            this.props.region.setSize({x: this.props.region.size.x, y: value});
             return;
         }
 

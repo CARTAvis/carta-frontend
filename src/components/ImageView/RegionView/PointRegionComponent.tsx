@@ -59,7 +59,7 @@ export class PointRegionComponent extends React.Component<PointRegionComponentPr
             if (frame.spatialReference) {
                 positionImageSpace = transformPoint(frame.spatialTransformAST, positionImageSpace, true);
             }
-            region.setControlPoint(0, positionImageSpace);
+            region.setCenter(positionImageSpace);
         }
     };
 

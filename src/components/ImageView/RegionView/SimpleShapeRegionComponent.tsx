@@ -205,7 +205,7 @@ export class SimpleShapeRegionComponent extends React.Component<RegionComponentP
             if (frame.spatialReference) {
                 newPosition = transformPoint(frame.spatialTransformAST, newPosition, true);
             }
-            region.setControlPoint(0, newPosition);
+            region.setCenter(newPosition);
         }
     };
 
