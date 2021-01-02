@@ -114,6 +114,8 @@ export class RegionStore {
         }
     }
 
+    // TODO: check this wcsSize related to reference frame or not,
+    // if yes, we can merge sizeWCS in EllipticalRegionForm & RectangularRegionForm
     @computed get wcsSize(): Point2D {
         const frame = this.activeFrame;
         if (!this.isValid || !this.size || !frame?.validWcs) {
