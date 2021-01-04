@@ -4,7 +4,7 @@ import { Pre, Tab, TabId, Tabs, NonIdealState, Spinner, Text, Label, FormGroup, 
 import { FixedSizeList as List } from "react-window";
 import AutoSizer from "react-virtualized-auto-sizer";
 import { CARTA } from "carta-protobuf";
-import { TableComponent, TableComponentProps } from "components/Shared";
+import { SafeNumericInput, TableComponent, TableComponentProps } from "components/Shared";
 import "./FileInfoComponent.scss";
 import { AppStore } from "stores";
 
@@ -140,6 +140,20 @@ export class FileInfoComponent extends React.Component<{
         fileBrowser.saveRegionId = parseInt(changeEvent.target.value);
     };
 
+    onSaveChannelStartChanged(val: any) {
+        const fileBrowser = AppStore.Instance.fileBrowserStore;
+        if (val && isFinite(val)) {
+            fileBrowser.saveChannelStart = val;
+        }
+    };
+
+    onSaveChannelEndChanged(val: any) {
+        const fileBrowser = AppStore.Instance.fileBrowserStore;
+        if (val && isFinite(val)) {
+            fileBrowser.saveChannelEnd = val;
+        }
+    };
+
     private renderSaveImageControl() {
         const fileBrowser = AppStore.Instance.fileBrowserStore;
         const activeFrame = AppStore.Instance.activeFrame;
@@ -156,13 +170,26 @@ export class FileInfoComponent extends React.Component<{
                         <Divider />
                     }
                     {activeFrame && activeFrame.numChannels > 1 &&
-                        <FormGroup label={"Channel range: "} inline={false} >
-                            <Label>{"From  "}
-                                <input value={fileBrowser.saveChannelStart} placeholder="First channel" />
-                                {"  To  "}
-                                <input value={fileBrowser.saveChannelEnd} placeholder="Number of channels" />
-                            </Label>
-                        </FormGroup>
+                        <div className="range-select">
+                            <FormGroup label={"Channel range: "} inline={true} >
+                                <FormGroup label="From" inline={true}>
+                                    <SafeNumericInput
+                                        value={fileBrowser.saveChannelStart}
+                                        buttonPosition="none"
+                                        placeholder="First channel"
+                                        onValueChange={val => this.onSaveChannelStartChanged(val)}
+                                    />
+                                </FormGroup>
+                                <FormGroup label="To" inline={true}>
+                                    <SafeNumericInput
+                                        value={fileBrowser.saveChannelEnd}
+                                        buttonPosition="none"
+                                        placeholder="Last channel"
+                                        onValueChange={val => this.onSaveChannelEndChanged(val)}
+                                    />
+                                </FormGroup>
+                            </FormGroup>
+                        </div>
                     }
                     {activeFrame && activeFrame.numChannels > 1 &&
                         <Divider />

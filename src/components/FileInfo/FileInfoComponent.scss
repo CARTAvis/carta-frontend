@@ -46,4 +46,13 @@
         padding: 1px;
         font-family: 'Helvetica Neue', 'Helvetica', 'Arial', sans-serif;
     }
+
+    .save-chop {
+
+        .range-select {
+            display: flex;
+            flex-direction: row;
+        }
+    }
+
 }

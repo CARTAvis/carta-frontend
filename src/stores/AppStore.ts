@@ -1,11 +1,11 @@
 import * as _ from "lodash";
-import {action, autorun, computed, observable, ObservableMap, when, makeObservable, runInAction} from "mobx";
+import { action, autorun, computed, observable, ObservableMap, when, makeObservable, runInAction } from "mobx";
 import * as Long from "long";
-import {Classes, Colors, IOptionProps, setHotkeysDialogProps} from "@blueprintjs/core";
-import {Utils} from "@blueprintjs/table";
+import { Classes, Colors, IOptionProps, setHotkeysDialogProps } from "@blueprintjs/core";
+import { Utils } from "@blueprintjs/table";
 import * as AST from "ast_wrapper";
 import * as CARTACompute from "carta_computation";
-import {CARTA} from "carta-protobuf";
+import { CARTA } from "carta-protobuf";
 import {
     AlertStore,
     AnimationMode,
@@ -36,12 +36,12 @@ import {
     SpectralProfileStore,
     WidgetsStore
 } from ".";
-import {distinct, GetRequiredTiles, mapToObject} from "utilities";
-import {ApiService, BackendService, ConnectionStatus, ScriptingService, TileService, TileStreamDetails} from "services";
-import {FrameView, Point2D, ProtobufProcessing, Theme, TileCoordinate, WCSMatchingType} from "models";
-import {HistogramWidgetStore, RegionWidgetStore, SpatialProfileWidgetStore, SpectralProfileWidgetStore, StatsWidgetStore, StokesAnalysisWidgetStore} from "./widgets";
-import {getImageCanvas, ImageViewLayer} from "components";
-import {AppToaster, ErrorToast, SuccessToast, WarningToast} from "components/Shared";
+import { distinct, GetRequiredTiles, mapToObject } from "utilities";
+import { ApiService, BackendService, ConnectionStatus, ScriptingService, TileService, TileStreamDetails } from "services";
+import { FrameView, Point2D, ProtobufProcessing, Theme, TileCoordinate, WCSMatchingType } from "models";
+import { HistogramWidgetStore, RegionWidgetStore, SpatialProfileWidgetStore, SpectralProfileWidgetStore, StatsWidgetStore, StokesAnalysisWidgetStore } from "./widgets";
+import { getImageCanvas, ImageViewLayer } from "components";
+import { AppToaster, ErrorToast, SuccessToast, WarningToast } from "components/Shared";
 import GitCommit from "../static/gitInfo";
 
 export class AppStore {
@@ -274,17 +274,17 @@ export class AppStore {
         return this.catalogStore.catalogProfileStores.size;
     }
 
-    @computed get frameNames(): IOptionProps [] {
-        let names: IOptionProps [] = [];
-        this.frames.forEach((frame, index) => names.push({label: index + ": " + frame.frameInfo.fileInfo.name, value: frame.frameInfo.fileId}));
+    @computed get frameNames(): IOptionProps[] {
+        let names: IOptionProps[] = [];
+        this.frames.forEach((frame, index) => names.push({ label: index + ": " + frame.frameInfo.fileInfo.name, value: frame.frameInfo.fileId }));
         return names;
     }
 
-    @computed get frameChannels(): number [] {
+    @computed get frameChannels(): number[] {
         return this.frames.map(frame => frame.requiredChannel);
     }
 
-    @computed get frameStokes(): number [] {
+    @computed get frameStokes(): number[] {
         return this.frames.map(frame => frame.requiredStokes);
     }
 
@@ -402,7 +402,7 @@ export class AppStore {
 
             this.backendService.loadFile(directory, file, hdu, this.fileCounter, CARTA.RenderMode.RASTER).subscribe(ack => {
                 if (!this.addFrame(ack, directory, hdu)) {
-                    AppToaster.show({icon: "warning-sign", message: "Load file failed.", intent: "danger", timeout: 3000});
+                    AppToaster.show({ icon: "warning-sign", message: "Load file failed.", intent: "danger", timeout: 3000 });
                 }
                 this.endFileLoading();
                 this.fileBrowserStore.hideFileBrowser();
@@ -432,17 +432,17 @@ export class AppStore {
         return this.loadFile(directory, file, hdu);
     };
 
-    @action saveFile = (directory: string, filename: string, fileType: CARTA.FileType) => {
+    @action saveFile = (directory: string, filename: string, fileType: CARTA.FileType, regionId?: number, channels?: number[], stokes?: number[]) => {
         if (!this.activeFrame) {
             return;
         }
         const fileId = this.activeFrame.frameInfo.fileId;
-        this.backendService.saveFile(fileId, directory, filename, fileType).subscribe(() => {
-            AppToaster.show({icon: "saved", message: `${filename} saved.`, intent: "success", timeout: 3000});
+        this.backendService.saveFile(fileId, directory, filename, fileType, regionId, channels, stokes).subscribe(() => {
+            AppToaster.show({ icon: "saved", message: `${filename} saved.`, intent: "success", timeout: 3000 });
             this.fileBrowserStore.hideFileBrowser();
         }, error => {
             console.error(error);
-            AppToaster.show({icon: "warning-sign", message: error, intent: "danger", timeout: 3000});
+            AppToaster.show({ icon: "warning-sign", message: error, intent: "danger", timeout: 3000 });
         });
     };
 
@@ -623,7 +623,7 @@ export class AppStore {
         this.backendService.loadCatalogFile(directory, file, fileId, previewDataSize).subscribe(ack => runInAction(() => {
             this.endFileLoading();
             if (frame && ack.success && ack.dataSize) {
-                let catalogInfo: CatalogInfo = {fileId, directory, fileInfo: ack.fileInfo, dataSize: ack.dataSize};
+                let catalogInfo: CatalogInfo = { fileId, directory, fileInfo: ack.fileInfo, dataSize: ack.dataSize };
                 let catalogWidgetId;
                 const columnData = ProtobufProcessing.ProcessCatalogData(ack.previewData);
 
@@ -786,7 +786,7 @@ export class AppStore {
     @action requestCubeHistogram = (fileId: number = -1) => {
         const frame = this.getFrame(fileId);
         if (frame && frame.renderConfig.cubeHistogramProgress < 1.0) {
-            this.backendService.setHistogramRequirements({fileId: frame.frameInfo.fileId, regionId: -2, histograms: [{channel: -2, numBins: -1}]});
+            this.backendService.setHistogramRequirements({ fileId: frame.frameInfo.fileId, regionId: -2, histograms: [{ channel: -2, numBins: -1 }] });
             this.restartTaskProgress();
         }
     };
@@ -795,7 +795,7 @@ export class AppStore {
         const frame = this.getFrame(fileId);
         if (frame && frame.renderConfig.cubeHistogramProgress < 1.0) {
             frame.renderConfig.updateCubeHistogram(null, 0);
-            this.backendService.setHistogramRequirements({fileId: frame.frameInfo.fileId, regionId: -2, histograms: []});
+            this.backendService.setHistogramRequirements({ fileId: frame.frameInfo.fileId, regionId: -2, histograms: [] });
         }
     };
 
@@ -819,12 +819,12 @@ export class AppStore {
                             this.fileCounter++;
                             frame.addMomentImage(this.frames.find(f => f.frameInfo.fileId === openFileAck.fileId));
                         } else {
-                            AppToaster.show({icon: "warning-sign", message: "Load file failed.", intent: "danger", timeout: 3000});
+                            AppToaster.show({ icon: "warning-sign", message: "Load file failed.", intent: "danger", timeout: 3000 });
                         }
                     });
                 }
             } else {
-                AppToaster.show({icon: "warning-sign", message: `Moment generation failed. ${ack?.message}`, intent: "danger", timeout: 3000});
+                AppToaster.show({ icon: "warning-sign", message: `Moment generation failed. ${ack?.message}`, intent: "danger", timeout: 3000 });
             }
             frame.resetMomentRequestState();
             this.endFileLoading();
@@ -911,12 +911,12 @@ export class AppStore {
                     yMax: Math.min(frame.frameInfo.fileInfoExtended.height, reqView.yMax),
                     mip: reqView.mip
                 };
-                const imageSize: Point2D = {x: frame.frameInfo.fileInfoExtended.width, y: frame.frameInfo.fileInfoExtended.height};
-                const tiles = GetRequiredTiles(croppedReq, imageSize, {x: 256, y: 256});
-                const midPointImageCoords = {x: (reqView.xMax + reqView.xMin) / 2.0, y: (reqView.yMin + reqView.yMax) / 2.0};
+                const imageSize: Point2D = { x: frame.frameInfo.fileInfoExtended.width, y: frame.frameInfo.fileInfoExtended.height };
+                const tiles = GetRequiredTiles(croppedReq, imageSize, { x: 256, y: 256 });
+                const midPointImageCoords = { x: (reqView.xMax + reqView.xMin) / 2.0, y: (reqView.yMin + reqView.yMax) / 2.0 };
                 // TODO: dynamic tile size
                 const tileSizeFullRes = reqView.mip * 256;
-                const midPointTileCoords = {x: midPointImageCoords.x / tileSizeFullRes - 0.5, y: midPointImageCoords.y / tileSizeFullRes - 0.5};
+                const midPointTileCoords = { x: midPointImageCoords.x / tileSizeFullRes - 0.5, y: midPointImageCoords.y / tileSizeFullRes - 0.5 };
                 this.tileService.requestTiles(tiles, frame.frameInfo.fileId, frame.channel, frame.stokes, midPointTileCoords, this.preferenceStore.imageCompressionQuality, true);
             } else {
                 this.tileService.updateInactiveFileChannel(frame.frameInfo.fileId, frame.channel, frame.stokes);
@@ -990,7 +990,7 @@ export class AppStore {
         autorun(() => {
             document.body.style.backgroundColor = this.darkTheme ? Colors.DARK_GRAY4 : Colors.WHITE;
             const className = this.darkTheme ? Classes.DARK : "";
-            setHotkeysDialogProps({className});
+            setHotkeysDialogProps({ className });
         });
 
         // Watch for system theme preference changes
@@ -1049,12 +1049,12 @@ export class AppStore {
                     mip: reqView.mip
                 };
 
-                const imageSize: Point2D = {x: this.activeFrame.frameInfo.fileInfoExtended.width, y: this.activeFrame.frameInfo.fileInfoExtended.height};
-                const tiles = GetRequiredTiles(croppedReq, imageSize, {x: 256, y: 256});
-                const midPointImageCoords = {x: (reqView.xMax + reqView.xMin) / 2.0, y: (reqView.yMin + reqView.yMax) / 2.0};
+                const imageSize: Point2D = { x: this.activeFrame.frameInfo.fileInfoExtended.width, y: this.activeFrame.frameInfo.fileInfoExtended.height };
+                const tiles = GetRequiredTiles(croppedReq, imageSize, { x: 256, y: 256 });
+                const midPointImageCoords = { x: (reqView.xMax + reqView.xMin) / 2.0, y: (reqView.yMin + reqView.yMax) / 2.0 };
                 // TODO: dynamic tile size
                 const tileSizeFullRes = reqView.mip * 256;
-                const midPointTileCoords = {x: midPointImageCoords.x / tileSizeFullRes - 0.5, y: midPointImageCoords.y / tileSizeFullRes - 0.5};
+                const midPointTileCoords = { x: midPointImageCoords.x / tileSizeFullRes - 0.5, y: midPointImageCoords.y / tileSizeFullRes - 0.5 };
                 this.throttledSetView(tiles, this.activeFrame.frameInfo.fileId, this.activeFrame.channel, this.activeFrame.stokes, midPointTileCoords);
             }
 
@@ -1072,14 +1072,14 @@ export class AppStore {
                 const updateRequiredChannels = this.activeFrame.requiredChannel !== this.activeFrame.channel || this.activeFrame.requiredStokes !== this.activeFrame.stokes;
                 // Don't auto-update when animation is playing
                 if (this.animatorStore.animationState === AnimationState.STOPPED && updateRequiredChannels) {
-                    updates.push({frame: this.activeFrame, channel: this.activeFrame.requiredChannel, stokes: this.activeFrame.requiredStokes});
+                    updates.push({ frame: this.activeFrame, channel: this.activeFrame.requiredChannel, stokes: this.activeFrame.requiredStokes });
                 }
 
                 // Update any sibling channels
                 this.activeFrame.spectralSiblings.forEach(frame => {
                     const siblingUpdateRequired = frame.requiredChannel !== frame.channel || frame.requiredStokes !== frame.stokes;
                     if (siblingUpdateRequired) {
-                        updates.push({frame, channel: frame.requiredChannel, stokes: frame.requiredStokes});
+                        updates.push({ frame, channel: frame.requiredChannel, stokes: frame.requiredStokes });
                     }
                 });
 
@@ -1092,7 +1092,7 @@ export class AppStore {
         // Update cursor profiles
         autorun(() => {
             if (this.activeFrame?.cursorInfo?.posImageSpace) {
-                const pos = {x: Math.round(this.activeFrame.cursorInfo.posImageSpace.x), y: Math.round(this.activeFrame.cursorInfo.posImageSpace.y)};
+                const pos = { x: Math.round(this.activeFrame.cursorInfo.posImageSpace.x), y: Math.round(this.activeFrame.cursorInfo.posImageSpace.y) };
                 if (pos.x >= 0 && pos.x <= this.activeFrame.frameInfo.fileInfoExtended.width - 1 && pos.y >= 0 && pos.y <= this.activeFrame.frameInfo.fileInfoExtended.height - 1) {
                     if (this.preferenceStore.lowBandwidthMode) {
                         throttledSetCursorLowBandwidth(this.activeFrame.frameInfo.fileId, pos);
@@ -1170,7 +1170,7 @@ export class AppStore {
 
             // Update cursor value from profile if it matches the file and is the cursor data
             if (this.activeFrame && this.activeFrame.frameInfo.fileId === spatialProfileData.fileId && spatialProfileData.regionId === 0) {
-                this.activeFrame.setCursorValue({x: spatialProfileData.x, y: spatialProfileData.y}, spatialProfileData.channel, spatialProfileData.value);
+                this.activeFrame.setCursorValue({ x: spatialProfileData.x, y: spatialProfileData.y }, spatialProfileData.channel, spatialProfileData.value);
             }
         }
     };
@@ -1424,7 +1424,7 @@ export class AppStore {
 
         this.resumingSession = true;
 
-        this.backendService.resumeSession({images, catalogFiles}).subscribe(this.onSessionResumed, err => {
+        this.backendService.resumeSession({ images, catalogFiles }).subscribe(this.onSessionResumed, err => {
             console.error(err);
             this.alertStore.showAlert("Error resuming session");
         });

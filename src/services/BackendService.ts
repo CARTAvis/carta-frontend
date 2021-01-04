@@ -1,9 +1,9 @@
-import {action, observable, makeObservable, runInAction} from "mobx";
-import {CARTA} from "carta-protobuf";
-import {Observable, Observer, Subject, throwError} from "rxjs";
-import {AppStore, PreferenceStore, RegionStore} from "stores";
-import {ApiService} from "./ApiService";
-import {mapToObject} from "utilities";
+import { action, observable, makeObservable, runInAction } from "mobx";
+import { CARTA } from "carta-protobuf";
+import { Observable, Observer, Subject, throwError } from "rxjs";
+import { AppStore, PreferenceStore, RegionStore } from "stores";
+import { ApiService } from "./ApiService";
+import { mapToObject } from "utilities";
 
 export enum ConnectionStatus {
     CLOSED = 0,
@@ -164,7 +164,7 @@ export class BackendService {
         this.connection = new WebSocket(apiService.accessToken ? url + `?token=${apiService.accessToken}` : url);
         this.connection.binaryType = "arraybuffer";
         this.connection.onmessage = this.messageHandler.bind(this);
-        this.connection.onclose = (ev: CloseEvent) => runInAction(()=>{
+        this.connection.onclose = (ev: CloseEvent) => runInAction(() => {
             // Only change to closed connection if the connection was originally active
             if (this.connectionStatus === ConnectionStatus.ACTIVE) {
                 this.connectionStatus = ConnectionStatus.CLOSED;
@@ -190,7 +190,7 @@ export class BackendService {
                 }
                 this.connectionStatus = ConnectionStatus.ACTIVE;
                 this.autoReconnect = true;
-                const message = CARTA.RegisterViewer.create({sessionId: this.sessionId, clientFeatureFlags: BackendService.DefaultFeatureFlags});
+                const message = CARTA.RegisterViewer.create({ sessionId: this.sessionId, clientFeatureFlags: BackendService.DefaultFeatureFlags });
                 // observer map is cleared, so that old subscriptions don't get incorrectly fired
                 this.observerRequestMap.clear();
                 this.eventCounter = 1;
@@ -224,7 +224,7 @@ export class BackendService {
         if (this.connectionStatus !== ConnectionStatus.ACTIVE) {
             return throwError(new Error("Not connected"));
         } else {
-            const message = CARTA.FileListRequest.create({directory});
+            const message = CARTA.FileListRequest.create({ directory });
             const requestId = this.eventCounter;
             this.logEvent(CARTA.EventType.FILE_LIST_REQUEST, requestId, message, false);
             if (this.sendEvent(CARTA.EventType.FILE_LIST_REQUEST, CARTA.FileListRequest.encode(message).finish())) {
@@ -242,7 +242,7 @@ export class BackendService {
         if (this.connectionStatus !== ConnectionStatus.ACTIVE) {
             return throwError(new Error("Not connected"));
         } else {
-            const message = CARTA.RegionListRequest.create({directory});
+            const message = CARTA.RegionListRequest.create({ directory });
             const requestId = this.eventCounter;
             this.logEvent(CARTA.EventType.REGION_LIST_REQUEST, requestId, message, false);
             if (this.sendEvent(CARTA.EventType.REGION_LIST_REQUEST, CARTA.RegionListRequest.encode(message).finish())) {
@@ -260,7 +260,7 @@ export class BackendService {
         if (this.connectionStatus !== ConnectionStatus.ACTIVE) {
             return throwError(new Error("Not connected"));
         } else {
-            const message = CARTA.CatalogListRequest.create({directory});
+            const message = CARTA.CatalogListRequest.create({ directory });
             const requestId = this.eventCounter;
             this.logEvent(CARTA.EventType.CATALOG_LIST_REQUEST, requestId, message, false);
             if (this.sendEvent(CARTA.EventType.CATALOG_LIST_REQUEST, CARTA.CatalogListRequest.encode(message).finish())) {
@@ -278,7 +278,7 @@ export class BackendService {
         if (this.connectionStatus !== ConnectionStatus.ACTIVE) {
             return throwError(new Error("Not connected"));
         } else {
-            const message = CARTA.FileInfoRequest.create({directory, file, hdu});
+            const message = CARTA.FileInfoRequest.create({ directory, file, hdu });
             const requestId = this.eventCounter;
             this.logEvent(CARTA.EventType.FILE_INFO_REQUEST, requestId, message, false);
             if (this.sendEvent(CARTA.EventType.FILE_INFO_REQUEST, CARTA.FileInfoRequest.encode(message).finish())) {
@@ -296,7 +296,7 @@ export class BackendService {
         if (this.connectionStatus !== ConnectionStatus.ACTIVE) {
             return throwError(new Error("Not connected"));
         } else {
-            const message = CARTA.RegionFileInfoRequest.create({directory, file});
+            const message = CARTA.RegionFileInfoRequest.create({ directory, file });
             const requestId = this.eventCounter;
             this.logEvent(CARTA.EventType.REGION_FILE_INFO_REQUEST, requestId, message, false);
             if (this.sendEvent(CARTA.EventType.REGION_FILE_INFO_REQUEST, CARTA.RegionFileInfoRequest.encode(message).finish())) {
@@ -314,7 +314,7 @@ export class BackendService {
         if (this.connectionStatus !== ConnectionStatus.ACTIVE) {
             return throwError(new Error("Not connected"));
         } else {
-            const message = CARTA.CatalogFileInfoRequest.create({directory, name});
+            const message = CARTA.CatalogFileInfoRequest.create({ directory, name });
             const requestId = this.eventCounter;
             this.logEvent(CARTA.EventType.CATALOG_FILE_INFO_REQUEST, requestId, message, false);
             if (this.sendEvent(CARTA.EventType.CATALOG_FILE_INFO_REQUEST, CARTA.CatalogFileInfoRequest.encode(message).finish())) {
@@ -332,7 +332,7 @@ export class BackendService {
         if (this.connectionStatus !== ConnectionStatus.ACTIVE) {
             return throwError(new Error("Not connected"));
         } else {
-            const message = CARTA.ImportRegion.create({directory, file, type, groupId: fileId});
+            const message = CARTA.ImportRegion.create({ directory, file, type, groupId: fileId });
             const requestId = this.eventCounter;
             this.logEvent(CARTA.EventType.IMPORT_REGION, requestId, message, false);
             if (this.sendEvent(CARTA.EventType.IMPORT_REGION, CARTA.ImportRegion.encode(message).finish())) {
@@ -350,7 +350,7 @@ export class BackendService {
         if (this.connectionStatus !== ConnectionStatus.ACTIVE) {
             return throwError(new Error("Not connected"));
         } else {
-            const message = CARTA.ExportRegion.create({directory, file, type, fileId, regionStyles: mapToObject(regionStyles), coordType});
+            const message = CARTA.ExportRegion.create({ directory, file, type, fileId, regionStyles: mapToObject(regionStyles), coordType });
             const requestId = this.eventCounter;
             this.logEvent(CARTA.EventType.EXPORT_REGION, requestId, message, false);
             if (this.sendEvent(CARTA.EventType.EXPORT_REGION, CARTA.ExportRegion.encode(message).finish())) {
@@ -368,7 +368,7 @@ export class BackendService {
         if (this.connectionStatus !== ConnectionStatus.ACTIVE) {
             return throwError(new Error("Not connected"));
         } else {
-            const message = CARTA.OpenFile.create({directory, file, hdu, fileId, renderMode});
+            const message = CARTA.OpenFile.create({ directory, file, hdu, fileId, renderMode });
             const requestId = this.eventCounter;
             this.logEvent(CARTA.EventType.OPEN_FILE, requestId, message, false);
             if (this.sendEvent(CARTA.EventType.OPEN_FILE, CARTA.OpenFile.encode(message).finish())) {
@@ -386,7 +386,7 @@ export class BackendService {
         if (this.connectionStatus !== ConnectionStatus.ACTIVE) {
             return throwError(new Error("Not connected"));
         } else {
-            const message = CARTA.OpenCatalogFile.create({directory, name, fileId, previewDataSize});
+            const message = CARTA.OpenCatalogFile.create({ directory, name, fileId, previewDataSize });
             const requestId = this.eventCounter;
             this.logEvent(CARTA.EventType.OPEN_CATALOG_FILE, requestId, message, false);
             if (this.sendEvent(CARTA.EventType.OPEN_CATALOG_FILE, CARTA.OpenCatalogFile.encode(message).finish())) {
@@ -402,7 +402,7 @@ export class BackendService {
     @action("close catalog file")
     closeCatalogFile(fileId: number): boolean {
         if (this.connectionStatus === ConnectionStatus.ACTIVE) {
-            const message = CARTA.CloseCatalogFile.create({fileId});
+            const message = CARTA.CloseCatalogFile.create({ fileId });
             this.logEvent(CARTA.EventType.CLOSE_CATALOG_FILE, this.eventCounter, message, false);
             if (this.sendEvent(CARTA.EventType.CLOSE_CATALOG_FILE, CARTA.CloseCatalogFile.encode(message).finish())) {
                 return true;
@@ -412,467 +412,467 @@ export class BackendService {
     }
 
     @action("save file")
-    saveFile(fileId: number, outputFileDirectory: string, outputFileName: string, outputFileType: CARTA.FileType): Observable<CARTA.SaveFileAck> {
+    saveFile(fileId: number, outputFileDirectory: string, outputFileName: string, outputFileType: CARTA.FileType, regionId?: number, channels?: number[], stokes?: number[]): Observable<CARTA.SaveFileAck> {
         if (this.connectionStatus !== ConnectionStatus.ACTIVE) {
             return throwError(new Error("Not connected"));
         } else {
-            const message = CARTA.SaveFile.create({fileId, outputFileDirectory, outputFileName, outputFileType});
-            const requestId = this.eventCounter;
-            this.logEvent(CARTA.EventType.SAVE_FILE, this.eventCounter, message, false);
-            if (this.sendEvent(CARTA.EventType.SAVE_FILE, CARTA.SaveFile.encode(message).finish())) {
-                return new Observable<CARTA.SaveFileAck>(observer => {
-                    this.observerRequestMap.set(requestId, observer);
-                });
-            } else {
-                return throwError(new Error("Could not send event"));
-            }
-        }
-    }
-
-    @action("close file")
-    closeFile(fileId: number): boolean {
-        if (this.connectionStatus === ConnectionStatus.ACTIVE) {
-            const message = CARTA.CloseFile.create({fileId});
-            this.logEvent(CARTA.EventType.CLOSE_FILE, this.eventCounter, message, false);
-            if (this.sendEvent(CARTA.EventType.CLOSE_FILE, CARTA.CloseFile.encode(message).finish())) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    @action("set channels")
-    setChannels(fileId: number, channel: number, stokes: number, requiredTiles: CARTA.IAddRequiredTiles): boolean {
-        if (this.connectionStatus === ConnectionStatus.ACTIVE) {
-            const message = CARTA.SetImageChannels.create({fileId, channel, stokes, requiredTiles});
-            this.logEvent(CARTA.EventType.SET_IMAGE_CHANNELS, this.eventCounter, message, false);
-            if (this.sendEvent(CARTA.EventType.SET_IMAGE_CHANNELS, CARTA.SetImageChannels.encode(message).finish())) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    @action("set cursor")
-    setCursor(fileId: number, x: number, y: number): boolean {
-        if (this.connectionStatus === ConnectionStatus.ACTIVE) {
-            const message = CARTA.SetCursor.create({fileId, point: {x, y}});
-            this.logEvent(CARTA.EventType.SET_CURSOR, this.eventCounter, message, false);
-            if (this.sendEvent(CARTA.EventType.SET_CURSOR, CARTA.SetCursor.encode(message).finish())) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    @action("set region")
-    setRegion(fileId: number, regionId: number, region: RegionStore): Observable<CARTA.SetRegionAck> {
-        if (this.connectionStatus !== ConnectionStatus.ACTIVE) {
-            return throwError(new Error("Not connected"));
-        } else {
-            const message = CARTA.SetRegion.create({
-                fileId,
-                regionId,
-                regionInfo: {
-                    regionType: region.regionType,
-                    rotation: region.rotation,
-                    controlPoints: region.controlPoints.slice(),
-                }
+            const message = CARTA.SaveFile.create({ fileId, outputFileDirectory, outputFileName, outputFileType, regionId, channels, stokes });
+        const requestId = this.eventCounter;
+        this.logEvent(CARTA.EventType.SAVE_FILE, this.eventCounter, message, false);
+        if (this.sendEvent(CARTA.EventType.SAVE_FILE, CARTA.SaveFile.encode(message).finish())) {
+            return new Observable<CARTA.SaveFileAck>(observer => {
+                this.observerRequestMap.set(requestId, observer);
             });
-
-            const requestId = this.eventCounter;
-            this.logEvent(CARTA.EventType.SET_REGION, requestId, message, false);
-            if (this.sendEvent(CARTA.EventType.SET_REGION, CARTA.SetRegion.encode(message).finish())) {
-                return new Observable<CARTA.SetRegionAck>(observer => {
-                    this.observerRequestMap.set(requestId, observer);
-                });
-            } else {
-                return throwError(new Error("Could not send event"));
-            }
-        }
-    }
-
-    @action("remove region")
-    removeRegion(regionId: number) {
-        if (this.connectionStatus === ConnectionStatus.ACTIVE) {
-            const message = CARTA.RemoveRegion.create({regionId});
-            this.logEvent(CARTA.EventType.REMOVE_REGION, this.eventCounter, message, false);
-            if (this.sendEvent(CARTA.EventType.REMOVE_REGION, CARTA.RemoveRegion.encode(message).finish())) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    @action("set catalog filter")
-    setCatalogFilterRequest(filterRequest: CARTA.ICatalogFilterRequest) {
-        if (this.connectionStatus === ConnectionStatus.ACTIVE) {
-            this.logEvent(CARTA.EventType.CATALOG_FILTER_REQUEST, this.eventCounter, filterRequest, false);
-            if (this.sendEvent(CARTA.EventType.CATALOG_FILTER_REQUEST, CARTA.CatalogFilterRequest.encode(filterRequest).finish())) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    @action("set spatial requirements")
-    setSpatialRequirements(requirementsMessage: CARTA.ISetSpectralRequirements) {
-        if (this.connectionStatus === ConnectionStatus.ACTIVE) {
-            this.logEvent(CARTA.EventType.SET_SPATIAL_REQUIREMENTS, this.eventCounter, requirementsMessage, false);
-            if (this.sendEvent(CARTA.EventType.SET_SPATIAL_REQUIREMENTS, CARTA.SetSpatialRequirements.encode(requirementsMessage).finish())) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    @action("set spectral requirements")
-    setSpectralRequirements(requirementsMessage: CARTA.ISetSpectralRequirements) {
-        if (this.connectionStatus === ConnectionStatus.ACTIVE) {
-            this.logEvent(CARTA.EventType.SET_SPECTRAL_REQUIREMENTS, this.eventCounter, requirementsMessage, false);
-            if (this.sendEvent(CARTA.EventType.SET_SPECTRAL_REQUIREMENTS, CARTA.SetSpectralRequirements.encode(requirementsMessage).finish())) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    @action("set stats requirements")
-    setStatsRequirements(requirementsMessage: CARTA.ISetStatsRequirements) {
-        if (this.connectionStatus === ConnectionStatus.ACTIVE) {
-            this.logEvent(CARTA.EventType.SET_STATS_REQUIREMENTS, this.eventCounter, requirementsMessage, false);
-            if (this.sendEvent(CARTA.EventType.SET_STATS_REQUIREMENTS, CARTA.SetStatsRequirements.encode(requirementsMessage).finish())) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    @action("set histogram requirements")
-    setHistogramRequirements(requirementsMessage: CARTA.ISetHistogramRequirements) {
-        if (this.connectionStatus === ConnectionStatus.ACTIVE) {
-            this.logEvent(CARTA.EventType.SET_HISTOGRAM_REQUIREMENTS, this.eventCounter, requirementsMessage, false);
-            if (this.sendEvent(CARTA.EventType.SET_HISTOGRAM_REQUIREMENTS, CARTA.SetHistogramRequirements.encode(requirementsMessage).finish())) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    @action("add required tiles")
-    addRequiredTiles(fileId: number, tiles: Array<number>, quality: number): boolean {
-        if (this.connectionStatus === ConnectionStatus.ACTIVE) {
-            const message = CARTA.AddRequiredTiles.create({fileId, tiles, compressionQuality: quality, compressionType: CARTA.CompressionType.ZFP});
-            this.logEvent(CARTA.EventType.ADD_REQUIRED_TILES, this.eventCounter, message, false);
-            if (this.sendEvent(CARTA.EventType.ADD_REQUIRED_TILES, CARTA.AddRequiredTiles.encode(message).finish())) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    @action("remove required tiles")
-    removeRequiredTiles(fileId: number, tiles: Array<number>): boolean {
-        if (this.connectionStatus === ConnectionStatus.ACTIVE) {
-            const message = CARTA.RemoveRequiredTiles.create({fileId, tiles});
-            this.logEvent(CARTA.EventType.REMOVE_REQUIRED_TILES, this.eventCounter, message, false);
-            if (this.sendEvent(CARTA.EventType.REMOVE_REQUIRED_TILES, CARTA.RemoveRequiredTiles.encode(message).finish())) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    @action("start animation")
-    startAnimation(animationMessage: CARTA.IStartAnimation): Observable<CARTA.StartAnimationAck> {
-        if (this.connectionStatus !== ConnectionStatus.ACTIVE) {
-            return throwError(new Error("Not connected"));
         } else {
-            const requestId = this.eventCounter;
-            this.logEvent(CARTA.EventType.START_ANIMATION, requestId, animationMessage, false);
-            if (this.sendEvent(CARTA.EventType.START_ANIMATION, CARTA.StartAnimation.encode(animationMessage).finish())) {
-                return new Observable<CARTA.StartAnimationAck>(observer => {
-                    this.observerRequestMap.set(requestId, observer);
-                });
-            } else {
-                return throwError(new Error("Could not send event"));
-            }
-        }
-    }
-
-    @action("stop animation")
-    stopAnimation(animationMessage: CARTA.IStopAnimation) {
-        this.animationId = INVALID_ANIMATION_ID;
-        if (this.connectionStatus === ConnectionStatus.ACTIVE) {
-            this.logEvent(CARTA.EventType.STOP_ANIMATION, this.eventCounter, animationMessage, false);
-            if (this.sendEvent(CARTA.EventType.STOP_ANIMATION, CARTA.StopAnimation.encode(animationMessage).finish())) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    @action("animation flow control")
-    sendAnimationFlowControl(message: CARTA.IAnimationFlowControl) {
-        if (this.connectionStatus === ConnectionStatus.ACTIVE) {
-            this.logEvent(CARTA.EventType.ANIMATION_FLOW_CONTROL, this.eventCounter, message, false);
-            if (this.sendEvent(CARTA.EventType.ANIMATION_FLOW_CONTROL, CARTA.AnimationFlowControl.encode(message).finish())) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    @action("set contour parameters")
-    setContourParameters(message: CARTA.ISetContourParameters) {
-        if (this.connectionStatus === ConnectionStatus.ACTIVE) {
-            this.logEvent(CARTA.EventType.SET_CONTOUR_PARAMETERS, this.eventCounter, message, false);
-            if (this.sendEvent(CARTA.EventType.SET_CONTOUR_PARAMETERS, CARTA.SetContourParameters.encode(message).finish())) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    @action("resume session")
-    resumeSession(message: CARTA.IResumeSession): Observable<CARTA.ResumeSessionAck> {
-        if (this.connectionStatus !== ConnectionStatus.ACTIVE) {
-            return throwError(new Error("Not connected"));
-        } else {
-            const requestId = this.eventCounter;
-            this.logEvent(CARTA.EventType.RESUME_SESSION, requestId, message, false);
-            if (this.sendEvent(CARTA.EventType.RESUME_SESSION, CARTA.ResumeSession.encode(message).finish())) {
-                return new Observable<CARTA.ResumeSessionAck>(observer => {
-                    this.observerRequestMap.set(requestId, observer);
-                });
-            } else {
-                return throwError(new Error("Could not send event"));
-            }
-        }
-    }
-
-    @action("set auth token")
-    setAuthToken = (token: string) => {
-        document.cookie = `CARTA-Authorization=${token}; path=/`;
-    };
-
-    @action("request moment")
-    requestMoment(message: CARTA.IMomentRequest): Observable<CARTA.MomentResponse> {
-        if (this.connectionStatus !== ConnectionStatus.ACTIVE) {
-            return throwError(new Error("Not connected"));
-        } else {
-            const requestId = this.eventCounter;
-            this.logEvent(CARTA.EventType.MOMENT_REQUEST, requestId, message, false);
-            if (this.sendEvent(CARTA.EventType.MOMENT_REQUEST, CARTA.MomentRequest.encode(message).finish())) {
-                return new Observable<CARTA.MomentResponse>(observer => {
-                    this.observerRequestMap.set(requestId, observer);
-                });
-            } else {
-                return throwError(new Error("Could not send event"));
-            }
-        }
-    }
-
-    @action("cancel requesting moment")
-    cancelRequestingMoment(fileId: number) {
-        if (this.connectionStatus !== ConnectionStatus.ACTIVE) {
-            return throwError(new Error("Not connected"));
-        } else {
-            const message = CARTA.StopMomentCalc.create({fileId});
-            this.logEvent(CARTA.EventType.STOP_MOMENT_CALC, this.eventCounter, message, false);
-            if (this.sendEvent(CARTA.EventType.STOP_MOMENT_CALC, CARTA.StopMomentCalc.encode(message).finish())) {
-                return true;
-            }
             return throwError(new Error("Could not send event"));
         }
     }
+}
 
-    @action("request spectral line")
-    requestSpectralLine(frequencyRange: CARTA.DoubleBounds, intensityLimit: number): Observable<CARTA.SpectralLineResponse> {
-        if (this.connectionStatus !== ConnectionStatus.ACTIVE) {
-            return throwError(new Error("Not connected"));
-        } else {
-            const message = CARTA.SpectralLineRequest.create({frequencyRange: frequencyRange, lineIntensityLowerLimit: intensityLimit});
-            const requestId = this.eventCounter;
-            this.logEvent(CARTA.EventType.SPECTRAL_LINE_REQUEST, requestId, message, false);
-            if (this.sendEvent(CARTA.EventType.SPECTRAL_LINE_REQUEST, CARTA.SpectralLineRequest.encode(message).finish())) {
-                return new Observable<CARTA.SpectralLineResponse>(observer => {
-                    this.observerRequestMap.set(requestId, observer);
-                });
-            } else {
-                return throwError(new Error("Could not send event"));
-            }
+@action("close file")
+closeFile(fileId: number): boolean {
+    if (this.connectionStatus === ConnectionStatus.ACTIVE) {
+        const message = CARTA.CloseFile.create({ fileId });
+        this.logEvent(CARTA.EventType.CLOSE_FILE, this.eventCounter, message, false);
+        if (this.sendEvent(CARTA.EventType.CLOSE_FILE, CARTA.CloseFile.encode(message).finish())) {
+            return true;
         }
     }
+    return false;
+}
 
-    @action("send scripting response")
-    sendScriptingResponse = (message: CARTA.IScriptingResponse) => {
-        if (this.connectionStatus === ConnectionStatus.ACTIVE) {
-            this.logEvent(CARTA.EventType.SCRIPTING_RESPONSE, this.eventCounter, message, false);
-            if (this.sendEvent(CARTA.EventType.SCRIPTING_RESPONSE, CARTA.ScriptingResponse.encode(message).finish())) {
-                return true;
-            }
+@action("set channels")
+setChannels(fileId: number, channel: number, stokes: number, requiredTiles: CARTA.IAddRequiredTiles): boolean {
+    if (this.connectionStatus === ConnectionStatus.ACTIVE) {
+        const message = CARTA.SetImageChannels.create({ fileId, channel, stokes, requiredTiles });
+        this.logEvent(CARTA.EventType.SET_IMAGE_CHANNELS, this.eventCounter, message, false);
+        if (this.sendEvent(CARTA.EventType.SET_IMAGE_CHANNELS, CARTA.SetImageChannels.encode(message).finish())) {
+            return true;
         }
-        return false;
-    };
+    }
+    return false;
+}
+
+@action("set cursor")
+setCursor(fileId: number, x: number, y: number): boolean {
+    if (this.connectionStatus === ConnectionStatus.ACTIVE) {
+        const message = CARTA.SetCursor.create({ fileId, point: { x, y } });
+        this.logEvent(CARTA.EventType.SET_CURSOR, this.eventCounter, message, false);
+        if (this.sendEvent(CARTA.EventType.SET_CURSOR, CARTA.SetCursor.encode(message).finish())) {
+            return true;
+        }
+    }
+    return false;
+}
+
+@action("set region")
+setRegion(fileId: number, regionId: number, region: RegionStore): Observable < CARTA.SetRegionAck > {
+    if(this.connectionStatus !== ConnectionStatus.ACTIVE) {
+    return throwError(new Error("Not connected"));
+} else {
+    const message = CARTA.SetRegion.create({
+        fileId,
+        regionId,
+        regionInfo: {
+            regionType: region.regionType,
+            rotation: region.rotation,
+            controlPoints: region.controlPoints.slice(),
+        }
+    });
+
+    const requestId = this.eventCounter;
+    this.logEvent(CARTA.EventType.SET_REGION, requestId, message, false);
+    if (this.sendEvent(CARTA.EventType.SET_REGION, CARTA.SetRegion.encode(message).finish())) {
+        return new Observable<CARTA.SetRegionAck>(observer => {
+            this.observerRequestMap.set(requestId, observer);
+        });
+    } else {
+        return throwError(new Error("Could not send event"));
+    }
+}
+    }
+
+@action("remove region")
+removeRegion(regionId: number) {
+    if (this.connectionStatus === ConnectionStatus.ACTIVE) {
+        const message = CARTA.RemoveRegion.create({ regionId });
+        this.logEvent(CARTA.EventType.REMOVE_REGION, this.eventCounter, message, false);
+        if (this.sendEvent(CARTA.EventType.REMOVE_REGION, CARTA.RemoveRegion.encode(message).finish())) {
+            return true;
+        }
+    }
+    return false;
+}
+
+@action("set catalog filter")
+setCatalogFilterRequest(filterRequest: CARTA.ICatalogFilterRequest) {
+    if (this.connectionStatus === ConnectionStatus.ACTIVE) {
+        this.logEvent(CARTA.EventType.CATALOG_FILTER_REQUEST, this.eventCounter, filterRequest, false);
+        if (this.sendEvent(CARTA.EventType.CATALOG_FILTER_REQUEST, CARTA.CatalogFilterRequest.encode(filterRequest).finish())) {
+            return true;
+        }
+    }
+    return false;
+}
+
+@action("set spatial requirements")
+setSpatialRequirements(requirementsMessage: CARTA.ISetSpectralRequirements) {
+    if (this.connectionStatus === ConnectionStatus.ACTIVE) {
+        this.logEvent(CARTA.EventType.SET_SPATIAL_REQUIREMENTS, this.eventCounter, requirementsMessage, false);
+        if (this.sendEvent(CARTA.EventType.SET_SPATIAL_REQUIREMENTS, CARTA.SetSpatialRequirements.encode(requirementsMessage).finish())) {
+            return true;
+        }
+    }
+    return false;
+}
+
+@action("set spectral requirements")
+setSpectralRequirements(requirementsMessage: CARTA.ISetSpectralRequirements) {
+    if (this.connectionStatus === ConnectionStatus.ACTIVE) {
+        this.logEvent(CARTA.EventType.SET_SPECTRAL_REQUIREMENTS, this.eventCounter, requirementsMessage, false);
+        if (this.sendEvent(CARTA.EventType.SET_SPECTRAL_REQUIREMENTS, CARTA.SetSpectralRequirements.encode(requirementsMessage).finish())) {
+            return true;
+        }
+    }
+    return false;
+}
+
+@action("set stats requirements")
+setStatsRequirements(requirementsMessage: CARTA.ISetStatsRequirements) {
+    if (this.connectionStatus === ConnectionStatus.ACTIVE) {
+        this.logEvent(CARTA.EventType.SET_STATS_REQUIREMENTS, this.eventCounter, requirementsMessage, false);
+        if (this.sendEvent(CARTA.EventType.SET_STATS_REQUIREMENTS, CARTA.SetStatsRequirements.encode(requirementsMessage).finish())) {
+            return true;
+        }
+    }
+    return false;
+}
+
+@action("set histogram requirements")
+setHistogramRequirements(requirementsMessage: CARTA.ISetHistogramRequirements) {
+    if (this.connectionStatus === ConnectionStatus.ACTIVE) {
+        this.logEvent(CARTA.EventType.SET_HISTOGRAM_REQUIREMENTS, this.eventCounter, requirementsMessage, false);
+        if (this.sendEvent(CARTA.EventType.SET_HISTOGRAM_REQUIREMENTS, CARTA.SetHistogramRequirements.encode(requirementsMessage).finish())) {
+            return true;
+        }
+    }
+    return false;
+}
+
+@action("add required tiles")
+addRequiredTiles(fileId: number, tiles: Array < number >, quality: number): boolean {
+    if (this.connectionStatus === ConnectionStatus.ACTIVE) {
+        const message = CARTA.AddRequiredTiles.create({ fileId, tiles, compressionQuality: quality, compressionType: CARTA.CompressionType.ZFP });
+        this.logEvent(CARTA.EventType.ADD_REQUIRED_TILES, this.eventCounter, message, false);
+        if (this.sendEvent(CARTA.EventType.ADD_REQUIRED_TILES, CARTA.AddRequiredTiles.encode(message).finish())) {
+            return true;
+        }
+    }
+    return false;
+}
+
+@action("remove required tiles")
+removeRequiredTiles(fileId: number, tiles: Array<number>): boolean {
+    if(this.connectionStatus === ConnectionStatus.ACTIVE) {
+    const message = CARTA.RemoveRequiredTiles.create({ fileId, tiles });
+    this.logEvent(CARTA.EventType.REMOVE_REQUIRED_TILES, this.eventCounter, message, false);
+    if (this.sendEvent(CARTA.EventType.REMOVE_REQUIRED_TILES, CARTA.RemoveRequiredTiles.encode(message).finish())) {
+        return true;
+    }
+}
+return false;
+    }
+
+@action("start animation")
+startAnimation(animationMessage: CARTA.IStartAnimation): Observable < CARTA.StartAnimationAck > {
+    if(this.connectionStatus !== ConnectionStatus.ACTIVE) {
+    return throwError(new Error("Not connected"));
+} else {
+    const requestId = this.eventCounter;
+    this.logEvent(CARTA.EventType.START_ANIMATION, requestId, animationMessage, false);
+    if (this.sendEvent(CARTA.EventType.START_ANIMATION, CARTA.StartAnimation.encode(animationMessage).finish())) {
+        return new Observable<CARTA.StartAnimationAck>(observer => {
+            this.observerRequestMap.set(requestId, observer);
+        });
+    } else {
+        return throwError(new Error("Could not send event"));
+    }
+}
+    }
+
+@action("stop animation")
+stopAnimation(animationMessage: CARTA.IStopAnimation) {
+    this.animationId = INVALID_ANIMATION_ID;
+    if (this.connectionStatus === ConnectionStatus.ACTIVE) {
+        this.logEvent(CARTA.EventType.STOP_ANIMATION, this.eventCounter, animationMessage, false);
+        if (this.sendEvent(CARTA.EventType.STOP_ANIMATION, CARTA.StopAnimation.encode(animationMessage).finish())) {
+            return true;
+        }
+    }
+    return false;
+}
+
+@action("animation flow control")
+sendAnimationFlowControl(message: CARTA.IAnimationFlowControl) {
+    if (this.connectionStatus === ConnectionStatus.ACTIVE) {
+        this.logEvent(CARTA.EventType.ANIMATION_FLOW_CONTROL, this.eventCounter, message, false);
+        if (this.sendEvent(CARTA.EventType.ANIMATION_FLOW_CONTROL, CARTA.AnimationFlowControl.encode(message).finish())) {
+            return true;
+        }
+    }
+    return false;
+}
+
+@action("set contour parameters")
+setContourParameters(message: CARTA.ISetContourParameters) {
+    if (this.connectionStatus === ConnectionStatus.ACTIVE) {
+        this.logEvent(CARTA.EventType.SET_CONTOUR_PARAMETERS, this.eventCounter, message, false);
+        if (this.sendEvent(CARTA.EventType.SET_CONTOUR_PARAMETERS, CARTA.SetContourParameters.encode(message).finish())) {
+            return true;
+        }
+    }
+    return false;
+}
+
+@action("resume session")
+resumeSession(message: CARTA.IResumeSession): Observable < CARTA.ResumeSessionAck > {
+    if(this.connectionStatus !== ConnectionStatus.ACTIVE) {
+    return throwError(new Error("Not connected"));
+} else {
+    const requestId = this.eventCounter;
+    this.logEvent(CARTA.EventType.RESUME_SESSION, requestId, message, false);
+    if (this.sendEvent(CARTA.EventType.RESUME_SESSION, CARTA.ResumeSession.encode(message).finish())) {
+        return new Observable<CARTA.ResumeSessionAck>(observer => {
+            this.observerRequestMap.set(requestId, observer);
+        });
+    } else {
+        return throwError(new Error("Could not send event"));
+    }
+}
+    }
+
+@action("set auth token")
+setAuthToken = (token: string) => {
+    document.cookie = `CARTA-Authorization=${token}; path=/`;
+};
+
+@action("request moment")
+requestMoment(message: CARTA.IMomentRequest): Observable < CARTA.MomentResponse > {
+    if(this.connectionStatus !== ConnectionStatus.ACTIVE) {
+    return throwError(new Error("Not connected"));
+} else {
+    const requestId = this.eventCounter;
+    this.logEvent(CARTA.EventType.MOMENT_REQUEST, requestId, message, false);
+    if (this.sendEvent(CARTA.EventType.MOMENT_REQUEST, CARTA.MomentRequest.encode(message).finish())) {
+        return new Observable<CARTA.MomentResponse>(observer => {
+            this.observerRequestMap.set(requestId, observer);
+        });
+    } else {
+        return throwError(new Error("Could not send event"));
+    }
+}
+    }
+
+@action("cancel requesting moment")
+cancelRequestingMoment(fileId: number) {
+    if (this.connectionStatus !== ConnectionStatus.ACTIVE) {
+        return throwError(new Error("Not connected"));
+    } else {
+        const message = CARTA.StopMomentCalc.create({ fileId });
+        this.logEvent(CARTA.EventType.STOP_MOMENT_CALC, this.eventCounter, message, false);
+        if (this.sendEvent(CARTA.EventType.STOP_MOMENT_CALC, CARTA.StopMomentCalc.encode(message).finish())) {
+            return true;
+        }
+        return throwError(new Error("Could not send event"));
+    }
+}
+
+@action("request spectral line")
+requestSpectralLine(frequencyRange: CARTA.DoubleBounds, intensityLimit: number): Observable < CARTA.SpectralLineResponse > {
+    if(this.connectionStatus !== ConnectionStatus.ACTIVE) {
+    return throwError(new Error("Not connected"));
+} else {
+    const message = CARTA.SpectralLineRequest.create({ frequencyRange: frequencyRange, lineIntensityLowerLimit: intensityLimit });
+    const requestId = this.eventCounter;
+    this.logEvent(CARTA.EventType.SPECTRAL_LINE_REQUEST, requestId, message, false);
+    if (this.sendEvent(CARTA.EventType.SPECTRAL_LINE_REQUEST, CARTA.SpectralLineRequest.encode(message).finish())) {
+        return new Observable<CARTA.SpectralLineResponse>(observer => {
+            this.observerRequestMap.set(requestId, observer);
+        });
+    } else {
+        return throwError(new Error("Could not send event"));
+    }
+}
+    }
+
+@action("send scripting response")
+sendScriptingResponse = (message: CARTA.IScriptingResponse) => {
+    if (this.connectionStatus === ConnectionStatus.ACTIVE) {
+        this.logEvent(CARTA.EventType.SCRIPTING_RESPONSE, this.eventCounter, message, false);
+        if (this.sendEvent(CARTA.EventType.SCRIPTING_RESPONSE, CARTA.ScriptingResponse.encode(message).finish())) {
+            return true;
+        }
+    }
+    return false;
+};
 
     public serverHasFeature(feature: CARTA.ServerFeatureFlags): boolean {
-        return (this.serverFeatureFlags & feature) !== 0;
-    }
+    return (this.serverFeatureFlags & feature) !== 0;
+}
 
     private messageHandler(event: MessageEvent) {
-        if (event.data === "PONG") {
-            this.lastPongTime = performance.now();
-            this.updateEndToEndPing();
-            return;
-        } else if (event.data.byteLength < 8) {
-            console.log("Unknown event format");
-            return;
-        }
-
-        const eventHeader16 = new Uint16Array(event.data, 0, 2);
-        const eventHeader32 = new Uint32Array(event.data, 4, 1);
-        const eventData = new Uint8Array(event.data, 8);
-
-        const eventType: CARTA.EventType = eventHeader16[0];
-        const eventIcdVersion = eventHeader16[1];
-        const eventId = eventHeader32[0];
-
-        if (eventIcdVersion !== BackendService.IcdVersion) {
-            console.warn(`Server event has ICD version ${eventIcdVersion}, which differs from frontend version ${BackendService.IcdVersion}. Errors may occur`);
-        }
-        try {
-            const messageClass = this.decoderMap.get(eventType);
-            if (messageClass) {
-                const parsedMessage = messageClass.decode(eventData);
-                if (parsedMessage) {
-                    this.logEvent(eventType, eventId, parsedMessage);
-                    const handler = this.handlerMap.get(eventType);
-                    if (handler) {
-                        handler.call(this, eventId, parsedMessage);
-                    } else {
-                        console.log(`Missing handler for event response ${eventType}`);
-                    }
-                } else {
-                    console.log(`Unsupported event response ${eventType}`);
-                }
-            }
-        } catch (e) {
-            console.log(e);
-        }
+    if (event.data === "PONG") {
+        this.lastPongTime = performance.now();
+        this.updateEndToEndPing();
+        return;
+    } else if (event.data.byteLength < 8) {
+        console.log("Unknown event format");
+        return;
     }
+
+    const eventHeader16 = new Uint16Array(event.data, 0, 2);
+    const eventHeader32 = new Uint32Array(event.data, 4, 1);
+    const eventData = new Uint8Array(event.data, 8);
+
+    const eventType: CARTA.EventType = eventHeader16[0];
+    const eventIcdVersion = eventHeader16[1];
+    const eventId = eventHeader32[0];
+
+    if (eventIcdVersion !== BackendService.IcdVersion) {
+        console.warn(`Server event has ICD version ${eventIcdVersion}, which differs from frontend version ${BackendService.IcdVersion}. Errors may occur`);
+    }
+    try {
+        const messageClass = this.decoderMap.get(eventType);
+        if (messageClass) {
+            const parsedMessage = messageClass.decode(eventData);
+            if (parsedMessage) {
+                this.logEvent(eventType, eventId, parsedMessage);
+                const handler = this.handlerMap.get(eventType);
+                if (handler) {
+                    handler.call(this, eventId, parsedMessage);
+                } else {
+                    console.log(`Missing handler for event response ${eventType}`);
+                }
+            } else {
+                console.log(`Unsupported event response ${eventType}`);
+            }
+        }
+    } catch (e) {
+        console.log(e);
+    }
+}
 
     private onSimpleMappedResponse(eventId: number, response: any) {
-        const observer = this.observerRequestMap.get(eventId);
-        if (observer) {
-            if (response.success) {
-                observer.next(response);
-            } else {
-                observer.error(response.message);
-            }
-            observer.complete();
-            this.observerRequestMap.delete(eventId);
+    const observer = this.observerRequestMap.get(eventId);
+    if (observer) {
+        if (response.success) {
+            observer.next(response);
         } else {
-            console.log(`Can't find observable for request ${eventId}`);
+            observer.error(response.message);
         }
+        observer.complete();
+        this.observerRequestMap.delete(eventId);
+    } else {
+        console.log(`Can't find observable for request ${eventId}`);
     }
+}
 
     private onRegisterViewerAck(eventId: number, ack: CARTA.RegisterViewerAck) {
-        this.sessionId = ack.sessionId;
-        this.serverFeatureFlags = ack.serverFeatureFlags;
-        this.grpcPort = ack.grpcPort;
+    this.sessionId = ack.sessionId;
+    this.serverFeatureFlags = ack.serverFeatureFlags;
+    this.grpcPort = ack.grpcPort;
 
-        this.onSimpleMappedResponse(eventId, ack);
+    this.onSimpleMappedResponse(eventId, ack);
 
-        // use the reconnect stream when the session type is resumed
-        if (ack.success && ack.sessionType === CARTA.SessionType.RESUMED) {
-            this.reconnectStream.next();
-        }
+    // use the reconnect stream when the session type is resumed
+    if (ack.success && ack.sessionType === CARTA.SessionType.RESUMED) {
+        this.reconnectStream.next();
     }
+}
 
     private onStartAnimationAck(eventId: number, ack: CARTA.StartAnimationAck) {
-        this.animationId = ack.success ? ack.animationId : INVALID_ANIMATION_ID;
-        this.onSimpleMappedResponse(eventId, ack);
-    }
+    this.animationId = ack.success ? ack.animationId : INVALID_ANIMATION_ID;
+    this.onSimpleMappedResponse(eventId, ack);
+}
 
     private onStreamedRasterTileData(eventId: number, rasterTileData: CARTA.RasterTileData) {
-        this.rasterTileStream.next(rasterTileData);
-    }
+    this.rasterTileStream.next(rasterTileData);
+}
 
     private onStreamedRasterSync(eventId: number, rasterTileSync: CARTA.RasterTileSync) {
-        this.rasterSyncStream.next(rasterTileSync);
-    }
+    this.rasterSyncStream.next(rasterTileSync);
+}
 
     private onStreamedRegionHistogramData(eventId: number, regionHistogramData: CARTA.RegionHistogramData) {
-        this.histogramStream.next(regionHistogramData);
-    }
+    this.histogramStream.next(regionHistogramData);
+}
 
     private onStreamedErrorData(eventId: number, errorData: CARTA.ErrorData) {
-        this.errorStream.next(errorData);
-    }
+    this.errorStream.next(errorData);
+}
 
     private onStreamedSpatialProfileData(eventId: number, spatialProfileData: CARTA.SpatialProfileData) {
-        this.spatialProfileStream.next(spatialProfileData);
-    }
+    this.spatialProfileStream.next(spatialProfileData);
+}
 
     private onStreamedSpectralProfileData(eventId: number, spectralProfileData: CARTA.SpectralProfileData) {
-        this.spectralProfileStream.next(spectralProfileData);
-    }
+    this.spectralProfileStream.next(spectralProfileData);
+}
 
     private onStreamedRegionStatsData(eventId: number, regionStatsData: CARTA.RegionStatsData) {
-        this.statsStream.next(regionStatsData);
-    }
+    this.statsStream.next(regionStatsData);
+}
 
     private onStreamedContourData(eventId: number, contourData: CARTA.ContourImageData) {
-        this.contourStream.next(contourData);
-    }
+    this.contourStream.next(contourData);
+}
 
     private onScriptingRequest(eventId: number, scriptingRequest: CARTA.ScriptingRequest) {
-        this.scriptingStream.next(scriptingRequest);
-    }
+    this.scriptingStream.next(scriptingRequest);
+}
 
     private onStreamedCatalogData(eventId: number, catalogFilter: CARTA.CatalogFilterResponse) {
-        this.catalogStream.next(catalogFilter);
-    }
+    this.catalogStream.next(catalogFilter);
+}
 
     private onStreamedMomentProgress(eventId: number, momentProgress: CARTA.MomentProgress) {
-        this.momentProgressStream.next(momentProgress);
-    }
+    this.momentProgressStream.next(momentProgress);
+}
 
     private sendEvent(eventType: CARTA.EventType, payload: Uint8Array): boolean {
-        if (this.connection.readyState === WebSocket.OPEN) {
-            const eventData = new Uint8Array(8 + payload.byteLength);
-            const eventHeader16 = new Uint16Array(eventData.buffer, 0, 2);
-            const eventHeader32 = new Uint32Array(eventData.buffer, 4, 1);
-            eventHeader16[0] = eventType;
-            eventHeader16[1] = BackendService.IcdVersion;
-            eventHeader32[0] = this.eventCounter;
+    if (this.connection.readyState === WebSocket.OPEN) {
+        const eventData = new Uint8Array(8 + payload.byteLength);
+        const eventHeader16 = new Uint16Array(eventData.buffer, 0, 2);
+        const eventHeader32 = new Uint32Array(eventData.buffer, 4, 1);
+        eventHeader16[0] = eventType;
+        eventHeader16[1] = BackendService.IcdVersion;
+        eventHeader32[0] = this.eventCounter;
 
-            eventData.set(payload, 8);
-            this.connection.send(eventData);
-            this.eventCounter++;
-            return true;
-        } else {
-            console.log("Error sending event");
-            this.eventCounter++;
-            return false;
-        }
+        eventData.set(payload, 8);
+        this.connection.send(eventData);
+        this.eventCounter++;
+        return true;
+    } else {
+        console.log("Error sending event");
+        this.eventCounter++;
+        return false;
     }
+}
 
     private logEvent(eventType: CARTA.EventType, eventId: number, message: any, incoming: boolean = true) {
-        const eventName = CARTA.EventType[eventType];
-        if (this.loggingEnabled && PreferenceStore.Instance.isEventLoggingEnabled(eventType)) {
-            if (incoming) {
-                if (eventId === 0) {
-                    console.log(`<== ${eventName} [Stream]`);
-                } else {
-                    console.log(`<== ${eventName} [${eventId}]`);
-                }
+    const eventName = CARTA.EventType[eventType];
+    if (this.loggingEnabled && PreferenceStore.Instance.isEventLoggingEnabled(eventType)) {
+        if (incoming) {
+            if (eventId === 0) {
+                console.log(`<== ${eventName} [Stream]`);
             } else {
-                console.log(`${eventName} [${eventId}] ==>`);
+                console.log(`<== ${eventName} [${eventId}]`);
             }
-            console.log(message);
-            console.log("\n");
+        } else {
+            console.log(`${eventName} [${eventId}] ==>`);
         }
+        console.log(message);
+        console.log("\n");
     }
+}
 }
