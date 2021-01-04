@@ -15,6 +15,7 @@ const KEYCODE_ENTER = 13;
 export class EllipticalRegionForm extends React.Component<{ region: RegionStore, frame: FrameStore, wcsInfo: number }> {
     private static readonly REGION_PIXEL_EPS = 1.0e-3;
 
+    // size determined by reference frame
     @computed get sizeWCS(): WCSPoint2D {
         const region = this.props.region;
         if (!region || region.controlPoints.length !== 2 || !region.size || !this.props.frame) {

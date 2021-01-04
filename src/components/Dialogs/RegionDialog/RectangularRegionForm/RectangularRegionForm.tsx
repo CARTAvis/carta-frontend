@@ -35,6 +35,7 @@ export class RectangularRegionForm extends React.Component<{ region: RegionStore
         return {x: centerPoint.x - sizeDims.x / 2.0, y: centerPoint.y - sizeDims.y / 2.0};
     }
 
+    // size determined by reference frame
     @computed get sizeWCS(): WCSPoint2D {
         const region = this.props.region;
         if (!region || region.controlPoints.length !== 2 || !region.size || !this.props.frame) {

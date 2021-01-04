@@ -84,7 +84,7 @@ export class RegionStore {
 
     @computed get center(): Point2D {
         if (!this.isValid) {
-            return {x: 0, y: 0}; // TODO: should we replace {x: 0, y: 0} with undefined?
+            return {x: 0, y: 0};
         }
         switch (this.regionType) {
             case CARTA.RegionType.POINT:
@@ -95,13 +95,13 @@ export class RegionStore {
                 const bounds = minMax2D(this.controlPoints);
                 return midpoint2D(bounds.minPoint, bounds.maxPoint);
             default:
-                return {x: 0, y: 0}; // TODO: should we replace {x: 0, y: 0} with undefined?
+                return {x: 0, y: 0};
         }
     }
 
     @computed get size(): Point2D {
         if (!this.isValid) {
-            return {x: 0, y: 0}; // TODO: should we replace {x: 0, y: 0} with undefined?
+            return {x: 0, y: 0};
         }
         switch (this.regionType) {
             case CARTA.RegionType.RECTANGLE:
@@ -110,23 +110,21 @@ export class RegionStore {
             case CARTA.RegionType.POLYGON:
                 return this.boundingBox;
             default:
-                return {x: 0, y: 0}; // TODO: should we replace {x: 0, y: 0} with undefined?
+                return {x: 0, y: 0};
         }
     }
 
-    // TODO: check this wcsSize related to reference frame or not,
-    // if yes, we can merge sizeWCS in EllipticalRegionForm & RectangularRegionForm
     @computed get wcsSize(): Point2D {
         const frame = this.activeFrame;
         if (!this.isValid || !this.size || !frame?.validWcs) {
-            return {x: 0, y: 0}; // TODO: should we replace {x: 0, y: 0} with undefined?
+            return {x: 0, y: 0};
         }
         return frame.getWcsSizeInArcsec(this.size);
     }
 
     @computed get boundingBox(): Point2D {
         if (!this.isValid) {
-            return {x: 0, y: 0}; // TODO: should we replace {x: 0, y: 0} with undefined?
+            return {x: 0, y: 0};
         }
         switch (this.regionType) {
             case CARTA.RegionType.RECTANGLE:
@@ -137,7 +135,7 @@ export class RegionStore {
                 const boundingBox = minMax2D(this.controlPoints);
                 return subtract2D(boundingBox.maxPoint, boundingBox.minPoint);
             default:
-                return {x: 0, y: 0}; // TODO: should we replace {x: 0, y: 0} with undefined?
+                return {x: 0, y: 0};
         }
     }
 
