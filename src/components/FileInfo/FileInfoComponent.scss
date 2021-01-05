@@ -47,12 +47,17 @@
         font-family: 'Helvetica Neue', 'Helvetica', 'Arial', sans-serif;
     }
 
-    .save-chop {
+}
 
-        .range-select {
-            display: flex;
-            flex-direction: row;
+.range-select {
+    display: flex;
+    flex-direction: row;
+
+    .bp3-form-group {
+        margin-right: 10px;
+        .bp3-label {
+            margin: 10px;
+            width: 5em;
         }
     }
-
 }

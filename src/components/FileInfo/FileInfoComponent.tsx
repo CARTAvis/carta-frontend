@@ -160,42 +160,48 @@ export class FileInfoComponent extends React.Component<{
         const closedRegions = activeFrame.regionSet.regions.filter(region => region.regionId > 0 && region.isClosedRegion);
         const regionOptions: IOptionProps[] = [{ value: 0, label: "Image" }].concat(closedRegions.map(region => ({ value: region.regionId, label: `${region.name ? region.name : region.regionId} (${CARTA.RegionType[region.regionType]})` })));
         return (
-            <div className="save-chop">
-                <Pre>
-                    <Label>{"Source file name: " + activeFrame.frameInfo.fileInfo.name}</Label>
-                    <Label>{"Region: "}
-                        <HTMLSelect value={fileBrowser.saveRegionId} onChange={this.handleRegionChanged} options={regionOptions} />
-                    </Label>
-                    {activeFrame && activeFrame.numChannels > 1 &&
-                        <Divider />
-                    }
-                    {activeFrame && activeFrame.numChannels > 1 &&
-                        <div className="range-select">
-                            <FormGroup label={"Channel range: "} inline={true} >
-                                <FormGroup label="From" inline={true}>
-                                    <SafeNumericInput
-                                        value={fileBrowser.saveChannelStart}
-                                        buttonPosition="none"
-                                        placeholder="First channel"
-                                        onValueChange={val => this.onSaveChannelStartChanged(val)}
-                                    />
-                                </FormGroup>
-                                <FormGroup label="To" inline={true}>
-                                    <SafeNumericInput
-                                        value={fileBrowser.saveChannelEnd}
-                                        buttonPosition="none"
-                                        placeholder="Last channel"
-                                        onValueChange={val => this.onSaveChannelEndChanged(val)}
-                                    />
-                                </FormGroup>
+            <Pre>
+                <Label>{"Source file name: " + activeFrame.frameInfo.fileInfo.name}</Label>
+                <Label>{"Region: "}
+                    <HTMLSelect
+                        value={fileBrowser.saveRegionId}
+                        onChange={this.handleRegionChanged}
+                        options={regionOptions}
+                    />
+                </Label>
+                {activeFrame && activeFrame.numChannels > 1 &&
+                    <Divider />
+                }
+                {activeFrame && activeFrame.numChannels > 1 &&
+                    <div className="range-select">
+                        <FormGroup label={"Range"} inline={true} >
+                            <FormGroup label={"From"} inline={true}>
+                                <SafeNumericInput
+                                    value={fileBrowser.saveChannelStart}
+                                    buttonPosition="none"
+                                    placeholder="First channel"
+                                    onValueChange={val => this.onSaveChannelStartChanged(val)}
+                                    min={0}
+                                    max={fileBrowser.saveChannelEnd-1}
+                                />
                             </FormGroup>
-                        </div>
-                    }
-                    {activeFrame && activeFrame.numChannels > 1 &&
-                        <Divider />
-                    }
-                </Pre>
-            </div >
+                            <FormGroup label={" To"} inline={true}>
+                                <SafeNumericInput
+                                    value={fileBrowser.saveChannelEnd}
+                                    buttonPosition="none"
+                                    placeholder="Last channel"
+                                    onValueChange={val => this.onSaveChannelEndChanged(val)}
+                                    min={fileBrowser.saveChannelStart+1}
+                                    max={activeFrame.channelValues.length}
+                                />
+                            </FormGroup>
+                        </FormGroup>
+                    </div>
+                }
+                {activeFrame && activeFrame.numChannels > 1 &&
+                    <Divider />
+                }
+            </Pre>
         );
     }
 
