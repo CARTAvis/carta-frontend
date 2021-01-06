@@ -1,4 +1,4 @@
-import {AlertStore} from "../stores";
+import {AlertStore} from "stores";
 import {getShaderProgram, loadImageTexture} from "utilities";
 import {TEXTURE_SIZE, TILE_SIZE} from "./TileService";
 
