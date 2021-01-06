@@ -18,6 +18,7 @@
     }
 
     .log-event-panel .bp3-form-group .bp3-label {
+        width: auto !important;
         text-align: left;
     }
 
@@ -25,6 +26,10 @@
         .bp3-input-group {
             width: 60px;
         }
+    }
+
+    .log-event-header {
+        margin: 0;
     }
 
     .log-event-list {

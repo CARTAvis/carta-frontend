@@ -536,7 +536,15 @@ export class PreferenceDialogComponent extends React.Component {
 
         const logEventsPanel = (
             <div className="log-event-panel">
-                <FormGroup inline={false} label="Enable logged event type" className="log-event-list">
+                <FormGroup inline={true} label="Enable logged event type" className="log-event-header">
+                    <Checkbox
+                        label="Select all"
+                        checked={preference.isSelectingAllLogEvents}
+                        indeterminate={preference.isSelectingIndeterminateLogEvents}
+                        onChange={() => preference.selectAllLogEvents()}
+                    />
+                </FormGroup>
+                <FormGroup inline={false} className="log-event-list">
                     {Event.EVENT_TYPES.map((eventType) =>
                         <Checkbox
                             className="log-event-checkbox"

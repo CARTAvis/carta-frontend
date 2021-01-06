@@ -547,6 +547,36 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
         ctx.fillRect(0, 0, composedCanvas.width, composedCanvas.height);
         ctx.drawImage(canvas, 0, 0);
 
+        // plot chart border
+        const chartBorder = this.genChartBorder();
+        if (chartBorder) {
+            ctx.beginPath();
+            ctx.strokeStyle = this.props.darkMode ? Colors.DARK_GRAY5 : Colors.LIGHT_GRAY1;
+            ctx.lineWidth = 1;
+            ctx.rect(chartBorder.x, chartBorder.y, chartBorder.width, chartBorder.height);
+            ctx.stroke();
+        }
+
+        // plot Mean/RMS
+        const meanRMS = this.genMeanRMSForPngPlot();
+        if (meanRMS?.mean) {
+            // plot mean
+            ctx.beginPath();
+            ctx.setLineDash([meanRMS.mean.dash]);
+            ctx.strokeStyle = meanRMS.mean.color;
+            ctx.lineWidth = 1;
+            ctx.moveTo(meanRMS.mean.xLeft, meanRMS.mean.y);
+            ctx.lineTo(meanRMS.mean.xRight, meanRMS.mean.y);
+            ctx.stroke();
+        }
+        if (meanRMS?.RMS) {
+            // plot RMS
+            ctx.fillStyle = meanRMS.RMS.color;
+            ctx.globalAlpha = meanRMS.RMS.opacity;
+            ctx.fillRect(meanRMS.RMS.xLeft, meanRMS.RMS.yTop, meanRMS.RMS.width, meanRMS.RMS.height);
+            ctx.globalAlpha = 1.0;
+        }
+
         // plot spectral lines
         const spectralLines = this.genSpectralLinesForPngPlot();
         spectralLines?.forEach(spectralLine => {
@@ -577,7 +607,6 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
         if (showPlotxAxes) {
             this.exportSubPlotImage(false);
         }
-
     };
 
     exportData = () => {
@@ -643,6 +672,22 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
         a.dispatchEvent(new MouseEvent("click"));
     };
 
+    private calcMarkerBox = (marker: LineMarker): {lowerBound: number, height: number} => {
+        if (!marker) {
+            return undefined;
+        }
+        const chartArea = this.chartArea;
+        const thickness = this.getPixelForValueY(marker.value - marker.width / 2.0, this.props.logY) - this.getPixelForValueY(marker.value + marker.width / 2.0, this.props.logY);
+        const valueCanvasSpace = this.getCanvasSpaceY(marker.value)
+        const lowerBound = clamp(valueCanvasSpace - thickness, chartArea.top, chartArea.bottom);
+        const upperBound = clamp(valueCanvasSpace + thickness, chartArea.top, chartArea.bottom);
+        const hight = upperBound - lowerBound;
+        return {
+            lowerBound: lowerBound,
+            height: hight
+        };
+    };
+
     private genHorizontalLine = (marker: LineMarker, isHovering: boolean, markerColor: string, markerOpacity: number, valueCanvasSpace: number) => {
         const chartArea = this.chartArea;
         const lineWidth = chartArea.right - chartArea.left;
@@ -664,12 +709,10 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
             ];
         } else {
             if (marker.width) {
-                const thickness = this.getPixelForValueY(marker.value - marker.width / 2.0, this.props.logY) - this.getPixelForValueY(marker.value + marker.width / 2.0, this.props.logY);
-                let lowerBound = clamp(valueCanvasSpace - thickness, chartArea.top, chartArea.bottom);
-                let upperBound = clamp(valueCanvasSpace + thickness, chartArea.top, chartArea.bottom);
-                let croppedThickness = upperBound - lowerBound;
+                const boxInfo = this.calcMarkerBox(marker);
+                const yTop = boxInfo?.lowerBound - valueCanvasSpace;
                 lineSegments = [(
-                    <Rect listening={false} key={0} x={chartArea.left} y={lowerBound - valueCanvasSpace} width={lineWidth} height={croppedThickness} fill={markerColor} opacity={markerOpacity}/>
+                    <Rect listening={false} key={0} x={chartArea.left} y={yTop} width={lineWidth} height={boxInfo?.height} fill={markerColor} opacity={markerOpacity}/>
                 )];
             } else {
                 lineSegments = [<Line listening={false} key={0} points={[chartArea.left, 0, chartArea.right, 0]} strokeWidth={1} stroke={markerColor} opacity={markerOpacity} dash={marker.dash}/>];
@@ -860,10 +903,24 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
         return selectionRect;
     };
 
+    private genChartBorder = (): {x: number, y: number, width: number, height: number} => {
+        const chartArea = this.chartArea;
+        let border = undefined;
+        if (chartArea) {
+            border = {
+                x: (Math.floor(chartArea.left) - 0.5) * devicePixelRatio,
+                y: (Math.floor(chartArea.top) - 0.5) * devicePixelRatio,
+                width: Math.ceil(chartArea.right - chartArea.left + 1) * devicePixelRatio,
+                height: Math.ceil(chartArea.bottom - chartArea.top + 1) * devicePixelRatio
+            }
+        }
+        return border;
+    };
+
     private genBorderRect = () => {
         const chartArea = this.chartArea;
         let borderRect = null;
-        if (this.chartArea) {
+        if (chartArea) {
             borderRect = (
                 // Shift by half a pixel for sharp 1px lines
                 <Rect
@@ -878,6 +935,41 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
             );
         }
         return borderRect;
+    };
+
+    private genMeanRMSForPngPlot = (): {
+        mean: {color: string, dash: number, y: number, xLeft: number, xRight: number},
+        RMS: {color: string, opacity: number, xLeft: number, yTop: number, width: number, height: number}
+    } => {
+        let meanRMS = {
+            mean: undefined,
+            RMS: undefined
+        };
+        const chartArea = this.chartArea;
+        this.props.markers?.forEach(marker => {
+            const canvasY = this.getCanvasSpaceY(marker.value);
+            if (marker?.id.match(/^marker-mean/) && !isNaN(canvasY)) {
+                meanRMS.mean = {
+                    color: marker?.color,
+                    dash: marker.dash,
+                    y: canvasY * devicePixelRatio,
+                    xLeft: chartArea.left * devicePixelRatio,
+                    xRight: chartArea.right * devicePixelRatio
+                };
+            }
+            if (marker?.id.match(/^marker-rms/) && !isNaN(canvasY)) {
+                const boxInfo = this.calcMarkerBox(marker);
+                meanRMS.RMS = {
+                    color: marker?.color,
+                    opacity: marker?.opacity,
+                    xLeft: chartArea.left * devicePixelRatio,
+                    yTop: boxInfo?.lowerBound * devicePixelRatio,
+                    width: (chartArea.right - chartArea.left) * devicePixelRatio,
+                    height: boxInfo?.height * devicePixelRatio
+                };
+            }
+        });
+        return meanRMS;
     };
 
     private genSpectralLinesForPngPlot = (): {color: string, text: string, x: number, yBottom: number, yTop: number}[] => {
