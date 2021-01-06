@@ -230,6 +230,7 @@ export class FileListTableComponent extends React.Component<FileListTableCompone
                 this.cachedFilterString = filterString;
                 this.cachedFileResponse = fileResponse;
                 runInAction(() => this.selectedRegions = []);
+                this.rowPivotIndex = -1;
                 this.props.onSelectionChanged([]);
 
                 setTimeout(() => this.tableRef?.scrollToRegion(Regions.row(0, 0)), 20);
@@ -242,10 +243,12 @@ export class FileListTableComponent extends React.Component<FileListTableCompone
             if (entry.isDirectory) {
                 this.props.onFolderClicked(entry.filename);
                 this.selectedRegions = undefined;
+                this.rowPivotIndex = -1;
                 this.props.onSelectionChanged([]);
             } else {
                 this.props.onFileClicked(entry);
                 this.selectedRegions = [Regions.row(index)];
+                this.rowPivotIndex = index;
                 this.props.onSelectionChanged(this.selectedFiles);
             }
         }
