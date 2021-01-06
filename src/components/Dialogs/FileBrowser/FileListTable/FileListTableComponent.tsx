@@ -383,7 +383,8 @@ export class FileListTableComponent extends React.Component<FileListTableCompone
                 this.rowPivotIndex = -1;
             } else {
                 this.props.onFileClicked(entry);
-                if (event.ctrlKey && this.selectedRegions.length) {
+                const isCtrlPressed = event.ctrlKey || event.metaKey;
+                if (isCtrlPressed && this.selectedRegions.length) {
                     const currentRow = Regions.row(index);
                     const rowIndex = Regions.findMatchingRegion(this.selectedRegions, currentRow);
                     if (rowIndex === -1) {
