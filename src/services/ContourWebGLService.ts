@@ -1,4 +1,6 @@
+import {AlertStore} from "stores";
 import {getShaderFromString, loadImageTexture} from "utilities";
+
 import allMaps from "../static/allmaps.png";
 import vertexShaderLine from "!raw-loader!./GLSL/vertex_shader_contours.glsl";
 import pixelShaderDashed from "!raw-loader!./GLSL/pixel_shader_contours.glsl";
@@ -44,12 +46,18 @@ export class ContourWebGLService {
     }
 
     public setCanvasSize = (width: number, height: number) => {
+        if (!this.gl) {
+            return;
+        }
         this.gl.canvas.width = width;
         this.gl.canvas.height = height;
         this.gl.viewport(0, 0, width, height);
     };
 
     private initShaders() {
+        if (!this.gl) {
+            return;
+        }
         let vertexShader = getShaderFromString(this.gl, vertexShaderLine, WebGLRenderingContext.VERTEX_SHADER);
         let fragmentShader = getShaderFromString(this.gl, pixelShaderDashed, WebGLRenderingContext.FRAGMENT_SHADER);
 
@@ -98,9 +106,14 @@ export class ContourWebGLService {
 
     private constructor() {
         this.gl = document.createElement("canvas").getContext("webgl");
-        this.gl.getExtension("OES_texture_float");
+        const floatExtension = this.gl?.getExtension("OES_texture_float");
+        if (!this.gl || !floatExtension) {
+            AlertStore.Instance.showAlert("Could not load WebGL. CARTA requires a browser with WebGL support! Images will not be displayed correctly");
+            this.gl = null;
+            return;
+        }
+
         this.initShaders();
-        // this.initBuffers();
         loadImageTexture(this.gl, allMaps, WebGLRenderingContext.TEXTURE0).then(texture => {
             this.cmapTexture = texture;
         });

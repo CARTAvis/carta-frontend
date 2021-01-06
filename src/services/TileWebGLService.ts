@@ -1,7 +1,8 @@
-import allMaps from "static/allmaps.png";
+import {AlertStore} from "../stores";
 import {getShaderProgram, loadImageTexture} from "utilities";
 import {TEXTURE_SIZE, TILE_SIZE} from "./TileService";
 
+import allMaps from "static/allmaps.png";
 import vertexShader from "!raw-loader!./GLSL/vertex_shader_raster.glsl";
 import pixelShader from "!raw-loader!./GLSL/pixel_shader_raster.glsl";
 
@@ -56,11 +57,17 @@ export class TileWebGLService {
     }
 
     public setCanvasSize = (width: number, height: number) => {
+        if (!this.gl) {
+            return;
+        }
         this.gl.canvas.width = width;
         this.gl.canvas.height = height;
     };
 
     private initShaders() {
+        if (!this.gl) {
+            return;
+        }
         this.shaderProgram = getShaderProgram(this.gl, vertexShader, pixelShader);
         this.gl.useProgram(this.shaderProgram);
 
@@ -119,6 +126,9 @@ export class TileWebGLService {
     }
 
     private initBuffers() {
+        if (!this.gl) {
+            return;
+        }
         this.vertexPositionBuffer = this.gl.createBuffer();
         this.gl.bindBuffer(WebGLRenderingContext.ARRAY_BUFFER, this.vertexPositionBuffer);
         const vertices = new Float32Array([
@@ -142,7 +152,12 @@ export class TileWebGLService {
 
     private constructor() {
         this.gl = document.createElement("canvas").getContext("webgl");
-        this.gl.getExtension("OES_texture_float");
+        const floatExtension = this.gl?.getExtension("OES_texture_float");
+        if (!this.gl || !floatExtension) {
+            AlertStore.Instance.showAlert("Could not load WebGL. CARTA requires a browser with WebGL support! Images will not be displayed correctly");
+            this.gl = null;
+            return;
+        }
         this.initShaders();
         this.initBuffers();
         loadImageTexture(this.gl, allMaps, WebGLRenderingContext.TEXTURE1).then(texture => {
