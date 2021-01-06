@@ -20,13 +20,13 @@ export class UIControllerComponent extends React.Component {
             <React.Fragment>
                 <SplashScreenComponent/>
                 <RootMenuComponent/>
-                <FileBrowserDialogComponent/>
                 <AboutDialogComponent/>
                 <RegionDialogComponent/>
-                <PreferenceDialogComponent/>
                 <SaveLayoutDialogComponent/>
                 <ContourDialogComponent/>
                 <FileInfoDialogComponent/>
+                <PreferenceDialogComponent/>
+                <FileBrowserDialogComponent/>
                 <DebugExecutionDialogComponent/>
                 <ExternalPageDialogComponent/>
                 <HelpDrawerComponent/>
