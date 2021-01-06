@@ -1,6 +1,6 @@
 import * as React from "react";
 import { observer } from "mobx-react";
-import { Pre, Tab, TabId, Tabs, NonIdealState, Spinner, Text, Label, FormGroup, Divider, IOptionProps, HTMLSelect, ControlGroup } from "@blueprintjs/core";
+import { Pre, Tab, TabId, Tabs, NonIdealState, Spinner, Text, Label, FormGroup, IOptionProps, HTMLSelect, ControlGroup } from "@blueprintjs/core";
 import { FixedSizeList as List } from "react-window";
 import AutoSizer from "react-virtualized-auto-sizer";
 import { CARTA } from "carta-protobuf";
@@ -140,16 +140,16 @@ export class FileInfoComponent extends React.Component<{
         fileBrowser.saveRegionId = parseInt(changeEvent.target.value);
     };
 
-    onSaveChannelStartChanged(val: any) {
+    private handleSaveChannelStartChanged = (val: any) => {
         const fileBrowser = AppStore.Instance.fileBrowserStore;
-        if (val && isFinite(val)) {
+        if (-1 < val && val < fileBrowser.saveChannelEnd) {
             fileBrowser.saveChannelStart = val;
         }
     };
 
-    onSaveChannelEndChanged(val: any) {
+    private handleSaveChannelEndChanged = (val: any) => {
         const fileBrowser = AppStore.Instance.fileBrowserStore;
-        if (val && isFinite(val)) {
+        if (fileBrowser.saveChannelStart < val && val < AppStore.Instance.activeFrame.channelValues.length) {
             fileBrowser.saveChannelEnd = val;
         }
     };
@@ -157,55 +157,64 @@ export class FileInfoComponent extends React.Component<{
     private renderSaveImageControl() {
         const fileBrowser = AppStore.Instance.fileBrowserStore;
         const activeFrame = AppStore.Instance.activeFrame;
-        const closedRegions = activeFrame.regionSet.regions.filter(region => region.regionId > 0 && region.isClosedRegion);
+        const closedRegions = activeFrame.regionSet?.regions.filter(region => region.regionId > 0 && region.isClosedRegion);
         const regionOptions: IOptionProps[] = [{ value: 0, label: "Image" }].concat(closedRegions.map(region => ({ value: region.regionId, label: `${region.name ? region.name : region.regionId} (${CARTA.RegionType[region.regionType]})` })));
         return (
-            <Pre>
-                <Label>{"Source file: " + activeFrame.frameInfo.directory + "/" + activeFrame.frameInfo.fileInfo.name}</Label>
-                <div className="region-select">
+            <React.Fragment>
+                <Pre>
                     <ControlGroup fill={true} vertical={false}>
-                        <Label>{"Spatial coverage"}</Label>
-                        <HTMLSelect
-                            value={fileBrowser.saveRegionId}
-                            onChange={this.handleRegionChanged}
-                            options={regionOptions}
-                        />
+                        <Label>{"Source file: "}</Label>
+                        <Text ellipsize={true}>
+                            {activeFrame.frameInfo.directory + "/" + activeFrame.frameInfo.fileInfo.name}
+                        </Text>
                     </ControlGroup>
-                </div>
-                {activeFrame && activeFrame.numChannels > 1 &&
-                    <Divider />
-                }
-                {activeFrame && activeFrame.numChannels > 1 &&
-                    <div className="range-select">
-                        <FormGroup label={"Spectral coverage"} inline={false} labelInfo={activeFrame?.spectralUnit ? `(${activeFrame.spectralUnit})` : ""} >
-                            <ControlGroup fill={true} vertical={false}>
-                                <Label>{"from"}</Label>
-                                <SafeNumericInput
-                                    value={fileBrowser.saveChannelStart}
-                                    buttonPosition="none"
-                                    fill={true}
-                                    placeholder="First channel"
-                                    onValueChange={val => this.onSaveChannelStartChanged(val)}
-                                    min={0}
-                                    max={fileBrowser.saveChannelEnd - 1}
-                                />
-                                <Label>{"to"}</Label>
-                                <SafeNumericInput
-                                    value={fileBrowser.saveChannelEnd}
-                                    buttonPosition="none"
-                                    placeholder="Last channel"
-                                    onValueChange={val => this.onSaveChannelEndChanged(val)}
-                                    min={fileBrowser.saveChannelStart + 1}
-                                    max={activeFrame.channelValues.length}
-                                />
-                            </ControlGroup>
-                        </FormGroup>
+                    <div className="region-select">
+                        <ControlGroup fill={true} vertical={false}>
+                            <Label>{"Spatial coverage"}</Label>
+                            <HTMLSelect
+                                value={fileBrowser.saveRegionId}
+                                onChange={this.handleRegionChanged}
+                                options={regionOptions}
+                            />
+                        </ControlGroup>
                     </div>
-                }
-                {activeFrame && activeFrame.hasStokes &&
-                    <Divider />
-                }
-            </Pre>
+                    {activeFrame && activeFrame.numChannels > 1 &&
+                        <hr />
+                    }
+                    {activeFrame && activeFrame.numChannels > 1 &&
+                        <div className="range-select">
+                            <FormGroup label={"Spectral coverage"} inline={false} labelInfo={activeFrame?.spectralUnit ? `(${activeFrame.spectralUnit})` : ""} >
+                                <ControlGroup fill={true} vertical={false}>
+                                    <Label>{"from"}</Label>
+                                    <SafeNumericInput
+                                        value={fileBrowser.saveChannelStart}
+                                        buttonPosition="none"
+                                        fill={true}
+                                        placeholder="First channel"
+                                        onValueChange={this.handleSaveChannelStartChanged}
+                                        min={0}
+                                        max={fileBrowser.saveChannelEnd - 1}
+                                        clampValueOnBlur={true}
+                                    />
+                                    <Label>{"to"}</Label>
+                                    <SafeNumericInput
+                                        value={fileBrowser.saveChannelEnd}
+                                        buttonPosition="none"
+                                        placeholder="Last channel"
+                                        onValueChange={this.handleSaveChannelEndChanged}
+                                        min={fileBrowser.saveChannelStart + 1}
+                                        max={activeFrame.channelValues.length}
+                                        clampValueOnBlur={true}
+                                    />
+                                </ControlGroup>
+                            </FormGroup>
+                        </div>
+                    }
+                    {activeFrame && activeFrame.hasStokes &&
+                        <hr />
+                    }
+                </Pre>
+            </React.Fragment>
         );
     }
 

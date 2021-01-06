@@ -60,11 +60,10 @@ export class FileBrowserDialogComponent extends React.Component {
         const appStore = AppStore.Instance;
         const fileBrowserStore = FileBrowserStore.Instance;
         const filename = fileBrowserStore.saveFilename.trim();
-        const saveChannels = [fileBrowserStore.saveChannelStart, fileBrowserStore.saveChannelEnd - fileBrowserStore.saveChannelStart, 1];
         if (fileBrowserStore.fileList && fileBrowserStore.fileList.files && fileBrowserStore.fileList.files.find(f => f.name.trim() === filename)) {
             this.overwriteExistingFileAlertVisible = true;
         } else {
-            appStore.saveFile(fileBrowserStore.fileList.directory, filename, fileBrowserStore.saveFileType, fileBrowserStore.saveRegionId, saveChannels);
+            appStore.saveFile(fileBrowserStore.fileList.directory, filename, fileBrowserStore.saveFileType);
         }
     };
 
