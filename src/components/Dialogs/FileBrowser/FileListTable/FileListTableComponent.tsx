@@ -49,6 +49,7 @@ export class FileListTableComponent extends React.Component<FileListTableCompone
     private cachedFilterString: string;
     private cachedSortingString: string;
     private cachedFileResponse: CARTA.IFileListResponse | CARTA.ICatalogListResponse;
+    private rowPivotIndex: number = -1;
 
     private static readonly FileTypeMap = new Map<CARTA.FileType, { type: string, description: string }>([
         [CARTA.FileType.CASA, {type: "CASA", description: "CASA Image"}],
@@ -203,11 +204,12 @@ export class FileListTableComponent extends React.Component<FileListTableCompone
             return [];
         }
         const files = [];
-        for (const r of this.selectedRegions) {
-            const rowIndex = r.rows[0];
-            if (rowIndex >= 0 && rowIndex < this.tableEntries.length) {
-                const f = this.tableEntries[rowIndex];
-                files.push(f);
+        for (const selection of this.selectedRegions) {
+            for (let i = selection.rows[0]; i <= selection.rows[1]; i++) {
+                if (i >= 0 && i < this.tableEntries.length) {
+                    const f = this.tableEntries[i];
+                    files.push(f);
+                }
             }
         }
         return files;
@@ -370,23 +372,29 @@ export class FileListTableComponent extends React.Component<FileListTableCompone
         this.props.onFileDoubleClicked(entry);
     };
 
-    @action private handleEntryClicked = (event: React.MouseEvent, entry: FileEntry, index) => {
+    @action private handleEntryClicked = (event: React.MouseEvent, entry: FileEntry, index: number) => {
         if (entry) {
             if (entry.isDirectory) {
                 this.props.onFolderClicked(entry.filename);
                 this.selectedRegions = [];
+                this.rowPivotIndex = -1;
             } else {
                 this.props.onFileClicked(entry);
                 if (event.ctrlKey && this.selectedRegions.length) {
                     const currentRow = Regions.row(index);
                     const rowIndex = Regions.findMatchingRegion(this.selectedRegions, currentRow);
                     if (rowIndex === -1) {
-                        this.selectedRegions = [...this.selectedRegions, currentRow];
+                        this.selectedRegions.push(currentRow);
+                        // Generate new array in order to trigger re-render
+                        this.selectedRegions = this.selectedRegions.slice();
                     } else {
                         this.selectedRegions = this.selectedRegions.filter(r => r !== this.selectedRegions[rowIndex]);
                     }
+                } else if (event.shiftKey && this.selectedRegions.length) {
+                    this.selectedRegions = [Regions.row(this.rowPivotIndex, index)];
                 } else {
                     this.selectedRegions = [Regions.row(index)];
+                    this.rowPivotIndex = index;
                 }
             }
         }
