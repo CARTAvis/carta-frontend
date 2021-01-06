@@ -1,7 +1,7 @@
 import * as React from "react";
 import {observer} from "mobx-react";
 import {AnchorButton, ButtonGroup, Tooltip} from "@blueprintjs/core";
-import {AppStore, RegionMode, DefaultWidgetConfig} from "stores";
+import {AppStore, RegionMode, DefaultWidgetConfig, WidgetsStore} from "stores";
 import {
     AnimatorComponent,
     HistogramComponent,
@@ -18,7 +18,8 @@ import {
     ImageViewLayer
 } from "components";
 import {RegionCreationMode} from "models";
-import {CustomIcon} from "icons/CustomIcons";
+import {IconName} from "@blueprintjs/icons";
+import {CustomIcon, CustomIconName} from "icons/CustomIcons";
 import {CARTA} from "carta-protobuf";
 import "./ToolbarMenuComponent.scss";
 
@@ -100,42 +101,19 @@ export class ToolbarMenuComponent extends React.Component {
                     </Tooltip>
                 </ButtonGroup>
                 <ButtonGroup className={className}>
-                    <Tooltip content={<span>Region List Widget{commonTooltip}</span>}>
-                        <AnchorButton icon={<CustomIcon icon={"regionList"}/>} id="regionListButton" onClick={appStore.widgetsStore.createFloatingRegionListWidget}/>
-                    </Tooltip>
-                    <Tooltip content={<span>Log Widget{commonTooltip}</span>}>
-                        <AnchorButton icon={"application"} id="logButton" onClick={appStore.widgetsStore.createFloatingLogWidget}/>
-                    </Tooltip>
-                    <Tooltip content={<span>Spatial Profiler{commonTooltip}</span>}>
-                        <AnchorButton icon={<CustomIcon icon={"spatialProfiler"}/>} id="spatialProfilerButton" onClick={appStore.widgetsStore.createFloatingSpatialProfilerWidget}/>
-                    </Tooltip>
-                    <Tooltip content={<span>Spectral Profiler{commonTooltip}</span>}>
-                        <AnchorButton icon={<CustomIcon icon={"spectralProfiler"}/>} id="spectralProfilerButton" onClick={appStore.widgetsStore.createFloatingSpectralProfilerWidget}/>
-                    </Tooltip>
-                    <Tooltip content={<span>Statistics Widget{commonTooltip}</span>}>
-                        <AnchorButton icon={"calculator"} id="statsButton" onClick={appStore.widgetsStore.createFloatingStatsWidget}/>
-                    </Tooltip>
-                    <Tooltip content={<span>Histogram Widget{commonTooltip}</span>}>
-                        <AnchorButton icon={"timeline-bar-chart"} id="histogramButton" onClick={appStore.widgetsStore.createFloatingHistogramWidget}/>
-                    </Tooltip>
-                    <Tooltip content={<span>Animator Widget{commonTooltip}</span>}>
-                        <AnchorButton icon={"video"} id="animatorButton" onClick={appStore.widgetsStore.createFloatingAnimatorWidget}/>
-                    </Tooltip>
-                    <Tooltip content={<span>Render Config Widget{commonTooltip}</span>}>
-                        <AnchorButton icon={"style"} id="renderConfigButton" onClick={appStore.widgetsStore.createFloatingRenderWidget}/>
-                    </Tooltip>
-                    <Tooltip content={<span>Stokes Analysis Widget{commonTooltip}</span>}>
-                        <AnchorButton icon={<CustomIcon icon={"stokes"}/>} id="stokesAnalysisButton" onClick={appStore.widgetsStore.createFloatingStokesWidget}/>
-                    </Tooltip>
-                    <Tooltip content={<span>Image List Widget{commonTooltip}</span>}>
-                        <AnchorButton icon={"layers"} id="layerListButton" onClick={appStore.widgetsStore.createFloatingLayerListWidget}/>
-                    </Tooltip>
-                    <Tooltip content={<span>Catalog Widget{commonTooltip}</span>}>
-                        <AnchorButton icon={"heatmap"} id="catalogOverlayButton" onClick={appStore.widgetsStore.reloadFloatingCatalogWidget}/>
-                    </Tooltip>
-                    <Tooltip content={<span>Spectral Line Query Widget{commonTooltip}</span>}>
-                        <AnchorButton icon={<CustomIcon icon={"spectralLineQuery"}/>} id="spectralLineQueryButton" onClick={appStore.widgetsStore.createFloatingSpectralLineQueryWidget}/>
-                    </Tooltip>
+                    {Array.from(WidgetsStore.Instance.CARTAWidgets.keys()).map(widgetType => {
+                        const widgetConfig = WidgetsStore.Instance.CARTAWidgets.get(widgetType);
+                        const trimmedStr = widgetType.trim();
+                        return (
+                            <Tooltip key={`${trimmedStr}Tooltip`} content={<span>{widgetType}{commonTooltip}</span>}>
+                                <AnchorButton
+                                    icon={widgetConfig.isCustomIcon ? <CustomIcon icon={widgetConfig.icon as CustomIconName}/> : widgetConfig.icon as IconName}
+                                    id={`${trimmedStr}Button`}
+                                    onClick={widgetConfig.onClick}
+                                />
+                            </Tooltip>
+                        );
+                    })}
                 </ButtonGroup>
                 <ButtonGroup className={dialogClassName}>
                     <Tooltip content={<span>File Header</span>}>
