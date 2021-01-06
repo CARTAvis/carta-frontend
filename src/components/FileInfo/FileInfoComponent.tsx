@@ -1,6 +1,6 @@
 import * as React from "react";
 import { observer } from "mobx-react";
-import { Pre, Tab, TabId, Tabs, NonIdealState, Spinner, Text, Label, FormGroup, Divider, IOptionProps, HTMLSelect } from "@blueprintjs/core";
+import { Pre, Tab, TabId, Tabs, NonIdealState, Spinner, Text, Label, FormGroup, Divider, IOptionProps, HTMLSelect, ControlGroup } from "@blueprintjs/core";
 import { FixedSizeList as List } from "react-window";
 import AutoSizer from "react-virtualized-auto-sizer";
 import { CARTA } from "carta-protobuf";
@@ -161,44 +161,48 @@ export class FileInfoComponent extends React.Component<{
         const regionOptions: IOptionProps[] = [{ value: 0, label: "Image" }].concat(closedRegions.map(region => ({ value: region.regionId, label: `${region.name ? region.name : region.regionId} (${CARTA.RegionType[region.regionType]})` })));
         return (
             <Pre>
-                <Label>{"Source file name: " + activeFrame.frameInfo.fileInfo.name}</Label>
-                <Label>{"Region: "}
-                    <HTMLSelect
-                        value={fileBrowser.saveRegionId}
-                        onChange={this.handleRegionChanged}
-                        options={regionOptions}
-                    />
-                </Label>
+                <Label>{"Source file: " + activeFrame.frameInfo.directory + "/" + activeFrame.frameInfo.fileInfo.name}</Label>
+                <div className="region-select">
+                    <ControlGroup fill={true} vertical={false}>
+                        <Label>{"Spatial coverage"}</Label>
+                        <HTMLSelect
+                            value={fileBrowser.saveRegionId}
+                            onChange={this.handleRegionChanged}
+                            options={regionOptions}
+                        />
+                    </ControlGroup>
+                </div>
                 {activeFrame && activeFrame.numChannels > 1 &&
                     <Divider />
                 }
                 {activeFrame && activeFrame.numChannels > 1 &&
                     <div className="range-select">
-                        <FormGroup label={"Range"} inline={true} >
-                            <FormGroup label={"From"} inline={true}>
+                        <FormGroup label={"Spectral coverage"} inline={false} labelInfo={activeFrame?.spectralUnit ? `(${activeFrame.spectralUnit})` : ""} >
+                            <ControlGroup fill={true} vertical={false}>
+                                <Label>{"from"}</Label>
                                 <SafeNumericInput
                                     value={fileBrowser.saveChannelStart}
                                     buttonPosition="none"
+                                    fill={true}
                                     placeholder="First channel"
                                     onValueChange={val => this.onSaveChannelStartChanged(val)}
                                     min={0}
-                                    max={fileBrowser.saveChannelEnd-1}
+                                    max={fileBrowser.saveChannelEnd - 1}
                                 />
-                            </FormGroup>
-                            <FormGroup label={" To"} inline={true}>
+                                <Label>{"to"}</Label>
                                 <SafeNumericInput
                                     value={fileBrowser.saveChannelEnd}
                                     buttonPosition="none"
                                     placeholder="Last channel"
                                     onValueChange={val => this.onSaveChannelEndChanged(val)}
-                                    min={fileBrowser.saveChannelStart+1}
+                                    min={fileBrowser.saveChannelStart + 1}
                                     max={activeFrame.channelValues.length}
                                 />
-                            </FormGroup>
+                            </ControlGroup>
                         </FormGroup>
                     </div>
                 }
-                {activeFrame && activeFrame.numChannels > 1 &&
+                {activeFrame && activeFrame.hasStokes &&
                     <Divider />
                 }
             </Pre>
