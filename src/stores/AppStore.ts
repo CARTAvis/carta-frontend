@@ -874,7 +874,8 @@ export class AppStore {
         CARTA.StatsType.Sigma,
         CARTA.StatsType.SumSq,
         CARTA.StatsType.Min,
-        CARTA.StatsType.Max
+        CARTA.StatsType.Max,
+        CARTA.StatsType.Extrema
     ];
     private static readonly CursorThrottleTime = 200;
     private static readonly CursorThrottleTimeRotated = 100;
