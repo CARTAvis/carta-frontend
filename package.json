@@ -29,7 +29,7 @@
         "@types/react-window": "^1.8.2",
         "@types/tinycolor2": "^1.4.2",
         "ajv": "^6.12.6",
-        "axios": "^0.20.0",
+        "axios": "^0.21.1",
         "chart.js": "^2.9.3",
         "fuzzy-search": "^3.2.1",
         "glob-to-regexp": "^0.4.1",
