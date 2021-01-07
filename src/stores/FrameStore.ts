@@ -99,8 +99,10 @@ export class FrameStore {
 
     @computed get filename(): string {
         // hdu extension name is in field 3 of fileInfoExtended computed entries
-        return this.frameInfo?.hdu !== "" && this.frameInfo?.hdu !== "0" && this.frameInfo?.fileInfoExtended?.computedEntries?.length >= 3 ?
-            `${this.frameInfo.fileInfo.name}.HDU_${this.frameInfo.hdu}_${this.frameInfo.fileInfoExtended.computedEntries[2]?.value}` :
+        const extName = this.frameInfo?.fileInfoExtended?.computedEntries?.length >= 3 && this.frameInfo?.fileInfoExtended?.computedEntries[2]?.name === "Extension name" ?
+                        `_${this.frameInfo.fileInfoExtended.computedEntries[2]?.value}` : "";
+        return this.frameInfo?.hdu !== "" && this.frameInfo?.hdu !== "0" ?
+            `${this.frameInfo.fileInfo.name}.HDU_${this.frameInfo.hdu}${extName}` :
             this.frameInfo.fileInfo.name;
     }
 

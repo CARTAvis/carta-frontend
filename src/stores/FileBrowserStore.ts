@@ -285,9 +285,11 @@ export class FileBrowserStore {
     @computed get HDUList(): IOptionProps[] {
         return this.HDUfileInfoExtended ?
             Object.keys(this.HDUfileInfoExtended)?.map(hdu => {
+                // hdu extension name is in field 3 of fileInfoExtended computed entries
+                const extName = this.HDUfileInfoExtended[hdu]?.computedEntries?.length >= 3 && this.HDUfileInfoExtended[hdu].computedEntries[2]?.name === "Extension name" ?
+                    `: ${this.HDUfileInfoExtended[hdu].computedEntries[2]?.value}` : "";
                 return {
-                    // hdu extension name is in field 3 of fileInfoExtended computed entries
-                    label: `${hdu}: ${this.HDUfileInfoExtended[hdu]?.computedEntries?.length >= 3 ? this.HDUfileInfoExtended[hdu].computedEntries[2]?.value : undefined}`,
+                    label: `${hdu}${extName}`,
                     value: hdu
                 }
             }) :
