@@ -1,3 +1,6 @@
+import {AlertStore} from "stores";
+import {TemplateNodes} from "./templates";
+
 export const GL = WebGLRenderingContext;
 
 export function getShaderFromString(gl: WebGLRenderingContext, shaderScript: string, type: number) {
@@ -83,4 +86,14 @@ export function copyToFP32Texture(gl: WebGLRenderingContext, texture: WebGLTextu
     gl.texParameteri(GL.TEXTURE_2D, GL.TEXTURE_MAG_FILTER, GL.NEAREST);
     gl.texParameteri(GL.TEXTURE_2D, GL.TEXTURE_WRAP_S, GL.CLAMP_TO_EDGE);
     gl.texParameteri(GL.TEXTURE_2D, GL.TEXTURE_WRAP_T, GL.CLAMP_TO_EDGE);
+}
+
+export function initWebGL(){
+    const gl = document.createElement("canvas").getContext("webgl");
+    const floatExtension = gl?.getExtension("OES_texture_float");
+    if (!gl || !floatExtension) {
+        AlertStore.Instance.showAlert(TemplateNodes.WebGLErrorMessage, "issue");
+        return null;
+    }
+    return gl;
 }

@@ -1,5 +1,4 @@
-import {AlertStore} from "stores";
-import {getShaderFromString, loadImageTexture} from "utilities";
+import {getShaderFromString, initWebGL, loadImageTexture} from "utilities";
 
 import allMaps from "../static/allmaps.png";
 import vertexShaderLine from "!raw-loader!./GLSL/vertex_shader_contours.glsl";
@@ -105,11 +104,8 @@ export class ContourWebGLService {
     }
 
     private constructor() {
-        this.gl = document.createElement("canvas").getContext("webgl");
-        const floatExtension = this.gl?.getExtension("OES_texture_float");
-        if (!this.gl || !floatExtension) {
-            AlertStore.Instance.showAlert("Could not load WebGL. CARTA requires a browser with WebGL support! Images will not be displayed correctly");
-            this.gl = null;
+        this.gl = initWebGL();
+        if (!this.gl) {
             return;
         }
 

@@ -1,5 +1,4 @@
-import {AlertStore} from "stores";
-import {getShaderProgram, loadImageTexture} from "utilities";
+import {getShaderProgram, initWebGL, loadImageTexture} from "utilities";
 import {TEXTURE_SIZE, TILE_SIZE} from "./TileService";
 
 import allMaps from "static/allmaps.png";
@@ -151,11 +150,8 @@ export class TileWebGLService {
     }
 
     private constructor() {
-        this.gl = document.createElement("canvas").getContext("webgl");
-        const floatExtension = this.gl?.getExtension("OES_texture_float");
-        if (!this.gl || !floatExtension) {
-            AlertStore.Instance.showAlert("Could not load WebGL. CARTA requires a browser with WebGL support! Images will not be displayed correctly");
-            this.gl = null;
+        this.gl = initWebGL();
+        if (!this.gl) {
             return;
         }
         this.initShaders();
