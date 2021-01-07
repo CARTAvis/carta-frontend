@@ -292,7 +292,7 @@ export class FileListTableComponent extends React.Component<FileListTableCompone
     private renderFilenames = (rowIndex: number) => {
         const entry = this.tableEntries[rowIndex];
         return (
-            <Cell className="filename-cell" tooltip={entry?.filename}>
+            <Cell className={entry.isDirectory? "folder-cell": "filename-cell"} tooltip={entry?.filename}>
                 <React.Fragment>
                     <div
                         onClick={event => this.handleEntryClicked(event, entry, rowIndex)}
@@ -382,7 +382,6 @@ export class FileListTableComponent extends React.Component<FileListTableCompone
                 this.selectedRegions = [];
                 this.rowPivotIndex = -1;
             } else {
-                this.props.onFileClicked(entry);
                 const isCtrlPressed = event.ctrlKey || event.metaKey;
                 if (isCtrlPressed && this.selectedRegions.length) {
                     const currentRow = Regions.row(index);
@@ -393,12 +392,23 @@ export class FileListTableComponent extends React.Component<FileListTableCompone
                         this.selectedRegions = this.selectedRegions.slice();
                     } else {
                         this.selectedRegions = this.selectedRegions.filter(r => r !== this.selectedRegions[rowIndex]);
+                        // Prevent deselection of all files
+                        if (!this.selectedRegions.length) {
+                            this.selectedRegions = [Regions.row(index)];
+                        }
                     }
                 } else if (event.shiftKey && this.selectedRegions.length) {
-                    this.selectedRegions = [Regions.row(this.rowPivotIndex, index)];
+                    const range = Regions.row(this.rowPivotIndex, index);
+                    this.selectedRegions = [];
+                    for (let i = range.rows[0]; i <= range.rows[1]; i++) {
+                        this.selectedRegions.push(Regions.row(i));
+                    }
                 } else {
                     this.selectedRegions = [Regions.row(index)];
                     this.rowPivotIndex = index;
+                }
+                if (this.selectedRegions?.length === 1) {
+                    this.props.onFileClicked(this.tableEntries[this.selectedRegions[0].rows[0]]);
                 }
             }
         }
