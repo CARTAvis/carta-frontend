@@ -1,4 +1,4 @@
-@import "../../../../../node_modules/@blueprintjs/core/lib/scss/variables.scss";
+@import "~@blueprintjs/core/lib/scss/variables.scss";
 
 .column-name {
     overflow: hidden;
@@ -64,6 +64,15 @@
 
         .bp3-icon {
           margin-right: 5px;
+        }
+
+        &:hover {
+          .bp3-icon{
+            color: $blue3;
+          }
+          .cell-text {
+            color: $blue3;
+          }
         }
       }
 

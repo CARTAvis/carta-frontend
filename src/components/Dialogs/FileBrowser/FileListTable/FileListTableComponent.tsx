@@ -299,7 +299,7 @@ export class FileListTableComponent extends React.Component<FileListTableCompone
                         onDoubleClick={() => this.handleEntryDoubleClicked(entry)}
                     >
                         {entry?.isDirectory && <Icon icon="folder-close"/>}
-                        {entry?.filename}
+                        <span className="cell-text">{entry?.filename}</span>
                     </div>
                 </React.Fragment>
             </Cell>
