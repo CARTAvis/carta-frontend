@@ -240,7 +240,7 @@ export class FrameStore {
             if (isFinite(delta) && (unit === "deg" || unit === "rad")) {
 
                 if (this.frameInfo.beamTable && this.frameInfo.beamTable.length > 0) {
-                    let beam : CARTA.Beam
+                    let beam : CARTA.IBeam
                     if (this.frameInfo.beamTable.length === 1 && this.frameInfo.beamTable[0].channel === -1 && this.frameInfo.beamTable[0].stokes === -1) {
                         beam = this.frameInfo.beamTable[0];
                     } else {
