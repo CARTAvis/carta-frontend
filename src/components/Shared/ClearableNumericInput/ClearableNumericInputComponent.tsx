@@ -95,10 +95,11 @@ export class ClearableNumericInputComponent extends React.Component<ClearableNum
     }
 
     render () {
-        let value = this.props.displayExponential && !this.isFocused ? toExponential(Number(this.value), 3) : this.value;
+        let value = this.props.displayExponential && !this.isFocused ? toExponential(Number(this.props.value), 3) : this.props.value;
         return (
         <FormGroup className={this.props.className} label={this.props.label} inline={true} disabled={this.props.disabled}>
             <NumericInput
+                asyncControl={true}
                 stepSize={this.props.stepSize}
                 value={value}
                 minorStepSize={this.props.minorStepSize ? this.props.minorStepSize : ClearableNumericInputComponent.minorStepSize}

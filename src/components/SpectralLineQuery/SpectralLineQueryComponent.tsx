@@ -308,8 +308,8 @@ export class SpectralLineQueryComponent extends React.Component<WidgetProps> {
                     <SafeNumericInput
                         value={widgetStore.redshiftInput}
                         buttonPosition="none"
-                        handleBlur={this.handleRedshiftChange}
-                        handleKeyDown={this.handleRedshiftChange}
+                        onBlur={this.handleRedshiftChange}
+                        onKeyDown={this.handleRedshiftChange}
                     />
                 </FormGroup>
             </div>

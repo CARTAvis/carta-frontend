@@ -103,8 +103,8 @@ export class PolygonRegionForm extends React.Component<{ region: RegionStore, wc
                         buttonPosition="none"
                         placeholder="X Coordinate"
                         value={point.x}
-                        handleBlur={(evt) => this.handlePointChange(index, true, evt)}
-                        handleKeyDown={(evt) => this.handlePointChange(index, true, evt)}
+                        onBlur={(evt) => this.handlePointChange(index, true, evt)}
+                        onKeyDown={(evt) => this.handlePointChange(index, true, evt)}
                     />
                 );
                 yInput = (
@@ -113,8 +113,8 @@ export class PolygonRegionForm extends React.Component<{ region: RegionStore, wc
                         buttonPosition="none"
                         placeholder="Y Coordinate"
                         value={point.y}
-                        handleBlur={(evt) => this.handlePointChange(index, false, evt)}
-                        handleKeyDown={(evt) => this.handlePointChange(index, false, evt)}
+                        onBlur={(evt) => this.handlePointChange(index, false, evt)}
+                        onKeyDown={(evt) => this.handlePointChange(index, false, evt)}
                     />
                 );
             } else {
@@ -126,8 +126,8 @@ export class PolygonRegionForm extends React.Component<{ region: RegionStore, wc
                             placeholder="X WCS Coordinate"
                             disabled={!this.props.wcsInfo || !pointWCS}
                             value={pointWCS ? pointWCS.x : ""}
-                            handleBlur={(evt) => this.handleWCSPointChange(index, true, evt)}
-                            handleKeyDown={(evt) => this.handleWCSPointChange(index, true, evt)}
+                            onBlur={(evt) => this.handleWCSPointChange(index, true, evt)}
+                            onKeyDown={(evt) => this.handleWCSPointChange(index, true, evt)}
                         />
                     </Tooltip>
                 );
@@ -139,8 +139,8 @@ export class PolygonRegionForm extends React.Component<{ region: RegionStore, wc
                             placeholder="Y WCS Coordinate"
                             disabled={!this.props.wcsInfo || !pointWCS}
                             value={pointWCS ? pointWCS.y : ""}
-                            handleBlur={(evt) => this.handleWCSPointChange(index, false, evt)}
-                            handleKeyDown={(evt) => this.handleWCSPointChange(index, false, evt)}
+                            onBlur={(evt) => this.handleWCSPointChange(index, false, evt)}
+                            onKeyDown={(evt) => this.handleWCSPointChange(index, false, evt)}
                         />
                     </Tooltip>
                 );

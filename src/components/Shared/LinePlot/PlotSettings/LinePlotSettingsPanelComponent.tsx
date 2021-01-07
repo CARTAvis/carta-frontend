@@ -160,8 +160,8 @@ export class LinePlotSettingsPanelComponent extends React.Component<LinePlotSett
                             selectAllOnFocus={true}
                             buttonPosition={"none"}
                             allowNumericCharactersOnly={true}
-                            handleBlur={props.handleXMinChange}
-                            handleKeyDown={props.handleXMinChange}
+                            onBlur={props.handleXMinChange}
+                            onKeyDown={props.handleXMinChange}
                         />
                     </FormGroup>
                     }
@@ -173,8 +173,8 @@ export class LinePlotSettingsPanelComponent extends React.Component<LinePlotSett
                             selectAllOnFocus={true}
                             buttonPosition={"none"}
                             allowNumericCharactersOnly={true}
-                            handleBlur={props.handleXMaxChange}
-                            handleKeyDown={props.handleXMaxChange}
+                            onBlur={props.handleXMaxChange}
+                            onKeyDown={props.handleXMaxChange}
                         />
                     </FormGroup>
                     }
@@ -187,8 +187,8 @@ export class LinePlotSettingsPanelComponent extends React.Component<LinePlotSett
                             selectAllOnFocus={true}
                             buttonPosition={"none"}
                             allowNumericCharactersOnly={true}
-                            handleBlur={props.handleYMinChange}
-                            handleKeyDown={props.handleYMinChange}
+                            onBlur={props.handleYMinChange}
+                            onKeyDown={props.handleYMinChange}
                         />
                     </FormGroup>
                     }
@@ -201,8 +201,8 @@ export class LinePlotSettingsPanelComponent extends React.Component<LinePlotSett
                             selectAllOnFocus={true}
                             buttonPosition={"none"}
                             allowNumericCharactersOnly={true}
-                            handleBlur={props.handleYMaxChange}
-                            handleKeyDown={props.handleYMaxChange}
+                            onBlur={props.handleYMaxChange}
+                            onKeyDown={props.handleYMaxChange}
                         />
                     </FormGroup>
                     }

@@ -414,8 +414,8 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
                             value={frame.renderConfig.scaleMinVal}
                             selectAllOnFocus={true}
                             buttonPosition={"none"}
-                            handleBlur={this.handleScaleMinChange}
-                            handleKeyDown={this.handleScaleMinChange}
+                            onBlur={this.handleScaleMinChange}
+                            onKeyDown={this.handleScaleMinChange}
                         />
                     </FormGroup>
                     <FormGroup label={"Clip Max"} inline={true}>
@@ -423,8 +423,8 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
                             value={frame.renderConfig.scaleMaxVal}
                             selectAllOnFocus={true}
                             buttonPosition={"none"}
-                            handleBlur={this.handleScaleMaxChange}
-                            handleKeyDown={this.handleScaleMaxChange}
+                            onBlur={this.handleScaleMaxChange}
+                            onKeyDown={this.handleScaleMaxChange}
                         />
                     </FormGroup>
                     {this.width < histogramCutoff && percentileSelectDiv}

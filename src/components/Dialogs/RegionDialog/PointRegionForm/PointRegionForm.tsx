@@ -114,8 +114,8 @@ export class PointRegionForm extends React.Component<{ region: RegionStore, wcsI
         const centerWCSPoint = getFormattedWCSPoint(this.props.wcsInfo, centerPoint);
         let xInput, yInput;
         if (region.coordinate === RegionCoordinate.Image) {
-            xInput = <SafeNumericInput selectAllOnFocus={true} buttonPosition="none" placeholder="X Coordinate" value={centerPoint.x} handleBlur={this.handleCenterXChange} handleKeyDown={this.handleCenterXChange}/>;
-            yInput = <SafeNumericInput selectAllOnFocus={true} buttonPosition="none" placeholder="Y Coordinate" value={centerPoint.y} handleBlur={this.handleCenterYChange} handleKeyDown={this.handleCenterYChange}/>;
+            xInput = <SafeNumericInput selectAllOnFocus={true} buttonPosition="none" placeholder="X Coordinate" value={centerPoint.x} onBlur={this.handleCenterXChange} onKeyDown={this.handleCenterXChange}/>;
+            yInput = <SafeNumericInput selectAllOnFocus={true} buttonPosition="none" placeholder="Y Coordinate" value={centerPoint.y} onBlur={this.handleCenterYChange} onKeyDown={this.handleCenterYChange}/>;
         } else {
             xInput = (
                 <Tooltip content={`Format: ${NUMBER_FORMAT_LABEL.get(formatX)}`} position={Position.BOTTOM} hoverOpenDelay={300}>
@@ -125,8 +125,8 @@ export class PointRegionForm extends React.Component<{ region: RegionStore, wcsI
                         placeholder="X WCS Coordinate"
                         disabled={!this.props.wcsInfo || !centerWCSPoint}
                         value={centerWCSPoint ? centerWCSPoint.x : ""}
-                        handleBlur={this.handleCenterWCSXChange}
-                        handleKeyDown={this.handleCenterWCSXChange}
+                        onBlur={this.handleCenterWCSXChange}
+                        onKeyDown={this.handleCenterWCSXChange}
                     />
                 </Tooltip>
             );
@@ -138,8 +138,8 @@ export class PointRegionForm extends React.Component<{ region: RegionStore, wcsI
                         placeholder="Y WCS Coordinate"
                         disabled={!this.props.wcsInfo || !centerWCSPoint}
                         value={centerWCSPoint ? centerWCSPoint.y : ""}
-                        handleBlur={this.handleCenterWCSYChange}
-                        handleKeyDown={this.handleCenterWCSYChange}
+                        onBlur={this.handleCenterWCSYChange}
+                        onKeyDown={this.handleCenterWCSYChange}
                     />
                 </Tooltip>
             );

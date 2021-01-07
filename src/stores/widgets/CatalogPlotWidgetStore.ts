@@ -64,7 +64,7 @@ export class CatalogPlotWidgetStore {
         this.logScaleY = val;
     }
 
-    @action setnBinx(val: number) {
+    @action setNumBinsX(val: number) {
         this.nBinx = val;
     }
 

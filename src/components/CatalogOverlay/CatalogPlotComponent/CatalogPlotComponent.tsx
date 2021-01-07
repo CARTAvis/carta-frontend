@@ -236,7 +236,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
         // increase x range to include border data
         const fraction = 1.001;
         const start = xRange.xMin;
-        const nBinx = widgetStore.nBinx? widgetStore.nBinx : this.initnBinx();
+        const nBinx = widgetStore.nBinx? widgetStore.nBinx : this.numBinsX;
         const end = start + (xRange.xMax - xRange.xMin) * fraction;
         const size = (end - start) / nBinx;
         data.type = "histogram";
@@ -281,12 +281,11 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
         return profileInfo;
     }
 
-    private initnBinx(): number {
+    @computed get numBinsX(): number {
         const widgetStore = this.widgetStore;
         const profileStore = this.profileStore;
         const coords = profileStore.get1DPlotData(widgetStore.xColumnName);
         const nBinx = Math.ceil(Math.sqrt(coords.wcsData?.length));
-        widgetStore.setnBinx(nBinx)
         return  nBinx;
     }
 
@@ -490,8 +489,8 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
         }
     }
 
-    private onBinWidthChange = (val: number) => {
-        this.widgetStore.setnBinx(val);
+    private onNumBinChange = (val: number) => {
+        this.widgetStore.setNumBinsX(val);
         this.onDeselect();
     }
 
@@ -692,7 +691,6 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
         };
         
         let data;
-        let bins = widgetStore.nBinx;
         if (widgetStore.plotType === CatalogPlotType.D2Scatter) {
             data = this.scatterData.data;
             let border;
@@ -723,10 +721,6 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
             layout.yaxis.title = "Count";
             if (widgetStore.logScaleY) {
                 layout.yaxis.type = "log";   
-            }
-
-            if (!bins) {
-                bins = this.initnBinx();
             }
         }
 
@@ -764,9 +758,9 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
                 label="Bins"
                 min={1}
                 integerOnly={true}
-                value={bins}
-                onValueChanged={val => this.onBinWidthChange(val)}
-                onValueCleared={() => this.onBinWidthChange(this.initnBinx())}
+                value={widgetStore.nBinx? widgetStore.nBinx : this.numBinsX}
+                onValueChanged={val => this.onNumBinChange(val)}
+                onValueCleared={() => this.onNumBinChange(this.numBinsX)}
                 displayExponential={false}
                 updateValueOnKeyDown={true}
                 disabled={disabled}
