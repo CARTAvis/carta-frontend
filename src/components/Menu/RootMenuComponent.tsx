@@ -4,10 +4,11 @@ import {observer} from "mobx-react";
 import {Alert, Icon, Menu, Popover, Position, Tooltip, MenuDivider} from "@blueprintjs/core";
 import {ToolbarMenuComponent} from "./ToolbarMenu/ToolbarMenuComponent";
 import {PresetLayout} from "models";
-import {AppStore, BrowserMode, PreferenceKeys} from "stores";
+import {AppStore, BrowserMode, PreferenceKeys, WidgetsStore, WidgetType} from "stores";
 import {ApiService, ConnectionStatus} from "services";
 import {toFixed} from "utilities";
-import {CustomIcon} from "icons/CustomIcons";
+import {IconName} from "@blueprintjs/icons";
+import {CustomIcon, CustomIconName} from "icons/CustomIcons";
 import "./RootMenuComponent.scss";
 
 @observer
@@ -22,6 +23,43 @@ export class RootMenuComponent extends React.Component {
 
     private handleDashboardClicked = () => {
         window.open(ApiService.RuntimeConfig.dashboardAddress, "_blank");
+    };
+
+    private genWidgetsMenu = () => {
+        const regionListConfig = WidgetsStore.Instance.CARTAWidgets.get(WidgetType.Region);
+        const imageListConfig = WidgetsStore.Instance.CARTAWidgets.get(WidgetType.ImageList);
+        const logConfig = WidgetsStore.Instance.CARTAWidgets.get(WidgetType.Log);
+        const spatialProfilerConfig = WidgetsStore.Instance.CARTAWidgets.get(WidgetType.SpatialProfiler);
+        const spectralProfilerConfig = WidgetsStore.Instance.CARTAWidgets.get(WidgetType.SpectralProfiler);
+        const restWidgets = Array.from(WidgetsStore.Instance.CARTAWidgets.keys()).filter(
+            widget => ![WidgetType.Region, WidgetType.ImageList, WidgetType.Log, WidgetType.SpatialProfiler, WidgetType.SpectralProfiler].includes(widget)
+        );
+
+        return (
+            <Menu className="widgets-menu">
+                <Menu.Item text="Info Panels" icon={"panel-stats"}>
+                    <Menu.Item text={WidgetType.Region} icon={<CustomIcon icon={regionListConfig.icon as CustomIconName}/>} onClick={regionListConfig.onClick}/>
+                    <Menu.Item text={WidgetType.ImageList} icon={imageListConfig.icon as IconName} onClick={imageListConfig.onClick}/>
+                    <Menu.Item text={WidgetType.Log} icon={logConfig.icon as IconName} onClick={logConfig.onClick}/>
+                </Menu.Item>
+                <Menu.Item text="Profiles" icon={"pulse"}>
+                    <Menu.Item text={WidgetType.SpatialProfiler} icon={<CustomIcon icon={spatialProfilerConfig.icon as CustomIconName}/>} onClick={spatialProfilerConfig.onClick}/>
+                    <Menu.Item text={WidgetType.SpectralProfiler} icon={<CustomIcon icon={spectralProfilerConfig.icon as CustomIconName}/>} onClick={spectralProfilerConfig.onClick}/>
+                </Menu.Item>
+                {restWidgets.map(widgetType => {
+                    const widgetConfig = WidgetsStore.Instance.CARTAWidgets.get(widgetType);
+                    const trimmedStr = widgetType.trim();
+                    return (
+                        <Menu.Item
+                            key={`${trimmedStr}Menu`}
+                            text={widgetType}
+                            icon={widgetConfig.isCustomIcon ? <CustomIcon icon={widgetConfig.icon as CustomIconName}/> : widgetConfig.icon as IconName}
+                            onClick={widgetConfig.onClick}
+                        />
+                    );
+                })}
+            </Menu>
+        );
     };
 
     render() {
@@ -215,27 +253,6 @@ export class RootMenuComponent extends React.Component {
             </Menu>
         );
 
-        const widgetsMenu = (
-            <Menu className="widgets-menu">
-                <Menu.Item text="Info Panels" icon={"panel-stats"}>
-                    <Menu.Item text="Region List" icon={<CustomIcon icon="regionList"/>} onClick={appStore.widgetsStore.createFloatingRegionListWidget}/>
-                    <Menu.Item text="Image List" icon={"layers"} onClick={appStore.widgetsStore.createFloatingLayerListWidget}/>
-                    <Menu.Item text="Program Log" icon={"application"} onClick={appStore.widgetsStore.createFloatingLogWidget}/>
-                </Menu.Item>
-                <Menu.Item text="Profiles" icon={"pulse"}>
-                    <Menu.Item text="Spatial Profiler" icon={<CustomIcon icon="spatialProfiler"/>} onClick={appStore.widgetsStore.createFloatingSpatialProfilerWidget}/>
-                    <Menu.Item text="Spectral Profiler" icon={<CustomIcon icon="spectralProfiler"/>} onClick={appStore.widgetsStore.createFloatingSpectralProfilerWidget}/>
-                </Menu.Item>
-                <Menu.Item text="Statistics" icon={"calculator"} onClick={appStore.widgetsStore.createFloatingStatsWidget}/>
-                <Menu.Item text="Histogram" icon={"timeline-bar-chart"} onClick={appStore.widgetsStore.createFloatingHistogramWidget}/>
-                <Menu.Item text="Animator" icon={"video"} onClick={appStore.widgetsStore.createFloatingAnimatorWidget}/>
-                <Menu.Item text="Render Config" icon={"style"} onClick={appStore.widgetsStore.createFloatingRenderWidget}/>
-                <Menu.Item text="Stokes Analysis" icon={<CustomIcon icon="stokes"/>} onClick={appStore.widgetsStore.createFloatingStokesWidget}/>
-                <Menu.Item text="Catalog" icon={"heatmap"} onClick={appStore.widgetsStore.reloadFloatingCatalogWidget}/>
-                <Menu.Item text="Spectral Line Query" icon={<CustomIcon icon={"spectralLineQuery"}/>} onClick={appStore.widgetsStore.createFloatingSpectralLineQueryWidget}/>
-            </Menu>
-        );
-
         const helpMenu = (
             <Menu>
                 <Menu.Item text="Online Manual" icon={"manual"} onClick={this.handleDocumentationClicked}/>
@@ -330,7 +347,7 @@ export class RootMenuComponent extends React.Component {
                         <Menu.Item text="View"/>
                     </Menu>
                 </Popover>
-                <Popover autoFocus={false} minimal={true} content={widgetsMenu} position={Position.BOTTOM_LEFT}>
+                <Popover autoFocus={false} minimal={true} content={this.genWidgetsMenu()} position={Position.BOTTOM_LEFT}>
                     <Menu className="root-menu-entry">
                         <Menu.Item text="Widgets"/>
                     </Menu>
