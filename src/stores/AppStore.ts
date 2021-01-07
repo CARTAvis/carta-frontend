@@ -9,7 +9,6 @@ import {CARTA} from "carta-protobuf";
 import {
     AlertStore,
     AnimationMode,
-    AnimationState,
     AnimatorStore,
     BrowserMode,
     CatalogInfo,
@@ -873,7 +872,8 @@ export class AppStore {
         CARTA.StatsType.Sigma,
         CARTA.StatsType.SumSq,
         CARTA.StatsType.Min,
-        CARTA.StatsType.Max
+        CARTA.StatsType.Max,
+        CARTA.StatsType.Extrema
     ];
     private static readonly CursorThrottleTime = 200;
     private static readonly CursorThrottleTimeRotated = 100;
@@ -925,7 +925,7 @@ export class AppStore {
     }, AppStore.ImageChannelThrottleTime);
 
     throttledSetView = _.throttle((tiles: TileCoordinate[], fileId: number, channel: number, stokes: number, focusPoint: Point2D) => {
-        const isAnimating = (this.animatorStore.animationState !== AnimationState.STOPPED && this.animatorStore.animationMode !== AnimationMode.FRAME);
+        const isAnimating = this.animatorStore.serverAnimationActive;
         if (isAnimating) {
             this.backendService.addRequiredTiles(fileId, tiles.map(t => t.encode()), this.preferenceStore.animationCompressionQuality);
         } else {
@@ -1071,7 +1071,7 @@ export class AppStore {
                 // Calculate if new data is required
                 const updateRequiredChannels = this.activeFrame.requiredChannel !== this.activeFrame.channel || this.activeFrame.requiredStokes !== this.activeFrame.stokes;
                 // Don't auto-update when animation is playing
-                if (this.animatorStore.animationState === AnimationState.STOPPED && updateRequiredChannels) {
+                if (!this.animatorStore.animationActive && updateRequiredChannels) {
                     updates.push({frame: this.activeFrame, channel: this.activeFrame.requiredChannel, stokes: this.activeFrame.requiredStokes});
                 }
 

@@ -42,6 +42,21 @@ import {
     CatalogPlotType
 } from "./widgets";
 
+export enum WidgetType {
+    Region = "Region List Widget",
+    Log = "Log Widget",
+    SpatialProfiler = "Spatial Profiler",
+    SpectralProfiler = "Spectral Profiler",
+    Statistics = "Statistics Widget",
+    Histogram = "Histogram Widget",
+    Animator = "Animator Widget",
+    RenderConfig = "Render Config Widget",
+    StokesAnalysis = "Stokes Analysis Widget",
+    ImageList = "Image List Widget",
+    Catalog = "Catalog Widget",
+    SpectralLineQuery = "Spectral Line Query Widget"
+}
+
 export interface DefaultWidgetConfig {
     id: string;
     type: string;
@@ -143,6 +158,21 @@ export class WidgetsStore {
 
     private widgetsMap: Map<string, Map<string, any>>;
     private defaultFloatingWidgetOffset: number;
+
+    public CARTAWidgets = new Map<WidgetType, {isCustomIcon: boolean, icon: string, onClick: () => void}>([
+        [WidgetType.Region, {isCustomIcon: true, icon: "regionList", onClick: () => WidgetsStore.Instance.createFloatingRegionListWidget()}],
+        [WidgetType.Log, {isCustomIcon: false, icon: "application", onClick: () => WidgetsStore.Instance.createFloatingLogWidget()}],
+        [WidgetType.SpatialProfiler, {isCustomIcon: true, icon: "spatialProfiler", onClick: () => WidgetsStore.Instance.createFloatingSpatialProfilerWidget()}],
+        [WidgetType.SpectralProfiler, {isCustomIcon: true, icon: "spectralProfiler", onClick: () => WidgetsStore.Instance.createFloatingSpectralProfilerWidget()}],
+        [WidgetType.Statistics, {isCustomIcon: false, icon: "calculator", onClick: () => WidgetsStore.Instance.createFloatingStatsWidget()}],
+        [WidgetType.Histogram, {isCustomIcon: false, icon: "timeline-bar-chart", onClick: () => WidgetsStore.Instance.createFloatingHistogramWidget()}],
+        [WidgetType.Animator, {isCustomIcon: false, icon: "video", onClick: () => WidgetsStore.Instance.createFloatingAnimatorWidget()}],
+        [WidgetType.RenderConfig, {isCustomIcon: false, icon: "style", onClick: () => WidgetsStore.Instance.createFloatingRenderWidget()}],
+        [WidgetType.StokesAnalysis, {isCustomIcon: true, icon: "stokes", onClick: () => WidgetsStore.Instance.createFloatingStokesWidget()}],
+        [WidgetType.ImageList, {isCustomIcon: false, icon: "layers", onClick: () => WidgetsStore.Instance.createFloatingLayerListWidget()}],
+        [WidgetType.Catalog, {isCustomIcon: false, icon: "heatmap", onClick: () => WidgetsStore.Instance.reloadFloatingCatalogWidget()}],
+        [WidgetType.SpectralLineQuery, {isCustomIcon: true, icon: "spectralLineQuery", onClick: () => WidgetsStore.Instance.createFloatingSpectralLineQueryWidget()}]
+    ]);
 
     public static RemoveFrameFromRegionWidgets(storeMap: Map<string, RegionWidgetStore>, fileId: number = ACTIVE_FILE_ID) {
         if (fileId === ACTIVE_FILE_ID) {
