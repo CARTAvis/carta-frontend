@@ -36,7 +36,12 @@ export class FileBrowserDialogComponent extends React.Component {
         const fileBrowserStore = FileBrowserStore.Instance;
         if (this.selectedFiles.length > 1) {
             for (let i = 0; i < this.selectedFiles.length; i++) {
-                await this.loadFile(this.selectedFiles[i], i > 0);
+                try {
+                    await this.loadFile(this.selectedFiles[i], i > 0);
+                }
+                catch (err){
+                    console.log(err);
+                }
             }
         } else {
             await this.loadFile({fileInfo: fileBrowserStore.selectedFile, hdu: fileBrowserStore.selectedHDU});
