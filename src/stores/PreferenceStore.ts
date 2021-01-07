@@ -362,6 +362,15 @@ export class PreferenceStore {
         return this.preferences.get(PreferenceKeys.PERFORMANCE_STOP_ANIMATION_PLAYBACK_MINUTES) ?? DEFAULTS.PERFORMANCE.stopAnimationPlaybackMinutes;
     }
 
+    @computed get isSelectingAllLogEvents(): boolean {
+        return this.preferences.get(PreferenceKeys.LOG_EVENT)?.length === Event.EVENT_NUMBER;
+    }
+
+    @computed get isSelectingIndeterminateLogEvents(): boolean {
+        const selected = this.preferences.get(PreferenceKeys.LOG_EVENT)?.length;
+        return selected > 0 && selected < Event.EVENT_NUMBER;
+    }
+
     public isEventLoggingEnabled = (eventType: CARTA.EventType): boolean => {
         if (Event.isEventTypeValid(eventType)) {
             const logEvents = this.preferences.get(PreferenceKeys.LOG_EVENT);
@@ -382,10 +391,6 @@ export class PreferenceStore {
 
     @computed get isCursorFrozen(): boolean {
         return this.cursorPosition === CursorPosition.FIXED;
-    }
-
-    @computed get enabledLoggingEventNames(): string[] {
-        return this.preferences.get(PreferenceKeys.LOG_EVENT) ?? [];
     }
 
     @action setPreference = async (key: PreferenceKeys, value: any) => {
@@ -474,6 +479,14 @@ export class PreferenceStore {
             PreferenceKeys.PERFORMANCE_IMAGE_COMPRESSION_QUALITY, PreferenceKeys.PERFORMANCE_LOW_BAND_WIDTH_MODE, PreferenceKeys.PERFORMANCE_STOP_ANIMATION_PLAYBACK_MINUTES,
             PreferenceKeys.PERFORMANCE_STREAM_CONTOURS_WHILE_ZOOMING, PreferenceKeys.PERFORMANCE_SYSTEM_TILE_CACHE
         ]);
+    };
+
+    @action selectAllLogEvents = () => {
+        if (this.isSelectingAllLogEvents || this.isSelectingIndeterminateLogEvents) {
+            this.resetLogEventSettings();
+        } else {
+            Event.EVENT_TYPES.forEach((eventType) => this.setPreference(PreferenceKeys.LOG_EVENT, eventType));
+        }
     };
 
     @action resetLogEventSettings = () => {
