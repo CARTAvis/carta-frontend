@@ -17,4 +17,15 @@
             width: 60px;
         }
     }
+
+    .panel-container {
+        .file-menu .bp3-button{
+            width: 150px;
+            height: 30px;
+            .bp3-button-text {
+                overflow: hidden;
+                white-space: nowrap;
+            }
+        }
+    }
 }

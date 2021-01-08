@@ -192,7 +192,7 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
 
         const overlayPanel = (
             <div className="panel-container">
-                 <FormGroup  inline={true} label="File"  disabled={disabledOverlayPanel}>
+                 <FormGroup className={"file-menu"} inline={true} label="File"  disabled={disabledOverlayPanel}>
                     <Select 
                         className="bp3-fill"
                         disabled={disabledOverlayPanel}

@@ -1,6 +1,6 @@
 import * as React from "react";
 import {observer} from "mobx-react";
-import {FormGroup, Switch, NumericInput, Button, HTMLSelect} from "@blueprintjs/core";
+import {FormGroup, Switch, Button, HTMLSelect} from "@blueprintjs/core";
 import {ColorResult} from "react-color";
 import {ColorPickerComponent, PlotTypeSelectorComponent, PlotType, SafeNumericInput} from "components/Shared";
 import {SWATCH_COLORS} from "utilities";
@@ -154,7 +154,7 @@ export class LinePlotSettingsPanelComponent extends React.Component<LinePlotSett
                     </FormGroup>
                     { typeof props.xMinVal !== "undefined"  && props.handleXMinChange &&
                     <FormGroup label={"X Min"} inline={true}>
-                        <NumericInput
+                        <SafeNumericInput
                             className="line-boundary"
                             value={props.xMinVal}
                             selectAllOnFocus={true}
@@ -167,7 +167,7 @@ export class LinePlotSettingsPanelComponent extends React.Component<LinePlotSett
                     }
                     { typeof props.xMaxVal !== "undefined"  && props.handleXMaxChange &&
                     <FormGroup label={"X Max"} inline={true}>
-                        <NumericInput
+                        <SafeNumericInput
                             className="line-boundary"
                             value={props.xMaxVal}
                             selectAllOnFocus={true}
@@ -180,8 +180,9 @@ export class LinePlotSettingsPanelComponent extends React.Component<LinePlotSett
                     }
                     { typeof props.yMinVal !== "undefined"  && props.handleYMinChange &&
                     <FormGroup label={"Y Min"} inline={true}>
-                        <NumericInput
+                        <SafeNumericInput
                             className="line-boundary"
+                            asyncControl={true}
                             value={props.yMinVal}
                             selectAllOnFocus={true}
                             buttonPosition={"none"}
@@ -193,8 +194,9 @@ export class LinePlotSettingsPanelComponent extends React.Component<LinePlotSett
                     }
                     { typeof props.yMaxVal !== "undefined"  && props.handleYMaxChange &&
                     <FormGroup label={"Y Max"} inline={true}>
-                        <NumericInput
+                        <SafeNumericInput
                             className="line-boundary"
+                            asyncControl={true}
                             value={props.yMaxVal}
                             selectAllOnFocus={true}
                             buttonPosition={"none"}

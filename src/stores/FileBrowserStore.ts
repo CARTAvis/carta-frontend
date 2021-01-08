@@ -25,6 +25,11 @@ export type RegionFileType = CARTA.FileType.CRTF | CARTA.FileType.DS9_REG;
 export type ImageFileType = CARTA.FileType.CASA | CARTA.FileType.FITS | CARTA.FileType.HDF5 | CARTA.FileType.MIRIAD;
 export type CatalogFileType = CARTA.CatalogFileType.VOTable | CARTA.CatalogFileType.FITSTable;
 
+export interface ISelectedFile {
+    fileInfo?: CARTA.IFileInfo | CARTA.ICatalogFileInfo,
+    hdu?: string
+}
+
 export class FileBrowserStore {
     private static staticInstance: FileBrowserStore;
 
@@ -185,24 +190,24 @@ export class FileBrowserStore {
         }));
     };
 
-    @action selectFile = (file: CARTA.IFileInfo | CARTA.ICatalogFileInfo, hdu?: string) => {
+    @action selectFile = (file: ISelectedFile) => {
         const fileList = this.getfileListByMode;
-        this.selectedFile = file;
+        this.selectedFile = file.fileInfo;
 
-        if (hdu) {
-            this.selectedHDU = hdu;
+        if (file.hdu) {
+            this.selectedHDU = file.hdu;
         }
 
         if (this.browserMode === BrowserMode.File) {
-            this.getFileInfo(fileList.directory, file.name, hdu);
+            this.getFileInfo(fileList.directory, file.fileInfo.name, file.hdu);
         } else if (this.browserMode === BrowserMode.SaveFile) {
-            this.getFileInfo(fileList.directory, file.name, hdu);
-            this.saveFilename = file.name;
+            this.getFileInfo(fileList.directory, file.fileInfo.name, file.hdu);
+            this.saveFilename = file.fileInfo.name;
         } else if (this.browserMode === BrowserMode.Catalog) {
-            this.getCatalogFileInfo(fileList.directory, file.name);
+            this.getCatalogFileInfo(fileList.directory, file.fileInfo.name);
         } else {
-            this.setExportFilename(file.name);
-            this.getRegionFileInfo(fileList.directory, file.name);
+            this.setExportFilename(file.fileInfo.name);
+            this.getRegionFileInfo(fileList.directory, file.fileInfo.name);
         }
     };
 

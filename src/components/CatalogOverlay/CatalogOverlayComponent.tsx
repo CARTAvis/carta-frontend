@@ -687,18 +687,6 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
             this.updateTableSize(this.catalogTableRef, false);
         }
     }
-    
-    private onMaxRowsChange = (val: number) => {
-        const profileStore = this.profileStore;
-        const dataSize = profileStore?.catalogInfo?.dataSize;
-        if (profileStore && val > 0 && val < dataSize) {
-            profileStore.setMaxRows(val);
-        } else if (profileStore && val === 0) {
-            profileStore.setMaxRows(1);
-        } else {
-            profileStore.setMaxRows(profileStore.catalogInfo.dataSize);
-        }
-    }
 
     private renderSystemPopOver = (system: CatalogSystemType, itemProps: IItemRendererProps) => {
         const menuItem = (
@@ -928,7 +916,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
                                 className={"catalog-max-rows"}
                                 label="Max Rows"
                                 value={profileStore.maxRows}
-                                onValueChanged={val => this.onMaxRowsChange(val)}
+                                onValueChanged={val => profileStore.setMaxRows(val)}
                                 onValueCleared={() => profileStore.setMaxRows(profileStore.catalogInfo.dataSize)}
                                 displayExponential={false}
                                 updateValueOnKeyDown={true}
