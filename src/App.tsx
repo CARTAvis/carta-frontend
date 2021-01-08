@@ -33,10 +33,11 @@ export class App extends React.Component {
         return (
             <div className={className}>
                 <UIControllerComponent/>
-                <Alert className={appStore.darkTheme ? "bp3-dark" : ""} isOpen={appStore.alertStore.alertVisible} onClose={appStore.alertStore.dismissAlert} canEscapeKeyCancel={true}>
+                <Alert icon={appStore.alertStore.alertIcon} className={appStore.darkTheme ? "bp3-dark" : ""} isOpen={appStore.alertStore.alertVisible} onClose={appStore.alertStore.dismissAlert} canEscapeKeyCancel={true}>
                     <p>{appStore.alertStore.alertText}</p>
                 </Alert>
                 <Alert
+                    icon={appStore.alertStore.alertIcon}
                     className={appStore.darkTheme ? "bp3-dark" : ""}
                     isOpen={appStore.alertStore.interactiveAlertVisible}
                     confirmButtonText="OK"

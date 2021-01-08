@@ -9,7 +9,6 @@ import {CARTA} from "carta-protobuf";
 import {
     AlertStore,
     AnimationMode,
-    AnimationState,
     AnimatorStore,
     BrowserMode,
     CatalogInfo,
@@ -332,7 +331,8 @@ export class AppStore {
             fileInfo: new CARTA.FileInfo(ack.fileInfo),
             fileInfoExtended: new CARTA.FileInfoExtended(ack.fileInfoExtended),
             fileFeatureFlags: ack.fileFeatureFlags,
-            renderMode: CARTA.RenderMode.RASTER
+            renderMode: CARTA.RenderMode.RASTER,
+            beamTable: ack.beamTable
         };
 
         let newFrame = new FrameStore(frameInfo);
@@ -928,7 +928,7 @@ export class AppStore {
     };
 
     private updateView = (tiles: TileCoordinate[], fileId: number, channel: number, stokes: number, focusPoint: Point2D) => {
-        const isAnimating = (this.animatorStore.animationState !== AnimationState.STOPPED && this.animatorStore.animationMode !== AnimationMode.FRAME);
+        const isAnimating = this.animatorStore.serverAnimationActive;
         if (isAnimating) {
             this.backendService.addRequiredTiles(fileId, tiles.map(t => t.encode()), this.preferenceStore.animationCompressionQuality);
         } else {
@@ -1077,7 +1077,7 @@ export class AppStore {
                 // Calculate if new data is required
                 const updateRequiredChannels = this.activeFrame.requiredChannel !== this.activeFrame.channel || this.activeFrame.requiredStokes !== this.activeFrame.stokes;
                 // Don't auto-update when animation is playing
-                if (this.animatorStore.animationState === AnimationState.STOPPED && updateRequiredChannels) {
+                if (!this.animatorStore.animationActive && updateRequiredChannels) {
                     updates.push({frame: this.activeFrame, channel: this.activeFrame.requiredChannel, stokes: this.activeFrame.requiredStokes});
                 }
 

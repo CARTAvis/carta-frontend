@@ -1,4 +1,5 @@
 import { action, observable, makeObservable } from "mobx";
+import React from "react";
 
 export class AlertStore {
     private static staticInstance: AlertStore;
@@ -11,13 +12,15 @@ export class AlertStore {
     }
 
     @observable alertVisible: boolean;
-    @observable alertText: string;
+    @observable alertText: string | React.ReactNode;
+    @observable alertIcon: any;
     @observable interactiveAlertVisible: boolean;
-    @observable interactiveAlertText: string;
+    @observable interactiveAlertText: string | React.ReactNode;
     interactiveAlertCallback: (confirmed: boolean) => void;
 
-    @action("show_alert") showAlert = (text: string) => {
+    @action("show_alert") showAlert = (text: string | React.ReactNode, icon?: any) => {
         this.alertText = text;
+        this.alertIcon = icon;
         this.alertVisible = true;
     };
 
@@ -25,8 +28,9 @@ export class AlertStore {
         this.alertVisible = false;
     };
 
-    @action("show_alert") showInteractiveAlert = (text: string, onClose: (confirmed: boolean) => void) => {
+    @action("show_alert") showInteractiveAlert = (text: string | React.ReactNode, onClose: (confirmed: boolean) => void, icon?: any) => {
         this.interactiveAlertText = text;
+        this.alertIcon = icon;
         this.interactiveAlertVisible = true;
         this.interactiveAlertCallback = onClose;
     };

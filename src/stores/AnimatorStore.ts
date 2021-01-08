@@ -10,11 +10,6 @@ export enum AnimationMode {
     FRAME = 2
 }
 
-export enum AnimationState {
-    STOPPED = 0,
-    PLAYING = 1
-}
-
 export enum PlayMode {
     FORWARD = 0,
     BACKWARD = 1,
@@ -39,12 +34,12 @@ export class AnimatorStore {
     @observable maxStep: number;
     @observable minStep: number;
     @observable animationMode: AnimationMode;
-    @observable animationState: AnimationState;
+    @observable animationActive: boolean;
     @observable playMode: PlayMode;
 
     @action setAnimationMode = (val: AnimationMode) => {
         // Prevent animation mode changes during playback
-        if (this.animationState === AnimationState.PLAYING) {
+        if (this.animationActive) {
             return;
         }
         this.animationMode = val;
@@ -68,7 +63,7 @@ export class AnimatorStore {
 
         if (this.animationMode === AnimationMode.FRAME) {
             clearInterval(this.animateHandle);
-            this.animationState = AnimationState.PLAYING;
+            this.animationActive = false;
             this.animate();
             this.animateHandle = setInterval(this.animate, this.frameInterval);
             return;
@@ -130,7 +125,7 @@ export class AnimatorStore {
             appStore.tileService.setAnimationEnabled(false);
         });
         appStore.tileService.setAnimationEnabled(true);
-        this.animationState = AnimationState.PLAYING;
+        this.animationActive = true;
 
         clearTimeout(this.stopHandle);
         this.stopHandle = setTimeout(this.stopAnimation, 1000 * 60 * preferenceStore.stopAnimationPlaybackMinutes);
@@ -138,7 +133,7 @@ export class AnimatorStore {
 
     @action stopAnimation = () => {
         // Ignore stop when not playing
-        if (this.animationState === AnimationState.STOPPED) {
+        if (!this.animationActive) {
             return;
         }
 
@@ -148,7 +143,7 @@ export class AnimatorStore {
             return;
         }
 
-        this.animationState = AnimationState.STOPPED;
+        this.animationActive = false;
         appStore.tileService.setAnimationEnabled(false);
 
         if (this.animationMode === AnimationMode.FRAME) {
@@ -177,7 +172,7 @@ export class AnimatorStore {
     };
 
     @action animate = () => {
-        if (this.animationState === AnimationState.PLAYING && this.animationMode === AnimationMode.FRAME) {
+        if (this.animationActive && this.animationMode === AnimationMode.FRAME) {
             AppStore.Instance.nextFrame();
         }
     };
@@ -194,7 +189,7 @@ export class AnimatorStore {
         this.maxStep = 50;
         this.minStep = 1;
         this.animationMode = AnimationMode.CHANNEL;
-        this.animationState = AnimationState.STOPPED;
+        this.animationActive = false;
         this.animateHandle = null;
         this.playMode = PlayMode.FORWARD;
     }
@@ -204,7 +199,7 @@ export class AnimatorStore {
     }
 
     @computed get serverAnimationActive() {
-        return this.animationState === AnimationState.PLAYING && this.animationMode !== AnimationMode.FRAME;
+        return this.animationActive && this.animationMode !== AnimationMode.FRAME;
     }
 
     private genAnimationFrames = (frame: FrameStore): {
