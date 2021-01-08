@@ -139,7 +139,7 @@ export class CatalogOverlayPlotSettingsComponent extends React.Component<Catalog
                         max={CatalogWidgetStore.MaxOverlaySize}
                         value={props.catalogSize}
                         stepSize={1}
-                        intonly={"true"}
+                        intOnly={true}
                         onValueChange={(value: number) => this.handleCatalogSizeChange(value)}
                     />
                 </FormGroup>
