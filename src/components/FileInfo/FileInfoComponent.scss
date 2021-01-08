@@ -10,7 +10,6 @@
         flex: 2 2 auto;
     }
 
-
     .header-list {
         display: block;
         unicode-bidi: embed;
@@ -49,54 +48,59 @@
 
 }
 
-.region-select{
-    display: flex;
-    flex-direction: row;
-    margin-top: 0px;
-    margin-bottom: 1em;
+.file-save-pre {
+    overflow: auto;
+    height: 100%;
 
-    .bp3-control-group {
-        margin-left: 0px;
-        .bp3-label {
-            margin: auto;
+    .region-select{
+        display: flex;
+        flex-direction: row;
+        margin-top: 0px;
+        margin-bottom: 1em;
+
+        .bp3-control-group {
+            margin-left: 0px;
+            .bp3-label {
+                margin: auto;
+                margin-right: 1em;
+                width: auto;
+            }
+            .bp3-input {
+                margin-left: 2em;
+                width: auto;
+            }
+        }
+    }
+
+    .range-select {
+        display: flex;
+        flex-direction: row;
+        margin-top: 1em;
+
+        .bp3-control-group {
+            margin-left: 0px;
+            .bp3-label {
+                margin: auto;
+            }
+            .bp3-input {
+                width: 8em;
+                align-self: auto;
+            }
+        }
+    }
+
+    .coordinate-select {
+        display: flex;
+        flex-direction: row;
+        margin-top: 0em;
+
+        .bp3-form-group {
             margin-right: 1em;
-            width: auto;
-        }
-        .bp3-input {
-            margin-left: 2em;
-            width: auto;
-        }
-    }
-}
 
-.range-select {
-    display: flex;
-    flex-direction: row;
-    margin-top: 1em;
-
-    .bp3-control-group {
-        margin-left: 0px;
-        .bp3-label {
-            margin: auto;
-        }
-        .bp3-input {
-            width: 8em;
-            align-self: auto;
+            .bp3-select {
+                margin-left: auto;
+            }
         }
     }
-}
 
-
-.coordinate-select {
-    display: flex;
-    flex-direction: row;
-    margin-top: 0em;
-
-    .bp3-form-group {
-        margin-right: 1em;
-
-        .bp3-select {
-            margin-left: auto;
-        }
-    }
 }

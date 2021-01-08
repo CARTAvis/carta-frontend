@@ -1,8 +1,13 @@
-import {action, autorun, computed, observable, makeObservable, runInAction} from "mobx";
 import {NumberRange} from "@blueprintjs/core";
+
+import {action, autorun, computed, observable, makeObservable, runInAction} from "mobx";
+
 import {CARTA} from "carta-protobuf";
+
 import * as AST from "ast_wrapper";
+
 import {AnimatorStore, AppStore, ASTSettingsString, ContourConfigStore, ContourStore, LogStore, OverlayBeamStore, OverlayStore, PreferenceStore, RegionSetStore, RegionStore, RenderConfigStore} from "stores";
+
 import {
     CHANNEL_TYPES,
     ChannelInfo,
@@ -26,9 +31,13 @@ import {
     Transform2D,
     ZoomPoint
 } from "models";
+
 import {clamp, formattedFrequency, getHeaderNumericValue, getTransformedChannel, transformPoint, isAstBadPoint, minMax2D, rotate2D, toFixed, trimFitsComment, round2D, getFormattedWCSPoint} from "utilities";
+
 import {BackendService, ContourWebGLService} from "services";
+
 import {RegionId} from "stores/widgets";
+
 import {formattedArcsec} from "utilities";
 
 export interface FrameInfo {
@@ -786,6 +795,10 @@ export class FrameStore {
 
     private convertSpectral = (values: Array<number>): Array<number> => {
         return values && values.length > 0 ? values.map(value => this.astSpectralTransform(this.spectralType, this.spectralUnit, this.spectralSystem, value)) : null;
+    };
+
+    public convertSpectralValue = (value: number): number => {
+        return this.astSpectralTransform(this.spectralType, this.spectralUnit, this.spectralSystem, value);
     };
 
     private astSpectralTransform = (type: SpectralType, unit: SpectralUnit, system: SpectralSystem, value: number): number => {

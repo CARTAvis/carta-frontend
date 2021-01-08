@@ -183,7 +183,7 @@ export class FileInfoComponent extends React.Component<{
         const spectralSystemOptions: IOptionProps[] = activeFrame && activeFrame.spectralSystemsSupported ? activeFrame.spectralSystemsSupported.map(system => { return { value: system, label: system }; }) : [];
         return (
             <React.Fragment>
-                <Pre>
+                <Pre className="file-save-pre">
                     <ControlGroup fill={true} vertical={false}>
                         <Label>{"Source file: "}</Label>
                         <Text ellipsize={true}>
@@ -206,9 +206,11 @@ export class FileInfoComponent extends React.Component<{
                     {activeFrame && activeFrame.numChannels > 1 &&
                         <React.Fragment>
                             <div className="range-select">
-                                <FormGroup label={"Spectral coverage"} inline={false} labelInfo={activeFrame?.spectralUnit ? `(${activeFrame.spectralUnit})` : ""} >
+                                <FormGroup label={"Spectral coverage"} inline={false} >
+                                    <Text>{activeFrame?.spectralUnit ? `from ${activeFrame.convertSpectralValue(fileBrowser.saveChannelStart)} (${activeFrame.spectralUnit})` : ""}</Text>
+                                    <Text>{activeFrame?.spectralUnit ? `to ${activeFrame.convertSpectralValue(fileBrowser.saveChannelEnd)} (${activeFrame.spectralUnit})` : ""}</Text>
                                     <ControlGroup fill={true} vertical={false}>
-                                        <Label>{"from"}</Label>
+                                        <Label>{"Channels from"}</Label>
                                         <SafeNumericInput
                                             value={fileBrowser.saveChannelStart}
                                             buttonPosition="none"
