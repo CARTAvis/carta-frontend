@@ -331,7 +331,8 @@ export class AppStore {
             fileInfo: new CARTA.FileInfo(ack.fileInfo),
             fileInfoExtended: new CARTA.FileInfoExtended(ack.fileInfoExtended),
             fileFeatureFlags: ack.fileFeatureFlags,
-            renderMode: CARTA.RenderMode.RASTER
+            renderMode: CARTA.RenderMode.RASTER,
+            beamTable: ack.beamTable
         };
 
         let newFrame = new FrameStore(frameInfo);
