@@ -9,7 +9,7 @@ import {ColormapConfigComponent} from "./ColormapConfigComponent/ColormapConfigC
 import {LinePlotComponent, LinePlotComponentProps, ProfilerInfoComponent, SafeNumericInput} from "components/Shared";
 import {TaskProgressDialogComponent} from "components/Dialogs";
 import {RenderConfigWidgetStore} from "stores/widgets";
-import {AnimationState, FrameStore, RenderConfigStore, DefaultWidgetConfig, WidgetProps, HelpType, AppStore, AnimatorStore, WidgetsStore} from "stores";
+import {FrameStore, RenderConfigStore, DefaultWidgetConfig, WidgetProps, HelpType, AppStore, WidgetsStore} from "stores";
 import {Point2D} from "models";
 import {clamp, toExponential, toFixed} from "utilities";
 import "./RenderConfigComponent.scss";
@@ -406,7 +406,7 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
                         renderConfig={frame.renderConfig}
                         onCubeHistogramSelected={this.handleCubeHistogramSelected}
                         showHistogramSelect={frame.frameInfo.fileInfoExtended.depth > 1}
-                        disableHistogramSelect={AnimatorStore.Instance.animationState === AnimationState.PLAYING}
+                        disableHistogramSelect={appStore.animatorStore.animationActive}
                         warnOnCubeHistogram={(frame.frameInfo.fileFeatureFlags & CARTA.FileFeatureFlags.CUBE_HISTOGRAMS) === 0}
                     />
                     <FormGroup label={"Clip Min"} inline={true}>

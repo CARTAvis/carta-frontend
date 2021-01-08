@@ -7,7 +7,7 @@ import {RegionSelectorComponent} from "components";
 import {TaskProgressDialogComponent} from "components/Dialogs";
 import {SafeNumericInput, SpectralSettingsComponent} from "components/Shared";
 import {MomentSelectingMode, SpectralProfileWidgetStore, RegionId} from "stores/widgets";
-import {AnimationState, AppStore} from "stores";
+import {AppStore} from "stores";
 import {MOMENT_TEXT} from "models";
 import "./MomentGeneratorComponent.scss";
 
@@ -182,7 +182,7 @@ export class MomentGeneratorComponent extends React.Component<{widgetStore: Spec
         const effectiveRegion = (frame?.regionSet?.regions) ? frame.regionSet.regions.find(r => r.regionId === widgetStore.effectiveRegionId) : null;
         const isEnabledRegion = effectiveRegion && effectiveRegion.isClosedRegion;
         const isImage = widgetStore.regionIdMap.get(widgetStore.fileId) !== RegionId.CURSOR && widgetStore.effectiveRegionId === 0; // request image when region dropdown is active with no region selected
-        const isAbleToGenerate = frame && frame.numChannels > 1 && appStore.animatorStore.animationState === AnimationState.STOPPED && !appStore.widgetsStore.isSpectralWidgetStreamingData && (isEnabledRegion || isImage);
+        const isAbleToGenerate = frame && frame.numChannels > 1 && !appStore.animatorStore.animationActive && !appStore.widgetsStore.isSpectralWidgetStreamingData && (isEnabledRegion || isImage);
         const hint = <span><br/><i><small>Please ensure<br/>1. Animation playback is stopped.<br/>2. Spectral profile generation is complete.<br/>3. Cursor or point region is not selected.</small></i></span>;
         const msg = <span>Unable to generate moment images{hint}</span>;
         const momentsPanel = (
