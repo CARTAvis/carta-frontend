@@ -85,3 +85,18 @@
         }
     }
 }
+
+
+.coordinate-select {
+    display: flex;
+    flex-direction: row;
+    margin-top: 0em;
+
+    .bp3-form-group {
+        margin-right: 1em;
+
+        .bp3-select {
+            margin-left: auto;
+        }
+    }
+}

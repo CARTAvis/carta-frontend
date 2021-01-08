@@ -7,6 +7,7 @@ import { CARTA } from "carta-protobuf";
 import { SafeNumericInput, TableComponent, TableComponentProps } from "components/Shared";
 import "./FileInfoComponent.scss";
 import { AppStore } from "stores";
+import { SpectralSystem, SpectralType, SpectralUnit } from "models";
 
 export enum FileInfoType {
     IMAGE_FILE = "image-file",
@@ -154,11 +155,32 @@ export class FileInfoComponent extends React.Component<{
         }
     };
 
+    private updateSpectralCoordinate(coordStr: string): void {
+        const activeFrame = AppStore.Instance.activeFrame;
+        if (activeFrame && activeFrame.spectralCoordsSupported && activeFrame.spectralCoordsSupported.has(coordStr)) {
+            const coord: { type: SpectralType, unit: SpectralUnit } = activeFrame.spectralCoordsSupported.get(coordStr);
+            activeFrame.spectralType = coord.type;
+            activeFrame.spectralUnit = coord.unit;
+        }
+    }
+
+    private updateSpectralSystem(specsys: SpectralSystem): void {
+        const activeFrame = AppStore.Instance.activeFrame;
+        if (activeFrame && activeFrame.spectralSystemsSupported && activeFrame.spectralSystemsSupported.includes(specsys)) {
+            activeFrame.spectralSystem = specsys;
+        }
+    }
+
     private renderSaveImageControl() {
         const fileBrowser = AppStore.Instance.fileBrowserStore;
         const activeFrame = AppStore.Instance.activeFrame;
         const closedRegions = activeFrame.regionSet?.regions.filter(region => region.regionId > 0 && region.isClosedRegion);
         const regionOptions: IOptionProps[] = [{ value: 0, label: "Image" }].concat(closedRegions.map(region => ({ value: region.regionId, label: `${region.name ? region.name : region.regionId} (${CARTA.RegionType[region.regionType]})` })));
+
+        const nativeSpectralCoordinate = activeFrame ? activeFrame.nativeSpectralCoordinate : undefined;
+        const spectralCoordinateOptions: IOptionProps[] = activeFrame && activeFrame.spectralCoordsSupported ?
+            Array.from(activeFrame.spectralCoordsSupported.keys()).map((coord: string) => { return { value: coord, label: coord === nativeSpectralCoordinate ? coord + " (Native WCS)" : coord }; }) : [];
+        const spectralSystemOptions: IOptionProps[] = activeFrame && activeFrame.spectralSystemsSupported ? activeFrame.spectralSystemsSupported.map(system => { return { value: system, label: system }; }) : [];
         return (
             <React.Fragment>
                 <Pre>
@@ -182,33 +204,57 @@ export class FileInfoComponent extends React.Component<{
                         <hr />
                     }
                     {activeFrame && activeFrame.numChannels > 1 &&
-                        <div className="range-select">
-                            <FormGroup label={"Spectral coverage"} inline={false} labelInfo={activeFrame?.spectralUnit ? `(${activeFrame.spectralUnit})` : ""} >
-                                <ControlGroup fill={true} vertical={false}>
-                                    <Label>{"from"}</Label>
-                                    <SafeNumericInput
-                                        value={fileBrowser.saveChannelStart}
-                                        buttonPosition="none"
-                                        fill={true}
-                                        placeholder="First channel"
-                                        onValueChange={this.handleSaveChannelStartChanged}
-                                        min={0}
-                                        max={fileBrowser.saveChannelEnd - 1}
-                                        clampValueOnBlur={true}
+                        <React.Fragment>
+                            <div className="range-select">
+                                <FormGroup label={"Spectral coverage"} inline={false} labelInfo={activeFrame?.spectralUnit ? `(${activeFrame.spectralUnit})` : ""} >
+                                    <ControlGroup fill={true} vertical={false}>
+                                        <Label>{"from"}</Label>
+                                        <SafeNumericInput
+                                            value={fileBrowser.saveChannelStart}
+                                            buttonPosition="none"
+                                            fill={true}
+                                            placeholder="First channel"
+                                            onValueChange={this.handleSaveChannelStartChanged}
+                                            min={0}
+                                            max={fileBrowser.saveChannelEnd - 1}
+                                            clampValueOnBlur={true}
+                                        />
+                                        <Label>{"to"}</Label>
+                                        <SafeNumericInput
+                                            value={fileBrowser.saveChannelEnd}
+                                            buttonPosition="none"
+                                            placeholder="Last channel"
+                                            onValueChange={this.handleSaveChannelEndChanged}
+                                            min={fileBrowser.saveChannelStart + 1}
+                                            max={activeFrame.channelValues.length}
+                                            clampValueOnBlur={true}
+                                        />
+                                    </ControlGroup>
+                                </FormGroup>
+                            </div>
+                            <div className="coordinate-select">
+                                <FormGroup label={"Coordinate"} inline={true}>
+                                    <HTMLSelect
+                                        value={activeFrame && (activeFrame.spectralCoordinate || "")}
+                                        options={spectralCoordinateOptions}
+                                        onChange={
+                                            (event: React.FormEvent<HTMLSelectElement>) =>
+                                                this.updateSpectralCoordinate(event.currentTarget.value as string)
+                                        }
                                     />
-                                    <Label>{"to"}</Label>
-                                    <SafeNumericInput
-                                        value={fileBrowser.saveChannelEnd}
-                                        buttonPosition="none"
-                                        placeholder="Last channel"
-                                        onValueChange={this.handleSaveChannelEndChanged}
-                                        min={fileBrowser.saveChannelStart + 1}
-                                        max={activeFrame.channelValues.length}
-                                        clampValueOnBlur={true}
+                                </FormGroup>
+                                <FormGroup label={"System"} inline={true} >
+                                    <HTMLSelect
+                                        value={activeFrame && (activeFrame.spectralSystem || "")}
+                                        options={spectralSystemOptions}
+                                        onChange={
+                                            (event: React.FormEvent<HTMLSelectElement>) =>
+                                                this.updateSpectralSystem(event.currentTarget.value as SpectralSystem)
+                                        }
                                     />
-                                </ControlGroup>
-                            </FormGroup>
-                        </div>
+                                </FormGroup>
+                            </div>
+                        </React.Fragment>
                     }
                     {activeFrame && activeFrame.hasStokes &&
                         <hr />
