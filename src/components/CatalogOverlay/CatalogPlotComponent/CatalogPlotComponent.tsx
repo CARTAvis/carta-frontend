@@ -203,13 +203,6 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
         return this.getHistogramXBorder(coords.wcsData);
     }
 
-    @computed get initnBinx(): number {
-        const widgetStore = this.widgetStore;
-        const profileStore = this.profileStore;
-        const coords = profileStore.get1DPlotData(widgetStore.xColumnName);
-        return  Math.ceil(Math.sqrt(coords.wcsData?.length));
-    }
-
     @computed get scatterData() {
         const widgetStore = this.widgetStore;
         const profileStore = this.profileStore;
@@ -243,8 +236,9 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
         // increase x range to include border data
         const fraction = 1.001;
         const start = xRange.xMin;
+        const nBinx = widgetStore.nBinx? widgetStore.nBinx : this.numBinsX;
         const end = start + (xRange.xMax - xRange.xMin) * fraction;
-        const size = (end - start) / widgetStore.nBinx;
+        const size = (end - start) / nBinx;
         data.type = "histogram";
         data.hoverinfo = "none";
         data.x = coords.wcsData?.slice(0);
@@ -285,6 +279,14 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
             }
         }
         return profileInfo;
+    }
+
+    @computed get numBinsX(): number {
+        const widgetStore = this.widgetStore;
+        const profileStore = this.profileStore;
+        const coords = profileStore.get1DPlotData(widgetStore.xColumnName);
+        const nBinx = Math.ceil(Math.sqrt(coords.wcsData?.length));
+        return  nBinx;
     }
 
     private handleColumnNameChange = (type: string, column: string) => {
@@ -487,23 +489,8 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
         }
     }
 
-    private onBinWidthChange = (val: number, reset: boolean = false) => {
-        const widgetStore = this.widgetStore;
-        let bins = val;
-        if (!Number.isInteger(val)) {
-            bins = Math.round(val);
-        }
-        if (reset) {
-            widgetStore.setnBinx(bins);
-        } else {
-            if (widgetStore && bins > 0) {
-                widgetStore.setnBinx(bins);
-            } else if (widgetStore && bins === 0) {
-                widgetStore.setnBinx(1);
-            } else {
-                widgetStore.setnBinx(this.initnBinx);
-            }
-        }
+    private onNumBinChange = (val: number) => {
+        this.widgetStore.setNumBinsX(val);
         this.onDeselect();
     }
 
@@ -704,7 +691,6 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
         };
         
         let data;
-        let bins = widgetStore.nBinx;
         if (widgetStore.plotType === CatalogPlotType.D2Scatter) {
             data = this.scatterData.data;
             let border;
@@ -735,10 +721,6 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
             layout.yaxis.title = "Count";
             if (widgetStore.logScaleY) {
                 layout.yaxis.type = "log";   
-            }
-
-            if (!bins) {
-                bins = this.initnBinx;
             }
         }
 
@@ -774,9 +756,11 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
             <ClearableNumericInputComponent
                 className={"catalog-bins"}
                 label="Bins"
-                value={bins}
-                onValueChanged={val => this.onBinWidthChange(val)}
-                onValueCleared={() => this.onBinWidthChange(this.initnBinx, true)}
+                min={1}
+                integerOnly={true}
+                value={widgetStore.nBinx? widgetStore.nBinx : this.numBinsX}
+                onValueChanged={val => this.onNumBinChange(val)}
+                onValueCleared={() => this.onNumBinChange(this.numBinsX)}
                 displayExponential={false}
                 updateValueOnKeyDown={true}
                 disabled={disabled}

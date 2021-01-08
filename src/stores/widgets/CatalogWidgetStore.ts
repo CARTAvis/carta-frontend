@@ -69,9 +69,7 @@ export class CatalogWidgetStore {
     }
 
     @action setCatalogSize(size: number) {
-        if (size >= CatalogWidgetStore.MinOverlaySize && size <= CatalogWidgetStore.MaxOverlaySize) {
-            this.catalogSize = size;
-        }
+        this.catalogSize = size;
     }
 
     @action setCatalogColor(color: string) {

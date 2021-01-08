@@ -1,11 +1,12 @@
 import * as React from "react";
 import {observer} from "mobx-react";
-import {Classes, H5, InputGroup, NumericInput, Position, Tooltip} from "@blueprintjs/core";
+import {Classes, H5, InputGroup, Position, Tooltip} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import {AppStore, RegionCoordinate, RegionStore, NUMBER_FORMAT_LABEL} from "stores";
 import {Point2D, WCSPoint2D} from "models";
 import {closeTo, getFormattedWCSPoint, getPixelValueFromWCS, isWCSStringFormatValid} from "utilities";
 import {CoordinateComponent} from "../CoordinateComponent/CoordinateComponent";
+import {SafeNumericInput} from "components/Shared";
 import "./PointRegionForm.scss";
 
 const KEYCODE_ENTER = 13;
@@ -113,12 +114,12 @@ export class PointRegionForm extends React.Component<{ region: RegionStore, wcsI
         const centerWCSPoint = getFormattedWCSPoint(this.props.wcsInfo, centerPoint);
         let xInput, yInput;
         if (region.coordinate === RegionCoordinate.Image) {
-            xInput = <NumericInput selectAllOnFocus={true} buttonPosition="none" placeholder="X Coordinate" value={centerPoint.x} onBlur={this.handleCenterXChange} onKeyDown={this.handleCenterXChange}/>;
-            yInput = <NumericInput selectAllOnFocus={true} buttonPosition="none" placeholder="Y Coordinate" value={centerPoint.y} onBlur={this.handleCenterYChange} onKeyDown={this.handleCenterYChange}/>;
+            xInput = <SafeNumericInput selectAllOnFocus={true} buttonPosition="none" placeholder="X Coordinate" value={centerPoint.x} onBlur={this.handleCenterXChange} onKeyDown={this.handleCenterXChange}/>;
+            yInput = <SafeNumericInput selectAllOnFocus={true} buttonPosition="none" placeholder="Y Coordinate" value={centerPoint.y} onBlur={this.handleCenterYChange} onKeyDown={this.handleCenterYChange}/>;
         } else {
             xInput = (
                 <Tooltip content={`Format: ${NUMBER_FORMAT_LABEL.get(formatX)}`} position={Position.BOTTOM} hoverOpenDelay={300}>
-                    <NumericInput
+                    <SafeNumericInput
                         allowNumericCharactersOnly={false}
                         buttonPosition="none"
                         placeholder="X WCS Coordinate"
@@ -131,7 +132,7 @@ export class PointRegionForm extends React.Component<{ region: RegionStore, wcsI
             );
             yInput = (
                 <Tooltip content={`Format: ${NUMBER_FORMAT_LABEL.get(formatY)}`} position={Position.BOTTOM} hoverOpenDelay={300}>
-                    <NumericInput
+                    <SafeNumericInput
                         allowNumericCharactersOnly={false}
                         buttonPosition="none"
                         placeholder="Y WCS Coordinate"
