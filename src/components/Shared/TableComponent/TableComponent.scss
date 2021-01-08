@@ -40,6 +40,7 @@
 }
 
 .column-popover {
+    max-width: 250px;
     .bp3-popover-arrow {
         .bp3-popover-arrow-fill {
             fill: #394b59 !important;
@@ -59,6 +60,7 @@
 }
 
 .column-popover-dark {
+    max-width: 250px;
     .bp3-popover-arrow {
         .bp3-popover-arrow-fill {
             fill: #e1e8ed !important;
