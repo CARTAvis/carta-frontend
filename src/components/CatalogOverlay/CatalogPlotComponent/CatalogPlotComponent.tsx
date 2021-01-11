@@ -4,8 +4,9 @@ import Plot from "react-plotly.js";
 import {autorun, computed, observable, action, makeObservable} from "mobx";
 import {observer} from "mobx-react";
 import {FormGroup, AnchorButton, Intent, Tooltip, Switch, Button, MenuItem, PopoverPosition, NonIdealState} from "@blueprintjs/core";
-import {Select, IItemRendererProps} from "@blueprintjs/select";
+import {Select, IItemRendererProps, ItemPredicate} from "@blueprintjs/select";
 import ReactResizeDetector from "react-resize-detector";
+import FuzzySearch from "fuzzy-search";
 import {CARTA} from "carta-protobuf";
 import {CatalogUpdateMode, WidgetProps, AppStore, WidgetsStore, CatalogStore, CatalogProfileStore, DefaultWidgetConfig} from "stores";
 import {CatalogPlotWidgetStore, Border, DragMode, XBorder, CatalogPlotWidgetStoreProps, CatalogWidgetStore, CatalogPlotType} from "stores/widgets";
@@ -214,7 +215,6 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
         data.marker = {
             symbol: "circle", 
             color: Colors.BLUE2,
-            size: 5,
             opacity: 1
         };
         data.hoverinfo = "none";
@@ -481,6 +481,11 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
         );
     }
 
+    private filterColumn: ItemPredicate<string> = (query: string, columnName: string) => {
+        const fileSearcher = new FuzzySearch([columnName]);
+        return fileSearcher.search(query).length > 0;
+    }
+
     private updateHistogramYrange = (figure: any, graphDiv: any) => {
         // fixed react plotlyjs bug with fixed range and changed x range 
         if (this.widgetStore.plotType === CatalogPlotType.Histogram) {
@@ -512,6 +517,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
         const widgetStore = this.widgetStore;
         const catalogWidgetStore = this.catalogWidgetStore;
         const catalogFileIds = CatalogStore.Instance.activeCatalogFiles;
+        const scale = 1 / devicePixelRatio;
         if (!widgetStore || !profileStore || !catalogWidgetStore || catalogFileIds === undefined || catalogFileIds?.length === 0) {
             return (
                 <div className="catalog-plot">
@@ -525,12 +531,14 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
         const disabled = !this.enablePlotButton;
         const isScatterPlot = this.plotType === CatalogPlotType.D2Scatter;
         const isHistogramPlot = this.plotType === CatalogPlotType.Histogram;
+        const ratio = isScatterPlot? devicePixelRatio : 1;
         const fontFamily = "'Helvetica Neue', 'Helvetica', 'Arial', sans-serif";
         let themeColor = Colors.LIGHT_GRAY5;
         let lableColor = Colors.GRAY1;
         let gridColor = Colors.LIGHT_GRAY1;
         let markerColor = Colors.GRAY2;
         let spikeLineClass = "catalog-plotly";
+        let catalogScatterClass = "catalog-scatter";
 
         let catalogFileItems = [];
         catalogFileIds.forEach((value) => {
@@ -544,6 +552,8 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
                 xyOptions.push(column.name); 
             }
         }
+
+        const noResults = (<MenuItem disabled={true} text="No results" />);
 
         const renderFileSelect = (
             <FormGroup  inline={true} label="File">
@@ -565,12 +575,15 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
             <FormGroup inline={true} label="X">
                 <Select 
                     className="bp3-fill"
-                    filterable={false}
                     items={xyOptions} 
                     activeItem={widgetStore.xColumnName}
                     onItemSelect={item => this.handleColumnNameChange("x", item)}
                     itemRenderer={this.renderColumnNamePopOver}
                     popoverProps={{popoverClassName: "catalog-select", minimal: true , position: PopoverPosition.AUTO_END}}
+                    filterable={true}
+                    noResults={noResults}
+                    itemPredicate={this.filterColumn}
+                    resetOnSelect={true}
                 >
                     <Button text={widgetStore.xColumnName} rightIcon="double-caret-vertical"/>
                 </Select>
@@ -587,12 +600,15 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
             <FormGroup inline={true} label="Y">
                 <Select 
                     className="bp3-fill"
-                    filterable={false}
                     items={xyOptions} 
                     activeItem={widgetStore.yColumnName}
                     onItemSelect={item => this.handleColumnNameChange("y", item)}
                     itemRenderer={this.renderColumnNamePopOver}
                     popoverProps={{popoverClassName: "catalog-select", minimal: true , position: PopoverPosition.AUTO_END}}
+                    filterable={true}
+                    noResults={noResults}
+                    itemPredicate={this.filterColumn}
+                    resetOnSelect={true}
                 >
                     <Button text={widgetStore.yColumnName} rightIcon="double-caret-vertical"/>
                 </Select>
@@ -621,8 +637,8 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
         }
 
         let layout: Partial<Plotly.Layout> = {
-            width: this.width, 
-            height: this.height - 85,
+            width: this.width * ratio, 
+            height: (this.height - 85) * ratio,
             paper_bgcolor: themeColor, 
             plot_bgcolor: themeColor,
             hovermode: "closest" ,
@@ -630,19 +646,19 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
                 title: widgetStore.xColumnName,
                 titlefont: {
                     family: fontFamily,
-                    size: 12,
+                    size: 12 * ratio,
                     color: lableColor
                 },
                 showticklabels: true,
                 tickfont: {
                     family: fontFamily,
-                    size: 12,
+                    size: 12 * ratio,
                     color: lableColor
                 },
                 tickcolor: gridColor,
                 gridcolor: gridColor,
                 zerolinecolor: gridColor,
-                zerolinewidth: 2,
+                zerolinewidth: 2 * ratio,
                 // box boreder
                 mirror: true,
                 linecolor: gridColor,
@@ -651,39 +667,39 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
                 spikemode: "across",
                 spikedash: "solid",
                 spikecolor: markerColor,
-                spikethickness: 1,
+                spikethickness: 1 * ratio,
                 // d3 format
                 tickformat: ".2e",
             },
             yaxis: {
                 titlefont: {
                     family: fontFamily,
-                    size: 12,
+                    size: 12 * ratio,
                     color: lableColor
                 },
                 showticklabels: true,
                 tickfont: {
                     family: fontFamily,
-                    size: 12,
+                    size: 12 * ratio,
                     color: lableColor
                 },
                 tickcolor: gridColor,
                 gridcolor: gridColor,
                 zerolinecolor: gridColor,
-                zerolinewidth: 2,
+                zerolinewidth: 2 * ratio,
                 mirror: true,
                 linecolor: gridColor,
                 showline: true,
                 spikemode: "across",
                 spikedash: "solid",
                 spikecolor: markerColor,
-                spikethickness: 1,
+                spikethickness: 1 * ratio,
             },
             margin: {
-                t: 5,
-                b: 40,
-                l: 80,
-                r: 5,
+                t: 5 * ratio,
+                b: 40 * ratio,
+                l: 80 * ratio,
+                r: 5 * ratio,
                 pad: 0
             },
             showlegend: false,
@@ -693,6 +709,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
         let data;
         if (widgetStore.plotType === CatalogPlotType.D2Scatter) {
             data = this.scatterData.data;
+            data[0].marker.size = 5 * ratio;
             let border;
             if (widgetStore.isScatterAutoScaled) {
                 border = this.scatterData.border;
@@ -776,7 +793,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
                     {isHistogramPlot && renderHistogramLog}
                     {isScatterPlot && renderYSelect}
                 </div>
-                <div className={spikeLineClass}>
+                <div className={`${spikeLineClass} ${isScatterPlot && devicePixelRatio > 1? catalogScatterClass : ""}`}>
                     <Plot
                         data={data}
                         layout={layout}
@@ -789,6 +806,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
                         onClick={this.onSingleSourceClick}
                         onInitialized={this.updateHistogramYrange}
                         onUpdate={this.updateHistogramYrange}
+                        style={{transform: isScatterPlot? `scale(${scale})` : "scale(1)", transformOrigin: "top left"}}
                     />
                 </div>
                 <div className="catalog-plot-footer">
