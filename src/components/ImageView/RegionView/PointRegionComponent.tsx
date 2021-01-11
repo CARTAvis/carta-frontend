@@ -59,7 +59,7 @@ export class PointRegionComponent extends React.Component<PointRegionComponentPr
             if (frame.spatialReference) {
                 positionImageSpace = transformPoint(frame.spatialTransformAST, positionImageSpace, true);
             }
-            region.setControlPoint(0, positionImageSpace);
+            region.setCenter(positionImageSpace);
         }
     };
 
@@ -71,12 +71,12 @@ export class PointRegionComponent extends React.Component<PointRegionComponentPr
         let rotation: number;
 
         if (frame.spatialReference) {
-            const pointReferenceImage = region.controlPoints[0];
+            const pointReferenceImage = region.center;
             const pointSecondaryImage = transformPoint(frame.spatialTransformAST, pointReferenceImage, false);
             centerPixelSpace = transformedImageToCanvasPos(pointSecondaryImage.x, pointSecondaryImage.y, frame, this.props.layerWidth, this.props.layerHeight);
             rotation = -frame.spatialTransform.rotation * 180.0 / Math.PI;
         } else {
-            centerPixelSpace = transformedImageToCanvasPos(region.controlPoints[0].x, region.controlPoints[0].y, frame, this.props.layerWidth, this.props.layerHeight);
+            centerPixelSpace = transformedImageToCanvasPos(region.center.x, region.center.y, frame, this.props.layerWidth, this.props.layerHeight);
             rotation = 0;
         }
 

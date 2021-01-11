@@ -25,10 +25,10 @@ export class PointRegionForm extends React.Component<{ region: RegionStore, wcsI
         }
         const valueString = ev.currentTarget.value;
         const value = parseFloat(valueString);
-        const existingValue = this.props.region.controlPoints[0].x;
+        const existingValue = this.props.region.center.x;
 
         if (isFinite(value) && !closeTo(value, existingValue, PointRegionForm.REGION_PIXEL_EPS)) {
-            this.props.region.setControlPoint(0, {x: value, y: this.props.region.controlPoints[0].y});
+            this.props.region.setCenter({x: value, y: this.props.region.center.y});
             return;
         }
 
@@ -41,10 +41,10 @@ export class PointRegionForm extends React.Component<{ region: RegionStore, wcsI
         }
         const valueString = ev.currentTarget.value;
         const value = parseFloat(valueString);
-        const existingValue = this.props.region.controlPoints[0].y;
+        const existingValue = this.props.region.center.y;
 
         if (isFinite(value) && !closeTo(value, existingValue, PointRegionForm.REGION_PIXEL_EPS)) {
-            this.props.region.setControlPoint(0, {x: this.props.region.controlPoints[0].x, y: value});
+            this.props.region.setCenter({x: this.props.region.center.x, y: value});
             return;
         }
 
@@ -55,7 +55,7 @@ export class PointRegionForm extends React.Component<{ region: RegionStore, wcsI
         if (ev.type === "keydown" && ev.keyCode !== KEYCODE_ENTER) {
             return;
         }
-        const centerWCSPoint = getFormattedWCSPoint(this.props.wcsInfo, this.props.region.controlPoints[0]);
+        const centerWCSPoint = getFormattedWCSPoint(this.props.wcsInfo, this.props.region.center);
         if (!centerWCSPoint) {
             return;
         }
@@ -65,9 +65,9 @@ export class PointRegionForm extends React.Component<{ region: RegionStore, wcsI
         }
         if (isWCSStringFormatValid(wcsString, AppStore.Instance.overlayStore.numbers.formatTypeX)) {
             const newPoint = getPixelValueFromWCS(this.props.wcsInfo, {x: wcsString, y: centerWCSPoint.y});
-            const existingValue = this.props.region.controlPoints[0].x;
+            const existingValue = this.props.region.center.x;
             if (newPoint && isFinite(newPoint.x) && !closeTo(newPoint.x, existingValue, PointRegionForm.REGION_PIXEL_EPS)) {
-                this.props.region.setControlPoint(0, newPoint);
+                this.props.region.setCenter(newPoint);
                 return;
             }
         }
@@ -79,7 +79,7 @@ export class PointRegionForm extends React.Component<{ region: RegionStore, wcsI
         if (ev.type === "keydown" && ev.keyCode !== KEYCODE_ENTER) {
             return;
         }
-        const centerWCSPoint = getFormattedWCSPoint(this.props.wcsInfo, this.props.region.controlPoints[0]);
+        const centerWCSPoint = getFormattedWCSPoint(this.props.wcsInfo, this.props.region.center);
         if (!centerWCSPoint) {
             return;
         }
@@ -89,9 +89,9 @@ export class PointRegionForm extends React.Component<{ region: RegionStore, wcsI
         }
         if (isWCSStringFormatValid(wcsString, AppStore.Instance.overlayStore.numbers.formatTypeY)) {
             const newPoint = getPixelValueFromWCS(this.props.wcsInfo, {x: centerWCSPoint.x, y: wcsString});
-            const existingValue = this.props.region.controlPoints[0].y;
+            const existingValue = this.props.region.center.y;
             if (newPoint && isFinite(newPoint.y) && !closeTo(newPoint.y, existingValue, PointRegionForm.REGION_PIXEL_EPS)) {
-                this.props.region.setControlPoint(0, newPoint);
+                this.props.region.setCenter(newPoint);
                 return;
             }
         }
@@ -110,7 +110,7 @@ export class PointRegionForm extends React.Component<{ region: RegionStore, wcsI
             return null;
         }
 
-        const centerPoint = region.controlPoints[0];
+        const centerPoint = region.center;
         const centerWCSPoint = getFormattedWCSPoint(this.props.wcsInfo, centerPoint);
         let xInput, yInput;
         if (region.coordinate === RegionCoordinate.Image) {
