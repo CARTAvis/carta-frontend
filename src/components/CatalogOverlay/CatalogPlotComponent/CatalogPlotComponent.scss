@@ -52,6 +52,18 @@
         }
     }
 
+    .catalog-scatter {
+        .js-plotly-plot .plotly {
+            .modebar-container {
+                right: 80px !important;
+            }
+
+            .modebar {
+                transform: scale(2);
+            }
+        }
+    }
+
     .catalog-plot-footer {
         width: 100%;
         height: 50px;
