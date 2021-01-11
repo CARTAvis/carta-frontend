@@ -1312,12 +1312,12 @@ export class FrameStore {
             const pointRefImage = transformPoint(this.spatialTransformAST, pos, true);
             this.spatialReference.updateCursorRegion(pointRefImage);
         } else {
-            this.frameRegionSet.regions?.[0].setCenter(pos);
+            this.frameRegionSet.regions?.[0].setControlPoint(0, pos);
         }
 
         for (const frame of this.secondarySpatialImages) {
             const pointSecondaryImage = transformPoint(frame.spatialTransformAST, pos, false);
-            frame.frameRegionSet.regions?.[0].setCenter(pointSecondaryImage);
+            frame.frameRegionSet.regions?.[0].setControlPoint(0, pointSecondaryImage);
         }
     };
 

@@ -20,8 +20,8 @@ export class RectangularRegionForm extends React.Component<{ region: RegionStore
             return {x: NaN, y: NaN};
         }
 
-        const centerPoint = region.center;
-        const sizeDims = region.size;
+        const centerPoint = region.controlPoints[0];
+        const sizeDims = region.controlPoints[1];
         return {x: centerPoint.x + sizeDims.x / 2.0, y: centerPoint.y + sizeDims.y / 2.0};
     }
 
@@ -31,18 +31,17 @@ export class RectangularRegionForm extends React.Component<{ region: RegionStore
             return {x: NaN, y: NaN};
         }
 
-        const centerPoint = region.center;
-        const sizeDims = region.size;
+        const centerPoint = region.controlPoints[0];
+        const sizeDims = region.controlPoints[1];
         return {x: centerPoint.x - sizeDims.x / 2.0, y: centerPoint.y - sizeDims.y / 2.0};
     }
 
-    // size determined by reference frame
     @computed get sizeWCS(): WCSPoint2D {
         const region = this.props.region;
-        if (!region || region.controlPoints.length !== 2 || !region.size || !this.props.frame) {
+        if (!region || region.controlPoints.length !== 2 || !region.controlPoints[1] || !this.props.frame) {
             return null;
         }
-        const size = this.props.region.size;
+        const size = this.props.region.controlPoints[1];
         const wcsSize = this.props.frame.getWcsSizeInArcsec(size);
         if (wcsSize) {
             return {x: formattedArcsec(wcsSize.x, WCS_PRECISION), y: formattedArcsec(wcsSize.y, WCS_PRECISION)};
@@ -62,10 +61,10 @@ export class RectangularRegionForm extends React.Component<{ region: RegionStore
         }
         const valueString = ev.currentTarget.value;
         const value = parseFloat(valueString);
-        const existingValue = this.props.region.center.x;
+        const existingValue = this.props.region.controlPoints[0].x;
 
         if (isFinite(value) && !closeTo(value, existingValue, RectangularRegionForm.REGION_PIXEL_EPS)) {
-            this.props.region.setCenter({x: value, y: this.props.region.center.y});
+            this.props.region.setControlPoint(0, {x: value, y: this.props.region.controlPoints[0].y});
             return;
         }
 
@@ -78,10 +77,10 @@ export class RectangularRegionForm extends React.Component<{ region: RegionStore
         }
         const valueString = ev.currentTarget.value;
         const value = parseFloat(valueString);
-        const existingValue = this.props.region.center.y;
+        const existingValue = this.props.region.controlPoints[0].y;
 
         if (isFinite(value) && !closeTo(value, existingValue, RectangularRegionForm.REGION_PIXEL_EPS)) {
-            this.props.region.setCenter({x: this.props.region.center.x, y: value});
+            this.props.region.setControlPoint(0, {x: this.props.region.controlPoints[0].x, y: value});
             return;
         }
 
@@ -92,7 +91,7 @@ export class RectangularRegionForm extends React.Component<{ region: RegionStore
         if (ev.type === "keydown" && ev.keyCode !== KEYCODE_ENTER) {
             return;
         }
-        const centerWCSPoint = getFormattedWCSPoint(this.props.wcsInfo, this.props.region.center);
+        const centerWCSPoint = getFormattedWCSPoint(this.props.wcsInfo, this.props.region.controlPoints[0]);
         if (!centerWCSPoint) {
             return;
         }
@@ -102,9 +101,9 @@ export class RectangularRegionForm extends React.Component<{ region: RegionStore
         }
         if (isWCSStringFormatValid(wcsString, AppStore.Instance.overlayStore.numbers.formatTypeX)) {
             const newPoint = getPixelValueFromWCS(this.props.wcsInfo, {x: wcsString, y: centerWCSPoint.y});
-            const existingValue = this.props.region.center.x;
+            const existingValue = this.props.region.controlPoints[0].x;
             if (newPoint && isFinite(newPoint.x) && !closeTo(newPoint.x, existingValue, RectangularRegionForm.REGION_PIXEL_EPS)) {
-                this.props.region.setCenter(newPoint);
+                this.props.region.setControlPoint(0, newPoint);
                 return;
             }
         }
@@ -116,7 +115,7 @@ export class RectangularRegionForm extends React.Component<{ region: RegionStore
         if (ev.type === "keydown" && ev.keyCode !== KEYCODE_ENTER) {
             return;
         }
-        const centerWCSPoint = getFormattedWCSPoint(this.props.wcsInfo, this.props.region.center);
+        const centerWCSPoint = getFormattedWCSPoint(this.props.wcsInfo, this.props.region.controlPoints[0]);
         if (!centerWCSPoint) {
             return;
         }
@@ -126,9 +125,9 @@ export class RectangularRegionForm extends React.Component<{ region: RegionStore
         }
         if (isWCSStringFormatValid(wcsString, AppStore.Instance.overlayStore.numbers.formatTypeY)) {
             const newPoint = getPixelValueFromWCS(this.props.wcsInfo, {x: centerWCSPoint.x, y: wcsString});
-            const existingValue = this.props.region.center.y;
+            const existingValue = this.props.region.controlPoints[0].y;
             if (newPoint && isFinite(newPoint.y) && !closeTo(newPoint.y, existingValue, RectangularRegionForm.REGION_PIXEL_EPS)) {
-                this.props.region.setCenter(newPoint);
+                this.props.region.setControlPoint(0, newPoint);
                 return;
             }
         }
@@ -142,10 +141,10 @@ export class RectangularRegionForm extends React.Component<{ region: RegionStore
         }
         const valueString = ev.currentTarget.value;
         const value = parseFloat(valueString);
-        const existingValue = this.props.region.size.x;
+        const existingValue = this.props.region.controlPoints[1].x;
 
         if (isFinite(value) && value > 0 && !closeTo(value, existingValue, RectangularRegionForm.REGION_PIXEL_EPS)) {
-            this.props.region.setSize({x: value, y: this.props.region.size.y});
+            this.props.region.setControlPoint(1, {x: value, y: this.props.region.controlPoints[1].y});
             return;
         }
 
@@ -164,9 +163,9 @@ export class RectangularRegionForm extends React.Component<{ region: RegionStore
             return;
         }
         const value = this.props.frame.getImageValueFromArcsec(getValueFromArcsecString(wcsString));
-        const existingValue = this.props.region.size.x;
+        const existingValue = this.props.region.controlPoints[1].x;
         if (isFinite(value) && value > 0 && !closeTo(value, existingValue, RectangularRegionForm.REGION_PIXEL_EPS)) {
-            this.props.region.setSize({x: value, y: this.props.region.size.y});
+            this.props.region.setControlPoint(1, {x: value, y: this.props.region.controlPoints[1].y});
             return;
         }
 
@@ -179,10 +178,10 @@ export class RectangularRegionForm extends React.Component<{ region: RegionStore
         }
         const valueString = ev.currentTarget.value;
         const value = parseFloat(valueString);
-        const existingValue = this.props.region.size.y;
+        const existingValue = this.props.region.controlPoints[1].y;
 
         if (isFinite(value) && value > 0 && !closeTo(value, existingValue, RectangularRegionForm.REGION_PIXEL_EPS)) {
-            this.props.region.setSize({x: this.props.region.size.x, y: value});
+            this.props.region.setControlPoint(1, {x: this.props.region.controlPoints[1].x, y: value});
             return;
         }
 
@@ -201,9 +200,9 @@ export class RectangularRegionForm extends React.Component<{ region: RegionStore
             return;
         }
         const value = this.props.frame.getImageValueFromArcsec(getValueFromArcsecString(wcsString));
-        const existingValue = this.props.region.size.y;
+        const existingValue = this.props.region.controlPoints[1].y;
         if (isFinite(value) && value > 0 && !closeTo(value, existingValue, RectangularRegionForm.REGION_PIXEL_EPS)) {
-            this.props.region.setSize({x: this.props.region.size.x, y: value});
+            this.props.region.setControlPoint(1, {x: this.props.region.controlPoints[1].x, y: value});
             return;
         }
 
@@ -213,8 +212,8 @@ export class RectangularRegionForm extends React.Component<{ region: RegionStore
     private handleLeftValueChange = (value: number, existingValue: number): boolean => {
         if (isFinite(value) && isFinite(existingValue) && !closeTo(value, existingValue, RectangularRegionForm.REGION_PIXEL_EPS)) {
             const region = this.props.region;
-            const centerPoint = region.center;
-            const sizeDims = region.size;
+            const centerPoint = region.controlPoints[0];
+            const sizeDims = region.controlPoints[1];
             const rightValue = centerPoint.x + sizeDims.x / 2.0;
             const newCenter = {x: (value + rightValue) / 2.0, y: centerPoint.y};
             const newDims = {x: Math.abs(value - rightValue), y: sizeDims.y};
@@ -264,8 +263,8 @@ export class RectangularRegionForm extends React.Component<{ region: RegionStore
     private handleBottomValueChange = (value: number, existingValue: number): boolean => {
         if (isFinite(value) && isFinite(existingValue) && !closeTo(value, existingValue, RectangularRegionForm.REGION_PIXEL_EPS)) {
             const region = this.props.region;
-            const centerPoint = region.center;
-            const sizeDims = region.size;
+            const centerPoint = region.controlPoints[0];
+            const sizeDims = region.controlPoints[1];
             const topValue = centerPoint.y + sizeDims.y / 2.0;
             const newCenter = {x: centerPoint.x, y: (value + topValue) / 2.0};
             const newDims = {x: sizeDims.x, y: Math.abs(value - topValue)};
@@ -315,8 +314,8 @@ export class RectangularRegionForm extends React.Component<{ region: RegionStore
     private handleRightValueChange = (value: number, existingValue: number): boolean => {
         if (isFinite(value) && isFinite(existingValue) && !closeTo(value, existingValue, RectangularRegionForm.REGION_PIXEL_EPS)) {
             const region = this.props.region;
-            const centerPoint = region.center;
-            const sizeDims = region.size;
+            const centerPoint = region.controlPoints[0];
+            const sizeDims = region.controlPoints[1];
             const leftValue = centerPoint.x - sizeDims.x / 2.0;
             const newCenter = {x: (value + leftValue) / 2.0, y: centerPoint.y};
             const newDims = {x: Math.abs(value - leftValue), y: sizeDims.y};
@@ -366,8 +365,8 @@ export class RectangularRegionForm extends React.Component<{ region: RegionStore
     private handleTopValueChange = (value: number, existingValue: number): boolean => {
         if (isFinite(value) && isFinite(existingValue) && !closeTo(value, existingValue, RectangularRegionForm.REGION_PIXEL_EPS)) {
             const region = this.props.region;
-            const centerPoint = region.center;
-            const sizeDims = region.size;
+            const centerPoint = region.controlPoints[0];
+            const sizeDims = region.controlPoints[1];
             const bottomValue = centerPoint.y - sizeDims.y / 2.0;
             const newCenter = {x: centerPoint.x, y: (value + bottomValue) / 2.0};
             const newDims = {x: sizeDims.x, y: Math.abs(value - bottomValue)};
@@ -442,7 +441,7 @@ export class RectangularRegionForm extends React.Component<{ region: RegionStore
         }
 
         // center
-        const centerPoint = region.center;
+        const centerPoint = region.controlPoints[0];
         const centerWCSPoint = getFormattedWCSPoint(this.props.wcsInfo, centerPoint);
         let centerInputX, centerInputY;
         if (region.coordinate === RegionCoordinate.Image) {
@@ -554,7 +553,7 @@ export class RectangularRegionForm extends React.Component<{ region: RegionStore
         const topRightInfoString = region.coordinate === RegionCoordinate.Image ? `WCS: ${WCSPoint2D.ToString(topRightWCSPoint)}` : `Image: ${Point2D.ToString(this.topRightPoint, "px", 3)}`;
 
         // size
-        const size = region.size;
+        const size = region.controlPoints[1];
         let sizeWidthInput, sizeHeightInput;
         if (region.coordinate === RegionCoordinate.Image) {
             sizeWidthInput = <SafeNumericInput selectAllOnFocus={true} buttonPosition="none" placeholder="Width" value={size.x} onBlur={this.handleWidthChange} onKeyDown={this.handleWidthChange}/>;
