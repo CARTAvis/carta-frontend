@@ -231,9 +231,9 @@ export class FileInfoComponent extends React.Component<{
                                 </FormGroup>
                             </div>
                             <div className="range-select">
-                                <FormGroup label={"Spectral range"} labelInfo={`(${activeFrame.spectralUnit})`} inline={false} >
+                                <FormGroup label={"Spectral range"} labelInfo={activeFrame.spectralUnit ? `(${activeFrame.spectralUnit})` : ""} inline={false} >
                                     <ControlGroup fill={true} vertical={false}>
-                                        <Label>{"Range from"}</Label>
+                                        <Label>{"from"}</Label>
                                         <SafeNumericInput
                                             value={fileBrowser.saveSpectralValueStart}
                                             buttonPosition="none"
