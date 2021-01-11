@@ -107,14 +107,14 @@ export class RegionStore {
             case CARTA.RegionType.POLYGON:
                 return this.boundingBox;
             default:
-                return {x: 0, y: 0};
+                return {x: undefined, y: undefined};
         }
     }
 
     @computed get wcsSize(): Point2D {
         const frame = this.activeFrame;
         if (!this.size || !frame?.validWcs) {
-            return {x: 0, y: 0};
+            return {x: undefined, y: undefined};
         }
         return frame.getWcsSizeInArcsec(this.size);
     }
