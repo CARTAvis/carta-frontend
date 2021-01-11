@@ -98,6 +98,15 @@ export class FrameStore {
     @observable isRequestingMoments: boolean;
     @observable requestingMomentsProgress: number;
 
+    @computed get filename(): string {
+        // hdu extension name is in field 3 of fileInfoExtended computed entries
+        const extName = this.frameInfo?.fileInfoExtended?.computedEntries?.length >= 3 && this.frameInfo?.fileInfoExtended?.computedEntries[2]?.name === "Extension name" ?
+                        `_${this.frameInfo.fileInfoExtended.computedEntries[2]?.value}` : "";
+        return this.frameInfo?.hdu !== "" && this.frameInfo?.hdu !== "0" ?
+            `${this.frameInfo.fileInfo.name}.HDU_${this.frameInfo.hdu}${extName}` :
+            this.frameInfo.fileInfo.name;
+    }
+
     @computed get regionSet(): RegionSetStore {
         if (this.spatialReference) {
             return this.spatialReference.regionSet;
@@ -848,7 +857,7 @@ export class FrameStore {
         }
         const initResult = AST.initFrame(headerString);
         if (!initResult) {
-            this.logStore.addWarning(`Problem processing WCS info in file ${this.frameInfo.fileInfo.name}`, ["ast"]);
+            this.logStore.addWarning(`Problem processing WCS info in file ${this.filename}`, ["ast"]);
             this.wcsInfo = AST.initDummyFrame();
         } else {
             this.wcsInfo = initResult;
@@ -904,7 +913,7 @@ export class FrameStore {
         }
         const initResult = AST.initFrame(headerString);
         if (!initResult) {
-            this.logStore.addWarning(`Problem processing WCS info in file ${this.frameInfo.fileInfo.name}`, ["ast"]);
+            this.logStore.addWarning(`Problem processing WCS info in file ${this.filename}`, ["ast"]);
             this.fullWcsInfo = null;
         } else {
             this.fullWcsInfo = initResult;

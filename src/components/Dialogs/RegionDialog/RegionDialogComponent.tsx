@@ -52,7 +52,7 @@ export class RegionDialogComponent extends React.Component {
         } else {
             region = appStore.activeFrame.regionSet.selectedRegion;
             const frame = appStore.activeFrame.spatialReference ?? appStore.activeFrame;
-            dialogProps.title = `Editing ${region.nameString} (${frame.frameInfo.fileInfo.name})`;
+            dialogProps.title = `Editing ${region.nameString} (${frame.filename})`;
             switch (region.regionType) {
                 case CARTA.RegionType.POINT:
                     bodyContent = (
