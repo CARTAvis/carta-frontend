@@ -50,7 +50,7 @@
 
 .file-save {
     display: flex;
-    flex-direction: auto;
+    flex-direction: row;
     margin: .5em;
     margin-top: 1em;
     display: block;
@@ -72,10 +72,9 @@
         margin-top: 1em;
 
         .label {
-            width: 20%;
+            width: 8em;
         }
         .bp3-html-select {
-            margin-left: -60%;
             width: auto;
         }
     }
@@ -87,7 +86,7 @@
             margin-left: 0em;
 
             .bp3-label {
-                width: 20%;
+                width: 7em;
             }
             .bp3-select {
                 margin-left: auto;

@@ -196,7 +196,7 @@ export class FileInfoComponent extends React.Component<{
                             {activeFrame.frameInfo.directory + "/" + activeFrame.frameInfo.fileInfo.name}
                         </Text>
                     </ControlGroup>
-                    <ControlGroup className="region-select" fill={true} vertical={false}>
+                    <ControlGroup className="region-select" vertical={false}>
                         <Label className="label">{"Region"}</Label>
                         <HTMLSelect
                             value={fileBrowser.saveRegionId}
