@@ -4,12 +4,28 @@
     height: calc(100% - 40px);
     width: 100%;
 
+    .file-info-panel-top {
+        display: inline-flex;
+
+        .bp3-tabs {
+            padding-right: 10px;
+        }
+
+        .bp3-form-group {
+            margin: 0;
+            padding-left: 10px;
+        }
+
+        .bp3-html-select {
+            width: 200px;
+        }
+    }
+
     .file-info-pre {
         overflow: auto;
         height: 100%;
         flex: 2 2 auto;
     }
-
 
     .header-list {
         display: block;
@@ -32,7 +48,6 @@
                 font-style: italic;
             }
         }
-
     }
 
     .bp3-heading {
