@@ -72,7 +72,7 @@ export class ContourGeneratorPanelComponent extends React.Component<{ frame: Fra
                             value={this.numLevels}
                             min={1}
                             max={20}
-                            step={1}
+                            stepSize={1}
                             className="narrow"
                             onValueChange={val => this.numLevels = Math.floor(val)}
                         />
@@ -155,7 +155,7 @@ export class ContourGeneratorPanelComponent extends React.Component<{ frame: Fra
                             value={this.numLevels}
                             min={1}
                             max={20}
-                            step={1}
+                            stepSize={1}
                             className="narrow"
                             onValueChange={val => this.numLevels = Math.floor(val)}
                         />
@@ -164,7 +164,7 @@ export class ContourGeneratorPanelComponent extends React.Component<{ frame: Fra
                         <SafeNumericInput
                             value={this.multiplierValue}
                             min={0.1}
-                            step={1}
+                            stepSize={1}
                             className="narrow"
                             onValueChange={val => this.multiplierValue = val}
                         />
@@ -228,7 +228,7 @@ export class ContourGeneratorPanelComponent extends React.Component<{ frame: Fra
                             value={this.numLevels}
                             min={1}
                             max={20}
-                            step={1}
+                            stepSize={1}
                             className="narrow"
                             onValueChange={val => this.numLevels = Math.floor(val)}
                         />
@@ -240,7 +240,7 @@ export class ContourGeneratorPanelComponent extends React.Component<{ frame: Fra
                             value={this.upperPercentage}
                             min={0}
                             max={100}
-                            step={1}
+                            stepSize={1}
                             className="narrow"
                             onValueChange={val => this.upperPercentage = val}
                         />
@@ -250,7 +250,7 @@ export class ContourGeneratorPanelComponent extends React.Component<{ frame: Fra
                             value={this.lowerPercentage}
                             min={0}
                             max={100}
-                            step={1}
+                            stepSize={1}
                             className="narrow"
                             onValueChange={val => this.lowerPercentage = val}
                         />

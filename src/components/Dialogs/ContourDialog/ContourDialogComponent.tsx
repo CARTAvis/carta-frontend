@@ -1,5 +1,5 @@
 import * as React from "react";
-import {action, autorun, computed, makeObservable, observable} from "mobx";
+import {action, autorun, computed, makeObservable, observable, runInAction} from "mobx";
 import {observer} from "mobx-react";
 import {Alert, AnchorButton, Button, Classes, Colors, FormGroup, HTMLSelect, IDialogProps, Intent, MenuItem, NonIdealState, Tab, Tabs, TagInput, Tooltip} from "@blueprintjs/core";
 import {Select} from "@blueprintjs/select";
@@ -455,7 +455,7 @@ export class ContourDialogComponent extends React.Component {
                         value={this.smoothingFactor}
                         majorStepSize={1}
                         stepSize={1}
-                        onValueChange={val => this.smoothingFactor = val}
+                        onValueChange={val => runInAction(() => {this.smoothingFactor = val})}
                     />
                 </FormGroup>
             </div>

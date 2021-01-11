@@ -331,7 +331,8 @@ export class AppStore {
             fileInfo: new CARTA.FileInfo(ack.fileInfo),
             fileInfoExtended: new CARTA.FileInfoExtended(ack.fileInfoExtended),
             fileFeatureFlags: ack.fileFeatureFlags,
-            renderMode: CARTA.RenderMode.RASTER
+            renderMode: CARTA.RenderMode.RASTER,
+            beamTable: ack.beamTable
         };
 
         let newFrame = new FrameStore(frameInfo);
@@ -606,64 +607,72 @@ export class AppStore {
 
     // Open catalog file
     @action appendCatalog = (directory: string, file: string, previewDataSize: number, type: CARTA.CatalogFileType) => {
-        if (!this.activeFrame) {
-            AppToaster.show(ErrorToast("Please load the image file"));
-            return;
-        }
-        if (!(type === CARTA.CatalogFileType.VOTable)) {
-            AppToaster.show(ErrorToast("`Catalog type not supported"));
-            return;
-        }
-        this.startFileLoading();
-
-        const frame = this.activeFrame;
-        const fileId = this.catalogNum + 1;
-
-        this.backendService.loadCatalogFile(directory, file, fileId, previewDataSize).subscribe(ack => runInAction(() => {
-            this.endFileLoading();
-            if (frame && ack.success && ack.dataSize) {
-                let catalogInfo: CatalogInfo = {fileId, directory, fileInfo: ack.fileInfo, dataSize: ack.dataSize};
-                let catalogWidgetId;
-                const columnData = ProtobufProcessing.ProcessCatalogData(ack.previewData);
-
-                // update image associated catalog file
-                let associatedCatalogFiles = [];
-                const catalogStore = CatalogStore.Instance;
-                const catalogComponentSize = catalogStore.catalogProfiles.size;
-                let currentAssociatedCatalogFile = catalogStore.activeCatalogFiles;
-                if (currentAssociatedCatalogFile?.length) {
-                    associatedCatalogFiles = currentAssociatedCatalogFile;
-                } else {
-                    // new image append
-                    catalogStore.catalogProfiles.forEach((value, componentId) => {
-                        catalogStore.catalogProfiles.set(componentId, fileId);
-                    });
-                }
-                associatedCatalogFiles.push(fileId);
-                catalogStore.updateImageAssociatedCatalogId(AppStore.Instance.activeFrame.frameInfo.fileId, associatedCatalogFiles);
-
-                if (catalogComponentSize === 0) {
-                    const catalog = this.widgetsStore.createFloatingCatalogWidget(fileId);
-                    catalogWidgetId = catalog.widgetStoreId;
-                    catalogStore.catalogProfiles.set(catalog.widgetComponentId, fileId);
-                } else {
-                    catalogWidgetId = this.widgetsStore.addCatalogWidget(fileId);
-                    const key = catalogStore.catalogProfiles.keys().next().value;
-                    catalogStore.catalogProfiles.set(key, fileId);
-                }
-                if (catalogWidgetId) {
-                    this.catalogStore.catalogWidgets.set(fileId, catalogWidgetId);
-                    this.catalogStore.addCatalog(fileId);
-                    this.fileBrowserStore.hideFileBrowser();
-
-                    const catalogProfileStore = new CatalogProfileStore(catalogInfo, ack.headers, columnData);
-                    catalogStore.catalogProfileStores.set(fileId, catalogProfileStore);
-                }
+        return new Promise<number>((resolve, reject) => {
+            if (!this.activeFrame) {
+                AppToaster.show(ErrorToast("Please load the image file"));
+                reject();
             }
-        }), error => {
-            console.error(error);
-            AppToaster.show(ErrorToast(error));
-            this.endFileLoading();
+            if (!(type === CARTA.CatalogFileType.VOTable)) {
+                AppToaster.show(ErrorToast("`Catalog type not supported"));
+                reject();
+            }
+            this.startFileLoading();
+
+            const frame = this.activeFrame;
+            const fileId = this.catalogNum + 1;
+
+            this.backendService.loadCatalogFile(directory, file, fileId, previewDataSize).subscribe(ack => runInAction(() => {
+                this.endFileLoading();
+                if (frame && ack.success && ack.dataSize) {
+                    let catalogInfo: CatalogInfo = {fileId, directory, fileInfo: ack.fileInfo, dataSize: ack.dataSize};
+                    let catalogWidgetId;
+                    const columnData = ProtobufProcessing.ProcessCatalogData(ack.previewData);
+
+                    // update image associated catalog file
+                    let associatedCatalogFiles = [];
+                    const catalogStore = CatalogStore.Instance;
+                    const catalogComponentSize = catalogStore.catalogProfiles.size;
+                    let currentAssociatedCatalogFile = catalogStore.activeCatalogFiles;
+                    if (currentAssociatedCatalogFile?.length) {
+                        associatedCatalogFiles = currentAssociatedCatalogFile;
+                    } else {
+                        // new image append
+                        catalogStore.catalogProfiles.forEach((value, componentId) => {
+                            catalogStore.catalogProfiles.set(componentId, fileId);
+                        });
+                    }
+                    associatedCatalogFiles.push(fileId);
+                    catalogStore.updateImageAssociatedCatalogId(AppStore.Instance.activeFrame.frameInfo.fileId, associatedCatalogFiles);
+
+                    if (catalogComponentSize === 0) {
+                        const catalog = this.widgetsStore.createFloatingCatalogWidget(fileId);
+                        catalogWidgetId = catalog.widgetStoreId;
+                        catalogStore.catalogProfiles.set(catalog.widgetComponentId, fileId);
+                    } else {
+                        catalogWidgetId = this.widgetsStore.addCatalogWidget(fileId);
+                        const key = catalogStore.catalogProfiles.keys().next().value;
+                        catalogStore.catalogProfiles.set(key, fileId);
+                    }
+                    if (catalogWidgetId) {
+                        this.catalogStore.catalogWidgets.set(fileId, catalogWidgetId);
+                        this.catalogStore.addCatalog(fileId);
+                        this.fileBrowserStore.hideFileBrowser();
+
+                        const catalogProfileStore = new CatalogProfileStore(catalogInfo, ack.headers, columnData);
+                        catalogStore.catalogProfileStores.set(fileId, catalogProfileStore);
+                        resolve(fileId);
+                    } else {
+                        reject();
+                    }
+                } else {
+                    reject();
+                }
+            }), error => {
+                console.error(error);
+                AppToaster.show(ErrorToast(error));
+                this.endFileLoading();
+                reject(error);
+            });
         });
     };
 
