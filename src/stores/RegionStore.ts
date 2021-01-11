@@ -100,9 +100,6 @@ export class RegionStore {
     }
 
     @computed get size(): Point2D {
-        if (!this.isValid) {
-            return {x: 0, y: 0};
-        }
         switch (this.regionType) {
             case CARTA.RegionType.RECTANGLE:
             case CARTA.RegionType.ELLIPSE:
@@ -116,7 +113,7 @@ export class RegionStore {
 
     @computed get wcsSize(): Point2D {
         const frame = this.activeFrame;
-        if (!this.isValid || !this.size || !frame?.validWcs) {
+        if (!this.size || !frame?.validWcs) {
             return {x: 0, y: 0};
         }
         return frame.getWcsSizeInArcsec(this.size);
