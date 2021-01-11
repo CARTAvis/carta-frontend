@@ -229,7 +229,7 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
         }
     };
 
-    private handleMouseUpRegularRegion() {
+    @action private handleMouseUpRegularRegion() {
         const frame = this.props.frame.spatialReference || this.props.frame;
 
         if (this.creatingRegion) {
