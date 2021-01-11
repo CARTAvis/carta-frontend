@@ -141,33 +141,39 @@ export class FileInfoComponent extends React.Component<{
         fileBrowser.saveRegionId = parseInt(changeEvent.target.value);
     };
 
-    private handleSaveChannelStartChanged = (val: any) => {
+    private handleSaveSpectralValueStartChanged = (val: any) => {
         const fileBrowser = AppStore.Instance.fileBrowserStore;
-        if (-1 < val && val < fileBrowser.saveChannelEnd) {
-            fileBrowser.saveChannelStart = val;
-        }
+        // if (-1 < val && val < fileBrowser.saveSpectralValueEnd) {
+        fileBrowser.saveSpectralValueStart = val;
+        // }
     };
 
-    private handleSaveChannelEndChanged = (val: any) => {
+    private handleSaveSpectralValueEndChanged = (val: any) => {
         const fileBrowser = AppStore.Instance.fileBrowserStore;
-        if (fileBrowser.saveChannelStart < val && val < AppStore.Instance.activeFrame.channelValues.length) {
-            fileBrowser.saveChannelEnd = val;
-        }
+        // if (fileBrowser.saveSpectralValueStart < val && val < AppStore.Instance.activeFrame.channelValues.length) {
+        fileBrowser.saveSpectralValueEnd = val;
+        // }
     };
 
     private updateSpectralCoordinate(coordStr: string): void {
         const activeFrame = AppStore.Instance.activeFrame;
+        const fileBrowser = AppStore.Instance.fileBrowserStore;
         if (activeFrame && activeFrame.spectralCoordsSupported && activeFrame.spectralCoordsSupported.has(coordStr)) {
             const coord: { type: SpectralType, unit: SpectralUnit } = activeFrame.spectralCoordsSupported.get(coordStr);
             activeFrame.spectralType = coord.type;
             activeFrame.spectralUnit = coord.unit;
+            fileBrowser.saveSpectralValueStart = activeFrame.channelValueBounds.min;
+            fileBrowser.saveSpectralValueEnd = activeFrame.channelValueBounds.max;
         }
     }
 
     private updateSpectralSystem(specsys: SpectralSystem): void {
         const activeFrame = AppStore.Instance.activeFrame;
+        const fileBrowser = AppStore.Instance.fileBrowserStore;
         if (activeFrame && activeFrame.spectralSystemsSupported && activeFrame.spectralSystemsSupported.includes(specsys)) {
             activeFrame.spectralSystem = specsys;
+            fileBrowser.saveSpectralValueStart = activeFrame.channelValueBounds.min;
+            fileBrowser.saveSpectralValueEnd = activeFrame.channelValueBounds.max;
         }
     }
 
@@ -183,77 +189,71 @@ export class FileInfoComponent extends React.Component<{
         const spectralSystemOptions: IOptionProps[] = activeFrame && activeFrame.spectralSystemsSupported ? activeFrame.spectralSystemsSupported.map(system => { return { value: system, label: system }; }) : [];
         return (
             <React.Fragment>
-                <Pre className="file-save-pre">
-                    <ControlGroup fill={true} vertical={false}>
-                        <Label>{"Source file: "}</Label>
-                        <Text ellipsize={true}>
+                <div className="file-save">
+                    <ControlGroup className="file-name" vertical={false}>
+                        <Label className="label">{"Source"}</Label>
+                        <Text className="text" ellipsize={true}>
                             {activeFrame.frameInfo.directory + "/" + activeFrame.frameInfo.fileInfo.name}
                         </Text>
                     </ControlGroup>
-                    <div className="region-select">
-                        <ControlGroup fill={true} vertical={false}>
-                            <Label>{"Spatial coverage"}</Label>
-                            <HTMLSelect
-                                value={fileBrowser.saveRegionId}
-                                onChange={this.handleRegionChanged}
-                                options={regionOptions}
-                            />
-                        </ControlGroup>
-                    </div>
-                    {activeFrame && activeFrame.numChannels > 1 &&
-                        <hr />
-                    }
+                    <ControlGroup className="region-select" fill={true} vertical={false}>
+                        <Label className="label">{"Region"}</Label>
+                        <HTMLSelect
+                            value={fileBrowser.saveRegionId}
+                            onChange={this.handleRegionChanged}
+                            options={regionOptions}
+                        />
+                    </ControlGroup>
                     {activeFrame && activeFrame.numChannels > 1 &&
                         <React.Fragment>
+                            <div className="coordinate-select">
+                                <FormGroup inline={false}>
+                                    <FormGroup label={"Coordinate"} inline={true}>
+                                        <HTMLSelect
+                                            value={activeFrame && (activeFrame.spectralCoordinate || "")}
+                                            options={spectralCoordinateOptions}
+                                            onChange={
+                                                (event: React.FormEvent<HTMLSelectElement>) =>
+                                                    this.updateSpectralCoordinate(event.currentTarget.value as string)
+                                            }
+                                        />
+                                    </FormGroup>
+                                    <FormGroup label={"System"} inline={true} >
+                                        <HTMLSelect
+                                            value={activeFrame && (activeFrame.spectralSystem || "")}
+                                            options={spectralSystemOptions}
+                                            onChange={
+                                                (event: React.FormEvent<HTMLSelectElement>) =>
+                                                    this.updateSpectralSystem(event.currentTarget.value as SpectralSystem)
+                                            }
+                                        />
+                                    </FormGroup>
+                                </FormGroup>
+                            </div>
                             <div className="range-select">
-                                <FormGroup label={"Spectral coverage"} inline={false} >
-                                    <Text>{activeFrame?.spectralUnit ? `from ${activeFrame.convertSpectralValue(fileBrowser.saveChannelStart)} (${activeFrame.spectralUnit})` : ""}</Text>
-                                    <Text>{activeFrame?.spectralUnit ? `to ${activeFrame.convertSpectralValue(fileBrowser.saveChannelEnd)} (${activeFrame.spectralUnit})` : ""}</Text>
+                                <FormGroup label={"Spectral range"} labelInfo={`(${activeFrame.spectralUnit})`} inline={false} >
                                     <ControlGroup fill={true} vertical={false}>
-                                        <Label>{"Channels from"}</Label>
+                                        <Label>{"Range from"}</Label>
                                         <SafeNumericInput
-                                            value={fileBrowser.saveChannelStart}
+                                            value={fileBrowser.saveSpectralValueStart}
                                             buttonPosition="none"
-                                            fill={true}
                                             placeholder="First channel"
-                                            onValueChange={this.handleSaveChannelStartChanged}
-                                            min={0}
-                                            max={fileBrowser.saveChannelEnd - 1}
+                                            onValueChange={this.handleSaveSpectralValueStartChanged}
+                                            min={activeFrame.channelValueBounds.min}
+                                            max={activeFrame.channelValueBounds.max}
                                             clampValueOnBlur={true}
                                         />
                                         <Label>{"to"}</Label>
                                         <SafeNumericInput
-                                            value={fileBrowser.saveChannelEnd}
+                                            value={fileBrowser.saveSpectralValueEnd}
                                             buttonPosition="none"
                                             placeholder="Last channel"
-                                            onValueChange={this.handleSaveChannelEndChanged}
-                                            min={fileBrowser.saveChannelStart + 1}
-                                            max={activeFrame.channelValues.length}
+                                            onValueChange={this.handleSaveSpectralValueEndChanged}
+                                            min={activeFrame.channelValueBounds.min}
+                                            max={activeFrame.channelValueBounds.max}
                                             clampValueOnBlur={true}
                                         />
                                     </ControlGroup>
-                                </FormGroup>
-                            </div>
-                            <div className="coordinate-select">
-                                <FormGroup label={"Coordinate"} inline={true}>
-                                    <HTMLSelect
-                                        value={activeFrame && (activeFrame.spectralCoordinate || "")}
-                                        options={spectralCoordinateOptions}
-                                        onChange={
-                                            (event: React.FormEvent<HTMLSelectElement>) =>
-                                                this.updateSpectralCoordinate(event.currentTarget.value as string)
-                                        }
-                                    />
-                                </FormGroup>
-                                <FormGroup label={"System"} inline={true} >
-                                    <HTMLSelect
-                                        value={activeFrame && (activeFrame.spectralSystem || "")}
-                                        options={spectralSystemOptions}
-                                        onChange={
-                                            (event: React.FormEvent<HTMLSelectElement>) =>
-                                                this.updateSpectralSystem(event.currentTarget.value as SpectralSystem)
-                                        }
-                                    />
                                 </FormGroup>
                             </div>
                         </React.Fragment>
@@ -261,7 +261,7 @@ export class FileInfoComponent extends React.Component<{
                     {activeFrame && activeFrame.hasStokes &&
                         <hr />
                     }
-                </Pre>
+                </div>
             </React.Fragment>
         );
     }

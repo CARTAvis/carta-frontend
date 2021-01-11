@@ -66,8 +66,8 @@ export class FileBrowserStore {
 
     @observable saveFilename: string = "";
     @observable saveFileType: CARTA.FileType = CARTA.FileType.CASA;
-    @observable saveChannelStart: number = 0;
-    @observable saveChannelEnd: number;
+    @observable saveSpectralValueStart: number;
+    @observable saveSpectralValueEnd: number;
     @observable saveRegionId: number;
 
     @action showFileBrowser = (mode: BrowserMode, append = false) => {
@@ -84,8 +84,8 @@ export class FileBrowserStore {
             this.saveFilename = AppStore.Instance.activeFrame.frameInfo.fileInfo.name;
         }
         this.saveRegionId = 0;
-        this.saveChannelStart = 0;
-        this.saveChannelEnd = AppStore.Instance.activeFrame?.channelValues?.length;
+        this.saveSpectralValueStart = AppStore.Instance.activeFrame?.channelValueBounds.min;
+        this.saveSpectralValueEnd = AppStore.Instance.activeFrame?.channelValueBounds.max;
     };
 
     @action hideFileBrowser = () => {

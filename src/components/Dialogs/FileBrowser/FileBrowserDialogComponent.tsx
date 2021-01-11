@@ -59,11 +59,15 @@ export class FileBrowserDialogComponent extends React.Component {
     private handleSaveFileClicked = () => {
         const appStore = AppStore.Instance;
         const fileBrowserStore = FileBrowserStore.Instance;
+        const activeFrame = appStore.activeFrame;
         const filename = fileBrowserStore.saveFilename.trim();
         if (fileBrowserStore.fileList && fileBrowserStore.fileList.files && fileBrowserStore.fileList.files.find(f => f.name.trim() === filename)) {
             this.overwriteExistingFileAlertVisible = true;
         } else {
-            appStore.saveFile(fileBrowserStore.fileList.directory, filename, fileBrowserStore.saveFileType);
+            const saveChannelStart = activeFrame.findChannelIndexByValue(fileBrowserStore.saveSpectralValueStart);
+            const saveChannelEnd = activeFrame.findChannelIndexByValue(fileBrowserStore.saveSpectralValueEnd);
+            const saveChannels = [Math.min(saveChannelStart, saveChannelEnd), Math.abs(saveChannelEnd - saveChannelStart), 1];
+            appStore.saveFile(fileBrowserStore.fileList.directory, filename, fileBrowserStore.saveFileType, fileBrowserStore.saveRegionId, saveChannels);
         }
     };
 
@@ -98,13 +102,16 @@ export class FileBrowserDialogComponent extends React.Component {
     private handleOverwriteAlertConfirmed = () => {
         this.overwriteExistingFileAlertVisible = false;
         const fileBrowserStore = FileBrowserStore.Instance;
+        const activeFrame = AppStore.Instance.activeFrame;
         if (fileBrowserStore.browserMode === BrowserMode.RegionExport) {
             const filename = fileBrowserStore.exportFilename.trim();
             this.exportRegion(fileBrowserStore.fileList.directory, filename);
         } else if (fileBrowserStore.browserMode === BrowserMode.SaveFile) {
             const appStore = AppStore.Instance;
             const filename = fileBrowserStore.saveFilename.trim();
-            const saveChannels = [fileBrowserStore.saveChannelStart, fileBrowserStore.saveChannelEnd - fileBrowserStore.saveChannelStart, 1];
+            const saveChannelStart = activeFrame.findChannelIndexByValue(fileBrowserStore.saveSpectralValueStart);
+            const saveChannelEnd = activeFrame.findChannelIndexByValue(fileBrowserStore.saveSpectralValueEnd);
+            const saveChannels = [Math.min(saveChannelStart, saveChannelEnd), Math.abs(saveChannelEnd - saveChannelStart), 1];
             appStore.saveFile(fileBrowserStore.fileList.directory, filename, fileBrowserStore.saveFileType, fileBrowserStore.saveRegionId, saveChannels);
         }
     };

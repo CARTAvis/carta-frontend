@@ -1,12 +1,12 @@
-import {NumberRange} from "@blueprintjs/core";
+import { NumberRange } from "@blueprintjs/core";
 
-import {action, autorun, computed, observable, makeObservable, runInAction} from "mobx";
+import { action, autorun, computed, observable, makeObservable, runInAction } from "mobx";
 
-import {CARTA} from "carta-protobuf";
+import { CARTA } from "carta-protobuf";
 
 import * as AST from "ast_wrapper";
 
-import {AnimatorStore, AppStore, ASTSettingsString, ContourConfigStore, ContourStore, LogStore, OverlayBeamStore, OverlayStore, PreferenceStore, RegionSetStore, RegionStore, RenderConfigStore} from "stores";
+import { AnimatorStore, AppStore, ASTSettingsString, ContourConfigStore, ContourStore, LogStore, OverlayBeamStore, OverlayStore, PreferenceStore, RegionSetStore, RegionStore, RenderConfigStore } from "stores";
 
 import {
     CHANNEL_TYPES,
@@ -32,13 +32,13 @@ import {
     ZoomPoint
 } from "models";
 
-import {clamp, formattedFrequency, getHeaderNumericValue, getTransformedChannel, transformPoint, isAstBadPoint, minMax2D, rotate2D, toFixed, trimFitsComment, round2D, getFormattedWCSPoint} from "utilities";
+import { clamp, formattedFrequency, getHeaderNumericValue, getTransformedChannel, transformPoint, isAstBadPoint, minMax2D, rotate2D, toFixed, trimFitsComment, round2D, getFormattedWCSPoint } from "utilities";
 
-import {BackendService, ContourWebGLService} from "services";
+import { BackendService, ContourWebGLService } from "services";
 
-import {RegionId} from "stores/widgets";
+import { RegionId } from "stores/widgets";
 
-import {formattedArcsec} from "utilities";
+import { formattedArcsec } from "utilities";
 
 export interface FrameInfo {
     fileId: number;
@@ -125,13 +125,13 @@ export class FrameStore {
             const refView = this.spatialReference.requiredFrameView;
             // Get the position of the ref frame's view in the secondary frame's pixel space
             const corners = [
-                this.spatialTransform.transformCoordinate({x: refView.xMin, y: refView.yMin}, false),
-                this.spatialTransform.transformCoordinate({x: refView.xMin, y: refView.yMax}, false),
-                this.spatialTransform.transformCoordinate({x: refView.xMax, y: refView.yMax}, false),
-                this.spatialTransform.transformCoordinate({x: refView.xMax, y: refView.yMin}, false)
+                this.spatialTransform.transformCoordinate({ x: refView.xMin, y: refView.yMin }, false),
+                this.spatialTransform.transformCoordinate({ x: refView.xMin, y: refView.yMax }, false),
+                this.spatialTransform.transformCoordinate({ x: refView.xMax, y: refView.yMax }, false),
+                this.spatialTransform.transformCoordinate({ x: refView.xMax, y: refView.yMin }, false)
             ];
 
-            const {minPoint, maxPoint} = minMax2D(corners);
+            const { minPoint, maxPoint } = minMax2D(corners);
             // Manually get adjusted zoom level and round to a power of 2
             const mipAdjustment = (PreferenceStore.Instance.lowBandwidthMode ? 2.0 : 1.0) / this.spatialTransform.scale;
             const mipExact = Math.max(1.0, mipAdjustment / this.spatialReference.zoomLevel);
@@ -186,7 +186,7 @@ export class FrameStore {
                 return new Transform2D(this.spatialTransformAST, center);
             } else {
                 // Otherwise use the center of the image
-                return new Transform2D(this.spatialTransformAST, {x: this.frameInfo.fileInfoExtended.width / 2.0 + 0.5, y: this.frameInfo.fileInfoExtended.height / 2.0 + 0.5});
+                return new Transform2D(this.spatialTransformAST, { x: this.frameInfo.fileInfoExtended.width / 2.0 + 0.5, y: this.frameInfo.fileInfoExtended.height / 2.0 + 0.5 });
             }
         }
         return null;
@@ -347,7 +347,7 @@ export class FrameStore {
             rawValues[i] = i;
         }
         return {
-            fromWCS: false, channelType: {code: "", name: "Channel", unit: ""}, indexes, values, rawValues,
+            fromWCS: false, channelType: { code: "", name: "Channel", unit: "" }, indexes, values, rawValues,
             getChannelIndexWCS: null, getChannelIndexSimple: getChannelIndexSimple
         };
     }
@@ -355,7 +355,7 @@ export class FrameStore {
     @computed get spectralInfo(): SpectralInfo {
         const spectralInfo: SpectralInfo = {
             channel: this.channel,
-            channelType: {code: "", name: "Channel", unit: ""},
+            channelType: { code: "", name: "Channel", unit: "" },
             specsys: "",
             spectralString: ""
         };
@@ -429,18 +429,18 @@ export class FrameStore {
             const channelType = CHANNEL_TYPES.find(type => headerVal === type.code);
             const unitHeader = entries.find(entry => entry.name.includes("CUNIT3"));
             if (channelType) {
-                return {valid: true, dimension: 3, type: {name: channelType.name, code: channelType.code, unit: unitHeader ? unitHeader.value.trim() : channelType.unit}};
+                return { valid: true, dimension: 3, type: { name: channelType.name, code: channelType.code, unit: unitHeader ? unitHeader.value.trim() : channelType.unit } };
             } else {
-                return {valid: false, dimension: 3, type: {name: headerVal, code: headerVal, unit: unitHeader ? unitHeader.value.trim() : undefined}};
+                return { valid: false, dimension: 3, type: { name: headerVal, code: headerVal, unit: unitHeader ? unitHeader.value.trim() : undefined } };
             }
         } else if (typeHeader4 && !typeHeader4.value.match(/stokes/i)) { // spectral axis should be CTYPE4
             const headerVal = typeHeader4.value.trim().toUpperCase();
             const channelType = CHANNEL_TYPES.find(type => headerVal === type.code);
             const unitHeader = entries.find(entry => entry.name.includes("CUNIT4"));
             if (channelType) {
-                return {valid: true, dimension: 4, type: {name: channelType.name, code: channelType.code, unit: unitHeader ? unitHeader.value.trim() : channelType.unit}};
+                return { valid: true, dimension: 4, type: { name: channelType.name, code: channelType.code, unit: unitHeader ? unitHeader.value.trim() : channelType.unit } };
             } else {
-                return {valid: false, dimension: 4, type: {name: headerVal, code: headerVal, unit: unitHeader ? unitHeader.value.trim() : undefined}};
+                return { valid: false, dimension: 4, type: { name: headerVal, code: headerVal, unit: unitHeader ? unitHeader.value.trim() : undefined } };
             }
         }
         return undefined;
@@ -502,7 +502,7 @@ export class FrameStore {
         if (this.numChannels > 1 && this.channelValues) {
             const head = this.channelValues[0];
             const tail = this.channelValues[this.numChannels - 1];
-            return new CARTA.FloatBounds(head <=  tail ?  {min: head, max: tail} : {min: tail, max: head});
+            return new CARTA.FloatBounds(head <= tail ? { min: head, max: tail } : { min: tail, max: head });
         }
         return null;
     }
@@ -645,7 +645,7 @@ export class FrameStore {
 
         const center = region.regionId === RegionId.CURSOR ? `${this.cursorInfo.infoWCS.x}, ${this.cursorInfo.infoWCS.y}` : `${wcsCenter.x}, ${wcsCenter.y}`;
         const wcsSize = this.getWcsSizeInArcsec(region.size);
-        const size = wcsSize ? {x: formattedArcsec(wcsSize.x, WCS_PRECISION), y: formattedArcsec(wcsSize.y, WCS_PRECISION)} : null;
+        const size = wcsSize ? { x: formattedArcsec(wcsSize.x, WCS_PRECISION), y: formattedArcsec(wcsSize.y, WCS_PRECISION) } : null;
         const systemType = OverlayStore.Instance.global.explicitSystem;
 
         switch (region.regionType) {
@@ -695,7 +695,7 @@ export class FrameStore {
         this.validWcs = false;
         this.frameInfo = frameInfo;
         this.renderHiDPI = true;
-        this.center = {x: 0, y: 0};
+        this.center = { x: 0, y: 0 };
         this.stokes = 0;
         this.channel = 0;
         this.requiredStokes = 0;
@@ -766,7 +766,7 @@ export class FrameStore {
 
         // need initialized wcs to get correct cursor info
         this.cursorInfo = this.getCursorInfo(this.center);
-        this.cursorValue = {position: {x: NaN, y: NaN}, channel: 0, value: NaN};
+        this.cursorValue = { position: { x: NaN, y: NaN }, channel: 0, value: NaN };
 
         autorun(() => {
             // update zoomLevel when image viewer is available for drawing
@@ -795,10 +795,6 @@ export class FrameStore {
 
     private convertSpectral = (values: Array<number>): Array<number> => {
         return values && values.length > 0 ? values.map(value => this.astSpectralTransform(this.spectralType, this.spectralUnit, this.spectralSystem, value)) : null;
-    };
-
-    public convertSpectralValue = (value: number): number => {
-        return this.astSpectralTransform(this.spectralType, this.spectralUnit, this.spectralSystem, value);
     };
 
     private astSpectralTransform = (type: SpectralType, unit: SpectralUnit, system: SpectralSystem, value: number): number => {
@@ -961,8 +957,8 @@ export class FrameStore {
         if (this.spectralAxis && !this.spectralAxis.valid) {
             this.channelValues = this.channelInfo.values;
             this.spectralCoordsSupported = new Map<string, { type: SpectralType, unit: SpectralUnit }>([
-                [this.nativeSpectralCoordinate, {type: null, unit: null}],
-                [SPECTRAL_TYPE_STRING.get(SpectralType.CHANNEL), {type: SpectralType.CHANNEL, unit: null}]
+                [this.nativeSpectralCoordinate, { type: null, unit: null }],
+                [SPECTRAL_TYPE_STRING.get(SpectralType.CHANNEL), { type: SpectralType.CHANNEL, unit: null }]
             ]);
             this.spectralSystemsSupported = [];
             return;
@@ -993,11 +989,11 @@ export class FrameStore {
                         this.spectralCoordsSupported.set(key, value);
                     }
                 });
-                this.spectralCoordsSupported.set(SPECTRAL_TYPE_STRING.get(SpectralType.CHANNEL), {type: SpectralType.CHANNEL, unit: null});
+                this.spectralCoordsSupported.set(SPECTRAL_TYPE_STRING.get(SpectralType.CHANNEL), { type: SpectralType.CHANNEL, unit: null });
             }
         } else {
             this.spectralCoordsSupported = new Map<string, { type: SpectralType, unit: SpectralUnit }>([
-                [SPECTRAL_TYPE_STRING.get(SpectralType.CHANNEL), {type: SpectralType.CHANNEL, unit: null}]
+                [SPECTRAL_TYPE_STRING.get(SpectralType.CHANNEL), { type: SpectralType.CHANNEL, unit: null }]
             ]);
         }
 
@@ -1069,7 +1065,7 @@ export class FrameStore {
             const offsetBlock = [[0, 0], [1, 1], [-1, -1]];
 
             // Shift image space coordinates to 1-indexed when passing to AST
-            const cursorNeighbourhood = offsetBlock.map((offset) => transformPoint(this.wcsInfo, {x: cursorPosImageSpace.x + offset[0], y: cursorPosImageSpace.y + offset[1]}));
+            const cursorNeighbourhood = offsetBlock.map((offset) => transformPoint(this.wcsInfo, { x: cursorPosImageSpace.x + offset[0], y: cursorPosImageSpace.y + offset[1] }));
 
             cursorPosWCS = cursorNeighbourhood[0];
 
@@ -1092,7 +1088,7 @@ export class FrameStore {
                 }
 
                 if (p.x !== n1.x && p.x !== n2.x && p.y !== n1.y && p.y !== n2.y) {
-                    cursorPosFormatted = {x: p.x, y: p.y};
+                    cursorPosFormatted = { x: p.x, y: p.y };
                     break;
                 }
 
@@ -1109,7 +1105,7 @@ export class FrameStore {
         const imageX = Math.round(cursorPosImageSpace.x);
         const imageY = Math.round(cursorPosImageSpace.y);
         const isInsideImage = imageX >= 0 && imageX < this.frameInfo.fileInfoExtended.width &&
-                                imageY >= 0 && imageY < this.frameInfo.fileInfoExtended.height;
+            imageY >= 0 && imageY < this.frameInfo.fileInfoExtended.height;
 
         return {
             posImageSpace: cursorPosImageSpace,
@@ -1186,7 +1182,7 @@ export class FrameStore {
                     return this.channelInfo.getChannelIndexWCS(x);
                 } else {
                     // invert x in selected widget wcs to frame's default wcs
-                    const tx =  AST.transformSpectralPoint(this.spectralFrame, this.spectralType, this.spectralUnit, this.spectralSystem, x, false);
+                    const tx = AST.transformSpectralPoint(this.spectralFrame, this.spectralType, this.spectralUnit, this.spectralSystem, x, false);
                     return this.channelInfo.getChannelIndexWCS(tx);
                 }
             }
@@ -1286,10 +1282,10 @@ export class FrameStore {
 
     @action setCenter(x: number, y: number) {
         if (this.spatialReference) {
-            const centerPointRefImage = this.spatialTransform.transformCoordinate({x, y}, true);
+            const centerPointRefImage = this.spatialTransform.transformCoordinate({ x, y }, true);
             this.spatialReference.setCenter(centerPointRefImage.x, centerPointRefImage.y);
         } else {
-            this.center = {x, y};
+            this.center = { x, y };
         }
     }
 
@@ -1306,7 +1302,7 @@ export class FrameStore {
     }
 
     @action setCursorValue(position: Point2D, channel: number, value: number) {
-        this.cursorValue = {position, channel, value};
+        this.cursorValue = { position, channel, value };
     }
 
     @action updateCursorRegion = (pos: Point2D) => {
@@ -1328,7 +1324,7 @@ export class FrameStore {
         if (this.spatialReference) {
             // Adjust zoom by scaling factor if zoom level is not absolute
             const adjustedZoom = absolute ? zoom : zoom / this.spatialTransform.scale;
-            const pointRefImage = transformPoint(this.spatialTransformAST, {x, y}, true);
+            const pointRefImage = transformPoint(this.spatialTransformAST, { x, y }, true);
             this.spatialReference.zoomToPoint(pointRefImage.x, pointRefImage.y, adjustedZoom);
         } else {
             if (PreferenceStore.Instance.zoomPoint === ZoomPoint.CURSOR) {
@@ -1364,12 +1360,12 @@ export class FrameStore {
             this.spatialReference.setCenter(imageCenterReferenceSpace.x, imageCenterReferenceSpace.y);
             // Calculate bounding box for transformed image
             const corners = [
-                this.spatialTransform.transformCoordinate({x: 0, y: 0}, true),
-                this.spatialTransform.transformCoordinate({x: 0, y: this.frameInfo.fileInfoExtended.height}, true),
-                this.spatialTransform.transformCoordinate({x: this.frameInfo.fileInfoExtended.width, y: this.frameInfo.fileInfoExtended.height}, true),
-                this.spatialTransform.transformCoordinate({x: this.frameInfo.fileInfoExtended.width, y: 0}, true)
+                this.spatialTransform.transformCoordinate({ x: 0, y: 0 }, true),
+                this.spatialTransform.transformCoordinate({ x: 0, y: this.frameInfo.fileInfoExtended.height }, true),
+                this.spatialTransform.transformCoordinate({ x: this.frameInfo.fileInfoExtended.width, y: this.frameInfo.fileInfoExtended.height }, true),
+                this.spatialTransform.transformCoordinate({ x: this.frameInfo.fileInfoExtended.width, y: 0 }, true)
             ];
-            const {minPoint, maxPoint} = minMax2D(corners);
+            const { minPoint, maxPoint } = minMax2D(corners);
             const rangeX = maxPoint.x - minPoint.x;
             const rangeY = maxPoint.y - minPoint.y;
             const pixelRatio = this.renderHiDPI ? devicePixelRatio : 1.0;
