@@ -1,18 +1,18 @@
-import {IOptionProps, TabId} from "@blueprintjs/core";
+import { IOptionProps, TabId } from "@blueprintjs/core";
 
-import {action, computed, observable, makeObservable, runInAction} from "mobx";
+import { action, computed, observable, makeObservable, runInAction } from "mobx";
 
-import {CARTA} from "carta-protobuf";
+import { CARTA } from "carta-protobuf";
 
-import {BackendService} from "services";
+import { BackendService } from "services";
 
-import {AppStore, DialogStore, PreferenceKeys, PreferenceStore} from "stores";
+import { AppStore, DialogStore, PreferenceKeys, PreferenceStore } from "stores";
 
-import {FileInfoType} from "components";
+import { FileInfoType } from "components";
 
-import {ProcessedColumnData} from "models";
+import { ProcessedColumnData } from "models";
 
-import {getDataTypeString} from "utilities";
+import { getDataTypeString } from "utilities";
 
 export enum BrowserMode {
     File,
@@ -52,7 +52,7 @@ export class FileBrowserStore {
     @observable fileList: CARTA.IFileListResponse;
     @observable selectedFile: CARTA.IFileInfo | CARTA.ICatalogFileInfo;
     @observable selectedHDU: string;
-    @observable HDUfileInfoExtended: {[k: string]: CARTA.IFileInfoExtended};
+    @observable HDUfileInfoExtended: { [k: string]: CARTA.IFileInfoExtended };
     @observable regionFileInfo: string[];
     @observable selectedTab: TabId = FileInfoType.IMAGE_FILE;
     @observable loadingList = false;
@@ -89,8 +89,8 @@ export class FileBrowserStore {
             this.saveFilename = AppStore.Instance.activeFrame.frameInfo.fileInfo.name;
         }
         this.saveRegionId = 0;
-        this.saveSpectralValueStart = AppStore.Instance.activeFrame?.channelValueBounds.min;
-        this.saveSpectralValueEnd = AppStore.Instance.activeFrame?.channelValueBounds.max;
+        this.saveSpectralValueStart = AppStore.Instance.activeFrame?.channelValueBounds?.min || 0;
+        this.saveSpectralValueEnd = AppStore.Instance.activeFrame?.channelValueBounds?.max || 0;
     };
 
     @action hideFileBrowser = () => {
