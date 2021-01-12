@@ -1106,6 +1106,10 @@ export class AppStore {
                     }
                 });
 
+                // Update channelValueBounds
+                FileBrowserStore.Instance.saveSpectralValueStart = this.activeFrame?.channelValueBounds?.min || 0;
+                FileBrowserStore.Instance.saveSpectralValueEnd = this.activeFrame?.channelValueBounds?.max || 0;
+
                 if (updates.length) {
                     this.throttledSetChannels(updates);
                 }
