@@ -61,18 +61,20 @@ export class FileInfoComponent extends React.Component<{
     private renderInfoPanel = () => {
         switch (this.props.selectedTab) {
             case FileInfoType.CHOP_IMAGE:
-                return this.renderSaveImageControl();
+                break;
             default:
+                if (this.props.isLoading) {
+                    return <NonIdealState className="non-ideal-state-file" icon={<Spinner className="astLoadingSpinner" />} title="Loading file info..." />;
+                } else if (this.props.errorMessage) {
+                    return <NonIdealState className="non-ideal-state-file" icon="document" title="Cannot open file!" description={this.props.errorMessage + " Select another file from the folder."} />;
+                } else if (!this.props.fileInfoExtended && !this.props.regionFileInfo && !this.props.catalogFileInfo) {
+                    return <NonIdealState className="non-ideal-state-file" icon="document" title="No file selected." description="Select a file from the folder." />;
+                }
                 break;
         }
-        if (this.props.isLoading) {
-            return <NonIdealState className="non-ideal-state-file" icon={<Spinner className="astLoadingSpinner" />} title="Loading file info..." />;
-        } else if (this.props.errorMessage) {
-            return <NonIdealState className="non-ideal-state-file" icon="document" title="Cannot open file!" description={this.props.errorMessage + " Select another file from the folder."} />;
-        } else if (!this.props.fileInfoExtended && !this.props.regionFileInfo && !this.props.catalogFileInfo) {
-            return <NonIdealState className="non-ideal-state-file" icon="document" title="No file selected." description="Select a file from the folder." />;
-        }
         switch (this.props.selectedTab) {
+            case FileInfoType.CHOP_IMAGE:
+                return this.renderSaveImageControl();
             case FileInfoType.IMAGE_FILE:
                 return this.renderImageHeaderList(this.props.fileInfoExtended.computedEntries);
             case FileInfoType.IMAGE_HEADER:
@@ -143,37 +145,36 @@ export class FileInfoComponent extends React.Component<{
 
     private handleSaveSpectralValueStartChanged = (val: any) => {
         const fileBrowser = AppStore.Instance.fileBrowserStore;
-        // if (-1 < val && val < fileBrowser.saveSpectralValueEnd) {
         fileBrowser.saveSpectralValueStart = val;
-        // }
     };
 
     private handleSaveSpectralValueEndChanged = (val: any) => {
         const fileBrowser = AppStore.Instance.fileBrowserStore;
-        // if (fileBrowser.saveSpectralValueStart < val && val < AppStore.Instance.activeFrame.channelValues.length) {
         fileBrowser.saveSpectralValueEnd = val;
-        // }
     };
+
+    private updateSpectralValueBound = () => {
+        const activeFrame = AppStore.Instance.activeFrame;
+        const fileBrowser = AppStore.Instance.fileBrowserStore;
+        fileBrowser.saveSpectralValueStart = activeFrame.channelValueBounds.min;
+        fileBrowser.saveSpectralValueEnd = activeFrame.channelValueBounds.max;
+    }
 
     private updateSpectralCoordinate(coordStr: string): void {
         const activeFrame = AppStore.Instance.activeFrame;
-        const fileBrowser = AppStore.Instance.fileBrowserStore;
         if (activeFrame && activeFrame.spectralCoordsSupported && activeFrame.spectralCoordsSupported.has(coordStr)) {
             const coord: { type: SpectralType, unit: SpectralUnit } = activeFrame.spectralCoordsSupported.get(coordStr);
             activeFrame.spectralType = coord.type;
             activeFrame.spectralUnit = coord.unit;
-            fileBrowser.saveSpectralValueStart = activeFrame.channelValueBounds.min;
-            fileBrowser.saveSpectralValueEnd = activeFrame.channelValueBounds.max;
+            this.updateSpectralValueBound();
         }
     }
 
     private updateSpectralSystem(specsys: SpectralSystem): void {
         const activeFrame = AppStore.Instance.activeFrame;
-        const fileBrowser = AppStore.Instance.fileBrowserStore;
         if (activeFrame && activeFrame.spectralSystemsSupported && activeFrame.spectralSystemsSupported.includes(specsys)) {
             activeFrame.spectralSystem = specsys;
-            fileBrowser.saveSpectralValueStart = activeFrame.channelValueBounds.min;
-            fileBrowser.saveSpectralValueEnd = activeFrame.channelValueBounds.max;
+            this.updateSpectralValueBound();
         }
     }
 
@@ -240,7 +241,7 @@ export class FileInfoComponent extends React.Component<{
                                             placeholder="First channel"
                                             onValueChange={this.handleSaveSpectralValueStartChanged}
                                             min={activeFrame.channelValueBounds.min}
-                                            max={activeFrame.channelValueBounds.max}
+                                            max={fileBrowser.saveSpectralValueEnd}
                                             clampValueOnBlur={true}
                                         />
                                         <Label>{"to"}</Label>
@@ -249,7 +250,7 @@ export class FileInfoComponent extends React.Component<{
                                             buttonPosition="none"
                                             placeholder="Last channel"
                                             onValueChange={this.handleSaveSpectralValueEndChanged}
-                                            min={activeFrame.channelValueBounds.min}
+                                            min={fileBrowser.saveSpectralValueStart}
                                             max={activeFrame.channelValueBounds.max}
                                             clampValueOnBlur={true}
                                         />
