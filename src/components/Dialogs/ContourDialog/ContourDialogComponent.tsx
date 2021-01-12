@@ -1,5 +1,5 @@
 import * as React from "react";
-import {action, autorun, computed, makeObservable, observable} from "mobx";
+import {action, autorun, computed, makeObservable, observable, runInAction} from "mobx";
 import {observer} from "mobx-react";
 import {Alert, AnchorButton, Button, Classes, Colors, FormGroup, HTMLSelect, IDialogProps, Intent, MenuItem, NonIdealState, Tab, Tabs, TagInput, Tooltip} from "@blueprintjs/core";
 import {Select} from "@blueprintjs/select";
@@ -149,7 +149,7 @@ export class ContourDialogComponent extends React.Component {
         if (!frame) {
             return null;
         }
-        return <MenuItem text={frame.frameInfo.fileInfo.name} onClick={handleClick} key={frame.frameInfo.fileId}/>;
+        return <MenuItem text={frame.filename} onClick={handleClick} key={frame.frameInfo.fileId}/>;
     };
 
     private renderHistogramSelectItem = (isCube: boolean, {handleClick, modifiers, query}) => {
@@ -455,7 +455,7 @@ export class ContourDialogComponent extends React.Component {
                         value={this.smoothingFactor}
                         majorStepSize={1}
                         stepSize={1}
-                        onValueChange={val => this.smoothingFactor = val}
+                        onValueChange={val => runInAction(() => {this.smoothingFactor = val})}
                     />
                 </FormGroup>
             </div>
@@ -480,7 +480,7 @@ export class ContourDialogComponent extends React.Component {
                             itemRenderer={this.renderDataSourceSelectItem}
                             disabled={appStore.animatorStore.animationActive}
                         >
-                            <Button text={dataSource.frameInfo.fileInfo.name} rightIcon="double-caret-vertical" alignText={"right"} disabled={appStore.animatorStore.animationActive}/>
+                            <Button text={dataSource.filename} rightIcon="double-caret-vertical" alignText={"right"} disabled={appStore.animatorStore.animationActive}/>
                         </DataSourceSelect>
                         <Tooltip content={appStore.frameLockedToContour ? "Data source is locked to active image" : "Data source is independent of active image"}>
                             <AnchorButton className="lock-button" icon={appStore.frameLockedToContour ? "lock" : "unlock"} minimal={true} onClick={appStore.toggleFrameContourLock}/>

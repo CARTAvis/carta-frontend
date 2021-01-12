@@ -24,7 +24,8 @@ import {
     SpatialProfilerSettingsPanelComponent,
     RenderConfigSettingsPanelComponent,
     HistogramSettingsPanelComponent,
-    ImageViewSettingsPanelComponent
+    ImageViewSettingsPanelComponent,
+    CatalogOverlayPlotSettingsPanelComponent
 } from "components";
 import {AppStore, HelpStore, HelpType, LayoutStore, CatalogStore} from "stores";
 import {
@@ -285,6 +286,8 @@ export class WidgetsStore {
                 return RenderConfigSettingsPanelComponent.WIDGET_CONFIG;
             case HistogramComponent.WIDGET_CONFIG.type:
                 return HistogramSettingsPanelComponent.WIDGET_CONFIG;
+            case CatalogOverlayComponent.WIDGET_CONFIG.type:
+                return CatalogOverlayPlotSettingsPanelComponent.WIDGET_CONFIG;
             default:
                 return PlaceholderComponent.WIDGET_CONFIG;
         }
@@ -359,18 +362,7 @@ export class WidgetsStore {
         const widgets = this.widgetsMap.get(widgetType);
         if (widgets) {
             // remove associated floating settings according current widgetId
-            if (this.floatingSettingsWidgets) {
-                let associatedFloatingSettingsId = null;
-                this.floatingSettingsWidgets.forEach((value, key) => {
-                    if (value === widgetId) {
-                        associatedFloatingSettingsId = key;
-                    }
-                });
-                if (associatedFloatingSettingsId) {
-                    this.removeFloatingWidget(associatedFloatingSettingsId, true);
-                    this.floatingSettingsWidgets.delete(associatedFloatingSettingsId);
-                }
-            }
+            this.removeAssociatedFloatingSetting(widgetId);
             widgets.delete(widgetId);
         }
         // remove floating settings according floating settings Id
@@ -422,6 +414,9 @@ export class WidgetsStore {
             case CatalogOverlayComponent.WIDGET_CONFIG.type:
                 itemId = this.getNextComponentId(CatalogOverlayComponent.WIDGET_CONFIG);
                 CatalogStore.Instance.catalogProfiles.set(itemId, 1);
+                if (widgetSettings) {
+                    this.addCatalogWidget(widgetSettings["catalogFileId"], null, widgetSettings);   
+                }
                 break;
             case CatalogPlotType.D2Scatter:
                 const scatterProps: CatalogPlotWidgetStoreProps = {
@@ -524,7 +519,7 @@ export class WidgetsStore {
         layout.registerComponent("catalog-overlay", CatalogOverlayComponent);
         layout.registerComponent("catalog-plot", CatalogPlotComponent);
 
-        const showCogWidgets = ["image-view", "spatial-profiler", "spectral-profiler", "histogram", "render-config", "stokes"];
+        const showCogWidgets = ["image-view", "spatial-profiler", "spectral-profiler", "histogram", "render-config", "stokes", "catalog-overlay"];
         // add drag source buttons from ToolbarMenuComponent
         ToolbarMenuComponent.DRAGSOURCE_WIDGETCONFIG_MAP.forEach((widgetConfig, id) => WidgetsStore.CreateDragSource(layout, widgetConfig, id));
 
@@ -563,7 +558,7 @@ export class WidgetsStore {
         if (!widgetType || !widgetID) {
             return null;
         }
-
+        
         let widgetStore = null;
         switch (widgetType) {
             case RenderConfigComponent.WIDGET_CONFIG.type:
@@ -580,6 +575,9 @@ export class WidgetsStore {
                 break;
             case StokesAnalysisComponent.WIDGET_CONFIG.type:
                 widgetStore = this.stokesAnalysisWidgets.get(widgetID);
+                break;
+            case CatalogOverlayComponent.WIDGET_CONFIG.type:
+                widgetStore = this.catalogWidgets.get(widgetID);
                 break;
             default:
                 break;
@@ -601,7 +599,8 @@ export class WidgetsStore {
             SpectralProfilerComponent.WIDGET_CONFIG.type,
             SpatialProfilerComponent.WIDGET_CONFIG.type,
             RenderConfigComponent.WIDGET_CONFIG.type,
-            HistogramComponent.WIDGET_CONFIG.type
+            HistogramComponent.WIDGET_CONFIG.type,
+            CatalogOverlayComponent.WIDGET_CONFIG.type
         ];
         if (floatingSettingsAppliedWidgets.indexOf(parentType) === -1) {
             return;
@@ -684,19 +683,20 @@ export class WidgetsStore {
             const isCatalogTable = config.component === CatalogOverlayComponent.WIDGET_CONFIG.type;
             const isCatalogPlot = config.component === CatalogPlotComponent.WIDGET_CONFIG.type;
             // Clean up removed widget's store (ignoring items that have been floated)
+            const id = config.id as string;
             if (config.component !== "floated" && !isCatalogTable && !isCatalogPlot) {
-                const id = config.id as string;
                 this.removeWidget(id, config.component);
             }
 
             // close UI, keep catalog file alive
             if (isCatalogTable) {
-                CatalogStore.Instance.catalogProfiles.delete(config.id as string);
+                CatalogStore.Instance.catalogProfiles.delete(id);
+                this.removeAssociatedFloatingSetting(id);
             }
 
             // remove all catalog plots associated to current catalog plot widget
             if (isCatalogPlot) {
-                CatalogStore.Instance.clearCatalogPlotsByWidgetId(config.id as string);
+                CatalogStore.Instance.clearCatalogPlotsByWidgetId(id);
             }
         }
     };
@@ -722,7 +722,7 @@ export class WidgetsStore {
         const appStore = AppStore.Instance;
         let newTitle;
         if (appStore.activeFrame) {
-            newTitle = appStore.activeFrame.frameInfo.fileInfo.name;
+            newTitle = appStore.activeFrame.filename;
         } else {
             newTitle = "No image loaded";
         }
@@ -915,15 +915,27 @@ export class WidgetsStore {
     };
 
     // add catalog widget store
-    @action addCatalogWidget(catalogFileId: number, id: string = null) {
+    @action addCatalogWidget(catalogFileId: number, id: string = null, widgetSettings: object = null) {
+        // return widget id if store already exsit
+        const catalogStore = CatalogStore.Instance;        
+        const catalogWidgetId = catalogStore.catalogWidgets.get(catalogFileId);
+        if (catalogWidgetId) {
+            return catalogWidgetId;
+        }   
+        
         // Generate new id if none passed in
         if (!id) {
             id = this.getNextId(CatalogOverlayComponent.WIDGET_CONFIG.type);
         }
 
         if (id) {
-            this.catalogWidgets.set(id, new CatalogWidgetStore(catalogFileId));
+            const catalogWidgetStore = new CatalogWidgetStore(catalogFileId);
+            if (widgetSettings) {
+                catalogWidgetStore.init(widgetSettings);
+            }
+            this.catalogWidgets.set(id, catalogWidgetStore);
         }
+        catalogStore.catalogWidgets.set(catalogFileId, id);
         return id;
     }
 
@@ -1206,6 +1218,22 @@ export class WidgetsStore {
         if (widget) {
             this.updateFloatingWidgetzIndexOnRemove(widget.zIndex);
             this.floatingWidgets = this.floatingWidgets.filter(w => w.componentId !== componentId);
+            this.removeAssociatedFloatingSetting(componentId);
         }
     };
+
+    private removeAssociatedFloatingSetting = (widgetId: string) => {
+        if (this.floatingSettingsWidgets?.size) {
+            let associatedFloatingSettingsId = null;
+            this.floatingSettingsWidgets.forEach((value, key) => {
+                if (value === widgetId) {
+                    associatedFloatingSettingsId = key;
+                }
+            });
+            if (associatedFloatingSettingsId) {
+                this.removeFloatingWidget(associatedFloatingSettingsId, true);
+                this.floatingSettingsWidgets.delete(associatedFloatingSettingsId);
+            }   
+        }
+    }
 }

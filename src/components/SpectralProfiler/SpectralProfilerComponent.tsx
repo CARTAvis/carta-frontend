@@ -348,7 +348,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
         }
 
         const frame = this.widgetStore.effectiveFrame;
-        const imageName = (frame ? frame.frameInfo.fileInfo.name : undefined);
+        const imageName = (frame ? frame.filename : undefined);
 
         let linePlotProps: LinePlotComponentProps = {
             xLabel: "Channel",

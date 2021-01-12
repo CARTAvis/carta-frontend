@@ -65,7 +65,10 @@ export enum PreferenceKeys {
     PERFORMANCE_LOW_BAND_WIDTH_MODE = "lowBandwidthMode",
     PERFORMANCE_STOP_ANIMATION_PLAYBACK_MINUTES = "stopAnimationPlaybackMinutes",
 
-    LOG_EVENT = "logEventList"
+    LOG_EVENT = "logEventList",
+
+    CATALOG_DISPLAYED_COLUMN_SIZE = "catalogDisplayedColumnSize",
+    CATALOG_TABLE_SEPARATOR_POSITION = "catalogTableSeparatorPosition"
 }
 
 const DEFAULTS = {
@@ -136,6 +139,10 @@ const DEFAULTS = {
     },
     LOG_EVENT: {
         eventLoggingEnabled: []
+    },
+    CATALOG: {
+        catalogDisplayedColumnSize: 10,
+        catalogTableSeparatorPosition: "60%"
     }
 };
 
@@ -393,6 +400,18 @@ export class PreferenceStore {
         return this.cursorPosition === CursorPosition.FIXED;
     }
 
+    @computed get enabledLoggingEventNames(): string[] {
+        return this.preferences.get(PreferenceKeys.LOG_EVENT) ?? [];
+    }
+
+    @computed get catalogDisplayedColumnSize(): number {
+        return this.preferences.get(PreferenceKeys.CATALOG_DISPLAYED_COLUMN_SIZE) ?? DEFAULTS.CATALOG.catalogDisplayedColumnSize;
+    }
+
+    @computed get catalogTableSeparatorPosition(): string {
+        return this.preferences.get(PreferenceKeys.CATALOG_TABLE_SEPARATOR_POSITION) ?? DEFAULTS.CATALOG.catalogTableSeparatorPosition;
+    }
+
     @action setPreference = async (key: PreferenceKeys, value: any) => {
         if (!key) {
             return false;
@@ -493,6 +512,10 @@ export class PreferenceStore {
         this.clearPreferences([PreferenceKeys.LOG_EVENT]);
     };
 
+    @action resetCatalogSettings = () => {
+        this.clearPreferences([PreferenceKeys.CATALOG_DISPLAYED_COLUMN_SIZE, PreferenceKeys.CATALOG_TABLE_SEPARATOR_POSITION]);
+    }
+
     @action fetchPreferences = async () => {
         await this.upgradePreferences();
         await this.getPreferences();
@@ -519,7 +542,8 @@ export class PreferenceStore {
                 PreferenceKeys.GLOBAL_ZOOM_POINT, PreferenceKeys.GLOBAL_SPECTRAL_MATCHING_TYPE, PreferenceKeys.RENDER_CONFIG_COLORMAP, PreferenceKeys.RENDER_CONFIG_NAN_COLOR_HEX,
                 PreferenceKeys.CONTOUR_CONFIG_CONTOUR_GENERATOR_TYPE, PreferenceKeys.CONTOUR_CONFIG_CONTOUR_COLOR, PreferenceKeys.CONTOUR_CONFIG_CONTOUR_COLORMAP,
                 PreferenceKeys.WCS_OVERLAY_WCS_TYPE, PreferenceKeys.WCS_OVERLAY_BEAM_COLOR, PreferenceKeys.WCS_OVERLAY_BEAM_TYPE, PreferenceKeys.REGION_COLOR,
-                PreferenceKeys.REGION_CREATION_MODE
+                PreferenceKeys.REGION_CREATION_MODE,
+                PreferenceKeys.CATALOG_TABLE_SEPARATOR_POSITION
             ];
 
             const intKeys = [
@@ -528,7 +552,8 @@ export class PreferenceStore {
                 PreferenceKeys.REGION_DASH_LENGTH, PreferenceKeys.REGION_TYPE, PreferenceKeys.PERFORMANCE_IMAGE_COMPRESSION_QUALITY, PreferenceKeys.PERFORMANCE_ANIMATION_COMPRESSION_QUALITY,
                 PreferenceKeys.PERFORMANCE_GPU_TILE_CACHE, PreferenceKeys.PERFORMANCE_SYSTEM_TILE_CACHE, PreferenceKeys.PERFORMANCE_CONTOUR_DECIMATION,
                 PreferenceKeys.PERFORMANCE_CONTOUR_COMPRESSION_LEVEL, PreferenceKeys.PERFORMANCE_CONTOUR_CHUNK_SIZE, PreferenceKeys.PERFORMANCE_CONTOUR_CONTROL_MAP_WIDTH,
-                PreferenceKeys.PERFORMANCE_STOP_ANIMATION_PLAYBACK_MINUTES
+                PreferenceKeys.PERFORMANCE_STOP_ANIMATION_PLAYBACK_MINUTES,
+                PreferenceKeys.CATALOG_DISPLAYED_COLUMN_SIZE
             ];
 
             const numberKeys = [

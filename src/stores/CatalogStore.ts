@@ -1,6 +1,6 @@
 import * as AST from "ast_wrapper";
-import { action, observable, ObservableMap, computed, makeObservable } from "mobx";
-import {AppStore, WidgetsStore, CatalogProfileStore, CatalogSystemType} from "stores";
+import {action, observable, ObservableMap, computed,makeObservable} from "mobx";
+import {AppStore, CatalogProfileStore, CatalogSystemType, WidgetsStore} from "stores";
 import {CatalogWidgetStore} from "stores/widgets";
 
 type CatalogOverlayDataInfo = {
@@ -237,20 +237,6 @@ export class CatalogStore {
         }
     }
 
-    getAssociatedIdByWidgetId(catalogPlotWidgetId: string): {catalogPlotComponentId: string, catalogFileId: number} {
-        let catalogPlotComponentId;
-        let catalogFileId;
-        this.catalogPlots.forEach((catalogWidgetMap, componentId) => {
-            catalogWidgetMap.forEach((widgetId, fileId) => {
-                if (widgetId === catalogPlotWidgetId) {
-                    catalogPlotComponentId = componentId;
-                    catalogFileId = fileId;
-                }
-            });
-        });
-        return {catalogPlotComponentId: catalogPlotComponentId, catalogFileId: catalogFileId};
-    }
-
     @action closeAssociatedCatalog(imageFileId: number) {
         const catalogFileIds = this.imageAssociatedCatalogId.get(imageFileId);
         if (catalogFileIds?.length) {
@@ -274,6 +260,20 @@ export class CatalogStore {
         }
     }
 
+    getAssociatedIdByWidgetId(catalogPlotWidgetId: string): {catalogPlotComponentId: string, catalogFileId: number} {
+        let catalogPlotComponentId;
+        let catalogFileId;
+        this.catalogPlots.forEach((catalogWidgetMap, componentId) => {
+            catalogWidgetMap.forEach((widgetId, fileId) => {
+                if (widgetId === catalogPlotWidgetId) {
+                    catalogPlotComponentId = componentId;
+                    catalogFileId = fileId;
+                }
+            });
+        });
+        return {catalogPlotComponentId: catalogPlotComponentId, catalogFileId: catalogFileId};
+    }
+
     getCatalogFileNames(fileIds: Array<number>) {
         let fileList = new Map<number, string>();
         fileIds.forEach(catalogFileId => {
@@ -294,10 +294,9 @@ export class CatalogStore {
             return widgetsStore.catalogWidgets.get(widgetStoreId);     
         } else {
             const widgetId = widgetsStore.addCatalogWidget(fileId);
-            this.catalogWidgets.set(fileId, widgetId);
             return widgetsStore.catalogWidgets.get(widgetId);
         }
-    } 
+    }
 
     private static GetFractionFromUnit(unit: string): number {
         if (CatalogStore.ArcminUnits.includes(unit)) {

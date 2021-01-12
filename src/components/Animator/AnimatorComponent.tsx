@@ -243,7 +243,7 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
                         value={frameIndex}
                         min={-1}
                         max={appStore.frames.length}
-                        step={1}
+                        stepSize={1}
                         onValueChange={this.onFrameChanged}
                         fill={true}
                         disabled={appStore.animatorStore.animationActive}
@@ -261,7 +261,7 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
                             disabled={appStore.animatorStore.animationActive}
                         />
                         <div className="slider-info">
-                            <pre>{activeFrame.frameInfo.fileInfo.name}</pre>
+                            {activeFrame.filename}
                         </div>
                     </React.Fragment>
                     }
@@ -287,7 +287,7 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
                         value={activeFrame.requiredChannel}
                         min={-1}
                         max={numChannels}
-                        step={1}
+                        stepSize={1}
                         onValueChange={this.onChannelChanged}
                         fill={true}
                         disabled={appStore.animatorStore.animationActive}

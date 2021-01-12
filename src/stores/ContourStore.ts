@@ -75,8 +75,9 @@ export class ContourStore {
             this.vertexBuffers = [];
         }
 
-        if (this.vertexBuffers.length !== index) {
+        if (!this.gl || this.vertexBuffers.length !== index) {
             console.log(`WebGL buffer index is incorrect!`);
+            return;
         }
 
         // TODO: handle buffer cleanup when no longer needed

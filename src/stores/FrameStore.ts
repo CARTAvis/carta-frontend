@@ -48,6 +48,7 @@ export interface FrameInfo {
     fileInfoExtended: CARTA.FileInfoExtended;
     fileFeatureFlags: number;
     renderMode: CARTA.RenderMode;
+    beamTable: CARTA.IBeam[];
 }
 
 export enum RasterRenderType {
@@ -105,6 +106,15 @@ export class FrameStore {
 
     @observable isRequestingMoments: boolean;
     @observable requestingMomentsProgress: number;
+
+    @computed get filename(): string {
+        // hdu extension name is in field 3 of fileInfoExtended computed entries
+        const extName = this.frameInfo?.fileInfoExtended?.computedEntries?.length >= 3 && this.frameInfo?.fileInfoExtended?.computedEntries[2]?.name === "Extension name" ?
+                        `_${this.frameInfo.fileInfoExtended.computedEntries[2]?.value}` : "";
+        return this.frameInfo?.hdu !== "" && this.frameInfo?.hdu !== "0" ?
+            `${this.frameInfo.fileInfo.name}.HDU_${this.frameInfo.hdu}${extName}` :
+            this.frameInfo.fileInfo.name;
+    }
 
     @computed get regionSet(): RegionSetStore {
         if (this.spatialReference) {
@@ -239,28 +249,38 @@ export class FrameStore {
     }
 
     @computed get beamProperties(): { x: number, y: number, angle: number, overlayBeamSettings: OverlayBeamStore } {
-        const bMajHeader = this.frameInfo.fileInfoExtended.headerEntries.find(entry => entry.name.indexOf("BMAJ") !== -1);
-        const bMinHeader = this.frameInfo.fileInfoExtended.headerEntries.find(entry => entry.name.indexOf("BMIN") !== -1);
-        const bpaHeader = this.frameInfo.fileInfoExtended.headerEntries.find(entry => entry.name.indexOf("BPA") !== -1);
         const unitHeader = this.frameInfo.fileInfoExtended.headerEntries.find(entry => entry.name.indexOf("CUNIT1") !== -1);
         const deltaHeader = this.frameInfo.fileInfoExtended.headerEntries.find(entry => entry.name.indexOf("CDELT1") !== -1);
 
-        if (bMajHeader && bMinHeader && bpaHeader && unitHeader && deltaHeader) {
-            let bMaj = getHeaderNumericValue(bMajHeader);
-            let bMin = getHeaderNumericValue(bMinHeader);
-            const bpa = getHeaderNumericValue(bpaHeader);
+        if (unitHeader && deltaHeader) {
             const unit = unitHeader.value.trim();
             const delta = getHeaderNumericValue(deltaHeader);
+            if (isFinite(delta) && (unit === "deg" || unit === "rad")) {
 
-            if (isFinite(bMaj) && bMaj > 0 && isFinite(bMin) && bMin > 0 && isFinite(bpa) && isFinite(delta) && (unit === "deg" || unit === "rad")) {
-                return {
-                    x: bMaj / Math.abs(delta),
-                    y: bMin / Math.abs(delta),
-                    angle: bpa,
-                    overlayBeamSettings: this.overlayBeamSettings
-                };
+                if (this.frameInfo.beamTable && this.frameInfo.beamTable.length > 0) {
+                    let beam : CARTA.IBeam
+                    if (this.frameInfo.beamTable.length === 1 && this.frameInfo.beamTable[0].channel === -1 && this.frameInfo.beamTable[0].stokes === -1) {
+                        beam = this.frameInfo.beamTable[0];
+                    } else {
+                        if (this.frameInfo.fileInfoExtended.depth > 1 && this.frameInfo.fileInfoExtended.stokes > 1) {
+                            beam = this.frameInfo.beamTable.find((beam) => beam.channel === this.requiredChannel && beam.stokes === this.requiredStokes);
+                        } else if (this.frameInfo.fileInfoExtended.depth > 1 && this.frameInfo.fileInfoExtended.stokes <= 1) {
+                            beam = this.frameInfo.beamTable.find((beam) => beam.channel === this.requiredChannel);
+                        } else if (this.frameInfo.fileInfoExtended.depth <= 1 && this.frameInfo.fileInfoExtended.stokes > 1) {
+                            beam = this.frameInfo.beamTable.find((beam) => beam.stokes === this.requiredStokes);
+                        }
+                    }
+
+                    if (beam && isFinite(beam.majorAxis) && beam.majorAxis > 0 && isFinite(beam.minorAxis) && beam.minorAxis > 0 && isFinite(beam.pa)) {
+                        return {
+                            x: beam.majorAxis / (unit === "deg" ? 3600 : (180 * 3600 / Math.PI)) / Math.abs(delta),
+                            y: beam.minorAxis / (unit === "deg" ? 3600 : (180 * 3600 / Math.PI)) / Math.abs(delta),
+                            angle: beam.pa,
+                            overlayBeamSettings: this.overlayBeamSettings
+                        }
+                    }
+                }
             }
-            return null;
         }
         return null;
     }
@@ -846,7 +866,7 @@ export class FrameStore {
         }
         const initResult = AST.initFrame(headerString);
         if (!initResult) {
-            this.logStore.addWarning(`Problem processing WCS info in file ${this.frameInfo.fileInfo.name}`, ["ast"]);
+            this.logStore.addWarning(`Problem processing WCS info in file ${this.filename}`, ["ast"]);
             this.wcsInfo = AST.initDummyFrame();
         } else {
             this.wcsInfo = initResult;
@@ -902,7 +922,7 @@ export class FrameStore {
         }
         const initResult = AST.initFrame(headerString);
         if (!initResult) {
-            this.logStore.addWarning(`Problem processing WCS info in file ${this.frameInfo.fileInfo.name}`, ["ast"]);
+            this.logStore.addWarning(`Problem processing WCS info in file ${this.filename}`, ["ast"]);
             this.fullWcsInfo = null;
         } else {
             this.fullWcsInfo = initResult;

@@ -44,6 +44,7 @@ export class TableComponentProps {
     sortingInfo?: {columnName: string, sortingType: CARTA.SortingType};
     disable?: boolean;
     darkTheme?: boolean;
+    tableHeaders?: Array<CARTA.ICatalogHeader>;
 }
 
 const MANUAL_SELECTION_COLUMN_WIDTH = 50;
@@ -108,14 +109,14 @@ export class TableComponent extends React.Component<TableComponentProps> {
         switch (dataType) {
             case CARTA.ColumnType.String || CARTA.ColumnType.Bool:
                 return (
-                    <div className={"column-filter-popover-content"}>
+                    <div className={"column-popover-content"}>
                         <small>Filter by substring</small><br/>
                         <small>e.g. gal (no quotation, entries contain the "gal" string)</small>
                     </div>
                 );
             default:
                 return (
-                    <div className={"column-filter-popover-content"}>
+                    <div className={"column-popover-content"}>
                         <small>Operators: {">"}, {">="}, {"<"}, {"<="}, {"=="}, {"!="}, {".."}, {"..."}</small><br/>
                         <small>e.g. {"<"} 10 (everything less than 10) </small><br/>
                         <small>e.g. == 1.23 (entries equal to 1.23) </small><br/>
@@ -170,8 +171,10 @@ export class TableComponent extends React.Component<TableComponentProps> {
         if (controlheader.filter !== "") {
             activeFilter = true;
         }
+        const headerDescription = this.props.tableHeaders[controlheader.dataIndex].description;
+        
         const disable = this.props.disable;
-        let popOverClass = this.props.darkTheme ? "column-filter-popover-dark" : "column-filter-popover";
+        let popOverClass = this.props.darkTheme ? "column-popover-dark" : "column-popover";
 
         const nameRenderer = () => {
             // sharing css with fileList table
@@ -192,7 +195,16 @@ export class TableComponent extends React.Component<TableComponentProps> {
                 <div className="sort-label" onClick={() => disable ? null : this.props.updateSortRequest(column.name, nextSortType)}>
                     <Label disabled={disable} className="bp3-inline label">
                         <Icon className={iconClass} icon={sortIcon as IconName}/>
-                        {column.name}
+                        <Popover 
+                            hoverOpenDelay={250} 
+                            hoverCloseDelay={0} 
+                            className={"column-popover"} 
+                            popoverClassName={popOverClass} 
+                            content={headerDescription? headerDescription : "Description not avaliable"} 
+                            interactionKind={PopoverInteractionKind.HOVER}
+                        >
+                            {column.name}
+                        </Popover>
                     </Label>
                 </div>
             );
@@ -202,9 +214,9 @@ export class TableComponent extends React.Component<TableComponentProps> {
             <ColumnHeaderCell>
                 <ColumnHeaderCell className={"column-name"} nameRenderer={nameRenderer}/>
                 <ColumnHeaderCell isActive={activeFilter}>
-                    <Popover hoverOpenDelay={250} hoverCloseDelay={0} className={"column-filter"} popoverClassName={popOverClass} content={filterSyntax} interactionKind={PopoverInteractionKind.HOVER}>
+                    <Popover hoverOpenDelay={250} hoverCloseDelay={0} className={"column-popover"} popoverClassName={popOverClass} content={filterSyntax} interactionKind={PopoverInteractionKind.HOVER}>
                         <InputGroup
-                            key={"column-filter-" + columnIndex}
+                            key={"column-popover-" + columnIndex}
                             small={true}
                             placeholder="Click to filter"
                             value={controlheader && controlheader.filter ? controlheader.filter : ""} 
@@ -299,7 +311,7 @@ export class TableComponent extends React.Component<TableComponentProps> {
         if (table.type === TableType.ColumnFilter) {
             return (
                 <Table
-                    className={"column-filter"}
+                    className={"column-filter-table"}
                     ref={table.updateTableRef ? (ref) => table.updateTableRef(ref) : null}
                     numRows={table.numVisibleRows}
                     renderMode={RenderMode.BATCH}

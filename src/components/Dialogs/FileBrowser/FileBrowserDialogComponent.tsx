@@ -16,6 +16,7 @@ export class FileBrowserDialogComponent extends React.Component {
     @observable overwriteExistingFileAlertVisible: boolean;
     @observable fileFilterString: string = "";
     @observable debouncedFilterString: string = "";
+    @observable selectedFiles: ISelectedFile[] = [];
 
     constructor(props: any) {
         super(props);
@@ -26,12 +27,28 @@ export class FileBrowserDialogComponent extends React.Component {
         FileBrowserStore.Instance.setSelectedTab(newId);
     };
 
-    private loadSelectedFile = () => {
-        const fileBrowserStore = FileBrowserStore.Instance;
-        this.loadFile(fileBrowserStore.selectedFile, fileBrowserStore.selectedHDU);
+
+    @action private handleSelectionChanged = (selection: ISelectedFile[]) => {
+        this.selectedFiles = selection;
     };
 
-    private loadFile = (fileInfo: CARTA.IFileInfo | CARTA.ICatalogFileInfo, hdu?: string) => {
+    private loadSelectedFiles = async () => {
+        const fileBrowserStore = FileBrowserStore.Instance;
+        if (this.selectedFiles.length > 1) {
+            for (let i = 0; i < this.selectedFiles.length; i++) {
+                try {
+                    await this.loadFile(this.selectedFiles[i], i > 0);
+                }
+                catch (err){
+                    console.log(err);
+                }
+            }
+        } else {
+            await this.loadFile({fileInfo: fileBrowserStore.selectedFile, hdu: fileBrowserStore.selectedHDU});
+        }
+    };
+
+    private loadFile = async (file: ISelectedFile, forceAppend: boolean = false) => {
         const appStore = AppStore.Instance;
         const fileBrowserStore = appStore.fileBrowserStore;
 
@@ -46,15 +63,15 @@ export class FileBrowserDialogComponent extends React.Component {
 
         if (fileBrowserStore.browserMode === BrowserMode.File) {
             const frames = appStore.frames;
-            if (!fileBrowserStore.appendingFrame || !frames.length) {
-                appStore.openFile(fileBrowserStore.fileList.directory, fileInfo.name, hdu);
+            if (!(forceAppend || fileBrowserStore.appendingFrame) || !frames.length) {
+                await appStore.openFile(fileBrowserStore.fileList.directory, file.fileInfo.name, file.hdu);
             } else {
-                appStore.appendFile(fileBrowserStore.fileList.directory, fileInfo.name, hdu);
+                await appStore.appendFile(fileBrowserStore.fileList.directory, file.fileInfo.name, file.hdu);
             }
         } else if (fileBrowserStore.browserMode === BrowserMode.Catalog) {
-            appStore.appendCatalog(fileBrowserStore.catalogFileList.directory, fileInfo.name, CatalogProfileStore.InitTableRows, CARTA.CatalogFileType.VOTable);
+            await appStore.appendCatalog(fileBrowserStore.catalogFileList.directory, file.fileInfo.name, CatalogProfileStore.InitTableRows, CARTA.CatalogFileType.VOTable);
         } else {
-            appStore.importRegion(fileBrowserStore.fileList.directory, fileInfo.name, fileInfo.type);
+            await appStore.importRegion(fileBrowserStore.fileList.directory, file.fileInfo.name, file.fileInfo.type);
         }
 
         fileBrowserStore.saveStartingDirectory();
@@ -171,7 +188,7 @@ export class FileBrowserDialogComponent extends React.Component {
                             <AnchorButton
                                 intent={Intent.PRIMARY}
                                 disabled={appStore.fileLoading || !fileBrowserStore.selectedFile || !fileBrowserStore.fileInfoResp || fileBrowserStore.loadingInfo}
-                                onClick={this.loadSelectedFile}
+                                onClick={this.loadSelectedFiles}
                                 text="Append"
                             />
                         </Tooltip>);
@@ -181,7 +198,7 @@ export class FileBrowserDialogComponent extends React.Component {
                             <AnchorButton
                                 intent={Intent.PRIMARY}
                                 disabled={appStore.fileLoading || !fileBrowserStore.selectedFile || !fileBrowserStore.fileInfoResp || fileBrowserStore.loadingInfo}
-                                onClick={this.loadSelectedFile}
+                                onClick={this.loadSelectedFiles}
                                 text="Load"
                             />
                         </Tooltip>
@@ -203,9 +220,9 @@ export class FileBrowserDialogComponent extends React.Component {
                     <Tooltip content={"Load a region file for the currently active image"}>
                         <AnchorButton
                             intent={Intent.PRIMARY}
-                            disabled={appStore.fileLoading || !fileBrowserStore.selectedFile || !fileBrowserStore.fileInfoResp || fileBrowserStore.loadingInfo || !appStore.activeFrame}
-                            onClick={this.loadSelectedFile}
-                            text="Load Region"
+                            disabled={appStore.fileLoading || !fileBrowserStore.selectedFile || !fileBrowserStore.fileInfoResp || fileBrowserStore.loadingInfo}
+                            onClick={this.loadSelectedFiles}
+                            text={this.selectedFiles?.length > 1 ? "Append selected" : "Append"}
                         />
                     </Tooltip>
                 );
@@ -215,7 +232,7 @@ export class FileBrowserDialogComponent extends React.Component {
                         <AnchorButton
                             intent={Intent.PRIMARY}
                             disabled={appStore.fileLoading || !fileBrowserStore.selectedFile || !fileBrowserStore.fileInfoResp || fileBrowserStore.loadingInfo || !appStore.activeFrame}
-                            onClick={this.loadSelectedFile}
+                            onClick={this.loadSelectedFiles}
                             text="Load Catalog"
                         />
                     </Tooltip>
@@ -459,6 +476,7 @@ export class FileBrowserDialogComponent extends React.Component {
                                 sortingString={appStore.preferenceStore.fileSortingString}
                                 onSortingChanged={fileBrowserStore.setSortingConfig}
                                 onFileClicked={fileBrowserStore.selectFile}
+                                onSelectionChanged={this.handleSelectionChanged}
                                 onFileDoubleClicked={this.loadFile}
                                 onFolderClicked={this.handleFolderClicked}
                             />
@@ -466,6 +484,7 @@ export class FileBrowserDialogComponent extends React.Component {
                         <div className="file-info-pane">
                             <FileInfoComponent
                                 infoTypes={FileBrowserDialogComponent.GetFileInfoTypes(fileBrowserStore.browserMode)}
+                                HDUOptions={{HDUList: fileBrowserStore.HDUList, handleSelectedHDUChange: fileBrowserStore.selectHDU}}
                                 fileInfoExtended={fileBrowserStore.fileInfoExtended}
                                 regionFileInfo={fileBrowserStore.regionFileInfo ? fileBrowserStore.regionFileInfo.join("\n") : ""}
                                 catalogFileInfo={fileBrowserStore.catalogFileInfo}
