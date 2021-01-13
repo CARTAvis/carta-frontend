@@ -23,7 +23,8 @@ enum PreferenceDialogTabs {
     OVERLAY_CONFIG,
     REGION,
     PERFORMANCE,
-    LOG_EVENT
+    LOG_EVENT,
+    CATALOG
 }
 
 const PercentileSelect = Select.ofType<string>();
@@ -81,6 +82,9 @@ export class PreferenceDialogComponent extends React.Component {
                 break;
             case PreferenceDialogTabs.LOG_EVENT:
                 preference.resetLogEventSettings();
+                break;
+            case PreferenceDialogTabs.CATALOG:
+                preference.resetCatalogSettings();
                 break;
             case PreferenceDialogTabs.GLOBAL:
             default:
@@ -536,7 +540,15 @@ export class PreferenceDialogComponent extends React.Component {
 
         const logEventsPanel = (
             <div className="log-event-panel">
-                <FormGroup inline={false} label="Enable logged event type" className="log-event-list">
+                <FormGroup inline={true} label="Enable logged event type" className="log-event-header">
+                    <Checkbox
+                        label="Select all"
+                        checked={preference.isSelectingAllLogEvents}
+                        indeterminate={preference.isSelectingIndeterminateLogEvents}
+                        onChange={() => preference.selectAllLogEvents()}
+                    />
+                </FormGroup>
+                <FormGroup inline={false} className="log-event-list">
                     {Event.EVENT_TYPES.map((eventType) =>
                         <Checkbox
                             className="log-event-checkbox"
@@ -546,6 +558,20 @@ export class PreferenceDialogComponent extends React.Component {
                             onChange={() => preference.setPreference(PreferenceKeys.LOG_EVENT, eventType)}
                         />
                     )}
+                </FormGroup>
+            </div>
+        );
+
+        const catalogPanel = (            
+            <div className="panel-container">
+                <FormGroup  inline={true} label="Displayed columns">
+                    <SafeNumericInput
+                        placeholder="Default Displayed Columns"
+                        min={1}
+                        value={preference.catalogDisplayedColumnSize}
+                        stepSize={1}
+                        onValueChange={(value: number) => preference.setPreference(PreferenceKeys.CATALOG_DISPLAYED_COLUMN_SIZE, value)}
+                    />
                 </FormGroup>
             </div>
         );
@@ -579,6 +605,7 @@ export class PreferenceDialogComponent extends React.Component {
                         <Tab id={PreferenceDialogTabs.RENDER_CONFIG} title="Render Configuration" panel={renderConfigPanel}/>
                         <Tab id={PreferenceDialogTabs.CONTOUR_CONFIG} title="Contour Configuration" panel={contourConfigPanel}/>
                         <Tab id={PreferenceDialogTabs.OVERLAY_CONFIG} title="Overlay Configuration" panel={overlayConfigPanel}/>
+                        <Tab id={PreferenceDialogTabs.CATALOG} title="Catalog" panel={catalogPanel}/>
                         <Tab id={PreferenceDialogTabs.REGION} title="Region" panel={regionSettingsPanel}/>
                         <Tab id={PreferenceDialogTabs.PERFORMANCE} title="Performance" panel={performancePanel}/>
                         <Tab id={PreferenceDialogTabs.LOG_EVENT} title="Log Events" panel={logEventsPanel}/>

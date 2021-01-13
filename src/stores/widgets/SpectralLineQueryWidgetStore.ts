@@ -263,7 +263,6 @@ export class SpectralLineQueryWidgetStore extends RegionWidgetStore {
             columnIndex: current.columnIndex,
             dataIndex: current.dataIndex,
             display: current.display,
-            representAs: current.representAs,
             filter: filterInput,
             columnWidth: current.columnWidth
         };
@@ -496,7 +495,6 @@ export class SpectralLineQueryWidgetStore extends RegionWidgetStore {
                 columnIndex: header.columnIndex,
                 dataIndex: index,
                 display: true,
-                representAs: undefined,
                 filter: "",
                 columnWidth: header.name === SpectralLineHeaders.LineSelection ? 50 : 150
             };

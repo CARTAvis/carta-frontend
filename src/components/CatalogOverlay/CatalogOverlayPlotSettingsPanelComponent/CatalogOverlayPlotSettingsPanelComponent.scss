@@ -1,0 +1,31 @@
+.catalog-settings{
+    margin: 20px;
+
+    .bp3-form-group {
+        &:first-of-type {
+            margin-left: 0px;
+        }
+    }
+
+    .bp3-form-group .bp3-label {
+        width: 9em;
+        text-align: left;
+    }
+
+    .bp3-numeric-input {
+        .bp3-input-group {
+            width: 60px;
+        }
+    }
+
+    .panel-container {
+        .file-menu .bp3-button{
+            width: 150px;
+            height: 30px;
+            .bp3-button-text {
+                overflow: hidden;
+                white-space: nowrap;
+            }
+        }
+    }
+}

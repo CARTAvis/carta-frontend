@@ -1,5 +1,5 @@
 import {action, computed, observable, makeObservable, runInAction} from "mobx";
-import {TabId} from "@blueprintjs/core";
+import {IOptionProps, TabId} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import {BackendService} from "services";
 import {AppStore, DialogStore, PreferenceKeys, PreferenceStore} from "stores";
@@ -25,6 +25,11 @@ export type RegionFileType = CARTA.FileType.CRTF | CARTA.FileType.DS9_REG;
 export type ImageFileType = CARTA.FileType.CASA | CARTA.FileType.FITS | CARTA.FileType.HDF5 | CARTA.FileType.MIRIAD;
 export type CatalogFileType = CARTA.CatalogFileType.VOTable | CARTA.CatalogFileType.FITSTable;
 
+export interface ISelectedFile {
+    fileInfo?: CARTA.IFileInfo | CARTA.ICatalogFileInfo,
+    hdu?: string
+}
+
 export class FileBrowserStore {
     private static staticInstance: FileBrowserStore;
 
@@ -40,7 +45,7 @@ export class FileBrowserStore {
     @observable fileList: CARTA.IFileListResponse;
     @observable selectedFile: CARTA.IFileInfo | CARTA.ICatalogFileInfo;
     @observable selectedHDU: string;
-    @observable fileInfoExtended: CARTA.IFileInfoExtended;
+    @observable HDUfileInfoExtended: {[k: string]: CARTA.IFileInfoExtended};
     @observable regionFileInfo: string[];
     @observable selectedTab: TabId = FileInfoType.IMAGE_FILE;
     @observable loadingList = false;
@@ -84,7 +89,7 @@ export class FileBrowserStore {
         this.loadingList = true;
         this.selectedFile = null;
         this.selectedHDU = null;
-        this.fileInfoExtended = null;
+        this.HDUfileInfoExtended = null;
         this.regionFileInfo = null;
         this.catalogFileInfo = null;
 
@@ -119,12 +124,16 @@ export class FileBrowserStore {
         const backendService = BackendService.Instance;
         this.loadingInfo = true;
         this.fileInfoResp = false;
-        this.fileInfoExtended = null;
+        this.HDUfileInfoExtended = null;
         this.responseErrorMessage = "";
 
         backendService.getFileInfo(directory, file, hdu).subscribe((res: CARTA.FileInfoResponse) => runInAction(() => {
             if (res.fileInfo && this.selectedFile && res.fileInfo.name === this.selectedFile.name) {
-                this.fileInfoExtended = res.fileInfoExtended;
+                this.HDUfileInfoExtended = res.fileInfoExtended;
+                const HDUList = Object.keys(this.HDUfileInfoExtended);
+                if (HDUList?.length >= 1) {
+                    this.selectedHDU = HDUList[0];
+                }
                 this.loadingInfo = false;
             }
             this.fileInfoResp = true;
@@ -132,7 +141,7 @@ export class FileBrowserStore {
             console.log(err);
             this.responseErrorMessage = err;
             this.fileInfoResp = false;
-            this.fileInfoExtended = null;
+            this.HDUfileInfoExtended = null;
             this.loadingInfo = false;
         }));
     };
@@ -185,24 +194,24 @@ export class FileBrowserStore {
         }));
     };
 
-    @action selectFile = (file: CARTA.IFileInfo | CARTA.ICatalogFileInfo, hdu?: string) => {
+    @action selectFile = (file: ISelectedFile) => {
         const fileList = this.getfileListByMode;
-        this.selectedFile = file;
+        this.selectedFile = file.fileInfo;
 
-        if (hdu) {
-            this.selectedHDU = hdu;
+        if (file.hdu) {
+            this.selectedHDU = file.hdu;
         }
 
         if (this.browserMode === BrowserMode.File) {
-            this.getFileInfo(fileList.directory, file.name, hdu);
+            this.getFileInfo(fileList.directory, file.fileInfo.name, file.hdu);
         } else if (this.browserMode === BrowserMode.SaveFile) {
-            this.getFileInfo(fileList.directory, file.name, hdu);
-            this.saveFilename = file.name;
+            this.getFileInfo(fileList.directory, file.fileInfo.name, file.hdu);
+            this.saveFilename = file.fileInfo.name;
         } else if (this.browserMode === BrowserMode.Catalog) {
-            this.getCatalogFileInfo(fileList.directory, file.name);
+            this.getCatalogFileInfo(fileList.directory, file.fileInfo.name);
         } else {
-            this.setExportFilename(file.name);
-            this.getRegionFileInfo(fileList.directory, file.name);
+            this.setExportFilename(file.fileInfo.name);
+            this.getRegionFileInfo(fileList.directory, file.fileInfo.name);
         }
     };
 
@@ -230,6 +239,12 @@ export class FileBrowserStore {
             this.getFileList(fileList.parent);
         }
     }
+
+    @action selectHDU = (hdu: string) => {
+        if (hdu in this.HDUfileInfoExtended) {
+            this.selectedHDU = hdu;
+        }
+    };
 
     @action setSelectedTab(newId: TabId) {
         this.selectedTab = newId;
@@ -272,9 +287,27 @@ export class FileBrowserStore {
         PreferenceStore.Instance.setPreference(PreferenceKeys.SILENT_FILE_SORTING_STRING, sortingString);
     };
 
+    @computed get HDUList(): IOptionProps[] {
+        return this.HDUfileInfoExtended ?
+            Object.keys(this.HDUfileInfoExtended)?.map(hdu => {
+                // hdu extension name is in field 3 of fileInfoExtended computed entries
+                const extName = this.HDUfileInfoExtended[hdu]?.computedEntries?.length >= 3 && this.HDUfileInfoExtended[hdu].computedEntries[2]?.name === "Extension name" ?
+                    `: ${this.HDUfileInfoExtended[hdu].computedEntries[2]?.value}` : "";
+                return {
+                    label: `${hdu}${extName}`,
+                    value: hdu
+                }
+            }) :
+            null;
+    }
+
+    @computed get fileInfoExtended(): CARTA.IFileInfoExtended {
+        return this.HDUfileInfoExtended && this.selectedHDU in this.HDUfileInfoExtended ? this.HDUfileInfoExtended[this.selectedHDU] : null;
+    }
+
     @computed get fileInfo() {
         let fileInfo = "";
-        if (this.fileInfoExtended && this.fileInfoExtended.computedEntries) {
+        if (this.fileInfoExtended?.computedEntries) {
             this.fileInfoExtended.computedEntries.forEach(header => {
                 fileInfo += `${header.name} = ${header.value}\n`;
             });
@@ -284,7 +317,7 @@ export class FileBrowserStore {
 
     @computed get headers() {
         let headers = "";
-        if (this.fileInfoExtended && this.fileInfoExtended.headerEntries) {
+        if (this.fileInfoExtended?.headerEntries) {
             this.fileInfoExtended.headerEntries.forEach(header => {
                 if (header.name === "END") {
                     headers += `${header.name}\n`;
