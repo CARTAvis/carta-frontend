@@ -161,7 +161,7 @@ export class BackendService {
         this.connectionDropped = false;
         this.connectionStatus = ConnectionStatus.PENDING;
         this.serverUrl = url;
-        this.connection = new WebSocket(apiService.accessToken ? url + `?token=${apiService.accessToken}` : url);
+        this.connection = new WebSocket(apiService.accessToken ? url + `/token/${apiService.accessToken}` : url);
         this.connection.binaryType = "arraybuffer";
         this.connection.onmessage = this.messageHandler.bind(this);
         this.connection.onclose = (ev: CloseEvent) => runInAction(()=>{
@@ -172,7 +172,7 @@ export class BackendService {
             // Reconnect to the same URL if Websocket is closed
             if (!ev.wasClean && this.autoReconnect) {
                 setTimeout(() => {
-                    const newConnection = new WebSocket(apiService.accessToken ? url + `?token=${apiService.accessToken}` : url);
+                    const newConnection = new WebSocket(apiService.accessToken ? url + `/token/${apiService.accessToken}` : url);
                     newConnection.binaryType = "arraybuffer";
                     newConnection.onopen = this.connection.onopen;
                     newConnection.onerror = this.connection.onerror;
