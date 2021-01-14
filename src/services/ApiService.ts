@@ -43,7 +43,7 @@ export class ApiService {
     private axiosInstance: AxiosInstance;
     private authInstance: gapi.auth2.GoogleAuth;
 
-    @action private setToken = (tokenString: string, tokenLifetime: number) => {
+    @action setToken = (tokenString: string, tokenLifetime: number = Number.MAX_VALUE) => {
         if (isFinite(tokenLifetime) && tokenLifetime > 0) {
             console.log(`Token updated and valid for ${tokenLifetime.toFixed()} seconds`);
             this._accessToken = tokenString;
@@ -74,7 +74,7 @@ export class ApiService {
     }
 
     constructor() {
-        makeObservable<ApiService, "_accessToken" | "setToken" | "clearToken">(this);
+        makeObservable(this);
         this.axiosInstance = axios.create();
         if (ApiService.RuntimeConfig.googleClientId) {
             gapi.load("auth2", () => {
