@@ -74,6 +74,7 @@ export class FileBrowserStore {
     @observable saveSpectralValueStart: number;
     @observable saveSpectralValueEnd: number;
     @observable saveRegionId: number;
+    @observable isDropDegeneratedAxes: boolean;
 
     @action showFileBrowser = (mode: BrowserMode, append = false) => {
         this.appendingFrame = append;
@@ -91,6 +92,7 @@ export class FileBrowserStore {
         this.saveRegionId = 0;
         this.saveSpectralValueStart = AppStore.Instance.activeFrame?.channelValueBounds?.min || 0;
         this.saveSpectralValueEnd = AppStore.Instance.activeFrame?.channelValueBounds?.max || 0;
+        this.isDropDegeneratedAxes = false;
     };
 
     @action hideFileBrowser = () => {

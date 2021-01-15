@@ -86,7 +86,8 @@ export class FileBrowserDialogComponent extends React.Component {
         const saveChannelEnd = activeFrame.findChannelIndexByValue(fileBrowserStore.saveSpectralValueEnd);
         const saveChannelDiff = Math.abs(saveChannelEnd - saveChannelStart);
         const saveChannels = [Math.min(saveChannelStart, saveChannelEnd), saveChannelDiff || 1, 1];
-        appStore.saveFile(fileBrowserStore.fileList.directory, filename, fileBrowserStore.saveFileType, fileBrowserStore.saveRegionId, saveChannels);
+        const saveStokes = [0, activeFrame.stokesInfo.length, 1]
+        appStore.saveFile(fileBrowserStore.fileList.directory, filename, fileBrowserStore.saveFileType, fileBrowserStore.saveRegionId, saveChannels, saveStokes, fileBrowserStore.isDropDegeneratedAxes);
     }
 
     private handleSaveFileClicked = () => {
