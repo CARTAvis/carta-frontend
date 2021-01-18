@@ -6,7 +6,7 @@ import AutoSizer from "react-virtualized-auto-sizer";
 import { CARTA } from "carta-protobuf";
 import { SafeNumericInput, TableComponent, TableComponentProps } from "components/Shared";
 import "./FileInfoComponent.scss";
-import { AppStore } from "stores";
+import { AppStore, FileBrowserStore } from "stores";
 import { SpectralSystem, SpectralType, SpectralUnit } from "models";
 
 export enum FileInfoType {
@@ -113,7 +113,7 @@ export class FileInfoComponent extends React.Component<{
         }
     };
     private onChangeIsDropDegeneratedAxes = () => {
-        const fileBrowser = AppStore.Instance.fileBrowserStore;
+        const fileBrowser = FileBrowserStore.Instance;
         fileBrowser.isDropDegeneratedAxes = !fileBrowser.isDropDegeneratedAxes;
     };
 
@@ -159,22 +159,17 @@ export class FileInfoComponent extends React.Component<{
         fileBrowser.saveRegionId = parseInt(changeEvent.target.value);
     };
 
-    private handleSaveSpectralValueStartChanged = (val: any) => {
-        const fileBrowser = AppStore.Instance.fileBrowserStore;
-        fileBrowser.saveSpectralValueStart = val;
+    private handleSaveSpectralRangeStartChanged = (val: any) => {
+        FileBrowserStore.Instance.saveSpectralRange[0] = val;
     };
 
-    private handleSaveSpectralValueEndChanged = (val: any) => {
-        const fileBrowser = AppStore.Instance.fileBrowserStore;
-        fileBrowser.saveSpectralValueEnd = val;
+    private handleSaveSpectralRangeEndChanged = (val: any) => {
+        FileBrowserStore.Instance.saveSpectralRange[1] = val;
     };
 
-    private updateSpectralValueBound = () => {
-        const activeFrame = AppStore.Instance.activeFrame;
-        const fileBrowser = AppStore.Instance.fileBrowserStore;
-        fileBrowser.saveSpectralValueStart = activeFrame.channelValueBounds.min;
-        fileBrowser.saveSpectralValueEnd = activeFrame.channelValueBounds.max;
-    }
+    private handleSaveSpectralRangeStrideChanged = (val: any) => {
+        FileBrowserStore.Instance.saveSpectralRange[2] = val;
+    };
 
     private updateSpectralCoordinate(coordStr: string): void {
         const activeFrame = AppStore.Instance.activeFrame;
@@ -182,7 +177,8 @@ export class FileInfoComponent extends React.Component<{
             const coord: { type: SpectralType, unit: SpectralUnit } = activeFrame.spectralCoordsSupported.get(coordStr);
             activeFrame.spectralType = coord.type;
             activeFrame.spectralUnit = coord.unit;
-            this.updateSpectralValueBound();
+            FileBrowserStore.Instance.updateIniSaveSpectralRange();
+            FileBrowserStore.Instance.updateIniSaveStokesRange();
         }
     }
 
@@ -190,12 +186,13 @@ export class FileInfoComponent extends React.Component<{
         const activeFrame = AppStore.Instance.activeFrame;
         if (activeFrame && activeFrame.spectralSystemsSupported && activeFrame.spectralSystemsSupported.includes(specsys)) {
             activeFrame.spectralSystem = specsys;
-            this.updateSpectralValueBound();
+            FileBrowserStore.Instance.updateIniSaveSpectralRange();
+            FileBrowserStore.Instance.updateIniSaveStokesRange();
         }
     }
 
     private renderSaveImageControl() {
-        const fileBrowser = AppStore.Instance.fileBrowserStore;
+        const fileBrowser = FileBrowserStore.Instance;
         const activeFrame = AppStore.Instance.activeFrame;
         const closedRegions = activeFrame.regionSet?.regions.filter(region => region.regionId > 0 && region.isClosedRegion);
         const regionOptions: IOptionProps[] = [{ value: 0, label: "Image" }].concat(closedRegions.map(region => ({ value: region.regionId, label: `${region.name ? region.name : region.regionId} (${CARTA.RegionType[region.regionType]})` })));
@@ -253,21 +250,31 @@ export class FileInfoComponent extends React.Component<{
                                         <ControlGroup fill={true} vertical={false}>
                                             <Label>{"from"}</Label>
                                             <SafeNumericInput
-                                                value={fileBrowser.saveSpectralValueStart}
+                                                value={fileBrowser.saveSpectralRange[0]}
                                                 buttonPosition="none"
                                                 placeholder="First channel"
-                                                onValueChange={this.handleSaveSpectralValueStartChanged}
+                                                onValueChange={this.handleSaveSpectralRangeStartChanged}
                                                 min={activeFrame.channelValueBounds.min}
-                                                max={fileBrowser.saveSpectralValueEnd}
+                                                max={fileBrowser.saveSpectralRange[1]}
                                                 clampValueOnBlur={true}
                                             />
                                             <Label>{"to"}</Label>
                                             <SafeNumericInput
-                                                value={fileBrowser.saveSpectralValueEnd}
+                                                value={fileBrowser.saveSpectralRange[1]}
                                                 buttonPosition="none"
                                                 placeholder="Last channel"
-                                                onValueChange={this.handleSaveSpectralValueEndChanged}
-                                                min={fileBrowser.saveSpectralValueStart}
+                                                onValueChange={this.handleSaveSpectralRangeEndChanged}
+                                                min={fileBrowser.saveSpectralRange[0]}
+                                                max={activeFrame.channelValueBounds.max}
+                                                clampValueOnBlur={true}
+                                            />
+                                            <Label>{"by"}</Label>
+                                            <SafeNumericInput
+                                                value={fileBrowser.saveSpectralRange[2]}
+                                                buttonPosition="none"
+                                                placeholder="Channel stride"
+                                                onValueChange={this.handleSaveSpectralRangeStrideChanged}
+                                                min={0}
                                                 max={activeFrame.channelValueBounds.max}
                                                 clampValueOnBlur={true}
                                             />
@@ -276,7 +283,7 @@ export class FileInfoComponent extends React.Component<{
                                 </div>
                             </React.Fragment>
                         }
-                        {activeFrame.stokesInfo.length > 1 &&
+                        {activeFrame.hasStokes &&
                             <hr />
                         }
                         <Switch

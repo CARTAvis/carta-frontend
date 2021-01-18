@@ -1107,8 +1107,8 @@ export class AppStore {
                 });
 
                 // Update channelValueBounds
-                FileBrowserStore.Instance.saveSpectralValueStart = this.activeFrame?.channelValueBounds?.min || 0;
-                FileBrowserStore.Instance.saveSpectralValueEnd = this.activeFrame?.channelValueBounds?.max || 0;
+                FileBrowserStore.Instance.updateIniSaveSpectralRange();
+                FileBrowserStore.Instance.updateIniSaveStokesRange();
 
                 if (updates.length) {
                     this.throttledSetChannels(updates);

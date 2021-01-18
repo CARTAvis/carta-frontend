@@ -84,8 +84,7 @@
     }
 
     .region-select{
-        margin-left: 0px;
-        margin-top: 1em;
+        margin: 0em;
 
         .label {
             width: 8em;
@@ -99,7 +98,7 @@
         margin-top: 1em;
 
         .bp3-form-group {
-            margin-left: 0em;
+            margin: 0em;
 
             .bp3-label {
                 width: 7em;
@@ -121,9 +120,9 @@
                 margin: auto;
                 width: 0%;
             }
-            .bp3-numeric-input {
-                margin-left: 2em;
-                width: auto;
+            .bp3-input {
+                margin-left: 1em;
+                width: 8em;
             }
         }
     }
