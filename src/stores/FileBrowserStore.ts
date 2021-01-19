@@ -407,20 +407,20 @@ export class FileBrowserStore {
     }
 
     @computed get saveStokesRange(): number[] {
-        // [start, end, stride] for "ABCD"
+        // [start, length, stride] for "ABCD"
         const options: number[][] = [
             [], // all
-            [0, 0, 1], // A
+            [0, 1, 1], // A
             [1, 1, 1], // B
-            [2, 2, 1], // C
-            [0, 1, 1], // AB
+            [2, 1, 1], // C
+            [0, 2, 1], // AB
             [1, 2, 1], // BC
             [0, 2, 2], // AC
-            [3, 3, 1], // D
-            [2, 3, 1], // CD
-            [0, 2, 1], // ABC
-            [0, 3, 4], // AD
-            [1, 3, 3], // BD
+            [3, 1, 1], // D
+            [2, 2, 1], // CD
+            [0, 3, 1], // ABC
+            [0, 2, 3], // AD
+            [1, 2, 2], // BD
             [1, 3, 1], // BCD
         ];
         return options[this.saveStokesOption];
