@@ -326,6 +326,7 @@ export class FileInfoComponent extends React.Component<{
                                                 buttonPosition="none"
                                                 placeholder="First channel"
                                                 onValueChange={this.handleSaveSpectralRangeStartChanged}
+                                                majorStepSize={null}
                                                 stepSize={majorStepSize}
                                                 minorStepSize={minorStepSize}
                                             />
@@ -335,6 +336,7 @@ export class FileInfoComponent extends React.Component<{
                                                 buttonPosition="none"
                                                 placeholder="Last channel"
                                                 onValueChange={this.handleSaveSpectralRangeEndChanged}
+                                                majorStepSize={null}
                                                 stepSize={majorStepSize}
                                                 minorStepSize={minorStepSize}
                                             />
@@ -344,6 +346,7 @@ export class FileInfoComponent extends React.Component<{
                                                 buttonPosition="none"
                                                 placeholder="Channel stride"
                                                 onValueChange={this.handleSaveSpectralRangeDeltaChanged}
+                                                majorStepSize={null}
                                                 stepSize={majorStepSize}
                                                 minorStepSize={minorStepSize}
                                                 min={0}
