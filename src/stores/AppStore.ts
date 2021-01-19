@@ -1108,7 +1108,6 @@ export class AppStore {
 
                 // Update channelValueBounds
                 FileBrowserStore.Instance.updateIniSaveSpectralRange();
-                FileBrowserStore.Instance.updateIniSaveStokesRange();
 
                 if (updates.length) {
                     this.throttledSetChannels(updates);

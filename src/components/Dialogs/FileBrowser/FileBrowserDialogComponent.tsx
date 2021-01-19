@@ -39,12 +39,12 @@ export class FileBrowserDialogComponent extends React.Component {
                 try {
                     await this.loadFile(this.selectedFiles[i], i > 0);
                 }
-                catch (err){
+                catch (err) {
                     console.log(err);
                 }
             }
         } else {
-            await this.loadFile({fileInfo: fileBrowserStore.selectedFile, hdu: fileBrowserStore.selectedHDU});
+            await this.loadFile({ fileInfo: fileBrowserStore.selectedFile, hdu: fileBrowserStore.selectedHDU });
         }
     };
 
@@ -54,8 +54,8 @@ export class FileBrowserDialogComponent extends React.Component {
 
         // Ignore load
         switch (fileBrowserStore.browserMode) {
-            case(BrowserMode.RegionExport):
-            case(BrowserMode.SaveFile):
+            case (BrowserMode.RegionExport):
+            case (BrowserMode.SaveFile):
                 return;
             default:
                 break;
@@ -85,11 +85,12 @@ export class FileBrowserDialogComponent extends React.Component {
         const saveChannelStart = activeFrame.findChannelIndexByValue(fileBrowserStore.saveSpectralRange[0]);
         const saveChannelEnd = activeFrame.findChannelIndexByValue(fileBrowserStore.saveSpectralRange[1]);
         const saveChannelStride = activeFrame.findChannelIndexByValue(fileBrowserStore.saveSpectralRange[2]);
-        const saveChannelDiff = Math.abs(saveChannelEnd - saveChannelStart);
+        // Count the number of product channels
+        const saveChannelDiff = Math.floor(Math.abs(saveChannelEnd - saveChannelStart) / saveChannelStride);
         const saveChannels = [Math.min(saveChannelStart, saveChannelEnd), saveChannelDiff || 1, saveChannelStride];
         const saveStokes = fileBrowserStore.saveStokesRange;
         appStore.saveFile(fileBrowserStore.fileList.directory, filename, fileBrowserStore.saveFileType, fileBrowserStore.saveRegionId, saveChannels, saveStokes, fileBrowserStore.isDropDegeneratedAxes);
-    }
+    };
 
     private handleSaveFileClicked = () => {
         const fileBrowserStore = FileBrowserStore.Instance;
@@ -486,7 +487,7 @@ export class FileBrowserDialogComponent extends React.Component {
                         <div className="file-info-pane">
                             <FileInfoComponent
                                 infoTypes={FileBrowserDialogComponent.GetFileInfoTypes(fileBrowserStore.browserMode)}
-                                HDUOptions={{HDUList: fileBrowserStore.HDUList, handleSelectedHDUChange: fileBrowserStore.selectHDU}}
+                                HDUOptions={{ HDUList: fileBrowserStore.HDUList, handleSelectedHDUChange: fileBrowserStore.selectHDU }}
                                 fileInfoExtended={fileBrowserStore.fileInfoExtended}
                                 regionFileInfo={fileBrowserStore.regionFileInfo ? fileBrowserStore.regionFileInfo.join("\n") : ""}
                                 catalogFileInfo={fileBrowserStore.catalogFileInfo}

@@ -72,7 +72,7 @@ export class FileBrowserStore {
     @observable saveFilename: string = "";
     @observable saveFileType: CARTA.FileType = CARTA.FileType.CASA;
     @observable saveSpectralRange: number[];
-    @observable saveStokesRange: number[];
+    @observable saveStokesOption: number;
     @observable saveRegionId: number;
     @observable isDropDegeneratedAxes: boolean;
 
@@ -91,7 +91,6 @@ export class FileBrowserStore {
         }
         this.saveRegionId = 0;
         this.updateIniSaveSpectralRange();
-        this.updateIniSaveStokesRange();
         this.isDropDegeneratedAxes = false;
     };
 
@@ -213,14 +212,8 @@ export class FileBrowserStore {
         const activeFrame = AppStore.Instance.activeFrame;
         const min = activeFrame?.channelValueBounds?.min || 0;
         const max = activeFrame?.channelValueBounds?.max || 0;
-        const dif = Math.abs(max - min) / (activeFrame?.numChannels || 1);
+        const dif = (Math.abs(max - min) + 1) / (activeFrame?.numChannels || 1);
         this.saveSpectralRange = [min, max, dif];
-    }
-
-    @action updateIniSaveStokesRange = () => {
-        const min = 0;
-        const max = AppStore.Instance.activeFrame?.stokes || 0;
-        this.saveStokesRange = [min, max, 1];
     }
 
     @action selectFile = (file: ISelectedFile) => {
@@ -410,6 +403,26 @@ export class FileBrowserStore {
         ];
 
         return { columnHeaders: columnHeaders, columnsData: columnsData };
+    }
+
+    @computed get saveStokesRange(): number[] {
+        // [start, end, stride] for "ABCD"
+        const options: number[][] = [
+            [], // all
+            [0, 0, 1], // A
+            [1, 1, 1], // B
+            [2, 2, 1], // C
+            [0, 1, 1], // AB
+            [1, 2, 1], // BC
+            [0, 2, 2], // AC
+            [3, 3, 1], // D
+            [2, 3, 1], // CD
+            [0, 2, 1], // ABC
+            [0, 3, 4], // AD
+            [1, 3, 3], // BD
+            [1, 3, 1], // BCD
+        ];
+        return options[this.saveStokesOption];
     }
 
     constructor() {

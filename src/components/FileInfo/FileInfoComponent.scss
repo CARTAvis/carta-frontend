@@ -127,6 +127,21 @@
         }
     }
 
+    .stokes-select {
+        margin-top: 1em;
+
+        .bp3-form-group {
+            margin: 0em;
+
+            .bp3-label {
+                width: 7em;
+            }
+            .bp3-select {
+                margin-left: auto;
+            }
+        }
+    }
+
     .drop-degenerate {
         margin-top: 1em;
     }
