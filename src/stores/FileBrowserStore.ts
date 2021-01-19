@@ -212,7 +212,7 @@ export class FileBrowserStore {
         const activeFrame = AppStore.Instance.activeFrame;
         const min = activeFrame?.channelValueBounds?.min || 0;
         const max = activeFrame?.channelValueBounds?.max || 0;
-        const dif = (Math.abs(max - min) + 1) / (activeFrame?.numChannels || 1);
+        const dif = Math.abs(max - min) / (activeFrame?.numChannels || 1);
         this.saveSpectralRange = [min, max, dif];
     }
 

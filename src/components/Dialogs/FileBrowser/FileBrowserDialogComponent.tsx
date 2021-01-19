@@ -82,12 +82,13 @@ export class FileBrowserDialogComponent extends React.Component {
         const fileBrowserStore = FileBrowserStore.Instance;
         const activeFrame = appStore.activeFrame;
         const filename = fileBrowserStore.saveFilename.trim();
+        const saveSpectralRangeDiff = Math.abs(fileBrowserStore.saveSpectralRange[1] - fileBrowserStore.saveSpectralRange[0]);
         const saveChannelStart = activeFrame.findChannelIndexByValue(fileBrowserStore.saveSpectralRange[0]);
         const saveChannelEnd = activeFrame.findChannelIndexByValue(fileBrowserStore.saveSpectralRange[1]);
-        const saveChannelStride = activeFrame.findChannelIndexByValue(fileBrowserStore.saveSpectralRange[2]);
+        const saveChannelStride = fileBrowserStore.saveSpectralRange[2] / saveSpectralRangeDiff *  activeFrame.numChannels;
         // Count the number of product channels
-        const saveChannelDiff = Math.floor(Math.abs(saveChannelEnd - saveChannelStart) / saveChannelStride);
-        const saveChannels = [Math.min(saveChannelStart, saveChannelEnd), saveChannelDiff || 1, saveChannelStride];
+        const saveChannelLength = Math.floor(saveSpectralRangeDiff / fileBrowserStore.saveSpectralRange[2]);
+        const saveChannels = [Math.min(saveChannelStart, saveChannelEnd), saveChannelLength || 1, saveChannelStride || 1];
         const saveStokes = fileBrowserStore.saveStokesRange;
         appStore.saveFile(fileBrowserStore.fileList.directory, filename, fileBrowserStore.saveFileType, fileBrowserStore.saveRegionId, saveChannels, saveStokes, fileBrowserStore.isDropDegeneratedAxes);
     };
