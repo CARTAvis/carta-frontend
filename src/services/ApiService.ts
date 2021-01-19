@@ -45,7 +45,12 @@ export class ApiService {
 
     @action setToken = (tokenString: string, tokenLifetime: number = Number.MAX_VALUE) => {
         if (isFinite(tokenLifetime) && tokenLifetime > 0) {
-            console.log(`Token updated and valid for ${tokenLifetime.toFixed()} seconds`);
+            // Store tokens from URL parameters as session cookie
+            if (tokenLifetime === Number.MAX_VALUE) {
+                document.cookie = `carta-auth-token=${tokenString}`
+            } else {
+                console.log(`Token updated and valid for ${tokenLifetime.toFixed()} seconds`);
+            }
             this._accessToken = tokenString;
             this.axiosInstance.defaults.headers.common["Authorization"] = `Bearer ${tokenString}`;
             this._tokenLifetime = tokenLifetime;
