@@ -82,13 +82,19 @@ export class FileBrowserDialogComponent extends React.Component {
         const fileBrowserStore = FileBrowserStore.Instance;
         const activeFrame = appStore.activeFrame;
         const filename = fileBrowserStore.saveFilename.trim();
-        const saveSpectralRangeDiff = Math.abs(fileBrowserStore.saveSpectralRange[1] - fileBrowserStore.saveSpectralRange[0]);
-        const saveChannelStart = activeFrame.findChannelIndexByValue(fileBrowserStore.saveSpectralRange[0]);
-        const saveChannelEnd = activeFrame.findChannelIndexByValue(fileBrowserStore.saveSpectralRange[1]);
-        const saveChannelStride = fileBrowserStore.saveSpectralRange[2] / saveSpectralRangeDiff *  activeFrame.numChannels;
+        const saveSpectralRangeDelta = Math.abs(fileBrowserStore.saveSpectralRange[1] - fileBrowserStore.saveSpectralRange[0]);
+        const channelStart = activeFrame.findChannelIndexByValue(fileBrowserStore.saveSpectralRange[0]);
+        const channelEnd = activeFrame.findChannelIndexByValue(fileBrowserStore.saveSpectralRange[1]);
+        const channelStride = fileBrowserStore.saveSpectralRange[2] / saveSpectralRangeDelta * activeFrame.numChannels;
         // Count the number of product channels
-        const saveChannelLength = Math.floor(saveSpectralRangeDiff / fileBrowserStore.saveSpectralRange[2]);
-        const saveChannels = [Math.min(saveChannelStart, saveChannelEnd), saveChannelLength || 1, saveChannelStride || 1];
+        const saveChannelLength = Math.floor(saveSpectralRangeDelta / fileBrowserStore.saveSpectralRange[2]);
+        const saveChannelStart = Math.min(channelStart, channelEnd);
+        const saveChannelLengthMax = activeFrame.numChannels - saveChannelStart;
+        const saveChannels = [
+            Math.max(saveChannelStart, 0),
+            Math.max(Math.min(saveChannelLength, saveChannelLengthMax), 1),
+            Math.max(Math.min(channelStride, saveChannelLengthMax), 1),
+        ];
         const saveStokes = fileBrowserStore.saveStokesRange;
         appStore.saveFile(fileBrowserStore.fileList.directory, filename, fileBrowserStore.saveFileType, fileBrowserStore.saveRegionId, saveChannels, saveStokes, fileBrowserStore.isDropDegeneratedAxes);
     };

@@ -1,10 +1,10 @@
 import * as React from "react";
 import { observer } from "mobx-react";
-import { Pre, Tab, TabId, Tabs, NonIdealState, Spinner, Text, Label, FormGroup, IOptionProps, HTMLSelect, ControlGroup, Divider, Switch } from "@blueprintjs/core";
+import { Pre, Tab, TabId, Tabs, NonIdealState, Spinner, Text, Label, FormGroup, IOptionProps, HTMLSelect, ControlGroup, Divider, Switch, NumericInput } from "@blueprintjs/core";
 import { FixedSizeList as List } from "react-window";
 import AutoSizer from "react-virtualized-auto-sizer";
 import { CARTA } from "carta-protobuf";
-import { SafeNumericInput, TableComponent, TableComponentProps } from "components/Shared";
+import { TableComponent, TableComponentProps } from "components/Shared";
 import "./FileInfoComponent.scss";
 import { AppStore, FileBrowserStore } from "stores";
 import { SpectralSystem, SpectralType, SpectralUnit } from "models";
@@ -160,15 +160,21 @@ export class FileInfoComponent extends React.Component<{
     };
 
     private handleSaveSpectralRangeStartChanged = (val: any) => {
-        FileBrowserStore.Instance.saveSpectralRange[0] = val;
+        if (FileBrowserStore && isFinite(val)) {
+            FileBrowserStore.Instance.saveSpectralRange[0] = val;
+        }
     };
 
     private handleSaveSpectralRangeEndChanged = (val: any) => {
-        FileBrowserStore.Instance.saveSpectralRange[1] = val;
+        if (FileBrowserStore && isFinite(val)) {
+            FileBrowserStore.Instance.saveSpectralRange[1] = val;
+        }
     };
 
-    private handleSaveSpectralRangeStrideChanged = (val: any) => {
-        FileBrowserStore.Instance.saveSpectralRange[2] = val;
+    private handleSaveSpectralRangeDeltaChanged = (val: any) => {
+        if (FileBrowserStore && isFinite(val)) {
+            FileBrowserStore.Instance.saveSpectralRange[2] = val;
+        }
     };
 
     private updateSpectralCoordinate(coordStr: string): void {
@@ -262,6 +268,11 @@ export class FileInfoComponent extends React.Component<{
             Array.from(activeFrame.spectralCoordsSupported.keys()).map((coord: string) => { return { value: coord, label: coord === nativeSpectralCoordinate ? coord + " (Native WCS)" : coord }; }) : [];
         const spectralSystemOptions: IOptionProps[] = activeFrame && activeFrame.spectralSystemsSupported ? activeFrame.spectralSystemsSupported.map(system => { return { value: system, label: system }; }) : [];
         const stokesOptions: IOptionProps[] = this.updateStokesOptions();
+        const min = Math.min(activeFrame.channelValueBounds.max, activeFrame.channelValueBounds.min);
+        const max = Math.max(activeFrame.channelValueBounds.max, activeFrame.channelValueBounds.min);
+        const delta = (max - min) / (activeFrame.numChannels - 1);
+        const majorStepSize = delta;
+        const minorStepSize = delta * 0.1;
         return (
             <React.Fragment>
                 {activeFrame &&
@@ -310,34 +321,32 @@ export class FileInfoComponent extends React.Component<{
                                     <FormGroup label={"Spectral range"} labelInfo={activeFrame.spectralUnit ? `(${activeFrame.spectralUnit})` : ""} inline={false} >
                                         <ControlGroup fill={true} vertical={false}>
                                             <Label>{"from"}</Label>
-                                            <SafeNumericInput
+                                            <NumericInput
                                                 value={fileBrowser.saveSpectralRange[0]}
                                                 buttonPosition="none"
                                                 placeholder="First channel"
                                                 onValueChange={this.handleSaveSpectralRangeStartChanged}
-                                                min={activeFrame.channelValueBounds.min}
-                                                max={fileBrowser.saveSpectralRange[1]}
-                                                clampValueOnBlur={true}
+                                                stepSize={majorStepSize}
+                                                minorStepSize={minorStepSize}
                                             />
                                             <Label>{"to"}</Label>
-                                            <SafeNumericInput
+                                            <NumericInput
                                                 value={fileBrowser.saveSpectralRange[1]}
                                                 buttonPosition="none"
                                                 placeholder="Last channel"
                                                 onValueChange={this.handleSaveSpectralRangeEndChanged}
-                                                min={fileBrowser.saveSpectralRange[0]}
-                                                max={activeFrame.channelValueBounds.max}
-                                                clampValueOnBlur={true}
+                                                stepSize={majorStepSize}
+                                                minorStepSize={minorStepSize}
                                             />
                                             <Label>{"by"}</Label>
-                                            <SafeNumericInput
+                                            <NumericInput
                                                 value={fileBrowser.saveSpectralRange[2]}
                                                 buttonPosition="none"
                                                 placeholder="Channel stride"
-                                                onValueChange={this.handleSaveSpectralRangeStrideChanged}
+                                                onValueChange={this.handleSaveSpectralRangeDeltaChanged}
+                                                stepSize={majorStepSize}
+                                                minorStepSize={minorStepSize}
                                                 min={0}
-                                                max={activeFrame.channelValueBounds.max}
-                                                clampValueOnBlur={true}
                                             />
                                         </ControlGroup>
                                     </FormGroup>
