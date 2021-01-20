@@ -340,17 +340,6 @@ export class FileInfoComponent extends React.Component<{
                                                 stepSize={majorStepSize}
                                                 minorStepSize={minorStepSize}
                                             />
-                                            <Label>{"by"}</Label>
-                                            <NumericInput
-                                                value={fileBrowser.saveSpectralRange[2]}
-                                                buttonPosition="none"
-                                                placeholder="Channel stride"
-                                                onValueChange={this.handleSaveSpectralRangeDeltaChanged}
-                                                majorStepSize={null}
-                                                stepSize={majorStepSize}
-                                                minorStepSize={minorStepSize}
-                                                min={0}
-                                            />
                                         </ControlGroup>
                                     </FormGroup>
                                 </div>
