@@ -1,0 +1,30 @@
+.profile-fitting-panel{
+
+    .profile-fitting-form{
+
+        .bp3-form-group {
+            &:first-of-type {
+                margin-left: 0px;
+            }
+            .bp3-label {
+                width: 10em;
+                text-align: left;
+            }
+        }
+
+        .component-slider{
+            widows: 100%;
+        }
+
+        .component-input{
+            display: flex;
+            flex-direction: row;
+        }
+
+        .fitting-result-pre{
+            overflow: auto;
+            height: 100%;
+            flex: 2 2 auto;
+        }
+    }
+}

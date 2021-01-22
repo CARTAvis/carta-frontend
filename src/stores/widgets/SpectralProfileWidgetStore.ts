@@ -6,6 +6,7 @@ import {RegionWidgetStore, RegionsType, ACTIVE_FILE_ID} from "./RegionWidgetStor
 import {SpectralLine} from "./SpectralLineQueryWidgetStore";
 import {AppStore} from "stores";
 import {ProfileSmoothingStore} from "stores/ProfileSmoothingStore";
+import {ProfileFittingStore} from "stores/ProfileFittingStore"
 import {SpectralSystem, SpectralType, SpectralUnit} from "models";
 import tinycolor from "tinycolor2";
 import {SpectralProfilerSettingsTabs} from "components";
@@ -47,6 +48,9 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
     @observable momentMask: CARTA.MomentMask;
     @observable maskRange: NumberRange;
     @observable selectedMoments: CARTA.Moment[];
+
+    // fitting settings
+    @observable fittingStore: ProfileFittingStore;
 
     public static StatsTypeString(statsType: CARTA.StatsType) {
         switch (statsType) {
@@ -320,6 +324,8 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         this.maskRange = [0, 1];
         this.selectedMoments = [CARTA.Moment.INTEGRATED_OF_THE_SPECTRUM];
         this.settingsTabId = SpectralProfilerSettingsTabs.CONVERSION;
+
+        this.fittingStore = new ProfileFittingStore();
 
         autorun(() => {
             if (this.effectiveFrame) {

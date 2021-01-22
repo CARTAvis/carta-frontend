@@ -22,3 +22,4 @@ export * from "./CatalogStore";
 export * from "./HelpStore";
 export * from "./ProfileSmoothingStore";
 export * from "./CatalogProfileStore";
+export * from "./ProfileFittingStore";

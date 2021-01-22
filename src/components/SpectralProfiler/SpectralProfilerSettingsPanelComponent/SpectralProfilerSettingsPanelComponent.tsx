@@ -8,6 +8,7 @@ import {SpectralProfileWidgetStore} from "stores/widgets";
 import {WidgetProps, DefaultWidgetConfig, HelpType, AppStore, WidgetsStore} from "stores";
 import {parseNumber} from "utilities";
 import "./SpectralProfilerSettingsPanelComponent.scss";
+import { ProfileFittingComponent } from "../ProfileFittingComponent/ProfileFittingComponent";
 
 const KEYCODE_ENTER = 13;
 
@@ -15,7 +16,8 @@ export enum SpectralProfilerSettingsTabs {
     CONVERSION,
     STYLING,
     SMOOTHING,
-    MOMENTS
+    MOMENTS,
+    FITTING
 }
 
 @observer
@@ -179,6 +181,7 @@ export class SpectralProfilerSettingsPanelComponent extends React.Component<Widg
                     <Tab id={SpectralProfilerSettingsTabs.STYLING} panelClassName="styling-tab-panel" title="Styling" panel={<LinePlotSettingsPanelComponent {...lineSettingsProps}/>}/>
                     <Tab id={SpectralProfilerSettingsTabs.SMOOTHING} title="Smoothing" panel={<SmoothingSettingsComponent smoothingStore={widgetStore.smoothingStore}/>}/>
                     <Tab id={SpectralProfilerSettingsTabs.MOMENTS} panelClassName="moment-tab-panel" title="Moments" panel={<MomentGeneratorComponent widgetStore={widgetStore}/>}/>
+                    <Tab id={SpectralProfilerSettingsTabs.FITTING} panelClassName="fitting-tab-panel" title="Fitting" panel={<ProfileFittingComponent fittingStore={widgetStore.fittingStore}/>}/>
                 </Tabs>
             </div>
         );
