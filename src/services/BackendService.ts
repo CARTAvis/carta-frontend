@@ -2,6 +2,7 @@ import {action, observable, makeObservable, runInAction} from "mobx";
 import {CARTA} from "carta-protobuf";
 import {Observable, Observer, Subject, throwError} from "rxjs";
 import {AppStore, PreferenceStore, RegionStore} from "stores";
+import {ApiService} from "./ApiService";
 import {mapToObject} from "utilities";
 
 export enum ConnectionStatus {
@@ -155,11 +156,12 @@ export class BackendService {
             this.connection.close();
         }
 
+        const apiService = ApiService.Instance;
         this.autoReconnect = autoConnect;
         this.connectionDropped = false;
         this.connectionStatus = ConnectionStatus.PENDING;
         this.serverUrl = url;
-        this.connection = new WebSocket(url);
+        this.connection = new WebSocket(apiService.accessToken ? url + `?token=${apiService.accessToken}` : url);
         this.connection.binaryType = "arraybuffer";
         this.connection.onmessage = this.messageHandler.bind(this);
         this.connection.onclose = (ev: CloseEvent) => runInAction(()=>{
@@ -170,7 +172,7 @@ export class BackendService {
             // Reconnect to the same URL if Websocket is closed
             if (!ev.wasClean && this.autoReconnect) {
                 setTimeout(() => {
-                    const newConnection = new WebSocket(url);
+                    const newConnection = new WebSocket(apiService.accessToken ? url + `?token=${apiService.accessToken}` : url);
                     newConnection.binaryType = "arraybuffer";
                     newConnection.onopen = this.connection.onopen;
                     newConnection.onerror = this.connection.onerror;
