@@ -89,6 +89,7 @@ export class FileBrowserStore {
         if (AppStore.Instance.activeFrame && mode === BrowserMode.SaveFile) {
             this.saveFilename = AppStore.Instance.activeFrame.frameInfo.fileInfo.name;
         }
+        this.updateIniSaveSpectralRange();
         this.saveRegionId = 0;
         this.isDropDegeneratedAxes = false;
     };
@@ -413,14 +414,14 @@ export class FileBrowserStore {
             [0, 1, 1], // A
             [1, 1, 1], // B
             [2, 1, 1], // C
+            [3, 1, 1], // D
             [0, 2, 1], // AB
             [1, 2, 1], // BC
-            [0, 2, 2], // AC
-            [3, 1, 1], // D
             [2, 2, 1], // CD
-            [0, 3, 1], // ABC
+            [0, 2, 2], // AC
             [0, 2, 3], // AD
             [1, 2, 2], // BD
+            [0, 3, 1], // ABC
             [1, 3, 1], // BCD
         ];
         return options[this.saveStokesOption];

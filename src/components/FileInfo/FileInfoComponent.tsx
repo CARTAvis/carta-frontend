@@ -160,20 +160,18 @@ export class FileInfoComponent extends React.Component<{
     };
 
     private handleSaveSpectralRangeStartChanged = (val: any) => {
+        const fileBrowser = AppStore.Instance.fileBrowserStore;
+        const spectralRange = AppStore.Instance.activeFrame.channelValueBounds;
         if (FileBrowserStore && isFinite(val)) {
-            FileBrowserStore.Instance.saveSpectralRange[0] = val;
+            FileBrowserStore.Instance.saveSpectralRange[0] = Math.min(Math.max(val, spectralRange.min), fileBrowser.saveSpectralRange[1]);
         }
     };
 
     private handleSaveSpectralRangeEndChanged = (val: any) => {
+        const fileBrowser = AppStore.Instance.fileBrowserStore;
+        const spectralRange = AppStore.Instance.activeFrame.channelValueBounds;
         if (FileBrowserStore && isFinite(val)) {
-            FileBrowserStore.Instance.saveSpectralRange[1] = val;
-        }
-    };
-
-    private handleSaveSpectralRangeDeltaChanged = (val: any) => {
-        if (FileBrowserStore && isFinite(val)) {
-            FileBrowserStore.Instance.saveSpectralRange[2] = val;
+            FileBrowserStore.Instance.saveSpectralRange[1] = Math.min(Math.max(val, fileBrowser.saveSpectralRange[0]), spectralRange.max);
         }
     };
 
@@ -207,52 +205,29 @@ export class FileInfoComponent extends React.Component<{
         ];
         if (activeFrame) {
             switch (stokesInfo.join("")) {
+                case "IQUV":
+                    options.push({ value: 4, label: stokesInfo[3] });
+                    options.push({ value: 7, label: stokesInfo.slice(2, 4).join("") });
+                    options.push({ value: 9, label: stokesInfo[0] + stokesInfo[3] });
+                    options.push({ value: 10, label: stokesInfo[1] + stokesInfo[3] });
+                    options.push({ value: 11, label: stokesInfo.slice(0, 3).join("") });
+                    options.push({ value: 12, label: stokesInfo.slice(1, 4).join("") });
+                case "IQU":
+                case "QUV":
+                    options.push({ value: 3, label: stokesInfo[2] });
+                    options.push({ value: 5, label: stokesInfo.slice(0, 2).join("") });
+                    options.push({ value: 6, label: stokesInfo.slice(1, 3).join("") });
+                    options.push({ value: 8, label: stokesInfo[0] + stokesInfo[2] });
                 case "IQ":
-                    options.push({ value: 1, label: stokesInfo[0] });
-                    options.push({ value: 2, label: stokesInfo[1] });
-                    break;
                 case "QU":
-                    options.push({ value: 1, label: stokesInfo[0] });
-                    options.push({ value: 2, label: stokesInfo[1] });
-                    break;
                 case "UV":
                     options.push({ value: 1, label: stokesInfo[0] });
                     options.push({ value: 2, label: stokesInfo[1] });
                     break;
-                case "IQU":
-                    options.push({ value: 1, label: stokesInfo[0] });
-                    options.push({ value: 2, label: stokesInfo[1] });
-                    options.push({ value: 3, label: stokesInfo[2] });
-                    options.push({ value: 4, label: stokesInfo.slice(0, 2).join("") });
-                    options.push({ value: 5, label: stokesInfo.slice(1, 3).join("") });
-                    options.push({ value: 6, label: stokesInfo[0] + stokesInfo[2] });
-                    break;
-                case "QUV":
-                    options.push({ value: 1, label: stokesInfo[0] });
-                    options.push({ value: 2, label: stokesInfo[1] });
-                    options.push({ value: 3, label: stokesInfo[2] });
-                    options.push({ value: 4, label: stokesInfo.slice(0, 2).join("") });
-                    options.push({ value: 5, label: stokesInfo.slice(1, 3).join("") });
-                    options.push({ value: 6, label: stokesInfo[0] + stokesInfo[2] });
-                    break;
-                case "IQUV":
-                    options.push({ value: 1, label: stokesInfo[0] });
-                    options.push({ value: 2, label: stokesInfo[1] });
-                    options.push({ value: 3, label: stokesInfo[2] });
-                    options.push({ value: 4, label: stokesInfo.slice(0, 2).join("") });
-                    options.push({ value: 5, label: stokesInfo.slice(1, 3).join("") });
-                    options.push({ value: 6, label: stokesInfo[0] + stokesInfo[2] });
-                    options.push({ value: 7, label: stokesInfo[3] });
-                    options.push({ value: 8, label: stokesInfo.slice(2, 4).join("") });
-                    options.push({ value: 9, label: stokesInfo.slice(0, 3).join("") });
-                    options.push({ value: 10, label: stokesInfo[0] + stokesInfo[3] });
-                    options.push({ value: 11, label: stokesInfo[1] + stokesInfo[3] });
-                    options.push({ value: 12, label: stokesInfo.slice(1, 4).join("") });
-                    break;
                 default:
                     break;
             }
-            return options;
+            return options.sort((a, b) => a.value - b.value);
         }
         return [];
     };
@@ -271,8 +246,7 @@ export class FileInfoComponent extends React.Component<{
         const min = Math.min(activeFrame.channelValueBounds.max, activeFrame.channelValueBounds.min);
         const max = Math.max(activeFrame.channelValueBounds.max, activeFrame.channelValueBounds.min);
         const delta = (max - min) / (activeFrame.numChannels - 1);
-        const majorStepSize = delta;
-        const minorStepSize = delta * 0.1;
+        const majorStepSize = delta * 0.1;
         return (
             <React.Fragment>
                 {activeFrame &&
@@ -328,7 +302,7 @@ export class FileInfoComponent extends React.Component<{
                                                 onValueChange={this.handleSaveSpectralRangeStartChanged}
                                                 majorStepSize={null}
                                                 stepSize={majorStepSize}
-                                                minorStepSize={minorStepSize}
+                                                minorStepSize={null}
                                             />
                                             <Label>{"to"}</Label>
                                             <NumericInput
@@ -338,7 +312,7 @@ export class FileInfoComponent extends React.Component<{
                                                 onValueChange={this.handleSaveSpectralRangeEndChanged}
                                                 majorStepSize={null}
                                                 stepSize={majorStepSize}
-                                                minorStepSize={minorStepSize}
+                                                minorStepSize={null}
                                             />
                                         </ControlGroup>
                                     </FormGroup>
