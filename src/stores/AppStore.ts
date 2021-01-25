@@ -147,10 +147,9 @@ export class AppStore {
         this.username = username;
     };
 
-    @action connectToServer = (socketName: string = "socket") => {
+    @action connectToServer = () => {
         // Remove query parameters, replace protocol and remove trailing /
-        const baseUrl = window.location.href.replace(window.location.search, "").replace(/^http/, "ws").replace(/\/$/, "");
-        let wsURL = `${baseUrl}/${socketName}`;
+        let wsURL = window.location.href.replace(window.location.search, "").replace(/^http/, "ws").replace(/\/$/, "");
         if (process.env.NODE_ENV === "development") {
             wsURL = process.env.REACT_APP_DEFAULT_ADDRESS ? process.env.REACT_APP_DEFAULT_ADDRESS : wsURL;
         } else {
@@ -180,6 +179,11 @@ export class AppStore {
                 this.loadFile(folderSearchParam, fileSearchParam, "");
             }
         }));
+
+        const authTokenParam = url.searchParams.get("token");
+        if (authTokenParam) {
+            ApiService.Instance.setToken(authTokenParam);
+        }
 
         this.backendService.connect(wsURL).subscribe(ack => {
             console.log(`Connected with session ID ${ack.sessionId}`);
