@@ -82,8 +82,8 @@ export class FileBrowserDialogComponent extends React.Component {
         const fileBrowserStore = FileBrowserStore.Instance;
         const activeFrame = appStore.activeFrame;
         const filename = fileBrowserStore.saveFilename.trim();
-        const channelStart = activeFrame.findChannelIndexByValue(fileBrowserStore.saveSpectralRange[0]);
-        const channelEnd = activeFrame.findChannelIndexByValue(fileBrowserStore.saveSpectralRange[1]);
+        const channelStart = fileBrowserStore.saveSpectralRange ? activeFrame.findChannelIndexByValue(fileBrowserStore.saveSpectralRange[0]) : 0;
+        const channelEnd = fileBrowserStore.saveSpectralRange ? activeFrame.findChannelIndexByValue(fileBrowserStore.saveSpectralRange[1]) : activeFrame.numChannels;
         // Count the number of product channels
         const saveChannelLength = Math.abs(channelEnd - channelStart) + 1;
         const saveChannelStart = Math.min(channelStart, channelEnd);

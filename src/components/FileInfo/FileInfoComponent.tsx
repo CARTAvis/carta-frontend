@@ -212,12 +212,14 @@ export class FileInfoComponent extends React.Component<{
                     options.push({ value: 10, label: stokesInfo[1] + stokesInfo[3] });
                     options.push({ value: 11, label: stokesInfo.slice(0, 3).join("") });
                     options.push({ value: 12, label: stokesInfo.slice(1, 4).join("") });
+                // eslint-disable-next-line
                 case "IQU":
                 case "QUV":
                     options.push({ value: 3, label: stokesInfo[2] });
                     options.push({ value: 5, label: stokesInfo.slice(0, 2).join("") });
                     options.push({ value: 6, label: stokesInfo.slice(1, 3).join("") });
                     options.push({ value: 8, label: stokesInfo[0] + stokesInfo[2] });
+                // eslint-disable-next-line
                 case "IQ":
                 case "QU":
                 case "UV":
@@ -243,8 +245,8 @@ export class FileInfoComponent extends React.Component<{
             Array.from(activeFrame.spectralCoordsSupported.keys()).map((coord: string) => { return { value: coord, label: coord === nativeSpectralCoordinate ? coord + " (Native WCS)" : coord }; }) : [];
         const spectralSystemOptions: IOptionProps[] = activeFrame && activeFrame.spectralSystemsSupported ? activeFrame.spectralSystemsSupported.map(system => { return { value: system, label: system }; }) : [];
         const stokesOptions: IOptionProps[] = this.updateStokesOptions();
-        const min = Math.min(activeFrame.channelValueBounds.max, activeFrame.channelValueBounds.min);
-        const max = Math.max(activeFrame.channelValueBounds.max, activeFrame.channelValueBounds.min);
+        const min = Math.min(activeFrame.channelValueBounds?.max, activeFrame.channelValueBounds?.min);
+        const max = Math.max(activeFrame.channelValueBounds?.max, activeFrame.channelValueBounds?.min);
         const delta = (max - min) / (activeFrame.numChannels - 1);
         const majorStepSize = delta * 0.1;
         return (
