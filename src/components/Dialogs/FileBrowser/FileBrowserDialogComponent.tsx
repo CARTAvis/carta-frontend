@@ -77,6 +77,7 @@ export class FileBrowserDialogComponent extends React.Component {
         fileBrowserStore.saveStartingDirectory();
     };
 
+    /// Prepare parameters for send saveFile 
     private handleSaveFile = () => {
         const appStore = AppStore.Instance;
         const fileBrowserStore = FileBrowserStore.Instance;

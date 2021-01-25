@@ -72,8 +72,10 @@ export class FileInfoComponent extends React.Component<{
 
     private renderInfoPanel = () => {
         switch (this.props.selectedTab) {
+            // Here is only controls for save, no need to wait file info
             case FileInfoType.CHOP_IMAGE:
                 break;
+            // Check if loading file
             default:
                 if (this.props.isLoading) {
                     return <NonIdealState className="non-ideal-state-file" icon={<Spinner className="astLoadingSpinner" />} title="Loading file info..." />;
@@ -162,6 +164,7 @@ export class FileInfoComponent extends React.Component<{
     private handleSaveSpectralRangeStartChanged = (val: any) => {
         const fileBrowser = AppStore.Instance.fileBrowserStore;
         const spectralRange = AppStore.Instance.activeFrame.channelValueBounds;
+        // Check and clamp the input
         if (FileBrowserStore && isFinite(val)) {
             FileBrowserStore.Instance.saveSpectralRange[0] = Math.min(Math.max(val, spectralRange.min), fileBrowser.saveSpectralRange[1]);
         }
@@ -170,6 +173,7 @@ export class FileInfoComponent extends React.Component<{
     private handleSaveSpectralRangeEndChanged = (val: any) => {
         const fileBrowser = AppStore.Instance.fileBrowserStore;
         const spectralRange = AppStore.Instance.activeFrame.channelValueBounds;
+        // Check and clamp the input
         if (FileBrowserStore && isFinite(val)) {
             FileBrowserStore.Instance.saveSpectralRange[1] = Math.min(Math.max(val, fileBrowser.saveSpectralRange[0]), spectralRange.max);
         }
@@ -181,6 +185,7 @@ export class FileInfoComponent extends React.Component<{
             const coord: { type: SpectralType, unit: SpectralUnit } = activeFrame.spectralCoordsSupported.get(coordStr);
             activeFrame.spectralType = coord.type;
             activeFrame.spectralUnit = coord.unit;
+            // Update the spectral range
             FileBrowserStore.Instance.updateIniSaveSpectralRange();
         }
     };
@@ -189,6 +194,7 @@ export class FileInfoComponent extends React.Component<{
         const activeFrame = AppStore.Instance.activeFrame;
         if (activeFrame && activeFrame.spectralSystemsSupported && activeFrame.spectralSystemsSupported.includes(specsys)) {
             activeFrame.spectralSystem = specsys;
+            // Update the spectral range
             FileBrowserStore.Instance.updateIniSaveSpectralRange();
         }
     };
@@ -197,6 +203,8 @@ export class FileInfoComponent extends React.Component<{
         FileBrowserStore.Instance.saveStokesOption = option;
     };
 
+    /// Generate options for stokes via string
+    /// Will be transfered by FileBrowserStores.saveStokesRange
     private updateStokesOptions = () => {
         const activeFrame = AppStore.Instance.activeFrame;
         const stokesInfo = activeFrame.stokesInfo;
@@ -239,12 +247,13 @@ export class FileInfoComponent extends React.Component<{
         const activeFrame = AppStore.Instance.activeFrame;
         const closedRegions = activeFrame.regionSet?.regions.filter(region => region.regionId > 0 && region.isClosedRegion);
         const regionOptions: IOptionProps[] = [{ value: 0, label: "Image" }].concat(closedRegions.map(region => ({ value: region.regionId, label: `${region.name ? region.name : region.regionId} (${CARTA.RegionType[region.regionType]})` })));
-
+        // Global value of Spectral Coordinate System and Unit
         const nativeSpectralCoordinate = activeFrame ? activeFrame.nativeSpectralCoordinate : undefined;
         const spectralCoordinateOptions: IOptionProps[] = activeFrame && activeFrame.spectralCoordsSupported ?
             Array.from(activeFrame.spectralCoordsSupported.keys()).map((coord: string) => { return { value: coord, label: coord === nativeSpectralCoordinate ? coord + " (Native WCS)" : coord }; }) : [];
         const spectralSystemOptions: IOptionProps[] = activeFrame && activeFrame.spectralSystemsSupported ? activeFrame.spectralSystemsSupported.map(system => { return { value: system, label: system }; }) : [];
         const stokesOptions: IOptionProps[] = this.updateStokesOptions();
+        // Calculate a small step size
         const min = Math.min(activeFrame.channelValueBounds?.max, activeFrame.channelValueBounds?.min);
         const max = Math.max(activeFrame.channelValueBounds?.max, activeFrame.channelValueBounds?.min);
         const delta = (max - min) / (activeFrame.numChannels - 1);

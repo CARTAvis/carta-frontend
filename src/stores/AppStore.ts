@@ -1110,9 +1110,6 @@ export class AppStore {
                     }
                 });
 
-                // Update channelValueBounds
-                FileBrowserStore.Instance.updateIniSaveSpectralRange();
-
                 if (updates.length) {
                     this.throttledSetChannels(updates);
                 }
@@ -1139,6 +1136,13 @@ export class AppStore {
         autorun(() => {
             if (this.activeFrame) {
                 this.overlayStore.setDefaultsFromAST(this.activeFrame);
+            }
+        });
+
+        // Update channelValueBounds for save image
+        autorun(() => {
+            if (this.activeFrame) {
+                FileBrowserStore.Instance.updateIniSaveSpectralRange();
             }
         });
 

@@ -69,6 +69,7 @@ export class FileBrowserStore {
     @observable catalogFileInfo: CARTA.ICatalogFileInfo;
     @observable catalogHeaders: Array<CARTA.ICatalogHeader>;
 
+    // Save image
     @observable saveFilename: string = "";
     @observable saveFileType: CARTA.FileType = CARTA.FileType.CASA;
     @observable saveSpectralRange: number[];
@@ -208,6 +209,7 @@ export class FileBrowserStore {
         }));
     };
 
+    /// Update the spectral range for save image file
     @action updateIniSaveSpectralRange = () => {
         const activeFrame = AppStore.Instance.activeFrame;
         if (activeFrame && activeFrame.numChannels > 1) {
@@ -407,6 +409,8 @@ export class FileBrowserStore {
         return { columnHeaders: columnHeaders, columnsData: columnsData };
     }
 
+    /// Transfer the request from stokes string
+    /// to [start, length, stride]
     @computed get saveStokesRange(): number[] {
         // [start, length, stride] for "ABCD"
         const options: number[][] = [
