@@ -1,7 +1,7 @@
 import * as React from "react";
 import {ImageComponent} from "./ImageComponent";
-import * as headContourButton from "static/help/head_contour_button.png";
-import * as headContourButton_d from "static/help/head_contour_button_d.png";
+import headContourButton from "static/help/head_contour_button.png";
+import headContourButton_d from "static/help/head_contour_button_d.png";
 
 export class ContourHelpComponent extends React.Component {
     public render() {
