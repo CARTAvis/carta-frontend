@@ -32,6 +32,10 @@ export class FileBrowserDialogComponent extends React.Component {
         this.selectedFiles = selection;
     };
 
+    @action setOverwriteExistingFileAlertVisible = (bool: boolean) => {
+        this.overwriteExistingFileAlertVisible = bool;
+    };
+
     private loadSelectedFiles = async () => {
         const fileBrowserStore = FileBrowserStore.Instance;
         if (this.selectedFiles.length > 1) {
@@ -101,7 +105,7 @@ export class FileBrowserDialogComponent extends React.Component {
         const fileBrowserStore = FileBrowserStore.Instance;
         const filename = fileBrowserStore.saveFilename.trim();
         if (fileBrowserStore.fileList && fileBrowserStore.fileList.files && fileBrowserStore.fileList.files.find(f => f.name.trim() === filename)) {
-            this.overwriteExistingFileAlertVisible = true;
+            this.setOverwriteExistingFileAlertVisible(true);
         } else {
             this.handleSaveFile();
         }
@@ -117,7 +121,7 @@ export class FileBrowserDialogComponent extends React.Component {
         const filename = fileBrowserStore.exportFilename.trim();
         if (fileBrowserStore.fileList && fileBrowserStore.fileList.files && fileBrowserStore.fileList.files.find(f => f.name.trim() === filename)) {
             // Existing file being replaced. Alert the user
-            this.overwriteExistingFileAlertVisible = true;
+            this.setOverwriteExistingFileAlertVisible(true);
         } else {
             this.exportRegion(fileBrowserStore.fileList.directory, filename);
         }
@@ -136,7 +140,7 @@ export class FileBrowserDialogComponent extends React.Component {
     }
 
     private handleOverwriteAlertConfirmed = () => {
-        this.overwriteExistingFileAlertVisible = false;
+        this.setOverwriteExistingFileAlertVisible(false);
         const fileBrowserStore = FileBrowserStore.Instance;
         if (fileBrowserStore.browserMode === BrowserMode.RegionExport) {
             const filename = fileBrowserStore.exportFilename.trim();
@@ -147,7 +151,7 @@ export class FileBrowserDialogComponent extends React.Component {
     };
 
     private handleOverwriteAlertDismissed = () => {
-        this.overwriteExistingFileAlertVisible = false;
+        this.setOverwriteExistingFileAlertVisible(false);
     };
 
     private handleExportInputChanged = (ev: React.ChangeEvent<HTMLInputElement>) => {

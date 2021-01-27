@@ -70,16 +70,16 @@
     margin: .5em;
     margin-top: 1em;
     display: block;
-    font-family: 'Helvetica Neue', 'Helvetica', 'Arial', sans-serif;
 
     .file-name {
-        margin-bottom: 0em;
+        margin: 0em;
 
         .label {
             width: 20%;
         }
         .text {
             margin-left: 1em;
+            width: 70%;
         }
     }
 
@@ -95,10 +95,11 @@
     }
 
     .coordinate-select {
-        margin-top: 1em;
+        margin-top: -1em;
 
         .bp3-form-group {
-            margin: 0em;
+            margin: 0;
+            margin-top: 1em;
 
             .bp3-label {
                 width: 7em;

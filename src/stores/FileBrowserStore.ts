@@ -218,7 +218,7 @@ export class FileBrowserStore {
             const delta = (max - min) / (activeFrame.numChannels - 1);
             this.saveSpectralRange = [min, max, delta];
         }
-    }
+    };
 
     @action selectFile = (file: ISelectedFile) => {
         const fileList = this.getfileListByMode;
@@ -311,6 +311,12 @@ export class FileBrowserStore {
     @action setSortingConfig = (columnName: string, direction: number) => {
         const sortingString = (direction >= 0 ? "+" : "-") + columnName.toLowerCase();
         PreferenceStore.Instance.setPreference(PreferenceKeys.SILENT_FILE_SORTING_STRING, sortingString);
+    };
+
+    @action setSaveRegionId = (regionId: number) => {
+        if (0 <= regionId && isFinite(regionId)) {
+            this.saveRegionId = regionId;
+        }
     };
 
     @computed get HDUList(): IOptionProps[] {

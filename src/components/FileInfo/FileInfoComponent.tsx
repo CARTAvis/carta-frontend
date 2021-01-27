@@ -157,8 +157,8 @@ export class FileInfoComponent extends React.Component<{
     }
 
     private handleRegionChanged = (changeEvent: React.ChangeEvent<HTMLSelectElement>) => {
-        const fileBrowser = AppStore.Instance.fileBrowserStore;
-        fileBrowser.saveRegionId = parseInt(changeEvent.target.value);
+        const fileBrowser = FileBrowserStore.Instance;
+        fileBrowser.setSaveRegionId(parseInt(changeEvent.target.value));
     };
 
     private handleSaveSpectralRangeStartChanged = (val: any) => {
@@ -254,9 +254,9 @@ export class FileInfoComponent extends React.Component<{
         const spectralSystemOptions: IOptionProps[] = activeFrame && activeFrame.spectralSystemsSupported ? activeFrame.spectralSystemsSupported.map(system => { return { value: system, label: system }; }) : [];
         const stokesOptions: IOptionProps[] = this.updateStokesOptions();
         // Calculate a small step size
-        const min = Math.min(activeFrame.channelValueBounds?.max, activeFrame.channelValueBounds?.min);
-        const max = Math.max(activeFrame.channelValueBounds?.max, activeFrame.channelValueBounds?.min);
-        const delta = (max - min) / (activeFrame.numChannels - 1);
+        const min = activeFrame.channelValueBounds?.min;
+        const max = activeFrame.channelValueBounds?.max;
+        const delta = activeFrame.numChannels > 1 ? Math.abs(max - min) / activeFrame.numChannels : Math.abs(max - min);
         const majorStepSize = delta * 0.1;
         return (
             <React.Fragment>
@@ -265,7 +265,7 @@ export class FileInfoComponent extends React.Component<{
                         <ControlGroup className="file-name" vertical={false}>
                             <Label className="label">{"Source"}</Label>
                             <Text className="text" ellipsize={true}>
-                                {activeFrame.frameInfo.directory + "/" + activeFrame.frameInfo.fileInfo.name}
+                                {activeFrame.frameInfo.fileInfo.name}
                             </Text>
                         </ControlGroup>
                         <ControlGroup className="region-select" vertical={false}>
