@@ -254,9 +254,10 @@ export class FileInfoComponent extends React.Component<{
         const spectralSystemOptions: IOptionProps[] = activeFrame && activeFrame.spectralSystemsSupported ? activeFrame.spectralSystemsSupported.map(system => { return { value: system, label: system }; }) : [];
         const stokesOptions: IOptionProps[] = this.updateStokesOptions();
         // Calculate a small step size
+        const numChannels = activeFrame.numChannels;
         const min = activeFrame.channelValueBounds?.min;
         const max = activeFrame.channelValueBounds?.max;
-        const delta = activeFrame.numChannels > 1 ? Math.abs(max - min) / activeFrame.numChannels : Math.abs(max - min);
+        const delta = numChannels > 1 ? Math.abs(max - min) / numChannels : Math.abs(max - min);
         const majorStepSize = delta * 0.1;
         return (
             <React.Fragment>
@@ -264,7 +265,7 @@ export class FileInfoComponent extends React.Component<{
                     <div className="file-save">
                         <ControlGroup className="file-name" vertical={false}>
                             <Label className="label">{"Source"}</Label>
-                            <Text className="text" ellipsize={true}>
+                            <Text className="text" ellipsize={true} title={activeFrame.frameInfo.fileInfo.name}>
                                 {activeFrame.frameInfo.fileInfo.name}
                             </Text>
                         </ControlGroup>
@@ -276,7 +277,7 @@ export class FileInfoComponent extends React.Component<{
                                 options={regionOptions}
                             />
                         </ControlGroup>
-                        {activeFrame.numChannels > 1 &&
+                        {numChannels > 1 &&
                             <React.Fragment>
                                 <div className="coordinate-select">
                                     <FormGroup inline={false}>
@@ -305,7 +306,7 @@ export class FileInfoComponent extends React.Component<{
                                 <div className="range-select">
                                     <FormGroup label={"Spectral range"} labelInfo={activeFrame.spectralUnit ? `(${activeFrame.spectralUnit})` : ""} inline={false} >
                                         <ControlGroup fill={true} vertical={false}>
-                                            <Label>{"from"}</Label>
+                                            <Label>{"From"}</Label>
                                             <NumericInput
                                                 value={fileBrowser.saveSpectralRange[0]}
                                                 buttonPosition="none"
@@ -315,7 +316,7 @@ export class FileInfoComponent extends React.Component<{
                                                 stepSize={majorStepSize}
                                                 minorStepSize={null}
                                             />
-                                            <Label>{"to"}</Label>
+                                            <Label>{"To"}</Label>
                                             <NumericInput
                                                 value={fileBrowser.saveSpectralRange[1]}
                                                 buttonPosition="none"

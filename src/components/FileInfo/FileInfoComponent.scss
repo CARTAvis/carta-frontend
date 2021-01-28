@@ -73,9 +73,10 @@
 
     .file-name {
         margin: 0em;
+        margin-bottom: 0em;
 
         .label {
-            width: 20%;
+            width: 7em;
         }
         .text {
             margin-left: 1em;
@@ -87,7 +88,7 @@
         margin: 0em;
 
         .label {
-            width: 8em;
+            width: 7.9em;
         }
         .bp3-html-select {
             width: auto;
@@ -116,20 +117,18 @@
 
         .bp3-control-group {
             .bp3-label {
-                margin-left: 0;
-                margin-right: 0em;
                 margin: auto;
                 width: auto;
             }
             .bp3-input {
-                margin-left: 0em;
-                width: auto;
+                margin: auto;
+                width: 13em;
             }
         }
     }
 
     .stokes-select {
-        margin-top: 1em;
+        margin-top: -0.5em;
 
         .bp3-form-group {
             margin: 0em;
