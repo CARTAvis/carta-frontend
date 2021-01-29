@@ -88,6 +88,7 @@
         margin: 0em;
 
         .label {
+            margin-top: 0.5em;
             width: 7.9em;
         }
         .bp3-html-select {
@@ -96,11 +97,12 @@
     }
 
     .coordinate-select {
+        margin: 0em;
         margin-top: -1em;
 
         .bp3-form-group {
             margin: 0;
-            margin-top: 1em;
+            margin-top: 0.5em;
 
             .bp3-label {
                 width: 7em;
@@ -128,7 +130,7 @@
     }
 
     .stokes-select {
-        margin-top: 0.5em;
+        margin-top: -0.5em;
 
         .bp3-form-group {
             margin: 0em;
