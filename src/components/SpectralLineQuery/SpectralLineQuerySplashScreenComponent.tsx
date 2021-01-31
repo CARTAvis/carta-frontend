@@ -17,6 +17,7 @@ export class SpectralLineQuerySplashScreenComponent extends React.Component<{isO
         return (
             <Overlay className={Classes.OVERLAY_SCROLL_CONTAINER} autoFocus={true} canEscapeKeyClose={false} canOutsideClickClose={false} isOpen={this.props.isOpen} usePortal={false}>
                 <div className={className}>
+                    <a href="https://splatalogue.online/" target="_blank" rel="noopener noreferrer">https://splatalogue.online/</a>
                     <Spinner intent={Intent.PRIMARY} size={30} value={null}/>
                     <div className={"loadingInfo-div"}>
                         <p>Checking whether Splatalogue is alive...</p>
