@@ -6,6 +6,7 @@ import {Cell, Column, Regions, RenderMode, SelectionModes, Table} from "@bluepri
 import SplitPane, { Pane } from "react-split-pane";
 import ReactResizeDetector from "react-resize-detector";
 import {SafeNumericInput, TableComponent, TableComponentProps, TableType} from "components/Shared";
+import {SpectralLineQuerySplashScreenComponent} from "./SpectralLineQuerySplashScreenComponent";
 import {AppStore, HelpType, DefaultWidgetConfig, WidgetProps, WidgetsStore} from "stores";
 import {RedshiftType, SpectralLineHeaders, SpectralLineQueryWidgetStore, SpectralLineQueryRangeType, SpectralLineQueryUnit} from "stores/widgets";
 import "./SpectralLineQueryComponent.scss";
@@ -416,6 +417,7 @@ export class SpectralLineQueryComponent extends React.Component<WidgetProps> {
                         </Tooltip>
                     </div>
                 </div>
+                <SpectralLineQuerySplashScreenComponent isOpen={!widgetStore.isSplatalogueAlive}/>
                 <Overlay className={Classes.OVERLAY_SCROLL_CONTAINER} autoFocus={true} canEscapeKeyClose={false} canOutsideClickClose={false} isOpen={widgetStore.isQuerying} usePortal={false}>
                     <div className="query-loading-overlay">
                         <Spinner intent={Intent.PRIMARY} size={30} value={null}/>

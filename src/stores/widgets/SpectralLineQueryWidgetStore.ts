@@ -104,6 +104,7 @@ const RESOLVED_QN_COLUMN_INDEX = 7;
 const FREQUENCY_RANGE_LIMIT = 2 * 1e4; // 20000 MHz
 
 export class SpectralLineQueryWidgetStore extends RegionWidgetStore {
+    @observable isSplatalogueAlive: boolean;
     @observable queryRangeType: SpectralLineQueryRangeType;
     @observable queryRange: NumberRange;
     @observable queryRangeByCenter: NumberRange;
@@ -123,6 +124,10 @@ export class SpectralLineQueryWidgetStore extends RegionWidgetStore {
     @observable sortingInfo: {columnName: string, sortingType: CARTA.SortingType};
     @observable numDataRows: number;
     @observable selectedSpectralProfilerID: string;
+
+    @action setSplatalogueStatus = (isSplatalogueAlive: boolean) => {
+        this.isSplatalogueAlive = isSplatalogueAlive;
+    };
 
     @action setQueryRangeType = (queryRangeType: SpectralLineQueryRangeType) => {
         this.queryRangeType = queryRangeType;
@@ -344,6 +349,7 @@ export class SpectralLineQueryWidgetStore extends RegionWidgetStore {
     constructor() {
         super(RegionsType.CLOSED);
         makeObservable<SpectralLineQueryWidgetStore, "isLineSelectedArray" | "restFreqColumn" | "measuredFreqColumn">(this);
+        this.isSplatalogueAlive = false;
         this.queryRangeType = SpectralLineQueryRangeType.Range;
         this.queryRange = [0, 0];
         this.queryRangeByCenter = [0, 0];

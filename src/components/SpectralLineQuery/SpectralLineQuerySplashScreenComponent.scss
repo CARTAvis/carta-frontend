@@ -1,0 +1,28 @@
+@import "../../../node_modules/@blueprintjs/core/lib/scss/variables.scss";
+
+.spectral-line-query-splash-screen {
+    user-select: none;
+
+    width: 350px;
+    height: 200px;
+    position: absolute;
+    margin-left: 200px;
+    margin-top: 200px;
+    padding: 15px 0 15px 0;
+    background: $light-gray5;
+
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-around;
+    text-align: center;
+
+    .loadingInfo-div {
+        height: 40px;
+        display: flex;
+        align-items: center;
+        p {
+            margin: 0 0 0 0;
+        }
+    }
+} 
