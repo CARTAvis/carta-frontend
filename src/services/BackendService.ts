@@ -111,6 +111,7 @@ export class BackendService {
             [CARTA.EventType.MOMENT_PROGRESS, this.onStreamedMomentProgress],
             [CARTA.EventType.MOMENT_RESPONSE, this.onSimpleMappedResponse],
             [CARTA.EventType.SCRIPTING_REQUEST, this.onScriptingRequest],
+            [CARTA.EventType.SPLATALOGUE_PONG, this.onSimpleMappedResponse],
             [CARTA.EventType.SPECTRAL_LINE_RESPONSE, this.onSimpleMappedResponse]
         ]);
 
@@ -142,6 +143,7 @@ export class BackendService {
             [CARTA.EventType.MOMENT_PROGRESS, CARTA.MomentProgress],
             [CARTA.EventType.MOMENT_RESPONSE, CARTA.MomentResponse],
             [CARTA.EventType.SCRIPTING_REQUEST, CARTA.ScriptingRequest],
+            [CARTA.EventType.SPLATALOGUE_PONG, CARTA.SplataloguePong],
             [CARTA.EventType.SPECTRAL_LINE_RESPONSE, CARTA.SpectralLineResponse]
         ]);
 
@@ -684,6 +686,24 @@ export class BackendService {
                 return true;
             }
             return throwError(new Error("Could not send event"));
+        }
+    }
+
+    @action("ping Splatalogue")
+    pingSplatalogue(): Observable<CARTA.SplataloguePong> {
+        if (this.connectionStatus !== ConnectionStatus.ACTIVE) {
+            return throwError(new Error("Not connected"));
+        } else {
+            const message = CARTA.SplataloguePing.create();
+            const requestId = this.eventCounter;
+            this.logEvent(CARTA.EventType.SPLATALOGUE_PING, requestId, message, false);
+            if (this.sendEvent(CARTA.EventType.SPLATALOGUE_PING, CARTA.SplataloguePing.encode(message).finish())) {
+                return new Observable<CARTA.SplataloguePong>(observer => {
+                    this.observerRequestMap.set(requestId, observer);
+                });
+            } else {
+                return throwError(new Error("Could not send event"));
+            }
         }
     }
 

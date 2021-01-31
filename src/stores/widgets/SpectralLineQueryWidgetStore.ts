@@ -218,8 +218,7 @@ export class SpectralLineQueryWidgetStore extends RegionWidgetStore {
             );
         } else {
             this.isQuerying = true;
-            const backendService = BackendService.Instance;
-            backendService.requestSpectralLine(new CARTA.DoubleBounds({min: freqMHzFrom, max: freqMHzTo}), this.intensityLimitEnabled ? this.intensityLimitValue : NaN).subscribe(ack => {
+            BackendService.Instance.requestSpectralLine(new CARTA.DoubleBounds({min: freqMHzFrom, max: freqMHzTo}), this.intensityLimitEnabled ? this.intensityLimitValue : NaN).subscribe(ack => {
                 this.isQuerying = false;
                 if (ack.success && ack.dataSize >= 0) {
                     if (ack.dataSize > 0) {
@@ -346,6 +345,17 @@ export class SpectralLineQueryWidgetStore extends RegionWidgetStore {
         }
     };
 
+    private pingSplatalogue = () => {
+        BackendService.Instance.pingSplatalogue().subscribe(ack => {
+            if (ack.success) {
+                this.setSplatalogueStatus(true);
+            }
+        }, error => {
+            console.error(error);
+            AppStore.Instance.alertStore.showAlert(error);
+        });
+    };
+
     constructor() {
         super(RegionsType.CLOSED);
         makeObservable<SpectralLineQueryWidgetStore, "isLineSelectedArray" | "restFreqColumn" | "measuredFreqColumn">(this);
@@ -371,6 +381,8 @@ export class SpectralLineQueryWidgetStore extends RegionWidgetStore {
         this.selectedSpectralProfilerID = AppStore.Instance.widgetsStore.spectralProfilerList.length > 0 ?
             AppStore.Instance.widgetsStore.spectralProfilerList[0] : undefined;
         this.sortingInfo = {columnName: null, sortingType: null};
+
+        this.pingSplatalogue();
 
         // update frequency column when redshift changes
         autorun(() => {
