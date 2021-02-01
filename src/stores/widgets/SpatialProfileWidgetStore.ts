@@ -149,6 +149,13 @@ export class SpatialProfileWidgetStore {
             // Cursor region only for now
             const regionId = 0;
             const coordinate = widgetStore.coordinate;
+            // Placeholder spatial config: request the entire full-resolution profile
+            const spatialConfig: CARTA.SetSpatialRequirements.ISpatialConfig = {
+                coordinate,
+                start: 0,
+                mip: 1,
+                end: coordinate.includes("x") ? frame.frameInfo.fileInfoExtended.width : frame.frameInfo.fileInfoExtended.height
+            };
 
             if (!frame.regionSet) {
                 return;
@@ -172,8 +179,11 @@ export class SpatialProfileWidgetStore {
                     regionRequirements.spatialProfiles = [];
                 }
 
-                if (regionRequirements.spatialProfiles.indexOf(coordinate) === -1) {
-                    regionRequirements.spatialProfiles.push(coordinate);
+                const existingConfig = regionRequirements.spatialProfiles.find(c => c.coordinate === coordinate);
+                if (existingConfig) {
+                    // TODO: Merge existing configs, rather than only allowing a single one
+                } else {
+                    regionRequirements.spatialProfiles.push(spatialConfig);
                 }
             }
         });
