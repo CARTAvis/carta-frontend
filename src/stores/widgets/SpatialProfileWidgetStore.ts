@@ -1,6 +1,7 @@
 import tinycolor from "tinycolor2";
 import {action, computed, observable, makeObservable} from "mobx";
 import {Colors} from "@blueprintjs/core";
+import * as _ from "lodash";
 import {FrameStore, ProfileSmoothingStore} from "stores";
 import {CARTA} from "carta-protobuf";
 import {PlotType, LineSettings} from "components/Shared";
@@ -246,7 +247,7 @@ export class SpatialProfileWidgetStore {
                         for (let i = 0; i < updatedConfigCount; i++) {
                             const updatedConfig = sortedUpdatedConfigs[i];
                             const config = sortedConfigs[i];
-                            if (updatedConfig !== config) {
+                            if (!_.isEqual(config, updatedConfig)){
                                 diffList.push(updatedRegionRequirements);
                                 return;
                             }
