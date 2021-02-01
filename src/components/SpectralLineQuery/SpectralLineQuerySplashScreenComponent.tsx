@@ -20,7 +20,7 @@ export class SpectralLineQuerySplashScreenComponent extends React.Component<{isO
                     <a href="https://splatalogue.online/" target="_blank" rel="noopener noreferrer">https://splatalogue.online/</a>
                     <Spinner intent={Intent.PRIMARY} size={30} value={null}/>
                     <div className={"loadingInfo-div"}>
-                        <p>Checking whether Splatalogue is alive...</p>
+                        <p>Checking Splatalogue...</p>
                     </div>
                 </div>
             </Overlay>
