@@ -162,12 +162,16 @@ export class FileInfoComponent extends React.Component<{
     };
 
     private handleSaveSpectralRangeStartChanged = (val: any) => {
-        const fileBrowser = AppStore.Instance.fileBrowserStore;
+        const fileBrowser = FileBrowserStore.Instance;
         const spectralRange = AppStore.Instance.activeFrame.channelValueBounds;
         // Check and clamp the input
         if (FileBrowserStore && isFinite(val)) {
-            FileBrowserStore.Instance.saveSpectralRange[0] = Math.min(Math.max(val, spectralRange.min), fileBrowser.saveSpectralRange[1]);
+            fileBrowser.saveSpectralRange[0] = val;
         }
+        // Delay validate value
+        setTimeout(() => {
+            fileBrowser.saveSpectralRange[0] = Math.min(Math.max(fileBrowser.saveSpectralRange[0], spectralRange.min), fileBrowser.saveSpectralRange[1]);
+        }, 600);
     };
 
     private handleSaveSpectralRangeEndChanged = (val: any) => {
@@ -175,8 +179,12 @@ export class FileInfoComponent extends React.Component<{
         const spectralRange = AppStore.Instance.activeFrame.channelValueBounds;
         // Check and clamp the input
         if (FileBrowserStore && isFinite(val)) {
-            FileBrowserStore.Instance.saveSpectralRange[1] = Math.min(Math.max(val, fileBrowser.saveSpectralRange[0]), spectralRange.max);
+            fileBrowser.saveSpectralRange[1] = val;
         }
+        // Delay validate value
+        setTimeout(() => {
+            fileBrowser.saveSpectralRange[1] = Math.min(Math.max(fileBrowser.saveSpectralRange[1], fileBrowser.saveSpectralRange[0]), spectralRange.max);
+        }, 600);
     };
 
     private updateSpectralCoordinate(coordStr: string): void {

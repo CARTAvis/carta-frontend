@@ -416,22 +416,22 @@ export class FileBrowserStore {
     }
 
     /// Transfer the request from stokes string
-    /// to [start, length, stride]
+    /// to [start, end, stride]
     @computed get saveStokesRange(): number[] {
-        // [start, length, stride] for "ABCD"
+        // [start, end, stride] for "ABCD"
         const options: number[][] = [
             [], // all
-            [0, 1, 1], // A
+            [0, 0, 1], // A
             [1, 1, 1], // B
-            [2, 1, 1], // C
-            [3, 1, 1], // D
-            [0, 2, 1], // AB
+            [2, 2, 1], // C
+            [3, 3, 1], // D
+            [0, 1, 1], // AB
             [1, 2, 1], // BC
-            [2, 2, 1], // CD
+            [2, 3, 1], // CD
             [0, 2, 2], // AC
-            [0, 2, 3], // AD
-            [1, 2, 2], // BD
-            [0, 3, 1], // ABC
+            [0, 3, 3], // AD
+            [1, 3, 2], // BD
+            [0, 2, 1], // ABC
             [1, 3, 1], // BCD
         ];
         return options[this.saveStokesOption];
