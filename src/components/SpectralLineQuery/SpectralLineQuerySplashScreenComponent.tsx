@@ -3,6 +3,7 @@ import {observer} from "mobx-react";
 import {AnchorButton, Classes, Intent, Overlay, Position, Spinner, Tooltip} from "@blueprintjs/core";
 import {AppStore} from "stores";
 import {SplataloguePingStatus} from "stores/widgets";
+import * as splatalogueLogoPng from "static/splatalogue_logo.png";
 import "./SpectralLineQuerySplashScreenComponent.scss";
 
 @observer
@@ -18,6 +19,7 @@ export class SpectralLineQuerySplashScreenComponent extends React.Component<{spl
         return (
             <Overlay className={Classes.OVERLAY_SCROLL_CONTAINER} autoFocus={true} canEscapeKeyClose={false} canOutsideClickClose={false} isOpen={this.props.splataloguePingStatus !== SplataloguePingStatus.Success} usePortal={false}>
                 <div className={className}>
+                    <a href="https://splatalogue.online/" target="_blank" rel="noopener noreferrer"><img src={splatalogueLogoPng} width={200}/></a>
                     <a href="https://splatalogue.online/" target="_blank" rel="noopener noreferrer">https://splatalogue.online/</a>
                     {this.props.splataloguePingStatus === SplataloguePingStatus.Checking ?
                         <Spinner intent={Intent.PRIMARY} size={20} value={null}/> :
