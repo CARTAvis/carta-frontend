@@ -8,6 +8,12 @@ import {RegionWidgetStore, RegionsType} from "./RegionWidgetStore";
 import {ProcessedColumnData, ProtobufProcessing} from "models";
 import {wavelengthToFrequency, SPEED_OF_LIGHT} from "utilities";
 
+export enum SplataloguePingStatus {
+    Checking,
+    Success,
+    Failure,
+}
+
 export enum SpectralLineQueryRangeType {
     Range = "Range",
     Center = "Center"
@@ -104,7 +110,7 @@ const RESOLVED_QN_COLUMN_INDEX = 7;
 const FREQUENCY_RANGE_LIMIT = 2 * 1e4; // 20000 MHz
 
 export class SpectralLineQueryWidgetStore extends RegionWidgetStore {
-    @observable isSplatalogueAlive: boolean;
+    @observable splataloguePingStatus: SplataloguePingStatus;
     @observable queryRangeType: SpectralLineQueryRangeType;
     @observable queryRange: NumberRange;
     @observable queryRangeByCenter: NumberRange;
@@ -124,10 +130,6 @@ export class SpectralLineQueryWidgetStore extends RegionWidgetStore {
     @observable sortingInfo: {columnName: string, sortingType: CARTA.SortingType};
     @observable numDataRows: number;
     @observable selectedSpectralProfilerID: string;
-
-    @action setSplatalogueStatus = (isSplatalogueAlive: boolean) => {
-        this.isSplatalogueAlive = isSplatalogueAlive;
-    };
 
     @action setQueryRangeType = (queryRangeType: SpectralLineQueryRangeType) => {
         this.queryRangeType = queryRangeType;
@@ -345,12 +347,12 @@ export class SpectralLineQueryWidgetStore extends RegionWidgetStore {
         }
     };
 
-    private pingSplatalogue = () => {
+    public pingSplatalogue = () => {
+        this.splataloguePingStatus = SplataloguePingStatus.Checking;
         BackendService.Instance.pingSplatalogue().subscribe(ack => {
-            if (ack.success) {
-                this.setSplatalogueStatus(true);
-            }
+            this.splataloguePingStatus = ack.success ? SplataloguePingStatus.Success : SplataloguePingStatus.Failure;
         }, error => {
+            this.splataloguePingStatus = SplataloguePingStatus.Failure;
             console.error(error);
             AppStore.Instance.alertStore.showAlert(error);
         });
@@ -359,7 +361,7 @@ export class SpectralLineQueryWidgetStore extends RegionWidgetStore {
     constructor() {
         super(RegionsType.CLOSED);
         makeObservable<SpectralLineQueryWidgetStore, "isLineSelectedArray" | "restFreqColumn" | "measuredFreqColumn">(this);
-        this.isSplatalogueAlive = false;
+        this.splataloguePingStatus = SplataloguePingStatus.Checking;
         this.queryRangeType = SpectralLineQueryRangeType.Range;
         this.queryRange = [0, 0];
         this.queryRangeByCenter = [0, 0];
