@@ -19,11 +19,11 @@ export class SpectralLineQuerySplashScreenComponent extends React.Component<{spl
         return (
             <Overlay className={Classes.OVERLAY_SCROLL_CONTAINER} autoFocus={true} canEscapeKeyClose={false} canOutsideClickClose={false} isOpen={this.props.splataloguePingStatus !== SplataloguePingStatus.Success} usePortal={false}>
                 <div className={className}>
-                    <a href="https://splatalogue.online/" target="_blank" rel="noopener noreferrer"><img src={splatalogueLogoPng} width={200}/></a>
+                    <a href="https://splatalogue.online/" target="_blank" rel="noopener noreferrer"><img src={splatalogueLogoPng} width={250}/></a>
                     <a href="https://splatalogue.online/" target="_blank" rel="noopener noreferrer">https://splatalogue.online/</a>
                     {this.props.splataloguePingStatus === SplataloguePingStatus.Checking ?
-                        <Spinner intent={Intent.PRIMARY} size={20} value={null}/> :
-                        <Tooltip content="Reconnect to Splatalogue" position={Position.TOP}>
+                        <Spinner intent={Intent.PRIMARY} size={30} value={null}/> :
+                        <Tooltip content="Reconnect to Splatalogue" position={Position.BOTTOM}>
                             <AnchorButton icon="repeat" onClick={this.props.onReload}/>
                         </Tooltip>
                     }
