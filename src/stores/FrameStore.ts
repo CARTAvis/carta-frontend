@@ -65,7 +65,7 @@ export class FrameStore {
     @observable spectralUnit: SpectralUnit;
     @observable spectralSystem: SpectralSystem;
     @observable channelValues: Array<number>;
-    @observable fullWcsInfo: number;
+    @observable wcsInfo3D: number;
     @observable validWcs: boolean;
     @observable center: Point2D;
     @observable cursorInfo: CursorInfo;
@@ -702,7 +702,7 @@ export class FrameStore {
         this.spectralSystemsSupported = null;
         this.wcsInfo = null;
         this.wcsInfoForTransformation = null;
-        this.fullWcsInfo = null;
+        this.wcsInfo3D = null;
         this.validWcs = false;
         this.frameInfo = frameInfo;
         this.renderHiDPI = true;
@@ -761,7 +761,7 @@ export class FrameStore {
                 this.spectralFrame = AST.getSpectralFrame(this.astFrameSet);
             }
             if (frameInfo.fileInfoExtended.depth > 1) {
-                this.fullWcsInfo = AST.copy(this.astFrameSet);
+                this.wcsInfo3D = AST.copy(this.astFrameSet);
             }
         }
         this.initSupportedSpectralConversion();
@@ -1207,7 +1207,7 @@ export class FrameStore {
 
         if (recursive) {
             this.spectralSiblings.forEach(frame => {
-                const siblingChannel = getTransformedChannel(this.fullWcsInfo, frame.fullWcsInfo, PreferenceStore.Instance.spectralMatchingType, sanitizedChannel);
+                const siblingChannel = getTransformedChannel(this.wcsInfo3D, frame.wcsInfo3D, PreferenceStore.Instance.spectralMatchingType, sanitizedChannel);
                 frame.setChannels(siblingChannel, frame.requiredStokes, false);
             });
 
@@ -1511,15 +1511,15 @@ export class FrameStore {
         }
         console.log(`Setting spectral reference for file ${this.frameInfo.fileId} to ${frame.frameInfo.fileId}`);
 
-        if (!this.fullWcsInfo || !frame.fullWcsInfo) {
+        if (!this.wcsInfo3D || !frame.wcsInfo3D) {
             console.log(`Error creating spectral transform between files ${this.frameInfo.fileId} and ${frame.frameInfo.fileId}. One of the files is missing spectral information`);
             this.spectralReference = null;
             return false;
         }
 
         // For now, this is just done to ensure a mapping can be constructed
-        const copySrc = AST.copy(this.fullWcsInfo);
-        const copyDest = AST.copy(frame.fullWcsInfo);
+        const copySrc = AST.copy(this.wcsInfo3D);
+        const copyDest = AST.copy(frame.wcsInfo3D);
         const preferenceStore = PreferenceStore.Instance;
         const spectralMatchingType = preferenceStore.spectralMatchingType;
         // Ensure that a mapping for the current alignment system is possible
@@ -1541,7 +1541,7 @@ export class FrameStore {
 
         this.spectralReference = frame;
         this.spectralReference.addSecondarySpectralImage(this);
-        const matchedChannel = getTransformedChannel(frame.fullWcsInfo, this.fullWcsInfo, preferenceStore.spectralMatchingType, frame.requiredChannel);
+        const matchedChannel = getTransformedChannel(frame.wcsInfo3D, this.wcsInfo3D, preferenceStore.spectralMatchingType, frame.requiredChannel);
         this.setChannels(matchedChannel, this.requiredStokes, false);
         return true;
     };
