@@ -40,6 +40,7 @@ export class ProtobufProcessing {
                 coordinate: profile.coordinate,
                 start: profile.start,
                 end: profile.end,
+                mip: profile.mip,
                 values: new Float32Array(profile.rawValuesFp32.slice().buffer)
             };
         }
@@ -48,6 +49,7 @@ export class ProtobufProcessing {
             coordinate: profile.coordinate,
             start: profile.start,
             end: profile.end,
+            mip: profile.mip,
             values: null
         };
     }
