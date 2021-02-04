@@ -414,7 +414,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
                 }
                 linePlotProps.lineColor = primaryLineColor;
                 const smoothingStore = this.widgetStore.smoothingStore;
-                if (smoothingStore.type !== SmoothingType.NONE) {
+                if (smoothingStore.type !== SmoothingType.NONE && currentPlotData?.smoothingValues) {
                     if (!smoothingStore.isOverlayOn) {
                         linePlotProps.lineColor = "#00000000";
                     }
