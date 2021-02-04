@@ -1,9 +1,13 @@
 import * as React from "react";
+import {computed} from "mobx"
 import {observer} from "mobx-react";
 import {AnchorButton, FormGroup, HTMLSelect, Slider, Pre, Text, Intent} from "@blueprintjs/core";
 import {SafeNumericInput} from "components/Shared";
 import {ProfileFittingStore} from "stores/ProfileFittingStore"
-import {AppStore} from "stores";
+import {SpectralProfileWidgetStore} from "stores/widgets/SpectralProfileWidgetStore";
+import {AppStore, SpectralProfileStore} from "stores";
+import {ProcessedSpectralProfile} from "models";
+import {CARTA} from "carta-protobuf";
 import "./ProfileFittingComponent.scss";
 
 export enum FittingFunction {
@@ -18,7 +22,7 @@ export enum FittingContinuum {
 }
 
 @observer
-export class ProfileFittingComponent extends React.Component<{fittingStore: ProfileFittingStore}> {
+export class ProfileFittingComponent extends React.Component<{fittingStore: ProfileFittingStore, widgetStore: SpectralProfileWidgetStore}> {
 
 
     private onCenterValueChanged = (val: number) => {
@@ -43,20 +47,55 @@ export class ProfileFittingComponent extends React.Component<{fittingStore: Prof
         }
     }
 
+    private showLog = () => {}
+
     private reset = () => {
         this.props.fittingStore.setComponents(1,true);
+        this.props.fittingStore.setHasResult(false);
     }
 
     private fitData = () => {
+        if (this.props.fittingStore.readyToFit) {
+            this.props.fittingStore.fitData(this.props.widgetStore.effectiveFrame.channelValues, this.coordinateData.values)
+        }
     }
 
     private readyToFit = () => {
         for (let i = 0; i < this.props.fittingStore.components.length; i++) {
-            if (!this.props.fittingStore.components[i].readyToFit) {
+            if (!this.props.fittingStore.components[i].isReadyToFit) {
                 return false;
             }
         }
         return true;
+    }
+
+    @computed get profileStore(): SpectralProfileStore {
+        if (this.props.widgetStore.effectiveFrame) {
+            let fileId = this.props.widgetStore.effectiveFrame.frameInfo.fileId;
+            const regionId = this.props.widgetStore.effectiveRegionId;
+            const frameMap = AppStore.Instance.spectralProfiles.get(fileId);
+            if (frameMap) {
+                return frameMap.get(regionId);
+            }
+        }
+        return null;
+    }
+
+    @computed get coordinateData(): ProcessedSpectralProfile {
+        const frame = this.props.widgetStore.effectiveFrame;
+        if (!frame) {
+            return null;
+        }
+
+        let regionId = this.props.widgetStore.effectiveRegionId;
+        if (frame.regionSet) {
+            const region = frame.regionSet.regions.find(r => r.regionId === regionId);
+            if (region && this.profileStore) {
+                return this.profileStore.getProfile(this.props.widgetStore.coordinate, region.isClosedRegion ? this.props.widgetStore.statsType : CARTA.StatsType.Sum);
+            }
+        }
+
+        return null;
     }
 
     render() {
@@ -101,6 +140,7 @@ export class ProfileFittingComponent extends React.Component<{fittingStore: Prof
                             value={fittingStore.continuum} 
                             options={[{label:"None", value: FittingContinuum.NONE}, {label:"0th order", value: FittingContinuum.ZEROTH_ORDER}, {label:"1th order", value: FittingContinuum.FIRST_ORDER}]} 
                             onChange={(ev) => fittingStore.setContinuum(parseInt(ev.target.value))}
+                            disabled={true}
                         />
                     </FormGroup>
                     <FormGroup label="Component" inline={true}>
@@ -168,11 +208,14 @@ export class ProfileFittingComponent extends React.Component<{fittingStore: Prof
                 <div className="profile-fitting-footer">
                     <AnchorButton
                         text="View log"
+                        onClick={this.showLog}
                         intent={Intent.PRIMARY}
+                        disabled={!fittingStore.hasResult}
                     />
                     <AnchorButton 
                         text="Save log"
                         intent={Intent.PRIMARY}
+                        disabled={!fittingStore.hasResult}
                     />
                     <AnchorButton 
                         text="Reset"

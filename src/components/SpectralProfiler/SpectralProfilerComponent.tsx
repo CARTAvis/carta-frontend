@@ -14,7 +14,7 @@ import {Point2D, ProcessedSpectralProfile} from "models";
 import {binarySearchByX, clamp, formattedExponential, formattedNotation, toExponential, toFixed} from "utilities";
 import "./SpectralProfilerComponent.scss";
 
-type PlotData = { values: Point2D[], smoothingValues: Point2D[], xMin: number, xMax: number, yMin: number, yMax: number, yMean: number, yRms: number, progress: number };
+type PlotData = { values: Point2D[], smoothingValues: Point2D[], fittingValues: Point2D[], xMin: number, xMax: number, yMin: number, yMax: number, yMean: number, yRms: number, progress: number };
 
 @observer
 export class SpectralProfilerComponent extends React.Component<WidgetProps> {
@@ -122,6 +122,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
             }
 
             let smoothingValues: Point2D[] = this.widgetStore.smoothingStore.getSmoothingPoint2DArray(channelValues, coordinateData.values);
+            let fittingValues: Point2D[] = this.widgetStore.fittingStore.getFittingPoint2DArray(channelValues);
 
             if (yCount > 0) {
                 yMean = ySum / yCount;
@@ -137,7 +138,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
                 yMin -= range * VERTICAL_RANGE_PADDING;
                 yMax += range * VERTICAL_RANGE_PADDING;
             }
-            return {values, smoothingValues, xMin, xMax, yMin, yMax, yMean, yRms, progress: coordinateData.progress};
+            return {values, smoothingValues, fittingValues, xMin, xMax, yMin, yMax, yMean, yRms, progress: coordinateData.progress};
         }
         return null;
     }
@@ -429,6 +430,19 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
                         exportData: smoothingStore.exportData
                     };
                     linePlotProps.multiPlotPropsMap.set("smoothed", smoothingPlotProps);
+                }
+
+                const fittingStore = this.widgetStore.fittingStore;
+                if (fittingStore.hasResult) {
+                    let fittingPlotProps: MultiPlotProps = {
+                        data: currentPlotData.fittingValues,
+                        type: linePlotProps.plotType,
+                        borderColor: smoothingStore.lineColor.colorHex,
+                        borderWidth: smoothingStore.lineWidth,
+                        pointRadius: smoothingStore.pointRadius,
+                        order: 0
+                    }
+                    linePlotProps.multiPlotPropsMap.set("fitting", fittingPlotProps);
                 }
 
                 // Determine scale in X and Y directions. If auto-scaling, use the bounds of the current data
