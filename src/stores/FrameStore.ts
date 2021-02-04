@@ -27,7 +27,7 @@ import {
     ZoomPoint
 } from "models";
 import {clamp, formattedFrequency, getHeaderNumericValue, getTransformedChannel, transformPoint, isAstBadPoint, minMax2D, rotate2D, toFixed, trimFitsComment, round2D, getFormattedWCSPoint} from "utilities";
-import {BackendService, ContourWebGLService} from "services";
+import {BackendService, ContourWebGLService, TILE_SIZE} from "services";
 import {RegionId} from "stores/widgets";
 import {formattedArcsec} from "utilities";
 
@@ -117,6 +117,10 @@ export class FrameStore {
 
     @computed get sharedRegions(): boolean {
         return !!this.spatialReference;
+    }
+
+    @computed get maxMip(): number {
+        return Math.pow(2, Math.ceil(Math.log2(this.frameInfo.fileInfoExtended.width / TILE_SIZE)));
     }
 
     @computed get requiredFrameView(): FrameView {
