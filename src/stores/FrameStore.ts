@@ -754,13 +754,15 @@ export class FrameStore {
         this.animationChannelRange = [0, frameInfo.fileInfoExtended.depth - 1];
 
         this.initSkyWCS();
-        if (frameInfo.fileInfoExtended.depth > 1) {
-            this.initFullWCS();
-        }
 
         this.astFrameSet = this.initFrame();
         if (this.astFrameSet) {
-            this.spectralFrame = AST.getSpectralFrame(this.astFrameSet);
+            if (this.spectralAxis && this.spectralAxis.valid) {
+                this.spectralFrame = AST.getSpectralFrame(this.astFrameSet);
+            }
+            if (frameInfo.fileInfoExtended.depth > 1) {
+                this.fullWcsInfo = AST.copy(this.astFrameSet);
+            }
         }
         this.initSupportedSpectralConversion();
         this.initCenter();
@@ -871,29 +873,24 @@ export class FrameStore {
         }
     };
 
-    @action private initFullWCS = () => {
-        let headerString = "";
+    private initFrame = (): number => {
+        const dimension = this.frameInfo.fileInfoExtended.depth > 1 ? "3" : "2";
 
+        let headerString = "";
         for (let entry of this.frameInfo.fileInfoExtended.headerEntries) {
             // Skip empty header entries
             if (!entry.value.length) {
                 continue;
             }
-
-            // Skip higher dimensions
+            // Skip higher dimensions, only accept 2 or 3
             if (entry.name.match(/(CTYPE|CDELT|CRPIX|CRVAL|CUNIT|NAXIS|CROTA)[4-9]/)) {
                 continue;
             }
 
             let value = trimFitsComment(entry.value);
-            if (entry.name.toUpperCase() === "NAXIS") {
-                value = "3";
+            if (entry.name.toUpperCase() === "NAXIS" || entry.name.toUpperCase() === "WCSAXES") {
+                value = dimension;
             }
-
-            if (entry.name.toUpperCase() === "WCSAXES") {
-                value = "3";
-            }
-
             if (entry.entryType === CARTA.EntryType.STRING) {
                 value = `'${value}'`;
             } else {
@@ -911,14 +908,7 @@ export class FrameStore {
             }
             headerString += entryString;
         }
-        const initResult = AST.initFrame(headerString);
-        if (!initResult) {
-            this.logStore.addWarning(`Problem processing WCS info in file ${this.filename}`, ["ast"]);
-            this.fullWcsInfo = null;
-        } else {
-            this.fullWcsInfo = initResult;
-            console.log("Initialised 3D WCS info from frame");
-        }
+        return AST.initFrame(headerString);
     };
 
     // This function shifts the pixel axis by 1, so that it starts at 0, rather than 1
@@ -931,37 +921,6 @@ export class FrameStore {
             }
         }
         return currentValue;
-    };
-
-    private initFrame = (): number => {
-        if (!this.spectralAxis || !this.spectralAxis.valid) {
-            return null;
-        }
-
-        let headerString = "";
-        const entries = this.frameInfo.fileInfoExtended.headerEntries;
-        for (let entry of entries) {
-            // Skip empty header entries
-            if (!entry.value.length) {
-                continue;
-            }
-            let name = entry.name;
-            let value = trimFitsComment(entry.value);
-            if (entry.entryType === CARTA.EntryType.STRING) {
-                value = `'${value}'`;
-            } else {
-                value = FrameStore.ShiftASTCoords(entry, value);
-            }
-            while (name.length < 8) {
-                name += " ";
-            }
-            let entryString = `${name}=  ${value}`;
-            while (entryString.length < 80) {
-                entryString += " ";
-            }
-            headerString += entryString;
-        }
-        return AST.initFrame(headerString);
     };
 
     @action private initSupportedSpectralConversion = () => {
