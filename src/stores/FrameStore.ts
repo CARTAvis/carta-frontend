@@ -753,17 +753,32 @@ export class FrameStore {
         };
         this.animationChannelRange = [0, frameInfo.fileInfoExtended.depth - 1];
 
-        this.initSkyWCS();
-
+        // init WCS
         this.astFrameSet = this.initFrame();
         if (this.astFrameSet) {
             if (this.spectralAxis && this.spectralAxis.valid) {
                 this.spectralFrame = AST.getSpectralFrame(this.astFrameSet);
             }
-            if (frameInfo.fileInfoExtended.depth > 1) {
+
+            if (frameInfo.fileInfoExtended.depth > 1) { // 3D frame
                 this.wcsInfo3D = AST.copy(this.astFrameSet);
+                // TODO: init wcsInfo
+                this.initSkyWCS();
+                AST.dump(this.wcsInfo);
+            } else { // 2D frame
+                this.wcsInfo = AST.copy(this.astFrameSet);
             }
+
+            // init wcs for transformation & precision
+            this.wcsInfoForTransformation = AST.copy(this.wcsInfo);
+            AST.set(this.wcsInfoForTransformation, `Format(1)=${AppStore.Instance.overlayStore.numbers.formatTypeX}.${WCS_PRECISION}`);
+            AST.set(this.wcsInfoForTransformation, `Format(2)=${AppStore.Instance.overlayStore.numbers.formatTypeY}.${WCS_PRECISION}`);
+            this.validWcs = true;
+            this.overlayStore.setDefaultsFromAST(this);
+        } else {
+            this.wcsInfo = AST.initDummyFrame();
         }
+
         this.initSupportedSpectralConversion();
         this.initCenter();
         this.zoomLevel = preferenceStore.isZoomRAWMode ? 1.0 : this.zoomLevelForFit;
@@ -817,6 +832,7 @@ export class FrameStore {
         return AST.transformSpectralPoint(this.spectralFrame, type, unit, system, value);
     };
 
+    // TODO: remove this func
     @action private initSkyWCS = () => {
         let headerString = "";
 
