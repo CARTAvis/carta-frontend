@@ -894,14 +894,26 @@ export class FrameStore {
 
         let headerString = "";
         for (let entry of this.frameInfo.fileInfoExtended.headerEntries) {
+            let name = entry.name;
+
+            // Skip higher dimensions
+            if (dimension === "2") {
+                if (entry.name.match(/(CTYPE|CDELT|CRPIX|CRVAL|CUNIT|NAXIS|CROTA)[3-9]/)) {
+                    continue;
+                }
+            } else { // check whether spectral axis is axis 3 or 4
+                if (entry.name.match(/(CTYPE|CDELT|CRPIX|CRVAL|CUNIT|NAXIS|CROTA)[5-9]/) ||
+                    (this.spectralAxis?.dimension === 3 && entry.name.match(/(CTYPE|CDELT|CRPIX|CRVAL|CUNIT|NAXIS|CROTA)4/)) ||
+                    (this.spectralAxis?.dimension === 4 && entry.name.match(/(CTYPE|CDELT|CRPIX|CRVAL|CUNIT|NAXIS|CROTA)3/))) {
+                    continue;
+                }
+                if (this.spectralAxis?.dimension === 4 && entry.name.match(/(CTYPE|CDELT|CRPIX|CRVAL|CUNIT|NAXIS|CROTA)4/)) {
+                    name = entry.name.replace("4", "3");
+                }
+            }
+
             // Skip empty header entries
             if (!entry.value.length) {
-                continue;
-            }
-            // Skip higher dimensions
-            if (entry.name.match(/(CTYPE|CDELT|CRPIX|CRVAL|CUNIT|NAXIS|CROTA)[5-9]/) ||
-                (this.spectralAxis?.dimension === 3 && entry.name.match(/(CTYPE|CDELT|CRPIX|CRVAL|CUNIT|NAXIS|CROTA)4/)) ||
-                (this.spectralAxis?.dimension === 4 && entry.name.match(/(CTYPE|CDELT|CRPIX|CRVAL|CUNIT|NAXIS|CROTA)3/))) {
                 continue;
             }
 
@@ -915,10 +927,6 @@ export class FrameStore {
                 value = FrameStore.ShiftASTCoords(entry, value);
             }
 
-            let name = entry.name;
-            if (this.spectralAxis?.dimension === 4 && entry.name.match(/(CTYPE|CDELT|CRPIX|CRVAL|CUNIT|NAXIS|CROTA)4/)) {
-                name = entry.name.replace("4", "3");
-            }
             while (name.length < 8) {
                 name += " ";
             }
