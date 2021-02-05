@@ -898,8 +898,10 @@ export class FrameStore {
             if (!entry.value.length) {
                 continue;
             }
-            // Skip higher dimensions, only accept 2 or 3
-            if (entry.name.match(/(CTYPE|CDELT|CRPIX|CRVAL|CUNIT|NAXIS|CROTA)[4-9]/)) {
+            // Skip higher dimensions
+            if (entry.name.match(/(CTYPE|CDELT|CRPIX|CRVAL|CUNIT|NAXIS|CROTA)[5-9]/) ||
+                (this.spectralAxis?.dimension === 3 && entry.name.match(/(CTYPE|CDELT|CRPIX|CRVAL|CUNIT|NAXIS|CROTA)4/)) ||
+                (this.spectralAxis?.dimension === 4 && entry.name.match(/(CTYPE|CDELT|CRPIX|CRVAL|CUNIT|NAXIS|CROTA)3/))) {
                 continue;
             }
 
@@ -914,6 +916,9 @@ export class FrameStore {
             }
 
             let name = entry.name;
+            if (this.spectralAxis?.dimension === 4 && entry.name.match(/(CTYPE|CDELT|CRPIX|CRVAL|CUNIT|NAXIS|CROTA)4/)) {
+                name = entry.name.replace("4", "3");
+            }
             while (name.length < 8) {
                 name += " ";
             }
