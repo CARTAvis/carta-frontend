@@ -762,19 +762,19 @@ export class FrameStore {
 
             if (frameInfo.fileInfoExtended.depth > 1) { // 3D frame
                 this.wcsInfo3D = AST.copy(this.astFrameSet);
-                // TODO: init wcsInfo
-                this.initSkyWCS();
-                AST.dump(this.wcsInfo);
+                this.wcsInfo = AST.getSkyFrameSet(this.astFrameSet);
             } else { // 2D frame
                 this.wcsInfo = AST.copy(this.astFrameSet);
             }
 
-            // init wcs for transformation & precision
-            this.wcsInfoForTransformation = AST.copy(this.wcsInfo);
-            AST.set(this.wcsInfoForTransformation, `Format(1)=${AppStore.Instance.overlayStore.numbers.formatTypeX}.${WCS_PRECISION}`);
-            AST.set(this.wcsInfoForTransformation, `Format(2)=${AppStore.Instance.overlayStore.numbers.formatTypeY}.${WCS_PRECISION}`);
-            this.validWcs = true;
-            this.overlayStore.setDefaultsFromAST(this);
+            if (this.wcsInfo) {
+                // init 2D(Sky) wcs copy for the precision of region coordinate transformation
+                this.wcsInfoForTransformation = AST.copy(this.wcsInfo);
+                AST.set(this.wcsInfoForTransformation, `Format(1)=${AppStore.Instance.overlayStore.numbers.formatTypeX}.${WCS_PRECISION}`);
+                AST.set(this.wcsInfoForTransformation, `Format(2)=${AppStore.Instance.overlayStore.numbers.formatTypeY}.${WCS_PRECISION}`);
+                this.validWcs = true;
+                this.overlayStore.setDefaultsFromAST(this);
+            }
         } else {
             this.wcsInfo = AST.initDummyFrame();
         }
@@ -830,63 +830,6 @@ export class FrameStore {
             return undefined;
         }
         return AST.transformSpectralPoint(this.spectralFrame, type, unit, system, value);
-    };
-
-    // TODO: remove this func
-    @action private initSkyWCS = () => {
-        let headerString = "";
-
-        for (let entry of this.frameInfo.fileInfoExtended.headerEntries) {
-            // Skip empty header entries
-            if (!entry.value.length) {
-                continue;
-            }
-
-            // Skip higher dimensions
-            if (entry.name.match(/(CTYPE|CDELT|CRPIX|CRVAL|CUNIT|NAXIS|CROTA)[3-9]/)) {
-                continue;
-            }
-
-            let value = entry.value;
-            if (entry.name.toUpperCase() === "NAXIS") {
-                value = "2";
-            }
-
-            if (entry.name.toUpperCase() === "WCSAXES") {
-                value = "2";
-            }
-
-            if (entry.entryType === CARTA.EntryType.STRING) {
-                value = `'${value}'`;
-            } else {
-                value = FrameStore.ShiftASTCoords(entry, value);
-            }
-
-            let name = entry.name;
-            while (name.length < 8) {
-                name += " ";
-            }
-
-            let entryString = `${name}=  ${value}`;
-            while (entryString.length < 80) {
-                entryString += " ";
-            }
-            headerString += entryString;
-        }
-        const initResult = AST.initFrame(headerString);
-        if (!initResult) {
-            this.logStore.addWarning(`Problem processing WCS info in file ${this.filename}`, ["ast"]);
-            this.wcsInfo = AST.initDummyFrame();
-        } else {
-            this.wcsInfo = initResult;
-            // init wcs for transformation & precision
-            this.wcsInfoForTransformation = AST.copy(this.wcsInfo);
-            AST.set(this.wcsInfoForTransformation, `Format(1)=${AppStore.Instance.overlayStore.numbers.formatTypeX}.${WCS_PRECISION}`);
-            AST.set(this.wcsInfoForTransformation, `Format(2)=${AppStore.Instance.overlayStore.numbers.formatTypeY}.${WCS_PRECISION}`);
-            this.validWcs = true;
-            this.overlayStore.setDefaultsFromAST(this);
-            console.log("Initialised WCS info from frame");
-        }
     };
 
     private initFrame = (): number => {
