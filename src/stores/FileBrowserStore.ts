@@ -1,6 +1,6 @@
 import { IOptionProps, TabId } from "@blueprintjs/core";
 
-import { action, computed, observable, makeObservable, runInAction } from "mobx";
+import { action, computed, observable, makeObservable, runInAction, autorun } from "mobx";
 
 import { CARTA } from "carta-protobuf";
 
@@ -72,10 +72,24 @@ export class FileBrowserStore {
     // Save image
     @observable saveFilename: string = "";
     @observable saveFileType: CARTA.FileType = CARTA.FileType.CASA;
-    @observable saveSpectralRange: number[];
+    @observable saveSpectralRange: number[] = [0, 0];
     @observable saveStokesOption: number;
     @observable saveRegionId: number;
     @observable isDropDegeneratedAxes: boolean;
+
+    constructor() {
+        makeObservable(this);
+        this.exportCoordinateType = CARTA.CoordinateType.WORLD;
+        this.exportFileType = CARTA.FileType.CRTF;
+
+        // Update channelValueBounds for save image
+        autorun(() => {
+            if (AppStore.Instance.activeFrame) {
+                FileBrowserStore.Instance.updateIniSaveSpectralRange();
+            }
+        });
+
+    }
 
     @action showFileBrowser = (mode: BrowserMode, append = false) => {
         this.appendingFrame = append;
@@ -435,11 +449,5 @@ export class FileBrowserStore {
             [1, 3, 1], // BCD
         ];
         return options[this.saveStokesOption];
-    }
-
-    constructor() {
-        makeObservable(this);
-        this.exportCoordinateType = CARTA.CoordinateType.WORLD;
-        this.exportFileType = CARTA.FileType.CRTF;
     }
 }

@@ -1139,13 +1139,6 @@ export class AppStore {
             }
         });
 
-        // Update channelValueBounds for save image
-        autorun(() => {
-            if (this.activeFrame) {
-                FileBrowserStore.Instance.updateIniSaveSpectralRange();
-            }
-        });
-
         // Set palette if theme changes
         autorun(() => {
             AST.setPalette(this.darkTheme ? nightPalette : dayPalette);
