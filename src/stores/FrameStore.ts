@@ -64,6 +64,11 @@ export class FrameStore {
     private cachedTransformedWcsInfo: number = -1;
     private zoomTimeoutHandler;
 
+    public readonly wcsInfo: number;
+    public readonly wcsInfoForTransformation: number;
+    public readonly wcsInfo3D: number;
+    public readonly validWcs: boolean;
+
     public spectralCoordsSupported: Map<string, { type: SpectralType, unit: SpectralUnit }>;
     public spectralSystemsSupported: Array<SpectralSystem>;
     public spatialTransformAST: number;
@@ -73,14 +78,10 @@ export class FrameStore {
 
     @observable frameInfo: FrameInfo;
     @observable renderHiDPI: boolean;
-    @observable wcsInfo: number;
-    @observable wcsInfoForTransformation: number;
     @observable spectralType: SpectralType;
     @observable spectralUnit: SpectralUnit;
     @observable spectralSystem: SpectralSystem;
     @observable channelValues: Array<number>;
-    @observable wcsInfo3D: number;
-    @observable validWcs: boolean;
     @observable center: Point2D;
     @observable cursorInfo: CursorInfo;
     @observable cursorValue: { position: Point2D, channel: number, value: number };
