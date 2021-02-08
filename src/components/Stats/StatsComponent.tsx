@@ -8,6 +8,7 @@ import {DefaultWidgetConfig, WidgetProps, HelpType, WidgetsStore, AppStore} from
 import {StatsWidgetStore} from "stores/widgets";
 import {toExponential} from "utilities";
 import {RegionSelectorComponent} from "components";
+import {ExportToolbarComponent} from "./ExportToolbar/ExportToolbarComponent";
 import "./StatsComponent.scss";
 
 @observer
@@ -29,6 +30,7 @@ export class StatsComponent extends React.Component<WidgetProps> {
 
     @observable width: number = 0;
     @observable height: number = 0;
+    @observable isMouseEntered = false;
 
     @computed get widgetStore(): StatsWidgetStore {
         const widgetsStore = WidgetsStore.Instance;
@@ -56,6 +58,14 @@ export class StatsComponent extends React.Component<WidgetProps> {
         }
         return null;
     }
+
+    @action showMouseEnterWidget = () => {
+        this.isMouseEntered = true;
+    };
+
+    @action hideMouseEnterWidget = () => {
+        this.isMouseEntered = false;
+    };
 
     private static readonly STATS_NAME_MAP = new Map<CARTA.StatsType, string>([
         [CARTA.StatsType.NumPixels, "NumPixels"],
@@ -115,6 +125,49 @@ export class StatsComponent extends React.Component<WidgetProps> {
         this.height = height;
     };
 
+    onMouseEnter = () => {
+        this.showMouseEnterWidget();
+    };
+
+    onMouseLeave = () => {
+        this.hideMouseEnterWidget();
+    };
+
+    private static GetTimestamp() {
+        const now = new Date();
+        return `${now.getFullYear()}-${now.getMonth() + 1}-${now.getDate()}-${now.getHours()}-${now.getMinutes()}-${now.getSeconds()}`;
+    }
+
+    exportData = () => {
+        const plotName = "Statistics";
+        const xLabel = "Statistic";
+        const yLabel = "Value";
+        const zLabel = "Unit";
+        let comment = `# xLabel: ${xLabel}\n# yLabel: ${yLabel}\n# zLabel: ${zLabel}\n`;
+
+        const header = "# x\ty\tz\n";
+
+        // read data from the table
+        let rows = "";
+        let table = document.getElementsByClassName('stats-table-data')[0];
+        let tr = table.getElementsByTagName('tr');
+        for (let i=1; i<tr.length; i++) {  // ignore the first line
+            let row_data = tr[i].getElementsByTagName("td");
+            let x_data = row_data[0].innerHTML;
+            let yz_data = row_data[1].innerHTML.replace(" ", "\t");
+            rows += `${x_data}\t${yz_data}\n`
+        }
+
+        // output file
+        const tsvData = `data:text/tab-separated-values;charset=utf-8,${comment}${header}${rows}`;
+        const dataURL = encodeURI(tsvData).replace(/#/g, "%23");
+
+        const a = document.createElement("a") as HTMLAnchorElement;
+        a.href = dataURL;
+        a.download = `${plotName}-${StatsComponent.GetTimestamp()}.tsv`;
+        a.dispatchEvent(new MouseEvent("click"));
+    }
+
     public render() {
         const appStore = AppStore.Instance;
 
@@ -158,7 +211,7 @@ export class StatsComponent extends React.Component<WidgetProps> {
             });
 
             formContent = (
-                <HTMLTable>
+                <HTMLTable className="stats-table-data" >
                     <thead className={appStore.darkTheme ? "dark-theme" : ""}>
                     <tr>
                         <th style={{width: StatsComponent.NAME_COLUMN_WIDTH}}>Statistic</th>
@@ -178,14 +231,31 @@ export class StatsComponent extends React.Component<WidgetProps> {
         if (appStore.darkTheme) {
             className += " dark-theme";
         }
+        
+        let exportToolbarComponent;
+        if (this.statsData!==null) {
+            exportToolbarComponent = (
+                <ExportToolbarComponent
+                    visible={this.isMouseEntered}
+                    exportData={this.exportData}
+                />
+            );
+        } else {
+            exportToolbarComponent = null;
+        }
 
         return (
             <div className={className}>
                 <div className="stats-toolbar">
                     <RegionSelectorComponent widgetStore={this.widgetStore}/>
                 </div>
-                <div className="stats-display">
+                <div 
+                    className="stats-display"
+                    onMouseEnter={this.onMouseEnter}
+                    onMouseLeave={this.onMouseLeave}
+                >
                     {formContent}
+                    {exportToolbarComponent}
                 </div>
                 <ReactResizeDetector handleWidth handleHeight onResize={this.onResize}/>
             </div>
