@@ -50,10 +50,24 @@ export enum RasterRenderType {
 export const WCS_PRECISION = 10;
 
 export class FrameStore {
+    private static readonly CursorInfoMaxPrecision = 25;
+    private static readonly ZoomInertiaDuration = 250;
+
     private readonly astFrameSet: number;
     private readonly spectralFrame: number;
+    private readonly controlMaps: Map<FrameStore, ControlMap>;
+    private readonly backendService: BackendService;
+    private readonly overlayStore: OverlayStore;
+    private readonly logStore: LogStore;
+
+    private spectralTransformAST: number;
+    private cachedTransformedWcsInfo: number = -1;
+    private zoomTimeoutHandler;
+
     public spectralCoordsSupported: Map<string, { type: SpectralType, unit: SpectralUnit }>;
     public spectralSystemsSupported: Array<SpectralSystem>;
+    public spatialTransformAST: number;
+
     // Region set for the current frame. Accessed via regionSet, to take into account region sharing
     @observable private readonly frameRegionSet: RegionSetStore;
 
@@ -644,47 +658,6 @@ export class FrameStore {
         return [];
     }
 
-    public getRegionWcsProperties(region: RegionStore): string {
-        if (!this.validWcs || !isFinite(region.center.x) || !isFinite(region.center.y)) {
-            return "Invalid";
-        }
-
-        const wcsCenter = getFormattedWCSPoint(this.wcsInfoForTransformation, region.center);
-        if (!wcsCenter) {
-            return "Invalid";
-        }
-
-        const center = region.regionId === RegionId.CURSOR ? `${this.cursorInfo.infoWCS.x}, ${this.cursorInfo.infoWCS.y}` : `${wcsCenter.x}, ${wcsCenter.y}`;
-        const wcsSize = this.getWcsSizeInArcsec(region.size);
-        const size = wcsSize ? {x: formattedArcsec(wcsSize.x, WCS_PRECISION), y: formattedArcsec(wcsSize.y, WCS_PRECISION)} : null;
-        const systemType = OverlayStore.Instance.global.explicitSystem;
-
-        switch (region.regionType) {
-            case CARTA.RegionType.POINT:
-                return `Point (wcs:${systemType}) [${center}]`;
-            case CARTA.RegionType.RECTANGLE:
-                return `rotbox(wcs:${systemType})[[${center}], [${size.x}, ${size.y}], ${toFixed(region.rotation, 1)}deg]`;
-            case CARTA.RegionType.ELLIPSE:
-                return `ellipse(wcs:${systemType})[[${center}], [${size.x}, ${size.y}], ${toFixed(region.rotation, 1)}deg]`;
-            case CARTA.RegionType.POLYGON:
-                return `polygon(wcs:${systemType})[[${center}], [${size.x}, ${size.y}], ${toFixed(region.rotation, 1)}deg]`;
-            default:
-                return "Not Implemented";
-        }
-    }
-
-    private readonly overlayStore: OverlayStore;
-    private readonly logStore: LogStore;
-    private readonly backendService: BackendService;
-    private readonly controlMaps: Map<FrameStore, ControlMap>;
-    public spatialTransformAST: number;
-    private spectralTransformAST: number;
-    private cachedTransformedWcsInfo: number = -1;
-    private zoomTimeoutHandler;
-
-    private static readonly CursorInfoMaxPrecision = 25;
-    private static readonly ZoomInertiaDuration = 250;
-
     constructor(frameInfo: FrameInfo) {
         makeObservable(this);
         this.overlayStore = OverlayStore.Instance;
@@ -776,6 +749,7 @@ export class FrameStore {
                 this.overlayStore.setDefaultsFromAST(this);
             }
         } else {
+            this.logStore.addWarning(`Problem processing WCS info in file ${this.filename}`, ["ast"]);
             this.wcsInfo = AST.initDummyFrame();
         }
 
@@ -820,6 +794,18 @@ export class FrameStore {
             }
         });
     }
+
+    // This function shifts the pixel axis by 1, so that it starts at 0, rather than 1
+    // For entries that are not related to the reference pixel location, the current value is returned
+    private static ShiftASTCoords = (entry: CARTA.IHeaderEntry, currentValue: string) => {
+        if (entry.name.match(/CRPIX\d+/)) {
+            const numericValue = parseFloat(entry.value);
+            if (isFinite(numericValue)) {
+                return (numericValue - 1).toString();
+            }
+        }
+        return currentValue;
+    };
 
     private convertSpectral = (values: Array<number>): Array<number> => {
         return values && values.length > 0 ? values.map(value => this.astSpectralTransform(this.spectralType, this.spectralUnit, this.spectralSystem, value)) : null;
@@ -883,95 +869,22 @@ export class FrameStore {
         return AST.initFrame(headerString);
     };
 
-    // This function shifts the pixel axis by 1, so that it starts at 0, rather than 1
-    // For entries that are not related to the reference pixel location, the current value is returned
-    private static ShiftASTCoords = (entry: CARTA.IHeaderEntry, currentValue: string) => {
-        if (entry.name.match(/CRPIX\d+/)) {
-            const numericValue = parseFloat(entry.value);
-            if (isFinite(numericValue)) {
-                return (numericValue - 1).toString();
-            }
-        }
-        return currentValue;
-    };
-
-    @action private initSupportedSpectralConversion = () => {
-        if (this.spectralAxis && !this.spectralAxis.valid) {
-            this.channelValues = this.channelInfo.values;
-            this.spectralCoordsSupported = new Map<string, { type: SpectralType, unit: SpectralUnit }>([
-                [this.nativeSpectralCoordinate, {type: null, unit: null}],
-                [SPECTRAL_TYPE_STRING.get(SpectralType.CHANNEL), {type: SpectralType.CHANNEL, unit: null}]
-            ]);
-            this.spectralSystemsSupported = [];
-            return;
-        } else if (!this.spectralAxis || !this.spectralFrame) {
-            this.spectralCoordsSupported = null;
-            this.spectralSystemsSupported = null;
-            return;
+    private sanitizeChannelNumber(channel: number) {
+        if (!isFinite(channel)) {
+            return this.requiredChannel;
         }
 
-        // generate spectral coordinate options
-        const entries = this.frameInfo.fileInfoExtended.headerEntries;
-        const spectralType = this.spectralInfo.channelType.code;
-        if (IsSpectralTypeSupported(spectralType)) {
-            // check RESTFRQ
-            const restFrqHeader = entries.find(entry => entry.name.indexOf("RESTFRQ") !== -1);
-            if (restFrqHeader) {
-                this.spectralCoordsSupported = SPECTRAL_COORDS_SUPPORTED;
-            } else {
-                this.spectralCoordsSupported = new Map<string, { type: SpectralType, unit: SpectralUnit }>();
-                Array.from(SPECTRAL_COORDS_SUPPORTED.keys()).forEach((key: string) => {
-                    const value = SPECTRAL_COORDS_SUPPORTED.get(key);
-                    const isVolecity = spectralType === SpectralType.VRAD || spectralType === SpectralType.VOPT;
-                    const isValueVolecity = value.type === SpectralType.VRAD || value.type === SpectralType.VOPT;
-                    if (isVolecity && isValueVolecity) { // VRAD, VOPT
-                        this.spectralCoordsSupported.set(key, value);
-                    }
-                    if (!isVolecity && !isValueVolecity) { // FREQ, WAVE, AWAV
-                        this.spectralCoordsSupported.set(key, value);
-                    }
-                });
-                this.spectralCoordsSupported.set(SPECTRAL_TYPE_STRING.get(SpectralType.CHANNEL), {type: SpectralType.CHANNEL, unit: null});
-            }
-        } else {
-            this.spectralCoordsSupported = new Map<string, { type: SpectralType, unit: SpectralUnit }>([
-                [SPECTRAL_TYPE_STRING.get(SpectralType.CHANNEL), {type: SpectralType.CHANNEL, unit: null}]
-            ]);
+        return Math.round(clamp(channel, 0, this.frameInfo.fileInfoExtended.depth - 1));
+    }
+
+    private replaceZoomTimeoutHandler = () => {
+        if (this.zoomTimeoutHandler) {
+            clearTimeout(this.zoomTimeoutHandler);
         }
 
-        // generate spectral system options
-        const spectralSystem = this.spectralInfo.specsys;
-        if (IsSpectralSystemSupported(spectralSystem)) {
-            const dateObsHeader = entries.find(entry => entry.name.indexOf("DATE-OBS") !== -1);
-            const obsgeoxHeader = entries.find(entry => entry.name.indexOf("OBSGEO-X") !== -1);
-            const obsgeoyHeader = entries.find(entry => entry.name.indexOf("OBSGEO-Y") !== -1);
-            const obsgeozHeader = entries.find(entry => entry.name.indexOf("OBSGEO-Z") !== -1);
-            if (spectralSystem === SpectralSystem.LSRK || spectralSystem === SpectralSystem.LSRD) { // LSRK, LSRD
-                if (dateObsHeader && (obsgeoxHeader && obsgeoyHeader && obsgeozHeader)) {
-                    this.spectralSystemsSupported = [SpectralSystem.LSRK, SpectralSystem.LSRD, SpectralSystem.BARY, SpectralSystem.TOPO];
-                } else if (dateObsHeader && !(obsgeoxHeader && obsgeoyHeader && obsgeozHeader)) {
-                    this.spectralSystemsSupported = [SpectralSystem.LSRK, SpectralSystem.LSRD, SpectralSystem.BARY];
-                } else {
-                    this.spectralSystemsSupported = [SpectralSystem.LSRK, SpectralSystem.LSRD];
-                }
-            } else if (spectralSystem === SpectralSystem.BARY) { // BARY
-                if (dateObsHeader && (obsgeoxHeader && obsgeoyHeader && obsgeozHeader)) {
-                    this.spectralSystemsSupported = [SpectralSystem.LSRK, SpectralSystem.LSRD, SpectralSystem.BARY, SpectralSystem.TOPO];
-                } else if (dateObsHeader && !(obsgeoxHeader && obsgeoyHeader && obsgeozHeader)) {
-                    this.spectralSystemsSupported = [SpectralSystem.LSRK, SpectralSystem.LSRD, SpectralSystem.BARY];
-                } else {
-                    this.spectralSystemsSupported = [SpectralSystem.BARY];
-                }
-            } else { // TOPO
-                if (dateObsHeader && (obsgeoxHeader && obsgeoyHeader && obsgeozHeader)) {
-                    this.spectralSystemsSupported = [SpectralSystem.LSRK, SpectralSystem.LSRD, SpectralSystem.BARY, SpectralSystem.TOPO];
-                } else {
-                    this.spectralSystemsSupported = [SpectralSystem.TOPO];
-                }
-            }
-        } else {
-            this.spectralSystemsSupported = [];
-        }
+        this.zoomTimeoutHandler = setTimeout(() => runInAction(() => {
+            this.zooming = false;
+        }), FrameStore.ZoomInertiaDuration);
     };
 
     public convertToNativeWCS = (value: number): number => {
@@ -1132,6 +1045,119 @@ export class FrameStore {
         return undefined;
     };
 
+    public getRegionWcsProperties(region: RegionStore): string {
+        if (!this.validWcs || !isFinite(region.center.x) || !isFinite(region.center.y)) {
+            return "Invalid";
+        }
+
+        const wcsCenter = getFormattedWCSPoint(this.wcsInfoForTransformation, region.center);
+        if (!wcsCenter) {
+            return "Invalid";
+        }
+
+        const center = region.regionId === RegionId.CURSOR ? `${this.cursorInfo.infoWCS.x}, ${this.cursorInfo.infoWCS.y}` : `${wcsCenter.x}, ${wcsCenter.y}`;
+        const wcsSize = this.getWcsSizeInArcsec(region.size);
+        const size = wcsSize ? {x: formattedArcsec(wcsSize.x, WCS_PRECISION), y: formattedArcsec(wcsSize.y, WCS_PRECISION)} : null;
+        const systemType = OverlayStore.Instance.global.explicitSystem;
+
+        switch (region.regionType) {
+            case CARTA.RegionType.POINT:
+                return `Point (wcs:${systemType}) [${center}]`;
+            case CARTA.RegionType.RECTANGLE:
+                return `rotbox(wcs:${systemType})[[${center}], [${size.x}, ${size.y}], ${toFixed(region.rotation, 1)}deg]`;
+            case CARTA.RegionType.ELLIPSE:
+                return `ellipse(wcs:${systemType})[[${center}], [${size.x}, ${size.y}], ${toFixed(region.rotation, 1)}deg]`;
+            case CARTA.RegionType.POLYGON:
+                return `polygon(wcs:${systemType})[[${center}], [${size.x}, ${size.y}], ${toFixed(region.rotation, 1)}deg]`;
+            default:
+                return "Not Implemented";
+        }
+    }
+
+    @action private initSupportedSpectralConversion = () => {
+        if (this.spectralAxis && !this.spectralAxis.valid) {
+            this.channelValues = this.channelInfo.values;
+            this.spectralCoordsSupported = new Map<string, { type: SpectralType, unit: SpectralUnit }>([
+                [this.nativeSpectralCoordinate, {type: null, unit: null}],
+                [SPECTRAL_TYPE_STRING.get(SpectralType.CHANNEL), {type: SpectralType.CHANNEL, unit: null}]
+            ]);
+            this.spectralSystemsSupported = [];
+            return;
+        } else if (!this.spectralAxis || !this.spectralFrame) {
+            this.spectralCoordsSupported = null;
+            this.spectralSystemsSupported = null;
+            return;
+        }
+
+        // generate spectral coordinate options
+        const entries = this.frameInfo.fileInfoExtended.headerEntries;
+        const spectralType = this.spectralInfo.channelType.code;
+        if (IsSpectralTypeSupported(spectralType)) {
+            // check RESTFRQ
+            const restFrqHeader = entries.find(entry => entry.name.indexOf("RESTFRQ") !== -1);
+            if (restFrqHeader) {
+                this.spectralCoordsSupported = SPECTRAL_COORDS_SUPPORTED;
+            } else {
+                this.spectralCoordsSupported = new Map<string, { type: SpectralType, unit: SpectralUnit }>();
+                Array.from(SPECTRAL_COORDS_SUPPORTED.keys()).forEach((key: string) => {
+                    const value = SPECTRAL_COORDS_SUPPORTED.get(key);
+                    const isVolecity = spectralType === SpectralType.VRAD || spectralType === SpectralType.VOPT;
+                    const isValueVolecity = value.type === SpectralType.VRAD || value.type === SpectralType.VOPT;
+                    if (isVolecity && isValueVolecity) { // VRAD, VOPT
+                        this.spectralCoordsSupported.set(key, value);
+                    }
+                    if (!isVolecity && !isValueVolecity) { // FREQ, WAVE, AWAV
+                        this.spectralCoordsSupported.set(key, value);
+                    }
+                });
+                this.spectralCoordsSupported.set(SPECTRAL_TYPE_STRING.get(SpectralType.CHANNEL), {type: SpectralType.CHANNEL, unit: null});
+            }
+        } else {
+            this.spectralCoordsSupported = new Map<string, { type: SpectralType, unit: SpectralUnit }>([
+                [SPECTRAL_TYPE_STRING.get(SpectralType.CHANNEL), {type: SpectralType.CHANNEL, unit: null}]
+            ]);
+        }
+
+        // generate spectral system options
+        const spectralSystem = this.spectralInfo.specsys;
+        if (IsSpectralSystemSupported(spectralSystem)) {
+            const dateObsHeader = entries.find(entry => entry.name.indexOf("DATE-OBS") !== -1);
+            const obsgeoxHeader = entries.find(entry => entry.name.indexOf("OBSGEO-X") !== -1);
+            const obsgeoyHeader = entries.find(entry => entry.name.indexOf("OBSGEO-Y") !== -1);
+            const obsgeozHeader = entries.find(entry => entry.name.indexOf("OBSGEO-Z") !== -1);
+            if (spectralSystem === SpectralSystem.LSRK || spectralSystem === SpectralSystem.LSRD) { // LSRK, LSRD
+                if (dateObsHeader && (obsgeoxHeader && obsgeoyHeader && obsgeozHeader)) {
+                    this.spectralSystemsSupported = [SpectralSystem.LSRK, SpectralSystem.LSRD, SpectralSystem.BARY, SpectralSystem.TOPO];
+                } else if (dateObsHeader && !(obsgeoxHeader && obsgeoyHeader && obsgeozHeader)) {
+                    this.spectralSystemsSupported = [SpectralSystem.LSRK, SpectralSystem.LSRD, SpectralSystem.BARY];
+                } else {
+                    this.spectralSystemsSupported = [SpectralSystem.LSRK, SpectralSystem.LSRD];
+                }
+            } else if (spectralSystem === SpectralSystem.BARY) { // BARY
+                if (dateObsHeader && (obsgeoxHeader && obsgeoyHeader && obsgeozHeader)) {
+                    this.spectralSystemsSupported = [SpectralSystem.LSRK, SpectralSystem.LSRD, SpectralSystem.BARY, SpectralSystem.TOPO];
+                } else if (dateObsHeader && !(obsgeoxHeader && obsgeoyHeader && obsgeozHeader)) {
+                    this.spectralSystemsSupported = [SpectralSystem.LSRK, SpectralSystem.LSRD, SpectralSystem.BARY];
+                } else {
+                    this.spectralSystemsSupported = [SpectralSystem.BARY];
+                }
+            } else { // TOPO
+                if (dateObsHeader && (obsgeoxHeader && obsgeoyHeader && obsgeozHeader)) {
+                    this.spectralSystemsSupported = [SpectralSystem.LSRK, SpectralSystem.LSRD, SpectralSystem.BARY, SpectralSystem.TOPO];
+                } else {
+                    this.spectralSystemsSupported = [SpectralSystem.TOPO];
+                }
+            }
+        } else {
+            this.spectralSystemsSupported = [];
+        }
+    };
+
+    @action private initCenter = () => {
+        this.center.x = (this.frameInfo.fileInfoExtended.width - 1) / 2.0;
+        this.center.y = (this.frameInfo.fileInfoExtended.height - 1) / 2.0;
+    };
+
     @action updateFromContourData(contourImageData: CARTA.ContourImageData) {
         const processedData = ProtobufProcessing.ProcessContourData(contourImageData);
         this.stokes = processedData.stokes;
@@ -1184,14 +1210,6 @@ export class FrameStore {
             });
 
         }
-    }
-
-    private sanitizeChannelNumber(channel: number) {
-        if (!isFinite(channel)) {
-            return this.requiredChannel;
-        }
-
-        return Math.round(clamp(channel, 0, this.frameInfo.fileInfoExtended.depth - 1));
     }
 
     @action incrementChannels(deltaChannel: number, deltaStokes: number, wrap: boolean = true) {
@@ -1278,21 +1296,6 @@ export class FrameStore {
             this.setZoom(zoom);
         }
     }
-
-    private replaceZoomTimeoutHandler = () => {
-        if (this.zoomTimeoutHandler) {
-            clearTimeout(this.zoomTimeoutHandler);
-        }
-
-        this.zoomTimeoutHandler = setTimeout(() => runInAction(() => {
-            this.zooming = false;
-        }), FrameStore.ZoomInertiaDuration);
-    };
-
-    @action private initCenter = () => {
-        this.center.x = (this.frameInfo.fileInfoExtended.width - 1) / 2.0;
-        this.center.y = (this.frameInfo.fileInfoExtended.height - 1) / 2.0;
-    };
 
     @action fitZoom = () => {
         if (this.spatialReference) {
