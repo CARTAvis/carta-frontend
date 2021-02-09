@@ -139,11 +139,25 @@ export class StatsComponent extends React.Component<WidgetProps> {
     }
 
     exportData = () => {
-        const plotName = "Statistics";
+        // get filename
+        let fileId;
+        if (this.widgetStore.effectiveFrame) {
+            fileId = this.widgetStore.effectiveFrame.frameInfo.fileId;
+        } else {
+            console.log("could not find fileId")
+            return;
+        }
+        const appStore = AppStore.Instance;
+        const frame = appStore.frames[fileId];
+        const fileName = frame.filename
+
+        const plotName = "statistics";
+        const title = `# ${fileName} ${plotName}\n`;
+
         const xLabel = "Statistic";
         const yLabel = "Value";
         const zLabel = "Unit";
-        let comment = `# xLabel: ${xLabel}\n# yLabel: ${yLabel}\n# zLabel: ${zLabel}\n`;
+        const comment = `# xLabel: ${xLabel}\n# yLabel: ${yLabel}\n# zLabel: ${zLabel}\n`;
 
         const header = "# x\ty\tz\n";
 
@@ -152,19 +166,19 @@ export class StatsComponent extends React.Component<WidgetProps> {
         let table = document.getElementsByClassName('stats-table-data')[0];
         let tr = table.getElementsByTagName('tr');
         for (let i=1; i<tr.length; i++) {  // ignore the first line
-            let row_data = tr[i].getElementsByTagName("td");
+            let row_data = tr[i].getElementsByTagName('td');
             let x_data = row_data[0].innerHTML;
             let yz_data = row_data[1].innerHTML.replace(" ", "\t");
             rows += `${x_data}\t${yz_data}\n`
         }
 
         // output file
-        const tsvData = `data:text/tab-separated-values;charset=utf-8,${comment}${header}${rows}`;
+        const tsvData = `data:text/tab-separated-values;charset=utf-8,${title}${comment}${header}${rows}`;
         const dataURL = encodeURI(tsvData).replace(/#/g, "%23");
 
-        const a = document.createElement("a") as HTMLAnchorElement;
+        const a = document.createElement('a') as HTMLAnchorElement;
         a.href = dataURL;
-        a.download = `${plotName}-${StatsComponent.GetTimestamp()}.tsv`;
+        a.download = `${fileName.replace(" ", "-")}-${plotName}-${StatsComponent.GetTimestamp()}.tsv`;
         a.dispatchEvent(new MouseEvent("click"));
     }
 
