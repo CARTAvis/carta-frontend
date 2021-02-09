@@ -4,9 +4,9 @@ import {action, autorun, computed, makeObservable, observable} from "mobx";
 import {HTMLTable, NonIdealState} from "@blueprintjs/core";
 import ReactResizeDetector from "react-resize-detector";
 import {CARTA} from "carta-protobuf";
-import {DefaultWidgetConfig, WidgetProps, HelpType, WidgetsStore, AppStore} from "stores";
+import {DefaultWidgetConfig, WidgetProps, HelpType, WidgetsStore, AppStore, RegionStore, WCS_PRECISION} from "stores";
 import {StatsWidgetStore} from "stores/widgets";
-import {toExponential} from "utilities";
+import {toExponential, toFixed, getFormattedWCSPoint, formattedArcsec} from "utilities";
 import {RegionSelectorComponent} from "components";
 import {ExportToolbarComponent} from "./ExportToolbar/ExportToolbarComponent";
 import "./StatsComponent.scss";
@@ -138,16 +138,73 @@ export class StatsComponent extends React.Component<WidgetProps> {
         return `${now.getFullYear()}-${now.getMonth() + 1}-${now.getDate()}-${now.getHours()}-${now.getMinutes()}-${now.getSeconds()}`;
     }
 
+    getRegionInfo = (region,frame) => {
+        let regionInfo = "";
+        regionInfo += `# region name: ${region.nameString}\n`;
+        regionInfo += `# region type: ${RegionStore.RegionTypeString(region.regionType)}\n`;
+
+        if (frame.validWcs) {
+            const centerWCSPoint = getFormattedWCSPoint(frame.wcsInfoForTransformation, region.center);
+            regionInfo += `# region center: (${centerWCSPoint.x}, ${centerWCSPoint.y})\n`;
+        } else {
+            regionInfo += `# region center (px): (${toFixed(region.center.x, 3)}, ${toFixed(region.center.y, 3)})\n`;
+        }
+
+        if (region.regionType===CARTA.RegionType.ELLIPSE) {
+            if (frame.validWcs) {
+                regionInfo += `# region axes: (${formattedArcsec(region.wcsSize.x, WCS_PRECISION)}, ${formattedArcsec(region.wcsSize.y, WCS_PRECISION)})\n`;
+            } else {
+                regionInfo += `# region axes (px): (${toFixed(region.size.x, 3)}, ${toFixed(region.size.y, 3)})\n`;
+            }
+        } else if (region.regionType===CARTA.RegionType.RECTANGLE) {
+            if (frame.validWcs) {
+                regionInfo += `# region size: (${formattedArcsec(region.wcsSize.x, WCS_PRECISION)}, ${formattedArcsec(region.wcsSize.y, WCS_PRECISION)})\n`;
+                
+            } else {
+                regionInfo += `# region size (px): (${toFixed(region.size.x, 3)}, ${toFixed(region.size.y, 3)})\n`;
+            }
+            if (region.rotation===0.0) {
+                let bottomLeftPoint = {x:region.center.x-region.size.x/2.0, y:region.center.y-region.size.y/2.0};
+                let topRightPoint =  {x:region.center.x+region.size.x/2.0, y:region.center.y+region.size.y/2.0};
+                if (frame.validWcs) {
+                    const bottomLeftWCSPoint = getFormattedWCSPoint(frame.wcsInfoForTransformation, bottomLeftPoint);
+                    regionInfo += `# region bottom left: (${bottomLeftWCSPoint.x}, ${bottomLeftWCSPoint.y})\n`;
+                    const topRightWCSPoint = getFormattedWCSPoint(frame.wcsInfoForTransformation, topRightPoint);
+                    regionInfo += `# region top right: (${topRightWCSPoint.x}, ${topRightWCSPoint.y})\n`;
+                } else {
+                    regionInfo += `# region bottom left (px): (${toFixed(bottomLeftPoint.x, 3)}, ${toFixed(bottomLeftPoint.y, 3)})\n`;
+                    regionInfo += `# region top right (px): (${toFixed(topRightPoint.x, 3)}, ${toFixed(topRightPoint.y, 3)})\n`;
+                }
+            }
+        } else if (region.regionType===CARTA.RegionType.POLYGON) {
+            if (frame.validWcs) {
+                for (let i=0; i<region.controlPoints.length; i++) {
+                    const pointWCSPoint = getFormattedWCSPoint(frame.wcsInfoForTransformation, region.controlPoints[i]);
+                    regionInfo += `# region point${i}: (${pointWCSPoint.x}, ${pointWCSPoint.y})\n`;
+                }
+            } else {
+                for (let i=0; i<region.controlPoints.length; i++) {
+                    regionInfo += `# region point${i} (px): (${toFixed(region.controlPoints[i].x, 3)}, ${toFixed(region.controlPoints[i].y, 3)})\n`;
+                }
+            }
+        }
+
+        regionInfo += `# region position angle (deg): ${region.rotation}\n`;
+        return regionInfo;
+    }
+
     exportData = () => {
-        // get filename
+        const appStore = AppStore.Instance;
+
         let fileId;
+        
         if (this.widgetStore.effectiveFrame) {
             fileId = this.widgetStore.effectiveFrame.frameInfo.fileId;
+            
         } else {
-            console.log("could not find fileId")
+            console.log("can't find effectiveFrame")
             return;
         }
-        const appStore = AppStore.Instance;
         const frame = appStore.frames[fileId];
         const fileName = frame.filename
 
@@ -157,7 +214,24 @@ export class StatsComponent extends React.Component<WidgetProps> {
         const xLabel = "Statistic";
         const yLabel = "Value";
         const zLabel = "Unit";
-        const comment = `# xLabel: ${xLabel}\n# yLabel: ${yLabel}\n# zLabel: ${zLabel}\n`;
+        let comment;
+        let regionId;
+        if (this.widgetStore) {
+            regionId = this.widgetStore.effectiveRegionId;
+        } else {
+            console.log("can't find widgetStore")
+            return;
+        }
+        if (regionId !== -1) {
+            let regionInfo = "";
+            const region = this.widgetStore.effectiveFrame.regionSet.regions.find(r => r.regionId === regionId);
+            if (region) {
+                regionInfo = this.getRegionInfo(region, frame);
+            }
+            comment = `${regionInfo}# xLabel: ${xLabel}\n# yLabel: ${yLabel}\n# zLabel: ${zLabel}\n`;
+        } else {
+            comment = `# xLabel: ${xLabel}\n# yLabel: ${yLabel}\n# zLabel: ${zLabel}\n`;
+        }
 
         const header = "# x\ty\tz\n";
 
