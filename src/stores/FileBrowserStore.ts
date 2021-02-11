@@ -76,6 +76,7 @@ export class FileBrowserStore {
     @observable saveStokesOption: number;
     @observable saveRegionId: number;
     @observable isDropDegeneratedAxes: boolean;
+    @observable debounceTimeout: any;
 
     constructor() {
         makeObservable(this);
@@ -331,6 +332,14 @@ export class FileBrowserStore {
         if (0 <= regionId && isFinite(regionId)) {
             this.saveRegionId = regionId;
         }
+    };
+
+    @action setSaveSpectralRangeMin = (min: number) => {
+        this.saveSpectralRange[0] = min;
+    };
+
+    @action setSaveSpectralRangeMax = (max: number) => {
+        this.saveSpectralRange[1] = max;
     };
 
     @computed get HDUList(): IOptionProps[] {
