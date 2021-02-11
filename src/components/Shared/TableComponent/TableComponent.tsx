@@ -73,7 +73,7 @@ export class TableComponent extends React.Component<TableComponentProps> {
                 );
             case CARTA.ColumnType.Bool:
                 return (
-                    <div className={"column-filter-popover-content"}>
+                    <div className={"column-popover-content"}>
                         <small>Filter by boolean value</small><br/>
                         <small>e.g. "True" or "T", "False" or "F", case insensitive</small>
                     </div>
@@ -111,13 +111,13 @@ export class TableComponent extends React.Component<TableComponentProps> {
                     <Popover
                         hoverOpenDelay={250}
                         hoverCloseDelay={0}
-                        className={"column-filter"}
-                        popoverClassName={this.props.darkTheme ? "column-filter-popover-dark" : "column-filter-popover"}
+                        className={"column-popover"}
+                        popoverClassName={this.props.darkTheme ? "column-popover-dark" : "column-popover"}
                         content={filterSyntax}
                         interactionKind={PopoverInteractionKind.HOVER}
                     >
                         <InputGroup
-                            key={"column-filter-" + columnIndex}
+                            key={"column-popover-" + columnIndex}
                             small={true}
                             placeholder="Click to filter"
                             value={controlheader?.filter ? controlheader.filter : ""}
