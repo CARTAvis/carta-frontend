@@ -195,12 +195,7 @@ export class TableComponent extends React.Component<TableComponentProps> {
         const controlheader = this.props.filter?.get(column.name);
         const filterSyntax = this.getfilterSyntax(column.dataType);
         const sortingInfo = this.props.sortingInfo;
-        let activeFilter = false;
-        if (controlheader.filter !== "") {
-            activeFilter = true;
-        }
-        const headerDescription = (this.props.tableHeaders?.[controlheader.dataIndex])?.description;
-        
+        const headerDescription = (this.props.tableHeaders?.[controlheader?.dataIndex])?.description;
         const disableSort = this.props.disableSort;
         let popOverClass = this.props.darkTheme ? "column-popover-dark" : "column-popover";
 
@@ -241,7 +236,7 @@ export class TableComponent extends React.Component<TableComponentProps> {
         return (
             <ColumnHeaderCell>
                 <ColumnHeaderCell className={"column-name"} nameRenderer={nameRenderer}/>
-                <ColumnHeaderCell isActive={activeFilter}>
+                <ColumnHeaderCell isActive={controlheader?.filter !== ""}>
                     <Popover hoverOpenDelay={250} hoverCloseDelay={0} className={"column-popover"} popoverClassName={popOverClass} content={filterSyntax} interactionKind={PopoverInteractionKind.HOVER}>
                         <InputGroup
                             key={"column-popover-" + columnIndex}
