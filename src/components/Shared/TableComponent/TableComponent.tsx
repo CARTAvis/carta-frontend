@@ -93,7 +93,7 @@ export class TableComponent extends React.Component<TableComponentProps> {
         }
     }
 
-    private renderLineSelectionColumnHeaderCell = (columnIndex: number, columnHeader: CARTA.CatalogHeader) => {
+    private renderCheckboxColumnHeaderCell = (columnIndex: number, columnHeader: CARTA.CatalogHeader) => {
         const controlheader = this.props.filter?.get(columnHeader.name);
         const filterSyntax = this.getfilterSyntax(columnHeader.dataType);
         return (
@@ -130,7 +130,7 @@ export class TableComponent extends React.Component<TableComponentProps> {
         );
     };
 
-    private renderLineSelectionCell = (rowIndex: number, columnIndex: number, columnData: any) => {
+    private renderCheckboxCell = (rowIndex: number, columnIndex: number, columnData: any) => {
         return (
             <Cell key={`cell_${columnIndex}_${rowIndex}`} interactive={false}>
                 <React.Fragment>
@@ -146,13 +146,13 @@ export class TableComponent extends React.Component<TableComponentProps> {
         );
     };
 
-    private renderLineSelectionColumn = (columnHeader: CARTA.CatalogHeader, columnData: any) => {
+    private renderCheckboxColumn = (columnHeader: CARTA.CatalogHeader, columnData: any) => {
         return (
             <Column
                 key={columnHeader.name}
                 name={columnHeader.name}
-                columnHeaderCellRenderer={(columnIndex: number) => this.renderLineSelectionColumnHeaderCell(columnIndex, columnHeader)}
-                cellRenderer={columnData?.length ? (rowIndex, columnIndex) => this.renderLineSelectionCell(rowIndex, columnIndex, columnData) : undefined}
+                columnHeaderCellRenderer={(columnIndex: number) => this.renderCheckboxColumnHeaderCell(columnIndex, columnHeader)}
+                cellRenderer={columnData?.length ? (rowIndex, columnIndex) => this.renderCheckboxCell(rowIndex, columnIndex, columnData) : undefined}
             />
         );
     };
@@ -314,9 +314,8 @@ export class TableComponent extends React.Component<TableComponentProps> {
             const columnIndex = header.columnIndex;
             let dataArray = tableData.get(columnIndex)?.data;
             if (table.type === TableType.ColumnFilter) {
-                // TODO: create SpectralLineTableComponent inherited from TableComponent to pull out this logic
                 const column = header.name === SpectralLineHeaders.LineSelection ?
-                this.renderLineSelectionColumn(header, dataArray) :
+                this.renderCheckboxColumn(header, dataArray) :
                 this.renderDataColumnWithFilter(header, dataArray);
                 tableColumns.push(column);
             } else if (table.type === TableType.Normal) {
