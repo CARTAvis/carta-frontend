@@ -514,7 +514,9 @@ export class ScatterPlotComponent extends React.Component<ScatterPlotComponentPr
             const zoomMaxX = this.props.xMax + rangeChangeX * (1 - fractionX);
             const zoomMinY = this.props.yMin - rangeChangeY * (1 - fractionY);
             const zoomMaxY = this.props.yMax + rangeChangeY * fractionY;
-            this.props.graphZoomedXY(zoomMinX, zoomMaxX, zoomMinY, zoomMaxY);
+            if (zoomMinX < zoomMaxX && zoomMinY < zoomMaxY) {
+                this.props.graphZoomedXY(zoomMinX, zoomMaxX, zoomMinY, zoomMaxY);   
+            }
         }
     };
 
