@@ -199,7 +199,7 @@ export class TableComponent extends React.Component<TableComponentProps> {
         if (controlheader.filter !== "") {
             activeFilter = true;
         }
-        const headerDescription = this.props.tableHeaders[controlheader.dataIndex].description;
+        const headerDescription = (this.props.tableHeaders?.[controlheader.dataIndex])?.description;
         
         const disable = this.props.disable;
         let popOverClass = this.props.darkTheme ? "column-popover-dark" : "column-popover";
@@ -228,7 +228,7 @@ export class TableComponent extends React.Component<TableComponentProps> {
                             hoverCloseDelay={0} 
                             className={"column-popover"} 
                             popoverClassName={popOverClass} 
-                            content={headerDescription? headerDescription : "Description not avaliable"} 
+                            content={headerDescription ?? "Description not avaliable"}
                             interactionKind={PopoverInteractionKind.HOVER}
                         >
                             {column.name}
