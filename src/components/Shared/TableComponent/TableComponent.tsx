@@ -63,17 +63,18 @@ export class TableComponent extends React.Component<TableComponentProps> {
     };
 
     private getfilterSyntax = (dataType: CARTA.ColumnType) => {
+        const className = "column-popover-content";
         switch (dataType) {
             case CARTA.ColumnType.String:
                 return (
-                    <div className={"column-popover-content"}>
+                    <div className={className}>
                         <small>Filter by substring</small><br/>
                         <small>e.g. gal (no quotation, entries contain the "gal" string)</small>
                     </div>
                 );
             case CARTA.ColumnType.Bool:
                 return (
-                    <div className={"column-popover-content"}>
+                    <div className={className}>
                         <small>Filter by boolean value</small><br/>
                         <small>e.g. "True" or "T", "False" or "F", case insensitive</small>
                     </div>
@@ -81,7 +82,7 @@ export class TableComponent extends React.Component<TableComponentProps> {
             case CARTA.ColumnType.Double:
             default:
                 return (
-                    <div className={"column-popover-content"}>
+                    <div className={className}>
                         <small>Operators: {">"}, {">="}, {"<"}, {"<="}, {"=="}, {"!="}, {".."}, {"..."}</small><br/>
                         <small>e.g. {"<"} 10 (everything less than 10) </small><br/>
                         <small>e.g. == 1.23 (entries equal to 1.23) </small><br/>
