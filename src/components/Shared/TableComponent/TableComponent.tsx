@@ -314,9 +314,9 @@ export class TableComponent extends React.Component<TableComponentProps> {
             const columnIndex = header.columnIndex;
             let dataArray = tableData.get(columnIndex)?.data;
             if (table.type === TableType.ColumnFilter) {
-                const column = header.name === SpectralLineHeaders.LineSelection ?
-                this.renderCheckboxColumn(header, dataArray) :
-                this.renderDataColumnWithFilter(header, dataArray);
+                const column = header.name === SpectralLineHeaders.LineSelection && this.props.manualSelectionProps ?
+                    this.renderCheckboxColumn(header, dataArray) :
+                    this.renderDataColumnWithFilter(header, dataArray);
                 tableColumns.push(column);
             } else if (table.type === TableType.Normal) {
                 const column = this.renderDataColumn(header.name, dataArray);
