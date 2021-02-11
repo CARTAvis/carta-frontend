@@ -442,6 +442,7 @@ export class SpectralLineQueryWidgetStore extends RegionWidgetStore {
                 // replace to comprehensive headers
                 header.name = SPLA_HEADER_MAP.get(header.name as SpectralLineHeaders);
             }
+            header.description = SPECTRAL_LINE_DESCRIPTION.get(header.name as SpectralLineHeaders);
         });
         // insert line selection column header
         ackHeaders.splice(0, 0, new CARTA.CatalogHeader({

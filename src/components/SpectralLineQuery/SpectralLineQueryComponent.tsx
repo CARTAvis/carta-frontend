@@ -364,6 +364,7 @@ export class SpectralLineQueryComponent extends React.Component<WidgetProps> {
             updateColumnFilter: widgetStore.setColumnFilter,
             columnWidths: widgetStore.resultTableColumnWidths,
             updateTableColumnWidth: widgetStore.setResultTableColumnWidth,
+            tableHeaders: widgetStore.columnHeaders
         };
 
         let className = "spectral-line-query-widget";
