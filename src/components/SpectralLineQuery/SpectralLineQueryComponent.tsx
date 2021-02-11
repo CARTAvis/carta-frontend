@@ -358,7 +358,7 @@ export class SpectralLineQueryComponent extends React.Component<WidgetProps> {
             },
             updateTableRef: (ref) => { this.resultTableRef = ref; },
             // sorting part
-            disable: true,
+            disableSort: true,
             sortingInfo: widgetStore.sortingInfo,
             // filtering part
             updateColumnFilter: widgetStore.setColumnFilter,

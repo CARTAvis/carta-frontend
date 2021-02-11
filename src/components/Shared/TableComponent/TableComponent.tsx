@@ -42,7 +42,7 @@ export class TableComponentProps {
     updateSelectedRow?: (dataIndex: number[]) => void;
     updateSortRequest?: (columnName: string, sortingType: CARTA.SortingType) => void;
     sortingInfo?: {columnName: string, sortingType: CARTA.SortingType};
-    disable?: boolean; // disable sort, TODO: rename to disableSort
+    disableSort?: boolean;
     darkTheme?: boolean;
     tableHeaders?: Array<CARTA.ICatalogHeader>;
 }
@@ -201,7 +201,7 @@ export class TableComponent extends React.Component<TableComponentProps> {
         }
         const headerDescription = (this.props.tableHeaders?.[controlheader.dataIndex])?.description;
         
-        const disable = this.props.disable;
+        const disableSort = this.props.disableSort;
         let popOverClass = this.props.darkTheme ? "column-popover-dark" : "column-popover";
 
         const nameRenderer = () => {
@@ -220,8 +220,8 @@ export class TableComponent extends React.Component<TableComponentProps> {
                 }
             }
             return (
-                <div className="sort-label" onClick={() => disable ? null : this.props.updateSortRequest(column.name, nextSortType)}>
-                    <Label disabled={disable} className="bp3-inline label">
+                <div className="sort-label" onClick={() => disableSort ? null : this.props.updateSortRequest(column.name, nextSortType)}>
+                    <Label disabled={disableSort} className="bp3-inline label">
                         <Icon className={iconClass} icon={sortIcon as IconName}/>
                         <Popover 
                             hoverOpenDelay={250} 
