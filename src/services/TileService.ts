@@ -1,10 +1,12 @@
 import {Subject} from "rxjs";
-import {action, computed, observable} from "mobx";
+import {action, computed, observable, makeObservable} from "mobx";
 import LRUCache from "mnemonist/lru-cache";
 import {CARTA} from "carta-protobuf";
 import {Point2D, TileCoordinate} from "models";
 import {BackendService, TileWebGLService} from "services";
 import {copyToFP32Texture, createFP32Texture} from "utilities";
+
+import ZFPWorker from "!worker-loader!zfp_wrapper";
 
 export interface RasterTile {
     data: Float32Array;
@@ -33,6 +35,15 @@ export const NUM_PERSISTENT_LAYERS = 4;
 export const NUM_PERSISTENT_TILES = 85;
 
 export class TileService {
+    private static staticInstance: TileService;
+
+    static get Instance() {
+        if (!TileService.staticInstance) {
+            TileService.staticInstance = new TileService();
+        }
+        return TileService.staticInstance;
+    }
+
     private readonly backendService: BackendService;
     private readonly persistentTiles: Map<number, RasterTile>;
     private readonly cacheMapCompressedTiles: Map<number, LRUCache<number, CompressedTile>>;
@@ -51,10 +62,10 @@ export class TileService {
     private pendingSynchronisedTiles: Array<number>;
     private receivedSynchronisedTiles: Array<{ coordinate: number, tile: RasterTile }>;
     private animationEnabled: boolean;
+    private gl: WebGLRenderingContext;
 
     @observable remainingTiles: number;
     @observable workersReady: boolean[];
-    readonly tileWebGLService: TileWebGLService;
 
     @computed get zfpReady() {
         return this.workersReady && this.workersReady.every(v => v);
@@ -85,9 +96,10 @@ export class TileService {
         this.lruCapacitySystem = lruCapacitySystem;
     };
 
-    constructor(backendService: BackendService) {
-        this.backendService = backendService;
-        this.tileWebGLService = new TileWebGLService();
+    private constructor() {
+        makeObservable(this);
+        this.backendService = BackendService.Instance;
+        this.gl = TileWebGLService.Instance.gl;
 
         this.channelMap = new Map<number, { channel: number, stokes: number }>();
         this.persistentTiles = new Map<number, RasterTile>();
@@ -101,10 +113,8 @@ export class TileService {
         this.animationEnabled = false;
 
         this.tileStream = new Subject<TileStreamDetails>();
-        this.backendService.getRasterTileStream().subscribe(this.handleStreamedTiles);
+        this.backendService.rasterTileStream.subscribe(this.handleStreamedTiles);
         this.backendService.rasterSyncStream.subscribe(this.handleStreamSync);
-
-        const ZFPWorker = require("worker-loader!zfp_wrapper");
         this.workers = new Array<Worker>(Math.min(navigator.hardwareConcurrency || 4, 4));
         this.workersReady = new Array<boolean>(this.workers.length);
 
@@ -225,6 +235,12 @@ export class TileService {
         }
     }
 
+    updateInactiveFileChannel(fileId: number, channel: number, stokes: number) {
+        this.clearCompressedCache(fileId);
+        this.channelMap.set(fileId, {channel, stokes});
+        this.backendService.setChannels(fileId, channel, stokes, {});
+    }
+
     clearGPUCache() {
         this.cachedTiles.forEach(this.clearTile);
         this.cachedTiles.clear();
@@ -267,7 +283,7 @@ export class TileService {
         const textureSizeMb = TEXTURE_SIZE * TEXTURE_SIZE * 4 / 1024 / 1024;
         console.log(`Creating ${this.textureArray.length} tile textures of size ${textureSizeMb} MB each (${textureSizeMb * this.textureArray.length} MB total)`);
         for (let i = 0; i < this.textureArray.length; i++) {
-            this.textureArray[i] = createFP32Texture(this.tileWebGLService.gl, TEXTURE_SIZE, TEXTURE_SIZE, WebGLRenderingContext.TEXTURE0);
+            this.textureArray[i] = createFP32Texture(this.gl, TEXTURE_SIZE, TEXTURE_SIZE, WebGLRenderingContext.TEXTURE0);
         }
     }
 
@@ -278,7 +294,7 @@ export class TileService {
         const tilesPerRow = TEXTURE_SIZE / TILE_SIZE;
         const xOffset = (localOffset % tilesPerRow) * TILE_SIZE;
         const yOffset = Math.floor(localOffset / tilesPerRow) * TILE_SIZE;
-        copyToFP32Texture(this.tileWebGLService.gl, this.textureArray[textureIndex], tile.data, WebGLRenderingContext.TEXTURE0, tile.width, tile.height, xOffset, yOffset);
+        copyToFP32Texture(this.gl, this.textureArray[textureIndex], tile.data, WebGLRenderingContext.TEXTURE0, tile.width, tile.height, xOffset, yOffset);
     }
 
     getTileTextureParameters(tile: RasterTile) {
@@ -414,7 +430,7 @@ export class TileService {
         }
 
         // If there are pending tiles to be synchronized, don't send tiles one-by-one
-        if (this.animationEnabled || this.pendingSynchronisedTiles && this.pendingSynchronisedTiles.length) {
+        if (this.animationEnabled || this.pendingSynchronisedTiles?.length) {
             // remove coordinate from pending list
             this.pendingSynchronisedTiles = this.pendingSynchronisedTiles.filter(v => v !== encodedCoordinate);
             const nextTile: RasterTile = {

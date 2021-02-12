@@ -1,13 +1,14 @@
-import * as AST from "ast_wrapper";
-import {action, autorun, computed, observable} from "mobx";
+import {action, computed, observable, makeObservable} from "mobx";
 import {ChartArea} from "chart.js";
 import {Colors} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import {PlotType, LineSettings, ScatterSettings} from "components/Shared";
 import {RegionWidgetStore, RegionsType} from "./RegionWidgetStore";
-import {AppStore, FrameStore} from "stores";
-import {getColorsForValues, isColorValid} from "utilities";
-import {DEFAULT_UNIT, GenCoordinateLabel, IsSpectralSystemValid, IsSpectralTypeValid, IsSpectralUnitValid, SpectralSystem, SpectralType, SpectralUnit, SPECTRAL_COORDS_SUPPORTED} from "models";
+import {getColorsForValues} from "utilities";
+import {SpectralSystem, SpectralType, SpectralUnit} from "models";
+import tinycolor from "tinycolor2";
+import {ProfileSmoothingStore} from "stores/ProfileSmoothingStore";
+import {StokesAnalysisSettingsTabs} from "components";
 
 export enum StokesCoordinate {
     CurrentZ = "z",
@@ -49,10 +50,6 @@ export class StokesAnalysisWidgetStore extends RegionWidgetStore {
     @observable quScatterMaxY: number;
     @observable linePlotcursorX: number;
     @observable channel: number;
-    @observable spectralType: SpectralType;
-    @observable spectralUnit: SpectralUnit;
-    @observable spectralSystem: SpectralSystem;
-    @observable channelValues:  Array<number>;
     @observable scatterPlotCursorX: number;
     @observable scatterPlotCursorY: number;
     @observable isMouseMoveIntoScatterPlots: boolean;
@@ -74,6 +71,8 @@ export class StokesAnalysisWidgetStore extends RegionWidgetStore {
     @observable colorPixel: { color: Uint8ClampedArray, size: number };
     @observable pointTransparency: number;
     @observable invertedColorMap: boolean;
+    readonly smoothingStore: ProfileSmoothingStore;
+    @observable settingsTabId: StokesAnalysisSettingsTabs;
     
     private static requestDataType = [StokesCoordinate.LinearPolarizationQ, StokesCoordinate.LinearPolarizationU];
     private static ValidStatsTypes = [
@@ -92,50 +91,53 @@ export class StokesAnalysisWidgetStore extends RegionWidgetStore {
         return requiredCoordinate;
     }
 
-    public static addToRequirementsMap(frame: FrameStore, updatedRequirements: Map<number, Map<number, CARTA.SetSpectralRequirements>>, widgetsMap: Map<string, StokesAnalysisWidgetStore>)
+    public static addToRequirementsMap(updatedRequirements: Map<number, Map<number, CARTA.SetSpectralRequirements>>, widgetsMap: Map<string, StokesAnalysisWidgetStore>)
         : Map<number, Map<number, CARTA.SetSpectralRequirements>> {
         widgetsMap.forEach(widgetStore => {
-            const fileId = frame.frameInfo.fileId;
-            const regionId = widgetStore.effectiveRegionId;
-            const coordinates = StokesAnalysisWidgetStore.requiredCoordinate(widgetStore);
-            let statsType = widgetStore.statsType;
+            const frame = widgetStore.effectiveFrame;
+            if (frame && frame.hasStokes) {
+                const fileId = frame.frameInfo.fileId;
+                const regionId = widgetStore.effectiveRegionId;
+                const coordinates = StokesAnalysisWidgetStore.requiredCoordinate(widgetStore);
+                let statsType = widgetStore.statsType;
 
-            if (!frame.regionSet) {
-                return;
-            }
-            const region = frame.regionSet.regions.find(r => r.regionId === regionId);
-            if (region) {
-                // Point regions have no meaningful stats type, default to Sum
-                if (region.regionType === CARTA.RegionType.POINT) {
-                    statsType = CARTA.StatsType.Sum;
+                if (!frame.regionSet) {
+                    return;
                 }
-
-                let frameRequirements = updatedRequirements.get(fileId);
-                if (!frameRequirements) {
-                    frameRequirements = new Map<number, CARTA.SetSpectralRequirements>();
-                    updatedRequirements.set(fileId, frameRequirements);
-                }
-
-                let regionRequirements = frameRequirements.get(regionId);
-                if (!regionRequirements) {
-                    regionRequirements = new CARTA.SetSpectralRequirements({regionId, fileId});
-                    frameRequirements.set(regionId, regionRequirements);
-                }
-
-                if (!regionRequirements.spectralProfiles) {
-                    regionRequirements.spectralProfiles = [];
-                }
-
-                coordinates.forEach(coordinate => {
-                    let spectralConfig = regionRequirements.spectralProfiles.find(profiles => profiles.coordinate === coordinate);
-                    if (!spectralConfig) {
-                        // create new spectral config
-                        regionRequirements.spectralProfiles.push({coordinate, statsTypes: [statsType]});
-                    } else if (spectralConfig.statsTypes.indexOf(statsType) === -1) {
-                        // add to the stats type array
-                        spectralConfig.statsTypes.push(statsType);
+                const region = frame.regionSet.regions.find(r => r.regionId === regionId);
+                if (region) {
+                    // Point regions have no meaningful stats type, default to Sum
+                    if (region.regionType === CARTA.RegionType.POINT) {
+                        statsType = CARTA.StatsType.Sum;
                     }
-                });
+
+                    let frameRequirements = updatedRequirements.get(fileId);
+                    if (!frameRequirements) {
+                        frameRequirements = new Map<number, CARTA.SetSpectralRequirements>();
+                        updatedRequirements.set(fileId, frameRequirements);
+                    }
+
+                    let regionRequirements = frameRequirements.get(regionId);
+                    if (!regionRequirements) {
+                        regionRequirements = new CARTA.SetSpectralRequirements({regionId, fileId});
+                        frameRequirements.set(regionId, regionRequirements);
+                    }
+
+                    if (!regionRequirements.spectralProfiles) {
+                        regionRequirements.spectralProfiles = [];
+                    }
+
+                    coordinates.forEach(coordinate => {
+                        let spectralConfig = regionRequirements.spectralProfiles.find(profiles => profiles.coordinate === coordinate);
+                        if (!spectralConfig) {
+                            // create new spectral config
+                            regionRequirements.spectralProfiles.push({coordinate, statsTypes: [statsType]});
+                        } else if (spectralConfig.statsTypes.indexOf(statsType) === -1) {
+                            // add to the stats type array
+                            spectralConfig.statsTypes.push(statsType);
+                        }
+                    });
+                }
             }
         });
         return updatedRequirements;
@@ -160,17 +162,21 @@ export class StokesAnalysisWidgetStore extends RegionWidgetStore {
     };
 
     @action setSpectralCoordinate = (coordStr: string) => {
-        if (SPECTRAL_COORDS_SUPPORTED.has(coordStr)) {
-            const coord: {type: SpectralType, unit: SpectralUnit} = SPECTRAL_COORDS_SUPPORTED.get(coordStr);
-            this.spectralType = coord.type;
-            this.spectralUnit = coord.unit;
+        const frame = this.effectiveFrame;
+        if (frame && frame.spectralCoordsSupported && frame.spectralCoordsSupported.has(coordStr)) {
+            const coord: {type: SpectralType, unit: SpectralUnit} = frame.spectralCoordsSupported.get(coordStr);
+            frame.spectralType = coord.type;
+            frame.spectralUnit = coord.unit;
             this.clearSharedXBounds();
         }
     };
 
     @action setSpectralSystem = (specsys: SpectralSystem) => {
-        this.spectralSystem = specsys;
-        this.clearSharedXBounds();
+        const frame = this.effectiveFrame;
+        if (frame && frame.spectralSystemsSupported && frame.spectralSystemsSupported.includes(specsys)) {
+            frame.spectralSystem = specsys;
+            this.clearSharedXBounds();
+        }
     };
 
     @action setSharedXBounds = (minVal: number, maxVal: number) => {
@@ -217,8 +223,9 @@ export class StokesAnalysisWidgetStore extends RegionWidgetStore {
         this.clearScatterPlotXYBounds();
     };
 
-    constructor(appStore: AppStore) {
-        super(appStore, RegionsType.CLOSED_AND_POINT);
+    constructor() {
+        super(RegionsType.CLOSED_AND_POINT);
+        makeObservable(this);
         this.colorMap = DEFAULTS.colorMap;
         this.colorPixel = getColorsForValues(DEFAULTS.colorMap);
         this.statsType = CARTA.StatsType.Mean;
@@ -232,67 +239,9 @@ export class StokesAnalysisWidgetStore extends RegionWidgetStore {
         this.scatterPlotPointSize = DEFAULTS.scatterPlotPointSize;
         this.equalAxes = DEFAULTS.equalAxes;
         this.pointTransparency = DEFAULTS.pointTransparency;
+        this.smoothingStore = new ProfileSmoothingStore();
+        this.settingsTabId = StokesAnalysisSettingsTabs.CONVERSION;
         this.invertedColorMap  = DEFAULTS.invertedColorMap;
-        this.initSpectralSettings();
-
-        // if type/unit/specsys changes, trigger transformation
-        autorun(() => {
-            const frame = this.appStore.activeFrame;
-            if (frame && frame.channelInfo && this.isSpectralSettingsSupported) {
-                if (this.isCoordChannel) {
-                    this.channelValues = frame.channelInfo.indexes;
-                } else {
-                    this.channelValues = this.isSpectralPropsEqual ? frame.channelInfo.values : this.convertSpectral(frame.spectralFrame, this.spectralType, this.spectralUnit, this.spectralSystem, frame.channelInfo.values);
-                }
-            }
-        });
-    }
-
-    private convertSpectral = (spectralFrame: number, type: SpectralType, unit: SpectralUnit, system: SpectralSystem, x: Array<number>): Array<number> => {
-        if (!spectralFrame || !type || !unit || !system || !x) {
-            return null;
-        }
-        let tx: Array<number> = new Array<number>(x.length);
-        for (let i = 0; i < x.length; i++) {
-            tx[i] = AST.transformSpectralPoint(this.appStore.activeFrame.spectralFrame, this.spectralType, this.spectralUnit, this.spectralSystem, x[i]);
-        }
-        return tx;
-    };
-
-    public initSpectralSettings = () => {
-        const frame = this.appStore.activeFrame;
-        if (frame && frame.spectralInfo && this.isSpectralSettingsSupported) {
-            this.spectralType = frame.spectralInfo.channelType.code as SpectralType;
-            this.spectralUnit = DEFAULT_UNIT.get(this.spectralType);
-            this.spectralSystem = frame.spectralInfo.specsys as SpectralSystem;
-        } else {
-            this.spectralType = null;
-            this.spectralUnit = null;
-            this.spectralSystem = null;
-        }
-
-        this.channelValues = null;
-        if (frame && frame.channelInfo) {
-            if (this.isCoordChannel) {
-                this.channelValues = frame.channelInfo.indexes;
-            } else {
-                this.channelValues = this.isSpectralPropsEqual ? frame.channelInfo.values : this.convertSpectral(frame.spectralFrame, this.spectralType, this.spectralUnit, this.spectralSystem, frame.channelInfo.values);
-            }
-        }
-    };
-
-    // check the type, unit, specsys are the same between widget and active frame
-    @computed get isSpectralPropsEqual(): boolean {
-        const appStore = this.appStore;
-        const frame = appStore.activeFrame;
-        let result = false;
-        if (frame && frame.spectralInfo) {
-            const isTypeEqual = frame.spectralInfo.channelType.code === (this.spectralType as string);
-            const isUnitEqual = frame.spectralInfo.channelType.unit === (this.spectralUnit as string);
-            const isSpecsysEqual = frame.spectralInfo.specsys === (this.spectralSystem as string);
-            result = isTypeEqual && isUnitEqual && isSpecsysEqual;
-        }
-        return result;
     }
 
     @action setQUScatterPlotXBounds = (minVal: number, maxVal: number) => {
@@ -412,35 +361,8 @@ export class StokesAnalysisWidgetStore extends RegionWidgetStore {
         }
     }
 
-    @computed get spectralCoordinate() {
-        return this.spectralType && this.spectralUnit ? GenCoordinateLabel(this.spectralType, this.spectralUnit) : "Channel";
-    }
-
-    @computed get isCoordChannel() {
-        return this.spectralCoordinate === "Channel";
-    }
-
-    @computed get isSpectralCoordinateSupported(): boolean {
-        const frame = this.appStore.activeFrame;
-        if (frame && frame.spectralInfo) {
-            const type = frame.spectralInfo.channelType.code as string;
-            const unit = frame.spectralInfo.channelType.unit as string;
-            return type && unit && IsSpectralTypeValid(type) && IsSpectralUnitValid(unit);
-        }
-        return false;
-    }
-
-    @computed get isSpectralSystemSupported(): boolean {
-        const frame = this.appStore.activeFrame;
-        if (frame && frame.spectralInfo) {
-            const specsys = frame.spectralInfo.specsys as string;
-            return specsys && IsSpectralSystemValid(specsys);
-        }
-        return false;
-    }
-
-    @computed get isSpectralSettingsSupported(): boolean {
-        return this.isSpectralCoordinateSupported && this.isSpectralSystemSupported;
+    @action setSettingsTabId = (tabId: StokesAnalysisSettingsTabs) => {
+        this.settingsTabId = tabId;
     }
 
     @computed get isLinePlotsAutoScaledX() {
@@ -471,11 +393,13 @@ export class StokesAnalysisWidgetStore extends RegionWidgetStore {
         if (!widgetSettings) {
             return;
         }
-        if (typeof widgetSettings.primaryLineColor === "string" && isColorValid(widgetSettings.primaryLineColor)) {
-            this.primaryLineColor.colorHex = widgetSettings.primaryLineColor;
+        const lineColor = tinycolor(widgetSettings.primaryLineColor);
+        if (lineColor.isValid()) {
+            this.primaryLineColor.colorHex = lineColor.toHexString();
         }
-        if (typeof widgetSettings.secondaryLineColor === "string" && isColorValid(widgetSettings.secondaryLineColor)) {
-            this.secondaryLineColor.colorHex = widgetSettings.secondaryLineColor;
+        const secondaryLineColor = tinycolor(widgetSettings.secondaryLineColor);
+        if (secondaryLineColor.isValid()) {
+            this.secondaryLineColor.colorHex = secondaryLineColor.toHexString();
         }
         if (typeof widgetSettings.lineWidth === "number" && widgetSettings.lineWidth >= LineSettings.MIN_WIDTH && widgetSettings.lineWidth <= LineSettings.MAX_WIDTH) {
             this.lineWidth = widgetSettings.lineWidth;

@@ -10,24 +10,23 @@
 
     user-select: none;
 
-    &.linked-to-selected {
-        border: 1px solid $blue2;
+    &.linked-to-widget-highlighted {
+        background-color: $gray4;
 
         &.dark-theme {
-            border: 1px solid $blue4;
+            background-color: $gray2;
         }
-
-        transition: border 250ms linear;
     }
 
     .profile-container {
         flex: 3 3 auto;
         min-width: 0;
-        padding-bottom: 5px;
-        margin-right: 5px;
+        .profile-toolbar {
+            height: 42px;
+        }
 
         .profile-plot {
-            height: calc(100% - 35px);
+            height: calc(100% - 57px);
             position: relative;
         }
     }

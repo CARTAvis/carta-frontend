@@ -1,14 +1,13 @@
 import * as React from "react";
+import tinycolor from "tinycolor2";
 import {observer} from "mobx-react";
-import {AppStore, OverlayStore, RasterRenderType} from "stores";
+import {AppStore, RasterRenderType} from "stores";
 import {FrameView, Point2D, TileCoordinate} from "models";
-import {GetRequiredTiles, GL, LayerToMip, hexStringToRgba, add2D, scale2D} from "utilities";
-import {RasterTile, TILE_SIZE} from "services";
-import "./RasterViewComponent.css";
+import {GetRequiredTiles, GL, LayerToMip, add2D, scale2D} from "utilities";
+import {RasterTile, TILE_SIZE, TileService, TileWebGLService} from "services";
+import "./RasterViewComponent.scss";
 
 export class RasterViewComponentProps {
-    appStore: AppStore;
-    overlaySettings: OverlayStore;
     docked: boolean;
 }
 
@@ -18,11 +17,11 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
     private gl: WebGLRenderingContext;
 
     componentDidMount() {
-        this.gl = this.props.appStore.tileService.tileWebGLService.gl;
+        this.gl = TileWebGLService.Instance.gl;
         if (this.canvas) {
             this.updateCanvas();
         }
-        this.props.appStore.tileService.tileStream.subscribe(() => {
+        TileService.Instance.tileStream.subscribe(() => {
             requestAnimationFrame(this.updateCanvas);
         });
     }
@@ -32,8 +31,8 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
     }
 
     private updateCanvas = () => {
-        const frame = this.props.appStore.activeFrame;
-        const tileRenderService = this.props.appStore.tileService.tileWebGLService;
+        const frame = AppStore.Instance.activeFrame;
+        const tileRenderService = TileWebGLService.Instance;
         if (frame && this.canvas && this.gl && tileRenderService.cmapTexture) {
             const histStokes = frame.renderConfig.stokes;
             const histChannel = frame.renderConfig.histogram ? frame.renderConfig.histogram.channel : undefined;
@@ -50,33 +49,35 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
     };
 
     private updateUniforms() {
-        const tileRenderService = this.props.appStore.tileService.tileWebGLService;
-        const frame = this.props.appStore.activeFrame;
+        const appStore = AppStore.Instance;
+        const shaderUniforms = TileWebGLService.Instance.shaderUniforms;
+        const frame = appStore.activeFrame;
         const renderConfig = frame.renderConfig;
-        const preference = this.props.appStore.preferenceStore;
-        if (renderConfig && preference && tileRenderService.shaderUniforms) {
-            this.gl.uniform1f(tileRenderService.shaderUniforms.MinVal, renderConfig.scaleMinVal);
-            this.gl.uniform1f(tileRenderService.shaderUniforms.MaxVal, renderConfig.scaleMaxVal);
-            this.gl.uniform1i(tileRenderService.shaderUniforms.CmapIndex, renderConfig.colorMap);
-            this.gl.uniform1i(tileRenderService.shaderUniforms.ScaleType, renderConfig.scaling);
-            this.gl.uniform1i(tileRenderService.shaderUniforms.Inverted, renderConfig.inverted ? 1 : 0);
-            this.gl.uniform1f(tileRenderService.shaderUniforms.Bias, renderConfig.bias);
-            this.gl.uniform1f(tileRenderService.shaderUniforms.Contrast, renderConfig.contrast);
-            this.gl.uniform1f(tileRenderService.shaderUniforms.Gamma, renderConfig.gamma);
-            this.gl.uniform1f(tileRenderService.shaderUniforms.Alpha, renderConfig.alpha);
-            this.gl.uniform1f(tileRenderService.shaderUniforms.CanvasWidth, frame.renderWidth * devicePixelRatio);
-            this.gl.uniform1f(tileRenderService.shaderUniforms.CanvasHeight, frame.renderHeight * devicePixelRatio);
 
-            const rgba = hexStringToRgba(preference.nanColorHex, preference.nanAlpha);
-            if (rgba) {
-                this.gl.uniform4f(tileRenderService.shaderUniforms.NaNColor, rgba.r / 255, rgba.g / 255, rgba.b / 255, rgba.a);
+        if (renderConfig && shaderUniforms) {
+            this.gl.uniform1f(shaderUniforms.MinVal, renderConfig.scaleMinVal);
+            this.gl.uniform1f(shaderUniforms.MaxVal, renderConfig.scaleMaxVal);
+            this.gl.uniform1i(shaderUniforms.CmapIndex, renderConfig.colorMapIndex);
+            this.gl.uniform1i(shaderUniforms.ScaleType, renderConfig.scaling);
+            this.gl.uniform1i(shaderUniforms.Inverted, renderConfig.inverted ? 1 : 0);
+            this.gl.uniform1f(shaderUniforms.Bias, renderConfig.bias);
+            this.gl.uniform1f(shaderUniforms.Contrast, renderConfig.contrast);
+            this.gl.uniform1f(shaderUniforms.Gamma, renderConfig.gamma);
+            this.gl.uniform1f(shaderUniforms.Alpha, renderConfig.alpha);
+            this.gl.uniform1f(shaderUniforms.CanvasWidth, frame.renderWidth * devicePixelRatio);
+            this.gl.uniform1f(shaderUniforms.CanvasHeight, frame.renderHeight * devicePixelRatio);
+
+            const nanColor = tinycolor(appStore.preferenceStore.nanColorHex).setAlpha(appStore.preferenceStore.nanAlpha);
+            if (nanColor.isValid()) {
+                const rgba = nanColor.toRgb();
+                this.gl.uniform4f(shaderUniforms.NaNColor, rgba.r / 255, rgba.g / 255, rgba.b / 255, rgba.a);
             }
         }
     }
 
     private updateCanvasSize() {
-        const frame = this.props.appStore.activeFrame;
-        const tileRenderService = this.props.appStore.tileService.tileWebGLService;
+        const frame = AppStore.Instance.activeFrame;
+        const tileRenderService = TileWebGLService.Instance;
         // Resize and clear the canvas if needed
         if (frame && frame.isRenderable && (this.canvas.width !== frame.renderWidth * devicePixelRatio || this.canvas.height !== frame.renderHeight * devicePixelRatio)) {
             this.canvas.width = frame.renderWidth * devicePixelRatio;
@@ -86,7 +87,7 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
     }
 
     private renderCanvas() {
-        const frame = this.props.appStore.activeFrame;
+        const frame = AppStore.Instance.activeFrame;
         // Only clear and render if we're in animation or tiled mode
         if (frame && frame.isRenderable && frame.renderType !== RasterRenderType.NONE) {
             this.gl.viewport(0, 0, frame.renderWidth * devicePixelRatio, frame.renderHeight * devicePixelRatio);
@@ -104,8 +105,8 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
     }
 
     private renderTiledCanvas() {
-        const frame = this.props.appStore.activeFrame;
-        const tileRenderService = this.props.appStore.tileService.tileWebGLService;
+        const frame = AppStore.Instance.activeFrame;
+        const tileRenderService = TileWebGLService.Instance;
 
         this.gl.bindBuffer(WebGLRenderingContext.ARRAY_BUFFER, tileRenderService.vertexUVBuffer);
         this.gl.vertexAttribPointer(tileRenderService.vertexUVAttribute, 2, WebGLRenderingContext.FLOAT, false, 0, 0);
@@ -133,8 +134,8 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
     }
 
     private renderTiles(tiles: TileCoordinate[], mip: number, peek: boolean = false, numPlaceholderLayersHighRes: number, renderLowRes: boolean) {
-        const tileService = this.props.appStore.tileService;
-        const frame = this.props.appStore.activeFrame;
+        const tileService = TileService.Instance;
+        const frame = AppStore.Instance.activeFrame;
 
         if (!tileService) {
             return;
@@ -199,19 +200,20 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
     }
 
     private renderTile(tile: TileCoordinate, rasterTile: RasterTile, mip: number) {
-        const frame = this.props.appStore.activeFrame;
-        const tileRenderService = this.props.appStore.tileService.tileWebGLService;
+        const frame = AppStore.Instance.activeFrame;
+        const tileRenderService = TileWebGLService.Instance;
+        const tileService = TileService.Instance;
 
         if (!rasterTile) {
             return;
         }
 
         if (rasterTile.data) {
-            this.props.appStore.tileService.uploadTileToGPU(rasterTile);
+            tileService.uploadTileToGPU(rasterTile);
             delete rasterTile.data;
         }
 
-        const textureParameters = this.props.appStore.tileService.getTileTextureParameters(rasterTile);
+        const textureParameters = tileService.getTileTextureParameters(rasterTile);
         if (textureParameters) {
             this.gl.bindTexture(WebGLRenderingContext.TEXTURE_2D, textureParameters.texture);
             this.gl.texParameteri(WebGLRenderingContext.TEXTURE_2D, WebGLRenderingContext.TEXTURE_MIN_FILTER, GL.NEAREST);
@@ -230,11 +232,9 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
             yMax: (tile.y + 1) * tileSizeAdjusted,
             mip: 1
         };
-
-        let bottomLeft = {x: (0.5 + tileImageView.xMin - full.xMin), y: (0.5 + tileImageView.yMin - full.yMin)};
+        let bottomLeft = {x: (tileImageView.xMin - full.xMin) - 0.5, y: (tileImageView.yMin - full.yMin) - 0.5};
         let tileScaling = scale2D({x: 1, y: 1}, mip * spatialRef.zoomLevel);
 
-        // Experimental code to handle WCS spatial transforms
         if (frame.spatialReference && frame.spatialTransform) {
             bottomLeft = add2D(bottomLeft, frame.spatialTransform.translation);
             // set origin of rotation to image center
@@ -262,8 +262,9 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
 
     render() {
         // dummy values to trigger React's componentDidUpdate()
-        const frame = this.props.appStore.activeFrame;
-        const preference = this.props.appStore.preferenceStore;
+        /* eslint-disable @typescript-eslint/no-unused-vars */
+        const appStore = AppStore.Instance;
+        const frame = appStore.activeFrame;
         if (frame) {
             const spatialReference = frame.spatialReference || frame;
             const frameView = spatialReference.requiredFrameView;
@@ -273,7 +274,7 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
             const colorMapping = {
                 min: frame.renderConfig.scaleMinVal,
                 max: frame.renderConfig.scaleMaxVal,
-                colorMap: frame.renderConfig.colorMap,
+                colorMap: frame.renderConfig.colorMapIndex,
                 contrast: frame.renderConfig.contrast,
                 bias: frame.renderConfig.bias,
                 scaling: frame.renderConfig.scaling,
@@ -281,11 +282,13 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
                 alpha: frame.renderConfig.alpha,
                 inverted: frame.renderConfig.inverted,
                 visibility: frame.renderConfig.visible,
-                nanColorHex: preference.nanColorHex,
-                nanAlpha: preference.nanAlpha
+                nanColorHex: appStore.preferenceStore.nanColorHex,
+                nanAlpha: appStore.preferenceStore.nanAlpha
             };
         }
-        const padding = this.props.overlaySettings.padding;
+        /* eslint-enable @typescript-eslint/no-unused-vars */
+
+        const padding = appStore.overlayStore.padding;
         let className = "raster-div";
         if (this.props.docked) {
             className += " docked";

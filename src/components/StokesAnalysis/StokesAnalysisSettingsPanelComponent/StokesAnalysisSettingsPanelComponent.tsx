@@ -1,34 +1,42 @@
 import * as React from "react";
 import {computed, autorun} from "mobx";
 import {observer} from "mobx-react";
-import {Colors} from "@blueprintjs/core";
-import {LinePlotSettingsPanelComponent, LinePlotSettingsPanelComponentProps, ScatterPlotSettingsPanelComponentProps, ScatterPlotSettingsPanelComponent, SpectralSettingsComponent} from "components/Shared";
+import {Colors, Tab, Tabs} from "@blueprintjs/core";
+import {LinePlotSettingsPanelComponent, LinePlotSettingsPanelComponentProps, ScatterPlotSettingsPanelComponentProps, ScatterPlotSettingsPanelComponent, SpectralSettingsComponent, SmoothingSettingsComponent} from "components/Shared";
 import {StokesAnalysisWidgetStore} from "stores/widgets";
-import {WidgetProps, WidgetConfig, HelpType} from "stores";
-import "./StokesAnalysisSettingsPanelComponent.css";
+import {WidgetProps, DefaultWidgetConfig, HelpType, WidgetsStore, AppStore} from "stores";
+import "./StokesAnalysisSettingsPanelComponent.scss";
+
+export enum StokesAnalysisSettingsTabs {
+    CONVERSION,
+    LINE_PLOT_STYLING,
+    SCATTER_PLOT_STYLING,
+    SMOOTHING
+}
 
 @observer
 export class StokesAnalysisSettingsPanelComponent extends React.Component<WidgetProps> {
 
-    public static get WIDGET_CONFIG(): WidgetConfig {
+    public static get WIDGET_CONFIG(): DefaultWidgetConfig {
         return {
             id: "stokes-floating-settings",
             type: "floating-settings",
             minWidth: 350,
             minHeight: 300,
-            defaultWidth: 400,
-            defaultHeight: 550,
+            defaultWidth: 550,
+            defaultHeight: 450,
             title: "stokes-settings",
             isCloseable: true,
             parentId: "stokes",
             parentType: "stokes",
-            helpType: HelpType.STOKES_ANALYSIS_SETTINGS
+            helpType: [HelpType.STOKES_ANALYSIS_SETTINGS_CONVERSION, HelpType.STOKES_ANALYSIS_SETTINGS_LINE_PLOT_STYLING, HelpType.STOKES_ANALYSIS_SETTINGS_SCATTER_PLOT_STYLING, HelpType.STOKES_ANALYSIS_SETTINGS_SMOOTHING]
         };
     }
 
     @computed get widgetStore(): StokesAnalysisWidgetStore {
-        if (this.props.appStore && this.props.appStore.widgetsStore.stokesAnalysisWidgets) {
-            const widgetStore = this.props.appStore.widgetsStore.stokesAnalysisWidgets.get(this.props.id);
+        const widgetsStore = WidgetsStore.Instance;
+        if (widgetsStore.stokesAnalysisWidgets) {
+            const widgetStore = widgetsStore.stokesAnalysisWidgets.get(this.props.id);
             if (widgetStore) {
                 return widgetStore;
             }
@@ -39,16 +47,16 @@ export class StokesAnalysisSettingsPanelComponent extends React.Component<Widget
 
     constructor(props: WidgetProps) {
         super(props);
+        const appStore = AppStore.Instance;
 
         autorun(() => {
             if (this.widgetStore) {
-                const appStore = this.props.appStore;
-                const frame = appStore.activeFrame;
+                const frame = this.widgetStore.effectiveFrame;
                 if (frame) {
                     const regionId = this.widgetStore.effectiveRegionId;
                     const regionString = regionId === 0 ? "Cursor" : `Region #${regionId}`;
                     const selectedString = this.widgetStore.matchesSelectedRegion ? "(Active)" : "";
-                    this.props.appStore.widgetsStore.setWidgetTitle(this.props.floatingSettingsId, `Stokes Analysis Settings: ${regionString} ${selectedString}`);
+                    appStore.widgetsStore.setWidgetTitle(this.props.floatingSettingsId, `Stokes Analysis Settings: ${regionString} ${selectedString}`);
                 }
             }
         });
@@ -61,9 +69,12 @@ export class StokesAnalysisSettingsPanelComponent extends React.Component<Widget
     handleInvertedColorMapChanged = (changeEvent: React.ChangeEvent<HTMLInputElement>) => {
         this.widgetStore.setInvertedColorMap(changeEvent.target.checked);
     };
+    handleSelectedTabChanged = (newTabId: React.ReactText) => {
+        this.widgetStore.setSettingsTabId(Number.parseInt(newTabId.toString()));
+    }
 
     render() {
-        const appStore = this.props.appStore;
+        const appStore = AppStore.Instance;
         const widgetStore = this.widgetStore;
         const lineSettingsProps: LinePlotSettingsPanelComponentProps = {
             darkMode: appStore.darkTheme,
@@ -81,7 +92,7 @@ export class StokesAnalysisSettingsPanelComponent extends React.Component<Widget
             setSecondaryLineColor: widgetStore.setSecondaryLineColor
         };
 
-        const scatterSettingsProrps: ScatterPlotSettingsPanelComponentProps = {
+        const scatterSettingsProps: ScatterPlotSettingsPanelComponentProps = {
             colorMap: widgetStore.colorMap,
             scatterPlotPointSize: widgetStore.scatterPlotPointSize,
             pointTransparency: widgetStore.pointTransparency,
@@ -94,23 +105,17 @@ export class StokesAnalysisSettingsPanelComponent extends React.Component<Widget
             handleInvertedColorMapChanged: this.handleInvertedColorMapChanged
         };
 
-        const hasStokes = appStore.activeFrame && appStore.activeFrame.frameInfo && appStore.activeFrame.frameInfo.fileInfoExtended.stokes > 1;
+        const hasStokes = widgetStore.effectiveFrame && widgetStore.effectiveFrame.hasStokes;
 
         return (
-            <React.Fragment>
-                <div className="stokes-settings">
-                    <p>Spectral Settings:</p>
-                    <SpectralSettingsComponent appStore={appStore} widgetStore={widgetStore} disable={!hasStokes}/>
-                    <p>Line Plots:</p>
-                    <div className={"stokes-line-settings"}>
-                        <LinePlotSettingsPanelComponent {...lineSettingsProps}/>
-                    </div>
-                    <p>Scatter Plot:</p>
-                    <div className={"stokes-scatter-settings"}>
-                        <ScatterPlotSettingsPanelComponent {...scatterSettingsProrps}/>
-                    </div>
-                </div>
-            </React.Fragment>
+            <div className="stokes-settings">
+                <Tabs id="spectralSettingTabs" selectedTabId={widgetStore.settingsTabId} onChange={this.handleSelectedTabChanged}>
+                    <Tab id={StokesAnalysisSettingsTabs.CONVERSION} title="Conversion" panel={<SpectralSettingsComponent widgetStore={widgetStore} disable={!hasStokes}/>}/>
+                    <Tab id={StokesAnalysisSettingsTabs.LINE_PLOT_STYLING} title="Line Plot Styling" panel={<LinePlotSettingsPanelComponent {...lineSettingsProps}/>}/>
+                    <Tab id={StokesAnalysisSettingsTabs.SCATTER_PLOT_STYLING} title="Scatter Plot Styling" panel={<ScatterPlotSettingsPanelComponent {...scatterSettingsProps}/>}/>
+                    <Tab id={StokesAnalysisSettingsTabs.SMOOTHING} title="Smoothing" panel={<SmoothingSettingsComponent smoothingStore={widgetStore.smoothingStore} diableStyle={true} diableDecimation={true}/>}/>
+                </Tabs>
+            </div>
         );
     }
 }

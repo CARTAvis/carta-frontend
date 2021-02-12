@@ -1,24 +1,24 @@
 import * as React from "react";
 import * as _ from "lodash";
 import ReactResizeDetector from "react-resize-detector";
-import {action, autorun, computed, observable} from "mobx";
+import {action, autorun, computed, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
-import {Button, ButtonGroup, FormGroup, HTMLSelect, IOptionProps, NonIdealState, NumericInput, Colors} from "@blueprintjs/core";
+import {Button, ButtonGroup, FormGroup, HTMLSelect, IOptionProps, NonIdealState, Colors} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import {ColormapConfigComponent} from "./ColormapConfigComponent/ColormapConfigComponent";
-import {LinePlotComponent, LinePlotComponentProps, PlotType, ProfilerInfoComponent} from "components/Shared";
+import {LinePlotComponent, LinePlotComponentProps, ProfilerInfoComponent, SafeNumericInput} from "components/Shared";
 import {TaskProgressDialogComponent} from "components/Dialogs";
 import {RenderConfigWidgetStore} from "stores/widgets";
-import {AnimationState, FrameScaling, FrameStore, RenderConfigStore, WidgetConfig, WidgetProps, HelpType} from "stores";
+import {FrameStore, RenderConfigStore, DefaultWidgetConfig, WidgetProps, HelpType, AppStore, WidgetsStore} from "stores";
 import {Point2D} from "models";
 import {clamp, toExponential, toFixed} from "utilities";
-import "./RenderConfigComponent.css";
+import "./RenderConfigComponent.scss";
 
 const KEYCODE_ENTER = 13;
 
 @observer
 export class RenderConfigComponent extends React.Component<WidgetProps> {
-    public static get WIDGET_CONFIG(): WidgetConfig {
+    public static get WIDGET_CONFIG(): DefaultWidgetConfig {
         return {
             id: "render-config",
             type: "render-config",
@@ -39,8 +39,9 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
     @observable height: number;
 
     @computed get widgetStore(): RenderConfigWidgetStore {
-        if (this.props.appStore && this.props.appStore.widgetsStore.renderConfigWidgets) {
-            const widgetStore = this.props.appStore.widgetsStore.renderConfigWidgets.get(this.props.id);
+        const widgetsStore = WidgetsStore.Instance;
+        if (widgetsStore.renderConfigWidgets) {
+            const widgetStore = widgetsStore.renderConfigWidgets.get(this.props.id);
             if (widgetStore) {
                 return widgetStore;
             }
@@ -50,7 +51,7 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
     }
 
     @computed get plotData(): { values: Array<Point2D>, xMin: number, xMax: number, yMin: number, yMax: number } {
-        const frame = this.props.appStore.activeFrame;
+        const frame = AppStore.Instance.activeFrame;
         if (frame && frame.renderConfig.histogram && frame.renderConfig.histogram.bins && frame.renderConfig.histogram.bins.length) {
             const histogram = frame.renderConfig.histogram;
             let minIndex = 0;
@@ -87,21 +88,24 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
 
     constructor(props: WidgetProps) {
         super(props);
+        makeObservable(this);
+
+        const appStore = AppStore.Instance;
         // Check if this widget hasn't been assigned an ID yet
         if (!props.docked && props.id === RenderConfigComponent.WIDGET_CONFIG.type) {
             // Assign the next unique ID
-            const id = props.appStore.widgetsStore.addRenderConfigWidget();
-            props.appStore.widgetsStore.changeWidgetId(props.id, id);
+            const id = appStore.widgetsStore.addRenderConfigWidget();
+            appStore.widgetsStore.changeWidgetId(props.id, id);
         } else {
-            if (!this.props.appStore.widgetsStore.renderConfigWidgets.has(this.props.id)) {
+            if (!appStore.widgetsStore.renderConfigWidgets.has(this.props.id)) {
                 console.log(`can't find store for widget with id=${this.props.id}`);
-                this.props.appStore.widgetsStore.renderConfigWidgets.set(this.props.id, new RenderConfigWidgetStore());
+                appStore.widgetsStore.renderConfigWidgets.set(this.props.id, new RenderConfigWidgetStore());
             }
         }
 
         autorun(() => {
-            if (this.props.appStore.activeFrame) {
-                const newHist = this.props.appStore.activeFrame.renderConfig.histogram;
+            if (appStore.activeFrame) {
+                const newHist = appStore.activeFrame.renderConfig.histogram;
                 if (newHist !== this.cachedHistogram) {
                     this.cachedHistogram = newHist;
                     this.widgetStore.clearXYBounds();
@@ -118,7 +122,7 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
     }
 
     componentDidUpdate() {
-        const frame = this.props.appStore.activeFrame;
+        const frame = AppStore.Instance.activeFrame;
 
         if (frame !== this.cachedFrame) {
             this.cachedFrame = frame;
@@ -126,22 +130,15 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
         }
     }
 
-    handleColorMapChange = (newColorMap: string) => {
-        this.props.appStore.activeFrame.renderConfig.setColorMap(newColorMap);
-    };
-
-    handleScalingChange = (scaling: FrameScaling) => {
-        this.props.appStore.activeFrame.renderConfig.setScaling(scaling);
-    };
-
     handleScaleMinChange = (ev) => {
         if (ev.type === "keydown" && ev.keyCode !== KEYCODE_ENTER) {
             return;
         }
 
         const val = parseFloat(ev.currentTarget.value);
-        if (isFinite(val) && val !== this.props.appStore.activeFrame.renderConfig.scaleMinVal) {
-            this.props.appStore.activeFrame.renderConfig.setCustomScale(val, this.props.appStore.activeFrame.renderConfig.scaleMaxVal);
+        const frame = AppStore.Instance.activeFrame;
+        if (frame && isFinite(val) && val !== frame.renderConfig.scaleMinVal) {
+            frame.renderConfig.setCustomScale(val, frame.renderConfig.scaleMaxVal);
         }
     };
 
@@ -151,8 +148,9 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
         }
 
         const val = parseFloat(ev.currentTarget.value);
-        if (isFinite(val) && val !== this.props.appStore.activeFrame.renderConfig.scaleMaxVal) {
-            this.props.appStore.activeFrame.renderConfig.setCustomScale(this.props.appStore.activeFrame.renderConfig.scaleMinVal, val);
+        const frame = AppStore.Instance.activeFrame;
+        if (frame && isFinite(val) && val !== frame.renderConfig.scaleMaxVal) {
+            frame.renderConfig.setCustomScale(frame.renderConfig.scaleMinVal, val);
         }
     };
 
@@ -162,51 +160,54 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
     };
 
     handlePercentileRankClick = (value: number) => {
-        if (!this.props.appStore.activeFrame.renderConfig.setPercentileRank(value)) {
-            this.props.appStore.alertStore.showAlert(`Couldn't set percentile of rank ${value}%`);
-            this.props.appStore.logStore.addError(`Couldn't set percentile of rank ${value}%`, ["render"]);
+        const appStore = AppStore.Instance;
+        if (!appStore.activeFrame.renderConfig.setPercentileRank(value)) {
+            appStore.alertStore.showAlert(`Couldn't set percentile of rank ${value}%`);
+            appStore.logStore.addError(`Couldn't set percentile of rank ${value}%`, ["render"]);
         }
     };
 
     handlePercentileRankSelectChanged = (event: React.ChangeEvent<HTMLSelectElement>) => {
-        this.props.appStore.activeFrame.renderConfig.setPercentileRank(+event.currentTarget.value);
+        AppStore.Instance.activeFrame.renderConfig.setPercentileRank(+event.currentTarget.value);
     };
 
     setCustomPercentileRank = () => {
-        this.props.appStore.activeFrame.renderConfig.setPercentileRank(-1);
+        AppStore.Instance.activeFrame.renderConfig.setPercentileRank(-1);
     };
 
     handleCubeHistogramSelected = () => {
-        const frame = this.props.appStore.activeFrame;
+        const appStore = AppStore.Instance;
+        const frame = appStore.activeFrame;
         if (frame && frame.renderConfig) {
             frame.renderConfig.setUseCubeHistogram(true);
             if (frame.renderConfig.cubeHistogramProgress < 1.0) {
-                this.props.appStore.requestCubeHistogram();
+                appStore.requestCubeHistogram();
             }
         }
     };
 
     handleCubeHistogramCancelled = () => {
-        const frame = this.props.appStore.activeFrame;
+        const appStore = AppStore.Instance;
+        const frame = appStore.activeFrame;
         if (frame && frame.renderConfig) {
             frame.renderConfig.setUseCubeHistogram(false);
         }
-        this.props.appStore.cancelCubeHistogramRequest();
+        appStore.cancelCubeHistogramRequest();
     };
 
     onMinMoved = (x: number) => {
-        const frame = this.props.appStore.activeFrame;
+        const frame = AppStore.Instance.activeFrame;
         // Check bounds first, to make sure the max isn't being moved below the min
         if (frame && frame.renderConfig && x < frame.renderConfig.scaleMaxVal) {
-            this.props.appStore.activeFrame.renderConfig.setCustomScale(x, this.props.appStore.activeFrame.renderConfig.scaleMaxVal);
+            frame.renderConfig.setCustomScale(x, frame.renderConfig.scaleMaxVal);
         }
     };
 
     onMaxMoved = (x: number) => {
-        const frame = this.props.appStore.activeFrame;
+        const frame = AppStore.Instance.activeFrame;
         // Check bounds first, to make sure the max isn't being moved below the min
         if (frame && frame.renderConfig && x > frame.renderConfig.scaleMinVal) {
-            this.props.appStore.activeFrame.renderConfig.setCustomScale(this.props.appStore.activeFrame.renderConfig.scaleMinVal, x);
+            frame.renderConfig.setCustomScale(frame.renderConfig.scaleMinVal, x);
         }
     };
 
@@ -225,7 +226,7 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
                 numberString = toFixed(this.widgetStore.cursorX, 2);
             }
 
-            const frame = this.props.appStore.activeFrame;
+            const frame = AppStore.Instance.activeFrame;
             if (frame.unit) {
                 numberString += ` ${frame.unit}`;
             }
@@ -236,7 +237,7 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
     };
 
     render() {
-        const appStore = this.props.appStore;
+        const appStore = AppStore.Instance;
         const frame = appStore.activeFrame;
 
         if (!frame || !this.widgetStore) {
@@ -252,7 +253,7 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
             unitString = `Value (${frame.unit})`;
         }
 
-        const imageName = frame.frameInfo.fileInfo.name;
+        const imageName = frame.filename;
         const plotName = `channel ${frame.channel} histogram`;
         let linePlotProps: LinePlotComponentProps = {
             xLabel: unitString,
@@ -260,8 +261,7 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
             imageName: imageName,
             plotName: plotName,
             logY: this.widgetStore.logScaleY,
-            usePointSymbols: this.widgetStore.plotType === PlotType.POINTS,
-            interpolateLines: this.widgetStore.plotType === PlotType.LINES,
+            plotType: this.widgetStore.plotType,
             showYAxisTicks: false,
             showYAxisLabel: false,
             graphClicked: this.onMinMoved,
@@ -358,7 +358,6 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
         const percentileButtonCutoff = 600;
         const histogramCutoff = 430;
         const displayRankButtons = this.width > percentileButtonCutoff;
-        const stokes = frame.renderConfig.stokes;
         let percentileButtonsDiv, percentileSelectDiv;
         if (displayRankButtons) {
             const percentileRankButtons = RenderConfigStore.PERCENTILE_RANKS.map(rank => (
@@ -407,21 +406,20 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
                         renderConfig={frame.renderConfig}
                         onCubeHistogramSelected={this.handleCubeHistogramSelected}
                         showHistogramSelect={frame.frameInfo.fileInfoExtended.depth > 1}
-                        disableHistogramSelect={appStore.animatorStore.animationState === AnimationState.PLAYING}
+                        disableHistogramSelect={appStore.animatorStore.animationActive}
                         warnOnCubeHistogram={(frame.frameInfo.fileFeatureFlags & CARTA.FileFeatureFlags.CUBE_HISTOGRAMS) === 0}
                     />
                     <FormGroup label={"Clip Min"} inline={true}>
-                        <NumericInput
+                        <SafeNumericInput
                             value={frame.renderConfig.scaleMinVal}
                             selectAllOnFocus={true}
                             buttonPosition={"none"}
-                            allowNumericCharactersOnly={false}
                             onBlur={this.handleScaleMinChange}
                             onKeyDown={this.handleScaleMinChange}
                         />
                     </FormGroup>
                     <FormGroup label={"Clip Max"} inline={true}>
-                        <NumericInput
+                        <SafeNumericInput
                             value={frame.renderConfig.scaleMaxVal}
                             selectAllOnFocus={true}
                             buttonPosition={"none"}

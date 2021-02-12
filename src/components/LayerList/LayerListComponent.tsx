@@ -1,20 +1,17 @@
 import * as React from "react";
 import {CSSProperties} from "react";
-import {observable} from "mobx";
+import {action, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
-import {AnchorButton, NonIdealState, Tooltip} from "@blueprintjs/core";
+import {AnchorButton, Menu, MenuDivider, MenuItem, NonIdealState, Tooltip} from "@blueprintjs/core";
 import {Cell, Column, ColumnHeaderCell, RowHeaderCell, SelectionModes, Table} from "@blueprintjs/table";
+import {IMenuContext} from "@blueprintjs/table/src/interactions/menus/menuContext";
 import ReactResizeDetector from "react-resize-detector";
-import {WidgetConfig, WidgetProps, HelpType} from "stores";
-import "./LayerListComponent.css";
+import {DefaultWidgetConfig, WidgetProps, HelpType, AppStore, FrameStore} from "stores";
+import "./LayerListComponent.scss";
 
 @observer
 export class LayerListComponent extends React.Component<WidgetProps> {
-    @observable width: number = 0;
-    @observable height: number = 0;
-    private columnWidths = [150, 80, 80, 70];
-
-    public static get WIDGET_CONFIG(): WidgetConfig {
+    public static get WIDGET_CONFIG(): DefaultWidgetConfig {
         return {
             id: "layer-list",
             type: "layer-list",
@@ -22,13 +19,22 @@ export class LayerListComponent extends React.Component<WidgetProps> {
             minHeight: 180,
             defaultWidth: 650,
             defaultHeight: 180,
-            title: "Layer List",
+            title: "Image List",
             isCloseable: true,
             helpType: HelpType.LAYER_LIST
         };
     }
 
-    private onColumnWidthsChange = (index: number, size: number) => {
+    @observable width: number = 0;
+    @observable height: number = 0;
+    @observable columnWidths = [132, 70, 110, 75, 67];
+
+    constructor(props: any) {
+        super(props);
+        makeObservable(this);
+    }
+
+    @action private onColumnWidthsChange = (index: number, size: number) => {
         if (!Number.isInteger(index) || index < 0 || index >= this.columnWidths.length || size <= 0) {
             return;
         }
@@ -36,7 +42,7 @@ export class LayerListComponent extends React.Component<WidgetProps> {
         this.forceUpdate();
     };
 
-    private onResize = (width: number, height: number) => {
+    @action private onResize = (width: number, height: number) => {
         this.width = width;
         this.height = height;
     };
@@ -45,40 +51,20 @@ export class LayerListComponent extends React.Component<WidgetProps> {
         if (oldIndex === newIndex) {
             return;
         }
-        this.props.appStore.reorderFrame(oldIndex, newIndex, length);
+        AppStore.Instance.reorderFrame(oldIndex, newIndex, length);
     };
 
     private rowHeaderCellRenderer = (rowIndex: number) => {
-        return <RowHeaderCell name={rowIndex.toString()} className={rowIndex === this.props.appStore.activeFrameIndex ? "active-row-cell" : ""}/>;
+        return <RowHeaderCell name={rowIndex.toString()} className={rowIndex === AppStore.Instance.activeFrameIndex ? "active-row-cell" : ""}/>;
+    };
+
+    private onFileSelected = (appStore: AppStore, frame: FrameStore) => {
+        const fileId = frame.frameInfo.fileId;
+        appStore.setActiveFrame(fileId);
     };
 
     private fileNameRenderer = (rowIndex: number) => {
-        const appStore = this.props.appStore;
-        if (rowIndex < 0 || rowIndex >= appStore.frames.length) {
-            return <Cell/>;
-        }
-
-        return <Cell className={rowIndex === appStore.activeFrameIndex ? "active-row-cell" : ""}>{appStore.frames[rowIndex].frameInfo.fileInfo.name}</Cell>;
-    };
-
-    private channelRenderer = (rowIndex: number) => {
-        const appStore = this.props.appStore;
-        if (rowIndex < 0 || rowIndex >= appStore.frames.length) {
-            return <Cell/>;
-        }
-        return <Cell className={rowIndex === appStore.activeFrameIndex ? "active-row-cell" : ""}>{appStore.frames[rowIndex].channel}</Cell>;
-    };
-
-    private stokesRenderer = (rowIndex: number) => {
-        const appStore = this.props.appStore;
-        if (rowIndex < 0 || rowIndex >= appStore.frames.length) {
-            return <Cell/>;
-        }
-        return <Cell className={rowIndex === appStore.activeFrameIndex ? "active-row-cell" : ""}>{appStore.frames[rowIndex].stokes}</Cell>;
-    };
-
-    private typeRenderer = (rowIndex: number) => {
-        const appStore = this.props.appStore;
+        const appStore = AppStore.Instance;
         if (rowIndex < 0 || rowIndex >= appStore.frames.length) {
             return <Cell/>;
         }
@@ -88,14 +74,140 @@ export class LayerListComponent extends React.Component<WidgetProps> {
         return (
             <Cell className={rowIndex === appStore.activeFrameIndex ? "active-row-cell" : ""}>
                 <React.Fragment>
-                    <Tooltip content={<span>Raster image<br/><i><small>Click to {frame.renderConfig.visible ? "hide" : "show"}</small></i></span>}>
-                        <AnchorButton minimal={true} small={true} intent={frame.renderConfig.visible ? "success" : "none"} onClick={frame.renderConfig.toggleVisibility}>R</AnchorButton>
+                    <div className="name-cell" onClick={() => this.onFileSelected(appStore, frame)}>
+                        {frame.filename}
+                    </div>
+                </React.Fragment>
+            </Cell>
+        );
+    };
+
+    private channelRenderer = (rowIndex: number) => {
+        const appStore = AppStore.Instance;
+        if (rowIndex < 0 || rowIndex >= appStore.frames.length) {
+            return <Cell/>;
+        }
+        return <Cell className={rowIndex === appStore.activeFrameIndex ? "active-row-cell" : ""}>{appStore.frames[rowIndex].requiredChannel}</Cell>;
+    };
+
+    private stokesRenderer = (rowIndex: number) => {
+        const appStore = AppStore.Instance;
+        if (rowIndex < 0 || rowIndex >= appStore.frames.length) {
+            return <Cell/>;
+        }
+        return <Cell className={rowIndex === appStore.activeFrameIndex ? "active-row-cell" : ""}>{appStore.frames[rowIndex].requiredStokes}</Cell>;
+    };
+
+    private typeRenderer = (rowIndex: number) => {
+        const appStore = AppStore.Instance;
+        if (rowIndex < 0 || rowIndex >= appStore.frames.length) {
+            return <Cell/>;
+        }
+
+        const frame = appStore.frames[rowIndex];
+
+        return (
+            <Cell className={rowIndex === appStore.activeFrameIndex ? "active-row-cell" : ""}>
+                <React.Fragment>
+                    <Tooltip position={"bottom"} content={<span>Raster layer<br/><i><small>Click to {frame.renderConfig.visible ? "hide" : "show"}</small></i></span>}>
+                        <AnchorButton minimal={true} small={true} active={frame.renderConfig.visible} intent={frame.renderConfig.visible ? "success" : "none"} onClick={frame.renderConfig.toggleVisibility}>R</AnchorButton>
                     </Tooltip>
                     {frame.contourConfig.enabled &&
-                    <Tooltip content={<span>Contour image<br/><i><small>Click to {frame.contourConfig.visible ? "hide" : "show"}</small></i></span>}>
-                        <AnchorButton minimal={true} small={true} intent={frame.contourConfig.visible ? "success" : "none"} onClick={frame.contourConfig.toggleVisibility}>C</AnchorButton>
+                    <Tooltip position={"bottom"} content={<span>Contour layer<br/><i><small>Click to {frame.contourConfig.visible ? "hide" : "show"}</small></i></span>}>
+                        <AnchorButton minimal={true} small={true} active={frame.contourConfig.visible} intent={frame.contourConfig.visible ? "success" : "none"} onClick={frame.contourConfig.toggleVisibility}>C</AnchorButton>
                     </Tooltip>
                     }
+                </React.Fragment>
+            </Cell>
+        );
+    };
+
+    private matchingRenderer = (rowIndex: number) => {
+        const appStore = AppStore.Instance;
+        if (rowIndex < 0 || rowIndex >= appStore.frames.length) {
+            return <Cell/>;
+        }
+
+        const frame = appStore.frames[rowIndex];
+
+        let spatialMatchingButton: React.ReactNode;
+        if (appStore.spatialReference) {
+            let tooltipSubtitle: string;
+            if (frame === appStore.spatialReference) {
+                tooltipSubtitle = `${frame.filename} is the current spatial reference`;
+            } else {
+                tooltipSubtitle = `Click to ${frame.spatialReference ? "disable" : "enable"} matching to ${appStore.spatialReference.filename}`;
+            }
+            spatialMatchingButton = (
+                <Tooltip position={"bottom"} content={<span>Spatial matching<br/><i><small>{tooltipSubtitle}</small></i></span>}>
+                    <AnchorButton
+                        className={frame === appStore.spatialReference ? "outlined" : ""}
+                        minimal={true}
+                        small={true}
+                        active={!!frame.spatialReference}
+                        intent={frame.spatialReference ? "success" : "none"}
+                        onClick={() => appStore.toggleSpatialMatching(frame)}
+                    >
+                        XY
+                    </AnchorButton>
+                </Tooltip>
+            );
+        }
+
+        let spectralMatchingButton: React.ReactNode;
+        if (frame.frameInfo.fileInfoExtended.depth > 1 && appStore.spectralReference) {
+            let tooltipSubtitle: string;
+            if (frame === appStore.spectralReference) {
+                tooltipSubtitle = `${frame.filename} is the current spectral reference`;
+            } else {
+                tooltipSubtitle = `Click to ${frame.spectralReference ? "disable" : "enable"} matching to ${appStore.spectralReference.filename}`;
+            }
+            spectralMatchingButton = (
+                <Tooltip position={"bottom"} content={<span>Spectral matching<br/><i><small>{tooltipSubtitle}</small></i></span>}>
+                    <AnchorButton
+                        className={frame === appStore.spectralReference ? "outlined" : ""}
+                        minimal={true}
+                        small={true}
+                        active={!!frame.spectralReference}
+                        intent={frame.spectralReference ? "success" : "none"}
+                        onClick={() => appStore.toggleSpectralMatching(frame)}
+                    >
+                        Z
+                    </AnchorButton>
+                </Tooltip>
+            );
+        }
+
+        let renderConfigMatchingButton: React.ReactNode;
+        if (appStore.rasterScalingReference) {
+            let tooltipSubtitle: string;
+            if (frame === appStore.rasterScalingReference) {
+                tooltipSubtitle = `${frame.filename} is the current raster scaling reference`;
+            } else {
+                tooltipSubtitle = `Click to ${frame.rasterScalingReference ? "disable" : "enable"} matching to ${appStore.rasterScalingReference.filename}`;
+            }
+            renderConfigMatchingButton = (
+                <Tooltip position={"bottom"} content={<span>Raster scaling matching<br/><i><small>{tooltipSubtitle}</small></i></span>}>
+                    <AnchorButton
+                        className={frame === appStore.rasterScalingReference ? "outlined" : ""}
+                        minimal={true}
+                        small={true}
+                        active={!!frame.rasterScalingReference}
+                        intent={frame.rasterScalingReference ? "success" : "none"}
+                        onClick={() => appStore.toggleRasterScalingMatching(frame)}
+                    >
+                        R
+                    </AnchorButton>
+                </Tooltip>
+            );
+        }
+
+        return (
+            <Cell className={rowIndex === appStore.activeFrameIndex ? "active-row-cell" : ""}>
+                <React.Fragment>
+                    {spatialMatchingButton}
+                    {spectralMatchingButton}
+                    {renderConfigMatchingButton}
                 </React.Fragment>
             </Cell>
         );
@@ -105,15 +217,18 @@ export class LayerListComponent extends React.Component<WidgetProps> {
         let name: string;
         switch (columnIndex) {
             case 0:
-                name = "File name";
+                name = "Image";
                 break;
             case 1:
-                name = "Type";
+                name = "Layers";
                 break;
             case 2:
-                name = "Channel";
+                name = "Matching";
                 break;
             case 3:
+                name = "Channel";
+                break;
+            case 4:
                 name = "Stokes";
                 break;
             default:
@@ -128,8 +243,31 @@ export class LayerListComponent extends React.Component<WidgetProps> {
         return <ColumnHeaderCell name={name} style={columnHeaderStyleProps}/>;
     };
 
+    private contextMenuRenderer = (context: IMenuContext) => {
+        const rows = context.getTarget().rows;
+        const appStore = AppStore.Instance;
+        if (rows && rows.length && appStore.frames[rows[0]]) {
+            const frame = appStore.frames[rows[0]];
+            if (frame) {
+                return (
+                    <Menu>
+                        <MenuDivider title={frame.filename}/>
+                        <MenuItem disabled={appStore.spatialReference === frame} text="Set as spatial reference" onClick={() => appStore.setSpatialReference(frame)}/>
+                        <MenuItem disabled={appStore.spectralReference === frame || frame.frameInfo.fileInfoExtended.depth <= 1} text="Set as spectral reference" onClick={() => appStore.setSpectralReference(frame)}/>
+                        <MenuItem disabled={appStore.rasterScalingReference === frame} text="Set as raster scaling reference" onClick={() => appStore.setRasterScalingReference(frame)}/>
+                        <MenuDivider/>
+                        <MenuItem text="Close image" onClick={() => appStore.closeFile(frame)}/>
+                        <MenuItem text="Close other images" disabled={appStore.frames?.length <= 1} onClick={() => appStore.closeOtherFiles(frame)}/>
+                        <MenuItem text="Close all images" disabled={appStore.frames?.length <= 1} onClick={() => appStore.closeOtherFiles(null, false)}/>
+                    </Menu>
+                );
+            }
+        }
+        return null;
+    };
+
     render() {
-        const appStore = this.props.appStore;
+        const appStore = AppStore.Instance;
         const frameNum = appStore.frameNum;
 
         if (frameNum <= 0) {
@@ -143,14 +281,23 @@ export class LayerListComponent extends React.Component<WidgetProps> {
 
         // This is a necessary hack in order to trigger a re-rendering when values change, because the cell renderer is in its own function
         // There is probably a neater way to do this, though
+        /* eslint-disable @typescript-eslint/no-unused-vars */
         const frameChannels = appStore.frameChannels;
         const frameStokes = appStore.frameStokes;
-        const activeFrameIndex = this.props.appStore.activeFrameIndex;
+        const activeFrameIndex = appStore.activeFrameIndex;
         const visibilityRaster = appStore.frames.map(f => f.renderConfig.visible);
         const visibilityContour = appStore.frames.map(f => f.contourConfig.visible && f.contourConfig.enabled);
+        const f1 = appStore.frames.map(f => f.spatialReference);
+        const f2 = appStore.frames.map(f => f.spectralReference);
+        const f3 = appStore.frames.map(f => f.rasterScalingReference);
+        const currentSpectralReference = appStore.spectralReference;
+        const currentSpatialReference = appStore.spatialReference;
+        const currentRasterScalingReference = appStore.rasterScalingReference;
 
+        /* eslint-enable @typescript-eslint/no-unused-vars */
         return (
             <div className="layer-list-widget">
+                {this.width > 0 &&
                 <Table
                     numRows={frameNum}
                     rowHeaderCellRenderer={this.rowHeaderCellRenderer}
@@ -163,24 +310,15 @@ export class LayerListComponent extends React.Component<WidgetProps> {
                     columnWidths={this.columnWidths}
                     enableColumnResizing={true}
                     onColumnWidthChanged={this.onColumnWidthsChange}
+                    bodyContextMenuRenderer={this.contextMenuRenderer}
                 >
-                    <Column
-                        columnHeaderCellRenderer={this.columnHeaderRenderer}
-                        cellRenderer={this.fileNameRenderer}
-                    />
-                    <Column
-                        columnHeaderCellRenderer={this.columnHeaderRenderer}
-                        cellRenderer={this.typeRenderer}
-                    />
-                    <Column
-                        columnHeaderCellRenderer={this.columnHeaderRenderer}
-                        cellRenderer={this.channelRenderer}
-                    />
-                    <Column
-                        columnHeaderCellRenderer={this.columnHeaderRenderer}
-                        cellRenderer={this.stokesRenderer}
-                    />
+                    <Column columnHeaderCellRenderer={this.columnHeaderRenderer} cellRenderer={this.fileNameRenderer}/>
+                    <Column columnHeaderCellRenderer={this.columnHeaderRenderer} cellRenderer={this.typeRenderer}/>
+                    <Column columnHeaderCellRenderer={this.columnHeaderRenderer} cellRenderer={this.matchingRenderer}/>
+                    <Column columnHeaderCellRenderer={this.columnHeaderRenderer} cellRenderer={this.channelRenderer}/>
+                    <Column columnHeaderCellRenderer={this.columnHeaderRenderer} cellRenderer={this.stokesRenderer}/>
                 </Table>
+                }
                 <ReactResizeDetector handleWidth handleHeight onResize={this.onResize}/>
             </div>
         );

@@ -9,7 +9,7 @@
         flex: 3 3 auto;
         min-width: 0;
         .profile-plot {
-            height: 100%;
+            height: calc(100% - 15px);
             position: relative;
         }
     }

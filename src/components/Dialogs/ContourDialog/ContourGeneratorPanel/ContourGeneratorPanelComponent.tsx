@@ -1,12 +1,12 @@
 import * as React from "react";
 import {observer} from "mobx-react";
-import {action, computed, observable} from "mobx";
-import {Button, FormGroup, MenuItem, NumericInput, TagInput} from "@blueprintjs/core";
+import {action, computed, makeObservable, observable} from "mobx";
+import {Button, FormGroup, MenuItem, TagInput} from "@blueprintjs/core";
 import {Select} from "@blueprintjs/select";
 import {ContourGeneratorType, FrameScaling, FrameStore} from "stores";
-import {ScalingSelectComponent, ClearableNumericInput, SCALING_POPOVER_PROPS} from "components/Shared";
+import {ScalingSelectComponent, ClearableNumericInputComponent, SCALING_POPOVER_PROPS, SafeNumericInput} from "components/Shared";
 import {getPercentiles, scaleValue} from "utilities";
-import "./ContourGeneratorPanelComponent.css";
+import "./ContourGeneratorPanelComponent.scss";
 
 const GeneratorSelect = Select.ofType<ContourGeneratorType>();
 
@@ -37,6 +37,11 @@ export class ContourGeneratorPanelComponent extends React.Component<{ frame: Fra
         }
     }
 
+    constructor(props: any) {
+        super(props);
+        makeObservable(this);
+    }
+
     private renderMinMaxParameterRow() {
         const frame = this.props.frame;
         if (!frame) {
@@ -44,32 +49,38 @@ export class ContourGeneratorPanelComponent extends React.Component<{ frame: Fra
         }
 
         return (
-            <div className="generator-parameters-row">
-                <ClearableNumericInput
-                    label="Min"
-                    value={this.minValue}
-                    onValueChanged={val => this.enteredMinValue = val}
-                    onValueCleared={() => this.enteredMinValue = undefined}
-                />
-                <ClearableNumericInput
-                    label="Max"
-                    value={this.maxValue}
-                    onValueChanged={val => this.enteredMaxValue = val}
-                    onValueCleared={() => this.enteredMaxValue = undefined}
-                />
-                <FormGroup label="N" inline={true}>
-                    <NumericInput
-                        value={this.numLevels}
-                        min={1}
-                        max={20}
-                        step={1}
-                        className="narrow"
-                        onValueChange={val => this.numLevels = Math.floor(val)}
+            <div className="parameter-container">
+                <div className="parameter-line">
+                    <ClearableNumericInputComponent
+                        label="Min"
+                        value={this.minValue}
+                        onValueChanged={val => this.enteredMinValue = val}
+                        onValueCleared={() => this.enteredMinValue = undefined}
+                        displayExponential={true}
                     />
-                </FormGroup>
-                <FormGroup>
-                    <ScalingSelectComponent selectedItem={this.scalingType} onItemSelect={val => this.scalingType = val}/>
-                </FormGroup>
+                    <ClearableNumericInputComponent
+                        label="Max"
+                        value={this.maxValue}
+                        onValueChanged={val => this.enteredMaxValue = val}
+                        onValueCleared={() => this.enteredMaxValue = undefined}
+                        displayExponential={true}
+                    />
+                </div>
+                <div className="parameter-line">
+                    <FormGroup label="N" inline={true}>
+                        <SafeNumericInput
+                            value={this.numLevels}
+                            min={1}
+                            max={20}
+                            stepSize={1}
+                            className="narrow"
+                            onValueChange={val => this.numLevels = Math.floor(val)}
+                        />
+                    </FormGroup>
+                    <FormGroup label="Scaling" inline={true}>
+                        <ScalingSelectComponent selectedItem={this.scalingType} onItemSelect={val => this.scalingType = val}/>
+                    </FormGroup>
+                </div>
             </div>
         );
     }
@@ -121,38 +132,44 @@ export class ContourGeneratorPanelComponent extends React.Component<{ frame: Fra
         }
 
         return (
-            <div className="generator-parameters-row">
-                <ClearableNumericInput
-                    label="Start"
-                    value={this.startValue}
-                    onValueChanged={val => this.enteredStartValue = val}
-                    onValueCleared={() => this.enteredStartValue = undefined}
-                />
-                <ClearableNumericInput
-                    label="Step"
-                    value={this.stepValue}
-                    onValueChanged={val => this.enteredStepValue = val}
-                    onValueCleared={() => this.enteredStepValue = undefined}
-                />
-                <FormGroup label="N" inline={true}>
-                    <NumericInput
-                        value={this.numLevels}
-                        min={1}
-                        max={20}
-                        step={1}
-                        className="narrow"
-                        onValueChange={val => this.numLevels = Math.floor(val)}
+            <div className="parameter-container">
+                <div className="parameter-line">
+                    <ClearableNumericInputComponent
+                        label="Start"
+                        value={this.startValue}
+                        onValueChanged={val => this.enteredStartValue = val}
+                        onValueCleared={() => this.enteredStartValue = undefined}
+                        displayExponential={true}
                     />
-                </FormGroup>
-                <FormGroup label="Multiplier" inline={true}>
-                    <NumericInput
-                        value={this.multiplierValue}
-                        min={0.1}
-                        step={1}
-                        className="narrow"
-                        onValueChange={val => this.multiplierValue = val}
+                    <ClearableNumericInputComponent
+                        label="Step"
+                        value={this.stepValue}
+                        onValueChanged={val => this.enteredStepValue = val}
+                        onValueCleared={() => this.enteredStepValue = undefined}
+                        displayExponential={true}
                     />
-                </FormGroup>
+                </div>
+                <div className="parameter-line">
+                    <FormGroup label="N" inline={true}>
+                        <SafeNumericInput
+                            value={this.numLevels}
+                            min={1}
+                            max={20}
+                            stepSize={1}
+                            className="narrow"
+                            onValueChange={val => this.numLevels = Math.floor(val)}
+                        />
+                    </FormGroup>
+                    <FormGroup label="Multiplier" inline={true}>
+                        <SafeNumericInput
+                            value={this.multiplierValue}
+                            min={0.1}
+                            stepSize={1}
+                            className="narrow"
+                            onValueChange={val => this.multiplierValue = val}
+                        />
+                    </FormGroup>
+                </div>
             </div>
         );
     }
@@ -179,7 +196,7 @@ export class ContourGeneratorPanelComponent extends React.Component<{ frame: Fra
 
     // region percentages-ref
     @observable enteredRefValue: number | undefined;
-    @observable lowerPercentage: number = 60;
+    @observable lowerPercentage: number = 20;
     @observable upperPercentage: number = 100;
 
     @computed get refValue() {
@@ -197,43 +214,48 @@ export class ContourGeneratorPanelComponent extends React.Component<{ frame: Fra
         }
 
         return (
-            <div className="generator-parameters-row">
-                <ClearableNumericInput
-                    label="Reference"
-                    value={this.refValue}
-                    onValueChanged={val => this.enteredRefValue = val}
-                    onValueCleared={() => this.enteredRefValue = undefined}
-                />
-                <FormGroup label="Lower (%)" inline={true}>
-                    <NumericInput
-                        value={this.lowerPercentage}
-                        min={0}
-                        max={100}
-                        step={1}
-                        className="narrow"
-                        onValueChange={val => this.lowerPercentage = val}
+            <div className="parameter-container">
+                <div className="parameter-line">
+                    <ClearableNumericInputComponent
+                        label="Reference"
+                        value={this.refValue}
+                        onValueChanged={val => this.enteredRefValue = val}
+                        onValueCleared={() => this.enteredRefValue = undefined}
+                        displayExponential={true}
                     />
-                </FormGroup>
-                <FormGroup label="Upper (%)" inline={true}>
-                    <NumericInput
-                        value={this.upperPercentage}
-                        min={0}
-                        max={100}
-                        step={1}
-                        className="narrow"
-                        onValueChange={val => this.upperPercentage = val}
-                    />
-                </FormGroup>
-                <FormGroup label="N" inline={true}>
-                    <NumericInput
-                        value={this.numLevels}
-                        min={1}
-                        max={20}
-                        step={1}
-                        className="narrow"
-                        onValueChange={val => this.numLevels = Math.floor(val)}
-                    />
-                </FormGroup>
+                    <FormGroup label="N" inline={true}>
+                        <SafeNumericInput
+                            value={this.numLevels}
+                            min={1}
+                            max={20}
+                            stepSize={1}
+                            className="narrow"
+                            onValueChange={val => this.numLevels = Math.floor(val)}
+                        />
+                    </FormGroup>
+                </div>
+                <div className="parameter-line">
+                    <FormGroup label="Upper (%)" inline={true}>
+                        <SafeNumericInput
+                            value={this.upperPercentage}
+                            min={0}
+                            max={100}
+                            stepSize={1}
+                            className="narrow"
+                            onValueChange={val => this.upperPercentage = val}
+                        />
+                    </FormGroup>
+                    <FormGroup label="Lower (%)" inline={true}>
+                        <SafeNumericInput
+                            value={this.lowerPercentage}
+                            min={0}
+                            max={100}
+                            stepSize={1}
+                            className="narrow"
+                            onValueChange={val => this.lowerPercentage = val}
+                        />
+                    </FormGroup>
+                </div>
             </div>
         );
     }
@@ -292,7 +314,7 @@ export class ContourGeneratorPanelComponent extends React.Component<{ frame: Fra
     };
 
     @action private handleLevelRemoved = (value: string, index: number) => {
-        this.sigmaLevels.splice(index, 1);
+        this.sigmaLevels = this.sigmaLevels.filter((v, i) => i !== index);
     };
 
     private renderMeanSigmaParameterRow() {
@@ -302,31 +324,37 @@ export class ContourGeneratorPanelComponent extends React.Component<{ frame: Fra
         }
 
         return (
-            <div className="generator-parameters-row">
-                <ClearableNumericInput
-                    label="Mean"
-                    value={this.meanValue}
-                    onValueChanged={val => this.enteredMeanValue = val}
-                    onValueCleared={() => this.enteredMeanValue = undefined}
-                />
-                <ClearableNumericInput
-                    label="Sigma"
-                    value={this.sigmaValue}
-                    onValueChanged={val => this.enteredSigmaValue = val}
-                    onValueCleared={() => this.enteredSigmaValue = undefined}
-                />
-                <FormGroup label={"Sigma List"} inline={true}>
-                    <TagInput
-                        addOnBlur={true}
-                        fill={true}
-                        tagProps={{
-                            minimal: true,
-                        }}
-                        onAdd={this.handleLevelAdded}
-                        onRemove={this.handleLevelRemoved}
-                        values={this.sigmaLevels}
+            <div className="parameter-container">
+                <div className="parameter-line">
+                    <ClearableNumericInputComponent
+                        label="Mean"
+                        value={this.meanValue}
+                        onValueChanged={val => this.enteredMeanValue = val}
+                        onValueCleared={() => this.enteredMeanValue = undefined}
+                        displayExponential={true}
                     />
-                </FormGroup>
+                    <ClearableNumericInputComponent
+                        label="Sigma"
+                        value={this.sigmaValue}
+                        onValueChanged={val => this.enteredSigmaValue = val}
+                        onValueCleared={() => this.enteredSigmaValue = undefined}
+                        displayExponential={true}
+                    />
+                </div>
+                <div className="parameter-line">
+                    <FormGroup label={"Sigma List"} inline={true}>
+                        <TagInput
+                            addOnBlur={true}
+                            fill={true}
+                            tagProps={{
+                                minimal: true,
+                            }}
+                            onAdd={this.handleLevelAdded}
+                            onRemove={this.handleLevelRemoved}
+                            values={this.sigmaLevels.map(v => v.toString())}
+                        />
+                    </FormGroup>
+                </div>
             </div>
         );
     }
@@ -407,7 +435,11 @@ export class ContourGeneratorPanelComponent extends React.Component<{ frame: Fra
                     </FormGroup>
                     <Button intent="success" className="generate-button" onClick={this.generateLevels}>Generate</Button>
                 </div>
-                {generatorParameters}
+                <div className="generator-parameters-row">
+                    <FormGroup label="Parameters" inline={true}>
+                        {generatorParameters}
+                    </FormGroup>
+                </div>
             </div>
         );
     }

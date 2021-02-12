@@ -18,4 +18,7 @@ export * from "./LayoutStore";
 export * from "./ContourStore";
 export * from "./ContourConfigStore";
 export * from "./DialogStore";
+export * from "./CatalogStore";
 export * from "./HelpStore";
+export * from "./ProfileSmoothingStore";
+export * from "./CatalogProfileStore";

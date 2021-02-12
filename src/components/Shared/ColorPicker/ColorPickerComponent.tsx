@@ -1,14 +1,15 @@
 import * as React from "react";
 import * as _ from "lodash";
+import {action} from "mobx";
 import {observer} from "mobx-react";
-import {observable} from "mobx";
-import {SketchPicker, ColorResult} from "react-color";
-import {AnchorButton, Button, Popover, PopoverPosition} from "@blueprintjs/core";
-import {RGBA} from "utilities";
-import "./ColorPickerComponent.css";
+import {makeObservable, observable} from "mobx";
+import tinycolor from "tinycolor2";
+import {SketchPicker, ColorResult, RGBColor} from "react-color";
+import {Button, Popover, PopoverPosition} from "@blueprintjs/core";
+import "./ColorPickerComponent.scss";
 
 interface ColorPickerComponentProps {
-    color: string | RGBA;
+    color: string | RGBColor;
     presetColors: string[];
     darkTheme: boolean;
     disableAlpha: boolean;
@@ -22,11 +23,16 @@ export class ColorPickerComponent extends React.Component<ColorPickerComponentPr
 
     @observable displayColorPicker: boolean;
 
-    private handleColorClick = () => {
+    constructor(props: ColorPickerComponentProps) {
+        super(props);
+        makeObservable(this);
+    }
+
+    @action private handleColorClick = () => {
         this.displayColorPicker = true;
     };
 
-    private handleColorClose = () => {
+    @action private handleColorClose = () => {
         this.displayColorPicker = false;
     };
 
@@ -41,8 +47,7 @@ export class ColorPickerComponent extends React.Component<ColorPickerComponentPr
         if (this.props.darkTheme) {
             popoverClassName += " bp3-dark";
         }
-        const buttonColor = typeof this.props.color === "string" ? this.props.color : `rgba(${this.props.color.r}, ${this.props.color.g}, ${this.props.color.b}, ${this.props.color.a})`;
-
+        const buttonColor = tinycolor(this.props.color).toString();
         return (
             <Popover isOpen={this.displayColorPicker} onClose={this.handleColorClose} position={PopoverPosition.RIGHT} popoverClassName={popoverClassName}>
                 <Button onClick={this.handleColorClick} className="color-swatch-button" disabled={this.props.disabled}>

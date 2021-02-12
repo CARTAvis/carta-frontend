@@ -2,62 +2,61 @@ import * as React from "react";
 import {observer} from "mobx-react";
 import {AnchorButton, Classes, IDialogProps, Intent} from "@blueprintjs/core";
 import {DraggableDialogComponent} from "components/Dialogs";
-import {AppStore, HelpType} from "stores";
+import {DialogStore} from "stores";
 import {CARTA_INFO} from "models";
-import "./AboutDialogComponent.css";
+import "./AboutDialogComponent.scss";
 import * as logoPng from "static/carta_logo.png";
 
 @observer
-export class AboutDialogComponent extends React.Component<{ appStore: AppStore }> {
-
+export class AboutDialogComponent extends React.Component {
     public render() {
-        const appStore = this.props.appStore;
+        const dialogStore = DialogStore.Instance;
 
         const dialogProps: IDialogProps = {
             icon: "info-sign",
             backdropClassName: "minimal-dialog-backdrop",
             canOutsideClickClose: true,
             lazy: true,
-            isOpen: appStore.dialogStore.aboutDialogVisible,
-            onClose: appStore.dialogStore.hideAboutDialog,
+            isOpen: dialogStore.aboutDialogVisible,
+            onClose: dialogStore.hideAboutDialog,
             className: "about-dialog",
             canEscapeKeyClose: true,
             title: "About CARTA",
         };
 
         return (
-            <DraggableDialogComponent dialogProps={dialogProps} appStore={appStore} defaultWidth={620} defaultHeight={700} enableResizing={false}>
+            <DraggableDialogComponent dialogProps={dialogProps} defaultWidth={620} defaultHeight={700} enableResizing={false}>
                 <div className={Classes.DIALOG_BODY}>
                     <div className={"image-div"}>
-                        <img src={logoPng} width={100}/>
+                        <img src={logoPng} width={80}/>
                         <h3>{CARTA_INFO.acronym} {CARTA_INFO.version} ({CARTA_INFO.date})</h3>
                         <p>{CARTA_INFO.fullName}</p>
                     </div>
-
                     <h3>Development team:</h3>
                     <p>The development of the CARTA project is a joint effort from:</p>
                     <ul>
-                        <li><a href="https://www.asiaa.sinica.edu.tw/" target="_blank">Academia Sinica, Institute of Astronomy and Astrophysics (ASIAA)</a></li>
-                        <li><a href="https://idia.ac.za/" target="_blank">Inter-University Institute for Data Intensive Astronomy (IDIA)</a></li>
-                        <li><a href="https://science.nrao.edu/" target="_blank">National Radio Astronomy Observatory (NRAO)</a></li>
-                        <li><a href="https://www.ualberta.ca/physics" target="_blank">Department of Physics, University of Alberta</a></li>
+                        <li><a href="https://www.asiaa.sinica.edu.tw/" rel="noopener noreferrer" target="_blank">Academia Sinica, Institute of Astronomy and Astrophysics (ASIAA)</a></li>
+                        <li><a href="https://idia.ac.za/" rel="noopener noreferrer" target="_blank">Inter-University Institute for Data Intensive Astronomy (IDIA)</a></li>
+                        <li><a href="https://science.nrao.edu/" rel="noopener noreferrer" target="_blank">National Radio Astronomy Observatory (NRAO)</a></li>
+                        <li><a href="https://www.ualberta.ca/physics" rel="noopener noreferrer" target="_blank">Department of Physics, University of Alberta</a></li>
                     </ul>
                     <h3>Useful links:</h3>
                     <ul>
-                        <li>Source code for CARTA is available on <a href="https://github.com/cartavis" target="_blank">GitHub</a></li>
-                        <li>Please report bugs or suggestions to <a href="mailto:carta_helpdesk@asiaa.sinica.edu.tw" target="_blank">carta_helpdesk@asiaa.sinica.edu.tw</a></li>
-                        <li>Documentation is available <a href="https://carta.readthedocs.io/en/1.3" target="_blank">online</a></li>
+                        <li>Source code for CARTA is available on <a href="https://github.com/cartavis" rel="noopener noreferrer" target="_blank">GitHub</a></li>
+                        {/* tslint:disable-next-line:max-line-length */}
+                        <li>Please report bugs or suggestions to the <a href="mailto:carta_helpdesk@asiaa.sinica.edu.tw" rel="noopener noreferrer" target="_blank">CARTA helpdesk</a> or file a <a href="https://github.com/CARTAvis/carta/issues" rel="noopener noreferrer" target="_blank">GitHub issue</a></li>
+                        <li>Documentation is available <a href="https://carta.readthedocs.io/en/1.4" rel="noopener noreferrer" target="_blank">online</a></li>
                     </ul>
                     <h3>License</h3>
-                    <p>
-                        Copyright (C) 2018-2019 ASIAA, IDIA, NRAO, and Department of Physics, University of Alberta. This program is free software; you can redistribute it and/or modify it under the terms of the&#160;
-                        <a href="http://www.gnu.org/copyleft/gpl.html" target="_blank">GNU General Public License version 3</a>&#160;
+                    <p className={Classes.TEXT_SMALL}>
+                        Copyright (C) 2018-2021 ASIAA, IDIA, NRAO, and Department of Physics, University of Alberta. This program is free software; you can redistribute it and/or modify it under the terms of the&#160;
+                        <a href="http://www.gnu.org/copyleft/gpl.html" rel="noopener noreferrer" target="_blank">GNU General Public License version 3</a>&#160;
                         as published by the Free Software Foundation.
                     </p>
                 </div>
                 <div className={Classes.DIALOG_FOOTER}>
                     <div className={Classes.DIALOG_FOOTER_ACTIONS}>
-                        <AnchorButton intent={Intent.NONE} onClick={appStore.dialogStore.hideAboutDialog} text="Close"/>
+                        <AnchorButton intent={Intent.NONE} onClick={dialogStore.hideAboutDialog} text="Close"/>
                     </div>
                 </div>
             </DraggableDialogComponent>

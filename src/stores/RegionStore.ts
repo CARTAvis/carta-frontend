@@ -1,13 +1,21 @@
-import { action, computed, observable } from "mobx";
-import { CARTA } from "carta-protobuf";
-import { Colors } from "@blueprintjs/core";
-import { Point2D } from "models";
-import { BackendService } from "services";
-import { minMax2D, midpoint2D, scale2D, subtract2D, simplePolygonTest, simplePolygonPointTest, toFixed } from "utilities";
-import { FrameStore } from "stores";
+import {action, computed, observable, makeObservable} from "mobx";
+import {Colors} from "@blueprintjs/core";
+import {CARTA} from "carta-protobuf";
+import {Point2D} from "models";
+import {BackendService} from "services";
+import {add2D, getApproximateEllipsePoints, getApproximatePolygonPoints, isAstBadPoint, midpoint2D, minMax2D, rotate2D, scale2D, simplePolygonPointTest, simplePolygonTest, subtract2D, toFixed, transformPoint} from "utilities";
+import {FrameStore} from "stores";
 
 export const CURSOR_REGION_ID = 0;
 export const FOCUS_REGION_RATIO = 0.4;
+
+const CENTER_POINT_INDEX = 0;
+const SIZE_POINT_INDEX = 1;
+
+export enum RegionCoordinate {
+    Image = "Image",
+    World = "World"
+}
 
 export class RegionStore {
     readonly fileId: number;
@@ -17,6 +25,7 @@ export class RegionStore {
     @observable lineWidth: number;
     @observable dashLength: number;
     @observable regionType: CARTA.RegionType;
+    @observable coordinate: RegionCoordinate;
     // Shallow observable, since control point updates are atomic
     @observable.shallow controlPoints: Point2D[];
     @observable rotation: number;
@@ -29,8 +38,11 @@ export class RegionStore {
     static readonly MIN_LINE_WIDTH = 0.5;
     static readonly MAX_LINE_WIDTH = 10;
     static readonly MAX_DASH_LENGTH = 50;
+    static readonly TARGET_VERTEX_COUNT = 200;
 
     private readonly backendService: BackendService;
+    private readonly regionApproximationMap: Map<number, Point2D[]>;
+    public modifiedTimestamp: number;
 
     public static RegionTypeString(regionType: CARTA.RegionType): string {
         switch (regionType) {
@@ -78,7 +90,7 @@ export class RegionStore {
             case CARTA.RegionType.POINT:
             case CARTA.RegionType.RECTANGLE:
             case CARTA.RegionType.ELLIPSE:
-                return this.controlPoints[0];
+                return this.controlPoints[CENTER_POINT_INDEX];
             case CARTA.RegionType.POLYGON:
                 const bounds = minMax2D(this.controlPoints);
                 return midpoint2D(bounds.minPoint, bounds.maxPoint);
@@ -87,15 +99,35 @@ export class RegionStore {
         }
     }
 
+    @computed get size(): Point2D {
+        switch (this.regionType) {
+            case CARTA.RegionType.RECTANGLE:
+            case CARTA.RegionType.ELLIPSE:
+                return this.controlPoints[SIZE_POINT_INDEX];
+            case CARTA.RegionType.POLYGON:
+                return this.boundingBox;
+            default:
+                return {x: undefined, y: undefined};
+        }
+    }
+
+    @computed get wcsSize(): Point2D {
+        const frame = this.activeFrame;
+        if (!this.size || !frame?.validWcs) {
+            return {x: undefined, y: undefined};
+        }
+        return frame.getWcsSizeInArcsec(this.size);
+    }
+
     @computed get boundingBox(): Point2D {
         if (!this.isValid) {
             return {x: 0, y: 0};
         }
         switch (this.regionType) {
             case CARTA.RegionType.RECTANGLE:
-                return this.controlPoints[1];
+                return this.size;
             case CARTA.RegionType.ELLIPSE:
-                return scale2D(this.controlPoints[1], 2);
+                return scale2D(this.size, 2);
             case CARTA.RegionType.POLYGON:
                 const boundingBox = minMax2D(this.controlPoints);
                 return subtract2D(boundingBox.maxPoint, boundingBox.minPoint);
@@ -133,7 +165,7 @@ export class RegionStore {
                 return this.controlPoints.length === 1;
             case CARTA.RegionType.RECTANGLE:
             case CARTA.RegionType.ELLIPSE:
-                return this.controlPoints.length === 2 && this.controlPoints[1].x > 0 && this.controlPoints[1].y > 0;
+                return this.controlPoints.length === 2 && this.size.x > 0 && this.size.y > 0;
             case CARTA.RegionType.POLYGON:
                 return this.controlPoints.length >= 1;
             default:
@@ -152,7 +184,7 @@ export class RegionStore {
     }
 
     @computed get regionProperties(): string {
-        const point = this.controlPoints[0];
+        const point = this.center;
         const center = isFinite(point.x) && isFinite(point.y) ? `${toFixed(point.x, 1)}pix, ${toFixed(point.y, 1)}pix` : "Invalid";
 
         switch (this.regionType) {
@@ -160,11 +192,11 @@ export class RegionStore {
                 return `Point (pixel) [${center}]`;
             case CARTA.RegionType.RECTANGLE:
                 return `rotbox[[${center}], ` +
-                    `[${toFixed(this.controlPoints[1].x, 1)}pix, ${toFixed(this.controlPoints[1].y, 1)}pix], ` +
+                    `[${toFixed(this.size.x, 1)}pix, ${toFixed(this.size.y, 1)}pix], ` +
                     `${toFixed(this.rotation, 1)}deg]`;
             case CARTA.RegionType.ELLIPSE:
                 return `ellipse[[${center}], ` +
-                    `[${toFixed(this.controlPoints[1].x, 1)}pix, ${toFixed(this.controlPoints[1].y, 1)}pix], ` +
+                    `[${toFixed(this.size.x, 1)}pix, ${toFixed(this.size.y, 1)}pix], ` +
                     `${toFixed(this.rotation, 1)}deg]`;
             case CARTA.RegionType.POLYGON:
                 // TODO: Region properties
@@ -177,8 +209,36 @@ export class RegionStore {
         }
     }
 
-    constructor(backendService: BackendService, fileId: number, activeFrame: FrameStore,  controlPoints: Point2D[], regionType: CARTA.RegionType, regionId: number = -1,
+    public getRegionApproximation(astTransform: number): Point2D[] {
+        let approximatePoints = this.regionApproximationMap.get(astTransform);
+        if (!approximatePoints) {
+            if (this.regionType === CARTA.RegionType.POINT) {
+                approximatePoints = [transformPoint(astTransform, this.center, false)];
+            }
+            if (this.regionType === CARTA.RegionType.ELLIPSE) {
+                approximatePoints = getApproximateEllipsePoints(astTransform, this.center, this.size.y, this.size.x, this.rotation, RegionStore.TARGET_VERTEX_COUNT);
+            } else if (this.regionType === CARTA.RegionType.RECTANGLE) {
+                let halfWidth = this.size.x / 2;
+                let halfHeight = this.size.y / 2;
+                const rotation = this.rotation * Math.PI / 180.0;
+                const points: Point2D[] = [
+                    add2D(this.center, rotate2D({x: -halfWidth, y: -halfHeight}, rotation)),
+                    add2D(this.center, rotate2D({x: +halfWidth, y: -halfHeight}, rotation)),
+                    add2D(this.center, rotate2D({x: +halfWidth, y: +halfHeight}, rotation)),
+                    add2D(this.center, rotate2D({x: -halfWidth, y: +halfHeight}, rotation)),
+                ];
+                approximatePoints = getApproximatePolygonPoints(astTransform, points, RegionStore.TARGET_VERTEX_COUNT);
+            } else {
+                approximatePoints = getApproximatePolygonPoints(astTransform, this.controlPoints, RegionStore.TARGET_VERTEX_COUNT, !this.creating);
+            }
+            this.regionApproximationMap.set(astTransform, approximatePoints);
+        }
+        return approximatePoints;
+    }
+
+    constructor(backendService: BackendService, fileId: number, activeFrame: FrameStore, controlPoints: Point2D[], regionType: CARTA.RegionType, regionId: number = -1,
                 color: string = Colors.TURQUOISE5, lineWidth: number = 2, dashLength: number = 0, rotation: number = 0, name: string = "") {
+        makeObservable(this);
         this.fileId = fileId;
         this.activeFrame = activeFrame;
         this.controlPoints = controlPoints;
@@ -190,15 +250,33 @@ export class RegionStore {
         this.dashLength = dashLength;
         this.rotation = rotation;
         this.backendService = backendService;
+        if (activeFrame.validWcs) {
+            this.coordinate = RegionCoordinate.World;
+        } else {
+            this.coordinate = RegionCoordinate.Image;
+        }
+        this.regionApproximationMap = new Map<number, Point2D[]>();
         this.simplePolygonTest();
+        this.modifiedTimestamp = performance.now();
     }
 
     @action setRegionId = (id: number) => {
         this.regionId = id;
     };
 
+    @action setCenter = (p: Point2D, skipUpdate = false) => {
+        this.setControlPoint(CENTER_POINT_INDEX, p, skipUpdate);
+    };
+
+    @action setSize = (p: Point2D, skipUpdate = false) => {
+        this.setControlPoint(SIZE_POINT_INDEX, p, skipUpdate);
+    };
+
     @action setControlPoint = (index: number, p: Point2D, skipUpdate = false) => {
-        if (index >= 0 && index < this.controlPoints.length) {
+        // Check for control point NaN values
+        if (index >= 0 && index < this.controlPoints.length && !isAstBadPoint(p) && isFinite(p?.x) && isFinite(p?.y)) {
+            this.regionApproximationMap.clear();
+            this.modifiedTimestamp = performance.now();
             this.controlPoints[index] = p;
             if (!this.editing && !skipUpdate) {
                 this.updateRegion();
@@ -210,6 +288,19 @@ export class RegionStore {
     };
 
     @action setControlPoints = (points: Point2D[], skipUpdate = false, shapeChanged = true) => {
+        // Check for control point NaN values
+        if (!points.length) {
+            return;
+        }
+
+        for (const p of points) {
+            if (isAstBadPoint(p) || !isFinite(p?.x) || !isFinite(p?.y)) {
+                return;
+            }
+        }
+
+        this.regionApproximationMap.clear();
+        this.modifiedTimestamp = performance.now();
         this.controlPoints = points;
         if (shapeChanged && this.regionType === CARTA.RegionType.POLYGON) {
             this.simplePolygonTest();
@@ -232,6 +323,8 @@ export class RegionStore {
 
     @action setRotation = (angle: number, skipUpdate = false) => {
         this.rotation = (angle + 360) % 360;
+        this.regionApproximationMap.clear();
+        this.modifiedTimestamp = performance.now();
         if (!this.editing && !skipUpdate) {
             this.updateRegion();
         }
@@ -296,7 +389,7 @@ export class RegionStore {
     @action focusCenter = () => {
         if (this.activeFrame) {
             this.activeFrame.setCenter(this.center.x, this.center.y);
-            
+
             if (this.activeFrame.renderWidth < this.activeFrame.zoomLevel * this.boundingBox.x || this.activeFrame.renderHeight < this.activeFrame.zoomLevel * this.boundingBox.y) {
                 const zoomLevel = FOCUS_REGION_RATIO * Math.min(this.activeFrame.renderWidth / this.boundingBox.x, this.activeFrame.renderHeight / this.boundingBox.y);
                 this.activeFrame.setZoom(zoomLevel);
@@ -304,11 +397,17 @@ export class RegionStore {
         }
     };
 
+    @action setCoordinate = (coordinate: RegionCoordinate) => {
+        if (coordinate) {
+            this.coordinate = coordinate;
+        }
+    };
+
     // Update the region with the backend
     private updateRegion = () => {
         if (this.isValid) {
             if (this.regionId === CURSOR_REGION_ID && this.regionType === CARTA.RegionType.POINT) {
-                this.backendService.setCursor(this.fileId, this.controlPoints[0].x, this.controlPoints[0].y);
+                this.backendService.setCursor(this.fileId, this.center.x, this.center.y);
             } else {
                 this.backendService.setRegion(this.fileId, this.regionId, this).subscribe(ack => {
                     if (ack.success) {

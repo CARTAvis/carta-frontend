@@ -1,10 +1,10 @@
 import * as React from "react";
 import {observer} from "mobx-react";
-import {FormGroup, Switch, NumericInput, Button, HTMLSelect} from "@blueprintjs/core";
+import {FormGroup, Switch, Button, HTMLSelect} from "@blueprintjs/core";
 import {ColorResult} from "react-color";
-import {ColorPickerComponent, PlotTypeSelectorComponent, PlotType} from "../../../Shared";
+import {ColorPickerComponent, PlotTypeSelectorComponent, PlotType, SafeNumericInput} from "components/Shared";
 import {SWATCH_COLORS} from "utilities";
-import "./LinePlotSettingsPanelComponent.css";
+import "./LinePlotSettingsPanelComponent.scss";
 
 export class LinePlotSettingsPanelComponentProps {
     darkMode: boolean;
@@ -102,25 +102,25 @@ export class LinePlotSettingsPanelComponent extends React.Component<LinePlotSett
                             </FormGroup>
                     }
                     <FormGroup  inline={true} label="Line Width" labelInfo="(px)">
-                        <NumericInput
-                                placeholder="Line Width"
-                                min={LineSettings.MIN_WIDTH}
-                                max={LineSettings.MAX_WIDTH}
-                                value={props.lineWidth}
-                                stepSize={LineSettings.LINE_WIDTH_STEP_SIZE}
-                                disabled={props.plotType === PlotType.POINTS}
-                                onValueChange={(value: number) => props.setLineWidth(value)}
+                        <SafeNumericInput
+                            placeholder="Line Width"
+                            min={LineSettings.MIN_WIDTH}
+                            max={LineSettings.MAX_WIDTH}
+                            value={props.lineWidth}
+                            stepSize={LineSettings.LINE_WIDTH_STEP_SIZE}
+                            disabled={props.plotType === PlotType.POINTS}
+                            onValueChange={(value: number) => props.setLineWidth(value)}
                         />
                     </FormGroup>
                     <FormGroup  inline={true} label="Point Size" labelInfo="(px)">
-                        <NumericInput
-                                placeholder="Point Size"
-                                min={LineSettings.MIN_POINT_SIZE}
-                                max={LineSettings.MAX_POINT_SIZE}
-                                value={props.linePlotPointSize}
-                                stepSize={LineSettings.POINT_SIZE_STEP_SIZE}
-                                disabled={props.plotType !== PlotType.POINTS}
-                                onValueChange={(value: number) => props.setLinePlotPointSize(value)}
+                        <SafeNumericInput
+                            placeholder="Point Size"
+                            min={LineSettings.MIN_POINT_SIZE}
+                            max={LineSettings.MAX_POINT_SIZE}
+                            value={props.linePlotPointSize}
+                            stepSize={LineSettings.POINT_SIZE_STEP_SIZE}
+                            disabled={props.plotType !== PlotType.POINTS}
+                            onValueChange={(value: number) => props.setLinePlotPointSize(value)}
                         />
                     </FormGroup>
                     { typeof props.logScaleY !== "undefined" && props.handleLogScaleChanged &&
@@ -154,7 +154,7 @@ export class LinePlotSettingsPanelComponent extends React.Component<LinePlotSett
                     </FormGroup>
                     { typeof props.xMinVal !== "undefined"  && props.handleXMinChange &&
                     <FormGroup label={"X Min"} inline={true}>
-                        <NumericInput
+                        <SafeNumericInput
                             className="line-boundary"
                             value={props.xMinVal}
                             selectAllOnFocus={true}
@@ -167,7 +167,7 @@ export class LinePlotSettingsPanelComponent extends React.Component<LinePlotSett
                     }
                     { typeof props.xMaxVal !== "undefined"  && props.handleXMaxChange &&
                     <FormGroup label={"X Max"} inline={true}>
-                        <NumericInput
+                        <SafeNumericInput
                             className="line-boundary"
                             value={props.xMaxVal}
                             selectAllOnFocus={true}
@@ -180,8 +180,9 @@ export class LinePlotSettingsPanelComponent extends React.Component<LinePlotSett
                     }
                     { typeof props.yMinVal !== "undefined"  && props.handleYMinChange &&
                     <FormGroup label={"Y Min"} inline={true}>
-                        <NumericInput
+                        <SafeNumericInput
                             className="line-boundary"
+                            asyncControl={true}
                             value={props.yMinVal}
                             selectAllOnFocus={true}
                             buttonPosition={"none"}
@@ -193,8 +194,9 @@ export class LinePlotSettingsPanelComponent extends React.Component<LinePlotSett
                     }
                     { typeof props.yMaxVal !== "undefined"  && props.handleYMaxChange &&
                     <FormGroup label={"Y Max"} inline={true}>
-                        <NumericInput
+                        <SafeNumericInput
                             className="line-boundary"
+                            asyncControl={true}
                             value={props.yMaxVal}
                             selectAllOnFocus={true}
                             buttonPosition={"none"}

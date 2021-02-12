@@ -1,0 +1,166 @@
+.spectral-line-query-widget {
+    height: 100%;
+    width: 100%;
+    padding: 5px;
+
+    .bp3-dialog-body {
+        height: calc(100% - 65px);
+        margin: 0;
+
+        .bp3-numeric-input {
+            .bp3-input-group {
+                width: 80px;
+            }
+        }
+
+        .bp3-form-group {
+            margin: 0 10px 0 0;
+            .bp3-label {
+                text-align: right;
+            }
+        }
+
+        .query-panel {
+            height: 30px;
+            display: flex;
+            flex-direction: row;
+            flex-wrap: nowrap;
+            justify-content: space-between;
+            margin: 0;
+            padding: 0 5px 0 5px;
+            .query-panel-input {
+                display: flex;
+                flex-direction: row;
+            }
+
+            .intensity-limit {
+                .bp3-form-group {
+                    margin: 0;
+                }
+            }
+        }
+
+        .body-split-pane {
+            height: calc(100% - 30px) !important;
+            position: inherit !important;
+            min-height: calc(100% - 30px) !important;
+
+            .Resizer {
+                background: rgba(0, 0, 0, 0);
+                opacity: 0;
+                z-index: 1;
+                -moz-box-sizing: border-box;
+                -webkit-box-sizing: border-box;
+                box-sizing: border-box;
+                -moz-background-clip: padding;
+                -webkit-background-clip: padding;
+                background-clip: padding-box;
+            }
+            .Resizer.horizontal {
+                height: 11px;
+                margin: -5px 0;
+                border-top: 5px solid rgba(255, 255, 255, 0);
+                border-bottom: 5px solid rgba(255, 255, 255, 0);
+                cursor: row-resize;
+                width: 100%;
+            }
+            .Resizer.disabled {
+                cursor: not-allowed;
+            }
+            .Resizer.disabled:hover {
+                border-color: transparent;
+            }
+
+            .Pane1  {
+                min-height: 10px !important;
+            }
+
+            .Pane2  {
+                min-height: 10px !important;
+            }
+
+            .header-table-container {
+                overflow: auto;
+                height: 100%;
+                width: 100%;
+                padding: 5px;
+
+                .bp3-table-container {
+                    width: 100%;
+                    .bp3-table-header {
+                        line-height: 220%;
+                    }
+                    .header-table-cell {
+                        line-height: 250%;
+                    }
+                    .cell-switch-button{
+                        margin: 0;
+                    }
+                }
+            }
+
+            .result-table-container {
+                height: 100%;
+                width: 100%;
+                padding: 5px;
+
+                .redshift-panel {
+                    height: 30px;
+                    margin: 0;
+                    margin: 0 0 5px 0;
+                    display: flex;
+                }
+
+                .result-table {
+                    height: calc(100% - 35px);
+                    width: 100%;
+                    .bp3-table-container {
+                        width: 100%;
+                        .bp3-table-editable-name.bp3-editable-text::before {
+                            right: 0px;
+                            left: 0px;
+                        }
+                        .bp3-editable-text::before {
+                            right: 0px;
+                            left: 0px;
+                        }
+                        .column-filter {
+                            width: inherit;
+                            height: inherit;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    .bp3-dialog-footer {
+        height: 65px;
+        margin: 0px;
+        padding: 0 5px 5px 5px;
+        .bp3-button {
+            height: 30px;
+        }
+        .bp3-form-group {
+            .bp3-label {
+                margin: 0;
+            }
+        }
+
+        .result-table-info {
+            height: 20px;
+            padding: 0 5px 0 5px;
+            pre {
+                font-size: x-small;
+                margin: 0;
+            }
+        }
+    }
+
+    .query-loading-overlay {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        margin: -15px 0 0 -15px;
+    }
+}

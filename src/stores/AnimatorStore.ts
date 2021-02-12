@@ -1,18 +1,13 @@
-import {action, computed, observable} from "mobx";
+import {action, computed, observable, makeObservable} from "mobx";
 import {CARTA} from "carta-protobuf";
-import {AppStore, FrameStore} from "stores";
-import {clamp, GetRequiredTiles} from "utilities";
+import {AppStore, FrameStore, PreferenceStore} from "stores";
+import {clamp, GetRequiredTiles, getTransformedChannelList, mapToObject} from "utilities";
 import {FrameView, Point2D} from "models";
 
 export enum AnimationMode {
     CHANNEL = 0,
     STOKES = 1,
     FRAME = 2
-}
-
-export enum AnimationState {
-    STOPPED = 0,
-    PLAYING = 1
 }
 
 export enum PlayMode {
@@ -23,16 +18,28 @@ export enum PlayMode {
 }
 
 export class AnimatorStore {
+    private static staticInstance: AnimatorStore;
+
+    static get Instance() {
+        if (!AnimatorStore.staticInstance) {
+            AnimatorStore.staticInstance = new AnimatorStore();
+        }
+        return AnimatorStore.staticInstance;
+    }
+
     @observable frameRate: number;
     @observable maxFrameRate: number;
     @observable minFrameRate: number;
+    @observable step: number;
+    @observable maxStep: number;
+    @observable minStep: number;
     @observable animationMode: AnimationMode;
-    @observable animationState: AnimationState;
+    @observable animationActive: boolean;
     @observable playMode: PlayMode;
 
     @action setAnimationMode = (val: AnimationMode) => {
         // Prevent animation mode changes during playback
-        if (this.animationState === AnimationState.PLAYING) {
+        if (this.animationActive) {
             return;
         }
         this.animationMode = val;
@@ -42,15 +49,21 @@ export class AnimatorStore {
         this.frameRate = val;
     };
 
+    @action setStep = (val: number) => {
+        this.step = val;
+    };
+
     @action startAnimation = () => {
-        const frame = this.appStore.activeFrame;
+        const appStore = AppStore.Instance;
+        const preferenceStore = PreferenceStore.Instance;
+        const frame = appStore.activeFrame;
         if (!frame) {
             return;
         }
 
         if (this.animationMode === AnimationMode.FRAME) {
             clearInterval(this.animateHandle);
-            this.animationState = AnimationState.PLAYING;
+            this.animationActive = false;
             this.animate();
             this.animateHandle = setInterval(this.animate, this.frameInterval);
             return;
@@ -76,8 +89,21 @@ export class AnimatorStore {
             fileId: frame.frameInfo.fileId,
             tiles: tiles,
             compressionType: CARTA.CompressionType.ZFP,
-            compressionQuality: this.appStore.preferenceStore.animationCompressionQuality,
+            compressionQuality: preferenceStore.animationCompressionQuality
         };
+
+        // Calculate matched frames for the animation range
+        const matchedFrames = new Map<number, CARTA.IMatchedFrameList>();
+        for (const sibling of frame.spectralSiblings) {
+            const frameNumbers = getTransformedChannelList(
+                frame.fullWcsInfo,
+                sibling.fullWcsInfo,
+                preferenceStore.spectralMatchingType,
+                animationFrames.firstFrame.channel,
+                animationFrames.lastFrame.channel
+            );
+            matchedFrames.set(sibling.frameInfo.fileId, {frameNumbers});
+        }
 
         const animationMessage: CARTA.IStartAnimation = {
             fileId: frame.frameInfo.fileId,
@@ -88,30 +114,37 @@ export class AnimatorStore {
             requiredTiles: requiredTiles,
             looping: true,
             reverse: this.playMode === PlayMode.BOUNCING,
-            frameRate: this.frameRate
+            frameRate: this.frameRate,
+            matchedFrames: mapToObject(matchedFrames)
         };
 
-        this.appStore.backendService.startAnimation(animationMessage).subscribe(() => {
+        appStore.backendService.startAnimation(animationMessage).subscribe(() => {
             console.log("Animation started successfully");
         }, err => {
             console.log(err);
-            this.appStore.tileService.setAnimationEnabled(false);
+            appStore.tileService.setAnimationEnabled(false);
         });
-        this.appStore.tileService.setAnimationEnabled(true);
-        this.animationState = AnimationState.PLAYING;
+        appStore.tileService.setAnimationEnabled(true);
+        this.animationActive = true;
 
         clearTimeout(this.stopHandle);
-        this.stopHandle = setTimeout(this.stopAnimation, 1000 * 60 * this.appStore.preferenceStore.stopAnimationPlaybackMinutes);
+        this.stopHandle = setTimeout(this.stopAnimation, 1000 * 60 * preferenceStore.stopAnimationPlaybackMinutes);
     };
 
     @action stopAnimation = () => {
-        const frame = this.appStore.activeFrame;
+        // Ignore stop when not playing
+        if (!this.animationActive) {
+            return;
+        }
+
+        const appStore = AppStore.Instance;
+        const frame = appStore.activeFrame;
         if (!frame) {
             return;
         }
 
-        this.animationState = AnimationState.STOPPED;
-        this.appStore.tileService.setAnimationEnabled(false);
+        this.animationActive = false;
+        appStore.tileService.setAnimationEnabled(false);
 
         if (this.animationMode === AnimationMode.FRAME) {
             clearInterval(this.animateHandle);
@@ -125,42 +158,55 @@ export class AnimatorStore {
                 fileId: frame.frameInfo.fileId,
                 endFrame
             };
-            this.appStore.backendService.stopAnimation(stopMessage);
-            this.appStore.throttledSetChannels(frame.frameInfo.fileId, frame.requiredChannel, frame.requiredStokes);
+            appStore.backendService.stopAnimation(stopMessage);
+
+            frame.setChannels(frame.channel, frame.stokes, true);
+
+            const updates = [{frame, channel: frame.requiredChannel, stokes: frame.requiredStokes}];
+            // Update any sibling channels
+            frame.spectralSiblings.forEach(siblingFrame => {
+                updates.push({frame: siblingFrame, channel: siblingFrame.requiredChannel, stokes: siblingFrame.requiredStokes});
+            });
+            appStore.throttledSetChannels(updates);
         }
     };
 
     @action animate = () => {
-        if (this.animationState === AnimationState.PLAYING && this.animationMode === AnimationMode.FRAME) {
-            // Do animation
-            this.appStore.nextFrame();
+        if (this.animationActive && this.animationMode === AnimationMode.FRAME) {
+            AppStore.Instance.nextFrame();
         }
     };
 
-    private readonly appStore: AppStore;
     private animateHandle;
     private stopHandle;
 
-    constructor(appStore: AppStore) {
+    constructor() {
+        makeObservable(this);
         this.frameRate = 5;
         this.maxFrameRate = 15;
         this.minFrameRate = 1;
+        this.step = 1;
+        this.maxStep = 50;
+        this.minStep = 1;
         this.animationMode = AnimationMode.CHANNEL;
-        this.animationState = AnimationState.STOPPED;
+        this.animationActive = false;
         this.animateHandle = null;
         this.playMode = PlayMode.FORWARD;
-        this.appStore = appStore;
     }
 
     @computed get frameInterval() {
         return 1000.0 / clamp(this.frameRate, this.minFrameRate, this.maxFrameRate);
     }
 
+    @computed get serverAnimationActive() {
+        return this.animationActive && this.animationMode !== AnimationMode.FRAME;
+    }
+
     private genAnimationFrames = (frame: FrameStore): {
         startFrame: CARTA.IAnimationFrame,
         firstFrame: CARTA.IAnimationFrame,
         lastFrame: CARTA.IAnimationFrame,
-        deltaFrame: CARTA.IAnimationFrame,
+        deltaFrame: CARTA.IAnimationFrame
     } => {
         if (!frame) {
             return null;
@@ -175,20 +221,20 @@ export class AnimatorStore {
         if (this.animationMode === AnimationMode.CHANNEL) {
             firstFrame = {
                 channel: frame.animationChannelRange[0],
-                stokes: frame.stokes,
+                stokes: frame.stokes
             };
             lastFrame = {
                 channel: frame.animationChannelRange[1],
                 stokes: frame.stokes
             };
             deltaFrame = {
-                channel: 1,
+                channel: this.step,
                 stokes: 0
             };
         } else if (this.animationMode === AnimationMode.STOKES) {
             firstFrame = {
                 channel: frame.channel,
-                stokes: 0,
+                stokes: 0
             };
             lastFrame = {
                 channel: frame.channel,
@@ -196,7 +242,7 @@ export class AnimatorStore {
             };
             deltaFrame = {
                 channel: 0,
-                stokes: 1
+                stokes: this.step
             };
         }
 
@@ -206,30 +252,26 @@ export class AnimatorStore {
             case PlayMode.BOUNCING:
             default:
                 if (this.animationMode === AnimationMode.CHANNEL) {
-                    startFrame.channel = Math.max((startFrame.channel + 1) % frame.frameInfo.fileInfoExtended.depth, firstFrame.channel);
-                    if (startFrame.channel > lastFrame.channel) {
+                    if (startFrame.channel < firstFrame.channel || startFrame.channel > lastFrame.channel) {
                         startFrame.channel = firstFrame.channel;
                     }
                 } else if (this.animationMode === AnimationMode.STOKES) {
-                    startFrame.stokes = Math.max((startFrame.stokes + 1) % frame.frameInfo.fileInfoExtended.depth, firstFrame.stokes);
-                    if (startFrame.stokes > lastFrame.stokes) {
+                    if (startFrame.stokes < firstFrame.stokes || startFrame.stokes > lastFrame.stokes) {
                         startFrame.stokes = firstFrame.stokes;
                     }
                 }
                 break;
             case PlayMode.BACKWARD:
                 if (this.animationMode === AnimationMode.CHANNEL) {
-                    startFrame.channel = Math.min((startFrame.channel - 1) % frame.frameInfo.fileInfoExtended.depth, lastFrame.channel);
-                    if (startFrame.channel < firstFrame.channel) {
+                    if (startFrame.channel < firstFrame.channel || startFrame.channel > lastFrame.channel) {
                         startFrame.channel = lastFrame.channel;
                     }
-                    deltaFrame.channel = -1;
+                    deltaFrame.channel = -1 * this.step;
                 } else if (this.animationMode === AnimationMode.STOKES) {
-                    startFrame.stokes = Math.min((startFrame.stokes - 1) % frame.frameInfo.fileInfoExtended.depth, lastFrame.stokes);
-                    if (startFrame.stokes < firstFrame.stokes) {
+                    if (startFrame.stokes < firstFrame.stokes || startFrame.stokes > lastFrame.stokes) {
                         startFrame.stokes = lastFrame.stokes;
                     }
-                    deltaFrame.stokes = -1;
+                    deltaFrame.stokes = -1 * this.step;
                 }
                 break;
             case PlayMode.BLINK:
@@ -250,7 +292,7 @@ export class AnimatorStore {
             startFrame: startFrame,
             firstFrame: firstFrame,
             lastFrame: lastFrame,
-            deltaFrame: deltaFrame,
+            deltaFrame: deltaFrame
         };
     };
 }

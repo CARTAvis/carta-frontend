@@ -1,13 +1,15 @@
 import * as React from "react";
+import {observer} from "mobx-react";
 import * as _ from "lodash";
 import {ColorResult} from "react-color";
-import {FormGroup, H5, NumericInput} from "@blueprintjs/core";
-import {ColorPickerComponent} from "components/Shared";
+import {FormGroup, H5} from "@blueprintjs/core";
+import {ColorPickerComponent, SafeNumericInput} from "components/Shared";
 import {RegionStore} from "stores";
 import {CARTA} from "carta-protobuf";
 import {SWATCH_COLORS} from "utilities";
-import "./AppearanceForm.css";
+import "./AppearanceForm.scss";
 
+@observer
 export class AppearanceForm extends React.Component<{ region: RegionStore, darkTheme: boolean }> {
     private static readonly APPEARANCE_CHANGE_DELAY = 100;
 
@@ -44,7 +46,7 @@ export class AppearanceForm extends React.Component<{ region: RegionStore, darkT
                     </FormGroup>
                     {region.regionType !== CARTA.RegionType.POINT &&
                         <FormGroup  inline={true} label="Line Width" labelInfo="(px)"> 
-                            <NumericInput
+                            <SafeNumericInput
                                     placeholder="Line Width"
                                     min={RegionStore.MIN_LINE_WIDTH}
                                     max={RegionStore.MAX_LINE_WIDTH}
@@ -56,7 +58,7 @@ export class AppearanceForm extends React.Component<{ region: RegionStore, darkT
                     }
                     {region.regionType !== CARTA.RegionType.POINT &&
                         <FormGroup inline={true} label="Dash Length" labelInfo="(px)">  
-                            <NumericInput
+                            <SafeNumericInput
                                 placeholder="Dash Length"
                                 min={0}
                                 max={RegionStore.MAX_DASH_LENGTH}

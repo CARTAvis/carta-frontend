@@ -24,7 +24,7 @@ body {
     }
 }
 
-.gl-container {
+.gl-container-app {
     position: absolute;
     top: 48px;
     bottom: 5px;
@@ -49,3 +49,14 @@ body {
     z-index: 999 !important;
 }
 
+// Workaround for BlueprintJS bug
+.bp3-dark .bp3-button-group:not(.bp3-minimal) > .bp3-popover-wrapper:not(:last-child) .bp3-button, .bp3-dark .bp3-button-group:not(.bp3-minimal) > .bp3-button:not(:last-child) {
+    margin-right: -1px !important;
+}
+
+// hide plotly tips
+body {
+    div.plotly-notifier {
+        visibility: hidden;
+    }
+}

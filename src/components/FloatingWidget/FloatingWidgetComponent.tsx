@@ -4,12 +4,11 @@ import {observer} from "mobx-react";
 import {Rnd} from "react-rnd";
 import {Icon, Position, Tooltip} from "@blueprintjs/core";
 import {PlaceholderComponent} from "components";
-import {AppStore, WidgetConfig} from "stores";
-import "./FloatingWidgetComponent.css";
+import {AppStore, HelpStore, LayoutStore, WidgetConfig, CatalogStore} from "stores";
+import "./FloatingWidgetComponent.scss";
 
 class FloatingWidgetComponentProps {
     widgetConfig: WidgetConfig;
-    appStore: AppStore;
     showPinButton: boolean;
     showFloatingSettingsButton?: boolean;
     children?: any;
@@ -17,6 +16,7 @@ class FloatingWidgetComponentProps {
     isSelected?: boolean;
     onSelected?: () => void;
     onClosed?: () => void;
+    floatingWidgets?: number;
 }
 
 @observer
@@ -38,9 +38,10 @@ export class FloatingWidgetComponent extends React.Component<FloatingWidgetCompo
     }
 
     updateDragSource() {
-        if (this.props.appStore.layoutStore.dockedLayout && this.pinElementRef) {
+        const layoutStore = LayoutStore.Instance;
+        if (layoutStore.dockedLayout && this.pinElementRef) {
             // Check for existing drag sources
-            const layout = this.props.appStore.layoutStore.dockedLayout;
+            const layout = layoutStore.dockedLayout;
             const matchingSources = layout["_dragSources"].filter(d => d._itemConfig.id === this.props.widgetConfig.id);
             const existingSource = matchingSources.find(d => d._element[0] === this.pinElementRef);
             if (existingSource) {
@@ -56,7 +57,7 @@ export class FloatingWidgetComponent extends React.Component<FloatingWidgetCompo
                 title: this.props.widgetConfig.title,
                 id: this.props.widgetConfig.id,
                 isClosable: this.props.widgetConfig.isCloseable,
-                props: {appStore: this.props.appStore, id: this.props.widgetConfig.id, docked: true}
+                props: {id: this.props.widgetConfig.id, docked: true}
             };
 
             if (this.props.widgetConfig.type === PlaceholderComponent.WIDGET_CONFIG.type) {
@@ -69,19 +70,46 @@ export class FloatingWidgetComponent extends React.Component<FloatingWidgetCompo
         }
     }
 
-    constructor(props: FloatingWidgetComponentProps) {
-        super(props);
+    private onClickHelpButton = () => {
+        const centerX = this.rnd.draggable.state.x + this.rnd.resizable.size.width * 0.5;
+        if (Array.isArray(this.props.widgetConfig.helpType)) {
+            const widgetsStore = AppStore.Instance.widgetsStore;
+            const widgetParentType = this.props.widgetConfig.parentType;
+            const parentId = widgetsStore.floatingSettingsWidgets.get(this.props.widgetConfig.id);
+            let settingsTab: number;
+            switch (widgetParentType) {
+                case "spatial-profiler":
+                    settingsTab = widgetsStore.spatialProfileWidgets.get(parentId).settingsTabId;
+                    break;
+                case "spectral-profiler":
+                    settingsTab = widgetsStore.spectralProfileWidgets.get(parentId).settingsTabId;
+                    break;
+                case "catalog-overlay":
+                    const catalogStore = CatalogStore.Instance;
+                    const catalogFileId = catalogStore.catalogProfiles.get(parentId);
+                    if (catalogFileId) {
+                        const catalogWidgetStoreId = catalogStore.catalogWidgets.get(catalogFileId);
+                        settingsTab = widgetsStore.catalogWidgets.get(catalogWidgetStoreId).settingsTabId;
+                    }
+                    break;
+                case "stokes":
+                default:
+                    settingsTab = widgetsStore.stokesAnalysisWidgets.get(parentId).settingsTabId;
+                    break;
+            }
+            HelpStore.Instance.showHelpDrawer(this.props.widgetConfig.helpType[settingsTab], centerX);
+        } else {
+            HelpStore.Instance.showHelpDrawer(this.props.widgetConfig.helpType, centerX);
+        }
     }
 
     public render() {
         const headerHeight = 25;
-        const appStore = this.props.appStore;
-        const widgetsStore = appStore.widgetsStore;
+        const appStore = AppStore.Instance;
         let className = "floating-widget";
         let floatingContentClassName = "floating-content";
         let titleClass = this.props.isSelected ? "floating-header selected" : "floating-header";
         let buttonClass = "floating-header-button";
-
         if (appStore.darkTheme) {
             className += " bp3-dark";
             titleClass += " bp3-dark";
@@ -92,6 +120,7 @@ export class FloatingWidgetComponent extends React.Component<FloatingWidgetCompo
             floatingContentClassName = "floating-settings-content";
         }
         const widgetConfig = this.props.widgetConfig;
+        
         return (
             <Rnd
                 ref={c => this.rnd = c}
@@ -107,18 +136,15 @@ export class FloatingWidgetComponent extends React.Component<FloatingWidgetCompo
                 dragGrid={[25, 25]}
                 minWidth={widgetConfig.minWidth}
                 minHeight={widgetConfig.minHeight + headerHeight}
-                bounds={".gl-container"}
+                bounds={".gl-container-app"}
                 dragHandleClassName={"floating-title"}
                 onMouseDown={this.props.onSelected}
                 onDragStop={(e, data) => {
-                    widgetConfig["defaultX"] = data.lastX;
-                    widgetConfig["defaultY"] = data.lastY;
+                    widgetConfig.setDefaultPosition(data.lastX, data.lastY);
                 }}
                 onResizeStop={(e, direction, element, delta, position) => {
-                    widgetConfig["defaultX"] = position.x;
-                    widgetConfig["defaultY"] = position.y;
-                    widgetConfig.defaultWidth += delta.width;
-                    widgetConfig.defaultHeight += delta.height;
+                    widgetConfig.setDefaultPosition(position.x, position.y);
+                    widgetConfig.setDefaultSize(widgetConfig.defaultWidth + delta.width, widgetConfig.defaultHeight + delta.height);
                 }}
             >
                 <div className={titleClass}>
@@ -133,7 +159,7 @@ export class FloatingWidgetComponent extends React.Component<FloatingWidgetCompo
                     </div>
                     }
                     {widgetConfig.helpType &&
-                    <div className={buttonClass} onClick={() => appStore.helpStore.showHelpDrawer(widgetConfig.helpType)}>
+                    <div className={buttonClass} onClick={this.onClickHelpButton}>
                         <Tooltip content="Help" position={Position.BOTTOM_RIGHT}>
                             <Icon icon={"help"}/>
                         </Tooltip>

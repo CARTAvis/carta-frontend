@@ -1,10 +1,9 @@
-import {action, computed, observable} from "mobx";
+import {action, computed, observable, makeObservable} from "mobx";
 import {CARTA} from "carta-protobuf";
 import {Colors} from "@blueprintjs/core";
 import {PlotType, LineSettings} from "components/Shared";
-import {AppStore} from "../AppStore";
 import {RegionWidgetStore, RegionsType} from "./RegionWidgetStore";
-import {isColorValid} from "utilities";
+import tinycolor from "tinycolor2";
 
 export class HistogramWidgetStore extends RegionWidgetStore {
     @observable minX: number;
@@ -121,8 +120,9 @@ export class HistogramWidgetStore extends RegionWidgetStore {
         return diffList;
     }
 
-    constructor(appStore: AppStore) {
-        super(appStore, RegionsType.CLOSED);
+    constructor() {
+        super(RegionsType.CLOSED);
+        makeObservable(this);
         this.logScaleY = true;
         this.plotType = PlotType.STEPS;
         this.primaryLineColor = { colorHex: Colors.BLUE2, fixed: false };
@@ -160,8 +160,9 @@ export class HistogramWidgetStore extends RegionWidgetStore {
         if (!widgetSettings) {
             return;
         }
-        if (typeof widgetSettings.primaryLineColor === "string" && isColorValid(widgetSettings.primaryLineColor)) {
-            this.primaryLineColor.colorHex = widgetSettings.primaryLineColor;
+        const lineColor = tinycolor(widgetSettings.primaryLineColor);
+        if (lineColor.isValid()) {
+            this.primaryLineColor.colorHex = lineColor.toHexString();
         }
         if (typeof widgetSettings.lineWidth === "number" && widgetSettings.lineWidth >= LineSettings.MIN_WIDTH && widgetSettings.lineWidth <= LineSettings.MAX_WIDTH) {
             this.lineWidth = widgetSettings.lineWidth;

@@ -1,14 +1,32 @@
 import * as React from "react";
 import {observer} from "mobx-react";
-import {Button, ButtonGroup, Tooltip} from "@blueprintjs/core";
-import {AppStore, WidgetConfig} from "stores";
-import {AnimatorComponent, HistogramComponent, LayerListComponent, LogComponent, RegionListComponent, RenderConfigComponent, SpatialProfilerComponent, SpectralProfilerComponent, StatsComponent, StokesAnalysisComponent} from "components";
-import {CustomIcon} from "icons/CustomIcons";
-import "./ToolbarMenuComponent.css";
+import {AnchorButton, ButtonGroup, Tooltip} from "@blueprintjs/core";
+import {AppStore, RegionMode, DefaultWidgetConfig, WidgetsStore} from "stores";
+import {
+    AnimatorComponent,
+    HistogramComponent,
+    LayerListComponent,
+    LogComponent,
+    RegionListComponent,
+    RenderConfigComponent,
+    SpatialProfilerComponent,
+    SpectralProfilerComponent,
+    SpectralLineQueryComponent,
+    StatsComponent,
+    StokesAnalysisComponent,
+    CatalogOverlayComponent,
+    ImageViewLayer
+} from "components";
+import {RegionCreationMode} from "models";
+import {IconName} from "@blueprintjs/icons";
+import {CustomIcon, CustomIconName} from "icons/CustomIcons";
+import {CARTA} from "carta-protobuf";
+import "./ToolbarMenuComponent.scss";
+
 @observer
-export class ToolbarMenuComponent extends React.Component<{ appStore: AppStore }> {
-    public static get DRAGSOURCE_WIDGETCONFIG_MAP(): Map<string, WidgetConfig> {
-        return new Map<string, WidgetConfig>([
+export class ToolbarMenuComponent extends React.Component {
+    public static get DRAGSOURCE_WIDGETCONFIG_MAP(): Map<string, DefaultWidgetConfig> {
+        return new Map<string, DefaultWidgetConfig>([
             ["renderConfigButton", RenderConfigComponent.WIDGET_CONFIG],
             ["layerListButton", LayerListComponent.WIDGET_CONFIG],
             ["logButton", LogComponent.WIDGET_CONFIG],
@@ -16,75 +34,96 @@ export class ToolbarMenuComponent extends React.Component<{ appStore: AppStore }
             ["regionListButton", RegionListComponent.WIDGET_CONFIG],
             ["spatialProfilerButton", SpatialProfilerComponent.WIDGET_CONFIG],
             ["spectralProfilerButton", SpectralProfilerComponent.WIDGET_CONFIG],
+            ["spectralLineQueryButton", SpectralLineQueryComponent.WIDGET_CONFIG],
             ["statsButton", StatsComponent.WIDGET_CONFIG],
             ["histogramButton", HistogramComponent.WIDGET_CONFIG],
             ["stokesAnalysisButton", StokesAnalysisComponent.WIDGET_CONFIG],
+            ["catalogOverlayButton", CatalogOverlayComponent.WIDGET_CONFIG]
         ]);
     }
 
+    handleRegionTypeClicked = (type: CARTA.RegionType) => {
+        const appStore = AppStore.Instance;
+        appStore.activeFrame.regionSet.setNewRegionType(type);
+        appStore.activeFrame.regionSet.setMode(RegionMode.CREATING);
+    };
+
+    regionTooltip = (shape: string) => {
+        const regionModeIsCenter = AppStore.Instance.preferenceStore.regionCreationMode === RegionCreationMode.CENTER;
+        return (
+            <span><br/><i><small>
+                Click-and-drag to define a region ({regionModeIsCenter ? "center to corner" : "corner to corner"}).<br/>
+                Hold Ctrl to define a region ({regionModeIsCenter ? "corner to corner" : "center to corner"}).<br/>
+                Change the default creation mode in Preferences.<br/>
+                Hold shift key to create a {shape}.
+            </small></i></span>
+        );
+    };
+
     public render() {
+        const appStore = AppStore.Instance;
+        const dialogStore = appStore.dialogStore;
+
         let className = "toolbar-menu";
         let dialogClassName = "dialog-toolbar-menu";
-        if (this.props.appStore.darkTheme) {
+        let actionsClassName = "actions-toolbar-menu";
+        if (appStore.darkTheme) {
             className += " bp3-dark";
             dialogClassName += " bp3-dark";
+            actionsClassName += " bp3-dark";
         }
-
-        const dialogStore = this.props.appStore.dialogStore;
+        const isRegionCreating = appStore.activeFrame ? appStore.activeFrame.regionSet.mode === RegionMode.CREATING : false;
+        const newRegionType = appStore.activeFrame ? appStore.activeFrame.regionSet.newRegionType : CARTA.RegionType.RECTANGLE;
+        const regionButtonsDisabled = !appStore.activeFrame || appStore.activeLayer === ImageViewLayer.Catalog;
 
         const commonTooltip = <span><br/><i><small>Drag to place docked widget<br/>Click to place a floating widget</small></i></span>;
         return (
             <React.Fragment>
-                <ButtonGroup className={className}>
-                    <Tooltip content={<span>Region List Widget{commonTooltip}</span>}>
-                        <Button icon={"th-list"} id="regionListButton" onClick={this.props.appStore.widgetsStore.createFloatingRegionListWidget}/>
+                <ButtonGroup className={actionsClassName}>
+                    <Tooltip content={<span>Point</span>}>
+                        <AnchorButton icon={"symbol-square"} onClick={() => this.handleRegionTypeClicked(CARTA.RegionType.POINT)} active={isRegionCreating && newRegionType === CARTA.RegionType.POINT} disabled={regionButtonsDisabled}/>
                     </Tooltip>
-                    <Tooltip content={<span>Log Widget{commonTooltip}</span>}>
-                        <Button icon={"application"} id="logButton" onClick={this.props.appStore.widgetsStore.createFloatingLogWidget}/>
+                    <Tooltip content={<span>Rectangle{this.regionTooltip("square")}</span>}>
+                        <AnchorButton icon={"square"} onClick={() => this.handleRegionTypeClicked(CARTA.RegionType.RECTANGLE)} active={isRegionCreating && newRegionType === CARTA.RegionType.RECTANGLE} disabled={regionButtonsDisabled}/>
                     </Tooltip>
-                    <Tooltip content={<span>Spatial Profiler{commonTooltip}</span>}>
-                        <Button icon={"pulse"} id="spatialProfilerButton" className={"profiler-button"} onClick={this.props.appStore.widgetsStore.createFloatingSpatialProfilerWidget}>
-                            xy
-                        </Button>
+                    <Tooltip content={<span>Ellipse{this.regionTooltip("circle")}</span>}>
+                        <AnchorButton icon={"circle"} onClick={() => this.handleRegionTypeClicked(CARTA.RegionType.ELLIPSE)} active={isRegionCreating && newRegionType === CARTA.RegionType.ELLIPSE} disabled={regionButtonsDisabled}/>
                     </Tooltip>
-                    <Tooltip content={<span>Spectral Profiler{commonTooltip}</span>}>
-                        <Button icon={"pulse"} id="spectralProfilerButton" className={"profiler-button"} onClick={this.props.appStore.widgetsStore.createFloatingSpectralProfilerWidget}>
-                            &nbsp;z
-                        </Button>
-                    </Tooltip>
-                    <Tooltip content={<span>Statistics Widget{commonTooltip}</span>}>
-                        <Button icon={"calculator"} id="statsButton" onClick={this.props.appStore.widgetsStore.createFloatingStatsWidget}/>
-                    </Tooltip>
-                    <Tooltip content={<span>Histogram Widget{commonTooltip}</span>}>
-                        <Button icon={"timeline-bar-chart"} id="histogramButton" onClick={this.props.appStore.widgetsStore.createFloatingHistogramWidget}/>
-                    </Tooltip>
-                    <Tooltip content={<span>Animator Widget{commonTooltip}</span>}>
-                        <Button icon={"video"} id="animatorButton" onClick={this.props.appStore.widgetsStore.createFloatingAnimatorWidget}/>
-                    </Tooltip>
-                    <Tooltip content={<span>Render Config Widget{commonTooltip}</span>}>
-                        <Button icon={"style"} id="renderConfigButton" onClick={this.props.appStore.widgetsStore.createFloatingRenderWidget}/>
-                    </Tooltip>
-                    <Tooltip content={<span>Stokes Analysis Widget{commonTooltip}</span>}>
-                        <Button icon={"pulse"} id="stokesAnalysisButton" className={"profiler-button"} onClick={this.props.appStore.widgetsStore.createFloatingStokesWidget}>
-                            &nbsp;s
-                        </Button>
-                    </Tooltip>
-                    <Tooltip content={<span>Layer List Widget{commonTooltip}</span>}>
-                        <Button icon={"layers"} id="layerListButton" onClick={this.props.appStore.widgetsStore.createFloatingLayerListWidget}/>
+                    <Tooltip
+                        content={
+                            <span>Polygon<span><br/><i><small>Define control points with a series of clicks.<br/>
+                            Double-click to close the loop and finish polygon creation.<br/>
+                            Double-click on a control point to delete it.<br/>
+                            Click on a side to create a new control point.</small></i></span></span>
+                        }
+                    >
+                        <AnchorButton icon={"polygon-filter"} onClick={() => this.handleRegionTypeClicked(CARTA.RegionType.POLYGON)} active={isRegionCreating && newRegionType === CARTA.RegionType.POLYGON} disabled={regionButtonsDisabled}/>
                     </Tooltip>
                 </ButtonGroup>
+                <ButtonGroup className={className}>
+                    {Array.from(WidgetsStore.Instance.CARTAWidgets.keys()).map(widgetType => {
+                        const widgetConfig = WidgetsStore.Instance.CARTAWidgets.get(widgetType);
+                        const trimmedStr = widgetType.trim();
+                        return (
+                            <Tooltip key={`${trimmedStr}Tooltip`} content={<span>{widgetType}{commonTooltip}</span>}>
+                                <AnchorButton
+                                    icon={widgetConfig.isCustomIcon ? <CustomIcon icon={widgetConfig.icon as CustomIconName}/> : widgetConfig.icon as IconName}
+                                    id={`${trimmedStr}Button`}
+                                    onClick={widgetConfig.onClick}
+                                />
+                            </Tooltip>
+                        );
+                    })}
+                </ButtonGroup>
                 <ButtonGroup className={dialogClassName}>
-                    <Tooltip content={<span>File Info</span>}>
-                        <Button icon={"info-sign"} onClick={dialogStore.showFileInfoDialog} className={dialogStore.fileInfoDialogVisible ? "bp3-active" : ""}/>
+                    <Tooltip content={<span>File Header</span>}>
+                        <AnchorButton icon={"app-header"} onClick={dialogStore.showFileInfoDialog} active={dialogStore.fileInfoDialogVisible}/>
                     </Tooltip>
-                    <Tooltip content={<span>Preference</span>}>
-                        <Button icon={"properties"} onClick={dialogStore.showPreferenceDialog} className={dialogStore.preferenceDialogVisible ? "bp3-active" : ""}/>
-                    </Tooltip>
-                    <Tooltip content={<span>Overlay Settings</span>}>
-                        <Button icon={"settings"} onClick={dialogStore.showOverlaySettings} className={dialogStore.overlaySettingsDialogVisible ? "bp3-active" : ""}/>
+                    <Tooltip content={<span>Preferences</span>}>
+                        <AnchorButton icon={"wrench"} onClick={dialogStore.showPreferenceDialog} active={dialogStore.preferenceDialogVisible}/>
                     </Tooltip>
                     <Tooltip content={<span>Contours</span>}>
-                        <Button icon={<CustomIcon icon={"contour"}/>} onClick={dialogStore.showContourDialog} className={dialogStore.contourDialogVisible ? "bp3-active" : ""}/>
+                        <AnchorButton icon={<CustomIcon icon={"contour"}/>} onClick={dialogStore.showContourDialog} active={dialogStore.contourDialogVisible}/>
                     </Tooltip>
                 </ButtonGroup>
             </React.Fragment>

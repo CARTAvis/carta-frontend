@@ -9,25 +9,26 @@ import {RectangularRegionForm} from "./RectangularRegionForm/RectangularRegionFo
 import {EllipticalRegionForm} from "./EllipticalRegionForm/EllipticalRegionForm";
 import {AppearanceForm} from "./AppearanceForm/AppearanceForm";
 import {PolygonRegionForm} from "./PolygonRegionForm/PolygonRegionForm";
-import "./RegionDialogComponent.css";
+import {CustomIcon} from "icons/CustomIcons";
+import "./RegionDialogComponent.scss";
 
 @observer
-export class RegionDialogComponent extends React.Component<{ appStore: AppStore }> {
+export class RegionDialogComponent extends React.Component {
     private static readonly MissingRegionNode = <NonIdealState icon={"folder-open"} title={"No region selected"} description={"Select a region using the list or image view"}/>;
     private static readonly InvalidRegionNode = <NonIdealState icon={"error"} title={"Region not supported"} description={"The selected region does not have any editable properties"}/>;
 
     private handleDeleteClicked = () => {
-        const appStore = this.props.appStore;
+        const appStore = AppStore.Instance;
         appStore.dialogStore.hideRegionDialog();
         if (appStore.activeFrame && appStore.activeFrame.regionSet.selectedRegion) {
             appStore.deleteRegion(appStore.activeFrame.regionSet.selectedRegion);
         }
     };
 
-    private handleFocusClicked = () => this.props.appStore.activeFrame.regionSet.selectedRegion.focusCenter();
+    private handleFocusClicked = () => AppStore.Instance.activeFrame.regionSet.selectedRegion.focusCenter();
 
     public render() {
-        const appStore = this.props.appStore;
+        const appStore = AppStore.Instance;
 
         const dialogProps: IDialogProps = {
             icon: "info-sign",
@@ -50,15 +51,14 @@ export class RegionDialogComponent extends React.Component<{ appStore: AppStore 
             bodyContent = RegionDialogComponent.InvalidRegionNode;
         } else {
             region = appStore.activeFrame.regionSet.selectedRegion;
-            const frame = appStore.activeFrame;
-
-            dialogProps.title = `Editing ${region.nameString}`;
+            const frame = appStore.activeFrame.spatialReference ?? appStore.activeFrame;
+            dialogProps.title = `Editing ${region.nameString} (${frame.filename})`;
             switch (region.regionType) {
                 case CARTA.RegionType.POINT:
                     bodyContent = (
                         <React.Fragment>
                             <AppearanceForm region={region} darkTheme={appStore.darkTheme}/>
-                            <PointRegionForm region={region} wcsInfo={frame.validWcs ? frame.wcsInfo : 0}/>
+                            <PointRegionForm region={region} wcsInfo={frame.validWcs ? frame.wcsInfoForTransformation : 0}/>
                         </React.Fragment>
                     );
                     editableRegion = true;
@@ -67,7 +67,7 @@ export class RegionDialogComponent extends React.Component<{ appStore: AppStore 
                     bodyContent = (
                         <React.Fragment>
                             <AppearanceForm region={region} darkTheme={appStore.darkTheme}/>
-                            <RectangularRegionForm region={region} wcsInfo={frame.validWcs ? frame.wcsInfo : 0}/>
+                            <RectangularRegionForm region={region} frame={frame} wcsInfo={frame.validWcs ? frame.wcsInfoForTransformation : 0}/>
                         </React.Fragment>
                     );
                     editableRegion = true;
@@ -76,7 +76,7 @@ export class RegionDialogComponent extends React.Component<{ appStore: AppStore 
                     bodyContent = (
                         <React.Fragment>
                             <AppearanceForm region={region} darkTheme={appStore.darkTheme}/>
-                            <EllipticalRegionForm region={region} wcsInfo={frame.validWcs ? frame.wcsInfo : 0}/>
+                            <EllipticalRegionForm region={region} frame={frame} wcsInfo={frame.validWcs ? frame.wcsInfoForTransformation : 0}/>
                         </React.Fragment>
                     );
                     editableRegion = true;
@@ -85,7 +85,7 @@ export class RegionDialogComponent extends React.Component<{ appStore: AppStore 
                     bodyContent = (
                         <React.Fragment>
                             <AppearanceForm region={region} darkTheme={appStore.darkTheme}/>
-                            <PolygonRegionForm region={region} wcsInfo={frame.validWcs ? frame.wcsInfo : 0}/>
+                            <PolygonRegionForm region={region} wcsInfo={frame.validWcs ? frame.wcsInfoForTransformation : 0}/>
                         </React.Fragment>
                     );
                     editableRegion = true;
@@ -101,13 +101,13 @@ export class RegionDialogComponent extends React.Component<{ appStore: AppStore 
                     <AnchorButton intent={Intent.WARNING} minimal={true} icon={region.locked ? "lock" : "unlock"} onClick={region.toggleLock}/>
                 </Tooltip>
                 <Tooltip content={"Focus"}>
-                    <AnchorButton intent={Intent.WARNING} minimal={true} icon={"eye-open"} onClick={this.handleFocusClicked}/>
+                    <AnchorButton intent={Intent.WARNING} minimal={true} icon={<CustomIcon icon="center"/>} onClick={this.handleFocusClicked}/>
                 </Tooltip>
             </React.Fragment>
         );
 
         return (
-            <DraggableDialogComponent dialogProps={dialogProps} appStore={appStore} helpType={HelpType.REGION_DIALOG} defaultWidth={600} defaultHeight={450} minHeight={300} minWidth={400} enableResizing={true}>
+            <DraggableDialogComponent dialogProps={dialogProps} helpType={HelpType.REGION_DIALOG} defaultWidth={775} defaultHeight={475} minHeight={300} minWidth={400} enableResizing={true}>
                 <div className={Classes.DIALOG_BODY}>
                     {bodyContent}
                 </div>

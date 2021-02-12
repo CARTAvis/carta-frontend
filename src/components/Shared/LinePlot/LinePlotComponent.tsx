@@ -1,18 +1,19 @@
 import * as React from "react";
 import {observer} from "mobx-react";
-import {action, computed, observable} from "mobx";
+import {action, computed, makeObservable, observable} from "mobx";
 import {ESCAPE} from "@blueprintjs/core/lib/cjs/common/keys";
 import {Colors} from "@blueprintjs/core";
 import {ChartArea} from "chart.js";
 import {Scatter} from "react-chartjs-2";
 import ReactResizeDetector from "react-resize-detector";
 import {Arrow, Group, Layer, Line, Rect, Stage, Text} from "react-konva";
-import {PlotContainerComponent, TickType} from "./PlotContainer/PlotContainerComponent";
+import {PlotContainerComponent, TickType, MultiPlotProps} from "./PlotContainer/PlotContainerComponent";
 import {ToolbarComponent} from "./Toolbar/ToolbarComponent";
 import {StokesCoordinate} from "stores/widgets/StokesAnalysisWidgetStore";
 import {Point2D} from "models";
 import {clamp, toExponential} from "utilities";
-import "./LinePlotComponent.css";
+import {PlotType} from "components/Shared";
+import "./LinePlotComponent.scss";
 
 export enum ZoomMode {
     NONE,
@@ -25,6 +26,12 @@ export enum InteractionMode {
     NONE,
     SELECTING,
     PANNING
+}
+
+export enum LinePlotSelectingMode {
+    BOX,
+    HORIZONTAL,
+    VERTICAL
 }
 
 export interface LineMarker {
@@ -60,10 +67,8 @@ export class LinePlotComponentProps {
     darkMode?: boolean;
     imageName?: string;
     plotName?: string;
-    usePointSymbols?: boolean;
     tickTypeX?: TickType;
     tickTypeY?: TickType;
-    interpolateLines?: boolean;
     markers?: LineMarker[];
     showTopAxis?: boolean;
     topAxisTickFormatter?: (value: number, index: number, values: number[]) => string | number;
@@ -75,17 +80,14 @@ export class LinePlotComponentProps {
     graphZoomReset?: () => void;
     graphCursorMoved?: (x: number) => void;
     scrollZoom?: boolean;
-    multiPlotData?: Map<string, { x: number, y: number }[]>;
     showXAxisTicks?: boolean;
     showXAxisLabel?: boolean;
     showYAxisTicks?: boolean;
     showYAxisLabel?: boolean;
-    xZeroLineColor?: string;
     yZeroLineColor?: string;
     showLegend?: boolean;
     xTickMarkLength?: number;
-    multiPlotBorderColor?: Map<string, string>;
-    plotType?: string;
+    plotType?: PlotType;
     isGroupSubPlot?: boolean;
     zIndex?: boolean;
     pointRadius?: number;
@@ -94,6 +96,10 @@ export class LinePlotComponentProps {
     multiColorSingleLineColors?: Array<string>;
     multiColorMultiLinesColors?: Map<string, Array<string>>;
     borderWidth?: number;
+    selectingMode?: LinePlotSelectingMode;
+    setSelectedRange?: (min: number, max: number) => void;
+    order?: number;
+    multiPlotPropsMap?: Map<string, MultiPlotProps>;
 }
 
 // Maximum time between double clicks
@@ -104,6 +110,9 @@ const DRAG_THRESHOLD = 3;
 const MARKER_HITBOX_THICKNESS = 16;
 // Maximum pixel distance before turing an X or Y zoom into an XY zoom
 const XY_ZOOM_THRESHOLD = 20;
+
+// Default text size in pixels
+const DEFAULT_FONT_SIZE = 12;
 
 export const VERTICAL_RANGE_PADDING = 0.05;
 
@@ -149,6 +158,23 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
         } else {
             return ZoomMode.NONE;
         }
+    }
+
+    @computed get cursorShape(): string {
+        const isHovering = this.hoveredMarker !== undefined && !this.isSelecting;
+        if (this.isPanning || isHovering) {
+            return "move";
+        } else if (this.props.selectingMode === LinePlotSelectingMode.HORIZONTAL) {
+            return "ew-resize";
+        } else if (this.props.selectingMode === LinePlotSelectingMode.VERTICAL) {
+            return "ns-resize";
+        }
+        return "crosshair";
+    }
+
+    constructor(props: LinePlotComponentProps) {
+        super(props);
+        makeObservable(this);
     }
 
     private getValueForPixelX(pixel: number) {
@@ -322,7 +348,7 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
         if (mouseMoveDist.x < DRAG_THRESHOLD && mouseMoveDist.y < DRAG_THRESHOLD) {
             this.onStageClick(ev);
         } else {
-            if (this.props.data || (this.props.multiPlotData && this.props.multiPlotData.size > 0)) {
+            if (this.props.data || (this.props.multiPlotPropsMap && this.props.multiPlotPropsMap.size > 0)) {
                 this.stageClickStartX = undefined;
                 this.stageClickStartY = undefined;
                 if (this.isSelecting && this.zoomMode !== ZoomMode.NONE) {
@@ -337,13 +363,19 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
                     let minY = this.getValueForPixelY(maxCanvasSpace, this.props.logY);
                     let maxY = this.getValueForPixelY(minCanvasSpace, this.props.logY);
 
-                    if (this.zoomMode === ZoomMode.X) {
-                        this.props.graphZoomedX(minX, maxX);
-                    }
-                    if (this.zoomMode === ZoomMode.Y) {
-                        this.props.graphZoomedY(minY, maxY);
-                    } else if (this.zoomMode === ZoomMode.XY) {
-                        this.props.graphZoomedXY(minX, maxX, minY, maxY);
+                    if (this.props.setSelectedRange && this.props.selectingMode === LinePlotSelectingMode.HORIZONTAL) {
+                        this.props.setSelectedRange(minX, maxX);
+                    } else if (this.props.setSelectedRange && this.props.selectingMode === LinePlotSelectingMode.VERTICAL) {
+                        this.props.setSelectedRange(minY, maxY);
+                    } else {
+                        if (this.zoomMode === ZoomMode.X) {
+                            this.props.graphZoomedX(minX, maxX);
+                        }
+                        if (this.zoomMode === ZoomMode.Y) {
+                            this.props.graphZoomedY(minY, maxY);
+                        } else if (this.zoomMode === ZoomMode.XY) {
+                            this.props.graphZoomedXY(minX, maxX, minY, maxY);
+                        }
                     }
                 }
             }
@@ -360,7 +392,7 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
     }
 
     onStageMouseMove = (ev) => {
-        if (this.props.data || (this.props.multiPlotData && this.props.multiPlotData.size > 0)) {
+        if (this.props.data || (this.props.multiPlotPropsMap && this.props.multiPlotPropsMap.size > 0)) {
             const mouseEvent: MouseEvent = ev.evt;
             const chartArea = this.chartArea;
             let mousePosX = clamp(mouseEvent.offsetX, chartArea.left - 1, chartArea.right + 1);
@@ -433,7 +465,7 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
     };
 
     onStageWheel = (ev) => {
-        if ((this.props.data || (this.props.multiPlotData && this.props.multiPlotData.size > 0) ) && this.props.scrollZoom && this.props.graphZoomedX && this.chartArea) {
+        if ((this.props.data || (this.props.multiPlotPropsMap && this.props.multiPlotPropsMap.size > 0) ) && this.props.scrollZoom && this.props.graphZoomedX && this.chartArea) {
             const wheelEvent: WheelEvent = ev.evt;
             const chartArea = this.chartArea;
             const lineHeight = 15;
@@ -467,7 +499,7 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
         this.hideMouseEnterWidget();
     };
 
-    private getTimestamp() {
+    private static GetTimestamp() {
         const now = new Date();
         return `${now.getFullYear()}-${now.getMonth() + 1}-${now.getDate()}-${now.getHours()}-${now.getMinutes()}-${now.getSeconds()}`;
     }
@@ -515,9 +547,59 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
         ctx.fillRect(0, 0, composedCanvas.width, composedCanvas.height);
         ctx.drawImage(canvas, 0, 0);
 
+        // plot chart border
+        const chartBorder = this.genChartBorder();
+        if (chartBorder) {
+            ctx.beginPath();
+            ctx.strokeStyle = this.props.darkMode ? Colors.DARK_GRAY5 : Colors.LIGHT_GRAY1;
+            ctx.lineWidth = 1;
+            ctx.rect(chartBorder.x, chartBorder.y, chartBorder.width, chartBorder.height);
+            ctx.stroke();
+        }
+
+        // plot Mean/RMS
+        const meanRMS = this.genMeanRMSForPngPlot();
+        if (meanRMS?.mean) {
+            // plot mean
+            ctx.beginPath();
+            ctx.setLineDash([meanRMS.mean.dash]);
+            ctx.strokeStyle = meanRMS.mean.color;
+            ctx.lineWidth = 1;
+            ctx.moveTo(meanRMS.mean.xLeft, meanRMS.mean.y);
+            ctx.lineTo(meanRMS.mean.xRight, meanRMS.mean.y);
+            ctx.stroke();
+        }
+        if (meanRMS?.RMS) {
+            // plot RMS
+            ctx.fillStyle = meanRMS.RMS.color;
+            ctx.globalAlpha = meanRMS.RMS.opacity;
+            ctx.fillRect(meanRMS.RMS.xLeft, meanRMS.RMS.yTop, meanRMS.RMS.width, meanRMS.RMS.height);
+            ctx.globalAlpha = 1.0;
+        }
+
+        // plot spectral lines
+        const spectralLines = this.genSpectralLinesForPngPlot();
+        spectralLines?.forEach(spectralLine => {
+            // plot line
+            ctx.beginPath();
+            ctx.strokeStyle = spectralLine.color;
+            ctx.lineWidth = 1;
+            ctx.moveTo(spectralLine.x, spectralLine.yBottom);
+            ctx.lineTo(spectralLine.x, spectralLine.yTop);
+            ctx.stroke();
+            // plot rotated text
+            ctx.save();
+            ctx.font = "12px Arial";
+            ctx.translate(spectralLine.x, spectralLine.yBottom);
+            ctx.rotate(-Math.PI / 2);
+            ctx.fillStyle = spectralLine.color;
+            ctx.fillText(spectralLine.text, 0, 10);
+            ctx.restore();
+        });
+
         composedCanvas.toBlob((blob) => {
             const link = document.createElement("a") as HTMLAnchorElement;
-            link.download = `${imageName}-${plotName.replace(" ", "-")}-${this.getTimestamp()}.png`;
+            link.download = `${imageName}-${plotName.replace(" ", "-")}-${LinePlotComponent.GetTimestamp()}.png`;
             link.href = URL.createObjectURL(blob);
             link.dispatchEvent(new MouseEvent("click"));
         }, "image/png");
@@ -525,7 +607,6 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
         if (showPlotxAxes) {
             this.exportSubPlotImage(false);
         }
-
     };
 
     exportData = () => {
@@ -557,15 +638,25 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
                 } else {
                     rows = this.props.data.map(o => `${o.x}\t${toExponential(o.y, 10)}`);
                 }
-            } else if (this.props.multiPlotData && this.props.multiPlotData.size) {
-                this.props.multiPlotData.forEach((value, key) => {
+            }
+
+            if (this.props.multiPlotPropsMap && this.props.multiPlotPropsMap.size) {
+                this.props.multiPlotPropsMap.forEach((props, key) => {
                     if (key === StokesCoordinate.LinearPolarizationQ || key === StokesCoordinate.LinearPolarizationU) {
                         rows.push(`# ${key}\t`);
-                        value.forEach(o => {
+                    } else if (key.indexOf("smoothed") > -1) {
+                        if (props.exportData) {
+                            props.exportData.forEach((content, title) => {
+                                rows.push(`# ${title}: ${content}\t`);
+                            });
+                        }
+                        rows.push(`# smoothed_x\tsmoothed_y`);
+                    }
+
+                    if (props.data) {
+                        props.data.forEach(o => {
                             rows.push(`${o.x}\t${toExponential(o.y, 10)}`);
                         });
-                    } else {
-                        rows = value.map(o => `${o.x}\t${toExponential(o.y, 10)}`);
                     }
                 });
             }
@@ -573,21 +664,41 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
 
         const tsvData = `data:text/tab-separated-values;charset=utf-8,${comment}\n${header}\n${rows.join("\n")}\n`;
 
-        const dataURL = encodeURI(tsvData).replace(/\#/g, "%23");
+        const dataURL = encodeURI(tsvData).replace(/#/g, "%23");
 
         const a = document.createElement("a") as HTMLAnchorElement;
         a.href = dataURL;
-        a.download = `${imageName}-${plotName.replace(" ", "-")}-${this.getTimestamp()}.tsv`;
+        a.download = `${imageName}-${plotName.replace(" ", "-")}-${LinePlotComponent.GetTimestamp()}.tsv`;
         a.dispatchEvent(new MouseEvent("click"));
     };
 
-    private genHorizontalLines = (marker: LineMarker, isHovering: boolean, markerColor: string, markerOpacity: number, valueCanvasSpace: number) => {
+    private calcMarkerBox = (marker: LineMarker): {lowerBound: number, height: number} => {
+        if (!marker) {
+            return undefined;
+        }
+        const chartArea = this.chartArea;
+        const thickness = this.getPixelForValueY(marker.value - marker.width / 2.0, this.props.logY) - this.getPixelForValueY(marker.value + marker.width / 2.0, this.props.logY);
+        const valueCanvasSpace = this.getCanvasSpaceY(marker.value)
+        const lowerBound = clamp(valueCanvasSpace - thickness, chartArea.top, chartArea.bottom);
+        const upperBound = clamp(valueCanvasSpace + thickness, chartArea.top, chartArea.bottom);
+        const hight = upperBound - lowerBound;
+        return {
+            lowerBound: lowerBound,
+            height: hight
+        };
+    };
+
+    private genHorizontalLine = (marker: LineMarker, isHovering: boolean, markerColor: string, markerOpacity: number, valueCanvasSpace: number) => {
         const chartArea = this.chartArea;
         const lineWidth = chartArea.right - chartArea.left;
         const isHoverMarker = isHovering && this.hoveredMarker.id === marker.id;
         const midPoint = (chartArea.left + chartArea.right) / 2.0;
 
         let lineSegments = null;
+        // TODO: sort out hover marker, marker with width, draggable marker
+        if (!marker.width && (valueCanvasSpace < Math.floor(chartArea.top - 1) || valueCanvasSpace > Math.ceil(chartArea.bottom + 1))) {
+            return undefined;
+        }
         if (isHoverMarker) {
             const arrowSize = MARKER_HITBOX_THICKNESS / 1.5;
             const arrowStart = 3;
@@ -598,12 +709,10 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
             ];
         } else {
             if (marker.width) {
-                const thickness = this.getPixelForValueY(marker.value - marker.width / 2.0, this.props.logY) - this.getPixelForValueY(marker.value + marker.width / 2.0, this.props.logY);
-                let lowerBound = clamp(valueCanvasSpace - thickness, chartArea.top, chartArea.bottom);
-                let upperBound = clamp(valueCanvasSpace + thickness, chartArea.top, chartArea.bottom);
-                let croppedThickness = upperBound - lowerBound;
+                const boxInfo = this.calcMarkerBox(marker);
+                const yTop = boxInfo?.lowerBound - valueCanvasSpace;
                 lineSegments = [(
-                    <Rect listening={false} key={0} x={chartArea.left} y={lowerBound - valueCanvasSpace} width={lineWidth} height={croppedThickness} fill={markerColor} opacity={markerOpacity}/>
+                    <Rect listening={false} key={0} x={chartArea.left} y={yTop} width={lineWidth} height={boxInfo?.height} fill={markerColor} opacity={markerOpacity}/>
                 )];
             } else {
                 lineSegments = [<Line listening={false} key={0} points={[chartArea.left, 0, chartArea.right, 0]} strokeWidth={1} stroke={markerColor} opacity={markerOpacity} dash={marker.dash}/>];
@@ -643,13 +752,17 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
         }
     };
 
-    private genVerticalLines = (marker: LineMarker, isHovering: boolean, markerColor: string, markerOpacity: number, valueCanvasSpace: number) => {
+    private genVerticalLine = (marker: LineMarker, isHovering: boolean, markerColor: string, markerOpacity: number, valueCanvasSpace: number, isShowingLabels?: boolean) => {
         const chartArea = this.chartArea;
         const lineHeight = chartArea.bottom - chartArea.top;
         const isHoverMarker = isHovering && this.hoveredMarker.id === marker.id;
         const midPoint = (chartArea.top + chartArea.bottom) / 2.0;
 
         let lineSegments = null;
+        // TODO: sort out hover marker, marker with width, draggable marker
+        if (!marker.width && (valueCanvasSpace < Math.floor(chartArea.left - 1) || valueCanvasSpace > Math.ceil(chartArea.right + 1))) {
+            return undefined;
+        }
         if (isHoverMarker) {
             const arrowSize = MARKER_HITBOX_THICKNESS / 1.5;
             const arrowStart = 3;
@@ -671,7 +784,7 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
                 lineSegments = [<Line listening={false} key={0} points={[0, chartArea.top, 0, chartArea.bottom]} strokeWidth={1} stroke={markerColor} opacity={markerOpacity} dash={marker.dash}/>];
             }
         }
-        if (marker.label) {
+        if (isShowingLabels && marker.label) {
             lineSegments.push(<Text align={"left"} fill={markerColor} key={lineSegments.length} text={marker.label} rotation={-90} x={0} y={chartArea.bottom}/>);
         }
 
@@ -713,26 +826,30 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
 
         let lines = [];
         if (this.props.markers && this.props.markers.length && chartArea) {
+            // TODO: refactoring to pull out this logic from horizontal lines
+            const chartAreaWidth = Math.abs(chartArea.right - chartArea.left);
+            const verticalLabelsTotalWidth = this.props.markers.length * DEFAULT_FONT_SIZE;
+            const isShowingVerticalLabels = (verticalLabelsTotalWidth / 2) < chartAreaWidth;
             for (let i = 0; i < this.props.markers.length; i++) {
                 const marker = this.props.markers[i];
                 const markerColor = marker.color || (this.props.darkMode ? Colors.RED4 : Colors.RED2);
                 const markerOpacity = (marker.isMouseMove && (!this.isMouseEntered || this.isMarkerDragging)) ? 0 : (marker.opacity || 1);
                 if (marker.horizontal) {
                     let valueCanvasSpace = this.getCanvasSpaceY(marker.value);
-                    if (valueCanvasSpace < Math.floor(chartArea.top - 1) || valueCanvasSpace > Math.ceil(chartArea.bottom + 1) || isNaN(valueCanvasSpace)) {
+                    if (isNaN(valueCanvasSpace)) {
                         continue;
                     }
-                    lines.push(this.genHorizontalLines(marker, isHovering, markerColor, markerOpacity, valueCanvasSpace));
+                    lines.push(this.genHorizontalLine(marker, isHovering, markerColor, markerOpacity, valueCanvasSpace));
                 } else {
                     let valueCanvasSpace = this.getCanvasSpaceX(marker.value);
-                    if (valueCanvasSpace < Math.floor(chartArea.left - 1) || valueCanvasSpace > Math.ceil(chartArea.right + 1) || isNaN(valueCanvasSpace)) {
+                    if (isNaN(valueCanvasSpace)) {
                         continue;
                     }
                     if (marker.interactionMarker) {
                         const markerOpacityInteraction = (!marker.isMouseMove && (this.isMouseEntered)) ? 0 : (marker.opacity || 1);
-                        lines.push(this.genVerticalLines(marker, isHovering, markerColor, markerOpacityInteraction, valueCanvasSpace));
+                        lines.push(this.genVerticalLine(marker, isHovering, markerColor, markerOpacityInteraction, valueCanvasSpace));
                     } else {
-                        lines.push(this.genVerticalLines(marker, isHovering, markerColor, markerOpacity, valueCanvasSpace));
+                        lines.push(this.genVerticalLine(marker, isHovering, markerColor, markerOpacity, valueCanvasSpace, isShowingVerticalLabels));
                     }
                 }
             }
@@ -786,10 +903,24 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
         return selectionRect;
     };
 
+    private genChartBorder = (): {x: number, y: number, width: number, height: number} => {
+        const chartArea = this.chartArea;
+        let border = undefined;
+        if (chartArea) {
+            border = {
+                x: (Math.floor(chartArea.left) - 0.5) * devicePixelRatio,
+                y: (Math.floor(chartArea.top) - 0.5) * devicePixelRatio,
+                width: Math.ceil(chartArea.right - chartArea.left + 1) * devicePixelRatio,
+                height: Math.ceil(chartArea.bottom - chartArea.top + 1) * devicePixelRatio
+            }
+        }
+        return border;
+    };
+
     private genBorderRect = () => {
         const chartArea = this.chartArea;
         let borderRect = null;
-        if (this.chartArea) {
+        if (chartArea) {
             borderRect = (
                 // Shift by half a pixel for sharp 1px lines
                 <Rect
@@ -806,12 +937,64 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
         return borderRect;
     };
 
+    private genMeanRMSForPngPlot = (): {
+        mean: {color: string, dash: number, y: number, xLeft: number, xRight: number},
+        RMS: {color: string, opacity: number, xLeft: number, yTop: number, width: number, height: number}
+    } => {
+        let meanRMS = {
+            mean: undefined,
+            RMS: undefined
+        };
+        const chartArea = this.chartArea;
+        this.props.markers?.forEach(marker => {
+            const canvasY = this.getCanvasSpaceY(marker.value);
+            if (marker?.id.match(/^marker-mean/) && !isNaN(canvasY)) {
+                meanRMS.mean = {
+                    color: marker?.color,
+                    dash: marker.dash,
+                    y: canvasY * devicePixelRatio,
+                    xLeft: chartArea.left * devicePixelRatio,
+                    xRight: chartArea.right * devicePixelRatio
+                };
+            }
+            if (marker?.id.match(/^marker-rms/) && !isNaN(canvasY)) {
+                const boxInfo = this.calcMarkerBox(marker);
+                meanRMS.RMS = {
+                    color: marker?.color,
+                    opacity: marker?.opacity,
+                    xLeft: chartArea.left * devicePixelRatio,
+                    yTop: boxInfo?.lowerBound * devicePixelRatio,
+                    width: (chartArea.right - chartArea.left) * devicePixelRatio,
+                    height: boxInfo?.height * devicePixelRatio
+                };
+            }
+        });
+        return meanRMS;
+    };
+
+    private genSpectralLinesForPngPlot = (): {color: string, text: string, x: number, yBottom: number, yTop: number}[] => {
+        let spectralLines = [];
+        const chartArea = this.chartArea;
+        this.props.markers?.forEach(marker => {
+            const canvasX = this.getCanvasSpaceX(marker.value);
+            if (marker?.id.match(/^spectral-line-/) && !isNaN(canvasX)) {
+                spectralLines.push({
+                    color: marker?.color,
+                    text: marker?.label,
+                    x: canvasX,
+                    yBottom: chartArea.bottom,
+                    yTop: chartArea.top
+                });
+            }
+        });
+        return spectralLines;
+    };
+
     render() {
-        const isHovering = this.hoveredMarker !== undefined && !this.isSelecting;
         return (
             <div
                 className={"line-plot-component"}
-                style={{cursor: this.isPanning || isHovering ? "move" : "crosshair"}}
+                style={{cursor: this.cursorShape}}
                 onKeyDown={this.onKeyDown}
                 onMouseEnter={this.onMouseEnter}
                 onMouseMove={this.onMouseMove}
@@ -849,7 +1032,7 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
                 }
                 <ToolbarComponent
                     darkMode={this.props.darkMode}
-                    visible={this.isMouseEntered && (this.props.data !== undefined || (this.props.multiPlotData && this.props.multiPlotData.size > 0))}
+                    visible={this.isMouseEntered && (this.props.data !== undefined || (this.props.multiPlotPropsMap && this.props.multiPlotPropsMap.size > 0))}
                     exportImage={this.exportImage}
                     exportData={this.exportData}
                 />

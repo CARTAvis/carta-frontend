@@ -1,0 +1,16 @@
+.idea
+.vscode
+node_modules
+src
+public
+protobuf
+wasm_src
+wasm_libs
+config
+tsconfig*.json
+tslint.json
+*.sh
+images.d.ts
+.env*
+.gitmodules
+carta-frontend-*.tgz

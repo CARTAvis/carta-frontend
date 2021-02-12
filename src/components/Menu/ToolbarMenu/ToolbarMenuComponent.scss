@@ -1,19 +1,19 @@
 @import "../../../../node_modules/@blueprintjs/core/lib/scss/variables.scss";
 
+.actions-toolbar-menu {
+    margin: 4px 4px 4px 10px;
+    user-select: none;
+
+    &.bp3-dark {
+        .bp3-button-text {
+            color: $gray5;
+        }
+    }
+}
+
 .toolbar-menu {
     margin: 4px 4px 4px 10px;
     user-select: none;
-    .profiler-button {
-        width: 30px;
-
-        .bp3-button-text {
-            position: absolute;
-            top: 0;
-            left: 16px;
-            font-size: smaller;
-            color: $gray1;
-        }
-    }
 
     &.bp3-dark {
         .bp3-button-text {
@@ -25,4 +25,10 @@
 .dialog-toolbar-menu {
     margin: 4px auto 4px 10px;
     user-select: none;
+
+    &.bp3-dark {
+        .bp3-button-text {
+            color: $gray5;
+        }
+    }
 }

@@ -1,18 +1,20 @@
 import * as React from "react";
 import {observer} from "mobx-react";
-import {action, computed, observable} from "mobx";
+import {action, computed, makeObservable, observable} from "mobx";
 import {ESCAPE} from "@blueprintjs/core/lib/cjs/common/keys";
 import {Colors} from "@blueprintjs/core";
 import {Scatter} from "react-chartjs-2";
 import ReactResizeDetector from "react-resize-detector";
 import {Layer, Stage, Group, Line, Ring, Rect} from "react-konva";
 import {ChartArea} from "chart.js";
-import {PlotContainerComponent, TickType} from "components/Shared/LinePlot/PlotContainer/PlotContainerComponent";
+import {PlotContainerComponent, TickType, MultiPlotProps} from "components/Shared/LinePlot/PlotContainer/PlotContainerComponent";
 import {ToolbarComponent} from "components/Shared/LinePlot/Toolbar/ToolbarComponent";
 import {ZoomMode, InteractionMode} from "components/Shared/LinePlot/LinePlotComponent";
+import { PlotType } from "../PlotTypeSelector/PlotTypeSelectorComponent";
 import {Point2D} from "models";
 import {clamp, toExponential} from "utilities";
-import "./ScatterPlotComponent.css";
+import "./ScatterPlotComponent.scss";
+
 
 type Point3D = { x: number, y: number, z?: number };
 
@@ -35,10 +37,8 @@ export class ScatterPlotComponentProps {
     darkMode?: boolean;
     imageName?: string;
     plotName?: string;
-    usePointSymbols?: boolean;
     tickTypeX?: TickType;
     tickTypeY?: TickType;
-    interpolateLines?: boolean;
     showTopAxis?: boolean;
     topAxisTickFormatter?: (value: number, index: number, values: number[]) => string | number;
     graphClicked?: (x: number, y: number, data: { x: number, y: number, z?: number }[]) => void;
@@ -50,7 +50,6 @@ export class ScatterPlotComponentProps {
     graphCursorMoved?: (x: number, y: number) => void;
     mouseEntered?: (value: boolean) => void;
     scrollZoom?: boolean;
-    multiPlotData?: Map<string, { x: number, y: number }[]>;
     colorRangeEnd?: number;
     showXAxisTicks?: boolean;
     showXAxisLabel?: boolean;
@@ -58,7 +57,7 @@ export class ScatterPlotComponentProps {
     yZeroLineColor?: string;
     showLegend?: boolean;
     xTickMarkLength?: number;
-    plotType?: string;
+    plotType?: PlotType;
     dataBackgroundColor?: Array<string>;
     isGroupSubPlot?: boolean;
     zIndex?: boolean;
@@ -67,14 +66,13 @@ export class ScatterPlotComponentProps {
     zeroLineWidth?: number;
     cursorNearestPoint?: { x: number, y: number };
     updateChartArea?: (chartArea: ChartArea) => void;
+    multiPlotPropsMap?: Map<string, MultiPlotProps>;
 }
 
 // Maximum time between double clicks
 const DOUBLE_CLICK_THRESHOLD = 300;
 // Minimum pixel distance before turning a click into a drag event
 const DRAG_THRESHOLD = 3;
-// Thickness of the rectangle used for detecting hits
-const MARKER_HITBOX_THICKNESS = 16;
 // Maximum pixel distance before turing an X or Y zoom into an XY zoom
 const XY_ZOOM_THRESHOLD = 20;
 // indicator default Radius
@@ -106,6 +104,11 @@ export class ScatterPlotComponent extends React.Component<ScatterPlotComponentPr
 
     @computed get isPanning() {
         return this.interactionMode === InteractionMode.PANNING;
+    }
+
+    constructor(props: ScatterPlotComponentProps) {
+        super(props);
+        makeObservable(this);
     }
 
     onPlotRefUpdated = (plotRef) => {
@@ -346,7 +349,7 @@ export class ScatterPlotComponent extends React.Component<ScatterPlotComponentPr
 
         const tsvData = `data:text/tab-separated-values;charset=utf-8,${comment}\n${header}\n${rows.join("\n")}\n`;
 
-        const dataURL = encodeURI(tsvData).replace(/\#/g, "%23");
+        const dataURL = encodeURI(tsvData).replace(/#/g, "%23");
 
         const a = document.createElement("a") as HTMLAnchorElement;
         a.href = dataURL;
@@ -355,7 +358,7 @@ export class ScatterPlotComponent extends React.Component<ScatterPlotComponentPr
     };
 
     onStageMouseMove = (ev) => {
-        if (this.props.data || this.props.multiPlotData) {
+        if (this.props.data || this.props.multiPlotPropsMap?.size > 0) {
             const mouseEvent: MouseEvent = ev.evt;
             const chartArea = this.chartArea;
             let mousePosX = clamp(mouseEvent.offsetX, chartArea.left - 1, chartArea.right + 1);
@@ -615,7 +618,7 @@ export class ScatterPlotComponent extends React.Component<ScatterPlotComponentPr
                 }
                 <ToolbarComponent
                     darkMode={this.props.darkMode}
-                    visible={this.isMouseEntered && (this.props.data !== undefined || this.props.multiPlotData !== undefined)}
+                    visible={this.isMouseEntered && (this.props.data !== undefined || (this.props.multiPlotPropsMap && this.props.multiPlotPropsMap.size > 0))}
                     exportImage={this.exportImage}
                     exportData={this.exportData}
                 />

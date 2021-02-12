@@ -1,8 +1,7 @@
-import {CARTA} from "carta-protobuf";
+export const SPEED_OF_LIGHT = 299792458;
 
 export function velocityFromFrequency(freq: number, refFreq: number): number {
-    const c = 299792458;
-    return c * (1.0 - freq / refFreq);
+    return SPEED_OF_LIGHT * (1.0 - freq / refFreq);
 }
 
 export function velocityStringFromFrequency(freq: number, refFreq: number): string {
@@ -14,8 +13,7 @@ export function velocityStringFromFrequency(freq: number, refFreq: number): stri
 }
 
 export function frequencyFromVelocity(velocity: number, refFreq: number): number {
-    const c = 299792458;
-    return refFreq * (1.0 - velocity / c);
+    return refFreq * (1.0 - velocity / SPEED_OF_LIGHT);
 }
 
 export function frequencyStringFromVelocity(velocity: number, refFreq: number): string {
@@ -67,4 +65,63 @@ export function formattedExponential(val: number, digits: number, unit: string =
         valString = `${valString} ${unit}`;
     }
     return valString;
+}
+
+export function formattedFrequency(freqGHz: number): string {
+    if (!isFinite(freqGHz)) {
+        return null;
+    }
+
+    let freqString = "";
+    if (freqGHz < 3) {
+        freqString = `${toFixed(freqGHz * 1000, 4)} MHz`;
+    } else if (freqGHz >= 3 && freqGHz < 1000) {
+        freqString = `${toFixed(freqGHz, 4)} GHz`;
+    } else {
+        freqString = `${toFixed(freqGHz / 1000, 4)} THz`;
+    }
+    return freqString;
+}
+
+// TODO: possibly move to region class since they are the only callers
+export function formattedArcsec(arcsec: number, decimals: number = -1): string {
+    if (!isFinite(arcsec)) {
+        return null;
+    }
+
+    let arcString = "";
+    if (arcsec < 120) {
+        arcString = `${decimals < 0 ? toFixed(arcsec, 6) : toFixed(arcsec, decimals)}"`;
+    } else if (arcsec >= 120 && arcsec < 7200) {
+        arcString = `${decimals < 0 ? toFixed(arcsec / 60.0, 3) : toFixed(arcsec / 60.0, decimals)}'`;
+    } else {
+        arcString = `${decimals < 0 ? toFixed(arcsec / 3600.0, 3) : toFixed(arcsec / 3600.0, decimals)} deg`;
+    }
+    return arcString;
+}
+
+export function wavelengthToFrequency(meter: number) { // return in Hz
+    if (!isFinite(meter) || meter === 0 || meter === null) {
+        return undefined;
+    }
+    return SPEED_OF_LIGHT / meter;
+}
+
+export function getValueFromArcsecString(formattedString: string): number {
+    const trimmedString = formattedString?.trim();
+    if (!trimmedString) {
+        return null;
+    }
+
+    const arcsecRegExp = /^(\d+(\.\d+)?)"?$/;
+    const arcminRegExp = /^(\d+(\.\d+)?)'$/;
+    const degreeRegExp = /^(\d+(\.\d+)?)\s*deg(ree)?$/i;
+    if (arcsecRegExp.test(trimmedString)) {
+        return parseFloat(RegExp.$1);
+    } else if (arcminRegExp.test(trimmedString)) {
+        return parseFloat(RegExp.$1) * 60;
+    } else if (degreeRegExp.test(trimmedString)) {
+        return parseFloat(RegExp.$1) * 3600;
+    }
+    return null;
 }

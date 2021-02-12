@@ -9,4 +9,31 @@
     .active-row-cell {
         font-weight: bold;
     }
+
+    .name-cell {
+        cursor: pointer;
+    }
+
+    .bp3-table-column-name {
+        font-size: 12px;
+    }
+
+    .bp3-button {
+        font-size: 11px;
+        &.bp3-small {
+            min-height: 13px;
+        }
+        .bp3-button-text {
+            line-height: 13px;
+        }
+        &.outlined {
+            border: solid 1px;
+        }
+        border: solid 1px transparent;
+        padding: 0 4px;
+    }
+
+    .bp3-popover-wrapper + .bp3-popover-wrapper {
+        margin-left: 2px;
+    }
 }

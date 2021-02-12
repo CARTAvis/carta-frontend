@@ -1,0 +1,25 @@
+.spectral-settings {
+    margin: 20px;
+
+    .bp3-form-group {
+        &:first-of-type {
+            margin-left: 0px;
+        }
+    }
+
+    .bp3-form-group .bp3-label {
+        text-align: left;
+    }
+
+    .conversion-tab-panel {
+        .bp3-form-group .bp3-label {
+            width: 6em;
+        }
+    }
+
+    .styling-tab-panel, .moment-tab-panel {
+        .bp3-form-group .bp3-label {
+            width: 8em;
+        }
+    }
+}

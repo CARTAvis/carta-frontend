@@ -1,8 +1,8 @@
 import * as React from "react";
 import {observer} from "mobx-react";
-import {FormGroup, Switch, NumericInput} from "@blueprintjs/core";
-import {ColormapComponent} from "../../ColormapComponent/ColormapComponent";
-import "./ScatterPlotSettingsPanelComponent.css";
+import {FormGroup, Switch} from "@blueprintjs/core";
+import {ColormapComponent, SafeNumericInput} from "components/Shared";
+import "./ScatterPlotSettingsPanelComponent.scss";
 
 export class ScatterPlotSettingsPanelComponentProps {
     colorMap: string;
@@ -48,23 +48,23 @@ export class ScatterPlotSettingsPanelComponent extends React.Component<ScatterPl
                     />
                     </FormGroup>
                     <FormGroup  inline={true} label="Symbol Size" labelInfo="(px)">
-                        <NumericInput
-                                placeholder="Symbol Size"
-                                min={ScatterSettings.MIN_POINT_SIZE}
-                                max={ScatterSettings.MAX_POINT_SIZE}
-                                value={props.scatterPlotPointSize}
-                                stepSize={ScatterSettings.POINT_SIZE_STEP_SIZE}
-                                onValueChange={(value: number) => props.setScatterPlotPointSize(value)}
+                        <SafeNumericInput
+                            placeholder="Symbol Size"
+                            min={ScatterSettings.MIN_POINT_SIZE}
+                            max={ScatterSettings.MAX_POINT_SIZE}
+                            value={props.scatterPlotPointSize}
+                            stepSize={ScatterSettings.POINT_SIZE_STEP_SIZE}
+                            onValueChange={(value: number) => props.setScatterPlotPointSize(value)}
                         />
                     </FormGroup>
                     <FormGroup  inline={true} label="Transparency">
-                        <NumericInput
-                                placeholder="transparency"
-                                min={ScatterSettings.MIN_TRANSPARENCY}
-                                max={ScatterSettings.MAX_TRANSPARENCY}
-                                value={props.pointTransparency}
-                                stepSize={ScatterSettings.TRANSPARENCY_STEP_SIZE}
-                                onValueChange={(value: number) => props.setPointTransparency(value)}
+                        <SafeNumericInput
+                            placeholder="transparency"
+                            min={ScatterSettings.MIN_TRANSPARENCY}
+                            max={ScatterSettings.MAX_TRANSPARENCY}
+                            value={props.pointTransparency}
+                            stepSize={ScatterSettings.TRANSPARENCY_STEP_SIZE}
+                            onValueChange={(value: number) => props.setPointTransparency(value)}
                         />
                     </FormGroup>
                     <FormGroup inline={true} label={"Equal Axes"}>

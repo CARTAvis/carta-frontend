@@ -1,9 +1,10 @@
-import {action, computed, observable} from "mobx";
+import tinycolor from "tinycolor2";
+import {action, computed, observable, makeObservable} from "mobx";
 import {Colors} from "@blueprintjs/core";
-import {FrameStore} from "../FrameStore";
+import {FrameStore, ProfileSmoothingStore} from "stores";
 import {CARTA} from "carta-protobuf";
 import {PlotType, LineSettings} from "components/Shared";
-import {isColorValid} from "utilities";
+import {SpatialProfilerSettingsTabs} from "components";
 
 export class SpatialProfileWidgetStore {
     @observable fileId: number;
@@ -25,8 +26,10 @@ export class SpatialProfileWidgetStore {
     @observable lineWidth: number;
     @observable linePlotPointSize: number;
     @observable linePlotInitXYBoundaries: { minXVal: number, maxXVal: number, minYVal: number, maxYVal: number };
+    readonly smoothingStore: ProfileSmoothingStore;
+    @observable settingsTabId: SpatialProfilerSettingsTabs;
 
-    private static ValidCoordinates = ["x", "y", "Ix", "Iy", "Qx", "Qy", "Ux", "Uy", "Vx", "Vz"];
+    private static ValidCoordinates = ["x", "y", "Ix", "Iy", "Qx", "Qy", "Ux", "Uy", "Vx", "Vy"];
 
     @action setFileId = (fileId: number) => {
         // Reset zoom when changing between files
@@ -107,7 +110,12 @@ export class SpatialProfileWidgetStore {
         this.isMouseMoveIntoLinePlots = val;
     };
 
+    @action setSettingsTabId = (val: SpatialProfilerSettingsTabs) => {
+        this.settingsTabId = val;
+    }
+
     constructor(coordinate: string = "x", fileId: number = -1, regionId: number = 0) {
+        makeObservable(this);
         // Describes which data is being visualised
         this.coordinate = coordinate;
         this.fileId = fileId;
@@ -122,6 +130,8 @@ export class SpatialProfileWidgetStore {
         this.linePlotPointSize = 1.5;
         this.lineWidth = 1;
         this.linePlotInitXYBoundaries = { minXVal: 0, maxXVal: 0, minYVal: 0, maxYVal: 0 };
+        this.smoothingStore = new ProfileSmoothingStore();
+        this.settingsTabId = SpatialProfilerSettingsTabs.STYLING;
     }
 
     @computed get isAutoScaledX() {
@@ -167,7 +177,6 @@ export class SpatialProfileWidgetStore {
                 }
             }
         });
-
         return updatedRequirements;
     }
 
@@ -269,8 +278,9 @@ export class SpatialProfileWidgetStore {
         if (typeof widgetSettings.coordinate === "string" && SpatialProfileWidgetStore.ValidCoordinates.includes(widgetSettings.coordinate)) {
             this.coordinate = widgetSettings.coordinate;
         }
-        if (typeof widgetSettings.primaryLineColor === "string" && isColorValid(widgetSettings.primaryLineColor)) {
-            this.primaryLineColor.colorHex = widgetSettings.primaryLineColor;
+        const lineColor = tinycolor(widgetSettings.primaryLineColor);
+        if (lineColor.isValid()) {
+            this.primaryLineColor.colorHex = lineColor.toHexString();
         }
         if (typeof widgetSettings.lineWidth === "number" && widgetSettings.lineWidth >= LineSettings.MIN_WIDTH && widgetSettings.lineWidth <= LineSettings.MAX_WIDTH) {
             this.lineWidth = widgetSettings.lineWidth;

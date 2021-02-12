@@ -1,12 +1,20 @@
-import * as AST from "ast_wrapper";
-import {action, autorun, computed, observable} from "mobx";
-import {Colors} from "@blueprintjs/core";
+import { action, autorun, computed, observable, makeObservable } from "mobx";
+import {Colors, NumberRange} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import {PlotType, LineSettings} from "components/Shared";
-import {RegionWidgetStore, RegionsType} from "./RegionWidgetStore";
-import {AppStore, FrameStore} from "..";
-import {isColorValid} from "utilities";
-import {DEFAULT_UNIT, GenCoordinateLabel, IsSpectralSystemValid, IsSpectralTypeValid, IsSpectralUnitValid, SpectralSystem, SpectralType, SpectralUnit, SPECTRAL_COORDS_SUPPORTED} from "models";
+import {RegionWidgetStore, RegionsType, ACTIVE_FILE_ID} from "./RegionWidgetStore";
+import {SpectralLine} from "./SpectralLineQueryWidgetStore";
+import {AppStore} from "stores";
+import {ProfileSmoothingStore} from "stores/ProfileSmoothingStore";
+import {SpectralSystem, SpectralType, SpectralUnit} from "models";
+import tinycolor from "tinycolor2";
+import {SpectralProfilerSettingsTabs} from "components";
+
+export enum MomentSelectingMode {
+    NONE = 1,
+    CHANNEL,
+    MASK
+}
 
 export class SpectralProfileWidgetStore extends RegionWidgetStore {
     @observable coordinate: string;
@@ -17,20 +25,28 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
     @observable maxY: number;
     @observable cursorX: number;
     @observable channel: number;
-    @observable spectralType: SpectralType;
-    @observable spectralUnit: SpectralUnit;
-    @observable spectralSystem: SpectralSystem;
-    @observable channelValues:  Array<number>;
     @observable markerTextVisible: boolean;
     @observable isMouseMoveIntoLinePlots: boolean;
+    @observable isStreamingData: boolean;
+    @observable isHighlighted: boolean;
+    @observable private spectralLinesMHz: SpectralLine[];
 
-    // settings 
+    // style settings
     @observable plotType: PlotType;
     @observable meanRmsVisible: boolean;
     @observable primaryLineColor: { colorHex: string, fixed: boolean };
     @observable lineWidth: number;
     @observable linePlotPointSize: number;
     @observable linePlotInitXYBoundaries: { minXVal: number, maxXVal: number, minYVal: number, maxYVal: number };
+    readonly smoothingStore: ProfileSmoothingStore;
+    @observable settingsTabId: SpectralProfilerSettingsTabs;
+
+    // moment settings
+    @observable selectingMode: MomentSelectingMode;
+    @observable channelValueRange: NumberRange;
+    @observable momentMask: CARTA.MomentMask;
+    @observable maskRange: NumberRange;
+    @observable selectedMoments: CARTA.Moment[];
 
     public static StatsTypeString(statsType: CARTA.StatsType) {
         switch (statsType) {
@@ -46,6 +62,8 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
                 return "Min";
             case CARTA.StatsType.Max:
                 return "Max";
+            case CARTA.StatsType.Extrema:
+                return "Extrema";
             case CARTA.StatsType.RMS:
                 return "RMS";
             case CARTA.StatsType.SumSq:
@@ -59,7 +77,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
 
     private static ValidStatsTypes = [
         CARTA.StatsType.Sum, CARTA.StatsType.FluxDensity, CARTA.StatsType.Mean, CARTA.StatsType.Sigma,
-        CARTA.StatsType.Min, CARTA.StatsType.Max, CARTA.StatsType.RMS, CARTA.StatsType.SumSq
+        CARTA.StatsType.Min, CARTA.StatsType.Max, CARTA.StatsType.Extrema, CARTA.StatsType.RMS, CARTA.StatsType.SumSq
     ];
 
     @action setRegionId = (fileId: number, regionId: number) => {
@@ -83,18 +101,133 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
     };
 
     @action setSpectralCoordinate = (coordStr: string) => {
-        if (SPECTRAL_COORDS_SUPPORTED.has(coordStr)) {
-            const coord: {type: SpectralType, unit: SpectralUnit} = SPECTRAL_COORDS_SUPPORTED.get(coordStr);
-            this.spectralType = coord.type;
-            this.spectralUnit = coord.unit;
+        const frame = this.effectiveFrame;
+        if (frame && frame.spectralCoordsSupported && frame.spectralCoordsSupported.has(coordStr)) {
+            const coord: {type: SpectralType, unit: SpectralUnit} = frame.spectralCoordsSupported.get(coordStr);
+            frame.spectralType = coord.type;
+            frame.spectralUnit = coord.unit;
             this.clearXBounds();
         }
     };
 
     @action setSpectralSystem = (specsys: SpectralSystem) => {
-        this.spectralSystem = specsys;
-        this.clearXBounds();
+        const frame = this.effectiveFrame;
+        if (frame && frame.spectralSystemsSupported && frame.spectralSystemsSupported.includes(specsys)) {
+            frame.spectralSystem = specsys;
+            this.clearXBounds();
+        }
     };
+
+    @action setMomentRangeSelectingMode = (mode: MomentSelectingMode) => {
+        if (mode) {
+            this.selectingMode = mode;
+        }
+    };
+
+    @action clearMomentRangeSelectingMode = () => {
+        this.selectingMode = MomentSelectingMode.NONE;
+    };
+
+    @action setSelectedChannelRange = (min: number, max: number) => {
+        if (isFinite(min) && isFinite(max)) {
+            this.channelValueRange[0] = min;
+            this.channelValueRange[1] = max;
+        }
+        this.selectingMode = MomentSelectingMode.NONE;
+    };
+
+    @action setSelectedMaskRange = (min: number, max: number) => {
+        if (isFinite(min) && isFinite(max)) {
+            this.maskRange[0] = min;
+            this.maskRange[1] = max;
+        }
+        this.selectingMode = MomentSelectingMode.NONE;
+    };
+
+    @action private updateRanges = () => {
+        const frame = this.effectiveFrame;
+        if (frame && frame.channelValueBounds) {
+            this.channelValueRange[0] = frame.channelValueBounds.min;
+            this.channelValueRange[1] = frame.channelValueBounds.max;
+            this.maskRange[0] = 0;
+            this.maskRange[1] = 1;
+        }
+    };
+
+    @action setMomentMask = (momentMask: CARTA.MomentMask) => {
+            this.momentMask = momentMask;
+    };
+
+    @action selectMoment = (selected: CARTA.Moment) => {
+        if (!this.selectedMoments.includes(selected)) {
+            this.selectedMoments.push(selected);
+        }
+    };
+
+    @action deselectMoment = (deselected: CARTA.Moment) => {
+        if (this.selectedMoments.includes(deselected)) {
+            this.selectedMoments = this.selectedMoments.filter((momentType) => momentType !== deselected);
+        }
+    };
+
+    @action removeMomentByIndex = (removeIndex: number) => {
+        if (removeIndex >= 0 && removeIndex < this.selectedMoments.length) {
+            this.selectedMoments = this.selectedMoments.filter((momentType, index) => index !== removeIndex);
+        }
+    };
+
+    @action clearSelectedMoments = () => {
+        this.selectedMoments = [];
+    };
+
+    @action isMomentSelected = (momentType: CARTA.Moment): boolean => {
+        return this.selectedMoments.includes(momentType);
+    };
+
+    @action requestMoment = () => {
+        const frame = this.effectiveFrame;
+        const channelIndex1 = frame.findChannelIndexByValue(this.channelValueRange[0]);
+        const channelIndex2 = frame.findChannelIndexByValue(this.channelValueRange[1]);
+        if (frame && isFinite(channelIndex1) && isFinite(channelIndex2)) {
+            const channelIndexRange: CARTA.IIntBounds = {
+                min: channelIndex1 <= channelIndex2 ? channelIndex1 : channelIndex2,
+                max: channelIndex1 <= channelIndex2 ? channelIndex2 : channelIndex1
+            };
+            const requestMessage: CARTA.IMomentRequest = {
+                fileId: frame.frameInfo.fileId,
+                moments: this.selectedMoments,
+                axis: CARTA.MomentAxis.SPECTRAL,
+                regionId: (this.fileId === ACTIVE_FILE_ID && this.effectiveRegionId === 0) ? -1 : this.effectiveRegionId, // request image when region dropdown is active with no region selected
+                spectralRange: channelIndexRange,
+                mask: this.momentMask,
+                pixelRange: new CARTA.FloatBounds({min: this.maskRange[0], max: this.maskRange[1]})
+            };
+            frame.resetMomentRequestState();
+            frame.setIsRequestingMoments(true);
+            AppStore.Instance.requestMoment(requestMessage, frame);
+        }
+    };
+
+    @action requestingMomentCancelled = () => {
+        const frame = this.effectiveFrame;
+        if (frame) {
+            AppStore.Instance.cancelRequestingMoment(frame.frameInfo.fileId);
+        }
+    };
+
+    @action setHighlighted = (isHighlighted: boolean) => {
+        this.isHighlighted = isHighlighted;
+     };
+ 
+     @action addSpectralLines = (spectralLines: SpectralLine[]) => {
+         if (spectralLines) {
+             this.spectralLinesMHz = spectralLines;
+         }
+     };
+ 
+     @action clearSpectralLines = () => {
+         this.spectralLinesMHz = [];
+     };
 
     @action setXBounds = (minVal: number, maxVal: number) => {
         this.minX = minVal;
@@ -154,11 +287,22 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         this.isMouseMoveIntoLinePlots = val;
     };
 
-    constructor(appStore: AppStore, coordinate: string = "z") {
-        super(appStore, RegionsType.CLOSED_AND_POINT);
+    @action updateStreamingDataStatus = (val: boolean) => {
+        this.isStreamingData = val;
+    };
+
+    @action setSettingsTabId = (tabId: SpectralProfilerSettingsTabs) => {
+        this.settingsTabId = tabId;
+    };
+
+    constructor(coordinate: string = "z") {
+        super(RegionsType.CLOSED_AND_POINT);
+        makeObservable<SpectralProfileWidgetStore, "spectralLinesMHz" | "updateRanges">(this);
         this.coordinate = coordinate;
         this.statsType = CARTA.StatsType.Mean;
-        this.initSpectralSettings();
+        this.isStreamingData = false;
+        this.isHighlighted = false;
+        this.spectralLinesMHz = [];
 
         // Describes how the data is visualised
         this.plotType = PlotType.STEPS;
@@ -169,64 +313,19 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         this.lineWidth = 1;
         this.linePlotInitXYBoundaries = { minXVal: 0, maxXVal: 0, minYVal: 0, maxYVal: 0 };
 
-        // if type/unit/specsys changes, trigger transformation
+        this.smoothingStore = new ProfileSmoothingStore();
+        this.selectingMode = MomentSelectingMode.NONE;
+        this.channelValueRange = [0, 0];
+        this.momentMask = CARTA.MomentMask.None;
+        this.maskRange = [0, 1];
+        this.selectedMoments = [CARTA.Moment.INTEGRATED_OF_THE_SPECTRUM];
+        this.settingsTabId = SpectralProfilerSettingsTabs.CONVERSION;
+
         autorun(() => {
-            const frame = this.appStore.activeFrame;
-            if (frame && frame.channelInfo && this.isSpectralSettingsSupported) {
-                if (this.isCoordChannel) {
-                    this.channelValues = frame.channelInfo.indexes;
-                } else {
-                    this.channelValues = this.isSpectralPropsEqual ? frame.channelInfo.values : this.convertSpectral(frame.spectralFrame, this.spectralType, this.spectralUnit, this.spectralSystem, frame.channelInfo.values);
-                }
+            if (this.effectiveFrame) {
+                this.updateRanges();
             }
         });
-    }
-
-    private convertSpectral = (spectralFrame: number, type: SpectralType, unit: SpectralUnit, system: SpectralSystem, x: Array<number>): Array<number> => {
-        if (!spectralFrame || !type || !unit || !system || !x) {
-            return null;
-        }
-        let tx: Array<number> = new Array<number>(x.length);
-        for (let i = 0; i < x.length; i++) {
-            tx[i] = AST.transformSpectralPoint(this.appStore.activeFrame.spectralFrame, this.spectralType, this.spectralUnit, this.spectralSystem, x[i]);
-        }
-        return tx;
-    };
-
-    public initSpectralSettings = () => {
-        const frame = this.appStore.activeFrame;
-        if (frame && frame.spectralInfo && this.isSpectralSettingsSupported) {
-            this.spectralType = frame.spectralInfo.channelType.code as SpectralType;
-            this.spectralUnit = DEFAULT_UNIT.get(this.spectralType);
-            this.spectralSystem = frame.spectralInfo.specsys as SpectralSystem;
-        } else {
-            this.spectralType = null;
-            this.spectralUnit = null;
-            this.spectralSystem = null;
-        }
-
-        this.channelValues = null;
-        if (frame && frame.channelInfo) {
-            if (this.isCoordChannel) {
-                this.channelValues = frame.channelInfo.indexes;
-            } else {
-                this.channelValues = this.isSpectralPropsEqual ? frame.channelInfo.values : this.convertSpectral(frame.spectralFrame, this.spectralType, this.spectralUnit, this.spectralSystem, frame.channelInfo.values);
-            }
-        }
-    };
-
-    // check the type, unit, specsys are the same between widget and active frame
-    @computed get isSpectralPropsEqual(): boolean {
-        const appStore = this.appStore;
-        const frame = appStore.activeFrame;
-        let result = false;
-        if (frame && frame.spectralInfo) {
-            const isTypeEqual = frame.spectralInfo.channelType.code === (this.spectralType as string);
-            const isUnitEqual = frame.spectralInfo.channelType.unit === (this.spectralUnit as string);
-            const isSpecsysEqual = frame.spectralInfo.specsys === (this.spectralSystem as string);
-            result = isTypeEqual && isUnitEqual && isSpecsysEqual;
-        }
-        return result;
     }
 
     @computed get isAutoScaledX() {
@@ -237,48 +336,59 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         return (this.minY === undefined || this.maxY === undefined);
     }
 
-    @computed get spectralCoordinate() {
-        return this.spectralType && this.spectralUnit ? GenCoordinateLabel(this.spectralType, this.spectralUnit) : "Channel";
+    @computed get isSelectingMomentChannelRange() {
+        return this.selectingMode === MomentSelectingMode.CHANNEL;
     }
 
-    @computed get isCoordChannel() {
-        return this.spectralCoordinate === "Channel";
+    @computed get isSelectingMomentMaskRange() {
+        return this.selectingMode === MomentSelectingMode.MASK;
     }
 
-    @computed get isSpectralCoordinateSupported(): boolean {
-        const frame = this.appStore.activeFrame;
-        if (frame && frame.spectralInfo) {
-            const type = frame.spectralInfo.channelType.code as string;
-            const unit = frame.spectralInfo.channelType.unit as string;
-            return type && unit && IsSpectralTypeValid(type) && IsSpectralUnitValid(unit);
+    @computed get selectedRange(): {isHorizontal: boolean, center: number, width: number} {
+        if (this.isSelectingMomentChannelRange) {
+            return {
+                isHorizontal: false,
+                center: (this.channelValueRange[0] + this.channelValueRange[1]) / 2,
+                width: Math.abs(this.channelValueRange[0] - this.channelValueRange[1])
+            };
+        } else if (this.isSelectingMomentMaskRange) {
+            return {
+                isHorizontal: true,
+                center: (this.maskRange[0] + this.maskRange[1]) / 2,
+                width: Math.abs(this.maskRange[0] - this.maskRange[1])
+            };
         }
-        return false;
+        return null;
     }
 
-    @computed get isSpectralSystemSupported(): boolean {
-        const frame = this.appStore.activeFrame;
-        if (frame && frame.spectralInfo) {
-            const specsys = frame.spectralInfo.specsys as string;
-            return specsys && IsSpectralSystemValid(specsys);
+    @computed get transformedSpectralLines(): SpectralLine[] {
+        // transform to corresponding value according to current widget's spectral settings
+        let transformedSpectralLines: SpectralLine[] = [];
+        const frame = this.effectiveFrame;
+        if (frame && this.spectralLinesMHz) {
+            this.spectralLinesMHz.forEach(spectralLine => {
+                const transformedValue = frame.convertFreqMHzToSettingWCS(spectralLine.value);
+                if (isFinite(transformedValue)) {
+                    transformedSpectralLines.push({species: spectralLine.species, value: transformedValue, qn: spectralLine.qn});
+                }
+            });
         }
-        return false;
+        return transformedSpectralLines;
     }
 
-    @computed get isSpectralSettingsSupported(): boolean {
-        return this.isSpectralCoordinateSupported && this.isSpectralSystemSupported;
-    }
-
-    public static CalculateRequirementsMap(frame: FrameStore, widgetsMap: Map<string, SpectralProfileWidgetStore>) {
+    public static CalculateRequirementsMap(widgetsMap: Map<string, SpectralProfileWidgetStore>) {
         const updatedRequirements = new Map<number, Map<number, CARTA.SetSpectralRequirements>>();
+
         widgetsMap.forEach(widgetStore => {
+            const frame = widgetStore.effectiveFrame;
+            if (!frame || !frame.regionSet) {
+                return;
+            }
             const fileId = frame.frameInfo.fileId;
             const regionId = widgetStore.effectiveRegionId;
             const coordinate = widgetStore.coordinate;
             let statsType = widgetStore.statsType;
 
-            if (!frame.regionSet) {
-                return;
-            }
             const region = frame.regionSet.regions.find(r => r.regionId === regionId);
             if (region) {
                 // Point regions have no meaningful stats type, default to Sum
@@ -432,8 +542,9 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         if (!widgetSettings) {
             return;
         }
-        if (typeof widgetSettings.primaryLineColor === "string" && isColorValid(widgetSettings.primaryLineColor)) {
-            this.primaryLineColor.colorHex = widgetSettings.primaryLineColor;
+        const lineColor = tinycolor(widgetSettings.primaryLineColor);
+        if (lineColor.isValid()) {
+            this.primaryLineColor.colorHex = lineColor.toHexString();
         }
         if (typeof widgetSettings.lineWidth === "number" && widgetSettings.lineWidth >= LineSettings.MIN_WIDTH && widgetSettings.lineWidth <= LineSettings.MAX_WIDTH) {
             this.lineWidth = widgetSettings.lineWidth;

@@ -7,3 +7,5 @@ export * from "./tiling";
 export * from "./units";
 export * from "./webgl";
 export * from "./wcs";
+export * from "./table";
+export * from "./templates";

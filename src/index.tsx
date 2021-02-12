@@ -1,13 +1,11 @@
 import * as React from "react";
 import * as ReactDOM from "react-dom";
+import axios from "axios";
 import {FocusStyleManager} from "@blueprintjs/core";
 import {App} from "./App";
-import {AppStore} from "./stores";
-import {unregister} from "./registerServiceWorker";
-import "./index.css";
-import "@blueprintjs/core/lib/css/blueprint.css";
-import "@blueprintjs/icons/lib/css/blueprint-icons.css";
-import "@blueprintjs/table/lib/css/table.css";
+import {ApiService} from "./services";
+
+import "./index.scss";
 
 // Pre-load static assets
 import allMaps from "./static/allmaps.png";
@@ -29,12 +27,30 @@ FocusStyleManager.onlyShowFocusOnTabs();
 window["React"] = React; // tslint:disable-line
 window["ReactDOM"] = ReactDOM; // tslint:disable-line
 
-const appStore = new AppStore();
+async function fetchConfig() {
+    const baseUrl = window.location.href.replace(window.location.search, "");
+    const configUrl = baseUrl + (baseUrl.endsWith("/") ? "" : "/") + "config";
+    try {
+        const res = await axios.get(configUrl);
+        ApiService.SetRuntimeConfig(res?.data);
+    } catch (e) {
+        console.log("No runtime config provided. Using default configuration");
+        ApiService.SetRuntimeConfig({});
+    }
 
-ReactDOM.render(
-    <App appStore={appStore}/>,
-    document.getElementById("root") as HTMLElement
-);
+    if (ApiService.RuntimeConfig.googleClientId) {
+        // Lazy load google API script only when the config requires it
+        const script = document.createElement("script");
+        script.src = "https://apis.google.com/js/client.js";
+        script.onload = () => {
+            ReactDOM.render(<App/>, document.getElementById("root") as HTMLElement);
+        };
+        document.body.appendChild(script);
+    } else {
+        ReactDOM.render(<App/>, document.getElementById("root") as HTMLElement);
+    }
+}
 
-// remove service worker if it exists
-unregister();
+fetchConfig().then(() => {
+    console.log("Configuration complete. Rendering frontend");
+});

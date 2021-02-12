@@ -1,6 +1,25 @@
+@import "../../../node_modules/@blueprintjs/core/lib/scss/variables.scss";
+
 .file-info {
     height: calc(100% - 40px);
     width: 100%;
+
+    .file-info-panel-top {
+        display: inline-flex;
+
+        .bp3-tabs {
+            padding-right: 10px;
+        }
+
+        .bp3-form-group {
+            margin: 0;
+            padding-left: 10px;
+        }
+
+        .bp3-html-select {
+            width: 200px;
+        }
+    }
 
     .file-info-pre {
         overflow: auto;
@@ -8,7 +27,38 @@
         flex: 2 2 auto;
     }
 
+    .header-list {
+        display: block;
+        unicode-bidi: embed;
+        font-family: monospace;
+        white-space: pre;
+        cursor: text;
+
+        .header-entry {
+            padding-right: 15px;
+            margin-top: 10px;
+            padding-left: 15px;
+            .header-name {
+                color: $blue2;
+                font-weight: bold;
+            }
+
+            .header-comment {
+                opacity: 0.5;
+                font-style: italic;
+            }
+        }
+    }
+
     .bp3-heading {
         flex: 0 0 auto;
+    }
+
+    .file-header-table {
+        overflow: auto;
+        height: 100%;
+        flex: 2 2 auto;
+        padding: 1px;
+        font-family: 'Helvetica Neue', 'Helvetica', 'Arial', sans-serif;
     }
 }

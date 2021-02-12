@@ -1,5 +1,6 @@
-import {action, computed, observable} from "mobx";
+import {action, computed, observable, makeObservable} from "mobx";
 import * as CARTACompute from "carta_computation";
+import {ContourWebGLService} from "../services";
 
 export class ContourStore {
     @observable progress: number;
@@ -28,8 +29,9 @@ export class ContourStore {
         return this.progress >= 1.0;
     }
 
-    constructor(gl: WebGLRenderingContext) {
-        this.gl = gl;
+    constructor() {
+        makeObservable(this);
+        this.gl = ContourWebGLService.Instance.gl;
     }
 
     @action setContourData = (indexOffsets: Int32Array, vertexData: Float32Array, progress: number) => {
@@ -73,8 +75,9 @@ export class ContourStore {
             this.vertexBuffers = [];
         }
 
-        if (this.vertexBuffers.length !== index) {
+        if (!this.gl || this.vertexBuffers.length !== index) {
             console.log(`WebGL buffer index is incorrect!`);
+            return;
         }
 
         // TODO: handle buffer cleanup when no longer needed

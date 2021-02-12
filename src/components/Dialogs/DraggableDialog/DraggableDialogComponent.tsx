@@ -3,11 +3,10 @@ import * as React from "react";
 import * as ReactDOM from "react-dom";
 import {ResizeEnable, Rnd} from "react-rnd";
 import {Dialog, IDialogProps, Button} from "@blueprintjs/core";
-import "./DraggableDialogComponent.css";
-import { AppStore, HelpType } from "stores";
+import {HelpStore, HelpType} from "stores";
+import "./DraggableDialogComponent.scss";
 
 export class ResizableDialogComponentProps {
-    appStore: AppStore;
     dialogProps: IDialogProps;
     defaultWidth: number;
     defaultHeight: number;
@@ -20,11 +19,12 @@ export class ResizableDialogComponentProps {
 export class DraggableDialogComponent extends React.Component<ResizableDialogComponentProps> {
 
     private dd: HTMLDivElement;
+    private rnd: Rnd;
 
     componentDidUpdate() {
         const header = this.dd.getElementsByClassName("bp3-dialog-header");
         if (this.props.helpType && header.length > 0 && this.dd.getElementsByClassName("help-button").length === 0) {
-            const helpButton = <Button icon="help" minimal={true} onClick={() => this.props.appStore.helpStore.showHelpDrawer(this.props.helpType)}/>;
+            const helpButton = <Button icon="help" minimal={true} onClick={this.onClickHelpButton}/>;
             const helpButtonDiv = document.createElement("div") as HTMLDivElement;
             helpButtonDiv.setAttribute("class", "help-button");
             ReactDOM.render(helpButton, helpButtonDiv);
@@ -35,6 +35,11 @@ export class DraggableDialogComponent extends React.Component<ResizableDialogCom
                 header[0].append(helpButtonDiv);
             }
         }
+    }
+
+    private onClickHelpButton = () => {
+        const centerX = this.rnd.draggable.state.x + this.rnd.resizable.size.width * 0.5;
+        HelpStore.Instance.showHelpDrawer(this.props.helpType, centerX);
     }
 
     render() {
@@ -62,7 +67,7 @@ export class DraggableDialogComponent extends React.Component<ResizableDialogCom
                 {this.props.dialogProps.isOpen &&
                 <Rnd
                     enableResizing={resizeSettings}
-                    bounds={".gl-container"}
+                    bounds={".gl-container-app"}
                     dragGrid={[1, 1]}
                     resizeGrid={[25, 25]}
                     default={{
@@ -74,8 +79,9 @@ export class DraggableDialogComponent extends React.Component<ResizableDialogCom
                     minWidth={this.props.minWidth}
                     minHeight={this.props.minHeight}
                     dragHandleClassName={"bp3-dialog-header"}
+                    ref={c => { this.rnd = c; }}
                 >
-                    <Dialog hasBackdrop={false} usePortal={false} {...this.props.dialogProps} children={this.props.children} enforceFocus={false} autoFocus={false}/>
+                    <Dialog hasBackdrop={false} usePortal={false}  enforceFocus={false} autoFocus={true} {...this.props.dialogProps} children={this.props.children}/>
                 </Rnd>
                 }
             </div>

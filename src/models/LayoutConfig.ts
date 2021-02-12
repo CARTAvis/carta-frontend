@@ -1,7 +1,10 @@
-import * as Ajv from "ajv";
-import {AppStore, WidgetConfig} from "stores";
+import Ajv from "ajv";
+import {AppStore, WidgetConfig, CatalogStore} from "stores";
 import {PresetLayout} from "models";
-import {smoothStepOffset} from "utilities";
+import {findDeep, smoothStepOffset} from "utilities";
+import {CatalogOverlayComponent} from "components";
+
+const layoutSchema = require("models/layout_schema_2.json");
 
 const COMPONENT_CONFIG = new Map<string, any>([
     ["image-view", {
@@ -62,7 +65,7 @@ const COMPONENT_CONFIG = new Map<string, any>([
     ["layer-list", {
         type: "react-component",
         component: "layer-list",
-        title: "Layer List",
+        title: "Image List",
         id: "layer-list"
     }],
     ["log", {
@@ -70,167 +73,30 @@ const COMPONENT_CONFIG = new Map<string, any>([
         component: "log",
         title: "Log",
         id: "log"
+    }],
+    ["catalog-overlay", {
+        type: "react-component",
+        component: "catalog-overlay",
+        title: "Catalog Overlay",
+        id: "catalog-overlay"
+    }],
+    ["catalog-plot", {
+        type: "react-component",
+        component: "catalog-plot",
+        title: "Catalog Plot",
+        id: "catalog-plot"
+    }],
+    ["spectral-line-query", {
+        type: "react-component",
+        component: "spectral-line-query",
+        title: "Spectral Line Query",
+        id: "spectral-line-query"
     }]
 ]);
 
-const INITIAL_LAYOUT_SCHEMA_VERSION = 1;
-const CURRENT_LAYOUT_SCHEMA_VERSION = 2;
-
-const LAYOUT_SCHEMA = {
-    "required": ["layoutVersion", "docked", "floating"],
-    "properties": {
-        "layoutVersion": {
-            "type": "integer",
-            "minimum": INITIAL_LAYOUT_SCHEMA_VERSION,
-            "maximum": CURRENT_LAYOUT_SCHEMA_VERSION
-        },
-        "docked":  {
-            "type": "object",
-            "properties": {
-                "type": {
-                    "type": "string"
-                },
-                "content": {
-                    "type": "array",
-                    "items": {
-                        "type": "object"
-                    }
-                }
-            }
-        },
-        "floating": {
-            "type": "array",
-            "items": {
-                "type": "object"
-            }
-        }
-    }
-};
-
-const DOCKED_SCHEMA = {
-    "1": {
-        "required": ["type"],
-        "properties": {
-            "type": {
-                "type": "string",
-                "pattern": "row|column|stack|component"
-            },
-            "id": {
-                "type": "string",
-                "pattern": "animator|histogram|image-view|log|region\-list|render\-config|spatial\-profiler|spectral\-profiler|stats|stokes"
-            },
-            "coord": {
-                "type": "string",
-                "pattern": "x|y"
-            },
-            "content": {
-                "type": "array",
-                "items": {
-                    "type": "object"
-                }
-            },
-            "width": {
-                "type": "number"
-            },
-            "height": {
-                "type": "number"
-            }
-        }
-    },
-    "2": {
-        "required": ["type"],
-        "properties": {
-            "type": {
-                "type": "string",
-                "pattern": "row|column|stack|component"
-            },
-            "id": {
-                "type": "string",
-                "pattern": "animator|histogram|image-view|layer-list|log|region\-list|render\-config|spatial\-profiler|spectral\-profiler|stats|stokes"
-            },
-            "widgetSettings": {
-                "type": "object"
-            },
-            "content": {
-                "type": "array",
-                "items": {
-                    "type": "object"
-                }
-            },
-            "width": {
-                "type": "number"
-            },
-            "height": {
-                "type": "number"
-            }
-        }
-    }
-};
-
-const FLOATING_WIDGET_SCHEMA = {
-    "1": {
-        "type": "object",
-        "required": ["type", "defaultWidth", "defaultHeight", "defaultX", "defaultY"],
-        "properties": {
-            "type": {
-                "type": "string",
-                "pattern": "animator|histogram|log|region\-list|render\-config|spatial\-profiler|spectral\-profiler|stats|stokes"
-            },
-            "coord": {
-                "type": "string",
-                "pattern": "x|y"
-            },
-            "defaultWidth": {
-                "type": "integer",
-                "minimum": 1
-            },
-            "defaultHeight": {
-                "type": "integer",
-                "minimum": 1
-            },
-            "defaultX": {
-                "type": "integer",
-                "minimum": 1
-            },
-            "defaultY": {
-                "type": "integer",
-                "minimum": 1
-            }
-        }
-    },
-    "2": {
-        "type": "object",
-        "required": ["type", "defaultWidth", "defaultHeight", "defaultX", "defaultY"],
-        "properties": {
-            "type": {
-                "type": "string",
-                "pattern": "animator|histogram|layer-list|log|region\-list|render\-config|spatial\-profiler|spectral\-profiler|stats|stokes"
-            },
-            "widgetSettings": {
-                "type": "object"
-            },
-            "defaultWidth": {
-                "type": "integer",
-                "minimum": 1
-            },
-            "defaultHeight": {
-                "type": "integer",
-                "minimum": 1
-            },
-            "defaultX": {
-                "type": "integer",
-                "minimum": 1
-            },
-            "defaultY": {
-                "type": "integer",
-                "minimum": 1
-            }
-        }
-    }
-};
-
 export class LayoutConfig {
-    private static jsonValidator = new Ajv({removeAdditional: true});
+    public static LayoutValidator = new Ajv({useDefaults: "empty"}).compile(layoutSchema);
+    public static CurrentSchemaVersion = 2;
 
     public static GetPresetConfig = (presetName: string) => {
         if (!presetName) {
@@ -243,7 +109,7 @@ export class LayoutConfig {
         }
 
         return {
-            layoutVersion: CURRENT_LAYOUT_SCHEMA_VERSION,
+            layoutVersion: LayoutConfig.CurrentSchemaVersion,
             docked: {
                 type: "row",
                 content: [{
@@ -259,130 +125,51 @@ export class LayoutConfig {
         };
     };
 
+    public static UpgradeLayout = (layout: { layoutVersion: 1 | 2, docked: any, floating: any }) => {
+        // Upgrade to V2 if required
+        if (layout.layoutVersion === 1) {
+            const spatialProfileWidgets = findDeep(layout, item => item.id === "spatial-profiler");
+            for (const widget of spatialProfileWidgets) {
+                if (widget.coord) {
+                    if (!widget.widgetSettings) {
+                        widget.widgetSettings = {};
+                    }
+                    widget.widgetSettings.coordinate = widget.coord;
+                    delete widget.coord;
+                }
+            }
+            layout.layoutVersion = 2;
+        }
+
+        // Upgrade floating widgets to consistent type
+        if (layout.floating && Array.isArray(layout.floating)) {
+            for (const widget of layout.floating) {
+                if (widget.type !== "component") {
+                    // Store widget type as id, to be consistent with docked widgets
+                    widget.id = widget.type;
+                    widget.type = "component";
+                }
+            }
+        }
+    };
+
     // Note: layoutConfig is formalized(modified) during validation if valid
     public static IsUserLayoutValid = (layoutName: string, layoutConfig: any): boolean => {
-        if (!layoutName || !layoutConfig ) {
+        if (!layoutName || !layoutConfig) {
             return false;
         }
         // exclude conflict with presets
         if (PresetLayout.isPreset(layoutName)) {
             return false;
         }
-        // 1. validate initial structure
-        if (false === LayoutConfig.jsonValidator.validate(LAYOUT_SCHEMA, layoutConfig)) {
-            return false;
-        }
-        // 2. validate config details according to version
-        const version = layoutConfig.layoutVersion;
-        if (version === 1) {
-            return LayoutConfig.LayoutHandlerV1(layoutConfig);
+
+        const validLayout = LayoutConfig.LayoutValidator(layoutConfig);
+        if (validLayout) {
+            return true;
         } else {
-            return LayoutConfig.LayoutHandlerV2(layoutConfig);
-        }
-    };
-
-    private static LayoutHandlerV1 = (config: any): boolean => {
-        if (!config) {
+            console.log(LayoutConfig.LayoutValidator.errors);
             return false;
         }
-
-        // validate docked part & convert v1 to v2
-        if (false === LayoutConfig.DockedValidatorV1(config.docked)) {
-            return false;
-        }
-
-        // validate floating part & convert v1 to v2
-        const floatingV1 = config.floating;
-        let floatingV2 = [];
-        floatingV1.forEach((widgetConfig) => {
-            if (true === LayoutConfig.jsonValidator.validate(FLOATING_WIDGET_SCHEMA["1"], widgetConfig)) {
-                if (widgetConfig.type === "spatial-profiler") {
-                    widgetConfig["widgetSettings"] = widgetConfig.coord === "y" ? {coordinate: "y"} : {coordinate: "x"};
-                    if (widgetConfig.coord) {
-                        delete widgetConfig.coord;
-                    }
-                }
-                floatingV2.push(widgetConfig);
-            }
-        });
-        config.floating = floatingV2;
-        config.layoutVersion = 2;
-
-        return true;
-    };
-
-    private static DockedValidatorV1 = (dockedNode: any): boolean => {
-        // validate self node
-        if (false === LayoutConfig.jsonValidator.validate(DOCKED_SCHEMA["1"], dockedNode)) {
-            return false;
-        }
-
-        // validate child node if not end node(type = component)
-        if ("content" in dockedNode) {
-            let result: boolean = true;
-            dockedNode.content.forEach((child) => {
-                result = result && LayoutConfig.DockedValidatorV1(child);
-            });
-            return result;
-        }
-
-        // validate end node - component
-        if (dockedNode.type !== "component" || !dockedNode.id) {
-            return false;
-        }
-
-        // convert v1 to v2
-        if (dockedNode.id === "spatial-profiler") {
-            dockedNode["widgetSettings"] = dockedNode.coord === "y" ? {coordinate: "y"} : {coordinate: "x"};
-            if (dockedNode.coord) {
-                delete dockedNode.coord;
-            }
-        }
-        return true;
-    };
-
-    private static LayoutHandlerV2 = (config: any): boolean => {
-        if (!config) {
-            return false;
-        }
-
-        // validate docked part
-        if (false === LayoutConfig.DockedValidatorV2(config.docked)) {
-            return false;
-        }
-
-        // validate floating part & remove invalid widget config
-        const floating = config.floating;
-        let floatingValid = [];
-        floating.forEach((widgetConfig) => {
-            if (true === LayoutConfig.jsonValidator.validate(FLOATING_WIDGET_SCHEMA["2"], widgetConfig)) {
-                floatingValid.push(widgetConfig);
-            }
-        });
-        config.floating = floatingValid;
-        return true;
-    };
-
-    private static DockedValidatorV2 = (dockedNode: any): boolean => {
-        // validate self node
-        if (false === LayoutConfig.jsonValidator.validate(DOCKED_SCHEMA["2"], dockedNode)) {
-            return false;
-        }
-
-        // validate child node if not end node(type = component)
-        if ("content" in dockedNode) {
-            let result: boolean = true;
-            dockedNode.content.forEach((child) => {
-                result = result && LayoutConfig.DockedValidatorV2(child);
-            });
-            return result;
-        }
-
-        // validate end node - component
-        if (dockedNode.type !== "component" || !dockedNode.id) {
-            return false;
-        }
-        return true;
     };
 
     public static CreateConfigToSave = (appStore: AppStore, rootConfig: any) => {
@@ -391,7 +178,7 @@ export class LayoutConfig {
         }
 
         let configToSave = {
-            layoutVersion: CURRENT_LAYOUT_SCHEMA_VERSION,
+            layoutVersion: LayoutConfig.CurrentSchemaVersion,
             docked: {
                 type: rootConfig.type,
                 content: []
@@ -405,16 +192,29 @@ export class LayoutConfig {
         // 2. handle floating widgets
         appStore.widgetsStore.floatingWidgets.forEach((config: WidgetConfig) => {
             let floatingConfig = {
-                type: config.type,
+                type: "component",
+                id: config.type,
                 defaultWidth: config.defaultWidth ? config.defaultWidth : "",
                 defaultHeight: config.defaultHeight ? config.defaultHeight : "",
                 defaultX: config.defaultX ? config.defaultX : "",
                 defaultY: config.defaultY ? config.defaultY : ""
             };
             // add widget settings
-            const widgetSettingsConfig = appStore.widgetsStore.toWidgetSettingsConfig(config.type, config.id);
+            let widgetSettingsConfig = undefined;
+            if (config.type === CatalogOverlayComponent.WIDGET_CONFIG.type) {
+                const catalogFileId = CatalogStore.Instance.catalogProfiles.get(config.id);
+                const catalogWidgetStoreId = CatalogStore.Instance.catalogWidgets.get(catalogFileId);
+                widgetSettingsConfig = appStore.widgetsStore.toWidgetSettingsConfig(config.type, catalogWidgetStoreId);
+            } else {
+                widgetSettingsConfig = appStore.widgetsStore.toWidgetSettingsConfig(config.type, config.id);
+            }
             if (widgetSettingsConfig) {
                 floatingConfig["widgetSettings"] = widgetSettingsConfig;
+            }
+            // add plot type
+            const plotWidget = appStore.widgetsStore.catalogPlotWidgets.get(config.id);
+            if (plotWidget) {
+                floatingConfig["plotType"] = plotWidget.plotType;
             }
             configToSave.floating.push(floatingConfig);
         });
@@ -434,6 +234,9 @@ export class LayoutConfig {
                         type: child.type,
                         content: []
                     };
+                    if (child.type === "stack" && child.activeItemIndex >= 0 && child.activeItemIndex < child.content?.length) { // save active tab
+                        simpleChild["activeItemIndex"] = child.activeItemIndex;
+                    }
                     if (child.width) {
                         simpleChild["width"] = child.width;
                     }
@@ -445,7 +248,7 @@ export class LayoutConfig {
                         LayoutConfig.GenSimpleConfigToSave(appStore, simpleChild.content, child.content);
                     }
                 } else if (child.type === "component" && child.id) {
-                    const widgetType = (child.id).replace(/\-\d+$/, "");
+                    const widgetType = (child.id).replace(/(-component)?-\d+$/, "");
                     let simpleChild = {
                         type: child.type,
                         id: widgetType
@@ -457,9 +260,21 @@ export class LayoutConfig {
                         simpleChild["height"] = child.height;
                     }
                     // add widget settings
-                    const widgetSettingsConfig = appStore.widgetsStore.toWidgetSettingsConfig(widgetType, child.id);
+                    let widgetSettingsConfig = undefined;
+                    if (widgetType === CatalogOverlayComponent.WIDGET_CONFIG.type) {
+                        const catalogFileId = CatalogStore.Instance.catalogProfiles.get(child.id);
+                        const catalogWidgetStoreId = CatalogStore.Instance.catalogWidgets.get(catalogFileId);
+                        widgetSettingsConfig = appStore.widgetsStore.toWidgetSettingsConfig(widgetType, catalogWidgetStoreId);
+                    } else {
+                        widgetSettingsConfig = appStore.widgetsStore.toWidgetSettingsConfig(widgetType, child.id);
+                    }
                     if (widgetSettingsConfig) {
                         simpleChild["widgetSettings"] = widgetSettingsConfig;
+                    }
+                    // add plot type
+                    const plotWidget = appStore.widgetsStore.catalogPlotWidgets.get(child.id);
+                    if (plotWidget) {
+                        simpleChild["plotType"] = plotWidget.plotType;
                     }
                     newParentContent.push(simpleChild);
                 }
@@ -467,8 +282,8 @@ export class LayoutConfig {
         });
     };
 
-    public static CreateConfigToApply = (appStore: AppStore, newParentContent: any, parentContent: any, componentConfigs: any[]) => {
-        if (!appStore || !newParentContent || !Array.isArray(newParentContent) || !parentContent || !Array.isArray(parentContent)) {
+    public static CreateConfigToApply = (newParentContent: any, parentContent: any, componentConfigs: any[]) => {
+        if (!newParentContent || !Array.isArray(newParentContent) || !parentContent || !Array.isArray(parentContent)) {
             return;
         }
 
@@ -479,6 +294,9 @@ export class LayoutConfig {
                         type: child.type,
                         content: []
                     };
+                    if (child.type === "stack" && child.activeItemIndex >= 0 && child.activeItemIndex < child.content?.length) { // load active tab
+                        simpleChild["activeItemIndex"] = child.activeItemIndex;
+                    }
                     if (child.width) {
                         simpleChild["width"] = child.width;
                     }
@@ -487,10 +305,10 @@ export class LayoutConfig {
                     }
                     newParentContent.push(simpleChild);
                     if (child.content) {
-                        LayoutConfig.CreateConfigToApply(appStore, simpleChild.content, child.content, componentConfigs);
+                        LayoutConfig.CreateConfigToApply(simpleChild.content, child.content, componentConfigs);
                     }
                 } else if (child.type === "component" && child.id) {
-                    const widgetType = (child.id).replace(/\-\d+$/, "");
+                    const widgetType = (child.id).replace(/-\d+$/, "");
                     if (COMPONENT_CONFIG.has(widgetType)) {
                         let componentConfig = Object.assign({}, COMPONENT_CONFIG.get(widgetType));
                         if (child.width) {
@@ -502,7 +320,10 @@ export class LayoutConfig {
                         if ("widgetSettings" in child) {
                             componentConfig["widgetSettings"] = child.widgetSettings;
                         }
-                        componentConfig.props = {appStore: appStore, id: "", docked: true};
+                        if ("plotType" in child) {
+                            componentConfig["plotType"] = child.plotType;
+                        }
+                        componentConfig.props = {appStore: AppStore.Instance, id: "", docked: true};
                         componentConfigs.push(componentConfig);
                         newParentContent.push(componentConfig);
                     }
