@@ -179,19 +179,6 @@ export class SpectralLineQueryWidgetStore extends RegionWidgetStore {
         this.queryResultTableRef = ref;
     }
 
-    @action selectAllLines = () => {
-        if (this.isLineSelectedArray && this.isLineSelectedArray.length > 0) {
-            const isSelectedAll = this.isSelectingAllLines;
-            const queryResultData = this.queryResult.get(LINE_SELECTION_COLUMN_INDEX).data;
-            for (let rowIndex = 0; rowIndex < this.isLineSelectedArray.length; rowIndex++) {
-                // update both queryResult & filterResult
-                this.isLineSelectedArray[rowIndex] = !isSelectedAll;
-                const realRowIndex = this.filteredRowIndexes[rowIndex];
-                queryResultData[realRowIndex] = !isSelectedAll;
-            }
-        }
-    };
-
     @action selectSingleLine = (rowIndex: number) => {
         if (this.isLineSelectedArray && this.isLineSelectedArray.length > 0 && isFinite(rowIndex) && rowIndex >= 0 && rowIndex < this.isLineSelectedArray.length) {
             const isSelected = this.isLineSelectedArray[rowIndex];
@@ -358,21 +345,6 @@ export class SpectralLineQueryWidgetStore extends RegionWidgetStore {
 
     @computed get isLineSelectedArray(): boolean[] {
         return this.filterResult?.get(LINE_SELECTION_COLUMN_INDEX)?.data as Array<boolean>;
-    }
-
-    @computed get isSelectingAllLines(): boolean {
-        if (this.isLineSelectedArray?.length <= 0) {
-            return false;
-        }
-        let result = true;
-        this.isLineSelectedArray?.forEach(isSelected => result = result && isSelected);
-        return result;
-    }
-
-    @computed get isSelectingIndeterminatedLines(): boolean {
-        let result = false;
-        this.isLineSelectedArray?.forEach(isSelected => result = result || isSelected);
-        return result && !this.isSelectingAllLines;
     }
 
     @computed get numSelectedLines(): number {

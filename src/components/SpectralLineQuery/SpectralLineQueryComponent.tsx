@@ -350,12 +350,7 @@ export class SpectralLineQueryComponent extends React.Component<WidgetProps> {
             dataset: widgetStore.filterResult,
             columnHeaders: widgetStore.displayedColumnHeaders,
             numVisibleRows: widgetStore.numDataRows,
-            manualSelectionProps: {
-                isSelectingAll: widgetStore.isSelectingAllLines,
-                isSelectingIndeterminate: widgetStore.isSelectingIndeterminatedLines,
-                selectAllLines: widgetStore.selectAllLines,
-                selectSingleLine: widgetStore.selectSingleLine
-            },
+            flipRowSelection: widgetStore.selectSingleLine,
             updateTableRef: (ref) => { this.resultTableRef = ref; },
             // sorting part
             disableSort: true,

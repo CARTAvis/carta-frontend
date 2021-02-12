@@ -12,16 +12,15 @@ import "./TableComponent.scss";
 
 export type ColumnFilter = { index: number, columnFilter: string };
 
+enum SelectionType {
+    None,
+    Indeterminate,
+    All
+}
+
 export enum TableType {
     Normal,
     ColumnFilter
-}
-
-export interface ManualSelectionProps {
-    isSelectingAll: boolean;
-    isSelectingIndeterminate: boolean;
-    selectAllLines: () => void;
-    selectSingleLine: (rowIndex: number) => void;
 }
 
 export class TableComponentProps {
@@ -34,13 +33,13 @@ export class TableComponentProps {
     loadingCell?: boolean;
     selectedDataIndex?: number[];
     showSelectedData?: boolean;
-    manualSelectionProps?: ManualSelectionProps;
     updateTableRef?: (ref: Table) => void;
     updateColumnFilter?: (value: string, columnName: string) => void;
     updateByInfiniteScroll?: (rowIndexEnd: number) => void;
     updateTableColumnWidth?: (width: number, columnName: string) => void;
     updateSelectedRow?: (dataIndex: number[]) => void;
     updateSortRequest?: (columnName: string, sortingType: CARTA.SortingType) => void;
+    flipRowSelection?: (rowIndex: number) => void;
     sortingInfo?: {columnName: string, sortingType: CARTA.SortingType};
     disableSort?: boolean;
     darkTheme?: boolean;
@@ -93,20 +92,28 @@ export class TableComponent extends React.Component<TableComponentProps> {
         }
     }
 
-    private renderCheckboxColumnHeaderCell = (columnIndex: number, columnHeader: CARTA.CatalogHeader) => {
+    private renderCheckboxColumnHeaderCell = (columnIndex: number, columnHeader: CARTA.CatalogHeader, columnData: any, selectionType: SelectionType) => {
         const controlheader = this.props.filter?.get(columnHeader.name);
         const filterSyntax = this.getfilterSyntax(columnHeader.dataType);
         return (
             <ColumnHeaderCell>
                 <ColumnHeaderCell>
-                    <React.Fragment>
-                        <Checkbox
-                            indeterminate={this.props.manualSelectionProps.isSelectingIndeterminate}
-                            checked={this.props.manualSelectionProps.isSelectingAll}
-                            inline={true}
-                            onChange={this.props.manualSelectionProps.selectAllLines}
-                        />
-                    </React.Fragment>
+                    <Checkbox
+                        indeterminate={selectionType === SelectionType.Indeterminate}
+                        checked={selectionType === SelectionType.All}
+                        inline={true}
+                        onChange={() => {
+                            if (selectionType === SelectionType.None || selectionType === SelectionType.All) {
+                                columnData?.forEach((isSelected, rowIndex) => this.props.flipRowSelection(rowIndex));
+                            } else {
+                                columnData?.forEach((isSelected, rowIndex) => {
+                                    if (!isSelected) {
+                                        this.props.flipRowSelection(rowIndex);
+                                    }
+                                })
+                            }
+                        }}
+                    />
                 </ColumnHeaderCell>
                 <ColumnHeaderCell isActive={controlheader?.filter !== ""}>
                     <Popover
@@ -121,7 +128,7 @@ export class TableComponent extends React.Component<TableComponentProps> {
                             key={"column-popover-" + columnIndex}
                             small={true}
                             placeholder="Click to filter"
-                            value={controlheader?.filter ? controlheader.filter : ""}
+                            value={controlheader?.filter ?? ""}
                             onChange={ev => this.props.updateColumnFilter(ev.currentTarget.value, columnHeader.name)}
                         />
                     </Popover>
@@ -137,7 +144,7 @@ export class TableComponent extends React.Component<TableComponentProps> {
                     {rowIndex < columnData?.length ?
                         <Checkbox
                             checked={columnData[rowIndex]}
-                            onChange={() => this.props.manualSelectionProps.selectSingleLine(rowIndex)}
+                            onChange={() => this.props.flipRowSelection(rowIndex)}
                         /> :
                         null
                     }
@@ -147,11 +154,15 @@ export class TableComponent extends React.Component<TableComponentProps> {
     };
 
     private renderCheckboxColumn = (columnHeader: CARTA.CatalogHeader, columnData: any) => {
+        let selected = 0;
+        columnData?.forEach(isSelected => selected += (isSelected ? 1 : 0));
+        const selectionType = (selected === columnData?.length) ? SelectionType.All : (selected > 0 ? SelectionType.Indeterminate : SelectionType.None);
+
         return (
             <Column
                 key={columnHeader.name}
                 name={columnHeader.name}
-                columnHeaderCellRenderer={(columnIndex: number) => this.renderCheckboxColumnHeaderCell(columnIndex, columnHeader)}
+                columnHeaderCellRenderer={(columnIndex: number) => this.renderCheckboxColumnHeaderCell(columnIndex, columnHeader, columnData, selectionType)}
                 cellRenderer={columnData?.length ? (rowIndex, columnIndex) => this.renderCheckboxCell(rowIndex, columnIndex, columnData) : undefined}
             />
         );
@@ -314,7 +325,7 @@ export class TableComponent extends React.Component<TableComponentProps> {
             const columnIndex = header.columnIndex;
             let dataArray = tableData.get(columnIndex)?.data;
             if (table.type === TableType.ColumnFilter) {
-                const column = header.name === SpectralLineHeaders.LineSelection && this.props.manualSelectionProps ?
+                const column = (header.name === SpectralLineHeaders.LineSelection && this.props.flipRowSelection) ?
                     this.renderCheckboxColumn(header, dataArray) :
                     this.renderDataColumnWithFilter(header, dataArray);
                 tableColumns.push(column);
