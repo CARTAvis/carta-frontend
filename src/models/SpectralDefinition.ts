@@ -18,6 +18,13 @@ export const CHANNEL_TYPES: ChannelType[] = [
     {code: "BETA", name: "Beta", unit: ""},
 ];
 
+// FREQ, ENER, WAVN
+export const SPECTRAL_COLORMAP_GROUP = [
+    CHANNEL_TYPES[0].code,
+    CHANNEL_TYPES[1].code,
+    CHANNEL_TYPES[2].code
+];
+
 export enum SpectralType {
     VRAD = "VRAD",
     VOPT = "VOPT",
