@@ -156,7 +156,7 @@ export class TableComponent extends React.Component<TableComponentProps> {
     private renderCheckboxColumn = (columnHeader: CARTA.CatalogHeader, columnData: any) => {
         let selected = 0;
         columnData?.forEach(isSelected => selected += (isSelected ? 1 : 0));
-        const selectionType = (selected === columnData?.length) ? SelectionType.All : (selected > 0 ? SelectionType.Indeterminate : SelectionType.None);
+        const selectionType = (selected === 0) ? SelectionType.None : (selected === columnData?.length ? SelectionType.All : SelectionType.Indeterminate);
 
         return (
             <Column
