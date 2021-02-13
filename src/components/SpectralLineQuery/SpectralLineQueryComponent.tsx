@@ -352,10 +352,7 @@ export class SpectralLineQueryComponent extends React.Component<WidgetProps> {
             numVisibleRows: widgetStore.numDataRows,
             flipRowSelection: widgetStore.selectSingleLine,
             updateTableRef: (ref) => { this.resultTableRef = ref; },
-            // sorting part
             disableSort: true,
-            sortingInfo: widgetStore.sortingInfo,
-            // filtering part
             updateColumnFilter: widgetStore.setColumnFilter,
             columnWidths: widgetStore.resultTableColumnWidths,
             updateTableColumnWidth: widgetStore.setResultTableColumnWidth,
@@ -412,7 +409,6 @@ export class SpectralLineQueryComponent extends React.Component<WidgetProps> {
                             <AnchorButton
                                 text="Filter"
                                 intent={Intent.PRIMARY}
-                                disabled={widgetStore.filters.length <= 0 || widgetStore.filteredRowNumber <= 0 || widgetStore.filterResult.size <= 0}
                                 onClick={() => this.widgetStore.filter()}
                             />
                         </Tooltip>
