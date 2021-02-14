@@ -409,6 +409,7 @@ export class SpectralLineQueryComponent extends React.Component<WidgetProps> {
                             <AnchorButton
                                 text="Filter"
                                 intent={Intent.PRIMARY}
+                                disabled={widgetStore.numDataRows <= 0}
                                 onClick={() => this.widgetStore.filter()}
                             />
                         </Tooltip>
