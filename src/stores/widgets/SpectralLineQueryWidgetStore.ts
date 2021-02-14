@@ -351,10 +351,6 @@ export class SpectralLineQueryWidgetStore extends RegionWidgetStore {
         return numSelected;
     }
 
-    @computed get filteredRowNumber(): number {
-        return this.filteredRowIndexes.length;
-    }
-
     @computed get resultTableInfo(): string {
         const info = `Showing ${this.numDataRows} line(s).`;
         const filteredInfo = `Showing ${this.filteredRowIndexes.length} filtered line(s) of total ${this.numDataRows} line(s).`;
