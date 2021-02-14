@@ -219,9 +219,6 @@ export class SpectralLineQueryComponent extends React.Component<WidgetProps> {
     render() {
         const appStore = AppStore.Instance;
         const widgetStore = this.widgetStore;
-        // trigger re-render of SpectralLineQueryComponent while typing filter string
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        const filters = widgetStore.filters;
 
         const inputByRange = (
             <React.Fragment>

@@ -366,16 +366,6 @@ export class SpectralLineQueryWidgetStore extends RegionWidgetStore {
         return numSelected;
     }
 
-    @computed get filters(): string[] {
-        let filters = [];
-        this.controlHeader.forEach((value) => {
-            if (value.filter) {
-                filters.push(value);
-            }
-        });
-        return filters;
-    }
-
     @computed get filteredRowNumber(): number {
         return this.filteredRowIndexes.length;
     }
