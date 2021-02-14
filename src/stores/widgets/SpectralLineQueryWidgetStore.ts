@@ -190,12 +190,12 @@ export class SpectralLineQueryWidgetStore extends RegionWidgetStore {
     }
 
     @action selectSingleLine = (rowIndex: number) => {
-        if (this.isLineSelectedArray && this.isLineSelectedArray.length > 0 && isFinite(rowIndex) && rowIndex >= 0 && rowIndex < this.isLineSelectedArray.length) {
-            const isSelected = this.isLineSelectedArray[rowIndex];
-            this.isLineSelectedArray[rowIndex] = !isSelected;
-            // update both queryResult & filterResult
+        const lineSelectionData = this.filterResult?.get(LINE_SELECTION_COLUMN_INDEX)?.data as Array<boolean>;
+        if (lineSelectionData?.length > 0 && isFinite(rowIndex) && rowIndex >= 0 && rowIndex < lineSelectionData?.length) {
+            // update both filterResult & queryResult
+            const isSelected = lineSelectionData[rowIndex];
             const realRowIndex = this.filteredRowIndexes[rowIndex];
-            this.queryResult.get(LINE_SELECTION_COLUMN_INDEX).data[realRowIndex] = !isSelected;
+            lineSelectionData[rowIndex] = this.queryResult.get(LINE_SELECTION_COLUMN_INDEX).data[realRowIndex] = !isSelected;
         }
     };
 
@@ -354,10 +354,6 @@ export class SpectralLineQueryWidgetStore extends RegionWidgetStore {
             }
         });
         return displayedColumnHeaders;
-    }
-
-    @computed get isLineSelectedArray(): boolean[] {
-        return this.filterResult?.get(LINE_SELECTION_COLUMN_INDEX)?.data as Array<boolean>;
     }
 
     @computed get numSelectedLines(): number {
@@ -592,7 +588,7 @@ export class SpectralLineQueryWidgetStore extends RegionWidgetStore {
 
     constructor() {
         super(RegionsType.CLOSED);
-        makeObservable<SpectralLineQueryWidgetStore, "isLineSelectedArray" | "restFreqColumn" | "measuredFreqColumn">(this);
+        makeObservable(this);
         this.queryRangeType = SpectralLineQueryRangeType.Range;
         this.queryRange = [0, 0];
         this.queryRangeByCenter = [0, 0];
