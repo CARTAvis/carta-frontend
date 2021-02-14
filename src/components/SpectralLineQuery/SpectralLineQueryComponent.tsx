@@ -147,9 +147,9 @@ export class SpectralLineQueryComponent extends React.Component<WidgetProps> {
     private createHeaderTable() {
         const headerNames = [];
         const headerDescriptions = [];
-        this.widgetStore.formalizedHeaders.forEach(header => {
+        this.widgetStore.columnHeaders?.forEach(header => {
             headerNames.push(header.name);
-            headerDescriptions.push(header.desc);
+            headerDescriptions.push(header.description);
         });
         const tableColumns = [];
         const columnName = this.renderDataColumn(HeaderTableColumnName.Name, headerNames);
@@ -162,7 +162,7 @@ export class SpectralLineQueryComponent extends React.Component<WidgetProps> {
         return (
             <Table
                 ref={(ref) => this.headerTableRef = ref}
-                numRows={this.widgetStore.formalizedHeaders.length}
+                numRows={this.widgetStore.columnHeaders?.length}
                 enableRowReordering={false}
                 renderMode={RenderMode.BATCH}
                 selectionModes={SelectionModes.NONE}

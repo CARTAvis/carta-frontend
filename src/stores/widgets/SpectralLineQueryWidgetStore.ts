@@ -87,11 +87,6 @@ const SPECTRAL_LINE_DESCRIPTION = new Map<SpectralLineHeaders, string>([
     [SpectralLineHeaders.LineList, "Originated catalogue"]
 ]);
 
-export interface SpectralLineHeader {
-    name: SpectralLineHeaders;
-    desc: string;
-}
-
 export enum RedshiftType {
     V = "Velocity (km/s)",
     Z = "Redshift"
@@ -330,16 +325,6 @@ export class SpectralLineQueryWidgetStore extends RegionWidgetStore {
         return Array.from(Array(this.numDataRows).keys());
     }
 
-    @computed get formalizedHeaders(): SpectralLineHeader[] {
-        let formalizedHeaders: SpectralLineHeader[] = [];
-        this.columnHeaders.forEach(header => {
-            if (Object.values(SpectralLineHeaders).includes(header.name as SpectralLineHeaders)) {
-                formalizedHeaders.push({name: header.name as SpectralLineHeaders, desc: SPECTRAL_LINE_DESCRIPTION.get(header.name as SpectralLineHeaders)});
-            }
-        });
-        return formalizedHeaders;
-    }
-
     @computed get redshiftFactor() {
         return this.redshiftType === RedshiftType.V ?
             Math.sqrt((1 - (this.redshiftInput * 1e3) / SPEED_OF_LIGHT) / (1 + (this.redshiftInput * 1e3) / SPEED_OF_LIGHT)) :
@@ -405,23 +390,29 @@ export class SpectralLineQueryWidgetStore extends RegionWidgetStore {
         return selectedLines;
     }
 
-    private preprocessHeaders = (ackHeaders): Array<CARTA.ICatalogHeader> => {
-        // 1. rename to comprehensive headers
+    private preprocessHeaders = (ackHeaders: CARTA.ICatalogHeader[]): Array<CARTA.ICatalogHeader> => {
+        let columnHeaders = [];
+
+        // 1. collect headers & rename to comprehensive headers
         ackHeaders?.forEach((header) => {
-            if (SPLA_HEADER_MAP.has(header.name as SpectralLineHeaders)) {
-                header.name = SPLA_HEADER_MAP.get(header.name as SpectralLineHeaders);
-            }
-            header.description = SPECTRAL_LINE_DESCRIPTION.get(header.name as SpectralLineHeaders);
+            const headerName = SPLA_HEADER_MAP.has(header.name as SpectralLineHeaders) ? SPLA_HEADER_MAP.get(header.name as SpectralLineHeaders) : header.name;
+            columnHeaders.push(new CARTA.CatalogHeader({
+                name: headerName,
+                dataType: header.dataType,
+                columnIndex: header.columnIndex,
+                description: SPECTRAL_LINE_DESCRIPTION.get(headerName as SpectralLineHeaders)
+            }));
         });
 
         // 2. insert line selection column header
-        ackHeaders?.splice(0, 0, new CARTA.CatalogHeader({
+        columnHeaders.splice(0, 0, new CARTA.CatalogHeader({
             name: SpectralLineHeaders.LineSelection,
             dataType: CARTA.ColumnType.Bool,
-            columnIndex: LINE_SELECTION_COLUMN_INDEX
+            columnIndex: LINE_SELECTION_COLUMN_INDEX,
+            description: SPECTRAL_LINE_DESCRIPTION.get(SpectralLineHeaders.LineSelection)
         }));
 
-        return ackHeaders?.sort((a, b) => {
+        return columnHeaders.sort((a, b) => {
             return (a.columnIndex - b.columnIndex);
         });
     };
@@ -451,7 +442,7 @@ export class SpectralLineQueryWidgetStore extends RegionWidgetStore {
             data: compensatedData
         });
 
-        // 3. update column data type
+        // 3. update numeric column data type
         headers.forEach(header => {
             if (header.dataType === CARTA.ColumnType.Double) {
                 const column = columns.get(header.columnIndex);
