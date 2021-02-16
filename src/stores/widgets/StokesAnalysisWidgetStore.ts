@@ -32,7 +32,7 @@ const DEFAULTS = {
         equalAxes: true,
         colorMap: "jet",
         pointTransparency: 1,
-        invertedColorMap: true
+        invertedColorMap: false
 };
 
 export class StokesAnalysisWidgetStore extends RegionWidgetStore {

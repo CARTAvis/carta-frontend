@@ -131,8 +131,6 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
                     // init color Map according CTYPE3 and CDELT3, if file changed
                     if (this.fileId !== frame.frameInfo.fileId) {
                         // Todo, reset zoom level for spatial and spectral issue #463
-                        const redToBlue = this.getColorMapOrder(frame);
-                        this.widgetStore.setInvertedColorMap(redToBlue);
                         this.widgetStore.clearLinePlotsXYBounds();
                         this.widgetStore.clearScatterPlotXYBounds();
                         this.fileId = frame.frameInfo.fileId;
@@ -153,16 +151,10 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
     // true: red->blue, false: blue->red
     private getColorMapOrder(frame: FrameStore): boolean {    
         if (frame && frame.channelInfo && frame.channelInfo.fromWCS && frame.channelInfo.channelType && !isNaN(frame.channelInfo.delta)) {
-            const CTYPE = frame.channelInfo.channelType.code;
-            const CDELT = frame.channelInfo.delta;
+            const CTYPE = frame.spectralType !== null? frame.spectralType : frame.channelInfo.channelType.code;
             const inGroup = SPECTRAL_COLORMAP_GROUP.includes(CTYPE);
-            console.log("ctype "+ CTYPE +" cdelt " + CDELT + " " + inGroup)
+            // chartjs plot tick lables with increasing order by default, no need to check for CDELT
             return inGroup ? true : false;
-            // if (CDELT > 0) {
-            //     return inGroup ? true : false;
-            // } else {
-            //     return inGroup ? false : true;
-            // }
         }
         return true;
     }
@@ -553,10 +545,12 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
 
     private fillScatterColor(data: Array<{ x: number, y: number, z?: number }>, interactionBorder: { xMin: number, xMax: number }, zIndex: boolean): Array<string> {
         let scatterColors = [];
-        if (data && data.length && zIndex && interactionBorder) {
+        const widgetStore = this.widgetStore;
+        if (data && data.length && zIndex && interactionBorder && widgetStore) {
             let xlinePlotRange = interactionBorder;
             const outOfRangeColor = `hsla(0, 0%, 50%, ${this.opacityOutRange})`;
-            const redToBlue = this.widgetStore.invertedColorMap;
+            const frame = widgetStore.effectiveFrame;
+            const redToBlue = this.getColorMapOrder(frame);
             const localPoints = [];
             for (let index = 0; index < data.length; index++) {
                 const point = data[index];
@@ -572,10 +566,12 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
                 if (point.z >= xlinePlotRange.xMin && point.z <= xlinePlotRange.xMax) {
                     outRange = false;
                 }
-                const percentage = (point.z - minMaxZ.minVal) / (minMaxZ.maxVal - minMaxZ.minVal);
+                let percentage = (point.z - minMaxZ.minVal) / (minMaxZ.maxVal - minMaxZ.minVal);
+                if (widgetStore.invertedColorMap) {
+                    percentage = 1 - percentage;
+                }
                 pointColor = outRange ? outOfRangeColor : this.getScatterColor(percentage, redToBlue);
                 scatterColors.push(pointColor);
-                
             }
         }
         return scatterColors;
