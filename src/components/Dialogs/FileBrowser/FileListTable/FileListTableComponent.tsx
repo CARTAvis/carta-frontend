@@ -441,7 +441,6 @@ export class FileListTableComponent extends React.Component<FileListTableCompone
 
         const entryCount = this.tableEntries.length;
         const unfilteredEntryCount = (fileResponse?.files?.length || 0) + (fileResponse?.subdirectories?.length || 0);
-        console.log({entryCount, unfilteredEntryCount});
         if (!unfilteredEntryCount) {
             return <NonIdealState icon="folder-open" title="Empty folder" description="There are no files or subdirectories in this folder"/>;
         } else if (!entryCount) {
