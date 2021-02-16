@@ -254,7 +254,7 @@ export class TableComponent extends React.Component<TableComponentProps> {
                             key={"column-popover-" + columnIndex}
                             small={true}
                             placeholder="Click to filter"
-                            value={controlheader?.filter ? controlheader.filter : ""}
+                            value={controlheader?.filter ?? ""}
                             onChange={ev => this.props.updateColumnFilter(ev.currentTarget.value, column.name)}
                         />
                     </Popover>
