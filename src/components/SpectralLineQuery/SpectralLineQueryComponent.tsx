@@ -219,7 +219,7 @@ export class SpectralLineQueryComponent extends React.Component<WidgetProps> {
     render() {
         const appStore = AppStore.Instance;
         const widgetStore = this.widgetStore;
-        // trigger re-render of SpectralLineQueryComponent while typing filter string
+        // trigger re-render of SpectralLineQueryComponent while reset filter string
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
         const filters = widgetStore.filters;
 
@@ -414,7 +414,7 @@ export class SpectralLineQueryComponent extends React.Component<WidgetProps> {
                             />
                         </Tooltip>
                         <Tooltip content="Reset filter" position={Position.BOTTOM}>
-                            <AnchorButton text="Reset" intent={Intent.PRIMARY} disabled={widgetStore.filterResult.size <= 0} onClick={() => this.widgetStore.resetFilter()}/>
+                            <AnchorButton text="Reset" intent={Intent.PRIMARY} onClick={() => this.widgetStore.resetFilter()}/>
                         </Tooltip>
                         <Tooltip content={plotTip} position={Position.BOTTOM}>
                             <AnchorButton
