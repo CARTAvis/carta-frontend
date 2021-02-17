@@ -4,7 +4,7 @@ import {observer} from "mobx-react";
 import {Rnd} from "react-rnd";
 import {Icon, Position, Tooltip} from "@blueprintjs/core";
 import {PlaceholderComponent} from "components";
-import {AppStore, HelpStore, LayoutStore, WidgetConfig} from "stores";
+import {AppStore, HelpStore, LayoutStore, WidgetConfig, CatalogStore} from "stores";
 import "./FloatingWidgetComponent.scss";
 
 class FloatingWidgetComponentProps {
@@ -83,6 +83,14 @@ export class FloatingWidgetComponent extends React.Component<FloatingWidgetCompo
                     break;
                 case "spectral-profiler":
                     settingsTab = widgetsStore.spectralProfileWidgets.get(parentId).settingsTabId;
+                    break;
+                case "catalog-overlay":
+                    const catalogStore = CatalogStore.Instance;
+                    const catalogFileId = catalogStore.catalogProfiles.get(parentId);
+                    if (catalogFileId) {
+                        const catalogWidgetStoreId = catalogStore.catalogWidgets.get(catalogFileId);
+                        settingsTab = widgetsStore.catalogWidgets.get(catalogWidgetStoreId).settingsTabId;
+                    }
                     break;
                 case "stokes":
                 default:

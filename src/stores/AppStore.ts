@@ -9,7 +9,6 @@ import {CARTA} from "carta-protobuf";
 import {
     AlertStore,
     AnimationMode,
-    AnimationState,
     AnimatorStore,
     BrowserMode,
     CatalogInfo,
@@ -134,10 +133,9 @@ export class AppStore {
         this.username = username;
     };
 
-    @action connectToServer = (socketName: string = "socket") => {
+    @action connectToServer = () => {
         // Remove query parameters, replace protocol and remove trailing /
-        const baseUrl = window.location.href.replace(window.location.search, "").replace(/^http/, "ws").replace(/\/$/, "");
-        let wsURL = `${baseUrl}/${socketName}`;
+        let wsURL = window.location.href.replace(window.location.search, "").replace(/^http/, "ws").replace(/\/$/, "");
         if (process.env.NODE_ENV === "development") {
             wsURL = process.env.REACT_APP_DEFAULT_ADDRESS ? process.env.REACT_APP_DEFAULT_ADDRESS : wsURL;
         } else {
@@ -166,6 +164,11 @@ export class AppStore {
                 this.loadFile(folderSearchParam, fileSearchParam, "");
             }
         }));
+
+        const authTokenParam = url.searchParams.get("token");
+        if (authTokenParam) {
+            ApiService.Instance.setToken(authTokenParam);
+        }
 
         this.backendService.connect(wsURL).subscribe(ack => {
             console.log(`Connected with session ID ${ack.sessionId}`);
@@ -273,7 +276,7 @@ export class AppStore {
 
     @computed get frameNames(): IOptionProps [] {
         let names: IOptionProps [] = [];
-        this.frames.forEach((frame, index) => names.push({label: index + ": " + frame.frameInfo.fileInfo.name, value: frame.frameInfo.fileId}));
+        this.frames.forEach((frame, index) => names.push({label: index + ": " + frame.filename, value: frame.frameInfo.fileId}));
         return names;
     }
 
@@ -329,7 +332,8 @@ export class AppStore {
             fileInfo: new CARTA.FileInfo(ack.fileInfo),
             fileInfoExtended: new CARTA.FileInfoExtended(ack.fileInfoExtended),
             fileFeatureFlags: ack.fileFeatureFlags,
-            renderMode: CARTA.RenderMode.RASTER
+            renderMode: CARTA.RenderMode.RASTER,
+            beamTable: ack.beamTable
         };
 
         let newFrame = new FrameStore(frameInfo);
@@ -355,7 +359,10 @@ export class AppStore {
             this.setSpectralReference(newFrame);
         }
 
-        this.setActiveFrame(newFrame.frameInfo.fileId);
+        const imageFileId = newFrame.frameInfo.fileId;
+        this.setActiveFrame(imageFileId);
+        // init image associated catalog
+        this.catalogStore.updateImageAssociatedCatalogId(imageFileId, []);
 
         // Set animation mode to frame if the new image is 2D, or to channel if the image is 3D and there are no other frames
         if (newFrame.frameInfo.fileInfoExtended.depth <= 1 && newFrame.frameInfo.fileInfoExtended.stokes <= 1) {
@@ -604,64 +611,72 @@ export class AppStore {
 
     // Open catalog file
     @action appendCatalog = (directory: string, file: string, previewDataSize: number, type: CARTA.CatalogFileType) => {
-        if (!this.activeFrame) {
-            AppToaster.show(ErrorToast("Please load the image file"));
-            return;
-        }
-        if (!(type === CARTA.CatalogFileType.VOTable)) {
-            AppToaster.show(ErrorToast("`Catalog type not supported"));
-            return;
-        }
-        this.startFileLoading();
-
-        const frame = this.activeFrame;
-        const fileId = this.catalogNum + 1;
-
-        this.backendService.loadCatalogFile(directory, file, fileId, previewDataSize).subscribe(ack => runInAction(() => {
-            this.endFileLoading();
-            if (frame && ack.success && ack.dataSize) {
-                let catalogInfo: CatalogInfo = {fileId, directory, fileInfo: ack.fileInfo, dataSize: ack.dataSize};
-                let catalogWidgetId;
-                const columnData = ProtobufProcessing.ProcessCatalogData(ack.previewData);
-
-                // update image associated catalog file
-                let associatedCatalogFiles = [];
-                const catalogStore = CatalogStore.Instance;
-                const catalogComponentSize = catalogStore.catalogProfiles.size;
-                let currentAssociatedCatalogFile = catalogStore.activeCatalogFiles;
-                if (currentAssociatedCatalogFile?.length) {
-                    associatedCatalogFiles = currentAssociatedCatalogFile;
-                } else {
-                    // new image append
-                    catalogStore.catalogProfiles.forEach((value, componentId) => {
-                        catalogStore.catalogProfiles.set(componentId, fileId);
-                    });
-                }
-                associatedCatalogFiles.push(fileId);
-                catalogStore.updateImageAssociatedCatalogId(AppStore.Instance.activeFrame.frameInfo.fileId, associatedCatalogFiles);
-
-                if (catalogComponentSize === 0) {
-                    const catalog = this.widgetsStore.createFloatingCatalogWidget(fileId);
-                    catalogWidgetId = catalog.widgetStoreId;
-                    catalogStore.catalogProfiles.set(catalog.widgetComponentId, fileId);
-                } else {
-                    catalogWidgetId = this.widgetsStore.addCatalogWidget(fileId);
-                    const key = catalogStore.catalogProfiles.keys().next().value;
-                    catalogStore.catalogProfiles.set(key, fileId);
-                }
-                if (catalogWidgetId) {
-                    this.catalogStore.catalogWidgets.set(fileId, catalogWidgetId);
-                    this.catalogStore.addCatalog(fileId);
-                    this.fileBrowserStore.hideFileBrowser();
-
-                    const catalogProfileStore = new CatalogProfileStore(catalogInfo, ack.headers, columnData);
-                    catalogStore.catalogProfileStores.set(fileId, catalogProfileStore);
-                }
+        return new Promise<number>((resolve, reject) => {
+            if (!this.activeFrame) {
+                AppToaster.show(ErrorToast("Please load the image file"));
+                reject();
             }
-        }), error => {
-            console.error(error);
-            AppToaster.show(ErrorToast(error));
-            this.endFileLoading();
+            if (!(type === CARTA.CatalogFileType.VOTable)) {
+                AppToaster.show(ErrorToast("`Catalog type not supported"));
+                reject();
+            }
+            this.startFileLoading();
+
+            const frame = this.activeFrame;
+            const fileId = this.catalogNum + 1;
+
+            this.backendService.loadCatalogFile(directory, file, fileId, previewDataSize).subscribe(ack => runInAction(() => {
+                this.endFileLoading();
+                if (frame && ack.success && ack.dataSize) {
+                    let catalogInfo: CatalogInfo = {fileId, directory, fileInfo: ack.fileInfo, dataSize: ack.dataSize};
+                    let catalogWidgetId;
+                    const columnData = ProtobufProcessing.ProcessCatalogData(ack.previewData);
+
+                    // update image associated catalog file
+                    let associatedCatalogFiles = [];
+                    const catalogStore = CatalogStore.Instance;
+                    const catalogComponentSize = catalogStore.catalogProfiles.size;
+                    let currentAssociatedCatalogFile = catalogStore.activeCatalogFiles;
+                    if (currentAssociatedCatalogFile?.length) {
+                        associatedCatalogFiles = currentAssociatedCatalogFile;
+                    } else {
+                        // new image append
+                        catalogStore.catalogProfiles.forEach((value, componentId) => {
+                            catalogStore.catalogProfiles.set(componentId, fileId);
+                        });
+                    }
+                    associatedCatalogFiles.push(fileId);
+                    catalogStore.updateImageAssociatedCatalogId(AppStore.Instance.activeFrame.frameInfo.fileId, associatedCatalogFiles);
+
+                    if (catalogComponentSize === 0) {
+                        const catalog = this.widgetsStore.createFloatingCatalogWidget(fileId);
+                        catalogWidgetId = catalog.widgetStoreId;
+                        catalogStore.catalogProfiles.set(catalog.widgetComponentId, fileId);
+                    } else {
+                        catalogWidgetId = this.widgetsStore.addCatalogWidget(fileId);
+                        const key = catalogStore.catalogProfiles.keys().next().value;
+                        catalogStore.catalogProfiles.set(key, fileId);
+                    }
+                    if (catalogWidgetId) {
+                        this.catalogStore.catalogWidgets.set(fileId, catalogWidgetId);
+                        this.catalogStore.addCatalog(fileId);
+                        this.fileBrowserStore.hideFileBrowser();
+
+                        const catalogProfileStore = new CatalogProfileStore(catalogInfo, ack.headers, columnData);
+                        catalogStore.catalogProfileStores.set(fileId, catalogProfileStore);
+                        resolve(fileId);
+                    } else {
+                        reject();
+                    }
+                } else {
+                    reject();
+                }
+            }), error => {
+                console.error(error);
+                AppToaster.show(ErrorToast(error));
+                this.endFileLoading();
+                reject(error);
+            });
         });
     };
 
@@ -772,7 +787,7 @@ export class AppStore {
             });
         }
         this.backendService.exportRegion(directory, file, fileType, coordType, frame.frameInfo.fileId, regionStyles).subscribe(() => {
-            AppToaster.show(SuccessToast("saved", `Exported regions for ${frame.frameInfo.fileInfo.name} using ${coordType === CARTA.CoordinateType.WORLD ? "world" : "pixel"} coordinates`));
+            AppToaster.show(SuccessToast("saved", `Exported regions for ${frame.filename} using ${coordType === CARTA.CoordinateType.WORLD ? "world" : "pixel"} coordinates`));
             this.fileBrowserStore.hideFileBrowser();
         }, error => {
             console.error(error);
@@ -922,7 +937,7 @@ export class AppStore {
     }, AppStore.ImageChannelThrottleTime);
 
     throttledSetView = _.throttle((tiles: TileCoordinate[], fileId: number, channel: number, stokes: number, focusPoint: Point2D) => {
-        const isAnimating = (this.animatorStore.animationState !== AnimationState.STOPPED && this.animatorStore.animationMode !== AnimationMode.FRAME);
+        const isAnimating = this.animatorStore.serverAnimationActive;
         if (isAnimating) {
             this.backendService.addRequiredTiles(fileId, tiles.map(t => t.encode()), this.preferenceStore.animationCompressionQuality);
         } else {
@@ -1078,7 +1093,7 @@ export class AppStore {
                 // Calculate if new data is required
                 const updateRequiredChannels = this.activeFrame.requiredChannel !== this.activeFrame.channel || this.activeFrame.requiredStokes !== this.activeFrame.stokes;
                 // Don't auto-update when animation is playing
-                if (this.animatorStore.animationState === AnimationState.STOPPED && updateRequiredChannels) {
+                if (!this.animatorStore.animationActive && updateRequiredChannels) {
                     updates.push({frame: this.activeFrame, channel: this.activeFrame.requiredChannel, stokes: this.activeFrame.requiredStokes});
                 }
 
@@ -1299,6 +1314,7 @@ export class AppStore {
     @action handleCatalogFilterStream = (catalogFilter: CARTA.CatalogFilterResponse) => {
         const catalogFileId = catalogFilter.fileId;
         const catalogProfileStore = this.catalogStore.catalogProfileStores.get(catalogFileId);
+        const catalogWidgetStoreId = this.catalogStore.catalogWidgets.get(catalogFileId);
 
         const progress = catalogFilter.progress;
         if (catalogProfileStore) {
@@ -1311,8 +1327,9 @@ export class AppStore {
             }
 
             if (catalogProfileStore.updateMode === CatalogUpdateMode.ViewUpdate) {
-                const xColumn = catalogProfileStore.xColumnRepresentation;
-                const yColumn = catalogProfileStore.yColumnRepresentation;
+                const catalogWidgetStore = this.widgetsStore.catalogWidgets.get(catalogWidgetStoreId);
+                const xColumn = catalogWidgetStore.xAxis;
+                const yColumn = catalogWidgetStore.yAxis;
                 if (xColumn && yColumn) {
                     const coords = catalogProfileStore.get2DPlotData(xColumn, yColumn, catalogData);
                     const wcs = this.activeFrame.validWcs ? this.activeFrame.wcsInfo : 0;
@@ -1587,7 +1604,7 @@ export class AppStore {
 
         if (val) {
             if (!frame.setSpatialReference(this.spatialReference)) {
-                AppToaster.show(WarningToast(`Could not enable spatial matching of ${frame.frameInfo.fileInfo.name} to reference image ${this.spatialReference.frameInfo.fileInfo.name}. No valid transform was found`));
+                AppToaster.show(WarningToast(`Could not enable spatial matching of ${frame.filename} to reference image ${this.spatialReference.filename}. No valid transform was found`));
             }
         } else {
             frame.clearSpatialReference();
@@ -1639,7 +1656,7 @@ export class AppStore {
 
         if (val) {
             if (!frame.setSpectralReference(this.spectralReference)) {
-                AppToaster.show(WarningToast(`Could not enable spectral matching (velocity system) of ${frame.frameInfo.fileInfo.name} to reference image ${this.spectralReference.frameInfo.fileInfo.name}. No valid transform was found`));
+                AppToaster.show(WarningToast(`Could not enable spectral matching (velocity system) of ${frame.filename} to reference image ${this.spectralReference.filename}. No valid transform was found`));
             }
         } else {
             frame.clearSpectralReference();
@@ -1717,7 +1734,7 @@ export class AppStore {
                     const now = new Date();
                     const timestamp = `${now.getFullYear()}-${now.getMonth() + 1}-${now.getDate()}-${now.getHours()}-${now.getMinutes()}-${now.getSeconds()}`;
                     const link = document.createElement("a") as HTMLAnchorElement;
-                    link.download = `${this.activeFrame.frameInfo.fileInfo.name}-image-${timestamp}.png`;
+                    link.download = `${this.activeFrame.filename}-image-${timestamp}.png`;
                     link.href = URL.createObjectURL(blob);
                     link.dispatchEvent(new MouseEvent("click"));
                 }, "image/png");

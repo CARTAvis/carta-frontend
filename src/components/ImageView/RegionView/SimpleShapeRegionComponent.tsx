@@ -53,18 +53,18 @@ export class SimpleShapeRegionComponent extends React.Component<RegionComponentP
 
     startEditing = (anchor: string) => {
         this.editAnchor = anchor;
-        const controlPoints = this.props.region.controlPoints;
+        const region = this.props.region;
 
         let w: number, h: number;
         if (this.props.region.regionType === CARTA.RegionType.RECTANGLE) {
-            w = controlPoints[1].x;
-            h = controlPoints[1].y;
+            w = region.size.x;
+            h = region.size.y;
         } else {
-            w = controlPoints[1].y;
-            h = controlPoints[1].x;
+            w = region.size.y;
+            h = region.size.x;
         }
 
-        this.editStartCenterPoint = {x: controlPoints[0].x, y: controlPoints[0].y};
+        this.editStartCenterPoint = {x: region.center.x, y: region.center.y};
 
         const relativeOppositeAnchorPointUnrotated = {x: 0, y: 0};
 
@@ -104,12 +104,12 @@ export class SimpleShapeRegionComponent extends React.Component<RegionComponentP
         let sizeFactor: number;
         if (region.regionType === CARTA.RegionType.RECTANGLE) {
             sizeFactor = 1.0;
-            w = region.controlPoints[1].x;
-            h = region.controlPoints[1].y;
+            w = region.size.x;
+            h = region.size.y;
         } else {
             sizeFactor = 0.5;
-            w = region.controlPoints[1].y;
-            h = region.controlPoints[1].x;
+            w = region.size.y;
+            h = region.size.x;
         }
 
         let deltaAnchors = subtract2D(newAnchorPoint, this.editOppositeAnchorPoint);
@@ -148,18 +148,18 @@ export class SimpleShapeRegionComponent extends React.Component<RegionComponentP
             newAnchorPoint = transformPoint(frame.spatialTransformAST, newAnchorPoint, true);
         }
 
-        const centerPoint = region.controlPoints[0];
+        const centerPoint = region.center;
 
         let w: number, h: number;
         let sizeFactor: number;
         if (region.regionType === CARTA.RegionType.RECTANGLE) {
             sizeFactor = 2.0;
-            w = region.controlPoints[1].x;
-            h = region.controlPoints[1].y;
+            w = region.size.x;
+            h = region.size.y;
         } else {
             sizeFactor = 1.0;
-            w = region.controlPoints[1].y;
-            h = region.controlPoints[1].x;
+            w = region.size.y;
+            h = region.size.x;
         }
 
         let deltaAnchorPoint = subtract2D(newAnchorPoint, centerPoint);
@@ -205,7 +205,7 @@ export class SimpleShapeRegionComponent extends React.Component<RegionComponentP
             if (frame.spatialReference) {
                 newPosition = transformPoint(frame.spatialTransformAST, newPosition, true);
             }
-            region.setControlPoint(0, newPosition);
+            region.setCenter(newPosition);
         }
     };
 
@@ -379,8 +379,8 @@ export class SimpleShapeRegionComponent extends React.Component<RegionComponentP
             const zoomLevel = frame.zoomLevel;
 
             const centerPixelSpace = transformedImageToCanvasPos(centerReferenceImage.x, centerReferenceImage.y, frame, this.props.layerWidth, this.props.layerHeight);
-            let width = (region.controlPoints[1].x * zoomLevel) / devicePixelRatio;
-            let height = (region.controlPoints[1].y * zoomLevel) / devicePixelRatio;
+            let width = (region.size.x * zoomLevel) / devicePixelRatio;
+            let height = (region.size.y * zoomLevel) / devicePixelRatio;
 
             // Adjusts the dash length to force the total number of dashes around the bounding box perimeter to 50
             // TODO: Is this needed anywhere?
@@ -432,12 +432,12 @@ export class SimpleShapeRegionComponent extends React.Component<RegionComponentP
             let offsetX: number;
             let offsetY: number;
             if (region.regionType === CARTA.RegionType.RECTANGLE) {
-                offsetX = region.controlPoints[1].x / 2;
-                offsetY = region.controlPoints[1].y / 2;
+                offsetX = region.size.x / 2;
+                offsetY = region.size.y / 2;
             } else {
                 // Ellipse has swapped axes
-                offsetX = region.controlPoints[1].y;
-                offsetY = region.controlPoints[1].x;
+                offsetX = region.size.y;
+                offsetY = region.size.x;
             }
 
             const zoomLevel = (frame.spatialReference ?? frame).zoomLevel;

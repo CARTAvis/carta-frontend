@@ -1,7 +1,7 @@
 import {action, computed, observable, makeObservable} from "mobx";
 import {Regions, IRegion} from "@blueprintjs/table";
 import {CARTA} from "carta-protobuf";
-import {AppStore, CatalogStore} from "stores";
+import {AppStore, CatalogStore, PreferenceStore} from "stores";
 import {filterProcessedColumnData, minMaxArray} from "utilities";
 import {ProcessedColumnData} from "models";
 
@@ -23,8 +23,6 @@ export enum CatalogCoordinate {
 export enum CatalogOverlay {
     X = "X",
     Y = "Y",
-    PlotSize = "Size",
-    PlotShape = "Shape",
     NONE = "None",
     RA = "RA",
     DEC = "DEC",
@@ -54,7 +52,7 @@ export enum CatalogSystemType {
     Pixel1 = "Pixel1",
 }
 
-export type ControlHeader = { columnIndex: number, dataIndex: number, display: boolean, representAs: CatalogCoordinate, filter: string, columnWidth: number };
+export type ControlHeader = { columnIndex: number, dataIndex: number, display: boolean, filter: string, columnWidth: number };
 
 export class CatalogProfileStore {
     public static readonly InitTableRows = 50;
@@ -68,7 +66,6 @@ export class CatalogProfileStore {
         [CatalogSystemType.Pixel1, "PIX1"]
     ]);
     private static readonly DataChunkSize = 50;
-    private static readonly InitDisplayedColumnSize = 10;
     // Number.NEGATIVE_INFINITY -1.797693134862316E+308
     private static readonly NEGATIVE_INFINITY = -1.7976931348623157e+308;
     private static readonly POSITIVE_INFINITY = 1.7976931348623157e+308;
@@ -267,49 +264,6 @@ export class CatalogProfileStore {
         this.catalogControlHeader.get(columnName).display = val;
     }
 
-    @action setHeaderRepresentation(option: {coordinate: CatalogCoordinate, coordinateType: CatalogOverlay}, columnName: string) {
-        const current = this.catalogControlHeader.get(columnName);
-        if (option.coordinate !== current.representAs) {
-            switch (option.coordinate) {
-                case CatalogCoordinate.X:
-                    const currentX = this.xColumnRepresentation;
-                    if (currentX) {
-                        this.catalogControlHeader.get(currentX).representAs = CatalogCoordinate.NONE;
-                    }
-                    break;
-                case CatalogCoordinate.Y:
-                    const currentY = this.yColumnRepresentation;
-                    if (currentY) {
-                        this.catalogControlHeader.get(currentY).representAs = CatalogCoordinate.NONE;
-                    }
-                    break;
-                case CatalogCoordinate.PlotSize:
-                    const currentSize = this.sizeColumnRepresentation;
-                    if (currentSize) {
-                        this.catalogControlHeader.get(currentSize).representAs = CatalogCoordinate.NONE;
-                    }
-                    break;
-                case CatalogCoordinate.PlotShape:
-                    const currentShape = this.shapeColumnRepresentation;
-                    if (currentShape) {
-                        this.catalogControlHeader.get(currentShape).representAs = CatalogCoordinate.NONE;
-                    }
-                    break;
-                default:
-                    break;
-            }
-            const newHeader: ControlHeader = {
-                columnIndex: current.columnIndex,
-                dataIndex: current.dataIndex,
-                display: current.display,
-                representAs: option.coordinate,
-                filter: current.filter,
-                columnWidth: current.columnWidth
-            };
-            this.catalogControlHeader.set(columnName, newHeader);
-        }
-    }
-
     @action.bound setTableColumnWidth(width: number, columnName: string) {
         this.catalogControlHeader.get(columnName).columnWidth = width;
     }
@@ -320,7 +274,6 @@ export class CatalogProfileStore {
             columnIndex: current.columnIndex,
             dataIndex: current.dataIndex,
             display: current.display,
-            representAs: current.representAs,
             filter: filter,
             columnWidth: current.columnWidth
         };
@@ -379,10 +332,10 @@ export class CatalogProfileStore {
             for (let index = 0; index < catalogHeader.length; index++) {
                 const header = catalogHeader[index];
                 let display = false;
-                if (index < CatalogProfileStore.InitDisplayedColumnSize) {
+                if (index < PreferenceStore.Instance.catalogDisplayedColumnSize) {
                     display = true;
                 }
-                let controlHeader: ControlHeader = {columnIndex: header.columnIndex, dataIndex: index, display: display, representAs: CatalogCoordinate.NONE, filter: "", columnWidth: null};
+                let controlHeader: ControlHeader = {columnIndex: header.columnIndex, dataIndex: index, display: display, filter: "", columnWidth: null};
                 controlHeaders.set(header.name, controlHeader);
             }
         }
@@ -519,46 +472,6 @@ export class CatalogProfileStore {
         }
     }
 
-    @computed get xColumnRepresentation(): string {
-        let xColumn = null;
-        this.catalogControlHeader.forEach((value, key) => {
-            if (value.representAs === CatalogCoordinate.X) {
-                xColumn = key;
-            }
-        });
-        return xColumn;
-    }
-
-    @computed get yColumnRepresentation(): string {
-        let yColumn = null;
-        this.catalogControlHeader.forEach((value, key) => {
-            if (value.representAs === CatalogCoordinate.Y) {
-                yColumn = key;
-            }
-        });
-        return yColumn;
-    }
-
-    @computed get sizeColumnRepresentation(): string {
-        let sizeColumn = null;
-        this.catalogControlHeader.forEach((value, key) => {
-            if (value.representAs === CatalogCoordinate.PlotSize) {
-                sizeColumn = key;
-            }
-        });
-        return sizeColumn;
-    }
-
-    @computed get shapeColumnRepresentation(): string {
-        let shapeColumn = null;
-        this.catalogControlHeader.forEach((value, key) => {
-            if (value.representAs === CatalogCoordinate.PlotShape) {
-                shapeColumn = key;
-            }
-        });
-        return shapeColumn;
-    }
-
     @computed get columnIndices(): Array<number> {
         let indices = [];
         this.catalogControlHeader.forEach((value, key) => {
@@ -613,14 +526,6 @@ export class CatalogProfileStore {
 
     @computed get catalogFileId(): number {
         return this.catalogInfo.fileId;
-    }
-
-    @computed get disableWithDataLoading(): boolean {
-        let disable = true;
-        if (this.progress === 1 || this.progress === undefined) {
-            disable = false;
-        }
-        return disable;
     }
 
     public get2DPlotData(xColumnName: string, yColumnName: string, columnsData: Map<number, ProcessedColumnData>): { wcsX?: Array<number>, wcsY?: Array<number>, xHeaderInfo: CARTA.ICatalogHeader, yHeaderInfo: CARTA.ICatalogHeader } {

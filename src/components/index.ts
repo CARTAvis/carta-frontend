@@ -28,3 +28,4 @@ export * from "./App/UIControllerComponent";
 export * from "./RegionSelector/RegionSelectorComponent";
 export * from "./HelpDrawer/HelpDrawerComponent";
 export * from "./CatalogOverlay/CatalogPlotComponent/CatalogPlotComponent";
+export * from "./CatalogOverlay/CatalogOverlayPlotSettingsPanelComponent/CatalogOverlayPlotSettingsPanelComponent";
