@@ -11,7 +11,7 @@ import {StokesAnalysisToolbarComponent} from "./StokesAnalysisToolbarComponent/S
 import {TickType, MultiPlotProps} from "../Shared/LinePlot/PlotContainer/PlotContainerComponent";
 import {AppStore, AnimatorStore, DefaultWidgetConfig, FrameStore, HelpType, WidgetsStore, WidgetProps, SpectralProfileStore} from "stores";
 import {StokesAnalysisWidgetStore, StokesCoordinate} from "stores/widgets";
-import {Point2D, SPECTRAL_COLORMAP_GROUP} from "models";
+import {Point2D, SPECTRAL_COLORMAP_GROUP, SpectralType} from "models";
 import {clamp, normalising, polarizationAngle, polarizedIntensity, binarySearchByX, closestPointIndexToCursor, toFixed, toExponential, minMaxPointArrayZ, formattedNotation, minMaxArray} from "utilities";
 import "./StokesAnalysisComponent.scss";
 
@@ -142,7 +142,10 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
     // true: red->blue, false: blue->red
     private getColorMapOrder(frame: FrameStore): boolean {    
         if (frame && frame.channelInfo && frame.channelInfo.fromWCS && frame.channelInfo.channelType && !isNaN(frame.channelInfo.delta)) {
-            const CTYPE = frame.spectralType !== null? frame.spectralType : frame.channelInfo.channelType.code;
+            let CTYPE = frame.spectralType !== null? frame.spectralType : frame.channelInfo.channelType.code;
+            if (CTYPE === SpectralType.CHANNEL) {
+                CTYPE = frame.channelInfo.channelType.code;
+            }
             const inGroup = SPECTRAL_COLORMAP_GROUP.includes(CTYPE);
             // chartjs plot tick lables with increasing order by default, no need to check for CDELT
             return inGroup ? true : false;
