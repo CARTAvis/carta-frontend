@@ -30,7 +30,6 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
         horizontal: 2,
     };
     private multicolorLineColorOutRange = "hsla(0, 0%, 50%, 0.5)";
-    private fileId = -1;
 
     public static get WIDGET_CONFIG(): DefaultWidgetConfig {
         return {
@@ -127,14 +126,6 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
                     const regionString = regionId === 0 ? "Cursor" : `Region #${regionId}`;
                     const selectedString = this.widgetStore.matchesSelectedRegion ? "(Active)" : "";
                     appStore.widgetsStore.setWidgetTitle(this.props.id, `Stokes Analysis : ${regionString} ${selectedString} ${progressString}`);
-
-                    // init color Map according CTYPE3 and CDELT3, if file changed
-                    if (this.fileId !== frame.frameInfo.fileId) {
-                        // Todo, reset zoom level for spatial and spectral issue #463
-                        this.widgetStore.clearLinePlotsXYBounds();
-                        this.widgetStore.clearScatterPlotXYBounds();
-                        this.fileId = frame.frameInfo.fileId;
-                    }
                 }
             } else {
                 appStore.widgetsStore.setWidgetTitle(this.props.id, `Stokes Analysis: Cursor`);
