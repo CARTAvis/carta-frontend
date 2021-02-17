@@ -265,7 +265,7 @@ export class FileInfoComponent extends React.Component<{
         const numChannels = activeFrame.numChannels;
         const min = activeFrame.channelValueBounds?.min;
         const max = activeFrame.channelValueBounds?.max;
-        const delta = numChannels > 1 ? Math.abs(max - min) / numChannels : Math.abs(max - min);
+        const delta = numChannels > 1 ? Math.abs(max - min) / (numChannels - 1) : Math.abs(max - min);
         const majorStepSize = delta * 0.1;
         return (
             <React.Fragment>
