@@ -187,7 +187,8 @@ export class StatsComponent extends React.Component<WidgetProps> {
                 <div className="stats-display">
                     {formContent}
                 </div>
-                <ReactResizeDetector handleWidth handleHeight onResize={this.onResize}/>
+                <ReactResizeDetector handleWidth handleHeight onResize={this.onResize}>
+                </ReactResizeDetector>
             </div>
         );
     }

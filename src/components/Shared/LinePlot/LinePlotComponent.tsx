@@ -1001,7 +1001,9 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
                 onMouseLeave={this.onMouseLeave}
                 tabIndex={0}
             >
-                <ReactResizeDetector handleWidth handleHeight onResize={this.resize} refreshMode={"throttle"} refreshRate={33}/>
+                <ReactResizeDetector handleWidth handleHeight onResize={this.resize} refreshMode={"throttle"} refreshRate={33}>
+
+                </ReactResizeDetector>
                 {this.width > 0 && this.height > 0 &&
                 <PlotContainerComponent
                     {...this.props}
