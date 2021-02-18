@@ -509,7 +509,7 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
 
         let polygonCreatingLine = null;
         if (this.currentCursorPos && this.creatingRegion && this.creatingRegion.regionType === CARTA.RegionType.POLYGON && this.creatingRegion.isValid) {
-            let firstControlPoint = this.creatingRegion.center;
+            let firstControlPoint = this.creatingRegion.controlPoints[0];
             let lastControlPoint = this.creatingRegion.controlPoints[this.creatingRegion.controlPoints.length - 1];
 
             if (frame.spatialReference) {
