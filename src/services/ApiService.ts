@@ -35,7 +35,7 @@ export class ApiService {
         }
     }
 
-    private static PreferenceValidator = new Ajv().compile(preferencesSchema);
+    private static PreferenceValidator = new Ajv({strictTypes: false}).compile(preferencesSchema);
 
     @observable private _accessToken: string;
     private _tokenLifetime: number;
