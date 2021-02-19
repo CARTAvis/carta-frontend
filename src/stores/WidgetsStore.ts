@@ -159,7 +159,7 @@ export class WidgetsStore {
     private widgetsMap: Map<string, Map<string, any>>;
     private defaultFloatingWidgetOffset: number;
 
-    public CARTAWidgets = new Map<WidgetType, {isCustomIcon: boolean, icon: string, onClick: () => void, widgetConfig: DefaultWidgetConfig}>([
+    public readonly CARTAWidgets = new Map<WidgetType, {isCustomIcon: boolean, icon: string, onClick: () => void, widgetConfig: DefaultWidgetConfig}>([
         [WidgetType.Region, {isCustomIcon: true, icon: "regionList", onClick: () => WidgetsStore.Instance.createFloatingRegionListWidget(), widgetConfig: RegionListComponent.WIDGET_CONFIG}],
         [WidgetType.Log, {isCustomIcon: false, icon: "application", onClick: () => WidgetsStore.Instance.createFloatingLogWidget(), widgetConfig: LogComponent.WIDGET_CONFIG}],
         [WidgetType.SpatialProfiler, {isCustomIcon: true, icon: "spatialProfiler", onClick: () => WidgetsStore.Instance.createFloatingSpatialProfilerWidget(), widgetConfig: SpatialProfilerComponent.WIDGET_CONFIG}],
