@@ -355,14 +355,12 @@ export class FileInfoComponent extends React.Component<{
                                 </div>
                             </React.Fragment>
                         }
-                        {(numChannels > 1 || activeFrame.hasStokes) &&
-                            <Switch
-                                className="drop-degenerate"
-                                checked={fileBrowser.isDropDegeneratedAxes}
-                                label="Drop degenerated axes"
-                                onChange={this.onChangeIsDropDegeneratedAxes}
-                            />
-                        }
+                        <Switch
+                            className="drop-degenerate"
+                            checked={fileBrowser.isDropDegeneratedAxes}
+                            label="Drop degenerated axes"
+                            onChange={this.onChangeIsDropDegeneratedAxes}
+                        />
                     </div>
                 }
             </React.Fragment>
