@@ -152,7 +152,7 @@ export class RootMenuComponent extends React.Component {
                 <Menu.Divider/>
                 <Menu.Item
                     text="Import catalog"
-                    label={`${modString}C`}
+                    label={`${modString}G`}
                     disabled={connectionStatus !== ConnectionStatus.ACTIVE || !appStore.activeFrame || appStore.fileLoading}
                     onClick={() => appStore.fileBrowserStore.showFileBrowser(BrowserMode.Catalog, false)}
                 />

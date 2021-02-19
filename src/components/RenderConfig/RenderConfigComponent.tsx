@@ -437,7 +437,8 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
                     onCancel={this.handleCubeHistogramCancelled}
                     text={"Calculating cube histogram"}
                 />
-                <ReactResizeDetector handleWidth handleHeight onResize={this.onResize} refreshMode={"throttle"}/>
+                <ReactResizeDetector handleWidth handleHeight onResize={this.onResize} refreshMode={"throttle"}>
+                </ReactResizeDetector>
             </div>
         );
     }

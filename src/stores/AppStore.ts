@@ -1776,7 +1776,7 @@ export class AppStore {
     // 3. Wait 25 ms to allow for re-rendering of tiles
     waitForImageData = async () => {
         await this.delay(25);
-        return new Promise(resolve => {
+        return new Promise<void>(resolve => {
             when(() => {
                 const tilesLoading = this.tileService.remainingTiles > 0;
                 const contoursLoading = this.activeFrame && this.activeFrame.contourProgress >= 0 && this.activeFrame.contourProgress < 1;
