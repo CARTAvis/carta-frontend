@@ -76,7 +76,9 @@ export class RegionListComponent extends React.Component<WidgetProps> {
             return (
                 <div className="region-list-widget">
                     <NonIdealState icon={"folder-open"} title={"No file loaded"} description={"Load a file using the menu"}/>;
-                    <ReactResizeDetector handleWidth handleHeight onResize={this.onResize}/>
+                    <ReactResizeDetector handleWidth handleHeight onResize={this.onResize}>
+
+                    </ReactResizeDetector>
                 </div>
             );
         }
@@ -200,7 +202,8 @@ export class RegionListComponent extends React.Component<WidgetProps> {
                     {rows}
                     </tbody>
                 </HTMLTable>
-                <ReactResizeDetector handleWidth handleHeight onResize={this.onResize}/>
+                <ReactResizeDetector handleWidth handleHeight onResize={this.onResize}>
+                </ReactResizeDetector>
             </div>
         );
     }
