@@ -12,7 +12,7 @@ import { SpectralSystem, SpectralType, SpectralUnit } from "models";
 export enum FileInfoType {
     IMAGE_FILE = "image-file",
     IMAGE_HEADER = "image-header",
-    CHOP_IMAGE = "chop-image",
+    SAVE_IMAGE = "save-image",
     REGION_FILE = "region-file",
     CATALOG_FILE = "catalog-file",
     CATALOG_HEADER = "catalog-header"
@@ -40,7 +40,7 @@ export class FileInfoComponent extends React.Component<{
                     return <Tab key={infoType} id={infoType} title="File Information" />;
                 case (FileInfoType.IMAGE_HEADER):
                     return <Tab key={infoType} id={infoType} title="Header" />;
-                case (FileInfoType.CHOP_IMAGE):
+                case (FileInfoType.SAVE_IMAGE):
                     return <Tab key={infoType} id={infoType} title="Save Image" />;
                 case (FileInfoType.CATALOG_FILE):
                     return <Tab key={infoType} id={infoType} title="Catalog Information" />;
@@ -73,7 +73,7 @@ export class FileInfoComponent extends React.Component<{
     private renderInfoPanel = () => {
         switch (this.props.selectedTab) {
             // Here is only controls for save, no need to wait file info
-            case FileInfoType.CHOP_IMAGE:
+            case FileInfoType.SAVE_IMAGE:
                 break;
             // Check if loading file
             default:
@@ -87,7 +87,7 @@ export class FileInfoComponent extends React.Component<{
                 break;
         }
         switch (this.props.selectedTab) {
-            case FileInfoType.CHOP_IMAGE:
+            case FileInfoType.SAVE_IMAGE:
                 return this.renderSaveImageControl();
             case FileInfoType.IMAGE_FILE:
                 return this.renderImageHeaderList(this.props.fileInfoExtended.computedEntries);
@@ -219,28 +219,40 @@ export class FileInfoComponent extends React.Component<{
         let options = [
             { value: 0, label: stokesInfo.join("") },
         ];
+        const optionsAddFourElements = () => {
+            options.push({ value: 4, label: stokesInfo[3] });
+            options.push({ value: 7, label: stokesInfo.slice(2, 4).join("") });
+            options.push({ value: 9, label: stokesInfo[0] + stokesInfo[3] });
+            options.push({ value: 10, label: stokesInfo[1] + stokesInfo[3] });
+            options.push({ value: 11, label: stokesInfo.slice(0, 3).join("") });
+            options.push({ value: 12, label: stokesInfo.slice(1, 4).join("") });
+        };
+        const optionsAddThreeElements = () => {
+            options.push({ value: 3, label: stokesInfo[2] });
+            options.push({ value: 5, label: stokesInfo.slice(0, 2).join("") });
+            options.push({ value: 6, label: stokesInfo.slice(1, 3).join("") });
+            options.push({ value: 8, label: stokesInfo[0] + stokesInfo[2] });
+        };
+        const optionsAddTwoElements = () => {
+            options.push({ value: 1, label: stokesInfo[0] });
+            options.push({ value: 2, label: stokesInfo[1] });
+        };
         if (activeFrame) {
             switch (stokesInfo.join("")) {
                 case "IQUV":
-                    options.push({ value: 4, label: stokesInfo[3] });
-                    options.push({ value: 7, label: stokesInfo.slice(2, 4).join("") });
-                    options.push({ value: 9, label: stokesInfo[0] + stokesInfo[3] });
-                    options.push({ value: 10, label: stokesInfo[1] + stokesInfo[3] });
-                    options.push({ value: 11, label: stokesInfo.slice(0, 3).join("") });
-                    options.push({ value: 12, label: stokesInfo.slice(1, 4).join("") });
-                // eslint-disable-next-line
+                    optionsAddFourElements();
+                    optionsAddThreeElements();
+                    optionsAddTwoElements();
+                    break;
                 case "IQU":
                 case "QUV":
-                    options.push({ value: 3, label: stokesInfo[2] });
-                    options.push({ value: 5, label: stokesInfo.slice(0, 2).join("") });
-                    options.push({ value: 6, label: stokesInfo.slice(1, 3).join("") });
-                    options.push({ value: 8, label: stokesInfo[0] + stokesInfo[2] });
-                // eslint-disable-next-line
+                    optionsAddThreeElements();
+                    optionsAddTwoElements();
+                    break;
                 case "IQ":
                 case "QU":
                 case "UV":
-                    options.push({ value: 1, label: stokesInfo[0] });
-                    options.push({ value: 2, label: stokesInfo[1] });
+                    optionsAddTwoElements();
                     break;
                 default:
                     break;

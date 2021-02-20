@@ -549,7 +549,7 @@ export class FileBrowserDialogComponent extends React.Component {
             case BrowserMode.File:
                 return [FileInfoType.IMAGE_FILE, FileInfoType.IMAGE_HEADER];
             case BrowserMode.SaveFile:
-                return [FileInfoType.CHOP_IMAGE, FileInfoType.IMAGE_FILE, FileInfoType.IMAGE_HEADER];
+                return [FileInfoType.SAVE_IMAGE, FileInfoType.IMAGE_FILE, FileInfoType.IMAGE_HEADER];
             case BrowserMode.Catalog:
                 return [FileInfoType.CATALOG_FILE, FileInfoType.CATALOG_HEADER];
             default:
