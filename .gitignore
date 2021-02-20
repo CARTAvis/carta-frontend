@@ -197,4 +197,6 @@ src/static/gitInfo.ts
 /emscripten*.simg
 /emscripten.simg/
 carta-frontend-*.tgz
-/.eslintcache
+
+# eslint
+.eslintcache
