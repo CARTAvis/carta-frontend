@@ -2,7 +2,7 @@ import * as React from "react";
 import * as AST from "ast_wrapper";
 import * as _ from "lodash";
 import {observer} from "mobx-react";
-import {FrameStore, OverlayStore} from "stores";
+import {FrameStore, OverlayStore, AppStore} from "stores";
 import {CursorInfo} from "models";
 import "./OverlayComponent.scss";
 
@@ -96,6 +96,7 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
         const axesColor = this.props.overlaySettings.axes.color;
         const numbersColor = this.props.overlaySettings.numbers.color;
         const labelsColor = this.props.overlaySettings.labels.color;
+        const darktheme = AppStore.Instance.darkTheme;
         /* eslint-enable no-unused-vars, @typescript-eslint/no-unused-vars */
 
         let className = "overlay-canvas";

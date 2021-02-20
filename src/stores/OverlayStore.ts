@@ -3,7 +3,7 @@ import {Colors} from "@blueprintjs/core";
 import { action, autorun, computed, observable, makeObservable } from "mobx";
 import {AppStore, FrameStore, PreferenceStore, WCS_PRECISION} from "stores";
 import {WCSType} from "models";
-import {toFixed} from "utilities";
+import {toFixed, getColorForTheme} from "utilities";
 
 const AST_DEFAULT_COLOR = Colors.BLUE3;
 
@@ -117,7 +117,8 @@ export class OverlayGlobalSettings {
         makeObservable(this);
         this.system = SystemType.Auto;
         this.labelType = LabelType.Exterior;
-        this.color = PreferenceStore.Instance.astColor;
+        this.setColor(PreferenceStore.Instance.astColor);
+        console.log(this.color);
         this.tolerance = 2; // percentage
 
         this.defaultSystem = SystemType.Auto;
@@ -126,7 +127,7 @@ export class OverlayGlobalSettings {
 
     @action setColor = (color: string) => {
         this.color = color;
-        AST.setColor(color, AstColorsIndex.GLOBAL);
+        AST.setColor(getColorForTheme(color), AstColorsIndex.GLOBAL);
     };
 
     @action setTolerance(tolerance: number) {

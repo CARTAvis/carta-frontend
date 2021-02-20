@@ -33,7 +33,7 @@ import {
     SpectralProfileStore,
     WidgetsStore
 } from ".";
-import {distinct, GetRequiredTiles, mapToObject} from "utilities";
+import {distinct, GetRequiredTiles, mapToObject, getColorForTheme} from "utilities";
 import {ApiService, BackendService, ConnectionStatus, ScriptingService, TileService, TileStreamDetails} from "services";
 import {FrameView, Point2D, ProtobufProcessing, Theme, TileCoordinate, WCSMatchingType} from "models";
 import {HistogramWidgetStore, RegionWidgetStore, SpatialProfileWidgetStore, SpectralProfileWidgetStore, StatsWidgetStore, StokesAnalysisWidgetStore} from "./widgets";
@@ -963,8 +963,8 @@ export class AppStore {
         this.helpStore = HelpStore.Instance;
         this.layoutStore = LayoutStore.Instance;
         this.logStore = LogStore.Instance;
-        this.overlayStore = OverlayStore.Instance;
         this.preferenceStore = PreferenceStore.Instance;
+        this.overlayStore = OverlayStore.Instance;
         this.widgetsStore = WidgetsStore.Instance;
 
         this.astReady = false;
@@ -987,7 +987,7 @@ export class AppStore {
             this.astReady = true;
             this.logStore.addInfo("AST library loaded", ["ast"]);
             const colors = [
-                this.overlayStore.global.color,
+                getColorForTheme(this.overlayStore.global.color),
                 this.overlayStore.title.color,
                 this.overlayStore.grid.color,
                 this.overlayStore.border.color,

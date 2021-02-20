@@ -148,8 +148,8 @@
             "type": "string"
         },
         "astColor": {
-            "type": "integer",
-            "minimum": 0
+            "type": "string",
+            "description": "TODO: validate color string"
         },
         "astGridVisible": {
             "type": "boolean"

@@ -10,7 +10,7 @@ import {
     Switch, Tab, Tabs, TabId
 } from "@blueprintjs/core";
 import {ColorResult} from "react-color";
-import {ColorPickerComponent, SafeNumericInput} from "components/Shared";
+import {ColorPickerComponent, SafeNumericInput, ColorComponent} from "components/Shared";
 import {AppStore, BeamType, LabelType, SystemType, HelpType, NumberFormatType, NUMBER_FORMAT_LABEL, DefaultWidgetConfig, WidgetProps} from "stores";
 import { SWATCH_COLORS} from "utilities";
 import "./ImageViewSettingsPanelComponent.scss";
@@ -135,13 +135,14 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
         const globalPanel = (
             <div className="panel-container">
                 <FormGroup inline={true} label="Color">
-                    <ColorPickerComponent
+                    {/* <ColorPickerComponent
                         color={global.color}
                         presetColors={SWATCH_COLORS}
                         setColor={(color: ColorResult) => global.setColor(color.hex)}
                         disableAlpha={true}
                         darkTheme={appStore.darkTheme}
-                    />
+                    /> */}
+                    <ColorComponent selectedColor={global.color} onItemSelect={(color: string)=> global.setColor(color) }/>
                 </FormGroup>
                 <FormGroup inline={true} label="Tolerance" labelInfo="(%)">
                     <SafeNumericInput

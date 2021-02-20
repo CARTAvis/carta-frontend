@@ -1,7 +1,7 @@
 // Static assets
 import allMaps from "static/allmaps.png";
 import {Colors} from "@blueprintjs/core";
-import {RenderConfigStore} from "stores";
+import {RenderConfigStore, AppStore} from "stores";
 
 export const SWATCH_COLORS = [
     Colors.BLUE3,
@@ -50,4 +50,17 @@ export function getColorsForValues(colorMap: string): { color: Uint8ClampedArray
         return {color: colorMapPixel?.data, size: colorMapPixel?.width};
     }
     return {color: new Uint8ClampedArray([0, 0, 0, 0]), size: 1};
+}
+
+export function getColorForTheme(color: string) {
+    if (color.indexOf("auto-") === -1) {
+        return color;
+    }
+
+    const requiredColor = color.substr(5).toUpperCase();
+    if (AppStore.Instance.darkTheme) {
+        return Colors[`${requiredColor}4`];
+    } else {
+        return Colors[`${requiredColor}2`];
+    }
 }
