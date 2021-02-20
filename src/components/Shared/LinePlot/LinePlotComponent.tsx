@@ -11,7 +11,7 @@ import {PlotContainerComponent, TickType, MultiPlotProps} from "./PlotContainer/
 import {ToolbarComponent} from "./Toolbar/ToolbarComponent";
 import {StokesCoordinate} from "stores/widgets/StokesAnalysisWidgetStore";
 import {Point2D} from "models";
-import {clamp, toExponential} from "utilities";
+import {clamp, toExponential, exportTsvFile} from "utilities";
 import {PlotType} from "components/Shared";
 import "./LinePlotComponent.scss";
 
@@ -662,14 +662,7 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
             }
         }
 
-        const tsvData = `data:text/tab-separated-values;charset=utf-8,${comment}\n${header}\n${rows.join("\n")}\n`;
-
-        const dataURL = encodeURI(tsvData).replace(/#/g, "%23");
-
-        const a = document.createElement("a") as HTMLAnchorElement;
-        a.href = dataURL;
-        a.download = `${imageName}-${plotName.replace(" ", "-")}-${LinePlotComponent.GetTimestamp()}.tsv`;
-        a.dispatchEvent(new MouseEvent("click"));
+        exportTsvFile(imageName, plotName, `${comment}\n${header}\n${rows.join("\n")}\n`);
     };
 
     private calcMarkerBox = (marker: LineMarker): {lowerBound: number, height: number} => {

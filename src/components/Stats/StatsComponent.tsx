@@ -4,11 +4,11 @@ import {action, autorun, computed, makeObservable, observable} from "mobx";
 import {HTMLTable, NonIdealState} from "@blueprintjs/core";
 import ReactResizeDetector from "react-resize-detector";
 import {CARTA} from "carta-protobuf";
-import {DefaultWidgetConfig, WidgetProps, HelpType, WidgetsStore, AppStore, RegionStore, WCS_PRECISION} from "stores";
+import {DefaultWidgetConfig, WidgetProps, HelpType, WidgetsStore, AppStore} from "stores";
 import {StatsWidgetStore} from "stores/widgets";
-import {toExponential, toFixed, getFormattedWCSPoint, formattedArcsec} from "utilities";
+import {toExponential, exportTsvFile} from "utilities";
 import {RegionSelectorComponent} from "components";
-import {ExportToolbarComponent} from "./ExportToolbar/ExportToolbarComponent";
+import {ToolbarComponent} from "components/Shared/LinePlot/Toolbar/ToolbarComponent";
 import "./StatsComponent.scss";
 
 @observer
@@ -68,16 +68,16 @@ export class StatsComponent extends React.Component<WidgetProps> {
     };
 
     private static readonly STATS_NAME_MAP = new Map<CARTA.StatsType, string>([
-        [CARTA.StatsType.NumPixels, "NumPixels"],
-        [CARTA.StatsType.Sum, "Sum"],
-        [CARTA.StatsType.FluxDensity, "FluxDensity"],
-        [CARTA.StatsType.Mean, "Mean"],
-        [CARTA.StatsType.Sigma, "StdDev"],
-        [CARTA.StatsType.Min, "Min"],
-        [CARTA.StatsType.Max, "Max"],
-        [CARTA.StatsType.Extrema, "Extrema"],
-        [CARTA.StatsType.RMS, "RMS"],
-        [CARTA.StatsType.SumSq, "SumSq"]
+        [CARTA.StatsType.NumPixels, "NumPixels".padEnd(12)],
+        [CARTA.StatsType.Sum, "Sum".padEnd(12)],
+        [CARTA.StatsType.FluxDensity, "FluxDensity".padEnd(12)],
+        [CARTA.StatsType.Mean, "Mean".padEnd(12)],
+        [CARTA.StatsType.Sigma, "StdDev".padEnd(12)],
+        [CARTA.StatsType.Min, "Min".padEnd(12)],
+        [CARTA.StatsType.Max, "Max".padEnd(12)],
+        [CARTA.StatsType.Extrema, "Extrema".padEnd(12)],
+        [CARTA.StatsType.RMS, "RMS".padEnd(12)],
+        [CARTA.StatsType.SumSq, "SumSq".padEnd(12)]
     ]);
 
     private static readonly NAME_COLUMN_WIDTH = 70;
@@ -133,127 +133,66 @@ export class StatsComponent extends React.Component<WidgetProps> {
         this.hideMouseEnterWidget();
     };
 
-    private static GetTimestamp() {
-        const now = new Date();
-        return `${now.getFullYear()}-${now.getMonth() + 1}-${now.getDate()}-${now.getHours()}-${now.getMinutes()}-${now.getSeconds()}`;
-    }
-
-    getRegionInfo = (region,frame) => {
-        let regionInfo = "";
-        regionInfo += `# region name: ${region.nameString}\n`;
-        regionInfo += `# region type: ${RegionStore.RegionTypeString(region.regionType)}\n`;
-
-        if (frame.validWcs) {
-            const centerWCSPoint = getFormattedWCSPoint(frame.wcsInfoForTransformation, region.center);
-            regionInfo += `# region center: (${centerWCSPoint.x}, ${centerWCSPoint.y})\n`;
-        } else {
-            regionInfo += `# region center (px): (${toFixed(region.center.x, 3)}, ${toFixed(region.center.y, 3)})\n`;
-        }
-
-        if (region.regionType===CARTA.RegionType.ELLIPSE) {
-            if (frame.validWcs) {
-                regionInfo += `# region axes: (${formattedArcsec(region.wcsSize.x, WCS_PRECISION)}, ${formattedArcsec(region.wcsSize.y, WCS_PRECISION)})\n`;
-            } else {
-                regionInfo += `# region axes (px): (${toFixed(region.size.x, 3)}, ${toFixed(region.size.y, 3)})\n`;
-            }
-        } else if (region.regionType===CARTA.RegionType.RECTANGLE) {
-            if (frame.validWcs) {
-                regionInfo += `# region size: (${formattedArcsec(region.wcsSize.x, WCS_PRECISION)}, ${formattedArcsec(region.wcsSize.y, WCS_PRECISION)})\n`;
-                
-            } else {
-                regionInfo += `# region size (px): (${toFixed(region.size.x, 3)}, ${toFixed(region.size.y, 3)})\n`;
-            }
-            if (region.rotation===0.0) {
-                let bottomLeftPoint = {x:region.center.x-region.size.x/2.0, y:region.center.y-region.size.y/2.0};
-                let topRightPoint =  {x:region.center.x+region.size.x/2.0, y:region.center.y+region.size.y/2.0};
-                if (frame.validWcs) {
-                    const bottomLeftWCSPoint = getFormattedWCSPoint(frame.wcsInfoForTransformation, bottomLeftPoint);
-                    regionInfo += `# region bottom left: (${bottomLeftWCSPoint.x}, ${bottomLeftWCSPoint.y})\n`;
-                    const topRightWCSPoint = getFormattedWCSPoint(frame.wcsInfoForTransformation, topRightPoint);
-                    regionInfo += `# region top right: (${topRightWCSPoint.x}, ${topRightWCSPoint.y})\n`;
-                } else {
-                    regionInfo += `# region bottom left (px): (${toFixed(bottomLeftPoint.x, 3)}, ${toFixed(bottomLeftPoint.y, 3)})\n`;
-                    regionInfo += `# region top right (px): (${toFixed(topRightPoint.x, 3)}, ${toFixed(topRightPoint.y, 3)})\n`;
-                }
-            }
-        } else if (region.regionType===CARTA.RegionType.POLYGON) {
-            if (frame.validWcs) {
-                for (let i=0; i<region.controlPoints.length; i++) {
-                    const pointWCSPoint = getFormattedWCSPoint(frame.wcsInfoForTransformation, region.controlPoints[i]);
-                    regionInfo += `# region point${i}: (${pointWCSPoint.x}, ${pointWCSPoint.y})\n`;
+    private getTableValue = (index, type) => {
+        let unitString = "";
+        const frame = this.widgetStore.effectiveFrame;
+        if (frame && frame.unit) {
+            const unit = frame.unit;
+            if (type === CARTA.StatsType.NumPixels) {
+                unitString = "pixel(s)";
+            } else if (type === CARTA.StatsType.SumSq) {
+                unitString = `(${unit})^2`;
+            } else if (type === CARTA.StatsType.FluxDensity) {
+                if (unit === "Jy/beam") {
+                    unitString = "Jy";
                 }
             } else {
-                for (let i=0; i<region.controlPoints.length; i++) {
-                    regionInfo += `# region point${i} (px): (${toFixed(region.controlPoints[i].x, 3)}, ${toFixed(region.controlPoints[i].y, 3)})\n`;
-                }
+                unitString = unit;
             }
         }
+        
+        const value =  this.statsData.statistics[index].value;
+        const numString = toExponential(value, 12);
+        unitString = isFinite(value) ? unitString : "";
 
-        regionInfo += `# region position angle (deg): ${region.rotation}\n`;
-        return regionInfo;
+        return {num: numString, unit: unitString}
     }
 
     exportData = () => {
-        const appStore = AppStore.Instance;
+        const frame = this.widgetStore.effectiveFrame;
 
-        let fileId;
-        
-        if (this.widgetStore.effectiveFrame) {
-            fileId = this.widgetStore.effectiveFrame.frameInfo.fileId;
-            
-        } else {
-            console.log("can't find effectiveFrame")
-            return;
-        }
-        const frame = appStore.frames[fileId];
-        const fileName = frame.filename
-
+        const fileName = this.widgetStore.effectiveFrame.filename;
         const plotName = "statistics";
         const title = `# ${fileName} ${plotName}\n`;
 
         const xLabel = "Statistic";
         const yLabel = "Value";
         const zLabel = "Unit";
-        let comment;
-        let regionId;
-        if (this.widgetStore) {
-            regionId = this.widgetStore.effectiveRegionId;
-        } else {
-            console.log("can't find widgetStore")
-            return;
-        }
+        let regionInfo = "";
+        let regionId = this.widgetStore.effectiveRegionId;
         if (regionId !== -1) {
-            let regionInfo = "";
             const region = this.widgetStore.effectiveFrame.regionSet.regions.find(r => r.regionId === regionId);
             if (region) {
-                regionInfo = this.getRegionInfo(region, frame);
+                regionInfo += `# ${region.regionProperties}\n`;
+                if (frame.validWcs) {
+                    regionInfo += `# ${frame.getRegionWcsProperties(region)}\n`;
+                }
             }
-            comment = `${regionInfo}# xLabel: ${xLabel}\n# yLabel: ${yLabel}\n# zLabel: ${zLabel}\n`;
-        } else {
-            comment = `# xLabel: ${xLabel}\n# yLabel: ${yLabel}\n# zLabel: ${zLabel}\n`;
         }
+        let comment = `# xLabel: ${xLabel}\n# yLabel: ${yLabel}\n# zLabel: ${zLabel}\n${regionInfo}`;
 
         const header = "# x\ty\tz\n";
 
-        // read data from the table
         let rows = "";
-        let table = document.getElementsByClassName('stats-table-data')[0];
-        let tr = table.getElementsByTagName('tr');
-        for (let i=1; i<tr.length; i++) {  // ignore the first line
-            let row_data = tr[i].getElementsByTagName('td');
-            let x_data = row_data[0].innerHTML;
-            let yz_data = row_data[1].innerHTML.replace(" ", "\t");
-            rows += `${x_data}\t${yz_data}\n`
-        }
+        StatsComponent.STATS_NAME_MAP.forEach((name, type) => {
+            const index = this.statsData.statistics.findIndex(s => s.statsType === type);
+            if (index >= 0) {
+                const value = this.getTableValue(index, type);
+                rows += `${name}\t${value.num}\t${value.unit}\n`
+            }
+        });
 
-        // output file
-        const tsvData = `data:text/tab-separated-values;charset=utf-8,${title}${comment}${header}${rows}`;
-        const dataURL = encodeURI(tsvData).replace(/#/g, "%23");
-
-        const a = document.createElement('a') as HTMLAnchorElement;
-        a.href = dataURL;
-        a.download = `${fileName.replace(" ", "-")}-${plotName}-${StatsComponent.GetTimestamp()}.tsv`;
-        a.dispatchEvent(new MouseEvent("click"));
+        exportTsvFile(fileName, plotName, `${title}${comment}${header}${rows}`);
     }
 
     public render() {
@@ -268,31 +207,11 @@ export class StatsComponent extends React.Component<WidgetProps> {
             StatsComponent.STATS_NAME_MAP.forEach((name, type) => {
                 const index = this.statsData.statistics.findIndex(s => s.statsType === type);
                 if (index >= 0) {
-                    let unitString = "";
-                    const frame = this.widgetStore.effectiveFrame;
-                    if (frame && frame.unit) {
-                        const unit = frame.unit;
-                        if (type === CARTA.StatsType.NumPixels) {
-                            unitString = "pixel(s)";
-                        } else if (type === CARTA.StatsType.SumSq) {
-                            unitString = `(${unit})^2`;
-                        } else if (type === CARTA.StatsType.FluxDensity) {
-                            if (unit === "Jy/beam") {
-                                unitString = "Jy";
-                            } else {
-                                return;
-                            }
-                        } else {
-                            unitString = unit;
-                        }
-                    }
-
-                    const value = this.statsData.statistics[index].value;
-                    const valueString = isFinite(value) ? `${(type === CARTA.StatsType.NumPixels) ? value : toExponential(value, 4)} ${unitString}` : `${value}`;
+                    const value = this.getTableValue(index, type);
                     rows.push((
                         <tr key={type}>
                             <td style={{width: StatsComponent.NAME_COLUMN_WIDTH}}>{name}</td>
-                            <td style={{width: valueWidth}}>{valueString}</td>
+                            <td style={{width: valueWidth}}>{value.num} {value.unit}</td>
                         </tr>
                     ));
                 }
@@ -319,17 +238,18 @@ export class StatsComponent extends React.Component<WidgetProps> {
         if (appStore.darkTheme) {
             className += " dark-theme";
         }
-        
-        let exportToolbarComponent;
-        if (this.statsData!==null) {
-            exportToolbarComponent = (
-                <ExportToolbarComponent
-                    visible={this.isMouseEntered}
-                    exportData={this.exportData}
-                />
+
+        let exportDataComponent = null;
+        if (this.statsData) {
+            exportDataComponent = (
+                <div className="stats-export-data">
+                    <ToolbarComponent
+                        darkMode={appStore.darkTheme}
+                        visible={this.isMouseEntered}
+                        exportData={this.exportData}
+                    />
+                </div>
             );
-        } else {
-            exportToolbarComponent = null;
         }
 
         return (
@@ -343,7 +263,7 @@ export class StatsComponent extends React.Component<WidgetProps> {
                     onMouseLeave={this.onMouseLeave}
                 >
                     {formContent}
-                    {exportToolbarComponent}
+                    {exportDataComponent}
                 </div>
                 <ReactResizeDetector handleWidth handleHeight onResize={this.onResize}/>
             </div>

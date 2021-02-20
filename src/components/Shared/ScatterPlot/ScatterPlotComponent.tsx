@@ -12,7 +12,7 @@ import {ToolbarComponent} from "components/Shared/LinePlot/Toolbar/ToolbarCompon
 import {ZoomMode, InteractionMode} from "components/Shared/LinePlot/LinePlotComponent";
 import { PlotType } from "../PlotTypeSelector/PlotTypeSelectorComponent";
 import {Point2D} from "models";
-import {clamp, toExponential} from "utilities";
+import {clamp, toExponential, exportTsvFile} from "utilities";
 import "./ScatterPlotComponent.scss";
 
 
@@ -347,14 +347,7 @@ export class ScatterPlotComponent extends React.Component<ScatterPlotComponentPr
             }
         }
 
-        const tsvData = `data:text/tab-separated-values;charset=utf-8,${comment}\n${header}\n${rows.join("\n")}\n`;
-
-        const dataURL = encodeURI(tsvData).replace(/#/g, "%23");
-
-        const a = document.createElement("a") as HTMLAnchorElement;
-        a.href = dataURL;
-        a.download = `${imageName}-${plotName.replace(" ", "-")}-${this.getTimestamp()}.tsv`;
-        a.dispatchEvent(new MouseEvent("click"));
+        exportTsvFile(imageName, plotName, `${comment}\n${header}\n${rows.join("\n")}\n`);
     };
 
     onStageMouseMove = (ev) => {
