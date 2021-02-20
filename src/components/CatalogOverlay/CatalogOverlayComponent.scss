@@ -223,8 +223,11 @@
             }
 
             .catalog-xaxis {
-                margin-left: 33px;
+                margin-left: 30px;
                 width: 140px;
+                .bp3-label{
+                    width: 40px;
+                }
                 .catalog-xaxis-select {
                     .catalog-xaxis-button {
                         width: 100px;
@@ -239,7 +242,10 @@
 
             .catalog-yaxis {
                 margin-left: 30px;
-                width: 130px;
+                width: 140px;
+                .bp3-label{
+                    width: 40px;
+                }
                 .catalog-yaxis-select {
                     .catalog-yaxis-button {
                         width: 100px;
