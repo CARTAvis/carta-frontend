@@ -75,7 +75,7 @@ export class FileBrowserStore {
     @observable saveSpectralRange: number[] = [0, 0];
     @observable saveStokesOption: number;
     @observable saveRegionId: number;
-    @observable isDropDegeneratedAxes: boolean;
+    @observable shouldDropDegeneratedAxes: boolean;
     @observable debounceTimeout: any;
 
     constructor() {
@@ -86,7 +86,7 @@ export class FileBrowserStore {
         // Update channelValueBounds for save image
         autorun(() => {
             if (AppStore.Instance.activeFrame) {
-                FileBrowserStore.Instance.updateIniSaveSpectralRange();
+                FileBrowserStore.Instance.initialSaveSpectralRange();
             }
         });
 
@@ -105,9 +105,9 @@ export class FileBrowserStore {
         if (AppStore.Instance.activeFrame && mode === BrowserMode.SaveFile) {
             this.saveFilename = AppStore.Instance.activeFrame.frameInfo.fileInfo.name;
         }
-        this.updateIniSaveSpectralRange();
+        this.initialSaveSpectralRange();
         this.saveRegionId = 0;
-        this.isDropDegeneratedAxes = false;
+        this.shouldDropDegeneratedAxes = false;
     };
 
     @action hideFileBrowser = () => {
@@ -225,7 +225,7 @@ export class FileBrowserStore {
     };
 
     /// Update the spectral range for save image file
-    @action updateIniSaveSpectralRange = () => {
+    @action initialSaveSpectralRange = () => {
         const activeFrame = AppStore.Instance.activeFrame;
         if (activeFrame && activeFrame.numChannels > 1) {
             const min = Math.min(activeFrame.channelValueBounds.max, activeFrame.channelValueBounds.min);

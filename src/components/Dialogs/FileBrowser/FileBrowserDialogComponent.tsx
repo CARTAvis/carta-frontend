@@ -101,7 +101,7 @@ export class FileBrowserDialogComponent extends React.Component {
             ];
         }
         const saveStokes = fileBrowserStore.saveStokesRange;
-        appStore.saveFile(fileBrowserStore.fileList.directory, filename, fileBrowserStore.saveFileType, fileBrowserStore.saveRegionId, saveChannels, saveStokes, fileBrowserStore.isDropDegeneratedAxes);
+        appStore.saveFile(fileBrowserStore.fileList.directory, filename, fileBrowserStore.saveFileType, fileBrowserStore.saveRegionId, saveChannels, saveStokes, fileBrowserStore.shouldDropDegeneratedAxes);
     };
 
     private handleSaveFileClicked = () => {

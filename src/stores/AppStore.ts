@@ -451,12 +451,12 @@ export class AppStore {
         return this.loadFile(directory, file, hdu);
     };
 
-    @action saveFile = (directory: string, filename: string, fileType: CARTA.FileType, regionId?: number, channels?: number[], stokes?: number[], isDropDegeneratedAxes?: boolean) => {
+    @action saveFile = (directory: string, filename: string, fileType: CARTA.FileType, regionId?: number, channels?: number[], stokes?: number[], shouldDropDegeneratedAxes?: boolean) => {
         if (!this.activeFrame) {
             return;
         }
         const fileId = this.activeFrame.frameInfo.fileId;
-        this.backendService.saveFile(fileId, directory, filename, fileType, regionId, channels, stokes, !isDropDegeneratedAxes).subscribe(() => {
+        this.backendService.saveFile(fileId, directory, filename, fileType, regionId, channels, stokes, !shouldDropDegeneratedAxes).subscribe(() => {
             AppToaster.show({ icon: "saved", message: `${filename} saved.`, intent: "success", timeout: 3000 });
             this.fileBrowserStore.hideFileBrowser();
         }, error => {

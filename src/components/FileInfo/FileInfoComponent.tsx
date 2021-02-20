@@ -114,9 +114,9 @@ export class FileInfoComponent extends React.Component<{
                 return "";
         }
     };
-    private onChangeIsDropDegeneratedAxes = () => {
+    private onChangeShouldDropDegeneratedAxes = () => {
         const fileBrowser = FileBrowserStore.Instance;
-        fileBrowser.isDropDegeneratedAxes = !fileBrowser.isDropDegeneratedAxes;
+        fileBrowser.shouldDropDegeneratedAxes = !fileBrowser.shouldDropDegeneratedAxes;
     };
 
     private renderImageHeaderList(entries: CARTA.IHeaderEntry[]) {
@@ -194,7 +194,7 @@ export class FileInfoComponent extends React.Component<{
             activeFrame.spectralType = coord.type;
             activeFrame.spectralUnit = coord.unit;
             // Update the spectral range
-            FileBrowserStore.Instance.updateIniSaveSpectralRange();
+            FileBrowserStore.Instance.initialSaveSpectralRange();
         }
     };
 
@@ -203,7 +203,7 @@ export class FileInfoComponent extends React.Component<{
         if (activeFrame && activeFrame.spectralSystemsSupported && activeFrame.spectralSystemsSupported.includes(specsys)) {
             activeFrame.spectralSystem = specsys;
             // Update the spectral range
-            FileBrowserStore.Instance.updateIniSaveSpectralRange();
+            FileBrowserStore.Instance.initialSaveSpectralRange();
         }
     };
 
@@ -369,9 +369,9 @@ export class FileInfoComponent extends React.Component<{
                         }
                         <Switch
                             className="drop-degenerate"
-                            checked={fileBrowser.isDropDegeneratedAxes}
+                            checked={fileBrowser.shouldDropDegeneratedAxes}
                             label="Drop degenerated axes"
-                            onChange={this.onChangeIsDropDegeneratedAxes}
+                            onChange={this.onChangeShouldDropDegeneratedAxes}
                         />
                     </div>
                 }
