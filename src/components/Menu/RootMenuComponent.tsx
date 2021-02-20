@@ -48,7 +48,7 @@ export class RootMenuComponent extends React.Component {
                 </Menu.Item>
                 {restWidgets.map(widgetType => {
                     const widgetConfig = WidgetsStore.Instance.CARTAWidgets.get(widgetType);
-                    const trimmedStr = widgetType.trim();
+                    const trimmedStr = widgetType.replace(/\s+/g, '');
                     return (
                         <Menu.Item
                             key={`${trimmedStr}Menu`}
