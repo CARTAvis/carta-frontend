@@ -68,16 +68,16 @@ export class StatsComponent extends React.Component<WidgetProps> {
     };
 
     private static readonly STATS_NAME_MAP = new Map<CARTA.StatsType, string>([
-        [CARTA.StatsType.NumPixels, "NumPixels".padEnd(12)],
-        [CARTA.StatsType.Sum, "Sum".padEnd(12)],
-        [CARTA.StatsType.FluxDensity, "FluxDensity".padEnd(12)],
-        [CARTA.StatsType.Mean, "Mean".padEnd(12)],
-        [CARTA.StatsType.Sigma, "StdDev".padEnd(12)],
-        [CARTA.StatsType.Min, "Min".padEnd(12)],
-        [CARTA.StatsType.Max, "Max".padEnd(12)],
-        [CARTA.StatsType.Extrema, "Extrema".padEnd(12)],
-        [CARTA.StatsType.RMS, "RMS".padEnd(12)],
-        [CARTA.StatsType.SumSq, "SumSq".padEnd(12)]
+        [CARTA.StatsType.NumPixels, "NumPixels"],
+        [CARTA.StatsType.Sum, "Sum"],
+        [CARTA.StatsType.FluxDensity, "FluxDensity"],
+        [CARTA.StatsType.Mean, "Mean"],
+        [CARTA.StatsType.Sigma, "StdDev"],
+        [CARTA.StatsType.Min, "Min"],
+        [CARTA.StatsType.Max, "Max"],
+        [CARTA.StatsType.Extrema, "Extrema"],
+        [CARTA.StatsType.RMS, "RMS"],
+        [CARTA.StatsType.SumSq, "SumSq"]
     ]);
 
     private static readonly NAME_COLUMN_WIDTH = 70;
@@ -134,78 +134,83 @@ export class StatsComponent extends React.Component<WidgetProps> {
     };
 
     private getTableValue = (index, type) => {
+        let numString = "";
         let unitString = "";
-        const frame = this.widgetStore.effectiveFrame;
-        if (frame && frame.unit) {
-            const unit = frame.unit;
-            if (type === CARTA.StatsType.NumPixels) {
-                unitString = "pixel(s)";
-            } else if (type === CARTA.StatsType.SumSq) {
-                unitString = `(${unit})^2`;
-            } else if (type === CARTA.StatsType.FluxDensity) {
-                if (unit === "Jy/beam") {
-                    unitString = "Jy";
-                }
-            } else {
-                unitString = unit;
-            }
-        }
         
-        const value =  this.statsData.statistics[index].value;
-        const numString = toExponential(value, 12);
-        unitString = isFinite(value) ? unitString : "";
+        if (isFinite(index) || type) {
+            const frame = this.widgetStore.effectiveFrame;
+            if (frame && frame.unit) {
+                const unit = frame.unit;
+                if (type === CARTA.StatsType.NumPixels) {
+                    unitString = "pixel(s)";
+                } else if (type === CARTA.StatsType.SumSq) {
+                    unitString = `(${unit})^2`;
+                } else if (type === CARTA.StatsType.FluxDensity) {
+                    if (unit === "Jy/beam") {
+                        unitString = "Jy";
+                    }
+                } else {
+                    unitString = unit;
+                }
+            }
+            
+            const value =  this.statsData?.statistics[index].value;
+            numString = toExponential(value, 12);
+            unitString = isFinite(value) ? unitString : "";
+        }
 
         return {num: numString, unit: unitString}
     }
 
     exportData = () => {
         const frame = this.widgetStore.effectiveFrame;
+        if (frame) {
+            const fileName = this.widgetStore.effectiveFrame.filename;
+            const plotName = "statistics";
+            const title = `# ${fileName} ${plotName}\n`;
 
-        const fileName = this.widgetStore.effectiveFrame.filename;
-        const plotName = "statistics";
-        const title = `# ${fileName} ${plotName}\n`;
-
-        const xLabel = "Statistic";
-        const yLabel = "Value";
-        const zLabel = "Unit";
-        let regionInfo = "";
-        let regionId = this.widgetStore.effectiveRegionId;
-        if (regionId !== -1) {
-            const region = this.widgetStore.effectiveFrame.regionSet.regions.find(r => r.regionId === regionId);
-            if (region) {
-                regionInfo += `# ${region.regionProperties}\n`;
-                if (frame.validWcs) {
-                    regionInfo += `# ${frame.getRegionWcsProperties(region)}\n`;
+            let regionInfo = "";
+            let regionId = this.widgetStore.effectiveRegionId;
+            if (regionId !== -1) {
+                const region = this.widgetStore.effectiveFrame.regionSet.regions.find(r => r.regionId === regionId);
+                if (region) {
+                    regionInfo += `# ${region.regionProperties}\n`;
+                    if (frame.validWcs) {
+                        regionInfo += `# ${frame.getRegionWcsProperties(region)}\n`;
+                    }
                 }
             }
+            let comment = `# xLabel: Statistic\n# yLabel: Value\n# zLabel: Unit\n${regionInfo}`;
+
+            const header = "# x\ty\tz\n";
+
+            let rows = "";
+            StatsComponent.STATS_NAME_MAP.forEach((name, type) => {
+                const index = this.statsData?.statistics.findIndex(s => s.statsType === type);
+                if (index >= 0) {
+                    const value = this.getTableValue(index, type);
+                    rows += `${name.padEnd(12)}\t${value.num}\t${value.unit}\n`
+                }
+            });
+
+            exportTsvFile(fileName, plotName, `${title}${comment}${header}${rows}`);
+        } else {
+            console.log("can't find effective frame")
         }
-        let comment = `# xLabel: ${xLabel}\n# yLabel: ${yLabel}\n# zLabel: ${zLabel}\n${regionInfo}`;
-
-        const header = "# x\ty\tz\n";
-
-        let rows = "";
-        StatsComponent.STATS_NAME_MAP.forEach((name, type) => {
-            const index = this.statsData.statistics.findIndex(s => s.statsType === type);
-            if (index >= 0) {
-                const value = this.getTableValue(index, type);
-                rows += `${name}\t${value.num}\t${value.unit}\n`
-            }
-        });
-
-        exportTsvFile(fileName, plotName, `${title}${comment}${header}${rows}`);
     }
 
     public render() {
         const appStore = AppStore.Instance;
 
         let formContent;
+        let exportDataComponent = null;
         if (this.statsData) {
             // stretch value column to cover width
             const valueWidth = Math.max(0, this.width - StatsComponent.NAME_COLUMN_WIDTH);
 
             let rows = [];
             StatsComponent.STATS_NAME_MAP.forEach((name, type) => {
-                const index = this.statsData.statistics.findIndex(s => s.statsType === type);
+                const index = this.statsData?.statistics.findIndex(s => s.statsType === type);
                 if (index >= 0) {
                     const value = this.getTableValue(index, type);
                     rows.push((
@@ -230,17 +235,7 @@ export class StatsComponent extends React.Component<WidgetProps> {
                     </tbody>
                 </HTMLTable>
             );
-        } else {
-            formContent = <NonIdealState icon={"folder-open"} title={"No stats data"} description={"Select a valid region from the dropdown"}/>;
-        }
 
-        let className = "stats-widget";
-        if (appStore.darkTheme) {
-            className += " dark-theme";
-        }
-
-        let exportDataComponent = null;
-        if (this.statsData) {
             exportDataComponent = (
                 <div className="stats-export-data">
                     <ToolbarComponent
@@ -250,6 +245,13 @@ export class StatsComponent extends React.Component<WidgetProps> {
                     />
                 </div>
             );
+        } else {
+            formContent = <NonIdealState icon={"folder-open"} title={"No stats data"} description={"Select a valid region from the dropdown"}/>;
+        }
+
+        let className = "stats-widget";
+        if (appStore.darkTheme) {
+            className += " dark-theme";
         }
 
         return (

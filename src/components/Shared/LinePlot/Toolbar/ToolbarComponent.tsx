@@ -25,18 +25,12 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
             className += " bp3-dark";
         }
 
-        let exportImageComponent = null;
-        if(this.props.exportImage) {
-            exportImageComponent = (
-                <Tooltip content="Export image">
-                    <AnchorButton icon="floppy-disk" onClick={this.props.exportImage}/>
-                </Tooltip>
-            )
-        }
-
         return (
             <ButtonGroup className={className} style={styleProps}>
-                {exportImageComponent}
+                {(this.props.exportImage) ?
+                    <Tooltip content="Export image">
+                        <AnchorButton icon="floppy-disk" onClick={this.props.exportImage}/>
+                    </Tooltip> : null}
                 <Tooltip content="Export data">
                     <AnchorButton icon="th" onClick={this.props.exportData}/>
                 </Tooltip>

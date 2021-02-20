@@ -11,7 +11,7 @@ import {PlotContainerComponent, TickType, MultiPlotProps} from "./PlotContainer/
 import {ToolbarComponent} from "./Toolbar/ToolbarComponent";
 import {StokesCoordinate} from "stores/widgets/StokesAnalysisWidgetStore";
 import {Point2D} from "models";
-import {clamp, toExponential, exportTsvFile} from "utilities";
+import {clamp, toExponential, getTimestamp, exportTsvFile} from "utilities";
 import {PlotType} from "components/Shared";
 import "./LinePlotComponent.scss";
 
@@ -499,11 +499,6 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
         this.hideMouseEnterWidget();
     };
 
-    private static GetTimestamp() {
-        const now = new Date();
-        return `${now.getFullYear()}-${now.getMonth() + 1}-${now.getDate()}-${now.getHours()}-${now.getMinutes()}-${now.getSeconds()}`;
-    }
-
     private exportSubPlotImage(visible: boolean) {
         const scatterChart = this.plotRef.chartInstance;
         scatterChart.config.options.scales.xAxes[0].ticks.display = visible;
@@ -599,7 +594,7 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
 
         composedCanvas.toBlob((blob) => {
             const link = document.createElement("a") as HTMLAnchorElement;
-            link.download = `${imageName}-${plotName.replace(" ", "-")}-${LinePlotComponent.GetTimestamp()}.png`;
+            link.download = `${imageName}-${plotName.replace(" ", "-")}-${getTimestamp()}.png`;
             link.href = URL.createObjectURL(blob);
             link.dispatchEvent(new MouseEvent("click"));
         }, "image/png");
