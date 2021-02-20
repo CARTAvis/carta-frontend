@@ -167,11 +167,11 @@ export class FileInfoComponent extends React.Component<{
         // Check and clamp the input
         if (FileBrowserStore && isFinite(val)) {
             fileBrowser.setSaveSpectralRangeMin(val);
+            clearTimeout(fileBrowser.debounceTimeoutSpectralMin);
+            fileBrowser.debounceTimeoutSpectralMin = setTimeout(() => {
+                fileBrowser.setSaveSpectralRangeMin(Math.min(Math.max(fileBrowser.saveSpectralRange[0], spectralRange.min), fileBrowser.saveSpectralRange[1]));
+            }, 600);
         }
-        clearTimeout(fileBrowser.debounceTimeout);
-        fileBrowser.debounceTimeout = setTimeout(() => {
-            fileBrowser.setSaveSpectralRangeMin(Math.min(Math.max(fileBrowser.saveSpectralRange[0], spectralRange.min), fileBrowser.saveSpectralRange[1]));
-        }, 600);
     };
 
     private handleSaveSpectralRangeEndChanged = (val: any) => {
@@ -180,11 +180,11 @@ export class FileInfoComponent extends React.Component<{
         // Check and clamp the input
         if (FileBrowserStore && isFinite(val)) {
             fileBrowser.setSaveSpectralRangeMax(val);
+            clearTimeout(fileBrowser.debounceTimeoutSpectralMax);
+            fileBrowser.debounceTimeoutSpectralMax = setTimeout(() => {
+                fileBrowser.setSaveSpectralRangeMax(Math.min(Math.max(fileBrowser.saveSpectralRange[1], fileBrowser.saveSpectralRange[0]), spectralRange.max));
+            }, 600);
         }
-        clearTimeout(fileBrowser.debounceTimeout);
-        fileBrowser.debounceTimeout = setTimeout(() => {
-            fileBrowser.setSaveSpectralRangeMax(Math.min(Math.max(fileBrowser.saveSpectralRange[1], fileBrowser.saveSpectralRange[0]), spectralRange.max));
-        }, 600);
     };
 
     private updateSpectralCoordinate(coordStr: string): void {
