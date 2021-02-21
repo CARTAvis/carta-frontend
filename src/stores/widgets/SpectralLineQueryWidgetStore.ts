@@ -87,6 +87,29 @@ const SPECTRAL_LINE_DESCRIPTION = new Map<SpectralLineHeaders, string>([
     [SpectralLineHeaders.LineList, "Originated catalogue"]
 ]);
 
+const SPECTRAL_LINE_HEADER_WIDTH = new Map<SpectralLineHeaders, number>([
+    [SpectralLineHeaders.LineSelection, 50],
+    [SpectralLineHeaders.Species, 100],
+    [SpectralLineHeaders.ChemicalName, 150],
+    [SpectralLineHeaders.ShiftedFrequency, 165],
+    [SpectralLineHeaders.RestFrequency, 150],
+    [SpectralLineHeaders.RestFrequencyErr, 180],
+    [SpectralLineHeaders.MeasuredFrequency, 175],
+    [SpectralLineHeaders.MeasuredFrequencyErr, 210],
+    [SpectralLineHeaders.ResolvedQN, 150],
+    [SpectralLineHeaders.UnresolvedQN, 150],
+    [SpectralLineHeaders.IntensityCDMS, 120],
+    [SpectralLineHeaders.IntensitySijm2, 100],
+    [SpectralLineHeaders.IntensitySij, 100],
+    [SpectralLineHeaders.IntensityAij, 120],
+    [SpectralLineHeaders.IntensityLovas, 120],
+    [SpectralLineHeaders.EnergyLowerCM, 120],
+    [SpectralLineHeaders.EnergyLowerK, 120],
+    [SpectralLineHeaders.EnergyUpperCM, 120],
+    [SpectralLineHeaders.EnergyUpperK, 120],
+    [SpectralLineHeaders.LineList, 100]
+]);
+
 export enum RedshiftType {
     V = "Velocity (km/s)",
     Z = "Redshift"
@@ -104,6 +127,7 @@ const SHIFTIED_FREQUENCY_COLUMN_INDEX = 2;
 const MEASURED_FREQUENCY_COLUMN_INDEX = 5;
 const RESOLVED_QN_COLUMN_INDEX = 7;
 const FREQUENCY_RANGE_LIMIT = 2 * 1e4; // 20000 MHz
+const DEFAULT_HEADER_WIDTH = 150;
 
 export class SpectralLineQueryWidgetStore extends RegionWidgetStore {
     @observable queryRangeType: SpectralLineQueryRangeType;
@@ -468,7 +492,7 @@ export class SpectralLineQueryWidgetStore extends RegionWidgetStore {
                 dataIndex: index,
                 display: true,
                 filter: "",
-                columnWidth: header.name === SpectralLineHeaders.LineSelection ? 50 : 150
+                columnWidth: SPECTRAL_LINE_HEADER_WIDTH.get(header.name) ?? DEFAULT_HEADER_WIDTH
             };
             controlHeaders.set(header.name, controlHeader);
         });
