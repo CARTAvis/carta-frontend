@@ -385,9 +385,19 @@ export class SpectralLineQueryWidgetStore extends RegionWidgetStore {
         return filters;
     }
 
+    @computed get filterNum(): number {
+        let filterNum = 0;
+        this.controlHeader.forEach((value) => {
+            if (value.filter) {
+                filterNum++;
+            }
+        });
+        return filterNum;
+    }
+
     @computed get resultTableInfo(): string {
         const info = `Showing ${this.numDataRows} line(s).`;
-        const filteredInfo = `Showing ${this.filteredRowIndexes.length} filtered line(s) of total ${this.numDataRows} line(s).`;
+        const filteredInfo = `Showing ${this.filteredRowIndexes.length} filtered line(s) of total ${this.numDataRows} line(s). Applied ${this.filterNum} filter(s).`;
         const lineSelectionInfo = this.numSelectedLines > 0 ? ` Selected ${this.numSelectedLines} line(s).` : "";
         return (this.isDataFiltered ? filteredInfo : info) + lineSelectionInfo;
     }
