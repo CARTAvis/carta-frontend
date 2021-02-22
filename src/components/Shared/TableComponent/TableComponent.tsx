@@ -107,7 +107,7 @@ export class TableComponent extends React.Component<TableComponentProps> {
                                 columnData?.forEach((isSelected, rowIndex) => this.props.flipRowSelection(rowIndex));
                             } else {
                                 columnData?.forEach((isSelected, rowIndex) => {
-                                    if (!isSelected) {
+                                    if (isSelected) {
                                         this.props.flipRowSelection(rowIndex);
                                     }
                                 })
