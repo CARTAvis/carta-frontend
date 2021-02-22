@@ -133,11 +133,11 @@ export class StatsComponent extends React.Component<WidgetProps> {
         this.hideMouseEnterWidget();
     };
 
-    private getTableValue = (index, type) => {
+    private getTableValue = (index: number, type: CARTA.StatsType) => {
         let numString = "";
         let unitString = "";
         
-        if (isFinite(index) || type) {
+        if (this.statsData && isFinite(index) && index >= 0 && index < this.statsData.statistics?.length) {
             const frame = this.widgetStore.effectiveFrame;
             if (frame && frame.unit) {
                 const unit = frame.unit;
@@ -154,7 +154,7 @@ export class StatsComponent extends React.Component<WidgetProps> {
                 }
             }
             
-            const value =  this.statsData?.statistics[index].value;
+            const value =  this.statsData.statistics[index].value;
             numString = toExponential(value, 12);
             unitString = isFinite(value) ? unitString : "";
         }
@@ -182,22 +182,16 @@ export class StatsComponent extends React.Component<WidgetProps> {
             } else {
                 regionInfo += "# full image\n"
             }
-
-            let channelInfo = ""
-            let stokesInfo = ""
-            const activeFrame = AppStore.Instance.activeFrame;
-            if (activeFrame) {
-                channelInfo += (activeFrame.channelInfo) ? `# channel: ${activeFrame.spectralInfo.channel}\n` : "";
-                stokesInfo += (activeFrame.hasStokes) ? `# stokes: ${activeFrame.stokesInfo[activeFrame.requiredStokes]}\n` : ""; 
-            }
+            let channelInfo = (frame.channelInfo) ? `# channel: ${frame.spectralInfo.channel}\n` : "";
+            let stokesInfo = (frame.hasStokes) ? `# stokes: ${frame.stokesInfo[frame.requiredStokes]}\n` : ""; 
             let comment = `${channelInfo}${stokesInfo}${regionInfo}`;
 
             const header = "# Statistic\tValue\tUnit\n";
 
             let rows = "";
             StatsComponent.STATS_NAME_MAP.forEach((name, type) => {
-                const index = this.statsData?.statistics.findIndex(s => s.statsType === type);
-                if (index >= 0) {
+                const index = this.statsData?.statistics?.findIndex(s => s.statsType === type);
+                if (index >= 0 && index < this.statsData.statistics.length) {
                     const value = this.getTableValue(index, type);
                     value.unit = (value.unit === "") ? "N/A" : value.unit;
                     rows += `${name.padEnd(12)}\t${value.num}\t${value.unit}\n`
@@ -221,8 +215,8 @@ export class StatsComponent extends React.Component<WidgetProps> {
 
             let rows = [];
             StatsComponent.STATS_NAME_MAP.forEach((name, type) => {
-                const index = this.statsData?.statistics.findIndex(s => s.statsType === type);
-                if (index >= 0) {
+                const index = this.statsData.statistics?.findIndex(s => s.statsType === type);
+                if (index >= 0 && index < this.statsData.statistics.length) {
                     const value = this.getTableValue(index, type);
                     rows.push((
                         <tr key={type}>
