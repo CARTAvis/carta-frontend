@@ -349,7 +349,7 @@ export class SpectralLineQueryComponent extends React.Component<WidgetProps> {
             filter: widgetStore.controlHeader,
             dataset: widgetStore.filterResult,
             columnHeaders: widgetStore.displayedColumnHeaders,
-            numVisibleRows: widgetStore.numDataRows,
+            numVisibleRows: widgetStore.numVisibleRows,
             flipRowSelection: widgetStore.selectSingleLine,
             updateTableRef: (ref) => { this.resultTableRef = ref; },
             disableSort: true,

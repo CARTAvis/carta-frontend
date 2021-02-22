@@ -247,6 +247,17 @@ export class SpectralLineQueryWidgetStore extends RegionWidgetStore {
         this.applyShiftFactor();
     };
 
+    @action private resetQueryContents = () => {
+        this.queryResult = new Map<number, ProcessedColumnData>();
+        this.filterResult = new Map<number, ProcessedColumnData>();
+        this.columnHeaders = [];
+        this.filteredRowIndexes = [];
+        this.shiftedFreqColumnRawData = [];
+        this.numDataRows = 0;
+        this.controlHeader = new Map<string, ControlHeader>();
+        this.isDataFiltered = false;
+    };
+
     @action query = () => {
         let valueMin = 0;
         let valueMax = 0;
@@ -280,7 +291,9 @@ export class SpectralLineQueryWidgetStore extends RegionWidgetStore {
                     this.controlHeader = this.initControlHeader(this.columnHeaders);
                     this.queryResult = this.initColumnData(ack.spectralLineData, ack.dataSize, this.columnHeaders);
                     this.updateFilterResult(this.fullRowIndexes);
+                    this.isDataFiltered = false;
                 } else {
+                    this.resetQueryContents();
                     AppStore.Instance.alertStore.showAlert(ack.message);
                 }
                 this.isQuerying = false;
@@ -347,6 +360,10 @@ export class SpectralLineQueryWidgetStore extends RegionWidgetStore {
 
     @computed get fullRowIndexes(): Array<number> {
         return Array.from(Array(this.numDataRows).keys());
+    }
+
+    @computed get numVisibleRows(): number {
+        return this.filteredRowIndexes.length;
     }
 
     @computed get redshiftFactor() {
@@ -536,19 +553,12 @@ export class SpectralLineQueryWidgetStore extends RegionWidgetStore {
         this.intensityLimitEnabled = true;
         this.intensityLimitValue = -5;
         this.isQuerying = false;
-        this.columnHeaders = [];
         this.redshiftType = RedshiftType.V;
         this.redshiftInput = 0;
         this.queryResultTableRef = undefined;
-        this.queryResult = new Map<number, ProcessedColumnData>();
-        this.filterResult = new Map<number, ProcessedColumnData>();
-        this.filteredRowIndexes = [];
-        this.shiftedFreqColumnRawData = [];
-        this.numDataRows = 0;
         this.selectedSpectralProfilerID = AppStore.Instance.widgetsStore.spectralProfilerList.length > 0 ?
             AppStore.Instance.widgetsStore.spectralProfilerList[0] : undefined;
-        this.controlHeader = new Map<string, ControlHeader>();
-        this.isDataFiltered = false;
+        this.resetQueryContents();
 
         // update selected spectral profiler when currently selected is closed
         autorun(() => {
