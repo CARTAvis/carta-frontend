@@ -75,9 +75,9 @@ export function numericFiltering(columnData: Array<number>, dataIndexes: number[
 
     let compareFunction = undefined;
     if (filter.operator === CARTA.ComparisonOperator.Equal && filter.values.length === 1) {
-        compareFunction = (data: number): boolean => { return data === filter.values[0]; };
+        compareFunction = (data: number): boolean => { return data - filter.values[0] === 0; };
     } else if (filter.operator === CARTA.ComparisonOperator.NotEqual && filter.values.length === 1) {
-        compareFunction = (data: number): boolean => { return data !== filter.values[0]; };
+        compareFunction = (data: number): boolean => { return data - filter.values[0] !== 0; };
     } else if (filter.operator === CARTA.ComparisonOperator.Lesser && filter.values.length === 1) {
         compareFunction = (data: number): boolean => { return data < filter.values[0]; };
     } else if (filter.operator === CARTA.ComparisonOperator.LessorOrEqual && filter.values.length === 1) {
@@ -100,7 +100,7 @@ export function numericFiltering(columnData: Array<number>, dataIndexes: number[
 
     let filteredDataIndexes = [];
     dataIndexes.forEach(dataIndex => {
-        if (dataIndex >= 0 && dataIndex < columnData.length && compareFunction(columnData[dataIndex] as number)) {
+        if (dataIndex >= 0 && dataIndex < columnData.length && compareFunction(columnData[dataIndex])) {
             filteredDataIndexes.push(dataIndex);
         }
     });
