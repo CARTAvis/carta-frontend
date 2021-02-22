@@ -21,7 +21,7 @@ export class StatsComponent extends React.Component<WidgetProps> {
             minWidth: 300,
             minHeight: 200,
             defaultWidth: 325,
-            defaultHeight: 250,
+            defaultHeight: 325,
             title: "Statistics",
             isCloseable: true,
             helpType: HelpType.STATS
@@ -179,16 +179,27 @@ export class StatsComponent extends React.Component<WidgetProps> {
                         regionInfo += `# ${frame.getRegionWcsProperties(region)}\n`;
                     }
                 }
+            } else {
+                regionInfo += "# full image\n"
             }
-            let comment = `# xLabel: Statistic\n# yLabel: Value\n# zLabel: Unit\n${regionInfo}`;
 
-            const header = "# x\ty\tz\n";
+            let channelInfo = ""
+            let stokesInfo = ""
+            const activeFrame = AppStore.Instance.activeFrame;
+            if (activeFrame) {
+                channelInfo += (activeFrame.channelInfo) ? `# channel: ${activeFrame.spectralInfo.channel}\n` : "";
+                stokesInfo += (activeFrame.hasStokes) ? `# stokes: ${activeFrame.stokesInfo[activeFrame.requiredStokes]}\n` : ""; 
+            }
+            let comment = `${channelInfo}${stokesInfo}${regionInfo}`;
+
+            const header = "# Statistic\tValue\tUnit\n";
 
             let rows = "";
             StatsComponent.STATS_NAME_MAP.forEach((name, type) => {
                 const index = this.statsData?.statistics.findIndex(s => s.statsType === type);
                 if (index >= 0) {
                     const value = this.getTableValue(index, type);
+                    value.unit = (value.unit === "") ? "N/A" : value.unit;
                     rows += `${name.padEnd(12)}\t${value.num}\t${value.unit}\n`
                 }
             });
