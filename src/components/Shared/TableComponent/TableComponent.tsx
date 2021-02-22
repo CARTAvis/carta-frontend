@@ -12,7 +12,7 @@ import "./TableComponent.scss";
 
 export type ColumnFilter = { index: number, columnFilter: string };
 
-enum SelectionType {
+enum RowSelectionType {
     None,
     Indeterminate,
     All
@@ -92,18 +92,18 @@ export class TableComponent extends React.Component<TableComponentProps> {
         }
     }
 
-    private renderCheckboxColumnHeaderCell = (columnIndex: number, columnHeader: CARTA.CatalogHeader, columnData: any, selectionType: SelectionType) => {
+    private renderCheckboxColumnHeaderCell = (columnIndex: number, columnHeader: CARTA.CatalogHeader, columnData: any, selectionType: RowSelectionType) => {
         const controlheader = this.props.filter?.get(columnHeader.name);
         const filterSyntax = this.getfilterSyntax(columnHeader.dataType);
         return (
             <ColumnHeaderCell>
                 <ColumnHeaderCell>
                     <Checkbox
-                        indeterminate={selectionType === SelectionType.Indeterminate}
-                        checked={selectionType === SelectionType.All}
+                        indeterminate={selectionType === RowSelectionType.Indeterminate}
+                        checked={selectionType === RowSelectionType.All}
                         inline={true}
                         onChange={() => {
-                            if (selectionType === SelectionType.None || selectionType === SelectionType.All) {
+                            if (selectionType === RowSelectionType.None || selectionType === RowSelectionType.All) {
                                 columnData?.forEach((isSelected, rowIndex) => this.props.flipRowSelection(rowIndex));
                             } else {
                                 columnData?.forEach((isSelected, rowIndex) => {
@@ -156,7 +156,7 @@ export class TableComponent extends React.Component<TableComponentProps> {
     private renderCheckboxColumn = (columnHeader: CARTA.CatalogHeader, columnData: any) => {
         let selected = 0;
         columnData?.forEach(isSelected => selected += (isSelected ? 1 : 0));
-        const selectionType = (selected === 0) ? SelectionType.None : (selected === columnData?.length ? SelectionType.All : SelectionType.Indeterminate);
+        const selectionType = (selected === 0) ? RowSelectionType.None : (selected === columnData?.length ? RowSelectionType.All : RowSelectionType.Indeterminate);
 
         return (
             <Column
