@@ -1,49 +1,50 @@
 {
-    "compilerOptions": {
-        "target": "es6",
-        "baseUrl": "./src",
-        "rootDir": "src",
-        "lib": [
-            "dom",
-            "dom.iterable",
-            "esnext"
-        ],
-        "allowJs": true,
-        "skipLibCheck": true,
-        "esModuleInterop": true,
-        "allowSyntheticDefaultImports": true,
-        "strict": false,
-        "noImplicitReturns": true,
-        "noImplicitThis": true,
-        "noImplicitAny": false,
-        "strictNullChecks": false,
-        "suppressImplicitAnyIndexErrors": true,
-        "noUnusedLocals": false,
-        "forceConsistentCasingInFileNames": true,
-        "experimentalDecorators": true,
-        "module": "esnext",
-        "moduleResolution": "node",
-        "resolveJsonModule": true,
-        "isolatedModules": true,
-        "noEmit": true,
-        "jsx": "react"
-    },
-    "include": [
-        "src",
-        "declarations.d.ts"
+  "compilerOptions": {
+    "target": "es6",
+    "baseUrl": "./src",
+    "rootDir": "src",
+    "lib": [
+      "dom",
+      "dom.iterable",
+      "esnext"
     ],
-    "exclude": [
-        "node_modules",
-        "build",
-        "wasm_src",
-        "wasm_libs",
-        "protobuf",
-        "scripts",
-        "acceptance-tests",
-        "webpack",
-        "jest",
-        "src/setupTests.ts",
-        "src/test",
-        "emscripten.simg"
-    ]
+    "allowJs": true,
+    "skipLibCheck": true,
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "strict": false,
+    "noImplicitReturns": true,
+    "noImplicitThis": true,
+    "noImplicitAny": false,
+    "strictNullChecks": false,
+    "suppressImplicitAnyIndexErrors": true,
+    "noUnusedLocals": false,
+    "forceConsistentCasingInFileNames": true,
+    "experimentalDecorators": true,
+    "module": "esnext",
+    "moduleResolution": "node",
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "noEmit": true,
+    "jsx": "react-jsx",
+    "noFallthroughCasesInSwitch": true
+  },
+  "include": [
+    "src",
+    "declarations.d.ts"
+  ],
+  "exclude": [
+    "node_modules",
+    "build",
+    "wasm_src",
+    "wasm_libs",
+    "protobuf",
+    "scripts",
+    "acceptance-tests",
+    "webpack",
+    "jest",
+    "src/setupTests.ts",
+    "src/test",
+    "emscripten.simg"
+  ]
 }

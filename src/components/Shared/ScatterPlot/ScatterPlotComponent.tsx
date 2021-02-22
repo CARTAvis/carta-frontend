@@ -502,7 +502,9 @@ export class ScatterPlotComponent extends React.Component<ScatterPlotComponentPr
             const zoomMaxX = this.props.xMax + rangeChangeX * (1 - fractionX);
             const zoomMinY = this.props.yMin - rangeChangeY * (1 - fractionY);
             const zoomMaxY = this.props.yMax + rangeChangeY * fractionY;
-            this.props.graphZoomedXY(zoomMinX, zoomMaxX, zoomMinY, zoomMaxY);
+            if (zoomMinX < zoomMaxX && zoomMinY < zoomMaxY) {
+                this.props.graphZoomedXY(zoomMinX, zoomMaxX, zoomMinY, zoomMaxY);   
+            }
         }
     };
 
@@ -577,7 +579,8 @@ export class ScatterPlotComponent extends React.Component<ScatterPlotComponentPr
                 onMouseLeave={this.onMouseLeave}
                 tabIndex={0}
             >
-                <ReactResizeDetector handleWidth handleHeight onResize={this.resize} refreshMode={"throttle"} refreshRate={33}/>
+                <ReactResizeDetector handleWidth handleHeight onResize={this.resize} refreshMode={"throttle"} refreshRate={33}>
+                </ReactResizeDetector>
                 {this.width > 0 && this.height > 0 &&
                 <PlotContainerComponent
                     {...this.props}

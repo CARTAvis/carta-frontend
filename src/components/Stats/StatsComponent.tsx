@@ -80,7 +80,7 @@ export class StatsComponent extends React.Component<WidgetProps> {
         [CARTA.StatsType.SumSq, "SumSq"]
     ]);
 
-    private static readonly NAME_COLUMN_WIDTH = 70;
+    private static readonly NAME_COLUMN_WIDTH = 90;
 
     constructor(props: WidgetProps) {
         super(props);
@@ -278,7 +278,8 @@ export class StatsComponent extends React.Component<WidgetProps> {
                     {formContent}
                     {exportDataComponent}
                 </div>
-                <ReactResizeDetector handleWidth handleHeight onResize={this.onResize}/>
+                <ReactResizeDetector handleWidth handleHeight onResize={this.onResize}>
+                </ReactResizeDetector>
             </div>
         );
     }

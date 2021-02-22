@@ -1,7 +1,7 @@
 import * as React from "react";
 import {ImageComponent} from "./ImageComponent";
-import * as headFileinfoButton from "static/help/head_fileinfo_button.png";
-import * as headFileinfoButton_d from "static/help/head_fileinfo_button_d.png";
+import headFileinfoButton from "static/help/head_fileinfo_button.png";
+import headFileinfoButton_d from "static/help/head_fileinfo_button_d.png";
 
 export class FileInfoHelpComponent extends React.Component {
     public render() {

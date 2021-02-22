@@ -177,7 +177,7 @@ export class CatalogViewComponent extends React.Component<CatalogViewComponentPr
         let scatterData: Plotly.Data[] = [];
         const unSelectedData = this.unSelectedData;
         const selectedData = this.selectedData;
-        unSelectedData.forEach((data, fileId) => {
+        unSelectedData.forEach((data: Plotly.PlotData, fileId) => {
             const catalogWidgetStore = catalogStore.getCatalogWidgetStore(fileId);
             const color = catalogWidgetStore.catalogColor;            
             data.marker.color = color;
@@ -189,7 +189,7 @@ export class CatalogViewComponent extends React.Component<CatalogViewComponentPr
         });
 
         if (selectedData) {
-            selectedData.forEach((data, fileId) => {
+            selectedData.forEach((data: Plotly.PlotData, fileId) => {
                 const catalogWidgetStore = catalogStore.getCatalogWidgetStore(fileId);
                 data.marker.color = catalogWidgetStore.highlightColor;
                 data.marker.line.color = catalogWidgetStore.highlightColor;

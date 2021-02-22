@@ -1,7 +1,7 @@
 import * as React from "react";
 import {ImageComponent} from "./ImageComponent";
-import * as headCatalogueButton from "static/help/head_catalogue_button.png";
-import * as headCatalogueButton_d from "static/help/head_catalogue_button_d.png";
+import headCatalogueButton from "static/help/head_catalogue_button.png";
+import headCatalogueButton_d from "static/help/head_catalogue_button_d.png";
 
 export class CatalogOverlayHelpComponent extends React.Component {
     public render() {

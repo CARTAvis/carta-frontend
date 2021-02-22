@@ -477,7 +477,11 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
             const currentRange = this.props.xMax - this.props.xMin;
             const fraction = (wheelEvent.offsetX - chartArea.left) / (chartArea.right - chartArea.left);
             const rangeChange = zoomSpeed * delta * currentRange;
-            this.props.graphZoomedX(this.props.xMin - rangeChange * fraction, this.props.xMax + rangeChange * (1 - fraction));
+            const minX = this.props.xMin - rangeChange * fraction;
+            const maxX = this.props.xMax + rangeChange * (1 - fraction);
+            if (minX < maxX) {
+                this.props.graphZoomedX(minX, maxX);   
+            }
         }
     };
 
@@ -989,7 +993,9 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
                 onMouseLeave={this.onMouseLeave}
                 tabIndex={0}
             >
-                <ReactResizeDetector handleWidth handleHeight onResize={this.resize} refreshMode={"throttle"} refreshRate={33}/>
+                <ReactResizeDetector handleWidth handleHeight onResize={this.resize} refreshMode={"throttle"} refreshRate={33}>
+
+                </ReactResizeDetector>
                 {this.width > 0 && this.height > 0 &&
                 <PlotContainerComponent
                     {...this.props}
