@@ -16,7 +16,6 @@ export class FileBrowserDialogComponent extends React.Component {
     @observable overwriteExistingFileAlertVisible: boolean;
     @observable fileFilterString: string = "";
     @observable debouncedFilterString: string = "";
-    @observable selectedFiles: ISelectedFile[] = [];
 
     constructor(props: any) {
         super(props);
@@ -27,17 +26,12 @@ export class FileBrowserDialogComponent extends React.Component {
         FileBrowserStore.Instance.setSelectedTab(newId);
     };
 
-
-    @action private handleSelectionChanged = (selection: ISelectedFile[]) => {
-        this.selectedFiles = selection;
-    };
-
     private loadSelectedFiles = async () => {
         const fileBrowserStore = FileBrowserStore.Instance;
-        if (this.selectedFiles.length > 1) {
-            for (let i = 0; i < this.selectedFiles.length; i++) {
+        if (fileBrowserStore.selectedFiles.length > 1) {
+            for (let i = 0; i < fileBrowserStore.selectedFiles.length; i++) {
                 try {
-                    await this.loadFile(this.selectedFiles[i], i > 0);
+                    await this.loadFile(fileBrowserStore.selectedFiles[i], i > 0);
                 }
                 catch (err){
                     console.log(err);
@@ -175,19 +169,30 @@ export class FileBrowserDialogComponent extends React.Component {
                             intent={Intent.PRIMARY}
                             disabled={appStore.fileLoading || !fileBrowserStore.selectedFile || !fileBrowserStore.fileInfoResp || fileBrowserStore.loadingInfo}
                             onClick={this.loadSelectedFiles}
-                            text={this.selectedFiles?.length > 1 ? "Append selected" : "Append"}
-                        />
-                    </Tooltip>);
-            } else {
-                return (
-                    <Tooltip content={"Close any existing images and load this image"}>
-                        <AnchorButton
-                            intent={Intent.PRIMARY}
-                            disabled={appStore.fileLoading || !fileBrowserStore.selectedFile || !fileBrowserStore.fileInfoResp || fileBrowserStore.loadingInfo}
-                            onClick={this.loadSelectedFiles}
-                            text={this.selectedFiles?.length > 1 ? "Load selected" : "Load"}
+                            text={fileBrowserStore.selectedFiles?.length > 1 ? "Append selected" : "Append"}
                         />
                     </Tooltip>
+                );
+            } else {
+                return (
+                    <div>
+                        <Tooltip content={"Close any existing images and load this image"}>
+                            <AnchorButton
+                                intent={Intent.PRIMARY}
+                                disabled={appStore.fileLoading || !fileBrowserStore.selectedFile || !fileBrowserStore.fileInfoResp || fileBrowserStore.loadingInfo}
+                                onClick={this.loadSelectedFiles}
+                                text={fileBrowserStore.selectedFiles?.length > 1 ? "Load selected" : "Load"}
+                            />
+                        </Tooltip>
+                        {fileBrowserStore.selectedFiles?.length === 4 &&
+                            <AnchorButton
+                                intent={Intent.PRIMARY}
+                                disabled={appStore.fileLoading || !fileBrowserStore.selectedFile || !fileBrowserStore.fileInfoResp || fileBrowserStore.loadingInfo}
+                                onClick={appStore.dialogStore.showStokesDialog}
+                                text={"Load as hyper cube"}
+                            />
+                        }
+                    </div>
                 );
             }
         } else if (browserMode === BrowserMode.SaveFile) {
@@ -454,7 +459,7 @@ export class FileBrowserDialogComponent extends React.Component {
                                 sortingString={appStore.preferenceStore.fileSortingString}
                                 onSortingChanged={fileBrowserStore.setSortingConfig}
                                 onFileClicked={fileBrowserStore.selectFile}
-                                onSelectionChanged={this.handleSelectionChanged}
+                                onSelectionChanged={fileBrowserStore.setSelectedFiles}
                                 onFileDoubleClicked={this.loadFile}
                                 onFolderClicked={this.handleFolderClicked}
                             />

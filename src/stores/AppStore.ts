@@ -315,7 +315,7 @@ export class AppStore {
         return this.spatialGroup.filter(f => f.contourConfig.enabled && f.contourConfig.visible);
     }
 
-    @action addFrame = (ack: CARTA.OpenFileAck, directory: string, hdu: string): boolean => {
+    @action addFrame = (ack: CARTA.OpenFileAck | CARTA.IOpenFileAck, directory: string, hdu: string): boolean => {
         if (!ack) {
             return false;
         }
@@ -423,6 +423,28 @@ export class AppStore {
             this.fileCounter++;
         });
     };
+
+    @action openConctaStokes = (stokesFiles: CARTA.IStokesFile[], directory: string, hdu: string) => {
+        return new Promise<number>((resolve, reject) => {
+            this.startFileLoading();
+            this.backendService.loadStokeFiles(stokesFiles, this.fileCounter, CARTA.RenderMode.RASTER).subscribe(ack => {
+                if (!this.addFrame(ack.openFileAck, directory, hdu)) {
+                    AppToaster.show({icon: "warning-sign", message: "Load file failed.", intent: "danger", timeout: 3000});
+                }
+                this.endFileLoading();
+                this.fileBrowserStore.hideFileBrowser();
+                AppStore.Instance.dialogStore.hideStokesDialog();
+                resolve(ack.openFileAck.fileId);
+            }, err => {
+                console.log(err)
+                this.alertStore.showAlert(`Error loading file: ${err}`);
+                this.endFileLoading();
+                reject(err);
+            });
+
+            this.fileCounter++;
+        });
+    }
 
     @action appendFile = (directory: string, file: string, hdu: string) => {
         // Stop animations playing before loading a new frame
@@ -1205,6 +1227,7 @@ export class AppStore {
 
             profileStore.stokes = spectralProfileData.stokes;
             for (let profile of spectralProfileData.profiles) {
+                console.log(profile)
                 profileStore.setProfile(ProtobufProcessing.ProcessSpectralProfile(profile, spectralProfileData.progress));
             }
         }
