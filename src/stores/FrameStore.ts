@@ -667,7 +667,13 @@ export class FrameStore {
             case CARTA.RegionType.ELLIPSE:
                 return `ellipse(wcs:${systemType})[[${center}], [${size.x}, ${size.y}], ${toFixed(region.rotation, 1)}deg]`;
             case CARTA.RegionType.POLYGON:
-                return `polygon(wcs:${systemType})[[${center}], [${size.x}, ${size.y}], ${toFixed(region.rotation, 1)}deg]`;
+                let polygonWcsProperties = `polygon(wcs:${systemType})[`;
+                region.controlPoints.map((point) => {
+                    const wcsPoint = isFinite(point.x) && isFinite(point.y) ? getFormattedWCSPoint(this.wcsInfoForTransformation, point) : null;
+                    polygonWcsProperties += wcsPoint ? `[${wcsPoint.x}, ${wcsPoint.y}], ` : "[Invalid], ";
+                });
+                polygonWcsProperties = polygonWcsProperties.slice(0, -2) + "]";
+                return polygonWcsProperties;
             default:
                 return "Not Implemented";
         }

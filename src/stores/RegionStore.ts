@@ -199,11 +199,12 @@ export class RegionStore {
                     `[${toFixed(this.size.x, 1)}pix, ${toFixed(this.size.y, 1)}pix], ` +
                     `${toFixed(this.rotation, 1)}deg]`;
             case CARTA.RegionType.POLYGON:
-                // TODO: Region properties
-                const bounds = minMax2D(this.controlPoints);
-                return `polygon[[${center}], ` +
-                    `[${toFixed(bounds.maxPoint.x, 1)}pix, ${toFixed(bounds.maxPoint.y, 1)}pix], ` +
-                    `${toFixed(this.rotation, 1)}deg]`;
+                let polygonProperties = "polygon[";
+                this.controlPoints.map((point) => {
+                    polygonProperties += isFinite(point.x) && isFinite(point.y) ? `[${toFixed(point.x, 1)}pix, ${toFixed(point.y, 1)}pix], ` : "[Invalid], ";
+                });
+                polygonProperties = polygonProperties.slice(0, -2) + "]";
+                return polygonProperties;
             default:
                 return "Not Implemented";
         }
