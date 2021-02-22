@@ -160,11 +160,11 @@ export class StatsComponent extends React.Component<WidgetProps> {
         }
 
         return {num: numString, unit: unitString}
-    }
+    };
 
     exportData = () => {
         const frame = this.widgetStore.effectiveFrame;
-        if (frame) {
+        if (this.statsData && frame) {
             const fileName = this.widgetStore.effectiveFrame.filename;
             const plotName = "statistics";
             const title = `# ${fileName} ${plotName}\n`;
@@ -190,8 +190,8 @@ export class StatsComponent extends React.Component<WidgetProps> {
 
             let rows = "";
             StatsComponent.STATS_NAME_MAP.forEach((name, type) => {
-                const index = this.statsData?.statistics?.findIndex(s => s.statsType === type);
-                if (index >= 0 && index < this.statsData.statistics.length) {
+                const index = this.statsData.statistics?.findIndex(s => s.statsType === type);
+                if (index >= 0 && index < this.statsData.statistics?.length) {
                     const value = this.getTableValue(index, type);
                     value.unit = (value.unit === "") ? "N/A" : value.unit;
                     rows += `${name.padEnd(12)}\t${value.num}\t${value.unit}\n`
@@ -199,10 +199,8 @@ export class StatsComponent extends React.Component<WidgetProps> {
             });
 
             exportTsvFile(fileName, plotName, `${title}${comment}${header}${rows}`);
-        } else {
-            console.log("can't find effective frame")
         }
-    }
+    };
 
     public render() {
         const appStore = AppStore.Instance;
