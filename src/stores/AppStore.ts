@@ -437,7 +437,7 @@ export class AppStore {
                 resolve(ack.openFileAck.fileId);
             }, err => {
                 console.log(err)
-                this.alertStore.showAlert(`Error loading file: ${err}`);
+                this.alertStore.showAlert(`Error loading files: ${err}`);
                 this.endFileLoading();
                 reject(err);
             });

@@ -293,6 +293,19 @@ export class FileBrowserStore {
         this.selectedFiles = selection;
     };
 
+    @action getFileHeader = (directory: string, file: string, hdu: string): Promise<{file: string, info: CARTA.IFileInfoExtended}> => {
+        return new Promise((resolve, reject) => {
+            BackendService.Instance.getFileInfo(directory, file, hdu).subscribe((res: CARTA.FileInfoResponse) => {
+                // console.log(res)
+                // this.fileInfoResp = true;
+                resolve({file: res.fileInfo.name, info: res.fileInfoExtended});
+            }, err => {
+                console.log(err);
+                reject(err);
+            });
+        })
+    }
+
     @computed get HDUList(): IOptionProps[] {
         return this.HDUfileInfoExtended ?
             Object.keys(this.HDUfileInfoExtended)?.map(hdu => {
