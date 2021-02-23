@@ -1,5 +1,6 @@
 import * as React from "react";
 import {observer} from "mobx-react";
+import {action, makeObservable, observable} from "mobx";
 import {ControlGroup, Divider, FormGroup, HTMLSelect, IOptionProps, NonIdealState, Pre, Spinner, Tab, TabId, Tabs, Text, Popover, PopperModifiers, Position, Button, InputGroup, ButtonGroup} from "@blueprintjs/core";
 import {FixedSizeList as List} from "react-window";
 import AutoSizer from "react-virtualized-auto-sizer";
@@ -28,6 +29,32 @@ export class FileInfoComponent extends React.Component<{
     errorMessage: string,
     catalogHeaderTable?: TableComponentProps
 }> {
+
+    @observable isMouseEntered = false;
+    @observable isSearchOpened = false;
+
+    @action onMouseEnter = () => {
+        this.isMouseEntered = true;
+    };
+
+    @action onMouseLeave = () => {
+        if (!this.isSearchOpened) {
+            this.isMouseEntered = false;
+        }
+    };
+
+    @action searchOpened = () => {
+        this.isSearchOpened = true;
+    }
+
+    @action searchClosed = () => {
+        this.isSearchOpened = false;
+    }
+
+    constructor(props) {
+        super(props);
+        makeObservable(this);
+    }
 
     private renderInfoTabs = () => {
         const infoTypes = this.props.infoTypes;
@@ -151,8 +178,11 @@ export class FileInfoComponent extends React.Component<{
                 className="header-search"
                 position={Position.LEFT}
                 modifiers={popoverModifiers}
+                onOpening={this.searchOpened}
+                onClosing={this.searchClosed}
+                defaultIsOpen={this.isSearchOpened ? true : false}
             >
-                <Button icon="search-text"></Button>
+                <Button icon="search-text" style={{opacity: (this.isMouseEntered) ? 1 : 0}}></Button>
                 <InputGroup
                     autoFocus={false}
                     placeholder={"Search text"}
@@ -165,7 +195,7 @@ export class FileInfoComponent extends React.Component<{
 
     render() {
         return (
-            <div className="file-info">
+            <div className="file-info" onMouseEnter={this.onMouseEnter} onMouseLeave={this.onMouseLeave}>
                 <div className="file-info-panel-top">
                     {this.renderInfoTabs()}
                     {this.renderHDUList()}
