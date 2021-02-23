@@ -114,10 +114,6 @@ export class FileInfoComponent extends React.Component<{
                 return "";
         }
     };
-    private onChangeShouldDropDegeneratedAxes = () => {
-        const fileBrowser = FileBrowserStore.Instance;
-        fileBrowser.shouldDropDegeneratedAxes = !fileBrowser.shouldDropDegeneratedAxes;
-    };
 
     private renderImageHeaderList(entries: CARTA.IHeaderEntry[]) {
         const renderHeaderRow = ({ index, style }) => {
@@ -156,34 +152,47 @@ export class FileInfoComponent extends React.Component<{
         );
     }
 
+    private onChangeShouldDropDegeneratedAxes = () => {
+        const fileBrowser = FileBrowserStore.Instance;
+        fileBrowser.shouldDropDegeneratedAxes = !fileBrowser.shouldDropDegeneratedAxes;
+    };
+
     private handleRegionChanged = (changeEvent: React.ChangeEvent<HTMLSelectElement>) => {
         const fileBrowser = FileBrowserStore.Instance;
         fileBrowser.setSaveRegionId(parseInt(changeEvent.target.value));
     };
 
-    private handleSaveSpectralRangeStartChanged = (val: any) => {
+    private handleSaveSpectralRangeStartChanged = (_valueAsNumber: number, valueAsString: string) => {
         const fileBrowser = FileBrowserStore.Instance;
         const spectralRange = AppStore.Instance.activeFrame.channelValueBounds;
         // Check and clamp the input
-        if (FileBrowserStore && isFinite(val)) {
-            fileBrowser.setSaveSpectralRangeMin(val);
+        if (FileBrowserStore) {
+            fileBrowser.setSaveSpectralRangeMin(valueAsString);
             clearTimeout(fileBrowser.debounceTimeoutSpectralMin);
             fileBrowser.debounceTimeoutSpectralMin = setTimeout(() => {
-                fileBrowser.setSaveSpectralRangeMin(Math.min(Math.max(fileBrowser.saveSpectralRange[0], spectralRange.min), fileBrowser.saveSpectralRange[1]));
-            }, 600);
+                if (isFinite(_valueAsNumber)) {
+                    fileBrowser.setSaveSpectralRangeMin(Math.min(Math.max(parseFloat(fileBrowser.saveSpectralRange[0]), spectralRange.min), parseFloat(fileBrowser.saveSpectralRange[1])).toString());
+                } else {
+                    fileBrowser.setSaveSpectralRangeMin(spectralRange.min.toString());
+                }
+            }, 2000);
         }
     };
 
-    private handleSaveSpectralRangeEndChanged = (val: any) => {
+    private handleSaveSpectralRangeEndChanged = (_valueAsNumber: number, valueAsString: string) => {
         const fileBrowser = AppStore.Instance.fileBrowserStore;
         const spectralRange = AppStore.Instance.activeFrame.channelValueBounds;
         // Check and clamp the input
-        if (FileBrowserStore && isFinite(val)) {
-            fileBrowser.setSaveSpectralRangeMax(val);
+        if (FileBrowserStore) {
+            fileBrowser.setSaveSpectralRangeMax(valueAsString);
             clearTimeout(fileBrowser.debounceTimeoutSpectralMax);
             fileBrowser.debounceTimeoutSpectralMax = setTimeout(() => {
-                fileBrowser.setSaveSpectralRangeMax(Math.min(Math.max(fileBrowser.saveSpectralRange[1], fileBrowser.saveSpectralRange[0]), spectralRange.max));
-            }, 600);
+                if (isFinite(_valueAsNumber)) {
+                    fileBrowser.setSaveSpectralRangeMax(Math.min(Math.max(parseFloat(fileBrowser.saveSpectralRange[1]), parseFloat(fileBrowser.saveSpectralRange[0])), spectralRange.max).toString());
+                } else {
+                    fileBrowser.setSaveSpectralRangeMax(spectralRange.max.toString());
+                }
+            }, 2000);
         }
     };
 
@@ -335,6 +344,7 @@ export class FileInfoComponent extends React.Component<{
                                                 majorStepSize={null}
                                                 stepSize={majorStepSize}
                                                 minorStepSize={null}
+                                                selectAllOnIncrement={true}
                                             />
                                             <Label>{"To"}</Label>
                                             <NumericInput
@@ -345,6 +355,7 @@ export class FileInfoComponent extends React.Component<{
                                                 majorStepSize={null}
                                                 stepSize={majorStepSize}
                                                 minorStepSize={null}
+                                                selectAllOnIncrement={true}
                                             />
                                         </ControlGroup>
                                     </FormGroup>

@@ -1,17 +1,10 @@
 import { IOptionProps, TabId } from "@blueprintjs/core";
-
 import { action, computed, observable, makeObservable, runInAction, autorun } from "mobx";
-
 import { CARTA } from "carta-protobuf";
-
 import { BackendService } from "services";
-
 import { AppStore, DialogStore, PreferenceKeys, PreferenceStore } from "stores";
-
 import { FileInfoType } from "components";
-
 import { ProcessedColumnData } from "models";
-
 import { getDataTypeString } from "utilities";
 
 export enum BrowserMode {
@@ -72,7 +65,7 @@ export class FileBrowserStore {
     // Save image
     @observable saveFilename: string = "";
     @observable saveFileType: CARTA.FileType = CARTA.FileType.CASA;
-    @observable saveSpectralRange: number[] = [0, 0];
+    @observable saveSpectralRange: string[] = ["0", "0"];
     @observable saveStokesOption: number;
     @observable saveRegionId: number;
     @observable shouldDropDegeneratedAxes: boolean;
@@ -232,7 +225,7 @@ export class FileBrowserStore {
             const min = Math.min(activeFrame.channelValueBounds.max, activeFrame.channelValueBounds.min);
             const max = Math.max(activeFrame.channelValueBounds.max, activeFrame.channelValueBounds.min);
             const delta = (max - min) / (activeFrame.numChannels - 1);
-            this.saveSpectralRange = [min, max, delta];
+            this.saveSpectralRange = [min.toString(), max.toString(), delta.toString()];
         }
     };
 
@@ -335,11 +328,11 @@ export class FileBrowserStore {
         }
     };
 
-    @action setSaveSpectralRangeMin = (min: number) => {
+    @action setSaveSpectralRangeMin = (min: string) => {
         this.saveSpectralRange[0] = min;
     };
 
-    @action setSaveSpectralRangeMax = (max: number) => {
+    @action setSaveSpectralRangeMax = (max: string) => {
         this.saveSpectralRange[1] = max;
     };
 

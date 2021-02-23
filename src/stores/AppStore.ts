@@ -1,29 +1,17 @@
 import { Classes, Colors, IOptionProps, setHotkeysDialogProps } from "@blueprintjs/core";
 import { Utils } from "@blueprintjs/table";
-
 import * as _ from "lodash";
-
 import { action, autorun, computed, observable, ObservableMap, when, makeObservable, runInAction } from "mobx";
-
 import * as Long from "long";
-
 import * as AST from "ast_wrapper";
-
 import * as CARTACompute from "carta_computation";
-
 import { CARTA } from "carta-protobuf";
-
 import { distinct, GetRequiredTiles, mapToObject } from "utilities";
-
 import { ApiService, BackendService, ConnectionStatus, ScriptingService, TileService, TileStreamDetails } from "services";
-
 import { FrameView, Point2D, ProtobufProcessing, Theme, TileCoordinate, WCSMatchingType } from "models";
-
 import { getImageCanvas, ImageViewLayer } from "components";
 import { AppToaster, ErrorToast, SuccessToast, WarningToast } from "components/Shared";
-
 import GitCommit from "../static/gitInfo";
-
 import {
     AlertStore,
     AnimationMode,
