@@ -110,7 +110,7 @@ export class BackendService {
             [CARTA.EventType.MOMENT_PROGRESS, {messageClass: CARTA.MomentProgress, handler: this.onStreamedMomentProgress}],
             [CARTA.EventType.MOMENT_RESPONSE, {messageClass: CARTA.MomentResponse, handler: this.onSimpleMappedResponse}],
             [CARTA.EventType.SCRIPTING_REQUEST, {messageClass: CARTA.ScriptingRequest, handler: this.onScriptingRequest}],
-            [CARTA.EventType.SPECTRAL_LINE_RESPONSE, {messageClass: CARTA.ScriptingResponse, handler: this.onSimpleMappedResponse}]
+            [CARTA.EventType.SPECTRAL_LINE_RESPONSE, {messageClass: CARTA.SpectralLineResponse, handler: this.onSimpleMappedResponse}]
         ]);
 
         // check ping every 5 seconds
