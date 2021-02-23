@@ -65,9 +65,9 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         return {
             id: "catalog-overlay",
             type: "catalog-overlay",
-            minWidth: 620,
+            minWidth: 720,
             minHeight: 400,
-            defaultWidth: 620,
+            defaultWidth: 720,
             defaultHeight: 400,
             title: "Catalog",
             isCloseable: true,

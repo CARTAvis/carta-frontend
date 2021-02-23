@@ -50,23 +50,38 @@ export enum RasterRenderType {
 export const WCS_PRECISION = 10;
 
 export class FrameStore {
+    private static readonly CursorInfoMaxPrecision = 25;
+    private static readonly ZoomInertiaDuration = 250;
+
     private readonly astFrameSet: number;
     private readonly spectralFrame: number;
+    private readonly controlMaps: Map<FrameStore, ControlMap>;
+    private readonly backendService: BackendService;
+    private readonly overlayStore: OverlayStore;
+    private readonly logStore: LogStore;
+
+    private spectralTransformAST: number;
+    private cachedTransformedWcsInfo: number = -1;
+    private zoomTimeoutHandler;
+
+    public readonly wcsInfo: number;
+    public readonly wcsInfoForTransformation: number;
+    public readonly wcsInfo3D: number;
+    public readonly validWcs: boolean;
+
     public spectralCoordsSupported: Map<string, { type: SpectralType, unit: SpectralUnit }>;
     public spectralSystemsSupported: Array<SpectralSystem>;
+    public spatialTransformAST: number;
+
     // Region set for the current frame. Accessed via regionSet, to take into account region sharing
     @observable private readonly frameRegionSet: RegionSetStore;
 
     @observable frameInfo: FrameInfo;
     @observable renderHiDPI: boolean;
-    @observable wcsInfo: number;
-    @observable wcsInfoForTransformation: number;
     @observable spectralType: SpectralType;
     @observable spectralUnit: SpectralUnit;
     @observable spectralSystem: SpectralSystem;
     @observable channelValues: Array<number>;
-    @observable fullWcsInfo: number;
-    @observable validWcs: boolean;
     @observable center: Point2D;
     @observable cursorInfo: CursorInfo;
     @observable cursorValue: { position: Point2D, channel: number, value: number };
@@ -644,47 +659,6 @@ export class FrameStore {
         return [];
     }
 
-    public getRegionWcsProperties(region: RegionStore): string {
-        if (!this.validWcs || !isFinite(region.center.x) || !isFinite(region.center.y)) {
-            return "Invalid";
-        }
-
-        const wcsCenter = getFormattedWCSPoint(this.wcsInfoForTransformation, region.center);
-        if (!wcsCenter) {
-            return "Invalid";
-        }
-
-        const center = region.regionId === RegionId.CURSOR ? `${this.cursorInfo.infoWCS.x}, ${this.cursorInfo.infoWCS.y}` : `${wcsCenter.x}, ${wcsCenter.y}`;
-        const wcsSize = this.getWcsSizeInArcsec(region.size);
-        const size = wcsSize ? {x: formattedArcsec(wcsSize.x, WCS_PRECISION), y: formattedArcsec(wcsSize.y, WCS_PRECISION)} : null;
-        const systemType = OverlayStore.Instance.global.explicitSystem;
-
-        switch (region.regionType) {
-            case CARTA.RegionType.POINT:
-                return `Point (wcs:${systemType}) [${center}]`;
-            case CARTA.RegionType.RECTANGLE:
-                return `rotbox(wcs:${systemType})[[${center}], [${size.x}, ${size.y}], ${toFixed(region.rotation, 1)}deg]`;
-            case CARTA.RegionType.ELLIPSE:
-                return `ellipse(wcs:${systemType})[[${center}], [${size.x}, ${size.y}], ${toFixed(region.rotation, 1)}deg]`;
-            case CARTA.RegionType.POLYGON:
-                return `polygon(wcs:${systemType})[[${center}], [${size.x}, ${size.y}], ${toFixed(region.rotation, 1)}deg]`;
-            default:
-                return "Not Implemented";
-        }
-    }
-
-    private readonly overlayStore: OverlayStore;
-    private readonly logStore: LogStore;
-    private readonly backendService: BackendService;
-    private readonly controlMaps: Map<FrameStore, ControlMap>;
-    public spatialTransformAST: number;
-    private spectralTransformAST: number;
-    private cachedTransformedWcsInfo: number = -1;
-    private zoomTimeoutHandler;
-
-    private static readonly CursorInfoMaxPrecision = 25;
-    private static readonly ZoomInertiaDuration = 250;
-
     constructor(frameInfo: FrameInfo) {
         makeObservable(this);
         this.overlayStore = OverlayStore.Instance;
@@ -702,7 +676,7 @@ export class FrameStore {
         this.spectralSystemsSupported = null;
         this.wcsInfo = null;
         this.wcsInfoForTransformation = null;
-        this.fullWcsInfo = null;
+        this.wcsInfo3D = null;
         this.validWcs = false;
         this.frameInfo = frameInfo;
         this.renderHiDPI = true;
@@ -753,15 +727,33 @@ export class FrameStore {
         };
         this.animationChannelRange = [0, frameInfo.fileInfoExtended.depth - 1];
 
-        this.initSkyWCS();
-        if (frameInfo.fileInfoExtended.depth > 1) {
-            this.initFullWCS();
-        }
-
+        // init WCS
         this.astFrameSet = this.initFrame();
         if (this.astFrameSet) {
-            this.spectralFrame = AST.getSpectralFrame(this.astFrameSet);
+            if (this.spectralAxis && this.spectralAxis.valid) {
+                this.spectralFrame = AST.getSpectralFrame(this.astFrameSet);
+            }
+
+            if (frameInfo.fileInfoExtended.depth > 1) { // 3D frame
+                this.wcsInfo3D = AST.copy(this.astFrameSet);
+                this.wcsInfo = AST.getSkyFrameSet(this.astFrameSet);
+            } else { // 2D frame
+                this.wcsInfo = AST.copy(this.astFrameSet);
+            }
+
+            if (this.wcsInfo) {
+                // init 2D(Sky) wcs copy for the precision of region coordinate transformation
+                this.wcsInfoForTransformation = AST.copy(this.wcsInfo);
+                AST.set(this.wcsInfoForTransformation, `Format(1)=${AppStore.Instance.overlayStore.numbers.formatTypeX}.${WCS_PRECISION}`);
+                AST.set(this.wcsInfoForTransformation, `Format(2)=${AppStore.Instance.overlayStore.numbers.formatTypeY}.${WCS_PRECISION}`);
+                this.validWcs = true;
+                this.overlayStore.setDefaultsFromAST(this);
+            }
+        } else {
+            this.logStore.addWarning(`Problem processing WCS info in file ${this.filename}`, ["ast"]);
+            this.wcsInfo = AST.initDummyFrame();
         }
+
         this.initSupportedSpectralConversion();
         this.initCenter();
         this.zoomLevel = preferenceStore.isZoomRAWMode ? 1.0 : this.zoomLevelForFit;
@@ -804,123 +796,6 @@ export class FrameStore {
         });
     }
 
-    private convertSpectral = (values: Array<number>): Array<number> => {
-        return values && values.length > 0 ? values.map(value => this.astSpectralTransform(this.spectralType, this.spectralUnit, this.spectralSystem, value)) : null;
-    };
-
-    private astSpectralTransform = (type: SpectralType, unit: SpectralUnit, system: SpectralSystem, value: number): number => {
-        if (!this.spectralFrame || !isFinite(value)) {
-            return undefined;
-        }
-        return AST.transformSpectralPoint(this.spectralFrame, type, unit, system, value);
-    };
-
-    @action private initSkyWCS = () => {
-        let headerString = "";
-
-        for (let entry of this.frameInfo.fileInfoExtended.headerEntries) {
-            // Skip empty header entries
-            if (!entry.value.length) {
-                continue;
-            }
-
-            // Skip higher dimensions
-            if (entry.name.match(/(CTYPE|CDELT|CRPIX|CRVAL|CUNIT|NAXIS|CROTA)[3-9]/)) {
-                continue;
-            }
-
-            let value = entry.value;
-            if (entry.name.toUpperCase() === "NAXIS") {
-                value = "2";
-            }
-
-            if (entry.name.toUpperCase() === "WCSAXES") {
-                value = "2";
-            }
-
-            if (entry.entryType === CARTA.EntryType.STRING) {
-                value = `'${value}'`;
-            } else {
-                value = FrameStore.ShiftASTCoords(entry, value);
-            }
-
-            let name = entry.name;
-            while (name.length < 8) {
-                name += " ";
-            }
-
-            let entryString = `${name}=  ${value}`;
-            while (entryString.length < 80) {
-                entryString += " ";
-            }
-            headerString += entryString;
-        }
-        const initResult = AST.initFrame(headerString);
-        if (!initResult) {
-            this.logStore.addWarning(`Problem processing WCS info in file ${this.filename}`, ["ast"]);
-            this.wcsInfo = AST.initDummyFrame();
-        } else {
-            this.wcsInfo = initResult;
-            // init wcs for transformation & precision
-            this.wcsInfoForTransformation = AST.copy(this.wcsInfo);
-            AST.set(this.wcsInfoForTransformation, `Format(1)=${AppStore.Instance.overlayStore.numbers.formatTypeX}.${WCS_PRECISION}`);
-            AST.set(this.wcsInfoForTransformation, `Format(2)=${AppStore.Instance.overlayStore.numbers.formatTypeY}.${WCS_PRECISION}`);
-            this.validWcs = true;
-            this.overlayStore.setDefaultsFromAST(this);
-            console.log("Initialised WCS info from frame");
-        }
-    };
-
-    @action private initFullWCS = () => {
-        let headerString = "";
-
-        for (let entry of this.frameInfo.fileInfoExtended.headerEntries) {
-            // Skip empty header entries
-            if (!entry.value.length) {
-                continue;
-            }
-
-            // Skip higher dimensions
-            if (entry.name.match(/(CTYPE|CDELT|CRPIX|CRVAL|CUNIT|NAXIS|CROTA)[4-9]/)) {
-                continue;
-            }
-
-            let value = trimFitsComment(entry.value);
-            if (entry.name.toUpperCase() === "NAXIS") {
-                value = "3";
-            }
-
-            if (entry.name.toUpperCase() === "WCSAXES") {
-                value = "3";
-            }
-
-            if (entry.entryType === CARTA.EntryType.STRING) {
-                value = `'${value}'`;
-            } else {
-                value = FrameStore.ShiftASTCoords(entry, value);
-            }
-
-            let name = entry.name;
-            while (name.length < 8) {
-                name += " ";
-            }
-
-            let entryString = `${name}=  ${value}`;
-            while (entryString.length < 80) {
-                entryString += " ";
-            }
-            headerString += entryString;
-        }
-        const initResult = AST.initFrame(headerString);
-        if (!initResult) {
-            this.logStore.addWarning(`Problem processing WCS info in file ${this.filename}`, ["ast"]);
-            this.fullWcsInfo = null;
-        } else {
-            this.fullWcsInfo = initResult;
-            console.log("Initialised 3D WCS info from frame");
-        }
-    };
-
     // This function shifts the pixel axis by 1, so that it starts at 0, rather than 1
     // For entries that are not related to the reference pixel location, the current value is returned
     private static ShiftASTCoords = (entry: CARTA.IHeaderEntry, currentValue: string) => {
@@ -933,28 +808,59 @@ export class FrameStore {
         return currentValue;
     };
 
-    private initFrame = (): number => {
-        if (!this.spectralAxis || !this.spectralAxis.valid) {
-            return null;
+    private convertSpectral = (values: Array<number>): Array<number> => {
+        return values && values.length > 0 ? values.map(value => this.astSpectralTransform(this.spectralType, this.spectralUnit, this.spectralSystem, value)) : null;
+    };
+
+    private astSpectralTransform = (type: SpectralType, unit: SpectralUnit, system: SpectralSystem, value: number): number => {
+        if (!this.spectralFrame || !isFinite(value)) {
+            return undefined;
         }
+        return AST.transformSpectralPoint(this.spectralFrame, type, unit, system, value);
+    };
+
+    private initFrame = (): number => {
+        const dimension = this.frameInfo.fileInfoExtended.depth > 1 ? "3" : "2";
 
         let headerString = "";
-        const entries = this.frameInfo.fileInfoExtended.headerEntries;
-        for (let entry of entries) {
+        for (let entry of this.frameInfo.fileInfoExtended.headerEntries) {
+            let name = entry.name;
+
+            // Skip higher dimensions
+            if (dimension === "2") {
+                if (entry.name.match(/(CTYPE|CDELT|CRPIX|CRVAL|CUNIT|NAXIS|CROTA)[3-9]/)) {
+                    continue;
+                }
+            } else { // check whether spectral axis is axis 3 or 4
+                if (entry.name.match(/(CTYPE|CDELT|CRPIX|CRVAL|CUNIT|NAXIS|CROTA)[5-9]/) ||
+                    (this.spectralAxis?.dimension === 3 && entry.name.match(/(CTYPE|CDELT|CRPIX|CRVAL|CUNIT|NAXIS|CROTA)4/)) ||
+                    (this.spectralAxis?.dimension === 4 && entry.name.match(/(CTYPE|CDELT|CRPIX|CRVAL|CUNIT|NAXIS|CROTA)3/))) {
+                    continue;
+                }
+                if (this.spectralAxis?.dimension === 4 && entry.name.match(/(CTYPE|CDELT|CRPIX|CRVAL|CUNIT|NAXIS|CROTA)4/)) {
+                    name = entry.name.replace("4", "3");
+                }
+            }
+
             // Skip empty header entries
             if (!entry.value.length) {
                 continue;
             }
-            let name = entry.name;
+
             let value = trimFitsComment(entry.value);
+            if (entry.name.toUpperCase() === "NAXIS" || entry.name.toUpperCase() === "WCSAXES") {
+                value = dimension;
+            }
             if (entry.entryType === CARTA.EntryType.STRING) {
                 value = `'${value}'`;
             } else {
                 value = FrameStore.ShiftASTCoords(entry, value);
             }
+
             while (name.length < 8) {
                 name += " ";
             }
+
             let entryString = `${name}=  ${value}`;
             while (entryString.length < 80) {
                 entryString += " ";
@@ -964,83 +870,22 @@ export class FrameStore {
         return AST.initFrame(headerString);
     };
 
-    @action private initSupportedSpectralConversion = () => {
-        if (this.spectralAxis && !this.spectralAxis.valid) {
-            this.channelValues = this.channelInfo.values;
-            this.spectralCoordsSupported = new Map<string, { type: SpectralType, unit: SpectralUnit }>([
-                [this.nativeSpectralCoordinate, {type: null, unit: null}],
-                [SPECTRAL_TYPE_STRING.get(SpectralType.CHANNEL), {type: SpectralType.CHANNEL, unit: null}]
-            ]);
-            this.spectralSystemsSupported = [];
-            return;
-        } else if (!this.spectralAxis || !this.spectralFrame) {
-            this.spectralCoordsSupported = null;
-            this.spectralSystemsSupported = null;
-            return;
+    private sanitizeChannelNumber(channel: number) {
+        if (!isFinite(channel)) {
+            return this.requiredChannel;
         }
 
-        // generate spectral coordinate options
-        const entries = this.frameInfo.fileInfoExtended.headerEntries;
-        const spectralType = this.spectralInfo.channelType.code;
-        if (IsSpectralTypeSupported(spectralType)) {
-            // check RESTFRQ
-            const restFrqHeader = entries.find(entry => entry.name.indexOf("RESTFRQ") !== -1);
-            if (restFrqHeader) {
-                this.spectralCoordsSupported = SPECTRAL_COORDS_SUPPORTED;
-            } else {
-                this.spectralCoordsSupported = new Map<string, { type: SpectralType, unit: SpectralUnit }>();
-                Array.from(SPECTRAL_COORDS_SUPPORTED.keys()).forEach((key: string) => {
-                    const value = SPECTRAL_COORDS_SUPPORTED.get(key);
-                    const isVolecity = spectralType === SpectralType.VRAD || spectralType === SpectralType.VOPT;
-                    const isValueVolecity = value.type === SpectralType.VRAD || value.type === SpectralType.VOPT;
-                    if (isVolecity && isValueVolecity) { // VRAD, VOPT
-                        this.spectralCoordsSupported.set(key, value);
-                    }
-                    if (!isVolecity && !isValueVolecity) { // FREQ, WAVE, AWAV
-                        this.spectralCoordsSupported.set(key, value);
-                    }
-                });
-                this.spectralCoordsSupported.set(SPECTRAL_TYPE_STRING.get(SpectralType.CHANNEL), {type: SpectralType.CHANNEL, unit: null});
-            }
-        } else {
-            this.spectralCoordsSupported = new Map<string, { type: SpectralType, unit: SpectralUnit }>([
-                [SPECTRAL_TYPE_STRING.get(SpectralType.CHANNEL), {type: SpectralType.CHANNEL, unit: null}]
-            ]);
+        return Math.round(clamp(channel, 0, this.frameInfo.fileInfoExtended.depth - 1));
+    }
+
+    private replaceZoomTimeoutHandler = () => {
+        if (this.zoomTimeoutHandler) {
+            clearTimeout(this.zoomTimeoutHandler);
         }
 
-        // generate spectral system options
-        const spectralSystem = this.spectralInfo.specsys;
-        if (IsSpectralSystemSupported(spectralSystem)) {
-            const dateObsHeader = entries.find(entry => entry.name.indexOf("DATE-OBS") !== -1);
-            const obsgeoxHeader = entries.find(entry => entry.name.indexOf("OBSGEO-X") !== -1);
-            const obsgeoyHeader = entries.find(entry => entry.name.indexOf("OBSGEO-Y") !== -1);
-            const obsgeozHeader = entries.find(entry => entry.name.indexOf("OBSGEO-Z") !== -1);
-            if (spectralSystem === SpectralSystem.LSRK || spectralSystem === SpectralSystem.LSRD) { // LSRK, LSRD
-                if (dateObsHeader && (obsgeoxHeader && obsgeoyHeader && obsgeozHeader)) {
-                    this.spectralSystemsSupported = [SpectralSystem.LSRK, SpectralSystem.LSRD, SpectralSystem.BARY, SpectralSystem.TOPO];
-                } else if (dateObsHeader && !(obsgeoxHeader && obsgeoyHeader && obsgeozHeader)) {
-                    this.spectralSystemsSupported = [SpectralSystem.LSRK, SpectralSystem.LSRD, SpectralSystem.BARY];
-                } else {
-                    this.spectralSystemsSupported = [SpectralSystem.LSRK, SpectralSystem.LSRD];
-                }
-            } else if (spectralSystem === SpectralSystem.BARY) { // BARY
-                if (dateObsHeader && (obsgeoxHeader && obsgeoyHeader && obsgeozHeader)) {
-                    this.spectralSystemsSupported = [SpectralSystem.LSRK, SpectralSystem.LSRD, SpectralSystem.BARY, SpectralSystem.TOPO];
-                } else if (dateObsHeader && !(obsgeoxHeader && obsgeoyHeader && obsgeozHeader)) {
-                    this.spectralSystemsSupported = [SpectralSystem.LSRK, SpectralSystem.LSRD, SpectralSystem.BARY];
-                } else {
-                    this.spectralSystemsSupported = [SpectralSystem.BARY];
-                }
-            } else { // TOPO
-                if (dateObsHeader && (obsgeoxHeader && obsgeoyHeader && obsgeozHeader)) {
-                    this.spectralSystemsSupported = [SpectralSystem.LSRK, SpectralSystem.LSRD, SpectralSystem.BARY, SpectralSystem.TOPO];
-                } else {
-                    this.spectralSystemsSupported = [SpectralSystem.TOPO];
-                }
-            }
-        } else {
-            this.spectralSystemsSupported = [];
-        }
+        this.zoomTimeoutHandler = setTimeout(() => runInAction(() => {
+            this.zooming = false;
+        }), FrameStore.ZoomInertiaDuration);
     };
 
     public convertToNativeWCS = (value: number): number => {
@@ -1201,6 +1046,119 @@ export class FrameStore {
         return undefined;
     };
 
+    public getRegionWcsProperties(region: RegionStore): string {
+        if (!this.validWcs || !isFinite(region.center.x) || !isFinite(region.center.y)) {
+            return "Invalid";
+        }
+
+        const wcsCenter = getFormattedWCSPoint(this.wcsInfoForTransformation, region.center);
+        if (!wcsCenter) {
+            return "Invalid";
+        }
+
+        const center = region.regionId === RegionId.CURSOR ? `${this.cursorInfo.infoWCS.x}, ${this.cursorInfo.infoWCS.y}` : `${wcsCenter.x}, ${wcsCenter.y}`;
+        const wcsSize = this.getWcsSizeInArcsec(region.size);
+        const size = wcsSize ? {x: formattedArcsec(wcsSize.x, WCS_PRECISION), y: formattedArcsec(wcsSize.y, WCS_PRECISION)} : null;
+        const systemType = OverlayStore.Instance.global.explicitSystem;
+
+        switch (region.regionType) {
+            case CARTA.RegionType.POINT:
+                return `Point (wcs:${systemType}) [${center}]`;
+            case CARTA.RegionType.RECTANGLE:
+                return `rotbox(wcs:${systemType})[[${center}], [${size.x}, ${size.y}], ${toFixed(region.rotation, 1)}deg]`;
+            case CARTA.RegionType.ELLIPSE:
+                return `ellipse(wcs:${systemType})[[${center}], [${size.x}, ${size.y}], ${toFixed(region.rotation, 1)}deg]`;
+            case CARTA.RegionType.POLYGON:
+                return `polygon(wcs:${systemType})[[${center}], [${size.x}, ${size.y}], ${toFixed(region.rotation, 1)}deg]`;
+            default:
+                return "Not Implemented";
+        }
+    }
+
+    @action private initSupportedSpectralConversion = () => {
+        if (this.spectralAxis && !this.spectralAxis.valid) {
+            this.channelValues = this.channelInfo.values;
+            this.spectralCoordsSupported = new Map<string, { type: SpectralType, unit: SpectralUnit }>([
+                [this.nativeSpectralCoordinate, {type: null, unit: null}],
+                [SPECTRAL_TYPE_STRING.get(SpectralType.CHANNEL), {type: SpectralType.CHANNEL, unit: null}]
+            ]);
+            this.spectralSystemsSupported = [];
+            return;
+        } else if (!this.spectralAxis || !this.spectralFrame) {
+            this.spectralCoordsSupported = null;
+            this.spectralSystemsSupported = null;
+            return;
+        }
+
+        // generate spectral coordinate options
+        const entries = this.frameInfo.fileInfoExtended.headerEntries;
+        const spectralType = this.spectralInfo.channelType.code;
+        if (IsSpectralTypeSupported(spectralType)) {
+            // check RESTFRQ
+            const restFrqHeader = entries.find(entry => entry.name.indexOf("RESTFRQ") !== -1);
+            if (restFrqHeader) {
+                this.spectralCoordsSupported = SPECTRAL_COORDS_SUPPORTED;
+            } else {
+                this.spectralCoordsSupported = new Map<string, { type: SpectralType, unit: SpectralUnit }>();
+                Array.from(SPECTRAL_COORDS_SUPPORTED.keys()).forEach((key: string) => {
+                    const value = SPECTRAL_COORDS_SUPPORTED.get(key);
+                    const isVolecity = spectralType === SpectralType.VRAD || spectralType === SpectralType.VOPT;
+                    const isValueVolecity = value.type === SpectralType.VRAD || value.type === SpectralType.VOPT;
+                    if (isVolecity && isValueVolecity) { // VRAD, VOPT
+                        this.spectralCoordsSupported.set(key, value);
+                    }
+                    if (!isVolecity && !isValueVolecity) { // FREQ, WAVE, AWAV
+                        this.spectralCoordsSupported.set(key, value);
+                    }
+                });
+                this.spectralCoordsSupported.set(SPECTRAL_TYPE_STRING.get(SpectralType.CHANNEL), {type: SpectralType.CHANNEL, unit: null});
+            }
+        } else {
+            this.spectralCoordsSupported = new Map<string, { type: SpectralType, unit: SpectralUnit }>([
+                [SPECTRAL_TYPE_STRING.get(SpectralType.CHANNEL), {type: SpectralType.CHANNEL, unit: null}]
+            ]);
+        }
+
+        // generate spectral system options
+        const spectralSystem = this.spectralInfo.specsys;
+        if (IsSpectralSystemSupported(spectralSystem)) {
+            const dateObsHeader = entries.find(entry => entry.name.indexOf("DATE-OBS") !== -1);
+            const obsgeoxHeader = entries.find(entry => entry.name.indexOf("OBSGEO-X") !== -1);
+            const obsgeoyHeader = entries.find(entry => entry.name.indexOf("OBSGEO-Y") !== -1);
+            const obsgeozHeader = entries.find(entry => entry.name.indexOf("OBSGEO-Z") !== -1);
+            if (spectralSystem === SpectralSystem.LSRK || spectralSystem === SpectralSystem.LSRD) { // LSRK, LSRD
+                if (dateObsHeader && (obsgeoxHeader && obsgeoyHeader && obsgeozHeader)) {
+                    this.spectralSystemsSupported = [SpectralSystem.LSRK, SpectralSystem.LSRD, SpectralSystem.BARY, SpectralSystem.TOPO];
+                } else if (dateObsHeader && !(obsgeoxHeader && obsgeoyHeader && obsgeozHeader)) {
+                    this.spectralSystemsSupported = [SpectralSystem.LSRK, SpectralSystem.LSRD, SpectralSystem.BARY];
+                } else {
+                    this.spectralSystemsSupported = [SpectralSystem.LSRK, SpectralSystem.LSRD];
+                }
+            } else if (spectralSystem === SpectralSystem.BARY) { // BARY
+                if (dateObsHeader && (obsgeoxHeader && obsgeoyHeader && obsgeozHeader)) {
+                    this.spectralSystemsSupported = [SpectralSystem.LSRK, SpectralSystem.LSRD, SpectralSystem.BARY, SpectralSystem.TOPO];
+                } else if (dateObsHeader && !(obsgeoxHeader && obsgeoyHeader && obsgeozHeader)) {
+                    this.spectralSystemsSupported = [SpectralSystem.LSRK, SpectralSystem.LSRD, SpectralSystem.BARY];
+                } else {
+                    this.spectralSystemsSupported = [SpectralSystem.BARY];
+                }
+            } else { // TOPO
+                if (dateObsHeader && (obsgeoxHeader && obsgeoyHeader && obsgeozHeader)) {
+                    this.spectralSystemsSupported = [SpectralSystem.LSRK, SpectralSystem.LSRD, SpectralSystem.BARY, SpectralSystem.TOPO];
+                } else {
+                    this.spectralSystemsSupported = [SpectralSystem.TOPO];
+                }
+            }
+        } else {
+            this.spectralSystemsSupported = [];
+        }
+    };
+
+    @action private initCenter = () => {
+        this.center.x = (this.frameInfo.fileInfoExtended.width - 1) / 2.0;
+        this.center.y = (this.frameInfo.fileInfoExtended.height - 1) / 2.0;
+    };
+
     @action updateFromContourData(contourImageData: CARTA.ContourImageData) {
         const processedData = ProtobufProcessing.ProcessContourData(contourImageData);
         this.stokes = processedData.stokes;
@@ -1248,19 +1206,11 @@ export class FrameStore {
 
         if (recursive) {
             this.spectralSiblings.forEach(frame => {
-                const siblingChannel = getTransformedChannel(this.fullWcsInfo, frame.fullWcsInfo, PreferenceStore.Instance.spectralMatchingType, sanitizedChannel);
+                const siblingChannel = getTransformedChannel(this.wcsInfo3D, frame.wcsInfo3D, PreferenceStore.Instance.spectralMatchingType, sanitizedChannel);
                 frame.setChannels(siblingChannel, frame.requiredStokes, false);
             });
 
         }
-    }
-
-    private sanitizeChannelNumber(channel: number) {
-        if (!isFinite(channel)) {
-            return this.requiredChannel;
-        }
-
-        return Math.round(clamp(channel, 0, this.frameInfo.fileInfoExtended.depth - 1));
     }
 
     @action incrementChannels(deltaChannel: number, deltaStokes: number, wrap: boolean = true) {
@@ -1347,21 +1297,6 @@ export class FrameStore {
             this.setZoom(zoom);
         }
     }
-
-    private replaceZoomTimeoutHandler = () => {
-        if (this.zoomTimeoutHandler) {
-            clearTimeout(this.zoomTimeoutHandler);
-        }
-
-        this.zoomTimeoutHandler = setTimeout(() => runInAction(() => {
-            this.zooming = false;
-        }), FrameStore.ZoomInertiaDuration);
-    };
-
-    @action private initCenter = () => {
-        this.center.x = (this.frameInfo.fileInfoExtended.width - 1) / 2.0;
-        this.center.y = (this.frameInfo.fileInfoExtended.height - 1) / 2.0;
-    };
 
     @action fitZoom = () => {
         if (this.spatialReference) {
@@ -1552,15 +1487,15 @@ export class FrameStore {
         }
         console.log(`Setting spectral reference for file ${this.frameInfo.fileId} to ${frame.frameInfo.fileId}`);
 
-        if (!this.fullWcsInfo || !frame.fullWcsInfo) {
+        if (!this.wcsInfo3D || !frame.wcsInfo3D) {
             console.log(`Error creating spectral transform between files ${this.frameInfo.fileId} and ${frame.frameInfo.fileId}. One of the files is missing spectral information`);
             this.spectralReference = null;
             return false;
         }
 
         // For now, this is just done to ensure a mapping can be constructed
-        const copySrc = AST.copy(this.fullWcsInfo);
-        const copyDest = AST.copy(frame.fullWcsInfo);
+        const copySrc = AST.copy(this.wcsInfo3D);
+        const copyDest = AST.copy(frame.wcsInfo3D);
         const preferenceStore = PreferenceStore.Instance;
         const spectralMatchingType = preferenceStore.spectralMatchingType;
         // Ensure that a mapping for the current alignment system is possible
@@ -1582,7 +1517,7 @@ export class FrameStore {
 
         this.spectralReference = frame;
         this.spectralReference.addSecondarySpectralImage(this);
-        const matchedChannel = getTransformedChannel(frame.fullWcsInfo, this.fullWcsInfo, preferenceStore.spectralMatchingType, frame.requiredChannel);
+        const matchedChannel = getTransformedChannel(frame.wcsInfo3D, this.wcsInfo3D, preferenceStore.spectralMatchingType, frame.requiredChannel);
         this.setChannels(matchedChannel, this.requiredStokes, false);
         return true;
     };

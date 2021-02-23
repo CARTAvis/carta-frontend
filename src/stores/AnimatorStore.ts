@@ -96,8 +96,8 @@ export class AnimatorStore {
         const matchedFrames = new Map<number, CARTA.IMatchedFrameList>();
         for (const sibling of frame.spectralSiblings) {
             const frameNumbers = getTransformedChannelList(
-                frame.fullWcsInfo,
-                sibling.fullWcsInfo,
+                frame.wcsInfo3D,
+                sibling.wcsInfo3D,
                 preferenceStore.spectralMatchingType,
                 animationFrames.firstFrame.channel,
                 animationFrames.lastFrame.channel

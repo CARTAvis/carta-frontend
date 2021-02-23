@@ -1,6 +1,6 @@
 import {CARTA} from "carta-protobuf";
 import * as AST from "ast_wrapper";
-import {Point2D, WCSPoint2D, SpectralType} from "models";
+import {Point2D, WCSPoint2D, SpectralType, SPECTRAL_DEFAULT_UNIT} from "models";
 import {NumberFormatType} from "stores";
 import {add2D, polygonPerimeter, rotate2D, scale2D, subtract2D, magDir2D} from "./math2d";
 
@@ -61,9 +61,14 @@ export function getTransformedChannel(srcTransform: number, destTransform: numbe
         return srcChannel;
     }
 
-    // Set spectral system for both transforms
-    AST.set(srcTransform, `System=${matchingType}, StdOfRest=Helio`);
-    AST.set(destTransform, `System=${matchingType}, StdOfRest=Helio`);
+    const defaultUnit = SPECTRAL_DEFAULT_UNIT.get(matchingType);
+    if (!defaultUnit) {
+        return NaN;
+    }
+
+    // Set common spectral
+    AST.set(srcTransform, `System=${matchingType}, StdOfRest=Helio, Unit=${defaultUnit}`);
+    AST.set(destTransform, `System=${matchingType}, StdOfRest=Helio, Unit=${defaultUnit}`);
     const sourceSpectralValue = AST.transform3DPoint(srcTransform, 0, 0, srcChannel, true);
     if (!sourceSpectralValue || !isFinite(sourceSpectralValue.z)) {
         return NaN;
@@ -85,9 +90,14 @@ export function getTransformedChannelList(srcTransform: number, destTransform: n
         return [];
     }
 
-    // Set spectral system for both transforms
-    AST.set(srcTransform, `System=${matchingType}, StdOfRest=Helio`);
-    AST.set(destTransform, `System=${matchingType}, StdOfRest=Helio`);
+    const defaultUnit = SPECTRAL_DEFAULT_UNIT.get(matchingType);
+    if (!defaultUnit) {
+        return [];
+    }
+
+    // Set common spectral
+    AST.set(srcTransform, `System=${matchingType}, StdOfRest=Helio, Unit=${defaultUnit}`);
+    AST.set(destTransform, `System=${matchingType}, StdOfRest=Helio, Unit=${defaultUnit}`);
 
     const N = lastChannel - firstChannel + 1;
     const destChannels = new Array<number>(N);
