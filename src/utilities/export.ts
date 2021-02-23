@@ -1,6 +1,7 @@
-export function getTimestamp() {
-    const now = new Date();
-    return `${now.getFullYear()}-${now.getMonth() + 1}-${now.getDate()}-${now.getHours()}-${now.getMinutes()}-${now.getSeconds()}`;
+import moment from "moment";
+
+export function getTimestamp(format: string = "YYYY-M-D-H-m-s") {
+    return moment(new Date()).format(format);
 }
 
 export function exportTsvFile(imageName: string, plotName: string, content: string) {
