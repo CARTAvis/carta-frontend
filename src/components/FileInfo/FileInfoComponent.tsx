@@ -145,7 +145,8 @@ export class FileInfoComponent extends React.Component<{
             </ButtonGroup>
         );
 
-        return (this.props.selectedTab === FileInfoType.IMAGE_HEADER) ? (
+        return (!this.props.isLoading && !this.props.errorMessage && this.props.fileInfoExtended &&
+            this.props.selectedTab === FileInfoType.IMAGE_HEADER) ? (
             <Popover
                 className="header-search"
                 position={Position.LEFT}
