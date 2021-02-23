@@ -67,7 +67,7 @@ EMSCRIPTEN_KEEPALIVE AstFrameSet* initFrame(const char* header)
 
 EMSCRIPTEN_KEEPALIVE AstSpecFrame* getSpectralFrame(AstFrameSet* frameSet)
 {
-   if (!frameSet || !astIsAFrameSet(frameSet))
+    if (!frameSet || !astIsAFrameSet(frameSet))
     {
         cout << "Invalid frame set." << endl;
         return nullptr;
@@ -80,7 +80,7 @@ EMSCRIPTEN_KEEPALIVE AstSpecFrame* getSpectralFrame(AstFrameSet* frameSet)
         cout << "Creating spectral template failed." << endl;
         return nullptr;
     }
-    AstFrameSet* found = static_cast<AstFrameSet*>astFindFrame(frameSet, spectralTemplate, " " );
+    AstFrameSet* found = static_cast<AstFrameSet*>astFindFrame(frameSet, spectralTemplate, " ");
     if (!found)
     {
         cout << "Spectral frame not found." << endl;
@@ -94,6 +94,65 @@ EMSCRIPTEN_KEEPALIVE AstSpecFrame* getSpectralFrame(AstFrameSet* frameSet)
     }
 
     return specframe;
+}
+
+EMSCRIPTEN_KEEPALIVE AstFrameSet* getSkyFrameSet(AstFrameSet* frameSet)
+{
+    if (!frameSet || !astIsAFrameSet(frameSet))
+    {
+        cout << "Invalid frame set." << endl;
+        return nullptr;
+    }
+
+    // Create 2D base frame
+    AstFrame *baseframe = astFrame(2, "Title=Pixel Coordinates,Domain=GRID,Label(1)=Pixel axis 1,Label(2)=Pixel axis 2");
+    if (!baseframe)
+    {
+        cout << "Create 2D base frame failed." << endl;
+        return nullptr;
+    }
+
+    // Find sky frame with sky template
+    AstSkyFrame *skyTemplate = astSkyFrame("MaxAxes=100,MinAxes=0");
+    if (!skyTemplate)
+    {
+        cout << "Creating sky template failed." << endl;
+        return nullptr;
+    }
+    AstFrameSet* found = static_cast<AstFrameSet*>astFindFrame(frameSet, skyTemplate, " ");
+    if (!found)
+    {
+        cout << "Sky frame not found." << endl;
+        return nullptr;
+    }
+    AstSkyFrame *skyframe = static_cast<AstSkyFrame*>astGetFrame(found, AST__CURRENT);
+    if (!skyframe)
+    {
+        cout << "Getting sky frame failed." << endl;
+        return nullptr;
+    }
+
+    // Get 2D map
+    int inaxes[2] = {1, 2};
+    int outaxes[3];
+    AstMapping *map2D;
+    astMapSplit(frameSet, 2, inaxes, outaxes, &map2D); // map is a deep copy
+    if (!map2D)
+    {
+        cout << "Getting 2D mapping failed." << endl;
+        return nullptr;
+    }
+
+    // Create frame set with base frame, sky frame, 2D mapping
+    AstFrameSet *skyframeSet = astFrameSet(baseframe, "");
+    if (!skyframeSet)
+    {
+        cout << "Creating sky frame set failed." << endl;
+        return nullptr;
+    }
+    astAddFrame(skyframeSet, AST__CURRENT, astSimplify(map2D), skyframe);
+
+    return skyframeSet;
 }
 
 EMSCRIPTEN_KEEPALIVE AstFrameSet* createTransformedFrameset(AstFrameSet* wcsinfo, double offsetX, double offsetY, double angle, double originX, double originY, double scaleX, double scaleY)
