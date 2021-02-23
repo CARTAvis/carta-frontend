@@ -11,7 +11,7 @@ import {StokesAnalysisToolbarComponent} from "./StokesAnalysisToolbarComponent/S
 import {TickType, MultiPlotProps} from "../Shared/LinePlot/PlotContainer/PlotContainerComponent";
 import {AppStore, AnimatorStore, DefaultWidgetConfig, FrameStore, HelpType, WidgetsStore, WidgetProps, SpectralProfileStore} from "stores";
 import {StokesAnalysisWidgetStore, StokesCoordinate} from "stores/widgets";
-import {Point2D, SPECTRAL_COLORMAP_GROUP, SpectralType} from "models";
+import {Point2D, SpectralColorMap, SpectralType} from "models";
 import {clamp, normalising, polarizationAngle, polarizedIntensity, binarySearchByX, closestPointIndexToCursor, toFixed, toExponential, minMaxPointArrayZ, formattedNotation, minMaxArray} from "utilities";
 import "./StokesAnalysisComponent.scss";
 
@@ -139,18 +139,22 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
         this.widgetStore.clearScatterPlotXYBounds();
     };
 
-    // true: red->blue, false: blue->red
-    private getColorMapOrder(frame: FrameStore): boolean {    
-        if (frame && frame.channelInfo && frame.channelInfo.fromWCS && frame.channelInfo.channelType && !isNaN(frame.channelInfo.delta)) {
-            let CTYPE = frame.spectralType !== null? frame.spectralType : frame.channelInfo.channelType.code;
-            if (CTYPE === SpectralType.CHANNEL) {
-                CTYPE = frame.channelInfo.channelType.code;
-            }
-            const inGroup = SPECTRAL_COLORMAP_GROUP.includes(CTYPE);
-            // chartjs plot tick lables with increasing order by default, no need to check for CDELT
-            return inGroup ? true : false;
+    // true: red->blue, false: blue->red. chartjs plot tick lables with increasing order by default, no need to check for CDELT
+    private getColorMapOrder(frame: FrameStore): boolean {
+        const defaultType = frame?.channelInfo?.channelType.code;     
+        let CTYPE = frame?.spectralType !== null? frame?.spectralType : defaultType;
+        if (CTYPE === SpectralType.CHANNEL) {
+            CTYPE = defaultType;
         }
-        return true;
+
+        switch (CTYPE) {
+            case SpectralColorMap.FREQ:
+            case SpectralColorMap.ENER:
+            case SpectralColorMap.WAVE:        
+                return true;
+            default:
+                return false;
+        }
     }
 
     @computed get currentChannelValue(): number {
@@ -526,10 +530,10 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
         return a === b && a === c && a === d && a !== null;
     }
 
-    private getScatterColor(percentage: number, redToBlue: boolean): string {
+    private getScatterColor(percentage: number, reversed: boolean): string {
         const colorMap = this.widgetStore.colorPixel.color;
         const mapSize = this.widgetStore.colorPixel.size;
-        if (redToBlue) {
+        if (reversed) {
             percentage = 1 - percentage;
         }
         const index = Math.round(percentage * mapSize) * 4;
@@ -544,7 +548,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
             let xlinePlotRange = interactionBorder;
             const outOfRangeColor = `hsla(0, 0%, 50%, ${this.opacityOutRange})`;
             const frame = widgetStore.effectiveFrame;
-            const redToBlue = this.getColorMapOrder(frame);
+            const reversed = this.getColorMapOrder(frame);
             const localPoints = [];
             for (let index = 0; index < data.length; index++) {
                 const point = data[index];
@@ -564,7 +568,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
                 if (widgetStore.invertedColorMap) {
                     percentage = 1 - percentage;
                 }
-                pointColor = outRange ? outOfRangeColor : this.getScatterColor(percentage, redToBlue);
+                pointColor = outRange ? outOfRangeColor : this.getScatterColor(percentage, reversed);
                 scatterColors.push(pointColor);
             }
         }

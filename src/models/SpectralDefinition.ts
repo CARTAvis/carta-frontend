@@ -19,11 +19,11 @@ export const CHANNEL_TYPES: ChannelType[] = [
 ];
 
 // FREQ, ENER, WAVN
-export const SPECTRAL_COLORMAP_GROUP = [
-    CHANNEL_TYPES[0].code,
-    CHANNEL_TYPES[1].code,
-    CHANNEL_TYPES[2].code
-];
+export enum SpectralColorMap {
+    FREQ = "FREQ",
+    ENER = "ENER",
+    WAVE = "WAVE"
+};
 
 export enum SpectralType {
     VRAD = "VRAD",
