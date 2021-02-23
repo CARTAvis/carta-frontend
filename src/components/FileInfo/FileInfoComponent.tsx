@@ -1,6 +1,6 @@
 import * as React from "react";
 import {observer} from "mobx-react";
-import {ControlGroup, Divider, FormGroup, HTMLSelect, IOptionProps, NonIdealState, Pre, Spinner, Tab, TabId, Tabs, Text} from "@blueprintjs/core";
+import {ControlGroup, Divider, FormGroup, HTMLSelect, IOptionProps, NonIdealState, Pre, Spinner, Tab, TabId, Tabs, Text, Popover, PopperModifiers, Position, Button, InputGroup, ButtonGroup} from "@blueprintjs/core";
 import {FixedSizeList as List} from "react-window";
 import AutoSizer from "react-virtualized-auto-sizer";
 import {CARTA} from "carta-protobuf";
@@ -134,6 +134,34 @@ export class FileInfoComponent extends React.Component<{
         );
     }
 
+    private renderHeaderSearch = () => {
+        const popoverModifiers: PopperModifiers = {arrow: {enabled: false}, offset: {offset: '0, 10px, 0, 0'}};
+        let iterText = "0 of 0"
+        const searchIter = (
+            <ButtonGroup>
+                <span className="header-search-iter">&nbsp;{iterText}&nbsp;</span>
+                <Button icon="caret-left" minimal={true}></Button>
+                <Button icon="caret-right" minimal={true}></Button>
+            </ButtonGroup>
+        );
+
+        return (this.props.selectedTab === FileInfoType.IMAGE_HEADER) ? (
+            <Popover
+                className="header-search"
+                position={Position.LEFT}
+                modifiers={popoverModifiers}
+            >
+                <Button icon="search-text"></Button>
+                <InputGroup
+                    autoFocus={false}
+                    placeholder={"Search text"}
+                    leftIcon="search-text"
+                    rightElement={searchIter}
+                />
+            </Popover>
+        ) : null;
+    };
+
     render() {
         return (
             <div className="file-info">
@@ -142,6 +170,7 @@ export class FileInfoComponent extends React.Component<{
                     {this.renderHDUList()}
                 </div>
                 {this.renderInfoPanel()}
+                {this.renderHeaderSearch()}
             </div>
         );
     }

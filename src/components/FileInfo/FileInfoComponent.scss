@@ -61,4 +61,16 @@
         padding: 1px;
         font-family: 'Helvetica Neue', 'Helvetica', 'Arial', sans-serif;
     }
+
+    .header-search {
+        position: absolute;
+        bottom: -40px;
+        right: 0;
+        margin: 0 10px 10px 0;
+    }
+}
+
+.header-search-iter {
+    color: $gray1;
+    padding-top: 6px;
 }
