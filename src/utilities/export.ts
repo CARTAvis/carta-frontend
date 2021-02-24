@@ -1,6 +1,6 @@
 import moment from "moment";
 
-export function getTimestamp(format: string = "YYYY-M-D-H-m-s") {
+export function getTimestamp(format: string = "YYYY-MM-DD-HH-mm-ss") {
     return moment(new Date()).format(format);
 }
 
@@ -14,5 +14,5 @@ export function exportTsvFile(imageName: string, plotName: string, content: stri
     a.download = `${imageName}-${plotName.replace(" ", "-")}-${getTimestamp()}.tsv`;
     a.dispatchEvent(new MouseEvent("click"));
 
-    return null
+    return null;
 }
