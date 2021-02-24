@@ -7,7 +7,7 @@ import "./ToolbarComponent.scss";
 export class ToolbarComponentProps {
     darkMode: boolean;
     visible: boolean;
-    exportImage: () => void;
+    exportImage?: () => void;
     exportData: () => void;
 }
 
@@ -27,9 +27,10 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
 
         return (
             <ButtonGroup className={className} style={styleProps}>
-                <Tooltip content="Export image">
-                    <AnchorButton icon="floppy-disk" onClick={this.props.exportImage}/>
-                </Tooltip>
+                {(this.props.exportImage) ?
+                    <Tooltip content="Export image">
+                        <AnchorButton icon="floppy-disk" onClick={this.props.exportImage}/>
+                    </Tooltip> : null}
                 <Tooltip content="Export data">
                     <AnchorButton icon="th" onClick={this.props.exportData}/>
                 </Tooltip>
