@@ -129,37 +129,43 @@ export class FileInfoComponent extends React.Component<{
     private highlightString(searchString: string, name: string, value?: string, comment?: string) {
         let testSubString = searchString;
         let splitString = (name !== "END") ? `${name} = ${value}${comment && " / "+comment}`.split(testSubString) : name.split(testSubString);
-
+        
         let highlightedString = [];
         let highlighClassName = "";
         if (name !== "END") {
             let classNameType = ["header-name", "header-value", "header-comment"];
             let classNameTypeIter = 0;
             let usedString = 0; 
+            function addHighlightedString(addString: string, sliceStart: number, sliceEnd?: number): void {
+                highlightedString.push(<span className={classNameType[classNameTypeIter]+highlighClassName}>{isFinite(sliceEnd) ? addString.slice(sliceStart, sliceEnd) : addString.slice(sliceStart)}</span>);
+                return;
+            }
             splitString.forEach((arrayValue) => {
 
                 highlighClassName = "";
-                for (const string of [arrayValue,this.searchString]) {
-
-                    usedString += string.length;;
-                    if (classNameTypeIter === 0 && usedString >= name.length + 3 + value.length) {
-                        highlightedString.push(<span className={classNameType[classNameTypeIter]+highlighClassName}>{string.slice(0, name.length - usedString + string.length)}</span>);
+                for (const addString of [arrayValue,this.searchString]) {
+                    const formerUsedString = usedString;
+                    const nameValueLength = name.length + 3 + value.length;
+                    usedString += addString.length;;
+                    if (comment && classNameTypeIter === 0 && usedString >= nameValueLength) {
+                        addHighlightedString(addString, 0, name.length - formerUsedString);
                         classNameTypeIter += 1;
-                        highlightedString.push(<span className={classNameType[classNameTypeIter]+highlighClassName}>{string.slice(name.length - usedString + string.length, name.length - usedString + string.length + value.length + 3)}</span>);
+                        addHighlightedString(addString, name.length - formerUsedString, nameValueLength - formerUsedString);
                         classNameTypeIter += 1;
-                        highlightedString.push(<span className={classNameType[classNameTypeIter]+highlighClassName}>{string.slice(name.length - usedString + string.length + value.length + 3)}</span>);
+                        addHighlightedString(addString, nameValueLength - formerUsedString);
 
                     } else if (classNameTypeIter === 0 && usedString >= name.length ) {
-                        highlightedString.push(<span className={classNameType[classNameTypeIter]+highlighClassName}>{string.slice(0, name.length - usedString + string.length)}</span>);
+                        addHighlightedString(addString, 0, name.length - formerUsedString);
                         classNameTypeIter += 1;
-                        highlightedString.push(<span className={classNameType[classNameTypeIter]+highlighClassName}>{string.slice(name.length - usedString + string.length)}</span>);
+                        addHighlightedString(addString, name.length - formerUsedString);
 
-                    } else if (classNameTypeIter === 1 && usedString > name.length + 3 + value.length) {
-                        highlightedString.push(<span className={classNameType[classNameTypeIter]+highlighClassName}>{string.slice(0, name.length + 3 + value.length - usedString + string.length)}</span>);
+                    } else if (comment && classNameTypeIter === 1 && usedString > nameValueLength) {
+                        addHighlightedString(addString, 0, nameValueLength - formerUsedString);
                         classNameTypeIter += 1;
-                        highlightedString.push(<span className={classNameType[classNameTypeIter]+highlighClassName}>{string.slice(name.length + 3 + value.length - usedString + string.length)}</span>);
+                        addHighlightedString(addString, nameValueLength - formerUsedString);
+
                     } else {
-                        highlightedString.push(<span className={classNameType[classNameTypeIter]+highlighClassName}>{string}</span>);
+                        highlightedString.push(<span className={classNameType[classNameTypeIter]+highlighClassName}>{addString}</span>);
                     }
     
                     highlighClassName = " info-highlight";
@@ -181,7 +187,6 @@ export class FileInfoComponent extends React.Component<{
     }
 
     private renderImageHeaderList(entries: CARTA.IHeaderEntry[], searchString?: string) {
-        //console.log(this.props.selectedTab, this.searchString);
         const renderHeaderRow = ({index, style}) => {
             if (index < 0 || index >= entries?.length) {
                 return null;
