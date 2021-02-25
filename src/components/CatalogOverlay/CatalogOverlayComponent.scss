@@ -47,7 +47,7 @@
             height: 100%;
         }
 
-        .catalog-system {
+        .bp3-form-group {
             margin-left: 5px;
         }
     }
@@ -210,6 +210,7 @@
             }
             
             .catalog-type-button {
+                margin-left: -40px;
                 width: 140px;
                 height: 30px;
                 .bp3-popover-target {
@@ -223,10 +224,15 @@
 
             .catalog-xaxis {
                 margin-left: 10px;
-                width: 120px;
+                width: 150px;
+                .bp3-label{
+                    text-align: right;
+                    width: 30px;
+                    margin-right: 13px;
+                }
                 .catalog-xaxis-select {
                     .catalog-xaxis-button {
-                        width: 90px;
+                        width: 100px;
                         height: 30px;
                         margin-left: 0px;
                         .bp3-button-text {
@@ -237,11 +243,15 @@
             }
 
             .catalog-yaxis {
-                margin-left: 5px;
-                width: 130px;
+                margin-left: 10px;
+                width: 140px;
+                .bp3-label{
+                    text-align: right;
+                    width: 30px;
+                }
                 .catalog-yaxis-select {
                     .catalog-yaxis-button {
-                        width: 90px;
+                        width: 100px;
                         height: 30px;
                         margin-left: 0px;
                         .bp3-button-text {
@@ -254,6 +264,7 @@
             .catalog-max-rows {
                 margin-left: 5px;
                 .bp3-label {
+                    text-align: right;
                     overflow: hidden;
                     width: 65px;
                     height: 30px;

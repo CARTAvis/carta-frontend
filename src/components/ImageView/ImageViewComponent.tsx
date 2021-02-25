@@ -277,7 +277,8 @@ export class ImageViewComponent extends React.Component<WidgetProps> {
                     docked={this.props.docked}
                 />
                 {divContents}
-                <ReactResizeDetector handleWidth handleHeight onResize={this.onResize} refreshMode={"throttle"} refreshRate={33}/>
+                <ReactResizeDetector handleWidth handleHeight onResize={this.onResize} refreshMode={"throttle"} refreshRate={33}>
+                </ReactResizeDetector>
             </div>
         );
     }

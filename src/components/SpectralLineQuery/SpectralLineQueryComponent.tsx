@@ -421,7 +421,8 @@ export class SpectralLineQueryComponent extends React.Component<WidgetProps> {
                         <Spinner intent={Intent.PRIMARY} size={30} value={null}/>
                     </div>
                 </Overlay>
-                <ReactResizeDetector handleWidth handleHeight onResize={this.onResize} refreshMode={"throttle"} refreshRate={33}/>
+                <ReactResizeDetector handleWidth handleHeight onResize={this.onResize} refreshMode={"throttle"} refreshRate={33}>
+                </ReactResizeDetector>
             </div>
         );
     }

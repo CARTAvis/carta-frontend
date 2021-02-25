@@ -33,7 +33,7 @@ import {
     SpectralProfileStore,
     WidgetsStore
 } from ".";
-import {distinct, GetRequiredTiles, mapToObject, getColorForTheme} from "utilities";
+import {distinct, GetRequiredTiles, mapToObject, getTimestamp, getColorForTheme} from "utilities";
 import {ApiService, BackendService, ConnectionStatus, ScriptingService, TileService, TileStreamDetails} from "services";
 import {FrameView, Point2D, ProtobufProcessing, Theme, TileCoordinate, WCSMatchingType} from "models";
 import {HistogramWidgetStore, RegionWidgetStore, SpatialProfileWidgetStore, SpectralProfileWidgetStore, StatsWidgetStore, StokesAnalysisWidgetStore} from "./widgets";
@@ -1742,10 +1742,8 @@ export class AppStore {
             const composedCanvas = getImageCanvas(this.overlayStore.padding);
             if (composedCanvas) {
                 composedCanvas.toBlob((blob) => {
-                    const now = new Date();
-                    const timestamp = `${now.getFullYear()}-${now.getMonth() + 1}-${now.getDate()}-${now.getHours()}-${now.getMinutes()}-${now.getSeconds()}`;
                     const link = document.createElement("a") as HTMLAnchorElement;
-                    link.download = `${this.activeFrame.filename}-image-${timestamp}.png`;
+                    link.download = `${this.activeFrame.filename}-image-${getTimestamp()}.png`;
                     link.href = URL.createObjectURL(blob);
                     link.dispatchEvent(new MouseEvent("click"));
                 }, "image/png");
@@ -1777,7 +1775,7 @@ export class AppStore {
     // 3. Wait 25 ms to allow for re-rendering of tiles
     waitForImageData = async () => {
         await this.delay(25);
-        return new Promise(resolve => {
+        return new Promise<void>(resolve => {
             when(() => {
                 const tilesLoading = this.tileService.remainingTiles > 0;
                 const contoursLoading = this.activeFrame && this.activeFrame.contourProgress >= 0 && this.activeFrame.contourProgress < 1;

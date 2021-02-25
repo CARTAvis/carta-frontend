@@ -1,7 +1,7 @@
 import * as React from "react";
 import {ImageComponent} from "./ImageComponent";
-import * as imageOverlayDemo from "static/help/image_overlay_demo.png";
-import * as imageOverlayDemo_d from "static/help/image_overlay_demo_d.png";
+import imageOverlayDemo from "static/help/image_overlay_demo.png";
+import imageOverlayDemo_d from "static/help/image_overlay_demo_d.png";
 
 export class ImageViewSettingsHelpComponent extends React.Component {
     public render() {

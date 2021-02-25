@@ -1,7 +1,7 @@
 import * as React from "react";
 import {ImageComponent} from "./ImageComponent";
-import * as headRegionButton from "static/help/head_region_button.png";
-import * as headRegionButton_d from "static/help/head_region_button_d.png";
+import headRegionButton from "static/help/head_region_button.png";
+import headRegionButton_d from "static/help/head_region_button_d.png";
 
 export class RegionListHelpComponent extends React.Component {
     public render() {
