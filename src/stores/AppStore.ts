@@ -424,7 +424,7 @@ export class AppStore {
         });
     };
 
-    @action openConctaStokes = (stokesFiles: CARTA.IStokesFile[], directory: string, hdu: string) => {
+    @action loadConcatStokes = (stokesFiles: CARTA.IStokesFile[], directory: string, hdu: string) => {
         return new Promise<number>((resolve, reject) => {
             this.startFileLoading();
             this.backendService.loadStokeFiles(stokesFiles, this.fileCounter, CARTA.RenderMode.RASTER).subscribe(ack => {
@@ -445,6 +445,21 @@ export class AppStore {
             this.fileCounter++;
         });
     }
+
+    @action appendConcatFile = (stokesFiles: CARTA.IStokesFile[], directory: string, hdu: string) => {
+        // Stop animations playing before loading a new frame
+        this.animatorStore.stopAnimation();
+        // hide all catalog data
+        if (this.catalogNum) {
+            CatalogStore.Instance.resetDisplayedData([]);
+        }
+        return this.loadConcatStokes(stokesFiles, directory, hdu);
+    };
+
+    @action openConcatFile = (stokesFiles: CARTA.IStokesFile[], directory: string, hdu: string) => {
+        this.removeAllFrames();
+        return this.loadConcatStokes(stokesFiles, directory, hdu);
+    };
 
     @action appendFile = (directory: string, file: string, hdu: string) => {
         // Stop animations playing before loading a new frame

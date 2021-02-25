@@ -164,14 +164,26 @@ export class FileBrowserDialogComponent extends React.Component {
         if (browserMode === BrowserMode.File) {
             if (appending) {
                 return (
-                    <Tooltip content={"Append this image while keeping other images open"}>
-                        <AnchorButton
-                            intent={Intent.PRIMARY}
-                            disabled={appStore.fileLoading || !fileBrowserStore.selectedFile || !fileBrowserStore.fileInfoResp || fileBrowserStore.loadingInfo}
-                            onClick={this.loadSelectedFiles}
-                            text={fileBrowserStore.selectedFiles?.length > 1 ? "Append selected" : "Append"}
-                        />
-                    </Tooltip>
+                    <div>
+                        <Tooltip content={"Append this image while keeping other images open"}>
+                            <AnchorButton
+                                intent={Intent.PRIMARY}
+                                disabled={appStore.fileLoading || !fileBrowserStore.selectedFile || !fileBrowserStore.fileInfoResp || fileBrowserStore.loadingInfo}
+                                onClick={this.loadSelectedFiles}
+                                text={fileBrowserStore.selectedFiles?.length > 1 ? "Append selected" : "Append"}
+                            />
+                        </Tooltip>
+                        {fileBrowserStore.selectedFiles?.length > 1 && fileBrowserStore.selectedFiles?.length < 5 &&
+                        <Tooltip content={"Append this image while keeping other images open"}>
+                            <AnchorButton
+                                intent={Intent.PRIMARY}
+                                disabled={appStore.fileLoading || !fileBrowserStore.selectedFile || !fileBrowserStore.fileInfoResp || fileBrowserStore.loadingInfo}
+                                onClick={appStore.dialogStore.showStokesDialog}
+                                text={"Load as hyper cube"}
+                            />
+                        </Tooltip>
+                        }
+                    </div>
                 );
             } else {
                 return (

@@ -208,7 +208,7 @@ export class StokesDialogComponent extends React.Component {
         // }
     };
 
-    private loadFile = async (files: CARTA.StokesFile[], forceAppend: boolean = false) => {
+    private loadFile = async (files: CARTA.StokesFile[]) => {
         const appStore = AppStore.Instance;
         const fileBrowserStore = appStore.fileBrowserStore;
 
@@ -218,12 +218,12 @@ export class StokesDialogComponent extends React.Component {
         }
 
         if (fileBrowserStore.browserMode === BrowserMode.File) {
-            // const frames = appStore.frames;
-            // if (!(forceAppend || fileBrowserStore.appendingFrame) || !frames.length) {
-                await appStore.openConctaStokes(files, fileBrowserStore.fileList.directory, files[0].hdu);
-            // } else {
-            //     await appStore.appendFile(fileBrowserStore.fileList.directory, file.fileInfo.name, file.hdu);
-            // }
+            const frames = appStore.frames;
+            if (!(fileBrowserStore.appendingFrame) || !frames.length) {
+                await appStore.openConcatFile(files, fileBrowserStore.fileList.directory, files[0].hdu);
+            } else {
+                await appStore.appendConcatFile(files, fileBrowserStore.fileList.directory, files[0].hdu);
+             }
         } 
 
         fileBrowserStore.saveStartingDirectory();
