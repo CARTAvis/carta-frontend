@@ -184,13 +184,15 @@ export class FileBrowserDialogComponent extends React.Component {
                                 text={fileBrowserStore.selectedFiles?.length > 1 ? "Load selected" : "Load"}
                             />
                         </Tooltip>
-                        {fileBrowserStore.selectedFiles?.length === 4 &&
+                        {fileBrowserStore.selectedFiles?.length > 1 && fileBrowserStore.selectedFiles?.length < 5 &&
+                        <Tooltip content={"Close any existing images and load this image"}>
                             <AnchorButton
                                 intent={Intent.PRIMARY}
                                 disabled={appStore.fileLoading || !fileBrowserStore.selectedFile || !fileBrowserStore.fileInfoResp || fileBrowserStore.loadingInfo}
                                 onClick={appStore.dialogStore.showStokesDialog}
                                 text={"Load as hyper cube"}
                             />
+                        </Tooltip>
                         }
                     </div>
                 );

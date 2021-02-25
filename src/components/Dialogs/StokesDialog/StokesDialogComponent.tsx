@@ -1,22 +1,40 @@
 import * as React from "react";
 import {observer} from "mobx-react";
 import {action, computed, makeObservable, observable, reaction} from "mobx";
-import {AnchorButton, Button, FormGroup, IDialogProps, Intent, MenuItem, PopoverPosition} from "@blueprintjs/core";
+import {AnchorButton, Button, IDialogProps, Intent, MenuItem, PopoverPosition} from "@blueprintjs/core";
+import {Cell, Column, SelectionModes, Table} from "@blueprintjs/table";
 import {Select, IItemRendererProps} from "@blueprintjs/select";
 import {DraggableDialogComponent} from "components/Dialogs";
-// import {FileInfoComponent, FileInfoType} from "components/FileInfo/FileInfoComponent";
 import {AppStore, BrowserMode, HelpType} from "stores";
 import {CustomIcon} from "icons/CustomIcons";
 import {CARTA} from "carta-protobuf";
-// import "./FileInfoDialogComponent.scss";
+import "./StokesDialogComponent.scss";
 
 @observer
 export class StokesDialogComponent extends React.Component {
-    @observable stokes: Map<string, CARTA.StokesType>;
+    @observable stokes: Map<string, CARTA.IStokesFile>;
     @observable stokesHeader: Map<string, CARTA.IFileInfoExtended>; 
 
-    @action setStokes = (fileName: string, type: CARTA.StokesType) => {
-        this.stokes.set(fileName, type);
+    @action updateStokesType = (fileName: string, type: CARTA.StokesType) => {
+        let currentStoke = this.stokes.get(fileName);
+        if (currentStoke.stokesType !== type) {
+            this.stokes.forEach((stokeFile, stokeFileName) => {
+                if (stokeFileName !== fileName && stokeFile.stokesType === type) {
+                    this.stokes.get(stokeFileName).stokesType = CARTA.StokesType.STOKES_TYPE_NONE;
+                }
+            });
+            const stoke: CARTA.IStokesFile = {
+                directory: currentStoke.directory,
+                file: currentStoke.file,
+                hdu: currentStoke.hdu,
+                stokesType: type
+            }
+            this.stokes.set(fileName, stoke);   
+        }
+    }
+
+    @action setStokes = (fileName: string, stoke: CARTA.IStokesFile) => {
+        this.stokes.set(fileName, stoke);
     }
 
     @action setStokesHeader = (fileName: string, fileInfoExtended: CARTA.IFileInfoExtended) => {
@@ -24,51 +42,50 @@ export class StokesDialogComponent extends React.Component {
     }
 
     @computed get fileNames(): string[] {
-        const appStore = AppStore.Instance;
-        const fileBrowserStore = appStore.fileBrowserStore;
-        let fileNames = [];
-        fileBrowserStore?.selectedFiles?.forEach(file => {
-            fileNames.push(file.fileInfo.name);
-        });
-        return fileNames;
+        let files = [];
+        this.stokes.forEach((type,file) => {
+            files.push(file)
+        })
+        return files;
     }
 
     @computed get fileSize(): number {
         return AppStore.Instance.fileBrowserStore?.selectedFiles?.length;
     }
 
-    // @computed get selectedStokesHeader(): Map<string, CARTA.IFileInfoExtended> {
-    //     let fileHeader = new Map<string, CARTA.IFileInfoExtended>();
-
-    //     this.selectedFiles?.forEach(file => {
-    //         this.getFileHeader(this.fileList.directory, file.fileInfo.name, file.hdu).then(result => {
-    //             console.log(result)
-    //             fileHeader.set(result.file, result.info);
-    //         })
-    //         .catch(err => {
-    //             console.log(err);
-    //         })
-    //     })
-        
-    //     return fileHeader;
-    // } 
+    @computed get noneType(): boolean {
+        let load = true;
+        this.stokes.forEach((file) => {
+            if (file.stokesType === CARTA.StokesType.STOKES_TYPE_NONE) {
+                load = false;
+            }
+        })
+        return load;
+    }
 
     constructor(props){
         super(props);
         makeObservable(this);
         this.stokes = new Map();
+        this.stokesHeader = new Map();
 
         reaction(() => this.fileSize, (size) => {
-            if (size === 4) {
-                // const fileHeader = AppStore.Instance.fileBrowserStore.selectedStokesHeader;
-                // console.log(fileHeader)
-                AppStore.Instance.fileBrowserStore.selectedFiles.forEach(file => {
+            if (size > 1 && size < 5) {
+                const fileBrowserStore = AppStore.Instance.fileBrowserStore;
+                this.stokes = new Map();
+                fileBrowserStore.selectedFiles.forEach(file => {
                     AppStore.Instance.fileBrowserStore.getFileHeader(
                         AppStore.Instance.fileBrowserStore.fileList.directory, 
                         file.fileInfo.name, 
                         file.hdu
                     ).then(result => {
-                        this.setStokes(file.fileInfo.name, this.getStokeType(result.info[0], result.file));
+                        const stoke: CARTA.IStokesFile = {
+                            directory: fileBrowserStore.fileList.directory,
+                            file: file.fileInfo.name,
+                            hdu: file.hdu,
+                            stokesType: this.getStokeType(result.info[0], result.file)
+                        }
+                        this.setStokes(file.fileInfo.name, stoke);
                     });
                 });   
             }
@@ -78,9 +95,6 @@ export class StokesDialogComponent extends React.Component {
     render() {
         const appStore = AppStore.Instance;
         const fileBrowserStore = appStore.fileBrowserStore;
-        // console.log(fileBrowserStore.selectedFiles)
-        // console.log(this.stokes)
-        // console.log( AppStore.Instance.fileBrowserStore?.fileInfoExtended)
 
         let className = "stokes-dialog";
         if (appStore.darkTheme) {
@@ -93,12 +107,40 @@ export class StokesDialogComponent extends React.Component {
             CARTA.StokesType.Q, 
             CARTA.StokesType.U, 
             CARTA.StokesType.V
-        ]; 
+        ];
 
-        const file1 = this.fileNames[0];
-        const file2 = this.fileNames[1];
-        const file3 = this.fileNames[2];
-        const file4 = this.fileNames[3];
+        const files = this.fileNames;
+
+        const fileName = (
+            <Column
+                key={"FileName"}
+                name={"File name"}
+                cellRenderer={(rowIndex, columnIndex) => (
+                        <Cell className="header-table-cell" key={`cell_${columnIndex}_${rowIndex}`} interactive={true}>{this.fileNames[rowIndex]}</Cell>
+                    )
+                }
+            />
+        );
+
+        const stokesDropDown = (
+            <Column  key={"Stokes"} name={"Stokes"} cellRenderer={rowIndex => {
+                const file = files[rowIndex];
+                return (
+                    <Cell className="cell-dropdown-menu" key={`cell_drop_down_${rowIndex}`} interactive={true}>
+                        <Select
+                            filterable={false}
+                            items={stokeItems}
+                            activeItem={this.stokes.get(file).stokesType}
+                            onItemSelect={type => this.updateStokesType(file, type)}
+                            itemRenderer={this.renderPopOver}
+                            popoverProps={{popoverClassName: "catalog-select", minimal: true , position: PopoverPosition.AUTO_END}}
+                        >
+                            <Button className="bp3-minimal catalog-represent-as-select-button" text={this.getLabelFromValue(this.stokes.get(file).stokesType)} rightIcon="double-caret-vertical"/>
+                        </Select>
+                    </Cell>
+                )
+            }}/>
+        );
 
         const dialogProps: IDialogProps = {
             icon: <CustomIcon icon={"stokes"}/>,
@@ -112,91 +154,47 @@ export class StokesDialogComponent extends React.Component {
         };
 
         return (
-            <DraggableDialogComponent dialogProps={dialogProps} helpType={HelpType.FILE_INFO} minWidth={300} minHeight={300} defaultWidth={600} defaultHeight={400} enableResizing={true}>
+            <DraggableDialogComponent dialogProps={dialogProps} helpType={HelpType.FILE_INFO} minWidth={300} minHeight={250} defaultWidth={602} defaultHeight={300} enableResizing={true}>
                 <div className="bp3-dialog-body">
-                    <FormGroup  inline={true} label={file1}>
-                        <Select 
-                            className="bp3-fill"
-                            filterable={false}
-                            items={stokeItems} 
-                            activeItem={this.stokes.get(file1)}
-                            onItemSelect={type => this.setStokes(file1, type)}
-                            itemRenderer={this.renderPopOver}
-                            popoverProps={{popoverClassName: "catalog-select", minimal: true , position: PopoverPosition.AUTO_END}}
-                        >
-                            <Button text={this.getLabelFromValue(this.stokes.get(file1))} rightIcon="double-caret-vertical"/>
-                        </Select>
-                    </FormGroup>
-                    <FormGroup  inline={true} label={file2}>
-                        <Select 
-                            className="bp3-fill"
-                            filterable={false}
-                            items={stokeItems} 
-                            activeItem={this.stokes.get(file2)}
-                            onItemSelect={type => this.setStokes(file2, type)}
-                            itemRenderer={this.renderPopOver}
-                            popoverProps={{popoverClassName: "catalog-select", minimal: true , position: PopoverPosition.AUTO_END}}
-                        >
-                            <Button text={this.getLabelFromValue(this.stokes.get(file2))} rightIcon="double-caret-vertical"/>
-                        </Select>
-                    </FormGroup>
-                    <FormGroup  inline={true} label={file3}>
-                        <Select 
-                            className="bp3-fill"
-                            filterable={false}
-                            items={stokeItems} 
-                            activeItem={this.stokes.get(file3)}
-                            onItemSelect={type => this.setStokes(file3, type)}
-                            itemRenderer={this.renderPopOver}
-                            popoverProps={{popoverClassName: "catalog-select", minimal: true , position: PopoverPosition.AUTO_END}}
-                        >
-                            <Button text={this.getLabelFromValue(this.stokes.get(file3))} rightIcon="double-caret-vertical"/>
-                        </Select>
-                    </FormGroup>
-                    <FormGroup  inline={true} label={file4}>
-                        <Select 
-                            className="bp3-fill"
-                            filterable={false}
-                            items={stokeItems} 
-                            activeItem={this.stokes.get(file4)}
-                            onItemSelect={type => this.setStokes(file4, type)}
-                            itemRenderer={this.renderPopOver}
-                            popoverProps={{popoverClassName: "catalog-select", minimal: true , position: PopoverPosition.AUTO_END}}
-                        >
-                            <Button text={this.getLabelFromValue(this.stokes.get(file4))} rightIcon="double-caret-vertical"/>
-                        </Select>
-                    </FormGroup>
-
-                    <AnchorButton
-                        intent={Intent.NONE}
-                        disabled={appStore.fileLoading || !fileBrowserStore.selectedFile || !fileBrowserStore.fileInfoResp || fileBrowserStore.loadingInfo}
-                        onClick={appStore.dialogStore.hideStokesDialog}
-                        text={"Cancel"}
-                    />
-
-                    <AnchorButton
-                        intent={Intent.PRIMARY}
-                        disabled={appStore.fileLoading || !fileBrowserStore.selectedFile || !fileBrowserStore.fileInfoResp || fileBrowserStore.loadingInfo}
-                        onClick={this.loadSelectedFiles}
-                        text={"Load"}
-                    />
+                    <Table
+                        className={"file-table"}
+                        numRows={this.stokes.size}
+                        enableRowHeader={false}
+                        enableRowReordering={false}
+                        selectionModes={SelectionModes.NONE}
+                        defaultRowHeight={30}
+                        minRowHeight={20}
+                        minColumnWidth={30}
+                        columnWidths={[470, 90]}
+                        enableRowResizing={false}
+                    >
+                        {[fileName, stokesDropDown]}
+                    </Table>
+                </div>
+                <div className="bp3-dialog-footer">
+                    <div className="bp3-dialog-footer-actions">
+                        <AnchorButton
+                            intent={Intent.NONE}
+                            disabled={appStore.fileLoading || !fileBrowserStore.selectedFile || !fileBrowserStore.fileInfoResp || fileBrowserStore.loadingInfo}
+                            onClick={AppStore.Instance.dialogStore?.hideStokesDialog}
+                            text={"Cancel"}
+                        />
+                        <AnchorButton
+                            intent={Intent.PRIMARY}
+                            disabled={appStore.fileLoading || !fileBrowserStore.selectedFile || !fileBrowserStore.fileInfoResp || fileBrowserStore.loadingInfo || !this.noneType}
+                            onClick={this.loadSelectedFiles}
+                            text={"Load"}
+                        />
+                    </div>
                 </div>
             </DraggableDialogComponent>
         );
     }
 
     private loadSelectedFiles = async () => {
-        const appStore = AppStore.Instance;
-        const fileBrowserStore = appStore.fileBrowserStore;
         let stokeFiles = [];
-        fileBrowserStore.selectedFiles.forEach(file => {
-            const stokeFile = new CARTA.StokesFile({
-                directory: fileBrowserStore.fileList.directory,
-                file: file.fileInfo.name,
-                hdu: file.hdu,
-                stokesType: this.stokes.get(file.fileInfo.name)
-            });
-            stokeFiles.push(stokeFile);
+        this.stokes.forEach(file => {
+            stokeFiles.push(file);
         });
 
         try {
@@ -219,7 +217,6 @@ export class StokesDialogComponent extends React.Component {
             return;
         }
 
-        // stokes with i, q, v, u VS single one?
         if (fileBrowserStore.browserMode === BrowserMode.File) {
             // const frames = appStore.frames;
             // if (!(forceAppend || fileBrowserStore.appendingFrame) || !frames.length) {
