@@ -117,7 +117,6 @@ export class OverlayGlobalSettings {
         this.system = SystemType.Auto;
         this.labelType = LabelType.Exterior;
         this.setColor(PreferenceStore.Instance.astColor);
-        console.log(this.color);
         this.tolerance = 2; // percentage
 
         this.defaultSystem = SystemType.Auto;

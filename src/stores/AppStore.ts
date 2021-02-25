@@ -856,16 +856,39 @@ export class AppStore {
     };
 
     @action setDarkTheme = () => {
-        this.preferenceStore.setPreference(PreferenceKeys.GLOBAL_THEME, Theme.DARK);
+        this.setTheme(Theme.DARK);
     };
 
     @action setLightTheme = () => {
-        this.preferenceStore.setPreference(PreferenceKeys.GLOBAL_THEME, Theme.LIGHT);
+        this.setTheme(Theme.LIGHT);
     };
 
     @action setAutoTheme = () => {
-        this.preferenceStore.setPreference(PreferenceKeys.GLOBAL_THEME, Theme.AUTO);
+        this.setTheme(Theme.AUTO);
     };
+
+    @action setTheme = (theme: string) => {
+        if (Theme.isValid(theme)) {
+            this.preferenceStore.setPreference(PreferenceKeys.GLOBAL_THEME, theme);
+            this.updateASTColors();
+        }
+    }
+
+    private updateASTColors() {
+        if (this.astReady) {
+            const astColors = [
+                getColorForTheme(this.overlayStore.global.color),
+                getColorForTheme(this.overlayStore.title.color),
+                getColorForTheme(this.overlayStore.grid.color),
+                getColorForTheme(this.overlayStore.border.color),
+                getColorForTheme(this.overlayStore.ticks.color),
+                getColorForTheme(this.overlayStore.axes.color),
+                getColorForTheme(this.overlayStore.numbers.color),
+                getColorForTheme(this.overlayStore.labels.color)
+            ]
+            AST.setColors(astColors);
+        }
+    }
 
     @action toggleCursorFrozen = () => {
         this.cursorFrozen = !this.cursorFrozen;
@@ -986,17 +1009,6 @@ export class AppStore {
         AST.onReady.then(runInAction(() => {
             this.astReady = true;
             this.logStore.addInfo("AST library loaded", ["ast"]);
-            const colors = [
-                getColorForTheme(this.overlayStore.global.color),
-                getColorForTheme(this.overlayStore.title.color),
-                getColorForTheme(this.overlayStore.grid.color),
-                getColorForTheme(this.overlayStore.border.color),
-                getColorForTheme(this.overlayStore.ticks.color),
-                getColorForTheme(this.overlayStore.axes.color),
-                getColorForTheme(this.overlayStore.numbers.color),
-                getColorForTheme(this.overlayStore.labels.color)
-            ]
-            AST.setColors(colors);
         }));
 
         CARTACompute.onReady.then(action(() => {
@@ -1161,17 +1173,7 @@ export class AppStore {
                         this.cursorFrozen = this.preferenceStore.isCursorFrozen;
                         this.connectToServer();
                     });
-                    const astColors = [
-                        getColorForTheme(this.overlayStore.global.color),
-                        getColorForTheme(this.overlayStore.title.color),
-                        getColorForTheme(this.overlayStore.grid.color),
-                        getColorForTheme(this.overlayStore.border.color),
-                        getColorForTheme(this.overlayStore.ticks.color),
-                        getColorForTheme(this.overlayStore.axes.color),
-                        getColorForTheme(this.overlayStore.numbers.color),
-                        getColorForTheme(this.overlayStore.labels.color)
-                    ]
-                    AST.setColors(astColors);
+                    this.updateASTColors();
                 });
             }
         });

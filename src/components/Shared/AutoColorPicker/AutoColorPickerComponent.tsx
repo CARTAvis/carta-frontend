@@ -81,10 +81,9 @@ export class AutoColorPickerComponent extends React.Component<AutoColorPickerCom
 
     public render() {
         const color = this.props.color;
-        const appStore = AppStore.Instance;
 
         let popoverClassName = "color-picker-popup";
-        if (appStore.darkTheme) {
+        if (AppStore.Instance.darkTheme) {
             popoverClassName += " bp3-dark";
         }
 

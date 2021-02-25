@@ -102,7 +102,7 @@ export class PreferenceDialogComponent extends React.Component {
                 <FormGroup inline={true} label="Theme">
                     <HTMLSelect
                         value={preference.theme}
-                        onChange={(ev) => appStore.preferenceStore.setPreference(PreferenceKeys.GLOBAL_THEME, ev.currentTarget.value)}
+                        onChange={(ev) => appStore.setTheme(ev.currentTarget.value)}
                     >
                         <option value={Theme.AUTO}>Automatic</option>
                         <option value={Theme.LIGHT}>Light</option>
