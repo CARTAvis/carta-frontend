@@ -107,7 +107,7 @@ const DEFAULTS = {
         contourColormap: "viridis",
     },
     WCS_OVERLAY: {
-        astColor: "auto-blue",
+        astColor: "auto-green",
         astGridVisible: false,
         astLabelsVisible: true,
         wcsType: WCSType.AUTOMATIC,

@@ -4,10 +4,8 @@ import {action} from "mobx";
 import {observer} from "mobx-react";
 import {makeObservable, observable} from "mobx";
 import tinycolor from "tinycolor2";
-import {SketchPicker, ColorResult, RGBColor, CustomPicker} from "react-color";
-import {Button, Popover, PopoverPosition, MenuItem, IPopoverProps} from "@blueprintjs/core";
-import {Select} from "@blueprintjs/select";
-import {getColorForTheme} from "utilities";
+import {SketchPicker, ColorResult, RGBColor} from "react-color";
+import {Button, Popover, PopoverPosition} from "@blueprintjs/core";
 import "./ColorPickerComponent.scss";
 
 interface ColorPickerComponentProps {
@@ -18,7 +16,6 @@ interface ColorPickerComponentProps {
     disabled?: boolean;
     setColor: (color: ColorResult) => void;
 }
-
 @observer
 export class ColorPickerComponent extends React.Component<ColorPickerComponentProps> {
     private static readonly CHANGE_DELAY = 100;
@@ -60,49 +57,3 @@ export class ColorPickerComponent extends React.Component<ColorPickerComponentPr
         );
     }
 }
-
-export default CustomPicker(ColorPickerComponent);
-
-interface ColorComponentProps {
-    selectedColor: string;
-    onItemSelect: (selected: string) => void;
-}
-
-const ColorSelect = Select.ofType<string>();
-const COLOR_POPOVER_PROPS: Partial<IPopoverProps> = {minimal: true, position: "auto-end", popoverClassName: "colorselect"};
-
-export const ColorComponent: React.FC<ColorComponentProps> = (props) => {
-    const selectedColor = props.selectedColor;
-
-    const renderColorBlock = (color: string) => {
-        let className = "dropdown-color";
-        return (
-            <div className={className} style={{background: getColorForTheme(color)}}>&nbsp;</div>
-        );
-    };
-
-    const renderColorSelectItem = (color: string, {handleClick, modifiers, query}) => {
-        return (
-            <MenuItem
-                active={modifiers.active}
-                disabled={modifiers.disabled}
-                key={color}
-                onClick={handleClick}
-                text={renderColorBlock(color)}
-            />
-        );
-    };
-
-    return (
-        <ColorSelect
-            activeItem={selectedColor}
-            onItemSelect={(color) => props.onItemSelect(color)}
-            popoverProps={COLOR_POPOVER_PROPS}
-            filterable={false}
-            items={["auto-blue", "auto-green", "auto-red"]}
-            itemRenderer={renderColorSelectItem}
-        >
-            <Button className="colorselect" text={renderColorBlock(selectedColor)} rightIcon="double-caret-vertical"/>
-        </ColorSelect>
-    );
-};

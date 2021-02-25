@@ -57,6 +57,12 @@ export function getColorForTheme(color: string) {
         return color;
     }
 
+    if (color === "auto-black") {
+        return Colors.BLACK;
+    } else if (color === "auto-white") {
+        return Colors.WHITE;
+    }
+
     const requiredColor = color.substr(5).toUpperCase();
     if (AppStore.Instance.darkTheme) {
         return Colors[`${requiredColor}4`];

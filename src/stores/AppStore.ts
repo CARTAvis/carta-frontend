@@ -988,13 +988,13 @@ export class AppStore {
             this.logStore.addInfo("AST library loaded", ["ast"]);
             const colors = [
                 getColorForTheme(this.overlayStore.global.color),
-                this.overlayStore.title.color,
-                this.overlayStore.grid.color,
-                this.overlayStore.border.color,
-                this.overlayStore.ticks.color,
-                this.overlayStore.axes.color,
-                this.overlayStore.numbers.color,
-                this.overlayStore.labels.color
+                getColorForTheme(this.overlayStore.title.color),
+                getColorForTheme(this.overlayStore.grid.color),
+                getColorForTheme(this.overlayStore.border.color),
+                getColorForTheme(this.overlayStore.ticks.color),
+                getColorForTheme(this.overlayStore.axes.color),
+                getColorForTheme(this.overlayStore.numbers.color),
+                getColorForTheme(this.overlayStore.labels.color)
             ]
             AST.setColors(colors);
         }));
@@ -1161,6 +1161,17 @@ export class AppStore {
                         this.cursorFrozen = this.preferenceStore.isCursorFrozen;
                         this.connectToServer();
                     });
+                    const astColors = [
+                        getColorForTheme(this.overlayStore.global.color),
+                        getColorForTheme(this.overlayStore.title.color),
+                        getColorForTheme(this.overlayStore.grid.color),
+                        getColorForTheme(this.overlayStore.border.color),
+                        getColorForTheme(this.overlayStore.ticks.color),
+                        getColorForTheme(this.overlayStore.axes.color),
+                        getColorForTheme(this.overlayStore.numbers.color),
+                        getColorForTheme(this.overlayStore.labels.color)
+                    ]
+                    AST.setColors(astColors);
                 });
             }
         });

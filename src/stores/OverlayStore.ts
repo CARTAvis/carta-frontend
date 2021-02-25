@@ -1,11 +1,10 @@
 import * as AST from "ast_wrapper";
-import {Colors} from "@blueprintjs/core";
 import { action, autorun, computed, observable, makeObservable } from "mobx";
 import {AppStore, FrameStore, PreferenceStore, WCS_PRECISION} from "stores";
 import {WCSType} from "models";
 import {toFixed, getColorForTheme} from "utilities";
 
-const AST_DEFAULT_COLOR = Colors.BLUE3;
+const AST_DEFAULT_COLOR = "auto-blue";
 
 export enum AstColorsIndex {
     GLOBAL = 0,
@@ -209,7 +208,7 @@ export class OverlayTitleSettings {
 
     @action setColor = (color: string) => {
         this.color = color;
-        AST.setColor(color, AstColorsIndex.TITLE);
+        AST.setColor(getColorForTheme(color), AstColorsIndex.TITLE);
     };
 
     @action setCustomText = (customTitle: boolean) => {
@@ -261,7 +260,7 @@ export class OverlayGridSettings {
 
     @action setColor = (color: string) => {
         this.color = color;
-        AST.setColor(color, AstColorsIndex.GRID);
+        AST.setColor(getColorForTheme(color), AstColorsIndex.GRID);
     };
 
     @action setWidth(width: number) {
@@ -313,7 +312,7 @@ export class OverlayBorderSettings {
 
     @action setColor = (color: string) => {
         this.color = color;
-        AST.setColor(color, AstColorsIndex.BORDER);
+        AST.setColor(getColorForTheme(color), AstColorsIndex.BORDER);
     };
 
     @action setWidth(width: number) {
@@ -379,7 +378,7 @@ export class OverlayTickSettings {
 
     @action setColor = (color: string) => {
         this.color = color;
-        AST.setColor(color, AstColorsIndex.TICK);
+        AST.setColor(getColorForTheme(color), AstColorsIndex.TICK);
     };
 
     @action setWidth(width: number) {
@@ -429,7 +428,7 @@ export class OverlayAxisSettings {
 
     @action setColor = (color: string) => {
         this.color = color;
-        AST.setColor(color, AstColorsIndex.AXIS);
+        AST.setColor(getColorForTheme(color), AstColorsIndex.AXIS);
     };
 
     @action setWidth(width: number) {
@@ -566,7 +565,7 @@ export class OverlayNumberSettings {
 
     @action setColor = (color: string) => {
         this.color = color;
-        AST.setColor(color, AstColorsIndex.NUMBER);
+        AST.setColor(getColorForTheme(color), AstColorsIndex.NUMBER);
     };
 
     @action setCustomFormat(customFormat: boolean) {
@@ -657,7 +656,7 @@ export class OverlayLabelSettings {
 
     @action setColor = (color: string) => {
         this.color = color;
-        AST.setColor(color, AstColorsIndex.LABEL);
+        AST.setColor(getColorForTheme(color), AstColorsIndex.LABEL);
     };
 
     @action setFont = (font: number) => {
