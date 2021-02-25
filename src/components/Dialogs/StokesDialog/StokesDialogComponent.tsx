@@ -6,7 +6,6 @@ import {Cell, Column, SelectionModes, Table} from "@blueprintjs/table";
 import {Select, IItemRendererProps} from "@blueprintjs/select";
 import {DraggableDialogComponent} from "components/Dialogs";
 import {AppStore, BrowserMode, HelpType} from "stores";
-import {CustomIcon} from "icons/CustomIcons";
 import {CARTA} from "carta-protobuf";
 import "./StokesDialogComponent.scss";
 
@@ -147,14 +146,14 @@ export class StokesDialogComponent extends React.Component {
         );
 
         const dialogProps: IDialogProps = {
-            icon: <CustomIcon icon={"stokes"}/>,
+            icon: "git-merge",
             className: className,
             backdropClassName: "minimal-dialog-backdrop",
             canOutsideClickClose: false,
             lazy: true,
             isOpen: appStore.dialogStore.stokesDialogVisible,
             onClose: appStore.dialogStore.hideStokesDialog,
-            title: "Stokes hypercube configuration",
+            title: "Merging stokes hypercube",
         };
 
         return (
@@ -200,7 +199,6 @@ export class StokesDialogComponent extends React.Component {
         this.stokes.forEach(file => {
             stokeFiles.push(file);
         });
-
         try {
             await this.loadFile(stokeFiles);
         }

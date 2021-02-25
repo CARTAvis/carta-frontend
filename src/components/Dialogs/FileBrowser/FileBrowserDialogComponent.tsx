@@ -406,7 +406,7 @@ export class FileBrowserDialogComponent extends React.Component {
             canOutsideClickClose: false,
             lazy: true,
             isOpen: appStore.dialogStore.fileBrowserDialogVisible,
-            onClose: fileBrowserStore.hideFileBrowser,
+            onClose: this.closeFileBrowser,
             onOpened: this.refreshFileList,
             title: "File Browser",
         };
@@ -497,7 +497,7 @@ export class FileBrowserDialogComponent extends React.Component {
                 </div>
                 <div className="bp3-dialog-footer">
                     <div className="bp3-dialog-footer-actions">
-                        <AnchorButton intent={Intent.NONE} onClick={fileBrowserStore.hideFileBrowser} disabled={appStore.fileLoading} text="Close"/>
+                        <AnchorButton intent={Intent.NONE} onClick={this.closeFileBrowser} disabled={appStore.fileLoading} text="Close"/>
                         {actionButton}
                     </div>
                 </div>
@@ -515,6 +515,15 @@ export class FileBrowserDialogComponent extends React.Component {
                 </Alert>
             </DraggableDialogComponent>
         );
+    }
+
+    private closeFileBrowser = () => {
+        const appStore = AppStore.Instance;
+        const fileBrowserStore = appStore.fileBrowserStore;
+        if (appStore.dialogStore.stokesDialogVisible) {
+            appStore.dialogStore.hideStokesDialog();
+        }
+        fileBrowserStore.hideFileBrowser();
     }
 
     private renderBreadcrumb = (props: IBreadcrumbProps) => {
