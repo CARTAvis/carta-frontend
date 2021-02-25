@@ -157,7 +157,7 @@ export class StokesDialogComponent extends React.Component {
         };
 
         return (
-            <DraggableDialogComponent dialogProps={dialogProps} helpType={HelpType.FILE_INFO} minWidth={300} minHeight={250} defaultWidth={602} defaultHeight={300} enableResizing={true}>
+            <DraggableDialogComponent dialogProps={dialogProps} helpType={HelpType.STOKES} minWidth={300} minHeight={250} defaultWidth={602} defaultHeight={300} enableResizing={true}>
                 <div className="bp3-dialog-body">
                     <Table
                         className={"file-table"}

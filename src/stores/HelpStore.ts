@@ -38,6 +38,7 @@ export enum HelpType {
     FILE_INFO = "file-info",
     SAVE_LAYOUT = "save-layout",
     REGION_DIALOG = "region-dialog",
+    STOKES = "STOKES",
 
     // Widgets
     ANIMATOR = "animator",

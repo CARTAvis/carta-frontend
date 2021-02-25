@@ -34,3 +34,4 @@ export * from "./CatalogOverlayHelpComponent";
 export * from "./CatalogHistogramPlotHelpComponent";
 export * from "./CatalogScatterPlotHelpComponent";
 export * from "./SpectralLineQueryHelpComponent";
+export * from "./StokesDialogHelpComponent";
