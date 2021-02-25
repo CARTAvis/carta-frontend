@@ -49,8 +49,8 @@ export class StokesDialogComponent extends React.Component {
         return files;
     }
 
-    @computed get fileSize(): number {
-        return AppStore.Instance.fileBrowserStore?.selectedFiles?.length;
+    @computed get stokesDialogVisible(): boolean {
+        return AppStore.Instance.dialogStore.stokesDialogVisible;
     }
 
     @computed get noneType(): boolean {
@@ -69,23 +69,27 @@ export class StokesDialogComponent extends React.Component {
         this.stokes = new Map();
         this.stokesHeader = new Map();
 
-        reaction(() => this.fileSize, (size) => {
-            if (size > 1 && size < 5) {
+        reaction(() => this.stokesDialogVisible, (stokesDialogVisible) => {
+            if (stokesDialogVisible) {
                 const fileBrowserStore = AppStore.Instance.fileBrowserStore;
                 this.stokes = new Map();
                 fileBrowserStore.selectedFiles.forEach(file => {
-                    AppStore.Instance.fileBrowserStore.getFileHeader(
+                    AppStore.Instance.fileBrowserStore.getConcatFilesHeader(
                         AppStore.Instance.fileBrowserStore.fileList.directory, 
                         file.fileInfo.name, 
                         file.hdu
-                    ).then(result => {
+                    ).then(response => {
+                        // fileInfoExtended: { [k: string]: CARTA.IFileInfoExtended }, sometimes k is " "
+                        const k = Object.keys(response.info)[0];
                         const stoke: CARTA.IStokesFile = {
                             directory: fileBrowserStore.fileList.directory,
                             file: file.fileInfo.name,
                             hdu: file.hdu,
-                            stokesType: this.getStokeType(result.info[0], result.file)
+                            stokesType: this.getStokeType(response.info[k], response.file)
                         }
                         this.setStokes(file.fileInfo.name, stoke);
+                    }).catch(err => {
+                        console.log(err)
                     });
                 });   
             }
@@ -203,9 +207,6 @@ export class StokesDialogComponent extends React.Component {
         catch (err){
             console.log(err);
         }
-        // else {
-        //     await this.loadFile({fileInfo: fileBrowserStore.selectedFile, hdu: fileBrowserStore.selectedHDU});
-        // }
     };
 
     private loadFile = async (files: CARTA.StokesFile[]) => {
@@ -257,7 +258,7 @@ export class StokesDialogComponent extends React.Component {
     }
 
     private getStokeType = (fileInfoExtended: CARTA.IFileInfoExtended, file: string): CARTA.StokesType => {
-        let type = this.getTypeFromHeader(fileInfoExtended.headerEntries);
+        let type = this.getTypeFromHeader(fileInfoExtended?.headerEntries);
         if (type === CARTA.StokesType.STOKES_TYPE_NONE) {
             type = this.getTypeFromName(file);
         }
@@ -267,7 +268,7 @@ export class StokesDialogComponent extends React.Component {
     private getTypeFromHeader(headers: CARTA.IHeaderEntry[]): CARTA.StokesType {
         let CRVAL: CARTA.IHeaderEntry = {};
         let type = CARTA.StokesType.STOKES_TYPE_NONE;
-        const CTYPE =  headers.find(obj => { 
+        const CTYPE =  headers?.find(obj => { 
             return (obj.value.toUpperCase() === "STOKES"); 
         });
 

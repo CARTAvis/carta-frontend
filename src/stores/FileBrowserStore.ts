@@ -196,6 +196,16 @@ export class FileBrowserStore {
         }));
     };
 
+    @action getConcatFilesHeader = (directory: string, file: string, hdu: string): Promise<{file: string, info: CARTA.IFileInfoExtended}> => {
+        return new Promise((resolve, reject) => {
+            BackendService.Instance.getFileInfo(directory, file, hdu).subscribe((res: CARTA.FileInfoResponse) => {
+                resolve({file: res.fileInfo.name, info: res.fileInfoExtended});
+            }, err => {
+                reject(err);
+            });
+        })
+    }
+
     @action selectFile = (file: ISelectedFile) => {
         const fileList = this.getfileListByMode;
         this.selectedFile = file.fileInfo;
@@ -292,19 +302,6 @@ export class FileBrowserStore {
     @action setSelectedFiles = (selection: ISelectedFile[]) => {
         this.selectedFiles = selection;
     };
-
-    @action getFileHeader = (directory: string, file: string, hdu: string): Promise<{file: string, info: CARTA.IFileInfoExtended}> => {
-        return new Promise((resolve, reject) => {
-            BackendService.Instance.getFileInfo(directory, file, hdu).subscribe((res: CARTA.FileInfoResponse) => {
-                // console.log(res)
-                // this.fileInfoResp = true;
-                resolve({file: res.fileInfo.name, info: res.fileInfoExtended});
-            }, err => {
-                console.log(err);
-                reject(err);
-            });
-        })
-    }
 
     @computed get HDUList(): IOptionProps[] {
         return this.HDUfileInfoExtended ?
