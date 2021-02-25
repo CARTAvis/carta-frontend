@@ -1,6 +1,6 @@
 import * as React from "react";
 import {observer} from "mobx-react";
-import {action, makeObservable, observable} from "mobx";
+import {action, computed, makeObservable, observable} from "mobx";
 import {ControlGroup, Divider, FormGroup, HTMLSelect, IOptionProps, NonIdealState, Pre, Spinner, Tab, TabId, Tabs, Text, Popover, PopperModifiers, Position, Button, InputGroup, ButtonGroup} from "@blueprintjs/core";
 import {FixedSizeList as List} from "react-window";
 import AutoSizer from "react-virtualized-auto-sizer";
@@ -30,6 +30,7 @@ export class FileInfoComponent extends React.Component<{
     catalogHeaderTable?: TableComponentProps
 }> {
 
+    @observable searchString: string = "";
     @observable isMouseEntered = false;
     @observable isSearchOpened = false;
 
@@ -49,6 +50,7 @@ export class FileInfoComponent extends React.Component<{
 
     @action searchClosed = () => {
         this.isSearchOpened = false;
+        this.searchString = "";
     }
 
     constructor(props) {
@@ -89,7 +91,7 @@ export class FileInfoComponent extends React.Component<{
         ) : undefined;
     };
 
-    private renderInfoPanel = () => {
+    @computed get renderInfoPanel() {
         if (this.props.isLoading) {
             return <NonIdealState className="non-ideal-state-file" icon={<Spinner className="astLoadingSpinner"/>} title="Loading file info..."/>;
         } else if (this.props.errorMessage) {
@@ -101,7 +103,7 @@ export class FileInfoComponent extends React.Component<{
             case FileInfoType.IMAGE_FILE:
                 return this.renderImageHeaderList(this.props.fileInfoExtended.computedEntries);
             case FileInfoType.IMAGE_HEADER:
-                return this.renderImageHeaderList(this.props.fileInfoExtended.headerEntries);
+                return this.renderImageHeaderList(this.props.fileInfoExtended.headerEntries, this.searchString);
             case FileInfoType.REGION_FILE:
                 return <Pre className="file-info-pre">{this.props.regionFileInfo}</Pre>;
             case FileInfoType.CATALOG_FILE:
@@ -122,25 +124,88 @@ export class FileInfoComponent extends React.Component<{
             default:
                 return "";
         }
-    };
+    }
 
-    private renderImageHeaderList(entries: CARTA.IHeaderEntry[]) {
+    private highlightString(searchString: string, name: string, value?: string, comment?: string) {
+        let testSubString = searchString;
+        let splitString = (name !== "END") ? `${name} = ${value}${comment && " / "+comment}`.split(testSubString) : name.split(testSubString);
+
+        let highlightedString = [];
+        let highlighClassName = "";
+        if (name !== "END") {
+            let classNameType = ["header-name", "header-value", "header-comment"];
+            let classNameTypeIter = 0;
+            let usedString = 0; 
+            splitString.forEach((arrayValue) => {
+
+                highlighClassName = "";
+                for (const string of [arrayValue,this.searchString]) {
+
+                    usedString += string.length;;
+                    if (classNameTypeIter === 0 && usedString >= name.length + 3 + value.length) {
+                        highlightedString.push(<span className={classNameType[classNameTypeIter]+highlighClassName}>{string.slice(0, name.length - usedString + string.length)}</span>);
+                        classNameTypeIter += 1;
+                        highlightedString.push(<span className={classNameType[classNameTypeIter]+highlighClassName}>{string.slice(name.length - usedString + string.length, name.length - usedString + string.length + value.length + 3)}</span>);
+                        classNameTypeIter += 1;
+                        highlightedString.push(<span className={classNameType[classNameTypeIter]+highlighClassName}>{string.slice(name.length - usedString + string.length + value.length + 3)}</span>);
+
+                    } else if (classNameTypeIter === 0 && usedString >= name.length ) {
+                        highlightedString.push(<span className={classNameType[classNameTypeIter]+highlighClassName}>{string.slice(0, name.length - usedString + string.length)}</span>);
+                        classNameTypeIter += 1;
+                        highlightedString.push(<span className={classNameType[classNameTypeIter]+highlighClassName}>{string.slice(name.length - usedString + string.length)}</span>);
+
+                    } else if (classNameTypeIter === 1 && usedString > name.length + 3 + value.length) {
+                        highlightedString.push(<span className={classNameType[classNameTypeIter]+highlighClassName}>{string.slice(0, name.length + 3 + value.length - usedString + string.length)}</span>);
+                        classNameTypeIter += 1;
+                        highlightedString.push(<span className={classNameType[classNameTypeIter]+highlighClassName}>{string.slice(name.length + 3 + value.length - usedString + string.length)}</span>);
+                    } else {
+                        highlightedString.push(<span className={classNameType[classNameTypeIter]+highlighClassName}>{string}</span>);
+                    }
+    
+                    highlighClassName = " info-highlight";
+                }
+            });
+        } else {
+            splitString.forEach((value) => {
+
+                highlighClassName = "";
+                for (const string of [value,this.searchString]) {
+                    highlightedString.push(<span className={"header-name"+highlighClassName}>{string}</span>);
+                }
+                highlighClassName = " info-highlight";
+            });
+        }
+        highlightedString.pop();
+        
+        return highlightedString;
+    }
+
+    private renderImageHeaderList(entries: CARTA.IHeaderEntry[], searchString?: string) {
+        //console.log(this.props.selectedTab, this.searchString);
         const renderHeaderRow = ({index, style}) => {
             if (index < 0 || index >= entries?.length) {
                 return null;
             }
             const header = entries[index];
-            if (header.name === "END") {
-                return <div style={style} className="header-name">{`${header.name}`}</div>;
-            } else {
+            if ((searchString) && (searchString !== "")) {
                 return (
                     <div style={style} className="header-entry">
-                        <span className="header-name">{header.name}</span>
-                        <span className="header-value"> = {`${header.value}`}</span>
-                        {header.comment && <span className="header-comment"> / {header.comment} </span>}
+                        {this.highlightString(searchString, header.name, header.value, header.comment)}
                     </div>
                 );
-            }
+            } else {
+                if (header.name === "END") {
+                    return <div style={style} className="header-name">{`${header.name}`}</div>;
+                } else {
+                    return (
+                        <div style={style} className="header-entry">
+                            <span className="header-name">{header.name}</span>
+                            <span className="header-value"> = {`${header.value}`}</span>
+                            {header.comment && <span className="header-comment"> / {header.comment} </span>}
+                        </div>
+                    );
+                }
+            }  
         };
 
         const numHeaders = entries?.length || 0;
@@ -159,6 +224,10 @@ export class FileInfoComponent extends React.Component<{
                 )}
             </AutoSizer>
         );
+    }
+
+    @action private handleSearchStringChanged = (ev: React.ChangeEvent<HTMLInputElement>) => {
+        this.searchString = ev.target.value;
     }
 
     private renderHeaderSearch = () => {
@@ -180,7 +249,6 @@ export class FileInfoComponent extends React.Component<{
                 modifiers={popoverModifiers}
                 onOpening={this.searchOpened}
                 onClosing={this.searchClosed}
-                defaultIsOpen={this.isSearchOpened ? true : false}
             >
                 <Button icon="search-text" style={{opacity: (this.isMouseEntered) ? 1 : 0}}></Button>
                 <InputGroup
@@ -188,6 +256,7 @@ export class FileInfoComponent extends React.Component<{
                     placeholder={"Search text"}
                     leftIcon="search-text"
                     rightElement={searchIter}
+                    onChange={this.handleSearchStringChanged}
                 />
             </Popover>
         ) : null;
@@ -200,7 +269,7 @@ export class FileInfoComponent extends React.Component<{
                     {this.renderInfoTabs()}
                     {this.renderHDUList()}
                 </div>
-                {this.renderInfoPanel()}
+                {this.renderInfoPanel}
                 {this.renderHeaderSearch()}
             </div>
         );
