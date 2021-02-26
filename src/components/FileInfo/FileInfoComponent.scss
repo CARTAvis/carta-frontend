@@ -62,7 +62,7 @@
         font-family: 'Helvetica Neue', 'Helvetica', 'Arial', sans-serif;
     }
 
-    .header-search {
+    .header-search-button {
         position: absolute;
         bottom: -40px;
         right: 0;
@@ -79,7 +79,10 @@
     }
 }
 
-.header-search-iter {
-    color: $gray1;
-    padding-top: 6px;
+.header-search {
+
+    .header-search-iter {
+        color: $gray1;
+        padding-top: 6px;
+    }
 }

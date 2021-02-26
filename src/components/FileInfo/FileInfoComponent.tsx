@@ -31,9 +31,11 @@ export class FileInfoComponent extends React.Component<{
 }> {
 
     @observable searchString: string = "";
+    @observable matchedIter: number = 0;
     @observable matchedTotal: number = 0;
     @observable isMouseEntered: boolean = false;
     @observable isSearchOpened: boolean = false;
+    private splitStringArray: Array<Array<string>> = [];
 
     @action onMouseEnter = () => {
         this.isMouseEntered = true;
@@ -52,11 +54,46 @@ export class FileInfoComponent extends React.Component<{
     @action searchClosed = () => {
         this.isSearchOpened = false;
         this.searchString = "";
+        this.matchedIter = 0;
+        this.matchedTotal = 0;
     }
 
-    @action addMatchedTotal = (matchedNum: number) => {
-        this.matchedTotal += matchedNum;
+    @action addMatchedIter = () => {
+        if (this.matchedIter >= this.matchedTotal) {
+            this.matchedIter = 1;
+        } else {
+            this.matchedIter += 1;
+        }
     };
+
+    @action minusMatchedIter = () => {
+        if (this.matchedIter === 1){
+            this.matchedIter = this.matchedTotal;
+        } else {
+            this.matchedIter -= 1;
+        }
+    };
+
+    @action private handleSearchStringChanged = (ev: React.ChangeEvent<HTMLInputElement>) => {
+        this.searchString = ev.target.value;
+        
+        // TODO: less strict search
+        // TODO: debounce
+        if (this.searchString !== ""){
+            this.splitStringArray = [];
+            this.matchedTotal = 0;
+            this.props.fileInfoExtended.headerEntries.forEach((entriesValue) => {
+                let splitString = (entriesValue.name !== "END") ?
+                `${entriesValue.name} = ${entriesValue.value}${entriesValue.comment && " / "+entriesValue.comment}`.split(this.searchString) : entriesValue.name.split(this.searchString)
+                this.splitStringArray.push(splitString);
+                this.matchedTotal += splitString.length - 1;
+            });
+            this.matchedIter = (this.matchedTotal > 0) ? 1 : 0;
+        } else {
+            this.matchedTotal = 0;
+            this.matchedIter = 0;
+        }
+    }
 
     constructor(props) {
         super(props);
@@ -131,10 +168,7 @@ export class FileInfoComponent extends React.Component<{
         }
     };
 
-    private highlightString(searchString: string, name: string, value?: string, comment?: string) {
-        let testSubString = searchString;
-        let splitString = (name !== "END") ? `${name} = ${value}${comment && " / "+comment}`.split(testSubString) : name.split(testSubString);
-        
+    private highlightString(splitString: Array<string>, searchString: string, name: string, value?: string, comment?: string) {
         let highlightedString = [];
         let highlighClassName = "";
         let keyIter = 0; // add unique keys to span to avoid warning
@@ -150,7 +184,7 @@ export class FileInfoComponent extends React.Component<{
             splitString.forEach((arrayValue) => {
 
                 highlighClassName = "";
-                for (const addString of [arrayValue, this.searchString]) {
+                for (const addString of [arrayValue, searchString]) {
                     const formerUsedString = usedString;
                     const nameValueLength = name.length + 3 + value.length;
                     usedString += addString.length;;
@@ -204,7 +238,7 @@ export class FileInfoComponent extends React.Component<{
             if ((searchString) && (searchString !== "")) {
                 return (
                     <div style={style} className="header-entry">
-                        {this.highlightString(searchString, header.name, header.value, header.comment)}
+                        {this.highlightString(this.splitStringArray[index], searchString, header.name, header.value, header.comment)}
                     </div>
                 );
             } else {
@@ -240,25 +274,31 @@ export class FileInfoComponent extends React.Component<{
         );
     }
 
-    @action private handleSearchStringChanged = (ev: React.ChangeEvent<HTMLInputElement>) => {
-        this.searchString = ev.target.value;
-    }
-
     private renderHeaderSearch = () => {
         const popoverModifiers: PopperModifiers = {arrow: {enabled: false}, offset: {offset: '0, 10px, 0, 0'}};
-        let iterText = `0 of ${this.matchedTotal}`;
+        let iterText = `${this.matchedIter} of ${this.matchedTotal}`;
         const searchIter = (
-            <ButtonGroup>
+            <ButtonGroup className="header-search">
                 <span className="header-search-iter">&nbsp;{iterText}&nbsp;</span>
-                <Button icon="caret-left" minimal={true}></Button>
-                <Button icon="caret-right" minimal={true}></Button>
+                <Button
+                    icon="caret-left"
+                    minimal={true}
+                    onClick={this.minusMatchedIter}
+                    disabled={(this.matchedIter === 0) || (this.matchedTotal === 1) ? true : false}
+                />
+                <Button
+                    icon="caret-right"
+                    minimal={true}
+                    onClick={this.addMatchedIter}
+                    disabled={(this.matchedIter === 0) || (this.matchedTotal === 1) ? true : false}
+                />
             </ButtonGroup>
         );
 
         return (!this.props.isLoading && !this.props.errorMessage && this.props.fileInfoExtended &&
             this.props.selectedTab === FileInfoType.IMAGE_HEADER) ? (
             <Popover
-                className="header-search"
+                className="header-search-button"
                 position={Position.LEFT}
                 modifiers={popoverModifiers}
                 onOpening={this.searchOpened}
