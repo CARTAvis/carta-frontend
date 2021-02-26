@@ -132,18 +132,20 @@ export class FileInfoComponent extends React.Component<{
         
         let highlightedString = [];
         let highlighClassName = "";
+        let keyIter = 0;
         if (name !== "END") {
             let classNameType = ["header-name", "header-value", "header-comment"];
             let classNameTypeIter = 0;
             let usedString = 0; 
             function addHighlightedString(addString: string, sliceStart: number, sliceEnd?: number): void {
-                highlightedString.push(<span className={classNameType[classNameTypeIter]+highlighClassName}>{isFinite(sliceEnd) ? addString.slice(sliceStart, sliceEnd) : addString.slice(sliceStart)}</span>);
+                highlightedString.push(<span className={classNameType[classNameTypeIter]+highlighClassName} key={keyIter.toString()}>{isFinite(sliceEnd) ? addString.slice(sliceStart, sliceEnd) : addString.slice(sliceStart)}</span>);
+                keyIter += 1;
                 return;
             }
             splitString.forEach((arrayValue) => {
 
                 highlighClassName = "";
-                for (const addString of [arrayValue,this.searchString]) {
+                for (const addString of [arrayValue, this.searchString]) {
                     const formerUsedString = usedString;
                     const nameValueLength = name.length + 3 + value.length;
                     usedString += addString.length;;
@@ -165,7 +167,8 @@ export class FileInfoComponent extends React.Component<{
                         addHighlightedString(addString, nameValueLength - formerUsedString);
 
                     } else {
-                        highlightedString.push(<span className={classNameType[classNameTypeIter]+highlighClassName}>{addString}</span>);
+                        highlightedString.push(<span className={classNameType[classNameTypeIter]+highlighClassName} key={keyIter.toString()}>{addString}</span>);
+                        keyIter += 1;
                     }
     
                     highlighClassName = " info-highlight";
@@ -176,7 +179,8 @@ export class FileInfoComponent extends React.Component<{
 
                 highlighClassName = "";
                 for (const string of [value,this.searchString]) {
-                    highlightedString.push(<span className={"header-name"+highlighClassName}>{string}</span>);
+                    highlightedString.push(<span className={"header-name"+highlighClassName} key={keyIter.toString()}>{string}</span>);
+                    keyIter += 1;
                 }
                 highlighClassName = " info-highlight";
             });
