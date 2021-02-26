@@ -1,6 +1,6 @@
 import * as React from "react";
 import {observer} from "mobx-react";
-import {action, computed, makeObservable, observable} from "mobx";
+import {action, makeObservable, observable} from "mobx";
 import {ControlGroup, Divider, FormGroup, HTMLSelect, IOptionProps, NonIdealState, Pre, Spinner, Tab, TabId, Tabs, Text, Popover, PopperModifiers, Position, Button, InputGroup, ButtonGroup} from "@blueprintjs/core";
 import {FixedSizeList as List} from "react-window";
 import AutoSizer from "react-virtualized-auto-sizer";
@@ -31,8 +31,9 @@ export class FileInfoComponent extends React.Component<{
 }> {
 
     @observable searchString: string = "";
-    @observable isMouseEntered = false;
-    @observable isSearchOpened = false;
+    @observable matchedTotal: number = 0;
+    @observable isMouseEntered: boolean = false;
+    @observable isSearchOpened: boolean = false;
 
     @action onMouseEnter = () => {
         this.isMouseEntered = true;
@@ -52,6 +53,10 @@ export class FileInfoComponent extends React.Component<{
         this.isSearchOpened = false;
         this.searchString = "";
     }
+
+    @action addMatchedTotal = (matchedNum: number) => {
+        this.matchedTotal += matchedNum;
+    };
 
     constructor(props) {
         super(props);
@@ -91,7 +96,7 @@ export class FileInfoComponent extends React.Component<{
         ) : undefined;
     };
 
-    @computed get renderInfoPanel() {
+    private renderInfoPanel = () => {
         if (this.props.isLoading) {
             return <NonIdealState className="non-ideal-state-file" icon={<Spinner className="astLoadingSpinner"/>} title="Loading file info..."/>;
         } else if (this.props.errorMessage) {
@@ -124,7 +129,7 @@ export class FileInfoComponent extends React.Component<{
             default:
                 return "";
         }
-    }
+    };
 
     private highlightString(searchString: string, name: string, value?: string, comment?: string) {
         let testSubString = searchString;
@@ -132,7 +137,7 @@ export class FileInfoComponent extends React.Component<{
         
         let highlightedString = [];
         let highlighClassName = "";
-        let keyIter = 0;
+        let keyIter = 0; // add unique keys to span to avoid warning
         if (name !== "END") {
             let classNameType = ["header-name", "header-value", "header-comment"];
             let classNameTypeIter = 0;
@@ -241,7 +246,7 @@ export class FileInfoComponent extends React.Component<{
 
     private renderHeaderSearch = () => {
         const popoverModifiers: PopperModifiers = {arrow: {enabled: false}, offset: {offset: '0, 10px, 0, 0'}};
-        let iterText = "0 of 0"
+        let iterText = `0 of ${this.matchedTotal}`;
         const searchIter = (
             <ButtonGroup>
                 <span className="header-search-iter">&nbsp;{iterText}&nbsp;</span>
@@ -278,7 +283,7 @@ export class FileInfoComponent extends React.Component<{
                     {this.renderInfoTabs()}
                     {this.renderHDUList()}
                 </div>
-                {this.renderInfoPanel}
+                {this.renderInfoPanel()}
                 {this.renderHeaderSearch()}
             </div>
         );
