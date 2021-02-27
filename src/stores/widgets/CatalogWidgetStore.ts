@@ -1,7 +1,7 @@
-import { action, observable, makeObservable } from "mobx";
+// import * as GSL from "gsl_wrapper";
+import { action, observable, makeObservable, computed } from "mobx";
 import {Colors} from "@blueprintjs/core";
-import {CatalogOverlay} from "stores/CatalogProfileStore";
-import {PreferenceStore} from "stores";
+import {CatalogOverlay, CatalogStore, PreferenceStore} from "stores";
 
 export enum CatalogPlotType {
     ImageOverlay = "Image Overlay",
@@ -28,21 +28,23 @@ export enum CatalogSettingsTabs {
     GLOBAL,
     IMAGE_OVERLAY,
     COLOR,
+    SIZE
 }
 
-const DEFAULTS = {
-    headerTableColumnWidts: [150, 75, 65, 100, 230],
-    showSelectedData: false,
-    catalogTableAutoScroll: false,
-    catalogPlotType: CatalogPlotType.ImageOverlay,
-    catalogColor: Colors.TURQUOISE3,
-    catalogSize: 10,
-    catalogShape: CatalogOverlayShape.Circle,
-    xAxis: CatalogOverlay.NONE,
-    yAxis: CatalogOverlay.NONE,
-    highlightColor: Colors.RED2,
-    settingsTabId: CatalogSettingsTabs.GLOBAL
-};
+// const DEFAULTS = {
+//     headerTableColumnWidts: [150, 75, 65, 100, 230],
+//     showSelectedData: false,
+//     catalogTableAutoScroll: false,
+//     catalogPlotType: CatalogPlotType.ImageOverlay,
+//     catalogColor: Colors.TURQUOISE3,
+//     catalogSize: 10,
+//     catalogShape: CatalogOverlayShape.Circle,
+//     xAxis: CatalogOverlay.NONE,
+//     yAxis: CatalogOverlay.NONE,
+//     highlightColor: Colors.RED2,
+//     settingsTabId: CatalogSettingsTabs.GLOBAL,
+//     sizeMapColumn: CatalogOverlay.NONE,
+// };
 
 export class CatalogWidgetStore {
     public static readonly MinOverlaySize = 1;
@@ -64,22 +66,30 @@ export class CatalogWidgetStore {
     @observable tableSeparatorPosition: string;
     @observable highlightColor: string;
     @observable settingsTabId: CatalogSettingsTabs;
+    @observable sizeMapColumn: string;
+    @observable sizeMapMax: number;
+    @observable sizeMapMin: number;
 
     constructor(catalogFileId: number) {
         makeObservable(this);
         this.catalogFileId = catalogFileId;
-        this.headerTableColumnWidts = DEFAULTS.headerTableColumnWidts;
-        this.showSelectedData = DEFAULTS.showSelectedData;
-        this.catalogTableAutoScroll = DEFAULTS.catalogTableAutoScroll;
-        this.catalogPlotType = DEFAULTS.catalogPlotType;
-        this.catalogColor = DEFAULTS.catalogColor;
-        this.catalogSize = DEFAULTS.catalogSize;
-        this.catalogShape = DEFAULTS.catalogShape;
-        this.xAxis = DEFAULTS.xAxis;
-        this.yAxis = DEFAULTS.yAxis;
+        this.headerTableColumnWidts = [150, 75, 65, 100, 230];
+        this.showSelectedData = false;
+        this.catalogTableAutoScroll = false;
+        this.catalogPlotType = CatalogPlotType.ImageOverlay;
+        this.catalogColor = Colors.TURQUOISE3;
+        this.catalogSize = 10;
+        this.catalogShape = CatalogOverlayShape.Circle;
+        this.xAxis = CatalogOverlay.NONE;
+        this.yAxis = CatalogOverlay.NONE;
         this.tableSeparatorPosition = PreferenceStore.Instance.catalogTableSeparatorPosition;
-        this.highlightColor = DEFAULTS.highlightColor;
-        this.settingsTabId = DEFAULTS.settingsTabId;
+        this.highlightColor = Colors.RED2;
+        this.settingsTabId = CatalogSettingsTabs.GLOBAL;
+        this.sizeMapColumn = CatalogOverlay.NONE;
+    }
+
+    @action setSizeMap(coloum: string) {
+        this.sizeMapColumn = coloum;
     }
 
     @action setHeaderTableColumnWidts(vals: Array<number>) {
@@ -132,6 +142,25 @@ export class CatalogWidgetStore {
 
     @action setSettingsTabId = (tabId: CatalogSettingsTabs) => {
         this.settingsTabId = tabId;
+    }
+
+    @computed get sizeArray(): number[] {
+        if (this.sizeMapColumn !== CatalogOverlay.NONE) {
+            const catalogProfileStore = CatalogStore.Instance.catalogProfileStores.get(this.catalogFileId);
+            let column = catalogProfileStore.get1DPlotData(this.sizeMapColumn).wcsData;
+            let size = new Array(column.length);
+            let min = column[0];
+            let max = column[column.length - 1];
+            console.log(column, min, max);
+            const abs = Math.abs(max - min);
+            for (let index = 0; index < column.length; index++) {
+                const element = column[index];
+                size[index] = Math.abs(element) / abs * this.catalogSize * 2;
+            }
+            // console.log(size);
+            return size;   
+        } 
+        return [];
     }
 
     public init = (widgetSettings): void => {

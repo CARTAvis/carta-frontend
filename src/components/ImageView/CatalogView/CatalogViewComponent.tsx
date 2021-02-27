@@ -1,7 +1,7 @@
 import * as React from "react";
 import * as Plotly from "plotly.js";
 import {observer} from "mobx-react";
-import {computed} from "mobx";
+import {computed, makeObservable} from "mobx";
 import Plot from "react-plotly.js";
 import {AppStore, WidgetsStore, CatalogStore} from "stores";
 import {CatalogOverlayShape} from "stores/widgets";
@@ -22,31 +22,58 @@ export interface CatalogViewComponentProps {
 @observer
 export class CatalogViewComponent extends React.Component<CatalogViewComponentProps> {
 
-    @computed get unSelectedData(): Map<number, Plotly.Data> {
+    constructor(props: CatalogViewComponentProps) {
+        super(props);
+        makeObservable(this);
+    }
+
+    @computed get unSelectedData(): Plotly.Data[] {
         const catalogStore = CatalogStore.Instance;
-        let coordsData = new Map<number, Plotly.Data>();
-        catalogStore.catalogData.forEach((catalog, key) => {
+        // let coordsData = new Map<number, Plotly.Data>();
+        let scatterData: Plotly.Data[] = [];
+        catalogStore.catalogData.forEach((catalog, fileId) => {
             if (!catalog.showSelectedData) {
                 let unSelecteData: Partial<Plotly.PlotData> = {};
+                const catalogWidgetStore = catalogStore.getCatalogWidgetStore(fileId);
+                const color = catalogWidgetStore.catalogColor;
+
                 unSelecteData.type = "scattergl";
                 unSelecteData.mode = "markers";
                 unSelecteData.hoverinfo = "none";
                 unSelecteData.visible = catalog.displayed;
-                unSelecteData.marker = {};
-                unSelecteData.marker.line = {};
                 // copy data to trigger react-plotly js update. only update revision number not working. with layout["datarevision"] will slow down plotly;
                 unSelecteData.x = catalog.xImageCoords.slice(0);
                 unSelecteData.y = catalog.yImageCoords.slice(0);
-                unSelecteData.name = key.toString();
-                coordsData.set(key, unSelecteData);
+
+                unSelecteData.marker = {
+                    color: color,
+                    symbol: catalogWidgetStore.catalogShape,
+                    line: {
+                        color: color,
+                        width: 4
+                    }
+                };
+
+                if (catalogWidgetStore.sizeArray.length) {
+                    unSelecteData.marker.size = catalogWidgetStore.sizeArray;
+                } else {
+                    unSelecteData.marker.size = catalogWidgetStore.catalogSize * 2;
+                }
+
+                unSelecteData.name = fileId.toString();
+
+                // remove selected data out 
+                // console.log(unSelecteData.x.length)
+
+                scatterData.push(unSelecteData);
             }
         });
-        return coordsData;
+        return scatterData;
     }
 
-    @computed get selectedData(): Map<number, Plotly.Data> {
-        const catalogStore = CatalogStore.Instance;   
-        let coordsData = new Map<number, Plotly.Data>(); 
+    @computed get selectedData(): Plotly.Data[] {
+        const catalogStore = CatalogStore.Instance;
+        let scatterData: Plotly.Data[] = [];
         catalogStore.catalogProfileStores.forEach((profileStore) => {    
             const selectedPoints = profileStore.selectedPointIndices;
             const selectedPointSize = selectedPoints.length;
@@ -57,18 +84,45 @@ export class CatalogViewComponent extends React.Component<CatalogViewComponentPr
                 selecteData.mode = "markers";
                 selecteData.hoverinfo = "none";
                 const coords = catalogStore.catalogData.get(fileId);
+                const catalogWidgetStore = catalogStore.getCatalogWidgetStore(fileId);
                 selecteData.visible = coords.displayed;
                 if (coords?.xImageCoords?.length) {
                     selecteData.x = coords.xSelectedCoords.slice(0);
                     selecteData.y = coords.ySelectedCoords.slice(0);
                     selecteData.name = fileId.toString();
-                    selecteData.marker = {};
-                    selecteData.marker.line = {};
-                    coordsData.set(fileId, selecteData);
+
+                    let outlineShape = catalogWidgetStore.catalogShape;
+                    if (outlineShape === CatalogOverlayShape.FullCircle) {
+                        outlineShape = CatalogOverlayShape.Circle;
+                    } else if (outlineShape === CatalogOverlayShape.FullStar) {
+                        outlineShape = CatalogOverlayShape.Star;
+                    } else if (outlineShape === CatalogOverlayShape.Plus) {
+                        outlineShape = "cross-open" as CatalogOverlayShape;
+                    } else if (outlineShape === CatalogOverlayShape.Cross) {
+                        outlineShape = "x-open" as CatalogOverlayShape;
+                    }
+
+                    selecteData.marker = {
+                        color: catalogWidgetStore.highlightColor,
+                        size: catalogWidgetStore.catalogSize * 2 + 5,
+                        symbol: outlineShape,
+                        line: {
+                            color: catalogWidgetStore.highlightColor,
+                            width: 4
+                        }
+                    };
+
+                    // if (catalogWidgetStore.sizeArray.length) {
+                    //     selecteData.marker.size = catalogWidgetStore.sizeArray;
+                    // } else {
+                    //     selecteData.marker.size = catalogWidgetStore.catalogSize * 2;
+                    // }
+
+                    scatterData.push(selecteData);
                 }
             }
         });
-        return coordsData;
+        return scatterData;
     }
 
     private onClick = (event: Readonly<Plotly.PlotMouseEvent>) => {
@@ -119,11 +173,11 @@ export class CatalogViewComponent extends React.Component<CatalogViewComponentPr
         const frame = appStore.activeFrame;
         const width = this.props.width * 2;
         const height = this.props.height * 2;
+
         // fixed devicePixelRatio 2, 1 / devicePixelRatio will cause point selection bug
         // when user swith devices from devicePixelRatio = 1 to 2
         const scale = 1 / 2;
         const padding = appStore.overlayStore.padding;
-        const catalogStore = CatalogStore.Instance;
         let className = "catalog-div";
         if (this.props.docked) {
             className += " docked";
@@ -177,37 +231,12 @@ export class CatalogViewComponent extends React.Component<CatalogViewComponentPr
         let scatterData: Plotly.Data[] = [];
         const unSelectedData = this.unSelectedData;
         const selectedData = this.selectedData;
-        unSelectedData.forEach((data: Plotly.PlotData, fileId) => {
-            const catalogWidgetStore = catalogStore.getCatalogWidgetStore(fileId);
-            const color = catalogWidgetStore.catalogColor;            
-            data.marker.color = color;
-            data.marker.line.color = color;
-            data.marker.line.width = 4;
-            data.marker.size = catalogWidgetStore.catalogSize * 2;
-            data.marker.symbol = catalogWidgetStore.catalogShape;
+        unSelectedData.forEach((data: Plotly.PlotData) => {
             scatterData.push(data);   
         });
 
         if (selectedData) {
-            selectedData.forEach((data: Plotly.PlotData, fileId) => {
-                const catalogWidgetStore = catalogStore.getCatalogWidgetStore(fileId);
-                data.marker.color = catalogWidgetStore.highlightColor;
-                data.marker.line.color = catalogWidgetStore.highlightColor;
-                data.marker.line.width = 4;
-                data.marker.size = catalogWidgetStore.catalogSize * 2 + 5;
-
-                let outlineShape = catalogWidgetStore.catalogShape;
-                if (outlineShape === CatalogOverlayShape.FullCircle) {
-                    outlineShape = CatalogOverlayShape.Circle;
-                } else if (outlineShape === CatalogOverlayShape.FullStar) {
-                    outlineShape = CatalogOverlayShape.Star;
-                } else if (outlineShape === CatalogOverlayShape.Plus) {
-                    outlineShape = "cross-open" as CatalogOverlayShape;
-                } else if (outlineShape === CatalogOverlayShape.Cross) {
-                    outlineShape = "x-open" as CatalogOverlayShape;
-                }
-                data.marker.symbol = outlineShape;
-
+            selectedData.forEach((data: Plotly.PlotData) => {
                 scatterData.push(data);
             });
         }

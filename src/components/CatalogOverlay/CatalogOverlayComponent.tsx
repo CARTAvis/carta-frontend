@@ -48,7 +48,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
 
     private catalogHeaderTableRef: Table = undefined;
     private catalogFileNames: Map<number, string>;
-    private static readonly axisDataType = [
+    static readonly axisDataType = [
         CARTA.ColumnType.Double,
         CARTA.ColumnType.Float,
         CARTA.ColumnType.Int8,
@@ -204,14 +204,9 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         const catalogWidgetStore = this.widgetStore;
         this.height = height;
         this.width = width;
-        // fixed bug from blueprintjs, only display 4 rows.
+        // fixed bug from blueprintjs, only display 4 rows. catalog name missing (in PR #1104) fixed after package update.
         if (profileStore && this.catalogHeaderTableRef) {
             this.updateTableSize(this.catalogHeaderTableRef, this.props.docked);
-            // hack way to update catalog title
-            if (profileStore.progress === 1 || profileStore.progress === undefined) {
-                const fileName = profileStore.catalogInfo.fileInfo.name;
-                WidgetsStore.Instance.setWidgetComponentTitle(this.props.id, `Catalog : ${fileName}`);
-            }
         }
         if (profileStore && this.catalogTableRef && catalogWidgetStore) {
             this.updateTableSize(this.catalogTableRef, this.props.docked);

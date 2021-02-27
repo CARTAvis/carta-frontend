@@ -1,11 +1,13 @@
 import {observer} from "mobx-react";
+import FuzzySearch from "fuzzy-search";
 import {action, autorun, computed, makeObservable} from "mobx";
 import * as React from "react";
 import {Button, FormGroup, Icon, MenuItem, PopoverPosition, Tab, Tabs} from "@blueprintjs/core";
-import {Select, IItemRendererProps} from "@blueprintjs/select";
-import {AppStore, CatalogStore, DefaultWidgetConfig, HelpType, PreferenceStore, PreferenceKeys, WidgetProps, WidgetsStore} from "stores";
+import {Select, IItemRendererProps, ItemPredicate} from "@blueprintjs/select";
+import {AppStore, CatalogStore, CatalogProfileStore, DefaultWidgetConfig, HelpType, PreferenceStore, PreferenceKeys, WidgetProps, WidgetsStore} from "stores";
 import {CatalogOverlayShape, CatalogWidgetStore, CatalogSettingsTabs} from "stores/widgets";
 import {ColorResult} from "react-color";
+import {CatalogOverlayComponent} from "components";
 import {ColorPickerComponent, SafeNumericInput} from "components/Shared";
 import {SWATCH_COLORS} from "utilities";
 import "./CatalogOverlayPlotSettingsPanelComponent.scss";
@@ -65,6 +67,23 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
 
     @computed get catalogFileId() {
         return CatalogStore.Instance.catalogProfiles?.get(this.props.id);
+    }
+
+    @computed get profileStore(): CatalogProfileStore {
+        return CatalogStore.Instance.catalogProfileStores.get(this.catalogFileId);
+    }
+
+    @computed get axisOption() {
+        const profileStore = this.profileStore;
+        let axisOptions = [];
+
+        profileStore.catalogControlHeader.forEach((header, columnName) => {
+            const dataType = profileStore.catalogHeader[header.dataIndex].dataType;
+            if (CatalogOverlayComponent.axisDataType.includes(dataType) && header.display) {
+                axisOptions.push(columnName);
+            }
+        });
+        return axisOptions;
     }
 
     constructor(props: WidgetProps) {
@@ -192,20 +211,6 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
 
         const overlayPanel = (
             <div className="panel-container">
-                 <FormGroup className={"file-menu"} inline={true} label="File"  disabled={disabledOverlayPanel}>
-                    <Select 
-                        className="bp3-fill"
-                        disabled={disabledOverlayPanel}
-                        filterable={false}
-                        items={catalogFileItems} 
-                        activeItem={this.catalogFileId}
-                        onItemSelect={this.handleCatalogFileChange}
-                        itemRenderer={this.renderFileIdPopOver}
-                        popoverProps={{popoverClassName: "catalog-select", minimal: true , position: PopoverPosition.AUTO_END}}
-                    >
-                        <Button text={activeFileName} rightIcon="double-caret-vertical"  disabled={disabledOverlayPanel}/>
-                    </Select>
-                </FormGroup>
                 <FormGroup label={"Color"} inline={true}  disabled={disabledOverlayPanel}>
                     <ColorPickerComponent
                         color={widgetStore.catalogColor}
@@ -258,6 +263,67 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
             </div>
         );
 
+        const noResults = (<MenuItem disabled={true} text="No results" />);
+
+        const sizeMap = (
+            <div className="panel-container">
+                <FormGroup className="catalog-xaxis" inline={true} label="Map" disabled={disabledOverlayPanel}>
+                    <Select
+                        className="catalog-xaxis-select"
+                        items={this.axisOption}
+                        activeItem={null}
+                        onItemSelect={(columnName) => widgetStore.setSizeMap(columnName)}
+                        itemRenderer={this.renderAxisPopOver}
+                        disabled={disabledOverlayPanel}
+                        popoverProps={{popoverClassName: "catalog-select", minimal: true , position: PopoverPosition.AUTO_END}}
+                        filterable={true}
+                        noResults={noResults}
+                        itemPredicate={this.filterColumn}
+                        resetOnSelect={true}
+                    >
+                        <Button className="catalog-xaxis-button" text={widgetStore.sizeMapColumn} disabled={disabledOverlayPanel} rightIcon="double-caret-vertical"/>
+                    </Select>
+                </FormGroup>
+                <FormGroup  inline={true} label="Size" labelInfo="(px)"  disabled={disabledOverlayPanel}>
+                    <SafeNumericInput
+                        placeholder="Catalog Size"
+                        disabled={disabledOverlayPanel}
+                        min={CatalogWidgetStore.MinOverlaySize}
+                        max={CatalogWidgetStore.MaxOverlaySize}
+                        value={widgetStore.catalogSize}
+                        stepSize={1}
+                        onValueChange={(value: number) => widgetStore.setCatalogSize(value)}
+                    />
+                </FormGroup>
+
+                {/* <FormGroup label={"Scaling"} inline={true}>
+                    <ScalingSelectComponent
+                        selectedItem={renderConfig.scaling}
+                        onItemSelect={renderConfig.setScaling}
+                    />
+                </FormGroup> */}
+
+                {/* <FormGroup label={"Clip Min"} inline={true}>
+                    <SafeNumericInput
+                        value={frame.renderConfig.scaleMinVal}
+                        selectAllOnFocus={true}
+                        buttonPosition={"none"}
+                        onBlur={this.handleScaleMinChange}
+                        onKeyDown={this.handleScaleMinChange}
+                    />
+                </FormGroup>
+                    <FormGroup label={"Clip Max"} inline={true}>
+                        <SafeNumericInput
+                            value={frame.renderConfig.scaleMaxVal}
+                            selectAllOnFocus={true}
+                            buttonPosition={"none"}
+                            onBlur={this.handleScaleMaxChange}
+                            onKeyDown={this.handleScaleMaxChange}
+                        />
+                </FormGroup> */}
+            </div>
+        )
+
         let className = "catalog-settings";
         if (appStore.darkTheme) {
             className += " bp3-dark";
@@ -265,6 +331,20 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
 
         return (
             <div className={className}>
+                <FormGroup className={"file-menu"} inline={true} label="File"  disabled={disabledOverlayPanel}>
+                    <Select 
+                        className="bp3-fill"
+                        disabled={disabledOverlayPanel}
+                        filterable={false}
+                        items={catalogFileItems} 
+                        activeItem={this.catalogFileId}
+                        onItemSelect={this.handleCatalogFileChange}
+                        itemRenderer={this.renderFileIdPopOver}
+                        popoverProps={{popoverClassName: "catalog-select", minimal: true , position: PopoverPosition.AUTO_END}}
+                    >
+                        <Button text={activeFileName} rightIcon="double-caret-vertical"  disabled={disabledOverlayPanel}/>
+                    </Select>
+                </FormGroup>
                 <Tabs
                     id="catalogSettings"
                     vertical={false}
@@ -273,8 +353,24 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
                 >
                     <Tab id={CatalogSettingsTabs.GLOBAL} title="Global" panel={globalPanel}/>
                     <Tab id={CatalogSettingsTabs.IMAGE_OVERLAY} title="Image Overlay" panel={overlayPanel} disabled={disabledOverlayPanel}/>
+                    <Tab id={CatalogSettingsTabs.SIZE} title="Size Map" panel={sizeMap} disabled={disabledOverlayPanel}/>
                 </Tabs>
             </div>
         );
     }
+
+    private renderAxisPopOver = (catalogName: string, itemProps: IItemRendererProps) => {
+        return (
+            <MenuItem
+                key={catalogName}
+                text={catalogName}
+                onClick={itemProps.handleClick}
+            />
+        );
+    }
+
+    private filterColumn: ItemPredicate<string> = (query: string, columnName: string) => {
+        const fileSearcher = new FuzzySearch([columnName]);
+        return fileSearcher.search(query).length > 0;
+    };
 }
