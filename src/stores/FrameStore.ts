@@ -1070,11 +1070,11 @@ export class FrameStore {
                 return `ellipse(wcs:${systemType})[[${center}], [${size.x}, ${size.y}], ${toFixed(region.rotation, 6)}deg]`;
             case CARTA.RegionType.POLYGON:
                 let polygonWcsProperties = `poly(wcs:${systemType})[`;
-                region.controlPoints.forEach((point) => {
+                region.controlPoints.forEach((point, index) => {
                     const wcsPoint = isFinite(point.x) && isFinite(point.y) ? getFormattedWCSPoint(this.wcsInfoForTransformation, point) : null;
-                    polygonWcsProperties += wcsPoint ? `[${wcsPoint.x}, ${wcsPoint.y}], ` : "[Invalid], ";
+                    polygonWcsProperties += wcsPoint ? `[${wcsPoint.x}, ${wcsPoint.y}]` : "[Invalid]";
+                    polygonWcsProperties += index !== region.controlPoints.length - 1 ? ", " : "]";
                 });
-                polygonWcsProperties = polygonWcsProperties.slice(0, -2) + "]";
                 return polygonWcsProperties;
             default:
                 return "Not Implemented";

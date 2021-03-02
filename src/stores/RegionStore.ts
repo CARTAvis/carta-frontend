@@ -200,10 +200,10 @@ export class RegionStore {
                     `${toFixed(this.rotation, 6)}deg]`;
             case CARTA.RegionType.POLYGON:
                 let polygonProperties = "poly[";
-                this.controlPoints.forEach((point) => {
-                    polygonProperties += isFinite(point.x) && isFinite(point.y) ? `[${toFixed(point.x, 6)}pix, ${toFixed(point.y, 6)}pix], ` : "[Invalid], ";
+                this.controlPoints.forEach((point, index) => {
+                    polygonProperties += isFinite(point.x) && isFinite(point.y) ? `[${toFixed(point.x, 6)}pix, ${toFixed(point.y, 6)}pix]` : "[Invalid]";
+                    polygonProperties += index !== this.controlPoints.length - 1 ? ", " : "]";
                 });
-                polygonProperties = polygonProperties.slice(0, -2) + "]";
                 return polygonProperties;
             default:
                 return "Not Implemented";
