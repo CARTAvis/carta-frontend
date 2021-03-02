@@ -1,6 +1,5 @@
 import * as React from "react";
 import * as AST from "ast_wrapper";
-import tinycolor from "tinycolor2";
 import {observer} from "mobx-react";
 import {action, makeObservable, observable} from "mobx";
 import {Select, ItemRenderer} from "@blueprintjs/select";
@@ -9,8 +8,7 @@ import {
     InputGroup, MenuItem,
     Switch, Tab, Tabs, TabId
 } from "@blueprintjs/core";
-import {ColorResult} from "react-color";
-import {ColorPickerComponent, SafeNumericInput, AutoColorPickerComponent} from "components/Shared";
+import {SafeNumericInput, AutoColorPickerComponent} from "components/Shared";
 import {AppStore, BeamType, LabelType, SystemType, HelpType, NumberFormatType, NUMBER_FORMAT_LABEL, DefaultWidgetConfig, WidgetProps} from "stores";
 import { SWATCH_COLORS} from "utilities";
 import "./ImageViewSettingsPanelComponent.scss";
@@ -665,12 +663,11 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
                     />
                 </FormGroup>
                 <FormGroup inline={true} label="Color">
-                    <ColorPickerComponent
-                        color={tinycolor(beamSettings.color).toHexString()}
+                    <AutoColorPickerComponent
+                        color={beamSettings.color}
                         presetColors={SWATCH_COLORS}
-                        setColor={(color: ColorResult) => beamSettings.setColor(color.hex)}
+                        setColor={beamSettings.setColor}
                         disableAlpha={true}
-                        darkTheme={appStore.darkTheme}
                     />
                 </FormGroup>
                 <FormGroup inline={true} label="Type">

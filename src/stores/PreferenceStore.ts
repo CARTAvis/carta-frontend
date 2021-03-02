@@ -112,7 +112,7 @@ const DEFAULTS = {
         astLabelsVisible: true,
         wcsType: WCSType.AUTOMATIC,
         beamVisible: true,
-        beamColor: Colors.GRAY3,
+        beamColor: "auto-gray",
         beamType: BeamType.Open,
         beamWidth: 1,
     },
