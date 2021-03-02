@@ -1361,7 +1361,7 @@ export class AppStore {
     };
 
     handleReconnectStream = () => {
-        this.alertStore.showInteractiveAlert("You have reconnected to the CARTA server. Do you want to resume your session?", this.onResumeAlertClosed);
+        this.alertStore.showInteractiveAlert("You have reconnected to the CARTA server. Do you want to resume your session(moment map images will be ignored)?", this.onResumeAlertClosed);
     };
 
     handleScriptingRequest = (request: CARTA.IScriptingRequest) => {
@@ -1379,6 +1379,13 @@ export class AppStore {
         // Some things should be reset when the user reconnects
         this.animatorStore.stopAnimation();
         this.tileService.clearRequestQueue();
+
+        // Ignore & remove in-memory images(moments)
+        this.frames.forEach(frame => {
+            if (frame.frameInfo.fileId > 1000) {
+                this.removeFrame(frame);
+            }
+        });
 
         const images: CARTA.IImageProperties[] = this.frames.map(frame => {
             const info = frame.frameInfo;
