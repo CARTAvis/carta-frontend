@@ -34,7 +34,7 @@ extern "C" {
 
 EMSCRIPTEN_KEEPALIVE AstFrameSet* initFrame(const char* header)
 {
-     if (!header)
+    if (!header)
     {
         cout << "Missing header argument." << endl;
         return nullptr;
@@ -53,12 +53,6 @@ EMSCRIPTEN_KEEPALIVE AstFrameSet* initFrame(const char* header)
     if (!frameSet || !astIsAFrameSet(frameSet))
     {
         cout << "Creating frame set failed." << endl;
-        return nullptr;
-    }
-
-    // work around for missing CTYPE1 & CTYPE2
-    const char *domain = astGetC(frameSet, "Domain");
-    if (!strstr(domain, "SKY")) {
         return nullptr;
     }
 

@@ -28,8 +28,9 @@ export enum SpectralType {
 }
 
 // Channel is not a valid standalone spectral type
-export const IsSpectralTypeSupported = (type: string): boolean => {
-    return type && type !== SpectralType.CHANNEL && Object.values(SpectralType).includes(type as SpectralType);
+export const IsSpectralTypeSupported = (typeStr: string): boolean => {
+    const normalizedStr = typeStr?.toUpperCase();
+    return Object.values(SpectralType).includes(normalizedStr as SpectralType) && normalizedStr !== SpectralType.CHANNEL;
 };
 
 export const SPECTRAL_MATCHING_TYPES: SpectralType[] = [SpectralType.VRAD, SpectralType.VOPT, SpectralType.FREQ, SpectralType.CHANNEL];
@@ -50,6 +51,7 @@ export enum SpectralUnit {
     NM = "nm",
     ANGSTROM  = "Angstrom"
 }
+
 export const IsSpectralUnitSupported = (unit: string): boolean => {
     return unit && Object.values(SpectralUnit).includes(unit as SpectralUnit);
 };
@@ -60,8 +62,10 @@ export enum SpectralSystem {
     BARY = "BARYCENT",
     TOPO = "TOPOCENT"
 }
-export const IsSpectralSystemSupported = (system: string): boolean => {
-    return system && Object.values(SpectralSystem).includes(system as SpectralSystem);
+
+export const IsSpectralSystemSupported = (systemStr: string): boolean => {
+    const normalizedStr = systemStr?.toUpperCase();
+    return Object.values(SpectralSystem).includes(normalizedStr as SpectralSystem);
 };
 
 export const SPECTRAL_TYPE_STRING = new Map<SpectralType, string>([

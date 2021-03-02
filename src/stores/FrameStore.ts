@@ -659,6 +659,20 @@ export class FrameStore {
         return [];
     }
 
+    @computed get isValidPVImage(): { valid: boolean; numSpectralAxis: number } {
+        if (this.frameInfo?.fileInfoExtended?.headerEntries) {
+            const entries = this.frameInfo.fileInfoExtended.headerEntries;
+            const axis1 = entries.find(entry => entry.name.includes("CTYPE1"));
+            const axis2 = entries.find(entry => entry.name.includes("CTYPE2"));
+            const positionAxisRegex = /offset|position|offset position/i;
+            if ((axis1?.value?.match(positionAxisRegex) && IsSpectralTypeSupported(axis2?.value?.trim())) ||
+                (axis2?.value?.match(positionAxisRegex) && IsSpectralTypeSupported(axis1?.value?.trim()))) {
+                return { valid: true, numSpectralAxis: axis1?.value?.match(positionAxisRegex) ? 2 : 1 };
+            }
+        }
+        return { valid: false, numSpectralAxis: undefined };
+    }
+
     constructor(frameInfo: FrameInfo) {
         makeObservable(this);
         this.overlayStore = OverlayStore.Instance;
@@ -727,31 +741,40 @@ export class FrameStore {
         };
         this.animationChannelRange = [0, frameInfo.fileInfoExtended.depth - 1];
 
-        // init WCS
-        this.astFrameSet = this.initFrame();
-        if (this.astFrameSet) {
-            if (this.spectralAxis && this.spectralAxis.valid) {
+        if (this.isValidPVImage.valid) {
+            this.astFrameSet = this.initPVImage();
+            if (this.astFrameSet) {
                 this.spectralFrame = AST.getSpectralFrame(this.astFrameSet);
-            }
-
-            if (frameInfo.fileInfoExtended.depth > 1) { // 3D frame
-                this.wcsInfo3D = AST.copy(this.astFrameSet);
-                this.wcsInfo = AST.getSkyFrameSet(this.astFrameSet);
-            } else { // 2D frame
                 this.wcsInfo = AST.copy(this.astFrameSet);
-            }
-
-            if (this.wcsInfo) {
-                // init 2D(Sky) wcs copy for the precision of region coordinate transformation
-                this.wcsInfoForTransformation = AST.copy(this.wcsInfo);
-                AST.set(this.wcsInfoForTransformation, `Format(1)=${AppStore.Instance.overlayStore.numbers.formatTypeX}.${WCS_PRECISION}`);
-                AST.set(this.wcsInfoForTransformation, `Format(2)=${AppStore.Instance.overlayStore.numbers.formatTypeY}.${WCS_PRECISION}`);
-                this.validWcs = true;
-                this.overlayStore.setDefaultsFromAST(this);
+            } else {
+                this.logStore.addWarning(`Problem processing headers in file ${this.filename} for AST`, ["ast"]);
+                this.wcsInfo = AST.initDummyFrame();
             }
         } else {
-            this.logStore.addWarning(`Problem processing WCS info in file ${this.filename}`, ["ast"]);
-            this.wcsInfo = AST.initDummyFrame();
+            // init WCS
+            this.astFrameSet = this.initFrame();
+            if (this.astFrameSet) {
+                this.spectralFrame = AST.getSpectralFrame(this.astFrameSet);
+
+                if (frameInfo.fileInfoExtended.depth > 1) { // 3D frame
+                    this.wcsInfo3D = AST.copy(this.astFrameSet);
+                    this.wcsInfo = AST.getSkyFrameSet(this.astFrameSet);
+                } else { // 2D frame
+                    this.wcsInfo = AST.copy(this.astFrameSet);
+                }
+
+                if (this.wcsInfo) {
+                    // init 2D(Sky) wcs copy for the precision of region coordinate transformation
+                    this.wcsInfoForTransformation = AST.copy(this.wcsInfo);
+                    AST.set(this.wcsInfoForTransformation, `Format(1)=${AppStore.Instance.overlayStore.numbers.formatTypeX}.${WCS_PRECISION}`);
+                    AST.set(this.wcsInfoForTransformation, `Format(2)=${AppStore.Instance.overlayStore.numbers.formatTypeY}.${WCS_PRECISION}`);
+                    this.validWcs = true;
+                    this.overlayStore.setDefaultsFromAST(this);
+                }
+            } else {
+                this.logStore.addWarning(`Problem processing headers in file ${this.filename} for AST`, ["ast"]);
+                this.wcsInfo = AST.initDummyFrame();
+            }
         }
 
         this.initSupportedSpectralConversion();
@@ -817,6 +840,37 @@ export class FrameStore {
             return undefined;
         }
         return AST.transformSpectralPoint(this.spectralFrame, type, unit, system, value);
+    };
+
+    private initPVImage = (): number => {
+        let headerString = "";
+        for (let entry of this.frameInfo.fileInfoExtended.headerEntries) {
+            if (entry.name.match(/(CTYPE|CDELT|CRPIX|CRVAL|CUNIT|NAXIS|CROTA)[3-9]/)) {
+                continue;
+            }
+
+            let name = entry.name;
+            let value = trimFitsComment(entry.value);
+            if (entry.name.toUpperCase() === "NAXIS" || entry.name.toUpperCase() === "WCSAXES") {
+                value = "2";
+            }
+            if (entry.entryType === CARTA.EntryType.STRING) {
+                value = `'${value}'`;
+            } else {
+                value = FrameStore.ShiftASTCoords(entry, value);
+            }
+
+            while (name.length < 8) {
+                name += " ";
+            }
+
+            let entryString = `${name}=  ${value}`;
+            while (entryString.length < 80) {
+                entryString += " ";
+            }
+            headerString += entryString;
+        }
+        return AST.initFrame(headerString);
     };
 
     private initFrame = (): number => {
