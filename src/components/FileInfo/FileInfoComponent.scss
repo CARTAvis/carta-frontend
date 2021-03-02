@@ -44,7 +44,7 @@
             }
 
             .header-comment {
-                opacity: 0.5;
+                color: rgba(0, 0, 0, 0.5);
                 font-style: italic;
             }
         }
@@ -76,6 +76,10 @@
 
     .info-highlight {
         background-color: yellow;
+    }
+
+    .info-highlight-selected {
+        background-color: $gold5;
     }
 }
 

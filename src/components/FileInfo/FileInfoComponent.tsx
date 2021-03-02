@@ -35,7 +35,9 @@ export class FileInfoComponent extends React.Component<{
     @observable matchedTotal: number = 0;
     @observable isMouseEntered: boolean = false;
     @observable isSearchOpened: boolean = false;
+    @observable matchedIterLocation: {line: number, num: number} = {line: 0, num: 0};
     private splitStringArray: Array<Array<string>> = [];
+    private listRef = React.createRef<any>();
 
     @action onMouseEnter = () => {
         this.isMouseEntered = true;
@@ -49,14 +51,23 @@ export class FileInfoComponent extends React.Component<{
 
     @action searchOpened = () => {
         this.isSearchOpened = true;
-    }
+    };
 
     @action searchClosed = () => {
         this.isSearchOpened = false;
         this.searchString = "";
-        this.matchedIter = 0;
+        this.resetMatchedNums();
+        this.matchedIterLocation = {line: 0, num: 0};
+    };
+
+    @action setSearchString = (inputSearchString: string) => {
+        this.searchString = inputSearchString;
+    };
+
+    @action resetMatchedNums = () => {
         this.matchedTotal = 0;
-    }
+        this.matchedIter = 0;
+    };
 
     @action addMatchedIter = () => {
         if (this.matchedIter >= this.matchedTotal) {
@@ -74,25 +85,67 @@ export class FileInfoComponent extends React.Component<{
         }
     };
 
-    @action private handleSearchStringChanged = (ev: React.ChangeEvent<HTMLInputElement>) => {
-        this.searchString = ev.target.value;
+    @action initMatchedIter = () => {
+        this.matchedIter = (this.matchedTotal > 0) ? 1 : 0;
+    };
+
+    @action addMatchedTotal = (inputNum: number) => {
+        this.matchedTotal += inputNum;
+    };
+
+    @action setMatchedIterLocation = (inputLine: number, inputNum: number) => {
+        this.matchedIterLocation.line = inputLine;
+        this.matchedIterLocation.num = inputNum;
+    };
+
+    private handleSearchStringChanged = (ev: React.ChangeEvent<HTMLInputElement>) => {
+        this.setSearchString(ev.target.value);
+        this.resetMatchedNums();
         
         // TODO: less strict search
         // TODO: debounce
         if (this.searchString !== ""){
             this.splitStringArray = [];
-            this.matchedTotal = 0;
-            this.props.fileInfoExtended.headerEntries.forEach((entriesValue) => {
+            let setScrollLineFlag = true;
+
+            this.props.fileInfoExtended.headerEntries.forEach((entriesValue, index) => {
                 let splitString = (entriesValue.name !== "END") ?
-                `${entriesValue.name} = ${entriesValue.value}${entriesValue.comment && " / "+entriesValue.comment}`.split(this.searchString) : entriesValue.name.split(this.searchString)
+                    `${entriesValue.name} = ${entriesValue.value}${entriesValue.comment && " / "+entriesValue.comment}`.split(this.searchString) : entriesValue.name.split(this.searchString)
                 this.splitStringArray.push(splitString);
-                this.matchedTotal += splitString.length - 1;
+                this.addMatchedTotal(splitString.length - 1);
+
+                if (splitString.length > 1 && setScrollLineFlag) {
+                    this.setMatchedIterLocation(index, 0);
+                    setScrollLineFlag = false;
+                }
             });
-            this.matchedIter = (this.matchedTotal > 0) ? 1 : 0;
-        } else {
-            this.matchedTotal = 0;
-            this.matchedIter = 0;
+
+            this.initMatchedIter();
+            this.listRef.current.scrollToItem(this.matchedIterLocation.line, "start");
         }
+    };
+
+    private calculateLocation = () => {
+        let matchedNum = 0;
+        for (let i = 0; i < this.splitStringArray.length; i++) {
+            const length = this.splitStringArray[i].length - 1
+            matchedNum += length;
+            if(matchedNum >= this.matchedIter) {
+                this.setMatchedIterLocation(i, this.matchedIter - matchedNum + length - 1);
+                this.listRef.current.scrollToItem(this.matchedIterLocation.line, "smart");
+                break;
+            }
+        }
+    };
+
+    private handleClickMatchedNext = () => {
+        this.addMatchedIter();
+        this.calculateLocation();
+    }
+
+    private handleClickMatchedPrev = () => {
+        this.minusMatchedIter();
+        this.calculateLocation();
     }
 
     constructor(props) {
@@ -145,7 +198,7 @@ export class FileInfoComponent extends React.Component<{
             case FileInfoType.IMAGE_FILE:
                 return this.renderImageHeaderList(this.props.fileInfoExtended.computedEntries);
             case FileInfoType.IMAGE_HEADER:
-                return this.renderImageHeaderList(this.props.fileInfoExtended.headerEntries, this.searchString);
+                return this.renderImageHeaderList(this.props.fileInfoExtended.headerEntries);
             case FileInfoType.REGION_FILE:
                 return <Pre className="file-info-pre">{this.props.regionFileInfo}</Pre>;
             case FileInfoType.CATALOG_FILE:
@@ -168,7 +221,12 @@ export class FileInfoComponent extends React.Component<{
         }
     };
 
-    private highlightString(splitString: Array<string>, searchString: string, name: string, value?: string, comment?: string) {
+    private highlightString(index: number, name: string, value?: string, comment?: string) {
+        const splitString = this.splitStringArray[index]
+
+        if(!splitString || !name) {
+            return null;
+        }
         let highlightedString = [];
         let highlighClassName = "";
         let keyIter = 0; // add unique keys to span to avoid warning
@@ -176,46 +234,48 @@ export class FileInfoComponent extends React.Component<{
             let classNameType = ["header-name", "header-value", "header-comment"];
             let classNameTypeIter = 0;
             let usedString = 0; 
+
             function addHighlightedString(addString: string, sliceStart: number, sliceEnd?: number): void {
                 highlightedString.push(<span className={classNameType[classNameTypeIter]+highlighClassName} key={keyIter.toString()}>{isFinite(sliceEnd) ? addString.slice(sliceStart, sliceEnd) : addString.slice(sliceStart)}</span>);
                 keyIter += 1;
                 return;
             }
-            splitString.forEach((arrayValue) => {
 
+            splitString.forEach((arrayValue, arrayIndex) => {
                 highlighClassName = "";
-                for (const addString of [arrayValue, searchString]) {
+                for (const addString of [arrayValue, this.searchString]) {
                     const formerUsedString = usedString;
                     const nameValueLength = name.length + 3 + value.length;
-                    usedString += addString.length;;
+                    usedString += addString.length;
+
                     if (comment && classNameTypeIter === 0 && usedString >= nameValueLength) {
                         addHighlightedString(addString, 0, name.length - formerUsedString);
                         classNameTypeIter += 1;
                         addHighlightedString(addString, name.length - formerUsedString, nameValueLength - formerUsedString);
                         classNameTypeIter += 1;
                         addHighlightedString(addString, nameValueLength - formerUsedString);
-
                     } else if (classNameTypeIter === 0 && usedString >= name.length ) {
                         addHighlightedString(addString, 0, name.length - formerUsedString);
                         classNameTypeIter += 1;
                         addHighlightedString(addString, name.length - formerUsedString);
-
                     } else if (comment && classNameTypeIter === 1 && usedString > nameValueLength) {
                         addHighlightedString(addString, 0, nameValueLength - formerUsedString);
                         classNameTypeIter += 1;
                         addHighlightedString(addString, nameValueLength - formerUsedString);
-
                     } else {
                         highlightedString.push(<span className={classNameType[classNameTypeIter]+highlighClassName} key={keyIter.toString()}>{addString}</span>);
                         keyIter += 1;
                     }
-    
-                    highlighClassName = " info-highlight";
+
+                    if ((index === this.matchedIterLocation.line) && (arrayIndex === this.matchedIterLocation.num)) {
+                        highlighClassName = " info-highlight-selected";
+                    } else {
+                        highlighClassName = " info-highlight";
+                    }
                 }
             });
         } else {
             splitString.forEach((value) => {
-
                 highlighClassName = "";
                 for (const string of [value,this.searchString]) {
                     highlightedString.push(<span className={"header-name"+highlighClassName} key={keyIter.toString()}>{string}</span>);
@@ -229,16 +289,16 @@ export class FileInfoComponent extends React.Component<{
         return highlightedString;
     }
 
-    private renderImageHeaderList(entries: CARTA.IHeaderEntry[], searchString?: string) {
+    private renderImageHeaderList(entries: CARTA.IHeaderEntry[]) {
         const renderHeaderRow = ({index, style}) => {
             if (index < 0 || index >= entries?.length) {
                 return null;
             }
             const header = entries[index];
-            if ((searchString) && (searchString !== "")) {
+            if ((this.props.selectedTab === FileInfoType.IMAGE_HEADER) && (this.searchString !== "")) {
                 return (
                     <div style={style} className="header-entry">
-                        {this.highlightString(this.splitStringArray[index], searchString, header.name, header.value, header.comment)}
+                        {this.highlightString(index, header.name, header.value, header.comment)}
                     </div>
                 );
             } else {
@@ -253,7 +313,7 @@ export class FileInfoComponent extends React.Component<{
                         </div>
                     );
                 }
-            }  
+            }
         };
 
         const numHeaders = entries?.length || 0;
@@ -266,6 +326,7 @@ export class FileInfoComponent extends React.Component<{
                         itemSize={18}
                         height={height}
                         width={width}
+                        ref={this.listRef}
                     >
                         {renderHeaderRow}
                     </List>
@@ -283,13 +344,13 @@ export class FileInfoComponent extends React.Component<{
                 <Button
                     icon="caret-left"
                     minimal={true}
-                    onClick={this.minusMatchedIter}
+                    onClick={this.handleClickMatchedPrev}
                     disabled={(this.matchedIter === 0) || (this.matchedTotal === 1) ? true : false}
                 />
                 <Button
                     icon="caret-right"
                     minimal={true}
-                    onClick={this.addMatchedIter}
+                    onClick={this.handleClickMatchedNext}
                     disabled={(this.matchedIter === 0) || (this.matchedTotal === 1) ? true : false}
                 />
             </ButtonGroup>
