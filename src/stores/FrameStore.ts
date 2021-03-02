@@ -1065,9 +1065,9 @@ export class FrameStore {
             case CARTA.RegionType.POINT:
                 return `Point (wcs:${systemType}) [${center}]`;
             case CARTA.RegionType.RECTANGLE:
-                return `rotbox(wcs:${systemType})[[${center}], [${size.x}, ${size.y}], ${toFixed(region.rotation, 1)}deg]`;
+                return `rotbox(wcs:${systemType})[[${center}], [${size.x}, ${size.y}], ${toFixed(region.rotation,6)}deg]`;
             case CARTA.RegionType.ELLIPSE:
-                return `ellipse(wcs:${systemType})[[${center}], [${size.x}, ${size.y}], ${toFixed(region.rotation, 1)}deg]`;
+                return `ellipse(wcs:${systemType})[[${center}], [${size.x}, ${size.y}], ${toFixed(region.rotation, 6)}deg]`;
             case CARTA.RegionType.POLYGON:
                 let polygonWcsProperties = `poly(wcs:${systemType})[`;
                 region.controlPoints.forEach((point) => {
