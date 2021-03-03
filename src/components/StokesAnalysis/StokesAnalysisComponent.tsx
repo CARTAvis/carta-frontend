@@ -9,7 +9,7 @@ import {CARTA} from "carta-protobuf";
 import {LinePlotComponent, LinePlotComponentProps, ProfilerInfoComponent, ScatterPlotComponent, ScatterPlotComponentProps, VERTICAL_RANGE_PADDING, PlotType, SmoothingType} from "components/Shared";
 import {StokesAnalysisToolbarComponent} from "./StokesAnalysisToolbarComponent/StokesAnalysisToolbarComponent";
 import {TickType, MultiPlotProps} from "../Shared/LinePlot/PlotContainer/PlotContainerComponent";
-import {AnimationState, SpectralProfileStore, DefaultWidgetConfig, WidgetProps, HelpType, AnimatorStore, WidgetsStore, AppStore} from "stores";
+import {SpectralProfileStore, DefaultWidgetConfig, WidgetProps, HelpType, AnimatorStore, WidgetsStore, AppStore} from "stores";
 import {StokesAnalysisWidgetStore, StokesCoordinate} from "stores/widgets";
 import {Point2D} from "models";
 import {clamp, normalising, polarizationAngle, polarizedIntensity, binarySearchByX, closestPointIndexToCursor, toFixed, toExponential, minMaxPointArrayZ, formattedNotation, minMaxArray} from "utilities";
@@ -165,7 +165,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
 
     onChannelChanged = (x: number) => {
         const frame = this.widgetStore.effectiveFrame;
-        if (AnimatorStore.Instance.animationState === AnimationState.PLAYING) {
+        if (AnimatorStore.Instance.animationActive) {
             return;
         }
 
@@ -193,7 +193,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
 
     onScatterChannelChanged = (x: number, y: number, data: Point3D[]) => {
         const frame = this.widgetStore.effectiveFrame;
-        if (AnimatorStore.Instance.animationState === AnimationState.PLAYING) {
+        if (AnimatorStore.Instance.animationActive) {
             return;
         }
         if (data.length > 0 && frame && frame.channelInfo) {
@@ -821,7 +821,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
             return <NonIdealState icon={"error"} title={"Missing profile"} description={"Profile not found"}/>;
         }
         const frame = this.widgetStore.effectiveFrame;
-        const imageName = (this.widgetStore.effectiveFrame ? this.widgetStore.effectiveFrame.frameInfo.fileInfo.name : undefined);
+        const imageName = (this.widgetStore.effectiveFrame ? this.widgetStore.effectiveFrame.filename : undefined);
         let quLinePlotProps: LinePlotComponentProps = {
             xLabel: "Channel",
             yLabel: "Value",
@@ -1188,7 +1188,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
                 let channelRequired = {
                     value: this.requiredChannelValue,
                     id: "marker-channel-required",
-                    draggable: AnimatorStore.Instance.animationState !== AnimationState.PLAYING,
+                    draggable: !AnimatorStore.Instance.animationActive,
                     dragMove: this.onChannelChanged,
                     horizontal: false,
                 };
@@ -1238,7 +1238,9 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
                     </div>
                     <ProfilerInfoComponent info={this.genProfilerInfo()}/>
                 </div>
-                <ReactResizeDetector handleWidth handleHeight onResize={this.onResize} refreshMode={"throttle"} refreshRate={33}/>
+                <ReactResizeDetector handleWidth handleHeight onResize={this.onResize} refreshMode={"throttle"} refreshRate={33}>
+
+                </ReactResizeDetector>
             </div>
         );
     }

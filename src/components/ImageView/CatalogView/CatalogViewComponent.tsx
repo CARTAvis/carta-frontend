@@ -3,7 +3,6 @@ import * as Plotly from "plotly.js";
 import {observer} from "mobx-react";
 import {computed} from "mobx";
 import Plot from "react-plotly.js";
-import {Colors} from "@blueprintjs/core";
 import {AppStore, WidgetsStore, CatalogStore} from "stores";
 import {CatalogOverlayShape} from "stores/widgets";
 import {canvasToTransformedImagePos} from "components/ImageView/RegionView/shared";
@@ -109,7 +108,7 @@ export class CatalogViewComponent extends React.Component<CatalogViewComponentPr
             const lineHeight = 15;
             const delta = wheelEvent.deltaMode === WheelEvent.DOM_DELTA_PIXEL ? wheelEvent.deltaY : wheelEvent.deltaY * lineHeight;
             if (frame.wcsInfo && this.props.onZoomed) {
-                const cursorPosImageSpace = canvasToTransformedImagePos(wheelEvent.offsetX, wheelEvent.offsetY, frame, this.props.width, this.props.height);
+                const cursorPosImageSpace = canvasToTransformedImagePos(wheelEvent.offsetX, wheelEvent.offsetY, frame, this.props.width * 2, this.props.height * 2);
                 this.props.onZoomed(frame.getCursorInfo(cursorPosImageSpace), -delta);
             }
         }
@@ -118,8 +117,11 @@ export class CatalogViewComponent extends React.Component<CatalogViewComponentPr
     render() {
         const appStore = AppStore.Instance;
         const frame = appStore.activeFrame;
-        const width = this.props.width;
-        const height = this.props.height;
+        const width = this.props.width * 2;
+        const height = this.props.height * 2;
+        // fixed devicePixelRatio 2, 1 / devicePixelRatio will cause point selection bug
+        // when user swith devices from devicePixelRatio = 1 to 2
+        const scale = 1 / 2;
         const padding = appStore.overlayStore.padding;
         const catalogStore = CatalogStore.Instance;
         let className = "catalog-div";
@@ -175,54 +177,41 @@ export class CatalogViewComponent extends React.Component<CatalogViewComponentPr
         let scatterData: Plotly.Data[] = [];
         const unSelectedData = this.unSelectedData;
         const selectedData = this.selectedData;
-        unSelectedData.forEach((data, fileId) => {
+        unSelectedData.forEach((data: Plotly.PlotData, fileId) => {
             const catalogWidgetStore = catalogStore.getCatalogWidgetStore(fileId);
-            const color = catalogWidgetStore.catalogColor;
-            if (color) {
-                data.marker.color = color;
-                data.marker.line.color = color;
-                data.marker.line.width = 2;
-            }
-
-            const size = catalogWidgetStore.catalogSize;
-            if (size) {
-                data.marker.size = size * devicePixelRatio;
-            }
-
-            const shape = catalogWidgetStore.catalogShape;
-            if (shape) {
-                data.marker.symbol = shape;
-            }
+            const color = catalogWidgetStore.catalogColor;            
+            data.marker.color = color;
+            data.marker.line.color = color;
+            data.marker.line.width = 4;
+            data.marker.size = catalogWidgetStore.catalogSize * 2;
+            data.marker.symbol = catalogWidgetStore.catalogShape;
             scatterData.push(data);   
         });
 
         if (selectedData) {
-            selectedData.forEach((data, fileId) => {
-                data.marker.color = Colors.RED2;
-                data.marker.line.color = Colors.RED2;
-                data.marker.line.width = 2;
+            selectedData.forEach((data: Plotly.PlotData, fileId) => {
                 const catalogWidgetStore = catalogStore.getCatalogWidgetStore(fileId);
-                const size = catalogWidgetStore.catalogSize;
-                if (size) {
-                    data.marker.size = size * devicePixelRatio + 4;
-                }
+                data.marker.color = catalogWidgetStore.highlightColor;
+                data.marker.line.color = catalogWidgetStore.highlightColor;
+                data.marker.line.width = 4;
+                data.marker.size = catalogWidgetStore.catalogSize * 2 + 5;
+
                 let outlineShape = catalogWidgetStore.catalogShape;
-                if (outlineShape) {
-                    if (outlineShape === CatalogOverlayShape.FullCircle) {
-                        outlineShape = CatalogOverlayShape.Circle;
-                    } else if (outlineShape === CatalogOverlayShape.FullStar) {
-                        outlineShape = CatalogOverlayShape.Star;
-                    } else if (outlineShape === CatalogOverlayShape.Plus) {
-                        outlineShape = "cross-open" as CatalogOverlayShape;
-                    } else if (outlineShape === CatalogOverlayShape.Cross) {
-                        outlineShape = "x-open" as CatalogOverlayShape;
-                    }
-                    data.marker.symbol = outlineShape;
+                if (outlineShape === CatalogOverlayShape.FullCircle) {
+                    outlineShape = CatalogOverlayShape.Circle;
+                } else if (outlineShape === CatalogOverlayShape.FullStar) {
+                    outlineShape = CatalogOverlayShape.Star;
+                } else if (outlineShape === CatalogOverlayShape.Plus) {
+                    outlineShape = "cross-open" as CatalogOverlayShape;
+                } else if (outlineShape === CatalogOverlayShape.Cross) {
+                    outlineShape = "x-open" as CatalogOverlayShape;
                 }
+                data.marker.symbol = outlineShape;
+
                 scatterData.push(data);
             });
         }
-
+        
         return (
             <div className={className} style={{left: padding.left, top: padding.top}} onWheelCapture={this.onWheelCaptured}>
                 <Plot
@@ -232,6 +221,7 @@ export class CatalogViewComponent extends React.Component<CatalogViewComponentPr
                     config={config}
                     onClick={this.onClick}
                     onDoubleClick={this.onDoubleClick}
+                    style={{transform: `scale(${scale})`, transformOrigin: "top left"}}
                 />
             </div>
         );

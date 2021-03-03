@@ -3,13 +3,13 @@ import * as _ from "lodash";
 import ReactResizeDetector from "react-resize-detector";
 import {action, autorun, computed, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
-import {Button, ButtonGroup, FormGroup, HTMLSelect, IOptionProps, NonIdealState, NumericInput, Colors} from "@blueprintjs/core";
+import {Button, ButtonGroup, FormGroup, HTMLSelect, IOptionProps, NonIdealState, Colors} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import {ColormapConfigComponent} from "./ColormapConfigComponent/ColormapConfigComponent";
-import {LinePlotComponent, LinePlotComponentProps, ProfilerInfoComponent} from "components/Shared";
+import {LinePlotComponent, LinePlotComponentProps, ProfilerInfoComponent, SafeNumericInput} from "components/Shared";
 import {TaskProgressDialogComponent} from "components/Dialogs";
 import {RenderConfigWidgetStore} from "stores/widgets";
-import {AnimationState, FrameStore, RenderConfigStore, DefaultWidgetConfig, WidgetProps, HelpType, AppStore, AnimatorStore, WidgetsStore} from "stores";
+import {FrameStore, RenderConfigStore, DefaultWidgetConfig, WidgetProps, HelpType, AppStore, WidgetsStore} from "stores";
 import {Point2D} from "models";
 import {clamp, toExponential, toFixed} from "utilities";
 import "./RenderConfigComponent.scss";
@@ -253,7 +253,7 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
             unitString = `Value (${frame.unit})`;
         }
 
-        const imageName = frame.frameInfo.fileInfo.name;
+        const imageName = frame.filename;
         const plotName = `channel ${frame.channel} histogram`;
         let linePlotProps: LinePlotComponentProps = {
             xLabel: unitString,
@@ -406,21 +406,20 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
                         renderConfig={frame.renderConfig}
                         onCubeHistogramSelected={this.handleCubeHistogramSelected}
                         showHistogramSelect={frame.frameInfo.fileInfoExtended.depth > 1}
-                        disableHistogramSelect={AnimatorStore.Instance.animationState === AnimationState.PLAYING}
+                        disableHistogramSelect={appStore.animatorStore.animationActive}
                         warnOnCubeHistogram={(frame.frameInfo.fileFeatureFlags & CARTA.FileFeatureFlags.CUBE_HISTOGRAMS) === 0}
                     />
                     <FormGroup label={"Clip Min"} inline={true}>
-                        <NumericInput
+                        <SafeNumericInput
                             value={frame.renderConfig.scaleMinVal}
                             selectAllOnFocus={true}
                             buttonPosition={"none"}
-                            allowNumericCharactersOnly={false}
                             onBlur={this.handleScaleMinChange}
                             onKeyDown={this.handleScaleMinChange}
                         />
                     </FormGroup>
                     <FormGroup label={"Clip Max"} inline={true}>
-                        <NumericInput
+                        <SafeNumericInput
                             value={frame.renderConfig.scaleMaxVal}
                             selectAllOnFocus={true}
                             buttonPosition={"none"}
@@ -438,7 +437,8 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
                     onCancel={this.handleCubeHistogramCancelled}
                     text={"Calculating cube histogram"}
                 />
-                <ReactResizeDetector handleWidth handleHeight onResize={this.onResize} refreshMode={"throttle"}/>
+                <ReactResizeDetector handleWidth handleHeight onResize={this.onResize} refreshMode={"throttle"}>
+                </ReactResizeDetector>
             </div>
         );
     }

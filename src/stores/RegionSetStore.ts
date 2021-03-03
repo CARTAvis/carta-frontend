@@ -146,7 +146,7 @@ export class RegionSetStore {
             if (region.regionId === CURSOR_REGION_ID) {
                 const centerNewFrame = transformPoint(spatialTransformAST, region.center, forward);
                 if (this.regions.length && this.regions[0].regionId === CURSOR_REGION_ID) {
-                    this.regions[0].setControlPoint(0, centerNewFrame);
+                    this.regions[0].setCenter(centerNewFrame);
                 }
             } else {
 
@@ -157,7 +157,7 @@ export class RegionSetStore {
                     const centerNewFrame = transformPoint(spatialTransformAST, region.center, forward);
                     if (!isAstBadPoint(centerNewFrame)) {
                         const transform = new Transform2D(spatialTransformAST, centerNewFrame);
-                        const size = scale2D(region.controlPoints[1], forward ? transform.scale : 1.0 / transform.scale);
+                        const size = scale2D(region.size, forward ? transform.scale : 1.0 / transform.scale);
                         rotation = region.rotation + (forward ? 1 : -1) * transform.rotation * 180 / Math.PI;
                         newControlPoints = [centerNewFrame, size];
                     }

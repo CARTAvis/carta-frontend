@@ -7,7 +7,6 @@ protobuf
 wasm_src
 wasm_libs
 config
-build/**/*.js.map
 tsconfig*.json
 tslint.json
 *.sh

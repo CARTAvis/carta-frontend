@@ -103,7 +103,7 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
             type: "floating-settings",
             minWidth: 280,
             minHeight: 225,
-            defaultWidth: 550,
+            defaultWidth: 600,
             defaultHeight: 420,
             title: "image-view-settings",
             isCloseable: true,

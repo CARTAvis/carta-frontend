@@ -48,7 +48,7 @@ export class RootMenuComponent extends React.Component {
                 </Menu.Item>
                 {restWidgets.map(widgetType => {
                     const widgetConfig = WidgetsStore.Instance.CARTAWidgets.get(widgetType);
-                    const trimmedStr = widgetType.trim();
+                    const trimmedStr = widgetType.replace(/\s+/g, '');
                     return (
                         <Menu.Item
                             key={`${trimmedStr}Menu`}
@@ -152,7 +152,7 @@ export class RootMenuComponent extends React.Component {
                 <Menu.Divider/>
                 <Menu.Item
                     text="Import catalog"
-                    label={`${modString}C`}
+                    label={`${modString}G`}
                     disabled={connectionStatus !== ConnectionStatus.ACTIVE || !appStore.activeFrame || appStore.fileLoading}
                     onClick={() => appStore.fileBrowserStore.showFileBrowser(BrowserMode.Catalog, false)}
                 />
@@ -168,10 +168,10 @@ export class RootMenuComponent extends React.Component {
             </Menu>
         );
 
-        let layerItems = appStore.frames.slice().sort((a, b) => a.frameInfo.fileId <= b.frameInfo.fileId ? -1 : 1).map(frame => {
+        let layerItems = appStore.frames.map(frame => {
             return (
                 <Menu.Item
-                    text={frame.frameInfo.fileInfo.name}
+                    text={frame.filename}
                     active={appStore.activeFrame && appStore.activeFrame.frameInfo.fileId === frame.frameInfo.fileId}
                     key={frame.frameInfo.fileId}
                     onClick={() => this.handleFrameSelect(frame.frameInfo.fileId)}

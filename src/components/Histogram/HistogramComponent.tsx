@@ -206,7 +206,7 @@ export class HistogramComponent extends React.Component<WidgetProps> {
             unitString = `Value (${frame.unit})`;
         }
 
-        const imageName = frame.frameInfo.fileInfo.name;
+        const imageName = frame.filename;
         const plotName = `channel ${frame.channel} histogram`;
         let linePlotProps: LinePlotComponentProps = {
             xLabel: unitString,
@@ -280,7 +280,8 @@ export class HistogramComponent extends React.Component<WidgetProps> {
                         <LinePlotComponent {...linePlotProps}/>
                     </div>
                 </div>
-                <ReactResizeDetector handleWidth handleHeight onResize={this.onResize} refreshMode={"throttle"}/>
+                <ReactResizeDetector handleWidth handleHeight onResize={this.onResize} refreshMode={"throttle"}>
+                </ReactResizeDetector>
             </div>
         );
     }

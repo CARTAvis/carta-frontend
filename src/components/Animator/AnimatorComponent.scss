@@ -29,10 +29,8 @@
             .slider-info {
                 overflow-x: hidden;
                 flex: 1 1 180px;
-                pre {
-                    margin: 0px;
-                    font-size: x-small;
-                }
+                font-size: x-small;
+                word-wrap: break-word;
             }
 
             &.range-slider {

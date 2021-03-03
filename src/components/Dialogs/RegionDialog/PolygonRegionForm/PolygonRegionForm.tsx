@@ -1,12 +1,13 @@
 import * as React from "react";
 import {observer} from "mobx-react";
 import {makeObservable, observable} from "mobx";
-import {Classes, H5, InputGroup, NumericInput, Position, Tooltip} from "@blueprintjs/core";
+import {Classes, H5, InputGroup, Position, Tooltip} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import {AppStore, RegionCoordinate, RegionStore, NUMBER_FORMAT_LABEL} from "stores";
 import {Point2D, WCSPoint2D} from "models";
 import {closeTo, getFormattedWCSPoint, getPixelValueFromWCS, isWCSStringFormatValid} from "utilities";
 import {CoordinateComponent} from "../CoordinateComponent/CoordinateComponent";
+import {SafeNumericInput} from "components/Shared";
 import "./PolygonRegionForm.scss";
 
 const KEYCODE_ENTER = 13;
@@ -97,7 +98,7 @@ export class PolygonRegionForm extends React.Component<{ region: RegionStore, wc
             let xInput, yInput;
             if (region.coordinate === RegionCoordinate.Image) {
                 xInput = (
-                    <NumericInput
+                    <SafeNumericInput
                         selectAllOnFocus={true}
                         buttonPosition="none"
                         placeholder="X Coordinate"
@@ -107,7 +108,7 @@ export class PolygonRegionForm extends React.Component<{ region: RegionStore, wc
                     />
                 );
                 yInput = (
-                    <NumericInput
+                    <SafeNumericInput
                         selectAllOnFocus={true}
                         buttonPosition="none"
                         placeholder="Y Coordinate"
@@ -119,7 +120,7 @@ export class PolygonRegionForm extends React.Component<{ region: RegionStore, wc
             } else {
                 xInput = (
                     <Tooltip content={`Format: ${NUMBER_FORMAT_LABEL.get(formatX)}`} position={Position.BOTTOM} hoverOpenDelay={300}>
-                        <NumericInput
+                        <SafeNumericInput
                             allowNumericCharactersOnly={false}
                             buttonPosition="none"
                             placeholder="X WCS Coordinate"
@@ -132,7 +133,7 @@ export class PolygonRegionForm extends React.Component<{ region: RegionStore, wc
                 );
                 yInput = (
                     <Tooltip content={`Format: ${NUMBER_FORMAT_LABEL.get(formatY)}`} position={Position.BOTTOM} hoverOpenDelay={300}>
-                        <NumericInput
+                        <SafeNumericInput
                             allowNumericCharactersOnly={false}
                             buttonPosition="none"
                             placeholder="Y WCS Coordinate"

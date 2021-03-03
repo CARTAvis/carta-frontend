@@ -1,6 +1,6 @@
 import * as React from "react";
 import {observer} from "mobx-react";
-import {Pre, Tab, TabId, Tabs, NonIdealState, Spinner, Text} from "@blueprintjs/core";
+import {ControlGroup, Divider, FormGroup, HTMLSelect, IOptionProps, NonIdealState, Pre, Spinner, Tab, TabId, Tabs, Text} from "@blueprintjs/core";
 import {FixedSizeList as List} from "react-window";
 import AutoSizer from "react-virtualized-auto-sizer";
 import {CARTA} from "carta-protobuf";
@@ -18,6 +18,7 @@ export enum FileInfoType {
 @observer
 export class FileInfoComponent extends React.Component<{
     infoTypes: FileInfoType[],
+    HDUOptions?: {HDUList: IOptionProps[], handleSelectedHDUChange: (hdu: string) => void;},
     fileInfoExtended: CARTA.IFileInfoExtended,
     regionFileInfo: string,
     catalogFileInfo: CARTA.ICatalogFileInfo,
@@ -48,6 +49,17 @@ export class FileInfoComponent extends React.Component<{
                 {tabEntries}
             </Tabs>
         );
+    };
+
+    private renderHDUList = () => {
+        return this.props.HDUOptions && this.props.HDUOptions.HDUList?.length > 1 ? (
+            <ControlGroup vertical={false}>
+                <Divider/>
+                <FormGroup inline={true} label="HDU">
+                    <HTMLSelect options={this.props.HDUOptions.HDUList} onChange={(ev) => this.props.HDUOptions.handleSelectedHDUChange(ev.currentTarget.value)}/>
+                </FormGroup>
+            </ControlGroup>
+        ) : undefined;
     };
 
     private renderInfoPanel = () => {
@@ -125,7 +137,10 @@ export class FileInfoComponent extends React.Component<{
     render() {
         return (
             <div className="file-info">
-                {this.renderInfoTabs()}
+                <div className="file-info-panel-top">
+                    {this.renderInfoTabs()}
+                    {this.renderHDUList()}
+                </div>
                 {this.renderInfoPanel()}
             </div>
         );

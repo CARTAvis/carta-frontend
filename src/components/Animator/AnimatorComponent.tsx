@@ -3,7 +3,7 @@ import {observer} from "mobx-react";
 import {action, makeObservable, observable} from "mobx";
 import {AnchorButton, Button, ButtonGroup, ControlGroup, HTMLSelect, IconName, Menu, MenuItem, NonIdealState, NumberRange, Popover, Position, Radio, RangeSlider, Slider, Tooltip} from "@blueprintjs/core";
 import ReactResizeDetector from "react-resize-detector";
-import {AnimationMode, AnimationState, PlayMode, DefaultWidgetConfig, WidgetProps, HelpType, AnimatorStore, AppStore} from "stores";
+import {AnimationMode, PlayMode, DefaultWidgetConfig, WidgetProps, HelpType, AnimatorStore, AppStore} from "stores";
 import {SafeNumericInput} from "components/Shared";
 import "./AnimatorComponent.scss";
 
@@ -233,7 +233,7 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
                 <div className="animator-slider">
                     <Radio
                         value={AnimationMode.FRAME}
-                        disabled={appStore.animatorStore.animationState === AnimationState.PLAYING}
+                        disabled={appStore.animatorStore.animationActive}
                         checked={appStore.animatorStore.animationMode === AnimationMode.FRAME}
                         onChange={this.onAnimationModeChanged}
                         label="Image"
@@ -243,10 +243,10 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
                         value={frameIndex}
                         min={-1}
                         max={appStore.frames.length}
-                        step={1}
+                        stepSize={1}
                         onValueChange={this.onFrameChanged}
                         fill={true}
-                        disabled={appStore.animatorStore.animationState === AnimationState.PLAYING}
+                        disabled={appStore.animatorStore.animationActive}
                     />
                     }
                     {!hideSliders &&
@@ -258,10 +258,10 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
                             showTrackFill={false}
                             stepSize={1}
                             onChange={this.onFrameChanged}
-                            disabled={appStore.animatorStore.animationState === AnimationState.PLAYING}
+                            disabled={appStore.animatorStore.animationActive}
                         />
                         <div className="slider-info">
-                            <pre>{activeFrame.frameInfo.fileInfo.name}</pre>
+                            {activeFrame.filename}
                         </div>
                     </React.Fragment>
                     }
@@ -277,7 +277,7 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
                 <div className="animator-slider">
                     <Radio
                         value={AnimationMode.CHANNEL}
-                        disabled={appStore.animatorStore.animationState === AnimationState.PLAYING}
+                        disabled={appStore.animatorStore.animationActive}
                         checked={appStore.animatorStore.animationMode === AnimationMode.CHANNEL}
                         onChange={this.onAnimationModeChanged}
                         label="Channel"
@@ -287,10 +287,10 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
                         value={activeFrame.requiredChannel}
                         min={-1}
                         max={numChannels}
-                        step={1}
+                        stepSize={1}
                         onValueChange={this.onChannelChanged}
                         fill={true}
-                        disabled={appStore.animatorStore.animationState === AnimationState.PLAYING}
+                        disabled={appStore.animatorStore.animationActive}
                     />
                     }
                     {!hideSliders &&
@@ -304,7 +304,7 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
                             labelPrecision={0}
                             showTrackFill={false}
                             onChange={this.onChannelChanged}
-                            disabled={appStore.animatorStore.animationState === AnimationState.PLAYING}
+                            disabled={appStore.animatorStore.animationActive}
                         />
                         <div className="slider-info">
                             <pre>{activeFrame.simpleSpectralInfo}</pre>
@@ -325,7 +325,7 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
                             labelStepSize={channelStep}
                             labelPrecision={0}
                             onChange={this.onRangeChanged}
-                            disabled={appStore.animatorStore.animationState === AnimationState.PLAYING}
+                            disabled={appStore.animatorStore.animationActive}
                         />
                         <div className="slider-info"/>
                     </React.Fragment>
@@ -340,7 +340,7 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
                 <div className="animator-slider">
                     <Radio
                         value={AnimationMode.STOKES}
-                        disabled={appStore.animatorStore.animationState === AnimationState.PLAYING}
+                        disabled={appStore.animatorStore.animationActive}
                         checked={appStore.animatorStore.animationMode === AnimationMode.STOKES}
                         onChange={this.onAnimationModeChanged}
                         label="Stokes"
@@ -352,7 +352,7 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
                         max={activeFrame.frameInfo.fileInfoExtended.stokes}
                         stepSize={1}
                         onValueChange={this.onStokesChanged}
-                        disabled={appStore.animatorStore.animationState === AnimationState.PLAYING}
+                        disabled={appStore.animatorStore.animationActive}
                         fill={true}
                     />
                     }
@@ -364,7 +364,7 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
                             showTrackFill={false}
                             max={activeFrame.frameInfo.fileInfoExtended.stokes - 1}
                             onChange={this.onStokesChanged}
-                            disabled={appStore.animatorStore.animationState === AnimationState.PLAYING}
+                            disabled={appStore.animatorStore.animationActive}
                         />
                         <div className="slider-info"/>
                     </React.Fragment>
@@ -392,7 +392,7 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
                 position={Position.TOP}
             >
                 <Tooltip content="Playback Mode" position={Position.TOP}>
-                    <AnchorButton icon={this.getPlayModeIcon()} disabled={appStore.animatorStore.animationState === AnimationState.PLAYING}>{!iconOnly && "Mode"}</AnchorButton>
+                    <AnchorButton icon={this.getPlayModeIcon()} disabled={appStore.animatorStore.animationActive}>{!iconOnly && "Mode"}</AnchorButton>
                 </Tooltip>
             </Popover>
         );
@@ -401,10 +401,10 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
             <ButtonGroup fill={true} className="playback-buttons">
                 <Button icon={"chevron-backward"} onClick={this.onFirstClicked}>{!iconOnly && "First"}</Button>
                 <Button icon={"step-backward"} onClick={this.onPrevClicked}>{!iconOnly && "Prev"}</Button>
-                {appStore.animatorStore.animationState === AnimationState.PLAYING &&
+                {appStore.animatorStore.animationActive &&
                 <Button icon={"stop"} onClick={appStore.animatorStore.stopAnimation}>{!iconOnly && "Stop"}</Button>
                 }
-                {appStore.animatorStore.animationState === AnimationState.STOPPED &&
+                {!appStore.animatorStore.animationActive &&
                 <Button icon={"play"} onClick={appStore.animatorStore.startAnimation}>{!iconOnly && "Play"}</Button>
                 }
                 <Button icon={"step-forward"} onClick={this.onNextClicked}>{!iconOnly && "Next"}</Button>
@@ -424,7 +424,7 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
                     minorStepSize={1}
                     majorStepSize={1}
                     onValueChange={appStore.animatorStore.setFrameRate}
-                    disabled={appStore.animatorStore.animationState === AnimationState.PLAYING}
+                    disabled={appStore.animatorStore.animationActive}
                 /> :
                 <SafeNumericInput
                     value={appStore.animatorStore.step}
@@ -434,7 +434,7 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
                     minorStepSize={1}
                     majorStepSize={1}
                     onValueChange={appStore.animatorStore.setStep}
-                    disabled={appStore.animatorStore.animationState === AnimationState.PLAYING}
+                    disabled={appStore.animatorStore.animationActive}
                 />
                 }
             </ControlGroup>
@@ -460,7 +460,8 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
                     {stokesSlider}
                 </div>
                 }
-                <ReactResizeDetector handleWidth handleHeight onResize={this.onResize} refreshMode={"throttle"} refreshRate={33}/>
+                <ReactResizeDetector handleWidth handleHeight onResize={this.onResize} refreshMode={"throttle"} refreshRate={33}>
+                </ReactResizeDetector>
             </div>
         );
     }

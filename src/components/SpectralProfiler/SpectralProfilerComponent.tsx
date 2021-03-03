@@ -8,7 +8,7 @@ import {CARTA} from "carta-protobuf";
 import {LineMarker, LinePlotComponent, LinePlotComponentProps, LinePlotSelectingMode, ProfilerInfoComponent, VERTICAL_RANGE_PADDING, SmoothingType} from "components/Shared";
 import {TickType, MultiPlotProps} from "../Shared/LinePlot/PlotContainer/PlotContainerComponent";
 import {SpectralProfilerToolbarComponent} from "./SpectralProfilerToolbarComponent/SpectralProfilerToolbarComponent";
-import {AnimationState, SpectralProfileStore, WidgetProps, HelpType, AnimatorStore, WidgetsStore, AppStore, DefaultWidgetConfig, RegionStore} from "stores";
+import {SpectralProfileStore, WidgetProps, HelpType, AnimatorStore, WidgetsStore, AppStore, DefaultWidgetConfig, RegionStore} from "stores";
 import {SpectralProfileWidgetStore} from "stores/widgets";
 import {Point2D, ProcessedSpectralProfile} from "models";
 import {binarySearchByX, clamp, formattedExponential, formattedNotation, toExponential, toFixed} from "utilities";
@@ -223,7 +223,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
 
     onChannelChanged = (x: number) => {
         const frame = this.widgetStore.effectiveFrame;
-        if (x === null || x === undefined || !isFinite(x) || AnimatorStore.Instance.animationState === AnimationState.PLAYING) {
+        if (x === null || x === undefined || !isFinite(x) || AnimatorStore.Instance.animationActive) {
             return;
         }
         const nearestIndex = frame.findChannelIndexByValue(x);
@@ -348,7 +348,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
         }
 
         const frame = this.widgetStore.effectiveFrame;
-        const imageName = (frame ? frame.frameInfo.fileInfo.name : undefined);
+        const imageName = (frame ? frame.filename : undefined);
 
         let linePlotProps: LinePlotComponentProps = {
             xLabel: "Channel",
@@ -473,7 +473,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
                 linePlotProps.markers.push({
                     value: this.requiredChannelValue,
                     id: "marker-channel-required",
-                    draggable: AnimatorStore.Instance.animationState !== AnimationState.PLAYING,
+                    draggable: !AnimatorStore.Instance.animationActive,
                     dragMove: this.onChannelChanged,
                     horizontal: false,
                 });
@@ -536,7 +536,8 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
                     </div>
                     <ProfilerInfoComponent info={this.genProfilerInfo()}/>
                 </div>
-                <ReactResizeDetector handleWidth handleHeight onResize={this.onResize} refreshMode={"throttle"} refreshRate={33}/>
+                <ReactResizeDetector handleWidth handleHeight onResize={this.onResize} refreshMode={"throttle"} refreshRate={33}>
+                </ReactResizeDetector>
             </div>
         );
     }
