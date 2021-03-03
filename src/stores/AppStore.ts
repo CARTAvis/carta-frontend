@@ -1361,7 +1361,7 @@ export class AppStore {
     };
 
     handleReconnectStream = () => {
-        this.alertStore.showInteractiveAlert("You have reconnected to the CARTA server. Do you want to resume your session(moment map images will be ignored)?", this.onResumeAlertClosed);
+        this.alertStore.showInteractiveAlert("Do you want to resume your session? Please note that temporary images such as moment images or PV images generated via the GUI will be unloaded.", this.onResumeAlertClosed);
     };
 
     handleScriptingRequest = (request: CARTA.IScriptingRequest) => {
