@@ -35,8 +35,9 @@ export class FileInfoComponent extends React.Component<{
     @observable matchedTotal: number = 0;
     @observable isMouseEntered: boolean = false;
     @observable isSearchOpened: boolean = false;
-    @observable matchedIterLocation: {line: number, num: number} = {line: 0, num: 0};
-    private splitStringArray: Array<Array<string>> = [];
+    @observable matchedIterLocation: {line: number, num: number} = {line: -1, num: -1};
+    private splitLengthArray: Array<Array<number>> = [];
+    private matchedLocationArray: Array<{line: number, num: number}> = [];
     private listRef = React.createRef<any>();
 
     @action onMouseEnter = () => {
@@ -57,7 +58,7 @@ export class FileInfoComponent extends React.Component<{
         this.isSearchOpened = false;
         this.searchString = "";
         this.resetMatchedNums();
-        this.matchedIterLocation = {line: 0, num: 0};
+        this.matchedIterLocation = {line: -1, num: -1};
     };
 
     @action setSearchString = (inputSearchString: string) => {
@@ -93,60 +94,50 @@ export class FileInfoComponent extends React.Component<{
         this.matchedTotal += inputNum;
     };
 
-    @action setMatchedIterLocation = (inputLine: number, inputNum: number) => {
-        this.matchedIterLocation.line = inputLine;
-        this.matchedIterLocation.num = inputNum;
+    @action updateMatchedIterLocation = () => {
+        this.matchedIterLocation = (this.matchedTotal > 0) ? this.matchedLocationArray[this.matchedIter - 1] : {line: -1, num: -1};
     };
 
     private handleSearchStringChanged = (ev: React.ChangeEvent<HTMLInputElement>) => {
         this.setSearchString(ev.target.value);
         this.resetMatchedNums();
         
-        // TODO: less strict search
-        // TODO: debounce
-        if (this.searchString !== ""){
-            this.splitStringArray = [];
-            let setScrollLineFlag = true;
+        if (this.searchString !== "") {
+            const searchStringRegExp = new RegExp(this.searchString, 'i');
+            this.splitLengthArray = [];
+            this.matchedLocationArray = [];
 
             this.props.fileInfoExtended.headerEntries.forEach((entriesValue, index) => {
                 let splitString = (entriesValue.name !== "END") ?
-                    `${entriesValue.name} = ${entriesValue.value}${entriesValue.comment && " / "+entriesValue.comment}`.split(this.searchString) : entriesValue.name.split(this.searchString)
-                this.splitStringArray.push(splitString);
+                    `${entriesValue.name} = ${entriesValue.value}${entriesValue.comment && " / "+entriesValue.comment}`.split(searchStringRegExp) : entriesValue.name.split(searchStringRegExp);
+                this.splitLengthArray.push(splitString.map(value => value.length));
                 this.addMatchedTotal(splitString.length - 1);
-
-                if (splitString.length > 1 && setScrollLineFlag) {
-                    this.setMatchedIterLocation(index, 0);
-                    setScrollLineFlag = false;
+                if (splitString.length > 1) {
+                    let numIter = 0;
+                    while(numIter < splitString.length - 1) {
+                        this.matchedLocationArray.push({line: index, num: numIter});
+                        numIter += 1;
+                    }
                 }
             });
 
             this.initMatchedIter();
+            this.updateMatchedIterLocation();
             this.listRef.current.scrollToItem(this.matchedIterLocation.line, "start");
-        }
-    };
-
-    private calculateLocation = () => {
-        let matchedNum = 0;
-        for (let i = 0; i < this.splitStringArray.length; i++) {
-            const length = this.splitStringArray[i].length - 1
-            matchedNum += length;
-            if(matchedNum >= this.matchedIter) {
-                this.setMatchedIterLocation(i, this.matchedIter - matchedNum + length - 1);
-                this.listRef.current.scrollToItem(this.matchedIterLocation.line, "smart");
-                break;
-            }
         }
     };
 
     private handleClickMatchedNext = () => {
         this.addMatchedIter();
-        this.calculateLocation();
-    }
+        this.updateMatchedIterLocation();
+        this.listRef.current.scrollToItem(this.matchedIterLocation.line, "start");
+    };
 
     private handleClickMatchedPrev = () => {
         this.minusMatchedIter();
-        this.calculateLocation();
-    }
+        this.updateMatchedIterLocation();
+        this.listRef.current.scrollToItem(this.matchedIterLocation.line, "start");
+    };
 
     constructor(props) {
         super(props);
@@ -222,70 +213,68 @@ export class FileInfoComponent extends React.Component<{
     };
 
     private highlightString(index: number, name: string, value?: string, comment?: string) {
-        const splitString = this.splitStringArray[index]
 
-        if(!splitString || !name) {
+        if(!isFinite(index) || index < 0 || !name) {
             return null;
         }
+        
+        const splitLength = this.splitLengthArray[index]
         let highlightedString = [];
         let highlighClassName = "";
         let keyIter = 0; // add unique keys to span to avoid warning
-        if (name !== "END") {
-            let classNameType = ["header-name", "header-value", "header-comment"];
-            let classNameTypeIter = 0;
-            let usedString = 0; 
 
-            function addHighlightedString(addString: string, sliceStart: number, sliceEnd?: number): void {
-                highlightedString.push(<span className={classNameType[classNameTypeIter]+highlighClassName} key={keyIter.toString()}>{isFinite(sliceEnd) ? addString.slice(sliceStart, sliceEnd) : addString.slice(sliceStart)}</span>);
-                keyIter += 1;
+        const combinedString = (name !== "END") ? `${name} = ${value}${comment && " / "+comment}` : name;
+        const nameValueLength = name.length + 3 + value.length;
+        const classNameType = ["header-name", "header-value", "header-comment"];
+        let classNameTypeIter = 0;
+        let usedLength = 0; 
+
+        function addHighlightedString(sliceStart: number, sliceEnd: number): void {
+            if(!isFinite(sliceStart) || !isFinite(sliceEnd)) {
                 return;
             }
-
-            splitString.forEach((arrayValue, arrayIndex) => {
-                highlighClassName = "";
-                for (const addString of [arrayValue, this.searchString]) {
-                    const formerUsedString = usedString;
-                    const nameValueLength = name.length + 3 + value.length;
-                    usedString += addString.length;
-
-                    if (comment && classNameTypeIter === 0 && usedString >= nameValueLength) {
-                        addHighlightedString(addString, 0, name.length - formerUsedString);
-                        classNameTypeIter += 1;
-                        addHighlightedString(addString, name.length - formerUsedString, nameValueLength - formerUsedString);
-                        classNameTypeIter += 1;
-                        addHighlightedString(addString, nameValueLength - formerUsedString);
-                    } else if (classNameTypeIter === 0 && usedString >= name.length ) {
-                        addHighlightedString(addString, 0, name.length - formerUsedString);
-                        classNameTypeIter += 1;
-                        addHighlightedString(addString, name.length - formerUsedString);
-                    } else if (comment && classNameTypeIter === 1 && usedString > nameValueLength) {
-                        addHighlightedString(addString, 0, nameValueLength - formerUsedString);
-                        classNameTypeIter += 1;
-                        addHighlightedString(addString, nameValueLength - formerUsedString);
-                    } else {
-                        highlightedString.push(<span className={classNameType[classNameTypeIter]+highlighClassName} key={keyIter.toString()}>{addString}</span>);
-                        keyIter += 1;
-                    }
-
-                    if ((index === this.matchedIterLocation.line) && (arrayIndex === this.matchedIterLocation.num)) {
-                        highlighClassName = " info-highlight-selected";
-                    } else {
-                        highlighClassName = " info-highlight";
-                    }
-                }
-            });
-        } else {
-            splitString.forEach((value) => {
-                highlighClassName = "";
-                for (const string of [value,this.searchString]) {
-                    highlightedString.push(<span className={"header-name"+highlighClassName} key={keyIter.toString()}>{string}</span>);
-                    keyIter += 1;
-                }
-                highlighClassName = " info-highlight";
-            });
+            highlightedString.push(<span className={classNameType[classNameTypeIter]+highlighClassName} key={keyIter.toString()}>{combinedString.slice(sliceStart, sliceEnd)}</span>);
+            keyIter += 1;
+            return;
         }
+
+        splitLength.forEach((arrayValue, arrayIndex) => {
+            highlighClassName = "";
+            for (const addLength of [arrayValue, this.searchString.length]) {
+                const formerUsedLength = usedLength;
+                usedLength += addLength;
+
+                if (name === "END") {
+                    addHighlightedString(formerUsedLength, formerUsedLength + addLength);
+                // the string includes name, value, and comment
+                } else if (comment && classNameTypeIter === 0 && usedLength >= nameValueLength) {
+                    addHighlightedString(formerUsedLength, name.length);
+                    classNameTypeIter += 1;
+                    addHighlightedString(name.length, nameValueLength);
+                    classNameTypeIter += 1;
+                    addHighlightedString(nameValueLength, formerUsedLength + addLength);
+                // the string includes name and value
+                } else if (classNameTypeIter === 0 && usedLength >= name.length ) {
+                    addHighlightedString(formerUsedLength, name.length);
+                    classNameTypeIter += 1;
+                    addHighlightedString(name.length, formerUsedLength + addLength);
+                // the string includes value and comment
+                } else if (comment && classNameTypeIter === 1 && usedLength > nameValueLength) {
+                    addHighlightedString(formerUsedLength, nameValueLength);
+                    classNameTypeIter += 1;
+                    addHighlightedString(nameValueLength, formerUsedLength + addLength);                        
+                } else {
+                    addHighlightedString(formerUsedLength, formerUsedLength + addLength);
+                }
+
+                if ((index === this.matchedIterLocation.line) && (arrayIndex === this.matchedIterLocation.num)) {
+                    highlighClassName = " info-highlight-selected";
+                } else {
+                    highlighClassName = " info-highlight";
+                }
+            }
+        });
         highlightedString.pop();
-        
         return highlightedString;
     }
 
