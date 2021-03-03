@@ -123,7 +123,7 @@ export class SmoothingSettingsComponent extends React.Component<{smoothingStore:
                         value={smoothingStore.gaussianSigma}
                         min={1}
                         className="narrow"
-                        onValueChange={val => smoothingStore.setGaussianSigma(Number.parseFloat(val))}
+                        onValueChange={val => smoothingStore.setGaussianSigma(val)}
                     />
                 </FormGroup>
                 }

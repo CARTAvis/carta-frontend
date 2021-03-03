@@ -11,7 +11,7 @@ import {PlotContainerComponent, TickType, MultiPlotProps} from "./PlotContainer/
 import {ToolbarComponent} from "./Toolbar/ToolbarComponent";
 import {StokesCoordinate} from "stores/widgets/StokesAnalysisWidgetStore";
 import {Point2D} from "models";
-import {clamp, toExponential} from "utilities";
+import {clamp, toExponential, getTimestamp, exportTsvFile} from "utilities";
 import {PlotType} from "components/Shared";
 import "./LinePlotComponent.scss";
 
@@ -477,7 +477,11 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
             const currentRange = this.props.xMax - this.props.xMin;
             const fraction = (wheelEvent.offsetX - chartArea.left) / (chartArea.right - chartArea.left);
             const rangeChange = zoomSpeed * delta * currentRange;
-            this.props.graphZoomedX(this.props.xMin - rangeChange * fraction, this.props.xMax + rangeChange * (1 - fraction));
+            const minX = this.props.xMin - rangeChange * fraction;
+            const maxX = this.props.xMax + rangeChange * (1 - fraction);
+            if (minX < maxX) {
+                this.props.graphZoomedX(minX, maxX);   
+            }
         }
     };
 
@@ -498,11 +502,6 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
     onMouseLeave = () => {
         this.hideMouseEnterWidget();
     };
-
-    private static GetTimestamp() {
-        const now = new Date();
-        return `${now.getFullYear()}-${now.getMonth() + 1}-${now.getDate()}-${now.getHours()}-${now.getMinutes()}-${now.getSeconds()}`;
-    }
 
     private exportSubPlotImage(visible: boolean) {
         const scatterChart = this.plotRef.chartInstance;
@@ -599,7 +598,7 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
 
         composedCanvas.toBlob((blob) => {
             const link = document.createElement("a") as HTMLAnchorElement;
-            link.download = `${imageName}-${plotName.replace(" ", "-")}-${LinePlotComponent.GetTimestamp()}.png`;
+            link.download = `${imageName}-${plotName.replace(" ", "-")}-${getTimestamp()}.png`;
             link.href = URL.createObjectURL(blob);
             link.dispatchEvent(new MouseEvent("click"));
         }, "image/png");
@@ -662,14 +661,7 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
             }
         }
 
-        const tsvData = `data:text/tab-separated-values;charset=utf-8,${comment}\n${header}\n${rows.join("\n")}\n`;
-
-        const dataURL = encodeURI(tsvData).replace(/#/g, "%23");
-
-        const a = document.createElement("a") as HTMLAnchorElement;
-        a.href = dataURL;
-        a.download = `${imageName}-${plotName.replace(" ", "-")}-${LinePlotComponent.GetTimestamp()}.tsv`;
-        a.dispatchEvent(new MouseEvent("click"));
+        exportTsvFile(imageName, plotName, `${comment}\n${header}\n${rows.join("\n")}\n`);
     };
 
     private calcMarkerBox = (marker: LineMarker): {lowerBound: number, height: number} => {
@@ -1001,7 +993,9 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
                 onMouseLeave={this.onMouseLeave}
                 tabIndex={0}
             >
-                <ReactResizeDetector handleWidth handleHeight onResize={this.resize} refreshMode={"throttle"} refreshRate={33}/>
+                <ReactResizeDetector handleWidth handleHeight onResize={this.resize} refreshMode={"throttle"} refreshRate={33}>
+
+                </ReactResizeDetector>
                 {this.width > 0 && this.height > 0 &&
                 <PlotContainerComponent
                     {...this.props}

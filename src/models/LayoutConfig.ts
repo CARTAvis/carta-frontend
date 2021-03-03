@@ -1,7 +1,8 @@
 import Ajv from "ajv";
-import {AppStore, WidgetConfig} from "stores";
+import {AppStore, WidgetConfig, CatalogStore} from "stores";
 import {PresetLayout} from "models";
 import {findDeep, smoothStepOffset} from "utilities";
+import {CatalogOverlayComponent} from "components";
 
 const layoutSchema = require("models/layout_schema_2.json");
 
@@ -94,7 +95,7 @@ const COMPONENT_CONFIG = new Map<string, any>([
 ]);
 
 export class LayoutConfig {
-    public static LayoutValidator = new Ajv({useDefaults: "empty"}).compile(layoutSchema);
+    public static LayoutValidator = new Ajv({useDefaults: "empty", strictTypes: false}).compile(layoutSchema);
     public static CurrentSchemaVersion = 2;
 
     public static GetPresetConfig = (presetName: string) => {
@@ -199,7 +200,14 @@ export class LayoutConfig {
                 defaultY: config.defaultY ? config.defaultY : ""
             };
             // add widget settings
-            const widgetSettingsConfig = appStore.widgetsStore.toWidgetSettingsConfig(config.type, config.id);
+            let widgetSettingsConfig = undefined;
+            if (config.type === CatalogOverlayComponent.WIDGET_CONFIG.type) {
+                const catalogFileId = CatalogStore.Instance.catalogProfiles.get(config.id);
+                const catalogWidgetStoreId = CatalogStore.Instance.catalogWidgets.get(catalogFileId);
+                widgetSettingsConfig = appStore.widgetsStore.toWidgetSettingsConfig(config.type, catalogWidgetStoreId);
+            } else {
+                widgetSettingsConfig = appStore.widgetsStore.toWidgetSettingsConfig(config.type, config.id);
+            }
             if (widgetSettingsConfig) {
                 floatingConfig["widgetSettings"] = widgetSettingsConfig;
             }
@@ -252,7 +260,14 @@ export class LayoutConfig {
                         simpleChild["height"] = child.height;
                     }
                     // add widget settings
-                    const widgetSettingsConfig = appStore.widgetsStore.toWidgetSettingsConfig(widgetType, child.id);
+                    let widgetSettingsConfig = undefined;
+                    if (widgetType === CatalogOverlayComponent.WIDGET_CONFIG.type) {
+                        const catalogFileId = CatalogStore.Instance.catalogProfiles.get(child.id);
+                        const catalogWidgetStoreId = CatalogStore.Instance.catalogWidgets.get(catalogFileId);
+                        widgetSettingsConfig = appStore.widgetsStore.toWidgetSettingsConfig(widgetType, catalogWidgetStoreId);
+                    } else {
+                        widgetSettingsConfig = appStore.widgetsStore.toWidgetSettingsConfig(widgetType, child.id);
+                    }
                     if (widgetSettingsConfig) {
                         simpleChild["widgetSettings"] = widgetSettingsConfig;
                     }

@@ -229,13 +229,13 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
         }
     };
 
-    private handleMouseUpRegularRegion() {
+    @action private handleMouseUpRegularRegion() {
         const frame = this.props.frame.spatialReference || this.props.frame;
 
         if (this.creatingRegion) {
-            if (this.creatingRegion.controlPoints.length > 1 && length2D(this.creatingRegion.controlPoints[1]) === 0) {
+            if (this.creatingRegion.controlPoints.length > 1 && length2D(this.creatingRegion.size) === 0) {
                 const scaleFactor = PreferenceStore.Instance.regionSize * (this.creatingRegion.regionType === CARTA.RegionType.RECTANGLE ? 1.0 : 0.5) / frame.zoomLevel;
-                this.creatingRegion.setControlPoint(1, scale2D({x: 1, y: 1}, scaleFactor));
+                this.creatingRegion.setSize(scale2D({x: 1, y: 1}, scaleFactor));
             }
             if (this.creatingRegion.isValid) {
                 this.creatingRegion.endCreating();

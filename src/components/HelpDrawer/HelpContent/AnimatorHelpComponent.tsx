@@ -1,7 +1,7 @@
 import * as React from "react";
 import {ImageComponent} from "./ImageComponent";
-import * as headAnimatorButton from "static/help/head_animator_button.png";
-import * as headAnimatorButton_d from "static/help/head_animator_button_d.png";
+import headAnimatorButton from "static/help/head_animator_button.png";
+import headAnimatorButton_d from "static/help/head_animator_button_d.png";
 
 export class AnimatorHelpComponent extends React.Component {
     public render() {

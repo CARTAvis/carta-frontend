@@ -216,6 +216,18 @@ export class HelpDrawerComponent extends React.Component {
                 title: "Catalog Scatter Plot",
                 content: <CatalogScatterPlotHelpComponent/>
         }], [
+            HelpType.CATALOG_SETTINGS_GOLBAL, {
+                title: "Catalog Settings",
+                content: ""
+        }],[
+            HelpType.CATALOG_SETTINGS_OVERLAY, {
+                title: "Catalog Settings",
+                content: ""
+        }],[
+            HelpType.CATALOG_SETTINGS_COLOR, {
+                title: "Catalog Settings",
+                content: ""
+        }],[
             HelpType.SPECTRAL_LINE_QUERY, {
                 title: "Spectral Line Query",
                 content: <SpectralLineQueryHelpComponent/>

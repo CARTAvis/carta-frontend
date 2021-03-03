@@ -6,7 +6,7 @@
     min-width: fit-content !important;
 }
 
-.column-filter {
+.column-filter-table {
     .bp3-table-selection-region {
         border: 0px;
         background-color: rgba(255, 255, 255, 0);
@@ -33,43 +33,49 @@
             }
         }
     }
+
+    .sort-label .bp3-label {
+        margin-bottom: 0px;
+    }
 }
 
-.column-filter-popover {
+.column-popover {
+    max-width: 250px;
     .bp3-popover-arrow {
         .bp3-popover-arrow-fill {
-            fill: #394b59;
+            fill: #394b59 !important;
         }
     
         .bp3-popover-arrow-border {
-            fill: #10161a;
-            fill-opacity: 0.1;
+            fill: #10161a !important;
+            fill-opacity: 0.1 !important;
         }
     }
-    .column-filter-popover-content {
-        padding: 10px 12px;
-        background: #394b59;
-        color: #f5f8fa;
-        border-radius: 3px;
+    .bp3-popover-content {
+        padding: 10px 12px !important;
+        background: #394b59 !important;
+        color: #f5f8fa !important;
+        border-radius: 3px !important;
     }
 }
 
-.column-filter-popover-dark {
+.column-popover-dark {
+    max-width: 250px;
     .bp3-popover-arrow {
         .bp3-popover-arrow-fill {
             fill: #e1e8ed !important;
         }
     
         .bp3-popover-arrow-border {
-            fill: #10161a;
-            fill-opacity: 0.2;
+            fill: #10161a !important;
+            fill-opacity: 0.2 !important;
         }
     }
-    .column-filter-popover-content {
-        padding: 10px 12px;
-        background: #e1e8ed;
-        color: #394b59;
-        border-radius: 3px;
+    .bp3-popover-content {
+        padding: 10px 12px !important;
+        background: #e1e8ed !important;
+        color: #394b59 !important;
+        border-radius: 3px !important;
     }
 }
 

@@ -75,7 +75,7 @@ export class LayerListComponent extends React.Component<WidgetProps> {
             <Cell className={rowIndex === appStore.activeFrameIndex ? "active-row-cell" : ""}>
                 <React.Fragment>
                     <div className="name-cell" onClick={() => this.onFileSelected(appStore, frame)}>
-                        {frame.frameInfo.fileInfo.name}
+                        {frame.filename}
                     </div>
                 </React.Fragment>
             </Cell>
@@ -134,9 +134,9 @@ export class LayerListComponent extends React.Component<WidgetProps> {
         if (appStore.spatialReference) {
             let tooltipSubtitle: string;
             if (frame === appStore.spatialReference) {
-                tooltipSubtitle = `${frame.frameInfo.fileInfo.name} is the current spatial reference`;
+                tooltipSubtitle = `${frame.filename} is the current spatial reference`;
             } else {
-                tooltipSubtitle = `Click to ${frame.spatialReference ? "disable" : "enable"} matching to ${appStore.spatialReference.frameInfo.fileInfo.name}`;
+                tooltipSubtitle = `Click to ${frame.spatialReference ? "disable" : "enable"} matching to ${appStore.spatialReference.filename}`;
             }
             spatialMatchingButton = (
                 <Tooltip position={"bottom"} content={<span>Spatial matching<br/><i><small>{tooltipSubtitle}</small></i></span>}>
@@ -158,9 +158,9 @@ export class LayerListComponent extends React.Component<WidgetProps> {
         if (frame.frameInfo.fileInfoExtended.depth > 1 && appStore.spectralReference) {
             let tooltipSubtitle: string;
             if (frame === appStore.spectralReference) {
-                tooltipSubtitle = `${frame.frameInfo.fileInfo.name} is the current spectral reference`;
+                tooltipSubtitle = `${frame.filename} is the current spectral reference`;
             } else {
-                tooltipSubtitle = `Click to ${frame.spectralReference ? "disable" : "enable"} matching to ${appStore.spectralReference.frameInfo.fileInfo.name}`;
+                tooltipSubtitle = `Click to ${frame.spectralReference ? "disable" : "enable"} matching to ${appStore.spectralReference.filename}`;
             }
             spectralMatchingButton = (
                 <Tooltip position={"bottom"} content={<span>Spectral matching<br/><i><small>{tooltipSubtitle}</small></i></span>}>
@@ -182,9 +182,9 @@ export class LayerListComponent extends React.Component<WidgetProps> {
         if (appStore.rasterScalingReference) {
             let tooltipSubtitle: string;
             if (frame === appStore.rasterScalingReference) {
-                tooltipSubtitle = `${frame.frameInfo.fileInfo.name} is the current raster scaling reference`;
+                tooltipSubtitle = `${frame.filename} is the current raster scaling reference`;
             } else {
-                tooltipSubtitle = `Click to ${frame.rasterScalingReference ? "disable" : "enable"} matching to ${appStore.rasterScalingReference.frameInfo.fileInfo.name}`;
+                tooltipSubtitle = `Click to ${frame.rasterScalingReference ? "disable" : "enable"} matching to ${appStore.rasterScalingReference.filename}`;
             }
             renderConfigMatchingButton = (
                 <Tooltip position={"bottom"} content={<span>Raster scaling matching<br/><i><small>{tooltipSubtitle}</small></i></span>}>
@@ -251,7 +251,7 @@ export class LayerListComponent extends React.Component<WidgetProps> {
             if (frame) {
                 return (
                     <Menu>
-                        <MenuDivider title={frame.frameInfo.fileInfo.name}/>
+                        <MenuDivider title={frame.filename}/>
                         <MenuItem disabled={appStore.spatialReference === frame} text="Set as spatial reference" onClick={() => appStore.setSpatialReference(frame)}/>
                         <MenuItem disabled={appStore.spectralReference === frame || frame.frameInfo.fileInfoExtended.depth <= 1} text="Set as spectral reference" onClick={() => appStore.setSpectralReference(frame)}/>
                         <MenuItem disabled={appStore.rasterScalingReference === frame} text="Set as raster scaling reference" onClick={() => appStore.setRasterScalingReference(frame)}/>
@@ -274,7 +274,8 @@ export class LayerListComponent extends React.Component<WidgetProps> {
             return (
                 <div className="layer-list-widget">
                     <NonIdealState icon={"folder-open"} title={"No file loaded"} description={"Load a file using the menu"}/>;
-                    <ReactResizeDetector handleWidth handleHeight onResize={this.onResize}/>
+                    <ReactResizeDetector handleWidth handleHeight onResize={this.onResize}>
+                    </ReactResizeDetector>
                 </div>
             );
         }
@@ -319,7 +320,9 @@ export class LayerListComponent extends React.Component<WidgetProps> {
                     <Column columnHeaderCellRenderer={this.columnHeaderRenderer} cellRenderer={this.stokesRenderer}/>
                 </Table>
                 }
-                <ReactResizeDetector handleWidth handleHeight onResize={this.onResize}/>
+                <ReactResizeDetector handleWidth handleHeight onResize={this.onResize}>
+
+                </ReactResizeDetector>
             </div>
         );
     }

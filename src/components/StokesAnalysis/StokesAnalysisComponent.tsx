@@ -821,7 +821,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
             return <NonIdealState icon={"error"} title={"Missing profile"} description={"Profile not found"}/>;
         }
         const frame = this.widgetStore.effectiveFrame;
-        const imageName = (this.widgetStore.effectiveFrame ? this.widgetStore.effectiveFrame.frameInfo.fileInfo.name : undefined);
+        const imageName = (this.widgetStore.effectiveFrame ? this.widgetStore.effectiveFrame.filename : undefined);
         let quLinePlotProps: LinePlotComponentProps = {
             xLabel: "Channel",
             yLabel: "Value",
@@ -1238,7 +1238,9 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
                     </div>
                     <ProfilerInfoComponent info={this.genProfilerInfo()}/>
                 </div>
-                <ReactResizeDetector handleWidth handleHeight onResize={this.onResize} refreshMode={"throttle"} refreshRate={33}/>
+                <ReactResizeDetector handleWidth handleHeight onResize={this.onResize} refreshMode={"throttle"} refreshRate={33}>
+
+                </ReactResizeDetector>
             </div>
         );
     }

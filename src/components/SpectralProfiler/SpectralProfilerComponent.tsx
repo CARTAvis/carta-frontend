@@ -348,7 +348,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
         }
 
         const frame = this.widgetStore.effectiveFrame;
-        const imageName = (frame ? frame.frameInfo.fileInfo.name : undefined);
+        const imageName = (frame ? frame.filename : undefined);
 
         let linePlotProps: LinePlotComponentProps = {
             xLabel: "Channel",
@@ -536,7 +536,8 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
                     </div>
                     <ProfilerInfoComponent info={this.genProfilerInfo()}/>
                 </div>
-                <ReactResizeDetector handleWidth handleHeight onResize={this.onResize} refreshMode={"throttle"} refreshRate={33}/>
+                <ReactResizeDetector handleWidth handleHeight onResize={this.onResize} refreshMode={"throttle"} refreshRate={33}>
+                </ReactResizeDetector>
             </div>
         );
     }
