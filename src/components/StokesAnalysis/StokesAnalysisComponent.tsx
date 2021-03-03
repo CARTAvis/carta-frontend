@@ -12,7 +12,7 @@ import {TickType, MultiPlotProps} from "../Shared/LinePlot/PlotContainer/PlotCon
 import {SpectralProfileStore, DefaultWidgetConfig, WidgetProps, HelpType, AnimatorStore, WidgetsStore, AppStore} from "stores";
 import {StokesAnalysisWidgetStore, StokesCoordinate} from "stores/widgets";
 import {Point2D} from "models";
-import {clamp, normalising, polarizationAngle, polarizedIntensity, binarySearchByX, closestPointIndexToCursor, toFixed, toExponential, minMaxPointArrayZ, formattedNotation, minMaxArray} from "utilities";
+import {clamp, normalising, polarizationAngle, polarizedIntensity, binarySearchByX, closestPointIndexToCursor, toFixed, toExponential, minMaxPointArrayZ, formattedNotation, minMaxArray, getColorForTheme} from "utilities";
 import "./StokesAnalysisComponent.scss";
 
 type Border = { xMin: number, xMax: number, yMin: number, yMax: number };
@@ -954,8 +954,8 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
                 paLinePlotProps.opacity = lineOpacity;
                 quLinePlotProps.opacity = lineOpacity;
                 
-                let primaryLineColor = this.widgetStore.primaryLineColor.colorHex;
-                let ulinePlotColor = this.widgetStore.secondaryLineColor.colorHex;
+                let primaryLineColor = getColorForTheme(this.widgetStore.primaryLineColor);
+                let ulinePlotColor = getColorForTheme(this.widgetStore.secondaryLineColor);
                 if (appStore.darkTheme) {
                     if (!this.widgetStore.primaryLineColor.fixed) {
                         primaryLineColor = Colors.BLUE4;   
@@ -1008,7 +1008,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
                     let smoothedPaPlotProps: MultiPlotProps = {
                         data: currentPlotData.paSmoothedValues.dataset,
                         type: smoothingStore.lineType,
-                        borderColor: smoothingStore.colorMap.get(StokesCoordinate.PolarizationAngle) ? smoothingStore.colorMap.get(StokesCoordinate.PolarizationAngle).colorHex : primaryLineColor,
+                        borderColor: getColorForTheme(smoothingStore.colorMap.get(StokesCoordinate.PolarizationAngle) ? getColorForTheme(smoothingStore.colorMap.get(StokesCoordinate.PolarizationAngle)) : primaryLineColor),
                         borderWidth: this.widgetStore.lineWidth + 1,
                         pointRadius: this.widgetStore.linePlotPointSize + 1
                     };

@@ -52,8 +52,12 @@ export function getColorsForValues(colorMap: string): { color: Uint8ClampedArray
     return {color: new Uint8ClampedArray([0, 0, 0, 0]), size: 1};
 }
 
+export function isAutoColor(color: string) {
+    return color?.indexOf("auto-") === 0;
+}
+
 export function getColorForTheme(color: string) {
-    if (color.indexOf("auto-") === -1) {
+    if (!isAutoColor(color)) {
         return color;
     }
 

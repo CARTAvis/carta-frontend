@@ -1,12 +1,11 @@
 import {action, computed, observable, makeObservable} from "mobx";
-import {Colors} from "@blueprintjs/core";
 import {PlotType, SmoothingType, LineSettings} from "components/Shared";
 import {Point2D} from "models";
 import * as GSL from "gsl_wrapper";
 
 export class ProfileSmoothingStore {
     @observable type: SmoothingType;
-    @observable lineColor: { colorHex: string, fixed: boolean };
+    @observable lineColor: string;
     @observable selectedLine: string;
     @observable lineType: PlotType;
     @observable lineWidth: number;
@@ -19,12 +18,12 @@ export class ProfileSmoothingStore {
     @observable binWidth: number;
     @observable savitzkyGolaySize: number;
     @observable savitzkyGolayOrder: number;
-    @observable colorMap: Map<string, { colorHex: string, fixed: boolean }>;
+    @observable colorMap: Map<string, string>;
 
     constructor() {
         makeObservable(this);
         this.type = SmoothingType.NONE;
-        this.lineColor = { colorHex: Colors.ROSE3, fixed: false };
+        this.lineColor = "auto-rose";
         this.lineType = PlotType.STEPS;
         this.lineWidth = 1;
         this.pointRadius = 1;
@@ -43,8 +42,8 @@ export class ProfileSmoothingStore {
         this.type = val;
     }
 
-    @action setLineColor = (colorHex: string, fixed: boolean) => {
-        this.lineColor = { colorHex: colorHex, fixed: fixed };
+    @action setLineColor = (color: string) => {
+        this.lineColor = color;
     }
 
     @action setSelectedLine = (key: string) => {
@@ -99,8 +98,8 @@ export class ProfileSmoothingStore {
         this.savitzkyGolayOrder = val;
     }
 
-    @action setColorMap = (key: string, val: { colorHex: string, fixed: boolean }) => {
-        this.colorMap.set(key, val);
+    @action setColorMap = (key: string, color: string) => {
+        this.colorMap.set(key, color);
     }
 
     @computed get exportData() {

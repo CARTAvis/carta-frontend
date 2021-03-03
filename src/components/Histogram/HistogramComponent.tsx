@@ -3,14 +3,14 @@ import * as _ from "lodash";
 import ReactResizeDetector from "react-resize-detector";
 import {action, autorun, computed, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
-import {NonIdealState, Colors} from "@blueprintjs/core";
+import {NonIdealState} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import {HistogramToolbarComponent} from "./HistogramToolbarComponent/HistogramToolbarComponent";
 import {LinePlotComponent, LinePlotComponentProps} from "components/Shared";
 import {TickType} from "../Shared/LinePlot/PlotContainer/PlotContainerComponent";
 import {HistogramWidgetStore} from "stores/widgets";
 import {FrameStore, WidgetProps, HelpType, WidgetsStore, AppStore, DefaultWidgetConfig} from "stores";
-import {clamp} from "utilities";
+import {clamp, getColorForTheme} from "utilities";
 import {Point2D} from "models";
 import "./HistogramComponent.scss";
 
@@ -234,12 +234,7 @@ export class HistogramComponent extends React.Component<WidgetProps> {
                 linePlotProps.data = currentPlotData.values;
 
                 // set line color
-                let primaryLineColor = this.widgetStore.primaryLineColor.colorHex;
-                if (appStore.darkTheme) {
-                    if (!this.widgetStore.primaryLineColor.fixed) {
-                        primaryLineColor = Colors.BLUE4;   
-                    }
-                }
+                let primaryLineColor = getColorForTheme(this.widgetStore.primaryLineColor);
                 linePlotProps.lineColor = primaryLineColor;
 
                 // Determine scale in X and Y directions. If auto-scaling, use the bounds of the current data
