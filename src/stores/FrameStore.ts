@@ -342,6 +342,7 @@ export class FrameStore {
                         fromWCS: true,
                         channelType: this.spectralAxis.type,
                         indexes,
+                        delta,
                         values,
                         rawValues,
                         getChannelIndexWCS: (value: number): number => {
@@ -373,8 +374,14 @@ export class FrameStore {
             rawValues[i] = i;
         }
         return {
-            fromWCS: false, channelType: {code: "", name: "Channel", unit: ""}, indexes, values, rawValues,
-            getChannelIndexWCS: null, getChannelIndexSimple: getChannelIndexSimple
+            fromWCS: false,
+            channelType: {code: "", name: "Channel", unit: ""},
+            delta: undefined,
+            indexes: indexes,
+            values: values,
+            rawValues: rawValues,
+            getChannelIndexWCS: null,
+            getChannelIndexSimple: getChannelIndexSimple
         };
     }
 
