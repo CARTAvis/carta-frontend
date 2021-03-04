@@ -98,12 +98,32 @@ export class FileInfoComponent extends React.Component<{
         this.matchedIterLocation = (this.matchedTotal > 0) ? this.matchedLocationArray[this.matchedIter - 1] : {line: -1, num: -1};
     };
 
+    private scrollToPosition = () => {
+        if (!this.listRef.current) {
+            return;
+        }
+
+        // scrollToItem() scroll to positions without the effect of padding
+        // calculate the correct positions and use scrollTo() instead
+        const origOffset = this.listRef.current.state.scrollOffset;
+        const height = this.listRef.current.props.height;
+        const itemSize = this.listRef.current.props.itemSize;
+        const targetPosition = 10 + this.matchedIterLocation.line * itemSize
+        if (this.matchedIterLocation.line === 0) {
+            this.listRef.current.scrollTo(0);
+        } else if (targetPosition > origOffset + height - itemSize) {
+            this.listRef.current.scrollTo(targetPosition - height + itemSize);
+        } else if (targetPosition < origOffset) {
+            this.listRef.current.scrollTo(targetPosition);
+        }
+    };
+
     private handleSearchStringChanged = (ev: React.ChangeEvent<HTMLInputElement>) => {
         this.setSearchString(ev.target.value);
         this.resetMatchedNums();
         
         if (this.searchString !== "") {
-            const searchStringRegExp = new RegExp(this.searchString, 'i');
+            const searchStringRegExp = new RegExp(this.searchString.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i');
             this.splitLengthArray = [];
             this.matchedLocationArray = [];
 
@@ -123,20 +143,20 @@ export class FileInfoComponent extends React.Component<{
 
             this.initMatchedIter();
             this.updateMatchedIterLocation();
-            this.listRef.current.scrollToItem(this.matchedIterLocation.line, "start");
+            this.scrollToPosition();
         }
     };
 
     private handleClickMatchedNext = () => {
         this.addMatchedIter();
         this.updateMatchedIterLocation();
-        this.listRef.current.scrollToItem(this.matchedIterLocation.line, "start");
+        this.scrollToPosition();
     };
 
     private handleClickMatchedPrev = () => {
         this.minusMatchedIter();
         this.updateMatchedIterLocation();
-        this.listRef.current.scrollToItem(this.matchedIterLocation.line, "start");
+        this.scrollToPosition();
     };
 
     constructor(props) {

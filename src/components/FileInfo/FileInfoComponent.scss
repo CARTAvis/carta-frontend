@@ -38,6 +38,7 @@
             padding-right: 15px;
             margin-top: 10px;
             padding-left: 15px;
+
             .header-name {
                 color: $blue2;
                 font-weight: bold;
@@ -46,6 +47,14 @@
             .header-comment {
                 color: rgba(0, 0, 0, 0.5);
                 font-style: italic;
+            }
+
+            .info-highlight {
+                background-color: yellow;
+            }
+        
+            .info-highlight-selected {
+                background-color: $gold5;
             }
         }
     }
@@ -73,17 +82,10 @@
             user-select: none;
         }
     }
-
-    .info-highlight {
-        background-color: yellow;
-    }
-
-    .info-highlight-selected {
-        background-color: $gold5;
-    }
 }
 
-.header-search {
+.bp3-popover {
+    width: 250px;
 
     .header-search-iter {
         color: $gray1;
