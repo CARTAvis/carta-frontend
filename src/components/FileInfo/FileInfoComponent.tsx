@@ -1,7 +1,7 @@
 import * as React from "react";
 import {observer} from "mobx-react";
 import {action, makeObservable, observable} from "mobx";
-import {ControlGroup, Divider, FormGroup, HTMLSelect, IOptionProps, NonIdealState, Pre, Spinner, Tab, TabId, Tabs, Text, Popover, PopperModifiers, Position, Button, InputGroup, ButtonGroup} from "@blueprintjs/core";
+import {Button, ButtonGroup, ControlGroup, Divider, FormGroup, HTMLSelect, InputGroup, IOptionProps, NonIdealState, Popover, PopperModifiers, Position, Pre, Spinner, Tab, TabId, Tabs, Text} from "@blueprintjs/core";
 import {FixedSizeList as List} from "react-window";
 import AutoSizer from "react-virtualized-auto-sizer";
 import {CARTA} from "carta-protobuf";
@@ -98,17 +98,17 @@ export class FileInfoComponent extends React.Component<{
         this.matchedIterLocation = (this.matchedTotal > 0) ? this.matchedLocationArray[this.matchedIter - 1] : {line: -1, num: -1};
     };
 
+    // scrollToItem() scroll to positions without the effect of padding
+    // calculate the correct positions and use scrollTo() instead
     private scrollToPosition = () => {
-        if (!this.listRef.current) {
+        const listRefCurrent = this.listRef.current;
+        if (!listRefCurrent) {
             return;
         }
-
-        // scrollToItem() scroll to positions without the effect of padding
-        // calculate the correct positions and use scrollTo() instead
-        const origOffset = this.listRef.current.state.scrollOffset;
-        const height = this.listRef.current.props.height;
-        const itemSize = this.listRef.current.props.itemSize;
-        const targetPosition = 10 + this.matchedIterLocation.line * itemSize
+        const origOffset = listRefCurrent.state.scrollOffset;
+        const height = listRefCurrent.props.height;
+        const itemSize = listRefCurrent.props.itemSize;
+        const targetPosition = 10 + this.matchedIterLocation.line * itemSize;
         if (this.matchedIterLocation.line === 0) {
             this.listRef.current.scrollTo(0);
         } else if (targetPosition > origOffset + height - itemSize) {
@@ -134,7 +134,7 @@ export class FileInfoComponent extends React.Component<{
                 this.addMatchedTotal(splitString.length - 1);
                 if (splitString.length > 1) {
                     let numIter = 0;
-                    while(numIter < splitString.length - 1) {
+                    while (numIter < splitString.length - 1) {
                         this.matchedLocationArray.push({line: index, num: numIter});
                         numIter += 1;
                     }
@@ -239,21 +239,19 @@ export class FileInfoComponent extends React.Component<{
         }
         
         const splitLength = this.splitLengthArray[index]
-        let highlightedString = [];
-        let highlighClassName = "";
-        let keyIter = 0; // add unique keys to span to avoid warning
-
-        const combinedString = (name !== "END") ? `${name} = ${value}${comment && " / "+comment}` : name;
         const nameValueLength = name.length + 3 + value.length;
-        const classNameType = ["header-name", "header-value", "header-comment"];
-        let classNameTypeIter = 0;
+        let highlightedString = [];
+        let keyIter = 0; // add unique keys to span to avoid warning
+        let highlighClassName = "";
+        let typeClassName = "header-name";
         let usedLength = 0; 
 
-        function addHighlightedString(sliceStart: number, sliceEnd: number): void {
+        function addHighlightedString(sliceStart: number, sliceEnd: number) {
             if(!isFinite(sliceStart) || !isFinite(sliceEnd)) {
                 return;
             }
-            highlightedString.push(<span className={classNameType[classNameTypeIter]+highlighClassName} key={keyIter.toString()}>{combinedString.slice(sliceStart, sliceEnd)}</span>);
+            highlightedString.push(<span className={typeClassName + highlighClassName} key={keyIter.toString()}>
+                {((name !== "END") ? `${name} = ${value}${comment && " / " + comment}` : name).slice(sliceStart, sliceEnd)}</span>);
             keyIter += 1;
             return;
         }
@@ -267,27 +265,27 @@ export class FileInfoComponent extends React.Component<{
                 if (name === "END") {
                     addHighlightedString(formerUsedLength, formerUsedLength + addLength);
                 // the string includes name, value, and comment
-                } else if (comment && classNameTypeIter === 0 && usedLength >= nameValueLength) {
+                } else if (comment && typeClassName === "header-name" && usedLength >= nameValueLength) {
                     addHighlightedString(formerUsedLength, name.length);
-                    classNameTypeIter += 1;
+                    typeClassName = "header-value";
                     addHighlightedString(name.length, nameValueLength);
-                    classNameTypeIter += 1;
+                    typeClassName = "header-comment";
                     addHighlightedString(nameValueLength, formerUsedLength + addLength);
                 // the string includes name and value
-                } else if (classNameTypeIter === 0 && usedLength >= name.length ) {
+                } else if (typeClassName === "header-name" && usedLength >= name.length ) {
                     addHighlightedString(formerUsedLength, name.length);
-                    classNameTypeIter += 1;
+                    typeClassName = "header-value";
                     addHighlightedString(name.length, formerUsedLength + addLength);
                 // the string includes value and comment
-                } else if (comment && classNameTypeIter === 1 && usedLength > nameValueLength) {
+                } else if (comment && typeClassName === "header-value" && usedLength > nameValueLength) {
                     addHighlightedString(formerUsedLength, nameValueLength);
-                    classNameTypeIter += 1;
+                    typeClassName = "header-comment";
                     addHighlightedString(nameValueLength, formerUsedLength + addLength);                        
                 } else {
                     addHighlightedString(formerUsedLength, formerUsedLength + addLength);
                 }
 
-                if ((index === this.matchedIterLocation.line) && (arrayIndex === this.matchedIterLocation.num)) {
+                if (index === this.matchedIterLocation.line && arrayIndex === this.matchedIterLocation.num) {
                     highlighClassName = " info-highlight-selected";
                 } else {
                     highlighClassName = " info-highlight";
@@ -304,7 +302,7 @@ export class FileInfoComponent extends React.Component<{
                 return null;
             }
             const header = entries[index];
-            if ((this.props.selectedTab === FileInfoType.IMAGE_HEADER) && (this.searchString !== "")) {
+            if (this.props.selectedTab === FileInfoType.IMAGE_HEADER && this.searchString !== "") {
                 return (
                     <div style={style} className="header-entry">
                         {this.highlightString(index, header.name, header.value, header.comment)}
@@ -346,44 +344,43 @@ export class FileInfoComponent extends React.Component<{
 
     private renderHeaderSearch = () => {
         const popoverModifiers: PopperModifiers = {arrow: {enabled: false}, offset: {offset: '0, 10px, 0, 0'}};
-        let iterText = `${this.matchedIter} of ${this.matchedTotal}`;
         const searchIter = (
             <ButtonGroup className="header-search">
-                <span className="header-search-iter">&nbsp;{iterText}&nbsp;</span>
+                <span className="header-search-iter">&nbsp;{this.matchedIter} of {this.matchedTotal}&nbsp;</span>
                 <Button
                     icon="caret-left"
                     minimal={true}
                     onClick={this.handleClickMatchedPrev}
-                    disabled={(this.matchedIter === 0) || (this.matchedTotal === 1) ? true : false}
+                    disabled={this.matchedIter === 0 || this.matchedTotal === 1 ? true : false}
                 />
                 <Button
                     icon="caret-right"
                     minimal={true}
                     onClick={this.handleClickMatchedNext}
-                    disabled={(this.matchedIter === 0) || (this.matchedTotal === 1) ? true : false}
+                    disabled={this.matchedIter === 0 || this.matchedTotal === 1 ? true : false}
                 />
             </ButtonGroup>
         );
 
         return (!this.props.isLoading && !this.props.errorMessage && this.props.fileInfoExtended &&
             this.props.selectedTab === FileInfoType.IMAGE_HEADER) ? (
-            <Popover
-                className="header-search-button"
-                position={Position.LEFT}
-                modifiers={popoverModifiers}
-                onOpening={this.searchOpened}
-                onClosing={this.searchClosed}
-            >
-                <Button icon="search-text" style={{opacity: (this.isMouseEntered) ? 1 : 0}}></Button>
-                <InputGroup
-                    autoFocus={false}
-                    placeholder={"Search text"}
-                    leftIcon="search-text"
-                    rightElement={searchIter}
-                    onChange={this.handleSearchStringChanged}
-                />
-            </Popover>
-        ) : null;
+                <Popover
+                    className="header-search-button"
+                    position={Position.LEFT}
+                    modifiers={popoverModifiers}
+                    onOpening={this.searchOpened}
+                    onClosing={this.searchClosed}
+                >
+                    <Button icon="search-text" style={{opacity: (this.isMouseEntered) ? 1 : 0}}></Button>
+                    <InputGroup
+                        autoFocus={false}
+                        placeholder={"Search text"}
+                        leftIcon="search-text"
+                        rightElement={searchIter}
+                        onChange={this.handleSearchStringChanged}
+                    />
+                </Popover>
+            ) : null;
     };
 
     render() {
