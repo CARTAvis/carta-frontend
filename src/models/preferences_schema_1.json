@@ -81,7 +81,7 @@
             "minimum": 0,
             "maximum": 3
         },
-        "transparentExportedImage": {
+        "transparentImageBackground": {
             "type": "boolean"
         },
         "scaling": {

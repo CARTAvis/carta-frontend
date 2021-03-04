@@ -19,7 +19,7 @@ export enum PreferenceKeys {
     GLOBAL_DRAG_PANNING = "dragPanning",
     GLOBAL_SPECTRAL_MATCHING_TYPE = "spectralMatchingType",
     GLOBAL_AUTO_WCS_MATCHING = "autoWCSMatching",
-    GLOBAL_TRANSPARENT_EXPORTED_IMAGE = "transparentExportedImage",
+    GLOBAL_TRANSPARENT_IMAGE_BACKGROUND = "transparentImageBackground",
 
     RENDER_CONFIG_SCALING = "scaling",
     RENDER_CONFIG_COLORMAP = "colormap",
@@ -87,7 +87,7 @@ const DEFAULTS = {
         dragPanning: true,
         spectralMatchingType: SpectralType.VRAD,
         autoWCSMatching: WCSMatchingType.NONE,
-        transparentExportedImage: true,
+        transparentImageBackground: true,
     },
     RENDER_CONFIG: {
         scaling: FrameScaling.LINEAR,
@@ -206,8 +206,8 @@ export class PreferenceStore {
         return this.preferences.get(PreferenceKeys.GLOBAL_AUTO_WCS_MATCHING) ?? DEFAULTS.GLOBAL.autoWCSMatching;
     }
 
-    @computed get transparentExportedImage(): boolean {
-        return this.preferences.get(PreferenceKeys.GLOBAL_TRANSPARENT_EXPORTED_IMAGE) ?? DEFAULTS.GLOBAL.transparentExportedImage;
+    @computed get transparentImageBackground(): boolean {
+        return this.preferences.get(PreferenceKeys.GLOBAL_TRANSPARENT_IMAGE_BACKGROUND) ?? DEFAULTS.GLOBAL.transparentImageBackground;
     }
 
     // getters for render config
@@ -463,7 +463,7 @@ export class PreferenceStore {
             PreferenceKeys.GLOBAL_THEME, PreferenceKeys.GLOBAL_AUTOLAUNCH, PreferenceKeys.GLOBAL_LAYOUT,
             PreferenceKeys.GLOBAL_CURSOR_POSITION, PreferenceKeys.GLOBAL_ZOOM_MODE, PreferenceKeys.GLOBAL_ZOOM_POINT,
             PreferenceKeys.GLOBAL_DRAG_PANNING, PreferenceKeys.GLOBAL_SPECTRAL_MATCHING_TYPE, PreferenceKeys.GLOBAL_AUTO_WCS_MATCHING,
-            PreferenceKeys.GLOBAL_TRANSPARENT_EXPORTED_IMAGE
+            PreferenceKeys.GLOBAL_TRANSPARENT_IMAGE_BACKGROUND
         ]);
     };
 
@@ -571,7 +571,7 @@ export class PreferenceStore {
             ];
 
             const booleanKeys = [
-                PreferenceKeys.GLOBAL_AUTOLAUNCH, PreferenceKeys.GLOBAL_DRAG_PANNING, PreferenceKeys.GLOBAL_TRANSPARENT_EXPORTED_IMAGE, PreferenceKeys.CONTOUR_CONFIG_CONTOUR_COLORMAP_ENABLED,
+                PreferenceKeys.GLOBAL_AUTOLAUNCH, PreferenceKeys.GLOBAL_DRAG_PANNING, PreferenceKeys.GLOBAL_TRANSPARENT_IMAGE_BACKGROUND, PreferenceKeys.CONTOUR_CONFIG_CONTOUR_COLORMAP_ENABLED,
                 PreferenceKeys.WCS_OVERLAY_AST_GRID_VISIBLE, PreferenceKeys.WCS_OVERLAY_AST_LABELS_VISIBLE, PreferenceKeys.WCS_OVERLAY_BEAM_VISIBLE,
                 PreferenceKeys.PERFORMANCE_STREAM_CONTOURS_WHILE_ZOOMING, PreferenceKeys.PERFORMANCE_LOW_BAND_WIDTH_MODE
             ];
