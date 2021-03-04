@@ -87,7 +87,7 @@ const DEFAULTS = {
         dragPanning: true,
         spectralMatchingType: SpectralType.VRAD,
         autoWCSMatching: WCSMatchingType.NONE,
-        transparentImageBackground: true,
+        transparentImageBackground: false,
     },
     RENDER_CONFIG: {
         scaling: FrameScaling.LINEAR,
