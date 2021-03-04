@@ -9,10 +9,12 @@ export class ScatterPlotSettingsPanelComponentProps {
     scatterPlotPointSize: number;
     pointTransparency: number;
     equalAxes: boolean;
+    invertedColorMap: boolean;
     setPointTransparency: (val: number) => void;
     setScatterPlotPointSize: (val: number) => void;
     setColormap: (val: string) => void;
     handleEqualAxesValuesChanged: (changeEvent: React.ChangeEvent<HTMLInputElement>) => void;
+    handleInvertedColorMapChanged: (changeEvent: React.ChangeEvent<HTMLInputElement>) => void;
 }
 
 export enum ScatterSettings {
@@ -34,10 +36,16 @@ export class ScatterPlotSettingsPanelComponent extends React.Component<ScatterPl
                 <React.Fragment>
                     <FormGroup inline={true} label="Color Map">
                         <ColormapComponent
-                            inverted={false}
+                            inverted={props.invertedColorMap}
                             selectedItem={props.colorMap}
                             onItemSelect={(selected) => { props.setColormap(selected); }}
                         />
+                    </FormGroup>
+                    <FormGroup label={"Invert Color Map"} inline={true}>
+                    <Switch
+                        checked={props.invertedColorMap}
+                        onChange={props.handleInvertedColorMapChanged}
+                    />
                     </FormGroup>
                     <FormGroup  inline={true} label="Symbol Size" labelInfo="(px)">
                         <SafeNumericInput
