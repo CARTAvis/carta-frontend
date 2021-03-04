@@ -3,7 +3,7 @@ import * as Plotly from "plotly.js";
 import {observer} from "mobx-react";
 import {computed, makeObservable} from "mobx";
 import Plot from "react-plotly.js";
-import {AppStore, WidgetsStore, CatalogStore} from "stores";
+import {AppStore, CatalogStore, WidgetsStore} from "stores";
 import {CatalogOverlayShape} from "stores/widgets";
 import {canvasToTransformedImagePos} from "components/ImageView/RegionView/shared";
 import {ImageViewLayer} from "../ImageViewComponent";
@@ -45,19 +45,24 @@ export class CatalogViewComponent extends React.Component<CatalogViewComponentPr
                 unSelecteData.x = catalog.xImageCoords.slice(0);
                 unSelecteData.y = catalog.yImageCoords.slice(0);
 
+                // const sizeref=2* 8594/((catalogWidgetStore.catalogSize * 2)**2);
+
                 unSelecteData.marker = {
                     color: color,
                     symbol: catalogWidgetStore.catalogShape,
+                    sizemode: catalogWidgetStore.sizeMapType,
+                    // sizeref: sizeref,
+                    // sizemin: 0,
                     line: {
                         color: color,
                         width: 4
                     }
                 };
 
-                if (catalogWidgetStore.sizeArray.length) {
+                if (!catalogWidgetStore.disableSizeMap) {
                     unSelecteData.marker.size = catalogWidgetStore.sizeArray;
                 } else {
-                    unSelecteData.marker.size = catalogWidgetStore.catalogSize * 2;
+                    unSelecteData.marker.size = catalogWidgetStore.catalogSize;
                 }
 
                 unSelecteData.name = fileId.toString();
@@ -104,8 +109,9 @@ export class CatalogViewComponent extends React.Component<CatalogViewComponentPr
 
                     selecteData.marker = {
                         color: catalogWidgetStore.highlightColor,
-                        size: catalogWidgetStore.catalogSize * 2 + 5,
+                        size: catalogWidgetStore.catalogSize + 5,
                         symbol: outlineShape,
+                        sizemode: catalogWidgetStore.sizeMapType,
                         line: {
                             color: catalogWidgetStore.highlightColor,
                             width: 4

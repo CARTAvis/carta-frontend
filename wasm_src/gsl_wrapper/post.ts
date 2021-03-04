@@ -7,6 +7,26 @@ Module.filterHanning = Module.cwrap("filterHanning", "number", ["number", "numbe
 Module.filterDecimation = Module.cwrap("filterDecimation", "number", ["number", "number", "number", "number", "number"]);
 Module.filterBinning = Module.cwrap("filterBinning", "number", ["number", "number", "number", "number"]);
 Module.filterSavitzkyGolay = Module.cwrap("filterSavitzkyGolay", "number", ["number", "number", "number", "number", "number", "number"]);
+Module.heapsort = Module.cwrap("heapsort", null, ["number", "number", "number"])
+
+Module.minMaxArray = function (data: Float64Array): {max: number, min: number} {
+    if (!data) {
+        return {max: undefined, min: undefined};
+    }
+
+    const N = data.length;
+    const dataOnWasmHeap = Module._malloc(N * 8);
+    Module.HEAPF64.set(new Float64Array(data), dataOnWasmHeap / 8);
+    
+    Module.heapsort(dataOnWasmHeap, N);
+
+    const maxOffset = dataOnWasmHeap + (N - 1) * 8;
+    const min = new Float64Array(Module.HEAPF64.buffer.slice(dataOnWasmHeap, dataOnWasmHeap + 8))[0];
+    const max = new Float64Array(Module.HEAPF64.buffer.slice(maxOffset , maxOffset + 8))[0];
+
+    Module._free(dataOnWasmHeap);
+    return {max: max, min};
+}
 
 Module.boxcarSmooth = function (yIn: Float64Array | Float32Array, kernelSize: number) {
     // Return empty array if arguments are invalid

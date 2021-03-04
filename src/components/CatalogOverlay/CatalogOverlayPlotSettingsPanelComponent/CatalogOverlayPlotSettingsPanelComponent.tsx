@@ -2,13 +2,13 @@ import {observer} from "mobx-react";
 import FuzzySearch from "fuzzy-search";
 import {action, autorun, computed, makeObservable} from "mobx";
 import * as React from "react";
-import {Button, FormGroup, Icon, MenuItem, PopoverPosition, Tab, Tabs} from "@blueprintjs/core";
+import {AnchorButton, Button, ButtonGroup, FormGroup, Icon, MenuItem, PopoverPosition, Tab, Tabs} from "@blueprintjs/core";
 import {Select, IItemRendererProps, ItemPredicate} from "@blueprintjs/select";
-import {AppStore, CatalogStore, CatalogProfileStore, DefaultWidgetConfig, HelpType, PreferenceStore, PreferenceKeys, WidgetProps, WidgetsStore} from "stores";
-import {CatalogOverlayShape, CatalogWidgetStore, CatalogSettingsTabs} from "stores/widgets";
+import {AppStore, CatalogStore, CatalogProfileStore, CatalogOverlay, DefaultWidgetConfig, HelpType, PreferenceStore, PreferenceKeys, WidgetProps, WidgetsStore} from "stores";
+import {CatalogOverlayShape, CatalogWidgetStore, CatalogSettingsTabs, SizeClip} from "stores/widgets";
 import {ColorResult} from "react-color";
 import {CatalogOverlayComponent} from "components";
-import {ColorPickerComponent, SafeNumericInput} from "components/Shared";
+import {ColorPickerComponent, SafeNumericInput, ScalingSelectComponent} from "components/Shared";
 import {SWATCH_COLORS} from "utilities";
 import "./CatalogOverlayPlotSettingsPanelComponent.scss";
 
@@ -37,6 +37,7 @@ const triangleDown = <path d="M 2 2 L 14 2 L 8 13 Z"/>;
 const diamond = <path d="M 8 14 L 14 8 L 8 2 L 2 8 Z"/>;
 const hexagon = <path d="M 12.33 5.5 L 12.33 10.5 L 8 13 L 3.67 10.5 L 3.67 5.5 L 8 3 Z"/>;
 const hexagon2 = <path d="M 3 8 L 5.5 3.67 L 10.5 3.67 L 13 8 L 10.5 12.33 L 5.5 12.33 Z"/>;
+const KEYCODE_ENTER = 13;
 
 @observer
 export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<WidgetProps> {
@@ -76,8 +77,8 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
     @computed get axisOption() {
         const profileStore = this.profileStore;
         let axisOptions = [];
-
-        profileStore.catalogControlHeader.forEach((header, columnName) => {
+        axisOptions.push(CatalogOverlay.NONE);
+        profileStore?.catalogControlHeader.forEach((header, columnName) => {
             const dataType = profileStore.catalogHeader[header.dataIndex].dataType;
             if (CatalogOverlayComponent.axisDataType.includes(dataType) && header.display) {
                 axisOptions.push(columnName);
@@ -194,6 +195,7 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
             activeFileName = `${this.catalogFileId}: ${fileName}`;
         }
         const disabledOverlayPanel = catalogFileIds.length <= 0;
+        const disableSizeMap = disabledOverlayPanel || widgetStore.disableSizeMap;
 
         const globalPanel = (
             <div className="panel-container">
@@ -264,10 +266,10 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
         );
 
         const noResults = (<MenuItem disabled={true} text="No results" />);
-
+        
         const sizeMap = (
             <div className="panel-container">
-                <FormGroup className="catalog-xaxis" inline={true} label="Map" disabled={disabledOverlayPanel}>
+                <FormGroup className="catalog-xaxis" inline={true} label="Column" disabled={disabledOverlayPanel}>
                     <Select
                         className="catalog-xaxis-select"
                         items={this.axisOption}
@@ -284,43 +286,69 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
                         <Button className="catalog-xaxis-button" text={widgetStore.sizeMapColumn} disabled={disabledOverlayPanel} rightIcon="double-caret-vertical"/>
                     </Select>
                 </FormGroup>
-                <FormGroup  inline={true} label="Size" labelInfo="(px)"  disabled={disabledOverlayPanel}>
-                    <SafeNumericInput
-                        placeholder="Catalog Size"
-                        disabled={disabledOverlayPanel}
-                        min={CatalogWidgetStore.MinOverlaySize}
-                        max={CatalogWidgetStore.MaxOverlaySize}
-                        value={widgetStore.catalogSize}
-                        stepSize={1}
-                        onValueChange={(value: number) => widgetStore.setCatalogSize(value)}
-                    />
-                </FormGroup>
-
-                {/* <FormGroup label={"Scaling"} inline={true}>
+                <FormGroup label={"Scaling"} inline={true}>
                     <ScalingSelectComponent
-                        selectedItem={renderConfig.scaling}
-                        onItemSelect={renderConfig.setScaling}
-                    />
-                </FormGroup> */}
-
-                {/* <FormGroup label={"Clip Min"} inline={true}>
-                    <SafeNumericInput
-                        value={frame.renderConfig.scaleMinVal}
-                        selectAllOnFocus={true}
-                        buttonPosition={"none"}
-                        onBlur={this.handleScaleMinChange}
-                        onKeyDown={this.handleScaleMinChange}
+                        selectedItem={widgetStore.scalingType}
+                        onItemSelect={(type) => widgetStore.setScalingType(type)}
                     />
                 </FormGroup>
-                    <FormGroup label={"Clip Max"} inline={true}>
-                        <SafeNumericInput
-                            value={frame.renderConfig.scaleMaxVal}
-                            selectAllOnFocus={true}
-                            buttonPosition={"none"}
-                            onBlur={this.handleScaleMaxChange}
-                            onKeyDown={this.handleScaleMaxChange}
-                        />
-                </FormGroup> */}
+                <FormGroup inline={true} label={"Size Mode"} disabled={disableSizeMap}>
+                    <ButtonGroup>
+                        <AnchorButton disabled={disableSizeMap} text={"Diameter"} active={widgetStore.sizeMapType === "diameter"} onClick={() => widgetStore.setSizeMapType("diameter")}/>
+                        <AnchorButton disabled={disableSizeMap} text={"Area"} active={widgetStore.sizeMapType === "area"} onClick={() => widgetStore.setSizeMapType("area")}/>
+                    </ButtonGroup>
+                </FormGroup>
+                <FormGroup  inline={true} label="Size Min" labelInfo="(px)"  disabled={disableSizeMap}>
+                    <SafeNumericInput
+                        allowNumericCharactersOnly={true}
+                        asyncControl={true}
+                        placeholder="Min"
+                        disabled={disableSizeMap}
+                        buttonPosition={"none"}
+                        value={widgetStore.sizeMin}
+                        onBlur={(ev) => this.handleSizeChange(ev, "size-min")}
+                        onKeyDown={(ev) => this.handleSizeChange(ev, "size-min")}
+                    />
+                </FormGroup>
+
+                <FormGroup  inline={true} label="Size Max" labelInfo="(px)"  disabled={disableSizeMap}>
+                    <SafeNumericInput
+                        allowNumericCharactersOnly={true}
+                        asyncControl={true}
+                        placeholder="Max"
+                        disabled={disableSizeMap}
+                        buttonPosition={"none"}
+                        value={widgetStore.pointSizebyType}
+                        onBlur={(ev) => this.handleSizeChange(ev, "size-max")}
+                        onKeyDown={(ev) => this.handleSizeChange(ev, "size-max")}
+                    />
+                </FormGroup>
+
+                <FormGroup  inline={true} label="Clip Min" disabled={disableSizeMap}>
+                    <SafeNumericInput
+                        allowNumericCharactersOnly={true}
+                        asyncControl={true}
+                        placeholder="Min"
+                        disabled={disableSizeMap}
+                        buttonPosition={"none"}
+                        value={widgetStore.sizeColumnMin}
+                        onBlur={(ev) => this.handleSizeChange(ev, "column-min")}
+                        onKeyDown={(ev) => this.handleSizeChange(ev, "column-min")}
+                    />
+                </FormGroup>
+
+                <FormGroup  inline={true} label="Clip Max" disabled={disableSizeMap}>
+                    <SafeNumericInput
+                        allowNumericCharactersOnly={true}
+                        asyncControl={true}
+                        placeholder="Max"
+                        disabled={disableSizeMap}
+                        buttonPosition={"none"}
+                        value={widgetStore.sizeColumnMax}
+                        onBlur={(ev) => this.handleSizeChange(ev, "column-max")}
+                        onKeyDown={(ev) => this.handleSizeChange(ev, "column-max")}
+                    />
+                </FormGroup>
             </div>
         )
 
@@ -372,5 +400,50 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
     private filterColumn: ItemPredicate<string> = (query: string, columnName: string) => {
         const fileSearcher = new FuzzySearch([columnName]);
         return fileSearcher.search(query).length > 0;
+    };
+
+    private handleSizeChange = (ev, type: SizeClip) => {
+        if (ev.type === "keydown" && ev.keyCode !== KEYCODE_ENTER) {
+            return;
+        }
+        const val = parseFloat(ev.currentTarget.value);
+        const widgetStore = this.widgetStore; 
+        const sizeMin = widgetStore.sizeMin;
+        const sizeMax = widgetStore.pointSizebyType;
+        const columnMin = widgetStore.sizeColumnMin;
+        const columnMax = widgetStore.sizeColumnMax;
+
+        switch (type) {
+            case "size-min":
+                if (isFinite(val) && val !== sizeMin && val < sizeMax && val >= 1) {
+                    widgetStore.setSizeMin(val);
+                } else {
+                    ev.currentTarget.value = sizeMin.toString();
+                }
+                break;
+            case "size-max":
+                if (isFinite(val) && val !== sizeMax && val > sizeMin && val <= widgetStore.maxPointSizebyType) {
+                    widgetStore.setSizeMax(val, widgetStore.sizeMapType);
+                } else {
+                    ev.currentTarget.value = sizeMax.toString();
+                }
+                break;
+            case "column-min":
+                if (isFinite(val) && val !== columnMin && val < columnMax) {
+                    widgetStore.setSizeColumnMin(val);
+                } else {
+                    ev.currentTarget.value = columnMin.toString();
+                }
+                break;
+            case "column-max":
+                if (isFinite(val) && val !== columnMax && val > columnMin) {
+                    widgetStore.setSizeColumnMax(val);
+                } else {
+                    ev.currentTarget.value = columnMax.toString();
+                }
+                break;
+            default:
+                break;
+        }
     };
 }

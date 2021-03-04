@@ -9,8 +9,14 @@
 #include <math.h>
 #include "gsl/gsl_fit.h"
 #include "gsl/gsl_multifit.h"
+#include "gsl/gsl_sort_vector.h"
 
 extern "C" {
+
+void EMSCRIPTEN_KEEPALIVE heapsort(double* data, int N) {
+    gsl_vector_view out = gsl_vector_view_array(data, N);
+    gsl_sort_vector(&out.vector);
+}
 
 int EMSCRIPTEN_KEEPALIVE filterBoxcar(double* yInArray, const int N, double* yOutArray, const int kernel) {
     int status = 0;    /* return value: 0 = success */
