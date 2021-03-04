@@ -109,12 +109,8 @@ export class FileInfoComponent extends React.Component<{
         const height = listRefCurrent.props.height;
         const itemSize = listRefCurrent.props.itemSize;
         const targetPosition = 10 + this.matchedIterLocation.line * itemSize;
-        if (this.matchedIterLocation.line === 0) {
-            this.listRef.current.scrollTo(0);
-        } else if (targetPosition > origOffset + height - itemSize) {
-            this.listRef.current.scrollTo(targetPosition - height + itemSize);
-        } else if (targetPosition < origOffset) {
-            this.listRef.current.scrollTo(targetPosition);
+        if (targetPosition > origOffset + height - itemSize || targetPosition < origOffset) {
+            this.listRef.current.scrollTo(targetPosition - height / 2);
         }
     };
 
