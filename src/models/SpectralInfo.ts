@@ -1,8 +1,8 @@
-import {ChannelType} from "./SpectralDefinition";
+import {SpectralTypeSet} from "./SpectralDefinition";
 
 export interface SpectralInfo {
     channel: number;
-    channelType: ChannelType;
+    channelType: SpectralTypeSet;
     specsys: string;
     spectralString: string;
     freqString?: string;

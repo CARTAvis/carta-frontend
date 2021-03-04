@@ -9,9 +9,9 @@ export class SpectralSettingsComponent extends React.Component<{frame: FrameStor
     render() {
         const frame = this.props.frame;
         const nativeSpectralCoordinate = frame ? frame.nativeSpectralCoordinate : undefined;
-        const spectralCoordinateOptions: IOptionProps[] = frame && frame.spectralCoordsSupported ?
+        const spectralCoordinateOptions: IOptionProps[] = frame?.spectralCoordsSupported ?
             Array.from(frame.spectralCoordsSupported.keys()).map((coord: string) => { return {value: coord, label: coord === nativeSpectralCoordinate ? coord + " (Native WCS)" : coord}; }) : [];
-        const spectralSystemOptions: IOptionProps[] = frame && frame.spectralSystemsSupported ? frame.spectralSystemsSupported.map((system) => { return {value: system, label: system}; }) : [];
+        const spectralSystemOptions: IOptionProps[] = frame?.spectralSystemsSupported ? frame.spectralSystemsSupported.map((system) => { return {value: system, label: system}; }) : [];
         const hasFrameCoordinateSetting = frame && (frame.isSpectralCoordinateConvertible || (frame.spectralAxis && !frame.spectralAxis.valid));
         const disableCoordinateSetting = this.props.disable || !hasFrameCoordinateSetting;
         const disableSystemSetting = this.props.disable || !frame || !frame.isSpectralSystemConvertible;

@@ -1,11 +1,11 @@
-export interface ChannelType {
+export interface SpectralTypeSet {
     code: string;
     unit: string;
     name: string;
 }
 
 // From FITS standard (Table 25 of V4.0 of "Definition of the Flexible Image Transport System")
-export const CHANNEL_TYPES: ChannelType[] = [
+export const STANDARD_SPECTRAL_TYPE_SETS: SpectralTypeSet[] = [
     {code: "FREQ", name: "Frequency", unit: "Hz"},
     {code: "ENER", name: "Energy", unit: "J"},
     {code: "WAVN", name: "Wavenumber", unit: "1/m"},

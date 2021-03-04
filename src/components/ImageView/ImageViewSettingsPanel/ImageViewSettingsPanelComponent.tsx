@@ -89,7 +89,7 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
         makeObservable(this);
 
         autorun(() => {
-            if (!AppStore.Instance.activeFrame?.isValidPVImage.valid && this.selectedTab === ImageViewSettingsPanelTabs.SPECTRAL) {
+            if (!AppStore.Instance.activeFrame?.isPVImage && this.selectedTab === ImageViewSettingsPanelTabs.SPECTRAL) {
                 this.selectedTab = ImageViewSettingsPanelTabs.GLOBAL;
             }
         });
@@ -687,17 +687,18 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
             </div>
         ) : null;
 
-        const isValidPVImage = appStore.activeFrame?.isValidPVImage.valid;
-        const spectralPanel = (
+        const frame = appStore.activeFrame;
+        const isPVImage = frame?.isPVImage;
+        const spectralPanel = isPVImage ? (
             <div className="panel-container">
                 <SpectralSettingsComponent
                     frame={appStore.activeFrame}
-                    onSpectralCoordinateChange={() => {/* TODO */}}
-                    onSpectralSystemChange={() => {/* TODO */}}
-                    disable={!isValidPVImage}
+                    onSpectralCoordinateChange={frame.setSpectralCoordinate}
+                    onSpectralSystemChange={frame.setSpectralSystem}
+                    disable={!isPVImage}
                 />
             </div>
-        );
+        ) : null;
 
         let className = "image-view-settings";
         if (appStore.darkTheme) {
@@ -721,7 +722,7 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
                     <Tab id={ImageViewSettingsPanelTabs.NUMBERS} title={ImageViewSettingsPanelTabs.NUMBERS} panel={numbersPanel}/>
                     <Tab id={ImageViewSettingsPanelTabs.LABELS} title={ImageViewSettingsPanelTabs.LABELS} panel={labelsPanel}/>
                     <Tab id={ImageViewSettingsPanelTabs.BEAM} title={ImageViewSettingsPanelTabs.BEAM} panel={beamPanel} disabled={appStore.frameNum <= 0}/>
-                    <Tab id={ImageViewSettingsPanelTabs.SPECTRAL} title={ImageViewSettingsPanelTabs.SPECTRAL} panel={spectralPanel} disabled={!isValidPVImage}/>
+                    <Tab id={ImageViewSettingsPanelTabs.SPECTRAL} title={ImageViewSettingsPanelTabs.SPECTRAL} panel={spectralPanel} disabled={!isPVImage}/>
                 </Tabs>
             </div>
         );

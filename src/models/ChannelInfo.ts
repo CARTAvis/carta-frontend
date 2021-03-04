@@ -1,8 +1,8 @@
-import {ChannelType} from "./SpectralDefinition";
+import {SpectralTypeSet} from "./SpectralDefinition";
 
 export interface ChannelInfo {
     fromWCS: boolean;
-    channelType: ChannelType;
+    channelType: SpectralTypeSet;
     indexes: number[];
     values: number[];
     rawValues: number[];

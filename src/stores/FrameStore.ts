@@ -4,9 +4,7 @@ import {CARTA} from "carta-protobuf";
 import * as AST from "ast_wrapper";
 import {AnimatorStore, AppStore, ASTSettingsString, ContourConfigStore, ContourStore, LogStore, OverlayBeamStore, OverlayStore, PreferenceStore, RegionSetStore, RegionStore, RenderConfigStore} from "stores";
 import {
-    CHANNEL_TYPES,
     ChannelInfo,
-    ChannelType,
     ControlMap,
     CursorInfo,
     FrameView,
@@ -22,7 +20,9 @@ import {
     SpectralInfo,
     SpectralSystem,
     SpectralType,
+    SpectralTypeSet,
     SpectralUnit,
+    STANDARD_SPECTRAL_TYPE_SETS,
     Transform2D,
     ZoomPoint
 } from "models";
@@ -436,37 +436,64 @@ export class FrameStore {
         return `${this.spectralInfo.spectralString?.replace(/\w+\s\(/, "")?.replace(/\):\s/, "\u000A")}${infoString?.replace(/\w+:\s/, "\u000A")}`;
     }
 
-    @computed get spectralAxis(): { valid: boolean; dimension: number, type: ChannelType } {
-        if (!this.frameInfo || !this.frameInfo.fileInfoExtended || this.frameInfo.fileInfoExtended.depth <= 1 || !this.frameInfo.fileInfoExtended.headerEntries) {
-            return undefined;
-        }
-        const entries = this.frameInfo.fileInfoExtended.headerEntries;
-        const typeHeader3 = entries.find(entry => entry.name.includes("CTYPE3"));
-        const typeHeader4 = entries.find(entry => entry.name.includes("CTYPE4"));
-        if ((!typeHeader3 && !typeHeader4) ||
-            (typeHeader3 && typeHeader3.value.match(/stokes/i) && !typeHeader4) ||
-            (!typeHeader3 && typeHeader4 && typeHeader4.value.match(/stokes/i)) ||
-            (typeHeader3 && typeHeader3.value.match(/stokes/i) && typeHeader4 && typeHeader4.value.match(/stokes/i))) {
-            return undefined;
-        }
+    @computed get isPVImage(): boolean {
+        return this.positionAxis !== undefined;
+    }
 
-        if (typeHeader3 && !typeHeader3.value.match(/stokes/i)) { // spectral axis should be CTYPE3
-            const headerVal = typeHeader3.value.trim().toUpperCase();
-            const channelType = CHANNEL_TYPES.find(type => headerVal === type.code);
-            const unitHeader = entries.find(entry => entry.name.includes("CUNIT3"));
-            if (channelType) {
-                return {valid: true, dimension: 3, type: {name: channelType.name, code: channelType.code, unit: unitHeader ? unitHeader.value.trim() : channelType.unit}};
-            } else {
-                return {valid: false, dimension: 3, type: {name: headerVal, code: headerVal, unit: unitHeader ? unitHeader.value.trim() : undefined}};
+    @computed get positionAxis(): number {
+        if (this.frameInfo?.fileInfoExtended?.headerEntries) {
+            const entries = this.frameInfo.fileInfoExtended.headerEntries;
+            const positionAxisRegex = /offset|position|offset position/i;
+            const axis1 = entries.find(entry => entry.name.includes("CTYPE1"));
+            const axis2 = entries.find(entry => entry.name.includes("CTYPE2"))
+            if (axis1?.value?.match(positionAxisRegex) || axis2?.value?.match(positionAxisRegex)) {
+                return axis1?.value?.match(positionAxisRegex) ? 1 : 2;
             }
-        } else if (typeHeader4 && !typeHeader4.value.match(/stokes/i)) { // spectral axis should be CTYPE4
-            const headerVal = typeHeader4.value.trim().toUpperCase();
-            const channelType = CHANNEL_TYPES.find(type => headerVal === type.code);
-            const unitHeader = entries.find(entry => entry.name.includes("CUNIT4"));
-            if (channelType) {
-                return {valid: true, dimension: 4, type: {name: channelType.name, code: channelType.code, unit: unitHeader ? unitHeader.value.trim() : channelType.unit}};
+        }
+        return undefined;
+    }
+
+    @computed get spectralAxis(): { valid: boolean; dimension: number, type: SpectralTypeSet, specsys: string } {
+        if (this.frameInfo?.fileInfoExtended?.headerEntries) {
+            const entries = this.frameInfo.fileInfoExtended.headerEntries;
+
+            // Locate spectral dimension from axis 1~4
+            let dimension = undefined;
+            if (this.isPVImage) {
+                dimension = this.positionAxis === 1 ? 2 : 1;
             } else {
-                return {valid: false, dimension: 4, type: {name: headerVal, code: headerVal, unit: unitHeader ? unitHeader.value.trim() : undefined}};
+                const typeHeader3 = entries.find(entry => entry.name.includes("CTYPE3"));
+                const typeHeader4 = entries.find(entry => entry.name.includes("CTYPE4"));
+                if (typeHeader3 && !typeHeader3.value.match(/stokes/i)) { // spectral axis should be CTYPE3
+                    dimension = 3;
+                } else if (typeHeader4 && !typeHeader4.value.match(/stokes/i)) { // spectral axis should be CTYPE4
+                    dimension = 4;
+                }
+            }
+
+            // Fill up spectral dimension & type/unit/system
+            if (dimension) {
+                const spectralHeader = entries.find(entry => entry.name.includes(`CTYPE${dimension}`));
+                const spectralValue = spectralHeader?.value.trim().toUpperCase();
+                const spectralType = STANDARD_SPECTRAL_TYPE_SETS.find(type => spectralValue === type.code);
+                const unitHeader = entries.find(entry => entry.name.includes(`CUNIT${dimension}`));
+                const specSysHeader = entries.find(entry => entry.name.includes("SPECSYS"));
+                const specsys = specSysHeader?.value ? trimFitsComment(specSysHeader.value)?.toUpperCase() : undefined;
+                if (spectralType) {
+                    return {
+                        valid: true,
+                        dimension: dimension,
+                        type: {name: spectralType.name, code: spectralType.code, unit: unitHeader?.value?.trim() ?? spectralType.unit},
+                        specsys: specsys
+                    };
+                } else {
+                    return {
+                        valid: false,
+                        dimension: dimension,
+                        type: {name: spectralValue, code: spectralValue, unit: unitHeader?.value?.trim() ?? undefined},
+                        specsys: specsys
+                    };
+                }
             }
         }
         return undefined;
@@ -480,18 +507,18 @@ export class FrameStore {
     }
 
     @computed get isSpectralSystemConvertible(): boolean {
-        if (!this.spectralInfo || !this.spectralFrame) {
+        if (!this.spectralAxis || !this.spectralFrame) {
             return false;
         }
-        return IsSpectralSystemSupported(this.spectralInfo.specsys as string);
+        return IsSpectralSystemSupported(this.spectralAxis.specsys as string);
     }
 
     @computed get isSpectralPropsEqual(): boolean {
         let result = false;
-        if (this.spectralInfo && this.spectralInfo.channelType) {
-            const isTypeEqual = this.spectralInfo.channelType.code === (this.spectralType as string);
-            const isUnitEqual = this.spectralInfo.channelType.unit === (this.spectralUnit as string);
-            const isSpecsysEqual = this.spectralInfo.specsys === (this.spectralSystem as string);
+        if (this.spectralAxis?.type && this.spectralAxis?.specsys) {
+            const isTypeEqual = this.spectralAxis.type.code === (this.spectralType as string);
+            const isUnitEqual = this.spectralAxis.type.unit === (this.spectralUnit as string);
+            const isSpecsysEqual = this.spectralAxis.specsys === (this.spectralSystem as string);
             result = isTypeEqual && isUnitEqual && isSpecsysEqual;
         }
         return result;
@@ -659,20 +686,6 @@ export class FrameStore {
         return [];
     }
 
-    @computed get isValidPVImage(): { valid: boolean; numSpectralAxis: number } {
-        if (this.frameInfo?.fileInfoExtended?.headerEntries) {
-            const entries = this.frameInfo.fileInfoExtended.headerEntries;
-            const axis1 = entries.find(entry => entry.name.includes("CTYPE1"));
-            const axis2 = entries.find(entry => entry.name.includes("CTYPE2"));
-            const positionAxisRegex = /offset|position|offset position/i;
-            if ((axis1?.value?.match(positionAxisRegex) && IsSpectralTypeSupported(axis2?.value?.trim())) ||
-                (axis2?.value?.match(positionAxisRegex) && IsSpectralTypeSupported(axis1?.value?.trim()))) {
-                return { valid: true, numSpectralAxis: axis1?.value?.match(positionAxisRegex) ? 2 : 1 };
-            }
-        }
-        return { valid: false, numSpectralAxis: undefined };
-    }
-
     constructor(frameInfo: FrameInfo) {
         makeObservable(this);
         this.overlayStore = OverlayStore.Instance;
@@ -741,7 +754,7 @@ export class FrameStore {
         };
         this.animationChannelRange = [0, frameInfo.fileInfoExtended.depth - 1];
 
-        if (this.isValidPVImage.valid) {
+        if (this.isPVImage) {
             this.astFrameSet = this.initPVImage();
             if (this.astFrameSet) {
                 this.spectralFrame = AST.getSpectralFrame(this.astFrameSet);
@@ -787,7 +800,7 @@ export class FrameStore {
             this.spectralUnit = SPECTRAL_DEFAULT_UNIT.get(this.spectralType);
         }
         if (this.isSpectralSystemConvertible) {
-            this.spectralSystem = this.spectralInfo.specsys as SpectralSystem;
+            this.spectralSystem = this.spectralAxis.specsys as SpectralSystem;
         }
 
         // need initialized wcs to get correct cursor info
@@ -1146,7 +1159,7 @@ export class FrameStore {
 
         // generate spectral coordinate options
         const entries = this.frameInfo.fileInfoExtended.headerEntries;
-        const spectralType = this.spectralInfo.channelType.code;
+        const spectralType = this.spectralAxis.type.code;
         if (IsSpectralTypeSupported(spectralType)) {
             // check RESTFRQ
             const restFrqHeader = entries.find(entry => entry.name.indexOf("RESTFRQ") !== -1);
@@ -1174,7 +1187,7 @@ export class FrameStore {
         }
 
         // generate spectral system options
-        const spectralSystem = this.spectralInfo.specsys;
+        const spectralSystem = this.spectralAxis.specsys;
         if (IsSpectralSystemSupported(spectralSystem)) {
             const dateObsHeader = entries.find(entry => entry.name.indexOf("DATE-OBS") !== -1);
             const obsgeoxHeader = entries.find(entry => entry.name.indexOf("OBSGEO-X") !== -1);
@@ -1211,6 +1224,24 @@ export class FrameStore {
     @action private initCenter = () => {
         this.center.x = (this.frameInfo.fileInfoExtended.width - 1) / 2.0;
         this.center.y = (this.frameInfo.fileInfoExtended.height - 1) / 2.0;
+    };
+
+    @action setSpectralCoordinate = (coordStr: string): boolean => {
+        if (this.spectralCoordsSupported?.has(coordStr)) {
+            const coord: {type: SpectralType, unit: SpectralUnit} = this.spectralCoordsSupported.get(coordStr);
+            this.spectralType = coord.type;
+            this.spectralUnit = coord.unit;
+            return true;
+        }
+        return false;
+    };
+
+    @action setSpectralSystem = (spectralSystem: SpectralSystem): boolean => {
+        if (this.spectralSystemsSupported?.includes(spectralSystem)) {
+            this.spectralSystem = spectralSystem;
+            return true;
+        }
+        return false;
     };
 
     @action updateFromContourData(contourImageData: CARTA.ContourImageData) {
