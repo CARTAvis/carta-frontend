@@ -340,7 +340,6 @@ export class FrameStore {
                     }
                     return {
                         fromWCS: true,
-                        channelType: this.spectralAxis.type,
                         indexes,
                         values,
                         rawValues,
@@ -373,7 +372,7 @@ export class FrameStore {
             rawValues[i] = i;
         }
         return {
-            fromWCS: false, channelType: {code: "", name: "Channel", unit: ""}, indexes, values, rawValues,
+            fromWCS: false, indexes, values, rawValues,
             getChannelIndexWCS: null, getChannelIndexSimple: getChannelIndexSimple
         };
     }
@@ -381,25 +380,18 @@ export class FrameStore {
     @computed get spectralInfo(): SpectralInfo {
         const spectralInfo: SpectralInfo = {
             channel: this.channel,
-            channelType: {code: "", name: "Channel", unit: ""},
-            specsys: "",
             spectralString: ""
         };
 
         if (this.frameInfo.fileInfoExtended.depth > 1) {
             const channelInfo = this.channelInfo;
-            spectralInfo.channelType = channelInfo.channelType;
-            if (channelInfo.channelType.code) {
-                const specSysHeader = this.frameInfo.fileInfoExtended.headerEntries.find(entry => entry.name.indexOf(`SPECSYS`) !== -1);
-                if (specSysHeader && specSysHeader.value) {
-                    spectralInfo.specsys = trimFitsComment(specSysHeader.value).toUpperCase();
-                }
-
-                spectralInfo.spectralString = `${channelInfo.channelType.name} (${spectralInfo.specsys}): ${toFixed(channelInfo.values[this.channel], 4)} ${channelInfo.channelType.unit}`;
-                if (channelInfo.channelType.code === "FREQ") {
+            const spectralType = this.spectralAxis?.type;
+            if (spectralType) {
+                spectralInfo.spectralString = `${spectralType.name} (${this.spectralAxis.specsys}): ${toFixed(channelInfo.values[this.channel], 4)} ${spectralType.unit}`;
+                if (this.spectralAxis.type.code === "FREQ") {
                     const freqVal = channelInfo.rawValues[this.channel];
                     // convert frequency value to unit in GHz
-                    if (this.isSpectralCoordinateConvertible && channelInfo.channelType.unit !== SPECTRAL_DEFAULT_UNIT.get(SpectralType.FREQ)) {
+                    if (this.isSpectralCoordinateConvertible && spectralType.unit !== SPECTRAL_DEFAULT_UNIT.get(SpectralType.FREQ)) {
                         const freqGHz = this.astSpectralTransform(SpectralType.FREQ, SpectralUnit.GHZ, this.spectralSystem, freqVal);
                         if (isFinite(freqGHz)) {
                             spectralInfo.spectralString = `Frequency (${this.spectralSystem}): ${formattedFrequency(freqGHz)}`;
@@ -410,10 +402,10 @@ export class FrameStore {
                     if (isFinite(velocityVal)) {
                         spectralInfo.velocityString = `Velocity: ${toFixed(velocityVal, 4)} km/s`;
                     }
-                } else if (channelInfo.channelType.code === "VRAD") {
+                } else if (spectralType.code === "VRAD") {
                     const velocityVal = channelInfo.rawValues[this.channel];
                     // convert velocity value to unit in km/s
-                    if (this.isSpectralCoordinateConvertible && channelInfo.channelType.unit !== SPECTRAL_DEFAULT_UNIT.get(SpectralType.VRAD)) {
+                    if (this.isSpectralCoordinateConvertible && spectralType.unit !== SPECTRAL_DEFAULT_UNIT.get(SpectralType.VRAD)) {
                         const volecityKMS = this.astSpectralTransform(SpectralType.VRAD, SpectralUnit.KMS, this.spectralSystem, velocityVal);
                         if (isFinite(volecityKMS)) {
                             spectralInfo.spectralString = `Velocity (${this.spectralSystem}): ${toFixed(volecityKMS, 4)} km/s`;
