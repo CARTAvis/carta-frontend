@@ -6,7 +6,7 @@ import Konva from "konva";
 import {Colors} from "@blueprintjs/core";
 import {FrameStore, RegionStore} from "stores";
 import {Point2D} from "models";
-import {add2D, average2D, closestPointOnLine, transformPoint, rotate2D, scale2D, subtract2D} from "utilities";
+import {add2D, average2D, closestPointOnLine, transformPoint, rotate2D, scale2D, subtract2D, getColorForTheme} from "utilities";
 import {canvasToTransformedImagePos, imageToCanvasPos, transformedImageToCanvasPos} from "./shared";
 
 export interface PolygonRegionComponentProps {
@@ -321,7 +321,7 @@ export class PolygonRegionComponent extends React.Component<PolygonRegionCompone
                 <Line
                     x={centerPointCanvasSpace.x}
                     y={centerPointCanvasSpace.y}
-                    stroke={region.isSimplePolygon ? region.color : INVALID_POLYGON_COLOR}
+                    stroke={region.isSimplePolygon ? getColorForTheme(region.color) : INVALID_POLYGON_COLOR}
                     strokeWidth={region.lineWidth}
                     opacity={region.isTemporary ? 0.5 : (region.locked ? 0.70 : 1)}
                     dash={[region.dashLength]}

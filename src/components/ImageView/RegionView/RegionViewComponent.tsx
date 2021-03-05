@@ -5,13 +5,13 @@ import {observer} from "mobx-react";
 import {Group, Layer, Line, Rect, Stage} from "react-konva";
 import Konva from "konva";
 import {CARTA} from "carta-protobuf";
-import {FrameStore, OverlayStore, PreferenceStore, RegionMode, RegionStore} from "stores";
+import {FrameStore, OverlayStore, PreferenceStore, RegionMode, RegionStore, AppStore} from "stores";
 import {SimpleShapeRegionComponent} from "./SimpleShapeRegionComponent";
 import {PolygonRegionComponent} from "./PolygonRegionComponent";
 import {PointRegionComponent} from "./PointRegionComponent";
 import {canvasToImagePos, canvasToTransformedImagePos, imageToCanvasPos, transformedImageToCanvasPos} from "./shared";
 import {CursorInfo, Point2D} from "models";
-import {average2D, length2D, pointDistanceSquared, scale2D, subtract2D, transformPoint} from "utilities";
+import {average2D, length2D, pointDistanceSquared, scale2D, subtract2D, transformPoint, getColorForTheme} from "utilities";
 import "./RegionViewComponent.scss";
 
 export interface RegionViewComponentProps {
@@ -421,6 +421,9 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
     };
 
     render() {
+        // dummy values to trigger React's componentDidUpdate()
+        // eslint-disable-next-line no-unused-vars,@typescript-eslint/no-unused-vars
+        const darkTheme = AppStore.Instance.darkTheme;
         const frame = this.props.frame;
         const regionSet = frame.regionSet;
 
@@ -529,7 +532,7 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
                 <Line
                     points={points}
                     dash={[5]}
-                    stroke={this.creatingRegion.color}
+                    stroke={getColorForTheme(this.creatingRegion.color)}
                     strokeWidth={this.creatingRegion.lineWidth}
                     opacity={0.5}
                     lineJoin={"round"}

@@ -2,7 +2,7 @@ import { action, observable, makeObservable } from "mobx";
 import tinycolor from "tinycolor2";
 import {CARTA} from "carta-protobuf";
 import {PreferenceStore} from "./PreferenceStore";
-import {RGBColor} from "react-color";
+import {isAutoColor} from "utilities";
 
 export enum ContourGeneratorType {
     StartStepMultiplier = "start-step-multiplier",
@@ -23,7 +23,7 @@ export class ContourConfigStore {
     @observable smoothingMode: CARTA.SmoothingMode;
     @observable smoothingFactor: number;
 
-    @observable color: RGBColor;
+    @observable color: string;
     @observable colormapEnabled: boolean;
     @observable colormap: string;
     @observable colormapContrast: number;
@@ -42,7 +42,7 @@ export class ContourConfigStore {
         this.smoothingMode = this.preferenceStore.contourSmoothingMode;
         this.smoothingFactor = this.preferenceStore.contourSmoothingFactor;
 
-        this.color = tinycolor(this.preferenceStore.contourColor).toRgb();
+        this.color = this.preferenceStore.contourColor;
         this.colormapEnabled = this.preferenceStore.contourColormapEnabled;
         this.colormap = this.preferenceStore.contourColormap;
         this.colormapBias = 0.0;
@@ -63,10 +63,10 @@ export class ContourConfigStore {
     };
 
     // Styling
-    @action setColor = (color: tinycolor.ColorInput) => {
+    @action setColor = (color: string) => {
         const colorObj = tinycolor(color);
-        if (colorObj.isValid()) {
-            this.color = colorObj.toRgb();
+        if (colorObj.isValid() || isAutoColor(color)) {
+            this.color = color;
         }
     };
 
