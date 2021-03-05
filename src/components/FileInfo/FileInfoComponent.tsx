@@ -45,9 +45,7 @@ export class FileInfoComponent extends React.Component<{
     };
 
     @action onMouseLeave = () => {
-        if (!this.isSearchOpened) {
-            this.isMouseEntered = false;
-        }
+        this.isMouseEntered = false;
     };
 
     @action searchOpened = () => {
@@ -71,7 +69,9 @@ export class FileInfoComponent extends React.Component<{
     };
 
     @action addMatchedIter = () => {
-        if (this.matchedIter >= this.matchedTotal) {
+        if (this.matchedIter === 0) {
+            return;
+        } else if (this.matchedIter >= this.matchedTotal) {
             this.matchedIter = 1;
         } else {
             this.matchedIter += 1;
@@ -79,7 +79,9 @@ export class FileInfoComponent extends React.Component<{
     };
 
     @action minusMatchedIter = () => {
-        if (this.matchedIter === 1){
+        if (this.matchedIter === 0) {
+            return;
+        } else if (this.matchedIter === 1){
             this.matchedIter = this.matchedTotal;
         } else {
             this.matchedIter -= 1;
@@ -119,13 +121,14 @@ export class FileInfoComponent extends React.Component<{
         this.resetMatchedNums();
         
         if (this.searchString !== "") {
+            // RegExp ignores the difference of lettercase; use special characters as normal strings by putting \ in the front
             const searchStringRegExp = new RegExp(this.searchString.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i');
             this.splitLengthArray = [];
             this.matchedLocationArray = [];
 
             this.props.fileInfoExtended.headerEntries.forEach((entriesValue, index) => {
                 let splitString = (entriesValue.name !== "END") ?
-                    `${entriesValue.name} = ${entriesValue.value}${entriesValue.comment && " / "+entriesValue.comment}`.split(searchStringRegExp) : entriesValue.name.split(searchStringRegExp);
+                    `${entriesValue.name} = ${entriesValue.value}${entriesValue.comment && " / " + entriesValue.comment}`.split(searchStringRegExp) : entriesValue.name.split(searchStringRegExp);
                 this.splitLengthArray.push(splitString.map(value => value.length));
                 this.addMatchedTotal(splitString.length - 1);
                 if (splitString.length > 1) {
@@ -143,14 +146,15 @@ export class FileInfoComponent extends React.Component<{
         }
     };
 
-    private handleClickMatchedNext = () => {
-        this.addMatchedIter();
-        this.updateMatchedIterLocation();
-        this.scrollToPosition();
-    };
+    private handleClickMatched = (mode: number, keyEvent?) => {
+        if (mode === 1 || keyEvent?.keyCode === 13) {
+            this.addMatchedIter();
+        } else if (mode === -1) {
+            this.minusMatchedIter();
+        } else {
+            return;
+        } 
 
-    private handleClickMatchedPrev = () => {
-        this.minusMatchedIter();
         this.updateMatchedIterLocation();
         this.scrollToPosition();
     };
@@ -228,7 +232,7 @@ export class FileInfoComponent extends React.Component<{
         }
     };
 
-    private highlightString(index: number, name: string, value?: string, comment?: string) {
+    private highlightString = (index: number, name: string, value?: string, comment?: string) => {
 
         if(!isFinite(index) || index < 0 || !name) {
             return null;
@@ -292,7 +296,7 @@ export class FileInfoComponent extends React.Component<{
         return highlightedString;
     }
 
-    private renderImageHeaderList(entries: CARTA.IHeaderEntry[]) {
+    private renderImageHeaderList = (entries: CARTA.IHeaderEntry[]) => {
         const renderHeaderRow = ({index, style}) => {
             if (index < 0 || index >= entries?.length) {
                 return null;
@@ -336,7 +340,7 @@ export class FileInfoComponent extends React.Component<{
                 )}
             </AutoSizer>
         );
-    }
+    };
 
     private renderHeaderSearch = () => {
         const popoverModifiers: PopperModifiers = {arrow: {enabled: false}, offset: {offset: '0, 10px, 0, 0'}};
@@ -346,13 +350,13 @@ export class FileInfoComponent extends React.Component<{
                 <Button
                     icon="caret-left"
                     minimal={true}
-                    onClick={this.handleClickMatchedPrev}
+                    onClick={() => this.handleClickMatched(-1)}
                     disabled={this.matchedIter === 0 || this.matchedTotal === 1 ? true : false}
                 />
                 <Button
                     icon="caret-right"
                     minimal={true}
-                    onClick={this.handleClickMatchedNext}
+                    onClick={() => this.handleClickMatched(1)}
                     disabled={this.matchedIter === 0 || this.matchedTotal === 1 ? true : false}
                 />
             </ButtonGroup>
@@ -367,13 +371,14 @@ export class FileInfoComponent extends React.Component<{
                     onOpening={this.searchOpened}
                     onClosing={this.searchClosed}
                 >
-                    <Button icon="search-text" style={{opacity: (this.isMouseEntered) ? 1 : 0}}></Button>
+                    <Button icon="search-text" style={{opacity: (this.isMouseEntered || this.isSearchOpened) ? 1 : 0}}></Button>
                     <InputGroup
                         autoFocus={false}
                         placeholder={"Search text"}
                         leftIcon="search-text"
                         rightElement={searchIter}
                         onChange={this.handleSearchStringChanged}
+                        onKeyDown={(ev) => this.handleClickMatched(0, ev)}
                     />
                 </Popover>
             ) : null;
