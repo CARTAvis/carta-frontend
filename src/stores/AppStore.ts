@@ -1730,7 +1730,8 @@ export class AppStore {
 
     exportImage = (): boolean => {
         if (this.activeFrame) {
-            const composedCanvas = getImageCanvas(this.overlayStore.padding);
+            const backgroundColor = this.preferenceStore.transparentImageBackground ? "rgba(255, 255, 255, 0)" : (this.darkTheme ? Colors.DARK_GRAY3 : Colors.LIGHT_GRAY5);
+            const composedCanvas = getImageCanvas(this.overlayStore.padding, backgroundColor);
             if (composedCanvas) {
                 composedCanvas.toBlob((blob) => {
                     const link = document.createElement("a") as HTMLAnchorElement;
