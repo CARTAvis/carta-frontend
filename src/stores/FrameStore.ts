@@ -389,7 +389,7 @@ export class FrameStore {
             const spectralType = this.spectralAxis?.type;
             if (spectralType) {
                 spectralInfo.spectralString = `${spectralType.name} (${this.spectralAxis?.specsys}): ${toFixed(channelInfo.values[this.channel], 4)} ${spectralType.unit}`;
-                if (this.spectralAxis.type.code === "FREQ") {
+                if (spectralType.code === "FREQ") {
                     const freqVal = channelInfo.rawValues[this.channel];
                     // convert frequency value to unit in GHz
                     if (this.isSpectralCoordinateConvertible && spectralType.unit !== SPECTRAL_DEFAULT_UNIT.get(SpectralType.FREQ)) {
