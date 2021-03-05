@@ -185,25 +185,26 @@ export class RegionStore {
 
     @computed get regionProperties(): string {
         const point = this.center;
-        const center = isFinite(point.x) && isFinite(point.y) ? `${toFixed(point.x, 1)}pix, ${toFixed(point.y, 1)}pix` : "Invalid";
+        const center = isFinite(point.x) && isFinite(point.y) ? `${toFixed(point.x, 6)}pix, ${toFixed(point.y, 6)}pix` : "Invalid";
 
         switch (this.regionType) {
             case CARTA.RegionType.POINT:
                 return `Point (pixel) [${center}]`;
             case CARTA.RegionType.RECTANGLE:
                 return `rotbox[[${center}], ` +
-                    `[${toFixed(this.size.x, 1)}pix, ${toFixed(this.size.y, 1)}pix], ` +
-                    `${toFixed(this.rotation, 1)}deg]`;
+                    `[${toFixed(this.size.x, 6)}pix, ${toFixed(this.size.y, 6)}pix], ` +
+                    `${toFixed(this.rotation, 6)}deg]`;
             case CARTA.RegionType.ELLIPSE:
                 return `ellipse[[${center}], ` +
-                    `[${toFixed(this.size.x, 1)}pix, ${toFixed(this.size.y, 1)}pix], ` +
-                    `${toFixed(this.rotation, 1)}deg]`;
+                    `[${toFixed(this.size.x, 6)}pix, ${toFixed(this.size.y, 6)}pix], ` +
+                    `${toFixed(this.rotation, 6)}deg]`;
             case CARTA.RegionType.POLYGON:
-                // TODO: Region properties
-                const bounds = minMax2D(this.controlPoints);
-                return `polygon[[${center}], ` +
-                    `[${toFixed(bounds.maxPoint.x, 1)}pix, ${toFixed(bounds.maxPoint.y, 1)}pix], ` +
-                    `${toFixed(this.rotation, 1)}deg]`;
+                let polygonProperties = "poly[";
+                this.controlPoints.forEach((point, index) => {
+                    polygonProperties += isFinite(point.x) && isFinite(point.y) ? `[${toFixed(point.x, 6)}pix, ${toFixed(point.y, 6)}pix]` : "[Invalid]";
+                    polygonProperties += index !== this.controlPoints.length - 1 ? ", " : "]";
+                });
+                return polygonProperties;
             default:
                 return "Not Implemented";
         }
