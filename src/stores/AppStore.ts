@@ -1376,7 +1376,7 @@ export class AppStore {
     };
 
     handleReconnectStream = () => {
-        this.alertStore.showInteractiveAlert("You have reconnected to the CARTA server. Do you want to resume your session?", this.onResumeAlertClosed);
+        this.alertStore.showInteractiveAlert("Do you want to resume your session? Please note that temporary images such as moment images or PV images generated via the GUI will be unloaded.", this.onResumeAlertClosed);
     };
 
     handleScriptingRequest = (request: CARTA.IScriptingRequest) => {
@@ -1394,6 +1394,10 @@ export class AppStore {
         // Some things should be reset when the user reconnects
         this.animatorStore.stopAnimation();
         this.tileService.clearRequestQueue();
+
+        // Ignore & remove generated in-memory images(moments/PV, fileId >= 1000)
+        const inMemoryImages = this.frames.filter(frame => frame.frameInfo.fileId >= 1000);
+        inMemoryImages.forEach(frame => this.removeFrame(frame));
 
         const images: CARTA.IImageProperties[] = this.frames.map(frame => {
             const info = frame.frameInfo;
