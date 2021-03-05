@@ -168,11 +168,6 @@ export class AppStore {
             }
         }));
 
-        const authTokenParam = url.searchParams.get("token");
-        if (authTokenParam) {
-            ApiService.Instance.setToken(authTokenParam);
-        }
-
         this.backendService.connect(wsURL).subscribe(ack => {
             console.log(`Connected with session ID ${ack.sessionId}`);
             this.logStore.addInfo(`Connected to server ${wsURL} with session ID ${ack.sessionId}`, ["network"]);
@@ -1147,6 +1142,13 @@ export class AppStore {
         this.backendService.reconnectStream.subscribe(this.handleReconnectStream);
         this.backendService.scriptingStream.subscribe(this.handleScriptingRequest);
         this.tileService.tileStream.subscribe(this.handleTileStream);
+
+        // Set auth token from URL if it exists
+        const url = new URL(window.location.href);
+        const authTokenParam = url.searchParams.get("token");
+        if (authTokenParam) {
+            this.apiService.setToken(authTokenParam);
+        }
 
         // Splash screen mask
         autorun(() => {
