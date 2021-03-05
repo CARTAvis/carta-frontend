@@ -18,6 +18,13 @@ export const STANDARD_SPECTRAL_TYPE_SETS: SpectralTypeSet[] = [
     {code: "BETA", name: "Beta", unit: ""},
 ];
 
+// FREQ, ENER, WAVN
+export enum SpectralColorMap {
+    FREQ = "FREQ",
+    ENER = "ENER",
+    WAVE = "WAVE"
+};
+
 export enum SpectralType {
     VRAD = "VRAD",
     VOPT = "VOPT",

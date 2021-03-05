@@ -341,6 +341,7 @@ export class FrameStore {
                     return {
                         fromWCS: true,
                         indexes,
+                        delta,
                         values,
                         rawValues,
                         getChannelIndexWCS: (value: number): number => {
@@ -372,7 +373,7 @@ export class FrameStore {
             rawValues[i] = i;
         }
         return {
-            fromWCS: false, indexes, values, rawValues,
+            fromWCS: false, delta: undefined, indexes, values, rawValues,
             getChannelIndexWCS: null, getChannelIndexSimple: getChannelIndexSimple
         };
     }
@@ -1124,11 +1125,17 @@ export class FrameStore {
             case CARTA.RegionType.POINT:
                 return `Point (wcs:${systemType}) [${center}]`;
             case CARTA.RegionType.RECTANGLE:
-                return `rotbox(wcs:${systemType})[[${center}], [${size.x}, ${size.y}], ${toFixed(region.rotation, 1)}deg]`;
+                return `rotbox(wcs:${systemType})[[${center}], [${size.x}, ${size.y}], ${toFixed(region.rotation,6)}deg]`;
             case CARTA.RegionType.ELLIPSE:
-                return `ellipse(wcs:${systemType})[[${center}], [${size.x}, ${size.y}], ${toFixed(region.rotation, 1)}deg]`;
+                return `ellipse(wcs:${systemType})[[${center}], [${size.x}, ${size.y}], ${toFixed(region.rotation, 6)}deg]`;
             case CARTA.RegionType.POLYGON:
-                return `polygon(wcs:${systemType})[[${center}], [${size.x}, ${size.y}], ${toFixed(region.rotation, 1)}deg]`;
+                let polygonWcsProperties = `poly(wcs:${systemType})[`;
+                region.controlPoints.forEach((point, index) => {
+                    const wcsPoint = isFinite(point.x) && isFinite(point.y) ? getFormattedWCSPoint(this.wcsInfoForTransformation, point) : null;
+                    polygonWcsProperties += wcsPoint ? `[${wcsPoint.x}, ${wcsPoint.y}]` : "[Invalid]";
+                    polygonWcsProperties += index !== region.controlPoints.length - 1 ? ", " : "]";
+                });
+                return polygonWcsProperties;
             default:
                 return "Not Implemented";
         }

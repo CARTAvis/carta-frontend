@@ -13,6 +13,7 @@ import {StokesCoordinate} from "stores/widgets/StokesAnalysisWidgetStore";
 import {Point2D} from "models";
 import {clamp, toExponential, getTimestamp, exportTsvFile} from "utilities";
 import {PlotType} from "components/Shared";
+import {AppStore} from "stores";
 import "./LinePlotComponent.scss";
 
 export enum ZoomMode {
@@ -542,7 +543,7 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
         composedCanvas.height = canvas.height;
 
         const ctx = composedCanvas.getContext("2d");
-        ctx.fillStyle = "rgba(255, 255, 255, 0.0)";
+        ctx.fillStyle = AppStore.Instance.preferenceStore.transparentImageBackground ? "rgba(255, 255, 255, 0.0)" : (this.props.darkMode ?  Colors.DARK_GRAY3 : Colors.LIGHT_GRAY5);
         ctx.fillRect(0, 0, composedCanvas.width, composedCanvas.height);
         ctx.drawImage(canvas, 0, 0);
 
