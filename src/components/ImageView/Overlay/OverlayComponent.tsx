@@ -78,7 +78,8 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
     render() {
         const styleString = this.props.overlaySettings.styleString;
 
-        const refFrame = this.props.frame.spatialReference || this.props.frame;
+        const frame = this.props.frame;
+        const refFrame = frame.spatialReference || frame;
         // changing the frame view, padding or width/height triggers a re-render
 
         // Dummy variables for triggering re-render
@@ -87,8 +88,13 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
         const framePadding = this.props.overlaySettings.padding;
         const w = this.props.overlaySettings.viewWidth;
         const h = this.props.overlaySettings.viewHeight;
-        const moving = this.props.frame.moving;
+        const moving = frame.moving;
         /* eslint-enable no-unused-vars, @typescript-eslint/no-unused-vars */
+
+        // Trigger switching AST overlay axis for PV image
+        if (frame.isPVImage) {
+            AST.set(frame.wcsInfo, `System=${frame.spectralType}, Unit=${frame.spectralUnit}, StdOfRest=${frame.spectralSystem}`);
+        }
 
         let className = "overlay-canvas";
         if (this.props.docked) {
