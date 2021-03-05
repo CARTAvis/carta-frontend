@@ -93,7 +93,7 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
 
         // Trigger switching AST overlay axis for PV image
         if (frame.isPVImage) {
-            AST.set(frame.wcsInfo, `System=${frame.spectralType}, Unit=${frame.spectralUnit}, StdOfRest=${frame.spectralSystem}`);
+            AST.set(frame.wcsInfo, `${frame.spectralType ? `System=${frame.spectralType},` : ""}${frame.spectralUnit ? `Unit=${frame.spectralUnit},` : ""}${frame.spectralSystem ? `StdOfRest=${frame.spectralSystem}` : ""}`);
         }
 
         let className = "overlay-canvas";
