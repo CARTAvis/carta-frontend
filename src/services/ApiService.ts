@@ -3,6 +3,7 @@ import Ajv from "ajv";
 import {action, computed, observable, makeObservable} from "mobx";
 import {AppToaster} from "components/Shared";
 import {LayoutConfig} from "../models";
+import {AlertStore} from "stores";
 
 const preferencesSchema = require("models/preferences_schema_1.json");
 
@@ -319,7 +320,7 @@ export class ApiService {
                 LayoutConfig.UpgradeLayout(layout);
                 const valid = LayoutConfig.LayoutValidator(layout);
                 if (!valid) {
-                    console.log(LayoutConfig.LayoutValidator.errors);
+                    AlertStore.Instance.showAlert(`Layout "${layoutName}" validation failed!`);
                 } else {
                     validLayouts[layoutName] = layout;
                 }
