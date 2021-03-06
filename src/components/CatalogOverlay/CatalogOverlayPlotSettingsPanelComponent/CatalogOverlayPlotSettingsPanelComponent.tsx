@@ -116,68 +116,6 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
         CatalogStore.Instance.catalogProfiles.set(this.props.id, fileId);
     }
 
-    private renderFileIdPopOver = (fileId: number, itemProps: IItemRendererProps) => {
-        const fileName = this.catalogFileNames.get(fileId);
-        let text = `${fileId}: ${fileName}`;
-        return (
-            <MenuItem
-                key={fileId}
-                text={text}
-                onClick={itemProps.handleClick}
-                active={itemProps.modifiers.active}
-            />
-        );
-    }
-
-    private renderShapePopOver = (shape: CatalogOverlayShape, itemProps: IItemRendererProps) => {
-        const shapeItem = this.getCatalogShape(shape);
-        return (
-            <MenuItem
-                icon={shapeItem}
-                key={shape}
-                onClick={itemProps.handleClick}
-                active={itemProps.modifiers.active}
-            />
-        );
-    }
-
-    private handleSelectedTabChanged = (newTabId: React.ReactText) => {
-        this.widgetStore.setSettingsTabId(Number.parseInt(newTabId.toString()));
-    }
-
-    private getCatalogShape = (shape: CatalogOverlayShape) => {
-        const widgetStore = this.widgetStore;
-        let color = widgetStore.catalogColor;
-        switch (shape) {
-            case CatalogOverlayShape.Circle:
-                return <Icon icon="circle" color={color}/>;
-            case CatalogOverlayShape.FullCircle:
-                return <Icon icon="full-circle" color={color}/>;  
-            case CatalogOverlayShape.Star:
-                return <Icon icon="star-empty" color={color}/>;
-            case CatalogOverlayShape.FullStar:
-                return <Icon icon="star" color={color}/>;
-            case CatalogOverlayShape.Square:
-                return <Icon icon="square" color={color}/>;
-            case CatalogOverlayShape.Plus:
-                return <Icon icon="plus" color={color}/>;
-            case CatalogOverlayShape.Cross:
-                return <Icon icon="cross" color={color}/>;
-            case CatalogOverlayShape.TriangleUp:
-                return IconWrapper(triangleUp, color, false);
-            case CatalogOverlayShape.TriangleDown:
-                return IconWrapper(triangleDown, color, false);
-            case CatalogOverlayShape.Diamond:
-                return IconWrapper(diamond, color, false);
-            case CatalogOverlayShape.hexagon:
-                return IconWrapper(hexagon, color, false);
-            case CatalogOverlayShape.hexagon2:
-                return IconWrapper(hexagon2, color, false);
-            default:
-                return <Icon icon="circle" color={color}/>;
-        }
-    }
-
     public render() {
         const appStore = AppStore.Instance;
         const widgetStore = this.widgetStore;
@@ -269,9 +207,8 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
         
         const sizeMap = (
             <div className="panel-container">
-                <FormGroup className="catalog-xaxis" inline={true} label="Column" disabled={disabledOverlayPanel}>
+                <FormGroup inline={true} label="Column" disabled={disabledOverlayPanel}>
                     <Select
-                        className="catalog-xaxis-select"
                         items={this.axisOption}
                         activeItem={null}
                         onItemSelect={(columnName) => widgetStore.setSizeMap(columnName)}
@@ -283,7 +220,7 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
                         itemPredicate={this.filterColumn}
                         resetOnSelect={true}
                     >
-                        <Button className="catalog-xaxis-button" text={widgetStore.sizeMapColumn} disabled={disabledOverlayPanel} rightIcon="double-caret-vertical"/>
+                        <Button text={widgetStore.sizeMapColumn} disabled={disabledOverlayPanel} rightIcon="double-caret-vertical"/>
                     </Select>
                 </FormGroup>
                 <FormGroup label={"Scaling"} inline={true}>
@@ -446,4 +383,66 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
                 break;
         }
     };
+
+    private renderFileIdPopOver = (fileId: number, itemProps: IItemRendererProps) => {
+        const fileName = this.catalogFileNames.get(fileId);
+        let text = `${fileId}: ${fileName}`;
+        return (
+            <MenuItem
+                key={fileId}
+                text={text}
+                onClick={itemProps.handleClick}
+                active={itemProps.modifiers.active}
+            />
+        );
+    }
+
+    private renderShapePopOver = (shape: CatalogOverlayShape, itemProps: IItemRendererProps) => {
+        const shapeItem = this.getCatalogShape(shape);
+        return (
+            <MenuItem
+                icon={shapeItem}
+                key={shape}
+                onClick={itemProps.handleClick}
+                active={itemProps.modifiers.active}
+            />
+        );
+    }
+
+    private handleSelectedTabChanged = (newTabId: React.ReactText) => {
+        this.widgetStore.setSettingsTabId(Number.parseInt(newTabId.toString()));
+    }
+
+    private getCatalogShape = (shape: CatalogOverlayShape) => {
+        const widgetStore = this.widgetStore;
+        let color = widgetStore.catalogColor;
+        switch (shape) {
+            case CatalogOverlayShape.Circle:
+                return <Icon icon="circle" color={color}/>;
+            case CatalogOverlayShape.FullCircle:
+                return <Icon icon="full-circle" color={color}/>;  
+            case CatalogOverlayShape.Star:
+                return <Icon icon="star-empty" color={color}/>;
+            case CatalogOverlayShape.FullStar:
+                return <Icon icon="star" color={color}/>;
+            case CatalogOverlayShape.Square:
+                return <Icon icon="square" color={color}/>;
+            case CatalogOverlayShape.Plus:
+                return <Icon icon="plus" color={color}/>;
+            case CatalogOverlayShape.Cross:
+                return <Icon icon="cross" color={color}/>;
+            case CatalogOverlayShape.TriangleUp:
+                return IconWrapper(triangleUp, color, false);
+            case CatalogOverlayShape.TriangleDown:
+                return IconWrapper(triangleDown, color, false);
+            case CatalogOverlayShape.Diamond:
+                return IconWrapper(diamond, color, false);
+            case CatalogOverlayShape.hexagon:
+                return IconWrapper(hexagon, color, false);
+            case CatalogOverlayShape.hexagon2:
+                return IconWrapper(hexagon2, color, false);
+            default:
+                return <Icon icon="circle" color={color}/>;
+        }
+    }
 }

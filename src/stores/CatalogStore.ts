@@ -3,14 +3,16 @@ import {action, observable, ObservableMap, computed,makeObservable} from "mobx";
 import {AppStore, CatalogProfileStore, CatalogSystemType, WidgetsStore} from "stores";
 import {CatalogWidgetStore} from "stores/widgets";
 
-type CatalogOverlayDataInfo = {
+type CatalogData = {
     xImageCoords: Array<number>,
     yImageCoords: Array<number>,
-    xSelectedCoords: Array<number>,
-    ySelectedCoords: Array<number>,
-    showSelectedData: boolean;
     displayed: boolean;
 };
+
+type SelectedCatalogData = {
+    xSelectedCoords: Array<number>,
+    ySelectedCoords: Array<number>
+}
 
 export class CatalogStore {
     private static staticInstance: CatalogStore;
@@ -26,7 +28,8 @@ export class CatalogStore {
     private static readonly ArcsecUnits = ["arcsec", "arcsecond"];
     private static readonly ArcminUnits = ["arcmin", "arcminute"];
 
-    @observable catalogData: ObservableMap<number, CatalogOverlayDataInfo>;
+    @observable catalogData: ObservableMap<number, CatalogData>;
+    @observable selectedCatalogData: ObservableMap<number, SelectedCatalogData>;
     // map image file id with catalog file Id
     @observable imageAssociatedCatalogId: Map<number, Array<number>>;
     // map catalog component Id with catalog file Id
@@ -41,6 +44,7 @@ export class CatalogStore {
     private constructor() {
         makeObservable(this);
         this.catalogData = new ObservableMap();
+        this.selectedCatalogData = new ObservableMap();
         this.imageAssociatedCatalogId = new Map<number, Array<number>>();
         this.catalogProfiles = new Map<string, number>();
         this.catalogPlots = new Map<string, ObservableMap<number, string>>();
@@ -53,11 +57,13 @@ export class CatalogStore {
         this.catalogData.set(fileId, {
             xImageCoords: [],
             yImageCoords: [],
-            xSelectedCoords: [],
-            ySelectedCoords: [],
-            showSelectedData: false,
             displayed: true
         });
+
+        this.selectedCatalogData.set(fileId, {
+            xSelectedCoords: [],
+            ySelectedCoords: []
+        })
     }
 
     @action updateCatalogData(fileId: number, xData: Array<number>, yData: Array<number>, wcsInfo: number, xUnit: string, yUnit: string, catalogFrame: CatalogSystemType) {
@@ -88,47 +94,39 @@ export class CatalogStore {
                 {
                     xImageCoords: catalogDataInfo.xImageCoords,
                     yImageCoords: catalogDataInfo.yImageCoords,
-                    xSelectedCoords: catalogDataInfo.xSelectedCoords,
-                    ySelectedCoords: catalogDataInfo.ySelectedCoords,
-                    showSelectedData: catalogDataInfo.showSelectedData,
                     displayed: catalogDataInfo.displayed
                 });
         }
     }
 
     @action updateSelectedPoints(fileId: number, xSelectedCoords: Array<number>, ySelectedCoords: Array<number>) {
-        const catalogDataInfo = this.catalogData.get(fileId);
-        if (catalogDataInfo) {
-            this.catalogData.set(fileId,
+        const selectedCatalogData = this.selectedCatalogData.get(fileId);
+        if (selectedCatalogData) {
+            this.selectedCatalogData.set(fileId,
                 {
-                    xImageCoords: catalogDataInfo.xImageCoords,
-                    yImageCoords: catalogDataInfo.yImageCoords,
                     xSelectedCoords: xSelectedCoords,
-                    ySelectedCoords: ySelectedCoords,
-                    showSelectedData: catalogDataInfo.showSelectedData,
-                    displayed: catalogDataInfo.displayed
+                    ySelectedCoords: ySelectedCoords
                 });
         }
     }
 
     @action clearImageCoordsData(fileId: number) {
         const catalogData = this.catalogData.get(fileId);
+        const selectedCatalogData = this.selectedCatalogData.get(fileId);
         if (catalogData) {
             catalogData.xImageCoords = [];
             catalogData.yImageCoords = [];
-            catalogData.showSelectedData = false;
+        }
+
+        if (selectedCatalogData) {
+            selectedCatalogData.xSelectedCoords = [];
+            selectedCatalogData.ySelectedCoords = [];
         }
     }
 
     @action removeCatalog(fileId: number) {
         this.catalogData.delete(fileId);
-    }
-
-    @action updateShowSelectedData(fileId: number, val: boolean) {
-        const catalog = this.catalogData.get(fileId);
-        if (catalog) {
-            catalog.showSelectedData = val;
-        }
+        this.selectedCatalogData.delete(fileId);
     }
 
     @action updateImageAssociatedCatalogId(activeFrameIndex: number, associatedCatalogFiles: number[]) {
@@ -178,9 +176,6 @@ export class CatalogStore {
                     {
                         xImageCoords: catalogDataInfo.xImageCoords,
                         yImageCoords: catalogDataInfo.yImageCoords,
-                        xSelectedCoords: catalogDataInfo.xSelectedCoords,
-                        ySelectedCoords: catalogDataInfo.ySelectedCoords,
-                        showSelectedData: catalogDataInfo.showSelectedData,
                         displayed: displayed
                     }
                 );
@@ -191,9 +186,6 @@ export class CatalogStore {
                     {
                         xImageCoords: catalogDataInfo.xImageCoords,
                         yImageCoords: catalogDataInfo.yImageCoords,
-                        xSelectedCoords: catalogDataInfo.xSelectedCoords,
-                        ySelectedCoords: catalogDataInfo.ySelectedCoords,
-                        showSelectedData: catalogDataInfo.showSelectedData,
                         displayed: false
                     });
             });

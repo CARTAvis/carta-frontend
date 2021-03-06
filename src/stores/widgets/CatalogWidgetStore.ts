@@ -32,28 +32,13 @@ export enum CatalogSettingsTabs {
     SIZE
 }
 
-// const DEFAULTS = {
-//     headerTableColumnWidts: [150, 75, 65, 100, 230],
-//     showSelectedData: false,
-//     catalogTableAutoScroll: false,
-//     catalogPlotType: CatalogPlotType.ImageOverlay,
-//     catalogColor: Colors.TURQUOISE3,
-//     catalogSize: 10,
-//     catalogShape: CatalogOverlayShape.Circle,
-//     xAxis: CatalogOverlay.NONE,
-//     yAxis: CatalogOverlay.NONE,
-//     highlightColor: Colors.RED2,
-//     settingsTabId: CatalogSettingsTabs.GLOBAL,
-//     sizeMapColumn: CatalogOverlay.NONE,
-// };
-
 export type SizeType = "area" | "diameter"; 
 export type SizeClip = "size-min" | "size-max" | "column-min" | "column-max";
 
 export class CatalogWidgetStore {
     public static readonly MinOverlaySize = 1;
-    public static readonly MaxOverlaySize = 200;
-    public static readonly MaxAreaSize = 20000;
+    public static readonly MaxOverlaySize = 150;
+    public static readonly MaxAreaSize = 10000;
     public static readonly MinTableSeparatorPosition = 5;
     public static readonly MaxTableSeparatorPosition = 95;
 
@@ -104,15 +89,10 @@ export class CatalogWidgetStore {
         this.sizeColumnMax = undefined;
 
         reaction(()=>this.columnData, (column) => {
-            // const catalogProfileStore = CatalogStore.Instance.catalogProfileStores.get(this.catalogFileId);
-            // let column = catalogProfileStore.get1DPlotData(this.sizeMapColumn).wcsData;
-            // let typed = Float64Array.from(column);
-            // console.log(column, typed)
             const boundary = GSL.minMaxArray(column);
-            console.log(boundary)
             this.sizeColumnMin = isFinite(boundary.min)? boundary.min : 0;
             this.sizeColumnMax = isFinite(boundary.max)? boundary.max : 0;
-        } )
+        })
     }
 
     @action setSizeMax(val: number, type: SizeType){
@@ -200,8 +180,8 @@ export class CatalogWidgetStore {
     }
 
     @computed get columnData() {
-        if (this.sizeMapColumn !== CatalogOverlay.NONE) {
-            const catalogProfileStore = CatalogStore.Instance.catalogProfileStores.get(this.catalogFileId);
+        const catalogProfileStore = CatalogStore.Instance.catalogProfileStores.get(this.catalogFileId);
+        if (this.sizeMapColumn !== CatalogOverlay.NONE && catalogProfileStore) {
             let column = catalogProfileStore.get1DPlotData(this.sizeMapColumn).wcsData;
             return column;   
         } else {
@@ -210,19 +190,13 @@ export class CatalogWidgetStore {
     }
 
     @computed get sizeArray(): number[] {
-        // const catalogProfileStore = CatalogStore.Instance.catalogProfileStores.get(this.catalogFileId);
-        // let column = catalogProfileStore.get1DPlotData(this.sizeMapColumn).wcsData;
-        console.log(this.sizeColumnMin, this.sizeColumnMax)
         const column = this.columnData;
         if (this.sizeMapColumn !== CatalogOverlay.NONE && column?.length && this.sizeColumnMin !== undefined && this.sizeColumnMax !== undefined) {
             let size = new Array(column.length);
             let columnMin = scaleValue(this.sizeColumnMin, this.scalingType);
             let columnMax = scaleValue(this.sizeColumnMax, this.scalingType);
-            console.log(column.length, columnMax, columnMin);
             const range = columnMax - columnMin;
-            // const fraction = scaleValue(this.catalogSize, this.scalingType) / scaleValue(max, this.scalingType);
             for (let index = 0; index < column.length; index++) {
-                // size[index] = fraction * scaleValue(column[index], this.scalingType);
                 let columnValue = column[index];
                 if (this.sizeMapType === "area") {
                     columnValue = Math.sqrt((scaleValue(column[index], this.scalingType) - columnMin) / range) * this.pointSizebyType;
@@ -240,7 +214,6 @@ export class CatalogWidgetStore {
 
                 size[index] = columnValue;
             }
-            console.log(this.scalingType, size);
             return size;   
         } 
         return [];

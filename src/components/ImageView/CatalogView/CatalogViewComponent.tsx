@@ -29,12 +29,11 @@ export class CatalogViewComponent extends React.Component<CatalogViewComponentPr
 
     @computed get unSelectedData(): Plotly.Data[] {
         const catalogStore = CatalogStore.Instance;
-        // let coordsData = new Map<number, Plotly.Data>();
         let scatterData: Plotly.Data[] = [];
         catalogStore.catalogData.forEach((catalog, fileId) => {
-            if (!catalog.showSelectedData) {
+            const catalogWidgetStore = catalogStore.getCatalogWidgetStore(fileId);
+            if (!catalogWidgetStore.showSelectedData) {
                 let unSelecteData: Partial<Plotly.PlotData> = {};
-                const catalogWidgetStore = catalogStore.getCatalogWidgetStore(fileId);
                 const color = catalogWidgetStore.catalogColor;
 
                 unSelecteData.type = "scattergl";
@@ -45,14 +44,10 @@ export class CatalogViewComponent extends React.Component<CatalogViewComponentPr
                 unSelecteData.x = catalog.xImageCoords.slice(0);
                 unSelecteData.y = catalog.yImageCoords.slice(0);
 
-                // const sizeref=2* 8594/((catalogWidgetStore.catalogSize * 2)**2);
-
                 unSelecteData.marker = {
                     color: color,
                     symbol: catalogWidgetStore.catalogShape,
                     sizemode: catalogWidgetStore.sizeMapType,
-                    // sizeref: sizeref,
-                    // sizemin: 0,
                     line: {
                         color: color,
                         width: 4
@@ -64,12 +59,7 @@ export class CatalogViewComponent extends React.Component<CatalogViewComponentPr
                 } else {
                     unSelecteData.marker.size = catalogWidgetStore.catalogSize;
                 }
-
                 unSelecteData.name = fileId.toString();
-
-                // remove selected data out 
-                // console.log(unSelecteData.x.length)
-
                 scatterData.push(unSelecteData);
             }
         });
@@ -83,49 +73,54 @@ export class CatalogViewComponent extends React.Component<CatalogViewComponentPr
             const selectedPoints = profileStore.selectedPointIndices;
             const selectedPointSize = selectedPoints.length;
             const fileId = profileStore.catalogFileId;
+            const selectedData = catalogStore.selectedCatalogData.get(fileId);
             let selecteData: Partial<Plotly.PlotData> = {};
-            if (selectedPointSize > 0) {
+
+            if (selectedPointSize && selectedData?.xSelectedCoords?.length) {
+                const coords = catalogStore.catalogData.get(fileId);
+                const catalogWidgetStore = catalogStore.getCatalogWidgetStore(fileId);
                 selecteData.type = "scattergl";
                 selecteData.mode = "markers";
                 selecteData.hoverinfo = "none";
-                const coords = catalogStore.catalogData.get(fileId);
-                const catalogWidgetStore = catalogStore.getCatalogWidgetStore(fileId);
-                selecteData.visible = coords.displayed;
-                if (coords?.xImageCoords?.length) {
-                    selecteData.x = coords.xSelectedCoords.slice(0);
-                    selecteData.y = coords.ySelectedCoords.slice(0);
-                    selecteData.name = fileId.toString();
+                selecteData.visible = coords.displayed;              
+                selecteData.x = selectedData.xSelectedCoords.slice(0);
+                selecteData.y = selectedData.ySelectedCoords.slice(0);
+                selecteData.name = fileId.toString();
 
-                    let outlineShape = catalogWidgetStore.catalogShape;
-                    if (outlineShape === CatalogOverlayShape.FullCircle) {
-                        outlineShape = CatalogOverlayShape.Circle;
-                    } else if (outlineShape === CatalogOverlayShape.FullStar) {
-                        outlineShape = CatalogOverlayShape.Star;
-                    } else if (outlineShape === CatalogOverlayShape.Plus) {
-                        outlineShape = "cross-open" as CatalogOverlayShape;
-                    } else if (outlineShape === CatalogOverlayShape.Cross) {
-                        outlineShape = "x-open" as CatalogOverlayShape;
-                    }
-
-                    selecteData.marker = {
-                        color: catalogWidgetStore.highlightColor,
-                        size: catalogWidgetStore.catalogSize + 5,
-                        symbol: outlineShape,
-                        sizemode: catalogWidgetStore.sizeMapType,
-                        line: {
-                            color: catalogWidgetStore.highlightColor,
-                            width: 4
-                        }
-                    };
-
-                    // if (catalogWidgetStore.sizeArray.length) {
-                    //     selecteData.marker.size = catalogWidgetStore.sizeArray;
-                    // } else {
-                    //     selecteData.marker.size = catalogWidgetStore.catalogSize * 2;
-                    // }
-
-                    scatterData.push(selecteData);
+                let outlineShape = catalogWidgetStore.catalogShape;
+                if (outlineShape === CatalogOverlayShape.FullCircle) {
+                    outlineShape = CatalogOverlayShape.Circle;
+                } else if (outlineShape === CatalogOverlayShape.FullStar) {
+                    outlineShape = CatalogOverlayShape.Star;
+                } else if (outlineShape === CatalogOverlayShape.Plus) {
+                    outlineShape = "cross-open" as CatalogOverlayShape;
+                } else if (outlineShape === CatalogOverlayShape.Cross) {
+                    outlineShape = "x-open" as CatalogOverlayShape;
                 }
+
+                selecteData.marker = {
+                    color: catalogWidgetStore.highlightColor,
+                    symbol: outlineShape,
+                    sizemode: catalogWidgetStore.sizeMapType,
+                    line: {
+                        color: catalogWidgetStore.highlightColor,
+                        width: 4
+                    }
+                };
+
+                if (!catalogWidgetStore.disableSizeMap) {
+                    const sizeMap = new Array(selectedPointSize);
+                    for (let index = 0; index < selectedPointSize; index++) {
+                        const i = selectedPoints[index];
+                        sizeMap[index] = catalogWidgetStore.sizeArray[i] + 5;
+                    }
+                    selecteData.marker.size = sizeMap;
+                } else {
+                    selecteData.marker.size = catalogWidgetStore.catalogSize + 5;
+                }
+
+                scatterData.push(selecteData);
+                
             }
         });
         return scatterData;

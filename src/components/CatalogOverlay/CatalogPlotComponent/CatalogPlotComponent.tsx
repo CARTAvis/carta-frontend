@@ -315,7 +315,6 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
         const val = changeEvent.target.checked;
         if (widgetsStore && catalogWidgetStore) {
             catalogWidgetStore.setShowSelectedData(val);
-            CatalogStore.Instance.updateShowSelectedData(this.catalogFileId, val);
         }
     }
 
@@ -444,7 +443,6 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
         profileStore.setSelectedPointIndices([], false);
         catalogWidgetStore.setCatalogTableAutoScroll(false);
         catalogWidgetStore.setShowSelectedData(false);
-        catalogStore.updateShowSelectedData(this.catalogFileId, false);
     }
 
     // Single source selected

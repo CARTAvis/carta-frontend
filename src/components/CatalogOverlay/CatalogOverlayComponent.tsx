@@ -271,7 +271,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
     @computed get axisOption() {
         const profileStore = this.profileStore;
         let axisOptions = [];
-
+        axisOptions.push(CatalogOverlay.NONE);
         profileStore.catalogControlHeader.forEach((header, columnName) => {
             const dataType = profileStore.catalogHeader[header.dataIndex].dataType;
             if (CatalogOverlayComponent.axisDataType.includes(dataType) && header.display) {
@@ -795,6 +795,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         const isImageOverlay = catalogWidgetStore.catalogPlotType === CatalogPlotType.ImageOverlay;
         const isHistogram = catalogWidgetStore.catalogPlotType === CatalogPlotType.Histogram;
         const disable = profileStore.loadOntoImage;
+        const disabledMap = catalogFileIds.length <= 0 || disable;
 
         let footerDropdownClass = "footer-action-large";
         if (this.width <= 600 ) {
@@ -921,6 +922,22 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
                     </div>
                     <div className="footer-button-container">
                         <div className="footer-button">
+                            <FormGroup inline={true} label="Size Column" disabled={disabledMap}>
+                                <Select
+                                    items={this.axisOption}
+                                    activeItem={null}
+                                    onItemSelect={(columnName) => catalogWidgetStore.setSizeMap(columnName)}
+                                    itemRenderer={this.renderAxisPopOver}
+                                    disabled={disabledMap}
+                                    popoverProps={{popoverClassName: "catalog-select", minimal: true , position: PopoverPosition.AUTO_END}}
+                                    filterable={true}
+                                    noResults={noResults}
+                                    itemPredicate={this.filterColumn}
+                                    resetOnSelect={true}
+                                >
+                                    <Button text={catalogWidgetStore.sizeMapColumn} disabled={disabledMap} rightIcon="double-caret-vertical"/>
+                                </Select>
+                            </FormGroup>
                             <Tooltip content={"Apply filter"}>
                             <AnchorButton
                                 intent={Intent.PRIMARY}
