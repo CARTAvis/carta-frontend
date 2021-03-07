@@ -1158,6 +1158,7 @@ export class AppStore {
                         // Attempt connection after authenticating
                         this.tileService.setCache(this.preferenceStore.gpuTileCache, this.preferenceStore.systemTileCache);
                         if (!this.layoutStore.applyLayout(this.preferenceStore.layout)) {
+                            AlertStore.Instance.showAlert(`Applying preference layout "${this.preferenceStore.layout}" failed!`);
                             this.layoutStore.applyLayout(PresetLayout.DEFAULT);
                         }
                         this.cursorFrozen = this.preferenceStore.isCursorFrozen;
