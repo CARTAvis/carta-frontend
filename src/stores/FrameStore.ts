@@ -752,9 +752,6 @@ export class FrameStore {
             if (this.astFrameSet) {
                 this.spectralFrame = AST.getSpectralFrame(this.astFrameSet);
                 this.wcsInfo = AST.copy(this.astFrameSet);
-            } else {
-                this.logStore.addWarning(`Problem processing headers in file ${this.filename} for AST`, ["ast"]);
-                this.wcsInfo = AST.initDummyFrame();
             }
         } else {
             // init WCS
@@ -777,10 +774,11 @@ export class FrameStore {
                     this.validWcs = true;
                     this.overlayStore.setDefaultsFromAST(this);
                 }
-            } else {
-                this.logStore.addWarning(`Problem processing headers in file ${this.filename} for AST`, ["ast"]);
-                this.wcsInfo = AST.initDummyFrame();
             }
+        }
+        if (!this.astFrameSet) {
+            this.logStore.addWarning(`Problem processing headers in file ${this.filename} for AST`, ["ast"]);
+            this.wcsInfo = AST.initDummyFrame();
         }
 
         this.initSupportedSpectralConversion();
