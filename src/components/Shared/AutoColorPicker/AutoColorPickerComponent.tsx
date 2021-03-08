@@ -3,22 +3,19 @@ import * as _ from "lodash";
 import {action, computed} from "mobx";
 import {observer} from "mobx-react";
 import {makeObservable, observable} from "mobx";
-import {SketchPicker, ColorResult, RGBColor} from "react-color";
+import {SketchPicker, ColorResult} from "react-color";
 import {Button, Popover, PopoverPosition, MenuItem} from "@blueprintjs/core";
 import {Select} from "@blueprintjs/select";
 import {getColorForTheme} from "utilities";
-import tinycolor from "tinycolor2";
 import "./AutoColorPickerComponent.scss";
 import {AppStore} from "stores";
 
 interface AutoColorPickerComponentProps {
     color: string;
-    colorAlpha?: number
     presetColors: string[];
     disableAlpha: boolean;
     disabled?: boolean;
     setColor: (color: string) => void;
-    setColorAlpha?: (color: number) => void;
 }
 
 const ColorSelect = Select.ofType<string>();
@@ -33,14 +30,6 @@ export class AutoColorPickerComponent extends React.Component<AutoColorPickerCom
         return getColorForTheme(this.props.color);
     }
 
-    @computed get autoAlphaColor(): RGBColor {
-        if (!this.props.disableAlpha && this.props.colorAlpha && this.props.setColor) {
-            return tinycolor(this.autoColor).setAlpha(this.props.colorAlpha).toRgb();
-        } else {
-            return tinycolor(this.autoColor).toRgb();
-        }
-    }
-
     @action private handleColorClick = () => {
         this.displayColorPicker = true;
     };
@@ -52,9 +41,6 @@ export class AutoColorPickerComponent extends React.Component<AutoColorPickerCom
     private handleColorChange = _.throttle((newColor: ColorResult) => {
         if (this.props.setColor) {
             this.props.setColor(newColor.hex);
-            if (this.props.setColor && !this.props.disableAlpha) {
-                this.props.setColorAlpha(newColor.rgb.a);
-            }
         }
     }, AutoColorPickerComponent.CHANGE_DELAY);
 
@@ -135,7 +121,7 @@ export class AutoColorPickerComponent extends React.Component<AutoColorPickerCom
                 </ColorSelect>
                 <Popover isOpen={this.displayColorPicker} onClose={this.handleColorClose} position={PopoverPosition.BOTTOM_RIGHT} popoverClassName={popoverClassName}>
                     <div/>
-                    <SketchPicker color={this.props.disableAlpha ? this.autoColor : this.autoAlphaColor} onChange={this.handleColorChange} disableAlpha={this.props.disableAlpha} presetColors={this.props.presetColors}/>
+                    <SketchPicker color={this.autoColor} onChange={this.handleColorChange} disableAlpha={this.props.disableAlpha} presetColors={this.props.presetColors}/>
                 </Popover>
             </div>
         );

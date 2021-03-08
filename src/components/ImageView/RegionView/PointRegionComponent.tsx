@@ -5,7 +5,7 @@ import Konva from "konva";
 import {FrameStore, RegionStore} from "stores";
 import {canvasToTransformedImagePos, transformedImageToCanvasPos} from "./shared";
 import {Point2D} from "models";
-import {transformPoint, getColorForTheme} from "utilities";
+import {transformPoint} from "utilities";
 
 export interface PointRegionComponentProps {
     region: RegionStore;
@@ -90,7 +90,7 @@ export class PointRegionComponent extends React.Component<PointRegionComponentPr
                     height={POINT_WIDTH}
                     offsetX={POINT_WIDTH * 0.5}
                     offsetY={POINT_WIDTH * 0.5}
-                    fill={getColorForTheme(region.color)}
+                    fill={region.color}
                 />
                 <Rect
                     rotation={rotation}

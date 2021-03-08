@@ -1,13 +1,15 @@
 import * as React from "react";
 import * as _ from "lodash";
+import tinycolor from "tinycolor2";
 import {action, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 import {AnchorButton, Button, Checkbox, FormGroup, HTMLSelect, IDialogProps, Intent, MenuItem, Position, Radio, RadioGroup, Switch, Tab, Tabs, Tooltip} from "@blueprintjs/core";
 import {Select} from "@blueprintjs/select";
+import {ColorResult} from "react-color";
 import {CARTA} from "carta-protobuf";
 import {DraggableDialogComponent} from "components/Dialogs";
 import {ScalingSelectComponent} from "components/Shared/ScalingSelectComponent/ScalingSelectComponent";
-import {ColormapComponent, AutoColorPickerComponent, SafeNumericInput} from "components/Shared";
+import {ColormapComponent, ColorPickerComponent, AutoColorPickerComponent, SafeNumericInput} from "components/Shared";
 import {CompressionQuality, CursorPosition, Event, RegionCreationMode, SPECTRAL_MATCHING_TYPES, SPECTRAL_TYPE_STRING, Theme, TileCache, WCSMatchingType, WCSType, Zoom, ZoomPoint} from "models";
 import {AppStore, BeamType, ContourGeneratorType, FrameScaling, HelpType, PreferenceKeys, PreferenceStore, RegionStore, RenderConfigStore} from "stores";
 import {SWATCH_COLORS} from "utilities";
@@ -214,17 +216,15 @@ export class PreferenceDialogComponent extends React.Component {
                 </FormGroup>
                 }
                 <FormGroup inline={true} label="NaN Color">
-                    <AutoColorPickerComponent
-                        color={preference.nanColorHex}
-                        colorAlpha={preference.nanAlpha}
+                    <ColorPickerComponent
+                        color={tinycolor(preference.nanColorHex).setAlpha(preference.nanAlpha).toRgb()}
                         presetColors={[...SWATCH_COLORS, "transparent"]}
-                        setColor={(color: string) => {
-                            preference.setPreference(PreferenceKeys.RENDER_CONFIG_NAN_COLOR_HEX, color === "transparent" ? "#000000" : color);
-                        }}
-                        setColorAlpha={(colorAlpha: number) => {
-                            preference.setPreference(PreferenceKeys.RENDER_CONFIG_NAN_ALPHA, colorAlpha);
+                        setColor={(color: ColorResult) => {
+                            preference.setPreference(PreferenceKeys.RENDER_CONFIG_NAN_COLOR_HEX, color.hex === "transparent" ? "#000000" : color.hex);
+                            preference.setPreference(PreferenceKeys.RENDER_CONFIG_NAN_ALPHA, color.rgb.a);
                         }}
                         disableAlpha={false}
+                        darkTheme={appStore.darkTheme}
                     />
                 </FormGroup>
             </React.Fragment>
@@ -296,11 +296,12 @@ export class PreferenceDialogComponent extends React.Component {
                     />
                 </FormGroup>
                 <FormGroup inline={true} label="Default Color">
-                    <AutoColorPickerComponent
+                    <ColorPickerComponent
                         color={preference.contourColor}
                         presetColors={SWATCH_COLORS}
-                        setColor={(color: string) => preference.setPreference(PreferenceKeys.CONTOUR_CONFIG_CONTOUR_COLOR, color)}
+                        setColor={(color: ColorResult) => preference.setPreference(PreferenceKeys.CONTOUR_CONFIG_CONTOUR_COLOR, color.hex)}
                         disableAlpha={true}
+                        darkTheme={appStore.darkTheme}
                     />
                 </FormGroup>
             </React.Fragment>
@@ -381,11 +382,12 @@ export class PreferenceDialogComponent extends React.Component {
         const regionSettingsPanel = (
             <React.Fragment>
                 <FormGroup inline={true} label="Color">
-                    <AutoColorPickerComponent
+                    <ColorPickerComponent
                         color={preference.regionColor}
                         presetColors={SWATCH_COLORS}
-                        setColor={(color: string) => preference.setPreference(PreferenceKeys.REGION_COLOR, color)}
+                        setColor={(color: ColorResult) => preference.setPreference(PreferenceKeys.REGION_COLOR, color.hex)}
                         disableAlpha={true}
+                        darkTheme={appStore.darkTheme}
                     />
                 </FormGroup>
                 <FormGroup inline={true} label="Line Width" labelInfo="(px)">

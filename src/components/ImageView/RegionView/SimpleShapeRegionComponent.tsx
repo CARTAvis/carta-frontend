@@ -7,7 +7,7 @@ import {CARTA} from "carta-protobuf";
 import {FrameStore, RegionStore} from "stores";
 import {Point2D} from "models";
 import {canvasToTransformedImagePos, transformedImageToCanvasPos} from "./shared";
-import {add2D, angle2D, rotate2D, scale2D, subtract2D, transformPoint, getColorForTheme} from "utilities";
+import {add2D, angle2D, rotate2D, scale2D, subtract2D, transformPoint} from "utilities";
 
 export interface RegionComponentProps {
     region: RegionStore;
@@ -356,7 +356,7 @@ export class SimpleShapeRegionComponent extends React.Component<RegionComponentP
                 <Line
                     x={centerPixelSpace.x}
                     y={centerPixelSpace.y}
-                    stroke={getColorForTheme(region.color)}
+                    stroke={region.color}
                     strokeWidth={region.lineWidth}
                     opacity={region.isTemporary ? 0.5 : (region.locked ? 0.70 : 1)}
                     dash={[region.dashLength]}
@@ -390,7 +390,7 @@ export class SimpleShapeRegionComponent extends React.Component<RegionComponentP
                 rotation: -rotation,
                 x: centerPixelSpace.x,
                 y: centerPixelSpace.y,
-                stroke: getColorForTheme(region.color),
+                stroke: region.color,
                 strokeWidth: region.lineWidth,
                 opacity: region.isTemporary ? 0.5 : (region.locked ? 0.70 : 1),
                 dash: [region.dashLength],

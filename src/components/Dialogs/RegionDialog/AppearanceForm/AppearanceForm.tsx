@@ -1,8 +1,9 @@
 import * as React from "react";
 import {observer} from "mobx-react";
 import * as _ from "lodash";
+import {ColorResult} from "react-color";
 import {FormGroup, H5} from "@blueprintjs/core";
-import {AutoColorPickerComponent, SafeNumericInput} from "components/Shared";
+import {ColorPickerComponent, SafeNumericInput} from "components/Shared";
 import {RegionStore} from "stores";
 import {CARTA} from "carta-protobuf";
 import {SWATCH_COLORS} from "utilities";
@@ -35,11 +36,12 @@ export class AppearanceForm extends React.Component<{ region: RegionStore, darkT
                 <H5>Appearance</H5>
                 <div className="form-contents">
                     <FormGroup label="Color" inline={true}>
-                        <AutoColorPickerComponent
+                        <ColorPickerComponent
                             color={region.color}
                             presetColors={SWATCH_COLORS}
-                            setColor={region.setColor}
+                            setColor={(color: ColorResult) => region.setColor(color.hex)}
                             disableAlpha={true}
+                            darkTheme={this.props.darkTheme}
                         />
                     </FormGroup>
                     {region.regionType !== CARTA.RegionType.POINT &&

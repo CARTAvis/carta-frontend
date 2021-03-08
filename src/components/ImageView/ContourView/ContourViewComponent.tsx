@@ -1,9 +1,8 @@
 import {observer} from "mobx-react";
 import * as React from "react";
 import {AppStore, ContourDashMode, FrameStore, RenderConfigStore} from "stores";
-import {ceilToPower, GL, rotate2D, scale2D, subtract2D, getColorForTheme} from "utilities";
+import {ceilToPower, GL, rotate2D, scale2D, subtract2D} from "utilities";
 import {ContourWebGLService} from "services";
-import tinycolor from "tinycolor2"
 import "./ContourViewComponent.scss";
 
 export interface ContourViewComponentProps {
@@ -149,10 +148,9 @@ export class ContourViewComponent extends React.Component<ContourViewComponentPr
             const minVal = Math.min(...levels);
             const maxVal = Math.max(...levels);
 
-            const color = getColorForTheme(frame.contourConfig.color);
-            const colorObj = tinycolor(color);
-            if (color && colorObj.isValid()) {
-                this.gl.uniform4f(this.contourWebGLService.shaderUniforms.LineColor, colorObj.toRgb().r / 255.0, colorObj.toRgb().g / 255.0, colorObj.toRgb().b / 255.0, colorObj.toRgb().a || 1.0);
+            const color = frame.contourConfig.color;
+            if (color) {
+                this.gl.uniform4f(this.contourWebGLService.shaderUniforms.LineColor, color.r / 255.0, color.g / 255.0, color.b / 255.0, color.a || 1.0);
             } else {
                 this.gl.uniform4f(this.contourWebGLService.shaderUniforms.LineColor, 1, 1, 1, 1);
             }
@@ -206,8 +204,6 @@ export class ContourViewComponent extends React.Component<ContourViewComponentPr
                 const numVertices = contourStore.vertexCount;
             });
         }
-
-        const darktheme = appStore.darkTheme;
         /* eslint-enable @typescript-eslint/no-unused-vars */
 
         const padding = appStore.overlayStore.padding;
