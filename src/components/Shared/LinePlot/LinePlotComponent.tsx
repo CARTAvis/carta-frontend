@@ -1024,7 +1024,7 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
                     </Layer>
                 </Stage>
                 }
-                {(this.props.data !== undefined || (this.props.multiPlotPropsMap && this.props.multiPlotPropsMap.size > 0)) &&
+                {(this.props.data !== undefined || this.props.multiPlotPropsMap?.size > 0) &&
                 <ToolbarComponent
                     darkMode={this.props.darkMode}
                     visible={this.isMouseEntered}
