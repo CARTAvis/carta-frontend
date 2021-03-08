@@ -55,7 +55,7 @@ export class AutoColorPickerComponent extends React.Component<AutoColorPickerCom
         if (colorItem === "custom-color") {
             return (
                 <div key={"custom-color"} className={"custom-color"}>
-                    {"Other : "}
+                    {"Other "}
                     <Button onClick={this.handleColorClick} className="color-swatch-button" disabled={this.props.disabled}>
                         <div style={{backgroundColor: this.autoColor}}/>
                     </Button>
