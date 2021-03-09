@@ -32,6 +32,7 @@
         unicode-bidi: embed;
         font-family: monospace;
         white-space: pre;
+        user-select: text;
         cursor: text;
 
         .header-entry {

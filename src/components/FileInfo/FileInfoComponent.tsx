@@ -1,7 +1,7 @@
 import * as React from "react";
 import {observer} from "mobx-react";
 import {action, makeObservable, observable} from "mobx";
-import {Button, ButtonGroup, ControlGroup, Divider, FormGroup, HTMLSelect, InputGroup, IOptionProps, NonIdealState, Popover, PopperModifiers, Position, Pre, Spinner, Tab, TabId, Tabs, Text} from "@blueprintjs/core";
+import {Button, ButtonGroup, ControlGroup, Divider, FormGroup, HTMLSelect, InputGroup, IOptionProps, NonIdealState, Popover, PopoverInteractionKind, PopperModifiers, Position, Pre, Spinner, Tab, TabId, Tabs, Text} from "@blueprintjs/core";
 import {FixedSizeList as List} from "react-window";
 import AutoSizer from "react-virtualized-auto-sizer";
 import {CARTA} from "carta-protobuf";
@@ -39,6 +39,7 @@ export class FileInfoComponent extends React.Component<{
     private splitLengthArray: Array<Array<number>> = [];
     private matchedLocationArray: Array<{line: number, num: number}> = [];
     private listRef = React.createRef<any>();
+    private clickMatchedTimer;
 
     @action onMouseEnter = () => {
         this.isMouseEntered = true;
@@ -120,9 +121,9 @@ export class FileInfoComponent extends React.Component<{
         this.setSearchString(ev.target.value);
         this.resetMatchedNums();
         
-        if (this.searchString !== "") {
+        if (this.searchString !== "" && this.searchString !== "\b") {
             // RegExp ignores the difference of lettercase; use special characters as normal strings by putting \ in the front
-            const searchStringRegExp = new RegExp(this.searchString.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i');
+            const searchStringRegExp = new RegExp(this.searchString.replace(/[.*+?^${}()|[\]\\]/g, '\\$&').replace("\b", ""), 'i');
             this.splitLengthArray = [];
             this.matchedLocationArray = [];
 
@@ -146,17 +147,33 @@ export class FileInfoComponent extends React.Component<{
         }
     };
 
+    // mode 1/-1: one step forward/backward, 99/-99: continuously forward/backward, 0: stop
     private handleClickMatched = (mode: number, keyEvent?) => {
-        if (mode === 1 || keyEvent?.keyCode === 13) {
-            this.addMatchedIter();
-        } else if (mode === -1) {
-            this.minusMatchedIter();
-        } else {
+            if ((keyEvent && keyEvent?.keyCode !== 13) || this.searchString === "") {
             return;
-        } 
+        }
+        if (mode === 0) {
+            clearInterval(this.clickMatchedTimer);
+        } else {
+            let clickMatched = () => {
+                if (mode === -1 || mode === -99) {
+                    this.minusMatchedIter();
+                } else {
+                    this.addMatchedIter();
+                }
+                this.updateMatchedIterLocation();
+                this.scrollToPosition();
+            }
 
-        this.updateMatchedIterLocation();
-        this.scrollToPosition();
+            if (mode === 99 || mode === -99) {
+                clickMatched();
+                this.clickMatchedTimer = setInterval(clickMatched, 100);
+            } else if (mode === 1 || mode === -1) {
+                clickMatched();
+            } else {
+                return;
+            }
+        }
     };
 
     constructor(props) {
@@ -350,13 +367,17 @@ export class FileInfoComponent extends React.Component<{
                 <Button
                     icon="caret-left"
                     minimal={true}
-                    onClick={() => this.handleClickMatched(-1)}
+                    onMouseDown={() => this.handleClickMatched(-99)}
+                    onMouseUp={() => this.handleClickMatched(0)}
+                    onKeyDown={(ev) => this.handleClickMatched(-1, ev)}
                     disabled={this.matchedIter === 0 || this.matchedTotal === 1 ? true : false}
                 />
                 <Button
                     icon="caret-right"
                     minimal={true}
-                    onClick={() => this.handleClickMatched(1)}
+                    onMouseDown={() => this.handleClickMatched(99)}
+                    onMouseUp={() => this.handleClickMatched(0)}
+                    onKeyDown={(ev) => this.handleClickMatched(1, ev)}
                     disabled={this.matchedIter === 0 || this.matchedTotal === 1 ? true : false}
                 />
             </ButtonGroup>
@@ -367,6 +388,7 @@ export class FileInfoComponent extends React.Component<{
                 <Popover
                     className="header-search-button"
                     position={Position.LEFT}
+                    interactionKind={PopoverInteractionKind.CLICK_TARGET_ONLY}
                     modifiers={popoverModifiers}
                     onOpening={this.searchOpened}
                     onClosing={this.searchClosed}
@@ -378,7 +400,7 @@ export class FileInfoComponent extends React.Component<{
                         leftIcon="search-text"
                         rightElement={searchIter}
                         onChange={this.handleSearchStringChanged}
-                        onKeyDown={(ev) => this.handleClickMatched(0, ev)}
+                        onKeyDown={(ev) => this.handleClickMatched(1, ev)}
                     />
                 </Popover>
             ) : null;
