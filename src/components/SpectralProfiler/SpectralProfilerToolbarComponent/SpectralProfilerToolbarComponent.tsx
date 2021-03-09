@@ -4,7 +4,7 @@ import {AnchorButton, FormGroup, HTMLSelect, IOptionProps, ButtonGroup, Tooltip}
 import {CARTA} from "carta-protobuf";
 import {AppStore, FrameStore} from "stores";
 import {SpectralProfileWidgetStore} from "stores/widgets";
-import {RegionSelectorComponent, SpectralProfilerComponent, SpectralProfilerSettingsTabs} from "components";
+import {SpectralProfilerComponent, SpectralProfilerSettingsTabs} from "components";
 import "./SpectralProfilerToolbarComponent.scss";
 import {CustomIcon} from "icons/CustomIcons";
 
@@ -74,7 +74,6 @@ export class SpectralProfilerToolbarComponent extends React.Component<{ widgetSt
 
         return (
             <div className="spectral-profiler-toolbar">
-                <RegionSelectorComponent widgetStore={widgetStore} onFrameChanged={this.handleFrameChanged}/>
                 <FormGroup label={"Statistic"} inline={true} disabled={!enableStatsSelect}>
                     <HTMLSelect value={enableStatsSelect ? widgetStore.statsType : CARTA.StatsType.Mean} options={profileStatsOptions} onChange={this.handleStatsChanged} disabled={!enableStatsSelect}/>
                 </FormGroup>

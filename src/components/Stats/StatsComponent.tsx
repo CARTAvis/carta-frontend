@@ -7,7 +7,7 @@ import {CARTA} from "carta-protobuf";
 import {DefaultWidgetConfig, WidgetProps, HelpType, WidgetsStore, AppStore} from "stores";
 import {StatsWidgetStore} from "stores/widgets";
 import {toExponential, exportTsvFile} from "utilities";
-import {RegionSelectorComponent} from "components";
+import {RegionSelectorComponent} from "components/Shared";
 import {ToolbarComponent} from "components/Shared/LinePlot/Toolbar/ToolbarComponent";
 import "./StatsComponent.scss";
 
