@@ -1,6 +1,6 @@
 import {observer} from "mobx-react";
 import * as React from "react";
-import {AnchorButton, FormGroup, HTMLSelect, IOptionProps, ButtonGroup, Tooltip} from "@blueprintjs/core";
+import {AnchorButton, ButtonGroup, IOptionProps, Menu, MenuItem, Popover, Position, Tooltip} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import {AppStore, FrameStore} from "stores";
 import {SpectralProfileWidgetStore} from "stores/widgets";
@@ -10,13 +10,12 @@ import {CustomIcon} from "icons/CustomIcons";
 
 @observer
 export class SpectralProfilerToolbarComponent extends React.Component<{ widgetStore: SpectralProfileWidgetStore, id: string }> {
-
-    private handleStatsChanged = (changeEvent: React.ChangeEvent<HTMLSelectElement>) => {
-        this.props.widgetStore.setStatsType(parseInt(changeEvent.target.value));
+    private onStatsItemClick = (ev) => {
+        // this.props.widgetStore.setStatsType(parseInt(ev.target.value));
     };
 
-    private handleCoordinateChanged = (changeEvent: React.ChangeEvent<HTMLSelectElement>) => {
-        this.props.widgetStore.setCoordinate(changeEvent.target.value);
+    private onStokesItemClick = (ev) => {
+        // this.props.widgetStore.setCoordinate(ev.target.value);
     };
 
     private smoothingShortcutClick = () => {
@@ -40,7 +39,6 @@ export class SpectralProfilerToolbarComponent extends React.Component<{ widgetSt
 
         let enableStatsSelect = false;
         let enableStokesSelect = false;
-        let stokesClassName = "unlinked-to-selected";
         let regionId = 0;
         const profileCoordinateOptions = [{value: "z", label: "Current"}];
         
@@ -53,11 +51,6 @@ export class SpectralProfilerToolbarComponent extends React.Component<{ widgetSt
             
             const stokesInfo = widgetStore.effectiveFrame.stokesInfo;
             stokesInfo.forEach(stokes => profileCoordinateOptions.push({value: `${stokes}z`, label: stokes}));
-
-            const linkedClass = "linked-to-selected-stokes";
-            if (enableStokesSelect && widgetStore.matchActiveFrame && (widgetStore.coordinate === stokesInfo[widgetStore.effectiveFrame.requiredStokes] + "z")) {
-                stokesClassName = AppStore.Instance.darkTheme ? `${linkedClass} dark-theme` : linkedClass;
-            }
         }
 
         const profileStatsOptions: IOptionProps[] = [
@@ -74,12 +67,42 @@ export class SpectralProfilerToolbarComponent extends React.Component<{ widgetSt
 
         return (
             <div className="spectral-profiler-toolbar">
-                <FormGroup label={"Statistic"} inline={true} disabled={!enableStatsSelect}>
-                    <HTMLSelect value={enableStatsSelect ? widgetStore.statsType : CARTA.StatsType.Mean} options={profileStatsOptions} onChange={this.handleStatsChanged} disabled={!enableStatsSelect}/>
-                </FormGroup>
-                <FormGroup label={"Stokes"} inline={true} disabled={!enableStokesSelect}>
-                    <HTMLSelect className={stokesClassName} value={widgetStore.coordinate} options={profileCoordinateOptions} onChange={this.handleCoordinateChanged} disabled={!enableStokesSelect}/>
-                </FormGroup>
+                <Tooltip content="Select images to show multiple profiles" position={Position.TOP}>
+                    <Popover
+                        content={<Menu></Menu>}
+                        position={Position.BOTTOM}
+                        disabled={true}
+                    >
+                        <AnchorButton className="profile-buttons" rightIcon="caret-down" text="Image" disabled={true}/>
+                    </Popover>
+                </Tooltip>
+                <Tooltip content="Select regions to show multiple profiles" position={Position.TOP}>
+                    <Popover
+                        content={<Menu></Menu>}
+                        position={Position.BOTTOM}
+                        disabled={true}
+                    >
+                        <AnchorButton className="profile-buttons" rightIcon="caret-down" text="Region" disabled={true}/>
+                    </Popover>
+                </Tooltip>
+                <Tooltip content="Select statistics to show multiple profiles" position={Position.TOP}>
+                    <Popover
+                        content={<Menu>{profileStatsOptions?.map((item) => <MenuItem key={item?.label} text={item?.label} onClick={this.onStatsItemClick}/>)}</Menu>}
+                        position={Position.BOTTOM}
+                        disabled={!enableStatsSelect}
+                    >
+                        <AnchorButton className="profile-buttons" rightIcon="caret-down" text="Statistics" disabled={!enableStatsSelect}/>
+                    </Popover>
+                </Tooltip>
+                <Tooltip content="Select stokes to show multiple profiles" position={Position.TOP}>
+                    <Popover
+                        content={<Menu>{profileCoordinateOptions?.map((item) => <MenuItem key={item?.label} text={item?.label} onClick={this.onStokesItemClick}/>)}</Menu>}
+                        position={Position.BOTTOM}
+                        disabled={!enableStokesSelect}
+                    >
+                        <AnchorButton className="profile-buttons" rightIcon="caret-down" text="Stokes" disabled={!enableStokesSelect}/>
+                    </Popover>
+                </Tooltip>
                 <ButtonGroup className="profile-buttons">
                     <Tooltip content="Smoothing">
                         <AnchorButton icon={<CustomIcon icon="smoothing"/>} onClick={this.smoothingShortcutClick}/>
