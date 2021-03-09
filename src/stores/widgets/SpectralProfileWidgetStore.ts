@@ -19,6 +19,8 @@ export enum MomentSelectingMode {
 export class SpectralProfileWidgetStore extends RegionWidgetStore {
     @observable coordinate: string;
     @observable statsType: CARTA.StatsType;
+    @observable selectedStatsTypes: CARTA.StatsType[];
+    @observable selectedCoordinates: string[];
     @observable minX: number;
     @observable maxX: number;
     @observable minY: number;
@@ -98,6 +100,37 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
             this.clearXYBounds();
             this.coordinate = coordinate;
         }
+    };
+
+    @action selectStatsType = (statsType: CARTA.StatsType) => {
+        if (SpectralProfileWidgetStore.ValidStatsTypes.includes(statsType)) {
+            if (this.selectedStatsTypes?.includes(statsType)) {
+                const index = this.selectedStatsTypes.indexOf(statsType);
+                this.selectedStatsTypes.splice(index, 1);
+            } else {
+                this.selectedStatsTypes.push(statsType);
+            }
+        }
+    };
+
+    @action selectCoordinate = (coordinate: string) => {
+        if (SpectralProfileWidgetStore.ValidCoordinates.includes(coordinate)) {
+            if (this.selectedCoordinates?.includes(coordinate)) {
+                const index = this.selectedCoordinates.indexOf(coordinate);
+                this.selectedCoordinates.splice(index, 1);
+            } else {
+                this.selectedCoordinates.push(coordinate);
+            }
+            this.clearXYBounds();
+        }
+    };
+
+    public isStatsTypeSelected = (statsType: CARTA.StatsType) => {
+        return this.selectedStatsTypes?.includes(statsType);
+    };
+
+    public isCoordinateSelected = (coordinate: string) => {
+        return this.selectedCoordinates?.includes(coordinate);
     };
 
     @action setSpectralCoordinate = (coordStr: string) => {

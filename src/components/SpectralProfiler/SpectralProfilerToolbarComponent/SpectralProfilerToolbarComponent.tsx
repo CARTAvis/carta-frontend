@@ -11,11 +11,11 @@ import {CustomIcon} from "icons/CustomIcons";
 @observer
 export class SpectralProfilerToolbarComponent extends React.Component<{ widgetStore: SpectralProfileWidgetStore, id: string }> {
     private onStatsItemClick = (ev) => {
-        // this.props.widgetStore.setStatsType(parseInt(ev.target.value));
+        this.props.widgetStore.selectStatsType(parseInt(ev.target.value));
     };
 
     private onStokesItemClick = (ev) => {
-        // this.props.widgetStore.setCoordinate(ev.target.value);
+        this.props.widgetStore.selectCoordinate(ev.target.value);
     };
 
     private smoothingShortcutClick = () => {
@@ -87,7 +87,13 @@ export class SpectralProfilerToolbarComponent extends React.Component<{ widgetSt
                 </Tooltip>
                 <Tooltip content="Select statistics to show multiple profiles" position={Position.TOP}>
                     <Popover
-                        content={<Menu>{profileStatsOptions?.map((item) => <MenuItem key={item?.label} text={item?.label} onClick={this.onStatsItemClick}/>)}</Menu>}
+                        content={
+                            <Menu>
+                                {profileStatsOptions?.map((item) =>
+                                    <MenuItem key={item?.label} text={item?.label} onClick={this.onStatsItemClick} icon={this.props.widgetStore.isStatsTypeSelected(item.value as CARTA.StatsType) ? "tick" : "blank"}/>
+                                )}
+                            </Menu>
+                        }
                         position={Position.BOTTOM}
                         disabled={!enableStatsSelect}
                     >
@@ -96,7 +102,13 @@ export class SpectralProfilerToolbarComponent extends React.Component<{ widgetSt
                 </Tooltip>
                 <Tooltip content="Select stokes to show multiple profiles" position={Position.TOP}>
                     <Popover
-                        content={<Menu>{profileCoordinateOptions?.map((item) => <MenuItem key={item?.label} text={item?.label} onClick={this.onStokesItemClick}/>)}</Menu>}
+                        content={
+                            <Menu>
+                                {profileCoordinateOptions?.map((item) =>
+                                    <MenuItem key={item?.label} text={item?.label} onClick={this.onStokesItemClick} icon={this.props.widgetStore.isCoordinateSelected(item.value) ? "tick" : "blank"}/>
+                                )}
+                            </Menu>
+                        }
                         position={Position.BOTTOM}
                         disabled={!enableStokesSelect}
                     >
