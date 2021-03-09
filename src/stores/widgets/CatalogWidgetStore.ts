@@ -1,8 +1,8 @@
 import * as GSL from "gsl_wrapper";
+import * as CARTACompute from "carta_computation";
 import {action, observable, makeObservable, computed, reaction} from "mobx";
 import {Colors} from "@blueprintjs/core";
 import {CatalogOverlay, CatalogStore, FrameScaling, PreferenceStore} from "stores";
-import {scaleValue} from "utilities";
 
 export enum CatalogPlotType {
     ImageOverlay = "Image Overlay",
@@ -33,7 +33,7 @@ export enum CatalogSettingsTabs {
 }
 
 export type SizeType = "area" | "diameter"; 
-export type SizeClip = "size-min" | "size-max" | "column-min" | "column-max";
+export type SizeClip = "size-min" | "size-max";
 
 export class CatalogWidgetStore {
     public static readonly MinOverlaySize = 1;
@@ -58,12 +58,18 @@ export class CatalogWidgetStore {
     @observable settingsTabId: CatalogSettingsTabs;
     // size map
     @observable sizeMapColumn: string;
-    @observable sizeColumnMax: number;
-    @observable sizeColumnMin: number;
+    @observable sizeColumnMax: {default: number, clipd: number};
+    @observable sizeColumnMin: {default: number, clipd: number};
     @observable sizeMax: {area: number, diameter: number};
     @observable sizeMin: number;
     @observable sizeMapType: SizeType;
-    @observable scalingType: FrameScaling;
+    @observable sizeScalingType: FrameScaling;
+    // color map
+    @observable colorMapColumn: string;
+    @observable colorColumnMax: number;
+    @observable colorColumnMin: number;
+    @observable colorMap: string;
+    @observable colorScalingType: FrameScaling;
 
     constructor(catalogFileId: number) {
         makeObservable(this);
@@ -82,20 +88,26 @@ export class CatalogWidgetStore {
         this.settingsTabId = CatalogSettingsTabs.GLOBAL;
         this.sizeMapColumn = CatalogOverlay.NONE;
         this.sizeMapType = "diameter";
-        this.scalingType = FrameScaling.LINEAR;
+        this.sizeScalingType = FrameScaling.LINEAR;
         this.sizeMin = 1;
         this.sizeMax = {area: 200, diameter: 20};
-        this.sizeColumnMin = undefined;
-        this.sizeColumnMax = undefined;
+        this.sizeColumnMin = {default: undefined, clipd: undefined};
+        this.sizeColumnMax = {default: undefined, clipd: undefined};
+        
+        this.colorMapColumn = CatalogOverlay.NONE;
+        this.colorColumnMax = undefined;
+        this.colorColumnMin = undefined;
+        this.colorMap = undefined;
+        this.colorScalingType = FrameScaling.LINEAR;
 
         reaction(()=>this.columnData, (column) => {
-            const boundary = GSL.minMaxArray(column);
-            this.sizeColumnMin = isFinite(boundary.min)? boundary.min : 0;
-            this.sizeColumnMax = isFinite(boundary.max)? boundary.max : 0;
-        })
+            const result =  GSL.minMaxArray(column);
+            this.setSizeColumnMin(isFinite(result.min)? result.min : 0, "default");
+            this.setSizeColumnMax(isFinite(result.max)? result.max : 0, "default");
+        });
     }
 
-    @action setSizeMax(val: number, type: SizeType){
+    @action setSizeMax(val: number, type: SizeType) {
         if (type === "area") {
             this.sizeMax.area = val;
         } else {
@@ -103,20 +115,38 @@ export class CatalogWidgetStore {
         }
     }
 
-    @action setSizeMin(val: number){
+    @action setSizeMin(val: number) {
         this.sizeMin = val;
     }
 
-    @action setSizeColumnMax(val: number){
-        this.sizeColumnMax = val;
+    @action setSizeColumnMax(val: number, type: "default" | "clipd") {
+        if (type === "default") {
+            this.sizeColumnMax.default = val; 
+            this.sizeColumnMax.clipd = val;  
+        } else {
+            this.sizeColumnMax.clipd = val;
+        }
     }
 
-    @action setSizeColumnMin(val: number){
-        this.sizeColumnMin = val;
+    @action setSizeColumnMin(val: number, type: "default" | "clipd") {
+        if (type === "default") {
+            this.sizeColumnMin.default = val;
+            this.sizeColumnMin.clipd = val; 
+        } else {
+            this.sizeColumnMin.clipd = val;
+        }
+    }
+
+    @action resetSizeColumnValue(type: "min" | "max") {
+        if (type === "min") {
+            this.sizeColumnMin.clipd = this.sizeColumnMin.default;
+        } else {
+            this.sizeColumnMax.clipd = this.sizeColumnMax.default;
+        }
     }
 
     @action setScalingType(type: FrameScaling) {
-        this.scalingType = type;
+        this.sizeScalingType = type;
     }
 
     @action setSizeMapType(type: SizeType) {
@@ -125,6 +155,8 @@ export class CatalogWidgetStore {
 
     @action setSizeMap(coloum: string) {
         this.sizeMapColumn = coloum;
+        this.sizeColumnMin = {default: undefined, clipd: undefined};
+        this.sizeColumnMax = {default: undefined, clipd: undefined};
     }
 
     @action setHeaderTableColumnWidts(vals: Array<number>) {
@@ -191,30 +223,17 @@ export class CatalogWidgetStore {
 
     @computed get sizeArray(): number[] {
         const column = this.columnData;
-        if (this.sizeMapColumn !== CatalogOverlay.NONE && column?.length && this.sizeColumnMin !== undefined && this.sizeColumnMax !== undefined) {
-            let size = new Array(column.length);
-            let columnMin = scaleValue(this.sizeColumnMin, this.scalingType);
-            let columnMax = scaleValue(this.sizeColumnMax, this.scalingType);
-            const range = columnMax - columnMin;
-            for (let index = 0; index < column.length; index++) {
-                let columnValue = column[index];
-                if (this.sizeMapType === "area") {
-                    columnValue = Math.sqrt((scaleValue(column[index], this.scalingType) - columnMin) / range) * this.pointSizebyType;
-                } else {
-                    columnValue = (scaleValue(column[index], this.scalingType) - columnMin) / range * this.pointSizebyType;
-                }
-                
-                if (columnValue < this.sizeMin || !isFinite(columnValue)) {
-                    columnValue = this.sizeMin;
-                }
-
-                if(columnValue > this.maxPointSizebyType) {
-                    columnValue = this.maxPointSizebyType;
-                }
-
-                size[index] = columnValue;
-            }
-            return size;   
+        if (this.sizeMapColumn !== CatalogOverlay.NONE && column?.length && this.sizeColumnMin.clipd !== undefined && this.sizeColumnMax.clipd !== undefined) {
+            return CARTACompute.CalculateCatalogSize(
+                new Float64Array(column), 
+                this.sizeColumnMin.clipd, 
+                this.sizeColumnMax.clipd, 
+                this.pointSizebyType, 
+                this.sizeMin, 
+                this.maxPointSizebyType,
+                this.sizeScalingType,
+                this.sizeMapType
+            ); 
         } 
         return [];
     }

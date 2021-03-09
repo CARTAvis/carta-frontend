@@ -17,7 +17,7 @@ Module.minMaxArray = function (data: Float64Array): {max: number, min: number} {
     const N = data.length;
     const dataOnWasmHeap = Module._malloc(N * 8);
     Module.HEAPF64.set(new Float64Array(data), dataOnWasmHeap / 8);
-    
+
     Module.heapsort(dataOnWasmHeap, N);
 
     const maxOffset = dataOnWasmHeap + (N - 1) * 8;

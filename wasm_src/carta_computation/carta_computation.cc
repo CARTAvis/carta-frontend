@@ -14,6 +14,17 @@ union Block {
     char byteValues[16];
 };
 
+typedef enum {
+    LINEAR = 0,
+    LOG = 1,
+    SQRT = 2,
+    SQUARE = 3,
+    POWER = 4,
+    GAMMA = 5,
+    EXP = 6,
+    CUSTOM = 7
+} FrameScaling;
+
 const float MiterLimit = 1.5f;
 const int VertexDataElements = 8;
 
@@ -219,6 +230,51 @@ void generateVertexData(void* dst, size_t dstCapacity, float* srcVertices, int n
         int startIndex = indexOffsets[i] / 2;
         int endIndex = i < numPolyLines - 1 ? indexOffsets[i + 1] / 2 : numVertices;
         fillSinglePolyline(srcVertices, startIndex, endIndex, dstIndex, vertexData, vertexDataShort, i > 0, i < numPolyLines - 1);
+    }
+}
+
+double clamp(double d, double min, double max) {
+  const double t = d < min ? min : d;
+  return t > max ? max : t;
+}
+
+double scaleValue(double x, int scaling, double alpha, double gamma) {
+    switch (scaling)
+    {
+    case SQUARE:
+        return x * x;
+    case SQRT:
+        return sqrt(x);
+    case LOG:
+        return clamp(log(alpha * x + 1.0) / log(alpha), 0.0, 1.0);
+    case POWER:
+        return (pow(alpha, x) - 1.0) / alpha;
+    case GAMMA:
+        return pow(x, gamma);
+    default:
+        return x;
+    }
+}
+
+void calculateCatalogSizeDiameter(double* data, size_t N, double min, double max, int shapeSize, int sizeMin, int sizeMax, int scaling, double alpha, double gamma) {
+    double columnMin = scaleValue(min, scaling, alpha, gamma);
+    double columnMax = scaleValue(max, scaling, alpha, gamma);
+    double range = columnMax - columnMin;
+    for (size_t i = 0; i < N; i++)
+    {
+        double value = scaleValue(*(data + i), scaling, alpha, gamma);
+        *(data + i) = clamp((value - columnMin) / range * shapeSize, sizeMin, sizeMax);
+    }
+}
+
+void calculateCatalogSizeArea(double* data, size_t N, double min, double max, int shapeSize, int sizeMin, int sizeMax, int scaling, double alpha, double gamma) {
+    double columnMin = scaleValue(min, scaling, alpha, gamma);
+    double columnMax = scaleValue(max, scaling, alpha, gamma);
+    double range = columnMax - columnMin;
+    for (size_t i = 0; i < N; i++)
+    {
+        double value = scaleValue(*(data + i), scaling, alpha, gamma);
+        *(data + i) = clamp(sqrt((value - columnMin) / range) * shapeSize, sizeMin, sizeMax);
     }
 }
 

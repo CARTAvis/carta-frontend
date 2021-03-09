@@ -8,7 +8,7 @@ import {AppStore, CatalogStore, CatalogProfileStore, CatalogOverlay, DefaultWidg
 import {CatalogOverlayShape, CatalogWidgetStore, CatalogSettingsTabs, SizeClip} from "stores/widgets";
 import {ColorResult} from "react-color";
 import {CatalogOverlayComponent} from "components";
-import {ColorPickerComponent, SafeNumericInput, ScalingSelectComponent} from "components/Shared";
+import {ColorPickerComponent, ClearableNumericInputComponent, SafeNumericInput, ScalingSelectComponent} from "components/Shared";
 import {SWATCH_COLORS} from "utilities";
 import "./CatalogOverlayPlotSettingsPanelComponent.scss";
 
@@ -225,7 +225,7 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
                 </FormGroup>
                 <FormGroup label={"Scaling"} inline={true}>
                     <ScalingSelectComponent
-                        selectedItem={widgetStore.scalingType}
+                        selectedItem={widgetStore.sizeScalingType}
                         onItemSelect={(type) => widgetStore.setScalingType(type)}
                     />
                 </FormGroup>
@@ -261,31 +261,26 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
                     />
                 </FormGroup>
 
-                <FormGroup  inline={true} label="Clip Min" disabled={disableSizeMap}>
-                    <SafeNumericInput
-                        allowNumericCharactersOnly={true}
-                        asyncControl={true}
-                        placeholder="Min"
-                        disabled={disableSizeMap}
-                        buttonPosition={"none"}
-                        value={widgetStore.sizeColumnMin}
-                        onBlur={(ev) => this.handleSizeChange(ev, "column-min")}
-                        onKeyDown={(ev) => this.handleSizeChange(ev, "column-min")}
-                    />
-                </FormGroup>
-
-                <FormGroup  inline={true} label="Clip Max" disabled={disableSizeMap}>
-                    <SafeNumericInput
-                        allowNumericCharactersOnly={true}
-                        asyncControl={true}
-                        placeholder="Max"
-                        disabled={disableSizeMap}
-                        buttonPosition={"none"}
-                        value={widgetStore.sizeColumnMax}
-                        onBlur={(ev) => this.handleSizeChange(ev, "column-max")}
-                        onKeyDown={(ev) => this.handleSizeChange(ev, "column-max")}
-                    />
-                </FormGroup>
+                <ClearableNumericInputComponent
+                    label="Clip Min"
+                    max={widgetStore.sizeColumnMax.clipd}
+                    integerOnly={false}
+                    value={widgetStore.sizeColumnMin.clipd}
+                    onValueChanged={val => widgetStore.setSizeColumnMin(val, "clipd")}
+                    onValueCleared={() => widgetStore.resetSizeColumnValue("min")}
+                    displayExponential={true}
+                    disabled={disableSizeMap}
+                />
+                <ClearableNumericInputComponent
+                    label="Clip Max"
+                    min={widgetStore.sizeColumnMin.clipd}
+                    integerOnly={false}
+                    value={widgetStore.sizeColumnMax.clipd}
+                    onValueChanged={val => widgetStore.setSizeColumnMax(val, "clipd")}
+                    onValueCleared={() => widgetStore.resetSizeColumnValue("max")}
+                    displayExponential={true}
+                    disabled={disableSizeMap}
+                />
             </div>
         )
 
@@ -347,8 +342,6 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
         const widgetStore = this.widgetStore; 
         const sizeMin = widgetStore.sizeMin;
         const sizeMax = widgetStore.pointSizebyType;
-        const columnMin = widgetStore.sizeColumnMin;
-        const columnMax = widgetStore.sizeColumnMax;
 
         switch (type) {
             case "size-min":
@@ -363,20 +356,6 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
                     widgetStore.setSizeMax(val, widgetStore.sizeMapType);
                 } else {
                     ev.currentTarget.value = sizeMax.toString();
-                }
-                break;
-            case "column-min":
-                if (isFinite(val) && val !== columnMin && val < columnMax) {
-                    widgetStore.setSizeColumnMin(val);
-                } else {
-                    ev.currentTarget.value = columnMin.toString();
-                }
-                break;
-            case "column-max":
-                if (isFinite(val) && val !== columnMax && val > columnMin) {
-                    widgetStore.setSizeColumnMax(val);
-                } else {
-                    ev.currentTarget.value = columnMax.toString();
                 }
                 break;
             default:

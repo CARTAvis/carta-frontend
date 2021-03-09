@@ -777,7 +777,6 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
                 onValueChanged={val => this.onNumBinChange(val)}
                 onValueCleared={() => this.onNumBinChange(this.numBinsX)}
                 displayExponential={false}
-                updateValueOnKeyDown={true}
                 disabled={disabled}
             />
         );

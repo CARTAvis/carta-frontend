@@ -6,6 +6,8 @@ declare var addOnPostRun: any;
 const decompress = Module.cwrap("ZSTD_decompress", "number", ["number", "number", "number", "number"]);
 const decodeArray = Module.cwrap("decodeArray", "number", ["number", "number", "number"]);
 const generateVertexData = Module.cwrap("generateVertexData", "number", ["number", "number", "number", "number", "number", "number"]);
+const calculateCatalogSizeArea = Module.cwrap("calculateCatalogSizeArea", null, ["number", "number", "number", "number", "number", "number", "number", "number", "number", "number"]);
+const calculateCatalogSizeDiameter = Module.cwrap("calculateCatalogSizeDiameter", null, ["number", "number", "number", "number", "number", "number", "number", "number", "number", "number"]);
 
 const VertexDataElements = 8;
 
@@ -102,5 +104,32 @@ Module.GenerateVertexData = (sourceVertices: Float32Array, indexOffsets: Int32Ar
     Module._free(indexPtr);
     return destHeapFloat;
 };
+
+Module.CalculateCatalogSize = (data: Float64Array, min: number, max: number, shapeSize: number, sizeMin: number, sizeMax: number, scaling: number, sizeType: string, alpha: number = 1000, gamma: number = 1.5): number[] => {
+    if (!data) {
+        return [];
+    }
+
+    const N = data.length;
+    const dataOnWasmHeap = Module._malloc(N * 8);
+    Module.HEAPF64.set(new Float64Array(data), dataOnWasmHeap / 8);
+
+    if (sizeType === "area") {
+        calculateCatalogSizeArea(dataOnWasmHeap, N, min, max, shapeSize, sizeMin, sizeMax, scaling, alpha, gamma);
+    } else if (sizeType === "diameter") {
+        calculateCatalogSizeDiameter(dataOnWasmHeap, N, min, max, shapeSize, sizeMin, sizeMax, scaling, alpha, gamma);
+    } else {
+        Module._free(dataOnWasmHeap);
+        return [];
+    }
+
+    const float64 = new Float64Array(Module.HEAPF64.buffer, dataOnWasmHeap, N);
+    Module._free(dataOnWasmHeap);
+    let size = Array(N);
+    for (let i = 0; i < N; i++) {
+        size[i] = isFinite(float64[i]) ? float64[i] : sizeMin;
+    }
+    return size;
+}
 
 module.exports = Module;

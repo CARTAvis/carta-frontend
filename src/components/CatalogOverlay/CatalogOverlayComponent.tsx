@@ -915,7 +915,6 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
                                 onValueChanged={val => profileStore.setMaxRows(val)}
                                 onValueCleared={() => profileStore.setMaxRows(profileStore.catalogInfo.dataSize)}
                                 displayExponential={false}
-                                updateValueOnKeyDown={true}
                                 disabled={disable}
                             />
                         </div>
