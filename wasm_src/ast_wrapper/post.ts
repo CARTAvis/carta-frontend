@@ -92,7 +92,6 @@ Module.setCanvas = function (canvas) {
 };
 
 Module.plot = Module.cwrap("plotGrid", "number", ["number", "number", "number", "number", "number", "number", "number", "number", "number", "number", "number", "string"]);
-Module.initFrame = Module.cwrap("initFrame", "number", ["string"]);
 Module.getSpectralFrame = Module.cwrap("getSpectralFrame", "number", ["number"]);
 Module.getSkyFrameSet = Module.cwrap("getSkyFrameSet", "number", ["number"]);
 Module.initDummyFrame = Module.cwrap("initDummyFrame", "number", []);
@@ -118,6 +117,15 @@ Module.createTransformedFrameset = Module.cwrap("createTransformedFrameset", "nu
 Module.fillTransformGrid = Module.cwrap("fillTransformGrid", "number", ["number", "number", "number", "number", "number", "number", "number", "number"]);
 
 Module.currentFormatStrings = [];
+
+Module.initFrame = function(wcsString: string) {
+    const stringSize = Module.lengthBytesUTF8(wcsString);
+    const stringPtr = Module._malloc(stringSize + 1);
+    Module.stringToUTF8(wcsString, stringPtr, stringSize + 1);
+    const retVal = Module.ccall("initFrame", "number", ["number"], [stringPtr]);
+    Module._free(stringPtr);
+    return retVal;
+}
 
 Module.getFormattedCoordinates = function (wcsInfo: number, x: number, y: number, formatString: string, tempFormat: boolean) {
     let prevString;
