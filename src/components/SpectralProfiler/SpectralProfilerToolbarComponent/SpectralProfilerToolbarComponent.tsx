@@ -6,8 +6,8 @@ import {CARTA} from "carta-protobuf";
 import {AppStore, FrameStore} from "stores";
 import {ProfileClass, SpectralProfileWidgetStore} from "stores/widgets";
 import {SpectralProfilerComponent, SpectralProfilerSettingsTabs} from "components";
-import "./SpectralProfilerToolbarComponent.scss";
 import {CustomIcon} from "icons/CustomIcons";
+import "./SpectralProfilerToolbarComponent.scss";
 
 type MultiSelectItem = string | CARTA.StatsType;
 
@@ -25,26 +25,28 @@ class MultiSelectDropDownComponent extends React.Component<{itemOptions: IOption
     };
 
     public render() {
+        const menu = (
+            <Menu>
+                {this.props.itemOptions?.map((item) =>
+                    <MenuItem
+                        key={item.value}
+                        text={item.label}
+                        onClick={(ev) => this.props.onItemSelect(item.value)}
+                        icon={this.props.itemSelected?.includes(item.value) ? "tick" : "blank"}
+                    />
+                )}
+            </Menu>
+        );
+
         return (
             <React.Fragment>
                 <Popover
-                    content={
-                        <Menu>
-                            {this.props.itemOptions?.map((item) =>
-                                <MenuItem key={item.value} text={item.label} onClick={(ev) => this.props.onItemSelect(item.value)} icon={this.props.itemSelected?.includes(item.value) ? "tick" : "blank"}/>
-                            )}
-                        </Menu>
-                    }
+                    content={menu}
                     isOpen={this.isOpen}
                     position={Position.BOTTOM}
                     disabled={this.props.disabled}
                 >
-                    <AnchorButton
-                        active={this.isOpen}
-                        rightIcon={"caret-down"}
-                        disabled={this.props.disabled}
-                        onClick={this.onClick}
-                    />
+                    <AnchorButton active={this.isOpen} rightIcon={"caret-down"} disabled={this.props.disabled} onClick={this.onClick}/>
                 </Popover>
             </React.Fragment>
         );
