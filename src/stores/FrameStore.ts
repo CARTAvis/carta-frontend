@@ -68,6 +68,8 @@ export class FrameStore {
     public readonly wcsInfoForTransformation: number;
     public readonly wcsInfo3D: number;
     public readonly validWcs: boolean;
+    public readonly frameInfo: FrameInfo;
+    public readonly aspectRatio: number;
 
     public spectralCoordsSupported: Map<string, { type: SpectralType, unit: SpectralUnit }>;
     public spectralSystemsSupported: Array<SpectralSystem>;
@@ -76,7 +78,6 @@ export class FrameStore {
     // Region set for the current frame. Accessed via regionSet, to take into account region sharing
     @observable private readonly frameRegionSet: RegionSetStore;
 
-    @observable frameInfo: FrameInfo;
     @observable renderHiDPI: boolean;
     @observable spectralType: SpectralType;
     @observable spectralUnit: SpectralUnit;
@@ -116,7 +117,7 @@ export class FrameStore {
     @computed get filename(): string {
         // hdu extension name is in field 3 of fileInfoExtended computed entries
         const extName = this.frameInfo?.fileInfoExtended?.computedEntries?.length >= 3 && this.frameInfo?.fileInfoExtended?.computedEntries[2]?.name === "Extension name" ?
-                        `_${this.frameInfo.fileInfoExtended.computedEntries[2]?.value}` : "";
+            `_${this.frameInfo.fileInfoExtended.computedEntries[2]?.value}` : "";
         return this.frameInfo?.hdu !== "" && this.frameInfo?.hdu !== "0" ?
             `${this.frameInfo.fileInfo.name}.HDU_${this.frameInfo.hdu}${extName}` :
             this.frameInfo.fileInfo.name;
@@ -175,7 +176,7 @@ export class FrameStore {
 
             const pixelRatio = this.renderHiDPI ? devicePixelRatio : 1.0;
             // Required image dimensions
-            const imageWidth = pixelRatio * this.renderWidth / this.zoomLevel;
+            const imageWidth = pixelRatio * this.renderWidth / this.zoomLevel / this.aspectRatio;
             const imageHeight = pixelRatio * this.renderHeight / this.zoomLevel;
 
             const mipAdjustment = (PreferenceStore.Instance.lowBandwidthMode ? 2.0 : 1.0);
@@ -264,7 +265,7 @@ export class FrameStore {
             if (isFinite(delta) && (unit === "deg" || unit === "rad")) {
 
                 if (this.frameInfo.beamTable && this.frameInfo.beamTable.length > 0) {
-                    let beam : CARTA.IBeam
+                    let beam: CARTA.IBeam;
                     if (this.frameInfo.beamTable.length === 1 && this.frameInfo.beamTable[0].channel === -1 && this.frameInfo.beamTable[0].stokes === -1) {
                         beam = this.frameInfo.beamTable[0];
                     } else {
@@ -283,7 +284,7 @@ export class FrameStore {
                             y: beam.minorAxis / (unit === "deg" ? 3600 : (180 * 3600 / Math.PI)) / Math.abs(delta),
                             angle: beam.pa,
                             overlayBeamSettings: this.overlayBeamSettings
-                        }
+                        };
                     }
                 }
             }
@@ -535,7 +536,7 @@ export class FrameStore {
         if (this.numChannels > 1 && this.channelValues) {
             const head = this.channelValues[0];
             const tail = this.channelValues[this.numChannels - 1];
-            return new CARTA.FloatBounds(head <=  tail ?  {min: head, max: tail} : {min: tail, max: head});
+            return new CARTA.FloatBounds(head <= tail ? {min: head, max: tail} : {min: tail, max: head});
         }
         return null;
     }
@@ -761,6 +762,19 @@ export class FrameStore {
             this.wcsInfo = AST.initDummyFrame();
         }
 
+        const cUnit1 = this.frameInfo.fileInfoExtended.headerEntries.find(entry => entry.name === "CUNIT1");
+        const cUnit2 = this.frameInfo.fileInfoExtended.headerEntries.find(entry => entry.name === "CUNIT2");
+        const sameUnits = cUnit1 && cUnit2 && trimFitsComment(cUnit1.value) === trimFitsComment(cUnit2.value);
+
+        // If the two units are different, there's no fixed aspect ratio
+        if (!sameUnits) {
+            this.aspectRatio = NaN;
+        } else {
+            const cDelt1 = getHeaderNumericValue(this.frameInfo.fileInfoExtended.headerEntries.find(entry => entry.name === "CDELT1"));
+            const cDelt2 = getHeaderNumericValue(this.frameInfo.fileInfoExtended.headerEntries.find(entry => entry.name === "CDELT2"));
+            this.aspectRatio = Math.abs(cDelt1 / cDelt2);
+        }
+
         this.initSupportedSpectralConversion();
         this.initCenter();
         this.zoomLevel = preferenceStore.isZoomRAWMode ? 1.0 : this.zoomLevelForFit;
@@ -967,7 +981,7 @@ export class FrameStore {
         const imageX = Math.round(cursorPosImageSpace.x);
         const imageY = Math.round(cursorPosImageSpace.y);
         const isInsideImage = imageX >= 0 && imageX < this.frameInfo.fileInfoExtended.width &&
-                                imageY >= 0 && imageY < this.frameInfo.fileInfoExtended.height;
+            imageY >= 0 && imageY < this.frameInfo.fileInfoExtended.height;
 
         return {
             posImageSpace: cursorPosImageSpace,
@@ -1044,7 +1058,7 @@ export class FrameStore {
                     return this.channelInfo.getChannelIndexWCS(x);
                 } else {
                     // invert x in selected widget wcs to frame's default wcs
-                    const tx =  AST.transformSpectralPoint(this.spectralFrame, this.spectralType, this.spectralUnit, this.spectralSystem, x, false);
+                    const tx = AST.transformSpectralPoint(this.spectralFrame, this.spectralType, this.spectralUnit, this.spectralSystem, x, false);
                     return this.channelInfo.getChannelIndexWCS(tx);
                 }
             }
@@ -1071,7 +1085,7 @@ export class FrameStore {
             case CARTA.RegionType.POINT:
                 return `Point (wcs:${systemType}) [${center}]`;
             case CARTA.RegionType.RECTANGLE:
-                return `rotbox(wcs:${systemType})[[${center}], [${size.x}, ${size.y}], ${toFixed(region.rotation,6)}deg]`;
+                return `rotbox(wcs:${systemType})[[${center}], [${size.x}, ${size.y}], ${toFixed(region.rotation, 6)}deg]`;
             case CARTA.RegionType.ELLIPSE:
                 return `ellipse(wcs:${systemType})[[${center}], [${size.x}, ${size.y}], ${toFixed(region.rotation, 6)}deg]`;
             case CARTA.RegionType.POLYGON:
@@ -1566,7 +1580,7 @@ export class FrameStore {
         this.rasterScalingReference = frame;
         this.rasterScalingReference.addSecondaryRasterScalingImage(this);
         this.renderConfig.updateFrom(frame.renderConfig);
-    }
+    };
 
     @action clearRasterScalingReference() {
         if (this.rasterScalingReference) {

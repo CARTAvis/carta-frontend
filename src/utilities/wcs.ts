@@ -3,6 +3,7 @@ import * as AST from "ast_wrapper";
 import {Point2D, WCSPoint2D, SpectralType, SPECTRAL_DEFAULT_UNIT} from "models";
 import {NumberFormatType} from "stores";
 import {add2D, polygonPerimeter, rotate2D, scale2D, subtract2D, magDir2D} from "./math2d";
+import {trimFitsComment} from "./parsing";
 
 export function isWCSStringFormatValid(wcsString: string, format: NumberFormatType): boolean {
     if (!wcsString || !format) {
@@ -27,7 +28,7 @@ export function getHeaderNumericValue(headerEntry: CARTA.IHeaderEntry): number {
     if (headerEntry.entryType === CARTA.EntryType.FLOAT || headerEntry.entryType === CARTA.EntryType.INT) {
         return headerEntry.numericValue;
     } else {
-        return parseFloat(headerEntry.value);
+        return parseFloat(trimFitsComment(headerEntry.value));
     }
 }
 

@@ -64,7 +64,7 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
             this.gl.uniform1f(shaderUniforms.Contrast, renderConfig.contrast);
             this.gl.uniform1f(shaderUniforms.Gamma, renderConfig.gamma);
             this.gl.uniform1f(shaderUniforms.Alpha, renderConfig.alpha);
-            this.gl.uniform1f(shaderUniforms.CanvasWidth, frame.renderWidth * devicePixelRatio);
+            this.gl.uniform1f(shaderUniforms.CanvasWidth, frame.renderWidth * devicePixelRatio / frame.aspectRatio);
             this.gl.uniform1f(shaderUniforms.CanvasHeight, frame.renderHeight * devicePixelRatio);
 
             const nanColor = tinycolor(appStore.preferenceStore.nanColorHex).setAlpha(appStore.preferenceStore.nanAlpha);
