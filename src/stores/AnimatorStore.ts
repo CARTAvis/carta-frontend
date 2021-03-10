@@ -63,7 +63,7 @@ export class AnimatorStore {
 
         if (this.animationMode === AnimationMode.FRAME) {
             clearInterval(this.animateHandle);
-            this.animationActive = false;
+            this.animationActive = true;
             this.animate();
             this.animateHandle = setInterval(this.animate, this.frameInterval);
             return;
@@ -96,8 +96,8 @@ export class AnimatorStore {
         const matchedFrames = new Map<number, CARTA.IMatchedFrameList>();
         for (const sibling of frame.spectralSiblings) {
             const frameNumbers = getTransformedChannelList(
-                frame.fullWcsInfo,
-                sibling.fullWcsInfo,
+                frame.wcsInfo3D,
+                sibling.wcsInfo3D,
                 preferenceStore.spectralMatchingType,
                 animationFrames.firstFrame.channel,
                 animationFrames.lastFrame.channel

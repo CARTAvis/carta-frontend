@@ -1,22 +1,8 @@
 import * as React from "react";
 import {observer} from "mobx-react";
 import {AnchorButton, ButtonGroup, Tooltip} from "@blueprintjs/core";
-import {AppStore, RegionMode, DefaultWidgetConfig, WidgetsStore} from "stores";
-import {
-    AnimatorComponent,
-    HistogramComponent,
-    LayerListComponent,
-    LogComponent,
-    RegionListComponent,
-    RenderConfigComponent,
-    SpatialProfilerComponent,
-    SpectralProfilerComponent,
-    SpectralLineQueryComponent,
-    StatsComponent,
-    StokesAnalysisComponent,
-    CatalogOverlayComponent,
-    ImageViewLayer
-} from "components";
+import {AppStore, RegionMode, WidgetsStore} from "stores";
+import {ImageViewLayer} from "components";
 import {RegionCreationMode} from "models";
 import {IconName} from "@blueprintjs/icons";
 import {CustomIcon, CustomIconName} from "icons/CustomIcons";
@@ -25,23 +11,6 @@ import "./ToolbarMenuComponent.scss";
 
 @observer
 export class ToolbarMenuComponent extends React.Component {
-    public static get DRAGSOURCE_WIDGETCONFIG_MAP(): Map<string, DefaultWidgetConfig> {
-        return new Map<string, DefaultWidgetConfig>([
-            ["renderConfigButton", RenderConfigComponent.WIDGET_CONFIG],
-            ["layerListButton", LayerListComponent.WIDGET_CONFIG],
-            ["logButton", LogComponent.WIDGET_CONFIG],
-            ["animatorButton", AnimatorComponent.WIDGET_CONFIG],
-            ["regionListButton", RegionListComponent.WIDGET_CONFIG],
-            ["spatialProfilerButton", SpatialProfilerComponent.WIDGET_CONFIG],
-            ["spectralProfilerButton", SpectralProfilerComponent.WIDGET_CONFIG],
-            ["spectralLineQueryButton", SpectralLineQueryComponent.WIDGET_CONFIG],
-            ["statsButton", StatsComponent.WIDGET_CONFIG],
-            ["histogramButton", HistogramComponent.WIDGET_CONFIG],
-            ["stokesAnalysisButton", StokesAnalysisComponent.WIDGET_CONFIG],
-            ["catalogOverlayButton", CatalogOverlayComponent.WIDGET_CONFIG]
-        ]);
-    }
-
     handleRegionTypeClicked = (type: CARTA.RegionType) => {
         const appStore = AppStore.Instance;
         appStore.activeFrame.regionSet.setNewRegionType(type);
@@ -103,12 +72,12 @@ export class ToolbarMenuComponent extends React.Component {
                 <ButtonGroup className={className}>
                     {Array.from(WidgetsStore.Instance.CARTAWidgets.keys()).map(widgetType => {
                         const widgetConfig = WidgetsStore.Instance.CARTAWidgets.get(widgetType);
-                        const trimmedStr = widgetType.trim();
+                        const trimmedStr = widgetType.replace(/\s+/g, '');
                         return (
                             <Tooltip key={`${trimmedStr}Tooltip`} content={<span>{widgetType}{commonTooltip}</span>}>
                                 <AnchorButton
                                     icon={widgetConfig.isCustomIcon ? <CustomIcon icon={widgetConfig.icon as CustomIconName}/> : widgetConfig.icon as IconName}
-                                    id={`${trimmedStr}Button`}
+                                    id={`${trimmedStr}Button`} // id particularly is for drag source in WidgetStore
                                     onClick={widgetConfig.onClick}
                                 />
                             </Tooltip>

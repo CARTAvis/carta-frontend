@@ -1,4 +1,4 @@
-import {action, computed, observable, makeObservable} from "mobx";
+import {action, computed, observable, makeObservable, override} from "mobx";
 import {ChartArea} from "chart.js";
 import {Colors} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
@@ -31,7 +31,8 @@ const DEFAULTS = {
         scatterPlotPointSize: 3,
         equalAxes: true,
         colorMap: "jet",
-        pointTransparency: 1
+        pointTransparency: 1,
+        invertedColorMap: false
 };
 
 export class StokesAnalysisWidgetStore extends RegionWidgetStore {
@@ -69,6 +70,7 @@ export class StokesAnalysisWidgetStore extends RegionWidgetStore {
     @observable colorMap: string;
     @observable colorPixel: { color: Uint8ClampedArray, size: number };
     @observable pointTransparency: number;
+    @observable invertedColorMap: boolean;
     readonly smoothingStore: ProfileSmoothingStore;
     @observable settingsTabId: StokesAnalysisSettingsTabs;
     
@@ -215,7 +217,7 @@ export class StokesAnalysisWidgetStore extends RegionWidgetStore {
         this.clearScatterPlotXYBounds();
     };
 
-    @action setRegionId = (fileId: number, regionId: number) => {
+    @override setRegionId(fileId: number, regionId: number) {
         this.regionIdMap.set(fileId, regionId);
         this.clearLinePlotsXYBounds();
         this.clearScatterPlotXYBounds();
@@ -239,6 +241,7 @@ export class StokesAnalysisWidgetStore extends RegionWidgetStore {
         this.pointTransparency = DEFAULTS.pointTransparency;
         this.smoothingStore = new ProfileSmoothingStore();
         this.settingsTabId = StokesAnalysisSettingsTabs.CONVERSION;
+        this.invertedColorMap  = DEFAULTS.invertedColorMap;
     }
 
     @action setQUScatterPlotXBounds = (minVal: number, maxVal: number) => {
@@ -309,6 +312,10 @@ export class StokesAnalysisWidgetStore extends RegionWidgetStore {
     };
 
     // settings
+    @action setInvertedColorMap = (invertedColorMap: boolean) => {
+        this.invertedColorMap = invertedColorMap;
+    };
+
     @action setPlotType = (val: PlotType) => {
         this.plotType = val;
     };

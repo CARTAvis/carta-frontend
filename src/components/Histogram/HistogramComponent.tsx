@@ -280,7 +280,8 @@ export class HistogramComponent extends React.Component<WidgetProps> {
                         <LinePlotComponent {...linePlotProps}/>
                     </div>
                 </div>
-                <ReactResizeDetector handleWidth handleHeight onResize={this.onResize} refreshMode={"throttle"}/>
+                <ReactResizeDetector handleWidth handleHeight onResize={this.onResize} refreshMode={"throttle"}>
+                </ReactResizeDetector>
             </div>
         );
     }

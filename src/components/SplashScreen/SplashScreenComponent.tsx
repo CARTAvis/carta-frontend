@@ -3,7 +3,7 @@ import {observer} from "mobx-react";
 import {Classes, Intent, Overlay, Spinner} from "@blueprintjs/core";
 import {AppStore} from "stores";
 import {CARTA_INFO} from "models";
-import * as logoPng from "static/carta_logo.png";
+import logoPng from "static/carta_logo.png";
 import "./SplashScreenComponent.scss";
 
 @observer
