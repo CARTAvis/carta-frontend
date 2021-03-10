@@ -101,6 +101,7 @@ export class AutoColorPickerComponent extends React.Component<AutoColorPickerCom
                         "auto-red",
                         "auto-vermilion",
                         "auto-rose",
+                        "auto-violet",
                         "auto-indigo",
                         "auto-cobalt",
                         "auto-turquoise",
