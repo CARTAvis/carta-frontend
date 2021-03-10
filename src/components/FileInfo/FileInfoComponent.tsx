@@ -40,6 +40,7 @@ export class FileInfoComponent extends React.Component<{
     private matchedLocationArray: Array<{line: number, num: number}> = [];
     private listRef = React.createRef<any>();
     private clickMatchedTimer;
+    private clickMatchedTimerStart;
 
     @action onMouseEnter = () => {
         this.isMouseEntered = true;
@@ -153,6 +154,7 @@ export class FileInfoComponent extends React.Component<{
             return;
         }
         if (mode === 0) {
+            clearTimeout(this.clickMatchedTimerStart);
             clearInterval(this.clickMatchedTimer);
         } else {
             let clickMatched = () => {
@@ -167,7 +169,9 @@ export class FileInfoComponent extends React.Component<{
 
             if (mode === 99 || mode === -99) {
                 clickMatched();
-                this.clickMatchedTimer = setInterval(clickMatched, 100);
+                this.clickMatchedTimerStart = setTimeout(() => {
+                    this.clickMatchedTimer = setInterval(clickMatched, 100);
+                }, 500);
             } else if (mode === 1 || mode === -1) {
                 clickMatched();
             } else {
@@ -395,7 +399,7 @@ export class FileInfoComponent extends React.Component<{
                 >
                     <Button icon="search-text" style={{opacity: (this.isMouseEntered || this.isSearchOpened) ? 1 : 0}}></Button>
                     <InputGroup
-                        autoFocus={false}
+                        autoFocus={true}
                         placeholder={"Search text"}
                         leftIcon="search-text"
                         rightElement={searchIter}
