@@ -16,15 +16,17 @@ Module.minMaxArray = function (data: Float64Array): {max: number, min: number} {
 
     const N = data.length;
     const dataOnWasmHeap = Module._malloc(N * 8);
+    const maxBuf = Module._malloc(8);
+    const minBuf = Module._malloc(8);
     Module.HEAPF64.set(new Float64Array(data), dataOnWasmHeap / 8);
 
-    Module.heapsort(dataOnWasmHeap, N);
+    Module.heapsort(dataOnWasmHeap, N, minBuf, maxBuf);
 
-    const maxOffset = dataOnWasmHeap + (N - 1) * 8;
-    const min = new Float64Array(Module.HEAPF64.buffer.slice(dataOnWasmHeap, dataOnWasmHeap + 8))[0];
-    const max = new Float64Array(Module.HEAPF64.buffer.slice(maxOffset , maxOffset + 8))[0];
-
+    const min = Module.getValue(minBuf, "double");
+    const max = Module.getValue(maxBuf, "double");
     Module._free(dataOnWasmHeap);
+    Module._free(minBuf);
+    Module._free(maxBuf);
     return {max: max, min};
 }
 

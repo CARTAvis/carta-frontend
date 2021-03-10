@@ -34,8 +34,6 @@ export class CatalogViewComponent extends React.Component<CatalogViewComponentPr
             const catalogWidgetStore = catalogStore.getCatalogWidgetStore(fileId);
             if (!catalogWidgetStore.showSelectedData) {
                 let unSelecteData: Partial<Plotly.PlotData> = {};
-                // const color = catalogWidgetStore.catalogColor;
-
                 unSelecteData.type = "scattergl";
                 unSelecteData.mode = "markers";
                 unSelecteData.hoverinfo = "none";
