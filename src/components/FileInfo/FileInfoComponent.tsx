@@ -61,7 +61,7 @@ export class FileInfoComponent extends React.Component<{
     };
 
     @action setSearchString = (inputSearchString: string) => {
-        this.searchString = inputSearchString.replace("\b","");
+        this.searchString = inputSearchString.replace("\b", "");
     };
 
     @action resetMatchedNums = () => {
@@ -121,7 +121,7 @@ export class FileInfoComponent extends React.Component<{
         this.setSearchString(ev.target.value);
         this.resetMatchedNums();
         
-        if (this.searchString !== "" && this.searchString !== "\b") {
+        if (this.searchString !== "") {
             // RegExp ignores the difference of lettercase; use special characters as normal strings by putting \ in the front
             const searchStringRegExp = new RegExp(this.searchString.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i');
             this.splitLengthArray = [];
