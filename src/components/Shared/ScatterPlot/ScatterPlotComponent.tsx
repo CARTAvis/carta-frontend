@@ -608,12 +608,14 @@ export class ScatterPlotComponent extends React.Component<ScatterPlotComponentPr
                     </Layer>
                 </Stage>
                 }
+                {(this.props.data !== undefined || this.props.multiPlotPropsMap?.size > 0) &&
                 <ToolbarComponent
                     darkMode={this.props.darkMode}
-                    visible={this.isMouseEntered && (this.props.data !== undefined || (this.props.multiPlotPropsMap && this.props.multiPlotPropsMap.size > 0))}
+                    visible={this.isMouseEntered}
                     exportImage={this.exportImage}
                     exportData={this.exportData}
                 />
+                }
             </div>
         );
     }

@@ -358,7 +358,7 @@ export class FileListTableComponent extends React.Component<FileListTableCompone
         let dateString: string;
         if (unixDate > 0) {
             const t = moment.unix(unixDate);
-            const isToday = moment(0, "HH").diff(t, "days") === 0;
+            const isToday = moment(0, "HH").diff(t) <= 0;
             if (isToday) {
                 dateString = t.format("HH:mm");
             } else {
