@@ -40,6 +40,7 @@ class MultiSelectDropDownComponent extends React.Component<{itemOptions: IOption
                     disabled={this.props.disabled}
                 >
                     <AnchorButton
+                        active={this.isOpen}
                         rightIcon={"caret-down"}
                         disabled={this.props.disabled}
                         onClick={this.onClick}
@@ -130,7 +131,7 @@ export class SpectralProfilerToolbarComponent extends React.Component<{ widgetSt
                 <Tooltip content="Select to show multiple profiles" position={Position.TOP}>
                     <AnchorButton
                         text={ProfileClass.STATISTICS}
-                        className={widgetStore.selectedProfileClass === ProfileClass.STATISTICS ? "bp3-active" : ""}
+                        active={widgetStore.selectedProfileClass === ProfileClass.STATISTICS}
                         onClick={(ev) => widgetStore.selectProfileClass(ProfileClass.STATISTICS)}
                         disabled={!enableStatsSelect}
                     />
@@ -144,7 +145,7 @@ export class SpectralProfilerToolbarComponent extends React.Component<{ widgetSt
                 <Tooltip content="Select to show multiple profiles" position={Position.TOP}>
                     <AnchorButton
                         text={ProfileClass.STOKES}
-                        className={widgetStore.selectedProfileClass === ProfileClass.STOKES ? "bp3-active" : ""}
+                        active={widgetStore.selectedProfileClass === ProfileClass.STOKES}
                         onClick={(ev) => widgetStore.selectProfileClass(ProfileClass.STOKES)}
                         disabled={!enableStokesSelect}
                     />
