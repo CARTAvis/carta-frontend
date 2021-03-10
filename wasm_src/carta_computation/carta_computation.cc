@@ -3,6 +3,8 @@
 #include <cstdint>
 #include <iostream>
 #include <algorithm>
+#include <stdlib.h>
+#include <string.h>
 
 #include "Point2D.h"
 
@@ -256,25 +258,40 @@ double scaleValue(double x, int scaling, double alpha, double gamma) {
     }
 }
 
-void calculateCatalogSizeDiameter(double* data, size_t N, double min, double max, int shapeSize, int sizeMin, int sizeMax, int scaling, double alpha, double gamma) {
+void calculateCatalogSizeDiameter(double* data, size_t N, double min, double max, int sizeMin, int sizeMax, int scaling, double alpha, double gamma) {
     double columnMin = scaleValue(min, scaling, alpha, gamma);
     double columnMax = scaleValue(max, scaling, alpha, gamma);
     double range = columnMax - columnMin;
     for (size_t i = 0; i < N; i++)
     {
         double value = scaleValue(*(data + i), scaling, alpha, gamma);
-        *(data + i) = clamp((value - columnMin) / range * shapeSize, sizeMin, sizeMax);
+        *(data + i) = clamp((value - columnMin) / range * sizeMax, sizeMin, sizeMax);
     }
 }
 
-void calculateCatalogSizeArea(double* data, size_t N, double min, double max, int shapeSize, int sizeMin, int sizeMax, int scaling, double alpha, double gamma) {
+void calculateCatalogSizeArea(double* data, size_t N, double min, double max, int sizeMin, int sizeMax, int scaling, double alpha, double gamma) {
     double columnMin = scaleValue(min, scaling, alpha, gamma);
     double columnMax = scaleValue(max, scaling, alpha, gamma);
     double range = columnMax - columnMin;
     for (size_t i = 0; i < N; i++)
     {
         double value = scaleValue(*(data + i), scaling, alpha, gamma);
-        *(data + i) = clamp(sqrt((value - columnMin) / range) * shapeSize, sizeMin, sizeMax);
+        *(data + i) = clamp(sqrt((value - columnMin) / range) * sizeMax, sizeMin, sizeMax);
+    }
+}
+
+void calculateCatalogColorMap(double* data, size_t dataSize, size_t colorMapWith, bool invert, double min, double max, int scaling, double alpha, double gamma) {
+    double columnMin = scaleValue(min, scaling, alpha, gamma);
+    double columnMax = scaleValue(max, scaling, alpha, gamma);
+    double range = columnMax - columnMin;
+    for (size_t i = 0; i < dataSize; i++)
+    {
+        double value = (scaleValue(*(data + i), scaling, alpha, gamma) - columnMin) / range;
+        if (invert)
+        {
+            value = 1 - value;
+        }
+        *(data + i) =  clamp(round(value * (colorMapWith - 1)) * 4 , 0, (colorMapWith - 1) * 4);
     }
 }
 

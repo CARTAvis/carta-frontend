@@ -8,7 +8,7 @@ import {AppStore, CatalogStore, CatalogProfileStore, CatalogOverlay, DefaultWidg
 import {CatalogOverlayShape, CatalogWidgetStore, CatalogSettingsTabs, SizeClip} from "stores/widgets";
 import {ColorResult} from "react-color";
 import {CatalogOverlayComponent} from "components";
-import {ColorPickerComponent, ClearableNumericInputComponent, SafeNumericInput, ScalingSelectComponent} from "components/Shared";
+import {ColorPickerComponent, ClearableNumericInputComponent, ColormapComponent, SafeNumericInput, ScalingSelectComponent} from "components/Shared";
 import {SWATCH_COLORS} from "utilities";
 import "./CatalogOverlayPlotSettingsPanelComponent.scss";
 
@@ -226,7 +226,7 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
                 <FormGroup label={"Scaling"} inline={true}>
                     <ScalingSelectComponent
                         selectedItem={widgetStore.sizeScalingType}
-                        onItemSelect={(type) => widgetStore.setScalingType(type)}
+                        onItemSelect={(type) => widgetStore.setSizeScalingType(type)}
                     />
                 </FormGroup>
                 <FormGroup inline={true} label={"Size Mode"} disabled={disableSizeMap}>
@@ -247,7 +247,6 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
                         onKeyDown={(ev) => this.handleSizeChange(ev, "size-min")}
                     />
                 </FormGroup>
-
                 <FormGroup  inline={true} label="Size Max" labelInfo="(px)"  disabled={disableSizeMap}>
                     <SafeNumericInput
                         allowNumericCharactersOnly={true}
@@ -260,7 +259,6 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
                         onKeyDown={(ev) => this.handleSizeChange(ev, "size-max")}
                     />
                 </FormGroup>
-
                 <ClearableNumericInputComponent
                     label="Clip Min"
                     max={widgetStore.sizeColumnMax.clipd}
@@ -282,7 +280,41 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
                     disabled={disableSizeMap}
                 />
             </div>
-        )
+        );
+
+        const colorMap = (
+            <div className="panel-container">
+                <FormGroup inline={true} label="Column" disabled={disabledOverlayPanel}>
+                    <Select
+                        items={this.axisOption}
+                        activeItem={null}
+                        onItemSelect={(columnName) => widgetStore.setColorMapColumn(columnName)}
+                        itemRenderer={this.renderAxisPopOver}
+                        disabled={disabledOverlayPanel}
+                        popoverProps={{popoverClassName: "catalog-select", minimal: true , position: PopoverPosition.AUTO_END}}
+                        filterable={true}
+                        noResults={noResults}
+                        itemPredicate={this.filterColumn}
+                        resetOnSelect={true}
+                    >
+                        <Button text={widgetStore.colorMapColumn} disabled={disabledOverlayPanel} rightIcon="double-caret-vertical"/>
+                    </Select>
+                </FormGroup>
+                <FormGroup label={"Scaling"} inline={true}>
+                    <ScalingSelectComponent
+                        selectedItem={widgetStore.colorScalingType}
+                        onItemSelect={(type) => widgetStore.setColorScalingType(type)}
+                    />
+                </FormGroup>
+                <FormGroup inline={true} label="Color Map">
+                    <ColormapComponent
+                        inverted={false}
+                        selectedItem={widgetStore.colorMap}
+                        onItemSelect={(selected) => { widgetStore.setColormap(selected); }}
+                    />
+                </FormGroup>
+            </div>
+        );
 
         let className = "catalog-settings";
         if (appStore.darkTheme) {
@@ -314,6 +346,7 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
                     <Tab id={CatalogSettingsTabs.GLOBAL} title="Global" panel={globalPanel}/>
                     <Tab id={CatalogSettingsTabs.IMAGE_OVERLAY} title="Image Overlay" panel={overlayPanel} disabled={disabledOverlayPanel}/>
                     <Tab id={CatalogSettingsTabs.SIZE} title="Size Map" panel={sizeMap} disabled={disabledOverlayPanel}/>
+                    <Tab id={CatalogSettingsTabs.COLOR} title="Color Map" panel={colorMap} disabled={disabledOverlayPanel}/>
                 </Tabs>
             </div>
         );

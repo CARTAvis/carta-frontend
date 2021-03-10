@@ -34,7 +34,7 @@ export class CatalogViewComponent extends React.Component<CatalogViewComponentPr
             const catalogWidgetStore = catalogStore.getCatalogWidgetStore(fileId);
             if (!catalogWidgetStore.showSelectedData) {
                 let unSelecteData: Partial<Plotly.PlotData> = {};
-                const color = catalogWidgetStore.catalogColor;
+                // const color = catalogWidgetStore.catalogColor;
 
                 unSelecteData.type = "scattergl";
                 unSelecteData.mode = "markers";
@@ -43,13 +43,11 @@ export class CatalogViewComponent extends React.Component<CatalogViewComponentPr
                 // copy data to trigger react-plotly js update. only update revision number not working. with layout["datarevision"] will slow down plotly;
                 unSelecteData.x = catalog.xImageCoords.slice(0);
                 unSelecteData.y = catalog.yImageCoords.slice(0);
-
+ 
                 unSelecteData.marker = {
-                    color: color,
                     symbol: catalogWidgetStore.catalogShape,
                     sizemode: catalogWidgetStore.sizeMapType,
                     line: {
-                        color: color,
                         width: 4
                     }
                 };
@@ -58,6 +56,12 @@ export class CatalogViewComponent extends React.Component<CatalogViewComponentPr
                     unSelecteData.marker.size = catalogWidgetStore.sizeArray;
                 } else {
                     unSelecteData.marker.size = catalogWidgetStore.catalogSize;
+                }
+
+                if (!catalogWidgetStore.disableColorMap) {
+                    unSelecteData.marker.color = catalogWidgetStore.colorArray;
+                } else {
+                    unSelecteData.marker.color = catalogWidgetStore.catalogColor; 
                 }
                 unSelecteData.name = fileId.toString();
                 scatterData.push(unSelecteData);

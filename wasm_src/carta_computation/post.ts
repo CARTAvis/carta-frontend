@@ -8,6 +8,7 @@ const decodeArray = Module.cwrap("decodeArray", "number", ["number", "number", "
 const generateVertexData = Module.cwrap("generateVertexData", "number", ["number", "number", "number", "number", "number", "number"]);
 const calculateCatalogSizeArea = Module.cwrap("calculateCatalogSizeArea", null, ["number", "number", "number", "number", "number", "number", "number", "number", "number", "number"]);
 const calculateCatalogSizeDiameter = Module.cwrap("calculateCatalogSizeDiameter", null, ["number", "number", "number", "number", "number", "number", "number", "number", "number", "number"]);
+const calculateCatalogColorMap = Module.cwrap("calculateCatalogColorMap", null, ["number", "number", "number", "number", "number", "number", "number", "number", "number", "number"]);
 
 const VertexDataElements = 8;
 
@@ -105,7 +106,7 @@ Module.GenerateVertexData = (sourceVertices: Float32Array, indexOffsets: Int32Ar
     return destHeapFloat;
 };
 
-Module.CalculateCatalogSize = (data: Float64Array, min: number, max: number, shapeSize: number, sizeMin: number, sizeMax: number, scaling: number, sizeType: string, alpha: number = 1000, gamma: number = 1.5): number[] => {
+Module.CalculateCatalogSize = (data: Float64Array, min: number, max: number, sizeMin: number, sizeMax: number, scaling: number, sizeType: string, alpha: number = 1000, gamma: number = 1.5): number[] => {
     if (!data) {
         return [];
     }
@@ -115,9 +116,9 @@ Module.CalculateCatalogSize = (data: Float64Array, min: number, max: number, sha
     Module.HEAPF64.set(new Float64Array(data), dataOnWasmHeap / 8);
 
     if (sizeType === "area") {
-        calculateCatalogSizeArea(dataOnWasmHeap, N, min, max, shapeSize, sizeMin, sizeMax, scaling, alpha, gamma);
+        calculateCatalogSizeArea(dataOnWasmHeap, N, min, max, sizeMin, sizeMax, scaling, alpha, gamma);
     } else if (sizeType === "diameter") {
-        calculateCatalogSizeDiameter(dataOnWasmHeap, N, min, max, shapeSize, sizeMin, sizeMax, scaling, alpha, gamma);
+        calculateCatalogSizeDiameter(dataOnWasmHeap, N, min, max, sizeMin, sizeMax, scaling, alpha, gamma);
     } else {
         Module._free(dataOnWasmHeap);
         return [];
@@ -129,6 +130,33 @@ Module.CalculateCatalogSize = (data: Float64Array, min: number, max: number, sha
     for (let i = 0; i < N; i++) {
         size[i] = isFinite(float64[i]) ? float64[i] : sizeMin;
     }
+    return size;
+}
+
+Module.CalculateCatalogColor = (data: Float64Array, color: Uint8ClampedArray, colorMapWith: number, invert: boolean, min: number, max: number, scaling: number, alpha: number = 1000, gamma: number = 1.5): string[] => {
+    if (!data) {
+        return [];
+    }
+
+    const N = data.length;
+
+    const dataOnWasmHeap = Module._malloc(N * 8);
+    Module.HEAPF64.set(new Float64Array(data), dataOnWasmHeap / 8);
+
+
+    calculateCatalogColorMap(dataOnWasmHeap, N, colorMapWith, invert, min, max, scaling, alpha, gamma);
+
+    const float64 = new Float64Array(Module.HEAPF64.buffer, dataOnWasmHeap, N);
+    let size = Array(N);
+    for (let i = 0; i < N; i++) {
+        let j = float64[i];
+        if (!isFinite(j)) {
+            j = 0
+        }
+        size[i] = (`rgba(${color[j]}, ${color[j + 1]}, ${color[j + 2]}, 1)`);
+    }
+
+    Module._free(dataOnWasmHeap);
     return size;
 }
 
