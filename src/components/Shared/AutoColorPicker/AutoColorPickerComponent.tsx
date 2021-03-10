@@ -1,6 +1,6 @@
 import * as React from "react";
 import * as _ from "lodash";
-import {action, computed} from "mobx";
+import {computed} from "mobx";
 import {observer} from "mobx-react";
 import {makeObservable, observable} from "mobx";
 import {SketchPicker, ColorResult} from "react-color";
@@ -30,14 +30,6 @@ export class AutoColorPickerComponent extends React.Component<AutoColorPickerCom
         return getColorForTheme(this.props.color);
     }
 
-    @action private handleColorClick = () => {
-        this.displayColorPicker = true;
-    };
-
-    @action private handleColorClose = () => {
-        this.displayColorPicker = false;
-    };
-
     private handleColorChange = _.throttle((newColor: ColorResult) => {
         if (this.props.setColor) {
             this.props.setColor(newColor.hex);
@@ -53,12 +45,17 @@ export class AutoColorPickerComponent extends React.Component<AutoColorPickerCom
 
     private renderColorSelectItem = (colorItem: string, {handleClick, modifiers}) => {
         if (colorItem === "custom-color") {
+            let popoverClassName = "color-picker-popup";
+            if (AppStore.Instance.darkTheme) {
+                popoverClassName += " bp3-dark";
+            }
+
             return (
                 <div key={"custom-color"} className={"custom-color"}>
-                    {"Other "}
-                    <Button onClick={this.handleColorClick} className="color-swatch-button" disabled={this.props.disabled}>
-                        <div style={{backgroundColor: this.autoColor}}/>
-                    </Button>
+                    <Popover position={PopoverPosition.BOTTOM_RIGHT} popoverClassName={popoverClassName}>
+                        <Button text={"Other"} className="color-swatch-button" disabled={this.props.disabled}/>
+                        <SketchPicker color={this.autoColor} onChange={this.handleColorChange} disableAlpha={this.props.disableAlpha} presetColors={this.props.presetColors}/>
+                    </Popover>
                 </div>
             );
         } else {
@@ -82,49 +79,38 @@ export class AutoColorPickerComponent extends React.Component<AutoColorPickerCom
     public render() {
         const color = this.props.color;
 
-        let popoverClassName = "color-picker-popup";
-        if (AppStore.Instance.darkTheme) {
-            popoverClassName += " bp3-dark";
-        }
-
         return (
-            <div>
-                <ColorSelect
-                    activeItem={color}
-                    onItemSelect={(color) => this.props.setColor(color)}
-                    popoverProps={{minimal: true, position: PopoverPosition.BOTTOM_LEFT, popoverClassName: "colorselect"}}
-                    filterable={false}
-                    items={[
-                        "auto-blue",
-                        "auto-green",
-                        "auto-orange",
-                        "auto-red",
-                        "auto-vermilion",
-                        "auto-rose",
-                        "auto-violet",
-                        "auto-indigo",
-                        "auto-cobalt",
-                        "auto-turquoise",
-                        "auto-forest",
-                        "auto-lime",
-                        "auto-gold",
-                        "auto-sepia",
-                        "auto-black",
-                        "auto-dark_gray",
-                        "auto-gray",
-                        "auto-light_gray",
-                        "auto-white",
-                        "custom-color"
-                    ]}
-                    itemRenderer={this.renderColorSelectItem}
-                >
-                    <Button className="colorselect" text={this.renderColorBlock(this.autoColor)} rightIcon="double-caret-vertical"/>
-                </ColorSelect>
-                <Popover isOpen={this.displayColorPicker} onClose={this.handleColorClose} position={PopoverPosition.BOTTOM_RIGHT} popoverClassName={popoverClassName}>
-                    <div/>
-                    <SketchPicker color={this.autoColor} onChange={this.handleColorChange} disableAlpha={this.props.disableAlpha} presetColors={this.props.presetColors}/>
-                </Popover>
-            </div>
+            <ColorSelect
+                activeItem={color}
+                onItemSelect={(color) => this.props.setColor(color)}
+                popoverProps={{minimal: true, position: PopoverPosition.BOTTOM_LEFT, popoverClassName: "colorselect"}}
+                filterable={false}
+                items={[
+                    "auto-blue",
+                    "auto-green",
+                    "auto-orange",
+                    "auto-red",
+                    "auto-vermilion",
+                    "auto-rose",
+                    "auto-violet",
+                    "auto-indigo",
+                    "auto-cobalt",
+                    "auto-turquoise",
+                    "auto-forest",
+                    "auto-lime",
+                    "auto-gold",
+                    "auto-sepia",
+                    "auto-black",
+                    "auto-dark_gray",
+                    "auto-gray",
+                    "auto-light_gray",
+                    "auto-white",
+                    "custom-color"
+                ]}
+                itemRenderer={this.renderColorSelectItem}
+            >
+                <Button className="colorselect" text={this.renderColorBlock(this.autoColor)} rightIcon="double-caret-vertical"/>
+            </ColorSelect>
         );
     }
 };
