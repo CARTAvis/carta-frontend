@@ -165,11 +165,6 @@ export class AppStore {
             }
         }));
 
-        const authTokenParam = url.searchParams.get("token");
-        if (authTokenParam) {
-            ApiService.Instance.setToken(authTokenParam);
-        }
-
         this.backendService.connect(wsURL).subscribe(ack => {
             console.log(`Connected with session ID ${ack.sessionId}`);
             this.logStore.addInfo(`Connected to server ${wsURL} with session ID ${ack.sessionId}`, ["network"]);
@@ -1162,6 +1157,13 @@ export class AppStore {
         this.backendService.scriptingStream.subscribe(this.handleScriptingRequest);
         this.tileService.tileStream.subscribe(this.handleTileStream);
 
+        // Set auth token from URL if it exists
+        const url = new URL(window.location.href);
+        const authTokenParam = url.searchParams.get("token");
+        if (authTokenParam) {
+            this.apiService.setToken(authTokenParam);
+        }
+
         // Splash screen mask
         autorun(() => {
             if (this.astReady && this.zfpReady && this.cartaComputeReady && this.apiService.authenticated) {
@@ -1745,7 +1747,8 @@ export class AppStore {
 
     exportImage = (): boolean => {
         if (this.activeFrame) {
-            const composedCanvas = getImageCanvas(this.overlayStore.padding);
+            const backgroundColor = this.preferenceStore.transparentImageBackground ? "rgba(255, 255, 255, 0)" : (this.darkTheme ? Colors.DARK_GRAY3 : Colors.LIGHT_GRAY5);
+            const composedCanvas = getImageCanvas(this.overlayStore.padding, backgroundColor);
             if (composedCanvas) {
                 composedCanvas.toBlob((blob) => {
                     const link = document.createElement("a") as HTMLAnchorElement;

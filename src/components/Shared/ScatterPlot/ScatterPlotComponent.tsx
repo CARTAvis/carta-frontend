@@ -13,6 +13,7 @@ import {ZoomMode, InteractionMode} from "components/Shared/LinePlot/LinePlotComp
 import {PlotType} from "../PlotTypeSelector/PlotTypeSelectorComponent";
 import {Point2D} from "models";
 import {clamp, toExponential, getTimestamp, exportTsvFile} from "utilities";
+import {AppStore} from "stores";
 import "./ScatterPlotComponent.scss";
 
 
@@ -299,7 +300,7 @@ export class ScatterPlotComponent extends React.Component<ScatterPlotComponentPr
         composedCanvas.height = canvas.height;
 
         const ctx = composedCanvas.getContext("2d");
-        ctx.fillStyle = "rgba(255, 255, 255, 0.0)";
+        ctx.fillStyle = AppStore.Instance.preferenceStore.transparentImageBackground ? "rgba(255, 255, 255, 0.0)" : (this.props.darkMode ?  Colors.DARK_GRAY3 : Colors.LIGHT_GRAY5);
         ctx.fillRect(0, 0, composedCanvas.width, composedCanvas.height);
         ctx.drawImage(canvas, 0, 0);
 
@@ -607,12 +608,14 @@ export class ScatterPlotComponent extends React.Component<ScatterPlotComponentPr
                     </Layer>
                 </Stage>
                 }
+                {(this.props.data !== undefined || this.props.multiPlotPropsMap?.size > 0) &&
                 <ToolbarComponent
                     darkMode={this.props.darkMode}
-                    visible={this.isMouseEntered && (this.props.data !== undefined || (this.props.multiPlotPropsMap && this.props.multiPlotPropsMap.size > 0))}
+                    visible={this.isMouseEntered}
                     exportImage={this.exportImage}
                     exportData={this.exportData}
                 />
+                }
             </div>
         );
     }

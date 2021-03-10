@@ -83,6 +83,9 @@
             "minimum": 0,
             "maximum": 3
         },
+        "transparentImageBackground": {
+            "type": "boolean"
+        },
         "scaling": {
             "type": "integer",
             "minimum": 0,
