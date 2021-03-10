@@ -3,19 +3,46 @@ import * as React from "react";
 import {AnchorButton, ButtonGroup, IOptionProps, Menu, MenuItem, Popover, Position, Tooltip} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import {AppStore, FrameStore} from "stores";
-import {SpectralProfileWidgetStore} from "stores/widgets";
+import {ProfileClass, SpectralProfileWidgetStore} from "stores/widgets";
 import {SpectralProfilerComponent, SpectralProfilerSettingsTabs} from "components";
 import "./SpectralProfilerToolbarComponent.scss";
 import {CustomIcon} from "icons/CustomIcons";
 
+type MultiSelectItem = string | CARTA.StatsType;
+
+class MultiSelectDropDownComponent extends React.Component<{itemOptions: IOptionProps[], itemSelected: MultiSelectItem[], onItemSelect: (item: MultiSelectItem) => void, disabled: boolean}> {
+    public render() {
+        return (
+            <React.Fragment>
+                <Popover
+                    content={
+                        <Menu>
+                            {this.props.itemOptions?.map((item) =>
+                                <MenuItem key={item.value} text={item.label} onClick={(ev) => this.props.onItemSelect(item.value)} icon={this.props.itemSelected?.includes(item.value) ? "tick" : "blank"}/>
+                            )}
+                        </Menu>
+                    }
+                    position={Position.BOTTOM}
+                    disabled={this.props.disabled}
+                >
+                    <AnchorButton
+                        rightIcon={"caret-down"}
+                        disabled={this.props.disabled}
+                    />
+                </Popover>
+            </React.Fragment>
+        );
+    }
+}
+
 @observer
 export class SpectralProfilerToolbarComponent extends React.Component<{ widgetStore: SpectralProfileWidgetStore, id: string }> {
-    private onStatsItemClick = (ev) => {
-        this.props.widgetStore.selectStatsType(parseInt(ev.target.value));
+    private onStatsItemClick = (selectStatsType: CARTA.StatsType) => {
+        this.props.widgetStore.selectStatsType(selectStatsType);
     };
 
-    private onStokesItemClick = (ev) => {
-        this.props.widgetStore.selectCoordinate(ev.target.value);
+    private onStokesItemSelect = (selectedStokes: string) => {
+        this.props.widgetStore.selectCoordinate(selectedStokes);
     };
 
     private smoothingShortcutClick = () => {
@@ -85,36 +112,34 @@ export class SpectralProfilerToolbarComponent extends React.Component<{ widgetSt
                         <AnchorButton className="profile-buttons" rightIcon="caret-down" text="Region" disabled={true}/>
                     </Popover>
                 </Tooltip>
-                <Tooltip content="Select statistics to show multiple profiles" position={Position.TOP}>
-                    <Popover
-                        content={
-                            <Menu>
-                                {profileStatsOptions?.map((item) =>
-                                    <MenuItem key={item?.label} text={item?.label} onClick={this.onStatsItemClick} icon={this.props.widgetStore.isStatsTypeSelected(item.value as CARTA.StatsType) ? "tick" : "blank"}/>
-                                )}
-                            </Menu>
-                        }
-                        position={Position.BOTTOM}
+                <Tooltip content="Select to show multiple profiles" position={Position.TOP}>
+                    <AnchorButton
+                        text={ProfileClass.STATISTICS}
+                        className={widgetStore.selectedProfileClass === ProfileClass.STATISTICS ? "bp3-active" : ""}
+                        onClick={(ev) => widgetStore.selectProfileClass(ProfileClass.STATISTICS)}
                         disabled={!enableStatsSelect}
-                    >
-                        <AnchorButton className="profile-buttons" rightIcon="caret-down" text="Statistics" disabled={!enableStatsSelect}/>
-                    </Popover>
+                    />
                 </Tooltip>
-                <Tooltip content="Select stokes to show multiple profiles" position={Position.TOP}>
-                    <Popover
-                        content={
-                            <Menu>
-                                {profileCoordinateOptions?.map((item) =>
-                                    <MenuItem key={item?.label} text={item?.label} onClick={this.onStokesItemClick} icon={this.props.widgetStore.isCoordinateSelected(item.value) ? "tick" : "blank"}/>
-                                )}
-                            </Menu>
-                        }
-                        position={Position.BOTTOM}
+                <MultiSelectDropDownComponent
+                    itemOptions={profileStatsOptions}
+                    itemSelected={widgetStore.selectedStatsTypes}
+                    onItemSelect={this.onStatsItemClick}
+                    disabled={!enableStatsSelect}
+                />
+                <Tooltip content="Select to show multiple profiles" position={Position.TOP}>
+                    <AnchorButton
+                        text={ProfileClass.STOKES}
+                        className={widgetStore.selectedProfileClass === ProfileClass.STOKES ? "bp3-active" : ""}
+                        onClick={(ev) => widgetStore.selectProfileClass(ProfileClass.STOKES)}
                         disabled={!enableStokesSelect}
-                    >
-                        <AnchorButton className="profile-buttons" rightIcon="caret-down" text="Stokes" disabled={!enableStokesSelect}/>
-                    </Popover>
+                    />
                 </Tooltip>
+                <MultiSelectDropDownComponent
+                    itemOptions={profileCoordinateOptions}
+                    itemSelected={widgetStore.selectedCoordinates}
+                    onItemSelect={this.onStokesItemSelect}
+                    disabled={!enableStokesSelect}
+                />
                 <ButtonGroup className="profile-buttons">
                     <Tooltip content="Smoothing">
                         <AnchorButton icon={<CustomIcon icon="smoothing"/>} onClick={this.smoothingShortcutClick}/>

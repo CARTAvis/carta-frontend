@@ -10,6 +10,13 @@ import {SpectralSystem, SpectralType, SpectralUnit} from "models";
 import tinycolor from "tinycolor2";
 import {SpectralProfilerSettingsTabs} from "components";
 
+export enum ProfileClass {
+    IMAGE = "Image",
+    REGION = "Region",
+    STATISTICS = "Statistics",
+    STOKES = "Stokes"
+}
+
 export enum MomentSelectingMode {
     NONE = 1,
     CHANNEL,
@@ -19,6 +26,7 @@ export enum MomentSelectingMode {
 export class SpectralProfileWidgetStore extends RegionWidgetStore {
     @observable coordinate: string;
     @observable statsType: CARTA.StatsType;
+    @observable selectedProfileClass: ProfileClass;
     @observable selectedStatsTypes: CARTA.StatsType[];
     @observable selectedCoordinates: string[];
     @observable minX: number;
@@ -93,6 +101,10 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         }
     };
 
+    @action selectProfileClass = (profileClass: ProfileClass) => {
+        this.selectedProfileClass = profileClass;
+    };
+
     @action setCoordinate = (coordinate: string) => {
         // Check coordinate validity
         if (SpectralProfileWidgetStore.ValidCoordinates.indexOf(coordinate) !== -1) {
@@ -105,10 +117,9 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
     @action selectStatsType = (statsType: CARTA.StatsType) => {
         if (SpectralProfileWidgetStore.ValidStatsTypes.includes(statsType)) {
             if (this.selectedStatsTypes?.includes(statsType)) {
-                const index = this.selectedStatsTypes.indexOf(statsType);
-                this.selectedStatsTypes.splice(index, 1);
+                this.selectedStatsTypes = this.selectedStatsTypes.filter(type => type !== statsType);
             } else {
-                this.selectedStatsTypes.push(statsType);
+                this.selectedStatsTypes = [...this.selectedStatsTypes, statsType];
             }
         }
     };
@@ -116,10 +127,9 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
     @action selectCoordinate = (coordinate: string) => {
         if (SpectralProfileWidgetStore.ValidCoordinates.includes(coordinate)) {
             if (this.selectedCoordinates?.includes(coordinate)) {
-                const index = this.selectedCoordinates.indexOf(coordinate);
-                this.selectedCoordinates.splice(index, 1);
+                this.selectedCoordinates = this.selectedCoordinates.filter(coord => coord !== coordinate);
             } else {
-                this.selectedCoordinates.push(coordinate);
+                this.selectedCoordinates = [...this.selectedCoordinates, coordinate];
             }
             this.clearXYBounds();
         }
@@ -333,6 +343,9 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         makeObservable<SpectralProfileWidgetStore, "spectralLinesMHz" | "updateRanges">(this);
         this.coordinate = coordinate;
         this.statsType = CARTA.StatsType.Mean;
+        this.selectedProfileClass = ProfileClass.IMAGE;
+        this.selectedStatsTypes = [];
+        this.selectedCoordinates = [];
         this.isStreamingData = false;
         this.isHighlighted = false;
         this.spectralLinesMHz = [];
