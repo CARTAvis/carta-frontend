@@ -1,4 +1,5 @@
 import {observer} from "mobx-react";
+import {action, makeObservable, observable} from "mobx";
 import * as React from "react";
 import {AnchorButton, ButtonGroup, IOptionProps, Menu, MenuItem, Popover, Position, Tooltip} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
@@ -10,7 +11,19 @@ import {CustomIcon} from "icons/CustomIcons";
 
 type MultiSelectItem = string | CARTA.StatsType;
 
+@observer
 class MultiSelectDropDownComponent extends React.Component<{itemOptions: IOptionProps[], itemSelected: MultiSelectItem[], onItemSelect: (item: MultiSelectItem) => void, disabled: boolean}> {
+    @observable isOpen: boolean = false;
+
+    constructor(props: any) {
+        super(props);
+        makeObservable(this);
+    }
+
+    @action onClick = (ev) => {
+        this.isOpen = !this.isOpen;
+    };
+
     public render() {
         return (
             <React.Fragment>
@@ -22,12 +35,14 @@ class MultiSelectDropDownComponent extends React.Component<{itemOptions: IOption
                             )}
                         </Menu>
                     }
+                    isOpen={this.isOpen}
                     position={Position.BOTTOM}
                     disabled={this.props.disabled}
                 >
                     <AnchorButton
                         rightIcon={"caret-down"}
                         disabled={this.props.disabled}
+                        onClick={this.onClick}
                     />
                 </Popover>
             </React.Fragment>
