@@ -108,7 +108,7 @@ export class MomentGeneratorComponent extends React.Component<{widgetStore: Spec
                     frame={frame}
                     onSpectralCoordinateChange={widgetStore.setSpectralCoordinate}
                     onSpectralSystemChange={widgetStore.setSpectralSystem}
-                    disable={false}
+                    disable={frame?.isPVImage}
                 />
                 {frame && frame.numChannels > 1 &&
                     <FormGroup label="Range" inline={true} labelInfo={frame?.spectralUnit ? `(${frame.spectralUnit})` : ""}>

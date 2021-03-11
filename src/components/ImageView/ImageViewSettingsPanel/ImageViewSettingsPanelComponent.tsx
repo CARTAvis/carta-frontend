@@ -696,6 +696,7 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
                     onSpectralCoordinateChange={frame.setSpectralCoordinate}
                     onSpectralSystemChange={frame.setSpectralSystem}
                     disable={!isPVImage}
+                    disableChannelOption={true}
                 />
             </div>
         ) : null;

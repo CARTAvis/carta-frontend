@@ -181,7 +181,7 @@ export class SpectralProfilerSettingsPanelComponent extends React.Component<Widg
                                 frame={widgetStore.effectiveFrame}
                                 onSpectralCoordinateChange={widgetStore.setSpectralCoordinate}
                                 onSpectralSystemChange={widgetStore.setSpectralSystem}
-                                disable={false}
+                                disable={widgetStore.effectiveFrame?.isPVImage}
                             />
                         }
                     />
