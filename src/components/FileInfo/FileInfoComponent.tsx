@@ -263,22 +263,22 @@ export class FileInfoComponent extends React.Component<{
         const nameValueLength = name.length + 3 + value.length;
         let highlightedString = [];
         let keyIter = 0; // add unique keys to span to avoid warning
-        let highlighClassName = "";
+        let highlightClassName = "";
         let typeClassName = "header-name";
         let usedLength = 0; 
 
-        function addHighlightedString(sliceStart: number, sliceEnd: number) {
+        let addHighlightedString = (sliceStart: number, sliceEnd: number) => {
             if(!isFinite(sliceStart) || !isFinite(sliceEnd)) {
                 return;
             }
-            highlightedString.push(<span className={typeClassName + highlighClassName} key={keyIter.toString()}>
+            highlightedString.push(<span className={typeClassName + highlightClassName} key={keyIter.toString()}>
                 {((name !== "END") ? `${name} = ${value}${comment && " / " + comment}` : name).slice(sliceStart, sliceEnd)}</span>);
             keyIter += 1;
             return;
-        }
+        };
 
         splitLength.forEach((arrayValue, arrayIndex) => {
-            highlighClassName = "";
+            highlightClassName = "";
             for (const addLength of [arrayValue, this.searchString.length]) {
                 const formerUsedLength = usedLength;
                 usedLength += addLength;
@@ -307,9 +307,9 @@ export class FileInfoComponent extends React.Component<{
                 }
 
                 if (index === this.matchedIterLocation.line && arrayIndex === this.matchedIterLocation.num) {
-                    highlighClassName = " info-highlight-selected";
+                    highlightClassName = " info-highlight-selected";
                 } else {
-                    highlighClassName = " info-highlight";
+                    highlightClassName = " info-highlight";
                 }
             }
         });
