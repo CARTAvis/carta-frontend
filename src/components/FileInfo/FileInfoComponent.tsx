@@ -28,14 +28,17 @@ export class FileInfoComponent extends React.Component<{
     isLoading: boolean,
     errorMessage: string,
     catalogHeaderTable?: TableComponentProps
+    selectedFile?: CARTA.IFileInfo | CARTA.ICatalogFileInfo;
 }> {
 
     @observable searchString: string = "";
     @observable matchedIter: number = 0;
-    @observable matchedTotal: number = 0;
     @observable isMouseEntered: boolean = false;
-    @observable isSearchOpened: boolean = false;
-    @observable matchedIterLocation: {line: number, num: number} = {line: -1, num: -1};
+    
+    private isSearchOpened: boolean = false;
+    private matchedTotal: number = 0;
+    private matchedIterLocation: {line: number, num: number} = {line: -1, num: -1};
+    private selectedFile: CARTA.IFileInfo | CARTA.ICatalogFileInfo;
     private splitLengthArray: Array<Array<number>> = [];
     private matchedLocationArray: Array<{line: number, num: number}> = [];
     private listRef = React.createRef<any>();
@@ -50,23 +53,15 @@ export class FileInfoComponent extends React.Component<{
         this.isMouseEntered = false;
     };
 
-    @action searchOpened = () => {
-        this.isSearchOpened = true;
-    };
-
-    @action searchClosed = () => {
-        this.isSearchOpened = false;
+    @action resetSearchString = () => {
         this.searchString = "";
-        this.resetMatchedNums();
-        this.matchedIterLocation = {line: -1, num: -1};
-    };
+    }
 
     @action setSearchString = (inputSearchString: string) => {
         this.searchString = inputSearchString.replace("\b", "");
     };
 
-    @action resetMatchedNums = () => {
-        this.matchedTotal = 0;
+    @action resetMatchedIter = () => {
         this.matchedIter = 0;
     };
 
@@ -98,7 +93,7 @@ export class FileInfoComponent extends React.Component<{
         this.matchedTotal += inputNum;
     };
 
-    @action updateMatchedIterLocation = () => {
+    private updateMatchedIterLocation = () => {
         this.matchedIterLocation = (this.matchedTotal > 0) ? this.matchedLocationArray[this.matchedIter - 1] : {line: -1, num: -1};
     };
 
@@ -118,9 +113,18 @@ export class FileInfoComponent extends React.Component<{
         }
     };
 
+    private handleSearchPanelClicked = (opened: boolean) => {
+        this.isSearchOpened = opened ? true : false;
+        this.resetSearchString();
+        this.resetMatchedIter();
+        this.matchedTotal = 0;
+        this.matchedIterLocation = {line: -1, num: -1};
+    };
+
     private handleSearchStringChanged = (ev: React.ChangeEvent<HTMLInputElement>) => {
         this.setSearchString(ev.target.value);
-        this.resetMatchedNums();
+        this.resetMatchedIter();
+        this.matchedTotal = 0;
         
         if (this.searchString !== "") {
             // RegExp ignores the difference of lettercase; use special characters as normal strings by putting \ in the front
@@ -132,7 +136,7 @@ export class FileInfoComponent extends React.Component<{
                 let splitString = (entriesValue.name !== "END") ?
                     `${entriesValue.name} = ${entriesValue.value}${entriesValue.comment && " / " + entriesValue.comment}`.split(searchStringRegExp) : entriesValue.name.split(searchStringRegExp);
                 this.splitLengthArray.push(splitString.map(value => value.length));
-                this.addMatchedTotal(splitString.length - 1);
+                this.matchedTotal += splitString.length - 1;
                 if (splitString.length > 1) {
                     let numIter = 0;
                     while (numIter < splitString.length - 1) {
@@ -318,12 +322,17 @@ export class FileInfoComponent extends React.Component<{
     }
 
     private renderImageHeaderList = (entries: CARTA.IHeaderEntry[]) => {
+        if (this.props.selectedFile !== this.selectedFile) {
+            this.isSearchOpened = false;
+        }
+        this.selectedFile = this.props.selectedFile;
+
         const renderHeaderRow = ({index, style}) => {
             if (index < 0 || index >= entries?.length) {
                 return null;
             }
             const header = entries[index];
-            if (this.props.selectedTab === FileInfoType.IMAGE_HEADER && this.searchString !== "") {
+            if (this.isSearchOpened && this.props.selectedTab === FileInfoType.IMAGE_HEADER && this.searchString !== "") {
                 return (
                     <div style={style} className="header-entry">
                         {this.highlightString(index, header.name, header.value, header.comment)}
@@ -394,8 +403,8 @@ export class FileInfoComponent extends React.Component<{
                     position={Position.LEFT}
                     interactionKind={PopoverInteractionKind.CLICK_TARGET_ONLY}
                     modifiers={popoverModifiers}
-                    onOpening={this.searchOpened}
-                    onClosing={this.searchClosed}
+                    onOpening={() => this.handleSearchPanelClicked(true)}
+                    onClosing={() => this.handleSearchPanelClicked(false)}
                 >
                     <Button icon="search-text" style={{opacity: (this.isMouseEntered || this.isSearchOpened) ? 1 : 0}}></Button>
                     <InputGroup
