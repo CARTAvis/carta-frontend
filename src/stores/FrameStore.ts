@@ -847,7 +847,7 @@ export class FrameStore {
     };
 
     private initPVImage = (): number => {
-        let headerString = "";
+        const fitsChan = AST.emptyFitsChan();
         for (let entry of this.frameInfo.fileInfoExtended.headerEntries) {
             if (entry.name.match(/(CTYPE|CDELT|CRPIX|CRVAL|CUNIT|NAXIS|CROTA)[3-9]/)) {
                 continue;
@@ -868,19 +868,15 @@ export class FrameStore {
                 name += " ";
             }
 
-            let entryString = `${name}=  ${value}`;
-            while (entryString.length < 80) {
-                entryString += " ";
-            }
-            headerString += entryString;
+            const entryString = `${name}=  ${value}`;
+            AST.putFits(fitsChan, entryString);
         }
-        return AST.initFrame(headerString);
+        return AST.getFrameFromFitsChan(fitsChan);
     };
 
     private initFrame = (): number => {
         const dimension = this.frameInfo.fileInfoExtended.depth > 1 ? "3" : "2";
-
-        let headerString = "";
+        const fitsChan = AST.emptyFitsChan();
         for (let entry of this.frameInfo.fileInfoExtended.headerEntries) {
             let name = entry.name;
 
@@ -919,13 +915,10 @@ export class FrameStore {
                 name += " ";
             }
 
-            let entryString = `${name}=  ${value}`;
-            while (entryString.length < 80) {
-                entryString += " ";
-            }
-            headerString += entryString;
+            const entryString = `${name}=  ${value}`;
+            AST.putFits(fitsChan, entryString);
         }
-        return AST.initFrame(headerString);
+        return AST.getFrameFromFitsChan(fitsChan);
     };
 
     private sanitizeChannelNumber(channel: number) {
