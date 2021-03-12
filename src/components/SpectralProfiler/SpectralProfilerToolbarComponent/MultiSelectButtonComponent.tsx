@@ -1,40 +1,40 @@
-import {observer} from "mobx-react";
 import * as React from "react";
-import {action, makeObservable, observable} from "mobx";
 import {AbstractPureComponent2, AnchorButton, IOptionProps, Menu, MenuItem, Popover, Position} from "@blueprintjs/core";
 import {ARROW_DOWN, ESCAPE} from "@blueprintjs/core/lib/cjs/common/keys";
 import {CARTA} from "carta-protobuf";
 
 type MultiSelectItem = string | CARTA.StatsType;
 
-@observer
+/*
+    NOTE:
+    This component is a modification of <MultiSelect> (a multi-selectable "input") from @blueprintjs/select in order to create a multi-selectable "button".
+    And there are warnings when @observer of mobx-react applying to AbstractPureComponent2, since AbstractPureComponent2 is a React.PureComponent but @observer requires a React.Component.
+    So we have to use primitive this.setState() instead of observer/observable of mobx.
+*/
 export class MultiSelectButtonComponent extends AbstractPureComponent2<{itemOptions: IOptionProps[], itemSelected: MultiSelectItem[], onItemSelect: (item: MultiSelectItem) => void, disabled: boolean}> {
     private button: HTMLAnchorElement | null = null;
-    @observable private isOpen: boolean = false;
-
-    constructor(props: any) {
-        super(props);
-        makeObservable(this);
-    }
-
-    @action private onClick = (ev) => {
-        this.isOpen = !this.isOpen;
+    public state: {isOpen: boolean} = {
+        isOpen: false
     };
 
-    @action private handlePopoverInteraction = (nextOpenState: boolean) => {
+    private onClick = (ev) => {
+        this.setState({isOpen: !this.state.isOpen});
+    };
+
+    private handlePopoverInteraction = (nextOpenState: boolean) => {
         this.requestAnimationFrame(() => {
             if (this.button && this.button !== document.activeElement) {
-                this.isOpen = false;
+                this.setState({isOpen: false});
             }
         });
     };
 
-    @action private handleButtonKeyDown = (ev: React.KeyboardEvent<HTMLElement>) => {
+    private handleButtonKeyDown = (ev: React.KeyboardEvent<HTMLElement>) => {
         if (ev.keyCode === ESCAPE) {
             this.button?.blur();
-            this.isOpen = false;
+            this.setState({isOpen: false});
         } else if (ev.keyCode === ARROW_DOWN) {
-            this.isOpen = true;
+            this.setState({isOpen: true});
         }
     };
 
@@ -60,14 +60,14 @@ export class MultiSelectButtonComponent extends AbstractPureComponent2<{itemOpti
                 autoFocus={false}
                 enforceFocus={false}
                 content={menu}
-                isOpen={this.isOpen}
+                isOpen={this.state.isOpen}
                 placement={Position.BOTTOM}
                 disabled={this.props.disabled}
                 onInteraction={this.handlePopoverInteraction}
                 minimal={true}
             >
                 <AnchorButton
-                    active={this.isOpen}
+                    active={this.state.isOpen}
                     rightIcon={"caret-down"}
                     disabled={this.props.disabled}
                     onClick={this.onClick}
