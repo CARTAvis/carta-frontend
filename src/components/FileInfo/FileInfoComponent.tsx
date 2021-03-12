@@ -5,7 +5,7 @@ import { FixedSizeList as List } from "react-window";
 import AutoSizer from "react-virtualized-auto-sizer";
 import { CARTA } from "carta-protobuf";
 import { TableComponent, TableComponentProps } from "components/Shared";
-import { ImageSaveComponent } from "components";
+import { ImageSaveComponent } from "components/Dialogs";
 import "./FileInfoComponent.scss";
 
 export enum FileInfoType {

@@ -2,9 +2,9 @@ import * as React from "react";
 import { observer } from "mobx-react";
 import { Text, Label, FormGroup, IOptionProps, HTMLSelect, ControlGroup, Switch, NumericInput } from "@blueprintjs/core";
 import { CARTA } from "carta-protobuf";
-import "./ImageSaveComponent.scss";
 import { AppStore, FileBrowserStore } from "stores";
 import { SpectralSystem, SpectralType, SpectralUnit } from "models";
+import "./ImageSaveComponent.scss";
 
 @observer
 export class ImageSaveComponent extends React.Component<{
