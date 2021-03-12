@@ -8,15 +8,23 @@ type MultiSelectItem = string | CARTA.StatsType;
 
 @observer
 export class MultiSelectButtonComponent extends React.Component<{itemOptions: IOptionProps[], itemSelected: MultiSelectItem[], onItemSelect: (item: MultiSelectItem) => void, disabled: boolean}> {
-    @observable isOpen: boolean = false;
+    private button: HTMLAnchorElement | null = null;
+    @observable private isOpen: boolean = false;
 
     constructor(props: any) {
         super(props);
         makeObservable(this);
     }
 
-    @action onClick = (ev) => {
+    @action private onClick = (ev) => {
         this.isOpen = !this.isOpen;
+    };
+
+    @action private handlePopoverInteraction = () => {
+        const isButtonFocused = this.button === document.activeElement;
+        if (this.button && !isButtonFocused) {
+            this.isOpen = false;
+        }
     };
 
     public render() {
@@ -26,7 +34,10 @@ export class MultiSelectButtonComponent extends React.Component<{itemOptions: IO
                     <MenuItem
                         key={item.value}
                         text={item.label}
-                        onClick={(ev) => this.props.onItemSelect(item.value)}
+                        onClick={(ev) => {
+                            this.button?.focus();
+                            this.props.onItemSelect(item.value);
+                        }}
                         icon={this.props.itemSelected?.includes(item.value) ? "tick" : "blank"}
                     />
                 )}
@@ -40,9 +51,16 @@ export class MultiSelectButtonComponent extends React.Component<{itemOptions: IO
                     isOpen={this.isOpen}
                     position={Position.BOTTOM}
                     disabled={this.props.disabled}
+                    onInteraction={this.handlePopoverInteraction}
                     minimal={true}
                 >
-                    <AnchorButton active={this.isOpen} rightIcon={"caret-down"} disabled={this.props.disabled} onClick={this.onClick}/>
+                    <AnchorButton
+                        active={this.isOpen}
+                        rightIcon={"caret-down"}
+                        disabled={this.props.disabled}
+                        onClick={this.onClick}
+                        elementRef={(button) => this.button = button}
+                    />
                 </Popover>
             </React.Fragment>
         );
