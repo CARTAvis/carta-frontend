@@ -1,57 +1,13 @@
 import {observer} from "mobx-react";
-import {action, makeObservable, observable} from "mobx";
 import * as React from "react";
-import {AnchorButton, ButtonGroup, IOptionProps, Menu, MenuItem, Popover, Position, Tooltip} from "@blueprintjs/core";
+import {AnchorButton, ButtonGroup, IOptionProps, Menu, Popover, Position, Tooltip} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import {AppStore, FrameStore} from "stores";
 import {ProfileClass, SpectralProfileWidgetStore} from "stores/widgets";
 import {SpectralProfilerComponent, SpectralProfilerSettingsTabs} from "components";
+import {MultiSelectButtonComponent} from "./MultiSelectButtonComponent";
 import {CustomIcon} from "icons/CustomIcons";
 import "./SpectralProfilerToolbarComponent.scss";
-
-type MultiSelectItem = string | CARTA.StatsType;
-
-@observer
-class MultiSelectDropDownComponent extends React.Component<{itemOptions: IOptionProps[], itemSelected: MultiSelectItem[], onItemSelect: (item: MultiSelectItem) => void, disabled: boolean}> {
-    @observable isOpen: boolean = false;
-
-    constructor(props: any) {
-        super(props);
-        makeObservable(this);
-    }
-
-    @action onClick = (ev) => {
-        this.isOpen = !this.isOpen;
-    };
-
-    public render() {
-        const menu = (
-            <Menu>
-                {this.props.itemOptions?.map((item) =>
-                    <MenuItem
-                        key={item.value}
-                        text={item.label}
-                        onClick={(ev) => this.props.onItemSelect(item.value)}
-                        icon={this.props.itemSelected?.includes(item.value) ? "tick" : "blank"}
-                    />
-                )}
-            </Menu>
-        );
-
-        return (
-            <React.Fragment>
-                <Popover
-                    content={menu}
-                    isOpen={this.isOpen}
-                    position={Position.BOTTOM}
-                    disabled={this.props.disabled}
-                >
-                    <AnchorButton active={this.isOpen} rightIcon={"caret-down"} disabled={this.props.disabled} onClick={this.onClick}/>
-                </Popover>
-            </React.Fragment>
-        );
-    }
-}
 
 @observer
 export class SpectralProfilerToolbarComponent extends React.Component<{ widgetStore: SpectralProfileWidgetStore, id: string }> {
@@ -138,7 +94,7 @@ export class SpectralProfilerToolbarComponent extends React.Component<{ widgetSt
                         disabled={!enableStatsSelect}
                     />
                 </Tooltip>
-                <MultiSelectDropDownComponent
+                <MultiSelectButtonComponent
                     itemOptions={profileStatsOptions}
                     itemSelected={widgetStore.selectedStatsTypes}
                     onItemSelect={this.onStatsItemClick}
@@ -152,7 +108,7 @@ export class SpectralProfilerToolbarComponent extends React.Component<{ widgetSt
                         disabled={!enableStokesSelect}
                     />
                 </Tooltip>
-                <MultiSelectDropDownComponent
+                <MultiSelectButtonComponent
                     itemOptions={profileCoordinateOptions}
                     itemSelected={widgetStore.selectedCoordinates}
                     onItemSelect={this.onStokesItemSelect}
