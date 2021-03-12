@@ -1,14 +1,14 @@
 import {observer} from "mobx-react";
 import * as React from "react";
 import {action, makeObservable, observable} from "mobx";
-import {AnchorButton, IOptionProps, Menu, MenuItem, Popover, Position} from "@blueprintjs/core";
+import {AbstractPureComponent2, AnchorButton, IOptionProps, Menu, MenuItem, Popover, Position} from "@blueprintjs/core";
 import {ARROW_DOWN, ESCAPE} from "@blueprintjs/core/lib/cjs/common/keys";
 import {CARTA} from "carta-protobuf";
 
 type MultiSelectItem = string | CARTA.StatsType;
 
 @observer
-export class MultiSelectButtonComponent extends React.Component<{itemOptions: IOptionProps[], itemSelected: MultiSelectItem[], onItemSelect: (item: MultiSelectItem) => void, disabled: boolean}> {
+export class MultiSelectButtonComponent extends AbstractPureComponent2<{itemOptions: IOptionProps[], itemSelected: MultiSelectItem[], onItemSelect: (item: MultiSelectItem) => void, disabled: boolean}> {
     private button: HTMLAnchorElement | null = null;
     @observable private isOpen: boolean = false;
 
@@ -21,10 +21,12 @@ export class MultiSelectButtonComponent extends React.Component<{itemOptions: IO
         this.isOpen = !this.isOpen;
     };
 
-    @action private handlePopoverInteraction = () => {
-        if (this.button && this.button !== document.activeElement) {
-            this.isOpen = false;
-        }
+    @action private handlePopoverInteraction = (nextOpenState: boolean) => {
+        this.requestAnimationFrame(() => {
+            if (this.button && this.button !== document.activeElement) {
+                this.isOpen = false;
+            }
+        });
     };
 
     @action private handleButtonKeyDown = (ev: React.KeyboardEvent<HTMLElement>) => {
@@ -54,25 +56,25 @@ export class MultiSelectButtonComponent extends React.Component<{itemOptions: IO
         );
 
         return (
-            <React.Fragment>
-                <Popover
-                    content={menu}
-                    isOpen={this.isOpen}
-                    position={Position.BOTTOM}
+            <Popover
+                autoFocus={false}
+                enforceFocus={false}
+                content={menu}
+                isOpen={this.isOpen}
+                placement={Position.BOTTOM}
+                disabled={this.props.disabled}
+                onInteraction={this.handlePopoverInteraction}
+                minimal={true}
+            >
+                <AnchorButton
+                    active={this.isOpen}
+                    rightIcon={"caret-down"}
                     disabled={this.props.disabled}
-                    onInteraction={this.handlePopoverInteraction}
-                    minimal={true}
-                >
-                    <AnchorButton
-                        active={this.isOpen}
-                        rightIcon={"caret-down"}
-                        disabled={this.props.disabled}
-                        onClick={this.onClick}
-                        elementRef={(button) => this.button = button}
-                        onKeyDown={this.handleButtonKeyDown}
-                    />
-                </Popover>
-            </React.Fragment>
+                    onClick={this.onClick}
+                    elementRef={(button) => this.button = button}
+                    onKeyDown={this.handleButtonKeyDown}
+                />
+            </Popover>
         );
     }
 }
