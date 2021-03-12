@@ -2,6 +2,7 @@ import {observer} from "mobx-react";
 import * as React from "react";
 import {action, makeObservable, observable} from "mobx";
 import {AnchorButton, IOptionProps, Menu, MenuItem, Popover, Position} from "@blueprintjs/core";
+import {ARROW_DOWN, ESCAPE} from "@blueprintjs/core/lib/cjs/common/keys";
 import {CARTA} from "carta-protobuf";
 
 type MultiSelectItem = string | CARTA.StatsType;
@@ -21,9 +22,17 @@ export class MultiSelectButtonComponent extends React.Component<{itemOptions: IO
     };
 
     @action private handlePopoverInteraction = () => {
-        const isButtonFocused = this.button === document.activeElement;
-        if (this.button && !isButtonFocused) {
+        if (this.button && this.button !== document.activeElement) {
             this.isOpen = false;
+        }
+    };
+
+    @action private handleButtonKeyDown = (ev: React.KeyboardEvent<HTMLElement>) => {
+        if (ev.keyCode === ESCAPE) {
+            this.button?.blur();
+            this.isOpen = false;
+        } else if (ev.keyCode === ARROW_DOWN) {
+            this.isOpen = true;
         }
     };
 
@@ -60,6 +69,7 @@ export class MultiSelectButtonComponent extends React.Component<{itemOptions: IO
                         disabled={this.props.disabled}
                         onClick={this.onClick}
                         elementRef={(button) => this.button = button}
+                        onKeyDown={this.handleButtonKeyDown}
                     />
                 </Popover>
             </React.Fragment>
