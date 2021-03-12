@@ -245,6 +245,7 @@ struct data
   double *t;
   double *y;
   size_t n;
+  size_t component;
 };
 
 /* model function: a * exp( -1/2 * [ (t - b) / c ]^2 ) */
@@ -257,19 +258,21 @@ gaussian(const double a, const double b, const double c, const double x)
 
 int func_f (const gsl_vector * x, void *params, gsl_vector * f) {
     struct data *d = (struct data *) params;
-    double a = gsl_vector_get(x, 0);
-    double b = gsl_vector_get(x, 1);
-    double c = gsl_vector_get(x, 2);
-    size_t i;
 
+    size_t i, j;
     for (i = 0; i < d->n; ++i)
-        {
+    {
         double ti = d->t[i];
         double yi = d->y[i];
-        double y = gaussian(a, b, c, ti);
+        double y = 0;
+
+        for (j = 0; j <  d->component; ++j )
+        {
+            y = y + gaussian(gsl_vector_get(x, j * 3), gsl_vector_get(x, j * 3 + 1), gsl_vector_get(x, j * 3 + 2), ti);
+        }
 
         gsl_vector_set(f, i, yi - y);
-        }
+    }
 
     return GSL_SUCCESS;
 }
@@ -372,11 +375,7 @@ int EMSCRIPTEN_KEEPALIVE fittingGaussian(double* xInArray, double* yInArray, con
     int status = 0; /* return value: 0 = success */
 
     const size_t n = N;  /* number of data points to fit */
-    const size_t p = 3;    /* number of model parameters */
-    const double a = amp[0];  /* amplitude */
-    const double b = center[0];  /* center */
-    const double xx = log(2.0);
-    const double c = fwhm[0] / pow( 8 * log(2.0), 0.5); /* width = fwhm / (8ln2)^0.5 */
+    const size_t p = N2 * 3;  /* number of model parameters */ // TODO
 
     gsl_vector *f = gsl_vector_alloc(n);
     gsl_vector *x = gsl_vector_alloc(p);
@@ -388,31 +387,35 @@ int EMSCRIPTEN_KEEPALIVE fittingGaussian(double* xInArray, double* yInArray, con
     fit_data.t = xInArray;
     fit_data.y = yInArray;
     fit_data.n = n;
+    fit_data.component = N2;
 
     /* define function to be minimized */
     fdf.f = func_f;
-    fdf.df = func_df;
+    fdf.df = NULL;
+    // fdf.df = func_df;
     fdf.fvv = NULL;
     fdf.n = n;
     fdf.p = p;
     fdf.params = &fit_data;
 
     /* starting point */
-    gsl_vector_set(x, 0, a);
-    gsl_vector_set(x, 1, b);
-    gsl_vector_set(x, 2, c);
+    for (i = 0; i < N2; ++i)
+    {
+        gsl_vector_set(x, i * 3, amp[i]);  /* amplitude */
+        gsl_vector_set(x, i * 3 + 1, center[i]); /* center */
+        gsl_vector_set(x, i * 3 + 2, fwhm[i] / pow( 8 * log(2.0), 0.5)); /* width = fwhm / (8ln2)^0.5 */
+    }
 
     fdf_params.trs = gsl_multifit_nlinear_trs_lm;
     solve_system(x, &fdf, &fdf_params);
 
     /* print data and model */
-    double A = gsl_vector_get(x, 0);
-    double B = gsl_vector_get(x, 1);
-    double C = gsl_vector_get(x, 2);
-
-    centerOut[0] = B;
-    ampOut[0] = A;
-    fwhmOut[0] = C * pow( 8 * log(2.0), 0.5);
+    for (i = 0; i < N2; ++i)
+    {
+        ampOut[i] = gsl_vector_get(x, i * 3);
+        centerOut[i] = gsl_vector_get(x, i * 3 + 1);
+        fwhmOut[i] = gsl_vector_get(x, i * 3 + 2) * pow( 8 * log(2.0), 0.5);
+    }
 
     // snprintf(logOut, sizeof(logOut), "Test=%.3e\n", test);
     
