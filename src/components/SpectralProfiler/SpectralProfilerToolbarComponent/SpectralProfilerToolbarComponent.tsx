@@ -1,6 +1,6 @@
 import {observer} from "mobx-react";
 import * as React from "react";
-import {AnchorButton, ButtonGroup, IOptionProps, Menu, Popover, Position, Tooltip} from "@blueprintjs/core";
+import {AnchorButton, ButtonGroup, IOptionProps, Position, Tooltip} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import {AppStore, FrameStore} from "stores";
 import {ProfileClass, SpectralProfileWidgetStore} from "stores/widgets";
@@ -68,23 +68,19 @@ export class SpectralProfilerToolbarComponent extends React.Component<{ widgetSt
 
         return (
             <div className="spectral-profiler-toolbar">
-                <Tooltip content="Select images to show multiple profiles" position={Position.TOP}>
-                    <Popover
-                        content={<Menu></Menu>}
-                        position={Position.BOTTOM}
-                        disabled={true}
-                    >
-                        <AnchorButton className="profile-buttons" rightIcon="caret-down" text="Image" disabled={true}/>
-                    </Popover>
+                <Tooltip content="Select to show multiple profiles" position={Position.TOP}>
+                    <AnchorButton
+                        text={ProfileClass.IMAGE}
+                        active={widgetStore.selectedProfileClass === ProfileClass.IMAGE}
+                        onClick={(ev) => widgetStore.selectProfileClass(ProfileClass.IMAGE)}
+                    />
                 </Tooltip>
-                <Tooltip content="Select regions to show multiple profiles" position={Position.TOP}>
-                    <Popover
-                        content={<Menu></Menu>}
-                        position={Position.BOTTOM}
-                        disabled={true}
-                    >
-                        <AnchorButton className="profile-buttons" rightIcon="caret-down" text="Region" disabled={true}/>
-                    </Popover>
+                <Tooltip content="Select to show multiple profiles" position={Position.TOP}>
+                    <AnchorButton
+                        text={ProfileClass.REGION}
+                        active={widgetStore.selectedProfileClass === ProfileClass.REGION}
+                        onClick={(ev) => widgetStore.selectProfileClass(ProfileClass.REGION)}
+                    />
                 </Tooltip>
                 <Tooltip content="Select to show multiple profiles" position={Position.TOP}>
                     <AnchorButton
