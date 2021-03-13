@@ -9,3 +9,4 @@ export * from "./webgl";
 export * from "./wcs";
 export * from "./table";
 export * from "./templates";
+export * from "./export";

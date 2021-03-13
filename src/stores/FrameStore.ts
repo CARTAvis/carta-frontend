@@ -342,6 +342,7 @@ export class FrameStore {
                         fromWCS: true,
                         channelType: this.spectralAxis.type,
                         indexes,
+                        delta,
                         values,
                         rawValues,
                         getChannelIndexWCS: (value: number): number => {
@@ -373,8 +374,14 @@ export class FrameStore {
             rawValues[i] = i;
         }
         return {
-            fromWCS: false, channelType: {code: "", name: "Channel", unit: ""}, indexes, values, rawValues,
-            getChannelIndexWCS: null, getChannelIndexSimple: getChannelIndexSimple
+            fromWCS: false,
+            channelType: {code: "", name: "Channel", unit: ""},
+            delta: undefined,
+            indexes: indexes,
+            values: values,
+            rawValues: rawValues,
+            getChannelIndexWCS: null,
+            getChannelIndexSimple: getChannelIndexSimple
         };
     }
 
@@ -822,7 +829,8 @@ export class FrameStore {
     private initFrame = (): number => {
         const dimension = this.frameInfo.fileInfoExtended.depth > 1 ? "3" : "2";
 
-        let headerString = "";
+        const fitsChan = AST.emptyFitsChan();
+
         for (let entry of this.frameInfo.fileInfoExtended.headerEntries) {
             let name = entry.name;
 
@@ -862,12 +870,10 @@ export class FrameStore {
             }
 
             let entryString = `${name}=  ${value}`;
-            while (entryString.length < 80) {
-                entryString += " ";
-            }
-            headerString += entryString;
+
+            AST.putFits(fitsChan, entryString);
         }
-        return AST.initFrame(headerString);
+        return AST.getFrameFromFitsChan(fitsChan);
     };
 
     private sanitizeChannelNumber(channel: number) {
@@ -1065,11 +1071,17 @@ export class FrameStore {
             case CARTA.RegionType.POINT:
                 return `Point (wcs:${systemType}) [${center}]`;
             case CARTA.RegionType.RECTANGLE:
-                return `rotbox(wcs:${systemType})[[${center}], [${size.x}, ${size.y}], ${toFixed(region.rotation, 1)}deg]`;
+                return `rotbox(wcs:${systemType})[[${center}], [${size.x}, ${size.y}], ${toFixed(region.rotation,6)}deg]`;
             case CARTA.RegionType.ELLIPSE:
-                return `ellipse(wcs:${systemType})[[${center}], [${size.x}, ${size.y}], ${toFixed(region.rotation, 1)}deg]`;
+                return `ellipse(wcs:${systemType})[[${center}], [${size.x}, ${size.y}], ${toFixed(region.rotation, 6)}deg]`;
             case CARTA.RegionType.POLYGON:
-                return `polygon(wcs:${systemType})[[${center}], [${size.x}, ${size.y}], ${toFixed(region.rotation, 1)}deg]`;
+                let polygonWcsProperties = `poly(wcs:${systemType})[`;
+                region.controlPoints.forEach((point, index) => {
+                    const wcsPoint = isFinite(point.x) && isFinite(point.y) ? getFormattedWCSPoint(this.wcsInfoForTransformation, point) : null;
+                    polygonWcsProperties += wcsPoint ? `[${wcsPoint.x}, ${wcsPoint.y}]` : "[Invalid]";
+                    polygonWcsProperties += index !== region.controlPoints.length - 1 ? ", " : "]";
+                });
+                return polygonWcsProperties;
             default:
                 return "Not Implemented";
         }

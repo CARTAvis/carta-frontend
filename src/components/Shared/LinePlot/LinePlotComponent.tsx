@@ -11,8 +11,9 @@ import {PlotContainerComponent, TickType, MultiPlotProps} from "./PlotContainer/
 import {ToolbarComponent} from "./Toolbar/ToolbarComponent";
 import {StokesCoordinate} from "stores/widgets/StokesAnalysisWidgetStore";
 import {Point2D} from "models";
-import {clamp, toExponential} from "utilities";
+import {clamp, toExponential, getTimestamp, exportTsvFile} from "utilities";
 import {PlotType} from "components/Shared";
+import {AppStore} from "stores";
 import "./LinePlotComponent.scss";
 
 export enum ZoomMode {
@@ -503,11 +504,6 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
         this.hideMouseEnterWidget();
     };
 
-    private static GetTimestamp() {
-        const now = new Date();
-        return `${now.getFullYear()}-${now.getMonth() + 1}-${now.getDate()}-${now.getHours()}-${now.getMinutes()}-${now.getSeconds()}`;
-    }
-
     private exportSubPlotImage(visible: boolean) {
         const scatterChart = this.plotRef.chartInstance;
         scatterChart.config.options.scales.xAxes[0].ticks.display = visible;
@@ -547,7 +543,7 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
         composedCanvas.height = canvas.height;
 
         const ctx = composedCanvas.getContext("2d");
-        ctx.fillStyle = "rgba(255, 255, 255, 0.0)";
+        ctx.fillStyle = AppStore.Instance.preferenceStore.transparentImageBackground ? "rgba(255, 255, 255, 0.0)" : (this.props.darkMode ?  Colors.DARK_GRAY3 : Colors.LIGHT_GRAY5);
         ctx.fillRect(0, 0, composedCanvas.width, composedCanvas.height);
         ctx.drawImage(canvas, 0, 0);
 
@@ -603,7 +599,7 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
 
         composedCanvas.toBlob((blob) => {
             const link = document.createElement("a") as HTMLAnchorElement;
-            link.download = `${imageName}-${plotName.replace(" ", "-")}-${LinePlotComponent.GetTimestamp()}.png`;
+            link.download = `${imageName}-${plotName.replace(" ", "-")}-${getTimestamp()}.png`;
             link.href = URL.createObjectURL(blob);
             link.dispatchEvent(new MouseEvent("click"));
         }, "image/png");
@@ -666,14 +662,7 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
             }
         }
 
-        const tsvData = `data:text/tab-separated-values;charset=utf-8,${comment}\n${header}\n${rows.join("\n")}\n`;
-
-        const dataURL = encodeURI(tsvData).replace(/#/g, "%23");
-
-        const a = document.createElement("a") as HTMLAnchorElement;
-        a.href = dataURL;
-        a.download = `${imageName}-${plotName.replace(" ", "-")}-${LinePlotComponent.GetTimestamp()}.tsv`;
-        a.dispatchEvent(new MouseEvent("click"));
+        exportTsvFile(imageName, plotName, `${comment}\n${header}\n${rows.join("\n")}\n`);
     };
 
     private calcMarkerBox = (marker: LineMarker): {lowerBound: number, height: number} => {
@@ -1036,12 +1025,14 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
                     </Layer>
                 </Stage>
                 }
+                {(this.props.data !== undefined || this.props.multiPlotPropsMap?.size > 0) &&
                 <ToolbarComponent
                     darkMode={this.props.darkMode}
-                    visible={this.isMouseEntered && (this.props.data !== undefined || (this.props.multiPlotPropsMap && this.props.multiPlotPropsMap.size > 0))}
+                    visible={this.isMouseEntered}
                     exportImage={this.exportImage}
                     exportData={this.exportData}
                 />
+                }
             </div>
         );
     }
