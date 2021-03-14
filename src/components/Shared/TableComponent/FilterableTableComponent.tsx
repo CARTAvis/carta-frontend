@@ -18,17 +18,12 @@ enum RowSelectionType {
     All
 }
 
-export enum TableType {
-    ColumnFilter
-}
-
-export class TableComponentProps {
+export class FilterableTableComponentProps {
     dataset: Map<number, ProcessedColumnData>;
     filter?: Map<string, ControlHeader>;
     columnHeaders: Array<CARTA.CatalogHeader>;
     numVisibleRows: number;
     columnWidths?: Array<number>;
-    type: TableType;
     loadingCell?: boolean;
     selectedDataIndex?: number[];
     showSelectedData?: boolean;
@@ -46,7 +41,7 @@ export class TableComponentProps {
 }
 
 @observer
-export class TableComponent extends React.Component<TableComponentProps> {
+export class FilterableTableComponent extends React.Component<FilterableTableComponentProps> {
     private readonly SortingTypelinkedList = {
         head: {
             value: null,
@@ -276,18 +271,6 @@ export class TableComponent extends React.Component<TableComponentProps> {
             this.props.updateByInfiniteScroll?.(rowIndices.rowIndexEnd);
         }
     };
-
-    private renderDataColumn(columnName: string, columnData: any) {
-        return (
-            <Column
-                key={columnName}
-                name={columnName}
-                cellRenderer={(rowIndex, columnIndex) => (
-                    <Cell key={`cell_${columnIndex}_${rowIndex}`} interactive={true}>{rowIndex < columnData?.length ? columnData[rowIndex] : undefined}</Cell>
-                )}
-            />
-        );
-    }
 
     private updateTableColumnWidth = (index: number, size: number) => {
         const header = this.props.columnHeaders[index];

@@ -5,7 +5,7 @@ import {AnchorButton, Button, Classes, ControlGroup, FormGroup, HTMLSelect, Inte
 import {Cell, Column, Regions, RenderMode, SelectionModes, Table} from "@blueprintjs/table";
 import SplitPane, { Pane } from "react-split-pane";
 import ReactResizeDetector from "react-resize-detector";
-import {SafeNumericInput, TableComponent, TableComponentProps, TableType} from "components/Shared";
+import {SafeNumericInput, FilterableTableComponent, FilterableTableComponentProps} from "components/Shared";
 import {AppStore, HelpType, DefaultWidgetConfig, WidgetProps, WidgetsStore} from "stores";
 import {RedshiftType, SpectralLineHeaders, SpectralLineQueryWidgetStore, SpectralLineQueryRangeType, SpectralLineQueryUnit} from "stores/widgets";
 import "./SpectralLineQueryComponent.scss";
@@ -344,8 +344,7 @@ export class SpectralLineQueryComponent extends React.Component<WidgetProps> {
             </Popover>
         );
 
-        const queryResultTableProps: TableComponentProps = {
-            type: TableType.ColumnFilter,
+        const queryResultTableProps: FilterableTableComponentProps = {
             filter: widgetStore.controlHeader,
             dataset: widgetStore.filterResult,
             columnHeaders: widgetStore.displayedColumnHeaders,
@@ -392,7 +391,7 @@ export class SpectralLineQueryComponent extends React.Component<WidgetProps> {
                         <Pane className={"result-table-container"}>
                             {redshiftPanel}
                             <div className="result-table">
-                                {this.width > 0 && <TableComponent {...queryResultTableProps}/>}
+                                {this.width > 0 && <FilterableTableComponent {...queryResultTableProps}/>}
                             </div>
                         </Pane>
                     </SplitPane>

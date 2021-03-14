@@ -8,7 +8,7 @@ export * from "./ProfilerInfo/ProfilerInfoComponent";
 export * from "./ScatterPlot/ScatterPlotComponent";
 export * from "./LinePlot/PlotSettings/LinePlotSettingsPanelComponent";
 export * from "./ScatterPlot/PlotSettings/ScatterPlotSettingsPanelComponent";
-export * from "./TableComponent/TableComponent";
+export * from "./TableComponent/FilterableTableComponent";
 export * from "./TableComponent/SimpleTableComponent";
 export * from "./ScalingSelectComponent/ScalingSelectComponent";
 export * from "./ClearableNumericInput/ClearableNumericInputComponent";
