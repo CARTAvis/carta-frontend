@@ -19,7 +19,6 @@ enum RowSelectionType {
 }
 
 export enum TableType {
-    Normal,
     ColumnFilter
 }
 
@@ -324,52 +323,30 @@ export class TableComponent extends React.Component<TableComponentProps> {
         table.columnHeaders?.forEach(header => {
             const columnIndex = header.columnIndex;
             let dataArray = tableData.get(columnIndex)?.data;
-            if (table.type === TableType.ColumnFilter) {
-                const column = (header.name === SpectralLineHeaders.LineSelection && this.props.flipRowSelection) ?
-                    this.renderCheckboxColumn(header, dataArray) :
-                    this.renderDataColumnWithFilter(header, dataArray);
-                tableColumns.push(column);
-            } else if (table.type === TableType.Normal) {
-                const column = this.renderDataColumn(header.name, dataArray);
-                tableColumns.push(column);
-            }
+            const column = (header.name === SpectralLineHeaders.LineSelection && this.props.flipRowSelection) ?
+                this.renderCheckboxColumn(header, dataArray) :
+                this.renderDataColumnWithFilter(header, dataArray);
+            tableColumns.push(column);
         });
 
-        if (table.type === TableType.ColumnFilter) {
-            return (
-                <Table
-                    className={"column-filter-table"}
-                    ref={table.updateTableRef ? (ref) => table.updateTableRef(ref) : null}
-                    numRows={table.numVisibleRows}
-                    renderMode={RenderMode.BATCH}
-                    enableRowReordering={false}
-                    selectionModes={SelectionModes.ROWS_AND_CELLS}
-                    onVisibleCellsChange={this.infiniteScroll}
-                    onColumnWidthChanged={this.updateTableColumnWidth}
-                    enableGhostCells={true}
-                    onSelection={this.onRowIndexSelection}
-                    enableMultipleSelection={true}
-                    enableRowResizing={false}
-                    columnWidths={table.columnWidths}
-                >
-                    {tableColumns}
-                </Table>
-            );
-        } else {
-            return (
-                <Table
-                    ref={table.updateTableRef ? (ref) => table.updateTableRef(ref) : null}
-                    numRows={table.numVisibleRows}
-                    renderMode={RenderMode.NONE}
-                    enableRowReordering={false}
-                    selectionModes={SelectionModes.NONE}
-                    enableGhostCells={true}
-                    enableRowResizing={false}
-                    columnWidths={table.columnWidths}
-                >
-                    {tableColumns}
-                </Table>
-            );
-        }
+        return (
+            <Table
+                className={"column-filter-table"}
+                ref={table.updateTableRef ? (ref) => table.updateTableRef(ref) : null}
+                numRows={table.numVisibleRows}
+                renderMode={RenderMode.BATCH}
+                enableRowReordering={false}
+                selectionModes={SelectionModes.ROWS_AND_CELLS}
+                onVisibleCellsChange={this.infiniteScroll}
+                onColumnWidthChanged={this.updateTableColumnWidth}
+                enableGhostCells={true}
+                onSelection={this.onRowIndexSelection}
+                enableMultipleSelection={true}
+                enableRowResizing={false}
+                columnWidths={table.columnWidths}
+            >
+                {tableColumns}
+            </Table>
+        );
     }
 }

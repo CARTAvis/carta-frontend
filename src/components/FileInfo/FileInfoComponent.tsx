@@ -4,7 +4,7 @@ import {ControlGroup, Divider, FormGroup, HTMLSelect, IOptionProps, NonIdealStat
 import {FixedSizeList as List} from "react-window";
 import AutoSizer from "react-virtualized-auto-sizer";
 import {CARTA} from "carta-protobuf";
-import {TableComponent, TableComponentProps} from "components/Shared";
+import {SimpleTableComponent, SimpleTableComponentProps} from "components/Shared";
 import "./FileInfoComponent.scss";
 
 export enum FileInfoType {
@@ -26,7 +26,7 @@ export class FileInfoComponent extends React.Component<{
     handleTabChange: (tab: TabId) => void;
     isLoading: boolean,
     errorMessage: string,
-    catalogHeaderTable?: TableComponentProps
+    catalogHeaderTable?: SimpleTableComponentProps
 }> {
 
     private renderInfoTabs = () => {
@@ -87,7 +87,7 @@ export class FileInfoComponent extends React.Component<{
                 if (this.props.catalogHeaderTable) {
                     return (
                         <Pre className="file-header-table">
-                            <TableComponent {...this.props.catalogHeaderTable}/>
+                            <SimpleTableComponent {...this.props.catalogHeaderTable}/>
                         </Pre>
                     );
                 }

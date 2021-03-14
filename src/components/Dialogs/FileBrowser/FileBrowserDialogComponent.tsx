@@ -7,7 +7,7 @@ import {CARTA} from "carta-protobuf";
 import {FileInfoComponent, FileInfoType} from "components/FileInfo/FileInfoComponent";
 import {FileListTableComponent} from "./FileListTable/FileListTableComponent";
 import {DraggableDialogComponent} from "components/Dialogs";
-import {TableComponentProps, TableType} from "components/Shared";
+import {SimpleTableComponentProps} from "components/Shared";
 import {AppStore, BrowserMode, CatalogProfileStore, FileBrowserStore, FileFilteringType, HelpType, ISelectedFile, PreferenceKeys, PreferenceStore} from "stores";
 import "./FileBrowserDialogComponent.scss";
 
@@ -405,11 +405,10 @@ export class FileBrowserDialogComponent extends React.Component {
             fileInput = this.renderOpenFilenameInput();
         }
 
-        let tableProps: TableComponentProps = null;
+        let tableProps: SimpleTableComponentProps = null;
         if (fileBrowserStore.browserMode === BrowserMode.Catalog && fileBrowserStore.catalogHeaders && fileBrowserStore.catalogHeaders.length) {
             const table = fileBrowserStore.catalogHeaderDataset;
             tableProps = {
-                type: TableType.Normal,
                 dataset: table.columnsData,
                 columnHeaders: table.columnHeaders,
                 numVisibleRows: fileBrowserStore.catalogHeaders.length
