@@ -3,7 +3,6 @@ import {observer} from "mobx-react";
 import {Cell, Column, Table, SelectionModes, RenderMode} from "@blueprintjs/table";
 import {CARTA} from "carta-protobuf";
 import {ProcessedColumnData} from "models";
-import "./TableComponent.scss";
 
 export class SimpleTableComponentProps {
     dataset: Map<number, ProcessedColumnData>;
