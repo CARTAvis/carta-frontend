@@ -111,7 +111,10 @@ export class ImageSaveComponent extends React.Component<{
                     optionsAddTwoElements();
                     break;
                 case "IQ":
+                case "IU":
+                case "IV":
                 case "QU":
+                case "QV":
                 case "UV":
                     optionsAddTwoElements();
                     break;
