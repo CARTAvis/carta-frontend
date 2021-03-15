@@ -291,6 +291,9 @@ export class FileListTableComponent extends React.Component<FileListTableCompone
 
     private renderFilenames = (rowIndex: number) => {
         const entry = this.tableEntries[rowIndex];
+        if (!entry) {
+            return <Cell loading={true}/>;
+        }
         return (
             <Cell className={entry.isDirectory? "folder-cell": "filename-cell"} tooltip={entry?.filename}>
                 <React.Fragment>
@@ -308,6 +311,9 @@ export class FileListTableComponent extends React.Component<FileListTableCompone
 
     private renderTypes = (rowIndex: number) => {
         const entry = this.tableEntries[rowIndex];
+        if (!entry) {
+            return <Cell loading={true}/>;
+        }
         return (
             <Cell tooltip={entry.typeInfo?.description}>
                 <React.Fragment>
@@ -324,6 +330,9 @@ export class FileListTableComponent extends React.Component<FileListTableCompone
 
     private renderSizes = (rowIndex: number) => {
         const entry = this.tableEntries[rowIndex];
+        if (!entry) {
+            return <Cell loading={true}/>;
+        }
         const sizeInBytes = entry?.size;
         return (
             <Cell>
@@ -341,12 +350,15 @@ export class FileListTableComponent extends React.Component<FileListTableCompone
 
     private renderDates = (rowIndex: number) => {
         const entry = this.tableEntries[rowIndex];
-        const unixDate = entry?.date;
+        if (!entry) {
+            return <Cell loading={true}/>;
+        }
 
+        const unixDate = entry.date;
         let dateString: string;
         if (unixDate > 0) {
             const t = moment.unix(unixDate);
-            const isToday = moment(0, "HH").diff(t, "days") === 0;
+            const isToday = moment(0, "HH").diff(t) <= 0;
             if (isToday) {
                 dateString = t.format("HH:mm");
             } else {
@@ -369,7 +381,7 @@ export class FileListTableComponent extends React.Component<FileListTableCompone
     };
 
     private handleEntryDoubleClicked = (entry: FileEntry) => {
-        if (entry.isDirectory) {
+        if (entry?.isDirectory) {
             return;
         }
         this.props.onFileDoubleClicked(entry);
@@ -433,7 +445,6 @@ export class FileListTableComponent extends React.Component<FileListTableCompone
             return <NonIdealState icon="folder-open" title="Empty folder" description="There are no files or subdirectories in this folder"/>;
         } else if (!entryCount) {
             return <NonIdealState icon="search" title="No results" description="There are no files or subdirectories matching the filter expression"/>;
-
         }
 
         return (

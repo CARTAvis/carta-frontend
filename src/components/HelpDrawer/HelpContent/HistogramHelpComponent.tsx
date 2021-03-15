@@ -1,7 +1,7 @@
 import * as React from "react";
 import {ImageComponent} from "./ImageComponent";
-import * as headHistogramButton from "static/help/head_histogram_button.png";
-import * as headHistogramButton_d from "static/help/head_histogram_button_d.png";
+import headHistogramButton from "static/help/head_histogram_button.png";
+import headHistogramButton_d from "static/help/head_histogram_button_d.png";
 
 export class HistogramHelpComponent extends React.Component {
     public render() {

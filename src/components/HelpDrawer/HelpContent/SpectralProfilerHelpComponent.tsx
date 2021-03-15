@@ -1,7 +1,7 @@
 import * as React from "react";
 import {ImageComponent} from "./ImageComponent";
-import * as headSpectralButton from "static/help/head_spectral_button.png";
-import * as headSpectralButton_d from "static/help/head_spectral_button_d.png";
+import headSpectralButton from "static/help/head_spectral_button.png";
+import headSpectralButton_d from "static/help/head_spectral_button_d.png";
 
 export class SpectralProfilerHelpComponent extends React.Component {
     public render() {

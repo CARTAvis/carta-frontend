@@ -1,7 +1,7 @@
 import * as React from "react";
 import {ImageComponent} from "./ImageComponent";
-import * as headSpatialButton from "static/help/head_spatial_button.png";
-import * as headSpatialButton_d from "static/help/head_spatial_button_d.png";
+import headSpatialButton from "static/help/head_spatial_button.png";
+import headSpatialButton_d from "static/help/head_spatial_button_d.png";
 
 export class SpatialProfilerHelpComponent extends React.Component {
     public render() {

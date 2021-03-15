@@ -92,8 +92,11 @@ Module.setCanvas = function (canvas) {
 };
 
 Module.plot = Module.cwrap("plotGrid", "number", ["number", "number", "number", "number", "number", "number", "number", "number", "number", "number", "number", "string"]);
-Module.initFrame = Module.cwrap("initFrame", "number", ["string"]);
+Module.emptyFitsChan = Module.cwrap("emptyFitsChan", "number");
+Module.putFits = Module.cwrap("putFits", null, ["number", "string"])
+Module.getFrameFromFitsChan = Module.cwrap("getFrameFromFitsChan", "number", ["number"]);
 Module.getSpectralFrame = Module.cwrap("getSpectralFrame", "number", ["number"]);
+Module.getSkyFrameSet = Module.cwrap("getSkyFrameSet", "number", ["number"]);
 Module.initDummyFrame = Module.cwrap("initDummyFrame", "number", []);
 Module.set = Module.cwrap("set", "number", ["number", "string"]);
 Module.clear = Module.cwrap("clear", "number", ["number", "string"]);
