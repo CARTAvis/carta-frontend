@@ -26,7 +26,7 @@ enum ImageViewSettingsPanelTabs {
     NUMBERS = "Numbers",
     LABELS = "Labels",
     BEAM = "Beam",
-    SPECTRAL = "Spectral"
+    CONVERSION = "Conversion"
 }
 
 // Font selector
@@ -89,7 +89,7 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
         makeObservable(this);
 
         autorun(() => {
-            if (!AppStore.Instance.activeFrame?.isPVImage && this.selectedTab === ImageViewSettingsPanelTabs.SPECTRAL) {
+            if (!AppStore.Instance.activeFrame?.isPVImage && this.selectedTab === ImageViewSettingsPanelTabs.CONVERSION) {
                 this.selectedTab = ImageViewSettingsPanelTabs.GLOBAL;
             }
         });
@@ -723,7 +723,7 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
                     <Tab id={ImageViewSettingsPanelTabs.NUMBERS} title={ImageViewSettingsPanelTabs.NUMBERS} panel={numbersPanel}/>
                     <Tab id={ImageViewSettingsPanelTabs.LABELS} title={ImageViewSettingsPanelTabs.LABELS} panel={labelsPanel}/>
                     <Tab id={ImageViewSettingsPanelTabs.BEAM} title={ImageViewSettingsPanelTabs.BEAM} panel={beamPanel} disabled={appStore.frameNum <= 0}/>
-                    <Tab id={ImageViewSettingsPanelTabs.SPECTRAL} title={ImageViewSettingsPanelTabs.SPECTRAL} panel={spectralPanel} disabled={!isPVImage}/>
+                    <Tab id={ImageViewSettingsPanelTabs.CONVERSION} title={ImageViewSettingsPanelTabs.CONVERSION} panel={spectralPanel} disabled={!isPVImage}/>
                 </Tabs>
             </div>
         );
