@@ -45,6 +45,17 @@
 .bp3-popover.colorselect {
     width: 120px;
 
+    .bp3-menu {
+        min-width: 100px;
+        max-height: 300px;
+        overflow: auto;
+        padding: 0;
+
+        .dropdown-color {
+            width: 90px !important;
+        }
+    }
+
     .custom-color {
         padding: 0 5px 5px 7px;
 
