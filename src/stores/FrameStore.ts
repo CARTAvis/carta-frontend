@@ -113,6 +113,8 @@ export class FrameStore {
     @observable isRequestingMoments: boolean;
     @observable requestingMomentsProgress: number;
 
+    @observable StokesFiles: CARTA.StokesFile[];
+
     @computed get filename(): string {
         // hdu extension name is in field 3 of fileInfoExtended computed entries
         const extName = this.frameInfo?.fileInfoExtended?.computedEntries?.length >= 3 && this.frameInfo?.fileInfoExtended?.computedEntries[2]?.name === "Extension name" ?
@@ -708,6 +710,8 @@ export class FrameStore {
 
         this.isRequestingMoments = false;
         this.requestingMomentsProgress = 0;
+
+        this.StokesFiles = [];
 
         // synchronize AST overlay's color/grid/label with preference when frame is created
         const astColor = preferenceStore.astColor;
@@ -1607,4 +1611,8 @@ export class FrameStore {
         this.setIsRequestingMoments(false);
         this.updateRequestingMomentsProgress(0);
     };
+
+    @action setStokesFiles = (StokesFiles: CARTA.StokesFile[]) => {
+        this.StokesFiles = StokesFiles;
+    }
 }

@@ -78,7 +78,7 @@ export class StokesDialogComponent extends React.Component {
                         file.fileInfo.name, 
                         file.hdu
                     ).then(response => {
-                        // fileInfoExtended: { [k: string]: CARTA.IFileInfoExtended }, sometimes k is " "
+                        // In fileInfoExtended: { [k: string]: CARTA.IFileInfoExtended }, sometimes k is " "
                         const k = Object.keys(response.info)[0];
                         const stoke: CARTA.IStokesFile = {
                             directory: fileBrowserStore.fileList.directory,
@@ -199,12 +199,11 @@ export class StokesDialogComponent extends React.Component {
         this.stokes.forEach(file => {
             stokeFiles.push(file);
         });
-        try {
-            await this.loadFile(stokeFiles);
-        }
-        catch (err){
-            console.log(err);
-        }
+        await this.loadFile(stokeFiles)
+        .then(() => AppStore.Instance.activeFrame?.setStokesFiles(stokeFiles))
+        .catch(() => {
+            AppStore.Instance.activeFrame?.setStokesFiles([]);
+        });
     };
 
     private loadFile = async (files: CARTA.StokesFile[]) => {
