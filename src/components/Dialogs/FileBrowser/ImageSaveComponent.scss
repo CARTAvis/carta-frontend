@@ -3,6 +3,7 @@
     display: block;
     overflow-y: auto;
     height: 100%;
+    width: 34em;
     margin: .5em;
     margin-top: 1em;
 
@@ -57,11 +58,10 @@
 
             .bp3-label {
                 margin-top: 1em;
-                width: 5.8em;
+                width: 6.2em;
             }
-            .bp3-input {
-                margin-left: 0em;
-                width: 12em;;
+            .bp3-numeric-input {
+                margin: 0em;
             }
         }
     }
