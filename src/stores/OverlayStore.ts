@@ -685,6 +685,53 @@ export class OverlayLabelSettings {
     };
 }
 
+export class OverlayColorbarSettings {
+    @observable visible: boolean;
+    @observable width: number;
+    @observable offset: number;
+    @observable borderVisible: boolean;
+    @observable borderWidth: number;
+    @observable tickVisible: boolean;
+    @observable tickNum: number;
+    @observable tickLen: number;
+    @observable tickWidth: number;
+    @observable labelVisible: boolean;
+    @observable labelRotated: boolean;
+    @observable labelFontSize: number;
+    @observable titleVisible: boolean;
+    @observable titleFontSize: number;
+
+    constructor() {
+        makeObservable(this);
+        this.visible = true;
+        this.width = 30;
+        this.offset = 10;
+        this.borderVisible = true;
+        this.borderWidth = 1;
+        this.tickVisible = true;
+        this.tickNum = 10;
+        this.tickLen = 10;
+        this.tickWidth = 1;
+        this.labelVisible = true;
+        this.labelRotated = false;
+        this.labelFontSize = 12;
+        this.titleVisible = true;
+        this.titleFontSize = 15;
+    }
+
+    @computed get rightBorderPos(): number {
+        return this.offset + this.width;
+    }
+
+    @computed get labelWidth(): number {
+        return this.labelRotated ? 25 : 45;
+    }
+
+    @computed get stageWidth(): number {
+        return this.offset + this.width + this.labelWidth + this.titleFontSize
+    }
+}
+
 export class OverlayBeamStore {
     @observable visible: boolean;
     @observable color: string;
@@ -781,6 +828,7 @@ export class OverlayStore {
     @observable numbers: OverlayNumberSettings;
     @observable labels: OverlayLabelSettings;
     @observable ticks: OverlayTickSettings;
+    @observable colorbar: OverlayColorbarSettings;
     @observable beam: OverlayBeamSettings;
 
     private constructor() {
@@ -793,6 +841,7 @@ export class OverlayStore {
         this.numbers = new OverlayNumberSettings();
         this.labels = new OverlayLabelSettings();
         this.ticks = new OverlayTickSettings();
+        this.colorbar = new OverlayColorbarSettings();
         this.beam = new OverlayBeamSettings();
         this.viewHeight = 1;
         this.viewWidth = 1;
@@ -943,9 +992,12 @@ export class OverlayStore {
         const titleGap = (this.title.show ? this.titleGap : 0);
         const titleHeight = (this.title.show ? this.title.fontSize : 0);
 
+        const colorbarGap = this.defaultGap;
+        const colorbarWidth = this.colorbar.stageWidth;
+
         return {
             left: base + numGap + numHeight + labelGap + labelHeight,
-            right: base,
+            right: base + colorbarGap + colorbarWidth,
             top: base + titleGap + titleHeight,
             bottom: base + numGap + numHeight + labelGap + labelHeight
         };

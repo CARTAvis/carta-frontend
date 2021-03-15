@@ -6,6 +6,7 @@ import {NonIdealState, Spinner, Tag} from "@blueprintjs/core";
 import ReactResizeDetector from "react-resize-detector";
 import {OverlayComponent} from "./Overlay/OverlayComponent";
 import {CursorOverlayComponent} from "./CursorOverlay/CursorOverlayComponent";
+import {ColorbarComponent} from "./Colorbar/ColorbarComponent";
 import {RasterViewComponent} from "./RasterView/RasterViewComponent";
 import {ToolbarComponent} from "./Toolbar/ToolbarComponent";
 import {BeamProfileOverlayComponent} from "./BeamProfileOverlay/BeamProfileOverlayComponent";
@@ -210,6 +211,12 @@ export class ImageViewComponent extends React.Component<WidgetProps> {
                         showChannel={false}
                         showSpectral={true}
                         showStokes={true}
+                    />
+                    }
+                    {appStore.activeFrame && overlayStore.colorbar.visible &&
+                    <ColorbarComponent
+                        height={overlayStore.viewHeight}
+                        left={overlayStore.padding.left + appStore.activeFrame.renderWidth}
                     />
                     }
                     {appStore.activeFrame &&
