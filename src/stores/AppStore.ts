@@ -1,8 +1,8 @@
-import { Classes, Colors, IOptionProps, setHotkeysDialogProps } from "@blueprintjs/core";
-import { Utils } from "@blueprintjs/table";
 import * as _ from "lodash";
 import { action, autorun, computed, observable, ObservableMap, when, makeObservable, runInAction } from "mobx";
 import * as Long from "long";
+import { Classes, Colors, IOptionProps, setHotkeysDialogProps } from "@blueprintjs/core";
+import { Utils } from "@blueprintjs/table";
 import * as AST from "ast_wrapper";
 import * as CARTACompute from "carta_computation";
 import { CARTA } from "carta-protobuf";
@@ -37,7 +37,7 @@ import {
 } from ".";
 import { distinct, GetRequiredTiles, mapToObject, getTimestamp } from "utilities";
 import { ApiService, BackendService, ConnectionStatus, ScriptingService, TileService, TileStreamDetails } from "services";
-import { FrameView, Point2D, ProtobufProcessing, Theme, TileCoordinate, WCSMatchingType } from "models";
+import { FrameView, Point2D, PresetLayout, ProtobufProcessing, Theme, TileCoordinate, WCSMatchingType } from "models";
 import { HistogramWidgetStore, RegionWidgetStore, SpatialProfileWidgetStore, SpectralProfileWidgetStore, StatsWidgetStore, StokesAnalysisWidgetStore } from "./widgets";
 import { getImageCanvas, ImageViewLayer } from "components";
 import { AppToaster, ErrorToast, SuccessToast, WarningToast } from "components/Shared";
@@ -1173,7 +1173,10 @@ export class AppStore {
                     this.layoutStore.fetchLayouts().then(() => {
                         // Attempt connection after authenticating
                         this.tileService.setCache(this.preferenceStore.gpuTileCache, this.preferenceStore.systemTileCache);
-                        this.layoutStore.applyLayout(this.preferenceStore.layout);
+                        if (!this.layoutStore.applyLayout(this.preferenceStore.layout)) {
+                            AlertStore.Instance.showAlert(`Applying preference layout "${this.preferenceStore.layout}" failed!`);
+                            this.layoutStore.applyLayout(PresetLayout.DEFAULT);
+                        }
                         this.cursorFrozen = this.preferenceStore.isCursorFrozen;
                         this.connectToServer();
                     });
