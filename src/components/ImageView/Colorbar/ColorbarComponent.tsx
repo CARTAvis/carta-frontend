@@ -82,10 +82,10 @@ export class ColorbarComponent extends React.Component<ColorbarComponentProps> {
         return (
             <React.Fragment>
                 <Layer>
-                    {ticks}
+                    {this.colorbarSettings.tickVisible ? ticks : null}
                 </Layer>
                 <Layer>
-                    {labels}
+                {this.colorbarSettings.labelVisible ? labels : null}
                 </Layer>
             </React.Fragment>
         );
@@ -96,7 +96,7 @@ export class ColorbarComponent extends React.Component<ColorbarComponentProps> {
             <Layer>
                 <Text
                     text={this.frame.unit}
-                    x={this.colorbarSettings.rightBorderPos + this.colorbarSettings.labelWidth}
+                    x={this.colorbarSettings.rightBorderPos + 5 + this.colorbarSettings.labelWidth}
                     y={this.yOffset + this.frame.renderHeight / 2}
                     fill={this.appStore.darkTheme ? nightPalette[this.appStore.overlayStore.global.color] : dayPalette[this.appStore.overlayStore.global.color]}
                     fontSize={this.colorbarSettings.titleFontSize}
@@ -117,7 +117,7 @@ export class ColorbarComponent extends React.Component<ColorbarComponentProps> {
             >
                 {this.renderColorbar()}
                 {this.renderTicksLabels()}
-                {this.renderTitle()}
+                {this.colorbarSettings.titleVisible ? this.renderTitle() : null}
             </Stage>
         );
     }

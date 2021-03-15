@@ -704,14 +704,14 @@ export class OverlayColorbarSettings {
     constructor() {
         makeObservable(this);
         this.visible = true;
-        this.width = 30;
+        this.width = 20;
         this.offset = 10;
         this.borderVisible = true;
-        this.borderWidth = 1;
+        this.borderWidth = 0.5;
         this.tickVisible = true;
         this.tickNum = 10;
-        this.tickLen = 10;
-        this.tickWidth = 1;
+        this.tickLen = 7;
+        this.tickWidth = 0.5;
         this.labelVisible = true;
         this.labelRotated = false;
         this.labelFontSize = 12;
@@ -719,16 +719,72 @@ export class OverlayColorbarSettings {
         this.titleFontSize = 15;
     }
 
+    @action setVisible(visible: boolean) {
+        this.visible = visible;
+    }
+
+    @action setWidth = (width: number) => {
+        this.width = width;
+    };
+
+    @action setOffset = (offset: number) => {
+        this.offset = offset;
+    };
+
+    @action setBorderVisible(visible: boolean) {
+        this.borderVisible = visible;
+    }
+
+    @action setBorderWidth(width: number) {
+        this.borderWidth = width;
+    }
+
+    @action setTickVisible(visible: boolean) {
+        this.tickVisible = visible;
+    }
+
+    @action setTickNum(tickNum: number) {
+        this.tickNum = tickNum;
+    }
+
+    @action setTickLen(tickLen: number) {
+        this.tickLen = tickLen;
+    }
+
+    @action setTickWidth(width: number) {
+        this.tickWidth = width;
+    }
+
+    @action setLabelVisible(visible: boolean) {
+        this.labelVisible = visible;
+    }
+
+    @action setLabelRotated(rotated: boolean) {
+        this.labelRotated = rotated;
+    }
+
+    @action setLabelFontSize(fontSize: number) {
+        this.labelFontSize = fontSize;
+    }
+
+    @action setTitleVisible(visible: boolean) {
+        this.titleVisible = visible;
+    }
+
+    @action setTitleFontSize(fontSize: number) {
+        this.titleFontSize = fontSize;
+    }
+
     @computed get rightBorderPos(): number {
         return this.offset + this.width;
     }
 
     @computed get labelWidth(): number {
-        return this.labelRotated ? 25 : 45;
+        return this.labelVisible ? this.labelFontSize + (this.labelRotated ? 12 : 42) : 0;
     }
 
     @computed get stageWidth(): number {
-        return this.offset + this.width + this.labelWidth + this.titleFontSize
+        return this.offset + this.width + this.labelWidth + (this.titleVisible ? 5 + this.titleFontSize : 5)
     }
 }
 
@@ -992,8 +1048,8 @@ export class OverlayStore {
         const titleGap = (this.title.show ? this.titleGap : 0);
         const titleHeight = (this.title.show ? this.title.fontSize : 0);
 
-        const colorbarGap = this.defaultGap;
-        const colorbarWidth = this.colorbar.stageWidth;
+        const colorbarGap = (this.colorbar.visible ? this.defaultGap : 0);
+        const colorbarWidth = (this.colorbar.visible ? this.colorbar.stageWidth : 0);
 
         return {
             left: base + numGap + numHeight + labelGap + labelHeight,

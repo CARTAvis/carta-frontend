@@ -124,6 +124,7 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
         const axes = overlayStore.axes;
         const numbers = overlayStore.numbers;
         const labels = overlayStore.labels;
+        const colorbar = overlayStore.colorbar;
         const beam = overlayStore.beam;
         const beamSettings = beam.settingsForDisplay;
 
@@ -598,6 +599,148 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
             </div>
         );
 
+        const colorbarPanel = (
+            <div className="panel-container">
+                <FormGroup inline={true} label="Visible">
+                    <Switch
+                        checked={colorbar.visible}
+                        onChange={(ev) => colorbar.setVisible(ev.currentTarget.checked)}
+                    />
+                </FormGroup>
+                <FormGroup inline={true} label="Width" labelInfo="(px)" disabled={!colorbar.visible}>
+                    <SafeNumericInput
+                        placeholder="Width"
+                        min={0.001}
+                        value={colorbar.width}
+                        stepSize={0.5}
+                        minorStepSize={0.1}
+                        majorStepSize={1}
+                        disabled={!colorbar.visible}
+                        onValueChange={(value: number) => colorbar.setWidth(value)}
+                    />
+                </FormGroup>
+                <FormGroup inline={true} label="Offset" labelInfo="(px)" disabled={!colorbar.visible}>
+                    <SafeNumericInput
+                        placeholder="Offset"
+                        min={0.0}
+                        value={colorbar.offset}
+                        stepSize={1}
+                        minorStepSize={0.1}
+                        majorStepSize={5}
+                        disabled={!colorbar.visible}
+                        onValueChange={(value: number) => colorbar.setOffset(value)}
+                    />
+                </FormGroup>
+                <FormGroup inline={true} label="Border" disabled={!colorbar.visible}>
+                    <Switch
+                        checked={colorbar.borderVisible}
+                        disabled={!colorbar.visible}
+                        onChange={(ev) => colorbar.setBorderVisible(ev.currentTarget.checked)}
+                    />
+                </FormGroup>
+                <FormGroup inline={true} label="Border Width" labelInfo="(px)" disabled={!colorbar.visible || !colorbar.borderVisible}>
+                    <SafeNumericInput
+                        placeholder="Border Width"
+                        min={0.001}
+                        value={colorbar.borderWidth}
+                        stepSize={0.5}
+                        minorStepSize={0.1}
+                        majorStepSize={1}
+                        disabled={!colorbar.visible || !colorbar.borderVisible}
+                        onValueChange={(value: number) => colorbar.setBorderWidth(value)}
+                    />
+                </FormGroup>
+                <FormGroup inline={true} label="Ticks" disabled={!colorbar.visible}>
+                    <Switch
+                        checked={colorbar.tickVisible}
+                        disabled={!colorbar.visible}
+                        onChange={(ev) => colorbar.setTickVisible(ev.currentTarget.checked)}
+                    />
+                </FormGroup>
+                <FormGroup inline={true} label="Ticks Number" disabled={!colorbar.visible || !colorbar.tickVisible}>
+                    <SafeNumericInput
+                        placeholder="Ticks Number"
+                        min={1}
+                        value={colorbar.tickNum}
+                        stepSize={1}
+                        minorStepSize={1}
+                        majorStepSize={5}
+                        disabled={!colorbar.visible || !colorbar.tickVisible}
+                        onValueChange={(value: number) => colorbar.setTickNum(value)}
+                    />
+                </FormGroup>
+                <FormGroup inline={true} label="Ticks Len" labelInfo="(px)" disabled={!colorbar.visible || !colorbar.tickVisible}>
+                    <SafeNumericInput
+                        placeholder="Ticks Len"
+                        min={0.0}
+                        value={colorbar.tickLen}
+                        stepSize={0.5}
+                        minorStepSize={0.1}
+                        majorStepSize={1}
+                        disabled={!colorbar.visible || !colorbar.tickVisible}
+                        onValueChange={(value: number) => colorbar.setTickLen(value)}
+                    />
+                </FormGroup>
+                <FormGroup inline={true} label="Ticks Width" labelInfo="(px)" disabled={!colorbar.visible || !colorbar.tickVisible}>
+                    <SafeNumericInput
+                        placeholder="Ticks Width"
+                        min={0.001}
+                        value={colorbar.tickWidth}
+                        stepSize={0.5}
+                        minorStepSize={0.1}
+                        majorStepSize={1}
+                        disabled={!colorbar.visible || !colorbar.tickVisible}
+                        onValueChange={(value: number) => colorbar.setTickWidth(value)}
+                    />
+                </FormGroup>
+                <FormGroup inline={true} label="Labels" disabled={!colorbar.visible}>
+                    <Switch
+                        checked={colorbar.labelVisible}
+                        disabled={!colorbar.visible}
+                        onChange={(ev) => colorbar.setLabelVisible(ev.currentTarget.checked)}
+                    />
+                </FormGroup>
+                <FormGroup inline={true} label="Labels Font Size" disabled={!colorbar.visible || !colorbar.labelVisible}>
+                    <SafeNumericInput
+                        placeholder="Labels Font Size"
+                        min={0.5}
+                        value={colorbar.labelFontSize}
+                        stepSize={0.5}
+                        minorStepSize={0.5}
+                        majorStepSize={1}
+                        disabled={!colorbar.visible || !colorbar.labelVisible}
+                        onValueChange={(value: number) => colorbar.setLabelFontSize(value)}
+                    />
+                </FormGroup>
+                <FormGroup inline={true} label="Labels Rotated" disabled={!colorbar.visible || !colorbar.labelVisible}>
+                    <Switch
+                        checked={colorbar.labelRotated}
+                        disabled={!colorbar.visible || !colorbar.labelVisible}
+                        onChange={(ev) => colorbar.setLabelRotated(ev.currentTarget.checked)}
+                    />
+                </FormGroup>
+                <FormGroup inline={true} label="Title" disabled={!colorbar.visible}>
+                    <Switch
+                        checked={colorbar.titleVisible}
+                        disabled={!colorbar.visible}
+                        onChange={(ev) => colorbar.setTitleVisible(ev.currentTarget.checked)}
+                    />
+                </FormGroup>
+                <FormGroup inline={true} label="Title Font Size" disabled={!colorbar.visible || !colorbar.titleVisible}>
+                    <SafeNumericInput
+                        placeholder="Title Font Size"
+                        min={0.5}
+                        value={colorbar.titleFontSize}
+                        stepSize={0.5}
+                        minorStepSize={0.5}
+                        majorStepSize={1}
+                        disabled={!colorbar.visible || !colorbar.titleVisible}
+                        onValueChange={(value: number) => colorbar.setTitleFontSize(value)}
+                    />
+                </FormGroup>
+            </div>
+        );
+
         const beamPanel = beam.isSelectedFrameValid ? (
             <div className="panel-container">
                 <FormGroup inline={true} label="Image">
@@ -689,6 +832,7 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
                     <Tab id="axes" title="Axes" panel={axesPanel}/>
                     <Tab id="numbers" title="Numbers" panel={numbersPanel}/>
                     <Tab id="labels" title="Labels" panel={labelsPanel}/>
+                    <Tab id="colorbar" title="Colorbar" panel={colorbarPanel}/>
                     <Tab id="beam" title="Beam" panel={beamPanel} disabled={appStore.frameNum <= 0}/>
                 </Tabs>
             </div>
