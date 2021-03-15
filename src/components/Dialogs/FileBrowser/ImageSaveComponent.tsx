@@ -245,9 +245,7 @@ export class ImageSaveComponent extends React.Component<{
 
     render() {
         return (
-            <div className="file-save">
-                {this.renderSaveImageControl()}
-            </div>
+            this.renderSaveImageControl()
         );
     }
 }
