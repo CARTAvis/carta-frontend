@@ -164,30 +164,28 @@ export class ImageSaveComponent extends React.Component<{
                         {numChannels > 1 &&
                             <React.Fragment>
                                 <div className="coordinate-select">
-                                    <FormGroup inline={false}>
-                                        <FormGroup label={"Range"} labelInfo={activeFrame.spectralUnit ? `(${activeFrame.spectralUnit})` : ""} inline={true} >
-                                            <HTMLSelect
-                                                value={activeFrame && (activeFrame.spectralCoordinate || "")}
-                                                options={spectralCoordinateOptions}
-                                                onChange={
-                                                    (event: React.FormEvent<HTMLSelectElement>) =>
-                                                        this.updateSpectralCoordinate(event.currentTarget.value as string)
-                                                }
-                                            />
-                                            <HTMLSelect
-                                                value={activeFrame && (activeFrame.spectralSystem || "")}
-                                                options={spectralSystemOptions}
-                                                onChange={
-                                                    (event: React.FormEvent<HTMLSelectElement>) =>
-                                                        this.updateSpectralSystem(event.currentTarget.value as SpectralSystem)
-                                                }
-                                            />
-                                        </FormGroup>
+                                    <FormGroup label={"Range"} labelInfo={activeFrame.spectralUnit ? `(${activeFrame.spectralUnit})` : ""} inline={true} >
+                                        <HTMLSelect
+                                            value={activeFrame && (activeFrame.spectralCoordinate || "")}
+                                            options={spectralCoordinateOptions}
+                                            onChange={
+                                                (event: React.FormEvent<HTMLSelectElement>) =>
+                                                    this.updateSpectralCoordinate(event.currentTarget.value as string)
+                                            }
+                                        />
+                                        <HTMLSelect
+                                            value={activeFrame && (activeFrame.spectralSystem || "")}
+                                            options={spectralSystemOptions}
+                                            onChange={
+                                                (event: React.FormEvent<HTMLSelectElement>) =>
+                                                    this.updateSpectralSystem(event.currentTarget.value as SpectralSystem)
+                                            }
+                                        />
                                     </FormGroup>
                                 </div>
                                 <div className="range-select">
-                                    <ControlGroup fill={true} vertical={false}>
-                                        <Label>{"From"}</Label>
+                                    <ControlGroup fill={true}>
+                                        <Label>{"From-To"}</Label>
                                         <NumericInput
                                             value={fileBrowser.saveSpectralRange[0]}
                                             buttonPosition="none"
@@ -199,7 +197,6 @@ export class ImageSaveComponent extends React.Component<{
                                             selectAllOnIncrement={true}
                                             intent={this.valideSaveSpectralRangeStart() ? Intent.NONE : Intent.DANGER}
                                         />
-                                        <Label>{"To"}</Label>
                                         <NumericInput
                                             value={fileBrowser.saveSpectralRange[1]}
                                             buttonPosition="none"

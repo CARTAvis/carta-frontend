@@ -4,7 +4,7 @@
     overflow-y: auto;
     height: 100%;
     margin: .5em;
-    margin-top: .5em;
+    margin-top: 1em;
 
     .file-name {
         margin: 0em;
@@ -49,17 +49,19 @@
     }
 
     .range-select {
-        margin-top: 1em;
-        margin-left: 0;
+        margin: 0em;
+        margin-top: .5em;
 
         .bp3-control-group {
+            margin: 0;
+
             .bp3-label {
-                margin: auto;
-                width: auto;
+                margin-top: 1em;
+                width: 5.8em;
             }
             .bp3-input {
-                margin: auto;
-                width: 12em;
+                margin-left: 0em;
+                width: 12em;;
             }
         }
     }
