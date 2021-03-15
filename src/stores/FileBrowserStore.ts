@@ -69,8 +69,6 @@ export class FileBrowserStore {
     @observable saveStokesOption: number;
     @observable saveRegionId: number;
     @observable shouldDropDegeneratedAxes: boolean;
-    @observable debounceTimeoutSpectralMin: any;
-    @observable debounceTimeoutSpectralMax: any;
 
     constructor() {
         makeObservable(this);
