@@ -82,7 +82,7 @@ export class FileBrowserDialogComponent extends React.Component {
     };
 
     /// Prepare parameters for send saveFile 
-    private handleSaveFile = () => {
+    private handleSaveFile = async () => {
         const appStore = AppStore.Instance;
         const fileBrowserStore = FileBrowserStore.Instance;
         const activeFrame = appStore.activeFrame;
@@ -101,7 +101,7 @@ export class FileBrowserDialogComponent extends React.Component {
             ];
         }
         const saveStokes = fileBrowserStore.saveStokesRange;
-        appStore.saveFile(fileBrowserStore.fileList.directory, filename, fileBrowserStore.saveFileType, fileBrowserStore.saveRegionId, saveChannels, saveStokes, fileBrowserStore.shouldDropDegeneratedAxes);
+        await appStore.saveFile(fileBrowserStore.fileList.directory, filename, fileBrowserStore.saveFileType, fileBrowserStore.saveRegionId, saveChannels, saveStokes, fileBrowserStore.shouldDropDegeneratedAxes);
     };
 
     private handleSaveFileClicked = () => {
@@ -224,7 +224,7 @@ export class FileBrowserDialogComponent extends React.Component {
                     <Tooltip content={"Save this file"}>
                         <AnchorButton
                             intent={Intent.PRIMARY}
-                            disabled={appStore.fileLoading || fileBrowserStore.loadingInfo}
+                            disabled={appStore.fileLoading || fileBrowserStore.loadingInfo || appStore.fileSaving}
                             onClick={this.handleSaveFileClicked}
                             text="Save"
                         />

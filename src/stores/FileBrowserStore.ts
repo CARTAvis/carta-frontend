@@ -432,22 +432,24 @@ export class FileBrowserStore {
 
     /// Transfer the request from stokes string
     /// to [start, end, stride]
+    /// Ex. "ABC" could be "IQU" or "QUV"
+    /// Ex. "AB" could be "IQ", "IU", "IV", "QU", "UV", or "QV"
     @computed get saveStokesRange(): number[] {
-        // [start, end, stride] for "IQUV"
+        // [start, end, stride] for "ABCD"
         const options: number[][] = [
             [], // all
-            [0, 0, 1], // I
-            [1, 1, 1], // Q
-            [2, 2, 1], // U
-            [3, 3, 1], // V
-            [0, 1, 1], // IQ
-            [1, 2, 1], // QU
-            [2, 3, 1], // UV
-            [0, 2, 2], // IU
-            [0, 3, 3], // IV
-            [1, 3, 2], // QV
-            [0, 2, 1], // IQU
-            [1, 3, 1], // QUV
+            [0, 0, 1], // A
+            [1, 1, 1], // B
+            [2, 2, 1], // C
+            [3, 3, 1], // D
+            [0, 1, 1], // AB
+            [1, 2, 1], // BC
+            [2, 3, 1], // CD
+            [0, 2, 2], // AC
+            [0, 3, 3], // AD
+            [1, 3, 2], // BD
+            [0, 2, 1], // ABC
+            [1, 3, 1], // BCD
         ];
         return options[this.saveStokesOption];
     }

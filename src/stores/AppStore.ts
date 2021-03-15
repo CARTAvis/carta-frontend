@@ -190,6 +190,7 @@ export class AppStore {
     @observable taskStartTime: number;
     @observable taskCurrentTime: number;
     @observable fileLoading: boolean;
+    @observable fileSaving: boolean;
     @observable resumingSession: boolean;
 
     @action restartTaskProgress = () => {
@@ -217,6 +218,14 @@ export class AppStore {
 
     @action endFileLoading = () => {
         this.fileLoading = false;
+    };
+
+    @action startFileSaving = () => {
+        this.fileSaving = true;
+    };
+
+    @action endFileSaving = () => {
+        this.fileSaving = false;
     };
 
     // Keyboard shortcuts
@@ -435,16 +444,23 @@ export class AppStore {
     };
 
     @action saveFile = (directory: string, filename: string, fileType: CARTA.FileType, regionId?: number, channels?: number[], stokes?: number[], shouldDropDegeneratedAxes?: boolean) => {
-        if (!this.activeFrame) {
-            return;
-        }
-        const fileId = this.activeFrame.frameInfo.fileId;
-        this.backendService.saveFile(fileId, directory, filename, fileType, regionId, channels, stokes, !shouldDropDegeneratedAxes).subscribe(() => {
-            AppToaster.show({ icon: "saved", message: `${filename} saved.`, intent: "success", timeout: 3000 });
-            this.fileBrowserStore.hideFileBrowser();
-        }, error => {
-            console.error(error);
-            AppToaster.show({ icon: "warning-sign", message: error, intent: "danger", timeout: 3000 });
+        return new Promise<number>((resolve, reject) => {
+            if (!this.activeFrame) {
+                reject();
+            }
+            this.startFileSaving();
+            const fileId = this.activeFrame.frameInfo.fileId;
+            this.backendService.saveFile(fileId, directory, filename, fileType, regionId, channels, stokes, !shouldDropDegeneratedAxes).subscribe(ack => {
+                AppToaster.show({ icon: "saved", message: `${filename} saved.`, intent: "success", timeout: 3000 });
+                this.fileBrowserStore.hideFileBrowser();
+                this.endFileSaving();
+                resolve(ack.fileId);
+            }, error => {
+                console.error(error);
+                AppToaster.show({ icon: "warning-sign", message: error, intent: "danger", timeout: 3000 });
+                this.endFileSaving();
+                reject(error);
+            });
         });
     };
 
