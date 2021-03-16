@@ -529,6 +529,15 @@ export class FrameStore {
         return !this.spectralType && !this.spectralUnit ? this.nativeSpectralCoordinate : GenCoordinateLabel(this.spectralType, this.spectralUnit);
     }
 
+    @computed get spectralLabel(): string {
+        let label = undefined;
+        if (this.spectralAxis) {
+            const spectralSystem = this.isSpectralSystemConvertible ? this.spectralSystem : `${this.spectralAxis.specsys}`;
+            label = `${spectralSystem && spectralSystem !== "" ? `[${spectralSystem}] ` : ""}${this.spectralCoordinate}`;
+        }
+        return label;
+    }
+
     @computed get spectralUnitStr(): string {
         if (this.spectralAxis && !this.spectralType && !this.spectralUnit) {
             return this.spectralAxis.type.unit;

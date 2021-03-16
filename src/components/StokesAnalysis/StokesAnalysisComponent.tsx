@@ -1148,8 +1148,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
             }
 
             if (frame.spectralAxis && !frame.isCoordChannel) {
-                const spectralSystem = frame.isSpectralSystemConvertible ? frame.spectralSystem : `${frame.spectralAxis.specsys}`;
-                paLinePlotProps.xLabel = piLinePlotProps.xLabel = quLinePlotProps.xLabel = `${spectralSystem && spectralSystem !== "" ? spectralSystem + ", " : ""}${frame.spectralCoordinate}`;
+                paLinePlotProps.xLabel = piLinePlotProps.xLabel = quLinePlotProps.xLabel = frame.spectralLabel;
             }
 
             paLinePlotProps.markers = [];

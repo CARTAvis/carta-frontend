@@ -96,7 +96,7 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
             AST.set(frame.wcsInfo, `${frame.spectralType ? `System(${frame.spectralAxis.dimension})=${frame.spectralType},` : ""}` +
                                     `${frame.spectralUnit ? `Unit(${frame.spectralAxis.dimension})=${frame.spectralUnit},` : ""}` +
                                     `${frame.spectralSystem ? `StdOfRest=${frame.spectralSystem},` : ""}` +
-                                    `${frame.spectralType && frame.spectralSystem ? `Label(${frame.spectralAxis.dimension})=${frame.spectralSystem} ${SPECTRAL_TYPE_STRING.get(frame.spectralType)},` : ""}`
+                                    `${frame.spectralType && frame.spectralSystem ? `Label(${frame.spectralAxis.dimension})=[${frame.spectralSystem}] ${SPECTRAL_TYPE_STRING.get(frame.spectralType)},` : ""}`
             );
         }
 
