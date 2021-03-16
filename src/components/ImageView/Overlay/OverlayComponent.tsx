@@ -3,7 +3,7 @@ import * as AST from "ast_wrapper";
 import * as _ from "lodash";
 import {observer} from "mobx-react";
 import {FrameStore, OverlayStore} from "stores";
-import {CursorInfo} from "models";
+import {CursorInfo, SPECTRAL_TYPE_STRING} from "models";
 import "./OverlayComponent.scss";
 
 export class OverlayComponentProps {
@@ -93,7 +93,11 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
 
         // Trigger switching AST overlay axis for PV image
         if (frame.isPVImage && frame.spectralAxis?.valid) {
-            AST.set(frame.wcsInfo, `${frame.spectralType ? `System(${frame.spectralAxis.dimension})=${frame.spectralType},` : ""}${frame.spectralUnit ? `Unit(${frame.spectralAxis.dimension})=${frame.spectralUnit},` : ""}${frame.spectralSystem ? `StdOfRest=${frame.spectralSystem}` : ""}`);
+            AST.set(frame.wcsInfo, `${frame.spectralType ? `System(${frame.spectralAxis.dimension})=${frame.spectralType},` : ""}` +
+                                    `${frame.spectralUnit ? `Unit(${frame.spectralAxis.dimension})=${frame.spectralUnit},` : ""}` +
+                                    `${frame.spectralSystem ? `StdOfRest=${frame.spectralSystem},` : ""}` +
+                                    `${frame.spectralType && frame.spectralSystem ? `Label(${frame.spectralAxis.dimension})=${frame.spectralSystem} ${SPECTRAL_TYPE_STRING.get(frame.spectralType)},` : ""}`
+            );
         }
 
         let className = "overlay-canvas";
