@@ -787,7 +787,11 @@ export class FrameStore {
 
         // init spectral settings
         if (this.spectralAxis && IsSpectralTypeSupported(this.spectralAxis.type.code as string) && IsSpectralUnitSupported(this.spectralAxis.type.unit as string)) {
-            this.spectralType = this.spectralAxis.type.code as SpectralType;
+            if (this.isPVImage) {
+                this.spectralType = SpectralType.VRAD;
+            } else {
+                this.spectralType = this.spectralAxis.type.code as SpectralType;
+            }
             this.spectralUnit = SPECTRAL_DEFAULT_UNIT.get(this.spectralType);
         }
         if (this.isSpectralSystemConvertible) {
