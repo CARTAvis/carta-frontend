@@ -44,22 +44,44 @@ export class ColorbarComponent extends React.Component<ColorbarComponentProps> {
         )
     };
 
-    private renderTicksLabels = () => {
+    private renderTicksNumbers = () => {
         const appStore = AppStore.Instance;
         const frame = appStore.activeFrame;
         const colorbarSettings = appStore.overlayStore.colorbar;
         const yOffset = appStore.overlayStore.padding.top;
 
         const indexArray = Array.from(Array(colorbarSettings.tickNum).keys())
-        let scaledArray = indexArray.map(x => x / (colorbarSettings.tickNum - 1));
-        // TODO: different scaling
+        let scaledArray = indexArray.map(x => (x + 1) / (colorbarSettings.tickNum + 1));
+        
+        switch(frame.renderConfig.scalingName) {
+            case('Log'):
+                scaledArray = scaledArray.map(x => Math.log(frame.renderConfig.alpha * x + 1) / Math.log(frame.renderConfig.alpha + 1));
+                break;
+            case('Square root'):
+                scaledArray = scaledArray.map(x => x ** 0.5);
+                break;
+            case('Squared'):
+                scaledArray = scaledArray.map(x => x ** 2.0);
+                break;
+            case('Gamma'):
+                scaledArray = scaledArray.map(x => x ** frame.renderConfig.gamma);
+                break;
+            case('Power'):
+                scaledArray = scaledArray.map(x => (frame.renderConfig.alpha ** x - 1) / (frame.renderConfig.alpha - 1));
+                break;
+            case('Linear'):
+            case('Unknown'):
+            default:
+                break;
+        }
+
         const yPosArray = scaledArray.map(x => yOffset + frame.renderHeight * (1 - x));
 
-        let text_dy = (frame.renderConfig.scaleMaxVal - frame.renderConfig.scaleMinVal) / (colorbarSettings.tickNum - 1);    
-        let texts = indexArray.map(x => (frame.renderConfig.scaleMinVal + text_dy * x).toFixed(4));
+        let text_dy = (frame.renderConfig.scaleMaxVal - frame.renderConfig.scaleMinVal) / (colorbarSettings.tickNum + 1);    
+        let texts = indexArray.map(x => (frame.renderConfig.scaleMinVal + text_dy * (x + 1)).toFixed(4));
 
         let ticks = [];
-        let labels = [];
+        let numbers = [];
         for (let i = 0; i < colorbarSettings.tickNum; i++) {
             if (colorbarSettings.tickVisible) {
                 ticks.push(
@@ -67,20 +89,22 @@ export class ColorbarComponent extends React.Component<ColorbarComponentProps> {
                         points={[colorbarSettings.rightBorderPos - colorbarSettings.tickLen, yPosArray[i], colorbarSettings.rightBorderPos, yPosArray[i]]}
                         stroke={this.getColor()}
                         strokeWidth={colorbarSettings.tickWidth}
+                        key={i.toString()}
                     />
                 );
             }
-            if (colorbarSettings.labelVisible) {
-                labels.push(
+            if (colorbarSettings.numberVisible) {
+                numbers.push(
                     <Text
                         text={texts[i]}
-                        x={colorbarSettings.rightBorderPos + 5}
-                        y={colorbarSettings.labelRotated ? yPosArray[i] + 18 : yPosArray[i] - colorbarSettings.labelFontSize / 2}
+                        x={colorbarSettings.rightBorderPos + colorbarSettings.textGap}
+                        y={colorbarSettings.numberRotated ? yPosArray[i] + 18 : yPosArray[i] - colorbarSettings.numberFontSize / 2}
                         fill={this.getColor()}
-                        fontFamily={this.astFonts[colorbarSettings.labelFont].family}
-                        fontStyle={`${this.astFonts[colorbarSettings.labelFont].style} ${this.astFonts[colorbarSettings.labelFont].weight}`}
-                        fontSize={colorbarSettings.labelFontSize}
-                        rotation={colorbarSettings.labelRotated ? -90 : 0}
+                        fontFamily={this.astFonts[colorbarSettings.numberFont].family}
+                        fontStyle={`${this.astFonts[colorbarSettings.numberFont].style} ${this.astFonts[colorbarSettings.numberFont].weight}`}
+                        fontSize={colorbarSettings.numberFontSize}
+                        rotation={colorbarSettings.numberRotated ? -90 : 0}
+                        key={i.toString()}
                     />
                 );
             }
@@ -92,7 +116,7 @@ export class ColorbarComponent extends React.Component<ColorbarComponentProps> {
                     {colorbarSettings.tickVisible ? ticks : null}
                 </Layer>
                 <Layer>
-                    {colorbarSettings.labelVisible ? labels : null}
+                    {colorbarSettings.numberVisible ? numbers : null}
                 </Layer>
             </React.Fragment>
         );
@@ -107,13 +131,14 @@ export class ColorbarComponent extends React.Component<ColorbarComponentProps> {
             <Layer>
                 <Text
                     text={frame.unit}
-                    x={colorbarSettings.rightBorderPos + 5 + colorbarSettings.labelWidth}
+                    x={colorbarSettings.rightBorderPos + colorbarSettings.textGap + colorbarSettings.labelWidth}
                     y={yOffset + frame.renderHeight / 2}
                     fill={this.getColor()}
-                    fontFamily={this.astFonts[colorbarSettings.titleFont].family}
-                    fontSize={colorbarSettings.titleFontSize}
-                    fontStyle={`${this.astFonts[colorbarSettings.titleFont].style} ${this.astFonts[colorbarSettings.titleFont].weight}`}
+                    fontFamily={this.astFonts[colorbarSettings.labelFont].family}
+                    fontSize={colorbarSettings.labelFontSize}
+                    fontStyle={`${this.astFonts[colorbarSettings.labelFont].style} ${this.astFonts[colorbarSettings.labelFont].weight}`}
                     rotation={-90}
+                    key={'0'}
                 />
             </Layer>
         );
@@ -130,8 +155,8 @@ export class ColorbarComponent extends React.Component<ColorbarComponentProps> {
                 style={{left: this.props.left}}
             >
                 {this.renderColorbar()}
-                {colorbarSettings.tickVisible || colorbarSettings.labelVisible ? this.renderTicksLabels() : null}
-                {colorbarSettings.titleVisible ? this.renderTitle() : null}
+                {colorbarSettings.tickVisible || colorbarSettings.numberVisible ? this.renderTicksNumbers() : null}
+                {colorbarSettings.labelVisible ? this.renderTitle() : null}
             </Stage>
         );
     }

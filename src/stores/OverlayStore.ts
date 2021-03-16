@@ -695,13 +695,13 @@ export class OverlayColorbarSettings {
     @observable tickNum: number;
     @observable tickLen: number;
     @observable tickWidth: number;
+    @observable numberVisible: boolean;
+    @observable numberRotated: boolean;
+    @observable numberFont: number;
+    @observable numberFontSize: number;
     @observable labelVisible: boolean;
-    @observable labelRotated: boolean;
     @observable labelFont: number;
     @observable labelFontSize: number;
-    @observable titleVisible: boolean;
-    @observable titleFont: number;
-    @observable titleFontSize: number;
 
     constructor() {
         makeObservable(this);
@@ -711,16 +711,16 @@ export class OverlayColorbarSettings {
         this.borderVisible = true;
         this.borderWidth = 0.5;
         this.tickVisible = true;
-        this.tickNum = 10;
+        this.tickNum = 9;
         this.tickLen = 7;
         this.tickWidth = 0.5;
+        this.numberVisible = true;
+        this.numberRotated = true;
+        this.numberFont = 0;
+        this.numberFontSize = 12;
         this.labelVisible = true;
-        this.labelRotated = true;
         this.labelFont = 0;
-        this.labelFontSize = 12;
-        this.titleVisible = true;
-        this.titleFont = 0;
-        this.titleFontSize = 15;
+        this.labelFontSize = 15;
     }
 
     @action setVisible = (visible: boolean) => {
@@ -759,12 +759,24 @@ export class OverlayColorbarSettings {
         this.tickWidth = width;
     }
 
-    @action setLabelVisible = (visible: boolean) => {
-        this.labelVisible = visible;
+    @action setNumberVisible = (visible: boolean) => {
+        this.numberVisible = visible;
     }
 
-    @action setLabelRotated = (rotated: boolean) => {
-        this.labelRotated = rotated;
+    @action setNumberRotated = (rotated: boolean) => {
+        this.numberRotated = rotated;
+    }
+
+    @action setNumberFont = (font: number) => {
+        this.numberFont = font;
+    }
+
+    @action setNumberFontSize = (fontSize: number) => {
+        this.numberFontSize = fontSize;
+    }
+
+    @action setLabelVisible = (visible: boolean) => {
+        this.labelVisible = visible;
     }
 
     @action setLabelFont = (font: number) => {
@@ -775,28 +787,20 @@ export class OverlayColorbarSettings {
         this.labelFontSize = fontSize;
     }
 
-    @action setTitleVisible = (visible: boolean) => {
-        this.titleVisible = visible;
-    }
-
-    @action setTitleFont = (font: number) => {
-        this.titleFont = font;
-    }
-
-    @action setTitleFontSize = (fontSize: number) => {
-        this.titleFontSize = fontSize;
-    }
-
     @computed get rightBorderPos(): number {
         return this.offset + this.width;
     }
 
+    @computed get textGap() {
+        return 5;
+    }
+
     @computed get labelWidth(): number {
-        return this.labelVisible ? this.labelFontSize + (this.labelRotated ? 12 : 42) : 0;
+        return this.numberVisible ? this.numberFontSize + (this.numberRotated ? 0 : 30) + this.textGap : 0;
     }
 
     @computed get stageWidth(): number {
-        return this.offset + this.width + this.labelWidth + (this.titleVisible ? 5 + this.titleFontSize : 5)
+        return this.offset + this.width + this.labelWidth + (this.labelVisible ? this.labelFontSize + this.textGap : 0)
     }
 }
 

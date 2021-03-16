@@ -693,43 +693,43 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
                         onValueChange={(value: number) => colorbar.setTickWidth(value)}
                     />
                 </FormGroup>
-                <FormGroup inline={true} label="Labels" disabled={!colorbar.visible}>
+                <FormGroup inline={true} label="Numbers" disabled={!colorbar.visible}>
+                    <Switch
+                        checked={colorbar.numberVisible}
+                        disabled={!colorbar.visible}
+                        onChange={(ev) => colorbar.setNumberVisible(ev.currentTarget.checked)}
+                    />
+                </FormGroup>
+                <FormGroup inline={true} className="font-group" label="Numbers Font" disabled={!colorbar.visible || !colorbar.numberVisible}>
+                    {this.fontSelect((colorbar.visible && colorbar.numberVisible), colorbar.numberFont, colorbar.setNumberFont)}
+                    <SafeNumericInput
+                        min={7}
+                        value={colorbar.numberFontSize}
+                        disabled={!colorbar.visible || !colorbar.numberVisible}
+                        onValueChange={(value: number) => colorbar.setNumberFontSize(value)}
+                    />
+                </FormGroup>
+                <FormGroup inline={true} label="Numbers Rotated" disabled={!colorbar.visible || !colorbar.numberVisible}>
+                    <Switch
+                        checked={colorbar.numberRotated}
+                        disabled={!colorbar.visible || !colorbar.numberVisible}
+                        onChange={(ev) => colorbar.setNumberRotated(ev.currentTarget.checked)}
+                    />
+                </FormGroup>
+                <FormGroup inline={true} label="Label" disabled={!colorbar.visible}>
                     <Switch
                         checked={colorbar.labelVisible}
                         disabled={!colorbar.visible}
                         onChange={(ev) => colorbar.setLabelVisible(ev.currentTarget.checked)}
                     />
                 </FormGroup>
-                <FormGroup inline={true} className="font-group" label="Labels Font" disabled={!colorbar.visible || !colorbar.labelVisible}>
+                <FormGroup inline={true} className="font-group" label="Label Font" disabled={!colorbar.visible || !colorbar.labelVisible}>
                     {this.fontSelect((colorbar.visible && colorbar.labelVisible), colorbar.labelFont, colorbar.setLabelFont)}
                     <SafeNumericInput
                         min={7}
                         value={colorbar.labelFontSize}
                         disabled={!colorbar.visible || !colorbar.labelVisible}
                         onValueChange={(value: number) => colorbar.setLabelFontSize(value)}
-                    />
-                </FormGroup>
-                <FormGroup inline={true} label="Labels Rotated" disabled={!colorbar.visible || !colorbar.labelVisible}>
-                    <Switch
-                        checked={colorbar.labelRotated}
-                        disabled={!colorbar.visible || !colorbar.labelVisible}
-                        onChange={(ev) => colorbar.setLabelRotated(ev.currentTarget.checked)}
-                    />
-                </FormGroup>
-                <FormGroup inline={true} label="Title" disabled={!colorbar.visible}>
-                    <Switch
-                        checked={colorbar.titleVisible}
-                        disabled={!colorbar.visible}
-                        onChange={(ev) => colorbar.setTitleVisible(ev.currentTarget.checked)}
-                    />
-                </FormGroup>
-                <FormGroup inline={true} className="font-group" label="Title Font" disabled={!colorbar.visible || !colorbar.titleVisible}>
-                    {this.fontSelect((colorbar.visible && colorbar.titleVisible), colorbar.titleFont, colorbar.setTitleFont)}
-                    <SafeNumericInput
-                        min={7}
-                        value={colorbar.titleFontSize}
-                        disabled={!colorbar.visible || !colorbar.titleVisible}
-                        onValueChange={(value: number) => colorbar.setTitleFontSize(value)}
                     />
                 </FormGroup>
             </div>
