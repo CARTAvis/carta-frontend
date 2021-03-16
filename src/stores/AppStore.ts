@@ -1467,7 +1467,7 @@ export class AppStore {
                 stokes: frame.requiredStokes,
                 regions: mapToObject(regions),
                 contourSettings,
-                stokesFiles: frame.StokesFiles
+                stokesFiles: frame.stokesFiles
             };
         });
 
