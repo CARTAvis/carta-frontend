@@ -89,7 +89,7 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
                 items={astFonts}
                 disabled={!visible}
                 filterable={false}
-                popoverProps={{minimal: true, position: "auto-end", popoverClassName: "fontselect"}}
+                popoverProps={{minimal: true, placement: "bottom", popoverClassName: "fontselect"}}
                 onItemSelect={(font) => fontSetter(font.id)}
             >
                 <Button text={(<span style={{fontFamily: currentFont.family, fontWeight: currentFont.weight, fontStyle: currentFont.style}}>{currentFont.name}</span>)} disabled={!visible} rightIcon="double-caret-vertical"/>
@@ -610,7 +610,7 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
                 <FormGroup inline={true} label="Width" labelInfo="(px)" disabled={!colorbar.visible}>
                     <SafeNumericInput
                         placeholder="Width"
-                        min={0.001}
+                        min={0.0}
                         value={colorbar.width}
                         stepSize={0.5}
                         minorStepSize={0.1}
@@ -641,7 +641,7 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
                 <FormGroup inline={true} label="Border Width" labelInfo="(px)" disabled={!colorbar.visible || !colorbar.borderVisible}>
                     <SafeNumericInput
                         placeholder="Border Width"
-                        min={0.001}
+                        min={0.5}
                         value={colorbar.borderWidth}
                         stepSize={0.5}
                         minorStepSize={0.1}
@@ -672,7 +672,7 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
                 <FormGroup inline={true} label="Ticks Len" labelInfo="(px)" disabled={!colorbar.visible || !colorbar.tickVisible}>
                     <SafeNumericInput
                         placeholder="Ticks Len"
-                        min={0.0}
+                        min={0.5}
                         value={colorbar.tickLen}
                         stepSize={0.5}
                         minorStepSize={0.1}
@@ -684,7 +684,7 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
                 <FormGroup inline={true} label="Ticks Width" labelInfo="(px)" disabled={!colorbar.visible || !colorbar.tickVisible}>
                     <SafeNumericInput
                         placeholder="Ticks Width"
-                        min={0.001}
+                        min={0.5}
                         value={colorbar.tickWidth}
                         stepSize={0.5}
                         minorStepSize={0.1}
@@ -700,14 +700,11 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
                         onChange={(ev) => colorbar.setLabelVisible(ev.currentTarget.checked)}
                     />
                 </FormGroup>
-                <FormGroup inline={true} label="Labels Font Size" disabled={!colorbar.visible || !colorbar.labelVisible}>
+                <FormGroup inline={true} className="font-group" label="Labels Font" disabled={!colorbar.visible || !colorbar.labelVisible}>
+                    {this.fontSelect((colorbar.visible && colorbar.labelVisible), colorbar.labelFont, colorbar.setLabelFont)}
                     <SafeNumericInput
-                        placeholder="Labels Font Size"
-                        min={0.5}
+                        min={7}
                         value={colorbar.labelFontSize}
-                        stepSize={0.5}
-                        minorStepSize={0.5}
-                        majorStepSize={1}
                         disabled={!colorbar.visible || !colorbar.labelVisible}
                         onValueChange={(value: number) => colorbar.setLabelFontSize(value)}
                     />
@@ -726,14 +723,11 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
                         onChange={(ev) => colorbar.setTitleVisible(ev.currentTarget.checked)}
                     />
                 </FormGroup>
-                <FormGroup inline={true} label="Title Font Size" disabled={!colorbar.visible || !colorbar.titleVisible}>
+                <FormGroup inline={true} className="font-group" label="Title Font" disabled={!colorbar.visible || !colorbar.titleVisible}>
+                    {this.fontSelect((colorbar.visible && colorbar.titleVisible), colorbar.titleFont, colorbar.setTitleFont)}
                     <SafeNumericInput
-                        placeholder="Title Font Size"
-                        min={0.5}
+                        min={7}
                         value={colorbar.titleFontSize}
-                        stepSize={0.5}
-                        minorStepSize={0.5}
-                        majorStepSize={1}
                         disabled={!colorbar.visible || !colorbar.titleVisible}
                         onValueChange={(value: number) => colorbar.setTitleFontSize(value)}
                     />

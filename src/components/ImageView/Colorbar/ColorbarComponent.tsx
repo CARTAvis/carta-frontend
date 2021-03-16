@@ -2,7 +2,8 @@ import * as React from "react";
 import {observer} from "mobx-react";
 import {Layer, Line, Rect, Stage, Text} from "react-konva";
 import {AppStore, dayPalette, nightPalette} from "stores";
-import {getColorsForValues} from "utilities";
+import {fonts} from "ast_wrapper";
+import {Font} from "../ImageViewSettingsPanel/ImageViewSettingsPanelComponent"
 import "./ColorbarComponent.scss";
 
 export interface ColorbarComponentProps {
@@ -13,93 +14,105 @@ export interface ColorbarComponentProps {
 @observer
 export class ColorbarComponent extends React.Component<ColorbarComponentProps> {
     
-    private appStore = AppStore.Instance;
-    private frame = this.appStore.activeFrame;
-    private colorbarSettings = this.appStore.overlayStore.colorbar;
-    private yOffset = this.appStore.overlayStore.padding.top;
+    private astFonts: Font[] = fonts.map((x, i) => (new Font(x, i)));
 
-    colorscale = () => {
-        const colorsForValues = getColorsForValues(this.frame.renderConfig.colorMap);
-        const indexArray = Array.from(Array(colorsForValues.size).keys()).map(x => this.frame.renderConfig.inverted ? x / colorsForValues.size : 1 - x / colorsForValues.size);
-
-        let colorscale = [];
-        for (let i = 0; i < colorsForValues.size; i++) {
-            colorscale.push(indexArray[i],
-                `rgb(${colorsForValues.color[i * 4]}, ${colorsForValues.color[i * 4 + 1]}, ${colorsForValues.color[i * 4 + 2]}, ${colorsForValues.color[i * 4 + 3]})`);
-        }
-        return colorscale
-    };
+    private getColor = (): string => {
+        const appStore = AppStore.Instance;
+        const colorId = appStore.overlayStore.global.color
+        return appStore.darkTheme ? nightPalette[colorId] : dayPalette[colorId];
+    }
 
     private renderColorbar = () => {
+        const appStore = AppStore.Instance;
+        const frame = appStore.activeFrame;
+        const colorbarSettings = appStore.overlayStore.colorbar;
+        const yOffset = appStore.overlayStore.padding.top;
         return (
             <Layer>
                 <Rect
-                    x={this.colorbarSettings.offset}
-                    y={this.yOffset}
-                    width={this.colorbarSettings.width}
-                    height={this.frame.renderHeight}
-                    fillLinearGradientStartPoint={{x: 0, y: this.yOffset}}
-                    fillLinearGradientEndPoint={{x: 0, y: this.yOffset + this.frame.renderHeight}}
-                    fillLinearGradientColorStops={this.colorscale()}
-                    stroke={this.colorbarSettings.borderVisible ? (this.appStore.darkTheme ? nightPalette[this.appStore.overlayStore.global.color] : dayPalette[this.appStore.overlayStore.global.color]) : null}
-                    strokeWidth={this.colorbarSettings.borderWidth}
+                    x={colorbarSettings.offset}
+                    y={yOffset}
+                    width={colorbarSettings.width}
+                    height={frame.renderHeight}
+                    fillLinearGradientStartPoint={{x: 0, y: yOffset}}
+                    fillLinearGradientEndPoint={{x: 0, y: yOffset + frame.renderHeight}}
+                    fillLinearGradientColorStops={frame.renderConfig.colorscaleArray}
+                    stroke={colorbarSettings.borderVisible ? this.getColor() : null}
+                    strokeWidth={colorbarSettings.borderWidth}
                 />
             </Layer>
         )
     };
 
     private renderTicksLabels = () => {
-        const indexArray = Array.from(Array(this.colorbarSettings.tickNum).keys())
-        let scaledArray = indexArray.map(x => x / (this.colorbarSettings.tickNum - 1));
-        // TODO: different scaling
-        const yPosArray = scaledArray.map(x => this.yOffset + this.frame.renderHeight * (1 - x));
+        const appStore = AppStore.Instance;
+        const frame = appStore.activeFrame;
+        const colorbarSettings = appStore.overlayStore.colorbar;
+        const yOffset = appStore.overlayStore.padding.top;
 
-        let text_dy = (this.frame.renderConfig.scaleMaxVal - this.frame.renderConfig.scaleMinVal) / (this.colorbarSettings.tickNum - 1);    
-        let texts = indexArray.map(x => (this.frame.renderConfig.scaleMinVal + text_dy * x).toFixed(4));
+        const indexArray = Array.from(Array(colorbarSettings.tickNum).keys())
+        let scaledArray = indexArray.map(x => x / (colorbarSettings.tickNum - 1));
+        // TODO: different scaling
+        const yPosArray = scaledArray.map(x => yOffset + frame.renderHeight * (1 - x));
+
+        let text_dy = (frame.renderConfig.scaleMaxVal - frame.renderConfig.scaleMinVal) / (colorbarSettings.tickNum - 1);    
+        let texts = indexArray.map(x => (frame.renderConfig.scaleMinVal + text_dy * x).toFixed(4));
 
         let ticks = [];
         let labels = [];
-        for (let i = 0; i < this.colorbarSettings.tickNum; i++) {
-            ticks.push(
-                <Line
-                    points={[this.colorbarSettings.rightBorderPos - this.colorbarSettings.tickLen, yPosArray[i], this.colorbarSettings.rightBorderPos, yPosArray[i]]}
-                    stroke={this.appStore.darkTheme ? nightPalette[this.appStore.overlayStore.global.color] : dayPalette[this.appStore.overlayStore.global.color]}
-                    strokeWidth={this.colorbarSettings.tickWidth}
-                />
-            );
-            labels.push(
-                <Text
-                    text={texts[i]}
-                    x={this.colorbarSettings.rightBorderPos + 5}
-                    y={this.colorbarSettings.labelRotated ? yPosArray[i] + 18 : yPosArray[i] - this.colorbarSettings.labelFontSize / 2}
-                    fill={this.appStore.darkTheme ? nightPalette[this.appStore.overlayStore.global.color] : dayPalette[this.appStore.overlayStore.global.color]}
-                    fontSize={this.colorbarSettings.labelFontSize}
-                    rotation={this.colorbarSettings.labelRotated ? -90 : 0}
-                />
-            );
+        for (let i = 0; i < colorbarSettings.tickNum; i++) {
+            if (colorbarSettings.tickVisible) {
+                ticks.push(
+                    <Line
+                        points={[colorbarSettings.rightBorderPos - colorbarSettings.tickLen, yPosArray[i], colorbarSettings.rightBorderPos, yPosArray[i]]}
+                        stroke={this.getColor()}
+                        strokeWidth={colorbarSettings.tickWidth}
+                    />
+                );
+            }
+            if (colorbarSettings.labelVisible) {
+                labels.push(
+                    <Text
+                        text={texts[i]}
+                        x={colorbarSettings.rightBorderPos + 5}
+                        y={colorbarSettings.labelRotated ? yPosArray[i] + 18 : yPosArray[i] - colorbarSettings.labelFontSize / 2}
+                        fill={this.getColor()}
+                        fontFamily={this.astFonts[colorbarSettings.labelFont].family}
+                        fontStyle={`${this.astFonts[colorbarSettings.labelFont].style} ${this.astFonts[colorbarSettings.labelFont].weight}`}
+                        fontSize={colorbarSettings.labelFontSize}
+                        rotation={colorbarSettings.labelRotated ? -90 : 0}
+                    />
+                );
+            }
         }
 
         return (
             <React.Fragment>
                 <Layer>
-                    {this.colorbarSettings.tickVisible ? ticks : null}
+                    {colorbarSettings.tickVisible ? ticks : null}
                 </Layer>
                 <Layer>
-                {this.colorbarSettings.labelVisible ? labels : null}
+                    {colorbarSettings.labelVisible ? labels : null}
                 </Layer>
             </React.Fragment>
         );
     };
 
     private renderTitle = () => {
+        const appStore = AppStore.Instance;
+        const frame = appStore.activeFrame;
+        const colorbarSettings = appStore.overlayStore.colorbar;
+        const yOffset = appStore.overlayStore.padding.top;
         return (
             <Layer>
                 <Text
-                    text={this.frame.unit}
-                    x={this.colorbarSettings.rightBorderPos + 5 + this.colorbarSettings.labelWidth}
-                    y={this.yOffset + this.frame.renderHeight / 2}
-                    fill={this.appStore.darkTheme ? nightPalette[this.appStore.overlayStore.global.color] : dayPalette[this.appStore.overlayStore.global.color]}
-                    fontSize={this.colorbarSettings.titleFontSize}
+                    text={frame.unit}
+                    x={colorbarSettings.rightBorderPos + 5 + colorbarSettings.labelWidth}
+                    y={yOffset + frame.renderHeight / 2}
+                    fill={this.getColor()}
+                    fontFamily={this.astFonts[colorbarSettings.titleFont].family}
+                    fontSize={colorbarSettings.titleFontSize}
+                    fontStyle={`${this.astFonts[colorbarSettings.titleFont].style} ${this.astFonts[colorbarSettings.titleFont].weight}`}
                     rotation={-90}
                 />
             </Layer>
@@ -108,16 +121,17 @@ export class ColorbarComponent extends React.Component<ColorbarComponentProps> {
 
 
     render() {
+        const colorbarSettings = AppStore.Instance.overlayStore.colorbar;
         return (
             <Stage
                 className={"colorbar-stage"}
-                width={this.colorbarSettings.stageWidth}
+                width={colorbarSettings.stageWidth}
                 height={this.props.height}
                 style={{left: this.props.left}}
             >
                 {this.renderColorbar()}
-                {this.renderTicksLabels()}
-                {this.colorbarSettings.titleVisible ? this.renderTitle() : null}
+                {colorbarSettings.tickVisible || colorbarSettings.labelVisible ? this.renderTicksLabels() : null}
+                {colorbarSettings.titleVisible ? this.renderTitle() : null}
             </Stage>
         );
     }

@@ -697,8 +697,10 @@ export class OverlayColorbarSettings {
     @observable tickWidth: number;
     @observable labelVisible: boolean;
     @observable labelRotated: boolean;
+    @observable labelFont: number;
     @observable labelFontSize: number;
     @observable titleVisible: boolean;
+    @observable titleFont: number;
     @observable titleFontSize: number;
 
     constructor() {
@@ -713,13 +715,15 @@ export class OverlayColorbarSettings {
         this.tickLen = 7;
         this.tickWidth = 0.5;
         this.labelVisible = true;
-        this.labelRotated = false;
+        this.labelRotated = true;
+        this.labelFont = 0;
         this.labelFontSize = 12;
         this.titleVisible = true;
+        this.titleFont = 0;
         this.titleFontSize = 15;
     }
 
-    @action setVisible(visible: boolean) {
+    @action setVisible = (visible: boolean) => {
         this.visible = visible;
     }
 
@@ -731,47 +735,55 @@ export class OverlayColorbarSettings {
         this.offset = offset;
     };
 
-    @action setBorderVisible(visible: boolean) {
+    @action setBorderVisible = (visible: boolean) => {
         this.borderVisible = visible;
     }
 
-    @action setBorderWidth(width: number) {
+    @action setBorderWidth = (width: number) => {
         this.borderWidth = width;
     }
 
-    @action setTickVisible(visible: boolean) {
+    @action setTickVisible = (visible: boolean) => {
         this.tickVisible = visible;
     }
 
-    @action setTickNum(tickNum: number) {
+    @action setTickNum = (tickNum: number) => {
         this.tickNum = tickNum;
     }
 
-    @action setTickLen(tickLen: number) {
+    @action setTickLen = (tickLen: number) => {
         this.tickLen = tickLen;
     }
 
-    @action setTickWidth(width: number) {
+    @action setTickWidth = (width: number) => {
         this.tickWidth = width;
     }
 
-    @action setLabelVisible(visible: boolean) {
+    @action setLabelVisible = (visible: boolean) => {
         this.labelVisible = visible;
     }
 
-    @action setLabelRotated(rotated: boolean) {
+    @action setLabelRotated = (rotated: boolean) => {
         this.labelRotated = rotated;
     }
 
-    @action setLabelFontSize(fontSize: number) {
+    @action setLabelFont = (font: number) => {
+        this.labelFont = font;
+    }
+
+    @action setLabelFontSize = (fontSize: number) => {
         this.labelFontSize = fontSize;
     }
 
-    @action setTitleVisible(visible: boolean) {
+    @action setTitleVisible = (visible: boolean) => {
         this.titleVisible = visible;
     }
 
-    @action setTitleFontSize(fontSize: number) {
+    @action setTitleFont = (font: number) => {
+        this.titleFont = font;
+    }
+
+    @action setTitleFontSize = (fontSize: number) => {
         this.titleFontSize = fontSize;
     }
 
