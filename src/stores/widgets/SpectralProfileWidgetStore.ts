@@ -27,6 +27,8 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
     @observable coordinate: string;
     @observable statsType: CARTA.StatsType;
     @observable selectedProfileClass: ProfileClass;
+    @observable selectedFrames: number[];
+    @observable selectedRegions: number[];
     @observable selectedStatsTypes: CARTA.StatsType[];
     @observable selectedCoordinates: string[];
     @observable minX: number;
@@ -112,6 +114,27 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
             this.clearXYBounds();
             this.coordinate = coordinate;
         }
+    };
+
+    @action selectFrame = (fileId: number) => {
+        /* if () { // TODO: error handling for fileId
+            if (this.selectedFrames?.includes(fileId)) {
+                this.selectedFrames = this.selectedFrames.filter(file => file !== fileId);
+            } else {
+                this.selectedFrames = [...this.selectedFrames, fileId];
+            }
+        }
+        */
+    };
+
+    @action selectRegion = (regionId: number) => {
+        // if () { TODO: error handling for regionId
+            if (this.selectedRegions?.includes(regionId)) {
+                this.selectedRegions = this.selectedRegions.filter(region => region !== regionId);
+            } else {
+                this.selectedRegions = [...this.selectedRegions, regionId];
+            }
+        // }
     };
 
     @action selectStatsType = (statsType: CARTA.StatsType) => {
@@ -344,6 +367,8 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         this.coordinate = coordinate;
         this.statsType = CARTA.StatsType.Mean;
         this.selectedProfileClass = ProfileClass.IMAGE;
+        this.selectedFrames = [];
+        this.selectedRegions = [];
         this.selectedStatsTypes = [];
         this.selectedCoordinates = [];
         this.isStreamingData = false;

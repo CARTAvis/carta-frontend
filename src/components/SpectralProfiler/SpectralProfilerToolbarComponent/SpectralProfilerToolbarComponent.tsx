@@ -11,8 +11,16 @@ import "./SpectralProfilerToolbarComponent.scss";
 
 @observer
 export class SpectralProfilerToolbarComponent extends React.Component<{ widgetStore: SpectralProfileWidgetStore, id: string }> {
-    private onStatsItemClick = (selectStatsType: CARTA.StatsType) => {
-        this.props.widgetStore.selectStatsType(selectStatsType);
+    private onFrameItemClick = (selectedFrame: number) => {
+        this.props.widgetStore.selectFrame(selectedFrame);
+    };
+
+    private onRegionItemClick = (selectedRegion: number) => {
+        this.props.widgetStore.selectRegion(selectedRegion);
+    };
+
+    private onStatsItemClick = (selectedStatsType: CARTA.StatsType) => {
+        this.props.widgetStore.selectStatsType(selectedStatsType);
     };
 
     private onStokesItemSelect = (selectedStokes: string) => {
@@ -38,6 +46,8 @@ export class SpectralProfilerToolbarComponent extends React.Component<{ widgetSt
     public render() {
         const widgetStore = this.props.widgetStore;
 
+        let enableFrameSelect = true;
+        let enableRegionSelect = true;
         let enableStatsSelect = false;
         let enableStokesSelect = false;
         let regionId = 0;
@@ -75,6 +85,12 @@ export class SpectralProfilerToolbarComponent extends React.Component<{ widgetSt
                         onClick={(ev) => widgetStore.selectProfileClass(ProfileClass.IMAGE)}
                     />
                 </Tooltip>
+                <MultiSelectButtonComponent
+                    itemOptions={AppStore.Instance.frameNames}
+                    itemSelected={widgetStore.selectedFrames}
+                    onItemSelect={this.onFrameItemClick}
+                    disabled={!enableFrameSelect}
+                />
                 <Tooltip content="Select to show multiple profiles" position={Position.TOP}>
                     <AnchorButton
                         text={ProfileClass.REGION}
@@ -82,6 +98,12 @@ export class SpectralProfilerToolbarComponent extends React.Component<{ widgetSt
                         onClick={(ev) => widgetStore.selectProfileClass(ProfileClass.REGION)}
                     />
                 </Tooltip>
+                <MultiSelectButtonComponent
+                    itemOptions={undefined}
+                    itemSelected={widgetStore.selectedRegions}
+                    onItemSelect={this.onRegionItemClick}
+                    disabled={!enableRegionSelect}
+                />
                 <Tooltip content="Select to show multiple profiles" position={Position.TOP}>
                     <AnchorButton
                         text={ProfileClass.STATISTICS}
