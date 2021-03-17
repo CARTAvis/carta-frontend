@@ -73,7 +73,7 @@ export class ColorbarComponent extends React.Component<ColorbarComponentProps> {
             default:
                 break;
         }
-        this.setHoverInfoText((frame.renderConfig.scaleMinVal + scaledPos * (frame.renderConfig.scaleMaxVal - frame.renderConfig.scaleMinVal)).toFixed(4));
+        this.setHoverInfoText((frame.renderConfig.scaleMinVal + scaledPos * (frame.renderConfig.scaleMaxVal - frame.renderConfig.scaleMinVal)).toFixed(5));
         this.setCursorY(point.y);
     };
     
@@ -81,6 +81,15 @@ export class ColorbarComponent extends React.Component<ColorbarComponentProps> {
         const appStore = AppStore.Instance;
         const colorId = appStore.overlayStore.global.color
         return appStore.darkTheme ? nightPalette[colorId] : dayPalette[colorId];
+    }
+
+    private getRounding = (): number => {
+        const appStore = AppStore.Instance;
+        const max = appStore.activeFrame.renderConfig.scaleMaxVal;
+        const min = appStore.activeFrame.renderConfig.scaleMinVal;
+        const tickNum = appStore.overlayStore.colorbar.tickNum;
+        const dy = Math.log10((max - min) / (tickNum + 1));
+        return dy > 0 ? 0 : Math.ceil(-dy) + 1;
     }
 
     private renderColorbar = () => {
@@ -140,7 +149,7 @@ export class ColorbarComponent extends React.Component<ColorbarComponentProps> {
         const yPosArray = scaledArray.map(x => yOffset + frame.renderHeight * (1 - x));
 
         let text_dy = (frame.renderConfig.scaleMaxVal - frame.renderConfig.scaleMinVal) / (colorbarSettings.tickNum + 1);    
-        let texts = indexArray.map(x => (frame.renderConfig.scaleMinVal + text_dy * (x + 1)).toFixed(4));
+        let texts = indexArray.map(x => (frame.renderConfig.scaleMinVal + text_dy * (x + 1)).toFixed(this.getRounding()));
 
         let ticks = [];
         let numbers = [];
