@@ -2,10 +2,11 @@ import * as React from "react";
 import {observer} from "mobx-react";
 import {action, observable, makeObservable} from "mobx";
 import {Layer, Line, Rect, Stage, Text} from "react-konva";
-import {AppStore, dayPalette, nightPalette} from "stores";
-import {fonts} from "ast_wrapper";
 import {Font} from "../ImageViewSettingsPanel/ImageViewSettingsPanelComponent"
 import {ProfilerInfoComponent} from "components/Shared";
+import {AppStore, dayPalette, nightPalette} from "stores";
+import {scaleValue, scaleValueInverse} from "utilities"
+import {fonts} from "ast_wrapper";
 import "./ColorbarComponent.scss";
 
 export interface ColorbarComponentProps {
@@ -51,28 +52,8 @@ export class ColorbarComponent extends React.Component<ColorbarComponentProps> {
         const yOffset = appStore.overlayStore.padding.top;
 
         let scaledPos = (frame.renderHeight + yOffset - point.y) / frame.renderHeight;
-        
-        switch(frame.renderConfig.scalingName) {
-            case('Log'):
-                scaledPos = (frame.renderConfig.alpha ** scaledPos - 1) / frame.renderConfig.alpha;
-                break;
-            case('Square root'):
-                scaledPos = scaledPos ** 2.0;
-                break;
-            case('Squared'):
-                scaledPos = scaledPos ** 0.5;
-                break;
-            case('Gamma'):
-                scaledPos = scaledPos ** (1 / frame.renderConfig.gamma);
-                break;
-            case('Power'):
-                scaledPos = Math.log(frame.renderConfig.alpha * scaledPos + 1) / Math.log(frame.renderConfig.alpha);
-                break;
-            case('Linear'):
-            case('Unknown'):
-            default:
-                break;
-        }
+        scaledPos = scaleValueInverse(scaledPos, frame.renderConfig.scaling, frame.renderConfig.alpha, frame.renderConfig.gamma);
+ 
         this.setHoverInfoText((frame.renderConfig.scaleMinVal + scaledPos * (frame.renderConfig.scaleMaxVal - frame.renderConfig.scaleMinVal)).toFixed(5));
         this.setCursorY(point.y);
     };
@@ -123,29 +104,7 @@ export class ColorbarComponent extends React.Component<ColorbarComponentProps> {
 
         const indexArray = Array.from(Array(colorbarSettings.tickNum).keys())
         let scaledArray = indexArray.map(x => (x + 1) / (colorbarSettings.tickNum + 1));
-        
-        switch(frame.renderConfig.scalingName) {
-            case('Log'):
-                scaledArray = scaledArray.map(x => Math.log(frame.renderConfig.alpha * x + 1) / Math.log(frame.renderConfig.alpha + 1));
-                break;
-            case('Square root'):
-                scaledArray = scaledArray.map(x => x ** 0.5);
-                break;
-            case('Squared'):
-                scaledArray = scaledArray.map(x => x ** 2.0);
-                break;
-            case('Gamma'):
-                scaledArray = scaledArray.map(x => x ** frame.renderConfig.gamma);
-                break;
-            case('Power'):
-                scaledArray = scaledArray.map(x => (frame.renderConfig.alpha ** x - 1) / (frame.renderConfig.alpha - 1));
-                break;
-            case('Linear'):
-            case('Unknown'):
-            default:
-                break;
-        }
-
+        scaledArray = scaledArray.map(x => scaleValue(x, frame.renderConfig.scaling, frame.renderConfig.alpha, frame.renderConfig.gamma));
         const yPosArray = scaledArray.map(x => yOffset + frame.renderHeight * (1 - x));
 
         let text_dy = (frame.renderConfig.scaleMaxVal - frame.renderConfig.scaleMinVal) / (colorbarSettings.tickNum + 1);    
@@ -228,7 +187,7 @@ export class ColorbarComponent extends React.Component<ColorbarComponentProps> {
             </div>
         );
  
-    }
+    };
 
     render() {
         const colorbarSettings = AppStore.Instance.overlayStore.colorbar;
