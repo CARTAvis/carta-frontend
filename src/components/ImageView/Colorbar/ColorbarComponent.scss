@@ -1,3 +1,12 @@
 .colorbar-stage {
     position: absolute;
+    z-index: 5; // need to be on top of overlay-canvas
+}
+
+.colorbar-info {
+    width: 170px;
+    height: 12px;
+    position: absolute;
+    bottom: 3px;
+    right: 5px;
 }

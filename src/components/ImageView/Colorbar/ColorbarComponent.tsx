@@ -1,9 +1,11 @@
 import * as React from "react";
 import {observer} from "mobx-react";
+import {action, observable, makeObservable} from "mobx";
 import {Layer, Line, Rect, Stage, Text} from "react-konva";
 import {AppStore, dayPalette, nightPalette} from "stores";
 import {fonts} from "ast_wrapper";
 import {Font} from "../ImageViewSettingsPanel/ImageViewSettingsPanelComponent"
+import {ProfilerInfoComponent} from "components/Shared";
 import "./ColorbarComponent.scss";
 
 export interface ColorbarComponentProps {
@@ -14,8 +16,67 @@ export interface ColorbarComponentProps {
 @observer
 export class ColorbarComponent extends React.Component<ColorbarComponentProps> {
     
+    @observable hoverInfoText: string =  "";
+    @observable showHoverInfo: boolean = false;
+    @observable cursorY: number = -1;
     private astFonts: Font[] = fonts.map((x, i) => (new Font(x, i)));
 
+    constructor(props) {
+        super(props);
+        makeObservable(this);
+    }
+
+    @action setHoverInfoText = (text: string) => {
+        this.hoverInfoText = text;
+    };
+
+    @action onMouseEnter = () => {
+        this.showHoverInfo = true;
+    };
+
+    @action onMouseLeave = () => {
+        this.showHoverInfo = false;
+    };
+
+    @action setCursorY = (y: number) => {
+        this.cursorY = y;
+    };
+
+    private handleMouseMove = (event) => {
+        const stage = event.target.getStage();
+        const point = stage.getPointerPosition();
+
+        const appStore = AppStore.Instance;
+        const frame = appStore.activeFrame;
+        const yOffset = appStore.overlayStore.padding.top;
+
+        let scaledPos = (frame.renderHeight + yOffset - point.y) / frame.renderHeight;
+        
+        switch(frame.renderConfig.scalingName) {
+            case('Log'):
+                scaledPos = (frame.renderConfig.alpha ** scaledPos - 1) / frame.renderConfig.alpha;
+                break;
+            case('Square root'):
+                scaledPos = scaledPos ** 2.0;
+                break;
+            case('Squared'):
+                scaledPos = scaledPos ** 0.5;
+                break;
+            case('Gamma'):
+                scaledPos = scaledPos ** (1 / frame.renderConfig.gamma);
+                break;
+            case('Power'):
+                scaledPos = Math.log(frame.renderConfig.alpha * scaledPos + 1) / Math.log(frame.renderConfig.alpha);
+                break;
+            case('Linear'):
+            case('Unknown'):
+            default:
+                break;
+        }
+        this.setHoverInfoText((frame.renderConfig.scaleMinVal + scaledPos * (frame.renderConfig.scaleMaxVal - frame.renderConfig.scaleMinVal)).toFixed(4));
+        this.setCursorY(point.y);
+    };
+    
     private getColor = (): string => {
         const appStore = AppStore.Instance;
         const colorId = appStore.overlayStore.global.color
@@ -28,19 +89,20 @@ export class ColorbarComponent extends React.Component<ColorbarComponentProps> {
         const colorbarSettings = appStore.overlayStore.colorbar;
         const yOffset = appStore.overlayStore.padding.top;
         return (
-            <Layer>
-                <Rect
-                    x={colorbarSettings.offset}
-                    y={yOffset}
-                    width={colorbarSettings.width}
-                    height={frame.renderHeight}
-                    fillLinearGradientStartPoint={{x: 0, y: yOffset}}
-                    fillLinearGradientEndPoint={{x: 0, y: yOffset + frame.renderHeight}}
-                    fillLinearGradientColorStops={frame.renderConfig.colorscaleArray}
-                    stroke={colorbarSettings.borderVisible ? this.getColor() : null}
-                    strokeWidth={colorbarSettings.borderWidth}
-                />
-            </Layer>
+            <Rect
+                x={colorbarSettings.offset}
+                y={yOffset}
+                width={colorbarSettings.width}
+                height={frame.renderHeight}
+                fillLinearGradientStartPoint={{x: 0, y: yOffset}}
+                fillLinearGradientEndPoint={{x: 0, y: yOffset + frame.renderHeight}}
+                fillLinearGradientColorStops={frame.renderConfig.colorscaleArray}
+                stroke={colorbarSettings.borderVisible ? this.getColor() : null}
+                strokeWidth={colorbarSettings.borderWidth}
+                onMouseEnter={this.onMouseEnter}
+                onMouseMove={this.handleMouseMove}
+                onMouseLeave={this.onMouseLeave}
+            />
         )
     };
 
@@ -112,12 +174,8 @@ export class ColorbarComponent extends React.Component<ColorbarComponentProps> {
 
         return (
             <React.Fragment>
-                <Layer>
-                    {colorbarSettings.tickVisible ? ticks : null}
-                </Layer>
-                <Layer>
-                    {colorbarSettings.numberVisible ? numbers : null}
-                </Layer>
+                {colorbarSettings.tickVisible ? ticks : null}
+                {colorbarSettings.numberVisible ? numbers : null}
             </React.Fragment>
         );
     };
@@ -128,36 +186,62 @@ export class ColorbarComponent extends React.Component<ColorbarComponentProps> {
         const colorbarSettings = appStore.overlayStore.colorbar;
         const yOffset = appStore.overlayStore.padding.top;
         return (
-            <Layer>
-                <Text
-                    text={frame.unit}
-                    x={colorbarSettings.rightBorderPos + colorbarSettings.textGap + colorbarSettings.labelWidth}
-                    y={yOffset + frame.renderHeight / 2}
-                    fill={this.getColor()}
-                    fontFamily={this.astFonts[colorbarSettings.labelFont].family}
-                    fontSize={colorbarSettings.labelFontSize}
-                    fontStyle={`${this.astFonts[colorbarSettings.labelFont].style} ${this.astFonts[colorbarSettings.labelFont].weight}`}
-                    rotation={-90}
-                    key={'0'}
-                />
-            </Layer>
+            <Text
+                text={frame.unit}
+                x={colorbarSettings.rightBorderPos + colorbarSettings.textGap + colorbarSettings.labelWidth}
+                y={yOffset + frame.renderHeight / 2}
+                fill={this.getColor()}
+                fontFamily={this.astFonts[colorbarSettings.labelFont].family}
+                fontSize={colorbarSettings.labelFontSize}
+                fontStyle={`${this.astFonts[colorbarSettings.labelFont].style} ${this.astFonts[colorbarSettings.labelFont].weight}`}
+                rotation={-90}
+                key={'0'}
+            />
         );
     };
 
+    private renderHoverBar = () => {
+        const colorbarSettings = AppStore.Instance.overlayStore.colorbar;
+        return (
+            <Line
+                points={[colorbarSettings.offset, this.cursorY, colorbarSettings.rightBorderPos, this.cursorY]}
+                stroke={this.getColor()}
+                strokeWidth={0.5}
+            />
+        );
+    };
+
+    private renderHoverInfo = () => {
+        const frame = AppStore.Instance.activeFrame;
+        return (
+            <div className={"colorbar-info"}>
+                <ProfilerInfoComponent info={[`Colorscale: ${this.hoverInfoText} ${frame.unit}`]}/>
+            </div>
+        );
+ 
+    }
 
     render() {
         const colorbarSettings = AppStore.Instance.overlayStore.colorbar;
         return (
-            <Stage
-                className={"colorbar-stage"}
-                width={colorbarSettings.stageWidth}
-                height={this.props.height}
-                style={{left: this.props.left}}
-            >
-                {this.renderColorbar()}
-                {colorbarSettings.tickVisible || colorbarSettings.numberVisible ? this.renderTicksNumbers() : null}
-                {colorbarSettings.labelVisible ? this.renderTitle() : null}
-            </Stage>
+            <React.Fragment>
+                <Stage
+                    className={"colorbar-stage"}
+                    width={colorbarSettings.stageWidth}
+                    height={this.props.height}
+                    style={{left: this.props.left}}
+                >
+                    <Layer>
+                        {this.renderColorbar()}
+                        {colorbarSettings.tickVisible || colorbarSettings.numberVisible ? this.renderTicksNumbers() : null}
+                        {colorbarSettings.labelVisible ? this.renderTitle() : null}
+                    </Layer>
+                    <Layer>
+                        {colorbarSettings.showHoverInfo && this.showHoverInfo ? this.renderHoverBar() : null}
+                    </Layer>
+                </Stage>
+                {colorbarSettings.showHoverInfo && this.showHoverInfo ? this.renderHoverInfo() : null}
+            </React.Fragment>
         );
     }
 }

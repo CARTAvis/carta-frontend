@@ -687,6 +687,7 @@ export class OverlayLabelSettings {
 
 export class OverlayColorbarSettings {
     @observable visible: boolean;
+    @observable showHoverInfo: boolean;
     @observable width: number;
     @observable offset: number;
     @observable borderVisible: boolean;
@@ -706,6 +707,7 @@ export class OverlayColorbarSettings {
     constructor() {
         makeObservable(this);
         this.visible = true;
+        this.showHoverInfo = true;
         this.width = 20;
         this.offset = 10;
         this.borderVisible = true;
@@ -727,6 +729,10 @@ export class OverlayColorbarSettings {
         this.visible = visible;
     }
 
+    @action setShowHoverInfo = (show: boolean) => {
+        this.showHoverInfo = show;
+    }
+    
     @action setWidth = (width: number) => {
         this.width = width;
     };
@@ -1066,12 +1072,13 @@ export class OverlayStore {
 
         const colorbarGap = (this.colorbar.visible ? this.defaultGap : 0);
         const colorbarWidth = (this.colorbar.visible ? this.colorbar.stageWidth : 0);
+        const colorbarHoverInfoWidth = (!this.colorbar.visible || this.labels.show ? 0 : 10);
 
         return {
             left: base + numGap + numHeight + labelGap + labelHeight,
             right: base + colorbarGap + colorbarWidth,
             top: base + titleGap + titleHeight,
-            bottom: base + numGap + numHeight + labelGap + labelHeight
+            bottom: base + numGap + numHeight + labelGap + labelHeight + colorbarHoverInfoWidth
         };
     }
 
