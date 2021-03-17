@@ -470,6 +470,7 @@ export class FileBrowserDialogComponent extends React.Component {
                                 isLoading={fileBrowserStore.loadingInfo}
                                 errorMessage={fileBrowserStore.responseErrorMessage}
                                 catalogHeaderTable={tableProps}
+                                selectedFile={fileBrowserStore.selectedFile}
                             />
                         </div>
                     </div>
