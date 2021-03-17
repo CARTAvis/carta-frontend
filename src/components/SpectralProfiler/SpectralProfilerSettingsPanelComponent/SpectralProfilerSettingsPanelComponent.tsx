@@ -55,18 +55,11 @@ export class SpectralProfilerSettingsPanelComponent extends React.Component<Widg
         autorun(() => {
             if (this.widgetStore) {
                 const frame = this.widgetStore.effectiveFrame;
-                const coordinate = this.widgetStore.coordinate;
-                if (frame && coordinate) {
-                    let coordinateString: string;
-                    if (coordinate.length === 2) {
-                        coordinateString = `Z Profile (Stokes ${coordinate[0]})`;
-                    } else {
-                        coordinateString = `Z Profile`;
-                    }
+                if (frame) {
                     const regionId = this.widgetStore.effectiveRegionId;
                     const regionString = regionId === 0 ? "Cursor" : `Region #${regionId}`;
                     const selectedString = this.widgetStore.matchesSelectedRegion ? "(Active)" : "";
-                    appStore.widgetsStore.setWidgetTitle(this.props.floatingSettingsId, `${coordinateString} Settings: ${regionString} ${selectedString}`);
+                    appStore.widgetsStore.setWidgetTitle(this.props.floatingSettingsId, `Z Profile Settings: ${regionString} ${selectedString}`);
                 }
             }
         });

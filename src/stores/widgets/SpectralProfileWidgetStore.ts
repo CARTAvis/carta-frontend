@@ -24,7 +24,6 @@ export enum MomentSelectingMode {
 }
 
 export class SpectralProfileWidgetStore extends RegionWidgetStore {
-    @observable coordinate: string;
     @observable statsType: CARTA.StatsType;
     @observable selectedProfileClass: ProfileClass;
     @observable selectedFrames: number[];
@@ -105,15 +104,6 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
 
     @action selectProfileClass = (profileClass: ProfileClass) => {
         this.selectedProfileClass = profileClass;
-    };
-
-    @action setCoordinate = (coordinate: string) => {
-        // Check coordinate validity
-        if (SpectralProfileWidgetStore.ValidCoordinates.indexOf(coordinate) !== -1) {
-            // Reset zoom when changing between coordinates
-            this.clearXYBounds();
-            this.coordinate = coordinate;
-        }
     };
 
     @action selectFrame = (fileId: number) => {
@@ -364,13 +354,12 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
     constructor(coordinate: string = "z") {
         super(RegionsType.CLOSED_AND_POINT);
         makeObservable<SpectralProfileWidgetStore, "spectralLinesMHz" | "updateRanges">(this);
-        this.coordinate = coordinate;
         this.statsType = CARTA.StatsType.Mean;
         this.selectedProfileClass = ProfileClass.IMAGE;
         this.selectedFrames = [];
         this.selectedRegions = [];
         this.selectedStatsTypes = [];
-        this.selectedCoordinates = [];
+        this.selectedCoordinates = [coordinate];
         this.isStreamingData = false;
         this.isHighlighted = false;
         this.spectralLinesMHz = [];
@@ -457,7 +446,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
             }
             const fileId = frame.frameInfo.fileId;
             const regionId = widgetStore.effectiveRegionId;
-            const coordinate = widgetStore.coordinate;
+            const coordinates = widgetStore.selectedCoordinates;
             let statsType = widgetStore.statsType;
 
             const region = frame.regionSet.regions.find(r => r.regionId === regionId);
@@ -483,11 +472,13 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
                     regionRequirements.spectralProfiles = [];
                 }
 
-                let spectralConfig = regionRequirements.spectralProfiles.find(profiles => profiles.coordinate === coordinate);
+                let spectralConfig = regionRequirements.spectralProfiles.find(profiles => coordinates.includes(profiles.coordinate));
                 if (!spectralConfig) {
                     // create new spectral config
-                    regionRequirements.spectralProfiles.push({coordinate, statsTypes: [statsType]});
-                } else if (spectralConfig.statsTypes.indexOf(statsType) === -1) {
+                    coordinates.forEach(coordinate => {
+                        regionRequirements.spectralProfiles.push({coordinate, statsTypes: [statsType]});
+                    });
+                } else if (!spectralConfig.statsTypes.includes(statsType)) {
                     // add to the stats type array
                     spectralConfig.statsTypes.push(statsType);
                 }

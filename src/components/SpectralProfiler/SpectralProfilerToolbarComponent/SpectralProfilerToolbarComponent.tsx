@@ -2,7 +2,7 @@ import {observer} from "mobx-react";
 import * as React from "react";
 import {AnchorButton, ButtonGroup, IOptionProps, Position, Tooltip} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
-import {AppStore, FrameStore} from "stores";
+import {AppStore} from "stores";
 import {ProfileClass, SpectralProfileWidgetStore} from "stores/widgets";
 import {SpectralProfilerComponent, SpectralProfilerSettingsTabs} from "components";
 import {MultiSelectButtonComponent} from "./MultiSelectButtonComponent";
@@ -35,12 +35,6 @@ export class SpectralProfilerToolbarComponent extends React.Component<{ widgetSt
     private momentsShortcutClick = () => {
         this.props.widgetStore.setSettingsTabId(SpectralProfilerSettingsTabs.MOMENTS);
         AppStore.Instance.widgetsStore.createFloatingSettingsWidget(SpectralProfilerComponent.WIDGET_CONFIG.title, this.props.id, SpectralProfilerComponent.WIDGET_CONFIG.type);
-    };
-
-    private handleFrameChanged = (newFrame: FrameStore) => {
-        if (newFrame && !newFrame.stokesInfo.includes(this.props.widgetStore.coordinate)) {
-            this.props.widgetStore.setCoordinate("z");
-        }
     };
 
     public render() {

@@ -14,7 +14,9 @@ import {Point2D, ProcessedSpectralProfile} from "models";
 import {binarySearchByX, clamp, formattedExponential, formattedNotation, toExponential, toFixed} from "utilities";
 import "./SpectralProfilerComponent.scss";
 
-type PlotData = { values: Point2D[], smoothingValues: Point2D[], xMin: number, xMax: number, yMin: number, yMax: number, yMean: number, yRms: number, progress: number };
+type XBound = {xMin: number, xMax: number};
+type YBound = {yMin: number, yMax: number};
+type PlotData = { points: Point2D[], smoothingPoints: Point2D[], xMin: number, xMax: number, yMin: number, yMax: number, yMean: number, yRms: number, progress: number };
 
 @observer
 export class SpectralProfilerComponent extends React.Component<WidgetProps> {
@@ -59,6 +61,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
         return null;
     }
 
+    /*
     @computed get plotData(): PlotData {
         const frame = this.widgetStore.effectiveFrame;
         if (!frame) {
@@ -70,7 +73,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
         if (frame.regionSet) {
             const region = frame.regionSet.regions.find(r => r.regionId === regionId);
             if (region && this.profileStore) {
-                coordinateData = this.profileStore.getProfile(this.widgetStore.coordinate, region.isClosedRegion ? this.widgetStore.statsType : CARTA.StatsType.Sum);
+                coordinateData = this.profileStore.getProfile(this.widgetStore.selectedCoordinates[0], region.isClosedRegion ? this.widgetStore.statsType : CARTA.StatsType.Sum);
             }
         }
 
@@ -137,9 +140,58 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
                 yMin -= range * VERTICAL_RANGE_PADDING;
                 yMax += range * VERTICAL_RANGE_PADDING;
             }
-            return {values, smoothingValues, xMin, xMax, yMin, yMax, yMean, yRms, progress: coordinateData.progress};
+            return {points: values, smoothingPoints: smoothingValues, xMin, xMax, yMin, yMax, yMean, yRms, progress: coordinateData.progress};
         }
         return null;
+    }
+    */
+
+    @computed get plotData(): PlotData {
+        const frame = this.widgetStore.effectiveFrame;
+        if (!frame) {
+            return null;
+        }
+
+        // Get profiles
+        const profiles: ProcessedSpectralProfile[] = this.getProfiles();
+        if (!profiles || profiles.length <= 0) {
+            return null;
+        }
+
+        // Determine xMin/xMax
+        const xBound = this.getBoundX();
+
+        // Determine data/smoothingData/yBound/progress
+        let points: Point2D[] = [];
+        let smoothingPoints: Point2D[] = [];
+        let yBound = {yMin: Number.MAX_VALUE, yMax: -Number.MAX_VALUE};
+        let minProgress: number;
+        profiles.forEach((profile, index) => {
+            const dataSet = this.getDataPointSet(profile, xBound);
+            points = points.concat(dataSet.points);
+            smoothingPoints = smoothingPoints.concat(dataSet.smoothingPoints);
+            if (yBound.yMin > dataSet.yBound.yMin) {
+                yBound.yMin = dataSet.yBound.yMin;
+            }
+            if (yBound.yMax < dataSet.yBound.yMax) {
+                yBound.yMax = dataSet.yBound.yMax;
+            }
+            if (index === 0 || profile.progress < minProgress) {
+                minProgress = profile.progress;
+            }
+        });
+
+        if (yBound.yMin === Number.MAX_VALUE) {
+            yBound.yMin = undefined;
+            yBound.yMax = undefined;
+        } else {
+            // extend y range a bit
+            const range = yBound.yMax - yBound.yMin;
+            yBound.yMin -= range * VERTICAL_RANGE_PADDING;
+            yBound.yMax += range * VERTICAL_RANGE_PADDING;
+        }
+
+        return {points, smoothingPoints, xMin: xBound.xMin, xMax: xBound.xMax, yMin: yBound.yMin, yMax: yBound.yMax, yMean: 0, yRms: 0, progress: minProgress};
     }
 
     @computed get exportHeaders(): string[] {
@@ -183,7 +235,6 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
         // Update widget title when region or coordinate changes
         autorun(() => {
             if (this.widgetStore && this.widgetStore.effectiveFrame) {
-                const coordinate = this.widgetStore.coordinate;
                 const frame = this.widgetStore.effectiveFrame;
                 let progressString = "";
                 const currentData = this.plotData;
@@ -195,17 +246,11 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
                         this.widgetStore.updateStreamingDataStatus(false);
                     }
                 }
-                if (frame && coordinate) {
-                    let coordinateString: string;
-                    if (coordinate.length === 2) {
-                        coordinateString = `Z Profile (Stokes ${coordinate[0]})`;
-                    } else {
-                        coordinateString = `Z Profile`;
-                    }
+                if (frame) {
                     const regionId = this.widgetStore.effectiveRegionId;
                     const regionString = regionId === 0 ? "Cursor" : `Region #${regionId}`;
                     const selectedString = this.widgetStore.matchesSelectedRegion ? "(Active)" : "";
-                    appStore.widgetsStore.setWidgetTitle(this.props.id, `${coordinateString}: ${regionString} ${selectedString} ${progressString}`);
+                    appStore.widgetsStore.setWidgetTitle(this.props.id, `Z Profile: ${regionString} ${selectedString} ${progressString}`);
                 }
                 if (currentData) {
                     this.widgetStore.initXYBoundaries(currentData.xMin, currentData.xMax, currentData.yMin, currentData.yMax);
@@ -278,7 +323,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
                 image: this.currentChannelValue,
                 unit: frame.spectralUnitStr
             };
-            const data = this.plotData.values;
+            const data = this.plotData.points;
             const nearest = binarySearchByX(data, this.widgetStore.isMouseMoveIntoLinePlots ? cursorX.profiler : cursorX.image);
             let cursorString = "";
             if (nearest && nearest.point && nearest.index >= 0 && nearest.index < data.length) {
@@ -341,6 +386,87 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
         return spectralLineMarkers;
     };
 
+    private getProfiles = (): ProcessedSpectralProfile[] => {
+        let profiles: ProcessedSpectralProfile[] = [];
+        const frame = this.widgetStore.effectiveFrame;
+        const regionId = this.widgetStore.effectiveRegionId;
+        if (frame.regionSet) {
+            const region = frame.regionSet.regions.find(r => r.regionId === regionId);
+            if (region && this.profileStore) {
+                this.widgetStore.selectedCoordinates.forEach(coordinate => {
+                    const profile = this.profileStore.getProfile(coordinate, region.isClosedRegion ? this.widgetStore.statsType : CARTA.StatsType.Sum);
+                    if (profile) {
+                        profiles.push(profile);
+                    }
+                });
+            }
+        }
+        return profiles;
+    };
+
+    private getBoundX = (): XBound => {
+        const channelValues = this.widgetStore.effectiveFrame.channelValues;
+        let xMin = Math.min(channelValues[0], channelValues[channelValues.length - 1]);
+        let xMax = Math.max(channelValues[0], channelValues[channelValues.length - 1])
+        if (!this.widgetStore.isAutoScaledX) {
+            const localXMin = clamp(this.widgetStore.minX, xMin, xMax);
+            const localXMax = clamp(this.widgetStore.maxX, xMin, xMax);
+            xMin = localXMin;
+            xMax = localXMax;
+        }
+        return {xMin, xMax};
+    };
+
+    private getDataPointSet = (profile: ProcessedSpectralProfile, xBound: XBound): {points: Point2D[], smoothingPoints: Point2D[], yBound: YBound} => {
+        const channelValues = this.widgetStore.effectiveFrame.channelValues;
+        let points: Point2D[] = [];
+        let smoothingPoints: Point2D[] = [];
+        let yBound = {yMin: Number.MAX_VALUE, yMax: -Number.MAX_VALUE};
+        if (profile?.values?.length && channelValues?.length && profile.values.length === channelValues.length) {
+            // Variables for mean and RMS calculations
+            /*
+            let ySum = 0;
+            let ySum2 = 0;
+            let yCount = 0;
+            */
+
+            for (let i = 0; i < channelValues.length; i++) {
+                const x = channelValues[i];
+                const y = profile.values[i];
+
+                // Skip values outside of range. If array already contains elements, we've reached the end of the range, and can break
+                if (x < xBound.xMin || x > xBound.xMax) {
+                    if (points.length) {
+                        break;
+                    } else {
+                        continue;
+                    }
+                }
+                points.push({x, y});
+                // Mean/RMS calculations
+                if (!isNaN(y)) {
+                    yBound.yMin = Math.min(yBound.yMin, y);
+                    yBound.yMax = Math.max(yBound.yMax, y);
+                    /*
+                    yCount++;
+                    ySum += y;
+                    ySum2 += y * y;
+                    */
+                }
+            }
+            smoothingPoints.concat(this.widgetStore.smoothingStore.getSmoothingPoint2DArray(channelValues, profile.values));
+
+            /*
+            if (yCount > 0) {
+                yMean = ySum / yCount;
+                yRms = Math.sqrt((ySum2 / yCount) - yMean * yMean);
+            }
+            */
+        }
+
+        return {points: points, smoothingPoints: smoothingPoints, yBound: yBound};
+    };
+
     render() {
         const appStore = AppStore.Instance;
         if (!this.widgetStore) {
@@ -401,7 +527,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
 
             const currentPlotData = this.plotData;
             if (currentPlotData) {
-                linePlotProps.data = currentPlotData.values;
+                linePlotProps.data = currentPlotData.points;
                 // Opacity ranges from 0.15 to 0.40 when data is in progress, and is 1.0 when finished
                 linePlotProps.opacity = currentPlotData.progress < 1.0 ? 0.15 + currentPlotData.progress / 4.0 : 1.0;
                 
@@ -420,7 +546,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
                     }
 
                     let smoothingPlotProps: MultiPlotProps = {
-                        data: currentPlotData.smoothingValues,
+                        data: currentPlotData.smoothingPoints,
                         type: smoothingStore.lineType,
                         borderColor: smoothingStore.lineColor.colorHex,
                         borderWidth: smoothingStore.lineWidth,
