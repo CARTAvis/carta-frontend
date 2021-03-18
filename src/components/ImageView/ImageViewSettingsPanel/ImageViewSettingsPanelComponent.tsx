@@ -617,7 +617,7 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
                     <SafeNumericInput
                         placeholder="Width"
                         min={1}
-                        max={overlayStore.viewWidth * 0.5}
+                        max={overlayStore.viewWidth * 0.3}
                         value={colorbar.width}
                         stepSize={0.5}
                         minorStepSize={0.1}

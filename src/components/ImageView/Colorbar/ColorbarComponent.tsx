@@ -68,7 +68,7 @@ export class ColorbarComponent extends React.Component<ColorbarComponentProps> {
         const min = appStore.activeFrame.renderConfig.scaleMinVal;
         const tickNum = appStore.overlayStore.colorbar.tickNum;
         const dy = Math.log10((max - min) / (tickNum + 1));
-        return dy > 0 ? 0 : Math.ceil(-dy) + 1;
+        return dy > 1 ? 0 : Math.ceil(-dy) + 1;
     }
 
     private renderColorbar = () => {
@@ -125,7 +125,9 @@ export class ColorbarComponent extends React.Component<ColorbarComponentProps> {
                     <Text
                         text={texts[i]}
                         x={colorbarSettings.rightBorderPos + colorbarSettings.textGap}
-                        y={colorbarSettings.numberRotated ? yPosArray[i] + 18 : yPosArray[i] - colorbarSettings.numberFontSize / 2}
+                        y={colorbarSettings.numberRotated ? yPosArray[i] + 100 / 2 : yPosArray[i] - colorbarSettings.numberFontSize / 2}
+                        width={colorbarSettings.numberRotated ? 100 : null}
+                        align={"center"}
                         fill={this.getColor()}
                         fontFamily={this.astFonts[colorbarSettings.numberFont].family}
                         fontStyle={`${this.astFonts[colorbarSettings.numberFont].style} ${this.astFonts[colorbarSettings.numberFont].weight}`}
@@ -154,7 +156,9 @@ export class ColorbarComponent extends React.Component<ColorbarComponentProps> {
             <Text
                 text={frame.unit}
                 x={colorbarSettings.rightBorderPos + colorbarSettings.textGap + colorbarSettings.labelWidth}
-                y={yOffset + frame.renderHeight / 2}
+                y={yOffset + frame.renderHeight}
+                width={frame.renderHeight}
+                align={"center"}
                 fill={this.getColor()}
                 fontFamily={this.astFonts[colorbarSettings.labelFont].family}
                 fontSize={colorbarSettings.labelFontSize}
