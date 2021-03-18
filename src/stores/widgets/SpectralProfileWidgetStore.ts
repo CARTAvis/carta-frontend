@@ -10,7 +10,7 @@ import {SpectralSystem, SpectralType, SpectralUnit} from "models";
 import tinycolor from "tinycolor2";
 import {SpectralProfilerSettingsTabs} from "components";
 
-export enum ProfileClass {
+export enum ProfileCategory {
     IMAGE = "Image",
     REGION = "Region",
     STATISTICS = "Statistics",
@@ -25,7 +25,7 @@ export enum MomentSelectingMode {
 
 export class SpectralProfileWidgetStore extends RegionWidgetStore {
     @observable statsType: CARTA.StatsType;
-    @observable selectedProfileClass: ProfileClass;
+    @observable selectedProfileCategory: ProfileCategory;
     @observable selectedFrames: number[];
     @observable selectedRegions: number[];
     @observable selectedStatsTypes: CARTA.StatsType[];
@@ -102,8 +102,8 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         }
     };
 
-    @action selectProfileClass = (profileClass: ProfileClass) => {
-        this.selectedProfileClass = profileClass;
+    @action selectProfileCategory = (profileCategory: ProfileCategory) => {
+        this.selectedProfileCategory = profileCategory;
     };
 
     @action selectFrame = (fileId: number) => {
@@ -355,7 +355,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         super(RegionsType.CLOSED_AND_POINT);
         makeObservable<SpectralProfileWidgetStore, "spectralLinesMHz" | "updateRanges">(this);
         this.statsType = CARTA.StatsType.Mean;
-        this.selectedProfileClass = ProfileClass.IMAGE;
+        this.selectedProfileCategory = ProfileCategory.IMAGE;
         this.selectedFrames = [];
         this.selectedRegions = [];
         this.selectedStatsTypes = [];

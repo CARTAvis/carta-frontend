@@ -9,7 +9,7 @@ import {LineMarker, LinePlotComponent, LinePlotComponentProps, LinePlotSelecting
 import {TickType, MultiPlotProps} from "../Shared/LinePlot/PlotContainer/PlotContainerComponent";
 import {SpectralProfilerToolbarComponent} from "./SpectralProfilerToolbarComponent/SpectralProfilerToolbarComponent";
 import {SpectralProfileStore, WidgetProps, HelpType, AnimatorStore, WidgetsStore, AppStore, DefaultWidgetConfig, RegionStore} from "stores";
-import {SpectralProfileWidgetStore} from "stores/widgets";
+import {ProfileCategory, SpectralProfileWidgetStore} from "stores/widgets";
 import {Point2D, ProcessedSpectralProfile} from "models";
 import {binarySearchByX, clamp, formattedExponential, formattedNotation, toExponential, toFixed} from "utilities";
 import "./SpectralProfilerComponent.scss";
@@ -167,6 +167,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
         let yBound = {yMin: Number.MAX_VALUE, yMax: -Number.MAX_VALUE};
         let minProgress: number;
         profiles.forEach((profile, index) => {
+            // TODO: should use multiPlotPropsMap for LinePlot
             const dataPointSet = this.getDataPointSet(profile, xBound);
             points = points.concat(dataPointSet.points);
             smoothingPoints = smoothingPoints.concat(dataPointSet.smoothingPoints);
@@ -390,15 +391,24 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
         let profiles: ProcessedSpectralProfile[] = [];
         const frame = this.widgetStore.effectiveFrame;
         const regionId = this.widgetStore.effectiveRegionId;
-        if (frame.regionSet) {
-            const region = frame.regionSet.regions.find(r => r.regionId === regionId);
-            if (region && this.profileStore) {
-                this.widgetStore.selectedCoordinates.forEach(coordinate => {
-                    const profile = this.profileStore.getProfile(coordinate, region.isClosedRegion ? this.widgetStore.statsType : CARTA.StatsType.Sum);
-                    if (profile) {
-                        profiles.push(profile);
-                    }
-                });
+        const profileCategory = this.widgetStore.selectedProfileCategory;
+        if (profileCategory === ProfileCategory.IMAGE) {
+            // TODO
+        } else if (profileCategory === ProfileCategory.REGION) {
+            // TODO
+        } else if (profileCategory === ProfileCategory.STATISTICS) {
+            // TODO
+        } else if (profileCategory === ProfileCategory.STOKES) {
+            if (frame.regionSet) {
+                const region = frame.regionSet.regions.find(r => r.regionId === regionId);
+                if (region && this.profileStore) {
+                    this.widgetStore.selectedCoordinates.forEach(coordinate => {
+                        const profile = this.profileStore.getProfile(coordinate, region.isClosedRegion ? this.widgetStore.statsType : CARTA.StatsType.Sum);
+                        if (profile) {
+                            profiles.push(profile);
+                        }
+                    });
+                }
             }
         }
         return profiles;

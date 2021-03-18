@@ -3,7 +3,7 @@ import * as React from "react";
 import {AnchorButton, ButtonGroup, IOptionProps, Position, Tooltip} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import {AppStore} from "stores";
-import {ProfileClass, SpectralProfileWidgetStore} from "stores/widgets";
+import {ProfileCategory, SpectralProfileWidgetStore} from "stores/widgets";
 import {SpectralProfilerComponent, SpectralProfilerSettingsTabs} from "components";
 import {MultiSelectButtonComponent} from "./MultiSelectButtonComponent";
 import {CustomIcon} from "icons/CustomIcons";
@@ -74,9 +74,9 @@ export class SpectralProfilerToolbarComponent extends React.Component<{ widgetSt
             <div className="spectral-profiler-toolbar">
                 <Tooltip content="Select to show multiple profiles" position={Position.TOP}>
                     <AnchorButton
-                        text={ProfileClass.IMAGE}
-                        active={widgetStore.selectedProfileClass === ProfileClass.IMAGE}
-                        onClick={(ev) => widgetStore.selectProfileClass(ProfileClass.IMAGE)}
+                        text={ProfileCategory.IMAGE}
+                        active={widgetStore.selectedProfileCategory === ProfileCategory.IMAGE}
+                        onClick={(ev) => widgetStore.selectProfileCategory(ProfileCategory.IMAGE)}
                     />
                 </Tooltip>
                 <MultiSelectButtonComponent
@@ -87,9 +87,9 @@ export class SpectralProfilerToolbarComponent extends React.Component<{ widgetSt
                 />
                 <Tooltip content="Select to show multiple profiles" position={Position.TOP}>
                     <AnchorButton
-                        text={ProfileClass.REGION}
-                        active={widgetStore.selectedProfileClass === ProfileClass.REGION}
-                        onClick={(ev) => widgetStore.selectProfileClass(ProfileClass.REGION)}
+                        text={ProfileCategory.REGION}
+                        active={widgetStore.selectedProfileCategory === ProfileCategory.REGION}
+                        onClick={(ev) => widgetStore.selectProfileCategory(ProfileCategory.REGION)}
                     />
                 </Tooltip>
                 <MultiSelectButtonComponent
@@ -100,9 +100,9 @@ export class SpectralProfilerToolbarComponent extends React.Component<{ widgetSt
                 />
                 <Tooltip content="Select to show multiple profiles" position={Position.TOP}>
                     <AnchorButton
-                        text={ProfileClass.STATISTICS}
-                        active={widgetStore.selectedProfileClass === ProfileClass.STATISTICS}
-                        onClick={(ev) => widgetStore.selectProfileClass(ProfileClass.STATISTICS)}
+                        text={ProfileCategory.STATISTICS}
+                        active={widgetStore.selectedProfileCategory === ProfileCategory.STATISTICS}
+                        onClick={(ev) => widgetStore.selectProfileCategory(ProfileCategory.STATISTICS)}
                         disabled={!enableStatsSelect}
                     />
                 </Tooltip>
@@ -114,9 +114,9 @@ export class SpectralProfilerToolbarComponent extends React.Component<{ widgetSt
                 />
                 <Tooltip content="Select to show multiple profiles" position={Position.TOP}>
                     <AnchorButton
-                        text={ProfileClass.STOKES}
-                        active={widgetStore.selectedProfileClass === ProfileClass.STOKES}
-                        onClick={(ev) => widgetStore.selectProfileClass(ProfileClass.STOKES)}
+                        text={ProfileCategory.STOKES}
+                        active={widgetStore.selectedProfileCategory === ProfileCategory.STOKES}
+                        onClick={(ev) => widgetStore.selectProfileCategory(ProfileCategory.STOKES)}
                         disabled={!enableStokesSelect}
                     />
                 </Tooltip>
