@@ -1083,10 +1083,12 @@ export class OverlayStore {
     }
 
     @computed get renderWidth() {
-        return this.viewWidth - this.padding.left - this.padding.right;
+        const renderWidth = this.viewWidth - this.padding.left - this.padding.right
+        return renderWidth > 1 ? renderWidth : 1; // return value > 1 to prevent crashing
     }
 
     @computed get renderHeight() {
-        return this.viewHeight - this.padding.top - this.padding.bottom;
+        const renderHeight =  this.viewHeight - this.padding.top - this.padding.bottom;
+        return renderHeight > 1 ? renderHeight : 1; // return value > 1 to prevent crashing
     }
 }

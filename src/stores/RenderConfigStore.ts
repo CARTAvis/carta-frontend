@@ -1,7 +1,7 @@
 import {action, computed, observable, makeObservable} from "mobx";
 import {FrameStore, PreferenceStore} from "stores";
 import {CARTA} from "carta-protobuf";
-import {clamp, getColorsForValues, getPercentiles} from "utilities";
+import {clamp, getColorsForValues, getPercentiles, scaleValueInverse} from "utilities";
 
 export enum FrameScaling {
     LINEAR = 0,
@@ -121,10 +121,11 @@ export class RenderConfigStore {
     @computed get colorscaleArray() {
         const colorsForValues = getColorsForValues(this.colorMap);
         const indexArray = Array.from(Array(colorsForValues.size).keys()).map(x => this.inverted ? x / colorsForValues.size : 1 - x / colorsForValues.size);
+        const scaledAarray = indexArray.map(x => 1.0 - scaleValueInverse(1.0 - x, this.scaling, this.alpha, this.gamma))
 
         let colorscale = [];
         for (let i = 0; i < colorsForValues.size; i++) {
-            colorscale.push(indexArray[i],
+            colorscale.push(scaledAarray[i],
                 `rgb(${colorsForValues.color[i * 4]}, ${colorsForValues.color[i * 4 + 1]}, ${colorsForValues.color[i * 4 + 2]}, ${colorsForValues.color[i * 4 + 3]})`);
         }
         return colorscale

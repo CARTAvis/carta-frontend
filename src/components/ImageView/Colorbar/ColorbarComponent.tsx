@@ -5,7 +5,6 @@ import {Layer, Line, Rect, Stage, Text} from "react-konva";
 import {Font} from "../ImageViewSettingsPanel/ImageViewSettingsPanelComponent"
 import {ProfilerInfoComponent} from "components/Shared";
 import {AppStore, dayPalette, nightPalette} from "stores";
-import {scaleValue, scaleValueInverse} from "utilities"
 import {fonts} from "ast_wrapper";
 import "./ColorbarComponent.scss";
 
@@ -52,7 +51,6 @@ export class ColorbarComponent extends React.Component<ColorbarComponentProps> {
         const yOffset = appStore.overlayStore.padding.top;
 
         let scaledPos = (frame.renderHeight + yOffset - point.y) / frame.renderHeight;
-        scaledPos = scaleValueInverse(scaledPos, frame.renderConfig.scaling, frame.renderConfig.alpha, frame.renderConfig.gamma);
  
         this.setHoverInfoText((frame.renderConfig.scaleMinVal + scaledPos * (frame.renderConfig.scaleMaxVal - frame.renderConfig.scaleMinVal)).toFixed(5));
         this.setCursorY(point.y);
@@ -104,7 +102,6 @@ export class ColorbarComponent extends React.Component<ColorbarComponentProps> {
 
         const indexArray = Array.from(Array(colorbarSettings.tickNum).keys())
         let scaledArray = indexArray.map(x => (x + 1) / (colorbarSettings.tickNum + 1));
-        scaledArray = scaledArray.map(x => scaleValue(x, frame.renderConfig.scaling, frame.renderConfig.alpha, frame.renderConfig.gamma));
         const yPosArray = scaledArray.map(x => yOffset + frame.renderHeight * (1 - x));
 
         let text_dy = (frame.renderConfig.scaleMaxVal - frame.renderConfig.scaleMinVal) / (colorbarSettings.tickNum + 1);    

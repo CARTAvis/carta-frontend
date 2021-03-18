@@ -616,7 +616,8 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
                 <FormGroup inline={true} label="Width" labelInfo="(px)" disabled={!colorbar.visible}>
                     <SafeNumericInput
                         placeholder="Width"
-                        min={0.0}
+                        min={1}
+                        max={overlayStore.viewWidth * 0.5}
                         value={colorbar.width}
                         stepSize={0.5}
                         minorStepSize={0.1}
@@ -629,6 +630,7 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
                     <SafeNumericInput
                         placeholder="Offset"
                         min={0.0}
+                        max={overlayStore.viewWidth * 0.3}
                         value={colorbar.offset}
                         stepSize={1}
                         minorStepSize={0.1}
