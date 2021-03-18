@@ -5,7 +5,7 @@ import {observer} from "mobx-react";
 import {action, autorun, makeObservable, observable} from "mobx";
 import {Select, ItemRenderer} from "@blueprintjs/select";
 import {
-    Button, Collapse, FormGroup, HTMLSelect,
+    Button, Collapse, Divider, FormGroup, HTMLSelect,
     InputGroup, MenuItem,
     Switch, Tab, Tabs, TabId
 } from "@blueprintjs/core";
@@ -691,6 +691,9 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
         const isPVImage = frame?.isPVImage;
         const spectralPanel = isPVImage ? (
             <div className="panel-container">
+                <h3>For spatial-spectral image</h3>
+                <Divider/>
+                <h3>Spectral axis</h3>
                 <SpectralSettingsComponent
                     frame={appStore.activeFrame}
                     onSpectralCoordinateChange={frame.setSpectralCoordinate}
