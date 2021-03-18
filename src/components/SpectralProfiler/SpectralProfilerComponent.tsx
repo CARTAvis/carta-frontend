@@ -16,7 +16,19 @@ import "./SpectralProfilerComponent.scss";
 
 type XBound = {xMin: number, xMax: number};
 type YBound = {yMin: number, yMax: number};
-type PlotData = { points: Point2D[], smoothingPoints: Point2D[], xMin: number, xMax: number, yMin: number, yMax: number, yMean: number, yRms: number, progress: number };
+type PlotData = {
+    numProfiles: number,
+    points: Point2D[],
+    smoothingPoints: Point2D[],
+    xMin: number,
+    xMax: number,
+    yMin: number,
+    yMax: number,
+    yMean: number,
+    yRms: number,
+    progressSum: number,
+    progress: number
+};
 
 @observer
 export class SpectralProfilerComponent extends React.Component<WidgetProps> {
@@ -165,8 +177,8 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
         let points: Point2D[] = [];
         let smoothingPoints: Point2D[] = [];
         let yBound = {yMin: Number.MAX_VALUE, yMax: -Number.MAX_VALUE};
-        let minProgress: number;
-        profiles.forEach((profile, index) => {
+        let progressSum: number = 0;
+        profiles.forEach((profile) => {
             // TODO: should use multiPlotPropsMap for LinePlot
             const dataPointSet = this.getDataPointSet(profile, xBound);
             points = points.concat(dataPointSet.points);
@@ -177,9 +189,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
             if (yBound.yMax < dataPointSet.yBound.yMax) {
                 yBound.yMax = dataPointSet.yBound.yMax;
             }
-            if (index === 0 || profile.progress < minProgress) {
-                minProgress = profile.progress;
-            }
+            progressSum += profile.progress;
         });
 
         if (yBound.yMin === Number.MAX_VALUE) {
@@ -192,7 +202,19 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
             yBound.yMax += range * VERTICAL_RANGE_PADDING;
         }
 
-        return {points, smoothingPoints, xMin: xBound.xMin, xMax: xBound.xMax, yMin: yBound.yMin, yMax: yBound.yMax, yMean: 0, yRms: 0, progress: minProgress};
+        return {
+            numProfiles: profiles.length,
+            points: points,
+            smoothingPoints: smoothingPoints,
+            xMin: xBound.xMin,
+            xMax: xBound.xMax,
+            yMin: yBound.yMin,
+            yMax:yBound.yMax,
+            yMean: 0,
+            yRms: 0,
+            progressSum: progressSum,
+            progress: progressSum / profiles.length
+        };
     }
 
     @computed get exportHeaders(): string[] {
@@ -241,7 +263,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
                 const currentData = this.plotData;
                 if (currentData && isFinite(currentData.progress)) {
                     if (currentData.progress < 1.0) {
-                        progressString = `[${toFixed(currentData.progress * 100)}% complete]`;
+                        progressString = `[${toFixed(currentData.progressSum * 100)}%/${currentData.numProfiles * 100}% complete]`
                         this.widgetStore.updateStreamingDataStatus(true);
                     } else {
                         this.widgetStore.updateStreamingDataStatus(false);
