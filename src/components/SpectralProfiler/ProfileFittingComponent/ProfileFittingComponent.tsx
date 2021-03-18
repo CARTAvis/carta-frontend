@@ -102,13 +102,6 @@ export class ProfileFittingComponent extends React.Component<{fittingStore: Prof
         const appStore = AppStore.Instance;
         const fittingStore = this.props.fittingStore;
 
-        // dummy variables for triggering re-render
-        /* eslint-disable @typescript-eslint/no-unused-vars */
-        const selectedCenter = fittingStore.selectedComponent.center;
-        const selectedAmp = fittingStore.selectedComponent.amp;
-        const selectedFwhm = fittingStore.selectedComponent.fwhm;
-        /* eslint-disable @typescript-eslint/no-unused-vars */
-
         return (
             <div className="profile-fitting-panel">
                 <div className="profile-fitting-form">
@@ -126,15 +119,6 @@ export class ProfileFittingComponent extends React.Component<{fittingStore: Prof
                             onChange={(ev) => fittingStore.setFunction(parseInt(ev.target.value))}
                         />
                     </FormGroup>
-                    <FormGroup label="N component" inline={true}>
-                        <SafeNumericInput
-                            value={fittingStore.components.length}
-                            min={1}
-                            max={10}
-                            stepSize={1}
-                            onValueChange={val => fittingStore.setComponents(Math.round(val))}
-                        />
-                    </FormGroup>
                     <FormGroup label="Continuum" inline={true}>
                         <HTMLSelect 
                             value={fittingStore.continuum} 
@@ -143,8 +127,15 @@ export class ProfileFittingComponent extends React.Component<{fittingStore: Prof
                             disabled={true}
                         />
                     </FormGroup>
-                    <FormGroup label="Component" inline={true}>
-                        <div className="component-slider">
+                    <FormGroup label="Components" inline={true}>
+                        <div className={"components-controller"}>
+                            <SafeNumericInput
+                                value={fittingStore.components.length}
+                                min={1}
+                                max={10}
+                                stepSize={1}
+                                onValueChange={val => fittingStore.setComponents(Math.round(val))}
+                            />
                             <Slider
                                 value={fittingStore.selectedIndex + 1}
                                 min={1}

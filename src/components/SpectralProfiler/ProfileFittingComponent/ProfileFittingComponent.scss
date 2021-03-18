@@ -12,8 +12,19 @@
             }
         }
 
-        .component-slider{
-            widows: 100%;
+        .components-controller{
+            display: flex;
+            flex-direction: row;
+            height: 30px;
+
+            .bp3-input-group{
+                width: 40px;
+            }
+
+            .bp3-slider{
+                margin-left: 15px;
+                width: 100%;
+            }
         }
 
         .component-input{

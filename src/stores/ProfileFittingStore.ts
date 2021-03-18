@@ -146,6 +146,7 @@ export class ProfileFittingIndividualStore {
     }
 
     constructor() {
+        makeObservable(this);
         this.center = 0;
         this.amp = 0;
         this.fwhm = 0;
