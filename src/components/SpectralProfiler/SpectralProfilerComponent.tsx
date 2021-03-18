@@ -158,23 +158,23 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
             return null;
         }
 
-        // Determine xMin/xMax
+        // Determine xBound
         const xBound = this.getBoundX();
 
-        // Determine data/smoothingData/yBound/progress
+        // Determine points/smoothingPoints/yBound/progress
         let points: Point2D[] = [];
         let smoothingPoints: Point2D[] = [];
         let yBound = {yMin: Number.MAX_VALUE, yMax: -Number.MAX_VALUE};
         let minProgress: number;
         profiles.forEach((profile, index) => {
-            const dataSet = this.getDataPointSet(profile, xBound);
-            points = points.concat(dataSet.points);
-            smoothingPoints = smoothingPoints.concat(dataSet.smoothingPoints);
-            if (yBound.yMin > dataSet.yBound.yMin) {
-                yBound.yMin = dataSet.yBound.yMin;
+            const dataPointSet = this.getDataPointSet(profile, xBound);
+            points = points.concat(dataPointSet.points);
+            smoothingPoints = smoothingPoints.concat(dataPointSet.smoothingPoints);
+            if (yBound.yMin > dataPointSet.yBound.yMin) {
+                yBound.yMin = dataPointSet.yBound.yMin;
             }
-            if (yBound.yMax < dataSet.yBound.yMax) {
-                yBound.yMax = dataSet.yBound.yMax;
+            if (yBound.yMax < dataPointSet.yBound.yMax) {
+                yBound.yMax = dataPointSet.yBound.yMax;
             }
             if (index === 0 || profile.progress < minProgress) {
                 minProgress = profile.progress;
