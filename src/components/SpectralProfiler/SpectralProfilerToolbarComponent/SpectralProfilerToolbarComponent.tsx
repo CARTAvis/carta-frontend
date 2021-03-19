@@ -1,11 +1,11 @@
 import {observer} from "mobx-react";
 import * as React from "react";
-import {AnchorButton, ButtonGroup, IOptionProps, Position, Tooltip} from "@blueprintjs/core";
+import {AnchorButton, ButtonGroup, IOptionProps, Tooltip} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import {AppStore} from "stores";
 import {ProfileCategory, SpectralProfileWidgetStore} from "stores/widgets";
 import {SpectralProfilerComponent, SpectralProfilerSettingsTabs} from "components";
-import {MultiSelectButtonComponent} from "./MultiSelectButtonComponent";
+import {ProfileSelectionComponent} from "./ProfileSelectionComponent";
 import {CustomIcon} from "icons/CustomIcons";
 import "./SpectralProfilerToolbarComponent.scss";
 
@@ -23,7 +23,7 @@ export class SpectralProfilerToolbarComponent extends React.Component<{ widgetSt
         this.props.widgetStore.selectStatsType(selectedStatsType);
     };
 
-    private onStokesItemSelect = (selectedStokes: string) => {
+    private onStokesItemClick = (selectedStokes: string) => {
         this.props.widgetStore.selectCoordinate(selectedStokes);
     };
 
@@ -72,59 +72,41 @@ export class SpectralProfilerToolbarComponent extends React.Component<{ widgetSt
 
         return (
             <div className="spectral-profiler-toolbar">
-                <Tooltip content="Select to show multiple profiles" position={Position.TOP}>
-                    <AnchorButton
-                        text={ProfileCategory.IMAGE}
-                        active={widgetStore.selectedProfileCategory === ProfileCategory.IMAGE}
-                        onClick={(ev) => widgetStore.selectProfileCategory(ProfileCategory.IMAGE)}
-                    />
-                </Tooltip>
-                <MultiSelectButtonComponent
+                <ProfileSelectionComponent
+                    category={ProfileCategory.IMAGE}
+                    selectedCategory={widgetStore.selectedProfileCategory}
                     itemOptions={AppStore.Instance.frameNames}
                     itemSelected={[widgetStore.selectedFrame]}
-                    onItemSelect={this.onFrameItemClick}
                     disabled={!enableFrameSelect}
+                    onCategorySelect={() => widgetStore.selectProfileCategory(ProfileCategory.IMAGE)}
+                    onItemSelect={this.onFrameItemClick}
                 />
-                <Tooltip content="Select to show multiple profiles" position={Position.TOP}>
-                    <AnchorButton
-                        text={ProfileCategory.REGION}
-                        active={widgetStore.selectedProfileCategory === ProfileCategory.REGION}
-                        onClick={(ev) => widgetStore.selectProfileCategory(ProfileCategory.REGION)}
-                    />
-                </Tooltip>
-                <MultiSelectButtonComponent
+                <ProfileSelectionComponent
+                    category={ProfileCategory.REGION}
+                    selectedCategory={widgetStore.selectedProfileCategory}
                     itemOptions={undefined}
                     itemSelected={widgetStore.selectedRegions}
-                    onItemSelect={this.onRegionItemClick}
                     disabled={!enableRegionSelect}
+                    onCategorySelect={() => widgetStore.selectProfileCategory(ProfileCategory.REGION)}
+                    onItemSelect={this.onRegionItemClick}
                 />
-                <Tooltip content="Select to show multiple profiles" position={Position.TOP}>
-                    <AnchorButton
-                        text={ProfileCategory.STATISTICS}
-                        active={widgetStore.selectedProfileCategory === ProfileCategory.STATISTICS}
-                        onClick={(ev) => widgetStore.selectProfileCategory(ProfileCategory.STATISTICS)}
-                        disabled={!enableStatsSelect}
-                    />
-                </Tooltip>
-                <MultiSelectButtonComponent
+                <ProfileSelectionComponent
+                    category={ProfileCategory.STATISTICS}
+                    selectedCategory={widgetStore.selectedProfileCategory}
                     itemOptions={profileStatsOptions}
                     itemSelected={widgetStore.selectedStatsTypes}
-                    onItemSelect={this.onStatsItemClick}
                     disabled={!enableStatsSelect}
+                    onCategorySelect={() => widgetStore.selectProfileCategory(ProfileCategory.STATISTICS)}
+                    onItemSelect={this.onStatsItemClick}
                 />
-                <Tooltip content="Select to show multiple profiles" position={Position.TOP}>
-                    <AnchorButton
-                        text={ProfileCategory.STOKES}
-                        active={widgetStore.selectedProfileCategory === ProfileCategory.STOKES}
-                        onClick={(ev) => widgetStore.selectProfileCategory(ProfileCategory.STOKES)}
-                        disabled={!enableStokesSelect}
-                    />
-                </Tooltip>
-                <MultiSelectButtonComponent
+                <ProfileSelectionComponent
+                    category={ProfileCategory.STOKES}
+                    selectedCategory={widgetStore.selectedProfileCategory}
                     itemOptions={profileCoordinateOptions}
                     itemSelected={widgetStore.selectedCoordinates}
-                    onItemSelect={this.onStokesItemSelect}
                     disabled={!enableStokesSelect}
+                    onCategorySelect={() => widgetStore.selectProfileCategory(ProfileCategory.STOKES)}
+                    onItemSelect={this.onStokesItemClick}
                 />
                 <ButtonGroup className="profile-buttons">
                     <Tooltip content="Smoothing">
