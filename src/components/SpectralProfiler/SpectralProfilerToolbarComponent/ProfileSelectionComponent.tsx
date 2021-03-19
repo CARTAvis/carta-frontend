@@ -1,15 +1,20 @@
 import {observer} from "mobx-react";
+import {autorun} from "mobx";
 import * as React from "react";
 import {AnchorButton, IOptionProps, Menu, MenuItem, Popover, Position, Tooltip} from "@blueprintjs/core";
-import {AppStore} from "stores";
 import {ProfileCategory, SpectralProfileWidgetStore} from "stores/widgets";
 import {CARTA} from "carta-protobuf";
 
 type MultiSelectItem = string | CARTA.StatsType;
+interface ItemOptionProps extends IOptionProps{
+    enable: boolean;
+    hightlight?: boolean;
+}
+
 class ProfileSelectionButtonComponentProps {
     category: ProfileCategory;
     selectedCategory: ProfileCategory;
-    itemOptions: IOptionProps[];
+    itemOptions: ItemOptionProps[];
     itemSelected: MultiSelectItem[];
     disabled: boolean;
     onCategorySelect: () => void;
@@ -36,6 +41,7 @@ class ProfileSelectionButtonComponent extends React.Component<ProfileSelectionBu
                                 <MenuItem
                                     key={item.value}
                                     text={item.label}
+                                    disabled={!item.enable}
                                     onClick={(ev) => this.props.onItemSelect(item.value)}
                                     icon={this.props.itemSelected?.includes(item.value) ? "tick" : "blank"}
                                     shouldDismissPopover={false}
@@ -55,6 +61,35 @@ class ProfileSelectionButtonComponent extends React.Component<ProfileSelectionBu
 
 @observer
 export class ProfileSelectionComponent extends React.Component<{widgetStore: SpectralProfileWidgetStore}> {
+    private profileStatsOptions: ItemOptionProps[] = Array.from(SpectralProfileWidgetStore.StatsTypeNameMap.entries()).map(entry => {
+        return {
+            value: entry[0],
+            label: entry[1],
+            enable: true
+        };
+    });
+
+    constructor(props) {
+        super(props);
+
+        // Update stats options according to selected option
+        // Unit of Sum/Mean/Sigma/Min/Max/Extrema/RMS: Jy/beam
+        // Unit of FluxDensity: Jy
+        // Unit of SumSq: (Jy/beam)^2
+        autorun(() => {
+            const widgetStore = this.props.widgetStore;
+            if (widgetStore.selectedStatsTypes?.length === 0) {
+                this.profileStatsOptions.forEach(option => option.enable = true);
+            } else if (widgetStore.selectedStatsTypes?.includes(CARTA.StatsType.FluxDensity)) {
+                this.profileStatsOptions.forEach(option => option.enable = option.value === CARTA.StatsType.FluxDensity);
+            } else if (widgetStore.selectedStatsTypes?.includes(CARTA.StatsType.SumSq)) {
+                this.profileStatsOptions.forEach(option => option.enable = option.value === CARTA.StatsType.SumSq);
+            } else {
+                this.profileStatsOptions.forEach(option => option.enable = option.value !== CARTA.StatsType.FluxDensity && option.value !== CARTA.StatsType.SumSq);
+            }
+        });
+    }
+
     private onFrameItemClick = (selectedFrame: number) => {
         this.props.widgetStore.selectFrame(selectedFrame);
     };
@@ -91,24 +126,12 @@ export class ProfileSelectionComponent extends React.Component<{widgetStore: Spe
             stokesInfo.forEach(stokes => profileCoordinateOptions.push({value: `${stokes}z`, label: stokes}));
         }
 
-        const profileStatsOptions: IOptionProps[] = [
-            {value: CARTA.StatsType.Sum, label: SpectralProfileWidgetStore.StatsTypeString(CARTA.StatsType.Sum)},
-            {value: CARTA.StatsType.Mean, label: SpectralProfileWidgetStore.StatsTypeString(CARTA.StatsType.Mean)},
-            {value: CARTA.StatsType.FluxDensity, label: SpectralProfileWidgetStore.StatsTypeString(CARTA.StatsType.FluxDensity)},
-            {value: CARTA.StatsType.Sigma, label: SpectralProfileWidgetStore.StatsTypeString(CARTA.StatsType.Sigma)},
-            {value: CARTA.StatsType.Min, label: SpectralProfileWidgetStore.StatsTypeString(CARTA.StatsType.Min)},
-            {value: CARTA.StatsType.Max, label: SpectralProfileWidgetStore.StatsTypeString(CARTA.StatsType.Max)},
-            {value: CARTA.StatsType.Extrema, label: SpectralProfileWidgetStore.StatsTypeString(CARTA.StatsType.Extrema)},
-            {value: CARTA.StatsType.RMS, label: SpectralProfileWidgetStore.StatsTypeString(CARTA.StatsType.RMS)},
-            {value: CARTA.StatsType.SumSq, label: SpectralProfileWidgetStore.StatsTypeString(CARTA.StatsType.SumSq)}
-        ];
-
         return (
             <React.Fragment>
                 <ProfileSelectionButtonComponent
                     category={ProfileCategory.IMAGE}
                     selectedCategory={widgetStore.selectedProfileCategory}
-                    itemOptions={AppStore.Instance.frameNames}
+                    itemOptions={undefined/*AppStore.Instance.frameNames*/}
                     itemSelected={[widgetStore.selectedFrame]}
                     disabled={!enableFrameSelect}
                     onCategorySelect={() => widgetStore.selectProfileCategory(ProfileCategory.IMAGE)}
@@ -126,7 +149,7 @@ export class ProfileSelectionComponent extends React.Component<{widgetStore: Spe
                 <ProfileSelectionButtonComponent
                     category={ProfileCategory.STATISTICS}
                     selectedCategory={widgetStore.selectedProfileCategory}
-                    itemOptions={profileStatsOptions}
+                    itemOptions={this.profileStatsOptions}
                     itemSelected={widgetStore.selectedStatsTypes}
                     disabled={!enableStatsSelect}
                     onCategorySelect={() => widgetStore.selectProfileCategory(ProfileCategory.STATISTICS)}
@@ -135,7 +158,7 @@ export class ProfileSelectionComponent extends React.Component<{widgetStore: Spe
                 <ProfileSelectionButtonComponent
                     category={ProfileCategory.STOKES}
                     selectedCategory={widgetStore.selectedProfileCategory}
-                    itemOptions={profileCoordinateOptions}
+                    itemOptions={undefined/*profileCoordinateOptions*/}
                     itemSelected={widgetStore.selectedCoordinates}
                     disabled={!enableStokesSelect}
                     onCategorySelect={() => widgetStore.selectProfileCategory(ProfileCategory.STOKES)}

@@ -59,29 +59,20 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
     @observable maskRange: NumberRange;
     @observable selectedMoments: CARTA.Moment[];
 
-    public static StatsTypeString(statsType: CARTA.StatsType) {
-        switch (statsType) {
-            case CARTA.StatsType.Sum:
-                return "Sum";
-            case CARTA.StatsType.FluxDensity:
-                return "FluxDensity";
-            case CARTA.StatsType.Mean:
-                return "Mean";
-            case CARTA.StatsType.Sigma:
-                return "StdDev";
-            case CARTA.StatsType.Min:
-                return "Min";
-            case CARTA.StatsType.Max:
-                return "Max";
-            case CARTA.StatsType.Extrema:
-                return "Extrema";
-            case CARTA.StatsType.RMS:
-                return "RMS";
-            case CARTA.StatsType.SumSq:
-                return "SumSq";
-            default:
-                return "Not Implemented";
-        }
+    public static readonly StatsTypeNameMap = new Map<CARTA.StatsType, string>([
+        [CARTA.StatsType.Sum, "Sum"],
+        [CARTA.StatsType.FluxDensity, "FluxDensity"],
+        [CARTA.StatsType.Mean, "Mean"],
+        [CARTA.StatsType.Sigma, "StdDev"],
+        [CARTA.StatsType.Min, "Min"],
+        [CARTA.StatsType.Max, "Max"],
+        [CARTA.StatsType.Extrema, "Extrema"],
+        [CARTA.StatsType.RMS, "RMS"],
+        [CARTA.StatsType.SumSq, "SumSq"]
+    ]);
+
+    public static StatsTypeString(statsType: CARTA.StatsType): string {
+        return SpectralProfileWidgetStore.StatsTypeNameMap.get(statsType) ?? "Not Implemented";
     }
 
     private static ValidCoordinates = ["z", "Iz", "Qz", "Uz", "Vz"];
