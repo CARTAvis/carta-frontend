@@ -81,7 +81,7 @@ export class SpectralProfilerToolbarComponent extends React.Component<{ widgetSt
                 </Tooltip>
                 <MultiSelectButtonComponent
                     itemOptions={AppStore.Instance.frameNames}
-                    itemSelected={widgetStore.selectedFrames}
+                    itemSelected={[widgetStore.selectedFrame]}
                     onItemSelect={this.onFrameItemClick}
                     disabled={!enableFrameSelect}
                 />

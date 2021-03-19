@@ -26,7 +26,7 @@ export enum MomentSelectingMode {
 export class SpectralProfileWidgetStore extends RegionWidgetStore {
     @observable statsType: CARTA.StatsType;
     @observable selectedProfileCategory: ProfileCategory;
-    @observable selectedFrames: number[];
+    @observable selectedFrame: number;
     @observable selectedRegions: number[];
     @observable selectedStatsTypes: CARTA.StatsType[];
     @observable selectedCoordinates: string[];
@@ -107,14 +107,8 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
     };
 
     @action selectFrame = (fileId: number) => {
-        /* if () { // TODO: error handling for fileId
-            if (this.selectedFrames?.includes(fileId)) {
-                this.selectedFrames = this.selectedFrames.filter(file => file !== fileId);
-            } else {
-                this.selectedFrames = [...this.selectedFrames, fileId];
-            }
-        }
-        */
+        // TODO: error handling for fileId
+        this.selectedFrame = fileId;
     };
 
     @action selectRegion = (regionId: number) => {
@@ -356,9 +350,9 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         makeObservable<SpectralProfileWidgetStore, "spectralLinesMHz" | "updateRanges">(this);
         this.statsType = CARTA.StatsType.Mean;
         this.selectedProfileCategory = ProfileCategory.IMAGE;
-        this.selectedFrames = [];
+        this.selectedFrame = 0;
         this.selectedRegions = [];
-        this.selectedStatsTypes = [];
+        this.selectedStatsTypes = [CARTA.StatsType.Mean];
         this.selectedCoordinates = [coordinate];
         this.isStreamingData = false;
         this.isHighlighted = false;
@@ -384,6 +378,24 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         autorun(() => {
             if (this.effectiveFrame) {
                 this.updateRanges();
+            }
+        });
+
+        // Reset region/statistics/stokes selected option when switching profile category
+        autorun(() => {
+            if (this.selectedProfileCategory === ProfileCategory.IMAGE) {
+                this.selectedCoordinates = [coordinate];
+                this.selectedRegions = [];
+                this.selectedStatsTypes = [CARTA.StatsType.Mean];
+            } else if (this.selectedProfileCategory === ProfileCategory.REGION) {
+                this.selectedCoordinates = [coordinate];
+                this.selectedStatsTypes = [CARTA.StatsType.Mean];
+            } else if (this.selectedProfileCategory === ProfileCategory.STATISTICS) {
+                this.selectedCoordinates = [coordinate];
+                this.selectedRegions = [];
+            } else if (this.selectedProfileCategory === ProfileCategory.STOKES) {
+                this.selectedRegions = [];
+                this.selectedStatsTypes = [CARTA.StatsType.Mean];
             }
         });
     }
