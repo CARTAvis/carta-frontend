@@ -1,12 +1,11 @@
 import {observer} from "mobx-react";
-import {autorun} from "mobx";
 import * as React from "react";
 import {AnchorButton, IOptionProps, Menu, MenuItem, Popover, Position, Tooltip} from "@blueprintjs/core";
 import {ProfileCategory, SpectralProfileWidgetStore} from "stores/widgets";
 import {CARTA} from "carta-protobuf";
 
 type MultiSelectItem = string | CARTA.StatsType;
-interface ItemOptionProps extends IOptionProps{
+export interface ProfileItemOptionProps extends IOptionProps{
     enable: boolean;
     hightlight?: boolean;
 }
@@ -14,7 +13,7 @@ interface ItemOptionProps extends IOptionProps{
 class ProfileSelectionButtonComponentProps {
     category: ProfileCategory;
     selectedCategory: ProfileCategory;
-    itemOptions: ItemOptionProps[];
+    itemOptions: ProfileItemOptionProps[];
     itemSelected: MultiSelectItem[];
     disabled: boolean;
     onCategorySelect: () => void;
@@ -61,53 +60,25 @@ class ProfileSelectionButtonComponent extends React.Component<ProfileSelectionBu
 
 @observer
 export class ProfileSelectionComponent extends React.Component<{widgetStore: SpectralProfileWidgetStore}> {
-    private profileStatsOptions: ItemOptionProps[] = Array.from(SpectralProfileWidgetStore.StatsTypeNameMap.entries()).map(entry => {
-        return {
-            value: entry[0],
-            label: entry[1],
-            enable: true
-        };
-    });
-
-    constructor(props) {
-        super(props);
-
-        // Update stats options according to selected option
-        // Unit of Sum/Mean/Sigma/Min/Max/Extrema/RMS: Jy/beam
-        // Unit of FluxDensity: Jy
-        // Unit of SumSq: (Jy/beam)^2
-        autorun(() => {
-            const widgetStore = this.props.widgetStore;
-            if (widgetStore.selectedStatsTypes?.length === 0) {
-                this.profileStatsOptions.forEach(option => option.enable = true);
-            } else if (widgetStore.selectedStatsTypes?.includes(CARTA.StatsType.FluxDensity)) {
-                this.profileStatsOptions.forEach(option => option.enable = option.value === CARTA.StatsType.FluxDensity);
-            } else if (widgetStore.selectedStatsTypes?.includes(CARTA.StatsType.SumSq)) {
-                this.profileStatsOptions.forEach(option => option.enable = option.value === CARTA.StatsType.SumSq);
-            } else {
-                this.profileStatsOptions.forEach(option => option.enable = option.value !== CARTA.StatsType.FluxDensity && option.value !== CARTA.StatsType.SumSq);
-            }
-        });
-    }
-
     private onFrameItemClick = (selectedFrame: number) => {
-        this.props.widgetStore.selectFrame(selectedFrame);
+        this.props.widgetStore.multipleProfileStore.selectFrame(selectedFrame);
     };
 
     private onRegionItemClick = (selectedRegion: number) => {
-        this.props.widgetStore.selectRegion(selectedRegion);
+        this.props.widgetStore.multipleProfileStore.selectRegion(selectedRegion);
     };
 
     private onStatsItemClick = (selectedStatsType: CARTA.StatsType) => {
-        this.props.widgetStore.selectStatsType(selectedStatsType);
+        this.props.widgetStore.multipleProfileStore.selectStatsType(selectedStatsType);
     };
 
     private onStokesItemClick = (selectedStokes: string) => {
-        this.props.widgetStore.selectCoordinate(selectedStokes);
+        this.props.widgetStore.multipleProfileStore.selectCoordinate(selectedStokes);
     };
 
     public render() {
         const widgetStore = this.props.widgetStore;
+        const multipleProfileStore = widgetStore.multipleProfileStore;
 
         let enableFrameSelect = true;
         let enableRegionSelect = true;
@@ -130,38 +101,38 @@ export class ProfileSelectionComponent extends React.Component<{widgetStore: Spe
             <React.Fragment>
                 <ProfileSelectionButtonComponent
                     category={ProfileCategory.IMAGE}
-                    selectedCategory={widgetStore.selectedProfileCategory}
+                    selectedCategory={multipleProfileStore.selectedProfileCategory}
                     itemOptions={undefined/*AppStore.Instance.frameNames*/}
-                    itemSelected={[widgetStore.selectedFrame]}
+                    itemSelected={[multipleProfileStore.selectedFrame]}
                     disabled={!enableFrameSelect}
-                    onCategorySelect={() => widgetStore.selectProfileCategory(ProfileCategory.IMAGE)}
+                    onCategorySelect={() => multipleProfileStore.selectProfileCategory(ProfileCategory.IMAGE)}
                     onItemSelect={this.onFrameItemClick}
                 />
                 <ProfileSelectionButtonComponent
                     category={ProfileCategory.REGION}
-                    selectedCategory={widgetStore.selectedProfileCategory}
+                    selectedCategory={multipleProfileStore.selectedProfileCategory}
                     itemOptions={undefined}
-                    itemSelected={widgetStore.selectedRegions}
+                    itemSelected={multipleProfileStore.selectedRegions}
                     disabled={!enableRegionSelect}
-                    onCategorySelect={() => widgetStore.selectProfileCategory(ProfileCategory.REGION)}
+                    onCategorySelect={() => multipleProfileStore.selectProfileCategory(ProfileCategory.REGION)}
                     onItemSelect={this.onRegionItemClick}
                 />
                 <ProfileSelectionButtonComponent
                     category={ProfileCategory.STATISTICS}
-                    selectedCategory={widgetStore.selectedProfileCategory}
-                    itemOptions={this.profileStatsOptions}
-                    itemSelected={widgetStore.selectedStatsTypes}
+                    selectedCategory={multipleProfileStore.selectedProfileCategory}
+                    itemOptions={multipleProfileStore.profileStatsOptions}
+                    itemSelected={multipleProfileStore.selectedStatsTypes}
                     disabled={!enableStatsSelect}
-                    onCategorySelect={() => widgetStore.selectProfileCategory(ProfileCategory.STATISTICS)}
+                    onCategorySelect={() => multipleProfileStore.selectProfileCategory(ProfileCategory.STATISTICS)}
                     onItemSelect={this.onStatsItemClick}
                 />
                 <ProfileSelectionButtonComponent
                     category={ProfileCategory.STOKES}
-                    selectedCategory={widgetStore.selectedProfileCategory}
+                    selectedCategory={multipleProfileStore.selectedProfileCategory}
                     itemOptions={undefined/*profileCoordinateOptions*/}
-                    itemSelected={widgetStore.selectedCoordinates}
+                    itemSelected={multipleProfileStore.selectedCoordinates}
                     disabled={!enableStokesSelect}
-                    onCategorySelect={() => widgetStore.selectProfileCategory(ProfileCategory.STOKES)}
+                    onCategorySelect={() => multipleProfileStore.selectProfileCategory(ProfileCategory.STOKES)}
                     onItemSelect={this.onStokesItemClick}
                 />
             </React.Fragment>

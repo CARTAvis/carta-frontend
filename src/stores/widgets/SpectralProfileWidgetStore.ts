@@ -5,17 +5,11 @@ import {PlotType, LineSettings} from "components/Shared";
 import {RegionWidgetStore, RegionsType, ACTIVE_FILE_ID} from "./RegionWidgetStore";
 import {SpectralLine} from "./SpectralLineQueryWidgetStore";
 import {AppStore} from "stores";
-import {ProfileSmoothingStore} from "stores/ProfileSmoothingStore";
+import {ProfileSmoothingStore} from "stores";
+import {MultipleProfileStore} from "stores/widgets";
 import {SpectralSystem, SpectralType, SpectralUnit} from "models";
 import tinycolor from "tinycolor2";
 import {SpectralProfilerSettingsTabs} from "components";
-
-export enum ProfileCategory {
-    IMAGE = "Image",
-    REGION = "Region",
-    STATISTICS = "Statistics",
-    STOKES = "Stokes"
-}
 
 export enum MomentSelectingMode {
     NONE = 1,
@@ -24,12 +18,6 @@ export enum MomentSelectingMode {
 }
 
 export class SpectralProfileWidgetStore extends RegionWidgetStore {
-    @observable statsType: CARTA.StatsType;
-    @observable selectedProfileCategory: ProfileCategory;
-    @observable selectedFrame: number;
-    @observable selectedRegions: number[];
-    @observable selectedStatsTypes: CARTA.StatsType[];
-    @observable selectedCoordinates: string[];
     @observable minX: number;
     @observable maxX: number;
     @observable minY: number;
@@ -49,7 +37,6 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
     @observable lineWidth: number;
     @observable linePlotPointSize: number;
     @observable linePlotInitXYBoundaries: { minXVal: number, maxXVal: number, minYVal: number, maxYVal: number };
-    readonly smoothingStore: ProfileSmoothingStore;
     @observable settingsTabId: SpectralProfilerSettingsTabs;
 
     // moment settings
@@ -59,86 +46,12 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
     @observable maskRange: NumberRange;
     @observable selectedMoments: CARTA.Moment[];
 
-    public static readonly StatsTypeNameMap = new Map<CARTA.StatsType, string>([
-        [CARTA.StatsType.Sum, "Sum"],
-        [CARTA.StatsType.FluxDensity, "FluxDensity"],
-        [CARTA.StatsType.Mean, "Mean"],
-        [CARTA.StatsType.Sigma, "StdDev"],
-        [CARTA.StatsType.Min, "Min"],
-        [CARTA.StatsType.Max, "Max"],
-        [CARTA.StatsType.Extrema, "Extrema"],
-        [CARTA.StatsType.RMS, "RMS"],
-        [CARTA.StatsType.SumSq, "SumSq"]
-    ]);
-
-    public static StatsTypeString(statsType: CARTA.StatsType): string {
-        return SpectralProfileWidgetStore.StatsTypeNameMap.get(statsType) ?? "Not Implemented";
-    }
-
-    private static ValidCoordinates = ["z", "Iz", "Qz", "Uz", "Vz"];
-
-    private static ValidStatsTypes = [
-        CARTA.StatsType.Sum, CARTA.StatsType.FluxDensity, CARTA.StatsType.Mean, CARTA.StatsType.Sigma,
-        CARTA.StatsType.Min, CARTA.StatsType.Max, CARTA.StatsType.Extrema, CARTA.StatsType.RMS, CARTA.StatsType.SumSq
-    ];
+    readonly smoothingStore: ProfileSmoothingStore;
+    readonly multipleProfileStore: MultipleProfileStore;
 
     @override setRegionId = (fileId: number, regionId: number) => {
         this.regionIdMap.set(fileId, regionId);
         this.clearXYBounds();
-    };
-
-    @action setStatsType = (statsType: CARTA.StatsType) => {
-        if (SpectralProfileWidgetStore.ValidStatsTypes.indexOf(statsType) !== -1) {
-            this.statsType = statsType;
-        }
-    };
-
-    @action selectProfileCategory = (profileCategory: ProfileCategory) => {
-        this.selectedProfileCategory = profileCategory;
-    };
-
-    @action selectFrame = (fileId: number) => {
-        // TODO: error handling for fileId
-        this.selectedFrame = fileId;
-    };
-
-    @action selectRegion = (regionId: number) => {
-        // if () { TODO: error handling for regionId
-            if (this.selectedRegions?.includes(regionId)) {
-                this.selectedRegions = this.selectedRegions.filter(region => region !== regionId);
-            } else {
-                this.selectedRegions = [...this.selectedRegions, regionId];
-            }
-        // }
-    };
-
-    @action selectStatsType = (statsType: CARTA.StatsType) => {
-        if (SpectralProfileWidgetStore.ValidStatsTypes.includes(statsType)) {
-            if (this.selectedStatsTypes?.includes(statsType)) {
-                this.selectedStatsTypes = this.selectedStatsTypes.filter(type => type !== statsType);
-            } else {
-                this.selectedStatsTypes = [...this.selectedStatsTypes, statsType];
-            }
-        }
-    };
-
-    @action selectCoordinate = (coordinate: string) => {
-        if (SpectralProfileWidgetStore.ValidCoordinates.includes(coordinate)) {
-            if (this.selectedCoordinates?.includes(coordinate)) {
-                this.selectedCoordinates = this.selectedCoordinates.filter(coord => coord !== coordinate);
-            } else {
-                this.selectedCoordinates = [...this.selectedCoordinates, coordinate];
-            }
-            this.clearXYBounds();
-        }
-    };
-
-    public isStatsTypeSelected = (statsType: CARTA.StatsType) => {
-        return this.selectedStatsTypes?.includes(statsType);
-    };
-
-    public isCoordinateSelected = (coordinate: string) => {
-        return this.selectedCoordinates?.includes(coordinate);
     };
 
     @action setSpectralCoordinate = (coordStr: string) => {
@@ -339,12 +252,6 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
     constructor(coordinate: string = "z") {
         super(RegionsType.CLOSED_AND_POINT);
         makeObservable<SpectralProfileWidgetStore, "spectralLinesMHz" | "updateRanges">(this);
-        this.statsType = CARTA.StatsType.Mean;
-        this.selectedProfileCategory = ProfileCategory.IMAGE;
-        this.selectedFrame = 0;
-        this.selectedRegions = [];
-        this.selectedStatsTypes = [CARTA.StatsType.Mean];
-        this.selectedCoordinates = [coordinate];
         this.isStreamingData = false;
         this.isHighlighted = false;
         this.spectralLinesMHz = [];
@@ -359,6 +266,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         this.linePlotInitXYBoundaries = { minXVal: 0, maxXVal: 0, minYVal: 0, maxYVal: 0 };
 
         this.smoothingStore = new ProfileSmoothingStore();
+        this.multipleProfileStore = new MultipleProfileStore(coordinate);
         this.selectingMode = MomentSelectingMode.NONE;
         this.channelValueRange = [0, 0];
         this.momentMask = CARTA.MomentMask.None;
@@ -369,24 +277,6 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         autorun(() => {
             if (this.effectiveFrame) {
                 this.updateRanges();
-            }
-        });
-
-        // Reset region/statistics/stokes selected option when switching profile category
-        autorun(() => {
-            if (this.selectedProfileCategory === ProfileCategory.IMAGE) {
-                this.selectedCoordinates = [coordinate];
-                this.selectedRegions = [];
-                this.selectedStatsTypes = [CARTA.StatsType.Mean];
-            } else if (this.selectedProfileCategory === ProfileCategory.REGION) {
-                this.selectedCoordinates = [coordinate];
-                this.selectedStatsTypes = [CARTA.StatsType.Mean];
-            } else if (this.selectedProfileCategory === ProfileCategory.STATISTICS) {
-                this.selectedCoordinates = [coordinate];
-                this.selectedRegions = [];
-            } else if (this.selectedProfileCategory === ProfileCategory.STOKES) {
-                this.selectedRegions = [];
-                this.selectedStatsTypes = [CARTA.StatsType.Mean];
             }
         });
     }
@@ -449,8 +339,8 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
             }
             const fileId = frame.frameInfo.fileId;
             const regionId = widgetStore.effectiveRegionId;
-            const coordinates = widgetStore.selectedCoordinates;
-            let statsType = widgetStore.statsType;
+            const coordinates = widgetStore.multipleProfileStore.selectedCoordinates;
+            let statsType = CARTA.StatsType.Sum;
 
             const region = frame.regionSet.regions.find(r => r.regionId === regionId);
             if (region) {

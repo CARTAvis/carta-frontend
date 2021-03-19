@@ -224,10 +224,6 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
             const regionId = this.widgetStore.effectiveRegionId;
             const region = frame.regionSet.regions.find(r => r.regionId === regionId);
 
-            // statistic type, ignore when region == cursor
-            if (regionId !== 0) {
-                headerString.push(`statistic: ${SpectralProfileWidgetStore.StatsTypeString(this.widgetStore.statsType)}`);
-            }
             // region info
             if (region) {
                 headerString.push(region.regionProperties);
@@ -409,11 +405,12 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
         return spectralLineMarkers;
     };
 
+    // TODO: move to multipleProfileStore
     private getProfiles = (): ProcessedSpectralProfile[] => {
         let profiles: ProcessedSpectralProfile[] = [];
         const frame = this.widgetStore.effectiveFrame;
         const regionId = this.widgetStore.effectiveRegionId;
-        const profileCategory = this.widgetStore.selectedProfileCategory;
+        const profileCategory = this.widgetStore.multipleProfileStore.selectedProfileCategory;
         if (profileCategory === ProfileCategory.IMAGE) {
             // TODO
         } else if (profileCategory === ProfileCategory.REGION) {
@@ -424,8 +421,8 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
             if (frame.regionSet) {
                 const region = frame.regionSet.regions.find(r => r.regionId === regionId);
                 if (region && this.profileStore) {
-                    this.widgetStore.selectedCoordinates.forEach(coordinate => {
-                        const profile = this.profileStore.getProfile(coordinate, region.isClosedRegion ? this.widgetStore.statsType : CARTA.StatsType.Sum);
+                    this.widgetStore.multipleProfileStore.selectedCoordinates.forEach(coordinate => {
+                        const profile = this.profileStore.getProfile(coordinate, region.isClosedRegion ? CARTA.StatsType.Mean : CARTA.StatsType.Sum);
                         if (profile) {
                             profiles.push(profile);
                         }
@@ -540,21 +537,19 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
                 linePlotProps.xLabel = `${spectralSystem && spectralSystem !== "" ? spectralSystem + ", " : ""}${frame.spectralCoordinate}`;
             }
             if (frame.unit) {
-                let yLabelName = "Value";
                 let yLabelUnit = `(${frame.unit})`;
                 let region: RegionStore;
                 if (frame.regionSet) {
                     region = frame.regionSet.regions.find(r => r.regionId === this.widgetStore.effectiveRegionId);
                     if (region && region.regionType !== CARTA.RegionType.POINT) {
-                        yLabelName = SpectralProfileWidgetStore.StatsTypeString(this.widgetStore.statsType);
-                        if (this.widgetStore.statsType === CARTA.StatsType.FluxDensity) {
+                        if (this.widgetStore.multipleProfileStore.isStatsTypeFluxDensity) {
                             yLabelUnit =  "(Jy)";
-                        } else if (this.widgetStore.statsType === CARTA.StatsType.SumSq) {
+                        } else if (this.widgetStore.multipleProfileStore.isStatsTypeSumSq) {
                             yLabelUnit = `(${frame.unit})^2`;
                         }
                     }
                 }
-                linePlotProps.yLabel = `${yLabelName} ${yLabelUnit}`;
+                linePlotProps.yLabel = `Value ${yLabelUnit}`;
             }
 
             const currentPlotData = this.plotData;
