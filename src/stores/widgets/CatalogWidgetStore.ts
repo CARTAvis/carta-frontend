@@ -9,19 +9,28 @@ export enum CatalogPlotType {
     D2Scatter = "2D Scatter"
 }
 
+// export enum CatalogOverlayShape {
+//     Circle = "circle-open",
+//     FullCircle = "circle",
+//     Star = "star-open",
+//     FullStar = "star",
+//     Square = "square-open",
+//     Plus = "cross-thin-open",
+//     Cross = "x-thin-open",
+//     TriangleUp = "triangle-up-open",
+//     TriangleDown = "triangle-down-open",
+//     Diamond = "diamond-open",
+//     hexagon2 = "hexagon2-open",
+//     hexagon = "hexagon-open",
+// }
+
 export enum CatalogOverlayShape {
-    Circle = "circle-open",
-    FullCircle = "circle",
-    Star = "star-open",
-    FullStar = "star",
-    Square = "square-open",
-    Plus = "cross-thin-open",
-    Cross = "x-thin-open",
-    TriangleUp = "triangle-up-open",
-    TriangleDown = "triangle-down-open",
-    Diamond = "diamond-open",
-    hexagon2 = "hexagon2-open",
-    hexagon = "hexagon-open",
+    // BoxFilled,
+    BoxLined = 1,
+    CircleFilled = 2,
+    CircleLined = 3,
+    // HexagonFilled,
+    HexagonLined = 5
 }
 
 export enum CatalogSettingsTabs {
@@ -37,7 +46,7 @@ const DEFAULTS = {
     catalogPlotType: CatalogPlotType.ImageOverlay,
     catalogColor: Colors.TURQUOISE3,
     catalogSize: 10,
-    catalogShape: CatalogOverlayShape.Circle,
+    catalogShape: CatalogOverlayShape.CircleLined,
     xAxis: CatalogOverlay.NONE,
     yAxis: CatalogOverlay.NONE,
     highlightColor: Colors.RED2,
@@ -103,7 +112,9 @@ export class CatalogWidgetStore {
     }
 
     @action setCatalogSize(size: number) {
-        this.catalogSize = size;
+        if (size >= CatalogWidgetStore.MinOverlaySize && size <= CatalogWidgetStore.MaxOverlaySize) {
+            this.catalogSize = size;   
+        }
     }
 
     @action setCatalogColor(color: string) {

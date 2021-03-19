@@ -1,7 +1,7 @@
 import * as React from "react";
 import * as Plotly from "plotly.js";
 import Plot from "react-plotly.js";
-import {autorun, computed, observable, action, makeObservable} from "mobx";
+import {action, autorun, computed, runInAction, observable, makeObservable} from "mobx";
 import {observer} from "mobx-react";
 import {FormGroup, AnchorButton, Intent, Tooltip, Switch, Button, MenuItem, PopoverPosition, NonIdealState} from "@blueprintjs/core";
 import {Select, IItemRendererProps, ItemPredicate} from "@blueprintjs/select";
@@ -57,7 +57,9 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
             const widgetStore =  this.widgetStore;
             const catalogFileIds = CatalogStore.Instance.activeCatalogFiles;
             if (!catalogFileIds?.includes(this.catalogFileId) && catalogFileIds?.length > 0) {
-                this.catalogFileId = catalogFileIds[0];
+                runInAction(() => {
+                    this.catalogFileId = catalogFileIds[0];
+                })
             }
             if (widgetStore) {
                 this.plotType = widgetStore.plotType;

@@ -11,7 +11,8 @@ import {ToolbarComponent} from "./Toolbar/ToolbarComponent";
 import {BeamProfileOverlayComponent} from "./BeamProfileOverlay/BeamProfileOverlayComponent";
 import {RegionViewComponent} from "./RegionView/RegionViewComponent";
 import {ContourViewComponent} from "./ContourView/ContourViewComponent";
-import {CatalogViewComponent} from "./CatalogView/CatalogViewComponent";
+// import {CatalogViewComponent} from "./CatalogView/CatalogViewComponent";
+import {CatalogViewGLComponent} from "./CatalogView/CatalogViewGLComponent";
 import {AppStore, RegionStore, DefaultWidgetConfig, WidgetProps, HelpType, Padding} from "stores";
 import {CursorInfo, Point2D} from "models";
 import {toFixed} from "utilities";
@@ -238,7 +239,7 @@ export class ImageViewComponent extends React.Component<WidgetProps> {
                         docked={this.props.docked && (this.activeLayer === ImageViewLayer.RegionMoving || this.activeLayer === ImageViewLayer.RegionCreating)}
                     />
                     }
-                    {appStore.activeFrame &&
+                    {/* {appStore.activeFrame &&
                     <CatalogViewComponent
                         width={appStore.activeFrame.renderWidth}
                         height={appStore.activeFrame.renderHeight}
@@ -247,7 +248,7 @@ export class ImageViewComponent extends React.Component<WidgetProps> {
                         onClicked={this.onClicked}
                         onZoomed={this.onZoomed}
                     />
-                    }
+                    } */}
                     <ToolbarComponent
                         docked={this.props.docked}
                         visible={appStore.imageToolbarVisible}
@@ -274,6 +275,9 @@ export class ImageViewComponent extends React.Component<WidgetProps> {
                     docked={this.props.docked}
                 />
                 <ContourViewComponent
+                    docked={this.props.docked}
+                />
+                <CatalogViewGLComponent
                     docked={this.props.docked}
                 />
                 {divContents}
