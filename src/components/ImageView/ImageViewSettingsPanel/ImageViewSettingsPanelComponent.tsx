@@ -665,16 +665,17 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
                         onChange={(ev) => colorbar.setTickVisible(ev.currentTarget.checked)}
                     />
                 </FormGroup>
-                <FormGroup inline={true} label="Ticks Number" disabled={!colorbar.visible || !colorbar.tickVisible}>
+                <FormGroup inline={true} label="Ticks Density" labelInfo="(per 100px)" disabled={!colorbar.visible || !colorbar.tickVisible}>
                     <SafeNumericInput
-                        placeholder="Ticks Number"
-                        min={1}
-                        value={colorbar.tickNum}
-                        stepSize={1}
-                        minorStepSize={1}
-                        majorStepSize={5}
+                        placeholder="Ticks Density"
+                        min={0.2}
+                        max={20}
+                        value={colorbar.tickDensity}
+                        stepSize={0.2}
+                        minorStepSize={0.1}
+                        majorStepSize={1}
                         disabled={!colorbar.visible || !colorbar.tickVisible}
-                        onValueChange={(value: number) => colorbar.setTickNum(value)}
+                        onValueChange={(value: number) => colorbar.setTickDensity(value)}
                     />
                 </FormGroup>
                 <FormGroup inline={true} label="Ticks Len" labelInfo="(px)" disabled={!colorbar.visible || !colorbar.tickVisible}>

@@ -693,7 +693,7 @@ export class OverlayColorbarSettings {
     @observable borderVisible: boolean;
     @observable borderWidth: number;
     @observable tickVisible: boolean;
-    @observable tickNum: number;
+    @observable tickDensity: number;
     @observable tickLen: number;
     @observable tickWidth: number;
     @observable numberVisible: boolean;
@@ -713,7 +713,7 @@ export class OverlayColorbarSettings {
         this.borderVisible = true;
         this.borderWidth = 0.5;
         this.tickVisible = true;
-        this.tickNum = 9;
+        this.tickDensity = 1;
         this.tickLen = 7;
         this.tickWidth = 0.5;
         this.numberVisible = true;
@@ -753,8 +753,8 @@ export class OverlayColorbarSettings {
         this.tickVisible = visible;
     }
 
-    @action setTickNum = (tickNum: number) => {
-        this.tickNum = tickNum;
+    @action setTickDensity = (tickNum: number) => {
+        this.tickDensity = tickNum;
     }
 
     @action setTickLen = (tickLen: number) => {
@@ -801,12 +801,46 @@ export class OverlayColorbarSettings {
         return 5;
     }
 
-    @computed get labelWidth(): number {
-        return this.numberVisible ? this.numberFontSize + (this.numberRotated ? 0 : 30) + this.textGap : 0;
+    @computed get tickNum(): number {
+        const appStore = AppStore.Instance;
+        const tickNum = Math.round((appStore.overlayStore.viewHeight - appStore.overlayStore.defaultGap * 2
+            - (appStore.overlayStore.title.show ? appStore.overlayStore.titleGap + appStore.overlayStore.title.fontSize : 0)
+            - (appStore.overlayStore.showNumbers ? appStore.overlayStore.defaultGap + appStore.overlayStore.numbers.fontSize : 0)
+            - (appStore.overlayStore.labels.show ? appStore.overlayStore.defaultGap + appStore.overlayStore.labels.fontSize : 0)
+            - (!this.visible || appStore.overlayStore.labels.show ? 0 : 10)) / 100.0 * this.tickDensity);
+        return appStore.overlayStore.viewHeight && tickNum > 1 ? tickNum : 1;
+    }
+
+    @computed get texts(): string[] {
+        const appStore = AppStore.Instance;
+        const frame = appStore?.activeFrame;
+        const tickNum = this.tickNum;
+        if (!frame || !tickNum) {
+            return [];
+        } else {
+            const indexArray = Array.from(Array(tickNum).keys());
+            const dy = (frame.renderConfig.scaleMaxVal - frame.renderConfig.scaleMinVal) / (tickNum + 1);
+            const origNumbers = indexArray.map(x => frame.renderConfig.scaleMinVal + dy * (x + 1));
+            const rounding = Math.ceil(-Math.log10(dy) + 1);
+            const maxOrder = Math.max(...origNumbers.map(x => Math.log10(x)));
+            const minOrder = Math.min(...origNumbers.map(x => Math.log10(x)));
+            if (maxOrder >= 5.0) {
+                return origNumbers.map(x => x.toExponential(Math.abs(maxOrder + rounding)));
+            } else if (rounding >= 6.0) {
+                return origNumbers.map(x => x.toExponential(Math.abs(minOrder + rounding)));
+            } else {
+                return origNumbers.map(x => x.toFixed(rounding < 0 ? 0 : rounding));
+            }
+        }
+    };
+
+    @computed get numberWidth(): number {
+        const textWidth = Math.max(...(this.texts.map(x => x.length)));
+        return this.numberVisible ? this.numberFontSize * (this.numberRotated ? 1 : textWidth / 2) + this.textGap : 0;
     }
 
     @computed get stageWidth(): number {
-        return this.offset + this.width + this.labelWidth + (this.labelVisible ? this.labelFontSize + this.textGap : 0)
+        return this.offset + this.width + this.numberWidth + (this.labelVisible ? this.labelFontSize + this.textGap : 0)
     }
 }
 

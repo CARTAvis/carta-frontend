@@ -4,7 +4,7 @@ import {action, observable, makeObservable} from "mobx";
 import {Layer, Line, Rect, Stage, Text} from "react-konva";
 import {Font} from "../ImageViewSettingsPanel/ImageViewSettingsPanelComponent"
 import {ProfilerInfoComponent} from "components/Shared";
-import {AppStore, dayPalette, nightPalette} from "stores";
+import {AppStore} from "stores";
 import {fonts} from "ast_wrapper";
 import "./ColorbarComponent.scss";
 
@@ -55,21 +55,6 @@ export class ColorbarComponent extends React.Component<ColorbarComponentProps> {
         this.setHoverInfoText((frame.renderConfig.scaleMinVal + scaledPos * (frame.renderConfig.scaleMaxVal - frame.renderConfig.scaleMinVal)).toFixed(5));
         this.setCursorY(point.y);
     };
-    
-    private getColor = (): string => {
-        const appStore = AppStore.Instance;
-        const colorId = appStore.overlayStore.global.color
-        return appStore.darkTheme ? nightPalette[colorId] : dayPalette[colorId];
-    }
-
-    private getRounding = (): number => {
-        const appStore = AppStore.Instance;
-        const max = appStore.activeFrame.renderConfig.scaleMaxVal;
-        const min = appStore.activeFrame.renderConfig.scaleMinVal;
-        const tickNum = appStore.overlayStore.colorbar.tickNum;
-        const dy = Math.log10((max - min) / (tickNum + 1));
-        return dy > 1 ? 0 : Math.ceil(-dy) + 1;
-    }
 
     private renderColorbar = () => {
         const appStore = AppStore.Instance;
@@ -85,7 +70,7 @@ export class ColorbarComponent extends React.Component<ColorbarComponentProps> {
                 fillLinearGradientStartPoint={{x: 0, y: yOffset}}
                 fillLinearGradientEndPoint={{x: 0, y: yOffset + frame.renderHeight}}
                 fillLinearGradientColorStops={frame.renderConfig.colorscaleArray}
-                stroke={colorbarSettings.borderVisible ? this.getColor() : null}
+                stroke={colorbarSettings.borderVisible ? appStore.getASTColor : null}
                 strokeWidth={colorbarSettings.borderWidth}
                 onMouseEnter={this.onMouseEnter}
                 onMouseMove={this.handleMouseMove}
@@ -99,13 +84,13 @@ export class ColorbarComponent extends React.Component<ColorbarComponentProps> {
         const frame = appStore.activeFrame;
         const colorbarSettings = appStore.overlayStore.colorbar;
         const yOffset = appStore.overlayStore.padding.top;
+        const color = appStore.getASTColor;
 
-        const indexArray = Array.from(Array(colorbarSettings.tickNum).keys())
+        const indexArray = Array.from(Array(colorbarSettings.tickNum).keys());
         let scaledArray = indexArray.map(x => (x + 1) / (colorbarSettings.tickNum + 1));
         const yPosArray = scaledArray.map(x => yOffset + frame.renderHeight * (1 - x));
 
-        let text_dy = (frame.renderConfig.scaleMaxVal - frame.renderConfig.scaleMinVal) / (colorbarSettings.tickNum + 1);    
-        let texts = indexArray.map(x => (frame.renderConfig.scaleMinVal + text_dy * (x + 1)).toFixed(this.getRounding()));
+        const texts = colorbarSettings.texts;
 
         let ticks = [];
         let numbers = [];
@@ -114,7 +99,7 @@ export class ColorbarComponent extends React.Component<ColorbarComponentProps> {
                 ticks.push(
                     <Line
                         points={[colorbarSettings.rightBorderPos - colorbarSettings.tickLen, yPosArray[i], colorbarSettings.rightBorderPos, yPosArray[i]]}
-                        stroke={this.getColor()}
+                        stroke={color}
                         strokeWidth={colorbarSettings.tickWidth}
                         key={i.toString()}
                     />
@@ -128,7 +113,7 @@ export class ColorbarComponent extends React.Component<ColorbarComponentProps> {
                         y={colorbarSettings.numberRotated ? yPosArray[i] + 100 / 2 : yPosArray[i] - colorbarSettings.numberFontSize / 2}
                         width={colorbarSettings.numberRotated ? 100 : null}
                         align={"center"}
-                        fill={this.getColor()}
+                        fill={color}
                         fontFamily={this.astFonts[colorbarSettings.numberFont].family}
                         fontStyle={`${this.astFonts[colorbarSettings.numberFont].style} ${this.astFonts[colorbarSettings.numberFont].weight}`}
                         fontSize={colorbarSettings.numberFontSize}
@@ -155,11 +140,11 @@ export class ColorbarComponent extends React.Component<ColorbarComponentProps> {
         return (
             <Text
                 text={frame.unit}
-                x={colorbarSettings.rightBorderPos + colorbarSettings.textGap + colorbarSettings.labelWidth}
+                x={colorbarSettings.rightBorderPos + colorbarSettings.textGap + colorbarSettings.numberWidth}
                 y={yOffset + frame.renderHeight}
                 width={frame.renderHeight}
                 align={"center"}
-                fill={this.getColor()}
+                fill={appStore.getASTColor}
                 fontFamily={this.astFonts[colorbarSettings.labelFont].family}
                 fontSize={colorbarSettings.labelFontSize}
                 fontStyle={`${this.astFonts[colorbarSettings.labelFont].style} ${this.astFonts[colorbarSettings.labelFont].weight}`}
@@ -170,11 +155,12 @@ export class ColorbarComponent extends React.Component<ColorbarComponentProps> {
     };
 
     private renderHoverBar = () => {
-        const colorbarSettings = AppStore.Instance.overlayStore.colorbar;
+        const appStore = AppStore.Instance;
+        const colorbarSettings = appStore.overlayStore.colorbar;
         return (
             <Line
                 points={[colorbarSettings.offset, this.cursorY, colorbarSettings.rightBorderPos, this.cursorY]}
-                stroke={this.getColor()}
+                stroke={appStore.getASTColor}
                 strokeWidth={0.5}
             />
         );
