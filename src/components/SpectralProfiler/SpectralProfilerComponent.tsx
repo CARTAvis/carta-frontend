@@ -9,7 +9,7 @@ import {LineMarker, LinePlotComponent, LinePlotComponentProps, LinePlotSelecting
 import {TickType, MultiPlotProps} from "../Shared/LinePlot/PlotContainer/PlotContainerComponent";
 import {SpectralProfilerToolbarComponent} from "./SpectralProfilerToolbarComponent/SpectralProfilerToolbarComponent";
 import {SpectralProfileStore, WidgetProps, HelpType, AnimatorStore, WidgetsStore, AppStore, DefaultWidgetConfig, RegionStore} from "stores";
-import {ProfileCategory, SpectralProfileWidgetStore} from "stores/widgets";
+import {SpectralProfileWidgetStore} from "stores/widgets";
 import {Point2D, ProcessedSpectralProfile} from "models";
 import {binarySearchByX, clamp, formattedExponential, formattedNotation, toExponential, toFixed} from "utilities";
 import "./SpectralProfilerComponent.scss";
@@ -160,12 +160,15 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
 
     @computed get plotData(): PlotData {
         const frame = this.widgetStore.effectiveFrame;
-        if (!frame) {
+        if (!frame || !this.profileStore) {
             return null;
         }
 
         // Get profiles
-        const profiles: ProcessedSpectralProfile[] = this.getProfiles();
+        const profilesParameter = this.widgetStore.multipleProfileStore.getProfilesParameter();
+        const profiles = profilesParameter?.map(profileParameter => {
+            return this.profileStore.getProfile(profileParameter.coordinate, profileParameter.statsType);
+        });
         if (!profiles || profiles.length <= 0) {
             return null;
         }
@@ -178,18 +181,20 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
         let smoothingPoints: Point2D[] = [];
         let yBound = {yMin: Number.MAX_VALUE, yMax: -Number.MAX_VALUE};
         let progressSum: number = 0;
-        profiles.forEach((profile) => {
-            // TODO: should use multiPlotPropsMap for LinePlot
-            const dataPointSet = this.getDataPointSet(profile, xBound);
-            points = points.concat(dataPointSet.points);
-            smoothingPoints = smoothingPoints.concat(dataPointSet.smoothingPoints);
-            if (yBound.yMin > dataPointSet.yBound.yMin) {
-                yBound.yMin = dataPointSet.yBound.yMin;
+        profiles.forEach(profile => {
+            if (profile) {
+                // TODO: should use multiPlotPropsMap for LinePlot
+                const dataPointSet = this.getDataPointSet(profile, xBound);
+                points = points.concat(dataPointSet.points);
+                smoothingPoints = smoothingPoints.concat(dataPointSet.smoothingPoints);
+                if (yBound.yMin > dataPointSet.yBound.yMin) {
+                    yBound.yMin = dataPointSet.yBound.yMin;
+                }
+                if (yBound.yMax < dataPointSet.yBound.yMax) {
+                    yBound.yMax = dataPointSet.yBound.yMax;
+                }
+                progressSum += profile.progress;
             }
-            if (yBound.yMax < dataPointSet.yBound.yMax) {
-                yBound.yMax = dataPointSet.yBound.yMax;
-            }
-            progressSum += profile.progress;
         });
 
         if (yBound.yMin === Number.MAX_VALUE) {
@@ -403,34 +408,6 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
             }
         }
         return spectralLineMarkers;
-    };
-
-    // TODO: move to multipleProfileStore
-    private getProfiles = (): ProcessedSpectralProfile[] => {
-        let profiles: ProcessedSpectralProfile[] = [];
-        const frame = this.widgetStore.effectiveFrame;
-        const regionId = this.widgetStore.effectiveRegionId;
-        const profileCategory = this.widgetStore.multipleProfileStore.selectedProfileCategory;
-        if (profileCategory === ProfileCategory.IMAGE) {
-            // TODO
-        } else if (profileCategory === ProfileCategory.REGION) {
-            // TODO
-        } else if (profileCategory === ProfileCategory.STATISTICS) {
-            // TODO
-        } else if (profileCategory === ProfileCategory.STOKES) {
-            if (frame.regionSet) {
-                const region = frame.regionSet.regions.find(r => r.regionId === regionId);
-                if (region && this.profileStore) {
-                    this.widgetStore.multipleProfileStore.selectedCoordinates.forEach(coordinate => {
-                        const profile = this.profileStore.getProfile(coordinate, region.isClosedRegion ? CARTA.StatsType.Mean : CARTA.StatsType.Sum);
-                        if (profile) {
-                            profiles.push(profile);
-                        }
-                    });
-                }
-            }
-        }
-        return profiles;
     };
 
     private getBoundX = (): XBound => {

@@ -6,13 +6,13 @@ import {CARTA} from "carta-protobuf";
 
 type MultiSelectItem = string | CARTA.StatsType;
 export interface ProfileItemOptionProps extends IOptionProps{
-    enable: boolean;
+    disable?: boolean;
     hightlight?: boolean;
 }
 
 class ProfileSelectionButtonComponentProps {
-    category: ProfileCategory;
-    selectedCategory: ProfileCategory;
+    categoryName: ProfileCategory;
+    isActiveCategory: boolean;
     itemOptions: ProfileItemOptionProps[];
     itemSelected: MultiSelectItem[];
     disabled: boolean;
@@ -27,8 +27,8 @@ class ProfileSelectionButtonComponent extends React.Component<ProfileSelectionBu
             <React.Fragment>
                 <Tooltip content="Select to show multiple profiles" position={Position.TOP}>
                     <AnchorButton
-                        text={this.props.category}
-                        active={this.props.selectedCategory === this.props.category}
+                        text={this.props.categoryName}
+                        active={this.props.isActiveCategory}
                         onClick={(ev) => this.props.onCategorySelect()}
                         disabled={this.props.disabled}
                     />
@@ -40,7 +40,7 @@ class ProfileSelectionButtonComponent extends React.Component<ProfileSelectionBu
                                 <MenuItem
                                     key={item.value}
                                     text={item.label}
-                                    disabled={!item.enable}
+                                    disabled={item.disable}
                                     onClick={(ev) => this.props.onItemSelect(item.value)}
                                     icon={this.props.itemSelected?.includes(item.value) ? "tick" : "blank"}
                                     shouldDismissPopover={false}
@@ -83,56 +83,51 @@ export class ProfileSelectionComponent extends React.Component<{widgetStore: Spe
         let enableFrameSelect = true;
         let enableRegionSelect = true;
         let enableStatsSelect = false;
-        let enableStokesSelect = false;
 
         let regionId = 0;
-        const profileCoordinateOptions = [{value: "z", label: "Current"}];
 
         if (widgetStore.effectiveFrame && widgetStore.effectiveFrame.regionSet) {
             regionId = widgetStore.effectiveRegionId;
             const selectedRegion = widgetStore.effectiveFrame.regionSet.regions.find(r => r.regionId === regionId);
             enableStatsSelect = (selectedRegion && selectedRegion.isClosedRegion);
-            enableStokesSelect = widgetStore.effectiveFrame.hasStokes;
-            const stokesInfo = widgetStore.effectiveFrame.stokesInfo;
-            stokesInfo.forEach(stokes => profileCoordinateOptions.push({value: `${stokes}z`, label: stokes}));
         }
 
         return (
             <React.Fragment>
                 <ProfileSelectionButtonComponent
-                    category={ProfileCategory.IMAGE}
-                    selectedCategory={multipleProfileStore.selectedProfileCategory}
-                    itemOptions={undefined/*AppStore.Instance.frameNames*/}
-                    itemSelected={[multipleProfileStore.selectedFrame]}
+                    categoryName={ProfileCategory.IMAGE}
+                    isActiveCategory={multipleProfileStore.profileCategory === ProfileCategory.IMAGE}
+                    itemOptions={multipleProfileStore.frameOptions}
+                    itemSelected={[multipleProfileStore.selectedFrameFileId]}
                     disabled={!enableFrameSelect}
-                    onCategorySelect={() => multipleProfileStore.selectProfileCategory(ProfileCategory.IMAGE)}
+                    onCategorySelect={() => multipleProfileStore.setProfileCategory(ProfileCategory.IMAGE)}
                     onItemSelect={this.onFrameItemClick}
                 />
                 <ProfileSelectionButtonComponent
-                    category={ProfileCategory.REGION}
-                    selectedCategory={multipleProfileStore.selectedProfileCategory}
+                    categoryName={ProfileCategory.REGION}
+                    isActiveCategory={multipleProfileStore.profileCategory === ProfileCategory.REGION}
                     itemOptions={undefined}
                     itemSelected={multipleProfileStore.selectedRegions}
                     disabled={!enableRegionSelect}
-                    onCategorySelect={() => multipleProfileStore.selectProfileCategory(ProfileCategory.REGION)}
+                    onCategorySelect={() => multipleProfileStore.setProfileCategory(ProfileCategory.REGION)}
                     onItemSelect={this.onRegionItemClick}
                 />
                 <ProfileSelectionButtonComponent
-                    category={ProfileCategory.STATISTICS}
-                    selectedCategory={multipleProfileStore.selectedProfileCategory}
-                    itemOptions={multipleProfileStore.profileStatsOptions}
+                    categoryName={ProfileCategory.STATISTICS}
+                    isActiveCategory={multipleProfileStore.profileCategory === ProfileCategory.STATISTICS}
+                    itemOptions={multipleProfileStore.statsTypeOptions}
                     itemSelected={multipleProfileStore.selectedStatsTypes}
                     disabled={!enableStatsSelect}
-                    onCategorySelect={() => multipleProfileStore.selectProfileCategory(ProfileCategory.STATISTICS)}
+                    onCategorySelect={() => multipleProfileStore.setProfileCategory(ProfileCategory.STATISTICS)}
                     onItemSelect={this.onStatsItemClick}
                 />
                 <ProfileSelectionButtonComponent
-                    category={ProfileCategory.STOKES}
-                    selectedCategory={multipleProfileStore.selectedProfileCategory}
-                    itemOptions={undefined/*profileCoordinateOptions*/}
+                    categoryName={ProfileCategory.STOKES}
+                    isActiveCategory={multipleProfileStore.profileCategory === ProfileCategory.STOKES}
+                    itemOptions={multipleProfileStore.coordinateOptions}
                     itemSelected={multipleProfileStore.selectedCoordinates}
-                    disabled={!enableStokesSelect}
-                    onCategorySelect={() => multipleProfileStore.selectProfileCategory(ProfileCategory.STOKES)}
+                    disabled={!multipleProfileStore.selectedFrame?.hasStokes}
+                    onCategorySelect={() => multipleProfileStore.setProfileCategory(ProfileCategory.STOKES)}
                     onItemSelect={this.onStokesItemClick}
                 />
             </React.Fragment>
