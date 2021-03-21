@@ -16,13 +16,13 @@ export class SpectralProfileStore {
         this.profiles = new Map<Coordinate, ObservableMap<CARTA.StatsType, ProcessedSpectralProfile>>();
     }
 
-    public getProfile(coordinate: Coordinate, statsType: CARTA.StatsType) {
+    public getProfile = (coordinate: Coordinate, statsType: CARTA.StatsType): ProcessedSpectralProfile => {
         let coordinateMap = this.profiles.get(coordinate);
         if (coordinateMap) {
             return coordinateMap.get(statsType);
         }
         return null;
-    }
+    };
 
     @action clearProfiles = () => {
         this.profiles = new Map<string, ObservableMap<CARTA.StatsType, ProcessedSpectralProfile>>();
