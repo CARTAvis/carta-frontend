@@ -203,7 +203,7 @@ export class MultipleProfileStore {
         // this.defaultFrame = frame;
         this.defaultCoordinate = coordinate;
 
-        this.profileCategory = ProfileCategory.STATISTICS;
+        this.profileCategory = ProfileCategory.IMAGE;
         // this.selectedFrameFileId = frame.frameInfo.fileId;
         this.selectedRegions = [];
         this.selectedStatsTypes = [CARTA.StatsType.Mean];

@@ -50,8 +50,9 @@ class ProfileSelectionButtonComponent extends React.Component<ProfileSelectionBu
                     }
                     minimal={true}
                     placement={Position.BOTTOM}
+                    disabled={!this.props.isActiveCategory || this.props.disabled}
                 >
-                    <AnchorButton rightIcon={"caret-down"} disabled={this.props.disabled}/>
+                    <AnchorButton rightIcon={"caret-down"} disabled={!this.props.isActiveCategory || this.props.disabled}/>
                 </Popover>
             </React.Fragment>
         );
