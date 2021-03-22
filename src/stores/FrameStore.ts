@@ -782,8 +782,6 @@ export class FrameStore {
             const cDelt2 = getHeaderNumericValue(this.frameInfo.fileInfoExtended.headerEntries.find(entry => entry.name === "CDELT2"));
             this.framePixelRatio = Math.abs(cDelt1 / cDelt2);
         }
-        // Testing
-        //this.framePixelRatio = NaN;
 
         this.initSupportedSpectralConversion();
         this.initCenter();
