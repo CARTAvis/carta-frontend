@@ -154,8 +154,8 @@ export class MultipleProfileStore {
 
     constructor(widgetStore: SpectralProfileWidgetStore, coordinate: string) {
         makeObservable(this);
-        this.defaultCoordinate = coordinate;
         this.widgetStore = widgetStore;
+        this.defaultCoordinate = coordinate;
 
         this.profileCategory = ProfileCategory.IMAGE;
         this.selectedRegions = [];

@@ -26,7 +26,6 @@ type PlotData = {
     yMax: number,
     yMean: number,
     yRms: number,
-    progressSum: number,
     progress: number
 };
 
@@ -81,10 +80,14 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
 
         // Get profiles
         const profilesParameter = this.widgetStore.multipleProfileStore.getProfilesParameter();
-        const profiles = profilesParameter?.map(profileParameter => {
-            return this.profileStore.getProfile(profileParameter.coordinate, profileParameter.statsType);
+        let profiles = [];
+        profilesParameter?.forEach(profileParameter => {
+            const profile = this.profileStore.getProfile(profileParameter.coordinate, profileParameter.statsType);
+            if (profile) {
+                profiles.push(profile);
+            }
         });
-        if (!profiles || profiles.length <= 0) {
+        if (profiles.length <= 0) {
             return null;
         }
 
@@ -108,7 +111,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
                 if (yBound.yMax < dataPointSet.yBound.yMax) {
                     yBound.yMax = dataPointSet.yBound.yMax;
                 }
-                progressSum += profile.progress;
+                progressSum = progressSum + profile.progress;
             }
         });
 
@@ -132,7 +135,6 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
             yMax:yBound.yMax,
             yMean: 0,
             yRms: 0,
-            progressSum: progressSum,
             progress: progressSum / profiles.length
         };
     }
@@ -174,7 +176,8 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
                 const currentData = this.plotData;
                 if (currentData && isFinite(currentData.progress)) {
                     if (currentData.progress < 1.0) {
-                        progressString = `[${toFixed(currentData.progressSum * 100)}%/${currentData.numProfiles * 100}% complete]`
+                        const totalProgress = currentData.numProfiles * 100;
+                        progressString = `[${toFixed(currentData.progress * totalProgress)}%/${totalProgress}% complete]`
                         this.widgetStore.updateStreamingDataStatus(true);
                     } else {
                         this.widgetStore.updateStreamingDataStatus(false);
