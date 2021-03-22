@@ -29,7 +29,7 @@ class ProfileSelectionButtonComponentProps {
 class ProfileSelectionButtonComponent extends React.Component<ProfileSelectionButtonComponentProps> {
     public render() {
         return (
-            <React.Fragment>
+            <div className="category-set">
                 <Tooltip content="Select to show multiple profiles" position={Position.TOP}>
                     <AnchorButton
                         text={this.props.categoryName}
@@ -59,7 +59,7 @@ class ProfileSelectionButtonComponent extends React.Component<ProfileSelectionBu
                 >
                     <AnchorButton rightIcon={"caret-down"} disabled={!this.props.isActiveCategory || this.props.disabled}/>
                 </Popover>
-            </React.Fragment>
+            </div>
         );
     }
 }
@@ -99,7 +99,7 @@ class ProfileSelectionComponent extends React.Component<{widgetStore: SpectralPr
         }
 
         return (
-            <React.Fragment>
+            <div className="profile-selection-panel">
                 <ProfileSelectionButtonComponent
                     categoryName={ProfileCategory.IMAGE}
                     isActiveCategory={multipleProfileStore.profileCategory === ProfileCategory.IMAGE}
@@ -136,7 +136,7 @@ class ProfileSelectionComponent extends React.Component<{widgetStore: SpectralPr
                     onCategorySelect={() => multipleProfileStore.setProfileCategory(ProfileCategory.STOKES)}
                     onItemSelect={this.onStokesItemClick}
                 />
-            </React.Fragment>
+            </div>
         );
     }
 }
@@ -158,7 +158,7 @@ export class SpectralProfilerToolbarComponent extends React.Component<{ widgetSt
         return (
             <div className="spectral-profiler-toolbar">
                 <ProfileSelectionComponent widgetStore={widgetStore}/>
-                <ButtonGroup className="profile-buttons">
+                <ButtonGroup className="shortcut-buttons">
                     <Tooltip content="Smoothing">
                         <AnchorButton icon={<CustomIcon icon="smoothing"/>} onClick={this.smoothingShortcutClick}/>
                     </Tooltip>

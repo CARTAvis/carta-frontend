@@ -4,17 +4,20 @@
     overflow: hidden;
     display: flex;
     user-select: none;
-    .bp3-form-group {
+
+    .profile-selection-panel {
         margin-bottom: 5px;
         margin-top: 5px;
-        margin-left: 15px;
+        padding-left: 8px;
+        display: flex;
+        flex-direction: row;
 
-        &:first-of-type {
-            margin-left: 5px;
+        .category-set {
+            padding-right: 15px;
         }
     }
 
-    .profile-buttons {
+    .shortcut-buttons {
         margin-bottom: 5px;
         margin-top: 5px;
         margin-left: auto;
