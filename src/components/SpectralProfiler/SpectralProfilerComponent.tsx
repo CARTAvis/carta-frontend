@@ -8,7 +8,7 @@ import {CARTA} from "carta-protobuf";
 import {LineMarker, LinePlotComponent, LinePlotComponentProps, LinePlotSelectingMode, ProfilerInfoComponent, VERTICAL_RANGE_PADDING, SmoothingType} from "components/Shared";
 import {TickType, MultiPlotProps} from "../Shared/LinePlot/PlotContainer/PlotContainerComponent";
 import {SpectralProfilerToolbarComponent} from "./SpectralProfilerToolbarComponent/SpectralProfilerToolbarComponent";
-import {SpectralProfileStore, WidgetProps, HelpType, AnimatorStore, WidgetsStore, AppStore, DefaultWidgetConfig, RegionStore} from "stores";
+import {SpectralProfileStore, WidgetProps, HelpType, AnimatorStore, WidgetsStore, AppStore, DefaultWidgetConfig} from "stores";
 import {SpectralProfileWidgetStore} from "stores/widgets";
 import {Point2D, ProcessedSpectralProfile} from "models";
 import {binarySearchByX, clamp, formattedExponential, formattedNotation, toExponential, toFixed} from "utilities";
@@ -166,7 +166,6 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
 
         // Get profiles
         const profilesParameter = this.widgetStore.multipleProfileStore.getProfilesParameter();
-        console.log(profilesParameter);
         const profiles = profilesParameter?.map(profileParameter => {
             return this.profileStore.getProfile(profileParameter.coordinate, profileParameter.statsType);
         });
@@ -174,7 +173,6 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
             return null;
         }
 
-        console.log(profiles);
         // Determine xBound
         const xBound = this.getBoundX();
 
@@ -482,13 +480,11 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
         }
 
         const frame = this.widgetStore.effectiveFrame;
-        const imageName = (frame ? frame.filename : undefined);
-
         let linePlotProps: LinePlotComponentProps = {
             xLabel: "Channel",
             yLabel: "Value",
             darkMode: appStore.darkTheme,
-            imageName: imageName,
+            imageName: frame?.filename ?? undefined,
             plotName: `Z profile`,
             plotType: this.widgetStore.plotType,
             tickTypeY: TickType.Scientific,
@@ -517,15 +513,11 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
             }
             if (frame.unit) {
                 let yLabelUnit = `(${frame.unit})`;
-                let region: RegionStore;
-                if (frame.regionSet) {
-                    region = frame.regionSet.regions.find(r => r.regionId === this.widgetStore.effectiveRegionId);
-                    if (region && region.regionType !== CARTA.RegionType.POINT) {
-                        if (this.widgetStore.multipleProfileStore.isStatsTypeFluxDensity) {
-                            yLabelUnit =  "(Jy)";
-                        } else if (this.widgetStore.multipleProfileStore.isStatsTypeSumSq) {
-                            yLabelUnit = `(${frame.unit})^2`;
-                        }
+                if (this.widgetStore.effectiveRegion?.regionType !== CARTA.RegionType.POINT) {
+                    if (this.widgetStore.multipleProfileStore.isStatsTypeFluxDensity) {
+                        yLabelUnit =  "(Jy)";
+                    } else if (this.widgetStore.multipleProfileStore.isStatsTypeSumSq) {
+                        yLabelUnit = `(${frame.unit})^2`;
                     }
                 }
                 linePlotProps.yLabel = `Value ${yLabelUnit}`;
