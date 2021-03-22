@@ -16,7 +16,6 @@ interface ColorPickerComponentProps {
     disabled?: boolean;
     setColor: (color: ColorResult) => void;
 }
-
 @observer
 export class ColorPickerComponent extends React.Component<ColorPickerComponentProps> {
     private static readonly CHANGE_DELAY = 100;

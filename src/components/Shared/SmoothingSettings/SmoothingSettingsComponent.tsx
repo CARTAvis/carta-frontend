@@ -2,10 +2,8 @@ import * as React from "react";
 import {observer} from "mobx-react";
 import {FormGroup, HTMLSelect, IOptionProps, Switch} from "@blueprintjs/core";
 import {ProfileSmoothingStore} from "stores";
-import {ColorPickerComponent, SafeNumericInput, PlotTypeSelectorComponent, PlotType, LineSettings} from "components/Shared";
-import {ColorResult} from "react-color";
+import {AutoColorPickerComponent, SafeNumericInput, PlotTypeSelectorComponent, PlotType, LineSettings} from "components/Shared";
 import {SWATCH_COLORS} from "utilities";
-import { AppStore } from "stores";
 import "./SmoothingSettingsComponent.scss";
 
 export enum SmoothingType {
@@ -60,18 +58,17 @@ export class SmoothingSettingsComponent extends React.Component<{smoothingStore:
                         {smoothingStore.colorMap.size > 0 &&
                             <HTMLSelect value={smoothingStore.selectedLine} options={colorKeys} onChange={this.handleSelectedLineChanged}/>
                         }
-                        <ColorPickerComponent
-                            color={smoothingStore.selectedLine && smoothingStore.colorMap.get(smoothingStore.selectedLine) ? smoothingStore.colorMap.get(smoothingStore.selectedLine).colorHex : smoothingStore.lineColor.colorHex}
+                        <AutoColorPickerComponent
+                            color={smoothingStore.selectedLine && smoothingStore.colorMap.get(smoothingStore.selectedLine) ? smoothingStore.colorMap.get(smoothingStore.selectedLine) : smoothingStore.lineColor}
                             presetColors={SWATCH_COLORS}
-                            setColor={(color: ColorResult) => {
+                            setColor={(color: string) => {
                                 if (smoothingStore.selectedLine && smoothingStore.colorMap.get(smoothingStore.selectedLine)) {
-                                    smoothingStore.setColorMap (smoothingStore.selectedLine, { colorHex: color.hex, fixed: true});
+                                    smoothingStore.setColorMap (smoothingStore.selectedLine, color);
                                 } else {
-                                    smoothingStore.setLineColor(color.hex, true);
+                                    smoothingStore.setLineColor(color);
                                 }
                             }}
                             disableAlpha={true}
-                            darkTheme={AppStore.Instance.darkTheme}
                         />
                     </FormGroup>
                     <FormGroup inline={true} label={"Line Style"}>

@@ -11,7 +11,7 @@ import {ContourGeneratorPanelComponent} from "./ContourGeneratorPanel/ContourGen
 import {AppStore, FrameStore, HelpType} from "stores";
 import {RenderConfigWidgetStore} from "stores/widgets";
 import {Point2D} from "models";
-import {clamp, toExponential, toFixed} from "utilities";
+import {clamp, toExponential, toFixed, getColorForTheme} from "utilities";
 import {CustomIcon} from "icons/CustomIcons";
 import "./ContourDialogComponent.scss";
 
@@ -324,12 +324,7 @@ export class ContourDialogComponent extends React.Component {
         const currentPlotData = this.plotData;
         if (currentPlotData) {
             // set line color
-            let primaryLineColor = this.widgetStore.primaryLineColor.colorHex;
-            if (appStore.darkTheme) {
-                if (!this.widgetStore.primaryLineColor.fixed) {
-                    primaryLineColor = Colors.BLUE4;
-                }
-            }
+            let primaryLineColor = getColorForTheme(this.widgetStore.primaryLineColor);
             linePlotProps.lineColor = primaryLineColor;
 
             // Determine scale in X and Y directions. If auto-scaling, use the bounds of the current data
