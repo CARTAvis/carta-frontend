@@ -27,7 +27,6 @@ export class MultipleProfileStore {
     private readonly widgetStore: SpectralProfileWidgetStore;
     private defaultStatsType: CARTA.StatsType = CARTA.StatsType.Mean;
     private defaultCoordinate: string;
-
     private profileStatsOptionTemplate: ProfileItemOptionProps[] = Array.from(STATISTICS_TEXT.entries()).map(entry => {
         return {
             value: entry[0],
@@ -35,46 +34,7 @@ export class MultipleProfileStore {
             enable: true
         };
     });
-
     private static ValidCoordinates = ["z", "Iz", "Qz", "Uz", "Vz"];
-
-    /*
-    public getProfiles = (): ProcessedSpectralProfile[] => {
-        let profiles: ProcessedSpectralProfile[] = [];
-        const frame = this.defaultFrame;
-        const regionId = this.widgetStore.effectiveRegionId;
-        if (this.profileCategory === ProfileCategory.IMAGE) {
-            // TODO
-        } else if (this.profileCategory === ProfileCategory.REGION) {
-            // TODO
-        } else if (this.profileCategory === ProfileCategory.STATISTICS) {
-            if (frame.regionSet) {
-                const region = frame.regionSet.regions.find(r => r.regionId === regionId);
-                if (region && this.profileStore) {
-                    this.selectedStatsTypes.forEach(statsType => {
-                        const profile = this.profileStore.getProfile(this.defaultCoordinate, region.isClosedRegion ? CARTA.StatsType.Mean : statsType);
-                        if (profile) {
-                            profiles.push(profile);
-                        }
-                    });
-                }
-            }
-        } else if (this.profileCategory === ProfileCategory.STOKES) {
-            if (frame.regionSet) {
-                const region = frame.regionSet.regions.find(r => r.regionId === regionId);
-                if (region && this.profileStore) {
-                    this.selectedCoordinates.forEach(coordinate => {
-                        const profile = this.profileStore.getProfile(coordinate, this.defaultStatsType);
-                        if (profile) {
-                            profiles.push(profile);
-                        }
-                    });
-                }
-            }
-        }
-        return profiles;
-    };
-    */
 
     public getProfilesParameter = (): ProfileParameter[] => {
         let profilesParameter: ProfileParameter[] = [];
@@ -138,7 +98,6 @@ export class MultipleProfileStore {
 
     @action setProfileCategory = (profileCategory: ProfileCategory) => {
         this.profileCategory = profileCategory;
-
         // Reset region/statistics/stokes selected option when switching profile category
         // TODO: missing handling for image
         if (profileCategory === ProfileCategory.IMAGE) {
