@@ -166,6 +166,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
 
         // Get profiles
         const profilesParameter = this.widgetStore.multipleProfileStore.getProfilesParameter();
+        console.log(profilesParameter);
         const profiles = profilesParameter?.map(profileParameter => {
             return this.profileStore.getProfile(profileParameter.coordinate, profileParameter.statsType);
         });
@@ -173,6 +174,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
             return null;
         }
 
+        console.log(profiles);
         // Determine xBound
         const xBound = this.getBoundX();
 

@@ -1,7 +1,7 @@
 import {action, computed, makeObservable, observable} from "mobx";
 import {CARTA} from "carta-protobuf";
 import {AppStore, FrameStore} from "..";
-import {ACTIVE_FILE_ID} from ".";
+import {SpectralProfileWidgetStore} from ".";
 import {ProfileItemOptionProps} from "components";
 import {STATISTICS_TEXT, SUPPORTED_STATISTICS_TYPES} from "models";
 
@@ -20,13 +20,11 @@ export interface ProfileParameter {
 export class MultipleProfileStore {
     // profile selection
     @observable profileCategory: ProfileCategory;
-    @observable selectedFrameFileId: number;
     @observable selectedRegions: number[];
     @observable selectedStatsTypes: CARTA.StatsType[];
     @observable selectedCoordinates: string[];
 
-    private defaultFrame: FrameStore;
-    private defaultRegionId: number;
+    private readonly widgetStore: SpectralProfileWidgetStore;
     private defaultStatsType: CARTA.StatsType = CARTA.StatsType.Mean;
     private defaultCoordinate: string;
 
@@ -81,27 +79,26 @@ export class MultipleProfileStore {
     public getProfilesParameter = (): ProfileParameter[] => {
         let profilesParameter: ProfileParameter[] = [];
         if (this.profileCategory === ProfileCategory.IMAGE) {
-            // TODO
+            // TODO: wire up profiles of matching images
+            const statsType = this.widgetStore.effectiveRegion?.isClosedRegion ? this.defaultStatsType : CARTA.StatsType.Sum;
+            profilesParameter.push({statsType: statsType, coordinate: this.defaultCoordinate});
         } else if (this.profileCategory === ProfileCategory.REGION) {
             // TODO
         } else if (this.profileCategory === ProfileCategory.STATISTICS) {
             this.selectedStatsTypes?.forEach(statsType => {
-                profilesParameter.push({statsType: statsType, coordinate: this.defaultCoordinate});
+                profilesParameter.push({statsType: this.widgetStore.effectiveRegion?.isClosedRegion ? statsType : CARTA.StatsType.Sum, coordinate: this.defaultCoordinate});
             });
         } else if (this.profileCategory === ProfileCategory.STOKES) {
+            const statsType = this.widgetStore.effectiveRegion?.isClosedRegion ? this.defaultStatsType : CARTA.StatsType.Sum;
             this.selectedCoordinates?.forEach(coordinate => {
-                profilesParameter.push({statsType: this.defaultStatsType, coordinate: coordinate});
+                profilesParameter.push({statsType: statsType, coordinate: coordinate});
             });
         }
         return profilesParameter;
     };
 
     @computed get frameOptions(): ProfileItemOptionProps[] {
-        let options: ProfileItemOptionProps[]= [{value: ACTIVE_FILE_ID, label: "Active"}];
-        if (AppStore.Instance.activeFrame) {
-            options = options.concat(AppStore.Instance.frameNames);
-        }
-        return options;
+        return AppStore.Instance.frameNames;
     }
 
     @computed get statsTypeOptions(): ProfileItemOptionProps[] {
@@ -124,7 +121,11 @@ export class MultipleProfileStore {
     }
 
     @computed get selectedFrame(): FrameStore {
-        return AppStore.Instance.getFrame(this.selectedFrameFileId);
+        return this.widgetStore.effectiveFrame;
+    }
+
+    @computed get selectedFrameFileId(): number {
+        return this.widgetStore.effectiveFrame?.frameInfo.fileId;
     }
 
     @computed get isStatsTypeFluxDensity(): boolean {
@@ -158,7 +159,7 @@ export class MultipleProfileStore {
 
     @action selectFrame = (fileId: number) => {
         // TODO: error handling for fileId
-        this.selectedFrameFileId = fileId;
+        this.widgetStore.setFileId(fileId);
     };
 
     @action selectRegion = (regionId: number) => {
@@ -192,17 +193,12 @@ export class MultipleProfileStore {
         }
     };
 
-    constructor(frame: FrameStore, coordinate: string) {
+    constructor(widgetStore: SpectralProfileWidgetStore, coordinate: string) {
         makeObservable(this);
-        if (frame) {
-            this.defaultFrame = frame;
-            this.selectedFrameFileId = frame.frameInfo.fileId;
-        }
-        // this.defaultFrame = frame;
         this.defaultCoordinate = coordinate;
+        this.widgetStore = widgetStore;
 
         this.profileCategory = ProfileCategory.IMAGE;
-        // this.selectedFrameFileId = frame.frameInfo.fileId;
         this.selectedRegions = [];
         this.selectedStatsTypes = [CARTA.StatsType.Mean];
         this.selectedCoordinates = [coordinate];
