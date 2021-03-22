@@ -800,28 +800,59 @@ export class OverlayColorbarSettings {
         return renderHeight && tickNum > 1 ? tickNum : 1;
     }
 
-    @computed get texts(): string[] {
+    @computed get roundedNumbers(): {numbers: number[], precision: number} {
         const appStore = AppStore.Instance;
         const frame = appStore?.activeFrame;
         const tickNum = this.tickNum;
+        console.log("tick num", tickNum)
         if (!frame || !tickNum) {
-            return [];
+            return null;
         } else {
             const indexArray = Array.from(Array(tickNum).keys());
-            const dy = (frame.renderConfig.scaleMaxVal - frame.renderConfig.scaleMinVal) / (tickNum + 1);
-            const origNumbers = indexArray.map(x => frame.renderConfig.scaleMinVal + dy * (x + 1));
-            const rounding = Math.ceil(-Math.log10(dy) + 1);
-            const maxOrder = Math.max(...origNumbers.map(x => Math.log10(x)));
-            const minOrder = Math.min(...origNumbers.map(x => Math.log10(x)));
-            if (maxOrder >= 5.0) {
-                return origNumbers.map(x => x.toExponential(Math.abs(maxOrder + rounding)));
-            } else if (rounding >= 6.0) {
-                return origNumbers.map(x => x.toExponential(Math.abs(minOrder + rounding)));
-            } else {
-                return origNumbers.map(x => x.toFixed(rounding < 0 ? 0 : rounding));
+            let dy = (frame.renderConfig.scaleMaxVal - frame.renderConfig.scaleMinVal) / (tickNum + 1);
+            const precision = -Math.round(Math.log10(dy)) + 1;
+            const roundBase = Math.pow(10, precision);
+            dy = Math.ceil(dy * roundBase) / roundBase;
+            console.log('dy', dy)
+            const min =  Math.round(frame.renderConfig.scaleMinVal * roundBase) / roundBase;
+            let numbers = indexArray.map(x => min + dy * (x + 1));
+
+            const isOutofBound = (element: number) => element >= frame.renderConfig.scaleMaxVal;
+            const outofBoundIndex = numbers.findIndex(isOutofBound);
+            if (outofBoundIndex !== -1) {
+                numbers = numbers.slice(0, outofBoundIndex);
             }
+            return {numbers: numbers, precision: precision};
         }
     }
+
+    @computed get texts(): string[] {
+        if (!this.roundedNumbers) {
+            return [];
+        }
+        const maxOrder = Math.max(...this.roundedNumbers.numbers.map(x => Math.log10(x)));
+        const minOrder = Math.min(...this.roundedNumbers.numbers.map(x => Math.log10(x)));
+        if (maxOrder >= 5.0) {
+            return this.roundedNumbers.numbers.map(x => x.toExponential(Math.abs(maxOrder + this.roundedNumbers.precision)));
+        } else if (minOrder <= -5.0) {
+            return this.roundedNumbers.numbers.map(x => x.toExponential(Math.abs(minOrder + this.roundedNumbers.precision)));
+        } else {
+            return this.roundedNumbers.numbers.map(x => x.toFixed(this.roundedNumbers.precision < 0 ? 0 : this.roundedNumbers.precision));
+        }
+    }
+
+    @computed get positions(): number[] {
+        if (!this.roundedNumbers) {
+            return [];
+        }
+        const renderConfig = AppStore.Instance?.activeFrame?.renderConfig;
+        if (!renderConfig) {
+            return [];
+        }
+        console.log(this.roundedNumbers.numbers.map(x => (x - renderConfig.scaleMinVal) / (renderConfig.scaleMaxVal - renderConfig.scaleMinVal)))
+        return this.roundedNumbers.numbers.map(x => (x - renderConfig.scaleMinVal) / (renderConfig.scaleMaxVal - renderConfig.scaleMinVal));
+    }
+
 
     @computed get rightBorderPos(): number {
         return this.offset + this.width;

@@ -85,11 +85,8 @@ export class ColorbarComponent extends React.Component<ColorbarComponentProps> {
         const yOffset = appStore.overlayStore.padding.top;
         const color = appStore.getASTColor;
 
-        const indexArray = Array.from(Array(colorbarSettings.tickNum).keys());
-        let scaledArray = indexArray.map(x => (x + 1) / (colorbarSettings.tickNum + 1));
-        const yPosArray = scaledArray.map(x => yOffset + frame.renderHeight * (1 - x));
-
         const texts = colorbarSettings.texts;
+        const positions = colorbarSettings.positions.map(x => yOffset + frame.renderHeight * (1 - x));
 
         let ticks = [];
         let numbers = [];
@@ -97,7 +94,7 @@ export class ColorbarComponent extends React.Component<ColorbarComponentProps> {
             if (colorbarSettings.tickVisible) {
                 ticks.push(
                     <Line
-                        points={[colorbarSettings.rightBorderPos - colorbarSettings.tickLen, yPosArray[i], colorbarSettings.rightBorderPos, yPosArray[i]]}
+                        points={[colorbarSettings.rightBorderPos - colorbarSettings.tickLen, positions[i], colorbarSettings.rightBorderPos, positions[i]]}
                         stroke={color}
                         strokeWidth={colorbarSettings.tickWidth}
                         key={i.toString()}
@@ -109,7 +106,7 @@ export class ColorbarComponent extends React.Component<ColorbarComponentProps> {
                     <Text
                         text={texts[i]}
                         x={colorbarSettings.rightBorderPos + colorbarSettings.textGap}
-                        y={colorbarSettings.numberRotated ? yPosArray[i] + 100 / 2 : yPosArray[i] - colorbarSettings.numberFontSize / 2}
+                        y={colorbarSettings.numberRotated ? positions[i] + 100 / 2 : positions[i] - colorbarSettings.numberFontSize / 2}
                         width={colorbarSettings.numberRotated ? 100 : null}
                         align={"center"}
                         fill={color}
