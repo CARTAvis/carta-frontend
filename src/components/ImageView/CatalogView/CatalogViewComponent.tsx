@@ -8,6 +8,7 @@ import {CatalogOverlayShape} from "stores/widgets";
 import {canvasToTransformedImagePos} from "components/ImageView/RegionView/shared";
 import {ImageViewLayer} from "../ImageViewComponent";
 import {CursorInfo} from "models";
+import {getColorForTheme} from "utilities";
 import "./CatalogViewComponent.scss";
 
 export interface CatalogViewComponentProps {
@@ -179,7 +180,7 @@ export class CatalogViewComponent extends React.Component<CatalogViewComponentPr
         const selectedData = this.selectedData;
         unSelectedData.forEach((data: Plotly.PlotData, fileId) => {
             const catalogWidgetStore = catalogStore.getCatalogWidgetStore(fileId);
-            const color = catalogWidgetStore.catalogColor;            
+            const color = getColorForTheme(catalogWidgetStore.catalogColor);
             data.marker.color = color;
             data.marker.line.color = color;
             data.marker.line.width = 4;
@@ -191,8 +192,9 @@ export class CatalogViewComponent extends React.Component<CatalogViewComponentPr
         if (selectedData) {
             selectedData.forEach((data: Plotly.PlotData, fileId) => {
                 const catalogWidgetStore = catalogStore.getCatalogWidgetStore(fileId);
-                data.marker.color = catalogWidgetStore.highlightColor;
-                data.marker.line.color = catalogWidgetStore.highlightColor;
+                const highlightColor = getColorForTheme(catalogWidgetStore.highlightColor);
+                data.marker.color = highlightColor;
+                data.marker.line.color = highlightColor;
                 data.marker.line.width = 4;
                 data.marker.size = catalogWidgetStore.catalogSize * 2 + 5;
 

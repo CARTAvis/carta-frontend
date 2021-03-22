@@ -1,7 +1,7 @@
 import * as React from "react";
 import {computed, autorun} from "mobx";
 import {observer} from "mobx-react";
-import {Colors, Tab, Tabs} from "@blueprintjs/core";
+import {Tab, Tabs} from "@blueprintjs/core";
 import {LinePlotSettingsPanelComponent, LinePlotSettingsPanelComponentProps, ScatterPlotSettingsPanelComponentProps, ScatterPlotSettingsPanelComponent, SpectralSettingsComponent, SmoothingSettingsComponent} from "components/Shared";
 import {StokesAnalysisWidgetStore} from "stores/widgets";
 import {WidgetProps, DefaultWidgetConfig, HelpType, WidgetsStore, AppStore} from "stores";
@@ -74,11 +74,8 @@ export class StokesAnalysisSettingsPanelComponent extends React.Component<Widget
     }
 
     render() {
-        const appStore = AppStore.Instance;
         const widgetStore = this.widgetStore;
         const lineSettingsProps: LinePlotSettingsPanelComponentProps = {
-            darkMode: appStore.darkTheme,
-            primaryDarkModeLineColor: Colors.BLUE4,
             primaryLineColor: widgetStore.primaryLineColor,
             lineWidth: widgetStore.lineWidth,
             plotType: widgetStore.plotType,
@@ -87,7 +84,6 @@ export class StokesAnalysisSettingsPanelComponent extends React.Component<Widget
             setLineWidth: widgetStore.setLineWidth,
             setLinePlotPointSize: widgetStore.setLinePlotPointSize,
             setPlotType: widgetStore.setPlotType,
-            secondaryDarkModeLineColor: Colors.ORANGE4,
             secondaryLineColor: widgetStore.secondaryLineColor,
             setSecondaryLineColor: widgetStore.setSecondaryLineColor
         };
