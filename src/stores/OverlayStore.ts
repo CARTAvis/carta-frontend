@@ -703,6 +703,7 @@ export class OverlayColorbarSettings {
     @observable labelVisible: boolean;
     @observable labelFont: number;
     @observable labelFontSize: number;
+    private textRatio = [0.5, 0.45, 0.5, 0.45, 0.6];
 
     constructor() {
         makeObservable(this);
@@ -727,11 +728,11 @@ export class OverlayColorbarSettings {
 
     @action setVisible = (visible: boolean) => {
         this.visible = visible;
-    }
+    };
 
     @action setShowHoverInfo = (show: boolean) => {
         this.showHoverInfo = show;
-    }
+    };
     
     @action setWidth = (width: number) => {
         this.width = width;
@@ -743,72 +744,60 @@ export class OverlayColorbarSettings {
 
     @action setBorderVisible = (visible: boolean) => {
         this.borderVisible = visible;
-    }
+    };
 
     @action setBorderWidth = (width: number) => {
         this.borderWidth = width;
-    }
+    };
 
     @action setTickVisible = (visible: boolean) => {
         this.tickVisible = visible;
-    }
+    };
 
     @action setTickDensity = (tickNum: number) => {
         this.tickDensity = tickNum;
-    }
+    };
 
     @action setTickLen = (tickLen: number) => {
         this.tickLen = tickLen;
-    }
+    };
 
     @action setTickWidth = (width: number) => {
         this.tickWidth = width;
-    }
+    };
 
     @action setNumberVisible = (visible: boolean) => {
         this.numberVisible = visible;
-    }
+    };
 
     @action setNumberRotated = (rotated: boolean) => {
         this.numberRotated = rotated;
-    }
+    };
 
     @action setNumberFont = (font: number) => {
         this.numberFont = font;
-    }
+    };
 
     @action setNumberFontSize = (fontSize: number) => {
         this.numberFontSize = fontSize;
-    }
+    };
 
     @action setLabelVisible = (visible: boolean) => {
         this.labelVisible = visible;
-    }
+    };
 
     @action setLabelFont = (font: number) => {
         this.labelFont = font;
-    }
+    };
 
     @action setLabelFontSize = (fontSize: number) => {
         this.labelFontSize = fontSize;
-    }
-
-    @computed get rightBorderPos(): number {
-        return this.offset + this.width;
-    }
-
-    @computed get textGap() {
-        return 5;
-    }
+    };
 
     @computed get tickNum(): number {
-        const appStore = AppStore.Instance;
-        const tickNum = Math.round((appStore.overlayStore.viewHeight - appStore.overlayStore.defaultGap * 2
-            - (appStore.overlayStore.title.show ? appStore.overlayStore.titleGap + appStore.overlayStore.title.fontSize : 0)
-            - (appStore.overlayStore.showNumbers ? appStore.overlayStore.defaultGap + appStore.overlayStore.numbers.fontSize : 0)
-            - (appStore.overlayStore.labels.show ? appStore.overlayStore.defaultGap + appStore.overlayStore.labels.fontSize : 0)
-            - (!this.visible || appStore.overlayStore.labels.show ? 0 : 10)) / 100.0 * this.tickDensity);
-        return appStore.overlayStore.viewHeight && tickNum > 1 ? tickNum : 1;
+        const renderHeight = AppStore.Instance.overlayStore.renderHeight;
+        const tickNum = Math.round(renderHeight / 100.0 * this.tickDensity);
+        return renderHeight && tickNum > 1 ? tickNum : 1;
     }
 
     @computed get texts(): string[] {
@@ -832,15 +821,27 @@ export class OverlayColorbarSettings {
                 return origNumbers.map(x => x.toFixed(rounding < 0 ? 0 : rounding));
             }
         }
-    };
-
-    @computed get numberWidth(): number {
-        const textWidth = Math.max(...(this.texts.map(x => x.length)));
-        return this.numberVisible ? this.numberFontSize * (this.numberRotated ? 1 : textWidth / 2) + this.textGap : 0;
     }
 
-    @computed get stageWidth(): number {
-        return this.offset + this.width + this.numberWidth + (this.labelVisible ? this.labelFontSize + this.textGap : 0)
+    @computed get rightBorderPos(): number {
+        return this.offset + this.width;
+    }
+
+    @computed get textGap() {
+        return 5;
+    }
+
+    @computed get numberWidth(): number {
+        const textWidth = Math.max(...(this.texts.map(x => x.length))) * this.textRatio[Math.floor(this.numberFont / 4)];
+        return this.numberVisible ? this.numberFontSize * (this.numberRotated ? 1 : textWidth) + this.textGap : 0;
+    }
+
+    @computed get totalWidth(): number {
+        return this.offset + this.width + this.numberWidth + (this.labelVisible ? this.labelFontSize + this.textGap : 0);
+    }
+
+    @computed get stageWidth(): number { // total width + base
+        return this.totalWidth + 5;
     }
 }
 
@@ -1092,37 +1093,43 @@ export class OverlayStore {
         return (numGap + numHeight + this.defaultGap);
     }
 
+    @computed get base() {
+        return 5;
+    }
+
+    @computed get paddingLeft(): number { // base + numGap + numHeight + labelGap + labelHeight
+        return this.base + (this.showNumbers ? this.defaultGap + this.numbers.fontSize : 0) + (this.labels.show ? this.defaultGap + this.labels.fontSize : 0)
+    }
+
+    @computed get paddingRight(): number { // base + colorbarWidth
+        return this.base + (this.colorbar.visible ? this.colorbar.totalWidth : 0);
+    }
+
+    @computed get paddingTop(): number { // base + titleGap + titleHeight
+        return this.base + (this.title.show ? this.titleGap + this.title.fontSize : 0);
+    }
+
+    @computed get paddingBottom(): number { // base + numGap + numHeight + labelGap + labelHeight + colorbarHoverInfoHeight
+        return this.base + (this.showNumbers ? this.defaultGap + this.numbers.fontSize : 0)
+            + (this.labels.show ? this.defaultGap + this.labels.fontSize : 0) + (!this.colorbar.visible || this.labels.show ? 0 : 10);
+    }
+
     @computed get padding(): Padding {
-        const base = 5;
-
-        const numGap = (this.showNumbers ? this.defaultGap : 0);
-        const numHeight = (this.showNumbers ? this.numbers.fontSize : 0);
-
-        const labelGap = (this.labels.show ? this.defaultGap : 0);
-        const labelHeight = (this.labels.show ? this.labels.fontSize : 0);
-
-        const titleGap = (this.title.show ? this.titleGap : 0);
-        const titleHeight = (this.title.show ? this.title.fontSize : 0);
-
-        const colorbarGap = (this.colorbar.visible ? this.defaultGap : 0);
-        const colorbarWidth = (this.colorbar.visible ? this.colorbar.stageWidth : 0);
-        const colorbarHoverInfoWidth = (!this.colorbar.visible || this.labels.show ? 0 : 10);
-
         return {
-            left: base + numGap + numHeight + labelGap + labelHeight,
-            right: base + colorbarGap + colorbarWidth,
-            top: base + titleGap + titleHeight,
-            bottom: base + numGap + numHeight + labelGap + labelHeight + colorbarHoverInfoWidth
+            left: this.paddingLeft,
+            right: this.paddingRight,
+            top: this.paddingTop,
+            bottom: this.paddingBottom
         };
     }
 
     @computed get renderWidth() {
-        const renderWidth = this.viewWidth - this.padding.left - this.padding.right
+        const renderWidth = this.viewWidth - this.paddingLeft - this.paddingRight
         return renderWidth > 1 ? renderWidth : 1; // return value > 1 to prevent crashing
     }
 
     @computed get renderHeight() {
-        const renderHeight =  this.viewHeight - this.padding.top - this.padding.bottom;
+        const renderHeight =  this.viewHeight - this.paddingTop - this.paddingBottom;
         return renderHeight > 1 ? renderHeight : 1; // return value > 1 to prevent crashing
     }
 }

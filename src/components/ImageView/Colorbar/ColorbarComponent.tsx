@@ -51,7 +51,6 @@ export class ColorbarComponent extends React.Component<ColorbarComponentProps> {
         const yOffset = appStore.overlayStore.padding.top;
 
         let scaledPos = (frame.renderHeight + yOffset - point.y) / frame.renderHeight;
- 
         this.setHoverInfoText((frame.renderConfig.scaleMinVal + scaledPos * (frame.renderConfig.scaleMaxVal - frame.renderConfig.scaleMinVal)).toFixed(5));
         this.setCursorY(point.y);
     };
@@ -140,7 +139,7 @@ export class ColorbarComponent extends React.Component<ColorbarComponentProps> {
         return (
             <Text
                 text={frame.unit}
-                x={colorbarSettings.rightBorderPos + colorbarSettings.textGap + colorbarSettings.numberWidth}
+                x={colorbarSettings.rightBorderPos + colorbarSettings.numberWidth + colorbarSettings.textGap}
                 y={yOffset + frame.renderHeight}
                 width={frame.renderHeight}
                 align={"center"}
