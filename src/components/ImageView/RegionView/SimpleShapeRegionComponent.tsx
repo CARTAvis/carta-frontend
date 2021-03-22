@@ -409,9 +409,9 @@ export class SimpleShapeRegionComponent extends React.Component<RegionComponentP
                 shapeNode = (
                     <Rect
                         {...commonProps}
-                        width={width}
+                        width={width * frame.aspectRatio}
                         height={height}
-                        offsetX={width / 2.0}
+                        offsetX={width * frame.aspectRatio / 2.0}
                         offsetY={height / 2.0}
                     />
                 );
@@ -420,7 +420,7 @@ export class SimpleShapeRegionComponent extends React.Component<RegionComponentP
                     <Ellipse
                         {...commonProps}
                         radiusY={width}
-                        radiusX={height}
+                        radiusX={height * frame.aspectRatio}
                     />
                 );
             }
