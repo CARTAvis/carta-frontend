@@ -1427,6 +1427,12 @@ export class FrameStore {
             return false;
         }
 
+        if (frame.aspectRatio !== 1.0 || this.aspectRatio !== 1.0) {
+            console.log("Cannot perform spatial transform between images with non-square pixels");
+            this.spatialReference = null;
+            return false;
+        }
+
         if (this.validWcs !== frame.validWcs) {
             console.log(`Error creating spatial transform between files ${this.frameInfo.fileId} and ${frame.frameInfo.fileId}`);
             this.spatialReference = null;
