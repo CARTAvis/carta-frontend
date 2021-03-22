@@ -12,10 +12,7 @@ export enum ProfileCategory {
     STOKES = "Stokes"
 }
 
-export interface ProfileParameter {
-    statsType: CARTA.StatsType;
-    coordinate: string;
-}
+type SpectralConfig = CARTA.SetSpectralRequirements.ISpectralConfig;
 
 export class MultipleProfileStore {
     // profile selection
@@ -36,22 +33,20 @@ export class MultipleProfileStore {
     });
     private static ValidCoordinates = ["z", "Iz", "Qz", "Uz", "Vz"];
 
-    public getProfilesParameter = (): ProfileParameter[] => {
-        let profilesParameter: ProfileParameter[] = [];
+    public getProfileConfigs = (): SpectralConfig[] => {
+        let profilesParameter: SpectralConfig[] = [];
         if (this.profileCategory === ProfileCategory.IMAGE) {
             // TODO: wire up profiles of matching images
             const statsType = this.widgetStore.effectiveRegion?.isClosedRegion ? this.defaultStatsType : CARTA.StatsType.Sum;
-            profilesParameter.push({statsType: statsType, coordinate: this.defaultCoordinate});
+            profilesParameter.push({statsTypes: [statsType], coordinate: this.defaultCoordinate});
         } else if (this.profileCategory === ProfileCategory.REGION) {
             // TODO
         } else if (this.profileCategory === ProfileCategory.STATISTICS) {
-            this.selectedStatsTypes?.forEach(statsType => {
-                profilesParameter.push({statsType: this.widgetStore.effectiveRegion?.isClosedRegion ? statsType : CARTA.StatsType.Sum, coordinate: this.defaultCoordinate});
-            });
+            profilesParameter.push({statsTypes: this.widgetStore.effectiveRegion?.isClosedRegion ? [...this.selectedStatsTypes] : [CARTA.StatsType.Sum], coordinate: this.defaultCoordinate});
         } else if (this.profileCategory === ProfileCategory.STOKES) {
             const statsType = this.widgetStore.effectiveRegion?.isClosedRegion ? this.defaultStatsType : CARTA.StatsType.Sum;
             this.selectedCoordinates?.forEach(coordinate => {
-                profilesParameter.push({statsType: statsType, coordinate: coordinate});
+                profilesParameter.push({statsTypes: [statsType], coordinate: coordinate});
             });
         }
         return profilesParameter;

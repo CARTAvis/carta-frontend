@@ -338,24 +338,17 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
             if (!frame || !frame.regionSet) {
                 return;
             }
+
             const fileId = frame.frameInfo.fileId;
-            const regionId = widgetStore.effectiveRegionId;
-            const coordinates = widgetStore.multipleProfileStore.selectedCoordinates;
-            let statsType = CARTA.StatsType.Sum;
-
-            const region = frame.regionSet.regions.find(r => r.regionId === regionId);
+            const region = widgetStore.effectiveRegion;
             if (region) {
-                // Point regions have no meaningful stats type, default to Sum
-                if (region.regionType === CARTA.RegionType.POINT) {
-                    statsType = CARTA.StatsType.Sum;
-                }
-
                 let frameRequirements = updatedRequirements.get(fileId);
                 if (!frameRequirements) {
                     frameRequirements = new Map<number, CARTA.SetSpectralRequirements>();
                     updatedRequirements.set(fileId, frameRequirements);
                 }
 
+                const regionId = widgetStore.effectiveRegionId;
                 let regionRequirements = frameRequirements.get(regionId);
                 if (!regionRequirements) {
                     regionRequirements = new CARTA.SetSpectralRequirements({regionId, fileId});
@@ -366,16 +359,15 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
                     regionRequirements.spectralProfiles = [];
                 }
 
-                let spectralConfig = regionRequirements.spectralProfiles.find(profiles => coordinates.includes(profiles.coordinate));
-                if (!spectralConfig) {
-                    // create new spectral config
-                    coordinates.forEach(coordinate => {
-                        regionRequirements.spectralProfiles.push({coordinate, statsTypes: [statsType]});
-                    });
-                } else if (!spectralConfig.statsTypes.includes(statsType)) {
-                    // add to the stats type array
-                    spectralConfig.statsTypes.push(statsType);
-                }
+                const profileConfigs = widgetStore.multipleProfileStore.getProfileConfigs();
+                profileConfigs?.forEach(profileConfig => {
+                    if (profileConfig) {
+                        regionRequirements.spectralProfiles.push({
+                            coordinate: profileConfig.coordinate,
+                            statsTypes: profileConfig.statsTypes
+                        });
+                    }
+                });
             }
         });
 

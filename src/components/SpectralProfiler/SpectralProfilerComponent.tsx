@@ -79,15 +79,8 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
         }
 
         // Get profiles
-        const profilesParameter = this.widgetStore.multipleProfileStore.getProfilesParameter();
-        let profiles = [];
-        profilesParameter?.forEach(profileParameter => {
-            const profile = this.profileStore.getProfile(profileParameter.coordinate, profileParameter.statsType);
-            if (profile) {
-                profiles.push(profile);
-            }
-        });
-        if (profiles.length <= 0) {
+        const profiles = this.getProfiles();
+        if (!profiles || profiles.length <= 0) {
             return null;
         }
 
@@ -321,6 +314,22 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
             }
         }
         return spectralLineMarkers;
+    };
+
+    private getProfiles = (): ProcessedSpectralProfile[] => {
+        let profiles = [];
+        if (this.profileStore) {
+            const profileConfigs = this.widgetStore.multipleProfileStore.getProfileConfigs();
+            profileConfigs?.forEach(profileConfig => {
+                profileConfig?.statsTypes?.forEach(statsType => {
+                    const profile = this.profileStore.getProfile(profileConfig.coordinate, statsType);
+                    if (profile) {
+                        profiles.push(profile);
+                    }
+                });
+            });
+        }
+        return profiles;
     };
 
     private getBoundX = (): XBound => {
