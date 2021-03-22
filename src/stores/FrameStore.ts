@@ -56,6 +56,7 @@ export class FrameStore {
     private readonly astFrameSet: number;
     private readonly spectralFrame: number;
     private readonly controlMaps: Map<FrameStore, ControlMap>;
+    private readonly framePixelRatio: number;
     private readonly backendService: BackendService;
     private readonly overlayStore: OverlayStore;
     private readonly logStore: LogStore;
@@ -69,7 +70,6 @@ export class FrameStore {
     public readonly wcsInfo3D: number;
     public readonly validWcs: boolean;
     public readonly frameInfo: FrameInfo;
-    public readonly aspectRatio: number;
 
     public spectralCoordsSupported: Map<string, { type: SpectralType, unit: SpectralUnit }>;
     public spectralSystemsSupported: Array<SpectralSystem>;
@@ -133,6 +133,14 @@ export class FrameStore {
 
     @computed get sharedRegions(): boolean {
         return !!this.spatialReference;
+    }
+
+    @computed get aspectRatio(): number {
+        if (isFinite(this.framePixelRatio)) {
+            return this.framePixelRatio;
+        }
+
+        return (this.overlayStore.renderWidth / this.frameInfo.fileInfoExtended.width) / (this.overlayStore.renderHeight / this.frameInfo.fileInfoExtended.height);
     }
 
     @computed get requiredFrameView(): FrameView {
@@ -737,6 +745,7 @@ export class FrameStore {
 
         // init WCS
         this.astFrameSet = this.initFrame();
+        AST.dump(this.astFrameSet);
         if (this.astFrameSet) {
             if (this.spectralAxis && this.spectralAxis.valid) {
                 this.spectralFrame = AST.getSpectralFrame(this.astFrameSet);
@@ -768,12 +777,15 @@ export class FrameStore {
 
         // If the two units are different, there's no fixed aspect ratio
         if (!sameUnits) {
-            this.aspectRatio = NaN;
+            this.framePixelRatio = NaN;
         } else {
             const cDelt1 = getHeaderNumericValue(this.frameInfo.fileInfoExtended.headerEntries.find(entry => entry.name === "CDELT1"));
             const cDelt2 = getHeaderNumericValue(this.frameInfo.fileInfoExtended.headerEntries.find(entry => entry.name === "CDELT2"));
-            this.aspectRatio = Math.abs(cDelt1 / cDelt2);
+            this.framePixelRatio = Math.abs(cDelt1 / cDelt2);
         }
+
+        // Testing
+        this.framePixelRatio = NaN;
 
         this.initSupportedSpectralConversion();
         this.initCenter();
