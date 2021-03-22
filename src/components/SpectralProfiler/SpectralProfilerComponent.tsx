@@ -224,17 +224,12 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
 
     @computed get exportHeaders(): string[] {
         let headerString = [];
-        const frame = this.widgetStore.effectiveFrame;
-        if (frame && frame.frameInfo && frame.regionSet) {
-            const regionId = this.widgetStore.effectiveRegionId;
-            const region = frame.regionSet.regions.find(r => r.regionId === regionId);
-
-            // region info
-            if (region) {
-                headerString.push(region.regionProperties);
-                if (frame.validWcs) {
-                    headerString.push(frame.getRegionWcsProperties(region));
-                }
+        const region = this.widgetStore.effectiveRegion;
+        if (region) {
+            headerString.push(region.regionProperties);
+            const frame = this.widgetStore.effectiveFrame;
+            if (frame?.validWcs) {
+                headerString.push(frame.getRegionWcsProperties(region));
             }
         }
         return headerString;
