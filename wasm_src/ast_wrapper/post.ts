@@ -116,6 +116,11 @@ Module.delete = Module.cwrap("deleteObject", null, ["number"]);
 Module.invert = Module.cwrap("invert", "number", ["number"]);
 Module.convert = Module.cwrap("convert", "number", ["number", "number", "string"]);
 Module.shiftMap2D = Module.cwrap("shiftMap2D", "number", ["number", "number"]);
+Module.scaleMap2D = Module.cwrap("scaleMap2D", "number", ["number", "number"]);
+Module.frame = Module.cwrap("frame", "number", ["number", "string"]);
+Module.addFrame = Module.cwrap("addFrame", null, ["number", "number", "number", "number"]);
+Module.setI = Module.cwrap("setI", null, ["number", "string", "number"]);
+Module.setD = Module.cwrap("setD", null, ["number", "string", "number"]);
 Module.createTransformedFrameset = Module.cwrap("createTransformedFrameset", "number", ["number", "number", "number", "number", "number", "number", "number", "number"]);
 Module.fillTransformGrid = Module.cwrap("fillTransformGrid", "number", ["number", "number", "number", "number", "number", "number", "number", "number"]);
 

@@ -53,7 +53,6 @@ export class FrameStore {
     private static readonly CursorInfoMaxPrecision = 25;
     private static readonly ZoomInertiaDuration = 250;
 
-    private readonly astFrameSet: number;
     private readonly spectralFrame: number;
     private readonly controlMaps: Map<FrameStore, ControlMap>;
     private readonly framePixelRatio: number;
@@ -682,7 +681,6 @@ export class FrameStore {
         this.backendService = BackendService.Instance;
         const preferenceStore = PreferenceStore.Instance;
 
-        this.astFrameSet = null;
         this.spectralFrame = null;
         this.spectralType = null;
         this.spectralUnit = null;
@@ -744,19 +742,20 @@ export class FrameStore {
         this.animationChannelRange = [0, frameInfo.fileInfoExtended.depth - 1];
 
         // init WCS
-        this.astFrameSet = this.initFrame();
-        AST.dump(this.astFrameSet);
-        if (this.astFrameSet) {
+        const astFrameSet = this.initFrame();
+        if (astFrameSet) {
             if (this.spectralAxis && this.spectralAxis.valid) {
-                this.spectralFrame = AST.getSpectralFrame(this.astFrameSet);
+                this.spectralFrame = AST.getSpectralFrame(astFrameSet);
             }
 
             if (frameInfo.fileInfoExtended.depth > 1) { // 3D frame
-                this.wcsInfo3D = AST.copy(this.astFrameSet);
-                this.wcsInfo = AST.getSkyFrameSet(this.astFrameSet);
+                this.wcsInfo3D = AST.copy(astFrameSet);
+                this.wcsInfo = AST.getSkyFrameSet(astFrameSet);
             } else { // 2D frame
-                this.wcsInfo = AST.copy(this.astFrameSet);
+                this.wcsInfo = AST.copy(astFrameSet);
             }
+
+            AST.delete(astFrameSet);
 
             if (this.wcsInfo) {
                 // init 2D(Sky) wcs copy for the precision of region coordinate transformation
@@ -783,9 +782,8 @@ export class FrameStore {
             const cDelt2 = getHeaderNumericValue(this.frameInfo.fileInfoExtended.headerEntries.find(entry => entry.name === "CDELT2"));
             this.framePixelRatio = Math.abs(cDelt1 / cDelt2);
         }
-
         // Testing
-        this.framePixelRatio = NaN;
+        //this.framePixelRatio = NaN;
 
         this.initSupportedSpectralConversion();
         this.initCenter();
