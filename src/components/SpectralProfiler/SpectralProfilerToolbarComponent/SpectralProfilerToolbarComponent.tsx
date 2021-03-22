@@ -30,7 +30,7 @@ class ProfileSelectionButtonComponent extends React.Component<ProfileSelectionBu
     public render() {
         return (
             <ButtonGroup fill={true} className="category-set">
-                <Tooltip content="Select to show multiple profiles" position={Position.TOP}>
+                <Tooltip content={`Show multiple profiles - ${this.props.categoryName}`} position={Position.TOP}>
                     <AnchorButton
                         text={this.props.categoryName}
                         active={this.props.isActiveCategory}
