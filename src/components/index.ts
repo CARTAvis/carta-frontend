@@ -13,7 +13,7 @@ export * from "./RegionList/RegionListComponent";
 export * from "./SpatialProfiler/SpatialProfilerComponent";
 export * from "./SpectralLineQuery/SpectralLineQueryComponent";
 export * from "./SpectralProfiler/SpectralProfilerComponent";
-export * from "./SpectralProfiler/SpectralProfilerToolbarComponent/ProfileSelectionComponent";
+export * from "./SpectralProfiler/SpectralProfilerToolbarComponent/SpectralProfilerToolbarComponent";
 export * from "./Stats/StatsComponent";
 export * from "./Histogram/HistogramComponent";
 export * from "./StokesAnalysis/StokesAnalysisComponent";
