@@ -600,7 +600,7 @@ export class FrameStore {
     @computed
     private get calculateZoomX() {
         const imageWidth = this.frameInfo.fileInfoExtended.width;
-        const pixelRatio = this.renderHiDPI ? devicePixelRatio : 1.0;
+        const pixelRatio = (this.renderHiDPI ? devicePixelRatio : 1.0) / this.aspectRatio;
 
         if (imageWidth <= 0) {
             return 1.0;
