@@ -111,6 +111,7 @@ export class ImageViewComponent extends React.Component<WidgetProps> {
         this.activeLayer = AppStore.Instance.activeLayer;
         autorun(() => {
             const frame = AppStore.Instance.activeFrame;
+            // this.activeLayer = AppStore.Instance.activeLayer;
             if (frame) {
                 const imageSize = {x: frame.renderWidth, y: frame.renderHeight};
                 // Compare to cached image size to prevent duplicate events when changing frames
@@ -249,6 +250,12 @@ export class ImageViewComponent extends React.Component<WidgetProps> {
                         onZoomed={this.onZoomed}
                     />
                     } */}
+                    {appStore.activeFrame &&
+                        <CatalogViewGLComponent
+                            docked={this.props.docked}
+                            onZoomed={this.onZoomed}
+                        />
+                    }
                     <ToolbarComponent
                         docked={this.props.docked}
                         visible={appStore.imageToolbarVisible}
@@ -275,9 +282,6 @@ export class ImageViewComponent extends React.Component<WidgetProps> {
                     docked={this.props.docked}
                 />
                 <ContourViewComponent
-                    docked={this.props.docked}
-                />
-                <CatalogViewGLComponent
                     docked={this.props.docked}
                 />
                 {divContents}

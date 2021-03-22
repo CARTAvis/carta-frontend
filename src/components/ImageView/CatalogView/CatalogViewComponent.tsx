@@ -4,7 +4,7 @@ import {observer} from "mobx-react";
 import {computed} from "mobx";
 import Plot from "react-plotly.js";
 import {AppStore, WidgetsStore, CatalogStore} from "stores";
-import {CatalogOverlayShape} from "stores/widgets";
+// import {CatalogOverlayShape} from "stores/widgets";
 import {canvasToTransformedImagePos} from "components/ImageView/RegionView/shared";
 import {ImageViewLayer} from "../ImageViewComponent";
 import {CursorInfo} from "models";

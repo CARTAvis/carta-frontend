@@ -1,14 +1,18 @@
 import {observer} from "mobx-react";
 import * as React from "react";
 import tinycolor from "tinycolor2";
-import {AppStore, FrameStore, CatalogStore} from "stores";
+import {AppStore, FrameStore, CatalogStore, WidgetsStore} from "stores";
 import {CatalogOverlayShape} from "stores/widgets";
-import {GL2} from "utilities";
+import {GL2, closestCatalogIndexToCursor} from "utilities";
 import {CatalogWebGLService} from "services";
+import {canvasToTransformedImagePos} from "components/ImageView/RegionView/shared";
+import {CursorInfo} from "models";
+import {ImageViewLayer} from "../ImageViewComponent";
 import "./CatalogViewGLComponent.scss";
 
 export interface CatalogViewGLComponentProps {
     docked: boolean;
+    onZoomed?: (cursorInfo: CursorInfo, delta: number) => void;
 }
 
 @observer
@@ -20,7 +24,6 @@ export class CatalogViewGLComponent extends React.Component<CatalogViewGLCompone
     componentDidMount() {
         this.catalogWebGLService = CatalogWebGLService.Instance;
         this.gl = this.catalogWebGLService.gl;
-        console.log(this.gl)
         if (this.canvas) {
             this.updateCanvas();
         }
@@ -28,6 +31,58 @@ export class CatalogViewGLComponent extends React.Component<CatalogViewGLCompone
 
     componentDidUpdate() {
         requestAnimationFrame(this.updateCanvas);
+    }
+
+    render() {
+        // dummy values to trigger React's componentDidUpdate()
+        /* eslint-disable @typescript-eslint/no-unused-vars */
+        const appStore = AppStore.Instance;
+        const baseFrame = appStore.activeFrame;
+        if (baseFrame) {
+            const view = baseFrame.requiredFrameView;
+        }
+
+        const catalogStore = appStore.catalogStore;
+        catalogStore.catalogGLData.forEach((catalog, fileId) => {
+            const catalogWidgetStore = catalogStore.getCatalogWidgetStore(fileId);
+            const numVertices = catalog.dataPoints.length;
+            const numSelectedVertices = catalog.selectedDataPoints.length;
+            const showSelectedData = catalog.showSelectedData;
+            const displayed = catalog.displayed;
+            const color = catalogWidgetStore.catalogColor;
+            const selectedColor = catalogWidgetStore.highlightColor;
+            const pointSize = catalogWidgetStore.catalogSize;
+            const shape = catalogWidgetStore.catalogShape;
+        });
+        /* eslint-enable @typescript-eslint/no-unused-vars */
+
+        const padding = appStore.overlayStore.padding;
+        // console.log(this.props.docked, appStore.activeLayer)
+        let className = "catalog-div";
+        if (this.props.docked) {
+            className += " docked";
+        }
+
+        if (appStore.activeLayer === ImageViewLayer.Catalog) {
+            className += " actived";
+        }
+        return (
+            <div className={className}>
+                <canvas
+                    id="catalog-canvas"
+                    className="catalog-canvas"
+                    ref={(ref) => this.canvas = ref}
+                    onClick={(evn) => this.onClick(evn)}
+                    onDoubleClick={this.onDoubleClick}
+                    onWheel={this.onWheelCaptured}
+                    style={{
+                        top: padding.top,
+                        left: padding.left,
+                        width: baseFrame ? baseFrame.renderWidth || 1 : 1,
+                        height: baseFrame ? baseFrame.renderHeight || 1 : 1
+                    }}
+                />
+            </div>);
     }
 
     private resizeAndClearCanvas() {
@@ -128,47 +183,54 @@ export class CatalogViewGLComponent extends React.Component<CatalogViewGLCompone
         });
     }
 
-    render() {
-        // dummy values to trigger React's componentDidUpdate()
-        /* eslint-disable @typescript-eslint/no-unused-vars */
-        const appStore = AppStore.Instance;
-        const baseFrame = appStore.activeFrame;
-        if (baseFrame) {
-            const view = baseFrame.requiredFrameView;
+    private onWheelCaptured = (event) => {
+        if (event && event.nativeEvent && event.nativeEvent.type === "wheel") {
+            const wheelEvent = event.nativeEvent;
+            const frame = AppStore.Instance.activeFrame;
+            const lineHeight = 15;
+            const delta = wheelEvent.deltaMode === WheelEvent.DOM_DELTA_PIXEL ? wheelEvent.deltaY : wheelEvent.deltaY * lineHeight;
+            if (frame.wcsInfo && this.props.onZoomed) {
+                const cursorPosImageSpace = canvasToTransformedImagePos(wheelEvent.offsetX, wheelEvent.offsetY, frame, frame.renderWidth, frame.renderHeight);
+                this.props.onZoomed(frame.getCursorInfo(cursorPosImageSpace), -delta);
+            }
         }
+    };
 
-        const catalogStore = appStore.catalogStore;
+    private onClick = (event) => {
+        const clickEvent = event.nativeEvent;
+        const catalogStore = CatalogStore.Instance;
+        const frame = AppStore.Instance.activeFrame;
+        const cursorPosImageSpace = canvasToTransformedImagePos(clickEvent.offsetX, clickEvent.offsetY, frame, frame.renderWidth, frame.renderHeight);
+
+        let selectedPoint = {fileId: undefined, minIndex: undefined, minDistanceSquared: Number.MAX_VALUE};
         catalogStore.catalogGLData.forEach((catalog, fileId) => {
-            const catalogWidgetStore = catalogStore.getCatalogWidgetStore(fileId);
-            const numVertices = catalog.dataPoints.length;
-            const numSelectedVertices = catalog.selectedDataPoints.length;
-            const showSelectedData = catalog.showSelectedData;
-            const displayed = catalog.displayed;
-            const color = catalogWidgetStore.catalogColor;
-            const selectedColor = catalogWidgetStore.highlightColor;
-            const pointSize = catalogWidgetStore.catalogSize;
-            const shape = catalogWidgetStore.catalogShape;
-        });
-        /* eslint-enable @typescript-eslint/no-unused-vars */
-
-        const padding = appStore.overlayStore.padding;
-        let className = "catalog-div";
-        if (this.props.docked) {
-            className += " docked";
+            let dataPoints = catalog.dataPoints;
+            const closestPoint = closestCatalogIndexToCursor(cursorPosImageSpace, dataPoints, dataPoints.length / 4);
+            if (closestPoint.minDistanceSquared < selectedPoint.minDistanceSquared) {
+                selectedPoint.minIndex = closestPoint.minIndex;
+                selectedPoint.minDistanceSquared = closestPoint.minDistanceSquared;
+                selectedPoint.fileId = fileId;
+            }
+        }); 
+        
+        if (selectedPoint.fileId !== undefined && selectedPoint.minIndex !== undefined) {
+            const catalogProfileStore = catalogStore.catalogProfileStores.get(selectedPoint.fileId);
+            const widgetStoreId = catalogStore.catalogWidgets.get(selectedPoint.fileId);
+            const catalogWidgetStore = WidgetsStore.Instance.catalogWidgets.get(widgetStoreId);
+            catalogStore.updateCatalogProfiles(selectedPoint.fileId);
+            catalogProfileStore.setSelectedPointIndices([selectedPoint.minIndex], false);
+            catalogWidgetStore.setCatalogTableAutoScroll(true);
         }
-        return (
-            <div className={className}>
-                <canvas
-                    id="catalog-canvas"
-                    className="catalog-canvas"
-                    ref={(ref) => this.canvas = ref}
-                    style={{
-                        top: padding.top,
-                        left: padding.left,
-                        width: baseFrame ? baseFrame.renderWidth || 1 : 1,
-                        height: baseFrame ? baseFrame.renderHeight || 1 : 1
-                    }}
-                />
-            </div>);
+    }
+
+    private onDoubleClick() {
+        const catalogStore = CatalogStore.Instance;
+        if (catalogStore?.catalogGLData?.size) {   
+            catalogStore.catalogProfileStores.forEach((profileStore) => {   
+                const widgetStoreId = CatalogStore.Instance.catalogWidgets.get(profileStore.catalogFileId);
+                profileStore.setSelectedPointIndices([], false);
+                WidgetsStore.Instance.catalogWidgets.get(widgetStoreId)?.setCatalogTableAutoScroll(false);
+            });
+        }
     }
 }
