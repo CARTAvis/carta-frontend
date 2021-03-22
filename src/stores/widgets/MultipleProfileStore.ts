@@ -1,6 +1,7 @@
 import {action, computed, makeObservable, observable} from "mobx";
 import {CARTA} from "carta-protobuf";
 import {AppStore, FrameStore} from "..";
+import {ACTIVE_FILE_ID} from ".";
 import {ProfileItemOptionProps} from "components";
 import {STATISTICS_TEXT, SUPPORTED_STATISTICS_TYPES} from "models";
 
@@ -96,14 +97,11 @@ export class MultipleProfileStore {
     };
 
     @computed get frameOptions(): ProfileItemOptionProps[] {
-        /*
-        let options = [{value: ACTIVE_FILE_ID, label: "Active"}];
+        let options: ProfileItemOptionProps[]= [{value: ACTIVE_FILE_ID, label: "Active"}];
         if (AppStore.Instance.activeFrame) {
             options = options.concat(AppStore.Instance.frameNames);
-            this.selectedFrameFileId = widgetStore.fileId;
         }
-        */
-        return AppStore.Instance.frameNames;
+        return options;
     }
 
     @computed get statsTypeOptions(): ProfileItemOptionProps[] {
