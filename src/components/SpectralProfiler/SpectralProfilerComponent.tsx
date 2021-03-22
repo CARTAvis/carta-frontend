@@ -11,7 +11,7 @@ import {SpectralProfilerToolbarComponent} from "./SpectralProfilerToolbarCompone
 import {SpectralProfileStore, WidgetProps, HelpType, AnimatorStore, WidgetsStore, AppStore, DefaultWidgetConfig} from "stores";
 import {SpectralProfileWidgetStore} from "stores/widgets";
 import {Point2D, ProcessedSpectralProfile} from "models";
-import {binarySearchByX, clamp, formattedExponential, formattedNotation, toExponential, toFixed} from "utilities";
+import {binarySearchByX, clamp, formattedExponential, formattedNotation, toExponential, toFixed, getColorForTheme} from "utilities";
 import "./SpectralProfilerComponent.scss";
 
 type XBound = {xMin: number, xMax: number};
@@ -444,12 +444,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
                 linePlotProps.opacity = currentPlotData.progress < 1.0 ? 0.15 + currentPlotData.progress / 4.0 : 1.0;
                 
                 // set line color
-                let primaryLineColor = this.widgetStore.primaryLineColor.colorHex;
-                if (appStore.darkTheme) {
-                    if (!this.widgetStore.primaryLineColor.fixed) {
-                        primaryLineColor = Colors.BLUE4;   
-                    }
-                }
+                let primaryLineColor = getColorForTheme(this.widgetStore.primaryLineColor);
                 linePlotProps.lineColor = primaryLineColor;
                 const smoothingStore = this.widgetStore.smoothingStore;
                 if (smoothingStore.type !== SmoothingType.NONE) {
@@ -460,7 +455,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
                     let smoothingPlotProps: MultiPlotProps = {
                         data: currentPlotData.smoothingPoints,
                         type: smoothingStore.lineType,
-                        borderColor: smoothingStore.lineColor.colorHex,
+                        borderColor: getColorForTheme(smoothingStore.lineColor),
                         borderWidth: smoothingStore.lineWidth,
                         pointRadius: smoothingStore.pointRadius,
                         order: 0,
