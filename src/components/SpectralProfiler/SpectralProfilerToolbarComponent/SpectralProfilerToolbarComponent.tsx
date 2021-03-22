@@ -29,7 +29,7 @@ class ProfileSelectionButtonComponentProps {
 class ProfileSelectionButtonComponent extends React.Component<ProfileSelectionButtonComponentProps> {
     public render() {
         return (
-            <div className="category-set">
+            <ButtonGroup fill={true} className="category-set">
                 <Tooltip content="Select to show multiple profiles" position={Position.TOP}>
                     <AnchorButton
                         text={this.props.categoryName}
@@ -59,7 +59,7 @@ class ProfileSelectionButtonComponent extends React.Component<ProfileSelectionBu
                 >
                     <AnchorButton rightIcon={"caret-down"} disabled={!this.props.isActiveCategory || this.props.disabled}/>
                 </Popover>
-            </div>
+            </ButtonGroup>
         );
     }
 }
