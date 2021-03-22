@@ -73,91 +73,6 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
         return null;
     }
 
-    /*
-    @computed get plotData(): PlotData {
-        const frame = this.widgetStore.effectiveFrame;
-        if (!frame) {
-            return null;
-        }
-
-        let coordinateData: ProcessedSpectralProfile;
-        let regionId = this.widgetStore.effectiveRegionId;
-        if (frame.regionSet) {
-            const region = frame.regionSet.regions.find(r => r.regionId === regionId);
-            if (region && this.profileStore) {
-                coordinateData = this.profileStore.getProfile(this.widgetStore.selectedCoordinates[0], region.isClosedRegion ? this.widgetStore.statsType : CARTA.StatsType.Sum);
-            }
-        }
-
-        if (coordinateData && coordinateData.values && coordinateData.values.length &&
-            frame.channelValues && frame.channelValues.length &&
-            coordinateData.values.length === frame.channelValues.length) {
-            const channelValues = frame.channelValues;
-            let xMin = Math.min(channelValues[0], channelValues[channelValues.length - 1]);
-            let xMax = Math.max(channelValues[0], channelValues[channelValues.length - 1]);
-
-            if (!this.widgetStore.isAutoScaledX) {
-                const localXMin = clamp(this.widgetStore.minX, xMin, xMax);
-                const localXMax = clamp(this.widgetStore.maxX, xMin, xMax);
-                xMin = localXMin;
-                xMax = localXMax;
-            }
-
-            let yMin = Number.MAX_VALUE;
-            let yMax = -Number.MAX_VALUE;
-            let yMean;
-            let yRms;
-            // Variables for mean and RMS calculations
-            let ySum = 0;
-            let ySum2 = 0;
-            let yCount = 0;
-
-            let values: Array<{ x: number, y: number }> = [];
-            for (let i = 0; i < channelValues.length; i++) {
-                const x = channelValues[i];
-                const y = coordinateData.values[i];
-
-                // Skip values outside of range. If array already contains elements, we've reached the end of the range, and can break
-                if (x < xMin || x > xMax) {
-                    if (values.length) {
-                        break;
-                    } else {
-                        continue;
-                    }
-                }
-                values.push({x, y});
-                // Mean/RMS calculations
-                if (!isNaN(y)) {
-                    yMin = Math.min(yMin, y);
-                    yMax = Math.max(yMax, y);
-                    yCount++;
-                    ySum += y;
-                    ySum2 += y * y;
-                }
-            }
-
-            let smoothingValues: Point2D[] = this.widgetStore.smoothingStore.getSmoothingPoint2DArray(channelValues, coordinateData.values);
-
-            if (yCount > 0) {
-                yMean = ySum / yCount;
-                yRms = Math.sqrt((ySum2 / yCount) - yMean * yMean);
-            }
-
-            if (yMin === Number.MAX_VALUE) {
-                yMin = undefined;
-                yMax = undefined;
-            } else {
-                // extend y range a bit
-                const range = yMax - yMin;
-                yMin -= range * VERTICAL_RANGE_PADDING;
-                yMax += range * VERTICAL_RANGE_PADDING;
-            }
-            return {points: values, smoothingPoints: smoothingValues, xMin, xMax, yMin, yMax, yMean, yRms, progress: coordinateData.progress};
-        }
-        return null;
-    }
-    */
-
     @computed get plotData(): PlotData {
         const frame = this.widgetStore.effectiveFrame;
         if (!frame || !this.profileStore) {
@@ -508,7 +423,8 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
             }
             if (frame.unit) {
                 let yLabelUnit = `(${frame.unit})`;
-                if (this.widgetStore.effectiveRegion?.regionType !== CARTA.RegionType.POINT) {
+                const region = this.widgetStore.effectiveRegion;
+                if (region && region.regionType !== CARTA.RegionType.POINT) {
                     if (this.widgetStore.multipleProfileStore.isStatsTypeFluxDensity) {
                         yLabelUnit =  "(Jy)";
                     } else if (this.widgetStore.multipleProfileStore.isStatsTypeSumSq) {
