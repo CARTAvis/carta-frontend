@@ -32,23 +32,19 @@ using namespace std;
 
 extern "C" {
 
-EMSCRIPTEN_KEEPALIVE AstFrameSet* initFrame(const char* header)
+EMSCRIPTEN_KEEPALIVE AstFitsChan* emptyFitsChan()
 {
-     if (!header)
-    {
-        cout << "Missing header argument." << endl;
-        return nullptr;
-    }
+    return astFitsChan(nullptr, nullptr, "");
+}
 
-    AstFitsChan* fitschan = astFitsChan(nullptr, nullptr, "");
-    if (!fitschan)
-    {
-        cout << "astFitsChan returned null :(" << endl;
-        return nullptr;
-    }
+EMSCRIPTEN_KEEPALIVE void putFits(AstFitsChan* fitschan, const char* card)
+{
+    astPutFits(fitschan, card, true);
+}
+
+EMSCRIPTEN_KEEPALIVE AstFrameSet* getFrameFromFitsChan(AstFitsChan* fitschan)
+{
     astClear(fitschan, "Card");
-    astPutCards(fitschan, header);
-
     AstFrameSet* frameSet = static_cast<AstFrameSet*>(astRead(fitschan));
     if (!frameSet || !astIsAFrameSet(frameSet))
     {

@@ -50,15 +50,14 @@ Module.fonts = [
 ];
 
 Module.colors = [
-    "black",
-    "white",
-    "red",
-    "green",
-    "blue",
-    "cyan",
-    "magenta",
-    "yellow",
-    "grey"
+    "blue", // global
+    "blue", // title
+    "blue", // grid
+    "blue", // border
+    "blue", // tick
+    "blue", // axe
+    "blue", // number
+    "blue" // label
 ];
 Module.shapes = [
     "\u25A1", // Square
@@ -75,8 +74,12 @@ Module.shapes = [
     "\u2606", // White star
 ];
 
-Module.setPalette = function (colors) {
+Module.setColors = function (colors) {
     Module.colors = colors;
+};
+
+Module.setColor = function (color, index) {
+    Module.colors[index] = color;
 };
 
 Module.setFontList = function (fonts) {
@@ -92,7 +95,9 @@ Module.setCanvas = function (canvas) {
 };
 
 Module.plot = Module.cwrap("plotGrid", "number", ["number", "number", "number", "number", "number", "number", "number", "number", "number", "number", "number", "string"]);
-Module.initFrame = Module.cwrap("initFrame", "number", ["string"]);
+Module.emptyFitsChan = Module.cwrap("emptyFitsChan", "number");
+Module.putFits = Module.cwrap("putFits", null, ["number", "string"])
+Module.getFrameFromFitsChan = Module.cwrap("getFrameFromFitsChan", "number", ["number"]);
 Module.getSpectralFrame = Module.cwrap("getSpectralFrame", "number", ["number"]);
 Module.getSkyFrameSet = Module.cwrap("getSkyFrameSet", "number", ["number"]);
 Module.initDummyFrame = Module.cwrap("initDummyFrame", "number", []);
