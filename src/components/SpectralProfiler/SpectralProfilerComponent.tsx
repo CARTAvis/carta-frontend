@@ -92,20 +92,30 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
         let data = [];
         let smoothedData = [];
         let yBound = {yMin: Number.MAX_VALUE, yMax: -Number.MAX_VALUE};
+        let yMean = undefined;
+        let yRms = undefined;
         let progressSum: number = 0;
+        const wantMeanRms = profiles.length === 1;
         profiles.forEach(profile => {
             if (profile) {
-                const dataPointSet = this.getDataPointSet(profile, xBound);
-                data.push(dataPointSet.points);
-                smoothedData.push(dataPointSet.smoothingPoints);
+                const pointsAndProperties = this.getDataPointsAndProperties(profile, xBound, wantMeanRms);
+                if (pointsAndProperties) {
+                    data.push(pointsAndProperties.points);
+                    smoothedData.push(pointsAndProperties.smoothedPoints);
 
-                if (yBound.yMin > dataPointSet.yBound.yMin) {
-                    yBound.yMin = dataPointSet.yBound.yMin;
+                    if (wantMeanRms) {
+                        yMean = pointsAndProperties.yMean;
+                        yRms = pointsAndProperties.yRms;
+                    }
+
+                    if (yBound.yMin > pointsAndProperties.yBound.yMin) {
+                        yBound.yMin = pointsAndProperties.yBound.yMin;
+                    }
+                    if (yBound.yMax < pointsAndProperties.yBound.yMax) {
+                        yBound.yMax = pointsAndProperties.yBound.yMax;
+                    }
+                    progressSum = progressSum + profile.progress;
                 }
-                if (yBound.yMax < dataPointSet.yBound.yMax) {
-                    yBound.yMax = dataPointSet.yBound.yMax;
-                }
-                progressSum = progressSum + profile.progress;
             }
         });
 
@@ -127,8 +137,8 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
             xMax: xBound.xMax,
             yMin: yBound.yMin,
             yMax: yBound.yMax,
-            yMean: undefined, // TODO: enable mean/rms for single profile
-            yRms: undefined,
+            yMean: yMean,
+            yRms: yRms,
             progress: progressSum / profiles.length
         };
     }
@@ -352,18 +362,24 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
         return {xMin, xMax};
     };
 
-    private getDataPointSet = (profile: ProcessedSpectralProfile, xBound: XBound): {points: Point2D[], smoothingPoints: Point2D[], yBound: YBound} => {
+    private getDataPointsAndProperties = (profile: ProcessedSpectralProfile, xBound: XBound, wantMeanRms: boolean): {
+        points: Point2D[],
+        smoothedPoints: Point2D[],
+        yBound: YBound,
+        yMean: number,
+        yRms: number
+    } => {
         const channelValues = this.widgetStore.effectiveFrame.channelValues;
         let points: Point2D[] = [];
-        let smoothingPoints: Point2D[] = [];
+        let smoothedPoints: Point2D[] = [];
         let yBound = {yMin: Number.MAX_VALUE, yMax: -Number.MAX_VALUE};
+        let yMean = undefined;
+        let yRms = undefined;
         if (profile?.values?.length && channelValues?.length && profile.values.length === channelValues.length) {
             // Variables for mean and RMS calculations
-            /*
             let ySum = 0;
             let ySum2 = 0;
             let yCount = 0;
-            */
 
             for (let i = 0; i < channelValues.length; i++) {
                 const x = channelValues[i];
@@ -378,28 +394,28 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
                     }
                 }
                 points.push({x, y});
-                // Mean/RMS calculations
+
+                // update yMin/yMax & calculate Mean/RMS
                 if (!isNaN(y)) {
                     yBound.yMin = Math.min(yBound.yMin, y);
                     yBound.yMax = Math.max(yBound.yMax, y);
-                    /*
-                    yCount++;
-                    ySum += y;
-                    ySum2 += y * y;
-                    */
+
+                    if (wantMeanRms) {
+                        yCount++;
+                        ySum += y;
+                        ySum2 += y * y;
+                    }
                 }
             }
-            smoothingPoints.concat(this.widgetStore.smoothingStore.getSmoothingPoint2DArray(channelValues, profile.values));
+            smoothedPoints = smoothedPoints.concat(this.widgetStore.smoothingStore.getSmoothingPoint2DArray(channelValues, profile.values));
 
-            /*
-            if (yCount > 0) {
+            if (wantMeanRms && yCount > 0) {
                 yMean = ySum / yCount;
                 yRms = Math.sqrt((ySum2 / yCount) - yMean * yMean);
             }
-            */
         }
 
-        return {points: points, smoothingPoints: smoothingPoints, yBound: yBound};
+        return {points: points, smoothedPoints: smoothedPoints, yBound: yBound, yMean: yMean, yRms: yRms};
     };
 
     render() {
