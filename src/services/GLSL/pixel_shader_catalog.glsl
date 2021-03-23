@@ -13,6 +13,8 @@ uniform bool uCmapEnabled;
 #define CIRCLE_LINED 3
 #define HEXAGON_FILLED 4
 #define HEXAGON_LINED 5
+#define RHOMB_FILLED 6
+#define RHOMB_LINED 7
 
 #define SIN_60 0.86602540378
 #define COS_60 0.5
@@ -35,6 +37,19 @@ float featherRange(vec2 a, float rMin, float rMax) {
     vec2 alpha = smoothstep(0.0, 1.0, v);
     // subtract inner feathered circle
     return (alpha.x) * (1.0 - alpha.y);
+}
+
+float featherRangeRhomb(vec2 r, float rMax) {
+    float v = (rMax - abs(r.x) - uFeatherWidth - abs(r.y)) / (2.0 * uFeatherWidth);
+    return smoothstep(0.0, 1.0, v);
+}
+
+float featherRangeRhomb(vec2 r, float rMin, float rMax) {
+    float v = (rMax - abs(r.x) - uFeatherWidth - abs(r.y)) / (2.0 * uFeatherWidth);
+    float v2 = (rMin - abs(r.x) - uFeatherWidth - abs(r.y)) / (2.0 * uFeatherWidth);
+    float alpha = smoothstep(0.0, 1.0, v);
+    float alpha2 = smoothstep(0.0, 1.0, v2);
+    return alpha * (1.0 - alpha2);
 }
 
 float featherRangeSquare(vec2 r, float rMax) {
@@ -117,6 +132,12 @@ void main() {
         break;
         case HEXAGON_LINED:
         alpha = featherRangeHex(posPixelSpace, rMin, rMax);
+        break;
+        case RHOMB_FILLED:
+        alpha = featherRangeRhomb(posPixelSpace, rMax);
+        break;
+        case RHOMB_LINED:
+        alpha = featherRangeRhomb(posPixelSpace, rMin, rMax);
         break;
     }
 

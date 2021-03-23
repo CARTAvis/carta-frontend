@@ -32,7 +32,7 @@ const IconWrapper = (path: React.SVGProps<SVGPathElement>, color: string, fill: 
 
 // const triangleUp = <path d="M 2 14 L 14 14 L 8 3 Z"/>;
 // const triangleDown = <path d="M 2 2 L 14 2 L 8 13 Z"/>;
-// const diamond = <path d="M 8 14 L 14 8 L 8 2 L 2 8 Z"/>;
+const rhomb = <path d="M 8 14 L 14 8 L 8 2 L 2 8 Z"/>;
 // const hexagon = <path d="M 12.33 5.5 L 12.33 10.5 L 8 13 L 3.67 10.5 L 3.67 5.5 L 8 3 Z"/>;
 const hexagon2 = <path d="M 3 8 L 5.5 3.67 L 10.5 3.67 L 13 8 L 10.5 12.33 L 5.5 12.33 Z"/>;
 
@@ -151,8 +151,8 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
             //     return IconWrapper(triangleUp, color, false);
             // case CatalogOverlayShape.TriangleDown:
             //     return IconWrapper(triangleDown, color, false);
-            // case CatalogOverlayShape.Diamond:
-            //     return IconWrapper(diamond, color, false);
+            case CatalogOverlayShape.Rhomb:
+                return IconWrapper(rhomb, color, false);
             // case CatalogOverlayShape.hexagon:
             //     return IconWrapper(hexagon, color, false);
             case CatalogOverlayShape.HexagonLined:

@@ -30,7 +30,8 @@ export enum CatalogOverlayShape {
     CircleFilled = 2,
     CircleLined = 3,
     // HexagonFilled,
-    HexagonLined = 5
+    HexagonLined = 5,
+    Rhomb = 7
 }
 
 export enum CatalogSettingsTabs {

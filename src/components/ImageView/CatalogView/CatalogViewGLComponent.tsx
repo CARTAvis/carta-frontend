@@ -135,7 +135,8 @@ export class CatalogViewGLComponent extends React.Component<CatalogViewGLCompone
         this.gl.uniform1f(this.catalogWebGLService.shaderUniforms.FeatherWidth, featherWidth);
         this.gl.uniform1i(this.catalogWebGLService.shaderUniforms.CmapEnabled, 0);
         this.gl.uniform1i(this.catalogWebGLService.shaderUniforms.SmapEnabled, 0);
-
+        const [minSize, maxSize] = this.gl.getParameter(this.gl.ALIASED_POINT_SIZE_RANGE);
+        console.log(minSize, maxSize)
         catalogStore.catalogGLData.forEach((catalog, fileId) => {
             const catalogWidgetStore = catalogStore.getCatalogWidgetStore(fileId);
             let dataPoints = catalog.dataPoints;
