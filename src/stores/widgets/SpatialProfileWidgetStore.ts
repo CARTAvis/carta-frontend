@@ -1,10 +1,10 @@
 import tinycolor from "tinycolor2";
 import {action, computed, observable, makeObservable} from "mobx";
-import {Colors} from "@blueprintjs/core";
 import {FrameStore, ProfileSmoothingStore} from "stores";
 import {CARTA} from "carta-protobuf";
 import {PlotType, LineSettings} from "components/Shared";
 import {SpatialProfilerSettingsTabs} from "components";
+import {isAutoColor} from "utilities";
 
 export class SpatialProfileWidgetStore {
     @observable fileId: number;
@@ -22,7 +22,7 @@ export class SpatialProfileWidgetStore {
     @observable wcsAxisVisible: boolean;
     @observable plotType: PlotType;
     @observable meanRmsVisible: boolean;
-    @observable primaryLineColor: { colorHex: string, fixed: boolean };
+    @observable primaryLineColor: string;
     @observable lineWidth: number;
     @observable linePlotPointSize: number;
     @observable linePlotInitXYBoundaries: { minXVal: number, maxXVal: number, minYVal: number, maxYVal: number };
@@ -126,7 +126,7 @@ export class SpatialProfileWidgetStore {
         this.meanRmsVisible = false;
         this.markerTextVisible = false;
         this.wcsAxisVisible = true;
-        this.primaryLineColor = { colorHex: Colors.BLUE2, fixed: false };
+        this.primaryLineColor = "auto-blue";
         this.linePlotPointSize = 1.5;
         this.lineWidth = 1;
         this.linePlotInitXYBoundaries = { minXVal: 0, maxXVal: 0, minYVal: 0, maxYVal: 0 };
@@ -251,8 +251,8 @@ export class SpatialProfileWidgetStore {
     }
 
     // settings
-    @action setPrimaryLineColor = (colorHex: string, fixed: boolean) => {
-        this.primaryLineColor = { colorHex: colorHex, fixed: fixed };
+    @action setPrimaryLineColor = (color: string) => {
+        this.primaryLineColor = color;
     }
 
     @action setLineWidth = (val: number) => {
@@ -279,8 +279,8 @@ export class SpatialProfileWidgetStore {
             this.coordinate = widgetSettings.coordinate;
         }
         const lineColor = tinycolor(widgetSettings.primaryLineColor);
-        if (lineColor.isValid()) {
-            this.primaryLineColor.colorHex = lineColor.toHexString();
+        if (lineColor.isValid() || isAutoColor(widgetSettings.primaryLineColor)) {
+            this.primaryLineColor = widgetSettings.primaryLineColor;
         }
         if (typeof widgetSettings.lineWidth === "number" && widgetSettings.lineWidth >= LineSettings.MIN_WIDTH && widgetSettings.lineWidth <= LineSettings.MAX_WIDTH) {
             this.lineWidth = widgetSettings.lineWidth;
@@ -314,7 +314,7 @@ export class SpatialProfileWidgetStore {
     public toConfig = () => {
         return {
             coordinate: this.coordinate,
-            primaryLineColor: this.primaryLineColor.colorHex,
+            primaryLineColor: this.primaryLineColor,
             lineWidth: this.lineWidth,
             linePlotPointSize: this.linePlotPointSize,
             wcsAxisVisible: this.wcsAxisVisible,

@@ -1,17 +1,13 @@
 import * as React from "react";
 import {observer} from "mobx-react";
 import {FormGroup, Switch, Button, HTMLSelect} from "@blueprintjs/core";
-import {ColorResult} from "react-color";
-import {ColorPickerComponent, PlotTypeSelectorComponent, PlotType, SafeNumericInput} from "components/Shared";
+import {AutoColorPickerComponent, PlotTypeSelectorComponent, PlotType, SafeNumericInput} from "components/Shared";
 import {SWATCH_COLORS} from "utilities";
 import "./LinePlotSettingsPanelComponent.scss";
 
 export class LinePlotSettingsPanelComponentProps {
-    darkMode: boolean;
-    primaryDarkModeLineColor: string;
-    secondaryDarkModeLineColor?: string;
-    primaryLineColor: {colorHex: string, fixed: boolean};
-    secondaryLineColor?: {colorHex: string, fixed: boolean};
+    primaryLineColor: string;
+    secondaryLineColor?: string;
     lineWidth: number;
     plotType: PlotType;
     linePlotPointSize: number;
@@ -28,8 +24,8 @@ export class LinePlotSettingsPanelComponentProps {
     xMaxVal?: number;
     yMinVal?: number;
     yMaxVal?: number;
-    setPrimaryLineColor: (colorHex: string, fixed: boolean) => void;
-    setSecondaryLineColor?: (colorHex: string, fixed: boolean) => void;
+    setPrimaryLineColor: (color: string) => void;
+    setSecondaryLineColor?: (color: string) => void;
     setLineWidth: (val: number) => void;
     setLinePlotPointSize: (val: number) => void;
     setPlotType: (val: PlotType) => void;
@@ -57,13 +53,6 @@ export enum LineSettings {
 
 @observer
 export class LinePlotSettingsPanelComponent extends React.Component<LinePlotSettingsPanelComponentProps> {
-     
-    private getThemeDefaultColor (darkThemeLineColor: string, lineColor: {colorHex: string, fixed: boolean}): string {
-        if (this.props.darkMode && !lineColor.fixed) {
-            return darkThemeLineColor;
-        }
-        return lineColor.colorHex;
-    }
 
     render() {
         const props = this.props;
@@ -76,28 +65,25 @@ export class LinePlotSettingsPanelComponent extends React.Component<LinePlotSett
                         </FormGroup>
                     }
                     <FormGroup inline={true} label="Primary Color">
-                        <ColorPickerComponent
-                            color={this.getThemeDefaultColor(props.primaryDarkModeLineColor, props.primaryLineColor)}
+                        <AutoColorPickerComponent
+                            color={props.primaryLineColor}
                             presetColors={[...SWATCH_COLORS, "transparent"]}
-                            setColor={(color: ColorResult) => {
-                                props.setPrimaryLineColor(color.hex === "transparent" ? "#000000" : color.hex, true);
+                            setColor={(color: string) => {
+                                props.setPrimaryLineColor(color === "transparent" ? "#000000" : color);
                             }}
                             disableAlpha={true}
-                            darkTheme={props.darkMode}
                         />
                     </FormGroup>
-                    {props.secondaryDarkModeLineColor 
-                        && props.secondaryLineColor
+                    {props.secondaryLineColor
                         && props.setSecondaryLineColor 
                         &&  <FormGroup inline={true} label="Secondary Color">
-                                <ColorPickerComponent
-                                    color={this.getThemeDefaultColor(props.secondaryDarkModeLineColor, props.secondaryLineColor)}
+                                <AutoColorPickerComponent
+                                    color={props.secondaryLineColor}
                                     presetColors={[...SWATCH_COLORS, "transparent"]}
-                                    setColor={(color: ColorResult) => {
-                                        props.setSecondaryLineColor(color.hex === "transparent" ? "#000000" : color.hex, true);
+                                    setColor={(color: string) => {
+                                        props.setSecondaryLineColor(color === "transparent" ? "#000000" : color);
                                     }}
                                     disableAlpha={true}
-                                    darkTheme={props.darkMode}
                                 />
                             </FormGroup>
                     }
