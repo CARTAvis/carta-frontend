@@ -3,7 +3,7 @@ import {Colors} from "@blueprintjs/core";
 import { action, autorun, computed, observable, makeObservable } from "mobx";
 import {AppStore, FrameStore, PreferenceStore, WCS_PRECISION} from "stores";
 import {WCSType} from "models";
-import {toFixed} from "utilities";
+import {toFixed, clamp} from "utilities";
 
 const AST_DEFAULT_COLOR = 4; // blue
 
@@ -801,23 +801,23 @@ export class OverlayColorbarSettings {
     }
 
     @computed get roundedNumbers(): {numbers: number[], precision: number} {
-        const appStore = AppStore.Instance;
-        const frame = appStore?.activeFrame;
+        const frame =  AppStore.Instance?.activeFrame;
+        const scaleMinVal = frame?.renderConfig?.scaleMinVal;
+        const scaleMaxVal = frame?.renderConfig?.scaleMaxVal;
         const tickNum = this.tickNum;
-        console.log("tick num", tickNum)
-        if (!frame || !tickNum) {
+        if (!scaleMinVal || !scaleMaxVal || !tickNum) {
             return null;
         } else {
-            const indexArray = Array.from(Array(tickNum).keys());
-            let dy = (frame.renderConfig.scaleMaxVal - frame.renderConfig.scaleMinVal) / (tickNum + 1);
+            let dy = (scaleMaxVal - scaleMinVal) / (tickNum + 1);
             const precision = -Math.round(Math.log10(dy)) + 1;
             const roundBase = Math.pow(10, precision);
             dy = Math.ceil(dy * roundBase) / roundBase;
-            console.log('dy', dy)
-            const min =  Math.round(frame.renderConfig.scaleMinVal * roundBase) / roundBase;
+            const min =  Math.round(scaleMinVal * roundBase) / roundBase;
+
+            const indexArray = Array.from(Array(tickNum).keys());
             let numbers = indexArray.map(x => min + dy * (x + 1));
 
-            const isOutofBound = (element: number) => element >= frame.renderConfig.scaleMaxVal;
+            const isOutofBound = (element: number) => element > scaleMaxVal - dy / 4;
             const outofBoundIndex = numbers.findIndex(isOutofBound);
             if (outofBoundIndex !== -1) {
                 numbers = numbers.slice(0, outofBoundIndex);
@@ -833,24 +833,22 @@ export class OverlayColorbarSettings {
         const maxOrder = Math.max(...this.roundedNumbers.numbers.map(x => Math.log10(x)));
         const minOrder = Math.min(...this.roundedNumbers.numbers.map(x => Math.log10(x)));
         if (maxOrder >= 5.0) {
-            return this.roundedNumbers.numbers.map(x => x.toExponential(Math.abs(maxOrder + this.roundedNumbers.precision)));
+            return this.roundedNumbers.numbers.map(x => x.toExponential(clamp(maxOrder + this.roundedNumbers.precision, 0, 10)));
         } else if (minOrder <= -5.0) {
-            return this.roundedNumbers.numbers.map(x => x.toExponential(Math.abs(minOrder + this.roundedNumbers.precision)));
+            return this.roundedNumbers.numbers.map(x => x.toExponential(clamp(minOrder + this.roundedNumbers.precision, 0, 10)));
         } else {
-            return this.roundedNumbers.numbers.map(x => x.toFixed(this.roundedNumbers.precision < 0 ? 0 : this.roundedNumbers.precision));
+            return this.roundedNumbers.numbers.map(x => x.toFixed(clamp(this.roundedNumbers.precision, 0, 10)));
         }
     }
 
     @computed get positions(): number[] {
-        if (!this.roundedNumbers) {
+        const appStore = AppStore.Instance;
+        const frame = appStore?.activeFrame;
+        const yOffset = appStore?.overlayStore.padding.top;
+        if (!this.roundedNumbers || !frame || !yOffset) {
             return [];
         }
-        const renderConfig = AppStore.Instance?.activeFrame?.renderConfig;
-        if (!renderConfig) {
-            return [];
-        }
-        console.log(this.roundedNumbers.numbers.map(x => (x - renderConfig.scaleMinVal) / (renderConfig.scaleMaxVal - renderConfig.scaleMinVal)))
-        return this.roundedNumbers.numbers.map(x => (x - renderConfig.scaleMinVal) / (renderConfig.scaleMaxVal - renderConfig.scaleMinVal));
+        return this.roundedNumbers.numbers.map(x => yOffset + frame.renderHeight * (frame.renderConfig.scaleMaxVal - x) / (frame.renderConfig.scaleMaxVal - frame.renderConfig.scaleMinVal));
     }
 
 
@@ -858,7 +856,7 @@ export class OverlayColorbarSettings {
         return this.offset + this.width;
     }
 
-    @computed get textGap() {
+    @computed get textGap(): number {
         return 5;
     }
 

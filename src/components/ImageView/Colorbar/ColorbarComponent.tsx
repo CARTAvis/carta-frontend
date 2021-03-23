@@ -55,12 +55,14 @@ export class ColorbarComponent extends React.Component<ColorbarComponentProps> {
         this.setCursorY(point.y);
     };
 
-    private renderColorbar = () => {
+    render() {
         const appStore = AppStore.Instance;
         const frame = appStore.activeFrame;
         const colorbarSettings = appStore.overlayStore.colorbar;
         const yOffset = appStore.overlayStore.padding.top;
-        return (
+        const color = appStore.getASTColor;
+
+        const colorbar = (
             <Rect
                 x={colorbarSettings.offset}
                 y={yOffset}
@@ -75,65 +77,46 @@ export class ColorbarComponent extends React.Component<ColorbarComponentProps> {
                 onMouseMove={this.handleMouseMove}
                 onMouseLeave={this.onMouseLeave}
             />
-        )
-    };
-
-    private renderTicksNumbers = () => {
-        const appStore = AppStore.Instance;
-        const frame = appStore.activeFrame;
-        const colorbarSettings = appStore.overlayStore.colorbar;
-        const yOffset = appStore.overlayStore.padding.top;
-        const color = appStore.getASTColor;
-
-        const texts = colorbarSettings.texts;
-        const positions = colorbarSettings.positions.map(x => yOffset + frame.renderHeight * (1 - x));
+        );
 
         let ticks = [];
         let numbers = [];
-        for (let i = 0; i < colorbarSettings.tickNum; i++) {
-            if (colorbarSettings.tickVisible) {
-                ticks.push(
-                    <Line
-                        points={[colorbarSettings.rightBorderPos - colorbarSettings.tickLen, positions[i], colorbarSettings.rightBorderPos, positions[i]]}
-                        stroke={color}
-                        strokeWidth={colorbarSettings.tickWidth}
-                        key={i.toString()}
-                    />
-                );
-            }
-            if (colorbarSettings.numberVisible) {
-                numbers.push(
-                    <Text
-                        text={texts[i]}
-                        x={colorbarSettings.rightBorderPos + colorbarSettings.textGap}
-                        y={colorbarSettings.numberRotated ? positions[i] + 100 / 2 : positions[i] - colorbarSettings.numberFontSize / 2}
-                        width={colorbarSettings.numberRotated ? 100 : null}
-                        align={"center"}
-                        fill={color}
-                        fontFamily={this.astFonts[colorbarSettings.numberFont].family}
-                        fontStyle={`${this.astFonts[colorbarSettings.numberFont].style} ${this.astFonts[colorbarSettings.numberFont].weight}`}
-                        fontSize={colorbarSettings.numberFontSize}
-                        rotation={colorbarSettings.numberRotated ? -90 : 0}
-                        key={i.toString()}
-                    />
-                );
+        if (colorbarSettings.tickVisible || colorbarSettings.numberVisible) {
+            const texts = colorbarSettings.texts;
+            const positions = colorbarSettings.positions;
+    
+            for (let i = 0; i < positions.length; i++) {
+                if (colorbarSettings.tickVisible) {
+                    ticks.push(
+                        <Line
+                            points={[colorbarSettings.rightBorderPos - colorbarSettings.tickLen, positions[i], colorbarSettings.rightBorderPos, positions[i]]}
+                            stroke={color}
+                            strokeWidth={colorbarSettings.tickWidth}
+                            key={i.toString()}
+                        />
+                    );
+                }
+                if (colorbarSettings.numberVisible) {
+                    numbers.push(
+                        <Text
+                            text={texts[i]}
+                            x={colorbarSettings.rightBorderPos + colorbarSettings.textGap}
+                            y={colorbarSettings.numberRotated ? positions[i] + 100 / 2 : positions[i] - colorbarSettings.numberFontSize / 2}
+                            width={colorbarSettings.numberRotated ? 100 : null}
+                            align={"center"}
+                            fill={color}
+                            fontFamily={this.astFonts[colorbarSettings.numberFont].family}
+                            fontStyle={`${this.astFonts[colorbarSettings.numberFont].style} ${this.astFonts[colorbarSettings.numberFont].weight}`}
+                            fontSize={colorbarSettings.numberFontSize}
+                            rotation={colorbarSettings.numberRotated ? -90 : 0}
+                            key={i.toString()}
+                        />
+                    );
+                }
             }
         }
 
-        return (
-            <React.Fragment>
-                {colorbarSettings.tickVisible ? ticks : null}
-                {colorbarSettings.numberVisible ? numbers : null}
-            </React.Fragment>
-        );
-    };
-
-    private renderTitle = () => {
-        const appStore = AppStore.Instance;
-        const frame = appStore.activeFrame;
-        const colorbarSettings = appStore.overlayStore.colorbar;
-        const yOffset = appStore.overlayStore.padding.top;
-        return (
+        const label = colorbarSettings.labelVisible ? (
             <Text
                 text={frame.unit}
                 x={colorbarSettings.rightBorderPos + colorbarSettings.numberWidth + colorbarSettings.textGap}
@@ -147,33 +130,22 @@ export class ColorbarComponent extends React.Component<ColorbarComponentProps> {
                 rotation={-90}
                 key={'0'}
             />
-        );
-    };
+        ) : null;
 
-    private renderHoverBar = () => {
-        const appStore = AppStore.Instance;
-        const colorbarSettings = appStore.overlayStore.colorbar;
-        return (
+        const hoverBar = colorbarSettings.showHoverInfo && this.showHoverInfo ? (
             <Line
                 points={[colorbarSettings.offset, this.cursorY, colorbarSettings.rightBorderPos, this.cursorY]}
                 stroke={appStore.getASTColor}
                 strokeWidth={0.5}
             />
-        );
-    };
+        ) : null;
 
-    private renderHoverInfo = () => {
-        const frame = AppStore.Instance.activeFrame;
-        return (
+        const hoverInfo = colorbarSettings.showHoverInfo && this.showHoverInfo ? (
             <div className={"colorbar-info"}>
                 <ProfilerInfoComponent info={[`Colorscale: ${this.hoverInfoText} ${frame.unit}`]}/>
             </div>
-        );
- 
-    };
+        ) : null;
 
-    render() {
-        const colorbarSettings = AppStore.Instance.overlayStore.colorbar;
         return (
             <React.Fragment>
                 <Stage
@@ -183,15 +155,16 @@ export class ColorbarComponent extends React.Component<ColorbarComponentProps> {
                     style={{left: this.props.left}}
                 >
                     <Layer>
-                        {this.renderColorbar()}
-                        {colorbarSettings.tickVisible || colorbarSettings.numberVisible ? this.renderTicksNumbers() : null}
-                        {colorbarSettings.labelVisible ? this.renderTitle() : null}
+                        {colorbar}
+                        {ticks}
+                        {numbers}
+                        {label}
                     </Layer>
                     <Layer>
-                        {colorbarSettings.showHoverInfo && this.showHoverInfo ? this.renderHoverBar() : null}
+                        {hoverBar}
                     </Layer>
                 </Stage>
-                {colorbarSettings.showHoverInfo && this.showHoverInfo ? this.renderHoverInfo() : null}
+                {hoverInfo}
             </React.Fragment>
         );
     }
