@@ -78,12 +78,11 @@ export class ProfileFittingStore {
     }
 
     fitData = (x: number[], y: Float32Array | Float64Array): void => {        
+        const inputData = [];
+        this.components.forEach(component => { inputData.push(component.amp); inputData.push(component.center); inputData.push(component.fwhm);})
 
-        const center: Float64Array = new Float64Array(this.components.map(component => {return component.center;}));
-        const amp: Float64Array = new Float64Array(this.components.map(component => {return component.amp;}));
-        const fwhm: Float64Array = new Float64Array(this.components.map(component => {return component.fwhm;}));
 
-        const fittingResult = GSL.gaussianFitting(x, y, center, amp, fwhm);
+        const fittingResult = GSL.gaussianFitting(x, y, inputData);
 
         const newComponents = [];        
         for (let i = 0; i < this.components.length ; i++) {

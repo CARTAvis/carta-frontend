@@ -370,47 +370,50 @@ solve_system(gsl_vector *x, gsl_multifit_nlinear_fdf *fdf, gsl_multifit_nlinear_
   gsl_multifit_nlinear_free(work);
 }
 
-
-int EMSCRIPTEN_KEEPALIVE fittingGaussian(double* xInArray, double* yInArray, const int N, double* center, double* amp, double* fwhm, double* centerOut, double* ampOut, double* fwhmOut, const int N2, char* logOut ) {
+int EMSCRIPTEN_KEEPALIVE fittingGaussian(double* xInArray, double* yInArray, const int dataN, double **inputs, double* ampOut, double* centerOut, double* fwhmOut, const int componentN, char* logOut) {
     int status = 0; /* return value: 0 = success */
 
-    const size_t n = N;  /* number of data points to fit */
-    const size_t p = N2 * 3;  /* number of model parameters */ // TODO
+    const size_t n = dataN;  /* number of data points to fit */
+    const size_t p = componentN * 3;  /* number of model parameters */ // TODO
 
     gsl_vector *f = gsl_vector_alloc(n);
     gsl_vector *x = gsl_vector_alloc(p);
     gsl_multifit_nlinear_fdf fdf;
     gsl_multifit_nlinear_parameters fdf_params = gsl_multifit_nlinear_default_parameters();
     struct data fit_data;
-    size_t i;
+    size_t i, j;
 
     fit_data.t = xInArray;
     fit_data.y = yInArray;
     fit_data.n = n;
-    fit_data.component = N2;
+    fit_data.component = componentN;
 
     /* define function to be minimized */
     fdf.f = func_f;
     fdf.df = NULL;
-    // fdf.df = func_df;
     fdf.fvv = NULL;
     fdf.n = n;
     fdf.p = p;
     fdf.params = &fit_data;
 
     /* starting point */
-    for (i = 0; i < N2; ++i)
+    for (i = 0; i < componentN; ++i)
     {
-        gsl_vector_set(x, i * 3, amp[i]);  /* amplitude */
-        gsl_vector_set(x, i * 3 + 1, center[i]); /* center */
-        gsl_vector_set(x, i * 3 + 2, fwhm[i] / pow( 8 * log(2.0), 0.5)); /* width = fwhm / (8ln2)^0.5 */
+        for (j = 0; j < 3; ++j)
+        {
+            if (j !== 2) {
+                gsl_vector_set(x, i * 3 + j, inputs[i][j]);
+            } else {
+                gsl_vector_set(x, i * 3 + 2, inputs[i][j] / pow( 8 * log(2.0), 0.5));  /* width */
+            }
+        }
     }
 
     fdf_params.trs = gsl_multifit_nlinear_trs_lm;
     solve_system(x, &fdf, &fdf_params);
 
-    /* print data and model */
-    for (i = 0; i < N2; ++i)
+    // /* print data and model */
+    for (i = 0; i < componentN; ++i)
     {
         ampOut[i] = gsl_vector_get(x, i * 3);
         centerOut[i] = gsl_vector_get(x, i * 3 + 1);
