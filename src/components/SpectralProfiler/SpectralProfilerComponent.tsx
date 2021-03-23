@@ -6,7 +6,7 @@ import {Colors, NonIdealState} from "@blueprintjs/core";
 import ReactResizeDetector from "react-resize-detector";
 import {CARTA} from "carta-protobuf";
 import {LineMarker, LinePlotComponent, LinePlotComponentProps, LinePlotSelectingMode, ProfilerInfoComponent, VERTICAL_RANGE_PADDING, SmoothingType} from "components/Shared";
-import {TickType, MultiPlotProps} from "../Shared/LinePlot/PlotContainer/PlotContainerComponent";
+import {TickType} from "../Shared/LinePlot/PlotContainer/PlotContainerComponent";
 import {SpectralProfilerToolbarComponent} from "./SpectralProfilerToolbarComponent/SpectralProfilerToolbarComponent";
 import {SpectralProfileStore, WidgetProps, HelpType, AnimatorStore, WidgetsStore, AppStore, DefaultWidgetConfig} from "stores";
 import {SpectralProfileWidgetStore} from "stores/widgets";
@@ -16,10 +16,11 @@ import "./SpectralProfilerComponent.scss";
 
 type XBound = {xMin: number, xMax: number};
 type YBound = {yMin: number, yMax: number};
-type PlotData = {
+type DataPoints = Point2D[];
+type MultiPlotData = {
     numProfiles: number,
-    points: Point2D[],
-    smoothingPoints: Point2D[],
+    data: DataPoints[],
+    smoothedData: DataPoints[],
     xMin: number,
     xMax: number,
     yMin: number,
@@ -72,6 +73,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
         return null;
     }
 
+    /*
     @computed get plotData(): PlotData {
         const frame = this.widgetStore.effectiveFrame;
         if (!frame || !this.profileStore) {
@@ -128,6 +130,66 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
             yMax:yBound.yMax,
             yMean: 0,
             yRms: 0,
+            progress: progressSum / profiles.length
+        };
+    }
+    */
+
+    @computed get plotData(): MultiPlotData {
+        const frame = this.widgetStore.effectiveFrame;
+        if (!frame || !this.profileStore) {
+            return null;
+        }
+
+        // Get profiles
+        const profiles = this.getProfiles();
+        if (!profiles || profiles.length <= 0) {
+            return null;
+        }
+
+        // Determine xBound
+        const xBound = this.getBoundX();
+
+        // Determine points/smoothingPoints/yBound/progress
+        let data = [];
+        let smoothedData = [];
+        let yBound = {yMin: Number.MAX_VALUE, yMax: -Number.MAX_VALUE};
+        let progressSum: number = 0;
+        profiles.forEach(profile => {
+            if (profile) {
+                const dataPointSet = this.getDataPointSet(profile, xBound);
+                data.push(dataPointSet.points);
+                smoothedData.push(dataPointSet.smoothingPoints);
+                if (yBound.yMin > dataPointSet.yBound.yMin) {
+                    yBound.yMin = dataPointSet.yBound.yMin;
+                }
+                if (yBound.yMax < dataPointSet.yBound.yMax) {
+                    yBound.yMax = dataPointSet.yBound.yMax;
+                }
+                progressSum = progressSum + profile.progress;
+            }
+        });
+
+        if (yBound.yMin === Number.MAX_VALUE) {
+            yBound.yMin = undefined;
+            yBound.yMax = undefined;
+        } else {
+            // extend y range a bit
+            const range = yBound.yMax - yBound.yMin;
+            yBound.yMin -= range * VERTICAL_RANGE_PADDING;
+            yBound.yMax += range * VERTICAL_RANGE_PADDING;
+        }
+
+        return {
+            numProfiles: profiles.length,
+            data: data,
+            smoothedData: smoothedData,
+            xMin: xBound.xMin,
+            xMax: xBound.xMax,
+            yMin: yBound.yMin,
+            yMax: yBound.yMax,
+            yMean: undefined, // TODO: enable mean/rms for single profile
+            yRms: undefined,
             progress: progressSum / profiles.length
         };
     }
@@ -253,7 +315,9 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
                 image: this.currentChannelValue,
                 unit: frame.spectralUnitStr
             };
-            const data = this.plotData.points;
+            // TODO: support multiple profiles
+            // const data = this.plotData.points;
+            const data = [];
             const nearest = binarySearchByX(data, this.widgetStore.isMouseMoveIntoLinePlots ? cursorX.profiler : cursorX.image);
             let cursorString = "";
             if (nearest && nearest.point && nearest.index >= 0 && nearest.index < data.length) {
@@ -408,7 +472,6 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
             darkMode: appStore.darkTheme,
             imageName: frame?.filename ?? undefined,
             plotName: `Z profile`,
-            plotType: this.widgetStore.plotType,
             tickTypeY: TickType.Scientific,
             graphClicked: this.onChannelChanged,
             graphZoomedX: this.widgetStore.setXBounds,
@@ -447,31 +510,40 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
             }
 
             const currentPlotData = this.plotData;
-            if (currentPlotData) {
-                linePlotProps.data = currentPlotData.points;
+            if (currentPlotData?.numProfiles > 0) {
+                // Fill profile & smoothed profiles
+                for(let i = 0; i < currentPlotData.numProfiles; i++) {
+                    if (i < currentPlotData.data?.length) {
+                        linePlotProps.multiPlotPropsMap.set(`profile${i}`, {
+                            data: currentPlotData.data[i],
+                            type: this.widgetStore.plotType,
+                            // TODO: color/width/radius for profile
+                        });
+                    }
+
+                    const smoothingStore = this.widgetStore.smoothingStore;
+                    if (smoothingStore.type !== SmoothingType.NONE && i < currentPlotData.smoothedData?.length) {
+                        if (!smoothingStore.isOverlayOn) {
+                            linePlotProps.lineColor = "#00000000";
+                        }
+                        linePlotProps.multiPlotPropsMap.set(`smoothedProfile${i}`, {
+                            data: currentPlotData.smoothedData[i],
+                            type: smoothingStore.lineType,
+                            borderColor: getColorForTheme(smoothingStore.lineColor),
+                            borderWidth: smoothingStore.lineWidth,
+                            pointRadius: smoothingStore.pointRadius,
+                            order: 0,
+                            exportData: smoothingStore.exportData
+                        });
+                    }
+                }
+
                 // Opacity ranges from 0.15 to 0.40 when data is in progress, and is 1.0 when finished
                 linePlotProps.opacity = currentPlotData.progress < 1.0 ? 0.15 + currentPlotData.progress / 4.0 : 1.0;
-                
+
                 // set line color
                 let primaryLineColor = getColorForTheme(this.widgetStore.primaryLineColor);
                 linePlotProps.lineColor = primaryLineColor;
-                const smoothingStore = this.widgetStore.smoothingStore;
-                if (smoothingStore.type !== SmoothingType.NONE) {
-                    if (!smoothingStore.isOverlayOn) {
-                        linePlotProps.lineColor = "#00000000";
-                    }
-
-                    let smoothingPlotProps: MultiPlotProps = {
-                        data: currentPlotData.smoothingPoints,
-                        type: smoothingStore.lineType,
-                        borderColor: getColorForTheme(smoothingStore.lineColor),
-                        borderWidth: smoothingStore.lineWidth,
-                        pointRadius: smoothingStore.pointRadius,
-                        order: 0,
-                        exportData: smoothingStore.exportData
-                    };
-                    linePlotProps.multiPlotPropsMap.set("smoothed", smoothingPlotProps);
-                }
 
                 // Determine scale in X and Y directions. If auto-scaling, use the bounds of the current data
                 if (this.widgetStore.isAutoScaledX) {
