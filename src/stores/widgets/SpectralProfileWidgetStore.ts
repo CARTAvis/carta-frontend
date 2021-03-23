@@ -359,6 +359,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
                     regionRequirements.spectralProfiles = [];
                 }
 
+                // TODO: wire up profile config creation for image & region
                 const profileConfigs = widgetStore.multipleProfileStore.getProfileConfigs();
                 profileConfigs?.forEach(profileConfig => {
                     if (profileConfig) {

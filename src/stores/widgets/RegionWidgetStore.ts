@@ -71,7 +71,7 @@ export class RegionWidgetStore {
 
     @computed get effectiveRegion(): RegionStore {
         if (this.effectiveFrame) {
-            return this.effectiveFrame.regionSet.regions.find(r => r.regionId === this.effectiveRegionId);
+            return this.effectiveFrame.regionSet?.regions?.find(r => r.regionId === this.effectiveRegionId);
         }
         return null;
     }
@@ -95,7 +95,7 @@ export class RegionWidgetStore {
         widgetsMap.forEach(widgetStore => {
             const frame = widgetStore.effectiveFrame;
             if (!frame || !frame.regionSet) {
-            return;
+                return;
             }
             const fileId = frame.frameInfo.fileId;
             const regionId = widgetStore.effectiveRegionId;
@@ -106,7 +106,7 @@ export class RegionWidgetStore {
                     frameRequirementsArray = [];
                     updatedRequirements.set(fileId, frameRequirementsArray);
                 }
-                if (frameRequirementsArray.indexOf(regionId) === -1) {
+                if (!frameRequirementsArray.includes(regionId)) {
                     frameRequirementsArray.push(regionId);
                 }
             }
