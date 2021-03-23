@@ -146,6 +146,10 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
         return headerString;
     }
 
+    @computed get isMeanRmsVisible(): boolean { // Show Mean/RMS when only 1 profile
+        return this.widgetStore.meanRmsVisible && this.plotData?.numProfiles === 1;
+    }
+
     constructor(props: WidgetProps) {
         super(props);
         makeObservable(this);
@@ -274,7 +278,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
             }
 
             profilerInfo.push(`${this.widgetStore.isMouseMoveIntoLinePlots ? "Cursor:" : "Data:"} ${cursorString}`);
-            if (this.widgetStore.meanRmsVisible) {
+            if (this.isMeanRmsVisible) {
                 profilerInfo.push(`Mean/RMS: ${formattedExponential(this.plotData.yMean, 2) + " / " + formattedExponential(this.plotData.yRms, 2)}`);
             }
         }
@@ -532,7 +536,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
                 });
             }
 
-            if (this.widgetStore.meanRmsVisible && currentPlotData && isFinite(currentPlotData.yMean) && isFinite(currentPlotData.yRms)) {
+            if (this.isMeanRmsVisible && isFinite(currentPlotData.yMean) && isFinite(currentPlotData.yRms)) {
                 linePlotProps.markers.push({
                     value: currentPlotData.yMean,
                     id: "marker-mean",
