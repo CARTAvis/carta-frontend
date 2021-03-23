@@ -90,11 +90,8 @@ class ProfileSelectionComponent extends React.Component<{widgetStore: SpectralPr
         let enableRegionSelect = true;
         let enableStatsSelect = false;
 
-        let regionId = 0;
-
         if (widgetStore.effectiveFrame && widgetStore.effectiveFrame.regionSet) {
-            regionId = widgetStore.effectiveRegionId;
-            const selectedRegion = widgetStore.effectiveFrame.regionSet.regions.find(r => r.regionId === regionId);
+            const selectedRegion = widgetStore.effectiveFrame.regionSet.regions.find(r => r.regionId === widgetStore.effectiveRegionId);
             enableStatsSelect = (selectedRegion && selectedRegion.isClosedRegion);
         }
 
@@ -112,7 +109,7 @@ class ProfileSelectionComponent extends React.Component<{widgetStore: SpectralPr
                 <ProfileSelectionButtonComponent
                     categoryName={ProfileCategory.REGION}
                     isActiveCategory={multipleProfileStore.profileCategory === ProfileCategory.REGION}
-                    itemOptions={undefined}
+                    itemOptions={multipleProfileStore.regionOptions}
                     itemSelected={multipleProfileStore.selectedRegions}
                     disabled={!enableRegionSelect}
                     onCategorySelect={() => multipleProfileStore.setProfileCategory(ProfileCategory.REGION)}

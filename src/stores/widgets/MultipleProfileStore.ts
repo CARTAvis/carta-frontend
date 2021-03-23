@@ -56,6 +56,31 @@ export class MultipleProfileStore {
         return AppStore.Instance.frameNames;
     }
 
+    @computed get regionOptions(): ProfileItemOptionProps[] {
+        let options = [];
+        const widgetStore = this.widgetStore;
+        if (widgetStore.effectiveFrame && widgetStore.effectiveFrame.regionSet) {
+            /*
+            const regions = widgetStore.effectiveFrame.regionSet.regions;
+            let fiteredRegions: RegionStore[];
+            if (widgetStore.type === RegionsType.CLOSED) {
+                options.push([{value: RegionId.IMAGE, label: "Image"}]);
+                fiteredRegions = regions.filter(r => !r.isTemporary && r.isClosedRegion);
+            } else if (widgetStore.type === RegionsType.CLOSED_AND_POINT) {
+                fiteredRegions = regions.filter(r => !r.isTemporary && (r.isClosedRegion || r.regionType === CARTA.RegionType.POINT));
+            } else {
+                fiteredRegions = regions;
+            }
+            options = options.concat(fiteredRegions.map(r => {return {value: r.regionId, label: r.nameString, disable: this.props.nonClosedDisabled ? !r.isClosedRegion : false}; }));
+
+            if (widgetStore.type === RegionsType.CLOSED_AND_POINT && options.length === 1) {
+                options = options.concat([{value: RegionId.CURSOR, label: "Cursor"}]);
+            }
+            */
+        }
+        return options;
+    }
+
     @computed get statsTypeOptions(): ProfileItemOptionProps[] {
         if (this.selectedStatsTypes?.length === 0) {
             this.profileStatsOptionTemplate.forEach(option => option.disable = false);
