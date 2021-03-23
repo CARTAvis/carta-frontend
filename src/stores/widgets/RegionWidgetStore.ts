@@ -70,7 +70,7 @@ export class RegionWidgetStore {
     }
 
     @computed get effectiveRegion(): RegionStore {
-        if (this.effectiveFrame && this.effectiveRegionId) {
+        if (this.effectiveFrame) {
             return this.effectiveFrame.regionSet.regions.find(r => r.regionId === this.effectiveRegionId);
         }
         return null;
