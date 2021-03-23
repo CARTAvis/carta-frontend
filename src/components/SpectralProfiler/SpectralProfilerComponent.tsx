@@ -73,68 +73,6 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
         return null;
     }
 
-    /*
-    @computed get plotData(): PlotData {
-        const frame = this.widgetStore.effectiveFrame;
-        if (!frame || !this.profileStore) {
-            return null;
-        }
-
-        // Get profiles
-        const profiles = this.getProfiles();
-        if (!profiles || profiles.length <= 0) {
-            return null;
-        }
-
-        // Determine xBound
-        const xBound = this.getBoundX();
-
-        // Determine points/smoothingPoints/yBound/progress
-        let points: Point2D[] = [];
-        let smoothingPoints: Point2D[] = [];
-        let yBound = {yMin: Number.MAX_VALUE, yMax: -Number.MAX_VALUE};
-        let progressSum: number = 0;
-        profiles.forEach(profile => {
-            if (profile) {
-                // TODO: should use multiPlotPropsMap for LinePlot
-                const dataPointSet = this.getDataPointSet(profile, xBound);
-                points = points.concat(dataPointSet.points);
-                smoothingPoints = smoothingPoints.concat(dataPointSet.smoothingPoints);
-                if (yBound.yMin > dataPointSet.yBound.yMin) {
-                    yBound.yMin = dataPointSet.yBound.yMin;
-                }
-                if (yBound.yMax < dataPointSet.yBound.yMax) {
-                    yBound.yMax = dataPointSet.yBound.yMax;
-                }
-                progressSum = progressSum + profile.progress;
-            }
-        });
-
-        if (yBound.yMin === Number.MAX_VALUE) {
-            yBound.yMin = undefined;
-            yBound.yMax = undefined;
-        } else {
-            // extend y range a bit
-            const range = yBound.yMax - yBound.yMin;
-            yBound.yMin -= range * VERTICAL_RANGE_PADDING;
-            yBound.yMax += range * VERTICAL_RANGE_PADDING;
-        }
-
-        return {
-            numProfiles: profiles.length,
-            points: points,
-            smoothingPoints: smoothingPoints,
-            xMin: xBound.xMin,
-            xMax: xBound.xMax,
-            yMin: yBound.yMin,
-            yMax:yBound.yMax,
-            yMean: 0,
-            yRms: 0,
-            progress: progressSum / profiles.length
-        };
-    }
-    */
-
     @computed get plotData(): MultiPlotData {
         const frame = this.widgetStore.effectiveFrame;
         if (!frame || !this.profileStore) {
@@ -160,6 +98,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
                 const dataPointSet = this.getDataPointSet(profile, xBound);
                 data.push(dataPointSet.points);
                 smoothedData.push(dataPointSet.smoothingPoints);
+
                 if (yBound.yMin > dataPointSet.yBound.yMin) {
                     yBound.yMin = dataPointSet.yBound.yMin;
                 }
