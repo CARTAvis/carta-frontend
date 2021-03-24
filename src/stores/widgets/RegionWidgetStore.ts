@@ -1,4 +1,4 @@
-import { action, observable, computed, makeObservable } from "mobx";
+import {action, observable, computed, makeObservable} from "mobx";
 import {AppStore, FrameStore, RegionStore} from "..";
 
 export const ACTIVE_FILE_ID = -1;
