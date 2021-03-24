@@ -374,7 +374,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
         let yBound = {yMin: Number.MAX_VALUE, yMax: -Number.MAX_VALUE};
         let yMean = undefined;
         let yRms = undefined;
-        if (profile?.values?.length && channelValues?.length && profile.values.length === channelValues.length) {
+        if (profile?.values?.length > 0 && channelValues?.length > 0 && profile.values.length === channelValues.length) {
             // Variables for mean and RMS calculations
             let ySum = 0;
             let ySum2 = 0;
@@ -413,7 +413,6 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
                 yRms = Math.sqrt((ySum2 / yCount) - yMean * yMean);
             }
         }
-
         return {points: points, smoothedPoints: smoothedPoints, yBound: yBound, yMean: yMean, yRms: yRms};
     };
 
