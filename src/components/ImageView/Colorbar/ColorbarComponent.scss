@@ -4,9 +4,14 @@
 }
 
 .colorbar-info {
-    width: 170px;
+    width: 300px;
     height: 12px;
     position: absolute;
     bottom: 3px;
     right: 5px;
+
+    .profiler-info {
+        left: auto;
+        right: 0px;
+    }
 }

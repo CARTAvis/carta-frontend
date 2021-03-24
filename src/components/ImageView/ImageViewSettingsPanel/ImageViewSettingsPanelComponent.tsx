@@ -619,24 +619,26 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
                         min={1}
                         max={overlayStore.viewWidth * 0.3}
                         value={colorbar.width}
-                        stepSize={0.5}
-                        minorStepSize={0.1}
-                        majorStepSize={1}
+                        stepSize={1}
+                        minorStepSize={1}
+                        majorStepSize={2}
                         disabled={!colorbar.visible}
                         onValueChange={(value: number) => colorbar.setWidth(value)}
+                        intOnly={true}
                     />
                 </FormGroup>
                 <FormGroup inline={true} label="Offset" labelInfo="(px)" disabled={!colorbar.visible}>
                     <SafeNumericInput
                         placeholder="Offset"
-                        min={0.0}
+                        min={0}
                         max={overlayStore.viewWidth * 0.3}
                         value={colorbar.offset}
                         stepSize={1}
-                        minorStepSize={0.1}
+                        minorStepSize={1}
                         majorStepSize={5}
                         disabled={!colorbar.visible}
                         onValueChange={(value: number) => colorbar.setOffset(value)}
+                        intOnly={true}
                     />
                 </FormGroup>
                 <FormGroup inline={true} label="Border" disabled={!colorbar.visible}>

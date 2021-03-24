@@ -50,8 +50,8 @@ export class ColorbarComponent extends React.Component<ColorbarComponentProps> {
         const frame = appStore.activeFrame;
         const yOffset = appStore.overlayStore.padding.top;
 
-        let scaledPos = (frame.renderHeight + yOffset - point.y) / frame.renderHeight;
-        this.setHoverInfoText((frame.renderConfig.scaleMinVal + scaledPos * (frame.renderConfig.scaleMaxVal - frame.renderConfig.scaleMinVal)).toFixed(5));
+        const scaledPos = (frame.renderHeight + yOffset - point.y) / frame.renderHeight;
+        this.setHoverInfoText((frame.renderConfig.scaleMinVal + scaledPos * (frame.renderConfig.scaleMaxVal - frame.renderConfig.scaleMinVal)).toExponential(5));
         this.setCursorY(point.y);
     };
 
@@ -62,17 +62,18 @@ export class ColorbarComponent extends React.Component<ColorbarComponentProps> {
         const yOffset = appStore.overlayStore.padding.top;
         const color = appStore.getASTColor;
 
+        // add 0.5 px offset to the colorbar when border has width <= 1px to avoid blurring
         const colorbar = (
             <Rect
-                x={colorbarSettings.offset}
-                y={yOffset}
+                x={colorbarSettings.offset + (colorbarSettings.borderWidth <= 1 && (this.props.left % 1 === 0) ? 0.5 : 0)}
+                y={yOffset - (colorbarSettings.borderWidth <= 1 && (yOffset % 1 === 0) ? 0.5 : 0)}
                 width={colorbarSettings.width}
-                height={frame.renderHeight}
+                height={frame.renderHeight + (colorbarSettings.borderWidth <= 1 && (frame.renderHeight % 1 !== 0) ? ((yOffset % 1 === 0) ? 0.5 : -0.5) : 0)}
                 fillLinearGradientStartPoint={{x: 0, y: yOffset}}
                 fillLinearGradientEndPoint={{x: 0, y: yOffset + frame.renderHeight}}
                 fillLinearGradientColorStops={frame.renderConfig.colorscaleArray}
                 stroke={colorbarSettings.borderVisible ? appStore.getASTColor : null}
-                strokeWidth={colorbarSettings.borderWidth}
+                strokeWidth={colorbarSettings.borderWidth / devicePixelRatio}
                 onMouseEnter={this.onMouseEnter}
                 onMouseMove={this.handleMouseMove}
                 onMouseLeave={this.onMouseLeave}
@@ -91,7 +92,7 @@ export class ColorbarComponent extends React.Component<ColorbarComponentProps> {
                         <Line
                             points={[colorbarSettings.rightBorderPos - colorbarSettings.tickLen, positions[i], colorbarSettings.rightBorderPos, positions[i]]}
                             stroke={color}
-                            strokeWidth={colorbarSettings.tickWidth}
+                            strokeWidth={colorbarSettings.tickWidth / devicePixelRatio}
                             key={i.toString()}
                         />
                     );
@@ -136,7 +137,7 @@ export class ColorbarComponent extends React.Component<ColorbarComponentProps> {
             <Line
                 points={[colorbarSettings.offset, this.cursorY, colorbarSettings.rightBorderPos, this.cursorY]}
                 stroke={appStore.getASTColor}
-                strokeWidth={0.5}
+                strokeWidth={1 / devicePixelRatio}
             />
         ) : null;
 

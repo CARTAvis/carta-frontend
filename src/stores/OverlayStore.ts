@@ -709,14 +709,14 @@ export class OverlayColorbarSettings {
         makeObservable(this);
         this.visible = true;
         this.showHoverInfo = true;
-        this.width = 20;
-        this.offset = 10;
+        this.width = 15;
+        this.offset = 5;
         this.borderVisible = true;
-        this.borderWidth = 0.5;
+        this.borderWidth = 1;
         this.tickVisible = true;
         this.tickDensity = 1;
-        this.tickLen = 7;
-        this.tickWidth = 0.5;
+        this.tickLen = 6;
+        this.tickWidth = 1;
         this.numberVisible = true;
         this.numberRotated = true;
         this.numberFont = 0;
@@ -808,16 +808,16 @@ export class OverlayColorbarSettings {
         if (!scaleMinVal || !scaleMaxVal || !tickNum) {
             return null;
         } else {
-            let dy = (scaleMaxVal - scaleMinVal) / (tickNum + 1);
+            let dy = (scaleMaxVal - scaleMinVal) / tickNum;
             const precision = -Math.round(Math.log10(dy)) + 1;
             const roundBase = Math.pow(10, precision);
             dy = Math.ceil(dy * roundBase) / roundBase;
             const min =  Math.round(scaleMinVal * roundBase) / roundBase;
 
             const indexArray = Array.from(Array(tickNum).keys());
-            let numbers = indexArray.map(x => min + dy * (x + 1));
+            let numbers = indexArray.map(x => min + dy * (x + (min <= scaleMinVal ? 1 : 0)));
 
-            const isOutofBound = (element: number) => element > scaleMaxVal - dy / 4;
+            const isOutofBound = (element: number) => element >= scaleMaxVal;
             const outofBoundIndex = numbers.findIndex(isOutofBound);
             if (outofBoundIndex !== -1) {
                 numbers = numbers.slice(0, outofBoundIndex);
