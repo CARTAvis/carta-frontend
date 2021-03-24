@@ -262,15 +262,14 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
     private genProfilerInfo = (): string[] => {
         let profilerInfo: string[] = [];
         const frame = this.widgetStore.effectiveFrame;
-        if (frame && this.plotData) {
+        // TODO: support multiple profiles
+        if (frame && this.plotData?.numProfiles === 1) {
             const cursorX = {
                 profiler: this.widgetStore.cursorX,
                 image: this.currentChannelValue,
                 unit: frame.spectralUnitStr
             };
-            // TODO: support multiple profiles
-            // const data = this.plotData.points;
-            const data = [];
+            const data = this.plotData.data[0];
             const nearest = binarySearchByX(data, this.widgetStore.isMouseMoveIntoLinePlots ? cursorX.profiler : cursorX.image);
             let cursorString = "";
             if (nearest && nearest.point && nearest.index >= 0 && nearest.index < data.length) {
