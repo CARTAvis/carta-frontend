@@ -334,42 +334,37 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         const updatedRequirements = new Map<number, Map<number, CARTA.SetSpectralRequirements>>();
 
         widgetsMap.forEach(widgetStore => {
-            const frame = widgetStore.effectiveFrame;
-            if (!frame || !frame.regionSet) {
-                return;
-            }
-
-            const fileId = frame.frameInfo.fileId;
-            const region = widgetStore.effectiveRegion;
-            if (region) {
-                let frameRequirements = updatedRequirements.get(fileId);
+            const spectralConfigs = widgetStore.multipleProfileStore.getProfileConfigs();
+            spectralConfigs.forEach(spectralConfig => {
+                // fileId
+                let frameRequirements = updatedRequirements.get(spectralConfig.fileId);
                 if (!frameRequirements) {
                     frameRequirements = new Map<number, CARTA.SetSpectralRequirements>();
-                    updatedRequirements.set(fileId, frameRequirements);
+                    updatedRequirements.set(spectralConfig.fileId, frameRequirements);
                 }
 
-                const regionId = widgetStore.effectiveRegionId;
-                let regionRequirements = frameRequirements.get(regionId);
+                // regionId
+                let regionRequirements = frameRequirements.get(spectralConfig.regionId);
                 if (!regionRequirements) {
-                    regionRequirements = new CARTA.SetSpectralRequirements({regionId, fileId});
-                    frameRequirements.set(regionId, regionRequirements);
+                    regionRequirements = new CARTA.SetSpectralRequirements({fileId: spectralConfig.fileId, regionId: spectralConfig.regionId});
+                    frameRequirements.set(spectralConfig.regionId, regionRequirements);
                 }
 
+                // cooridnate & stats type
                 if (!regionRequirements.spectralProfiles) {
                     regionRequirements.spectralProfiles = [];
                 }
-
-                // TODO: wire up profile config creation for image & region
-                const profileConfigs = widgetStore.multipleProfileStore.getProfileConfigs();
-                profileConfigs?.forEach(profileConfig => {
-                    if (profileConfig) {
-                        regionRequirements.spectralProfiles.push({
-                            coordinate: profileConfig.coordinate,
-                            statsTypes: profileConfig.statsTypes
-                        });
-                    }
-                });
-            }
+                let existingSpectralConfig = regionRequirements.spectralProfiles.find(profiles => profiles.coordinate === spectralConfig.coordinate);
+                if (!existingSpectralConfig) { // create new spectral config
+                    regionRequirements.spectralProfiles.push({coordinate: spectralConfig.coordinate, statsTypes: spectralConfig.statsTypes});
+                } else {
+                    spectralConfig.statsTypes?.forEach(statsType => {
+                        if (!existingSpectralConfig.statsTypes.includes(statsType)) { // add to the stats type array
+                            existingSpectralConfig.statsTypes.push(statsType);
+                        }
+                    });
+                }
+            });
         });
 
         return updatedRequirements;

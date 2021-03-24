@@ -110,7 +110,7 @@ class ProfileSelectionComponent extends React.Component<{widgetStore: SpectralPr
                     categoryName={ProfileCategory.REGION}
                     isActiveCategory={multipleProfileStore.profileCategory === ProfileCategory.REGION}
                     itemOptions={multipleProfileStore.regionOptions}
-                    itemSelected={multipleProfileStore.selectedRegions}
+                    itemSelected={multipleProfileStore.selectedRegionIds}
                     disabled={!enableRegionSelect}
                     onCategorySelect={() => multipleProfileStore.setProfileCategory(ProfileCategory.REGION)}
                     onItemSelect={this.onRegionItemClick}

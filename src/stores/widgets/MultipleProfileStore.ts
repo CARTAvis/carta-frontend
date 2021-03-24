@@ -12,12 +12,15 @@ export enum ProfileCategory {
     STOKES = "Stokes"
 }
 
-type SpectralConfig = CARTA.SetSpectralRequirements.ISpectralConfig;
+interface FullSpectralConfig extends CARTA.SetSpectralRequirements.ISpectralConfig {
+    fileId: number;
+    regionId: number;
+}
 
 export class MultipleProfileStore {
     // profile selection
     @observable profileCategory: ProfileCategory;
-    @observable selectedRegions: number[];
+    @observable selectedRegionIds: number[];
     @observable selectedStatsTypes: CARTA.StatsType[];
     @observable selectedCoordinates: string[];
 
@@ -33,24 +36,26 @@ export class MultipleProfileStore {
     });
     private static ValidCoordinates = ["z", "Iz", "Qz", "Uz", "Vz"];
 
-    public getProfileConfigs = (): SpectralConfig[] => {
-        let profileConfigs: SpectralConfig[] = [];
+    public getProfileConfigs = (): FullSpectralConfig[] => {
+        let profileConfigs: FullSpectralConfig[] = [];
+        const fileId = this.widgetStore.effectiveFrame.frameInfo.fileId;
+        const regionId = this.widgetStore.effectiveRegionId;
         if (this.profileCategory === ProfileCategory.IMAGE) {
-            // TODO: wire up profiles of matching images
+            // TODO: add matched image ids
             const statsType = this.widgetStore.effectiveRegion?.isClosedRegion ? this.defaultStatsType : CARTA.StatsType.Sum;
-            profileConfigs.push({statsTypes: [statsType], coordinate: this.defaultCoordinate});
+            profileConfigs.push({fileId: fileId, regionId: regionId, statsTypes: [statsType], coordinate: this.defaultCoordinate});
         } else if (this.profileCategory === ProfileCategory.REGION) {
-            // TODO: how to create multiple region profile?
-            const statsType = this.widgetStore.effectiveRegion?.isClosedRegion ? this.defaultStatsType : CARTA.StatsType.Sum;
-            this.selectedRegions?.forEach(region => {
-                profileConfigs.push({statsTypes: [statsType], coordinate: this.defaultCoordinate});
+            this.selectedRegionIds?.forEach(selectedRegionId => {
+                const region = this.widgetStore.effectiveFrame.regionSet.regions.find(r => r.regionId === selectedRegionId);
+                const statsType = region?.isClosedRegion ? this.defaultStatsType : CARTA.StatsType.Sum;
+                profileConfigs.push({fileId: fileId, regionId: selectedRegionId, statsTypes: [statsType], coordinate: this.defaultCoordinate});
             });
         } else if (this.profileCategory === ProfileCategory.STATISTICS) {
-            profileConfigs.push({statsTypes: this.widgetStore.effectiveRegion?.isClosedRegion ? [...this.selectedStatsTypes] : [CARTA.StatsType.Sum], coordinate: this.defaultCoordinate});
+            profileConfigs.push({fileId: fileId, regionId: regionId, statsTypes: this.widgetStore.effectiveRegion?.isClosedRegion ? [...this.selectedStatsTypes] : [CARTA.StatsType.Sum], coordinate: this.defaultCoordinate});
         } else if (this.profileCategory === ProfileCategory.STOKES) {
             const statsType = this.widgetStore.effectiveRegion?.isClosedRegion ? this.defaultStatsType : CARTA.StatsType.Sum;
             this.selectedCoordinates?.forEach(coordinate => {
-                profileConfigs.push({statsTypes: [statsType], coordinate: coordinate});
+                profileConfigs.push({fileId: fileId, regionId: regionId, statsTypes: [statsType], coordinate: coordinate});
             });
         }
         return profileConfigs;
@@ -111,17 +116,17 @@ export class MultipleProfileStore {
         // Reset region/statistics/stokes selected option when switching profile category
         // TODO: missing handling for image
         if (profileCategory === ProfileCategory.IMAGE) {
-            this.selectedRegions = [RegionId.CURSOR];
+            this.selectedRegionIds = [RegionId.CURSOR];
             this.selectedStatsTypes = [this.defaultStatsType];
             this.selectedCoordinates = [this.defaultCoordinate];
         } else if (profileCategory === ProfileCategory.REGION) {
             this.selectedStatsTypes = [this.defaultStatsType];
             this.selectedCoordinates = [this.defaultCoordinate];
         } else if (profileCategory === ProfileCategory.STATISTICS) {
-            this.selectedRegions = [RegionId.CURSOR];
+            this.selectedRegionIds = [RegionId.CURSOR];
             this.selectedCoordinates = [this.defaultCoordinate];
         } else if (profileCategory === ProfileCategory.STOKES) {
-            this.selectedRegions = [RegionId.CURSOR];
+            this.selectedRegionIds = [RegionId.CURSOR];
             this.selectedStatsTypes = [this.defaultStatsType];
         }
     };
@@ -133,10 +138,10 @@ export class MultipleProfileStore {
 
     @action selectRegion = (regionId: number) => {
         // if () { TODO: error handling for regionId
-            if (this.selectedRegions?.includes(regionId)) {
-                this.selectedRegions = this.selectedRegions.filter(region => region !== regionId);
+            if (this.selectedRegionIds?.includes(regionId)) {
+                this.selectedRegionIds = this.selectedRegionIds.filter(region => region !== regionId);
             } else {
-                this.selectedRegions = [...this.selectedRegions, regionId];
+                this.selectedRegionIds = [...this.selectedRegionIds, regionId];
             }
         // }
     };
@@ -168,7 +173,7 @@ export class MultipleProfileStore {
         this.defaultCoordinate = coordinate;
 
         this.profileCategory = ProfileCategory.IMAGE;
-        this.selectedRegions = [RegionId.CURSOR];
+        this.selectedRegionIds = [RegionId.CURSOR];
         this.selectedStatsTypes = [CARTA.StatsType.Mean];
         this.selectedCoordinates = [coordinate];
     }

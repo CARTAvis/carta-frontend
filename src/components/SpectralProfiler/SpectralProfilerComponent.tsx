@@ -8,7 +8,7 @@ import {CARTA} from "carta-protobuf";
 import {LineMarker, LinePlotComponent, LinePlotComponentProps, LinePlotSelectingMode, ProfilerInfoComponent, VERTICAL_RANGE_PADDING, SmoothingType} from "components/Shared";
 import {TickType} from "../Shared/LinePlot/PlotContainer/PlotContainerComponent";
 import {SpectralProfilerToolbarComponent} from "./SpectralProfilerToolbarComponent/SpectralProfilerToolbarComponent";
-import {SpectralProfileStore, WidgetProps, HelpType, AnimatorStore, WidgetsStore, AppStore, DefaultWidgetConfig} from "stores";
+import {WidgetProps, HelpType, AnimatorStore, WidgetsStore, AppStore, DefaultWidgetConfig} from "stores";
 import {SpectralProfileWidgetStore} from "stores/widgets";
 import {Point2D, ProcessedSpectralProfile} from "models";
 import {binarySearchByX, clamp, formattedExponential, formattedNotation, toExponential, toFixed, getColorForTheme} from "utilities";
@@ -61,21 +61,9 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
         return new SpectralProfileWidgetStore();
     }
 
-    @computed get profileStore(): SpectralProfileStore {
-        if (this.widgetStore.effectiveFrame) {
-            let fileId = this.widgetStore.effectiveFrame.frameInfo.fileId;
-            const regionId = this.widgetStore.effectiveRegionId;
-            const frameMap = AppStore.Instance.spectralProfiles.get(fileId);
-            if (frameMap) {
-                return frameMap.get(regionId);
-            }
-        }
-        return null;
-    }
-
     @computed get plotData(): MultiPlotData {
         const frame = this.widgetStore.effectiveFrame;
-        if (!frame || !this.profileStore) {
+        if (!frame) {
             return null;
         }
 
@@ -334,17 +322,17 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
 
     private getProfiles = (): ProcessedSpectralProfile[] => {
         let profiles = [];
-        if (this.profileStore) {
-            const profileConfigs = this.widgetStore.multipleProfileStore.getProfileConfigs();
-            profileConfigs?.forEach(profileConfig => {
-                profileConfig?.statsTypes?.forEach(statsType => {
-                    const profile = this.profileStore.getProfile(profileConfig.coordinate, statsType);
-                    if (profile) {
-                        profiles.push(profile);
-                    }
-                });
+        const profileConfigs = this.widgetStore.multipleProfileStore.getProfileConfigs();
+        profileConfigs?.forEach(profileConfig => {
+            const frameProfileStoreMap = AppStore.Instance.spectralProfiles.get(profileConfig.fileId);
+            const regionProfileStoreMap = frameProfileStoreMap?.get(profileConfig.regionId);
+            profileConfig?.statsTypes?.forEach(statsType => {
+                const profile = regionProfileStoreMap?.getProfile(profileConfig.coordinate, statsType);
+                if (profile) {
+                    profiles.push(profile);
+                }
             });
-        }
+        });
         return profiles;
     };
 
@@ -422,12 +410,10 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
             return <NonIdealState icon={"error"} title={"Missing profile"} description={"Profile not found"}/>;
         }
 
-        const frame = this.widgetStore.effectiveFrame;
         let linePlotProps: LinePlotComponentProps = {
             xLabel: "Channel",
             yLabel: "Value",
             darkMode: appStore.darkTheme,
-            imageName: frame?.filename ?? undefined,
             plotName: `Z profile`,
             tickTypeY: TickType.Scientific,
             graphClicked: this.onChannelChanged,
@@ -448,7 +434,10 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
             multiPlotPropsMap: new Map()
         };
 
-        if (this.profileStore && frame) {
+        const frame = this.widgetStore.effectiveFrame;
+        if (frame) {
+            linePlotProps.imageName = frame.filename;
+
             if (frame.spectralAxis && !frame.isCoordChannel) {
                 const spectralSystem = frame.isSpectralSystemConvertible ? frame.spectralSystem : `${frame.spectralInfo.specsys}`;
                 linePlotProps.xLabel = `${spectralSystem && spectralSystem !== "" ? spectralSystem + ", " : ""}${frame.spectralCoordinate}`;
