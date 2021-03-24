@@ -401,7 +401,7 @@ int EMSCRIPTEN_KEEPALIVE fittingGaussian(double* xInArray, double* yInArray, con
     {
         for (j = 0; j < 3; ++j)
         {
-            if (j !== 2) {
+            if (j != 2) {
                 gsl_vector_set(x, i * 3 + j, inputs[i][j]);
             } else {
                 gsl_vector_set(x, i * 3 + 2, inputs[i][j] / pow( 8 * log(2.0), 0.5));  /* width */
