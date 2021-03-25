@@ -444,9 +444,9 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
             if (frame.unit) {
                 let yLabelUnit = "";
                 if (this.widgetStore.profileSelectionStore.isSameStatsTypeUnit) {
-                    if (this.widgetStore.profileSelectionStore.isStatsTypeFluxDensity) {
+                    if (this.widgetStore.profileSelectionStore.isStatsTypeFluxDensityOnly) {
                         yLabelUnit =  " (Jy)";
-                    } else if (this.widgetStore.profileSelectionStore.isStatsTypeSumSq) {
+                    } else if (this.widgetStore.profileSelectionStore.isStatsTypeSumSqOnly) {
                         yLabelUnit = ` (${frame.unit})^2`;
                     } else {
                         yLabelUnit = ` (${frame.unit})`;

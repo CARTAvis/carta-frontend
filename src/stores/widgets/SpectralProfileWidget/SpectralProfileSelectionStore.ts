@@ -102,12 +102,12 @@ export class SpectralProfileSelectionStore {
         return this.widgetStore.effectiveFrame?.frameInfo.fileId;
     }
 
-    @computed get isStatsTypeFluxDensity(): boolean {
-        return this.selectedStatsTypes?.length === 1 && this.selectedStatsTypes?.includes(CARTA.StatsType.FluxDensity);
+    @computed get isStatsTypeFluxDensityOnly(): boolean {
+        return this.selectedStatsTypes?.length === 1 && this.selectedStatsTypes[0] === CARTA.StatsType.FluxDensity;
     }
 
-    @computed get isStatsTypeSumSq(): boolean {
-        return this.selectedStatsTypes?.length === 1 && this.selectedStatsTypes?.includes(CARTA.StatsType.SumSq);
+    @computed get isStatsTypeSumSqOnly(): boolean {
+        return this.selectedStatsTypes?.length === 1 && this.selectedStatsTypes[0] === CARTA.StatsType.SumSq;
     }
 
     @computed get isSameStatsTypeUnit(): boolean {
