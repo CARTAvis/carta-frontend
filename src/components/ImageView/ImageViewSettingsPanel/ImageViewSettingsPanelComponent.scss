@@ -1,13 +1,18 @@
 @import "../../../../node_modules/@blueprintjs/core/lib/scss/variables.scss";
 
 .image-view-settings {
-    margin: 20px;
+    padding: 20px;
+    height: 100%;
 
+    div.bp3-tabs.bp3-vertical {
+        height: 100%;
+    }
+    
     .bp3-tab-panel {
-        height: 25em;
-        overflow: auto;
         width: 100%;
-	user-select: none;
+        height: 100%;
+        overflow: auto;
+	    user-select: none;
     }
 
     .bp3-tab-list {
@@ -23,7 +28,7 @@
             margin-left: 0px;
         }
         .bp3-label {
-            width: 8em;
+            width: 12em;
             text-align: right;
         }
     }
