@@ -1,15 +1,9 @@
 @import "../../../../node_modules/@blueprintjs/core/lib/scss/variables.scss";
 
-.color-swatch-button {
-    padding: 5px !important;    .bp3-button-text {
-        div {
-            width: 40px;
-            height: 20px;
-        }
-    }
-}
-
 .color-picker-popup {
+    position: relative;
+    top: -15px;
+
     &.bp3-dark {
         .sketch-picker {
             background: $dark-gray5 !important;
@@ -33,6 +27,40 @@
                     }
                 }
             }
+        }
+    }
+}
+
+.dropdown-color {
+    border: solid 1px black;
+    width: 100%;
+    border-radius: $pt-border-radius;
+}
+
+.bp3-button.colorselect .bp3-button-text {
+    width: 80px;
+}
+
+
+.bp3-popover.colorselect {
+    width: 120px;
+
+    .bp3-menu {
+        min-width: 100px;
+        max-height: 300px;
+        overflow: auto;
+        padding: 0;
+
+        .dropdown-color {
+            width: 90px !important;
+        }
+    }
+
+    .custom-color {
+        padding: 0 5px 5px 7px;
+
+        .color-swatch-button {
+            width: 90px;
         }
     }
 }

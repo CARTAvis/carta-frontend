@@ -83,9 +83,9 @@ export function scaleValue(x: number, scaling: FrameScaling, alpha: number = 100
         case FrameScaling.SQRT:
             return Math.sqrt(x);
         case FrameScaling.LOG:
-            return clamp(Math.log(alpha * x + 1.0) / Math.log(alpha), 0.0, 1.0);
+            return Math.log(alpha * x + 1.0) / Math.log(alpha + 1.0);
         case FrameScaling.POWER:
-            return (Math.pow(alpha, x) - 1.0) / alpha;
+            return (Math.pow(alpha, x) - 1.0) / (alpha - 1.0);
         case FrameScaling.GAMMA:
             return Math.pow(x, gamma);
         default:

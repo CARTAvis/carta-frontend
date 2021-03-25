@@ -41,7 +41,8 @@ export const ScalingSelectComponent: React.FC<ScalingComponentProps> = (props) =
                 label={RenderConfigStore.SCALING_TYPES.get(scaling)}
                 key={scaling}
                 onClick={handleClick}
-                text={<div className="equation-div" style={{backgroundImage: `url(${equationPngMap.get(scaling)}`}}/>}
+                text={<div className="equation-div" style={{backgroundImage: `url(${equationPngMap.get(scaling)}`, backgroundSize: 'contain'}}/>}
+                style={{width: "220px"}}
             />
         );
     };
