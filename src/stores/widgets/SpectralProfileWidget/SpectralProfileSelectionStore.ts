@@ -34,7 +34,7 @@ export class SpectralProfileSelectionStore {
         const fileId = this.widgetStore.effectiveFrame.frameInfo.fileId;
         const regionId = this.widgetStore.effectiveRegionId;
         if (this.profileCategory === ProfileCategory.IMAGE) {
-            // TODO: add matched image ids
+            // TODO: add matched image ids, spectralSiblings of FrameStore
             const statsType = this.widgetStore.effectiveRegion?.isClosedRegion ? this.defaultStatsType : CARTA.StatsType.Sum;
             profileConfigs.push({fileId: fileId, regionId: regionId, statsTypes: [statsType], coordinate: this.defaultCoordinate});
         } else if (this.profileCategory === ProfileCategory.REGION) {
@@ -55,7 +55,20 @@ export class SpectralProfileSelectionStore {
     };
 
     @computed get frameOptions(): ProfileItemOptionProps[] {
-        return AppStore.Instance.frameNames;
+        let options = [];
+        const appStore = AppStore.Instance;
+        const frameNameOptions = appStore.frameNames;
+        const spectralReference = appStore.spectralReference;
+        const matchedFrameIds = spectralReference?.spectralSiblings?.map(matchedFrame => {return matchedFrame.frameInfo.fileId;});
+        options = frameNameOptions?.map(frameNameOption => {
+            const isMatched = matchedFrameIds?.length > 0 && (frameNameOption.value === spectralReference.frameInfo.fileId || matchedFrameIds.includes(frameNameOption.value as number));
+            return {
+                label: `${frameNameOption.label}`,
+                value: frameNameOption.value,
+                hightlight: isMatched
+            };
+        });
+        return options;
     }
 
     @computed get regionOptions(): ProfileItemOptionProps[] {

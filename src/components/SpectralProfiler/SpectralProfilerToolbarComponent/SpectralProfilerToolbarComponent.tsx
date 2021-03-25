@@ -1,7 +1,7 @@
 import {observer} from "mobx-react";
 import * as React from "react";
 import {CARTA} from "carta-protobuf";
-import {AnchorButton, ButtonGroup, IOptionProps, Menu, MenuItem, Popover, Position, Tooltip} from "@blueprintjs/core";
+import {AnchorButton, ButtonGroup, Intent, IOptionProps, Menu, MenuItem, Popover, Position, Tooltip} from "@blueprintjs/core";
 import {AppStore} from "stores";
 import {ProfileCategory, SpectralProfileWidgetStore} from "stores/widgets";
 import {SpectralProfilerComponent, SpectralProfilerSettingsTabs} from "components";
@@ -46,6 +46,7 @@ class ProfileSelectionButtonComponent extends React.Component<ProfileSelectionBu
                                     key={item.value}
                                     text={item.label}
                                     disabled={item.disable}
+                                    intent={item.hightlight ? Intent.PRIMARY : Intent.NONE}
                                     onClick={(ev) => this.props.onItemSelect(item.value, this.props.isActiveCategory)}
                                     icon={this.props.itemSelected?.includes(item.value) ? "tick" : "blank"}
                                     shouldDismissPopover={false}
