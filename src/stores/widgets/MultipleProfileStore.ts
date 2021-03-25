@@ -136,32 +136,42 @@ export class MultipleProfileStore {
         this.widgetStore.setFileId(fileId);
     };
 
-    @action selectRegion = (regionId: number) => {
-        // if () { TODO: error handling for regionId
+    @action selectRegion = (regionId: number, isMultipleSelectionMode: boolean) => {
+        if (isMultipleSelectionMode) {
             if (this.selectedRegionIds?.includes(regionId)) {
                 this.selectedRegionIds = this.selectedRegionIds.filter(region => region !== regionId);
             } else {
                 this.selectedRegionIds = [...this.selectedRegionIds, regionId];
             }
-        // }
+        } else {
+            this.selectedRegionIds = [regionId];
+        }
     };
 
-    @action selectStatsType = (statsType: CARTA.StatsType) => {
+    @action selectStatsType = (statsType: CARTA.StatsType, isMultipleSelectionMode: boolean) => {
         if (SUPPORTED_STATISTICS_TYPES.includes(statsType)) {
-            if (this.selectedStatsTypes?.includes(statsType)) {
-                this.selectedStatsTypes = this.selectedStatsTypes.filter(type => type !== statsType);
+            if (isMultipleSelectionMode) {
+                if (this.selectedStatsTypes?.includes(statsType)) {
+                    this.selectedStatsTypes = this.selectedStatsTypes.filter(type => type !== statsType);
+                } else {
+                    this.selectedStatsTypes = [...this.selectedStatsTypes, statsType];
+                }
             } else {
-                this.selectedStatsTypes = [...this.selectedStatsTypes, statsType];
+                this.selectedStatsTypes = [statsType];
             }
         }
     };
 
-    @action selectCoordinate = (coordinate: string) => {
+    @action selectCoordinate = (coordinate: string, isMultipleSelectionMode: boolean) => {
         if (MultipleProfileStore.ValidCoordinates.includes(coordinate)) {
-            if (this.selectedCoordinates?.includes(coordinate)) {
-                this.selectedCoordinates = this.selectedCoordinates.filter(coord => coord !== coordinate);
+            if (isMultipleSelectionMode) {
+                if (this.selectedCoordinates?.includes(coordinate)) {
+                    this.selectedCoordinates = this.selectedCoordinates.filter(coord => coord !== coordinate);
+                } else {
+                    this.selectedCoordinates = [...this.selectedCoordinates, coordinate];
+                }
             } else {
-                this.selectedCoordinates = [...this.selectedCoordinates, coordinate];
+                this.selectedCoordinates = [coordinate];
             }
             // this.clearXYBounds();
         }

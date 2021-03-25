@@ -22,7 +22,7 @@ class ProfileSelectionButtonComponentProps {
     itemSelected: MultiSelectItem[];
     disabled: boolean;
     onCategorySelect: () => void;
-    onItemSelect: (item: MultiSelectItem) => void;
+    onItemSelect: (item: MultiSelectItem, isMultipleSelectionMode: boolean) => void;
 }
 
 @observer
@@ -30,7 +30,7 @@ class ProfileSelectionButtonComponent extends React.Component<ProfileSelectionBu
     public render() {
         return (
             <ButtonGroup fill={true} className="category-set">
-                <Tooltip content={`Show multiple profiles - ${this.props.categoryName}`} position={Position.TOP}>
+                <Tooltip content={"Click to show multiple profiles"} position={Position.TOP}>
                     <AnchorButton
                         text={this.props.categoryName}
                         active={this.props.isActiveCategory}
@@ -46,7 +46,7 @@ class ProfileSelectionButtonComponent extends React.Component<ProfileSelectionBu
                                     key={item.value}
                                     text={item.label}
                                     disabled={item.disable}
-                                    onClick={(ev) => this.props.onItemSelect(item.value)}
+                                    onClick={(ev) => this.props.onItemSelect(item.value, this.props.isActiveCategory)}
                                     icon={this.props.itemSelected?.includes(item.value) ? "tick" : "blank"}
                                     shouldDismissPopover={false}
                                 />
@@ -55,9 +55,9 @@ class ProfileSelectionButtonComponent extends React.Component<ProfileSelectionBu
                     }
                     minimal={true}
                     placement={Position.BOTTOM}
-                    disabled={!this.props.isActiveCategory || this.props.disabled}
+                    disabled={this.props.disabled}
                 >
-                    <AnchorButton rightIcon={"caret-down"} disabled={!this.props.isActiveCategory || this.props.disabled}/>
+                    <AnchorButton rightIcon={"caret-down"} disabled={this.props.disabled}/>
                 </Popover>
             </ButtonGroup>
         );
@@ -66,20 +66,21 @@ class ProfileSelectionButtonComponent extends React.Component<ProfileSelectionBu
 
 @observer
 class ProfileSelectionComponent extends React.Component<{widgetStore: SpectralProfileWidgetStore}> {
-    private onFrameItemClick = (selectedFrame: number) => {
+    // Frame selection does not allow multiple selection
+    private onFrameItemClick = (selectedFrame: number, isMultipleSelectionMode: boolean) => {
         this.props.widgetStore.multipleProfileStore.selectFrame(selectedFrame);
     };
 
-    private onRegionItemClick = (selectedRegion: number) => {
-        this.props.widgetStore.multipleProfileStore.selectRegion(selectedRegion);
+    private onRegionItemClick = (selectedRegion: number, isMultipleSelectionMode: boolean) => {
+        this.props.widgetStore.multipleProfileStore.selectRegion(selectedRegion, isMultipleSelectionMode);
     };
 
-    private onStatsItemClick = (selectedStatsType: CARTA.StatsType) => {
-        this.props.widgetStore.multipleProfileStore.selectStatsType(selectedStatsType);
+    private onStatsItemClick = (selectedStatsType: CARTA.StatsType, isMultipleSelectionMode: boolean) => {
+        this.props.widgetStore.multipleProfileStore.selectStatsType(selectedStatsType, isMultipleSelectionMode);
     };
 
-    private onStokesItemClick = (selectedStokes: string) => {
-        this.props.widgetStore.multipleProfileStore.selectCoordinate(selectedStokes);
+    private onStokesItemClick = (selectedStokes: string, isMultipleSelectionMode: boolean) => {
+        this.props.widgetStore.multipleProfileStore.selectCoordinate(selectedStokes, isMultipleSelectionMode);
     };
 
     public render() {
