@@ -10,7 +10,7 @@ import {TickType, MultiPlotProps} from "../Shared/LinePlot/PlotContainer/PlotCon
 import {AppStore, ASTSettingsString, DefaultWidgetConfig, FrameStore, HelpType, OverlayStore, SpatialProfileStore, WidgetProps, WidgetsStore} from "stores";
 import {SpatialProfileWidgetStore} from "stores/widgets";
 import {Point2D} from "models";
-import {binarySearchByX, clamp, formattedExponential, transformPoint, toFixed} from "utilities";
+import {binarySearchByX, clamp, formattedExponential, transformPoint, toFixed, getColorForTheme} from "utilities";
 import "./SpatialProfilerComponent.scss";
 
 // The fixed size of the settings panel popover (excluding the show/hide button)
@@ -415,12 +415,7 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
                     linePlotProps.data = currentPlotData.values;
 
                     // set line color
-                    let primaryLineColor = this.widgetStore.primaryLineColor.colorHex;
-                    if (appStore.darkTheme) {
-                        if (!this.widgetStore.primaryLineColor.fixed) {
-                            primaryLineColor = Colors.BLUE4;
-                        }
-                    }
+                    let primaryLineColor = getColorForTheme(this.widgetStore.primaryLineColor);
                     linePlotProps.lineColor = primaryLineColor;
                     const smoothingStore = this.widgetStore.smoothingStore;
                     if (smoothingStore.type !== SmoothingType.NONE) {
@@ -431,7 +426,7 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
                         let smoothingPlotProps: MultiPlotProps = {
                             data: currentPlotData.smoothingValues,
                             type: smoothingStore.lineType,
-                            borderColor: smoothingStore.lineColor.colorHex,
+                            borderColor: getColorForTheme(smoothingStore.lineColor),
                             borderWidth: smoothingStore.lineWidth,
                             pointRadius: smoothingStore.pointRadius,
                             order: 0,

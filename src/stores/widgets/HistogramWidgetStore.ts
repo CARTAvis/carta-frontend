@@ -1,8 +1,8 @@
 import {action, computed, observable, makeObservable} from "mobx";
 import {CARTA} from "carta-protobuf";
-import {Colors} from "@blueprintjs/core";
 import {PlotType, LineSettings} from "components/Shared";
 import {RegionWidgetStore, RegionsType} from "./RegionWidgetStore";
+import {isAutoColor} from "utilities";
 import tinycolor from "tinycolor2";
 
 export class HistogramWidgetStore extends RegionWidgetStore {
@@ -15,7 +15,7 @@ export class HistogramWidgetStore extends RegionWidgetStore {
     // settings 
     @observable logScaleY: boolean;
     @observable plotType: PlotType;
-    @observable primaryLineColor: { colorHex: string, fixed: boolean };
+    @observable primaryLineColor: string;
     @observable lineWidth: number;
     @observable linePlotPointSize: number;
     @observable meanRmsVisible: boolean;
@@ -125,15 +125,15 @@ export class HistogramWidgetStore extends RegionWidgetStore {
         makeObservable(this);
         this.logScaleY = true;
         this.plotType = PlotType.STEPS;
-        this.primaryLineColor = { colorHex: Colors.BLUE2, fixed: false };
+        this.primaryLineColor = "auto-blue";
         this.linePlotPointSize = 1.5;
         this.lineWidth = 1;
         this.linePlotInitXYBoundaries = { minXVal: 0, maxXVal: 0, minYVal: 0, maxYVal: 0 };
     }
 
     // settings
-    @action setPrimaryLineColor = (colorHex: string, fixed: boolean) => {
-        this.primaryLineColor = { colorHex: colorHex, fixed: fixed };
+    @action setPrimaryLineColor = (color: string) => {
+        this.primaryLineColor = color;
     };
 
     @action setLineWidth = (val: number) => {
@@ -161,8 +161,8 @@ export class HistogramWidgetStore extends RegionWidgetStore {
             return;
         }
         const lineColor = tinycolor(widgetSettings.primaryLineColor);
-        if (lineColor.isValid()) {
-            this.primaryLineColor.colorHex = lineColor.toHexString();
+        if (lineColor.isValid() || isAutoColor(widgetSettings.primaryLineColor)) {
+            this.primaryLineColor = widgetSettings.primaryLineColor;
         }
         if (typeof widgetSettings.lineWidth === "number" && widgetSettings.lineWidth >= LineSettings.MIN_WIDTH && widgetSettings.lineWidth <= LineSettings.MAX_WIDTH) {
             this.lineWidth = widgetSettings.lineWidth;
@@ -192,7 +192,7 @@ export class HistogramWidgetStore extends RegionWidgetStore {
 
     public toConfig = () => {
         return {
-            primaryLineColor: this.primaryLineColor.colorHex,
+            primaryLineColor: this.primaryLineColor,
             lineWidth: this.lineWidth,
             linePlotPointSize: this.linePlotPointSize,
             logScaleY: this.logScaleY,
