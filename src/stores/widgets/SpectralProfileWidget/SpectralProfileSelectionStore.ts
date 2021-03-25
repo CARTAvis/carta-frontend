@@ -135,7 +135,9 @@ export class SpectralProfileSelectionStore {
     @action selectRegion = (regionId: number, isMultipleSelectionMode: boolean) => {
         if (isMultipleSelectionMode) {
             if (this.selectedRegionIds?.includes(regionId)) {
-                this.selectedRegionIds = this.selectedRegionIds.filter(region => region !== regionId);
+                if (this.selectedRegionIds?.length > 1) {
+                    this.selectedRegionIds = this.selectedRegionIds.filter(region => region !== regionId);
+                }
             } else {
                 this.selectedRegionIds = [...this.selectedRegionIds, regionId];
             }
@@ -148,7 +150,9 @@ export class SpectralProfileSelectionStore {
         if (SUPPORTED_STATISTICS_TYPES.includes(statsType)) {
             if (isMultipleSelectionMode) {
                 if (this.selectedStatsTypes?.includes(statsType)) {
-                    this.selectedStatsTypes = this.selectedStatsTypes.filter(type => type !== statsType);
+                    if (this.selectedStatsTypes?.length > 1) {
+                        this.selectedStatsTypes = this.selectedStatsTypes.filter(type => type !== statsType);
+                    }
                 } else {
                     this.selectedStatsTypes = [...this.selectedStatsTypes, statsType];
                 }
@@ -162,7 +166,9 @@ export class SpectralProfileSelectionStore {
         if (SpectralProfileSelectionStore.ValidCoordinates.includes(coordinate)) {
             if (isMultipleSelectionMode) {
                 if (this.selectedCoordinates?.includes(coordinate)) {
-                    this.selectedCoordinates = this.selectedCoordinates.filter(coord => coord !== coordinate);
+                    if (this.selectedCoordinates?.length > 1) {
+                        this.selectedCoordinates = this.selectedCoordinates.filter(coord => coord !== coordinate);
+                    }
                 } else {
                     this.selectedCoordinates = [...this.selectedCoordinates, coordinate];
                 }
