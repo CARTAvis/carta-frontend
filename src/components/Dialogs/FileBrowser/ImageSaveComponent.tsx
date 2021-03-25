@@ -219,7 +219,7 @@ export class ImageSaveComponent extends React.Component<{
                                         <Label>{activeFrame.spectralUnit ? `(${activeFrame.spectralUnit})` : ""}</Label>
                                     </ControlGroup>
                                     <ControlGroup>
-                                        <Label>{"Rang to"}</Label>
+                                        <Label>{"Range to"}</Label>
                                         <NumericInput
                                             value={fileBrowser.saveSpectralRange[1]}
                                             buttonPosition="none"
