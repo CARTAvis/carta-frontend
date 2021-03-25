@@ -21,17 +21,31 @@ export class ImageSaveComponent extends React.Component<{
     };
 
     private valideSaveSpectralRangeStart = () => {
+        const appStore = AppStore.Instance;
         const fileBrowser = FileBrowserStore.Instance;
         const spectralRange = AppStore.Instance.activeFrame.channelValueBounds;
         const valueAsNumber = parseFloat(fileBrowser.saveSpectralRange[0]);
-        return spectralRange.min <= valueAsNumber && valueAsNumber <= parseFloat(fileBrowser.saveSpectralRange[1]);
+        const isValide = spectralRange.min <= valueAsNumber && valueAsNumber <= parseFloat(fileBrowser.saveSpectralRange[1]);
+        if (isValide) {
+            appStore.endFileSaving()
+        } else {
+            appStore.startFileSaving();
+        }
+        return isValide;
     };
 
     private valideSaveSpectralRangeEnd = () => {
+        const appStore = AppStore.Instance;
         const fileBrowser = FileBrowserStore.Instance;
         const spectralRange = AppStore.Instance.activeFrame.channelValueBounds;
         const valueAsNumber = parseFloat(fileBrowser.saveSpectralRange[1]);
-        return parseFloat(fileBrowser.saveSpectralRange[0]) <= valueAsNumber && valueAsNumber <= spectralRange.max;
+        const isValide = parseFloat(fileBrowser.saveSpectralRange[0]) <= valueAsNumber && valueAsNumber <= spectralRange.max;
+        if (isValide) {
+            appStore.endFileSaving()
+        } else {
+            appStore.startFileSaving();
+        }
+        return isValide;
     };
 
     private handleSaveSpectralRangeStartChanged = (_valueAsNumber: number, valueAsString: string) => {
@@ -164,7 +178,7 @@ export class ImageSaveComponent extends React.Component<{
                         {numChannels > 1 &&
                             <React.Fragment>
                                 <div className="coordinate-select">
-                                    <FormGroup label={"Range"} labelInfo={activeFrame.spectralUnit ? `(${activeFrame.spectralUnit})` : ""} inline={true} >
+                                    <FormGroup label={"Range unit"} inline={true} >
                                         <HTMLSelect
                                             value={activeFrame && (activeFrame.spectralCoordinate || "")}
                                             options={spectralCoordinateOptions}
@@ -184,8 +198,8 @@ export class ImageSaveComponent extends React.Component<{
                                     </FormGroup>
                                 </div>
                                 <div className="range-select">
-                                    <ControlGroup fill={true}>
-                                        <Label>{"From-To"}</Label>
+                                    <ControlGroup>
+                                        <Label>{"Range from"}</Label>
                                         <NumericInput
                                             value={fileBrowser.saveSpectralRange[0]}
                                             buttonPosition="none"
@@ -196,7 +210,12 @@ export class ImageSaveComponent extends React.Component<{
                                             minorStepSize={null}
                                             selectAllOnIncrement={true}
                                             intent={this.valideSaveSpectralRangeStart() ? Intent.NONE : Intent.DANGER}
+                                            inlist={true}
                                         />
+                                        <Label>{activeFrame.spectralUnit ? `(${activeFrame.spectralUnit})` : ""}</Label>
+                                    </ControlGroup>
+                                    <ControlGroup>
+                                        <Label>{"Rang to"}</Label>
                                         <NumericInput
                                             value={fileBrowser.saveSpectralRange[1]}
                                             buttonPosition="none"
@@ -208,6 +227,7 @@ export class ImageSaveComponent extends React.Component<{
                                             selectAllOnIncrement={true}
                                             intent={this.valideSaveSpectralRangeEnd() ? Intent.NONE : Intent.DANGER}
                                         />
+                                        <Label>{activeFrame.spectralUnit ? `(${activeFrame.spectralUnit})` : ""}</Label>
                                     </ControlGroup>
                                 </div>
                             </React.Fragment>

@@ -1,9 +1,9 @@
 
 .file-save {
     display: block;
-    overflow-y: auto;
+    overflow-x: auto;
     height: 100%;
-    width: 34em;
+    width: 100%;
     margin: .5em;
     margin-top: 1em;
 
@@ -12,11 +12,11 @@
         margin-bottom: 0em;
 
         .label {
-            width: 7em;
+            width: 22%;
         }
         .text {
-            margin-left: 1em;
-            width: 70%;
+            margin-left: 0;
+            width: 72%;
         }
     }
 
@@ -25,9 +25,10 @@
 
         .label {
             margin-top: 0.5em;
-            width: 7.9em;
+            width: 22%;
         }
         .bp3-html-select {
+            margin-left: 0;
             width: auto;
         }
     }
@@ -41,10 +42,10 @@
             margin-top: 0.5em;
 
             .bp3-label {
-                width: 7em;
+                width: 20%;
             }
             .bp3-select {
-                margin-left: auto;
+                margin-left: 0;
             }
         }
     }
@@ -58,30 +59,35 @@
 
             .bp3-label {
                 margin-top: 1em;
-                width: 7em;
+                width: 21%;
             }
             .bp3-numeric-input {
                 margin: 0em;
+                width: 14em;
+                .bp3-input {
+                    width: 13em;
+                }
             }
         }
     }
 
     .stokes-select {
-        margin-top: 1em;
+        margin-top: 0.5em;
 
         .bp3-form-group {
             margin: 0em;
 
             .bp3-label {
-                width: 7em;
+                width: 20%;
             }
             .bp3-select {
-                margin-left: auto;
+                margin-left: 0;
             }
         }
     }
 
     .drop-degenerate {
         margin-top: 1em;
+        width: 14em;
     }
 }
