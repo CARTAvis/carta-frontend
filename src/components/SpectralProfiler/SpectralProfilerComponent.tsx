@@ -4,7 +4,6 @@ import {action, autorun, computed, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 import {Colors, NonIdealState} from "@blueprintjs/core";
 import ReactResizeDetector from "react-resize-detector";
-import {CARTA} from "carta-protobuf";
 import {LineMarker, LinePlotComponent, LinePlotComponentProps, LinePlotSelectingMode, ProfilerInfoComponent, VERTICAL_RANGE_PADDING, SmoothingType} from "components/Shared";
 import {TickType} from "../Shared/LinePlot/PlotContainer/PlotContainerComponent";
 import {SpectralProfilerToolbarComponent} from "./SpectralProfilerToolbarComponent/SpectralProfilerToolbarComponent";
@@ -443,16 +442,17 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
                 linePlotProps.xLabel = `${spectralSystem && spectralSystem !== "" ? spectralSystem + ", " : ""}${frame.spectralCoordinate}`;
             }
             if (frame.unit) {
-                let yLabelUnit = `(${frame.unit})`;
-                const region = this.widgetStore.effectiveRegion;
-                if (region && region.regionType !== CARTA.RegionType.POINT) {
+                let yLabelUnit = "";
+                if (this.widgetStore.profileSelectionStore.isSameStatsTypeUnit) {
                     if (this.widgetStore.profileSelectionStore.isStatsTypeFluxDensity) {
-                        yLabelUnit =  "(Jy)";
+                        yLabelUnit =  " (Jy)";
                     } else if (this.widgetStore.profileSelectionStore.isStatsTypeSumSq) {
-                        yLabelUnit = `(${frame.unit})^2`;
+                        yLabelUnit = ` (${frame.unit})^2`;
+                    } else {
+                        yLabelUnit = ` (${frame.unit})`;
                     }
                 }
-                linePlotProps.yLabel = `Value ${yLabelUnit}`;
+                linePlotProps.yLabel = `Value${yLabelUnit}`;
             }
 
             const currentPlotData = this.plotData;

@@ -27,13 +27,6 @@ export class SpectralProfileSelectionStore {
     private readonly widgetStore: SpectralProfileWidgetStore;
     private defaultStatsType: CARTA.StatsType = CARTA.StatsType.Mean;
     private defaultCoordinate: string;
-    private profileStatsOptionTemplate: ProfileItemOptionProps[] = Array.from(STATISTICS_TEXT.entries()).map(entry => {
-        return {
-            value: entry[0],
-            label: entry[1],
-            enable: true
-        };
-    });
     private static ValidCoordinates = ["z", "Iz", "Qz", "Uz", "Vz"];
 
     public getProfileConfigs = (): FullSpectralConfig[] => {
@@ -77,16 +70,9 @@ export class SpectralProfileSelectionStore {
     }
 
     @computed get statsTypeOptions(): ProfileItemOptionProps[] {
-        if (this.selectedStatsTypes?.length === 0) {
-            this.profileStatsOptionTemplate.forEach(option => option.disable = false);
-        } else if (this.selectedStatsTypes?.includes(CARTA.StatsType.FluxDensity)) {
-            this.profileStatsOptionTemplate.forEach(option => option.disable = option.value !== CARTA.StatsType.FluxDensity);
-        } else if (this.selectedStatsTypes?.includes(CARTA.StatsType.SumSq)) {
-            this.profileStatsOptionTemplate.forEach(option => option.disable = option.value !== CARTA.StatsType.SumSq);
-        } else {
-            this.profileStatsOptionTemplate.forEach(option => option.disable = option.value === CARTA.StatsType.FluxDensity || option.value === CARTA.StatsType.SumSq);
-        }
-        return this.profileStatsOptionTemplate;
+        return Array.from(STATISTICS_TEXT.entries()).map(entry => {
+            return {value: entry[0], label: entry[1]};
+        });
     }
 
     @computed get coordinateOptions(): ProfileItemOptionProps[] {
@@ -104,11 +90,21 @@ export class SpectralProfileSelectionStore {
     }
 
     @computed get isStatsTypeFluxDensity(): boolean {
-        return this.selectedStatsTypes?.includes(CARTA.StatsType.FluxDensity);
+        return this.selectedStatsTypes?.length === 1 && this.selectedStatsTypes?.includes(CARTA.StatsType.FluxDensity);
     }
 
     @computed get isStatsTypeSumSq(): boolean {
-        return this.selectedStatsTypes?.includes(CARTA.StatsType.SumSq);
+        return this.selectedStatsTypes?.length === 1 && this.selectedStatsTypes?.includes(CARTA.StatsType.SumSq);
+    }
+
+    @computed get isSameStatsTypeUnit(): boolean {
+        // unit of FluxDensity: Jy, unit of SumSq: (Jy/Beam)^2, others: Jy/Beam
+        if (this.selectedStatsTypes?.length <= 1) {
+            return true;
+        } else if (this.selectedStatsTypes?.includes(CARTA.StatsType.FluxDensity) || this.selectedStatsTypes?.includes(CARTA.StatsType.SumSq)) {
+            return false;
+        }
+        return true;
     }
 
     @action setProfileCategory = (profileCategory: ProfileCategory) => {
