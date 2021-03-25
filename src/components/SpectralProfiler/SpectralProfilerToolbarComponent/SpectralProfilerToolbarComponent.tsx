@@ -68,24 +68,24 @@ class ProfileSelectionButtonComponent extends React.Component<ProfileSelectionBu
 class ProfileSelectionComponent extends React.Component<{widgetStore: SpectralProfileWidgetStore}> {
     // Frame selection does not allow multiple selection
     private onFrameItemClick = (selectedFrame: number, isMultipleSelectionMode: boolean) => {
-        this.props.widgetStore.multipleProfileStore.selectFrame(selectedFrame);
+        this.props.widgetStore.profileSelectionStore.selectFrame(selectedFrame);
     };
 
     private onRegionItemClick = (selectedRegion: number, isMultipleSelectionMode: boolean) => {
-        this.props.widgetStore.multipleProfileStore.selectRegion(selectedRegion, isMultipleSelectionMode);
+        this.props.widgetStore.profileSelectionStore.selectRegion(selectedRegion, isMultipleSelectionMode);
     };
 
     private onStatsItemClick = (selectedStatsType: CARTA.StatsType, isMultipleSelectionMode: boolean) => {
-        this.props.widgetStore.multipleProfileStore.selectStatsType(selectedStatsType, isMultipleSelectionMode);
+        this.props.widgetStore.profileSelectionStore.selectStatsType(selectedStatsType, isMultipleSelectionMode);
     };
 
     private onStokesItemClick = (selectedStokes: string, isMultipleSelectionMode: boolean) => {
-        this.props.widgetStore.multipleProfileStore.selectCoordinate(selectedStokes, isMultipleSelectionMode);
+        this.props.widgetStore.profileSelectionStore.selectCoordinate(selectedStokes, isMultipleSelectionMode);
     };
 
     public render() {
         const widgetStore = this.props.widgetStore;
-        const multipleProfileStore = widgetStore.multipleProfileStore;
+        const multipleProfileStore = widgetStore.profileSelectionStore;
 
         let enableFrameSelect = true;
         let enableRegionSelect = true;

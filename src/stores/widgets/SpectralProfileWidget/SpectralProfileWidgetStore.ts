@@ -2,11 +2,9 @@ import {action, autorun, computed, observable, makeObservable, override} from "m
 import {NumberRange} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import {PlotType, LineSettings} from "components/Shared";
-import {RegionWidgetStore, RegionsType, ACTIVE_FILE_ID} from "./RegionWidgetStore";
-import {SpectralLine} from "./SpectralLineQueryWidgetStore";
+import {RegionWidgetStore, RegionsType, ACTIVE_FILE_ID, SpectralLine, SpectralProfileSelectionStore} from "stores/widgets";
 import {AppStore} from "stores";
 import {ProfileSmoothingStore} from "stores";
-import {MultipleProfileStore} from "stores/widgets";
 import {SpectralSystem, SpectralType, SpectralUnit} from "models";
 import tinycolor from "tinycolor2";
 import {SpectralProfilerSettingsTabs} from "components";
@@ -48,7 +46,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
     @observable selectedMoments: CARTA.Moment[];
 
     readonly smoothingStore: ProfileSmoothingStore;
-    readonly multipleProfileStore: MultipleProfileStore;
+    readonly profileSelectionStore: SpectralProfileSelectionStore;
 
     @override setRegionId = (fileId: number, regionId: number) => {
         this.regionIdMap.set(fileId, regionId);
@@ -267,7 +265,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         this.linePlotInitXYBoundaries = { minXVal: 0, maxXVal: 0, minYVal: 0, maxYVal: 0 };
 
         this.smoothingStore = new ProfileSmoothingStore();
-        this.multipleProfileStore = new MultipleProfileStore(this, coordinate);
+        this.profileSelectionStore = new SpectralProfileSelectionStore(this, coordinate);
         this.selectingMode = MomentSelectingMode.NONE;
         this.channelValueRange = [0, 0];
         this.momentMask = CARTA.MomentMask.None;
@@ -334,7 +332,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         const updatedRequirements = new Map<number, Map<number, CARTA.SetSpectralRequirements>>();
 
         widgetsMap.forEach(widgetStore => {
-            const spectralConfigs = widgetStore.multipleProfileStore.getProfileConfigs();
+            const spectralConfigs = widgetStore.profileSelectionStore.getProfileConfigs();
             spectralConfigs.forEach(spectralConfig => {
                 // fileId
                 let frameRequirements = updatedRequirements.get(spectralConfig.fileId);

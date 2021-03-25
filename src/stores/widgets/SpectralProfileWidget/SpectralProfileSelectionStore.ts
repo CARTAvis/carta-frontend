@@ -1,7 +1,7 @@
 import {action, computed, makeObservable, observable} from "mobx";
 import {CARTA} from "carta-protobuf";
-import {AppStore, FrameStore} from "..";
-import {RegionId, SpectralProfileWidgetStore} from ".";
+import {AppStore, FrameStore} from "stores";
+import {RegionId, SpectralProfileWidgetStore} from "stores/widgets";
 import {ProfileItemOptionProps} from "components";
 import {STATISTICS_TEXT, SUPPORTED_STATISTICS_TYPES} from "models";
 
@@ -17,7 +17,7 @@ interface FullSpectralConfig extends CARTA.SetSpectralRequirements.ISpectralConf
     regionId: number;
 }
 
-export class MultipleProfileStore {
+export class SpectralProfileSelectionStore {
     // profile selection
     @observable profileCategory: ProfileCategory;
     @observable selectedRegionIds: number[];
@@ -163,7 +163,7 @@ export class MultipleProfileStore {
     };
 
     @action selectCoordinate = (coordinate: string, isMultipleSelectionMode: boolean) => {
-        if (MultipleProfileStore.ValidCoordinates.includes(coordinate)) {
+        if (SpectralProfileSelectionStore.ValidCoordinates.includes(coordinate)) {
             if (isMultipleSelectionMode) {
                 if (this.selectedCoordinates?.includes(coordinate)) {
                     this.selectedCoordinates = this.selectedCoordinates.filter(coord => coord !== coordinate);

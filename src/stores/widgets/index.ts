@@ -1,7 +1,6 @@
 export * from "./RenderConfigWidgetStore";
 export * from "./SpatialProfileWidgetStore";
 export * from "./SpectralLineQueryWidgetStore";
-export * from "./SpectralProfileWidgetStore";
 export * from "./RegionWidgetStore";
 export * from "./StatsWidgetStore";
 export * from "./HistogramWidgetStore";
@@ -9,4 +8,5 @@ export * from "./EmptyWidgetStore";
 export * from "./StokesAnalysisWidgetStore";
 export * from "./CatalogWidgetStore";
 export * from "./CatalogPlotWidgetStore";
-export * from "./MultipleProfileStore";
+export * from "./SpectralProfileWidget/SpectralProfileWidgetStore";
+export * from "./SpectralProfileWidget/SpectralProfileSelectionStore";

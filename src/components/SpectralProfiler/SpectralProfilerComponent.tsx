@@ -322,7 +322,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
 
     private getProfiles = (): ProcessedSpectralProfile[] => {
         let profiles = [];
-        const profileConfigs = this.widgetStore.multipleProfileStore.getProfileConfigs();
+        const profileConfigs = this.widgetStore.profileSelectionStore.getProfileConfigs();
         profileConfigs?.forEach(profileConfig => {
             const frameProfileStoreMap = AppStore.Instance.spectralProfiles.get(profileConfig.fileId);
             const regionProfileStoreMap = frameProfileStoreMap?.get(profileConfig.regionId);
@@ -446,9 +446,9 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
                 let yLabelUnit = `(${frame.unit})`;
                 const region = this.widgetStore.effectiveRegion;
                 if (region && region.regionType !== CARTA.RegionType.POINT) {
-                    if (this.widgetStore.multipleProfileStore.isStatsTypeFluxDensity) {
+                    if (this.widgetStore.profileSelectionStore.isStatsTypeFluxDensity) {
                         yLabelUnit =  "(Jy)";
-                    } else if (this.widgetStore.multipleProfileStore.isStatsTypeSumSq) {
+                    } else if (this.widgetStore.profileSelectionStore.isStatsTypeSumSq) {
                         yLabelUnit = `(${frame.unit})^2`;
                     }
                 }
