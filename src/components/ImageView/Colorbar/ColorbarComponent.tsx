@@ -78,7 +78,7 @@ export class ColorbarComponent extends React.Component<ColorbarComponentProps> {
                 fillLinearGradientStartPoint={{x: 0, y: yOffset}}
                 fillLinearGradientEndPoint={{x: 0, y: yOffset + frame.renderHeight}}
                 fillLinearGradientColorStops={frame.renderConfig.colorscaleArray}
-                stroke={colorbarSettings.borderVisible ? (colorbarSettings.setBorderCustomColor ? getColorForTheme(colorbarSettings.borderColor) : color) : null}
+                stroke={colorbarSettings.borderVisible ? (colorbarSettings.borderCustomColor ? getColorForTheme(colorbarSettings.borderColor) : color) : null}
                 strokeWidth={colorbarSettings.borderWidth / devicePixelRatio}
                 onMouseEnter={this.onMouseEnter}
                 onMouseMove={this.handleMouseMove}
@@ -97,7 +97,7 @@ export class ColorbarComponent extends React.Component<ColorbarComponentProps> {
                     ticks.push(
                         <Line
                             points={[colorbarSettings.rightBorderPos - colorbarSettings.tickLen, positions[i], colorbarSettings.rightBorderPos, positions[i]]}
-                            stroke={colorbarSettings.setTickCustomColor ? getColorForTheme(colorbarSettings.tickColor) : color}
+                            stroke={colorbarSettings.tickCustomColor ? getColorForTheme(colorbarSettings.tickColor) : color}
                             strokeWidth={colorbarSettings.tickWidth / devicePixelRatio}
                             key={i.toString()}
                         />
@@ -111,7 +111,7 @@ export class ColorbarComponent extends React.Component<ColorbarComponentProps> {
                             y={colorbarSettings.numberRotated ? positions[i] + frame.renderHeight / 2 : positions[i] - colorbarSettings.numberFontSize / 2}
                             width={colorbarSettings.numberRotated ? frame.renderHeight : null}
                             align={"center"}
-                            fill={colorbarSettings.setNumberCustomColor ? getColorForTheme(colorbarSettings.numberColor) : color}
+                            fill={colorbarSettings.numberCustomColor ? getColorForTheme(colorbarSettings.numberColor) : color}
                             fontFamily={this.astFonts[colorbarSettings.numberFont].family}
                             fontStyle={`${this.astFonts[colorbarSettings.numberFont].style} ${this.astFonts[colorbarSettings.numberFont].weight}`}
                             fontSize={colorbarSettings.numberFontSize}
@@ -130,7 +130,7 @@ export class ColorbarComponent extends React.Component<ColorbarComponentProps> {
                 y={yOffset + frame.renderHeight}
                 width={frame.renderHeight}
                 align={"center"}
-                fill={colorbarSettings.setLabelCustomColor ? getColorForTheme(colorbarSettings.labelColor) : color}
+                fill={colorbarSettings.labelCustomColor ? getColorForTheme(colorbarSettings.labelColor) : color}
                 fontFamily={this.astFonts[colorbarSettings.labelFont].family}
                 fontSize={colorbarSettings.labelFontSize}
                 fontStyle={`${this.astFonts[colorbarSettings.labelFont].style} ${this.astFonts[colorbarSettings.labelFont].weight}`}

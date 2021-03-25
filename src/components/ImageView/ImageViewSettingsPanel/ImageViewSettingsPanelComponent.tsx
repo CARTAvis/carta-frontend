@@ -826,7 +826,7 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
                         onChange={(ev) => colorbar.setNumberRotated(ev.currentTarget.checked)}
                     />
                 </FormGroup>
-                <FormGroup inline={true} label="Numbers custom Precision" disabled={!colorbar.visible || !colorbar.numberVisible}>
+                <FormGroup inline={true} label="Numbers custom precision" disabled={!colorbar.visible || !colorbar.numberVisible}>
                     <Switch
                         checked={colorbar.numberCustomPrecision}
                         disabled={!colorbar.visible || !colorbar.numberVisible}
