@@ -100,9 +100,9 @@ export function scaleValueInverse(x: number, scaling: FrameScaling, alpha: numbe
         case FrameScaling.SQRT:
             return x * x;
         case FrameScaling.LOG:
-            return (Math.pow(alpha, x) - 1.0) / (alpha - 1.0);
+            return (Math.pow(alpha + 1, x) - 1.0) / alpha;
         case FrameScaling.POWER:
-            return Math.log(alpha * x + 1.0) / Math.log(alpha + 1.0);
+            return alpha === 1 ? 0 : Math.log((alpha - 1.0) * x + 1.0) / Math.log(alpha);
         case FrameScaling.GAMMA:
             return Math.pow(x, 1.0 / gamma);
         default:

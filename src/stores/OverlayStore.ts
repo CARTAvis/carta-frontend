@@ -829,7 +829,9 @@ export class OverlayColorbarSettings {
         const scaleMinVal = frame?.renderConfig?.scaleMinVal;
         const scaleMaxVal = frame?.renderConfig?.scaleMaxVal;
         const tickNum = this.tickNum;
-        if (!scaleMinVal || !scaleMaxVal || !tickNum) {
+        if (!isFinite(scaleMinVal) || !isFinite(scaleMaxVal) || !tickNum) {
+            return null;
+        } else if (scaleMinVal >= scaleMaxVal) {
             return null;
         } else {
             let dy = (scaleMaxVal - scaleMinVal) / tickNum;
@@ -854,8 +856,10 @@ export class OverlayColorbarSettings {
         if (!this.roundedNumbers) {
             return [];
         }
-        const maxOrder = Math.max(...this.roundedNumbers.numbers.map(x => Math.log10(x)));
-        const minOrder = Math.min(...this.roundedNumbers.numbers.map(x => Math.log10(x)));
+        const orders = this.roundedNumbers.numbers.map(x => x === 0 ? 0 : Math.log10(Math.abs(x)));
+        const maxOrder = Math.max(...orders);
+        const minOrder = Math.min(...orders);
+        console.log(this.roundedNumbers.numbers, orders, maxOrder, minOrder)
         if (maxOrder >= 5.0) {
             return this.roundedNumbers.numbers.map(x => x.toExponential(this.numberCustomPrecision ? this.numberPrecision : clamp(maxOrder + this.roundedNumbers.precision, 0, 10)));
         } else if (minOrder <= -5.0) {
@@ -869,7 +873,7 @@ export class OverlayColorbarSettings {
         const appStore = AppStore.Instance;
         const frame = appStore?.activeFrame;
         const yOffset = appStore?.overlayStore.padding.top;
-        if (!this.roundedNumbers || !frame || !yOffset) {
+        if (!this.roundedNumbers || !frame || !isFinite(yOffset)) {
             return [];
         }
         return this.roundedNumbers.numbers.map(x => yOffset + frame.renderHeight * (frame.renderConfig.scaleMaxVal - x) / (frame.renderConfig.scaleMaxVal - frame.renderConfig.scaleMinVal));

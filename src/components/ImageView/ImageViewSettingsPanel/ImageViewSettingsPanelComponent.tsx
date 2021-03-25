@@ -185,6 +185,7 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
                     {this.fontSelect(title.visible, title.font, title.setFont)}
                     <SafeNumericInput
                         min={7}
+                        max={96}
                         placeholder="Font size"
                         value={title.fontSize}
                         disabled={!title.visible}
@@ -271,6 +272,7 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
                     <SafeNumericInput
                         placeholder="Width"
                         min={0.001}
+                        max={30}
                         value={ticks.width}
                         stepSize={0.5}
                         minorStepSize={0.1}
@@ -396,7 +398,8 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
                 <FormGroup inline={true} label="Width" labelInfo="(px)" disabled={!border.visible}>
                     <SafeNumericInput
                         placeholder="Width"
-                        min={0.001}
+                        min={0.5}
+                        max={30}
                         value={border.width}
                         stepSize={0.5}
                         minorStepSize={0.1}
@@ -472,6 +475,7 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
                     {this.fontSelect(numbers.visible, numbers.font, numbers.setFont)}
                     <SafeNumericInput
                         min={7}
+                        max={96}
                         placeholder="Font size"
                         value={numbers.fontSize}
                         disabled={!numbers.visible}
@@ -563,6 +567,7 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
                     {this.fontSelect(labels.visible, labels.font, labels.setFont)}
                     <SafeNumericInput
                         min={7}
+                        max={96}
                         placeholder="Font size"
                         value={labels.fontSize}
                         disabled={!labels.visible}
@@ -653,6 +658,7 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
                     <SafeNumericInput
                         placeholder="Border Width"
                         min={0.5}
+                        max={30}
                         value={colorbar.borderWidth}
                         stepSize={0.5}
                         minorStepSize={0.1}
@@ -686,6 +692,7 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
                     <SafeNumericInput
                         placeholder="Ticks Len"
                         min={0.5}
+                        max={colorbar.width}
                         value={colorbar.tickLen}
                         stepSize={0.5}
                         minorStepSize={0.1}
@@ -698,6 +705,7 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
                     <SafeNumericInput
                         placeholder="Ticks Width"
                         min={0.5}
+                        max={30}
                         value={colorbar.tickWidth}
                         stepSize={0.5}
                         minorStepSize={0.1}
@@ -718,6 +726,7 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
                     {this.fontSelect((colorbar.visible && colorbar.numberVisible), colorbar.numberFont, colorbar.setNumberFont)}
                     <SafeNumericInput
                         min={7}
+                        max={96}
                         value={colorbar.numberFontSize}
                         disabled={!colorbar.visible || !colorbar.numberVisible}
                         onValueChange={(value: number) => colorbar.setNumberFontSize(value)}
@@ -761,6 +770,7 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
                     {this.fontSelect((colorbar.visible && colorbar.labelVisible), colorbar.labelFont, colorbar.setLabelFont)}
                     <SafeNumericInput
                         min={7}
+                        max={96}
                         value={colorbar.labelFontSize}
                         disabled={!colorbar.visible || !colorbar.labelVisible}
                         onValueChange={(value: number) => colorbar.setLabelFontSize(value)}

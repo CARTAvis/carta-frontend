@@ -52,8 +52,10 @@ export class RenderConfigStore {
 
     static readonly PERCENTILE_RANKS = [90, 95, 99, 99.5, 99.9, 99.95, 99.99, 100];
 
-    static readonly GAMMA_MIN = 0;
+    static readonly GAMMA_MIN = 0.1;
     static readonly GAMMA_MAX = 2;
+    static readonly ALPHA_MIN = 0.1;
+    static readonly ALPHA_MAX = 1000000;
 
     @observable scaling: FrameScaling;
     @observable colorMapIndex: number;

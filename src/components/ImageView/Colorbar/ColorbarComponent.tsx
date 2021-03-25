@@ -64,12 +64,16 @@ export class ColorbarComponent extends React.Component<ColorbarComponentProps> {
 
         // to avoid blurring, add 0.5 px offset to colorbar with width <= 1px when necessary
         const isOnePixBorder = colorbarSettings.borderWidth <= 1;
+        let isIntPosition = (position: number): boolean => {
+            return (position * devicePixelRatio) % 1 === 0;
+        };
+
         const colorbar = (
             <Rect
-                x={colorbarSettings.offset + (isOnePixBorder && (this.props.left % 1 === 0) ? 0.5 / devicePixelRatio : 0)}
-                y={yOffset - (isOnePixBorder && (yOffset % 1 === 0) ? 0.5 / devicePixelRatio : 0)}
+                x={colorbarSettings.offset + (isOnePixBorder && (isIntPosition(this.props.left) ? 0.5 / devicePixelRatio : 0))}
+                y={yOffset - (isOnePixBorder && (isIntPosition(yOffset) ? 0.5 / devicePixelRatio : 0))}
                 width={colorbarSettings.width}
-                height={frame.renderHeight + (isOnePixBorder && (frame.renderHeight % 1 !== 0) ? ((yOffset % 1 === 0) ? 0.5 : -0.5) / devicePixelRatio : 0)}
+                height={frame.renderHeight + (isOnePixBorder && (!isIntPosition(frame.renderHeight) ? (isIntPosition(yOffset) ? 0.5 : -0.5) / devicePixelRatio : 0))}
                 fillLinearGradientStartPoint={{x: 0, y: yOffset}}
                 fillLinearGradientEndPoint={{x: 0, y: yOffset + frame.renderHeight}}
                 fillLinearGradientColorStops={frame.renderConfig.colorscaleArray}
