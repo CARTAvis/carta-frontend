@@ -134,12 +134,10 @@ export class SpectralProfileSelectionStore {
 
     @action selectRegion = (regionId: number, isMultipleSelectionMode: boolean) => {
         if (isMultipleSelectionMode) {
-            if (this.selectedRegionIds?.includes(regionId)) {
-                if (this.selectedRegionIds?.length > 1) {
-                    this.selectedRegionIds = this.selectedRegionIds.filter(region => region !== regionId);
-                }
-            } else {
+            if (!this.selectedRegionIds.includes(regionId)) {
                 this.selectedRegionIds = [...this.selectedRegionIds, regionId];
+            } else if (this.selectedRegionIds.length > 1) {
+                this.selectedRegionIds = this.selectedRegionIds.filter(region => region !== regionId);
             }
         } else {
             this.selectedRegionIds = [regionId];
@@ -149,12 +147,10 @@ export class SpectralProfileSelectionStore {
     @action selectStatsType = (statsType: CARTA.StatsType, isMultipleSelectionMode: boolean) => {
         if (SUPPORTED_STATISTICS_TYPES.includes(statsType)) {
             if (isMultipleSelectionMode) {
-                if (this.selectedStatsTypes?.includes(statsType)) {
-                    if (this.selectedStatsTypes?.length > 1) {
-                        this.selectedStatsTypes = this.selectedStatsTypes.filter(type => type !== statsType);
-                    }
-                } else {
+                if (!this.selectedStatsTypes.includes(statsType)) {
                     this.selectedStatsTypes = [...this.selectedStatsTypes, statsType];
+                } else if (this.selectedStatsTypes.length > 1) {
+                    this.selectedStatsTypes = this.selectedStatsTypes.filter(type => type !== statsType);
                 }
             } else {
                 this.selectedStatsTypes = [statsType];
@@ -165,12 +161,10 @@ export class SpectralProfileSelectionStore {
     @action selectCoordinate = (coordinate: string, isMultipleSelectionMode: boolean) => {
         if (SpectralProfileSelectionStore.ValidCoordinates.includes(coordinate)) {
             if (isMultipleSelectionMode) {
-                if (this.selectedCoordinates?.includes(coordinate)) {
-                    if (this.selectedCoordinates?.length > 1) {
-                        this.selectedCoordinates = this.selectedCoordinates.filter(coord => coord !== coordinate);
-                    }
-                } else {
+                if (!this.selectedCoordinates.includes(coordinate)) {
                     this.selectedCoordinates = [...this.selectedCoordinates, coordinate];
+                } else if (this.selectedCoordinates.length > 1) {
+                    this.selectedCoordinates = this.selectedCoordinates.filter(coord => coord !== coordinate);
                 }
             } else {
                 this.selectedCoordinates = [coordinate];
