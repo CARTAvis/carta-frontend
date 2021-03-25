@@ -242,11 +242,6 @@ export class AppStore {
         }
     }
 
-    @computed get getASTColor(): string {
-        const colorId = this.overlayStore.global.color;
-        return this.darkTheme ? nightPalette[colorId] : dayPalette[colorId];
-    }
-
     // Frame actions
     @computed get activeFrameIndex(): number {
         if (!this.activeFrame) {

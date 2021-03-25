@@ -6,6 +6,7 @@ import {Font} from "../ImageViewSettingsPanel/ImageViewSettingsPanelComponent"
 import {ProfilerInfoComponent} from "components/Shared";
 import {AppStore} from "stores";
 import {fonts} from "ast_wrapper";
+import {getColorForTheme} from "utilities";
 import "./ColorbarComponent.scss";
 
 export interface ColorbarComponentProps {
@@ -60,7 +61,7 @@ export class ColorbarComponent extends React.Component<ColorbarComponentProps> {
         const frame = appStore.activeFrame;
         const colorbarSettings = appStore.overlayStore.colorbar;
         const yOffset = appStore.overlayStore.padding.top;
-        const color = appStore.getASTColor;
+        const color = getColorForTheme(appStore.overlayStore.global.color);
 
         // to avoid blurring, add 0.5 px offset to colorbar with width <= 1px when necessary
         const isOnePixBorder = colorbarSettings.borderWidth <= 1;
@@ -77,7 +78,7 @@ export class ColorbarComponent extends React.Component<ColorbarComponentProps> {
                 fillLinearGradientStartPoint={{x: 0, y: yOffset}}
                 fillLinearGradientEndPoint={{x: 0, y: yOffset + frame.renderHeight}}
                 fillLinearGradientColorStops={frame.renderConfig.colorscaleArray}
-                stroke={colorbarSettings.borderVisible ? appStore.getASTColor : null}
+                stroke={colorbarSettings.borderVisible ? (colorbarSettings.setBorderCustomColor ? getColorForTheme(colorbarSettings.borderColor) : color) : null}
                 strokeWidth={colorbarSettings.borderWidth / devicePixelRatio}
                 onMouseEnter={this.onMouseEnter}
                 onMouseMove={this.handleMouseMove}
@@ -96,7 +97,7 @@ export class ColorbarComponent extends React.Component<ColorbarComponentProps> {
                     ticks.push(
                         <Line
                             points={[colorbarSettings.rightBorderPos - colorbarSettings.tickLen, positions[i], colorbarSettings.rightBorderPos, positions[i]]}
-                            stroke={color}
+                            stroke={colorbarSettings.setTickCustomColor ? getColorForTheme(colorbarSettings.tickColor) : color}
                             strokeWidth={colorbarSettings.tickWidth / devicePixelRatio}
                             key={i.toString()}
                         />
@@ -110,7 +111,7 @@ export class ColorbarComponent extends React.Component<ColorbarComponentProps> {
                             y={colorbarSettings.numberRotated ? positions[i] + frame.renderHeight / 2 : positions[i] - colorbarSettings.numberFontSize / 2}
                             width={colorbarSettings.numberRotated ? frame.renderHeight : null}
                             align={"center"}
-                            fill={color}
+                            fill={colorbarSettings.setNumberCustomColor ? getColorForTheme(colorbarSettings.numberColor) : color}
                             fontFamily={this.astFonts[colorbarSettings.numberFont].family}
                             fontStyle={`${this.astFonts[colorbarSettings.numberFont].style} ${this.astFonts[colorbarSettings.numberFont].weight}`}
                             fontSize={colorbarSettings.numberFontSize}
@@ -129,7 +130,7 @@ export class ColorbarComponent extends React.Component<ColorbarComponentProps> {
                 y={yOffset + frame.renderHeight}
                 width={frame.renderHeight}
                 align={"center"}
-                fill={appStore.getASTColor}
+                fill={colorbarSettings.setLabelCustomColor ? getColorForTheme(colorbarSettings.labelColor) : color}
                 fontFamily={this.astFonts[colorbarSettings.labelFont].family}
                 fontSize={colorbarSettings.labelFontSize}
                 fontStyle={`${this.astFonts[colorbarSettings.labelFont].style} ${this.astFonts[colorbarSettings.labelFont].weight}`}
@@ -141,7 +142,7 @@ export class ColorbarComponent extends React.Component<ColorbarComponentProps> {
         const hoverBar = colorbarSettings.showHoverInfo && this.showHoverInfo ? (
             <Line
                 points={[colorbarSettings.offset, this.cursorY, colorbarSettings.rightBorderPos, this.cursorY]}
-                stroke={appStore.getASTColor}
+                stroke={color}
                 strokeWidth={1 / devicePixelRatio}
             />
         ) : null;

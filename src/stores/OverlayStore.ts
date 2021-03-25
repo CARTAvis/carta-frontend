@@ -686,21 +686,29 @@ export class OverlayColorbarSettings {
     @observable offset: number;
     @observable borderVisible: boolean;
     @observable borderWidth: number;
+    @observable borderCustomColor: boolean;
+    @observable borderColor: string;
     @observable tickVisible: boolean;
     @observable tickDensity: number;
     @observable tickLen: number;
     @observable tickWidth: number;
+    @observable tickCustomColor: boolean;
+    @observable tickColor: string;
     @observable numberVisible: boolean;
     @observable numberRotated: boolean;
     @observable numberFont: number;
     @observable numberFontSize: number;
     @observable numberCustomPrecision: boolean;
     @observable numberPrecision: number;
+    @observable numberCustomColor: boolean;
+    @observable numberColor: string;
     @observable labelVisible: boolean;
     @observable labelFont: number;
     @observable labelFontSize: number;
     @observable labelCustomText: boolean;
     @observable labelText: string;
+    @observable labelCustomColor: boolean;
+    @observable labelColor: string;
     private textRatio = [0.5, 0.45, 0.5, 0.45, 0.6];
 
     constructor() {
@@ -711,21 +719,29 @@ export class OverlayColorbarSettings {
         this.offset = 5;
         this.borderVisible = true;
         this.borderWidth = 1;
+        this.borderCustomColor = false;
+        this.borderColor = AST_DEFAULT_COLOR;
         this.tickVisible = true;
         this.tickDensity = 1;
         this.tickLen = 6;
         this.tickWidth = 1;
+        this.tickCustomColor = false;
+        this.tickColor = AST_DEFAULT_COLOR;
         this.numberVisible = true;
         this.numberRotated = true;
         this.numberFont = 0;
         this.numberFontSize = 12;
         this.numberCustomPrecision = false;
         this.numberPrecision = 3;
+        this.numberCustomColor = false;
+        this.numberColor = AST_DEFAULT_COLOR;
         this.labelVisible = true;
         this.labelFont = 0;
         this.labelFontSize = 15;
         this.labelCustomText = false;
         this.labelText = "";
+        this.labelCustomColor = false;
+        this.labelColor = AST_DEFAULT_COLOR;
     }
 
     @action setVisible = (visible: boolean) => {
@@ -752,6 +768,14 @@ export class OverlayColorbarSettings {
         this.borderWidth = width;
     };
 
+    @action setBorderCustomColor = (customColor: boolean) => {
+        this.borderCustomColor = customColor;
+    };
+
+    @action setBorderColor = (color: string) => {
+        this.borderColor = color;
+    };
+
     @action setTickVisible = (visible: boolean) => {
         this.tickVisible = visible;
     };
@@ -766,6 +790,14 @@ export class OverlayColorbarSettings {
 
     @action setTickWidth = (width: number) => {
         this.tickWidth = width;
+    };
+
+    @action setTickCustomColor = (customColor: boolean) => {
+        this.tickCustomColor = customColor;
+    };
+
+    @action setTickColor = (color: string) => {
+        this.tickColor = color;
     };
 
     @action setNumberVisible = (visible: boolean) => {
@@ -792,6 +824,14 @@ export class OverlayColorbarSettings {
         this.numberPrecision = numberPrecision;
     };
 
+    @action setNumberCustomColor = (customColor: boolean) => {
+        this.numberCustomColor = customColor;
+    };
+
+    @action setNumberColor = (color: string) => {
+        this.numberColor = color;
+    };
+
     @action setLabelVisible = (visible: boolean) => {
         this.labelVisible = visible;
     };
@@ -810,6 +850,14 @@ export class OverlayColorbarSettings {
 
     @action setLabelText = (text: string) => {
         this.labelText = text;
+    };
+
+    @action setLabelCustomColor = (customColor: boolean) => {
+        this.labelCustomColor = customColor;
+    };
+
+    @action setLabelColor = (color: string) => {
+        this.labelColor = color;
     };
 
     @computed get tickNum(): number {
@@ -853,7 +901,6 @@ export class OverlayColorbarSettings {
         const orders = this.roundedNumbers.numbers.map(x => x === 0 ? 0 : Math.log10(Math.abs(x)));
         const maxOrder = Math.max(...orders);
         const minOrder = Math.min(...orders);
-        console.log(this.roundedNumbers.numbers, orders, maxOrder, minOrder)
         if (maxOrder >= 5.0) {
             return this.roundedNumbers.numbers.map(x => x.toExponential(this.numberCustomPrecision ? this.numberPrecision : clamp(maxOrder + this.roundedNumbers.precision, 0, 10)));
         } else if (minOrder <= -5.0) {
