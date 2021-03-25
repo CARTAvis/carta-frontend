@@ -61,7 +61,8 @@ export const getImageCanvas = (padding: Padding, backgroundColor: string = "rgba
     ctx.drawImage(rasterCanvas, padding.left * devicePixelRatio, padding.top * devicePixelRatio);
     ctx.drawImage(contourCanvas, padding.left * devicePixelRatio, padding.top * devicePixelRatio);
     if (colorbarCanvas) {
-        ctx.drawImage(colorbarCanvas, overlayCanvas.width - colorbarCanvas.width, 0);
+        const colorbarCanvasWidth = colorbarCanvas.width * overlayCanvas.height / colorbarCanvas.height;
+        ctx.drawImage(colorbarCanvas, overlayCanvas.width - colorbarCanvasWidth, 0, colorbarCanvasWidth, overlayCanvas.height);
     }
 
     if (beamProfileCanvas) {

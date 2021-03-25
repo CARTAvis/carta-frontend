@@ -641,6 +641,7 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
                         intOnly={true}
                     />
                 </FormGroup>
+                <hr></hr>
                 <FormGroup inline={true} label="Border" disabled={!colorbar.visible}>
                     <Switch
                         checked={colorbar.borderVisible}
@@ -660,6 +661,7 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
                         onValueChange={(value: number) => colorbar.setBorderWidth(value)}
                     />
                 </FormGroup>
+                <hr></hr>
                 <FormGroup inline={true} label="Ticks" disabled={!colorbar.visible}>
                     <Switch
                         checked={colorbar.tickVisible}
@@ -704,6 +706,7 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
                         onValueChange={(value: number) => colorbar.setTickWidth(value)}
                     />
                 </FormGroup>
+                <hr></hr>
                 <FormGroup inline={true} label="Numbers" disabled={!colorbar.visible}>
                     <Switch
                         checked={colorbar.numberVisible}
@@ -727,6 +730,26 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
                         onChange={(ev) => colorbar.setNumberRotated(ev.currentTarget.checked)}
                     />
                 </FormGroup>
+                <FormGroup inline={true} label="Numbers Custom Precision" disabled={!colorbar.visible || !colorbar.numberVisible}>
+                    <Switch
+                        checked={colorbar.numberCustomPrecision}
+                        disabled={!colorbar.visible || !colorbar.numberVisible}
+                        onChange={(ev) => colorbar.setNumberCustomPrecision(ev.currentTarget.checked)}
+                    />
+                </FormGroup>
+                <Collapse isOpen={colorbar.numberCustomPrecision}>
+                    <FormGroup inline={true} label="Precision" disabled={!colorbar.visible || !colorbar.numberVisible}>
+                        <SafeNumericInput
+                            min={0}
+                            stepSize={1}
+                            value={colorbar.numberPrecision}
+                            disabled={!colorbar.visible || !colorbar.numberVisible}
+                            onValueChange={(value: number) => colorbar.setNumberPrecision(value)}
+                            intOnly={true}
+                        />
+                    </FormGroup>
+                </Collapse>
+                <hr></hr>
                 <FormGroup inline={true} label="Label" disabled={!colorbar.visible}>
                     <Switch
                         checked={colorbar.labelVisible}
@@ -743,6 +766,23 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
                         onValueChange={(value: number) => colorbar.setLabelFontSize(value)}
                     />
                 </FormGroup>
+                <FormGroup inline={true} label="Label Custom Text" disabled={!colorbar.visible || !colorbar.labelVisible}>
+                    <Switch
+                        checked={colorbar.labelCustomText}
+                        disabled={!colorbar.visible || !colorbar.labelVisible}
+                        onChange={(ev) => colorbar.setLabelCustomText(ev.currentTarget.checked)}
+                    />
+                </FormGroup>
+                <Collapse isOpen={colorbar.labelCustomText}>
+                    <FormGroup inline={true} label="Label Text" disabled={!colorbar.visible || !colorbar.labelVisible}>
+                        <InputGroup
+                            disabled={!colorbar.visible || !colorbar.labelVisible}
+                            value={colorbar.labelText}
+                            placeholder="Enter label text"
+                            onChange={ev => colorbar.setLabelText(ev.currentTarget.value)}
+                        />
+                    </FormGroup>
+                </Collapse>
             </div>
         );
 

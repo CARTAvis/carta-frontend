@@ -700,9 +700,13 @@ export class OverlayColorbarSettings {
     @observable numberRotated: boolean;
     @observable numberFont: number;
     @observable numberFontSize: number;
+    @observable numberCustomPrecision: boolean;
+    @observable numberPrecision: number;
     @observable labelVisible: boolean;
     @observable labelFont: number;
     @observable labelFontSize: number;
+    @observable labelCustomText: boolean;
+    @observable labelText: string;
     private textRatio = [0.5, 0.45, 0.5, 0.45, 0.6];
 
     constructor() {
@@ -721,9 +725,13 @@ export class OverlayColorbarSettings {
         this.numberRotated = true;
         this.numberFont = 0;
         this.numberFontSize = 12;
+        this.numberCustomPrecision = false;
+        this.numberPrecision = 3;
         this.labelVisible = true;
         this.labelFont = 0;
         this.labelFontSize = 15;
+        this.labelCustomText = false;
+        this.labelText = "";
     }
 
     @action setVisible = (visible: boolean) => {
@@ -782,6 +790,14 @@ export class OverlayColorbarSettings {
         this.numberFontSize = fontSize;
     };
 
+    @action setNumberCustomPrecision = (numberCustomPrecision: boolean) => {
+        this.numberCustomPrecision = numberCustomPrecision;
+    };
+
+    @action setNumberPrecision = (numberPrecision: number) => {
+        this.numberPrecision = numberPrecision;
+    };
+
     @action setLabelVisible = (visible: boolean) => {
         this.labelVisible = visible;
     };
@@ -792,6 +808,14 @@ export class OverlayColorbarSettings {
 
     @action setLabelFontSize = (fontSize: number) => {
         this.labelFontSize = fontSize;
+    };
+
+    @action setLabelCustomText = (customText: boolean) => {
+        this.labelCustomText = customText;
+    };
+
+    @action setLabelText = (text: string) => {
+        this.labelText = text;
     };
 
     @computed get tickNum(): number {
@@ -833,11 +857,11 @@ export class OverlayColorbarSettings {
         const maxOrder = Math.max(...this.roundedNumbers.numbers.map(x => Math.log10(x)));
         const minOrder = Math.min(...this.roundedNumbers.numbers.map(x => Math.log10(x)));
         if (maxOrder >= 5.0) {
-            return this.roundedNumbers.numbers.map(x => x.toExponential(clamp(maxOrder + this.roundedNumbers.precision, 0, 10)));
+            return this.roundedNumbers.numbers.map(x => x.toExponential(this.numberCustomPrecision ? this.numberPrecision : clamp(maxOrder + this.roundedNumbers.precision, 0, 10)));
         } else if (minOrder <= -5.0) {
-            return this.roundedNumbers.numbers.map(x => x.toExponential(clamp(minOrder + this.roundedNumbers.precision, 0, 10)));
+            return this.roundedNumbers.numbers.map(x => x.toExponential(this.numberCustomPrecision ? this.numberPrecision : clamp(minOrder + this.roundedNumbers.precision, 0, 10)));
         } else {
-            return this.roundedNumbers.numbers.map(x => x.toFixed(clamp(this.roundedNumbers.precision, 0, 10)));
+            return this.roundedNumbers.numbers.map(x => x.toFixed(this.numberCustomPrecision ? this.numberPrecision : clamp(this.roundedNumbers.precision, 0, 10)));
         }
     }
 

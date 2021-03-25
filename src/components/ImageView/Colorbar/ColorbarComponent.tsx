@@ -62,13 +62,14 @@ export class ColorbarComponent extends React.Component<ColorbarComponentProps> {
         const yOffset = appStore.overlayStore.padding.top;
         const color = appStore.getASTColor;
 
-        // add 0.5 px offset to the colorbar when border has width <= 1px to avoid blurring
+        // to avoid blurring, add 0.5 px offset to colorbar with width <= 1px when necessary
+        const isOnePixBorder = colorbarSettings.borderWidth <= 1;
         const colorbar = (
             <Rect
-                x={colorbarSettings.offset + (colorbarSettings.borderWidth <= 1 && (this.props.left % 1 === 0) ? 0.5 : 0)}
-                y={yOffset - (colorbarSettings.borderWidth <= 1 && (yOffset % 1 === 0) ? 0.5 : 0)}
+                x={colorbarSettings.offset + (isOnePixBorder && (this.props.left % 1 === 0) ? 0.5 / devicePixelRatio : 0)}
+                y={yOffset - (isOnePixBorder && (yOffset % 1 === 0) ? 0.5 / devicePixelRatio : 0)}
                 width={colorbarSettings.width}
-                height={frame.renderHeight + (colorbarSettings.borderWidth <= 1 && (frame.renderHeight % 1 !== 0) ? ((yOffset % 1 === 0) ? 0.5 : -0.5) : 0)}
+                height={frame.renderHeight + (isOnePixBorder && (frame.renderHeight % 1 !== 0) ? ((yOffset % 1 === 0) ? 0.5 : -0.5) / devicePixelRatio : 0)}
                 fillLinearGradientStartPoint={{x: 0, y: yOffset}}
                 fillLinearGradientEndPoint={{x: 0, y: yOffset + frame.renderHeight}}
                 fillLinearGradientColorStops={frame.renderConfig.colorscaleArray}
@@ -102,8 +103,8 @@ export class ColorbarComponent extends React.Component<ColorbarComponentProps> {
                         <Text
                             text={texts[i]}
                             x={colorbarSettings.rightBorderPos + colorbarSettings.textGap}
-                            y={colorbarSettings.numberRotated ? positions[i] + 100 / 2 : positions[i] - colorbarSettings.numberFontSize / 2}
-                            width={colorbarSettings.numberRotated ? 100 : null}
+                            y={colorbarSettings.numberRotated ? positions[i] + frame.renderHeight / 2 : positions[i] - colorbarSettings.numberFontSize / 2}
+                            width={colorbarSettings.numberRotated ? frame.renderHeight : null}
                             align={"center"}
                             fill={color}
                             fontFamily={this.astFonts[colorbarSettings.numberFont].family}
@@ -119,7 +120,7 @@ export class ColorbarComponent extends React.Component<ColorbarComponentProps> {
 
         const label = colorbarSettings.labelVisible ? (
             <Text
-                text={frame.unit}
+                text={colorbarSettings.labelCustomText ? colorbarSettings.labelText : frame.unit}
                 x={colorbarSettings.rightBorderPos + colorbarSettings.numberWidth + colorbarSettings.textGap}
                 y={yOffset + frame.renderHeight}
                 width={frame.renderHeight}
