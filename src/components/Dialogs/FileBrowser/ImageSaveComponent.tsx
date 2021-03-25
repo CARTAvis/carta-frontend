@@ -5,11 +5,15 @@ import { CARTA } from "carta-protobuf";
 import { AppStore, FileBrowserStore } from "stores";
 import { SpectralSystem, SpectralType, SpectralUnit } from "models";
 import "./ImageSaveComponent.scss";
+import { observable } from "mobx";
 
 @observer
 export class ImageSaveComponent extends React.Component<{
 
 }> {
+    @observable isValideSaveSpectralRangeStart: boolean;
+    @observable isValideSaveSpectralRangeEnd: boolean;
+
     private onChangeShouldDropDegeneratedAxes = () => {
         const fileBrowser = FileBrowserStore.Instance;
         fileBrowser.shouldDropDegeneratedAxes = !fileBrowser.shouldDropDegeneratedAxes;
@@ -25,13 +29,13 @@ export class ImageSaveComponent extends React.Component<{
         const fileBrowser = FileBrowserStore.Instance;
         const spectralRange = AppStore.Instance.activeFrame.channelValueBounds;
         const valueAsNumber = parseFloat(fileBrowser.saveSpectralRange[0]);
-        const isValide = spectralRange.min <= valueAsNumber && valueAsNumber <= parseFloat(fileBrowser.saveSpectralRange[1]);
-        if (isValide) {
+        this.isValideSaveSpectralRangeStart = spectralRange.min <= valueAsNumber && valueAsNumber <= parseFloat(fileBrowser.saveSpectralRange[1]);
+        if (this.isValideSaveSpectralRangeStart && this.isValideSaveSpectralRangeEnd) {
             appStore.endFileSaving()
         } else {
             appStore.startFileSaving();
         }
-        return isValide;
+        return this.isValideSaveSpectralRangeStart;
     };
 
     private valideSaveSpectralRangeEnd = () => {
@@ -39,13 +43,13 @@ export class ImageSaveComponent extends React.Component<{
         const fileBrowser = FileBrowserStore.Instance;
         const spectralRange = AppStore.Instance.activeFrame.channelValueBounds;
         const valueAsNumber = parseFloat(fileBrowser.saveSpectralRange[1]);
-        const isValide = parseFloat(fileBrowser.saveSpectralRange[0]) <= valueAsNumber && valueAsNumber <= spectralRange.max;
-        if (isValide) {
+        this.isValideSaveSpectralRangeEnd = parseFloat(fileBrowser.saveSpectralRange[0]) <= valueAsNumber && valueAsNumber <= spectralRange.max;
+        if (this.isValideSaveSpectralRangeStart && this.isValideSaveSpectralRangeEnd) {
             appStore.endFileSaving()
         } else {
             appStore.startFileSaving();
         }
-        return isValide;
+        return this.isValideSaveSpectralRangeEnd;
     };
 
     private handleSaveSpectralRangeStartChanged = (_valueAsNumber: number, valueAsString: string) => {
