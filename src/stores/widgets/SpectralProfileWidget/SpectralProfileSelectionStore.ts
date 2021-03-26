@@ -114,11 +114,10 @@ export class SpectralProfileSelectionStore {
 
     @computed get regionOptions(): ProfileItemOptionProps[] {
         let options = [];
-        const widgetStore = this.widgetStore;
-        if (widgetStore.effectiveFrame && widgetStore.effectiveFrame.regionSet) {
-            const regions = widgetStore.effectiveFrame.regionSet.regions;
-            const fiteredRegions = regions.filter(r => !r.isTemporary && (r.isClosedRegion || r.regionType === CARTA.RegionType.POINT));
-            options = options.concat(fiteredRegions?.map(r => {return {value: r.regionId, label: r.nameString};}));
+        const frame = this.selectedFrame;
+        if (frame?.regionSet?.regions) {
+            const filteredRegions = frame.regionSet.regions.filter(r => !r.isTemporary && (r.isClosedRegion || r.regionType === CARTA.RegionType.POINT));
+            options = options.concat(filteredRegions?.map(r => {return {value: r.regionId, label: r.nameString};}));
         }
         return options;
     }
