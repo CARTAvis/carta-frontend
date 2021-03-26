@@ -3,7 +3,7 @@ import * as React from "react";
 import {CARTA} from "carta-protobuf";
 import {AnchorButton, ButtonGroup, Intent, IOptionProps, Menu, MenuItem, Popover, Position, Tooltip} from "@blueprintjs/core";
 import {AppStore} from "stores";
-import {ProfileCategory, SpectralProfileWidgetStore} from "stores/widgets";
+import {ProfileCategory, SpectralProfileWidgetStore, SpectralProfileSelectionStore} from "stores/widgets";
 import {SpectralProfilerComponent, SpectralProfilerSettingsTabs} from "components";
 import {CustomIcon} from "icons/CustomIcons";
 import "./SpectralProfilerToolbarComponent.scss";
@@ -66,73 +66,64 @@ class ProfileSelectionButtonComponent extends React.Component<ProfileSelectionBu
 }
 
 @observer
-class ProfileSelectionComponent extends React.Component<{widgetStore: SpectralProfileWidgetStore}> {
+class ProfileSelectionComponent extends React.Component<{profileSelectionStore: SpectralProfileSelectionStore}> {
     // Frame selection does not allow multiple selection
     private onFrameItemClick = (selectedFrame: number, isMultipleSelectionMode: boolean) => {
-        this.props.widgetStore.profileSelectionStore.selectFrame(selectedFrame);
+        this.props.profileSelectionStore.selectFrame(selectedFrame);
     };
 
     private onRegionItemClick = (selectedRegion: number, isMultipleSelectionMode: boolean) => {
-        this.props.widgetStore.profileSelectionStore.selectRegion(selectedRegion, isMultipleSelectionMode);
+        this.props.profileSelectionStore.selectRegion(selectedRegion, isMultipleSelectionMode);
     };
 
     private onStatsItemClick = (selectedStatsType: CARTA.StatsType, isMultipleSelectionMode: boolean) => {
-        this.props.widgetStore.profileSelectionStore.selectStatsType(selectedStatsType, isMultipleSelectionMode);
+        this.props.profileSelectionStore.selectStatsType(selectedStatsType, isMultipleSelectionMode);
     };
 
     private onStokesItemClick = (selectedStokes: string, isMultipleSelectionMode: boolean) => {
-        this.props.widgetStore.profileSelectionStore.selectCoordinate(selectedStokes, isMultipleSelectionMode);
+        this.props.profileSelectionStore.selectCoordinate(selectedStokes, isMultipleSelectionMode);
     };
 
     public render() {
-        const widgetStore = this.props.widgetStore;
-        const multipleProfileStore = widgetStore.profileSelectionStore;
-
-        let enableFrameSelect = true;
-        let enableRegionSelect = true;
-        let enableStatsSelect = false;
-
-        if (widgetStore.effectiveFrame && widgetStore.effectiveFrame.regionSet) {
-            const selectedRegion = widgetStore.effectiveFrame.regionSet.regions.find(r => r.regionId === widgetStore.effectiveRegionId);
-            enableStatsSelect = (selectedRegion && selectedRegion.isClosedRegion);
-        }
+        const profileSelectionStore = this.props.profileSelectionStore;
+        const frame = profileSelectionStore.selectedFrame;
 
         return (
             <div className="profile-selection-panel">
                 <ProfileSelectionButtonComponent
                     categoryName={ProfileCategory.IMAGE}
-                    isActiveCategory={multipleProfileStore.activeProfileCategory === ProfileCategory.IMAGE}
-                    itemOptions={multipleProfileStore.frameOptions}
-                    itemSelected={[multipleProfileStore.selectedFrameFileId]}
-                    disabled={!enableFrameSelect}
-                    onCategorySelect={() => multipleProfileStore.setActiveProfileCategory(ProfileCategory.IMAGE)}
+                    isActiveCategory={profileSelectionStore.activeProfileCategory === ProfileCategory.IMAGE}
+                    itemOptions={profileSelectionStore.frameOptions}
+                    itemSelected={[profileSelectionStore.selectedFrameFileId]}
+                    disabled={!frame}
+                    onCategorySelect={() => profileSelectionStore.setActiveProfileCategory(ProfileCategory.IMAGE)}
                     onItemSelect={this.onFrameItemClick}
                 />
                 <ProfileSelectionButtonComponent
                     categoryName={ProfileCategory.REGION}
-                    isActiveCategory={multipleProfileStore.activeProfileCategory === ProfileCategory.REGION}
-                    itemOptions={multipleProfileStore.regionOptions}
-                    itemSelected={multipleProfileStore.selectedRegionIds}
-                    disabled={!enableRegionSelect}
-                    onCategorySelect={() => multipleProfileStore.setActiveProfileCategory(ProfileCategory.REGION)}
+                    isActiveCategory={profileSelectionStore.activeProfileCategory === ProfileCategory.REGION}
+                    itemOptions={profileSelectionStore.regionOptions}
+                    itemSelected={profileSelectionStore.selectedRegionIds}
+                    disabled={!frame}
+                    onCategorySelect={() => profileSelectionStore.setActiveProfileCategory(ProfileCategory.REGION)}
                     onItemSelect={this.onRegionItemClick}
                 />
                 <ProfileSelectionButtonComponent
                     categoryName={ProfileCategory.STATISTICS}
-                    isActiveCategory={multipleProfileStore.activeProfileCategory === ProfileCategory.STATISTICS}
-                    itemOptions={multipleProfileStore.statsTypeOptions}
-                    itemSelected={multipleProfileStore.selectedStatsTypes}
-                    disabled={!enableStatsSelect}
-                    onCategorySelect={() => multipleProfileStore.setActiveProfileCategory(ProfileCategory.STATISTICS)}
+                    isActiveCategory={profileSelectionStore.activeProfileCategory === ProfileCategory.STATISTICS}
+                    itemOptions={profileSelectionStore.statsTypeOptions}
+                    itemSelected={profileSelectionStore.selectedStatsTypes}
+                    disabled={!frame || !profileSelectionStore.isStatsTypeSelectionAvailable}
+                    onCategorySelect={() => profileSelectionStore.setActiveProfileCategory(ProfileCategory.STATISTICS)}
                     onItemSelect={this.onStatsItemClick}
                 />
                 <ProfileSelectionButtonComponent
                     categoryName={ProfileCategory.STOKES}
-                    isActiveCategory={multipleProfileStore.activeProfileCategory === ProfileCategory.STOKES}
-                    itemOptions={multipleProfileStore.coordinateOptions}
-                    itemSelected={multipleProfileStore.selectedCoordinates}
-                    disabled={!multipleProfileStore.selectedFrame?.hasStokes}
-                    onCategorySelect={() => multipleProfileStore.setActiveProfileCategory(ProfileCategory.STOKES)}
+                    isActiveCategory={profileSelectionStore.activeProfileCategory === ProfileCategory.STOKES}
+                    itemOptions={profileSelectionStore.coordinateOptions}
+                    itemSelected={profileSelectionStore.selectedCoordinates}
+                    disabled={!(frame?.hasStokes)}
+                    onCategorySelect={() => profileSelectionStore.setActiveProfileCategory(ProfileCategory.STOKES)}
                     onItemSelect={this.onStokesItemClick}
                 />
             </div>
@@ -156,7 +147,7 @@ export class SpectralProfilerToolbarComponent extends React.Component<{ widgetSt
         const widgetStore = this.props.widgetStore;
         return (
             <div className="spectral-profiler-toolbar">
-                <ProfileSelectionComponent widgetStore={widgetStore}/>
+                <ProfileSelectionComponent profileSelectionStore={widgetStore.profileSelectionStore}/>
                 <ButtonGroup className="shortcut-buttons">
                     <Tooltip content="Smoothing">
                         <AnchorButton icon={<CustomIcon icon="smoothing"/>} onClick={this.smoothingShortcutClick}/>

@@ -142,6 +142,14 @@ export class SpectralProfileSelectionStore {
         return this.selectedFrame?.frameInfo.fileId;
     }
 
+    @computed get isStatsTypeSelectionAvailable(): boolean {
+        if (this.activeProfileCategory !== ProfileCategory.REGION && this.selectedFrame?.regionSet?.regions && this.selectedRegionIds?.length > 0) {
+            const selectedRegion = this.selectedFrame.regionSet.regions.find(r => r.regionId === this.selectedRegionIds[0]);
+            return selectedRegion && selectedRegion.isClosedRegion;
+        }
+        return true;
+    }
+
     @computed get isStatsTypeFluxDensityOnly(): boolean {
         return this.selectedStatsTypes?.length === 1 && this.selectedStatsTypes[0] === CARTA.StatsType.FluxDensity;
     }
