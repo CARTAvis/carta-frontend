@@ -921,9 +921,9 @@ export class OverlayColorbarSettings {
         const maxOrder = Math.max(...orders);
         const minOrder = Math.min(...orders);
         if (maxOrder >= 5.0) {
-            return this.roundedNumbers.numbers.map(x => x.toExponential(this.numberCustomPrecision ? this.numberPrecision : clamp(maxOrder + this.roundedNumbers.precision, 0, 10)));
+            return this.roundedNumbers.numbers.map(x => x.toExponential(this.numberCustomPrecision ? this.numberPrecision : clamp(Math.ceil(maxOrder) + this.roundedNumbers.precision, 0, 10)));
         } else if (minOrder <= -5.0) {
-            return this.roundedNumbers.numbers.map(x => x.toExponential(this.numberCustomPrecision ? this.numberPrecision : clamp(minOrder + this.roundedNumbers.precision, 0, 10)));
+            return this.roundedNumbers.numbers.map(x => x.toExponential(this.numberCustomPrecision ? this.numberPrecision : clamp(Math.ceil(-minOrder) - this.roundedNumbers.precision, 0, 10)));
         } else {
             return this.roundedNumbers.numbers.map(x => x.toFixed(this.numberCustomPrecision ? this.numberPrecision : clamp(this.roundedNumbers.precision, 0, 10)));
         }
