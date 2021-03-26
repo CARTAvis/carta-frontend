@@ -899,7 +899,6 @@ export class OverlayColorbarSettings {
             const roundBase = Math.pow(10, precision);
             const min =  Math.round(scaleMinVal * roundBase) / roundBase;
             dy = Math.ceil(dy * roundBase) / roundBase;
-            precision = Math.ceil(-Math.log10(dy));
 
             const indexArray = Array.from(Array(tickNum).keys());
             let numbers = indexArray.map(x => min + dy * (x + (min <= scaleMinVal ? 1 : 0)));
@@ -921,9 +920,9 @@ export class OverlayColorbarSettings {
         const maxOrder = Math.max(...orders);
         const minOrder = Math.min(...orders);
         if (maxOrder >= 5.0) {
-            return this.roundedNumbers.numbers.map(x => x.toExponential(this.numberCustomPrecision ? this.numberPrecision : clamp(Math.ceil(maxOrder) + this.roundedNumbers.precision, 0, 10)));
+            return this.roundedNumbers.numbers.map(x => x.toExponential(this.numberCustomPrecision ? this.numberPrecision : clamp(Math.floor(maxOrder) + this.roundedNumbers.precision, 0, 10)));
         } else if (minOrder <= -5.0) {
-            return this.roundedNumbers.numbers.map(x => x.toExponential(this.numberCustomPrecision ? this.numberPrecision : clamp(Math.ceil(-minOrder) - this.roundedNumbers.precision, 0, 10)));
+            return this.roundedNumbers.numbers.map(x => x.toExponential(this.numberCustomPrecision ? this.numberPrecision : clamp(this.roundedNumbers.precision - Math.ceil(-minOrder), 0, 10)));
         } else {
             return this.roundedNumbers.numbers.map(x => x.toFixed(this.numberCustomPrecision ? this.numberPrecision : clamp(this.roundedNumbers.precision, 0, 10)));
         }
