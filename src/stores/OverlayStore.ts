@@ -895,10 +895,11 @@ export class OverlayColorbarSettings {
             return null;
         } else {
             let dy = (scaleMaxVal - scaleMinVal) / tickNum;
-            const precision = -Math.round(Math.log10(dy)) + 1;
+            let precision = -Math.round(Math.log10(dy)) + 1;
             const roundBase = Math.pow(10, precision);
-            dy = Math.ceil(dy * roundBase) / roundBase;
             const min =  Math.round(scaleMinVal * roundBase) / roundBase;
+            dy = Math.ceil(dy * roundBase) / roundBase;
+            precision = -Math.round(Math.log10(dy));
 
             const indexArray = Array.from(Array(tickNum).keys());
             let numbers = indexArray.map(x => min + dy * (x + (min <= scaleMinVal ? 1 : 0)));
