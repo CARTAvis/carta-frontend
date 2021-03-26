@@ -695,6 +695,25 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
                         intOnly={true}
                     />
                 </FormGroup>
+                <FormGroup inline={true} label="Custom color" disabled={!colorbar.visible}>
+                    <Switch
+                        checked={colorbar.customColor}
+                        disabled={!colorbar.visible}
+                        onChange={(ev) => colorbar.setCustomColor(ev.currentTarget.checked)}
+                    />
+                </FormGroup>
+                <Collapse isOpen={colorbar.customColor}>
+                    <FormGroup inline={true} label="color" disabled={!colorbar.visible}>
+                        {colorbar.visible &&
+                            <AutoColorPickerComponent
+                                color={colorbar.color}
+                                presetColors={SWATCH_COLORS}
+                                setColor={colorbar.setColor}
+                                disableAlpha={true}
+                            />
+                        }
+                    </FormGroup>
+                </Collapse>
                 <hr></hr>
                 <FormGroup inline={true} label="Border" disabled={!colorbar.visible}>
                     <Switch
@@ -809,6 +828,22 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
                         onChange={(ev) => colorbar.setNumberVisible(ev.currentTarget.checked)}
                     />
                 </FormGroup>
+                <FormGroup inline={true} label="Numbers rotation"  disabled={!colorbar.visible || !colorbar.numberVisible}>
+                    <HTMLSelect
+                        value={colorbar.numberRotation}
+                        disabled={!colorbar.visible || !colorbar.numberVisible}
+                        onChange={(ev) => {
+                            colorbar.setNumberRotation(Number(ev.currentTarget.value));
+                            if ((Number(ev.currentTarget.value) === 90) || (Number(ev.currentTarget.value) === -90)) {
+                                colorbar.setLabelRotation(Number(ev.currentTarget.value));
+                            }
+                        }}
+                    >
+                        <option value={-90}>-90</option>
+                        <option value={0}>0</option>
+                        <option value={90}>90</option>
+                    </HTMLSelect>
+                </FormGroup>
                 <FormGroup inline={true} className="font-group" label="Numbers Font" disabled={!colorbar.visible || !colorbar.numberVisible}>
                     {this.fontSelect((colorbar.visible && colorbar.numberVisible), colorbar.numberFont, colorbar.setNumberFont)}
                     <SafeNumericInput
@@ -817,13 +852,6 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
                         value={colorbar.numberFontSize}
                         disabled={!colorbar.visible || !colorbar.numberVisible}
                         onValueChange={(value: number) => colorbar.setNumberFontSize(value)}
-                    />
-                </FormGroup>
-                <FormGroup inline={true} label="Numbers rotated" disabled={!colorbar.visible || !colorbar.numberVisible}>
-                    <Switch
-                        checked={colorbar.numberRotated}
-                        disabled={!colorbar.visible || !colorbar.numberVisible}
-                        onChange={(ev) => colorbar.setNumberRotated(ev.currentTarget.checked)}
                     />
                 </FormGroup>
                 <FormGroup inline={true} label="Numbers custom precision" disabled={!colorbar.visible || !colorbar.numberVisible}>
@@ -871,6 +899,16 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
                         disabled={!colorbar.visible}
                         onChange={(ev) => colorbar.setLabelVisible(ev.currentTarget.checked)}
                     />
+                </FormGroup>
+                <FormGroup inline={true} label="Label rotation"  disabled={!colorbar.visible || !colorbar.labelVisible}>
+                    <HTMLSelect
+                        value={colorbar.labelRotation}
+                        disabled={!colorbar.visible || !colorbar.labelVisible}
+                        onChange={(ev) => colorbar.setLabelRotation(Number(ev.currentTarget.value))}
+                    >
+                        <option value={-90}>-90</option>
+                        <option value={90}>90</option>
+                    </HTMLSelect>
                 </FormGroup>
                 <FormGroup inline={true} className="font-group" label="Label Font" disabled={!colorbar.visible || !colorbar.labelVisible}>
                     {this.fontSelect((colorbar.visible && colorbar.labelVisible), colorbar.labelFont, colorbar.setLabelFont)}

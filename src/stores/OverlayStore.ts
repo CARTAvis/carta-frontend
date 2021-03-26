@@ -684,6 +684,8 @@ export class OverlayColorbarSettings {
     @observable showHoverInfo: boolean;
     @observable width: number;
     @observable offset: number;
+    @observable customColor: boolean;
+    @observable color: string;
     @observable borderVisible: boolean;
     @observable borderWidth: number;
     @observable borderCustomColor: boolean;
@@ -695,7 +697,7 @@ export class OverlayColorbarSettings {
     @observable tickCustomColor: boolean;
     @observable tickColor: string;
     @observable numberVisible: boolean;
-    @observable numberRotated: boolean;
+    @observable numberRotation: number;
     @observable numberFont: number;
     @observable numberFontSize: number;
     @observable numberCustomPrecision: boolean;
@@ -703,6 +705,7 @@ export class OverlayColorbarSettings {
     @observable numberCustomColor: boolean;
     @observable numberColor: string;
     @observable labelVisible: boolean;
+    @observable labelRotation: number;
     @observable labelFont: number;
     @observable labelFontSize: number;
     @observable labelCustomText: boolean;
@@ -717,6 +720,8 @@ export class OverlayColorbarSettings {
         this.showHoverInfo = true;
         this.width = 15;
         this.offset = 5;
+        this.customColor = false;
+        this.color = AST_DEFAULT_COLOR;
         this.borderVisible = true;
         this.borderWidth = 1;
         this.borderCustomColor = false;
@@ -728,7 +733,7 @@ export class OverlayColorbarSettings {
         this.tickCustomColor = false;
         this.tickColor = AST_DEFAULT_COLOR;
         this.numberVisible = true;
-        this.numberRotated = true;
+        this.numberRotation = -90;
         this.numberFont = 0;
         this.numberFontSize = 12;
         this.numberCustomPrecision = false;
@@ -736,6 +741,7 @@ export class OverlayColorbarSettings {
         this.numberCustomColor = false;
         this.numberColor = AST_DEFAULT_COLOR;
         this.labelVisible = true;
+        this.labelRotation = -90;
         this.labelFont = 0;
         this.labelFontSize = 15;
         this.labelCustomText = false;
@@ -758,6 +764,14 @@ export class OverlayColorbarSettings {
 
     @action setOffset = (offset: number) => {
         this.offset = offset;
+    };
+
+    @action setCustomColor = (customColor: boolean) => {
+        this.customColor = customColor;
+    };
+
+    @action setColor = (color: string) => {
+        this.color = color;
     };
 
     @action setBorderVisible = (visible: boolean) => {
@@ -804,8 +818,8 @@ export class OverlayColorbarSettings {
         this.numberVisible = visible;
     };
 
-    @action setNumberRotated = (rotated: boolean) => {
-        this.numberRotated = rotated;
+    @action setNumberRotation = (rotation: number) => {
+        this.numberRotation = rotation;
     };
 
     @action setNumberFont = (font: number) => {
@@ -834,6 +848,10 @@ export class OverlayColorbarSettings {
 
     @action setLabelVisible = (visible: boolean) => {
         this.labelVisible = visible;
+    };
+
+    @action setLabelRotation = (rotation: number) => {
+        this.labelRotation = rotation;
     };
 
     @action setLabelFont = (font: number) => {
@@ -931,7 +949,7 @@ export class OverlayColorbarSettings {
 
     @computed get numberWidth(): number {
         const textWidth = Math.max(...(this.texts.map(x => x.length))) * this.textRatio[Math.floor(this.numberFont / 4)];
-        return this.numberVisible ? this.numberFontSize * (this.numberRotated ? 1 : textWidth) + this.textGap : 0;
+        return this.numberVisible ? this.numberFontSize * (this.numberRotation ? 1 : textWidth) + this.textGap : 0;
     }
 
     @computed get totalWidth(): number {

@@ -61,9 +61,12 @@ export class ColorbarComponent extends React.Component<ColorbarComponentProps> {
         const frame = appStore.activeFrame;
         const colorbarSettings = appStore.overlayStore.colorbar;
         const yOffset = appStore.overlayStore.padding.top;
-        const color = getColorForTheme(appStore.overlayStore.global.color);
 
-        // to avoid blurring, add 0.5 px offset to colorbar with width <= 1px when necessary
+        let getColor = (customColor: boolean, color: string): string => {
+            return customColor ? getColorForTheme(color) : (colorbarSettings.customColor ? getColorForTheme(colorbarSettings.color) : getColorForTheme(appStore.overlayStore.global.color));
+        }
+
+        // to avoid blurry border when width <= 1px, add 0.5 px offset to the colorbar if necessary
         const isOnePixBorder = colorbarSettings.borderWidth <= 1;
         let isIntPosition = (position: number): boolean => {
             return (position * devicePixelRatio) % 1 === 0;
@@ -78,7 +81,7 @@ export class ColorbarComponent extends React.Component<ColorbarComponentProps> {
                 fillLinearGradientStartPoint={{x: 0, y: yOffset}}
                 fillLinearGradientEndPoint={{x: 0, y: yOffset + frame.renderHeight}}
                 fillLinearGradientColorStops={frame.renderConfig.colorscaleArray}
-                stroke={colorbarSettings.borderVisible ? (colorbarSettings.borderCustomColor ? getColorForTheme(colorbarSettings.borderColor) : color) : null}
+                stroke={colorbarSettings.borderVisible ? getColor(colorbarSettings.borderCustomColor, colorbarSettings.borderColor) : null}
                 strokeWidth={colorbarSettings.borderWidth / devicePixelRatio}
                 onMouseEnter={this.onMouseEnter}
                 onMouseMove={this.handleMouseMove}
@@ -94,10 +97,12 @@ export class ColorbarComponent extends React.Component<ColorbarComponentProps> {
     
             for (let i = 0; i < positions.length; i++) {
                 if (colorbarSettings.tickVisible) {
+                    // to avoid blurry ticks when width <= 1px, offset to .5 px position 
+                    const position = positions[i] - ((colorbarSettings.tickWidth <= 1) && (positions[i] - Math.floor(positions[i]) - 0.5 / devicePixelRatio));
                     ticks.push(
                         <Line
-                            points={[colorbarSettings.rightBorderPos - colorbarSettings.tickLen, positions[i], colorbarSettings.rightBorderPos, positions[i]]}
-                            stroke={colorbarSettings.tickCustomColor ? getColorForTheme(colorbarSettings.tickColor) : color}
+                            points={[colorbarSettings.rightBorderPos - colorbarSettings.tickLen, position, colorbarSettings.rightBorderPos, position]}
+                            stroke={getColor(colorbarSettings.tickCustomColor, colorbarSettings.tickColor)}
                             strokeWidth={colorbarSettings.tickWidth / devicePixelRatio}
                             key={i.toString()}
                         />
@@ -107,15 +112,15 @@ export class ColorbarComponent extends React.Component<ColorbarComponentProps> {
                     numbers.push(
                         <Text
                             text={texts[i]}
-                            x={colorbarSettings.rightBorderPos + colorbarSettings.textGap}
-                            y={colorbarSettings.numberRotated ? positions[i] + frame.renderHeight / 2 : positions[i] - colorbarSettings.numberFontSize / 2}
-                            width={colorbarSettings.numberRotated ? frame.renderHeight : null}
+                            x={colorbarSettings.rightBorderPos + colorbarSettings.textGap + (colorbarSettings.numberRotation === 90 ? colorbarSettings.numberFontSize : 0)}
+                            y={colorbarSettings.numberRotation === 0 ? positions[i] - colorbarSettings.numberFontSize / 2 : positions[i] - frame.renderHeight / 2 * colorbarSettings.numberRotation / 90}
+                            width={colorbarSettings.numberRotation === 0 ? null : frame.renderHeight}
                             align={"center"}
-                            fill={colorbarSettings.numberCustomColor ? getColorForTheme(colorbarSettings.numberColor) : color}
+                            fill={getColor(colorbarSettings.numberCustomColor, colorbarSettings.numberColor)}
                             fontFamily={this.astFonts[colorbarSettings.numberFont].family}
                             fontStyle={`${this.astFonts[colorbarSettings.numberFont].style} ${this.astFonts[colorbarSettings.numberFont].weight}`}
                             fontSize={colorbarSettings.numberFontSize}
-                            rotation={colorbarSettings.numberRotated ? -90 : 0}
+                            rotation={colorbarSettings.numberRotation}
                             key={i.toString()}
                         />
                     );
@@ -126,15 +131,15 @@ export class ColorbarComponent extends React.Component<ColorbarComponentProps> {
         const label = colorbarSettings.labelVisible ? (
             <Text
                 text={colorbarSettings.labelCustomText ? colorbarSettings.labelText : frame.unit}
-                x={colorbarSettings.rightBorderPos + colorbarSettings.numberWidth + colorbarSettings.textGap}
-                y={yOffset + frame.renderHeight}
+                x={colorbarSettings.rightBorderPos + colorbarSettings.numberWidth + colorbarSettings.textGap + (colorbarSettings.labelRotation === 90 ? colorbarSettings.numberFontSize : 0)}
+                y={yOffset + (colorbarSettings.labelRotation === -90 ? frame.renderHeight : 0)}
                 width={frame.renderHeight}
                 align={"center"}
-                fill={colorbarSettings.labelCustomColor ? getColorForTheme(colorbarSettings.labelColor) : color}
+                fill={getColor(colorbarSettings.labelCustomColor, colorbarSettings.labelColor)}
                 fontFamily={this.astFonts[colorbarSettings.labelFont].family}
                 fontSize={colorbarSettings.labelFontSize}
                 fontStyle={`${this.astFonts[colorbarSettings.labelFont].style} ${this.astFonts[colorbarSettings.labelFont].weight}`}
-                rotation={-90}
+                rotation={colorbarSettings.labelRotation}
                 key={'0'}
             />
         ) : null;
@@ -142,7 +147,7 @@ export class ColorbarComponent extends React.Component<ColorbarComponentProps> {
         const hoverBar = colorbarSettings.showHoverInfo && this.showHoverInfo ? (
             <Line
                 points={[colorbarSettings.offset, this.cursorY, colorbarSettings.rightBorderPos, this.cursorY]}
-                stroke={color}
+                stroke={colorbarSettings.customColor ? getColorForTheme(colorbarSettings.color) : getColorForTheme(appStore.overlayStore.global.color)}
                 strokeWidth={1 / devicePixelRatio}
             />
         ) : null;
