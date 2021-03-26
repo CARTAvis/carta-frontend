@@ -30,16 +30,30 @@ const IconWrapper = (path: React.SVGProps<SVGPathElement>, color: string, fill: 
     );
 };
 
-// const triangleUp = <path d="M 2 14 L 14 14 L 8 3 Z"/>;
-// const triangleDown = <path d="M 2 2 L 14 2 L 8 13 Z"/>;
+const triangleUp = <path d="M 2 14 L 14 14 L 8 3 Z"/>;
+const triangleDown = <path d="M 2 2 L 14 2 L 8 13 Z"/>;
 const rhomb = <path d="M 8 14 L 14 8 L 8 2 L 2 8 Z"/>;
-// const hexagon = <path d="M 12.33 5.5 L 12.33 10.5 L 8 13 L 3.67 10.5 L 3.67 5.5 L 8 3 Z"/>;
-const hexagon2 = <path d="M 3 8 L 5.5 3.67 L 10.5 3.67 L 13 8 L 10.5 12.33 L 5.5 12.33 Z"/>;
+const hexagon2 = <path d="M 12.33 5.5 L 12.33 10.5 L 8 13 L 3.67 10.5 L 3.67 5.5 L 8 3 Z"/>;
+const hexagon = <path d="M 3 8 L 5.5 3.67 L 10.5 3.67 L 13 8 L 10.5 12.33 L 5.5 12.33 Z"/>;
+const ellipse = <ellipse cx="8" cy="8" rx="7" ry="4"/>;
 
 @observer
 export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<WidgetProps> {
 
     private catalogFileNames: Map<number, string>;
+    private catalogOverlayShape: Array<CatalogOverlayShape> = [
+        CatalogOverlayShape.BoxLined,
+        CatalogOverlayShape.CircleFilled,
+        CatalogOverlayShape.CircleLined,
+        CatalogOverlayShape.CrossFilled,
+        CatalogOverlayShape.EllipseLined,
+        CatalogOverlayShape.HexagonLined,
+        CatalogOverlayShape.HexagonLined2,
+        CatalogOverlayShape.RhombLined,
+        CatalogOverlayShape.TriangleDownLined,
+        CatalogOverlayShape.TriangleUpLined,
+        CatalogOverlayShape.XFilled
+    ];
 
     public static get WIDGET_CONFIG(): DefaultWidgetConfig {
         return {
@@ -139,34 +153,25 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
             //     return <Icon icon="star" color={color}/>;
             case CatalogOverlayShape.BoxLined:
                 return <Icon icon="square" color={color}/>;
-
-            // case CatalogOverlayShape.BoxFilled:
-            //     return <Icon icon="symbol-square" color={color}/>;
-            
-            // case CatalogOverlayShape.Plus:
-            //     return <Icon icon="plus" color={color}/>;
-            // case CatalogOverlayShape.Cross:
-            //     return <Icon icon="cross" color={color}/>;
-            // case CatalogOverlayShape.TriangleUp:
-            //     return IconWrapper(triangleUp, color, false);
-            // case CatalogOverlayShape.TriangleDown:
-            //     return IconWrapper(triangleDown, color, false);
-            case CatalogOverlayShape.Rhomb:
+            case CatalogOverlayShape.CrossFilled:
+                return <Icon icon="plus" color={color}/>;
+            case CatalogOverlayShape.XFilled:
+                return <Icon icon="cross" color={color}/>;
+            case CatalogOverlayShape.TriangleUpLined:
+                return IconWrapper(triangleUp, color, false);
+            case CatalogOverlayShape.TriangleDownLined:
+                return IconWrapper(triangleDown, color, false);
+            case CatalogOverlayShape.RhombLined:
                 return IconWrapper(rhomb, color, false);
-            // case CatalogOverlayShape.hexagon:
-            //     return IconWrapper(hexagon, color, false);
-            case CatalogOverlayShape.HexagonLined:
+            case CatalogOverlayShape.HexagonLined2:
                 return IconWrapper(hexagon2, color, false);
+            case CatalogOverlayShape.HexagonLined:
+                return IconWrapper(hexagon, color, false);
+            case CatalogOverlayShape.EllipseLined:
+                return IconWrapper(ellipse, color, false);
             default:
                 return <Icon icon="circle" color={color}/>;
         }
-    }
-
-    private enumToArray<T>(enumeration: T) {
-        return Object.keys(enumeration)
-            .filter(key => isNaN(Number(key)))
-            .map(key => enumeration[key])
-            .filter(val => typeof val === "number" || typeof val === "string");
     }
 
     public render() {
@@ -246,7 +251,7 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
                         className="bp3-fill"
                         disabled={disabledOverlayPanel}
                         filterable={false}
-                        items={this.enumToArray(CatalogOverlayShape)} 
+                        items={this.catalogOverlayShape} 
                         activeItem={widgetStore.catalogShape} 
                         onItemSelect={(item) => widgetStore.setCatalogShape(item)}
                         itemRenderer={this.renderShapePopOver}

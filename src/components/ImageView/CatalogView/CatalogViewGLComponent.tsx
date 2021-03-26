@@ -21,6 +21,22 @@ export class CatalogViewGLComponent extends React.Component<CatalogViewGLCompone
     private gl: WebGL2RenderingContext;
     private catalogWebGLService: CatalogWebGLService;
 
+    private featherWidth =  new Map<number, number>([
+        [CatalogOverlayShape.BoxLined, 0.35],
+        [CatalogOverlayShape.CircleFilled, 0.35],
+        [CatalogOverlayShape.CircleLined, 0.35],
+        [CatalogOverlayShape.EllipseLined, 1.0],
+        [CatalogOverlayShape.HexagonLined, 0.35],
+        [CatalogOverlayShape.RhombLined, 0.35],
+        [CatalogOverlayShape.TriangleUpLined, 0.35],
+        [CatalogOverlayShape.TriangleDownLined, 0.35],
+        [CatalogOverlayShape.HexagonLined2, 0.35],
+        [CatalogOverlayShape.CrossFilled, 0.35],
+        [CatalogOverlayShape.XFilled, 0.35],
+        [CatalogOverlayShape.CrossLined, 0.35],
+        [CatalogOverlayShape.XLined, 0.35]
+    ])
+
     componentDidMount() {
         this.catalogWebGLService = CatalogWebGLService.Instance;
         this.gl = this.catalogWebGLService.gl;
@@ -127,18 +143,17 @@ export class CatalogViewGLComponent extends React.Component<CatalogViewGLCompone
     
         this.gl.clear(GL2.COLOR_BUFFER_BIT | GL2.DEPTH_BUFFER_BIT);
         const lineThickness = 2.0 * devicePixelRatio;
-        const featherWidth = 0.35 * devicePixelRatio;
         const frameView = baseFrame.requiredFrameView;
         this.gl.uniform2f(this.catalogWebGLService.shaderUniforms.FrameViewMin, frameView.xMin, frameView.yMin);
         this.gl.uniform2f(this.catalogWebGLService.shaderUniforms.FrameViewMax, frameView.xMax, frameView.yMax);
         this.gl.uniform1f(this.catalogWebGLService.shaderUniforms.LineThickness, lineThickness);
-        this.gl.uniform1f(this.catalogWebGLService.shaderUniforms.FeatherWidth, featherWidth);
         this.gl.uniform1i(this.catalogWebGLService.shaderUniforms.CmapEnabled, 0);
         this.gl.uniform1i(this.catalogWebGLService.shaderUniforms.SmapEnabled, 0);
-        const [minSize, maxSize] = this.gl.getParameter(this.gl.ALIASED_POINT_SIZE_RANGE);
-        console.log(minSize, maxSize)
+        // const [minSize, maxSize] = this.gl.getParameter(this.gl.ALIASED_POINT_SIZE_RANGE);
+        // console.log(minSize, maxSize)
         catalogStore.catalogGLData.forEach((catalog, fileId) => {
             const catalogWidgetStore = catalogStore.getCatalogWidgetStore(fileId);
+            const featherWidth = this.featherWidth.get(catalogWidgetStore.catalogShape) * devicePixelRatio;
             let dataPoints = catalog.dataPoints;
             let color = tinycolor(catalogWidgetStore.catalogColor).toRgb();
             let pointSize = catalogWidgetStore.catalogSize;
@@ -147,8 +162,9 @@ export class CatalogViewGLComponent extends React.Component<CatalogViewGLCompone
                 dataPoints = selectedDataPoints;
             }
 
+            this.gl.uniform1f(this.catalogWebGLService.shaderUniforms.FeatherWidth, featherWidth);
+
             if (catalog.displayed && dataPoints?.length) {
-                
                 this.gl.uniform3f(this.catalogWebGLService.shaderUniforms.PointColor, color.r / 255.0, color.g / 255.0, color.b / 255.0);
                 this.gl.uniform1i(this.catalogWebGLService.shaderUniforms.ShapeType, catalogWidgetStore.catalogShape);
                 this.gl.uniform1f(this.catalogWebGLService.shaderUniforms.PointSize, pointSize * devicePixelRatio);
@@ -164,14 +180,21 @@ export class CatalogViewGLComponent extends React.Component<CatalogViewGLCompone
 
             if (catalog.displayed && selectedDataPoints?.length) {
                 let outlineShape = catalogWidgetStore.catalogShape;
+                let outlineShapeSize = pointSize * devicePixelRatio + 7;
                 if (outlineShape === CatalogOverlayShape.CircleFilled) {
                     outlineShape = CatalogOverlayShape.CircleLined;
+                } else if(outlineShape === CatalogOverlayShape.CrossFilled) {
+                    outlineShape = CatalogOverlayShape.CrossLined;
+                    outlineShapeSize = pointSize * devicePixelRatio;
+                } else if (outlineShape === CatalogOverlayShape.XFilled) {
+                    outlineShape = CatalogOverlayShape.XLined;
+                    outlineShapeSize = pointSize * devicePixelRatio;
                 }
 
                 let selectedColor = tinycolor(catalogWidgetStore.highlightColor).toRgb();
                 this.gl.uniform3f(this.catalogWebGLService.shaderUniforms.PointColor, selectedColor.r / 255.0, selectedColor.g / 255.0, selectedColor.b / 255.0);
                 this.gl.uniform1i(this.catalogWebGLService.shaderUniforms.ShapeType, outlineShape);
-                this.gl.uniform1f(this.catalogWebGLService.shaderUniforms.PointSize, pointSize * devicePixelRatio + 5);
+                this.gl.uniform1f(this.catalogWebGLService.shaderUniforms.PointSize, outlineShapeSize);
 
                 this.catalogWebGLService.updateDataTexture(selectedDataPoints);
                 
