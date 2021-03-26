@@ -3,10 +3,10 @@ import * as React from "react";
 import tinycolor from "tinycolor2";
 import {AppStore, FrameStore, CatalogStore, WidgetsStore} from "stores";
 import {CatalogOverlayShape} from "stores/widgets";
-import {GL2, closestCatalogIndexToCursor} from "utilities";
 import {CatalogWebGLService} from "services";
 import {canvasToTransformedImagePos} from "components/ImageView/RegionView/shared";
 import {CursorInfo} from "models";
+import {closestCatalogIndexToCursor, GL2} from "utilities";
 import {ImageViewLayer} from "../ImageViewComponent";
 import "./CatalogViewGLComponent.scss";
 
@@ -136,8 +136,8 @@ export class CatalogViewGLComponent extends React.Component<CatalogViewGLCompone
     };
 
     private renderCatalog(baseFrame: FrameStore) {
-        // For alpha blending (soft lines)
         const catalogStore = CatalogStore.Instance;
+        // For alpha blending (soft lines)
         this.gl.enable(GL2.BLEND);
         this.gl.blendFunc(GL2.SRC_ALPHA, GL2.ONE_MINUS_SRC_ALPHA);
     
@@ -149,8 +149,6 @@ export class CatalogViewGLComponent extends React.Component<CatalogViewGLCompone
         this.gl.uniform1f(this.catalogWebGLService.shaderUniforms.LineThickness, lineThickness);
         this.gl.uniform1i(this.catalogWebGLService.shaderUniforms.CmapEnabled, 0);
         this.gl.uniform1i(this.catalogWebGLService.shaderUniforms.SmapEnabled, 0);
-        // const [minSize, maxSize] = this.gl.getParameter(this.gl.ALIASED_POINT_SIZE_RANGE);
-        // console.log(minSize, maxSize)
         catalogStore.catalogGLData.forEach((catalog, fileId) => {
             const catalogWidgetStore = catalogStore.getCatalogWidgetStore(fileId);
             const featherWidth = this.featherWidth.get(catalogWidgetStore.catalogShape) * devicePixelRatio;

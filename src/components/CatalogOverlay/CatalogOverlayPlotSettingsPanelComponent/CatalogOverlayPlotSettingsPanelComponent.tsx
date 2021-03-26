@@ -146,11 +146,7 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
             case CatalogOverlayShape.CircleLined:
                 return <Icon icon="circle" color={color}/>;
             case CatalogOverlayShape.CircleFilled:
-                return <Icon icon="full-circle" color={color}/>;  
-            // case CatalogOverlayShape.Star:
-            //     return <Icon icon="star-empty" color={color}/>;
-            // case CatalogOverlayShape.FullStar:
-            //     return <Icon icon="star" color={color}/>;
+                return <Icon icon="full-circle" color={color}/>;
             case CatalogOverlayShape.BoxLined:
                 return <Icon icon="square" color={color}/>;
             case CatalogOverlayShape.CrossFilled:

@@ -321,7 +321,6 @@ void main() {
     }
 
     // Blending
-    // outColor = vec4(v_colour.xyz, alpha);
     if (uCmapEnabled) {
         outColor = vec4(uPointColor, alpha);
     } else {

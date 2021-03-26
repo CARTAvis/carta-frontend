@@ -126,7 +126,6 @@ export function createTextureFromArray(gl: WebGL2RenderingContext, data: Float32
     } else {
         paddedData = new Float32Array(width * height * components);
         paddedData.set(data, 0);
-        // console.log(`Padding data texture from ${numPoints} to ${width * height}`);
     }
 
     const texture = gl.createTexture();
@@ -153,6 +152,5 @@ export function createTextureFromArray(gl: WebGL2RenderingContext, data: Float32
     gl.texParameteri(GL2.TEXTURE_2D, GL2.TEXTURE_MAG_FILTER, GL2.NEAREST);
     gl.texParameteri(GL2.TEXTURE_2D, GL2.TEXTURE_WRAP_S, GL2.CLAMP_TO_EDGE);
     gl.texParameteri(GL2.TEXTURE_2D, GL2.TEXTURE_WRAP_T, GL2.CLAMP_TO_EDGE);
-    // console.log(width, height)
     return texture;
 }
