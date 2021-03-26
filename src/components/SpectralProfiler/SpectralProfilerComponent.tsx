@@ -151,33 +151,28 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
             }
         }
 
-        // Update widget title when region or coordinate changes
+        // Update boundaries
         autorun(() => {
-            if (this.widgetStore && this.widgetStore.effectiveFrame) {
-                const frame = this.widgetStore.effectiveFrame;
-                let progressString = "";
-                const currentData = this.plotData;
-                if (currentData && isFinite(currentData.progress)) {
-                    if (currentData.progress < 1.0) {
-                        const totalProgress = currentData.numProfiles * 100;
-                        progressString = `[${toFixed(currentData.progress * totalProgress)}%/${totalProgress}% complete]`
-                        this.widgetStore.updateStreamingDataStatus(true);
-                    } else {
-                        this.widgetStore.updateStreamingDataStatus(false);
-                    }
-                }
-                if (frame) {
-                    const regionId = this.widgetStore.effectiveRegionId;
-                    const regionString = regionId === 0 ? "Cursor" : `Region #${regionId}`;
-                    const selectedString = this.widgetStore.matchesSelectedRegion ? "(Active)" : "";
-                    appStore.widgetsStore.setWidgetTitle(this.props.id, `Z Profile: ${regionString} ${selectedString} ${progressString}`);
-                }
-                if (currentData) {
-                    this.widgetStore.initXYBoundaries(currentData.xMin, currentData.xMax, currentData.yMin, currentData.yMax);
-                }
-            } else {
-                appStore.widgetsStore.setWidgetTitle(this.props.id, `Z Profile: Cursor`);
+            const currentData = this.plotData;
+            if (this.widgetStore && currentData) {
+                this.widgetStore.initXYBoundaries(currentData.xMin, currentData.xMax, currentData.yMin, currentData.yMax);
             }
+        });
+
+        // Update widget title
+        autorun(() => {
+            let title = "Z Profile";
+            const currentData = this.plotData;
+            if (this.widgetStore && currentData && isFinite(currentData.progress)) {
+                if (currentData.progress < 1.0) {
+                    const totalProgress = currentData.numProfiles * 100;
+                    title += `: [${toFixed(currentData.progress * totalProgress)}%/${totalProgress}% complete]`
+                    this.widgetStore.updateStreamingDataStatus(true);
+                } else {
+                    this.widgetStore.updateStreamingDataStatus(false);
+                }
+            }
+            appStore.widgetsStore.setWidgetTitle(this.props.id, title);
         });
     }
 
