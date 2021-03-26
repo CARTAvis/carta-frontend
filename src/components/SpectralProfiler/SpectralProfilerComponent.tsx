@@ -130,19 +130,6 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
         };
     }
 
-    @computed get exportHeaders(): string[] {
-        let headerString = [];
-        const region = this.widgetStore.effectiveRegion;
-        if (region) {
-            headerString.push(region.regionProperties);
-            const frame = this.widgetStore.effectiveFrame;
-            if (frame?.validWcs) {
-                headerString.push(frame.getRegionWcsProperties(region));
-            }
-        }
-        return headerString;
-    }
-
     @computed get isMeanRmsVisible(): boolean { // Show Mean/RMS when only 1 profile
         return this.widgetStore.meanRmsVisible && this.plotData?.numProfiles === 1;
     }
@@ -163,6 +150,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
                 appStore.widgetsStore.addSpectralProfileWidget(this.props.id);
             }
         }
+
         // Update widget title when region or coordinate changes
         autorun(() => {
             if (this.widgetStore && this.widgetStore.effectiveFrame) {
@@ -245,6 +233,24 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
     onGraphCursorMoved = _.throttle((x) => {
         this.widgetStore.setCursor(x);
     }, 33);
+
+    private getExportHeaders = (): string[] => {
+        let headerString = [];
+        // TODO: confirm export region format
+        const profileSelectionStore = this.widgetStore.profileSelectionStore;
+        const regionIds = profileSelectionStore.selectedRegionIds;
+        regionIds?.forEach(regionId => {
+            const frame = profileSelectionStore.selectedFrame;
+            const region = frame?.regionSet?.regions?.find(r => r.regionId === regionId);
+            if (region) {
+                headerString.push(region.regionProperties);
+                if (frame?.validWcs) {
+                    headerString.push(frame.getRegionWcsProperties(region));
+                }
+            }
+        });
+        return headerString;
+    };
 
     private genProfilerInfo = (): string[] => {
         let profilerInfo: string[] = [];
@@ -573,7 +579,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
                 });
             }
 
-            linePlotProps.comments = this.exportHeaders;
+            linePlotProps.comments = this.getExportHeaders();
         }
 
         let className = "spectral-profiler-widget";
