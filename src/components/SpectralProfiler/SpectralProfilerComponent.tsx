@@ -432,7 +432,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
                     let fittingPlotProps: MultiPlotProps = {
                         data: currentPlotData.fittingValues,
                         type: PlotType.LINES,
-                        borderColor: smoothingStore.lineColor.colorHex,
+                        borderColor: smoothingStore.lineColor,
                         borderWidth: smoothingStore.lineWidth,
                         pointRadius: smoothingStore.pointRadius,
                         order: 0
