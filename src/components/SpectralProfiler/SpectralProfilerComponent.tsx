@@ -321,7 +321,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
 
     private getProfiles = (): ProcessedSpectralProfile[] => {
         let profiles = [];
-        const profileConfigs = this.widgetStore.profileSelectionStore.getProfileConfigs();
+        const profileConfigs = this.widgetStore.profileSelectionStore.profileConfigs;
         profileConfigs?.forEach(profileConfig => {
             const frameProfileStoreMap = AppStore.Instance.spectralProfiles.get(profileConfig.fileId);
             const regionProfileStoreMap = frameProfileStoreMap?.get(profileConfig.regionId);

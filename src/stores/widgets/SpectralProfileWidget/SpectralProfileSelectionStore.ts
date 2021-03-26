@@ -19,40 +19,41 @@ interface FullSpectralConfig extends CARTA.SetSpectralRequirements.ISpectralConf
 
 export class SpectralProfileSelectionStore {
     // profile selection
-    @observable profileCategory: ProfileCategory;
+    @observable activeProfileCategory: ProfileCategory;
     @observable selectedRegionIds: number[];
     @observable selectedStatsTypes: CARTA.StatsType[];
     @observable selectedCoordinates: string[];
 
     private readonly widgetStore: SpectralProfileWidgetStore;
-    private defaultStatsType: CARTA.StatsType = CARTA.StatsType.Mean;
-    private defaultCoordinate: string;
-    private static ValidCoordinates = ["z", "Iz", "Qz", "Uz", "Vz"];
+    private readonly DEFAULT_REGION_ID: RegionId = RegionId.CURSOR;
+    private readonly DEFAULT_STATS_TYPE: CARTA.StatsType = CARTA.StatsType.Mean;
+    private readonly DEFAULT_COORDINATE: string = "z";
+    private static readonly ValidCoordinates = ["z", "Iz", "Qz", "Uz", "Vz"];
 
-    public getProfileConfigs = (): FullSpectralConfig[] => {
+    @computed get profileConfigs(): FullSpectralConfig[] {
         let profileConfigs: FullSpectralConfig[] = [];
         const fileId = this.widgetStore.effectiveFrame.frameInfo.fileId;
         const regionId = this.widgetStore.effectiveRegionId;
-        if (this.profileCategory === ProfileCategory.IMAGE) {
+        if (this.activeProfileCategory === ProfileCategory.IMAGE) {
             // TODO: add matched image ids, spectralSiblings of FrameStore
-            const statsType = this.widgetStore.effectiveRegion?.isClosedRegion ? this.defaultStatsType : CARTA.StatsType.Sum;
-            profileConfigs.push({fileId: fileId, regionId: regionId, statsTypes: [statsType], coordinate: this.defaultCoordinate});
-        } else if (this.profileCategory === ProfileCategory.REGION) {
+            const statsType = this.widgetStore.effectiveRegion?.isClosedRegion ? this.DEFAULT_STATS_TYPE : CARTA.StatsType.Sum;
+            profileConfigs.push({fileId: fileId, regionId: regionId, statsTypes: [statsType], coordinate: this.DEFAULT_COORDINATE});
+        } else if (this.activeProfileCategory === ProfileCategory.REGION) {
             this.selectedRegionIds?.forEach(selectedRegionId => {
                 const region = this.widgetStore.effectiveFrame.regionSet.regions.find(r => r.regionId === selectedRegionId);
-                const statsType = region?.isClosedRegion ? this.defaultStatsType : CARTA.StatsType.Sum;
-                profileConfigs.push({fileId: fileId, regionId: selectedRegionId, statsTypes: [statsType], coordinate: this.defaultCoordinate});
+                const statsType = region?.isClosedRegion ? this.DEFAULT_STATS_TYPE : CARTA.StatsType.Sum;
+                profileConfigs.push({fileId: fileId, regionId: selectedRegionId, statsTypes: [statsType], coordinate: this.DEFAULT_COORDINATE});
             });
-        } else if (this.profileCategory === ProfileCategory.STATISTICS) {
-            profileConfigs.push({fileId: fileId, regionId: regionId, statsTypes: this.widgetStore.effectiveRegion?.isClosedRegion ? [...this.selectedStatsTypes] : [CARTA.StatsType.Sum], coordinate: this.defaultCoordinate});
-        } else if (this.profileCategory === ProfileCategory.STOKES) {
-            const statsType = this.widgetStore.effectiveRegion?.isClosedRegion ? this.defaultStatsType : CARTA.StatsType.Sum;
+        } else if (this.activeProfileCategory === ProfileCategory.STATISTICS) {
+            profileConfigs.push({fileId: fileId, regionId: regionId, statsTypes: this.widgetStore.effectiveRegion?.isClosedRegion ? [...this.selectedStatsTypes] : [CARTA.StatsType.Sum], coordinate: this.DEFAULT_COORDINATE});
+        } else if (this.activeProfileCategory === ProfileCategory.STOKES) {
+            const statsType = this.widgetStore.effectiveRegion?.isClosedRegion ? this.DEFAULT_STATS_TYPE : CARTA.StatsType.Sum;
             this.selectedCoordinates?.forEach(coordinate => {
                 profileConfigs.push({fileId: fileId, regionId: regionId, statsTypes: [statsType], coordinate: coordinate});
             });
         }
         return profileConfigs;
-    };
+    }
 
     @computed get frameOptions(): ProfileItemOptionProps[] {
         let options = [];
@@ -120,24 +121,23 @@ export class SpectralProfileSelectionStore {
         return true;
     }
 
-    @action setProfileCategory = (profileCategory: ProfileCategory) => {
-        this.profileCategory = profileCategory;
-        // Reset region/statistics/stokes selected option when switching profile category
-        // TODO: missing handling for image
+    @action setActiveProfileCategory = (profileCategory: ProfileCategory) => {
+        // Reset region/statistics/stokes to default (only 1 item) when switching active profile category
         if (profileCategory === ProfileCategory.IMAGE) {
-            this.selectedRegionIds = [RegionId.CURSOR];
-            this.selectedStatsTypes = [this.defaultStatsType];
-            this.selectedCoordinates = [this.defaultCoordinate];
+            this.selectedRegionIds = [this.DEFAULT_REGION_ID];
+            this.selectedStatsTypes = [this.DEFAULT_STATS_TYPE];
+            this.selectedCoordinates = [this.DEFAULT_COORDINATE];
         } else if (profileCategory === ProfileCategory.REGION) {
-            this.selectedStatsTypes = [this.defaultStatsType];
-            this.selectedCoordinates = [this.defaultCoordinate];
+            this.selectedStatsTypes = [this.DEFAULT_STATS_TYPE];
+            this.selectedCoordinates = [this.DEFAULT_COORDINATE];
         } else if (profileCategory === ProfileCategory.STATISTICS) {
-            this.selectedRegionIds = [RegionId.CURSOR];
-            this.selectedCoordinates = [this.defaultCoordinate];
+            this.selectedRegionIds = [this.DEFAULT_REGION_ID];
+            this.selectedCoordinates = [this.DEFAULT_COORDINATE];
         } else if (profileCategory === ProfileCategory.STOKES) {
-            this.selectedRegionIds = [RegionId.CURSOR];
-            this.selectedStatsTypes = [this.defaultStatsType];
+            this.selectedRegionIds = [this.DEFAULT_REGION_ID];
+            this.selectedStatsTypes = [this.DEFAULT_STATS_TYPE];
         }
+        this.activeProfileCategory = profileCategory;
     };
 
     @action selectFrame = (fileId: number) => {
@@ -189,11 +189,10 @@ export class SpectralProfileSelectionStore {
     constructor(widgetStore: SpectralProfileWidgetStore, coordinate: string) {
         makeObservable(this);
         this.widgetStore = widgetStore;
-        this.defaultCoordinate = coordinate;
 
-        this.profileCategory = ProfileCategory.IMAGE;
-        this.selectedRegionIds = [RegionId.CURSOR];
-        this.selectedStatsTypes = [CARTA.StatsType.Mean];
-        this.selectedCoordinates = [coordinate];
+        this.activeProfileCategory = ProfileCategory.IMAGE;
+        this.selectedRegionIds = [this.DEFAULT_REGION_ID];
+        this.selectedStatsTypes = [this.DEFAULT_STATS_TYPE];
+        this.selectedCoordinates = [this.DEFAULT_COORDINATE];
     }
 }

@@ -101,38 +101,38 @@ class ProfileSelectionComponent extends React.Component<{widgetStore: SpectralPr
             <div className="profile-selection-panel">
                 <ProfileSelectionButtonComponent
                     categoryName={ProfileCategory.IMAGE}
-                    isActiveCategory={multipleProfileStore.profileCategory === ProfileCategory.IMAGE}
+                    isActiveCategory={multipleProfileStore.activeProfileCategory === ProfileCategory.IMAGE}
                     itemOptions={multipleProfileStore.frameOptions}
                     itemSelected={[multipleProfileStore.selectedFrameFileId]}
                     disabled={!enableFrameSelect}
-                    onCategorySelect={() => multipleProfileStore.setProfileCategory(ProfileCategory.IMAGE)}
+                    onCategorySelect={() => multipleProfileStore.setActiveProfileCategory(ProfileCategory.IMAGE)}
                     onItemSelect={this.onFrameItemClick}
                 />
                 <ProfileSelectionButtonComponent
                     categoryName={ProfileCategory.REGION}
-                    isActiveCategory={multipleProfileStore.profileCategory === ProfileCategory.REGION}
+                    isActiveCategory={multipleProfileStore.activeProfileCategory === ProfileCategory.REGION}
                     itemOptions={multipleProfileStore.regionOptions}
                     itemSelected={multipleProfileStore.selectedRegionIds}
                     disabled={!enableRegionSelect}
-                    onCategorySelect={() => multipleProfileStore.setProfileCategory(ProfileCategory.REGION)}
+                    onCategorySelect={() => multipleProfileStore.setActiveProfileCategory(ProfileCategory.REGION)}
                     onItemSelect={this.onRegionItemClick}
                 />
                 <ProfileSelectionButtonComponent
                     categoryName={ProfileCategory.STATISTICS}
-                    isActiveCategory={multipleProfileStore.profileCategory === ProfileCategory.STATISTICS}
+                    isActiveCategory={multipleProfileStore.activeProfileCategory === ProfileCategory.STATISTICS}
                     itemOptions={multipleProfileStore.statsTypeOptions}
                     itemSelected={multipleProfileStore.selectedStatsTypes}
                     disabled={!enableStatsSelect}
-                    onCategorySelect={() => multipleProfileStore.setProfileCategory(ProfileCategory.STATISTICS)}
+                    onCategorySelect={() => multipleProfileStore.setActiveProfileCategory(ProfileCategory.STATISTICS)}
                     onItemSelect={this.onStatsItemClick}
                 />
                 <ProfileSelectionButtonComponent
                     categoryName={ProfileCategory.STOKES}
-                    isActiveCategory={multipleProfileStore.profileCategory === ProfileCategory.STOKES}
+                    isActiveCategory={multipleProfileStore.activeProfileCategory === ProfileCategory.STOKES}
                     itemOptions={multipleProfileStore.coordinateOptions}
                     itemSelected={multipleProfileStore.selectedCoordinates}
                     disabled={!multipleProfileStore.selectedFrame?.hasStokes}
-                    onCategorySelect={() => multipleProfileStore.setProfileCategory(ProfileCategory.STOKES)}
+                    onCategorySelect={() => multipleProfileStore.setActiveProfileCategory(ProfileCategory.STOKES)}
                     onItemSelect={this.onStokesItemClick}
                 />
             </div>
