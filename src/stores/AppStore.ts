@@ -303,6 +303,18 @@ export class AppStore {
         return activeGroupFrames;
     }
 
+    // TODO: confirm group for multiple spectral profiles
+    @computed get matchedGroupIds(): number[] {
+        let ids = [];
+        const spectralReference = this.spectralReference;
+        if (spectralReference) {
+            ids.push(spectralReference.frameInfo.fileId);
+            const matchedFrameIds = spectralReference?.spectralSiblings?.map(matchedFrame => {return matchedFrame.frameInfo.fileId;});
+            ids = ids.concat(matchedFrameIds);
+        }
+        return ids;
+    }
+
     @computed get contourFrames(): FrameStore[] {
         return this.spatialGroup.filter(f => f.contourConfig.enabled && f.contourConfig.visible);
     }

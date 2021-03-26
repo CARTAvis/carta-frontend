@@ -32,29 +32,69 @@ export class SpectralProfileSelectionStore {
 
     @computed get profileConfigs(): FullSpectralConfig[] {
         let profileConfigs: FullSpectralConfig[] = [];
-        const fileId = this.widgetStore.effectiveFrame.frameInfo.fileId;
-        const regionId = this.widgetStore.effectiveRegionId;
-        if (this.activeProfileCategory === ProfileCategory.IMAGE) {
-            // TODO: add matched image ids, spectralSiblings of FrameStore
-            const statsType = this.widgetStore.effectiveRegion?.isClosedRegion ? this.DEFAULT_STATS_TYPE : CARTA.StatsType.Sum;
-            profileConfigs.push({fileId: fileId, regionId: regionId, statsTypes: [statsType], coordinate: this.DEFAULT_COORDINATE});
-        } else if (this.activeProfileCategory === ProfileCategory.REGION) {
-            this.selectedRegionIds?.forEach(selectedRegionId => {
-                const region = this.widgetStore.effectiveFrame.regionSet.regions.find(r => r.regionId === selectedRegionId);
-                const statsType = region?.isClosedRegion ? this.DEFAULT_STATS_TYPE : CARTA.StatsType.Sum;
-                profileConfigs.push({fileId: fileId, regionId: selectedRegionId, statsTypes: [statsType], coordinate: this.DEFAULT_COORDINATE});
-            });
-        } else if (this.activeProfileCategory === ProfileCategory.STATISTICS) {
-            profileConfigs.push({fileId: fileId, regionId: regionId, statsTypes: this.widgetStore.effectiveRegion?.isClosedRegion ? [...this.selectedStatsTypes] : [CARTA.StatsType.Sum], coordinate: this.DEFAULT_COORDINATE});
-        } else if (this.activeProfileCategory === ProfileCategory.STOKES) {
-            const statsType = this.widgetStore.effectiveRegion?.isClosedRegion ? this.DEFAULT_STATS_TYPE : CARTA.StatsType.Sum;
-            this.selectedCoordinates?.forEach(coordinate => {
-                profileConfigs.push({fileId: fileId, regionId: regionId, statsTypes: [statsType], coordinate: coordinate});
-            });
+        if (this.selectedFrame && this.selectedRegionIds?.length >= 1 && this.selectedStatsTypes?.length >= 1 && this.selectedStatsTypes?.length >= 1) {
+            if (this.activeProfileCategory === ProfileCategory.IMAGE) {
+                const matchedFileIds = AppStore.Instance.matchedGroupIds;
+                if (matchedFileIds?.includes(this.selectedFrameFileId)) {
+                    matchedFileIds.forEach(fileId => {
+                        profileConfigs.push({
+                            fileId: fileId,
+                            regionId: this.DEFAULT_REGION_ID, // TODO: what's the value for matched images?
+                            statsTypes: [this.DEFAULT_STATS_TYPE], // TODO: what's the value for matched images?
+                            coordinate: this.DEFAULT_COORDINATE // TODO: what's the value for matched images?
+                        });
+                    });
+                } else {
+                    profileConfigs.push({
+                        fileId: this.selectedFrameFileId,
+                        regionId: this.DEFAULT_REGION_ID, // TODO: what's the value for matched images?
+                        statsTypes: [this.DEFAULT_STATS_TYPE], // TODO: what's the value for matched images?
+                        coordinate: this.DEFAULT_COORDINATE // TODO: what's the value for matched images?
+                    });
+                }
+            } else if (this.activeProfileCategory === ProfileCategory.REGION) {
+                const selectedStatsType = this.selectedStatsTypes[0];
+                const selectedCoordinate = this.selectedCoordinates[0];
+
+                this.selectedRegionIds?.forEach(selectedRegionId => {
+                    const region = this.selectedFrame.regionSet?.regions?.find(r => r.regionId === selectedRegionId);
+                    profileConfigs.push({
+                        fileId: this.selectedFrameFileId,
+                        regionId: selectedRegionId,
+                        statsTypes: [region?.isClosedRegion ? selectedStatsType : CARTA.StatsType.Sum],
+                        coordinate: selectedCoordinate
+                    });
+                });
+            } else if (this.activeProfileCategory === ProfileCategory.STATISTICS) {
+                const selectedRegionId = this.selectedRegionIds[0];
+                const selectedCoordinate = this.selectedCoordinates[0];
+                const region = this.selectedFrame.regionSet?.regions?.find(r => r.regionId === selectedRegionId);
+
+                profileConfigs.push({
+                    fileId: this.selectedFrameFileId,
+                    regionId: selectedRegionId,
+                    statsTypes: region?.isClosedRegion ? [...this.selectedStatsTypes] : [CARTA.StatsType.Sum],
+                    coordinate: selectedCoordinate
+                });
+            } else if (this.activeProfileCategory === ProfileCategory.STOKES) {
+                const selectedRegionId = this.selectedRegionIds[0];
+                const selectedStatsType = this.selectedStatsTypes[0];
+                const region = this.selectedFrame.regionSet?.regions?.find(r => r.regionId === selectedRegionId);
+
+                this.selectedCoordinates?.forEach(coordinate => {
+                    profileConfigs.push({
+                        fileId: this.selectedFrameFileId,
+                        regionId: selectedRegionId,
+                        statsTypes: [region?.isClosedRegion ? selectedStatsType : CARTA.StatsType.Sum],
+                        coordinate: coordinate
+                    });
+                });
+            }
         }
         return profileConfigs;
     }
 
+    // TODO: integrate with AppStore.Instance.matchedGroupIds
     @computed get frameOptions(): ProfileItemOptionProps[] {
         let options = [];
         const appStore = AppStore.Instance;
@@ -100,7 +140,7 @@ export class SpectralProfileSelectionStore {
     }
 
     @computed get selectedFrameFileId(): number {
-        return this.widgetStore.effectiveFrame?.frameInfo.fileId;
+        return this.selectedFrame?.frameInfo.fileId;
     }
 
     @computed get isStatsTypeFluxDensityOnly(): boolean {
@@ -141,7 +181,6 @@ export class SpectralProfileSelectionStore {
     };
 
     @action selectFrame = (fileId: number) => {
-        // TODO: error handling for fileId
         this.widgetStore.setFileId(fileId);
     };
 
