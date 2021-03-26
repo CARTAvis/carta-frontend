@@ -899,7 +899,7 @@ export class OverlayColorbarSettings {
             const roundBase = Math.pow(10, precision);
             const min =  Math.round(scaleMinVal * roundBase) / roundBase;
             dy = Math.ceil(dy * roundBase) / roundBase;
-            precision = -Math.round(Math.log10(dy));
+            precision = Math.ceil(-Math.log10(dy));
 
             const indexArray = Array.from(Array(tickNum).keys());
             let numbers = indexArray.map(x => min + dy * (x + (min <= scaleMinVal ? 1 : 0)));
