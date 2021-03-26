@@ -878,6 +878,10 @@ export class OverlayColorbarSettings {
         this.labelColor = color;
     };
 
+    private getPrecision = (x: number): number => {
+        return -Math.floor(Math.log10(x));
+    }
+
     @computed get tickNum(): number {
         const renderHeight = AppStore.Instance.overlayStore.renderHeight;
         const tickNum = Math.round(renderHeight / 100.0 * this.tickDensity);
@@ -895,10 +899,11 @@ export class OverlayColorbarSettings {
             return null;
         } else {
             let dy = (scaleMaxVal - scaleMinVal) / tickNum;
-            let precision = -Math.round(Math.log10(dy)) + 1;
+            let precision = this.getPrecision(dy);
             const roundBase = Math.pow(10, precision);
             const min =  Math.round(scaleMinVal * roundBase) / roundBase;
             dy = Math.ceil(dy * roundBase) / roundBase;
+            precision = this.getPrecision(dy);
 
             const indexArray = Array.from(Array(tickNum).keys());
             let numbers = indexArray.map(x => min + dy * (x + (min <= scaleMinVal ? 1 : 0)));
@@ -920,9 +925,9 @@ export class OverlayColorbarSettings {
         const maxOrder = Math.max(...orders);
         const minOrder = Math.min(...orders);
         if (maxOrder >= 5.0) {
-            return this.roundedNumbers.numbers.map(x => x.toExponential(this.numberCustomPrecision ? this.numberPrecision : clamp(Math.floor(maxOrder) + this.roundedNumbers.precision, 0, 10)));
+            return this.roundedNumbers.numbers.map(x => x.toExponential(this.numberCustomPrecision ? this.numberPrecision : clamp(-this.getPrecision(x) + this.roundedNumbers.precision, 0, 10)));
         } else if (minOrder <= -5.0) {
-            return this.roundedNumbers.numbers.map(x => x.toExponential(this.numberCustomPrecision ? this.numberPrecision : clamp(this.roundedNumbers.precision - Math.ceil(-minOrder), 0, 10)));
+            return this.roundedNumbers.numbers.map(x => x.toExponential(this.numberCustomPrecision ? this.numberPrecision : clamp(-this.getPrecision(x) + this.roundedNumbers.precision, 0, 10)));
         } else {
             return this.roundedNumbers.numbers.map(x => x.toFixed(this.numberCustomPrecision ? this.numberPrecision : clamp(this.roundedNumbers.precision, 0, 10)));
         }
