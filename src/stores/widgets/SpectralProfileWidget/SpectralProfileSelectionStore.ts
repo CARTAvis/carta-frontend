@@ -27,7 +27,7 @@ export class SpectralProfileSelectionStore {
     private readonly widgetStore: SpectralProfileWidgetStore;
     private readonly DEFAULT_REGION_ID: RegionId = RegionId.CURSOR;
     private readonly DEFAULT_STATS_TYPE: CARTA.StatsType = CARTA.StatsType.Mean;
-    private readonly DEFAULT_COORDINATE: string = "z";
+    private readonly DEFAULT_COORDINATE: string;
     private static readonly ValidCoordinates = ["z", "Iz", "Qz", "Uz", "Vz"];
 
     @computed get profileConfigs(): FullSpectralConfig[] {
@@ -227,6 +227,7 @@ export class SpectralProfileSelectionStore {
     constructor(widgetStore: SpectralProfileWidgetStore, coordinate: string) {
         makeObservable(this);
         this.widgetStore = widgetStore;
+        this.DEFAULT_COORDINATE = coordinate;
 
         this.activeProfileCategory = ProfileCategory.IMAGE;
         this.selectedRegionIds = [this.DEFAULT_REGION_ID];
