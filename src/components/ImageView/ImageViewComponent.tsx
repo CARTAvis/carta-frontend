@@ -11,7 +11,7 @@ import {ToolbarComponent} from "./Toolbar/ToolbarComponent";
 import {BeamProfileOverlayComponent} from "./BeamProfileOverlay/BeamProfileOverlayComponent";
 import {RegionViewComponent} from "./RegionView/RegionViewComponent";
 import {ContourViewComponent} from "./ContourView/ContourViewComponent";
-import {CatalogViewComponent} from "./CatalogView/CatalogViewComponent";
+import {CatalogViewGLComponent} from "./CatalogView/CatalogViewGLComponent";
 import {AppStore, RegionStore, DefaultWidgetConfig, WidgetProps, HelpType, Padding} from "stores";
 import {CursorInfo, Point2D} from "models";
 import {toFixed} from "utilities";
@@ -110,6 +110,7 @@ export class ImageViewComponent extends React.Component<WidgetProps> {
         this.activeLayer = AppStore.Instance.activeLayer;
         autorun(() => {
             const frame = AppStore.Instance.activeFrame;
+            // this.activeLayer = AppStore.Instance.activeLayer;
             if (frame) {
                 const imageSize = {x: frame.renderWidth, y: frame.renderHeight};
                 // Compare to cached image size to prevent duplicate events when changing frames
@@ -239,14 +240,10 @@ export class ImageViewComponent extends React.Component<WidgetProps> {
                     />
                     }
                     {appStore.activeFrame &&
-                    <CatalogViewComponent
-                        width={appStore.activeFrame.renderWidth}
-                        height={appStore.activeFrame.renderHeight}
-                        activeLayer={this.activeLayer}
-                        docked={this.props.docked && appStore.activeLayer === ImageViewLayer.Catalog}
-                        onClicked={this.onClicked}
-                        onZoomed={this.onZoomed}
-                    />
+                        <CatalogViewGLComponent
+                            docked={this.props.docked}
+                            onZoomed={this.onZoomed}
+                        />
                     }
                     <ToolbarComponent
                         docked={this.props.docked}

@@ -168,7 +168,7 @@ export class RootMenuComponent extends React.Component {
             </Menu>
         );
 
-        let layerItems = appStore.frames.slice().sort((a, b) => a.frameInfo.fileId <= b.frameInfo.fileId ? -1 : 1).map(frame => {
+        let layerItems = appStore.frames.map(frame => {
             return (
                 <Menu.Item
                     text={frame.filename}

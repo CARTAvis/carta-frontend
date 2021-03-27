@@ -66,6 +66,9 @@ export class StokesAnalysisSettingsPanelComponent extends React.Component<Widget
         this.widgetStore.setEqualAxesValue(changeEvent.target.checked);
     };
 
+    handleInvertedColorMapChanged = (changeEvent: React.ChangeEvent<HTMLInputElement>) => {
+        this.widgetStore.setInvertedColorMap(changeEvent.target.checked);
+    };
     handleSelectedTabChanged = (newTabId: React.ReactText) => {
         this.widgetStore.setSettingsTabId(Number.parseInt(newTabId.toString()));
     }
@@ -97,7 +100,9 @@ export class StokesAnalysisSettingsPanelComponent extends React.Component<Widget
             setPointTransparency:  widgetStore.setPointTransparency,
             setScatterPlotPointSize: widgetStore.setScatterPlotPointSize,
             setColormap: widgetStore.setColormap,
-            handleEqualAxesValuesChanged: this.handleEqualAxesValuesChanged
+            handleEqualAxesValuesChanged: this.handleEqualAxesValuesChanged,
+            invertedColorMap: widgetStore.invertedColorMap,
+            handleInvertedColorMapChanged: this.handleInvertedColorMapChanged
         };
 
         const hasStokes = widgetStore.effectiveFrame && widgetStore.effectiveFrame.hasStokes;

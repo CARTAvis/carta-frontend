@@ -106,31 +106,23 @@ Module.GenerateVertexData = (sourceVertices: Float32Array, indexOffsets: Int32Ar
     return destHeapFloat;
 };
 
-Module.CalculateCatalogSize = (data: Float64Array, min: number, max: number, sizeMin: number, sizeMax: number, scaling: number, sizeType: string, alpha: number = 1000, gamma: number = 1.5): number[] => {
-    if (!data) {
-        return [];
-    }
-
+Module.CalculateCatalogSize = (data: Array<number>, min: number, max: number, sizeMin: number, sizeMax: number, scaling: number, sizeType: string, alpha: number = 1000, gamma: number = 1.5): Float32Array => {
     const N = data.length;
-    const dataOnWasmHeap = Module._malloc(N * 8);
-    Module.HEAPF64.set(new Float64Array(data), dataOnWasmHeap / 8);
+    const src = new Float32Array(data);
+    const bytes_per_element = src.BYTES_PER_ELEMENT;
+    const dataOnWasmHeap = Module._malloc(N * bytes_per_element);
+
+    Module.HEAPF32.set(src, dataOnWasmHeap / bytes_per_element);
 
     if (sizeType === "area") {
         calculateCatalogSizeArea(dataOnWasmHeap, N, min, max, sizeMin, sizeMax, scaling, alpha, gamma);
     } else if (sizeType === "diameter") {
         calculateCatalogSizeDiameter(dataOnWasmHeap, N, min, max, sizeMin, sizeMax, scaling, alpha, gamma);
-    } else {
-        Module._free(dataOnWasmHeap);
-        return [];
     }
 
-    const float64 = new Float64Array(Module.HEAPF64.buffer, dataOnWasmHeap, N);
+    const float32 = new Float32Array(Module.HEAPF32.buffer, dataOnWasmHeap, N);
     Module._free(dataOnWasmHeap);
-    let size = Array(N);
-    for (let i = 0; i < N; i++) {
-        size[i] = isFinite(float64[i]) ? float64[i] : sizeMin;
-    }
-    return size;
+    return float32;
 }
 
 Module.CalculateCatalogColor = (data: Float64Array, color: Uint8ClampedArray, colorMapWith: number, invert: boolean, min: number, max: number, scaling: number, alpha: number = 1000, gamma: number = 1.5): string[] => {

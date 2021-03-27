@@ -34,15 +34,29 @@ const IconWrapper = (path: React.SVGProps<SVGPathElement>, color: string, fill: 
 
 const triangleUp = <path d="M 2 14 L 14 14 L 8 3 Z"/>;
 const triangleDown = <path d="M 2 2 L 14 2 L 8 13 Z"/>;
-const diamond = <path d="M 8 14 L 14 8 L 8 2 L 2 8 Z"/>;
-const hexagon = <path d="M 12.33 5.5 L 12.33 10.5 L 8 13 L 3.67 10.5 L 3.67 5.5 L 8 3 Z"/>;
-const hexagon2 = <path d="M 3 8 L 5.5 3.67 L 10.5 3.67 L 13 8 L 10.5 12.33 L 5.5 12.33 Z"/>;
+const rhomb = <path d="M 8 14 L 14 8 L 8 2 L 2 8 Z"/>;
+const hexagon2 = <path d="M 12.33 5.5 L 12.33 10.5 L 8 13 L 3.67 10.5 L 3.67 5.5 L 8 3 Z"/>;
+const hexagon = <path d="M 3 8 L 5.5 3.67 L 10.5 3.67 L 13 8 L 10.5 12.33 L 5.5 12.33 Z"/>;
+const ellipse = <ellipse cx="8" cy="8" rx="7" ry="4"/>;
 const KEYCODE_ENTER = 13;
 
 @observer
 export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<WidgetProps> {
 
     private catalogFileNames: Map<number, string>;
+    private catalogOverlayShape: Array<CatalogOverlayShape> = [
+        CatalogOverlayShape.BoxLined,
+        CatalogOverlayShape.CircleFilled,
+        CatalogOverlayShape.CircleLined,
+        CatalogOverlayShape.CrossFilled,
+        CatalogOverlayShape.EllipseLined,
+        CatalogOverlayShape.HexagonLined,
+        CatalogOverlayShape.HexagonLined2,
+        CatalogOverlayShape.RhombLined,
+        CatalogOverlayShape.TriangleDownLined,
+        CatalogOverlayShape.TriangleUpLined,
+        CatalogOverlayShape.XFilled
+    ];
 
     public static get WIDGET_CONFIG(): DefaultWidgetConfig {
         return {
@@ -180,7 +194,7 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
                         className="bp3-fill"
                         disabled={disabledOverlayPanel}
                         filterable={false}
-                        items={Object.values(CatalogOverlayShape)} 
+                        items={this.catalogOverlayShape} 
                         activeItem={widgetStore.catalogShape} 
                         onItemSelect={(item) => widgetStore.setCatalogShape(item)}
                         itemRenderer={this.renderShapePopOver}
@@ -191,8 +205,9 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
                 </FormGroup>
                 <FormGroup  inline={true} label="Size" labelInfo="(px)"  disabled={disabledOverlayPanel}>
                     <SafeNumericInput
+                        className="catalog-size-overlay"
                         placeholder="Catalog Size"
-                        disabled={disabledOverlayPanel}
+                        disabled={disabledOverlayPanel || !widgetStore.disableSizeMap}
                         min={CatalogWidgetStore.MinOverlaySize}
                         max={CatalogWidgetStore.MaxOverlaySize}
                         value={widgetStore.catalogSize}
@@ -231,7 +246,7 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
                 </FormGroup>
                 <FormGroup inline={true} label={"Size Mode"} disabled={disableSizeMap}>
                     <ButtonGroup>
-                        <AnchorButton disabled={disableSizeMap} text={"Diameter"} active={widgetStore.sizeMapType === "diameter"} onClick={() => widgetStore.setSizeMapType("diameter")}/>
+                        <AnchorButton disabled={disableSizeMap} text={"Radius"} active={widgetStore.sizeMapType === "radius"} onClick={() => widgetStore.setSizeMapType("radius")}/>
                         <AnchorButton disabled={disableSizeMap} text={"Area"} active={widgetStore.sizeMapType === "area"} onClick={() => widgetStore.setSizeMapType("area")}/>
                     </ButtonGroup>
                 </FormGroup>
@@ -429,30 +444,28 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
         const widgetStore = this.widgetStore;
         let color = widgetStore.catalogColor;
         switch (shape) {
-            case CatalogOverlayShape.Circle:
+            case CatalogOverlayShape.CircleLined:
                 return <Icon icon="circle" color={color}/>;
-            case CatalogOverlayShape.FullCircle:
-                return <Icon icon="full-circle" color={color}/>;  
-            case CatalogOverlayShape.Star:
-                return <Icon icon="star-empty" color={color}/>;
-            case CatalogOverlayShape.FullStar:
-                return <Icon icon="star" color={color}/>;
-            case CatalogOverlayShape.Square:
+            case CatalogOverlayShape.CircleFilled:
+                return <Icon icon="full-circle" color={color}/>;
+            case CatalogOverlayShape.BoxLined:
                 return <Icon icon="square" color={color}/>;
-            case CatalogOverlayShape.Plus:
+            case CatalogOverlayShape.CrossFilled:
                 return <Icon icon="plus" color={color}/>;
-            case CatalogOverlayShape.Cross:
+            case CatalogOverlayShape.XFilled:
                 return <Icon icon="cross" color={color}/>;
-            case CatalogOverlayShape.TriangleUp:
+            case CatalogOverlayShape.TriangleUpLined:
                 return IconWrapper(triangleUp, color, false);
-            case CatalogOverlayShape.TriangleDown:
+            case CatalogOverlayShape.TriangleDownLined:
                 return IconWrapper(triangleDown, color, false);
-            case CatalogOverlayShape.Diamond:
-                return IconWrapper(diamond, color, false);
-            case CatalogOverlayShape.hexagon:
-                return IconWrapper(hexagon, color, false);
-            case CatalogOverlayShape.hexagon2:
+            case CatalogOverlayShape.RhombLined:
+                return IconWrapper(rhomb, color, false);
+            case CatalogOverlayShape.HexagonLined2:
                 return IconWrapper(hexagon2, color, false);
+            case CatalogOverlayShape.HexagonLined:
+                return IconWrapper(hexagon, color, false);
+            case CatalogOverlayShape.EllipseLined:
+                return IconWrapper(ellipse, color, false);
             default:
                 return <Icon icon="circle" color={color}/>;
         }

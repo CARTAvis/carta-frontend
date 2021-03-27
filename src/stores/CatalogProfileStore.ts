@@ -352,24 +352,25 @@ export class CatalogProfileStore {
 
     @action setSelectedPointIndices = (pointIndices: Array<number>, autoPanZoom: boolean) => {
         this.selectedPointIndices = pointIndices;
-
-        const coords = CatalogStore.Instance.catalogData.get(this.catalogFileId);
-        if (coords?.xImageCoords?.length) {
+        const coordsArray = CatalogStore.Instance.catalogGLData.get(this.catalogFileId);
+        if (coordsArray?.dataPoints?.length) {
             let selectedX = [];
             let selectedY = [];
-            let xArray = coords.xImageCoords;
-            let yArray = coords.yImageCoords;
-
+            const selectedData = new Float32Array(pointIndices.length * 4)
             for (let index = 0; index < pointIndices.length; index++) {
                 const pointIndex = pointIndices[index];
-                const x = xArray[pointIndex];
-                const y = yArray[pointIndex];
+                const x = coordsArray.dataPoints[pointIndex * 4];
+                const y = coordsArray.dataPoints[pointIndex * 4 + 1];
                 if (!this.isInfinite(x) && !this.isInfinite(y)) {
                     selectedX.push(x);
                     selectedY.push(y);
                 }
+                selectedData[index * 4] = x;
+                selectedData[index * 4 + 1] = y;
+                selectedData[index * 4 + 2] = 10;
+                selectedData[index * 4 + 3] = 0.5; 
             }
-            CatalogStore.Instance.updateSelectedPoints(this.catalogFileId, selectedX, selectedY);
+            CatalogStore.Instance.updateSelectedPoints(this.catalogFileId, selectedData);
 
             if (autoPanZoom) {
                 const selectedDataLength = selectedX.length;

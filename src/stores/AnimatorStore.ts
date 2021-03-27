@@ -63,7 +63,7 @@ export class AnimatorStore {
 
         if (this.animationMode === AnimationMode.FRAME) {
             clearInterval(this.animateHandle);
-            this.animationActive = false;
+            this.animationActive = true;
             this.animate();
             this.animateHandle = setInterval(this.animate, this.frameInterval);
             return;

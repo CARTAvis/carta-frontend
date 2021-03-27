@@ -12,7 +12,7 @@
 
 extern "C" {
 
-void EMSCRIPTEN_KEEPALIVE heapsort(double* data, int N, double * min_out, double * max_out) {
+void EMSCRIPTEN_KEEPALIVE getMinMax(double* data, int N, double * min_out, double * max_out) {
     gsl_vector_view out = gsl_vector_view_array(data, N);
     gsl_vector_minmax(&out.vector, min_out, max_out);
 }

@@ -1,0 +1,17 @@
+.catalog-div {
+    position: absolute;
+    left: 0;
+
+    &.docked {
+        z-index: 2;
+    }
+
+    &.actived {
+        z-index: 4;
+    }
+
+    .catalog-canvas {
+        position: absolute;
+        z-index: 0;
+    }
+}

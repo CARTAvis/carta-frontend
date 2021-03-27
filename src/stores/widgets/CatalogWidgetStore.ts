@@ -12,18 +12,19 @@ export enum CatalogPlotType {
 }
 
 export enum CatalogOverlayShape {
-    Circle = "circle-open",
-    FullCircle = "circle",
-    Star = "star-open",
-    FullStar = "star",
-    Square = "square-open",
-    Plus = "cross-thin-open",
-    Cross = "x-thin-open",
-    TriangleUp = "triangle-up-open",
-    TriangleDown = "triangle-down-open",
-    Diamond = "diamond-open",
-    hexagon2 = "hexagon2-open",
-    hexagon = "hexagon-open",
+    BoxLined = 1,
+    CircleFilled = 2,
+    CircleLined = 3,
+    HexagonLined = 5,
+    RhombLined = 7,
+    TriangleUpLined = 9,
+    EllipseLined = 11,
+    TriangleDownLined = 13,
+    HexagonLined2 = 15,
+    CrossFilled = 16,
+    CrossLined = 17,
+    XFilled = 18,
+    XLined = 19
 }
 
 export enum CatalogSettingsTabs {
@@ -33,7 +34,7 @@ export enum CatalogSettingsTabs {
     SIZE
 }
 
-export type SizeType = "area" | "diameter"; 
+export type SizeType = "area" | "radius"; 
 export type SizeClip = "size-min" | "size-max";
 
 export class CatalogWidgetStore {
@@ -81,17 +82,17 @@ export class CatalogWidgetStore {
         this.catalogPlotType = CatalogPlotType.ImageOverlay;
         this.catalogColor = Colors.TURQUOISE3;
         this.catalogSize = 20;
-        this.catalogShape = CatalogOverlayShape.Circle;
+        this.catalogShape = CatalogOverlayShape.CircleLined;
         this.xAxis = CatalogOverlay.NONE;
         this.yAxis = CatalogOverlay.NONE;
         this.tableSeparatorPosition = PreferenceStore.Instance.catalogTableSeparatorPosition;
         this.highlightColor = Colors.RED2;
         this.settingsTabId = CatalogSettingsTabs.GLOBAL;
         this.sizeMapColumn = CatalogOverlay.NONE;
-        this.sizeMapType = "diameter";
+        this.sizeMapType = "radius";
         this.sizeScalingType = FrameScaling.LINEAR;
-        this.sizeMin = 1;
-        this.sizeMax = {area: 200, diameter: 20};
+        this.sizeMin = 10;
+        this.sizeMax = {area: 20, diameter: 20};
         this.sizeColumnMin = {default: undefined, clipd: undefined};
         this.sizeColumnMax = {default: undefined, clipd: undefined};
         
@@ -105,6 +106,10 @@ export class CatalogWidgetStore {
             const result =  GSL.minMaxArray(column);
             this.setSizeColumnMin(isFinite(result.min)? result.min : 0, "default");
             this.setSizeColumnMax(isFinite(result.max)? result.max : 0, "default");
+        });
+
+        reaction(()=>this.sizeArray, (res) => {
+            CatalogStore.Instance.updateCatalogSizeMap(this.catalogFileId, res);
         });
 
         reaction(()=>this.colorMapData, (column) => {
@@ -227,7 +232,9 @@ export class CatalogWidgetStore {
     }
 
     @action setCatalogSize(size: number) {
-        this.catalogSize = size;
+        if (size >= CatalogWidgetStore.MinOverlaySize && size <= CatalogWidgetStore.MaxOverlaySize) {
+            this.catalogSize = size;   
+        }
     }
 
     @action setCatalogColor(color: string) {
@@ -296,20 +303,21 @@ export class CatalogWidgetStore {
         }
     }
 
-    @computed get sizeArray(): number[] {
+    @computed get sizeArray(): Float32Array {
         const column = this.sizeMapData;
         if (!this.disableSizeMap && column?.length && this.sizeColumnMin.clipd !== undefined && this.sizeColumnMax.clipd !== undefined) {
+            // wasm 0.25s, Js 0.9s
             return CARTACompute.CalculateCatalogSize(
-                new Float64Array(column), 
+                column,
                 this.sizeColumnMin.clipd, 
                 this.sizeColumnMax.clipd, 
                 this.sizeMin, 
                 this.pointSizebyType,
                 this.sizeScalingType,
                 this.sizeMapType
-            ); 
+            );
         } 
-        return [];
+        return new Float32Array(0);
     }
 
     @computed get disableSizeMap(): boolean {

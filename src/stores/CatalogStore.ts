@@ -3,16 +3,12 @@ import {action, observable, ObservableMap, computed,makeObservable} from "mobx";
 import {AppStore, CatalogProfileStore, CatalogSystemType, WidgetsStore} from "stores";
 import {CatalogWidgetStore} from "stores/widgets";
 
-type CatalogData = {
-    xImageCoords: Array<number>,
-    yImageCoords: Array<number>,
+type CatalogOverlayCoords = {
+    dataPoints: Float32Array,
+    selectedDataPoints: Float32Array,
+    showSelectedData: boolean;
     displayed: boolean;
 };
-
-type SelectedCatalogData = {
-    xSelectedCoords: Array<number>,
-    ySelectedCoords: Array<number>
-}
 
 export class CatalogStore {
     private static staticInstance: CatalogStore;
@@ -28,8 +24,7 @@ export class CatalogStore {
     private static readonly ArcsecUnits = ["arcsec", "arcsecond"];
     private static readonly ArcminUnits = ["arcmin", "arcminute"];
 
-    @observable catalogData: ObservableMap<number, CatalogData>;
-    @observable selectedCatalogData: ObservableMap<number, SelectedCatalogData>;
+    @observable catalogGLData: ObservableMap<number, CatalogOverlayCoords>;
     // map image file id with catalog file Id
     @observable imageAssociatedCatalogId: Map<number, Array<number>>;
     // map catalog component Id with catalog file Id
@@ -43,8 +38,7 @@ export class CatalogStore {
 
     private constructor() {
         makeObservable(this);
-        this.catalogData = new ObservableMap();
-        this.selectedCatalogData = new ObservableMap();
+        this.catalogGLData = new ObservableMap();
         this.imageAssociatedCatalogId = new Map<number, Array<number>>();
         this.catalogProfiles = new Map<string, number>();
         this.catalogPlots = new Map<string, ObservableMap<number, string>>();
@@ -53,80 +47,86 @@ export class CatalogStore {
     }
 
     @action addCatalog(fileId: number) {
-        // init catalog overlay data
-        this.catalogData.set(fileId, {
-            xImageCoords: [],
-            yImageCoords: [],
+        this.catalogGLData.set(fileId, {
+            dataPoints:new Float32Array(0),
+            selectedDataPoints: new Float32Array(0), 
+            showSelectedData: false, 
             displayed: true
         });
-
-        this.selectedCatalogData.set(fileId, {
-            xSelectedCoords: [],
-            ySelectedCoords: []
-        })
     }
 
     @action updateCatalogData(fileId: number, xData: Array<number>, yData: Array<number>, wcsInfo: number, xUnit: string, yUnit: string, catalogFrame: CatalogSystemType) {
-        const catalogDataInfo = this.catalogData.get(fileId);
-        if (catalogDataInfo) {
+        const catalog = this.catalogGLData.get(fileId);
+        if (catalog) {
+            const dataSize = catalog.dataPoints.length;
+            let dataPoints = new Float32Array(dataSize + xData.length * 4);
+            dataPoints.set(catalog.dataPoints);
+
             switch (catalogFrame) {
                 case CatalogSystemType.Pixel0:
                     for (let i = 0; i < xData.length; i++) {
-                        catalogDataInfo.xImageCoords.push(xData[i]);
-                        catalogDataInfo.yImageCoords.push(yData[i]);
+                        dataPoints[dataSize + i * 4] = xData[i];
+                        dataPoints[dataSize + i * 4 + 1] = yData[i];
+                        dataPoints[dataSize + i * 4 + 2] = 10;
+                        dataPoints[dataSize + i * 4 + 3] = 0.5;
                     }
                     break;
                 case CatalogSystemType.Pixel1:
                     for (let i = 0; i < xData.length; i++) {
-                        catalogDataInfo.xImageCoords.push(xData[i] - 1);
-                        catalogDataInfo.yImageCoords.push(yData[i] - 1);
+                        dataPoints[dataSize + i * 4] = xData[i] - 1;
+                        dataPoints[dataSize + i * 4 + 1] = yData[i] - 1;
+                        dataPoints[dataSize + i * 4 + 2] = 10;
+                        dataPoints[dataSize + i * 4 + 3] = 0.5;
                     }
                     break;
                 default:
                     const pixelData = CatalogStore.TransformCatalogData(xData, yData, wcsInfo, xUnit, yUnit, catalogFrame);
                     for (let i = 0; i < pixelData.xImageCoords.length; i++) {
-                        catalogDataInfo.xImageCoords.push(pixelData.xImageCoords[i]);
-                        catalogDataInfo.yImageCoords.push(pixelData.yImageCoords[i]);
+                        dataPoints[dataSize + i * 4] = pixelData.xImageCoords[i];
+                        dataPoints[dataSize + i * 4 + 1] = pixelData.yImageCoords[i];
+                        dataPoints[dataSize + i * 4 + 2] = 10;
+                        dataPoints[dataSize + i * 4 + 3] = 0.5;
                     }
                     break;
             }
-            this.catalogData.set(fileId,
-                {
-                    xImageCoords: catalogDataInfo.xImageCoords,
-                    yImageCoords: catalogDataInfo.yImageCoords,
-                    displayed: catalogDataInfo.displayed
-                });
+            catalog.dataPoints = dataPoints;
         }
     }
 
-    @action updateSelectedPoints(fileId: number, xSelectedCoords: Array<number>, ySelectedCoords: Array<number>) {
-        const selectedCatalogData = this.selectedCatalogData.get(fileId);
-        if (selectedCatalogData) {
-            this.selectedCatalogData.set(fileId,
-                {
-                    xSelectedCoords: xSelectedCoords,
-                    ySelectedCoords: ySelectedCoords
-                });
+    @action updateCatalogSizeMap(fileId: number, sizeData: Float32Array) {
+        const catalog = this.catalogGLData.get(fileId);
+        if (catalog?.dataPoints?.length && sizeData?.length) {
+            for (let i = 0; i < sizeData.length; i++) {
+               catalog.dataPoints[i * 4 + 2] = sizeData[i];
+            }
+            console.log(catalog.dataPoints.length)
+        }
+    }
+
+    @action updateSelectedPoints(fileId: number, selectedData: Float32Array) {
+        const catalog = this.catalogGLData.get(fileId);
+        if (catalog) {
+            catalog.selectedDataPoints = selectedData;
         }
     }
 
     @action clearImageCoordsData(fileId: number) {
-        const catalogData = this.catalogData.get(fileId);
-        const selectedCatalogData = this.selectedCatalogData.get(fileId);
-        if (catalogData) {
-            catalogData.xImageCoords = [];
-            catalogData.yImageCoords = [];
-        }
-
-        if (selectedCatalogData) {
-            selectedCatalogData.xSelectedCoords = [];
-            selectedCatalogData.ySelectedCoords = [];
+        const catalog = this.catalogGLData.get(fileId);
+        if (catalog) {
+            catalog.dataPoints = new Float32Array(0);
+            catalog.showSelectedData = false;
         }
     }
 
     @action removeCatalog(fileId: number) {
-        this.catalogData.delete(fileId);
-        this.selectedCatalogData.delete(fileId);
+        this.catalogGLData.delete(fileId);
+    }
+
+    @action updateShowSelectedData(fileId: number, val: boolean) {
+        const catalog = this.catalogGLData.get(fileId);
+        if (catalog) {
+            catalog.showSelectedData = val;
+        }
     }
 
     @action updateImageAssociatedCatalogId(activeFrameIndex: number, associatedCatalogFiles: number[]) {
@@ -167,27 +167,16 @@ export class CatalogStore {
 
     @action resetDisplayedData(associatedCatalogFileId: Array<number>) {
         if (associatedCatalogFileId.length) {
-            this.catalogData.forEach((catalogDataInfo, fileId) => {
+            this.catalogGLData.forEach((catalog, fileId) => {
                 let displayed = true;
                 if (!associatedCatalogFileId.includes(fileId)) {
                     displayed = false;
                 }
-                this.catalogData.set(fileId,
-                    {
-                        xImageCoords: catalogDataInfo.xImageCoords,
-                        yImageCoords: catalogDataInfo.yImageCoords,
-                        displayed: displayed
-                    }
-                );
+                catalog.displayed = displayed;
             });
         } else {
-            this.catalogData.forEach((catalogDataInfo, fileId) => {
-                this.catalogData.set(fileId,
-                    {
-                        xImageCoords: catalogDataInfo.xImageCoords,
-                        yImageCoords: catalogDataInfo.yImageCoords,
-                        displayed: false
-                    });
+            this.catalogGLData.forEach((catalog) => {
+                catalog.displayed = false;
             });
         }
     }

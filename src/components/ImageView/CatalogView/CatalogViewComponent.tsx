@@ -1,10 +1,10 @@
 import * as React from "react";
 import * as Plotly from "plotly.js";
 import {observer} from "mobx-react";
-import {computed, makeObservable} from "mobx";
+import {makeObservable} from "mobx";
 import Plot from "react-plotly.js";
 import {AppStore, CatalogStore, WidgetsStore} from "stores";
-import {CatalogOverlayShape} from "stores/widgets";
+// import {CatalogOverlayShape} from "stores/widgets";
 import {canvasToTransformedImagePos} from "components/ImageView/RegionView/shared";
 import {ImageViewLayer} from "../ImageViewComponent";
 import {CursorInfo} from "models";
@@ -27,106 +27,106 @@ export class CatalogViewComponent extends React.Component<CatalogViewComponentPr
         makeObservable(this);
     }
 
-    @computed get unSelectedData(): Plotly.Data[] {
-        const catalogStore = CatalogStore.Instance;
-        let scatterData: Plotly.Data[] = [];
-        catalogStore.catalogData.forEach((catalog, fileId) => {
-            const catalogWidgetStore = catalogStore.getCatalogWidgetStore(fileId);
-            if (!catalogWidgetStore.showSelectedData) {
-                let unSelecteData: Partial<Plotly.PlotData> = {};
-                unSelecteData.type = "scattergl";
-                unSelecteData.mode = "markers";
-                unSelecteData.hoverinfo = "none";
-                unSelecteData.visible = catalog.displayed;
-                // copy data to trigger react-plotly js update. only update revision number not working. with layout["datarevision"] will slow down plotly;
-                unSelecteData.x = catalog.xImageCoords.slice(0);
-                unSelecteData.y = catalog.yImageCoords.slice(0);
+    // @computed get unSelectedData(): Plotly.Data[] {
+    //     const catalogStore = CatalogStore.Instance;
+    //     let scatterData: Plotly.Data[] = [];
+    //     catalogStore.catalogData.forEach((catalog, fileId) => {
+    //         const catalogWidgetStore = catalogStore.getCatalogWidgetStore(fileId);
+    //         if (!catalogWidgetStore.showSelectedData) {
+    //             let unSelecteData: Partial<Plotly.PlotData> = {};
+    //             unSelecteData.type = "scattergl";
+    //             unSelecteData.mode = "markers";
+    //             unSelecteData.hoverinfo = "none";
+    //             unSelecteData.visible = catalog.displayed;
+    //             // copy data to trigger react-plotly js update. only update revision number not working. with layout["datarevision"] will slow down plotly;
+    //             unSelecteData.x = catalog.xImageCoords.slice(0);
+    //             unSelecteData.y = catalog.yImageCoords.slice(0);
  
-                unSelecteData.marker = {
-                    symbol: catalogWidgetStore.catalogShape,
-                    sizemode: catalogWidgetStore.sizeMapType,
-                    line: {
-                        width: 4
-                    }
-                };
+    //             unSelecteData.marker = {
+    //                 symbol: catalogWidgetStore.catalogShape,
+    //                 sizemode: catalogWidgetStore.sizeMapType,
+    //                 line: {
+    //                     width: 4
+    //                 }
+    //             };
 
-                if (!catalogWidgetStore.disableSizeMap) {
-                    unSelecteData.marker.size = catalogWidgetStore.sizeArray;
-                } else {
-                    unSelecteData.marker.size = catalogWidgetStore.catalogSize;
-                }
+    //             if (!catalogWidgetStore.disableSizeMap) {
+    //                 unSelecteData.marker.size = catalogWidgetStore.sizeArray;
+    //             } else {
+    //                 unSelecteData.marker.size = catalogWidgetStore.catalogSize;
+    //             }
 
-                if (!catalogWidgetStore.disableColorMap) {
-                    unSelecteData.marker.color = catalogWidgetStore.colorArray;
-                } else {
-                    unSelecteData.marker.color = catalogWidgetStore.catalogColor; 
-                }
-                unSelecteData.name = fileId.toString();
-                scatterData.push(unSelecteData);
-            }
-        });
-        return scatterData;
-    }
+    //             if (!catalogWidgetStore.disableColorMap) {
+    //                 unSelecteData.marker.color = catalogWidgetStore.colorArray;
+    //             } else {
+    //                 unSelecteData.marker.color = catalogWidgetStore.catalogColor; 
+    //             }
+    //             unSelecteData.name = fileId.toString();
+    //             scatterData.push(unSelecteData);
+    //         }
+    //     });
+    //     return scatterData;
+    // }
 
-    @computed get selectedData(): Plotly.Data[] {
-        const catalogStore = CatalogStore.Instance;
-        let scatterData: Plotly.Data[] = [];
-        catalogStore.catalogProfileStores.forEach((profileStore) => {    
-            const selectedPoints = profileStore.selectedPointIndices;
-            const selectedPointSize = selectedPoints.length;
-            const fileId = profileStore.catalogFileId;
-            const selectedData = catalogStore.selectedCatalogData.get(fileId);
-            let selecteData: Partial<Plotly.PlotData> = {};
+    // @computed get selectedData(): Plotly.Data[] {
+    //     const catalogStore = CatalogStore.Instance;
+    //     let scatterData: Plotly.Data[] = [];
+    //     catalogStore.catalogProfileStores.forEach((profileStore) => {    
+    //         const selectedPoints = profileStore.selectedPointIndices;
+    //         const selectedPointSize = selectedPoints.length;
+    //         const fileId = profileStore.catalogFileId;
+    //         const selectedData = catalogStore.selectedCatalogData.get(fileId);
+    //         let selecteData: Partial<Plotly.PlotData> = {};
 
-            if (selectedPointSize && selectedData?.xSelectedCoords?.length) {
-                const coords = catalogStore.catalogData.get(fileId);
-                const catalogWidgetStore = catalogStore.getCatalogWidgetStore(fileId);
-                selecteData.type = "scattergl";
-                selecteData.mode = "markers";
-                selecteData.hoverinfo = "none";
-                selecteData.visible = coords.displayed;              
-                selecteData.x = selectedData.xSelectedCoords.slice(0);
-                selecteData.y = selectedData.ySelectedCoords.slice(0);
-                selecteData.name = fileId.toString();
+    //         if (selectedPointSize && selectedData?.xSelectedCoords?.length) {
+    //             const coords = catalogStore.catalogData.get(fileId);
+    //             const catalogWidgetStore = catalogStore.getCatalogWidgetStore(fileId);
+    //             selecteData.type = "scattergl";
+    //             selecteData.mode = "markers";
+    //             selecteData.hoverinfo = "none";
+    //             selecteData.visible = coords.displayed;              
+    //             selecteData.x = selectedData.xSelectedCoords.slice(0);
+    //             selecteData.y = selectedData.ySelectedCoords.slice(0);
+    //             selecteData.name = fileId.toString();
 
-                let outlineShape = catalogWidgetStore.catalogShape;
-                if (outlineShape === CatalogOverlayShape.FullCircle) {
-                    outlineShape = CatalogOverlayShape.Circle;
-                } else if (outlineShape === CatalogOverlayShape.FullStar) {
-                    outlineShape = CatalogOverlayShape.Star;
-                } else if (outlineShape === CatalogOverlayShape.Plus) {
-                    outlineShape = "cross-open" as CatalogOverlayShape;
-                } else if (outlineShape === CatalogOverlayShape.Cross) {
-                    outlineShape = "x-open" as CatalogOverlayShape;
-                }
+    //             let outlineShape = catalogWidgetStore.catalogShape;
+    //             if (outlineShape === CatalogOverlayShape.FullCircle) {
+    //                 outlineShape = CatalogOverlayShape.Circle;
+    //             } else if (outlineShape === CatalogOverlayShape.FullStar) {
+    //                 outlineShape = CatalogOverlayShape.Star;
+    //             } else if (outlineShape === CatalogOverlayShape.Plus) {
+    //                 outlineShape = "cross-open" as CatalogOverlayShape;
+    //             } else if (outlineShape === CatalogOverlayShape.Cross) {
+    //                 outlineShape = "x-open" as CatalogOverlayShape;
+    //             }
 
-                selecteData.marker = {
-                    color: catalogWidgetStore.highlightColor,
-                    symbol: outlineShape,
-                    sizemode: catalogWidgetStore.sizeMapType,
-                    line: {
-                        color: catalogWidgetStore.highlightColor,
-                        width: 4
-                    }
-                };
+    //             selecteData.marker = {
+    //                 color: catalogWidgetStore.highlightColor,
+    //                 symbol: outlineShape,
+    //                 sizemode: catalogWidgetStore.sizeMapType,
+    //                 line: {
+    //                     color: catalogWidgetStore.highlightColor,
+    //                     width: 4
+    //                 }
+    //             };
 
-                if (!catalogWidgetStore.disableSizeMap) {
-                    const sizeMap = new Array(selectedPointSize);
-                    for (let index = 0; index < selectedPointSize; index++) {
-                        const i = selectedPoints[index];
-                        sizeMap[index] = catalogWidgetStore.sizeArray[i] + 5;
-                    }
-                    selecteData.marker.size = sizeMap;
-                } else {
-                    selecteData.marker.size = catalogWidgetStore.catalogSize + 5;
-                }
+    //             if (!catalogWidgetStore.disableSizeMap) {
+    //                 const sizeMap = new Array(selectedPointSize);
+    //                 for (let index = 0; index < selectedPointSize; index++) {
+    //                     const i = selectedPoints[index];
+    //                     sizeMap[index] = catalogWidgetStore.sizeArray[i] + 5;
+    //                 }
+    //                 selecteData.marker.size = sizeMap;
+    //             } else {
+    //                 selecteData.marker.size = catalogWidgetStore.catalogSize + 5;
+    //             }
 
-                scatterData.push(selecteData);
+    //             scatterData.push(selecteData);
                 
-            }
-        });
-        return scatterData;
-    }
+    //         }
+    //     });
+    //     return scatterData;
+    // }
 
     private onClick = (event: Readonly<Plotly.PlotMouseEvent>) => {
         if (event && event.points && event.points.length > 0) {
@@ -147,16 +147,16 @@ export class CatalogViewComponent extends React.Component<CatalogViewComponentPr
         }
     };
 
-    private onDoubleClick() {
-        const catalogStore = CatalogStore.Instance;
-        if (catalogStore.catalogData.size) {   
-            catalogStore.catalogProfileStores.forEach((profileStore) => {   
-                const widgetStoreId = CatalogStore.Instance.catalogWidgets.get(profileStore.catalogFileId);
-                profileStore.setSelectedPointIndices([], false);
-                WidgetsStore.Instance.catalogWidgets.get(widgetStoreId)?.setCatalogTableAutoScroll(false);
-            });
-        }
-    }
+    // private onDoubleClick() {
+    //     const catalogStore = CatalogStore.Instance;
+    //     if (catalogStore.catalogData.size) {   
+    //         catalogStore.catalogProfileStores.forEach((profileStore) => {   
+    //             const widgetStoreId = CatalogStore.Instance.catalogWidgets.get(profileStore.catalogFileId);
+    //             profileStore.setSelectedPointIndices([], false);
+    //             WidgetsStore.Instance.catalogWidgets.get(widgetStoreId)?.setCatalogTableAutoScroll(false);
+    //         });
+    //     }
+    // }
 
     private onWheelCaptured = (event: React.WheelEvent<HTMLDivElement>) => {
         if (event && event.nativeEvent && event.nativeEvent.type === "wheel") {
@@ -232,17 +232,17 @@ export class CatalogViewComponent extends React.Component<CatalogViewComponentPr
             layout.yaxis.range = [border.yMin, border.yMax];
         }
         let scatterData: Plotly.Data[] = [];
-        const unSelectedData = this.unSelectedData;
-        const selectedData = this.selectedData;
-        unSelectedData.forEach((data: Plotly.PlotData) => {
-            scatterData.push(data);   
-        });
+        // const unSelectedData = this.unSelectedData;
+        // const selectedData = this.selectedData;
+        // unSelectedData.forEach((data: Plotly.PlotData) => {
+        //     scatterData.push(data);   
+        // });
 
-        if (selectedData) {
-            selectedData.forEach((data: Plotly.PlotData) => {
-                scatterData.push(data);
-            });
-        }
+        // if (selectedData) {
+        //     selectedData.forEach((data: Plotly.PlotData) => {
+        //         scatterData.push(data);
+        //     });
+        // }
         
         return (
             <div className={className} style={{left: padding.left, top: padding.top}} onWheelCapture={this.onWheelCaptured}>
@@ -252,7 +252,7 @@ export class CatalogViewComponent extends React.Component<CatalogViewComponentPr
                     layout={layout}
                     config={config}
                     onClick={this.onClick}
-                    onDoubleClick={this.onDoubleClick}
+                    // onDoubleClick={this.onDoubleClick}
                     style={{transform: `scale(${scale})`, transformOrigin: "top left"}}
                 />
             </div>

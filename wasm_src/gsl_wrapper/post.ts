@@ -7,7 +7,7 @@ Module.filterHanning = Module.cwrap("filterHanning", "number", ["number", "numbe
 Module.filterDecimation = Module.cwrap("filterDecimation", "number", ["number", "number", "number", "number", "number"]);
 Module.filterBinning = Module.cwrap("filterBinning", "number", ["number", "number", "number", "number"]);
 Module.filterSavitzkyGolay = Module.cwrap("filterSavitzkyGolay", "number", ["number", "number", "number", "number", "number", "number"]);
-Module.heapsort = Module.cwrap("heapsort", null, ["number", "number", "number"])
+Module.getMinMax = Module.cwrap("getMinMax", null, ["number", "number", "number"])
 
 Module.minMaxArray = function (data: Float64Array): {max: number, min: number} {
     if (!data) {
@@ -20,7 +20,7 @@ Module.minMaxArray = function (data: Float64Array): {max: number, min: number} {
     const minBuf = Module._malloc(8);
     Module.HEAPF64.set(new Float64Array(data), dataOnWasmHeap / 8);
 
-    Module.heapsort(dataOnWasmHeap, N, minBuf, maxBuf);
+    Module.getMinMax(dataOnWasmHeap, N, minBuf, maxBuf);
 
     const min = Module.getValue(minBuf, "double");
     const max = Module.getValue(maxBuf, "double");

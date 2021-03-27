@@ -167,6 +167,9 @@ export class PreferenceDialogComponent extends React.Component {
                         {SPECTRAL_MATCHING_TYPES.map(type => <option key={type} value={type}>{SPECTRAL_TYPE_STRING.get(type)}</option>)}
                     </HTMLSelect>
                 </FormGroup>
+                <FormGroup inline={true} label="Tranparent Image Background">
+                    <Switch checked={preference.transparentImageBackground} onChange={(ev) => preference.setPreference(PreferenceKeys.GLOBAL_TRANSPARENT_IMAGE_BACKGROUND, ev.currentTarget.checked)}/>
+                </FormGroup>
             </React.Fragment>
         );
 

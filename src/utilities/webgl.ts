@@ -2,6 +2,7 @@ import {AlertStore} from "stores";
 import {TemplateNodes} from "./templates";
 
 export const GL = WebGLRenderingContext;
+export const GL2 = WebGL2RenderingContext;
 
 export function getShaderFromString(gl: WebGLRenderingContext, shaderScript: string, type: number) {
     if (!gl || !shaderScript || !(type === GL.VERTEX_SHADER || type === GL.FRAGMENT_SHADER)) {
@@ -96,4 +97,60 @@ export function initWebGL(){
         return null;
     }
     return gl;
+}
+
+export function initWebGL2(){
+    const gl = document.createElement("canvas").getContext("webgl2");
+    if (!gl) {
+        AlertStore.Instance.showAlert(TemplateNodes.WebGLErrorMessage, "issue");
+        return null;
+    }
+    return gl;
+}
+
+export function createTextureFromArray(gl: WebGL2RenderingContext, data: Float32Array, texIndex: number = GL2.TEXTURE0, components: number = 1):WebGLTexture {
+    const numPoints = data.length / components;
+
+    if (data.length % components !== 0) {
+        console.error(`Invalid data size (${data.length} for number of components ${components}`);
+        return null;
+    }
+
+    // Attempt to make a square texture by default
+    let width = Math.ceil(Math.sqrt(numPoints));
+    let height = Math.ceil(numPoints / width);
+
+    let paddedData: Float32Array;
+    if (width * height === numPoints) {
+        paddedData = data;
+    } else {
+        paddedData = new Float32Array(width * height * components);
+        paddedData.set(data, 0);
+    }
+
+    const texture = gl.createTexture();
+    gl.activeTexture(texIndex);
+    gl.bindTexture(GL2.TEXTURE_2D, texture);
+    switch (components) {
+        case 1:
+            gl.texImage2D(GL2.TEXTURE_2D, 0, GL2.R32F, width, height, 0, GL2.RED, GL2.FLOAT, paddedData);
+            break;
+        case 2:
+            gl.texImage2D(GL2.TEXTURE_2D, 0, GL2.RG32F, width, height, 0, GL2.RG, GL2.FLOAT, paddedData);
+            break;
+        case 3:
+            gl.texImage2D(GL2.TEXTURE_2D, 0, GL2.RGB32F, width, height, 0, GL2.RGB, GL2.FLOAT, paddedData);
+            break;
+        case 4:
+            gl.texImage2D(GL2.TEXTURE_2D, 0, GL2.RGBA32F, width, height, 0, GL2.RGBA, GL2.FLOAT, paddedData);
+            break;
+        default:
+            console.error(`Invalid number of components specified: ${components}`);
+            return null;
+    }
+    gl.texParameteri(GL2.TEXTURE_2D, GL2.TEXTURE_MIN_FILTER, GL2.NEAREST);
+    gl.texParameteri(GL2.TEXTURE_2D, GL2.TEXTURE_MAG_FILTER, GL2.NEAREST);
+    gl.texParameteri(GL2.TEXTURE_2D, GL2.TEXTURE_WRAP_S, GL2.CLAMP_TO_EDGE);
+    gl.texParameteri(GL2.TEXTURE_2D, GL2.TEXTURE_WRAP_T, GL2.CLAMP_TO_EDGE);
+    return texture;
 }

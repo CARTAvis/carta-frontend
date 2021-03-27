@@ -235,12 +235,16 @@ void generateVertexData(void* dst, size_t dstCapacity, float* srcVertices, int n
     }
 }
 
-double clamp(double d, double min, double max) {
-  const double t = d < min ? min : d;
-  return t > max ? max : t;
+float clamp(float d, float min, float max) {
+    if (d!=d)
+    {
+        return min;
+    }
+    const double t = d < min ? min : d;
+    return t > max ? max : t;
 }
 
-double scaleValue(double x, int scaling, double alpha, double gamma) {
+float scaleValue(float x, int scaling, float alpha, float gamma) {
     switch (scaling)
     {
     case SQUARE:
@@ -258,24 +262,24 @@ double scaleValue(double x, int scaling, double alpha, double gamma) {
     }
 }
 
-void calculateCatalogSizeDiameter(double* data, size_t N, double min, double max, int sizeMin, int sizeMax, int scaling, double alpha, double gamma) {
-    double columnMin = scaleValue(min, scaling, alpha, gamma);
-    double columnMax = scaleValue(max, scaling, alpha, gamma);
-    double range = columnMax - columnMin;
+void calculateCatalogSizeDiameter(float* data, size_t N, float min, float max, int sizeMin, int sizeMax, int scaling, float alpha, float gamma) {
+    float columnMin = scaleValue(min, scaling, alpha, gamma);
+    float columnMax = scaleValue(max, scaling, alpha, gamma);
+    float range = columnMax - columnMin;
     for (size_t i = 0; i < N; i++)
     {
-        double value = scaleValue(*(data + i), scaling, alpha, gamma);
+        float value = scaleValue(*(data + i), scaling, alpha, gamma);
         *(data + i) = clamp((value - columnMin) / range * sizeMax, sizeMin, sizeMax);
     }
 }
 
-void calculateCatalogSizeArea(double* data, size_t N, double min, double max, int sizeMin, int sizeMax, int scaling, double alpha, double gamma) {
-    double columnMin = scaleValue(min, scaling, alpha, gamma);
-    double columnMax = scaleValue(max, scaling, alpha, gamma);
-    double range = columnMax - columnMin;
+void calculateCatalogSizeArea(float* data, size_t N, float min, float max, int sizeMin, int sizeMax, int scaling, float alpha, float gamma) {
+    float columnMin = scaleValue(min, scaling, alpha, gamma);
+    float columnMax = scaleValue(max, scaling, alpha, gamma);
+    float range = columnMax - columnMin;
     for (size_t i = 0; i < N; i++)
     {
-        double value = scaleValue(*(data + i), scaling, alpha, gamma);
+        float value = scaleValue(*(data + i), scaling, alpha, gamma);
         *(data + i) = clamp(sqrt((value - columnMin) / range) * sizeMax, sizeMin, sizeMax);
     }
 }

@@ -253,3 +253,16 @@ export function angle2D(a: Point2D, b: Point2D) {
 export function round2D(a: Point2D) {
     return {x: Math.round(a.x), y: Math.round(a.y)};
 }
+
+export function closestCatalogIndexToCursor(cursor: Point2D, points: Float32Array, numberVertexs: number): {minIndex: number, minDistanceSquared: number} {
+    let minDistanceSquared = Number.MAX_VALUE;
+    let minIndex = 0;
+    for (let index = 0; index < numberVertexs; index++) {
+        const distance = pointDistanceSquared(cursor, {x: points[index * 4], y: points[index * 4 + 1]});
+        if (distance < minDistanceSquared) {
+            minDistanceSquared = distance;
+            minIndex = index;
+        }
+    }
+    return {minIndex: minIndex, minDistanceSquared: minDistanceSquared};
+}

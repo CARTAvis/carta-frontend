@@ -37,7 +37,7 @@ import {
 } from ".";
 import {distinct, GetRequiredTiles, mapToObject, getTimestamp} from "utilities";
 import {ApiService, BackendService, ConnectionStatus, ScriptingService, TileService, TileStreamDetails} from "services";
-import {FrameView, Point2D, ProtobufProcessing, Theme, TileCoordinate, WCSMatchingType} from "models";
+import {FrameView, Point2D, PresetLayout, ProtobufProcessing, Theme, TileCoordinate, WCSMatchingType} from "models";
 import {HistogramWidgetStore, RegionWidgetStore, SpatialProfileWidgetStore, SpectralProfileWidgetStore, StatsWidgetStore, StokesAnalysisWidgetStore} from "./widgets";
 import {getImageCanvas, ImageViewLayer} from "components";
 import {AppToaster, ErrorToast, SuccessToast, WarningToast} from "components/Shared";
@@ -167,11 +167,6 @@ export class AppStore {
                 this.loadFile(folderSearchParam, fileSearchParam, "");
             }
         }));
-
-        const authTokenParam = url.searchParams.get("token");
-        if (authTokenParam) {
-            ApiService.Instance.setToken(authTokenParam);
-        }
 
         this.backendService.connect(wsURL).subscribe(ack => {
             console.log(`Connected with session ID ${ack.sessionId}`);
@@ -597,7 +592,7 @@ export class AppStore {
 
     @action shiftFrame = (delta: number) => {
         if (this.activeFrame && this.frames.length > 1) {
-            const frameIds = this.frames.map(f => f.frameInfo.fileId).sort((a, b) => a - b);
+            const frameIds = this.frames.map(f => f.frameInfo.fileId)
             const currentIndex = frameIds.indexOf(this.activeFrame.frameInfo.fileId);
             const requiredIndex = (this.frames.length + currentIndex + delta) % this.frames.length;
             this.setActiveFrame(frameIds[requiredIndex]);
@@ -1148,6 +1143,13 @@ export class AppStore {
         this.backendService.scriptingStream.subscribe(this.handleScriptingRequest);
         this.tileService.tileStream.subscribe(this.handleTileStream);
 
+        // Set auth token from URL if it exists
+        const url = new URL(window.location.href);
+        const authTokenParam = url.searchParams.get("token");
+        if (authTokenParam) {
+            this.apiService.setToken(authTokenParam);
+        }
+
         // Splash screen mask
         autorun(() => {
             if (this.astReady && this.zfpReady && this.cartaComputeReady && this.apiService.authenticated) {
@@ -1155,7 +1157,10 @@ export class AppStore {
                     this.layoutStore.fetchLayouts().then(() => {
                         // Attempt connection after authenticating
                         this.tileService.setCache(this.preferenceStore.gpuTileCache, this.preferenceStore.systemTileCache);
-                        this.layoutStore.applyLayout(this.preferenceStore.layout);
+                        if (!this.layoutStore.applyLayout(this.preferenceStore.layout)) {
+                            AlertStore.Instance.showAlert(`Applying preference layout "${this.preferenceStore.layout}" failed!`);
+                            this.layoutStore.applyLayout(PresetLayout.DEFAULT);
+                        }
                         this.cursorFrozen = this.preferenceStore.isCursorFrozen;
                         this.connectToServer();
                     });
@@ -1361,7 +1366,7 @@ export class AppStore {
     };
 
     handleReconnectStream = () => {
-        this.alertStore.showInteractiveAlert("You have reconnected to the CARTA server. Do you want to resume your session?", this.onResumeAlertClosed);
+        this.alertStore.showInteractiveAlert("Do you want to resume your session? Please note that temporary images such as moment images or PV images generated via the GUI will be unloaded.", this.onResumeAlertClosed);
     };
 
     handleScriptingRequest = (request: CARTA.IScriptingRequest) => {
@@ -1379,6 +1384,10 @@ export class AppStore {
         // Some things should be reset when the user reconnects
         this.animatorStore.stopAnimation();
         this.tileService.clearRequestQueue();
+
+        // Ignore & remove generated in-memory images(moments/PV, fileId >= 1000)
+        const inMemoryImages = this.frames.filter(frame => frame.frameInfo.fileId >= 1000);
+        inMemoryImages.forEach(frame => this.removeFrame(frame));
 
         const images: CARTA.IImageProperties[] = this.frames.map(frame => {
             const info = frame.frameInfo;
@@ -1726,7 +1735,8 @@ export class AppStore {
 
     exportImage = (): boolean => {
         if (this.activeFrame) {
-            const composedCanvas = getImageCanvas(this.overlayStore.padding);
+            const backgroundColor = this.preferenceStore.transparentImageBackground ? "rgba(255, 255, 255, 0)" : (this.darkTheme ? Colors.DARK_GRAY3 : Colors.LIGHT_GRAY5);
+            const composedCanvas = getImageCanvas(this.overlayStore.padding, backgroundColor);
             if (composedCanvas) {
                 composedCanvas.toBlob((blob) => {
                     const link = document.createElement("a") as HTMLAnchorElement;
