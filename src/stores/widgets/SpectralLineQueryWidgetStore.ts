@@ -145,6 +145,7 @@ export class SpectralLineQueryWidgetStore extends RegionWidgetStore {
     @observable filterResult: Map<number, ProcessedColumnData>;
     @observable private filteredRowIndexes: Array<number>;
     @observable private isDataFiltered: boolean;
+    @observable private filterNum: number;
     @observable numDataRows: number;
     @observable selectedSpectralProfilerID: string;
     @observable controlHeader: Map<string, ControlHeader>;
@@ -256,6 +257,7 @@ export class SpectralLineQueryWidgetStore extends RegionWidgetStore {
         this.numDataRows = 0;
         this.controlHeader = new Map<string, ControlHeader>();
         this.isDataFiltered = false;
+        this.filterNum = 0;
     };
 
     @action query = () => {
@@ -292,6 +294,7 @@ export class SpectralLineQueryWidgetStore extends RegionWidgetStore {
                     this.queryResult = this.initColumnData(ack.spectralLineData, ack.dataSize, this.columnHeaders);
                     this.updateFilterResult(this.fullRowIndexes);
                     this.isDataFiltered = false;
+                    this.filterNum = 0;
                 } else {
                     this.resetQueryContents();
                     AppStore.Instance.alertStore.showAlert(ack.message);
@@ -323,6 +326,7 @@ export class SpectralLineQueryWidgetStore extends RegionWidgetStore {
     @action filter = () => {
         // find intersections of indexes from filter criteria
         let filteredRowIndexes = this.fullRowIndexes;
+        let filterNum = 0;
         this.controlHeader.forEach((controlHeader) => {
             const filterString = controlHeader.filter;
             if (filterString !== "") {
@@ -336,12 +340,14 @@ export class SpectralLineQueryWidgetStore extends RegionWidgetStore {
                 } else if (dataType === CARTA.ColumnType.String) {
                     filteredRowIndexes = stringFiltering(data as Array<string>, filteredRowIndexes, filterString);
                 }
+                filterNum++;
             }
         });
 
         // set up filtered columns
         this.updateFilterResult(filteredRowIndexes);
         this.isDataFiltered = true;
+        this.filterNum = filterNum;
     };
 
     @action resetFilter = () => {
@@ -352,6 +358,7 @@ export class SpectralLineQueryWidgetStore extends RegionWidgetStore {
             this.updateFilterResult(this.fullRowIndexes);
         }
         this.isDataFiltered = false;
+        this.filterNum = 0;
     };
 
     @action.bound setResultTableColumnWidth(width: number, columnName: string) {
@@ -400,16 +407,6 @@ export class SpectralLineQueryWidgetStore extends RegionWidgetStore {
             }
         });
         return filters;
-    }
-
-    @computed get filterNum(): number {
-        let filterNum = 0;
-        this.controlHeader.forEach((value) => {
-            if (value.filter) {
-                filterNum++;
-            }
-        });
-        return filterNum;
     }
 
     @computed get resultTableInfo(): string {
