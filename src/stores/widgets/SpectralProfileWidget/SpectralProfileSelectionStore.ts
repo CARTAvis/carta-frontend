@@ -32,24 +32,27 @@ export class SpectralProfileSelectionStore {
 
     @computed get profileConfigs(): FullSpectralConfig[] {
         let profileConfigs: FullSpectralConfig[] = [];
-        if (this.selectedFrame && this.selectedRegionIds?.length >= 1 && this.selectedStatsTypes?.length >= 1 && this.selectedStatsTypes?.length >= 1) {
+        if (this.selectedFrame && this.selectedRegionIds?.length >= 1 && this.selectedStatsTypes?.length >= 1 && this.selectedCoordinates?.length >= 1) {
             if (this.activeProfileCategory === ProfileCategory.IMAGE) {
+                const selectedRegionId = this.selectedRegionIds[0];
+                const selectedStatsType = this.selectedStatsTypes[0];
+                const selectedCoordinate = this.selectedCoordinates[0];
                 const matchedFileIds = AppStore.Instance.matchedGroupIds;
                 if (matchedFileIds?.includes(this.selectedFrameFileId)) {
                     matchedFileIds.forEach(fileId => {
                         profileConfigs.push({
                             fileId: fileId,
-                            regionId: this.DEFAULT_REGION_ID, // TODO: what's the value for matched images?
-                            statsTypes: [this.DEFAULT_STATS_TYPE], // TODO: what's the value for matched images?
-                            coordinate: this.DEFAULT_COORDINATE // TODO: what's the value for matched images?
+                            regionId: selectedRegionId,
+                            statsTypes: [selectedStatsType],
+                            coordinate: selectedCoordinate
                         });
                     });
                 } else {
                     profileConfigs.push({
                         fileId: this.selectedFrameFileId,
-                        regionId: this.DEFAULT_REGION_ID, // TODO: what's the value for matched images?
-                        statsTypes: [this.DEFAULT_STATS_TYPE], // TODO: what's the value for matched images?
-                        coordinate: this.DEFAULT_COORDINATE // TODO: what's the value for matched images?
+                        regionId: selectedRegionId,
+                        statsTypes: [selectedStatsType],
+                        coordinate: selectedCoordinate
                     });
                 }
             } else if (this.activeProfileCategory === ProfileCategory.REGION) {
