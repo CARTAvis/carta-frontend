@@ -109,7 +109,9 @@ ctx.onmessage = (event => {
                 layer: eventArgs.layer,
                 fileId: eventArgs.fileId,
                 channel: eventArgs.channel,
-                stokes: eventArgs.stokes
+                stokes: eventArgs.stokes,
+                minVal: eventArgs.minVal,
+                maxVal: eventArgs.maxVal
             }], [event.data[1]]);
 
             if (Module.debugOutput) {

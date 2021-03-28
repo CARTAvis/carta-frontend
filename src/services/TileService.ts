@@ -13,6 +13,8 @@ export interface RasterTile {
     width: number;
     height: number;
     textureCoordinate: number;
+    minVal: number;
+    maxVal: number;
 }
 
 export interface CompressedTile {
@@ -129,7 +131,7 @@ export class TileService {
                     const eventArgs = event.data[2];
                     const length = eventArgs.width * eventArgs.subsetHeight;
                     const resultArray = new Float32Array(buffer, 0, length);
-                    this.updateStream(eventArgs.fileId, eventArgs.channel, eventArgs.stokes, resultArray, eventArgs.width, eventArgs.subsetHeight, eventArgs.layer, eventArgs.tileCoordinate);
+                    this.updateStream(eventArgs.fileId, eventArgs.channel, eventArgs.stokes, resultArray, eventArgs.width, eventArgs.subsetHeight, eventArgs.layer, eventArgs.tileCoordinate, eventArgs.minVal, eventArgs.maxVal);
                 }
             };
         }
@@ -380,7 +382,7 @@ export class TileService {
 
                 if (tileMessage.compressionType === CARTA.CompressionType.NONE) {
                     const decompressedData = new Float32Array(tile.imageData.buffer.slice(tile.imageData.byteOffset, tile.imageData.byteOffset + tile.imageData.byteLength));
-                    this.updateStream(tileMessage.fileId, tileMessage.channel, tileMessage.stokes, decompressedData, tile.width, tile.height, tile.layer, encodedCoordinate);
+                    this.updateStream(tileMessage.fileId, tileMessage.channel, tileMessage.stokes, decompressedData, tile.width, tile.height, tile.layer, encodedCoordinate, tile.minValue, tile.maxValue);
                 } else {
                     this.getCompressedCache(tileMessage.fileId).set(encodedCoordinate, {tile, compressionQuality: tileMessage.compressionQuality});
                     this.asyncDecompressTile(tileMessage.fileId, tileMessage.channel, tileMessage.stokes, tile, tileMessage.compressionQuality, encodedCoordinate);
@@ -414,6 +416,8 @@ export class TileService {
                 compression: precision,
                 nanEncodings: nanEncodings32,
                 tileCoordinate,
+                minVal: tile.minValue,
+                maxVal: tile.maxValue,
                 layer: tile.layer,
                 requestId: this.compressionRequestCounter
             }],
@@ -421,7 +425,7 @@ export class TileService {
         this.compressionRequestCounter++;
     }
 
-    private updateStream(fileId: number, channel: number, stokes: number, decompressedData: Float32Array, width: number, height: number, layer: number, encodedCoordinate: number) {
+    private updateStream(fileId: number, channel: number, stokes: number, decompressedData: Float32Array, width: number, height: number, layer: number, encodedCoordinate: number, minVal: number, maxVal: number) {
         const key = `${fileId}_${stokes}_${channel}`;
         const pendingCompressionMap = this.pendingDecompressions.get(key);
         if (!pendingCompressionMap) {
@@ -438,6 +442,8 @@ export class TileService {
                 height,
                 textureCoordinate: -1,
                 data: decompressedData,
+                minVal,
+                maxVal
             };
             if (!this.receivedSynchronisedTiles) {
                 this.receivedSynchronisedTiles = [];
@@ -478,6 +484,8 @@ export class TileService {
                 height,
                 textureCoordinate,
                 data: decompressedData,
+                minVal,
+                maxVal
             };
             if (layer < NUM_PERSISTENT_LAYERS) {
                 this.persistentTiles.set(encodedCoordinate, rasterTile);

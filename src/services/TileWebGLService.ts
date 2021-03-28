@@ -29,6 +29,8 @@ interface ShaderUniforms {
     TileOffset: WebGLUniformLocation;
     TileTextureOffset: WebGLUniformLocation;
     TileTextureSize: WebGLUniformLocation;
+    TileMinVal: WebGLUniformLocation;
+    TileMaxVal: WebGLUniformLocation;
     TextureSize: WebGLUniformLocation;
     TileBorder: WebGLUniformLocation;
 }
@@ -100,6 +102,8 @@ export class TileWebGLService {
             TileTextureOffset: this.gl.getUniformLocation(this.shaderProgram, "uTileTextureOffset"),
             TextureSize: this.gl.getUniformLocation(this.shaderProgram, "uTextureSize"),
             TileTextureSize: this.gl.getUniformLocation(this.shaderProgram, "uTileTextureSize"),
+            TileMaxVal: this.gl.getUniformLocation(this.shaderProgram, "uTileMaxVal"),
+            TileMinVal: this.gl.getUniformLocation(this.shaderProgram, "uTileMinVal"),
             TileBorder: this.gl.getUniformLocation(this.shaderProgram, "uTileBorder")
         };
 
