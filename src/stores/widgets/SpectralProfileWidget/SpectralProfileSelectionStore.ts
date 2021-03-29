@@ -192,10 +192,8 @@ export class SpectralProfileSelectionStore {
 
     @action selectFrame = (fileId: number) => {
         this.widgetStore.setFileId(fileId);
-        const frame = AppStore.Instance.getFrame(fileId)
-        if (!frame?.hasStokes && this.activeProfileCategory === ProfileCategory.STOKES) {
-            this.setActiveProfileCategory(ProfileCategory.IMAGE);
-        }
+        // TODO: do we need to switch category to IMAGE or can stay in the same category when switching frame?
+        this.setActiveProfileCategory(ProfileCategory.IMAGE);
     };
 
     @action selectRegion = (regionId: number, isMultipleSelectionMode: boolean) => {
