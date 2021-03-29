@@ -144,7 +144,9 @@ export class SpectralProfileSelectionStore {
     }
 
     @computed get isStatsTypeSelectionAvailable(): boolean {
-        if (this.activeProfileCategory !== ProfileCategory.REGION && this.selectedFrame?.regionSet?.regions && this.selectedRegionIds?.length > 0) {
+        // Check the available stats types of the selected single region
+        if ((this.activeProfileCategory === ProfileCategory.REGION && this.selectedFrame?.regionSet?.regions && this.selectedRegionIds?.length === 1) ||
+            (this.activeProfileCategory !== ProfileCategory.REGION && this.selectedFrame?.regionSet?.regions && this.selectedRegionIds?.length > 0)) {
             const selectedRegion = this.selectedFrame.regionSet.regions.find(r => r.regionId === this.selectedRegionIds[0]);
             return selectedRegion && selectedRegion.isClosedRegion;
         }
