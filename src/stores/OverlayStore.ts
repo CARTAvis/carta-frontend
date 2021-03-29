@@ -744,7 +744,7 @@ export class OverlayColorbarSettings {
         this.labelRotation = -90;
         this.labelFont = 0;
         this.labelFontSize = 15;
-        this.labelCustomText = AppStore.Instance?.activeFrame?.unit ? true : false;
+        this.labelCustomText = false;
         this.labelText = "";
         this.labelCustomColor = false;
         this.labelColor = AST_DEFAULT_COLOR;
@@ -878,8 +878,12 @@ export class OverlayColorbarSettings {
         this.labelColor = color;
     };
 
+    private getOrder = (x: number): number => {
+        return x === 0 ? 0 : Math.log10(Math.abs(x));
+    };
+
     private getPrecision = (x: number): number => {
-        return Math.floor(Math.log10(Math.abs(x)));
+        return Math.floor(this.getOrder(x));
     };
 
     @computed get tickNum(): number {
@@ -921,13 +925,13 @@ export class OverlayColorbarSettings {
         if (!this.roundedNumbers) {
             return [];
         }
-        const orders = this.roundedNumbers.numbers.map(x => x === 0 ? 0 : Math.log10(Math.abs(x)));
+        const orders = this.roundedNumbers.numbers.map(x => this.getOrder(x));
         const maxOrder = Math.max(...orders);
         const minOrder = Math.min(...orders);
         if (maxOrder >= 5.0 || minOrder <= -5.0) {
-            return this.roundedNumbers.numbers.map(x => x.toExponential(this.numberCustomPrecision ? this.numberPrecision : clamp(this.roundedNumbers.precision + this.getPrecision(x), 0, 10)));
+            return this.roundedNumbers.numbers.map(x => x.toExponential(this.numberCustomPrecision ? this.numberPrecision : (x === 0 ? 0 : clamp(this.roundedNumbers.precision + this.getPrecision(x), 0, 50))));
         } else {
-            return this.roundedNumbers.numbers.map(x => x.toFixed(this.numberCustomPrecision ? this.numberPrecision : clamp(this.roundedNumbers.precision, 0, 10)));
+            return this.roundedNumbers.numbers.map(x => x.toFixed(this.numberCustomPrecision ? this.numberPrecision : clamp(this.roundedNumbers.precision, 0, 50)));
         }
     }
 
