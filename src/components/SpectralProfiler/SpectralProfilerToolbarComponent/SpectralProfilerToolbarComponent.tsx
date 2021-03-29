@@ -9,7 +9,6 @@ import {CustomIcon} from "icons/CustomIcons";
 import "./SpectralProfilerToolbarComponent.scss";
 
 export interface ProfileItemOptionProps extends IOptionProps{
-    disable?: boolean;
     hightlight?: boolean;
 }
 
@@ -21,6 +20,7 @@ class ProfileSelectionButtonComponentProps {
     itemOptions: ProfileItemOptionProps[];
     itemSelected: MultiSelectItem[];
     disabled: boolean;
+    disableOptions?: boolean;
     onCategorySelect: () => void;
     onItemSelect: (item: MultiSelectItem, isMultipleSelectionMode: boolean) => void;
 }
@@ -45,7 +45,7 @@ class ProfileSelectionButtonComponent extends React.Component<ProfileSelectionBu
                                 <MenuItem
                                     key={item.value}
                                     text={item.label}
-                                    disabled={item.disable}
+                                    disabled={this.props.disableOptions}
                                     intent={item.hightlight ? Intent.PRIMARY : Intent.NONE}
                                     onClick={(ev) => this.props.onItemSelect(item.value, this.props.isActiveCategory)}
                                     icon={this.props.itemSelected?.includes(item.value) ? "tick" : "blank"}
@@ -113,7 +113,8 @@ class ProfileSelectionComponent extends React.Component<{profileSelectionStore: 
                     isActiveCategory={profileSelectionStore.activeProfileCategory === ProfileCategory.STATISTICS}
                     itemOptions={profileSelectionStore.statsTypeOptions}
                     itemSelected={profileSelectionStore.selectedStatsTypes}
-                    disabled={!frame || !profileSelectionStore.isStatsTypeSelectionAvailable}
+                    disabled={!frame}
+                    disableOptions={!profileSelectionStore.isStatsTypeSelectionAvailable}
                     onCategorySelect={() => profileSelectionStore.setActiveProfileCategory(ProfileCategory.STATISTICS)}
                     onItemSelect={this.onStatsItemClick}
                 />
