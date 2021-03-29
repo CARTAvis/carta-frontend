@@ -1,7 +1,6 @@
 import * as React from "react";
 import {observer} from "mobx-react";
 import {computed, autorun} from "mobx";
-import {Colors} from "@blueprintjs/core";
 import {LinePlotSettingsPanelComponentProps, LinePlotSettingsPanelComponent} from "components/Shared";
 import {HistogramWidgetStore} from "stores/widgets";
 import {WidgetProps, DefaultWidgetConfig, HelpType, WidgetsStore, AppStore} from "stores";
@@ -141,8 +140,6 @@ export class HistogramSettingsPanelComponent extends React.Component<WidgetProps
     render() {
         const widgetStore = this.widgetStore;
         const lineSettingsProps: LinePlotSettingsPanelComponentProps = {
-            darkMode: AppStore.Instance.darkTheme,
-            primaryDarkModeLineColor: Colors.BLUE4,
             primaryLineColor: widgetStore.primaryLineColor,
             lineWidth: widgetStore.lineWidth,
             plotType: widgetStore.plotType,

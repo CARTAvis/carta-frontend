@@ -1,10 +1,9 @@
 import {action, computed, observable, makeObservable, override} from "mobx";
 import {ChartArea} from "chart.js";
-import {Colors} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import {PlotType, LineSettings, ScatterSettings} from "components/Shared";
 import {RegionWidgetStore, RegionsType} from "./RegionWidgetStore";
-import {getColorsForValues} from "utilities";
+import {getColorsForValues, isAutoColor} from "utilities";
 import {SpectralSystem, SpectralType, SpectralUnit} from "models";
 import tinycolor from "tinycolor2";
 import {ProfileSmoothingStore} from "stores/ProfileSmoothingStore";
@@ -24,8 +23,8 @@ export enum StokesCoordinate {
 const DEFAULTS = {
         fractionalPolVisible: false,
         scatterOutRangePointsZIndex: [],
-        primaryLineColor: { colorHex: Colors.BLUE2, fixed: false },
-        secondaryLineColor: { colorHex: Colors.ORANGE2, fixed: false },
+        primaryLineColor: "auto-blue",
+        secondaryLineColor: "auto-orange",
         lineWidth: 1,
         linePlotPointSize: 1.5,
         scatterPlotPointSize: 3,
@@ -61,8 +60,8 @@ export class StokesAnalysisWidgetStore extends RegionWidgetStore {
 
     // settings 
     @observable plotType: PlotType;
-    @observable primaryLineColor: { colorHex: string, fixed: boolean };
-    @observable secondaryLineColor: { colorHex: string, fixed: boolean };
+    @observable primaryLineColor: string;
+    @observable secondaryLineColor: string;
     @observable lineWidth: number;
     @observable linePlotPointSize: number;
     @observable scatterPlotPointSize: number;
@@ -320,12 +319,12 @@ export class StokesAnalysisWidgetStore extends RegionWidgetStore {
         this.plotType = val;
     };
 
-    @action setPrimaryLineColor = (colorHex: string, fixed: boolean) => {
-        this.primaryLineColor = { colorHex: colorHex, fixed: fixed };
+    @action setPrimaryLineColor = (color: string) => {
+        this.primaryLineColor = color;
     }
 
-    @action setSecondaryLineColor = (colorHex: string, fixed: boolean) => {
-        this.secondaryLineColor = { colorHex: colorHex, fixed: fixed };
+    @action setSecondaryLineColor = (color: string) => {
+        this.secondaryLineColor = color;
     }
 
     @action setLineWidth = (val: number) => {
@@ -394,12 +393,12 @@ export class StokesAnalysisWidgetStore extends RegionWidgetStore {
             return;
         }
         const lineColor = tinycolor(widgetSettings.primaryLineColor);
-        if (lineColor.isValid()) {
-            this.primaryLineColor.colorHex = lineColor.toHexString();
+        if (lineColor.isValid() || isAutoColor(widgetSettings.primaryLineColor)) {
+            this.primaryLineColor = widgetSettings.primaryLineColor;
         }
         const secondaryLineColor = tinycolor(widgetSettings.secondaryLineColor);
-        if (secondaryLineColor.isValid()) {
-            this.secondaryLineColor.colorHex = secondaryLineColor.toHexString();
+        if (secondaryLineColor.isValid() || isAutoColor(widgetSettings.secondaryLineColor)) {
+            this.secondaryLineColor = widgetSettings.secondaryLineColor;
         }
         if (typeof widgetSettings.lineWidth === "number" && widgetSettings.lineWidth >= LineSettings.MIN_WIDTH && widgetSettings.lineWidth <= LineSettings.MAX_WIDTH) {
             this.lineWidth = widgetSettings.lineWidth;
@@ -426,8 +425,8 @@ export class StokesAnalysisWidgetStore extends RegionWidgetStore {
 
     public toConfig = () => {
         return {
-            primaryLineColor: this.primaryLineColor.colorHex,
-            secondaryLineColor: this.secondaryLineColor.colorHex,
+            primaryLineColor: this.primaryLineColor,
+            secondaryLineColor: this.secondaryLineColor,
             lineWidth: this.lineWidth,
             linePlotPointSize: this.linePlotPointSize,
             plotType: this.plotType,
