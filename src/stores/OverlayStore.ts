@@ -1,5 +1,5 @@
 import * as AST from "ast_wrapper";
-import { action, autorun, computed, observable, makeObservable } from "mobx";
+import {action, autorun, computed, observable, makeObservable} from "mobx";
 import {AppStore, FrameStore, PreferenceStore, WCS_PRECISION} from "stores";
 import {WCSType} from "models";
 import {toFixed, clamp, getColorForTheme} from "utilities";
@@ -744,7 +744,7 @@ export class OverlayColorbarSettings {
         this.labelRotation = -90;
         this.labelFont = 0;
         this.labelFontSize = 15;
-        this.labelCustomText = false;
+        this.labelCustomText = AppStore.Instance?.activeFrame?.unit ? true : false;
         this.labelText = "";
         this.labelCustomColor = false;
         this.labelColor = AST_DEFAULT_COLOR;
@@ -879,8 +879,8 @@ export class OverlayColorbarSettings {
     };
 
     private getPrecision = (x: number): number => {
-        return -Math.floor(Math.log10(x));
-    }
+        return Math.floor(Math.log10(Math.abs(x)));
+    };
 
     @computed get tickNum(): number {
         const renderHeight = AppStore.Instance.overlayStore.renderHeight;
@@ -899,11 +899,11 @@ export class OverlayColorbarSettings {
             return null;
         } else {
             let dy = (scaleMaxVal - scaleMinVal) / tickNum;
-            let precision = this.getPrecision(dy);
+            let precision = -this.getPrecision(dy);
             const roundBase = Math.pow(10, precision);
             const min =  Math.round(scaleMinVal * roundBase) / roundBase;
             dy = Math.ceil(dy * roundBase) / roundBase;
-            precision = this.getPrecision(dy);
+            precision = -this.getPrecision(dy);
 
             const indexArray = Array.from(Array(tickNum).keys());
             let numbers = indexArray.map(x => min + dy * (x + (min <= scaleMinVal ? 1 : 0)));
@@ -924,10 +924,8 @@ export class OverlayColorbarSettings {
         const orders = this.roundedNumbers.numbers.map(x => x === 0 ? 0 : Math.log10(Math.abs(x)));
         const maxOrder = Math.max(...orders);
         const minOrder = Math.min(...orders);
-        if (maxOrder >= 5.0) {
-            return this.roundedNumbers.numbers.map(x => x.toExponential(this.numberCustomPrecision ? this.numberPrecision : clamp(-this.getPrecision(x) + this.roundedNumbers.precision, 0, 10)));
-        } else if (minOrder <= -5.0) {
-            return this.roundedNumbers.numbers.map(x => x.toExponential(this.numberCustomPrecision ? this.numberPrecision : clamp(-this.getPrecision(x) + this.roundedNumbers.precision, 0, 10)));
+        if (maxOrder >= 5.0 || minOrder <= -5.0) {
+            return this.roundedNumbers.numbers.map(x => x.toExponential(this.numberCustomPrecision ? this.numberPrecision : clamp(this.roundedNumbers.precision + this.getPrecision(x), 0, 10)));
         } else {
             return this.roundedNumbers.numbers.map(x => x.toFixed(this.numberCustomPrecision ? this.numberPrecision : clamp(this.roundedNumbers.precision, 0, 10)));
         }
@@ -953,12 +951,17 @@ export class OverlayColorbarSettings {
     }
 
     @computed get numberWidth(): number {
-        const textWidth = Math.max(...(this.texts.map(x => x.length))) * this.textRatio[Math.floor(this.numberFont / 4)];
+        const textWidth = Math.max(...(this.texts.map(x => x.length))) * this.textRatio[clamp(Math.floor(this.numberFont / 4), 0, this.textRatio.length)];
         return this.numberVisible ? this.numberFontSize * (this.numberRotation ? 1 : textWidth) + this.textGap : 0;
     }
 
+    @computed get labelWidth(): number {
+        const labelText = this.labelCustomText ? this.labelText : AppStore.Instance?.activeFrame?.unit;
+        return this.labelVisible && (labelText !== "") ? this.labelFontSize + this.textGap : 0;
+    }
+
     @computed get totalWidth(): number {
-        return this.offset + this.width + this.numberWidth + (this.labelVisible ? this.labelFontSize + this.textGap : 0);
+        return this.offset + this.width + this.numberWidth + this.labelWidth;
     }
 
     @computed get stageWidth(): number { // total width + base

@@ -128,9 +128,10 @@ export class ColorbarComponent extends React.Component<ColorbarComponentProps> {
             }
         }
 
-        const label = colorbarSettings.labelVisible ? (
+        const labelText = colorbarSettings.labelCustomText ? colorbarSettings.labelText : frame.unit
+        const label = colorbarSettings.labelVisible && (labelText !== "") ? (
             <Text
-                text={colorbarSettings.labelCustomText ? colorbarSettings.labelText : frame.unit}
+                text={labelText}
                 x={colorbarSettings.rightBorderPos + colorbarSettings.numberWidth + colorbarSettings.textGap + (colorbarSettings.labelRotation === 90 ? colorbarSettings.numberFontSize : 0)}
                 y={yOffset + (colorbarSettings.labelRotation === -90 ? frame.renderHeight : 0)}
                 width={frame.renderHeight}
@@ -143,7 +144,7 @@ export class ColorbarComponent extends React.Component<ColorbarComponentProps> {
                 key={'0'}
             />
         ) : null;
-
+        
         const hoverBar = colorbarSettings.showHoverInfo && this.showHoverInfo ? (
             <Line
                 points={[colorbarSettings.offset, this.cursorY, colorbarSettings.rightBorderPos, this.cursorY]}
