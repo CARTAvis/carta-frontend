@@ -37,7 +37,7 @@ export class SpectralProfileSelectionStore {
                 const selectedRegionId = this.selectedRegionIds[0];
                 const selectedStatsType = this.selectedStatsTypes[0];
                 const selectedCoordinate = this.selectedCoordinates[0];
-                const matchedFileIds = AppStore.Instance.matchedGroupIds;
+                const matchedFileIds = AppStore.Instance.spatialAndSpectalMatchedFileIds;
                 if (matchedFileIds?.includes(this.selectedFrameFileId)) {
                     matchedFileIds.forEach(fileId => {
                         profileConfigs.push({
@@ -97,17 +97,15 @@ export class SpectralProfileSelectionStore {
         return profileConfigs;
     }
 
-    // TODO: integrate with AppStore.Instance.matchedGroupIds
     @computed get frameOptions(): ProfileItemOptionProps[] {
         let options = [];
         const appStore = AppStore.Instance;
         const frameNameOptions = appStore.frameNames;
-        const spectralReference = appStore.spectralReference;
-        const matchedFrameIds = spectralReference?.spectralSiblings?.map(matchedFrame => {return matchedFrame.frameInfo.fileId;});
+        const matchedFrameIds = appStore.spatialAndSpectalMatchedFileIds;
         options = frameNameOptions?.map(frameNameOption => {
-            const isMatched = matchedFrameIds?.length > 0 && (frameNameOption.value === spectralReference.frameInfo.fileId || matchedFrameIds.includes(frameNameOption.value as number));
+            const isMatched = matchedFrameIds?.length > 1 && matchedFrameIds?.includes(frameNameOption.value as number);
             return {
-                label: `${frameNameOption.label}`,
+                label: `${frameNameOption.label}${isMatched ? " (matched)" : ""}`,
                 value: frameNameOption.value,
                 hightlight: isMatched
             };

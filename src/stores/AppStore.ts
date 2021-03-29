@@ -303,16 +303,20 @@ export class AppStore {
         return activeGroupFrames;
     }
 
-    // TODO: confirm group for multiple spectral profiles
-    @computed get matchedGroupIds(): number[] {
-        let ids = [];
-        const spectralReference = this.spectralReference;
-        if (spectralReference) {
-            ids.push(spectralReference.frameInfo.fileId);
-            const matchedFrameIds = spectralReference?.spectralSiblings?.map(matchedFrame => {return matchedFrame.frameInfo.fileId;});
-            ids = ids.concat(matchedFrameIds);
+    @computed get spatialAndSpectalMatchedFileIds(): number[] {
+        let matchedIds = [];
+        if (this.spatialReference) {
+            matchedIds.push(this.spatialReference.frameInfo.fileId);
         }
-        return ids;
+
+        const spatialMatchedFileIds = this.spatialReference?.spatialSiblings?.map(matchedFrame => {return matchedFrame.frameInfo.fileId;});
+        const spectralMatchedFileIds = this.spatialReference?.spectralSiblings?.map(matchedFrame => {return matchedFrame.frameInfo.fileId;});
+        spatialMatchedFileIds?.forEach(spatialMatchedFileId => {
+            if (spectralMatchedFileIds?.includes(spatialMatchedFileId)) {
+                matchedIds.push(spatialMatchedFileId);
+            }
+        });
+        return matchedIds;
     }
 
     @computed get contourFrames(): FrameStore[] {
