@@ -257,8 +257,6 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
         this.gl.uniform2f(tileRenderService.shaderUniforms.TileSize, rasterTile.width, rasterTile.height);
         this.gl.uniform2f(tileRenderService.shaderUniforms.TileOffset, bottomLeft.x, bottomLeft.y);
         this.gl.uniform2f(tileRenderService.shaderUniforms.TileScaling, tileScaling.x, tileScaling.y);
-        this.gl.uniform1f(tileRenderService.shaderUniforms.TileMinVal, rasterTile.minVal);
-        this.gl.uniform1f(tileRenderService.shaderUniforms.TileMaxVal, rasterTile.maxVal);
         this.gl.drawArrays(WebGLRenderingContext.TRIANGLE_STRIP, 0, 4);
     }
 

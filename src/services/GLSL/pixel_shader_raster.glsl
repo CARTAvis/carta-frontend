@@ -27,8 +27,6 @@ uniform float uContrast;
 uniform float uGamma;
 uniform float uAlpha;
 uniform vec4 uNaNColor;
-uniform float uTileMinVal;
-uniform float uTileMaxVal;
 
 // Tile texture parameters in pixels
 uniform float uTileBorder;
@@ -57,10 +55,6 @@ void main(void) {
 
     float range = uMaxVal - uMinVal;
     float rawVal = texture2D(uDataTexture, texCoords).r;
-
-    // Per-tile scaling (from [0, 1] -> [uTileMinVal, uTileMaxVal]
-    float tileRange = uTileMaxVal - uTileMinVal;
-    rawVal = rawVal * tileRange + uTileMinVal;
 
     // Scaling types
     // LINEAR (Default: uScaleType == LINEAR)

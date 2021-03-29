@@ -100,6 +100,16 @@ ctx.onmessage = (event => {
                 decodedIndex += L;
             }
 
+            const range = eventArgs.maxVal - eventArgs.minVal;
+            if (isFinite(range) && range > 0.0) {
+                for (let i = 0; i < outputView.length; i++) {
+                    const v = outputView[i];
+                    if (v> -FLT_MAX) {
+                        outputView[i] = v * range + eventArgs.minVal;
+                    }
+                }
+            }
+
             ctx.postMessage(["decompress", event.data[1], {
                 width: eventArgs.width,
                 subsetHeight: eventArgs.subsetHeight,
@@ -110,8 +120,6 @@ ctx.onmessage = (event => {
                 fileId: eventArgs.fileId,
                 channel: eventArgs.channel,
                 stokes: eventArgs.stokes,
-                minVal: eventArgs.minVal,
-                maxVal: eventArgs.maxVal
             }], [event.data[1]]);
 
             if (Module.debugOutput) {
