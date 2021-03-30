@@ -262,6 +262,8 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
             return LinePlotSelectingMode.HORIZONTAL;
         } else if (this.widgetStore.isSelectingMomentMaskRange) {
             return LinePlotSelectingMode.VERTICAL;
+        } else if (this.widgetStore.fittingStore.isCursorSelectionOn) {
+            return LinePlotSelectingMode.BOX;
         }
         return LinePlotSelectingMode.BOX;
     }
@@ -313,6 +315,12 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
             }
         }
     };
+
+    private setSelectedBox = (xMin: number, xMax: number, yMin: number, yMax: number) => {
+        if (isFinite(xMin) && isFinite(xMax) && isFinite(yMin) && isFinite(yMax)) {
+            this.widgetStore.fittingStore.setComponentByCursor(xMin, xMax, yMin, yMax);
+        }
+    }
 
     private fillVisibleSpectralLines = (): LineMarker[] => {
         let spectralLineMarkers: LineMarker[] = [];
@@ -372,6 +380,9 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
             pointRadius: this.widgetStore.linePlotPointSize,
             selectingMode: this.linePlotSelectingMode,
             setSelectedRange: this.setSelectedRange,
+            isSelectingInsideBox: this.widgetStore.fittingStore.isCursorSelectionOn,
+            setSelectedInsideBox: this.setSelectedBox,
+            insideBoxs: this.widgetStore.fittingStore.componentPlottingBoxs,
             zeroLineWidth: 2,
             order: 1,
             multiPlotPropsMap: new Map()
@@ -432,7 +443,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
                     let fittingPlotProps: MultiPlotProps = {
                         data: currentPlotData.fittingValues,
                         type: PlotType.LINES,
-                        borderColor: getColorForTheme(smoothingStore.lineColor),
+                        borderColor: getColorForTheme("auto-orange"),
                         borderWidth: smoothingStore.lineWidth,
                         pointRadius: smoothingStore.pointRadius,
                         order: 0

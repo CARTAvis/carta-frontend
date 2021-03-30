@@ -51,6 +51,12 @@ export interface LineMarker {
     interactionMarker?: boolean;
 }
 
+export interface LinePlotInsideBoxMarker {
+    boundary: {xMin: number, xMax: number, yMin: number, yMax: number};
+    color?: string;
+    opacity?: number;
+}
+
 export class LinePlotComponentProps {
     width?: number;
     height?: number;
@@ -99,6 +105,9 @@ export class LinePlotComponentProps {
     borderWidth?: number;
     selectingMode?: LinePlotSelectingMode;
     setSelectedRange?: (min: number, max: number) => void;
+    isSelectingInsideBox?: boolean;
+    setSelectedInsideBox?: (minX: number, maxX: number, minY: number, maxY: number) => void;
+    insideBoxs?: LinePlotInsideBoxMarker[];
     order?: number;
     multiPlotPropsMap?: Map<string, MultiPlotProps>;
 }
@@ -368,6 +377,8 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
                         this.props.setSelectedRange(minX, maxX);
                     } else if (this.props.setSelectedRange && this.props.selectingMode === LinePlotSelectingMode.VERTICAL) {
                         this.props.setSelectedRange(minY, maxY);
+                    } else if (this.props.setSelectedInsideBox && this.props.isSelectingInsideBox && this.props.selectingMode === LinePlotSelectingMode.BOX)  {
+                        this.props.setSelectedInsideBox(minX, maxX, minY, maxY);
                     } else {
                         if (this.zoomMode === ZoomMode.X) {
                             this.props.graphZoomedX(minX, maxX);
@@ -929,6 +940,26 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
         }
         return borderRect;
     };
+
+    private genInsideBoxs = () => {
+        const chartArea = this.chartArea;
+        let insideBoxs = [];
+        if (this.props.insideBoxs && chartArea) {
+            for (const box of this.props.insideBoxs) {
+                insideBoxs.push(
+                    <Rect
+                        x = {Math.floor(chartArea.left) + this.getPixelForValueX(box.boundary.xMin)}
+                        y = {Math.floor(chartArea.bottom) + this.getPixelForValueY(box.boundary.yMin)}
+                        width = {this.getPixelForValueX(box.boundary.xMax) - this.getPixelForValueX(box.boundary.xMin)}
+                        height = {this.getPixelForValueX(box.boundary.yMax) - this.getPixelForValueX(box.boundary.yMin)}
+                        fill={Colors.ROSE3}
+                        opacity={box.opacity}
+                    />
+                );
+            }
+        }
+        return insideBoxs;
+    }
 
     private genMeanRMSForPngPlot = (): {
         mean: {color: string, dash: number, y: number, xLeft: number, xRight: number},

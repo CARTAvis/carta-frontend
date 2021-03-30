@@ -63,6 +63,10 @@ export class ProfileFittingComponent extends React.Component<{fittingStore: Prof
 
     }
 
+    private cursorSelecting = () => {
+        this.props.fittingStore.setIsCursorSelectionOn(true);
+    }
+
     private showLog = () => {}
 
     private reset = () => {
@@ -168,7 +172,7 @@ export class ProfileFittingComponent extends React.Component<{fittingStore: Prof
                             <AnchorButton onClick={this.autoDetect} icon="series-search"/>
                         </FormGroup>
                         <FormGroup label="Cursor selection" inline={true}>
-                            <AnchorButton disabled={true} active={true} icon="select"/>
+                            <AnchorButton onClick={this.cursorSelecting} active={fittingStore.isCursorSelectionOn} icon="select"/>
                         </FormGroup>
                         <FormGroup label="Center" inline={true}>
                             <div className="component-input">

@@ -2,6 +2,8 @@ import {action, computed, observable, makeObservable} from "mobx";
 import {FittingFunction, FittingContinuum} from "components/SpectralProfiler/ProfileFittingComponent/ProfileFittingComponent";
 import { Point2D } from "models";
 import * as GSL from "gsl_wrapper";
+import { LinePlotInsideBoxMarker } from "components/Shared/LinePlot/LinePlotComponent";
+import { getColorForTheme } from "utilities";
 
 export class ProfileFittingStore {
     @observable function: FittingFunction;
@@ -10,6 +12,7 @@ export class ProfileFittingStore {
     @observable selectedIndex: number;
     @observable hasResult: boolean;
     @observable resultLog: string;
+    @observable isCursorSelectionOn: boolean
 
     @action setComponents(length: number, reset?: boolean) {
         this.setSelectedIndex(length - 1);
@@ -24,11 +27,35 @@ export class ProfileFittingStore {
         this.components = newComponents;
     }
 
+    @action setComponentByCursor(xMin: number, xMax: number, yMin: number, yMax: number) {
+        const selectedComponent = this.selectedComponent;
+        selectedComponent.setAmp(yMax - yMin);
+        selectedComponent.setCenter((xMin + xMax)/ 2);
+        selectedComponent.setFwhm(xMax - xMin);
+        this.isCursorSelectionOn = false;
+    }
+
     @computed get selectedComponent(): ProfileFittingIndividualStore {
         if (this.components && this.selectedIndex < this.components.length) {
             return this.components[this.selectedIndex];
         }
         return null;
+    }
+
+    @computed get componentPlottingBoxs(): LinePlotInsideBoxMarker[] {
+        const boxs: LinePlotInsideBoxMarker[] = [];
+        if (this.components) {
+            for (let i = 0; i < this.components.length; i++) {
+                const component = this.components[i];
+                const box: LinePlotInsideBoxMarker = {
+                    boundary: {xMin: component.center - 0.5 * component.fwhm, xMax: component.center + 0.5 * component.fwhm, yMin: 0, yMax: component.amp},
+                    color: (i === this.selectedIndex) ? getColorForTheme("auto-orange"): getColorForTheme("auto-lime"),
+                    opacity: (i === this.selectedIndex) ? 0.9 : 0.7
+                }
+                boxs.push(box);
+            }
+        }
+        return boxs;
     }
 
     @computed get resultString(): string {
@@ -101,8 +128,7 @@ export class ProfileFittingStore {
     constructor() {
         makeObservable(this);
         this.function = FittingFunction.GAUSSIAN;
-        this.components = [];
-        this.setComponents(1);
+        this.components = [new ProfileFittingIndividualStore()];
         this.continuum = FittingContinuum.NONE;
         this.selectedIndex = 0;
     }
@@ -125,6 +151,10 @@ export class ProfileFittingStore {
 
     @action setResultLog = (val: string) => {
         this.resultLog = val;
+    }
+
+    @action setIsCursorSelectionOn = (val: boolean) => {
+        this.isCursorSelectionOn = val;
     }
 }
 
