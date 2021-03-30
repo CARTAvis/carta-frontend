@@ -695,6 +695,19 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
                         intOnly={true}
                     />
                 </FormGroup>
+                <FormGroup inline={true} label="Ticks density" labelInfo="(per 100px)" disabled={!colorbar.visible || (!colorbar.tickVisible && !colorbar.numberVisible)}>
+                    <SafeNumericInput
+                        placeholder="Ticks density"
+                        min={0.2}
+                        max={20}
+                        value={colorbar.tickDensity}
+                        stepSize={0.2}
+                        minorStepSize={0.1}
+                        majorStepSize={1}
+                        disabled={!colorbar.visible || (!colorbar.tickVisible && !colorbar.numberVisible)}
+                        onValueChange={(value: number) => colorbar.setTickDensity(value)}
+                    />
+                </FormGroup>
                 <FormGroup inline={true} label="Custom color" disabled={!colorbar.visible}>
                     <Switch
                         checked={colorbar.customColor}
@@ -715,106 +728,69 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
                     </FormGroup>
                 </Collapse>
                 <hr></hr>
-                <FormGroup inline={true} label="Border" disabled={!colorbar.visible}>
+                <FormGroup inline={true} label="Label" disabled={!colorbar.visible}>
                     <Switch
-                        checked={colorbar.borderVisible}
+                        checked={colorbar.labelVisible}
                         disabled={!colorbar.visible}
-                        onChange={(ev) => colorbar.setBorderVisible(ev.currentTarget.checked)}
+                        onChange={(ev) => colorbar.setLabelVisible(ev.currentTarget.checked)}
                     />
                 </FormGroup>
-                <FormGroup inline={true} label="Border width" labelInfo="(px)" disabled={!colorbar.visible || !colorbar.borderVisible}>
+                <FormGroup inline={true} label="Label rotation"  disabled={!colorbar.visible || !colorbar.labelVisible}>
+                    <HTMLSelect
+                        value={colorbar.labelRotation}
+                        disabled={!colorbar.visible || !colorbar.labelVisible}
+                        onChange={(ev) => {
+                            colorbar.setLabelRotation(Number(ev.currentTarget.value));
+                            if (colorbar.numberRotation !== 0 && ((Number(ev.currentTarget.value) === 90) || (Number(ev.currentTarget.value) === -90))) {
+                                colorbar.setNumberRotation(Number(ev.currentTarget.value));
+                            }
+                        }}
+                    >
+                        <option value={-90}>-90</option>
+                        <option value={90}>90</option>
+                    </HTMLSelect>
+                </FormGroup>
+                <FormGroup inline={true} className="font-group" label="Label font" disabled={!colorbar.visible || !colorbar.labelVisible}>
+                    {this.fontSelect((colorbar.visible && colorbar.labelVisible), colorbar.labelFont, colorbar.setLabelFont)}
                     <SafeNumericInput
-                        placeholder="Border width"
-                        min={0.5}
-                        max={30}
-                        value={colorbar.borderWidth}
-                        stepSize={0.5}
-                        minorStepSize={0.1}
-                        majorStepSize={1}
-                        disabled={!colorbar.visible || !colorbar.borderVisible}
-                        onValueChange={(value: number) => colorbar.setBorderWidth(value)}
+                        min={7}
+                        max={96}
+                        value={colorbar.labelFontSize}
+                        disabled={!colorbar.visible || !colorbar.labelVisible}
+                        onValueChange={(value: number) => colorbar.setLabelFontSize(value)}
                     />
                 </FormGroup>
-                <FormGroup inline={true} label="Border custom color" disabled={!colorbar.visible || !colorbar.borderVisible}>
+                <FormGroup inline={true} label="Label custom text" disabled={!colorbar.visible || !colorbar.labelVisible}>
                     <Switch
-                        checked={colorbar.borderCustomColor}
-                        disabled={!colorbar.visible || !colorbar.borderVisible}
-                        onChange={(ev) => colorbar.setBorderCustomColor(ev.currentTarget.checked)}
+                        checked={colorbar.labelCustomText}
+                        disabled={!colorbar.visible || !colorbar.labelVisible}
+                        onChange={(ev) => colorbar.setLabelCustomText(ev.currentTarget.checked)}
                     />
                 </FormGroup>
-                <Collapse isOpen={colorbar.borderCustomColor}>
-                    <FormGroup inline={true} label="Border color" disabled={!colorbar.visible || !colorbar.borderVisible}>
-                        {colorbar.visible && colorbar.borderVisible &&
-                            <AutoColorPickerComponent
-                                color={colorbar.borderColor}
-                                presetColors={SWATCH_COLORS}
-                                setColor={colorbar.setBorderColor}
-                                disableAlpha={true}
-                            />
-                        }
+                <Collapse isOpen={colorbar.labelCustomText}>
+                    <FormGroup inline={true} label="Label text" disabled={!colorbar.visible || !colorbar.labelVisible}>
+                        <InputGroup
+                            disabled={!colorbar.visible || !colorbar.labelVisible}
+                            value={colorbar.labelText}
+                            placeholder="Enter label text"
+                            onChange={ev => colorbar.setLabelText(ev.currentTarget.value)}
+                        />
                     </FormGroup>
                 </Collapse>
-                <hr></hr>
-                <FormGroup inline={true} label="Ticks" disabled={!colorbar.visible}>
+                <FormGroup inline={true} label="Label custom color" disabled={!colorbar.visible || !colorbar.labelVisible}>
                     <Switch
-                        checked={colorbar.tickVisible}
-                        disabled={!colorbar.visible}
-                        onChange={(ev) => colorbar.setTickVisible(ev.currentTarget.checked)}
+                        checked={colorbar.labelCustomColor}
+                        disabled={!colorbar.visible || !colorbar.labelVisible}
+                        onChange={(ev) => colorbar.setLabelCustomColor(ev.currentTarget.checked)}
                     />
                 </FormGroup>
-                <FormGroup inline={true} label="Ticks density" labelInfo="(per 100px)" disabled={!colorbar.visible || !colorbar.tickVisible}>
-                    <SafeNumericInput
-                        placeholder="Ticks density"
-                        min={0.2}
-                        max={20}
-                        value={colorbar.tickDensity}
-                        stepSize={0.2}
-                        minorStepSize={0.1}
-                        majorStepSize={1}
-                        disabled={!colorbar.visible || !colorbar.tickVisible}
-                        onValueChange={(value: number) => colorbar.setTickDensity(value)}
-                    />
-                </FormGroup>
-                <FormGroup inline={true} label="Ticks len" labelInfo="(px)" disabled={!colorbar.visible || !colorbar.tickVisible}>
-                    <SafeNumericInput
-                        placeholder="Ticks len"
-                        min={0.5}
-                        max={colorbar.width}
-                        value={colorbar.tickLen}
-                        stepSize={0.5}
-                        minorStepSize={0.1}
-                        majorStepSize={1}
-                        disabled={!colorbar.visible || !colorbar.tickVisible}
-                        onValueChange={(value: number) => colorbar.setTickLen(value)}
-                    />
-                </FormGroup>
-                <FormGroup inline={true} label="Ticks width" labelInfo="(px)" disabled={!colorbar.visible || !colorbar.tickVisible}>
-                    <SafeNumericInput
-                        placeholder="Ticks width"
-                        min={0.5}
-                        max={30}
-                        value={colorbar.tickWidth}
-                        stepSize={0.5}
-                        minorStepSize={0.1}
-                        majorStepSize={1}
-                        disabled={!colorbar.visible || !colorbar.tickVisible}
-                        onValueChange={(value: number) => colorbar.setTickWidth(value)}
-                    />
-                </FormGroup>
-                <FormGroup inline={true} label="Ticks custom color" disabled={!colorbar.visible || !colorbar.tickVisible}>
-                    <Switch
-                        checked={colorbar.tickCustomColor}
-                        disabled={!colorbar.visible || !colorbar.tickVisible}
-                        onChange={(ev) => colorbar.setTickCustomColor(ev.currentTarget.checked)}
-                    />
-                </FormGroup>
-                <Collapse isOpen={colorbar.tickCustomColor}>
-                    <FormGroup inline={true} label="Ticks color" disabled={!colorbar.visible || !colorbar.tickVisible}>
-                        {colorbar.visible && colorbar.tickVisible &&
+                <Collapse isOpen={colorbar.labelCustomColor}>
+                    <FormGroup inline={true} label="Label color" disabled={!colorbar.visible || !colorbar.labelVisible}>
+                        {colorbar.visible && colorbar.labelVisible &&
                             <AutoColorPickerComponent
-                                color={colorbar.tickColor}
+                                color={colorbar.labelColor}
                                 presetColors={SWATCH_COLORS}
-                                setColor={colorbar.setTickColor}
+                                setColor={colorbar.setLabelColor}
                                 disableAlpha={true}
                             />
                         }
@@ -832,19 +808,14 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
                     <HTMLSelect
                         value={colorbar.numberRotation}
                         disabled={!colorbar.visible || !colorbar.numberVisible}
-                        onChange={(ev) => {
-                            colorbar.setNumberRotation(Number(ev.currentTarget.value));
-                            if ((Number(ev.currentTarget.value) === 90) || (Number(ev.currentTarget.value) === -90)) {
-                                colorbar.setLabelRotation(Number(ev.currentTarget.value));
-                            }
-                        }}
+                        onChange={(ev) => colorbar.setNumberRotation(Number(ev.currentTarget.value))}
                     >
                         <option value={-90}>-90</option>
                         <option value={0}>0</option>
                         <option value={90}>90</option>
                     </HTMLSelect>
                 </FormGroup>
-                <FormGroup inline={true} className="font-group" label="Numbers Font" disabled={!colorbar.visible || !colorbar.numberVisible}>
+                <FormGroup inline={true} className="font-group" label="Numbers font" disabled={!colorbar.visible || !colorbar.numberVisible}>
                     {this.fontSelect((colorbar.visible && colorbar.numberVisible), colorbar.numberFont, colorbar.setNumberFont)}
                     <SafeNumericInput
                         min={7}
@@ -893,64 +864,93 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
                     </FormGroup>
                 </Collapse>
                 <hr></hr>
-                <FormGroup inline={true} label="Label" disabled={!colorbar.visible}>
+                <FormGroup inline={true} label="Ticks" disabled={!colorbar.visible}>
                     <Switch
-                        checked={colorbar.labelVisible}
+                        checked={colorbar.tickVisible}
                         disabled={!colorbar.visible}
-                        onChange={(ev) => colorbar.setLabelVisible(ev.currentTarget.checked)}
+                        onChange={(ev) => colorbar.setTickVisible(ev.currentTarget.checked)}
                     />
                 </FormGroup>
-                <FormGroup inline={true} label="Label rotation"  disabled={!colorbar.visible || !colorbar.labelVisible}>
-                    <HTMLSelect
-                        value={colorbar.labelRotation}
-                        disabled={!colorbar.visible || !colorbar.labelVisible}
-                        onChange={(ev) => colorbar.setLabelRotation(Number(ev.currentTarget.value))}
-                    >
-                        <option value={-90}>-90</option>
-                        <option value={90}>90</option>
-                    </HTMLSelect>
-                </FormGroup>
-                <FormGroup inline={true} className="font-group" label="Label Font" disabled={!colorbar.visible || !colorbar.labelVisible}>
-                    {this.fontSelect((colorbar.visible && colorbar.labelVisible), colorbar.labelFont, colorbar.setLabelFont)}
+                <FormGroup inline={true} label="Ticks length" labelInfo="(px)" disabled={!colorbar.visible || !colorbar.tickVisible}>
                     <SafeNumericInput
-                        min={7}
-                        max={96}
-                        value={colorbar.labelFontSize}
-                        disabled={!colorbar.visible || !colorbar.labelVisible}
-                        onValueChange={(value: number) => colorbar.setLabelFontSize(value)}
+                        placeholder="Ticks length"
+                        min={0.5}
+                        max={colorbar.width}
+                        value={colorbar.tickLen}
+                        stepSize={0.5}
+                        minorStepSize={0.1}
+                        majorStepSize={1}
+                        disabled={!colorbar.visible || !colorbar.tickVisible}
+                        onValueChange={(value: number) => colorbar.setTickLen(value)}
                     />
                 </FormGroup>
-                <FormGroup inline={true} label="Label custom text" disabled={!colorbar.visible || !colorbar.labelVisible}>
+                <FormGroup inline={true} label="Ticks width" labelInfo="(px)" disabled={!colorbar.visible || !colorbar.tickVisible}>
+                    <SafeNumericInput
+                        placeholder="Ticks width"
+                        min={0.5}
+                        max={30}
+                        value={colorbar.tickWidth}
+                        stepSize={0.5}
+                        minorStepSize={0.1}
+                        majorStepSize={1}
+                        disabled={!colorbar.visible || !colorbar.tickVisible}
+                        onValueChange={(value: number) => colorbar.setTickWidth(value)}
+                    />
+                </FormGroup>
+                <FormGroup inline={true} label="Ticks custom color" disabled={!colorbar.visible || !colorbar.tickVisible}>
                     <Switch
-                        checked={colorbar.labelCustomText}
-                        disabled={!colorbar.visible || !colorbar.labelVisible}
-                        onChange={(ev) => colorbar.setLabelCustomText(ev.currentTarget.checked)}
+                        checked={colorbar.tickCustomColor}
+                        disabled={!colorbar.visible || !colorbar.tickVisible}
+                        onChange={(ev) => colorbar.setTickCustomColor(ev.currentTarget.checked)}
                     />
                 </FormGroup>
-                <Collapse isOpen={colorbar.labelCustomText}>
-                    <FormGroup inline={true} label="Label text" disabled={!colorbar.visible || !colorbar.labelVisible}>
-                        <InputGroup
-                            disabled={!colorbar.visible || !colorbar.labelVisible}
-                            value={colorbar.labelText}
-                            placeholder="Enter label text"
-                            onChange={ev => colorbar.setLabelText(ev.currentTarget.value)}
-                        />
+                <Collapse isOpen={colorbar.tickCustomColor}>
+                    <FormGroup inline={true} label="Ticks color" disabled={!colorbar.visible || !colorbar.tickVisible}>
+                        {colorbar.visible && colorbar.tickVisible &&
+                            <AutoColorPickerComponent
+                                color={colorbar.tickColor}
+                                presetColors={SWATCH_COLORS}
+                                setColor={colorbar.setTickColor}
+                                disableAlpha={true}
+                            />
+                        }
                     </FormGroup>
                 </Collapse>
-                <FormGroup inline={true} label="Label custom color" disabled={!colorbar.visible || !colorbar.labelVisible}>
+                <hr></hr>
+                <FormGroup inline={true} label="Border" disabled={!colorbar.visible}>
                     <Switch
-                        checked={colorbar.labelCustomColor}
-                        disabled={!colorbar.visible || !colorbar.labelVisible}
-                        onChange={(ev) => colorbar.setLabelCustomColor(ev.currentTarget.checked)}
+                        checked={colorbar.borderVisible}
+                        disabled={!colorbar.visible}
+                        onChange={(ev) => colorbar.setBorderVisible(ev.currentTarget.checked)}
                     />
                 </FormGroup>
-                <Collapse isOpen={colorbar.labelCustomColor}>
-                    <FormGroup inline={true} label="Label color" disabled={!colorbar.visible || !colorbar.labelVisible}>
-                        {colorbar.visible && colorbar.labelVisible &&
+                <FormGroup inline={true} label="Border width" labelInfo="(px)" disabled={!colorbar.visible || !colorbar.borderVisible}>
+                    <SafeNumericInput
+                        placeholder="Border width"
+                        min={0.5}
+                        max={30}
+                        value={colorbar.borderWidth}
+                        stepSize={0.5}
+                        minorStepSize={0.1}
+                        majorStepSize={1}
+                        disabled={!colorbar.visible || !colorbar.borderVisible}
+                        onValueChange={(value: number) => colorbar.setBorderWidth(value)}
+                    />
+                </FormGroup>
+                <FormGroup inline={true} label="Border custom color" disabled={!colorbar.visible || !colorbar.borderVisible}>
+                    <Switch
+                        checked={colorbar.borderCustomColor}
+                        disabled={!colorbar.visible || !colorbar.borderVisible}
+                        onChange={(ev) => colorbar.setBorderCustomColor(ev.currentTarget.checked)}
+                    />
+                </FormGroup>
+                <Collapse isOpen={colorbar.borderCustomColor}>
+                    <FormGroup inline={true} label="Border color" disabled={!colorbar.visible || !colorbar.borderVisible}>
+                        {colorbar.visible && colorbar.borderVisible &&
                             <AutoColorPickerComponent
-                                color={colorbar.labelColor}
+                                color={colorbar.borderColor}
                                 presetColors={SWATCH_COLORS}
-                                setColor={colorbar.setLabelColor}
+                                setColor={colorbar.setBorderColor}
                                 disableAlpha={true}
                             />
                         }

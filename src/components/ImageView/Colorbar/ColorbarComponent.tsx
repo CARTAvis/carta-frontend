@@ -2,10 +2,10 @@ import * as React from "react";
 import {observer} from "mobx-react";
 import {action, observable, makeObservable} from "mobx";
 import {Layer, Line, Rect, Stage, Text} from "react-konva";
-import {Font} from "../ImageViewSettingsPanel/ImageViewSettingsPanelComponent"
 import {ProfilerInfoComponent} from "components/Shared";
 import {AppStore} from "stores";
 import {fonts} from "ast_wrapper";
+import {Font} from "../ImageViewSettingsPanel/ImageViewSettingsPanelComponent"
 import {getColorForTheme} from "utilities";
 import "./ColorbarComponent.scss";
 
@@ -64,7 +64,7 @@ export class ColorbarComponent extends React.Component<ColorbarComponentProps> {
 
         let getColor = (customColor: boolean, color: string): string => {
             return customColor ? getColorForTheme(color) : (colorbarSettings.customColor ? getColorForTheme(colorbarSettings.color) : getColorForTheme(appStore.overlayStore.global.color));
-        }
+        };
 
         // to avoid blurry border when width <= 1px, add 0.5 px offset to the colorbar if necessary
         const isOnePixBorder = colorbarSettings.borderWidth <= 1;
@@ -128,10 +128,10 @@ export class ColorbarComponent extends React.Component<ColorbarComponentProps> {
             }
         }
 
-        const labelText = colorbarSettings.labelCustomText ? colorbarSettings.labelText : frame.unit
-        const label = colorbarSettings.labelVisible && (labelText !== "") ? (
+        const frameUnit = frame.unit === undefined || !frame.unit.length ? "arbitrary units" : frame.unit;
+        const label = colorbarSettings.labelVisible ? (
             <Text
-                text={labelText}
+                text={colorbarSettings.labelCustomText ? colorbarSettings.labelText : frameUnit}
                 x={colorbarSettings.rightBorderPos + colorbarSettings.numberWidth + colorbarSettings.textGap + (colorbarSettings.labelRotation === 90 ? colorbarSettings.numberFontSize : 0)}
                 y={yOffset + (colorbarSettings.labelRotation === -90 ? frame.renderHeight : 0)}
                 width={frame.renderHeight}

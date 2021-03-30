@@ -123,7 +123,7 @@ export class RenderConfigStore {
     @computed get colorscaleArray() {
         const colorsForValues = getColorsForValues(this.colorMap);
         const indexArray = Array.from(Array(colorsForValues.size).keys()).map(x => this.inverted ? x / colorsForValues.size : 1 - x / colorsForValues.size);
-        const scaledAarray = indexArray.map(x => 1.0 - scaleValueInverse(1.0 - x, this.scaling, this.alpha, this.gamma))
+        const scaledAarray = indexArray.map(x => 1.0 - scaleValueInverse(1.0 - x, this.scaling, this.alpha, this.gamma));
 
         let colorscale = [];
         for (let i = 0; i < colorsForValues.size; i++) {

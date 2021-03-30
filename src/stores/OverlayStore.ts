@@ -740,7 +740,7 @@ export class OverlayColorbarSettings {
         this.numberPrecision = 3;
         this.numberCustomColor = false;
         this.numberColor = AST_DEFAULT_COLOR;
-        this.labelVisible = true;
+        this.labelVisible = false;
         this.labelRotation = -90;
         this.labelFont = 0;
         this.labelFontSize = 15;
@@ -794,12 +794,12 @@ export class OverlayColorbarSettings {
         this.tickVisible = visible;
     };
 
-    @action setTickDensity = (tickNum: number) => {
-        this.tickDensity = tickNum;
+    @action setTickDensity = (density: number) => {
+        this.tickDensity = density;
     };
 
-    @action setTickLen = (tickLen: number) => {
-        this.tickLen = tickLen;
+    @action setTickLen = (len: number) => {
+        this.tickLen = len;
     };
 
     @action setTickWidth = (width: number) => {
@@ -830,12 +830,12 @@ export class OverlayColorbarSettings {
         this.numberFontSize = fontSize;
     };
 
-    @action setNumberCustomPrecision = (numberCustomPrecision: boolean) => {
-        this.numberCustomPrecision = numberCustomPrecision;
+    @action setNumberCustomPrecision = (customPrecision: boolean) => {
+        this.numberCustomPrecision = customPrecision;
     };
 
-    @action setNumberPrecision = (numberPrecision: number) => {
-        this.numberPrecision = numberPrecision;
+    @action setNumberPrecision = (precision: number) => {
+        this.numberPrecision = precision;
     };
 
     @action setNumberCustomColor = (customColor: boolean) => {
@@ -902,12 +902,12 @@ export class OverlayColorbarSettings {
         } else if (scaleMinVal >= scaleMaxVal) {
             return null;
         } else {
-            let dy = (scaleMaxVal - scaleMinVal) / tickNum;
-            let precision = -this.getPrecision(dy);
+            let dy = (scaleMaxVal - scaleMinVal) / tickNum; // estimate the step
+            let precision = -this.getPrecision(dy); // estimate precision
             const roundBase = Math.pow(10, precision);
             const min =  Math.round(scaleMinVal * roundBase) / roundBase;
-            dy = Math.ceil(dy * roundBase) / roundBase;
-            precision = -this.getPrecision(dy);
+            dy = Math.ceil(dy * roundBase) / roundBase; // the exact step
+            precision = -this.getPrecision(dy); // the exact precision of the step
 
             const indexArray = Array.from(Array(tickNum).keys());
             let numbers = indexArray.map(x => min + dy * (x + (min <= scaleMinVal ? 1 : 0)));
@@ -960,8 +960,7 @@ export class OverlayColorbarSettings {
     }
 
     @computed get labelWidth(): number {
-        const labelText = this.labelCustomText ? this.labelText : AppStore.Instance?.activeFrame?.unit;
-        return this.labelVisible && (labelText !== "") ? this.labelFontSize + this.textGap : 0;
+        return this.labelVisible ? this.labelFontSize + this.textGap : 0;
     }
 
     @computed get totalWidth(): number {
