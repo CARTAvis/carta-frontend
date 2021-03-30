@@ -70,10 +70,7 @@ export class RegionWidgetStore {
     }
 
     @computed get effectiveRegion(): RegionStore {
-        if (this.effectiveFrame) {
-            return this.effectiveFrame.regionSet?.regions?.find(r => r.regionId === this.effectiveRegionId);
-        }
-        return null;
+        return this.effectiveFrame?.getRegion(this.effectiveRegionId);
     }
 
     @computed get matchesSelectedRegion(): boolean {
@@ -94,13 +91,13 @@ export class RegionWidgetStore {
 
         widgetsMap.forEach(widgetStore => {
             const frame = widgetStore.effectiveFrame;
-            if (!frame || !frame.regionSet) {
+            if (!frame) {
                 return;
             }
             const fileId = frame.frameInfo.fileId;
             const regionId = widgetStore.effectiveRegionId;
-            const region = frame.regionSet.regions.find(r => r.regionId === regionId);
-            if (regionId === -1 || (region && region.isClosedRegion)) {
+            const region = frame.getRegion(regionId);
+            if (regionId === -1 || (region?.isClosedRegion)) {
                 let frameRequirementsArray = updatedRequirements.get(fileId);
                 if (!frameRequirementsArray) {
                     frameRequirementsArray = [];

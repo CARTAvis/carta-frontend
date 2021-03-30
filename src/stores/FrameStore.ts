@@ -894,6 +894,10 @@ export class FrameStore {
         }), FrameStore.ZoomInertiaDuration);
     };
 
+    public getRegion = (regionId: number): RegionStore => {
+        return this.regionSet?.regions?.find(r => r.regionId === regionId);
+    };
+
     public convertToNativeWCS = (value: number): number => {
         if (!this.spectralFrame || !isFinite(value)) {
             return undefined;
@@ -1062,7 +1066,7 @@ export class FrameStore {
             return "Invalid";
         }
 
-        const center = region.regionId === RegionId.CURSOR ? `${this.cursorInfo.infoWCS.x}, ${this.cursorInfo.infoWCS.y}` : `${wcsCenter.x}, ${wcsCenter.y}`;
+        const center = region.regionId === RegionId.CURSOR ? `${this.cursorInfo?.infoWCS?.x}, ${this.cursorInfo?.infoWCS?.y}` : `${wcsCenter.x}, ${wcsCenter.y}`;
         const wcsSize = this.getWcsSizeInArcsec(region.size);
         const size = wcsSize ? {x: formattedArcsec(wcsSize.x, WCS_PRECISION), y: formattedArcsec(wcsSize.y, WCS_PRECISION)} : null;
         const systemType = OverlayStore.Instance.global.explicitSystem;

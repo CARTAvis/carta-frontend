@@ -75,7 +75,7 @@ export class SpectralProfileSelectionStore {
                 const selectedCoordinate = this.selectedCoordinates[0];
 
                 this.selectedRegionIds?.forEach(selectedRegionId => {
-                    const region = this.selectedFrame.regionSet?.regions?.find(r => r.regionId === selectedRegionId);
+                    const region = this.selectedFrame.getRegion(selectedRegionId);
                     profileConfigs.push({
                         fileId: this.selectedFrameFileId,
                         regionId: selectedRegionId,
@@ -86,7 +86,7 @@ export class SpectralProfileSelectionStore {
             } else if (this.activeProfileCategory === ProfileCategory.STATISTICS) {
                 const selectedRegionId = this.selectedRegionIds[0];
                 const selectedCoordinate = this.selectedCoordinates[0];
-                const region = this.selectedFrame.regionSet?.regions?.find(r => r.regionId === selectedRegionId);
+                const region = this.selectedFrame.getRegion(selectedRegionId);
 
                 profileConfigs.push({
                     fileId: this.selectedFrameFileId,
@@ -97,7 +97,7 @@ export class SpectralProfileSelectionStore {
             } else if (this.activeProfileCategory === ProfileCategory.STOKES) {
                 const selectedRegionId = this.selectedRegionIds[0];
                 const selectedStatsType = this.selectedStatsTypes[0];
-                const region = this.selectedFrame.regionSet?.regions?.find(r => r.regionId === selectedRegionId);
+                const region = this.selectedFrame.getRegion(selectedRegionId);
 
                 this.selectedCoordinates?.forEach(coordinate => {
                     profileConfigs.push({
@@ -117,7 +117,7 @@ export class SpectralProfileSelectionStore {
         this.profileConfigs?.forEach(profileConfig => {
             const frame = AppStore.Instance.getFrame(profileConfig.fileId);
             const fileName = frame?.filename;
-            const region = frame?.regionSet?.regions?.find(r => r.regionId === profileConfig.regionId);
+            const region = frame?.getRegion(profileConfig.regionId);
             profileConfig.statsTypes?.forEach(statsType => {
                 profileOptions.push(`${fileName}-${region?.nameString}-${StatsTypeString(statsType)}-${profileConfig.coordinate}`);
             });
@@ -173,9 +173,9 @@ export class SpectralProfileSelectionStore {
 
     @computed get isStatsTypeSelectionAvailable(): boolean {
         // Check the available stats types of the selected single region
-        if ((this.activeProfileCategory === ProfileCategory.REGION && this.selectedFrame?.regionSet?.regions && this.selectedRegionIds?.length === 1) ||
-            (this.activeProfileCategory !== ProfileCategory.REGION && this.selectedFrame?.regionSet?.regions && this.selectedRegionIds?.length > 0)) {
-            const selectedRegion = this.selectedFrame.regionSet.regions.find(r => r.regionId === this.selectedRegionIds[0]);
+        if ((this.activeProfileCategory === ProfileCategory.REGION && this.selectedRegionIds?.length === 1) ||
+            (this.activeProfileCategory !== ProfileCategory.REGION && this.selectedRegionIds?.length > 0)) {
+            const selectedRegion = this.selectedFrame?.getRegion(this.selectedRegionIds[0]);
             return selectedRegion && selectedRegion.isClosedRegion;
         }
         return true;
