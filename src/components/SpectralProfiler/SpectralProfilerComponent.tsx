@@ -236,7 +236,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
         const regionIds = profileSelectionStore.selectedRegionIds;
         regionIds?.forEach(regionId => {
             const frame = profileSelectionStore.selectedFrame;
-            const region = frame?.regionSet?.regions?.find(r => r.regionId === regionId);
+            const region = frame?.getRegion(regionId);
             if (region) {
                 headerString.push(region.regionProperties);
                 if (frame?.validWcs) {
