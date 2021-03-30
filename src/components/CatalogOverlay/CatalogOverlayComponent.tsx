@@ -558,12 +558,14 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
 
     private handleResetClick = () => {
         const profileStore = this.profileStore;
+        const catalogWidgetStore = this.widgetStore;
         const appStore = AppStore.Instance;
-        if (profileStore) {
+        if (profileStore && catalogWidgetStore) {
             profileStore.resetCatalogFilterRequest();
             this.resetSelectedPointIndices();
             appStore.catalogStore.clearImageCoordsData(this.catalogFileId);
             appStore.sendCatalogFilter(profileStore.catalogFilterRequest);
+            catalogWidgetStore.resetMaps();
         }
     }
 
@@ -919,8 +921,8 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
                             />
                         </div>
                     </div>
-                    <div className="footer-button-container">
-                        <div className="footer-button">
+                    <div className="bp3-dialog-footer">
+                        <div className="bp3-dialog-footer-actions">
                             <FormGroup inline={true} label="Size Column" disabled={disabledMap}>
                                 <Select
                                     items={this.axisOption}
@@ -937,38 +939,30 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
                                     <Button text={catalogWidgetStore.sizeMapColumn} disabled={disabledMap} rightIcon="double-caret-vertical"/>
                                 </Select>
                             </FormGroup>
-                            <Tooltip content={"Apply filter"}>
                             <AnchorButton
                                 intent={Intent.PRIMARY}
                                 text="Update"
                                 onClick={this.handleFilterRequest}
                                 disabled={disable || !profileStore.updateTableView}
                             />
-                            </Tooltip>
-                            <Tooltip content={"Reset view"}>
                             <AnchorButton
                                 intent={Intent.PRIMARY}
                                 text="Reset"
                                 onClick={this.handleResetClick}
                                 disabled={disable}
                             />
-                            </Tooltip>
-                            <Tooltip content={"Close file"}>
                             <AnchorButton
                                 intent={Intent.PRIMARY}
                                 text="Close"
                                 onClick={this.handleFileCloseClick}
                                 disabled={disable}
                             />
-                            </Tooltip>
-                            <Tooltip content={"Plot data"}>
                             <AnchorButton
                                 intent={Intent.PRIMARY}
                                 text="Plot"
                                 onClick={this.handlePlotClick}
                                 disabled={!this.enablePlotButton}
                             />
-                            </Tooltip>
                         </div>
                     </div>
                 </div>

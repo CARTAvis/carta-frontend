@@ -279,19 +279,17 @@
                 }
             }
         }
-
-        .footer-button-container {
-            width: 100%;
+        
+        .bp3-dialog-footer {
             height: 35px;
-            display: inline-block;
-
-            .footer-button {
-                overflow-x: auto;
-                display: inline-flex;
-                float: right;
-
-                .bp3-popover-wrapper {
-                    margin-left: 5px;
+            float: right;
+            .bp3-button {
+                height: 30px;
+            }
+            .bp3-form-group {
+                margin: 0;
+                .bp3-label {
+                    margin: 0;
                 }
             }
         }

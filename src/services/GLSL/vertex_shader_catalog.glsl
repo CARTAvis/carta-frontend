@@ -9,6 +9,7 @@ uniform bool uSmapEnabled;
 uniform float uPointSize;
 uniform highp int uShapeType;
 uniform bool uAreaMode;
+uniform float uSelectedSizeOffset;
 
 #define BOX_FILLED 0
 #define BOX_LINED 1
@@ -98,6 +99,9 @@ void main() {
     gl_Position = vec4(imageToGL(pos), 0, 1);
     if (uSmapEnabled) {
         v_pointSize = size;
+        if(uSelectedSizeOffset > 0.0) {
+            v_pointSize += uSelectedSizeOffset;
+        }
     } else {
         v_pointSize = uPointSize;
     }

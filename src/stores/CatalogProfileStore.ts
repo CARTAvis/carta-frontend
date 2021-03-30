@@ -361,13 +361,14 @@ export class CatalogProfileStore {
                 const pointIndex = pointIndices[index];
                 const x = coordsArray.dataPoints[pointIndex * 4];
                 const y = coordsArray.dataPoints[pointIndex * 4 + 1];
+                const size = coordsArray.dataPoints[pointIndex * 4 + 2];
                 if (!this.isInfinite(x) && !this.isInfinite(y)) {
                     selectedX.push(x);
                     selectedY.push(y);
                 }
                 selectedData[index * 4] = x;
                 selectedData[index * 4 + 1] = y;
-                selectedData[index * 4 + 2] = 10;
+                selectedData[index * 4 + 2] = size;
                 selectedData[index * 4 + 3] = 0.5; 
             }
             CatalogStore.Instance.updateSelectedPoints(this.catalogFileId, selectedData);
@@ -392,7 +393,7 @@ export class CatalogProfileStore {
 
             }
         }
-    };
+    }
 
     @action setMaxRows(maxRows: number) {
         this.updateTableStatus(true);   

@@ -118,6 +118,16 @@ export class CatalogWidgetStore {
         });
     }
 
+    @action resetMaps() {
+        this.sizeMapColumn = CatalogOverlay.NONE;
+        this.sizeArea = false;
+        this.sizeScalingType = FrameScaling.LINEAR;
+        this.sizeMin = {area: 100, diameter: 10};
+        this.sizeMax = {area: 200, diameter: 20};
+        this.sizeColumnMin = {default: undefined, clipd: undefined};
+        this.sizeColumnMax = {default: undefined, clipd: undefined};
+    }
+
     @action setColorColumnMax(val: number, type: "default" | "clipd") {
         if (type === "default") {
             this.colorColumnMax.default = val; 

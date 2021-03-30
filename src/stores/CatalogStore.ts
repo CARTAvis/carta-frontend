@@ -6,7 +6,6 @@ import {CatalogWidgetStore} from "stores/widgets";
 type CatalogOverlayCoords = {
     dataPoints: Float32Array,
     selectedDataPoints: Float32Array,
-    showSelectedData: boolean;
     displayed: boolean;
 };
 
@@ -49,8 +48,7 @@ export class CatalogStore {
     @action addCatalog(fileId: number) {
         this.catalogGLData.set(fileId, {
             dataPoints:new Float32Array(0),
-            selectedDataPoints: new Float32Array(0), 
-            showSelectedData: false, 
+            selectedDataPoints: new Float32Array(0),
             displayed: true
         });
     }
@@ -59,6 +57,8 @@ export class CatalogStore {
         const catalog = this.catalogGLData.get(fileId);
         if (catalog) {
             const dataSize = catalog.dataPoints.length;
+            const catalogWidgetStore = this.getCatalogWidgetStore(fileId);
+            const sizeArray = catalogWidgetStore.sizeArray;
             let dataPoints = new Float32Array(dataSize + xData.length * 4);
             dataPoints.set(catalog.dataPoints);
 
@@ -67,16 +67,22 @@ export class CatalogStore {
                     for (let i = 0; i < xData.length; i++) {
                         dataPoints[dataSize + i * 4] = xData[i];
                         dataPoints[dataSize + i * 4 + 1] = yData[i];
-                        dataPoints[dataSize + i * 4 + 2] = 10;
-                        dataPoints[dataSize + i * 4 + 3] = 0.5;
+                        if (!catalogWidgetStore.disableSizeMap && sizeArray.length === xData.length) {
+                            dataPoints[dataSize + i * 4 + 2] = catalogWidgetStore.sizeArray[i] * devicePixelRatio;
+                        }
+                        // dataPoints[dataSize + i * 4 + 2] = 10;
+                        // dataPoints[dataSize + i * 4 + 3] = 0.5;
                     }
                     break;
                 case CatalogSystemType.Pixel1:
                     for (let i = 0; i < xData.length; i++) {
                         dataPoints[dataSize + i * 4] = xData[i] - 1;
                         dataPoints[dataSize + i * 4 + 1] = yData[i] - 1;
-                        dataPoints[dataSize + i * 4 + 2] = 10;
-                        dataPoints[dataSize + i * 4 + 3] = 0.5;
+                        if (!catalogWidgetStore.disableSizeMap && sizeArray.length === xData.length) {
+                            dataPoints[dataSize + i * 4 + 2] = catalogWidgetStore.sizeArray[i] * devicePixelRatio;
+                        }
+                        // dataPoints[dataSize + i * 4 + 2] = 10;
+                        // dataPoints[dataSize + i * 4 + 3] = 0.5;
                     }
                     break;
                 default:
@@ -84,8 +90,11 @@ export class CatalogStore {
                     for (let i = 0; i < pixelData.xImageCoords.length; i++) {
                         dataPoints[dataSize + i * 4] = pixelData.xImageCoords[i];
                         dataPoints[dataSize + i * 4 + 1] = pixelData.yImageCoords[i];
-                        dataPoints[dataSize + i * 4 + 2] = 10;
-                        dataPoints[dataSize + i * 4 + 3] = 0.5;
+                        if (!catalogWidgetStore.disableSizeMap && sizeArray.length === xData.length) {
+                            dataPoints[dataSize + i * 4 + 2] = catalogWidgetStore.sizeArray[i] * devicePixelRatio;
+                        }
+                        // dataPoints[dataSize + i * 4 + 2] = 10;
+                        // dataPoints[dataSize + i * 4 + 3] = 0.5;
                     }
                     break;
             }
@@ -100,6 +109,11 @@ export class CatalogStore {
                catalog.dataPoints[i * 4 + 2] = sizeData[i] * devicePixelRatio;
             }
         }
+        const selectedDataIndices = this.catalogProfileStores.get(fileId)?.selectedPointIndices;
+        for (let i = 0; i < selectedDataIndices?.length; i++) {
+            const j = selectedDataIndices[i];
+            catalog.selectedDataPoints[i * 4 + 2] = sizeData[j] * devicePixelRatio;
+        }
     }
 
     @action updateSelectedPoints(fileId: number, selectedData: Float32Array) {
@@ -113,19 +127,11 @@ export class CatalogStore {
         const catalog = this.catalogGLData.get(fileId);
         if (catalog) {
             catalog.dataPoints = new Float32Array(0);
-            catalog.showSelectedData = false;
         }
     }
 
     @action removeCatalog(fileId: number) {
         this.catalogGLData.delete(fileId);
-    }
-
-    @action updateShowSelectedData(fileId: number, val: boolean) {
-        const catalog = this.catalogGLData.get(fileId);
-        if (catalog) {
-            catalog.showSelectedData = val;
-        }
     }
 
     @action updateImageAssociatedCatalogId(activeFrameIndex: number, associatedCatalogFiles: number[]) {

@@ -720,7 +720,6 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
             layout.yaxis.range = [border.yMin, border.yMax];
             layout.yaxis.title = widgetStore.yColumnName;
             layout.yaxis.tickformat = ".2e";
-            layout["hoverdistance"] = 5;
         } else {
             data = this.histogramData.data;
             let border;
@@ -808,22 +807,22 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
                         style={{transform: isScatterPlot? `scale(${scale})` : "scale(1)", transformOrigin: "top left"}}
                     />
                 </div>
-                <div className="catalog-plot-footer">
+                <div className="bp3-dialog-footer">
                     <div className="scatter-info">
                         <ProfilerInfoComponent info={this.genProfilerInfo}/>
                     </div>
-                    <div className="actions">
-                        <FormGroup label={"Show only selected sources"} inline={true} disabled={disabled}>
-                            <Switch checked={catalogWidgetStore.showSelectedData} onChange={this.handleShowSelectedDataChanged} disabled={disabled}/>
-                        </FormGroup>
-                        <Tooltip className="plot-button" content={"Update plots with data"}>
-                            <AnchorButton
-                                intent={Intent.PRIMARY}
-                                text="Plot All"
-                                onClick={this.handlePlotClick}
-                                disabled={disabled}
-                            />
-                        </Tooltip>
+                    <div className="bp3-dialog-footer-actions">
+                        <Tooltip content={"Show only selected sources at image and table viewer"}>
+                            <FormGroup label={"Selected only"} inline={true} disabled={disabled}>
+                                <Switch checked={catalogWidgetStore.showSelectedData} onChange={this.handleShowSelectedDataChanged} disabled={disabled}/>
+                            </FormGroup>
+                        </Tooltip>            
+                        <AnchorButton
+                            intent={Intent.PRIMARY}
+                            text="Plot"
+                            onClick={this.handlePlotClick}
+                            disabled={disabled}
+                        />
                     </div>
                 </div>
                 <ReactResizeDetector handleWidth handleHeight onResize={this.onResize} refreshMode={"throttle"} refreshRate={33}>

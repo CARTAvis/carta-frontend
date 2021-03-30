@@ -63,14 +63,15 @@ export class CatalogViewGLComponent extends React.Component<CatalogViewGLCompone
             const catalogWidgetStore = catalogStore.getCatalogWidgetStore(fileId);
             const numVertices = catalog.dataPoints.length;
             const numSelectedVertices = catalog.selectedDataPoints.length;
-            const showSelectedData = catalog.showSelectedData;
+            const showSelectedData = catalogWidgetStore.showSelectedData;
             const displayed = catalog.displayed;
             const color = catalogWidgetStore.catalogColor;
             const selectedColor = catalogWidgetStore.highlightColor;
             const pointSize = catalogWidgetStore.catalogSize;
             const shape = catalogWidgetStore.catalogShape;
             const sizeMap = catalogWidgetStore.sizeMapColumn;
-            const s = catalogWidgetStore.sizeArray.length;
+            const sizeArray = catalogWidgetStore.sizeArray.length;
+            // const disableSizeMap = catalogWidgetStore.disableSizeMap;
         });
         /* eslint-enable @typescript-eslint/no-unused-vars */
 
@@ -157,9 +158,8 @@ export class CatalogViewGLComponent extends React.Component<CatalogViewGLCompone
             let dataPoints = catalog.dataPoints;
             let color = tinycolor(catalogWidgetStore.catalogColor).toRgb();
             let pointSize = catalogWidgetStore.catalogSize;
-            console.log(pointSize, catalogWidgetStore.sizeArea)
             let selectedDataPoints = catalog.selectedDataPoints;
-            if (catalog.showSelectedData) {
+            if (catalogWidgetStore.showSelectedData) {
                 dataPoints = selectedDataPoints;
             }
 
@@ -174,6 +174,7 @@ export class CatalogViewGLComponent extends React.Component<CatalogViewGLCompone
             this.gl.uniform1i(this.catalogWebGLService.shaderUniforms.SmapEnabled, sMapEnabled);
             this.gl.uniform1f(this.catalogWebGLService.shaderUniforms.FeatherWidth, featherWidth);
             this.gl.uniform1i(this.catalogWebGLService.shaderUniforms.AreaMode, sizeArea);
+            this.gl.uniform1f(this.catalogWebGLService.shaderUniforms.SelectedSizeOffset, 0.0);
 
             if (catalog.displayed && dataPoints?.length) {
                 this.gl.uniform3f(this.catalogWebGLService.shaderUniforms.PointColor, color.r / 255.0, color.g / 255.0, color.b / 255.0);
@@ -191,6 +192,11 @@ export class CatalogViewGLComponent extends React.Component<CatalogViewGLCompone
 
             if (catalog.displayed && selectedDataPoints?.length) {
                 let outlineShape = catalogWidgetStore.catalogShape;
+                if (catalogWidgetStore.disableSizeMap) {
+                    this.gl.uniform1f(this.catalogWebGLService.shaderUniforms.SelectedSizeOffset, 0.0);
+                } else {
+                    this.gl.uniform1f(this.catalogWebGLService.shaderUniforms.SelectedSizeOffset, 7.0);
+                }
                 let outlineShapeSize = pointSize * devicePixelRatio + 7;
                 if (outlineShape === CatalogOverlayShape.CircleFilled) {
                     outlineShape = CatalogOverlayShape.CircleLined;
