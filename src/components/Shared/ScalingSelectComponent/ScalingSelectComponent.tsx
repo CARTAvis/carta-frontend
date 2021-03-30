@@ -1,6 +1,7 @@
 import * as React from "react";
 import {MenuItem, IPopoverProps, Button} from "@blueprintjs/core";
 import {Select} from "@blueprintjs/select";
+import {AppStore} from "stores";
 import {FrameScaling, RenderConfigStore} from "stores/RenderConfigStore";
 
 // Equation PNG images
@@ -10,6 +11,13 @@ import sqrtPng from "static/equations/sqrt.png";
 import squaredPng from "static/equations/squared.png";
 import gammaPng from "static/equations/gamma.png";
 import powerPng from "static/equations/power.png";
+
+import linearDarkPng from "static/equations/linear_dark.png";
+import logDarkPng from "static/equations/log_dark.png";
+import sqrtDarkPng from "static/equations/sqrt_dark.png";
+import squaredDarkPng from "static/equations/squared_dark.png";
+import gammaDarkPng from "static/equations/gamma_dark.png";
+import powerDarkPng from "static/equations/power_dark.png";
 
 interface ScalingComponentProps {
     selectedItem: FrameScaling;
@@ -23,6 +31,15 @@ const equationPngMap = new Map([
     [FrameScaling.SQUARE, squaredPng],
     [FrameScaling.GAMMA, gammaPng],
     [FrameScaling.POWER, powerPng]
+]);
+
+const equationDarkPngMap = new Map([
+    [FrameScaling.LINEAR, linearDarkPng],
+    [FrameScaling.LOG, logDarkPng],
+    [FrameScaling.SQRT, sqrtDarkPng],
+    [FrameScaling.SQUARE, squaredDarkPng],
+    [FrameScaling.GAMMA, gammaDarkPng],
+    [FrameScaling.POWER, powerDarkPng]
 ]);
 
 const ScalingSelect = Select.ofType<FrameScaling>();
@@ -41,7 +58,7 @@ export const ScalingSelectComponent: React.FC<ScalingComponentProps> = (props) =
                 label={RenderConfigStore.SCALING_TYPES.get(scaling)}
                 key={scaling}
                 onClick={handleClick}
-                text={<div className="equation-div" style={{backgroundImage: `url(${equationPngMap.get(scaling)}`, backgroundSize: 'contain'}}/>}
+                text={<div className="equation-div" style={{backgroundImage: `url(${AppStore?.Instance?.darkTheme ? equationDarkPngMap.get(scaling) : equationPngMap.get(scaling)}`, backgroundSize: 'contain'}}/>}
                 style={{width: "220px"}}
             />
         );
