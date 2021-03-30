@@ -3,7 +3,7 @@ import {CARTA} from "carta-protobuf";
 import {AppStore, FrameStore} from "stores";
 import {RegionId, SpectralProfileWidgetStore} from "stores/widgets";
 import {ProfileItemOptionProps} from "components";
-import {STATISTICS_TEXT, SUPPORTED_STATISTICS_TYPES} from "models";
+import {ProcessedSpectralProfile, STATISTICS_TEXT, StatsTypeString, SUPPORTED_STATISTICS_TYPES} from "models";
 
 export enum ProfileCategory {
     IMAGE = "Image",
@@ -29,6 +29,21 @@ export class SpectralProfileSelectionStore {
     private readonly DEFAULT_STATS_TYPE: CARTA.StatsType = CARTA.StatsType.Mean;
     private readonly DEFAULT_COORDINATE: string;
     private static readonly ValidCoordinates = ["z", "Iz", "Qz", "Uz", "Vz"];
+
+    public getProfiles = (): ProcessedSpectralProfile[] => {
+        let profiles = [];
+        this.profileConfigs?.forEach(profileConfig => {
+            const frameProfileStoreMap = AppStore.Instance.spectralProfiles.get(profileConfig.fileId);
+            const regionProfileStoreMap = frameProfileStoreMap?.get(profileConfig.regionId);
+            profileConfig?.statsTypes?.forEach(statsType => {
+                const profile = regionProfileStoreMap?.getProfile(profileConfig.coordinate, statsType);
+                if (profile) {
+                    profiles.push(profile);
+                }
+            });
+        });
+        return profiles;
+    };
 
     @computed get profileConfigs(): FullSpectralConfig[] {
         let profileConfigs: FullSpectralConfig[] = [];
@@ -95,6 +110,19 @@ export class SpectralProfileSelectionStore {
             }
         }
         return profileConfigs;
+    }
+
+    @computed get profileOptions(): string[] {
+        let profileOptions = [];
+        this.profileConfigs?.forEach(profileConfig => {
+            const frame = AppStore.Instance.getFrame(profileConfig.fileId);
+            const fileName = frame?.filename;
+            const region = frame?.regionSet?.regions?.find(r => r.regionId === profileConfig.regionId);
+            profileConfig.statsTypes?.forEach(statsType => {
+                profileOptions.push(`${fileName}-${region?.nameString}-${StatsTypeString(statsType)}-${profileConfig.coordinate}`);
+            });
+        });
+        return profileOptions;
     }
 
     @computed get frameOptions(): ProfileItemOptionProps[] {
