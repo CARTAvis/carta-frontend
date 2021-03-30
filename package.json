@@ -29,7 +29,7 @@
         "axios": "^0.19.2",
         "chart.js": "^2.9.3",
         "chartjs-plugin-annotation": "^0.5.7",
-        "chokidar-cli": "^1.2.2",
+        "chokidar-cli": "^2.1.0",
         "fuzzy-search": "^3.2.1",
         "glob-to-regexp": "^0.4.1",
         "golden-layout": "^1.5.9",
