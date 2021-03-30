@@ -9,6 +9,7 @@ import {AppStore, SpectralProfileStore} from "stores";
 import {ProcessedSpectralProfile} from "models";
 import {CARTA} from "carta-protobuf";
 import "./ProfileFittingComponent.scss";
+import { autoDetecting } from "utilities/fitting_heuristics";
 
 export enum FittingFunction {
     GAUSSIAN,
@@ -45,6 +46,21 @@ export class ProfileFittingComponent extends React.Component<{fittingStore: Prof
         if (isFinite(component.center) && isFinite(component.amp) && isFinite(component.fwhm)) {
 
         }
+    }
+
+    private autoDetect = () => {
+        this.reset();
+        const guessComponents = autoDetecting(this.props.widgetStore.effectiveFrame.channelValues, Array.prototype.slice.call(this.coordinateData.values));
+        if (guessComponents) {
+
+            this.props.fittingStore.setComponents(guessComponents.length);
+            for (let i = 0; i < guessComponents.length; i++) {
+                this.props.fittingStore.components[i].setAmp(guessComponents[i].amp);
+                this.props.fittingStore.components[i].setCenter(guessComponents[i].center);
+                this.props.fittingStore.components[i].setFwhm(guessComponents[i].fwhm);
+            }
+        }
+
     }
 
     private showLog = () => {}
@@ -148,6 +164,9 @@ export class ProfileFittingComponent extends React.Component<{fittingStore: Prof
                         </div>
                     </FormGroup>
                     <FormGroup inline={true}>
+                        <FormGroup label="Auto detect" inline={true}>
+                            <AnchorButton onClick={this.autoDetect} icon="series-search"/>
+                        </FormGroup>
                         <FormGroup label="Cursor selection" inline={true}>
                             <AnchorButton disabled={true} active={true} icon="select"/>
                         </FormGroup>
