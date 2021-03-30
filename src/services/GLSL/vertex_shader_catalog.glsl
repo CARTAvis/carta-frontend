@@ -36,7 +36,7 @@ uniform float uSelectedSizeOffset;
 #define SQRT3 sqrt(3.0)
 #define SIN_60 0.86602540378
 
-out vec4 v_colour;
+out float v_colour;
 out float v_pointSize;
 
 
@@ -111,6 +111,7 @@ void main() {
     }
 
     gl_PointSize = v_pointSize + uFeatherWidth;
-    v_colour = vec4(hsv2rgb(vec3(cmapVal, 0.5, 1.0)), 1.0);
+    // v_colour = vec4(hsv2rgb(vec3(cmapVal, 0.5, 1.0)), 1.0);
+    v_colour = cmapVal;
 
 }

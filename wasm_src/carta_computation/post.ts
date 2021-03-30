@@ -6,9 +6,9 @@ declare var addOnPostRun: any;
 const decompress = Module.cwrap("ZSTD_decompress", "number", ["number", "number", "number", "number"]);
 const decodeArray = Module.cwrap("decodeArray", "number", ["number", "number", "number"]);
 const generateVertexData = Module.cwrap("generateVertexData", "number", ["number", "number", "number", "number", "number", "number"]);
-const calculateCatalogSizeArea = Module.cwrap("calculateCatalogSizeArea", null, ["number", "number", "number", "number", "number", "number", "number", "number", "number", "number"]);
-const calculateCatalogSizeDiameter = Module.cwrap("calculateCatalogSizeDiameter", null, ["number", "number", "number", "number", "number", "number", "number", "number", "number", "number"]);
-const calculateCatalogColorMap = Module.cwrap("calculateCatalogColorMap", null, ["number", "number", "number", "number", "number", "number", "number", "number", "number", "number"]);
+const calculateCatalogSizeArea = Module.cwrap("calculateCatalogSizeArea", null, ["number", "number", "number", "number", "number", "number", "number", "number", "number"]);
+const calculateCatalogSizeDiameter = Module.cwrap("calculateCatalogSizeDiameter", null, ["number", "number", "number", "number", "number", "number", "number", "number", "number"]);
+const calculateCatalogColorMap = Module.cwrap("calculateCatalogColorMap", null, ["number", "number", "number", "number", "number", "number", "number"]);
 
 const VertexDataElements = 8;
 
@@ -125,31 +125,18 @@ Module.CalculateCatalogSize = (data: Array<number>, min: number, max: number, si
     return float32;
 }
 
-Module.CalculateCatalogColor = (data: Float64Array, color: Uint8ClampedArray, colorMapWith: number, invert: boolean, min: number, max: number, scaling: number, alpha: number = 1000, gamma: number = 1.5): string[] => {
-    if (!data) {
-        return [];
-    }
-
+Module.CalculateCatalogColor = (data: Array<number>, invert: boolean, min: number, max: number, scaling: number, alpha: number = 1000, gamma: number = 1.5): Float32Array => {
     const N = data.length;
+    const src = new Float32Array(data);
+    const bytes_per_element = src.BYTES_PER_ELEMENT;
+    const dataOnWasmHeap = Module._malloc(N * bytes_per_element);
+    Module.HEAPF32.set(new Float64Array(data), dataOnWasmHeap / bytes_per_element);
 
-    const dataOnWasmHeap = Module._malloc(N * 8);
-    Module.HEAPF64.set(new Float64Array(data), dataOnWasmHeap / 8);
+    calculateCatalogColorMap(dataOnWasmHeap, N, invert, min, max, scaling, alpha, gamma);
 
-
-    calculateCatalogColorMap(dataOnWasmHeap, N, colorMapWith, invert, min, max, scaling, alpha, gamma);
-
-    const float64 = new Float64Array(Module.HEAPF64.buffer, dataOnWasmHeap, N);
-    let size = Array(N);
-    for (let i = 0; i < N; i++) {
-        let j = float64[i];
-        if (!isFinite(j)) {
-            j = 0
-        }
-        size[i] = (`rgba(${color[j]}, ${color[j + 1]}, ${color[j + 2]}, 1)`);
-    }
-
+    const float32 = new Float32Array(Module.HEAPF32.buffer, dataOnWasmHeap, N);
     Module._free(dataOnWasmHeap);
-    return size;
+    return float32;
 }
 
 module.exports = Module;

@@ -1,12 +1,6 @@
 #version 300 es
 precision highp float;
 
-uniform float uLineThickness;
-uniform highp int uShapeType;
-uniform float uFeatherWidth;
-uniform vec3 uPointColor;
-uniform bool uCmapEnabled;
-
 #define BOX_FILLED 0
 #define BOX_LINED 1
 #define CIRCLE_FILLED 2
@@ -36,15 +30,32 @@ uniform bool uCmapEnabled;
 #define SIN_90 1.0
 #define COS_90 0.0
 
+uniform float uLineThickness;
+uniform highp int uShapeType;
+uniform float uFeatherWidth;
+uniform vec3 uPointColor;
+
+// color map
+uniform bool uCmapEnabled;
+uniform sampler2D uCmapTexture;
+uniform int uNumCmaps;
+uniform int uCmapIndex;
+uniform int uScaleType;
+uniform int uInverted;
+uniform float uMinVal;
+uniform float uMaxVal;
+uniform float uGamma;
+uniform float uAlpha;
+
+in float v_colour;
+in float v_pointSize;
+out vec4 outColor;
+
 mat2 rot45 = mat2(COS_45, -COS_45, COS_45, COS_45);
 mat2 rot60 = mat2(COS_60, -SIN_60, SIN_60, COS_60);
 mat2 rot90 = mat2(COS_90, -SIN_90, SIN_90, COS_90);
 mat2 rot120 = mat2(-COS_60, -SIN_60, SIN_60, -COS_60);
 mat2 rot180 = mat2(-COS_0, SIN_0, -SIN_0, -COS_0);
-
-in vec4 v_colour;
-in float v_pointSize;
-out vec4 outColor;
 
 // Circle
 float featherRange(vec2 a, float rMax) {
@@ -323,7 +334,10 @@ void main() {
 
     // Blending
     if (uCmapEnabled) {
-        outColor = vec4(uPointColor, alpha);
+        float x = clamp((v_colour), 0.0, 1.0);
+        float cmapYVal = (float(uCmapIndex) + 0.5) / float(uNumCmaps);
+        vec2 cmapCoords = vec2(x, cmapYVal);
+        outColor = vec4(texture(uCmapTexture, cmapCoords).xyz, alpha);
     } else {
         outColor = vec4(uPointColor, alpha);
     }

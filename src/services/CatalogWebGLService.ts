@@ -1,4 +1,5 @@
-import {getShaderFromString, initWebGL2, createTextureFromArray} from "utilities";
+import {createTextureFromArray, getShaderFromString, initWebGL2, loadImageTexture} from "utilities";
+import allMaps from "../static/allmaps.png";
 import vertexShaderLine from "!raw-loader!./GLSL/vertex_shader_catalog.glsl";
 import pixelShaderDashed from "!raw-loader!./GLSL/pixel_shader_catalog.glsl";
 
@@ -14,12 +15,15 @@ interface ShaderUniforms {
     PointSize: WebGLUniformLocation,
     SmapEnabled: WebGLUniformLocation,
     AreaMode: WebGLUniformLocation,
-    SelectedSizeOffset: WebGLUniformLocation
+    SelectedSizeOffset: WebGLUniformLocation,
+    CmapTexture: WebGLUniformLocation,
+    NumCmaps: WebGLUniformLocation,
+    CmapIndex: WebGLUniformLocation
 }
 
 export class CatalogWebGLService {
     private static staticInstance: CatalogWebGLService;
-
+    private cmapTexture: WebGLTexture;
     private dataTexture: WebGLTexture; 
     readonly gl: WebGL2RenderingContext;
     shaderUniforms: ShaderUniforms;
@@ -75,12 +79,18 @@ export class CatalogWebGLService {
             FrameViewMax: this.gl.getUniformLocation(shaderProgram, "uFrameViewMax"),
             PositionTexture: this.gl.getUniformLocation(shaderProgram, "uPositionTexture"),
             PointColor: this.gl.getUniformLocation(shaderProgram, "uPointColor"),
-            CmapEnabled: this.gl.getUniformLocation(shaderProgram, "uCmapEnabled"),
             PointSize: this.gl.getUniformLocation(shaderProgram, "uPointSize"),
             SmapEnabled: this.gl.getUniformLocation(shaderProgram, "uSmapEnabled"),
             AreaMode: this.gl.getUniformLocation(shaderProgram, "uAreaMode"),
-            SelectedSizeOffset: this.gl.getUniformLocation(shaderProgram, "uSelectedSizeOffset")
+            SelectedSizeOffset: this.gl.getUniformLocation(shaderProgram, "uSelectedSizeOffset"),
+            CmapEnabled: this.gl.getUniformLocation(shaderProgram, "uCmapEnabled"),
+            CmapTexture: this.gl.getUniformLocation(shaderProgram, "uCmapTexture"),
+            NumCmaps: this.gl.getUniformLocation(shaderProgram, "uNumCmaps"),
+            CmapIndex: this.gl.getUniformLocation(shaderProgram, "uCmapIndex")
         };
+
+        this.gl.uniform1i(this.shaderUniforms.NumCmaps, 79);
+        this.gl.uniform1i(this.shaderUniforms.CmapTexture, 1);
     }
 
     private constructor() {
@@ -90,5 +100,8 @@ export class CatalogWebGLService {
         }
 
         this.initShaders();
+        loadImageTexture(this.gl, allMaps, WebGL2RenderingContext.TEXTURE1).then(texture => {
+            this.cmapTexture = texture;
+        });
     }
 }

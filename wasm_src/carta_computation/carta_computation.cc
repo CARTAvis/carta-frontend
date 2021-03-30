@@ -268,8 +268,8 @@ void calculateCatalogSizeDiameter(float* data, size_t N, float min, float max, i
     float range = columnMax - columnMin;
     for (size_t i = 0; i < N; i++)
     {
-        float c = clamp(*(data + i), min, max);
-        float value = scaleValue(c, scaling, alpha, gamma);
+        float v = clamp(*(data + i), min, max);
+        float value = scaleValue(v, scaling, alpha, gamma);
         *(data + i) = (value - columnMin) / range * (sizeMax - sizeMin) + sizeMin;
     }
 }
@@ -280,24 +280,25 @@ void calculateCatalogSizeArea(float* data, size_t N, float min, float max, int s
     float range = columnMax - columnMin;
     for (size_t i = 0; i < N; i++)
     {
-        float c = clamp(*(data + i), min, max);
-        float value = scaleValue(c, scaling, alpha, gamma);
+        float v = clamp(*(data + i), min, max);
+        float value = scaleValue(v, scaling, alpha, gamma);
         *(data + i) = sqrt((value - columnMin) / range) * (sizeMax - sizeMin) + sizeMin;
     }
 }
 
-void calculateCatalogColorMap(double* data, size_t dataSize, size_t colorMapWith, bool invert, double min, double max, int scaling, double alpha, double gamma) {
-    double columnMin = scaleValue(min, scaling, alpha, gamma);
-    double columnMax = scaleValue(max, scaling, alpha, gamma);
-    double range = columnMax - columnMin;
+void calculateCatalogColorMap(float* data, size_t dataSize, bool invert, float min, float max, int scaling, float alpha, float gamma) {
+    float columnMin = scaleValue(min, scaling, alpha, gamma);
+    float columnMax = scaleValue(max, scaling, alpha, gamma);
+    float range = columnMax - columnMin;
     for (size_t i = 0; i < dataSize; i++)
     {
-        double value = (scaleValue(*(data + i), scaling, alpha, gamma) - columnMin) / range;
+        float v = clamp(*(data + i), min, max);
+        float value = (scaleValue(v, scaling, alpha, gamma) - columnMin) / range;
         if (invert)
         {
             value = 1 - value;
         }
-        *(data + i) =  clamp(round(value * (colorMapWith - 1)) * 4 , 0, (colorMapWith - 1) * 4);
+        *(data + i) = value;
     }
 }
 

@@ -369,7 +369,7 @@ export class CatalogProfileStore {
                 selectedData[index * 4] = x;
                 selectedData[index * 4 + 1] = y;
                 selectedData[index * 4 + 2] = size;
-                selectedData[index * 4 + 3] = 0.5; 
+                // selectedData[index * 4 + 3] = 0.5; 
             }
             CatalogStore.Instance.updateSelectedPoints(this.catalogFileId, selectedData);
 

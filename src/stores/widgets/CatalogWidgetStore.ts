@@ -3,7 +3,6 @@ import * as CARTACompute from "carta_computation";
 import {action, observable, makeObservable, computed, reaction} from "mobx";
 import {Colors} from "@blueprintjs/core";
 import {CatalogOverlay, CatalogStore, FrameScaling, PreferenceStore} from "stores";
-import {getColorsForValues} from "utilities";
 
 export enum CatalogPlotType {
     ImageOverlay = "Image Overlay",
@@ -31,7 +30,8 @@ export enum CatalogSettingsTabs {
     GLOBAL,
     IMAGE_OVERLAY,
     COLOR,
-    SIZE
+    SIZE,
+    ORIENTATION
 }
 
 export type SizeClip = "size-min" | "size-max";
@@ -90,7 +90,7 @@ export class CatalogWidgetStore {
         this.sizeMapColumn = CatalogOverlay.NONE;
         this.sizeArea = false;
         this.sizeScalingType = FrameScaling.LINEAR;
-        this.sizeMin = {area: 100, diameter: 10};
+        this.sizeMin = {area: 50, diameter: 1};
         this.sizeMax = {area: 200, diameter: 20};
         this.sizeColumnMin = {default: undefined, clipd: undefined};
         this.sizeColumnMax = {default: undefined, clipd: undefined};
@@ -115,6 +115,10 @@ export class CatalogWidgetStore {
             const result =  GSL.minMaxArray(column);
             this.setColorColumnMin(isFinite(result.min)? result.min : 0, "default");
             this.setColorColumnMax(isFinite(result.max)? result.max : 0, "default");
+        });
+
+        reaction(()=>this.colorArray, (res) => {
+            CatalogStore.Instance.updateCatalogColorMap(this.catalogFileId, res);
         });
     }
 
@@ -291,22 +295,18 @@ export class CatalogWidgetStore {
         }
     }
 
-    @computed get colorArray(): string[]{
+    @computed get colorArray(): Float32Array{
         const column = this.colorMapData;
-        const colorMap = getColorsForValues(this.colorMap);
-
-        if (!this.disableColorMap && column?.length && colorMap?.size > 1) {
+        if (!this.disableColorMap && column?.length) {
             return CARTACompute.CalculateCatalogColor(
-                new Float64Array(column),
-                colorMap.color,
-                colorMap.size,
+                column,
                 false,
                 this.colorColumnMin.clipd, 
                 this.colorColumnMax.clipd, 
                 this.colorScalingType
             ); 
         }
-        return [];
+        return new Float32Array(0);
     }
 
     @computed get sizeMapData(): number[] {

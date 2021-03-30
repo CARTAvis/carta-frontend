@@ -116,6 +116,15 @@ export class CatalogStore {
         }
     }
 
+    @action updateCatalogColorMap(fileId: number, color: Float32Array) {
+        const catalog = this.catalogGLData.get(fileId);
+        if (catalog?.dataPoints?.length && color?.length) {
+            for (let i = 0; i < color.length; i++) {
+               catalog.dataPoints[i * 4 + 3] = color[i];
+            }
+        }
+    }
+
     @action updateSelectedPoints(fileId: number, selectedData: Float32Array) {
         const catalog = this.catalogGLData.get(fileId);
         if (catalog) {

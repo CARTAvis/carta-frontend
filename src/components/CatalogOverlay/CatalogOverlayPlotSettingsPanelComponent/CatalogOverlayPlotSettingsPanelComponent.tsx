@@ -362,8 +362,8 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
                 >
                     <Tab id={CatalogSettingsTabs.GLOBAL} title="Global" panel={globalPanel}/>
                     <Tab id={CatalogSettingsTabs.IMAGE_OVERLAY} title="Image Overlay" panel={overlayPanel} disabled={disabledOverlayPanel}/>
-                    <Tab id={CatalogSettingsTabs.SIZE} title="Size Map" panel={sizeMap} disabled={disabledOverlayPanel}/>
-                    <Tab id={CatalogSettingsTabs.COLOR} title="Color Map" panel={colorMap} disabled={disabledOverlayPanel}/>
+                    <Tab id={CatalogSettingsTabs.SIZE} title="Size" panel={sizeMap} disabled={disabledOverlayPanel}/>
+                    <Tab id={CatalogSettingsTabs.COLOR} title="Color" panel={colorMap} disabled={disabledOverlayPanel}/>
                 </Tabs>
             </div>
         );

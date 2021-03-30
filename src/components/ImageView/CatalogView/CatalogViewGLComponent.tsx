@@ -1,7 +1,7 @@
 import {observer} from "mobx-react";
 import * as React from "react";
 import tinycolor from "tinycolor2";
-import {AppStore, FrameStore, CatalogStore, WidgetsStore} from "stores";
+import {AppStore, CatalogStore, FrameStore, RenderConfigStore, WidgetsStore} from "stores";
 import {CatalogOverlayShape} from "stores/widgets";
 import {CatalogWebGLService} from "services";
 import {canvasToTransformedImagePos} from "components/ImageView/RegionView/shared";
@@ -69,9 +69,11 @@ export class CatalogViewGLComponent extends React.Component<CatalogViewGLCompone
             const selectedColor = catalogWidgetStore.highlightColor;
             const pointSize = catalogWidgetStore.catalogSize;
             const shape = catalogWidgetStore.catalogShape;
-            const sizeMap = catalogWidgetStore.sizeMapColumn;
-            const sizeArray = catalogWidgetStore.sizeArray.length;
-            // const disableSizeMap = catalogWidgetStore.disableSizeMap;
+            const sizeMapColumn = catalogWidgetStore.sizeMapColumn;
+            const sizeMap = catalogWidgetStore.sizeArray.length;
+            const colorMapColumn = catalogWidgetStore.colorMapColumn;
+            const colorMapValue = catalogWidgetStore.colorArray.length;
+            const colorMap = catalogWidgetStore.colorMap;
         });
         /* eslint-enable @typescript-eslint/no-unused-vars */
 
@@ -150,7 +152,6 @@ export class CatalogViewGLComponent extends React.Component<CatalogViewGLCompone
         this.gl.uniform2f(this.catalogWebGLService.shaderUniforms.FrameViewMin, frameView.xMin, frameView.yMin);
         this.gl.uniform2f(this.catalogWebGLService.shaderUniforms.FrameViewMax, frameView.xMax, frameView.yMax);
         this.gl.uniform1f(this.catalogWebGLService.shaderUniforms.LineThickness, lineThickness);
-        this.gl.uniform1i(this.catalogWebGLService.shaderUniforms.CmapEnabled, 0);
         
         catalogStore.catalogGLData.forEach((catalog, fileId) => {
             const catalogWidgetStore = catalogStore.getCatalogWidgetStore(fileId);
@@ -171,6 +172,13 @@ export class CatalogViewGLComponent extends React.Component<CatalogViewGLCompone
             if (catalogWidgetStore.sizeArea) {
                 sizeArea = 1;
             }
+
+            this.gl.uniform1i(this.catalogWebGLService.shaderUniforms.CmapEnabled, 0);
+            if (!catalogWidgetStore.disableColorMap) {
+                this.gl.uniform1i(this.catalogWebGLService.shaderUniforms.CmapEnabled, 1);
+                this.gl.uniform1i(this.catalogWebGLService.shaderUniforms.CmapIndex, RenderConfigStore.COLOR_MAPS_ALL.indexOf(catalogWidgetStore.colorMap));
+            }
+
             this.gl.uniform1i(this.catalogWebGLService.shaderUniforms.SmapEnabled, sMapEnabled);
             this.gl.uniform1f(this.catalogWebGLService.shaderUniforms.FeatherWidth, featherWidth);
             this.gl.uniform1i(this.catalogWebGLService.shaderUniforms.AreaMode, sizeArea);
