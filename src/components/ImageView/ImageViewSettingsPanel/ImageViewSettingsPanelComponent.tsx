@@ -772,9 +772,9 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
                     <FormGroup inline={true} label="Label text" disabled={!colorbar.visible || !colorbar.labelVisible}>
                         <InputGroup
                             disabled={!colorbar.visible || !colorbar.labelVisible}
-                            value={colorbar.labelText}
+                            value={appStore.activeFrame?.colorbarLabelCustomText}
                             placeholder="Enter label text"
-                            onChange={ev => colorbar.setLabelText(ev.currentTarget.value)}
+                            onChange={ev => appStore.activeFrame?.setColorbarLabelCustomText(ev.currentTarget.value)}
                         />
                     </FormGroup>
                 </Collapse>

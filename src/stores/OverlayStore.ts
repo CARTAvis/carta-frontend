@@ -709,7 +709,7 @@ export class OverlayColorbarSettings {
     @observable labelFont: number;
     @observable labelFontSize: number;
     @observable labelCustomText: boolean;
-    @observable labelText: string;
+    //@observable labelText: string;
     @observable labelCustomColor: boolean;
     @observable labelColor: string;
     private textRatio = [0.5, 0.45, 0.5, 0.45, 0.6];
@@ -745,7 +745,7 @@ export class OverlayColorbarSettings {
         this.labelFont = 0;
         this.labelFontSize = 15;
         this.labelCustomText = false;
-        this.labelText = "";
+        //this.labelText = "";
         this.labelCustomColor = false;
         this.labelColor = AST_DEFAULT_COLOR;
     }
@@ -866,9 +866,9 @@ export class OverlayColorbarSettings {
         this.labelCustomText = customText;
     };
 
-    @action setLabelText = (text: string) => {
-        this.labelText = text;
-    };
+    //@action setLabelText = (text: string) => {
+    //    this.labelText = text;
+    //};
 
     @action setLabelCustomColor = (customColor: boolean) => {
         this.labelCustomColor = customColor;

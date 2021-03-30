@@ -101,6 +101,7 @@ export class FrameStore {
     @observable moving: boolean;
     @observable zooming: boolean;
 
+    @observable colorbarLabelCustomText: string;
     @observable overlayBeamSettings: OverlayBeamStore;
     @observable spatialReference: FrameStore;
     @observable spectralReference: FrameStore;
@@ -698,6 +699,7 @@ export class FrameStore {
         this.renderType = RasterRenderType.NONE;
         this.moving = false;
         this.zooming = false;
+        this.colorbarLabelCustomText = this.unit === undefined || !this.unit.length ? "arbitrary units" : this.unit;
         this.overlayBeamSettings = new OverlayBeamStore();
         this.spatialTransformAST = null;
         this.controlMaps = new Map<FrameStore, ControlMap>();
@@ -976,6 +978,10 @@ export class FrameStore {
             infoWCS: cursorPosFormatted
         };
     }
+
+    @action setColorbarLabelCustomText = (text: string) => {
+        this.colorbarLabelCustomText = text;
+    };
 
     public getControlMap(frame: FrameStore) {
         const preferenceStore = PreferenceStore.Instance;

@@ -131,7 +131,7 @@ export class ColorbarComponent extends React.Component<ColorbarComponentProps> {
         const frameUnit = frame.unit === undefined || !frame.unit.length ? "arbitrary units" : frame.unit;
         const label = colorbarSettings.labelVisible ? (
             <Text
-                text={colorbarSettings.labelCustomText ? colorbarSettings.labelText : frameUnit}
+                text={colorbarSettings.labelCustomText ? frame.colorbarLabelCustomText : frameUnit}
                 x={colorbarSettings.rightBorderPos + colorbarSettings.numberWidth + colorbarSettings.textGap + (colorbarSettings.labelRotation === 90 ? colorbarSettings.numberFontSize : 0)}
                 y={yOffset + (colorbarSettings.labelRotation === -90 ? frame.renderHeight : 0)}
                 width={frame.renderHeight}
