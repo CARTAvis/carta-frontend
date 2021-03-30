@@ -2,7 +2,7 @@
 precision highp float;
 
 uniform float uLineThickness;
-uniform int uShapeType;
+uniform highp int uShapeType;
 uniform float uFeatherWidth;
 uniform vec3 uPointColor;
 uniform bool uCmapEnabled;
@@ -254,6 +254,7 @@ void main() {
     vec2 posPixelSpace = (0.5 - gl_PointCoord) * (v_pointSize + uFeatherWidth);
 
     float rMax = v_pointSize * 0.5;
+    // to do rmin < 0?
     float rMin = rMax - uLineThickness;
     bool shouldDrawPoint = false;
     float alpha = 1.0;

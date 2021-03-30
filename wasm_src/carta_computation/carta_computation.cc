@@ -268,8 +268,9 @@ void calculateCatalogSizeDiameter(float* data, size_t N, float min, float max, i
     float range = columnMax - columnMin;
     for (size_t i = 0; i < N; i++)
     {
-        float value = scaleValue(*(data + i), scaling, alpha, gamma);
-        *(data + i) = clamp((value - columnMin) / range * sizeMax, sizeMin, sizeMax);
+        float c = clamp(*(data + i), min, max);
+        float value = scaleValue(c, scaling, alpha, gamma);
+        *(data + i) = (value - columnMin) / range * (sizeMax - sizeMin) + sizeMin;
     }
 }
 
@@ -279,8 +280,9 @@ void calculateCatalogSizeArea(float* data, size_t N, float min, float max, int s
     float range = columnMax - columnMin;
     for (size_t i = 0; i < N; i++)
     {
-        float value = scaleValue(*(data + i), scaling, alpha, gamma);
-        *(data + i) = clamp(sqrt((value - columnMin) / range) * sizeMax, sizeMin, sizeMax);
+        float c = clamp(*(data + i), min, max);
+        float value = scaleValue(c, scaling, alpha, gamma);
+        *(data + i) = sqrt((value - columnMin) / range) * (sizeMax - sizeMin) + sizeMin;
     }
 }
 

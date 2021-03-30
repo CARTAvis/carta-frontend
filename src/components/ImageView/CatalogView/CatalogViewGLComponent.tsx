@@ -24,7 +24,7 @@ export class CatalogViewGLComponent extends React.Component<CatalogViewGLCompone
     private featherWidth =  new Map<number, number>([
         [CatalogOverlayShape.BoxLined, 0.35],
         [CatalogOverlayShape.CircleFilled, 0.35],
-        [CatalogOverlayShape.CircleLined, 0.35],
+        [CatalogOverlayShape.CircleLined, 1.0],
         [CatalogOverlayShape.EllipseLined, 1.0],
         [CatalogOverlayShape.HexagonLined, 0.35],
         [CatalogOverlayShape.RhombLined, 0.35],
@@ -153,10 +153,11 @@ export class CatalogViewGLComponent extends React.Component<CatalogViewGLCompone
         
         catalogStore.catalogGLData.forEach((catalog, fileId) => {
             const catalogWidgetStore = catalogStore.getCatalogWidgetStore(fileId);
-            const featherWidth = this.featherWidth.get(catalogWidgetStore.catalogShape) * devicePixelRatio;
+            const featherWidth = this.featherWidth.get(catalogWidgetStore.catalogShape) *  (1 / devicePixelRatio);
             let dataPoints = catalog.dataPoints;
             let color = tinycolor(catalogWidgetStore.catalogColor).toRgb();
             let pointSize = catalogWidgetStore.catalogSize;
+            console.log(pointSize, catalogWidgetStore.sizeArea)
             let selectedDataPoints = catalog.selectedDataPoints;
             if (catalog.showSelectedData) {
                 dataPoints = selectedDataPoints;
@@ -166,8 +167,13 @@ export class CatalogViewGLComponent extends React.Component<CatalogViewGLCompone
             if (!catalogWidgetStore.disableSizeMap) {
                 sMapEnabled = 1;
             }
+            let sizeArea = 0;
+            if (catalogWidgetStore.sizeArea) {
+                sizeArea = 1;
+            }
             this.gl.uniform1i(this.catalogWebGLService.shaderUniforms.SmapEnabled, sMapEnabled);
             this.gl.uniform1f(this.catalogWebGLService.shaderUniforms.FeatherWidth, featherWidth);
+            this.gl.uniform1i(this.catalogWebGLService.shaderUniforms.AreaMode, sizeArea);
 
             if (catalog.displayed && dataPoints?.length) {
                 this.gl.uniform3f(this.catalogWebGLService.shaderUniforms.PointColor, color.r / 255.0, color.g / 255.0, color.b / 255.0);

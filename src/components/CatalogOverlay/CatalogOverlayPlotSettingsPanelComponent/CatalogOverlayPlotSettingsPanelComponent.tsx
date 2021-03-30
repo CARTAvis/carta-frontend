@@ -2,7 +2,7 @@ import {observer} from "mobx-react";
 import FuzzySearch from "fuzzy-search";
 import {action, autorun, computed, makeObservable} from "mobx";
 import * as React from "react";
-import {AnchorButton, Button, ButtonGroup, FormGroup, Icon, MenuItem, PopoverPosition, Tab, Tabs} from "@blueprintjs/core";
+import {AnchorButton, Button, ButtonGroup, FormGroup, Icon, MenuItem, PopoverPosition, Tab, Tabs, Tooltip} from "@blueprintjs/core";
 import {Select, IItemRendererProps, ItemPredicate} from "@blueprintjs/select";
 import {AppStore, CatalogStore, CatalogProfileStore, CatalogOverlay, DefaultWidgetConfig, HelpType, PreferenceStore, PreferenceKeys, WidgetProps, WidgetsStore} from "stores";
 import {CatalogOverlayShape, CatalogWidgetStore, CatalogSettingsTabs, SizeClip} from "stores/widgets";
@@ -246,8 +246,8 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
                 </FormGroup>
                 <FormGroup inline={true} label={"Size Mode"} disabled={disableSizeMap}>
                     <ButtonGroup>
-                        <AnchorButton disabled={disableSizeMap} text={"Radius"} active={widgetStore.sizeMapType === "radius"} onClick={() => widgetStore.setSizeMapType("radius")}/>
-                        <AnchorButton disabled={disableSizeMap} text={"Area"} active={widgetStore.sizeMapType === "area"} onClick={() => widgetStore.setSizeMapType("area")}/>
+                        <AnchorButton disabled={disableSizeMap} text={"Diameter"} active={!widgetStore.sizeArea} onClick={() => widgetStore.setSizeArea(false)}/>
+                        <AnchorButton disabled={disableSizeMap} text={"Area"} active={widgetStore.sizeArea} onClick={() => widgetStore.setSizeArea(true)}/>
                     </ButtonGroup>
                 </FormGroup>
                 <FormGroup  inline={true} label="Size Min" labelInfo="(px)"  disabled={disableSizeMap}>
@@ -257,22 +257,24 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
                         placeholder="Min"
                         disabled={disableSizeMap}
                         buttonPosition={"none"}
-                        value={widgetStore.sizeMin}
+                        value={widgetStore.pointSizebyType.min}
                         onBlur={(ev) => this.handleSizeChange(ev, "size-min")}
                         onKeyDown={(ev) => this.handleSizeChange(ev, "size-min")}
                     />
                 </FormGroup>
                 <FormGroup  inline={true} label="Size Max" labelInfo="(px)"  disabled={disableSizeMap}>
-                    <SafeNumericInput
-                        allowNumericCharactersOnly={true}
-                        asyncControl={true}
-                        placeholder="Max"
-                        disabled={disableSizeMap}
-                        buttonPosition={"none"}
-                        value={widgetStore.pointSizebyType}
-                        onBlur={(ev) => this.handleSizeChange(ev, "size-max")}
-                        onKeyDown={(ev) => this.handleSizeChange(ev, "size-max")}
-                    />
+                    <Tooltip content = {`Maximum size ${widgetStore.maxPointSizebyType}`}>
+                        <SafeNumericInput
+                            allowNumericCharactersOnly={true}
+                            asyncControl={true}
+                            placeholder="Max"
+                            disabled={disableSizeMap}
+                            buttonPosition={"none"}
+                            value={widgetStore.pointSizebyType.max}
+                            onBlur={(ev) => this.handleSizeChange(ev, "size-max")}
+                            onKeyDown={(ev) => this.handleSizeChange(ev, "size-max")}
+                        />
+                    </Tooltip>
                 </FormGroup>
                 <ClearableNumericInputComponent
                     label="Clip Min"
@@ -388,22 +390,21 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
         }
         const val = parseFloat(ev.currentTarget.value);
         const widgetStore = this.widgetStore; 
-        const sizeMin = widgetStore.sizeMin;
-        const sizeMax = widgetStore.pointSizebyType;
+        const pointSize = widgetStore.pointSizebyType;
 
         switch (type) {
             case "size-min":
-                if (isFinite(val) && val !== sizeMin && val < sizeMax && val >= 1) {
+                if (isFinite(val) && val !== pointSize.min && val < pointSize.max && val >= 1) {
                     widgetStore.setSizeMin(val);
                 } else {
-                    ev.currentTarget.value = sizeMin.toString();
+                    ev.currentTarget.value = pointSize.min.toString();
                 }
                 break;
             case "size-max":
-                if (isFinite(val) && val !== sizeMax && val > sizeMin && val <= widgetStore.maxPointSizebyType) {
-                    widgetStore.setSizeMax(val, widgetStore.sizeMapType);
+                if (isFinite(val) && val !== pointSize.max && val > pointSize.min && val <= widgetStore.maxPointSizebyType) {
+                    widgetStore.setSizeMax(val);
                 } else {
-                    ev.currentTarget.value = sizeMax.toString();
+                    ev.currentTarget.value = pointSize.max.toString();
                 }
                 break;
             default:

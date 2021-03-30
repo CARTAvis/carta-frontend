@@ -106,7 +106,7 @@ Module.GenerateVertexData = (sourceVertices: Float32Array, indexOffsets: Int32Ar
     return destHeapFloat;
 };
 
-Module.CalculateCatalogSize = (data: Array<number>, min: number, max: number, sizeMin: number, sizeMax: number, scaling: number, sizeType: string, alpha: number = 1000, gamma: number = 1.5): Float32Array => {
+Module.CalculateCatalogSize = (data: Array<number>, min: number, max: number, sizeMin: number, sizeMax: number, scaling: number, area: boolean, alpha: number = 1000, gamma: number = 1.5): Float32Array => {
     const N = data.length;
     const src = new Float32Array(data);
     const bytes_per_element = src.BYTES_PER_ELEMENT;
@@ -114,9 +114,9 @@ Module.CalculateCatalogSize = (data: Array<number>, min: number, max: number, si
 
     Module.HEAPF32.set(src, dataOnWasmHeap / bytes_per_element);
 
-    if (sizeType === "area") {
+    if (area) {
         calculateCatalogSizeArea(dataOnWasmHeap, N, min, max, sizeMin, sizeMax, scaling, alpha, gamma);
-    } else if (sizeType === "diameter") {
+    } else {
         calculateCatalogSizeDiameter(dataOnWasmHeap, N, min, max, sizeMin, sizeMax, scaling, alpha, gamma);
     }
 

@@ -34,13 +34,12 @@ export enum CatalogSettingsTabs {
     SIZE
 }
 
-export type SizeType = "area" | "radius"; 
 export type SizeClip = "size-min" | "size-max";
 
 export class CatalogWidgetStore {
     public static readonly MinOverlaySize = 1;
-    public static readonly MaxOverlaySize = 150;
-    public static readonly MaxAreaSize = 10000;
+    public static readonly MaxOverlaySize = 50;
+    public static readonly MaxAreaSize = 8000;
     public static readonly MinTableSeparatorPosition = 5;
     public static readonly MaxTableSeparatorPosition = 95;
 
@@ -63,8 +62,8 @@ export class CatalogWidgetStore {
     @observable sizeColumnMax: {default: number, clipd: number};
     @observable sizeColumnMin: {default: number, clipd: number};
     @observable sizeMax: {area: number, diameter: number};
-    @observable sizeMin: number;
-    @observable sizeMapType: SizeType;
+    @observable sizeMin: {area: number, diameter: number};
+    @observable sizeArea: boolean;
     @observable sizeScalingType: FrameScaling;
     // color map
     @observable colorMapColumn: string;
@@ -89,10 +88,10 @@ export class CatalogWidgetStore {
         this.highlightColor = Colors.RED2;
         this.settingsTabId = CatalogSettingsTabs.GLOBAL;
         this.sizeMapColumn = CatalogOverlay.NONE;
-        this.sizeMapType = "radius";
+        this.sizeArea = false;
         this.sizeScalingType = FrameScaling.LINEAR;
-        this.sizeMin = 10;
-        this.sizeMax = {area: 20, diameter: 20};
+        this.sizeMin = {area: 100, diameter: 10};
+        this.sizeMax = {area: 200, diameter: 20};
         this.sizeColumnMin = {default: undefined, clipd: undefined};
         this.sizeColumnMax = {default: undefined, clipd: undefined};
         
@@ -159,8 +158,8 @@ export class CatalogWidgetStore {
         this.colorMap = colorMap;
     }
 
-    @action setSizeMax(val: number, type: SizeType) {
-        if (type === "area") {
+    @action setSizeMax(val: number) {
+        if (this.sizeArea) {
             this.sizeMax.area = val;
         } else {
             this.sizeMax.diameter = val;
@@ -168,7 +167,11 @@ export class CatalogWidgetStore {
     }
 
     @action setSizeMin(val: number) {
-        this.sizeMin = val;
+        if (this.sizeArea) {
+            this.sizeMin.area = val;
+        } else {
+            this.sizeMin.diameter = val;
+        }
     }
 
     @action setSizeColumnMax(val: number, type: "default" | "clipd") {
@@ -201,14 +204,17 @@ export class CatalogWidgetStore {
         this.sizeScalingType = type;
     }
 
-    @action setSizeMapType(type: SizeType) {
-        this.sizeMapType = type;
+    @action setSizeArea(val: boolean) {
+        this.sizeArea = val;
     }
 
     @action setSizeMap(coloum: string) {
         this.sizeMapColumn = coloum;
         this.sizeColumnMin = {default: undefined, clipd: undefined};
         this.sizeColumnMax = {default: undefined, clipd: undefined};
+        if (coloum === CatalogOverlay.NONE) {
+            this.sizeArea = false;
+        }
     }
 
     @action setHeaderTableColumnWidts(vals: Array<number>) {
@@ -307,14 +313,15 @@ export class CatalogWidgetStore {
         const column = this.sizeMapData;
         if (!this.disableSizeMap && column?.length && this.sizeColumnMin.clipd !== undefined && this.sizeColumnMax.clipd !== undefined) {
             // wasm 0.25s, Js 0.9s
+            const pointSize = this.pointSizebyType;
             return CARTACompute.CalculateCatalogSize(
                 column,
                 this.sizeColumnMin.clipd, 
                 this.sizeColumnMax.clipd, 
-                this.sizeMin, 
-                this.pointSizebyType,
+                pointSize.min, 
+                pointSize.max,
                 this.sizeScalingType,
-                this.sizeMapType
+                this.sizeArea
             );
         } 
         return new Float32Array(0);
@@ -325,7 +332,7 @@ export class CatalogWidgetStore {
     }
 
     @computed get maxPointSizebyType(): number {
-        if (this.sizeMapType === "area") {
+        if (this.sizeArea) {
             // scattergl `area` limitation around 20000
             return CatalogWidgetStore.MaxAreaSize;
         } else {
@@ -335,11 +342,11 @@ export class CatalogWidgetStore {
         }
     }
 
-    @computed get pointSizebyType(): number {
-        if (this.sizeMapType === "area") {
-            return this.sizeMax.area;
+    @computed get pointSizebyType(): {min: number, max: number} {
+        if (this.sizeArea) {
+            return {min: this.sizeMin.area, max: this.sizeMax.area};
         } else {
-            return this.sizeMax.diameter;
+            return {min: this.sizeMin.diameter, max: this.sizeMax.diameter};
         } 
     }
 

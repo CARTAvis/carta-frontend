@@ -12,7 +12,8 @@ interface ShaderUniforms {
     PointColor: WebGLUniformLocation,
     CmapEnabled: WebGLUniformLocation,
     PointSize: WebGLUniformLocation,
-    SmapEnabled: WebGLUniformLocation
+    SmapEnabled: WebGLUniformLocation,
+    AreaMode: WebGLUniformLocation
 }
 
 export class CatalogWebGLService {
@@ -76,6 +77,7 @@ export class CatalogWebGLService {
             CmapEnabled: this.gl.getUniformLocation(shaderProgram, "uCmapEnabled"),
             PointSize: this.gl.getUniformLocation(shaderProgram, "uPointSize"),
             SmapEnabled: this.gl.getUniformLocation(shaderProgram, "uSmapEnabled"),
+            AreaMode: this.gl.getUniformLocation(shaderProgram, "uAreaMode")
         };
     }
 
