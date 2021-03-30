@@ -108,19 +108,14 @@ export class ProfileFittingStore {
         const inputData = [];
         this.components.forEach(component => { inputData.push(component.amp); inputData.push(component.center); inputData.push(component.fwhm);})
 
-
         const fittingResult = GSL.gaussianFitting(x, y, inputData);
 
-        const newComponents = [];        
         for (let i = 0; i < this.components.length ; i++) {
             const component = this.components[i];
             component.setResultCenter(fittingResult.center[i]);
             component.setResultAmp(fittingResult.amp[i]);
             component.setResultFwhm(fittingResult.fwhm[i]);
-            
-            newComponents.push(component);
         }
-        this.components = newComponents;
         this.setResultLog(fittingResult.log);
         this.setHasResult(true);
     }
