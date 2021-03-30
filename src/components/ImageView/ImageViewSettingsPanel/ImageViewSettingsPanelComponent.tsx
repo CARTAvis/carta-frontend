@@ -663,6 +663,7 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
                 </FormGroup>
                 <FormGroup inline={true} label="Cursor info" disabled={!colorbar.visible}>
                     <Switch
+                        disabled={!colorbar.visible}
                         checked={colorbar.showHoverInfo}
                         onChange={(ev) => colorbar.setShowHoverInfo(ev.currentTarget.checked)}
                     />
