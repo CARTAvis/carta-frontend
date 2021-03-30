@@ -408,6 +408,7 @@ export class FileInfoComponent extends React.Component<{
                 >
                     <Button icon="search-text" style={{opacity: (this.isMouseEntered || this.isSearchOpened) ? 1 : 0}}></Button>
                     <InputGroup
+                        className="header-search-input"
                         autoFocus={true}
                         placeholder={"Search text"}
                         leftIcon="search-text"

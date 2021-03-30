@@ -310,7 +310,7 @@ export class EllipticalRegionForm extends React.Component<{ region: RegionStore,
                             <td><span className="info-string">{infoString}</span></td>
                         </tr>
                         <tr>
-                            <td>Axes {pxUnitSpan}</td>
+                            <td>Semi-axes {pxUnitSpan}</td>
                             <td>{sizeWidthInput}</td>
                             <td>{sizeHeightInput}</td>
                             <td><span className="info-string">{sizeInfoString}</span></td>
