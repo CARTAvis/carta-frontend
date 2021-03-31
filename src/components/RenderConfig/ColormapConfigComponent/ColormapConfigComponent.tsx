@@ -1,6 +1,7 @@
 import * as React from "react";
 import {observer} from "mobx-react";
-import {FormGroup, Switch} from "@blueprintjs/core";
+import {Colors, FormGroup, Switch} from "@blueprintjs/core";
+import {Circle, Layer, Rect, Stage} from "react-konva";
 import {FrameScaling, RenderConfigStore} from "stores";
 import {ColormapComponent, ScalingSelectComponent, SafeNumericInput} from "components/Shared";
 
@@ -21,6 +22,26 @@ export class ColormapConfigComponent extends React.Component<ColormapConfigProps
         }
 
         const renderConfig = this.props.renderConfig;
+        const twoDimensionBoard = (
+            <React.Fragment>
+                <Rect
+                    x={0}
+                    y={0}
+                    width={195}
+                    height={90}
+                    stroke={Colors.LIGHT_GRAY1}
+                    strokeWidth={4}
+                />
+                <Circle
+                    x={195 / 2}
+                    y={90 / 2}
+                    radius={5}
+                    fill={Colors.GRAY5}
+                    draggable={true}
+                />
+            </React.Fragment>
+        )
+
         return (
             <React.Fragment>
                 <FormGroup label={"Color map"} inline={true}>
@@ -64,6 +85,17 @@ export class ColormapConfigComponent extends React.Component<ColormapConfigProps
                     />
                 </FormGroup>
                 }
+                <Stage
+                    className={"bias-contrast-stage"}
+                    height={90}
+                    width={195}
+                    style={{padding: '15px 0px 15px 15px'}}
+                >
+                    <Layer>
+                        {twoDimensionBoard}
+                    </Layer>
+                </Stage>
+
                 <FormGroup label={"Bias"} inline={true}>
                     <SafeNumericInput
                         min={RenderConfigStore.BIAS_MIN}

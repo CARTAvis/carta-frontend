@@ -396,7 +396,7 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
                     </div>
                 </div>
                 }
-                <div className="colormap-config">
+                <div className="options-container">
                     <HistogramConfigComponent
                         darkTheme={appStore.darkTheme}
                         renderConfig={frame.renderConfig}
