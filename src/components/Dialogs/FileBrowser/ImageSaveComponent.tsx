@@ -214,7 +214,6 @@ export class ImageSaveComponent extends React.Component<{
                                             minorStepSize={null}
                                             selectAllOnIncrement={true}
                                             intent={this.valideSaveSpectralRangeStart() ? Intent.NONE : Intent.DANGER}
-                                            inlist={true}
                                         />
                                         <Label>{activeFrame.spectralUnit ? `(${activeFrame.spectralUnit})` : ""}</Label>
                                     </ControlGroup>
