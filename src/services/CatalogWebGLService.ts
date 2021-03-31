@@ -16,9 +16,16 @@ interface ShaderUniforms {
     SmapEnabled: WebGLUniformLocation,
     AreaMode: WebGLUniformLocation,
     SelectedSizeOffset: WebGLUniformLocation,
+    // color map
     CmapTexture: WebGLUniformLocation,
     NumCmaps: WebGLUniformLocation,
-    CmapIndex: WebGLUniformLocation
+    CmapIndex: WebGLUniformLocation,
+    CminVal: WebGLUniformLocation,
+    CmaxVal: WebGLUniformLocation,
+    Gamma: WebGLUniformLocation,
+    Alpha: WebGLUniformLocation,
+    CscaleType: WebGLUniformLocation,
+    Inverted: WebGLUniformLocation
 }
 
 export class CatalogWebGLService {
@@ -83,10 +90,17 @@ export class CatalogWebGLService {
             SmapEnabled: this.gl.getUniformLocation(shaderProgram, "uSmapEnabled"),
             AreaMode: this.gl.getUniformLocation(shaderProgram, "uAreaMode"),
             SelectedSizeOffset: this.gl.getUniformLocation(shaderProgram, "uSelectedSizeOffset"),
+            // color map
             CmapEnabled: this.gl.getUniformLocation(shaderProgram, "uCmapEnabled"),
             CmapTexture: this.gl.getUniformLocation(shaderProgram, "uCmapTexture"),
             NumCmaps: this.gl.getUniformLocation(shaderProgram, "uNumCmaps"),
-            CmapIndex: this.gl.getUniformLocation(shaderProgram, "uCmapIndex")
+            CmapIndex: this.gl.getUniformLocation(shaderProgram, "uCmapIndex"),
+            CminVal: this.gl.getUniformLocation(shaderProgram, "uCminVal"),
+            CmaxVal: this.gl.getUniformLocation(shaderProgram, "uCmaxVal"),
+            Gamma: this.gl.getUniformLocation(shaderProgram, "uGamma"),
+            Alpha: this.gl.getUniformLocation(shaderProgram, "uAlpha"),
+            CscaleType: this.gl.getUniformLocation(shaderProgram, "uCscaleType"),
+            Inverted: this.gl.getUniformLocation(shaderProgram, "uInverted"),
         };
 
         this.gl.uniform1i(this.shaderUniforms.NumCmaps, 79);

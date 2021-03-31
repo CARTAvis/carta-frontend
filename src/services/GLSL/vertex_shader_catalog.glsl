@@ -1,16 +1,6 @@
 #version 300 es
 precision highp float;
 
-uniform vec2 uFrameViewMin;
-uniform vec2 uFrameViewMax;
-uniform float uFeatherWidth;
-uniform sampler2D uPositionTexture;
-uniform bool uSmapEnabled;
-uniform float uPointSize;
-uniform highp int uShapeType;
-uniform bool uAreaMode;
-uniform float uSelectedSizeOffset;
-
 #define BOX_FILLED 0
 #define BOX_LINED 1
 #define CIRCLE_FILLED 2
@@ -35,6 +25,34 @@ uniform float uSelectedSizeOffset;
 #define PI radians(180.0)
 #define SQRT3 sqrt(3.0)
 #define SIN_60 0.86602540378
+
+#define LINEAR 0
+#define LOG 1
+#define SQRT 2
+#define SQUARE 3
+#define POWER 4
+#define GAMMA 5
+
+#define FLT_MAX 3.402823466e+38
+
+uniform vec2 uFrameViewMin;
+uniform vec2 uFrameViewMax;
+uniform float uFeatherWidth;
+uniform sampler2D uPositionTexture;
+uniform bool uSmapEnabled;
+uniform float uPointSize;
+uniform highp int uShapeType;
+uniform bool uAreaMode;
+uniform float uSelectedSizeOffset;
+
+// color map
+uniform bool uCmapEnabled;
+uniform int uCscaleType;
+uniform bool uInverted;
+uniform float uCminVal;
+uniform float uCmaxVal;
+uniform float uGamma;
+uniform float uAlpha;
 
 out float v_colour;
 out float v_pointSize;
@@ -90,6 +108,24 @@ float getSquareSideByArea(float area) {
     return 20.0;
 }
 
+float scaleValue(float x) {
+    switch (uCscaleType)
+    {
+    case SQUARE:
+        return x * x;
+    case SQRT:
+        return sqrt(x);
+    case LOG:
+        return clamp(log(uAlpha * x + 1.0) / log(uAlpha), 0.0, 1.0);
+    case POWER:
+        return (pow(uAlpha, x) - 1.0) / uAlpha;
+    case GAMMA:
+        return pow(x, uGamma);
+    default:
+        return x;
+    }
+}
+
 void main() {
     vec4 data = getValueByIndexFromTexture(uPositionTexture, gl_VertexID);
     vec2 pos = data.xy;
@@ -112,6 +148,16 @@ void main() {
 
     gl_PointSize = v_pointSize + uFeatherWidth;
     // v_colour = vec4(hsv2rgb(vec3(cmapVal, 0.5, 1.0)), 1.0);
-    v_colour = cmapVal;
+    v_colour = 0.0;
+    if(uCmapEnabled) {
+        float columnMin = scaleValue(uCminVal);
+        float columnMax = scaleValue(uCmaxVal);
+        float mapVal = clamp(cmapVal, uCminVal, uCmaxVal);
+        float cValue = (scaleValue(mapVal) - columnMin) / (columnMax - columnMin);
+        if(uInverted) {
+            cValue = 1.0 - cValue;
+        }
+        v_colour = cValue;
+    }
 
 }

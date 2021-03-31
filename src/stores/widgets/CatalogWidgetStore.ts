@@ -117,8 +117,8 @@ export class CatalogWidgetStore {
             this.setColorColumnMax(isFinite(result.max)? result.max : 0, "default");
         });
 
-        reaction(()=>this.colorArray, (res) => {
-            CatalogStore.Instance.updateCatalogColorMap(this.catalogFileId, res);
+        reaction(()=>this.colorMapData, (res) => {
+            CatalogStore.Instance.updateCatalogColorMap(this.catalogFileId, new Float32Array(res));
         });
     }
 
@@ -295,19 +295,19 @@ export class CatalogWidgetStore {
         }
     }
 
-    @computed get colorArray(): Float32Array{
-        const column = this.colorMapData;
-        if (!this.disableColorMap && column?.length) {
-            return CARTACompute.CalculateCatalogColor(
-                column,
-                false,
-                this.colorColumnMin.clipd, 
-                this.colorColumnMax.clipd, 
-                this.colorScalingType
-            ); 
-        }
-        return new Float32Array(0);
-    }
+    // @computed get colorArray(): Float32Array{
+    //     const column = this.colorMapData;
+    //     if (!this.disableColorMap && column?.length) {
+    //         return CARTACompute.CalculateCatalogColor(
+    //             column,
+    //             false,
+    //             this.colorColumnMin.clipd, 
+    //             this.colorColumnMax.clipd, 
+    //             this.colorScalingType
+    //         ); 
+    //     }
+    //     return new Float32Array(0);
+    // }
 
     @computed get sizeMapData(): number[] {
         const catalogProfileStore = CatalogStore.Instance.catalogProfileStores.get(this.catalogFileId);

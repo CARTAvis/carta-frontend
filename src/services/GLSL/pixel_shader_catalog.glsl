@@ -40,12 +40,6 @@ uniform bool uCmapEnabled;
 uniform sampler2D uCmapTexture;
 uniform int uNumCmaps;
 uniform int uCmapIndex;
-uniform int uScaleType;
-uniform int uInverted;
-uniform float uMinVal;
-uniform float uMaxVal;
-uniform float uGamma;
-uniform float uAlpha;
 
 in float v_colour;
 in float v_pointSize;
@@ -334,7 +328,7 @@ void main() {
 
     // Blending
     if (uCmapEnabled) {
-        float x = clamp((v_colour), 0.0, 1.0);
+        float x = clamp(v_colour, 0.0, 1.0);
         float cmapYVal = (float(uCmapIndex) + 0.5) / float(uNumCmaps);
         vec2 cmapCoords = vec2(x, cmapYVal);
         outColor = vec4(texture(uCmapTexture, cmapCoords).xyz, alpha);
