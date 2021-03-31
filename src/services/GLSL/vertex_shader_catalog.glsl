@@ -47,12 +47,12 @@ uniform float uSelectedSizeOffset;
 
 // color map
 uniform bool uCmapEnabled;
-uniform int uCscaleType;
-uniform bool uInverted;
-uniform float uCminVal;
-uniform float uCmaxVal;
-uniform float uGamma;
-uniform float uAlpha;
+// uniform int uCscaleType;
+// uniform bool uInverted;
+// uniform float uCminVal;
+// uniform float uCmaxVal;
+// uniform float uGamma;
+// uniform float uAlpha;
 
 out float v_colour;
 out float v_pointSize;
@@ -108,23 +108,23 @@ float getSquareSideByArea(float area) {
     return 20.0;
 }
 
-float scaleValue(float x) {
-    switch (uCscaleType)
-    {
-    case SQUARE:
-        return x * x;
-    case SQRT:
-        return sqrt(x);
-    case LOG:
-        return clamp(log(uAlpha * x + 1.0) / log(uAlpha), 0.0, 1.0);
-    case POWER:
-        return (pow(uAlpha, x) - 1.0) / uAlpha;
-    case GAMMA:
-        return pow(x, uGamma);
-    default:
-        return x;
-    }
-}
+// float scaleValue(float x) {
+//     switch (uCscaleType)
+//     {
+//     case SQUARE:
+//         return x * x;
+//     case SQRT:
+//         return sqrt(x);
+//     case LOG:
+//         return clamp(log(uAlpha * x + 1.0) / log(uAlpha), 0.0, 1.0);
+//     case POWER:
+//         return (pow(uAlpha, x) - 1.0) / uAlpha;
+//     case GAMMA:
+//         return pow(x, uGamma);
+//     default:
+//         return x;
+//     }
+// }
 
 void main() {
     vec4 data = getValueByIndexFromTexture(uPositionTexture, gl_VertexID);

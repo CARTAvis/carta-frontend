@@ -11,21 +11,21 @@ interface ShaderUniforms {
     FrameViewMax: WebGLUniformLocation,
     PositionTexture: WebGLUniformLocation,
     PointColor: WebGLUniformLocation,
-    CmapEnabled: WebGLUniformLocation,
     PointSize: WebGLUniformLocation,
     SmapEnabled: WebGLUniformLocation,
     AreaMode: WebGLUniformLocation,
     SelectedSizeOffset: WebGLUniformLocation,
     // color map
+    CmapEnabled: WebGLUniformLocation,
     CmapTexture: WebGLUniformLocation,
     NumCmaps: WebGLUniformLocation,
     CmapIndex: WebGLUniformLocation,
-    CminVal: WebGLUniformLocation,
-    CmaxVal: WebGLUniformLocation,
-    Gamma: WebGLUniformLocation,
-    Alpha: WebGLUniformLocation,
-    CscaleType: WebGLUniformLocation,
-    Inverted: WebGLUniformLocation
+    // CminVal: WebGLUniformLocation,
+    // CmaxVal: WebGLUniformLocation,
+    // Gamma: WebGLUniformLocation,
+    // Alpha: WebGLUniformLocation,
+    // CscaleType: WebGLUniformLocation,
+    // Inverted: WebGLUniformLocation
 }
 
 export class CatalogWebGLService {
@@ -95,12 +95,12 @@ export class CatalogWebGLService {
             CmapTexture: this.gl.getUniformLocation(shaderProgram, "uCmapTexture"),
             NumCmaps: this.gl.getUniformLocation(shaderProgram, "uNumCmaps"),
             CmapIndex: this.gl.getUniformLocation(shaderProgram, "uCmapIndex"),
-            CminVal: this.gl.getUniformLocation(shaderProgram, "uCminVal"),
-            CmaxVal: this.gl.getUniformLocation(shaderProgram, "uCmaxVal"),
-            Gamma: this.gl.getUniformLocation(shaderProgram, "uGamma"),
-            Alpha: this.gl.getUniformLocation(shaderProgram, "uAlpha"),
-            CscaleType: this.gl.getUniformLocation(shaderProgram, "uCscaleType"),
-            Inverted: this.gl.getUniformLocation(shaderProgram, "uInverted"),
+            // CminVal: this.gl.getUniformLocation(shaderProgram, "uCminVal"),
+            // CmaxVal: this.gl.getUniformLocation(shaderProgram, "uCmaxVal"),
+            // Gamma: this.gl.getUniformLocation(shaderProgram, "uGamma"),
+            // Alpha: this.gl.getUniformLocation(shaderProgram, "uAlpha"),
+            // CscaleType: this.gl.getUniformLocation(shaderProgram, "uCscaleType"),
+            // Inverted: this.gl.getUniformLocation(shaderProgram, "uInverted"),
         };
 
         this.gl.uniform1i(this.shaderUniforms.NumCmaps, 79);

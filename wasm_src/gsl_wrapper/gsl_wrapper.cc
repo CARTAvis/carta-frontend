@@ -12,11 +12,6 @@
 
 extern "C" {
 
-void EMSCRIPTEN_KEEPALIVE getMinMax(double* data, int N, double * min_out, double * max_out) {
-    gsl_vector_view out = gsl_vector_view_array(data, N);
-    gsl_vector_minmax(&out.vector, min_out, max_out);
-}
-
 int EMSCRIPTEN_KEEPALIVE filterBoxcar(double* yInArray, const int N, double* yOutArray, const int kernel) {
     int status = 0;    /* return value: 0 = success */
     gsl_vector_view yIn = gsl_vector_view_array(yInArray, N);

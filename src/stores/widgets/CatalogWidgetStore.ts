@@ -1,8 +1,8 @@
-import * as GSL from "gsl_wrapper";
 import * as CARTACompute from "carta_computation";
 import {action, observable, makeObservable, computed, reaction} from "mobx";
 import {Colors} from "@blueprintjs/core";
 import {CatalogOverlay, CatalogStore, FrameScaling, PreferenceStore} from "stores";
+import {minMaxArray} from "utilities";
 
 export enum CatalogPlotType {
     ImageOverlay = "Image Overlay",
@@ -90,7 +90,7 @@ export class CatalogWidgetStore {
         this.sizeMapColumn = CatalogOverlay.NONE;
         this.sizeArea = false;
         this.sizeScalingType = FrameScaling.LINEAR;
-        this.sizeMin = {area: 50, diameter: 1};
+        this.sizeMin = {area: 100, diameter: 1};
         this.sizeMax = {area: 200, diameter: 20};
         this.sizeColumnMin = {default: undefined, clipd: undefined};
         this.sizeColumnMax = {default: undefined, clipd: undefined};
@@ -102,9 +102,9 @@ export class CatalogWidgetStore {
         this.colorScalingType = FrameScaling.LINEAR;
 
         reaction(()=>this.sizeMapData, (column) => {
-            const result =  GSL.minMaxArray(column);
-            this.setSizeColumnMin(isFinite(result.min)? result.min : 0, "default");
-            this.setSizeColumnMax(isFinite(result.max)? result.max : 0, "default");
+            const result = minMaxArray(column);
+            this.setSizeColumnMin(isFinite(result.minVal)? result.minVal : 0, "default");
+            this.setSizeColumnMax(isFinite(result.maxVal)? result.maxVal : 0, "default");
         });
 
         reaction(()=>this.sizeArray, (res) => {
@@ -112,9 +112,9 @@ export class CatalogWidgetStore {
         });
 
         reaction(()=>this.colorMapData, (column) => {
-            const result =  GSL.minMaxArray(column);
-            this.setColorColumnMin(isFinite(result.min)? result.min : 0, "default");
-            this.setColorColumnMax(isFinite(result.max)? result.max : 0, "default");
+            const result = minMaxArray(column);
+            this.setColorColumnMin(isFinite(result.minVal)? result.minVal : 0, "default");
+            this.setColorColumnMax(isFinite(result.maxVal)? result.maxVal : 0, "default");
         });
 
         // reaction(()=>this.colorMapData, (res) => {
@@ -130,7 +130,7 @@ export class CatalogWidgetStore {
         this.sizeMapColumn = CatalogOverlay.NONE;
         this.sizeArea = false;
         this.sizeScalingType = FrameScaling.LINEAR;
-        this.sizeMin = {area: 100, diameter: 10};
+        this.sizeMin = {area: 50, diameter: 1};
         this.sizeMax = {area: 200, diameter: 20};
         this.sizeColumnMin = {default: undefined, clipd: undefined};
         this.sizeColumnMax = {default: undefined, clipd: undefined};
@@ -293,7 +293,7 @@ export class CatalogWidgetStore {
         const catalogProfileStore = CatalogStore.Instance.catalogProfileStores.get(this.catalogFileId);
         if (!this.disableColorMap && catalogProfileStore) {
             let column = catalogProfileStore.get1DPlotData(this.colorMapColumn).wcsData;
-            return Float32Array.from(column);   
+            return column? Float32Array.from(column) : new Float32Array(0);   
         } else {
             return new Float32Array(0);
         }
@@ -317,7 +317,7 @@ export class CatalogWidgetStore {
         const catalogProfileStore = CatalogStore.Instance.catalogProfileStores.get(this.catalogFileId);
         if (!this.disableSizeMap && catalogProfileStore) {
             let column = catalogProfileStore.get1DPlotData(this.sizeMapColumn).wcsData;
-            return Float32Array.from(column);   
+            return column? Float32Array.from(column) : new Float32Array(0);   
         } else {
             return new Float32Array(0);
         }
@@ -326,7 +326,6 @@ export class CatalogWidgetStore {
     @computed get sizeArray(): Float32Array {
         let column = this.sizeMapData;
         if (!this.disableSizeMap && column?.length && this.sizeColumnMin.clipd !== undefined && this.sizeColumnMax.clipd !== undefined) {
-            // wasm 0.25s, Js 0.9s
             const pointSize = this.pointSizebyType;
             return CARTACompute.CalculateCatalogSize(
                 column,

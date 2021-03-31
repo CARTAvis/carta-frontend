@@ -72,7 +72,8 @@ export class CatalogViewGLComponent extends React.Component<CatalogViewGLCompone
             const sizeMapColumn = catalogWidgetStore.sizeMapColumn;
             const sizeMap = catalogWidgetStore.sizeArray.length;
             const colorMapColumn = catalogWidgetStore.colorMapColumn;
-            const colorScalingType = catalogWidgetStore.colorScalingType;
+            const colorMapArray = catalogWidgetStore.colorArray.length;
+            // const colorScalingType = catalogWidgetStore.colorScalingType;
             const colorMap = catalogWidgetStore.colorMap;
         });
         /* eslint-enable @typescript-eslint/no-unused-vars */
@@ -178,12 +179,12 @@ export class CatalogViewGLComponent extends React.Component<CatalogViewGLCompone
             if (!catalogWidgetStore.disableColorMap) {
                 this.gl.uniform1i(shaderUniforms.CmapEnabled, 1);
                 this.gl.uniform1i(shaderUniforms.CmapIndex, RenderConfigStore.COLOR_MAPS_ALL.indexOf(catalogWidgetStore.colorMap));
-                this.gl.uniform1f(shaderUniforms.CminVal, catalogWidgetStore.colorColumnMin.clipd);
-                this.gl.uniform1f(shaderUniforms.CmaxVal, catalogWidgetStore.colorColumnMax.clipd);
-                this.gl.uniform1f(shaderUniforms.Gamma, baseFrame.renderConfig.gamma);
-                this.gl.uniform1f(shaderUniforms.Alpha, baseFrame.renderConfig.alpha);
-                this.gl.uniform1i(shaderUniforms.CscaleType, catalogWidgetStore.colorScalingType);
-                this.gl.uniform1i(shaderUniforms.Inverted, 0);
+                // this.gl.uniform1f(shaderUniforms.CminVal, catalogWidgetStore.colorColumnMin.clipd);
+                // this.gl.uniform1f(shaderUniforms.CmaxVal, catalogWidgetStore.colorColumnMax.clipd);
+                // this.gl.uniform1f(shaderUniforms.Gamma, baseFrame.renderConfig.gamma);
+                // this.gl.uniform1f(shaderUniforms.Alpha, baseFrame.renderConfig.alpha);
+                // this.gl.uniform1i(shaderUniforms.CscaleType, catalogWidgetStore.colorScalingType);
+                // this.gl.uniform1i(shaderUniforms.Inverted, 0);
             }
 
             this.gl.uniform1i(shaderUniforms.SmapEnabled, catalogWidgetStore.disableSizeMap? 0 : 1);
