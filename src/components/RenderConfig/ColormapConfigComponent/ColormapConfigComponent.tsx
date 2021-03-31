@@ -1,9 +1,11 @@
 import * as React from "react";
 import {observer} from "mobx-react";
-import {Colors, FormGroup, Switch} from "@blueprintjs/core";
+import {action, makeObservable, observable} from "mobx";
+import {Button, Collapse, Colors, FormGroup, Switch} from "@blueprintjs/core";
 import {Circle, Layer, Rect, Stage} from "react-konva";
 import {FrameScaling, RenderConfigStore} from "stores";
 import {ColormapComponent, ScalingSelectComponent, SafeNumericInput} from "components/Shared";
+import {clamp} from "utilities"
 
 interface ColormapConfigProps {
     renderConfig: RenderConfigStore;
@@ -12,18 +14,38 @@ interface ColormapConfigProps {
 @observer
 export class ColormapConfigComponent extends React.Component<ColormapConfigProps> {
 
+    @observable extendBiasContrast: boolean = false;
+
+    @action switchExtendBiasContrast = () => {
+        this.extendBiasContrast = !this.extendBiasContrast;
+    };
+
+    constructor(props) {
+        super(props);
+        makeObservable(this);
+    }
+
     handleInvertedChanged: React.FormEventHandler<HTMLInputElement> = (evt) => {
         this.props.renderConfig.setInverted(evt.currentTarget.checked);
     };
+
+    private handleDragMove = (event) => {
+        const stage = event.target.getStage();
+        const point = stage.getPointerPosition();
+
+        const bias = clamp(point.x, 0, stage.width()) / stage.width() * 2 - 1;
+        const contrast = 2 -  clamp(point.y, 0, stage.height()) / stage.height() * 2;
+        this.props.renderConfig.setBias(bias);
+        this.props.renderConfig.setContrast(contrast); 
+    }
 
     render() {
         if (!this.props.renderConfig) {
             return null;
         }
 
-        const boardPadding = 15;
-        const boardWidth = 230 - boardPadding * 2;
-        const boardHeight = 90;
+        const boardWidth = 130;
+        const boardHeight = 60;
 
 
         const renderConfig = this.props.renderConfig;
@@ -38,21 +60,18 @@ export class ColormapConfigComponent extends React.Component<ColormapConfigProps
                     strokeWidth={4}
                 />
                 <Circle
-                    x={boardWidth / 2}
-                    y={boardHeight / 2}
+                    x={(renderConfig.bias + 1) * boardWidth / 2}
+                    y={(2 - renderConfig.contrast) * boardHeight / 2}
                     radius={5}
                     fill={Colors.GRAY3}
                     draggable={true}
                     dragBoundFunc={function (pos) {
-                        let newX = pos.x < 0 ? 0 : pos.x;
-                        newX = newX > boardWidth ? boardWidth : newX;
-                        let newY = pos.y < 0 ? 0 : pos.y;
-                        newY = newY > boardHeight ? boardHeight : newY;
                         return {
-                          x: newX,
-                          y: newY,
+                          x: clamp(pos.x, 0, boardWidth),
+                          y: clamp(pos.y, 0, boardHeight)
                         };
                     }}
+                    onDragMove={this.handleDragMove}
                 />
             </React.Fragment>
         )
@@ -90,6 +109,7 @@ export class ColormapConfigComponent extends React.Component<ColormapConfigProps
                 {renderConfig.scaling === FrameScaling.GAMMA &&
                 <FormGroup label={"Gamma"} inline={true}>
                     <SafeNumericInput
+                        className={'step-input'}
                         min={RenderConfigStore.GAMMA_MIN}
                         max={RenderConfigStore.GAMMA_MAX}
                         stepSize={0.1}
@@ -100,39 +120,52 @@ export class ColormapConfigComponent extends React.Component<ColormapConfigProps
                     />
                 </FormGroup>
                 }
-                <Stage
-                    className={"bias-contrast-stage"}
-                    width={boardWidth}
-                    height={boardHeight}
-                    style={{padding: `${boardPadding}px 0px ${boardPadding}px ${boardPadding}px`}}
-                >
-                    <Layer>
-                        {twoDimensionBoard}
-                    </Layer>
-                </Stage>
-
-                <FormGroup label={"Bias"} inline={true}>
-                    <SafeNumericInput
-                        min={RenderConfigStore.BIAS_MIN}
-                        max={RenderConfigStore.BIAS_MAX}
-                        stepSize={0.1}
-                        minorStepSize={0.01}
-                        majorStepSize={0.5}
-                        value={renderConfig.bias}
-                        onValueChange={renderConfig.setBias}
-                    />
+                <FormGroup inline={true}>
+                    <Button
+                        minimal={true}
+                        rightIcon={this.extendBiasContrast ? "double-chevron-up" : "double-chevron-down"}
+                        alignText={'right'}
+                        small={true}
+                        style={{width: boardWidth, marginTop: 5}}
+                        onClick={this.switchExtendBiasContrast}
+                    >
+                        {"Bias / Contrast"}
+                    </Button>
                 </FormGroup>
-                <FormGroup label={"Contrast"} inline={true}>
-                    <SafeNumericInput
-                        min={RenderConfigStore.CONTRAST_MIN}
-                        max={RenderConfigStore.CONTRAST_MAX}
-                        stepSize={0.1}
-                        minorStepSize={0.01}
-                        majorStepSize={0.5}
-                        value={renderConfig.contrast}
-                        onValueChange={renderConfig.setContrast}
-                    />
-                </FormGroup>
+                <Collapse isOpen={this.extendBiasContrast}>
+                    <Stage
+                        className={"bias-contrast-stage"}
+                        width={boardWidth}
+                        height={boardHeight}
+                        style={{paddingBottom: 10}}
+                    >
+                        <Layer>
+                            {twoDimensionBoard}
+                        </Layer>
+                    </Stage>
+                    <FormGroup label={"Bias"} inline={true}>
+                        <SafeNumericInput
+                            className={'step-input'}
+                            min={RenderConfigStore.BIAS_MIN}
+                            max={RenderConfigStore.BIAS_MAX}
+                            stepSize={0.1}
+                            majorStepSize={0.5}
+                            value={renderConfig.bias}
+                            onValueChange={renderConfig.setBias}
+                        />
+                    </FormGroup>
+                    <FormGroup label={"Contrast"} inline={true}>
+                        <SafeNumericInput
+                            className={'step-input'}
+                            min={RenderConfigStore.CONTRAST_MIN}
+                            max={RenderConfigStore.CONTRAST_MAX}
+                            stepSize={0.1}
+                            majorStepSize={0.5}
+                            value={renderConfig.contrast}
+                            onValueChange={renderConfig.setContrast}
+                        />
+                    </FormGroup>
+                </Collapse>
             </React.Fragment>
         )
     }
