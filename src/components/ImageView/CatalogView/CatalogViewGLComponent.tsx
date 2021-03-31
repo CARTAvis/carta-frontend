@@ -175,7 +175,6 @@ export class CatalogViewGLComponent extends React.Component<CatalogViewGLCompone
             // }
 
             this.gl.uniform1i(shaderUniforms.CmapEnabled, 0);
-
             if (!catalogWidgetStore.disableColorMap) {
                 this.gl.uniform1i(shaderUniforms.CmapEnabled, 1);
                 this.gl.uniform1i(shaderUniforms.CmapIndex, RenderConfigStore.COLOR_MAPS_ALL.indexOf(catalogWidgetStore.colorMap));
@@ -228,6 +227,7 @@ export class CatalogViewGLComponent extends React.Component<CatalogViewGLCompone
                 this.gl.uniform3f(shaderUniforms.PointColor, selectedColor.r / 255.0, selectedColor.g / 255.0, selectedColor.b / 255.0);
                 this.gl.uniform1i(shaderUniforms.ShapeType, outlineShape);
                 this.gl.uniform1f(shaderUniforms.PointSize, outlineShapeSize);
+                this.gl.uniform1i(shaderUniforms.CmapEnabled, 0);
 
                 this.catalogWebGLService.updateDataTexture(selectedDataPoints);
                 

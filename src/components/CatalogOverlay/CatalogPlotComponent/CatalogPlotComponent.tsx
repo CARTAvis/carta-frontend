@@ -13,6 +13,7 @@ import {CatalogPlotWidgetStore, Border, DragMode, XBorder, CatalogPlotWidgetStor
 import {ProfilerInfoComponent, ClearableNumericInputComponent} from "components/Shared";
 import {Colors} from "@blueprintjs/core";
 import {toFixed, minMaxArray} from "utilities";
+import {TypedArray} from "models/Processed";
 import "./CatalogPlotComponent.scss";
 
 @observer
@@ -184,7 +185,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
         };
     }
 
-    private getHistogramXBorder(xArray: number[]): XBorder {
+    private getHistogramXBorder(xArray: number[] | TypedArray): XBorder {
         const xBounds = minMaxArray(xArray);
         return {
             xMin: xBounds.minVal,

@@ -106,13 +106,13 @@ Module.GenerateVertexData = (sourceVertices: Float32Array, indexOffsets: Int32Ar
     return destHeapFloat;
 };
 
-Module.CalculateCatalogSize = (data: Array<number>, min: number, max: number, sizeMin: number, sizeMax: number, scaling: number, area: boolean, alpha: number = 1000, gamma: number = 1.5): Float32Array => {
+Module.CalculateCatalogSize = (data: Float32Array, min: number, max: number, sizeMin: number, sizeMax: number, scaling: number, area: boolean, alpha: number = 1000, gamma: number = 1.5): Float32Array => {
     const N = data.length;
-    const src = new Float32Array(data);
-    const bytes_per_element = src.BYTES_PER_ELEMENT;
+    // const src = new Float32Array(data);
+    const bytes_per_element = data.BYTES_PER_ELEMENT;
     const dataOnWasmHeap = Module._malloc(N * bytes_per_element);
 
-    Module.HEAPF32.set(src, dataOnWasmHeap / bytes_per_element);
+    Module.HEAPF32.set(data, dataOnWasmHeap / bytes_per_element);
 
     if (area) {
         calculateCatalogSizeArea(dataOnWasmHeap, N, min, max, sizeMin, sizeMax, scaling, alpha, gamma);
@@ -125,12 +125,12 @@ Module.CalculateCatalogSize = (data: Array<number>, min: number, max: number, si
     return float32;
 }
 
-Module.CalculateCatalogColor = (data: Array<number>, invert: boolean, min: number, max: number, scaling: number, alpha: number = 1000, gamma: number = 1.5): Float32Array => {
+Module.CalculateCatalogColor = (data: Float32Array, invert: boolean, min: number, max: number, scaling: number, alpha: number = 1000, gamma: number = 1.5): Float32Array => {
     const N = data.length;
-    const src = new Float32Array(data);
-    const bytes_per_element = src.BYTES_PER_ELEMENT;
+    // const src = new Float32Array(data);
+    const bytes_per_element = data.BYTES_PER_ELEMENT;
     const dataOnWasmHeap = Module._malloc(N * bytes_per_element);
-    Module.HEAPF32.set(new Float64Array(data), dataOnWasmHeap / bytes_per_element);
+    Module.HEAPF32.set(data, dataOnWasmHeap / bytes_per_element);
 
     calculateCatalogColorMap(dataOnWasmHeap, N, invert, min, max, scaling, alpha, gamma);
 

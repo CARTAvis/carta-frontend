@@ -118,7 +118,7 @@ export class CatalogWidgetStore {
         });
 
         reaction(()=>this.colorMapData, (res) => {
-            CatalogStore.Instance.updateCatalogColorMap(this.catalogFileId, new Float32Array(res));
+            CatalogStore.Instance.updateCatalogColorMap(this.catalogFileId, res);
         });
     }
 
@@ -285,13 +285,13 @@ export class CatalogWidgetStore {
         this.settingsTabId = tabId;
     }
 
-    @computed get colorMapData(): number[] {
+    @computed get colorMapData(): Float32Array {
         const catalogProfileStore = CatalogStore.Instance.catalogProfileStores.get(this.catalogFileId);
         if (!this.disableColorMap && catalogProfileStore) {
             let column = catalogProfileStore.get1DPlotData(this.colorMapColumn).wcsData;
-            return column;   
+            return Float32Array.from(column);   
         } else {
-            return [];
+            return new Float32Array(0);
         }
     }
 
@@ -309,18 +309,18 @@ export class CatalogWidgetStore {
     //     return new Float32Array(0);
     // }
 
-    @computed get sizeMapData(): number[] {
+    @computed get sizeMapData(): Float32Array {
         const catalogProfileStore = CatalogStore.Instance.catalogProfileStores.get(this.catalogFileId);
         if (!this.disableSizeMap && catalogProfileStore) {
             let column = catalogProfileStore.get1DPlotData(this.sizeMapColumn).wcsData;
-            return column;   
+            return Float32Array.from(column);   
         } else {
-            return [];
+            return new Float32Array(0);
         }
     }
 
     @computed get sizeArray(): Float32Array {
-        const column = this.sizeMapData;
+        let column = this.sizeMapData;
         if (!this.disableSizeMap && column?.length && this.sizeColumnMin.clipd !== undefined && this.sizeColumnMax.clipd !== undefined) {
             // wasm 0.25s, Js 0.9s
             const pointSize = this.pointSizebyType;

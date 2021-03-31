@@ -3,7 +3,7 @@ import {Regions, IRegion} from "@blueprintjs/table";
 import {CARTA} from "carta-protobuf";
 import {AppStore, CatalogStore, PreferenceStore} from "stores";
 import {filterProcessedColumnData, minMaxArray} from "utilities";
-import {ProcessedColumnData} from "models";
+import {ProcessedColumnData, TypedArray} from "models";
 
 export interface CatalogInfo {
     fileId: number;
@@ -550,14 +550,14 @@ export class CatalogProfileStore {
         }
     }
 
-    public get1DPlotData(column: string): { wcsData?: Array<number>, headerInfo: CARTA.ICatalogHeader } {
+    public get1DPlotData(column: string): { wcsData?: TypedArray, headerInfo: CARTA.ICatalogHeader } {
         const controlHeader = this.catalogControlHeader;
         const header = controlHeader.get(column);
         const headerInfo = this.catalogHeader[header.dataIndex];
         const xColumn = this.catalogData.get(headerInfo.columnIndex);
 
         if (xColumn && xColumn.dataType !== CARTA.ColumnType.String && xColumn.dataType !== CARTA.ColumnType.Bool) {
-            const wcsData = xColumn.data as Array<number>;
+            const wcsData = xColumn.data as TypedArray;
             return {wcsData, headerInfo};
         } else {
             return {headerInfo};
