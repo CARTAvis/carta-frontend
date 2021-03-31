@@ -21,23 +21,38 @@ export class ColormapConfigComponent extends React.Component<ColormapConfigProps
             return null;
         }
 
+        const boardPadding = 15;
+        const boardWidth = 230 - boardPadding * 2;
+        const boardHeight = 90;
+
+
         const renderConfig = this.props.renderConfig;
         const twoDimensionBoard = (
             <React.Fragment>
                 <Rect
                     x={0}
                     y={0}
-                    width={195}
-                    height={90}
+                    width={boardWidth}
+                    height={boardHeight}
                     stroke={Colors.LIGHT_GRAY1}
                     strokeWidth={4}
                 />
                 <Circle
-                    x={195 / 2}
-                    y={90 / 2}
+                    x={boardWidth / 2}
+                    y={boardHeight / 2}
                     radius={5}
-                    fill={Colors.GRAY5}
+                    fill={Colors.GRAY3}
                     draggable={true}
+                    dragBoundFunc={function (pos) {
+                        let newX = pos.x < 0 ? 0 : pos.x;
+                        newX = newX > boardWidth ? boardWidth : newX;
+                        let newY = pos.y < 0 ? 0 : pos.y;
+                        newY = newY > boardHeight ? boardHeight : newY;
+                        return {
+                          x: newX,
+                          y: newY,
+                        };
+                    }}
                 />
             </React.Fragment>
         )
@@ -87,9 +102,9 @@ export class ColormapConfigComponent extends React.Component<ColormapConfigProps
                 }
                 <Stage
                     className={"bias-contrast-stage"}
-                    height={90}
-                    width={195}
-                    style={{padding: '15px 0px 15px 15px'}}
+                    width={boardWidth}
+                    height={boardHeight}
+                    style={{padding: `${boardPadding}px 0px ${boardPadding}px ${boardPadding}px`}}
                 >
                     <Layer>
                         {twoDimensionBoard}
