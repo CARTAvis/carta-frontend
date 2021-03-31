@@ -73,7 +73,6 @@ export class CatalogViewGLComponent extends React.Component<CatalogViewGLCompone
             const sizeMap = catalogWidgetStore.sizeArray.length;
             const colorMapColumn = catalogWidgetStore.colorMapColumn;
             const colorMapArray = catalogWidgetStore.colorArray.length;
-            // const colorScalingType = catalogWidgetStore.colorScalingType;
             const colorMap = catalogWidgetStore.colorMap;
         });
         /* eslint-enable @typescript-eslint/no-unused-vars */
@@ -186,6 +185,7 @@ export class CatalogViewGLComponent extends React.Component<CatalogViewGLCompone
                 // this.gl.uniform1i(shaderUniforms.CscaleType, catalogWidgetStore.colorScalingType);
                 // this.gl.uniform1i(shaderUniforms.Inverted, 0);
             }
+            // console.log(dataPoints)
 
             this.gl.uniform1i(shaderUniforms.SmapEnabled, catalogWidgetStore.disableSizeMap? 0 : 1);
             this.gl.uniform1f(shaderUniforms.FeatherWidth, featherWidth);

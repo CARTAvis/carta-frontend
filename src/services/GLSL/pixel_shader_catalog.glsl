@@ -30,6 +30,8 @@ precision highp float;
 #define SIN_90 1.0
 #define COS_90 0.0
 
+#define FLT_MAX 3.402823466e+38
+
 uniform float uLineThickness;
 uniform highp int uShapeType;
 uniform float uFeatherWidth;
@@ -255,6 +257,10 @@ float featherRangeXLined(vec2 r) {
     return featherRangeCrossLined(r);
 }
 
+bool isnan(float val) {
+    return val != val;
+}
+
 void main() {
     vec2 posPixelSpace = (0.5 - gl_PointCoord) * (v_pointSize + uFeatherWidth);
 
@@ -327,7 +333,7 @@ void main() {
     }
 
     // Blending
-    if (uCmapEnabled) {
+    if (uCmapEnabled && !isnan(v_colour)) {
         float x = clamp(v_colour, 0.0, 1.0);
         float cmapYVal = (float(uCmapIndex) + 0.5) / float(uNumCmaps);
         vec2 cmapCoords = vec2(x, cmapYVal);

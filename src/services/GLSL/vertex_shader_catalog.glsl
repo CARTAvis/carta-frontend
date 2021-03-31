@@ -33,8 +33,6 @@ precision highp float;
 #define POWER 4
 #define GAMMA 5
 
-#define FLT_MAX 3.402823466e+38
-
 uniform vec2 uFrameViewMin;
 uniform vec2 uFrameViewMax;
 uniform float uFeatherWidth;
@@ -108,6 +106,10 @@ float getSquareSideByArea(float area) {
     return 20.0;
 }
 
+bool isnan(float val) {
+    return val != val;
+}
+
 // float scaleValue(float x) {
 //     switch (uCscaleType)
 //     {
@@ -131,6 +133,10 @@ void main() {
     vec2 pos = data.xy;
     float size = data.z;
     v_colour = data.w;
+    
+    if(isnan(size)) {
+        size = uPointSize;
+    }
 
     gl_Position = vec4(imageToGL(pos), 0, 1);
     if (uSmapEnabled) {
