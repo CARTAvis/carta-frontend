@@ -54,6 +54,10 @@ export class RenderConfigStore {
 
     static readonly GAMMA_MIN = 0;
     static readonly GAMMA_MAX = 2;
+    static readonly BIAS_MIN = -1;
+    static readonly BIAS_MAX = 1;
+    static readonly CONTRAST_MIN = 0;
+    static readonly CONTRAST_MAX = 2;
 
     @observable scaling: FrameScaling;
     @observable colorMapIndex: number;
@@ -262,6 +266,14 @@ export class RenderConfigStore {
         this.updateSiblings();
     };
 
+    @action setBias = (bias: number) => {
+        this.bias = bias;
+    }
+
+    @action setContrast = (contrast: number) => {
+        this.contrast = contrast;
+    }
+
     @action setInverted = (inverted: boolean) => {
         this.inverted = inverted;
     };
@@ -285,6 +297,8 @@ export class RenderConfigStore {
         this.scaling = other.scaling;
         this.alpha = other.alpha;
         this.gamma = other.gamma;
+        this.bias = other.bias;
+        this.contrast = other.contrast;
         this.scaleMin[this.stokes] = other.scaleMinVal;
         this.scaleMax[this.stokes] = other.scaleMaxVal;
         this.selectedPercentile[this.stokes] = -1;

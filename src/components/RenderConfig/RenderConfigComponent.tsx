@@ -5,6 +5,7 @@ import {action, autorun, computed, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 import {Button, ButtonGroup, FormGroup, HTMLSelect, IOptionProps, NonIdealState, Colors} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
+import {HistogramConfigComponent} from "./HistogramConfigComponent/HistogramConfigComponent";
 import {ColormapConfigComponent} from "./ColormapConfigComponent/ColormapConfigComponent";
 import {LinePlotComponent, LinePlotComponentProps, ProfilerInfoComponent, SafeNumericInput} from "components/Shared";
 import {TaskProgressDialogComponent} from "components/Dialogs";
@@ -396,7 +397,7 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
                 </div>
                 }
                 <div className="colormap-config">
-                    <ColormapConfigComponent
+                    <HistogramConfigComponent
                         darkTheme={appStore.darkTheme}
                         renderConfig={frame.renderConfig}
                         onCubeHistogramSelected={this.handleCubeHistogramSelected}
@@ -422,6 +423,9 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
                             onKeyDown={this.handleScaleMaxChange}
                         />
                     </FormGroup>
+                    <ColormapConfigComponent
+                        renderConfig={frame.renderConfig}
+                    />
                     {this.width < histogramCutoff && percentileSelectDiv}
                 </div>
                 <TaskProgressDialogComponent
