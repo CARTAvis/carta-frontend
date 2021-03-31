@@ -130,7 +130,7 @@ void main() {
     vec4 data = getValueByIndexFromTexture(uPositionTexture, gl_VertexID);
     vec2 pos = data.xy;
     float size = data.z;
-    float cmapVal = data.w;
+    v_colour = data.w;
 
     gl_Position = vec4(imageToGL(pos), 0, 1);
     if (uSmapEnabled) {
@@ -148,16 +148,16 @@ void main() {
 
     gl_PointSize = v_pointSize + uFeatherWidth;
     // v_colour = vec4(hsv2rgb(vec3(cmapVal, 0.5, 1.0)), 1.0);
-    v_colour = 0.0;
-    if(uCmapEnabled) {
-        float columnMin = scaleValue(uCminVal);
-        float columnMax = scaleValue(uCmaxVal);
-        float mapVal = clamp(cmapVal, uCminVal, uCmaxVal);
-        float cValue = (scaleValue(mapVal) - columnMin) / (columnMax - columnMin);
-        if(uInverted) {
-            cValue = 1.0 - cValue;
-        }
-        v_colour = cValue;
-    }
+    // v_colour = 0.0;
+    // if(uCmapEnabled) {
+    //     float columnMin = scaleValue(uCminVal);
+    //     float columnMax = scaleValue(uCmaxVal);
+    //     float mapVal = clamp(cmapVal, uCminVal, uCmaxVal);
+    //     float cValue = (scaleValue(mapVal) - columnMin) / (columnMax - columnMin);
+    //     if(uInverted) {
+    //         cValue = 1.0 - cValue;
+    //     }
+    //     v_colour = cValue;
+    // }
 
 }

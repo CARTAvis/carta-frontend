@@ -6,8 +6,8 @@ declare var addOnPostRun: any;
 const decompress = Module.cwrap("ZSTD_decompress", "number", ["number", "number", "number", "number"]);
 const decodeArray = Module.cwrap("decodeArray", "number", ["number", "number", "number"]);
 const generateVertexData = Module.cwrap("generateVertexData", "number", ["number", "number", "number", "number", "number", "number"]);
-const calculateCatalogSizeArea = Module.cwrap("calculateCatalogSizeArea", null, ["number", "number", "number", "number", "number", "number", "number", "number", "number"]);
-const calculateCatalogSizeDiameter = Module.cwrap("calculateCatalogSizeDiameter", null, ["number", "number", "number", "number", "number", "number", "number", "number", "number"]);
+const calculateCatalogSizeArea = Module.cwrap("calculateCatalogSizeArea", null, ["number", "number", "number", "number", "number", "number", "number", "number", "number", "number"]);
+const calculateCatalogSizeDiameter = Module.cwrap("calculateCatalogSizeDiameter", null, ["number", "number", "number", "number", "number", "number", "number", "number", "number", "number"]);
 const calculateCatalogColorMap = Module.cwrap("calculateCatalogColorMap", null, ["number", "number", "number", "number", "number", "number", "number"]);
 
 const VertexDataElements = 8;
@@ -106,7 +106,7 @@ Module.GenerateVertexData = (sourceVertices: Float32Array, indexOffsets: Int32Ar
     return destHeapFloat;
 };
 
-Module.CalculateCatalogSize = (data: Float32Array, min: number, max: number, sizeMin: number, sizeMax: number, scaling: number, area: boolean, alpha: number = 1000, gamma: number = 1.5): Float32Array => {
+Module.CalculateCatalogSize = (data: Float32Array, min: number, max: number, sizeMin: number, sizeMax: number, scaling: number, area: boolean, devicePixelRatio: number, alpha: number = 1000, gamma: number = 1.5): Float32Array => {
     const N = data.length;
     // const src = new Float32Array(data);
     const bytes_per_element = data.BYTES_PER_ELEMENT;
@@ -115,9 +115,9 @@ Module.CalculateCatalogSize = (data: Float32Array, min: number, max: number, siz
     Module.HEAPF32.set(data, dataOnWasmHeap / bytes_per_element);
 
     if (area) {
-        calculateCatalogSizeArea(dataOnWasmHeap, N, min, max, sizeMin, sizeMax, scaling, alpha, gamma);
+        calculateCatalogSizeArea(dataOnWasmHeap, N, min, max, sizeMin, sizeMax, scaling, devicePixelRatio, alpha, gamma);
     } else {
-        calculateCatalogSizeDiameter(dataOnWasmHeap, N, min, max, sizeMin, sizeMax, scaling, alpha, gamma);
+        calculateCatalogSizeDiameter(dataOnWasmHeap, N, min, max, sizeMin, sizeMax, scaling, devicePixelRatio, alpha, gamma);
     }
 
     const float32 = new Float32Array(Module.HEAPF32.buffer, dataOnWasmHeap, N);

@@ -106,13 +106,13 @@ export class CatalogStore {
         const catalog = this.catalogGLData.get(fileId);
         if (catalog?.dataPoints?.length && sizeData?.length) {
             for (let i = 0; i < sizeData.length; i++) {
-               catalog.dataPoints[i * 4 + 2] = sizeData[i] * devicePixelRatio;
+               catalog.dataPoints[i * 4 + 2] = sizeData[i];
             }
         }
         const selectedDataIndices = this.catalogProfileStores.get(fileId)?.selectedPointIndices;
         for (let i = 0; i < selectedDataIndices?.length; i++) {
             const j = selectedDataIndices[i];
-            catalog.selectedDataPoints[i * 4 + 2] = sizeData[j] * devicePixelRatio;
+            catalog.selectedDataPoints[i * 4 + 2] = sizeData[j];
         }
     }
 

@@ -262,7 +262,7 @@ float scaleValue(float x, int scaling, float alpha, float gamma) {
     }
 }
 
-void calculateCatalogSizeDiameter(float* data, size_t N, float min, float max, int sizeMin, int sizeMax, int scaling, float alpha, float gamma) {
+void calculateCatalogSizeDiameter(float* data, size_t N, float min, float max, int sizeMin, int sizeMax, int scaling, int devicePixelRatio, float alpha, float gamma) {
     float columnMin = scaleValue(min, scaling, alpha, gamma);
     float columnMax = scaleValue(max, scaling, alpha, gamma);
     float range = columnMax - columnMin;
@@ -270,11 +270,11 @@ void calculateCatalogSizeDiameter(float* data, size_t N, float min, float max, i
     {
         float v = clamp(*(data + i), min, max);
         float value = scaleValue(v, scaling, alpha, gamma);
-        *(data + i) = (value - columnMin) / range * (sizeMax - sizeMin) + sizeMin;
+        *(data + i) = ((value - columnMin) / range * (sizeMax - sizeMin) + sizeMin) * devicePixelRatio;
     }
 }
 
-void calculateCatalogSizeArea(float* data, size_t N, float min, float max, int sizeMin, int sizeMax, int scaling, float alpha, float gamma) {
+void calculateCatalogSizeArea(float* data, size_t N, float min, float max, int sizeMin, int sizeMax, int scaling, int devicePixelRatio, float alpha, float gamma) {
     float columnMin = scaleValue(min, scaling, alpha, gamma);
     float columnMax = scaleValue(max, scaling, alpha, gamma);
     float range = columnMax - columnMin;
@@ -282,7 +282,7 @@ void calculateCatalogSizeArea(float* data, size_t N, float min, float max, int s
     {
         float v = clamp(*(data + i), min, max);
         float value = scaleValue(v, scaling, alpha, gamma);
-        *(data + i) = sqrt((value - columnMin) / range) * (sizeMax - sizeMin) + sizeMin;
+        *(data + i) = (sqrt((value - columnMin) / range) * (sizeMax - sizeMin) + sizeMin) * devicePixelRatio;
     }
 }
 
