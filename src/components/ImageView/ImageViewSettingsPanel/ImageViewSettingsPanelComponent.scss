@@ -1,17 +1,22 @@
 @import "../../../../node_modules/@blueprintjs/core/lib/scss/variables.scss";
 
 .image-view-settings {
-    margin: 20px;
+    padding: 20px;
+    height: 100%;
 
     h3 {
         margin: 10px 0 10px 5px;
     }
 
+    div.bp3-tabs.bp3-vertical {
+        height: 100%;
+    }
+
     .bp3-tab-panel {
-        height: 25em;
-        overflow: auto;
         width: 100%;
-	    user-select: none;
+        height: 100%;
+        overflow: auto;
+        user-select: none;
     }
 
     .bp3-tab-list {
@@ -27,7 +32,7 @@
             margin-left: 0px;
         }
         .bp3-label {
-            width: 8em;
+            width: 12em;
             text-align: right;
         }
     }
@@ -53,5 +58,10 @@
             width: 190px;
             margin-right: 5px;
         }
+    }
+
+    hr {
+        margin: 15px;
+        border: 1px solid $light-gray3;
     }
 }
