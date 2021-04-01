@@ -5,9 +5,8 @@ import {Button, FormGroup, Icon, MenuItem, PopoverPosition, Tab, Tabs} from "@bl
 import {Select, IItemRendererProps} from "@blueprintjs/select";
 import {AppStore, CatalogStore, DefaultWidgetConfig, HelpType, PreferenceStore, PreferenceKeys, WidgetProps, WidgetsStore} from "stores";
 import {CatalogOverlayShape, CatalogWidgetStore, CatalogSettingsTabs} from "stores/widgets";
-import {ColorResult} from "react-color";
-import {ColorPickerComponent, SafeNumericInput} from "components/Shared";
-import {SWATCH_COLORS} from "utilities";
+import {AutoColorPickerComponent, SafeNumericInput} from "components/Shared";
+import {SWATCH_COLORS, getColorForTheme} from "utilities";
 import "./CatalogOverlayPlotSettingsPanelComponent.scss";
 
 const IconWrapper = (path: React.SVGProps<SVGPathElement>, color: string, fill: boolean, strokeWidth = 2, viewboxDefault = 16) => {
@@ -127,7 +126,7 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
 
     private getCatalogShape = (shape: CatalogOverlayShape) => {
         const widgetStore = this.widgetStore;
-        let color = widgetStore.catalogColor;
+        let color = getColorForTheme(widgetStore.catalogColor);
         switch (shape) {
             case CatalogOverlayShape.Circle:
                 return <Icon icon="circle" color={color}/>;
@@ -207,26 +206,24 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
                     </Select>
                 </FormGroup>
                 <FormGroup label={"Color"} inline={true}  disabled={disabledOverlayPanel}>
-                    <ColorPickerComponent
+                    <AutoColorPickerComponent
                         color={widgetStore.catalogColor}
                         presetColors={[...SWATCH_COLORS, "transparent"]}
-                        setColor={(color: ColorResult) => {
-                            widgetStore.setCatalogColor(color.hex === "transparent" ? "#000000" : color.hex);
+                        setColor={(color: string) => {
+                            widgetStore.setCatalogColor(color === "transparent" ? "#000000" : color);
                         }}
                         disableAlpha={true}
-                        darkTheme={appStore.darkTheme}
                         disabled={disabledOverlayPanel}
                     />
                 </FormGroup>
                 <FormGroup label={"Overlay Highlight"} inline={true}  disabled={disabledOverlayPanel}>
-                    <ColorPickerComponent
+                    <AutoColorPickerComponent
                         color={widgetStore.highlightColor}
                         presetColors={[...SWATCH_COLORS, "transparent"]}
-                        setColor={(color: ColorResult) => {
-                            widgetStore.setHighlightColor(color.hex === "transparent" ? "#000000" : color.hex);
+                        setColor={(color: string) => {
+                            widgetStore.setHighlightColor(color === "transparent" ? "#000000" : color);
                         }}
                         disableAlpha={true}
-                        darkTheme={appStore.darkTheme}
                         disabled={disabledOverlayPanel}
                     />
                 </FormGroup>

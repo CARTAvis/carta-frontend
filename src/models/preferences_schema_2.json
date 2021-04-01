@@ -1,15 +1,17 @@
 {
     "$schema": "http://json-schema.org/draft-07/schema#",
     "title": "Preferences",
-    "description": "Schema for CARTA Preferences (Version 1)",
-    "$id": "carta_preferences_1",
+    "description": "Schema for CARTA Preferences (Version 2)",
+    "$id": "carta_preferences_2",
     "required": [
         "version"
     ],
     "properties": {
         "version": {
+            "description": "The version of the preferences contained",
             "type": "integer",
-            "minimum": 1
+            "minimum": 1,
+            "maximum": 2
         },
         "username": {
             "type": "string",
@@ -151,8 +153,8 @@
             "type": "string"
         },
         "astColor": {
-            "type": "integer",
-            "minimum": 0
+            "type": "string",
+            "description": "TODO: validate color string"
         },
         "astGridVisible": {
             "type": "boolean"

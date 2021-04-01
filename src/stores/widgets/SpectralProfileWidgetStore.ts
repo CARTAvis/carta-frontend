@@ -1,14 +1,15 @@
 import {action, autorun, computed, observable, makeObservable, override} from "mobx";
-import {Colors, NumberRange} from "@blueprintjs/core";
+import {NumberRange} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import {PlotType, LineSettings} from "components/Shared";
 import {RegionWidgetStore, RegionsType, ACTIVE_FILE_ID} from "./RegionWidgetStore";
 import {SpectralLine} from "./SpectralLineQueryWidgetStore";
 import {AppStore} from "stores";
 import {ProfileSmoothingStore} from "stores/ProfileSmoothingStore";
-import {SpectralSystem, SpectralType, SpectralUnit} from "models";
+import {SpectralSystem} from "models";
 import tinycolor from "tinycolor2";
 import {SpectralProfilerSettingsTabs} from "components";
+import {isAutoColor} from "utilities";
 
 export enum MomentSelectingMode {
     NONE = 1,
@@ -34,7 +35,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
     // style settings
     @observable plotType: PlotType;
     @observable meanRmsVisible: boolean;
-    @observable primaryLineColor: { colorHex: string, fixed: boolean };
+    @observable primaryLineColor: string;
     @observable lineWidth: number;
     @observable linePlotPointSize: number;
     @observable linePlotInitXYBoundaries: { minXVal: number, maxXVal: number, minYVal: number, maxYVal: number };
@@ -101,19 +102,13 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
     };
 
     @action setSpectralCoordinate = (coordStr: string) => {
-        const frame = this.effectiveFrame;
-        if (frame && frame.spectralCoordsSupported && frame.spectralCoordsSupported.has(coordStr)) {
-            const coord: {type: SpectralType, unit: SpectralUnit} = frame.spectralCoordsSupported.get(coordStr);
-            frame.spectralType = coord.type;
-            frame.spectralUnit = coord.unit;
+        if (this.effectiveFrame.setSpectralCoordinate(coordStr)) {
             this.clearXBounds();
         }
     };
 
     @action setSpectralSystem = (specsys: SpectralSystem) => {
-        const frame = this.effectiveFrame;
-        if (frame && frame.spectralSystemsSupported && frame.spectralSystemsSupported.includes(specsys)) {
-            frame.spectralSystem = specsys;
+        if (this.effectiveFrame.setSpectralSystem(specsys)) {
             this.clearXBounds();
         }
     };
@@ -308,7 +303,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         this.plotType = PlotType.STEPS;
         this.meanRmsVisible = false;
         this.markerTextVisible = false;
-        this.primaryLineColor = { colorHex: Colors.BLUE2, fixed: false };
+        this.primaryLineColor = "auto-blue";
         this.linePlotPointSize = 1.5;
         this.lineWidth = 1;
         this.linePlotInitXYBoundaries = { minXVal: 0, maxXVal: 0, minYVal: 0, maxYVal: 0 };
@@ -518,8 +513,8 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
     }
 
     // settings
-    @action setPrimaryLineColor = (colorHex: string, fixed: boolean) => {
-        this.primaryLineColor = { colorHex: colorHex, fixed: fixed };
+    @action setPrimaryLineColor = (color: string) => {
+        this.primaryLineColor = color;
     }
 
     @action setLineWidth = (val: number) => {
@@ -543,8 +538,8 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
             return;
         }
         const lineColor = tinycolor(widgetSettings.primaryLineColor);
-        if (lineColor.isValid()) {
-            this.primaryLineColor.colorHex = lineColor.toHexString();
+        if (lineColor.isValid() || isAutoColor(widgetSettings.primaryLineColor)) {
+            this.primaryLineColor = widgetSettings.primaryLineColor;
         }
         if (typeof widgetSettings.lineWidth === "number" && widgetSettings.lineWidth >= LineSettings.MIN_WIDTH && widgetSettings.lineWidth <= LineSettings.MAX_WIDTH) {
             this.lineWidth = widgetSettings.lineWidth;
@@ -574,7 +569,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
 
     public toConfig = () => {
         return {
-            primaryLineColor: this.primaryLineColor.colorHex,
+            primaryLineColor: this.primaryLineColor,
             lineWidth: this.lineWidth,
             linePlotPointSize: this.linePlotPointSize,
             meanRmsVisible: this.meanRmsVisible,

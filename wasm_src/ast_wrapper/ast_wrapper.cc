@@ -52,12 +52,6 @@ EMSCRIPTEN_KEEPALIVE AstFrameSet* getFrameFromFitsChan(AstFitsChan* fitschan)
         return nullptr;
     }
 
-    // work around for missing CTYPE1 & CTYPE2
-    const char *domain = astGetC(frameSet, "Domain");
-    if (!strstr(domain, "SKY")) {
-        return nullptr;
-    }
-
     return frameSet;
 }
 
