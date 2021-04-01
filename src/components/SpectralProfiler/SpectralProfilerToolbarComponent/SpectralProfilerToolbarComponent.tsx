@@ -29,9 +29,21 @@ class ProfileSelectionButtonComponentProps {
 @observer
 class ProfileSelectionButtonComponent extends React.Component<ProfileSelectionButtonComponentProps> {
     public render() {
+        const itemOptions = this.props.itemOptions;
+        const itemSelected = this.props.itemSelected;
+        let dropdownText = "";
+        if (itemOptions && itemSelected?.length > 0) {
+            itemSelected.forEach((selectedItemValue, index) => {
+                const selectedItemOption = itemOptions.find(item => item.value === selectedItemValue);
+                if (selectedItemOption?.label) {
+                    dropdownText += `${selectedItemOption.label}${index !== itemSelected.length - 1 ? "," : ""}`;
+                }
+            });
+        }
+
         return (
             <ButtonGroup fill={true} className="category-set">
-                <Tooltip content={"Click to show multiple profiles"} position={Position.TOP}>
+                <Tooltip content={"Click to enable multiple selection"} position={Position.TOP}>
                     <AnchorButton
                         text={this.props.categoryName}
                         active={this.props.isActiveCategory}
@@ -59,7 +71,12 @@ class ProfileSelectionButtonComponent extends React.Component<ProfileSelectionBu
                     placement={Position.BOTTOM}
                     disabled={this.props.disabled}
                 >
-                    <AnchorButton rightIcon={"caret-down"} disabled={this.props.disabled}/>
+                    <AnchorButton
+                        text={<span className="overflow-text">{dropdownText}</span>}
+                        className="dropdown-button"
+                        rightIcon={"caret-down"}
+                        disabled={this.props.disabled}
+                    />
                 </Popover>
             </ButtonGroup>
         );

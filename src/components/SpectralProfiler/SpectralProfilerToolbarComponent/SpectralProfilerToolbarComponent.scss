@@ -13,7 +13,28 @@
         flex-direction: row;
 
         .category-set {
-            padding-right: 15px;
+            padding-right: 5px;
+
+            .bp3-button {
+                padding: 5px;
+
+                .bp3-button-text {
+                    margin-right: 0;
+                }
+            }
+
+            .dropdown-button {
+                width: 100px;
+                padding-right: 0;
+
+                .overflow-text {
+                    width: 70px;
+                    text-overflow: ellipsis;
+                    overflow: hidden;
+                    white-space: nowrap;
+                    display: block;
+                }
+            }
         }
     }
 

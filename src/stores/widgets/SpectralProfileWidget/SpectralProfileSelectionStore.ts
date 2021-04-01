@@ -8,7 +8,7 @@ import {ProcessedSpectralProfile, STATISTICS_TEXT, StatsTypeString, SUPPORTED_ST
 export enum ProfileCategory {
     IMAGE = "Image",
     REGION = "Region",
-    STATISTICS = "Statistics",
+    STATISTICS = "Statistic",
     STOKES = "Stokes"
 }
 
@@ -226,7 +226,7 @@ export class SpectralProfileSelectionStore {
     }
 
     @computed get coordinateOptions(): ProfileItemOptionProps[] {
-        let options = [{value: "z", label: "Current"}];
+        let options = [{value: "z", label: "z"}];
         this.selectedFrame?.stokesInfo?.forEach(stokes => options.push({value: `${stokes}z`, label: stokes}));
         return options;
     }
