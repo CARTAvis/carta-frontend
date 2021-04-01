@@ -47,12 +47,22 @@ export class ProfileFittingStore {
         if (this.components) {
             for (let i = 0; i < this.components.length; i++) {
                 const component = this.components[i];
-                const box: LinePlotInsideBoxMarker = {
+                const initialBox: LinePlotInsideBoxMarker = {
                     boundary: {xMin: component.center - 0.5 * component.fwhm, xMax: component.center + 0.5 * component.fwhm, yMin: 0, yMax: component.amp},
-                    color: (i === this.selectedIndex) ? getColorForTheme("auto-orange"): getColorForTheme("auto-lime"),
-                    opacity: (i === this.selectedIndex) ? 0.9 : 0.7
+                    color: getColorForTheme("auto-lime"),
+                    opacity: (i === this.selectedIndex) ? 0.5 : 0.3,
+                    strokeColor: (i === this.selectedIndex) ? getColorForTheme("auto-grey") : null
                 }
-                boxs.push(box);
+                boxs.push(initialBox);
+                if (isFinite(component.resutlCenter) && isFinite(component.resultAmp) && isFinite(component.resultFwhm)) {
+                    const resultBox: LinePlotInsideBoxMarker = {
+                        boundary: {xMin: component.resutlCenter - 0.5 * component.resultFwhm, xMax: component.resutlCenter + 0.5 * component.resultFwhm, yMin: 0, yMax: component.resultAmp},
+                        // color: getColorForTheme("auto-orange"),
+                        opacity: (i === this.selectedIndex) ? 0.8 : 0.3,
+                        strokeColor: getColorForTheme("auto-orange")
+                    }
+                    boxs.push(resultBox);
+                }
             }
         }
         return boxs;

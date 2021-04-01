@@ -55,6 +55,7 @@ export interface LinePlotInsideBoxMarker {
     boundary: {xMin: number, xMax: number, yMin: number, yMax: number};
     color?: string;
     opacity?: number;
+    strokeColor?: string;
 }
 
 export class LinePlotComponentProps {
@@ -948,12 +949,14 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
             for (const box of this.props.insideBoxs) {
                 insideBoxs.push(
                     <Rect
-                        x = {Math.floor(chartArea.left) + this.getPixelForValueX(box.boundary.xMin)}
-                        y = {Math.floor(chartArea.bottom) + this.getPixelForValueY(box.boundary.yMin)}
+                        x = {this.getPixelForValueX(box.boundary.xMin)}
+                        y = {this.getPixelForValueY(box.boundary.yMin)}
                         width = {this.getPixelForValueX(box.boundary.xMax) - this.getPixelForValueX(box.boundary.xMin)}
-                        height = {this.getPixelForValueX(box.boundary.yMax) - this.getPixelForValueX(box.boundary.yMin)}
-                        fill={Colors.ROSE3}
+                        height = {this.getPixelForValueY(box.boundary.yMax) - this.getPixelForValueY(box.boundary.yMin)}
+                        fill={box.color}
                         opacity={box.opacity}
+                        stroke={box.strokeColor}
+                        strokeWidth={1}
                     />
                 );
             }
@@ -1052,6 +1055,7 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
                     <Layer>
                         {this.genLines()}
                         {this.genSelectionRect()}
+                        {this.genInsideBoxs()}
                         {this.genBorderRect()}
                     </Layer>
                 </Stage>
