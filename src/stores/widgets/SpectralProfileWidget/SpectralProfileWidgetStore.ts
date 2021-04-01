@@ -33,6 +33,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
     @observable plotType: PlotType;
     @observable meanRmsVisible: boolean;
     @observable primaryLineColor: string;
+    @observable profileColorMap: Map<string, string>;
     @observable lineWidth: number;
     @observable linePlotPointSize: number;
     @observable linePlotInitXYBoundaries: { minXVal: number, maxXVal: number, minYVal: number, maxYVal: number };
@@ -260,6 +261,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         this.meanRmsVisible = false;
         this.markerTextVisible = false;
         this.primaryLineColor = "auto-blue";
+        this.profileColorMap = new Map();
         this.linePlotPointSize = 1.5;
         this.lineWidth = 1;
         this.linePlotInitXYBoundaries = { minXVal: 0, maxXVal: 0, minYVal: 0, maxYVal: 0 };
@@ -332,8 +334,8 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         const updatedRequirements = new Map<number, Map<number, CARTA.SetSpectralRequirements>>();
 
         widgetsMap.forEach(widgetStore => {
-            const spectralConfigs = widgetStore.profileSelectionStore.profileConfigs;
-            spectralConfigs.forEach(spectralConfig => {
+            const spectralConfigs = widgetStore.profileSelectionStore.getFormattedSpectralConfigs();
+            spectralConfigs?.forEach(spectralConfig => {
                 // fileId
                 let frameRequirements = updatedRequirements.get(spectralConfig.fileId);
                 if (!frameRequirements) {
@@ -463,6 +465,22 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
     @action setPrimaryLineColor = (color: string) => {
         this.primaryLineColor = color;
     }
+
+    @action getProfileColor = (profileName: string): string => {
+        return this.profileColorMap.get(profileName);
+    };
+
+    @action setProfileColor = (profileName: string, color: string) => {
+        this.profileColorMap.set(profileName, color);
+    };
+
+    @action removeProfileColor = (profileName: string) => {
+        this.profileColorMap.delete(profileName);
+    };
+
+    @action clearProfileColors = () => {
+        this.profileColorMap.clear();
+    };
 
     @action setLineWidth = (val: number) => {
         if (val >= LineSettings.MIN_WIDTH && val <= LineSettings.MAX_WIDTH) {

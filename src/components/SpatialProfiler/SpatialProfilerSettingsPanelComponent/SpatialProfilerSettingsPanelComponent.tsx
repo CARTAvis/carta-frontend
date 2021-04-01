@@ -153,12 +153,12 @@ export class SpatialProfilerSettingsPanelComponent extends React.Component<Widge
         }];
 
         const lineSettingsProps: LinePlotSettingsPanelComponentProps = {
-            primaryLineColor: widgetStore.primaryLineColor,
+            lineColorMap: new Map<string, string>([["primary", widgetStore.primaryLineColor]]),
             lineWidth: widgetStore.lineWidth,
             plotType: widgetStore.plotType,
             linePlotPointSize: widgetStore.linePlotPointSize,
             showWCSAxis: widgetStore.wcsAxisVisible,
-            setPrimaryLineColor: widgetStore.setPrimaryLineColor,
+            setLineColor: (lineName: string, color: string) => widgetStore.setPrimaryLineColor(color),
             setLineWidth: widgetStore.setLineWidth,
             setLinePlotPointSize: widgetStore.setLinePlotPointSize,
             handleWcsAxisChanged: this.handleWcsAxisChanged,

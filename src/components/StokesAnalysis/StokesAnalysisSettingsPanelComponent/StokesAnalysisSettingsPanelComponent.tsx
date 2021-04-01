@@ -76,16 +76,14 @@ export class StokesAnalysisSettingsPanelComponent extends React.Component<Widget
     render() {
         const widgetStore = this.widgetStore;
         const lineSettingsProps: LinePlotSettingsPanelComponentProps = {
-            primaryLineColor: widgetStore.primaryLineColor,
+            lineColorMap: new Map<string, string>([["primary", widgetStore.primaryLineColor], ["secondary", widgetStore.secondaryLineColor]]),
             lineWidth: widgetStore.lineWidth,
             plotType: widgetStore.plotType,
             linePlotPointSize: widgetStore.linePlotPointSize,
-            setPrimaryLineColor: widgetStore.setPrimaryLineColor,
+            setLineColor: widgetStore.setLineColor,
             setLineWidth: widgetStore.setLineWidth,
             setLinePlotPointSize: widgetStore.setLinePlotPointSize,
             setPlotType: widgetStore.setPlotType,
-            secondaryLineColor: widgetStore.secondaryLineColor,
-            setSecondaryLineColor: widgetStore.setSecondaryLineColor
         };
 
         const scatterSettingsProps: ScatterPlotSettingsPanelComponentProps = {

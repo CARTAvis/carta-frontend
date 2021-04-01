@@ -140,11 +140,11 @@ export class HistogramSettingsPanelComponent extends React.Component<WidgetProps
     render() {
         const widgetStore = this.widgetStore;
         const lineSettingsProps: LinePlotSettingsPanelComponentProps = {
-            primaryLineColor: widgetStore.primaryLineColor,
+            lineColorMap: new Map<string, string>([["primary", widgetStore.primaryLineColor]]),
             lineWidth: widgetStore.lineWidth,
             plotType: widgetStore.plotType,
             linePlotPointSize: widgetStore.linePlotPointSize,
-            setPrimaryLineColor: widgetStore.setPrimaryLineColor,
+            setLineColor: (lineName: string, color: string) => widgetStore.setPrimaryLineColor(color),
             setLineWidth: widgetStore.setLineWidth,
             setLinePlotPointSize: widgetStore.setLinePlotPointSize,
             setPlotType: widgetStore.setPlotType,

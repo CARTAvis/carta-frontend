@@ -6,6 +6,7 @@ import {AppStore} from "stores";
 import {ProfileCategory, SpectralProfileWidgetStore, SpectralProfileSelectionStore} from "stores/widgets";
 import {SpectralProfilerComponent, SpectralProfilerSettingsTabs} from "components";
 import {CustomIcon} from "icons/CustomIcons";
+import {SWATCH_COLORS} from "utilities";
 import "./SpectralProfilerToolbarComponent.scss";
 
 export interface ProfileItemOptionProps extends IOptionProps{
@@ -22,7 +23,7 @@ class ProfileSelectionButtonComponentProps {
     disabled: boolean;
     disableOptions?: boolean;
     onCategorySelect: () => void;
-    onItemSelect: (item: MultiSelectItem, isMultipleSelectionMode: boolean) => void;
+    onItemSelect: (item: MultiSelectItem, itemIndex: number, isMultipleSelectionMode: boolean) => void;
 }
 
 @observer
@@ -41,13 +42,13 @@ class ProfileSelectionButtonComponent extends React.Component<ProfileSelectionBu
                 <Popover
                     content={
                         <Menu>
-                            {this.props.itemOptions?.map((item) =>
+                            {this.props.itemOptions?.map((item, index) =>
                                 <MenuItem
                                     key={item.value}
                                     text={item.label}
                                     disabled={this.props.disableOptions}
                                     intent={item.hightlight ? Intent.PRIMARY : Intent.NONE}
-                                    onClick={(ev) => this.props.onItemSelect(item.value, this.props.isActiveCategory)}
+                                    onClick={(ev) => this.props.onItemSelect(item.value, index, this.props.isActiveCategory)}
                                     icon={this.props.itemSelected?.includes(item.value) ? "tick" : "blank"}
                                     shouldDismissPopover={false}
                                 />
@@ -68,20 +69,23 @@ class ProfileSelectionButtonComponent extends React.Component<ProfileSelectionBu
 @observer
 class ProfileSelectionComponent extends React.Component<{profileSelectionStore: SpectralProfileSelectionStore}> {
     // Frame selection does not allow multiple selection
-    private onFrameItemClick = (selectedFrame: number, isMultipleSelectionMode: boolean) => {
+    private onFrameItemClick = (selectedFrame: number, itemIndex: number, isMultipleSelectionMode: boolean) => {
         this.props.profileSelectionStore.selectFrame(selectedFrame);
     };
 
-    private onRegionItemClick = (selectedRegion: number, isMultipleSelectionMode: boolean) => {
-        this.props.profileSelectionStore.selectRegion(selectedRegion, isMultipleSelectionMode);
+    private onRegionItemClick = (selectedRegion: number, itemIndex: number, isMultipleSelectionMode: boolean) => {
+        const color = SWATCH_COLORS[itemIndex % SWATCH_COLORS.length];
+        this.props.profileSelectionStore.selectRegion(selectedRegion, color, isMultipleSelectionMode);
     };
 
-    private onStatsItemClick = (selectedStatsType: CARTA.StatsType, isMultipleSelectionMode: boolean) => {
-        this.props.profileSelectionStore.selectStatsType(selectedStatsType, isMultipleSelectionMode);
+    private onStatsItemClick = (selectedStatsType: CARTA.StatsType, itemIndex: number, isMultipleSelectionMode: boolean) => {
+        const color = SWATCH_COLORS[itemIndex % SWATCH_COLORS.length];
+        this.props.profileSelectionStore.selectStatsType(selectedStatsType, color, isMultipleSelectionMode);
     };
 
-    private onStokesItemClick = (selectedStokes: string, isMultipleSelectionMode: boolean) => {
-        this.props.profileSelectionStore.selectCoordinate(selectedStokes, isMultipleSelectionMode);
+    private onStokesItemClick = (selectedStokes: string, itemIndex: number, isMultipleSelectionMode: boolean) => {
+        const color = SWATCH_COLORS[itemIndex % SWATCH_COLORS.length];
+        this.props.profileSelectionStore.selectCoordinate(selectedStokes, color, isMultipleSelectionMode);
     };
 
     public render() {

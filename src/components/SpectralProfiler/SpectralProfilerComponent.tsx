@@ -20,6 +20,8 @@ type MultiPlotData = {
     numProfiles: number,
     data: DataPoints[],
     smoothedData: DataPoints[],
+    colors: string[],
+    labels: string[],
     xMin: number,
     xMax: number,
     yMin: number,
@@ -61,13 +63,14 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
     }
 
     @computed get plotData(): MultiPlotData {
-        const frame = this.widgetStore.effectiveFrame;
+        const widgetStore = this.widgetStore;
+        const frame = widgetStore.effectiveFrame;
         if (!frame) {
             return null;
         }
 
         // Get profiles
-        const profiles = this.widgetStore.profileSelectionStore.getProfiles();
+        const profiles = widgetStore.profileSelectionStore.profiles;
         if (!(profiles?.length > 0)) {
             return null;
         }
@@ -75,17 +78,20 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
         // Determine xBound
         const xBound = this.getBoundX();
 
-        // Determine points/smoothingPoints/yBound/progress
+        // Determine points/smoothingPoints/colors/yBound/progress
         let data = [];
         let smoothedData = [];
+        let colors = [];
+        let labels = [];
         let yBound = {yMin: Number.MAX_VALUE, yMax: -Number.MAX_VALUE};
         let yMean = undefined;
         let yRms = undefined;
         let progressSum: number = 0;
         const wantMeanRms = profiles.length === 1;
+        const profileColorMap = widgetStore.profileColorMap;
         profiles.forEach(profile => {
-            if (profile) {
-                const pointsAndProperties = this.getDataPointsAndProperties(profile, xBound, wantMeanRms);
+            if (profile?.data && profile?.colorKey && profile?.label) {
+                const pointsAndProperties = this.getDataPointsAndProperties(profile.data, xBound, wantMeanRms);
                 if (pointsAndProperties) {
                     data.push(pointsAndProperties.points);
                     smoothedData.push(pointsAndProperties.smoothedPoints);
@@ -101,8 +107,10 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
                     if (yBound.yMax < pointsAndProperties.yBound.yMax) {
                         yBound.yMax = pointsAndProperties.yBound.yMax;
                     }
-                    progressSum = progressSum + profile.progress;
+                    progressSum = progressSum + profile.data.progress;
                 }
+                colors.push(getColorForTheme(profileColorMap.get(profile.colorKey)));
+                labels.push(profile.label);
             }
         });
 
@@ -120,6 +128,8 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
             numProfiles: profiles.length,
             data: data,
             smoothedData: smoothedData,
+            colors: colors,
+            labels: labels,
             xMin: xBound.xMin,
             xMax: xBound.xMax,
             yMin: yBound.yMin,
@@ -448,7 +458,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
                         linePlotProps.multiPlotPropsMap.set(`profile${i}`, {
                             data: currentPlotData.data[i],
                             type: this.widgetStore.plotType,
-                            // TODO: color/width/radius for profile
+                            borderColor: currentPlotData.colors[i]
                         });
                     }
 

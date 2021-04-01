@@ -6,8 +6,7 @@ import {SWATCH_COLORS} from "utilities";
 import "./LinePlotSettingsPanelComponent.scss";
 
 export class LinePlotSettingsPanelComponentProps {
-    primaryLineColor: string;
-    secondaryLineColor?: string;
+    lineColorMap: Map<string, string>;
     lineWidth: number;
     plotType: PlotType;
     linePlotPointSize: number;
@@ -24,8 +23,7 @@ export class LinePlotSettingsPanelComponentProps {
     xMaxVal?: number;
     yMinVal?: number;
     yMaxVal?: number;
-    setPrimaryLineColor: (color: string) => void;
-    setSecondaryLineColor?: (color: string) => void;
+    setLineColor: (lineName: string, color: string) => void;
     setLineWidth: (val: number) => void;
     setLinePlotPointSize: (val: number) => void;
     setPlotType: (val: PlotType) => void;
@@ -53,6 +51,31 @@ export enum LineSettings {
 
 @observer
 export class LinePlotSettingsPanelComponent extends React.Component<LinePlotSettingsPanelComponentProps> {
+    private getLineColorSelectors = (): JSX.Element => {
+        const lineColorMap = this.props.lineColorMap;
+        const setLineColor = this.props.setLineColor;
+        if (lineColorMap && setLineColor) {
+            return (
+                <React.Fragment>
+                    {Array.from(lineColorMap.keys()).map((lineName, index) => {
+                        return (
+                            <FormGroup key={index} inline={true} label="Line Color"/* TODO: add line label*/>
+                                <AutoColorPickerComponent
+                                    color={lineColorMap.get(lineName)}
+                                    presetColors={[...SWATCH_COLORS, "transparent"]}
+                                    setColor={(color: string) => {
+                                        setLineColor(lineName, color === "transparent" ? "#000000" : color);
+                                    }}
+                                    disableAlpha={true}
+                                />
+                            </FormGroup>
+                        );
+                    })}
+                </React.Fragment>
+            );
+        }
+        return null;
+    };
 
     render() {
         const props = this.props;
@@ -64,29 +87,7 @@ export class LinePlotSettingsPanelComponent extends React.Component<LinePlotSett
                             <HTMLSelect value={props.userSelectedCoordinate} options={props.profileCoordinateOptions} onChange={props.handleCoordinateChanged}/>
                         </FormGroup>
                     }
-                    <FormGroup inline={true} label="Primary Color">
-                        <AutoColorPickerComponent
-                            color={props.primaryLineColor}
-                            presetColors={[...SWATCH_COLORS, "transparent"]}
-                            setColor={(color: string) => {
-                                props.setPrimaryLineColor(color === "transparent" ? "#000000" : color);
-                            }}
-                            disableAlpha={true}
-                        />
-                    </FormGroup>
-                    {props.secondaryLineColor
-                        && props.setSecondaryLineColor 
-                        &&  <FormGroup inline={true} label="Secondary Color">
-                                <AutoColorPickerComponent
-                                    color={props.secondaryLineColor}
-                                    presetColors={[...SWATCH_COLORS, "transparent"]}
-                                    setColor={(color: string) => {
-                                        props.setSecondaryLineColor(color === "transparent" ? "#000000" : color);
-                                    }}
-                                    disableAlpha={true}
-                                />
-                            </FormGroup>
-                    }
+                    {this.getLineColorSelectors()}
                     <FormGroup  inline={true} label="Line Width" labelInfo="(px)">
                         <SafeNumericInput
                             placeholder="Line Width"
