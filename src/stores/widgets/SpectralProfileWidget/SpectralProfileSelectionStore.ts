@@ -332,7 +332,15 @@ export class SpectralProfileSelectionStore {
             if (isMultipleSelectionMode) {
                 const profileKey = `${ProfileCategory.STOKES}-${coordinate}`;
                 if (!this.selectedCoordinates.includes(coordinate)) {
-                    this.selectedCoordinates = [...this.selectedCoordinates, coordinate].sort(); // TODO: place z in 1st
+                    this.selectedCoordinates = [...this.selectedCoordinates, coordinate].sort((a, b) => {
+                        // always place z in the first element
+                        if (a === 'z') {
+                            return -1;
+                        } else if (b === 'z') {
+                            return 1;
+                        }
+                        return a.charCodeAt(0) - b.charCodeAt(0);
+                    });
                     this.widgetStore.setProfileColor(profileKey, color);
                 } else if (this.selectedCoordinates.length > 1) {
                     this.selectedCoordinates = this.selectedCoordinates.filter(coord => coord !== coordinate);

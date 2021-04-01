@@ -58,7 +58,6 @@ class ProfileSelectionButtonComponent extends React.Component<ProfileSelectionBu
                                 <MenuItem
                                     key={item.value}
                                     text={item.label}
-                                    disabled={this.props.disableOptions}
                                     intent={item.hightlight ? Intent.PRIMARY : Intent.NONE}
                                     onClick={(ev) => this.props.onItemSelect(item.value, index, this.props.isActiveCategory)}
                                     icon={this.props.itemSelected?.includes(item.value) ? "tick" : "blank"}
@@ -75,7 +74,7 @@ class ProfileSelectionButtonComponent extends React.Component<ProfileSelectionBu
                         text={<span className="overflow-text">{dropdownText}</span>}
                         className="dropdown-button"
                         rightIcon={"caret-down"}
-                        disabled={this.props.disabled}
+                        disabled={this.props.disabled || this.props.disableOptions}
                     />
                 </Popover>
             </ButtonGroup>
