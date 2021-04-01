@@ -166,7 +166,16 @@ export class SpectralProfilerSettingsPanelComponent extends React.Component<Widg
         return (
             <div className="spectral-settings">
                 <Tabs id="spectralSettingTabs" selectedTabId={widgetStore.settingsTabId} onChange={this.handleSelectedTabChanged}>
-                    <Tab id={SpectralProfilerSettingsTabs.CONVERSION} panelClassName="conversion-tab-panel" title="Conversion" panel={<SpectralSettingsComponent widgetStore={widgetStore} disable={false}/>}/>
+                    <Tab id={SpectralProfilerSettingsTabs.CONVERSION} panelClassName="conversion-tab-panel" title="Conversion"
+                        panel={
+                            <SpectralSettingsComponent
+                                frame={widgetStore.effectiveFrame}
+                                onSpectralCoordinateChange={widgetStore.setSpectralCoordinate}
+                                onSpectralSystemChange={widgetStore.setSpectralSystem}
+                                disable={widgetStore.effectiveFrame?.isPVImage}
+                            />
+                        }
+                    />
                     <Tab id={SpectralProfilerSettingsTabs.STYLING} panelClassName="styling-tab-panel" title="Styling" panel={<LinePlotSettingsPanelComponent {...lineSettingsProps}/>}/>
                     <Tab id={SpectralProfilerSettingsTabs.SMOOTHING} title="Smoothing" panel={<SmoothingSettingsComponent smoothingStore={widgetStore.smoothingStore}/>}/>
                     <Tab id={SpectralProfilerSettingsTabs.MOMENTS} panelClassName="moment-tab-panel" title="Moments" panel={<MomentGeneratorComponent widgetStore={widgetStore}/>}/>

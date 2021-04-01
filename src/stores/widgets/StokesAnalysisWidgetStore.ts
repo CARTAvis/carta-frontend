@@ -4,7 +4,7 @@ import {CARTA} from "carta-protobuf";
 import {PlotType, LineSettings, ScatterSettings} from "components/Shared";
 import {RegionWidgetStore, RegionsType} from "./RegionWidgetStore";
 import {getColorsForValues, isAutoColor} from "utilities";
-import {SpectralSystem, SpectralType, SpectralUnit} from "models";
+import {SpectralSystem} from "models";
 import tinycolor from "tinycolor2";
 import {ProfileSmoothingStore} from "stores/ProfileSmoothingStore";
 import {StokesAnalysisSettingsTabs} from "components";
@@ -161,19 +161,13 @@ export class StokesAnalysisWidgetStore extends RegionWidgetStore {
     };
 
     @action setSpectralCoordinate = (coordStr: string) => {
-        const frame = this.effectiveFrame;
-        if (frame && frame.spectralCoordsSupported && frame.spectralCoordsSupported.has(coordStr)) {
-            const coord: {type: SpectralType, unit: SpectralUnit} = frame.spectralCoordsSupported.get(coordStr);
-            frame.spectralType = coord.type;
-            frame.spectralUnit = coord.unit;
+        if (this.effectiveFrame.setSpectralCoordinate(coordStr)) {
             this.clearSharedXBounds();
         }
     };
 
     @action setSpectralSystem = (specsys: SpectralSystem) => {
-        const frame = this.effectiveFrame;
-        if (frame && frame.spectralSystemsSupported && frame.spectralSystemsSupported.includes(specsys)) {
-            frame.spectralSystem = specsys;
+        if (this.effectiveFrame.setSpectralSystem(specsys)) {
             this.clearSharedXBounds();
         }
     };

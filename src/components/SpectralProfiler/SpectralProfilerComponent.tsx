@@ -433,8 +433,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
             linePlotProps.imageName = frame.filename;
 
             if (frame.spectralAxis && !frame.isCoordChannel) {
-                const spectralSystem = frame.isSpectralSystemConvertible ? frame.spectralSystem : `${frame.spectralInfo.specsys}`;
-                linePlotProps.xLabel = `${spectralSystem && spectralSystem !== "" ? spectralSystem + ", " : ""}${frame.spectralCoordinate}`;
+                linePlotProps.xLabel = frame.spectralLabel;
             }
             if (frame.unit) {
                 let yLabelUnit = "";
