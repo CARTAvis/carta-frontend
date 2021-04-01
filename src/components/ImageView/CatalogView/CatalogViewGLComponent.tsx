@@ -69,11 +69,23 @@ export class CatalogViewGLComponent extends React.Component<CatalogViewGLCompone
             const selectedColor = catalogWidgetStore.highlightColor;
             const pointSize = catalogWidgetStore.catalogSize;
             const shape = catalogWidgetStore.catalogShape;
+            // size
             const sizeMapColumn = catalogWidgetStore.sizeMapColumn;
-            const sizeMap = catalogWidgetStore.sizeArray.length;
+            const sizeMaxArea = catalogWidgetStore.sizeMax.area;
+            const sizeMinArea = catalogWidgetStore.sizeMin.area;
+            const sizeMaxDiameter = catalogWidgetStore.sizeMax.diameter;
+            const sizeMinDiameter = catalogWidgetStore.sizeMin.diameter;
+            const sizeColumnMaxClipd = catalogWidgetStore.sizeColumnMax.clipd;
+            const sizeColumnMinClipd = catalogWidgetStore.sizeColumnMin.clipd;
+            const sizeArea = catalogWidgetStore.sizeArea;
+            const sizeScalingType = catalogWidgetStore.sizeScalingType;
+            // color
             const colorMapColumn = catalogWidgetStore.colorMapColumn;
-            const colorMapArray = catalogWidgetStore.colorArray.length;
             const colorMap = catalogWidgetStore.colorMap;
+            const colorScalingType = catalogWidgetStore.colorScalingType;
+            const invertedColorMap = catalogWidgetStore.invertedColorMap;
+            const colorColumnMaxClipd = catalogWidgetStore.colorColumnMax.clipd;
+            const colorColumnMinClipd = catalogWidgetStore.colorColumnMin.clipd;
         });
         /* eslint-enable @typescript-eslint/no-unused-vars */
 

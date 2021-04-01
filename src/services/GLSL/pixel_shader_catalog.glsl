@@ -257,7 +257,7 @@ float featherRangeXLined(vec2 r) {
     return featherRangeCrossLined(r);
 }
 
-bool isnan(float val) {
+bool isNaN(float val) {
     return val != val;
 }
 
@@ -333,7 +333,7 @@ void main() {
     }
 
     // Blending
-    if (uCmapEnabled && !isnan(v_colour)) {
+    if (uCmapEnabled && !isNaN(v_colour)) {
         float x = clamp(v_colour, 0.0, 1.0);
         float cmapYVal = (float(uCmapIndex) + 0.5) / float(uNumCmaps);
         vec2 cmapCoords = vec2(x, cmapYVal);

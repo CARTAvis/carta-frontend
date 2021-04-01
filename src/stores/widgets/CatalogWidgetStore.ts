@@ -71,6 +71,7 @@ export class CatalogWidgetStore {
     @observable colorColumnMin: {default: number, clipd: number};
     @observable colorMap: string;
     @observable colorScalingType: FrameScaling;
+    @observable invertedColorMap: boolean;
 
     constructor(catalogFileId: number) {
         makeObservable(this);
@@ -94,12 +95,12 @@ export class CatalogWidgetStore {
         this.sizeMax = {area: 200, diameter: 20};
         this.sizeColumnMin = {default: undefined, clipd: undefined};
         this.sizeColumnMax = {default: undefined, clipd: undefined};
-        
         this.colorMapColumn = CatalogOverlay.NONE;
         this.colorColumnMax = {default: undefined, clipd: undefined};
         this.colorColumnMin = {default: undefined, clipd: undefined};
         this.colorMap = "jet";
         this.colorScalingType = FrameScaling.LINEAR;
+        this.invertedColorMap = false;
 
         reaction(()=>this.sizeMapData, (column) => {
             const result = minMaxArray(column);
@@ -107,8 +108,8 @@ export class CatalogWidgetStore {
             this.setSizeColumnMax(isFinite(result.maxVal)? result.maxVal : 0, "default");
         });
 
-        reaction(()=>this.sizeArray, (res) => {
-            CatalogStore.Instance.updateCatalogSizeMap(this.catalogFileId, res);
+        reaction(()=>this.sizeArray(), (size) => {
+            CatalogStore.Instance.updateCatalogSizeMap(this.catalogFileId, size);
         });
 
         reaction(()=>this.colorMapData, (column) => {
@@ -121,12 +122,13 @@ export class CatalogWidgetStore {
         //     CatalogStore.Instance.updateCatalogColorMap(this.catalogFileId, res);
         // });
 
-        reaction(()=>this.colorArray, (res) => {
-            CatalogStore.Instance.updateCatalogColorMap(this.catalogFileId, res);
+        reaction(()=>this.colorArray(), (color) => {
+            CatalogStore.Instance.updateCatalogColorMap(this.catalogFileId, color);
         });
     }
 
     @action resetMaps() {
+        // size
         this.sizeMapColumn = CatalogOverlay.NONE;
         this.sizeArea = false;
         this.sizeScalingType = FrameScaling.LINEAR;
@@ -134,6 +136,17 @@ export class CatalogWidgetStore {
         this.sizeMax = {area: 200, diameter: 20};
         this.sizeColumnMin = {default: undefined, clipd: undefined};
         this.sizeColumnMax = {default: undefined, clipd: undefined};
+        // color
+        this.colorMapColumn = CatalogOverlay.NONE;
+        this.colorColumnMax = {default: undefined, clipd: undefined};
+        this.colorColumnMin = {default: undefined, clipd: undefined};
+        this.colorMap = "jet";
+        this.colorScalingType = FrameScaling.LINEAR;
+        this.invertedColorMap = false;
+    }
+
+    @action setColorMapDirection(val: boolean) {
+        this.invertedColorMap = val;
     }
 
     @action setColorColumnMax(val: number, type: "default" | "clipd") {
@@ -172,7 +185,7 @@ export class CatalogWidgetStore {
         this.colorScalingType = type;
     }
 
-    @action setColormap(colorMap: string) {
+    @action setColorMap(colorMap: string) {
         this.colorMap = colorMap;
     }
 
@@ -299,12 +312,12 @@ export class CatalogWidgetStore {
         }
     }
 
-    @computed get colorArray(): Float32Array{
+    colorArray(): Float32Array{
         const column = this.colorMapData;
-        if (!this.disableColorMap && column?.length) {
+        if (!this.disableColorMap && column?.length && this.colorColumnMin.clipd !== undefined && this.colorColumnMax.clipd !== undefined) {
             return CARTACompute.CalculateCatalogColor(
                 column,
-                false,
+                this.invertedColorMap,
                 this.colorColumnMin.clipd, 
                 this.colorColumnMax.clipd, 
                 this.colorScalingType
@@ -323,7 +336,7 @@ export class CatalogWidgetStore {
         }
     }
 
-    @computed get sizeArray(): Float32Array {
+    sizeArray(): Float32Array {
         let column = this.sizeMapData;
         if (!this.disableSizeMap && column?.length && this.sizeColumnMin.clipd !== undefined && this.sizeColumnMax.clipd !== undefined) {
             const pointSize = this.pointSizebyType;

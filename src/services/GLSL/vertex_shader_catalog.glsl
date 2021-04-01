@@ -106,7 +106,7 @@ float getSquareSideByArea(float area) {
     return 20.0;
 }
 
-bool isnan(float val) {
+bool isNaN(float val) {
     return val != val;
 }
 
@@ -134,7 +134,7 @@ void main() {
     float size = data.z;
     v_colour = data.w;
     
-    if(isnan(size)) {
+    if(isNaN(size)) {
         size = uPointSize;
     }
 

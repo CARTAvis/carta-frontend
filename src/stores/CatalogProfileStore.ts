@@ -555,7 +555,6 @@ export class CatalogProfileStore {
         const header = controlHeader.get(column);
         const headerInfo = this.catalogHeader[header.dataIndex];
         const xColumn = this.catalogData.get(headerInfo.columnIndex);
-
         if (xColumn && xColumn.dataType !== CARTA.ColumnType.String && xColumn.dataType !== CARTA.ColumnType.Bool) {
             const wcsData = xColumn.data as TypedArray;
             return {wcsData, headerInfo};

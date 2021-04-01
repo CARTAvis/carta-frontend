@@ -281,7 +281,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         return axisOptions;
     }
 
-    private renderAxisPopOver = (catalogName: string, itemProps: IItemRendererProps) => {
+    private renderColumnNamePopOver = (catalogName: string, itemProps: IItemRendererProps) => {
         return (
             <MenuItem
                 key={catalogName}
@@ -880,7 +880,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
                                     items={this.axisOption}
                                     activeItem={null}
                                     onItemSelect={(columnName) => catalogWidgetStore.setxAxis(columnName)}
-                                    itemRenderer={this.renderAxisPopOver}
+                                    itemRenderer={this.renderColumnNamePopOver}
                                     disabled={disable}
                                     popoverProps={{popoverClassName: "catalog-select", minimal: true , position: PopoverPosition.AUTO_END}}
                                     filterable={true}
@@ -898,7 +898,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
                                     items={this.axisOption}
                                     activeItem={null}
                                     onItemSelect={(columnName) => catalogWidgetStore.setyAxis(columnName)}
-                                    itemRenderer={this.renderAxisPopOver}
+                                    itemRenderer={this.renderColumnNamePopOver}
                                     disabled={isHistogram || disable}
                                     popoverProps={{popoverClassName: "catalog-select", minimal: true , position: PopoverPosition.AUTO_END}}
                                     filterable={true}
@@ -923,12 +923,12 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
                     </div>
                     <div className="bp3-dialog-footer">
                         <div className="bp3-dialog-footer-actions">
-                            <FormGroup inline={true} label="Size Column" disabled={disabledMap}>
+                            <FormGroup inline={true} label="Size" disabled={disabledMap}>
                                 <Select
                                     items={this.axisOption}
                                     activeItem={null}
                                     onItemSelect={(columnName) => catalogWidgetStore.setSizeMap(columnName)}
-                                    itemRenderer={this.renderAxisPopOver}
+                                    itemRenderer={this.renderColumnNamePopOver}
                                     disabled={disabledMap}
                                     popoverProps={{popoverClassName: "catalog-select", minimal: true , position: PopoverPosition.AUTO_END}}
                                     filterable={true}
@@ -937,6 +937,22 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
                                     resetOnSelect={true}
                                 >
                                     <Button text={catalogWidgetStore.sizeMapColumn} disabled={disabledMap} rightIcon="double-caret-vertical"/>
+                                </Select>
+                            </FormGroup>
+                            <FormGroup inline={true} label="Color" disabled={disabledMap}>
+                                <Select
+                                    items={this.axisOption}
+                                    activeItem={null}
+                                    onItemSelect={(columnName) => catalogWidgetStore.setColorMapColumn(columnName)}
+                                    itemRenderer={this.renderColumnNamePopOver}
+                                    disabled={disabledMap}
+                                    popoverProps={{popoverClassName: "catalog-select", minimal: true , position: PopoverPosition.AUTO_END}}
+                                    filterable={true}
+                                    noResults={noResults}
+                                    itemPredicate={this.filterColumn}
+                                    resetOnSelect={true}
+                                >
+                                    <Button text={catalogWidgetStore.colorMapColumn} disabled={disabledMap} rightIcon="double-caret-vertical"/>
                                 </Select>
                             </FormGroup>
                             <AnchorButton

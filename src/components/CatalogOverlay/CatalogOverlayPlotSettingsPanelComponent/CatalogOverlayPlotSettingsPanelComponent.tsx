@@ -2,7 +2,7 @@ import {observer} from "mobx-react";
 import FuzzySearch from "fuzzy-search";
 import {action, autorun, computed, makeObservable} from "mobx";
 import * as React from "react";
-import {AnchorButton, Button, ButtonGroup, FormGroup, Icon, MenuItem, PopoverPosition, Tab, Tabs, Tooltip} from "@blueprintjs/core";
+import {AnchorButton, Button, ButtonGroup, FormGroup, Icon, MenuItem, PopoverPosition, Switch, Tab, Tabs, Tooltip} from "@blueprintjs/core";
 import {Select, IItemRendererProps, ItemPredicate} from "@blueprintjs/select";
 import {AppStore, CatalogStore, CatalogProfileStore, CatalogOverlay, DefaultWidgetConfig, HelpType, PreferenceStore, PreferenceKeys, WidgetProps, WidgetsStore} from "stores";
 import {CatalogOverlayShape, CatalogWidgetStore, CatalogSettingsTabs, SizeClip} from "stores/widgets";
@@ -65,7 +65,7 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
             minWidth: 350,
             minHeight: 225,
             defaultWidth: 375,
-            defaultHeight: 375,
+            defaultHeight: 475,
             title: "catalog-overlay-settings",
             isCloseable: true,
             parentId: "catalog-overlay",
@@ -148,6 +148,7 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
         }
         const disabledOverlayPanel = catalogFileIds.length <= 0;
         const disableSizeMap = disabledOverlayPanel || widgetStore.disableSizeMap;
+        const disableColorMap = disabledOverlayPanel || widgetStore.disableColorMap;
 
         const globalPanel = (
             <div className="panel-container">
@@ -327,9 +328,35 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
                     <ColormapComponent
                         inverted={false}
                         selectedItem={widgetStore.colorMap}
-                        onItemSelect={(selected) => { widgetStore.setColormap(selected); }}
+                        onItemSelect={(selected) => widgetStore.setColorMap(selected)}
                     />
                 </FormGroup>
+                <FormGroup label={"Invert Color Map"} inline={true}>
+                    <Switch
+                        checked={widgetStore.invertedColorMap}
+                        onChange={(ev) => widgetStore.setColorMapDirection(ev.currentTarget.checked)}
+                    />
+                </FormGroup>
+                <ClearableNumericInputComponent
+                    label="Clip Min"
+                    max={widgetStore.colorColumnMax.clipd}
+                    integerOnly={false}
+                    value={widgetStore.colorColumnMin.clipd}
+                    onValueChanged={val => widgetStore.setColorColumnMin(val, "clipd")}
+                    onValueCleared={() => widgetStore.resetColorColumnValue("min")}
+                    displayExponential={true}
+                    disabled={disableColorMap}
+                />
+                <ClearableNumericInputComponent
+                    label="Clip Max"
+                    min={widgetStore.colorColumnMin.clipd}
+                    integerOnly={false}
+                    value={widgetStore.colorColumnMax.clipd}
+                    onValueChanged={val => widgetStore.setColorColumnMax(val, "clipd")}
+                    onValueCleared={() => widgetStore.resetColorColumnValue("max")}
+                    displayExponential={true}
+                    disabled={disableColorMap}
+                />
             </div>
         );
 

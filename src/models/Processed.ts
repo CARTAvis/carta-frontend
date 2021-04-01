@@ -148,7 +148,6 @@ export class ProtobufProcessing {
             default:
                 return {dataType: CARTA.ColumnType.UnsupportedType, data: []};
         }
-
         return {dataType: column.dataType, data: data};
 
     }
