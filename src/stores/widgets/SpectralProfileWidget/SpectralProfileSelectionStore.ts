@@ -298,7 +298,7 @@ export class SpectralProfileSelectionStore {
         if (isMultipleSelectionMode) {
             const profileKey = `${ProfileCategory.REGION}-${regionId}`;
             if (!this.selectedRegionIds.includes(regionId)) {
-                this.selectedRegionIds = [...this.selectedRegionIds, regionId];
+                this.selectedRegionIds = [...this.selectedRegionIds, regionId].sort((a, b) => {return a - b;});
                 this.widgetStore.setProfileColor(profileKey, color);
             } else if (this.selectedRegionIds.length > 1) {
                 this.selectedRegionIds = this.selectedRegionIds.filter(region => region !== regionId);
@@ -314,7 +314,8 @@ export class SpectralProfileSelectionStore {
             if (isMultipleSelectionMode) {
                 const profileKey = `${ProfileCategory.STATISTICS}-${statsType}`;
                 if (!this.selectedStatsTypes.includes(statsType)) {
-                    this.selectedStatsTypes = [...this.selectedStatsTypes, statsType];
+                    this.selectedStatsTypes = [...this.selectedStatsTypes, statsType].sort((a, b) => {return a - b;});
+                    console.log(this.selectedStatsTypes);
                     this.widgetStore.setProfileColor(profileKey, color);
                 } else if (this.selectedStatsTypes.length > 1) {
                     this.selectedStatsTypes = this.selectedStatsTypes.filter(type => type !== statsType);
@@ -331,7 +332,7 @@ export class SpectralProfileSelectionStore {
             if (isMultipleSelectionMode) {
                 const profileKey = `${ProfileCategory.STOKES}-${coordinate}`;
                 if (!this.selectedCoordinates.includes(coordinate)) {
-                    this.selectedCoordinates = [...this.selectedCoordinates, coordinate];
+                    this.selectedCoordinates = [...this.selectedCoordinates, coordinate].sort(); // TODO: place z in 1st
                     this.widgetStore.setProfileColor(profileKey, color);
                 } else if (this.selectedCoordinates.length > 1) {
                     this.selectedCoordinates = this.selectedCoordinates.filter(coord => coord !== coordinate);
