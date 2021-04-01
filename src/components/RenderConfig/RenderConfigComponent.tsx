@@ -7,12 +7,13 @@ import {Button, ButtonGroup, FormGroup, HTMLSelect, IOptionProps, NonIdealState,
 import {CARTA} from "carta-protobuf";
 import {HistogramConfigComponent} from "./HistogramConfigComponent/HistogramConfigComponent";
 import {ColormapConfigComponent} from "./ColormapConfigComponent/ColormapConfigComponent";
-import {LinePlotComponent, LinePlotComponentProps, ProfilerInfoComponent, SafeNumericInput} from "components/Shared";
+import {MultiPlotProps} from "../Shared/LinePlot/PlotContainer/PlotContainerComponent";
+import {LinePlotComponent, LinePlotComponentProps, PlotType, ProfilerInfoComponent, SafeNumericInput} from "components/Shared";
 import {TaskProgressDialogComponent} from "components/Dialogs";
 import {RenderConfigWidgetStore} from "stores/widgets";
 import {FrameStore, RenderConfigStore, DefaultWidgetConfig, WidgetProps, HelpType, AppStore, WidgetsStore} from "stores";
 import {Point2D} from "models";
-import {clamp, toExponential, toFixed, getColorForTheme} from "utilities";
+import {clamp, toExponential, toFixed, getColorForTheme, scaleValue} from "utilities";
 import "./RenderConfigComponent.scss";
 
 const KEYCODE_ENTER = 13;
@@ -275,17 +276,23 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
             scrollZoom: true,
             borderWidth: this.widgetStore.lineWidth,
             pointRadius: this.widgetStore.linePlotPointSize,
-            zeroLineWidth: 2
+            zeroLineWidth: 2,
+            multiPlotPropsMap: new Map()
         };
 
         if (frame.renderConfig.histogram && frame.renderConfig.histogram.bins && frame.renderConfig.histogram.bins.length) {
             const currentPlotData = this.plotData;
-            if (currentPlotData) {
-                linePlotProps.data = currentPlotData.values;
 
+            if (currentPlotData) {
                 // set line color
                 let primaryLineColor = getColorForTheme(this.widgetStore.primaryLineColor);
-                linePlotProps.lineColor = primaryLineColor;
+
+                let histogramProps: MultiPlotProps = {
+                    data: currentPlotData.values,
+                    type: this.widgetStore.plotType,
+                    borderColor: primaryLineColor
+                };
+                linePlotProps.multiPlotPropsMap.set("histogram", histogramProps);
 
                 // Determine scale in X and Y directions. If auto-scaling, use the bounds of the current data
                 if (this.widgetStore.isAutoScaledX) {
@@ -348,6 +355,33 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
                     opacity: 0.2,
                     color: appStore.darkTheme ? Colors.GREEN4 : Colors.GREEN2
                 });
+            }
+
+            const scaleMinVal = frame.renderConfig?.scaleMinVal;
+            const scaleMaxVal = frame.renderConfig?.scaleMaxVal;
+            if (isFinite(scaleMinVal) && isFinite(scaleMaxVal) && (scaleMinVal < scaleMaxVal)) {
+                let colorScalingData = [];
+                const colorScalingNum = 2048;
+                const colorScalingX = Array.from(Array(colorScalingNum).keys()).map(x => scaleMinVal + x / (colorScalingNum - 1) * (scaleMaxVal - scaleMinVal));
+                let colorScalingY = Array.from(Array(colorScalingNum).keys()).map(x => x / (colorScalingNum - 1));
+                colorScalingY = colorScalingY.map(x => scaleValue(x, frame.renderConfig.scaling, frame.renderConfig.alpha, frame.renderConfig.gamma, frame.renderConfig.bias, frame.renderConfig.contrast));
+                // fit to the histogram y axis
+                if (linePlotProps.logY) {
+                    colorScalingY = colorScalingY.map(x => Math.pow(10, Math.log10(linePlotProps.yMin) + x * (Math.log10(linePlotProps.yMax) - Math.log10(linePlotProps.yMin))));
+                } else {
+                colorScalingY = colorScalingY.map(x => linePlotProps.yMin + x * (linePlotProps.yMax - linePlotProps.yMin));
+                }
+
+                for (let i = 0; i < colorScalingNum; i++) {
+                    colorScalingData.push({x: colorScalingX[i], y: colorScalingY[i]});
+                }
+                const colorScalingProps: MultiPlotProps = {
+                    data: colorScalingData,
+                    type: PlotType.LINES,
+                    borderColor: appStore.darkTheme ? Colors.GRAY5 : Colors.GRAY1,
+                    borderWidth: 0.5
+                };
+                linePlotProps.multiPlotPropsMap.set("colorScaling", colorScalingProps);
             }
         }
 

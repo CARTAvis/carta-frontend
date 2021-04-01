@@ -76,21 +76,30 @@ export function getPercentiles(histogram: CARTA.IHistogram, ranks: number[]): nu
     return calculatedPercentiles;
 }
 
-export function scaleValue(x: number, scaling: FrameScaling, alpha: number = 1000, gamma: number = 1.5) {
+export function scaleValue(x: number, scaling: FrameScaling, alpha: number = 1000, gamma: number = 1.5, bias: number = 0, contrast: number = 1) {
+    let scaleValue;
     switch (scaling) {
         case FrameScaling.SQUARE:
-            return x * x;
+            scaleValue =  x * x;
+            break;
         case FrameScaling.SQRT:
-            return Math.sqrt(x);
+            scaleValue =  Math.sqrt(x);
+            break;
         case FrameScaling.LOG:
-            return Math.log(alpha * x + 1.0) / Math.log(alpha + 1.0);
+            scaleValue = Math.log(alpha * x + 1.0) / Math.log(alpha + 1.0);
+            break;
         case FrameScaling.POWER:
-            return (Math.pow(alpha, x) - 1.0) / (alpha - 1.0);
+            scaleValue = (Math.pow(alpha, x) - 1.0) / (alpha - 1.0);
+            break;
         case FrameScaling.GAMMA:
-            return Math.pow(x, gamma);
+            scaleValue = Math.pow(x, gamma);
+            break;
         default:
-            return x;
+            scaleValue = x;
     }
+    scaleValue = clamp(scaleValue - bias, 0, 1);
+    scaleValue = clamp((scaleValue - 0.5) * contrast + 0.5, 0, 1);
+    return scaleValue;
 }
 
 export function roundToPower(val: number, power: number) {

@@ -45,7 +45,7 @@ export class ColormapConfigComponent extends React.Component<ColormapConfigProps
         }
 
         const boardWidth = 130;
-        const boardHeight = 60;
+        const boardHeight = 130;
 
 
         const renderConfig = this.props.renderConfig;
