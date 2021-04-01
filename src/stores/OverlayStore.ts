@@ -797,8 +797,8 @@ export class OverlayStore {
             const _ = this.global.system;
             this.setFormatsFromSystem();
             const frame = AppStore.Instance.activeFrame;
-            if (frame && frame.wcsInfoForTransformation && frame.validWcs) {
-                AST.set(AppStore.Instance.activeFrame.wcsInfoForTransformation, `System=${this.global.explicitSystem}`);
+            if (frame?.validWcs && frame?.wcsInfoForTransformation && this.global.explicitSystem) {
+                AST.set(frame.wcsInfoForTransformation, `System=${this.global.explicitSystem}`);
             }
         });
 
@@ -806,8 +806,8 @@ export class OverlayStore {
             // eslint-disable-next-line @typescript-eslint/no-unused-vars
             const _ = this.numbers.formatTypeX;
             const frame = AppStore.Instance.activeFrame;
-            if (frame && frame.wcsInfoForTransformation && frame.validWcs) {
-                AST.set(AppStore.Instance.activeFrame.wcsInfoForTransformation, `Format(1)=${this.numbers.formatTypeX}.${WCS_PRECISION}`);
+            if (frame?.validWcs && frame?.wcsInfoForTransformation && this.numbers.formatTypeX) {
+                AST.set(frame.wcsInfoForTransformation, `Format(1)=${this.numbers.formatTypeX}.${WCS_PRECISION}`);
             }
         });
 
@@ -815,8 +815,8 @@ export class OverlayStore {
             // eslint-disable-next-line @typescript-eslint/no-unused-vars
             const _ = this.numbers.formatTypeY;
             const frame = AppStore.Instance.activeFrame;
-            if (frame && frame.wcsInfoForTransformation && frame.validWcs) {
-                AST.set(AppStore.Instance.activeFrame.wcsInfoForTransformation, `Format(2)=${this.numbers.formatTypeY}.${WCS_PRECISION}`);
+            if (frame?.validWcs && frame?.wcsInfoForTransformation && this.numbers.formatTypeY) {
+                AST.set(frame.wcsInfoForTransformation, `Format(2)=${this.numbers.formatTypeY}.${WCS_PRECISION}`);
             }
         });
     }

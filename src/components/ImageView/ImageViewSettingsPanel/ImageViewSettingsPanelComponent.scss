@@ -3,11 +3,15 @@
 .image-view-settings {
     margin: 20px;
 
+    h3 {
+        margin: 10px 0 10px 5px;
+    }
+
     .bp3-tab-panel {
         height: 25em;
         overflow: auto;
         width: 100%;
-	user-select: none;
+	    user-select: none;
     }
 
     .bp3-tab-list {
@@ -29,7 +33,6 @@
     }
     
     .font-group {
-    
         .bp3-form-content {
             display: flex;
         }
