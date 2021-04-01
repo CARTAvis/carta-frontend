@@ -78,8 +78,15 @@
             direction: rtl;
         }
 
-        .step-input .bp3-input-group input{
-            width: 102px;
+        .step-input .bp3-input-group {
+
+            input{
+                width: 102px;
+            }
+
+            .bp3-button {
+                width: 30px;
+            }
         }
     }
 
