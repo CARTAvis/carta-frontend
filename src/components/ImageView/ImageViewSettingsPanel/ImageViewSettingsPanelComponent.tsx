@@ -1,17 +1,31 @@
 import * as React from "react";
 import * as AST from "ast_wrapper";
 import {observer} from "mobx-react";
-import {action, makeObservable, observable} from "mobx";
+import {action, autorun, makeObservable, observable} from "mobx";
 import {Select, ItemRenderer} from "@blueprintjs/select";
 import {
-    Button, Collapse, FormGroup, HTMLSelect,
+    Button, Collapse, Divider, FormGroup, HTMLSelect,
     InputGroup, MenuItem,
     Switch, Tab, Tabs, TabId
 } from "@blueprintjs/core";
-import {SafeNumericInput, AutoColorPickerComponent} from "components/Shared";
+import {AutoColorPickerComponent, SafeNumericInput, SpectralSettingsComponent} from "components/Shared";
 import {AppStore, BeamType, LabelType, SystemType, HelpType, NumberFormatType, NUMBER_FORMAT_LABEL, DefaultWidgetConfig, WidgetProps} from "stores";
 import { SWATCH_COLORS} from "utilities";
 import "./ImageViewSettingsPanelComponent.scss";
+
+enum ImageViewSettingsPanelTabs {
+    GLOBAL = "Global",
+    TITLE = "Title",
+    TICKS = "Ticks",
+    GRID = "Grid",
+    BORDER = "Border",
+    AXES = "Axes",
+    NUMBERS = "Numbers",
+    LABELS = "Labels",
+    BEAM = "Beam",
+    COLORBAR = "Colorbar",
+    CONVERSION = "Conversion"
+}
 
 // Font selector
 export class Font {
@@ -62,7 +76,7 @@ export const renderFont: ItemRenderer<Font> = (font, {handleClick, modifiers, qu
 
 @observer
 export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps> {
-    @observable selectedTab: TabId = "global";
+    @observable selectedTab: TabId = ImageViewSettingsPanelTabs.GLOBAL;
 
     @action private setSelectedTab = (tab: TabId) => {
         this.selectedTab = tab;
@@ -71,6 +85,12 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
     constructor(props: any) {
         super(props);
         makeObservable(this);
+
+        autorun(() => {
+            if (!AppStore.Instance.activeFrame?.isPVImage && this.selectedTab === ImageViewSettingsPanelTabs.CONVERSION) {
+                this.selectedTab = ImageViewSettingsPanelTabs.GLOBAL;
+            }
+        });
     }
 
     private fontSelect(visible: boolean, currentFontId: number, fontSetter: Function) {
@@ -1029,6 +1049,23 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
             </div>
         ) : null;
 
+        const frame = appStore.activeFrame;
+        const isPVImage = frame?.isPVImage;
+        const spectralPanel = isPVImage ? (
+            <div className="panel-container">
+                <h3>For spatial-spectral image</h3>
+                <Divider/>
+                <h3>Spectral axis</h3>
+                <SpectralSettingsComponent
+                    frame={appStore.activeFrame}
+                    onSpectralCoordinateChange={frame.setSpectralCoordinate}
+                    onSpectralSystemChange={frame.setSpectralSystem}
+                    disable={!isPVImage}
+                    disableChannelOption={true}
+                />
+            </div>
+        ) : null;
+
         let className = "image-view-settings";
         if (appStore.darkTheme) {
             className += " bp3-dark";
@@ -1042,16 +1079,17 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
                     selectedTabId={this.selectedTab}
                     onChange={this.setSelectedTab}
                 >
-                    <Tab id="global" title="Global" panel={globalPanel}/>
-                    <Tab id="title" title="Title" panel={titlePanel}/>
-                    <Tab id="ticks" title="Ticks" panel={ticksPanel}/>
-                    <Tab id="grid" title="Grid" panel={gridPanel}/>
-                    <Tab id="border" title="Border" panel={borderPanel}/>
-                    <Tab id="axes" title="Axes" panel={axesPanel}/>
-                    <Tab id="numbers" title="Numbers" panel={numbersPanel}/>
-                    <Tab id="labels" title="Labels" panel={labelsPanel}/>
-                    <Tab id="colorbar" title="Colorbar" panel={colorbarPanel}/>
-                    <Tab id="beam" title="Beam" panel={beamPanel} disabled={appStore.frameNum <= 0}/>
+                    <Tab id={ImageViewSettingsPanelTabs.GLOBAL} title={ImageViewSettingsPanelTabs.GLOBAL} panel={globalPanel}/>
+                    <Tab id={ImageViewSettingsPanelTabs.TITLE} title={ImageViewSettingsPanelTabs.TITLE} panel={titlePanel}/>
+                    <Tab id={ImageViewSettingsPanelTabs.TICKS} title={ImageViewSettingsPanelTabs.TICKS} panel={ticksPanel}/>
+                    <Tab id={ImageViewSettingsPanelTabs.GRID} title={ImageViewSettingsPanelTabs.GRID} panel={gridPanel}/>
+                    <Tab id={ImageViewSettingsPanelTabs.BORDER} title={ImageViewSettingsPanelTabs.BORDER} panel={borderPanel}/>
+                    <Tab id={ImageViewSettingsPanelTabs.AXES} title={ImageViewSettingsPanelTabs.AXES} panel={axesPanel}/>
+                    <Tab id={ImageViewSettingsPanelTabs.NUMBERS} title={ImageViewSettingsPanelTabs.NUMBERS} panel={numbersPanel}/>
+                    <Tab id={ImageViewSettingsPanelTabs.LABELS} title={ImageViewSettingsPanelTabs.LABELS} panel={labelsPanel}/>
+                    <Tab id={ImageViewSettingsPanelTabs.COLORBAR} title={ImageViewSettingsPanelTabs.COLORBAR} panel={colorbarPanel}/>
+                    <Tab id={ImageViewSettingsPanelTabs.BEAM} title={ImageViewSettingsPanelTabs.BEAM} panel={beamPanel} disabled={appStore.frameNum <= 0}/>
+                    <Tab id={ImageViewSettingsPanelTabs.CONVERSION} title={ImageViewSettingsPanelTabs.CONVERSION} panel={spectralPanel} disabled={!isPVImage}/>
                 </Tabs>
             </div>
         );
