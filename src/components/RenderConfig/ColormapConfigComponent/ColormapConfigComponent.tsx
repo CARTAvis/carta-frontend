@@ -126,7 +126,7 @@ export class ColormapConfigComponent extends React.Component<ColormapConfigProps
                         rightIcon={this.extendBiasContrast ? "double-chevron-up" : "double-chevron-down"}
                         alignText={'right'}
                         small={true}
-                        style={{width: boardWidth, marginTop: 5}}
+                        style={{marginTop: 5}}
                         onClick={this.switchExtendBiasContrast}
                     >
                         {"Bias / Contrast"}
