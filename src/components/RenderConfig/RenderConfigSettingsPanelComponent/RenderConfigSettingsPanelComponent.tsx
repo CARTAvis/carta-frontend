@@ -5,6 +5,7 @@ import {LinePlotSettingsPanelComponentProps, LinePlotSettingsPanelComponent} fro
 import {RenderConfigWidgetStore} from "stores/widgets/RenderConfigWidgetStore";
 import {WidgetProps, DefaultWidgetConfig, HelpType, WidgetsStore} from "stores";
 import {parseNumber} from "utilities";
+import "./RenderConfigSettingsPanelComponent.scss";
 
 const KEYCODE_ENTER = 13;
 
@@ -17,7 +18,7 @@ export class RenderConfigSettingsPanelComponent extends React.Component<WidgetPr
             type: "floating-settings",
             minWidth: 280,
             minHeight: 225,
-            defaultWidth: 300,
+            defaultWidth: 350,
             defaultHeight: 375,
             title: "render-config-settings",
             isCloseable: true,
@@ -146,7 +147,9 @@ export class RenderConfigSettingsPanelComponent extends React.Component<WidgetPr
         };
 
         return (
-            <LinePlotSettingsPanelComponent {...lineSettingsProps}/>
+            <div className="render-config-settings-panel">
+                <LinePlotSettingsPanelComponent {...lineSettingsProps}/>
+            </div>
         );
     }
 }

@@ -5,6 +5,7 @@ import {LinePlotSettingsPanelComponentProps, LinePlotSettingsPanelComponent} fro
 import {HistogramWidgetStore} from "stores/widgets";
 import {WidgetProps, DefaultWidgetConfig, HelpType, WidgetsStore, AppStore} from "stores";
 import {parseNumber} from "utilities";
+import "./HistogramSettingsPanelComponent.scss";
 
 const KEYCODE_ENTER = 13;
 
@@ -17,7 +18,7 @@ export class HistogramSettingsPanelComponent extends React.Component<WidgetProps
             type: "floating-settings",
             minWidth: 280,
             minHeight: 225,
-            defaultWidth: 300,
+            defaultWidth: 350,
             defaultHeight: 320,
             title: "histogram-settings",
             isCloseable: true,
@@ -166,7 +167,9 @@ export class HistogramSettingsPanelComponent extends React.Component<WidgetProps
         };
         
         return (
-            <LinePlotSettingsPanelComponent {...lineSettingsProps}/>
+            <div className="histogram-settings-panel">
+                <LinePlotSettingsPanelComponent {...lineSettingsProps}/>
+            </div>
         );
     }
 }

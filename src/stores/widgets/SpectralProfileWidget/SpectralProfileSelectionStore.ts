@@ -327,7 +327,6 @@ export class SpectralProfileSelectionStore {
                 const profileKey = statsType;
                 if (!this.selectedStatsTypes.includes(statsType)) {
                     this.selectedStatsTypes = [...this.selectedStatsTypes, statsType].sort((a, b) => {return a - b;});
-                    console.log(this.selectedStatsTypes);
                     this.widgetStore.setProfileColor(profileKey, color);
                 } else if (this.selectedStatsTypes.length > 1) {
                     this.selectedStatsTypes = this.selectedStatsTypes.filter(type => type !== statsType);
