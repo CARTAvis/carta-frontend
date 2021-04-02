@@ -5,7 +5,7 @@ import {PlotType, LineSettings} from "components/Shared";
 import {RegionWidgetStore, RegionsType, ACTIVE_FILE_ID, SpectralLine, SpectralProfileSelectionStore} from "stores/widgets";
 import {AppStore} from "stores";
 import {ProfileSmoothingStore} from "stores";
-import {SpectralSystem} from "models";
+import {LineKey, SpectralSystem} from "models";
 import tinycolor from "tinycolor2";
 import {SpectralProfilerSettingsTabs} from "components";
 import {isAutoColor} from "utilities";
@@ -33,7 +33,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
     @observable plotType: PlotType;
     @observable meanRmsVisible: boolean;
     @observable primaryLineColor: string;
-    @observable profileColorMap: Map<string, string>;
+    @observable profileColorMap: Map<LineKey, string>; // TODO: do we need to move this to profileSelectionStore?
     @observable lineWidth: number;
     @observable linePlotPointSize: number;
     @observable linePlotInitXYBoundaries: { minXVal: number, maxXVal: number, minYVal: number, maxYVal: number };
@@ -460,16 +460,16 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         this.primaryLineColor = color;
     }
 
-    @action getProfileColor = (profileName: string): string => {
-        return this.profileColorMap.get(profileName);
+    @action getProfileColor = (lineKey: LineKey): string => {
+        return this.profileColorMap.get(lineKey);
     };
 
-    @action setProfileColor = (profileName: string, color: string) => {
-        this.profileColorMap.set(profileName, color);
+    @action setProfileColor = (lineKey: LineKey, color: string) => {
+        this.profileColorMap.set(lineKey, color);
     };
 
-    @action removeProfileColor = (profileName: string) => {
-        this.profileColorMap.delete(profileName);
+    @action removeProfileColor = (lineKey: LineKey) => {
+        this.profileColorMap.delete(lineKey);
     };
 
     @action clearProfileColors = () => {

@@ -2,11 +2,13 @@ import * as React from "react";
 import {observer} from "mobx-react";
 import {FormGroup, Switch, Button, HTMLSelect} from "@blueprintjs/core";
 import {AutoColorPickerComponent, PlotTypeSelectorComponent, PlotType, SafeNumericInput} from "components/Shared";
+import {LineKey} from "models";
 import {SWATCH_COLORS} from "utilities";
 import "./LinePlotSettingsPanelComponent.scss";
 
 export class LinePlotSettingsPanelComponentProps {
-    lineColorMap: Map<string, string>;
+    lineColorMap: Map<LineKey, string>;
+    lineOrderedKeys?: LineKey[];
     lineWidth: number;
     plotType: PlotType;
     linePlotPointSize: number;
@@ -23,7 +25,7 @@ export class LinePlotSettingsPanelComponentProps {
     xMaxVal?: number;
     yMinVal?: number;
     yMaxVal?: number;
-    setLineColor: (lineName: string, color: string) => void;
+    setLineColor: (lineKey: LineKey, color: string) => void;
     setLineWidth: (val: number) => void;
     setLinePlotPointSize: (val: number) => void;
     setPlotType: (val: PlotType) => void;
@@ -55,16 +57,17 @@ export class LinePlotSettingsPanelComponent extends React.Component<LinePlotSett
         const lineColorMap = this.props.lineColorMap;
         const setLineColor = this.props.setLineColor;
         if (lineColorMap && setLineColor) {
+            const lineKeys = this.props.lineOrderedKeys ?? Array.from(lineColorMap.keys());
             return (
                 <React.Fragment>
-                    {Array.from(lineColorMap.keys()).map((lineName, index) => {
+                    {lineKeys.map((lineKey, index) => {
                         return (
-                            <FormGroup key={index} inline={true} label="Line Color"/* TODO: add line label*/>
+                            <FormGroup key={index} inline={true} label="Line Color" labelInfo={`(${lineKey})`/* TODO: replace key(value) with name */}>
                                 <AutoColorPickerComponent
-                                    color={lineColorMap.get(lineName)}
+                                    color={lineColorMap.get(lineKey)}
                                     presetColors={[...SWATCH_COLORS, "transparent"]}
                                     setColor={(color: string) => {
-                                        setLineColor(lineName, color === "transparent" ? "#000000" : color);
+                                        setLineColor(lineKey, color === "transparent" ? "#000000" : color);
                                     }}
                                     disableAlpha={true}
                                 />

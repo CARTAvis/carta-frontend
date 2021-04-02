@@ -3,7 +3,7 @@ import {CARTA} from "carta-protobuf";
 import {AppStore, FrameStore} from "stores";
 import {RegionId, SpectralProfileWidgetStore} from "stores/widgets";
 import {ProfileItemOptionProps} from "components";
-import {ProcessedSpectralProfile, STATISTICS_TEXT, StatsTypeString, SUPPORTED_STATISTICS_TYPES} from "models";
+import {LineKey, ProcessedSpectralProfile, STATISTICS_TEXT, StatsTypeString, SUPPORTED_STATISTICS_TYPES} from "models";
 
 export enum ProfileCategory {
     IMAGE = "Image",
@@ -17,7 +17,7 @@ interface ProfileConfig {
     regionId: number;
     statsType: CARTA.StatsType;
     coordinate: string;
-    colorKey: string;
+    colorKey: LineKey;
     label: string;
 }
 
@@ -84,7 +84,7 @@ export class SpectralProfileSelectionStore {
                             regionId: selectedRegionId,
                             statsType: selectedStatsType,
                             coordinate: selectedCoordinate,
-                            colorKey: `${ProfileCategory.IMAGE}-${fileId}`,
+                            colorKey: fileId,
                             label: `${fileId}-${selectedRegionId}-${selectedStatsType}-${selectedCoordinate}`
                         });
                     });
@@ -94,7 +94,7 @@ export class SpectralProfileSelectionStore {
                         regionId: selectedRegionId,
                         statsType: selectedStatsType,
                         coordinate: selectedCoordinate,
-                        colorKey: `${ProfileCategory.IMAGE}-${this.selectedFrameFileId}`,
+                        colorKey: this.selectedFrameFileId,
                         label: `${this.selectedFrameFileId}-${selectedRegionId}-${selectedStatsType}-${selectedCoordinate}`
                     });
                 }
@@ -110,7 +110,7 @@ export class SpectralProfileSelectionStore {
                         regionId: selectedRegionId,
                         statsType: statsType,
                         coordinate: selectedCoordinate,
-                        colorKey: `${ProfileCategory.REGION}-${selectedRegionId}`,
+                        colorKey: selectedRegionId,
                         label: `${this.selectedFrameFileId}-${selectedRegionId}-${statsType}-${selectedCoordinate}`
                     });
                 });
@@ -126,7 +126,7 @@ export class SpectralProfileSelectionStore {
                             regionId: selectedRegionId,
                             statsType: statsType,
                             coordinate: selectedCoordinate,
-                            colorKey: `${ProfileCategory.STATISTICS}-${statsType}`,
+                            colorKey: statsType,
                             label: `${this.selectedFrameFileId}-${selectedRegionId}-${statsType}-${selectedCoordinate}`
                         });
                     });
@@ -136,7 +136,7 @@ export class SpectralProfileSelectionStore {
                         regionId: selectedRegionId,
                         statsType: CARTA.StatsType.Sum,
                         coordinate: selectedCoordinate,
-                        colorKey: `${ProfileCategory.STATISTICS}-${CARTA.StatsType.Sum}`,
+                        colorKey: CARTA.StatsType.Sum,
                         label: `${this.selectedFrameFileId}-${selectedRegionId}-${CARTA.StatsType.Sum}-${selectedCoordinate}`
                     });
                 }
@@ -152,7 +152,7 @@ export class SpectralProfileSelectionStore {
                         regionId: selectedRegionId,
                         statsType: statsType,
                         coordinate: coordinate,
-                        colorKey: `${ProfileCategory.STOKES}-${coordinate}`,
+                        colorKey: coordinate,
                         label: `${this.selectedFrameFileId}-${selectedRegionId}-${statsType}-${coordinate}`
                     });
                 });
@@ -180,6 +180,19 @@ export class SpectralProfileSelectionStore {
             }
         });
         return profiles;
+    }
+
+    @computed get profileOrderedKeys(): (number | string)[] {
+        if (this.activeProfileCategory === ProfileCategory.IMAGE) {
+            const matchedFileIds = AppStore.Instance.spatialAndSpectalMatchedFileIds;
+            return matchedFileIds?.includes(this.selectedFrameFileId) ? matchedFileIds : [this.selectedFrameFileId];
+        } else if (this.activeProfileCategory === ProfileCategory.REGION) {
+            return this.selectedRegionIds;
+        } else if (this.activeProfileCategory === ProfileCategory.STATISTICS) {
+            return this.selectedStatsTypes;
+        } else {
+            return this.selectedCoordinates;
+        }
     }
 
     @computed get profileOptions(): string[] {
@@ -220,9 +233,8 @@ export class SpectralProfileSelectionStore {
     }
 
     @computed get statsTypeOptions(): ProfileItemOptionProps[] {
-        return Array.from(STATISTICS_TEXT.entries()).map(entry => {
-            return {value: entry[0], label: entry[1]};
-        });
+        const sortedKeys = Array.from(STATISTICS_TEXT.keys())?.sort((a, b) => {return a-b;});
+        return sortedKeys?.map(key => {return {value: key, label: STATISTICS_TEXT.get(key)};});
     }
 
     @computed get coordinateOptions(): ProfileItemOptionProps[] {
@@ -296,7 +308,7 @@ export class SpectralProfileSelectionStore {
 
     @action selectRegion = (regionId: number, color: string, isMultipleSelectionMode: boolean = false) => {
         if (isMultipleSelectionMode) {
-            const profileKey = `${ProfileCategory.REGION}-${regionId}`;
+            const profileKey = regionId;
             if (!this.selectedRegionIds.includes(regionId)) {
                 this.selectedRegionIds = [...this.selectedRegionIds, regionId].sort((a, b) => {return a - b;});
                 this.widgetStore.setProfileColor(profileKey, color);
@@ -312,7 +324,7 @@ export class SpectralProfileSelectionStore {
     @action selectStatsType = (statsType: CARTA.StatsType, color: string, isMultipleSelectionMode: boolean = false) => {
         if (SUPPORTED_STATISTICS_TYPES.includes(statsType)) {
             if (isMultipleSelectionMode) {
-                const profileKey = `${ProfileCategory.STATISTICS}-${statsType}`;
+                const profileKey = statsType;
                 if (!this.selectedStatsTypes.includes(statsType)) {
                     this.selectedStatsTypes = [...this.selectedStatsTypes, statsType].sort((a, b) => {return a - b;});
                     console.log(this.selectedStatsTypes);
@@ -330,7 +342,7 @@ export class SpectralProfileSelectionStore {
     @action selectCoordinate = (coordinate: string, color: string, isMultipleSelectionMode: boolean = false) => {
         if (SpectralProfileSelectionStore.ValidCoordinates.includes(coordinate)) {
             if (isMultipleSelectionMode) {
-                const profileKey = `${ProfileCategory.STOKES}-${coordinate}`;
+                const profileKey = coordinate;
                 if (!this.selectedCoordinates.includes(coordinate)) {
                     this.selectedCoordinates = [...this.selectedCoordinates, coordinate].sort((a, b) => {
                         // always place z in the first element
