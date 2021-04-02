@@ -69,7 +69,7 @@ export class LinePlotSettingsPanelComponent extends React.Component<LinePlotSett
                                 label="Line Color"
                                 labelInfo={
                                     this.props.lineOptions?.length > 0 ?
-                                    <React.Fragment>(<span className="profile-name">{this.props.lineOptions.find(option => option.value === lineKey)?.label}</span>)</React.Fragment> :
+                                    <React.Fragment>(<span className="line-label">{this.props.lineOptions.find(option => option.value === lineKey)?.label}</span>)</React.Fragment> :
                                     ""
                                 }
                             >
