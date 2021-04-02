@@ -2,8 +2,7 @@ import {action, computed, makeObservable, observable} from "mobx";
 import {CARTA} from "carta-protobuf";
 import {AppStore, FrameStore} from "stores";
 import {RegionId, SpectralProfileWidgetStore} from "stores/widgets";
-import {ProfileItemOptionProps} from "components";
-import {LineKey, ProcessedSpectralProfile, STATISTICS_TEXT, StatsTypeString, SUPPORTED_STATISTICS_TYPES} from "models";
+import {LineKey, LineOption, ProcessedSpectralProfile, STATISTICS_TEXT, SUPPORTED_STATISTICS_TYPES} from "models";
 
 export enum ProfileCategory {
     IMAGE = "Image",
@@ -182,7 +181,7 @@ export class SpectralProfileSelectionStore {
         return profiles;
     }
 
-    @computed get profileOrderedKeys(): (number | string)[] {
+    @computed get profileOrderedKeys(): LineKey[] {
         if (this.activeProfileCategory === ProfileCategory.IMAGE) {
             const matchedFileIds = AppStore.Instance.spatialAndSpectalMatchedFileIds;
             return matchedFileIds?.includes(this.selectedFrameFileId) ? matchedFileIds : [this.selectedFrameFileId];
@@ -195,18 +194,19 @@ export class SpectralProfileSelectionStore {
         }
     }
 
-    @computed get profileOptions(): string[] {
-        let profileOptions = [];
-        this.profileConfigs?.forEach(profileConfig => {
-            const frame = AppStore.Instance.getFrame(profileConfig.fileId);
-            const fileName = frame?.filename;
-            const region = frame?.getRegion(profileConfig.regionId);
-            profileOptions.push(`${fileName}-${region?.nameString}-${StatsTypeString(profileConfig.statsType)}-${profileConfig.coordinate}`);
-        });
-        return profileOptions;
+    @computed get profileOptions(): LineOption[] {
+        if (this.activeProfileCategory === ProfileCategory.IMAGE) {
+            return this.frameOptions;
+        } else if (this.activeProfileCategory === ProfileCategory.REGION) {
+            return this.regionOptions;
+        } else if (this.activeProfileCategory === ProfileCategory.STATISTICS) {
+            return this.statsTypeOptions;
+        } else {
+            return this.coordinateOptions;
+        }
     }
 
-    @computed get frameOptions(): ProfileItemOptionProps[] {
+    @computed get frameOptions(): LineOption[] {
         let options = [];
         const appStore = AppStore.Instance;
         const frameNameOptions = appStore.frameNames;
@@ -222,7 +222,7 @@ export class SpectralProfileSelectionStore {
         return options;
     }
 
-    @computed get regionOptions(): ProfileItemOptionProps[] {
+    @computed get regionOptions(): LineOption[] {
         let options = [];
         const frame = this.selectedFrame;
         if (frame?.regionSet?.regions) {
@@ -232,12 +232,12 @@ export class SpectralProfileSelectionStore {
         return options;
     }
 
-    @computed get statsTypeOptions(): ProfileItemOptionProps[] {
+    @computed get statsTypeOptions(): LineOption[] {
         const sortedKeys = Array.from(STATISTICS_TEXT.keys())?.sort((a, b) => {return a-b;});
         return sortedKeys?.map(key => {return {value: key, label: STATISTICS_TEXT.get(key)};});
     }
 
-    @computed get coordinateOptions(): ProfileItemOptionProps[] {
+    @computed get coordinateOptions(): LineOption[] {
         let options = [{value: "z", label: "z"}];
         this.selectedFrame?.stokesInfo?.forEach(stokes => options.push({value: `${stokes}z`, label: stokes}));
         return options;

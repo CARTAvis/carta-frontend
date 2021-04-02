@@ -38,4 +38,12 @@
             width: 10em;
         }
     }
+
+    .overflow-text {
+        width: 70px;
+        text-overflow: ellipsis;
+        overflow: hidden;
+        white-space: nowrap;
+        display: block;
+    }
 }

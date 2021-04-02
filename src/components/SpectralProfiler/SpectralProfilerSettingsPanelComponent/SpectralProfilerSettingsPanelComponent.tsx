@@ -142,6 +142,7 @@ export class SpectralProfilerSettingsPanelComponent extends React.Component<Widg
         const lineSettingsProps: LinePlotSettingsPanelComponentProps = {
             lineColorMap: widgetStore.profileColorMap,
             lineOrderedKeys: widgetStore.profileSelectionStore.profileOrderedKeys,
+            lineOptions: widgetStore.profileSelectionStore.profileOptions,
             lineWidth: widgetStore.lineWidth,
             plotType: widgetStore.plotType,
             linePlotPointSize: widgetStore.linePlotPointSize,

@@ -1,24 +1,21 @@
 import {observer} from "mobx-react";
 import * as React from "react";
 import {CARTA} from "carta-protobuf";
-import {AnchorButton, ButtonGroup, Intent, IOptionProps, Menu, MenuItem, Popover, Position, Tooltip} from "@blueprintjs/core";
+import {AnchorButton, ButtonGroup, Intent, Menu, MenuItem, Popover, Position, Tooltip} from "@blueprintjs/core";
 import {AppStore} from "stores";
 import {ProfileCategory, SpectralProfileWidgetStore, SpectralProfileSelectionStore} from "stores/widgets";
 import {SpectralProfilerComponent, SpectralProfilerSettingsTabs} from "components";
 import {CustomIcon} from "icons/CustomIcons";
 import {SWATCH_COLORS} from "utilities";
+import {LineOption} from "models";
 import "./SpectralProfilerToolbarComponent.scss";
-
-export interface ProfileItemOptionProps extends IOptionProps{
-    hightlight?: boolean;
-}
 
 type MultiSelectItem = string | CARTA.StatsType;
 
 class ProfileSelectionButtonComponentProps {
     categoryName: ProfileCategory;
     isActiveCategory: boolean;
-    itemOptions: ProfileItemOptionProps[];
+    itemOptions: LineOption[];
     itemSelected: MultiSelectItem[];
     disabled: boolean;
     disableOptions?: boolean;

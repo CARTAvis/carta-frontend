@@ -2,13 +2,14 @@ import * as React from "react";
 import {observer} from "mobx-react";
 import {FormGroup, Switch, Button, HTMLSelect} from "@blueprintjs/core";
 import {AutoColorPickerComponent, PlotTypeSelectorComponent, PlotType, SafeNumericInput} from "components/Shared";
-import {LineKey} from "models";
+import {LineKey, LineOption} from "models";
 import {SWATCH_COLORS} from "utilities";
 import "./LinePlotSettingsPanelComponent.scss";
 
 export class LinePlotSettingsPanelComponentProps {
     lineColorMap: Map<LineKey, string>;
     lineOrderedKeys?: LineKey[];
+    lineOptions?: LineOption[];
     lineWidth: number;
     plotType: PlotType;
     linePlotPointSize: number;
@@ -62,7 +63,16 @@ export class LinePlotSettingsPanelComponent extends React.Component<LinePlotSett
                 <React.Fragment>
                     {lineKeys.map((lineKey, index) => {
                         return (
-                            <FormGroup key={index} inline={true} label="Line Color" labelInfo={`(${lineKey})`/* TODO: replace key(value) with name */}>
+                            <FormGroup
+                                key={index}
+                                inline={true}
+                                label="Line Color"
+                                labelInfo={
+                                    <span className="overflow-text">
+                                        {this.props.lineOptions?.length > 0 ? `(${this.props.lineOptions.find(option => option.value === lineKey)?.label})` : ""}
+                                    </span>
+                                }
+                            >
                                 <AutoColorPickerComponent
                                     color={lineColorMap.get(lineKey)}
                                     presetColors={[...SWATCH_COLORS, "transparent"]}
