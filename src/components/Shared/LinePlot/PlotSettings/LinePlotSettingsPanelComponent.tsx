@@ -67,7 +67,11 @@ export class LinePlotSettingsPanelComponent extends React.Component<LinePlotSett
                                 key={index}
                                 inline={true}
                                 label="Line Color"
-                                labelInfo={this.props.lineOptions?.length > 0 ? `(${this.props.lineOptions.find(option => option.value === lineKey)?.label})` : ""}
+                                labelInfo={
+                                    this.props.lineOptions?.length > 0 ?
+                                    <React.Fragment>(<span className="profile-name">{this.props.lineOptions.find(option => option.value === lineKey)?.label}</span>)</React.Fragment> :
+                                    ""
+                                }
                             >
                                 <AutoColorPickerComponent
                                     color={lineColorMap.get(lineKey) ?? DEFAULT_COLOR}
@@ -205,7 +209,7 @@ export class LinePlotSettingsPanelComponent extends React.Component<LinePlotSett
                     { typeof props.isAutoScaledX !== "undefined" 
                         &&  typeof props.isAutoScaledY !== "undefined"
                         &&  props.clearXYBounds
-                        &&  <FormGroup inline={true} className="reset-range-content">
+                        &&  <FormGroup label={"Reset Range"} inline={true} className="reset-range-content">
                                 <Button className="reset-range-button" icon={"zoom-to-fit"} small={true} disabled={props.isAutoScaledX && props.isAutoScaledY} onClick={props.clearXYBounds}>Reset Range</Button>
                             </FormGroup>
                     }
