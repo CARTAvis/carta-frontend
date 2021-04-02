@@ -716,6 +716,16 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         }
     }
 
+    private smoothingShortcutClick = () => {
+        // this.widgetStore.setSettingsTabId(Catal.SMOOTHING);
+        // AppStore.Instance.widgetsStore.createFloatingSettingsWidget(SpectralProfilerComponent.WIDGET_CONFIG.title, this.props.id, SpectralProfilerComponent.WIDGET_CONFIG.type);
+    };
+
+    private momentsShortcutClick = () => {
+        // this.props.widgetStore.setSettingsTabId(SpectralProfilerSettingsTabs.MOMENTS);
+        // AppStore.Instance.widgetsStore.createFloatingSettingsWidget(SpectralProfilerComponent.WIDGET_CONFIG.title, this.props.id, SpectralProfilerComponent.WIDGET_CONFIG.type);
+    };
+
     public render() {
         const catalogWidgetStore = this.widgetStore;
         const profileStore = this.profileStore;
@@ -835,6 +845,18 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
                             <Button text={activeSystem} disabled={!isImageOverlay} rightIcon="double-caret-vertical"/>
                         </Select>
                     </FormGroup>
+
+                    {/* <ButtonGroup className="catalog-map-buttons">
+                        <Tooltip content="Size map">
+                            <AnchorButton onClick={this.smoothingShortcutClick}>Size</AnchorButton>
+                        </Tooltip>
+                        <Tooltip content="Color map">
+                            <AnchorButton onClick={this.momentsShortcutClick}>Color</AnchorButton>
+                        </Tooltip>
+                        <Tooltip content="Color map">
+                            <AnchorButton onClick={this.momentsShortcutClick}>Orientation</AnchorButton>
+                        </Tooltip>
+                    </ButtonGroup> */}
                 </div>
                 <SplitPane
                     className="catalog-table"
@@ -909,6 +931,18 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
                                     <Button className="catalog-yaxis-button" text={catalogWidgetStore.yAxis} disabled={isHistogram || disable} rightIcon="double-caret-vertical"/>
                                 </Select>
                             </FormGroup>
+
+                            {/* <ButtonGroup className="catalog-map-buttons">
+                                <Tooltip content="Size map">
+                                    <AnchorButton onClick={this.smoothingShortcutClick}>S</AnchorButton>
+                                </Tooltip>
+                                <Tooltip content="Color map">
+                                    <AnchorButton onClick={this.momentsShortcutClick}>C</AnchorButton>
+                                </Tooltip>
+                                <Tooltip content="Color map">
+                                    <AnchorButton onClick={this.momentsShortcutClick}>O</AnchorButton>
+                                </Tooltip>
+                            </ButtonGroup> */}
 
                             <ClearableNumericInputComponent
                                 className={"catalog-max-rows"}

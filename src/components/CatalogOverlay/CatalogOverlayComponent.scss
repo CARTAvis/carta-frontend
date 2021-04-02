@@ -11,6 +11,11 @@
         padding-top: 5px;
         display: inline-flex;
 
+        .catalog-map-buttons {
+            position: absolute;
+            right: 5px;
+        }
+
         .bp3-tab-panel {
             height: 22em;
             overflow: auto;
@@ -224,17 +229,19 @@
 
             .catalog-xaxis {
                 margin-left: 10px;
-                width: 150px;
-                .bp3-label{
-                    text-align: right;
-                    width: 30px;
-                    margin-right: 13px;
-                }
+                width: 140px;
+                // .bp3-label{
+                //     text-align: right;
+                //     width: 30px;
+                //     margin-right: 13px;
+                // }
                 .catalog-xaxis-select {
                     .catalog-xaxis-button {
                         width: 100px;
                         height: 30px;
                         margin-left: 0px;
+                        justify-content: space-between;
+
                         .bp3-button-text {
                             overflow: hidden;
                         }
@@ -245,20 +252,27 @@
             .catalog-yaxis {
                 margin-left: 10px;
                 width: 140px;
-                .bp3-label{
-                    text-align: right;
-                    width: 30px;
-                }
+                // .bp3-label{
+                //     text-align: right;
+                //     width: 30px;
+                // }
                 .catalog-yaxis-select {
                     .catalog-yaxis-button {
                         width: 100px;
                         height: 30px;
                         margin-left: 0px;
+                        justify-content: space-between;
+
                         .bp3-button-text {
                             overflow: hidden;
                         }
                     }
                 }
+            }
+
+            .catalog-map-buttons {
+                height: fit-content;
+                margin-left: 10px;
             }
 
             .catalog-max-rows {

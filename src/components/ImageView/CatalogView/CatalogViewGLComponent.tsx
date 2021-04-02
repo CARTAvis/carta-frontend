@@ -209,10 +209,10 @@ export class CatalogViewGLComponent extends React.Component<CatalogViewGLCompone
                 this.gl.uniform1i(shaderUniforms.ShapeType, catalogWidgetStore.catalogShape);
                 this.gl.uniform1f(shaderUniforms.PointSize, pointSize * devicePixelRatio);
 
-                this.catalogWebGLService.updateDataTexture(dataPoints);
+                // this.catalogWebGLService.updateDataTexture(dataPoints);
                 
                 this.gl.activeTexture(GL2.TEXTURE0);
-                this.gl.bindTexture(GL2.TEXTURE_2D, this.catalogWebGLService.getDataTexture());
+                this.gl.bindTexture(GL2.TEXTURE_2D, this.catalogWebGLService.getDataTexture(fileId));
                 this.gl.uniform1i(shaderUniforms.PositionTexture, 0);
                 this.gl.drawArrays(GL2.POINTS, 0, dataPoints.length / 4);
                 this.gl.finish();   
@@ -242,10 +242,10 @@ export class CatalogViewGLComponent extends React.Component<CatalogViewGLCompone
                 this.gl.uniform1f(shaderUniforms.PointSize, outlineShapeSize);
                 this.gl.uniform1i(shaderUniforms.CmapEnabled, 0);
 
-                this.catalogWebGLService.updateDataTexture(selectedDataPoints);
+                // this.catalogWebGLService.updateDataTexture(selectedDataPoints);
                 
                 this.gl.activeTexture(GL2.TEXTURE0);
-                this.gl.bindTexture(GL2.TEXTURE_2D, this.catalogWebGLService.getDataTexture());
+                this.gl.bindTexture(GL2.TEXTURE_2D, this.catalogWebGLService.getSelectedDataTexture(fileId));
                 this.gl.uniform1i(shaderUniforms.PositionTexture, 0);
                 this.gl.drawArrays(GL2.POINTS, 0, selectedDataPoints.length / 4);
                 this.gl.finish(); 

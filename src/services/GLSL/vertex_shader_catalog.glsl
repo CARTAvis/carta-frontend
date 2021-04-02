@@ -37,6 +37,7 @@ uniform vec2 uFrameViewMin;
 uniform vec2 uFrameViewMax;
 uniform float uFeatherWidth;
 uniform sampler2D uPositionTexture;
+uniform sampler2D uOABTexture;
 uniform bool uSmapEnabled;
 uniform float uPointSize;
 uniform highp int uShapeType;
@@ -54,6 +55,7 @@ uniform bool uCmapEnabled;
 
 out float v_colour;
 out float v_pointSize;
+out float v_orientation;
 
 
 vec4 getValueByIndexFromTexture(sampler2D texture, int index) {
@@ -130,6 +132,7 @@ bool isNaN(float val) {
 
 void main() {
     vec4 data = getValueByIndexFromTexture(uPositionTexture, gl_VertexID);
+    vec4 oab = getValueByIndexFromTexture(uPositionTexture, gl_VertexID);
     vec2 pos = data.xy;
     float size = data.z;
     v_colour = data.w;

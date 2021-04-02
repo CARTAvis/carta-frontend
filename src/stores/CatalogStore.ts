@@ -1,6 +1,7 @@
 import * as AST from "ast_wrapper";
 import {action, observable, ObservableMap, computed,makeObservable} from "mobx";
 import {AppStore, CatalogProfileStore, CatalogSystemType, WidgetsStore} from "stores";
+import {CatalogWebGLService} from "services";
 import {CatalogWidgetStore} from "stores/widgets";
 
 type CatalogOverlayCoords = {
@@ -99,6 +100,7 @@ export class CatalogStore {
                     break;
             }
             catalog.dataPoints = dataPoints;
+            CatalogWebGLService.Instance.updateDataTexture(fileId, dataPoints);
         }
     }
 
@@ -108,11 +110,15 @@ export class CatalogStore {
             for (let i = 0; i < sizeData.length; i++) {
                catalog.dataPoints[i * 4 + 2] = sizeData[i];
             }
+            CatalogWebGLService.Instance.updateDataTexture(fileId, catalog.dataPoints);
         }
         const selectedDataIndices = this.catalogProfileStores.get(fileId)?.selectedPointIndices;
-        for (let i = 0; i < selectedDataIndices?.length; i++) {
-            const j = selectedDataIndices[i];
-            catalog.selectedDataPoints[i * 4 + 2] = sizeData[j];
+        if (selectedDataIndices?.length) {
+            for (let i = 0; i < selectedDataIndices.length; i++) {
+                const j = selectedDataIndices[i];
+                catalog.selectedDataPoints[i * 4 + 2] = sizeData[j];
+            }
+            CatalogWebGLService.Instance.updateSelectedDataTexture(fileId, catalog.selectedDataPoints);   
         }
     }
 
@@ -122,6 +128,7 @@ export class CatalogStore {
             for (let i = 0; i < color.length; i++) {
                catalog.dataPoints[i * 4 + 3] = color[i];
             }
+            CatalogWebGLService.Instance.updateDataTexture(fileId, catalog.dataPoints);
         }
     }
 
@@ -130,17 +137,21 @@ export class CatalogStore {
         if (catalog) {
             catalog.selectedDataPoints = selectedData;
         }
+        CatalogWebGLService.Instance.updateSelectedDataTexture(fileId, selectedData);
     }
 
     @action clearImageCoordsData(fileId: number) {
         const catalog = this.catalogGLData.get(fileId);
         if (catalog) {
             catalog.dataPoints = new Float32Array(0);
+            CatalogWebGLService.Instance.clearTexture(fileId);
         }
     }
 
     @action removeCatalog(fileId: number) {
         this.catalogGLData.delete(fileId);
+        CatalogWebGLService.Instance.clearTexture(fileId);
+        console.log(CatalogWebGLService.Instance)
     }
 
     @action updateImageAssociatedCatalogId(activeFrameIndex: number, associatedCatalogFiles: number[]) {

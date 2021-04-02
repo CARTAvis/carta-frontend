@@ -26,12 +26,16 @@ interface ShaderUniforms {
     // Alpha: WebGLUniformLocation,
     // CscaleType: WebGLUniformLocation,
     // Inverted: WebGLUniformLocation
+    OABTexture: WebGLUniformLocation
 }
 
 export class CatalogWebGLService {
     private static staticInstance: CatalogWebGLService;
     private cmapTexture: WebGLTexture;
-    private dataTexture: WebGLTexture; 
+    // private dataTexture: WebGLTexture;
+    private dataTextures: Map<number, WebGLTexture>;
+    private dataTextureOAB: Map<number, WebGLTexture>;
+    private selectedDataTextures: Map<number, WebGLTexture>;
     readonly gl: WebGL2RenderingContext;
     shaderUniforms: ShaderUniforms;
 
@@ -51,12 +55,33 @@ export class CatalogWebGLService {
         this.gl.viewport(0, 0, width, height);
     };
 
-    public updateDataTexture = (dataPoints: Float32Array) => {
-        this.dataTexture = createTextureFromArray(this.gl, dataPoints, WebGL2RenderingContext.TEXTURE0, 4);
+    public updateDataTexture = (fileId: number, dataPoints: Float32Array) => {
+        this.dataTextures.set(fileId, createTextureFromArray(this.gl, dataPoints, WebGL2RenderingContext.TEXTURE0, 4))
     }
 
-    public getDataTexture = () => {
-        return this.dataTexture;
+    public getDataTexture = (fileId: number) => {
+        return this.dataTextures.get(fileId);
+    }
+
+    public updateSelectedDataTexture = (fileId: number, dataPoints: Float32Array) => {
+        this.selectedDataTextures.set(fileId, createTextureFromArray(this.gl, dataPoints, WebGL2RenderingContext.TEXTURE0, 4))
+    }
+
+    public getSelectedDataTexture = (fileId: number) => {
+        return this.selectedDataTextures.get(fileId);
+    }
+
+    public updateDataTextureOAB = (fileId: number, dataPoints: Float32Array) => {
+        this.dataTextureOAB.set(fileId, createTextureFromArray(this.gl, dataPoints, WebGL2RenderingContext.TEXTURE0, 4))
+    }
+
+    public getDataTextureOAB = (fileId: number) => {
+        return this.dataTextureOAB.get(fileId);
+    }
+
+    public clearTexture = (fileId: number) => {
+        this.dataTextures.delete(fileId);
+        this.selectedDataTextures.delete(fileId);
     }
 
     private initShaders() {
@@ -101,10 +126,15 @@ export class CatalogWebGLService {
             // Alpha: this.gl.getUniformLocation(shaderProgram, "uAlpha"),
             // CscaleType: this.gl.getUniformLocation(shaderProgram, "uCscaleType"),
             // Inverted: this.gl.getUniformLocation(shaderProgram, "uInverted"),
+            // data
+            OABTexture: this.gl.getUniformLocation(shaderProgram, "uOABTexture"),
         };
 
         this.gl.uniform1i(this.shaderUniforms.NumCmaps, 79);
         this.gl.uniform1i(this.shaderUniforms.CmapTexture, 1);
+        this.dataTextures = new Map<number, WebGLTexture>();
+        this.selectedDataTextures = new Map<number, WebGLTexture>();
+        this.dataTextureOAB = new Map<number, WebGLTexture>();
     }
 
     private constructor() {

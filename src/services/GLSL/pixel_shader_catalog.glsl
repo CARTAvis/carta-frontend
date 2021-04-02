@@ -261,6 +261,13 @@ bool isNaN(float val) {
     return val != val;
 }
 
+mat2 rotateMat (float deg) {
+    float rads = radians(deg);
+    float cosRads = cos(rads);
+    float sinRads = sin(rads);
+    return mat2(cosRads, -sinRads, sinRads, cosRads);
+}
+
 void main() {
     vec2 posPixelSpace = (0.5 - gl_PointCoord) * (v_pointSize + uFeatherWidth);
 
