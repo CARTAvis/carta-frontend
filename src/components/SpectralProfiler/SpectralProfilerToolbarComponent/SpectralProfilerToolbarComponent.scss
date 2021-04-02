@@ -16,19 +16,16 @@
             padding-right: 5px;
 
             .bp3-button {
-                padding: 5px;
-
                 .bp3-button-text {
                     margin-right: 0;
                 }
             }
 
             .dropdown-button {
-                width: 100px;
-                padding-right: 0;
+                max-width: 100px;
 
                 .overflow-text {
-                    width: 70px;
+                    max-width: 70px;
                     text-overflow: ellipsis;
                     overflow: hidden;
                     white-space: nowrap;
