@@ -24,6 +24,7 @@ export const SWATCH_COLORS = [
     Colors.LIGHT_GRAY3,
     Colors.WHITE
 ];
+export const DEFAULT_COLOR = SWATCH_COLORS[0];
 
 function initContextWithSize(width: number, height: number) {
     const canvas = document.createElement("canvas") as HTMLCanvasElement;

@@ -5,6 +5,7 @@ import {LinePlotSettingsPanelComponentProps, LinePlotSettingsPanelComponent} fro
 import {RenderConfigWidgetStore} from "stores/widgets/RenderConfigWidgetStore";
 import {WidgetProps, DefaultWidgetConfig, HelpType, WidgetsStore} from "stores";
 import {parseNumber} from "utilities";
+import {LineKey} from "models";
 import "./RenderConfigSettingsPanelComponent.scss";
 
 const KEYCODE_ENTER = 13;
@@ -119,11 +120,12 @@ export class RenderConfigSettingsPanelComponent extends React.Component<WidgetPr
     render() {
         const widgetStore = this.widgetStore;
         const lineSettingsProps: LinePlotSettingsPanelComponentProps = {
-            lineColorMap: new Map<string, string>([["primary", widgetStore.primaryLineColor]]),
+            lineColorMap: new Map<LineKey, string>([["Primary", widgetStore.primaryLineColor]]),
+            lineOptions: [{value: "Primary", label: "Primary"}],
             lineWidth: widgetStore.lineWidth,
             plotType: widgetStore.plotType,
             linePlotPointSize: widgetStore.linePlotPointSize,
-            setLineColor: (lineName: string, color: string) => widgetStore.setPrimaryLineColor(color),
+            setLineColor: (lineKey: LineKey, color: string) => widgetStore.setPrimaryLineColor(color),
             setLineWidth: widgetStore.setLineWidth,
             setLinePlotPointSize: widgetStore.setLinePlotPointSize,
             setPlotType: widgetStore.setPlotType,

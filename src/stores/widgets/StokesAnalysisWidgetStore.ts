@@ -313,14 +313,6 @@ export class StokesAnalysisWidgetStore extends RegionWidgetStore {
         this.plotType = val;
     };
 
-    @action setLineColor = (lineName: string, color: string) => {
-        if (lineName === "primary") {
-            this.setPrimaryLineColor(color);
-        } else if (lineName === "secondary") {
-            this.setSecondaryLineColor(color);
-        }
-    };
-
     @action setPrimaryLineColor = (color: string) => {
         this.primaryLineColor = color;
     }
