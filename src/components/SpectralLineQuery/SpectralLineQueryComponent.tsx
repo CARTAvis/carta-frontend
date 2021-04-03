@@ -195,6 +195,16 @@ export class SpectralLineQueryComponent extends React.Component<WidgetProps> {
         }
     };
 
+    private handleFilter = () => {
+        this.widgetStore.filter();
+        this.resultTableRef?.scrollToRegion(Regions.row(0, 0));
+    };
+
+    private handleResetFilter = () => {
+        this.widgetStore.resetFilter()
+        this.resultTableRef?.scrollToRegion(Regions.row(0, 0));
+    };
+
     private handlePlot = () => {
         const widgetStore = this.widgetStore;
         const appStore = AppStore.Instance;
@@ -409,11 +419,11 @@ export class SpectralLineQueryComponent extends React.Component<WidgetProps> {
                                 text="Filter"
                                 intent={Intent.PRIMARY}
                                 disabled={widgetStore.numDataRows <= 0}
-                                onClick={() => this.widgetStore.filter()}
+                                onClick={this.handleFilter}
                             />
                         </Tooltip>
                         <Tooltip content="Reset filter" position={Position.BOTTOM}>
-                            <AnchorButton text="Reset" intent={Intent.PRIMARY} onClick={() => this.widgetStore.resetFilter()}/>
+                            <AnchorButton text="Reset" intent={Intent.PRIMARY} onClick={this.handleResetFilter}/>
                         </Tooltip>
                         <Tooltip content={plotTip} position={Position.BOTTOM}>
                             <AnchorButton
