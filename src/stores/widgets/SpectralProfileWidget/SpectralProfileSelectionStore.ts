@@ -73,7 +73,8 @@ export class SpectralProfileSelectionStore {
         if (this.selectedFrame && this.selectedRegionIds?.length >= 1 && this.selectedStatsTypes?.length >= 1 && this.selectedCoordinates?.length >= 1) {
             if (this.activeProfileCategory === ProfileCategory.IMAGE) {
                 const selectedRegionId = this.selectedRegionIds[0];
-                const selectedStatsType = this.selectedStatsTypes[0];
+                const region = this.selectedFrame.getRegion(selectedRegionId);
+                const statsType = region?.isClosedRegion ? this.selectedStatsTypes[0] : CARTA.StatsType.Sum;
                 const selectedCoordinate = this.selectedCoordinates[0];
                 const matchedFileIds = AppStore.Instance.spatialAndSpectalMatchedFileIds;
                 if (matchedFileIds?.includes(this.selectedFrameFileId)) {
@@ -81,20 +82,20 @@ export class SpectralProfileSelectionStore {
                         profileConfigs.push({
                             fileId: fileId,
                             regionId: selectedRegionId,
-                            statsType: selectedStatsType,
+                            statsType: statsType,
                             coordinate: selectedCoordinate,
                             colorKey: fileId,
-                            label: `${fileId}-${selectedRegionId}-${selectedStatsType}-${selectedCoordinate}`
+                            label: `${fileId}-${selectedRegionId}-${statsType}-${selectedCoordinate}`
                         });
                     });
                 } else {
                     profileConfigs.push({
                         fileId: this.selectedFrameFileId,
                         regionId: selectedRegionId,
-                        statsType: selectedStatsType,
+                        statsType: statsType,
                         coordinate: selectedCoordinate,
                         colorKey: this.selectedFrameFileId,
-                        label: `${this.selectedFrameFileId}-${selectedRegionId}-${selectedStatsType}-${selectedCoordinate}`
+                        label: `${this.selectedFrameFileId}-${selectedRegionId}-${statsType}-${selectedCoordinate}`
                     });
                 }
             } else if (this.activeProfileCategory === ProfileCategory.REGION) {
@@ -280,23 +281,29 @@ export class SpectralProfileSelectionStore {
     }
 
     @action setActiveProfileCategory = (profileCategory: ProfileCategory) => {
-        this.widgetStore.clearProfileColors();
+        const widgetStore = this.widgetStore;
+        const primaryLineColor = widgetStore.primaryLineColor;
+
         this.activeProfileCategory = profileCategory;
+        widgetStore.clearProfileColors();
         // Reset region/statistics/stokes to default (only 1 item) when switching active profile category
-        // TODO: init color
         if (profileCategory === ProfileCategory.IMAGE) {
             this.selectedRegionIds = [this.DEFAULT_REGION_ID];
             this.selectedStatsTypes = [this.DEFAULT_STATS_TYPE];
             this.selectedCoordinates = [this.DEFAULT_COORDINATE];
+            widgetStore.setProfileColor(this.selectedFrameFileId, primaryLineColor);
         } else if (profileCategory === ProfileCategory.REGION) {
             this.selectedStatsTypes = [this.DEFAULT_STATS_TYPE];
             this.selectedCoordinates = [this.DEFAULT_COORDINATE];
+            widgetStore.setProfileColor(this.DEFAULT_REGION_ID, primaryLineColor);
         } else if (profileCategory === ProfileCategory.STATISTIC) {
             this.selectedRegionIds = [this.DEFAULT_REGION_ID];
             this.selectedCoordinates = [this.DEFAULT_COORDINATE];
+            widgetStore.setProfileColor(this.DEFAULT_STATS_TYPE, primaryLineColor);
         } else if (profileCategory === ProfileCategory.STOKES) {
             this.selectedRegionIds = [this.DEFAULT_REGION_ID];
             this.selectedStatsTypes = [this.DEFAULT_STATS_TYPE];
+            widgetStore.setProfileColor(this.DEFAULT_COORDINATE, primaryLineColor);
         }
     };
 
@@ -369,6 +376,9 @@ export class SpectralProfileSelectionStore {
         this.widgetStore = widgetStore;
         this.DEFAULT_COORDINATE = coordinate;
 
+        this.selectedRegionIds = [];
+        this.selectedStatsTypes = [];
+        this.selectedCoordinates = [];
         this.setActiveProfileCategory(ProfileCategory.IMAGE);
     }
 }

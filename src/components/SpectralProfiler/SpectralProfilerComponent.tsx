@@ -90,17 +90,15 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
         const wantMeanRms = profiles.length === 1;
         const profileColorMap = widgetStore.lineColorMap;
         profiles.forEach(profile => {
-            if (profile?.data && profile?.colorKey && profile?.label) {
+            if (profile) {
                 const pointsAndProperties = this.getDataPointsAndProperties(profile.data, xBound, wantMeanRms);
                 if (pointsAndProperties) {
                     data.push(pointsAndProperties.points);
                     smoothedData.push(pointsAndProperties.smoothedPoints);
-
                     if (wantMeanRms) {
                         yMean = pointsAndProperties.yMean;
                         yRms = pointsAndProperties.yRms;
                     }
-
                     if (yBound.yMin > pointsAndProperties.yBound.yMin) {
                         yBound.yMin = pointsAndProperties.yBound.yMin;
                     }
