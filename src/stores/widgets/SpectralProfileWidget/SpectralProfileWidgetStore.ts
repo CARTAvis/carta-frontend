@@ -32,8 +32,8 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
     // style settings
     @observable plotType: PlotType;
     @observable meanRmsVisible: boolean;
-    @observable primaryLineColor: string;
-    @observable profileColorMap: Map<LineKey, string>; // TODO: do we need to move this to profileSelectionStore?
+    @observable primaryLineColor: string; // TODO: how to handle this?
+    @observable lineColorMap: Map<LineKey, string>;
     @observable lineWidth: number;
     @observable linePlotPointSize: number;
     @observable linePlotInitXYBoundaries: { minXVal: number, maxXVal: number, minYVal: number, maxYVal: number };
@@ -255,7 +255,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         this.meanRmsVisible = false;
         this.markerTextVisible = false;
         this.primaryLineColor = "auto-blue";
-        this.profileColorMap = new Map();
+        this.lineColorMap = new Map();
         this.linePlotPointSize = 1.5;
         this.lineWidth = 1;
         this.linePlotInitXYBoundaries = { minXVal: 0, maxXVal: 0, minYVal: 0, maxYVal: 0 };
@@ -461,19 +461,19 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
     }
 
     @action getProfileColor = (lineKey: LineKey): string => {
-        return this.profileColorMap.get(lineKey);
+        return this.lineColorMap.get(lineKey);
     };
 
     @action setProfileColor = (lineKey: LineKey, color: string) => {
-        this.profileColorMap.set(lineKey, color);
+        this.lineColorMap.set(lineKey, color);
     };
 
     @action removeProfileColor = (lineKey: LineKey) => {
-        this.profileColorMap.delete(lineKey);
+        this.lineColorMap.delete(lineKey);
     };
 
     @action clearProfileColors = () => {
-        this.profileColorMap.clear();
+        this.lineColorMap.clear();
     };
 
     @action setLineWidth = (val: number) => {
