@@ -7,7 +7,7 @@ import {LineKey, LineOption, ProcessedSpectralProfile, STATISTICS_TEXT, SUPPORTE
 export enum ProfileCategory {
     IMAGE = "Image",
     REGION = "Region",
-    STATISTICS = "Statistic",
+    STATISTIC = "Statistic",
     STOKES = "Stokes"
 }
 
@@ -45,7 +45,7 @@ export class SpectralProfileSelectionStore {
         let formattedSpectralConfigs: SpectralConfig[] = [];
         const profileConfigs = this.profileConfigs;
         if (profileConfigs?.length > 0) {
-            if (this.activeProfileCategory === ProfileCategory.STATISTICS) {
+            if (this.activeProfileCategory === ProfileCategory.STATISTIC) {
                 let statsTypes = [];
                 profileConfigs.forEach(profileConfig => statsTypes.push(profileConfig.statsType));
                 formattedSpectralConfigs.push({
@@ -113,7 +113,7 @@ export class SpectralProfileSelectionStore {
                         label: `${this.selectedFrameFileId}-${selectedRegionId}-${statsType}-${selectedCoordinate}`
                     });
                 });
-            } else if (this.activeProfileCategory === ProfileCategory.STATISTICS) {
+            } else if (this.activeProfileCategory === ProfileCategory.STATISTIC) {
                 const selectedRegionId = this.selectedRegionIds[0];
                 const selectedCoordinate = this.selectedCoordinates[0];
                 const region = this.selectedFrame.getRegion(selectedRegionId);
@@ -187,7 +187,7 @@ export class SpectralProfileSelectionStore {
             return matchedFileIds?.includes(this.selectedFrameFileId) ? matchedFileIds : [this.selectedFrameFileId];
         } else if (this.activeProfileCategory === ProfileCategory.REGION) {
             return this.selectedRegionIds;
-        } else if (this.activeProfileCategory === ProfileCategory.STATISTICS) {
+        } else if (this.activeProfileCategory === ProfileCategory.STATISTIC) {
             return this.selectedStatsTypes;
         } else {
             return this.selectedCoordinates;
@@ -199,7 +199,7 @@ export class SpectralProfileSelectionStore {
             return this.frameOptions;
         } else if (this.activeProfileCategory === ProfileCategory.REGION) {
             return this.regionOptions;
-        } else if (this.activeProfileCategory === ProfileCategory.STATISTICS) {
+        } else if (this.activeProfileCategory === ProfileCategory.STATISTIC) {
             return this.statsTypeOptions;
         } else {
             return this.coordinateOptions;
@@ -291,7 +291,7 @@ export class SpectralProfileSelectionStore {
         } else if (profileCategory === ProfileCategory.REGION) {
             this.selectedStatsTypes = [this.DEFAULT_STATS_TYPE];
             this.selectedCoordinates = [this.DEFAULT_COORDINATE];
-        } else if (profileCategory === ProfileCategory.STATISTICS) {
+        } else if (profileCategory === ProfileCategory.STATISTIC) {
             this.selectedRegionIds = [this.DEFAULT_REGION_ID];
             this.selectedCoordinates = [this.DEFAULT_COORDINATE];
         } else if (profileCategory === ProfileCategory.STOKES) {

@@ -126,13 +126,13 @@ class ProfileSelectionComponent extends React.Component<{profileSelectionStore: 
                     onItemSelect={this.onRegionItemClick}
                 />
                 <ProfileSelectionButtonComponent
-                    categoryName={ProfileCategory.STATISTICS}
-                    isActiveCategory={profileSelectionStore.activeProfileCategory === ProfileCategory.STATISTICS}
+                    categoryName={ProfileCategory.STATISTIC}
+                    isActiveCategory={profileSelectionStore.activeProfileCategory === ProfileCategory.STATISTIC}
                     itemOptions={profileSelectionStore.statsTypeOptions}
                     itemSelected={profileSelectionStore.selectedStatsTypes}
                     disabled={!frame}
                     disableOptions={!profileSelectionStore.isStatsTypeSelectionAvailable}
-                    onCategorySelect={() => profileSelectionStore.setActiveProfileCategory(ProfileCategory.STATISTICS)}
+                    onCategorySelect={() => profileSelectionStore.setActiveProfileCategory(ProfileCategory.STATISTIC)}
                     onItemSelect={this.onStatsItemClick}
                 />
                 <ProfileSelectionButtonComponent
