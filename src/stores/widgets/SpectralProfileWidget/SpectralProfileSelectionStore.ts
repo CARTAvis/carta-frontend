@@ -1,4 +1,4 @@
-import {action, computed, makeObservable, observable} from "mobx";
+import {action, autorun, computed, makeObservable, observable} from "mobx";
 import {CARTA} from "carta-protobuf";
 import {AppStore, FrameStore} from "stores";
 import {RegionId, SpectralProfileWidgetStore} from "stores/widgets";
@@ -380,5 +380,11 @@ export class SpectralProfileSelectionStore {
         this.selectedStatsTypes = [];
         this.selectedCoordinates = [];
         this.setActiveProfileCategory(ProfileCategory.IMAGE);
+
+        autorun(() => {
+            if (this.widgetStore.effectiveFrame) {
+                this.setActiveProfileCategory(ProfileCategory.IMAGE);
+            }
+        });
     }
 }
