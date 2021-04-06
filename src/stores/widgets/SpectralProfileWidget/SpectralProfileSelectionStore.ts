@@ -4,8 +4,8 @@ import {AppStore, FrameStore} from "stores";
 import {ACTIVE_FILE_ID, RegionId, SpectralProfileWidgetStore} from "stores/widgets";
 import {LineKey, LineOption, ProcessedSpectralProfile, STATISTICS_TEXT, SUPPORTED_STATISTICS_TYPES} from "models";
 
-export enum ProfileCategory {
-    NONE = "None", // single profile mode: only 1 profile displayed in widget
+export enum MultiProfileCategory {
+    NONE = "None", // single profile mode: allow only 1 profile displayed in widget
     IMAGE = "Image",
     REGION = "Region",
     STATISTIC = "Statistic",
@@ -28,7 +28,7 @@ interface SpectralConfig extends CARTA.SetSpectralRequirements.ISpectralConfig {
 
 export class SpectralProfileSelectionStore {
     // profile selection
-    @observable activeProfileCategory: ProfileCategory;
+    @observable activeProfileCategory: MultiProfileCategory;
     @observable selectedRegionIds: number[];
     @observable selectedStatsTypes: CARTA.StatsType[];
     @observable selectedCoordinates: string[];
@@ -46,7 +46,7 @@ export class SpectralProfileSelectionStore {
         let formattedSpectralConfigs: SpectralConfig[] = [];
         const profileConfigs = this.profileConfigs;
         if (profileConfigs?.length > 0) {
-            if (this.activeProfileCategory === ProfileCategory.STATISTIC) {
+            if (this.activeProfileCategory === MultiProfileCategory.STATISTIC) {
                 let statsTypes = [];
                 profileConfigs.forEach(profileConfig => statsTypes.push(profileConfig.statsType));
                 formattedSpectralConfigs.push({
@@ -74,13 +74,13 @@ export class SpectralProfileSelectionStore {
         let profileConfigs: ProfileConfig[] = [];
         if (this.selectedFrame && this.selectedRegionIds?.length >= 1 && this.selectedStatsTypes?.length >= 1 && this.selectedCoordinates?.length >= 1) {
             const realFileId = this.selectedFrame.frameInfo.fileId;
-            if (this.activeProfileCategory === ProfileCategory.NONE || this.activeProfileCategory === ProfileCategory.IMAGE) {
+            if (this.activeProfileCategory === MultiProfileCategory.NONE || this.activeProfileCategory === MultiProfileCategory.IMAGE) {
                 const selectedRegionId = this.selectedRegionIds[0];
                 const region = this.selectedFrame.getRegion(selectedRegionId);
                 const statsType = region?.isClosedRegion ? this.selectedStatsTypes[0] : CARTA.StatsType.Sum;
                 const selectedCoordinate = this.selectedCoordinates[0];
                 const matchedFileIds = AppStore.Instance.spatialAndSpectalMatchedFileIds;
-                if (this.activeProfileCategory === ProfileCategory.IMAGE && matchedFileIds?.includes(realFileId)) {
+                if (this.activeProfileCategory === MultiProfileCategory.IMAGE && matchedFileIds?.includes(realFileId)) {
                     matchedFileIds.forEach(fileId => {
                         profileConfigs.push({
                             fileId: fileId,
@@ -101,7 +101,7 @@ export class SpectralProfileSelectionStore {
                         label: `${realFileId}-${selectedRegionId}-${statsType}-${selectedCoordinate}`
                     });
                 }
-            } else if (this.activeProfileCategory === ProfileCategory.REGION) {
+            } else if (this.activeProfileCategory === MultiProfileCategory.REGION) {
                 const selectedStatsType = this.selectedStatsTypes[0];
                 const selectedCoordinate = this.selectedCoordinates[0];
 
@@ -117,7 +117,7 @@ export class SpectralProfileSelectionStore {
                         label: `${realFileId}-${selectedRegionId}-${statsType}-${selectedCoordinate}`
                     });
                 });
-            } else if (this.activeProfileCategory === ProfileCategory.STATISTIC) {
+            } else if (this.activeProfileCategory === MultiProfileCategory.STATISTIC) {
                 const selectedRegionId = this.selectedRegionIds[0];
                 const selectedCoordinate = this.selectedCoordinates[0];
                 const region = this.selectedFrame.getRegion(selectedRegionId);
@@ -143,7 +143,7 @@ export class SpectralProfileSelectionStore {
                         label: `${realFileId}-${selectedRegionId}-${CARTA.StatsType.Sum}-${selectedCoordinate}`
                     });
                 }
-            } else if (this.activeProfileCategory === ProfileCategory.STOKES) {
+            } else if (this.activeProfileCategory === MultiProfileCategory.STOKES) {
                 const selectedRegionId = this.selectedRegionIds[0];
                 const selectedStatsType = this.selectedStatsTypes[0];
                 const region = this.selectedFrame.getRegion(selectedRegionId);
@@ -186,30 +186,30 @@ export class SpectralProfileSelectionStore {
     }
 
     @computed get profileOrderedKeys(): LineKey[] {
-        if (this.activeProfileCategory === ProfileCategory.NONE) {
+        if (this.activeProfileCategory === MultiProfileCategory.NONE) {
             return [this.selectedFrameFileId];
-        } else if (this.activeProfileCategory === ProfileCategory.IMAGE) {
+        } else if (this.activeProfileCategory === MultiProfileCategory.IMAGE) {
             const matchedFileIds = AppStore.Instance.spatialAndSpectalMatchedFileIds;
             // TODO: should check whether readFileId is included in matchedFileIds
             return matchedFileIds?.includes(this.selectedFrameFileId) ? matchedFileIds : [this.selectedFrameFileId];
-        } else if (this.activeProfileCategory === ProfileCategory.REGION) {
+        } else if (this.activeProfileCategory === MultiProfileCategory.REGION) {
             return this.selectedRegionIds;
-        } else if (this.activeProfileCategory === ProfileCategory.STATISTIC) {
+        } else if (this.activeProfileCategory === MultiProfileCategory.STATISTIC) {
             return this.selectedStatsTypes;
-        } else if (this.activeProfileCategory === ProfileCategory.STOKES) {
+        } else if (this.activeProfileCategory === MultiProfileCategory.STOKES) {
             return this.selectedCoordinates;
         }
         return undefined;
     }
 
     @computed get profileOptions(): LineOption[] {
-        if (this.activeProfileCategory === ProfileCategory.NONE || this.activeProfileCategory === ProfileCategory.IMAGE) {
+        if (this.activeProfileCategory === MultiProfileCategory.NONE || this.activeProfileCategory === MultiProfileCategory.IMAGE) {
             return this.frameOptions;
-        } else if (this.activeProfileCategory === ProfileCategory.REGION) {
+        } else if (this.activeProfileCategory === MultiProfileCategory.REGION) {
             return this.regionOptions;
-        } else if (this.activeProfileCategory === ProfileCategory.STATISTIC) {
+        } else if (this.activeProfileCategory === MultiProfileCategory.STATISTIC) {
             return this.statsTypeOptions;
-        } else if (this.activeProfileCategory === ProfileCategory.STOKES) {
+        } else if (this.activeProfileCategory === MultiProfileCategory.STOKES) {
             return this.coordinateOptions;
         }
         return undefined;
@@ -219,7 +219,7 @@ export class SpectralProfileSelectionStore {
         let options: LineOption[] = [{value: ACTIVE_FILE_ID, label: "Active"}];
         const appStore = AppStore.Instance;
         const frameNameOptions = appStore.frameNames;
-        if (this.activeProfileCategory === ProfileCategory.IMAGE) {
+        if (this.activeProfileCategory === MultiProfileCategory.IMAGE) {
             const matchedFrameIds = appStore.spatialAndSpectalMatchedFileIds;
             frameNameOptions?.forEach(frameNameOption => {
                 const isMatched = matchedFrameIds?.length > 1 && matchedFrameIds?.includes(frameNameOption.value as number);
@@ -236,7 +236,7 @@ export class SpectralProfileSelectionStore {
     }
 
     @computed get regionOptions(): LineOption[] {
-        let options: LineOption[] = [{value: RegionId.ACTIVE, label: "Active", disabled: this.activeProfileCategory === ProfileCategory.REGION}];
+        let options: LineOption[] = [{value: RegionId.ACTIVE, label: "Active", disabled: this.activeProfileCategory === MultiProfileCategory.REGION}];
         const frame = this.selectedFrame;
         if (frame?.regionSet?.regions) {
             const filteredRegions = frame.regionSet.regions.filter(r => !r.isTemporary && (r.isClosedRegion || r.regionType === CARTA.RegionType.POINT));
@@ -270,8 +270,8 @@ export class SpectralProfileSelectionStore {
 
     @computed get isStatsTypeSelectionAvailable(): boolean {
         // Check the available stats types of the selected single region
-        if ((this.activeProfileCategory === ProfileCategory.REGION && this.selectedRegionIds?.length === 1) ||
-            (this.activeProfileCategory !== ProfileCategory.REGION && this.selectedRegionIds?.length > 0)) {
+        if ((this.activeProfileCategory === MultiProfileCategory.REGION && this.selectedRegionIds?.length === 1) ||
+            (this.activeProfileCategory !== MultiProfileCategory.REGION && this.selectedRegionIds?.length > 0)) {
             const selectedRegion = this.selectedFrame?.getRegion(this.selectedRegionIds[0]);
             return selectedRegion && selectedRegion.isClosedRegion;
         }
@@ -296,27 +296,27 @@ export class SpectralProfileSelectionStore {
         return true;
     }
 
-    @action setActiveProfileCategory = (profileCategory: ProfileCategory) => {
+    @action setActiveProfileCategory = (profileCategory: MultiProfileCategory) => {
         const widgetStore = this.widgetStore;
         const primaryLineColor = widgetStore.primaryLineColor;
 
         this.activeProfileCategory = profileCategory;
         widgetStore.clearProfileColors();
         // Reset region/statistics/stokes to default (only 1 item) when switching active profile category
-        if (profileCategory === ProfileCategory.NONE || profileCategory === ProfileCategory.IMAGE) {
+        if (profileCategory === MultiProfileCategory.NONE || profileCategory === MultiProfileCategory.IMAGE) {
             this.selectedRegionIds = [this.DEFAULT_REGION_ID];
             this.selectedStatsTypes = [this.DEFAULT_STATS_TYPE];
             this.selectedCoordinates = [this.DEFAULT_COORDINATE];
             widgetStore.setProfileColor(this.selectedFrameFileId, primaryLineColor);
-        } else if (profileCategory === ProfileCategory.REGION) {
+        } else if (profileCategory === MultiProfileCategory.REGION) {
             this.selectedStatsTypes = [this.DEFAULT_STATS_TYPE];
             this.selectedCoordinates = [this.DEFAULT_COORDINATE];
             widgetStore.setProfileColor(this.DEFAULT_REGION_ID, primaryLineColor);
-        } else if (profileCategory === ProfileCategory.STATISTIC) {
+        } else if (profileCategory === MultiProfileCategory.STATISTIC) {
             this.selectedRegionIds = [this.DEFAULT_REGION_ID];
             this.selectedCoordinates = [this.DEFAULT_COORDINATE];
             widgetStore.setProfileColor(this.DEFAULT_STATS_TYPE, primaryLineColor);
-        } else if (profileCategory === ProfileCategory.STOKES) {
+        } else if (profileCategory === MultiProfileCategory.STOKES) {
             this.selectedRegionIds = [this.DEFAULT_REGION_ID];
             this.selectedStatsTypes = [this.DEFAULT_STATS_TYPE];
             widgetStore.setProfileColor(this.DEFAULT_COORDINATE, primaryLineColor);
@@ -393,6 +393,6 @@ export class SpectralProfileSelectionStore {
         this.selectedRegionIds = [];
         this.selectedStatsTypes = [];
         this.selectedCoordinates = [];
-        this.setActiveProfileCategory(ProfileCategory.NONE);
+        this.setActiveProfileCategory(MultiProfileCategory.NONE);
     }
 }

@@ -3,7 +3,7 @@ import * as React from "react";
 import {CARTA} from "carta-protobuf";
 import {AnchorButton, ButtonGroup, Intent, Menu, MenuItem, Popover, Position, Tooltip} from "@blueprintjs/core";
 import {AppStore} from "stores";
-import {ProfileCategory, SpectralProfileWidgetStore, SpectralProfileSelectionStore} from "stores/widgets";
+import {MultiProfileCategory, SpectralProfileWidgetStore, SpectralProfileSelectionStore} from "stores/widgets";
 import {SpectralProfilerComponent, SpectralProfilerSettingsTabs} from "components";
 import {CustomIcon} from "icons/CustomIcons";
 import {SWATCH_COLORS} from "utilities";
@@ -13,7 +13,7 @@ import "./SpectralProfilerToolbarComponent.scss";
 type MultiSelectItem = string | CARTA.StatsType;
 
 class ProfileSelectionButtonComponentProps {
-    categoryName: ProfileCategory;
+    categoryName: MultiProfileCategory;
     isActiveCategory: boolean;
     itemOptions: LineOption[];
     itemSelected: MultiSelectItem[];
@@ -118,56 +118,56 @@ class ProfileSelectionComponent extends React.Component<{profileSelectionStore: 
         return (
             <div className="profile-selection-panel">
                 <ProfileSelectionButtonComponent
-                    categoryName={ProfileCategory.IMAGE}
-                    isActiveCategory={profileSelectionStore.activeProfileCategory === ProfileCategory.IMAGE}
+                    categoryName={MultiProfileCategory.IMAGE}
+                    isActiveCategory={profileSelectionStore.activeProfileCategory === MultiProfileCategory.IMAGE}
                     itemOptions={profileSelectionStore.frameOptions}
                     itemSelected={[profileSelectionStore.selectedFrameFileId]}
                     disabled={!frame}
                     hightlightDropDownButton={profileSelectionStore.isSelectingSpecificFrame}
                     onCategorySelect={() => {
                         profileSelectionStore.setActiveProfileCategory(
-                            profileSelectionStore.activeProfileCategory !== ProfileCategory.IMAGE ? ProfileCategory.IMAGE : ProfileCategory.NONE
+                            profileSelectionStore.activeProfileCategory !== MultiProfileCategory.IMAGE ? MultiProfileCategory.IMAGE : MultiProfileCategory.NONE
                         );
                     }}
                     onItemSelect={this.onFrameItemClick}
                 />
                 <ProfileSelectionButtonComponent
-                    categoryName={ProfileCategory.REGION}
-                    isActiveCategory={profileSelectionStore.activeProfileCategory === ProfileCategory.REGION}
+                    categoryName={MultiProfileCategory.REGION}
+                    isActiveCategory={profileSelectionStore.activeProfileCategory === MultiProfileCategory.REGION}
                     itemOptions={profileSelectionStore.regionOptions}
                     itemSelected={profileSelectionStore.selectedRegionIds}
                     disabled={!frame}
                     onCategorySelect={() => {
                         profileSelectionStore.setActiveProfileCategory(
-                            profileSelectionStore.activeProfileCategory !== ProfileCategory.REGION ? ProfileCategory.REGION : ProfileCategory.NONE
+                            profileSelectionStore.activeProfileCategory !== MultiProfileCategory.REGION ? MultiProfileCategory.REGION : MultiProfileCategory.NONE
                         );
                     }}
                     onItemSelect={this.onRegionItemClick}
                 />
                 <ProfileSelectionButtonComponent
-                    categoryName={ProfileCategory.STATISTIC}
-                    isActiveCategory={profileSelectionStore.activeProfileCategory === ProfileCategory.STATISTIC}
+                    categoryName={MultiProfileCategory.STATISTIC}
+                    isActiveCategory={profileSelectionStore.activeProfileCategory === MultiProfileCategory.STATISTIC}
                     itemOptions={profileSelectionStore.statsTypeOptions}
                     itemSelected={profileSelectionStore.selectedStatsTypes}
                     disabled={!frame}
                     disableOptions={!profileSelectionStore.isStatsTypeSelectionAvailable}
                     onCategorySelect={() => {
                         profileSelectionStore.setActiveProfileCategory(
-                            profileSelectionStore.activeProfileCategory !== ProfileCategory.STATISTIC ? ProfileCategory.STATISTIC : ProfileCategory.NONE
+                            profileSelectionStore.activeProfileCategory !== MultiProfileCategory.STATISTIC ? MultiProfileCategory.STATISTIC : MultiProfileCategory.NONE
                         );
                     }}
                     onItemSelect={this.onStatsItemClick}
                 />
                 <ProfileSelectionButtonComponent
-                    categoryName={ProfileCategory.STOKES}
-                    isActiveCategory={profileSelectionStore.activeProfileCategory === ProfileCategory.STOKES}
+                    categoryName={MultiProfileCategory.STOKES}
+                    isActiveCategory={profileSelectionStore.activeProfileCategory === MultiProfileCategory.STOKES}
                     itemOptions={profileSelectionStore.coordinateOptions}
                     itemSelected={profileSelectionStore.selectedCoordinates}
                     disabled={!frame}
                     disableOptions={!(frame?.hasStokes)}
                     onCategorySelect={() => {
                         profileSelectionStore.setActiveProfileCategory(
-                            profileSelectionStore.activeProfileCategory !== ProfileCategory.STOKES ? ProfileCategory.STOKES : ProfileCategory.NONE
+                            profileSelectionStore.activeProfileCategory !== MultiProfileCategory.STOKES ? MultiProfileCategory.STOKES : MultiProfileCategory.NONE
                         );
                     }}
                     onItemSelect={this.onStokesItemClick}
