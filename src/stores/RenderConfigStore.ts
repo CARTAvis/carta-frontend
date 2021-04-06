@@ -127,14 +127,28 @@ export class RenderConfigStore {
     @computed get colorscaleArray() {
         const colorsForValues = getColorsForValues(this.colorMap);
         const indexArray = Array.from(Array(colorsForValues.size).keys()).map(x => this.inverted ? x / colorsForValues.size : 1 - x / colorsForValues.size);
-        const scaledAarray = indexArray.map(x => 1.0 - scaleValueInverse(1.0 - x, this.scaling, this.alpha, this.gamma));
+        const scaledAarray = indexArray.map(x => 1.0 - scaleValueInverse(1.0 - x, this.scaling, this.alpha, this.gamma, this.bias, this.contrast));
+        let rbgString = (index) => {
+            return `rgb(${colorsForValues.color[index * 4]}, ${colorsForValues.color[index * 4 + 1]}, ${colorsForValues.color[index * 4 + 2]}, ${colorsForValues.color[index * 4 + 3]})`
+
+        };
 
         let colorscale = [];
-        for (let i = 0; i < colorsForValues.size; i++) {
-            colorscale.push(scaledAarray[i],
-                `rgb(${colorsForValues.color[i * 4]}, ${colorsForValues.color[i * 4 + 1]}, ${colorsForValues.color[i * 4 + 2]}, ${colorsForValues.color[i * 4 + 3]})`);
+        if (this.contrast === 0) {
+            return [0, rbgString(Math.floor(colorsForValues.size / 2)), 1, rbgString(Math.floor(colorsForValues.size / 2))];
+        } else if (Math.min(...scaledAarray) === 1) {
+            return [0, rbgString(colorsForValues.size - 1), 1, rbgString(colorsForValues.size - 1)];
+        } else if (Math.max(...scaledAarray) === 0) {
+            return [0, rbgString(0), 1, rbgString(0)];
+        } else {
+            for (let i = 0; i < colorsForValues.size; i++) {
+                colorscale.push(scaledAarray[i], rbgString(i));
+                if (scaledAarray[i] === 0) {
+                    break;
+                }
+            }
+            return colorscale;
         }
-        return colorscale
     };
 
     @computed get scalingName() {

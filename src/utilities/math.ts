@@ -102,20 +102,22 @@ export function scaleValue(x: number, scaling: FrameScaling, alpha: number = 100
     return scaleValue;
 }
 
-export function scaleValueInverse(x: number, scaling: FrameScaling, alpha: number = 1000, gamma: number = 1.5) {
+export function scaleValueInverse(x: number, scaling: FrameScaling, alpha: number = 1000, gamma: number = 1.5, bias: number = 0, contrast: number = 1) {
+    let scaleValue = (x - 0.5) / contrast + 0.5;
+    scaleValue = clamp(scaleValue + bias, 0, 1);
     switch (scaling) {
         case FrameScaling.SQUARE:
-            return Math.sqrt(x);
+            return Math.sqrt(scaleValue);
         case FrameScaling.SQRT:
-            return x * x;
+            return scaleValue * scaleValue;
         case FrameScaling.LOG:
-            return (Math.pow(alpha + 1, x) - 1.0) / alpha;
+            return (Math.pow(alpha + 1, scaleValue) - 1.0) / alpha;
         case FrameScaling.POWER:
-            return alpha === 1 ? 0 : Math.log((alpha - 1.0) * x + 1.0) / Math.log(alpha);
+            return alpha === 1 ? 0 : Math.log((alpha - 1.0) * scaleValue + 1.0) / Math.log(alpha);
         case FrameScaling.GAMMA:
-            return Math.pow(x, 1.0 / gamma);
+            return Math.pow(scaleValue, 1.0 / gamma);
         default:
-            return x;
+            return scaleValue;
     }
 }
 
