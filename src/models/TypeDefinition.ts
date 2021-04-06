@@ -6,5 +6,6 @@ export type RegionId = number;
 
 export type LineKey = string | number;
 export interface LineOption extends IOptionProps{
+    disabled?: boolean;
     hightlight?: boolean;
 }

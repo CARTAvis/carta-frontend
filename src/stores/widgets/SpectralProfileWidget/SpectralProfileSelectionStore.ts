@@ -1,10 +1,11 @@
-import {action, autorun, computed, makeObservable, observable} from "mobx";
+import {action, computed, makeObservable, observable} from "mobx";
 import {CARTA} from "carta-protobuf";
 import {AppStore, FrameStore} from "stores";
-import {RegionId, SpectralProfileWidgetStore} from "stores/widgets";
+import {ACTIVE_FILE_ID, RegionId, SpectralProfileWidgetStore} from "stores/widgets";
 import {LineKey, LineOption, ProcessedSpectralProfile, STATISTICS_TEXT, SUPPORTED_STATISTICS_TYPES} from "models";
 
 export enum ProfileCategory {
+    NONE = "None",
     IMAGE = "Image",
     REGION = "Region",
     STATISTIC = "Statistic",
@@ -71,13 +72,13 @@ export class SpectralProfileSelectionStore {
     @computed get profileConfigs(): ProfileConfig[] {
         let profileConfigs: ProfileConfig[] = [];
         if (this.selectedFrame && this.selectedRegionIds?.length >= 1 && this.selectedStatsTypes?.length >= 1 && this.selectedCoordinates?.length >= 1) {
-            if (this.activeProfileCategory === ProfileCategory.IMAGE) {
+            if (this.activeProfileCategory === ProfileCategory.NONE || this.activeProfileCategory === ProfileCategory.IMAGE) {
                 const selectedRegionId = this.selectedRegionIds[0];
                 const region = this.selectedFrame.getRegion(selectedRegionId);
                 const statsType = region?.isClosedRegion ? this.selectedStatsTypes[0] : CARTA.StatsType.Sum;
                 const selectedCoordinate = this.selectedCoordinates[0];
                 const matchedFileIds = AppStore.Instance.spatialAndSpectalMatchedFileIds;
-                if (matchedFileIds?.includes(this.selectedFrameFileId)) {
+                if (this.activeProfileCategory === ProfileCategory.IMAGE && matchedFileIds?.includes(this.selectedFrameFileId)) {
                     matchedFileIds.forEach(fileId => {
                         profileConfigs.push({
                             fileId: fileId,
@@ -183,48 +184,56 @@ export class SpectralProfileSelectionStore {
     }
 
     @computed get profileOrderedKeys(): LineKey[] {
-        if (this.activeProfileCategory === ProfileCategory.IMAGE) {
+        if (this.activeProfileCategory === ProfileCategory.NONE) {
+            return [this.selectedFrameFileId];
+        } else if (this.activeProfileCategory === ProfileCategory.IMAGE) {
             const matchedFileIds = AppStore.Instance.spatialAndSpectalMatchedFileIds;
             return matchedFileIds?.includes(this.selectedFrameFileId) ? matchedFileIds : [this.selectedFrameFileId];
         } else if (this.activeProfileCategory === ProfileCategory.REGION) {
             return this.selectedRegionIds;
         } else if (this.activeProfileCategory === ProfileCategory.STATISTIC) {
             return this.selectedStatsTypes;
-        } else {
+        } else if (this.activeProfileCategory === ProfileCategory.STOKES) {
             return this.selectedCoordinates;
         }
+        return undefined;
     }
 
     @computed get profileOptions(): LineOption[] {
-        if (this.activeProfileCategory === ProfileCategory.IMAGE) {
+        if (this.activeProfileCategory === ProfileCategory.NONE || this.activeProfileCategory === ProfileCategory.IMAGE) {
             return this.frameOptions;
         } else if (this.activeProfileCategory === ProfileCategory.REGION) {
             return this.regionOptions;
         } else if (this.activeProfileCategory === ProfileCategory.STATISTIC) {
             return this.statsTypeOptions;
-        } else {
+        } else if (this.activeProfileCategory === ProfileCategory.STOKES) {
             return this.coordinateOptions;
         }
+        return undefined;
     }
 
     @computed get frameOptions(): LineOption[] {
-        let options = [];
+        let options: LineOption[] = [{value: ACTIVE_FILE_ID, label: "Active"}];
         const appStore = AppStore.Instance;
         const frameNameOptions = appStore.frameNames;
-        const matchedFrameIds = appStore.spatialAndSpectalMatchedFileIds;
-        options = frameNameOptions?.map(frameNameOption => {
-            const isMatched = matchedFrameIds?.length > 1 && matchedFrameIds?.includes(frameNameOption.value as number);
-            return {
-                label: `${frameNameOption.label}${isMatched ? " (matched)" : ""}`,
-                value: frameNameOption.value,
-                hightlight: isMatched
-            };
-        });
+        if (this.activeProfileCategory === ProfileCategory.IMAGE) {
+            const matchedFrameIds = appStore.spatialAndSpectalMatchedFileIds;
+            frameNameOptions?.forEach(frameNameOption => {
+                const isMatched = matchedFrameIds?.length > 1 && matchedFrameIds?.includes(frameNameOption.value as number);
+                options.push({
+                    value: frameNameOption.value,
+                    label: `${frameNameOption.label}${isMatched ? " (matched)" : ""}`,
+                    hightlight: isMatched
+                });
+            });
+        } else {
+            options = options.concat(frameNameOptions);
+        }
         return options;
     }
 
     @computed get regionOptions(): LineOption[] {
-        let options = [];
+        let options: LineOption[] = [{value: RegionId.ACTIVE, label: "Active", disabled: this.activeProfileCategory === ProfileCategory.REGION}];
         const frame = this.selectedFrame;
         if (frame?.regionSet?.regions) {
             const filteredRegions = frame.regionSet.regions.filter(r => !r.isTemporary && (r.isClosedRegion || r.regionType === CARTA.RegionType.POINT));
@@ -287,7 +296,7 @@ export class SpectralProfileSelectionStore {
         this.activeProfileCategory = profileCategory;
         widgetStore.clearProfileColors();
         // Reset region/statistics/stokes to default (only 1 item) when switching active profile category
-        if (profileCategory === ProfileCategory.IMAGE) {
+        if (profileCategory === ProfileCategory.NONE || profileCategory === ProfileCategory.IMAGE) {
             this.selectedRegionIds = [this.DEFAULT_REGION_ID];
             this.selectedStatsTypes = [this.DEFAULT_STATS_TYPE];
             this.selectedCoordinates = [this.DEFAULT_COORDINATE];
@@ -309,8 +318,6 @@ export class SpectralProfileSelectionStore {
 
     @action selectFrame = (fileId: number) => {
         this.widgetStore.setFileId(fileId);
-        // TODO: do we need to switch category to IMAGE or can stay in the same category when switching frame?
-        this.setActiveProfileCategory(ProfileCategory.IMAGE);
     };
 
     @action selectRegion = (regionId: number, color: string, isMultipleSelectionMode: boolean = false) => {
@@ -379,12 +386,6 @@ export class SpectralProfileSelectionStore {
         this.selectedRegionIds = [];
         this.selectedStatsTypes = [];
         this.selectedCoordinates = [];
-        this.setActiveProfileCategory(ProfileCategory.IMAGE);
-
-        autorun(() => {
-            if (this.widgetStore.effectiveFrame) {
-                this.setActiveProfileCategory(ProfileCategory.IMAGE);
-            }
-        });
+        this.setActiveProfileCategory(ProfileCategory.NONE);
     }
 }

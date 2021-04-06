@@ -40,7 +40,7 @@ class ProfileSelectionButtonComponent extends React.Component<ProfileSelectionBu
 
         return (
             <ButtonGroup fill={true} className="category-set">
-                <Tooltip content={"Click to enable multiple selection"} position={Position.TOP}>
+                <Tooltip content={`Click to enable/disable multiple profiles of ${this.props.categoryName}`} position={Position.TOP}>
                     <AnchorButton
                         text={this.props.categoryName}
                         active={this.props.isActiveCategory}
@@ -55,6 +55,7 @@ class ProfileSelectionButtonComponent extends React.Component<ProfileSelectionBu
                                 <MenuItem
                                     key={item.value}
                                     text={item.label}
+                                    disabled={item?.disabled}
                                     intent={item.hightlight ? Intent.PRIMARY : Intent.NONE}
                                     onClick={(ev) => this.props.onItemSelect(item.value, index, this.props.isActiveCategory)}
                                     icon={this.props.itemSelected?.includes(item.value) ? "tick" : "blank"}
@@ -113,7 +114,11 @@ class ProfileSelectionComponent extends React.Component<{profileSelectionStore: 
                     itemOptions={profileSelectionStore.frameOptions}
                     itemSelected={[profileSelectionStore.selectedFrameFileId]}
                     disabled={!frame}
-                    onCategorySelect={() => profileSelectionStore.setActiveProfileCategory(ProfileCategory.IMAGE)}
+                    onCategorySelect={() => {
+                        profileSelectionStore.setActiveProfileCategory(
+                            profileSelectionStore.activeProfileCategory !== ProfileCategory.IMAGE ? ProfileCategory.IMAGE : ProfileCategory.NONE
+                        );
+                    }}
                     onItemSelect={this.onFrameItemClick}
                 />
                 <ProfileSelectionButtonComponent
@@ -122,7 +127,11 @@ class ProfileSelectionComponent extends React.Component<{profileSelectionStore: 
                     itemOptions={profileSelectionStore.regionOptions}
                     itemSelected={profileSelectionStore.selectedRegionIds}
                     disabled={!frame}
-                    onCategorySelect={() => profileSelectionStore.setActiveProfileCategory(ProfileCategory.REGION)}
+                    onCategorySelect={() => {
+                        profileSelectionStore.setActiveProfileCategory(
+                            profileSelectionStore.activeProfileCategory !== ProfileCategory.REGION ? ProfileCategory.REGION : ProfileCategory.NONE
+                        );
+                    }}
                     onItemSelect={this.onRegionItemClick}
                 />
                 <ProfileSelectionButtonComponent
@@ -132,7 +141,11 @@ class ProfileSelectionComponent extends React.Component<{profileSelectionStore: 
                     itemSelected={profileSelectionStore.selectedStatsTypes}
                     disabled={!frame}
                     disableOptions={!profileSelectionStore.isStatsTypeSelectionAvailable}
-                    onCategorySelect={() => profileSelectionStore.setActiveProfileCategory(ProfileCategory.STATISTIC)}
+                    onCategorySelect={() => {
+                        profileSelectionStore.setActiveProfileCategory(
+                            profileSelectionStore.activeProfileCategory !== ProfileCategory.STATISTIC ? ProfileCategory.STATISTIC : ProfileCategory.NONE
+                        );
+                    }}
                     onItemSelect={this.onStatsItemClick}
                 />
                 <ProfileSelectionButtonComponent
@@ -140,8 +153,13 @@ class ProfileSelectionComponent extends React.Component<{profileSelectionStore: 
                     isActiveCategory={profileSelectionStore.activeProfileCategory === ProfileCategory.STOKES}
                     itemOptions={profileSelectionStore.coordinateOptions}
                     itemSelected={profileSelectionStore.selectedCoordinates}
-                    disabled={!(frame?.hasStokes)}
-                    onCategorySelect={() => profileSelectionStore.setActiveProfileCategory(ProfileCategory.STOKES)}
+                    disabled={!frame}
+                    disableOptions={!(frame?.hasStokes)}
+                    onCategorySelect={() => {
+                        profileSelectionStore.setActiveProfileCategory(
+                            profileSelectionStore.activeProfileCategory !== ProfileCategory.STOKES ? ProfileCategory.STOKES : ProfileCategory.NONE
+                        );
+                    }}
                     onItemSelect={this.onStokesItemClick}
                 />
             </div>
