@@ -101,6 +101,8 @@ export class LinePlotComponentProps {
     setSelectedRange?: (min: number, max: number) => void;
     order?: number;
     multiPlotPropsMap?: Map<string, MultiPlotProps>;
+    graphZoomFreezeOnDragging?: boolean;
+    isAutoScaledX?: boolean;
 }
 
 // Maximum time between double clicks
@@ -126,6 +128,7 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
     private panPrevious: number;
     private previousClickTime: number;
     private pendingClickHandle;
+    private isZoomFreezed = false;
 
     @observable chartArea: ChartArea;
     @observable hoveredMarker: LineMarker;
@@ -284,10 +287,19 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
 
     @action onMarkerDragStart = () => {
         this.isMarkerDragging = true;
+        if (this.props.isAutoScaledX && this.props.graphZoomFreezeOnDragging) {
+            this.props.graphZoomedX(this.props.xMin, this.props.xMax);
+            this.props.graphZoomedY(this.props.yMin, this.props.yMax);
+            this.isZoomFreezed = true;
+        }
     };
 
     @action onMarkerDragEnd = () => {
         this.isMarkerDragging = false;
+        if (this.isZoomFreezed) {
+            this.props.graphZoomReset();
+            this.isZoomFreezed = false;
+        }
     };
 
     onMarkerDragged = (ev, marker: LineMarker) => {
@@ -778,7 +790,7 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
             }
         }
         if (isShowingLabels && marker.label) {
-            lineSegments.push(<Text align={"left"} fill={markerColor} key={lineSegments.length} text={marker.label} rotation={-90} x={0} y={chartArea.bottom}/>);
+            lineSegments.push(<Text align={"left"} fill={markerColor} key={lineSegments.length} text={marker.label} rotation={-90} x={marker.label === "Max" ? -DEFAULT_FONT_SIZE : 0} y={chartArea.bottom}/>);
         }
 
         if (marker.draggable) {

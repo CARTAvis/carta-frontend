@@ -277,7 +277,9 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
             borderWidth: this.widgetStore.lineWidth,
             pointRadius: this.widgetStore.linePlotPointSize,
             zeroLineWidth: 2,
-            multiPlotPropsMap: new Map()
+            multiPlotPropsMap: new Map(),
+            graphZoomFreezeOnDragging: true,
+            isAutoScaledX: this.widgetStore.isAutoScaledX
         };
 
         if (frame.renderConfig.histogram && frame.renderConfig.histogram.bins && frame.renderConfig.histogram.bins.length) {
@@ -296,8 +298,8 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
 
                 // Determine scale in X and Y directions. If auto-scaling, use the bounds of the current data
                 if (this.widgetStore.isAutoScaledX) {
-                    linePlotProps.xMin = currentPlotData.xMin;
-                    linePlotProps.xMax = currentPlotData.xMax;
+                    linePlotProps.xMin = frame.renderConfig.scaleMinVal - 0.02 * (frame.renderConfig.scaleMaxVal - frame.renderConfig.scaleMinVal);
+                    linePlotProps.xMax = frame.renderConfig.scaleMaxVal + 0.02 * (frame.renderConfig.scaleMaxVal - frame.renderConfig.scaleMinVal);
                 } else {
                     linePlotProps.xMin = this.widgetStore.minX;
                     linePlotProps.xMax = this.widgetStore.maxX;
