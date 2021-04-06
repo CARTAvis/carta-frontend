@@ -268,11 +268,19 @@ export class RenderConfigStore {
 
     @action setBias = (bias: number) => {
         this.bias = bias;
-    }
+    };
+
+    @action resetBias = () => {
+        this.bias = 0;
+    };
 
     @action setContrast = (contrast: number) => {
         this.contrast = contrast;
-    }
+    };
+
+    @action resetContrast = () => {
+        this.contrast = 1;
+    };
 
     @action setInverted = (inverted: boolean) => {
         this.inverted = inverted;

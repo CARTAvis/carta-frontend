@@ -36,8 +36,20 @@ export class ColormapConfigComponent extends React.Component<ColormapConfigProps
         const bias = clamp(point.x, 0, stage.width()) / stage.width() * 2 - 1;
         const contrast = 2 -  clamp(point.y, 0, stage.height()) / stage.height() * 2;
         this.props.renderConfig.setBias(bias);
-        this.props.renderConfig.setContrast(contrast); 
-    }
+        this.props.renderConfig.setContrast(contrast);
+    };
+
+    private resetButton = (onClick) => {
+        return (
+            <Button
+                icon={"reset"}
+                minimal={true}
+                small={true}
+                style={{opacity: 0.5}}
+                onClick={onClick}
+            />
+        )
+    };
 
     render() {
         if (!this.props.renderConfig) {
@@ -152,6 +164,7 @@ export class ColormapConfigComponent extends React.Component<ColormapConfigProps
                             majorStepSize={0.5}
                             value={renderConfig.bias}
                             onValueChange={renderConfig.setBias}
+                            rightElement={this.resetButton(renderConfig.resetBias)}
                         />
                     </FormGroup>
                     <FormGroup label={"Contrast"} inline={true}>
@@ -163,6 +176,7 @@ export class ColormapConfigComponent extends React.Component<ColormapConfigProps
                             majorStepSize={0.5}
                             value={renderConfig.contrast}
                             onValueChange={renderConfig.setContrast}
+                            rightElement={this.resetButton(renderConfig.resetContrast)}
                         />
                     </FormGroup>
                 </Collapse>
