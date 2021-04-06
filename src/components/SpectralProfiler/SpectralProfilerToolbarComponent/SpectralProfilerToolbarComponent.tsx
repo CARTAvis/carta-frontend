@@ -20,6 +20,7 @@ class ProfileSelectionButtonComponentProps {
     disabled: boolean;
     disableOptions?: boolean;
     hightlightDropDownButton?: boolean;
+    tooltip: JSX.Element;
     onCategorySelect: () => void;
     onItemSelect: (item: MultiSelectItem, itemIndex: number, isMultipleSelectionMode: boolean) => void;
 }
@@ -49,7 +50,7 @@ class ProfileSelectionButtonComponent extends React.Component<ProfileSelectionBu
 
         return (
             <ButtonGroup fill={true} className="category-set">
-                <Tooltip content={`Click to enable/disable multiple profiles of ${this.props.categoryName}`} position={Position.TOP}>
+                <Tooltip content={this.props.tooltip} position={Position.TOP}>
                     <AnchorButton
                         text={this.props.categoryName}
                         active={this.props.isActiveCategory}
@@ -130,6 +131,12 @@ class ProfileSelectionComponent extends React.Component<{profileSelectionStore: 
                         );
                     }}
                     onItemSelect={this.onFrameItemClick}
+                    tooltip={
+                        <span>
+                            {`Click to enable/disable multiple profiles of ${MultiProfileCategory.IMAGE}`}
+                            <span><br/><i><small>Spectral profiler shows the profiles of spatially and spectrally matched images related to the selected image when enabled.</small></i></span>
+                        </span>
+                    }
                 />
                 <ProfileSelectionButtonComponent
                     categoryName={MultiProfileCategory.REGION}
@@ -143,6 +150,12 @@ class ProfileSelectionComponent extends React.Component<{profileSelectionStore: 
                         );
                     }}
                     onItemSelect={this.onRegionItemClick}
+                    tooltip={
+                        <span>
+                            {`Click to enable/disable multiple profiles of ${MultiProfileCategory.REGION}`}
+                            <span><br/><i><small>Spectral profiler shows the profiles of selected regions when enabled.</small></i></span>
+                        </span>
+                    }
                 />
                 <ProfileSelectionButtonComponent
                     categoryName={MultiProfileCategory.STATISTIC}
@@ -157,6 +170,12 @@ class ProfileSelectionComponent extends React.Component<{profileSelectionStore: 
                         );
                     }}
                     onItemSelect={this.onStatsItemClick}
+                    tooltip={
+                        <span>
+                            {`Click to enable/disable multiple profiles of ${MultiProfileCategory.STATISTIC}`}
+                            <span><br/><i><small>Spectral profiler shows the profiles of selected statistics when enabled.</small></i></span>
+                        </span>
+                    }
                 />
                 <ProfileSelectionButtonComponent
                     categoryName={MultiProfileCategory.STOKES}
@@ -171,6 +190,12 @@ class ProfileSelectionComponent extends React.Component<{profileSelectionStore: 
                         );
                     }}
                     onItemSelect={this.onStokesItemClick}
+                    tooltip={
+                        <span>
+                            {`Click to enable/disable multiple profiles of ${MultiProfileCategory.STOKES}`}
+                            <span><br/><i><small>Spectral profiler shows the profiles of selected stokes when enabled.</small></i></span>
+                        </span>
+                    }
                 />
             </div>
         );
