@@ -7,7 +7,7 @@ import {SpectralLine} from "./SpectralLineQueryWidgetStore";
 import {AppStore} from "stores";
 import {ProfileSmoothingStore} from "stores/ProfileSmoothingStore";
 import {ProfileFittingStore} from "stores/ProfileFittingStore"
-import {SpectralSystem, SpectralType, SpectralUnit} from "models";
+import {SpectralSystem} from "models";
 import tinycolor from "tinycolor2";
 import {SpectralProfilerSettingsTabs} from "components";
 import {isAutoColor} from "utilities";
@@ -106,19 +106,13 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
     };
 
     @action setSpectralCoordinate = (coordStr: string) => {
-        const frame = this.effectiveFrame;
-        if (frame && frame.spectralCoordsSupported && frame.spectralCoordsSupported.has(coordStr)) {
-            const coord: {type: SpectralType, unit: SpectralUnit} = frame.spectralCoordsSupported.get(coordStr);
-            frame.spectralType = coord.type;
-            frame.spectralUnit = coord.unit;
+        if (this.effectiveFrame.setSpectralCoordinate(coordStr)) {
             this.clearXBounds();
         }
     };
 
     @action setSpectralSystem = (specsys: SpectralSystem) => {
-        const frame = this.effectiveFrame;
-        if (frame && frame.spectralSystemsSupported && frame.spectralSystemsSupported.includes(specsys)) {
-            frame.spectralSystem = specsys;
+        if (this.effectiveFrame.setSpectralSystem(specsys)) {
             this.clearXBounds();
         }
     };

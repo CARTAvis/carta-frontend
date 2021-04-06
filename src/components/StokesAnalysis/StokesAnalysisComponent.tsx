@@ -141,8 +141,8 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
 
     // true: red->blue, false: blue->red. chartjs plot tick lables with increasing order by default, no need to check for CDELT
     private getColorMapOrder(frame: FrameStore): boolean {
-        const defaultType = frame?.channelInfo?.channelType.code;     
-        let CTYPE = frame?.spectralType !== null? frame?.spectralType : defaultType;
+        const defaultType = frame?.spectralAxis?.type.code;
+        let CTYPE = frame?.spectralType ?? defaultType;
         if (CTYPE === SpectralType.CHANNEL) {
             CTYPE = defaultType;
         }
@@ -1148,8 +1148,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
             }
 
             if (frame.spectralAxis && !frame.isCoordChannel) {
-                const spectralSystem = frame.isSpectralSystemConvertible ? frame.spectralSystem : `${frame.spectralInfo.specsys}`;
-                paLinePlotProps.xLabel = piLinePlotProps.xLabel = quLinePlotProps.xLabel = `${spectralSystem && spectralSystem !== "" ? spectralSystem + ", " : ""}${frame.spectralCoordinate}`;
+                paLinePlotProps.xLabel = piLinePlotProps.xLabel = quLinePlotProps.xLabel = frame.spectralLabel;
             }
 
             paLinePlotProps.markers = [];
