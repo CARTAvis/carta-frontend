@@ -51,8 +51,7 @@ export class ProfileFittingComponent extends React.Component<{fittingStore: Prof
     private autoDetect = () => {
         this.reset();
         const guessComponents = autoDetecting(this.props.widgetStore.effectiveFrame.channelValues, Array.prototype.slice.call(this.coordinateData.values));
-        if (guessComponents) {
-
+        if (guessComponents && guessComponents.length > 0) {
             this.props.fittingStore.setComponents(guessComponents.length);
             for (let i = 0; i < guessComponents.length; i++) {
                 this.props.fittingStore.components[i].setAmp(guessComponents[i].amp);

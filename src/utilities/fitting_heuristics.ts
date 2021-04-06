@@ -2,83 +2,102 @@ import * as _ from "lodash";
 import * as GSL from "gsl_wrapper";
 import { ProfileFittingIndividualStore } from "stores/ProfileFittingStore";
 
-
-export function Gaussian(x, a, c0, s) {
-    return a * Math.exp(-1 *Math.pow( (x - c0), 2)/ 2 /Math.pow(s,2));
-}
-
-export function hanning_smoothing(intensity: number[]) {
-    const aaa: number[] = [];
-    for (let i = 1 ; i < intensity.length -1; i++) {
-        const value = 0.25 * intensity[i - 1] + 0.5 * intensity[i] + 0.25 * intensity[i + 1];
-        aaa.push(value);
+export function hanningSmoothing(data: number[]) {
+    // hanning width = 3
+    const smoothedData: number[] = [];
+    smoothedData.push(data[0]);
+    for (let i = 1 ; i < data.length -1; i++) {
+        const value = 0.25 * data[i - 1] + 0.5 * data[i] + 0.25 * data[i + 1];
+        smoothedData.push(value);
     }
-    return aaa;
+    smoothedData.push(data[data.length - 1]);
+    return smoothedData;
 }
 
 export function binning(data: number[], binWidth: number) {
-    const bbb: number[] = [];
-    for (let i = 0; i < data.length - 1; i = i + binWidth ) {
-        bbb.push(_.mean(data.slice(i, (i + binWidth > data.length) ? data.length : i + binWidth)))
+    const binnedData: number[] = [];
+    for (let i = 0; i < data.length - binWidth; i = i + binWidth ) {
+        binnedData.push(_.mean(data.slice(i, (i + binWidth > data.length) ? data.length : i + binWidth)))
     }
-    return bbb;
+    return binnedData;
 }
 
 export function getIndexByVelocity(velocity: number[], targetVelocity: number) {
-    // const delta = Math.abs(velocity[1] - velocity[0]);
+    // const deltaVelocity = Math.abs(velocity[1] - velocity[0]);
     for (let i = 0; i < velocity.length - 1; i ++) {
         if (velocity[i] <= targetVelocity && targetVelocity < velocity[i + 1]) {
             return i;
+        } else if (targetVelocity === velocity[velocity.length - 1]) {
+            return velocity.length - 1;
         }
     }
     return null;
 }
 
 export function profilePreprocessing(data: number[]) {
-    let dataProcessed = binning(data, (data.length / 128) + 1);
-    dataProcessed = hanning_smoothing(dataProcessed);
-    dataProcessed = hanning_smoothing(dataProcessed);
+    let dataProcessed = binning(data, Math.floor(data.length / 128) + 1);
+    dataProcessed = hanningSmoothing(dataProcessed);
+    dataProcessed = hanningSmoothing(dataProcessed);// seems necessary from testing
     return dataProcessed;
 }
 
-export function histogram(data: number[], binN: number): {y: number[], x: number[]} {
-    const x = [];
+/**
+ * Compute the histogram of a set of data.
+ *
+ * @param {number[]} data Input data.
+ * @param {number[]} binN defines the number of equal-width bins in the given range.
+ * @return {hist: number[], binEdges: number[]}
+ *
+ * hist: The values of the histogram.
+ * binEdges: Return the bin edges.
+*/
+export function histogram(data: number[], binN: number): {hist: number[], binEdges: number[]} {
+    if (isFinite(binN) && binN > 0) {
+
+    }
+    const binEdges = [];
     const min = _.min(data);
     const max = _.max(data);
-    const binWidth = (max - min ) / binN;
+    const binWidth = (max - min) / binN;
 
     for (let i = 0; i < binN ; i++) {
-        x.push(min + i * binWidth);
+        binEdges.push(min + i * binWidth);
     }
 
-    x.push(max);
+    binEdges.push(max);
 
-    const y: number[] = [binN];
+    const hist = new Array(binN).fill(0);
 
     for (const value of data) {
         for (let j = 0; j < binN; j++) {
-            if ((value >= x[j] && value <= x[j + 1]) || (value <= x[j] && value >= x[j + 1])) {
-                y[j] = y[j] + 1;
+            if (value >= binEdges[j] && value < binEdges[j + 1]) {
+                hist[j] = hist[j] + 1;
+                break;
+            } else if (value === binEdges[binN]) {
+                hist[binN - 1] = hist[binN - 1] + 1;
                 break;
             }
         }
     }
 
-    return {y, x};
+    return {hist, binEdges};
 }
 
 
 export function autoDetecting(velocity: number[], intensity:number[]) : ProfileFittingIndividualStore[] {
+    // pre-processing data based on number of channels
     const xSmoothed = profilePreprocessing(velocity);
     const ySmoothed = profilePreprocessing(intensity);
-    const bins = Number.parseInt(Math.sqrt(velocity.length).toFixed(0));
 
+    // fit a gaussian to the intensity histogram as an estimate of continuum level and noise level
+    const bins = Math.floor(Math.sqrt(velocity.length));
     const histResult = histogram(ySmoothed, bins);
 
-    let histY: number[] = [0, ...histResult.y, 0];
+    // padding 0 to both sides of the histogram
+    let histY: number[] = [0, ...histResult.hist, 0];
     const histXCenterTmp = [];
-    for (let i = 0; i < histResult.x.length - 1 ; i++) {
-        histXCenterTmp.push((histResult.x[i] + histResult.x[i + 1])/ 2);
+    for (let i = 0; i < histResult.binEdges.length - 2 ; i++) {
+        histXCenterTmp.push((histResult.binEdges[i] + histResult.binEdges[i + 1])/ 2);
     }
     const deltaHistXCenter = histXCenterTmp[1] - histXCenterTmp[0];
     let histXCenter: number[] = [histXCenterTmp[0] - deltaHistXCenter, ...histXCenterTmp, histXCenterTmp[histXCenterTmp.length - 1] + deltaHistXCenter];
@@ -90,15 +109,15 @@ export function autoDetecting(velocity: number[], intensity:number[]) : ProfileF
     const intensitySmoothedMean = histogramGaussianFitting.center[0];
     const intensitySmoothedStddev = histogramGaussianFitting.fwhm[0] / (2 * Math.sqrt(Math.log(2) * 2 )); 
 
-    // 1st
+    // 1st: marking channels with signals
     const lineBoxs:{fromIndex, toIndex, fromIndexOri, toIndexOri}[] = [];
     let switchFrom  = false;
-    const nSigmaThreshold = 2; // 
+    const nSigmaThreshold = 2;
     const signalChCountThreshold = 4;
     const floor = intensitySmoothedMean - nSigmaThreshold * intensitySmoothedStddev;
     const ceiling = intensitySmoothedMean + nSigmaThreshold * intensitySmoothedStddev;
 
-    let fromIndex, toIndex, fromIndexOri, toIndexOri;
+    let fromIndex = 0, toIndex = 0, fromIndexOri, toIndexOri;
     for (let i = 0; i < ySmoothed.length; i++) {
         const value = ySmoothed[i];
         if((value > ceiling || value < floor) && switchFrom === false) {
@@ -112,10 +131,18 @@ export function autoDetecting(velocity: number[], intensity:number[]) : ProfileF
             if (toIndexOri - fromIndexOri + 1 >= signalChCountThreshold && (_.mean(ySmoothed.slice(fromIndex, toIndex + 1))> intensitySmoothedMean + 3 * intensitySmoothedStddev || _.mean(ySmoothed.slice(fromIndex, toIndex + 1)) < intensitySmoothedMean - 3 * intensitySmoothedStddev)) {
                 lineBoxs.push({fromIndexOri, toIndexOri, fromIndex, toIndex});
             }
+        } else if((value > ceiling || value < floor) && switchFrom === true && i === ySmoothed.length - 1) {
+            toIndex = i;
+            fromIndexOri = getIndexByVelocity(velocity, xSmoothed[fromIndex]);
+            toIndexOri = getIndexByVelocity(velocity, xSmoothed[toIndex]);
+            if (toIndexOri - fromIndexOri + 1 >= signalChCountThreshold && (_.mean(ySmoothed.slice(fromIndex, toIndex + 1))> intensitySmoothedMean + 3 * intensitySmoothedStddev || _.mean(ySmoothed.slice(fromIndex, toIndex + 1)) < intensitySmoothedMean - 3 * intensitySmoothedStddev)) {
+                lineBoxs.push({fromIndexOri, toIndexOri, fromIndex, toIndex});
+            }
+            break;
         }
     }
 
-    // 2nd
+    // 2nd: checking multiplicity per identified feature in 1st step
     const lineBoxsFinal:{fromIndex, toIndex, fromIndexOri, toIndexOri}[] = [];
     const multiChCountThreshold = 12;
     const multiMeanSnThreshold = 4
@@ -127,11 +154,11 @@ export function autoDetecting(velocity: number[], intensity:number[]) : ProfileF
         const chCount = lineBox.toIndex - lineBox.fromIndex + 1;
         const dividerIndex = [];
         const dividerIndexTmp = [];
-        const dividerValueTmp = []; //
+        const dividerValueTmp = [];
         const dividerLocalMaxIndex = [];
         const dividerLocalMinIndex = [];
-        const dividerLocalMaxValue = []; //
-        const dividerLocalMinValue = []; //
+        const dividerLocalMaxValue = [];
+        const dividerLocalMinValue = [];
 
         if (Math.abs(meanSN) >= multiMeanSnThreshold && chCount >= multiChCountThreshold) {
             for (let j = lineBox.fromIndex ; j < lineBox.toIndex - 4; j++) {
@@ -148,17 +175,17 @@ export function autoDetecting(velocity: number[], intensity:number[]) : ProfileF
                     dividerLocalMaxValue.push(ySmoothed[j + 2]);
                 }
             }
+            // validating each divider index
 
             for (const index of dividerLocalMinIndex) {
                 dividerIndexTmp.push(index);
             }
-
-            for (const index of dividerLocalMaxValue) {
+            for (const index of dividerLocalMaxIndex) {
                 dividerIndexTmp.push(index);
             }
-
             dividerIndexTmp.sort();
             
+            // dividerValueTmp is not used elsewhere
             for (const index of dividerIndexTmp) {
                 if (dividerLocalMinIndex.indexOf(index) !== -1) {
                     dividerValueTmp.push(dividerLocalMinValue[dividerLocalMinIndex.indexOf(index)]);
@@ -166,7 +193,6 @@ export function autoDetecting(velocity: number[], intensity:number[]) : ProfileF
                     dividerValueTmp.push(dividerLocalMaxValue[dividerLocalMaxIndex.indexOf[index]]);
                 }
             }
-
             dividerIndex.push(lineBox.fromIndexOri);
 
             if (dividerIndexTmp.length === 0) {
@@ -287,7 +313,11 @@ export function autoDetecting(velocity: number[], intensity:number[]) : ProfileF
             dividerIndex.push(lineBox.toIndexOri);
 
             for (let d = 0; d < dividerIndex.length - 1; d++) {
-                lineBoxsFinal.push({fromIndexOri:dividerIndex[d], toIndexOri:dividerIndex[d+1], fromIndex: getIndexByVelocity(xSmoothed, velocity[dividerIndex[d]]), toIndex: getIndexByVelocity(xSmoothed, velocity[dividerIndex[d + 1]])});
+                const fromIndexOri = dividerIndex[d];
+                const toIndexOri = dividerIndex[d+1];
+                const fromIndex = getIndexByVelocity(xSmoothed, velocity[dividerIndex[d]]);
+                const toIndex = getIndexByVelocity(xSmoothed, velocity[dividerIndex[d + 1]]);
+                lineBoxsFinal.push({fromIndexOri, toIndexOri, fromIndex, toIndex});
             }
         } else {
             lineBoxsFinal.push(lineBox);
