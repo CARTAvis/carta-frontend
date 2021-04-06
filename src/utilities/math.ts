@@ -102,6 +102,23 @@ export function scaleValue(x: number, scaling: FrameScaling, alpha: number = 100
     return scaleValue;
 }
 
+export function scaleValueInverse(x: number, scaling: FrameScaling, alpha: number = 1000, gamma: number = 1.5) {
+    switch (scaling) {
+        case FrameScaling.SQUARE:
+            return Math.sqrt(x);
+        case FrameScaling.SQRT:
+            return x * x;
+        case FrameScaling.LOG:
+            return (Math.pow(alpha + 1, x) - 1.0) / alpha;
+        case FrameScaling.POWER:
+            return alpha === 1 ? 0 : Math.log((alpha - 1.0) * x + 1.0) / Math.log(alpha);
+        case FrameScaling.GAMMA:
+            return Math.pow(x, 1.0 / gamma);
+        default:
+            return x;
+    }
+}
+
 export function roundToPower(val: number, power: number) {
     return Math.pow(power, Math.round(Math.log(val) / Math.log(power)));
 }

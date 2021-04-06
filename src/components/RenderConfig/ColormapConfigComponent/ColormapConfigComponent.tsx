@@ -112,6 +112,8 @@ export class ColormapConfigComponent extends React.Component<ColormapConfigProps
                 {(renderConfig.scaling === FrameScaling.LOG || renderConfig.scaling === FrameScaling.POWER) &&
                 <FormGroup label={"Alpha"} inline={true}>
                     <SafeNumericInput
+                        min={RenderConfigStore.ALPHA_MIN}
+                        max={RenderConfigStore.ALPHA_MAX}
                         buttonPosition={"none"}
                         value={renderConfig.alpha}
                         onValueChange={renderConfig.setAlpha}
