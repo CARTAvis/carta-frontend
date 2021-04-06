@@ -19,6 +19,7 @@ class ProfileSelectionButtonComponentProps {
     itemSelected: MultiSelectItem[];
     disabled: boolean;
     disableOptions?: boolean;
+    hightlightDropDownButton?: boolean;
     onCategorySelect: () => void;
     onItemSelect: (item: MultiSelectItem, itemIndex: number, isMultipleSelectionMode: boolean) => void;
 }
@@ -36,6 +37,14 @@ class ProfileSelectionButtonComponent extends React.Component<ProfileSelectionBu
                     dropdownText += `${selectedItemOption.label}${index !== itemSelected.length - 1 ? "," : ""}`;
                 }
             });
+        }
+
+        let dropdownButtonClassName = "dropdown-button";
+        if (this.props.hightlightDropDownButton) {
+            dropdownButtonClassName += " specific-selection";
+        }
+        if (AppStore.Instance.darkTheme) {
+            dropdownButtonClassName += " dark-theme";
         }
 
         return (
@@ -70,7 +79,7 @@ class ProfileSelectionButtonComponent extends React.Component<ProfileSelectionBu
                 >
                     <AnchorButton
                         text={<span className="overflow-text">{dropdownText}</span>}
-                        className="dropdown-button"
+                        className={dropdownButtonClassName}
                         rightIcon={"caret-down"}
                         disabled={this.props.disabled || this.props.disableOptions}
                     />
@@ -114,6 +123,7 @@ class ProfileSelectionComponent extends React.Component<{profileSelectionStore: 
                     itemOptions={profileSelectionStore.frameOptions}
                     itemSelected={[profileSelectionStore.selectedFrameFileId]}
                     disabled={!frame}
+                    hightlightDropDownButton={profileSelectionStore.isSelectingSpecificFrame}
                     onCategorySelect={() => {
                         profileSelectionStore.setActiveProfileCategory(
                             profileSelectionStore.activeProfileCategory !== ProfileCategory.IMAGE ? ProfileCategory.IMAGE : ProfileCategory.NONE

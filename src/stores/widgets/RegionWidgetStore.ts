@@ -50,7 +50,7 @@ export class RegionWidgetStore {
         return null;
     }
 
-    @computed get matchActiveFrame(): boolean {
+    @computed get isEffectiveFrameEqualToActiveFrame(): boolean {
         return this.effectiveFrame && this.appStore.activeFrame.frameInfo.fileId === this.effectiveFrame.frameInfo.fileId;
     }
 
@@ -74,7 +74,7 @@ export class RegionWidgetStore {
     }
 
     @computed get matchesSelectedRegion(): boolean {
-        if (this.matchActiveFrame) {
+        if (this.isEffectiveFrameEqualToActiveFrame) {
             if (this.appStore.selectedRegion) {
                 return this.effectiveRegionId === this.appStore.selectedRegion.regionId;
             } else {
