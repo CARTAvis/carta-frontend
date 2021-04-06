@@ -1,11 +1,9 @@
 import * as React from "react";
 import {observer} from "mobx-react";
 import {action, makeObservable, observable} from "mobx";
-import {Button, Collapse, Colors, FormGroup, Switch} from "@blueprintjs/core";
-import {Circle, Layer, Rect, Stage} from "react-konva";
+import {Button, Collapse, FormGroup, Switch} from "@blueprintjs/core";
 import {FrameScaling, RenderConfigStore} from "stores";
-import {ColormapComponent, ScalingSelectComponent, SafeNumericInput} from "components/Shared";
-import {clamp} from "utilities"
+import {BiasContrastSelectComponent, ColormapComponent, ScalingSelectComponent, SafeNumericInput} from "components/Shared";
 
 interface ColormapConfigProps {
     renderConfig: RenderConfigStore;
@@ -29,67 +27,21 @@ export class ColormapConfigComponent extends React.Component<ColormapConfigProps
         this.props.renderConfig.setInverted(evt.currentTarget.checked);
     };
 
-    private handleDragMove = (event) => {
-        const stage = event.target.getStage();
-        const point = stage.getPointerPosition();
-
-        const bias = clamp(point.x, 0, stage.width()) / stage.width() * 2 - 1;
-        const contrast = 2 -  clamp(point.y, 0, stage.height()) / stage.height() * 2;
-        this.props.renderConfig.setBias(bias);
-        this.props.renderConfig.setContrast(contrast);
-    };
-
-    private resetButton = (onClick) => {
-        return (
-            <Button
-                icon={"reset"}
-                minimal={true}
-                small={true}
-                style={{opacity: 0.5}}
-                onClick={onClick}
-            />
-        )
-    };
-
     render() {
         if (!this.props.renderConfig) {
             return null;
         }
 
-        const boardWidth = 130;
-        const boardHeight = 130;
-
-
         const renderConfig = this.props.renderConfig;
-        const twoDimensionBoard = (
-            <React.Fragment>
-                <Rect
-                    x={0}
-                    y={0}
-                    width={boardWidth}
-                    height={boardHeight}
-                    stroke={Colors.LIGHT_GRAY1}
-                    strokeWidth={4}
-                />
-                <Circle
-                    x={(renderConfig.bias + 1) * boardWidth / 2}
-                    y={(2 - renderConfig.contrast) * boardHeight / 2}
-                    radius={5}
-                    fill={Colors.GRAY3}
-                    draggable={true}
-                    dragBoundFunc={function (pos) {
-                        return {
-                          x: clamp(pos.x, 0, boardWidth),
-                          y: clamp(pos.y, 0, boardHeight)
-                        };
-                    }}
-                    onDragMove={this.handleDragMove}
-                />
-            </React.Fragment>
-        )
 
         return (
             <React.Fragment>
+                <FormGroup label={"Scaling"} inline={true}>
+                    <ScalingSelectComponent
+                        selectedItem={renderConfig.scaling}
+                        onItemSelect={renderConfig.setScaling}
+                    />
+                </FormGroup>
                 <FormGroup label={"Color map"} inline={true}>
                     <ColormapComponent
                         inverted={renderConfig.inverted}
@@ -101,12 +53,6 @@ export class ColormapConfigComponent extends React.Component<ColormapConfigProps
                     <Switch
                         checked={renderConfig.inverted}
                         onChange={this.handleInvertedChanged}
-                    />
-                </FormGroup>
-                <FormGroup label={"Scaling"} inline={true}>
-                    <ScalingSelectComponent
-                        selectedItem={renderConfig.scaling}
-                        onItemSelect={renderConfig.setScaling}
                     />
                 </FormGroup>
                 {(renderConfig.scaling === FrameScaling.LOG || renderConfig.scaling === FrameScaling.POWER) &&
@@ -140,47 +86,22 @@ export class ColormapConfigComponent extends React.Component<ColormapConfigProps
                         rightIcon={this.extendBiasContrast ? "double-chevron-up" : "double-chevron-down"}
                         alignText={'right'}
                         small={true}
-                        style={{marginTop: 5}}
                         onClick={this.switchExtendBiasContrast}
                     >
                         {"Bias / Contrast"}
                     </Button>
                 </FormGroup>
                 <Collapse isOpen={this.extendBiasContrast}>
-                    <Stage
-                        className={"bias-contrast-stage"}
-                        width={boardWidth}
-                        height={boardHeight}
-                        style={{paddingBottom: 10}}
-                    >
-                        <Layer>
-                            {twoDimensionBoard}
-                        </Layer>
-                    </Stage>
-                    <FormGroup label={"Bias"} inline={true}>
-                        <SafeNumericInput
-                            className={'step-input'}
-                            min={RenderConfigStore.BIAS_MIN}
-                            max={RenderConfigStore.BIAS_MAX}
-                            stepSize={0.1}
-                            majorStepSize={0.5}
-                            value={renderConfig.bias}
-                            onValueChange={renderConfig.setBias}
-                            rightElement={this.resetButton(renderConfig.resetBias)}
-                        />
-                    </FormGroup>
-                    <FormGroup label={"Contrast"} inline={true}>
-                        <SafeNumericInput
-                            className={'step-input'}
-                            min={RenderConfigStore.CONTRAST_MIN}
-                            max={RenderConfigStore.CONTRAST_MAX}
-                            stepSize={0.1}
-                            majorStepSize={0.5}
-                            value={renderConfig.contrast}
-                            onValueChange={renderConfig.setContrast}
-                            rightElement={this.resetButton(renderConfig.resetContrast)}
-                        />
-                    </FormGroup>
+                    <BiasContrastSelectComponent
+                        bias={renderConfig.bias}
+                        contrast={renderConfig.contrast}
+                        setBias={renderConfig.setBias}
+                        setContrast={renderConfig.setContrast}
+                        resetBias={renderConfig.resetBias}
+                        resetContrast={renderConfig.resetContrast}
+                        boardWidth={130}
+                        boardHeight={130}
+                    />
                 </Collapse>
             </React.Fragment>
         )
