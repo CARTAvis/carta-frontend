@@ -190,8 +190,8 @@ export class SpectralProfileSelectionStore {
             return [this.selectedFrameFileId];
         } else if (this.activeProfileCategory === MultiProfileCategory.IMAGE) {
             const matchedFileIds = AppStore.Instance.spatialAndSpectalMatchedFileIds;
-            // TODO: should check whether readFileId is included in matchedFileIds
-            return matchedFileIds?.includes(this.selectedFrameFileId) ? matchedFileIds : [this.selectedFrameFileId];
+            const realFileId = this.selectedFrame?.frameInfo.fileId;
+            return matchedFileIds?.includes(realFileId) ? matchedFileIds : [this.selectedFrameFileId];
         } else if (this.activeProfileCategory === MultiProfileCategory.REGION) {
             return this.selectedRegionIds;
         } else if (this.activeProfileCategory === MultiProfileCategory.STATISTIC) {
