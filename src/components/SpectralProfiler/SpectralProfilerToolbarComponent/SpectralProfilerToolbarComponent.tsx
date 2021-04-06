@@ -134,7 +134,7 @@ class ProfileSelectionComponent extends React.Component<{profileSelectionStore: 
                     tooltip={
                         <span>
                             {`Click to enable/disable multiple profiles of ${MultiProfileCategory.IMAGE}`}
-                            <span><br/><i><small>Spectral profiler shows the profiles of spatially and spectrally matched images related to the selected image when enabled.</small></i></span>
+                            <span><br/><i><small>Spectral profiler shows the profiles of spatially and spectrally<br/>matched images related to the selected image when enabled.</small></i></span>
                         </span>
                     }
                 />
