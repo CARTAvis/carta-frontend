@@ -9,7 +9,8 @@ import {AppStore, SpectralProfileStore} from "stores";
 import {ProcessedSpectralProfile} from "models";
 import {CARTA} from "carta-protobuf";
 import "./ProfileFittingComponent.scss";
-import { autoDetecting } from "utilities/fitting_heuristics";
+import {autoDetecting} from "utilities/fitting_heuristics";
+import {clamp} from "utilities";
 
 export enum FittingFunction {
     GAUSSIAN,
@@ -50,7 +51,7 @@ export class ProfileFittingComponent extends React.Component<{fittingStore: Prof
 
     private autoDetect = () => {
         this.reset();
-        const guessComponents = autoDetecting(this.props.widgetStore.effectiveFrame.channelValues, Array.prototype.slice.call(this.coordinateData.values));
+        const guessComponents = autoDetecting(this.plottingData.x, Array.prototype.slice.call(this.plottingData.y));
         if (guessComponents && guessComponents.length > 0) {
             this.props.fittingStore.setComponents(guessComponents.length);
             for (let i = 0; i < guessComponents.length; i++) {
@@ -75,7 +76,7 @@ export class ProfileFittingComponent extends React.Component<{fittingStore: Prof
 
     private fitData = () => {
         if (this.props.fittingStore.readyToFit) {
-            this.props.fittingStore.fitData(this.props.widgetStore.effectiveFrame.channelValues, this.coordinateData.values)
+            this.props.fittingStore.fitData(this.plottingData.x, this.plottingData.y)
         }
     }
 
@@ -100,20 +101,55 @@ export class ProfileFittingComponent extends React.Component<{fittingStore: Prof
         return null;
     }
 
-    @computed get coordinateData(): ProcessedSpectralProfile {
-        const frame = this.props.widgetStore.effectiveFrame;
+    @computed get plottingData(): {x: number[] ,y: Float32Array | Float64Array} {
+        const widgetStore = this.props.widgetStore;
+        const frame = widgetStore.effectiveFrame;
         if (!frame) {
             return null;
         }
 
-        let regionId = this.props.widgetStore.effectiveRegionId;
+        let coordinateData: ProcessedSpectralProfile;
+        let regionId = widgetStore.effectiveRegionId;
         if (frame.regionSet) {
             const region = frame.regionSet.regions.find(r => r.regionId === regionId);
             if (region && this.profileStore) {
-                return this.profileStore.getProfile(this.props.widgetStore.coordinate, region.isClosedRegion ? this.props.widgetStore.statsType : CARTA.StatsType.Sum);
+                coordinateData = this.profileStore.getProfile(widgetStore.coordinate, region.isClosedRegion ? widgetStore.statsType : CARTA.StatsType.Sum);
             }
         }
 
+        if (coordinateData && coordinateData.values && coordinateData.values.length &&
+            frame.channelValues && frame.channelValues.length &&
+            coordinateData.values.length === frame.channelValues.length) {
+            const channelValues = frame.channelValues;
+            let xMin = Math.min(channelValues[0], channelValues[channelValues.length - 1]);
+            let xMax = Math.max(channelValues[0], channelValues[channelValues.length - 1]);
+
+            if (!widgetStore.isAutoScaledX) {
+                const localXMin = clamp(widgetStore.minX, xMin, xMax);
+                const localXMax = clamp(widgetStore.maxX, xMin, xMax);
+                xMin = localXMin;
+                xMax = localXMax;
+            }
+
+
+            let xMinIndex, xMaxIndex;
+            for (let i = 0; i < channelValues.length; i++) {
+                const x = channelValues[i];
+                if (x < xMin) {
+                    continue;
+                }
+                if (!isFinite(xMinIndex)) {
+                    xMinIndex = i;
+                }
+
+                if (x > xMax) {
+                    break;
+                }
+                xMaxIndex = i;
+            }
+
+            return {x: channelValues.slice(xMinIndex, xMaxIndex), y: coordinateData.values.slice(xMinIndex, xMaxIndex)};
+        }
         return null;
     }
 

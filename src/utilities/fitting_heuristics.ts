@@ -93,7 +93,7 @@ export function autoDetecting(velocity: number[], intensity:number[]) : ProfileF
 
     // fit a gaussian to the intensity histogram as an estimate of continuum level and noise level
     const bins = Math.floor(Math.sqrt(velocity.length));
-    const histResult = histogram(ySmoothed, bins);
+    const histResult = histogram(ySmoothed, bins <= 8 ? 8 : bins);
 
     // padding 0 to both sides of the histogram
     let histY: number[] = [0, ...histResult.hist, 0];
