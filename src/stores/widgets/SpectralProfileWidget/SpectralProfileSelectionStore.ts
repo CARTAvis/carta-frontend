@@ -74,7 +74,7 @@ export class SpectralProfileSelectionStore {
         let profileConfigs: ProfileConfig[] = [];
         if (this.selectedFrame && this.selectedRegionIds?.length > 0 && this.selectedStatsTypes?.length > 0 && this.selectedCoordinates?.length > 0) {
             if (this.activeProfileCategory === MultiProfileCategory.NONE || this.activeProfileCategory === MultiProfileCategory.IMAGE) {
-                const region = this.selectedFrame.getRegion(this.effectiveRegionId);
+                const region = this.widgetStore.effectiveRegion;
                 const statsType = region?.isClosedRegion ? this.selectedStatsTypes[0] : CARTA.StatsType.Sum;
                 const selectedCoordinate = this.selectedCoordinates[0];
                 const matchedFileIds = AppStore.Instance.spatialAndSpectalMatchedFileIds;
@@ -118,7 +118,7 @@ export class SpectralProfileSelectionStore {
                 });
             } else if (this.activeProfileCategory === MultiProfileCategory.STATISTIC) {
                 const selectedCoordinate = this.selectedCoordinates[0];
-                const region = this.selectedFrame.getRegion(this.effectiveRegionId);
+                const region = this.widgetStore.effectiveRegion;
                 if (region?.isClosedRegion) {
                     this.selectedStatsTypes.forEach(statsType => {
                         profileConfigs.push({
@@ -142,7 +142,7 @@ export class SpectralProfileSelectionStore {
                 }
             } else if (this.activeProfileCategory === MultiProfileCategory.STOKES) {
                 const selectedStatsType = this.selectedStatsTypes[0];
-                const region = this.selectedFrame.getRegion(this.effectiveRegionId);
+                const region = this.widgetStore.effectiveRegion;
                 const statsType = region?.isClosedRegion ? selectedStatsType : CARTA.StatsType.Sum;
                 this.selectedCoordinates?.forEach(coordinate => {
                     profileConfigs.push({
