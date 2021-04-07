@@ -334,59 +334,60 @@ export class SpectralProfileSelectionStore {
         this.widgetStore.setRegionId(this.selectedFrameFileId, RegionId.ACTIVE);
     };
 
-    @action selectRegion = (regionId: number, color: string, isMultipleSelectionMode: boolean = false) => {
-        if (isMultipleSelectionMode) {
-            const profileKey = regionId;
-            if (!this.selectedRegionIds.includes(regionId)) {
-                this.selectedRegionIds = [...this.selectedRegionIds, regionId].sort((a, b) => {return a - b;});
-                this.widgetStore.setProfileColor(profileKey, color);
-            } else if (this.selectedRegionIds.length > 1) {
-                this.selectedRegionIds = this.selectedRegionIds.filter(region => region !== regionId);
-                this.widgetStore.removeProfileColor(profileKey);
-            }
+    @action selectRegionSingleMode = (regionId: number) => {
+        this.selectedRegionIds = [regionId];
+    };
+
+    @action selectRegionMultiMode = (regionId: number, color: string) => {
+        if (this.selectedRegionIds?.includes(regionId)) {
+            this.selectedRegionIds = this.selectedRegionIds.filter(region => region !== regionId);
+            this.widgetStore.removeProfileColor(regionId);
         } else {
-            this.selectedRegionIds = [regionId];
+            this.selectedRegionIds = [...this.selectedRegionIds, regionId].sort((a, b) => {return a - b;});
+            this.widgetStore.setProfileColor(regionId, color);
         }
     };
 
-    @action selectStatsType = (statsType: CARTA.StatsType, color: string, isMultipleSelectionMode: boolean = false) => {
+    @action selectStatSingleMode = (statsType: CARTA.StatsType) => {
         if (SUPPORTED_STATISTICS_TYPES.includes(statsType)) {
-            if (isMultipleSelectionMode) {
-                const profileKey = statsType;
-                if (!this.selectedStatsTypes.includes(statsType)) {
-                    this.selectedStatsTypes = [...this.selectedStatsTypes, statsType].sort((a, b) => {return a - b;});
-                    this.widgetStore.setProfileColor(profileKey, color);
-                } else if (this.selectedStatsTypes.length > 1) {
-                    this.selectedStatsTypes = this.selectedStatsTypes.filter(type => type !== statsType);
-                    this.widgetStore.removeProfileColor(profileKey);
-                }
+            this.selectedStatsTypes = [statsType];
+        }
+    };
+
+    @action selectStatMultiMode = (statsType: CARTA.StatsType, color: string) => {
+        if (SUPPORTED_STATISTICS_TYPES.includes(statsType)) {
+            if (this.selectedStatsTypes?.includes(statsType)) {
+                this.selectedStatsTypes = this.selectedStatsTypes.filter(type => type !== statsType);
+                this.widgetStore.removeProfileColor(statsType);
             } else {
-                this.selectedStatsTypes = [statsType];
+                this.selectedStatsTypes = [...this.selectedStatsTypes, statsType].sort((a, b) => {return a - b;});
+                this.widgetStore.setProfileColor(statsType, color);
             }
         }
     };
 
-    @action selectCoordinate = (coordinate: string, color: string, isMultipleSelectionMode: boolean = false) => {
+    @action selectCoordinateSingleMode = (coordinate: string) => {
         if (SpectralProfileSelectionStore.ValidCoordinates.includes(coordinate)) {
-            if (isMultipleSelectionMode) {
-                const profileKey = coordinate;
-                if (!this.selectedCoordinates.includes(coordinate)) {
-                    this.selectedCoordinates = [...this.selectedCoordinates, coordinate].sort((a, b) => {
-                        // always place z in the first element
-                        if (a === 'z') {
-                            return -1;
-                        } else if (b === 'z') {
-                            return 1;
-                        }
-                        return a.charCodeAt(0) - b.charCodeAt(0);
-                    });
-                    this.widgetStore.setProfileColor(profileKey, color);
-                } else if (this.selectedCoordinates.length > 1) {
-                    this.selectedCoordinates = this.selectedCoordinates.filter(coord => coord !== coordinate);
-                    this.widgetStore.removeProfileColor(profileKey);
-                }
+            this.selectedCoordinates = [coordinate];
+        }
+    };
+
+    @action selectCoordinateMultiMode = (coordinate: string, color: string) => {
+        if (SpectralProfileSelectionStore.ValidCoordinates.includes(coordinate)) {
+            if (this.selectedCoordinates?.includes(coordinate)) {
+                this.selectedCoordinates = this.selectedCoordinates.filter(coord => coord !== coordinate);
+                this.widgetStore.removeProfileColor(coordinate);
             } else {
-                this.selectedCoordinates = [coordinate];
+                this.selectedCoordinates = [...this.selectedCoordinates, coordinate].sort((a, b) => {
+                    // always place z in the first element
+                    if (a === 'z') {
+                        return -1;
+                    } else if (b === 'z') {
+                        return 1;
+                    }
+                    return a.charCodeAt(0) - b.charCodeAt(0);
+                });
+                this.widgetStore.setProfileColor(coordinate, color);
             }
             // this.clearXYBounds();
         }

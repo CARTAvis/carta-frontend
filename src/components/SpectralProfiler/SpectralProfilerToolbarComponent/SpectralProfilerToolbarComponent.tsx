@@ -22,7 +22,7 @@ class ProfileSelectionButtonComponentProps {
     hightlightDropDownButton?: boolean;
     tooltip: JSX.Element;
     onCategorySelect: () => void;
-    onItemSelect: (item: MultiSelectItem, itemIndex: number, isMultipleSelectionMode: boolean) => void;
+    onItemSelect: (item: MultiSelectItem, itemIndex: number) => void;
 }
 
 @observer
@@ -67,7 +67,7 @@ class ProfileSelectionButtonComponent extends React.Component<ProfileSelectionBu
                                     text={item.label}
                                     disabled={item?.disabled}
                                     intent={item.hightlight ? Intent.PRIMARY : Intent.NONE}
-                                    onClick={(ev) => this.props.onItemSelect(item.value, index, this.props.isActiveCategory)}
+                                    onClick={(ev) => this.props.onItemSelect(item.value, index)}
                                     icon={this.props.itemSelected?.includes(item.value) ? "tick" : "blank"}
                                     shouldDismissPopover={false}
                                 />
@@ -93,27 +93,38 @@ class ProfileSelectionButtonComponent extends React.Component<ProfileSelectionBu
 @observer
 class ProfileSelectionComponent extends React.Component<{profileSelectionStore: SpectralProfileSelectionStore}> {
     // Frame selection does not allow multiple selection
-    private onFrameItemClick = (selectedFrame: number, itemIndex: number, isMultipleSelectionMode: boolean) => {
+    private onFrameItemClick = (selectedFrame: number, itemIndex: number) => {
         this.props.profileSelectionStore.selectFrame(selectedFrame);
     };
 
-    private onRegionItemClick = (selectedRegion: number, itemIndex: number, isMultipleSelectionMode: boolean) => {
-        const color = SWATCH_COLORS[itemIndex % SWATCH_COLORS.length];
-        const frame = this.props.profileSelectionStore.selectedFrame;
-        if (frame) {
-            this.props.profileSelectionStore.selectFrame(frame.frameInfo.fileId);
-            this.props.profileSelectionStore.selectRegion(selectedRegion, color, isMultipleSelectionMode);
+    private onRegionItemClick = (selectedRegion: number, itemIndex: number) => {
+        const profileSelectionStore = this.props.profileSelectionStore;
+        if (profileSelectionStore.activeProfileCategory !== MultiProfileCategory.REGION) {
+            profileSelectionStore.selectRegionSingleMode(selectedRegion);
+        } else {
+            const color = SWATCH_COLORS[itemIndex % SWATCH_COLORS.length];
+            profileSelectionStore.selectRegionMultiMode(selectedRegion, color);
         }
     };
 
-    private onStatsItemClick = (selectedStatsType: CARTA.StatsType, itemIndex: number, isMultipleSelectionMode: boolean) => {
-        const color = SWATCH_COLORS[itemIndex % SWATCH_COLORS.length];
-        this.props.profileSelectionStore.selectStatsType(selectedStatsType, color, isMultipleSelectionMode);
+    private onStatsItemClick = (selectedStatsType: CARTA.StatsType, itemIndex: number) => {
+        const profileSelectionStore = this.props.profileSelectionStore;
+        if (profileSelectionStore.activeProfileCategory !== MultiProfileCategory.STATISTIC) {
+            profileSelectionStore.selectStatSingleMode(selectedStatsType);
+        } else {
+            const color = SWATCH_COLORS[itemIndex % SWATCH_COLORS.length];
+            profileSelectionStore.selectStatMultiMode(selectedStatsType, color);
+        }
     };
 
-    private onStokesItemClick = (selectedStokes: string, itemIndex: number, isMultipleSelectionMode: boolean) => {
-        const color = SWATCH_COLORS[itemIndex % SWATCH_COLORS.length];
-        this.props.profileSelectionStore.selectCoordinate(selectedStokes, color, isMultipleSelectionMode);
+    private onStokesItemClick = (selectedStokes: string, itemIndex: number) => {
+        const profileSelectionStore = this.props.profileSelectionStore;
+        if (profileSelectionStore.activeProfileCategory !== MultiProfileCategory.STOKES) {
+            profileSelectionStore.selectCoordinateSingleMode(selectedStokes);
+        } else {
+            const color = SWATCH_COLORS[itemIndex % SWATCH_COLORS.length];
+            profileSelectionStore.selectCoordinateMultiMode(selectedStokes, color);
+        }
     };
 
     public render() {
