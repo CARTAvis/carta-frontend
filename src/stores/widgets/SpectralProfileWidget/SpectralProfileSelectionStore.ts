@@ -182,7 +182,7 @@ export class SpectralProfileSelectionStore {
 
     @computed get profileOrderedKeys(): LineKey[] {
         if (this.activeProfileCategory === MultiProfileCategory.NONE) {
-            return [this.selectedFrameFileId];
+            return [SpectralProfileWidgetStore.PRIMARY_LINE_KEY];
         } else if (this.activeProfileCategory === MultiProfileCategory.IMAGE) {
             const matchedFileIds = AppStore.Instance.spatialAndSpectalMatchedFileIds;
             return matchedFileIds?.includes(this.selectedFrameFileId) ? matchedFileIds : [this.selectedFrameFileId];
@@ -197,7 +197,9 @@ export class SpectralProfileSelectionStore {
     }
 
     @computed get profileOptions(): LineOption[] {
-        if (this.activeProfileCategory === MultiProfileCategory.NONE || this.activeProfileCategory === MultiProfileCategory.IMAGE) {
+        if (this.activeProfileCategory === MultiProfileCategory.NONE) {
+            return [{value: SpectralProfileWidgetStore.PRIMARY_LINE_KEY, label: SpectralProfileWidgetStore.PRIMARY_LINE_KEY}];
+        } else if (this.activeProfileCategory === MultiProfileCategory.IMAGE) {
             return this.frameOptions;
         } else if (this.activeProfileCategory === MultiProfileCategory.REGION) {
             return this.regionOptions;
@@ -302,6 +304,10 @@ export class SpectralProfileSelectionStore {
         return true;
     }
 
+    @computed get isSingleLineMode(): boolean {
+        return this.activeProfileCategory === MultiProfileCategory.NONE;
+    }
+
     @action setActiveProfileCategory = (profileCategory: MultiProfileCategory) => {
         const widgetStore = this.widgetStore;
         const primaryLineColor = widgetStore.primaryLineColor;
@@ -313,7 +319,8 @@ export class SpectralProfileSelectionStore {
             this.selectedRegionIds = [this.DEFAULT_REGION_ID];
             this.selectedStatsTypes = [this.DEFAULT_STATS_TYPE];
             this.selectedCoordinates = [this.DEFAULT_COORDINATE];
-            widgetStore.setProfileColor(this.selectedFrameFileId, primaryLineColor);
+            const lineKey = profileCategory === MultiProfileCategory.NONE ? SpectralProfileWidgetStore.PRIMARY_LINE_KEY : this.selectedFrameFileId;
+            widgetStore.setProfileColor(lineKey, primaryLineColor);
         } else if (profileCategory === MultiProfileCategory.REGION) {
             this.selectedStatsTypes = [this.DEFAULT_STATS_TYPE];
             this.selectedCoordinates = [this.DEFAULT_COORDINATE];

@@ -31,12 +31,15 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
     // style settings
     @observable plotType: PlotType;
     @observable meanRmsVisible: boolean;
-    @observable primaryLineColor: string; // TODO: how to handle this?
+    @observable primaryLineColor: string;
     @observable lineColorMap: Map<LineKey, string>;
     @observable lineWidth: number;
     @observable linePlotPointSize: number;
     @observable linePlotInitXYBoundaries: { minXVal: number, maxXVal: number, minYVal: number, maxYVal: number };
     @observable settingsTabId: SpectralProfilerSettingsTabs;
+
+    // line key will be "Primary" in single line mode
+    public static readonly PRIMARY_LINE_KEY = "Primary";
 
     // moment settings
     @observable selectingMode: MomentSelectingMode;
@@ -254,7 +257,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         this.meanRmsVisible = false;
         this.markerTextVisible = false;
         this.primaryLineColor = "auto-blue";
-        this.lineColorMap = new Map<LineKey, string>();
+        this.lineColorMap = new Map<LineKey, string>([[SpectralProfileWidgetStore.PRIMARY_LINE_KEY, this.primaryLineColor]]);
         this.linePlotPointSize = 1.5;
         this.lineWidth = 1;
         this.linePlotInitXYBoundaries = { minXVal: 0, maxXVal: 0, minYVal: 0, maxYVal: 0 };
@@ -455,16 +458,16 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
     }
 
     // settings
-    @action setPrimaryLineColor = (color: string) => {
-        this.primaryLineColor = color;
-    }
-
     @action getProfileColor = (lineKey: LineKey): string => {
         return this.lineColorMap.get(lineKey);
     };
 
     @action setProfileColor = (lineKey: LineKey, color: string) => {
         this.lineColorMap.set(lineKey, color);
+        // In order to be compatible with loading/saving primary color setting in layout config
+        if (this.profileSelectionStore?.isSingleLineMode) {
+            this.primaryLineColor = color;
+        }
     };
 
     @action removeProfileColor = (lineKey: LineKey) => {
@@ -498,6 +501,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         const lineColor = tinycolor(widgetSettings.primaryLineColor);
         if (lineColor.isValid() || isAutoColor(widgetSettings.primaryLineColor)) {
             this.primaryLineColor = widgetSettings.primaryLineColor;
+            this.lineColorMap.set(SpectralProfileWidgetStore.PRIMARY_LINE_KEY, this.primaryLineColor);
         }
         if (typeof widgetSettings.lineWidth === "number" && widgetSettings.lineWidth >= LineSettings.MIN_WIDTH && widgetSettings.lineWidth <= LineSettings.MAX_WIDTH) {
             this.lineWidth = widgetSettings.lineWidth;
