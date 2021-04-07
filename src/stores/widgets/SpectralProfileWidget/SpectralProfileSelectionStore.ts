@@ -240,7 +240,7 @@ export class SpectralProfileSelectionStore {
     }
 
     @computed get statsTypeOptions(): LineOption[] {
-        const sortedKeys = Array.from(STATISTICS_TEXT.keys())?.sort((a, b) => {return a-b;});
+        const sortedKeys = Array.from(STATISTICS_TEXT.keys())?.sort((a, b) => {return a - b;});
         return sortedKeys?.map(key => {return {value: key, label: STATISTICS_TEXT.get(key)};});
     }
 
