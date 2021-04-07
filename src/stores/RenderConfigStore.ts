@@ -148,7 +148,7 @@ export class RenderConfigStore {
             }
             return colorscale;
         }
-    };
+    }
 
     @computed get scalingName() {
         const scalingType = RenderConfigStore.SCALING_TYPES.get(this.scaling);

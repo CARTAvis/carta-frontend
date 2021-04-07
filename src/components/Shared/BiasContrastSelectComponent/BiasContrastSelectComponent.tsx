@@ -11,10 +11,10 @@ const DRAG_MOVE_INTERVAL = 10;
 interface BiasContrastSelectComponentProps {
     bias: number;
     contrast: number;
-    setBias(bias: number): void;
-    setContrast(contrast: number): void;
-    resetBias(): void;
-    resetContrast(): void;
+    setBias: (bias: number) => void;
+    setContrast: (contrast: number) => void;
+    resetBias: () => void;
+    resetContrast: () => void;
     boardWidth: number;
     boardHeight: number;
     biasMin: number;
