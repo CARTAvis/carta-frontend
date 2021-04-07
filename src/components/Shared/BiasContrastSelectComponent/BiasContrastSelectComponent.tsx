@@ -4,7 +4,7 @@ import {Button, Colors, FormGroup} from "@blueprintjs/core";
 import {Circle, Layer, Rect, Stage} from "react-konva";
 import Konva from "konva";
 import {SafeNumericInput} from "components/Shared";
-import {clamp} from "utilities"
+import {clamp} from "utilities";
 
 const DRAG_MOVE_INTERVAL = 10;
 
