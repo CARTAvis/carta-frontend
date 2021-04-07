@@ -334,6 +334,7 @@ export class SpectralProfileSelectionStore {
         widgetStore.setFileId(fileId);
         widgetStore.setRegionId(this.selectedFrameFileId, RegionId.ACTIVE);
         this.selectedRegionIds = [widgetStore.getRegionId(this.selectedFrameFileId)];
+        this.selectedCoordinates= [this.DEFAULT_COORDINATE];
     };
 
     @action selectRegionSingleMode = (regionId: number) => {
