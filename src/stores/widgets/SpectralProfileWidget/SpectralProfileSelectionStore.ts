@@ -278,8 +278,8 @@ export class SpectralProfileSelectionStore {
         // Check the available stats types of the selected single region
         if ((this.activeProfileCategory === MultiProfileCategory.REGION && this.selectedRegionIds?.length === 1) ||
             (this.activeProfileCategory !== MultiProfileCategory.REGION && this.selectedRegionIds?.length > 0)) {
-            const selectedRegion = this.selectedFrame?.getRegion(this.selectedRegionIds[0]);
-            return selectedRegion && selectedRegion.isClosedRegion;
+            const selectedRegion = this.widgetStore.effectiveRegion;
+            return selectedRegion?.isClosedRegion;
         }
         return true;
     }
