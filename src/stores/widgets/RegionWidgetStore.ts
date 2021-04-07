@@ -39,6 +39,10 @@ export class RegionWidgetStore {
         this.regionIdMap.set(fileId, regionId);
     };
 
+    @action getRegionId = (fileId: number): number => {
+        return this.regionIdMap.get(fileId);
+    };
+
     @action setFileId = (fileId: number) => {
         this.fileId = fileId;
     }
@@ -56,7 +60,7 @@ export class RegionWidgetStore {
 
     @computed get effectiveRegionId(): number {
         if (this.effectiveFrame) {
-            const regionId = this.regionIdMap.get(this.fileId);
+            const regionId = this.getRegionId(this.fileId);
             if (regionId !== RegionId.ACTIVE && regionId !== undefined) {
                 return regionId;
             } else {

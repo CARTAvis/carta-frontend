@@ -330,12 +330,16 @@ export class SpectralProfileSelectionStore {
     };
 
     @action selectFrame = (fileId: number) => {
-        this.widgetStore.setFileId(fileId);
-        this.widgetStore.setRegionId(this.selectedFrameFileId, RegionId.ACTIVE);
+        const widgetStore = this.widgetStore;
+        widgetStore.setFileId(fileId);
+        widgetStore.setRegionId(this.selectedFrameFileId, RegionId.ACTIVE);
+        this.selectedRegionIds = [widgetStore.getRegionId(this.selectedFrameFileId)];
     };
 
     @action selectRegionSingleMode = (regionId: number) => {
         this.selectedRegionIds = [regionId];
+        this.widgetStore.setFileId(this.selectedFrameFileId);
+        this.widgetStore.setRegionId(this.selectedFrameFileId, regionId);
     };
 
     @action selectRegionMultiMode = (regionId: number, color: string) => {
