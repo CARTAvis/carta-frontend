@@ -33,7 +33,6 @@ export class ColormapConfigComponent extends React.Component<ColormapConfigProps
         }
 
         const renderConfig = this.props.renderConfig;
-
         return (
             <React.Fragment>
                 <FormGroup label={"Scaling"} inline={true}>
@@ -101,9 +100,13 @@ export class ColormapConfigComponent extends React.Component<ColormapConfigProps
                         resetContrast={renderConfig.resetContrast}
                         boardWidth={130}
                         boardHeight={130}
+                        biasMin={RenderConfigStore.BIAS_MIN}
+                        biasMax={RenderConfigStore.BIAS_MAX}
+                        contrastMin={RenderConfigStore.CONTRAST_MIN}
+                        contrastMax={RenderConfigStore.CONTRAST_MAX}
                     />
                 </Collapse>
             </React.Fragment>
-        )
+        );
     }
 }

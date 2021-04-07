@@ -2,11 +2,13 @@ import * as React from "react";
 import {observer} from "mobx-react";
 import {Button, Colors, FormGroup} from "@blueprintjs/core";
 import {Circle, Layer, Rect, Stage} from "react-konva";
+import Konva from "konva";
 import {SafeNumericInput} from "components/Shared";
-import {RenderConfigStore} from "stores";
 import {clamp} from "utilities"
 
-export interface BiasContrastSelectComponentProps {
+const DRAG_MOVE_INTERVAL = 10;
+
+interface BiasContrastSelectComponentProps {
     bias: number;
     contrast: number;
     setBias(bias: number): void;
@@ -15,31 +17,40 @@ export interface BiasContrastSelectComponentProps {
     resetContrast(): void;
     boardWidth: number;
     boardHeight: number;
+    biasMin: number;
+    biasMax: number;
+    contrastMin: number;
+    contrastMax: number;
 }
 
 @observer
 export class BiasContrastSelectComponent extends React.Component<BiasContrastSelectComponentProps> {
 
-    private handleDragMove = (event) => {
-        const stage = event.target.getStage();
-        const point = stage.getPointerPosition();
+    private dragMoveTimer;
 
-        const bias = clamp(point.x, 0, stage.width()) / stage.width() * 2 - 1;
-        const contrast = 2 -  clamp(point.y, 0, stage.height()) / stage.height() * 2;
-        this.props.setBias(bias);
-        this.props.setContrast(contrast);
+    private handleDragMove = (event: Konva.KonvaEventObject<DragEvent>) => {
+        clearTimeout(this.dragMoveTimer);
+        this.dragMoveTimer = setTimeout(() => {
+            const stage = event.target.getStage();
+            const point = stage.getPointerPosition();
+
+            const bias = clamp(point.x, 0, stage.width()) / stage.width() * 2 - 1;
+            const contrast = 2 -  clamp(point.y, 0, stage.height()) / stage.height() * 2;
+            this.props.setBias(bias);
+            this.props.setContrast(contrast);
+        }, DRAG_MOVE_INTERVAL);
     };
 
-    private resetButton = (clickEvent) => {
+    private resetButton = (handleClick) => {
         return (
             <Button
                 icon={"reset"}
                 minimal={true}
                 small={true}
                 style={{opacity: 0.5}}
-                onClick={clickEvent}
+                onClick={handleClick}
             />
-        )
+        );
     };
 
     render() {
@@ -59,16 +70,11 @@ export class BiasContrastSelectComponent extends React.Component<BiasContrastSel
                     radius={5}
                     fill={Colors.GRAY3}
                     draggable={true}
-                    dragBoundFunc={(pos) => {
-                        return {
-                          x: clamp(pos.x, 0, this.props.boardWidth),
-                          y: clamp(pos.y, 0, this.props.boardHeight)
-                        };
-                    }}
+                    dragBoundFunc={(pos) => ({x: clamp(pos.x, 0, this.props.boardWidth), y: clamp(pos.y, 0, this.props.boardHeight)})}
                     onDragMove={this.handleDragMove}
                 />
             </React.Fragment>
-        )
+        );
 
         return (
             <React.Fragment>
@@ -85,8 +91,8 @@ export class BiasContrastSelectComponent extends React.Component<BiasContrastSel
                 <FormGroup label={"Bias"} inline={true}>
                     <SafeNumericInput
                         className={'step-input'}
-                        min={RenderConfigStore.BIAS_MIN}
-                        max={RenderConfigStore.BIAS_MAX}
+                        min={this.props.biasMin}
+                        max={this.props.biasMax}
                         stepSize={0.1}
                         majorStepSize={0.5}
                         value={this.props.bias}
@@ -97,8 +103,8 @@ export class BiasContrastSelectComponent extends React.Component<BiasContrastSel
                 <FormGroup label={"Contrast"} inline={true}>
                     <SafeNumericInput
                         className={'step-input'}
-                        min={RenderConfigStore.CONTRAST_MIN}
-                        max={RenderConfigStore.CONTRAST_MAX}
+                        min={this.props.contrastMin}
+                        max={this.props.contrastMax}
                         stepSize={0.1}
                         majorStepSize={0.5}
                         value={this.props.contrast}

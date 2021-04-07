@@ -17,6 +17,7 @@ import {clamp, toExponential, toFixed, getColorForTheme, scaleValue} from "utili
 import "./RenderConfigComponent.scss";
 
 const KEYCODE_ENTER = 13;
+const COLORSCALE_LENGTH = 2048;
 
 @observer
 export class RenderConfigComponent extends React.Component<WidgetProps> {
@@ -282,9 +283,10 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
             isAutoScaledX: this.widgetStore.isAutoScaledX
         };
 
+        const scaleMinVal = frame.renderConfig?.scaleMinVal;
+        const scaleMaxVal = frame.renderConfig?.scaleMaxVal;
         if (frame.renderConfig.histogram && frame.renderConfig.histogram.bins && frame.renderConfig.histogram.bins.length) {
             const currentPlotData = this.plotData;
-
             if (currentPlotData) {
                 // set line color
                 let primaryLineColor = getColorForTheme(this.widgetStore.primaryLineColor);
@@ -297,9 +299,9 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
                 linePlotProps.multiPlotPropsMap.set("histogram", histogramProps);
 
                 // Determine scale in X and Y directions. If auto-scaling, use the bounds of the current data
-                if (this.widgetStore.isAutoScaledX) {
-                    linePlotProps.xMin = frame.renderConfig.scaleMinVal - 0.02 * (frame.renderConfig.scaleMaxVal - frame.renderConfig.scaleMinVal);
-                    linePlotProps.xMax = frame.renderConfig.scaleMaxVal + 0.02 * (frame.renderConfig.scaleMaxVal - frame.renderConfig.scaleMinVal);
+                if (this.widgetStore.isAutoScaledX && isFinite(scaleMinVal) && isFinite(scaleMaxVal) && (scaleMinVal < scaleMaxVal)) {
+                    linePlotProps.xMin = scaleMinVal - 0.02 * (scaleMaxVal - scaleMinVal);
+                    linePlotProps.xMax = scaleMaxVal + 0.02 * (scaleMaxVal - scaleMinVal);
                 } else {
                     linePlotProps.xMin = this.widgetStore.minX;
                     linePlotProps.xMax = this.widgetStore.maxX;
@@ -321,19 +323,19 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
 
         if (frame.renderConfig) {
             linePlotProps.markers = [{
-                value: frame.renderConfig.scaleMinVal,
+                value: scaleMinVal,
                 id: "marker-min",
                 label: this.widgetStore.markerTextVisible ? "Min" : undefined,
                 draggable: true,
-                dragCustomBoundary: {xMax: frame.renderConfig.scaleMaxVal},
+                dragCustomBoundary: {xMax: scaleMaxVal},
                 dragMove: this.onMinMoved,
                 horizontal: false,
             }, {
-                value: frame.renderConfig.scaleMaxVal,
+                value: scaleMaxVal,
                 id: "marker-max",
                 label: this.widgetStore.markerTextVisible ? "Max" : undefined,
                 draggable: true,
-                dragCustomBoundary: {xMin: frame.renderConfig.scaleMinVal},
+                dragCustomBoundary: {xMin: scaleMinVal},
                 dragMove: this.onMaxMoved,
                 horizontal: false,
             }];
@@ -359,31 +361,28 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
                 });
             }
 
-            const scaleMinVal = frame.renderConfig?.scaleMinVal;
-            const scaleMaxVal = frame.renderConfig?.scaleMaxVal;
             if (isFinite(scaleMinVal) && isFinite(scaleMaxVal) && (scaleMinVal < scaleMaxVal)) {
-                let colorScalingData = [];
-                const colorScalingNum = 2048;
-                const colorScalingX = Array.from(Array(colorScalingNum).keys()).map(x => scaleMinVal + x / (colorScalingNum - 1) * (scaleMaxVal - scaleMinVal));
-                let colorScalingY = Array.from(Array(colorScalingNum).keys()).map(x => x / (colorScalingNum - 1));
-                colorScalingY = colorScalingY.map(x => scaleValue(x, frame.renderConfig.scaling, frame.renderConfig.alpha, frame.renderConfig.gamma, frame.renderConfig.bias, frame.renderConfig.contrast));
+                const colorScaleX = Array.from(Array(COLORSCALE_LENGTH).keys()).map(x => scaleMinVal + x / (COLORSCALE_LENGTH - 1) * (scaleMaxVal - scaleMinVal));
+                let colorScaleY = Array.from(Array(COLORSCALE_LENGTH).keys()).map(x => x / (COLORSCALE_LENGTH - 1));
+                colorScaleY = colorScaleY.map(x => scaleValue(x, frame.renderConfig.scaling, frame.renderConfig.alpha, frame.renderConfig.gamma, frame.renderConfig.bias, frame.renderConfig.contrast));
                 // fit to the histogram y axis
                 if (linePlotProps.logY) {
-                    colorScalingY = colorScalingY.map(x => Math.pow(10, Math.log10(linePlotProps.yMin) + x * (Math.log10(linePlotProps.yMax) - Math.log10(linePlotProps.yMin))));
+                    colorScaleY = colorScaleY.map(x => Math.pow(10, Math.log10(linePlotProps.yMin) + x * (Math.log10(linePlotProps.yMax) - Math.log10(linePlotProps.yMin))));
                 } else {
-                colorScalingY = colorScalingY.map(x => linePlotProps.yMin + x * (linePlotProps.yMax - linePlotProps.yMin));
+                    colorScaleY = colorScaleY.map(x => linePlotProps.yMin + x * (linePlotProps.yMax - linePlotProps.yMin));
                 }
 
-                for (let i = 0; i < colorScalingNum; i++) {
-                    colorScalingData.push({x: colorScalingX[i], y: colorScalingY[i]});
+                let colorScaleData = [];
+                for (let i = 0; i < COLORSCALE_LENGTH; i++) {
+                    colorScaleData.push({x: colorScaleX[i], y: colorScaleY[i]});
                 }
-                const colorScalingProps: MultiPlotProps = {
-                    data: colorScalingData,
+                const colorScaleProps: MultiPlotProps = {
+                    data: colorScaleData,
                     type: PlotType.LINES,
                     borderColor: appStore.darkTheme ? Colors.GRAY5 : Colors.GRAY1,
                     borderWidth: 0.5
                 };
-                linePlotProps.multiPlotPropsMap.set("colorScaling", colorScalingProps);
+                linePlotProps.multiPlotPropsMap.set("colorScale", colorScaleProps);
             }
         }
 

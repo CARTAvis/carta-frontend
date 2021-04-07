@@ -128,7 +128,7 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
     private panPrevious: number;
     private previousClickTime: number;
     private pendingClickHandle;
-    private isZoomFreezed = false;
+    private isZoomFreezed: boolean = false;
 
     @observable chartArea: ChartArea;
     @observable hoveredMarker: LineMarker;
