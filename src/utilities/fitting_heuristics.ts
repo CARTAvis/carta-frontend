@@ -27,8 +27,10 @@ export function getIndexByVelocity(velocity: number[], targetVelocity: number) {
     for (let i = 0; i < velocity.length - 1; i ++) {
         if (velocity[i] <= targetVelocity && targetVelocity < velocity[i + 1]) {
             return i;
-        } else if (targetVelocity === velocity[velocity.length - 1]) {
-            return velocity.length - 1;
+        } else if (velocity[i] >= targetVelocity && targetVelocity > velocity[i + 1]) {
+            return i;
+        } else if (targetVelocity === velocity[i + 1]) {
+            return i + 1;
         }
     }
     return null;
