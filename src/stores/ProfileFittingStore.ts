@@ -47,21 +47,14 @@ export class ProfileFittingStore {
         if (this.components) {
             for (let i = 0; i < this.components.length; i++) {
                 const component = this.components[i];
-                const initialBox: LinePlotInsideBoxMarker = {
-                    boundary: {xMin: component.center - 0.5 * component.fwhm, xMax: component.center + 0.5 * component.fwhm, yMin: 0, yMax: component.amp},
-                    color: getColorForTheme("auto-lime"),
-                    opacity: (i === this.selectedIndex) ? 0.5 : 0.3,
-                    strokeColor: (i === this.selectedIndex) ? getColorForTheme("auto-grey") : null
-                }
-                boxs.push(initialBox);
-                if (isFinite(component.resutlCenter) && isFinite(component.resultAmp) && isFinite(component.resultFwhm)) {
-                    const resultBox: LinePlotInsideBoxMarker = {
-                        boundary: {xMin: component.resutlCenter - 0.5 * component.resultFwhm, xMax: component.resutlCenter + 0.5 * component.resultFwhm, yMin: 0, yMax: component.resultAmp},
-                        // color: getColorForTheme("auto-orange"),
-                        opacity: (i === this.selectedIndex) ? 0.8 : 0.3,
-                        strokeColor: getColorForTheme("auto-orange")
+                if (component.isReadyToFit && !(isFinite(component.resutlCenter) && isFinite(component.resultAmp) && isFinite(component.resultFwhm))) {
+                    const initialBox: LinePlotInsideBoxMarker = {
+                        boundary: {xMin: component.center - 0.5 * component.fwhm, xMax: component.center + 0.5 * component.fwhm, yMin: 0, yMax: component.amp},
+                        color: getColorForTheme("auto-lime"),
+                        opacity: (i === this.selectedIndex) ? 0.5 : 0.3,
+                        strokeColor: (i === this.selectedIndex) ? getColorForTheme("auto-grey") : null
                     }
-                    boxs.push(resultBox);
+                    boxs.push(initialBox);
                 }
             }
         }
@@ -176,7 +169,7 @@ export class ProfileFittingIndividualStore {
     @observable resultFwhm: number;
 
     @computed get isReadyToFit(): boolean {
-        return (isFinite(this.center) && isFinite(this.amp) && isFinite(this.fwhm));
+        return (isFinite(this.center) && isFinite(this.amp) && isFinite(this.fwhm) && (this.center !== 0 && this.amp !== 0 && this.fwhm !== 0));
     }
 
     constructor() {

@@ -79,7 +79,7 @@ export class ProfileFittingComponent extends React.Component<{fittingStore: Prof
         }
     }
 
-    private readyToFit = () => {
+    @computed get readyToFit(): boolean {
         for (let i = 0; i < this.props.fittingStore.components.length; i++) {
             if (!this.props.fittingStore.components[i].isReadyToFit) {
                 return false;

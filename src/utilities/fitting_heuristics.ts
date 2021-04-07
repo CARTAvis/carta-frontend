@@ -327,9 +327,12 @@ export function autoDetecting(velocity: number[], intensity:number[]) : ProfileF
     const guessComponents: ProfileFittingIndividualStore[] = [];
     for (const lineBox of lineBoxsFinal) {
         const component = new ProfileFittingIndividualStore();
-        component.setCenter((velocity[lineBox.fromIndexOri] + velocity[lineBox.toIndexOri]) / 2);
         component.setFwhm(Math.abs(velocity[lineBox.toIndexOri] - velocity[lineBox.fromIndexOri]) / 2);
-        component.setAmp(ySmoothed[Math.floor((lineBox.fromIndex + lineBox.toIndex ) / 2)] - intensitySmoothedMean);
+        const localYSmoothed = ySmoothed.slice(lineBox.fromIndex, lineBox.toIndex);
+        const localYExtrema = _.mean(localYSmoothed) > intensitySmoothedMean ? _.max(localYSmoothed) : _.min(localYSmoothed);
+        component.setAmp(localYExtrema);
+        const localYExtremaIndex = localYSmoothed.indexOf(localYExtrema);
+        component.setCenter(xSmoothed[lineBox.fromIndex + localYExtremaIndex]);
         guessComponents.push(component);
     }
 
