@@ -34,7 +34,7 @@ export class SpectralProfileSelectionStore {
     @observable selectedCoordinates: string[];
 
     private readonly widgetStore: SpectralProfileWidgetStore;
-    private readonly DEFAULT_REGION_ID: RegionId = RegionId.CURSOR;
+    private readonly DEFAULT_REGION_ID: RegionId = RegionId.ACTIVE;
     private readonly DEFAULT_STATS_TYPE: CARTA.StatsType = CARTA.StatsType.Mean;
     private readonly DEFAULT_COORDINATE: string;
     private static readonly ValidCoordinates = ["z", "Iz", "Qz", "Uz", "Vz"];
@@ -72,91 +72,86 @@ export class SpectralProfileSelectionStore {
     // TODO: remove label
     @computed private get profileConfigs(): ProfileConfig[] {
         let profileConfigs: ProfileConfig[] = [];
-        if (this.selectedFrame && this.selectedRegionIds?.length >= 1 && this.selectedStatsTypes?.length >= 1 && this.selectedCoordinates?.length >= 1) {
-            const realFileId = this.selectedFrame.frameInfo.fileId;
+        if (this.selectedFrame && this.selectedRegionIds?.length > 0 && this.selectedStatsTypes?.length > 0 && this.selectedCoordinates?.length > 0) {
             if (this.activeProfileCategory === MultiProfileCategory.NONE || this.activeProfileCategory === MultiProfileCategory.IMAGE) {
-                const selectedRegionId = this.selectedRegionIds[0];
-                const region = this.selectedFrame.getRegion(selectedRegionId);
+                const region = this.selectedFrame.getRegion(this.effectiveRegionId);
                 const statsType = region?.isClosedRegion ? this.selectedStatsTypes[0] : CARTA.StatsType.Sum;
                 const selectedCoordinate = this.selectedCoordinates[0];
                 const matchedFileIds = AppStore.Instance.spatialAndSpectalMatchedFileIds;
-                if (this.activeProfileCategory === MultiProfileCategory.IMAGE && matchedFileIds?.includes(realFileId)) {
+                if (this.activeProfileCategory === MultiProfileCategory.IMAGE && matchedFileIds?.includes(this.selectedFrameFileId)) {
                     matchedFileIds.forEach(fileId => {
                         profileConfigs.push({
                             fileId: fileId,
-                            regionId: selectedRegionId,
+                            regionId: this.effectiveRegionId,
                             statsType: statsType,
                             coordinate: selectedCoordinate,
                             colorKey: fileId,
-                            label: `${fileId}-${selectedRegionId}-${statsType}-${selectedCoordinate}`
+                            label: `${fileId}-${this.effectiveRegionId}-${statsType}-${selectedCoordinate}`
                         });
                     });
                 } else {
                     profileConfigs.push({
-                        fileId: realFileId,
-                        regionId: selectedRegionId,
+                        fileId: this.selectedFrameFileId,
+                        regionId: this.effectiveRegionId,
                         statsType: statsType,
                         coordinate: selectedCoordinate,
-                        colorKey: realFileId,
-                        label: `${realFileId}-${selectedRegionId}-${statsType}-${selectedCoordinate}`
+                        colorKey: this.selectedFrameFileId,
+                        label: `${this.selectedFrameFileId}-${this.effectiveRegionId}-${statsType}-${selectedCoordinate}`
                     });
                 }
             } else if (this.activeProfileCategory === MultiProfileCategory.REGION) {
                 const selectedStatsType = this.selectedStatsTypes[0];
                 const selectedCoordinate = this.selectedCoordinates[0];
-
                 this.selectedRegionIds?.forEach(selectedRegionId => {
-                    const region = this.selectedFrame.getRegion(selectedRegionId);
-                    const statsType = region?.isClosedRegion ? selectedStatsType : CARTA.StatsType.Sum;
-                    profileConfigs.push({
-                        fileId: realFileId,
-                        regionId: selectedRegionId,
-                        statsType: statsType,
-                        coordinate: selectedCoordinate,
-                        colorKey: selectedRegionId,
-                        label: `${realFileId}-${selectedRegionId}-${statsType}-${selectedCoordinate}`
-                    });
-                });
-            } else if (this.activeProfileCategory === MultiProfileCategory.STATISTIC) {
-                const selectedRegionId = this.selectedRegionIds[0];
-                const selectedCoordinate = this.selectedCoordinates[0];
-                const region = this.selectedFrame.getRegion(selectedRegionId);
-
-                if (region?.isClosedRegion) {
-                    this.selectedStatsTypes.forEach(statsType => {
+                    if (selectedRegionId !== RegionId.ACTIVE) {
+                        const region = this.selectedFrame.getRegion(selectedRegionId);
+                        const statsType = region?.isClosedRegion ? selectedStatsType : CARTA.StatsType.Sum;
                         profileConfigs.push({
-                            fileId: realFileId,
+                            fileId: this.selectedFrameFileId,
                             regionId: selectedRegionId,
                             statsType: statsType,
                             coordinate: selectedCoordinate,
+                            colorKey: selectedRegionId,
+                            label: `${this.selectedFrameFileId}-${selectedRegionId}-${statsType}-${selectedCoordinate}`
+                        });
+                    }
+                });
+            } else if (this.activeProfileCategory === MultiProfileCategory.STATISTIC) {
+                const selectedCoordinate = this.selectedCoordinates[0];
+                const region = this.selectedFrame.getRegion(this.effectiveRegionId);
+                if (region?.isClosedRegion) {
+                    this.selectedStatsTypes.forEach(statsType => {
+                        profileConfigs.push({
+                            fileId: this.selectedFrameFileId,
+                            regionId: this.effectiveRegionId,
+                            statsType: statsType,
+                            coordinate: selectedCoordinate,
                             colorKey: statsType,
-                            label: `${realFileId}-${selectedRegionId}-${statsType}-${selectedCoordinate}`
+                            label: `${this.selectedFrameFileId}-${this.effectiveRegionId}-${statsType}-${selectedCoordinate}`
                         });
                     });
                 } else {
                     profileConfigs.push({
-                        fileId: realFileId,
-                        regionId: selectedRegionId,
+                        fileId: this.selectedFrameFileId,
+                        regionId: this.effectiveRegionId,
                         statsType: CARTA.StatsType.Sum,
                         coordinate: selectedCoordinate,
                         colorKey: CARTA.StatsType.Sum,
-                        label: `${realFileId}-${selectedRegionId}-${CARTA.StatsType.Sum}-${selectedCoordinate}`
+                        label: `${this.selectedFrameFileId}-${this.effectiveRegionId}-${CARTA.StatsType.Sum}-${selectedCoordinate}`
                     });
                 }
             } else if (this.activeProfileCategory === MultiProfileCategory.STOKES) {
-                const selectedRegionId = this.selectedRegionIds[0];
                 const selectedStatsType = this.selectedStatsTypes[0];
-                const region = this.selectedFrame.getRegion(selectedRegionId);
+                const region = this.selectedFrame.getRegion(this.effectiveRegionId);
                 const statsType = region?.isClosedRegion ? selectedStatsType : CARTA.StatsType.Sum;
-
                 this.selectedCoordinates?.forEach(coordinate => {
                     profileConfigs.push({
-                        fileId: realFileId,
-                        regionId: selectedRegionId,
+                        fileId: this.selectedFrameFileId,
+                        regionId: this.effectiveRegionId,
                         statsType: statsType,
                         coordinate: coordinate,
                         colorKey: coordinate,
-                        label: `${realFileId}-${selectedRegionId}-${statsType}-${coordinate}`
+                        label: `${this.selectedFrameFileId}-${this.effectiveRegionId}-${statsType}-${coordinate}`
                     });
                 });
             }
@@ -190,8 +185,7 @@ export class SpectralProfileSelectionStore {
             return [this.selectedFrameFileId];
         } else if (this.activeProfileCategory === MultiProfileCategory.IMAGE) {
             const matchedFileIds = AppStore.Instance.spatialAndSpectalMatchedFileIds;
-            const realFileId = this.selectedFrame?.frameInfo.fileId;
-            return matchedFileIds?.includes(realFileId) ? matchedFileIds : [this.selectedFrameFileId];
+            return matchedFileIds?.includes(this.selectedFrameFileId) ? matchedFileIds : [this.selectedFrameFileId];
         } else if (this.activeProfileCategory === MultiProfileCategory.REGION) {
             return this.selectedRegionIds;
         } else if (this.activeProfileCategory === MultiProfileCategory.STATISTIC) {
@@ -261,11 +255,23 @@ export class SpectralProfileSelectionStore {
     }
 
     @computed get selectedFrameFileId(): number {
+        return this.selectedFrame?.frameInfo.fileId;
+    }
+
+    @computed get selectedFrameWidgetFileId(): number {
         return this.widgetStore.fileId;
     }
 
     @computed get isSelectingSpecificFrame(): boolean {
-        return this.widgetStore.isEffectiveFrameEqualToActiveFrame && this.selectedFrameFileId !== ACTIVE_FILE_ID;
+        return this.widgetStore.isEffectiveFrameEqualToActiveFrame && this.selectedFrameWidgetFileId !== ACTIVE_FILE_ID;
+    }
+
+    @computed get effectiveRegionId(): number {
+        return this.widgetStore.effectiveRegionId;
+    }
+
+    @computed get isSelectingSpecificRegion(): boolean {
+        return this.widgetStore.matchesSelectedRegion && this.selectedRegionIds?.length > 0 && this.selectedRegionIds[0] !== undefined && this.selectedRegionIds[0] !== RegionId.ACTIVE;
     }
 
     @computed get isStatsTypeSelectionAvailable(): boolean {
@@ -325,6 +331,7 @@ export class SpectralProfileSelectionStore {
 
     @action selectFrame = (fileId: number) => {
         this.widgetStore.setFileId(fileId);
+        this.widgetStore.setRegionId(this.selectedFrameFileId, RegionId.ACTIVE);
     };
 
     @action selectRegion = (regionId: number, color: string, isMultipleSelectionMode: boolean = false) => {

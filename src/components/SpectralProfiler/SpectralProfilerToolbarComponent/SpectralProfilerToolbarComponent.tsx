@@ -99,7 +99,11 @@ class ProfileSelectionComponent extends React.Component<{profileSelectionStore: 
 
     private onRegionItemClick = (selectedRegion: number, itemIndex: number, isMultipleSelectionMode: boolean) => {
         const color = SWATCH_COLORS[itemIndex % SWATCH_COLORS.length];
-        this.props.profileSelectionStore.selectRegion(selectedRegion, color, isMultipleSelectionMode);
+        const frame = this.props.profileSelectionStore.selectedFrame;
+        if (frame) {
+            this.props.profileSelectionStore.selectFrame(frame.frameInfo.fileId);
+            this.props.profileSelectionStore.selectRegion(selectedRegion, color, isMultipleSelectionMode);
+        }
     };
 
     private onStatsItemClick = (selectedStatsType: CARTA.StatsType, itemIndex: number, isMultipleSelectionMode: boolean) => {
@@ -122,7 +126,7 @@ class ProfileSelectionComponent extends React.Component<{profileSelectionStore: 
                     categoryName={MultiProfileCategory.IMAGE}
                     isActiveCategory={profileSelectionStore.activeProfileCategory === MultiProfileCategory.IMAGE}
                     itemOptions={profileSelectionStore.frameOptions}
-                    itemSelected={[profileSelectionStore.selectedFrameFileId]}
+                    itemSelected={[profileSelectionStore.selectedFrameWidgetFileId]}
                     disabled={!frame}
                     hightlightDropDownButton={profileSelectionStore.isSelectingSpecificFrame}
                     onCategorySelect={() => {
@@ -144,6 +148,7 @@ class ProfileSelectionComponent extends React.Component<{profileSelectionStore: 
                     itemOptions={profileSelectionStore.regionOptions}
                     itemSelected={profileSelectionStore.selectedRegionIds}
                     disabled={!frame}
+                    hightlightDropDownButton={profileSelectionStore.isSelectingSpecificRegion}
                     onCategorySelect={() => {
                         profileSelectionStore.setActiveProfileCategory(
                             profileSelectionStore.activeProfileCategory !== MultiProfileCategory.REGION ? MultiProfileCategory.REGION : MultiProfileCategory.NONE
