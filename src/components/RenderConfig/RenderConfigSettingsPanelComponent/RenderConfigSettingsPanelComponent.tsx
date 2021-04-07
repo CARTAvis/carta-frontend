@@ -1,10 +1,12 @@
 import * as React from "react";
 import {observer} from "mobx-react";
 import {computed} from "mobx";
+import {FormGroup, Switch} from "@blueprintjs/core";
 import {LinePlotSettingsPanelComponentProps, LinePlotSettingsPanelComponent} from "components/Shared";
 import {RenderConfigWidgetStore} from "stores/widgets/RenderConfigWidgetStore";
 import {WidgetProps, DefaultWidgetConfig, HelpType, WidgetsStore} from "stores";
 import {parseNumber} from "utilities";
+import "./RenderConfigSettingsPanelComponent.scss"
 
 const KEYCODE_ENTER = 13;
 
@@ -146,7 +148,17 @@ export class RenderConfigSettingsPanelComponent extends React.Component<WidgetPr
         };
 
         return (
-            <LinePlotSettingsPanelComponent {...lineSettingsProps}/>
+            <React.Fragment>
+                <div className="line-settings-panel colorscale-setting">
+                    <FormGroup inline={true} label="Show Colorscale">
+                        <Switch
+                            checked={widgetStore.showColorscale}
+                            onChange={(ev) => widgetStore.setShowColorscale(ev.currentTarget.checked)}
+                        />
+                    </FormGroup>
+                </div>
+                <LinePlotSettingsPanelComponent {...lineSettingsProps}/>
+            </React.Fragment>
         );
     }
 }

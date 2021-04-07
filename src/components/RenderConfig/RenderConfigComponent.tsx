@@ -299,9 +299,12 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
                 linePlotProps.multiPlotPropsMap.set("histogram", histogramProps);
 
                 // Determine scale in X and Y directions. If auto-scaling, use the bounds of the current data
-                if (this.widgetStore.isAutoScaledX && isFinite(scaleMinVal) && isFinite(scaleMaxVal) && (scaleMinVal < scaleMaxVal)) {
+                if (this.widgetStore.isAutoScaledX && this.widgetStore.showColorscale && isFinite(scaleMinVal) && isFinite(scaleMaxVal) && (scaleMinVal < scaleMaxVal)) {
                     linePlotProps.xMin = scaleMinVal - 0.02 * (scaleMaxVal - scaleMinVal);
                     linePlotProps.xMax = scaleMaxVal + 0.02 * (scaleMaxVal - scaleMinVal);
+                } else if (this.widgetStore.isAutoScaledX) {
+                    linePlotProps.xMin = currentPlotData.xMin;
+                    linePlotProps.xMax = currentPlotData.xMax;
                 } else {
                     linePlotProps.xMin = this.widgetStore.minX;
                     linePlotProps.xMax = this.widgetStore.maxX;
@@ -361,7 +364,7 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
                 });
             }
 
-            if (isFinite(scaleMinVal) && isFinite(scaleMaxVal) && (scaleMinVal < scaleMaxVal)) {
+            if (this.widgetStore.showColorscale && isFinite(scaleMinVal) && isFinite(scaleMaxVal) && (scaleMinVal < scaleMaxVal)) {
                 const colorScaleX = Array.from(Array(COLORSCALE_LENGTH).keys()).map(x => scaleMinVal + x / (COLORSCALE_LENGTH - 1) * (scaleMaxVal - scaleMinVal));
                 let colorScaleY = Array.from(Array(COLORSCALE_LENGTH).keys()).map(x => x / (COLORSCALE_LENGTH - 1));
                 colorScaleY = colorScaleY.map(x => scaleValue(x, frame.renderConfig.scaling, frame.renderConfig.alpha, frame.renderConfig.gamma, frame.renderConfig.bias, frame.renderConfig.contrast));
