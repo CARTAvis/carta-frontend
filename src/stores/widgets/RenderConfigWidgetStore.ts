@@ -20,7 +20,7 @@ export class RenderConfigWidgetStore {
     @observable markerTextVisible: boolean;
     @observable meanRmsVisible: boolean;
     @observable linePlotInitXYBoundaries: { minXVal: number, maxXVal: number, minYVal: number, maxYVal: number };
-    @observable showColorscale: boolean;
+    @observable showColormapScaling: boolean;
 
     @action setXBounds = (minVal: number, maxVal: number) => {
         this.minX = minVal;
@@ -76,8 +76,8 @@ export class RenderConfigWidgetStore {
         this.cursorX = cursorVal;
     };
 
-    @action setShowColorscale = (showColorscale: boolean) => {
-        this.showColorscale = showColorscale;
+    @action setShowColormapScaling = (showColormapScaling: boolean) => {
+        this.showColormapScaling = showColormapScaling;
     };
 
     constructor() {
@@ -90,7 +90,7 @@ export class RenderConfigWidgetStore {
         this.linePlotPointSize = 1.5;
         this.lineWidth = 1;
         this.linePlotInitXYBoundaries = { minXVal: 0, maxXVal: 0, minYVal: 0, maxYVal: 0 };
-        this.showColorscale = true;
+        this.showColormapScaling = true;
     }
 
     @computed get isAutoScaledX() {

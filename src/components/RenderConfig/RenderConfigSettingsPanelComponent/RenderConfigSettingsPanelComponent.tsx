@@ -149,11 +149,11 @@ export class RenderConfigSettingsPanelComponent extends React.Component<WidgetPr
 
         return (
             <React.Fragment>
-                <div className="line-settings-panel colorscale-setting">
-                    <FormGroup inline={true} label="Show Colorscale">
+                <div className="line-settings-panel colormap-scaling-setting">
+                    <FormGroup inline={true} label="Show Color Scaling">
                         <Switch
-                            checked={widgetStore.showColorscale}
-                            onChange={(ev) => widgetStore.setShowColorscale(ev.currentTarget.checked)}
+                            checked={widgetStore.showColormapScaling}
+                            onChange={(ev) => widgetStore.setShowColormapScaling(ev.currentTarget.checked)}
                         />
                     </FormGroup>
                 </div>

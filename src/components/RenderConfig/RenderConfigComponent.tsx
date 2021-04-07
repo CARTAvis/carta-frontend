@@ -299,7 +299,7 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
                 linePlotProps.multiPlotPropsMap.set("histogram", histogramProps);
 
                 // Determine scale in X and Y directions. If auto-scaling, use the bounds of the current data
-                if (this.widgetStore.isAutoScaledX && this.widgetStore.showColorscale && isFinite(scaleMinVal) && isFinite(scaleMaxVal) && (scaleMinVal < scaleMaxVal)) {
+                if (this.widgetStore.isAutoScaledX && this.widgetStore.showColormapScaling && isFinite(scaleMinVal) && isFinite(scaleMaxVal) && (scaleMinVal < scaleMaxVal)) {
                     linePlotProps.xMin = scaleMinVal - 0.02 * (scaleMaxVal - scaleMinVal);
                     linePlotProps.xMax = scaleMaxVal + 0.02 * (scaleMaxVal - scaleMinVal);
                 } else if (this.widgetStore.isAutoScaledX) {
@@ -364,28 +364,28 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
                 });
             }
 
-            if (this.widgetStore.showColorscale && isFinite(scaleMinVal) && isFinite(scaleMaxVal) && (scaleMinVal < scaleMaxVal)) {
-                const colorScaleX = Array.from(Array(COLORSCALE_LENGTH).keys()).map(x => scaleMinVal + x / (COLORSCALE_LENGTH - 1) * (scaleMaxVal - scaleMinVal));
-                let colorScaleY = Array.from(Array(COLORSCALE_LENGTH).keys()).map(x => x / (COLORSCALE_LENGTH - 1));
-                colorScaleY = colorScaleY.map(x => scaleValue(x, frame.renderConfig.scaling, frame.renderConfig.alpha, frame.renderConfig.gamma, frame.renderConfig.bias, frame.renderConfig.contrast));
+            if (this.widgetStore.showColormapScaling && isFinite(scaleMinVal) && isFinite(scaleMaxVal) && (scaleMinVal < scaleMaxVal)) {
+                const colormapScalingX = Array.from(Array(COLORSCALE_LENGTH).keys()).map(x => scaleMinVal + x / (COLORSCALE_LENGTH - 1) * (scaleMaxVal - scaleMinVal));
+                let colormapScalingY = Array.from(Array(COLORSCALE_LENGTH).keys()).map(x => x / (COLORSCALE_LENGTH - 1));
+                colormapScalingY = colormapScalingY.map(x => scaleValue(x, frame.renderConfig.scaling, frame.renderConfig.alpha, frame.renderConfig.gamma, frame.renderConfig.bias, frame.renderConfig.contrast));
                 // fit to the histogram y axis
                 if (linePlotProps.logY) {
-                    colorScaleY = colorScaleY.map(x => Math.pow(10, Math.log10(linePlotProps.yMin) + x * (Math.log10(linePlotProps.yMax) - Math.log10(linePlotProps.yMin))));
+                    colormapScalingY = colormapScalingY.map(x => Math.pow(10, Math.log10(linePlotProps.yMin) + x * (Math.log10(linePlotProps.yMax) - Math.log10(linePlotProps.yMin))));
                 } else {
-                    colorScaleY = colorScaleY.map(x => linePlotProps.yMin + x * (linePlotProps.yMax - linePlotProps.yMin));
+                    colormapScalingY = colormapScalingY.map(x => linePlotProps.yMin + x * (linePlotProps.yMax - linePlotProps.yMin));
                 }
 
-                let colorScaleData = [];
+                let colormapScalingData = [];
                 for (let i = 0; i < COLORSCALE_LENGTH; i++) {
-                    colorScaleData.push({x: colorScaleX[i], y: colorScaleY[i]});
+                    colormapScalingData.push({x: colormapScalingX[i], y: colormapScalingY[i]});
                 }
-                const colorScaleProps: MultiPlotProps = {
-                    data: colorScaleData,
+                const colormapScalingProps: MultiPlotProps = {
+                    data: colormapScalingData,
                     type: PlotType.LINES,
                     borderColor: appStore.darkTheme ? Colors.GRAY5 : Colors.GRAY1,
                     borderWidth: 0.5
                 };
-                linePlotProps.multiPlotPropsMap.set("colorScale", colorScaleProps);
+                linePlotProps.multiPlotPropsMap.set("colormapScaling", colormapScalingProps);
             }
         }
 
