@@ -40,14 +40,6 @@ class ProfileSelectionButtonComponent extends React.Component<ProfileSelectionBu
             });
         }
 
-        let dropdownButtonClassName = "dropdown-button";
-        if (this.props.hightlightDropDownButton) {
-            dropdownButtonClassName += " specific-selection";
-        }
-        if (AppStore.Instance.darkTheme) {
-            dropdownButtonClassName += " dark-theme";
-        }
-
         return (
             <ButtonGroup fill={true} className="category-set">
                 <Tooltip content={this.props.tooltip} position={Position.TOP}>
@@ -80,7 +72,8 @@ class ProfileSelectionButtonComponent extends React.Component<ProfileSelectionBu
                 >
                     <AnchorButton
                         text={<span className="overflow-text">{dropdownText}</span>}
-                        className={dropdownButtonClassName}
+                        className="dropdown-button"
+                        intent={this.props.hightlightDropDownButton ? Intent.PRIMARY : Intent.NONE}
                         rightIcon={"caret-down"}
                         disabled={this.props.disabled || this.props.disableOptions}
                     />

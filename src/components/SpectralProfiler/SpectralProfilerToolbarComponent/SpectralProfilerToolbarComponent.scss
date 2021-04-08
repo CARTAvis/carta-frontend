@@ -31,17 +31,6 @@
                     white-space: nowrap;
                     display: block;
                 }
-
-                &.specific-selection {
-                    border: 1px solid $blue2;
-                    border-radius: $pt-border-radius;
-
-                    &.dark-theme {
-                        border: 1px solid $blue4;
-                    }
-
-                    transition: border 250ms linear;
-                }
             }
         }
     }
