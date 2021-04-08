@@ -83,10 +83,24 @@ export class ProfileFittingStore {
             return false;
         }
 
+        let lockedInputCount = 0;
         for (const component of this.components) {
             if (!component.isReadyToFit) {
                 return false;
             }
+            if (component.lockedCenter) {
+                lockedInputCount++;
+            }
+            if (component.lockedAmp) {
+                lockedInputCount++;
+            }
+            if (component.lockedFwhm) {
+                lockedInputCount++;
+            }
+        }
+
+        if (lockedInputCount === this.components.length * 3) {
+            return false;
         }
         return true;
     }
@@ -109,10 +123,17 @@ export class ProfileFittingStore {
 
     fitData = (x: number[], y: Float32Array | Float64Array): void => {        
         const inputData = [];
-        this.components.forEach(component => { inputData.push(component.amp); inputData.push(component.center); inputData.push(component.fwhm);})
+        const lockedInputData = [];
+        this.components.forEach(component => {
+            inputData.push(component.amp);
+            inputData.push(component.center);
+            inputData.push(component.fwhm);
+            lockedInputData.push(component.lockedAmp ? 1: 0);
+            lockedInputData.push(component.lockedCenter ? 1: 0);
+            lockedInputData.push(component.lockedFwhm ? 1: 0);
+        })
 
-        const fittingResult = GSL.gaussianFitting(x, y, inputData);
-
+        const fittingResult = GSL.gaussianFitting(x, y, inputData, lockedInputData);
         for (let i = 0; i < this.components.length ; i++) {
             const component = this.components[i];
             component.setResultCenter(fittingResult.center[i]);
@@ -169,7 +190,7 @@ export class ProfileFittingIndividualStore {
     @observable resultFwhm: number;
 
     @computed get isReadyToFit(): boolean {
-        return (isFinite(this.center) && isFinite(this.amp) && isFinite(this.fwhm) && (this.center !== 0 && this.amp !== 0 && this.fwhm !== 0));
+        return (isFinite(this.center) && isFinite(this.amp) && isFinite(this.fwhm) && (this.amp !== 0 && this.fwhm !== 0));
     }
 
     constructor() {
@@ -177,6 +198,9 @@ export class ProfileFittingIndividualStore {
         this.center = 0;
         this.amp = 0;
         this.fwhm = 0;
+        this.lockedCenter = false;
+        this.lockedAmp = false;
+        this.lockedFwhm = false;
     }
 
     @action setCenter = (val: number) => {

@@ -106,7 +106,7 @@ export function autoDetecting(velocity: number[], intensity:number[]) : ProfileF
 
     // [amp, center, fwhm]
     const initialGuess = [_.max(histY), histXCenter[_.findIndex(histY, (y => y === _.max(histY)))], 2 * Math.sqrt(Math.log(10) * 2 ) * 0.5 * (deltaHistXCenter)];
-    const histogramGaussianFitting = GSL.gaussianFitting(new Float64Array(histXCenter),new Float64Array(histY), initialGuess);
+    const histogramGaussianFitting = GSL.gaussianFitting(new Float64Array(histXCenter),new Float64Array(histY), initialGuess, [0, 0, 0]);
 
     const intensitySmoothedMean = histogramGaussianFitting.center[0];
     const intensitySmoothedStddev = histogramGaussianFitting.fwhm[0] / (2 * Math.sqrt(Math.log(2) * 2 )); 

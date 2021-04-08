@@ -60,11 +60,22 @@ export class ProfileFittingComponent extends React.Component<{fittingStore: Prof
                 this.props.fittingStore.components[i].setFwhm(guessComponents[i].fwhm);
             }
         }
-
     }
 
     private cursorSelecting = () => {
         this.props.fittingStore.setIsCursorSelectionOn(true);
+    }
+
+    private onCenterLocked = () => {
+        this.props.fittingStore.selectedComponent.setLockedCenter(!this.props.fittingStore.selectedComponent.lockedCenter);
+    }
+
+    private onAmpLocked = () => {
+        this.props.fittingStore.selectedComponent.setLockedAmp(!this.props.fittingStore.selectedComponent.lockedAmp);
+    }
+
+    private onFwhmLocked = () => {
+        this.props.fittingStore.selectedComponent.setLockedFwhm(!this.props.fittingStore.selectedComponent.lockedFwhm);
     }
 
     private showLog = () => {}
@@ -78,15 +89,6 @@ export class ProfileFittingComponent extends React.Component<{fittingStore: Prof
         if (this.props.fittingStore.readyToFit) {
             this.props.fittingStore.fitData(this.plottingData.x, this.plottingData.y)
         }
-    }
-
-    @computed get readyToFit(): boolean {
-        for (let i = 0; i < this.props.fittingStore.components.length; i++) {
-            if (!this.props.fittingStore.components[i].isReadyToFit) {
-                return false;
-            }
-        }
-        return true;
     }
 
     @computed get profileStore(): SpectralProfileStore {
@@ -218,7 +220,7 @@ export class ProfileFittingComponent extends React.Component<{fittingStore: Prof
                                     allowNumericCharactersOnly={false}
                                     buttonPosition="none"
                                 />
-                                <AnchorButton icon={fittingStore.selectedComponent.lockedCenter ? "lock" : "unlock"}/>
+                                <AnchorButton onClick={this.onCenterLocked} icon={fittingStore.selectedComponent.lockedCenter ? "lock" : "unlock"}/>
                             </div>
                         </FormGroup>
                         <FormGroup label="Amplitude" inline={true}>
@@ -230,7 +232,7 @@ export class ProfileFittingComponent extends React.Component<{fittingStore: Prof
                                     allowNumericCharactersOnly={false}
                                     buttonPosition="none"
                                     />
-                                <AnchorButton icon={fittingStore.selectedComponent.lockedAmp ? "lock" : "unlock"}/>
+                                <AnchorButton onClick={this.onAmpLocked} icon={fittingStore.selectedComponent.lockedAmp ? "lock" : "unlock"}/>
                             </div>
                         </FormGroup>
                         <FormGroup label="FWHM" inline={true}>
@@ -242,7 +244,7 @@ export class ProfileFittingComponent extends React.Component<{fittingStore: Prof
                                     allowNumericCharactersOnly={false}
                                     buttonPosition="none"
                                 />
-                                <AnchorButton icon={fittingStore.selectedComponent.lockedFwhm ? "lock" : "unlock"}/>
+                                <AnchorButton onClick={this.onFwhmLocked} icon={fittingStore.selectedComponent.lockedFwhm ? "lock" : "unlock"}/>
                             </div>
                         </FormGroup>
                     </FormGroup>
@@ -275,7 +277,7 @@ export class ProfileFittingComponent extends React.Component<{fittingStore: Prof
                         text="Fit"
                         intent={Intent.PRIMARY}
                         onClick={this.fitData}
-                        disabled={!this.readyToFit}
+                        disabled={!fittingStore.readyToFit}
                     />
                 </div>
             </div>

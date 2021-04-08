@@ -7,7 +7,7 @@ Module.filterHanning = Module.cwrap("filterHanning", "number", ["number", "numbe
 Module.filterDecimation = Module.cwrap("filterDecimation", "number", ["number", "number", "number", "number", "number"]);
 Module.filterBinning = Module.cwrap("filterBinning", "number", ["number", "number", "number", "number"]);
 Module.filterSavitzkyGolay = Module.cwrap("filterSavitzkyGolay", "number", ["number", "number", "number", "number", "number", "number"]);
-Module.fittingGaussian = Module.cwrap("fittingGaussian", "number", ["number", "number", "number", "number", "number", "number", "number", "number", "string"])
+Module.fittingGaussian = Module.cwrap("fittingGaussian", "number", ["number", "number", "number", "number", "number", "number", "number", "number", "number", "string"])
 
 Module.boxcarSmooth = function (yIn: Float64Array | Float32Array, kernelSize: number) {
     // Return empty array if arguments are invalid
@@ -130,7 +130,9 @@ Module.savitzkyGolaySmooth = function (xIn: Float64Array | Float32Array, yIn: Fl
     return yOut;
 };
 
-Module.gaussianFitting = function (xIn: Float64Array | Float32Array, yIn: Float64Array | Float32Array, inputData: number[]) {
+// inputData stores initial guesses as [amp1, center1, fwhm1, amp2, center2, fwhm2, ...]
+// lockedInputdData stores which initial guesses are locked as [1(amp1), 0(center1), 0(fwhm1), 0(amp2), 1(center2), 0(fwhm2), ...]
+Module.gaussianFitting = function (xIn: Float64Array | Float32Array, yIn: Float64Array | Float32Array, inputData: number[], lockedInputData: number[]) {
     if (!xIn || !yIn || !inputData) {
         return null;
     }
@@ -142,16 +144,24 @@ Module.gaussianFitting = function (xIn: Float64Array | Float32Array, yIn: Float6
     Module.HEAPF64.set(new Float64Array(yIn), Module.yIn / 8);
 
     const componentN = inputData.length / 3;
+
     Module.inputData = Module._malloc(componentN * 3 * 8);
     Module.HEAPF64.set(new Float64Array(inputData), Module.inputData / 8);
-
     const inputArray: number[] = [];
-    for (let i = 0 ; i < componentN ; i++) {
+    for (let i = 0 ; i < componentN; i++) {
         inputArray.push(Module.inputData + i * 3 * 8);
     }
-
     Module.inputArray = Module._malloc(componentN * 4);
     Module.HEAPU32.set(new Uint32Array(inputArray), Module.inputArray / 4);
+
+    Module.lockedInputData = Module._malloc(componentN * 3 * 4);
+    Module.HEAP32.set(new Int32Array(lockedInputData), Module.lockedInputData / 4);
+    const lockedInputArray: number[] = [];
+    for (let i = 0; i < componentN; i++) {
+        lockedInputArray.push(Module.lockedInputData + i * 3 * 4)
+    }
+    Module.lockedInputArray = Module._malloc(componentN * 4);
+    Module.HEAPU32.set(new Uint32Array(lockedInputArray), Module.lockedInputArray / 4);
 
     Module.resultAmp = Module._malloc(componentN * 8);
     Module.resultCenter = Module._malloc(componentN * 8);
@@ -161,7 +171,7 @@ Module.gaussianFitting = function (xIn: Float64Array | Float32Array, yIn: Float6
     Module.logPtrUint = Module._malloc(Module.logBytes);
     Module.logHeapUint = new Uint8Array(Module.HEAPU8.buffer, Module.logPtrUint, Module.logBytes); // ???
 
-    Module.fittingGaussian(Module.xIn, Module.yIn, dataN, Module.inputArray, Module.resultAmp, Module.resultCenter, Module.resultFwhm, componentN, Module.logPtrUint);
+    Module.fittingGaussian(Module.xIn, Module.yIn, dataN, Module.inputArray, Module.lockedInputArray, Module.resultAmp, Module.resultCenter, Module.resultFwhm, componentN, Module.logPtrUint);
 
     const centerOut = new Float64Array(Module.HEAPF64.buffer, Module.resultCenter, componentN).slice();
     const ampOut = new Float64Array(Module.HEAPF64.buffer, Module.resultAmp, componentN).slice();
@@ -170,8 +180,13 @@ Module.gaussianFitting = function (xIn: Float64Array | Float32Array, yIn: Float6
 
     Module._free(Module.xIn);
     Module._free(Module.yIn);
-    Module._free(Module.inputData);
+
     Module._free(Module.inputArray);
+    Module._free(Module.inputData);
+
+    Module._free(Module.lockedInputArray);
+    Module._free(Module.lockedInputData);
+
     Module._free(Module.resultCenter);
     Module._free(Module.resultAmp);
     Module._free(Module.resultFwhm);
