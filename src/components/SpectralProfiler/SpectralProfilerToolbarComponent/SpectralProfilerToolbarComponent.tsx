@@ -170,7 +170,7 @@ class ProfileSelectionComponent extends React.Component<{profileSelectionStore: 
                     categoryName={MultiProfileCategory.STATISTIC}
                     isActiveCategory={profileSelectionStore.activeProfileCategory === MultiProfileCategory.STATISTIC}
                     itemOptions={profileSelectionStore.statsTypeOptions}
-                    itemSelected={profileSelectionStore.selectedStatsTypes}
+                    itemSelected={profileSelectionStore.isStatsTypeSelectionAvailable ? profileSelectionStore.selectedStatsTypes : [CARTA.StatsType.Mean]}
                     disabled={!frame}
                     disableOptions={!profileSelectionStore.isStatsTypeSelectionAvailable}
                     onCategorySelect={() => {
