@@ -435,17 +435,28 @@ export class FrameStore {
     }
 
     @computed get positionAxis(): number {
+        return this.specialAxis(/offset|position|offset position/i);
+    }
+
+    @computed get isUVImage(): boolean {
+        return this.uvAxis !== undefined;
+    }
+
+    @computed get uvAxis(): number {
+        return this.specialAxis(/uu/i);
+    }
+
+    private specialAxis = (regex): number => {
         if (this.frameInfo?.fileInfoExtended?.headerEntries) {
             const entries = this.frameInfo.fileInfoExtended.headerEntries;
-            const positionAxisRegex = /offset|position|offset position/i;
             const axis1 = entries.find(entry => entry.name.includes("CTYPE1"));
             const axis2 = entries.find(entry => entry.name.includes("CTYPE2"))
-            if (axis1?.value?.match(positionAxisRegex) || axis2?.value?.match(positionAxisRegex)) {
-                return axis1?.value?.match(positionAxisRegex) ? 1 : 2;
+            if (axis1?.value?.match(regex) || axis2?.value?.match(regex)) {
+                return axis1?.value?.match(regex) ? 1 : 2;
             }
         }
         return undefined;
-    }
+    };
 
     @computed get spectralAxis(): { valid: boolean; dimension: number, type: SpectralTypeSet, specsys: string } {
         if (this.frameInfo?.fileInfoExtended?.headerEntries) {
@@ -759,10 +770,23 @@ export class FrameStore {
         this.animationChannelRange = [0, frameInfo.fileInfoExtended.depth - 1];
 
         if (this.isPVImage) {
-            this.astFrameSet = this.initPVImage();
+            this.astFrameSet = this.initFrame2D();
             if (this.astFrameSet) {
                 this.spectralFrame = AST.getSpectralFrame(this.astFrameSet);
                 this.wcsInfo = AST.copy(this.astFrameSet);
+            }
+        } else if (this.isUVImage) {
+            this.astFrameSet = this.initFrame();
+            const astFrameSet2D = this.initFrame2D();
+            if (this.astFrameSet && astFrameSet2D) {
+                this.spectralFrame = AST.getSpectralFrame(this.astFrameSet);
+
+                if (frameInfo.fileInfoExtended.depth > 1) { // 3D frame
+                    this.wcsInfo3D = AST.copy(this.astFrameSet);
+                    this.wcsInfo = AST.copy(astFrameSet2D);
+                } else { // 2D frame
+                    this.wcsInfo = AST.copy(this.astFrameSet);
+                }
             }
         } else {
             // init WCS
@@ -861,7 +885,7 @@ export class FrameStore {
         return AST.transformSpectralPoint(this.spectralFrame, type, unit, system, value);
     };
 
-    private initPVImage = (): number => {
+    private initFrame2D = (): number => {
         const fitsChan = AST.emptyFitsChan();
         for (let entry of this.frameInfo.fileInfoExtended.headerEntries) {
             if (entry.name.match(/(CTYPE|CDELT|CRPIX|CRVAL|CUNIT|NAXIS|CROTA)[3-9]/)) {
@@ -981,7 +1005,7 @@ export class FrameStore {
 
     public getCursorInfo(cursorPosImageSpace: Point2D) {
         let cursorPosWCS, cursorPosFormatted;
-        if (this.validWcs) {
+        if (this.validWcs || this.isPVImage || this.isUVImage) {
             // We need to compare X and Y coordinates in both directions
             // to avoid a confusing drop in precision at rounding threshold
             const offsetBlock = [[0, 0], [1, 1], [-1, -1]];
