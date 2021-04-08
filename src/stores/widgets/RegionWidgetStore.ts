@@ -60,7 +60,7 @@ export class RegionWidgetStore {
 
     @computed get effectiveRegionId(): number {
         if (this.effectiveFrame) {
-            const regionId = this.getRegionId(this.fileId);
+            const regionId = this.regionIdMap.get(this.fileId);
             if (regionId !== RegionId.ACTIVE && regionId !== undefined) {
                 return regionId;
             } else {

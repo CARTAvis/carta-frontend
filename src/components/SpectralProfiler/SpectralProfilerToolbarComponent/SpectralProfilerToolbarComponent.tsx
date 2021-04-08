@@ -132,7 +132,7 @@ class ProfileSelectionComponent extends React.Component<{profileSelectionStore: 
                     itemOptions={profileSelectionStore.frameOptions}
                     itemSelected={[profileSelectionStore.selectedFrameWidgetFileId]}
                     disabled={!frame}
-                    hightlightDropDownButton={profileSelectionStore.isSelectingSpecificFrame}
+                    hightlightDropDownButton={profileSelectionStore.isSelectingActiveFrame}
                     onCategorySelect={() => {
                         profileSelectionStore.setActiveProfileCategory(
                             profileSelectionStore.activeProfileCategory !== MultiProfileCategory.IMAGE ? MultiProfileCategory.IMAGE : MultiProfileCategory.NONE
@@ -152,7 +152,7 @@ class ProfileSelectionComponent extends React.Component<{profileSelectionStore: 
                     itemOptions={profileSelectionStore.regionOptions}
                     itemSelected={profileSelectionStore.selectedRegionIds}
                     disabled={!frame}
-                    hightlightDropDownButton={profileSelectionStore.isSelectingSpecificRegion}
+                    hightlightDropDownButton={profileSelectionStore.isSelectingActiveRegion}
                     onCategorySelect={() => {
                         profileSelectionStore.setActiveProfileCategory(
                             profileSelectionStore.activeProfileCategory !== MultiProfileCategory.REGION ? MultiProfileCategory.REGION : MultiProfileCategory.NONE

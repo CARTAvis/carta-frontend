@@ -274,7 +274,7 @@ export class SpectralProfileSelectionStore {
         return this.widgetStore.fileId;
     }
 
-    @computed get isSelectingSpecificFrame(): boolean {
+    @computed get isSelectingActiveFrame(): boolean {
         return this.widgetStore.isEffectiveFrameEqualToActiveFrame && this.selectedFrameWidgetFileId !== ACTIVE_FILE_ID;
     }
 
@@ -282,7 +282,7 @@ export class SpectralProfileSelectionStore {
         return this.widgetStore.effectiveRegionId;
     }
 
-    @computed get isSelectingSpecificRegion(): boolean {
+    @computed get isSelectingActiveRegion(): boolean {
         return this.widgetStore.matchesSelectedRegion && this.selectedRegionIds?.length > 0 && this.selectedRegionIds[0] !== undefined && this.selectedRegionIds[0] !== RegionId.ACTIVE;
     }
 
@@ -355,9 +355,10 @@ export class SpectralProfileSelectionStore {
     };
 
     @action selectRegionSingleMode = (regionId: number) => {
+        const widgetStore = this.widgetStore;
+        widgetStore.setFileId(this.selectedFrameFileId);
+        widgetStore.setRegionId(this.selectedFrameFileId, regionId);
         this.selectedRegionIds = [regionId];
-        this.widgetStore.setFileId(this.selectedFrameFileId);
-        this.widgetStore.setRegionId(this.selectedFrameFileId, regionId);
     };
 
     @action selectRegionMultiMode = (regionId: number, color: string) => {
