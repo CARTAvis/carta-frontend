@@ -212,11 +212,20 @@ export class SpectralProfileSelectionStore {
     }
 
     @computed get frameOptions(): LineOption[] {
-        let options: LineOption[] = [{value: ACTIVE_FILE_ID, label: "Active"}];
+        let options: LineOption[] = [];
         const appStore = AppStore.Instance;
         const frameNameOptions = appStore.frameNames;
         if (this.activeProfileCategory === MultiProfileCategory.IMAGE) {
             const matchedFrameIds = appStore.spatialAndSpectalMatchedFileIds;
+
+            // Handle active option
+            const isActiveMatched = matchedFrameIds?.includes(appStore.activeFrameFileId);
+            options.push({
+                value: ACTIVE_FILE_ID,
+                label: `Active${isActiveMatched ? " (matched)" : ""}`,
+                hightlight: isActiveMatched
+            });
+
             frameNameOptions?.forEach(frameNameOption => {
                 const isMatched = matchedFrameIds?.length > 1 && matchedFrameIds?.includes(frameNameOption.value as number);
                 options.push({
@@ -226,6 +235,7 @@ export class SpectralProfileSelectionStore {
                 });
             });
         } else {
+            options.push({value: ACTIVE_FILE_ID, label: "Active"});
             options = options.concat(frameNameOptions);
         }
         return options;

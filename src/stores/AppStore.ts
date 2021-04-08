@@ -243,6 +243,10 @@ export class AppStore {
     }
 
     // Frame actions
+    @computed get activeFrameFileId(): number {
+        return this.activeFrame?.frameInfo.fileId;
+    }
+
     @computed get activeFrameIndex(): number {
         if (!this.activeFrame) {
             return -1;
