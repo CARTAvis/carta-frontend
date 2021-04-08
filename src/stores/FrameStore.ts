@@ -1022,9 +1022,9 @@ export class FrameStore {
 
             while (precisionX < FrameStore.CursorInfoMaxPrecision && precisionY < FrameStore.CursorInfoMaxPrecision) {
                 let astString = new ASTSettingsString();
-                astString.add("Format(1)", this.overlayStore.numbers.cursorFormatStringX(precisionX));
-                astString.add("Format(2)", this.overlayStore.numbers.cursorFormatStringY(precisionY));
-                astString.add("System", this.overlayStore.global.explicitSystem);
+                astString.add("Format(1)", this.isPVImage || this.isUVImage ? undefined : this.overlayStore.numbers.cursorFormatStringX(precisionX));
+                astString.add("Format(2)", this.isPVImage || this.isUVImage ? undefined : this.overlayStore.numbers.cursorFormatStringY(precisionY));
+                astString.add("System", this.isPVImage || this.isUVImage ? 'cartesian' : this.overlayStore.global.explicitSystem);
 
                 let formattedNeighbourhood = normalizedNeighbourhood.map((pos) => AST.getFormattedCoordinates(this.wcsInfo, pos.x, pos.y, astString.toString()), true);
                 let [p, n1, n2] = formattedNeighbourhood;
