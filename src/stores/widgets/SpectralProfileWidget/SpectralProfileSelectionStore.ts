@@ -332,6 +332,10 @@ export class SpectralProfileSelectionStore {
             const lineKey = profileCategory === MultiProfileCategory.NONE ? SpectralProfileWidgetStore.PRIMARY_LINE_KEY : this.selectedFrameFileId;
             widgetStore.setProfileColor(lineKey, primaryLineColor);
         } else if (profileCategory === MultiProfileCategory.REGION) {
+            // Active region option will be disabled in multi selection mode, switch to specfic region
+            if (this.selectedRegionIds?.length > 0 && this.selectedRegionIds[0] === RegionId.ACTIVE) {
+                this.selectRegionSingleMode(this.effectiveRegionId);
+            }
             this.selectedStatsTypes = [this.DEFAULT_STATS_TYPE];
             this.selectedCoordinates = [this.DEFAULT_COORDINATE];
             widgetStore.setProfileColor(this.DEFAULT_REGION_ID, primaryLineColor);
