@@ -164,7 +164,7 @@ export class RenderConfigSettingsPanelComponent extends React.Component<WidgetPr
                         onChange={(ev) => widgetStore.setShowColormapScaling(ev.currentTarget.checked)}
                     />
                 </FormGroup>
-                <FormGroup inline={true} label="smoothed bias/contrast">
+                <FormGroup inline={true} label="Smoothed Bias/Contrast">
                     <Switch
                         checked={AppStore.Instance.activeFrame?.renderConfig?.smoothedBiasContrastMode}
                         onChange={(ev) => AppStore.Instance.activeFrame?.renderConfig?.setSmoothedBiasContrastMode(ev.currentTarget.checked)}

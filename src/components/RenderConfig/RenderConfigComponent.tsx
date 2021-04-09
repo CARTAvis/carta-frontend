@@ -279,7 +279,7 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
             pointRadius: this.widgetStore.linePlotPointSize,
             zeroLineWidth: 2,
             multiPlotPropsMap: new Map(),
-            graphZoomFreezeOnDragging: true,
+            showColormapScaling: this.widgetStore.showColormapScaling,
             isAutoScaledX: this.widgetStore.isAutoScaledX
         };
 

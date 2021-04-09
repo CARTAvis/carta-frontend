@@ -101,7 +101,7 @@ export class LinePlotComponentProps {
     setSelectedRange?: (min: number, max: number) => void;
     order?: number;
     multiPlotPropsMap?: Map<string, MultiPlotProps>;
-    graphZoomFreezeOnDragging?: boolean;
+    showColormapScaling?: boolean;
     isAutoScaledX?: boolean;
 }
 
@@ -287,7 +287,7 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
 
     @action onMarkerDragStart = () => {
         this.isMarkerDragging = true;
-        if (this.props.isAutoScaledX && this.props.graphZoomFreezeOnDragging) {
+        if (this.props.isAutoScaledX && this.props.showColormapScaling) {
             this.props.graphZoomedX(this.props.xMin, this.props.xMax);
             this.props.graphZoomedY(this.props.yMin, this.props.yMax);
             this.isZoomFreezed = true;
@@ -449,13 +449,13 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
                     return;
                 }
                 // Do left-click callback if it exists
-                if (this.props.graphClicked && mouseButton === 0) {
+                if (this.props.graphClicked && mouseButton === 0 && !(this.props.showColormapScaling && this.props.isAutoScaledX)) {
                     const xCanvasSpace = mousePoint.x;
                     const xGraphSpace = this.getValueForPixelX(xCanvasSpace);
                     this.props.graphClicked(xGraphSpace);
                 }
                 // Do right-click callback if it exists
-                else if (this.props.graphRightClicked && mouseButton === 2) {
+                else if (this.props.graphRightClicked && mouseButton === 2 && !(this.props.showColormapScaling && this.props.isAutoScaledX)) {
                     const xCanvasSpace = mousePoint.x;
                     const xGraphSpace = this.getValueForPixelX(xCanvasSpace);
                     this.props.graphRightClicked(xGraphSpace);
