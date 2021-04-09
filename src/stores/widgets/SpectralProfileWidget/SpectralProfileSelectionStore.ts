@@ -34,7 +34,7 @@ export class SpectralProfileSelectionStore {
     @observable selectedCoordinates: string[];
 
     private readonly widgetStore: SpectralProfileWidgetStore;
-    private readonly DEFAULT_REGION_ID: RegionId = RegionId.ACTIVE;
+    private readonly DEFAULT_REGION_ID: RegionId = RegionId.ACTIVE; // TODO: can this be removed?
     private readonly DEFAULT_STATS_TYPE: CARTA.StatsType = CARTA.StatsType.Mean;
     private readonly DEFAULT_COORDINATE: string;
     private static readonly ValidCoordinates = ["z", "Iz", "Qz", "Uz", "Vz"];
@@ -362,12 +362,17 @@ export class SpectralProfileSelectionStore {
         }
     };
 
+    // When frame is changed:
+    // region - switch to active to ensure getting correct region
+    // stokes - switch to default('z')
     @action selectFrame = (fileId: number) => {
         const widgetStore = this.widgetStore;
         widgetStore.setFileId(fileId);
         widgetStore.setRegionId(this.selectedFrameFileId, RegionId.ACTIVE);
-        this.selectedRegionIds = [widgetStore.getRegionId(this.selectedFrameFileId)];
+        this.selectedRegionIds = [RegionId.ACTIVE];
         this.selectedCoordinates= [this.DEFAULT_COORDINATE];
+        // TODO: in multi mode, should stokes be disabled?
+        // TODO: color for multi mode
     };
 
     @action selectRegionSingleMode = (regionId: number) => {
