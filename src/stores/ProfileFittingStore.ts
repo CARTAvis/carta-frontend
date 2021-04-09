@@ -9,9 +9,15 @@ export class ProfileFittingStore {
     @observable function: FittingFunction;
     @observable components: ProfileFittingIndividualStore[];
     @observable continuum: FittingContinuum;
+    @observable zerothOrderValue: number;
+    @observable firstOrderValue: number;
+    @observable lockedZerothOrderValue: boolean;
+    @observable lockedFirstOrderValue: boolean;
     @observable selectedIndex: number;
     @observable hasResult: boolean;
     @observable resultLog: string;
+    @observable isCursorSelectingZerothOrder: boolean;
+    @observable isCursorSelectingFirstOrder: boolean;
     @observable isCursorSelectionOn: boolean
 
     @action setComponents(length: number, reset?: boolean) {
@@ -105,6 +111,21 @@ export class ProfileFittingStore {
         return true;
     }
 
+    getInitialContinuumPoint2DArray(x: number[]): Point2D[] {
+        if (this.components && this.continuum !== FittingContinuum.NONE) {
+            const continuumPoint2DArray = new Array<{ x: number, y: number }>(x.length);
+            for (let i = 0; i < x.length; i++) {
+                let yi = this.zerothOrderValue;
+                if (this.continuum === FittingContinuum.FIRST_ORDER) {
+                    yi += x[i] * this.firstOrderValue;
+                }
+                continuumPoint2DArray.push({x:x[i], y:yi});
+            }
+            return continuumPoint2DArray;
+        }
+        return [];
+    }
+
     getFittingPoint2DArray(x: number[]): Point2D[] {
         if (this.components && this.hasResult) {
             const fittingPoint2DArray = new Array<{ x: number, y: number }>(x.length);
@@ -149,6 +170,8 @@ export class ProfileFittingStore {
         this.function = FittingFunction.GAUSSIAN;
         this.components = [new ProfileFittingIndividualStore()];
         this.continuum = FittingContinuum.NONE;
+        this.zerothOrderValue = 0;
+        this.firstOrderValue = 0;
         this.selectedIndex = 0;
     }
 
@@ -158,6 +181,22 @@ export class ProfileFittingStore {
 
     @action setContinuum = (val: FittingContinuum) => {
         this.continuum = val;
+    }
+
+    @action setZerothOrderValue = (val: number) => {
+        this.zerothOrderValue = val;
+    }
+
+    @action setFirstOrderValue = (val: number) => {
+        this.firstOrderValue = val;
+    }
+
+    @action setLockedZerothOrderValue = (val: boolean) => {
+        this.lockedZerothOrderValue = val;
+    }
+
+    @action setLockedFirstOrderValue = (val: boolean) => {
+        this.lockedFirstOrderValue = val;
     }
 
     @action setSelectedIndex = (val: number) => {
@@ -170,6 +209,14 @@ export class ProfileFittingStore {
 
     @action setResultLog = (val: string) => {
         this.resultLog = val;
+    }
+
+    @action setIsCursorSelectingZerothOrder = (val: boolean) => {
+        this.isCursorSelectingZerothOrder = val;
+    }
+
+    @action setIsCursorSelectingFirstOrder = (val: boolean) => {
+        this.isCursorSelectingFirstOrder = val;
     }
 
     @action setIsCursorSelectionOn = (val: boolean) => {

@@ -26,6 +26,32 @@ export enum FittingContinuum {
 @observer
 export class ProfileFittingComponent extends React.Component<{fittingStore: ProfileFittingStore, widgetStore: SpectralProfileWidgetStore}> {
 
+
+    private onZerothOrderValueChanged = (val: number) => {
+        this.props.fittingStore.setZerothOrderValue(val);
+    }
+
+    private onFirstOrderValueChanged = (val: number) => {
+        this.props.fittingStore.setFirstOrderValue(val);
+    }
+
+    private onZerothOrderValueLocked = () => {
+        this.props.fittingStore.setLockedZerothOrderValue(!this.props.fittingStore.lockedZerothOrderValue);
+    }
+
+    private onFirstOrderValueLocked = () => {
+        this.props.fittingStore.setLockedFirstOrderValue(!this.props.fittingStore.lockedFirstOrderValue);
+    }
+
+    private cursorSelectingZerothOrder = () => {
+        this.props.fittingStore.setIsCursorSelectingZerothOrder(!this.props.fittingStore.isCursorSelectingZerothOrder);
+    }
+
+    private cursorSelectingFirstOrder = () => {
+        this.props.fittingStore.setIsCursorSelectingFirstOrder(!this.props.fittingStore.isCursorSelectingFirstOrder);
+    }
+
+
     private onCenterValueChanged = (val: number) => {
         this.props.fittingStore.selectedComponent.setCenter(val);
     }
@@ -70,8 +96,13 @@ export class ProfileFittingComponent extends React.Component<{fittingStore: Prof
     private showLog = () => {}
 
     private reset = () => {
-        this.props.fittingStore.setComponents(1,true);
-        this.props.fittingStore.setHasResult(false);
+        const fittingStore = this.props.fittingStore;
+        fittingStore.setComponents(1,true);
+        fittingStore.setHasResult(false);
+        fittingStore.setContinuum(FittingContinuum.NONE);
+        fittingStore.setIsCursorSelectingZerothOrder(false);
+        fittingStore.setIsCursorSelectingFirstOrder(false);
+        fittingStore.setIsCursorSelectionOn(false);
     }
 
     private fitData = () => {
@@ -176,19 +207,54 @@ export class ProfileFittingComponent extends React.Component<{fittingStore: Prof
                         />
                     </FormGroup>
                     <FormGroup label="Continuum" inline={true}>
+                    <div className="component-input">
                         <HTMLSelect 
                             value={fittingStore.continuum} 
                             options={[{label:"None", value: FittingContinuum.NONE}, {label:"0th order", value: FittingContinuum.ZEROTH_ORDER}, {label:"1th order", value: FittingContinuum.FIRST_ORDER}]} 
                             onChange={(ev) => fittingStore.setContinuum(parseInt(ev.target.value))}
-                            disabled={true}
                         />
+                        {fittingStore.continuum === FittingContinuum.ZEROTH_ORDER &&
+                            <AnchorButton onClick={this.cursorSelectingZerothOrder} active={fittingStore.isCursorSelectingZerothOrder} icon="select"/>
+                        }
+                        {fittingStore.continuum === FittingContinuum.FIRST_ORDER &&
+                            <AnchorButton onClick={this.cursorSelectingFirstOrder} active={fittingStore.isCursorSelectingFirstOrder} icon="select"/>
+                        }
+                    </div>
                     </FormGroup>
+                    {(fittingStore.continuum === FittingContinuum.ZEROTH_ORDER || fittingStore.continuum === FittingContinuum.FIRST_ORDER) &&
+                        <FormGroup label="0th order value" inline={true}>
+                            <div className="component-input">
+                                <SafeNumericInput
+                                    value={fittingStore.zerothOrderValue}
+                                    onValueChange={this.onZerothOrderValueChanged}
+                                    disabled={fittingStore.lockedZerothOrderValue}
+                                    allowNumericCharactersOnly={false}
+                                    buttonPosition="none"
+                                    />
+                                <AnchorButton onClick={this.onZerothOrderValueLocked} icon={fittingStore.lockedZerothOrderValue ? "lock" : "unlock"}/>
+                            </div>
+                        </FormGroup>
+                    }
+                    {fittingStore.continuum === FittingContinuum.FIRST_ORDER &&
+                        <FormGroup label="1st order value" inline={true}>
+                            <div className="component-input">
+                                <SafeNumericInput
+                                    value={fittingStore.firstOrderValue}
+                                    onValueChange={this.onFirstOrderValueChanged}
+                                    disabled={fittingStore.lockedFirstOrderValue}
+                                    allowNumericCharactersOnly={false}
+                                    buttonPosition="none"
+                                    />
+                                <AnchorButton onClick={this.onFirstOrderValueLocked} icon={fittingStore.lockedFirstOrderValue ? "lock" : "unlock"}/>
+                            </div>
+                        </FormGroup>
+                    }
                     <FormGroup label="Components" inline={true}>
                         <div className={"components-controller"}>
                             <SafeNumericInput
                                 value={fittingStore.components.length}
                                 min={1}
-                                max={10}
+                                max={20}
                                 stepSize={1}
                                 onValueChange={val => fittingStore.setComponents(Math.round(val))}
                             />

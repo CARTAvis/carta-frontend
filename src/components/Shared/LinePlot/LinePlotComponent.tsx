@@ -32,7 +32,8 @@ export enum InteractionMode {
 export enum LinePlotSelectingMode {
     BOX,
     HORIZONTAL,
-    VERTICAL
+    VERTICAL,
+    LINE
 }
 
 export interface LineMarker {
@@ -108,6 +109,7 @@ export class LinePlotComponentProps {
     setSelectedRange?: (min: number, max: number) => void;
     isSelectingInsideBox?: boolean;
     setSelectedInsideBox?: (minX: number, maxX: number, minY: number, maxY: number) => void;
+    setSelectedLine?: (startX: number, endX: number, startY: number, endY: number) => void;
     insideBoxs?: LinePlotInsideBoxMarker[];
     order?: number;
     multiPlotPropsMap?: Map<string, MultiPlotProps>;
@@ -157,6 +159,9 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
     }
 
     @computed get zoomMode(): ZoomMode {
+        if (this.props.selectingMode === LinePlotSelectingMode.LINE) {
+            return ZoomMode.NONE;
+        }
         const absDelta = {x: Math.abs(this.selectionBoxEnd.x - this.selectionBoxStart.x), y: Math.abs(this.selectionBoxEnd.y - this.selectionBoxStart.y)};
         if (absDelta.x > XY_ZOOM_THRESHOLD && absDelta.y > XY_ZOOM_THRESHOLD && this.props.graphZoomedXY) {
             return ZoomMode.XY;
@@ -389,6 +394,14 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
                         } else if (this.zoomMode === ZoomMode.XY) {
                             this.props.graphZoomedXY(minX, maxX, minY, maxY);
                         }
+                    }
+                } else if (this.isSelecting && this.zoomMode === ZoomMode.NONE) {
+                    if (this.props.setSelectedLine && this.props.selectingMode === LinePlotSelectingMode.LINE) {
+                        let startX = this.getValueForPixelX(this.selectionBoxStart.x);
+                        let endX = this.getValueForPixelX(this.selectionBoxEnd.x);
+                        let startY = this.getValueForPixelY(this.selectionBoxStart.y, this.props.logY)
+                        let endY = this.getValueForPixelY(this.selectionBoxEnd.y, this.props.logY)
+                        this.props.setSelectedLine(startX, endX, startY, endY);
                     }
                 }
             }
@@ -902,6 +915,11 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
                     <Line stroke={Colors.GRAY3} key={2} x={end.x} y={start.y} points={[0, XY_ZOOM_THRESHOLD / 2.0, 0, 0, -XY_ZOOM_THRESHOLD / 2.0, 0]} strokeWidth={3} scaleX={Math.sign(delta.x)} scaleY={Math.sign(delta.y)}/>,
                     <Line stroke={Colors.GRAY3} key={3} x={start.x} y={end.y} points={[0, -XY_ZOOM_THRESHOLD / 2.0, 0, 0, XY_ZOOM_THRESHOLD / 2.0, 0]} strokeWidth={3} scaleX={Math.sign(delta.x)} scaleY={Math.sign(delta.y)}/>,
                     <Line stroke={Colors.GRAY3} key={4} x={end.x} y={end.y} points={[-XY_ZOOM_THRESHOLD / 2.0, 0, 0, 0, 0, -XY_ZOOM_THRESHOLD / 2.0]} strokeWidth={3} scaleX={Math.sign(delta.x)} scaleY={Math.sign(delta.y)}/>
+                ];
+            } else if (this.zoomMode === ZoomMode.NONE && this.props.selectingMode === LinePlotSelectingMode.LINE) {
+                // Selection rectangle consists of a filled rectangle with drag corners
+                selectionRect = [
+                    <Line stroke={Colors.GRAY3} key={1} points={[start.x, start.y, end.x, end.y]} strokeWidth={3}/>
                 ];
             }
         }

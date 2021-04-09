@@ -13,8 +13,9 @@ import {SpectralProfileWidgetStore} from "stores/widgets";
 import {Point2D, ProcessedSpectralProfile} from "models";
 import {binarySearchByX, clamp, formattedExponential, formattedNotation, toExponential, toFixed, getColorForTheme} from "utilities";
 import "./SpectralProfilerComponent.scss";
+import { FittingContinuum } from "./ProfileFittingComponent/ProfileFittingComponent";
 
-type PlotData = { values: Point2D[], smoothingValues: Point2D[], fittingValues: Point2D[], xMin: number, xMax: number, yMin: number, yMax: number, yMean: number, yRms: number, progress: number };
+type PlotData = { values: Point2D[], smoothingValues: Point2D[], fittingContinuumValues: Point2D[], fittingValues: Point2D[], xMin: number, xMax: number, yMin: number, yMax: number, yMean: number, yRms: number, progress: number };
 
 @observer
 export class SpectralProfilerComponent extends React.Component<WidgetProps> {
@@ -122,6 +123,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
             }
 
             let smoothingValues: Point2D[] = this.widgetStore.smoothingStore.getSmoothingPoint2DArray(channelValues, coordinateData.values);
+            let fittingContinuumValues: Point2D[] = this.widgetStore.fittingStore.getInitialContinuumPoint2DArray(channelValues);
             let fittingValues: Point2D[] = this.widgetStore.fittingStore.getFittingPoint2DArray(channelValues);
 
             if (yCount > 0) {
@@ -138,7 +140,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
                 yMin -= range * VERTICAL_RANGE_PADDING;
                 yMax += range * VERTICAL_RANGE_PADDING;
             }
-            return {values, smoothingValues, fittingValues, xMin, xMax, yMin, yMax, yMean, yRms, progress: coordinateData.progress};
+            return {values, smoothingValues, fittingContinuumValues, fittingValues, xMin, xMax, yMin, yMax, yMean, yRms, progress: coordinateData.progress};
         }
         return null;
     }
@@ -262,6 +264,10 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
             return LinePlotSelectingMode.HORIZONTAL;
         } else if (this.widgetStore.isSelectingMomentMaskRange) {
             return LinePlotSelectingMode.VERTICAL;
+        } else if (this.widgetStore.fittingStore.isCursorSelectingZerothOrder) {
+            return LinePlotSelectingMode.HORIZONTAL;
+        } else if (this.widgetStore.fittingStore.isCursorSelectingFirstOrder) {
+            return LinePlotSelectingMode.LINE;
         } else if (this.widgetStore.fittingStore.isCursorSelectionOn) {
             return LinePlotSelectingMode.BOX;
         }
@@ -312,9 +318,37 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
                 this.widgetStore.setSelectedChannelRange(min, max);
             } else if (this.widgetStore.isSelectingMomentMaskRange) {
                 this.widgetStore.setSelectedMaskRange(min, max);
+            } else if (this.widgetStore.fittingStore.isCursorSelectingZerothOrder) {
+                if (this.plotData?.values?.length > 0) {
+                    let sum = 0;
+                    let n = 0;
+                    for (let i = 0; i < this.plotData.values.length; i++) {
+                        const value = this.plotData.values[i];
+                        if (value.x < min) {
+                            continue;
+                        } else if (value.x > max) {
+                            break;
+                        }
+                        sum = sum + value.y;
+                        n++;
+                    }
+                    this.widgetStore.fittingStore.setZerothOrderValue(sum / n);
+                }
+                this.widgetStore.fittingStore.setIsCursorSelectingZerothOrder(false);
             }
         }
     };
+
+    private setSelectedLine = (startX: number, endX: number, startY: number, endY: number) => {
+        if (isFinite(startX) && isFinite(endX) && isFinite(startY) && isFinite(endY)) {
+            if (this.widgetStore.fittingStore.isCursorSelectingFirstOrder) {
+                const slope = (endY - startY) / (endX - startX);
+                this.widgetStore.fittingStore.setZerothOrderValue(startY - slope * startX);
+                this.widgetStore.fittingStore.setFirstOrderValue(slope);
+                this.widgetStore.fittingStore.setIsCursorSelectingFirstOrder(false);
+            }
+        }
+    }
 
     private setSelectedBox = (xMin: number, xMax: number, yMin: number, yMax: number) => {
         if (isFinite(xMin) && isFinite(xMax) && isFinite(yMin) && isFinite(yMax)) {
@@ -382,6 +416,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
             setSelectedRange: this.setSelectedRange,
             isSelectingInsideBox: this.widgetStore.fittingStore.isCursorSelectionOn,
             setSelectedInsideBox: this.setSelectedBox,
+            setSelectedLine: this.setSelectedLine,
             insideBoxs: this.widgetStore.fittingStore.componentPlottingBoxs,
             zeroLineWidth: 2,
             order: 1,
@@ -438,13 +473,24 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
                 }
 
                 const fittingStore = this.widgetStore.fittingStore;
+                if (fittingStore.continuum !== FittingContinuum.NONE) {
+                    let fittingPlotProps: MultiPlotProps = {
+                        data: currentPlotData.fittingContinuumValues,
+                        type: PlotType.LINES,
+                        borderColor: getColorForTheme("auto-lime"),
+                        borderWidth: 1,
+                        pointRadius: 1,
+                        order: 0
+                    }
+                    linePlotProps.multiPlotPropsMap.set("fitting", fittingPlotProps);
+                }
                 if (fittingStore.hasResult) {
                     let fittingPlotProps: MultiPlotProps = {
                         data: currentPlotData.fittingValues,
                         type: PlotType.LINES,
                         borderColor: getColorForTheme("auto-orange"),
-                        borderWidth: smoothingStore.lineWidth,
-                        pointRadius: smoothingStore.pointRadius,
+                        borderWidth: 1,
+                        pointRadius: 1,
                         order: 0
                     }
                     linePlotProps.multiPlotPropsMap.set("fitting", fittingPlotProps);
