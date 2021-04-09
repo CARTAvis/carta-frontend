@@ -283,17 +283,21 @@ export class SpectralProfileSelectionStore {
     }
 
     @computed get isSelectingActiveRegion(): boolean {
-        return this.widgetStore.matchesSelectedRegion && this.selectedRegionIds?.length > 0 && this.selectedRegionIds[0] !== undefined && this.selectedRegionIds[0] !== RegionId.ACTIVE;
+        return this.widgetStore.matchesSelectedRegion && this.selectedRegionIds?.length === 1 && this.selectedRegionIds[0] !== undefined && this.selectedRegionIds[0] !== RegionId.ACTIVE;
     }
 
     @computed get isStatsTypeSelectionAvailable(): boolean {
-        // Check the available stats types of the selected single region
-        if ((this.activeProfileCategory === MultiProfileCategory.REGION && this.selectedRegionIds?.length === 1) ||
-            (this.activeProfileCategory !== MultiProfileCategory.REGION && this.selectedRegionIds?.length > 0)) {
+        if (this.activeProfileCategory === MultiProfileCategory.REGION) {
+            if (this.selectedRegionIds?.length === 1) {
+                const selectedRegion = this.selectedFrame.getRegion(this.selectedRegionIds[0]);
+                return selectedRegion?.isClosedRegion;
+            }
+            return true;
+        } else {
+            // Check the available stats types of the selected single region
             const selectedRegion = this.widgetStore.effectiveRegion;
             return selectedRegion?.isClosedRegion;
         }
-        return true;
     }
 
     @computed get isStatsTypeFluxDensityOnly(): boolean {
