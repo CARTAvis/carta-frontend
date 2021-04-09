@@ -457,7 +457,7 @@ export class SpectralProfileSelectionStore {
             }
         });
 
-        // Handle selected & deleted region: remove regionId in selectedRegionIds if it does not existed in region options
+        // Handle when selected region was deleted: remove regionId in selectedRegionIds if it does not existed in region options
         autorun(() => {
             if (this.activeProfileCategory === MultiProfileCategory.REGION) {
                 this.selectedRegionIds?.forEach(selectedRegionId => {
