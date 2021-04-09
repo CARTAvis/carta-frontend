@@ -22,10 +22,10 @@
             }
 
             .dropdown-button {
-                max-width: 110px;
+                width: 100px;
 
                 .overflow-text {
-                    max-width: 80px;
+                    max-width: 60px;
                     text-overflow: ellipsis;
                     overflow: hidden;
                     white-space: nowrap;

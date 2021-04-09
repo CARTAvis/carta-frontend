@@ -1,7 +1,7 @@
 import {observer} from "mobx-react";
 import * as React from "react";
 import {CARTA} from "carta-protobuf";
-import {AnchorButton, ButtonGroup, Intent, Menu, MenuItem, Popover, Position, Tooltip} from "@blueprintjs/core";
+import {AnchorButton, ButtonGroup, Icon, Intent, Menu, MenuItem, Popover, Position, Tooltip} from "@blueprintjs/core";
 import {AppStore} from "stores";
 import {MultiProfileCategory, SpectralProfileWidgetStore, SpectralProfileSelectionStore} from "stores/widgets";
 import {SpectralProfilerComponent, SpectralProfilerSettingsTabs} from "components";
@@ -19,7 +19,7 @@ class ProfileSelectionButtonComponentProps {
     itemSelected: MultiSelectItem[];
     disabled: boolean;
     disableOptions?: boolean;
-    hightlightDropDownButton?: boolean;
+    isSelectingSpecificItem?: boolean;
     tooltip: JSX.Element;
     onCategorySelect: () => void;
     onItemSelect: (item: MultiSelectItem, itemIndex: number) => void;
@@ -73,7 +73,7 @@ class ProfileSelectionButtonComponent extends React.Component<ProfileSelectionBu
                     <AnchorButton
                         text={<span className="overflow-text">{dropdownText}</span>}
                         className="dropdown-button"
-                        intent={this.props.hightlightDropDownButton ? Intent.PRIMARY : Intent.NONE}
+                        icon={this.props.isSelectingSpecificItem ? <Icon icon="lock" iconSize={10}/> : undefined}
                         rightIcon={"caret-down"}
                         disabled={this.props.disabled || this.props.disableOptions}
                     />
@@ -132,7 +132,7 @@ class ProfileSelectionComponent extends React.Component<{profileSelectionStore: 
                     itemOptions={profileSelectionStore.frameOptions}
                     itemSelected={[profileSelectionStore.selectedFrameWidgetFileId]}
                     disabled={!frame}
-                    hightlightDropDownButton={profileSelectionStore.isSelectingActiveFrame}
+                    isSelectingSpecificItem={profileSelectionStore.isSelectingActiveFrame}
                     onCategorySelect={() => {
                         profileSelectionStore.setActiveProfileCategory(
                             profileSelectionStore.activeProfileCategory !== MultiProfileCategory.IMAGE ? MultiProfileCategory.IMAGE : MultiProfileCategory.NONE
@@ -152,7 +152,7 @@ class ProfileSelectionComponent extends React.Component<{profileSelectionStore: 
                     itemOptions={profileSelectionStore.regionOptions}
                     itemSelected={profileSelectionStore.selectedRegionIds}
                     disabled={!frame}
-                    hightlightDropDownButton={profileSelectionStore.isSelectingActiveRegion}
+                    isSelectingSpecificItem={profileSelectionStore.isSelectingActiveRegion}
                     onCategorySelect={() => {
                         profileSelectionStore.setActiveProfileCategory(
                             profileSelectionStore.activeProfileCategory !== MultiProfileCategory.REGION ? MultiProfileCategory.REGION : MultiProfileCategory.NONE
