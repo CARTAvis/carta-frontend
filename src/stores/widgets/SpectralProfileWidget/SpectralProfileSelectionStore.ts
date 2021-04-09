@@ -283,7 +283,16 @@ export class SpectralProfileSelectionStore {
     }
 
     @computed get isSelectingActiveRegion(): boolean {
-        return this.widgetStore.matchesSelectedRegion && this.selectedRegionIds?.length === 1 && this.selectedRegionIds[0] !== undefined && this.selectedRegionIds[0] !== RegionId.ACTIVE;
+        const appStore = AppStore.Instance;
+        if (this.widgetStore.isEffectiveFrameEqualToActiveFrame && this.selectedRegionIds?.length === 1) {
+            const selectedRegionId = this.selectedRegionIds[0];
+            if (appStore.selectedRegion) {
+                return selectedRegionId === appStore.selectedRegion.regionId;
+            } else {
+                return selectedRegionId === RegionId.CURSOR;
+            }
+        }
+        return false;
     }
 
     @computed get isStatsTypeSelectionAvailable(): boolean {
