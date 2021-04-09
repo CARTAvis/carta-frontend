@@ -83,7 +83,7 @@ export class RenderConfigWidgetStore {
 
     @action setSettingsTabId = (val: RenderConfigSettingsTabs) => {
         this.settingsTabId = val;
-    }
+    };
 
     constructor() {
         makeObservable(this);
