@@ -383,11 +383,13 @@ export class SpectralProfileSelectionStore {
     };
 
     @action selectRegionMultiMode = (regionId: number, color: string) => {
-        if (!this.selectedRegionIds?.includes(regionId)) {
+        if (this.selectedRegionIds?.includes(regionId) && this.selectedRegionIds?.length > 1) {
+            // remove selection
+            this.removeSelectedRegionMultiMode(regionId);
+        } else if (!this.selectedRegionIds?.includes(regionId)) {
+            // add selection
             this.selectedRegionIds = [...this.selectedRegionIds, regionId].sort((a, b) => {return a - b;});
             this.widgetStore.setProfileColor(regionId, color);
-        } else if (this.selectedRegionIds?.length > 1) {
-            this.removeSelectedRegionMultiMode(regionId);
         }
     };
 
@@ -406,12 +408,14 @@ export class SpectralProfileSelectionStore {
 
     @action selectStatMultiMode = (statsType: CARTA.StatsType, color: string) => {
         if (SUPPORTED_STATISTICS_TYPES.includes(statsType)) {
-            if (!this.selectedStatsTypes.includes(statsType)) {
-                this.selectedStatsTypes = [...this.selectedStatsTypes, statsType].sort((a, b) => {return a - b;});
-                this.widgetStore.setProfileColor(statsType, color);
-            } else if (this.selectedStatsTypes.length > 1) {
+            if (this.selectedStatsTypes?.includes(statsType) && this.selectedStatsTypes?.length > 1) {
+                // remove selection
                 this.selectedStatsTypes = this.selectedStatsTypes.filter(type => type !== statsType);
                 this.widgetStore.removeProfileColor(statsType);
+            } else if (!this.selectedStatsTypes?.includes(statsType)) {
+                // add selection
+                this.selectedStatsTypes = [...this.selectedStatsTypes, statsType].sort((a, b) => {return a - b;});
+                this.widgetStore.setProfileColor(statsType, color);
             }
         }
     };
@@ -424,7 +428,12 @@ export class SpectralProfileSelectionStore {
 
     @action selectCoordinateMultiMode = (coordinate: string, color: string) => {
         if (SpectralProfileSelectionStore.ValidCoordinates.includes(coordinate)) {
-            if (!this.selectedCoordinates.includes(coordinate)) {
+            if (this.selectedCoordinates?.includes(coordinate) && this.selectedCoordinates.length > 1) {
+                // remove selection
+                this.selectedCoordinates = this.selectedCoordinates.filter(coord => coord !== coordinate);
+                this.widgetStore.removeProfileColor(coordinate);
+            } else if (!this.selectedCoordinates.includes(coordinate)) {
+                // add selection
                 this.selectedCoordinates = [...this.selectedCoordinates, coordinate].sort((a, b) => {
                     // always place z in the first element
                     if (a === 'z') {
@@ -435,9 +444,6 @@ export class SpectralProfileSelectionStore {
                     return a.charCodeAt(0) - b.charCodeAt(0);
                 });
                 this.widgetStore.setProfileColor(coordinate, color);
-            } else if (this.selectedCoordinates.length > 1) {
-                this.selectedCoordinates = this.selectedCoordinates.filter(coord => coord !== coordinate);
-                this.widgetStore.removeProfileColor(coordinate);
             }
             // this.clearXYBounds();
         }
