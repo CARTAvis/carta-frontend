@@ -28,17 +28,23 @@ export class BiasContrastSelectComponent extends React.Component<BiasContrastSel
 
     private dragMoveTimer;
 
+    private updateValues = (event: Konva.KonvaEventObject<DragEvent>) => {
+        const stage = event.target.getStage();
+        const point = stage.getPointerPosition();
+
+        const bias = clamp(point.x, 0, stage.width()) / stage.width() * (this.props.biasMax - this.props.biasMin) + this.props.biasMin;
+        const contrast = this.props.contrastMax -  clamp(point.y, 0, stage.height()) / stage.height() * (this.props.contrastMax - this.props.contrastMin);
+        this.props.setBias(bias);
+        this.props.setContrast(contrast);
+    };
+
+    private handleClick = (event: Konva.KonvaEventObject<DragEvent>) => {
+        this.updateValues(event);
+    };
+
     private handleDragMove = (event: Konva.KonvaEventObject<DragEvent>) => {
         clearTimeout(this.dragMoveTimer);
-        this.dragMoveTimer = setTimeout(() => {
-            const stage = event.target.getStage();
-            const point = stage.getPointerPosition();
-
-            const bias = clamp(point.x, 0, stage.width()) / stage.width() * (this.props.biasMax - this.props.biasMin) + this.props.biasMin;
-            const contrast = this.props.contrastMax -  clamp(point.y, 0, stage.height()) / stage.height() * (this.props.contrastMax - this.props.contrastMin);
-            this.props.setBias(bias);
-            this.props.setContrast(contrast);
-        }, DRAG_MOVE_INTERVAL);
+        this.dragMoveTimer = setTimeout(() => this.updateValues(event), DRAG_MOVE_INTERVAL);
     };
 
     private resetButton = (handleClick) => {
@@ -63,6 +69,7 @@ export class BiasContrastSelectComponent extends React.Component<BiasContrastSel
                     height={this.props.boardHeight}
                     stroke={Colors.LIGHT_GRAY1}
                     strokeWidth={4}
+                    onClick={this.handleClick}
                 />
                 <Circle
                     x={(this.props.bias - this.props.biasMin) * this.props.boardWidth / (this.props.biasMax - this.props.biasMin)}
