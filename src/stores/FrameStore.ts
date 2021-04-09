@@ -776,6 +776,7 @@ export class FrameStore {
                 this.wcsInfo = AST.copy(this.astFrameSet);
             }
         } else if (this.isUVImage) {
+            // TODO: Refactor the code to avoid redundancy between astFrameSet and astFrameSet2D
             this.astFrameSet = this.initFrame();
             const astFrameSet2D = this.initFrame2D();
             if (this.astFrameSet && astFrameSet2D) {
