@@ -450,6 +450,13 @@ export class SpectralProfileSelectionStore {
         this.selectedCoordinates = [];
         this.setActiveProfileCategory(MultiProfileCategory.NONE);
 
+        // Handle empty frame: reset
+        autorun(() => {
+            if (!this.selectedFrame) {
+                this.setActiveProfileCategory(MultiProfileCategory.NONE);
+            }
+        });
+
         // Handle selected & deleted region: remove regionId in selectedRegionIds if it does not existed in region options
         autorun(() => {
             if (this.activeProfileCategory === MultiProfileCategory.REGION) {
