@@ -1,3 +1,14 @@
-.colormap-scaling-setting {
-    height: 30px;
+.render-config-settings {
+    margin: 20px;
+
+    .bp3-form-group {
+        &:first-of-type {
+            margin-left: 0px;
+        }
+    }
+
+    .bp3-form-group .bp3-label {
+        width: 8em;
+        text-align: left;
+    }
 }

@@ -60,11 +60,18 @@ export class RenderConfigStore {
     static readonly BIAS_MAX = 1;
     static readonly CONTRAST_MIN = 0;
     static readonly CONTRAST_MAX = 2;
+    static readonly SMOOTHED_BIAS_MIN = 0;
+    static readonly SMOOTHED_BIAS_MAX = 1;
+    static readonly SMOOTHED_CONTRAST_MIN = 0;
+    static readonly SMOOTHED_CONTRAST_MAX = 1;
 
     @observable scaling: FrameScaling;
     @observable colorMapIndex: number;
-    @observable contrast: number;
     @observable bias: number;
+    @observable contrast: number;
+    @observable smoothedBias: number;
+    @observable smoothedContrast: number;
+    @observable smoothedBiasContrastMode: boolean;
     @observable gamma: number;
     @observable alpha: number;
     @observable inverted: boolean;
@@ -88,6 +95,9 @@ export class RenderConfigStore {
         this.selectedPercentile = [percentile, percentile, percentile, percentile];
         this.bias = 0;
         this.contrast = 1;
+        this.smoothedBias = 0;
+        this.smoothedContrast = 0;
+        this.smoothedBiasContrastMode = true;
         this.alpha = preference.scalingAlpha;
         this.gamma = preference.scalingGamma;
         this.scaling = preference.scaling;
@@ -127,7 +137,7 @@ export class RenderConfigStore {
     @computed get colorscaleArray() {
         const colorsForValues = getColorsForValues(this.colorMap);
         const indexArray = Array.from(Array(colorsForValues.size).keys()).map(x => this.inverted ? x / colorsForValues.size : 1 - x / colorsForValues.size);
-        const scaledAarray = indexArray.map(x => 1.0 - scaleValueInverse(1.0 - x, this.scaling, this.alpha, this.gamma, this.bias, this.contrast));
+        const scaledAarray = indexArray.map(x => 1.0 - scaleValueInverse(1.0 - x, this.scaling, this.alpha, this.gamma, this.bias, this.contrast, this.smoothedBiasContrastMode, this.smoothedBias, this.smoothedContrast));
         let rbgString = (index: number): string => (
             `rgb(${colorsForValues.color[index * 4]}, ${colorsForValues.color[index * 4 + 1]}, ${colorsForValues.color[index * 4 + 2]}, ${colorsForValues.color[index * 4 + 3]})`
         );
@@ -308,6 +318,26 @@ export class RenderConfigStore {
 
     @action resetContrast = () => {
         this.contrast = 1;
+    };
+
+    @action setSmoothedBias = (smoothedBias: number) => {
+        this.smoothedBias = smoothedBias;
+    };
+
+    @action resetSmoothedBias = () => {
+        this.smoothedBias = 0;
+    };
+
+    @action setSmoothedContrast = (smoothedContrast: number) => {
+        this.smoothedContrast = smoothedContrast;
+    };
+
+    @action resetSmoothedContrast = () => {
+        this.smoothedContrast = 0;
+    };
+
+    @action setSmoothedBiasContrastMode = (mode: boolean) => {
+        this.smoothedBiasContrastMode = mode;
     };
 
     @action setInverted = (inverted: boolean) => {

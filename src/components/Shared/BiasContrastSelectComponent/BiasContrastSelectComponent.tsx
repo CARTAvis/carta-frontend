@@ -34,8 +34,8 @@ export class BiasContrastSelectComponent extends React.Component<BiasContrastSel
             const stage = event.target.getStage();
             const point = stage.getPointerPosition();
 
-            const bias = clamp(point.x, 0, stage.width()) / stage.width() * 2 - 1;
-            const contrast = 2 -  clamp(point.y, 0, stage.height()) / stage.height() * 2;
+            const bias = clamp(point.x, 0, stage.width()) / stage.width() * (this.props.biasMax - this.props.biasMin) + this.props.biasMin;
+            const contrast = this.props.contrastMax -  clamp(point.y, 0, stage.height()) / stage.height() * (this.props.contrastMax - this.props.contrastMin);
             this.props.setBias(bias);
             this.props.setContrast(contrast);
         }, DRAG_MOVE_INTERVAL);
@@ -65,8 +65,8 @@ export class BiasContrastSelectComponent extends React.Component<BiasContrastSel
                     strokeWidth={4}
                 />
                 <Circle
-                    x={(this.props.bias + 1) * this.props.boardWidth / 2}
-                    y={(2 - this.props.contrast) * this.props.boardHeight / 2}
+                    x={(this.props.bias - this.props.biasMin) * this.props.boardWidth / (this.props.biasMax - this.props.biasMin)}
+                    y={(this.props.contrastMax - this.props.contrast) * this.props.boardHeight / (this.props.contrastMax - this.props.contrastMin)}
                     radius={5}
                     fill={Colors.GRAY3}
                     draggable={true}

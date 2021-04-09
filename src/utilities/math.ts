@@ -76,7 +76,14 @@ export function getPercentiles(histogram: CARTA.IHistogram, ranks: number[]): nu
     return calculatedPercentiles;
 }
 
-export function scaleValue(x: number, scaling: FrameScaling, alpha: number = 1000, gamma: number = 1.5, bias: number = 0, contrast: number = 1) {
+function errorFunction(x: number, c: number, x0: number) {
+    const y = Math.exp(c * (x - x0));
+    return y / (y + 1);
+}
+
+export function scaleValue(x: number, scaling: FrameScaling, alpha: number = 1000, gamma: number = 1.5, bias: number = 0, contrast: number = 1,
+    biasContrastMode: boolean = false, smoothedBias: number = 0, smoothedContrast: number = 0) {
+
     let scaleValue;
     switch (scaling) {
         case FrameScaling.SQUARE:
@@ -97,14 +104,40 @@ export function scaleValue(x: number, scaling: FrameScaling, alpha: number = 100
         default:
             scaleValue = x;
     }
-    scaleValue = clamp(scaleValue - bias, 0, 1);
-    scaleValue = clamp((scaleValue - 0.5) * contrast + 0.5, 0, 1);
+    if (biasContrastMode) {
+        const c = smoothedContrast === 0 ? 0.001 : smoothedContrast * 12;
+        const offset = errorFunction(0, c, smoothedBias);
+        let denominator = errorFunction(1, c, smoothedBias) - offset;
+        if (denominator <= 0) {
+            denominator = 0.1;
+        }
+
+        scaleValue = (errorFunction(scaleValue, c, smoothedBias) - offset) / denominator;
+    } else {
+        scaleValue = clamp(scaleValue - bias, 0, 1);
+        scaleValue = clamp((scaleValue - 0.5) * contrast + 0.5, 0, 1);
+    }
     return scaleValue;
 }
 
-export function scaleValueInverse(x: number, scaling: FrameScaling, alpha: number = 1000, gamma: number = 1.5, bias: number = 0, contrast: number = 1) {
-    let scaleValue = (x - 0.5) / contrast + 0.5;
-    scaleValue = clamp(scaleValue + bias, 0, 1);
+export function scaleValueInverse(x: number, scaling: FrameScaling, alpha: number = 1000, gamma: number = 1.5, bias: number = 0, contrast: number = 1,
+    biasContrastMode: boolean = false, smoothedBias: number = 0, smoothedContrast: number = 0) {
+
+    let scaleValue;
+    if (biasContrastMode) {
+        const c = smoothedContrast === 0 ? 0.001 : smoothedContrast * 12;
+        const offset = errorFunction(0, c, smoothedBias);
+        let denominator = errorFunction(1, c, smoothedBias) - offset;
+        if (denominator <= 0) {
+            denominator = 0.1;
+        }
+
+        scaleValue = clamp(Math.log(x * denominator + offset / (1 - x * denominator - offset)) / c + smoothedBias, 0, 1);
+    } else {
+        scaleValue = (x - 0.5) / contrast + 0.5;
+        scaleValue = clamp(scaleValue + bias, 0, 1);
+    }
+
     switch (scaling) {
         case FrameScaling.SQUARE:
             return Math.sqrt(scaleValue);
