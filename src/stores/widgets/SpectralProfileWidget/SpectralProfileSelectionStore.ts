@@ -339,26 +339,26 @@ export class SpectralProfileSelectionStore {
         widgetStore.clearProfileColors();
         // Reset region/statistics/stokes to default (only 1 item) when switching active profile category
         if (profileCategory === MultiProfileCategory.NONE || profileCategory === MultiProfileCategory.IMAGE) {
-            this.selectedRegionIds = [this.DEFAULT_REGION_ID];
+            this.selectedRegionIds = [this.DEFAULT_REGION_ID]; // TODO: should we use this.selectRegionSingleMode(RegionId.ACTIVE)?
             this.selectedStatsTypes = [this.DEFAULT_STATS_TYPE];
             this.selectedCoordinates = [this.DEFAULT_COORDINATE];
             const lineKey = profileCategory === MultiProfileCategory.NONE ? SpectralProfileWidgetStore.PRIMARY_LINE_KEY : this.selectedFrameFileId;
             widgetStore.setProfileColor(lineKey, primaryLineColor);
         } else if (profileCategory === MultiProfileCategory.REGION) {
-            // Active region option will be disabled in multi selection mode, switch to specfic region
             if (this.selectedRegionIds?.length > 0 && this.selectedRegionIds[0] === RegionId.ACTIVE) {
+                // Active region option will be disabled in multi selection mode, switch to specfic region
                 this.selectRegionSingleMode(this.effectiveRegionId);
             }
-            this.selectedStatsTypes = [this.DEFAULT_STATS_TYPE];
-            this.selectedCoordinates = [this.DEFAULT_COORDINATE];
+            this.selectStatSingleMode(this.DEFAULT_STATS_TYPE);
+            this.selectCoordinateSingleMode(this.DEFAULT_COORDINATE);
             widgetStore.setProfileColor(this.DEFAULT_REGION_ID, primaryLineColor);
         } else if (profileCategory === MultiProfileCategory.STATISTIC) {
-            this.selectedRegionIds = [this.DEFAULT_REGION_ID];
-            this.selectedCoordinates = [this.DEFAULT_COORDINATE];
+            this.selectRegionSingleMode(RegionId.ACTIVE);
+            this.selectCoordinateSingleMode(this.DEFAULT_COORDINATE);
             widgetStore.setProfileColor(this.DEFAULT_STATS_TYPE, primaryLineColor);
         } else if (profileCategory === MultiProfileCategory.STOKES) {
-            this.selectedRegionIds = [this.DEFAULT_REGION_ID];
-            this.selectedStatsTypes = [this.DEFAULT_STATS_TYPE];
+            this.selectRegionSingleMode(RegionId.ACTIVE);
+            this.selectCoordinateSingleMode(this.DEFAULT_COORDINATE);
             widgetStore.setProfileColor(this.DEFAULT_COORDINATE, primaryLineColor);
         }
     };
