@@ -213,6 +213,7 @@ export class SpectralProfileSelectionStore {
 
     @computed get frameOptions(): LineOption[] {
         let options: LineOption[] = [{value: ACTIVE_FILE_ID, label: "Active"}];
+
         const appStore = AppStore.Instance;
         const frameNameOptions = appStore.frameNames;
         if (this.activeProfileCategory === MultiProfileCategory.IMAGE) {
@@ -241,6 +242,7 @@ export class SpectralProfileSelectionStore {
 
     @computed get regionOptions(): LineOption[] {
         let options: LineOption[] = [{value: RegionId.ACTIVE, label: "Active", disabled: this.activeProfileCategory === MultiProfileCategory.REGION}];
+
         const frame = this.selectedFrame;
         if (frame?.regionSet?.regions) {
             const filteredRegions = frame.regionSet.regions.filter(r => !r.isTemporary && (r.isClosedRegion || r.regionType === CARTA.RegionType.POINT));
@@ -272,23 +274,19 @@ export class SpectralProfileSelectionStore {
         return this.widgetStore.fileId;
     }
 
-    @computed get isSelectingActiveFrame(): boolean {
-        return this.widgetStore.isEffectiveFrameEqualToActiveFrame && this.selectedFrameWidgetFileId !== ACTIVE_FILE_ID;
-    }
-
     @computed get effectiveRegionId(): number {
         return this.widgetStore.effectiveRegionId;
+    }
+
+    @computed get isSelectingActiveFrame(): boolean {
+        return this.widgetStore.isEffectiveFrameEqualToActiveFrame && this.selectedFrameWidgetFileId !== ACTIVE_FILE_ID;
     }
 
     @computed get isSelectingActiveRegion(): boolean {
         const appStore = AppStore.Instance;
         if (this.widgetStore.isEffectiveFrameEqualToActiveFrame && this.selectedRegionIds?.length === 1) {
             const selectedRegionId = this.selectedRegionIds[0];
-            if (appStore.selectedRegion) {
-                return selectedRegionId === appStore.selectedRegion.regionId;
-            } else {
-                return selectedRegionId === RegionId.CURSOR;
-            }
+            return selectedRegionId === (appStore.selectedRegion ? appStore.selectedRegion.regionId : RegionId.CURSOR);
         }
         return false;
     }
