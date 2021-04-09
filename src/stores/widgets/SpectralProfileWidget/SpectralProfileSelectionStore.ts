@@ -1,4 +1,4 @@
-import {action, computed, makeObservable, observable} from "mobx";
+import {action, autorun, computed, makeObservable, observable} from "mobx";
 import {CARTA} from "carta-protobuf";
 import {AppStore, FrameStore} from "stores";
 import {ACTIVE_FILE_ID, RegionId, SpectralProfileWidgetStore} from "stores/widgets";
@@ -212,19 +212,18 @@ export class SpectralProfileSelectionStore {
     }
 
     @computed get frameOptions(): LineOption[] {
-        let options: LineOption[] = [];
+        let options: LineOption[] = [{value: ACTIVE_FILE_ID, label: "Active"}];
         const appStore = AppStore.Instance;
         const frameNameOptions = appStore.frameNames;
         if (this.activeProfileCategory === MultiProfileCategory.IMAGE) {
             const matchedFrameIds = appStore.spatialAndSpectalMatchedFileIds;
 
-            // Handle active option
-            const isActiveMatched = matchedFrameIds?.includes(appStore.activeFrameFileId);
-            options.push({
-                value: ACTIVE_FILE_ID,
-                label: `Active${isActiveMatched ? " (matched)" : ""}`,
-                hightlight: isActiveMatched
-            });
+            // Highlight matched active option
+            if (matchedFrameIds?.includes(appStore.activeFrameFileId)) {
+                let activeOption = options.find(option => option.value === ACTIVE_FILE_ID);
+                activeOption.label = "Active (matched)";
+                activeOption.hightlight = true;
+            }
 
             frameNameOptions?.forEach(frameNameOption => {
                 const isMatched = matchedFrameIds?.length > 1 && matchedFrameIds?.includes(frameNameOption.value as number);
@@ -235,7 +234,6 @@ export class SpectralProfileSelectionStore {
                 });
             });
         } else {
-            options.push({value: ACTIVE_FILE_ID, label: "Active"});
             options = options.concat(frameNameOptions);
         }
         return options;
@@ -296,17 +294,19 @@ export class SpectralProfileSelectionStore {
     }
 
     @computed get isStatsTypeSelectionAvailable(): boolean {
-        if (this.activeProfileCategory === MultiProfileCategory.REGION) {
-            if (this.selectedRegionIds?.length === 1) {
-                const selectedRegion = this.selectedFrame.getRegion(this.selectedRegionIds[0]);
+        if (this.selectedFrame) {
+            if (this.activeProfileCategory === MultiProfileCategory.REGION) {
+                if (this.selectedRegionIds?.length === 1) {
+                    const selectedRegion = this.selectedFrame.getRegion(this.selectedRegionIds[0]);
+                    return selectedRegion?.isClosedRegion;
+                }
+                return true; // TODO: add check for the situation of all point regions
+            } else {
+                const selectedRegion = this.widgetStore.effectiveRegion;
                 return selectedRegion?.isClosedRegion;
             }
-            return true; // TODO: add check for the situation of all point regions
-        } else {
-            // Check the available stats types of the selected single region
-            const selectedRegion = this.widgetStore.effectiveRegion;
-            return selectedRegion?.isClosedRegion;
         }
+        return false;
     }
 
     @computed get isStatsTypeFluxDensityOnly(): boolean {
@@ -331,6 +331,7 @@ export class SpectralProfileSelectionStore {
         return this.activeProfileCategory === MultiProfileCategory.NONE;
     }
 
+    // TODO: sorting out this function
     @action setActiveProfileCategory = (profileCategory: MultiProfileCategory) => {
         const widgetStore = this.widgetStore;
         const primaryLineColor = widgetStore.primaryLineColor;
@@ -379,10 +380,16 @@ export class SpectralProfileSelectionStore {
     };
 
     @action selectRegionMultiMode = (regionId: number, color: string) => {
-        if (!this.selectedRegionIds.includes(regionId)) {
+        if (!this.selectedRegionIds?.includes(regionId)) {
             this.selectedRegionIds = [...this.selectedRegionIds, regionId].sort((a, b) => {return a - b;});
             this.widgetStore.setProfileColor(regionId, color);
-        } else if (this.selectedRegionIds.length > 1) {
+        } else if (this.selectedRegionIds?.length > 1) {
+            this.removeSelectedRegionMultiMode(regionId);
+        }
+    };
+
+    @action removeSelectedRegionMultiMode = (regionId: number) => {
+        if (this.selectedRegionIds?.includes(regionId)) {
             this.selectedRegionIds = this.selectedRegionIds.filter(region => region !== regionId);
             this.widgetStore.removeProfileColor(regionId);
         }
@@ -442,5 +449,25 @@ export class SpectralProfileSelectionStore {
         this.selectedStatsTypes = [];
         this.selectedCoordinates = [];
         this.setActiveProfileCategory(MultiProfileCategory.NONE);
+
+        // Handle selected & deleted region: remove regionId in selectedRegionIds if it does not existed in region options
+        autorun(() => {
+            if (this.activeProfileCategory === MultiProfileCategory.REGION) {
+                this.selectedRegionIds?.forEach(selectedRegionId => {
+                    if (!this.regionOptions?.find(regionOption => selectedRegionId === regionOption.value)) {
+                        this.removeSelectedRegionMultiMode(selectedRegionId);
+                    }
+                });
+
+                // Once selectedRegionIds becomes empty, add cursor region (active region is disabled in multi selection mode)
+                if (this.selectedRegionIds?.length === 0) {
+                    this.selectRegionMultiMode(RegionId.CURSOR, widgetStore.primaryLineColor);
+                }
+            } else {
+                if (this.selectedRegionIds?.length > 0 && !this.regionOptions?.find(regionOption => this.selectedRegionIds[0] === regionOption.value)) {
+                    this.selectRegionSingleMode(RegionId.ACTIVE);
+                }
+            }
+        });
     }
 }
