@@ -10,6 +10,9 @@ interface ShaderUniforms {
     MaxVal: WebGLUniformLocation;
     Bias: WebGLUniformLocation;
     Contrast: WebGLUniformLocation;
+    BiasContrastMode: WebGLUniformLocation;
+    SmoothedBias: WebGLUniformLocation;
+    SmoothedContrast: WebGLUniformLocation;
     Gamma: WebGLUniformLocation;
     Alpha: WebGLUniformLocation;
     ScaleType: WebGLUniformLocation;
@@ -81,6 +84,9 @@ export class TileWebGLService {
             NaNColor: this.gl.getUniformLocation(this.shaderProgram, "uNaNColor"),
             Bias: this.gl.getUniformLocation(this.shaderProgram, "uBias"),
             Contrast: this.gl.getUniformLocation(this.shaderProgram, "uContrast"),
+            BiasContrastMode: this.gl.getUniformLocation(this.shaderProgram, "uBiasContrastMode"),
+            SmoothedBias: this.gl.getUniformLocation(this.shaderProgram, "uSmoothedBias"),
+            SmoothedContrast: this.gl.getUniformLocation(this.shaderProgram, "uSmoothedContrast"),
             Gamma: this.gl.getUniformLocation(this.shaderProgram, "uGamma"),
             Alpha: this.gl.getUniformLocation(this.shaderProgram, "uAlpha"),
             ScaleType: this.gl.getUniformLocation(this.shaderProgram, "uScaleType"),
@@ -111,6 +117,9 @@ export class TileWebGLService {
         this.gl.uniform1f(this.shaderUniforms.MaxVal, 5.50);
         this.gl.uniform1f(this.shaderUniforms.Bias, 0);
         this.gl.uniform1f(this.shaderUniforms.Contrast, 1);
+        this.gl.uniform1i(this.shaderUniforms.BiasContrastMode, 1);
+        this.gl.uniform1f(this.shaderUniforms.SmoothedBias, 0);
+        this.gl.uniform1f(this.shaderUniforms.SmoothedContrast, 0);
         this.gl.uniform1f(this.shaderUniforms.Gamma, 1);
         this.gl.uniform1f(this.shaderUniforms.Alpha, 1000);
         this.gl.uniform1i(this.shaderUniforms.Inverted, 0);

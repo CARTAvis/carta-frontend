@@ -20,10 +20,13 @@ uniform int uNumCmaps;
 uniform int uCmapIndex;
 uniform int uScaleType;
 uniform int uInverted;
+uniform int uBiasContrastMode;
 uniform float uMinVal;
 uniform float uMaxVal;
 uniform float uBias;
 uniform float uContrast;
+uniform float uSmoothedBias;
+uniform float uSmoothedContrast;
 uniform float uGamma;
 uniform float uAlpha;
 uniform vec4 uNaNColor;
@@ -37,6 +40,11 @@ uniform float uTileTextureSize;
 // Some shader compilers have trouble with NaN checks, so we instead use a dummy value of -FLT_MAX
 bool isnan(float val) {
     return val <= -FLT_MAX;
+}
+
+float errorFunction(float x, float c, float x0) {
+    float y = exp(c * (x - x0));
+    return y / (y + 1.0);
 }
 
 void main(void) {
@@ -77,10 +85,22 @@ void main(void) {
         x = pow(x, uGamma);
     }
 
-    // bias mod
-    x = clamp(x - uBias, 0.0, 1.0);
-    // contrast mod
-    x = clamp((x - 0.5) * uContrast + 0.5, 0.0, 1.0);
+    if (uBiasContrastMode > 0) {
+        float c = (uSmoothedContrast == 0.0) ? 0.001 : uSmoothedContrast * 12.0;
+        float offset = errorFunction(0.0, c, uSmoothedBias);
+        float denominator = errorFunction(1.0, c, uSmoothedBias) - offset;
+        if (denominator <= 0.0) {
+            denominator = 0.1;
+        }
+
+        x = (errorFunction(x, c, uSmoothedBias) - offset) / denominator;
+    } else {
+        // bias mod
+        x = clamp(x - uBias, 0.0, 1.0);
+        // contrast mod
+        x = clamp((x - 0.5) * uContrast + 0.5, 0.0, 1.0);
+    }
+    
     // invert mod
     if (uInverted > 0) {
         x = 1.0 - x;
