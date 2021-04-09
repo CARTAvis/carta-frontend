@@ -51,7 +51,7 @@ export class ProfileFittingStore {
                     const initialBox: LinePlotInsideBoxMarker = {
                         boundary: {xMin: component.center - 0.5 * component.fwhm, xMax: component.center + 0.5 * component.fwhm, yMin: 0, yMax: component.amp},
                         color: getColorForTheme("auto-lime"),
-                        opacity: (i === this.selectedIndex) ? 0.5 : 0.3,
+                        opacity: (i === this.selectedIndex) ? 0.5 : 0.2,
                         strokeColor: (i === this.selectedIndex) ? getColorForTheme("auto-grey") : null
                     }
                     boxs.push(initialBox);

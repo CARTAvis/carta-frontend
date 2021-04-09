@@ -29,6 +29,11 @@ export class SpectralProfilerToolbarComponent extends React.Component<{ widgetSt
         AppStore.Instance.widgetsStore.createFloatingSettingsWidget(SpectralProfilerComponent.WIDGET_CONFIG.title, this.props.id, SpectralProfilerComponent.WIDGET_CONFIG.type);
     };
 
+    private fittingShortcutClick = () => {
+        this.props.widgetStore.setSettingsTabId(SpectralProfilerSettingsTabs.FITTING);
+        AppStore.Instance.widgetsStore.createFloatingSettingsWidget(SpectralProfilerComponent.WIDGET_CONFIG.title, this.props.id, SpectralProfilerComponent.WIDGET_CONFIG.type);
+    };
+
     private handleFrameChanged = (newFrame: FrameStore) => {
         if (newFrame && !newFrame.stokesInfo.includes(this.props.widgetStore.coordinate)) {
             this.props.widgetStore.setCoordinate("z");
@@ -82,6 +87,9 @@ export class SpectralProfilerToolbarComponent extends React.Component<{ widgetSt
                     <HTMLSelect className={stokesClassName} value={widgetStore.coordinate} options={profileCoordinateOptions} onChange={this.handleCoordinateChanged} disabled={!enableStokesSelect}/>
                 </FormGroup>
                 <ButtonGroup className="profile-buttons">
+                    <Tooltip content="Fitting">
+                        <AnchorButton icon="regression-chart" onClick={this.fittingShortcutClick}/>
+                    </Tooltip>
                     <Tooltip content="Smoothing">
                         <AnchorButton icon={<CustomIcon icon="smoothing"/>} onClick={this.smoothingShortcutClick}/>
                     </Tooltip>

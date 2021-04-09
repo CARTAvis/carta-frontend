@@ -1,7 +1,7 @@
 import * as React from "react";
 import {computed} from "mobx"
 import {observer} from "mobx-react";
-import {AnchorButton, FormGroup, HTMLSelect, Slider, Pre, Text, Intent} from "@blueprintjs/core";
+import {AnchorButton, FormGroup, HTMLSelect, Slider, Pre, Text, Intent, Tooltip} from "@blueprintjs/core";
 import {SafeNumericInput} from "components/Shared";
 import {ProfileFittingStore} from "stores/ProfileFittingStore"
 import {SpectralProfileWidgetStore} from "stores/widgets/SpectralProfileWidgetStore";
@@ -26,27 +26,16 @@ export enum FittingContinuum {
 @observer
 export class ProfileFittingComponent extends React.Component<{fittingStore: ProfileFittingStore, widgetStore: SpectralProfileWidgetStore}> {
 
-
     private onCenterValueChanged = (val: number) => {
         this.props.fittingStore.selectedComponent.setCenter(val);
-        this.drawSelectedComponent();
     }
 
     private onAmpValueChanged = (val: number) => {
         this.props.fittingStore.selectedComponent.setAmp(val);
-        this.drawSelectedComponent();
     }
 
     private onFwhmValueChanged = (val: number) => {
         this.props.fittingStore.selectedComponent.setFwhm(val);
-        this.drawSelectedComponent();
-    }
-    
-    private drawSelectedComponent = () => {
-        const component = this.props.fittingStore.selectedComponent;
-        if (isFinite(component.center) && isFinite(component.amp) && isFinite(component.fwhm)) {
-
-        }
     }
 
     private autoDetect = () => {
@@ -63,7 +52,7 @@ export class ProfileFittingComponent extends React.Component<{fittingStore: Prof
     }
 
     private cursorSelecting = () => {
-        this.props.fittingStore.setIsCursorSelectionOn(true);
+        this.props.fittingStore.setIsCursorSelectionOn(!this.props.fittingStore.isCursorSelectionOn);
     }
 
     private onCenterLocked = () => {
@@ -155,6 +144,16 @@ export class ProfileFittingComponent extends React.Component<{fittingStore: Prof
         return null;
     }
 
+    autoButtonTooltip = () => {
+        return(
+            <span><i>
+                Automatically detect features in the spectrum <br/>
+                and set initial guess for each component.<br/>
+                [Experimental]
+            </i></span>
+        )
+    }
+
     render() {
         const appStore = AppStore.Instance;
         const fittingStore = this.props.fittingStore;
@@ -193,20 +192,24 @@ export class ProfileFittingComponent extends React.Component<{fittingStore: Prof
                                 stepSize={1}
                                 onValueChange={val => fittingStore.setComponents(Math.round(val))}
                             />
-                            <Slider
-                                value={fittingStore.selectedIndex + 1}
-                                min={1}
-                                stepSize={1}
-                                max={fittingStore.components.length}
-                                showTrackFill={false}
-                                onChange={val => fittingStore.setSelectedIndex(val - 1)}
-                                disabled={fittingStore.components.length <= 1}
-                            />
+                            {fittingStore.components.length > 1 &&
+                                <Slider
+                                    value={fittingStore.selectedIndex + 1}
+                                    min={1}
+                                    stepSize={1}
+                                    max={fittingStore.components.length}
+                                    showTrackFill={false}
+                                    onChange={val => fittingStore.setSelectedIndex(val - 1)}
+                                    disabled={fittingStore.components.length <= 1}
+                                />
+                            }
                         </div>
                     </FormGroup>
                     <FormGroup inline={true}>
                         <FormGroup label="Auto detect" inline={true}>
-                            <AnchorButton onClick={this.autoDetect} icon="series-search"/>
+                            <Tooltip content={this.autoButtonTooltip()}>
+                                <AnchorButton onClick={this.autoDetect} icon="series-search"/>
+                            </Tooltip>
                         </FormGroup>
                         <FormGroup label="Cursor selection" inline={true}>
                             <AnchorButton onClick={this.cursorSelecting} active={fittingStore.isCursorSelectionOn} icon="select"/>
