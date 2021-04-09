@@ -292,7 +292,7 @@ export class SpectralProfileSelectionStore {
                 const selectedRegion = this.selectedFrame.getRegion(this.selectedRegionIds[0]);
                 return selectedRegion?.isClosedRegion;
             }
-            return true;
+            return true; // TODO: add check for the situation of all point regions
         } else {
             // Check the available stats types of the selected single region
             const selectedRegion = this.widgetStore.effectiveRegion;
