@@ -34,8 +34,6 @@ export class SpectralProfileSelectionStore {
     @observable selectedCoordinates: string[];
 
     private readonly widgetStore: SpectralProfileWidgetStore;
-    private readonly DEFAULT_REGION_ID: RegionId = RegionId.ACTIVE; // TODO: can this be removed?
-    private readonly DEFAULT_STATS_TYPE: CARTA.StatsType = CARTA.StatsType.Mean;
     private readonly DEFAULT_COORDINATE: string;
     private static readonly ValidCoordinates = ["z", "Iz", "Qz", "Uz", "Vz"];
 
@@ -343,7 +341,7 @@ export class SpectralProfileSelectionStore {
         if (this.selectedStatsTypes?.length === 1) {
             this.selectStatSingleMode(this.selectedStatsTypes[0]);
         } else if (this.selectedStatsTypes?.length > 1) {
-            this.selectStatSingleMode(this.DEFAULT_STATS_TYPE);
+            this.selectStatSingleMode(CARTA.StatsType.Mean);
         }
     };
 
@@ -362,13 +360,17 @@ export class SpectralProfileSelectionStore {
 
         this.activeProfileCategory = profileCategory;
         widgetStore.clearProfileColors();
-        // Reset region/statistics/stokes to default (only 1 item) when switching active profile category
-        if (profileCategory === MultiProfileCategory.NONE || profileCategory === MultiProfileCategory.IMAGE) {
-            this.selectedRegionIds = [this.DEFAULT_REGION_ID]; // TODO: should we use this.selectRegionSingleMode(RegionId.ACTIVE)?
-            this.selectedStatsTypes = [this.DEFAULT_STATS_TYPE];
-            this.selectedCoordinates = [this.DEFAULT_COORDINATE];
-            const lineKey = profileCategory === MultiProfileCategory.NONE ? SpectralProfileWidgetStore.PRIMARY_LINE_KEY : this.selectedFrameFileId;
-            widgetStore.setProfileColor(lineKey, primaryLineColor);
+        if (profileCategory === MultiProfileCategory.NONE) {
+            this.selectSingleRegionHandily();
+            this.selectSingleStatHandily();
+            this.selectSingleStokesHandily();
+            widgetStore.setProfileColor(SpectralProfileWidgetStore.PRIMARY_LINE_KEY, primaryLineColor);
+        } else if (profileCategory === MultiProfileCategory.IMAGE) {
+            // TODO: is selecting region/stat/stokes matters in multi profile mode of image?
+            this.selectSingleRegionHandily();
+            this.selectSingleStatHandily();
+            this.selectSingleStokesHandily();
+            widgetStore.setProfileColor(this.selectedFrameFileId, primaryLineColor);
         } else if (profileCategory === MultiProfileCategory.REGION) {
             this.selectSingleStatHandily();
             this.selectSingleStokesHandily();
@@ -481,20 +483,26 @@ export class SpectralProfileSelectionStore {
         }
     };
 
+    @action private init = () => {
+        this.activeProfileCategory = MultiProfileCategory.NONE;
+        this.selectedRegionIds = [RegionId.ACTIVE];
+        this.selectedStatsTypes = [CARTA.StatsType.Mean];
+        this.selectedCoordinates = [this.DEFAULT_COORDINATE];
+        const widgetStore = this.widgetStore;
+        widgetStore.clearProfileColors();
+        widgetStore.setProfileColor(SpectralProfileWidgetStore.PRIMARY_LINE_KEY, widgetStore.primaryLineColor);
+    };
+
     constructor(widgetStore: SpectralProfileWidgetStore, coordinate: string) {
         makeObservable(this);
         this.widgetStore = widgetStore;
         this.DEFAULT_COORDINATE = coordinate;
-
-        this.selectedRegionIds = [];
-        this.selectedStatsTypes = [];
-        this.selectedCoordinates = [];
-        this.setActiveProfileCategory(MultiProfileCategory.NONE);
+        this.init();
 
         // Handle empty frame: reset
         autorun(() => {
             if (!this.selectedFrame) {
-                this.setActiveProfileCategory(MultiProfileCategory.NONE);
+                this.init();
             }
         });
 
