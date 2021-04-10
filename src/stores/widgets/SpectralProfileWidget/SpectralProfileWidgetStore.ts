@@ -465,7 +465,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
     @action setProfileColor = (lineKey: LineKey, color: string) => {
         this.lineColorMap.set(lineKey, color);
         // In order to be compatible with loading/saving primary color setting in layout config
-        if (this.profileSelectionStore?.isSingleLineMode) {
+        if (this.profileSelectionStore?.isSingleProfileMode) {
             this.primaryLineColor = color;
         }
     };

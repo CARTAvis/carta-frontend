@@ -6,7 +6,7 @@ import {LineKey, LineOption, ProcessedSpectralProfile, STATISTICS_TEXT, SUPPORTE
 import {SWATCH_COLORS} from "utilities";
 
 export enum MultiProfileCategory {
-    NONE = "None", // single profile mode: allow only 1 profile displayed in widget
+    NONE = "None", // Single profile mode: allow only 1 profile displayed in widget
     IMAGE = "Image",
     REGION = "Region",
     STATISTIC = "Statistic",
@@ -81,9 +81,9 @@ export class SpectralProfileSelectionStore {
                     matchedFileIds.forEach(fileId => {
                         profileConfigs.push({
                             fileId: fileId,
-                            regionId: this.effectiveRegionId,
-                            statsType: statsType,
-                            coordinate: selectedCoordinate,
+                            regionId: this.effectiveRegionId, // TODO: what are region/stat/stokes in multi profile mode of image?
+                            statsType: statsType, // TODO: what are region/stat/stokes in multi profile mode of image?
+                            coordinate: selectedCoordinate, // TODO: what are region/stat/stokes in multi profile mode of image?
                             colorKey: fileId,
                             label: `${fileId}-${this.effectiveRegionId}-${statsType}-${selectedCoordinate}`
                         });
@@ -324,7 +324,7 @@ export class SpectralProfileSelectionStore {
         return true;
     }
 
-    @computed get isSingleLineMode(): boolean {
+    @computed get isSingleProfileMode(): boolean {
         return this.activeProfileCategory === MultiProfileCategory.NONE;
     }
 
