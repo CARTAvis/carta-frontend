@@ -4,9 +4,11 @@ import {action, autorun, computed, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 import {Colors, NonIdealState} from "@blueprintjs/core";
 import ReactResizeDetector from "react-resize-detector";
-import {LineMarker, LinePlotComponent, LinePlotComponentProps, LinePlotSelectingMode, ProfilerInfoComponent, VERTICAL_RANGE_PADDING, SmoothingType} from "components/Shared";
+import SplitPane, { Pane } from "react-split-pane";
+import {LineMarker, LinePlotComponent, LinePlotComponentProps, LinePlotSelectingMode, VERTICAL_RANGE_PADDING, SmoothingType} from "components/Shared";
 import {TickType} from "../Shared/LinePlot/PlotContainer/PlotContainerComponent";
 import {SpectralProfilerToolbarComponent} from "./SpectralProfilerToolbarComponent/SpectralProfilerToolbarComponent";
+import {SpectralProfilerInfoComponent} from "./SpectralProfilerInfoComponent/SpectralProfilerInfoComponent";
 import {WidgetProps, HelpType, AnimatorStore, WidgetsStore, AppStore, DefaultWidgetConfig} from "stores";
 import {SpectralProfileWidgetStore} from "stores/widgets";
 import {Point2D, ProcessedSpectralProfile} from "models";
@@ -38,9 +40,9 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
             id: "spectral-profiler",
             type: "spectral-profiler",
             minWidth: 780,
-            minHeight: 225,
+            minHeight: 300,
             defaultWidth: 780,
-            defaultHeight: 275,
+            defaultHeight: 300,
             title: "Z Profile: Cursor",
             isCloseable: true,
             helpType: HelpType.SPECTRAL_PROFILER
@@ -583,10 +585,20 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
                     <div className="profile-toolbar">
                         <SpectralProfilerToolbarComponent widgetStore={this.widgetStore} id={this.props.id}/>
                     </div>
-                    <div className="profile-plot">
-                        <LinePlotComponent {...linePlotProps}/>
-                    </div>
-                    <ProfilerInfoComponent info={this.genProfilerInfo()}/>
+                    <SplitPane
+                        className="body-split-pane"
+                        split="horizontal"
+                        primary={"first"}
+                        defaultSize={"80%"}
+                        minSize={"10%"}
+                    >
+                        <Pane className={"line-plot-container"}>
+                            <LinePlotComponent {...linePlotProps}/>
+                        </Pane>
+                        <Pane className={"info-container"}>
+                            <SpectralProfilerInfoComponent info={this.genProfilerInfo()}/>
+                        </Pane>
+                    </SplitPane>
                 </div>
                 <ReactResizeDetector handleWidth handleHeight onResize={this.onResize} refreshMode={"throttle"} refreshRate={33}>
                 </ReactResizeDetector>

@@ -21,13 +21,60 @@
     .profile-container {
         flex: 3 3 auto;
         min-width: 0;
+
         .profile-toolbar {
             height: 42px;
         }
 
-        .profile-plot {
-            height: calc(100% - 57px);
-            position: relative;
+        .body-split-pane {
+            height: calc(100% - 42px) !important;
+            position: inherit !important;
+            min-height: calc(100% - 42px) !important;
+
+            .Resizer {
+                background: rgba(0, 0, 0, 0);
+                opacity: 0;
+                z-index: 1;
+                -moz-box-sizing: border-box;
+                -webkit-box-sizing: border-box;
+                box-sizing: border-box;
+                -moz-background-clip: padding;
+                -webkit-background-clip: padding;
+                background-clip: padding-box;
+            }
+            .Resizer.horizontal {
+                height: 11px;
+                margin: -5px 0;
+                border-top: 5px solid rgba(255, 255, 255, 0);
+                border-bottom: 5px solid rgba(255, 255, 255, 0);
+                cursor: row-resize;
+                width: 100%;
+            }
+            .Resizer.disabled {
+                cursor: not-allowed;
+            }
+            .Resizer.disabled:hover {
+                border-color: transparent;
+            }
+
+            .Pane1  {
+                min-height: 10px !important;
+            }
+
+            .Pane2  {
+                min-height: 10px !important;
+            }
+
+            .line-plot-container {
+                overflow: auto;
+                height: 100%;
+                width: 100%;
+            }
+
+            .info-container {
+                height: 100%;
+                width: 100%;
+            }
         }
     }
 }
