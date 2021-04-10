@@ -381,13 +381,20 @@ export class SpectralProfileSelectionStore {
         const widgetStore = this.widgetStore;
         const primaryLineColor = widgetStore.primaryLineColor;
         widgetStore.clearProfileColors();
-        if (profileCategory === MultiProfileCategory.NONE) {
-            // Single selection mode
+        if (profileCategory === MultiProfileCategory.NONE) { // Single profile mode
             widgetStore.setProfileColor(SpectralProfileWidgetStore.PRIMARY_LINE_KEY, primaryLineColor);
         } else if (profileCategory === MultiProfileCategory.IMAGE) {
             // TODO: is selecting region/stat/stokes matters in multi profile mode of image?
-            // TODO: colors for multi image profiles
-            widgetStore.setProfileColor(this.selectedFrameFileId, primaryLineColor);
+            if (this.selectedFrame) {
+                const matchedFileIds = AppStore.Instance.spatialAndSpectalMatchedFileIds;
+                if (matchedFileIds?.includes(this.selectedFrameFileId)) {
+                    matchedFileIds.forEach(fileId => {
+                        widgetStore.setProfileColor(fileId, primaryLineColor); // TODO: assign different colors
+                    });
+                } else {
+                    widgetStore.setProfileColor(this.selectedFrameFileId, primaryLineColor);
+                }
+            }
         } else if (profileCategory === MultiProfileCategory.REGION) {
             if (this.selectedRegionIds?.length > 0) {
                 // Active region option will be disabled in multi selection mode, switch to specfic region
@@ -417,7 +424,6 @@ export class SpectralProfileSelectionStore {
         this.selectedRegionIds = [RegionId.ACTIVE];
         this.selectedCoordinates= [this.DEFAULT_COORDINATE];
         // TODO: in multi mode, should stokes be disabled?
-        // TODO: color for multi mode
     };
 
     @action selectRegionSingleMode = (regionId: number) => {
