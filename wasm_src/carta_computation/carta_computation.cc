@@ -302,4 +302,16 @@ void calculateCatalogColorMap(float* data, size_t dataSize, bool invert, float m
     }
 }
 
+void calculateCatalogOrientationMap(float* data, size_t N, float min, float max, float angleMin, float angleMax, int scaling, float alpha, float gamma) {
+    float columnMin = scaleValue(min, scaling, alpha, gamma);
+    float columnMax = scaleValue(max, scaling, alpha, gamma);
+    float range = columnMax - columnMin;
+    for (size_t i = 0; i < N; i++)
+    {
+        float v = clamp(*(data + i), min, max);
+        float value = scaleValue(v, scaling, alpha, gamma);
+        *(data + i) = ((value - columnMin) / range * (angleMax - angleMin) + angleMin);
+    }
+}
+
 }

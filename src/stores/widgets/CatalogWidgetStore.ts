@@ -2,7 +2,7 @@ import * as CARTACompute from "carta_computation";
 import {action, observable, makeObservable, computed, reaction} from "mobx";
 import {Colors} from "@blueprintjs/core";
 import {CatalogOverlay, CatalogStore,FrameScaling, PreferenceStore} from "stores";
-import {minMaxArray} from "utilities";
+import {minMaxArray, clamp} from "utilities";
 
 export enum CatalogPlotType {
     ImageOverlay = "Image Overlay",
@@ -28,20 +28,24 @@ export enum CatalogOverlayShape {
 
 export enum CatalogSettingsTabs {
     GLOBAL,
-    IMAGE_OVERLAY,
+    STYLING,
     COLOR,
     SIZE,
     ORIENTATION
 }
 
-export type SizeClip = "size-min" | "size-max";
+export type ValueClip = "size-min" | "size-max" | "angle-min" | "angle-max";
 
 export class CatalogWidgetStore {
     public static readonly MinOverlaySize = 1;
-    public static readonly MaxOverlaySize = 50;
+    public static readonly MaxOverlaySize = 100;
     public static readonly MaxAreaSize = 8000;
     public static readonly MinTableSeparatorPosition = 5;
     public static readonly MaxTableSeparatorPosition = 95;
+    public static readonly MinThickness = 1.5;
+    public static readonly MaxThickness = 10;
+    public static readonly MinAngle = 0;
+    public static readonly MaxAngle = 360;
 
     @observable catalogFileId: number;
     @observable headerTableColumnWidts: Array<number>;
@@ -57,6 +61,7 @@ export class CatalogWidgetStore {
     @observable tableSeparatorPosition: string;
     @observable highlightColor: string;
     @observable settingsTabId: CatalogSettingsTabs;
+    @observable thickness: number;
     // size map
     @observable sizeMapColumn: string;
     @observable sizeColumnMax: {default: number, clipd: number};
@@ -72,6 +77,13 @@ export class CatalogWidgetStore {
     @observable colorMap: string;
     @observable colorScalingType: FrameScaling;
     @observable invertedColorMap: boolean;
+    // orientation
+    @observable orientationMapColumn: string;
+    @observable orientationMax: {default: number, clipd: number};
+    @observable orientationMin: {default: number, clipd: number};
+    @observable orientationScalingType: FrameScaling;
+    @observable angleMax: number;
+    @observable angleMin: number;
 
     constructor(catalogFileId: number) {
         makeObservable(this);
@@ -88,6 +100,7 @@ export class CatalogWidgetStore {
         this.tableSeparatorPosition = PreferenceStore.Instance.catalogTableSeparatorPosition;
         this.highlightColor = Colors.RED2;
         this.settingsTabId = CatalogSettingsTabs.GLOBAL;
+        this.thickness = 2.0;
         this.sizeMapColumn = CatalogOverlay.NONE;
         this.sizeArea = false;
         this.sizeScalingType = FrameScaling.LINEAR;
@@ -101,6 +114,12 @@ export class CatalogWidgetStore {
         this.colorMap = "jet";
         this.colorScalingType = FrameScaling.LINEAR;
         this.invertedColorMap = false;
+        this.orientationMapColumn = CatalogOverlay.NONE;
+        this.orientationMax = {default: undefined, clipd: undefined};
+        this.orientationMin = {default: undefined, clipd: undefined};
+        this.orientationScalingType = FrameScaling.LINEAR;
+        this.angleMax = CatalogWidgetStore.MaxAngle;
+        this.angleMin = CatalogWidgetStore.MinAngle;
 
         reaction(()=>this.sizeMapData, (column) => {
             const result = minMaxArray(column);
@@ -118,12 +137,18 @@ export class CatalogWidgetStore {
             this.setColorColumnMax(isFinite(result.maxVal)? result.maxVal : 0, "default");
         });
 
-        // reaction(()=>this.colorMapData, (res) => {
-        //     CatalogStore.Instance.updateCatalogColorMap(this.catalogFileId, res);
-        // });
-
         reaction(()=>this.colorArray(), (color) => {
             CatalogStore.Instance.updateCatalogColorMap(this.catalogFileId, color);
+        });
+
+        reaction(()=>this.orientationMapData, (column) => {
+            const result = minMaxArray(column);
+            this.setOrientationMin(isFinite(result.minVal)? result.minVal : 0, "default");
+            this.setOrientationMax(isFinite(result.maxVal)? result.maxVal : 0, "default");
+        });
+
+        reaction(()=>this.orientationArray(), (orientation) => {
+            CatalogStore.Instance.updateCatalogOrientationMap(this.catalogFileId, orientation);
         });
     }
 
@@ -143,7 +168,58 @@ export class CatalogWidgetStore {
         this.colorMap = "jet";
         this.colorScalingType = FrameScaling.LINEAR;
         this.invertedColorMap = false;
+        // orientation
+        this.orientationMapColumn = CatalogOverlay.NONE;
+        this.orientationMax = {default: undefined, clipd: undefined};
+        this.orientationMin = {default: undefined, clipd: undefined};
+        this.orientationScalingType = FrameScaling.LINEAR;
+        this.angleMax = CatalogWidgetStore.MaxAngle;
+        this.angleMin = CatalogWidgetStore.MinAngle;
     }
+
+    @action setAngleMax(max: number) {
+        this.angleMax = clamp(max, CatalogWidgetStore.MinAngle, CatalogWidgetStore.MaxAngle);
+    }
+
+    @action setAngleMin(min: number) {
+        this.angleMin = clamp(min, CatalogWidgetStore.MinAngle, CatalogWidgetStore.MaxAngle);
+    }
+
+    @action setOrientationMax(val: number, type: "default" | "clipd") {
+        if (type === "default") {
+            this.orientationMax.default = val; 
+            this.orientationMax.clipd = val;  
+        } else {
+            this.orientationMax.clipd = val;
+        }
+    }
+
+    @action setOrientationMin(val: number, type: "default" | "clipd") {
+        if (type === "default") {
+            this.orientationMin.default = val;
+            this.orientationMin.clipd = val; 
+        } else {
+            this.orientationMin.clipd = val;
+        }
+    }
+
+    @action resetOrientationValue(type: "min" | "max") {
+        if (type === "min") {
+            this.orientationMin.clipd = this.orientationMin.default;
+        } else {
+            this.orientationMax.clipd = this.orientationMax.default;
+        }
+    }
+
+    @action setOrientationMapColumn(coloum: string) {
+        this.orientationMapColumn = coloum;
+        this.orientationMin = {default: undefined, clipd: undefined};
+        this.orientationMax = {default: undefined, clipd: undefined};
+    }
+
+    @action setOrientationScalingType(type: FrameScaling) {
+        this.orientationScalingType = type;
+    }    
 
     @action setColorMapDirection(val: boolean) {
         this.invertedColorMap = val;
@@ -302,6 +378,35 @@ export class CatalogWidgetStore {
         this.settingsTabId = tabId;
     }
 
+    @action setThickness(val: number){
+        this.thickness = clamp(val, CatalogWidgetStore.MinThickness, CatalogWidgetStore.MaxThickness);
+    }
+
+    @computed get orientationMapData(): Float32Array {
+        const catalogProfileStore = CatalogStore.Instance.catalogProfileStores.get(this.catalogFileId);
+        if (!this.disableOrientationMap && catalogProfileStore) {
+            let column = catalogProfileStore.get1DPlotData(this.orientationMapColumn).wcsData;
+            return column? Float32Array.from(column) : new Float32Array(0);   
+        } else {
+            return new Float32Array(0);
+        }
+    }
+
+    orientationArray(): Float32Array {
+        let column = this.orientationMapData;
+        if (!this.disableOrientationMap && column?.length && this.orientationMin.clipd !== undefined && this.orientationMax.clipd !== undefined) {
+            return CARTACompute.CalculateCatalogOrientation(
+                column,
+                this.orientationMin.clipd, 
+                this.orientationMax.clipd, 
+                this.angleMin, 
+                this.angleMax,
+                this.orientationScalingType
+            );
+        } 
+        return new Float32Array(0);
+    }
+
     @computed get colorMapData(): Float32Array {
         const catalogProfileStore = CatalogStore.Instance.catalogProfileStores.get(this.catalogFileId);
         if (!this.disableColorMap && catalogProfileStore) {
@@ -381,6 +486,10 @@ export class CatalogWidgetStore {
         return this.colorMapColumn === CatalogOverlay.NONE;
     }
 
+    @computed get disableOrientationMap(): boolean {
+        return this.orientationMapColumn === CatalogOverlay.NONE;
+    }
+
     public init = (widgetSettings): void => {
         if (!widgetSettings) {
             return;
@@ -397,6 +506,7 @@ export class CatalogWidgetStore {
         this.catalogColor = widgetSettings.catalogColor;
         this.highlightColor = widgetSettings.highlightColor;
         this.tableSeparatorPosition = widgetSettings.tableSeparatorPosition;
+        this.thickness = widgetSettings.thickness;
     };
 
     public toConfig = () => {
@@ -406,7 +516,8 @@ export class CatalogWidgetStore {
             highlightColor: this.highlightColor,
             catalogSize: this.catalogSize,
             catalogShape: this.catalogShape,
-            tableSeparatorPosition: this.tableSeparatorPosition
+            tableSeparatorPosition: this.tableSeparatorPosition,
+            thickness: this.thickness
         };
     };
 }

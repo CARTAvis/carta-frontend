@@ -33,29 +33,25 @@ precision highp float;
 #define POWER 4
 #define GAMMA 5
 
+uniform sampler2D uPositionTexture;
+uniform sampler2D uSizeTexture;
+uniform sampler2D uColorTexture;
+uniform sampler2D uOrientationTexture;
+uniform sampler2D uSelectedSourceTexture;
+
 uniform vec2 uFrameViewMin;
 uniform vec2 uFrameViewMax;
 uniform float uFeatherWidth;
-uniform sampler2D uPositionTexture;
-uniform sampler2D uOABTexture;
 uniform bool uSmapEnabled;
 uniform float uPointSize;
 uniform highp int uShapeType;
 uniform bool uAreaMode;
-uniform float uSelectedSizeOffset;
-
-// color map
-uniform bool uCmapEnabled;
-// uniform int uCscaleType;
-// uniform bool uInverted;
-// uniform float uCminVal;
-// uniform float uCmaxVal;
-// uniform float uGamma;
-// uniform float uAlpha;
+uniform bool uShowSelectedSource;
 
 out float v_colour;
 out float v_pointSize;
 out float v_orientation;
+out float v_selected;
 
 
 vec4 getValueByIndexFromTexture(sampler2D texture, int index) {
@@ -112,30 +108,17 @@ bool isNaN(float val) {
     return val != val;
 }
 
-// float scaleValue(float x) {
-//     switch (uCscaleType)
-//     {
-//     case SQUARE:
-//         return x * x;
-//     case SQRT:
-//         return sqrt(x);
-//     case LOG:
-//         return clamp(log(uAlpha * x + 1.0) / log(uAlpha), 0.0, 1.0);
-//     case POWER:
-//         return (pow(uAlpha, x) - 1.0) / uAlpha;
-//     case GAMMA:
-//         return pow(x, uGamma);
-//     default:
-//         return x;
-//     }
-// }
-
 void main() {
     vec4 data = getValueByIndexFromTexture(uPositionTexture, gl_VertexID);
-    vec4 oab = getValueByIndexFromTexture(uPositionTexture, gl_VertexID);
+    vec4 orientation = getValueByIndexFromTexture(uOrientationTexture, gl_VertexID);
+    vec4 s = getValueByIndexFromTexture(uSizeTexture, gl_VertexID);
+    vec4 color = getValueByIndexFromTexture(uColorTexture, gl_VertexID);
+    vec4 selectedSource = getValueByIndexFromTexture(uSelectedSourceTexture, gl_VertexID);
     vec2 pos = data.xy;
-    float size = data.z;
-    v_colour = data.w;
+    float size = s.x;
+    v_colour = color.x;
+    v_orientation = orientation.x;
+    v_selected = selectedSource.x;
     
     if(isNaN(size)) {
         size = uPointSize;
@@ -144,9 +127,6 @@ void main() {
     gl_Position = vec4(imageToGL(pos), 0, 1);
     if (uSmapEnabled) {
         v_pointSize = size;
-        if(uSelectedSizeOffset > 0.0) {
-            v_pointSize += uSelectedSizeOffset;
-        }
     } else {
         v_pointSize = uPointSize;
     }
@@ -155,18 +135,11 @@ void main() {
         v_pointSize = getSquareSideByArea(v_pointSize);
     }
 
-    gl_PointSize = v_pointSize + uFeatherWidth;
-    // v_colour = vec4(hsv2rgb(vec3(cmapVal, 0.5, 1.0)), 1.0);
-    // v_colour = 0.0;
-    // if(uCmapEnabled) {
-    //     float columnMin = scaleValue(uCminVal);
-    //     float columnMax = scaleValue(uCmaxVal);
-    //     float mapVal = clamp(cmapVal, uCminVal, uCmaxVal);
-    //     float cValue = (scaleValue(mapVal) - columnMin) / (columnMax - columnMin);
-    //     if(uInverted) {
-    //         cValue = 1.0 - cValue;
-    //     }
-    //     v_colour = cValue;
-    // }
-
+    if (uShowSelectedSource) {
+        if (selectedSource.x == 1.0) {
+            gl_PointSize = v_pointSize + uFeatherWidth;
+        }
+    } else {
+        gl_PointSize = v_pointSize + uFeatherWidth;
+    }
 }

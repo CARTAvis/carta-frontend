@@ -9,6 +9,7 @@ const generateVertexData = Module.cwrap("generateVertexData", "number", ["number
 const calculateCatalogSizeArea = Module.cwrap("calculateCatalogSizeArea", null, ["number", "number", "number", "number", "number", "number", "number", "number", "number", "number"]);
 const calculateCatalogSizeDiameter = Module.cwrap("calculateCatalogSizeDiameter", null, ["number", "number", "number", "number", "number", "number", "number", "number", "number", "number"]);
 const calculateCatalogColorMap = Module.cwrap("calculateCatalogColorMap", null, ["number", "number", "number", "number", "number", "number", "number"]);
+const calculateCatalogOrientationMap = Module.cwrap("calculateCatalogOrientationMap", null, ["number", "number", "number", "number", "number", "number", "number", "number", "number"]);
 
 const VertexDataElements = 8;
 
@@ -108,7 +109,6 @@ Module.GenerateVertexData = (sourceVertices: Float32Array, indexOffsets: Int32Ar
 
 Module.CalculateCatalogSize = (data: Float32Array, min: number, max: number, sizeMin: number, sizeMax: number, scaling: number, area: boolean, devicePixelRatio: number, alpha: number = 1000, gamma: number = 1.5): Float32Array => {
     const N = data.length;
-    // const src = new Float32Array(data);
     const bytes_per_element = data.BYTES_PER_ELEMENT;
     const dataOnWasmHeap = Module._malloc(N * bytes_per_element);
 
@@ -127,12 +127,24 @@ Module.CalculateCatalogSize = (data: Float32Array, min: number, max: number, siz
 
 Module.CalculateCatalogColor = (data: Float32Array, invert: boolean, min: number, max: number, scaling: number, alpha: number = 1000, gamma: number = 1.5): Float32Array => {
     const N = data.length;
-    // const src = new Float32Array(data);
     const bytes_per_element = data.BYTES_PER_ELEMENT;
     const dataOnWasmHeap = Module._malloc(N * bytes_per_element);
     Module.HEAPF32.set(data, dataOnWasmHeap / bytes_per_element);
 
     calculateCatalogColorMap(dataOnWasmHeap, N, invert, min, max, scaling, alpha, gamma);
+
+    const float32 = new Float32Array(Module.HEAPF32.buffer, dataOnWasmHeap, N);
+    Module._free(dataOnWasmHeap);
+    return float32;
+}
+
+Module.CalculateCatalogOrientation = (data: Float32Array, min: number, max: number, angleMin: number, angleMax: number, scaling: number, alpha: number = 1000, gamma: number = 1.5): Float32Array => {
+    const N = data.length;
+    const bytes_per_element = data.BYTES_PER_ELEMENT;
+    const dataOnWasmHeap = Module._malloc(N * bytes_per_element);
+    Module.HEAPF32.set(data, dataOnWasmHeap / bytes_per_element);
+
+    calculateCatalogOrientationMap(dataOnWasmHeap, N, min, max, angleMin, angleMax, scaling, alpha, gamma);
 
     const float32 = new Float32Array(Module.HEAPF32.buffer, dataOnWasmHeap, N);
     Module._free(dataOnWasmHeap);

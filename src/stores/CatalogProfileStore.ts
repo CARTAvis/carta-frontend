@@ -356,20 +356,17 @@ export class CatalogProfileStore {
         if (coordsArray?.dataPoints?.length) {
             let selectedX = [];
             let selectedY = [];
-            const selectedData = new Float32Array(pointIndices.length * 4)
+            const selectedData = new Float32Array(coordsArray.dataPoints.length / 2);
             for (let index = 0; index < pointIndices.length; index++) {
-                const pointIndex = pointIndices[index];
-                const x = coordsArray.dataPoints[pointIndex * 4];
-                const y = coordsArray.dataPoints[pointIndex * 4 + 1];
-                const size = coordsArray.dataPoints[pointIndex * 4 + 2];
+                const i = pointIndices[index];
+                const x = coordsArray.dataPoints[i * 2];
+                const y = coordsArray.dataPoints[i * 2 + 1];
+
                 if (!this.isInfinite(x) && !this.isInfinite(y)) {
                     selectedX.push(x);
                     selectedY.push(y);
                 }
-                selectedData[index * 4] = x;
-                selectedData[index * 4 + 1] = y;
-                selectedData[index * 4 + 2] = size;
-                // selectedData[index * 4 + 3] = 0.5; 
+                selectedData[i] = 1.0;
             }
             CatalogStore.Instance.updateSelectedPoints(this.catalogFileId, selectedData);
 

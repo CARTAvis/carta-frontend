@@ -1,7 +1,7 @@
 import * as React from "react";
 import {action, autorun, computed, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
-import {AnchorButton, FormGroup, Intent, NonIdealState, Switch, Tooltip, MenuItem, PopoverPosition, Button} from "@blueprintjs/core";
+import {AnchorButton, ButtonGroup, FormGroup, Intent, NonIdealState, Switch, Tooltip, MenuItem, PopoverPosition, Button} from "@blueprintjs/core";
 import {Cell, Column, Regions, RenderMode, SelectionModes, Table} from "@blueprintjs/table";
 import * as ScrollUtils from "../../../node_modules/@blueprintjs/table/lib/esm/common/internal/scrollUtils";
 import {Select, IItemRendererProps, ItemPredicate} from "@blueprintjs/select";
@@ -11,7 +11,7 @@ import FuzzySearch from "fuzzy-search";
 import {CARTA} from "carta-protobuf";
 import {TableComponent, TableComponentProps, TableType, ClearableNumericInputComponent} from "components/Shared";
 import {AppStore, CatalogStore, CatalogProfileStore, CatalogOverlay, CatalogUpdateMode, CatalogSystemType, DefaultWidgetConfig, HelpType, WidgetProps, WidgetsStore, PreferenceStore, PreferenceKeys} from "stores";
-import {CatalogWidgetStore, CatalogPlotWidgetStoreProps, CatalogPlotType} from "stores/widgets";
+import {CatalogWidgetStore, CatalogPlotWidgetStoreProps, CatalogPlotType, CatalogSettingsTabs} from "stores/widgets";
 import {toFixed} from "utilities";
 import {ProcessedColumnData} from "models";
 import "./CatalogOverlayComponent.scss";
@@ -584,7 +584,15 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
                     const wcs = frame.validWcs ? frame.wcsInfo : 0;
                     const catalogFileId = this.catalogFileId;
                     catalogStore.clearImageCoordsData(catalogFileId);
-                    catalogStore.updateCatalogData(catalogFileId, imageCoords.wcsX, imageCoords.wcsY, wcs, imageCoords.xHeaderInfo.units, imageCoords.yHeaderInfo.units, profileStore.catalogCoordinateSystem.system);
+                    catalogStore.updateCatalogData(
+                        catalogFileId, 
+                        imageCoords.wcsX, 
+                        imageCoords.wcsY, 
+                        wcs, 
+                        imageCoords.xHeaderInfo.units, 
+                        imageCoords.yHeaderInfo.units, 
+                        profileStore.catalogCoordinateSystem.system
+                    );
                     profileStore.setSelectedPointIndices(profileStore.selectedPointIndices, false);
                     catalogWidgetStore.setCatalogTableAutoScroll(false);
                 }
@@ -716,14 +724,9 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         }
     }
 
-    private smoothingShortcutClick = () => {
-        // this.widgetStore.setSettingsTabId(Catal.SMOOTHING);
-        // AppStore.Instance.widgetsStore.createFloatingSettingsWidget(SpectralProfilerComponent.WIDGET_CONFIG.title, this.props.id, SpectralProfilerComponent.WIDGET_CONFIG.type);
-    };
-
-    private momentsShortcutClick = () => {
-        // this.props.widgetStore.setSettingsTabId(SpectralProfilerSettingsTabs.MOMENTS);
-        // AppStore.Instance.widgetsStore.createFloatingSettingsWidget(SpectralProfilerComponent.WIDGET_CONFIG.title, this.props.id, SpectralProfilerComponent.WIDGET_CONFIG.type);
+    private shortcutoOnClick = (type: CatalogSettingsTabs) => {
+        this.widgetStore.setSettingsTabId(type);
+        AppStore.Instance.widgetsStore.createFloatingSettingsWidget(CatalogOverlayComponent.WIDGET_CONFIG.title, this.props.id, CatalogOverlayComponent.WIDGET_CONFIG.type);
     };
 
     public render() {
@@ -807,7 +810,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         const isImageOverlay = catalogWidgetStore.catalogPlotType === CatalogPlotType.ImageOverlay;
         const isHistogram = catalogWidgetStore.catalogPlotType === CatalogPlotType.Histogram;
         const disable = profileStore.loadOntoImage;
-        const disabledMap = catalogFileIds.length <= 0 || disable;
+        // const disabledMap = catalogFileIds.length <= 0 || disable;
 
         let footerDropdownClass = "footer-action-large";
         if (this.width <= 600 ) {
@@ -846,17 +849,11 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
                         </Select>
                     </FormGroup>
 
-                    {/* <ButtonGroup className="catalog-map-buttons">
-                        <Tooltip content="Size map">
-                            <AnchorButton onClick={this.smoothingShortcutClick}>Size</AnchorButton>
-                        </Tooltip>
-                        <Tooltip content="Color map">
-                            <AnchorButton onClick={this.momentsShortcutClick}>Color</AnchorButton>
-                        </Tooltip>
-                        <Tooltip content="Color map">
-                            <AnchorButton onClick={this.momentsShortcutClick}>Orientation</AnchorButton>
-                        </Tooltip>
-                    </ButtonGroup> */}
+                    <ButtonGroup className="catalog-map-buttons">
+                        <AnchorButton onClick={() => this.shortcutoOnClick(CatalogSettingsTabs.SIZE)}>Size</AnchorButton>
+                        <AnchorButton onClick={() => this.shortcutoOnClick(CatalogSettingsTabs.COLOR)}>Color</AnchorButton>
+                        <AnchorButton onClick={() => this.shortcutoOnClick(CatalogSettingsTabs.ORIENTATION)}>Orientation</AnchorButton>
+                    </ButtonGroup>
                 </div>
                 <SplitPane
                     className="catalog-table"
@@ -932,18 +929,6 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
                                 </Select>
                             </FormGroup>
 
-                            {/* <ButtonGroup className="catalog-map-buttons">
-                                <Tooltip content="Size map">
-                                    <AnchorButton onClick={this.smoothingShortcutClick}>S</AnchorButton>
-                                </Tooltip>
-                                <Tooltip content="Color map">
-                                    <AnchorButton onClick={this.momentsShortcutClick}>C</AnchorButton>
-                                </Tooltip>
-                                <Tooltip content="Color map">
-                                    <AnchorButton onClick={this.momentsShortcutClick}>O</AnchorButton>
-                                </Tooltip>
-                            </ButtonGroup> */}
-
                             <ClearableNumericInputComponent
                                 className={"catalog-max-rows"}
                                 label="Max Rows"
@@ -957,7 +942,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
                     </div>
                     <div className="bp3-dialog-footer">
                         <div className="bp3-dialog-footer-actions">
-                            <FormGroup inline={true} label="Size" disabled={disabledMap}>
+                            {/* <FormGroup inline={true} label="Size" disabled={disabledMap}>
                                 <Select
                                     items={this.axisOption}
                                     activeItem={null}
@@ -988,7 +973,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
                                 >
                                     <Button text={catalogWidgetStore.colorMapColumn} disabled={disabledMap} rightIcon="double-caret-vertical"/>
                                 </Select>
-                            </FormGroup>
+                            </FormGroup> */}
                             <AnchorButton
                                 intent={Intent.PRIMARY}
                                 text="Update"

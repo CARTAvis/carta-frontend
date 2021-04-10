@@ -258,7 +258,7 @@ export function closestCatalogIndexToCursor(cursor: Point2D, points: Float32Arra
     let minDistanceSquared = Number.MAX_VALUE;
     let minIndex = 0;
     for (let index = 0; index < numberVertexs; index++) {
-        const distance = pointDistanceSquared(cursor, {x: points[index * 4], y: points[index * 4 + 1]});
+        const distance = pointDistanceSquared(cursor, {x: points[index * 2], y: points[index * 2 + 1]});
         if (distance < minDistanceSquared) {
             minDistanceSquared = distance;
             minIndex = index;

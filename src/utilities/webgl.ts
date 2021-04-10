@@ -110,7 +110,6 @@ export function initWebGL2(){
 
 export function createTextureFromArray(gl: WebGL2RenderingContext, data: Float32Array, texIndex: number = GL2.TEXTURE0, components: number = 1):WebGLTexture {
     const numPoints = data.length / components;
-
     if (data.length % components !== 0) {
         console.error(`Invalid data size (${data.length} for number of components ${components}`);
         return null;

@@ -1336,7 +1336,15 @@ export class AppStore {
                 if (xColumn && yColumn) {
                     const coords = catalogProfileStore.get2DPlotData(xColumn, yColumn, catalogData);
                     const wcs = this.activeFrame.validWcs ? this.activeFrame.wcsInfo : 0;
-                    this.catalogStore.updateCatalogData(catalogFileId, coords.wcsX, coords.wcsY, wcs, coords.xHeaderInfo.units, coords.yHeaderInfo.units, catalogProfileStore.catalogCoordinateSystem.system);
+                    this.catalogStore.updateCatalogData(
+                        catalogFileId, 
+                        coords.wcsX, 
+                        coords.wcsY, 
+                        wcs, 
+                        coords.xHeaderInfo.units, 
+                        coords.yHeaderInfo.units, 
+                        catalogProfileStore.catalogCoordinateSystem.system
+                    );
                 }
             }
         }

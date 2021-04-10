@@ -1,12 +1,11 @@
 import * as AST from "ast_wrapper";
 import {action, observable, ObservableMap, computed,makeObservable} from "mobx";
 import {AppStore, CatalogProfileStore, CatalogSystemType, WidgetsStore} from "stores";
-import {CatalogWebGLService} from "services";
+import {CatalogWebGLService, CatalogTextureType} from "services";
 import {CatalogWidgetStore} from "stores/widgets";
 
 type CatalogOverlayCoords = {
     dataPoints: Float32Array,
-    selectedDataPoints: Float32Array,
     displayed: boolean;
 };
 
@@ -49,7 +48,6 @@ export class CatalogStore {
     @action addCatalog(fileId: number) {
         this.catalogGLData.set(fileId, {
             dataPoints:new Float32Array(0),
-            selectedDataPoints: new Float32Array(0),
             displayed: true
         });
     }
@@ -58,86 +56,54 @@ export class CatalogStore {
         const catalog = this.catalogGLData.get(fileId);
         if (catalog) {
             const dataSize = catalog.dataPoints.length;
-            const catalogWidgetStore = this.getCatalogWidgetStore(fileId);
-            const sizeArray = catalogWidgetStore.sizeArray;
-            let dataPoints = new Float32Array(dataSize + xData.length * 4);
+            let dataPoints = new Float32Array(dataSize + xData.length * 2);
             dataPoints.set(catalog.dataPoints);
-
             switch (catalogFrame) {
                 case CatalogSystemType.Pixel0:
                     for (let i = 0; i < xData.length; i++) {
-                        dataPoints[dataSize + i * 4] = xData[i];
-                        dataPoints[dataSize + i * 4 + 1] = yData[i];
-                        if (!catalogWidgetStore.disableSizeMap && sizeArray.length === xData.length) {
-                            dataPoints[dataSize + i * 4 + 2] = catalogWidgetStore.sizeArray[i] * devicePixelRatio;
-                        }
-                        // dataPoints[dataSize + i * 4 + 2] = 10;
-                        // dataPoints[dataSize + i * 4 + 3] = 0.5;
+                        dataPoints[dataSize + i * 2] = xData[i];
+                        dataPoints[dataSize + i * 2 + 1] = yData[i];
                     }
                     break;
                 case CatalogSystemType.Pixel1:
                     for (let i = 0; i < xData.length; i++) {
-                        dataPoints[dataSize + i * 4] = xData[i] - 1;
-                        dataPoints[dataSize + i * 4 + 1] = yData[i] - 1;
-                        if (!catalogWidgetStore.disableSizeMap && sizeArray.length === xData.length) {
-                            dataPoints[dataSize + i * 4 + 2] = catalogWidgetStore.sizeArray[i] * devicePixelRatio;
-                        }
-                        // dataPoints[dataSize + i * 4 + 2] = 10;
-                        // dataPoints[dataSize + i * 4 + 3] = 0.5;
+                        dataPoints[dataSize + i * 2] = xData[i] - 1;
+                        dataPoints[dataSize + i * 2 + 1] = yData[i] - 1;
                     }
                     break;
                 default:
                     const pixelData = CatalogStore.TransformCatalogData(xData, yData, wcsInfo, xUnit, yUnit, catalogFrame);
                     for (let i = 0; i < pixelData.xImageCoords.length; i++) {
-                        dataPoints[dataSize + i * 4] = pixelData.xImageCoords[i];
-                        dataPoints[dataSize + i * 4 + 1] = pixelData.yImageCoords[i];
-                        if (!catalogWidgetStore.disableSizeMap && sizeArray.length === xData.length) {
-                            dataPoints[dataSize + i * 4 + 2] = catalogWidgetStore.sizeArray[i] * devicePixelRatio;
-                        }
-                        // dataPoints[dataSize + i * 4 + 2] = 10;
-                        // dataPoints[dataSize + i * 4 + 3] = 0.5;
+                        dataPoints[dataSize + i * 2] = pixelData.xImageCoords[i];
+                        dataPoints[dataSize + i * 2 + 1] = pixelData.yImageCoords[i];
                     }
                     break;
             }
             catalog.dataPoints = dataPoints;
-            CatalogWebGLService.Instance.updateDataTexture(fileId, dataPoints);
+            CatalogWebGLService.Instance.updateDataTexture(fileId, dataPoints, CatalogTextureType.Position);
         }
     }
 
     @action updateCatalogSizeMap(fileId: number, sizeData: Float32Array) {
-        const catalog = this.catalogGLData.get(fileId);
-        if (catalog?.dataPoints?.length && sizeData?.length) {
-            for (let i = 0; i < sizeData.length; i++) {
-               catalog.dataPoints[i * 4 + 2] = sizeData[i];
-            }
-            CatalogWebGLService.Instance.updateDataTexture(fileId, catalog.dataPoints);
-        }
-        const selectedDataIndices = this.catalogProfileStores.get(fileId)?.selectedPointIndices;
-        if (selectedDataIndices?.length) {
-            for (let i = 0; i < selectedDataIndices.length; i++) {
-                const j = selectedDataIndices[i];
-                catalog.selectedDataPoints[i * 4 + 2] = sizeData[j];
-            }
-            CatalogWebGLService.Instance.updateSelectedDataTexture(fileId, catalog.selectedDataPoints);   
+        if (sizeData.length) {
+            CatalogWebGLService.Instance.updateDataTexture(fileId, sizeData, CatalogTextureType.Size);
         }
     }
 
     @action updateCatalogColorMap(fileId: number, color: Float32Array) {
-        const catalog = this.catalogGLData.get(fileId);
-        if (catalog?.dataPoints?.length && color?.length) {
-            for (let i = 0; i < color.length; i++) {
-               catalog.dataPoints[i * 4 + 3] = color[i];
-            }
-            CatalogWebGLService.Instance.updateDataTexture(fileId, catalog.dataPoints);
+        if (color.length) {
+            CatalogWebGLService.Instance.updateDataTexture(fileId, color, CatalogTextureType.Color);
         }
     }
 
-    @action updateSelectedPoints(fileId: number, selectedData: Float32Array) {
-        const catalog = this.catalogGLData.get(fileId);
-        if (catalog) {
-            catalog.selectedDataPoints = selectedData;
+    @action updateCatalogOrientationMap(fileId: number, orientation: Float32Array) {
+        if (orientation.length) {
+            CatalogWebGLService.Instance.updateDataTexture(fileId, orientation, CatalogTextureType.Orientation);
         }
-        CatalogWebGLService.Instance.updateSelectedDataTexture(fileId, selectedData);
+    }
+
+    @action updateSelectedPoints(fileId: number, selectedSource: Float32Array) {
+        CatalogWebGLService.Instance.updateDataTexture(fileId, selectedSource, CatalogTextureType.SelectedSource);
     }
 
     @action clearImageCoordsData(fileId: number) {

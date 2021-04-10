@@ -5,7 +5,7 @@ import * as React from "react";
 import {AnchorButton, Button, ButtonGroup, FormGroup, Icon, MenuItem, PopoverPosition, Switch, Tab, Tabs, Tooltip} from "@blueprintjs/core";
 import {Select, IItemRendererProps, ItemPredicate} from "@blueprintjs/select";
 import {AppStore, CatalogStore, CatalogProfileStore, CatalogOverlay, DefaultWidgetConfig, HelpType, PreferenceStore, PreferenceKeys, WidgetProps, WidgetsStore} from "stores";
-import {CatalogOverlayShape, CatalogWidgetStore, CatalogSettingsTabs, SizeClip} from "stores/widgets";
+import {CatalogOverlayShape, CatalogWidgetStore, CatalogSettingsTabs, ValueClip} from "stores/widgets";
 import {ColorResult} from "react-color";
 import {CatalogOverlayComponent} from "components";
 import {ColorPickerComponent, ClearableNumericInputComponent, ColormapComponent, SafeNumericInput, ScalingSelectComponent} from "components/Shared";
@@ -37,7 +37,7 @@ const triangleDown = <path d="M 2 2 L 14 2 L 8 13 Z"/>;
 const rhomb = <path d="M 8 14 L 14 8 L 8 2 L 2 8 Z"/>;
 const hexagon2 = <path d="M 12.33 5.5 L 12.33 10.5 L 8 13 L 3.67 10.5 L 3.67 5.5 L 8 3 Z"/>;
 const hexagon = <path d="M 3 8 L 5.5 3.67 L 10.5 3.67 L 13 8 L 10.5 12.33 L 5.5 12.33 Z"/>;
-const ellipse = <ellipse cx="8" cy="8" rx="7" ry="4"/>;
+const ellipse = <ellipse cx="8" cy="8" rx="4" ry="7"/>;
 const KEYCODE_ENTER = 13;
 
 @observer
@@ -64,7 +64,7 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
             type: "floating-settings",
             minWidth: 350,
             minHeight: 225,
-            defaultWidth: 375,
+            defaultWidth: 400,
             defaultHeight: 475,
             title: "catalog-overlay-settings",
             isCloseable: true,
@@ -149,6 +149,7 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
         const disabledOverlayPanel = catalogFileIds.length <= 0;
         const disableSizeMap = disabledOverlayPanel || widgetStore.disableSizeMap;
         const disableColorMap = disabledOverlayPanel || widgetStore.disableColorMap;
+        const disableOrientationMap = disabledOverlayPanel || widgetStore.disableOrientationMap;
 
         const globalPanel = (
             <div className="panel-container">
@@ -207,13 +208,25 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
                 <FormGroup  inline={true} label="Size" labelInfo="(px)"  disabled={disabledOverlayPanel}>
                     <SafeNumericInput
                         className="catalog-size-overlay"
-                        placeholder="Catalog Size"
+                        placeholder="Size"
                         disabled={disabledOverlayPanel || !widgetStore.disableSizeMap}
                         min={CatalogWidgetStore.MinOverlaySize}
                         max={CatalogWidgetStore.MaxOverlaySize}
                         value={widgetStore.catalogSize}
                         stepSize={1}
                         onValueChange={(value: number) => widgetStore.setCatalogSize(value)}
+                    />
+                </FormGroup>
+                <FormGroup  inline={true} label="Thickness" disabled={disabledOverlayPanel}>
+                    <SafeNumericInput
+                        className="catalog-size-overlay"
+                        placeholder="Thickness"
+                        disabled={disabledOverlayPanel}
+                        min={CatalogWidgetStore.MinThickness}
+                        max={CatalogWidgetStore.MaxThickness}
+                        value={widgetStore.thickness}
+                        stepSize={0.5}
+                        onValueChange={(value: number) => widgetStore.setThickness(value)}
                     />
                 </FormGroup>
             </div>
@@ -259,8 +272,8 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
                         disabled={disableSizeMap}
                         buttonPosition={"none"}
                         value={widgetStore.pointSizebyType.min}
-                        onBlur={(ev) => this.handleSizeChange(ev, "size-min")}
-                        onKeyDown={(ev) => this.handleSizeChange(ev, "size-min")}
+                        onBlur={(ev) => this.handleChange(ev, "size-min")}
+                        onKeyDown={(ev) => this.handleChange(ev, "size-min")}
                     />
                 </FormGroup>
                 <FormGroup  inline={true} label="Size Max" labelInfo="(px)"  disabled={disableSizeMap}>
@@ -272,8 +285,8 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
                             disabled={disableSizeMap}
                             buttonPosition={"none"}
                             value={widgetStore.pointSizebyType.max}
-                            onBlur={(ev) => this.handleSizeChange(ev, "size-max")}
-                            onKeyDown={(ev) => this.handleSizeChange(ev, "size-max")}
+                            onBlur={(ev) => this.handleChange(ev, "size-max")}
+                            onKeyDown={(ev) => this.handleChange(ev, "size-max")}
                         />
                     </Tooltip>
                 </FormGroup>
@@ -360,6 +373,77 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
             </div>
         );
 
+        const orientationMap = (
+            <div className="panel-container">
+                <FormGroup inline={true} label="Column" disabled={disabledOverlayPanel}>
+                    <Select
+                        items={this.axisOption}
+                        activeItem={null}
+                        onItemSelect={(columnName) => widgetStore.setOrientationMapColumn(columnName)}
+                        itemRenderer={this.renderAxisPopOver}
+                        disabled={disabledOverlayPanel}
+                        popoverProps={{popoverClassName: "catalog-select", minimal: true , position: PopoverPosition.AUTO_END}}
+                        filterable={true}
+                        noResults={noResults}
+                        itemPredicate={this.filterColumn}
+                        resetOnSelect={true}
+                    >
+                        <Button text={widgetStore.orientationMapColumn} disabled={disabledOverlayPanel} rightIcon="double-caret-vertical"/>
+                    </Select>
+                </FormGroup>
+                <FormGroup label={"Scaling"} inline={true}>
+                    <ScalingSelectComponent
+                        selectedItem={widgetStore.orientationScalingType}
+                        onItemSelect={(type) => widgetStore.setOrientationScalingType(type)}
+                    />
+                </FormGroup>
+                <FormGroup  inline={true} label="Orientation Min" labelInfo="(degree)"  disabled={disableOrientationMap}>
+                    <SafeNumericInput
+                        allowNumericCharactersOnly={true}
+                        asyncControl={true}
+                        placeholder="Min"
+                        disabled={disableOrientationMap}
+                        buttonPosition={"none"}
+                        value={widgetStore.angleMin}
+                        onBlur={(ev) => this.handleChange(ev, "angle-min")}
+                        onKeyDown={(ev) => this.handleChange(ev, "angle-min")}
+                    />
+                </FormGroup>
+                <FormGroup  inline={true} label="Orientation Max" labelInfo="(degree)"  disabled={disableOrientationMap}>
+                    <SafeNumericInput
+                        allowNumericCharactersOnly={true}
+                        asyncControl={true}
+                        placeholder="Max"
+                        disabled={disableOrientationMap}
+                        buttonPosition={"none"}
+                        value={widgetStore.angleMax}
+                        onBlur={(ev) => this.handleChange(ev, "angle-max")}
+                        onKeyDown={(ev) => this.handleChange(ev, "angle-max")}
+                    />
+                </FormGroup>
+                <ClearableNumericInputComponent
+                    label="Clip Min"
+                    max={widgetStore.orientationMax.clipd}
+                    integerOnly={false}
+                    value={widgetStore.orientationMin.clipd}
+                    onValueChanged={val => widgetStore.setOrientationMin(val, "clipd")}
+                    onValueCleared={() => widgetStore.resetOrientationValue("min")}
+                    displayExponential={true}
+                    disabled={disableOrientationMap}
+                />
+                <ClearableNumericInputComponent
+                    label="Clip Max"
+                    min={widgetStore.orientationMin.clipd}
+                    integerOnly={false}
+                    value={widgetStore.orientationMax.clipd}
+                    onValueChanged={val => widgetStore.setOrientationMax(val, "clipd")}
+                    onValueCleared={() => widgetStore.resetOrientationValue("max")}
+                    displayExponential={true}
+                    disabled={disableOrientationMap}
+                />
+            </div>
+        );
+
         let className = "catalog-settings";
         if (appStore.darkTheme) {
             className += " bp3-dark";
@@ -388,9 +472,10 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
                     onChange={(tabId) => this.handleSelectedTabChanged(tabId)}
                 >
                     <Tab id={CatalogSettingsTabs.GLOBAL} title="Global" panel={globalPanel}/>
-                    <Tab id={CatalogSettingsTabs.IMAGE_OVERLAY} title="Image Overlay" panel={overlayPanel} disabled={disabledOverlayPanel}/>
+                    <Tab id={CatalogSettingsTabs.STYLING} title="Styling" panel={overlayPanel} disabled={disabledOverlayPanel}/>
                     <Tab id={CatalogSettingsTabs.SIZE} title="Size" panel={sizeMap} disabled={disabledOverlayPanel}/>
                     <Tab id={CatalogSettingsTabs.COLOR} title="Color" panel={colorMap} disabled={disabledOverlayPanel}/>
+                    <Tab id={CatalogSettingsTabs.ORIENTATION} title="Orientation" panel={orientationMap} disabled={disabledOverlayPanel}/>
                 </Tabs>
             </div>
         );
@@ -411,7 +496,7 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
         return fileSearcher.search(query).length > 0;
     };
 
-    private handleSizeChange = (ev, type: SizeClip) => {
+    private handleChange = (ev, type: ValueClip) => {
         if (ev.type === "keydown" && ev.keyCode !== KEYCODE_ENTER) {
             return;
         }
@@ -432,6 +517,20 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
                     widgetStore.setSizeMax(val);
                 } else {
                     ev.currentTarget.value = pointSize.max.toString();
+                }
+                break;
+            case "angle-min":
+                if (isFinite(val) && val < widgetStore.angleMax) {
+                    widgetStore.setAngleMin(val);
+                } else {
+                    ev.currentTarget.value = widgetStore.angleMin.toString();
+                }
+                break;
+            case "angle-max":
+                if (isFinite(val) && val > widgetStore.angleMin) {
+                    widgetStore.setAngleMax(val);
+                } else {
+                    ev.currentTarget.value = widgetStore.angleMax.toString();
                 }
                 break;
             default:
