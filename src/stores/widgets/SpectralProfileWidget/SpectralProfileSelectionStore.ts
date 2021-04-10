@@ -327,6 +327,16 @@ export class SpectralProfileSelectionStore {
         return this.activeProfileCategory === MultiProfileCategory.NONE;
     }
 
+    @action private switchToSingleModeHandily = (profileCategory: MultiProfileCategory) => {
+        if (profileCategory === MultiProfileCategory.REGION) {
+            this.selectSingleRegionHandily();
+        } else if (profileCategory === MultiProfileCategory.STATISTIC) {
+            this.selectSingleStatHandily();
+        } else if (profileCategory === MultiProfileCategory.STOKES) {
+            this.selectSingleStokesHandily();
+        }
+    };
+
     // Keeps the only 1 selected, or keeps active region
     @action private selectSingleRegionHandily = () => {
         if (this.selectedRegionIds?.length === 1) {
@@ -355,41 +365,42 @@ export class SpectralProfileSelectionStore {
     };
 
     @action setActiveProfileCategory = (profileCategory: MultiProfileCategory) => {
+        if (profileCategory === this.activeProfileCategory) {
+            return;
+        }
+
+        // Switch previously selected category to single selection mode from multi selection mode
+        if (this.activeProfileCategory === MultiProfileCategory.REGION ||
+            this.activeProfileCategory === MultiProfileCategory.STATISTIC ||
+            this.activeProfileCategory === MultiProfileCategory.STOKES) {
+            this.switchToSingleModeHandily(this.activeProfileCategory);
+        }
+        this.activeProfileCategory = profileCategory;
+
+        // Set profile color
         const widgetStore = this.widgetStore;
         const primaryLineColor = widgetStore.primaryLineColor;
-
-        this.activeProfileCategory = profileCategory;
         widgetStore.clearProfileColors();
         if (profileCategory === MultiProfileCategory.NONE) {
-            this.selectSingleRegionHandily();
-            this.selectSingleStatHandily();
-            this.selectSingleStokesHandily();
+            // Single selection mode
             widgetStore.setProfileColor(SpectralProfileWidgetStore.PRIMARY_LINE_KEY, primaryLineColor);
         } else if (profileCategory === MultiProfileCategory.IMAGE) {
             // TODO: is selecting region/stat/stokes matters in multi profile mode of image?
-            this.selectSingleRegionHandily();
-            this.selectSingleStatHandily();
-            this.selectSingleStokesHandily();
+            // TODO: colors for multi image profiles
             widgetStore.setProfileColor(this.selectedFrameFileId, primaryLineColor);
         } else if (profileCategory === MultiProfileCategory.REGION) {
-            this.selectSingleStatHandily();
-            this.selectSingleStokesHandily();
             if (this.selectedRegionIds?.length > 0) {
+                // Active region option will be disabled in multi selection mode, switch to specfic region
                 if (this.selectedRegionIds[0] === RegionId.ACTIVE) {
-                    // Active region option will be disabled in multi selection mode, switch to specfic region
                     this.selectRegionSingleMode(this.effectiveRegionId);
                 }
                 widgetStore.setProfileColor(this.selectedRegionIds[0], primaryLineColor);
             }
         } else if (profileCategory === MultiProfileCategory.STATISTIC) {
-            this.selectSingleRegionHandily();
-            this.selectSingleStokesHandily();
             if (this.selectedStatsTypes?.length > 0) {
                 widgetStore.setProfileColor(this.selectedStatsTypes[0], primaryLineColor);
             }
         } else if (profileCategory === MultiProfileCategory.STOKES) {
-            this.selectSingleRegionHandily();
-            this.selectSingleStatHandily();
             if (this.selectedCoordinates?.length > 0) {
                 widgetStore.setProfileColor(this.selectedCoordinates[0], primaryLineColor);
             }
