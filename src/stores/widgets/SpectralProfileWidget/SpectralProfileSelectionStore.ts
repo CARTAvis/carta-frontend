@@ -329,7 +329,33 @@ export class SpectralProfileSelectionStore {
         return this.activeProfileCategory === MultiProfileCategory.NONE;
     }
 
-    // TODO: sorting out this function
+    // Keeps the only 1 selected, or keeps active region
+    @action private selectSingleRegionHandily = () => {
+        if (this.selectedRegionIds?.length === 1) {
+            this.selectRegionSingleMode(this.selectedRegionIds[0]);
+        } else if (this.selectedRegionIds?.length > 1) {
+            this.selectRegionSingleMode(RegionId.ACTIVE);
+        }
+    };
+
+    // Keeps the only 1 selected, or keeps default stats type
+    @action private selectSingleStatHandily = () => {
+        if (this.selectedStatsTypes?.length === 1) {
+            this.selectStatSingleMode(this.selectedStatsTypes[0]);
+        } else if (this.selectedStatsTypes?.length > 1) {
+            this.selectStatSingleMode(this.DEFAULT_STATS_TYPE);
+        }
+    };
+
+    // Keeps the only 1 selected, or keeps default stokes
+    @action private selectSingleStokesHandily = () => {
+        if (this.selectedCoordinates?.length === 1) {
+            this.selectCoordinateSingleMode(this.selectedCoordinates[0]);
+        } else if (this.selectedCoordinates?.length > 1) {
+            this.selectCoordinateSingleMode(this.DEFAULT_COORDINATE);
+        }
+    };
+
     @action setActiveProfileCategory = (profileCategory: MultiProfileCategory) => {
         const widgetStore = this.widgetStore;
         const primaryLineColor = widgetStore.primaryLineColor;
@@ -344,21 +370,27 @@ export class SpectralProfileSelectionStore {
             const lineKey = profileCategory === MultiProfileCategory.NONE ? SpectralProfileWidgetStore.PRIMARY_LINE_KEY : this.selectedFrameFileId;
             widgetStore.setProfileColor(lineKey, primaryLineColor);
         } else if (profileCategory === MultiProfileCategory.REGION) {
-            if (this.selectedRegionIds?.length > 0 && this.selectedRegionIds[0] === RegionId.ACTIVE) {
-                // Active region option will be disabled in multi selection mode, switch to specfic region
-                this.selectRegionSingleMode(this.effectiveRegionId);
+            this.selectSingleStatHandily();
+            this.selectSingleStokesHandily();
+            if (this.selectedRegionIds?.length > 0) {
+                if (this.selectedRegionIds[0] === RegionId.ACTIVE) {
+                    // Active region option will be disabled in multi selection mode, switch to specfic region
+                    this.selectRegionSingleMode(this.effectiveRegionId);
+                }
+                widgetStore.setProfileColor(this.selectedRegionIds[0], primaryLineColor);
             }
-            this.selectStatSingleMode(this.DEFAULT_STATS_TYPE);
-            this.selectCoordinateSingleMode(this.DEFAULT_COORDINATE);
-            widgetStore.setProfileColor(this.DEFAULT_REGION_ID, primaryLineColor);
         } else if (profileCategory === MultiProfileCategory.STATISTIC) {
-            this.selectRegionSingleMode(RegionId.ACTIVE);
-            this.selectCoordinateSingleMode(this.DEFAULT_COORDINATE);
-            widgetStore.setProfileColor(this.DEFAULT_STATS_TYPE, primaryLineColor);
+            this.selectSingleRegionHandily();
+            this.selectSingleStokesHandily();
+            if (this.selectedStatsTypes?.length > 0) {
+                widgetStore.setProfileColor(this.selectedStatsTypes[0], primaryLineColor);
+            }
         } else if (profileCategory === MultiProfileCategory.STOKES) {
-            this.selectRegionSingleMode(RegionId.ACTIVE);
-            this.selectCoordinateSingleMode(this.DEFAULT_COORDINATE);
-            widgetStore.setProfileColor(this.DEFAULT_COORDINATE, primaryLineColor);
+            this.selectSingleRegionHandily();
+            this.selectSingleStatHandily();
+            if (this.selectedCoordinates?.length > 0) {
+                widgetStore.setProfileColor(this.selectedCoordinates[0], primaryLineColor);
+            }
         }
     };
 
@@ -382,14 +414,15 @@ export class SpectralProfileSelectionStore {
         this.selectedRegionIds = [regionId];
     };
 
-    @action selectRegionMultiMode = (regionId: number, color: string) => {
-        if (this.selectedRegionIds?.includes(regionId) && this.selectedRegionIds?.length > 1) {
-            // remove selection
-            this.removeSelectedRegionMultiMode(regionId);
-        } else if (!this.selectedRegionIds?.includes(regionId)) {
-            // add selection
-            this.selectedRegionIds = [...this.selectedRegionIds, regionId].sort((a, b) => {return a - b;});
-            this.widgetStore.setProfileColor(regionId, color);
+    @action selectStatSingleMode = (statsType: CARTA.StatsType) => {
+        if (SUPPORTED_STATISTICS_TYPES.includes(statsType)) {
+            this.selectedStatsTypes = [statsType];
+        }
+    };
+
+    @action selectCoordinateSingleMode = (coordinate: string) => {
+        if (SpectralProfileSelectionStore.ValidCoordinates.includes(coordinate)) {
+            this.selectedCoordinates = [coordinate];
         }
     };
 
@@ -400,9 +433,14 @@ export class SpectralProfileSelectionStore {
         }
     };
 
-    @action selectStatSingleMode = (statsType: CARTA.StatsType) => {
-        if (SUPPORTED_STATISTICS_TYPES.includes(statsType)) {
-            this.selectedStatsTypes = [statsType];
+    @action selectRegionMultiMode = (regionId: number, color: string) => {
+        if (this.selectedRegionIds?.includes(regionId) && this.selectedRegionIds?.length > 1) {
+            // remove selection
+            this.removeSelectedRegionMultiMode(regionId);
+        } else if (!this.selectedRegionIds?.includes(regionId)) {
+            // add selection
+            this.selectedRegionIds = [...this.selectedRegionIds, regionId].sort((a, b) => {return a - b;});
+            this.widgetStore.setProfileColor(regionId, color);
         }
     };
 
@@ -417,12 +455,6 @@ export class SpectralProfileSelectionStore {
                 this.selectedStatsTypes = [...this.selectedStatsTypes, statsType].sort((a, b) => {return a - b;});
                 this.widgetStore.setProfileColor(statsType, color);
             }
-        }
-    };
-
-    @action selectCoordinateSingleMode = (coordinate: string) => {
-        if (SpectralProfileSelectionStore.ValidCoordinates.includes(coordinate)) {
-            this.selectedCoordinates = [coordinate];
         }
     };
 
