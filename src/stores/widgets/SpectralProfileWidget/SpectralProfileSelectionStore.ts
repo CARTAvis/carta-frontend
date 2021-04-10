@@ -3,6 +3,7 @@ import {CARTA} from "carta-protobuf";
 import {AppStore, FrameStore} from "stores";
 import {ACTIVE_FILE_ID, RegionId, SpectralProfileWidgetStore} from "stores/widgets";
 import {LineKey, LineOption, ProcessedSpectralProfile, STATISTICS_TEXT, SUPPORTED_STATISTICS_TYPES} from "models";
+import {SWATCH_COLORS} from "utilities";
 
 export enum MultiProfileCategory {
     NONE = "None", // single profile mode: allow only 1 profile displayed in widget
@@ -388,8 +389,9 @@ export class SpectralProfileSelectionStore {
             if (this.selectedFrame) {
                 const matchedFileIds = AppStore.Instance.spatialAndSpectalMatchedFileIds;
                 if (matchedFileIds?.includes(this.selectedFrameFileId)) {
-                    matchedFileIds.forEach(fileId => {
-                        widgetStore.setProfileColor(fileId, primaryLineColor); // TODO: assign different colors
+                    matchedFileIds.forEach((fileId, index) => {
+                        const color = index === 0 ? primaryLineColor : SWATCH_COLORS[index % SWATCH_COLORS.length];
+                        widgetStore.setProfileColor(fileId, color);
                     });
                 } else {
                     widgetStore.setProfileColor(this.selectedFrameFileId, primaryLineColor);
