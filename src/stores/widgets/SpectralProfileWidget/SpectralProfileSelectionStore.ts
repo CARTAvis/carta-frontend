@@ -502,7 +502,7 @@ export class SpectralProfileSelectionStore {
         }
     };
 
-    @action private init = () => {
+    @action private initSingleMode = () => {
         this.activeProfileCategory = MultiProfileCategory.NONE;
         this.selectedRegionIds = [RegionId.ACTIVE];
         this.selectedStatsTypes = [CARTA.StatsType.Mean];
@@ -516,12 +516,12 @@ export class SpectralProfileSelectionStore {
         makeObservable(this);
         this.widgetStore = widgetStore;
         this.DEFAULT_COORDINATE = coordinate;
-        this.init();
+        this.initSingleMode();
 
         // Handle empty frame: reset
         autorun(() => {
             if (!this.selectedFrame) {
-                this.init();
+                this.initSingleMode();
             }
         });
 
