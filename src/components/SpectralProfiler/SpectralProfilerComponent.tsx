@@ -613,8 +613,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
                         </Pane>
                     </SplitPane>
                 </div>
-                <ReactResizeDetector handleWidth handleHeight onResize={this.onResize} refreshMode={"throttle"} refreshRate={33}>
-                </ReactResizeDetector>
+                <ReactResizeDetector handleWidth handleHeight onResize={this.onResize} refreshMode={"throttle"} refreshRate={33}/>
             </div>
         );
     }
