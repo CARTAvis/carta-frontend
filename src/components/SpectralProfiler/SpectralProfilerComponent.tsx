@@ -8,7 +8,7 @@ import SplitPane, { Pane } from "react-split-pane";
 import {LineMarker, LinePlotComponent, LinePlotComponentProps, LinePlotSelectingMode, VERTICAL_RANGE_PADDING, SmoothingType} from "components/Shared";
 import {TickType} from "../Shared/LinePlot/PlotContainer/PlotContainerComponent";
 import {SpectralProfilerToolbarComponent} from "./SpectralProfilerToolbarComponent/SpectralProfilerToolbarComponent";
-import {SpectralProfilerInfoComponent} from "./SpectralProfilerInfoComponent/SpectralProfilerInfoComponent";
+import {ProfileInfo, SpectralProfilerInfoComponent} from "./SpectralProfilerInfoComponent/SpectralProfilerInfoComponent";
 import {WidgetProps, HelpType, AnimatorStore, WidgetsStore, AppStore, DefaultWidgetConfig} from "stores";
 import {SpectralProfileWidgetStore} from "stores/widgets";
 import {Point2D, ProcessedSpectralProfile} from "models";
@@ -257,36 +257,49 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
         return headerString;
     };
 
-    private genProfilerInfo = (): string[] => {
-        let profilerInfo: string[] = [];
-        const frame = this.widgetStore.effectiveFrame;
-        // TODO: support multiple profiles
-        if (frame && this.plotData?.numProfiles === 1) {
-            const cursorX = {
-                profiler: this.widgetStore.cursorX,
-                image: this.currentChannelValue,
-                unit: frame.spectralUnitStr
-            };
-            const data = this.plotData.data[0];
-            const nearest = binarySearchByX(data, this.widgetStore.isMouseMoveIntoLinePlots ? cursorX.profiler : cursorX.image);
-            let cursorString = "";
-            if (nearest && nearest.point && nearest.index >= 0 && nearest.index < data.length) {
-                let floatXStr = "";
-                const diffLeft = nearest.index - 1 >= 0 ? Math.abs(nearest.point.x - data[nearest.index - 1].x) : 0;
-                if (diffLeft > 0 && diffLeft < 1e-6) {
-                    floatXStr = formattedNotation(nearest.point.x);
-                } else if (diffLeft >= 1e-6  && diffLeft < 1e-3) {
-                    floatXStr = toFixed(nearest.point.x, 6);
-                } else {
-                    floatXStr = toFixed(nearest.point.x, 3);
-                }
-                const xLabel = cursorX.unit === "Channel" ? "Channel " + toFixed(nearest.point.x) : floatXStr + " " + cursorX.unit;
-                cursorString =  "(" + xLabel + ", " + toExponential(nearest.point.y, 2) + ")";
+    private genCursoInfoString = (data: Point2D[], cursorXValue: number, cursorXUnit: string, label: string): string => {
+        let cursorInfoString = undefined;
+        const nearest = binarySearchByX(data, cursorXValue);
+        if (nearest?.point && nearest?.index >= 0 && nearest?.index < data?.length) {
+            let floatXStr = "";
+            const diffLeft = nearest.index - 1 >= 0 ? Math.abs(nearest.point.x - data[nearest.index - 1].x) : 0;
+            if (diffLeft > 0 && diffLeft < 1e-6) {
+                floatXStr = formattedNotation(nearest.point.x);
+            } else if (diffLeft >= 1e-6  && diffLeft < 1e-3) {
+                floatXStr = toFixed(nearest.point.x, 6);
+            } else {
+                floatXStr = toFixed(nearest.point.x, 3);
             }
+            const xLabel = cursorXUnit === "Channel" ? `Channel ${toFixed(nearest.point.x)}` : `${floatXStr} ${cursorXUnit}`;
+            cursorInfoString = `(${xLabel}, ${toExponential(nearest.point.y, 2)})`;
+        }
+        return `${label}: ${cursorInfoString}`;
+    };
 
-            profilerInfo.push(`${this.widgetStore.isMouseMoveIntoLinePlots ? "Cursor:" : "Data:"} ${cursorString}`);
-            if (this.isMeanRmsVisible) {
-                profilerInfo.push(`Mean/RMS: ${formattedExponential(this.plotData.yMean, 2) + " / " + formattedExponential(this.plotData.yRms, 2)}`);
+    private genProfilerInfo = (): ProfileInfo[] => {
+        let profilerInfo: ProfileInfo[] = [];
+        const frame = this.widgetStore.effectiveFrame;
+        if (frame && this.plotData?.numProfiles > 0 && this.plotData?.data) {
+            const isCursorInsideLinePlots = this.widgetStore.isMouseMoveIntoLinePlots;
+            const label = isCursorInsideLinePlots ? "Cursor" : "Data";
+            const cursorXValue = isCursorInsideLinePlots ? this.widgetStore.cursorX : this.currentChannelValue;
+            const cursorXUnit = frame.spectralUnitStr;
+
+            if (this.plotData.numProfiles === 1) { // Single profile, Mean/RMS is available
+                const data = this.plotData.data[0];
+                const cursorInfoString = this.genCursoInfoString(data, cursorXValue, cursorXUnit, label);
+                profilerInfo.push({
+                    infoString: this.isMeanRmsVisible ? `${cursorInfoString}, Mean/RMS: ${formattedExponential(this.plotData.yMean, 2)}/${formattedExponential(this.plotData.yRms, 2)}` : cursorInfoString
+                });
+            } else {
+                for (let i = 0; i < this.plotData.numProfiles; i++) {
+                    const data = this.plotData.data[i];
+                    const cursorInfoString = this.genCursoInfoString(data, cursorXValue, cursorXUnit, label);
+                    profilerInfo.push({
+                        color: this.plotData.colors?.[i],
+                        infoString: `${this.plotData.labels?.[i]} ${cursorInfoString}`
+                    });
+                }
             }
         }
         return profilerInfo;
@@ -596,7 +609,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
                             <LinePlotComponent {...linePlotProps}/>
                         </Pane>
                         <Pane className={"info-container"}>
-                            <SpectralProfilerInfoComponent info={this.genProfilerInfo()}/>
+                            <SpectralProfilerInfoComponent profileInfo={this.genProfilerInfo()}/>
                         </Pane>
                     </SplitPane>
                 </div>
