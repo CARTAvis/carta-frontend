@@ -502,7 +502,6 @@ export class SpectralProfileSelectionStore {
                 });
                 this.widgetStore.setProfileColor(coordinate, color);
             }
-            // this.clearXYBounds();
         }
     };
 
