@@ -9,7 +9,7 @@ export interface ProfileInfo {
 export const SpectralProfilerInfoComponent: React.FC<{profileInfo: ProfileInfo[]}> = (props) => {
     return (
         <div className="spectral-profiler-info">
-            {props.profileInfo?.map(info => {
+            {props.profileInfo?.map((info, index) => {
                 const colorSquare = info?.color ?
                     <div
                         style={{
@@ -20,7 +20,7 @@ export const SpectralProfilerInfoComponent: React.FC<{profileInfo: ProfileInfo[]
                         }}
                     /> : null;
                 return (
-                    <div className="profile-legend">
+                    <div key={index} className="profile-legend">
                         {colorSquare}
                         <pre>{info.infoString}</pre>
                     </div>

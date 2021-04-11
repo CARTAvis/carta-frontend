@@ -2,7 +2,7 @@ import {action, autorun, computed, makeObservable, observable} from "mobx";
 import {CARTA} from "carta-protobuf";
 import {AppStore, FrameStore} from "stores";
 import {ACTIVE_FILE_ID, RegionId, SpectralProfileWidgetStore} from "stores/widgets";
-import {LineKey, LineOption, ProcessedSpectralProfile, STATISTICS_TEXT, SUPPORTED_STATISTICS_TYPES} from "models";
+import {LineKey, LineOption, ProcessedSpectralProfile, StatsTypeString, STATISTICS_TEXT, SUPPORTED_STATISTICS_TYPES} from "models";
 import {SWATCH_COLORS} from "utilities";
 
 export enum MultiProfileCategory {
@@ -68,7 +68,11 @@ export class SpectralProfileSelectionStore {
         return formattedSpectralConfigs;
     };
 
-    // TODO: remove label
+    private genProfileLabel = (fileId: number, regionId: number, statsType: CARTA.StatsType, coordinate: string) => {
+        const fileName = AppStore.Instance.getFrameName(fileId);
+        return `${fileName}, ${regionId === RegionId.CURSOR ? "Cursor" : `Region ${regionId}`}, Statistic: ${StatsTypeString(statsType)}, Cooridnate: ${coordinate}`;
+    };
+
     @computed private get profileConfigs(): ProfileConfig[] {
         let profileConfigs: ProfileConfig[] = [];
         if (this.selectedFrame && this.selectedRegionIds?.length > 0 && this.selectedStatsTypes?.length > 0 && this.selectedCoordinates?.length > 0) {
@@ -85,7 +89,7 @@ export class SpectralProfileSelectionStore {
                             statsType: statsType, // TODO: what are region/stat/stokes in multi profile mode of image?
                             coordinate: selectedCoordinate, // TODO: what are region/stat/stokes in multi profile mode of image?
                             colorKey: fileId,
-                            label: `${fileId}-${this.effectiveRegionId}-${statsType}-${selectedCoordinate}`
+                            label: this.genProfileLabel(fileId, this.effectiveRegionId, statsType, selectedCoordinate)
                         });
                     });
                 } else {
@@ -95,7 +99,7 @@ export class SpectralProfileSelectionStore {
                         statsType: statsType,
                         coordinate: selectedCoordinate,
                         colorKey: this.selectedFrameFileId,
-                        label: `${this.selectedFrameFileId}-${this.effectiveRegionId}-${statsType}-${selectedCoordinate}`
+                        label: this.genProfileLabel(this.selectedFrameFileId, this.effectiveRegionId, statsType, selectedCoordinate)
                     });
                 }
             } else if (this.activeProfileCategory === MultiProfileCategory.REGION) {
@@ -111,7 +115,7 @@ export class SpectralProfileSelectionStore {
                             statsType: statsType,
                             coordinate: selectedCoordinate,
                             colorKey: selectedRegionId,
-                            label: `${this.selectedFrameFileId}-${selectedRegionId}-${statsType}-${selectedCoordinate}`
+                            label: this.genProfileLabel(this.selectedFrameFileId, selectedRegionId, statsType, selectedCoordinate)
                         });
                     }
                 });
@@ -126,7 +130,7 @@ export class SpectralProfileSelectionStore {
                             statsType: statsType,
                             coordinate: selectedCoordinate,
                             colorKey: statsType,
-                            label: `${this.selectedFrameFileId}-${this.effectiveRegionId}-${statsType}-${selectedCoordinate}`
+                            label: this.genProfileLabel(this.selectedFrameFileId, this.effectiveRegionId, statsType, selectedCoordinate)
                         });
                     });
                 } else {
@@ -136,7 +140,7 @@ export class SpectralProfileSelectionStore {
                         statsType: CARTA.StatsType.Sum,
                         coordinate: selectedCoordinate,
                         colorKey: CARTA.StatsType.Sum,
-                        label: `${this.selectedFrameFileId}-${this.effectiveRegionId}-${CARTA.StatsType.Sum}-${selectedCoordinate}`
+                        label: this.genProfileLabel(this.selectedFrameFileId, this.effectiveRegionId, CARTA.StatsType.Sum, selectedCoordinate)
                     });
                 }
             } else if (this.activeProfileCategory === MultiProfileCategory.STOKES) {
@@ -150,7 +154,7 @@ export class SpectralProfileSelectionStore {
                         statsType: statsType,
                         coordinate: coordinate,
                         colorKey: coordinate,
-                        label: `${this.selectedFrameFileId}-${this.effectiveRegionId}-${statsType}-${coordinate}`
+                        label: this.genProfileLabel(this.selectedFrameFileId, this.effectiveRegionId, statsType, coordinate)
                     });
                 });
             }
