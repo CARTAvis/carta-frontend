@@ -91,21 +91,6 @@ export class ColormapConfigComponent extends React.Component<ColormapConfigProps
                     </Button>
                 </FormGroup>
                 <Collapse isOpen={this.extendBiasContrast}>
-                    {renderConfig.smoothedBiasContrastMode ?
-                    <BiasContrastSelectComponent
-                        bias={renderConfig.smoothedBias}
-                        contrast={renderConfig.smoothedContrast}
-                        setBias={renderConfig.setSmoothedBias}
-                        setContrast={renderConfig.setSmoothedContrast}
-                        resetBias={renderConfig.resetSmoothedBias}
-                        resetContrast={renderConfig.resetSmoothedContrast}
-                        boardWidth={130}
-                        boardHeight={130}
-                        biasMin={RenderConfigStore.SMOOTHED_BIAS_MIN}
-                        biasMax={RenderConfigStore.SMOOTHED_BIAS_MAX}
-                        contrastMin={RenderConfigStore.SMOOTHED_CONTRAST_MIN}
-                        contrastMax={RenderConfigStore.SMOOTHED_CONTRAST_MAX}
-                    /> :
                     <BiasContrastSelectComponent
                         bias={renderConfig.bias}
                         contrast={renderConfig.contrast}
@@ -120,7 +105,6 @@ export class ColormapConfigComponent extends React.Component<ColormapConfigProps
                         contrastMin={RenderConfigStore.CONTRAST_MIN}
                         contrastMax={RenderConfigStore.CONTRAST_MAX}
                     />
-                    }
                 </Collapse>
             </React.Fragment>
         );

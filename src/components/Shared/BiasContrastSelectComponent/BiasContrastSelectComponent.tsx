@@ -7,6 +7,7 @@ import {SafeNumericInput} from "components/Shared";
 import {clamp} from "utilities";
 
 const DRAG_MOVE_INTERVAL = 10;
+const DOUBLE_CLICK_THRESHOLD = 300;
 
 interface BiasContrastSelectComponentProps {
     bias: number;
@@ -26,25 +27,32 @@ interface BiasContrastSelectComponentProps {
 @observer
 export class BiasContrastSelectComponent extends React.Component<BiasContrastSelectComponentProps> {
 
-    private dragMoveTimer;
+    private updateValuesTimer;
 
-    private updateValues = (event: Konva.KonvaEventObject<DragEvent>) => {
+    private updateValues = (event: Konva.KonvaEventObject<any>, interval: number) => {
+        clearTimeout(this.updateValuesTimer);
         const stage = event.target.getStage();
         const point = stage.getPointerPosition();
-
-        const bias = clamp(point.x, 0, stage.width()) / stage.width() * (this.props.biasMax - this.props.biasMin) + this.props.biasMin;
-        const contrast = this.props.contrastMax -  clamp(point.y, 0, stage.height()) / stage.height() * (this.props.contrastMax - this.props.contrastMin);
-        this.props.setBias(bias);
-        this.props.setContrast(contrast);
+        this.updateValuesTimer = setTimeout(() => {
+            const bias = clamp(point.x, 0, stage.width()) / stage.width() * (this.props.biasMax - this.props.biasMin) + this.props.biasMin;
+            const contrast = this.props.contrastMax -  clamp(point.y, 0, stage.height()) / stage.height() * (this.props.contrastMax - this.props.contrastMin);
+            this.props.setBias(bias);
+            this.props.setContrast(contrast);
+        }, interval);
     };
 
-    private handleClick = (event: Konva.KonvaEventObject<DragEvent>) => {
-        this.updateValues(event);
+    private handleDoubleClick = () => {
+        clearTimeout(this.updateValuesTimer);
+        this.props.resetBias();
+        this.props.resetContrast();
+    };
+
+    private handleClick = (event: Konva.KonvaEventObject<MouseEvent>) => {
+        this.updateValues(event, DOUBLE_CLICK_THRESHOLD);
     };
 
     private handleDragMove = (event: Konva.KonvaEventObject<DragEvent>) => {
-        clearTimeout(this.dragMoveTimer);
-        this.dragMoveTimer = setTimeout(() => this.updateValues(event), DRAG_MOVE_INTERVAL);
+        this.updateValues(event, DRAG_MOVE_INTERVAL);
     };
 
     private resetButton = (handleClick) => {
@@ -70,6 +78,7 @@ export class BiasContrastSelectComponent extends React.Component<BiasContrastSel
                     stroke={Colors.LIGHT_GRAY1}
                     strokeWidth={4}
                     onClick={this.handleClick}
+                    onDblClick={this.handleDoubleClick}
                 />
                 <Circle
                     x={(this.props.bias - this.props.biasMin) * this.props.boardWidth / (this.props.biasMax - this.props.biasMin)}
@@ -79,6 +88,7 @@ export class BiasContrastSelectComponent extends React.Component<BiasContrastSel
                     draggable={true}
                     dragBoundFunc={(pos) => ({x: clamp(pos.x, 0, this.props.boardWidth), y: clamp(pos.y, 0, this.props.boardHeight)})}
                     onDragMove={this.handleDragMove}
+                    onDblClick={this.handleDoubleClick}
                 />
             </React.Fragment>
         );

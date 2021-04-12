@@ -60,18 +60,12 @@ export class RenderConfigStore {
     static readonly BIAS_MAX = 1;
     static readonly CONTRAST_MIN = 0;
     static readonly CONTRAST_MAX = 2;
-    static readonly SMOOTHED_BIAS_MIN = 0;
-    static readonly SMOOTHED_BIAS_MAX = 1;
-    static readonly SMOOTHED_CONTRAST_MIN = 0;
-    static readonly SMOOTHED_CONTRAST_MAX = 1;
 
     @observable scaling: FrameScaling;
     @observable colorMapIndex: number;
     @observable bias: number;
     @observable contrast: number;
-    @observable smoothedBias: number;
-    @observable smoothedContrast: number;
-    @observable smoothedBiasContrastMode: boolean;
+    @observable useSmoothedBiasContrast: boolean;
     @observable gamma: number;
     @observable alpha: number;
     @observable inverted: boolean;
@@ -95,9 +89,7 @@ export class RenderConfigStore {
         this.selectedPercentile = [percentile, percentile, percentile, percentile];
         this.bias = 0;
         this.contrast = 1;
-        this.smoothedBias = 0;
-        this.smoothedContrast = 0;
-        this.smoothedBiasContrastMode = true;
+        this.useSmoothedBiasContrast = true;
         this.alpha = preference.scalingAlpha;
         this.gamma = preference.scalingGamma;
         this.scaling = preference.scaling;
@@ -137,14 +129,19 @@ export class RenderConfigStore {
     @computed get colorscaleArray() {
         const colorsForValues = getColorsForValues(this.colorMap);
         const indexArray = Array.from(Array(colorsForValues.size).keys()).map(x => this.inverted ? x / colorsForValues.size : 1 - x / colorsForValues.size);
-        const scaledAarray = indexArray.map(x => 1.0 - scaleValueInverse(1.0 - x, this.scaling, this.alpha, this.gamma, this.bias, this.contrast, this.smoothedBiasContrastMode, this.smoothedBias, this.smoothedContrast));
+        const scaledAarray = indexArray.map(x => 1.0 - scaleValueInverse(1.0 - x, this.scaling, this.alpha, this.gamma, this.bias, this.contrast, this.useSmoothedBiasContrast));
         let rbgString = (index: number): string => (
             `rgb(${colorsForValues.color[index * 4]}, ${colorsForValues.color[index * 4 + 1]}, ${colorsForValues.color[index * 4 + 2]}, ${colorsForValues.color[index * 4 + 3]})`
         );
 
         let colorscale = [];
         if (this.contrast === 0) {
-            return [0, rbgString(Math.floor(colorsForValues.size / 2)), 1, rbgString(Math.floor(colorsForValues.size / 2))];
+            for (let i = 0; i < colorsForValues.size; i++) {
+                if (scaledAarray[i] === 0) {
+                    return [0, rbgString(i), 1, rbgString(i)];
+                }
+            }
+            return [0, rbgString(colorsForValues.size - 1), 1, rbgString(colorsForValues.size - 1)];
         } else if (Math.min(...scaledAarray) === 1) {
             return [0, rbgString(colorsForValues.size - 1), 1, rbgString(colorsForValues.size - 1)];
         } else if (Math.max(...scaledAarray) === 0) {
@@ -320,24 +317,8 @@ export class RenderConfigStore {
         this.contrast = 1;
     };
 
-    @action setSmoothedBias = (smoothedBias: number) => {
-        this.smoothedBias = smoothedBias;
-    };
-
-    @action resetSmoothedBias = () => {
-        this.smoothedBias = 0;
-    };
-
-    @action setSmoothedContrast = (smoothedContrast: number) => {
-        this.smoothedContrast = smoothedContrast;
-    };
-
-    @action resetSmoothedContrast = () => {
-        this.smoothedContrast = 0;
-    };
-
-    @action setSmoothedBiasContrastMode = (mode: boolean) => {
-        this.smoothedBiasContrastMode = mode;
+    @action setUseSmoothedBiasContrast = (useSmoothedBiasContrast: boolean) => {
+        this.useSmoothedBiasContrast = useSmoothedBiasContrast;
     };
 
     @action setInverted = (inverted: boolean) => {

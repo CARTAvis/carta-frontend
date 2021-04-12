@@ -166,8 +166,8 @@ export class RenderConfigSettingsPanelComponent extends React.Component<WidgetPr
                 </FormGroup>
                 <FormGroup inline={true} label="Smoothed Bias/Contrast">
                     <Switch
-                        checked={AppStore.Instance.activeFrame?.renderConfig?.smoothedBiasContrastMode}
-                        onChange={(ev) => AppStore.Instance.activeFrame?.renderConfig?.setSmoothedBiasContrastMode(ev.currentTarget.checked)}
+                        checked={AppStore.Instance.activeFrame?.renderConfig?.useSmoothedBiasContrast}
+                        onChange={(ev) => AppStore.Instance.activeFrame?.renderConfig?.setUseSmoothedBiasContrast(ev.currentTarget.checked)}
                     />
                 </FormGroup>
             </div>

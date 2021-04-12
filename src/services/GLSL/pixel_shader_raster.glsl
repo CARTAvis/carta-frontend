@@ -20,13 +20,11 @@ uniform int uNumCmaps;
 uniform int uCmapIndex;
 uniform int uScaleType;
 uniform int uInverted;
-uniform int uBiasContrastMode;
+uniform int uUseSmoothedBiasContrast;
 uniform float uMinVal;
 uniform float uMaxVal;
 uniform float uBias;
 uniform float uContrast;
-uniform float uSmoothedBias;
-uniform float uSmoothedContrast;
 uniform float uGamma;
 uniform float uAlpha;
 uniform vec4 uNaNColor;
@@ -85,15 +83,23 @@ void main(void) {
         x = pow(x, uGamma);
     }
 
-    if (uBiasContrastMode > 0) {
-        float c = (uSmoothedContrast == 0.0) ? 0.001 : uSmoothedContrast * 12.0;
-        float offset = errorFunction(0.0, c, uSmoothedBias);
-        float denominator = errorFunction(1.0, c, uSmoothedBias) - offset;
-        if (denominator <= 0.0) {
-            denominator = 0.1;
-        }
+    if (uUseSmoothedBiasContrast > 0) {
+        if (uContrast < 1.0) {
+            float smoothedBias = 0.5 - uBias / 2.0; // [-1, 1] map to [1, 0]
+            x = clamp((x - smoothedBias) * uContrast + smoothedBias, 0.0, 1.0);
+        } else {
+            float smoothedBias = uBias / 2.0 + 0.5; // [-1, 1] map to [0, 1]
+            float smoothedContrast = uContrast < 1.0 ? 0.0 : uContrast - 1.0; // [1, 2] map to [0, 1]
 
-        x = (errorFunction(x, c, uSmoothedBias) - offset) / denominator;
+            float c = (smoothedContrast == 0.0) ? 0.001 : smoothedContrast * 12.0;
+            float offset = errorFunction(0.0, c, smoothedBias);
+            float denominator = errorFunction(1.0, c, smoothedBias) - offset;
+            if (denominator <= 0.0) {
+                denominator = 0.1;
+            }
+
+            x = (errorFunction(x, c, smoothedBias) - offset) / denominator;
+        }
     } else {
         // bias mod
         x = clamp(x - uBias, 0.0, 1.0);
