@@ -297,7 +297,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
                     const cursorInfoString = this.genCursoInfoString(data, cursorXValue, cursorXUnit, label);
                     profilerInfo.push({
                         color: this.plotData.colors?.[i],
-                        infoString: `${this.plotData.labels?.[i]}, ${cursorInfoString}`
+                        infoString: `${cursorInfoString}, ${this.plotData.labels?.[i]}`
                     });
                 }
             }
