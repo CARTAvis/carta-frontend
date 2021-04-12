@@ -36,7 +36,7 @@ export class SpectralProfileSelectionStore {
 
     private readonly widgetStore: SpectralProfileWidgetStore;
     private readonly DEFAULT_COORDINATE: string;
-    private static readonly ValidCoordinates = ["z", "Iz", "Qz", "Uz", "Vz"];
+    private static readonly ValidCoordinates = ["z", "I", "Q", "U", "V"];
 
     // getFormattedSpectralConfigs() is a simple converter to transform this.profileConfigs to SpectralConfig,
     // and SpectralConfig is specially for CalculateRequirementsMap in SpectralProfileWidgetStore.
@@ -70,7 +70,7 @@ export class SpectralProfileSelectionStore {
 
     private genProfileLabel = (fileId: number, regionId: number, statsType: CARTA.StatsType, coordinate: string) => {
         const fileName = AppStore.Instance.getFrameName(fileId);
-        return `${fileName}, ${regionId === RegionId.CURSOR ? "Cursor" : `Region ${regionId}`}, Statistic: ${StatsTypeString(statsType)}, Cooridnate: ${coordinate}`;
+        return `${fileName}, ${regionId === RegionId.CURSOR ? "Cursor" : `Region ${regionId}`}, Statistic: ${StatsTypeString(statsType)}, Cooridnate: ${coordinate === "z" ? "Current" : coordinate}`;
     };
 
     @computed private get profileConfigs(): ProfileConfig[] {
@@ -260,8 +260,8 @@ export class SpectralProfileSelectionStore {
     }
 
     @computed get coordinateOptions(): LineOption[] {
-        let options = [{value: "z", label: "z"}];
-        this.selectedFrame?.stokesInfo?.forEach(stokes => options.push({value: `${stokes}z`, label: stokes}));
+        let options = [{value: "z", label: "Current"}];
+        this.selectedFrame?.stokesInfo?.forEach(stokes => options.push({value: stokes, label: stokes}));
         return options;
     }
 
@@ -420,19 +420,28 @@ export class SpectralProfileSelectionStore {
     };
 
     // When frame is changed,
-    // Single profile mode(None)/Multi profile mode of Region/Stat/Stokes, within the same image:
+    // Single profile mode(None)/Multi profile mode of Region/Stat, within the same image:
     //      * region - switch to active to ensure getting correct region
-    //      * stokes - switch to default('z') // TODO: can this be better?
+    //      * stokes - stay in the same stokes if new frame also has the one, otherwise to default('z')
+    // Multi profile mode of Stokes:
+    //      * region - switch to active to ensure getting correct region
+    //      * stokes - stay in the selected stokes, let backend handle invalid selection
     // Multi profile mode of Image(matched images):
     //      * region - regions are shared among matched images
-    //      * stokes - let backend handle invalid selection
+    //      * stokes - stay in the selected stokes, let backend handle invalid selection
     @action selectFrame = (fileId: number) => {
         const widgetStore = this.widgetStore;
         widgetStore.setFileId(fileId);
         if (this.activeProfileCategory !== MultiProfileCategory.IMAGE) {
             widgetStore.setRegionId(this.selectedFrameFileId, RegionId.ACTIVE);
             this.selectedRegionIds = [RegionId.ACTIVE];
-            this.selectedCoordinates = [this.DEFAULT_COORDINATE];
+            // Stay in the same stokes if new frame also has the one, otherwise to default('z')
+            if (this.activeProfileCategory !== MultiProfileCategory.STOKES && (
+                this.selectedCoordinates?.length > 0 &&
+                !AppStore.Instance.getFrame(fileId)?.stokesInfo?.includes(this.selectedCoordinates[0])
+            )) {
+                this.selectedCoordinates = [this.DEFAULT_COORDINATE];
+            }
         }
     };
 
