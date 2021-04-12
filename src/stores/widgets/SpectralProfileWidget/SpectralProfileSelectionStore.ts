@@ -87,7 +87,7 @@ export class SpectralProfileSelectionStore {
                             fileId: fileId,
                             regionId: this.effectiveRegionId,
                             statsType: statsType,
-                            coordinate: selectedCoordinate, // TODO: what are region/stat/stokes in multi profile mode of image?
+                            coordinate: selectedCoordinate,
                             colorKey: fileId,
                             label: this.genProfileLabel(fileId, this.effectiveRegionId, statsType, selectedCoordinate)
                         });
@@ -419,16 +419,21 @@ export class SpectralProfileSelectionStore {
         }
     };
 
-    // When frame is changed:
-    // region - switch to active to ensure getting correct region
-    // stokes - switch to default('z')
+    // When frame is changed,
+    // Single profile mode(None)/Multi profile mode of Region/Stat/Stokes, within the same image:
+    //      * region - switch to active to ensure getting correct region
+    //      * stokes - switch to default('z') // TODO: can this be better?
+    // Multi profile mode of Image(matched images):
+    //      * region - regions are shared among matched images
+    //      * stokes - let backend handle invalid selection
     @action selectFrame = (fileId: number) => {
         const widgetStore = this.widgetStore;
         widgetStore.setFileId(fileId);
-        widgetStore.setRegionId(this.selectedFrameFileId, RegionId.ACTIVE);
-        this.selectedRegionIds = [RegionId.ACTIVE];
-        this.selectedCoordinates= [this.DEFAULT_COORDINATE];
-        // TODO: in multi mode, should stokes be disabled?
+        if (this.activeProfileCategory !== MultiProfileCategory.IMAGE) {
+            widgetStore.setRegionId(this.selectedFrameFileId, RegionId.ACTIVE);
+            this.selectedRegionIds = [RegionId.ACTIVE];
+            this.selectedCoordinates = [this.DEFAULT_COORDINATE];
+        }
     };
 
     @action selectRegionSingleMode = (regionId: number) => {
