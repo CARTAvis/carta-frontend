@@ -124,7 +124,7 @@ void main() {
         size = uPointSize;
     }
 
-    gl_Position = vec4(imageToGL(pos), 0, 1);
+    gl_Position = vec4(imageToGL(pos), 0.5, 1);
     if (uSmapEnabled) {
         v_pointSize = size;
     } else {

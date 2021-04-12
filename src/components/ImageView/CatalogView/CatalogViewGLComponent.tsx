@@ -2,7 +2,6 @@ import {observer} from "mobx-react";
 import * as React from "react";
 import tinycolor from "tinycolor2";
 import {AppStore, CatalogStore, FrameStore, RenderConfigStore, WidgetsStore} from "stores";
-import {CatalogOverlayShape} from "stores/widgets";
 import {CatalogTextureType, CatalogWebGLService} from "services";
 import {canvasToTransformedImagePos} from "components/ImageView/RegionView/shared";
 import {CursorInfo} from "models";
@@ -20,20 +19,6 @@ export class CatalogViewGLComponent extends React.Component<CatalogViewGLCompone
     private canvas: HTMLCanvasElement;
     private gl: WebGL2RenderingContext;
     private catalogWebGLService: CatalogWebGLService;
-
-    private featherWidth =  new Map<number, number>([
-        [CatalogOverlayShape.BoxLined, 0.35],
-        [CatalogOverlayShape.CircleFilled, 0.35],
-        [CatalogOverlayShape.CircleLined, 0.5],
-        [CatalogOverlayShape.EllipseLined, 5.0],
-        [CatalogOverlayShape.HexagonLined, 0.35],
-        [CatalogOverlayShape.RhombLined, 0.35],
-        [CatalogOverlayShape.TriangleUpLined, 0.35],
-        [CatalogOverlayShape.TriangleDownLined, 0.35],
-        [CatalogOverlayShape.HexagonLined2, 0.35],
-        [CatalogOverlayShape.CrossFilled, 0.0],
-        [CatalogOverlayShape.XFilled, 0.0]
-    ])
 
     componentDidMount() {
         this.catalogWebGLService = CatalogWebGLService.Instance;
@@ -163,7 +148,9 @@ export class CatalogViewGLComponent extends React.Component<CatalogViewGLCompone
         // For alpha blending (soft lines)
         this.gl.enable(GL2.BLEND);
         this.gl.blendFunc(GL2.SRC_ALPHA, GL2.ONE_MINUS_SRC_ALPHA);
-    
+        // depth test
+        this.gl.enable(GL2.DEPTH_TEST);
+        this.gl.depthFunc(GL2.LEQUAL);
         this.gl.clear(GL2.COLOR_BUFFER_BIT | GL2.DEPTH_BUFFER_BIT);
         const frameView = baseFrame.requiredFrameView;
         const shaderUniforms = this.catalogWebGLService.shaderUniforms;
@@ -172,12 +159,13 @@ export class CatalogViewGLComponent extends React.Component<CatalogViewGLCompone
         
         catalogStore.catalogGLData.forEach((catalog, fileId) => {
             const catalogWidgetStore = catalogStore.getCatalogWidgetStore(fileId);
-            const featherWidth = this.featherWidth.get(catalogWidgetStore.catalogShape) * devicePixelRatio;
+            const shape = catalogWidgetStore.shapeSettings;
+            const featherWidth = shape.featherWidth * devicePixelRatio;
             const lineThickness = catalogWidgetStore.thickness * devicePixelRatio;
             let dataPoints = catalog.dataPoints;
             let color = tinycolor(catalogWidgetStore.catalogColor).toRgb();
             let selectedSourceColor = tinycolor(catalogWidgetStore.highlightColor).toRgb();
-            let pointSize = catalogWidgetStore.catalogSize;
+            let pointSize = catalogWidgetStore.catalogSize + shape.minSize;
             
             this.gl.uniform1f(shaderUniforms.LineThickness, lineThickness);
             this.gl.uniform1i(shaderUniforms.ShowSelectedSource, catalogWidgetStore.showSelectedData? 1.0 : 0.0);

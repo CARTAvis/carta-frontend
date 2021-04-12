@@ -213,7 +213,7 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
                         min={CatalogWidgetStore.MinOverlaySize}
                         max={CatalogWidgetStore.MaxOverlaySize}
                         value={widgetStore.catalogSize}
-                        stepSize={1}
+                        stepSize={0.5}
                         onValueChange={(value: number) => widgetStore.setCatalogSize(value)}
                     />
                 </FormGroup>
@@ -506,7 +506,7 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
 
         switch (type) {
             case "size-min":
-                if (isFinite(val) && val !== pointSize.min && val < pointSize.max && val >= 1) {
+                if (isFinite(val) && val !== pointSize.min && val < pointSize.max && val >= CatalogWidgetStore.SizeMapMin) {
                     widgetStore.setSizeMin(val);
                 } else {
                     ev.currentTarget.value = pointSize.min.toString();

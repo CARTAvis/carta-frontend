@@ -38,14 +38,29 @@ export type ValueClip = "size-min" | "size-max" | "angle-min" | "angle-max";
 
 export class CatalogWidgetStore {
     public static readonly MinOverlaySize = 1;
-    public static readonly MaxOverlaySize = 100;
-    public static readonly MaxAreaSize = 8000;
+    public static readonly MaxOverlaySize = 50;
+    public static readonly MaxAreaSize = 4000;
     public static readonly MinTableSeparatorPosition = 5;
     public static readonly MaxTableSeparatorPosition = 95;
     public static readonly MinThickness = 1.5;
     public static readonly MaxThickness = 10;
     public static readonly MinAngle = 0;
     public static readonly MaxAngle = 360;
+    public static readonly SizeMapMin = 0;
+
+    private OverlayShapeSettings =  new Map<number, {featherWidth: number, minSize: number}>([
+        [CatalogOverlayShape.BoxLined, {featherWidth: 0.35, minSize: 5}],
+        [CatalogOverlayShape.CircleFilled, {featherWidth: 0.35, minSize: 3}],
+        [CatalogOverlayShape.CircleLined, {featherWidth: 0.5, minSize: 3}],
+        [CatalogOverlayShape.EllipseLined, {featherWidth: 1.0, minSize: 6}],
+        [CatalogOverlayShape.HexagonLined, {featherWidth: 0.35, minSize: 6}],
+        [CatalogOverlayShape.RhombLined, {featherWidth: 0.35, minSize: 5}],
+        [CatalogOverlayShape.TriangleUpLined, {featherWidth: 0.35, minSize: 6}],
+        [CatalogOverlayShape.TriangleDownLined, {featherWidth: 0.35, minSize: 6}],
+        [CatalogOverlayShape.HexagonLined2, {featherWidth: 0.35, minSize: 6}],
+        [CatalogOverlayShape.CrossFilled, {featherWidth: 0.0, minSize: 4}],
+        [CatalogOverlayShape.XFilled, {featherWidth: 0.0, minSize: 4}]
+    ]);
 
     @observable catalogFileId: number;
     @observable headerTableColumnWidts: Array<number>;
@@ -93,7 +108,7 @@ export class CatalogWidgetStore {
         this.catalogTableAutoScroll = false;
         this.catalogPlotType = CatalogPlotType.ImageOverlay;
         this.catalogColor = Colors.TURQUOISE3;
-        this.catalogSize = 20;
+        this.catalogSize = 5;
         this.catalogShape = CatalogOverlayShape.CircleLined;
         this.xAxis = CatalogOverlay.NONE;
         this.yAxis = CatalogOverlay.NONE;
@@ -445,12 +460,13 @@ export class CatalogWidgetStore {
         let column = this.sizeMapData;
         if (!this.disableSizeMap && column?.length && this.sizeColumnMin.clipd !== undefined && this.sizeColumnMax.clipd !== undefined) {
             const pointSize = this.pointSizebyType;
+            let min = this.shapeSettings.minSize;
             return CARTACompute.CalculateCatalogSize(
                 column,
                 this.sizeColumnMin.clipd, 
                 this.sizeColumnMax.clipd, 
-                pointSize.min, 
-                pointSize.max,
+                pointSize.min + min, 
+                pointSize.max + min,
                 this.sizeScalingType,
                 this.sizeArea,
                 devicePixelRatio
@@ -465,11 +481,8 @@ export class CatalogWidgetStore {
 
     @computed get maxPointSizebyType(): number {
         if (this.sizeArea) {
-            // scattergl `area` limitation around 20000
             return CatalogWidgetStore.MaxAreaSize;
         } else {
-            // https://codepen.io/panchyo0/pen/qBqYrbR?editors=1010 
-            // scattergl `diameter` limitation around 200, bug?
             return CatalogWidgetStore.MaxOverlaySize;
         }
     }
@@ -488,6 +501,14 @@ export class CatalogWidgetStore {
 
     @computed get disableOrientationMap(): boolean {
         return this.orientationMapColumn === CatalogOverlay.NONE;
+    }
+
+    @computed get shapeSettings(): {featherWidth: number, minSize: number} {
+        const pointSize = this.pointSizebyType;
+        if (pointSize.min === 0) {
+            return {featherWidth: this.OverlayShapeSettings.get(this.catalogShape).featherWidth, minSize: 0};
+        }
+        return this.OverlayShapeSettings.get(this.catalogShape);
     }
 
     public init = (widgetSettings): void => {

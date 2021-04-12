@@ -80,13 +80,13 @@ float featherRange(vec2 a, float rMin, float rMax) {
 
 // Ellipse
 float featherRangeEllipse(vec2 r, float rMax) {
-    float v =  ((pow(rMax, 2.0) - pow(r.x, 2.0) * 3.0) - uFeatherWidth - pow(r.y, 2.0)) / (2.0 * uFeatherWidth);
+    float v = ((pow(rMax, 2.0) - pow(r.x, 2.0) * 3.0) - uFeatherWidth - pow(r.y, 2.0)) / (2.0 * uFeatherWidth);
     return smoothstep(0.0, 1.0, v);
 }
 
 float featherRangeEllipse(vec2 r, float rMin, float rMax) {
-    float v =  ((pow(rMax, 2.0) - pow(r.x, 2.0) * 3.0) - uFeatherWidth - pow(r.y, 2.0)) / (2.0 * uFeatherWidth);
-    float v2 =  ((pow(rMin, 2.0) - pow(r.x, 2.0) * 3.0) - uFeatherWidth - pow(r.y, 2.0)) / (2.0 * uFeatherWidth);
+    float v = ((pow(rMax, 2.0) - pow(r.x, 2.0) * 3.0) - uFeatherWidth - pow(r.y, 2.0)) / (20.0 * uFeatherWidth);
+    float v2 = ((pow(rMin, 2.0) - pow(r.x, 2.0) * 3.0) - uFeatherWidth - pow(r.y, 2.0)) / (20.0 * uFeatherWidth);
     float alpha = smoothstep(0.0, 1.0, v);
     float alpha2 = smoothstep(0.0, 1.0, v2);
     return alpha * (1.0 - alpha2);
@@ -397,33 +397,38 @@ float getAlphaValue(vec2 posPixelSpace, float rMin, float rMax) {
 
 void main() {
     vec2 posPixelSpace = (0.5 - gl_PointCoord) * (v_pointSize + uFeatherWidth);
-    // to do rmin < 0?
-    float rMax = v_pointSize * 0.5 - uLineThickness;
+    float rMax = v_pointSize * 0.5;
     float rMin = rMax - uLineThickness;
+    float outline = 0.0;
+    float alpha2 = 0.0;
     // orientation
     if(uOmapEnabled && !isNaN(v_orientation)){
         posPixelSpace*= rotateMat(v_orientation);
     }
-    float alpha = getAlphaValue(posPixelSpace, rMin, rMax);
 
     // highlight selected source
-    float v = 0.0;
-    float alpha2 = 0.0;
+    gl_FragDepth = 0.5;
     if(v_selected == 1.0){
+        rMax = rMax - uLineThickness;
+        rMin = rMin - uLineThickness;
         float borderWidth = uLineThickness * 0.5;
-        v = drawOutline(posPixelSpace, borderWidth, rMin, rMax);
+        outline = drawOutline(posPixelSpace, borderWidth, rMin, rMax);
         alpha2 = getAlphaValue(posPixelSpace, rMin, rMax + uLineThickness);
+        if(outline > 0.5 && alpha2 == 1.0) {
+            gl_FragDepth = 0.0;
+        } 
     }
+    float alpha = getAlphaValue(posPixelSpace, rMin, rMax);
 
     // Blending
     if (uCmapEnabled && !isNaN(v_colour)) {
         float x = clamp(v_colour, 0.0, 1.0);
         float cmapYVal = (float(uCmapIndex) + 0.5) / float(uNumCmaps);
         vec2 cmapCoords = vec2(x, cmapYVal);
-        // outColor = vec4((1.0 - v) * texture(uCmapTexture, cmapCoords).xyz + v * uSelectedSourceColor, alpha);
-        outColor = (1.0 - v) * vec4(texture(uCmapTexture, cmapCoords).xyz, alpha) + v * vec4(uSelectedSourceColor, alpha2);
+        // outColor = vec4((1.0 - outline) * texture(uCmapTexture, cmapCoords).xyz + outline * uSelectedSourceColor, alpha);
+        outColor = (1.0 - outline) * vec4(texture(uCmapTexture, cmapCoords).xyz, alpha) + outline * vec4(uSelectedSourceColor, alpha2);
     } else {
-        // outColor = vec4((1.0 - v) * uPointColor + v * uSelectedSourceColor, alpha);
-        outColor = (1.0 - v) * vec4(uPointColor, alpha) + v * vec4(uSelectedSourceColor, alpha2);
+        // outColor = vec4((1.0 - outline) * uPointColor + outline * uSelectedSourceColor, alpha);
+        outColor = (1.0 - outline) * vec4(uPointColor, alpha) + outline * vec4(uSelectedSourceColor, alpha2);
     }
 }
