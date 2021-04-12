@@ -147,8 +147,8 @@ export function autoDetecting(velocity: number[], intensity:number[]) : ProfileF
         }
     }
 
+    console.log("identified line interval:")
     for (const iLineBox of lineBoxs) {
-        console.log("identified line interval:")
         console.log("fromIndexOri :" + iLineBox.fromIndexOri + ", toIndexOri :" + iLineBox.toIndexOri + ", fromIndex :" + iLineBox.fromIndex + ", toIndex :" + iLineBox.toIndex);
     }
 
@@ -163,13 +163,14 @@ export function autoDetecting(velocity: number[], intensity:number[]) : ProfileF
         const meanSN = (_.mean(ySmoothed.slice(lineBox.fromIndex, lineBox.toIndex)) - intensitySmoothedMean) / intensitySmoothedStddev;
         const chCount = lineBox.toIndex - lineBox.fromIndex + 1;
         const dividerIndex = [];
-        const dividerIndexTmp = [];
+        let dividerIndexTmp = [];
         const dividerValueTmp = [];
         const dividerLocalMaxIndex = [];
         const dividerLocalMinIndex = [];
         const dividerLocalMaxValue = [];
         const dividerLocalMinValue = [];
 
+        console.log("mean S/N of the line interval: {fromIndexOri :" + lineBox.fromIndexOri + ", toIndexOri :" + lineBox.toIndexOri + ", fromIndex :" + lineBox.fromIndex + ", toIndex :" + lineBox.toIndex + "}(" + chCount + "channels): " + meanSN);
         if (Math.abs(meanSN) >= multiMeanSnThreshold && chCount >= multiChCountThreshold) {
             for (let j = lineBox.fromIndex ; j < lineBox.toIndex - 4; j++) {
                 const tempData = ySmoothed.slice(j,j + 5);
@@ -193,7 +194,8 @@ export function autoDetecting(velocity: number[], intensity:number[]) : ProfileF
             for (const index of dividerLocalMaxIndex) {
                 dividerIndexTmp.push(index);
             }
-            dividerIndexTmp.sort();
+            dividerIndexTmp = dividerIndexTmp.sort((a,b) => a - b);
+            console.log("dividerIndexTmp: ", dividerIndexTmp);
             
             // dividerValueTmp is not used elsewhere
             for (const index of dividerIndexTmp) {
@@ -261,14 +263,18 @@ export function autoDetecting(velocity: number[], intensity:number[]) : ProfileF
                         if (dividerLocalMinIndex.indexOf(left) !== -1) {
                             if (dividerLocalMinIndex.indexOf(middle) !== -1) {
                                 dividerIndex.push(left);
+                                console.log("add left: ", left);
                             } else if (dividerLocalMaxIndex.indexOf(middle) !== -1 && k === 0) {
                                 dividerIndex.push(left);
+                                console.log("add left: ", left);
                             }
                         } else if (dividerLocalMaxIndex.indexOf(left) !== -1) {
                             if (dividerLocalMinIndex.indexOf(middle) !== -1 && dividerLocalMaxIndex.indexOf(right) !== -1) {
                                 dividerIndex.push(middle);
+                                console.log("add middle: ", middle);
                             } else if (dividerLocalMaxIndex.indexOf(middle) !== -1) {
                                 dividerIndex.push((left + middle)/2);
+                                console.log("add mean of left and middle: ", (left + middle)/2);
                             }
                         }
                     }
@@ -276,14 +282,17 @@ export function autoDetecting(velocity: number[], intensity:number[]) : ProfileF
                     const dividerIndexTmpLast1 = dividerIndexTmp[dividerIndexTmp.length - 1];
                     if (dividerLocalMinIndex.indexOf(dividerIndexTmpLast1) !== -1) {
                         dividerIndex.push(dividerIndexTmpLast1);
+                        console.log("add last one: ", dividerIndexTmpLast1);
                     }
                     const dividerIndexTmpLast2 = dividerIndexTmp[dividerIndexTmp.length - 2];
                     if (dividerLocalMaxIndex.indexOf(dividerIndexTmpLast2) !== -1 && dividerLocalMaxIndex.indexOf(dividerIndexTmpLast1) !== -1) {
                         dividerIndex.push((dividerIndexTmpLast2 + dividerIndexTmpLast1) / 2);
+                        console.log("add mean of last two: ", (dividerIndexTmpLast2 + dividerIndexTmpLast1) / 2);
                     }
                     const dividerIndexTmpLast3 = dividerIndexTmp[dividerIndexTmp.length - 3];
                     if (dividerLocalMinIndex.indexOf(dividerIndexTmpLast3) !== -1 && dividerLocalMinIndex.indexOf(dividerIndexTmpLast2) !== -1 && dividerLocalMaxIndex.indexOf(dividerIndexTmpLast1) !== -1) {
                         dividerIndex.push(dividerIndexTmpLast2);
+                        console.log("add the 2nd last one: ", dividerIndexTmpLast1);
                     }
                 } else {
                     for (let k = 0; k < dividerIndexTmp.length - 2;  k++) {
@@ -293,14 +302,18 @@ export function autoDetecting(velocity: number[], intensity:number[]) : ProfileF
                         if (dividerLocalMaxIndex.indexOf(left) !== -1) {
                             if (dividerLocalMaxIndex.indexOf(middle) !== -1) {
                                 dividerIndex.push(left);
+                                console.log("add left: ", left);
                             } else if (dividerLocalMinIndex.indexOf(middle) !== -1 && k === 0) {
                                 dividerIndex.push(left);
+                                console.log("add left: ", left);
                             }
                         } else if (dividerLocalMinIndex.indexOf(left) !== -1) {
                             if (dividerLocalMaxIndex.indexOf(middle) !== -1 && dividerLocalMinIndex.indexOf(right) !== -1) {
                                 dividerIndex.push(middle);
+                                console.log("add middle: ", middle);
                             } else if (dividerLocalMinIndex.indexOf(middle) !== -1) {
                                 dividerIndex.push((left + middle)/2);
+                                console.log("add mean of left and middle: ", (left + middle)/2);
                             }
                         }
                     }
@@ -308,14 +321,17 @@ export function autoDetecting(velocity: number[], intensity:number[]) : ProfileF
                     const dividerIndexTmpLast1 = dividerIndexTmp[dividerIndexTmp.length - 1];
                     if (dividerLocalMaxIndex.indexOf(dividerIndexTmpLast1) !== -1) {
                         dividerIndex.push(dividerIndexTmpLast1);
+                        console.log("add last one: ", dividerIndexTmpLast1);
                     }
                     const dividerIndexTmpLast2 = dividerIndexTmp[dividerIndexTmp.length - 2];
                     if (dividerLocalMinIndex.indexOf(dividerIndexTmpLast2) !== -1 && dividerLocalMinIndex.indexOf(dividerIndexTmpLast1) !== -1) {
                         dividerIndex.push((dividerIndexTmpLast2 + dividerIndexTmpLast1) / 2);
+                        console.log("add mean of last two: ", (dividerIndexTmpLast2 + dividerIndexTmpLast1) / 2);
                     }
                     const dividerIndexTmpLast3 = dividerIndexTmp[dividerIndexTmp.length - 3];
                     if (dividerLocalMaxIndex.indexOf(dividerIndexTmpLast3) !== -1 && dividerLocalMaxIndex.indexOf(dividerIndexTmpLast2) !== -1 && dividerLocalMinIndex.indexOf(dividerIndexTmpLast1) !== -1) {
                         dividerIndex.push(dividerIndexTmpLast2);
+                        console.log("add the 2nd last one: ", dividerIndexTmpLast2);
                     }
                 }
             }
@@ -334,8 +350,8 @@ export function autoDetecting(velocity: number[], intensity:number[]) : ProfileF
         }
     }
 
+    console.log("final identified line interval:")
     for (const iLineBox of lineBoxsFinal) {
-        console.log("final identified line interval:")
         console.log("fromIndexOri :" + iLineBox.fromIndexOri + ", toIndexOri :" + iLineBox.toIndexOri + ", fromIndex :" + iLineBox.fromIndex + ", toIndex :" + iLineBox.toIndex);
     }
 
@@ -343,7 +359,7 @@ export function autoDetecting(velocity: number[], intensity:number[]) : ProfileF
     for (const lineBox of lineBoxsFinal) {
         const component = new ProfileFittingIndividualStore();
         component.setFwhm(Math.abs(velocity[lineBox.toIndexOri] - velocity[lineBox.fromIndexOri]) / 2);
-        const localYSmoothed = ySmoothed.slice(lineBox.fromIndex, lineBox.toIndex);
+        const localYSmoothed = ySmoothed.slice(lineBox.fromIndex, lineBox.toIndex + 1);
         const localYExtrema = _.mean(localYSmoothed) > intensitySmoothedMean ? _.max(localYSmoothed) : _.min(localYSmoothed);
         component.setAmp(localYExtrema);
         const localYExtremaIndex = localYSmoothed.indexOf(localYExtrema);

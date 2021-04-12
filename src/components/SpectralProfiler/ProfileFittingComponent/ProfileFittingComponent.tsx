@@ -170,7 +170,7 @@ export class ProfileFittingComponent extends React.Component<{fittingStore: Prof
                 xMaxIndex = i;
             }
 
-            return {x: channelValues.slice(xMinIndex, xMaxIndex), y: coordinateData.values.slice(xMinIndex, xMaxIndex)};
+            return {x: channelValues.slice(xMinIndex, xMaxIndex + 1), y: coordinateData.values.slice(xMinIndex, xMaxIndex + 1)};
         }
         return null;
     }

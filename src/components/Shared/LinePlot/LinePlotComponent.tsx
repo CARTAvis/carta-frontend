@@ -964,9 +964,11 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
         const chartArea = this.chartArea;
         let insideBoxs = [];
         if (this.props.insideBoxs && chartArea) {
-            for (const box of this.props.insideBoxs) {
+            for (let i = 0; i < this.props.insideBoxs.length; i++) {
+                const box = this.props.insideBoxs[i];
                 insideBoxs.push(
                     <Rect
+                        key = {i}
                         x = {this.getPixelForValueX(box.boundary.xMin)}
                         y = {this.getPixelForValueY(box.boundary.yMin)}
                         width = {this.getPixelForValueX(box.boundary.xMax) - this.getPixelForValueX(box.boundary.xMin)}
