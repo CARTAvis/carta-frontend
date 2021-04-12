@@ -602,7 +602,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
                         className="body-split-pane"
                         split="horizontal"
                         primary={"first"}
-                        defaultSize={"80%"}
+                        defaultSize={"75%"}
                         minSize={"60%"}
                     >
                         <Pane className={"line-plot-container"}>
