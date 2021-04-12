@@ -84,21 +84,19 @@ void main(void) {
     }
 
     if (uUseSmoothedBiasContrast > 0) {
-        if (uContrast < 1.0) {
+        if (uContrast <= 1.0) {
             float smoothedBias = 0.5 - uBias / 2.0; // [-1, 1] map to [1, 0]
             x = clamp((x - smoothedBias) * uContrast + smoothedBias, 0.0, 1.0);
         } else {
             float smoothedBias = uBias / 2.0 + 0.5; // [-1, 1] map to [0, 1]
             float smoothedContrast = uContrast < 1.0 ? 0.0 : uContrast - 1.0; // [1, 2] map to [0, 1]
-
-            float c = (smoothedContrast == 0.0) ? 0.001 : smoothedContrast * 12.0;
-            float offset = errorFunction(0.0, c, smoothedBias);
-            float denominator = errorFunction(1.0, c, smoothedBias) - offset;
+            smoothedContrast = (smoothedContrast == 0.0) ? 0.001 : smoothedContrast * 12.0;
+            float offset = errorFunction(0.0, smoothedContrast, smoothedBias);
+            float denominator = errorFunction(1.0, smoothedContrast, smoothedBias) - offset;
             if (denominator <= 0.0) {
                 denominator = 0.1;
             }
-
-            x = (errorFunction(x, c, smoothedBias) - offset) / denominator;
+            x = (errorFunction(x, smoothedContrast, smoothedBias) - offset) / denominator;
         }
     } else {
         // bias mod

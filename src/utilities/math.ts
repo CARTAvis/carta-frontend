@@ -82,7 +82,7 @@ function errorFunction(x: number, c: number, x0: number) {
 }
 
 function errorFunctionInverse(x: number, c: number, x0: number) {
-    return Math.log(x / (1-x)) / c + x0;
+    return Math.log(x / (1 - x)) / c + x0;
 }
 
 function getSmoothedValue(bias: number, contrast: number) {
@@ -119,8 +119,9 @@ export function scaleValue(x: number, scaling: FrameScaling, alpha: number = 100
         default:
             scaleValue = x;
     }
+
     if (useSmoothedBiasContrast) {
-        if (contrast < 1) {
+        if (contrast <= 1) {
             const smoothedBias = 0.5 - bias / 2; // [-1, 1] map to [1, 0]
             scaleValue = clamp((scaleValue - smoothedBias) * contrast + smoothedBias, 0, 1);
         } else {
@@ -137,7 +138,7 @@ export function scaleValue(x: number, scaling: FrameScaling, alpha: number = 100
 export function scaleValueInverse(x: number, scaling: FrameScaling, alpha: number = 1000, gamma: number = 1.5, bias: number = 0, contrast: number = 1, useSmoothedBiasContrast: boolean = true) {
     let scaleValue;
     if (useSmoothedBiasContrast) {
-        if (contrast < 1) {
+        if (contrast <= 1) {
             const smoothedBias = 0.5 - bias / 2; // [-1, 1] map to [1, 0]
             scaleValue = clamp((x - smoothedBias) / contrast + smoothedBias, 0, 1);
         } else {
