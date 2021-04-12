@@ -85,8 +85,8 @@ export class SpectralProfileSelectionStore {
                     matchedFileIds.forEach(fileId => {
                         profileConfigs.push({
                             fileId: fileId,
-                            regionId: this.effectiveRegionId, // TODO: what are region/stat/stokes in multi profile mode of image?
-                            statsType: statsType, // TODO: what are region/stat/stokes in multi profile mode of image?
+                            regionId: this.effectiveRegionId,
+                            statsType: statsType,
                             coordinate: selectedCoordinate, // TODO: what are region/stat/stokes in multi profile mode of image?
                             colorKey: fileId,
                             label: this.genProfileLabel(fileId, this.effectiveRegionId, statsType, selectedCoordinate)
@@ -389,7 +389,6 @@ export class SpectralProfileSelectionStore {
         if (profileCategory === MultiProfileCategory.NONE) { // Single profile mode
             widgetStore.setProfileColor(SpectralProfileWidgetStore.PRIMARY_LINE_KEY, primaryLineColor);
         } else if (profileCategory === MultiProfileCategory.IMAGE) {
-            // TODO: is selecting region/stat/stokes matters in multi profile mode of image?
             if (this.selectedFrame) {
                 const matchedFileIds = AppStore.Instance.spatialAndSpectalMatchedFileIds;
                 if (matchedFileIds?.includes(this.selectedFrameFileId)) {
