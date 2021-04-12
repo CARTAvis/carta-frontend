@@ -110,6 +110,9 @@ export function autoDetecting(velocity: number[], intensity:number[]) : ProfileF
 
     const intensitySmoothedMean = histogramGaussianFitting.center[0];
     const intensitySmoothedStddev = histogramGaussianFitting.fwhm[0] / (2 * Math.sqrt(Math.log(2) * 2 )); 
+    console.log("Intensity_smoothed histogram Gaussian fit, amplitude = " + histogramGaussianFitting.amp[0]);
+    console.log("Intensity_smoothed histogram Gaussian fit, mean = " + intensitySmoothedMean);
+    console.log("Intensity_smoothed histogram Gaussian fit, stddev = " + intensitySmoothedStddev);
 
     // 1st: marking channels with signals
     const lineBoxs:{fromIndex, toIndex, fromIndexOri, toIndexOri}[] = [];
@@ -142,6 +145,11 @@ export function autoDetecting(velocity: number[], intensity:number[]) : ProfileF
             }
             break;
         }
+    }
+
+    for (const iLineBox of lineBoxs) {
+        console.log("identified line interval:")
+        console.log("fromIndexOri :" + iLineBox.fromIndexOri + ", toIndexOri :" + iLineBox.toIndexOri + ", fromIndex :" + iLineBox.fromIndex + ", toIndex :" + iLineBox.toIndex);
     }
 
     // 2nd: checking multiplicity per identified feature in 1st step
@@ -324,6 +332,11 @@ export function autoDetecting(velocity: number[], intensity:number[]) : ProfileF
         } else {
             lineBoxsFinal.push(lineBox);
         }
+    }
+
+    for (const iLineBox of lineBoxsFinal) {
+        console.log("final identified line interval:")
+        console.log("fromIndexOri :" + iLineBox.fromIndexOri + ", toIndexOri :" + iLineBox.toIndexOri + ", fromIndex :" + iLineBox.fromIndex + ", toIndex :" + iLineBox.toIndex);
     }
 
     const guessComponents: ProfileFittingIndividualStore[] = [];
