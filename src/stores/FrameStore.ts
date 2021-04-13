@@ -1239,19 +1239,29 @@ export class FrameStore {
         this.center.y = (this.frameInfo.fileInfoExtended.height - 1) / 2.0;
     };
 
-    @action setSpectralCoordinate = (coordStr: string): boolean => {
+    @action setSpectralCoordinate = (coordStr: string, alignSpectralSiblings: boolean = true): boolean => {
         if (this.spectralCoordsSupported?.has(coordStr)) {
             const coord: {type: SpectralType, unit: SpectralUnit} = this.spectralCoordsSupported.get(coordStr);
             this.spectralType = coord.type;
             this.spectralUnit = coord.unit;
+
+            // TODO: make sure spectral alignment does not have side effect or bugs
+            if (alignSpectralSiblings) {
+                (!this.spectralReference ? this.secondarySpectralImages : this.spectralSiblings)?.forEach(spectrallyMatchedFrame => spectrallyMatchedFrame.setSpectralCoordinate(coordStr, false));
+            }
             return true;
         }
         return false;
     };
 
-    @action setSpectralSystem = (spectralSystem: SpectralSystem): boolean => {
+    @action setSpectralSystem = (spectralSystem: SpectralSystem, alignSpectralSiblings: boolean = true): boolean => {
         if (this.spectralSystemsSupported?.includes(spectralSystem)) {
             this.spectralSystem = spectralSystem;
+
+            // TODO: make sure spectral alignment does not have side effect or bugs
+            if (alignSpectralSiblings) {
+                (!this.spectralReference ? this.secondarySpectralImages : this.spectralSiblings)?.forEach(spectrallyMatchedFrame => spectrallyMatchedFrame.setSpectralSystem(spectralSystem, false));
+            }
             return true;
         }
         return false;
