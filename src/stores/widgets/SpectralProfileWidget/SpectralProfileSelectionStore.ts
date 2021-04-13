@@ -27,6 +27,11 @@ interface SpectralConfig extends CARTA.SetSpectralRequirements.ISpectralConfig {
     regionId: number;
 }
 
+const SUPPORTED_STOKES = ["z", "Iz", "Qz", "Uz", "Vz"];
+const SUPPORTED_STOKES_LABEL_MAP = new Map<string, string>([
+    ["z", "Current"], ["Iz", "I"], ["Qz", "Q"], ["Uz", "U"], ["Vz", "V"]
+]);
+
 export class SpectralProfileSelectionStore {
     // profile selection
     @observable activeProfileCategory: MultiProfileCategory;
@@ -36,7 +41,6 @@ export class SpectralProfileSelectionStore {
 
     private readonly widgetStore: SpectralProfileWidgetStore;
     private readonly DEFAULT_COORDINATE: string;
-    private static readonly ValidCoordinates = ["z", "I", "Q", "U", "V"];
 
     // getFormattedSpectralConfigs() is a simple converter to transform this.profileConfigs to SpectralConfig,
     // and SpectralConfig is specially for CalculateRequirementsMap in SpectralProfileWidgetStore.
@@ -70,7 +74,7 @@ export class SpectralProfileSelectionStore {
 
     private genProfileLabel = (fileId: number, regionId: number, statsType: CARTA.StatsType, coordinate: string) => {
         const fileName = AppStore.Instance.getFrameName(fileId);
-        return `${fileName}, ${regionId === RegionId.CURSOR ? "Cursor" : `Region ${regionId}`}, Statistic: ${StatsTypeString(statsType)}, Cooridnate: ${coordinate === "z" ? "Current" : coordinate}`;
+        return `${fileName}, ${regionId === RegionId.CURSOR ? "Cursor" : `Region ${regionId}`}, Statistic: ${StatsTypeString(statsType)}, Cooridnate: ${SUPPORTED_STOKES_LABEL_MAP.get(coordinate)}`;
     };
 
     @computed private get profileConfigs(): ProfileConfig[] {
@@ -261,7 +265,7 @@ export class SpectralProfileSelectionStore {
 
     @computed get coordinateOptions(): LineOption[] {
         let options = [{value: "z", label: "Current"}];
-        this.selectedFrame?.stokesInfo?.forEach(stokes => options.push({value: stokes, label: stokes}));
+        this.selectedFrame?.stokesInfo?.forEach(stokes => options.push({value: `${stokes}z`, label: stokes}));
         return options;
     }
 
@@ -422,26 +426,19 @@ export class SpectralProfileSelectionStore {
     // When frame is changed,
     // Single profile mode(None)/Multi profile mode of Region/Stat, within the same image:
     //      * region - switch to active to ensure getting correct region
-    //      * stokes - stay in the same stokes if new frame also has the one, otherwise to default('z')
+    //      * stokes - handled in the autorun
     // Multi profile mode of Stokes:
     //      * region - switch to active to ensure getting correct region
-    //      * stokes - stay in the selected stokes, let backend handle invalid selection
+    //      * stokes - handled in the autorun
     // Multi profile mode of Image(matched images):
     //      * region - regions are shared among matched images
-    //      * stokes - stay in the selected stokes, let backend handle invalid selection
+    //      * stokes - handled in the autorun
     @action selectFrame = (fileId: number) => {
         const widgetStore = this.widgetStore;
         widgetStore.setFileId(fileId);
         if (this.activeProfileCategory !== MultiProfileCategory.IMAGE) {
             widgetStore.setRegionId(this.selectedFrameFileId, RegionId.ACTIVE);
             this.selectedRegionIds = [RegionId.ACTIVE];
-            // Stay in the same stokes if new frame also has the one, otherwise to default('z')
-            if (this.activeProfileCategory !== MultiProfileCategory.STOKES && (
-                this.selectedCoordinates?.length > 0 &&
-                !AppStore.Instance.getFrame(fileId)?.stokesInfo?.includes(this.selectedCoordinates[0])
-            )) {
-                this.selectedCoordinates = [this.DEFAULT_COORDINATE];
-            }
         }
     };
 
@@ -459,7 +456,7 @@ export class SpectralProfileSelectionStore {
     };
 
     @action selectCoordinateSingleMode = (coordinate: string) => {
-        if (SpectralProfileSelectionStore.ValidCoordinates.includes(coordinate)) {
+        if (SUPPORTED_STOKES.includes(coordinate)) {
             this.selectedCoordinates = [coordinate];
         }
     };
@@ -497,7 +494,7 @@ export class SpectralProfileSelectionStore {
     };
 
     @action selectCoordinateMultiMode = (coordinate: string, color: string) => {
-        if (SpectralProfileSelectionStore.ValidCoordinates.includes(coordinate)) {
+        if (SUPPORTED_STOKES.includes(coordinate)) {
             if (this.selectedCoordinates?.includes(coordinate) && this.selectedCoordinates.length > 1) {
                 // remove selection
                 this.selectedCoordinates = this.selectedCoordinates.filter(coord => coord !== coordinate);
@@ -541,7 +538,7 @@ export class SpectralProfileSelectionStore {
             }
         });
 
-        // Handle when selected region was deleted: remove regionId in selectedRegionIds if it does not existed in region options
+        // When selected region was deleted: remove regionId in selectedRegionIds if it does not existed in region options
         autorun(() => {
             if (this.activeProfileCategory === MultiProfileCategory.REGION) {
                 this.selectedRegionIds?.forEach(selectedRegionId => {
@@ -558,6 +555,13 @@ export class SpectralProfileSelectionStore {
                 if (this.selectedRegionIds?.length > 0 && !this.regionOptions?.find(regionOption => this.selectedRegionIds[0] === regionOption.value)) {
                     this.selectRegionSingleMode(RegionId.ACTIVE);
                 }
+            }
+        });
+
+        // When frame is changed(coordinateOptions changes), selected stokes stay unchanged if new frame also support them, otherwise to default('z')
+        autorun(() => {
+            if (this.selectedCoordinates?.some(coordinate => !this.coordinateOptions?.find(coordinateOption => coordinate === coordinateOption.value))) {
+                this.selectCoordinateSingleMode(this.DEFAULT_COORDINATE);
             }
         });
     }
