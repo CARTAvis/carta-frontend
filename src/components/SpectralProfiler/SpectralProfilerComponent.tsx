@@ -368,7 +368,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
             }
             return {xMin, xMax};
         }
-        return undefined;
+        return {xMin: undefined, xMax: undefined};
     };
 
     private getDataPointsAndProperties = (frameChannelValues: number[], profile: ProcessedSpectralProfile, wantMeanRms: boolean): {
