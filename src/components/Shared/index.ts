@@ -15,4 +15,5 @@ export * from "./ScatterPlot/ScatterPlotComponent";
 export * from "./ScatterPlot/PlotSettings/ScatterPlotSettingsPanelComponent";
 export * from "./SmoothingSettings/SmoothingSettingsComponent";
 export * from "./SpectralSettings/SpectralSettingsComponent";
-export * from "./TableComponent/TableComponent";
+export * from "./Tables/FilterableTableComponent";
+export * from "./Tables/SimpleTableComponent";
