@@ -167,17 +167,20 @@ export class SpectralProfileSelectionStore {
     }
 
     @computed get profiles(): {
+        channelValues: number[],
         data: ProcessedSpectralProfile,
         colorKey: string,
         label: string
     }[] {
         let profiles = [];
         this.profileConfigs?.forEach(profileConfig => {
+            const channelValues = AppStore.Instance.getFrame(profileConfig.fileId)?.channelValues;
             const frameProfileStoreMap = AppStore.Instance.spectralProfiles.get(profileConfig.fileId);
             const regionProfileStoreMap = frameProfileStoreMap?.get(profileConfig.regionId);
             const profileData = regionProfileStoreMap?.getProfile(profileConfig.coordinate, profileConfig.statsType);
-            if (profileData) {
+            if (channelValues && profileData) {
                 profiles.push({
+                    channelValues: channelValues,
                     data: profileData,
                     colorKey: profileConfig.colorKey,
                     label: profileConfig.label

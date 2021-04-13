@@ -77,14 +77,13 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
             return null;
         }
 
-        // Determine xBound
-        const xBound = this.getBoundX();
-
         // Determine points/smoothingPoints/colors/yBound/progress
+        let numProfiles = 0;
         let data = [];
         let smoothedData = [];
         let colors = [];
         let labels = [];
+        let xBound = {xMin: Number.MAX_VALUE, xMax: -Number.MAX_VALUE};
         let yBound = {yMin: Number.MAX_VALUE, yMax: -Number.MAX_VALUE};
         let yMean = undefined;
         let yRms = undefined;
@@ -93,14 +92,25 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
         const profileColorMap = widgetStore.lineColorMap;
         profiles.forEach(profile => {
             if (profile) {
-                const pointsAndProperties = this.getDataPointsAndProperties(profile.data, xBound, wantMeanRms);
+                const pointsAndProperties = this.getDataPointsAndProperties(profile.channelValues, profile.data, wantMeanRms);
                 if (pointsAndProperties) {
+                    numProfiles++;
                     data.push(pointsAndProperties.points);
+                    colors.push(getColorForTheme(profileColorMap.get(profile.colorKey)));
+                    labels.push(profile.label);
                     smoothedData.push(pointsAndProperties.smoothedPoints);
                     if (wantMeanRms) {
                         yMean = pointsAndProperties.yMean;
                         yRms = pointsAndProperties.yRms;
                     }
+
+                    if (xBound.xMin > pointsAndProperties.xBound.xMin) {
+                        xBound.xMin = pointsAndProperties.xBound.xMin;
+                    }
+                    if (xBound.xMax < pointsAndProperties.xBound.xMax) {
+                        xBound.xMax = pointsAndProperties.xBound.xMax;
+                    }
+
                     if (yBound.yMin > pointsAndProperties.yBound.yMin) {
                         yBound.yMin = pointsAndProperties.yBound.yMin;
                     }
@@ -109,10 +119,13 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
                     }
                     progressSum = progressSum + profile.data.progress;
                 }
-                colors.push(getColorForTheme(profileColorMap.get(profile.colorKey)));
-                labels.push(profile.label);
             }
         });
+
+        if (xBound.xMin === Number.MAX_VALUE) {
+            xBound.xMin = undefined;
+            xBound.xMax = undefined;
+        }
 
         if (yBound.yMin === Number.MAX_VALUE) {
             yBound.yMin = undefined;
@@ -125,7 +138,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
         }
 
         return {
-            numProfiles: profiles.length,
+            numProfiles: numProfiles,
             data: data,
             smoothedData: smoothedData,
             colors: colors,
@@ -136,7 +149,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
             yMax: yBound.yMax,
             yMean: yMean,
             yRms: yRms,
-            progress: progressSum / profiles.length
+            progress: progressSum / numProfiles
         };
     }
 
@@ -343,44 +356,48 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
         return spectralLineMarkers;
     };
 
-    private getBoundX = (): XBound => {
-        const channelValues = this.widgetStore.effectiveFrame.channelValues;
-        let xMin = Math.min(channelValues[0], channelValues[channelValues.length - 1]);
-        let xMax = Math.max(channelValues[0], channelValues[channelValues.length - 1])
-        if (!this.widgetStore.isAutoScaledX) {
-            const localXMin = clamp(this.widgetStore.minX, xMin, xMax);
-            const localXMax = clamp(this.widgetStore.maxX, xMin, xMax);
-            xMin = localXMin;
-            xMax = localXMax;
+    private getBoundX = (channelValues: number[]): XBound => {
+        if (channelValues?.length > 0) {
+            let xMin = Math.min(channelValues[0], channelValues[channelValues.length - 1]);
+            let xMax = Math.max(channelValues[0], channelValues[channelValues.length - 1])
+            if (!this.widgetStore.isAutoScaledX) {
+                const localXMin = clamp(this.widgetStore.minX, xMin, xMax);
+                const localXMax = clamp(this.widgetStore.maxX, xMin, xMax);
+                xMin = localXMin;
+                xMax = localXMax;
+            }
+            return {xMin, xMax};
         }
-        return {xMin, xMax};
+        return undefined;
     };
 
-    private getDataPointsAndProperties = (profile: ProcessedSpectralProfile, xBound: XBound, wantMeanRms: boolean): {
+    private getDataPointsAndProperties = (frameChannelValues: number[], profile: ProcessedSpectralProfile, wantMeanRms: boolean): {
         points: Point2D[],
         smoothedPoints: Point2D[],
+        xBound: XBound,
         yBound: YBound,
         yMean: number,
         yRms: number
     } => {
-        const channelValues = this.widgetStore.effectiveFrame.channelValues;
         let points: Point2D[] = [];
         let smoothedPoints: Point2D[] = [];
+        let xBound = this.getBoundX(frameChannelValues);
         let yBound = {yMin: Number.MAX_VALUE, yMax: -Number.MAX_VALUE};
         let yMean = undefined;
         let yRms = undefined;
-        if (profile?.values?.length > 0 && channelValues?.length > 0 && profile.values.length === channelValues.length) {
+
+        if (profile?.values?.length > 0 && frameChannelValues?.length > 0 && profile.values.length === frameChannelValues.length) {
             // Variables for mean and RMS calculations
             let ySum = 0;
             let ySum2 = 0;
             let yCount = 0;
 
-            for (let i = 0; i < channelValues.length; i++) {
-                const x = channelValues[i];
+            for (let i = 0; i < frameChannelValues.length; i++) {
+                const x = frameChannelValues[i];
                 const y = profile.values[i];
 
                 // Skip values outside of range. If array already contains elements, we've reached the end of the range, and can break
-                if (x < xBound.xMin || x > xBound.xMax) {
+                if (x < xBound?.xMin || x > xBound?.xMax) {
                     if (points.length) {
                         break;
                     } else {
@@ -401,14 +418,14 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
                     }
                 }
             }
-            smoothedPoints = smoothedPoints.concat(this.widgetStore.smoothingStore.getSmoothingPoint2DArray(channelValues, profile.values));
+            smoothedPoints = smoothedPoints.concat(this.widgetStore.smoothingStore.getSmoothingPoint2DArray(frameChannelValues, profile.values));
 
             if (wantMeanRms && yCount > 0) {
                 yMean = ySum / yCount;
                 yRms = Math.sqrt((ySum2 / yCount) - yMean * yMean);
             }
         }
-        return {points: points, smoothedPoints: smoothedPoints, yBound: yBound, yMean: yMean, yRms: yRms};
+        return {points: points, smoothedPoints: smoothedPoints, xBound: xBound, yBound: yBound, yMean: yMean, yRms: yRms};
     };
 
     render() {
