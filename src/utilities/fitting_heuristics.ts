@@ -235,13 +235,13 @@ export function autoDetecting(velocity: number[], intensity:number[]) : ProfileF
                         if (dividerLocalMinIndex.indexOf(right) !== -1) {
                             dividerIndex.push(right);
                         } else if (dividerLocalMaxIndex.indexOf(right) !== -1) {
-                            dividerIndex.push((left + right)/2);
+                            dividerIndex.push(Math.floor((left + right)/2));
                         }
                     }
                 } else {
                     if (dividerLocalMinIndex.indexOf(left) !== -1) {
                         if (dividerLocalMinIndex.indexOf(right) !== -1) {
-                            dividerIndex.push((left + right)/2);
+                            dividerIndex.push(Math.floor((left + right)/2));
                         } else if (dividerLocalMaxIndex.indexOf(right) !== -1) {
                             dividerIndex.push(right);
                         }
@@ -273,8 +273,8 @@ export function autoDetecting(velocity: number[], intensity:number[]) : ProfileF
                                 dividerIndex.push(middle);
                                 console.log("add middle: ", middle);
                             } else if (dividerLocalMaxIndex.indexOf(middle) !== -1) {
-                                dividerIndex.push((left + middle)/2);
-                                console.log("add mean of left and middle: ", (left + middle)/2);
+                                dividerIndex.push(Math.floor((left + middle)/2));
+                                console.log("add mean of left and middle: ", Math.floor((left + middle)/2));
                             }
                         }
                     }
@@ -286,8 +286,8 @@ export function autoDetecting(velocity: number[], intensity:number[]) : ProfileF
                     }
                     const dividerIndexTmpLast2 = dividerIndexTmp[dividerIndexTmp.length - 2];
                     if (dividerLocalMaxIndex.indexOf(dividerIndexTmpLast2) !== -1 && dividerLocalMaxIndex.indexOf(dividerIndexTmpLast1) !== -1) {
-                        dividerIndex.push((dividerIndexTmpLast2 + dividerIndexTmpLast1) / 2);
-                        console.log("add mean of last two: ", (dividerIndexTmpLast2 + dividerIndexTmpLast1) / 2);
+                        dividerIndex.push(Math.floor((dividerIndexTmpLast2 + dividerIndexTmpLast1) / 2));
+                        console.log("add mean of last two: ", Math.floor((dividerIndexTmpLast2 + dividerIndexTmpLast1) / 2));
                     }
                     const dividerIndexTmpLast3 = dividerIndexTmp[dividerIndexTmp.length - 3];
                     if (dividerLocalMinIndex.indexOf(dividerIndexTmpLast3) !== -1 && dividerLocalMinIndex.indexOf(dividerIndexTmpLast2) !== -1 && dividerLocalMaxIndex.indexOf(dividerIndexTmpLast1) !== -1) {
@@ -312,8 +312,8 @@ export function autoDetecting(velocity: number[], intensity:number[]) : ProfileF
                                 dividerIndex.push(middle);
                                 console.log("add middle: ", middle);
                             } else if (dividerLocalMinIndex.indexOf(middle) !== -1) {
-                                dividerIndex.push((left + middle)/2);
-                                console.log("add mean of left and middle: ", (left + middle)/2);
+                                dividerIndex.push(Math.floor((left + middle)/2));
+                                console.log("add mean of left and middle: ", Math.floor((left + middle)/2));
                             }
                         }
                     }
@@ -325,8 +325,8 @@ export function autoDetecting(velocity: number[], intensity:number[]) : ProfileF
                     }
                     const dividerIndexTmpLast2 = dividerIndexTmp[dividerIndexTmp.length - 2];
                     if (dividerLocalMinIndex.indexOf(dividerIndexTmpLast2) !== -1 && dividerLocalMinIndex.indexOf(dividerIndexTmpLast1) !== -1) {
-                        dividerIndex.push((dividerIndexTmpLast2 + dividerIndexTmpLast1) / 2);
-                        console.log("add mean of last two: ", (dividerIndexTmpLast2 + dividerIndexTmpLast1) / 2);
+                        dividerIndex.push(Math.floor((dividerIndexTmpLast2 + dividerIndexTmpLast1) / 2));
+                        console.log("add mean of last two: ", Math.floor((dividerIndexTmpLast2 + dividerIndexTmpLast1) / 2));
                     }
                     const dividerIndexTmpLast3 = dividerIndexTmp[dividerIndexTmp.length - 3];
                     if (dividerLocalMaxIndex.indexOf(dividerIndexTmpLast3) !== -1 && dividerLocalMaxIndex.indexOf(dividerIndexTmpLast2) !== -1 && dividerLocalMinIndex.indexOf(dividerIndexTmpLast1) !== -1) {
