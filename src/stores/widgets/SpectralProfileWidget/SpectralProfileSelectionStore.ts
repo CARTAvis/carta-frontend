@@ -424,10 +424,7 @@ export class SpectralProfileSelectionStore {
     };
 
     // When frame is changed,
-    // Single profile mode(None)/Multi profile mode of Region/Stat, within the same image:
-    //      * region - switch to active to ensure getting correct region
-    //      * stokes - handled in the autorun
-    // Multi profile mode of Stokes:
+    // Single profile mode(None)/Multi profile mode of Region/Stat/Stokes, within the same image:
     //      * region - switch to active to ensure getting correct region
     //      * stokes - handled in the autorun
     // Multi profile mode of Image(matched images):
@@ -436,10 +433,8 @@ export class SpectralProfileSelectionStore {
     @action selectFrame = (fileId: number) => {
         const widgetStore = this.widgetStore;
         widgetStore.setFileId(fileId);
-        if (this.activeProfileCategory !== MultiProfileCategory.IMAGE) {
-            widgetStore.setRegionId(this.selectedFrameFileId, RegionId.ACTIVE);
-            this.selectedRegionIds = [RegionId.ACTIVE];
-        }
+        widgetStore.setRegionId(this.selectedFrameFileId, RegionId.ACTIVE);
+        this.selectedRegionIds = [RegionId.ACTIVE];
     };
 
     @action selectRegionSingleMode = (regionId: number) => {
