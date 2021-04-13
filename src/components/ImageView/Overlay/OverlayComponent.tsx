@@ -2,8 +2,8 @@ import * as React from "react";
 import * as AST from "ast_wrapper";
 import * as _ from "lodash";
 import {observer} from "mobx-react";
-import {FrameStore, OverlayStore} from "stores";
-import {CursorInfo} from "models";
+import {AppStore, FrameStore, OverlayStore} from "stores";
+import {CursorInfo, SPECTRAL_TYPE_STRING} from "models";
 import "./OverlayComponent.scss";
 
 export class OverlayComponentProps {
@@ -78,7 +78,8 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
     render() {
         const styleString = this.props.overlaySettings.styleString;
 
-        const refFrame = this.props.frame.spatialReference || this.props.frame;
+        const frame = this.props.frame;
+        const refFrame = frame.spatialReference || frame;
         // changing the frame view, padding or width/height triggers a re-render
 
         // Dummy variables for triggering re-render
@@ -87,8 +88,26 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
         const framePadding = this.props.overlaySettings.padding;
         const w = this.props.overlaySettings.viewWidth;
         const h = this.props.overlaySettings.viewHeight;
-        const moving = this.props.frame.moving;
+        const moving = frame.moving;
+        const globalColor = this.props.overlaySettings.global.color;
+        const titleColor = this.props.overlaySettings.title.color;
+        const gridColor = this.props.overlaySettings.grid.color;
+        const borderColor = this.props.overlaySettings.border.color;
+        const oticksColor = this.props.overlaySettings.ticks.color;
+        const axesColor = this.props.overlaySettings.axes.color;
+        const numbersColor = this.props.overlaySettings.numbers.color;
+        const labelsColor = this.props.overlaySettings.labels.color;
+        const darktheme = AppStore.Instance.darkTheme;
         /* eslint-enable no-unused-vars, @typescript-eslint/no-unused-vars */
+
+        // Trigger switching AST overlay axis for PV image
+        if (frame.isPVImage && frame.spectralAxis?.valid) {
+            AST.set(frame.wcsInfo, `${frame.spectralType ? `System(${frame.spectralAxis.dimension})=${frame.spectralType},` : ""}` +
+                                    `${frame.spectralUnit ? `Unit(${frame.spectralAxis.dimension})=${frame.spectralUnit},` : ""}` +
+                                    `${frame.spectralSystem ? `StdOfRest=${frame.spectralSystem},` : ""}` +
+                                    `${frame.spectralType && frame.spectralSystem ? `Label(${frame.spectralAxis.dimension})=[${frame.spectralSystem}] ${SPECTRAL_TYPE_STRING.get(frame.spectralType)},` : ""}`
+            );
+        }
 
         let className = "overlay-canvas";
         if (this.props.docked) {

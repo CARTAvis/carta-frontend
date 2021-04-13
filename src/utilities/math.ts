@@ -83,11 +83,28 @@ export function scaleValue(x: number, scaling: FrameScaling, alpha: number = 100
         case FrameScaling.SQRT:
             return Math.sqrt(x);
         case FrameScaling.LOG:
-            return clamp(Math.log(alpha * x + 1.0) / Math.log(alpha), 0.0, 1.0);
+            return Math.log(alpha * x + 1.0) / Math.log(alpha + 1.0);
         case FrameScaling.POWER:
-            return (Math.pow(alpha, x) - 1.0) / alpha;
+            return (Math.pow(alpha, x) - 1.0) / (alpha - 1.0);
         case FrameScaling.GAMMA:
             return Math.pow(x, gamma);
+        default:
+            return x;
+    }
+}
+
+export function scaleValueInverse(x: number, scaling: FrameScaling, alpha: number = 1000, gamma: number = 1.5) {
+    switch (scaling) {
+        case FrameScaling.SQUARE:
+            return Math.sqrt(x);
+        case FrameScaling.SQRT:
+            return x * x;
+        case FrameScaling.LOG:
+            return (Math.pow(alpha + 1, x) - 1.0) / alpha;
+        case FrameScaling.POWER:
+            return alpha === 1 ? 0 : Math.log((alpha - 1.0) * x + 1.0) / Math.log(alpha);
+        case FrameScaling.GAMMA:
+            return Math.pow(x, 1.0 / gamma);
         default:
             return x;
     }

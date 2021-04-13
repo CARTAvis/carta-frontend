@@ -15,7 +15,6 @@ import {
     CatalogProfileStore,
     CatalogStore,
     CatalogUpdateMode,
-    dayPalette,
     DialogStore,
     FileBrowserStore,
     FrameInfo,
@@ -24,7 +23,6 @@ import {
     LayoutStore,
     LogEntry,
     LogStore,
-    nightPalette,
     OverlayStore,
     PreferenceKeys,
     PreferenceStore,
@@ -35,7 +33,7 @@ import {
     SpectralProfileStore,
     WidgetsStore
 } from ".";
-import {distinct, GetRequiredTiles, mapToObject, getTimestamp} from "utilities";
+import {distinct, GetRequiredTiles, mapToObject, getTimestamp, getColorForTheme} from "utilities";
 import {ApiService, BackendService, ConnectionStatus, ScriptingService, TileService, TileStreamDetails} from "services";
 import {FrameView, Point2D, PresetLayout, ProtobufProcessing, Theme, TileCoordinate, WCSMatchingType} from "models";
 import {HistogramWidgetStore, RegionWidgetStore, SpatialProfileWidgetStore, SpectralProfileWidgetStore, StatsWidgetStore, StokesAnalysisWidgetStore} from "./widgets";
@@ -161,7 +159,6 @@ export class AppStore {
         let autoFileLoaded = false;
 
         AST.onReady.then(runInAction(() => {
-            AST.setPalette(this.darkTheme ? nightPalette : dayPalette);
             this.astReady = true;
             if (this.backendService.connectionStatus === ConnectionStatus.ACTIVE && !autoFileLoaded && fileSearchParam) {
                 this.loadFile(folderSearchParam, fileSearchParam, "");
@@ -891,16 +888,39 @@ export class AppStore {
     };
 
     @action setDarkTheme = () => {
-        this.preferenceStore.setPreference(PreferenceKeys.GLOBAL_THEME, Theme.DARK);
+        this.setTheme(Theme.DARK);
     };
 
     @action setLightTheme = () => {
-        this.preferenceStore.setPreference(PreferenceKeys.GLOBAL_THEME, Theme.LIGHT);
+        this.setTheme(Theme.LIGHT);
     };
 
     @action setAutoTheme = () => {
-        this.preferenceStore.setPreference(PreferenceKeys.GLOBAL_THEME, Theme.AUTO);
+        this.setTheme(Theme.AUTO);
     };
+
+    @action setTheme = (theme: string) => {
+        if (Theme.isValid(theme)) {
+            this.preferenceStore.setPreference(PreferenceKeys.GLOBAL_THEME, theme);
+            this.updateASTColors();
+        }
+    }
+
+    private updateASTColors() {
+        if (this.astReady) {
+            const astColors = [
+                getColorForTheme(this.overlayStore.global.color),
+                getColorForTheme(this.overlayStore.title.color),
+                getColorForTheme(this.overlayStore.grid.color),
+                getColorForTheme(this.overlayStore.border.color),
+                getColorForTheme(this.overlayStore.ticks.color),
+                getColorForTheme(this.overlayStore.axes.color),
+                getColorForTheme(this.overlayStore.numbers.color),
+                getColorForTheme(this.overlayStore.labels.color)
+            ]
+            AST.setColors(astColors);
+        }
+    }
 
     @action toggleCursorFrozen = () => {
         this.cursorFrozen = !this.cursorFrozen;
@@ -998,8 +1018,8 @@ export class AppStore {
         this.helpStore = HelpStore.Instance;
         this.layoutStore = LayoutStore.Instance;
         this.logStore = LogStore.Instance;
-        this.overlayStore = OverlayStore.Instance;
         this.preferenceStore = PreferenceStore.Instance;
+        this.overlayStore = OverlayStore.Instance;
         this.widgetsStore = WidgetsStore.Instance;
 
         this.astReady = false;
@@ -1019,7 +1039,6 @@ export class AppStore {
         this.activeLayer = ImageViewLayer.RegionMoving;
 
         AST.onReady.then(runInAction(() => {
-            AST.setPalette(this.darkTheme ? nightPalette : dayPalette);
             this.astReady = true;
             this.logStore.addInfo("AST library loaded", ["ast"]);
         }));
@@ -1159,11 +1178,6 @@ export class AppStore {
             }
         });
 
-        // Set palette if theme changes
-        autorun(() => {
-            AST.setPalette(this.darkTheme ? nightPalette : dayPalette);
-        });
-
         // Update requirements every 200 ms
         setInterval(this.recalculateRequirements, AppStore.RequirementsCheckInterval);
 
@@ -1201,6 +1215,7 @@ export class AppStore {
                         this.cursorFrozen = this.preferenceStore.isCursorFrozen;
                         this.connectToServer();
                     });
+                    this.updateASTColors();
                 });
             }
         });
