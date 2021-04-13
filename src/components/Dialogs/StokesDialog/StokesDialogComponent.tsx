@@ -153,7 +153,7 @@ export class StokesDialogComponent extends React.Component {
             lazy: true,
             isOpen: appStore.dialogStore.stokesDialogVisible,
             onClose: appStore.dialogStore.hideStokesDialog,
-            title: "Merging stokes hypercube",
+            title: "Merging Stokes hypercube",
         };
 
         return (

@@ -179,7 +179,7 @@ export class FileBrowserDialogComponent extends React.Component {
                                 intent={Intent.PRIMARY}
                                 disabled={appStore.fileLoading || !fileBrowserStore.selectedFile || !fileBrowserStore.fileInfoResp || fileBrowserStore.loadingInfo}
                                 onClick={appStore.dialogStore.showStokesDialog}
-                                text={"Load as hyper cube"}
+                                text={"Load as hypercube"}
                             />
                         </Tooltip>
                         }
@@ -202,7 +202,7 @@ export class FileBrowserDialogComponent extends React.Component {
                                 intent={Intent.PRIMARY}
                                 disabled={appStore.fileLoading || !fileBrowserStore.selectedFile || !fileBrowserStore.fileInfoResp || fileBrowserStore.loadingInfo}
                                 onClick={appStore.dialogStore.showStokesDialog}
-                                text={"Load as hyper cube"}
+                                text={"Load as hypercube"}
                             />
                         </Tooltip>
                         }
