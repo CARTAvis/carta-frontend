@@ -1053,9 +1053,9 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
         const isPVImage = frame?.isPVImage;
         const spectralPanel = isPVImage ? (
             <div className="panel-container">
-                <h3>For spatial-spectral image</h3>
+                <p>For spatial-spectral image</p>
                 <Divider/>
-                <h3>Spectral axis</h3>
+                <p>Spectral axis</p>
                 <SpectralSettingsComponent
                     frame={appStore.activeFrame}
                     onSpectralCoordinateChange={frame.setSpectralCoordinate}
