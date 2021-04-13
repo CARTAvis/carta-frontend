@@ -307,7 +307,7 @@ export class AppStore {
         return this.spatialGroup.filter(f => f.contourConfig.enabled && f.contourConfig.visible);
     }
 
-    @action addFrame = (ack: CARTA.OpenFileAck | CARTA.IOpenFileAck, directory: string, hdu: string): boolean => {
+    @action addFrame = (ack: CARTA.IOpenFileAck, directory: string, hdu: string): boolean => {
         if (!ack) {
             return false;
         }
