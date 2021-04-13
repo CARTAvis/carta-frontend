@@ -32,13 +32,13 @@ export class StokesAnalysisToolbarComponent extends React.Component<{widgetStore
         let enableFractionalPol = false;
 
         if (appStore?.activeFrame?.stokesFiles?.length) {
-            AppStore.Instance?.activeFrame?.stokesFiles?.forEach(file => {
+            appStore.activeFrame.stokesFiles.forEach(file => {
                 if (file.stokesType === CARTA.StokesType.I) {
                     enableFractionalPol = true;
                 }
             });
         } else{ 
-            if (widgetStore.effectiveFrame && widgetStore.effectiveFrame.regionSet) {
+            if (widgetStore.effectiveFrame?.regionSet) {
                 enableFractionalPol = widgetStore.effectiveFrame.frameInfo.fileInfoExtended.stokes > 1;
             }
         }
