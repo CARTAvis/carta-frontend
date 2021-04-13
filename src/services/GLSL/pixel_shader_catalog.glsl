@@ -21,6 +21,7 @@ precision highp float;
 #define CROSS_LINED 17
 #define X_FILLED 18
 #define X_LINED 19
+#define LineSegment_FILLED 20
 
 #define SIN_0 0.0
 #define COS_0 1.0
@@ -237,46 +238,42 @@ float featherRangeTriangleUp(vec2 r, float rMin, float rMax) {
 }
 
 // Cross
-float featherRangeCross(vec2 r, float rMax) {
-    float lineThickness = uLineThickness;
-    float radius = length(r);
-    if(rMax > radius) {
-        if(r.y > -lineThickness && r.y < lineThickness){
-            return 1.0;
-        }
-        if(r.x > -lineThickness && r.x < lineThickness){
-            return 1.0;
-        }
+float featherRangeCross(vec2 r, float rMin, float rMax) {
+    float lineThickness = (rMax - rMin) * 0.5;
+    if(r.y > -lineThickness && r.y < lineThickness){
+        float v = (lineThickness + uFeatherWidth - abs(r.y)) / (2.0 * uFeatherWidth);
+        float v2 = (rMax - lineThickness - uFeatherWidth - abs(r.x)) / (2.0 * uFeatherWidth);
+        float alpha = smoothstep(0.0, 1.0, v);
+        float alpha2 = smoothstep(0.0, 1.0, v2);
+        return alpha * alpha2;
+    }
+    if(r.x > -lineThickness && r.x < lineThickness){
+        float v = (lineThickness + uFeatherWidth - abs(r.x)) / (2.0 * uFeatherWidth);
+        float v2 = (rMax - lineThickness - uFeatherWidth - abs(r.y)) / (2.0 * uFeatherWidth);
+        float alpha3 = smoothstep(0.0, 1.0, v);
+        float alpha4 = smoothstep(0.0, 1.0, v2);
+        return alpha3 * alpha4;
     }
     return 0.0;
 }
 
 float featherRangeCrossLined(vec2 r, float rMin, float rMax) {
     float lineThicknessMin = uLineThickness * 0.5;
-    float lineThicknessMax = uLineThickness * 3.0;
-    float radius = length(r);
-    if(rMax > radius) {
-        if((r.y > -lineThicknessMax && r.y < -lineThicknessMin) && (r.x < -lineThicknessMin || r.x > lineThicknessMin)) {
+    float lineThicknessMax = uLineThickness;
+    if(rMax > length(r)) {
+        if((abs(r.y) < lineThicknessMax && abs(r.y) > lineThicknessMin) && (r.x < -lineThicknessMin || r.x > lineThicknessMin)) {
             return 1.0;
         }
 
-        if((r.y < lineThicknessMax && r.y > lineThicknessMin) && (r.x < -lineThicknessMin || r.x > lineThicknessMin)) {
+        if(abs(r.y) < uLineThickness && abs(r.x) > rMin && abs(r.x) < rMax) {
             return 1.0;
         }
 
-        if(r.y > -uLineThickness && r.y < uLineThickness && abs(r.x) > rMin && abs(r.x) < rMax) {
+        if((abs(r.x) < lineThicknessMax && abs(r.x) > lineThicknessMin) && (r.y < -lineThicknessMin || r.y > lineThicknessMin)) {
             return 1.0;
         }
 
-        if((r.x > -lineThicknessMax && r.x < -lineThicknessMin) && (r.y < -lineThicknessMin || r.y > lineThicknessMin)) {
-            return 1.0;
-        }
-
-        if((r.x < lineThicknessMax && r.x > lineThicknessMin) && (r.y < -lineThicknessMin || r.y > lineThicknessMin)) {
-            return 1.0;
-        }
-
-        if(r.x > -uLineThickness && r.x < uLineThickness && abs(r.y) > rMin && abs(r.y) < rMax) {
+        if(abs(r.x) < uLineThickness && abs(r.y) > rMin && abs(r.y) < rMax) {
             return 1.0;
         }
     }
@@ -285,14 +282,37 @@ float featherRangeCrossLined(vec2 r, float rMin, float rMax) {
 }
 
 // X
-float featherRangeX(vec2 r, float rMax) {
+float featherRangeX(vec2 r, float rMin, float rMax) {
     r*= rot45;
-    return featherRangeCross(r, rMax);
+    return featherRangeCross(r, rMin, rMax);
 }
 
 float featherRangeXLined(vec2 r, float rMin, float rMax) {
     r*= rot45;
     return featherRangeCrossLined(r, rMin, rMax);
+}
+
+// Line Segment
+float featherLineSegment(vec2 r, float rMin, float rMax) {
+    float lineThickness = (rMax - rMin) * 0.5;
+    float v = (lineThickness + uFeatherWidth - abs(r.x)) / (2.0 * uFeatherWidth);
+    float v2 = (rMax - lineThickness - uFeatherWidth - abs(r.y)) / (2.0 * uFeatherWidth);
+    float alpha = smoothstep(0.0, 1.0, v);
+    float alpha2 = smoothstep(0.0, 1.0, v2);
+    return alpha * alpha2;
+}
+
+float featherLineSegmentLined(vec2 r, float rMin, float rMax) {
+    if(rMax > abs(r.y)) {
+        if(abs(r.x) < uLineThickness && abs(r.x) > uLineThickness * 0.4) {
+            return 1.0;
+        }
+
+        if(abs(r.x) < uLineThickness && abs(r.y) > rMin && abs(r.y) < rMax) {
+            return 1.0;
+        }
+    }
+    return 0.0;
 }
 
 bool isNaN(float val) {
@@ -343,6 +363,8 @@ float drawOutline(vec2 posPixelSpace, float borderWidth, float rMin, float rMax)
             return featherRangeCrossLined(posPixelSpace, rMin, rMax);
         case X_FILLED:
             return featherRangeCrossLined(posPixelSpace * rot45, rMin, rMax);
+        case LineSegment_FILLED:
+            return featherLineSegmentLined(posPixelSpace, rMin, rMax);
         default:
             return 0.0;
     }
@@ -383,13 +405,15 @@ float getAlphaValue(vec2 posPixelSpace, float rMin, float rMax) {
         case HEXAGON_LINED_2:
             return featherRangeHex2(posPixelSpace, rMin, rMax);
         case CROSS_FILLED:
-            return featherRangeCross(posPixelSpace, rMax);
+            return featherRangeCross(posPixelSpace, rMin, rMax);
         case CROSS_LINED:
             return featherRangeCrossLined(posPixelSpace, rMin, rMax);
         case X_FILLED:
-            return featherRangeX(posPixelSpace, rMax);
+            return featherRangeX(posPixelSpace, rMin, rMax);
         case X_LINED:
             return featherRangeXLined(posPixelSpace, rMin, rMax);
+        case LineSegment_FILLED:
+            return featherLineSegment(posPixelSpace, rMin, rMax);
         default:
             return 0.0;
     }

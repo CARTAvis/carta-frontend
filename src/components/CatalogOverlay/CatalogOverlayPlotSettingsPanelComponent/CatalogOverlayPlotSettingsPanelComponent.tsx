@@ -55,7 +55,8 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
         CatalogOverlayShape.RhombLined,
         CatalogOverlayShape.TriangleDownLined,
         CatalogOverlayShape.TriangleUpLined,
-        CatalogOverlayShape.XFilled
+        CatalogOverlayShape.XFilled,
+        CatalogOverlayShape.LineSegmentFILLED
     ];
 
     public static get WIDGET_CONFIG(): DefaultWidgetConfig {
@@ -593,6 +594,8 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
                 return IconWrapper(hexagon, color, false);
             case CatalogOverlayShape.EllipseLined:
                 return IconWrapper(ellipse, color, false);
+            case CatalogOverlayShape.LineSegmentFILLED:
+                return <Icon icon="minus" style={{"transform": "rotate(90deg)"}} color={color}/>;
             default:
                 return <Icon icon="circle" color={color}/>;
         }

@@ -23,7 +23,8 @@ export enum CatalogOverlayShape {
     CrossFilled = 16,
     CrossLined = 17,
     XFilled = 18,
-    XLined = 19
+    XLined = 19,
+    LineSegmentFILLED = 20
 }
 
 export enum CatalogSettingsTabs {
@@ -58,8 +59,9 @@ export class CatalogWidgetStore {
         [CatalogOverlayShape.TriangleUpLined, {featherWidth: 0.35, minSize: 6}],
         [CatalogOverlayShape.TriangleDownLined, {featherWidth: 0.35, minSize: 6}],
         [CatalogOverlayShape.HexagonLined2, {featherWidth: 0.35, minSize: 6}],
-        [CatalogOverlayShape.CrossFilled, {featherWidth: 0.0, minSize: 4}],
-        [CatalogOverlayShape.XFilled, {featherWidth: 0.0, minSize: 4}]
+        [CatalogOverlayShape.CrossFilled, {featherWidth: 0.5, minSize: 4}],
+        [CatalogOverlayShape.XFilled, {featherWidth: 0.5, minSize: 4}],
+        [CatalogOverlayShape.LineSegmentFILLED, {featherWidth: 0.35, minSize: 4}]
     ]);
 
     @observable catalogFileId: number;
@@ -126,7 +128,7 @@ export class CatalogWidgetStore {
         this.colorMapColumn = CatalogOverlay.NONE;
         this.colorColumnMax = {default: undefined, clipd: undefined};
         this.colorColumnMin = {default: undefined, clipd: undefined};
-        this.colorMap = "jet";
+        this.colorMap = "viridis";
         this.colorScalingType = FrameScaling.LINEAR;
         this.invertedColorMap = false;
         this.orientationMapColumn = CatalogOverlay.NONE;

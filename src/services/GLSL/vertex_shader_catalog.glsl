@@ -21,6 +21,7 @@ precision highp float;
 #define CROSS_LINED 17
 #define X_FILLED 18
 #define X_LINED 19
+#define LineSegment_FILLED 20
 
 #define PI radians(180.0)
 #define SQRT3 sqrt(3.0)
@@ -82,6 +83,7 @@ float getSquareSideByArea(float area) {
         case CROSS_LINED:
         case X_FILLED:
         case X_LINED:
+        case LineSegment_FILLED:
             return sqrt(area);
         case CIRCLE_FILLED:
         case CIRCLE_LINED:
