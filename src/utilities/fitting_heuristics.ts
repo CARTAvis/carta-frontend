@@ -87,22 +87,83 @@ export function histogram(data: number[], binN: number): {hist: number[], binEdg
 
 
 export function autoDetecting(velocity: number[], intensity:number[]) : ProfileFittingIndividualStore[] {
+
+    const yDataFlippedSum = intensity.map((value, i) => {
+        return value + intensity[intensity.length - 1 - i];
+    })
+
+    const flippedSumHistResult = histogram(yDataFlippedSum, Math.round(Math.sqrt(yDataFlippedSum.length)));
+    // padding 0 to both sides of the histogram
+    const histFlippedSumY = [0, ...flippedSumHistResult.hist, 0];
+    const histFlippedSumXCenterEmp = [];
+    for (let i = 0; i < flippedSumHistResult.binEdges.length - 2 ; i++) {
+        histFlippedSumXCenterEmp.push((flippedSumHistResult.binEdges[i] + flippedSumHistResult.binEdges[i + 1])/ 2);
+    } 
+    const deltaHistFlippedSumXCenter = histFlippedSumXCenterEmp[1] - histFlippedSumXCenterEmp[0];
+    const histFlippedSumXCenter = [histFlippedSumXCenterEmp[0] - deltaHistFlippedSumXCenter, ...histFlippedSumXCenterEmp ,histFlippedSumXCenterEmp[histFlippedSumXCenterEmp.length - 1] +deltaHistFlippedSumXCenter];
+
+    const initialGuessFlippedSum = [_.max(histFlippedSumY), histFlippedSumXCenter[_.findIndex(histFlippedSumY, (y => y === _.max(histFlippedSumY)))], 2 * Math.sqrt(Math.log(10) * 2 ) * 0.5 * (deltaHistFlippedSumXCenter)]
+    const flippedSumHistogramGaussianFitting = GSL.gaussianFitting(new Float64Array(histFlippedSumXCenter),new Float64Array(histFlippedSumY), initialGuessFlippedSum, [0, 0, 0]);
+
+    const flippedSumMean = flippedSumHistogramGaussianFitting.center[0];
+    const flippedSumStddev = flippedSumHistogramGaussianFitting.fwhm[0] / (2 * Math.sqrt(Math.log(2) * 2 ));
+    console.log("yDataFlippedSum histogram Gaussian fit, amp = ", flippedSumHistogramGaussianFitting.amp[0]);
+    console.log("yDataFlippedSum histogram Gaussian fit, mean = ", flippedSumMean);
+    console.log("yDataFlippedSum histogram Gaussian fit, stddev = ", flippedSumStddev);
+
+    let INDEX_FROM, INDEX_TO;
+    let SWITCH = false;
+    const xMeanSegment = [];
+    const yMeanSegment = [];
+    const SN = 2;
+    const FLOOR = flippedSumMean - SN * flippedSumStddev;
+    const CEILING = flippedSumMean + SN * flippedSumStddev;
+    for (let i = 0; i < yDataFlippedSum.length; i++) {
+        const value = yDataFlippedSum[i];
+        if((value > CEILING || value < FLOOR) && SWITCH === false && i <= yDataFlippedSum.length - 2) {
+            INDEX_FROM = i;
+            SWITCH = true;
+            console.log(i);
+        } else if (value < CEILING && value > FLOOR && SWITCH === true) {
+            INDEX_TO = i;
+            SWITCH = false;
+            console.log("(" + INDEX_FROM + ", " + INDEX_TO + ")");
+            xMeanSegment.push(_.mean(velocity.slice(INDEX_FROM, INDEX_TO)));
+            yMeanSegment.push(_.mean(intensity.slice(INDEX_FROM, INDEX_TO)));
+        } else if((value > CEILING || value < FLOOR) && SWITCH === true && i === yDataFlippedSum.length - 1) {
+            INDEX_TO = i;
+            console.log("(" + INDEX_FROM + ", " + INDEX_TO + ")");
+            xMeanSegment.push(_.mean(velocity.slice(INDEX_FROM, INDEX_TO)));
+            yMeanSegment.push(_.mean(intensity.slice(INDEX_FROM, INDEX_TO)));
+            break;
+        }
+    }
+
+    if (xMeanSegment.length <= 1) {
+        xMeanSegment.push(_.mean(velocity.slice(0, Math.floor(velocity.length)/2)));
+        xMeanSegment.push(_.mean(velocity.slice(Math.floor(velocity.length/2), velocity.length)));
+        yMeanSegment.push(_.mean(intensity.slice(0, Math.floor(intensity.length)/2)));
+        yMeanSegment.push(_.mean(intensity.slice(Math.floor(intensity.length/2), intensity.length)));
+    }
+    console.log("xMeanSegment:", xMeanSegment);
+    console.log("yMeanSegment:", yMeanSegment);
+
     // pre-processing data based on number of channels
     const xSmoothed = profilePreprocessing(velocity);
     const ySmoothed = profilePreprocessing(intensity);
 
     // fit a gaussian to the intensity histogram as an estimate of continuum level and noise level
-    const bins = Math.floor(Math.sqrt(velocity.length));
+    const bins = Math.round(Math.sqrt(velocity.length));
     const histResult = histogram(ySmoothed, bins <= 8 ? 8 : bins);
 
     // padding 0 to both sides of the histogram
-    let histY: number[] = [0, ...histResult.hist, 0];
+    const histY: number[] = [0, ...histResult.hist, 0];
     const histXCenterTmp = [];
     for (let i = 0; i < histResult.binEdges.length - 2 ; i++) {
         histXCenterTmp.push((histResult.binEdges[i] + histResult.binEdges[i + 1])/ 2);
     }
     const deltaHistXCenter = histXCenterTmp[1] - histXCenterTmp[0];
-    let histXCenter: number[] = [histXCenterTmp[0] - deltaHistXCenter, ...histXCenterTmp, histXCenterTmp[histXCenterTmp.length - 1] + deltaHistXCenter];
+    const histXCenter: number[] = [histXCenterTmp[0] - deltaHistXCenter, ...histXCenterTmp, histXCenterTmp[histXCenterTmp.length - 1] + deltaHistXCenter];
 
     // [amp, center, fwhm]
     const initialGuess = [_.max(histY), histXCenter[_.findIndex(histY, (y => y === _.max(histY)))], 2 * Math.sqrt(Math.log(10) * 2 ) * 0.5 * (deltaHistXCenter)];
