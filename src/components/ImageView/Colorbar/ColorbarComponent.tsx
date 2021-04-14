@@ -55,7 +55,7 @@ export class ColorbarComponent extends React.Component {
         const appStore = AppStore.Instance;
         const frame = appStore.activeFrame;
         const colorbarSettings = appStore.overlayStore.colorbar;
-        const yOffset = appStore.overlayStore.padding.top;
+        const yOffset = colorbarSettings.position === "right" ? appStore.overlayStore.padding.top : appStore.overlayStore.padding.left;
 
         let getColor = (customColor: boolean, color: string): string => {
             return customColor ? getColorForTheme(color) : (colorbarSettings.customColor ? getColorForTheme(colorbarSettings.color) : getColorForTheme(appStore.overlayStore.global.color));
@@ -67,14 +67,38 @@ export class ColorbarComponent extends React.Component {
             return (position * devicePixelRatio) % 1 === 0;
         };
 
+        let rectX, rectY, rectWidth, rectHeight;
+        switch(colorbarSettings.position) {
+            case("bottom"):
+                rectX = yOffset + (isOnePixBorder && (isIntPosition(yOffset) ? 0.5 / devicePixelRatio : 0));
+                rectY = colorbarSettings.offset + (isOnePixBorder ? 0.5 / devicePixelRatio : 0);
+                rectWidth = frame.renderWidth + (isOnePixBorder && (!isIntPosition(frame.renderWidth) ? (isIntPosition(yOffset) ? 0.5 : -0.5) / devicePixelRatio : 0));
+                rectHeight = colorbarSettings.width;
+                break;
+            case("top"):
+                rectX = yOffset + (isOnePixBorder && (isIntPosition(yOffset) ? 0.5 / devicePixelRatio : 0));
+                rectY = appStore.overlayStore.base + colorbarSettings.totalWidth - colorbarSettings.width - colorbarSettings.offset - (isOnePixBorder ? 0.5 / devicePixelRatio : 0);
+                rectWidth = frame.renderWidth + (isOnePixBorder && (!isIntPosition(frame.renderWidth) ? (isIntPosition(yOffset) ? 0.5 : -0.5) / devicePixelRatio : 0));
+                rectHeight = colorbarSettings.width;
+                break;
+            case("right"):
+            default:
+                rectX = colorbarSettings.offset + (isOnePixBorder ? 0.5 / devicePixelRatio : 0);
+                rectY = yOffset - (isOnePixBorder && (isIntPosition(yOffset) ? 0.5 / devicePixelRatio : 0));
+                rectWidth = colorbarSettings.width;
+                rectHeight = frame.renderHeight + (isOnePixBorder && (!isIntPosition(frame.renderHeight) ? (isIntPosition(yOffset) ? 0.5 : -0.5) / devicePixelRatio : 0));
+                break;
+        }
+
+
         const colorbar = (
             <Rect
-                x={colorbarSettings.offset + (isOnePixBorder && (isIntPosition(appStore.overlayStore.padding.left + appStore.overlayStore.renderWidth) ? 0.5 / devicePixelRatio : 0))}
-                y={yOffset - (isOnePixBorder && (isIntPosition(yOffset) ? 0.5 / devicePixelRatio : 0))}
-                width={colorbarSettings.width}
-                height={frame.renderHeight + (isOnePixBorder && (!isIntPosition(frame.renderHeight) ? (isIntPosition(yOffset) ? 0.5 : -0.5) / devicePixelRatio : 0))}
-                fillLinearGradientStartPoint={{x: 0, y: yOffset}}
-                fillLinearGradientEndPoint={{x: 0, y: yOffset + frame.renderHeight}}
+                x={rectX}
+                y={rectY}
+                width={rectWidth}
+                height={rectHeight}
+                fillLinearGradientStartPoint={colorbarSettings.position === "right" ? {x: 0, y: yOffset} : {x: yOffset + frame.renderWidth, y: 0}}
+                fillLinearGradientEndPoint={colorbarSettings.position === "right" ? {x: 0, y: yOffset + frame.renderHeight} : {x: yOffset, y: 0}}
                 fillLinearGradientColorStops={frame.renderConfig.colorscaleArray}
                 stroke={colorbarSettings.borderVisible ? getColor(colorbarSettings.borderCustomColor, colorbarSettings.borderColor) : null}
                 strokeWidth={colorbarSettings.borderWidth / devicePixelRatio}
@@ -154,17 +178,17 @@ export class ColorbarComponent extends React.Component {
             </div>
         ) : null;
 
-        let top;
+        let stageTop;
         switch(colorbarSettings.position) {
             case("bottom"):
-                top = appStore.overlayStore.padding.top + appStore.overlayStore.renderHeight + appStore.overlayStore.numberWidth + appStore.overlayStore.labelWidth;
+                stageTop = appStore.overlayStore.padding.top + appStore.overlayStore.renderHeight + appStore.overlayStore.numberWidth + appStore.overlayStore.labelWidth;
                 break;
             case("top"):
-                top = appStore.overlayStore.title.show ? appStore.overlayStore.padding.top - colorbarSettings.totalWidth - appStore.overlayStore.base : 0;
+                stageTop = appStore.overlayStore.title.show ? appStore.overlayStore.padding.top - colorbarSettings.totalWidth - appStore.overlayStore.base : 0;
                 break;
             case("right"):
             default:
-                top = 0;
+                stageTop = 0;
                 break;
         }
 
@@ -176,7 +200,7 @@ export class ColorbarComponent extends React.Component {
                     height={colorbarSettings.position === "right" ? appStore.overlayStore.viewHeight : colorbarSettings.stageWidth}
                     style={{
                         left: colorbarSettings.position === "right" ? appStore.overlayStore.padding.left + appStore.overlayStore.renderWidth : 0,
-                        top: top
+                        top: stageTop
                     }}
                 >
                     <Layer>
