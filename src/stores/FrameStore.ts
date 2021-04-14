@@ -438,7 +438,7 @@ export class FrameStore {
         if (this.frameInfo?.fileInfoExtended?.headerEntries) {
             const entries = this.frameInfo.fileInfoExtended.headerEntries;
             const axis1 = entries.find(entry => entry.name.includes("CTYPE1"));
-            const axis2 = entries.find(entry => entry.name.includes("CTYPE2"))
+            const axis2 = entries.find(entry => entry.name.includes("CTYPE2"));
             if (axis1?.value?.match(/offset|position|offset position/i)) {
                 return 1;
             } else if (axis2?.value?.match(/offset|position|offset position/i)) {
@@ -456,7 +456,7 @@ export class FrameStore {
         if (this.frameInfo?.fileInfoExtended?.headerEntries) {
             const entries = this.frameInfo.fileInfoExtended.headerEntries;
             const axis1 = entries.find(entry => entry.name.includes("CTYPE1"));
-            const axis2 = entries.find(entry => entry.name.includes("CTYPE2"))
+            const axis2 = entries.find(entry => entry.name.includes("CTYPE2"));
             if (axis1?.value?.match(/uu/i)) {
                 return 1;
             } else if (axis2?.value?.match(/uu/i)) {
