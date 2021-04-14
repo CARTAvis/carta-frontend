@@ -1,12 +1,12 @@
 import * as React from "react";
-import { observer } from "mobx-react";
-import { action, makeObservable, observable } from "mobx";
-import { Button, ButtonGroup, ControlGroup, Divider, FormGroup, HTMLSelect, InputGroup, IOptionProps, NonIdealState, Popover, PopoverInteractionKind, PopperModifiers, Position, Pre, Spinner, Tab, TabId, Tabs, Text } from "@blueprintjs/core";
-import { FixedSizeList as List } from "react-window";
+import {observer} from "mobx-react";
+import {action, makeObservable, observable} from "mobx";
+import {Button, ButtonGroup, ControlGroup, Divider, FormGroup, HTMLSelect, InputGroup, IOptionProps, NonIdealState, Popover, PopoverInteractionKind, PopperModifiers, Position, Pre, Spinner, Tab, TabId, Tabs, Text} from "@blueprintjs/core";
+import {FixedSizeList as List} from "react-window";
 import AutoSizer from "react-virtualized-auto-sizer";
-import { CARTA } from "carta-protobuf";
-import { TableComponent, TableComponentProps } from "components/Shared";
-import { ImageSaveComponent } from "components/Dialogs";
+import {CARTA } from "carta-protobuf";
+import {SimpleTableComponent, SimpleTableComponentProps} from "components/Shared";
+import {ImageSaveComponent} from "components/Dialogs";
 import "./FileInfoComponent.scss";
 
 export enum FileInfoType {
@@ -29,8 +29,8 @@ export class FileInfoComponent extends React.Component<{
     handleTabChange: (tab: TabId) => void;
     isLoading: boolean,
     errorMessage: string,
-    catalogHeaderTable?: TableComponentProps
-    selectedFile?: CARTA.IFileInfo | CARTA.ICatalogFileInfo;
+    catalogHeaderTable?: SimpleTableComponentProps,
+    selectedFile?: CARTA.IFileInfo | CARTA.ICatalogFileInfo
 }> {
 
     @observable searchString: string = "";
@@ -264,7 +264,7 @@ export class FileInfoComponent extends React.Component<{
                 if (this.props.catalogHeaderTable) {
                     return (
                         <Pre className="file-header-table">
-                            <TableComponent {...this.props.catalogHeaderTable} />
+                            <SimpleTableComponent {...this.props.catalogHeaderTable} />
                         </Pre>
                     );
                 }
@@ -415,26 +415,26 @@ export class FileInfoComponent extends React.Component<{
 
         return (!this.props.isLoading && !this.props.errorMessage && this.props.fileInfoExtended &&
             this.props.selectedTab === FileInfoType.IMAGE_HEADER) ? (
-            <Popover
-                className="header-search-button"
-                position={Position.LEFT}
-                interactionKind={PopoverInteractionKind.CLICK_TARGET_ONLY}
-                modifiers={popoverModifiers}
-                onOpening={() => this.handleSearchPanelClicked(true)}
-                onClosing={() => this.handleSearchPanelClicked(false)}
-            >
-                <Button icon="search-text" style={{ opacity: (this.isMouseEntered || this.isSearchOpened) ? 1 : 0 }}></Button>
-                <InputGroup
-                    className="header-search-input"
-                    autoFocus={true}
-                    placeholder={"Search text"}
-                    leftIcon="search-text"
-                    rightElement={searchIter}
-                    onChange={this.handleSearchStringChanged}
-                    onKeyDown={(ev) => this.handleClickMatched(1, ev)}
-                />
-            </Popover>
-        ) : null;
+                <Popover
+                    className="header-search-button"
+                    position={Position.LEFT}
+                    interactionKind={PopoverInteractionKind.CLICK_TARGET_ONLY}
+                    modifiers={popoverModifiers}
+                    onOpening={() => this.handleSearchPanelClicked(true)}
+                    onClosing={() => this.handleSearchPanelClicked(false)}
+                >
+                    <Button icon="search-text" style={{ opacity: (this.isMouseEntered || this.isSearchOpened) ? 1 : 0 }}></Button>
+                    <InputGroup
+                        className="header-search-input"
+                        autoFocus={true}
+                        placeholder={"Search text"}
+                        leftIcon="search-text"
+                        rightElement={searchIter}
+                        onChange={this.handleSearchStringChanged}
+                        onKeyDown={(ev) => this.handleClickMatched(1, ev)}
+                    />
+                </Popover>
+            ) : null;
     };
 
     render() {

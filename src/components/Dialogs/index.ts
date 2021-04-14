@@ -10,3 +10,4 @@ export * from "./LayoutDialog/SaveLayoutDialogComponent";
 export * from "./FileInfoDialog/FileInfoDialogComponent";
 export * from "./ContourDialog/ContourDialogComponent";
 export * from "./DebugExecutionDialog/DebugExecutionDialogComponent";
+export * from "./StokesDialog/StokesDialogComponent";

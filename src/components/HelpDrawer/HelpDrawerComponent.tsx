@@ -36,7 +36,8 @@ import {
     CatalogOverlayHelpComponent,
     CatalogHistogramPlotHelpComponent,
     CatalogScatterPlotHelpComponent,
-    SpectralLineQueryHelpComponent
+    SpectralLineQueryHelpComponent,
+    StokesDialogHelpComponent
 } from "./HelpContent";
 import {AppStore, HelpStore, HelpType} from "stores";
 
@@ -100,6 +101,10 @@ export class HelpDrawerComponent extends React.Component {
             HelpType.REGION_DIALOG, {
                 title: "Region Dialog",
                 content: <RegionDialogHelpComponent/>
+        }], [
+            HelpType.STOKES, {
+                title: "Stokes Dialog",
+                content: <StokesDialogHelpComponent/>
         }],
 
         // Widgets

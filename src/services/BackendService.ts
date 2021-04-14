@@ -25,7 +25,7 @@ export class BackendService {
         return BackendService.staticInstance;
     }
 
-    private static readonly IcdVersion = 19;
+    private static readonly IcdVersion = 20;
     private static readonly DefaultFeatureFlags = CARTA.ClientFeatureFlags.WEB_ASSEMBLY | CARTA.ClientFeatureFlags.WEB_GL;
     @observable connectionStatus: ConnectionStatus;
     readonly loggingEnabled: boolean;
@@ -110,7 +110,8 @@ export class BackendService {
             [CARTA.EventType.MOMENT_PROGRESS, {messageClass: CARTA.MomentProgress, handler: this.onStreamedMomentProgress}],
             [CARTA.EventType.MOMENT_RESPONSE, {messageClass: CARTA.MomentResponse, handler: this.onSimpleMappedResponse}],
             [CARTA.EventType.SCRIPTING_REQUEST, {messageClass: CARTA.ScriptingRequest, handler: this.onScriptingRequest}],
-            [CARTA.EventType.SPECTRAL_LINE_RESPONSE, {messageClass: CARTA.SpectralLineResponse, handler: this.onSimpleMappedResponse}]
+            [CARTA.EventType.SPECTRAL_LINE_RESPONSE, {messageClass: CARTA.SpectralLineResponse, handler: this.onSimpleMappedResponse}],
+            [CARTA.EventType.CONCAT_STOKES_FILES_ACK, {messageClass: CARTA.ConcatStokesFilesAck, handler: this.onSimpleMappedResponse}]
         ]);
 
         // check ping every 5 seconds
@@ -341,6 +342,29 @@ export class BackendService {
             this.logEvent(CARTA.EventType.OPEN_FILE, requestId, message, false);
             if (this.sendEvent(CARTA.EventType.OPEN_FILE, CARTA.OpenFile.encode(message).finish())) {
                 return new Observable<CARTA.OpenFileAck>(observer => {
+                    this.observerRequestMap.set(requestId, observer);
+                });
+            } else {
+                return throwError(new Error("Could not send event"));
+            }
+        }
+    }
+
+    @action("load individual stokes")
+    loadStokeFiles(stokesFiles: CARTA.IStokesFile[], fileId: number, renderMode: CARTA.RenderMode): Observable<CARTA.ConcatStokesFilesAck> {
+        if (this.connectionStatus !== ConnectionStatus.ACTIVE) {
+            return throwError(new Error("Not connected"));
+        } else {
+            const concatStokes: CARTA.IConcatStokesFiles= {
+                stokesFiles: stokesFiles,
+                fileId: fileId,
+                renderMode: renderMode
+            }
+            const message = CARTA.ConcatStokesFiles.create(concatStokes);
+            const requestId = this.eventCounter;
+            this.logEvent(CARTA.EventType.CONCAT_STOKES_FILES, requestId, message, false);
+            if (this.sendEvent(CARTA.EventType.CONCAT_STOKES_FILES, CARTA.ConcatStokesFiles.encode(message).finish())) {
+                return new Observable<CARTA.ConcatStokesFilesAck>(observer => {
                     this.observerRequestMap.set(requestId, observer);
                 });
             } else {

@@ -9,10 +9,10 @@ import ReactResizeDetector from "react-resize-detector";
 import SplitPane, { Pane } from "react-split-pane";
 import FuzzySearch from "fuzzy-search";
 import {CARTA} from "carta-protobuf";
-import {TableComponent, TableComponentProps, TableType, ClearableNumericInputComponent} from "components/Shared";
+import {FilterableTableComponent, FilterableTableComponentProps, ClearableNumericInputComponent} from "components/Shared";
 import {AppStore, CatalogStore, CatalogProfileStore, CatalogOverlay, CatalogUpdateMode, CatalogSystemType, DefaultWidgetConfig, HelpType, WidgetProps, WidgetsStore, PreferenceStore, PreferenceKeys} from "stores";
 import {CatalogWidgetStore, CatalogPlotWidgetStoreProps, CatalogPlotType} from "stores/widgets";
-import {toFixed} from "utilities";
+import {toFixed, ComparisonOperator} from "utilities";
 import {ProcessedColumnData} from "models";
 import "./CatalogOverlayComponent.scss";
 
@@ -22,18 +22,6 @@ enum HeaderTableColumnName {
     Type = "Type",
     Display = "Display",
     Description = "Description"
-}
-
-// order matters, since ... and .. both having .. (same for < and <=, > and >=)
-enum ComparisonOperator {
-   Equal = "==",
-   NotEqual = "!=",
-   LessorOrEqual = "<=",
-   Lesser = "<",
-   GreaterOrEqual = ">=",
-   Greater = ">",
-   RangeClosed = "...",
-   RangeOpen = ".."
 }
 
 @observer
@@ -733,8 +721,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         }
 
         const catalogTable = this.catalogDataInfo;
-        const dataTableProps: TableComponentProps = {
-            type: TableType.ColumnFilter,
+        const dataTableProps: FilterableTableComponentProps = {
             dataset: catalogTable.dataset,
             filter: profileStore.catalogControlHeader,
             columnHeaders: profileStore.displayedColumnHeaders,
@@ -750,7 +737,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
             updateSelectedRow: this.onCatalogTableDataSelected,
             updateSortRequest: this.updateSortRequest,
             sortingInfo: profileStore.sortingInfo,
-            disable: profileStore.loadOntoImage,
+            disableSort: profileStore.loadOntoImage,
             darkTheme: AppStore.Instance.darkTheme,
             tableHeaders: profileStore.catalogHeader
         };
@@ -851,7 +838,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
                         {this.createHeaderTable()}
                     </Pane>
                     <Pane className={"catalog-overlay-data-container"}>
-                        <TableComponent {...dataTableProps}/>
+                        <FilterableTableComponent {...dataTableProps}/>
                     </Pane>
                 </SplitPane>
                 <div className="bp3-dialog-footer">
