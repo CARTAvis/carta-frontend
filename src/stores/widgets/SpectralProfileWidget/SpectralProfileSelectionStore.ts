@@ -401,7 +401,7 @@ export class SpectralProfileSelectionStore {
             }
         } else if (profileCategory === MultiProfileCategory.REGION) {
             if (this.selectedRegionIds?.length > 0) {
-                // Active region option will be disabled in multi selection mode, switch to specfic region
+                // Active region option will be disabled in multi selection mode, switch to specific region
                 if (this.selectedRegionIds[0] === RegionId.ACTIVE) {
                     this.selectRegionSingleMode(this.effectiveRegionId);
                 }
@@ -419,17 +419,21 @@ export class SpectralProfileSelectionStore {
     };
 
     // When frame is changed,
-    // Single profile mode(None)/Multi profile mode of Region/Stat/Stokes, within the same image:
+    // Single profile mode(None)/Multi profile mode of Stat/Stokes:
     //      * region - switch to active to ensure getting correct region
     //      * stokes - handled in the autorun
+    // Multi profile mode of Region:
+    //      * region - active region is disabled, switch to specific region
+    //      * stokes - handled in the autorun
     // Multi profile mode of Image(matched images):
-    //      * region - regions are shared among matched images
+    //      * region - switch to active of the selected frame, and regions are shared among matched images
     //      * stokes - handled in the autorun
     @action selectFrame = (fileId: number) => {
         const widgetStore = this.widgetStore;
         widgetStore.setFileId(fileId);
-        widgetStore.setRegionId(this.selectedFrameFileId, RegionId.ACTIVE);
-        this.selectedRegionIds = [RegionId.ACTIVE];
+        const regionId = this.activeProfileCategory === MultiProfileCategory.REGION ? this.effectiveRegionId : RegionId.ACTIVE;
+        widgetStore.setRegionId(fileId, regionId);
+        this.selectedRegionIds = [regionId];
     };
 
     @action selectRegionSingleMode = (regionId: number) => {
