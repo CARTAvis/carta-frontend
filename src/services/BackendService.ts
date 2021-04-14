@@ -1,9 +1,9 @@
-import { action, observable, makeObservable, runInAction } from "mobx";
-import { CARTA } from "carta-protobuf";
-import { Observable, Observer, Subject, throwError } from "rxjs";
-import { AppStore, PreferenceStore, RegionStore } from "stores";
-import { mapToObject } from "utilities";
-import { ApiService } from "./ApiService";
+import {action, observable, makeObservable, runInAction} from "mobx";
+import {CARTA } from "carta-protobuf";
+import {Observable, Observer, Subject, throwError} from "rxjs";
+import {AppStore, PreferenceStore, RegionStore} from "stores";
+import {mapToObject} from "utilities";
+import {ApiService} from "./ApiService";
 
 export enum ConnectionStatus {
     CLOSED = 0,

@@ -1,11 +1,11 @@
 import * as React from "react";
-import { observer } from "mobx-react";
-import { Text, Label, FormGroup, IOptionProps, HTMLSelect, ControlGroup, Switch, NumericInput, Intent } from "@blueprintjs/core";
-import { CARTA } from "carta-protobuf";
-import { AppStore, FileBrowserStore } from "stores";
-import { SpectralSystem, SpectralType, SpectralUnit } from "models";
+import {observer} from "mobx-react";
+import {Text, Label, FormGroup, IOptionProps, HTMLSelect, ControlGroup, Switch, NumericInput, Intent} from "@blueprintjs/core";
+import {CARTA} from "carta-protobuf";
+import {AppStore, FileBrowserStore} from "stores";
+import {SpectralSystem, SpectralType, SpectralUnit} from "models";
 import "./ImageSaveComponent.scss";
-import { observable } from "mobx";
+import {observable} from "mobx";
 
 @observer
 export class ImageSaveComponent extends React.Component<{

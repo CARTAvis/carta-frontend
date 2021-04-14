@@ -1,11 +1,11 @@
 import * as _ from "lodash";
-import { action, autorun, computed, observable, ObservableMap, when, makeObservable, runInAction } from "mobx";
+import {action, autorun, computed, observable, ObservableMap, when, makeObservable, runInAction} from "mobx";
 import * as Long from "long";
-import { Classes, Colors, IOptionProps, setHotkeysDialogProps } from "@blueprintjs/core";
-import { Utils } from "@blueprintjs/table";
+import {Classes, Colors, IOptionProps, setHotkeysDialogProps} from "@blueprintjs/core";
+import {Utils} from "@blueprintjs/table";
 import * as AST from "ast_wrapper";
 import * as CARTACompute from "carta_computation";
-import { CARTA } from "carta-protobuf";
+import {CARTA} from "carta-protobuf";
 import {
     AlertStore,
     AnimationMode,
@@ -33,12 +33,12 @@ import {
     SpectralProfileStore,
     WidgetsStore
 } from ".";
-import { distinct, GetRequiredTiles, mapToObject, getTimestamp, getColorForTheme } from "utilities";
-import { ApiService, BackendService, ConnectionStatus, ScriptingService, TileService, TileStreamDetails } from "services";
-import { FrameView, Point2D, PresetLayout, ProtobufProcessing, Theme, TileCoordinate, WCSMatchingType } from "models";
-import { HistogramWidgetStore, RegionWidgetStore, SpatialProfileWidgetStore, SpectralProfileWidgetStore, StatsWidgetStore, StokesAnalysisWidgetStore } from "./widgets";
-import { getImageCanvas, ImageViewLayer } from "components";
-import { AppToaster, ErrorToast, SuccessToast, WarningToast } from "components/Shared";
+import {distinct, GetRequiredTiles, mapToObject, getTimestamp, getColorForTheme} from "utilities";
+import {ApiService, BackendService, ConnectionStatus, ScriptingService, TileService, TileStreamDetails} from "services";
+import {FrameView, Point2D, PresetLayout, ProtobufProcessing, Theme, TileCoordinate, WCSMatchingType} from "models";
+import {HistogramWidgetStore, RegionWidgetStore, SpatialProfileWidgetStore, SpectralProfileWidgetStore, StatsWidgetStore, StokesAnalysisWidgetStore} from "./widgets";
+import {getImageCanvas, ImageViewLayer} from "components";
+import {AppToaster, ErrorToast, SuccessToast, WarningToast} from "components/Shared";
 import GitCommit from "../static/gitInfo";
 
 export class AppStore {
