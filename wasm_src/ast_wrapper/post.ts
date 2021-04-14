@@ -115,7 +115,7 @@ Module.spectralTransform = Module.cwrap("spectralTransform", "number", ["number"
 Module.getLastErrorMessage = Module.cwrap("getLastErrorMessage", "string");
 Module.clearLastErrorMessage = Module.cwrap("clearLastErrorMessage", null);
 Module.copy = Module.cwrap("copy", null, ["number"]);
-Module.delete = Module.cwrap("deleteObject", null, ["number"]);
+Module.deleteObject = Module.cwrap("deleteObject", null, ["number"]);
 Module.invert = Module.cwrap("invert", "number", ["number"]);
 Module.convert = Module.cwrap("convert", "number", ["number", "number", "string"]);
 Module.shiftMap2D = Module.cwrap("shiftMap2D", "number", ["number", "number"]);
@@ -161,7 +161,7 @@ Module.getWCSValueFromFormattedString = function (wcsInfo: number, formatString:
     return {x: xOut[0], y: yOut[0]};
 }
 
-Module.transformPointArrays = function (wcsInfo: number, xIn: Float64Array, yIn: Float64Array, forward: number) {
+Module.transformPointArrays = function (wcsInfo: number, xIn: Float64Array, yIn: Float64Array, forward: boolean = true) {
     // Return empty array if arguments are invalid
     if (!(xIn instanceof Float64Array) || !(yIn instanceof Float64Array) || xIn.length !== yIn.length) {
         return {x: new Float64Array(1), y: new Float64Array(1)};

@@ -158,7 +158,7 @@ export class AppStore {
 
         let autoFileLoaded = false;
 
-        AST.onReady.then(runInAction(() => {
+        AST.onReady.then(action(() => {
             this.astReady = true;
             if (this.backendService.connectionStatus === ConnectionStatus.ACTIVE && !autoFileLoaded && fileSearchParam) {
                 this.loadFile(folderSearchParam, fileSearchParam, "");
@@ -1038,7 +1038,7 @@ export class AppStore {
         this.initRequirements();
         this.activeLayer = ImageViewLayer.RegionMoving;
 
-        AST.onReady.then(runInAction(() => {
+        AST.onReady.then(action(() => {
             this.astReady = true;
             this.logStore.addInfo("AST library loaded", ["ast"]);
         }));

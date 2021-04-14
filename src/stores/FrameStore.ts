@@ -227,7 +227,7 @@ export class FrameStore {
             };
             adjTranslation = rotate2D(adjTranslation, -this.spatialTransform.rotation);
             if (this.cachedTransformedWcsInfo >= 0) {
-                AST.delete(this.cachedTransformedWcsInfo);
+                AST.deleteObject(this.cachedTransformedWcsInfo);
             }
 
             this.cachedTransformedWcsInfo = AST.createTransformedFrameset(this.wcsInfo,
@@ -775,7 +775,7 @@ export class FrameStore {
                 this.spectralFrame = AST.getSpectralFrame(astFrameSet);
                 this.wcsInfo = AST.copy(astFrameSet);
             }
-            AST.delete(astFrameSet);
+            AST.deleteObject(astFrameSet);
         } else {
             // init WCS
             const astFrameSet = this.initFrame();
@@ -788,7 +788,7 @@ export class FrameStore {
                 } else { // 2D frame
                     this.wcsInfo = AST.copy(astFrameSet);
                 }
-                AST.delete(astFrameSet);
+                AST.deleteObject(astFrameSet);
 
                 if (this.wcsInfo) {
                     // init 2D(Sky) wcs copy for the precision of region coordinate transformation
@@ -1029,7 +1029,7 @@ export class FrameStore {
                 astString.add("Format(2)", this.overlayStore.numbers.cursorFormatStringY(precisionY));
                 astString.add("System", this.overlayStore.global.explicitSystem);
 
-                let formattedNeighbourhood = normalizedNeighbourhood.map((pos) => AST.getFormattedCoordinates(this.wcsInfo, pos.x, pos.y, astString.toString()), true);
+                let formattedNeighbourhood = normalizedNeighbourhood.map((pos) => AST.getFormattedCoordinates(this.wcsInfo, pos.x, pos.y, astString.toString(), true));
                 let [p, n1, n2] = formattedNeighbourhood;
                 if (!p.x || !p.y || p.x === "<bad>" || p.y === "<bad>") {
                     cursorPosFormatted = null;
@@ -1531,8 +1531,8 @@ export class FrameStore {
         AST.invert(copySrc);
         AST.invert(copyDest);
         this.spatialTransformAST = AST.convert(copySrc, copyDest, "");
-        AST.delete(copySrc);
-        AST.delete(copyDest);
+        AST.deleteObject(copySrc);
+        AST.deleteObject(copyDest);
         if (!this.spatialTransformAST) {
             console.log(`Error creating spatial transform between files ${this.frameInfo.fileId} and ${frame.frameInfo.fileId}`);
             this.spatialReference = null;
@@ -1544,7 +1544,7 @@ export class FrameStore {
             || !isFinite(currentTransform.origin.x) || !isFinite(currentTransform.origin.y)) {
             console.log(`Error creating spatial transform between files ${this.frameInfo.fileId} and ${frame.frameInfo.fileId}`);
             this.spatialReference = null;
-            AST.delete(this.spatialTransformAST);
+            AST.deleteObject(this.spatialTransformAST);
             this.spatialTransformAST = null;
             return false;
         }
@@ -1577,7 +1577,7 @@ export class FrameStore {
         }
 
         if (this.spatialTransformAST) {
-            AST.delete(this.spatialTransformAST);
+            AST.deleteObject(this.spatialTransformAST);
         }
         this.spatialTransformAST = null;
         const gl = ContourWebGLService.Instance.gl;
@@ -1633,8 +1633,8 @@ export class FrameStore {
         AST.invert(copySrc);
         AST.invert(copyDest);
         this.spectralTransformAST = AST.convert(copySrc, copyDest, "");
-        AST.delete(copySrc);
-        AST.delete(copyDest);
+        AST.deleteObject(copySrc);
+        AST.deleteObject(copyDest);
 
         if (!this.spectralTransformAST) {
             console.log(`Error creating spatial transform between files ${this.frameInfo.fileId} and ${frame.frameInfo.fileId}. Could not create AST transform`);
@@ -1656,7 +1656,7 @@ export class FrameStore {
         }
 
         if (this.spectralTransformAST) {
-            AST.delete(this.spectralTransformAST);
+            AST.deleteObject(this.spectralTransformAST);
         }
         this.spectralTransformAST = null;
     };

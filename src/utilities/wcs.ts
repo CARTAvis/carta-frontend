@@ -145,7 +145,7 @@ export function getApproximateEllipsePoints(astTransform: number, centerReferenc
         yCoords[i] = p.y;
     }
 
-    const results = AST.transformPointArrays(astTransform, xCoords, yCoords, 0) as { x: Float64Array, y: Float64Array };
+    const results = AST.transformPointArrays(astTransform, xCoords, yCoords, false);
     const approximatePoints = new Array<Point2D>(targetVertexCount);
     for (let i = 0; i < targetVertexCount; i++) {
         approximatePoints[i] = {x: results.x[i], y: results.y[i]};
@@ -182,7 +182,7 @@ export function getApproximatePolygonPoints(astTransform: number, controlPoints:
             yCoords[i] = approxPointsOriginalSpace[i].y;
         }
 
-        const results = AST.transformPointArrays(astTransform, xCoords, yCoords, 0) as { x: Float64Array, y: Float64Array };
+        const results = AST.transformPointArrays(astTransform, xCoords, yCoords, false);
         const approximatePoints = new Array<Point2D>(N);
         for (let i = 0; i < N; i++) {
             approximatePoints[i] = {x: results.x[i], y: results.y[i]};

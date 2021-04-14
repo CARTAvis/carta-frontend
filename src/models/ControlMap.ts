@@ -28,8 +28,8 @@ export class ControlMap {
             AST.invert(copySrc);
             AST.invert(copyDest);
             astTransform = AST.convert(copySrc, copyDest, "");
-            AST.delete(copySrc);
-            AST.delete(copyDest);
+            AST.deleteObject(copySrc);
+            AST.deleteObject(copyDest);
             cleanUpTransform = true;
         }
 
@@ -37,9 +37,9 @@ export class ControlMap {
         const paddingY = Math.ceil(src.frameInfo.fileInfoExtended.height / height);
         this.minPoint = {x: -paddingX, y: -paddingY};
         this.maxPoint = {x: paddingX + src.frameInfo.fileInfoExtended.width, y: paddingY + src.frameInfo.fileInfoExtended.height};
-        this.grid = AST.getTransformGrid(astTransform, this.minPoint.x, this.maxPoint.x, width, this.minPoint.y, this.maxPoint.y, height, 1);
+        this.grid = AST.getTransformGrid(astTransform, this.minPoint.x, this.maxPoint.x, width, this.minPoint.y, this.maxPoint.y, height, true);
         if (cleanUpTransform) {
-            AST.delete(astTransform);
+            AST.deleteObject(astTransform);
         }
     }
 

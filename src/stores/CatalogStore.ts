@@ -337,8 +337,8 @@ export class CatalogStore {
                 yWCSValues[i] = yWcsData[i] * yFraction;
             }
 
-            const results = AST.transformPointArrays(wcsCopy, xWCSValues, yWCSValues, 0);
-            AST.delete(wcsCopy);
+            const results = AST.transformPointArrays(wcsCopy, xWCSValues, yWCSValues, false);
+            AST.deleteObject(wcsCopy);
             return {xImageCoords: results.x, yImageCoords: results.y};
         }
         return {xImageCoords: new Float64Array(0), yImageCoords: new Float64Array(0)};

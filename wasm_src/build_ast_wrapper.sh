@@ -18,6 +18,8 @@ if [[ $(find build/ast_wrapper.js -type f -size +1000c 2>/dev/null) ]]; then
     cp build/ast_wrapper.wasm ../../public/
     # link wrapper to node modules
     mv build/ast_wrapper.js build/index.js
+    # copy typings into build folder
+    cp index.d.ts build/index.d.ts
     cd ../../node_modules
     rm -f ast_wrapper
     ln -s ../wasm_src/ast_wrapper/build ast_wrapper

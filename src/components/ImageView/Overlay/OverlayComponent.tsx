@@ -82,7 +82,7 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
                 plot(currentStyleString.replace(/Gap\(\d\)=[^,]+, ?/g, "").replace("Grid=1", "Grid=0"));
             }
 
-            AST.delete(tempWcsInfo);
+            AST.deleteObject(tempWcsInfo);
             AST.clearLastErrorMessage();
         }
     }, 50);
