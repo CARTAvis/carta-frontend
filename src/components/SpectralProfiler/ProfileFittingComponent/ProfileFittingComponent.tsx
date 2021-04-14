@@ -27,30 +27,35 @@ export enum FittingContinuum {
 export class ProfileFittingComponent extends React.Component<{fittingStore: ProfileFittingStore, widgetStore: SpectralProfileWidgetStore}> {
 
 
-    private onZerothOrderValueChanged = (val: number) => {
-        this.props.fittingStore.setZerothOrderValue(val);
+    private onContinuumValueChanged = (ev) => {
+        this.props.fittingStore.setYIntercept(0);
+        this.props.fittingStore.setSlope(0);
+        this.props.fittingStore.setContinuum(parseInt(ev.target.value));
     }
 
-    private onFirstOrderValueChanged = (val: number) => {
-        this.props.fittingStore.setFirstOrderValue(val);
+    private onYInterceptValueChanged = (val: number) => {
+        this.props.fittingStore.setYIntercept(val);
     }
 
-    private onZerothOrderValueLocked = () => {
-        this.props.fittingStore.setLockedZerothOrderValue(!this.props.fittingStore.lockedZerothOrderValue);
+    private onSlopeValueChanged = (val: number) => {
+        this.props.fittingStore.setSlope(val);
     }
 
-    private onFirstOrderValueLocked = () => {
-        this.props.fittingStore.setLockedFirstOrderValue(!this.props.fittingStore.lockedFirstOrderValue);
+    private onYInterceptValueLocked = () => {
+        this.props.fittingStore.setLockedYIntercept(!this.props.fittingStore.lockedYIntercept);
     }
 
-    private cursorSelectingZerothOrder = () => {
-        this.props.fittingStore.setIsCursorSelectingZerothOrder(!this.props.fittingStore.isCursorSelectingZerothOrder);
+    private onSlopeValueLocked = () => {
+        this.props.fittingStore.setLockedSlope(!this.props.fittingStore.lockedSlope);
     }
 
-    private cursorSelectingFirstOrder = () => {
-        this.props.fittingStore.setIsCursorSelectingFirstOrder(!this.props.fittingStore.isCursorSelectingFirstOrder);
+    private cursorSelectingYIntercept = () => {
+        this.props.fittingStore.setIsCursorSelectingYIntercept(!this.props.fittingStore.isCursorSelectingYIntercept);
     }
 
+    private cursorSelectingSlope = () => {
+        this.props.fittingStore.setIsCursorSelectingSlope(!this.props.fittingStore.isCursorSelectingSlope);
+    }
 
     private onCenterValueChanged = (val: number) => {
         this.props.fittingStore.selectedComponent.setCenter(val);
@@ -65,15 +70,17 @@ export class ProfileFittingComponent extends React.Component<{fittingStore: Prof
     }
 
     private autoDetect = () => {
-        this.reset();
-        const guessComponents = autoDetecting(this.plottingData.x, Array.prototype.slice.call(this.plottingData.y));
-        if (guessComponents && guessComponents.length > 0) {
-            this.props.fittingStore.setComponents(guessComponents.length);
-            for (let i = 0; i < guessComponents.length; i++) {
-                this.props.fittingStore.components[i].setAmp(guessComponents[i].amp);
-                this.props.fittingStore.components[i].setCenter(guessComponents[i].center);
-                this.props.fittingStore.components[i].setFwhm(guessComponents[i].fwhm);
+        this.props.fittingStore.setHasResult(false);
+        const result = autoDetecting(this.plottingData.x, Array.prototype.slice.call(this.plottingData.y), this.props.fittingStore.continuum);
+        if (result.components?.length > 0) {
+            this.props.fittingStore.setComponents(result.components.length, true);
+            for (let i = 0; i < result.components.length; i++) {
+                this.props.fittingStore.components[i].setAmp(result.components[i].amp);
+                this.props.fittingStore.components[i].setCenter(result.components[i].center);
+                this.props.fittingStore.components[i].setFwhm(result.components[i].fwhm);
             }
+            this.props.fittingStore.setYIntercept(result.yIntercept);
+            this.props.fittingStore.setSlope(result.slope);
         }
     }
 
@@ -100,8 +107,10 @@ export class ProfileFittingComponent extends React.Component<{fittingStore: Prof
         fittingStore.setComponents(1,true);
         fittingStore.setHasResult(false);
         fittingStore.setContinuum(FittingContinuum.NONE);
-        fittingStore.setIsCursorSelectingZerothOrder(false);
-        fittingStore.setIsCursorSelectingFirstOrder(false);
+        fittingStore.setYIntercept(0);
+        fittingStore.setSlope(0);
+        fittingStore.setIsCursorSelectingYIntercept(false);
+        fittingStore.setIsCursorSelectingSlope(false);
         fittingStore.setIsCursorSelectionOn(false);
     }
 
@@ -206,49 +215,6 @@ export class ProfileFittingComponent extends React.Component<{fittingStore: Prof
                             onChange={(ev) => fittingStore.setFunction(parseInt(ev.target.value))}
                         />
                     </FormGroup>
-                    <FormGroup label="Continuum" inline={true}>
-                    <div className="component-input">
-                        <HTMLSelect 
-                            value={fittingStore.continuum} 
-                            options={[{label:"None", value: FittingContinuum.NONE}, {label:"0th order", value: FittingContinuum.ZEROTH_ORDER}, {label:"1th order", value: FittingContinuum.FIRST_ORDER}]} 
-                            onChange={(ev) => fittingStore.setContinuum(parseInt(ev.target.value))}
-                        />
-                        {fittingStore.continuum === FittingContinuum.ZEROTH_ORDER &&
-                            <AnchorButton onClick={this.cursorSelectingZerothOrder} active={fittingStore.isCursorSelectingZerothOrder} icon="select"/>
-                        }
-                        {fittingStore.continuum === FittingContinuum.FIRST_ORDER &&
-                            <AnchorButton onClick={this.cursorSelectingFirstOrder} active={fittingStore.isCursorSelectingFirstOrder} icon="select"/>
-                        }
-                    </div>
-                    </FormGroup>
-                    {(fittingStore.continuum === FittingContinuum.ZEROTH_ORDER || fittingStore.continuum === FittingContinuum.FIRST_ORDER) &&
-                        <FormGroup label="0th order value" inline={true}>
-                            <div className="component-input">
-                                <SafeNumericInput
-                                    value={fittingStore.zerothOrderValue}
-                                    onValueChange={this.onZerothOrderValueChanged}
-                                    disabled={fittingStore.lockedZerothOrderValue}
-                                    allowNumericCharactersOnly={false}
-                                    buttonPosition="none"
-                                    />
-                                <AnchorButton onClick={this.onZerothOrderValueLocked} icon={fittingStore.lockedZerothOrderValue ? "lock" : "unlock"}/>
-                            </div>
-                        </FormGroup>
-                    }
-                    {fittingStore.continuum === FittingContinuum.FIRST_ORDER &&
-                        <FormGroup label="1st order value" inline={true}>
-                            <div className="component-input">
-                                <SafeNumericInput
-                                    value={fittingStore.firstOrderValue}
-                                    onValueChange={this.onFirstOrderValueChanged}
-                                    disabled={fittingStore.lockedFirstOrderValue}
-                                    allowNumericCharactersOnly={false}
-                                    buttonPosition="none"
-                                    />
-                                <AnchorButton onClick={this.onFirstOrderValueLocked} icon={fittingStore.lockedFirstOrderValue ? "lock" : "unlock"}/>
-                            </div>
-                        </FormGroup>
-                    }
                     <FormGroup label="Components" inline={true}>
                         <div className={"components-controller"}>
                             <SafeNumericInput
@@ -277,9 +243,6 @@ export class ProfileFittingComponent extends React.Component<{fittingStore: Prof
                                 <AnchorButton onClick={this.autoDetect} icon="series-search"/>
                             </Tooltip>
                         </FormGroup>
-                        <FormGroup label="Cursor selection" inline={true}>
-                            <AnchorButton onClick={this.cursorSelecting} active={fittingStore.isCursorSelectionOn} icon="select"/>
-                        </FormGroup>
                         <FormGroup label="Center" inline={true}>
                             <div className="component-input">
                                 <SafeNumericInput
@@ -290,6 +253,7 @@ export class ProfileFittingComponent extends React.Component<{fittingStore: Prof
                                     buttonPosition="none"
                                 />
                                 <AnchorButton onClick={this.onCenterLocked} icon={fittingStore.selectedComponent.lockedCenter ? "lock" : "unlock"}/>
+                                <AnchorButton onClick={this.cursorSelecting} active={fittingStore.isCursorSelectionOn} icon="select"/>
                             </div>
                         </FormGroup>
                         <FormGroup label="Amplitude" inline={true}>
@@ -302,6 +266,7 @@ export class ProfileFittingComponent extends React.Component<{fittingStore: Prof
                                     buttonPosition="none"
                                     />
                                 <AnchorButton onClick={this.onAmpLocked} icon={fittingStore.selectedComponent.lockedAmp ? "lock" : "unlock"}/>
+                                <AnchorButton onClick={this.cursorSelecting} active={fittingStore.isCursorSelectionOn} icon="select"/>
                             </div>
                         </FormGroup>
                         <FormGroup label="FWHM" inline={true}>
@@ -314,9 +279,54 @@ export class ProfileFittingComponent extends React.Component<{fittingStore: Prof
                                     buttonPosition="none"
                                 />
                                 <AnchorButton onClick={this.onFwhmLocked} icon={fittingStore.selectedComponent.lockedFwhm ? "lock" : "unlock"}/>
+                                <AnchorButton onClick={this.cursorSelecting} active={fittingStore.isCursorSelectionOn} icon="select"/>
                             </div>
                         </FormGroup>
                     </FormGroup>
+                    <FormGroup label="Continuum" inline={true}>
+                    <div className="component-input">
+                        <HTMLSelect 
+                            value={fittingStore.continuum} 
+                            options={[{label:"None", value: FittingContinuum.NONE}, {label:"0th order", value: FittingContinuum.ZEROTH_ORDER}, {label:"1th order", value: FittingContinuum.FIRST_ORDER}]} 
+                            onChange={this.onContinuumValueChanged}
+                        />
+                    </div>
+                    </FormGroup>
+                    {(fittingStore.continuum === FittingContinuum.ZEROTH_ORDER || fittingStore.continuum === FittingContinuum.FIRST_ORDER) &&
+                        <FormGroup label="Y intercept" inline={true}>
+                            <div className="component-input">
+                                <SafeNumericInput
+                                    value={fittingStore.yIntercept}
+                                    onValueChange={this.onYInterceptValueChanged}
+                                    disabled={fittingStore.lockedYIntercept}
+                                    allowNumericCharactersOnly={false}
+                                    buttonPosition="none"
+                                    />
+                                <AnchorButton onClick={this.onYInterceptValueLocked} icon={fittingStore.lockedYIntercept ? "lock" : "unlock"}/>
+                                {fittingStore.continuum === FittingContinuum.ZEROTH_ORDER &&
+                                    <AnchorButton onClick={this.cursorSelectingYIntercept} active={fittingStore.isCursorSelectingYIntercept} icon="select"/>
+                                }
+                                {fittingStore.continuum === FittingContinuum.FIRST_ORDER &&
+                                    <AnchorButton onClick={this.cursorSelectingSlope} active={fittingStore.isCursorSelectingSlope} icon="select"/>
+                                }
+                            </div>
+                        </FormGroup>
+                    }
+                    {fittingStore.continuum === FittingContinuum.FIRST_ORDER &&
+                        <FormGroup label="Slope" inline={true}>
+                            <div className="component-input">
+                                <SafeNumericInput
+                                    value={fittingStore.slope}
+                                    onValueChange={this.onSlopeValueChanged}
+                                    disabled={fittingStore.lockedSlope}
+                                    allowNumericCharactersOnly={false}
+                                    buttonPosition="none"
+                                    />
+                                <AnchorButton onClick={this.onSlopeValueLocked} icon={fittingStore.lockedSlope ? "lock" : "unlock"}/>
+                                <AnchorButton onClick={this.cursorSelectingSlope} active={fittingStore.isCursorSelectingSlope} icon="select"/>
+                            </div>
+                        </FormGroup>
+                    }
                     <FormGroup label="Fitting result" inline={true}>
                         <Pre className="fitting-result-pre">
                             <Text>

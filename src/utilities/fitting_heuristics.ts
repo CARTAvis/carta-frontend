@@ -1,6 +1,7 @@
 import * as _ from "lodash";
 import * as GSL from "gsl_wrapper";
 import { ProfileFittingIndividualStore } from "stores/ProfileFittingStore";
+import { FittingContinuum } from "components/SpectralProfiler/ProfileFittingComponent/ProfileFittingComponent";
 
 export function hanningSmoothing(data: number[]) {
     // hanning width = 3
@@ -22,14 +23,14 @@ export function binning(data: number[], binWidth: number) {
     return binnedData;
 }
 
-export function getIndexByVelocity(velocity: number[], targetVelocity: number) {
-    // const deltaVelocity = Math.abs(velocity[1] - velocity[0]);
-    for (let i = 0; i < velocity.length - 1; i ++) {
-        if (velocity[i] <= targetVelocity && targetVelocity < velocity[i + 1]) {
+export function getIndexByValue(values: number[], targetValue: number) {
+    // const deltaVelocity = Math.abs(values[1] - values[0]);
+    for (let i = 0; i < values.length - 1; i ++) {
+        if (values[i] <= targetValue && targetValue < values[i + 1]) {
             return i;
-        } else if (velocity[i] >= targetVelocity && targetVelocity > velocity[i + 1]) {
+        } else if (values[i] >= targetValue && targetValue > values[i + 1]) {
             return i;
-        } else if (targetVelocity === velocity[i + 1]) {
+        } else if (targetValue === values[i + 1]) {
             return i + 1;
         }
     }
@@ -86,74 +87,96 @@ export function histogram(data: number[], binN: number): {hist: number[], binEdg
 }
 
 
-export function autoDetecting(velocity: number[], intensity:number[]) : ProfileFittingIndividualStore[] {
+export function autoDetecting(xInput: number[], yInput:number[], order: FittingContinuum) : {components:ProfileFittingIndividualStore[], yIntercept: number, slope:number} {
 
-    const yDataFlippedSum = intensity.map((value, i) => {
-        return value + intensity[intensity.length - 1 - i];
-    })
+    let x: number[] = xInput;
+    let y: number[] = yInput;
 
-    const flippedSumHistResult = histogram(yDataFlippedSum, Math.round(Math.sqrt(yDataFlippedSum.length)));
-    // padding 0 to both sides of the histogram
-    const histFlippedSumY = [0, ...flippedSumHistResult.hist, 0];
-    const histFlippedSumXCenterEmp = [];
-    for (let i = 0; i < flippedSumHistResult.binEdges.length - 2 ; i++) {
-        histFlippedSumXCenterEmp.push((flippedSumHistResult.binEdges[i] + flippedSumHistResult.binEdges[i + 1])/ 2);
-    } 
-    const deltaHistFlippedSumXCenter = histFlippedSumXCenterEmp[1] - histFlippedSumXCenterEmp[0];
-    const histFlippedSumXCenter = [histFlippedSumXCenterEmp[0] - deltaHistFlippedSumXCenter, ...histFlippedSumXCenterEmp ,histFlippedSumXCenterEmp[histFlippedSumXCenterEmp.length - 1] +deltaHistFlippedSumXCenter];
+    let yIntercept: number = null;
+    let slope: number = null;
+    if (order !== FittingContinuum.NONE) {
+        let continuumAdjustedY: number[] = [];
 
-    const initialGuessFlippedSum = [_.max(histFlippedSumY), histFlippedSumXCenter[_.findIndex(histFlippedSumY, (y => y === _.max(histFlippedSumY)))], 2 * Math.sqrt(Math.log(10) * 2 ) * 0.5 * (deltaHistFlippedSumXCenter)]
-    const flippedSumHistogramGaussianFitting = GSL.gaussianFitting(new Float64Array(histFlippedSumXCenter),new Float64Array(histFlippedSumY), initialGuessFlippedSum, [0, 0, 0]);
+        const yDataFlippedSum = y.map((value, i) => {
+            return value + y[y.length - 1 - i];
+        })
 
-    const flippedSumMean = flippedSumHistogramGaussianFitting.center[0];
-    const flippedSumStddev = flippedSumHistogramGaussianFitting.fwhm[0] / (2 * Math.sqrt(Math.log(2) * 2 ));
-    console.log("yDataFlippedSum histogram Gaussian fit, amp = ", flippedSumHistogramGaussianFitting.amp[0]);
-    console.log("yDataFlippedSum histogram Gaussian fit, mean = ", flippedSumMean);
-    console.log("yDataFlippedSum histogram Gaussian fit, stddev = ", flippedSumStddev);
+        const flippedSumHistResult = histogram(yDataFlippedSum, Math.floor(Math.sqrt(yDataFlippedSum.length)));
+        // padding 0 to both sides of the histogram
+        const histFlippedSumY = [0, ...flippedSumHistResult.hist, 0];
+        const histFlippedSumXCenterEmp = [];
+        for (let i = 0; i < flippedSumHistResult.binEdges.length - 2 ; i++) {
+            histFlippedSumXCenterEmp.push((flippedSumHistResult.binEdges[i] + flippedSumHistResult.binEdges[i + 1])/ 2);
+        }
+        const deltaHistFlippedSumXCenter = histFlippedSumXCenterEmp[1] - histFlippedSumXCenterEmp[0];
+        const histFlippedSumXCenter = [histFlippedSumXCenterEmp[0] - deltaHistFlippedSumXCenter, ...histFlippedSumXCenterEmp ,histFlippedSumXCenterEmp[histFlippedSumXCenterEmp.length - 1] + deltaHistFlippedSumXCenter];
 
-    let INDEX_FROM, INDEX_TO;
-    let SWITCH = false;
-    const xMeanSegment = [];
-    const yMeanSegment = [];
-    const SN = 2;
-    const FLOOR = flippedSumMean - SN * flippedSumStddev;
-    const CEILING = flippedSumMean + SN * flippedSumStddev;
-    for (let i = 0; i < yDataFlippedSum.length; i++) {
-        const value = yDataFlippedSum[i];
-        if((value > CEILING || value < FLOOR) && SWITCH === false && i <= yDataFlippedSum.length - 2) {
-            INDEX_FROM = i;
-            SWITCH = true;
-            console.log(i);
-        } else if (value < CEILING && value > FLOOR && SWITCH === true) {
-            INDEX_TO = i;
-            SWITCH = false;
-            console.log("(" + INDEX_FROM + ", " + INDEX_TO + ")");
-            xMeanSegment.push(_.mean(velocity.slice(INDEX_FROM, INDEX_TO)));
-            yMeanSegment.push(_.mean(intensity.slice(INDEX_FROM, INDEX_TO)));
-        } else if((value > CEILING || value < FLOOR) && SWITCH === true && i === yDataFlippedSum.length - 1) {
-            INDEX_TO = i;
-            console.log("(" + INDEX_FROM + ", " + INDEX_TO + ")");
-            xMeanSegment.push(_.mean(velocity.slice(INDEX_FROM, INDEX_TO)));
-            yMeanSegment.push(_.mean(intensity.slice(INDEX_FROM, INDEX_TO)));
-            break;
+        const initialGuessFlippedSum = [_.max(histFlippedSumY), histFlippedSumXCenter[_.findIndex(histFlippedSumY, (i => i === _.max(histFlippedSumY)))], 2 * Math.sqrt(Math.log(10) * 2 ) * 0.5 * (deltaHistFlippedSumXCenter)]
+        const flippedSumHistogramGaussianFitting = GSL.gaussianFitting(new Float64Array(histFlippedSumXCenter), new Float64Array(histFlippedSumY), initialGuessFlippedSum, [0, 0, 0]);
+
+        const flippedSumMean = flippedSumHistogramGaussianFitting.center[0];
+        const flippedSumStddev = flippedSumHistogramGaussianFitting.fwhm[0] / (2 * Math.sqrt(Math.log(2) * 2));
+        console.log("yDataFlippedSum histogram Gaussian fit, amp = ", flippedSumHistogramGaussianFitting.amp[0]);
+        console.log("yDataFlippedSum histogram Gaussian fit, mean = ", flippedSumMean);
+        console.log("yDataFlippedSum histogram Gaussian fit, stddev = ", flippedSumStddev);
+        if (order === FittingContinuum.ZEROTH_ORDER) {
+            yIntercept = flippedSumMean;
+            for (const value of y) {
+                continuumAdjustedY.push(value - yIntercept);
+            }
+            y = continuumAdjustedY;
+        } else if (order === FittingContinuum.FIRST_ORDER) {
+            let INDEX_FROM, INDEX_TO;
+            let SWITCH = false;
+            const xMeanSegment = [];
+            const yMeanSegment = [];
+            const SN = 2;
+            const FLOOR = flippedSumMean - SN * flippedSumStddev;
+            const CEILING = flippedSumMean + SN * flippedSumStddev;
+            for (let i = 0; i < yDataFlippedSum.length; i++) {
+                const value = yDataFlippedSum[i];
+                if(value < CEILING && value > FLOOR && SWITCH === false && i <= yDataFlippedSum.length - 2) {
+                    INDEX_FROM = i;
+                    SWITCH = true;
+                    console.log(i);
+                } else if ((value > CEILING || value < FLOOR) && SWITCH === true) {
+                    INDEX_TO = i;
+                    SWITCH = false;
+                    console.log("(" + INDEX_FROM + ", " + INDEX_TO + ")");
+                    xMeanSegment.push(_.mean(x.slice(INDEX_FROM, INDEX_TO)));
+                    yMeanSegment.push(_.mean(y.slice(INDEX_FROM, INDEX_TO)));
+                } else if(value < CEILING && value > FLOOR && SWITCH === true && i === yDataFlippedSum.length - 1) {
+                    INDEX_TO = i;
+                    console.log("(" + INDEX_FROM + ", " + INDEX_TO + ")");
+                    xMeanSegment.push(_.mean(x.slice(INDEX_FROM, INDEX_TO)));
+                    yMeanSegment.push(_.mean(y.slice(INDEX_FROM, INDEX_TO)));
+                    break;
+                }
+            }
+
+            if (xMeanSegment.length <= 1) {
+                xMeanSegment.push(_.mean(x.slice(0, Math.floor(x.length)/2)));
+                xMeanSegment.push(_.mean(x.slice(Math.floor(x.length/2),x.length)));
+                yMeanSegment.push(_.mean(y.slice(0, Math.floor(y.length)/2)));
+                yMeanSegment.push(_.mean(y.slice(Math.floor(y.length/2), y.length)));
+            }
+            console.log("xMeanSegment:", xMeanSegment);
+            console.log("yMeanSegment:", yMeanSegment);
+            slope = (yMeanSegment[yMeanSegment.length -1] - yMeanSegment[0]) / (xMeanSegment[xMeanSegment.length - 1] - xMeanSegment[0]);
+            yIntercept = yMeanSegment[0] - slope * xMeanSegment[0];
+            for (let i = 0; i < y.length; i++) {
+                continuumAdjustedY.push(y[i] - (slope *x[i] + yIntercept));
+            }
+            y = continuumAdjustedY;
         }
     }
 
-    if (xMeanSegment.length <= 1) {
-        xMeanSegment.push(_.mean(velocity.slice(0, Math.floor(velocity.length)/2)));
-        xMeanSegment.push(_.mean(velocity.slice(Math.floor(velocity.length/2), velocity.length)));
-        yMeanSegment.push(_.mean(intensity.slice(0, Math.floor(intensity.length)/2)));
-        yMeanSegment.push(_.mean(intensity.slice(Math.floor(intensity.length/2), intensity.length)));
-    }
-    console.log("xMeanSegment:", xMeanSegment);
-    console.log("yMeanSegment:", yMeanSegment);
-
     // pre-processing data based on number of channels
-    const xSmoothed = profilePreprocessing(velocity);
-    const ySmoothed = profilePreprocessing(intensity);
+    const xSmoothed = profilePreprocessing(x);
+    const ySmoothed = profilePreprocessing(y);
 
     // fit a gaussian to the intensity histogram as an estimate of continuum level and noise level
-    const bins = Math.round(Math.sqrt(velocity.length));
+    const bins = Math.floor(Math.sqrt(x.length));
     const histResult = histogram(ySmoothed, bins <= 8 ? 8 : bins);
 
     // padding 0 to both sides of the histogram
@@ -192,15 +215,15 @@ export function autoDetecting(velocity: number[], intensity:number[]) : ProfileF
         } else if (value < ceiling && value > floor && switchFrom === true) {
             toIndex = i - 1;
             switchFrom = false;
-            fromIndexOri = getIndexByVelocity(velocity, xSmoothed[fromIndex]);
-            toIndexOri = getIndexByVelocity(velocity, xSmoothed[toIndex]);
+            fromIndexOri = getIndexByValue(x, xSmoothed[fromIndex]);
+            toIndexOri = getIndexByValue(x, xSmoothed[toIndex]);
             if (toIndexOri - fromIndexOri + 1 >= signalChCountThreshold && (_.mean(ySmoothed.slice(fromIndex, toIndex + 1))> intensitySmoothedMean + 3 * intensitySmoothedStddev || _.mean(ySmoothed.slice(fromIndex, toIndex + 1)) < intensitySmoothedMean - 3 * intensitySmoothedStddev)) {
                 lineBoxs.push({fromIndexOri, toIndexOri, fromIndex, toIndex});
             }
         } else if((value > ceiling || value < floor) && switchFrom === true && i === ySmoothed.length - 1) {
             toIndex = i;
-            fromIndexOri = getIndexByVelocity(velocity, xSmoothed[fromIndex]);
-            toIndexOri = getIndexByVelocity(velocity, xSmoothed[toIndex]);
+            fromIndexOri = getIndexByValue(x, xSmoothed[fromIndex]);
+            toIndexOri = getIndexByValue(x, xSmoothed[toIndex]);
             if (toIndexOri - fromIndexOri + 1 >= signalChCountThreshold && (_.mean(ySmoothed.slice(fromIndex, toIndex + 1))> intensitySmoothedMean + 3 * intensitySmoothedStddev || _.mean(ySmoothed.slice(fromIndex, toIndex + 1)) < intensitySmoothedMean - 3 * intensitySmoothedStddev)) {
                 lineBoxs.push({fromIndexOri, toIndexOri, fromIndex, toIndex});
             }
@@ -238,12 +261,12 @@ export function autoDetecting(velocity: number[], intensity:number[]) : ProfileF
                 const tempMap = tempData.map((data, index) => {return {data, index}})
                 const sortedArg = _.sortBy(tempMap, temp => temp.data).map((data) => {return data.index}); 
                 if ((sortedArg[3] === 0 && sortedArg[4] === 4) || (sortedArg[3] === 4 && sortedArg[4] === 0)) {
-                    dividerLocalMinIndex.push(getIndexByVelocity(velocity, xSmoothed[j + 2]));
+                    dividerLocalMinIndex.push(getIndexByValue(x, xSmoothed[j + 2]));
                     dividerLocalMinValue.push(ySmoothed[j + 2]);
                 }
 
                 if ((sortedArg[0] === 0 && sortedArg[1] === 4) || (sortedArg[0] === 4 && sortedArg[1] === 0)) {
-                    dividerLocalMaxIndex.push(getIndexByVelocity(velocity, xSmoothed[j + 2]));
+                    dividerLocalMaxIndex.push(getIndexByValue(x, xSmoothed[j + 2]));
                     dividerLocalMaxValue.push(ySmoothed[j + 2]);
                 }
             }
@@ -402,8 +425,8 @@ export function autoDetecting(velocity: number[], intensity:number[]) : ProfileF
             for (let d = 0; d < dividerIndex.length - 1; d++) {
                 const fromIndexOri = dividerIndex[d];
                 const toIndexOri = dividerIndex[d+1];
-                const fromIndex = getIndexByVelocity(xSmoothed, velocity[dividerIndex[d]]);
-                const toIndex = getIndexByVelocity(xSmoothed, velocity[dividerIndex[d + 1]]);
+                const fromIndex = getIndexByValue(xSmoothed,x[dividerIndex[d]]);
+                const toIndex = getIndexByValue(xSmoothed,x[dividerIndex[d + 1]]);
                 lineBoxsFinal.push({fromIndexOri, toIndexOri, fromIndex, toIndex});
             }
         } else {
@@ -416,17 +439,17 @@ export function autoDetecting(velocity: number[], intensity:number[]) : ProfileF
         console.log("fromIndexOri :" + iLineBox.fromIndexOri + ", toIndexOri :" + iLineBox.toIndexOri + ", fromIndex :" + iLineBox.fromIndex + ", toIndex :" + iLineBox.toIndex);
     }
 
-    const guessComponents: ProfileFittingIndividualStore[] = [];
+    const components: ProfileFittingIndividualStore[] = [];
     for (const lineBox of lineBoxsFinal) {
         const component = new ProfileFittingIndividualStore();
-        component.setFwhm(Math.abs(velocity[lineBox.toIndexOri] - velocity[lineBox.fromIndexOri]) / 2);
+        component.setFwhm(Math.abs(x[lineBox.toIndexOri] -x[lineBox.fromIndexOri]) / 2);
         const localYSmoothed = ySmoothed.slice(lineBox.fromIndex, lineBox.toIndex + 1);
         const localYExtrema = _.mean(localYSmoothed) > intensitySmoothedMean ? _.max(localYSmoothed) : _.min(localYSmoothed);
         component.setAmp(localYExtrema);
         const localYExtremaIndex = localYSmoothed.indexOf(localYExtrema);
         component.setCenter(xSmoothed[lineBox.fromIndex + localYExtremaIndex]);
-        guessComponents.push(component);
+        components.push(component);
     }
 
-    return guessComponents;
+    return {components, yIntercept, slope};
 }

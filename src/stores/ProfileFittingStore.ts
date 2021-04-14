@@ -9,15 +9,17 @@ export class ProfileFittingStore {
     @observable function: FittingFunction;
     @observable components: ProfileFittingIndividualStore[];
     @observable continuum: FittingContinuum;
-    @observable zerothOrderValue: number;
-    @observable firstOrderValue: number;
-    @observable lockedZerothOrderValue: boolean;
-    @observable lockedFirstOrderValue: boolean;
+    @observable yIntercept: number;
+    @observable slope: number;
+    @observable lockedYIntercept: boolean;
+    @observable lockedSlope: boolean;
+    @observable resultYIntercept: number;
+    @observable resultSlope: number;
     @observable selectedIndex: number;
     @observable hasResult: boolean;
     @observable resultLog: string;
-    @observable isCursorSelectingZerothOrder: boolean;
-    @observable isCursorSelectingFirstOrder: boolean;
+    @observable isCursorSelectingYIntercept: boolean;
+    @observable isCursorSelectingSlope: boolean;
     @observable isCursorSelectionOn: boolean
 
     @action setComponents(length: number, reset?: boolean) {
@@ -54,8 +56,9 @@ export class ProfileFittingStore {
             for (let i = 0; i < this.components.length; i++) {
                 const component = this.components[i];
                 if (component.isReadyToFit && !(isFinite(component.resutlCenter) && isFinite(component.resultAmp) && isFinite(component.resultFwhm))) {
+                    const deltaYForContinuum = component.center * this.slope + this.yIntercept;
                     const initialBox: LinePlotInsideBoxMarker = {
-                        boundary: {xMin: component.center - 0.5 * component.fwhm, xMax: component.center + 0.5 * component.fwhm, yMin: 0, yMax: component.amp},
+                        boundary: {xMin: component.center - 0.5 * component.fwhm, xMax: component.center + 0.5 * component.fwhm, yMin: 0 + deltaYForContinuum, yMax: component.amp + deltaYForContinuum},
                         color: getColorForTheme("auto-lime"),
                         opacity: (i === this.selectedIndex) ? 0.5 : 0.2,
                         strokeColor: (i === this.selectedIndex) ? getColorForTheme("auto-grey") : null
@@ -115,9 +118,9 @@ export class ProfileFittingStore {
         if (this.components && this.continuum !== FittingContinuum.NONE) {
             const continuumPoint2DArray = new Array<{ x: number, y: number }>(x.length);
             for (let i = 0; i < x.length; i++) {
-                let yi = this.zerothOrderValue;
+                let yi = this.yIntercept;
                 if (this.continuum === FittingContinuum.FIRST_ORDER) {
-                    yi += x[i] * this.firstOrderValue;
+                    yi += x[i] * this.slope;
                 }
                 continuumPoint2DArray.push({x:x[i], y:yi});
             }
@@ -170,8 +173,8 @@ export class ProfileFittingStore {
         this.function = FittingFunction.GAUSSIAN;
         this.components = [new ProfileFittingIndividualStore()];
         this.continuum = FittingContinuum.NONE;
-        this.zerothOrderValue = 0;
-        this.firstOrderValue = 0;
+        this.yIntercept = 0;
+        this.slope = 0;
         this.selectedIndex = 0;
     }
 
@@ -183,20 +186,28 @@ export class ProfileFittingStore {
         this.continuum = val;
     }
 
-    @action setZerothOrderValue = (val: number) => {
-        this.zerothOrderValue = val;
+    @action setYIntercept = (val: number) => {
+        this.yIntercept = val;
     }
 
-    @action setFirstOrderValue = (val: number) => {
-        this.firstOrderValue = val;
+    @action setSlope = (val: number) => {
+        this.slope = val;
     }
 
-    @action setLockedZerothOrderValue = (val: boolean) => {
-        this.lockedZerothOrderValue = val;
+    @action setLockedYIntercept = (val: boolean) => {
+        this.lockedYIntercept = val;
     }
 
-    @action setLockedFirstOrderValue = (val: boolean) => {
-        this.lockedFirstOrderValue = val;
+    @action setLockedSlope = (val: boolean) => {
+        this.lockedSlope = val;
+    }
+
+    @action setResultYIntercept = (val: number) => {
+        this.resultYIntercept = val;
+    }
+
+    @action setResultSlope = (val: number) => {
+        this.resultSlope = val;
     }
 
     @action setSelectedIndex = (val: number) => {
@@ -211,12 +222,12 @@ export class ProfileFittingStore {
         this.resultLog = val;
     }
 
-    @action setIsCursorSelectingZerothOrder = (val: boolean) => {
-        this.isCursorSelectingZerothOrder = val;
+    @action setIsCursorSelectingYIntercept = (val: boolean) => {
+        this.isCursorSelectingYIntercept = val;
     }
 
-    @action setIsCursorSelectingFirstOrder = (val: boolean) => {
-        this.isCursorSelectingFirstOrder = val;
+    @action setIsCursorSelectingSlope = (val: boolean) => {
+        this.isCursorSelectingSlope = val;
     }
 
     @action setIsCursorSelectionOn = (val: boolean) => {

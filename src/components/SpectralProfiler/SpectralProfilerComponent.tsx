@@ -264,9 +264,9 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
             return LinePlotSelectingMode.HORIZONTAL;
         } else if (this.widgetStore.isSelectingMomentMaskRange) {
             return LinePlotSelectingMode.VERTICAL;
-        } else if (this.widgetStore.fittingStore.isCursorSelectingZerothOrder) {
+        } else if (this.widgetStore.fittingStore.isCursorSelectingYIntercept) {
             return LinePlotSelectingMode.HORIZONTAL;
-        } else if (this.widgetStore.fittingStore.isCursorSelectingFirstOrder) {
+        } else if (this.widgetStore.fittingStore.isCursorSelectingSlope) {
             return LinePlotSelectingMode.LINE;
         } else if (this.widgetStore.fittingStore.isCursorSelectionOn) {
             return LinePlotSelectingMode.BOX;
@@ -318,7 +318,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
                 this.widgetStore.setSelectedChannelRange(min, max);
             } else if (this.widgetStore.isSelectingMomentMaskRange) {
                 this.widgetStore.setSelectedMaskRange(min, max);
-            } else if (this.widgetStore.fittingStore.isCursorSelectingZerothOrder) {
+            } else if (this.widgetStore.fittingStore.isCursorSelectingYIntercept) {
                 if (this.plotData?.values?.length > 0) {
                     let sum = 0;
                     let n = 0;
@@ -332,20 +332,20 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
                         sum = sum + value.y;
                         n++;
                     }
-                    this.widgetStore.fittingStore.setZerothOrderValue(sum / n);
+                    this.widgetStore.fittingStore.setYIntercept(sum / n);
                 }
-                this.widgetStore.fittingStore.setIsCursorSelectingZerothOrder(false);
+                this.widgetStore.fittingStore.setIsCursorSelectingYIntercept(false);
             }
         }
     };
 
     private setSelectedLine = (startX: number, endX: number, startY: number, endY: number) => {
         if (isFinite(startX) && isFinite(endX) && isFinite(startY) && isFinite(endY)) {
-            if (this.widgetStore.fittingStore.isCursorSelectingFirstOrder) {
+            if (this.widgetStore.fittingStore.isCursorSelectingSlope) {
                 const slope = (endY - startY) / (endX - startX);
-                this.widgetStore.fittingStore.setZerothOrderValue(startY - slope * startX);
-                this.widgetStore.fittingStore.setFirstOrderValue(slope);
-                this.widgetStore.fittingStore.setIsCursorSelectingFirstOrder(false);
+                this.widgetStore.fittingStore.setYIntercept(startY - slope * startX);
+                this.widgetStore.fittingStore.setSlope(slope);
+                this.widgetStore.fittingStore.setIsCursorSelectingSlope(false);
             }
         }
     }
