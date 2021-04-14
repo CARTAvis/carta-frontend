@@ -38,17 +38,17 @@ uniform highp int uShapeType;
 uniform float uFeatherWidth;
 uniform vec3 uPointColor;
 uniform vec3 uSelectedSourceColor;
-// color map
-uniform bool uCmapEnabled;
 uniform sampler2D uCmapTexture;
 uniform int uNumCmaps;
 uniform int uCmapIndex;
 uniform bool uOmapEnabled;
+uniform bool uCmapEnabled;
 
 in float v_colour;
 in float v_pointSize;
 in float v_orientation;
 in float v_selected;
+in float v_minorSize;
 out vec4 outColor;
 
 mat2 rot45 = mat2(COS_45, -COS_45, COS_45, COS_45);
@@ -86,11 +86,21 @@ float featherRangeEllipse(vec2 r, float rMax) {
 }
 
 float featherRangeEllipse(vec2 r, float rMin, float rMax) {
-    float v = ((pow(rMax, 2.0) - pow(r.x, 2.0) * 3.0) - uFeatherWidth - pow(r.y, 2.0)) / (20.0 * uFeatherWidth);
-    float v2 = ((pow(rMin, 2.0) - pow(r.x, 2.0) * 3.0) - uFeatherWidth - pow(r.y, 2.0)) / (20.0 * uFeatherWidth);
-    float alpha = smoothstep(0.0, 1.0, v);
-    float alpha2 = smoothstep(0.0, 1.0, v2);
-    return alpha * (1.0 - alpha2);
+    vec2 p = vec2(2.0, 2.0);
+    vec2 bb = pow(vec2(rMax, rMin), p);
+    vec2 aa = bb / 3.0;
+    if (v_minorSize >= 0.0) {
+        float rMaxMinor = v_minorSize * 0.5;
+        float rMinMinor = rMaxMinor - uLineThickness;
+        if(v_selected == 1.0){
+            rMaxMinor = rMaxMinor - uLineThickness * 0.5;
+            rMinMinor = rMinMinor - uLineThickness * 0.7;
+        }
+        aa = pow(vec2(rMaxMinor, rMinMinor), p);
+    }
+    vec2 v = ((1.0 - pow(r.x, 2.0) / aa) * bb - pow(r.y, 2.0) - uFeatherWidth) / (20.0 * uFeatherWidth);
+    vec2 alpha = smoothstep(0.0, 1.0, v);
+    return alpha.x * (1.0 - alpha.y);
 }
 
 // Rhomb
@@ -336,7 +346,15 @@ float drawOutline(vec2 posPixelSpace, float borderWidth, float rMin, float rMax)
             return step(rMin + borderWidth, length(posPixelSpace));
         case ELLIPSE_FILLED:
         case ELLIPSE_LINED:
-            pos.y = pow(rMin + borderWidth, 2.0) - pow(posPixelSpace.x, 2.0) * 3.0;
+            float bb = pow(rMin + borderWidth, 2.0);
+            float aa = bb / 3.0;
+            if (v_minorSize >= 0.0) {
+                float rMinMinor = v_minorSize * 0.5 - 2.0 * uLineThickness + borderWidth;
+                aa = pow(rMinMinor, 2.0);
+                pos.y = (1.0 - pow(posPixelSpace.x, 2.0) / aa) * bb;
+            } else {
+                pos.y = (1.0 - pow(posPixelSpace.x, 2.0) / aa) * bb;
+            }
             pos.x = posPixelSpace.x * posPixelSpace.x;
             return step(pos.x + pos.y, pos.x + posPixelSpace.y * posPixelSpace.y);
         case HEXAGON_FILLED:
@@ -420,7 +438,11 @@ float getAlphaValue(vec2 posPixelSpace, float rMin, float rMax) {
 }
 
 void main() {
-    vec2 posPixelSpace = (0.5 - gl_PointCoord) * (v_pointSize + uFeatherWidth);
+    float side = v_pointSize;
+    if (v_minorSize > v_pointSize) {
+        side = v_minorSize;
+    }
+    vec2 posPixelSpace = (0.5 - gl_PointCoord) * (side + uFeatherWidth);
     float rMax = v_pointSize * 0.5;
     float rMin = rMax - uLineThickness;
     float outline = 0.0;
@@ -449,7 +471,6 @@ void main() {
         float x = clamp(v_colour, 0.0, 1.0);
         float cmapYVal = (float(uCmapIndex) + 0.5) / float(uNumCmaps);
         vec2 cmapCoords = vec2(x, cmapYVal);
-        // outColor = vec4((1.0 - outline) * texture(uCmapTexture, cmapCoords).xyz + outline * uSelectedSourceColor, alpha);
         outColor = (1.0 - outline) * vec4(texture(uCmapTexture, cmapCoords).xyz, alpha) + outline * vec4(uSelectedSourceColor, alpha2);
     } else {
         // outColor = vec4((1.0 - outline) * uPointColor + outline * uSelectedSourceColor, alpha);

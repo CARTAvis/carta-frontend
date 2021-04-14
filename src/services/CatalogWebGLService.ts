@@ -8,8 +8,8 @@ export enum CatalogTextureType{
     Color,
     Orientation,
     Position,
-    EllipseAxis,
-    SelectedSource
+    SelectedSource,
+    SizeMinor
 }
 
 interface ShaderUniforms {
@@ -28,10 +28,12 @@ interface ShaderUniforms {
     ColorTexture: WebGLUniformLocation,
     SizeTexture: WebGLUniformLocation,
     SelectedSourceTexture: WebGLUniformLocation,
-    // AxisTexture
+    SizeMinorTexture: WebGLUniformLocation,
     // size
     SmapEnabled: WebGLUniformLocation,
     AreaMode: WebGLUniformLocation,
+    SminorMapEnabled: WebGLUniformLocation,
+    AreaModeMinor: WebGLUniformLocation,
     // color map
     CmapEnabled: WebGLUniformLocation,
     CmapTexture: WebGLUniformLocation,
@@ -49,6 +51,7 @@ export class CatalogWebGLService {
     private colorTextures: Map<number, WebGLTexture>;
     private orientationTextures: Map<number, WebGLTexture>;
     private selectedSourceTextures: Map<number, WebGLTexture>;
+    private sizeMinorTextures: Map<number, WebGLTexture>;
     readonly gl: WebGL2RenderingContext;
     shaderUniforms: ShaderUniforms;
 
@@ -80,7 +83,10 @@ export class CatalogWebGLService {
                 this.orientationTextures.set(fileId, createTextureFromArray(this.gl, dataPoints, WebGL2RenderingContext.TEXTURE4, 1));
                 break;
             case CatalogTextureType.SelectedSource:
-                this.selectedSourceTextures.set(fileId, createTextureFromArray(this.gl, dataPoints, WebGL2RenderingContext.TEXTURE4, 1));
+                this.selectedSourceTextures.set(fileId, createTextureFromArray(this.gl, dataPoints, WebGL2RenderingContext.TEXTURE5, 1));
+                break;
+            case CatalogTextureType.SizeMinor:
+                this.sizeMinorTextures.set(fileId, createTextureFromArray(this.gl, dataPoints, WebGL2RenderingContext.TEXTURE6, 1))
                 break;
             default:
                 this.dataTextures.set(fileId, createTextureFromArray(this.gl, dataPoints, WebGL2RenderingContext.TEXTURE1, 2));
@@ -98,6 +104,8 @@ export class CatalogWebGLService {
                 return this.orientationTextures.get(fileId);
             case CatalogTextureType.SelectedSource:
                 return this.selectedSourceTextures.get(fileId);
+            case CatalogTextureType.SizeMinor:
+                return this.sizeMinorTextures.get(fileId);
             default:
                 return this.dataTextures.get(fileId);
         }
@@ -109,6 +117,7 @@ export class CatalogWebGLService {
         this.sizeTextures.delete(fileId);
         this.colorTextures.delete(fileId);
         this.orientationTextures.delete(fileId);
+        this.sizeMinorTextures.delete(fileId);
     }
 
     private initShaders() {
@@ -138,26 +147,24 @@ export class CatalogWebGLService {
             FrameViewMax: this.gl.getUniformLocation(shaderProgram, "uFrameViewMax"),
             SelectedSourceColor: this.gl.getUniformLocation(shaderProgram, "uSelectedSourceColor"),
             ShowSelectedSource: this.gl.getUniformLocation(shaderProgram, "uShowSelectedSource"),
-            // 0
-            PositionTexture: this.gl.getUniformLocation(shaderProgram, "uPositionTexture"),
             PointColor: this.gl.getUniformLocation(shaderProgram, "uPointColor"),
             PointSize: this.gl.getUniformLocation(shaderProgram, "uPointSize"),
-            SmapEnabled: this.gl.getUniformLocation(shaderProgram, "uSmapEnabled"),
-            AreaMode: this.gl.getUniformLocation(shaderProgram, "uAreaMode"),
-            // color map
-            CmapEnabled: this.gl.getUniformLocation(shaderProgram, "uCmapEnabled"),
-            CmapTexture: this.gl.getUniformLocation(shaderProgram, "uCmapTexture"),
-            NumCmaps: this.gl.getUniformLocation(shaderProgram, "uNumCmaps"),
-            // 1
             CmapIndex: this.gl.getUniformLocation(shaderProgram, "uCmapIndex"),
-            // texture 2 3 4 5
+            NumCmaps: this.gl.getUniformLocation(shaderProgram, "uNumCmaps"),
+            AreaMode: this.gl.getUniformLocation(shaderProgram, "uAreaMode"),
+            AreaModeMinor: this.gl.getUniformLocation(shaderProgram, "uAreaModeMinor"),
+            SmapEnabled: this.gl.getUniformLocation(shaderProgram, "uSmapEnabled"),
+            SminorMapEnabled: this.gl.getUniformLocation(shaderProgram, "uSminorMapEnabled"),
+            OmapEnabled: this.gl.getUniformLocation(shaderProgram, "uOmapEnabled"),
+            CmapEnabled: this.gl.getUniformLocation(shaderProgram, "uCmapEnabled"),
+            // texture 0 1 2 3 4 5
+            CmapTexture: this.gl.getUniformLocation(shaderProgram, "uCmapTexture"),
+            PositionTexture: this.gl.getUniformLocation(shaderProgram, "uPositionTexture"),
             OrientationTexture: this.gl.getUniformLocation(shaderProgram, "uOrientationTexture"),
             SizeTexture: this.gl.getUniformLocation(shaderProgram, "uSizeTexture"),
             ColorTexture: this.gl.getUniformLocation(shaderProgram, "uColorTexture"),
             SelectedSourceTexture: this.gl.getUniformLocation(shaderProgram, "uSelectedSourceTexture"),
-            // orientation
-            OmapEnabled: this.gl.getUniformLocation(shaderProgram, "uOmapEnabled"),
-
+            SizeMinorTexture: this.gl.getUniformLocation(shaderProgram, "uSizeMinorTexture"),
         };
 
         this.gl.uniform1i(this.shaderUniforms.NumCmaps, 79);
@@ -167,6 +174,7 @@ export class CatalogWebGLService {
         this.orientationTextures = new Map<number, WebGLTexture>();
         this.sizeTextures = new Map<number, WebGLTexture>();
         this.colorTextures = new Map<number, WebGLTexture>();
+        this.sizeMinorTextures = new Map<number, WebGLTexture>();
     }
 
     private constructor() {

@@ -84,33 +84,10 @@ export class CatalogStore {
         }
     }
 
-    @action updateCatalogSizeMap(fileId: number, sizeData: Float32Array) {
-        if (sizeData.length) {
-            CatalogWebGLService.Instance.updateDataTexture(fileId, sizeData, CatalogTextureType.Size);
-        }
-    }
-
-    @action updateCatalogColorMap(fileId: number, color: Float32Array) {
-        if (color.length) {
-            CatalogWebGLService.Instance.updateDataTexture(fileId, color, CatalogTextureType.Color);
-        }
-    }
-
-    @action updateCatalogOrientationMap(fileId: number, orientation: Float32Array) {
-        if (orientation.length) {
-            CatalogWebGLService.Instance.updateDataTexture(fileId, orientation, CatalogTextureType.Orientation);
-        }
-    }
-
-    @action updateSelectedPoints(fileId: number, selectedSource: Float32Array) {
-        CatalogWebGLService.Instance.updateDataTexture(fileId, selectedSource, CatalogTextureType.SelectedSource);
-    }
-
     @action clearImageCoordsData(fileId: number) {
         const catalog = this.catalogGLData.get(fileId);
         if (catalog) {
             catalog.dataPoints = new Float32Array(0);
-            CatalogWebGLService.Instance.clearTexture(fileId);
         }
     }
 

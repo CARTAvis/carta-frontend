@@ -8,6 +8,7 @@ import {CursorInfo} from "models";
 import {closestCatalogIndexToCursor, GL2} from "utilities";
 import {ImageViewLayer} from "../ImageViewComponent";
 import "./CatalogViewGLComponent.scss";
+import {CatalogOverlayShape} from "stores/widgets";
 
 export interface CatalogViewGLComponentProps {
     docked: boolean;
@@ -63,6 +64,12 @@ export class CatalogViewGLComponent extends React.Component<CatalogViewGLCompone
             const sizeColumnMinClipd = catalogWidgetStore.sizeColumnMin.clipd;
             const sizeArea = catalogWidgetStore.sizeArea;
             const sizeScalingType = catalogWidgetStore.sizeScalingType;
+            // size minor
+            const sizeMinorMapColumn = catalogWidgetStore.sizeMinorMapColumn;
+            const sizeMinorColumnMaxClipd = catalogWidgetStore.sizeMinorColumnMax.clipd;
+            const sizeMinorColumnMinClipd = catalogWidgetStore.sizeMinorColumnMin.clipd;
+            const sizeMinorArea = catalogWidgetStore.sizeMinorArea;
+            const sizeMinorScalingType = catalogWidgetStore.sizeMinorScalingType;
             // color
             const colorMapColumn = catalogWidgetStore.colorMapColumn;
             const colorMap = catalogWidgetStore.colorMap;
@@ -166,7 +173,6 @@ export class CatalogViewGLComponent extends React.Component<CatalogViewGLCompone
             let color = tinycolor(catalogWidgetStore.catalogColor).toRgb();
             let selectedSourceColor = tinycolor(catalogWidgetStore.highlightColor).toRgb();
             let pointSize = catalogWidgetStore.catalogSize + shape.minSize;
-            
             this.gl.uniform1f(shaderUniforms.LineThickness, lineThickness);
             this.gl.uniform1i(shaderUniforms.ShowSelectedSource, catalogWidgetStore.showSelectedData? 1.0 : 0.0);
             // size
@@ -203,11 +209,23 @@ export class CatalogViewGLComponent extends React.Component<CatalogViewGLCompone
                 this.gl.uniform1i(shaderUniforms.OrientationTexture, 4);
             }
 
+            // selected source
             const selectedSource = this.catalogWebGLService.getDataTexture(fileId, CatalogTextureType.SelectedSource);
             if (selectedSource) {
                 this.gl.activeTexture(GL2.TEXTURE5);
                 this.gl.bindTexture(GL2.TEXTURE_2D, selectedSource);
                 this.gl.uniform1i(shaderUniforms.SelectedSourceTexture, 5);   
+            }
+
+            // size minor
+            this.gl.uniform1i(shaderUniforms.SminorMapEnabled, 0);
+            this.gl.uniform1i(shaderUniforms.AreaModeMinor, catalogWidgetStore.sizeMinorArea? 1 : 0);
+            const sizeMinorTexture = this.catalogWebGLService.getDataTexture(fileId, CatalogTextureType.SizeMinor);
+            if (!catalogWidgetStore.disableSizeMinorMap && sizeMinorTexture && catalogWidgetStore.catalogShape === CatalogOverlayShape.EllipseLined) {
+                this.gl.uniform1i(shaderUniforms.SminorMapEnabled, 1);
+                this.gl.activeTexture(GL2.TEXTURE6);
+                this.gl.bindTexture(GL2.TEXTURE_2D, sizeMinorTexture);
+                this.gl.uniform1i(shaderUniforms.SizeMinorTexture, 6);
             }
 
             // position 

@@ -39,6 +39,7 @@ uniform sampler2D uSizeTexture;
 uniform sampler2D uColorTexture;
 uniform sampler2D uOrientationTexture;
 uniform sampler2D uSelectedSourceTexture;
+uniform sampler2D uSizeMinorTexture;
 
 uniform vec2 uFrameViewMin;
 uniform vec2 uFrameViewMax;
@@ -48,11 +49,16 @@ uniform float uPointSize;
 uniform highp int uShapeType;
 uniform bool uAreaMode;
 uniform bool uShowSelectedSource;
+uniform bool uSminorMapEnabled;
+uniform bool uAreaModeMinor;
+uniform bool uCmapEnabled;
+uniform bool uOmapEnabled;
 
 out float v_colour;
 out float v_pointSize;
 out float v_orientation;
 out float v_selected;
+out float v_minorSize;
 
 
 vec4 getValueByIndexFromTexture(sampler2D texture, int index) {
@@ -73,7 +79,7 @@ vec3 hsv2rgb(vec3 c)
     return c.z * mix(K.xxx, clamp(p - K.xxx, 0.0, 1.0), c.y);
 }
 
-float getSquareSideByArea(float area) {
+float getSquareSideByArea(float area, float minorSize) {
     switch (uShapeType) {
         case BOX_FILLED:
         case BOX_LINED:
@@ -100,10 +106,14 @@ float getSquareSideByArea(float area) {
             return sqrt(area * 4.0 / SQRT3);
         case ELLIPSE_FILLED:
         case ELLIPSE_LINED:
-            // b = (1.0 / SQRT3) * a
-            return sqrt(SQRT3 * area / PI) * 2.0;
+            float side = sqrt(area / PI) * 2.0;
+            if (minorSize >= 0.0 && area < minorSize) {
+                side = sqrt(minorSize / PI) * 2.0;
+            }   
+            return side;
+        default:
+            return 0.0;
     }
-    return 20.0;
 }
 
 bool isNaN(float val) {
@@ -112,36 +122,56 @@ bool isNaN(float val) {
 
 void main() {
     vec4 data = getValueByIndexFromTexture(uPositionTexture, gl_VertexID);
-    vec4 orientation = getValueByIndexFromTexture(uOrientationTexture, gl_VertexID);
-    vec4 s = getValueByIndexFromTexture(uSizeTexture, gl_VertexID);
-    vec4 color = getValueByIndexFromTexture(uColorTexture, gl_VertexID);
     vec4 selectedSource = getValueByIndexFromTexture(uSelectedSourceTexture, gl_VertexID);
     vec2 pos = data.xy;
-    float size = s.x;
-    v_colour = color.x;
-    v_orientation = orientation.x;
+    gl_Position = vec4(imageToGL(pos), 0.5, 1);
+
+    v_colour = -1.0;
+    v_orientation = -1.0;
+    v_minorSize = -1.0;
     v_selected = selectedSource.x;
-    
-    if(isNaN(size)) {
-        size = uPointSize;
+    v_pointSize = uPointSize;
+
+    if (uCmapEnabled) {
+        vec4 color = getValueByIndexFromTexture(uColorTexture, gl_VertexID);
+        v_colour = color.x;
     }
 
-    gl_Position = vec4(imageToGL(pos), 0.5, 1);
+    if (uOmapEnabled) {
+        vec4 orientation = getValueByIndexFromTexture(uOrientationTexture, gl_VertexID);
+        v_orientation = orientation.x;
+    }
+
     if (uSmapEnabled) {
-        v_pointSize = size;
-    } else {
-        v_pointSize = uPointSize;
+        vec4 sizeMajor = getValueByIndexFromTexture(uSizeTexture, gl_VertexID);
+        float size = sizeMajor.x;
+        if(!isNaN(size)) {
+            v_pointSize = size;
+        }
     }
 
     if (uAreaMode) {
-        v_pointSize = getSquareSideByArea(v_pointSize);
+        v_pointSize = getSquareSideByArea(v_pointSize, v_minorSize);
     }
 
     if (uShowSelectedSource) {
         if (selectedSource.x == 1.0) {
             gl_PointSize = v_pointSize + uFeatherWidth;
+        } else {
+            gl_PointSize = 0.0;
         }
     } else {
         gl_PointSize = v_pointSize + uFeatherWidth;
+    }
+
+    if (uSminorMapEnabled) {
+        vec4 sizeMinor = getValueByIndexFromTexture(uSizeMinorTexture, gl_VertexID);
+        v_minorSize = sizeMinor.x;
+        if (uAreaModeMinor) {
+            v_minorSize = getSquareSideByArea(v_pointSize, v_minorSize);
+        }
+        if (v_pointSize < v_minorSize) {
+            gl_PointSize = v_minorSize + uFeatherWidth;
+        }
     }
 }

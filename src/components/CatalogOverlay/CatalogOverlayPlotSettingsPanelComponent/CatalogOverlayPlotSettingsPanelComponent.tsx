@@ -64,9 +64,9 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
             id: "catalog-overlay-floating-settings",
             type: "floating-settings",
             minWidth: 350,
-            minHeight: 225,
+            minHeight: 250,
             defaultWidth: 400,
-            defaultHeight: 475,
+            defaultHeight: 560,
             title: "catalog-overlay-settings",
             isCloseable: true,
             parentId: "catalog-overlay",
@@ -151,6 +151,7 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
         const disableSizeMap = disabledOverlayPanel || widgetStore.disableSizeMap;
         const disableColorMap = disabledOverlayPanel || widgetStore.disableColorMap;
         const disableOrientationMap = disabledOverlayPanel || widgetStore.disableOrientationMap;
+        const disableSizeMinorMap = disableSizeMap || widgetStore.disableSizeMinorMap;
 
         const globalPanel = (
             <div className="panel-container">
@@ -192,20 +193,6 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
                         disabled={disabledOverlayPanel}
                     />
                 </FormGroup>
-                <FormGroup  inline={true} label="Shape"  disabled={disabledOverlayPanel}>
-                    <Select 
-                        className="bp3-fill"
-                        disabled={disabledOverlayPanel}
-                        filterable={false}
-                        items={this.catalogOverlayShape} 
-                        activeItem={widgetStore.catalogShape} 
-                        onItemSelect={(item) => widgetStore.setCatalogShape(item)}
-                        itemRenderer={this.renderShapePopOver}
-                        popoverProps={{popoverClassName: "catalog-select", minimal: true , position: PopoverPosition.AUTO_END}}
-                    >
-                        <Button icon={this.getCatalogShape(widgetStore.catalogShape)} rightIcon="double-caret-vertical"  disabled={disabledOverlayPanel}/>
-                    </Select>
-                </FormGroup>
                 <FormGroup  inline={true} label="Size" labelInfo="(px)"  disabled={disabledOverlayPanel}>
                     <SafeNumericInput
                         className="catalog-size-overlay"
@@ -235,7 +222,7 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
 
         const noResults = (<MenuItem disabled={true} text="No results" />);
         
-        const sizeMap = (
+        const sizeMajor = (
             <div className="panel-container">
                 <FormGroup inline={true} label="Column" disabled={disabledOverlayPanel}>
                     <Select
@@ -265,32 +252,6 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
                         <AnchorButton disabled={disableSizeMap} text={"Area"} active={widgetStore.sizeArea} onClick={() => widgetStore.setSizeArea(true)}/>
                     </ButtonGroup>
                 </FormGroup>
-                <FormGroup  inline={true} label="Size Min" labelInfo="(px)"  disabled={disableSizeMap}>
-                    <SafeNumericInput
-                        allowNumericCharactersOnly={true}
-                        asyncControl={true}
-                        placeholder="Min"
-                        disabled={disableSizeMap}
-                        buttonPosition={"none"}
-                        value={widgetStore.pointSizebyType.min}
-                        onBlur={(ev) => this.handleChange(ev, "size-min")}
-                        onKeyDown={(ev) => this.handleChange(ev, "size-min")}
-                    />
-                </FormGroup>
-                <FormGroup  inline={true} label="Size Max" labelInfo="(px)"  disabled={disableSizeMap}>
-                    <Tooltip content = {`Maximum size ${widgetStore.maxPointSizebyType}`}>
-                        <SafeNumericInput
-                            allowNumericCharactersOnly={true}
-                            asyncControl={true}
-                            placeholder="Max"
-                            disabled={disableSizeMap}
-                            buttonPosition={"none"}
-                            value={widgetStore.pointSizebyType.max}
-                            onBlur={(ev) => this.handleChange(ev, "size-max")}
-                            onKeyDown={(ev) => this.handleChange(ev, "size-max")}
-                        />
-                    </Tooltip>
-                </FormGroup>
                 <ClearableNumericInputComponent
                     label="Clip Min"
                     max={widgetStore.sizeColumnMax.clipd}
@@ -313,6 +274,99 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
                 />
             </div>
         );
+
+        const sizeMinor = (
+            <div className="panel-container">
+                <FormGroup inline={true} label="Column" disabled={disabledOverlayPanel}>
+                    <Select
+                        items={this.axisOption}
+                        activeItem={null}
+                        onItemSelect={(columnName) => widgetStore.setSizeMinorMap(columnName)}
+                        itemRenderer={this.renderAxisPopOver}
+                        disabled={disabledOverlayPanel}
+                        popoverProps={{popoverClassName: "catalog-select", minimal: true , position: PopoverPosition.AUTO_END}}
+                        filterable={true}
+                        noResults={noResults}
+                        itemPredicate={this.filterColumn}
+                        resetOnSelect={true}
+                    >
+                        <Button text={widgetStore.sizeMinorMapColumn} disabled={disabledOverlayPanel} rightIcon="double-caret-vertical"/>
+                    </Select>
+                </FormGroup>
+                <FormGroup label={"Scaling"} inline={true}>
+                    <ScalingSelectComponent
+                        selectedItem={widgetStore.sizeMinorScalingType}
+                        onItemSelect={(type) => widgetStore.setSizeMinorScalingType(type)}
+                    />
+                </FormGroup>
+                <FormGroup inline={true} label={"Size Mode"} disabled={disableSizeMinorMap}>
+                    <ButtonGroup>
+                        <AnchorButton disabled={disableSizeMinorMap} text={"Diameter"} active={!widgetStore.sizeMinorArea} onClick={() => widgetStore.setSizeMinorArea(false)}/>
+                        <AnchorButton disabled={disableSizeMinorMap} text={"Area"} active={widgetStore.sizeMinorArea} onClick={() => widgetStore.setSizeMinorArea(true)}/>
+                    </ButtonGroup>
+                </FormGroup>
+                <ClearableNumericInputComponent
+                    label="Clip Min"
+                    max={widgetStore.sizeMinorColumnMax.clipd}
+                    integerOnly={false}
+                    value={widgetStore.sizeMinorColumnMin.clipd}
+                    onValueChanged={val => widgetStore.setSizeMinorColumnMin(val, "clipd")}
+                    onValueCleared={() => widgetStore.resetSizeMinorColumnValue("min")}
+                    displayExponential={true}
+                    disabled={disableSizeMinorMap}
+                />
+                <ClearableNumericInputComponent
+                    label="Clip Max"
+                    min={widgetStore.sizeMinorColumnMin.clipd}
+                    integerOnly={false}
+                    value={widgetStore.sizeMinorColumnMax.clipd}
+                    onValueChanged={val => widgetStore.setSizeMinorColumnMax(val, "clipd")}
+                    onValueCleared={() => widgetStore.resetSizeMinorColumnValue("max")}
+                    displayExponential={true}
+                    disabled={disableSizeMinorMap}
+                />
+            </div>
+        );
+
+        const sizeMap = (
+            <div className="panel-container">
+                <Tabs
+                    id="catalogSettings"
+                    vertical={false}
+                    selectedTabId={widgetStore.sizeAxisTabId}
+                    onChange={(tabId) => this.handleSelectedAxisTabChanged(tabId)}
+                >
+                    <Tab id={CatalogSettingsTabs.SIZE_MAJOR} title="Major" panel={sizeMajor}/>
+                    <Tab id={CatalogSettingsTabs.SIZE_MINOR} title="Minor" panel={sizeMinor} disabled = {!widgetStore.enableSizeMinorTab}/>
+                </Tabs>
+                <FormGroup  inline={true} label="Size Min" labelInfo="(px)"  disabled={disableSizeMap}>
+                    <SafeNumericInput
+                        allowNumericCharactersOnly={true}
+                        asyncControl={true}
+                        placeholder="Min"
+                        disabled={disableSizeMap}
+                        buttonPosition={"none"}
+                        value={widgetStore.sizeMajor? widgetStore.pointSizebyType.min : widgetStore.minorPointSizebyType.min}
+                        onBlur={(ev) => this.handleChange(ev, "size-min")}
+                        onKeyDown={(ev) => this.handleChange(ev, "size-min")}
+                    />
+                </FormGroup>
+                <FormGroup  inline={true} label="Size Max" labelInfo="(px)"  disabled={disableSizeMap}>
+                    <Tooltip content = {`Maximum size ${widgetStore.maxPointSizebyType}`}>
+                        <SafeNumericInput
+                            allowNumericCharactersOnly={true}
+                            asyncControl={true}
+                            placeholder="Max"
+                            disabled={disableSizeMap}
+                            buttonPosition={"none"}
+                            value={widgetStore.sizeMajor? widgetStore.pointSizebyType.max : widgetStore.minorPointSizebyType.max}
+                            onBlur={(ev) => this.handleChange(ev, "size-max")}
+                            onKeyDown={(ev) => this.handleChange(ev, "size-max")}
+                        />
+                    </Tooltip>
+                </FormGroup>
+            </div>
+        )
 
         const colorMap = (
             <div className="panel-container">
@@ -466,6 +520,20 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
                         <Button text={activeFileName} rightIcon="double-caret-vertical"  disabled={disabledOverlayPanel}/>
                     </Select>
                 </FormGroup>
+                <FormGroup  inline={true} label="Shape"  disabled={disabledOverlayPanel}>
+                    <Select 
+                        className="bp3-fill"
+                        disabled={disabledOverlayPanel}
+                        filterable={false}
+                        items={this.catalogOverlayShape} 
+                        activeItem={widgetStore.catalogShape} 
+                        onItemSelect={(item) => widgetStore.setCatalogShape(item)}
+                        itemRenderer={this.renderShapePopOver}
+                        popoverProps={{popoverClassName: "catalog-select", minimal: true , position: PopoverPosition.AUTO_END}}
+                    >
+                        <Button icon={this.getCatalogShape(widgetStore.catalogShape)} rightIcon="double-caret-vertical"  disabled={disabledOverlayPanel}/>
+                    </Select>
+                </FormGroup>
                 <Tabs
                     id="catalogSettings"
                     vertical={false}
@@ -503,7 +571,7 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
         }
         const val = parseFloat(ev.currentTarget.value);
         const widgetStore = this.widgetStore; 
-        const pointSize = widgetStore.pointSizebyType;
+        const pointSize = widgetStore.sizeMajor? widgetStore.pointSizebyType : widgetStore.minorPointSizebyType;
 
         switch (type) {
             case "size-min":
@@ -566,6 +634,10 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
 
     private handleSelectedTabChanged = (newTabId: React.ReactText) => {
         this.widgetStore.setSettingsTabId(Number.parseInt(newTabId.toString()));
+    }
+
+    private handleSelectedAxisTabChanged = (newTabId: React.ReactText) => {
+        this.widgetStore.setSizeAxisTab(Number.parseInt(newTabId.toString()));
     }
 
     private getCatalogShape = (shape: CatalogOverlayShape) => {

@@ -4,6 +4,7 @@ import {CARTA} from "carta-protobuf";
 import {AppStore, CatalogStore, PreferenceStore} from "stores";
 import {filterProcessedColumnData, minMaxArray} from "utilities";
 import {ProcessedColumnData, TypedArray} from "models";
+import {CatalogWebGLService, CatalogTextureType} from "services";
 
 export interface CatalogInfo {
     fileId: number;
@@ -368,8 +369,7 @@ export class CatalogProfileStore {
                 }
                 selectedData[i] = 1.0;
             }
-            CatalogStore.Instance.updateSelectedPoints(this.catalogFileId, selectedData);
-
+            CatalogWebGLService.Instance.updateDataTexture(this.catalogFileId, selectedData, CatalogTextureType.SelectedSource);
             if (autoPanZoom) {
                 const selectedDataLength = selectedX.length;
                 if (selectedDataLength === 1) {
