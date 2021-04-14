@@ -499,8 +499,8 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
                         linePlotProps.multiPlotPropsMap.set(`smoothedProfile${i}`, {
                             data: currentPlotData.smoothedData[i],
                             type: smoothingStore.lineType,
-                            borderColor: getColorForTheme(smoothingStore.lineColor),
-                            borderWidth: smoothingStore.lineWidth,
+                            borderColor: currentPlotData.numProfiles > 1 ? currentPlotData.colors[i] : getColorForTheme(smoothingStore.lineColor),
+                            borderWidth: currentPlotData.numProfiles > 1 ? this.widgetStore.lineWidth + 1 : smoothingStore.lineWidth,
                             pointRadius: smoothingStore.pointRadius,
                             order: 0,
                             exportData: smoothingStore.exportData

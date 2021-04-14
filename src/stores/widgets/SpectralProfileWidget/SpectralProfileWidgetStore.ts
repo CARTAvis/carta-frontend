@@ -278,6 +278,10 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         });
     }
 
+    @computed get profileNum(): number {
+        return this.profileSelectionStore.profiles?.length;
+    }
+
     @computed get isAutoScaledX() {
         return (this.minX === undefined || this.maxX === undefined);
     }

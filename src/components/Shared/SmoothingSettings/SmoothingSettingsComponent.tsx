@@ -17,7 +17,7 @@ export enum SmoothingType {
 }
 
 @observer
-export class SmoothingSettingsComponent extends React.Component<{smoothingStore: ProfileSmoothingStore, diableDecimation?: boolean, diableStyle?: boolean}> {
+export class SmoothingSettingsComponent extends React.Component<{smoothingStore: ProfileSmoothingStore, diableDecimation?: boolean, diableStyle?: boolean, disableColorAndLineWidth?: boolean}> {
 
     private handleSelectedLineChanged = (changeEvent: React.ChangeEvent<HTMLSelectElement>) => {
         this.props.smoothingStore.setSelectedLine(changeEvent.target.value);
@@ -54,37 +54,41 @@ export class SmoothingSettingsComponent extends React.Component<{smoothingStore:
                 </FormGroup>
                 {(smoothingStore.type !== SmoothingType.NONE) && !this.props.diableStyle &&
                 <React.Fragment>
-                    <FormGroup inline={true} label="Color">
-                        {smoothingStore.colorMap.size > 0 &&
-                            <HTMLSelect value={smoothingStore.selectedLine} options={colorKeys} onChange={this.handleSelectedLineChanged}/>
-                        }
-                        <AutoColorPickerComponent
-                            color={smoothingStore.selectedLine && smoothingStore.colorMap.get(smoothingStore.selectedLine) ? smoothingStore.colorMap.get(smoothingStore.selectedLine) : smoothingStore.lineColor}
-                            presetColors={SWATCH_COLORS}
-                            setColor={(color: string) => {
-                                if (smoothingStore.selectedLine && smoothingStore.colorMap.get(smoothingStore.selectedLine)) {
-                                    smoothingStore.setColorMap (smoothingStore.selectedLine, color);
-                                } else {
-                                    smoothingStore.setLineColor(color);
-                                }
-                            }}
-                            disableAlpha={true}
-                        />
-                    </FormGroup>
+                    {!this.props.disableColorAndLineWidth &&
+                        <FormGroup inline={true} label="Color">
+                            {smoothingStore.colorMap.size > 0 &&
+                                <HTMLSelect value={smoothingStore.selectedLine} options={colorKeys} onChange={this.handleSelectedLineChanged}/>
+                            }
+                            <AutoColorPickerComponent
+                                color={smoothingStore.selectedLine && smoothingStore.colorMap.get(smoothingStore.selectedLine) ? smoothingStore.colorMap.get(smoothingStore.selectedLine) : smoothingStore.lineColor}
+                                presetColors={SWATCH_COLORS}
+                                setColor={(color: string) => {
+                                    if (smoothingStore.selectedLine && smoothingStore.colorMap.get(smoothingStore.selectedLine)) {
+                                        smoothingStore.setColorMap (smoothingStore.selectedLine, color);
+                                    } else {
+                                        smoothingStore.setLineColor(color);
+                                    }
+                                }}
+                                disableAlpha={true}
+                            />
+                        </FormGroup>
+                    }
                     <FormGroup inline={true} label={"Line Style"}>
                         <PlotTypeSelectorComponent value={smoothingStore.lineType} onValueChanged={smoothingStore.setLineType}/>
                     </FormGroup>
-                    <FormGroup  inline={true} label="Line Width" labelInfo="(px)">
-                        <SafeNumericInput
-                            placeholder="Line Width"
-                            min={LineSettings.MIN_WIDTH}
-                            max={LineSettings.MAX_WIDTH}
-                            value={smoothingStore.lineWidth}
-                            stepSize={1}
-                            disabled={smoothingStore.lineType === PlotType.POINTS}
-                            onValueChange={(value: number) => smoothingStore.setLineWidth(value)}
-                        />
-                    </FormGroup>
+                    {!this.props.disableColorAndLineWidth &&
+                        <FormGroup  inline={true} label="Line Width" labelInfo="(px)">
+                            <SafeNumericInput
+                                placeholder="Line Width"
+                                min={LineSettings.MIN_WIDTH}
+                                max={LineSettings.MAX_WIDTH}
+                                value={smoothingStore.lineWidth}
+                                stepSize={1}
+                                disabled={smoothingStore.lineType === PlotType.POINTS}
+                                onValueChange={(value: number) => smoothingStore.setLineWidth(value)}
+                            />
+                        </FormGroup>
+                    }
                     <FormGroup  inline={true} label="Point Size" labelInfo="(px)">
                         <SafeNumericInput
                             placeholder="Point Size"
