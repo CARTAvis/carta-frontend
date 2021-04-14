@@ -435,7 +435,17 @@ export class FrameStore {
     }
 
     @computed get positionAxis(): number {
-        return this.specialAxis(/offset|position|offset position/i);
+        if (this.frameInfo?.fileInfoExtended?.headerEntries) {
+            const entries = this.frameInfo.fileInfoExtended.headerEntries;
+            const axis1 = entries.find(entry => entry.name.includes("CTYPE1"));
+            const axis2 = entries.find(entry => entry.name.includes("CTYPE2"))
+            if (axis1?.value?.match(/offset|position|offset position/i)) {
+                return 1;
+            } else if (axis2?.value?.match(/offset|position|offset position/i)) {
+                return 2;
+            }
+        }
+        return undefined;
     }
 
     @computed get isUVImage(): boolean {
@@ -443,20 +453,18 @@ export class FrameStore {
     }
 
     @computed get uvAxis(): number {
-        return this.specialAxis(/uu/i);
-    }
-
-    private specialAxis = (regex): number => {
         if (this.frameInfo?.fileInfoExtended?.headerEntries) {
             const entries = this.frameInfo.fileInfoExtended.headerEntries;
             const axis1 = entries.find(entry => entry.name.includes("CTYPE1"));
             const axis2 = entries.find(entry => entry.name.includes("CTYPE2"))
-            if (axis1?.value?.match(regex) || axis2?.value?.match(regex)) {
-                return axis1?.value?.match(regex) ? 1 : 2;
+            if (axis1?.value?.match(/uu/i)) {
+                return 1;
+            } else if (axis2?.value?.match(/uu/i)) {
+                return 2;
             }
         }
         return undefined;
-    };
+    }
 
     @computed get spectralAxis(): { valid: boolean; dimension: number, type: SpectralTypeSet, specsys: string } {
         if (this.frameInfo?.fileInfoExtended?.headerEntries) {
@@ -775,20 +783,6 @@ export class FrameStore {
                 this.spectralFrame = AST.getSpectralFrame(this.astFrameSet);
                 this.wcsInfo = AST.copy(this.astFrameSet);
             }
-        } else if (this.isUVImage) {
-            // TODO: Refactor the code to avoid redundancy between astFrameSet and astFrameSet2D
-            this.astFrameSet = this.initFrame();
-            const astFrameSet2D = this.initFrame2D();
-            if (this.astFrameSet && astFrameSet2D) {
-                this.spectralFrame = AST.getSpectralFrame(this.astFrameSet);
-
-                if (frameInfo.fileInfoExtended.depth > 1) { // 3D frame
-                    this.wcsInfo3D = AST.copy(this.astFrameSet);
-                    this.wcsInfo = AST.copy(astFrameSet2D);
-                } else { // 2D frame
-                    this.wcsInfo = AST.copy(this.astFrameSet);
-                }
-            }
         } else {
             // init WCS
             this.astFrameSet = this.initFrame();
@@ -797,12 +791,18 @@ export class FrameStore {
 
                 if (frameInfo.fileInfoExtended.depth > 1) { // 3D frame
                     this.wcsInfo3D = AST.copy(this.astFrameSet);
-                    this.wcsInfo = AST.getSkyFrameSet(this.astFrameSet);
+                    if (this.isUVImage) {
+                        // TODO: Refactor the code to avoid redundancy between astFrameSet and astFrameSet2D
+                        const astFrameSet2D = this.initFrame2D();
+                        this.wcsInfo = AST.copy(astFrameSet2D);
+                    } else {
+                        this.wcsInfo = AST.getSkyFrameSet(this.astFrameSet);
+                    }
                 } else { // 2D frame
                     this.wcsInfo = AST.copy(this.astFrameSet);
                 }
 
-                if (this.wcsInfo) {
+                if (this.wcsInfo && !this.isUVImage) {
                     // init 2D(Sky) wcs copy for the precision of region coordinate transformation
                     this.wcsInfoForTransformation = AST.copy(this.wcsInfo);
                     AST.set(this.wcsInfoForTransformation, `Format(1)=${AppStore.Instance.overlayStore.numbers.formatTypeX}.${WCS_PRECISION}`);
