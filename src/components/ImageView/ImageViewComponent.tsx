@@ -21,6 +21,7 @@ export const getImageCanvas = (padding: Padding, backgroundColor: string = "rgba
     const rasterCanvas = document.getElementById("raster-canvas") as HTMLCanvasElement;
     const contourCanvas = document.getElementById("contour-canvas") as HTMLCanvasElement;
     const overlayCanvas = document.getElementById("overlay-canvas") as HTMLCanvasElement;
+    const catalogCanvas = document.getElementById("catalog-canvas") as HTMLCanvasElement;
 
     if (!rasterCanvas || !contourCanvas || !overlayCanvas) {
         return null;
@@ -28,7 +29,6 @@ export const getImageCanvas = (padding: Padding, backgroundColor: string = "rgba
 
     let regionCanvas: HTMLCanvasElement;
     let beamProfileCanvas: HTMLCanvasElement;
-    let catalogCanvas: HTMLCanvasElement;
     const beamProfileQuery = $(".beam-profile-stage").children().children("canvas");
     if (beamProfileQuery && beamProfileQuery.length) {
         beamProfileCanvas = beamProfileQuery[0] as HTMLCanvasElement;
@@ -37,11 +37,6 @@ export const getImageCanvas = (padding: Padding, backgroundColor: string = "rgba
     const regionQuery = $(".region-stage").children().children("canvas");
     if (regionQuery && regionQuery.length) {
         regionCanvas = regionQuery[0] as HTMLCanvasElement;
-    }
-
-    const catalogQuery = $(".catalog-plotly")?.children()?.children()?.children(".gl-container")?.children(".gl-canvas-context");
-    if (catalogQuery && catalogQuery.length) {
-        catalogCanvas = catalogQuery[0] as HTMLCanvasElement;
     }
 
     const composedCanvas = document.createElement("canvas") as HTMLCanvasElement;
@@ -62,11 +57,7 @@ export const getImageCanvas = (padding: Padding, backgroundColor: string = "rgba
     }
 
     if (catalogCanvas) {
-        if (devicePixelRatio === 1) {
-            ctx.drawImage(catalogCanvas, padding.left * devicePixelRatio, padding.top * devicePixelRatio, catalogCanvas.width / 2, catalogCanvas.height / 2);   
-        } else {
-            ctx.drawImage(catalogCanvas, padding.left * devicePixelRatio, padding.top * devicePixelRatio);
-        }
+        ctx.drawImage(catalogCanvas, padding.left * devicePixelRatio, padding.top * devicePixelRatio);
     }
 
     ctx.setTransform(1, 0, 0, 1, 0, 0);
