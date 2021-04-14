@@ -5,33 +5,15 @@ import {observer} from "mobx-react";
 import {Colors, NonIdealState} from "@blueprintjs/core";
 import ReactResizeDetector from "react-resize-detector";
 import SplitPane, { Pane } from "react-split-pane";
-import {LineMarker, LinePlotComponent, LinePlotComponentProps, LinePlotSelectingMode, VERTICAL_RANGE_PADDING, SmoothingType} from "components/Shared";
+import {LineMarker, LinePlotComponent, LinePlotComponentProps, LinePlotSelectingMode, SmoothingType} from "components/Shared";
 import {TickType} from "../Shared/LinePlot/PlotContainer/PlotContainerComponent";
 import {SpectralProfilerToolbarComponent} from "./SpectralProfilerToolbarComponent/SpectralProfilerToolbarComponent";
 import {ProfileInfo, SpectralProfilerInfoComponent} from "./SpectralProfilerInfoComponent/SpectralProfilerInfoComponent";
 import {WidgetProps, HelpType, AnimatorStore, WidgetsStore, AppStore, DefaultWidgetConfig} from "stores";
-import {SpectralProfileWidgetStore} from "stores/widgets";
-import {Point2D, ProcessedSpectralProfile} from "models";
-import {binarySearchByX, clamp, formattedExponential, formattedNotation, toExponential, toFixed, getColorForTheme} from "utilities";
+import {MultiPlotData, SpectralProfileWidgetStore} from "stores/widgets";
+import {Point2D} from "models";
+import {binarySearchByX, formattedExponential, formattedNotation, toExponential, toFixed, getColorForTheme} from "utilities";
 import "./SpectralProfilerComponent.scss";
-
-type XBound = {xMin: number, xMax: number};
-type YBound = {yMin: number, yMax: number};
-type DataPoints = Point2D[];
-type MultiPlotData = {
-    numProfiles: number,
-    data: DataPoints[],
-    smoothedData: DataPoints[],
-    colors: string[],
-    labels: string[],
-    xMin: number,
-    xMax: number,
-    yMin: number,
-    yMax: number,
-    yMean: number,
-    yRms: number,
-    progress: number
-};
 
 @observer
 export class SpectralProfilerComponent extends React.Component<WidgetProps> {
@@ -65,92 +47,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
     }
 
     @computed get plotData(): MultiPlotData {
-        const widgetStore = this.widgetStore;
-        const frame = widgetStore.effectiveFrame;
-        if (!frame) {
-            return null;
-        }
-
-        // Get profiles
-        const profiles = widgetStore.profileSelectionStore.profiles;
-        if (!(profiles?.length > 0)) {
-            return null;
-        }
-
-        // Determine points/smoothingPoints/colors/yBound/progress
-        let numProfiles = 0;
-        let data = [];
-        let smoothedData = [];
-        let colors = [];
-        let labels = [];
-        let xBound = {xMin: Number.MAX_VALUE, xMax: -Number.MAX_VALUE};
-        let yBound = {yMin: Number.MAX_VALUE, yMax: -Number.MAX_VALUE};
-        let yMean = undefined;
-        let yRms = undefined;
-        let progressSum: number = 0;
-        const wantMeanRms = profiles.length === 1;
-        const profileColorMap = widgetStore.lineColorMap;
-        profiles.forEach(profile => {
-            if (profile) {
-                const pointsAndProperties = this.getDataPointsAndProperties(profile.channelValues, profile.data, wantMeanRms);
-                if (pointsAndProperties) {
-                    numProfiles++;
-                    data.push(pointsAndProperties.points);
-                    colors.push(getColorForTheme(profileColorMap.get(profile.colorKey)));
-                    labels.push(profile.label);
-                    smoothedData.push(pointsAndProperties.smoothedPoints);
-                    if (wantMeanRms) {
-                        yMean = pointsAndProperties.yMean;
-                        yRms = pointsAndProperties.yRms;
-                    }
-
-                    if (xBound.xMin > pointsAndProperties.xBound.xMin) {
-                        xBound.xMin = pointsAndProperties.xBound.xMin;
-                    }
-                    if (xBound.xMax < pointsAndProperties.xBound.xMax) {
-                        xBound.xMax = pointsAndProperties.xBound.xMax;
-                    }
-
-                    if (yBound.yMin > pointsAndProperties.yBound.yMin) {
-                        yBound.yMin = pointsAndProperties.yBound.yMin;
-                    }
-                    if (yBound.yMax < pointsAndProperties.yBound.yMax) {
-                        yBound.yMax = pointsAndProperties.yBound.yMax;
-                    }
-                    progressSum = progressSum + profile.data.progress;
-                }
-            }
-        });
-
-        if (xBound.xMin === Number.MAX_VALUE) {
-            xBound.xMin = undefined;
-            xBound.xMax = undefined;
-        }
-
-        if (yBound.yMin === Number.MAX_VALUE) {
-            yBound.yMin = undefined;
-            yBound.yMax = undefined;
-        } else {
-            // extend y range a bit
-            const range = yBound.yMax - yBound.yMin;
-            yBound.yMin -= range * VERTICAL_RANGE_PADDING;
-            yBound.yMax += range * VERTICAL_RANGE_PADDING;
-        }
-
-        return {
-            numProfiles: numProfiles,
-            data: data,
-            smoothedData: smoothedData,
-            colors: colors,
-            labels: labels,
-            xMin: xBound.xMin,
-            xMax: xBound.xMax,
-            yMin: yBound.yMin,
-            yMax: yBound.yMax,
-            yMean: yMean,
-            yRms: yRms,
-            progress: progressSum / numProfiles
-        };
+        return this.widgetStore.plotData;
     }
 
     @computed get isMeanRmsVisible(): boolean { // Show Mean/RMS when only 1 profile
@@ -173,14 +70,6 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
                 appStore.widgetsStore.addSpectralProfileWidget(this.props.id);
             }
         }
-
-        // Update boundaries
-        autorun(() => {
-            const currentData = this.plotData;
-            if (this.widgetStore && currentData) {
-                this.widgetStore.initXYBoundaries(currentData.xMin, currentData.xMax, currentData.yMin, currentData.yMax);
-            }
-        });
 
         // Update widget title
         autorun(() => {
@@ -289,6 +178,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
         return `${label}: ${cursorInfoString}`;
     };
 
+    // TODO: move to widget store
     private genProfilerInfo = (): ProfileInfo[] => {
         let profilerInfo: ProfileInfo[] = [];
         const frame = this.widgetStore.effectiveFrame;
@@ -354,78 +244,6 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
             }
         }
         return spectralLineMarkers;
-    };
-
-    private getBoundX = (channelValues: number[]): XBound => {
-        if (channelValues?.length > 0) {
-            let xMin = Math.min(channelValues[0], channelValues[channelValues.length - 1]);
-            let xMax = Math.max(channelValues[0], channelValues[channelValues.length - 1])
-            if (!this.widgetStore.isAutoScaledX) {
-                const localXMin = clamp(this.widgetStore.minX, xMin, xMax);
-                const localXMax = clamp(this.widgetStore.maxX, xMin, xMax);
-                xMin = localXMin;
-                xMax = localXMax;
-            }
-            return {xMin, xMax};
-        }
-        return {xMin: undefined, xMax: undefined};
-    };
-
-    private getDataPointsAndProperties = (frameChannelValues: number[], profile: ProcessedSpectralProfile, wantMeanRms: boolean): {
-        points: Point2D[],
-        smoothedPoints: Point2D[],
-        xBound: XBound,
-        yBound: YBound,
-        yMean: number,
-        yRms: number
-    } => {
-        let points: Point2D[] = [];
-        let smoothedPoints: Point2D[] = [];
-        let xBound = this.getBoundX(frameChannelValues);
-        let yBound = {yMin: Number.MAX_VALUE, yMax: -Number.MAX_VALUE};
-        let yMean = undefined;
-        let yRms = undefined;
-
-        if (profile?.values?.length > 0 && frameChannelValues?.length > 0 && profile.values.length === frameChannelValues.length) {
-            // Variables for mean and RMS calculations
-            let ySum = 0;
-            let ySum2 = 0;
-            let yCount = 0;
-
-            for (let i = 0; i < frameChannelValues.length; i++) {
-                const x = frameChannelValues[i];
-                const y = profile.values[i];
-
-                // Skip values outside of range. If array already contains elements, we've reached the end of the range, and can break
-                if (x < xBound?.xMin || x > xBound?.xMax) {
-                    if (points.length) {
-                        break;
-                    } else {
-                        continue;
-                    }
-                }
-                points.push({x, y});
-
-                // update yMin/yMax & calculate Mean/RMS
-                if (!isNaN(y)) {
-                    yBound.yMin = Math.min(yBound.yMin, y);
-                    yBound.yMax = Math.max(yBound.yMax, y);
-
-                    if (wantMeanRms) {
-                        yCount++;
-                        ySum += y;
-                        ySum2 += y * y;
-                    }
-                }
-            }
-            smoothedPoints = smoothedPoints.concat(this.widgetStore.smoothingStore.getSmoothingPoint2DArray(frameChannelValues, profile.values));
-
-            if (wantMeanRms && yCount > 0) {
-                yMean = ySum / yCount;
-                yRms = Math.sqrt((ySum2 / yCount) - yMean * yMean);
-            }
-        }
-        return {points: points, smoothedPoints: smoothedPoints, xBound: xBound, yBound: yBound, yMean: yMean, yRms: yRms};
     };
 
     render() {
