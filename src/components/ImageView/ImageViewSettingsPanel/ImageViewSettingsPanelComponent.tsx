@@ -716,6 +716,17 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
                         intOnly={true}
                     />
                 </FormGroup>
+                <FormGroup inline={true} label="Position"  disabled={!colorbar.visible}>
+                    <HTMLSelect
+                        value={colorbar.position}
+                        disabled={!colorbar.visible}
+                        onChange={(ev) => colorbar.setPosition(ev.currentTarget.value)}
+                    >
+                        <option value={"right"}>right</option>
+                        <option value={"top"}>top</option>
+                        <option value={"bottom"}>bottom</option>
+                    </HTMLSelect>
+                </FormGroup>
                 <FormGroup inline={true} label="Ticks density" labelInfo="(per 100px)" disabled={!colorbar.visible || (!colorbar.tickVisible && !colorbar.numberVisible)}>
                     <SafeNumericInput
                         placeholder="Ticks density"

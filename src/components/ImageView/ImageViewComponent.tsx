@@ -225,10 +225,7 @@ export class ImageViewComponent extends React.Component<WidgetProps> {
                     />
                     }
                     {appStore.activeFrame && overlayStore.colorbar.visible &&
-                    <ColorbarComponent
-                        height={overlayStore.viewHeight}
-                        left={overlayStore.padding.left + appStore.activeFrame.renderWidth}
-                    />
+                    <ColorbarComponent/>
                     }
                     {appStore.activeFrame &&
                     <BeamProfileOverlayComponent

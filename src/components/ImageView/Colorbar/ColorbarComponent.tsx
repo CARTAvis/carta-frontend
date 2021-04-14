@@ -9,13 +9,8 @@ import {Font} from "../ImageViewSettingsPanel/ImageViewSettingsPanelComponent"
 import {getColorForTheme} from "utilities";
 import "./ColorbarComponent.scss";
 
-export interface ColorbarComponentProps {
-    height: number;
-    left: number;
-}
-
 @observer
-export class ColorbarComponent extends React.Component<ColorbarComponentProps> {
+export class ColorbarComponent extends React.Component {
     
     @observable hoverInfoText: string =  "";
     @observable showHoverInfo: boolean = false;
@@ -74,7 +69,7 @@ export class ColorbarComponent extends React.Component<ColorbarComponentProps> {
 
         const colorbar = (
             <Rect
-                x={colorbarSettings.offset + (isOnePixBorder && (isIntPosition(this.props.left) ? 0.5 / devicePixelRatio : 0))}
+                x={colorbarSettings.offset + (isOnePixBorder && (isIntPosition(appStore.overlayStore.padding.left + appStore.overlayStore.renderWidth) ? 0.5 / devicePixelRatio : 0))}
                 y={yOffset - (isOnePixBorder && (isIntPosition(yOffset) ? 0.5 / devicePixelRatio : 0))}
                 width={colorbarSettings.width}
                 height={frame.renderHeight + (isOnePixBorder && (!isIntPosition(frame.renderHeight) ? (isIntPosition(yOffset) ? 0.5 : -0.5) / devicePixelRatio : 0))}
@@ -159,13 +154,30 @@ export class ColorbarComponent extends React.Component<ColorbarComponentProps> {
             </div>
         ) : null;
 
+        let top;
+        switch(colorbarSettings.position) {
+            case("bottom"):
+                top = appStore.overlayStore.padding.top + appStore.overlayStore.renderHeight + appStore.overlayStore.numberWidth + appStore.overlayStore.labelWidth;
+                break;
+            case("top"):
+                top = appStore.overlayStore.title.show ? appStore.overlayStore.padding.top - colorbarSettings.totalWidth - appStore.overlayStore.base : 0;
+                break;
+            case("right"):
+            default:
+                top = 0;
+                break;
+        }
+
         return (
             <React.Fragment>
                 <Stage
                     className={"colorbar-stage"}
-                    width={colorbarSettings.stageWidth}
-                    height={this.props.height}
-                    style={{left: this.props.left}}
+                    width={colorbarSettings.position === "right" ? colorbarSettings.stageWidth : appStore.overlayStore.viewWidth}
+                    height={colorbarSettings.position === "right" ? appStore.overlayStore.viewHeight : colorbarSettings.stageWidth}
+                    style={{
+                        left: colorbarSettings.position === "right" ? appStore.overlayStore.padding.left + appStore.overlayStore.renderWidth : 0,
+                        top: top
+                    }}
                 >
                     <Layer>
                         {colorbar}
