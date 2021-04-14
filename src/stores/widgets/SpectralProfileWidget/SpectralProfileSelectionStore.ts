@@ -230,7 +230,7 @@ export class SpectralProfileSelectionStore {
             const matchedFrameIds = appStore.spatialAndSpectalMatchedFileIds;
 
             // Highlight matched active option
-            if (matchedFrameIds?.includes(appStore.activeFrameFileId)) {
+            if (matchedFrameIds?.length > 1 && matchedFrameIds?.includes(appStore.activeFrameFileId)) {
                 let activeOption = options.find(option => option.value === ACTIVE_FILE_ID);
                 activeOption.label = "Active (matched)";
                 activeOption.hightlight = true;
