@@ -178,7 +178,6 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
         return `${label}: ${cursorInfoString}`;
     };
 
-    // TODO: move to widget store
     private genProfilerInfo = (): ProfileInfo[] => {
         let profilerInfo: ProfileInfo[] = [];
         const frame = this.widgetStore.effectiveFrame;
