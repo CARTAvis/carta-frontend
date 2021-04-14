@@ -152,7 +152,7 @@ class ProfileSelectionComponent extends React.Component<{profileSelectionStore: 
                     itemOptions={profileSelectionStore.regionOptions}
                     itemSelected={profileSelectionStore.selectedRegionIds}
                     disabled={!frame}
-                    isSelectingSpecificItem={profileSelectionStore.isSelectingActiveRegion}
+                    isSelectingSpecificItem={profileSelectionStore.activeProfileCategory !== MultiProfileCategory.REGION && profileSelectionStore.isSelectingActiveRegion}
                     onCategorySelect={() => {
                         profileSelectionStore.setActiveProfileCategory(
                             profileSelectionStore.activeProfileCategory !== MultiProfileCategory.REGION ? MultiProfileCategory.REGION : MultiProfileCategory.NONE
