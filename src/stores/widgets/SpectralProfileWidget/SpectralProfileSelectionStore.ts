@@ -397,15 +397,7 @@ export class SpectralProfileSelectionStore {
             widgetStore.setProfileColor(SpectralProfileWidgetStore.PRIMARY_LINE_KEY, primaryLineColor);
         } else if (profileCategory === MultiProfileCategory.IMAGE) {
             if (this.selectedFrame) {
-                const matchedFileIds = AppStore.Instance.spatialAndSpectalMatchedFileIds;
-                if (matchedFileIds?.includes(this.selectedFrameFileId)) {
-                    matchedFileIds.forEach((fileId, index) => {
-                        const color = index === 0 ? primaryLineColor : SWATCH_COLORS[index % SWATCH_COLORS.length];
-                        widgetStore.setProfileColor(fileId, color);
-                    });
-                } else {
-                    widgetStore.setProfileColor(this.selectedFrameFileId, primaryLineColor);
-                }
+                widgetStore.setProfileColor(this.selectedFrameFileId, primaryLineColor);
             }
         } else if (profileCategory === MultiProfileCategory.REGION) {
             if (this.selectedRegionIds?.length > 0) {
@@ -560,6 +552,24 @@ export class SpectralProfileSelectionStore {
         autorun(() => {
             if (this.selectedCoordinates?.some(coordinate => !this.coordinateOptions?.find(coordinateOption => coordinate === coordinateOption.value))) {
                 this.selectCoordinateSingleMode(this.DEFAULT_COORDINATE);
+            }
+        });
+
+        // When in Multi profile mode of Image and there are matched files(may change dynamically), assign them colors
+        autorun(() => {
+            const matchedFileIds = AppStore.Instance.spatialAndSpectalMatchedFileIds;
+            if (matchedFileIds?.length > 1 && this.activeProfileCategory === MultiProfileCategory.IMAGE) {
+                if (matchedFileIds.includes(this.selectedFrameFileId)) {
+                    matchedFileIds.forEach((fileId, index) => {
+                        const widgetStore = this.widgetStore;
+                        if (fileId === this.selectedFrameFileId) {
+                            widgetStore.setProfileColor(fileId, widgetStore.primaryLineColor);
+                        } else {
+                            const color = SWATCH_COLORS[index % SWATCH_COLORS.length];
+                            widgetStore.setProfileColor(fileId, color);
+                        }
+                    });
+                }
             }
         });
     }
