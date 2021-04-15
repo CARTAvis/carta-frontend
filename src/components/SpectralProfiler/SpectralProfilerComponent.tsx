@@ -15,7 +15,7 @@ import {binarySearchByX, clamp, formattedExponential, formattedNotation, toExpon
 import "./SpectralProfilerComponent.scss";
 import { FittingContinuum } from "./ProfileFittingComponent/ProfileFittingComponent";
 
-type PlotData = { values: Point2D[], smoothingValues: Point2D[], fittingContinuumValues: Point2D[], fittingValues: Point2D[], xMin: number, xMax: number, yMin: number, yMax: number, yMean: number, yRms: number, progress: number };
+type PlotData = { values: Point2D[], smoothingValues: Point2D[], fittingBaselineValues: Point2D[], fittingResultValues: Point2D[], fittingIndividualResultValues:Array<Point2D[]>, fittingResidualValues: Point2D[], xMin: number, xMax: number, yMin: number, yMax: number, yMean: number, yRms: number, progress: number };
 
 @observer
 export class SpectralProfilerComponent extends React.Component<WidgetProps> {
@@ -123,8 +123,10 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
             }
 
             let smoothingValues: Point2D[] = this.widgetStore.smoothingStore.getSmoothingPoint2DArray(channelValues, coordinateData.values);
-            let fittingContinuumValues: Point2D[] = this.widgetStore.fittingStore.getInitialContinuumPoint2DArray(channelValues);
-            let fittingValues: Point2D[] = this.widgetStore.fittingStore.getFittingPoint2DArray(channelValues);
+            let fittingBaselineValues: Point2D[] = this.widgetStore.fittingStore.getBaseLinePoint2DArray(channelValues);
+            let fittingResultValues: Point2D[] = this.widgetStore.fittingStore.getFittingResultPoint2DArray(channelValues);
+            let fittingIndividualResultValues: Array<Point2D[]> = this.widgetStore.fittingStore.getFittingIndividualResultPoint2DArrays(channelValues);
+            let fittingResidualValues: Point2D[] = this.widgetStore.fittingStore.getFittingResidualPoint2DArray(channelValues, coordinateData.values);
 
             if (yCount > 0) {
                 yMean = ySum / yCount;
@@ -140,7 +142,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
                 yMin -= range * VERTICAL_RANGE_PADDING;
                 yMax += range * VERTICAL_RANGE_PADDING;
             }
-            return {values, smoothingValues, fittingContinuumValues, fittingValues, xMin, xMax, yMin, yMax, yMean, yRms, progress: coordinateData.progress};
+            return {values, smoothingValues, fittingBaselineValues, fittingResultValues, fittingIndividualResultValues, fittingResidualValues, xMin, xMax, yMin, yMax, yMean, yRms, progress: coordinateData.progress};
         }
         return null;
     }
@@ -475,25 +477,47 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
                 const fittingStore = this.widgetStore.fittingStore;
                 if (fittingStore.continuum !== FittingContinuum.NONE) {
                     let fittingPlotProps: MultiPlotProps = {
-                        data: currentPlotData.fittingContinuumValues,
+                        data: currentPlotData.fittingBaselineValues,
                         type: PlotType.LINES,
                         borderColor: getColorForTheme("auto-lime"),
                         borderWidth: 1,
                         pointRadius: 1,
                         order: 0
                     }
-                    linePlotProps.multiPlotPropsMap.set("fitting", fittingPlotProps);
+                    linePlotProps.multiPlotPropsMap.set("fittingBaseline", fittingPlotProps);
                 }
                 if (fittingStore.hasResult) {
                     let fittingPlotProps: MultiPlotProps = {
-                        data: currentPlotData.fittingValues,
+                        data: currentPlotData.fittingResultValues,
                         type: PlotType.LINES,
                         borderColor: getColorForTheme("auto-orange"),
                         borderWidth: 1,
                         pointRadius: 1,
                         order: 0
                     }
-                    linePlotProps.multiPlotPropsMap.set("fitting", fittingPlotProps);
+                    linePlotProps.multiPlotPropsMap.set("fittingResult", fittingPlotProps);
+
+                    for (const individualResultValues of currentPlotData.fittingIndividualResultValues) {
+                        const individualPlotProps: MultiPlotProps = {
+                            data: individualResultValues,
+                            type: PlotType.LINES,
+                            borderColor: getColorForTheme("auto-orange"),
+                            borderWidth: 1,
+                            pointRadius: 1,
+                            order: 0.
+                        }
+                        linePlotProps.multiPlotPropsMap.set("fittingIndividual", individualPlotProps);
+                    }
+
+                    let fittingResidualPlotProps: MultiPlotProps = {
+                        data: currentPlotData.fittingResidualValues,
+                        type: PlotType.POINTS,
+                        borderColor: getColorForTheme("auto-orange"),
+                        borderWidth: 1,
+                        pointRadius: 1,
+                        order: 0
+                    }
+                    linePlotProps.multiPlotPropsMap.set("fittingResidual", fittingResidualPlotProps);
                 }
 
                 // Determine scale in X and Y directions. If auto-scaling, use the bounds of the current data

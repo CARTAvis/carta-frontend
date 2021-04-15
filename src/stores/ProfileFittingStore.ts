@@ -114,7 +114,7 @@ export class ProfileFittingStore {
         return true;
     }
 
-    getInitialContinuumPoint2DArray(x: number[]): Point2D[] {
+    getBaseLinePoint2DArray(x: number[]): Point2D[] {
         if (this.components && this.continuum !== FittingContinuum.NONE) {
             const continuumPoint2DArray = new Array<{ x: number, y: number }>(x.length);
             for (let i = 0; i < x.length; i++) {
@@ -129,18 +129,51 @@ export class ProfileFittingStore {
         return [];
     }
 
-    getFittingPoint2DArray(x: number[]): Point2D[] {
+    getFittingResultPoint2DArray(x: number[]): Point2D[] {
         if (this.components && this.hasResult) {
-            const fittingPoint2DArray = new Array<{ x: number, y: number }>(x.length);
-            for (let i = 0; i <x.length; i++) {
+            const resultPoint2DArray = new Array<Point2D>(x.length);
+            for (let i = 0; i < x.length; i++) {
                 let yi = 0;
                 for (const component of this.components) {
                     const z = (x[i] - component.resutlCenter) / component.resultFwhm;
-                    yi += component.resultAmp * Math.exp(-4 * Math.log(2) * z * z)
+                    yi += component.resultAmp * Math.exp(-4 * Math.log(2) * z * z);
                 }
-                fittingPoint2DArray.push({x:x[i], y:yi})
+                resultPoint2DArray.push({x: x[i], y: yi + (this.slope * x[i] + this.yIntercept)}); // TODO
             }
-            return fittingPoint2DArray;
+            return resultPoint2DArray;
+        }
+        return [];
+    }
+
+    getFittingIndividualResultPoint2DArrays(x: number[]): Array<Point2D[]> {
+        if (this.components && this.hasResult) {
+            const individualResultPoint2DArrays = new Array<Point2D[]>(this.components.length);
+            for (const component of this.components) {
+                const individualResultPoint2DArray = new Array<Point2D>(x.length);
+                for (let i = 0; i < x.length; i++) {
+                    const z = (x[i] - component.resutlCenter) / component.resultFwhm;
+                    const yi = component.resultAmp * Math.exp(-4 * Math.log(2) * z * z)
+                    individualResultPoint2DArray.push({x: x[i], y: yi + (this.slope * x[i] + this.yIntercept)}); // TODO
+                }
+                individualResultPoint2DArrays.push(individualResultPoint2DArray);
+            }
+            return individualResultPoint2DArrays;
+        }
+        return [];
+    }
+
+    getFittingResidualPoint2DArray(x: number[], y: Float32Array | Float64Array): Point2D[] {
+        if (this.components && this.hasResult) {
+            const residualPoint2DArray = new Array<{ x: number, y: number }>(x.length);
+            for (let i = 0; i < x.length; i++) {
+                let yi = 0;
+                for (const component of this.components) {
+                    const z = (x[i] - component.resutlCenter) / component.resultFwhm;
+                    yi += component.resultAmp * Math.exp(-4 * Math.log(2) * z * z);
+                }
+                residualPoint2DArray.push({x: x[i], y: y[i] - (yi + (this.slope * x[i] + this.yIntercept))}); // TODO
+            }
+            return residualPoint2DArray;
         }
         return [];
     }
