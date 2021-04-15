@@ -1,4 +1,5 @@
 import {observer} from "mobx-react";
+import {CARTA} from "carta-protobuf";
 import * as React from "react";
 import {AnchorButton, FormGroup, Switch, ButtonGroup, Tooltip} from "@blueprintjs/core";
 import {AppStore, FrameStore} from "stores";
@@ -27,9 +28,19 @@ export class StokesAnalysisToolbarComponent extends React.Component<{widgetStore
 
     public render() {
         const widgetStore = this.props.widgetStore;
+        const appStore = AppStore.Instance;
         let enableFractionalPol = false;
-        if (widgetStore.effectiveFrame && widgetStore.effectiveFrame.regionSet) {
-            enableFractionalPol = widgetStore.effectiveFrame.frameInfo.fileInfoExtended.stokes > 1;
+
+        if (appStore?.activeFrame?.stokesFiles?.length) {
+            appStore.activeFrame.stokesFiles.forEach(file => {
+                if (file.stokesType === CARTA.StokesType.I) {
+                    enableFractionalPol = true;
+                }
+            });
+        } else{ 
+            if (widgetStore.effectiveFrame?.regionSet) {
+                enableFractionalPol = widgetStore.effectiveFrame.frameInfo.fileInfoExtended.stokes > 1;
+            }
         }
 
         return (

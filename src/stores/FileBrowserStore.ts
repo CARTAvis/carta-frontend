@@ -65,6 +65,8 @@ export class FileBrowserStore {
     @observable saveFilename: string = "";
     @observable saveFileType: CARTA.FileType = CARTA.FileType.CASA;
 
+    @observable selectedFiles: ISelectedFile[];
+
     @action showFileBrowser = (mode: BrowserMode, append = false) => {
         this.appendingFrame = append;
         this.browserMode = mode;
@@ -194,6 +196,16 @@ export class FileBrowserStore {
         }));
     };
 
+    @action getConcatFilesHeader = (directory: string, file: string, hdu: string): Promise<{file: string, info: CARTA.IFileInfoExtended}> => {
+        return new Promise((resolve, reject) => {
+            BackendService.Instance.getFileInfo(directory, file, hdu).subscribe((res: CARTA.FileInfoResponse) => {
+                resolve({file: res.fileInfo.name, info: res.fileInfoExtended});
+            }, err => {
+                reject(err);
+            });
+        })
+    }
+
     @action selectFile = (file: ISelectedFile) => {
         const fileList = this.getfileListByMode;
         this.selectedFile = file.fileInfo;
@@ -285,6 +297,10 @@ export class FileBrowserStore {
     @action setSortingConfig = (columnName: string, direction: number) => {
         const sortingString = (direction >= 0 ? "+" : "-") + columnName.toLowerCase();
         PreferenceStore.Instance.setPreference(PreferenceKeys.SILENT_FILE_SORTING_STRING, sortingString);
+    };
+
+    @action setSelectedFiles = (selection: ISelectedFile[]) => {
+        this.selectedFiles = selection;
     };
 
     @computed get HDUList(): IOptionProps[] {

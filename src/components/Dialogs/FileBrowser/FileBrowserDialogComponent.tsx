@@ -7,7 +7,7 @@ import {CARTA} from "carta-protobuf";
 import {FileInfoComponent, FileInfoType} from "components/FileInfo/FileInfoComponent";
 import {FileListTableComponent} from "./FileListTable/FileListTableComponent";
 import {DraggableDialogComponent} from "components/Dialogs";
-import {TableComponentProps, TableType} from "components/Shared";
+import {SimpleTableComponentProps} from "components/Shared";
 import {AppStore, BrowserMode, CatalogProfileStore, FileBrowserStore, FileFilteringType, HelpType, ISelectedFile, PreferenceKeys, PreferenceStore} from "stores";
 import "./FileBrowserDialogComponent.scss";
 
@@ -16,7 +16,6 @@ export class FileBrowserDialogComponent extends React.Component {
     @observable overwriteExistingFileAlertVisible: boolean;
     @observable fileFilterString: string = "";
     @observable debouncedFilterString: string = "";
-    @observable selectedFiles: ISelectedFile[] = [];
 
     constructor(props: any) {
         super(props);
@@ -27,17 +26,12 @@ export class FileBrowserDialogComponent extends React.Component {
         FileBrowserStore.Instance.setSelectedTab(newId);
     };
 
-
-    @action private handleSelectionChanged = (selection: ISelectedFile[]) => {
-        this.selectedFiles = selection;
-    };
-
     private loadSelectedFiles = async () => {
         const fileBrowserStore = FileBrowserStore.Instance;
-        if (this.selectedFiles.length > 1) {
-            for (let i = 0; i < this.selectedFiles.length; i++) {
+        if (fileBrowserStore.selectedFiles.length > 1) {
+            for (let i = 0; i < fileBrowserStore.selectedFiles.length; i++) {
                 try {
-                    await this.loadFile(this.selectedFiles[i], i > 0);
+                    await this.loadFile(fileBrowserStore.selectedFiles[i], i > 0);
                 }
                 catch (err){
                     console.log(err);
@@ -170,24 +164,49 @@ export class FileBrowserDialogComponent extends React.Component {
         if (browserMode === BrowserMode.File) {
             if (appending) {
                 return (
-                    <Tooltip content={"Append this image while keeping other images open"}>
-                        <AnchorButton
-                            intent={Intent.PRIMARY}
-                            disabled={appStore.fileLoading || !fileBrowserStore.selectedFile || !fileBrowserStore.fileInfoResp || fileBrowserStore.loadingInfo}
-                            onClick={this.loadSelectedFiles}
-                            text={this.selectedFiles?.length > 1 ? "Append selected" : "Append"}
-                        />
-                    </Tooltip>);
+                    <div>
+                        <Tooltip content={"Append this image while keeping other images open"}>
+                            <AnchorButton
+                                intent={Intent.PRIMARY}
+                                disabled={appStore.fileLoading || !fileBrowserStore.selectedFile || !fileBrowserStore.fileInfoResp || fileBrowserStore.loadingInfo}
+                                onClick={this.loadSelectedFiles}
+                                text={fileBrowserStore.selectedFiles?.length > 1 ? "Append selected" : "Append"}
+                            />
+                        </Tooltip>
+                        {fileBrowserStore.selectedFiles?.length > 1 && fileBrowserStore.selectedFiles?.length < 5 &&
+                        <Tooltip content={"Append this image while keeping other images open"}>
+                            <AnchorButton
+                                intent={Intent.PRIMARY}
+                                disabled={appStore.fileLoading || !fileBrowserStore.selectedFile || !fileBrowserStore.fileInfoResp || fileBrowserStore.loadingInfo}
+                                onClick={appStore.dialogStore.showStokesDialog}
+                                text={"Load as hypercube"}
+                            />
+                        </Tooltip>
+                        }
+                    </div>
+                );
             } else {
                 return (
-                    <Tooltip content={"Close any existing images and load this image"}>
-                        <AnchorButton
-                            intent={Intent.PRIMARY}
-                            disabled={appStore.fileLoading || !fileBrowserStore.selectedFile || !fileBrowserStore.fileInfoResp || fileBrowserStore.loadingInfo}
-                            onClick={this.loadSelectedFiles}
-                            text={this.selectedFiles?.length > 1 ? "Load selected" : "Load"}
-                        />
-                    </Tooltip>
+                    <div>
+                        <Tooltip content={"Close any existing images and load this image"}>
+                            <AnchorButton
+                                intent={Intent.PRIMARY}
+                                disabled={appStore.fileLoading || !fileBrowserStore.selectedFile || !fileBrowserStore.fileInfoResp || fileBrowserStore.loadingInfo}
+                                onClick={this.loadSelectedFiles}
+                                text={fileBrowserStore.selectedFiles?.length > 1 ? "Load selected" : "Load"}
+                            />
+                        </Tooltip>
+                        {fileBrowserStore.selectedFiles?.length > 1 && fileBrowserStore.selectedFiles?.length < 5 &&
+                        <Tooltip content={"Close any existing images and load this image"}>
+                            <AnchorButton
+                                intent={Intent.PRIMARY}
+                                disabled={appStore.fileLoading || !fileBrowserStore.selectedFile || !fileBrowserStore.fileInfoResp || fileBrowserStore.loadingInfo}
+                                onClick={appStore.dialogStore.showStokesDialog}
+                                text={"Load as hypercube"}
+                            />
+                        </Tooltip>
+                        }
+                    </div>
                 );
             }
         } else if (browserMode === BrowserMode.SaveFile) {
@@ -387,7 +406,7 @@ export class FileBrowserDialogComponent extends React.Component {
             canOutsideClickClose: false,
             lazy: true,
             isOpen: appStore.dialogStore.fileBrowserDialogVisible,
-            onClose: fileBrowserStore.hideFileBrowser,
+            onClose: this.closeFileBrowser,
             onOpened: this.refreshFileList,
             title: "File Browser",
         };
@@ -405,11 +424,10 @@ export class FileBrowserDialogComponent extends React.Component {
             fileInput = this.renderOpenFilenameInput();
         }
 
-        let tableProps: TableComponentProps = null;
+        let tableProps: SimpleTableComponentProps = null;
         if (fileBrowserStore.browserMode === BrowserMode.Catalog && fileBrowserStore.catalogHeaders && fileBrowserStore.catalogHeaders.length) {
             const table = fileBrowserStore.catalogHeaderDataset;
             tableProps = {
-                type: TableType.Normal,
                 dataset: table.columnsData,
                 columnHeaders: table.columnHeaders,
                 numVisibleRows: fileBrowserStore.catalogHeaders.length
@@ -454,7 +472,7 @@ export class FileBrowserDialogComponent extends React.Component {
                                 sortingString={appStore.preferenceStore.fileSortingString}
                                 onSortingChanged={fileBrowserStore.setSortingConfig}
                                 onFileClicked={fileBrowserStore.selectFile}
-                                onSelectionChanged={this.handleSelectionChanged}
+                                onSelectionChanged={fileBrowserStore.setSelectedFiles}
                                 onFileDoubleClicked={this.loadFile}
                                 onFolderClicked={this.handleFolderClicked}
                             />
@@ -479,7 +497,7 @@ export class FileBrowserDialogComponent extends React.Component {
                 </div>
                 <div className="bp3-dialog-footer">
                     <div className="bp3-dialog-footer-actions">
-                        <AnchorButton intent={Intent.NONE} onClick={fileBrowserStore.hideFileBrowser} disabled={appStore.fileLoading} text="Close"/>
+                        <AnchorButton intent={Intent.NONE} onClick={this.closeFileBrowser} disabled={appStore.fileLoading} text="Close"/>
                         {actionButton}
                     </div>
                 </div>
@@ -497,6 +515,15 @@ export class FileBrowserDialogComponent extends React.Component {
                 </Alert>
             </DraggableDialogComponent>
         );
+    }
+
+    private closeFileBrowser = () => {
+        const appStore = AppStore.Instance;
+        const fileBrowserStore = appStore.fileBrowserStore;
+        if (appStore.dialogStore.stokesDialogVisible) {
+            appStore.dialogStore.hideStokesDialog();
+        }
+        fileBrowserStore.hideFileBrowser();
     }
 
     private renderBreadcrumb = (props: IBreadcrumbProps) => {
