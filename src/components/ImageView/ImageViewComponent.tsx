@@ -69,7 +69,7 @@ export const getImageCanvas = (padding: Padding, colorbarPosition: string, backg
                 break;
             case("bottom"):
                 xPos = 0;
-                yPos = overlayCanvas.height - colorbarCanvas.height;
+                yPos = overlayCanvas.height - colorbarCanvas.height - AppStore.Instance.overlayStore.colorbarHoverInfoHeight;
                 break;
             case("right"):
             default:

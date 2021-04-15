@@ -89,9 +89,8 @@ export class ColorbarComponent extends React.Component {
         // adjust stage position
         if (colorbarSettings.position === "right") {
             stageLeft = appStore.overlayStore.padding.left + appStore.overlayStore.renderWidth;
-        }
-        if (colorbarSettings.position === "bottom") {
-            stageTop = appStore.overlayStore.viewHeight - colorbarSettings.stageWidth;
+        } else if (colorbarSettings.position === "bottom") {
+            stageTop = appStore.overlayStore.viewHeight - appStore.overlayStore.colorbarHoverInfoHeight - colorbarSettings.stageWidth;
         } else if (colorbarSettings.position === "top" && appStore.overlayStore.title.show) {
             stageTop = appStore.overlayStore.padding.top - colorbarSettings.stageWidth;
         }
