@@ -70,7 +70,13 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
             isCloseable: true,
             parentId: "catalog-overlay",
             parentType: "catalog-overlay",
-            helpType: [HelpType.CATALOG_SETTINGS_GOLBAL, HelpType.CATALOG_SETTINGS_OVERLAY, HelpType.CATALOG_SETTINGS_COLOR]
+            helpType: [
+                HelpType.CATALOG_SETTINGS_GOLBAL, 
+                HelpType.CATALOG_SETTINGS_OVERLAY, 
+                HelpType.CATALOG_SETTINGS_COLOR,
+                HelpType.CATALOG_SETTINGS_SIZE,
+                HelpType.CATALOG_SETTINGS_ORIENTATION
+            ]
         };
     }
 

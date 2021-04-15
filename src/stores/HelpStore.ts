@@ -72,5 +72,7 @@ export enum HelpType {
     CATALOG_SETTINGS_GOLBAL = "catalog-settings-golbal",
     CATALOG_SETTINGS_OVERLAY = "catalog-settings-overlay",
     CATALOG_SETTINGS_COLOR = "catalog-settings-color",
+    CATALOG_SETTINGS_SIZE = "catalog-settings-size",
+    CATALOG_SETTINGS_ORIENTATION = "catalog-settings-orientation",
     SPECTRAL_LINE_QUERY = "spectral-line-query"
 }
