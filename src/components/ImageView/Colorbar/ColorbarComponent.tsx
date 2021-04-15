@@ -141,10 +141,12 @@ export class ColorbarComponent extends React.Component {
                 if (colorbarSettings.tickVisible) {
                     // to avoid blurry ticks when width <= 1px, offset to .5 px position 
                     const position = positions[i] - ((colorbarSettings.tickWidth <= 1) && (positions[i] - Math.floor(positions[i]) - 0.5 / devicePixelRatio));
-                    let tickPoints = [colorbarSettings.rightBorderPos - colorbarSettings.getTickLen, position, colorbarSettings.rightBorderPos, position];
-                    // rotate to horizontal by swapping
-                    if (colorbarSettings.position !== "right") {
+                    let tickPoints = [colorbarSettings.rightBorderPos - colorbarSettings.tickLen, position, colorbarSettings.rightBorderPos, position];
+                    if (colorbarSettings.position !== "right") { // rotate to horizontal by swapping
                         tickPoints = [tickPoints[1], tickPoints[0], tickPoints[3], tickPoints[2]];
+                        if (colorbarSettings.position === "top") { // reflect over x-axis
+                            tickPoints[0] = colorbarSettings.rightBorderPos + colorbarSettings.tickLen;
+                        }
                     }
                     ticks.push(
                         <Line

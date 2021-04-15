@@ -710,7 +710,6 @@ export class OverlayColorbarSettings {
     @observable labelFont: number;
     @observable labelFontSize: number;
     @observable labelCustomText: boolean;
-    //@observable labelText: string;
     @observable labelCustomColor: boolean;
     @observable labelColor: string;
     private textRatio = [0.5, 0.45, 0.5, 0.45, 0.6];
@@ -747,7 +746,6 @@ export class OverlayColorbarSettings {
         this.labelFont = 0;
         this.labelFontSize = 15;
         this.labelCustomText = false;
-        //this.labelText = "";
         this.labelCustomColor = false;
         this.labelColor = AST_DEFAULT_COLOR;
     }
@@ -872,10 +870,6 @@ export class OverlayColorbarSettings {
         this.labelCustomText = customText;
     };
 
-    //@action setLabelText = (text: string) => {
-    //    this.labelText = text;
-    //};
-
     @action setLabelCustomColor = (customColor: boolean) => {
         this.labelCustomColor = customColor;
     };
@@ -884,6 +878,21 @@ export class OverlayColorbarSettings {
         this.labelColor = color;
     };
 
+    @computed get yOffset(): number {
+        const padding = AppStore.Instance?.overlayStore?.padding;
+        return this.position === "right" ? padding?.top : padding?.left;
+    }
+
+    @computed get height(): number {
+        const frame = AppStore.Instance?.activeFrame;
+        return this.position === "right" ? frame.renderHeight : frame.renderWidth;
+    }
+
+    @computed get tickNum(): number {
+        const tickNum = Math.round(this.height / 100.0 * this.tickDensity);
+        return this.height && tickNum > 1 ? tickNum : 1;
+    }
+
     private getOrder = (x: number): number => {
         return x === 0 ? 0 : Math.log10(Math.abs(x));
     };
@@ -891,12 +900,6 @@ export class OverlayColorbarSettings {
     private getPrecision = (x: number): number => {
         return Math.floor(this.getOrder(x));
     };
-
-    @computed get tickNum(): number {
-        const renderHeight = this.position === "right" ? AppStore.Instance.overlayStore.renderHeight : AppStore.Instance.overlayStore.renderWidth;
-        const tickNum = Math.round(renderHeight / 100.0 * this.tickDensity);
-        return renderHeight && tickNum > 1 ? tickNum : 1;
-    }
 
     @computed get roundedNumbers(): {numbers: number[], precision: number} {
         const frame =  AppStore.Instance?.activeFrame;
@@ -952,20 +955,6 @@ export class OverlayColorbarSettings {
         } else {
             return this.roundedNumbers.numbers.map(x => yOffset + height * (x - frame.renderConfig.scaleMinVal) / (frame.renderConfig.scaleMaxVal - frame.renderConfig.scaleMinVal));
         }
-    }
-
-    @computed get getTickLen(): number {
-        return this.position === "top" ? -this.tickLen : this.tickLen;
-    }
-
-    @computed get yOffset(): number {
-        const padding = AppStore.Instance?.overlayStore?.padding;
-        return this.position === "right" ? padding?.top : padding?.left;
-    }
-
-    @computed get height(): number {
-        const frame = AppStore.Instance?.activeFrame;
-        return this.position === "right" ? frame.renderHeight : frame.renderWidth;
     }
 
     @computed get rightBorderPos(): number {
