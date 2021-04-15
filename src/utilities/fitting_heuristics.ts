@@ -85,20 +85,10 @@ export function histogram(data: number[], binN: number): {hist: number[], binEdg
     return {hist, binEdges};
 }
 
+export function getEstimatedPoints(xInput: number[], yInput:number[]): {x: number, y: number}[] {
 
-export function autoDetecting(xInput: number[], yInput:number[]) : {components:ProfileFittingIndividualStore[], order: number, yIntercept: number, slope:number} {
-
-    let x: number[] = xInput;
-    let y: number[] = yInput;
-
-    let order: number;
-    let yMean: number;
-    let yIntercept: number;
-    let slope: number;
-    let continuumAdjustedY: number[] = [];
-
-    const yDataFlippedSum = y.map((value, i) => {
-        return value + y[y.length - 1 - i];
+    const yDataFlippedSum = yInput.map((value, i) => {
+        return value + yInput[yInput.length - 1 - i];
     })
 
     const flippedSumHistResult = histogram(yDataFlippedSum, Math.floor(Math.sqrt(yDataFlippedSum.length)));
@@ -137,32 +127,45 @@ export function autoDetecting(xInput: number[], yInput:number[]) : {components:P
             INDEX_TO = i;
             SWITCH = false;
             console.log("(" + INDEX_FROM + ", " + INDEX_TO + ")");
-            xMeanSegment.push(_.mean(x.slice(INDEX_FROM, INDEX_TO)));
-            yMeanSegment.push(_.mean(y.slice(INDEX_FROM, INDEX_TO)));
+            xMeanSegment.push(_.mean(xInput.slice(INDEX_FROM, INDEX_TO)));
+            yMeanSegment.push(_.mean(yInput.slice(INDEX_FROM, INDEX_TO)));
         } else if(value < CEILING && value > FLOOR && SWITCH === true && i === yDataFlippedSum.length - 1) {
             INDEX_TO = i;
             console.log("(" + INDEX_FROM + ", " + INDEX_TO + ")");
-            xMeanSegment.push(_.mean(x.slice(INDEX_FROM, INDEX_TO)));
-            yMeanSegment.push(_.mean(y.slice(INDEX_FROM, INDEX_TO)));
+            xMeanSegment.push(_.mean(xInput.slice(INDEX_FROM, INDEX_TO)));
+            yMeanSegment.push(_.mean(yInput.slice(INDEX_FROM, INDEX_TO)));
             break;
         }
     }
 
     if (xMeanSegment.length <= 1) {
-        xMeanSegment.push(_.mean(x.slice(0, Math.floor(x.length)/2)));
-        xMeanSegment.push(_.mean(x.slice(Math.floor(x.length/2),x.length)));
-        yMeanSegment.push(_.mean(y.slice(0, Math.floor(y.length)/2)));
-        yMeanSegment.push(_.mean(y.slice(Math.floor(y.length/2), y.length)));
+        xMeanSegment.push(_.mean(xInput.slice(0, Math.floor(xInput.length)/ 2)));
+        xMeanSegment.push(_.mean(xInput.slice(Math.floor(xInput.length/ 2),xInput.length)));
+        yMeanSegment.push(_.mean(yInput.slice(0, Math.floor(yInput.length)/ 2)));
+        yMeanSegment.push(_.mean(yInput.slice(Math.floor(yInput.length/ 2), yInput.length)));
     }
     console.log("xMeanSegment:", xMeanSegment);
     console.log("yMeanSegment:", yMeanSegment);
-    yMean = (yMeanSegment[yMeanSegment.length -1] + yMeanSegment[0]) / 2;
-    slope = (yMeanSegment[yMeanSegment.length -1] - yMeanSegment[0]) / (xMeanSegment[xMeanSegment.length - 1] - xMeanSegment[0]);
-    yIntercept = yMeanSegment[0] - slope * xMeanSegment[0];
-    for (let i = 0; i < y.length; i++) {
-        continuumAdjustedY.push(y[i] - (slope *x[i] + yIntercept));
-    }
-    y = continuumAdjustedY;
+    return [{x: xMeanSegment[0], y : yMeanSegment[0]},{x: xMeanSegment[xMeanSegment.length - 1], y : yMeanSegment[yMeanSegment.length - 1]}];
+}
+
+export function autoDetecting(xInput: number[], yInput:number[]) : {components:ProfileFittingIndividualStore[], order: number, yIntercept: number, slope:number} {
+
+    let x: number[] = xInput;
+    let y: number[] = yInput;
+
+    const estimatedPoints = getEstimatedPoints(x, y);
+    const startPoint = estimatedPoints[0];
+    const endPoint = estimatedPoints[1];
+
+    let yMean = (startPoint.y + endPoint.y) / 2;
+    let slope = (endPoint.y - startPoint.y) / (endPoint.x - startPoint.x);
+    let yIntercept = startPoint.y - slope * startPoint.x;
+
+    // adjust y with estimated order continuum
+    y = yInput.map((yi, i) => {
+        return yi - (slope * x[i] + yIntercept);
+    });
 
     // pre-processing data based on number of channels
     const xSmoothed = profilePreprocessing(x);
@@ -191,14 +194,14 @@ export function autoDetecting(xInput: number[], yInput:number[]) : {components:P
     console.log("Intensity_smoothed histogram Gaussian fit, mean = " + intensitySmoothedMean);
     console.log("Intensity_smoothed histogram Gaussian fit, stddev = " + intensitySmoothedStddev);
 
-    const zerothOrderValidSigma = 2;
-    const firstOrderValidSigma = 2;
-    if (yMeanSegment[0] > -1 * zerothOrderValidSigma * intensitySmoothedStddev && yMeanSegment[0] < zerothOrderValidSigma * intensitySmoothedStddev && yMeanSegment[yMeanSegment.length -1] > -1 * zerothOrderValidSigma * intensitySmoothedStddev && yMeanSegment[yMeanSegment.length -1] < zerothOrderValidSigma * intensitySmoothedStddev) {
+    // validate order of continuum with estimatedPoints and histogram fitting stddev
+    let order: number;
+    const orderValidWidth = 2 * intensitySmoothedStddev;
+    if (-orderValidWidth < startPoint.y && startPoint.y < orderValidWidth && -orderValidWidth < endPoint.y && endPoint.y < orderValidWidth) {
         order = -1;
         yIntercept = 0;
         slope = 0;
-    } else if (yMeanSegment[0] > yMean - firstOrderValidSigma * intensitySmoothedStddev && yMeanSegment[0] < yMean + firstOrderValidSigma * intensitySmoothedStddev &&
-        yMeanSegment[yMeanSegment.length -1] > yMean - firstOrderValidSigma * intensitySmoothedStddev && yMeanSegment[yMeanSegment.length -1] < yMean + firstOrderValidSigma * intensitySmoothedStddev) {
+    } else if (yMean - orderValidWidth < startPoint.y && startPoint.y < yMean + orderValidWidth && yMean - orderValidWidth < endPoint.y && endPoint.y < yMean + orderValidWidth) {
         order = 0;
         yIntercept = yMean;
         slope = 0;
