@@ -53,26 +53,26 @@ export class FrameStore {
     private static readonly CursorInfoMaxPrecision = 25;
     private static readonly ZoomInertiaDuration = 250;
 
-    private readonly spectralFrame: number;
+    private readonly spectralFrame: AST.FrameSet;
     private readonly controlMaps: Map<FrameStore, ControlMap>;
     private readonly framePixelRatio: number;
     private readonly backendService: BackendService;
     private readonly overlayStore: OverlayStore;
     private readonly logStore: LogStore;
 
-    private spectralTransformAST: number;
-    private cachedTransformedWcsInfo: number = -1;
+    private spectralTransformAST: AST.FrameSet;
+    private cachedTransformedWcsInfo: AST.FrameSet = -1;
     private zoomTimeoutHandler;
 
-    public readonly wcsInfo: number;
-    public readonly wcsInfoForTransformation: number;
-    public readonly wcsInfo3D: number;
+    public readonly wcsInfo: AST.FrameSet;
+    public readonly wcsInfoForTransformation: AST.FrameSet;
+    public readonly wcsInfo3D: AST.FrameSet;
     public readonly validWcs: boolean;
     public readonly frameInfo: FrameInfo;
 
     public spectralCoordsSupported: Map<string, { type: SpectralType, unit: SpectralUnit }>;
     public spectralSystemsSupported: Array<SpectralSystem>;
-    public spatialTransformAST: number;
+    public spatialTransformAST: AST.FrameSet;
 
     // Region set for the current frame. Accessed via regionSet, to take into account region sharing
     @observable private readonly frameRegionSet: RegionSetStore;
@@ -842,6 +842,10 @@ export class FrameStore {
             const cDelt1 = getHeaderNumericValue(this.frameInfo.fileInfoExtended.headerEntries.find(entry => entry.name === "CDELT1"));
             const cDelt2 = getHeaderNumericValue(this.frameInfo.fileInfoExtended.headerEntries.find(entry => entry.name === "CDELT2"));
             this.framePixelRatio = Math.abs(cDelt1 / cDelt2);
+            // Correct for numerical errors in CDELT values if they're within 0.1% of each other
+            if (Math.abs(this.framePixelRatio - 1.0) < 0.001) {
+                this.framePixelRatio = 1.0;
+            }
         }
 
         this.initSupportedSpectralConversion();
@@ -913,7 +917,7 @@ export class FrameStore {
         return AST.transformSpectralPoint(this.spectralFrame, type, unit, system, value);
     };
 
-    private initFrame2D = (): number => {
+    private initFrame2D = (): AST.FrameSet => {
         const fitsChan = AST.emptyFitsChan();
         for (let entry of this.frameInfo.fileInfoExtended.headerEntries) {
             if (entry.name.match(/(CTYPE|CDELT|CRPIX|CRVAL|CUNIT|NAXIS|CROTA)[3-9]/)) {
@@ -941,7 +945,7 @@ export class FrameStore {
         return AST.getFrameFromFitsChan(fitsChan);
     };
 
-    private initFrame = (): number => {
+    private initFrame = (): AST.FrameSet => {
         const dimension = this.frameInfo.fileInfoExtended.depth > 1 ? "3" : "2";
         const fitsChan = AST.emptyFitsChan();
         for (let entry of this.frameInfo.fileInfoExtended.headerEntries) {

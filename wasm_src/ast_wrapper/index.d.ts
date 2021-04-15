@@ -1,9 +1,9 @@
-export type FrameSet = number;
-export type Frame = number;
-export type Mapping = number;
-export type FitsChan = number;
-export type SpecFrame = number;
-export type AstObject = FrameSet | Frame | Mapping | FitsChan | SpecFrame;
+export interface AstObject{}
+export interface FrameSet extends AstObject {}
+export interface Frame extends AstObject {}
+export interface Mapping extends AstObject {}
+export interface FitsChan extends AstObject {}
+export interface SpecFrame extends AstObject {}
 
 export let fonts: string[];
 export function setColors(newColors: string[]): void;
@@ -30,10 +30,10 @@ export function format(frameSet: FrameSet, axis: number, value: number): string;
 // Not exported transform(), transform3D(), spectralTransform()
 export function getLastErrorMessage(): string;
 export function clearLastErrorMessage(): void;
-export function copy(src: AstObject): AstObject;
+export function copy<T extends AstObject>(src: T): T;
 export function deleteObject(src: AstObject): void;
 export function invert(src: FrameSet): FrameSet;
-export function convert(from: FrameSet | Frame, to: Frame | FrameSet, domainList: string);
+export function convert(from: FrameSet | Frame, to: Frame | FrameSet, domainList: string): FrameSet;
 export function shiftMap2D(x: number, y: number): Mapping;
 export function scaleMap2D(x: number, y: number): Mapping;
 export function frame(numAxes: number, options: string): Frame;
@@ -44,7 +44,7 @@ export function createTransformedFrameset(frameSet: FrameSet, offsetX: number, o
 // Not exported fillTransformGrid()
 
 // Helper functions
-export function getFormattedCoordinates(frameSet: FrameSet, x: number, y: number, formatString?: string, tempFormat?: boolean);
+export function getFormattedCoordinates(frameSet: FrameSet, x: number, y: number, formatString?: string, tempFormat?: boolean): {x: string, y: string};
 export function getWCSValueFromFormattedString(frameSet: FrameSet, formatString: {x: string, y: string}): {x: number, y: number};
 export function transformPointArrays(frameSet: FrameSet, xIn: Float64Array, yIn: Float64Array, forward?: boolean): {x: Float64Array, y: Float64Array};
 export function transformPoint(frameSet: FrameSet, x: number, y: number, forward?: boolean): {x: number, y: number};

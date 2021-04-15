@@ -14,7 +14,7 @@ export class ControlMap {
     private texture: WebGLTexture;
     private gl: WebGLRenderingContext;
 
-    constructor(src: FrameStore, dst: FrameStore, astTransform: number, width: number, height: number) {
+    constructor(src: FrameStore, dst: FrameStore, astTransform: AST.FrameSet, width: number, height: number) {
         this.source = src;
         this.destination = dst;
         this.width = width;

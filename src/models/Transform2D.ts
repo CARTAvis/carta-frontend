@@ -1,3 +1,4 @@
+import * as AST from "ast_wrapper";
 import {Point2D} from "./Point2D";
 import {add2D, transformPoint, length2D, scaleAndRotateAboutPoint2D, subtract2D} from "utilities";
 
@@ -7,7 +8,7 @@ export class Transform2D {
     scale: number;
     origin: Point2D;
 
-    constructor(astTransform: number, refPixel: Point2D) {
+    constructor(astTransform: AST.FrameSet, refPixel: Point2D) {
         const transformedRef = transformPoint(astTransform, refPixel, true);
         const delta = 1.0;
         const refTop = add2D(refPixel, {x: 0, y: delta / 2.0});

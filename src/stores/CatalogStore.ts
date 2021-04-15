@@ -60,7 +60,7 @@ export class CatalogStore {
         });
     }
 
-    @action updateCatalogData(fileId: number, xData: Array<number>, yData: Array<number>, wcsInfo: number, xUnit: string, yUnit: string, catalogFrame: CatalogSystemType) {
+    @action updateCatalogData(fileId: number, xData: Array<number>, yData: Array<number>, wcsInfo: AST.FrameSet, xUnit: string, yUnit: string, catalogFrame: CatalogSystemType) {
         const catalogDataInfo = this.catalogData.get(fileId);
         if (catalogDataInfo) {
             switch (catalogFrame) {
@@ -309,7 +309,7 @@ export class CatalogStore {
         }
     }
 
-    private static TransformCatalogData(xWcsData: Array<number>, yWcsData: Array<number>, wcsInfo: number, xUnit: string, yUnit: string, catalogFrame: CatalogSystemType): { xImageCoords: Float64Array, yImageCoords: Float64Array } {
+    private static TransformCatalogData(xWcsData: Array<number>, yWcsData: Array<number>, wcsInfo: AST.FrameSet, xUnit: string, yUnit: string, catalogFrame: CatalogSystemType): { xImageCoords: Float64Array, yImageCoords: Float64Array } {
         if (xWcsData?.length === yWcsData?.length && xWcsData?.length > 0) {
             const N = xWcsData.length;
 
