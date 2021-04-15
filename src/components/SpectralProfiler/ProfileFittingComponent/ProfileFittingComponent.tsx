@@ -18,9 +18,9 @@ export enum FittingFunction {
 }
 
 export enum FittingContinuum {
-    NONE,
-    ZEROTH_ORDER,
-    FIRST_ORDER
+    NONE = -1,
+    ZEROTH_ORDER = 0,
+    FIRST_ORDER = 1
 }
 
 @observer
@@ -71,7 +71,7 @@ export class ProfileFittingComponent extends React.Component<{fittingStore: Prof
 
     private autoDetect = () => {
         this.props.fittingStore.setHasResult(false);
-        const result = autoDetecting(this.plottingData.x, Array.prototype.slice.call(this.plottingData.y), this.props.fittingStore.continuum);
+        const result = autoDetecting(this.plottingData.x, Array.prototype.slice.call(this.plottingData.y));
         if (result.components?.length > 0) {
             this.props.fittingStore.setComponents(result.components.length, true);
             for (let i = 0; i < result.components.length; i++) {
@@ -79,6 +79,7 @@ export class ProfileFittingComponent extends React.Component<{fittingStore: Prof
                 this.props.fittingStore.components[i].setCenter(result.components[i].center);
                 this.props.fittingStore.components[i].setFwhm(result.components[i].fwhm);
             }
+            this.props.fittingStore.setContinuum(result.order);
             this.props.fittingStore.setYIntercept(result.yIntercept);
             this.props.fittingStore.setSlope(result.slope);
         }
