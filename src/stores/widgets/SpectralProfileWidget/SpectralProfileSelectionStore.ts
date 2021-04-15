@@ -241,7 +241,8 @@ export class SpectralProfileSelectionStore {
                 options.push({
                     value: frameNameOption.value,
                     label: `${frameNameOption.label}${isMatched ? " (matched)" : ""}`,
-                    hightlight: isMatched
+                    hightlight: isMatched,
+                    active: frameNameOption.active
                 });
             });
         } else {

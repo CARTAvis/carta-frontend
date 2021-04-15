@@ -56,7 +56,7 @@ class ProfileSelectionButtonComponent extends React.Component<ProfileSelectionBu
                             {this.props.itemOptions?.map((item, index) =>
                                 <MenuItem
                                     key={item.value}
-                                    text={item.label}
+                                    text={item.active ? <b>{item.label}</b> : item.label}
                                     disabled={item?.disabled}
                                     intent={item.hightlight ? Intent.PRIMARY : Intent.NONE}
                                     onClick={(ev) => this.props.onItemSelect(item.value, index)}

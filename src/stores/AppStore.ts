@@ -41,6 +41,10 @@ import {getImageCanvas, ImageViewLayer} from "components";
 import {AppToaster, ErrorToast, SuccessToast, WarningToast} from "components/Shared";
 import GitCommit from "../static/gitInfo";
 
+interface FrameOption extends IOptionProps {
+    active?: boolean;
+}
+
 export class AppStore {
     private static staticInstance: AppStore;
 
@@ -273,9 +277,16 @@ export class AppStore {
         return this.catalogStore.catalogProfileStores.size;
     }
 
-    @computed get frameNames(): IOptionProps [] {
-        let names: IOptionProps [] = [];
-        this.frames.forEach((frame, index) => names.push({label: index + ": " + frame.filename, value: frame.frameInfo.fileId}));
+    @computed get frameNames(): FrameOption[] {
+        let names: FrameOption[] = [];
+        this.frames.forEach((frame, index) => {
+            const fileId = frame.frameInfo.fileId;
+            names.push({
+                label: index + ": " + frame.filename,
+                value: fileId,
+                active: fileId === this.activeFrameFileId
+            });
+        });
         return names;
     }
 
