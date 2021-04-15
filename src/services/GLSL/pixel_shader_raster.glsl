@@ -60,6 +60,7 @@ void main(void) {
     // LINEAR (Default: uScaleType == LINEAR)
     float x = clamp((rawVal - uMinVal) / range, 0.0, 1.0);
     // Other scaling types
+    // normalized to [0, 1] for LOG and POWER, different from the scaling in ds9
     if (uScaleType == SQUARE) {
         x = x * x;
     }
@@ -67,10 +68,10 @@ void main(void) {
         x = sqrt(x);
     }
     else if (uScaleType == LOG) {
-        x = clamp(log(uAlpha * x + 1.0) / log(uAlpha), 0.0, 1.0);
+        x = log(uAlpha * x + 1.0) / log(uAlpha + 1.0);
     }
     else if (uScaleType == POWER) {
-        x = (pow(uAlpha, x) -1.0)/uAlpha;
+        x = (pow(uAlpha, x) - 1.0) / (uAlpha - 1.0);
     }
     else if (uScaleType == GAMMA) {
         x = pow(x, uGamma);

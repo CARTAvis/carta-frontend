@@ -2,6 +2,7 @@ import * as React from "react";
 import {MenuItem, IPopoverProps, Button} from "@blueprintjs/core";
 import {Select} from "@blueprintjs/select";
 import {FrameScaling, RenderConfigStore} from "stores/RenderConfigStore";
+import "./ScalingSelectComponent.scss";
 
 // Equation PNG images
 import linearPng from "static/equations/linear.png";
@@ -41,7 +42,8 @@ export const ScalingSelectComponent: React.FC<ScalingComponentProps> = (props) =
                 label={RenderConfigStore.SCALING_TYPES.get(scaling)}
                 key={scaling}
                 onClick={handleClick}
-                text={<div className="equation-div" style={{backgroundImage: `url(${equationPngMap.get(scaling)}`}}/>}
+                text={<div className="equation-div" style={{backgroundImage: `url(${equationPngMap.get(scaling)}`, backgroundSize: 'contain'}}/>}
+                style={{width: "220px"}}
             />
         );
     };

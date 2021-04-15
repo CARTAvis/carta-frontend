@@ -131,7 +131,7 @@ export class CatalogWidgetStore {
         this.sizeMapColumn = CatalogOverlay.NONE;
         this.sizeArea = false;
         this.sizeScalingType = FrameScaling.LINEAR;
-        this.sizeMin = {area: 100, diameter: 1};
+        this.sizeMin = {area: 100, diameter: 5};
         this.sizeMax = {area: 200, diameter: 20};
         this.sizeColumnMin = {default: undefined, clipd: undefined};
         this.sizeColumnMax = {default: undefined, clipd: undefined};
@@ -208,7 +208,7 @@ export class CatalogWidgetStore {
         this.sizeMapColumn = CatalogOverlay.NONE;
         this.sizeArea = false;
         this.sizeScalingType = FrameScaling.LINEAR;
-        this.sizeMin = {area: 50, diameter: 1};
+        this.sizeMin = {area: 50, diameter: 5};
         this.sizeMax = {area: 200, diameter: 20};
         this.sizeColumnMin = {default: undefined, clipd: undefined};
         this.sizeColumnMax = {default: undefined, clipd: undefined};
