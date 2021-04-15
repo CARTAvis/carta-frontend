@@ -65,19 +65,19 @@ export const getImageCanvas = (padding: Padding, colorbarPosition: string, backg
         switch(colorbarPosition) {
             case("top"):
                 xPos = 0;
-                yPos = padding.top - colorbarCanvas.height;
+                yPos = padding.top * devicePixelRatio - colorbarCanvas.height;
                 break;
             case("bottom"):
                 xPos = 0;
-                yPos = overlayCanvas.height - colorbarCanvas.height - AppStore.Instance.overlayStore.colorbarHoverInfoHeight;
+                yPos = overlayCanvas.height - colorbarCanvas.height - AppStore.Instance.overlayStore.colorbarHoverInfoHeight * devicePixelRatio;
                 break;
             case("right"):
             default:
-                xPos = padding.left + rasterCanvas.width;
+                xPos = padding.left * devicePixelRatio + rasterCanvas.width;
                 yPos = 0;
                 break;
         }
-        ctx.drawImage(colorbarCanvas, xPos * devicePixelRatio, yPos * devicePixelRatio, colorbarCanvas.width * devicePixelRatio, colorbarCanvas.height * devicePixelRatio);
+        ctx.drawImage(colorbarCanvas, xPos, yPos);
     }
 
     if (beamProfileCanvas) {
