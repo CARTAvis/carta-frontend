@@ -114,7 +114,6 @@ export class ImageViewComponent extends React.Component<WidgetProps> {
         this.activeLayer = AppStore.Instance.activeLayer;
         autorun(() => {
             const frame = AppStore.Instance.activeFrame;
-            // this.activeLayer = AppStore.Instance.activeLayer;
             if (frame) {
                 const imageSize = {x: frame.renderWidth, y: frame.renderHeight};
                 // Compare to cached image size to prevent duplicate events when changing frames
