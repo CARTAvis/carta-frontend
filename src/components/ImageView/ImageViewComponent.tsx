@@ -18,7 +18,7 @@ import {CursorInfo, Point2D} from "models";
 import {toFixed} from "utilities";
 import "./ImageViewComponent.scss";
 
-export const getImageCanvas = (padding: Padding, backgroundColor: string = "rgba(255, 255, 255, 0)"): HTMLCanvasElement => {
+export const getImageCanvas = (padding: Padding, colorbarPosition: string, backgroundColor: string = "rgba(255, 255, 255, 0)"): HTMLCanvasElement => {
     const rasterCanvas = document.getElementById("raster-canvas") as HTMLCanvasElement;
     const contourCanvas = document.getElementById("contour-canvas") as HTMLCanvasElement;
     const overlayCanvas = document.getElementById("overlay-canvas") as HTMLCanvasElement;
@@ -61,8 +61,23 @@ export const getImageCanvas = (padding: Padding, backgroundColor: string = "rgba
     ctx.drawImage(rasterCanvas, padding.left * devicePixelRatio, padding.top * devicePixelRatio);
     ctx.drawImage(contourCanvas, padding.left * devicePixelRatio, padding.top * devicePixelRatio);
     if (colorbarCanvas) {
-        const colorbarCanvasWidth = colorbarCanvas.width * overlayCanvas.height / colorbarCanvas.height;
-        ctx.drawImage(colorbarCanvas, overlayCanvas.width - colorbarCanvasWidth, 0, colorbarCanvasWidth, overlayCanvas.height);
+        let xPos, yPos;
+        switch(colorbarPosition) {
+            case("top"):
+                xPos = 0;
+                yPos = padding.top - colorbarCanvas.height;
+                break;
+            case("bottom"):
+                xPos = 0;
+                yPos = overlayCanvas.height - colorbarCanvas.height;
+                break;
+            case("right"):
+            default:
+                xPos = padding.left + rasterCanvas.width;
+                yPos = 0;
+                break;
+        }
+        ctx.drawImage(colorbarCanvas, xPos * devicePixelRatio, yPos * devicePixelRatio, colorbarCanvas.width * devicePixelRatio, colorbarCanvas.height * devicePixelRatio);
     }
 
     if (beamProfileCanvas) {
