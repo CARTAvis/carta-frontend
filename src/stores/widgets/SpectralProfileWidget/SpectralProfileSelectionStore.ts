@@ -242,11 +242,17 @@ export class SpectralProfileSelectionStore {
                     value: frameNameOption.value,
                     label: `${frameNameOption.label}${isMatched ? " (matched)" : ""}`,
                     hightlight: isMatched,
-                    active: frameNameOption.active
+                    active: frameNameOption.value === appStore.activeFrameFileId
                 });
             });
         } else {
-            options = options.concat(frameNameOptions);
+            options = options.concat(frameNameOptions?.map(frameNameOption => {
+                return {
+                    value: frameNameOption.value,
+                    label: frameNameOption.label,
+                    active: frameNameOption.value === appStore.activeFrameFileId
+                };
+            }));
         }
         return options;
     }
