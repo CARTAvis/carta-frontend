@@ -256,8 +256,16 @@ export class SpectralProfileSelectionStore {
 
         const frame = this.selectedFrame;
         if (frame?.regionSet?.regions) {
+            const appStore = AppStore.Instance;
+            const activeRegionId = appStore.selectedRegion ? appStore.selectedRegion.regionId : RegionId.CURSOR;
             const filteredRegions = frame.regionSet.regions.filter(r => !r.isTemporary && (r.isClosedRegion || r.regionType === CARTA.RegionType.POINT));
-            options = options.concat(filteredRegions?.map(r => {return {value: r.regionId, label: r.nameString};}));
+            options = options.concat(filteredRegions?.map(r => {
+                return {
+                    value: r.regionId,
+                    label: r.nameString,
+                    active: this.widgetStore.isEffectiveFrameEqualToActiveFrame && r.regionId === activeRegionId
+                };
+            }));
         }
         return options;
     }

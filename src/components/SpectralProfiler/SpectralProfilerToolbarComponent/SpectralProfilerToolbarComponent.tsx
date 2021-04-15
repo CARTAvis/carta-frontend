@@ -1,7 +1,7 @@
 import {observer} from "mobx-react";
 import * as React from "react";
 import {CARTA} from "carta-protobuf";
-import {AnchorButton, ButtonGroup, Icon, Intent, Menu, MenuItem, Popover, Position, Tooltip} from "@blueprintjs/core";
+import {AnchorButton, ButtonGroup, Intent, Menu, MenuItem, Popover, Position, Tooltip} from "@blueprintjs/core";
 import {AppStore} from "stores";
 import {MultiProfileCategory, SpectralProfileWidgetStore, SpectralProfileSelectionStore} from "stores/widgets";
 import {SpectralProfilerComponent, SpectralProfilerSettingsTabs} from "components";
@@ -71,9 +71,8 @@ class ProfileSelectionButtonComponent extends React.Component<ProfileSelectionBu
                     disabled={this.props.disabled}
                 >
                     <AnchorButton
-                        text={<span className="overflow-text">{dropdownText}</span>}
+                        text={<span className="overflow-text">{this.props.isSelectingSpecificItem ? <b>{dropdownText}</b> : dropdownText}</span>}
                         className="dropdown-button"
-                        icon={this.props.isSelectingSpecificItem ? <Icon icon="star" iconSize={10}/> : undefined}
                         rightIcon={"caret-down"}
                         disabled={this.props.disabled || this.props.disableOptions}
                     />
