@@ -191,14 +191,14 @@ export function autoDetecting(xInput: number[], yInput:number[]) : {components:P
     console.log("Intensity_smoothed histogram Gaussian fit, mean = " + intensitySmoothedMean);
     console.log("Intensity_smoothed histogram Gaussian fit, stddev = " + intensitySmoothedStddev);
 
-    const orderValidZerothSigma = 1;
-    const orderValidFirstSigma = 1;
-    if (yMeanSegment[0] > -1 * orderValidZerothSigma * intensitySmoothedStddev && yMeanSegment[0] < orderValidZerothSigma * intensitySmoothedStddev && yMeanSegment[yMeanSegment.length -1] > -1 * orderValidZerothSigma * intensitySmoothedStddev && yMeanSegment[yMeanSegment.length -1] < orderValidZerothSigma * intensitySmoothedStddev) {
+    const zerothOrderValidSigma = 2;
+    const firstOrderValidSigma = 2;
+    if (yMeanSegment[0] > -1 * zerothOrderValidSigma * intensitySmoothedStddev && yMeanSegment[0] < zerothOrderValidSigma * intensitySmoothedStddev && yMeanSegment[yMeanSegment.length -1] > -1 * zerothOrderValidSigma * intensitySmoothedStddev && yMeanSegment[yMeanSegment.length -1] < zerothOrderValidSigma * intensitySmoothedStddev) {
         order = -1;
         yIntercept = 0;
         slope = 0;
-    } else if (yMeanSegment[0] > yMean - orderValidFirstSigma * intensitySmoothedStddev && yMeanSegment[0] < yMean + orderValidFirstSigma * intensitySmoothedStddev && 
-        yMeanSegment[yMeanSegment.length -1] > yMean - orderValidFirstSigma * intensitySmoothedStddev && yMeanSegment[yMeanSegment.length -1] < yMean + orderValidFirstSigma * intensitySmoothedStddev) {
+    } else if (yMeanSegment[0] > yMean - firstOrderValidSigma * intensitySmoothedStddev && yMeanSegment[0] < yMean + firstOrderValidSigma * intensitySmoothedStddev &&
+        yMeanSegment[yMeanSegment.length -1] > yMean - firstOrderValidSigma * intensitySmoothedStddev && yMeanSegment[yMeanSegment.length -1] < yMean + firstOrderValidSigma * intensitySmoothedStddev) {
         order = 0;
         yIntercept = yMean;
         slope = 0;
