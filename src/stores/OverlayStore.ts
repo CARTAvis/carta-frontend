@@ -945,15 +945,33 @@ export class OverlayColorbarSettings {
         const appStore = AppStore.Instance;
         const frame = appStore?.activeFrame;
         const yOffset =  this.position === "right" ? appStore?.overlayStore.padding.top : appStore?.overlayStore.padding.left;
+        const height = this.position === "right" ? frame.renderHeight : frame.renderWidth;
         if (!this.roundedNumbers || !frame || !isFinite(yOffset)) {
             return [];
         }
-        return this.roundedNumbers.numbers.map(x => yOffset + frame.renderHeight * (frame.renderConfig.scaleMaxVal - x) / (frame.renderConfig.scaleMaxVal - frame.renderConfig.scaleMinVal));
+        if (this.position === "right") {
+            return this.roundedNumbers.numbers.map(x => yOffset + height * (frame.renderConfig.scaleMaxVal - x) / (frame.renderConfig.scaleMaxVal - frame.renderConfig.scaleMinVal));
+        } else {
+            return this.roundedNumbers.numbers.map(x => yOffset + height * (x - frame.renderConfig.scaleMinVal) / (frame.renderConfig.scaleMaxVal - frame.renderConfig.scaleMinVal));
+        }
     }
 
+    @computed get getTickLen(): number {
+        return this.position === "top" ? -this.tickLen : this.tickLen;
+    }
+
+    @computed get yOffset(): number {
+        const padding = AppStore.Instance?.overlayStore?.padding;
+        return this.position === "right" ? padding?.top : padding?.left;
+    }
+
+    @computed get height(): number {
+        const frame = AppStore.Instance?.activeFrame;
+        return this.position === "right" ? frame.renderHeight : frame.renderWidth;
+    }
 
     @computed get rightBorderPos(): number {
-        return this.offset + this.width;
+        return this.position === "top" ? this.stageWidth - this.offset - this.width : this.offset + this.width;
     }
 
     @computed get textGap(): number {
@@ -962,7 +980,7 @@ export class OverlayColorbarSettings {
 
     @computed get numberWidth(): number {
         const textWidth = Math.max(...(this.texts.map(x => x.length))) * this.textRatio[clamp(Math.floor(this.numberFont / 4), 0, this.textRatio.length)];
-        return this.numberVisible ? this.numberFontSize * (this.numberRotation ? 1 : textWidth) + this.textGap : 0;
+        return this.numberVisible ? this.numberFontSize * (this.numberRotation || this.position !== "right" ? 1 : textWidth) + this.textGap : 0;
     }
 
     @computed get labelWidth(): number {
@@ -1205,7 +1223,7 @@ export class OverlayStore {
     }
 
     @computed get minSize() {
-        return Math.min(this.viewWidth, this.viewHeight);
+        return Math.min(this.renderWidth, this.renderHeight);
     }
 
     @computed get showNumbers() {
@@ -1253,7 +1271,7 @@ export class OverlayStore {
     @computed get paddingBottom(): number { // base + numGap + numHeight + labelGap + labelHeight + colorbarWidth + colorbarHoverInfoHeight
         return this.base + this.numberWidth + this.labelWidth
             + (this.colorbar.visible && this.colorbar.position === "bottom" ? this.colorbar.totalWidth : 0)
-            + (!(this.colorbar.visible) || this.labels.show || (this.colorbar.visible && this.colorbar.position === "bottom") ? 0 : 10);
+            + (!(this.colorbar.visible) || (this.colorbar.visible && this.labels.show && this.colorbar.position !== "bottom") || (this.colorbar.visible && this.colorbar.labelVisible && this.colorbar.position === "bottom") ? 0 : 10);
     }
 
     @computed get padding(): Padding {

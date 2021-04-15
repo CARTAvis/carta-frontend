@@ -767,10 +767,10 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
                         onChange={(ev) => colorbar.setLabelVisible(ev.currentTarget.checked)}
                     />
                 </FormGroup>
-                <FormGroup inline={true} label="Label rotation"  disabled={!colorbar.visible || !colorbar.labelVisible}>
+                <FormGroup inline={true} label="Label rotation"  disabled={!colorbar.visible || !colorbar.labelVisible || colorbar.position !== "right"}>
                     <HTMLSelect
                         value={colorbar.labelRotation}
-                        disabled={!colorbar.visible || !colorbar.labelVisible}
+                        disabled={!colorbar.visible || !colorbar.labelVisible || colorbar.position !== "right"}
                         onChange={(ev) => {
                             colorbar.setLabelRotation(Number(ev.currentTarget.value));
                             if (colorbar.numberRotation !== 0 && ((Number(ev.currentTarget.value) === 90) || (Number(ev.currentTarget.value) === -90))) {
@@ -836,10 +836,10 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
                         onChange={(ev) => colorbar.setNumberVisible(ev.currentTarget.checked)}
                     />
                 </FormGroup>
-                <FormGroup inline={true} label="Numbers rotation"  disabled={!colorbar.visible || !colorbar.numberVisible}>
+                <FormGroup inline={true} label="Numbers rotation"  disabled={!colorbar.visible || !colorbar.numberVisible || colorbar.position !== "right"}>
                     <HTMLSelect
                         value={colorbar.numberRotation}
-                        disabled={!colorbar.visible || !colorbar.numberVisible}
+                        disabled={!colorbar.visible || !colorbar.numberVisible || colorbar.position !== "right"}
                         onChange={(ev) => colorbar.setNumberRotation(Number(ev.currentTarget.value))}
                     >
                         <option value={-90}>-90</option>
