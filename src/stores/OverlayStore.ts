@@ -943,17 +943,16 @@ export class OverlayColorbarSettings {
     }
 
     @computed get positions(): number[] {
-        const appStore = AppStore.Instance;
-        const frame = appStore?.activeFrame;
-        const yOffset =  this.position === "right" ? appStore?.overlayStore.padding.top : appStore?.overlayStore.padding.left;
-        const height = this.position === "right" ? frame.renderHeight : frame.renderWidth;
-        if (!this.roundedNumbers || !frame || !isFinite(yOffset)) {
+        const frame =  AppStore.Instance?.activeFrame;
+        const scaleMinVal = frame?.renderConfig?.scaleMinVal;
+        const scaleMaxVal = frame?.renderConfig?.scaleMaxVal;
+        if (!this.roundedNumbers || !frame || !isFinite(this.yOffset)) {
             return [];
         }
         if (this.position === "right") {
-            return this.roundedNumbers.numbers.map(x => yOffset + height * (frame.renderConfig.scaleMaxVal - x) / (frame.renderConfig.scaleMaxVal - frame.renderConfig.scaleMinVal));
+            return this.roundedNumbers.numbers.map(x => this.yOffset + this.height * (scaleMaxVal - x) / (scaleMaxVal - scaleMinVal));
         } else {
-            return this.roundedNumbers.numbers.map(x => yOffset + height * (x - frame.renderConfig.scaleMinVal) / (frame.renderConfig.scaleMaxVal - frame.renderConfig.scaleMinVal));
+            return this.roundedNumbers.numbers.map(x => this.yOffset + this.height * (x - scaleMinVal) / (scaleMaxVal - scaleMinVal));
         }
     }
 
