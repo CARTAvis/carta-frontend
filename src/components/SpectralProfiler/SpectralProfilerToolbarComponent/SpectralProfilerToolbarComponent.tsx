@@ -73,7 +73,7 @@ class ProfileSelectionButtonComponent extends React.Component<ProfileSelectionBu
                     <AnchorButton
                         text={<span className="overflow-text">{dropdownText}</span>}
                         className="dropdown-button"
-                        icon={this.props.isSelectingSpecificItem ? <Icon icon="lock" iconSize={10}/> : undefined}
+                        icon={this.props.isSelectingSpecificItem ? <Icon icon="star" iconSize={10}/> : undefined}
                         rightIcon={"caret-down"}
                         disabled={this.props.disabled || this.props.disableOptions}
                     />
