@@ -626,21 +626,17 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
             comment += "\n" + this.props.comments.map(c => "# " + c).join("\n");
         }
 
-        const header = "# x\ty";
-
         let rows = [];
         if (plotName === "histogram") {
-            rows = this.props.data.map(o => `${toExponential(o.x, 10)}\t${toExponential(o.y, 10)}`);
+            rows.push("# x\ty");
+            rows = rows.concat(this.props.data.map(o => `${toExponential(o.x, 10)}\t${toExponential(o.y, 10)}`));
         } else {
             if (this.props.data && this.props.data.length) {
-                if (this.props.tickTypeX === TickType.Scientific) {
-                    rows = this.props.data.map(o => `${toExponential(o.x, 10)}\t${toExponential(o.y, 10)}`);
-                } else {
-                    rows = this.props.data.map(o => `${o.x}\t${toExponential(o.y, 10)}`);
-                }
+                rows.push("# x\ty");
+                rows = rows.concat(this.props.data.map(o => this.props.tickTypeX === TickType.Scientific ? `${toExponential(o.x, 10)}\t${toExponential(o.y, 10)}` : `${o.x}\t${toExponential(o.y, 10)}`));
             }
 
-            if (this.props.multiPlotPropsMap && this.props.multiPlotPropsMap.size) {
+            if (this.props.multiPlotPropsMap && this.props.multiPlotPropsMap.size > 0) {
                 this.props.multiPlotPropsMap.forEach((props, key) => {
                     if (key === StokesCoordinate.LinearPolarizationQ || key === StokesCoordinate.LinearPolarizationU) {
                         rows.push(`# ${key}\t`);
@@ -662,7 +658,7 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
             }
         }
 
-        exportTsvFile(imageName, plotName, `${comment}\n${header}\n${rows.join("\n")}\n`);
+        exportTsvFile(imageName, plotName, `${comment}\n${rows.join("\n")}\n`);
     };
 
     private calcMarkerBox = (marker: LineMarker): {lowerBound: number, height: number} => {

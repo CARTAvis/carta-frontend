@@ -75,18 +75,8 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
 
     @computed get exportHeaders(): string[] {
         let headerString = [];
-        const frame = this.widgetStore.effectiveFrame;
-        if (frame && frame.frameInfo && frame.regionSet) {
-            const regionId = this.widgetStore.effectiveRegionId;
-            const region = frame.regionSet.regions.find(r => r.regionId === regionId);
-
-            if (region) {
-                headerString.push(region.regionProperties);
-                if (frame.validWcs) {
-                    headerString.push(frame.getRegionWcsProperties(region));
-                }
-            }
-        }
+        const regionProperties = this.widgetStore.effectiveFrame?.getRegionProperties(this.widgetStore.effectiveRegionId);
+        regionProperties?.forEach(regionProperty => headerString.push(regionProperty));
         return headerString;
     }
 

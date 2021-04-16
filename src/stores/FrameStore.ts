@@ -1149,6 +1149,18 @@ export class FrameStore {
         return undefined;
     };
 
+    public getRegionProperties(regionId: number): string[] {
+        let propertyString = [];
+        const region = this.getRegion(regionId);
+        if (region) {
+            propertyString.push(region.regionProperties);
+            if (this.validWcs) {
+                propertyString.push(this.getRegionWcsProperties(region));
+            }
+        }
+        return propertyString;
+    };
+
     public getRegionWcsProperties(region: RegionStore): string {
         if (!this.validWcs || !isFinite(region.center.x) || !isFinite(region.center.y)) {
             return "Invalid";

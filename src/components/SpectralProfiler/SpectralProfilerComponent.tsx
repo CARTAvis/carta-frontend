@@ -141,24 +141,6 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
         this.widgetStore.setCursor(x);
     }, 33);
 
-    private getExportHeaders = (): string[] => {
-        let headerString = [];
-        // TODO: confirm export region format
-        const profileSelectionStore = this.widgetStore.profileSelectionStore;
-        const regionIds = profileSelectionStore.selectedRegionIds;
-        regionIds?.forEach(regionId => {
-            const frame = profileSelectionStore.selectedFrame;
-            const region = frame?.getRegion(regionId);
-            if (region) {
-                headerString.push(region.regionProperties);
-                if (frame?.validWcs) {
-                    headerString.push(frame.getRegionWcsProperties(region));
-                }
-            }
-        });
-        return headerString;
-    };
-
     private genCursoInfoString = (data: Point2D[], cursorXValue: number, cursorXUnit: string, label: string): string => {
         let cursorInfoString = undefined;
         const nearest = binarySearchByX(data, cursorXValue);
@@ -304,7 +286,8 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
                         linePlotProps.multiPlotPropsMap.set(`profile${i}`, {
                             data: currentPlotData.data[i],
                             type: this.widgetStore.plotType,
-                            borderColor: currentPlotData.colors[i]
+                            borderColor: currentPlotData.colors[i],
+                            // TODO: region properties
                         });
                     }
 
@@ -413,8 +396,6 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
                     color: appStore.darkTheme ? Colors.GRAY4 : Colors.GRAY2
                 });
             }
-
-            linePlotProps.comments = this.getExportHeaders();
         }
 
         let className = "spectral-profiler-widget";
