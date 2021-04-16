@@ -902,7 +902,7 @@ export class OverlayColorbarSettings {
     };
 
     @computed get roundedNumbers(): {numbers: number[], precision: number} {
-        const frame =  AppStore.Instance?.activeFrame;
+        const frame = AppStore.Instance?.activeFrame;
         const scaleMinVal = frame?.renderConfig?.scaleMinVal;
         const scaleMaxVal = frame?.renderConfig?.scaleMaxVal;
         const tickNum = this.tickNum;
