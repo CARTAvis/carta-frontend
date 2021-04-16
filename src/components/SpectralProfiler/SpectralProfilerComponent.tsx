@@ -497,16 +497,17 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
                     }
                     linePlotProps.multiPlotPropsMap.set("fittingResult", fittingPlotProps);
 
-                    for (const individualResultValues of currentPlotData.fittingIndividualResultValues) {
+                    for (let i = 0; i < currentPlotData.fittingIndividualResultValues.length; i++) {
                         const individualPlotProps: MultiPlotProps = {
-                            data: individualResultValues,
+                            data: currentPlotData.fittingIndividualResultValues[i],
                             type: PlotType.LINES,
                             borderColor: getColorForTheme("auto-orange"),
                             borderWidth: 1,
                             pointRadius: 1,
-                            order: 0.
+                            order: 0,
+                            opacity: 0.6
                         }
-                        linePlotProps.multiPlotPropsMap.set("fittingIndividual", individualPlotProps);
+                        linePlotProps.multiPlotPropsMap.set(`fittingIndividual(${i + 1})`, individualPlotProps);
                     }
 
                     let fittingResidualPlotProps: MultiPlotProps = {

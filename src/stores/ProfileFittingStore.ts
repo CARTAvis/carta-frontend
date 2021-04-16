@@ -149,10 +149,10 @@ export class ProfileFittingStore {
         if (this.components && this.hasResult) {
             const individualResultPoint2DArrays = new Array<Point2D[]>(this.components.length);
             for (const component of this.components) {
-                const individualResultPoint2DArray = new Array<Point2D>(x.length);
+                let individualResultPoint2DArray: Point2D[] = [];
                 for (let i = 0; i < x.length; i++) {
                     const z = (x[i] - component.resutlCenter) / component.resultFwhm;
-                    const yi = component.resultAmp * Math.exp(-4 * Math.log(2) * z * z)
+                    const yi = component.resultAmp * Math.exp(-4 * Math.log(2) * z * z);
                     individualResultPoint2DArray.push({x: x[i], y: yi + (this.slope * x[i] + this.yIntercept)}); // TODO
                 }
                 individualResultPoint2DArrays.push(individualResultPoint2DArray);
