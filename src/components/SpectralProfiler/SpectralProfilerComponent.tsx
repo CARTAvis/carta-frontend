@@ -6,7 +6,7 @@ import {Colors, NonIdealState} from "@blueprintjs/core";
 import ReactResizeDetector from "react-resize-detector";
 import SplitPane, { Pane } from "react-split-pane";
 import {LineMarker, LinePlotComponent, LinePlotComponentProps, LinePlotSelectingMode, SmoothingType} from "components/Shared";
-import {TickType} from "../Shared/LinePlot/PlotContainer/PlotContainerComponent";
+import {MultiPlotProps, TickType} from "../Shared/LinePlot/PlotContainer/PlotContainerComponent";
 import {SpectralProfilerToolbarComponent} from "./SpectralProfilerToolbarComponent/SpectralProfilerToolbarComponent";
 import {ProfileInfo, SpectralProfilerInfoComponent} from "./SpectralProfilerInfoComponent/SpectralProfilerInfoComponent";
 import {WidgetProps, HelpType, AnimatorStore, WidgetsStore, AppStore, DefaultWidgetConfig} from "stores";
@@ -233,11 +233,12 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
             return <NonIdealState icon={"error"} title={"Missing profile"} description={"Profile not found"}/>;
         }
 
+        const plotName = "Z profile";
         let linePlotProps: LinePlotComponentProps = {
             xLabel: "Channel",
             yLabel: "Value",
             darkMode: appStore.darkTheme,
-            plotName: `Z profile`,
+            plotName: plotName,
             tickTypeY: TickType.Scientific,
             graphClicked: this.onChannelChanged,
             graphZoomedX: this.widgetStore.setXBounds,
@@ -254,7 +255,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
             setSelectedRange: this.setSelectedRange,
             zeroLineWidth: 2,
             order: 1,
-            multiPlotPropsMap: new Map()
+            multiPlotPropsMap: new Map<string, MultiPlotProps>()
         };
 
         const frame = this.widgetStore.effectiveFrame;
@@ -284,10 +285,12 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
                 for(let i = 0; i < currentPlotData.numProfiles; i++) {
                     if (i < currentPlotData.data?.length) {
                         linePlotProps.multiPlotPropsMap.set(`profile${i}`, {
+                            imageName: currentPlotData.labels[i],
+                            plotName: "",
                             data: currentPlotData.data[i],
                             type: this.widgetStore.plotType,
                             borderColor: currentPlotData.colors[i],
-                            // TODO: region properties
+                            comments: currentPlotData.comments[i]
                         });
                     }
 
@@ -297,13 +300,15 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
                             linePlotProps.lineColor = "#00000000";
                         }
                         linePlotProps.multiPlotPropsMap.set(`smoothedProfile${i}`, {
+                            imageName: `${currentPlotData.labels[i]}-smoothed`,
+                            plotName: "",
                             data: currentPlotData.smoothedData[i],
                             type: smoothingStore.lineType,
                             borderColor: currentPlotData.numProfiles > 1 ? currentPlotData.colors[i] : getColorForTheme(smoothingStore.lineColor),
                             borderWidth: currentPlotData.numProfiles > 1 ? this.widgetStore.lineWidth + 1 : smoothingStore.lineWidth,
                             pointRadius: smoothingStore.pointRadius,
                             order: 0,
-                            exportData: smoothingStore.exportData
+                            comments: [...currentPlotData.comments[i], ...smoothingStore.comments]
                         });
                     }
                 }

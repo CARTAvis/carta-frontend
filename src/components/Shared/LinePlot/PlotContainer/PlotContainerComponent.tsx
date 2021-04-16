@@ -54,13 +54,15 @@ export class PlotContainerProps {
 }
 
 export class MultiPlotProps {
+    imageName: string;
+    plotName: string;
     data: { x: number, y: number }[];
     type: PlotType;
     borderColor?: string;
     borderWidth?: number;
     pointRadius?: number;
     order?: number;
-    exportData?: Map<string, string>;
+    comments?: string[];
 }
 
 interface MulticolorLineChartDatasets extends ChartDataSets {

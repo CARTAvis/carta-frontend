@@ -18,12 +18,14 @@ export enum MomentSelectingMode {
 type XBound = {xMin: number, xMax: number};
 type YBound = {yMin: number, yMax: number};
 type DataPoints = Point2D[];
+type Comments = string[];
 export type MultiPlotData = {
     numProfiles: number,
     data: DataPoints[],
     smoothedData: DataPoints[],
     colors: string[],
     labels: string[],
+    comments: Comments[],
     xMin: number,
     xMax: number,
     yMin: number,
@@ -326,6 +328,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         let smoothedData = [];
         let colors = [];
         let labels = [];
+        let comments = [];
         let xBound = {xMin: Number.MAX_VALUE, xMax: -Number.MAX_VALUE};
         let yBound = {yMin: Number.MAX_VALUE, yMax: -Number.MAX_VALUE};
         let yMean = undefined;
@@ -341,6 +344,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
                     data.push(pointsAndProperties.points);
                     colors.push(getColorForTheme(profileColorMap.get(profile.colorKey)));
                     labels.push(profile.label);
+                    comments.push(profile.comments);
                     smoothedData.push(pointsAndProperties.smoothedPoints);
                     if (wantMeanRms) {
                         yMean = pointsAndProperties.yMean;
@@ -386,6 +390,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
             smoothedData: smoothedData,
             colors: colors,
             labels: labels,
+            comments: comments,
             xMin: xBound.xMin,
             xMax: xBound.xMax,
             yMin: yBound.yMin,

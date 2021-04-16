@@ -9,7 +9,6 @@ import ReactResizeDetector from "react-resize-detector";
 import {Arrow, Group, Layer, Line, Rect, Stage, Text} from "react-konva";
 import {PlotContainerComponent, TickType, MultiPlotProps} from "./PlotContainer/PlotContainerComponent";
 import {ToolbarComponent} from "./Toolbar/ToolbarComponent";
-import {StokesCoordinate} from "stores/widgets/StokesAnalysisWidgetStore";
 import {Point2D} from "models";
 import {clamp, toExponential, getTimestamp, exportTsvFile} from "utilities";
 import {PlotType} from "components/Shared";
@@ -610,55 +609,54 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
     };
 
     exportData = () => {
-        const plotName = this.props.plotName || "unknown";
-        const imageName = this.props.imageName || "unknown";
+        // TODO: Delete this block when LinePlotComponent fully supports multiple lines
+        if (this.props.data?.length > 0) {
+            let rows = [];
+            const plotName = this.props.plotName || "unknown";
+            const imageName = this.props.imageName || "unknown";
+            let comment = `# ${imageName} ${plotName}`;
+            if (this.props.xLabel) {
+                comment += `\n# xLabel: ${this.props.xLabel}`;
+            }
+            if (this.props.yLabel) {
+                comment += `\n# yLabel: ${this.props.yLabel}`;
+            }
+            if (this.props.comments?.length > 0) {
+                comment += "\n" + this.props.comments.map(c => "# " + c).join("\n");
+            }
 
-        let comment = `# ${imageName} ${plotName}`;
-        if (this.props.xLabel) {
-            comment += `\n# xLabel: ${this.props.xLabel}`;
-        }
-        if (this.props.yLabel) {
-            comment += `\n# yLabel: ${this.props.yLabel}`;
-        }
-
-        // add comments from properties
-        if (this.props.comments && this.props.comments.length) {
-            comment += "\n" + this.props.comments.map(c => "# " + c).join("\n");
-        }
-
-        let rows = [];
-        if (plotName === "histogram") {
+            // data part
             rows.push("# x\ty");
-            rows = rows.concat(this.props.data.map(o => `${toExponential(o.x, 10)}\t${toExponential(o.y, 10)}`));
-        } else {
-            if (this.props.data && this.props.data.length) {
-                rows.push("# x\ty");
-                rows = rows.concat(this.props.data.map(o => this.props.tickTypeX === TickType.Scientific ? `${toExponential(o.x, 10)}\t${toExponential(o.y, 10)}` : `${o.x}\t${toExponential(o.y, 10)}`));
-            }
+            const useScientificForm = plotName === "histogram" || this.props.tickTypeX === TickType.Scientific;
+            rows = rows.concat(this.props.data.map(o => useScientificForm ? `${toExponential(o.x, 10)}\t${toExponential(o.y, 10)}` : `${o.x}\t${toExponential(o.y, 10)}`));
 
-            if (this.props.multiPlotPropsMap && this.props.multiPlotPropsMap.size > 0) {
-                this.props.multiPlotPropsMap.forEach((props, key) => {
-                    if (key === StokesCoordinate.LinearPolarizationQ || key === StokesCoordinate.LinearPolarizationU) {
-                        rows.push(`# ${key}\t`);
-                    } else if (key.indexOf("smoothed") > -1) {
-                        if (props.exportData) {
-                            props.exportData.forEach((content, title) => {
-                                rows.push(`# ${title}: ${content}\t`);
-                            });
-                        }
-                        rows.push(`# smoothed_x\tsmoothed_y`);
-                    }
-
-                    if (props.data) {
-                        props.data.forEach(o => {
-                            rows.push(`${o.x}\t${toExponential(o.y, 10)}`);
-                        });
-                    }
-                });
-            }
+            exportTsvFile(imageName, plotName, `${comment}\n${rows.join("\n")}\n`);
         }
 
-        exportTsvFile(imageName, plotName, `${comment}\n${rows.join("\n")}\n`);
+        this.props.multiPlotPropsMap?.forEach(multiPlotProp => {
+            let rows = [];
+            const plotName = multiPlotProp.imageName;
+            const imageName = multiPlotProp.plotName;
+            let comment = `# ${imageName} ${plotName}`;
+            if (this.props.xLabel) {
+                comment += `\n# xLabel: ${this.props.xLabel}`;
+            }
+            if (this.props.yLabel) {
+                comment += `\n# yLabel: ${this.props.yLabel}`;
+            }
+            if (this.props.comments?.length > 0) {
+                comment += "\n" + this.props.comments.map(c => "# " + c).join("\n");
+            }
+            multiPlotProp.comments?.forEach(comment => rows.push(`# ${comment}\t`));
+
+            // data part
+            rows.push("# x\ty");
+            multiPlotProp.data?.forEach(o => {
+                rows.push(`${o.x}\t${toExponential(o.y, 10)}`);
+            });
+
+            exportTsvFile(multiPlotProp.imageName, multiPlotProp.plotName, `${comment}\n${rows.join("\n")}\n`);
+        });
     };
 
     private calcMarkerBox = (marker: LineMarker): {lowerBound: number, height: number} => {
