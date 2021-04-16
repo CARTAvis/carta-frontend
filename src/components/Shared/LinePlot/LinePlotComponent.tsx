@@ -159,11 +159,10 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
     }
 
     @computed get zoomMode(): ZoomMode {
+        const absDelta = {x: Math.abs(this.selectionBoxEnd.x - this.selectionBoxStart.x), y: Math.abs(this.selectionBoxEnd.y - this.selectionBoxStart.y)};
         if (this.props.selectingMode === LinePlotSelectingMode.LINE) {
             return ZoomMode.NONE;
-        }
-        const absDelta = {x: Math.abs(this.selectionBoxEnd.x - this.selectionBoxStart.x), y: Math.abs(this.selectionBoxEnd.y - this.selectionBoxStart.y)};
-        if (absDelta.x > XY_ZOOM_THRESHOLD && absDelta.y > XY_ZOOM_THRESHOLD && this.props.graphZoomedXY) {
+        } else if (absDelta.x > XY_ZOOM_THRESHOLD && absDelta.y > XY_ZOOM_THRESHOLD && this.props.graphZoomedXY) {
             return ZoomMode.XY;
         } else if (this.props.graphZoomedX && this.props.graphZoomedY) {
             return absDelta.x > absDelta.y ? ZoomMode.X : ZoomMode.Y;
@@ -367,7 +366,13 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
             if (this.props.data || (this.props.multiPlotPropsMap && this.props.multiPlotPropsMap.size > 0)) {
                 this.stageClickStartX = undefined;
                 this.stageClickStartY = undefined;
-                if (this.isSelecting && this.zoomMode !== ZoomMode.NONE) {
+                if (this.isSelecting && this.props.setSelectedLine && this.props.selectingMode === LinePlotSelectingMode.LINE) {
+                    let startX = this.getValueForPixelX(this.selectionBoxStart.x);
+                    let endX = this.getValueForPixelX(this.selectionBoxEnd.x);
+                    let startY = this.getValueForPixelY(this.selectionBoxStart.y, this.props.logY)
+                    let endY = this.getValueForPixelY(this.selectionBoxEnd.y, this.props.logY)
+                    this.props.setSelectedLine(startX, endX, startY, endY);
+                } else if (this.isSelecting && this.zoomMode !== ZoomMode.NONE) {
                     let minCanvasSpace = Math.min(this.selectionBoxStart.x, this.selectionBoxEnd.x);
                     let maxCanvasSpace = Math.max(this.selectionBoxStart.x, this.selectionBoxEnd.x);
                     let minX = this.getValueForPixelX(minCanvasSpace);
@@ -394,14 +399,6 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
                         } else if (this.zoomMode === ZoomMode.XY) {
                             this.props.graphZoomedXY(minX, maxX, minY, maxY);
                         }
-                    }
-                } else if (this.isSelecting && this.zoomMode === ZoomMode.NONE) {
-                    if (this.props.setSelectedLine && this.props.selectingMode === LinePlotSelectingMode.LINE) {
-                        let startX = this.getValueForPixelX(this.selectionBoxStart.x);
-                        let endX = this.getValueForPixelX(this.selectionBoxEnd.x);
-                        let startY = this.getValueForPixelY(this.selectionBoxStart.y, this.props.logY)
-                        let endY = this.getValueForPixelY(this.selectionBoxEnd.y, this.props.logY)
-                        this.props.setSelectedLine(startX, endX, startY, endY);
                     }
                 }
             }

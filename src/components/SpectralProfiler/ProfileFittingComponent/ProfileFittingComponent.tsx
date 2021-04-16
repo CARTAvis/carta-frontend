@@ -70,6 +70,7 @@ export class ProfileFittingComponent extends React.Component<{fittingStore: Prof
 
     private autoDetect = () => {
         this.props.fittingStore.setHasResult(false);
+        this.props.fittingStore.setComponents(1, true);
         this.props.fittingStore.autoDetect(this.plottingData.x, Array.prototype.slice.call(this.plottingData.y));
         if (this.props.fittingStore.isAutoDetectWithFitting) {
             this.fitData();

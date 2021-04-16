@@ -43,8 +43,11 @@ export class ProfileFittingStore {
 
     @action setComponentByCursor(xMin: number, xMax: number, yMin: number, yMax: number) {
         const selectedComponent = this.selectedComponent;
-        selectedComponent.setAmp(yMax - yMin);
-        selectedComponent.setCenter((xMin + xMax)/ 2);
+        const centerX = (xMin + xMax)/ 2
+        const baselineCenterY = this.slope * centerX + this.yIntercept;
+        const isPositiveAmp = ((yMin + yMax) / 2) >= baselineCenterY;
+        selectedComponent.setAmp(isPositiveAmp ? yMax - yMin: yMin - yMax);
+        selectedComponent.setCenter(centerX);
         selectedComponent.setFwhm(xMax - xMin);
         this.isCursorSelectionOn = false;
     }

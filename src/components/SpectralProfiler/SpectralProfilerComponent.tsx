@@ -267,7 +267,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
         } else if (this.widgetStore.isSelectingMomentMaskRange) {
             return LinePlotSelectingMode.VERTICAL;
         } else if (this.widgetStore.fittingStore.isCursorSelectingYIntercept) {
-            return LinePlotSelectingMode.HORIZONTAL;
+            return LinePlotSelectingMode.LINE;
         } else if (this.widgetStore.fittingStore.isCursorSelectingSlope) {
             return LinePlotSelectingMode.LINE;
         } else if (this.widgetStore.fittingStore.isCursorSelectionOn) {
@@ -320,30 +320,16 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
                 this.widgetStore.setSelectedChannelRange(min, max);
             } else if (this.widgetStore.isSelectingMomentMaskRange) {
                 this.widgetStore.setSelectedMaskRange(min, max);
-            } else if (this.widgetStore.fittingStore.isCursorSelectingYIntercept) {
-                if (this.plotData?.values?.length > 0) {
-                    let sum = 0;
-                    let n = 0;
-                    for (let i = 0; i < this.plotData.values.length; i++) {
-                        const value = this.plotData.values[i];
-                        if (value.x < min) {
-                            continue;
-                        } else if (value.x > max) {
-                            break;
-                        }
-                        sum = sum + value.y;
-                        n++;
-                    }
-                    this.widgetStore.fittingStore.setYIntercept(sum / n);
-                }
-                this.widgetStore.fittingStore.setIsCursorSelectingYIntercept(false);
             }
         }
     };
 
     private setSelectedLine = (startX: number, endX: number, startY: number, endY: number) => {
         if (isFinite(startX) && isFinite(endX) && isFinite(startY) && isFinite(endY)) {
-            if (this.widgetStore.fittingStore.isCursorSelectingSlope) {
+            if (this.widgetStore.fittingStore.isCursorSelectingYIntercept) {
+                this.widgetStore.fittingStore.setYIntercept((startY + endY) / 2);
+                this.widgetStore.fittingStore.setIsCursorSelectingYIntercept(false);
+            } else if (this.widgetStore.fittingStore.isCursorSelectingSlope) {
                 const slope = (endY - startY) / (endX - startX);
                 this.widgetStore.fittingStore.setYIntercept(startY - slope * startX);
                 this.widgetStore.fittingStore.setSlope(slope);
