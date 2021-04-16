@@ -1,9 +1,10 @@
 import {action, computed, observable, makeObservable} from "mobx";
 import {FittingFunction, FittingContinuum} from "components/SpectralProfiler/ProfileFittingComponent/ProfileFittingComponent";
-import { Point2D } from "models";
+import {Point2D} from "models";
 import * as GSL from "gsl_wrapper";
-import { LinePlotInsideBoxMarker } from "components/Shared/LinePlot/LinePlotComponent";
-import { getColorForTheme } from "utilities";
+import {LinePlotInsideBoxMarker} from "components/Shared/LinePlot/LinePlotComponent";
+import {getColorForTheme} from "utilities";
+import {autoDetecting} from "utilities/fitting_heuristics";
 
 export class ProfileFittingStore {
     @observable function: FittingFunction;
@@ -20,7 +21,12 @@ export class ProfileFittingStore {
     @observable resultLog: string;
     @observable isCursorSelectingYIntercept: boolean;
     @observable isCursorSelectingSlope: boolean;
-    @observable isCursorSelectionOn: boolean
+    @observable isCursorSelectionOn: boolean;
+    @observable isAutoDetectWithCont: boolean;
+    @observable isAutoDetectWithFitting: boolean;
+    @observable hasAutoDetectResult: boolean;
+    @observable detectedComponentN: number;
+    @observable enableResidual: boolean
 
     @action setComponents(length: number, reset?: boolean) {
         this.setSelectedIndex(length - 1);
@@ -114,6 +120,14 @@ export class ProfileFittingStore {
         return true;
     }
 
+    @computed get autoDetectResultText(): string {
+        let text = "";
+        if (this.hasAutoDetectResult) {
+            text = `detected ${this.detectedComponentN} component${this.detectedComponentN > 1 ? "s" : ""}.`;
+        }
+        return text;
+    }
+
     getBaseLinePoint2DArray(x: number[]): Point2D[] {
         if (this.components && this.continuum !== FittingContinuum.NONE) {
             const continuumPoint2DArray = new Array<{ x: number, y: number }>(x.length);
@@ -178,6 +192,22 @@ export class ProfileFittingStore {
         return [];
     }
 
+    autoDetect = (x: number[], y: number[]): void => {
+        const result = autoDetecting(x, y, this.isAutoDetectWithCont ? null: {order: this.continuum, yIntercept: this.yIntercept, slope: this.slope});
+        if (result.components?.length > 0) {
+            this.setComponents(result.components.length, true);
+            for (let i = 0; i < result.components.length; i++) {
+                this.components[i].setAmp(result.components[i].amp);
+                this.components[i].setCenter(result.components[i].center);
+                this.components[i].setFwhm(result.components[i].fwhm);
+            }
+            this.setContinuum(result.order);
+            this.setYIntercept(result.yIntercept);
+            this.setSlope(result.slope);
+        }
+        this.setDetectedComponentN(result.components? result.components.length : 0);
+    }
+
     fitData = (x: number[], y: Float32Array | Float64Array): void => {        
         const inputData = [];
         const lockedInputData = [];
@@ -209,6 +239,9 @@ export class ProfileFittingStore {
         this.yIntercept = 0;
         this.slope = 0;
         this.selectedIndex = 0;
+        this.isAutoDetectWithCont = false;
+        this.isAutoDetectWithFitting = false;
+        this.enableResidual = false;
     }
 
     @action setFunction = (val: FittingFunction) => {
@@ -266,6 +299,27 @@ export class ProfileFittingStore {
     @action setIsCursorSelectionOn = (val: boolean) => {
         this.isCursorSelectionOn = val;
     }
+
+    @action setIsAutoDetectWithCont = (val: boolean) => {
+        this.isAutoDetectWithCont = val;
+    }
+
+    @action setIsAutoDetectWithFitting = (val: boolean) => {
+        this.isAutoDetectWithFitting = val;
+    }
+
+    @action setHasAutoDetectResult = (val: boolean) => {
+        this.hasAutoDetectResult = val;
+    }
+
+    @action setDetectedComponentN = (val: number) => {
+        this.detectedComponentN = val;
+    }
+
+    @action setEnableResidual = (val: boolean) => {
+        this.enableResidual = val;
+    }
+
 }
 
 export class ProfileFittingIndividualStore {

@@ -510,15 +510,17 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
                         linePlotProps.multiPlotPropsMap.set(`fittingIndividual(${i + 1})`, individualPlotProps);
                     }
 
-                    let fittingResidualPlotProps: MultiPlotProps = {
-                        data: currentPlotData.fittingResidualValues,
-                        type: PlotType.POINTS,
-                        borderColor: getColorForTheme("auto-orange"),
-                        borderWidth: 1,
-                        pointRadius: 1,
-                        order: 0
+                    if (fittingStore.enableResidual) {
+                        let fittingResidualPlotProps: MultiPlotProps = {
+                            data: currentPlotData.fittingResidualValues,
+                            type: PlotType.POINTS,
+                            borderColor: getColorForTheme("auto-orange"),
+                            borderWidth: 1,
+                            pointRadius: 1,
+                            order: 0
+                        }
+                        linePlotProps.multiPlotPropsMap.set("fittingResidual", fittingResidualPlotProps);
                     }
-                    linePlotProps.multiPlotPropsMap.set("fittingResidual", fittingResidualPlotProps);
                 }
 
                 // Determine scale in X and Y directions. If auto-scaling, use the bounds of the current data

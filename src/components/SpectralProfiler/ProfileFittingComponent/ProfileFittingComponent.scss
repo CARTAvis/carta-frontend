@@ -25,6 +25,10 @@
                 margin-left: 15px;
                 width: 100%;
             }
+
+            .bp3-switch{
+                margin-left: 15px;
+            }
         }
 
         .component-input{
@@ -36,6 +40,19 @@
             overflow: auto;
             height: 100%;
             flex: 2 2 auto;
+        }
+    }
+
+    .profile-fitting-footer{
+        display: flex;
+        flex-direction: row;
+
+        .bp3-button{
+            margin-left: 10px;
+        }
+
+        .bp3-switch{
+            margin-left: 15px;
         }
     }
 }

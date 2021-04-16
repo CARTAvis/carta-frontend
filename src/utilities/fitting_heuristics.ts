@@ -85,30 +85,40 @@ export function histogram(data: number[], binN: number): {hist: number[], binEdg
     return {hist, binEdges};
 }
 
+export function histogramGaussianFit(y: number[], bins: number) {
+    const histResult = histogram(y, bins);
+
+    // padding 0 to both sides of the histogram
+    const histY: number[] = [0, ...histResult.hist, 0];
+    const histXCenterTmp = [];
+    for (let i = 0; i < histResult.binEdges.length - 2 ; i++) {
+        histXCenterTmp.push((histResult.binEdges[i] + histResult.binEdges[i + 1])/ 2);
+    }
+    const deltaHistXCenter = histXCenterTmp[1] - histXCenterTmp[0];
+    const histXCenter: number[] = [histXCenterTmp[0] - deltaHistXCenter, ...histXCenterTmp, histXCenterTmp[histXCenterTmp.length - 1] + deltaHistXCenter];
+
+    // [amp, center, fwhm]
+    const initialGuess = [_.max(histY), histXCenter[_.findIndex(histY, (y => y === _.max(histY)))], 2 * Math.sqrt(Math.log(10) * 2 ) * 0.5 * (deltaHistXCenter)];
+    const histogramGaussianFitting = GSL.gaussianFitting(new Float64Array(histXCenter), new Float64Array(histY), initialGuess, [0, 0, 0]);
+
+    const intensitySmoothedMean = histogramGaussianFitting.center[0];
+    const intensitySmoothedStddev = histogramGaussianFitting.fwhm[0] / (2 * Math.sqrt(Math.log(2) * 2 ));
+    console.log("histogram Gaussian fit, amplitude = " + histogramGaussianFitting.amp[0]);
+    console.log("histogram Gaussian fit, mean = " + intensitySmoothedMean);
+    console.log("histogram Gaussian fit, stddev = " + intensitySmoothedStddev);
+    return {center: intensitySmoothedMean, stddev: intensitySmoothedStddev}
+}
+
 export function getEstimatedPoints(xInput: number[], yInput:number[]): {x: number, y: number}[] {
 
     const yDataFlippedSum = yInput.map((value, i) => {
         return value + yInput[yInput.length - 1 - i];
     })
 
-    const flippedSumHistResult = histogram(yDataFlippedSum, Math.floor(Math.sqrt(yDataFlippedSum.length)));
-    // padding 0 to both sides of the histogram
-    const histFlippedSumY = [0, ...flippedSumHistResult.hist, 0];
-    const histFlippedSumXCenterEmp = [];
-    for (let i = 0; i < flippedSumHistResult.binEdges.length - 2 ; i++) {
-        histFlippedSumXCenterEmp.push((flippedSumHistResult.binEdges[i] + flippedSumHistResult.binEdges[i + 1])/ 2);
-    }
-    const deltaHistFlippedSumXCenter = histFlippedSumXCenterEmp[1] - histFlippedSumXCenterEmp[0];
-    const histFlippedSumXCenter = [histFlippedSumXCenterEmp[0] - deltaHistFlippedSumXCenter, ...histFlippedSumXCenterEmp ,histFlippedSumXCenterEmp[histFlippedSumXCenterEmp.length - 1] + deltaHistFlippedSumXCenter];
-
-    const initialGuessFlippedSum = [_.max(histFlippedSumY), histFlippedSumXCenter[_.findIndex(histFlippedSumY, (i => i === _.max(histFlippedSumY)))], 2 * Math.sqrt(Math.log(10) * 2 ) * 0.5 * (deltaHistFlippedSumXCenter)]
-    const flippedSumHistogramGaussianFitting = GSL.gaussianFitting(new Float64Array(histFlippedSumXCenter), new Float64Array(histFlippedSumY), initialGuessFlippedSum, [0, 0, 0]);
-
-    const flippedSumMean = flippedSumHistogramGaussianFitting.center[0];
-    const flippedSumStddev = flippedSumHistogramGaussianFitting.fwhm[0] / (2 * Math.sqrt(Math.log(2) * 2));
-    console.log("yDataFlippedSum histogram Gaussian fit, amp = ", flippedSumHistogramGaussianFitting.amp[0]);
-    console.log("yDataFlippedSum histogram Gaussian fit, mean = ", flippedSumMean);
-    console.log("yDataFlippedSum histogram Gaussian fit, stddev = ", flippedSumStddev);
+    console.log("yDataFlippedSum histogram Gaussian fit");
+    const fitHistogramResult = histogramGaussianFit(yDataFlippedSum, Math.floor(Math.sqrt(yDataFlippedSum.length)));
+    const flippedSumMean = fitHistogramResult.center;
+    const flippedSumStddev = fitHistogramResult.stddev;
 
     let INDEX_FROM, INDEX_TO;
     let SWITCH = false;
@@ -149,20 +159,31 @@ export function getEstimatedPoints(xInput: number[], yInput:number[]): {x: numbe
     return [{x: xMeanSegment[0], y : yMeanSegment[0]},{x: xMeanSegment[xMeanSegment.length - 1], y : yMeanSegment[yMeanSegment.length - 1]}];
 }
 
-export function autoDetecting(xInput: number[], yInput:number[]) : {components:ProfileFittingIndividualStore[], order: number, yIntercept: number, slope:number} {
+export function autoDetecting(xInput: number[], yInput:number[], orderInputs?: {order: number, yIntercept: number, slope: number}) : {components:ProfileFittingIndividualStore[], order: number, yIntercept: number, slope:number} {
 
     let x: number[] = xInput;
     let y: number[] = yInput;
+
+    let order;
+    let yMean;
+    let slope;
+    let yIntercept;
 
     const estimatedPoints = getEstimatedPoints(x, y);
     const startPoint = estimatedPoints[0];
     const endPoint = estimatedPoints[1];
 
-    let yMean = (startPoint.y + endPoint.y) / 2;
-    let slope = (endPoint.y - startPoint.y) / (endPoint.x - startPoint.x);
-    let yIntercept = startPoint.y - slope * startPoint.x;
+    // set baseline
+    if (orderInputs) {
+        slope = orderInputs.slope;
+        yIntercept = orderInputs.yIntercept;
+    } else {
+        yMean = (startPoint.y + endPoint.y) / 2;
+        slope = (endPoint.y - startPoint.y) / (endPoint.x - startPoint.x);
+        yIntercept = startPoint.y - slope * startPoint.x;
+    }
 
-    // adjust y with estimated order continuum
+    // adjust y with given baseline
     y = yInput.map((yi, i) => {
         return yi - (slope * x[i] + yIntercept);
     });
@@ -172,45 +193,32 @@ export function autoDetecting(xInput: number[], yInput:number[]) : {components:P
     const ySmoothed = profilePreprocessing(y);
 
     // fit a gaussian to the intensity histogram as an estimate of continuum level and noise level
-    const bins = Math.floor(Math.sqrt(x.length));
-    const histResult = histogram(ySmoothed, bins <= 8 ? 8 : bins);
+    const bins = Math.floor(Math.sqrt(y.length));
+    console.log("ySmoothed histogram Gaussian fit");
+    const fitHistogramResult = histogramGaussianFit(ySmoothed, bins <= 8 ? 8 : bins);
+    const intensitySmoothedMean = fitHistogramResult.center;
+    const intensitySmoothedStddev = fitHistogramResult.stddev;
 
-    // padding 0 to both sides of the histogram
-    const histY: number[] = [0, ...histResult.hist, 0];
-    const histXCenterTmp = [];
-    for (let i = 0; i < histResult.binEdges.length - 2 ; i++) {
-        histXCenterTmp.push((histResult.binEdges[i] + histResult.binEdges[i + 1])/ 2);
-    }
-    const deltaHistXCenter = histXCenterTmp[1] - histXCenterTmp[0];
-    const histXCenter: number[] = [histXCenterTmp[0] - deltaHistXCenter, ...histXCenterTmp, histXCenterTmp[histXCenterTmp.length - 1] + deltaHistXCenter];
-
-    // [amp, center, fwhm]
-    const initialGuess = [_.max(histY), histXCenter[_.findIndex(histY, (y => y === _.max(histY)))], 2 * Math.sqrt(Math.log(10) * 2 ) * 0.5 * (deltaHistXCenter)];
-    const histogramGaussianFitting = GSL.gaussianFitting(new Float64Array(histXCenter), new Float64Array(histY), initialGuess, [0, 0, 0]);
-
-    const intensitySmoothedMean = histogramGaussianFitting.center[0];
-    const intensitySmoothedStddev = histogramGaussianFitting.fwhm[0] / (2 * Math.sqrt(Math.log(2) * 2 )); 
-    console.log("Intensity_smoothed histogram Gaussian fit, amplitude = " + histogramGaussianFitting.amp[0]);
-    console.log("Intensity_smoothed histogram Gaussian fit, mean = " + intensitySmoothedMean);
-    console.log("Intensity_smoothed histogram Gaussian fit, stddev = " + intensitySmoothedStddev);
-
-    // validate order of continuum with estimatedPoints and histogram fitting stddev
-    let order: number;
-    const orderValidWidth = 2 * intensitySmoothedStddev;
-    if (-orderValidWidth < startPoint.y && startPoint.y < orderValidWidth && -orderValidWidth < endPoint.y && endPoint.y < orderValidWidth) {
-        order = -1;
-        yIntercept = 0;
-        slope = 0;
-    } else if (yMean - orderValidWidth < startPoint.y && startPoint.y < yMean + orderValidWidth && yMean - orderValidWidth < endPoint.y && endPoint.y < yMean + orderValidWidth) {
-        order = 0;
-        yIntercept = yMean;
-        slope = 0;
+    if (orderInputs) {
+        order = orderInputs.order
     } else {
-        order = 1;
+        // validate order of baseline with estimatedPoints and histogram fitting stddev
+        const orderValidWidth = 3 * intensitySmoothedStddev;
+        if (-orderValidWidth < startPoint.y && startPoint.y < orderValidWidth && -orderValidWidth < endPoint.y && endPoint.y < orderValidWidth) {
+            order = -1;
+            yIntercept = 0;
+            slope = 0;
+        } else if (yMean - orderValidWidth < startPoint.y && startPoint.y < yMean + orderValidWidth && yMean - orderValidWidth < endPoint.y && endPoint.y < yMean + orderValidWidth) {
+            order = 0;
+            yIntercept = yMean;
+            slope = 0;
+        } else {
+            order = 1;
+        }
     }
 
     // 1st: marking channels with signals
-    const lineBoxs:{fromIndex, toIndex, fromIndexOri, toIndexOri}[] = [];
+    const lineBoxs: {fromIndex, toIndex, fromIndexOri, toIndexOri}[] = [];
     let switchFrom  = false;
     const nSigmaThreshold = 2;
     const signalChCountThreshold = 4;
