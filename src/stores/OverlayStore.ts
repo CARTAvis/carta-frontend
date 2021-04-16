@@ -943,7 +943,7 @@ export class OverlayColorbarSettings {
     }
 
     @computed get positions(): number[] {
-        const frame =  AppStore.Instance?.activeFrame;
+        const frame = AppStore.Instance?.activeFrame;
         const scaleMinVal = frame?.renderConfig?.scaleMinVal;
         const scaleMaxVal = frame?.renderConfig?.scaleMaxVal;
         if (!this.roundedNumbers || !frame || !isFinite(this.yOffset)) {
