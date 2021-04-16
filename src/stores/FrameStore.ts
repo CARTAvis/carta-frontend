@@ -114,6 +114,8 @@ export class FrameStore {
     @observable isRequestingMoments: boolean;
     @observable requestingMomentsProgress: number;
 
+    @observable stokesFiles: CARTA.StokesFile[];
+
     @computed get filename(): string {
         // hdu extension name is in field 3 of fileInfoExtended computed entries
         const extName = this.frameInfo?.fileInfoExtended?.computedEntries?.length >= 3 && this.frameInfo?.fileInfoExtended?.computedEntries[2]?.name === "Extension name" ?
@@ -437,11 +439,30 @@ export class FrameStore {
     @computed get positionAxis(): number {
         if (this.frameInfo?.fileInfoExtended?.headerEntries) {
             const entries = this.frameInfo.fileInfoExtended.headerEntries;
-            const positionAxisRegex = /offset|position|offset position/i;
             const axis1 = entries.find(entry => entry.name.includes("CTYPE1"));
-            const axis2 = entries.find(entry => entry.name.includes("CTYPE2"))
-            if (axis1?.value?.match(positionAxisRegex) || axis2?.value?.match(positionAxisRegex)) {
-                return axis1?.value?.match(positionAxisRegex) ? 1 : 2;
+            const axis2 = entries.find(entry => entry.name.includes("CTYPE2"));
+            if (axis1?.value?.match(/offset|position|offset position/i)) {
+                return 1;
+            } else if (axis2?.value?.match(/offset|position|offset position/i)) {
+                return 2;
+            }
+        }
+        return undefined;
+    }
+
+    @computed get isUVImage(): boolean {
+        return this.uvAxis !== undefined;
+    }
+
+    @computed get uvAxis(): number {
+        if (this.frameInfo?.fileInfoExtended?.headerEntries) {
+            const entries = this.frameInfo.fileInfoExtended.headerEntries;
+            const axis1 = entries.find(entry => entry.name.includes("CTYPE1"));
+            const axis2 = entries.find(entry => entry.name.includes("CTYPE2"));
+            if (axis1?.value?.match(/uu/i)) {
+                return 1;
+            } else if (axis2?.value?.match(/uu/i)) {
+                return 2;
             }
         }
         return undefined;
@@ -733,6 +754,8 @@ export class FrameStore {
         this.isRequestingMoments = false;
         this.requestingMomentsProgress = 0;
 
+        this.stokesFiles = [];
+
         // synchronize AST overlay's color/grid/label with preference when frame is created
         const astColor = preferenceStore.astColor;
         if (astColor !== this.overlayStore.global.color) {
@@ -759,7 +782,7 @@ export class FrameStore {
         this.animationChannelRange = [0, frameInfo.fileInfoExtended.depth - 1];
 
         if (this.isPVImage) {
-            this.astFrameSet = this.initPVImage();
+            this.astFrameSet = this.initFrame2D();
             if (this.astFrameSet) {
                 this.spectralFrame = AST.getSpectralFrame(this.astFrameSet);
                 this.wcsInfo = AST.copy(this.astFrameSet);
@@ -772,12 +795,18 @@ export class FrameStore {
 
                 if (frameInfo.fileInfoExtended.depth > 1) { // 3D frame
                     this.wcsInfo3D = AST.copy(this.astFrameSet);
-                    this.wcsInfo = AST.getSkyFrameSet(this.astFrameSet);
+                    if (this.isUVImage) {
+                        // TODO: Refactor the code to avoid redundancy between astFrameSet and astFrameSet2D
+                        const astFrameSet2D = this.initFrame2D();
+                        this.wcsInfo = AST.copy(astFrameSet2D);
+                    } else {
+                        this.wcsInfo = AST.getSkyFrameSet(this.astFrameSet);
+                    }
                 } else { // 2D frame
                     this.wcsInfo = AST.copy(this.astFrameSet);
                 }
 
-                if (this.wcsInfo) {
+                if (this.wcsInfo && !this.isUVImage) {
                     // init 2D(Sky) wcs copy for the precision of region coordinate transformation
                     this.wcsInfoForTransformation = AST.copy(this.wcsInfo);
                     AST.set(this.wcsInfoForTransformation, `Format(1)=${AppStore.Instance.overlayStore.numbers.formatTypeX}.${WCS_PRECISION}`);
@@ -861,7 +890,7 @@ export class FrameStore {
         return AST.transformSpectralPoint(this.spectralFrame, type, unit, system, value);
     };
 
-    private initPVImage = (): number => {
+    private initFrame2D = (): number => {
         const fitsChan = AST.emptyFitsChan();
         for (let entry of this.frameInfo.fileInfoExtended.headerEntries) {
             if (entry.name.match(/(CTYPE|CDELT|CRPIX|CRVAL|CUNIT|NAXIS|CROTA)[3-9]/)) {
@@ -981,7 +1010,7 @@ export class FrameStore {
 
     public getCursorInfo(cursorPosImageSpace: Point2D) {
         let cursorPosWCS, cursorPosFormatted;
-        if (this.validWcs) {
+        if (this.validWcs || this.isPVImage || this.isUVImage) {
             // We need to compare X and Y coordinates in both directions
             // to avoid a confusing drop in precision at rounding threshold
             const offsetBlock = [[0, 0], [1, 1], [-1, -1]];
@@ -998,9 +1027,9 @@ export class FrameStore {
 
             while (precisionX < FrameStore.CursorInfoMaxPrecision && precisionY < FrameStore.CursorInfoMaxPrecision) {
                 let astString = new ASTSettingsString();
-                astString.add("Format(1)", this.overlayStore.numbers.cursorFormatStringX(precisionX));
-                astString.add("Format(2)", this.overlayStore.numbers.cursorFormatStringY(precisionY));
-                astString.add("System", this.overlayStore.global.explicitSystem);
+                astString.add("Format(1)", this.isPVImage || this.isUVImage ? undefined : this.overlayStore.numbers.cursorFormatStringX(precisionX));
+                astString.add("Format(2)", this.isPVImage || this.isUVImage ? undefined : this.overlayStore.numbers.cursorFormatStringY(precisionY));
+                astString.add("System", this.isPVImage || this.isUVImage ? 'cartesian' : this.overlayStore.global.explicitSystem);
 
                 let formattedNeighbourhood = normalizedNeighbourhood.map((pos) => AST.getFormattedCoordinates(this.wcsInfo, pos.x, pos.y, astString.toString()), true);
                 let [p, n1, n2] = formattedNeighbourhood;
@@ -1689,4 +1718,8 @@ export class FrameStore {
         this.setIsRequestingMoments(false);
         this.updateRequestingMomentsProgress(0);
     };
+
+    @action setStokesFiles = (stokesFiles: CARTA.StokesFile[]) => {
+        this.stokesFiles = stokesFiles;
+    }
 }

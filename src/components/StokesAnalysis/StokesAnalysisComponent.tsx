@@ -683,7 +683,6 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
                 compositeProfile = this.calculateCompositeProfile(region.isClosedRegion ? this.widgetStore.statsType : CARTA.StatsType.Sum);
             }
         }
-
         let channelInfo = frame.channelInfo;
         if (compositeProfile && channelInfo) {
             let quDic = this.assembleScatterPlotData(compositeProfile.qProfile, compositeProfile.uProfile, StokesCoordinate.PolarizationQU);
