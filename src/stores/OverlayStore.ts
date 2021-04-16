@@ -884,8 +884,8 @@ export class OverlayColorbarSettings {
     }
 
     @computed get height(): number {
-        const frame = AppStore.Instance?.activeFrame;
-        return this.position === "right" ? frame.renderHeight : frame.renderWidth;
+        const overlayStore = AppStore.Instance?.overlayStore;
+        return this.position === "right" ? overlayStore?.renderHeight : overlayStore?.renderWidth;
     }
 
     @computed get tickNum(): number {
@@ -1243,7 +1243,7 @@ export class OverlayStore {
     }
 
     @computed get colorbarHoverInfoHeight(): number {
-        return (!(this.colorbar.visible) || (this.colorbar.visible && this.labels.show && this.colorbar.position !== "bottom") || (this.colorbar.visible && this.colorbar.labelVisible && this.colorbar.position === "bottom") ? 0 : 10);
+        return (!(this.colorbar.visible) || (this.colorbar.visible && this.colorbar.position !== "bottom" && this.labels.show) || (this.colorbar.visible && this.colorbar.position === "bottom" && this.colorbar.labelVisible) ? 0 : 10);
     }
 
     @computed get paddingLeft(): number { 
@@ -1259,7 +1259,7 @@ export class OverlayStore {
     }
 
     @computed get paddingBottom(): number {
-        return this.base + this.numberWidth + this.labelWidth + (this.colorbar.visible && this.colorbar.position === "bottom" ? this.colorbar.totalWidth : 0) + this.colorbarHoverInfoHeight
+        return this.base + this.numberWidth + this.labelWidth + (this.colorbar.visible && this.colorbar.position === "bottom" ? this.colorbar.totalWidth : 0) + this.colorbarHoverInfoHeight;
     }
 
     @computed get padding(): Padding {
@@ -1272,7 +1272,7 @@ export class OverlayStore {
     }
 
     @computed get renderWidth() {
-        const renderWidth = this.viewWidth - this.paddingLeft - this.paddingRight
+        const renderWidth = this.viewWidth - this.paddingLeft - this.paddingRight;
         return renderWidth > 1 ? renderWidth : 1; // return value > 1 to prevent crashing
     }
 

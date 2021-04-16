@@ -145,7 +145,7 @@ export class ColorbarComponent extends React.Component {
                     if (colorbarSettings.position !== "right") { // rotate to horizontal by swapping
                         tickPoints = [tickPoints[1], tickPoints[0], tickPoints[3], tickPoints[2]];
                         if (colorbarSettings.position === "top") { // reflect over x-axis
-                            tickPoints[0] = colorbarSettings.rightBorderPos + colorbarSettings.tickLen;
+                            tickPoints[1] = colorbarSettings.rightBorderPos + colorbarSettings.tickLen;
                         }
                     }
                     ticks.push(
