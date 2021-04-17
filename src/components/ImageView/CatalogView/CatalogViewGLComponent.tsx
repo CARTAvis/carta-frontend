@@ -207,6 +207,8 @@ export class CatalogViewGLComponent extends React.Component<CatalogViewGLCompone
                     x: -baseRequiredView.xMin * rangeScale.x,
                     y: -baseRequiredView.yMin * rangeScale.y
                 };
+                rotationAngle = 0.0;
+                scaleAdjustment = 1.0;
             }
             this.gl.uniform2f(shaderUniforms.RangeOffset, rangeOffset.x, rangeOffset.y);
             this.gl.uniform2f(shaderUniforms.RangeScale, rangeScale.x, rangeScale.y);
