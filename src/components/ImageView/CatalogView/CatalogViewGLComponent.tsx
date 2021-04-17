@@ -5,10 +5,10 @@ import {AppStore, CatalogStore, FrameStore, RenderConfigStore, WidgetsStore} fro
 import {CatalogTextureType, CatalogWebGLService} from "services";
 import {canvasToTransformedImagePos} from "components/ImageView/RegionView/shared";
 import {CursorInfo} from "models";
-import {closestCatalogIndexToCursor, GL2} from "utilities";
 import {ImageViewLayer} from "../ImageViewComponent";
 import "./CatalogViewGLComponent.scss";
 import {CatalogOverlayShape} from "stores/widgets";
+import {closestCatalogIndexToCursor, GL2, subtract2D, scale2D, rotate2D} from "utilities";
 
 export interface CatalogViewGLComponentProps {
     docked: boolean;
@@ -159,10 +159,11 @@ export class CatalogViewGLComponent extends React.Component<CatalogViewGLCompone
         this.gl.enable(GL2.DEPTH_TEST);
         this.gl.depthFunc(GL2.LEQUAL);
         this.gl.clear(GL2.COLOR_BUFFER_BIT | GL2.DEPTH_BUFFER_BIT);
-        const frameView = baseFrame.requiredFrameView;
         const shaderUniforms = this.catalogWebGLService.shaderUniforms;
-        this.gl.uniform2f(shaderUniforms.FrameViewMin, frameView.xMin, frameView.yMin);
-        this.gl.uniform2f(shaderUniforms.FrameViewMax, frameView.xMax, frameView.yMax);
+        let rangeScale = {x: 1.0, y: 1.0};
+        let rangeOffset = {x: 0.0, y: 0.0};
+        let rotationAngle = 0.0;
+        let scaleAdjustment = 1.0;
         
         catalogStore.catalogGLData.forEach((catalog, fileId) => {
             const catalogWidgetStore = catalogStore.getCatalogWidgetStore(fileId);
@@ -175,6 +176,43 @@ export class CatalogViewGLComponent extends React.Component<CatalogViewGLCompone
             let pointSize = catalogWidgetStore.catalogSize + shape.minSize;
             this.gl.uniform1f(shaderUniforms.LineThickness, lineThickness);
             this.gl.uniform1i(shaderUniforms.ShowSelectedSource, catalogWidgetStore.showSelectedData? 1.0 : 0.0);
+
+            //FrameView
+            if (catalog.displayed && baseFrame.spatialReference) {
+                const baseRequiredView = baseFrame.spatialReference.requiredFrameView;
+                const originAdjustedOffset = subtract2D(baseFrame.spatialTransform.origin, scale2D(rotate2D(baseFrame.spatialTransform.origin, baseFrame.spatialTransform.rotation), baseFrame.spatialTransform.scale));
+
+                rangeScale = {
+                    x: 1.0 / (baseRequiredView.xMax - baseRequiredView.xMin),
+                    y: 1.0 / (baseRequiredView.yMax - baseRequiredView.yMin),
+                };
+
+                rangeOffset = {
+                    x: (baseFrame.spatialTransform.translation.x - baseRequiredView.xMin + originAdjustedOffset.x) * rangeScale.x,
+                    y: (baseFrame.spatialTransform.translation.y - baseRequiredView.yMin + originAdjustedOffset.y) * rangeScale.y
+                };
+                rotationAngle = -baseFrame.spatialTransform.rotation;
+                scaleAdjustment = baseFrame.spatialTransform.scale;
+            } else {
+                let baseRequiredView = baseFrame.requiredFrameView;
+                if (baseFrame.spatialReference) {
+                    baseRequiredView = baseFrame.spatialReference.requiredFrameView;   
+                }
+                rangeScale = {
+                    x: 1.0 / (baseRequiredView.xMax - baseRequiredView.xMin),
+                    y: 1.0 / (baseRequiredView.yMax - baseRequiredView.yMin),
+                };
+    
+                rangeOffset = {
+                    x: -baseRequiredView.xMin * rangeScale.x,
+                    y: -baseRequiredView.yMin * rangeScale.y
+                };
+            }
+            this.gl.uniform2f(shaderUniforms.RangeOffset, rangeOffset.x, rangeOffset.y);
+            this.gl.uniform2f(shaderUniforms.RangeScale, rangeScale.x, rangeScale.y);
+            this.gl.uniform1f(shaderUniforms.ScaleAdjustment, scaleAdjustment);
+            this.gl.uniform1f(shaderUniforms.RotationAngle, rotationAngle);
+
             // size
             this.gl.uniform1i(shaderUniforms.SmapEnabled, 0);
             this.gl.uniform1i(shaderUniforms.AreaMode, catalogWidgetStore.sizeArea? 1 : 0);
@@ -230,7 +268,7 @@ export class CatalogViewGLComponent extends React.Component<CatalogViewGLCompone
 
             // position 
             const positionTexture = this.catalogWebGLService.getDataTexture(fileId, CatalogTextureType.Position);
-            if (catalog.displayed && dataPoints?.length && positionTexture) {
+            if ((catalog.displayed || baseFrame.spatialReference) && dataPoints?.length && positionTexture) {
                 this.gl.uniform3f(shaderUniforms.PointColor, color.r / 255.0, color.g / 255.0, color.b / 255.0);
                 this.gl.uniform3f(shaderUniforms.SelectedSourceColor, selectedSourceColor.r / 255.0, selectedSourceColor.g / 255.0, selectedSourceColor.b / 255.0);
                 this.gl.uniform1i(shaderUniforms.ShapeType, catalogWidgetStore.catalogShape);
