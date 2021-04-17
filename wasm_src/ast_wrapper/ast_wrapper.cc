@@ -42,7 +42,7 @@ EMSCRIPTEN_KEEPALIVE void putFits(AstFitsChan* fitschan, const char* card)
     astPutFits(fitschan, card, true);
 }
 
-EMSCRIPTEN_KEEPALIVE AstFrameSet* getFrameFromFitsChan(AstFitsChan* fitschan)
+EMSCRIPTEN_KEEPALIVE AstFrameSet* getFrameFromFitsChan(AstFitsChan* fitschan, bool checkSkyDomain)
 {
     astClear(fitschan, "Card");
     AstFrameSet* frameSet = static_cast<AstFrameSet*>(astRead(fitschan));
@@ -50,6 +50,14 @@ EMSCRIPTEN_KEEPALIVE AstFrameSet* getFrameFromFitsChan(AstFitsChan* fitschan)
     {
         cout << "Creating frame set failed." << endl;
         return nullptr;
+    }
+
+    // work around for missing CTYPE1 & CTYPE2
+    if (checkSkyDomain) {
+        const char *domain = astGetC(frameSet, "Domain");
+        if (!strstr(domain, "SKY")) {
+            return nullptr;
+        }
     }
 
     return frameSet;

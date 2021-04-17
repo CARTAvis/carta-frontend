@@ -787,6 +787,20 @@ export class FrameStore {
                 this.spectralFrame = AST.getSpectralFrame(this.astFrameSet);
                 this.wcsInfo = AST.copy(this.astFrameSet);
             }
+        } else if (this.isUVImage) {
+            // TODO: Refactor the code to avoid redundancy between astFrameSet and astFrameSet2D
+            this.astFrameSet = this.initFrame(false);
+            const astFrameSet2D = this.initFrame2D();
+            if (this.astFrameSet && astFrameSet2D) {
+                this.spectralFrame = AST.getSpectralFrame(this.astFrameSet);
+
+                if (frameInfo.fileInfoExtended.depth > 1) { // 3D frame
+                    this.wcsInfo3D = AST.copy(this.astFrameSet);
+                    this.wcsInfo = AST.copy(astFrameSet2D);
+                } else { // 2D frame
+                    this.wcsInfo = AST.copy(this.astFrameSet);
+                }
+            }
         } else {
             // init WCS
             this.astFrameSet = this.initFrame();
@@ -795,18 +809,12 @@ export class FrameStore {
 
                 if (frameInfo.fileInfoExtended.depth > 1) { // 3D frame
                     this.wcsInfo3D = AST.copy(this.astFrameSet);
-                    if (this.isUVImage) {
-                        // TODO: Refactor the code to avoid redundancy between astFrameSet and astFrameSet2D
-                        const astFrameSet2D = this.initFrame2D();
-                        this.wcsInfo = AST.copy(astFrameSet2D);
-                    } else {
-                        this.wcsInfo = AST.getSkyFrameSet(this.astFrameSet);
-                    }
+                    this.wcsInfo = AST.getSkyFrameSet(this.astFrameSet);
                 } else { // 2D frame
                     this.wcsInfo = AST.copy(this.astFrameSet);
                 }
 
-                if (this.wcsInfo && !this.isUVImage) {
+                if (this.wcsInfo) {
                     // init 2D(Sky) wcs copy for the precision of region coordinate transformation
                     this.wcsInfoForTransformation = AST.copy(this.wcsInfo);
                     AST.set(this.wcsInfoForTransformation, `Format(1)=${AppStore.Instance.overlayStore.numbers.formatTypeX}.${WCS_PRECISION}`);
@@ -915,10 +923,10 @@ export class FrameStore {
             const entryString = `${name}=  ${value}`;
             AST.putFits(fitsChan, entryString);
         }
-        return AST.getFrameFromFitsChan(fitsChan);
+        return AST.getFrameFromFitsChan(fitsChan, false);
     };
 
-    private initFrame = (): number => {
+    private initFrame = (checkSkyDomain: boolean = true): number => {
         const dimension = this.frameInfo.fileInfoExtended.depth > 1 ? "3" : "2";
         const fitsChan = AST.emptyFitsChan();
         for (let entry of this.frameInfo.fileInfoExtended.headerEntries) {
@@ -962,7 +970,7 @@ export class FrameStore {
             const entryString = `${name}=  ${value}`;
             AST.putFits(fitsChan, entryString);
         }
-        return AST.getFrameFromFitsChan(fitsChan);
+        return AST.getFrameFromFitsChan(fitsChan, checkSkyDomain);
     };
 
     private sanitizeChannelNumber(channel: number) {
