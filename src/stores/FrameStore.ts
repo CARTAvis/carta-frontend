@@ -1286,7 +1286,6 @@ export class FrameStore {
             this.spectralType = coord.type;
             this.spectralUnit = coord.unit;
 
-            // TODO: make sure spectral alignment does not have side effect or bugs
             if (alignSpectralSiblings) {
                 (!this.spectralReference ? this.secondarySpectralImages : this.spectralSiblings)?.forEach(spectrallyMatchedFrame => spectrallyMatchedFrame.setSpectralCoordinate(coordStr, false));
             }
@@ -1299,7 +1298,6 @@ export class FrameStore {
         if (this.spectralSystemsSupported?.includes(spectralSystem)) {
             this.spectralSystem = spectralSystem;
 
-            // TODO: make sure spectral alignment does not have side effect or bugs
             if (alignSpectralSiblings) {
                 (!this.spectralReference ? this.secondarySpectralImages : this.spectralSiblings)?.forEach(spectrallyMatchedFrame => spectrallyMatchedFrame.setSpectralSystem(spectralSystem, false));
             }
