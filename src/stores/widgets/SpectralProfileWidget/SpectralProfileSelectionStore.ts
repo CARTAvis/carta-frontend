@@ -619,7 +619,7 @@ export class SpectralProfileSelectionStore {
                         if (fileId === this.selectedFrameFileId) {
                             widgetStore.setProfileColor(fileId, widgetStore.primaryLineColor);
                         } else {
-                            const color = SWATCH_COLORS[index % SWATCH_COLORS.length];
+                            const color = SWATCH_COLORS[(index + 1) % SWATCH_COLORS.length];
                             widgetStore.setProfileColor(fileId, color);
                         }
                     });
