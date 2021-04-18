@@ -283,9 +283,10 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
             if (currentPlotData?.numProfiles > 0) {
                 // Fill profile & smoothed profiles
                 for(let i = 0; i < currentPlotData.numProfiles; i++) {
+                    const imageName = currentPlotData.labels[i]?.replace(/,\s/g, '-')?.replace(/\s/g, '_');
                     if (i < currentPlotData.data?.length) {
                         linePlotProps.multiPlotPropsMap.set(`profile${i}`, {
-                            imageName: currentPlotData.labels[i],
+                            imageName: imageName,
                             plotName: "",
                             data: currentPlotData.data[i],
                             type: this.widgetStore.plotType,
@@ -300,7 +301,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
                             linePlotProps.lineColor = "#00000000";
                         }
                         linePlotProps.multiPlotPropsMap.set(`smoothedProfile${i}`, {
-                            imageName: `${currentPlotData.labels[i]}-smoothed`,
+                            imageName: `${imageName}-smoothed`,
                             plotName: "",
                             data: currentPlotData.smoothedData[i],
                             type: smoothingStore.lineType,

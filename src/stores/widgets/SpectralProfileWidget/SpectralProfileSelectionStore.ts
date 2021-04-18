@@ -74,7 +74,7 @@ export class SpectralProfileSelectionStore {
 
     private genProfileLabel = (fileId: number, regionId: number, statsType: CARTA.StatsType, coordinate: string) => {
         const fileName = AppStore.Instance.getFrameName(fileId);
-        return `${fileName}, ${regionId === RegionId.CURSOR ? "Cursor" : `Region ${regionId}`}, Statistic: ${StatsTypeString(statsType)}, Cooridnate: ${SUPPORTED_STOKES_LABEL_MAP.get(coordinate)}`;
+        return `${fileName}, ${regionId === RegionId.CURSOR ? "Cursor" : `Region ${regionId}`}, Statistic ${StatsTypeString(statsType)}, Cooridnate ${SUPPORTED_STOKES_LABEL_MAP.get(coordinate)}`;
     };
 
     @computed private get profileConfigs(): ProfileConfig[] {
