@@ -19,7 +19,7 @@ interface ProfileConfig {
     statsType: CARTA.StatsType;
     coordinate: string;
     colorKey: LineKey;
-    label: string;
+    label: {image: string, plot: string};
 }
 
 interface SpectralConfig extends CARTA.SetSpectralRequirements.ISpectralConfig {
@@ -72,9 +72,11 @@ export class SpectralProfileSelectionStore {
         return formattedSpectralConfigs;
     };
 
-    private genProfileLabel = (fileId: number, regionId: number, statsType: CARTA.StatsType, coordinate: string) => {
-        const fileName = AppStore.Instance.getFrameName(fileId);
-        return `${fileName}, ${regionId === RegionId.CURSOR ? "Cursor" : `Region ${regionId}`}, Statistic ${StatsTypeString(statsType)}, Cooridnate ${SUPPORTED_STOKES_LABEL_MAP.get(coordinate)}`;
+    private genProfileLabel = (fileId: number, regionId: number, statsType: CARTA.StatsType, coordinate: string): {image: string, plot: string} => {
+        return {
+            image: AppStore.Instance.getFrameName(fileId),
+            plot: `${regionId === RegionId.CURSOR ? "Cursor" : `Region ${regionId}`}, Statistic ${StatsTypeString(statsType)}, Cooridnate ${SUPPORTED_STOKES_LABEL_MAP.get(coordinate)}`
+        };
     };
 
     @computed private get profileConfigs(): ProfileConfig[] {
@@ -170,7 +172,7 @@ export class SpectralProfileSelectionStore {
         channelValues: number[],
         data: ProcessedSpectralProfile,
         colorKey: string,
-        label: string,
+        label: {image: string, plot: string},
         comments: string[]
     }[] {
         let profiles = [];

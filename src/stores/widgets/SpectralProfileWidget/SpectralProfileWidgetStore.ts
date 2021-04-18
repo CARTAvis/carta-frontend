@@ -24,7 +24,7 @@ export type MultiPlotData = {
     data: DataPoints[],
     smoothedData: DataPoints[],
     colors: string[],
-    labels: string[],
+    labels: {image: string, plot: string}[],
     comments: Comments[],
     xMin: number,
     xMax: number,

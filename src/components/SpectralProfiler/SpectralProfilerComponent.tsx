@@ -181,7 +181,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
                     const cursorInfoString = this.genCursoInfoString(data, cursorXValue, cursorXUnit, label);
                     profilerInfo.push({
                         color: this.plotData.colors?.[i],
-                        infoString: `${cursorInfoString}, ${this.plotData.labels?.[i]}`
+                        infoString: `${cursorInfoString}, ${this.plotData.labels?.[i]?.image}, ${this.plotData.labels?.[i]?.plot}`
                     });
                 }
             }
@@ -233,12 +233,10 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
             return <NonIdealState icon={"error"} title={"Missing profile"} description={"Profile not found"}/>;
         }
 
-        const plotName = "Z profile";
         let linePlotProps: LinePlotComponentProps = {
             xLabel: "Channel",
             yLabel: "Value",
             darkMode: appStore.darkTheme,
-            plotName: plotName,
             tickTypeY: TickType.Scientific,
             graphClicked: this.onChannelChanged,
             graphZoomedX: this.widgetStore.setXBounds,
@@ -260,8 +258,6 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
 
         const frame = this.widgetStore.effectiveFrame;
         if (frame) {
-            linePlotProps.imageName = frame.filename;
-
             if (frame.spectralAxis && !frame.isCoordChannel) {
                 linePlotProps.xLabel = frame.spectralLabel;
             }
@@ -283,11 +279,12 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
             if (currentPlotData?.numProfiles > 0) {
                 // Fill profile & smoothed profiles
                 for(let i = 0; i < currentPlotData.numProfiles; i++) {
-                    const imageName = currentPlotData.labels[i]?.replace(/,\s/g, '-')?.replace(/\s/g, '_');
+                    const imageName = currentPlotData.labels[i]?.image;
+                    const plotName = `Z-profile-${currentPlotData.labels[i]?.plot}`.replace(/,\s/g, '-')?.replace(/\s/g, '_');
                     if (i < currentPlotData.data?.length) {
                         linePlotProps.multiPlotPropsMap.set(`profile${i}`, {
                             imageName: imageName,
-                            plotName: "",
+                            plotName: plotName,
                             data: currentPlotData.data[i],
                             type: this.widgetStore.plotType,
                             borderColor: currentPlotData.colors[i],
@@ -301,8 +298,8 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
                             linePlotProps.lineColor = "#00000000";
                         }
                         linePlotProps.multiPlotPropsMap.set(`smoothedProfile${i}`, {
-                            imageName: `${imageName}-smoothed`,
-                            plotName: "",
+                            imageName: imageName,
+                            plotName: `${plotName}-smoothed`,
                             data: currentPlotData.smoothedData[i],
                             type: smoothingStore.lineType,
                             borderColor: currentPlotData.numProfiles > 1 ? currentPlotData.colors[i] : getColorForTheme(smoothingStore.lineColor),
