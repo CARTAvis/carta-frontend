@@ -351,11 +351,10 @@ export class SpectralProfileSelectionStore {
     @computed get isStatsTypeSelectionAvailable(): boolean {
         if (this.selectedFrame) {
             if (this.activeProfileCategory === MultiProfileCategory.REGION) {
-                if (this.selectedRegionIds?.length === 1) {
-                    const selectedRegion = this.selectedFrame.getRegion(this.selectedRegionIds[0]);
+                return this.selectedRegionIds?.some(selectedRegionId => {
+                    const selectedRegion = this.selectedFrame.getRegion(selectedRegionId);
                     return selectedRegion?.isClosedRegion;
-                }
-                return true; // TODO: add check for the situation of all point regions
+                });
             } else {
                 const selectedRegion = this.widgetStore.effectiveRegion;
                 return selectedRegion?.isClosedRegion;
