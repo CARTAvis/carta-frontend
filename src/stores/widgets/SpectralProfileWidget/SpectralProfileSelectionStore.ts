@@ -219,7 +219,7 @@ export class SpectralProfileSelectionStore {
             prevStatsType = profileConfig.statsType;
             prevCoordinate = profileConfig.coordinate;
         });
-        return {image: images, plot: `Region_${regions}-Statistic_${statTypes}-Coordinate_${coordinates}`};
+        return {image: images, plot: `Z-Profile-Region_${regions}-Statistic_${statTypes}-Coordinate_${coordinates}`};
     }
 
     @computed get profileOrderedKeys(): LineKey[] {
