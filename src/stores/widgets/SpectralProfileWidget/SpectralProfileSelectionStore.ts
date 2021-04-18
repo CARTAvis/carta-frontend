@@ -195,6 +195,33 @@ export class SpectralProfileSelectionStore {
         return profiles;
     }
 
+    @computed get profilesPlotName(): {image: string, plot: string} {
+        let images, regions, statTypes, coordinates;
+        let prevFileId, prevRegionId, prevStatsType, prevCoordinate;
+        images = regions = statTypes = coordinates = "";
+        prevFileId = prevRegionId = prevStatsType = prevCoordinate = undefined;
+        this.profileConfigs?.forEach((profileConfig, index) => {
+            const fileName = AppStore.Instance.getFrame(profileConfig.fileId)?.filename;
+            if (prevFileId !== profileConfig.fileId) {
+                images += `${index === 0 ? "" : ","}${fileName}`;
+            }
+            if (prevRegionId !== profileConfig.regionId) {
+                regions += `${index === 0 ? "" : ","}${profileConfig.regionId === RegionId.CURSOR ? "Cursor" : profileConfig.regionId}`;
+            }
+            if (prevStatsType !== profileConfig.statsType) {
+                statTypes += `${index === 0 ? "" : ","}${StatsTypeString(profileConfig.statsType)}`;
+            }
+            if (prevCoordinate !== profileConfig.coordinate) {
+                coordinates += `${index === 0 ? "" : ","}${SUPPORTED_STOKES_LABEL_MAP.get(profileConfig.coordinate)}`;
+            }
+            prevFileId = profileConfig.fileId;
+            prevRegionId = profileConfig.regionId;
+            prevStatsType = profileConfig.statsType;
+            prevCoordinate = profileConfig.coordinate;
+        });
+        return {image: images, plot: `Region_${regions}-Statistic_${statTypes}-Coordinate_${coordinates}`};
+    }
+
     @computed get profileOrderedKeys(): LineKey[] {
         if (this.activeProfileCategory === MultiProfileCategory.NONE) {
             return [SpectralProfileWidgetStore.PRIMARY_LINE_KEY];

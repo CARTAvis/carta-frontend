@@ -277,6 +277,8 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
 
             const currentPlotData = this.plotData;
             if (currentPlotData?.numProfiles > 0) {
+                linePlotProps.imageName = currentPlotData.plotName?.image;
+                linePlotProps.plotName = currentPlotData.plotName?.plot;
                 // Fill profile & smoothed profiles
                 for(let i = 0; i < currentPlotData.numProfiles; i++) {
                     const imageName = currentPlotData.labels[i]?.image;
