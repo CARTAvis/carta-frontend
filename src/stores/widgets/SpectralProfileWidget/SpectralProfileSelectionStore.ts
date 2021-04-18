@@ -32,6 +32,8 @@ const SUPPORTED_STOKES_LABEL_MAP = new Map<string, string>([
     ["z", "Current"], ["Iz", "I"], ["Qz", "Q"], ["Uz", "U"], ["Vz", "V"]
 ]);
 
+const MAXIMUM_PROFILES = 10;
+
 export class SpectralProfileSelectionStore {
     // profile selection
     @observable activeProfileCategory: MultiProfileCategory;
@@ -89,14 +91,16 @@ export class SpectralProfileSelectionStore {
                 const matchedFileIds = AppStore.Instance.spatialAndSpectalMatchedFileIds;
                 if (this.activeProfileCategory === MultiProfileCategory.IMAGE && matchedFileIds?.includes(this.selectedFrameFileId)) {
                     matchedFileIds.forEach(fileId => {
-                        profileConfigs.push({
-                            fileId: fileId,
-                            regionId: this.effectiveRegionId,
-                            statsType: statsType,
-                            coordinate: selectedCoordinate,
-                            colorKey: fileId,
-                            label: this.genProfileLabel(fileId, this.effectiveRegionId, statsType, selectedCoordinate)
-                        });
+                        if (profileConfigs.length < MAXIMUM_PROFILES) {
+                            profileConfigs.push({
+                                fileId: fileId,
+                                regionId: this.effectiveRegionId,
+                                statsType: statsType,
+                                coordinate: selectedCoordinate,
+                                colorKey: fileId,
+                                label: this.genProfileLabel(fileId, this.effectiveRegionId, statsType, selectedCoordinate)
+                            });
+                        }
                     });
                 } else {
                     profileConfigs.push({
@@ -512,7 +516,7 @@ export class SpectralProfileSelectionStore {
         if (this.selectedRegionIds?.includes(regionId) && this.selectedRegionIds?.length > 1) {
             // remove selection
             this.removeSelectedRegionMultiMode(regionId);
-        } else if (!this.selectedRegionIds?.includes(regionId)) {
+        } else if (!this.selectedRegionIds?.includes(regionId) && this.selectedRegionIds?.length < MAXIMUM_PROFILES) {
             // add selection
             this.selectedRegionIds = [...this.selectedRegionIds, regionId].sort((a, b) => {return a - b;});
             this.widgetStore.setProfileColor(regionId, color);
@@ -525,7 +529,7 @@ export class SpectralProfileSelectionStore {
                 // remove selection
                 this.selectedStatsTypes = this.selectedStatsTypes.filter(type => type !== statsType);
                 this.widgetStore.removeProfileColor(statsType);
-            } else if (!this.selectedStatsTypes?.includes(statsType)) {
+            } else if (!this.selectedStatsTypes?.includes(statsType) && this.selectedStatsTypes?.length < MAXIMUM_PROFILES) {
                 // add selection
                 this.selectedStatsTypes = [...this.selectedStatsTypes, statsType].sort((a, b) => {return a - b;});
                 this.widgetStore.setProfileColor(statsType, color);
@@ -539,7 +543,7 @@ export class SpectralProfileSelectionStore {
                 // remove selection
                 this.selectedCoordinates = this.selectedCoordinates.filter(coord => coord !== coordinate);
                 this.widgetStore.removeProfileColor(coordinate);
-            } else if (!this.selectedCoordinates.includes(coordinate)) {
+            } else if (!this.selectedCoordinates.includes(coordinate) && this.selectedCoordinates?.length < MAXIMUM_PROFILES) {
                 // add selection
                 this.selectedCoordinates = [...this.selectedCoordinates, coordinate].sort((a, b) => {
                     // always place z in the first element
