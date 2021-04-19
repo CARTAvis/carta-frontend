@@ -53,7 +53,7 @@ export class FrameStore {
     private static readonly CursorInfoMaxPrecision = 25;
     private static readonly ZoomInertiaDuration = 250;
 
-    private readonly spectralFrame: AST.FrameSet;
+    private readonly spectralFrame: AST.SpecFrame;
     private readonly controlMaps: Map<FrameStore, ControlMap>;
     private readonly framePixelRatio: number;
     private readonly backendService: BackendService;
