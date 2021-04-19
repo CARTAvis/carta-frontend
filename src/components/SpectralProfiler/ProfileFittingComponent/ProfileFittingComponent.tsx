@@ -78,6 +78,10 @@ export class ProfileFittingComponent extends React.Component<{fittingStore: Prof
         this.props.fittingStore.setHasAutoDetectResult(true);
     }
 
+    private deleteComponent = () => {
+        this.props.fittingStore.deleteSelectedComponent();
+    }
+
     private cursorSelecting = () => {
         this.props.fittingStore.setIsCursorSelectionOn(!this.props.fittingStore.isCursorSelectionOn);
     }
@@ -157,19 +161,19 @@ export class ProfileFittingComponent extends React.Component<{fittingStore: Prof
                 xMax = localXMax;
             }
 
-
             let xMinIndex, xMaxIndex;
             for (let i = 0; i < channelValues.length; i++) {
                 const x = channelValues[i];
-                if (x < xMin) {
-                    continue;
-                }
-                if (!isFinite(xMinIndex)) {
-                    xMinIndex = i;
+                if (x < xMin || x > xMax) {
+                    if (isFinite(xMinIndex)) {
+                        break;
+                    } else {
+                        continue;
+                    }
                 }
 
-                if (x > xMax) {
-                    break;
+                if (!isFinite(xMinIndex)) {
+                    xMinIndex = i;
                 }
                 xMaxIndex = i;
             }
@@ -192,6 +196,8 @@ export class ProfileFittingComponent extends React.Component<{fittingStore: Prof
     render() {
         const appStore = AppStore.Instance;
         const fittingStore = this.props.fittingStore;
+        // // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        // const channel = this.props.widgetStore.effectiveFrame.channelValues;
 
         return (
             <div className="profile-fitting-panel">
@@ -242,15 +248,18 @@ export class ProfileFittingComponent extends React.Component<{fittingStore: Prof
                                 onValueChange={val => fittingStore.setComponents(Math.round(val))}
                             />
                             {fittingStore.components.length > 1 &&
-                                <Slider
-                                    value={fittingStore.selectedIndex + 1}
-                                    min={1}
-                                    stepSize={1}
-                                    max={fittingStore.components.length}
-                                    showTrackFill={false}
-                                    onChange={val => fittingStore.setSelectedIndex(val - 1)}
-                                    disabled={fittingStore.components.length <= 1}
-                                />
+                                <React.Fragment>
+                                    <Slider
+                                        value={fittingStore.selectedIndex + 1}
+                                        min={1}
+                                        stepSize={1}
+                                        max={fittingStore.components.length}
+                                        showTrackFill={false}
+                                        onChange={val => fittingStore.setSelectedIndex(val - 1)}
+                                        disabled={fittingStore.components.length <= 1}
+                                    />
+                                    <AnchorButton intent={Intent.NONE} icon={"trash"} onClick={this.deleteComponent}/>
+                                </React.Fragment>
                             }
                         </div>
                     </FormGroup>
@@ -346,17 +355,6 @@ export class ProfileFittingComponent extends React.Component<{fittingStore: Prof
                     </FormGroup>              
                 </div>
                 <div className="profile-fitting-footer">
-                    <AnchorButton
-                        text="View log"
-                        onClick={this.showLog}
-                        intent={Intent.PRIMARY}
-                        disabled={!fittingStore.hasResult}
-                    />
-                    <AnchorButton 
-                        text="Save log"
-                        intent={Intent.PRIMARY}
-                        disabled={!fittingStore.hasResult}
-                    />
                     <AnchorButton 
                         text="Reset"
                         intent={Intent.PRIMARY}
@@ -367,6 +365,12 @@ export class ProfileFittingComponent extends React.Component<{fittingStore: Prof
                         intent={Intent.PRIMARY}
                         onClick={this.fitData}
                         disabled={!fittingStore.readyToFit}
+                    />
+                    <AnchorButton
+                        text="View log"
+                        onClick={this.showLog}
+                        intent={Intent.PRIMARY}
+                        disabled={!fittingStore.hasResult}
                     />
                     <Switch
                         label="residual"

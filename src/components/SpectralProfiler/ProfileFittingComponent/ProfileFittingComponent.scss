@@ -26,6 +26,10 @@
                 width: 100%;
             }
 
+            .bp3-button{
+                margin-left: 15px;
+            }
+
             .bp3-switch{
                 margin-left: 15px;
             }
@@ -46,6 +50,7 @@
     .profile-fitting-footer{
         display: flex;
         flex-direction: row;
+        justify-content: flex-end;
 
         .bp3-button{
             margin-left: 10px;

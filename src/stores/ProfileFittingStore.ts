@@ -41,6 +41,13 @@ export class ProfileFittingStore {
         this.components = newComponents;
     }
 
+    @action deleteSelectedComponent() {
+        if (this.components.length > 1) {
+            this.components = this.components.slice(0, this.selectedIndex).concat(this.components.slice(this.selectedIndex + 1));
+            this.selectedIndex = this.selectedIndex === 0 ? 0: this.selectedIndex - 1;
+        }
+    }
+
     @action setComponentByCursor(xMin: number, xMax: number, yMin: number, yMax: number) {
         const selectedComponent = this.selectedComponent;
         const centerX = (xMin + xMax)/ 2
