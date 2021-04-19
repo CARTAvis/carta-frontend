@@ -2,6 +2,7 @@ import * as React from "react";
 import {observer} from "mobx-react";
 import {Classes, H5, InputGroup, Position, Tooltip} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
+import * as AST from "ast_wrapper";
 import {AppStore, RegionCoordinate, RegionStore, NUMBER_FORMAT_LABEL} from "stores";
 import {Point2D, WCSPoint2D} from "models";
 import {closeTo, getFormattedWCSPoint, getPixelValueFromWCS, isWCSStringFormatValid} from "utilities";
@@ -12,7 +13,7 @@ import "./PointRegionForm.scss";
 const KEYCODE_ENTER = 13;
 
 @observer
-export class PointRegionForm extends React.Component<{ region: RegionStore, wcsInfo: number }> {
+export class PointRegionForm extends React.Component<{ region: RegionStore, wcsInfo: AST.FrameSet }> {
     private static readonly REGION_PIXEL_EPS = 1.0e-3;
 
     private handleNameChange = (ev) => {

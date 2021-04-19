@@ -279,6 +279,17 @@ EMSCRIPTEN_KEEPALIVE int set(AstFrameSet* wcsinfo, const char* attrib)
     return 0;
 }
 
+EMSCRIPTEN_KEEPALIVE void  setI(AstObject* obj, const char* attrib, int val)
+{
+    astSetI(obj, attrib, val);
+}
+
+EMSCRIPTEN_KEEPALIVE void  setD(AstObject* obj, const char* attrib, double val)
+{
+    astSetD(obj, attrib, val);
+}
+
+
 EMSCRIPTEN_KEEPALIVE int clear(AstObject* obj, const char* attrib)
 {
     if (!obj)
@@ -424,6 +435,22 @@ EMSCRIPTEN_KEEPALIVE AstShiftMap* shiftMap2D(double x, double y)
 EMSCRIPTEN_KEEPALIVE double axDistance(AstFrameSet* wcsinfo, int axis, double v1, double v2)
 {
     return astAxDistance(wcsinfo, axis, v1, v2);
+}
+
+EMSCRIPTEN_KEEPALIVE AstFrame* frame(int naxes, const char* options)
+{
+    return astFrame(naxes, options);
+}
+
+EMSCRIPTEN_KEEPALIVE void addFrame(AstFrameSet* frameSet, int iframe, AstMapping* map, AstFrame* frame)
+{
+    astAddFrame(frameSet, iframe, map, frame);
+}
+
+EMSCRIPTEN_KEEPALIVE AstMatrixMap* scaleMap2D(double sx, double sy)
+{
+    double diags[] = {sx, sy};
+    return astMatrixMap(2, 2, 1, diags, "");
 }
 
 EMSCRIPTEN_KEEPALIVE float* fillTransformGrid(AstFrameSet* wcsInfo, double xMin, double xMax, int nx, double yMin, double yMax, int ny, int forward)

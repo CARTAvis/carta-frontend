@@ -53,30 +53,30 @@ export class FrameStore {
     private static readonly CursorInfoMaxPrecision = 25;
     private static readonly ZoomInertiaDuration = 250;
 
-    private readonly astFrameSet: number;
-    private readonly spectralFrame: number;
+    private readonly spectralFrame: AST.FrameSet;
     private readonly controlMaps: Map<FrameStore, ControlMap>;
+    private readonly framePixelRatio: number;
     private readonly backendService: BackendService;
     private readonly overlayStore: OverlayStore;
     private readonly logStore: LogStore;
 
-    private spectralTransformAST: number;
-    private cachedTransformedWcsInfo: number = -1;
+    private spectralTransformAST: AST.FrameSet;
+    private cachedTransformedWcsInfo: AST.FrameSet = -1;
     private zoomTimeoutHandler;
 
-    public readonly wcsInfo: number;
-    public readonly wcsInfoForTransformation: number;
-    public readonly wcsInfo3D: number;
+    public readonly wcsInfo: AST.FrameSet;
+    public readonly wcsInfoForTransformation: AST.FrameSet;
+    public readonly wcsInfo3D: AST.FrameSet;
     public readonly validWcs: boolean;
+    public readonly frameInfo: FrameInfo;
 
     public spectralCoordsSupported: Map<string, { type: SpectralType, unit: SpectralUnit }>;
     public spectralSystemsSupported: Array<SpectralSystem>;
-    public spatialTransformAST: number;
+    public spatialTransformAST: AST.FrameSet;
 
     // Region set for the current frame. Accessed via regionSet, to take into account region sharing
     @observable private readonly frameRegionSet: RegionSetStore;
 
-    @observable frameInfo: FrameInfo;
     @observable renderHiDPI: boolean;
     @observable spectralType: SpectralType;
     @observable spectralUnit: SpectralUnit;
@@ -119,7 +119,7 @@ export class FrameStore {
     @computed get filename(): string {
         // hdu extension name is in field 3 of fileInfoExtended computed entries
         const extName = this.frameInfo?.fileInfoExtended?.computedEntries?.length >= 3 && this.frameInfo?.fileInfoExtended?.computedEntries[2]?.name === "Extension name" ?
-                        `_${this.frameInfo.fileInfoExtended.computedEntries[2]?.value}` : "";
+            `_${this.frameInfo.fileInfoExtended.computedEntries[2]?.value}` : "";
         return this.frameInfo?.hdu !== "" && this.frameInfo?.hdu !== "0" ?
             `${this.frameInfo.fileInfo.name}.HDU_${this.frameInfo.hdu}${extName}` :
             this.frameInfo.fileInfo.name;
@@ -135,6 +135,14 @@ export class FrameStore {
 
     @computed get sharedRegions(): boolean {
         return !!this.spatialReference;
+    }
+
+    @computed get aspectRatio(): number {
+        if (isFinite(this.framePixelRatio)) {
+            return this.framePixelRatio;
+        }
+
+        return (this.overlayStore.renderWidth / this.frameInfo.fileInfoExtended.width) / (this.overlayStore.renderHeight / this.frameInfo.fileInfoExtended.height);
     }
 
     @computed get requiredFrameView(): FrameView {
@@ -178,7 +186,7 @@ export class FrameStore {
 
             const pixelRatio = this.renderHiDPI ? devicePixelRatio : 1.0;
             // Required image dimensions
-            const imageWidth = pixelRatio * this.renderWidth / this.zoomLevel;
+            const imageWidth = pixelRatio * this.renderWidth / this.zoomLevel / this.aspectRatio;
             const imageHeight = pixelRatio * this.renderHeight / this.zoomLevel;
 
             const mipAdjustment = (PreferenceStore.Instance.lowBandwidthMode ? 2.0 : 1.0);
@@ -219,7 +227,7 @@ export class FrameStore {
             };
             adjTranslation = rotate2D(adjTranslation, -this.spatialTransform.rotation);
             if (this.cachedTransformedWcsInfo >= 0) {
-                AST.delete(this.cachedTransformedWcsInfo);
+                AST.deleteObject(this.cachedTransformedWcsInfo);
             }
 
             this.cachedTransformedWcsInfo = AST.createTransformedFrameset(this.wcsInfo,
@@ -267,7 +275,7 @@ export class FrameStore {
             if (isFinite(delta) && (unit === "deg" || unit === "rad")) {
 
                 if (this.frameInfo.beamTable && this.frameInfo.beamTable.length > 0) {
-                    let beam : CARTA.IBeam
+                    let beam: CARTA.IBeam;
                     if (this.frameInfo.beamTable.length === 1 && this.frameInfo.beamTable[0].channel === -1 && this.frameInfo.beamTable[0].stokes === -1) {
                         beam = this.frameInfo.beamTable[0];
                     } else {
@@ -286,7 +294,7 @@ export class FrameStore {
                             y: beam.minorAxis / (unit === "deg" ? 3600 : (180 * 3600 / Math.PI)) / Math.abs(delta),
                             angle: beam.pa,
                             overlayBeamSettings: this.overlayBeamSettings
-                        }
+                        };
                     }
                 }
             }
@@ -579,7 +587,7 @@ export class FrameStore {
         if (this.numChannels > 1 && this.channelValues) {
             const head = this.channelValues[0];
             const tail = this.channelValues[this.numChannels - 1];
-            return new CARTA.FloatBounds(head <=  tail ?  {min: head, max: tail} : {min: tail, max: head});
+            return new CARTA.FloatBounds(head <= tail ? {min: head, max: tail} : {min: tail, max: head});
         }
         return null;
     }
@@ -636,7 +644,7 @@ export class FrameStore {
     @computed
     private get calculateZoomX() {
         const imageWidth = this.frameInfo.fileInfoExtended.width;
-        const pixelRatio = this.renderHiDPI ? devicePixelRatio : 1.0;
+        const pixelRatio = (this.renderHiDPI ? devicePixelRatio : 1.0) / this.aspectRatio;
 
         if (imageWidth <= 0) {
             return 1.0;
@@ -717,7 +725,6 @@ export class FrameStore {
         this.backendService = BackendService.Instance;
         const preferenceStore = PreferenceStore.Instance;
 
-        this.astFrameSet = null;
         this.spectralFrame = null;
         this.spectralType = null;
         this.spectralUnit = null;
@@ -782,37 +789,37 @@ export class FrameStore {
         this.animationChannelRange = [0, frameInfo.fileInfoExtended.depth - 1];
 
         if (this.isPVImage) {
-            this.astFrameSet = this.initFrame2D();
-            if (this.astFrameSet) {
-                this.spectralFrame = AST.getSpectralFrame(this.astFrameSet);
-                this.wcsInfo = AST.copy(this.astFrameSet);
+            const astFrameSet = this.initFrame2D();
+            if (astFrameSet) {
+                this.spectralFrame = AST.getSpectralFrame(astFrameSet);
+                this.wcsInfo = AST.copy(astFrameSet);
             }
         } else if (this.isUVImage) {
             // TODO: Refactor the code to avoid redundancy between astFrameSet and astFrameSet2D
-            this.astFrameSet = this.initFrame(false);
+            const astFrameSet = this.initFrame(false);
             const astFrameSet2D = this.initFrame2D();
-            if (this.astFrameSet && astFrameSet2D) {
-                this.spectralFrame = AST.getSpectralFrame(this.astFrameSet);
-
+            if (astFrameSet && astFrameSet2D) {
+                this.spectralFrame = AST.getSpectralFrame(astFrameSet);
                 if (frameInfo.fileInfoExtended.depth > 1) { // 3D frame
-                    this.wcsInfo3D = AST.copy(this.astFrameSet);
+                    this.wcsInfo3D = AST.copy(astFrameSet);
                     this.wcsInfo = AST.copy(astFrameSet2D);
                 } else { // 2D frame
-                    this.wcsInfo = AST.copy(this.astFrameSet);
+                    this.wcsInfo = AST.copy(astFrameSet);
                 }
             }
         } else {
             // init WCS
-            this.astFrameSet = this.initFrame();
-            if (this.astFrameSet) {
-                this.spectralFrame = AST.getSpectralFrame(this.astFrameSet);
+            const astFrameSet = this.initFrame();
+            if (astFrameSet) {
+                this.spectralFrame = AST.getSpectralFrame(astFrameSet);
 
                 if (frameInfo.fileInfoExtended.depth > 1) { // 3D frame
-                    this.wcsInfo3D = AST.copy(this.astFrameSet);
-                    this.wcsInfo = AST.getSkyFrameSet(this.astFrameSet);
+                    this.wcsInfo3D = AST.copy(astFrameSet);
+                    this.wcsInfo = AST.getSkyFrameSet(astFrameSet);
                 } else { // 2D frame
-                    this.wcsInfo = AST.copy(this.astFrameSet);
+                    this.wcsInfo = AST.copy(astFrameSet);
                 }
+                AST.deleteObject(astFrameSet);
 
                 if (this.wcsInfo) {
                     // init 2D(Sky) wcs copy for the precision of region coordinate transformation
@@ -824,9 +831,27 @@ export class FrameStore {
                 }
             }
         }
-        if (!this.astFrameSet) {
+
+        if (!this.wcsInfo) {
             this.logStore.addWarning(`Problem processing headers in file ${this.filename} for AST`, ["ast"]);
             this.wcsInfo = AST.initDummyFrame();
+        }
+
+        const cUnit1 = this.frameInfo.fileInfoExtended.headerEntries.find(entry => entry.name === "CUNIT1");
+        const cUnit2 = this.frameInfo.fileInfoExtended.headerEntries.find(entry => entry.name === "CUNIT2");
+        const sameUnits = cUnit1 && cUnit2 && trimFitsComment(cUnit1.value) === trimFitsComment(cUnit2.value);
+
+        // If the two units are different, there's no fixed aspect ratio
+        if (!sameUnits) {
+            this.framePixelRatio = NaN;
+        } else {
+            const cDelt1 = getHeaderNumericValue(this.frameInfo.fileInfoExtended.headerEntries.find(entry => entry.name === "CDELT1"));
+            const cDelt2 = getHeaderNumericValue(this.frameInfo.fileInfoExtended.headerEntries.find(entry => entry.name === "CDELT2"));
+            this.framePixelRatio = Math.abs(cDelt1 / cDelt2);
+            // Correct for numerical errors in CDELT values if they're within 0.1% of each other
+            if (Math.abs(this.framePixelRatio - 1.0) < 0.001) {
+                this.framePixelRatio = 1.0;
+            }
         }
 
         this.initSupportedSpectralConversion();
@@ -898,7 +923,7 @@ export class FrameStore {
         return AST.transformSpectralPoint(this.spectralFrame, type, unit, system, value);
     };
 
-    private initFrame2D = (): number => {
+    private initFrame2D = (): AST.FrameSet => {
         const fitsChan = AST.emptyFitsChan();
         for (let entry of this.frameInfo.fileInfoExtended.headerEntries) {
             if (entry.name.match(/(CTYPE|CDELT|CRPIX|CRVAL|CUNIT|NAXIS|CROTA)[3-9]/)) {
@@ -926,7 +951,7 @@ export class FrameStore {
         return AST.getFrameFromFitsChan(fitsChan, false);
     };
 
-    private initFrame = (checkSkyDomain: boolean = true): number => {
+    private initFrame = (checkSkyDomain: boolean = true): AST.FrameSet => {
         const dimension = this.frameInfo.fileInfoExtended.depth > 1 ? "3" : "2";
         const fitsChan = AST.emptyFitsChan();
         for (let entry of this.frameInfo.fileInfoExtended.headerEntries) {
@@ -1039,7 +1064,7 @@ export class FrameStore {
                 astString.add("Format(2)", this.isPVImage || this.isUVImage ? undefined : this.overlayStore.numbers.cursorFormatStringY(precisionY));
                 astString.add("System", this.isPVImage || this.isUVImage ? 'cartesian' : this.overlayStore.global.explicitSystem);
 
-                let formattedNeighbourhood = normalizedNeighbourhood.map((pos) => AST.getFormattedCoordinates(this.wcsInfo, pos.x, pos.y, astString.toString()), true);
+                let formattedNeighbourhood = normalizedNeighbourhood.map((pos) => AST.getFormattedCoordinates(this.wcsInfo, pos.x, pos.y, astString.toString(), true));
                 let [p, n1, n2] = formattedNeighbourhood;
                 if (!p.x || !p.y || p.x === "<bad>" || p.y === "<bad>") {
                     cursorPosFormatted = null;
@@ -1064,7 +1089,7 @@ export class FrameStore {
         const imageX = Math.round(cursorPosImageSpace.x);
         const imageY = Math.round(cursorPosImageSpace.y);
         const isInsideImage = imageX >= 0 && imageX < this.frameInfo.fileInfoExtended.width &&
-                                imageY >= 0 && imageY < this.frameInfo.fileInfoExtended.height;
+            imageY >= 0 && imageY < this.frameInfo.fileInfoExtended.height;
 
         return {
             posImageSpace: cursorPosImageSpace,
@@ -1145,7 +1170,7 @@ export class FrameStore {
                     return this.channelInfo.getChannelIndexWCS(x);
                 } else {
                     // invert x in selected widget wcs to frame's default wcs
-                    const tx =  AST.transformSpectralPoint(this.spectralFrame, this.spectralType, this.spectralUnit, this.spectralSystem, x, false);
+                    const tx = AST.transformSpectralPoint(this.spectralFrame, this.spectralType, this.spectralUnit, this.spectralSystem, x, false);
                     return this.channelInfo.getChannelIndexWCS(tx);
                 }
             }
@@ -1172,7 +1197,7 @@ export class FrameStore {
             case CARTA.RegionType.POINT:
                 return `Point (wcs:${systemType}) [${center}]`;
             case CARTA.RegionType.RECTANGLE:
-                return `rotbox(wcs:${systemType})[[${center}], [${size.x}, ${size.y}], ${toFixed(region.rotation,6)}deg]`;
+                return `rotbox(wcs:${systemType})[[${center}], [${size.x}, ${size.y}], ${toFixed(region.rotation, 6)}deg]`;
             case CARTA.RegionType.ELLIPSE:
                 return `ellipse(wcs:${systemType})[[${center}], [${size.x}, ${size.y}], ${toFixed(region.rotation, 6)}deg]`;
             case CARTA.RegionType.POLYGON:
@@ -1522,6 +1547,12 @@ export class FrameStore {
             return false;
         }
 
+        if (frame.aspectRatio !== 1.0 || this.aspectRatio !== 1.0) {
+            console.log("Cannot perform spatial transform between images with non-square pixels");
+            this.spatialReference = null;
+            return false;
+        }
+
         if (this.validWcs !== frame.validWcs) {
             console.log(`Error creating spatial transform between files ${this.frameInfo.fileId} and ${frame.frameInfo.fileId}`);
             this.spatialReference = null;
@@ -1535,8 +1566,8 @@ export class FrameStore {
         AST.invert(copySrc);
         AST.invert(copyDest);
         this.spatialTransformAST = AST.convert(copySrc, copyDest, "");
-        AST.delete(copySrc);
-        AST.delete(copyDest);
+        AST.deleteObject(copySrc);
+        AST.deleteObject(copyDest);
         if (!this.spatialTransformAST) {
             console.log(`Error creating spatial transform between files ${this.frameInfo.fileId} and ${frame.frameInfo.fileId}`);
             this.spatialReference = null;
@@ -1548,7 +1579,7 @@ export class FrameStore {
             || !isFinite(currentTransform.origin.x) || !isFinite(currentTransform.origin.y)) {
             console.log(`Error creating spatial transform between files ${this.frameInfo.fileId} and ${frame.frameInfo.fileId}`);
             this.spatialReference = null;
-            AST.delete(this.spatialTransformAST);
+            AST.deleteObject(this.spatialTransformAST);
             this.spatialTransformAST = null;
             return false;
         }
@@ -1581,7 +1612,7 @@ export class FrameStore {
         }
 
         if (this.spatialTransformAST) {
-            AST.delete(this.spatialTransformAST);
+            AST.deleteObject(this.spatialTransformAST);
         }
         this.spatialTransformAST = null;
         const gl = ContourWebGLService.Instance.gl;
@@ -1637,8 +1668,8 @@ export class FrameStore {
         AST.invert(copySrc);
         AST.invert(copyDest);
         this.spectralTransformAST = AST.convert(copySrc, copyDest, "");
-        AST.delete(copySrc);
-        AST.delete(copyDest);
+        AST.deleteObject(copySrc);
+        AST.deleteObject(copyDest);
 
         if (!this.spectralTransformAST) {
             console.log(`Error creating spatial transform between files ${this.frameInfo.fileId} and ${frame.frameInfo.fileId}. Could not create AST transform`);
@@ -1660,7 +1691,7 @@ export class FrameStore {
         }
 
         if (this.spectralTransformAST) {
-            AST.delete(this.spectralTransformAST);
+            AST.deleteObject(this.spectralTransformAST);
         }
         this.spectralTransformAST = null;
     };
@@ -1685,7 +1716,7 @@ export class FrameStore {
         this.rasterScalingReference = frame;
         this.rasterScalingReference.addSecondaryRasterScalingImage(this);
         this.renderConfig.updateFrom(frame.renderConfig);
-    }
+    };
 
     @action clearRasterScalingReference() {
         if (this.rasterScalingReference) {

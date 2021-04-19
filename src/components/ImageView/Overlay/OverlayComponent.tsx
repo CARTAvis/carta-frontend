@@ -47,11 +47,22 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
             this.updateImageDimensions();
             AST.setCanvas(this.canvas);
 
+            // Take aspect ratio scaling into account
+            let tempWcsInfo = AST.copy(wcsInfo);
+
+            if (frame.aspectRatio !== 1.0) {
+                const scaleMapping = AST.scaleMap2D(1.0, 1.0 / frame.aspectRatio);
+                const newFrame = AST.frame(2, "Domain=PIXEL");
+                AST.addFrame(tempWcsInfo, 1, scaleMapping, newFrame);
+                AST.setI(tempWcsInfo, "Base", 3);
+                AST.setI(tempWcsInfo, "Current", 2);
+            }
+
             const plot = (styleString: string) => {
                 AST.plot(
-                    wcsInfo,
+                    tempWcsInfo,
                     frameView.xMin, frameView.xMax,
-                    frameView.yMin, frameView.yMax,
+                    frameView.yMin / frame.aspectRatio, frameView.yMax / frame.aspectRatio,
                     settings.viewWidth * pixelRatio, settings.viewHeight * pixelRatio,
                     settings.padding.left * pixelRatio, settings.padding.right * pixelRatio, settings.padding.top * pixelRatio, settings.padding.bottom * pixelRatio,
                     styleString);
@@ -71,6 +82,7 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
                 plot(currentStyleString.replace(/Gap\(\d\)=[^,]+, ?/g, "").replace("Grid=1", "Grid=0"));
             }
 
+            AST.deleteObject(tempWcsInfo);
             AST.clearLastErrorMessage();
         }
     }, 50);
