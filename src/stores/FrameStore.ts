@@ -791,11 +791,8 @@ export class FrameStore {
         if (this.isPVImage) {
             const astFrameSet = this.initFrame2D();
             if (astFrameSet) {
+                this.spectralFrame = AST.getSpectralFrame(astFrameSet);
                 this.wcsInfo = AST.copy(astFrameSet);
-                const spectralFrame = AST.getSpectralFrame(this.wcsInfo);
-                if (spectralFrame) {
-                    this.spectralFrame = AST.copy(spectralFrame);
-                }
                 AST.deleteObject(astFrameSet);
             }
         } else if (this.isUVImage) {
@@ -803,17 +800,12 @@ export class FrameStore {
             const astFrameSet = this.initFrame(false);
             const astFrameSet2D = this.initFrame2D();
             if (astFrameSet && astFrameSet2D) {
-                let spectralFrame = undefined;
+                this.spectralFrame = AST.getSpectralFrame(astFrameSet);
                 if (frameInfo.fileInfoExtended.depth > 1) { // 3D frame
                     this.wcsInfo3D = AST.copy(astFrameSet);
                     this.wcsInfo = AST.copy(astFrameSet2D);
-                    spectralFrame = AST.getSpectralFrame(this.wcsInfo3D);
                 } else { // 2D frame
                     this.wcsInfo = AST.copy(astFrameSet);
-                    spectralFrame = AST.getSpectralFrame(this.wcsInfo);
-                }
-                if (spectralFrame) {
-                    this.spectralFrame = AST.copy(spectralFrame);
                 }
             }
             AST.deleteObject(astFrameSet);
@@ -822,17 +814,12 @@ export class FrameStore {
             // init WCS
             const astFrameSet = this.initFrame();
             if (astFrameSet) {
-                let spectralFrame = undefined;
+                this.spectralFrame = AST.getSpectralFrame(astFrameSet);
                 if (frameInfo.fileInfoExtended.depth > 1) { // 3D frame
                     this.wcsInfo3D = AST.copy(astFrameSet);
                     this.wcsInfo = AST.getSkyFrameSet(this.wcsInfo3D);
-                    spectralFrame = AST.getSpectralFrame(this.wcsInfo3D);
                 } else { // 2D frame
                     this.wcsInfo = AST.copy(astFrameSet);
-                    spectralFrame = AST.getSpectralFrame(this.wcsInfo);
-                }
-                if (spectralFrame) {
-                    this.spectralFrame = AST.copy(spectralFrame);
                 }
                 AST.deleteObject(astFrameSet);
 
