@@ -1,6 +1,6 @@
 import * as React from "react";
 import * as _ from "lodash";
-import ReactResizeDetector from "react-resize-detector";
+import ResizeObserver from "react-resize-detector/build/withPolyfill";
 import {action, autorun, computed, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 import {Button, ButtonGroup, FormGroup, HTMLSelect, IOptionProps, NonIdealState, Colors} from "@blueprintjs/core";
@@ -432,8 +432,8 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
                     onCancel={this.handleCubeHistogramCancelled}
                     text={"Calculating cube histogram"}
                 />
-                <ReactResizeDetector handleWidth handleHeight onResize={this.onResize} refreshMode={"throttle"}>
-                </ReactResizeDetector>
+                <ResizeObserver handleWidth handleHeight onResize={this.onResize} refreshMode={"throttle"}>
+                </ResizeObserver>
             </div>
         );
     }

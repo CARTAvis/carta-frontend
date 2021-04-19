@@ -5,7 +5,7 @@ import {AnchorButton, FormGroup, Intent, NonIdealState, Switch, Tooltip, MenuIte
 import {Cell, Column, Regions, RenderMode, SelectionModes, Table} from "@blueprintjs/table";
 import * as ScrollUtils from "../../../node_modules/@blueprintjs/table/lib/esm/common/internal/scrollUtils";
 import {Select, IItemRendererProps, ItemPredicate} from "@blueprintjs/select";
-import ReactResizeDetector from "react-resize-detector";
+import ResizeObserver from "react-resize-detector/build/withPolyfill";
 import SplitPane, { Pane } from "react-split-pane";
 import FuzzySearch from "fuzzy-search";
 import {CARTA} from "carta-protobuf";
@@ -948,8 +948,8 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
                         </div>
                     </div>
                 </div>
-                <ReactResizeDetector handleWidth handleHeight onResize={this.onResize} refreshMode={"throttle"} refreshRate={33}>
-                </ReactResizeDetector>
+                <ResizeObserver handleWidth handleHeight onResize={this.onResize} refreshMode={"throttle"} refreshRate={33}>
+                </ResizeObserver>
             </div>
         );
     }

@@ -5,7 +5,7 @@ import {autorun, computed, observable, action, makeObservable} from "mobx";
 import {observer} from "mobx-react";
 import {FormGroup, AnchorButton, Intent, Tooltip, Switch, Button, MenuItem, PopoverPosition, NonIdealState} from "@blueprintjs/core";
 import {Select, IItemRendererProps, ItemPredicate} from "@blueprintjs/select";
-import ReactResizeDetector from "react-resize-detector";
+import ResizeObserver from "react-resize-detector/build/withPolyfill";
 import FuzzySearch from "fuzzy-search";
 import {CARTA} from "carta-protobuf";
 import {CatalogUpdateMode, WidgetProps, AppStore, WidgetsStore, CatalogStore, CatalogProfileStore, DefaultWidgetConfig} from "stores";
@@ -827,8 +827,8 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
                         </Tooltip>
                     </div>
                 </div>
-                <ReactResizeDetector handleWidth handleHeight onResize={this.onResize} refreshMode={"throttle"} refreshRate={33}>
-                </ReactResizeDetector>
+                <ResizeObserver handleWidth handleHeight onResize={this.onResize} refreshMode={"throttle"} refreshRate={33}>
+                </ResizeObserver>
             </div>
         );
     }

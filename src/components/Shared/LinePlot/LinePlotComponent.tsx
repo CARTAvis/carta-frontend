@@ -5,7 +5,7 @@ import {ESCAPE} from "@blueprintjs/core/lib/cjs/common/keys";
 import {Colors} from "@blueprintjs/core";
 import {ChartArea} from "chart.js";
 import {Scatter} from "react-chartjs-2";
-import ReactResizeDetector from "react-resize-detector";
+import ResizeObserver from "react-resize-detector/build/withPolyfill";
 import {Arrow, Group, Layer, Line, Rect, Stage, Text} from "react-konva";
 import {PlotContainerComponent, TickType, MultiPlotProps} from "./PlotContainer/PlotContainerComponent";
 import {ToolbarComponent} from "./Toolbar/ToolbarComponent";
@@ -994,9 +994,9 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
                 onMouseLeave={this.onMouseLeave}
                 tabIndex={0}
             >
-                <ReactResizeDetector handleWidth handleHeight onResize={this.resize} refreshMode={"throttle"} refreshRate={33}>
+                <ResizeObserver handleWidth handleHeight onResize={this.resize} refreshMode={"throttle"} refreshRate={33}>
 
-                </ReactResizeDetector>
+                </ResizeObserver>
                 {this.width > 0 && this.height > 0 &&
                 <PlotContainerComponent
                     {...this.props}

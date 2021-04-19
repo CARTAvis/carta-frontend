@@ -2,7 +2,7 @@ import * as React from "react";
 import {observer} from "mobx-react";
 import {action, makeObservable, observable} from "mobx";
 import {AnchorButton, Button, ButtonGroup, ControlGroup, HTMLSelect, IconName, Menu, MenuItem, NonIdealState, NumberRange, Popover, Position, Radio, RangeSlider, Slider, Tooltip} from "@blueprintjs/core";
-import ReactResizeDetector from "react-resize-detector";
+import ResizeObserver from "react-resize-detector/build/withPolyfill";
 import {AnimationMode, PlayMode, DefaultWidgetConfig, WidgetProps, HelpType, AnimatorStore, AppStore} from "stores";
 import {SafeNumericInput} from "components/Shared";
 import "./AnimatorComponent.scss";
@@ -460,8 +460,8 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
                     {stokesSlider}
                 </div>
                 }
-                <ReactResizeDetector handleWidth handleHeight onResize={this.onResize} refreshMode={"throttle"} refreshRate={33}>
-                </ReactResizeDetector>
+                <ResizeObserver handleWidth handleHeight onResize={this.onResize} refreshMode={"throttle"} refreshRate={33}>
+                </ResizeObserver>
             </div>
         );
     }

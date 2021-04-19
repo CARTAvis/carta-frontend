@@ -4,7 +4,7 @@ import {action, computed, makeObservable, observable} from "mobx";
 import {ESCAPE} from "@blueprintjs/core/lib/cjs/common/keys";
 import {Colors} from "@blueprintjs/core";
 import {Scatter} from "react-chartjs-2";
-import ReactResizeDetector from "react-resize-detector";
+import ResizeObserver from "react-resize-detector/build/withPolyfill";
 import {Layer, Stage, Group, Line, Ring, Rect} from "react-konva";
 import {ChartArea} from "chart.js";
 import {PlotContainerComponent, TickType, MultiPlotProps} from "components/Shared/LinePlot/PlotContainer/PlotContainerComponent";
@@ -580,8 +580,8 @@ export class ScatterPlotComponent extends React.Component<ScatterPlotComponentPr
                 onMouseLeave={this.onMouseLeave}
                 tabIndex={0}
             >
-                <ReactResizeDetector handleWidth handleHeight onResize={this.resize} refreshMode={"throttle"} refreshRate={33}>
-                </ReactResizeDetector>
+                <ResizeObserver handleWidth handleHeight onResize={this.resize} refreshMode={"throttle"} refreshRate={33}>
+                </ResizeObserver>
                 {this.width > 0 && this.height > 0 &&
                 <PlotContainerComponent
                     {...this.props}

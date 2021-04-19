@@ -1,6 +1,6 @@
 import * as React from "react";
 import * as _ from "lodash";
-import ReactResizeDetector from "react-resize-detector";
+import ResizeObserver from "react-resize-detector/build/withPolyfill";
 import {action, autorun, computed, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 import {NonIdealState} from "@blueprintjs/core";
@@ -275,8 +275,8 @@ export class HistogramComponent extends React.Component<WidgetProps> {
                         <LinePlotComponent {...linePlotProps}/>
                     </div>
                 </div>
-                <ReactResizeDetector handleWidth handleHeight onResize={this.onResize} refreshMode={"throttle"}>
-                </ReactResizeDetector>
+                <ResizeObserver handleWidth handleHeight onResize={this.onResize} refreshMode={"throttle"}>
+                </ResizeObserver>
             </div>
         );
     }

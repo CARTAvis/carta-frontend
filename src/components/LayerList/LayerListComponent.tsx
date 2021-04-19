@@ -5,7 +5,7 @@ import {observer} from "mobx-react";
 import {AnchorButton, Menu, MenuDivider, MenuItem, NonIdealState, Tooltip} from "@blueprintjs/core";
 import {Cell, Column, ColumnHeaderCell, RowHeaderCell, SelectionModes, Table} from "@blueprintjs/table";
 import {IMenuContext} from "@blueprintjs/table/src/interactions/menus/menuContext";
-import ReactResizeDetector from "react-resize-detector";
+import ResizeObserver from "react-resize-detector/build/withPolyfill";
 import {DefaultWidgetConfig, WidgetProps, HelpType, AppStore, FrameStore} from "stores";
 import "./LayerListComponent.scss";
 
@@ -274,8 +274,8 @@ export class LayerListComponent extends React.Component<WidgetProps> {
             return (
                 <div className="layer-list-widget">
                     <NonIdealState icon={"folder-open"} title={"No file loaded"} description={"Load a file using the menu"}/>;
-                    <ReactResizeDetector handleWidth handleHeight onResize={this.onResize}>
-                    </ReactResizeDetector>
+                    <ResizeObserver handleWidth handleHeight onResize={this.onResize}>
+                    </ResizeObserver>
                 </div>
             );
         }
@@ -320,9 +320,9 @@ export class LayerListComponent extends React.Component<WidgetProps> {
                     <Column columnHeaderCellRenderer={this.columnHeaderRenderer} cellRenderer={this.stokesRenderer}/>
                 </Table>
                 }
-                <ReactResizeDetector handleWidth handleHeight onResize={this.onResize}>
+                <ResizeObserver handleWidth handleHeight onResize={this.onResize}>
 
-                </ReactResizeDetector>
+                </ResizeObserver>
             </div>
         );
     }

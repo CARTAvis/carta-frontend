@@ -2,7 +2,7 @@ import * as React from "react";
 import {observer} from "mobx-react";
 import {action, autorun, computed, makeObservable, observable} from "mobx";
 import {HTMLTable, NonIdealState} from "@blueprintjs/core";
-import ReactResizeDetector from "react-resize-detector";
+import ResizeObserver from "react-resize-detector/build/withPolyfill";
 import {CARTA} from "carta-protobuf";
 import {DefaultWidgetConfig, WidgetProps, HelpType, WidgetsStore, AppStore} from "stores";
 import {StatsWidgetStore} from "stores/widgets";
@@ -270,8 +270,8 @@ export class StatsComponent extends React.Component<WidgetProps> {
                     {formContent}
                     {exportDataComponent}
                 </div>
-                <ReactResizeDetector handleWidth handleHeight onResize={this.onResize}>
-                </ReactResizeDetector>
+                <ResizeObserver handleWidth handleHeight onResize={this.onResize}>
+                </ResizeObserver>
             </div>
         );
     }

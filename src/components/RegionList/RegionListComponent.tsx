@@ -2,7 +2,7 @@ import * as React from "react";
 import {action, computed, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 import {HTMLTable, Icon, NonIdealState, Position, Tooltip} from "@blueprintjs/core";
-import ReactResizeDetector from "react-resize-detector";
+import ResizeObserver from "react-resize-detector/build/withPolyfill";
 import {CARTA} from "carta-protobuf";
 import {RegionStore, DefaultWidgetConfig, WidgetProps, HelpType, DialogStore, AppStore, FrameStore, WCS_PRECISION} from "stores";
 import {toFixed, getFormattedWCSPoint, formattedArcsec} from "utilities";
@@ -76,9 +76,9 @@ export class RegionListComponent extends React.Component<WidgetProps> {
             return (
                 <div className="region-list-widget">
                     <NonIdealState icon={"folder-open"} title={"No file loaded"} description={"Load a file using the menu"}/>;
-                    <ReactResizeDetector handleWidth handleHeight onResize={this.onResize}>
+                    <ResizeObserver handleWidth handleHeight onResize={this.onResize}>
 
-                    </ReactResizeDetector>
+                    </ResizeObserver>
                 </div>
             );
         }
@@ -202,8 +202,8 @@ export class RegionListComponent extends React.Component<WidgetProps> {
                     {rows}
                     </tbody>
                 </HTMLTable>
-                <ReactResizeDetector handleWidth handleHeight onResize={this.onResize}>
-                </ReactResizeDetector>
+                <ResizeObserver handleWidth handleHeight onResize={this.onResize}>
+                </ResizeObserver>
             </div>
         );
     }
