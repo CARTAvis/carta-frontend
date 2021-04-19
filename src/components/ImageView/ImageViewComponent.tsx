@@ -62,16 +62,16 @@ export const getImageCanvas = (padding: Padding, colorbarPosition: string, backg
     ctx.drawImage(contourCanvas, padding.left * devicePixelRatio, padding.top * devicePixelRatio);
     if (colorbarCanvas) {
         let xPos, yPos;
-        switch(colorbarPosition) {
-            case("top"):
+        switch (colorbarPosition) {
+            case "top":
                 xPos = 0;
                 yPos = padding.top * devicePixelRatio - colorbarCanvas.height;
                 break;
-            case("bottom"):
+            case "bottom":
                 xPos = 0;
                 yPos = overlayCanvas.height - colorbarCanvas.height - AppStore.Instance.overlayStore.colorbarHoverInfoHeight * devicePixelRatio;
                 break;
-            case("right"):
+            case "right":
             default:
                 xPos = padding.left * devicePixelRatio + rasterCanvas.width;
                 yPos = 0;

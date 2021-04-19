@@ -166,14 +166,14 @@ export class ColorbarComponent extends React.Component {
                             numberYPos = colorbarSettings.rightBorderPos - colorbarSettings.textGap - colorbarSettings.numberFontSize;
                         }
                     } else { // adjust for rotation
-                        switch(colorbarSettings.numberRotation) {
-                            case(90):
+                        switch (colorbarSettings.numberRotation) {
+                            case 90:
                                 numberXPos += colorbarSettings.numberFontSize;
                                 break;
-                            case(0):
+                            case 0:
                                 numberYPos = positions[i] - colorbarSettings.numberFontSize / 2;
                                 break;
-                            case(-90):
+                            case -90:
                                 numberYPos = positions[i] + colorbarSettings.height / 2;
                                 break;
                             default:
@@ -201,11 +201,11 @@ export class ColorbarComponent extends React.Component {
 
         const frameUnit = frame.unit === undefined || !frame.unit.length ? "arbitrary units" : frame.unit;
         if (colorbarSettings.position === "right") { // adjust for rotation
-            switch(colorbarSettings.labelRotation) {
-                case(90):
+            switch (colorbarSettings.labelRotation) {
+                case 90:
                     labelXPos += colorbarSettings.labelFontSize;
                     break;
-                case(-90):
+                case -90:
                     labelYPos += colorbarSettings.height;
                     break;
                 default:
