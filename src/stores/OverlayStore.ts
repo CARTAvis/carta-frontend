@@ -684,6 +684,7 @@ export class OverlayColorbarSettings {
     @observable showHoverInfo: boolean;
     @observable width: number;
     @observable offset: number;
+    @observable position: string;
     @observable customColor: boolean;
     @observable color: string;
     @observable borderVisible: boolean;
@@ -709,7 +710,6 @@ export class OverlayColorbarSettings {
     @observable labelFont: number;
     @observable labelFontSize: number;
     @observable labelCustomText: boolean;
-    //@observable labelText: string;
     @observable labelCustomColor: boolean;
     @observable labelColor: string;
     private textRatio = [0.5, 0.45, 0.5, 0.45, 0.6];
@@ -720,6 +720,7 @@ export class OverlayColorbarSettings {
         this.showHoverInfo = true;
         this.width = 15;
         this.offset = 5;
+        this.position = "right";
         this.customColor = false;
         this.color = AST_DEFAULT_COLOR;
         this.borderVisible = true;
@@ -745,7 +746,6 @@ export class OverlayColorbarSettings {
         this.labelFont = 0;
         this.labelFontSize = 15;
         this.labelCustomText = false;
-        //this.labelText = "";
         this.labelCustomColor = false;
         this.labelColor = AST_DEFAULT_COLOR;
     }
@@ -764,6 +764,10 @@ export class OverlayColorbarSettings {
 
     @action setOffset = (offset: number) => {
         this.offset = offset;
+    };
+
+    @action setPosition = (position: string) => {
+        this.position = position;
     };
 
     @action setCustomColor = (customColor: boolean) => {
@@ -866,10 +870,6 @@ export class OverlayColorbarSettings {
         this.labelCustomText = customText;
     };
 
-    //@action setLabelText = (text: string) => {
-    //    this.labelText = text;
-    //};
-
     @action setLabelCustomColor = (customColor: boolean) => {
         this.labelCustomColor = customColor;
     };
@@ -877,6 +877,21 @@ export class OverlayColorbarSettings {
     @action setLabelColor = (color: string) => {
         this.labelColor = color;
     };
+
+    @computed get yOffset(): number {
+        const padding = AppStore.Instance?.overlayStore?.padding;
+        return this.position === "right" ? padding?.top : padding?.left;
+    }
+
+    @computed get height(): number {
+        const overlayStore = AppStore.Instance?.overlayStore;
+        return this.position === "right" ? overlayStore?.renderHeight : overlayStore?.renderWidth;
+    }
+
+    @computed get tickNum(): number {
+        const tickNum = Math.round(this.height / 100.0 * this.tickDensity);
+        return this.height && tickNum > 1 ? tickNum : 1;
+    }
 
     private getOrder = (x: number): number => {
         return x === 0 ? 0 : Math.log10(Math.abs(x));
@@ -886,20 +901,12 @@ export class OverlayColorbarSettings {
         return Math.floor(this.getOrder(x));
     };
 
-    @computed get tickNum(): number {
-        const renderHeight = AppStore.Instance.overlayStore.renderHeight;
-        const tickNum = Math.round(renderHeight / 100.0 * this.tickDensity);
-        return renderHeight && tickNum > 1 ? tickNum : 1;
-    }
-
     @computed get roundedNumbers(): {numbers: number[], precision: number} {
-        const frame =  AppStore.Instance?.activeFrame;
+        const frame = AppStore.Instance?.activeFrame;
         const scaleMinVal = frame?.renderConfig?.scaleMinVal;
         const scaleMaxVal = frame?.renderConfig?.scaleMaxVal;
         const tickNum = this.tickNum;
-        if (!isFinite(scaleMinVal) || !isFinite(scaleMaxVal) || !tickNum) {
-            return null;
-        } else if (scaleMinVal >= scaleMaxVal) {
+        if (!isFinite(scaleMinVal) || !isFinite(scaleMaxVal) || (scaleMinVal >= scaleMaxVal) || !tickNum) {
             return null;
         } else {
             let dy = (scaleMaxVal - scaleMinVal) / tickNum; // estimate the step
@@ -936,18 +943,21 @@ export class OverlayColorbarSettings {
     }
 
     @computed get positions(): number[] {
-        const appStore = AppStore.Instance;
-        const frame = appStore?.activeFrame;
-        const yOffset = appStore?.overlayStore.padding.top;
-        if (!this.roundedNumbers || !frame || !isFinite(yOffset)) {
+        const frame = AppStore.Instance?.activeFrame;
+        const scaleMinVal = frame?.renderConfig?.scaleMinVal;
+        const scaleMaxVal = frame?.renderConfig?.scaleMaxVal;
+        if (!this.roundedNumbers || !frame || !isFinite(this.yOffset)) {
             return [];
         }
-        return this.roundedNumbers.numbers.map(x => yOffset + frame.renderHeight * (frame.renderConfig.scaleMaxVal - x) / (frame.renderConfig.scaleMaxVal - frame.renderConfig.scaleMinVal));
+        if (this.position === "right") {
+            return this.roundedNumbers.numbers.map(x => this.yOffset + this.height * (scaleMaxVal - x) / (scaleMaxVal - scaleMinVal));
+        } else {
+            return this.roundedNumbers.numbers.map(x => this.yOffset + this.height * (x - scaleMinVal) / (scaleMaxVal - scaleMinVal));
+        }
     }
 
-
     @computed get rightBorderPos(): number {
-        return this.offset + this.width;
+        return this.position === "top" ? this.stageWidth - this.offset - this.width : this.offset + this.width;
     }
 
     @computed get textGap(): number {
@@ -956,7 +966,7 @@ export class OverlayColorbarSettings {
 
     @computed get numberWidth(): number {
         const textWidth = Math.max(...(this.texts.map(x => x.length))) * this.textRatio[clamp(Math.floor(this.numberFont / 4), 0, this.textRatio.length)];
-        return this.numberVisible ? this.numberFontSize * (this.numberRotation ? 1 : textWidth) + this.textGap : 0;
+        return this.numberVisible ? this.numberFontSize * (this.numberRotation || this.position !== "right" ? 1 : textWidth) + this.textGap : 0;
     }
 
     @computed get labelWidth(): number {
@@ -1199,7 +1209,7 @@ export class OverlayStore {
     }
 
     @computed get minSize() {
-        return Math.min(this.viewWidth, this.viewHeight);
+        return Math.min(this.renderWidth, this.renderHeight);
     }
 
     @computed get showNumbers() {
@@ -1211,7 +1221,7 @@ export class OverlayStore {
     }
 
     @computed get titleGap() {
-        return this.defaultGap * 2;
+        return this.defaultGap * 2 + (this.colorbar.visible && this.colorbar.position === "top" ? this.colorbar.totalWidth : 0);
     }
 
     @computed get cumulativeLabelGap() {
@@ -1224,21 +1234,32 @@ export class OverlayStore {
         return 5;
     }
 
-    @computed get paddingLeft(): number { // base + numGap + numHeight + labelGap + labelHeight
-        return this.base + (this.showNumbers ? this.defaultGap + this.numbers.fontSize : 0) + (this.labels.show ? this.defaultGap + this.labels.fontSize : 0)
+    @computed get numberWidth(): number {
+        return this.showNumbers ? this.defaultGap + this.numbers.fontSize : 0;
     }
 
-    @computed get paddingRight(): number { // base + colorbarWidth
-        return this.base + (this.colorbar.visible ? this.colorbar.totalWidth : 0);
+    @computed get labelWidth(): number {
+        return this.labels.show ? this.defaultGap + this.labels.fontSize : 0;
     }
 
-    @computed get paddingTop(): number { // base + titleGap + titleHeight
-        return this.base + (this.title.show ? this.titleGap + this.title.fontSize : 0);
+    @computed get colorbarHoverInfoHeight(): number {
+        return (!(this.colorbar.visible) || (this.colorbar.visible && this.colorbar.position !== "bottom" && this.labels.show) || (this.colorbar.visible && this.colorbar.position === "bottom" && this.colorbar.labelVisible) ? 0 : 10);
     }
 
-    @computed get paddingBottom(): number { // base + numGap + numHeight + labelGap + labelHeight + colorbarHoverInfoHeight
-        return this.base + (this.showNumbers ? this.defaultGap + this.numbers.fontSize : 0)
-            + (this.labels.show ? this.defaultGap + this.labels.fontSize : 0) + (!this.colorbar.visible || this.labels.show ? 0 : 10);
+    @computed get paddingLeft(): number { 
+        return this.base + this.numberWidth + this.labelWidth;
+    }
+
+    @computed get paddingRight(): number {
+        return this.base + (this.colorbar.visible && this.colorbar.position === "right" ? this.colorbar.totalWidth : 0);
+    }
+
+    @computed get paddingTop(): number {
+        return this.base + (this.title.show ? this.titleGap + this.title.fontSize : (this.colorbar.visible && this.colorbar.position === "top" ? this.colorbar.totalWidth : 0));
+    }
+
+    @computed get paddingBottom(): number {
+        return this.base + this.numberWidth + this.labelWidth + (this.colorbar.visible && this.colorbar.position === "bottom" ? this.colorbar.totalWidth : 0) + this.colorbarHoverInfoHeight;
     }
 
     @computed get padding(): Padding {
@@ -1251,7 +1272,7 @@ export class OverlayStore {
     }
 
     @computed get renderWidth() {
-        const renderWidth = this.viewWidth - this.paddingLeft - this.paddingRight
+        const renderWidth = this.viewWidth - this.paddingLeft - this.paddingRight;
         return renderWidth > 1 ? renderWidth : 1; // return value > 1 to prevent crashing
     }
 
