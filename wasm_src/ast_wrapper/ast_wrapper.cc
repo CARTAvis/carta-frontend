@@ -56,6 +56,7 @@ EMSCRIPTEN_KEEPALIVE AstFrameSet* getFrameFromFitsChan(AstFitsChan* fitschan, bo
     if (checkSkyDomain) {
         const char *domain = astGetC(frameSet, "Domain");
         if (!strstr(domain, "SKY")) {
+            astDelete(frameSet);
             return nullptr;
         }
     }
