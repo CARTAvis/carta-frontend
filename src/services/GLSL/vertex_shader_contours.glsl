@@ -10,6 +10,7 @@ uniform vec2 uRotationOrigin;
 uniform float uRotationAngle;
 uniform float uScaleAdjustment;
 uniform float uLineThickness;
+uniform float uPixelRatio;
 
 // Control-map based transformation
 uniform int uControlMapEnabled;
@@ -98,7 +99,7 @@ void main(void) {
     vec2 posImageSpace = aVertexPosition.xy - 0.5;
 
     // Calculate extrusion vector and distance
-    vec2 extrudeOffet = (aVertexNormal / 16384.0) * uLineThickness * 0.5;
+    vec2 extrudeOffet = vec2(1.0 / uPixelRatio, 1.0) * (aVertexNormal / 16384.0) * uLineThickness * 0.5;
     float extrudeDistance = length(extrudeOffet);
 
     // If there's a control map, use it to look up location using bilinear filtering

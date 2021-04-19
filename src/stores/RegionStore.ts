@@ -1,6 +1,7 @@
 import {action, computed, observable, makeObservable} from "mobx";
 import {Colors} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
+import * as AST from "ast_wrapper";
 import {Point2D} from "models";
 import {BackendService} from "services";
 import {add2D, getApproximateEllipsePoints, getApproximatePolygonPoints, isAstBadPoint, midpoint2D, minMax2D, rotate2D, scale2D, simplePolygonPointTest, simplePolygonTest, subtract2D, toFixed, transformPoint} from "utilities";
@@ -41,7 +42,7 @@ export class RegionStore {
     static readonly TARGET_VERTEX_COUNT = 200;
 
     private readonly backendService: BackendService;
-    private readonly regionApproximationMap: Map<number, Point2D[]>;
+    private readonly regionApproximationMap: Map<AST.FrameSet, Point2D[]>;
     public modifiedTimestamp: number;
 
     public static RegionTypeString(regionType: CARTA.RegionType): string {
@@ -210,7 +211,7 @@ export class RegionStore {
         }
     }
 
-    public getRegionApproximation(astTransform: number): Point2D[] {
+    public getRegionApproximation(astTransform: AST.FrameSet): Point2D[] {
         let approximatePoints = this.regionApproximationMap.get(astTransform);
         if (!approximatePoints) {
             if (this.regionType === CARTA.RegionType.POINT) {
