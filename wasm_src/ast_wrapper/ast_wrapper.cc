@@ -411,9 +411,9 @@ EMSCRIPTEN_KEEPALIVE void deleteObject(AstFrameSet* src)
     astDelete(src);
 }
 
-EMSCRIPTEN_KEEPALIVE AstFrameSet* copy(AstFrameSet* src)
+EMSCRIPTEN_KEEPALIVE AstObject* copy(AstObject* src)
 {
-    return static_cast<AstFrameSet*> astCopy(src);
+    return static_cast<AstObject*> astCopy(src);
 }
 
 EMSCRIPTEN_KEEPALIVE void invert(AstFrameSet* src)
