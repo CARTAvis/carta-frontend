@@ -89,10 +89,16 @@ export class ProfileFittingStore {
     @computed get resultString(): string {
         let resultString = "";
         if (this.components && this.hasResult) {
+            if (this.continuum !== FittingContinuum.NONE) {
+                resultString += `Y Intercept = ${this.resultYIntercept}\n`;
+            }
+            if (this.continuum === FittingContinuum.FIRST_ORDER) {
+                resultString += `Slope = ${this.resultSlope}\n`;
+            }
             for (let i = 0; i <  this.components.length; i++) {
                 const component = this.components[i];
                 const componentString =
-                    `Component #${i+1}\n`+
+                    `\nComponent #${i+1}\n`+
                     `Center = ${component.resutlCenter}\n` +
                     `Amplitude = ${component.resultAmp}\n` +
                     `FWHM = ${component.resultFwhm}\n`;
@@ -162,7 +168,7 @@ export class ProfileFittingStore {
                     const z = (x[i] - component.resutlCenter) / component.resultFwhm;
                     yi += component.resultAmp * Math.exp(-4 * Math.log(2) * z * z);
                 }
-                resultPoint2DArray.push({x: x[i], y: yi + (this.slope * x[i] + this.yIntercept)}); // TODO
+                resultPoint2DArray.push({x: x[i], y: yi + (this.resultSlope * x[i] + this.resultYIntercept)});
             }
             return resultPoint2DArray;
         }
@@ -177,7 +183,7 @@ export class ProfileFittingStore {
                 for (let i = 0; i < x.length; i++) {
                     const z = (x[i] - component.resutlCenter) / component.resultFwhm;
                     const yi = component.resultAmp * Math.exp(-4 * Math.log(2) * z * z);
-                    individualResultPoint2DArray.push({x: x[i], y: yi + (this.slope * x[i] + this.yIntercept)}); // TODO
+                    individualResultPoint2DArray.push({x: x[i], y: yi + (this.resultSlope * x[i] + this.resultYIntercept)});
                 }
                 individualResultPoint2DArrays.push(individualResultPoint2DArray);
             }
@@ -195,7 +201,7 @@ export class ProfileFittingStore {
                     const z = (x[i] - component.resutlCenter) / component.resultFwhm;
                     yi += component.resultAmp * Math.exp(-4 * Math.log(2) * z * z);
                 }
-                residualPoint2DArray.push({x: x[i], y: y[i] - (yi + (this.slope * x[i] + this.yIntercept))}); // TODO
+                residualPoint2DArray.push({x: x[i], y: y[i] - (yi + (this.resultSlope * x[i] + this.resultYIntercept))});
             }
             return residualPoint2DArray;
         }
@@ -230,7 +236,28 @@ export class ProfileFittingStore {
             lockedInputData.push(component.lockedFwhm ? 1: 0);
         })
 
-        const fittingResult = GSL.gaussianFitting(x, y, inputData, lockedInputData);
+        const orderInputData = [];
+        const lockedOrderInputData = [];
+        if (this.continuum === FittingContinuum.NONE) {
+            orderInputData.push(0);
+            orderInputData.push(0);
+            lockedOrderInputData.push(1);
+            lockedOrderInputData.push(1);
+        } else if (this.continuum === FittingContinuum.ZEROTH_ORDER) {
+            orderInputData.push(this.yIntercept);
+            orderInputData.push(0);
+            lockedOrderInputData.push(this.lockedYIntercept ? 1: 0);
+            lockedOrderInputData.push(1);
+        } else if (this.continuum === FittingContinuum.FIRST_ORDER) {
+            orderInputData.push(this.yIntercept);
+            orderInputData.push(this.slope);
+            lockedOrderInputData.push(this.lockedYIntercept ? 1: 0);
+            lockedOrderInputData.push(this.lockedSlope ? 1: 0);
+        }
+
+        const fittingResult = GSL.gaussianFitting(x, y, inputData, lockedInputData, orderInputData, lockedOrderInputData);
+        this.setResultYIntercept(fittingResult.yIntercept);
+        this.setResultSlope(fittingResult.slope);
         for (let i = 0; i < this.components.length ; i++) {
             const component = this.components[i];
             component.setResultCenter(fittingResult.center[i]);

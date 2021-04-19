@@ -461,7 +461,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
                 }
 
                 const fittingStore = this.widgetStore.fittingStore;
-                if (fittingStore.continuum !== FittingContinuum.NONE) {
+                if (fittingStore.continuum !== FittingContinuum.NONE && !fittingStore.hasResult) {
                     let fittingPlotProps: MultiPlotProps = {
                         data: currentPlotData.fittingBaselineValues,
                         type: PlotType.LINES,
