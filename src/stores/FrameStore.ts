@@ -815,9 +815,9 @@ export class FrameStore {
                 if (spectralFrame) {
                     this.spectralFrame = AST.copy(spectralFrame);
                 }
-                AST.deleteObject(astFrameSet);
-                AST.deleteObject(astFrameSet2D);
             }
+            AST.deleteObject(astFrameSet);
+            AST.deleteObject(astFrameSet2D);
         } else {
             // init WCS
             const astFrameSet = this.initFrame();
