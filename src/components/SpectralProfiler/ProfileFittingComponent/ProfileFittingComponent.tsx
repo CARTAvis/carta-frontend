@@ -1,7 +1,7 @@
 import * as React from "react";
-import {computed} from "mobx"
+import {computed, observable, action} from "mobx"
 import {observer} from "mobx-react";
-import {AnchorButton, FormGroup, HTMLSelect, Slider, Pre, Text, Intent, Tooltip, Switch} from "@blueprintjs/core";
+import {AnchorButton, FormGroup, HTMLSelect, Slider, Pre, Text, Intent, Tooltip, Switch, Popover, Button} from "@blueprintjs/core";
 import {SafeNumericInput} from "components/Shared";
 import {ProfileFittingStore} from "stores/ProfileFittingStore"
 import {SpectralProfileWidgetStore} from "stores/widgets/SpectralProfileWidgetStore";
@@ -24,7 +24,7 @@ export enum FittingContinuum {
 
 @observer
 export class ProfileFittingComponent extends React.Component<{fittingStore: ProfileFittingStore, widgetStore: SpectralProfileWidgetStore}> {
-
+    @observable isShowingLog: boolean;
 
     private onContinuumValueChanged = (ev) => {
         this.props.fittingStore.setYIntercept(0);
@@ -98,7 +98,17 @@ export class ProfileFittingComponent extends React.Component<{fittingStore: Prof
         this.props.fittingStore.selectedComponent.setLockedFwhm(!this.props.fittingStore.selectedComponent.lockedFwhm);
     }
 
-    private showLog = () => {}
+    private showLog = () => {
+        this.setIsShowingLog(true);
+    }
+
+    private handleLogClose = () => {
+        this.setIsShowingLog(false);
+    }
+
+    private saveLog = () => {
+        
+    }
 
     private reset = () => {
         const fittingStore = this.props.fittingStore;
@@ -193,11 +203,13 @@ export class ProfileFittingComponent extends React.Component<{fittingStore: Prof
         )
     }
 
+    @action setIsShowingLog(val: boolean) {
+        this.isShowingLog = val;
+    }
+
     render() {
         const appStore = AppStore.Instance;
         const fittingStore = this.props.fittingStore;
-        // // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        // const channel = this.props.widgetStore.effectiveFrame.channelValues;
 
         return (
             <div className="profile-fitting-panel">
@@ -366,12 +378,27 @@ export class ProfileFittingComponent extends React.Component<{fittingStore: Prof
                         onClick={this.fitData}
                         disabled={!fittingStore.readyToFit}
                     />
-                    <AnchorButton
-                        text="View log"
-                        onClick={this.showLog}
-                        intent={Intent.PRIMARY}
-                        disabled={!fittingStore.hasResult}
-                    />
+                    <Popover isOpen={this.isShowingLog} onClose={this.handleLogClose}> 
+                        <AnchorButton
+                            text="View log"
+                            onClick={this.showLog}
+                            intent={Intent.PRIMARY}
+                            disabled={!fittingStore.hasResult}
+                        />
+                        <div> 
+                            <div className="fitting-popover">
+                                <Pre className="fitting-log-pre">
+                                    <Text>
+                                        {fittingStore.resultLog}
+                                    </Text>
+                                </Pre>
+                            </div>
+                            <Button
+                                text="Save log"
+                                onClick={this.saveLog}
+                            />
+                        </div>
+                    </Popover>
                     <Switch
                         label="residual"
                         checked={fittingStore.enableResidual}

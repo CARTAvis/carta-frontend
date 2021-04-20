@@ -254,6 +254,8 @@ struct data
   gsl_vector *orderParameterIndexes;
 };
 
+char logout[4096];
+
 /* model function: amp * exp( -4ln2[(t - center)/ fwhm]^2 */
 double
 gaussian(const double amp, const double center, const double fwhm, const double x)
@@ -328,10 +330,12 @@ callback(const size_t iter, void *params,
   /* compute reciprocal condition number of J(x) */
   gsl_multifit_nlinear_rcond(&rcond, w);
 
-  fprintf(stderr, "iter %2zu: |a|/|v| = %.4f cond(J) = %8.4f, |f(x)| = %.4f\n", iter, avratio, 1.0 / rcond, gsl_blas_dnrm2(f));
-  for (i = 0; i < x -> size; i++) {
-      fprintf(stderr, "xi = %.4f\n", gsl_vector_get(x, i));
-  }
+// //   fprintf(stderr, "iter %2zu: |a|/|v| = %.4f cond(J) = %8.4f, |f(x)| = %.4f\n", iter, avratio, 1.0 / rcond, gsl_blas_dnrm2(f));
+//   snprintf(logout, sizeof(logout), "%s\n iter %2zu: |a|/|v| = %.4f cond(J) = %8.4f, |f(x)| = %.4f\n", logout, iter, avratio, 1.0 / rcond, gsl_blas_dnrm2(f));
+//   for (i = 0; i < x -> size; i++) {
+//     //   fprintf(stderr, "xi = %.4f\n", gsl_vector_get(x, i));
+//     snprintf(logout, sizeof(logout), "%s\n xi = %.4f\n", logout, gsl_vector_get(x, i));
+//   }
 }
 
 void
@@ -376,20 +380,22 @@ solve_system(gsl_vector *x, gsl_multifit_nlinear_fdf *fdf, gsl_multifit_nlinear_
   #define ERR(i) sqrt(gsl_matrix_get(covar,i,i))
 
   /* print summary */
-  fprintf(stderr, "summary from method '%s/%s'\n", gsl_multifit_nlinear_name(work), gsl_multifit_nlinear_trs_name(work));
-  fprintf(stderr, "number of iterations: %zu\n", gsl_multifit_nlinear_niter(work));
-  fprintf(stderr, "function evaluations: %zu\n", fdf->nevalf);
-  fprintf(stderr, "Jacobian evaluations: %zu\n", fdf->nevaldf);
-  fprintf(stderr, "reason for stopping : %s\n", (info == 1) ? "small step size" : "small gradient");
-  fprintf(stderr, "initial |f(x)|      : %f\n", sqrt(chisq0));
-  fprintf(stderr, "final |f(x)|        : %f\n", sqrt(chisq));
-  fprintf(stderr, "initial cost        : %.12e\n", chisq0);
-  fprintf(stderr, "final cost          : %.12e\n", chisq);
+  snprintf(logout, sizeof(logout), "%s\n summary from method '%s/%s'\n", logout, gsl_multifit_nlinear_name(work), gsl_multifit_nlinear_trs_name(work));
+  snprintf(logout, sizeof(logout), "%s\n number of iterations: %zu\n", logout, gsl_multifit_nlinear_niter(work));
+  snprintf(logout, sizeof(logout), "%s\n function evaluations: %zu\n", logout, fdf->nevalf);
+  snprintf(logout, sizeof(logout), "%s\n Jacobian evaluations: %zu\n", logout, fdf->nevaldf);
+  snprintf(logout, sizeof(logout), "%s\n reason for stopping : %s\n", logout, (info == 1) ? "small step size" : "small gradient");
+  snprintf(logout, sizeof(logout), "%s\n initial |f(x)|      : %f\n", logout, sqrt(chisq0));
+  snprintf(logout, sizeof(logout), "%s\n final |f(x)|        : %f\n", logout, sqrt(chisq));
+  snprintf(logout, sizeof(logout), "%s\n initial cost        : %.12e\n", logout, chisq0);
+  snprintf(logout, sizeof(logout), "%s\n final cost          : %.12e\n", logout, chisq);
   size_t i;
   for (i = 0; i < x->size; i++) {
-    fprintf(stderr, "final xi            : %.12e +/- %.12e (%.3g%%)\n", FIT(i), ERR(i), abs(100 * ERR(i) / FIT(i)));
+    // fprintf(stderr, "final xi            : %.12e +/- %.12e (%.3g%%)\n", FIT(i), ERR(i), abs(100 * ERR(i) / FIT(i)));
+    snprintf(logout, sizeof(logout), "%s\n final variable%zu    : %.12e +/- %.12e (%.3g%%)\n", logout, i + 1, FIT(i), ERR(i), abs(100 * ERR(i) / FIT(i)));
   }
-  fprintf(stderr, "final cond(J)       : %.12e\n", 1.0 / rcond);
+//   fprintf(stderr, "final cond(J)       : %.12e\n", 1.0 / rcond);
+  snprintf(logout, sizeof(logout), "%s\n final cond(J)       : %.12e\n", logout, 1.0 / rcond);
 
   gsl_multifit_nlinear_free(work);
 }
@@ -420,13 +426,12 @@ size_t getModelParametersIndexMatrix(int **lockedInputs, gsl_matrix *parameterIn
     return n;
 }
 
-int EMSCRIPTEN_KEEPALIVE fittingGaussian(
+char * EMSCRIPTEN_KEEPALIVE fittingGaussian(
     double* xInArray, double* yInArray, const int dataN,
     double **inputs, int **lockedInputs, const int componentN,
     double* orderInputs, int* lockedOrderInputs,
-    double* ampOut, double* centerOut, double* fwhmOut, double* orderInputsOut,
-    char* logOut) {
-    int status = 0; /* return value: 0 = success */
+    double* ampOut, double* centerOut, double* fwhmOut, double* orderInputsOut) {
+    strncpy(logout, "", sizeof(logout));
 
     gsl_matrix *parameterIndexs = gsl_matrix_alloc(componentN, 3); // the matrix to store the indexes of unlocked inputs in vector of model parameters
     gsl_vector *orderParameterIndexes = gsl_vector_alloc(2);
@@ -518,13 +523,11 @@ int EMSCRIPTEN_KEEPALIVE fittingGaussian(
         }
     }
 
-    snprintf(logOut, sizeof(logOut), "Tesststststsstst");
-    
     gsl_vector_free(f);
     gsl_vector_free(x);
     gsl_matrix_free(parameterIndexs);
 
-    return 0;
+    return logout;
 }
 
 }

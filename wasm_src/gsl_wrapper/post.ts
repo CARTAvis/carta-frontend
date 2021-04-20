@@ -7,7 +7,7 @@ Module.filterHanning = Module.cwrap("filterHanning", "number", ["number", "numbe
 Module.filterDecimation = Module.cwrap("filterDecimation", "number", ["number", "number", "number", "number", "number"]);
 Module.filterBinning = Module.cwrap("filterBinning", "number", ["number", "number", "number", "number"]);
 Module.filterSavitzkyGolay = Module.cwrap("filterSavitzkyGolay", "number", ["number", "number", "number", "number", "number", "number"]);
-Module.fittingGaussian = Module.cwrap("fittingGaussian", "number", ["number", "number", "number", "number", "number", "number", "number", "number", "number", "number", "number", "number", "string"])
+Module.fittingGaussian = Module.cwrap("fittingGaussian", "string", ["number", "number", "number", "number", "number", "number", "number", "number", "number", "number", "number", "number"])
 
 Module.boxcarSmooth = function (yIn: Float64Array | Float32Array, kernelSize: number) {
     // Return empty array if arguments are invalid
@@ -173,22 +173,16 @@ Module.gaussianFitting = function (xIn: Float64Array | Float32Array, yIn: Float6
     Module.resultCenter = Module._malloc(componentN * 8);
     Module.resultFwhm = Module._malloc(componentN * 8);
 
-    Module.logBytes = 1e6;
-    Module.logPtrUint = Module._malloc(Module.logBytes);
-    Module.logHeapUint = new Uint8Array(Module.HEAPU8.buffer, Module.logPtrUint, Module.logBytes); // ???
-
-    Module.fittingGaussian(
+    const log = Module.fittingGaussian(
         Module.xIn, Module.yIn, dataN,
         Module.inputArray, Module.lockedInputArray, componentN,
         Module.orderValues, Module.lockedOrderValues,
-        Module.resultAmp, Module.resultCenter, Module.resultFwhm, Module.resultOrderValues,
-        Module.logPtrUint);
+        Module.resultAmp, Module.resultCenter, Module.resultFwhm, Module.resultOrderValues);
 
     const continuumValues = new Float64Array(Module.HEAPF64.buffer, Module.resultOrderValues, 2).slice();
     const centerOut = new Float64Array(Module.HEAPF64.buffer, Module.resultCenter, componentN).slice();
     const ampOut = new Float64Array(Module.HEAPF64.buffer, Module.resultAmp, componentN).slice();
     const fwhmOut = new Float64Array(Module.HEAPF64.buffer, Module.resultFwhm, componentN).slice();
-    const log = Module.logHeapUint.slice();
 
     Module._free(Module.xIn);
     Module._free(Module.yIn);
