@@ -477,14 +477,14 @@ export class AppStore {
         return this.loadFile(directory, file, hdu);
     };
 
-    @action saveFile = (directory: string, filename: string, fileType: CARTA.FileType, regionId?: number, channels?: number[], stokes?: number[], shouldDropDegeneratedAxes?: boolean) => {
+    @action saveFile = (directory: string, filename: string, fileType: CARTA.FileType, regionId?: number, channels?: number[], stokes?: number[], shouldDropDegenerateAxes?: boolean) => {
         return new Promise<number>((resolve, reject) => {
             if (!this.activeFrame) {
                 reject();
             }
             this.startFileSaving();
             const fileId = this.activeFrame.frameInfo.fileId;
-            this.backendService.saveFile(fileId, directory, filename, fileType, regionId, channels, stokes, !shouldDropDegeneratedAxes).subscribe(ack => {
+            this.backendService.saveFile(fileId, directory, filename, fileType, regionId, channels, stokes, !shouldDropDegenerateAxes).subscribe(ack => {
                 AppToaster.show({ icon: "saved", message: `${filename} saved.`, intent: "success", timeout: 3000 });
                 this.fileBrowserStore.hideFileBrowser();
                 this.endFileSaving();

@@ -68,7 +68,7 @@ export class FileBrowserStore {
     @observable saveSpectralRange: string[] = ["0", "0"];
     @observable saveStokesOption: number;
     @observable saveRegionId: number;
-    @observable shouldDropDegeneratedAxes: boolean;
+    @observable shouldDropDegenerateAxes: boolean;
 
     constructor() {
         makeObservable(this);
@@ -101,7 +101,7 @@ export class FileBrowserStore {
         }
         this.initialSaveSpectralRange();
         this.saveRegionId = 0;
-        this.shouldDropDegeneratedAxes = false;
+        this.shouldDropDegenerateAxes = false;
     };
 
     @action hideFileBrowser = () => {

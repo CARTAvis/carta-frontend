@@ -5,51 +5,54 @@ import {CARTA} from "carta-protobuf";
 import {AppStore, FileBrowserStore} from "stores";
 import {SpectralSystem, SpectralType, SpectralUnit} from "models";
 import "./ImageSaveComponent.scss";
-import {observable} from "mobx";
+import {action, autorun, computed, makeObservable} from "mobx";
 
 @observer
-export class ImageSaveComponent extends React.Component<{
+export class ImageSaveComponent extends React.Component {
+    constructor(props: any) {
+        super(props);
+        makeObservable(this);
 
-}> {
-    @observable isValideSaveSpectralRangeStart: boolean;
-    @observable isValideSaveSpectralRangeEnd: boolean;
+        autorun(()=>{
+            const appStore = AppStore.Instance;
+            if (this.validSaveSpectralRangeStart && this.validSaveSpectralRangeEnd) {
+                appStore.endFileSaving()
+            } else {
+                appStore.startFileSaving();
+            }
+        })
+    }
 
-    private onChangeShouldDropDegeneratedAxes = () => {
+    @computed get validSaveSpectralRangeStart() {
+        const appStore = AppStore.Instance;
         const fileBrowser = FileBrowserStore.Instance;
-        fileBrowser.shouldDropDegeneratedAxes = !fileBrowser.shouldDropDegeneratedAxes;
+        const spectralRange = appStore.activeFrame?.channelValueBounds;
+        if (spectralRange && fileBrowser.saveSpectralRange?.length) {
+            const valueAsNumber = parseFloat(fileBrowser.saveSpectralRange[0]);
+            return spectralRange.min <= valueAsNumber && valueAsNumber <= parseFloat(fileBrowser.saveSpectralRange[1]);
+        }
+        return false;
+    }
+
+    @computed get validSaveSpectralRangeEnd() {
+        const appStore = AppStore.Instance;
+        const fileBrowser = FileBrowserStore.Instance;
+        const spectralRange = appStore.activeFrame?.channelValueBounds;
+        if (spectralRange && fileBrowser.saveSpectralRange?.length) {
+            const valueAsNumber = parseFloat(fileBrowser.saveSpectralRange[1]);
+            return parseFloat(fileBrowser.saveSpectralRange[0]) <= valueAsNumber && valueAsNumber <= spectralRange.max;
+        }
+        return false;
+    }
+
+    private onChangeShouldDropDegenerateAxes = () => {
+        const fileBrowser = FileBrowserStore.Instance;
+        fileBrowser.shouldDropDegenerateAxes = !fileBrowser.shouldDropDegenerateAxes;
     };
 
     private handleRegionChanged = (changeEvent: React.ChangeEvent<HTMLSelectElement>) => {
         const fileBrowser = FileBrowserStore.Instance;
         fileBrowser.setSaveRegionId(parseInt(changeEvent.target.value));
-    };
-
-    private valideSaveSpectralRangeStart = () => {
-        const appStore = AppStore.Instance;
-        const fileBrowser = FileBrowserStore.Instance;
-        const spectralRange = AppStore.Instance.activeFrame.channelValueBounds;
-        const valueAsNumber = parseFloat(fileBrowser.saveSpectralRange[0]);
-        this.isValideSaveSpectralRangeStart = spectralRange.min <= valueAsNumber && valueAsNumber <= parseFloat(fileBrowser.saveSpectralRange[1]);
-        if (this.isValideSaveSpectralRangeStart && this.isValideSaveSpectralRangeEnd) {
-            appStore.endFileSaving()
-        } else {
-            appStore.startFileSaving();
-        }
-        return this.isValideSaveSpectralRangeStart;
-    };
-
-    private valideSaveSpectralRangeEnd = () => {
-        const appStore = AppStore.Instance;
-        const fileBrowser = FileBrowserStore.Instance;
-        const spectralRange = AppStore.Instance.activeFrame.channelValueBounds;
-        const valueAsNumber = parseFloat(fileBrowser.saveSpectralRange[1]);
-        this.isValideSaveSpectralRangeEnd = parseFloat(fileBrowser.saveSpectralRange[0]) <= valueAsNumber && valueAsNumber <= spectralRange.max;
-        if (this.isValideSaveSpectralRangeStart && this.isValideSaveSpectralRangeEnd) {
-            appStore.endFileSaving()
-        } else {
-            appStore.startFileSaving();
-        }
-        return this.isValideSaveSpectralRangeEnd;
     };
 
     private handleSaveSpectralRangeStartChanged = (_valueAsNumber: number, valueAsString: string) => {
@@ -66,9 +69,9 @@ export class ImageSaveComponent extends React.Component<{
         }
     };
 
-    private updateSpectralCoordinate(coordStr: string): void {
+    @action updateSpectralCoordinate(coordStr: string): void {
         const activeFrame = AppStore.Instance.activeFrame;
-        if (activeFrame && activeFrame.spectralCoordsSupported && activeFrame.spectralCoordsSupported.has(coordStr)) {
+        if (activeFrame?.spectralCoordsSupported?.has(coordStr)) {
             const coord: { type: SpectralType, unit: SpectralUnit } = activeFrame.spectralCoordsSupported.get(coordStr);
             activeFrame.spectralType = coord.type;
             activeFrame.spectralUnit = coord.unit;
@@ -77,22 +80,21 @@ export class ImageSaveComponent extends React.Component<{
         }
     };
 
-    private updateSpectralSystem(specsys: SpectralSystem): void {
+    @action updateSpectralSystem(specsys: SpectralSystem): void {
         const activeFrame = AppStore.Instance.activeFrame;
-        if (activeFrame && activeFrame.spectralSystemsSupported && activeFrame.spectralSystemsSupported.includes(specsys)) {
+        if (activeFrame?.spectralSystemsSupported?.includes(specsys)) {
             activeFrame.spectralSystem = specsys;
             // Update the spectral range
             FileBrowserStore.Instance.initialSaveSpectralRange();
         }
     };
 
-    private updateStokes(option: number): void {
+    @action updateStokes(option: number): void {
         FileBrowserStore.Instance.saveStokesOption = option;
     };
 
     /// Generate options for stokes via string
-    /// Will be transfered by FileBrowserStores.saveStokesRange
-    private updateStokesOptions = () => {
+    @computed get stokesOptions() {
         const activeFrame = AppStore.Instance.activeFrame;
         const stokesInfo = activeFrame.stokesInfo;
         let options = [
@@ -154,7 +156,7 @@ export class ImageSaveComponent extends React.Component<{
         const spectralCoordinateOptions: IOptionProps[] = activeFrame && activeFrame.spectralCoordsSupported ?
             Array.from(activeFrame.spectralCoordsSupported.keys()).map((coord: string) => { return { value: coord, label: coord === nativeSpectralCoordinate ? coord + " (Native WCS)" : coord }; }) : [];
         const spectralSystemOptions: IOptionProps[] = activeFrame && activeFrame.spectralSystemsSupported ? activeFrame.spectralSystemsSupported.map(system => { return { value: system, label: system }; }) : [];
-        const stokesOptions: IOptionProps[] = this.updateStokesOptions();
+        const stokesOptions: IOptionProps[] = this.stokesOptions;
         // Calculate a small step size
         const numChannels = activeFrame.numChannels;
         const min = activeFrame.channelValueBounds?.min;
@@ -213,7 +215,7 @@ export class ImageSaveComponent extends React.Component<{
                                             stepSize={majorStepSize}
                                             minorStepSize={null}
                                             selectAllOnIncrement={true}
-                                            intent={this.valideSaveSpectralRangeStart() ? Intent.NONE : Intent.DANGER}
+                                            intent={this.validSaveSpectralRangeStart ? Intent.NONE : Intent.DANGER}
                                         />
                                         <Label>{activeFrame.spectralUnit ? `(${activeFrame.spectralUnit})` : ""}</Label>
                                     </ControlGroup>
@@ -228,7 +230,7 @@ export class ImageSaveComponent extends React.Component<{
                                             stepSize={majorStepSize}
                                             minorStepSize={null}
                                             selectAllOnIncrement={true}
-                                            intent={this.valideSaveSpectralRangeEnd() ? Intent.NONE : Intent.DANGER}
+                                            intent={this.validSaveSpectralRangeEnd ? Intent.NONE : Intent.DANGER}
                                         />
                                         <Label>{activeFrame.spectralUnit ? `(${activeFrame.spectralUnit})` : ""}</Label>
                                     </ControlGroup>
@@ -253,9 +255,9 @@ export class ImageSaveComponent extends React.Component<{
                         }
                         <Switch
                             className="drop-degenerate"
-                            checked={fileBrowser.shouldDropDegeneratedAxes}
-                            label="Drop degenerated axes"
-                            onChange={this.onChangeShouldDropDegeneratedAxes}
+                            checked={fileBrowser.shouldDropDegenerateAxes}
+                            label="Drop degenerate axes"
+                            onChange={this.onChangeShouldDropDegenerateAxes}
                         />
                     </div>
                 }
