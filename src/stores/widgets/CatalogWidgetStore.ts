@@ -91,12 +91,16 @@ export class CatalogWidgetStore {
     @observable sizeArea: boolean;
     @observable sizeScalingType: FrameScaling;
     @observable sizeAxisTabId: CatalogSettingsTabs.SIZE_MINOR | CatalogSettingsTabs.SIZE_MAJOR;
+    @observable sizeColumnMinLocked: boolean;
+    @observable sizeColumnMaxLocked: boolean;
     // size map minor
     @observable sizeMinorMapColumn: string;
     @observable sizeMinorColumnMax: {default: number, clipd: number};
     @observable sizeMinorColumnMin: {default: number, clipd: number};
     @observable sizeMinorArea: boolean;
     @observable sizeMinorScalingType: FrameScaling;
+    @observable sizeMinorColumnMinLocked: boolean;
+    @observable sizeMinorColumnMaxLocked: boolean;
     // color map
     @observable colorMapColumn: string;
     @observable colorColumnMax: {default: number, clipd: number};
@@ -153,50 +157,78 @@ export class CatalogWidgetStore {
         this.orientationScalingType = FrameScaling.LINEAR;
         this.angleMax = CatalogWidgetStore.MaxAngle;
         this.angleMin = CatalogWidgetStore.MinAngle;
+        this.sizeColumnMinLocked = false;
+        this.sizeColumnMaxLocked = false;
+        this.sizeMinorColumnMinLocked = false;
+        this.sizeMinorColumnMaxLocked = false;
 
-        reaction(()=>this.sizeMapData, (column) => {
+        reaction(() => this.sizeMapData, (column) => {
             const result = minMaxArray(column);
             this.setSizeColumnMin(isFinite(result.minVal)? result.minVal : 0, "default");
             this.setSizeColumnMax(isFinite(result.maxVal)? result.maxVal : 0, "default");
         });
 
-        reaction(()=>this.sizeArray(), (size) => {
+        reaction(() => this.sizeArray(), (size) => {
             if (size.length) {
                 CatalogWebGLService.Instance.updateDataTexture(this.catalogFileId, size, CatalogTextureType.Size);   
             }
         });
 
-        reaction(()=>this.sizeMinorMapData, (column) => {
+        reaction(() => this.sizeColumnMin.clipd, (sizeColumnMin) => {
+            if (this.sizeColumnMinLocked) {
+                this.sizeMinorColumnMin.clipd = sizeColumnMin;
+            }
+        });
+
+        reaction(() => this.sizeColumnMax.clipd, (sizeColumnMax) => {
+            if (this.sizeColumnMaxLocked) {
+                this.sizeMinorColumnMax.clipd = sizeColumnMax;
+            }
+        });
+
+        reaction(() => this.sizeMinorMapData, (column) => {
             const result = minMaxArray(column);
             this.setSizeMinorColumnMin(isFinite(result.minVal)? result.minVal : 0, "default");
             this.setSizeMinorColumnMax(isFinite(result.maxVal)? result.maxVal : 0, "default");
         });
 
-        reaction(()=>this.sizeMinorArray(), (size) => {
+        reaction(() => this.sizeMinorArray(), (size) => {
             if (size.length) {
                 CatalogWebGLService.Instance.updateDataTexture(this.catalogFileId, size, CatalogTextureType.SizeMinor);
             }
         });
 
-        reaction(()=>this.colorMapData, (column) => {
+        reaction(() => this.sizeMinorColumnMin.clipd, (sizeMinorColumnMin) => {
+            if (this.sizeMinorColumnMinLocked) {
+                this.sizeColumnMin.clipd = sizeMinorColumnMin;
+            }
+        });
+
+        reaction(() => this.sizeMinorColumnMax.clipd, (sizeMinorColumnMax) => {
+            if (this.sizeMinorColumnMaxLocked) {
+                this.sizeColumnMax.clipd = sizeMinorColumnMax;
+            }
+        });
+
+        reaction(() => this.colorMapData, (column) => {
             const result = minMaxArray(column);
             this.setColorColumnMin(isFinite(result.minVal)? result.minVal : 0, "default");
             this.setColorColumnMax(isFinite(result.maxVal)? result.maxVal : 0, "default");
         });
 
-        reaction(()=>this.colorArray(), (color) => {
+        reaction(() => this.colorArray(), (color) => {
             if (color.length) {
                 CatalogWebGLService.Instance.updateDataTexture(this.catalogFileId, color, CatalogTextureType.Color);   
             }
         });
 
-        reaction(()=>this.orientationMapData, (column) => {
+        reaction(() => this.orientationMapData, (column) => {
             const result = minMaxArray(column);
             this.setOrientationMin(isFinite(result.minVal)? result.minVal : 0, "default");
             this.setOrientationMax(isFinite(result.maxVal)? result.maxVal : 0, "default");
         });
 
-        reaction(()=>this.orientationArray(), (orientation) => {
+        reaction(() => this.orientationArray(), (orientation) => {
            if (orientation.length) {
             CatalogWebGLService.Instance.updateDataTexture(this.catalogFileId, orientation, CatalogTextureType.Orientation);   
            }
@@ -213,12 +245,16 @@ export class CatalogWidgetStore {
         this.sizeColumnMin = {default: undefined, clipd: undefined};
         this.sizeColumnMax = {default: undefined, clipd: undefined};
         this.sizeAxisTabId = CatalogSettingsTabs.SIZE_MAJOR;
+        this.sizeColumnMinLocked = false;
+        this.sizeColumnMaxLocked = false;
         // size minor
         this.sizeMinorMapColumn = CatalogOverlay.NONE;
         this.sizeMinorArea = false;
         this.sizeMinorScalingType = FrameScaling.LINEAR;
         this.sizeMinorColumnMin = {default: undefined, clipd: undefined};
         this.sizeMinorColumnMax = {default: undefined, clipd: undefined};
+        this.sizeMinorColumnMinLocked = false;
+        this.sizeMinorColumnMaxLocked =false;
         // color
         this.colorMapColumn = CatalogOverlay.NONE;
         this.colorColumnMax = {default: undefined, clipd: undefined};
@@ -417,6 +453,34 @@ export class CatalogWidgetStore {
             this.sizeMinorColumnMin.clipd = this.sizeMinorColumnMin.default;
         } else {
             this.sizeMinorColumnMax.clipd = this.sizeMinorColumnMax.default;
+        }
+    }
+
+    @action toggleSizeColumnMinLock = () => {
+        this.sizeColumnMinLocked = !this.sizeColumnMinLocked;
+        if (this.sizeColumnMinLocked) {
+            this.sizeMinorColumnMin.clipd = this.sizeColumnMin.clipd;
+        }
+    }
+
+    @action toggleSizeColumnMaxLock = () => {
+        this.sizeColumnMaxLocked = !this.sizeColumnMaxLocked;
+        if (this.sizeColumnMaxLocked) {
+            this.sizeMinorColumnMax.clipd = this.sizeColumnMax.clipd;
+        }
+    }
+
+    @action toggleSizeMinorColumnMinLock = () => {
+        this.sizeMinorColumnMinLocked = !this.sizeMinorColumnMinLocked;
+        if (this.sizeMinorColumnMinLocked) {
+            this.sizeColumnMin.clipd = this.sizeMinorColumnMin.clipd;
+        }
+    }
+
+    @action toggleSizeMinorColumnMaxLock = () => {
+        this.sizeMinorColumnMaxLocked = !this.sizeMinorColumnMaxLocked;
+        if (this.sizeMinorColumnMaxLocked) {
+            this.sizeColumnMax.clipd = this.sizeMinorColumnMax.clipd;
         }
     }
 

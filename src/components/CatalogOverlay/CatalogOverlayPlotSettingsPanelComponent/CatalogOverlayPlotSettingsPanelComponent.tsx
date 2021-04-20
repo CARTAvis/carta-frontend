@@ -243,7 +243,7 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
                         <Button text={widgetStore.sizeMapColumn} disabled={disabledOverlayPanel} rightIcon="double-caret-vertical"/>
                     </Select>
                 </FormGroup>
-                <FormGroup label={"Scaling"} inline={true}>
+                <FormGroup label={"Scaling"} inline={true} disabled={disableSizeMap}>
                     <ScalingSelectComponent
                         selectedItem={widgetStore.sizeScalingType}
                         onItemSelect={(type) => widgetStore.setSizeScalingType(type)}
@@ -255,26 +255,46 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
                         <AnchorButton disabled={disableSizeMap} text={"Area"} active={widgetStore.sizeArea} onClick={() => widgetStore.setSizeArea(true)}/>
                     </ButtonGroup>
                 </FormGroup>
-                <ClearableNumericInputComponent
-                    label="Clip Min"
-                    max={widgetStore.sizeColumnMax.clipd}
-                    integerOnly={false}
-                    value={widgetStore.sizeColumnMin.clipd}
-                    onValueChanged={val => widgetStore.setSizeColumnMin(val, "clipd")}
-                    onValueCleared={() => widgetStore.resetSizeColumnValue("min")}
-                    displayExponential={true}
-                    disabled={disableSizeMap}
-                />
-                <ClearableNumericInputComponent
-                    label="Clip Max"
-                    min={widgetStore.sizeColumnMin.clipd}
-                    integerOnly={false}
-                    value={widgetStore.sizeColumnMax.clipd}
-                    onValueChanged={val => widgetStore.setSizeColumnMax(val, "clipd")}
-                    onValueCleared={() => widgetStore.resetSizeColumnValue("max")}
-                    displayExponential={true}
-                    disabled={disableSizeMap}
-                />
+                <div className="numeric-input-lock">
+                    <ClearableNumericInputComponent
+                        label="Clip Min"
+                        max={widgetStore.sizeColumnMax.clipd}
+                        integerOnly={false}
+                        value={widgetStore.sizeColumnMin.clipd}
+                        onValueChanged={val => widgetStore.setSizeColumnMin(val, "clipd")}
+                        onValueCleared={() => widgetStore.resetSizeColumnValue("min")}
+                        displayExponential={true}
+                        disabled={disableSizeMap || widgetStore.sizeMinorColumnMinLocked}
+                    />
+                    <AnchorButton 
+                        className="lock-button" 
+                        icon={widgetStore.sizeColumnMinLocked ||  widgetStore.sizeMinorColumnMinLocked? "lock" : "unlock"}
+                        intent={widgetStore.sizeColumnMinLocked ? "success" : "none"}
+                        disabled={disableSizeMinorMap || widgetStore.sizeMinorColumnMinLocked}   
+                        minimal={true} 
+                        onClick={widgetStore.toggleSizeColumnMinLock}
+                    />
+                </div>
+                <div className="numeric-input-lock">
+                    <ClearableNumericInputComponent
+                        label="Clip Max"
+                        min={widgetStore.sizeColumnMin.clipd}
+                        integerOnly={false}
+                        value={widgetStore.sizeColumnMax.clipd}
+                        onValueChanged={val => widgetStore.setSizeColumnMax(val, "clipd")}
+                        onValueCleared={() => widgetStore.resetSizeColumnValue("max")}
+                        displayExponential={true}
+                        disabled={disableSizeMap || widgetStore.sizeMinorColumnMaxLocked}
+                    />
+                    <AnchorButton 
+                        className="lock-button" 
+                        icon={widgetStore.sizeColumnMaxLocked || widgetStore.sizeMinorColumnMaxLocked ? "lock" : "unlock"}
+                        intent={widgetStore.sizeColumnMaxLocked ? "success" : "none"}
+                        disabled={disableSizeMinorMap || widgetStore.sizeMinorColumnMaxLocked}  
+                        minimal={true} 
+                        onClick={widgetStore.toggleSizeColumnMaxLock}
+                    />
+                </div>
             </div>
         );
 
@@ -308,26 +328,46 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
                         <AnchorButton disabled={disableSizeMinorMap} text={"Area"} active={widgetStore.sizeMinorArea} onClick={() => widgetStore.setSizeMinorArea(true)}/>
                     </ButtonGroup>
                 </FormGroup>
-                <ClearableNumericInputComponent
-                    label="Clip Min"
-                    max={widgetStore.sizeMinorColumnMax.clipd}
-                    integerOnly={false}
-                    value={widgetStore.sizeMinorColumnMin.clipd}
-                    onValueChanged={val => widgetStore.setSizeMinorColumnMin(val, "clipd")}
-                    onValueCleared={() => widgetStore.resetSizeMinorColumnValue("min")}
-                    displayExponential={true}
-                    disabled={disableSizeMinorMap}
-                />
-                <ClearableNumericInputComponent
-                    label="Clip Max"
-                    min={widgetStore.sizeMinorColumnMin.clipd}
-                    integerOnly={false}
-                    value={widgetStore.sizeMinorColumnMax.clipd}
-                    onValueChanged={val => widgetStore.setSizeMinorColumnMax(val, "clipd")}
-                    onValueCleared={() => widgetStore.resetSizeMinorColumnValue("max")}
-                    displayExponential={true}
-                    disabled={disableSizeMinorMap}
-                />
+                <div className="numeric-input-lock">
+                    <ClearableNumericInputComponent
+                        label="Clip Min"
+                        max={widgetStore.sizeMinorColumnMax.clipd}
+                        integerOnly={false}
+                        value={widgetStore.sizeMinorColumnMin.clipd}
+                        onValueChanged={val => widgetStore.setSizeMinorColumnMin(val, "clipd")}
+                        onValueCleared={() => widgetStore.resetSizeMinorColumnValue("min")}
+                        displayExponential={true}
+                        disabled={disableSizeMinorMap || widgetStore.sizeColumnMinLocked}
+                    />
+                    <AnchorButton 
+                        className="lock-button" 
+                        icon={widgetStore.sizeColumnMinLocked ||  widgetStore.sizeMinorColumnMinLocked ? "lock" : "unlock"}
+                        intent={widgetStore.sizeMinorColumnMinLocked ? "success" : "none"}
+                        disabled={disableSizeMinorMap || widgetStore.sizeColumnMinLocked}  
+                        minimal={true} 
+                        onClick={widgetStore.toggleSizeMinorColumnMinLock}
+                    />
+                </div>
+                <div className="numeric-input-lock">
+                    <ClearableNumericInputComponent
+                        label="Clip Max"
+                        min={widgetStore.sizeMinorColumnMin.clipd}
+                        integerOnly={false}
+                        value={widgetStore.sizeMinorColumnMax.clipd}
+                        onValueChanged={val => widgetStore.setSizeMinorColumnMax(val, "clipd")}
+                        onValueCleared={() => widgetStore.resetSizeMinorColumnValue("max")}
+                        displayExponential={true}
+                        disabled={disableSizeMinorMap || widgetStore.sizeColumnMaxLocked}
+                    />
+                    <AnchorButton 
+                        className="lock-button" 
+                        icon={widgetStore.sizeColumnMaxLocked || widgetStore.sizeMinorColumnMaxLocked ? "lock" : "unlock"}
+                        intent={widgetStore.sizeMinorColumnMaxLocked ? "success" : "none"}
+                        disabled={disableSizeMinorMap || widgetStore.sizeColumnMaxLocked} 
+                        minimal={true} 
+                        onClick={widgetStore.toggleSizeMinorColumnMaxLock}
+                    />
+                </div>
             </div>
         );
 

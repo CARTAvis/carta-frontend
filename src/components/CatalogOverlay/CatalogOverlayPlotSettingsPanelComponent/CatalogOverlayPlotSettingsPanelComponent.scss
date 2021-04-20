@@ -24,4 +24,11 @@
         }
     }
 
+    .numeric-input-lock {
+        display: inline-flex;
+        .lock-button {
+            margin-bottom: 20px;
+        }
+    }
+
 }
