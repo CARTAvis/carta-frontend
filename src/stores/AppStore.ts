@@ -158,7 +158,7 @@ export class AppStore {
 
         let autoFileLoaded = false;
 
-        AST.onReady.then(runInAction(() => {
+        AST.onReady.then(action(() => {
             this.astReady = true;
             if (this.backendService.connectionStatus === ConnectionStatus.ACTIVE && !autoFileLoaded && fileSearchParam) {
                 this.loadFile(folderSearchParam, fileSearchParam, "");
@@ -1038,7 +1038,7 @@ export class AppStore {
         this.initRequirements();
         this.activeLayer = ImageViewLayer.RegionMoving;
 
-        AST.onReady.then(runInAction(() => {
+        AST.onReady.then(action(() => {
             this.astReady = true;
             this.logStore.addInfo("AST library loaded", ["ast"]);
         }));
@@ -1789,7 +1789,7 @@ export class AppStore {
     exportImage = (): boolean => {
         if (this.activeFrame) {
             const backgroundColor = this.preferenceStore.transparentImageBackground ? "rgba(255, 255, 255, 0)" : (this.darkTheme ? Colors.DARK_GRAY3 : Colors.LIGHT_GRAY5);
-            const composedCanvas = getImageCanvas(this.overlayStore.padding, backgroundColor);
+            const composedCanvas = getImageCanvas(this.overlayStore.padding, this.overlayStore.colorbar.position, backgroundColor);
             if (composedCanvas) {
                 composedCanvas.toBlob((blob) => {
                     const link = document.createElement("a") as HTMLAnchorElement;
@@ -1805,7 +1805,7 @@ export class AppStore {
 
     getImageDataUrl = (backgroundColor: string) => {
         if (this.activeFrame) {
-            const composedCanvas = getImageCanvas(this.overlayStore.padding, backgroundColor);
+            const composedCanvas = getImageCanvas(this.overlayStore.padding, this.overlayStore.colorbar.position, backgroundColor);
             if (composedCanvas) {
                 return composedCanvas.toDataURL();
             }

@@ -3,6 +3,7 @@ import * as AST from "ast_wrapper";
 import {Point2D, WCSPoint2D, SpectralType, SPECTRAL_DEFAULT_UNIT} from "models";
 import {NumberFormatType} from "stores";
 import {add2D, polygonPerimeter, rotate2D, scale2D, subtract2D, magDir2D} from "./math2d";
+import {trimFitsComment} from "./parsing";
 
 export function isWCSStringFormatValid(wcsString: string, format: NumberFormatType): boolean {
     if (!wcsString || !format) {
@@ -27,16 +28,16 @@ export function getHeaderNumericValue(headerEntry: CARTA.IHeaderEntry): number {
     if (headerEntry.entryType === CARTA.EntryType.FLOAT || headerEntry.entryType === CARTA.EntryType.INT) {
         return headerEntry.numericValue;
     } else {
-        return parseFloat(headerEntry.value);
+        return parseFloat(trimFitsComment(headerEntry.value));
     }
 }
 
-export function transformPoint(astTransform: number, point: Point2D, forward: boolean = true) {
+export function transformPoint(astTransform: AST.FrameSet, point: Point2D, forward: boolean = true) {
     return AST.transformPoint(astTransform, point.x, point.y, forward);
 }
 
 // TODO: possibly move to region class since they are the only callers
-export function getFormattedWCSPoint(astTransform: number, pixelCoords: Point2D) {
+export function getFormattedWCSPoint(astTransform: AST.FrameSet, pixelCoords: Point2D) {
     if (astTransform) {
         const pointWCS = transformPoint(astTransform, pixelCoords);
         const normVals = AST.normalizeCoordinates(astTransform, pointWCS.x, pointWCS.y);
@@ -48,7 +49,7 @@ export function getFormattedWCSPoint(astTransform: number, pixelCoords: Point2D)
     return null;
 }
 
-export function getPixelValueFromWCS(astTransform: number, formattedWCSPoint: WCSPoint2D): Point2D {
+export function getPixelValueFromWCS(astTransform: AST.FrameSet, formattedWCSPoint: WCSPoint2D): Point2D {
     if (astTransform) {
         const pointWCS = AST.getWCSValueFromFormattedString(astTransform, formattedWCSPoint);
         return transformPoint(astTransform, pointWCS, false);
@@ -56,7 +57,7 @@ export function getPixelValueFromWCS(astTransform: number, formattedWCSPoint: WC
     return null;
 }
 
-export function getTransformedChannel(srcTransform: number, destTransform: number, matchingType: SpectralType, srcChannel: number) {
+export function getTransformedChannel(srcTransform: AST.FrameSet, destTransform: AST.FrameSet, matchingType: SpectralType, srcChannel: number) {
     if (matchingType === SpectralType.CHANNEL) {
         return srcChannel;
     }
@@ -85,7 +86,7 @@ export function getTransformedChannel(srcTransform: number, destTransform: numbe
     return destPixelValue.z;
 }
 
-export function getTransformedChannelList(srcTransform: number, destTransform: number, matchingType: SpectralType, firstChannel: number, lastChannel: number) {
+export function getTransformedChannelList(srcTransform: AST.FrameSet, destTransform: AST.FrameSet, matchingType: SpectralType, firstChannel: number, lastChannel: number) {
     if (matchingType === SpectralType.CHANNEL || firstChannel > lastChannel) {
         return [];
     }
@@ -132,7 +133,7 @@ export function isAstBadPoint(point: Point2D) {
     return !point || isAstBad(point.x) || isAstBad(point.y);
 }
 
-export function getApproximateEllipsePoints(astTransform: number, centerReferenceImage: Point2D, radA: number, radB: number, rotation: number, targetVertexCount: number): Point2D[] {
+export function getApproximateEllipsePoints(astTransform: AST.FrameSet, centerReferenceImage: Point2D, radA: number, radB: number, rotation: number, targetVertexCount: number): Point2D[] {
     const dTheta = 2.0 * Math.PI / targetVertexCount;
     const xCoords = new Float64Array(targetVertexCount);
     const yCoords = new Float64Array(targetVertexCount);
@@ -144,7 +145,7 @@ export function getApproximateEllipsePoints(astTransform: number, centerReferenc
         yCoords[i] = p.y;
     }
 
-    const results = AST.transformPointArrays(astTransform, xCoords, yCoords, 0) as { x: Float64Array, y: Float64Array };
+    const results = AST.transformPointArrays(astTransform, xCoords, yCoords, false);
     const approximatePoints = new Array<Point2D>(targetVertexCount);
     for (let i = 0; i < targetVertexCount; i++) {
         approximatePoints[i] = {x: results.x[i], y: results.y[i]};
@@ -152,7 +153,7 @@ export function getApproximateEllipsePoints(astTransform: number, centerReferenc
     return approximatePoints;
 }
 
-export function getApproximatePolygonPoints(astTransform: number, controlPoints: Point2D[], targetVertexCount: number, closed: boolean = true): Point2D[] {
+export function getApproximatePolygonPoints(astTransform: AST.FrameSet, controlPoints: Point2D[], targetVertexCount: number, closed: boolean = true): Point2D[] {
     const totalLength = polygonPerimeter(controlPoints, closed);
     const idealSubdivisionLength = totalLength / targetVertexCount;
 
@@ -181,7 +182,7 @@ export function getApproximatePolygonPoints(astTransform: number, controlPoints:
             yCoords[i] = approxPointsOriginalSpace[i].y;
         }
 
-        const results = AST.transformPointArrays(astTransform, xCoords, yCoords, 0) as { x: Float64Array, y: Float64Array };
+        const results = AST.transformPointArrays(astTransform, xCoords, yCoords, false);
         const approximatePoints = new Array<Point2D>(N);
         for (let i = 0; i < N; i++) {
             approximatePoints[i] = {x: results.x[i], y: results.y[i]};

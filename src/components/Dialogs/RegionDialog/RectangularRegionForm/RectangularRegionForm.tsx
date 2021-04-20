@@ -3,6 +3,7 @@ import {observer} from "mobx-react";
 import {computed} from "mobx";
 import {Classes, H5, InputGroup, Position, Tooltip} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
+import * as AST from "ast_wrapper";
 import {AppStore, FrameStore, RegionCoordinate, RegionStore, NUMBER_FORMAT_LABEL, WCS_PRECISION} from "stores";
 import {Point2D, WCSPoint2D} from "models";
 import {closeTo, formattedArcsec, getFormattedWCSPoint, getPixelValueFromWCS, getValueFromArcsecString, isWCSStringFormatValid} from "utilities";
@@ -10,10 +11,11 @@ import {CoordinateComponent} from "../CoordinateComponent/CoordinateComponent";
 import {SafeNumericInput} from "components/Shared";
 import "./RectangularRegionForm.scss";
 
+
 const KEYCODE_ENTER = 13;
 
 @observer
-export class RectangularRegionForm extends React.Component<{ region: RegionStore, frame: FrameStore, wcsInfo: number }> {
+export class RectangularRegionForm extends React.Component<{ region: RegionStore, frame: FrameStore, wcsInfo: AST.FrameSet }> {
     @computed get topRightPoint(): Point2D {
         const region = this.props.region;
         if (!region || region.controlPoints.length !== 2) {
