@@ -94,7 +94,6 @@ export class CatalogStore {
     @action removeCatalog(fileId: number) {
         this.catalogGLData.delete(fileId);
         CatalogWebGLService.Instance.clearTexture(fileId);
-        console.log(CatalogWebGLService.Instance)
     }
 
     @action updateImageAssociatedCatalogId(activeFrameIndex: number, associatedCatalogFiles: number[]) {

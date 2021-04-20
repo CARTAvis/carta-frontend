@@ -166,122 +166,133 @@ export class CatalogViewGLComponent extends React.Component<CatalogViewGLCompone
         let scaleAdjustment = 1.0;
         
         catalogStore.catalogGLData.forEach((catalog, fileId) => {
-            const catalogWidgetStore = catalogStore.getCatalogWidgetStore(fileId);
-            const shape = catalogWidgetStore.shapeSettings;
-            const featherWidth = shape.featherWidth * devicePixelRatio;
-            const lineThickness = catalogWidgetStore.thickness * devicePixelRatio;
-            let dataPoints = catalog.dataPoints;
-            let color = tinycolor(catalogWidgetStore.catalogColor).toRgb();
-            let selectedSourceColor = tinycolor(catalogWidgetStore.highlightColor).toRgb();
-            let pointSize = catalogWidgetStore.catalogSize + shape.minSize;
-            this.gl.uniform1f(shaderUniforms.LineThickness, lineThickness);
-            this.gl.uniform1i(shaderUniforms.ShowSelectedSource, catalogWidgetStore.showSelectedData? 1.0 : 0.0);
+            let showCatalog = catalog.displayed
+            const spatialMatchedImageId = baseFrame?.spatialReference?.frameInfo?.fileId;
+            if (spatialMatchedImageId >= 0) {
+                const spatialReferencedCatalogs = catalogStore.imageAssociatedCatalogId.get(spatialMatchedImageId);
+                showCatalog = catalog.displayed || spatialReferencedCatalogs.includes(fileId);
+            }
+            if(showCatalog) {
+                const catalogWidgetStore = catalogStore.getCatalogWidgetStore(fileId);
+                const shape = catalogWidgetStore.shapeSettings;
+                const featherWidth = shape.featherWidth * devicePixelRatio;
+                const lineThickness = catalogWidgetStore.thickness * devicePixelRatio;
+                let dataPoints = catalog.dataPoints;
+                let color = tinycolor(catalogWidgetStore.catalogColor).toRgb();
+                let selectedSourceColor = tinycolor(catalogWidgetStore.highlightColor).toRgb();
+                let pointSize = catalogWidgetStore.catalogSize + shape.minSize;
+                this.gl.uniform1f(shaderUniforms.LineThickness, lineThickness);
+                this.gl.uniform1i(shaderUniforms.ShowSelectedSource, catalogWidgetStore.showSelectedData? 1.0 : 0.0);
+                // console.log("catalog Id: " + fileId + catalog.displayed + " baseFrame: " + baseFrame.frameInfo.fileId, "spatial Ref: " + baseFrame?.spatialReference?.frameInfo?.fileId)
+                // if (baseFrame.secondarySpatialImages) {
+                //     baseFrame.secondarySpatialImages.forEach(frame => console.log("secondary:" + frame.frameInfo.fileId))
+                // }
+                //FrameView
+                if (catalog.displayed && baseFrame.spatialReference) {
+                    const baseRequiredView = baseFrame.spatialReference.requiredFrameView;
+                    const originAdjustedOffset = subtract2D(baseFrame.spatialTransform.origin, scale2D(rotate2D(baseFrame.spatialTransform.origin, baseFrame.spatialTransform.rotation), baseFrame.spatialTransform.scale));
 
-            //FrameView
-            if (catalog.displayed && baseFrame.spatialReference) {
-                const baseRequiredView = baseFrame.spatialReference.requiredFrameView;
-                const originAdjustedOffset = subtract2D(baseFrame.spatialTransform.origin, scale2D(rotate2D(baseFrame.spatialTransform.origin, baseFrame.spatialTransform.rotation), baseFrame.spatialTransform.scale));
+                    rangeScale = {
+                        x: 1.0 / (baseRequiredView.xMax - baseRequiredView.xMin),
+                        y: 1.0 / (baseRequiredView.yMax - baseRequiredView.yMin),
+                    };
 
-                rangeScale = {
-                    x: 1.0 / (baseRequiredView.xMax - baseRequiredView.xMin),
-                    y: 1.0 / (baseRequiredView.yMax - baseRequiredView.yMin),
-                };
-
-                rangeOffset = {
-                    x: (baseFrame.spatialTransform.translation.x - baseRequiredView.xMin + originAdjustedOffset.x) * rangeScale.x,
-                    y: (baseFrame.spatialTransform.translation.y - baseRequiredView.yMin + originAdjustedOffset.y) * rangeScale.y
-                };
-                rotationAngle = -baseFrame.spatialTransform.rotation;
-                scaleAdjustment = baseFrame.spatialTransform.scale;
-            } else {
-                let baseRequiredView = baseFrame.requiredFrameView;
-                if (baseFrame.spatialReference) {
-                    baseRequiredView = baseFrame.spatialReference.requiredFrameView;   
+                    rangeOffset = {
+                        x: (baseFrame.spatialTransform.translation.x - baseRequiredView.xMin + originAdjustedOffset.x) * rangeScale.x,
+                        y: (baseFrame.spatialTransform.translation.y - baseRequiredView.yMin + originAdjustedOffset.y) * rangeScale.y
+                    };
+                    rotationAngle = -baseFrame.spatialTransform.rotation;
+                    scaleAdjustment = baseFrame.spatialTransform.scale;
+                } else {
+                    let baseRequiredView = baseFrame.requiredFrameView;
+                    if (baseFrame.spatialReference) {
+                        baseRequiredView = baseFrame.spatialReference.requiredFrameView;   
+                    }
+                    rangeScale = {
+                        x: 1.0 / (baseRequiredView.xMax - baseRequiredView.xMin),
+                        y: 1.0 / (baseRequiredView.yMax - baseRequiredView.yMin),
+                    };
+        
+                    rangeOffset = {
+                        x: -baseRequiredView.xMin * rangeScale.x,
+                        y: -baseRequiredView.yMin * rangeScale.y
+                    };
+                    rotationAngle = 0.0;
+                    scaleAdjustment = 1.0;
                 }
-                rangeScale = {
-                    x: 1.0 / (baseRequiredView.xMax - baseRequiredView.xMin),
-                    y: 1.0 / (baseRequiredView.yMax - baseRequiredView.yMin),
-                };
-    
-                rangeOffset = {
-                    x: -baseRequiredView.xMin * rangeScale.x,
-                    y: -baseRequiredView.yMin * rangeScale.y
-                };
-                rotationAngle = 0.0;
-                scaleAdjustment = 1.0;
-            }
-            this.gl.uniform2f(shaderUniforms.RangeOffset, rangeOffset.x, rangeOffset.y);
-            this.gl.uniform2f(shaderUniforms.RangeScale, rangeScale.x, rangeScale.y);
-            this.gl.uniform1f(shaderUniforms.ScaleAdjustment, scaleAdjustment);
-            this.gl.uniform1f(shaderUniforms.RotationAngle, rotationAngle);
+                this.gl.uniform2f(shaderUniforms.RangeOffset, rangeOffset.x, rangeOffset.y);
+                this.gl.uniform2f(shaderUniforms.RangeScale, rangeScale.x, rangeScale.y);
+                this.gl.uniform1f(shaderUniforms.ScaleAdjustment, scaleAdjustment);
+                this.gl.uniform1f(shaderUniforms.RotationAngle, rotationAngle);
 
-            // size
-            this.gl.uniform1i(shaderUniforms.SmapEnabled, 0);
-            this.gl.uniform1i(shaderUniforms.AreaMode, catalogWidgetStore.sizeArea? 1 : 0);
-            const sizeTexture = this.catalogWebGLService.getDataTexture(fileId, CatalogTextureType.Size);
-            if (!catalogWidgetStore.disableSizeMap && sizeTexture) {
-                this.gl.uniform1i(shaderUniforms.SmapEnabled, 1);
-                this.gl.activeTexture(GL2.TEXTURE2);
-                this.gl.bindTexture(GL2.TEXTURE_2D, sizeTexture);
-                this.gl.uniform1i(shaderUniforms.SizeTexture, 2);
-            }
+                // size
+                this.gl.uniform1i(shaderUniforms.SmapEnabled, 0);
+                this.gl.uniform1i(shaderUniforms.AreaMode, catalogWidgetStore.sizeArea? 1 : 0);
+                const sizeTexture = this.catalogWebGLService.getDataTexture(fileId, CatalogTextureType.Size);
+                if (!catalogWidgetStore.disableSizeMap && sizeTexture) {
+                    this.gl.uniform1i(shaderUniforms.SmapEnabled, 1);
+                    this.gl.activeTexture(GL2.TEXTURE2);
+                    this.gl.bindTexture(GL2.TEXTURE_2D, sizeTexture);
+                    this.gl.uniform1i(shaderUniforms.SizeTexture, 2);
+                }
 
-            // color
-            this.gl.uniform1i(shaderUniforms.CmapEnabled, 0);
-            const colorTexture = this.catalogWebGLService.getDataTexture(fileId, CatalogTextureType.Color);
-            if (!catalogWidgetStore.disableColorMap && colorTexture){
-                this.gl.uniform1i(shaderUniforms.CmapEnabled, 1);
-                this.gl.uniform1i(shaderUniforms.CmapIndex, RenderConfigStore.COLOR_MAPS_ALL.indexOf(catalogWidgetStore.colorMap));
-                this.gl.activeTexture(GL2.TEXTURE3);
-                this.gl.bindTexture(GL2.TEXTURE_2D, colorTexture);
-                this.gl.uniform1i(shaderUniforms.ColorTexture, 3);
-            }
+                // color
+                this.gl.uniform1i(shaderUniforms.CmapEnabled, 0);
+                const colorTexture = this.catalogWebGLService.getDataTexture(fileId, CatalogTextureType.Color);
+                if (!catalogWidgetStore.disableColorMap && colorTexture){
+                    this.gl.uniform1i(shaderUniforms.CmapEnabled, 1);
+                    this.gl.uniform1i(shaderUniforms.CmapIndex, RenderConfigStore.COLOR_MAPS_ALL.indexOf(catalogWidgetStore.colorMap));
+                    this.gl.activeTexture(GL2.TEXTURE3);
+                    this.gl.bindTexture(GL2.TEXTURE_2D, colorTexture);
+                    this.gl.uniform1i(shaderUniforms.ColorTexture, 3);
+                }
 
-            this.gl.uniform1f(shaderUniforms.FeatherWidth, featherWidth);
+                this.gl.uniform1f(shaderUniforms.FeatherWidth, featherWidth);
 
-            // orientation
-            this.gl.uniform1i(shaderUniforms.OmapEnabled, 0);
-            const orientationTexture = this.catalogWebGLService.getDataTexture(fileId, CatalogTextureType.Orientation);
-            if (!catalogWidgetStore.disableOrientationMap && orientationTexture) {
-                this.gl.uniform1i(shaderUniforms.OmapEnabled, 1);
-                this.gl.activeTexture(GL2.TEXTURE4);
-                this.gl.bindTexture(GL2.TEXTURE_2D, orientationTexture);
-                this.gl.uniform1i(shaderUniforms.OrientationTexture, 4);
-            }
+                // orientation
+                this.gl.uniform1i(shaderUniforms.OmapEnabled, 0);
+                const orientationTexture = this.catalogWebGLService.getDataTexture(fileId, CatalogTextureType.Orientation);
+                if (!catalogWidgetStore.disableOrientationMap && orientationTexture) {
+                    this.gl.uniform1i(shaderUniforms.OmapEnabled, 1);
+                    this.gl.activeTexture(GL2.TEXTURE4);
+                    this.gl.bindTexture(GL2.TEXTURE_2D, orientationTexture);
+                    this.gl.uniform1i(shaderUniforms.OrientationTexture, 4);
+                }
 
-            // selected source
-            const selectedSource = this.catalogWebGLService.getDataTexture(fileId, CatalogTextureType.SelectedSource);
-            if (selectedSource) {
-                this.gl.activeTexture(GL2.TEXTURE5);
-                this.gl.bindTexture(GL2.TEXTURE_2D, selectedSource);
-                this.gl.uniform1i(shaderUniforms.SelectedSourceTexture, 5);   
-            }
+                // selected source
+                const selectedSource = this.catalogWebGLService.getDataTexture(fileId, CatalogTextureType.SelectedSource);
+                if (selectedSource) {
+                    this.gl.activeTexture(GL2.TEXTURE5);
+                    this.gl.bindTexture(GL2.TEXTURE_2D, selectedSource);
+                    this.gl.uniform1i(shaderUniforms.SelectedSourceTexture, 5);   
+                }
 
-            // size minor
-            this.gl.uniform1i(shaderUniforms.SminorMapEnabled, 0);
-            this.gl.uniform1i(shaderUniforms.AreaModeMinor, catalogWidgetStore.sizeMinorArea? 1 : 0);
-            const sizeMinorTexture = this.catalogWebGLService.getDataTexture(fileId, CatalogTextureType.SizeMinor);
-            if (!catalogWidgetStore.disableSizeMinorMap && sizeMinorTexture && catalogWidgetStore.catalogShape === CatalogOverlayShape.EllipseLined) {
-                this.gl.uniform1i(shaderUniforms.SminorMapEnabled, 1);
-                this.gl.activeTexture(GL2.TEXTURE6);
-                this.gl.bindTexture(GL2.TEXTURE_2D, sizeMinorTexture);
-                this.gl.uniform1i(shaderUniforms.SizeMinorTexture, 6);
-            }
+                // size minor
+                this.gl.uniform1i(shaderUniforms.SminorMapEnabled, 0);
+                this.gl.uniform1i(shaderUniforms.AreaModeMinor, catalogWidgetStore.sizeMinorArea? 1 : 0);
+                const sizeMinorTexture = this.catalogWebGLService.getDataTexture(fileId, CatalogTextureType.SizeMinor);
+                if (!catalogWidgetStore.disableSizeMinorMap && sizeMinorTexture && catalogWidgetStore.catalogShape === CatalogOverlayShape.EllipseLined) {
+                    this.gl.uniform1i(shaderUniforms.SminorMapEnabled, 1);
+                    this.gl.activeTexture(GL2.TEXTURE6);
+                    this.gl.bindTexture(GL2.TEXTURE_2D, sizeMinorTexture);
+                    this.gl.uniform1i(shaderUniforms.SizeMinorTexture, 6);
+                }
 
-            // position 
-            const positionTexture = this.catalogWebGLService.getDataTexture(fileId, CatalogTextureType.Position);
-            if ((catalog.displayed || baseFrame.spatialReference) && dataPoints?.length && positionTexture) {
-                this.gl.uniform3f(shaderUniforms.PointColor, color.r / 255.0, color.g / 255.0, color.b / 255.0);
-                this.gl.uniform3f(shaderUniforms.SelectedSourceColor, selectedSourceColor.r / 255.0, selectedSourceColor.g / 255.0, selectedSourceColor.b / 255.0);
-                this.gl.uniform1i(shaderUniforms.ShapeType, catalogWidgetStore.catalogShape);
-                this.gl.uniform1f(shaderUniforms.PointSize, pointSize * devicePixelRatio);
-                
-                this.gl.activeTexture(GL2.TEXTURE1);
-                this.gl.bindTexture(GL2.TEXTURE_2D, positionTexture);
-                this.gl.uniform1i(shaderUniforms.PositionTexture, 1);
+                // position 
+                const positionTexture = this.catalogWebGLService.getDataTexture(fileId, CatalogTextureType.Position);
+                if (dataPoints?.length && positionTexture) {
+                    this.gl.uniform3f(shaderUniforms.PointColor, color.r / 255.0, color.g / 255.0, color.b / 255.0);
+                    this.gl.uniform3f(shaderUniforms.SelectedSourceColor, selectedSourceColor.r / 255.0, selectedSourceColor.g / 255.0, selectedSourceColor.b / 255.0);
+                    this.gl.uniform1i(shaderUniforms.ShapeType, catalogWidgetStore.catalogShape);
+                    this.gl.uniform1f(shaderUniforms.PointSize, pointSize * devicePixelRatio);
+                    
+                    this.gl.activeTexture(GL2.TEXTURE1);
+                    this.gl.bindTexture(GL2.TEXTURE_2D, positionTexture);
+                    this.gl.uniform1i(shaderUniforms.PositionTexture, 1);
 
-                this.gl.drawArrays(GL2.POINTS, 0, dataPoints.length / 2);
-                this.gl.finish();
+                    this.gl.drawArrays(GL2.POINTS, 0, dataPoints.length / 2);
+                    this.gl.finish();
+                }
             }
         });
     }

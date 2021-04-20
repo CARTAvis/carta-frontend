@@ -8,7 +8,7 @@ import {AppStore, CatalogStore, CatalogProfileStore, CatalogOverlay, DefaultWidg
 import {CatalogOverlayShape, CatalogWidgetStore, CatalogSettingsTabs, ValueClip} from "stores/widgets";
 import {CatalogOverlayComponent} from "components";
 import {AutoColorPickerComponent, ClearableNumericInputComponent, ColormapComponent, SafeNumericInput, ScalingSelectComponent} from "components/Shared";
-import {SWATCH_COLORS} from "utilities";
+import {getColorForTheme, SWATCH_COLORS} from "utilities";
 import "./CatalogOverlayPlotSettingsPanelComponent.scss";
 
 const IconWrapper = (path: React.SVGProps<SVGPathElement>, color: string, fill: boolean, strokeWidth = 2, viewboxDefault = 16) => {
@@ -179,7 +179,7 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
                         color={widgetStore.catalogColor}
                         presetColors={[...SWATCH_COLORS, "transparent"]}
                         setColor={(color: string) => {
-                            widgetStore.setCatalogColor(color === "transparent" ? "#000000" : color);
+                            widgetStore.setCatalogColor(color === "transparent" ? "#000000" : getColorForTheme(color));
                         }}
                         disableAlpha={true}
                         disabled={disabledOverlayPanel}
@@ -190,7 +190,7 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
                         color={widgetStore.highlightColor}
                         presetColors={[...SWATCH_COLORS, "transparent"]}
                         setColor={(color: string) => {
-                            widgetStore.setHighlightColor(color === "transparent" ? "#000000" : color);
+                            widgetStore.setHighlightColor(color === "transparent" ? "#000000" : getColorForTheme(color));
                         }}
                         disableAlpha={true}
                         disabled={disabledOverlayPanel}
