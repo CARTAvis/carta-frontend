@@ -264,7 +264,7 @@ export class FileInfoComponent extends React.Component<{
                 if (this.props.catalogHeaderTable) {
                     return (
                         <Pre className="file-header-table">
-                            <SimpleTableComponent {...this.props.catalogHeaderTable} />
+                            <SimpleTableComponent {...this.props.catalogHeaderTable}/>
                         </Pre>
                     );
                 }
@@ -344,7 +344,7 @@ export class FileInfoComponent extends React.Component<{
         }
         this.selectedFile = this.props.selectedFile;
 
-        const renderHeaderRow = ({ index, style }) => {
+        const renderHeaderRow = ({index, style}) => {
             if (index < 0 || index >= entries?.length) {
                 return null;
             }

@@ -448,7 +448,7 @@ export class BackendService {
     @action("set cursor")
     setCursor(fileId: number, x: number, y: number): boolean {
         if (this.connectionStatus === ConnectionStatus.ACTIVE) {
-            const message = CARTA.SetCursor.create({fileId, point: { x, y }});
+            const message = CARTA.SetCursor.create({fileId, point: {x, y}});
             this.logEvent(CARTA.EventType.SET_CURSOR, this.eventCounter, message, false);
             if (this.sendEvent(CARTA.EventType.SET_CURSOR, CARTA.SetCursor.encode(message).finish())) {
                 return true;
