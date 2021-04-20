@@ -231,7 +231,7 @@ export class PreferenceDialogComponent extends React.Component {
                     />
                 </FormGroup>
                 <FormGroup inline={true} label="Smoothed Bias/Contrast">
-                <Switch checked={preference.useSmoothedBiasContrast} onChange={(ev) => preference.setPreference(PreferenceKeys.RENDER_CONFIG_USE_SMOOTHED_BIAS_CONTRAST, ev.currentTarget.checked)}/>
+                    <Switch checked={preference.useSmoothedBiasContrast} onChange={(ev) => preference.setPreference(PreferenceKeys.RENDER_CONFIG_USE_SMOOTHED_BIAS_CONTRAST, ev.currentTarget.checked)}/>
                 </FormGroup>
             </React.Fragment>
         );
