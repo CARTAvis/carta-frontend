@@ -335,7 +335,7 @@ callback(const size_t iter, void *params,
 }
 
 void
-solve_system(gsl_vector *x, gsl_multifit_nlinear_fdf *fdf, gsl_multifit_nlinear_parameters *params, char** parameterName)
+solve_system(gsl_vector *x, gsl_multifit_nlinear_fdf *fdf, gsl_multifit_nlinear_parameters *params)
 {
   const gsl_multifit_nlinear_type *T = gsl_multifit_nlinear_trust;
   const size_t max_iter = 200;
@@ -387,7 +387,7 @@ solve_system(gsl_vector *x, gsl_multifit_nlinear_fdf *fdf, gsl_multifit_nlinear_
   fprintf(stderr, "final cost          : %.12e\n", chisq);
   size_t i;
   for (i = 0; i < x->size; i++) {
-    fprintf(stderr, "final %s            : %.12e +/- %.12e (%.3g%%)\n", parameterName[i], FIT(i), ERR(i), abs(100 * ERR(i) / FIT(i)));
+    fprintf(stderr, "final xi            : %.12e +/- %.12e (%.3g%%)\n", FIT(i), ERR(i), abs(100 * ERR(i) / FIT(i)));
   }
   fprintf(stderr, "final cond(J)       : %.12e\n", 1.0 / rcond);
 
@@ -518,7 +518,7 @@ int EMSCRIPTEN_KEEPALIVE fittingGaussian(
         }
     }
 
-    // snprintf(logOut, sizeof(logOut), "Test=%.3e\n", test);
+    snprintf(logOut, sizeof(logOut), "Tesststststsstst");
     
     gsl_vector_free(f);
     gsl_vector_free(x);
