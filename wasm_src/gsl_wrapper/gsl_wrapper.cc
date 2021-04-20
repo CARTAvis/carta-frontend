@@ -321,24 +321,21 @@ callback(const size_t iter, void *params,
   gsl_vector *x = gsl_multifit_nlinear_position(w);
   double avratio = gsl_multifit_nlinear_avratio(w);
   double rcond;
+  size_t i;
 
   (void) params; /* not used */
 
   /* compute reciprocal condition number of J(x) */
   gsl_multifit_nlinear_rcond(&rcond, w);
 
-//   fprintf(stderr, "iter %2zu: a = %.4f, b = %.4f, c = %.4f, |a|/|v| = %.4f cond(J) = %8.4f, |f(x)| = %.4f\n",
-//           iter,
-//           gsl_vector_get(x, 0),
-//           gsl_vector_get(x, 1),
-//           gsl_vector_get(x, 2),
-//           avratio,
-//           1.0 / rcond,
-//           gsl_blas_dnrm2(f));
+  fprintf(stderr, "iter %2zu: |a|/|v| = %.4f cond(J) = %8.4f, |f(x)| = %.4f\n", iter, avratio, 1.0 / rcond, gsl_blas_dnrm2(f));
+  for (i = 0; i < x -> size; i++) {
+      fprintf(stderr, "xi = %.4f\n", gsl_vector_get(x, i));
+  }
 }
 
 void
-solve_system(gsl_vector *x, gsl_multifit_nlinear_fdf *fdf, gsl_multifit_nlinear_parameters *params)
+solve_system(gsl_vector *x, gsl_multifit_nlinear_fdf *fdf, gsl_multifit_nlinear_parameters *params, char** parameterName)
 {
   const gsl_multifit_nlinear_type *T = gsl_multifit_nlinear_trust;
   const size_t max_iter = 200;
@@ -347,8 +344,7 @@ solve_system(gsl_vector *x, gsl_multifit_nlinear_fdf *fdf, gsl_multifit_nlinear_
   const double ftol = 1.0e-8;
   const size_t n = fdf->n;
   const size_t p = fdf->p;
-  gsl_multifit_nlinear_workspace *work =
-    gsl_multifit_nlinear_alloc(T, params, n, p);
+  gsl_multifit_nlinear_workspace *work = gsl_multifit_nlinear_alloc(T, params, n, p);
   gsl_vector * f = gsl_multifit_nlinear_residual(work);
   gsl_vector * y = gsl_multifit_nlinear_position(work);
   int info;
@@ -361,8 +357,12 @@ solve_system(gsl_vector *x, gsl_multifit_nlinear_fdf *fdf, gsl_multifit_nlinear_
   gsl_blas_ddot(f, f, &chisq0);
 
   /* iterate until convergence */
-  gsl_multifit_nlinear_driver(max_iter, xtol, gtol, ftol,
-                              callback, NULL, &info, work);
+  gsl_multifit_nlinear_driver(max_iter, xtol, gtol, ftol, callback, NULL, &info, work);
+
+  /* compute covariance of best fit parameters */
+  gsl_matrix *J = gsl_multifit_nlinear_jac(work);
+  gsl_matrix *covar = gsl_matrix_alloc (p, p);
+  gsl_multifit_nlinear_covar (J, 0.0, covar);
 
   /* store final cost */
   gsl_blas_ddot(f, f, &chisq);
@@ -372,15 +372,24 @@ solve_system(gsl_vector *x, gsl_multifit_nlinear_fdf *fdf, gsl_multifit_nlinear_
 
   gsl_vector_memcpy(x, y);
 
+  #define FIT(i) gsl_vector_get(work->x, i)
+  #define ERR(i) sqrt(gsl_matrix_get(covar,i,i))
+
   /* print summary */
-  fprintf(stderr, "NITER         = %zu\n", gsl_multifit_nlinear_niter(work));
-  fprintf(stderr, "NFEV          = %zu\n", fdf->nevalf);
-  fprintf(stderr, "NJEV          = %zu\n", fdf->nevaldf);
-  fprintf(stderr, "NAEV          = %zu\n", fdf->nevalfvv);
-  fprintf(stderr, "initial cost  = %.12e\n", chisq0);
-  fprintf(stderr, "final cost    = %.12e\n", chisq);
-  fprintf(stderr, "final x       = (%.12e, %.12e, %12e)\n", gsl_vector_get(x, 0), gsl_vector_get(x, 1), gsl_vector_get(x, 2));
-  fprintf(stderr, "final cond(J) = %.12e\n", 1.0 / rcond);
+  fprintf(stderr, "summary from method '%s/%s'\n", gsl_multifit_nlinear_name(work), gsl_multifit_nlinear_trs_name(work));
+  fprintf(stderr, "number of iterations: %zu\n", gsl_multifit_nlinear_niter(work));
+  fprintf(stderr, "function evaluations: %zu\n", fdf->nevalf);
+  fprintf(stderr, "Jacobian evaluations: %zu\n", fdf->nevaldf);
+  fprintf(stderr, "reason for stopping : %s\n", (info == 1) ? "small step size" : "small gradient");
+  fprintf(stderr, "initial |f(x)|      : %f\n", sqrt(chisq0));
+  fprintf(stderr, "final |f(x)|        : %f\n", sqrt(chisq));
+  fprintf(stderr, "initial cost        : %.12e\n", chisq0);
+  fprintf(stderr, "final cost          : %.12e\n", chisq);
+  size_t i;
+  for (i = 0; i < x->size; i++) {
+    fprintf(stderr, "final %s            : %.12e +/- %.12e (%.3g%%)\n", parameterName[i], FIT(i), ERR(i), abs(100 * ERR(i) / FIT(i)));
+  }
+  fprintf(stderr, "final cond(J)       : %.12e\n", 1.0 / rcond);
 
   gsl_multifit_nlinear_free(work);
 }
@@ -393,15 +402,11 @@ size_t getModelParametersIndexMatrix(int **lockedInputs, gsl_matrix *parameterIn
     if (lockedOrderInputs[0] == 0) {
         gsl_vector_set(orderParameterIndexes, 0, n);
         n++;
-    } else {
-        gsl_vector_set(orderParameterIndexes, 0, NAN);
     }
 
     if (lockedOrderInputs[1] == 0) {
         gsl_vector_set(orderParameterIndexes, 1, n);
         n++;
-    } else {
-        gsl_vector_set(orderParameterIndexes, 1, NAN);
     }
 
     for (i = 0; i < componentN; ++i) {
@@ -409,8 +414,6 @@ size_t getModelParametersIndexMatrix(int **lockedInputs, gsl_matrix *parameterIn
             if (lockedInputs[i][j] == 0) {
                 gsl_matrix_set(parameterIndexs, i, j, n);
                 n++;
-            } else {
-                gsl_matrix_set(parameterIndexs, i, j, NAN);
             }
         }
     }
@@ -425,19 +428,11 @@ int EMSCRIPTEN_KEEPALIVE fittingGaussian(
     char* logOut) {
     int status = 0; /* return value: 0 = success */
 
-    fprintf(stderr, "input yIntercept    = %f\n", orderInputs[0]);
-    fprintf(stderr, "input slope         = %f\n", orderInputs[1]);
-    fprintf(stderr, "locked yIntercept    = %d\n", lockedOrderInputs[0]);
-    fprintf(stderr, "locked slope         = %d\n", lockedOrderInputs[1]);
-
     gsl_matrix *parameterIndexs = gsl_matrix_alloc(componentN, 3); // the matrix to store the indexes of unlocked inputs in vector of model parameters
     gsl_vector *orderParameterIndexes = gsl_vector_alloc(2);
 
     const size_t n = dataN;  /* number of data points to fit */
     const size_t p = getModelParametersIndexMatrix(lockedInputs, parameterIndexs, componentN, lockedOrderInputs, orderParameterIndexes);  /* number of model parameters */
-
-    fprintf(stderr, "testp         = %zu\n", p);
-    fprintf(stderr, "testn         n= %zu\n", n);
 
     gsl_vector *f = gsl_vector_alloc(n); // vector of data points
     gsl_vector *x = gsl_vector_alloc(p); // vector of model parameters(unlocked input)
@@ -445,17 +440,6 @@ int EMSCRIPTEN_KEEPALIVE fittingGaussian(
     gsl_multifit_nlinear_parameters fdf_params = gsl_multifit_nlinear_default_parameters();
     struct data fit_data;
     size_t i, j, parameterIndex;
-
-    fprintf(stderr, "orderParameterIndexes:\n");
-    for (i = 0; i < 2; i++) {
-        fprintf(stderr, "   %f\n", gsl_vector_get(orderParameterIndexes, i));
-    }
-    fprintf(stderr, "parameterIndexs:\n");
-    for (i = 0; i < componentN; i++) {
-        fprintf(stderr, "   %f\n", gsl_matrix_get(parameterIndexs, i, 0));
-        fprintf(stderr, "   %f\n", gsl_matrix_get(parameterIndexs, i, 1));
-        fprintf(stderr, "   %f\n", gsl_matrix_get(parameterIndexs, i, 2));
-    }
 
     fit_data.t = xInArray;
     fit_data.y = yInArray;
@@ -495,11 +479,6 @@ int EMSCRIPTEN_KEEPALIVE fittingGaussian(
                 parameterIndex++;
             }
         }
-    }
-
-    fprintf(stderr, "vector x:");
-    for (i = 0; i < p; i++) {
-        fprintf(stderr, "%f\n", gsl_vector_get(x, i));
     }
 
     fdf_params.trs = gsl_multifit_nlinear_trs_lm;
