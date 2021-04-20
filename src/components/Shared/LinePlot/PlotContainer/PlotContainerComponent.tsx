@@ -59,6 +59,7 @@ export class MultiPlotProps {
     borderColor?: string;
     borderWidth?: number;
     pointRadius?: number;
+    opacity?: number;
     order?: number;
     exportData?: Map<string, string>;
 }
@@ -469,8 +470,9 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
         if (this.props.multiPlotPropsMap && this.props.multiPlotPropsMap.size > 0) {
             this.props.multiPlotPropsMap.forEach((props, key) => {
                 let currentLineColor = props.borderColor ? props.borderColor : lineColor;
-                if (opacity < 1.0) {
-                    currentLineColor = tinycolor(currentLineColor).setAlpha(opacity).toRgbString();
+                let currentOpacity = clamp((props.opacity ? props.opacity : opacity) || 1.0, 0, 1);
+                if (currentOpacity < 1.0) {
+                    currentLineColor = tinycolor(currentLineColor).setAlpha(currentOpacity).toRgbString();
                 }
                 const multiPlotDatasetConfig: MulticolorLineChartDatasets = {
                     type: "line",

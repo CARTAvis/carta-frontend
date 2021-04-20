@@ -1,19 +1,13 @@
 import * as React from "react";
 import {observer} from "mobx-react";
 import {computed} from "mobx";
-import {FormGroup, Switch, Tab, Tabs} from "@blueprintjs/core";
 import {LinePlotSettingsPanelComponentProps, LinePlotSettingsPanelComponent} from "components/Shared";
 import {RenderConfigWidgetStore} from "stores/widgets/RenderConfigWidgetStore";
-import {WidgetProps, DefaultWidgetConfig, HelpType, WidgetsStore, AppStore} from "stores";
+import {WidgetProps, DefaultWidgetConfig, HelpType, WidgetsStore} from "stores";
 import {parseNumber} from "utilities";
 import "./RenderConfigSettingsPanelComponent.scss";
 
 const KEYCODE_ENTER = 13;
-
-export enum RenderConfigSettingsTabs {
-    STYLING,
-    COLORMAP
-}
 
 @observer
 export class RenderConfigSettingsPanelComponent extends React.Component<WidgetProps> {
@@ -122,10 +116,6 @@ export class RenderConfigSettingsPanelComponent extends React.Component<WidgetPr
         }
     };
 
-    handleSelectedTabChanged = (newTabId: React.ReactText) => {
-        this.widgetStore.setSettingsTabId(Number.parseInt(newTabId.toString()));
-    };
-
     render() {
         const widgetStore = this.widgetStore;
         const lineSettingsProps: LinePlotSettingsPanelComponentProps = {
@@ -156,30 +146,8 @@ export class RenderConfigSettingsPanelComponent extends React.Component<WidgetPr
             handleYMaxChange: this.handleYMaxChange
         };
 
-        const colormapScalingPanel = (
-            <div className="line-settings-panel">
-                <FormGroup inline={true} label="Show Color Scaling">
-                    <Switch
-                        checked={widgetStore.showColormapScaling}
-                        onChange={(ev) => widgetStore.setShowColormapScaling(ev.currentTarget.checked)}
-                    />
-                </FormGroup>
-                <FormGroup inline={true} label="Smoothed Bias/Contrast">
-                    <Switch
-                        checked={AppStore.Instance.activeFrame?.renderConfig?.useSmoothedBiasContrast}
-                        onChange={(ev) => AppStore.Instance.activeFrame?.renderConfig?.setUseSmoothedBiasContrast(ev.currentTarget.checked)}
-                    />
-                </FormGroup>
-            </div>
-        );
-
         return (
-            <div className="render-config-settings">
-                <Tabs id="renderConfigSettingsTabs" selectedTabId={widgetStore.settingsTabId} onChange={this.handleSelectedTabChanged}>
-                    <Tab id={RenderConfigSettingsTabs.STYLING} title="Styling" panel={<LinePlotSettingsPanelComponent {...lineSettingsProps}/>}/>
-                    <Tab id={RenderConfigSettingsTabs.COLORMAP} title="Colormap Scaling" panel={colormapScalingPanel}/>
-                </Tabs>
-            </div>
+            <LinePlotSettingsPanelComponent {...lineSettingsProps}/>
         );
     }
 }

@@ -278,19 +278,15 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
             borderWidth: this.widgetStore.lineWidth,
             pointRadius: this.widgetStore.linePlotPointSize,
             zeroLineWidth: 2,
-            multiPlotPropsMap: new Map(),
-            showColormapScaling: this.widgetStore.showColormapScaling,
-            isAutoScaledX: this.widgetStore.isAutoScaledX
+            multiPlotPropsMap: new Map()
         };
 
         const scaleMinVal = frame.renderConfig?.scaleMinVal;
         const scaleMaxVal = frame.renderConfig?.scaleMaxVal;
+        const primaryLineColor = getColorForTheme(this.widgetStore.primaryLineColor);
         if (frame.renderConfig.histogram && frame.renderConfig.histogram.bins && frame.renderConfig.histogram.bins.length) {
             const currentPlotData = this.plotData;
             if (currentPlotData) {
-                // set line color
-                let primaryLineColor = getColorForTheme(this.widgetStore.primaryLineColor);
-
                 let histogramProps: MultiPlotProps = {
                     data: currentPlotData.values,
                     type: this.widgetStore.plotType,
@@ -299,10 +295,7 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
                 linePlotProps.multiPlotPropsMap.set("histogram", histogramProps);
 
                 // Determine scale in X and Y directions. If auto-scaling, use the bounds of the current data
-                if (this.widgetStore.isAutoScaledX && this.widgetStore.showColormapScaling && isFinite(scaleMinVal) && isFinite(scaleMaxVal) && (scaleMinVal < scaleMaxVal)) {
-                    linePlotProps.xMin = scaleMinVal - 0.02 * (scaleMaxVal - scaleMinVal);
-                    linePlotProps.xMax = scaleMaxVal + 0.02 * (scaleMaxVal - scaleMinVal);
-                } else if (this.widgetStore.isAutoScaledX) {
+                if (this.widgetStore.isAutoScaledX) {
                     linePlotProps.xMin = currentPlotData.xMin;
                     linePlotProps.xMax = currentPlotData.xMax;
                 } else {
@@ -364,7 +357,7 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
                 });
             }
 
-            if (this.widgetStore.showColormapScaling && isFinite(scaleMinVal) && isFinite(scaleMaxVal) && (scaleMinVal < scaleMaxVal)) {
+            if (isFinite(scaleMinVal) && isFinite(scaleMaxVal) && (scaleMinVal < scaleMaxVal)) {
                 const colormapScalingX = Array.from(Array(COLORSCALE_LENGTH).keys()).map(x => scaleMinVal + x / (COLORSCALE_LENGTH - 1) * (scaleMaxVal - scaleMinVal));
                 let colormapScalingY = Array.from(Array(COLORSCALE_LENGTH).keys()).map(x => x / (COLORSCALE_LENGTH - 1));
                 colormapScalingY = colormapScalingY.map(x => scaleValue(x, frame.renderConfig.scaling, frame.renderConfig.alpha, frame.renderConfig.gamma, frame.renderConfig.bias, frame.renderConfig.contrast, frame.renderConfig.useSmoothedBiasContrast));
@@ -383,7 +376,8 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
                     data: colormapScalingData,
                     type: PlotType.LINES,
                     borderColor: appStore.darkTheme ? Colors.GRAY5 : Colors.GRAY1,
-                    borderWidth: 0.5
+                    borderWidth: 0.5,
+                    opacity: 0.5
                 };
                 linePlotProps.multiPlotPropsMap.set("colormapScaling", colormapScalingProps);
             }

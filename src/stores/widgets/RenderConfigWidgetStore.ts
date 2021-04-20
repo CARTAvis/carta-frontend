@@ -2,7 +2,6 @@ import {action, computed, observable, makeObservable} from "mobx";
 import {isAutoColor} from "utilities";
 import tinycolor from "tinycolor2";
 import {PlotType, LineSettings} from "components/Shared";
-import {RenderConfigSettingsTabs} from "components";
 
 export class RenderConfigWidgetStore {
     @observable minX: number;
@@ -20,8 +19,6 @@ export class RenderConfigWidgetStore {
     @observable markerTextVisible: boolean;
     @observable meanRmsVisible: boolean;
     @observable linePlotInitXYBoundaries: { minXVal: number, maxXVal: number, minYVal: number, maxYVal: number };
-    @observable showColormapScaling: boolean;
-    @observable settingsTabId: RenderConfigSettingsTabs;
 
     @action setXBounds = (minVal: number, maxVal: number) => {
         this.minX = minVal;
@@ -77,14 +74,6 @@ export class RenderConfigWidgetStore {
         this.cursorX = cursorVal;
     };
 
-    @action setShowColormapScaling = (showColormapScaling: boolean) => {
-        this.showColormapScaling = showColormapScaling;
-    };
-
-    @action setSettingsTabId = (val: RenderConfigSettingsTabs) => {
-        this.settingsTabId = val;
-    };
-
     constructor() {
         makeObservable(this);
         this.logScaleY = true;
@@ -95,8 +84,6 @@ export class RenderConfigWidgetStore {
         this.linePlotPointSize = 1.5;
         this.lineWidth = 1;
         this.linePlotInitXYBoundaries = { minXVal: 0, maxXVal: 0, minYVal: 0, maxYVal: 0 };
-        this.showColormapScaling = true;
-        this.settingsTabId = RenderConfigSettingsTabs.STYLING;
     }
 
     @computed get isAutoScaledX() {
