@@ -63,6 +63,7 @@ export class MultiPlotProps {
     pointRadius?: number;
     order?: number;
     comments?: string[];
+    hidden?: boolean;
 }
 
 interface MulticolorLineChartDatasets extends ChartDataSets {
@@ -470,6 +471,10 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
 
         if (this.props.multiPlotPropsMap && this.props.multiPlotPropsMap.size > 0) {
             this.props.multiPlotPropsMap.forEach((props, key) => {
+                if (props.hidden) {
+                    return;
+                }
+
                 let currentLineColor = props.borderColor ? props.borderColor : lineColor;
                 if (opacity < 1.0) {
                     currentLineColor = tinycolor(currentLineColor).setAlpha(opacity).toRgbString();
