@@ -1307,6 +1307,13 @@ export class FrameStore {
         this.center.y = (this.frameInfo.fileInfoExtended.height - 1) / 2.0;
     };
 
+    @action setSpectralCoordinateToRadioVelocity = () => {
+        const coordStr = GenCoordinateLabel(SpectralType.VRAD, SPECTRAL_DEFAULT_UNIT.get(SpectralType.VRAD));
+        if (this.spectralCoordsSupported?.has(coordStr)) {
+            this.setSpectralCoordinate(coordStr);
+        }
+    };
+
     @action setSpectralCoordinate = (coordStr: string, alignSpectralSiblings: boolean = true): boolean => {
         if (this.spectralCoordsSupported?.has(coordStr)) {
             const coord: {type: SpectralType, unit: SpectralUnit} = this.spectralCoordsSupported.get(coordStr);

@@ -449,6 +449,8 @@ export class SpectralProfileSelectionStore {
             widgetStore.setProfileColor(SpectralProfileWidgetStore.PRIMARY_LINE_KEY, primaryLineColor);
         } else if (profileCategory === MultiProfileCategory.IMAGE) {
             if (this.selectedFrame) {
+                // Switch spectral system to Radio velocity for common use case
+                this.selectedFrame.setSpectralCoordinateToRadioVelocity();
                 widgetStore.setProfileColor(this.selectedFrameFileId, primaryLineColor);
             }
         } else if (profileCategory === MultiProfileCategory.REGION) {
