@@ -1,5 +1,5 @@
 import {action, observable, makeObservable, runInAction} from "mobx";
-import {CARTA } from "carta-protobuf";
+import {CARTA} from "carta-protobuf";
 import {Observable, Observer, Subject, throwError} from "rxjs";
 import {AppStore, PreferenceStore, RegionStore} from "stores";
 import {mapToObject} from "utilities";
@@ -133,7 +133,7 @@ export class BackendService {
         this.connection = new WebSocket(apiService.accessToken ? url + `?token=${apiService.accessToken}` : url);
         this.connection.binaryType = "arraybuffer";
         this.connection.onmessage = this.messageHandler.bind(this);
-        this.connection.onclose = (ev: CloseEvent) => runInAction(() => {
+        this.connection.onclose = (ev: CloseEvent) => runInAction(()=>{
             // Only change to closed connection if the connection was originally active
             if (this.connectionStatus === ConnectionStatus.ACTIVE) {
                 this.connectionStatus = ConnectionStatus.CLOSED;
@@ -159,7 +159,7 @@ export class BackendService {
                 }
                 this.connectionStatus = ConnectionStatus.ACTIVE;
                 this.autoReconnect = true;
-                const message = CARTA.RegisterViewer.create({ sessionId: this.sessionId, clientFeatureFlags: BackendService.DefaultFeatureFlags });
+                const message = CARTA.RegisterViewer.create({sessionId: this.sessionId, clientFeatureFlags: BackendService.DefaultFeatureFlags});
                 // observer map is cleared, so that old subscriptions don't get incorrectly fired
                 this.observerRequestMap.clear();
                 this.eventCounter = 1;
@@ -193,7 +193,7 @@ export class BackendService {
         if (this.connectionStatus !== ConnectionStatus.ACTIVE) {
             return throwError(new Error("Not connected"));
         } else {
-            const message = CARTA.FileListRequest.create({ directory });
+            const message = CARTA.FileListRequest.create({directory});
             const requestId = this.eventCounter;
             this.logEvent(CARTA.EventType.FILE_LIST_REQUEST, requestId, message, false);
             if (this.sendEvent(CARTA.EventType.FILE_LIST_REQUEST, CARTA.FileListRequest.encode(message).finish())) {
@@ -211,7 +211,7 @@ export class BackendService {
         if (this.connectionStatus !== ConnectionStatus.ACTIVE) {
             return throwError(new Error("Not connected"));
         } else {
-            const message = CARTA.RegionListRequest.create({ directory });
+            const message = CARTA.RegionListRequest.create({directory});
             const requestId = this.eventCounter;
             this.logEvent(CARTA.EventType.REGION_LIST_REQUEST, requestId, message, false);
             if (this.sendEvent(CARTA.EventType.REGION_LIST_REQUEST, CARTA.RegionListRequest.encode(message).finish())) {
@@ -229,7 +229,7 @@ export class BackendService {
         if (this.connectionStatus !== ConnectionStatus.ACTIVE) {
             return throwError(new Error("Not connected"));
         } else {
-            const message = CARTA.CatalogListRequest.create({ directory });
+            const message = CARTA.CatalogListRequest.create({directory});
             const requestId = this.eventCounter;
             this.logEvent(CARTA.EventType.CATALOG_LIST_REQUEST, requestId, message, false);
             if (this.sendEvent(CARTA.EventType.CATALOG_LIST_REQUEST, CARTA.CatalogListRequest.encode(message).finish())) {
@@ -247,7 +247,7 @@ export class BackendService {
         if (this.connectionStatus !== ConnectionStatus.ACTIVE) {
             return throwError(new Error("Not connected"));
         } else {
-            const message = CARTA.FileInfoRequest.create({ directory, file, hdu });
+            const message = CARTA.FileInfoRequest.create({directory, file, hdu});
             const requestId = this.eventCounter;
             this.logEvent(CARTA.EventType.FILE_INFO_REQUEST, requestId, message, false);
             if (this.sendEvent(CARTA.EventType.FILE_INFO_REQUEST, CARTA.FileInfoRequest.encode(message).finish())) {
@@ -265,7 +265,7 @@ export class BackendService {
         if (this.connectionStatus !== ConnectionStatus.ACTIVE) {
             return throwError(new Error("Not connected"));
         } else {
-            const message = CARTA.RegionFileInfoRequest.create({ directory, file });
+            const message = CARTA.RegionFileInfoRequest.create({directory, file});
             const requestId = this.eventCounter;
             this.logEvent(CARTA.EventType.REGION_FILE_INFO_REQUEST, requestId, message, false);
             if (this.sendEvent(CARTA.EventType.REGION_FILE_INFO_REQUEST, CARTA.RegionFileInfoRequest.encode(message).finish())) {
@@ -283,7 +283,7 @@ export class BackendService {
         if (this.connectionStatus !== ConnectionStatus.ACTIVE) {
             return throwError(new Error("Not connected"));
         } else {
-            const message = CARTA.CatalogFileInfoRequest.create({ directory, name });
+            const message = CARTA.CatalogFileInfoRequest.create({directory, name});
             const requestId = this.eventCounter;
             this.logEvent(CARTA.EventType.CATALOG_FILE_INFO_REQUEST, requestId, message, false);
             if (this.sendEvent(CARTA.EventType.CATALOG_FILE_INFO_REQUEST, CARTA.CatalogFileInfoRequest.encode(message).finish())) {
@@ -301,7 +301,7 @@ export class BackendService {
         if (this.connectionStatus !== ConnectionStatus.ACTIVE) {
             return throwError(new Error("Not connected"));
         } else {
-            const message = CARTA.ImportRegion.create({ directory, file, type, groupId: fileId });
+            const message = CARTA.ImportRegion.create({directory, file, type, groupId: fileId});
             const requestId = this.eventCounter;
             this.logEvent(CARTA.EventType.IMPORT_REGION, requestId, message, false);
             if (this.sendEvent(CARTA.EventType.IMPORT_REGION, CARTA.ImportRegion.encode(message).finish())) {
@@ -319,7 +319,7 @@ export class BackendService {
         if (this.connectionStatus !== ConnectionStatus.ACTIVE) {
             return throwError(new Error("Not connected"));
         } else {
-            const message = CARTA.ExportRegion.create({ directory, file, type, fileId, regionStyles: mapToObject(regionStyles), coordType });
+            const message = CARTA.ExportRegion.create({directory, file, type, fileId, regionStyles: mapToObject(regionStyles), coordType});
             const requestId = this.eventCounter;
             this.logEvent(CARTA.EventType.EXPORT_REGION, requestId, message, false);
             if (this.sendEvent(CARTA.EventType.EXPORT_REGION, CARTA.ExportRegion.encode(message).finish())) {
@@ -337,7 +337,7 @@ export class BackendService {
         if (this.connectionStatus !== ConnectionStatus.ACTIVE) {
             return throwError(new Error("Not connected"));
         } else {
-            const message = CARTA.OpenFile.create({ directory, file, hdu, fileId, renderMode });
+            const message = CARTA.OpenFile.create({directory, file, hdu, fileId, renderMode});
             const requestId = this.eventCounter;
             this.logEvent(CARTA.EventType.OPEN_FILE, requestId, message, false);
             if (this.sendEvent(CARTA.EventType.OPEN_FILE, CARTA.OpenFile.encode(message).finish())) {
@@ -378,7 +378,7 @@ export class BackendService {
         if (this.connectionStatus !== ConnectionStatus.ACTIVE) {
             return throwError(new Error("Not connected"));
         } else {
-            const message = CARTA.OpenCatalogFile.create({ directory, name, fileId, previewDataSize });
+            const message = CARTA.OpenCatalogFile.create({directory, name, fileId, previewDataSize});
             const requestId = this.eventCounter;
             this.logEvent(CARTA.EventType.OPEN_CATALOG_FILE, requestId, message, false);
             if (this.sendEvent(CARTA.EventType.OPEN_CATALOG_FILE, CARTA.OpenCatalogFile.encode(message).finish())) {
@@ -394,7 +394,7 @@ export class BackendService {
     @action("close catalog file")
     closeCatalogFile(fileId: number): boolean {
         if (this.connectionStatus === ConnectionStatus.ACTIVE) {
-            const message = CARTA.CloseCatalogFile.create({ fileId });
+            const message = CARTA.CloseCatalogFile.create({fileId});
             this.logEvent(CARTA.EventType.CLOSE_CATALOG_FILE, this.eventCounter, message, false);
             if (this.sendEvent(CARTA.EventType.CLOSE_CATALOG_FILE, CARTA.CloseCatalogFile.encode(message).finish())) {
                 return true;
@@ -408,7 +408,7 @@ export class BackendService {
         if (this.connectionStatus !== ConnectionStatus.ACTIVE) {
             return throwError(new Error("Not connected"));
         } else {
-            const message = CARTA.SaveFile.create({ fileId, outputFileDirectory, outputFileName, outputFileType, regionId, channels, stokes, keepDegenerate });
+            const message = CARTA.SaveFile.create({fileId, outputFileDirectory, outputFileName, outputFileType, regionId, channels, stokes, keepDegenerate});
             const requestId = this.eventCounter;
             this.logEvent(CARTA.EventType.SAVE_FILE, this.eventCounter, message, false);
             if (this.sendEvent(CARTA.EventType.SAVE_FILE, CARTA.SaveFile.encode(message).finish())) {
@@ -424,7 +424,7 @@ export class BackendService {
     @action("close file")
     closeFile(fileId: number): boolean {
         if (this.connectionStatus === ConnectionStatus.ACTIVE) {
-            const message = CARTA.CloseFile.create({ fileId });
+            const message = CARTA.CloseFile.create({fileId});
             this.logEvent(CARTA.EventType.CLOSE_FILE, this.eventCounter, message, false);
             if (this.sendEvent(CARTA.EventType.CLOSE_FILE, CARTA.CloseFile.encode(message).finish())) {
                 return true;
@@ -436,7 +436,7 @@ export class BackendService {
     @action("set channels")
     setChannels(fileId: number, channel: number, stokes: number, requiredTiles: CARTA.IAddRequiredTiles): boolean {
         if (this.connectionStatus === ConnectionStatus.ACTIVE) {
-            const message = CARTA.SetImageChannels.create({ fileId, channel, stokes, requiredTiles });
+            const message = CARTA.SetImageChannels.create({fileId, channel, stokes, requiredTiles});
             this.logEvent(CARTA.EventType.SET_IMAGE_CHANNELS, this.eventCounter, message, false);
             if (this.sendEvent(CARTA.EventType.SET_IMAGE_CHANNELS, CARTA.SetImageChannels.encode(message).finish())) {
                 return true;
@@ -448,7 +448,7 @@ export class BackendService {
     @action("set cursor")
     setCursor(fileId: number, x: number, y: number): boolean {
         if (this.connectionStatus === ConnectionStatus.ACTIVE) {
-            const message = CARTA.SetCursor.create({ fileId, point: { x, y } });
+            const message = CARTA.SetCursor.create({fileId, point: { x, y }});
             this.logEvent(CARTA.EventType.SET_CURSOR, this.eventCounter, message, false);
             if (this.sendEvent(CARTA.EventType.SET_CURSOR, CARTA.SetCursor.encode(message).finish())) {
                 return true;
@@ -487,7 +487,7 @@ export class BackendService {
     @action("remove region")
     removeRegion(regionId: number) {
         if (this.connectionStatus === ConnectionStatus.ACTIVE) {
-            const message = CARTA.RemoveRegion.create({ regionId });
+            const message = CARTA.RemoveRegion.create({regionId});
             this.logEvent(CARTA.EventType.REMOVE_REGION, this.eventCounter, message, false);
             if (this.sendEvent(CARTA.EventType.REMOVE_REGION, CARTA.RemoveRegion.encode(message).finish())) {
                 return true;
@@ -554,7 +554,7 @@ export class BackendService {
     @action("add required tiles")
     addRequiredTiles(fileId: number, tiles: Array<number>, quality: number): boolean {
         if (this.connectionStatus === ConnectionStatus.ACTIVE) {
-            const message = CARTA.AddRequiredTiles.create({ fileId, tiles, compressionQuality: quality, compressionType: CARTA.CompressionType.ZFP });
+            const message = CARTA.AddRequiredTiles.create({fileId, tiles, compressionQuality: quality, compressionType: CARTA.CompressionType.ZFP});
             this.logEvent(CARTA.EventType.ADD_REQUIRED_TILES, this.eventCounter, message, false);
             if (this.sendEvent(CARTA.EventType.ADD_REQUIRED_TILES, CARTA.AddRequiredTiles.encode(message).finish())) {
                 return true;
@@ -566,7 +566,7 @@ export class BackendService {
     @action("remove required tiles")
     removeRequiredTiles(fileId: number, tiles: Array<number>): boolean {
         if (this.connectionStatus === ConnectionStatus.ACTIVE) {
-            const message = CARTA.RemoveRequiredTiles.create({ fileId, tiles });
+            const message = CARTA.RemoveRequiredTiles.create({fileId, tiles});
             this.logEvent(CARTA.EventType.REMOVE_REQUIRED_TILES, this.eventCounter, message, false);
             if (this.sendEvent(CARTA.EventType.REMOVE_REQUIRED_TILES, CARTA.RemoveRequiredTiles.encode(message).finish())) {
                 return true;
@@ -670,7 +670,7 @@ export class BackendService {
         if (this.connectionStatus !== ConnectionStatus.ACTIVE) {
             return throwError(new Error("Not connected"));
         } else {
-            const message = CARTA.StopMomentCalc.create({ fileId });
+            const message = CARTA.StopMomentCalc.create({fileId});
             this.logEvent(CARTA.EventType.STOP_MOMENT_CALC, this.eventCounter, message, false);
             if (this.sendEvent(CARTA.EventType.STOP_MOMENT_CALC, CARTA.StopMomentCalc.encode(message).finish())) {
                 return true;
@@ -684,7 +684,7 @@ export class BackendService {
         if (this.connectionStatus !== ConnectionStatus.ACTIVE) {
             return throwError(new Error("Not connected"));
         } else {
-            const message = CARTA.SpectralLineRequest.create({ frequencyRange: frequencyRange, lineIntensityLowerLimit: intensityLimit });
+            const message = CARTA.SpectralLineRequest.create({frequencyRange: frequencyRange, lineIntensityLowerLimit: intensityLimit});
             const requestId = this.eventCounter;
             this.logEvent(CARTA.EventType.SPECTRAL_LINE_REQUEST, requestId, message, false);
             if (this.sendEvent(CARTA.EventType.SPECTRAL_LINE_REQUEST, CARTA.SpectralLineRequest.encode(message).finish())) {

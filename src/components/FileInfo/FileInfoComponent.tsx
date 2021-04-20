@@ -42,7 +42,7 @@ export class FileInfoComponent extends React.Component<{
     private matchedIterLocation: {line: number, num: number} = {line: -1, num: -1};
     private selectedFile: CARTA.IFileInfo | CARTA.ICatalogFileInfo;
     private splitLengthArray: Array<Array<number>> = [];
-    private matchedLocationArray: Array<{ line: number, num: number }> = [];
+    private matchedLocationArray: Array<{line: number, num: number}> = [];
     private listRef = React.createRef<any>();
     private clickMatchedTimer;
     private clickMatchedTimerStart;
@@ -78,7 +78,7 @@ export class FileInfoComponent extends React.Component<{
     };
 
     @action minusMatchedIter = () => {
-        if (this.matchedIter === 0) {
+        if (this.matchedIter === 0){
             return;
         } else if (this.matchedIter === 1) {
             this.matchedIter = this.matchedTotal;
@@ -96,7 +96,7 @@ export class FileInfoComponent extends React.Component<{
     };
 
     private updateMatchedIterLocation = () => {
-        this.matchedIterLocation = (this.matchedTotal > 0) ? this.matchedLocationArray[this.matchedIter - 1] : { line: -1, num: -1 };
+        this.matchedIterLocation = (this.matchedTotal > 0) ? this.matchedLocationArray[this.matchedIter - 1] : {line: -1, num: -1};
     };
 
     // scrollToItem() scroll to positions without the effect of padding
@@ -120,7 +120,7 @@ export class FileInfoComponent extends React.Component<{
         this.resetSearchString();
         this.resetMatchedIter();
         this.matchedTotal = 0;
-        this.matchedIterLocation = { line: -1, num: -1 };
+        this.matchedIterLocation = {line: -1, num: -1};
     };
 
     private handleSearchStringChanged = (ev: React.ChangeEvent<HTMLInputElement>) => {
@@ -142,7 +142,7 @@ export class FileInfoComponent extends React.Component<{
                 if (splitString.length > 1) {
                     let numIter = 0;
                     while (numIter < splitString.length - 1) {
-                        this.matchedLocationArray.push({ line: index, num: numIter });
+                        this.matchedLocationArray.push({line: index, num: numIter});
                         numIter += 1;
                     }
                 }
@@ -221,9 +221,9 @@ export class FileInfoComponent extends React.Component<{
     private renderHDUList = () => {
         return this.props.HDUOptions && this.props.HDUOptions.HDUList?.length > 1 ? (
             <ControlGroup vertical={false}>
-                <Divider />
+                <Divider/>
                 <FormGroup inline={true} label="HDU">
-                    <HTMLSelect options={this.props.HDUOptions.HDUList} onChange={(ev) => this.props.HDUOptions.handleSelectedHDUChange(ev.currentTarget.value)} />
+                    <HTMLSelect options={this.props.HDUOptions.HDUList} onChange={(ev) => this.props.HDUOptions.handleSelectedHDUChange(ev.currentTarget.value)}/>
                 </FormGroup>
             </ControlGroup>
         ) : undefined;
@@ -276,7 +276,7 @@ export class FileInfoComponent extends React.Component<{
 
     private highlightString = (index: number, name: string, value?: string, comment?: string) => {
 
-        if (!isFinite(index) || index < 0 || !name) {
+        if(!isFinite(index) || index < 0 || !name) {
             return null;
         }
 
@@ -289,7 +289,7 @@ export class FileInfoComponent extends React.Component<{
         let usedLength = 0;
 
         let addHighlightedString = (sliceStart: number, sliceEnd: number) => {
-            if (!isFinite(sliceStart) || !isFinite(sliceEnd)) {
+            if(!isFinite(sliceStart) || !isFinite(sliceEnd)) {
                 return;
             }
             highlightedString.push(<span className={typeClassName + highlightClassName} key={keyIter.toString()}>
@@ -373,7 +373,7 @@ export class FileInfoComponent extends React.Component<{
         const numHeaders = entries?.length || 0;
         return (
             <AutoSizer>
-                {({ height, width }) => (
+                {({height, width}) => (
                     <List
                         className="header-list bp3-code-block"
                         itemCount={numHeaders}
@@ -390,7 +390,7 @@ export class FileInfoComponent extends React.Component<{
     };
 
     private renderHeaderSearch = () => {
-        const popoverModifiers: PopperModifiers = { arrow: { enabled: false }, offset: { offset: '0, 10px, 0, 0' } };
+        const popoverModifiers: PopperModifiers = {arrow: {enabled: false}, offset: {offset: '0, 10px, 0, 0'}};
         const searchIter = (
             <ButtonGroup className="header-search">
                 <span className="header-search-iter">&nbsp;{this.matchedIter} of {this.matchedTotal}&nbsp;</span>
@@ -423,7 +423,7 @@ export class FileInfoComponent extends React.Component<{
                     onOpening={() => this.handleSearchPanelClicked(true)}
                     onClosing={() => this.handleSearchPanelClicked(false)}
                 >
-                    <Button icon="search-text" style={{ opacity: (this.isMouseEntered || this.isSearchOpened) ? 1 : 0 }}></Button>
+                    <Button icon="search-text" style={{opacity: (this.isMouseEntered || this.isSearchOpened) ? 1 : 0}}></Button>
                     <InputGroup
                         className="header-search-input"
                         autoFocus={true}

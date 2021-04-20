@@ -1,7 +1,7 @@
 import {IOptionProps, TabId} from "@blueprintjs/core";
 import {action, computed, observable, makeObservable, runInAction, autorun} from "mobx";
 import {CARTA} from "carta-protobuf";
-import {BackendService } from "services";
+import {BackendService} from "services";
 import {AppStore, DialogStore, PreferenceKeys, PreferenceStore} from "stores";
 import {FileInfoType} from "components";
 import {ProcessedColumnData} from "models";
@@ -45,7 +45,7 @@ export class FileBrowserStore {
     @observable fileList: CARTA.IFileListResponse;
     @observable selectedFile: CARTA.IFileInfo | CARTA.ICatalogFileInfo;
     @observable selectedHDU: string;
-    @observable HDUfileInfoExtended: { [k: string]: CARTA.IFileInfoExtended };
+    @observable HDUfileInfoExtended: {[k: string]: CARTA.IFileInfoExtended};
     @observable regionFileInfo: string[];
     @observable selectedTab: TabId = FileInfoType.IMAGE_FILE;
     @observable loadingList = false;
@@ -430,19 +430,19 @@ export class FileBrowserStore {
         }
 
         const dataType = CARTA.ColumnType.String;
-        columnsData.set(0, { dataType, data: nameData });
-        columnsData.set(1, { dataType, data: unitData });
-        columnsData.set(2, { dataType, data: typeData });
-        columnsData.set(3, { dataType, data: descriptionData });
+        columnsData.set(0, {dataType, data: nameData});
+        columnsData.set(1, {dataType, data: unitData});
+        columnsData.set(2, {dataType, data: typeData});
+        columnsData.set(3, {dataType, data: descriptionData});
 
         let columnHeaders = [
-            new CARTA.CatalogHeader({ name: "Name", dataType, columnIndex: 0 }),
-            new CARTA.CatalogHeader({ name: "Unit", dataType, columnIndex: 1 }),
-            new CARTA.CatalogHeader({ name: "Data Type", dataType, columnIndex: 2 }),
-            new CARTA.CatalogHeader({ name: "Description", dataType, columnIndex: 3 })
+            new CARTA.CatalogHeader({name: "Name", dataType, columnIndex: 0}),
+            new CARTA.CatalogHeader({name: "Unit", dataType, columnIndex: 1}),
+            new CARTA.CatalogHeader({name: "Data Type", dataType, columnIndex: 2}),
+            new CARTA.CatalogHeader({name: "Description", dataType, columnIndex: 3})
         ];
 
-        return { columnHeaders: columnHeaders, columnsData: columnsData };
+        return {columnHeaders: columnHeaders, columnsData: columnsData};
     }
 
     /// Transfer the request from stokes string
