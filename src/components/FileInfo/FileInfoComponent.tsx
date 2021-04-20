@@ -4,7 +4,7 @@ import {action, makeObservable, observable} from "mobx";
 import {Button, ButtonGroup, ControlGroup, Divider, FormGroup, HTMLSelect, InputGroup, IOptionProps, NonIdealState, Popover, PopoverInteractionKind, PopperModifiers, Position, Pre, Spinner, Tab, TabId, Tabs, Text} from "@blueprintjs/core";
 import {FixedSizeList as List} from "react-window";
 import AutoSizer from "react-virtualized-auto-sizer";
-import {CARTA } from "carta-protobuf";
+import {CARTA} from "carta-protobuf";
 import {SimpleTableComponent, SimpleTableComponentProps} from "components/Shared";
 import {ImageSaveComponent} from "components/Dialogs";
 import "./FileInfoComponent.scss";
@@ -21,7 +21,7 @@ export enum FileInfoType {
 @observer
 export class FileInfoComponent extends React.Component<{
     infoTypes: FileInfoType[],
-    HDUOptions?: { HDUList: IOptionProps[], handleSelectedHDUChange: (hdu: string) => void; },
+    HDUOptions?: {HDUList: IOptionProps[], handleSelectedHDUChange: (hdu: string) => void;},
     fileInfoExtended: CARTA.IFileInfoExtended,
     regionFileInfo: string,
     catalogFileInfo: CARTA.ICatalogFileInfo,
@@ -39,7 +39,7 @@ export class FileInfoComponent extends React.Component<{
 
     private isSearchOpened: boolean = false;
     private matchedTotal: number = 0;
-    private matchedIterLocation: { line: number, num: number } = { line: -1, num: -1 };
+    private matchedIterLocation: {line: number, num: number} = {line: -1, num: -1};
     private selectedFile: CARTA.IFileInfo | CARTA.ICatalogFileInfo;
     private splitLengthArray: Array<Array<number>> = [];
     private matchedLocationArray: Array<{ line: number, num: number }> = [];
