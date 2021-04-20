@@ -68,7 +68,7 @@ class ProfileSelectionButtonComponent extends React.Component<ProfileSelectionBu
                     }
                     minimal={true}
                     placement={Position.BOTTOM}
-                    disabled={this.props.disabled}
+                    disabled={this.props.disabled || this.props.disableOptions}
                 >
                     <AnchorButton
                         text={<span className="overflow-text">{this.props.isSelectingSpecificItem ? <b>{dropdownText}</b> : dropdownText}</span>}
