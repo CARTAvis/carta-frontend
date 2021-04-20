@@ -5,7 +5,6 @@ import {LinePlotSettingsPanelComponentProps, LinePlotSettingsPanelComponent} fro
 import {RenderConfigWidgetStore} from "stores/widgets/RenderConfigWidgetStore";
 import {WidgetProps, DefaultWidgetConfig, HelpType, WidgetsStore} from "stores";
 import {parseNumber} from "utilities";
-import "./RenderConfigSettingsPanelComponent.scss";
 
 const KEYCODE_ENTER = 13;
 

@@ -2,6 +2,7 @@ import {action, computed, observable, makeObservable} from "mobx";
 import {FrameStore, PreferenceStore} from "stores";
 import {CARTA} from "carta-protobuf";
 import {clamp, getColorsForValues, getPercentiles, scaleValueInverse} from "utilities";
+import { AppStore } from "./AppStore";
 
 export enum FrameScaling {
     LINEAR = 0,
@@ -65,7 +66,6 @@ export class RenderConfigStore {
     @observable colorMapIndex: number;
     @observable bias: number;
     @observable contrast: number;
-    @observable useSmoothedBiasContrast: boolean;
     @observable gamma: number;
     @observable alpha: number;
     @observable inverted: boolean;
@@ -89,7 +89,6 @@ export class RenderConfigStore {
         this.selectedPercentile = [percentile, percentile, percentile, percentile];
         this.bias = 0;
         this.contrast = 1;
-        this.useSmoothedBiasContrast = true;
         this.alpha = preference.scalingAlpha;
         this.gamma = preference.scalingGamma;
         this.scaling = preference.scaling;
@@ -129,7 +128,7 @@ export class RenderConfigStore {
     @computed get colorscaleArray() {
         const colorsForValues = getColorsForValues(this.colorMap);
         const indexArray = Array.from(Array(colorsForValues.size).keys()).map(x => this.inverted ? x / colorsForValues.size : 1 - x / colorsForValues.size);
-        const scaledAarray = indexArray.map(x => 1.0 - scaleValueInverse(1.0 - x, this.scaling, this.alpha, this.gamma, this.bias, this.contrast, this.useSmoothedBiasContrast));
+        const scaledAarray = indexArray.map(x => 1.0 - scaleValueInverse(1.0 - x, this.scaling, this.alpha, this.gamma, this.bias, this.contrast, AppStore.Instance?.preferenceStore?.useSmoothedBiasContrast));
         let rbgString = (index: number): string => (
             `rgb(${colorsForValues.color[index * 4]}, ${colorsForValues.color[index * 4 + 1]}, ${colorsForValues.color[index * 4 + 2]}, ${colorsForValues.color[index * 4 + 3]})`
         );
@@ -315,10 +314,6 @@ export class RenderConfigStore {
 
     @action resetContrast = () => {
         this.contrast = 1;
-    };
-
-    @action setUseSmoothedBiasContrast = (useSmoothedBiasContrast: boolean) => {
-        this.useSmoothedBiasContrast = useSmoothedBiasContrast;
     };
 
     @action setInverted = (inverted: boolean) => {
