@@ -67,7 +67,6 @@ export function getColorsForValues(colorMap: string): { color: Uint8ClampedArray
 }
 
 export function isAutoColor(color: string): boolean {
-    // console.log(`${color} ${SUPPORTED_AUTO_COLORS_REGEX} ${SUPPORTED_AUTO_COLORS_REGEX.test(color)}`);
     return SUPPORTED_AUTO_COLORS_REGEX.test(color);
 }
 
