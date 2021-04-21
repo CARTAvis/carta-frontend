@@ -12,14 +12,19 @@
             }
         }
 
-        .components-controller{
+        .components-input{
             display: flex;
             flex-direction: row;
-            height: 30px;
 
             .bp3-input-group{
                 width: 40px;
             }
+        }
+
+        .components-slieder{
+            display: flex;
+            flex-direction: row;
+            height: 30px;
 
             .bp3-slider{
                 margin-left: 15px;
@@ -29,15 +34,15 @@
             .bp3-button{
                 margin-left: 15px;
             }
-
-            .bp3-switch{
-                margin-left: 15px;
-            }
         }
 
         .component-input{
             display: flex;
             flex-direction: row;
+
+            .bp3-switch{
+                margin-left: 15px;
+            }
         }
 
         .fitting-result-pre{

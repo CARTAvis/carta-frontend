@@ -1,5 +1,5 @@
 import * as React from "react";
-import {computed, observable, action} from "mobx"
+import {computed, observable, action, autorun, makeObservable} from "mobx";
 import {observer} from "mobx-react";
 import {AnchorButton, FormGroup, HTMLSelect, Slider, Pre, Text, Intent, Tooltip, Switch, Popover, Button} from "@blueprintjs/core";
 import {SafeNumericInput} from "components/Shared";
@@ -10,6 +10,7 @@ import {ProcessedSpectralProfile} from "models";
 import {CARTA} from "carta-protobuf";
 import {clamp} from "utilities";
 import "./ProfileFittingComponent.scss";
+import { RegionId } from "stores/widgets";
 
 export enum FittingFunction {
     GAUSSIAN,
@@ -22,8 +23,13 @@ export enum FittingContinuum {
     FIRST_ORDER = 1
 }
 
+export interface ProfileFittingComponentProps {
+    fittingStore: ProfileFittingStore,
+    widgetStore: SpectralProfileWidgetStore
+}
+
 @observer
-export class ProfileFittingComponent extends React.Component<{fittingStore: ProfileFittingStore, widgetStore: SpectralProfileWidgetStore}> {
+export class ProfileFittingComponent extends React.Component<ProfileFittingComponentProps> {
     @observable isShowingLog: boolean;
 
     private onContinuumValueChanged = (ev) => {
@@ -117,6 +123,8 @@ export class ProfileFittingComponent extends React.Component<{fittingStore: Prof
         fittingStore.setContinuum(FittingContinuum.NONE);
         fittingStore.setYIntercept(0);
         fittingStore.setSlope(0);
+        fittingStore.setResultYIntercept(0);
+        fittingStore.setResultSlope(0);
         fittingStore.setIsCursorSelectingYIntercept(false);
         fittingStore.setIsCursorSelectingSlope(false);
         fittingStore.setIsCursorSelectionOn(false);
@@ -202,6 +210,26 @@ export class ProfileFittingComponent extends React.Component<{fittingStore: Prof
             </i></span>
         )
     }
+    @action setIsShowingLog(val: boolean) {
+        this.isShowingLog = val;
+    }
+
+    constructor(props: ProfileFittingComponentProps) {
+        super(props);
+        makeObservable(this);
+        autorun(() => {
+            // clear fitting data when the profile data changed
+            if (props.widgetStore.effectiveRegionId && props.widgetStore.statsType && props.widgetStore.coordinate &&
+                props.widgetStore.effectiveFrame?.regionSet?.regions?.find(r => r.regionId === props.widgetStore.effectiveRegionId)?.center) {
+                this.reset();
+            }
+
+            // clear fitting data when the profile data changed
+            if (props.widgetStore.effectiveRegionId === RegionId.CURSOR && props.widgetStore.effectiveFrame.cursorValue.position) {
+                this.reset();
+            }
+        });
+    }
 
     @action setIsShowingLog(val: boolean) {
         this.isShowingLog = val;
@@ -229,7 +257,7 @@ export class ProfileFittingComponent extends React.Component<{fittingStore: Prof
                         />
                     </FormGroup>
                     <FormGroup label="Auto detect" inline={true}>
-                        <div className={"components-controller"}>
+                        <div className={"component-input"}>
                             <Tooltip content={this.autoButtonTooltip()}>
                                 <AnchorButton onClick={this.autoDetect} icon="series-search"/>
                             </Tooltip>
@@ -251,7 +279,7 @@ export class ProfileFittingComponent extends React.Component<{fittingStore: Prof
                         </FormGroup>
                     }
                     <FormGroup label="Components" inline={true}>
-                        <div className={"components-controller"}>
+                        <div className={"components-input"}>
                             <SafeNumericInput
                                 value={fittingStore.components.length}
                                 min={1}
@@ -260,7 +288,7 @@ export class ProfileFittingComponent extends React.Component<{fittingStore: Prof
                                 onValueChange={val => fittingStore.setComponents(Math.round(val))}
                             />
                             {fittingStore.components.length > 1 &&
-                                <React.Fragment>
+                                <div className="components-slieder">
                                     <Slider
                                         value={fittingStore.selectedIndex + 1}
                                         min={1}
@@ -271,7 +299,7 @@ export class ProfileFittingComponent extends React.Component<{fittingStore: Prof
                                         disabled={fittingStore.components.length <= 1}
                                     />
                                     <AnchorButton intent={Intent.NONE} icon={"trash"} onClick={this.deleteComponent}/>
-                                </React.Fragment>
+                                </div>
                             }
                         </div>
                     </FormGroup>
@@ -318,7 +346,7 @@ export class ProfileFittingComponent extends React.Component<{fittingStore: Prof
                     <div className="component-input">
                         <HTMLSelect 
                             value={fittingStore.continuum} 
-                            options={[{label:"None", value: FittingContinuum.NONE}, {label:"0th order", value: FittingContinuum.ZEROTH_ORDER}, {label:"1th order", value: FittingContinuum.FIRST_ORDER}]} 
+                            options={[{label:"None", value: FittingContinuum.NONE}, {label:"0th order", value: FittingContinuum.ZEROTH_ORDER}, {label:"1st order", value: FittingContinuum.FIRST_ORDER}]} 
                             onChange={this.onContinuumValueChanged}
                         />
                     </div>
