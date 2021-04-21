@@ -98,7 +98,7 @@ class ProfileSelectionComponent extends React.Component<{profileSelectionStore: 
         if (profileSelectionStore.activeProfileCategory !== MultiProfileCategory.REGION) {
             profileSelectionStore.selectRegionSingleMode(selectedRegion);
         } else {
-            profileSelectionStore.selectRegionMultiMode(selectedRegion);
+            profileSelectionStore.selectRegionMultiMode(selectedRegion, itemIndex + 1);
         }
     };
 
@@ -107,7 +107,7 @@ class ProfileSelectionComponent extends React.Component<{profileSelectionStore: 
         if (profileSelectionStore.activeProfileCategory !== MultiProfileCategory.STATISTIC) {
             profileSelectionStore.selectStatSingleMode(selectedStatsType);
         } else {
-            profileSelectionStore.selectStatMultiMode(selectedStatsType);
+            profileSelectionStore.selectStatMultiMode(selectedStatsType, itemIndex + 1);
         }
     };
 
@@ -116,7 +116,7 @@ class ProfileSelectionComponent extends React.Component<{profileSelectionStore: 
         if (profileSelectionStore.activeProfileCategory !== MultiProfileCategory.STOKES) {
             profileSelectionStore.selectCoordinateSingleMode(selectedStokes);
         } else {
-            profileSelectionStore.selectCoordinateMultiMode(selectedStokes);
+            profileSelectionStore.selectCoordinateMultiMode(selectedStokes, itemIndex + 1);
         }
     };
 

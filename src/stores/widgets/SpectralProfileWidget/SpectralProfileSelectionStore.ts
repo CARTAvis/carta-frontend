@@ -516,19 +516,19 @@ export class SpectralProfileSelectionStore {
         }
     };
 
-    @action selectRegionMultiMode = (regionId: number) => {
+    @action selectRegionMultiMode = (regionId: number, itemIndex: number) => {
         if (this.selectedRegionIds?.includes(regionId) && this.selectedRegionIds?.length > 1) {
             // remove selection
             this.removeSelectedRegionMultiMode(regionId);
         } else if (!this.selectedRegionIds?.includes(regionId) && this.selectedRegionIds?.length < MAXIMUM_PROFILES) {
             // add selection
             this.selectedRegionIds = [...this.selectedRegionIds, regionId].sort((a, b) => {return a - b;});
-            const color = this.selectedRegionIds.length === 1 ? this.widgetStore.primaryLineColor : genColorFromIndex(this.selectedRegionIds.length - 1);
+            const color = this.selectedRegionIds.length === 1 ? this.widgetStore.primaryLineColor : genColorFromIndex(itemIndex);
             this.widgetStore.setProfileColor(regionId, color);
         }
     };
 
-    @action selectStatMultiMode = (statsType: CARTA.StatsType) => {
+    @action selectStatMultiMode = (statsType: CARTA.StatsType, itemIndex: number) => {
         if (SUPPORTED_STATISTICS_TYPES.includes(statsType)) {
             if (this.selectedStatsTypes?.includes(statsType) && this.selectedStatsTypes?.length > 1) {
                 // remove selection
@@ -537,13 +537,13 @@ export class SpectralProfileSelectionStore {
             } else if (!this.selectedStatsTypes?.includes(statsType) && this.selectedStatsTypes?.length < MAXIMUM_PROFILES) {
                 // add selection
                 this.selectedStatsTypes = [...this.selectedStatsTypes, statsType].sort((a, b) => {return a - b;});
-                const color = this.selectedStatsTypes.length === 1 ? this.widgetStore.primaryLineColor : genColorFromIndex(this.selectedStatsTypes.length - 1);
+                const color = this.selectedStatsTypes.length === 1 ? this.widgetStore.primaryLineColor : genColorFromIndex(itemIndex);
                 this.widgetStore.setProfileColor(statsType, color);
             }
         }
     };
 
-    @action selectCoordinateMultiMode = (coordinate: string) => {
+    @action selectCoordinateMultiMode = (coordinate: string, itemIndex: number) => {
         if (SUPPORTED_STOKES.includes(coordinate)) {
             if (this.selectedCoordinates?.includes(coordinate) && this.selectedCoordinates.length > 1) {
                 // remove selection
@@ -560,7 +560,7 @@ export class SpectralProfileSelectionStore {
                     }
                     return a.charCodeAt(0) - b.charCodeAt(0);
                 });
-                const color = this.selectedCoordinates.length === 1 ? this.widgetStore.primaryLineColor : genColorFromIndex(this.selectedCoordinates.length - 1);
+                const color = this.selectedCoordinates.length === 1 ? this.widgetStore.primaryLineColor : genColorFromIndex(itemIndex);
                 this.widgetStore.setProfileColor(coordinate, color);
             }
         }
@@ -600,7 +600,7 @@ export class SpectralProfileSelectionStore {
 
                 // Once selectedRegionIds becomes empty, add cursor region (active region is disabled in multi selection mode)
                 if (this.selectedRegionIds?.length === 0) {
-                    this.selectRegionMultiMode(RegionId.CURSOR);
+                    this.selectRegionMultiMode(RegionId.CURSOR, 0);
                 }
             } else {
                 if (this.selectedRegionIds?.length > 0 && !this.regionOptions?.find(regionOption => this.selectedRegionIds[0] === regionOption.value)) {
