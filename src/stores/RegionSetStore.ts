@@ -1,4 +1,5 @@
 import { action, observable, makeObservable } from "mobx";
+import * as AST from "ast_wrapper";
 import {CARTA} from "carta-protobuf";
 import {CURSOR_REGION_ID, FrameStore, PreferenceStore, RegionStore} from "stores";
 import {Point2D, Transform2D} from "models";
@@ -130,7 +131,7 @@ export class RegionSetStore {
         this.mode = (this.mode === RegionMode.MOVING) ? RegionMode.CREATING : RegionMode.MOVING;
     };
 
-    @action migrateRegionsFromExistingSet = (sourceRegionSet: RegionSetStore, spatialTransformAST: number, forward: boolean = false) => {
+    @action migrateRegionsFromExistingSet = (sourceRegionSet: RegionSetStore, spatialTransformAST: AST.FrameSet, forward: boolean = false) => {
         if (sourceRegionSet?.regions?.length <= 1) {
             return;
         }
