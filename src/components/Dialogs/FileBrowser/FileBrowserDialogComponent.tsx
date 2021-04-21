@@ -128,8 +128,14 @@ export class FileBrowserDialogComponent extends React.Component {
         fileBrowserStore.setExportFilename(ev.target.value);
     };
 
-    private handleRequestingFileCancelled = () => {
-        AppStore.Instance.cancelRequestingFile();
+    private handleFileBrowserRequestingCancelled = () => {
+        if (FileBrowserStore.Instance.browserMode === BrowserMode.File) {
+            AppStore.Instance.cancelRequestingFile();
+        } else if (FileBrowserStore.Instance.browserMode === BrowserMode.RegionImport) {
+            // AppStore.Instance.cancel();
+        } else if (FileBrowserStore.Instance.browserMode === BrowserMode.Catalog){
+            AppStore.Instance.cancelRequestingCatalog();
+        }
     };
 
     @action handleFilterStringInputChanged = (ev: React.ChangeEvent<HTMLInputElement>) => {
@@ -441,93 +447,94 @@ export class FileBrowserDialogComponent extends React.Component {
         const fileList = fileBrowserStore.getfileListByMode;
 
         return (
-            <div>
-            <DraggableDialogComponent dialogProps={dialogProps} helpType={HelpType.FILE_Browser} minWidth={400} minHeight={400} defaultWidth={1200} defaultHeight={600} enableResizing={true}>
-                <div className="file-path">
-                    {this.pathItems &&
-                    <React.Fragment>
-                        <Tooltip content={"Refresh current directory"}>
-                            <AnchorButton
-                                className="refresh-button"
-                                icon="repeat"
-                                onClick={() => fileBrowserStore.selectFolder(fileList.directory, true)}
-                                minimal={true}
+            <React.Fragment>
+                <DraggableDialogComponent dialogProps={dialogProps} helpType={HelpType.FILE_Browser} minWidth={400} minHeight={400} defaultWidth={1200} defaultHeight={600} enableResizing={true}>
+                    <div className="file-path">
+                        {this.pathItems &&
+                        <React.Fragment>
+                            <Tooltip content={"Refresh current directory"}>
+                                <AnchorButton
+                                    className="refresh-button"
+                                    icon="repeat"
+                                    onClick={() => fileBrowserStore.selectFolder(fileList.directory, true)}
+                                    minimal={true}
+                                />
+                            </Tooltip>
+                            <Breadcrumbs
+                                className="path-breadcrumbs"
+                                breadcrumbRenderer={this.renderBreadcrumb}
+                                items={this.pathItems}
                             />
-                        </Tooltip>
-                        <Breadcrumbs
-                            className="path-breadcrumbs"
-                            breadcrumbRenderer={this.renderBreadcrumb}
-                            items={this.pathItems}
-                        />
-                    </React.Fragment>
-                    }
-                </div>
-                <div className="bp3-dialog-body">
-                    <div className={paneClassName}>
-                        <div className="file-list">
-                            <FileListTableComponent
-                                darkTheme={appStore.darkTheme}
-                                loading={fileBrowserStore.loadingList}
-                                listResponse={fileBrowserStore.getfileListByMode}
-                                fileBrowserMode={fileBrowserStore.browserMode}
-                                selectedFile={fileBrowserStore.selectedFile}
-                                selectedHDU={fileBrowserStore.selectedHDU}
-                                filterString={this.debouncedFilterString}
-                                filterType={appStore.preferenceStore.fileFilteringType}
-                                sortingString={appStore.preferenceStore.fileSortingString}
-                                onSortingChanged={fileBrowserStore.setSortingConfig}
-                                onFileClicked={fileBrowserStore.selectFile}
-                                onSelectionChanged={fileBrowserStore.setSelectedFiles}
-                                onFileDoubleClicked={this.loadFile}
-                                onFolderClicked={this.handleFolderClicked}
-                            />
+                        </React.Fragment>
+                        }
+                    </div>
+                    <div className="bp3-dialog-body">
+                        <div className={paneClassName}>
+                            <div className="file-list">
+                                <FileListTableComponent
+                                    darkTheme={appStore.darkTheme}
+                                    loading={fileBrowserStore.loadingList}
+                                    listResponse={fileBrowserStore.getfileListByMode}
+                                    fileBrowserMode={fileBrowserStore.browserMode}
+                                    selectedFile={fileBrowserStore.selectedFile}
+                                    selectedHDU={fileBrowserStore.selectedHDU}
+                                    filterString={this.debouncedFilterString}
+                                    filterType={appStore.preferenceStore.fileFilteringType}
+                                    sortingString={appStore.preferenceStore.fileSortingString}
+                                    onSortingChanged={fileBrowserStore.setSortingConfig}
+                                    onFileClicked={fileBrowserStore.selectFile}
+                                    onSelectionChanged={fileBrowserStore.setSelectedFiles}
+                                    onFileDoubleClicked={this.loadFile}
+                                    onFolderClicked={this.handleFolderClicked}
+                                />
+                            </div>
+                            <div className="file-info-pane">
+                                <FileInfoComponent
+                                    infoTypes={FileBrowserDialogComponent.GetFileInfoTypes(fileBrowserStore.browserMode)}
+                                    HDUOptions={{HDUList: fileBrowserStore.HDUList, handleSelectedHDUChange: fileBrowserStore.selectHDU}}
+                                    fileInfoExtended={fileBrowserStore.fileInfoExtended}
+                                    regionFileInfo={fileBrowserStore.regionFileInfo ? fileBrowserStore.regionFileInfo.join("\n") : ""}
+                                    catalogFileInfo={fileBrowserStore.catalogFileInfo}
+                                    selectedTab={fileBrowserStore.selectedTab as FileInfoType}
+                                    handleTabChange={this.handleTabChange}
+                                    isLoading={fileBrowserStore.loadingInfo}
+                                    errorMessage={fileBrowserStore.responseErrorMessage}
+                                    catalogHeaderTable={tableProps}
+                                    selectedFile={fileBrowserStore.selectedFile}
+                                />
+                            </div>
                         </div>
-                        <div className="file-info-pane">
-                            <FileInfoComponent
-                                infoTypes={FileBrowserDialogComponent.GetFileInfoTypes(fileBrowserStore.browserMode)}
-                                HDUOptions={{HDUList: fileBrowserStore.HDUList, handleSelectedHDUChange: fileBrowserStore.selectHDU}}
-                                fileInfoExtended={fileBrowserStore.fileInfoExtended}
-                                regionFileInfo={fileBrowserStore.regionFileInfo ? fileBrowserStore.regionFileInfo.join("\n") : ""}
-                                catalogFileInfo={fileBrowserStore.catalogFileInfo}
-                                selectedTab={fileBrowserStore.selectedTab as FileInfoType}
-                                handleTabChange={this.handleTabChange}
-                                isLoading={fileBrowserStore.loadingInfo}
-                                errorMessage={fileBrowserStore.responseErrorMessage}
-                                catalogHeaderTable={tableProps}
-                                selectedFile={fileBrowserStore.selectedFile}
-                            />
+                        {fileInput}
+                    </div>
+                    <div className="bp3-dialog-footer">
+                        <div className="bp3-dialog-footer-actions">
+                            <AnchorButton intent={Intent.NONE} onClick={this.closeFileBrowser} disabled={appStore.fileLoading} text="Close"/>
+                            {actionButton}
                         </div>
                     </div>
-                    {fileInput}
-                </div>
-                <div className="bp3-dialog-footer">
-                    <div className="bp3-dialog-footer-actions">
-                        <AnchorButton intent={Intent.NONE} onClick={this.closeFileBrowser} disabled={appStore.fileLoading} text="Close"/>
-                        {actionButton}
-                    </div>
-                </div>
-                <Alert
-                    className={appStore.darkTheme ? "bp3-dark" : ""}
-                    isOpen={this.overwriteExistingFileAlertVisible}
-                    confirmButtonText="Yes"
-                    cancelButtonText="Cancel"
-                    intent={Intent.DANGER}
-                    onConfirm={this.handleOverwriteAlertConfirmed}
-                    onCancel={this.handleOverwriteAlertDismissed}
-                    canEscapeKeyCancel={true}
-                >
-                    This file exists. Are you sure to overwrite it?
-                </Alert>
-            </DraggableDialogComponent>
-            <TaskProgressDialogComponent
-                isOpen={appStore.isRequestingFiles && appStore.requestingFilesProgress < 1}
-                progress={appStore.requestingFilesProgress}
-                timeRemaining={appStore.estimatedTaskRemainingTime}
-                cancellable={true}
-                onCancel={this.handleRequestingFileCancelled}
-                text={"Loading files"}
-            />
-            </div>
+                    <Alert
+                        className={appStore.darkTheme ? "bp3-dark" : ""}
+                        isOpen={this.overwriteExistingFileAlertVisible}
+                        confirmButtonText="Yes"
+                        cancelButtonText="Cancel"
+                        intent={Intent.DANGER}
+                        onConfirm={this.handleOverwriteAlertConfirmed}
+                        onCancel={this.handleOverwriteAlertDismissed}
+                        canEscapeKeyCancel={true}
+                    >
+                        This file exists. Are you sure to overwrite it?
+                    </Alert>
+                </DraggableDialogComponent>
+                <TaskProgressDialogComponent
+                    isOpen={appStore.isFileBrowserRequesting && appStore.fileBrowserRequestingProgress < 1}
+                    progress={appStore.fileBrowserRequestingProgress}
+                    timeRemaining={appStore.estimatedTaskRemainingTime}
+                    cancellable={true}
+                    onCancel={this.handleFileBrowserRequestingCancelled}
+                    text={"Loading files"}
+                    contentText={`loading files ${appStore.fileBrowserRequestingCheckedCount} / ${appStore.fileBrowserRequestingTotalCount}`}
+                />
+            </React.Fragment>
         );
     }
 

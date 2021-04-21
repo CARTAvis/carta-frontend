@@ -95,33 +95,37 @@ export class FileBrowserStore {
         this.regionFileInfo = null;
         this.catalogFileInfo = null;
 
+        AppStore.Instance.resetFileBrowserRequestState();
+        AppStore.Instance.setIsFileBrowserRequesting(true);
         if (this.browserMode === BrowserMode.File || this.browserMode === BrowserMode.SaveFile) {
-            AppStore.Instance.resetFileRequestState();
-            AppStore.Instance.setIsRequestingFiles(true);
             backendService.getFileList(directory).subscribe(res => runInAction(() => {
                 this.fileList = res;
                 this.loadingList = false;
-                AppStore.Instance.resetFileRequestState();
+                AppStore.Instance.resetFileBrowserRequestState();
             }), err => runInAction(() => {
                 console.log(err);
                 this.loadingList = false;
-                AppStore.Instance.resetFileRequestState();
+                AppStore.Instance.resetFileBrowserRequestState();
             }));
         } else if (this.browserMode === BrowserMode.Catalog) {
             backendService.getCatalogList(directory).subscribe(res => runInAction(() => {
                 this.catalogFileList = res;
                 this.loadingList = false;
+                AppStore.Instance.resetFileBrowserRequestState();
             }), err => runInAction(() => {
                 console.log(err);
                 this.loadingList = false;
+                AppStore.Instance.resetFileBrowserRequestState();
             }));
         } else {
             backendService.getRegionList(directory).subscribe(res => runInAction(() => {
                 this.fileList = res;
                 this.loadingList = false;
+                AppStore.Instance.resetFileBrowserRequestState();
             }), err => runInAction(() => {
                 console.log(err);
                 this.loadingList = false;
+                AppStore.Instance.resetFileBrowserRequestState();
             }));
         }
         AppStore.Instance.restartTaskProgress();

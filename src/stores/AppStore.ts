@@ -216,25 +216,35 @@ export class AppStore {
         this.fileLoading = false;
     };
 
-    @observable isRequestingFiles: boolean;
-    @observable requestingFilesProgress: number;
+    @observable isFileBrowserRequesting: boolean;
+    @observable fileBrowserRequestingProgress: number;
+    @observable fileBrowserRequestingCheckedCount: number;
+    @observable fileBrowserRequestingTotalCount: number;
 
-    @action setIsRequestingFiles = (val: boolean) => {
-        this.isRequestingFiles = val;
+    @action setIsFileBrowserRequesting = (val: boolean) => {
+        this.isFileBrowserRequesting = val;
     };
 
-    @action updateRequestingFileProgress = (progress: number) => {
-        this.requestingFilesProgress = progress;
+    @action updateFileBrowserRequestingProgress = (progress: number, checkedCount: number, totalCount: number) => {
+        this.fileBrowserRequestingProgress = progress;
+        this.fileBrowserRequestingCheckedCount = checkedCount;
+        this.fileBrowserRequestingTotalCount = totalCount;
     };
 
-    @action resetFileRequestState = () => {
-        this.setIsRequestingFiles(false);
-        this.updateRequestingFileProgress(0);
+    @action resetFileBrowserRequestState = () => {
+        this.setIsFileBrowserRequesting(false);
+        this.updateFileBrowserRequestingProgress(0, 0, 0);
     };
 
     @action cancelRequestingFile = () => {
-        if (this.requestingFilesProgress < 1.0) {
+        if (this.fileBrowserRequestingProgress < 1.0) {
             this.backendService.cancelRequestingFiles();
+        }
+    };
+
+    @action cancelRequestingCatalog = () => {
+        if (this.fileBrowserRequestingProgress < 1.0) {
+            this.backendService.cancelRequestingCatalogs();
         }
     };
 
@@ -1215,7 +1225,7 @@ export class AppStore {
         this.backendService.reconnectStream.subscribe(this.handleReconnectStream);
         this.backendService.scriptingStream.subscribe(this.handleScriptingRequest);
         this.tileService.tileStream.subscribe(this.handleTileStream);
-        this.backendService.fileProgressStream.subscribe(this.handleFileProgressStream);
+        this.backendService.progressStream.subscribe(this.handleFileProgressStream);
 
         // Set auth token from URL if it exists
         const url = new URL(window.location.href);
@@ -1432,7 +1442,7 @@ export class AppStore {
         if (!fileProgress) {
             return;
         }
-        AppStore.Instance.updateRequestingFileProgress(fileProgress.percentage);
+        this.updateFileBrowserRequestingProgress(fileProgress.percentage, fileProgress.checkedCount, fileProgress.totalCount);
         this.updateTaskProgress(fileProgress.percentage);
     };
 

@@ -57,7 +57,7 @@ export class BackendService {
     readonly momentProgressStream: Subject<CARTA.MomentProgress>;
     readonly reconnectStream: Subject<void>;
     readonly scriptingStream: Subject<CARTA.ScriptingRequest>;
-    readonly fileProgressStream: Subject<CARTA.Progress>;
+    readonly progressStream: Subject<CARTA.Progress>;
     private readonly decoderMap: Map<CARTA.EventType, {messageClass: any, handler: HandlerFunction}>;
 
     private constructor() {
@@ -81,15 +81,17 @@ export class BackendService {
         this.catalogStream = new Subject<CARTA.CatalogFilterResponse>();
         this.momentProgressStream = new Subject<CARTA.MomentProgress>();
         this.reconnectStream = new Subject<void>();
-        this.fileProgressStream = new Subject<CARTA.Progress>();
+        this.progressStream = new Subject<CARTA.Progress>();
 
         // Construct handler and decoder maps
         this.decoderMap = new Map<CARTA.EventType, { messageClass: any, handler: HandlerFunction }>([
             [CARTA.EventType.REGISTER_VIEWER_ACK, {messageClass: CARTA.RegisterViewerAck, handler: this.onRegisterViewerAck}],
             [CARTA.EventType.FILE_LIST_RESPONSE, {messageClass: CARTA.FileListResponse, handler: this.onSimpleMappedResponse}],
-            [CARTA.EventType.FILE_LIST_PROGRESS, {messageClass: CARTA.Progress, handler: this.onStreamedFileProgress}],
             [CARTA.EventType.REGION_LIST_RESPONSE, {messageClass: CARTA.RegionListResponse, handler: this.onSimpleMappedResponse}],
             [CARTA.EventType.CATALOG_LIST_RESPONSE, {messageClass: CARTA.CatalogListResponse, handler: this.onSimpleMappedResponse}],
+            [CARTA.EventType.FILE_LIST_PROGRESS, {messageClass: CARTA.Progress, handler: this.onStreameProgress}],
+            [CARTA.EventType.REGION_LIST_PROGRESS, {messageClass: CARTA.Progress, handler: this.onStreameProgress}],
+            [CARTA.EventType.CATALOG_LIST_PROGRESS, {messageClass: CARTA.Progress, handler: this.onStreameProgress}],
             [CARTA.EventType.FILE_INFO_RESPONSE, {messageClass: CARTA.FileInfoResponse, handler: this.onSimpleMappedResponse}],
             [CARTA.EventType.REGION_FILE_INFO_RESPONSE, {messageClass: CARTA.RegionFileInfoResponse, handler: this.onSimpleMappedResponse}],
             [CARTA.EventType.CATALOG_FILE_INFO_RESPONSE, {messageClass: CARTA.CatalogFileInfoResponse, handler: this.onSimpleMappedResponse}],
@@ -701,6 +703,19 @@ export class BackendService {
         }
     }
 
+    @action("cancel requesting catalogs")
+    cancelRequestingCatalogs() {
+        if (this.connectionStatus !== ConnectionStatus.ACTIVE) {
+            return throwError(new Error("Not connected"));
+        } else {
+            this.logEvent(CARTA.EventType.STOP_CATALOG_LIST, this.eventCounter, "", false);
+            if (this.sendEvent(CARTA.EventType.STOP_CATALOG_LIST, new Uint8Array())) {
+                return true;
+            }
+            return throwError(new Error("Could not send event"));
+        }
+    }
+
     @action("request spectral line")
     requestSpectralLine(frequencyRange: CARTA.DoubleBounds, intensityLimit: number): Observable<CARTA.SpectralLineResponse> {
         if (this.connectionStatus !== ConnectionStatus.ACTIVE) {
@@ -848,8 +863,8 @@ export class BackendService {
         this.momentProgressStream.next(momentProgress);
     }
 
-    private onStreamedFileProgress(_eventId: number, fileProgress: CARTA.Progress) {
-        this.fileProgressStream.next(fileProgress);
+    private onStreameProgress(_eventId: number, progress: CARTA.Progress) {
+        this.progressStream.next(progress);
     }
 
     private sendEvent(eventType: CARTA.EventType, payload: Uint8Array): boolean {
