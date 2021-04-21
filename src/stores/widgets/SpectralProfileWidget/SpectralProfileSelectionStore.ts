@@ -3,7 +3,7 @@ import {CARTA} from "carta-protobuf";
 import {AppStore, FrameStore} from "stores";
 import {ACTIVE_FILE_ID, RegionId, SpectralProfileWidgetStore} from "stores/widgets";
 import {LineKey, LineOption, ProcessedSpectralProfile, StatsTypeString, STATISTICS_TEXT, SUPPORTED_STATISTICS_TYPES} from "models";
-import {SWATCH_COLORS} from "utilities";
+import {genColorFromIndex} from "utilities";
 
 export enum MultiProfileCategory {
     NONE = "None", // Single profile mode: allow only 1 profile displayed in widget
@@ -516,18 +516,19 @@ export class SpectralProfileSelectionStore {
         }
     };
 
-    @action selectRegionMultiMode = (regionId: number, color: string) => {
+    @action selectRegionMultiMode = (regionId: number) => {
         if (this.selectedRegionIds?.includes(regionId) && this.selectedRegionIds?.length > 1) {
             // remove selection
             this.removeSelectedRegionMultiMode(regionId);
         } else if (!this.selectedRegionIds?.includes(regionId) && this.selectedRegionIds?.length < MAXIMUM_PROFILES) {
             // add selection
             this.selectedRegionIds = [...this.selectedRegionIds, regionId].sort((a, b) => {return a - b;});
+            const color = this.selectedRegionIds.length === 1 ? this.widgetStore.primaryLineColor : genColorFromIndex(this.selectedRegionIds.length - 1);
             this.widgetStore.setProfileColor(regionId, color);
         }
     };
 
-    @action selectStatMultiMode = (statsType: CARTA.StatsType, color: string) => {
+    @action selectStatMultiMode = (statsType: CARTA.StatsType) => {
         if (SUPPORTED_STATISTICS_TYPES.includes(statsType)) {
             if (this.selectedStatsTypes?.includes(statsType) && this.selectedStatsTypes?.length > 1) {
                 // remove selection
@@ -536,12 +537,13 @@ export class SpectralProfileSelectionStore {
             } else if (!this.selectedStatsTypes?.includes(statsType) && this.selectedStatsTypes?.length < MAXIMUM_PROFILES) {
                 // add selection
                 this.selectedStatsTypes = [...this.selectedStatsTypes, statsType].sort((a, b) => {return a - b;});
+                const color = this.selectedStatsTypes.length === 1 ? this.widgetStore.primaryLineColor : genColorFromIndex(this.selectedStatsTypes.length - 1);
                 this.widgetStore.setProfileColor(statsType, color);
             }
         }
     };
 
-    @action selectCoordinateMultiMode = (coordinate: string, color: string) => {
+    @action selectCoordinateMultiMode = (coordinate: string) => {
         if (SUPPORTED_STOKES.includes(coordinate)) {
             if (this.selectedCoordinates?.includes(coordinate) && this.selectedCoordinates.length > 1) {
                 // remove selection
@@ -558,6 +560,7 @@ export class SpectralProfileSelectionStore {
                     }
                     return a.charCodeAt(0) - b.charCodeAt(0);
                 });
+                const color = this.selectedCoordinates.length === 1 ? this.widgetStore.primaryLineColor : genColorFromIndex(this.selectedCoordinates.length - 1);
                 this.widgetStore.setProfileColor(coordinate, color);
             }
         }
@@ -597,7 +600,7 @@ export class SpectralProfileSelectionStore {
 
                 // Once selectedRegionIds becomes empty, add cursor region (active region is disabled in multi selection mode)
                 if (this.selectedRegionIds?.length === 0) {
-                    this.selectRegionMultiMode(RegionId.CURSOR, widgetStore.primaryLineColor);
+                    this.selectRegionMultiMode(RegionId.CURSOR);
                 }
             } else {
                 if (this.selectedRegionIds?.length > 0 && !this.regionOptions?.find(regionOption => this.selectedRegionIds[0] === regionOption.value)) {
@@ -620,12 +623,9 @@ export class SpectralProfileSelectionStore {
                 if (matchedFileIds.includes(this.selectedFrameFileId)) {
                     matchedFileIds.forEach((fileId, index) => {
                         const widgetStore = this.widgetStore;
-                        if (fileId === this.selectedFrameFileId) {
-                            widgetStore.setProfileColor(fileId, widgetStore.primaryLineColor);
-                        } else {
-                            const color = SWATCH_COLORS[(index + 1) % SWATCH_COLORS.length];
-                            widgetStore.setProfileColor(fileId, color);
-                        }
+                         // index + 1 to avoid choosing blue(conflict with native primary color(auto-blue))
+                        const color = fileId === this.selectedFrameFileId ? widgetStore.primaryLineColor : genColorFromIndex(index + 1);
+                        widgetStore.setProfileColor(fileId, color);
                     });
                 }
             }

@@ -6,7 +6,6 @@ import {AppStore} from "stores";
 import {MultiProfileCategory, SpectralProfileWidgetStore, SpectralProfileSelectionStore} from "stores/widgets";
 import {SpectralProfilerComponent, SpectralProfilerSettingsTabs} from "components";
 import {CustomIcon} from "icons/CustomIcons";
-import {SWATCH_COLORS} from "utilities";
 import {LineOption} from "models";
 import "./SpectralProfilerToolbarComponent.scss";
 
@@ -94,8 +93,7 @@ class ProfileSelectionComponent extends React.Component<{profileSelectionStore: 
         if (profileSelectionStore.activeProfileCategory !== MultiProfileCategory.REGION) {
             profileSelectionStore.selectRegionSingleMode(selectedRegion);
         } else {
-            const color = SWATCH_COLORS[(itemIndex + 1) % SWATCH_COLORS.length];
-            profileSelectionStore.selectRegionMultiMode(selectedRegion, color);
+            profileSelectionStore.selectRegionMultiMode(selectedRegion);
         }
     };
 
@@ -104,8 +102,7 @@ class ProfileSelectionComponent extends React.Component<{profileSelectionStore: 
         if (profileSelectionStore.activeProfileCategory !== MultiProfileCategory.STATISTIC) {
             profileSelectionStore.selectStatSingleMode(selectedStatsType);
         } else {
-            const color = SWATCH_COLORS[(itemIndex + 1) % SWATCH_COLORS.length];
-            profileSelectionStore.selectStatMultiMode(selectedStatsType, color);
+            profileSelectionStore.selectStatMultiMode(selectedStatsType);
         }
     };
 
@@ -114,8 +111,7 @@ class ProfileSelectionComponent extends React.Component<{profileSelectionStore: 
         if (profileSelectionStore.activeProfileCategory !== MultiProfileCategory.STOKES) {
             profileSelectionStore.selectCoordinateSingleMode(selectedStokes);
         } else {
-            const color = SWATCH_COLORS[(itemIndex + 1) % SWATCH_COLORS.length];
-            profileSelectionStore.selectCoordinateMultiMode(selectedStokes, color);
+            profileSelectionStore.selectCoordinateMultiMode(selectedStokes);
         }
     };
 

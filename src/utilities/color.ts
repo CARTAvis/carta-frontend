@@ -57,6 +57,18 @@ export function isAutoColor(color: string) {
     return color?.indexOf("auto-") === 0;
 }
 
+export function genColorFromIndex(index: number) {
+    // Ordered close to complementary colors to avoid choosing adjacent colors
+    const orderedColors = [
+        "BLUE", "ORANGE", "GREEN", "RED", "VIOLET",
+        "SEPIA", "ROSE", "GRAY", "LIME", "TURQUOISE",
+        "VERMILION", "FOREST", "INDIGO", "GOLD", "COBALT",
+        "LIGHT_GRAY", "DARK_GRAY", "WHITE", "BLACK"
+    ];
+    const selectedColor = Number.isInteger(index) && index >= 0 ? orderedColors[index % orderedColors.length] : orderedColors[0];
+    return Colors[`${selectedColor}${AppStore.Instance.darkTheme ? "4" : "2"}`];
+}
+
 export function getColorForTheme(color: string) {
     if (!isAutoColor(color)) {
         return color;
@@ -69,9 +81,5 @@ export function getColorForTheme(color: string) {
     }
 
     const requiredColor = color.substr(5).toUpperCase();
-    if (AppStore.Instance.darkTheme) {
-        return Colors[`${requiredColor}4`];
-    } else {
-        return Colors[`${requiredColor}2`];
-    }
+    return Colors[`${requiredColor}${AppStore.Instance.darkTheme ? "4" : "2"}`];
 }
