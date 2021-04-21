@@ -28,6 +28,7 @@ export class BackendService {
     private static readonly IcdVersion = 20;
     private static readonly DefaultFeatureFlags = CARTA.ClientFeatureFlags.WEB_ASSEMBLY | CARTA.ClientFeatureFlags.WEB_GL;
     private static readonly MaxConnectionAttempts = 15;
+    private static readonly ConnectionAttemptDelay = 1000;
 
     @observable connectionStatus: ConnectionStatus;
     readonly loggingEnabled: boolean;
@@ -147,7 +148,7 @@ export class BackendService {
                     newConnection.onclose = this.connection.onclose;
                     newConnection.onmessage = this.connection.onmessage;
                     this.connection = newConnection;
-                }, 1000);
+                }, BackendService.ConnectionAttemptDelay);
             }
         });
 

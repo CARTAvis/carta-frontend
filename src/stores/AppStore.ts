@@ -1088,7 +1088,7 @@ export class AppStore {
                 case ConnectionStatus.CLOSED:
                     if (this.previousConnectionStatus === ConnectionStatus.ACTIVE || this.previousConnectionStatus === ConnectionStatus.PENDING) {
                         AppToaster.show(ErrorToast("Disconnected from server"));
-                        this.alertStore.showInteractiveAlert("Do you want to reconnect to the server? Please note that temporary images such as moment images or PV images generated via the GUI will be unloaded.", this.onReconnectAlertClosed);
+                        this.alertStore.showRetryAlert("You have been disconnected from the server. Do you want to reconnect? Please note that temporary images such as moment images or PV images generated via the GUI will be unloaded.", this.onReconnectAlertClosed);
                     }
                     break;
                 default:
