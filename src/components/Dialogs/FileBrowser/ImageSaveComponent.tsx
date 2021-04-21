@@ -1,11 +1,11 @@
 import * as React from "react";
 import {observer} from "mobx-react";
+import {action, autorun, computed, makeObservable} from "mobx";
 import {Text, Label, FormGroup, IOptionProps, HTMLSelect, ControlGroup, Switch, NumericInput, Intent} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import {AppStore, FileBrowserStore} from "stores";
-import {SpectralSystem, SpectralType, SpectralUnit} from "models";
+import {SpectralSystem} from "models";
 import "./ImageSaveComponent.scss";
-import {action, autorun, computed, makeObservable} from "mobx";
 
 @observer
 export class ImageSaveComponent extends React.Component {
@@ -63,22 +63,16 @@ export class ImageSaveComponent extends React.Component {
         }
     };
 
-    @action updateSpectralCoordinate(coordStr: string): void {
+    updateSpectralCoordinate(coordStr: string): void {
         const activeFrame = AppStore.Instance.activeFrame;
-        if (activeFrame?.spectralCoordsSupported?.has(coordStr)) {
-            const coord: { type: SpectralType, unit: SpectralUnit } = activeFrame.spectralCoordsSupported.get(coordStr);
-            activeFrame.spectralType = coord.type;
-            activeFrame.spectralUnit = coord.unit;
-            // Update the spectral range
+        if (activeFrame?.setSpectralCoordinate(coordStr)) {
             FileBrowserStore.Instance.initialSaveSpectralRange();
         }
     };
 
-    @action updateSpectralSystem(specsys: SpectralSystem): void {
+    updateSpectralSystem(specsys: SpectralSystem): void {
         const activeFrame = AppStore.Instance.activeFrame;
-        if (activeFrame?.spectralSystemsSupported?.includes(specsys)) {
-            activeFrame.spectralSystem = specsys;
-            // Update the spectral range
+        if (activeFrame?.setSpectralSystem(specsys)) {
             FileBrowserStore.Instance.initialSaveSpectralRange();
         }
     };
