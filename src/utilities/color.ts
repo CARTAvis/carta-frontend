@@ -10,13 +10,11 @@ export const SWATCH_COLORS = [
     Colors.RED3,
     Colors.VIOLET3,
     Colors.SEPIA3,
-    Colors.ROSE3,
+    Colors.INDIGO3,
     Colors.GRAY3,
     Colors.LIME3,
     Colors.TURQUOISE3,
-    Colors.VERMILION3,
     Colors.FOREST3,
-    Colors.INDIGO3,
     Colors.GOLD3,
     Colors.COBALT3,
     Colors.LIGHT_GRAY3,
@@ -25,6 +23,21 @@ export const SWATCH_COLORS = [
     Colors.BLACK
 ];
 export const DEFAULT_COLOR = SWATCH_COLORS[0];
+
+const SELECTABLE_COLORS = [
+    "blue", "orange", "green", "red", "violet",
+    "sepia", "indigo", "gray", "lime", "turquoise",
+    "forest", "gold", "cobalt", "light_gray", "dark_gray",
+    "white", "black"
+];
+export const AUTO_COLOR_OPTIONS = SELECTABLE_COLORS.map(color => {return `auto-${color}`;});
+
+// SUPPORTED_COLORS are supported since ver. 1.4, and rose/vermilion are removed due to similar to red
+const SUPPORTED_COLORS = [...SELECTABLE_COLORS, "rose", "vermilion"];
+
+// Supported auto colors are in pattern "auto-blue", "auto-orange", "auto-green"...etc
+// Validate with regex ^auto-(blue|orange|green...)$
+const SUPPORTED_AUTO_COLORS_REGEX = new RegExp(`^auto-(${SUPPORTED_COLORS.join('|')})$`);
 
 function initContextWithSize(width: number, height: number) {
     const canvas = document.createElement("canvas") as HTMLCanvasElement;
@@ -53,20 +66,14 @@ export function getColorsForValues(colorMap: string): { color: Uint8ClampedArray
     return {color: new Uint8ClampedArray([0, 0, 0, 0]), size: 1};
 }
 
-export function isAutoColor(color: string) {
-    return color?.indexOf("auto-") === 0;
+export function isAutoColor(color: string): boolean {
+    // console.log(`${color} ${SUPPORTED_AUTO_COLORS_REGEX} ${SUPPORTED_AUTO_COLORS_REGEX.test(color)}`);
+    return SUPPORTED_AUTO_COLORS_REGEX.test(color);
 }
 
 export function genColorFromIndex(index: number) {
-    // Ordered close to complementary colors to avoid choosing adjacent colors
-    const orderedColors = [
-        "BLUE", "ORANGE", "GREEN", "RED", "VIOLET",
-        "SEPIA", "ROSE", "GRAY", "LIME", "TURQUOISE",
-        "VERMILION", "FOREST", "INDIGO", "GOLD", "COBALT",
-        "LIGHT_GRAY", "DARK_GRAY", "WHITE", "BLACK"
-    ];
-    const selectedColor = Number.isInteger(index) && index >= 0 ? orderedColors[index % orderedColors.length] : orderedColors[0];
-    return Colors[`${selectedColor}${AppStore.Instance.darkTheme ? "4" : "2"}`];
+    const selectedColor = Number.isInteger(index) && index >= 0 ? SELECTABLE_COLORS[index % SELECTABLE_COLORS.length] : SELECTABLE_COLORS[0];
+    return Colors[`${selectedColor.toUpperCase()}${AppStore.Instance.darkTheme ? "4" : "2"}`];
 }
 
 export function getColorForTheme(color: string) {

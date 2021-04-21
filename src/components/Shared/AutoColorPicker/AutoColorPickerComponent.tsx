@@ -6,7 +6,7 @@ import {makeObservable, observable} from "mobx";
 import {SketchPicker, ColorResult} from "react-color";
 import {Button, Popover, PopoverPosition, MenuItem} from "@blueprintjs/core";
 import {Select} from "@blueprintjs/select";
-import {getColorForTheme} from "utilities";
+import {AUTO_COLOR_OPTIONS, getColorForTheme} from "utilities";
 import "./AutoColorPickerComponent.scss";
 import {AppStore} from "stores";
 
@@ -19,6 +19,7 @@ interface AutoColorPickerComponentProps {
 }
 
 const ColorSelect = Select.ofType<string>();
+const CUSTOM_COLOR_OPTION = "custom-color";
 
 @observer
 export class AutoColorPickerComponent extends React.Component<AutoColorPickerComponentProps> {
@@ -44,7 +45,7 @@ export class AutoColorPickerComponent extends React.Component<AutoColorPickerCom
     };
 
     private renderColorSelectItem = (colorItem: string, {handleClick, modifiers}) => {
-        if (colorItem === "custom-color") {
+        if (colorItem === CUSTOM_COLOR_OPTION) {
             let popoverClassName = "color-picker-popup";
             if (AppStore.Instance.darkTheme) {
                 popoverClassName += " bp3-dark";
@@ -85,28 +86,7 @@ export class AutoColorPickerComponent extends React.Component<AutoColorPickerCom
                 onItemSelect={(color) => this.props.setColor(color)}
                 popoverProps={{minimal: true, position: PopoverPosition.BOTTOM_LEFT, popoverClassName: "colorselect"}}
                 filterable={false}
-                items={[
-                    "auto-blue",
-                    "auto-orange",
-                    "auto-green",
-                    "auto-red",
-                    "auto-violet",
-                    "auto-sepia",
-                    "auto-rose",
-                    "auto-gray",
-                    "auto-lime",
-                    "auto-turquoise",
-                    "auto-vermilion",
-                    "auto-forest",
-                    "auto-indigo",
-                    "auto-gold",
-                    "auto-cobalt",
-                    "auto-light_gray",
-                    "auto-dark_gray",
-                    "auto-white",
-                    "auto-black",
-                    "custom-color"
-                ]}
+                items={[...AUTO_COLOR_OPTIONS, CUSTOM_COLOR_OPTION]}
                 itemRenderer={this.renderColorSelectItem}
             >
                 <Button className="colorselect" text={this.renderColorBlock(this.autoColor)} rightIcon="double-caret-vertical"/>
