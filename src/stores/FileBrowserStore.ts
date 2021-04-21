@@ -79,6 +79,7 @@ export class FileBrowserStore {
         autorun(() => {
             if (AppStore.Instance.activeFrame) {
                 FileBrowserStore.Instance.initialSaveSpectralRange();
+                this.setSaveFileType(AppStore.Instance.activeFrame?.frameInfo?.fileInfo.type);
             }
         });
 
