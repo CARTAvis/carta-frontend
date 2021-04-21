@@ -32,7 +32,7 @@ const SELECTABLE_COLORS = [
 ];
 export const AUTO_COLOR_OPTIONS = SELECTABLE_COLORS.map(color => {return `auto-${color}`;});
 
-// SUPPORTED_COLORS are supported since ver. 1.4, and rose/vermilion are removed due to similar to red
+// SUPPORTED_COLORS are supported since ver. 1.4, and rose/vermilion are removed from selectable colors due to similar to red
 const SUPPORTED_COLORS = [...SELECTABLE_COLORS, "rose", "vermilion"];
 
 // Supported auto colors are in pattern "auto-blue", "auto-orange", "auto-green"...etc
