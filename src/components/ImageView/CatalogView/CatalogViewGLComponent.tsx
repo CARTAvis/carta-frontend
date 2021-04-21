@@ -151,6 +151,7 @@ export class CatalogViewGLComponent extends React.Component<CatalogViewGLCompone
     };
 
     private renderCatalog(baseFrame: FrameStore) {
+        const appStore = AppStore.Instance;
         const catalogStore = CatalogStore.Instance;
         // For alpha blending (soft lines)
         this.gl.enable(GL2.BLEND);
@@ -164,15 +165,26 @@ export class CatalogViewGLComponent extends React.Component<CatalogViewGLCompone
         let rangeOffset = {x: 0.0, y: 0.0};
         let rotationAngle = 0.0;
         let scaleAdjustment = 1.0;
+
+        const catalogFileIds = catalogStore.activeCatalogFiles; 
         
-        catalogStore.catalogGLData.forEach((catalog, fileId) => {
-            let showCatalog = catalog.displayed
-            const spatialMatchedImageId = baseFrame?.spatialReference?.frameInfo?.fileId;
-            if (spatialMatchedImageId >= 0) {
-                const spatialReferencedCatalogs = catalogStore.imageAssociatedCatalogId.get(spatialMatchedImageId);
-                showCatalog = catalog.displayed || spatialReferencedCatalogs.includes(fileId);
-            }
-            if(showCatalog) {
+        // catalogStore.catalogGLData.forEach((catalog, fileId) => {
+        catalogFileIds.forEach(fileId => {
+            const catalog = catalogStore.catalogGLData.get(fileId);
+            // let showCatalog = catalog.displayed
+            // const spatialMatchedImageId = baseFrame?.spatialReference?.frameInfo?.fileId;
+            // if (spatialMatchedImageId >= 0) {
+            //     const spatialReferencedCatalogs = catalogStore.imageAssociatedCatalogId.get(spatialMatchedImageId);
+            //     showCatalog = showCatalog || spatialReferencedCatalogs.includes(fileId);
+            // }
+            // if (baseFrame.secondarySpatialImages) {
+            //     baseFrame.secondarySpatialImages.forEach(frame => {
+            //         console.log("secondary:" + frame.frameInfo.fileId)
+            //         const secondarySpatialReferencedCatalogs = catalogStore.imageAssociatedCatalogId.get(frame.frameInfo.fileId);
+            //         showCatalog = showCatalog || secondarySpatialReferencedCatalogs.includes(fileId);
+            //     });
+            // }
+            // if(showCatalog) {
                 const catalogWidgetStore = catalogStore.getCatalogWidgetStore(fileId);
                 const shape = catalogWidgetStore.shapeSettings;
                 const featherWidth = shape.featherWidth * devicePixelRatio;
@@ -183,31 +195,55 @@ export class CatalogViewGLComponent extends React.Component<CatalogViewGLCompone
                 let pointSize = catalogWidgetStore.catalogSize + shape.minSize;
                 this.gl.uniform1f(shaderUniforms.LineThickness, lineThickness);
                 this.gl.uniform1i(shaderUniforms.ShowSelectedSource, catalogWidgetStore.showSelectedData? 1.0 : 0.0);
-                // console.log("catalog Id: " + fileId + catalog.displayed + " baseFrame: " + baseFrame.frameInfo.fileId, "spatial Ref: " + baseFrame?.spatialReference?.frameInfo?.fileId)
-                // if (baseFrame.secondarySpatialImages) {
-                //     baseFrame.secondarySpatialImages.forEach(frame => console.log("secondary:" + frame.frameInfo.fileId))
-                // }
+                console.log(catalog.dataPoints)
+                console.log("catalog Id: " + fileId + catalog.displayed + " baseFrame: " + baseFrame.frameInfo.fileId, "spatial Ref: " + baseFrame?.spatialReference?.frameInfo?.fileId)
+                if (baseFrame.secondarySpatialImages) {
+                    baseFrame.secondarySpatialImages.forEach(frame => console.log("secondary:" + frame.frameInfo.fileId))
+                }
+
+                const frame = appStore.getFrame(catalogStore.getFramIdByCatalogId(fileId));
+                console.log(frame.frameInfo.fileId, catalogStore.getFramIdByCatalogId(fileId))
                 //FrameView
-                if (catalog.displayed && baseFrame.spatialReference) {
-                    const baseRequiredView = baseFrame.spatialReference.requiredFrameView;
-                    const originAdjustedOffset = subtract2D(baseFrame.spatialTransform.origin, scale2D(rotate2D(baseFrame.spatialTransform.origin, baseFrame.spatialTransform.rotation), baseFrame.spatialTransform.scale));
-
-                    rangeScale = {
-                        x: 1.0 / (baseRequiredView.xMax - baseRequiredView.xMin),
-                        y: 1.0 / (baseRequiredView.yMax - baseRequiredView.yMin),
-                    };
-
-                    rangeOffset = {
-                        x: (baseFrame.spatialTransform.translation.x - baseRequiredView.xMin + originAdjustedOffset.x) * rangeScale.x,
-                        y: (baseFrame.spatialTransform.translation.y - baseRequiredView.yMin + originAdjustedOffset.y) * rangeScale.y
-                    };
-                    rotationAngle = -baseFrame.spatialTransform.rotation;
-                    scaleAdjustment = baseFrame.spatialTransform.scale;
+                if (frame.spatialReference) {
+                    console.log("if")
+                    // const spatialMatchedImageId = baseFrame.spatialReference.frameInfo.fileId;
+                    // const spatialReferencedCatalogs = catalogStore.imageAssociatedCatalogId.get(spatialMatchedImageId);
+                    // if(spatialReferencedCatalogs.includes(fileId) || false) {
+                    //     const baseRequiredView = baseFrame.spatialReference.requiredFrameView;
+                    //     rangeScale = {
+                    //         x: 1.0 / (baseRequiredView.xMax - baseRequiredView.xMin),
+                    //         y: 1.0 / (baseRequiredView.yMax - baseRequiredView.yMin),
+                    //     };
+            
+                    //     rangeOffset = {
+                    //         x: -baseRequiredView.xMin * rangeScale.x,
+                    //         y: -baseRequiredView.yMin * rangeScale.y
+                    //     };
+                    //     rotationAngle = 0.0;
+                    //     scaleAdjustment = 1.0;
+                    // } else {
+                        const baseRequiredView = baseFrame.spatialReference.requiredFrameView;
+                        const originAdjustedOffset = subtract2D(baseFrame.spatialTransform.origin, scale2D(rotate2D(baseFrame.spatialTransform.origin, baseFrame.spatialTransform.rotation), baseFrame.spatialTransform.scale));
+    
+                        rangeScale = {
+                            x: 1.0 / (baseRequiredView.xMax - baseRequiredView.xMin),
+                            y: 1.0 / (baseRequiredView.yMax - baseRequiredView.yMin),
+                        };
+    
+                        rangeOffset = {
+                            x: (baseFrame.spatialTransform.translation.x - baseRequiredView.xMin + originAdjustedOffset.x) * rangeScale.x,
+                            y: (baseFrame.spatialTransform.translation.y - baseRequiredView.yMin + originAdjustedOffset.y) * rangeScale.y
+                        };
+                        rotationAngle = -baseFrame.spatialTransform.rotation;
+                        scaleAdjustment = baseFrame.spatialTransform.scale;
+                    // }
                 } else {
-                    let baseRequiredView = baseFrame.requiredFrameView;
-                    if (baseFrame.spatialReference) {
-                        baseRequiredView = baseFrame.spatialReference.requiredFrameView;   
-                    }
+                    console.log("elsss")
+                    let baseRequiredView = frame.requiredFrameView;
+                    console.log(frame, baseFrame.spatialReference.requiredFrameView)
+                    // if (baseFrame.spatialReference) {
+                    //     baseRequiredView = baseFrame.spatialReference.requiredFrameView;   
+                    // }
                     rangeScale = {
                         x: 1.0 / (baseRequiredView.xMax - baseRequiredView.xMin),
                         y: 1.0 / (baseRequiredView.yMax - baseRequiredView.yMin),
@@ -293,7 +329,7 @@ export class CatalogViewGLComponent extends React.Component<CatalogViewGLCompone
                     this.gl.drawArrays(GL2.POINTS, 0, dataPoints.length / 2);
                     this.gl.finish();
                 }
-            }
+            // }
         });
     }
 

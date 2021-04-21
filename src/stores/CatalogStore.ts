@@ -202,10 +202,34 @@ export class CatalogStore {
         const activeFrame = AppStore.Instance.activeFrame;
         if (activeFrame) {
             const imageId = activeFrame.frameInfo.fileId;
-            return this.imageAssociatedCatalogId.get(imageId);
+            let associatedCatalogIds = [...this.imageAssociatedCatalogId.get(imageId)];
+            const spatialMatchedImageId = activeFrame?.spatialReference?.frameInfo?.fileId;
+            if (spatialMatchedImageId >= 0) {
+                const spatialReferencedCatalogs = this.imageAssociatedCatalogId.get(spatialMatchedImageId);
+                associatedCatalogIds = [...new Set([].concat(...[associatedCatalogIds, spatialReferencedCatalogs]))];
+            }
+
+            activeFrame.secondarySpatialImages?.forEach(frame => {
+                const secondarySpatialReferencedCatalogs = this.imageAssociatedCatalogId.get(frame.frameInfo.fileId);
+                associatedCatalogIds = [...new Set([].concat(...[associatedCatalogIds, secondarySpatialReferencedCatalogs]))];
+            });
+            
+            console.log(associatedCatalogIds)
+            // console.log(this.imageAssociatedCatalogId)
+            return associatedCatalogIds;
         } else {
             return [];
         }
+    }
+
+    getFramIdByCatalogId(catalogId: number): number {
+        let frameId = -1;
+        this.imageAssociatedCatalogId.forEach((catalogIds, imageId) => {
+            if (catalogIds.includes(catalogId)) {
+                frameId = imageId;
+            }
+        });
+        return frameId;
     }
 
     getAssociatedIdByWidgetId(catalogPlotWidgetId: string): {catalogPlotComponentId: string, catalogFileId: number} {

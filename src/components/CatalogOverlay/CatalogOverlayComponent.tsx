@@ -569,9 +569,12 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
                 profileStore.setUpdateMode(CatalogUpdateMode.ViewUpdate);
                 if (frame) {
                     const imageCoords = profileStore.get2DPlotData(catalogWidgetStore.xAxis, catalogWidgetStore.yAxis, profileStore.catalogData);
-                    const wcs = frame.validWcs ? frame.wcsInfo : 0;
+                    let wcs = frame.validWcs ? frame.wcsInfo : 0;
                     const catalogFileId = this.catalogFileId;
                     catalogStore.clearImageCoordsData(catalogFileId);
+                    if (frame.spatialReference) {
+                        wcs = frame.spatialReference.wcsInfo;
+                    }
                     catalogStore.updateCatalogData(
                         catalogFileId, 
                         imageCoords.wcsX, 
