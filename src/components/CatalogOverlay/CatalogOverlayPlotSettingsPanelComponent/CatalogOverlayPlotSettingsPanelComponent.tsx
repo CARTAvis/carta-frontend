@@ -4,11 +4,11 @@ import {action, autorun, computed, makeObservable} from "mobx";
 import * as React from "react";
 import {AnchorButton, Button, ButtonGroup, FormGroup, Icon, MenuItem, PopoverPosition, Switch, Tab, Tabs, Tooltip} from "@blueprintjs/core";
 import {Select, IItemRendererProps, ItemPredicate} from "@blueprintjs/select";
-import {AppStore, CatalogStore, CatalogProfileStore, CatalogOverlay, DefaultWidgetConfig, HelpType, PreferenceStore, PreferenceKeys, WidgetProps, WidgetsStore} from "stores";
+import {AppStore, CatalogStore, CatalogProfileStore, CatalogOverlay, DefaultWidgetConfig, HelpType, WidgetProps, WidgetsStore} from "stores";
 import {CatalogOverlayShape, CatalogWidgetStore, CatalogSettingsTabs, ValueClip} from "stores/widgets";
 import {CatalogOverlayComponent} from "components";
 import {AutoColorPickerComponent, ClearableNumericInputComponent, ColormapComponent, SafeNumericInput, ScalingSelectComponent} from "components/Shared";
-import {SWATCH_COLORS} from "utilities";
+import {getColorForTheme, SWATCH_COLORS} from "utilities";
 import "./CatalogOverlayPlotSettingsPanelComponent.scss";
 
 const IconWrapper = (path: React.SVGProps<SVGPathElement>, color: string, fill: boolean, strokeWidth = 2, viewboxDefault = 16) => {
@@ -64,7 +64,7 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
             type: "floating-settings",
             minWidth: 350,
             minHeight: 250,
-            defaultWidth: 400,
+            defaultWidth: 350,
             defaultHeight: 560,
             title: "catalog-overlay-settings",
             isCloseable: true,
@@ -158,71 +158,6 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
         const disableOrientationMap = disabledOverlayPanel || widgetStore.disableOrientationMap;
         const disableSizeMinorMap = disableSizeMap || widgetStore.disableSizeMinorMap;
 
-        const globalPanel = (
-            <div className="panel-container">
-                <FormGroup  inline={true} label="Displayed columns">
-                    <SafeNumericInput
-                        placeholder="Default Displayed Columns"
-                        min={1}
-                        value={PreferenceStore.Instance.catalogDisplayedColumnSize}
-                        stepSize={1}
-                        onValueChange={(value: number) => PreferenceStore.Instance.setPreference(PreferenceKeys.CATALOG_DISPLAYED_COLUMN_SIZE, value)}
-                    />
-                </FormGroup>
-            </div>
-        );
-
-        const overlayPanel = (
-            <div className="panel-container">
-                <FormGroup label={"Color"} inline={true}  disabled={disabledOverlayPanel}>
-                    <AutoColorPickerComponent
-                        color={widgetStore.catalogColor}
-                        presetColors={[...SWATCH_COLORS, "transparent"]}
-                        setColor={(color: string) => {
-                            widgetStore.setCatalogColor(color === "transparent" ? "#000000" : color);
-                        }}
-                        disableAlpha={true}
-                        disabled={disabledOverlayPanel}
-                    />
-                </FormGroup>
-                <FormGroup label={"Overlay Highlight"} inline={true}  disabled={disabledOverlayPanel}>
-                    <AutoColorPickerComponent
-                        color={widgetStore.highlightColor}
-                        presetColors={[...SWATCH_COLORS, "transparent"]}
-                        setColor={(color: string) => {
-                            widgetStore.setHighlightColor(color === "transparent" ? "#000000" : color);
-                        }}
-                        disableAlpha={true}
-                        disabled={disabledOverlayPanel}
-                    />
-                </FormGroup>
-                <FormGroup  inline={true} label="Size" labelInfo="(px)"  disabled={disabledOverlayPanel}>
-                    <SafeNumericInput
-                        className="catalog-size-overlay"
-                        placeholder="Size"
-                        disabled={disabledOverlayPanel || !widgetStore.disableSizeMap}
-                        min={CatalogWidgetStore.MinOverlaySize}
-                        max={CatalogWidgetStore.MaxOverlaySize}
-                        value={widgetStore.catalogSize}
-                        stepSize={0.5}
-                        onValueChange={(value: number) => widgetStore.setCatalogSize(value)}
-                    />
-                </FormGroup>
-                <FormGroup  inline={true} label="Thickness" disabled={disabledOverlayPanel}>
-                    <SafeNumericInput
-                        className="catalog-size-overlay"
-                        placeholder="Thickness"
-                        disabled={disabledOverlayPanel}
-                        min={CatalogWidgetStore.MinThickness}
-                        max={CatalogWidgetStore.MaxThickness}
-                        value={widgetStore.thickness}
-                        stepSize={0.5}
-                        onValueChange={(value: number) => widgetStore.setThickness(value)}
-                    />
-                </FormGroup>
-            </div>
-        );
-
         const noResults = (<MenuItem disabled={true} text="No results" />);
         
         const sizeMajor = (
@@ -247,6 +182,7 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
                     <ScalingSelectComponent
                         selectedItem={widgetStore.sizeScalingType}
                         onItemSelect={(type) => widgetStore.setSizeScalingType(type)}
+                        disabled={disableSizeMap}
                     />
                 </FormGroup>
                 <FormGroup inline={true} label={"Size Mode"} disabled={disableSizeMap}>
@@ -316,10 +252,11 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
                         <Button text={widgetStore.sizeMinorMapColumn} disabled={disabledOverlayPanel} rightIcon="double-caret-vertical"/>
                     </Select>
                 </FormGroup>
-                <FormGroup label={"Scaling"} inline={true}>
+                <FormGroup label={"Scaling"} inline={true} disabled={disableSizeMinorMap}>
                     <ScalingSelectComponent
                         selectedItem={widgetStore.sizeMinorScalingType}
                         onItemSelect={(type) => widgetStore.setSizeMinorScalingType(type)}
+                        disabled={disableSizeMinorMap}
                     />
                 </FormGroup>
                 <FormGroup inline={true} label={"Size Mode"} disabled={disableSizeMinorMap}>
@@ -373,6 +310,30 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
 
         const sizeMap = (
             <div className="panel-container">
+                <FormGroup  inline={true} label="Size" labelInfo="(px)"  disabled={disabledOverlayPanel}>
+                    <SafeNumericInput
+                        className="catalog-size-overlay"
+                        placeholder="Size"
+                        disabled={disabledOverlayPanel || !widgetStore.disableSizeMap}
+                        min={CatalogWidgetStore.MinOverlaySize}
+                        max={CatalogWidgetStore.MaxOverlaySize}
+                        value={widgetStore.catalogSize}
+                        stepSize={0.5}
+                        onValueChange={(value: number) => widgetStore.setCatalogSize(value)}
+                    />
+                </FormGroup>
+                <FormGroup  inline={true} label="Thickness" disabled={disabledOverlayPanel}>
+                    <SafeNumericInput
+                        className="catalog-size-overlay"
+                        placeholder="Thickness"
+                        disabled={disabledOverlayPanel}
+                        min={CatalogWidgetStore.MinThickness}
+                        max={CatalogWidgetStore.MaxThickness}
+                        value={widgetStore.thickness}
+                        stepSize={0.5}
+                        onValueChange={(value: number) => widgetStore.setThickness(value)}
+                    />
+                </FormGroup>
                 <Tabs
                     id="catalogSettings"
                     vertical={false}
@@ -413,6 +374,28 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
 
         const colorMap = (
             <div className="panel-container">
+                <FormGroup label={"Color"} inline={true}  disabled={disabledOverlayPanel || !widgetStore.disableColorMap}>
+                    <AutoColorPickerComponent
+                        color={widgetStore.catalogColor}
+                        presetColors={[...SWATCH_COLORS, "transparent"]}
+                        setColor={(color: string) => {
+                            widgetStore.setCatalogColor(color === "transparent" ? "#000000" : getColorForTheme(color));
+                        }}
+                        disableAlpha={true}
+                        disabled={disabledOverlayPanel || !widgetStore.disableColorMap}
+                    />
+                </FormGroup>
+                <FormGroup label={"Overlay Highlight"} inline={true}  disabled={disabledOverlayPanel}>
+                    <AutoColorPickerComponent
+                        color={widgetStore.highlightColor}
+                        presetColors={[...SWATCH_COLORS, "transparent"]}
+                        setColor={(color: string) => {
+                            widgetStore.setHighlightColor(color === "transparent" ? "#000000" : getColorForTheme(color));
+                        }}
+                        disableAlpha={true}
+                        disabled={disabledOverlayPanel}
+                    />
+                </FormGroup>
                 <FormGroup inline={true} label="Column" disabled={disabledOverlayPanel}>
                     <Select
                         items={this.axisOption}
@@ -429,23 +412,26 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
                         <Button text={widgetStore.colorMapColumn} disabled={disabledOverlayPanel} rightIcon="double-caret-vertical"/>
                     </Select>
                 </FormGroup>
-                <FormGroup label={"Scaling"} inline={true}>
+                <FormGroup label={"Scaling"} inline={true} disabled={disableColorMap}>
                     <ScalingSelectComponent
                         selectedItem={widgetStore.colorScalingType}
                         onItemSelect={(type) => widgetStore.setColorScalingType(type)}
+                        disabled={disableColorMap}
                     />
                 </FormGroup>
-                <FormGroup inline={true} label="Color Map">
+                <FormGroup inline={true} label="Color Map" disabled={disableColorMap}>
                     <ColormapComponent
                         inverted={false}
                         selectedItem={widgetStore.colorMap}
                         onItemSelect={(selected) => widgetStore.setColorMap(selected)}
+                        disabled={disableColorMap}
                     />
                 </FormGroup>
-                <FormGroup label={"Invert Color Map"} inline={true}>
+                <FormGroup label={"Invert Color Map"} inline={true} disabled={disableColorMap}>
                     <Switch
                         checked={widgetStore.invertedColorMap}
                         onChange={(ev) => widgetStore.setColorMapDirection(ev.currentTarget.checked)}
+                        disabled={disableColorMap}
                     />
                 </FormGroup>
                 <ClearableNumericInputComponent
@@ -489,10 +475,11 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
                         <Button text={widgetStore.orientationMapColumn} disabled={disabledOverlayPanel} rightIcon="double-caret-vertical"/>
                     </Select>
                 </FormGroup>
-                <FormGroup label={"Scaling"} inline={true}>
+                <FormGroup label={"Scaling"} inline={true} disabled={disableOrientationMap}>
                     <ScalingSelectComponent
                         selectedItem={widgetStore.orientationScalingType}
                         onItemSelect={(type) => widgetStore.setOrientationScalingType(type)}
+                        disabled={disableOrientationMap}
                     />
                 </FormGroup>
                 <FormGroup  inline={true} label="Orientation Min" labelInfo="(degree)"  disabled={disableOrientationMap}>
@@ -583,8 +570,6 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
                     selectedTabId={widgetStore.settingsTabId}
                     onChange={(tabId) => this.handleSelectedTabChanged(tabId)}
                 >
-                    <Tab id={CatalogSettingsTabs.GLOBAL} title="Global" panel={globalPanel}/>
-                    <Tab id={CatalogSettingsTabs.STYLING} title="Styling" panel={overlayPanel} disabled={disabledOverlayPanel}/>
                     <Tab id={CatalogSettingsTabs.SIZE} title="Size" panel={sizeMap} disabled={disabledOverlayPanel}/>
                     <Tab id={CatalogSettingsTabs.COLOR} title="Color" panel={colorMap} disabled={disabledOverlayPanel}/>
                     <Tab id={CatalogSettingsTabs.ORIENTATION} title="Orientation" panel={orientationMap} disabled={disabledOverlayPanel}/>

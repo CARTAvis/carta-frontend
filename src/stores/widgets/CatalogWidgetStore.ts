@@ -49,7 +49,7 @@ export class CatalogWidgetStore {
     public static readonly MinThickness = 1.5;
     public static readonly MaxThickness = 10;
     public static readonly MinAngle = 0;
-    public static readonly MaxAngle = 360;
+    public static readonly MaxAngle = 720;
     public static readonly SizeMapMin = 0;
 
     private OverlayShapeSettings =  new Map<number, {featherWidth: number, minSize: number}>([
@@ -130,7 +130,7 @@ export class CatalogWidgetStore {
         this.yAxis = CatalogOverlay.NONE;
         this.tableSeparatorPosition = PreferenceStore.Instance.catalogTableSeparatorPosition;
         this.highlightColor = Colors.RED2;
-        this.settingsTabId = CatalogSettingsTabs.GLOBAL;
+        this.settingsTabId = CatalogSettingsTabs.SIZE;
         this.thickness = 2.0;
         this.sizeMapColumn = CatalogOverlay.NONE;
         this.sizeArea = false;
@@ -155,7 +155,7 @@ export class CatalogWidgetStore {
         this.orientationMax = {default: undefined, clipd: undefined};
         this.orientationMin = {default: undefined, clipd: undefined};
         this.orientationScalingType = FrameScaling.LINEAR;
-        this.angleMax = CatalogWidgetStore.MaxAngle;
+        this.angleMax = 360;
         this.angleMin = CatalogWidgetStore.MinAngle;
         this.sizeColumnMinLocked = false;
         this.sizeColumnMaxLocked = false;

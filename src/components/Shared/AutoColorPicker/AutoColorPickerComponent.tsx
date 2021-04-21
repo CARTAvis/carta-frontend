@@ -108,8 +108,9 @@ export class AutoColorPickerComponent extends React.Component<AutoColorPickerCom
                     "custom-color"
                 ]}
                 itemRenderer={this.renderColorSelectItem}
+                disabled={this.props.disabled}
             >
-                <Button className="colorselect" text={this.renderColorBlock(this.autoColor)} rightIcon="double-caret-vertical"/>
+                <Button className="colorselect" text={this.renderColorBlock(this.autoColor)} rightIcon="double-caret-vertical" disabled={this.props.disabled}/>
             </ColorSelect>
         );
     }

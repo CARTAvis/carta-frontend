@@ -15,6 +15,7 @@ import powerPng from "static/equations/power.png";
 interface ScalingComponentProps {
     selectedItem: FrameScaling;
     onItemSelect: (selected: FrameScaling) => void;
+    disabled?: boolean;
 }
 
 const equationPngMap = new Map([
@@ -56,8 +57,9 @@ export const ScalingSelectComponent: React.FC<ScalingComponentProps> = (props) =
             filterable={false}
             items={SCALING_KEYS}
             itemRenderer={renderScalingSelectItem}
+            disabled={props.disabled}
         >
-            <Button text={RenderConfigStore.SCALING_TYPES.get(props.selectedItem)} rightIcon="double-caret-vertical" alignText={"right"}/>
+            <Button text={RenderConfigStore.SCALING_TYPES.get(props.selectedItem)} rightIcon="double-caret-vertical" alignText={"right"} disabled={props.disabled}/>
         </ScalingSelect>
     );
 };
