@@ -1224,7 +1224,7 @@ export class FrameStore {
     }
 
     @action private initSupportedSpectralConversion = () => {
-        if (this.spectralAxis && !this.spectralAxis.valid) {
+        if (this.channelInfo && this.spectralAxis && !this.spectralAxis.valid) {
             this.channelValues = this.channelInfo.values;
             this.spectralCoordsSupported = new Map<string, { type: SpectralType, unit: SpectralUnit }>([
                 [this.nativeSpectralCoordinate, {type: null, unit: null}],
