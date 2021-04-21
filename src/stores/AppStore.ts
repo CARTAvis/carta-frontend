@@ -1430,7 +1430,7 @@ export class AppStore {
             return;
         }
         this.backendService.connect(this.backendService.serverUrl).subscribe(ack => {
-            if (ack.success && ack.sessionType === CARTA.SessionType.RESUMED) {
+            if (ack.sessionType === CARTA.SessionType.RESUMED) {
                 console.log(`Reconnected with session ID ${ack.sessionId}`);
                 this.logStore.addInfo(`Reconnected to server with session ID ${ack.sessionId}`, ["network"]);
                 this.resumeSession();

@@ -27,6 +27,8 @@ export class BackendService {
 
     private static readonly IcdVersion = 20;
     private static readonly DefaultFeatureFlags = CARTA.ClientFeatureFlags.WEB_ASSEMBLY | CARTA.ClientFeatureFlags.WEB_GL;
+    private static readonly MaxConnectionAttempts = 15;
+
     @observable connectionStatus: ConnectionStatus;
     readonly loggingEnabled: boolean;
     @observable connectionDropped: boolean;
@@ -123,7 +125,7 @@ export class BackendService {
         }
 
         const isReconnection: boolean = url === this.serverUrl;
-
+        let connectionAttempts = 0;
         const apiService = ApiService.Instance;
         this.connectionDropped = false;
         this.connectionStatus = ConnectionStatus.PENDING;
@@ -133,9 +135,10 @@ export class BackendService {
         this.connection.onmessage = this.messageHandler.bind(this);
         this.connection.onclose = (ev: CloseEvent) => runInAction(()=>{
             // Only change to closed connection if the connection was originally active or this is a reconnection
-            if (this.connectionStatus === ConnectionStatus.ACTIVE || isReconnection) {
+            if (this.connectionStatus === ConnectionStatus.ACTIVE || isReconnection || connectionAttempts >= BackendService.MaxConnectionAttempts) {
                 this.connectionStatus = ConnectionStatus.CLOSED;
             } else {
+                connectionAttempts++;
                 setTimeout(() => {
                     const newConnection = new WebSocket(apiService.accessToken ? url + `?token=${apiService.accessToken}` : url);
                     newConnection.binaryType = "arraybuffer";
