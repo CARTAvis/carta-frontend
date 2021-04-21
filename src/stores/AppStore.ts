@@ -216,6 +216,28 @@ export class AppStore {
         this.fileLoading = false;
     };
 
+    @observable isRequestingFiles: boolean;
+    @observable requestingFilesProgress: number;
+
+    @action setIsRequestingFiles = (val: boolean) => {
+        this.isRequestingFiles = val;
+    };
+
+    @action updateRequestingFileProgress = (progress: number) => {
+        this.requestingFilesProgress = progress;
+    };
+
+    @action resetFileRequestState = () => {
+        this.setIsRequestingFiles(false);
+        this.updateRequestingFileProgress(0);
+    };
+
+    @action cancelRequestingFile = () => {
+        if (this.requestingFilesProgress < 1.0) {
+            this.backendService.cancelRequestingFiles();
+        }
+    };
+
     // Keyboard shortcuts
     @computed get modifierString() {
         // Modifier string for shortcut keys.
@@ -1193,6 +1215,7 @@ export class AppStore {
         this.backendService.reconnectStream.subscribe(this.handleReconnectStream);
         this.backendService.scriptingStream.subscribe(this.handleScriptingRequest);
         this.tileService.tileStream.subscribe(this.handleTileStream);
+        this.backendService.fileProgressStream.subscribe(this.handleFileProgressStream);
 
         // Set auth token from URL if it exists
         const url = new URL(window.location.href);
@@ -1403,6 +1426,14 @@ export class AppStore {
             frame.updateRequestingMomentsProgress(momentProgress.progress);
             this.updateTaskProgress(momentProgress.progress);
         }
+    };
+
+    handleFileProgressStream = (fileProgress: CARTA.Progress) => {
+        if (!fileProgress) {
+            return;
+        }
+        AppStore.Instance.updateRequestingFileProgress(fileProgress.percentage);
+        this.updateTaskProgress(fileProgress.percentage);
     };
 
     handleErrorStream = (errorData: CARTA.ErrorData) => {

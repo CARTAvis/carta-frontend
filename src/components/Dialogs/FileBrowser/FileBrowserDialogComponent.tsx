@@ -6,7 +6,7 @@ import {Alert, AnchorButton, Breadcrumb, Breadcrumbs, Button, IBreadcrumbProps, 
 import {CARTA} from "carta-protobuf";
 import {FileInfoComponent, FileInfoType} from "components/FileInfo/FileInfoComponent";
 import {FileListTableComponent} from "./FileListTable/FileListTableComponent";
-import {DraggableDialogComponent} from "components/Dialogs";
+import {DraggableDialogComponent, TaskProgressDialogComponent} from "components/Dialogs";
 import {SimpleTableComponentProps} from "components/Shared";
 import {AppStore, BrowserMode, CatalogProfileStore, FileBrowserStore, FileFilteringType, HelpType, ISelectedFile, PreferenceKeys, PreferenceStore} from "stores";
 import "./FileBrowserDialogComponent.scss";
@@ -126,6 +126,10 @@ export class FileBrowserDialogComponent extends React.Component {
     private handleExportInputChanged = (ev: React.ChangeEvent<HTMLInputElement>) => {
         const fileBrowserStore = FileBrowserStore.Instance;
         fileBrowserStore.setExportFilename(ev.target.value);
+    };
+
+    private handleRequestingFileCancelled = () => {
+        AppStore.Instance.cancelRequestingFile();
     };
 
     @action handleFilterStringInputChanged = (ev: React.ChangeEvent<HTMLInputElement>) => {
@@ -437,6 +441,7 @@ export class FileBrowserDialogComponent extends React.Component {
         const fileList = fileBrowserStore.getfileListByMode;
 
         return (
+            <div>
             <DraggableDialogComponent dialogProps={dialogProps} helpType={HelpType.FILE_Browser} minWidth={400} minHeight={400} defaultWidth={1200} defaultHeight={600} enableResizing={true}>
                 <div className="file-path">
                     {this.pathItems &&
@@ -514,6 +519,15 @@ export class FileBrowserDialogComponent extends React.Component {
                     This file exists. Are you sure to overwrite it?
                 </Alert>
             </DraggableDialogComponent>
+            <TaskProgressDialogComponent
+                isOpen={appStore.isRequestingFiles && appStore.requestingFilesProgress < 1}
+                progress={appStore.requestingFilesProgress}
+                timeRemaining={appStore.estimatedTaskRemainingTime}
+                cancellable={true}
+                onCancel={this.handleRequestingFileCancelled}
+                text={"Loading files"}
+            />
+            </div>
         );
     }
 

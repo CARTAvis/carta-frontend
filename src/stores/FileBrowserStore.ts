@@ -96,12 +96,16 @@ export class FileBrowserStore {
         this.catalogFileInfo = null;
 
         if (this.browserMode === BrowserMode.File || this.browserMode === BrowserMode.SaveFile) {
+            AppStore.Instance.resetFileRequestState();
+            AppStore.Instance.setIsRequestingFiles(true);
             backendService.getFileList(directory).subscribe(res => runInAction(() => {
                 this.fileList = res;
                 this.loadingList = false;
+                AppStore.Instance.resetFileRequestState();
             }), err => runInAction(() => {
                 console.log(err);
                 this.loadingList = false;
+                AppStore.Instance.resetFileRequestState();
             }));
         } else if (this.browserMode === BrowserMode.Catalog) {
             backendService.getCatalogList(directory).subscribe(res => runInAction(() => {
@@ -120,6 +124,7 @@ export class FileBrowserStore {
                 this.loadingList = false;
             }));
         }
+        AppStore.Instance.restartTaskProgress();
     };
 
     @action getFileInfo = (directory: string, file: string, hdu: string) => {
