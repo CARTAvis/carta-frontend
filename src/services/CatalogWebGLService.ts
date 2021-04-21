@@ -72,6 +72,9 @@ export class CatalogWebGLService {
     };
 
     public updateDataTexture = (fileId: number, dataPoints: Float32Array, textureType: CatalogTextureType) => {
+        if (!this.gl) {
+            return;
+        }
         switch (textureType) {
             case CatalogTextureType.Size:
                 this.sizeTextures.set(fileId, createTextureFromArray(this.gl, dataPoints, WebGL2RenderingContext.TEXTURE2, 1));

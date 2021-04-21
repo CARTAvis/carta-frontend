@@ -10,5 +10,15 @@ export const TemplateNodes = {
                 <small> If you are using CARTA through a browser, please ensure your browser supports WebGL. If you are using the CARTA standalone app, please ensure you are not running in a remote desktop. </small>
             </p>
         </React.Fragment>
+    ),
+    WebGL2ErrorMessage: (
+        <div>
+            <div>
+                <p>Could not load WebGL2.0. Catalog will not be displayed properly.</p>
+            </div>
+            <div>
+                <small> If you are using CARTA with Safari, please ensure WebGL2.0 is enabled at Develop &gt; Experimental Features &gt; WebGL2.0 then reload the page.</small>
+            </div>
+        </div>
     )
 };

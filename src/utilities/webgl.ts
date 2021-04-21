@@ -2,7 +2,6 @@ import {AlertStore} from "stores";
 import {TemplateNodes} from "./templates";
 
 export const GL = WebGLRenderingContext;
-export const GL2 = WebGL2RenderingContext;
 
 export function getShaderFromString(gl: WebGLRenderingContext, shaderScript: string, type: number) {
     if (!gl || !shaderScript || !(type === GL.VERTEX_SHADER || type === GL.FRAGMENT_SHADER)) {
@@ -102,13 +101,14 @@ export function initWebGL(){
 export function initWebGL2(){
     const gl = document.createElement("canvas").getContext("webgl2");
     if (!gl) {
-        AlertStore.Instance.showAlert(TemplateNodes.WebGLErrorMessage, "issue");
+        AlertStore.Instance.showAlert(TemplateNodes.WebGL2ErrorMessage, "issue");
         return null;
     }
     return gl;
 }
 
-export function createTextureFromArray(gl: WebGL2RenderingContext, data: Float32Array, texIndex: number = GL2.TEXTURE0, components: number = 1):WebGLTexture {
+export function createTextureFromArray(gl: WebGL2RenderingContext, data: Float32Array, texIndex: number = WebGL2RenderingContext.TEXTURE0, components: number = 1):WebGLTexture {
+    const GL2 = WebGL2RenderingContext;
     const numPoints = data.length / components;
     if (data.length % components !== 0) {
         console.error(`Invalid data size (${data.length} for number of components ${components}`);
