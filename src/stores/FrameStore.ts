@@ -1706,6 +1706,10 @@ export class FrameStore {
         this.spectralReference.addSecondarySpectralImage(this);
         const matchedChannel = getTransformedChannel(frame.wcsInfo3D, this.wcsInfo3D, preferenceStore.spectralMatchingType, frame.requiredChannel);
         this.setChannels(matchedChannel, this.requiredStokes, false);
+
+        // Align spectral settings to spectral reference
+        this.setSpectralCoordinate(frame.spectralCoordinate, false);
+
         return true;
     };
 
