@@ -1,7 +1,7 @@
 import {observer} from "mobx-react";
 import * as React from "react";
 import tinycolor from "tinycolor2";
-import {AppStore, CatalogStore, FrameStore, RenderConfigStore, WidgetsStore} from "stores";
+import {AppStore, CatalogStore, RenderConfigStore, WidgetsStore} from "stores";
 import {CatalogTextureType, CatalogWebGLService} from "services";
 import {canvasToTransformedImagePos} from "components/ImageView/RegionView/shared";
 import {CursorInfo} from "models";
@@ -43,12 +43,12 @@ export class CatalogViewGLComponent extends React.Component<CatalogViewGLCompone
         }
 
         const catalogStore = appStore.catalogStore;
+        const catalogFileIds = catalogStore.activeCatalogFiles; 
         catalogStore.catalogGLData.forEach((catalog, fileId) => {
             const catalogWidgetStore = catalogStore.getCatalogWidgetStore(fileId);
             const numVertices = catalog.dataPoints.length;
             const numSelectedVertices = catalogStore.catalogProfileStores.get(fileId)?.selectedPointIndices.length;
             const showSelectedData = catalogWidgetStore.showSelectedData;
-            const displayed = catalog.displayed;
             const color = catalogWidgetStore.catalogColor;
             const selectedColor = catalogWidgetStore.highlightColor;
             const pointSize = catalogWidgetStore.catalogSize;
@@ -137,12 +137,9 @@ export class CatalogViewGLComponent extends React.Component<CatalogViewGLCompone
     }
 
     private updateCanvas = () => {
-        const appStore = AppStore.Instance;
-        const baseFrame = appStore.activeFrame;
-
-        if (baseFrame && this.canvas && this.gl && this.catalogWebGLService.shaderUniforms) {
+        if (this.canvas && this.gl && this.catalogWebGLService.shaderUniforms) {
             this.resizeAndClearCanvas();
-            this.renderCatalog(baseFrame);
+            this.renderCatalog();
             // draw in 2d canvas
             const ctx = this.canvas.getContext("2d");
             ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
@@ -150,7 +147,7 @@ export class CatalogViewGLComponent extends React.Component<CatalogViewGLCompone
         }
     };
 
-    private renderCatalog(baseFrame: FrameStore) {
+    private renderCatalog() {
         const appStore = AppStore.Instance;
         const catalogStore = CatalogStore.Instance;
         // For alpha blending (soft lines)
@@ -166,25 +163,10 @@ export class CatalogViewGLComponent extends React.Component<CatalogViewGLCompone
         let rotationAngle = 0.0;
         let scaleAdjustment = 1.0;
 
-        const catalogFileIds = catalogStore.activeCatalogFiles; 
-        
-        // catalogStore.catalogGLData.forEach((catalog, fileId) => {
-        catalogFileIds.forEach(fileId => {
+        catalogStore.activeCatalogFiles.forEach(fileId => {
+            const frame = appStore.getFrame(catalogStore.getFramIdByCatalogId(fileId));
             const catalog = catalogStore.catalogGLData.get(fileId);
-            // let showCatalog = catalog.displayed
-            // const spatialMatchedImageId = baseFrame?.spatialReference?.frameInfo?.fileId;
-            // if (spatialMatchedImageId >= 0) {
-            //     const spatialReferencedCatalogs = catalogStore.imageAssociatedCatalogId.get(spatialMatchedImageId);
-            //     showCatalog = showCatalog || spatialReferencedCatalogs.includes(fileId);
-            // }
-            // if (baseFrame.secondarySpatialImages) {
-            //     baseFrame.secondarySpatialImages.forEach(frame => {
-            //         console.log("secondary:" + frame.frameInfo.fileId)
-            //         const secondarySpatialReferencedCatalogs = catalogStore.imageAssociatedCatalogId.get(frame.frameInfo.fileId);
-            //         showCatalog = showCatalog || secondarySpatialReferencedCatalogs.includes(fileId);
-            //     });
-            // }
-            // if(showCatalog) {
+            if(catalog) {
                 const catalogWidgetStore = catalogStore.getCatalogWidgetStore(fileId);
                 const shape = catalogWidgetStore.shapeSettings;
                 const featherWidth = shape.featherWidth * devicePixelRatio;
@@ -195,55 +177,24 @@ export class CatalogViewGLComponent extends React.Component<CatalogViewGLCompone
                 let pointSize = catalogWidgetStore.catalogSize + shape.minSize;
                 this.gl.uniform1f(shaderUniforms.LineThickness, lineThickness);
                 this.gl.uniform1i(shaderUniforms.ShowSelectedSource, catalogWidgetStore.showSelectedData? 1.0 : 0.0);
-                console.log(catalog.dataPoints)
-                console.log("catalog Id: " + fileId + catalog.displayed + " baseFrame: " + baseFrame.frameInfo.fileId, "spatial Ref: " + baseFrame?.spatialReference?.frameInfo?.fileId)
-                if (baseFrame.secondarySpatialImages) {
-                    baseFrame.secondarySpatialImages.forEach(frame => console.log("secondary:" + frame.frameInfo.fileId))
-                }
-
-                const frame = appStore.getFrame(catalogStore.getFramIdByCatalogId(fileId));
-                console.log(frame.frameInfo.fileId, catalogStore.getFramIdByCatalogId(fileId))
                 //FrameView
                 if (frame.spatialReference) {
-                    console.log("if")
-                    // const spatialMatchedImageId = baseFrame.spatialReference.frameInfo.fileId;
-                    // const spatialReferencedCatalogs = catalogStore.imageAssociatedCatalogId.get(spatialMatchedImageId);
-                    // if(spatialReferencedCatalogs.includes(fileId) || false) {
-                    //     const baseRequiredView = baseFrame.spatialReference.requiredFrameView;
-                    //     rangeScale = {
-                    //         x: 1.0 / (baseRequiredView.xMax - baseRequiredView.xMin),
-                    //         y: 1.0 / (baseRequiredView.yMax - baseRequiredView.yMin),
-                    //     };
-            
-                    //     rangeOffset = {
-                    //         x: -baseRequiredView.xMin * rangeScale.x,
-                    //         y: -baseRequiredView.yMin * rangeScale.y
-                    //     };
-                    //     rotationAngle = 0.0;
-                    //     scaleAdjustment = 1.0;
-                    // } else {
-                        const baseRequiredView = baseFrame.spatialReference.requiredFrameView;
-                        const originAdjustedOffset = subtract2D(baseFrame.spatialTransform.origin, scale2D(rotate2D(baseFrame.spatialTransform.origin, baseFrame.spatialTransform.rotation), baseFrame.spatialTransform.scale));
-    
-                        rangeScale = {
-                            x: 1.0 / (baseRequiredView.xMax - baseRequiredView.xMin),
-                            y: 1.0 / (baseRequiredView.yMax - baseRequiredView.yMin),
-                        };
-    
-                        rangeOffset = {
-                            x: (baseFrame.spatialTransform.translation.x - baseRequiredView.xMin + originAdjustedOffset.x) * rangeScale.x,
-                            y: (baseFrame.spatialTransform.translation.y - baseRequiredView.yMin + originAdjustedOffset.y) * rangeScale.y
-                        };
-                        rotationAngle = -baseFrame.spatialTransform.rotation;
-                        scaleAdjustment = baseFrame.spatialTransform.scale;
-                    // }
+                    const baseRequiredView = frame.spatialReference.requiredFrameView;
+                    const originAdjustedOffset = subtract2D(frame.spatialTransform.origin, scale2D(rotate2D(frame.spatialTransform.origin, frame.spatialTransform.rotation), frame.spatialTransform.scale));
+
+                    rangeScale = {
+                        x: 1.0 / (baseRequiredView.xMax - baseRequiredView.xMin),
+                        y: 1.0 / (baseRequiredView.yMax - baseRequiredView.yMin),
+                    };
+
+                    rangeOffset = {
+                        x: (frame.spatialTransform.translation.x - baseRequiredView.xMin + originAdjustedOffset.x) * rangeScale.x,
+                        y: (frame.spatialTransform.translation.y - baseRequiredView.yMin + originAdjustedOffset.y) * rangeScale.y
+                    };
+                    rotationAngle = -frame.spatialTransform.rotation;
+                    scaleAdjustment = frame.spatialTransform.scale;
                 } else {
-                    console.log("elsss")
                     let baseRequiredView = frame.requiredFrameView;
-                    console.log(frame, baseFrame.spatialReference.requiredFrameView)
-                    // if (baseFrame.spatialReference) {
-                    //     baseRequiredView = baseFrame.spatialReference.requiredFrameView;   
-                    // }
                     rangeScale = {
                         x: 1.0 / (baseRequiredView.xMax - baseRequiredView.xMin),
                         y: 1.0 / (baseRequiredView.yMax - baseRequiredView.yMin),
@@ -329,7 +280,7 @@ export class CatalogViewGLComponent extends React.Component<CatalogViewGLCompone
                     this.gl.drawArrays(GL2.POINTS, 0, dataPoints.length / 2);
                     this.gl.finish();
                 }
-            // }
+            }
         });
     }
 

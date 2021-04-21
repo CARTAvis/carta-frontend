@@ -5,8 +5,7 @@ import {CatalogWebGLService, CatalogTextureType} from "services";
 import {CatalogWidgetStore} from "stores/widgets";
 
 type CatalogOverlayCoords = {
-    dataPoints: Float32Array,
-    displayed: boolean;
+    dataPoints: Float32Array
 };
 
 export class CatalogStore {
@@ -47,8 +46,7 @@ export class CatalogStore {
 
     @action addCatalog(fileId: number) {
         this.catalogGLData.set(fileId, {
-            dataPoints:new Float32Array(0),
-            displayed: true
+            dataPoints:new Float32Array(0)
         });
     }
 
@@ -108,7 +106,6 @@ export class CatalogStore {
                 this.catalogProfiles.set(componentId, activeCatalogFileIds[0]);
             });  
         }
-        this.resetDisplayedData(activeCatalogFileIds);
     }
 
     // update associated catalogProfile fileId
@@ -130,22 +127,6 @@ export class CatalogStore {
             }
         });
         return imagefileId;
-    }
-
-    @action resetDisplayedData(associatedCatalogFileId: Array<number>) {
-        if (associatedCatalogFileId.length) {
-            this.catalogGLData.forEach((catalog, fileId) => {
-                let displayed = true;
-                if (!associatedCatalogFileId.includes(fileId)) {
-                    displayed = false;
-                }
-                catalog.displayed = displayed;
-            });
-        } else {
-            this.catalogGLData.forEach((catalog) => {
-                catalog.displayed = false;
-            });
-        }
     }
 
     @action setCatalogPlots(componentId: string, fileId: number, widgetId: string) {
@@ -206,17 +187,18 @@ export class CatalogStore {
             const spatialMatchedImageId = activeFrame?.spatialReference?.frameInfo?.fileId;
             if (spatialMatchedImageId >= 0) {
                 const spatialReferencedCatalogs = this.imageAssociatedCatalogId.get(spatialMatchedImageId);
-                associatedCatalogIds = [...new Set([].concat(...[associatedCatalogIds, spatialReferencedCatalogs]))];
+                associatedCatalogIds = [...new Set([].concat(...[associatedCatalogIds, spatialReferencedCatalogs]))].filter(catalogFileId => {
+                    return this.catalogGLData.get(catalogFileId) !== undefined;
+                });
             }
 
             activeFrame.secondarySpatialImages?.forEach(frame => {
                 const secondarySpatialReferencedCatalogs = this.imageAssociatedCatalogId.get(frame.frameInfo.fileId);
-                associatedCatalogIds = [...new Set([].concat(...[associatedCatalogIds, secondarySpatialReferencedCatalogs]))];
+                associatedCatalogIds = [...new Set([].concat(...[associatedCatalogIds, secondarySpatialReferencedCatalogs]))].filter(catalogFileId => {
+                    return this.catalogGLData.get(catalogFileId) !== undefined;
+                });;
             });
-            
-            console.log(associatedCatalogIds)
-            // console.log(this.imageAssociatedCatalogId)
-            return associatedCatalogIds;
+            return associatedCatalogIds.sort((a, b) => a - b);
         } else {
             return [];
         }
