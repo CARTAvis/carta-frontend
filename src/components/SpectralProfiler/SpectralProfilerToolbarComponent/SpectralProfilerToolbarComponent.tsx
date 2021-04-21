@@ -39,8 +39,13 @@ class ProfileSelectionButtonComponent extends React.Component<ProfileSelectionBu
             });
         }
 
+        let className = "category-set";
+        if (AppStore.Instance.darkTheme) {
+            className += " bp3-dark";
+        }
+
         return (
-            <ButtonGroup fill={true} className="category-set">
+            <ButtonGroup fill={true} className={className}>
                 <Tooltip content={this.props.tooltip} position={Position.TOP}>
                     <AnchorButton
                         text={this.props.categoryName}
