@@ -10,7 +10,7 @@ import {toFixed} from "utilities";
 import {IconName} from "@blueprintjs/icons";
 import {CustomIcon, CustomIconName} from "icons/CustomIcons";
 import "./RootMenuComponent.scss";
-import { CARTA } from "carta-protobuf";
+import {CARTA} from "carta-protobuf";
 
 @observer
 export class RootMenuComponent extends React.Component {
