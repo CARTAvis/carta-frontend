@@ -71,29 +71,6 @@ export class FileBrowserStore {
     @observable loadingCheckedCount: number;
     @observable loadingTotalCount: number;
 
-    @action updateLoadingState = (progress: number, checkedCount: number, totalCount: number) => {
-        this.loadingProgress = progress;
-        this.loadingCheckedCount = checkedCount;
-        this.loadingTotalCount = totalCount;
-    };
-
-    @action resetLoadingStates = () => {
-        this.loadingList = false;
-        this.updateLoadingState(0, 0, 0);
-    };
-
-    @action cancelRequestingFile = () => {
-        if (this.loadingProgress < 1.0) {
-            BackendService.Instance.cancelRequestingFiles();
-        }
-    };
-
-    @action cancelRequestingCatalog = () => {
-        if (this.loadingProgress < 1.0) {
-            BackendService.Instance.cancelRequestingCatalogs();
-        }
-    };
-
     @action showFileBrowser = (mode: BrowserMode, append = false) => {
         this.appendingFrame = append;
         this.browserMode = mode;
@@ -330,6 +307,29 @@ export class FileBrowserStore {
 
     @action setSelectedFiles = (selection: ISelectedFile[]) => {
         this.selectedFiles = selection;
+    };
+
+    @action updateLoadingState = (progress: number, checkedCount: number, totalCount: number) => {
+        this.loadingProgress = progress;
+        this.loadingCheckedCount = checkedCount;
+        this.loadingTotalCount = totalCount;
+    };
+
+    @action resetLoadingStates = () => {
+        this.loadingList = false;
+        this.updateLoadingState(0, 0, 0);
+    };
+
+    @action cancelRequestingFile = () => {
+        if (this.loadingProgress < 1.0) {
+            BackendService.Instance.cancelRequestingFiles();
+        }
+    };
+
+    @action cancelRequestingCatalog = () => {
+        if (this.loadingProgress < 1.0) {
+            BackendService.Instance.cancelRequestingCatalogs();
+        }
     };
 
     @computed get HDUList(): IOptionProps[] {
