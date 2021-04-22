@@ -193,12 +193,6 @@ export class BackendService {
         this.endToEndPing = this.lastPongTime - this.lastPingTime;
     };
 
-
-
-
-
-
-
     @action("file list")
     getFileList(directory: string): Observable<CARTA.FileListResponse> {
         if (this.connectionStatus !== ConnectionStatus.ACTIVE) {

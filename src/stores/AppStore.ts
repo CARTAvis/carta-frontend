@@ -216,38 +216,6 @@ export class AppStore {
         this.fileLoading = false;
     };
 
-    @observable isFileBrowserRequesting: boolean;
-    @observable fileBrowserRequestingProgress: number;
-    @observable fileBrowserRequestingCheckedCount: number;
-    @observable fileBrowserRequestingTotalCount: number;
-
-    @action setIsFileBrowserRequesting = (val: boolean) => {
-        this.isFileBrowserRequesting = val;
-    };
-
-    @action updateFileBrowserRequestingProgress = (progress: number, checkedCount: number, totalCount: number) => {
-        this.fileBrowserRequestingProgress = progress;
-        this.fileBrowserRequestingCheckedCount = checkedCount;
-        this.fileBrowserRequestingTotalCount = totalCount;
-    };
-
-    @action resetFileBrowserRequestState = () => {
-        this.setIsFileBrowserRequesting(false);
-        this.updateFileBrowserRequestingProgress(0, 0, 0);
-    };
-
-    @action cancelRequestingFile = () => {
-        if (this.fileBrowserRequestingProgress < 1.0) {
-            this.backendService.cancelRequestingFiles();
-        }
-    };
-
-    @action cancelRequestingCatalog = () => {
-        if (this.fileBrowserRequestingProgress < 1.0) {
-            this.backendService.cancelRequestingCatalogs();
-        }
-    };
-
     // Keyboard shortcuts
     @computed get modifierString() {
         // Modifier string for shortcut keys.
@@ -1442,7 +1410,7 @@ export class AppStore {
         if (!fileProgress) {
             return;
         }
-        this.updateFileBrowserRequestingProgress(fileProgress.percentage, fileProgress.checkedCount, fileProgress.totalCount);
+        this.fileBrowserStore.updateLoadingState(fileProgress.percentage, fileProgress.checkedCount, fileProgress.totalCount);
         this.updateTaskProgress(fileProgress.percentage);
     };
 

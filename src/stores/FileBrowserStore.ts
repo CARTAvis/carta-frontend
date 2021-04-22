@@ -67,6 +67,33 @@ export class FileBrowserStore {
 
     @observable selectedFiles: ISelectedFile[];
 
+    @observable loadingProgress: number;
+    @observable loadingCheckedCount: number;
+    @observable loadingTotalCount: number;
+
+    @action updateLoadingState = (progress: number, checkedCount: number, totalCount: number) => {
+        this.loadingProgress = progress;
+        this.loadingCheckedCount = checkedCount;
+        this.loadingTotalCount = totalCount;
+    };
+
+    @action resetLoadingStates = () => {
+        this.loadingList = false;
+        this.updateLoadingState(0, 0, 0);
+    };
+
+    @action cancelRequestingFile = () => {
+        if (this.loadingProgress < 1.0) {
+            BackendService.Instance.cancelRequestingFiles();
+        }
+    };
+
+    @action cancelRequestingCatalog = () => {
+        if (this.loadingProgress < 1.0) {
+            BackendService.Instance.cancelRequestingCatalogs();
+        }
+    };
+
     @action showFileBrowser = (mode: BrowserMode, append = false) => {
         this.appendingFrame = append;
         this.browserMode = mode;
@@ -87,6 +114,7 @@ export class FileBrowserStore {
     };
 
     @action getFileList = (directory: string) => {
+        this.resetLoadingStates();
         const backendService = BackendService.Instance;
         this.loadingList = true;
         this.selectedFile = null;
@@ -95,37 +123,29 @@ export class FileBrowserStore {
         this.regionFileInfo = null;
         this.catalogFileInfo = null;
 
-        AppStore.Instance.resetFileBrowserRequestState();
-        AppStore.Instance.setIsFileBrowserRequesting(true);
         if (this.browserMode === BrowserMode.File || this.browserMode === BrowserMode.SaveFile) {
             backendService.getFileList(directory).subscribe(res => runInAction(() => {
                 this.fileList = res;
-                this.loadingList = false;
-                AppStore.Instance.resetFileBrowserRequestState();
+                this.resetLoadingStates();
             }), err => runInAction(() => {
                 console.log(err);
-                this.loadingList = false;
-                AppStore.Instance.resetFileBrowserRequestState();
+                this.resetLoadingStates();
             }));
         } else if (this.browserMode === BrowserMode.Catalog) {
             backendService.getCatalogList(directory).subscribe(res => runInAction(() => {
                 this.catalogFileList = res;
-                this.loadingList = false;
-                AppStore.Instance.resetFileBrowserRequestState();
+                this.resetLoadingStates();
             }), err => runInAction(() => {
                 console.log(err);
-                this.loadingList = false;
-                AppStore.Instance.resetFileBrowserRequestState();
+                this.resetLoadingStates();
             }));
         } else {
             backendService.getRegionList(directory).subscribe(res => runInAction(() => {
                 this.fileList = res;
-                this.loadingList = false;
-                AppStore.Instance.resetFileBrowserRequestState();
+                this.resetLoadingStates();
             }), err => runInAction(() => {
                 console.log(err);
-                this.loadingList = false;
-                AppStore.Instance.resetFileBrowserRequestState();
+                this.resetLoadingStates();
             }));
         }
         AppStore.Instance.restartTaskProgress();

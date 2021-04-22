@@ -129,13 +129,13 @@ export class FileBrowserDialogComponent extends React.Component {
     };
 
     private handleFileBrowserRequestingCancelled = () => {
-        if (FileBrowserStore.Instance.browserMode === BrowserMode.File) {
-            AppStore.Instance.cancelRequestingFile();
-        } else if (FileBrowserStore.Instance.browserMode === BrowserMode.RegionImport) {
-            // AppStore.Instance.cancel();
-        } else if (FileBrowserStore.Instance.browserMode === BrowserMode.Catalog){
-            AppStore.Instance.cancelRequestingCatalog();
+        const fileBrowserStore = FileBrowserStore.Instance;
+        if (fileBrowserStore.browserMode === BrowserMode.Catalog){
+            fileBrowserStore.cancelRequestingCatalog();
+        } else {
+            fileBrowserStore.cancelRequestingFile();
         }
+        fileBrowserStore.resetLoadingStates();
     };
 
     @action handleFilterStringInputChanged = (ev: React.ChangeEvent<HTMLInputElement>) => {
@@ -526,13 +526,13 @@ export class FileBrowserDialogComponent extends React.Component {
                     </Alert>
                 </DraggableDialogComponent>
                 <TaskProgressDialogComponent
-                    isOpen={appStore.isFileBrowserRequesting && appStore.fileBrowserRequestingProgress < 1}
-                    progress={appStore.fileBrowserRequestingProgress}
+                    isOpen={fileBrowserStore.loadingList && fileBrowserStore.loadingProgress < 1}
+                    progress={fileBrowserStore.loadingProgress}
                     timeRemaining={appStore.estimatedTaskRemainingTime}
                     cancellable={true}
                     onCancel={this.handleFileBrowserRequestingCancelled}
                     text={"Loading files"}
-                    contentText={`loading files ${appStore.fileBrowserRequestingCheckedCount} / ${appStore.fileBrowserRequestingTotalCount}`}
+                    contentText={`loading files ${fileBrowserStore.loadingCheckedCount} / ${fileBrowserStore.loadingTotalCount}`}
                 />
             </React.Fragment>
         );
