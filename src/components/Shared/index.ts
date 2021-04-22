@@ -1,5 +1,6 @@
 export * from "./toaster";
 export * from "./AutoColorPicker/AutoColorPickerComponent";
+export * from "./BiasContrastSelectComponent/BiasContrastSelectComponent";
 export * from "./ClearableNumericInput/ClearableNumericInputComponent";
 export * from "./ColorPicker/ColorPickerComponent";
 export * from "./ColormapComponent/ColormapComponent";

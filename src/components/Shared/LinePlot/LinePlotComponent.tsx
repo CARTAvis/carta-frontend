@@ -633,7 +633,11 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
             exportTsvFile(imageName, plotName, `${comment}\n${rows.join("\n")}\n`);
         }
 
-        this.props.multiPlotPropsMap?.forEach(multiPlotProp => {
+        this.props.multiPlotPropsMap?.forEach((multiPlotProp, key) => {
+            if (key === "colormapScaling") { // TODO: remove this to fully support multiple lines
+                return;
+            }
+
             let rows = [];
             const plotName = multiPlotProp.imageName;
             const imageName = multiPlotProp.plotName;
