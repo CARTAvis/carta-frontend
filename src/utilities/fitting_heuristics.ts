@@ -160,6 +160,33 @@ export function getEstimatedPoints(xInput: number[], yInput:number[]): {x: numbe
 }
 
 export function autoDetecting(xInput: number[], yInput:number[], orderInputs?: {order: number, yIntercept: number, slope: number}) : {components:ProfileFittingIndividualStore[], order: number, yIntercept: number, slope:number} {
+ 
+    // This part of codes tries to analyze the input spectrum and guesses where spectral and continuum features are, then sets up a set of initial solution for the GSL profile fitter. The procedure is outlined below.
+
+    // On the GUI, there is a toggle 'w/ cont.' which sets a flag to the guesser if continuum needs to be taken into account or not. 
+    // When the flag is False (ie no continuum), a histogram of the input spectrum will be computed and a Gaussian is fitted to the peak of the histogram. 
+    // If the input spectrum is mostly line free, the center of the final Gaussian represents the mean value of the line-free part of the spectrum and the stddev of the Gaussian represents the 1-sigma noise level of the line-free part.
+    // Note that if line feature dominates the spectrum, the derived mean and stddev values are over-estimated, which might affect the subsequent procedures. 
+
+    // Then, the second part of the procedures is to identify segments of channels that _contain_ line features based on the derived mean and stddev from the histogram. 
+    // The output of this part is a list of channel segments.
+
+    // Then the third (final) part of the procedures is to check multiplicity of each line segment to see if there are more than one line feature (ie Gaussian-like profile).
+    // The procedure is to identify local min and max first then analyze the "pattern" of min and max. 
+    // For example, if we see the distribution max-min-max in one line segment and the mean value in this segment is greater than the mean derived from the histogram, then we guess there are TWO line features in this segment. 
+    // If we see min-min and the mean value in this segment is less than the mean derived from the histogram, then we guess there are TWO absorption features in this segment.
+
+    // Once all line segments pass the multiplicity check, a final list of channel ranges is derived with each representing a line feature for the GSL profile fitter.
+    // The initial values of a Gaussian component are derived from a given channel range (ie an identified line feature).
+
+    // If the toggle 'w/ cont.' is enabled (ie there is continuum), before computing a histogram to estimate mean and stddev of line free part of the spectrum, an extra step is taken.
+    // This extra step is to remove the apparent continuum (a constant or a line with a slope) so that the procedures mentioned above can work properly in most of cases.
+    // To remove the apparent continuum, we form a new array as the input spectrum plus the reversed spectrum.
+    // Then we apply the same trick by forming a histogram and fitting a Gaussian to guess which channel ranges are _line free_.
+    // These line free channels are thus used for estimating the apparent continuum (as a constant or a line with a slope) and set up the initial solution for GSL profile fitter.
+    // Once the continuum is estimated, we remove the continuum from the input spectrum first then apply the same procedures as 'w/ cont.'=False.
+    // Note that when estimating the continuum, if the input spectrum are dominated with line features (especially when their distributions have mirror symmetry), the final estimated continuum may not be ideal.
+    // Therefore, the following line feature identification procedures (2nd and 3rd) may not work well.
 
     let x: number[] = xInput;
     let y: number[] = yInput;

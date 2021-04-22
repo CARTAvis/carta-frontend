@@ -231,10 +231,6 @@ export class ProfileFittingComponent extends React.Component<ProfileFittingCompo
         });
     }
 
-    @action setIsShowingLog(val: boolean) {
-        this.isShowingLog = val;
-    }
-
     render() {
         const appStore = AppStore.Instance;
         const fittingStore = this.props.fittingStore;
