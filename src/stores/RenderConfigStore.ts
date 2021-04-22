@@ -127,8 +127,8 @@ export class RenderConfigStore {
 
     @computed get colorscaleArray() {
         const colorsForValues = getColorsForValues(this.colorMap);
-        const indexArray = Array.from(Array(colorsForValues.size).keys()).map(x => this.inverted ? x / colorsForValues.size : 1 - x / colorsForValues.size);
-        const scaledAarray = indexArray.map(x => 1.0 - scaleValueInverse(1.0 - x, this.scaling, this.alpha, this.gamma, this.bias, this.contrast, AppStore.Instance?.preferenceStore?.useSmoothedBiasContrast));
+        const indexArray = Array.from(Array(colorsForValues.size).keys()).map(x => this.inverted ? 1 - x / colorsForValues.size : x / colorsForValues.size);
+        const scaledArray = indexArray.map(x => 1.0 - scaleValueInverse(x, this.scaling, this.alpha, this.gamma, this.bias, this.contrast, AppStore.Instance?.preferenceStore?.useSmoothedBiasContrast));
         let rbgString = (index: number): string => (
             `rgb(${colorsForValues.color[index * 4]}, ${colorsForValues.color[index * 4 + 1]}, ${colorsForValues.color[index * 4 + 2]}, ${colorsForValues.color[index * 4 + 3]})`
         );
@@ -136,19 +136,21 @@ export class RenderConfigStore {
         let colorscale = [];
         if (this.contrast === 0) {
             for (let i = 0; i < colorsForValues.size; i++) {
-                if (scaledAarray[i] === 0) {
+                if (scaledArray[i] === (this.inverted ? 1 : 0)) {
                     return [0, rbgString(i), 1, rbgString(i)];
                 }
             }
             return [0, rbgString(colorsForValues.size - 1), 1, rbgString(colorsForValues.size - 1)];
-        } else if (Math.min(...scaledAarray) === 1) {
+        } else if (Math.min(...scaledArray) === 1) {
             return [0, rbgString(colorsForValues.size - 1), 1, rbgString(colorsForValues.size - 1)];
-        } else if (Math.max(...scaledAarray) === 0) {
+        } else if (Math.max(...scaledArray) === 0) {
             return [0, rbgString(0), 1, rbgString(0)];
         } else {
             for (let i = 0; i < colorsForValues.size; i++) {
-                colorscale.push(scaledAarray[i], rbgString(i));
-                if (scaledAarray[i] === 0) {
+                if (scaledArray[i + 1] !== scaledArray[i]) {
+                    colorscale.push(scaledArray[i], rbgString(i));
+                }
+                if (scaledArray[i] === (this.inverted ? 1 : 0)) {
                     break;
                 }
             }
