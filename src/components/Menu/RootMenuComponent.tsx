@@ -127,12 +127,18 @@ export class RootMenuComponent extends React.Component {
                     disabled={appStore.appendFileDisabled}
                     onClick={() => appStore.fileBrowserStore.showFileBrowser(BrowserMode.File, true)}
                 />
-                <Menu.Item
-                    text="Save image"
-                    label={`${modString}S`}
-                    disabled={appStore.appendFileDisabled || appStore.backendService?.serverFeatureFlags === CARTA.ServerFeatureFlags.READ_ONLY}
-                    onClick={() => appStore.fileBrowserStore.showFileBrowser(BrowserMode.SaveFile, false)}
-                />
+                <Tooltip
+                    content={"not allowed in read-only mode"}
+                    disabled={appStore.appendFileDisabled || appStore.backendService?.serverFeatureFlags !== CARTA.ServerFeatureFlags.READ_ONLY}
+                    position={Position.LEFT}
+                >
+                    <Menu.Item
+                        text="Save image"
+                        label={`${modString}S`}
+                        disabled={appStore.appendFileDisabled || appStore.backendService?.serverFeatureFlags === CARTA.ServerFeatureFlags.READ_ONLY}
+                        onClick={() => appStore.fileBrowserStore.showFileBrowser(BrowserMode.SaveFile, false)}
+                    />
+                </Tooltip>
                 <Menu.Item
                     text="Close image"
                     label={`${modString}W`}
@@ -145,11 +151,17 @@ export class RootMenuComponent extends React.Component {
                     disabled={!appStore.activeFrame}
                     onClick={() => appStore.fileBrowserStore.showFileBrowser(BrowserMode.RegionImport, false)}
                 />
-                <Menu.Item
-                    text="Export regions"
-                    disabled={!appStore.activeFrame || !appStore.activeFrame.regionSet.regions || appStore.activeFrame.regionSet.regions.length <= 1 || appStore.backendService.serverFeatureFlags === CARTA.ServerFeatureFlags.READ_ONLY}
-                    onClick={() => appStore.fileBrowserStore.showFileBrowser(BrowserMode.RegionExport, false)}
-                />
+                <Tooltip
+                    content={"not allowed in read-only mode"}
+                    disabled={!appStore.activeFrame || !appStore.activeFrame.regionSet.regions || appStore.activeFrame.regionSet.regions.length <= 1 || appStore.backendService?.serverFeatureFlags !== CARTA.ServerFeatureFlags.READ_ONLY}
+                    position={Position.LEFT}
+                >
+                    <Menu.Item
+                        text="Export regions"
+                        disabled={!appStore.activeFrame || !appStore.activeFrame.regionSet.regions || appStore.activeFrame.regionSet.regions.length <= 1 || appStore.backendService.serverFeatureFlags === CARTA.ServerFeatureFlags.READ_ONLY}
+                        onClick={() => appStore.fileBrowserStore.showFileBrowser(BrowserMode.RegionExport, false)}
+                    />
+                </Tooltip>
                 <Menu.Divider/>
                 <Menu.Item
                     text="Import catalog"
