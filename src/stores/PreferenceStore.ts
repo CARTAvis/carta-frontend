@@ -28,6 +28,7 @@ export enum PreferenceKeys {
     RENDER_CONFIG_SCALING_GAMMA = "scalingGamma",
     RENDER_CONFIG_NAN_COLOR_HEX = "nanColorHex",
     RENDER_CONFIG_NAN_ALPHA = "nanAlpha",
+    RENDER_CONFIG_USE_SMOOTHED_BIAS_CONTRAST = "useSmoothedBiasContrast",
 
     CONTOUR_CONFIG_CONTOUR_GENERATOR_TYPE = "contourGeneratorType",
     CONTOUR_CONFIG_CONTOUR_SMOOTHING_MODE = "contourSmoothingMode",
@@ -97,6 +98,7 @@ const DEFAULTS = {
         scalingGamma: 1,
         nanColorHex: "#137CBD",
         nanAlpha: 1,
+        useSmoothedBiasContrast: true,
     },
     CONTOUR_CONFIG: {
         contourGeneratorType: ContourGeneratorType.StartStepMultiplier,
@@ -237,6 +239,10 @@ export class PreferenceStore {
 
     @computed get nanAlpha(): number {
         return this.preferences.get(PreferenceKeys.RENDER_CONFIG_NAN_ALPHA) ?? DEFAULTS.RENDER_CONFIG.nanAlpha;
+    }
+
+    @computed get useSmoothedBiasContrast(): boolean {
+        return this.preferences.get(PreferenceKeys.RENDER_CONFIG_USE_SMOOTHED_BIAS_CONTRAST) ?? DEFAULTS.RENDER_CONFIG.useSmoothedBiasContrast;
     }
 
     // getters for Contour Config
@@ -471,7 +477,7 @@ export class PreferenceStore {
         this.clearPreferences([
             PreferenceKeys.RENDER_CONFIG_COLORMAP, PreferenceKeys.RENDER_CONFIG_NAN_ALPHA, PreferenceKeys.RENDER_CONFIG_NAN_COLOR_HEX,
             PreferenceKeys.RENDER_CONFIG_PERCENTILE, PreferenceKeys.RENDER_CONFIG_SCALING, PreferenceKeys.RENDER_CONFIG_SCALING_ALPHA,
-            PreferenceKeys.RENDER_CONFIG_SCALING_GAMMA
+            PreferenceKeys.RENDER_CONFIG_SCALING_GAMMA, PreferenceKeys.RENDER_CONFIG_USE_SMOOTHED_BIAS_CONTRAST
         ]);
     };
 
@@ -571,7 +577,8 @@ export class PreferenceStore {
             ];
 
             const booleanKeys = [
-                PreferenceKeys.GLOBAL_AUTOLAUNCH, PreferenceKeys.GLOBAL_DRAG_PANNING, PreferenceKeys.GLOBAL_TRANSPARENT_IMAGE_BACKGROUND, PreferenceKeys.CONTOUR_CONFIG_CONTOUR_COLORMAP_ENABLED,
+                PreferenceKeys.GLOBAL_AUTOLAUNCH, PreferenceKeys.GLOBAL_DRAG_PANNING, PreferenceKeys.GLOBAL_TRANSPARENT_IMAGE_BACKGROUND,
+                PreferenceKeys.RENDER_CONFIG_USE_SMOOTHED_BIAS_CONTRAST, PreferenceKeys.CONTOUR_CONFIG_CONTOUR_COLORMAP_ENABLED,
                 PreferenceKeys.WCS_OVERLAY_AST_GRID_VISIBLE, PreferenceKeys.WCS_OVERLAY_AST_LABELS_VISIBLE, PreferenceKeys.WCS_OVERLAY_BEAM_VISIBLE,
                 PreferenceKeys.PERFORMANCE_STREAM_CONTOURS_WHILE_ZOOMING, PreferenceKeys.PERFORMANCE_LOW_BAND_WIDTH_MODE
             ];

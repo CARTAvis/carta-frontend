@@ -20,6 +20,7 @@ uniform int uNumCmaps;
 uniform int uCmapIndex;
 uniform int uScaleType;
 uniform int uInverted;
+uniform int uUseSmoothedBiasContrast;
 uniform float uMinVal;
 uniform float uMaxVal;
 uniform float uBias;
@@ -37,6 +38,11 @@ uniform float uTileTextureSize;
 // Some shader compilers have trouble with NaN checks, so we instead use a dummy value of -FLT_MAX
 bool isnan(float val) {
     return val <= -FLT_MAX;
+}
+
+float errorFunction(float x, float c, float x0) {
+    float y = exp(c * (x - x0));
+    return y / (y + 1.0);
 }
 
 void main(void) {
@@ -77,10 +83,28 @@ void main(void) {
         x = pow(x, uGamma);
     }
 
-    // bias mod
-    x = clamp(x - uBias, 0.0, 1.0);
-    // contrast mod
-    x = clamp((x - 0.5) * uContrast + 0.5, 0.0, 1.0);
+    if (uUseSmoothedBiasContrast > 0) {
+        if (uContrast <= 1.0) {
+            float smoothedBias = 0.5 - uBias / 2.0; // [-1, 1] map to [1, 0]
+            x = clamp((x - smoothedBias) * uContrast + smoothedBias, 0.0, 1.0);
+        } else {
+            float smoothedBias = uBias / 2.0 + 0.5; // [-1, 1] map to [0, 1]
+            float smoothedContrast = uContrast < 1.0 ? 0.0 : uContrast - 1.0; // [1, 2] map to [0, 1]
+            smoothedContrast = (smoothedContrast == 0.0) ? 0.001 : smoothedContrast * 12.0;
+            float offset = errorFunction(0.0, smoothedContrast, smoothedBias);
+            float denominator = errorFunction(1.0, smoothedContrast, smoothedBias) - offset;
+            if (denominator <= 0.0) {
+                denominator = 0.1;
+            }
+            x = (errorFunction(x, smoothedContrast, smoothedBias) - offset) / denominator;
+        }
+    } else {
+        // bias mod
+        x = clamp(x - uBias, 0.0, 1.0);
+        // contrast mod
+        x = clamp((x - 0.5) * uContrast + 0.5, 0.0, 1.0);
+    }
+    
     // invert mod
     if (uInverted > 0) {
         x = 1.0 - x;
