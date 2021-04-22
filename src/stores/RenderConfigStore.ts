@@ -2,6 +2,7 @@ import {action, computed, observable, makeObservable} from "mobx";
 import {FrameStore, PreferenceStore} from "stores";
 import {CARTA} from "carta-protobuf";
 import {clamp, getColorsForValues, getPercentiles, scaleValueInverse} from "utilities";
+import { AppStore } from "./AppStore";
 
 export enum FrameScaling {
     LINEAR = 0,
@@ -56,11 +57,15 @@ export class RenderConfigStore {
     static readonly GAMMA_MAX = 2;
     static readonly ALPHA_MIN = 0.1;
     static readonly ALPHA_MAX = 1000000;
+    static readonly BIAS_MIN = -1;
+    static readonly BIAS_MAX = 1;
+    static readonly CONTRAST_MIN = 0;
+    static readonly CONTRAST_MAX = 2;
 
     @observable scaling: FrameScaling;
     @observable colorMapIndex: number;
-    @observable contrast: number;
     @observable bias: number;
+    @observable contrast: number;
     @observable gamma: number;
     @observable alpha: number;
     @observable inverted: boolean;
@@ -123,15 +128,33 @@ export class RenderConfigStore {
     @computed get colorscaleArray() {
         const colorsForValues = getColorsForValues(this.colorMap);
         const indexArray = Array.from(Array(colorsForValues.size).keys()).map(x => this.inverted ? x / colorsForValues.size : 1 - x / colorsForValues.size);
-        const scaledAarray = indexArray.map(x => 1.0 - scaleValueInverse(1.0 - x, this.scaling, this.alpha, this.gamma));
+        const scaledAarray = indexArray.map(x => 1.0 - scaleValueInverse(1.0 - x, this.scaling, this.alpha, this.gamma, this.bias, this.contrast, AppStore.Instance?.preferenceStore?.useSmoothedBiasContrast));
+        let rbgString = (index: number): string => (
+            `rgb(${colorsForValues.color[index * 4]}, ${colorsForValues.color[index * 4 + 1]}, ${colorsForValues.color[index * 4 + 2]}, ${colorsForValues.color[index * 4 + 3]})`
+        );
 
         let colorscale = [];
-        for (let i = 0; i < colorsForValues.size; i++) {
-            colorscale.push(scaledAarray[i],
-                `rgb(${colorsForValues.color[i * 4]}, ${colorsForValues.color[i * 4 + 1]}, ${colorsForValues.color[i * 4 + 2]}, ${colorsForValues.color[i * 4 + 3]})`);
+        if (this.contrast === 0) {
+            for (let i = 0; i < colorsForValues.size; i++) {
+                if (scaledAarray[i] === 0) {
+                    return [0, rbgString(i), 1, rbgString(i)];
+                }
+            }
+            return [0, rbgString(colorsForValues.size - 1), 1, rbgString(colorsForValues.size - 1)];
+        } else if (Math.min(...scaledAarray) === 1) {
+            return [0, rbgString(colorsForValues.size - 1), 1, rbgString(colorsForValues.size - 1)];
+        } else if (Math.max(...scaledAarray) === 0) {
+            return [0, rbgString(0), 1, rbgString(0)];
+        } else {
+            for (let i = 0; i < colorsForValues.size; i++) {
+                colorscale.push(scaledAarray[i], rbgString(i));
+                if (scaledAarray[i] === 0) {
+                    break;
+                }
+            }
+            return colorscale;
         }
-        return colorscale
-    };
+    }
 
     @computed get scalingName() {
         const scalingType = RenderConfigStore.SCALING_TYPES.get(this.scaling);
@@ -277,6 +300,22 @@ export class RenderConfigStore {
         this.updateSiblings();
     };
 
+    @action setBias = (bias: number) => {
+        this.bias = bias;
+    };
+
+    @action resetBias = () => {
+        this.bias = 0;
+    };
+
+    @action setContrast = (contrast: number) => {
+        this.contrast = contrast;
+    };
+
+    @action resetContrast = () => {
+        this.contrast = 1;
+    };
+
     @action setInverted = (inverted: boolean) => {
         this.inverted = inverted;
     };
@@ -300,6 +339,8 @@ export class RenderConfigStore {
         this.scaling = other.scaling;
         this.alpha = other.alpha;
         this.gamma = other.gamma;
+        this.bias = other.bias;
+        this.contrast = other.contrast;
         this.scaleMin[this.stokes] = other.scaleMinVal;
         this.scaleMax[this.stokes] = other.scaleMaxVal;
         this.selectedPercentile[this.stokes] = -1;
