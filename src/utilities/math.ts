@@ -140,7 +140,11 @@ export function scaleValueInverse(x: number, scaling: FrameScaling, alpha: numbe
     if (useSmoothedBiasContrast) {
         if (contrast <= 1) {
             const smoothedBias = 0.5 - bias / 2; // [-1, 1] map to [1, 0]
-            scaleValue = clamp((x - smoothedBias) / contrast + smoothedBias, 0, 1);
+            if (x === 0 && smoothedBias === 0 && contrast === 0) {
+                scaleValue = 1;
+            } else {
+                scaleValue = clamp((x - smoothedBias) / contrast + smoothedBias, 0, 1);
+            }
         } else {
             const smoothedValue = getSmoothedValue(bias, contrast);
             scaleValue = clamp(errorFunctionInverse(x * smoothedValue.denominator + smoothedValue.offset, smoothedValue.contrast, smoothedValue.bias), 0, 1);
