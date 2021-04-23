@@ -1211,6 +1211,7 @@ export class AppStore {
                         if (!this.layoutStore.applyLayout(this.preferenceStore.layout)) {
                             AlertStore.Instance.showAlert(`Applying preference layout "${this.preferenceStore.layout}" failed!`);
                             this.layoutStore.applyLayout(PresetLayout.DEFAULT);
+                            this.preferenceStore.setPreference(PreferenceKeys.GLOBAL_LAYOUT, PresetLayout.DEFAULT);
                         }
                         this.cursorFrozen = this.preferenceStore.isCursorFrozen;
                         this.connectToServer();
