@@ -190,7 +190,10 @@ export class LayoutConfig {
         LayoutConfig.GenSimpleConfigToSave(appStore, configToSave.docked.content, rootConfig.content);
 
         // 2. handle floating widgets
-        appStore.widgetsStore.floatingWidgets.forEach((config: WidgetConfig) => {
+        appStore.widgetsStore.floatingWidgets?.forEach((config: WidgetConfig) => {
+            if (config?.type === "floating-settings") { // skip floating settings panel
+                return;
+            }
             let floatingConfig = {
                 type: "component",
                 id: config.type,
