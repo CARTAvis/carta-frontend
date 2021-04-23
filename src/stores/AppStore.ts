@@ -1201,7 +1201,6 @@ export class AppStore {
             this.apiService.setToken(authTokenParam);
         }
 
-        // Splash screen mask
         autorun(() => {
             if (this.astReady && this.zfpReady && this.cartaComputeReady && this.apiService.authenticated) {
                 this.preferenceStore.fetchPreferences().then(() => {
