@@ -441,10 +441,6 @@ export class AppStore {
     @action appendConcatFile = (stokesFiles: CARTA.IStokesFile[], directory: string, hdu: string) => {
         // Stop animations playing before loading a new frame
         this.animatorStore.stopAnimation();
-        // hide all catalog data
-        if (this.catalogNum) {
-            CatalogStore.Instance.resetDisplayedData([]);
-        }
         return this.loadConcatStokes(stokesFiles, directory, hdu);
     };
 
@@ -456,10 +452,6 @@ export class AppStore {
     @action appendFile = (directory: string, file: string, hdu: string) => {
         // Stop animations playing before loading a new frame
         this.animatorStore.stopAnimation();
-        // hide all catalog data
-        if (this.catalogNum) {
-            CatalogStore.Instance.resetDisplayedData([]);
-        }
         return this.loadFile(directory, file, hdu);
     };
 
@@ -729,7 +721,7 @@ export class AppStore {
                 return;
             }
             // update associated image
-            const fileIds = catalogStore.activeCatalogFiles;
+            const fileIds = catalogStore.imageAssociatedCatalogId.get(this.activeFrame.frameInfo.fileId);
             const activeImageId = AppStore.Instance.activeFrame.frameInfo.fileId;
             let associatedCatalogId = [];
             if (fileIds) {
@@ -1385,9 +1377,10 @@ export class AppStore {
                 const catalogWidgetStore = this.widgetsStore.catalogWidgets.get(catalogWidgetStoreId);
                 const xColumn = catalogWidgetStore.xAxis;
                 const yColumn = catalogWidgetStore.yAxis;
-                if (xColumn && yColumn) {
+                const frame = this.getFrame(this.catalogStore.getFramIdByCatalogId(catalogFileId));
+                if (xColumn && yColumn && frame) {
                     const coords = catalogProfileStore.get2DPlotData(xColumn, yColumn, catalogData);
-                    const wcs = this.activeFrame.validWcs ? this.activeFrame.wcsInfo : 0;
+                    const wcs = frame.validWcs ? frame.wcsInfo : 0;
                     this.catalogStore.updateCatalogData(
                         catalogFileId, 
                         coords.wcsX, 

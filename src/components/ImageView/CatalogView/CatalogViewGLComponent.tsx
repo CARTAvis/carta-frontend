@@ -1,14 +1,14 @@
 import {observer} from "mobx-react";
 import * as React from "react";
 import tinycolor from "tinycolor2";
-import {AppStore, CatalogStore, FrameStore, RenderConfigStore, WidgetsStore} from "stores";
+import {AppStore, CatalogStore, RenderConfigStore, WidgetsStore} from "stores";
 import {CatalogTextureType, CatalogWebGLService} from "services";
 import {canvasToTransformedImagePos} from "components/ImageView/RegionView/shared";
 import {CursorInfo} from "models";
-import {closestCatalogIndexToCursor} from "utilities";
 import {ImageViewLayer} from "../ImageViewComponent";
 import "./CatalogViewGLComponent.scss";
 import {CatalogOverlayShape} from "stores/widgets";
+import {closestCatalogIndexToCursor, subtract2D, scale2D, rotate2D} from "utilities";
 
 export interface CatalogViewGLComponentProps {
     docked: boolean;
@@ -43,12 +43,12 @@ export class CatalogViewGLComponent extends React.Component<CatalogViewGLCompone
         }
 
         const catalogStore = appStore.catalogStore;
+        const catalogFileIds = catalogStore.activeCatalogFiles; 
         catalogStore.catalogGLData.forEach((catalog, fileId) => {
             const catalogWidgetStore = catalogStore.getCatalogWidgetStore(fileId);
             const numVertices = catalog.dataPoints.length;
             const numSelectedVertices = catalogStore.catalogProfileStores.get(fileId)?.selectedPointIndices.length;
             const showSelectedData = catalogWidgetStore.showSelectedData;
-            const displayed = catalog.displayed;
             const color = catalogWidgetStore.catalogColor;
             const selectedColor = catalogWidgetStore.highlightColor;
             const pointSize = catalogWidgetStore.catalogSize;
@@ -137,12 +137,9 @@ export class CatalogViewGLComponent extends React.Component<CatalogViewGLCompone
     }
 
     private updateCanvas = () => {
-        const appStore = AppStore.Instance;
-        const baseFrame = appStore.activeFrame;
-
-        if (baseFrame && this.canvas && this.gl && this.catalogWebGLService.shaderUniforms) {
+        if (this.canvas && this.gl && this.catalogWebGLService.shaderUniforms) {
             this.resizeAndClearCanvas();
-            this.renderCatalog(baseFrame);
+            this.renderCatalog();
             // draw in 2d canvas
             const ctx = this.canvas.getContext("2d");
             ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
@@ -150,7 +147,8 @@ export class CatalogViewGLComponent extends React.Component<CatalogViewGLCompone
         }
     };
 
-    private renderCatalog(baseFrame: FrameStore) {
+    private renderCatalog() {
+        const appStore = AppStore.Instance;
         const catalogStore = CatalogStore.Instance;
         const GL2 = WebGL2RenderingContext;
         // For alpha blending (soft lines)
@@ -160,89 +158,129 @@ export class CatalogViewGLComponent extends React.Component<CatalogViewGLCompone
         this.gl.enable(GL2.DEPTH_TEST);
         this.gl.depthFunc(GL2.LEQUAL);
         this.gl.clear(GL2.COLOR_BUFFER_BIT | GL2.DEPTH_BUFFER_BIT);
-        const frameView = baseFrame.requiredFrameView;
         const shaderUniforms = this.catalogWebGLService.shaderUniforms;
-        this.gl.uniform2f(shaderUniforms.FrameViewMin, frameView.xMin, frameView.yMin);
-        this.gl.uniform2f(shaderUniforms.FrameViewMax, frameView.xMax, frameView.yMax);
+        let rangeScale = {x: 1.0, y: 1.0};
+        let rangeOffset = {x: 0.0, y: 0.0};
+        let rotationAngle = 0.0;
+        let scaleAdjustment = 1.0;
+
+        catalogStore.activeCatalogFiles.forEach(fileId => {
+            const frame = appStore.getFrame(catalogStore.getFramIdByCatalogId(fileId));
+            const catalog = catalogStore.catalogGLData.get(fileId);
+            if(catalog) {
+                const catalogWidgetStore = catalogStore.getCatalogWidgetStore(fileId);
+                const shape = catalogWidgetStore.shapeSettings;
+                const featherWidth = shape.featherWidth * devicePixelRatio;
+                const lineThickness = catalogWidgetStore.thickness * devicePixelRatio;
+                let dataPoints = catalog.dataPoints;
+                let color = tinycolor(catalogWidgetStore.catalogColor).toRgb();
+                let selectedSourceColor = tinycolor(catalogWidgetStore.highlightColor).toRgb();
+                let pointSize = catalogWidgetStore.catalogSize + shape.minSize;
+                this.gl.uniform1f(shaderUniforms.LineThickness, lineThickness);
+                this.gl.uniform1i(shaderUniforms.ShowSelectedSource, catalogWidgetStore.showSelectedData? 1.0 : 0.0);
+                //FrameView
+                if (frame.spatialReference) {
+                    const baseRequiredView = frame.spatialReference.requiredFrameView;
+                    const originAdjustedOffset = subtract2D(frame.spatialTransform.origin, scale2D(rotate2D(frame.spatialTransform.origin, frame.spatialTransform.rotation), frame.spatialTransform.scale));
+
+                    rangeScale = {
+                        x: 1.0 / (baseRequiredView.xMax - baseRequiredView.xMin),
+                        y: 1.0 / (baseRequiredView.yMax - baseRequiredView.yMin),
+                    };
+
+                    rangeOffset = {
+                        x: (frame.spatialTransform.translation.x - baseRequiredView.xMin + originAdjustedOffset.x) * rangeScale.x,
+                        y: (frame.spatialTransform.translation.y - baseRequiredView.yMin + originAdjustedOffset.y) * rangeScale.y
+                    };
+                    rotationAngle = -frame.spatialTransform.rotation;
+                    scaleAdjustment = frame.spatialTransform.scale;
+                } else {
+                    let baseRequiredView = frame.requiredFrameView;
+                    rangeScale = {
+                        x: 1.0 / (baseRequiredView.xMax - baseRequiredView.xMin),
+                        y: 1.0 / (baseRequiredView.yMax - baseRequiredView.yMin),
+                    };
         
-        catalogStore.catalogGLData.forEach((catalog, fileId) => {
-            const catalogWidgetStore = catalogStore.getCatalogWidgetStore(fileId);
-            const shape = catalogWidgetStore.shapeSettings;
-            const featherWidth = shape.featherWidth * devicePixelRatio;
-            const lineThickness = catalogWidgetStore.thickness * devicePixelRatio;
-            let dataPoints = catalog.dataPoints;
-            let color = tinycolor(catalogWidgetStore.catalogColor).toRgb();
-            let selectedSourceColor = tinycolor(catalogWidgetStore.highlightColor).toRgb();
-            let pointSize = catalogWidgetStore.catalogSize + shape.minSize;
-            this.gl.uniform1f(shaderUniforms.LineThickness, lineThickness);
-            this.gl.uniform1i(shaderUniforms.ShowSelectedSource, catalogWidgetStore.showSelectedData? 1.0 : 0.0);
-            // size
-            this.gl.uniform1i(shaderUniforms.SmapEnabled, 0);
-            this.gl.uniform1i(shaderUniforms.AreaMode, catalogWidgetStore.sizeArea? 1 : 0);
-            const sizeTexture = this.catalogWebGLService.getDataTexture(fileId, CatalogTextureType.Size);
-            if (!catalogWidgetStore.disableSizeMap && sizeTexture) {
-                this.gl.uniform1i(shaderUniforms.SmapEnabled, 1);
-                this.gl.activeTexture(GL2.TEXTURE2);
-                this.gl.bindTexture(GL2.TEXTURE_2D, sizeTexture);
-                this.gl.uniform1i(shaderUniforms.SizeTexture, 2);
-            }
+                    rangeOffset = {
+                        x: -baseRequiredView.xMin * rangeScale.x,
+                        y: -baseRequiredView.yMin * rangeScale.y
+                    };
+                    rotationAngle = 0.0;
+                    scaleAdjustment = 1.0;
+                }
+                this.gl.uniform2f(shaderUniforms.RangeOffset, rangeOffset.x, rangeOffset.y);
+                this.gl.uniform2f(shaderUniforms.RangeScale, rangeScale.x, rangeScale.y);
+                this.gl.uniform1f(shaderUniforms.ScaleAdjustment, scaleAdjustment);
+                this.gl.uniform1f(shaderUniforms.RotationAngle, rotationAngle);
 
-            // color
-            this.gl.uniform1i(shaderUniforms.CmapEnabled, 0);
-            const colorTexture = this.catalogWebGLService.getDataTexture(fileId, CatalogTextureType.Color);
-            if (!catalogWidgetStore.disableColorMap && colorTexture){
-                this.gl.uniform1i(shaderUniforms.CmapEnabled, 1);
-                this.gl.uniform1i(shaderUniforms.CmapIndex, RenderConfigStore.COLOR_MAPS_ALL.indexOf(catalogWidgetStore.colorMap));
-                this.gl.activeTexture(GL2.TEXTURE3);
-                this.gl.bindTexture(GL2.TEXTURE_2D, colorTexture);
-                this.gl.uniform1i(shaderUniforms.ColorTexture, 3);
-            }
+                // size
+                this.gl.uniform1i(shaderUniforms.SmapEnabled, 0);
+                this.gl.uniform1i(shaderUniforms.AreaMode, catalogWidgetStore.sizeArea? 1 : 0);
+                const sizeTexture = this.catalogWebGLService.getDataTexture(fileId, CatalogTextureType.Size);
+                if (!catalogWidgetStore.disableSizeMap && sizeTexture) {
+                    this.gl.uniform1i(shaderUniforms.SmapEnabled, 1);
+                    this.gl.activeTexture(GL2.TEXTURE2);
+                    this.gl.bindTexture(GL2.TEXTURE_2D, sizeTexture);
+                    this.gl.uniform1i(shaderUniforms.SizeTexture, 2);
+                }
 
-            this.gl.uniform1f(shaderUniforms.FeatherWidth, featherWidth);
+                // color
+                this.gl.uniform1i(shaderUniforms.CmapEnabled, 0);
+                const colorTexture = this.catalogWebGLService.getDataTexture(fileId, CatalogTextureType.Color);
+                if (!catalogWidgetStore.disableColorMap && colorTexture){
+                    this.gl.uniform1i(shaderUniforms.CmapEnabled, 1);
+                    this.gl.uniform1i(shaderUniforms.CmapIndex, RenderConfigStore.COLOR_MAPS_ALL.indexOf(catalogWidgetStore.colorMap));
+                    this.gl.activeTexture(GL2.TEXTURE3);
+                    this.gl.bindTexture(GL2.TEXTURE_2D, colorTexture);
+                    this.gl.uniform1i(shaderUniforms.ColorTexture, 3);
+                }
 
-            // orientation
-            this.gl.uniform1i(shaderUniforms.OmapEnabled, 0);
-            const orientationTexture = this.catalogWebGLService.getDataTexture(fileId, CatalogTextureType.Orientation);
-            if (!catalogWidgetStore.disableOrientationMap && orientationTexture) {
-                this.gl.uniform1i(shaderUniforms.OmapEnabled, 1);
-                this.gl.activeTexture(GL2.TEXTURE4);
-                this.gl.bindTexture(GL2.TEXTURE_2D, orientationTexture);
-                this.gl.uniform1i(shaderUniforms.OrientationTexture, 4);
-            }
+                this.gl.uniform1f(shaderUniforms.FeatherWidth, featherWidth);
 
-            // selected source
-            const selectedSource = this.catalogWebGLService.getDataTexture(fileId, CatalogTextureType.SelectedSource);
-            if (selectedSource) {
-                this.gl.activeTexture(GL2.TEXTURE5);
-                this.gl.bindTexture(GL2.TEXTURE_2D, selectedSource);
-                this.gl.uniform1i(shaderUniforms.SelectedSourceTexture, 5);   
-            }
+                // orientation
+                this.gl.uniform1i(shaderUniforms.OmapEnabled, 0);
+                const orientationTexture = this.catalogWebGLService.getDataTexture(fileId, CatalogTextureType.Orientation);
+                if (!catalogWidgetStore.disableOrientationMap && orientationTexture) {
+                    this.gl.uniform1i(shaderUniforms.OmapEnabled, 1);
+                    this.gl.activeTexture(GL2.TEXTURE4);
+                    this.gl.bindTexture(GL2.TEXTURE_2D, orientationTexture);
+                    this.gl.uniform1i(shaderUniforms.OrientationTexture, 4);
+                }
 
-            // size minor
-            this.gl.uniform1i(shaderUniforms.SminorMapEnabled, 0);
-            this.gl.uniform1i(shaderUniforms.AreaModeMinor, catalogWidgetStore.sizeMinorArea? 1 : 0);
-            const sizeMinorTexture = this.catalogWebGLService.getDataTexture(fileId, CatalogTextureType.SizeMinor);
-            if (!catalogWidgetStore.disableSizeMinorMap && sizeMinorTexture && catalogWidgetStore.catalogShape === CatalogOverlayShape.EllipseLined) {
-                this.gl.uniform1i(shaderUniforms.SminorMapEnabled, 1);
-                this.gl.activeTexture(GL2.TEXTURE6);
-                this.gl.bindTexture(GL2.TEXTURE_2D, sizeMinorTexture);
-                this.gl.uniform1i(shaderUniforms.SizeMinorTexture, 6);
-            }
+                // selected source
+                const selectedSource = this.catalogWebGLService.getDataTexture(fileId, CatalogTextureType.SelectedSource);
+                if (selectedSource) {
+                    this.gl.activeTexture(GL2.TEXTURE5);
+                    this.gl.bindTexture(GL2.TEXTURE_2D, selectedSource);
+                    this.gl.uniform1i(shaderUniforms.SelectedSourceTexture, 5);   
+                }
 
-            // position 
-            const positionTexture = this.catalogWebGLService.getDataTexture(fileId, CatalogTextureType.Position);
-            if (catalog.displayed && dataPoints?.length && positionTexture) {
-                this.gl.uniform3f(shaderUniforms.PointColor, color.r / 255.0, color.g / 255.0, color.b / 255.0);
-                this.gl.uniform3f(shaderUniforms.SelectedSourceColor, selectedSourceColor.r / 255.0, selectedSourceColor.g / 255.0, selectedSourceColor.b / 255.0);
-                this.gl.uniform1i(shaderUniforms.ShapeType, catalogWidgetStore.catalogShape);
-                this.gl.uniform1f(shaderUniforms.PointSize, pointSize * devicePixelRatio);
-                
-                this.gl.activeTexture(GL2.TEXTURE1);
-                this.gl.bindTexture(GL2.TEXTURE_2D, positionTexture);
-                this.gl.uniform1i(shaderUniforms.PositionTexture, 1);
+                // size minor
+                this.gl.uniform1i(shaderUniforms.SminorMapEnabled, 0);
+                this.gl.uniform1i(shaderUniforms.AreaModeMinor, catalogWidgetStore.sizeMinorArea? 1 : 0);
+                const sizeMinorTexture = this.catalogWebGLService.getDataTexture(fileId, CatalogTextureType.SizeMinor);
+                if (!catalogWidgetStore.disableSizeMinorMap && sizeMinorTexture && catalogWidgetStore.catalogShape === CatalogOverlayShape.EllipseLined) {
+                    this.gl.uniform1i(shaderUniforms.SminorMapEnabled, 1);
+                    this.gl.activeTexture(GL2.TEXTURE6);
+                    this.gl.bindTexture(GL2.TEXTURE_2D, sizeMinorTexture);
+                    this.gl.uniform1i(shaderUniforms.SizeMinorTexture, 6);
+                }
 
-                this.gl.drawArrays(GL2.POINTS, 0, dataPoints.length / 2);
-                this.gl.finish();
+                // position 
+                const positionTexture = this.catalogWebGLService.getDataTexture(fileId, CatalogTextureType.Position);
+                if (dataPoints?.length && positionTexture) {
+                    this.gl.uniform3f(shaderUniforms.PointColor, color.r / 255.0, color.g / 255.0, color.b / 255.0);
+                    this.gl.uniform3f(shaderUniforms.SelectedSourceColor, selectedSourceColor.r / 255.0, selectedSourceColor.g / 255.0, selectedSourceColor.b / 255.0);
+                    this.gl.uniform1i(shaderUniforms.ShapeType, catalogWidgetStore.catalogShape);
+                    this.gl.uniform1f(shaderUniforms.PointSize, pointSize * devicePixelRatio);
+                    
+                    this.gl.activeTexture(GL2.TEXTURE1);
+                    this.gl.bindTexture(GL2.TEXTURE_2D, positionTexture);
+                    this.gl.uniform1i(shaderUniforms.PositionTexture, 1);
+
+                    this.gl.drawArrays(GL2.POINTS, 0, dataPoints.length / 2);
+                    this.gl.finish();
+                }
             }
         });
     }
@@ -263,11 +301,11 @@ export class CatalogViewGLComponent extends React.Component<CatalogViewGLCompone
     private onClick = (event) => {
         const clickEvent = event.nativeEvent;
         const catalogStore = CatalogStore.Instance;
-        const frame = AppStore.Instance.activeFrame;
-        const cursorPosImageSpace = canvasToTransformedImagePos(clickEvent.offsetX, clickEvent.offsetY, frame, frame.renderWidth, frame.renderHeight);
 
         let selectedPoint = {fileId: undefined, minIndex: undefined, minDistanceSquared: Number.MAX_VALUE};
         catalogStore.catalogGLData.forEach((catalog, fileId) => {
+            const frame = AppStore.Instance.getFrame(catalogStore.getFramIdByCatalogId(fileId));
+            let cursorPosImageSpace = canvasToTransformedImagePos(clickEvent.offsetX, clickEvent.offsetY, frame, frame.renderWidth, frame.renderHeight);
             let dataPoints = catalog.dataPoints;
             const closestPoint = closestCatalogIndexToCursor(cursorPosImageSpace, dataPoints, dataPoints.length / 2);
             if (closestPoint.minDistanceSquared < selectedPoint.minDistanceSquared) {
@@ -275,7 +313,7 @@ export class CatalogViewGLComponent extends React.Component<CatalogViewGLCompone
                 selectedPoint.minDistanceSquared = closestPoint.minDistanceSquared;
                 selectedPoint.fileId = fileId;
             }
-        }); 
+        });
         
         if (selectedPoint.fileId !== undefined && selectedPoint.minIndex !== undefined) {
             const catalogProfileStore = catalogStore.catalogProfileStores.get(selectedPoint.fileId);
