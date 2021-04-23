@@ -1391,12 +1391,9 @@ export class FrameStore {
         }
     }
 
-    @action setCenter(x: number, y: number, enableSpatialTransform: boolean = true) {
+    @action setCenter(x: number, y: number) {
         if (this.spatialReference) {
-            let centerPointRefImage = {x, y};
-            if (enableSpatialTransform) {
-                centerPointRefImage = this.spatialTransform.transformCoordinate({x, y}, true);   
-            }
+            const centerPointRefImage = this.spatialTransform.transformCoordinate({x, y}, true);
             this.spatialReference.setCenter(centerPointRefImage.x, centerPointRefImage.y);
         } else {
             this.center = {x, y};

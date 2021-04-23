@@ -41,6 +41,8 @@ uniform sampler2D uOrientationTexture;
 uniform sampler2D uSelectedSourceTexture;
 uniform sampler2D uSizeMinorTexture;
 
+uniform vec2 uFrameViewMin;
+uniform vec2 uFrameViewMax;
 uniform float uFeatherWidth;
 uniform bool uSmapEnabled;
 uniform float uPointSize;
@@ -51,10 +53,6 @@ uniform bool uSminorMapEnabled;
 uniform bool uAreaModeMinor;
 uniform bool uCmapEnabled;
 uniform bool uOmapEnabled;
-uniform float uRotationAngle;
-uniform vec2 uRangeOffset;
-uniform vec2 uRangeScale;
-uniform float uScaleAdjustment;
 
 out float v_colour;
 out float v_pointSize;
@@ -71,7 +69,7 @@ vec4 getValueByIndexFromTexture(sampler2D texture, int index) {
 }
 
 vec2 imageToGL(vec2 imageVec) {
-    return 2.0 * imageVec - 1.0;
+    return 2.0 * (imageVec - uFrameViewMin) / (uFrameViewMax - uFrameViewMin) - 1.0;
 }
 
 vec3 hsv2rgb(vec3 c)
@@ -122,18 +120,10 @@ bool isNaN(float val) {
     return val != val;
 }
 
-vec2 rotate2D(vec2 vector, float theta) {
-    float sinTheta = sin(theta);
-    float cosTheta = cos(theta);
-    return mat2(cosTheta, -sinTheta, sinTheta, cosTheta) * vector * uScaleAdjustment;
-}
-
 void main() {
     vec4 data = getValueByIndexFromTexture(uPositionTexture, gl_VertexID);
     vec4 selectedSource = getValueByIndexFromTexture(uSelectedSourceTexture, gl_VertexID);
-    // Scale and rotate
-    vec2 pos = rotate2D(data.xy, uRotationAngle) * uRangeScale + uRangeOffset;
-
+    vec2 pos = data.xy;
     gl_Position = vec4(imageToGL(pos), 0.5, 1);
 
     v_colour = -1.0;

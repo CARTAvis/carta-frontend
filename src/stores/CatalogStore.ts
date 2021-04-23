@@ -5,7 +5,8 @@ import {CatalogWebGLService, CatalogTextureType} from "services";
 import {CatalogWidgetStore} from "stores/widgets";
 
 type CatalogOverlayCoords = {
-    dataPoints: Float32Array
+    dataPoints: Float32Array,
+    displayed: boolean;
 };
 
 export class CatalogStore {
@@ -46,7 +47,8 @@ export class CatalogStore {
 
     @action addCatalog(fileId: number) {
         this.catalogGLData.set(fileId, {
-            dataPoints:new Float32Array(0)
+            dataPoints:new Float32Array(0),
+            displayed: true
         });
     }
 
@@ -92,6 +94,7 @@ export class CatalogStore {
     @action removeCatalog(fileId: number) {
         this.catalogGLData.delete(fileId);
         CatalogWebGLService.Instance.clearTexture(fileId);
+        console.log(CatalogWebGLService.Instance)
     }
 
     @action updateImageAssociatedCatalogId(activeFrameIndex: number, associatedCatalogFiles: number[]) {
@@ -106,6 +109,7 @@ export class CatalogStore {
                 this.catalogProfiles.set(componentId, activeCatalogFileIds[0]);
             });  
         }
+        this.resetDisplayedData(activeCatalogFileIds);
     }
 
     // update associated catalogProfile fileId
@@ -127,6 +131,22 @@ export class CatalogStore {
             }
         });
         return imagefileId;
+    }
+
+    @action resetDisplayedData(associatedCatalogFileId: Array<number>) {
+        if (associatedCatalogFileId.length) {
+            this.catalogGLData.forEach((catalog, fileId) => {
+                let displayed = true;
+                if (!associatedCatalogFileId.includes(fileId)) {
+                    displayed = false;
+                }
+                catalog.displayed = displayed;
+            });
+        } else {
+            this.catalogGLData.forEach((catalog) => {
+                catalog.displayed = false;
+            });
+        }
     }
 
     @action setCatalogPlots(componentId: string, fileId: number, widgetId: string) {
@@ -183,35 +203,10 @@ export class CatalogStore {
         const activeFrame = AppStore.Instance.activeFrame;
         if (activeFrame) {
             const imageId = activeFrame.frameInfo.fileId;
-            let associatedCatalogIds = [...this.imageAssociatedCatalogId.get(imageId)];
-            const spatialMatchedImageId = activeFrame?.spatialReference?.frameInfo?.fileId;
-            if (spatialMatchedImageId >= 0) {
-                const spatialReferencedCatalogs = this.imageAssociatedCatalogId.get(spatialMatchedImageId);
-                associatedCatalogIds = [...new Set([].concat(...[associatedCatalogIds, spatialReferencedCatalogs]))].filter(catalogFileId => {
-                    return this.catalogGLData.get(catalogFileId) !== undefined;
-                });
-            }
-
-            activeFrame.secondarySpatialImages?.forEach(frame => {
-                const secondarySpatialReferencedCatalogs = this.imageAssociatedCatalogId.get(frame.frameInfo.fileId);
-                associatedCatalogIds = [...new Set([].concat(...[associatedCatalogIds, secondarySpatialReferencedCatalogs]))].filter(catalogFileId => {
-                    return this.catalogGLData.get(catalogFileId) !== undefined;
-                });;
-            });
-            return associatedCatalogIds.sort((a, b) => a - b);
+            return this.imageAssociatedCatalogId.get(imageId);
         } else {
             return [];
         }
-    }
-
-    getFramIdByCatalogId(catalogId: number): number {
-        let frameId = -1;
-        this.imageAssociatedCatalogId.forEach((catalogIds, imageId) => {
-            if (catalogIds.includes(catalogId)) {
-                frameId = imageId;
-            }
-        });
-        return frameId;
     }
 
     getAssociatedIdByWidgetId(catalogPlotWidgetId: string): {catalogPlotComponentId: string, catalogFileId: number} {

@@ -27,12 +27,7 @@ enum HeaderTableColumnName {
 @observer
 export class CatalogOverlayComponent extends React.Component<WidgetProps> {
     @computed get catalogFileId() {
-        const catalogId = CatalogStore.Instance.catalogProfiles?.get(this.props.id);
-        const catalogFileIds = CatalogStore.Instance.activeCatalogFiles;
-        if (!catalogFileIds.includes(catalogId) && catalogFileIds.length) {
-            return catalogFileIds[0];
-        }
-        return catalogId;
+        return CatalogStore.Instance.catalogProfiles?.get(this.props.id);
     }
 
     @observable catalogTableRef: Table = undefined;
@@ -565,16 +560,16 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
     private handlePlotClick = () => {
         const profileStore = this.profileStore;
         const appStore = AppStore.Instance;
+        const frame = appStore.activeFrame;
         const catalogStore = CatalogStore.Instance;
         const catalogWidgetStore = this.widgetStore;
         // init plot data   
         switch (catalogWidgetStore.catalogPlotType) {
             case CatalogPlotType.ImageOverlay:
                 profileStore.setUpdateMode(CatalogUpdateMode.ViewUpdate);
-                const frame = appStore.getFrame(catalogStore.getFramIdByCatalogId(this.catalogFileId));
                 if (frame) {
                     const imageCoords = profileStore.get2DPlotData(catalogWidgetStore.xAxis, catalogWidgetStore.yAxis, profileStore.catalogData);
-                    let wcs = frame.validWcs ? frame.wcsInfo : 0;
+                    const wcs = frame.validWcs ? frame.wcsInfo : 0;
                     const catalogFileId = this.catalogFileId;
                     catalogStore.clearImageCoordsData(catalogFileId);
                     catalogStore.updateCatalogData(
