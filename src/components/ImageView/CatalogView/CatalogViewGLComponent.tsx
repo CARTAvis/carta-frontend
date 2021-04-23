@@ -300,11 +300,11 @@ export class CatalogViewGLComponent extends React.Component<CatalogViewGLCompone
     private onClick = (event) => {
         const clickEvent = event.nativeEvent;
         const catalogStore = CatalogStore.Instance;
-        const frame = AppStore.Instance.activeFrame;
-        const cursorPosImageSpace = canvasToTransformedImagePos(clickEvent.offsetX, clickEvent.offsetY, frame, frame.renderWidth, frame.renderHeight);
 
         let selectedPoint = {fileId: undefined, minIndex: undefined, minDistanceSquared: Number.MAX_VALUE};
         catalogStore.catalogGLData.forEach((catalog, fileId) => {
+            const frame = AppStore.Instance.getFrame(catalogStore.getFramIdByCatalogId(fileId));
+            let cursorPosImageSpace = canvasToTransformedImagePos(clickEvent.offsetX, clickEvent.offsetY, frame, frame.renderWidth, frame.renderHeight);
             let dataPoints = catalog.dataPoints;
             const closestPoint = closestCatalogIndexToCursor(cursorPosImageSpace, dataPoints, dataPoints.length / 2);
             if (closestPoint.minDistanceSquared < selectedPoint.minDistanceSquared) {
@@ -312,7 +312,7 @@ export class CatalogViewGLComponent extends React.Component<CatalogViewGLCompone
                 selectedPoint.minDistanceSquared = closestPoint.minDistanceSquared;
                 selectedPoint.fileId = fileId;
             }
-        }); 
+        });
         
         if (selectedPoint.fileId !== undefined && selectedPoint.minIndex !== undefined) {
             const catalogProfileStore = catalogStore.catalogProfileStores.get(selectedPoint.fileId);
