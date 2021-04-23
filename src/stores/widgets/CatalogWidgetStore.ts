@@ -306,9 +306,11 @@ export class CatalogWidgetStore {
     }
 
     @action setOrientationMapColumn(coloum: string) {
-        this.orientationMapColumn = coloum;
-        this.orientationMin = {default: undefined, clipd: undefined};
-        this.orientationMax = {default: undefined, clipd: undefined};
+        if (this.orientationMapColumn !== coloum) {
+            this.orientationMapColumn = coloum;
+            this.orientationMin = {default: undefined, clipd: undefined};
+            this.orientationMax = {default: undefined, clipd: undefined};   
+        }
     }
 
     @action setOrientationScalingType(type: FrameScaling) {
@@ -346,9 +348,11 @@ export class CatalogWidgetStore {
     }
 
     @action setColorMapColumn(coloum: string) {
-        this.colorMapColumn = coloum;
-        this.colorColumnMin = {default: undefined, clipd: undefined};
-        this.colorColumnMax = {default: undefined, clipd: undefined};
+        if (this.colorMapColumn !== coloum) {
+            this.colorMapColumn = coloum;
+            this.colorColumnMin = {default: undefined, clipd: undefined};
+            this.colorColumnMax = {default: undefined, clipd: undefined};   
+        }
     }
 
     @action setColorScalingType(type: FrameScaling) {
@@ -418,11 +422,13 @@ export class CatalogWidgetStore {
     }
 
     @action setSizeMap(coloum: string) {
-        this.sizeMapColumn = coloum;
-        this.sizeColumnMin = {default: undefined, clipd: undefined};
-        this.sizeColumnMax = {default: undefined, clipd: undefined};
-        if (coloum === CatalogOverlay.NONE) {
-            this.sizeArea = false;
+        if (this.sizeMapColumn !== coloum) {
+            this.sizeMapColumn = coloum;
+            this.sizeColumnMin = {default: undefined, clipd: undefined};
+            this.sizeColumnMax = {default: undefined, clipd: undefined};
+            if (coloum === CatalogOverlay.NONE) {
+                this.sizeArea = false;
+            }   
         }
     }
 
@@ -493,11 +499,13 @@ export class CatalogWidgetStore {
     }
 
     @action setSizeMinorMap(coloum: string) {
-        this.sizeMinorMapColumn = coloum;
-        this.sizeMinorColumnMin = {default: undefined, clipd: undefined};
-        this.sizeMinorColumnMax = {default: undefined, clipd: undefined};
-        if (coloum === CatalogOverlay.NONE) {
-            this.sizeMinorArea = false;
+        if(this.sizeMinorMapColumn !== coloum) {
+            this.sizeMinorMapColumn = coloum;
+            this.sizeMinorColumnMin = {default: undefined, clipd: undefined};
+            this.sizeMinorColumnMax = {default: undefined, clipd: undefined};
+            if (coloum === CatalogOverlay.NONE) {
+                this.sizeMinorArea = false;
+            }
         }
     }
 
