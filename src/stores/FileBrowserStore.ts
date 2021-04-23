@@ -67,10 +67,10 @@ export class FileBrowserStore {
 
     @observable selectedFiles: ISelectedFile[];
 
+    @observable isLoadingDialogOpen: boolean;
     @observable loadingProgress: number;
     @observable loadingCheckedCount: number;
     @observable loadingTotalCount: number;
-    @observable loadingStartTime: number;
 
     @action showFileBrowser = (mode: BrowserMode, append = false) => {
         this.appendingFrame = append;
@@ -92,7 +92,6 @@ export class FileBrowserStore {
     };
 
     @action getFileList = (directory: string) => {
-        this.resetLoadingStates();
         const backendService = BackendService.Instance;
         this.loadingList = true;
         this.selectedFile = null;
@@ -100,7 +99,6 @@ export class FileBrowserStore {
         this.HDUfileInfoExtended = null;
         this.regionFileInfo = null;
         this.catalogFileInfo = null;
-        this.loadingStartTime = performance.now();
         AppStore.Instance.restartTaskProgress();
 
         if (this.browserMode === BrowserMode.File || this.browserMode === BrowserMode.SaveFile) {
@@ -311,6 +309,10 @@ export class FileBrowserStore {
         this.selectedFiles = selection;
     };
 
+    @action showLoadingDialog = () => {
+        this.isLoadingDialogOpen = true;
+    }
+
     @action updateLoadingState = (progress: number, checkedCount: number, totalCount: number) => {
         this.loadingProgress = progress;
         this.loadingCheckedCount = checkedCount;
@@ -319,6 +321,7 @@ export class FileBrowserStore {
 
     @action resetLoadingStates = () => {
         this.loadingList = false;
+        this.isLoadingDialogOpen = false;
         this.updateLoadingState(0, 0, 0);
     };
 
@@ -427,13 +430,6 @@ export class FileBrowserStore {
         ];
 
         return {columnHeaders: columnHeaders, columnsData: columnsData};
-    }
-
-    @computed get showLoadingProgress(): boolean {
-        if (performance.now() - this.loadingStartTime > 3) {
-            return true;
-        }
-        return false;
     }
 
     constructor() {

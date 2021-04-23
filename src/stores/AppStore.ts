@@ -1411,6 +1411,7 @@ export class AppStore {
             return;
         }
         this.fileBrowserStore.updateLoadingState(fileProgress.percentage, fileProgress.checkedCount, fileProgress.totalCount);
+        this.fileBrowserStore.showLoadingDialog();
         this.updateTaskProgress(fileProgress.percentage);
     };
 
