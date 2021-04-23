@@ -142,9 +142,11 @@ export class RenderConfigStore {
             }
             return [0, rbgString(colorsForValues.size - 1), 1, rbgString(colorsForValues.size - 1)];
         } else if (Math.min(...scaledArray) === 1) {
-            return [0, rbgString(colorsForValues.size - 1), 1, rbgString(colorsForValues.size - 1)];
+            const color = this.inverted ? rbgString(0) : rbgString(colorsForValues.size - 1);
+            return [0, color, 1, color];
         } else if (Math.max(...scaledArray) === 0) {
-            return [0, rbgString(0), 1, rbgString(0)];
+            const color = this.inverted ? rbgString(colorsForValues.size - 1) : rbgString(0);
+            return [0, color, 1, color];
         } else {
             for (let i = 0; i < colorsForValues.size; i++) {
                 if (scaledArray[i + 1] !== scaledArray[i]) {
