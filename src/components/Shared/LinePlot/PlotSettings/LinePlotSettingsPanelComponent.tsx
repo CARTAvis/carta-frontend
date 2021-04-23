@@ -62,16 +62,13 @@ export class LinePlotSettingsPanelComponent extends React.Component<LinePlotSett
             return (
                 <React.Fragment>
                     {lineKeys.map((lineKey, index) => {
+                        const lineLabel = this.props.lineOptions?.find(option => option.value === lineKey)?.label;
                         return (
                             <FormGroup
                                 key={index}
                                 inline={true}
                                 label="Line Color"
-                                labelInfo={
-                                    this.props.lineOptions?.length > 0 ?
-                                    <React.Fragment>(<span className="line-label">{this.props.lineOptions.find(option => option.value === lineKey)?.label}</span>)</React.Fragment> :
-                                    ""
-                                }
+                                labelInfo={lineLabel ? <React.Fragment>(<span className="line-label" title={lineLabel}>{lineLabel}</span>)</React.Fragment> : ""}
                             >
                                 <AutoColorPickerComponent
                                     color={lineColorMap.get(lineKey) ?? DEFAULT_COLOR}
