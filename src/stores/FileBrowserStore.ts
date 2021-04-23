@@ -70,6 +70,7 @@ export class FileBrowserStore {
     @observable loadingProgress: number;
     @observable loadingCheckedCount: number;
     @observable loadingTotalCount: number;
+    @observable loadingStartTime: number;
 
     @action showFileBrowser = (mode: BrowserMode, append = false) => {
         this.appendingFrame = append;
@@ -99,6 +100,8 @@ export class FileBrowserStore {
         this.HDUfileInfoExtended = null;
         this.regionFileInfo = null;
         this.catalogFileInfo = null;
+        this.loadingStartTime = performance.now();
+        AppStore.Instance.restartTaskProgress();
 
         if (this.browserMode === BrowserMode.File || this.browserMode === BrowserMode.SaveFile) {
             backendService.getFileList(directory).subscribe(res => runInAction(() => {
@@ -125,7 +128,6 @@ export class FileBrowserStore {
                 this.resetLoadingStates();
             }));
         }
-        AppStore.Instance.restartTaskProgress();
     };
 
     @action getFileInfo = (directory: string, file: string, hdu: string) => {
@@ -425,6 +427,13 @@ export class FileBrowserStore {
         ];
 
         return {columnHeaders: columnHeaders, columnsData: columnsData};
+    }
+
+    @computed get showLoadingProgress(): boolean {
+        if (performance.now() - this.loadingStartTime > 3000) {
+            return true;
+        }
+        return false;
     }
 
     constructor() {

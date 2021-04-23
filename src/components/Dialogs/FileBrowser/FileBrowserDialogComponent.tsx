@@ -524,7 +524,7 @@ export class FileBrowserDialogComponent extends React.Component {
                     This file exists. Are you sure to overwrite it?
                 </Alert>
                 <TaskProgressDialogComponent
-                    isOpen={fileBrowserStore.loadingList && fileBrowserStore.loadingProgress < 1}
+                    isOpen={fileBrowserStore.loadingList && fileBrowserStore.loadingProgress < 1 && fileBrowserStore.showLoadingProgress}
                     progress={fileBrowserStore.loadingProgress}
                     timeRemaining={appStore.estimatedTaskRemainingTime}
                     cancellable={true}
