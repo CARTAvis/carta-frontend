@@ -430,7 +430,7 @@ export class FileBrowserStore {
     }
 
     @computed get showLoadingProgress(): boolean {
-        if (performance.now() - this.loadingStartTime > 3000) {
+        if (performance.now() - this.loadingStartTime > 3) {
             return true;
         }
         return false;
