@@ -191,7 +191,8 @@ export class LayoutConfig {
 
         // 2. handle floating widgets
         appStore.widgetsStore.floatingWidgets?.forEach((config: WidgetConfig) => {
-            if (config?.type === "floating-settings") { // skip floating settings panel
+            // skip saving floating settings panel
+            if (config?.type === "floating-settings") {
                 return;
             }
             let floatingConfig = {
