@@ -143,6 +143,8 @@ export class LayoutConfig {
 
         // Upgrade floating widgets to consistent type
         if (layout.floating && Array.isArray(layout.floating)) {
+            // Remove floating settings widget in order to be backward compatible
+            layout.floating = layout.floating.filter(floatingWidget => floatingWidget?.id !== "floating-settings");
             for (const widget of layout.floating) {
                 if (widget.type !== "component") {
                     // Store widget type as id, to be consistent with docked widgets

@@ -76,6 +76,7 @@
                 "id": {
                     "type": "string",
                     "enum": [
+                        "floating-settings",
                         "layer-list",
                         "log",
                         "animator",
