@@ -2,8 +2,8 @@ import {action, observable, makeObservable, runInAction} from "mobx";
 import {CARTA} from "carta-protobuf";
 import {Observable, Observer, Subject, throwError} from "rxjs";
 import {AppStore, PreferenceStore, RegionStore} from "stores";
-import {ApiService} from "./ApiService";
 import {mapToObject} from "utilities";
+import {ApiService} from "./ApiService";
 
 export enum ConnectionStatus {
     CLOSED = 0,
@@ -404,11 +404,11 @@ export class BackendService {
     }
 
     @action("save file")
-    saveFile(fileId: number, outputFileDirectory: string, outputFileName: string, outputFileType: CARTA.FileType): Observable<CARTA.SaveFileAck> {
+    saveFile(fileId: number, outputFileDirectory: string, outputFileName: string, outputFileType: CARTA.FileType, regionId?: number, channels?: number[], stokes?: number[], keepDegenerate?: boolean): Observable<CARTA.SaveFileAck> {
         if (this.connectionStatus !== ConnectionStatus.ACTIVE) {
             return throwError(new Error("Not connected"));
         } else {
-            const message = CARTA.SaveFile.create({fileId, outputFileDirectory, outputFileName, outputFileType});
+            const message = CARTA.SaveFile.create({fileId, outputFileDirectory, outputFileName, outputFileType, regionId, channels, stokes, keepDegenerate});
             const requestId = this.eventCounter;
             this.logEvent(CARTA.EventType.SAVE_FILE, this.eventCounter, message, false);
             if (this.sendEvent(CARTA.EventType.SAVE_FILE, CARTA.SaveFile.encode(message).finish())) {
