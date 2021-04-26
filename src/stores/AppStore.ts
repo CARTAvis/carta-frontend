@@ -187,6 +187,7 @@ export class AppStore {
     @observable taskStartTime: number;
     @observable taskCurrentTime: number;
     @observable fileLoading: boolean;
+    @observable fileSaving: boolean;
     @observable resumingSession: boolean;
 
     @action restartTaskProgress = () => {
@@ -216,6 +217,14 @@ export class AppStore {
         this.fileLoading = false;
     };
 
+    @action startFileSaving = () => {
+        this.fileSaving = true;
+    };
+
+    @action endFileSaving = () => {
+        this.fileSaving = false;
+    };
+
     // Keyboard shortcuts
     @computed get modifierString() {
         // Modifier string for shortcut keys.
@@ -240,6 +249,14 @@ export class AppStore {
         } else {
             return this.preferenceStore.theme === Theme.DARK;
         }
+    }
+
+    @computed get openFileDisabled(): boolean {
+        return this.backendService?.connectionStatus !== ConnectionStatus.ACTIVE || this.fileLoading;
+    }
+
+    @computed get appendFileDisabled(): boolean {
+        return this.openFileDisabled || !this.activeFrame;
     }
 
     // Frame actions
@@ -269,17 +286,17 @@ export class AppStore {
         return this.catalogStore.catalogProfileStores.size;
     }
 
-    @computed get frameNames(): IOptionProps [] {
-        let names: IOptionProps [] = [];
+    @computed get frameNames(): IOptionProps[] {
+        let names: IOptionProps[] = [];
         this.frames.forEach((frame, index) => names.push({label: index + ": " + frame.filename, value: frame.frameInfo.fileId}));
         return names;
     }
 
-    @computed get frameChannels(): number [] {
+    @computed get frameChannels(): number[] {
         return this.frames.map(frame => frame.requiredChannel);
     }
 
-    @computed get frameStokes(): number [] {
+    @computed get frameStokes(): number[] {
         return this.frames.map(frame => frame.requiredStokes);
     }
 
@@ -468,17 +485,24 @@ export class AppStore {
         return this.loadFile(directory, file, hdu);
     };
 
-    @action saveFile = (directory: string, filename: string, fileType: CARTA.FileType) => {
-        if (!this.activeFrame) {
-            return;
-        }
-        const fileId = this.activeFrame.frameInfo.fileId;
-        this.backendService.saveFile(fileId, directory, filename, fileType).subscribe(() => {
-            AppToaster.show({icon: "saved", message: `${filename} saved.`, intent: "success", timeout: 3000});
-            this.fileBrowserStore.hideFileBrowser();
-        }, error => {
-            console.error(error);
-            AppToaster.show({icon: "warning-sign", message: error, intent: "danger", timeout: 3000});
+    @action saveFile = (directory: string, filename: string, fileType: CARTA.FileType, regionId?: number, channels?: number[], stokes?: number[], shouldDropDegenerateAxes?: boolean) => {
+        return new Promise<number>((resolve, reject) => {
+            if (!this.activeFrame) {
+                reject();
+            }
+            this.startFileSaving();
+            const fileId = this.activeFrame.frameInfo.fileId;
+            this.backendService.saveFile(fileId, directory, filename, fileType, regionId, channels, stokes, !shouldDropDegenerateAxes).subscribe(ack => {
+                AppToaster.show({ icon: "saved", message: `${filename} saved.`, intent: "success", timeout: 3000 });
+                this.fileBrowserStore.hideFileBrowser();
+                this.endFileSaving();
+                resolve(ack.fileId);
+            }, error => {
+                console.error(error);
+                AppToaster.show({ icon: "warning-sign", message: error, intent: "danger", timeout: 3000 });
+                this.endFileSaving();
+                reject(error);
+            });
         });
     };
 
@@ -501,7 +525,9 @@ export class AppStore {
     };
 
     @action closeCurrentFile = (confirmClose: boolean = true) => {
-        this.closeFile(this.activeFrame, confirmClose);
+        if (!this.appendFileDisabled) {
+            this.closeFile(this.activeFrame, confirmClose);
+        }
     };
 
     @action closeOtherFiles = (frame: FrameStore, confirmClose: boolean = true) => {
