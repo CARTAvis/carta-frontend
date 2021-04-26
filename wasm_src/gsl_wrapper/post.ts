@@ -7,7 +7,7 @@ Module.filterHanning = Module.cwrap("filterHanning", "number", ["number", "numbe
 Module.filterDecimation = Module.cwrap("filterDecimation", "number", ["number", "number", "number", "number", "number"]);
 Module.filterBinning = Module.cwrap("filterBinning", "number", ["number", "number", "number", "number"]);
 Module.filterSavitzkyGolay = Module.cwrap("filterSavitzkyGolay", "number", ["number", "number", "number", "number", "number", "number"]);
-Module.fittingGaussian = Module.cwrap("fittingGaussian", "string", ["number", "number", "number", "number", "number", "number", "number", "number", "number", "number", "number", "number"])
+Module.fittingGaussian = Module.cwrap("fittingGaussian", "string", ["number", "number", "number", "number", "number", "number", "number", "number", "number", "number", "number", "number", "string"])
 
 Module.boxcarSmooth = function (yIn: Float64Array | Float32Array, kernelSize: number) {
     // Return empty array if arguments are invalid
@@ -200,7 +200,6 @@ Module.gaussianFitting = function (xIn: Float64Array | Float32Array, yIn: Float6
     Module._free(Module.resultCenter);
     Module._free(Module.resultAmp);
     Module._free(Module.resultFwhm);
-    Module._free(Module.logPtrUint);
 
     return {center: centerOut, yIntercept: continuumValues[0], slope: continuumValues[1], amp: ampOut, fwhm: fwhmOut, log: log};
 }
