@@ -16,3 +16,4 @@ export * from "./SpectralSettings/SpectralSettingsComponent";
 export * from "./SafeNumericInput/SafeNumericInput";
 export * from "./SmoothingSettings/SmoothingSettingsComponent";
 export * from "./AutoColorPicker/AutoColorPickerComponent";
+export * from "./BiasContrastSelectComponent/BiasContrastSelectComponent";

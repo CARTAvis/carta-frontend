@@ -230,6 +230,9 @@ export class PreferenceDialogComponent extends React.Component {
                         darkTheme={appStore.darkTheme}
                     />
                 </FormGroup>
+                <FormGroup inline={true} label="Smoothed Bias/Contrast">
+                    <Switch checked={preference.useSmoothedBiasContrast} onChange={(ev) => preference.setPreference(PreferenceKeys.RENDER_CONFIG_USE_SMOOTHED_BIAS_CONTRAST, ev.currentTarget.checked)}/>
+                </FormGroup>
             </React.Fragment>
         );
 
