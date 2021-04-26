@@ -1,4 +1,4 @@
-import { action, observable, makeObservable } from "mobx";
+import {action, observable, makeObservable} from "mobx";
 import React from "react";
 
 export enum AlertType {
@@ -50,14 +50,14 @@ export class AlertStore {
         this.alertType = AlertType.Retry;
         this.alertVisible = true;
         this.interactiveAlertCallback = onClose;
-    }
+    };
 
     @action handleInteractiveAlertClosed = (confirmed: boolean) => {
         this.alertVisible = false;
         if (this.interactiveAlertCallback) {
             this.interactiveAlertCallback(confirmed);
         }
-    }
+    };
 
     private constructor() {
         makeObservable(this);

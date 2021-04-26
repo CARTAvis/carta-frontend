@@ -445,7 +445,7 @@ export class AppStore {
                 AppStore.Instance.dialogStore.hideStokesDialog();
                 resolve(ack.openFileAck.fileId);
             }, err => {
-                console.log(err)
+                console.log(err);
                 this.alertStore.showAlert(`Error loading files: ${err}`);
                 this.endFileLoading();
                 reject(err);
@@ -453,7 +453,7 @@ export class AppStore {
 
             this.fileCounter++;
         });
-    }
+    };
 
     @action appendConcatFile = (stokesFiles: CARTA.IStokesFile[], directory: string, hdu: string) => {
         // Stop animations playing before loading a new frame
@@ -493,13 +493,13 @@ export class AppStore {
             this.startFileSaving();
             const fileId = this.activeFrame.frameInfo.fileId;
             this.backendService.saveFile(fileId, directory, filename, fileType, regionId, channels, stokes, !shouldDropDegenerateAxes).subscribe(ack => {
-                AppToaster.show({ icon: "saved", message: `${filename} saved.`, intent: "success", timeout: 3000 });
+                AppToaster.show({icon: "saved", message: `${filename} saved.`, intent: "success", timeout: 3000});
                 this.fileBrowserStore.hideFileBrowser();
                 this.endFileSaving();
                 resolve(ack.fileId);
             }, error => {
                 console.error(error);
-                AppToaster.show({ icon: "warning-sign", message: error, intent: "danger", timeout: 3000 });
+                AppToaster.show({icon: "warning-sign", message: error, intent: "danger", timeout: 3000});
                 this.endFileSaving();
                 reject(error);
             });
@@ -652,7 +652,7 @@ export class AppStore {
 
     @action shiftFrame = (delta: number) => {
         if (this.activeFrame && this.frames.length > 1) {
-            const frameIds = this.frames.map(f => f.frameInfo.fileId)
+            const frameIds = this.frames.map(f => f.frameInfo.fileId);
             const currentIndex = frameIds.indexOf(this.activeFrame.frameInfo.fileId);
             const requiredIndex = (this.frames.length + currentIndex + delta) % this.frames.length;
             this.setActiveFrame(frameIds[requiredIndex]);
@@ -930,7 +930,7 @@ export class AppStore {
             this.preferenceStore.setPreference(PreferenceKeys.GLOBAL_THEME, theme);
             this.updateASTColors();
         }
-    }
+    };
 
     private updateASTColors() {
         if (this.astReady) {
@@ -943,7 +943,7 @@ export class AppStore {
                 getColorForTheme(this.overlayStore.axes.color),
                 getColorForTheme(this.overlayStore.numbers.color),
                 getColorForTheme(this.overlayStore.labels.color)
-            ]
+            ];
             AST.setColors(astColors);
         }
     }
@@ -1540,7 +1540,7 @@ export class AppStore {
             console.error(err);
             this.alertStore.showAlert("Error resuming session");
         });
-    }
+    };
 
     @action private onSessionResumed = () => {
         console.log(`Resumed successfully`);

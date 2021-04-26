@@ -21,7 +21,7 @@ export class App extends React.Component {
         }
     };
 
-    renderAlertComponent = (alertStore: AlertStore, darkTheme: boolean) => {
+    private renderAlertComponent = (alertStore: AlertStore, darkTheme: boolean) => {
         switch (alertStore.alertType) {
             case AlertType.Info:
                 return (
@@ -66,7 +66,7 @@ export class App extends React.Component {
             default:
                 return null;
         }
-    }
+    };
 
     public render() {
         const appStore = AppStore.Instance;
@@ -77,7 +77,7 @@ export class App extends React.Component {
             glClassName += " dark-theme";
         }
 
-        let alertComponent = this.renderAlertComponent(appStore.alertStore, appStore.darkTheme);
+        const alertComponent = this.renderAlertComponent(appStore.alertStore, appStore.darkTheme);
 
         return (
             <div className={className}>
