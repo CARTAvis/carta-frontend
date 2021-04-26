@@ -6,11 +6,13 @@ import {FixedSizeList as List} from "react-window";
 import AutoSizer from "react-virtualized-auto-sizer";
 import {CARTA} from "carta-protobuf";
 import {SimpleTableComponent, SimpleTableComponentProps} from "components/Shared";
+import {ImageSaveComponent} from "components/Dialogs";
 import "./FileInfoComponent.scss";
 
 export enum FileInfoType {
     IMAGE_FILE = "image-file",
     IMAGE_HEADER = "image-header",
+    SAVE_IMAGE = "save-image",
     REGION_FILE = "region-file",
     CATALOG_FILE = "catalog-file",
     CATALOG_HEADER = "catalog-header"
@@ -34,7 +36,7 @@ export class FileInfoComponent extends React.Component<{
     @observable searchString: string = "";
     @observable matchedIter: number = 0;
     @observable isMouseEntered: boolean = false;
-    
+
     private isSearchOpened: boolean = false;
     private matchedTotal: number = 0;
     private matchedIterLocation: {line: number, num: number} = {line: -1, num: -1};
@@ -76,9 +78,9 @@ export class FileInfoComponent extends React.Component<{
     };
 
     @action minusMatchedIter = () => {
-        if (this.matchedIter === 0) {
+        if (this.matchedIter === 0){
             return;
-        } else if (this.matchedIter === 1){
+        } else if (this.matchedIter === 1) {
             this.matchedIter = this.matchedTotal;
         } else {
             this.matchedIter -= 1;
@@ -125,7 +127,7 @@ export class FileInfoComponent extends React.Component<{
         this.setSearchString(ev.target.value);
         this.resetMatchedIter();
         this.matchedTotal = 0;
-        
+
         if (this.searchString !== "") {
             // RegExp ignores the difference of lettercase; use special characters as normal strings by putting \ in the front
             const searchStringRegExp = new RegExp(this.searchString.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i');
@@ -154,7 +156,7 @@ export class FileInfoComponent extends React.Component<{
 
     // mode 1/-1: one step forward/backward, 99/-99: continuously forward/backward, 0: stop
     private handleClickMatched = (mode: number, keyEvent?) => {
-            if ((keyEvent && keyEvent?.keyCode !== 13) || this.searchString === "") {
+        if ((keyEvent && keyEvent?.keyCode !== 13) || this.searchString === "") {
             return;
         }
         if (mode === 0) {
@@ -192,16 +194,21 @@ export class FileInfoComponent extends React.Component<{
     private renderInfoTabs = () => {
         const infoTypes = this.props.infoTypes;
         const tabEntries = infoTypes.map(infoType => {
-            if (FileInfoType.IMAGE_FILE === infoType) {
-                return <Tab key={infoType} id={infoType} title="File Information"/>;
-            } else if (FileInfoType.IMAGE_HEADER === infoType) {
-                return <Tab key={infoType} id={infoType} title="Header"/>;
-            } else if (FileInfoType.CATALOG_FILE === infoType) {
-                return <Tab key={infoType} id={infoType} title="Catalog Information"/>;
-            } else if (FileInfoType.CATALOG_HEADER === infoType) {
-                return <Tab key={infoType} id={infoType} title="Catalog Header"/>;
-            } else {
-                return <Tab key={infoType} id={infoType} title="Region Information"/>;
+            switch (infoType) {
+                case (FileInfoType.IMAGE_FILE):
+                    return <Tab key={infoType} id={infoType} title="File Information" />;
+                case (FileInfoType.IMAGE_HEADER):
+                    return <Tab key={infoType} id={infoType} title="Header" />;
+                case (FileInfoType.SAVE_IMAGE):
+                    return <Tab key={infoType} id={infoType} title="Save Image" />;
+                case (FileInfoType.CATALOG_FILE):
+                    return <Tab key={infoType} id={infoType} title="Catalog Information" />;
+                case (FileInfoType.CATALOG_HEADER):
+                    return <Tab key={infoType} id={infoType} title="Catalog Header" />;
+                case (FileInfoType.REGION_FILE):
+                    return <Tab key={infoType} id={infoType} title="Region Information" />;
+                default:
+                    return "";
             }
         });
         return (
@@ -223,14 +230,24 @@ export class FileInfoComponent extends React.Component<{
     };
 
     private renderInfoPanel = () => {
-        if (this.props.isLoading) {
-            return <NonIdealState className="non-ideal-state-file" icon={<Spinner className="astLoadingSpinner"/>} title="Loading file info..."/>;
-        } else if (this.props.errorMessage) {
-            return <NonIdealState className="non-ideal-state-file" icon="document" title="Cannot open file!" description={this.props.errorMessage + " Select another file from the folder."}/>;
-        } else if (!this.props.fileInfoExtended && !this.props.regionFileInfo && !this.props.catalogFileInfo) {
-            return <NonIdealState className="non-ideal-state-file" icon="document" title="No file selected." description="Select a file from the folder."/>;
+        switch (this.props.selectedTab) {
+            // Here is only controls for save, no need to wait file info
+            case FileInfoType.SAVE_IMAGE:
+                break;
+            // Check if loading file
+            default:
+                if (this.props.isLoading) {
+                    return <NonIdealState className="non-ideal-state-file" icon={<Spinner className="astLoadingSpinner" />} title="Loading file info..." />;
+                } else if (this.props.errorMessage) {
+                    return <NonIdealState className="non-ideal-state-file" icon="document" title="Cannot open file!" description={this.props.errorMessage + " Select another file from the folder."} />;
+                } else if (!this.props.fileInfoExtended && !this.props.regionFileInfo && !this.props.catalogFileInfo) {
+                    return <NonIdealState className="non-ideal-state-file" icon="document" title="No file selected." description="Select a file from the folder." />;
+                }
+                break;
         }
         switch (this.props.selectedTab) {
+            case FileInfoType.SAVE_IMAGE:
+                return (<ImageSaveComponent />);
             case FileInfoType.IMAGE_FILE:
                 return this.renderImageHeaderList(this.props.fileInfoExtended.computedEntries);
             case FileInfoType.IMAGE_HEADER:
@@ -262,14 +279,14 @@ export class FileInfoComponent extends React.Component<{
         if(!isFinite(index) || index < 0 || !name) {
             return null;
         }
-        
+
         const splitLength = this.splitLengthArray[index]
         const nameValueLength = name.length + 3 + value.length;
         let highlightedString = [];
         let keyIter = 0; // add unique keys to span to avoid warning
         let highlightClassName = "";
         let typeClassName = "header-name";
-        let usedLength = 0; 
+        let usedLength = 0;
 
         let addHighlightedString = (sliceStart: number, sliceEnd: number) => {
             if(!isFinite(sliceStart) || !isFinite(sliceEnd)) {
@@ -289,23 +306,23 @@ export class FileInfoComponent extends React.Component<{
 
                 if (name === "END") {
                     addHighlightedString(formerUsedLength, formerUsedLength + addLength);
-                // the string includes name, value, and comment
+                    // the string includes name, value, and comment
                 } else if (comment && typeClassName === "header-name" && usedLength >= nameValueLength) {
                     addHighlightedString(formerUsedLength, name.length);
                     typeClassName = "header-value";
                     addHighlightedString(name.length, nameValueLength);
                     typeClassName = "header-comment";
                     addHighlightedString(nameValueLength, formerUsedLength + addLength);
-                // the string includes name and value
-                } else if (typeClassName === "header-name" && usedLength >= name.length ) {
+                    // the string includes name and value
+                } else if (typeClassName === "header-name" && usedLength >= name.length) {
                     addHighlightedString(formerUsedLength, name.length);
                     typeClassName = "header-value";
                     addHighlightedString(name.length, formerUsedLength + addLength);
-                // the string includes value and comment
+                    // the string includes value and comment
                 } else if (comment && typeClassName === "header-value" && usedLength > nameValueLength) {
                     addHighlightedString(formerUsedLength, nameValueLength);
                     typeClassName = "header-comment";
-                    addHighlightedString(nameValueLength, formerUsedLength + addLength);                        
+                    addHighlightedString(nameValueLength, formerUsedLength + addLength);
                 } else {
                     addHighlightedString(formerUsedLength, formerUsedLength + addLength);
                 }
