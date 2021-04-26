@@ -892,11 +892,11 @@ export class FrameStore {
             const specsys = this.spectralSystem;
             if (this.channelInfo) {
                 if (!type && !unit) {
-                    this.channelValues = this.channelInfo.values;
+                    this.setChannelValues(this.channelInfo.values);
                 } else if (this.isCoordChannel) {
-                    this.channelValues = this.channelInfo.indexes;
+                    this.setChannelValues(this.channelInfo.indexes);
                 } else {
-                    this.channelValues = this.isSpectralPropsEqual ? this.channelInfo.values : this.convertSpectral(this.channelInfo.values);
+                    this.setChannelValues(this.isSpectralPropsEqual ? this.channelInfo.values : this.convertSpectral(this.channelInfo.values));
                 }
             }
         });
@@ -1215,9 +1215,13 @@ export class FrameStore {
         }
     }
 
+    @action private setChannelValues(values: number[]) {
+        this.channelValues = values;
+    }
+
     @action private initSupportedSpectralConversion = () => {
         if (this.channelInfo && this.spectralAxis && !this.spectralAxis.valid) {
-            this.channelValues = this.channelInfo.values;
+            this.setChannelValues(this.channelInfo.values);
             this.spectralCoordsSupported = new Map<string, { type: SpectralType, unit: SpectralUnit }>([
                 [this.nativeSpectralCoordinate, {type: null, unit: null}],
                 [SPECTRAL_TYPE_STRING.get(SpectralType.CHANNEL), {type: SpectralType.CHANNEL, unit: null}]

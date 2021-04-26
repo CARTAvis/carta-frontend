@@ -46,9 +46,13 @@ export class FileBrowserDialogComponent extends React.Component {
         const appStore = AppStore.Instance;
         const fileBrowserStore = appStore.fileBrowserStore;
 
-        // Ignore load if in export mode
-        if (fileBrowserStore.browserMode === BrowserMode.RegionExport) {
-            return;
+        // Ignore load
+        switch (fileBrowserStore.browserMode) {
+            case (BrowserMode.RegionExport):
+            case (BrowserMode.SaveFile):
+                return;
+            default:
+                break;
         }
 
         if (fileBrowserStore.browserMode === BrowserMode.File) {
@@ -67,14 +71,36 @@ export class FileBrowserDialogComponent extends React.Component {
         fileBrowserStore.saveStartingDirectory();
     };
 
-    private handleSaveFileClicked = () => {
+    /// Prepare parameters for send saveFile 
+    private handleSaveFile = async () => {
         const appStore = AppStore.Instance;
+        const fileBrowserStore = FileBrowserStore.Instance;
+        const activeFrame = appStore.activeFrame;
+        const filename = fileBrowserStore.saveFilename.trim();
+        const channelStart = fileBrowserStore.saveSpectralRange ? activeFrame.findChannelIndexByValue(parseFloat(fileBrowserStore.saveSpectralRange[0])) : 0;
+        const channelEnd = fileBrowserStore.saveSpectralRange ? activeFrame.findChannelIndexByValue(parseFloat(fileBrowserStore.saveSpectralRange[1])) : activeFrame.numChannels - 1;
+
+        const saveChannelStart = Math.min(channelStart, channelEnd);
+        const saveChannelEnd = Math.max(channelStart, channelEnd);
+        let saveChannels = [];
+        if (activeFrame.numChannels > 1) {
+            saveChannels = [
+                Math.max(saveChannelStart, 0),
+                Math.min(saveChannelEnd, activeFrame.numChannels - 1),
+                1,
+            ];
+        }
+        const saveStokes = fileBrowserStore.saveStokesRange;
+        await appStore.saveFile(fileBrowserStore.fileList.directory, filename, fileBrowserStore.saveFileType, fileBrowserStore.saveRegionId, saveChannels, saveStokes, fileBrowserStore.shouldDropDegenerateAxes);
+    };
+
+    private handleSaveFileClicked = () => {
         const fileBrowserStore = FileBrowserStore.Instance;
         const filename = fileBrowserStore.saveFilename.trim();
         if (fileBrowserStore.fileList && fileBrowserStore.fileList.files && fileBrowserStore.fileList.files.find(f => f.name.trim() === filename)) {
             this.overwriteExistingFileAlertVisible = true;
         } else {
-            appStore.saveFile(fileBrowserStore.fileList.directory, filename, fileBrowserStore.saveFileType);
+            this.handleSaveFile();
         }
     };
 
@@ -113,9 +139,7 @@ export class FileBrowserDialogComponent extends React.Component {
             const filename = fileBrowserStore.exportFilename.trim();
             this.exportRegion(fileBrowserStore.fileList.directory, filename);
         } else if (fileBrowserStore.browserMode === BrowserMode.SaveFile) {
-            const appStore = AppStore.Instance;
-            const filename = fileBrowserStore.saveFilename.trim();
-            appStore.saveFile(fileBrowserStore.fileList.directory, filename, fileBrowserStore.saveFileType);
+            this.handleSaveFile();
         }
     };
 
@@ -161,99 +185,102 @@ export class FileBrowserDialogComponent extends React.Component {
         const appStore = AppStore.Instance;
         const fileBrowserStore = appStore.fileBrowserStore;
 
-        if (browserMode === BrowserMode.File) {
-            if (appending) {
+        switch (browserMode) {
+            case (BrowserMode.File):
+                if (appending) {
+                    return (
+                        <div>
+                            <Tooltip content={"Append this image while keeping other images open"}>
+                                <AnchorButton
+                                    intent={Intent.PRIMARY}
+                                    disabled={appStore.fileLoading || !fileBrowserStore.selectedFile || !fileBrowserStore.fileInfoResp || fileBrowserStore.loadingInfo}
+                                    onClick={this.loadSelectedFiles}
+                                    text={fileBrowserStore.selectedFiles?.length > 1 ? "Append selected" : "Append"}
+                                />
+                            </Tooltip>
+                            {fileBrowserStore.selectedFiles?.length > 1 && fileBrowserStore.selectedFiles?.length < 5 &&
+                                <Tooltip content={"Append this image while keeping other images open"}>
+                                    <AnchorButton
+                                        intent={Intent.PRIMARY}
+                                        disabled={appStore.fileLoading || !fileBrowserStore.selectedFile || !fileBrowserStore.fileInfoResp || fileBrowserStore.loadingInfo}
+                                        onClick={appStore.dialogStore.showStokesDialog}
+                                        text={"Load as hypercube"}
+                                    />
+                                </Tooltip>
+                            }
+                        </div>
+                    );
+                } else {
+                    return (
+                        <div>
+                            <Tooltip content={"Close any existing images and load this image"}>
+                                <AnchorButton
+                                    intent={Intent.PRIMARY}
+                                    disabled={appStore.fileLoading || !fileBrowserStore.selectedFile || !fileBrowserStore.fileInfoResp || fileBrowserStore.loadingInfo}
+                                    onClick={this.loadSelectedFiles}
+                                    text={fileBrowserStore.selectedFiles?.length > 1 ? "Load selected" : "Load"}
+                                />
+                            </Tooltip>
+                            {fileBrowserStore.selectedFiles?.length > 1 && fileBrowserStore.selectedFiles?.length < 5 &&
+                                <Tooltip content={"Close any existing images and load this image"}>
+                                    <AnchorButton
+                                        intent={Intent.PRIMARY}
+                                        disabled={appStore.fileLoading || !fileBrowserStore.selectedFile || !fileBrowserStore.fileInfoResp || fileBrowserStore.loadingInfo}
+                                        onClick={appStore.dialogStore.showStokesDialog}
+                                        text={"Load as hypercube"}
+                                    />
+                                </Tooltip>
+                            }
+                        </div>
+                    );
+                }
+            case (BrowserMode.SaveFile):
                 return (
-                    <div>
-                        <Tooltip content={"Append this image while keeping other images open"}>
-                            <AnchorButton
-                                intent={Intent.PRIMARY}
-                                disabled={appStore.fileLoading || !fileBrowserStore.selectedFile || !fileBrowserStore.fileInfoResp || fileBrowserStore.loadingInfo}
-                                onClick={this.loadSelectedFiles}
-                                text={fileBrowserStore.selectedFiles?.length > 1 ? "Append selected" : "Append"}
-                            />
-                        </Tooltip>
-                        {fileBrowserStore.selectedFiles?.length > 1 && fileBrowserStore.selectedFiles?.length < 5 &&
-                        <Tooltip content={"Append this image while keeping other images open"}>
-                            <AnchorButton
-                                intent={Intent.PRIMARY}
-                                disabled={appStore.fileLoading || !fileBrowserStore.selectedFile || !fileBrowserStore.fileInfoResp || fileBrowserStore.loadingInfo}
-                                onClick={appStore.dialogStore.showStokesDialog}
-                                text={"Load as hypercube"}
-                            />
-                        </Tooltip>
-                        }
-                    </div>
+                    <Tooltip content={"Save this file"}>
+                        <AnchorButton
+                            intent={Intent.PRIMARY}
+                            disabled={appStore.fileLoading || fileBrowserStore.loadingInfo || appStore.fileSaving}
+                            onClick={this.handleSaveFileClicked}
+                            text="Save"
+                        />
+                    </Tooltip>
                 );
-            } else {
+            case (BrowserMode.RegionImport):
                 return (
-                    <div>
-                        <Tooltip content={"Close any existing images and load this image"}>
-                            <AnchorButton
-                                intent={Intent.PRIMARY}
-                                disabled={appStore.fileLoading || !fileBrowserStore.selectedFile || !fileBrowserStore.fileInfoResp || fileBrowserStore.loadingInfo}
-                                onClick={this.loadSelectedFiles}
-                                text={fileBrowserStore.selectedFiles?.length > 1 ? "Load selected" : "Load"}
-                            />
-                        </Tooltip>
-                        {fileBrowserStore.selectedFiles?.length > 1 && fileBrowserStore.selectedFiles?.length < 5 &&
-                        <Tooltip content={"Close any existing images and load this image"}>
-                            <AnchorButton
-                                intent={Intent.PRIMARY}
-                                disabled={appStore.fileLoading || !fileBrowserStore.selectedFile || !fileBrowserStore.fileInfoResp || fileBrowserStore.loadingInfo}
-                                onClick={appStore.dialogStore.showStokesDialog}
-                                text={"Load as hypercube"}
-                            />
-                        </Tooltip>
-                        }
-                    </div>
+                    <Tooltip content={"Load a region file for the currently active image"}>
+                        <AnchorButton
+                            intent={Intent.PRIMARY}
+                            disabled={appStore.fileLoading || !fileBrowserStore.selectedFile || !fileBrowserStore.fileInfoResp || fileBrowserStore.loadingInfo}
+                            onClick={this.loadSelectedFiles}
+                            text="Load Region"
+                        />
+                    </Tooltip>
                 );
-            }
-        } else if (browserMode === BrowserMode.SaveFile) {
-            return (
-                <Tooltip content={"Save this file"}>
-                    <AnchorButton
-                        intent={Intent.PRIMARY}
-                        disabled={appStore.fileLoading || fileBrowserStore.loadingInfo}
-                        onClick={this.handleSaveFileClicked}
-                        text="Save"
-                    />
-                </Tooltip>
-            );
-        } else if (browserMode === BrowserMode.RegionImport) {
-            return (
-                <Tooltip content={"Load a region file for the currently active image"}>
-                    <AnchorButton
-                        intent={Intent.PRIMARY}
-                        disabled={appStore.fileLoading || !fileBrowserStore.selectedFile || !fileBrowserStore.fileInfoResp || fileBrowserStore.loadingInfo || !appStore.activeFrame}
-                        onClick={this.loadSelectedFiles}
-                        text="Load Region"
-                    />
-                </Tooltip>
-            );
-        } else if (browserMode === BrowserMode.Catalog) {
-            return (
-                <Tooltip content={"Load a catalog file for the currently active image"}>
-                    <AnchorButton
-                        intent={Intent.PRIMARY}
-                        disabled={appStore.fileLoading || !fileBrowserStore.selectedFile || !fileBrowserStore.fileInfoResp || fileBrowserStore.loadingInfo || !appStore.activeFrame}
-                        onClick={this.loadSelectedFiles}
-                        text="Load Catalog"
-                    />
-                </Tooltip>
-            );
-        } else {
-            const frame = appStore.activeFrame;
-            return (
-                <Tooltip content={"Export all regions for the currently active image"}>
-                    <AnchorButton
-                        intent={Intent.PRIMARY}
-                        disabled={!FileBrowserDialogComponent.ValidateFilename(fileBrowserStore.exportFilename) || !frame || frame.regionSet.regions.length <= 1}
-                        onClick={this.handleExportRegionsClicked}
-                        text="Export Regions"
-                    />
-                </Tooltip>
-            );
+            case (BrowserMode.Catalog):
+                return (
+                    <Tooltip content={"Load a catalog file for the currently active image"}>
+                        <AnchorButton
+                            intent={Intent.PRIMARY}
+                            disabled={appStore.fileLoading || !fileBrowserStore.selectedFile || !fileBrowserStore.fileInfoResp || fileBrowserStore.loadingInfo || !appStore.activeFrame}
+                            onClick={this.loadSelectedFiles}
+                            text="Load Catalog"
+                        />
+                    </Tooltip>
+                );
+            case (BrowserMode.RegionExport):
+                const frame = appStore.activeFrame;
+                return (
+                    <Tooltip content={"Export all regions for the currently active image"}>
+                        <AnchorButton
+                            intent={Intent.PRIMARY}
+                            disabled={!FileBrowserDialogComponent.ValidateFilename(fileBrowserStore.exportFilename) || !frame || frame.regionSet.regions.length <= 1}
+                            onClick={this.handleExportRegionsClicked}
+                            text="Export Regions"
+                        />
+                    </Tooltip>
+                );
+            default:
+                return "";
         }
     }
 
@@ -331,15 +358,21 @@ export class FileBrowserDialogComponent extends React.Component {
         let filterName: string;
         let filterDescription: string;
 
-        if (preferenceStore.fileFilteringType === FileFilteringType.Fuzzy) {
-            filterName = "Fuzzy search";
-            filterDescription = "Filter by filename with fuzzy search";
-        } else if (preferenceStore.fileFilteringType === FileFilteringType.Unix) {
-            filterName = "Unix pattern";
-            filterDescription = "Filter by filename using unix-style pattern";
-        } else {
-            filterName = "Regular expression";
-            filterDescription = "Filter by filename using regular expression";
+        switch (preferenceStore.fileFilteringType) {
+            case (FileFilteringType.Fuzzy):
+                filterName = "Fuzzy search";
+                filterDescription = "Filter by filename with fuzzy search";
+                break;
+            case (FileFilteringType.Unix):
+                filterName = "Unix pattern";
+                filterDescription = "Filter by filename using unix-style pattern";
+                break;
+            case (FileFilteringType.Regex):
+                filterName = "Regular expression";
+                filterDescription = "Filter by filename using regular expression";
+                break;
+            default:
+                break;
         }
 
         const filterTypeMenu = (
@@ -440,21 +473,21 @@ export class FileBrowserDialogComponent extends React.Component {
             <DraggableDialogComponent dialogProps={dialogProps} helpType={HelpType.FILE_Browser} minWidth={400} minHeight={400} defaultWidth={1200} defaultHeight={600} enableResizing={true}>
                 <div className="file-path">
                     {this.pathItems &&
-                    <React.Fragment>
-                        <Tooltip content={"Refresh current directory"}>
-                            <AnchorButton
-                                className="refresh-button"
-                                icon="repeat"
-                                onClick={() => fileBrowserStore.selectFolder(fileList.directory, true)}
-                                minimal={true}
+                        <React.Fragment>
+                            <Tooltip content={"Refresh current directory"}>
+                                <AnchorButton
+                                    className="refresh-button"
+                                    icon="repeat"
+                                    onClick={() => fileBrowserStore.selectFolder(fileList.directory, true)}
+                                    minimal={true}
+                                />
+                            </Tooltip>
+                            <Breadcrumbs
+                                className="path-breadcrumbs"
+                                breadcrumbRenderer={this.renderBreadcrumb}
+                                items={this.pathItems}
                             />
-                        </Tooltip>
-                        <Breadcrumbs
-                            className="path-breadcrumbs"
-                            breadcrumbRenderer={this.renderBreadcrumb}
-                            items={this.pathItems}
-                        />
-                    </React.Fragment>
+                        </React.Fragment>
                     }
                 </div>
                 <div className="bp3-dialog-body">
@@ -538,8 +571,9 @@ export class FileBrowserDialogComponent extends React.Component {
     private static GetFileInfoTypes(fileBrowserMode: BrowserMode): Array<FileInfoType> {
         switch (fileBrowserMode) {
             case BrowserMode.File:
-            case BrowserMode.SaveFile:
                 return [FileInfoType.IMAGE_FILE, FileInfoType.IMAGE_HEADER];
+            case BrowserMode.SaveFile:
+                return [FileInfoType.SAVE_IMAGE, FileInfoType.IMAGE_FILE, FileInfoType.IMAGE_HEADER];
             case BrowserMode.Catalog:
                 return [FileInfoType.CATALOG_FILE, FileInfoType.CATALOG_HEADER];
             default:
