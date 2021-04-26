@@ -1,6 +1,7 @@
 import {action, computed, observable, makeObservable} from "mobx";
 import {Colors} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
+import * as AST from "ast_wrapper";
 import {Point2D} from "models";
 import {BackendService} from "services";
 import {add2D, getApproximateEllipsePoints, getApproximatePolygonPoints, isAstBadPoint, midpoint2D, minMax2D, rotate2D, scale2D, simplePolygonPointTest, simplePolygonTest, subtract2D, toFixed, transformPoint} from "utilities";
@@ -41,7 +42,7 @@ export class RegionStore {
     static readonly TARGET_VERTEX_COUNT = 200;
 
     private readonly backendService: BackendService;
-    private readonly regionApproximationMap: Map<number, Point2D[]>;
+    private readonly regionApproximationMap: Map<AST.FrameSet, Point2D[]>;
     public modifiedTimestamp: number;
 
     public static RegionTypeString(regionType: CARTA.RegionType): string {
@@ -185,31 +186,32 @@ export class RegionStore {
 
     @computed get regionProperties(): string {
         const point = this.center;
-        const center = isFinite(point.x) && isFinite(point.y) ? `${toFixed(point.x, 1)}pix, ${toFixed(point.y, 1)}pix` : "Invalid";
+        const center = isFinite(point.x) && isFinite(point.y) ? `${toFixed(point.x, 6)}pix, ${toFixed(point.y, 6)}pix` : "Invalid";
 
         switch (this.regionType) {
             case CARTA.RegionType.POINT:
                 return `Point (pixel) [${center}]`;
             case CARTA.RegionType.RECTANGLE:
                 return `rotbox[[${center}], ` +
-                    `[${toFixed(this.size.x, 1)}pix, ${toFixed(this.size.y, 1)}pix], ` +
-                    `${toFixed(this.rotation, 1)}deg]`;
+                    `[${toFixed(this.size.x, 6)}pix, ${toFixed(this.size.y, 6)}pix], ` +
+                    `${toFixed(this.rotation, 6)}deg]`;
             case CARTA.RegionType.ELLIPSE:
                 return `ellipse[[${center}], ` +
-                    `[${toFixed(this.size.x, 1)}pix, ${toFixed(this.size.y, 1)}pix], ` +
-                    `${toFixed(this.rotation, 1)}deg]`;
+                    `[${toFixed(this.size.x, 6)}pix, ${toFixed(this.size.y, 6)}pix], ` +
+                    `${toFixed(this.rotation, 6)}deg]`;
             case CARTA.RegionType.POLYGON:
-                // TODO: Region properties
-                const bounds = minMax2D(this.controlPoints);
-                return `polygon[[${center}], ` +
-                    `[${toFixed(bounds.maxPoint.x, 1)}pix, ${toFixed(bounds.maxPoint.y, 1)}pix], ` +
-                    `${toFixed(this.rotation, 1)}deg]`;
+                let polygonProperties = "poly[";
+                this.controlPoints.forEach((point, index) => {
+                    polygonProperties += isFinite(point.x) && isFinite(point.y) ? `[${toFixed(point.x, 6)}pix, ${toFixed(point.y, 6)}pix]` : "[Invalid]";
+                    polygonProperties += index !== this.controlPoints.length - 1 ? ", " : "]";
+                });
+                return polygonProperties;
             default:
                 return "Not Implemented";
         }
     }
 
-    public getRegionApproximation(astTransform: number): Point2D[] {
+    public getRegionApproximation(astTransform: AST.FrameSet): Point2D[] {
         let approximatePoints = this.regionApproximationMap.get(astTransform);
         if (!approximatePoints) {
             if (this.regionType === CARTA.RegionType.POINT) {

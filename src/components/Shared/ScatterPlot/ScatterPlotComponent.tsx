@@ -10,9 +10,10 @@ import {ChartArea} from "chart.js";
 import {PlotContainerComponent, TickType, MultiPlotProps} from "components/Shared/LinePlot/PlotContainer/PlotContainerComponent";
 import {ToolbarComponent} from "components/Shared/LinePlot/Toolbar/ToolbarComponent";
 import {ZoomMode, InteractionMode} from "components/Shared/LinePlot/LinePlotComponent";
-import { PlotType } from "../PlotTypeSelector/PlotTypeSelectorComponent";
+import {PlotType} from "../PlotTypeSelector/PlotTypeSelectorComponent";
 import {Point2D} from "models";
-import {clamp, toExponential} from "utilities";
+import {clamp, toExponential, getTimestamp, exportTsvFile} from "utilities";
+import {AppStore} from "stores";
 import "./ScatterPlotComponent.scss";
 
 
@@ -164,11 +165,6 @@ export class ScatterPlotComponent extends React.Component<ScatterPlotComponentPr
         }
     };
 
-    private getTimestamp() {
-        const now = new Date();
-        return `${now.getFullYear()}-${now.getMonth() + 1}-${now.getDate()}-${now.getHours()}-${now.getMinutes()}-${now.getSeconds()}`;
-    }
-
     private genBorderRect = () => {
         const chartArea = this.chartArea;
         let borderRect = null;
@@ -304,13 +300,13 @@ export class ScatterPlotComponent extends React.Component<ScatterPlotComponentPr
         composedCanvas.height = canvas.height;
 
         const ctx = composedCanvas.getContext("2d");
-        ctx.fillStyle = "rgba(255, 255, 255, 0.0)";
+        ctx.fillStyle = AppStore.Instance.preferenceStore.transparentImageBackground ? "rgba(255, 255, 255, 0.0)" : (this.props.darkMode ?  Colors.DARK_GRAY3 : Colors.LIGHT_GRAY5);
         ctx.fillRect(0, 0, composedCanvas.width, composedCanvas.height);
         ctx.drawImage(canvas, 0, 0);
 
         composedCanvas.toBlob((blob) => {
             const link = document.createElement("a") as HTMLAnchorElement;
-            link.download = `${imageName}-${plotName.replace(" ", "-")}-${this.getTimestamp()}.png`;
+            link.download = `${imageName}-${plotName.replace(" ", "-")}-${getTimestamp()}.png`;
             link.href = URL.createObjectURL(blob);
             link.dispatchEvent(new MouseEvent("click"));
         }, "image/png");
@@ -347,14 +343,7 @@ export class ScatterPlotComponent extends React.Component<ScatterPlotComponentPr
             }
         }
 
-        const tsvData = `data:text/tab-separated-values;charset=utf-8,${comment}\n${header}\n${rows.join("\n")}\n`;
-
-        const dataURL = encodeURI(tsvData).replace(/#/g, "%23");
-
-        const a = document.createElement("a") as HTMLAnchorElement;
-        a.href = dataURL;
-        a.download = `${imageName}-${plotName.replace(" ", "-")}-${this.getTimestamp()}.tsv`;
-        a.dispatchEvent(new MouseEvent("click"));
+        exportTsvFile(imageName, plotName, `${comment}\n${header}\n${rows.join("\n")}\n`);
     };
 
     onStageMouseMove = (ev) => {
@@ -514,7 +503,9 @@ export class ScatterPlotComponent extends React.Component<ScatterPlotComponentPr
             const zoomMaxX = this.props.xMax + rangeChangeX * (1 - fractionX);
             const zoomMinY = this.props.yMin - rangeChangeY * (1 - fractionY);
             const zoomMaxY = this.props.yMax + rangeChangeY * fractionY;
-            this.props.graphZoomedXY(zoomMinX, zoomMaxX, zoomMinY, zoomMaxY);
+            if (zoomMinX < zoomMaxX && zoomMinY < zoomMaxY) {
+                this.props.graphZoomedXY(zoomMinX, zoomMaxX, zoomMinY, zoomMaxY);   
+            }
         }
     };
 
@@ -589,7 +580,8 @@ export class ScatterPlotComponent extends React.Component<ScatterPlotComponentPr
                 onMouseLeave={this.onMouseLeave}
                 tabIndex={0}
             >
-                <ReactResizeDetector handleWidth handleHeight onResize={this.resize} refreshMode={"throttle"} refreshRate={33}/>
+                <ReactResizeDetector handleWidth handleHeight onResize={this.resize} refreshMode={"throttle"} refreshRate={33}>
+                </ReactResizeDetector>
                 {this.width > 0 && this.height > 0 &&
                 <PlotContainerComponent
                     {...this.props}
@@ -616,12 +608,14 @@ export class ScatterPlotComponent extends React.Component<ScatterPlotComponentPr
                     </Layer>
                 </Stage>
                 }
+                {(this.props.data !== undefined || this.props.multiPlotPropsMap?.size > 0) &&
                 <ToolbarComponent
                     darkMode={this.props.darkMode}
-                    visible={this.isMouseEntered && (this.props.data !== undefined || (this.props.multiPlotPropsMap && this.props.multiPlotPropsMap.size > 0))}
+                    visible={this.isMouseEntered}
                     exportImage={this.exportImage}
                     exportData={this.exportData}
                 />
+                }
             </div>
         );
     }

@@ -6,6 +6,7 @@ import {NonIdealState, Spinner, Tag} from "@blueprintjs/core";
 import ReactResizeDetector from "react-resize-detector";
 import {OverlayComponent} from "./Overlay/OverlayComponent";
 import {CursorOverlayComponent} from "./CursorOverlay/CursorOverlayComponent";
+import {ColorbarComponent} from "./Colorbar/ColorbarComponent";
 import {RasterViewComponent} from "./RasterView/RasterViewComponent";
 import {ToolbarComponent} from "./Toolbar/ToolbarComponent";
 import {BeamProfileOverlayComponent} from "./BeamProfileOverlay/BeamProfileOverlayComponent";
@@ -17,7 +18,7 @@ import {CursorInfo, Point2D} from "models";
 import {toFixed} from "utilities";
 import "./ImageViewComponent.scss";
 
-export const getImageCanvas = (padding: Padding, backgroundColor: string = "rgba(255, 255, 255, 0)"): HTMLCanvasElement => {
+export const getImageCanvas = (padding: Padding, colorbarPosition: string, backgroundColor: string = "rgba(255, 255, 255, 0)"): HTMLCanvasElement => {
     const rasterCanvas = document.getElementById("raster-canvas") as HTMLCanvasElement;
     const contourCanvas = document.getElementById("contour-canvas") as HTMLCanvasElement;
     const overlayCanvas = document.getElementById("overlay-canvas") as HTMLCanvasElement;
@@ -26,9 +27,15 @@ export const getImageCanvas = (padding: Padding, backgroundColor: string = "rgba
         return null;
     }
 
+    let colorbarCanvas: HTMLCanvasElement;
     let regionCanvas: HTMLCanvasElement;
     let beamProfileCanvas: HTMLCanvasElement;
     let catalogCanvas: HTMLCanvasElement;
+    const colorbarQuery = $(".colorbar-stage").children().children("canvas");
+    if (colorbarQuery && colorbarQuery.length) {
+        colorbarCanvas = colorbarQuery[0] as HTMLCanvasElement;
+    }
+
     const beamProfileQuery = $(".beam-profile-stage").children().children("canvas");
     if (beamProfileQuery && beamProfileQuery.length) {
         beamProfileCanvas = beamProfileQuery[0] as HTMLCanvasElement;
@@ -53,6 +60,26 @@ export const getImageCanvas = (padding: Padding, backgroundColor: string = "rgba
     ctx.fillRect(0, 0, composedCanvas.width, composedCanvas.height);
     ctx.drawImage(rasterCanvas, padding.left * devicePixelRatio, padding.top * devicePixelRatio);
     ctx.drawImage(contourCanvas, padding.left * devicePixelRatio, padding.top * devicePixelRatio);
+    if (colorbarCanvas) {
+        let xPos, yPos;
+        switch (colorbarPosition) {
+            case "top":
+                xPos = 0;
+                yPos = padding.top * devicePixelRatio - colorbarCanvas.height;
+                break;
+            case "bottom":
+                xPos = 0;
+                yPos = overlayCanvas.height - colorbarCanvas.height - AppStore.Instance.overlayStore.colorbarHoverInfoHeight * devicePixelRatio;
+                break;
+            case "right":
+            default:
+                xPos = padding.left * devicePixelRatio + rasterCanvas.width;
+                yPos = 0;
+                break;
+        }
+        ctx.drawImage(colorbarCanvas, xPos, yPos);
+    }
+
     if (beamProfileCanvas) {
         ctx.drawImage(beamProfileCanvas, padding.left * devicePixelRatio, padding.top * devicePixelRatio);
     }
@@ -212,6 +239,9 @@ export class ImageViewComponent extends React.Component<WidgetProps> {
                         showStokes={true}
                     />
                     }
+                    {appStore.activeFrame && overlayStore.colorbar.visible &&
+                    <ColorbarComponent/>
+                    }
                     {appStore.activeFrame &&
                     <BeamProfileOverlayComponent
                         top={overlayStore.padding.top}
@@ -277,7 +307,8 @@ export class ImageViewComponent extends React.Component<WidgetProps> {
                     docked={this.props.docked}
                 />
                 {divContents}
-                <ReactResizeDetector handleWidth handleHeight onResize={this.onResize} refreshMode={"throttle"} refreshRate={33}/>
+                <ReactResizeDetector handleWidth handleHeight onResize={this.onResize} refreshMode={"throttle"} refreshRate={33}>
+                </ReactResizeDetector>
             </div>
         );
     }

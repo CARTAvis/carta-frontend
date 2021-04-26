@@ -274,7 +274,8 @@ export class LayerListComponent extends React.Component<WidgetProps> {
             return (
                 <div className="layer-list-widget">
                     <NonIdealState icon={"folder-open"} title={"No file loaded"} description={"Load a file using the menu"}/>;
-                    <ReactResizeDetector handleWidth handleHeight onResize={this.onResize}/>
+                    <ReactResizeDetector handleWidth handleHeight onResize={this.onResize}>
+                    </ReactResizeDetector>
                 </div>
             );
         }
@@ -319,7 +320,9 @@ export class LayerListComponent extends React.Component<WidgetProps> {
                     <Column columnHeaderCellRenderer={this.columnHeaderRenderer} cellRenderer={this.stokesRenderer}/>
                 </Table>
                 }
-                <ReactResizeDetector handleWidth handleHeight onResize={this.onResize}/>
+                <ReactResizeDetector handleWidth handleHeight onResize={this.onResize}>
+
+                </ReactResizeDetector>
             </div>
         );
     }

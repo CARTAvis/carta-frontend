@@ -35,7 +35,18 @@ Module.onReady = new Promise(function (func) {
     Module.ZstdReady = true;
 });
 
-function resizeAndFillBuffers(src: TypedArray, destSize) {
+type TypedJSArray =
+    | Uint8Array
+    | Uint8ClampedArray
+    | Uint16Array
+    | Uint32Array
+    | Int8Array
+    | Int16Array
+    | Int32Array
+    | Float32Array
+    | Float64Array;
+
+function resizeAndFillBuffers(src: TypedJSArray, destSize) {
     const srcSize = src.byteLength;
 
     // resize src if buffer is not big enough

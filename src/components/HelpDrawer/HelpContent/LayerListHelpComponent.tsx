@@ -1,7 +1,7 @@
 import * as React from "react";
 import {ImageComponent} from "./ImageComponent";
-import * as headLayerButton from "static/help/head_layer_button.png";
-import * as headLayerButton_d from "static/help/head_layer_button_d.png";
+import headLayerButton from "static/help/head_layer_button.png";
+import headLayerButton_d from "static/help/head_layer_button_d.png";
 
 export class LayerListHelpComponent extends React.Component {
     public render() {

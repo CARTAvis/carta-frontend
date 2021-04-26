@@ -5,7 +5,7 @@ import {AnchorButton, Button, Classes, ControlGroup, FormGroup, HTMLSelect, Inte
 import {Cell, Column, Regions, RenderMode, SelectionModes, Table} from "@blueprintjs/table";
 import SplitPane, { Pane } from "react-split-pane";
 import ReactResizeDetector from "react-resize-detector";
-import {SafeNumericInput, TableComponent, TableComponentProps, TableType} from "components/Shared";
+import {SafeNumericInput, FilterableTableComponent, FilterableTableComponentProps} from "components/Shared";
 import {AppStore, HelpType, DefaultWidgetConfig, WidgetProps, WidgetsStore} from "stores";
 import {RedshiftType, SpectralLineHeaders, SpectralLineQueryWidgetStore, SpectralLineQueryRangeType, SpectralLineQueryUnit} from "stores/widgets";
 import "./SpectralLineQueryComponent.scss";
@@ -130,11 +130,11 @@ export class SpectralLineQueryComponent extends React.Component<WidgetProps> {
 
     private renderSwitchButtonCell(rowIndex: number, columnName: SpectralLineHeaders) {
         const widgetStore = this.widgetStore;
-        const display = widgetStore.headerDisplay.get(columnName);
+        const display = widgetStore.controlHeader?.get(columnName)?.display;
         return (
             <Cell className="header-table-cell" key={`cell_switch_${rowIndex}`}>
                 <React.Fragment>
-                    <Switch className="cell-switch-button" key={`cell_switch_button_${rowIndex}`} checked={display} onChange={() => widgetStore.setHeaderDisplay(columnName)}/>
+                    <Switch className="cell-switch-button" key={`cell_switch_button_${rowIndex}`} checked={display ?? false} onChange={(ev) => widgetStore.setHeaderDisplay(ev.currentTarget.checked, columnName)}/>
                 </React.Fragment>
             </Cell>
         );
@@ -147,9 +147,9 @@ export class SpectralLineQueryComponent extends React.Component<WidgetProps> {
     private createHeaderTable() {
         const headerNames = [];
         const headerDescriptions = [];
-        this.widgetStore.formalizedHeaders.forEach(header => {
+        this.widgetStore.columnHeaders?.forEach(header => {
             headerNames.push(header.name);
-            headerDescriptions.push(header.desc);
+            headerDescriptions.push(header.description);
         });
         const tableColumns = [];
         const columnName = this.renderDataColumn(HeaderTableColumnName.Name, headerNames);
@@ -162,7 +162,7 @@ export class SpectralLineQueryComponent extends React.Component<WidgetProps> {
         return (
             <Table
                 ref={(ref) => this.headerTableRef = ref}
-                numRows={this.widgetStore.formalizedHeaders.length}
+                numRows={this.widgetStore.columnHeaders?.length}
                 enableRowReordering={false}
                 renderMode={RenderMode.BATCH}
                 selectionModes={SelectionModes.NONE}
@@ -195,15 +195,23 @@ export class SpectralLineQueryComponent extends React.Component<WidgetProps> {
         }
     };
 
+    private handleFilter = () => {
+        this.widgetStore.filter();
+        this.resultTableRef?.scrollToRegion(Regions.row(0));
+    };
+
+    private handleResetFilter = () => {
+        this.widgetStore.resetFilter()
+        this.resultTableRef?.scrollToRegion(Regions.row(0));
+    };
+
     private handlePlot = () => {
         const widgetStore = this.widgetStore;
         const appStore = AppStore.Instance;
         const frame = appStore.activeFrame;
-        if (widgetStore.selectedSpectralProfilerID && frame) {
-            const selectedWidgetStore = appStore.widgetsStore.getSpectralWidgetStoreByID(widgetStore.selectedSpectralProfilerID);
-            if (selectedWidgetStore) {
-                selectedWidgetStore.addSpectralLines(widgetStore.selectedLines);
-            }
+        const lines = widgetStore.getSelectedLines();
+        if (widgetStore.selectedSpectralProfilerID && frame && lines?.length > 0) {
+            appStore.widgetsStore.getSpectralWidgetStoreByID(widgetStore.selectedSpectralProfilerID)?.addSpectralLines(lines);
         }
     };
 
@@ -221,6 +229,9 @@ export class SpectralLineQueryComponent extends React.Component<WidgetProps> {
     render() {
         const appStore = AppStore.Instance;
         const widgetStore = this.widgetStore;
+        // trigger re-render of SpectralLineQueryComponent while reset filter string
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        const filters = widgetStore.filters;
 
         const inputByRange = (
             <React.Fragment>
@@ -343,20 +354,18 @@ export class SpectralLineQueryComponent extends React.Component<WidgetProps> {
             </Popover>
         );
 
-        const queryResultTableProps: TableComponentProps = {
-            type: TableType.Normal,
-            dataset: widgetStore.queryResult,
+        const queryResultTableProps: FilterableTableComponentProps = {
+            filter: widgetStore.controlHeader,
+            dataset: widgetStore.filterResult,
             columnHeaders: widgetStore.displayedColumnHeaders,
-            numVisibleRows: widgetStore.numDataRows,
-            manualSelectionProps: {
-                isSelectingAll: widgetStore.isSelectingAllLines,
-                isSelectingIndeterminate: widgetStore.isSelectingIndeterminatedLines,
-                selectAllLines: widgetStore.selectAllLines,
-                selectSingleLine: widgetStore.selectSingleLine
-            },
-            manualSelectionData: widgetStore.manualSelectionData,
-            sortingInfo: widgetStore.sortingInfo,
-            updateTableRef: (ref) => { this.resultTableRef = ref; }
+            numVisibleRows: widgetStore.numVisibleRows,
+            flipRowSelection: widgetStore.selectSingleLine,
+            updateTableRef: (ref) => { this.resultTableRef = ref; },
+            disableSort: true,
+            updateColumnFilter: widgetStore.setColumnFilter,
+            columnWidths: widgetStore.resultTableColumnWidths,
+            updateTableColumnWidth: widgetStore.setResultTableColumnWidth,
+            tableHeaders: widgetStore.columnHeaders
         };
 
         let className = "spectral-line-query-widget";
@@ -364,10 +373,10 @@ export class SpectralLineQueryComponent extends React.Component<WidgetProps> {
             className += " dark-theme";
         }
 
-        const isSelectedLinesUnderLimit = widgetStore.selectedLines?.length < PLOT_LINES_LIMIT;
+        const isSelectedLinesUnderLimit = widgetStore.numSelectedLines <= PLOT_LINES_LIMIT;
         const hint = (
             <span><br/><i><small>
-                {!isSelectedLinesUnderLimit ? `Please select fewer than ${PLOT_LINES_LIMIT} lines.` : ""}
+                {!isSelectedLinesUnderLimit ? `Please select no greater than ${PLOT_LINES_LIMIT} lines.` : ""}
                 {!isSelectedLinesUnderLimit && !isSelectedWidgetExisted ? <br/> : ""}
                 {!isSelectedWidgetExisted ? "Please select one spectral profiler." : ""}
             </small></i></span>
@@ -392,27 +401,40 @@ export class SpectralLineQueryComponent extends React.Component<WidgetProps> {
                         <Pane className={"result-table-container"}>
                             {redshiftPanel}
                             <div className="result-table">
-                                {this.width > 0 && <TableComponent {...queryResultTableProps}/>}
+                                {this.width > 0 && <FilterableTableComponent {...queryResultTableProps}/>}
                             </div>
                         </Pane>
                     </SplitPane>
                 </div>
                 <div className="bp3-dialog-footer">
-                    <div className="result-table-info"><pre>Showing {widgetStore.numDataRows} entries.{widgetStore.selectedLines?.length > 0 ? ` Selected ${widgetStore.selectedLines.length} lines.` : ""}</pre></div>
+                    <div className="result-table-info">
+                        <pre>{widgetStore.resultTableInfo}</pre>
+                    </div>
                     <div className="bp3-dialog-footer-actions">
                         <FormGroup inline={true} label={this.width < MINIMUM_WIDTH ? "" : "Spectral Profiler"}>
                             {widgetMenu}
                         </FormGroup>
+                        <Tooltip content="Apply filter" position={Position.BOTTOM}>
+                            <AnchorButton
+                                text="Filter"
+                                intent={Intent.PRIMARY}
+                                disabled={widgetStore.numDataRows <= 0}
+                                onClick={this.handleFilter}
+                            />
+                        </Tooltip>
+                        <Tooltip content="Reset filter" position={Position.BOTTOM}>
+                            <AnchorButton text="Reset" intent={Intent.PRIMARY} onClick={this.handleResetFilter}/>
+                        </Tooltip>
                         <Tooltip content={plotTip} position={Position.BOTTOM}>
                             <AnchorButton
                                 text="Plot"
                                 intent={Intent.PRIMARY}
-                                disabled={!appStore.activeFrame || widgetStore.queryResult.size <= 0 || !isSelectedWidgetExisted || !isSelectedLinesUnderLimit}
+                                disabled={!appStore.activeFrame || widgetStore.filterResult.size <= 0 || !isSelectedWidgetExisted || !isSelectedLinesUnderLimit}
                                 onClick={this.handlePlot}
                             />
                         </Tooltip>
                         <Tooltip content="Clear plotted lines" position={Position.BOTTOM}>
-                            <AnchorButton text="Clear" intent={Intent.PRIMARY} disabled={!appStore.activeFrame || !isSelectedWidgetExisted || widgetStore.queryResult.size <= 0} onClick={this.handleClear}/>
+                            <AnchorButton text="Clear" intent={Intent.PRIMARY} disabled={!appStore.activeFrame || !isSelectedWidgetExisted || widgetStore.filterResult.size <= 0} onClick={this.handleClear}/>
                         </Tooltip>
                     </div>
                 </div>
@@ -421,7 +443,8 @@ export class SpectralLineQueryComponent extends React.Component<WidgetProps> {
                         <Spinner intent={Intent.PRIMARY} size={30} value={null}/>
                     </div>
                 </Overlay>
-                <ReactResizeDetector handleWidth handleHeight onResize={this.onResize} refreshMode={"throttle"} refreshRate={33}/>
+                <ReactResizeDetector handleWidth handleHeight onResize={this.onResize} refreshMode={"throttle"} refreshRate={33}>
+                </ReactResizeDetector>
             </div>
         );
     }

@@ -1,7 +1,7 @@
 import * as React from "react";
 import {ImageComponent} from "./ImageComponent";
-import * as headPreferenceButton from "static/help/head_preference_button.png";
-import * as headPreferenceButton_d from "static/help/head_preference_button_d.png";
+import headPreferenceButton from "static/help/head_preference_button.png";
+import headPreferenceButton_d from "static/help/head_preference_button_d.png";
 
 export class PreferencesHelpComponent extends React.Component {
     public render() {

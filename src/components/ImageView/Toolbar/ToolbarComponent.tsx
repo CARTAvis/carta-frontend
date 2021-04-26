@@ -69,6 +69,15 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
         }
     }
 
+    exportImageTooltip = () => {
+        return (
+            <span><br/><i><small>
+                Background color is {AppStore.Instance.preferenceStore.transparentImageBackground ? "transparent" : "filled"}.<br/>
+                {AppStore.Instance.preferenceStore.transparentImageBackground ? "Disable" : "Enable"} transparent image background in Preferences.<br/>
+            </small></i></span>
+        );
+    };
+
     render() {
         const appStore = AppStore.Instance;
         const preferenceStore = appStore.preferenceStore;
@@ -232,7 +241,7 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
                 <Tooltip position={tooltipPosition} content="Toggle labels">
                     <AnchorButton icon="numerical" active={!overlay.labelsHidden} onClick={overlay.toggleLabels}/>
                 </Tooltip>
-                <Tooltip position={tooltipPosition} content={`Export image (${appStore.modifierString}E)`}>
+                <Tooltip position={tooltipPosition} content={<span>{`Export image (${appStore.modifierString}E)`}{this.exportImageTooltip()}</span>}>
                     <AnchorButton icon="floppy-disk" onClick={appStore.exportImage}/>
                 </Tooltip>
             </ButtonGroup>

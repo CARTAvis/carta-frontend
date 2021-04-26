@@ -1,23 +1,23 @@
 import * as React from "react";
 import {ImageComponent} from "./ImageComponent";
-import * as catalogSelectionButton from "static/help/catalogue_selection_button.png";
-import * as catalogSelectionButton_d from "static/help/catalogue_selection_button_d.png";
-import * as contourButton from "static/help/contour_button.png";
-import * as contourButton_d from "static/help/contour_button_d.png";
-import * as exportPNGButton from "static/help/export_png_button.png";
-import * as exportPNGButton_d from "static/help/export_png_button_d.png";
-import * as imageInfoButton from "static/help/image_info_button.png";
-import * as imageInfoButton_d from "static/help/image_info_button_d.png";
-import * as imageTools from "static/help/image_tools.png";
-import * as imageTools_d from "static/help/image_tools_d.png";
-import * as regionButton from "static/help/region_button.png";
-import * as regionButton_d from "static/help/region_button_d.png";
-import * as WCSMatchButton from "static/help/wcs_match_button.png";
-import * as WCSMatchButton_d from "static/help/wcs_match_button_d.png";
-import * as zoomButton from "static/help/zoom_button.png";
-import * as zoomButton_d from "static/help/zoom_button_d.png";
-import * as headCatalogueButton from "static/help/head_catalogue_button.png";
-import * as headCatalogueButton_d from "static/help/head_catalogue_button_d.png";
+import catalogSelectionButton from "static/help/catalogue_selection_button.png";
+import catalogSelectionButton_d from "static/help/catalogue_selection_button_d.png";
+import contourButton from "static/help/contour_button.png";
+import contourButton_d from "static/help/contour_button_d.png";
+import exportPNGButton from "static/help/export_png_button.png";
+import exportPNGButton_d from "static/help/export_png_button_d.png";
+import imageInfoButton from "static/help/image_info_button.png";
+import imageInfoButton_d from "static/help/image_info_button_d.png";
+import imageTools from "static/help/image_tools.png";
+import imageTools_d from "static/help/image_tools_d.png";
+import regionButton from "static/help/region_button.png";
+import regionButton_d from "static/help/region_button_d.png";
+import WCSMatchButton from "static/help/wcs_match_button.png";
+import WCSMatchButton_d from "static/help/wcs_match_button_d.png";
+import zoomButton from "static/help/zoom_button.png";
+import zoomButton_d from "static/help/zoom_button_d.png";
+import headCatalogueButton from "static/help/head_catalogue_button.png";
+import headCatalogueButton_d from "static/help/head_catalogue_button_d.png";
 
 export class ImageViewHelpComponent extends React.Component {
     public render() {

@@ -11,7 +11,7 @@ import {SpectralProfilerToolbarComponent} from "./SpectralProfilerToolbarCompone
 import {SpectralProfileStore, WidgetProps, HelpType, AnimatorStore, WidgetsStore, AppStore, DefaultWidgetConfig, RegionStore} from "stores";
 import {SpectralProfileWidgetStore} from "stores/widgets";
 import {Point2D, ProcessedSpectralProfile} from "models";
-import {binarySearchByX, clamp, formattedExponential, formattedNotation, toExponential, toFixed} from "utilities";
+import {binarySearchByX, clamp, formattedExponential, formattedNotation, toExponential, toFixed, getColorForTheme} from "utilities";
 import "./SpectralProfilerComponent.scss";
 
 type PlotData = { values: Point2D[], smoothingValues: Point2D[], xMin: number, xMax: number, yMin: number, yMax: number, yMean: number, yRms: number, progress: number };
@@ -378,8 +378,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
 
         if (this.profileStore && frame) {
             if (frame.spectralAxis && !frame.isCoordChannel) {
-                const spectralSystem = frame.isSpectralSystemConvertible ? frame.spectralSystem : `${frame.spectralInfo.specsys}`;
-                linePlotProps.xLabel = `${spectralSystem && spectralSystem !== "" ? spectralSystem + ", " : ""}${frame.spectralCoordinate}`;
+                linePlotProps.xLabel = frame.spectralLabel;
             }
             if (frame.unit) {
                 let yLabelName = "Value";
@@ -406,12 +405,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
                 linePlotProps.opacity = currentPlotData.progress < 1.0 ? 0.15 + currentPlotData.progress / 4.0 : 1.0;
                 
                 // set line color
-                let primaryLineColor = this.widgetStore.primaryLineColor.colorHex;
-                if (appStore.darkTheme) {
-                    if (!this.widgetStore.primaryLineColor.fixed) {
-                        primaryLineColor = Colors.BLUE4;   
-                    }
-                }
+                let primaryLineColor = getColorForTheme(this.widgetStore.primaryLineColor);
                 linePlotProps.lineColor = primaryLineColor;
                 const smoothingStore = this.widgetStore.smoothingStore;
                 if (smoothingStore.type !== SmoothingType.NONE && currentPlotData?.smoothingValues) {
@@ -422,7 +416,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
                     let smoothingPlotProps: MultiPlotProps = {
                         data: currentPlotData.smoothingValues,
                         type: smoothingStore.lineType,
-                        borderColor: smoothingStore.lineColor.colorHex,
+                        borderColor: getColorForTheme(smoothingStore.lineColor),
                         borderWidth: smoothingStore.lineWidth,
                         pointRadius: smoothingStore.pointRadius,
                         order: 0,
@@ -536,7 +530,8 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
                     </div>
                     <ProfilerInfoComponent info={this.genProfilerInfo()}/>
                 </div>
-                <ReactResizeDetector handleWidth handleHeight onResize={this.onResize} refreshMode={"throttle"} refreshRate={33}/>
+                <ReactResizeDetector handleWidth handleHeight onResize={this.onResize} refreshMode={"throttle"} refreshRate={33}>
+                </ReactResizeDetector>
             </div>
         );
     }

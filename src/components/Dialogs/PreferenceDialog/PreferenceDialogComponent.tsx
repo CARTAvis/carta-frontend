@@ -9,8 +9,7 @@ import {ColorResult} from "react-color";
 import {CARTA} from "carta-protobuf";
 import {DraggableDialogComponent} from "components/Dialogs";
 import {ScalingSelectComponent} from "components/Shared/ScalingSelectComponent/ScalingSelectComponent";
-import {ColorComponent} from "components/ImageView/ImageViewSettingsPanel/ColorComponent";
-import {ColormapComponent, ColorPickerComponent, SafeNumericInput} from "components/Shared";
+import {ColormapComponent, ColorPickerComponent, AutoColorPickerComponent, SafeNumericInput} from "components/Shared";
 import {CompressionQuality, CursorPosition, Event, RegionCreationMode, SPECTRAL_MATCHING_TYPES, SPECTRAL_TYPE_STRING, Theme, TileCache, WCSMatchingType, WCSType, Zoom, ZoomPoint} from "models";
 import {AppStore, BeamType, ContourGeneratorType, FrameScaling, HelpType, PreferenceKeys, PreferenceStore, RegionStore, RenderConfigStore} from "stores";
 import {SWATCH_COLORS} from "utilities";
@@ -103,7 +102,7 @@ export class PreferenceDialogComponent extends React.Component {
                 <FormGroup inline={true} label="Theme">
                     <HTMLSelect
                         value={preference.theme}
-                        onChange={(ev) => appStore.preferenceStore.setPreference(PreferenceKeys.GLOBAL_THEME, ev.currentTarget.value)}
+                        onChange={(ev) => appStore.setTheme(ev.currentTarget.value)}
                     >
                         <option value={Theme.AUTO}>Automatic</option>
                         <option value={Theme.LIGHT}>Light</option>
@@ -167,6 +166,9 @@ export class PreferenceDialogComponent extends React.Component {
                         {SPECTRAL_MATCHING_TYPES.map(type => <option key={type} value={type}>{SPECTRAL_TYPE_STRING.get(type)}</option>)}
                     </HTMLSelect>
                 </FormGroup>
+                <FormGroup inline={true} label="Transparent Image Background">
+                    <Switch checked={preference.transparentImageBackground} onChange={(ev) => preference.setPreference(PreferenceKeys.GLOBAL_TRANSPARENT_IMAGE_BACKGROUND, ev.currentTarget.checked)}/>
+                </FormGroup>
             </React.Fragment>
         );
 
@@ -227,6 +229,9 @@ export class PreferenceDialogComponent extends React.Component {
                         disableAlpha={false}
                         darkTheme={appStore.darkTheme}
                     />
+                </FormGroup>
+                <FormGroup inline={true} label="Smoothed Bias/Contrast">
+                    <Switch checked={preference.useSmoothedBiasContrast} onChange={(ev) => preference.setPreference(PreferenceKeys.RENDER_CONFIG_USE_SMOOTHED_BIAS_CONTRAST, ev.currentTarget.checked)}/>
                 </FormGroup>
             </React.Fragment>
         );
@@ -311,9 +316,11 @@ export class PreferenceDialogComponent extends React.Component {
         const overlayConfigPanel = (
             <React.Fragment>
                 <FormGroup inline={true} label="AST Color">
-                    <ColorComponent
-                        selectedItem={preference.astColor}
-                        onItemSelect={(selected) => preference.setPreference(PreferenceKeys.WCS_OVERLAY_AST_COLOR, selected)}
+                    <AutoColorPickerComponent
+                        color={preference.astColor}
+                        presetColors={SWATCH_COLORS}
+                        setColor={(color: string) => preference.setPreference(PreferenceKeys.WCS_OVERLAY_AST_COLOR, color)}
+                        disableAlpha={true}
                     />
                 </FormGroup>
                 <FormGroup inline={true} label="AST Grid Visible">
@@ -342,12 +349,11 @@ export class PreferenceDialogComponent extends React.Component {
                     />
                 </FormGroup>
                 <FormGroup inline={true} label="Beam Color">
-                    <ColorPickerComponent
-                        color={tinycolor(preference.beamColor).toRgb()}
+                    <AutoColorPickerComponent
+                        color={preference.beamColor}
                         presetColors={SWATCH_COLORS}
-                        setColor={(color: ColorResult) => preference.setPreference(PreferenceKeys.WCS_OVERLAY_BEAM_COLOR, color.hex)}
+                        setColor={(color: string) => preference.setPreference(PreferenceKeys.WCS_OVERLAY_BEAM_COLOR, color)}
                         disableAlpha={true}
-                        darkTheme={appStore.darkTheme}
                     />
                 </FormGroup>
                 <FormGroup inline={true} label="Beam Type">

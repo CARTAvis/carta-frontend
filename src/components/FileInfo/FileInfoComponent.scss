@@ -17,7 +17,7 @@
         }
 
         .bp3-html-select {
-            width: 200px;
+            width: 110px;
         }
     }
 
@@ -32,20 +32,30 @@
         unicode-bidi: embed;
         font-family: monospace;
         white-space: pre;
+        user-select: text;
         cursor: text;
 
         .header-entry {
             padding-right: 15px;
             margin-top: 10px;
             padding-left: 15px;
+
             .header-name {
                 color: $blue2;
                 font-weight: bold;
             }
 
             .header-comment {
-                opacity: 0.5;
+                color: rgba(0, 0, 0, 0.5);
                 font-style: italic;
+            }
+
+            .info-highlight {
+                background-color: yellow;
+            }
+        
+            .info-highlight-selected {
+                background-color: $gold5;
             }
         }
     }
@@ -60,5 +70,26 @@
         flex: 2 2 auto;
         padding: 1px;
         font-family: 'Helvetica Neue', 'Helvetica', 'Arial', sans-serif;
+    }
+
+    .header-search-button {
+        position: absolute;
+        bottom: -40px;
+        right: 0;
+        margin: 0 10px 10px 0;
+        
+        .bp3-button {
+            transition: opacity 400ms;
+            user-select: none;
+        }
+    }
+}
+
+.header-search-input {
+    width: 250px;
+
+    .header-search-iter {
+        color: $gray1;
+        padding-top: 6px;
     }
 }

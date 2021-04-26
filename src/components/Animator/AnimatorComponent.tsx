@@ -460,7 +460,8 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
                     {stokesSlider}
                 </div>
                 }
-                <ReactResizeDetector handleWidth handleHeight onResize={this.onResize} refreshMode={"throttle"} refreshRate={33}/>
+                <ReactResizeDetector handleWidth handleHeight onResize={this.onResize} refreshMode={"throttle"} refreshRate={33}>
+                </ReactResizeDetector>
             </div>
         );
     }

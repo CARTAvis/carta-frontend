@@ -95,7 +95,7 @@ const COMPONENT_CONFIG = new Map<string, any>([
 ]);
 
 export class LayoutConfig {
-    public static LayoutValidator = new Ajv({useDefaults: "empty"}).compile(layoutSchema);
+    public static LayoutValidator = new Ajv({useDefaults: "empty", strictTypes: false}).compile(layoutSchema);
     public static CurrentSchemaVersion = 2;
 
     public static GetPresetConfig = (presetName: string) => {

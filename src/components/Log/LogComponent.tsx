@@ -114,7 +114,7 @@ export class LogComponent extends React.Component<WidgetProps> {
         return (
             <div className="log">
                 {entryElements.length ? (
-                    <ScrollToBottom className="log-entry-list" followButtonClassName="log-entry-follow">
+                    <ScrollToBottom initialScrollBehavior="auto" debug={false} className="log-entry-list" followButtonClassName="log-entry-follow">
                         {entryElements}
                     </ScrollToBottom>
                 ) : <NonIdealState className="log-entry-list" icon="application" title="No log entries"/>}

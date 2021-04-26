@@ -1,50 +1,30 @@
 import * as React from "react";
-import {makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
-import {Alert, Button, FormGroup, MenuItem, Switch} from "@blueprintjs/core";
-import {Select} from "@blueprintjs/select";
-import {AppStore, FrameScaling, RenderConfigStore} from "stores";
-import {ColormapComponent, ScalingSelectComponent, SCALING_POPOVER_PROPS, SafeNumericInput} from "components/Shared";
-
-const HistogramSelect = Select.ofType<boolean>();
+import {action, makeObservable, observable} from "mobx";
+import {Button, Collapse, FormGroup, Switch} from "@blueprintjs/core";
+import {FrameScaling, RenderConfigStore} from "stores";
+import {BiasContrastSelectComponent, ColormapComponent, ScalingSelectComponent, SafeNumericInput} from "components/Shared";
 
 interface ColormapConfigProps {
     renderConfig: RenderConfigStore;
-    onCubeHistogramSelected: () => void;
-    onCubeHistogramCancelled?: () => void;
-    darkTheme: boolean;
-    warnOnCubeHistogram: boolean;
-    showHistogramSelect: boolean;
-    disableHistogramSelect: boolean;
 }
 
 @observer
 export class ColormapConfigComponent extends React.Component<ColormapConfigProps> {
-    @observable showCubeHistogramAlert: boolean;
 
-    constructor(props: any) {
+    @observable extendBiasContrast: boolean = false;
+
+    @action switchExtendBiasContrast = () => {
+        this.extendBiasContrast = !this.extendBiasContrast;
+    };
+
+    constructor(props) {
         super(props);
         makeObservable(this);
     }
 
-    renderHistogramSelectItem = (isCube: boolean, {handleClick, modifiers, query}) => {
-        return <MenuItem text={isCube ? "Per-Cube" : "Per-Channel"} onClick={handleClick} key={isCube ? "cube" : "channel"}/>;
-    };
-
     handleInvertedChanged: React.FormEventHandler<HTMLInputElement> = (evt) => {
         this.props.renderConfig.setInverted(evt.currentTarget.checked);
-    };
-
-    handleHistogramChange = (value: boolean) => {
-        if (value && !this.props.renderConfig.cubeHistogram) {
-            if (this.props.warnOnCubeHistogram) {
-                this.showCubeHistogramAlert = true;
-            } else {
-                this.handleAlertConfirm();
-            }
-        } else {
-            this.props.renderConfig.setUseCubeHistogram(value);
-        }
     };
 
     render() {
@@ -55,21 +35,6 @@ export class ColormapConfigComponent extends React.Component<ColormapConfigProps
         const renderConfig = this.props.renderConfig;
         return (
             <React.Fragment>
-                {this.props.showHistogramSelect &&
-                <FormGroup label={"Histogram"} inline={true} disabled={this.props.disableHistogramSelect}>
-                    <HistogramSelect
-                        activeItem={renderConfig.useCubeHistogram}
-                        popoverProps={SCALING_POPOVER_PROPS}
-                        filterable={false}
-                        items={[true, false]}
-                        onItemSelect={this.handleHistogramChange}
-                        itemRenderer={this.renderHistogramSelectItem}
-                        disabled={this.props.disableHistogramSelect}
-                    >
-                        <Button text={renderConfig.useCubeHistogram ? "Per-Cube" : "Per-Channel"} rightIcon="double-caret-vertical" alignText={"right"} disabled={this.props.disableHistogramSelect}/>
-                    </HistogramSelect>
-                </FormGroup>
-                }
                 <FormGroup label={"Scaling"} inline={true}>
                     <ScalingSelectComponent
                         selectedItem={renderConfig.scaling}
@@ -92,6 +57,8 @@ export class ColormapConfigComponent extends React.Component<ColormapConfigProps
                 {(renderConfig.scaling === FrameScaling.LOG || renderConfig.scaling === FrameScaling.POWER) &&
                 <FormGroup label={"Alpha"} inline={true}>
                     <SafeNumericInput
+                        min={RenderConfigStore.ALPHA_MIN}
+                        max={RenderConfigStore.ALPHA_MAX}
                         buttonPosition={"none"}
                         value={renderConfig.alpha}
                         onValueChange={renderConfig.setAlpha}
@@ -101,6 +68,7 @@ export class ColormapConfigComponent extends React.Component<ColormapConfigProps
                 {renderConfig.scaling === FrameScaling.GAMMA &&
                 <FormGroup label={"Gamma"} inline={true}>
                     <SafeNumericInput
+                        className={'step-input'}
                         min={RenderConfigStore.GAMMA_MIN}
                         max={RenderConfigStore.GAMMA_MAX}
                         stepSize={0.1}
@@ -111,21 +79,34 @@ export class ColormapConfigComponent extends React.Component<ColormapConfigProps
                     />
                 </FormGroup>
                 }
-                <Alert className={AppStore.Instance.darkTheme ? "bp3-dark" : ""} icon={"time"} isOpen={this.showCubeHistogramAlert} onCancel={this.handleAlertCancel} onConfirm={this.handleAlertConfirm} cancelButtonText={"Cancel"}>
-                    <p>
-                        Calculating a cube histogram may take a long time, depending on the size of the file. Are you sure you want to continue?
-                    </p>
-                </Alert>
+                <FormGroup inline={true}>
+                    <Button
+                        minimal={true}
+                        rightIcon={this.extendBiasContrast ? "double-chevron-up" : "double-chevron-down"}
+                        alignText={'right'}
+                        small={true}
+                        onClick={this.switchExtendBiasContrast}
+                    >
+                        {"Bias / Contrast"}
+                    </Button>
+                </FormGroup>
+                <Collapse isOpen={this.extendBiasContrast}>
+                    <BiasContrastSelectComponent
+                        bias={renderConfig.bias}
+                        contrast={renderConfig.contrast}
+                        setBias={renderConfig.setBias}
+                        setContrast={renderConfig.setContrast}
+                        resetBias={renderConfig.resetBias}
+                        resetContrast={renderConfig.resetContrast}
+                        boardWidth={130}
+                        boardHeight={130}
+                        biasMin={RenderConfigStore.BIAS_MIN}
+                        biasMax={RenderConfigStore.BIAS_MAX}
+                        contrastMin={RenderConfigStore.CONTRAST_MIN}
+                        contrastMax={RenderConfigStore.CONTRAST_MAX}
+                    />
+                </Collapse>
             </React.Fragment>
         );
     }
-
-    private handleAlertConfirm = () => {
-        this.props.onCubeHistogramSelected();
-        this.showCubeHistogramAlert = false;
-    };
-
-    private handleAlertCancel = () => {
-        this.showCubeHistogramAlert = false;
-    };
 }

@@ -1,7 +1,7 @@
 import * as React from "react";
 import {ImageComponent} from "./ImageComponent";
-import * as headRenderconfigButton from "static/help/head_renderconfig_button.png";
-import * as headRenderconfigButton_d from "static/help/head_renderconfig_button_d.png";
+import headRenderconfigButton from "static/help/head_renderconfig_button.png";
+import headRenderconfigButton_d from "static/help/head_renderconfig_button_d.png";
 
 export class RenderConfigHelpComponent extends React.Component {
     public render() {

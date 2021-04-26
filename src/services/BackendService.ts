@@ -2,8 +2,8 @@ import {action, observable, makeObservable, runInAction} from "mobx";
 import {CARTA} from "carta-protobuf";
 import {Observable, Observer, Subject, throwError} from "rxjs";
 import {AppStore, PreferenceStore, RegionStore} from "stores";
-import {ApiService} from "./ApiService";
 import {mapToObject} from "utilities";
+import {ApiService} from "./ApiService";
 
 export enum ConnectionStatus {
     CLOSED = 0,
@@ -57,8 +57,7 @@ export class BackendService {
     readonly momentProgressStream: Subject<CARTA.MomentProgress>;
     readonly reconnectStream: Subject<void>;
     readonly scriptingStream: Subject<CARTA.ScriptingRequest>;
-    private readonly handlerMap: Map<CARTA.EventType, HandlerFunction>;
-    private readonly decoderMap: Map<CARTA.EventType, any>;
+    private readonly decoderMap: Map<CARTA.EventType, {messageClass: any, handler: HandlerFunction}>;
 
     private constructor() {
         makeObservable(this);
@@ -83,66 +82,36 @@ export class BackendService {
         this.reconnectStream = new Subject<void>();
 
         // Construct handler and decoder maps
-        this.handlerMap = new Map<CARTA.EventType, HandlerFunction>([
-            [CARTA.EventType.REGISTER_VIEWER_ACK, this.onRegisterViewerAck],
-            [CARTA.EventType.FILE_LIST_RESPONSE, this.onSimpleMappedResponse],
-            [CARTA.EventType.REGION_LIST_RESPONSE, this.onSimpleMappedResponse],
-            [CARTA.EventType.CATALOG_LIST_RESPONSE, this.onSimpleMappedResponse],
-            [CARTA.EventType.FILE_INFO_RESPONSE, this.onSimpleMappedResponse],
-            [CARTA.EventType.REGION_FILE_INFO_RESPONSE, this.onSimpleMappedResponse],
-            [CARTA.EventType.CATALOG_FILE_INFO_RESPONSE, this.onSimpleMappedResponse],
-            [CARTA.EventType.OPEN_FILE_ACK, this.onSimpleMappedResponse],
-            [CARTA.EventType.SAVE_FILE_ACK, this.onSimpleMappedResponse],
-            [CARTA.EventType.OPEN_CATALOG_FILE_ACK, this.onSimpleMappedResponse],
-            [CARTA.EventType.IMPORT_REGION_ACK, this.onSimpleMappedResponse],
-            [CARTA.EventType.EXPORT_REGION_ACK, this.onSimpleMappedResponse],
-            [CARTA.EventType.SET_REGION_ACK, this.onSimpleMappedResponse],
-            [CARTA.EventType.RESUME_SESSION_ACK, this.onSimpleMappedResponse],
-            [CARTA.EventType.START_ANIMATION_ACK, this.onStartAnimationAck],
-            [CARTA.EventType.RASTER_TILE_DATA, this.onStreamedRasterTileData],
-            [CARTA.EventType.REGION_HISTOGRAM_DATA, this.onStreamedRegionHistogramData],
-            [CARTA.EventType.ERROR_DATA, this.onStreamedErrorData],
-            [CARTA.EventType.SPATIAL_PROFILE_DATA, this.onStreamedSpatialProfileData],
-            [CARTA.EventType.SPECTRAL_PROFILE_DATA, this.onStreamedSpectralProfileData],
-            [CARTA.EventType.REGION_STATS_DATA, this.onStreamedRegionStatsData],
-            [CARTA.EventType.CONTOUR_IMAGE_DATA, this.onStreamedContourData],
-            [CARTA.EventType.CATALOG_FILTER_RESPONSE, this.onStreamedCatalogData],
-            [CARTA.EventType.RASTER_TILE_SYNC, this.onStreamedRasterSync],
-            [CARTA.EventType.MOMENT_PROGRESS, this.onStreamedMomentProgress],
-            [CARTA.EventType.MOMENT_RESPONSE, this.onSimpleMappedResponse],
-            [CARTA.EventType.SCRIPTING_REQUEST, this.onScriptingRequest],
-            [CARTA.EventType.SPECTRAL_LINE_RESPONSE, this.onSimpleMappedResponse]
-        ]);
-
-        this.decoderMap = new Map<CARTA.EventType, any>([
-            [CARTA.EventType.REGISTER_VIEWER_ACK, CARTA.RegisterViewerAck],
-            [CARTA.EventType.FILE_LIST_RESPONSE, CARTA.FileListResponse],
-            [CARTA.EventType.REGION_LIST_RESPONSE, CARTA.RegionListResponse],
-            [CARTA.EventType.CATALOG_LIST_RESPONSE, CARTA.CatalogListResponse],
-            [CARTA.EventType.FILE_INFO_RESPONSE, CARTA.FileInfoResponse],
-            [CARTA.EventType.REGION_FILE_INFO_RESPONSE, CARTA.RegionFileInfoResponse],
-            [CARTA.EventType.CATALOG_FILE_INFO_RESPONSE, CARTA.CatalogFileInfoResponse],
-            [CARTA.EventType.OPEN_FILE_ACK, CARTA.OpenFileAck],
-            [CARTA.EventType.SAVE_FILE_ACK, CARTA.SaveFileAck],
-            [CARTA.EventType.OPEN_CATALOG_FILE_ACK, CARTA.OpenCatalogFileAck],
-            [CARTA.EventType.IMPORT_REGION_ACK, CARTA.ImportRegionAck],
-            [CARTA.EventType.EXPORT_REGION_ACK, CARTA.ExportRegionAck],
-            [CARTA.EventType.SET_REGION_ACK, CARTA.SetRegionAck],
-            [CARTA.EventType.RESUME_SESSION_ACK, CARTA.ResumeSessionAck],
-            [CARTA.EventType.START_ANIMATION_ACK, CARTA.StartAnimationAck],
-            [CARTA.EventType.RASTER_TILE_DATA, CARTA.RasterTileData],
-            [CARTA.EventType.REGION_HISTOGRAM_DATA, CARTA.RegionHistogramData],
-            [CARTA.EventType.ERROR_DATA, CARTA.ErrorData],
-            [CARTA.EventType.SPATIAL_PROFILE_DATA, CARTA.SpatialProfileData],
-            [CARTA.EventType.SPECTRAL_PROFILE_DATA, CARTA.SpectralProfileData],
-            [CARTA.EventType.REGION_STATS_DATA, CARTA.RegionStatsData],
-            [CARTA.EventType.CONTOUR_IMAGE_DATA, CARTA.ContourImageData],
-            [CARTA.EventType.CATALOG_FILTER_RESPONSE, CARTA.CatalogFilterResponse],
-            [CARTA.EventType.RASTER_TILE_SYNC, CARTA.RasterTileSync],
-            [CARTA.EventType.MOMENT_PROGRESS, CARTA.MomentProgress],
-            [CARTA.EventType.MOMENT_RESPONSE, CARTA.MomentResponse],
-            [CARTA.EventType.SCRIPTING_REQUEST, CARTA.ScriptingRequest],
-            [CARTA.EventType.SPECTRAL_LINE_RESPONSE, CARTA.SpectralLineResponse]
+        this.decoderMap = new Map<CARTA.EventType, { messageClass: any, handler: HandlerFunction }>([
+            [CARTA.EventType.REGISTER_VIEWER_ACK, {messageClass: CARTA.RegisterViewerAck, handler: this.onRegisterViewerAck}],
+            [CARTA.EventType.FILE_LIST_RESPONSE, {messageClass: CARTA.FileListResponse, handler: this.onSimpleMappedResponse}],
+            [CARTA.EventType.REGION_LIST_RESPONSE, {messageClass: CARTA.RegionListResponse, handler: this.onSimpleMappedResponse}],
+            [CARTA.EventType.CATALOG_LIST_RESPONSE, {messageClass: CARTA.CatalogListResponse, handler: this.onSimpleMappedResponse}],
+            [CARTA.EventType.FILE_INFO_RESPONSE, {messageClass: CARTA.FileInfoResponse, handler: this.onSimpleMappedResponse}],
+            [CARTA.EventType.REGION_FILE_INFO_RESPONSE, {messageClass: CARTA.RegionFileInfoResponse, handler: this.onSimpleMappedResponse}],
+            [CARTA.EventType.CATALOG_FILE_INFO_RESPONSE, {messageClass: CARTA.CatalogFileInfoResponse, handler: this.onSimpleMappedResponse}],
+            [CARTA.EventType.OPEN_FILE_ACK, {messageClass: CARTA.OpenFileAck, handler: this.onSimpleMappedResponse}],
+            [CARTA.EventType.SAVE_FILE_ACK, {messageClass: CARTA.SaveFileAck, handler: this.onSimpleMappedResponse}],
+            [CARTA.EventType.OPEN_CATALOG_FILE_ACK, {messageClass: CARTA.OpenCatalogFileAck, handler: this.onSimpleMappedResponse}],
+            [CARTA.EventType.IMPORT_REGION_ACK, {messageClass: CARTA.ImportRegionAck, handler: this.onSimpleMappedResponse}],
+            [CARTA.EventType.EXPORT_REGION_ACK, {messageClass: CARTA.ExportRegionAck, handler: this.onSimpleMappedResponse}],
+            [CARTA.EventType.SET_REGION_ACK, {messageClass: CARTA.SetRegionAck, handler: this.onSimpleMappedResponse}],
+            [CARTA.EventType.RESUME_SESSION_ACK, {messageClass: CARTA.ResumeSessionAck, handler: this.onSimpleMappedResponse}],
+            [CARTA.EventType.START_ANIMATION_ACK, {messageClass: CARTA.StartAnimationAck, handler: this.onStartAnimationAck}],
+            [CARTA.EventType.RASTER_TILE_DATA, {messageClass: CARTA.RasterTileData, handler: this.onStreamedRasterTileData}],
+            [CARTA.EventType.REGION_HISTOGRAM_DATA, {messageClass: CARTA.RegionHistogramData, handler: this.onStreamedRegionHistogramData}],
+            [CARTA.EventType.ERROR_DATA, {messageClass: CARTA.ErrorData, handler: this.onStreamedErrorData}],
+            [CARTA.EventType.SPATIAL_PROFILE_DATA, {messageClass: CARTA.SpatialProfileData, handler: this.onStreamedSpatialProfileData}],
+            [CARTA.EventType.SPECTRAL_PROFILE_DATA, {messageClass: CARTA.SpectralProfileData, handler: this.onStreamedSpectralProfileData}],
+            [CARTA.EventType.REGION_STATS_DATA, {messageClass: CARTA.RegionStatsData, handler: this.onStreamedRegionStatsData}],
+            [CARTA.EventType.CONTOUR_IMAGE_DATA, {messageClass: CARTA.ContourImageData, handler: this.onStreamedContourData}],
+            [CARTA.EventType.CATALOG_FILTER_RESPONSE, {messageClass: CARTA.CatalogFilterResponse, handler: this.onStreamedCatalogData}],
+            [CARTA.EventType.RASTER_TILE_SYNC, {messageClass: CARTA.RasterTileSync, handler: this.onStreamedRasterSync}],
+            [CARTA.EventType.MOMENT_PROGRESS, {messageClass: CARTA.MomentProgress, handler: this.onStreamedMomentProgress}],
+            [CARTA.EventType.MOMENT_RESPONSE, {messageClass: CARTA.MomentResponse, handler: this.onSimpleMappedResponse}],
+            [CARTA.EventType.SCRIPTING_REQUEST, {messageClass: CARTA.ScriptingRequest, handler: this.onScriptingRequest}],
+            [CARTA.EventType.SPECTRAL_LINE_RESPONSE, {messageClass: CARTA.SpectralLineResponse, handler: this.onSimpleMappedResponse}],
+            [CARTA.EventType.CONCAT_STOKES_FILES_ACK, {messageClass: CARTA.ConcatStokesFilesAck, handler: this.onSimpleMappedResponse}]
         ]);
 
         // check ping every 5 seconds
@@ -381,6 +350,29 @@ export class BackendService {
         }
     }
 
+    @action("load individual stokes")
+    loadStokeFiles(stokesFiles: CARTA.IStokesFile[], fileId: number, renderMode: CARTA.RenderMode): Observable<CARTA.ConcatStokesFilesAck> {
+        if (this.connectionStatus !== ConnectionStatus.ACTIVE) {
+            return throwError(new Error("Not connected"));
+        } else {
+            const concatStokes: CARTA.IConcatStokesFiles= {
+                stokesFiles: stokesFiles,
+                fileId: fileId,
+                renderMode: renderMode
+            }
+            const message = CARTA.ConcatStokesFiles.create(concatStokes);
+            const requestId = this.eventCounter;
+            this.logEvent(CARTA.EventType.CONCAT_STOKES_FILES, requestId, message, false);
+            if (this.sendEvent(CARTA.EventType.CONCAT_STOKES_FILES, CARTA.ConcatStokesFiles.encode(message).finish())) {
+                return new Observable<CARTA.ConcatStokesFilesAck>(observer => {
+                    this.observerRequestMap.set(requestId, observer);
+                });
+            } else {
+                return throwError(new Error("Could not send event"));
+            }
+        }
+    }
+
     @action("load catalog file")
     loadCatalogFile(directory: string, name: string, fileId: number, previewDataSize: number): Observable<CARTA.OpenCatalogFileAck> {
         if (this.connectionStatus !== ConnectionStatus.ACTIVE) {
@@ -412,11 +404,11 @@ export class BackendService {
     }
 
     @action("save file")
-    saveFile(fileId: number, outputFileDirectory: string, outputFileName: string, outputFileType: CARTA.FileType): Observable<CARTA.SaveFileAck> {
+    saveFile(fileId: number, outputFileDirectory: string, outputFileName: string, outputFileType: CARTA.FileType, regionId?: number, channels?: number[], stokes?: number[], keepDegenerate?: boolean): Observable<CARTA.SaveFileAck> {
         if (this.connectionStatus !== ConnectionStatus.ACTIVE) {
             return throwError(new Error("Not connected"));
         } else {
-            const message = CARTA.SaveFile.create({fileId, outputFileDirectory, outputFileName, outputFileType});
+            const message = CARTA.SaveFile.create({fileId, outputFileDirectory, outputFileName, outputFileType, regionId, channels, stokes, keepDegenerate});
             const requestId = this.eventCounter;
             this.logEvent(CARTA.EventType.SAVE_FILE, this.eventCounter, message, false);
             if (this.sendEvent(CARTA.EventType.SAVE_FILE, CARTA.SaveFile.encode(message).finish())) {
@@ -742,17 +734,12 @@ export class BackendService {
             console.warn(`Server event has ICD version ${eventIcdVersion}, which differs from frontend version ${BackendService.IcdVersion}. Errors may occur`);
         }
         try {
-            const messageClass = this.decoderMap.get(eventType);
-            if (messageClass) {
-                const parsedMessage = messageClass.decode(eventData);
+            const decoderEntry = this.decoderMap.get(eventType);
+            if (decoderEntry) {
+                const parsedMessage = decoderEntry.messageClass.decode(eventData);
                 if (parsedMessage) {
                     this.logEvent(eventType, eventId, parsedMessage);
-                    const handler = this.handlerMap.get(eventType);
-                    if (handler) {
-                        handler.call(this, eventId, parsedMessage);
-                    } else {
-                        console.log(`Missing handler for event response ${eventType}`);
-                    }
+                    decoderEntry.handler.call(this, eventId, parsedMessage);
                 } else {
                     console.log(`Unsupported event response ${eventType}`);
                 }
@@ -795,47 +782,47 @@ export class BackendService {
         this.onSimpleMappedResponse(eventId, ack);
     }
 
-    private onStreamedRasterTileData(eventId: number, rasterTileData: CARTA.RasterTileData) {
+    private onStreamedRasterTileData(_eventId: number, rasterTileData: CARTA.RasterTileData) {
         this.rasterTileStream.next(rasterTileData);
     }
 
-    private onStreamedRasterSync(eventId: number, rasterTileSync: CARTA.RasterTileSync) {
+    private onStreamedRasterSync(_eventId: number, rasterTileSync: CARTA.RasterTileSync) {
         this.rasterSyncStream.next(rasterTileSync);
     }
 
-    private onStreamedRegionHistogramData(eventId: number, regionHistogramData: CARTA.RegionHistogramData) {
+    private onStreamedRegionHistogramData(_eventId: number, regionHistogramData: CARTA.RegionHistogramData) {
         this.histogramStream.next(regionHistogramData);
     }
 
-    private onStreamedErrorData(eventId: number, errorData: CARTA.ErrorData) {
+    private onStreamedErrorData(_eventId: number, errorData: CARTA.ErrorData) {
         this.errorStream.next(errorData);
     }
 
-    private onStreamedSpatialProfileData(eventId: number, spatialProfileData: CARTA.SpatialProfileData) {
+    private onStreamedSpatialProfileData(_eventId: number, spatialProfileData: CARTA.SpatialProfileData) {
         this.spatialProfileStream.next(spatialProfileData);
     }
 
-    private onStreamedSpectralProfileData(eventId: number, spectralProfileData: CARTA.SpectralProfileData) {
+    private onStreamedSpectralProfileData(_eventId: number, spectralProfileData: CARTA.SpectralProfileData) {
         this.spectralProfileStream.next(spectralProfileData);
     }
 
-    private onStreamedRegionStatsData(eventId: number, regionStatsData: CARTA.RegionStatsData) {
+    private onStreamedRegionStatsData(_eventId: number, regionStatsData: CARTA.RegionStatsData) {
         this.statsStream.next(regionStatsData);
     }
 
-    private onStreamedContourData(eventId: number, contourData: CARTA.ContourImageData) {
+    private onStreamedContourData(_eventId: number, contourData: CARTA.ContourImageData) {
         this.contourStream.next(contourData);
     }
 
-    private onScriptingRequest(eventId: number, scriptingRequest: CARTA.ScriptingRequest) {
+    private onScriptingRequest(_eventId: number, scriptingRequest: CARTA.ScriptingRequest) {
         this.scriptingStream.next(scriptingRequest);
     }
 
-    private onStreamedCatalogData(eventId: number, catalogFilter: CARTA.CatalogFilterResponse) {
+    private onStreamedCatalogData(_eventId: number, catalogFilter: CARTA.CatalogFilterResponse) {
         this.catalogStream.next(catalogFilter);
     }
 
-    private onStreamedMomentProgress(eventId: number, momentProgress: CARTA.MomentProgress) {
+    private onStreamedMomentProgress(_eventId: number, momentProgress: CARTA.MomentProgress) {
         this.momentProgressStream.next(momentProgress);
     }
 

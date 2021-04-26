@@ -10,6 +10,7 @@ import {toFixed} from "utilities";
 import {IconName} from "@blueprintjs/icons";
 import {CustomIcon, CustomIconName} from "icons/CustomIcons";
 import "./RootMenuComponent.scss";
+import {CARTA} from "carta-protobuf";
 
 @observer
 export class RootMenuComponent extends React.Component {
@@ -48,7 +49,7 @@ export class RootMenuComponent extends React.Component {
                 </Menu.Item>
                 {restWidgets.map(widgetType => {
                     const widgetConfig = WidgetsStore.Instance.CARTAWidgets.get(widgetType);
-                    const trimmedStr = widgetType.trim();
+                    const trimmedStr = widgetType.replace(/\s+/g, '');
                     return (
                         <Menu.Item
                             key={`${trimmedStr}Menu`}
@@ -117,25 +118,31 @@ export class RootMenuComponent extends React.Component {
                 <Menu.Item
                     text="Open image"
                     label={`${modString}O`}
-                    disabled={connectionStatus !== ConnectionStatus.ACTIVE || appStore.fileLoading}
+                    disabled={appStore.openFileDisabled}
                     onClick={() => appStore.fileBrowserStore.showFileBrowser(BrowserMode.File, false)}
                 />
                 <Menu.Item
                     text="Append image"
                     label={`${modString}L`}
-                    disabled={connectionStatus !== ConnectionStatus.ACTIVE || !appStore.activeFrame || appStore.fileLoading}
+                    disabled={appStore.appendFileDisabled}
                     onClick={() => appStore.fileBrowserStore.showFileBrowser(BrowserMode.File, true)}
                 />
-                <Menu.Item
-                    text="Save image"
-                    label={`${modString}S`}
-                    disabled={connectionStatus !== ConnectionStatus.ACTIVE || !appStore.activeFrame || appStore.fileLoading}
-                    onClick={() => appStore.fileBrowserStore.showFileBrowser(BrowserMode.SaveFile, false)}
-                />
+                <Tooltip
+                    content={"not allowed in read-only mode"}
+                    disabled={appStore.appendFileDisabled || appStore.backendService?.serverFeatureFlags !== CARTA.ServerFeatureFlags.READ_ONLY}
+                    position={Position.LEFT}
+                >
+                    <Menu.Item
+                        text="Save image"
+                        label={`${modString}S`}
+                        disabled={appStore.appendFileDisabled || appStore.backendService?.serverFeatureFlags === CARTA.ServerFeatureFlags.READ_ONLY}
+                        onClick={() => appStore.fileBrowserStore.showFileBrowser(BrowserMode.SaveFile, false)}
+                    />
+                </Tooltip>
                 <Menu.Item
                     text="Close image"
                     label={`${modString}W`}
-                    disabled={connectionStatus !== ConnectionStatus.ACTIVE || !appStore.activeFrame || appStore.fileLoading}
+                    disabled={appStore.appendFileDisabled}
                     onClick={() => appStore.closeCurrentFile(true)}
                 />
                 <Menu.Divider/>
@@ -144,16 +151,22 @@ export class RootMenuComponent extends React.Component {
                     disabled={!appStore.activeFrame}
                     onClick={() => appStore.fileBrowserStore.showFileBrowser(BrowserMode.RegionImport, false)}
                 />
-                <Menu.Item
-                    text="Export regions"
-                    disabled={!appStore.activeFrame || !appStore.activeFrame.regionSet.regions || appStore.activeFrame.regionSet.regions.length <= 1}
-                    onClick={() => appStore.fileBrowserStore.showFileBrowser(BrowserMode.RegionExport, false)}
-                />
+                <Tooltip
+                    content={"not allowed in read-only mode"}
+                    disabled={!appStore.activeFrame || !appStore.activeFrame.regionSet.regions || appStore.activeFrame.regionSet.regions.length <= 1 || appStore.backendService?.serverFeatureFlags !== CARTA.ServerFeatureFlags.READ_ONLY}
+                    position={Position.LEFT}
+                >
+                    <Menu.Item
+                        text="Export regions"
+                        disabled={!appStore.activeFrame || !appStore.activeFrame.regionSet.regions || appStore.activeFrame.regionSet.regions.length <= 1 || appStore.backendService.serverFeatureFlags === CARTA.ServerFeatureFlags.READ_ONLY}
+                        onClick={() => appStore.fileBrowserStore.showFileBrowser(BrowserMode.RegionExport, false)}
+                    />
+                </Tooltip>
                 <Menu.Divider/>
                 <Menu.Item
                     text="Import catalog"
-                    label={`${modString}C`}
-                    disabled={connectionStatus !== ConnectionStatus.ACTIVE || !appStore.activeFrame || appStore.fileLoading}
+                    label={`${modString}G`}
+                    disabled={appStore.appendFileDisabled}
                     onClick={() => appStore.fileBrowserStore.showFileBrowser(BrowserMode.Catalog, false)}
                 />
                 <Menu.Divider/>
@@ -168,7 +181,7 @@ export class RootMenuComponent extends React.Component {
             </Menu>
         );
 
-        let layerItems = appStore.frames.slice().sort((a, b) => a.frameInfo.fileId <= b.frameInfo.fileId ? -1 : 1).map(frame => {
+        let layerItems = appStore.frames.map(frame => {
             return (
                 <Menu.Item
                     text={frame.filename}

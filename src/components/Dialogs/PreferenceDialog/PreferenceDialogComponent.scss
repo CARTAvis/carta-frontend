@@ -1,8 +1,13 @@
 @import "../../../../node_modules/@blueprintjs/core/lib/scss/variables.scss";
 
-.preference-dialog {
+.preference-dialog { 
+
+    .bp3-tabs {
+        height: 100%;
+    }
+
     .bp3-tab-panel {
-        height: 25em;
+        height: 100%;
         overflow: auto;
         width: 100%;
     }
@@ -38,7 +43,7 @@
             flex-wrap: wrap;
 
             .log-event-checkbox {
-                width: 255px;
+                width: 265px;
                 margin-bottom: 0;
             }
         }

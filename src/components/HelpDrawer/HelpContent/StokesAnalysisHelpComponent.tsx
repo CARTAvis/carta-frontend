@@ -1,7 +1,7 @@
 import * as React from "react";
 import {ImageComponent} from "./ImageComponent";
-import * as headStokesButton from "static/help/head_stokes_button.png";
-import * as headStokesButton_d from "static/help/head_stokes_button_d.png";
+import headStokesButton from "static/help/head_stokes_button.png";
+import headStokesButton_d from "static/help/head_stokes_button_d.png";
 
 export class StokesAnalysisHelpComponent extends React.Component {
     public render() {

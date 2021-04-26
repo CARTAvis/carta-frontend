@@ -95,5 +95,14 @@
                 }
             }
         }
+
+        .stats-export-data {
+            position: absolute;
+            bottom: 0;
+            right: 0;
+            margin: 0 5px 15px 0;
+            transition: opacity 400ms;
+            user-select: none;
+        }
     }
 }

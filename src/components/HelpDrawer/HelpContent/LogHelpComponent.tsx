@@ -1,7 +1,7 @@
 import * as React from "react";
 import {ImageComponent} from "./ImageComponent";
-import * as headLogButton from "static/help/head_log_button.png";
-import * as headLogButton_d from "static/help/head_log_button_d.png";
+import headLogButton from "static/help/head_log_button.png";
+import headLogButton_d from "static/help/head_log_button_d.png";
 
 export class LogHelpComponent extends React.Component {
     public render() {

@@ -4,6 +4,7 @@ import {Ellipse, Group, Layer, Line, Stage} from "react-konva";
 import {Colors} from "@blueprintjs/core";
 import {AppStore, BeamType, FrameStore} from "stores";
 import { Point2D } from "models";
+import {getColorForTheme} from "utilities";
 import "./BeamProfileOverlayComponent.scss";
 
 interface BeamProfileOverlayComponentProps {
@@ -36,7 +37,7 @@ export class BeamProfileOverlayComponent extends React.Component<BeamProfileOver
         const id = frame.frameInfo.fileId;
         const zoomLevel = frame.spatialReference ? frame.spatialReference.zoomLevel * frame.spatialTransform.scale : frame.zoomLevel;
         const beamSettings = frame.overlayBeamSettings;
-        const color = beamSettings.color;
+        const color = getColorForTheme(beamSettings.color);
         const axisColor = beamSettings.type === BeamType.Solid ? Colors.WHITE : color;
         const type = beamSettings.type;
         const strokeWidth = beamSettings.width;

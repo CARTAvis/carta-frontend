@@ -1,7 +1,7 @@
 import * as React from "react";
 import {ImageComponent} from "./ImageComponent";
-import * as headLineQueryButton from "static/help/head_linequery_button.png";
-import * as headLineQueryButton_d from "static/help/head_linequery_button_d.png";
+import headLineQueryButton from "static/help/head_linequery_button.png";
+import headLineQueryButton_d from "static/help/head_linequery_button_d.png";
 
 export class SpectralLineQueryHelpComponent extends React.Component {
     public render() {

@@ -1,0 +1,66 @@
+@import "../../../../node_modules/@blueprintjs/core/lib/scss/variables.scss";
+
+.color-picker-popup {
+    position: relative;
+    top: -15px;
+
+    &.bp3-dark {
+        .sketch-picker {
+            background: $dark-gray5 !important;
+
+            input {
+                background: $dark-gray3 !important;
+                color: white;
+                box-shadow: $dark-gray1 0 0 0 1px inset !important;
+            }
+
+            span {
+                color: white !important;
+            }
+
+            .flexbox-fix {
+                div {
+                    span {
+                        div {
+                            box-shadow: $gray2 0 0 0 1px inset !important;
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+.dropdown-color {
+    border: solid 1px black;
+    width: 100%;
+    border-radius: $pt-border-radius;
+}
+
+.bp3-button.colorselect .bp3-button-text {
+    width: 80px;
+}
+
+
+.bp3-popover.colorselect {
+    width: 120px;
+
+    .bp3-menu {
+        min-width: 100px;
+        max-height: 300px;
+        overflow: auto;
+        padding: 0;
+
+        .dropdown-color {
+            width: 90px !important;
+        }
+    }
+
+    .custom-color {
+        padding: 0 5px 5px 7px;
+
+        .color-swatch-button {
+            width: 90px;
+        }
+    }
+}

@@ -5,16 +5,19 @@ import {action, autorun, computed, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 import {Button, ButtonGroup, FormGroup, HTMLSelect, IOptionProps, NonIdealState, Colors} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
+import {HistogramConfigComponent} from "./HistogramConfigComponent/HistogramConfigComponent";
 import {ColormapConfigComponent} from "./ColormapConfigComponent/ColormapConfigComponent";
-import {LinePlotComponent, LinePlotComponentProps, ProfilerInfoComponent, SafeNumericInput} from "components/Shared";
+import {MultiPlotProps} from "../Shared/LinePlot/PlotContainer/PlotContainerComponent";
+import {LinePlotComponent, LinePlotComponentProps, PlotType, ProfilerInfoComponent, SafeNumericInput} from "components/Shared";
 import {TaskProgressDialogComponent} from "components/Dialogs";
 import {RenderConfigWidgetStore} from "stores/widgets";
 import {FrameStore, RenderConfigStore, DefaultWidgetConfig, WidgetProps, HelpType, AppStore, WidgetsStore} from "stores";
 import {Point2D} from "models";
-import {clamp, toExponential, toFixed} from "utilities";
+import {clamp, toExponential, toFixed, getColorForTheme, scaleValue} from "utilities";
 import "./RenderConfigComponent.scss";
 
 const KEYCODE_ENTER = 13;
+const COLORSCALE_LENGTH = 2048;
 
 @observer
 export class RenderConfigComponent extends React.Component<WidgetProps> {
@@ -274,22 +277,22 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
             scrollZoom: true,
             borderWidth: this.widgetStore.lineWidth,
             pointRadius: this.widgetStore.linePlotPointSize,
-            zeroLineWidth: 2
+            zeroLineWidth: 2,
+            multiPlotPropsMap: new Map()
         };
 
+        const scaleMinVal = frame.renderConfig?.scaleMinVal;
+        const scaleMaxVal = frame.renderConfig?.scaleMaxVal;
+        const primaryLineColor = getColorForTheme(this.widgetStore.primaryLineColor);
         if (frame.renderConfig.histogram && frame.renderConfig.histogram.bins && frame.renderConfig.histogram.bins.length) {
             const currentPlotData = this.plotData;
             if (currentPlotData) {
-                linePlotProps.data = currentPlotData.values;
-
-                // set line color
-                let primaryLineColor = this.widgetStore.primaryLineColor.colorHex;
-                if (appStore.darkTheme) {
-                    if (!this.widgetStore.primaryLineColor.fixed) {
-                        primaryLineColor = Colors.BLUE4;
-                    }
-                }
-                linePlotProps.lineColor = primaryLineColor;
+                let histogramProps: MultiPlotProps = {
+                    data: currentPlotData.values,
+                    type: this.widgetStore.plotType,
+                    borderColor: primaryLineColor
+                };
+                linePlotProps.multiPlotPropsMap.set("histogram", histogramProps);
 
                 // Determine scale in X and Y directions. If auto-scaling, use the bounds of the current data
                 if (this.widgetStore.isAutoScaledX) {
@@ -316,19 +319,19 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
 
         if (frame.renderConfig) {
             linePlotProps.markers = [{
-                value: frame.renderConfig.scaleMinVal,
+                value: scaleMinVal,
                 id: "marker-min",
                 label: this.widgetStore.markerTextVisible ? "Min" : undefined,
                 draggable: true,
-                dragCustomBoundary: {xMax: frame.renderConfig.scaleMaxVal},
+                dragCustomBoundary: {xMax: scaleMaxVal},
                 dragMove: this.onMinMoved,
                 horizontal: false,
             }, {
-                value: frame.renderConfig.scaleMaxVal,
+                value: scaleMaxVal,
                 id: "marker-max",
                 label: this.widgetStore.markerTextVisible ? "Max" : undefined,
                 draggable: true,
-                dragCustomBoundary: {xMin: frame.renderConfig.scaleMinVal},
+                dragCustomBoundary: {xMin: scaleMinVal},
                 dragMove: this.onMaxMoved,
                 horizontal: false,
             }];
@@ -352,6 +355,31 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
                     opacity: 0.2,
                     color: appStore.darkTheme ? Colors.GREEN4 : Colors.GREEN2
                 });
+            }
+
+            if (isFinite(scaleMinVal) && isFinite(scaleMaxVal) && (scaleMinVal < scaleMaxVal)) {
+                const colormapScalingX = Array.from(Array(COLORSCALE_LENGTH).keys()).map(x => scaleMinVal + x / (COLORSCALE_LENGTH - 1) * (scaleMaxVal - scaleMinVal));
+                let colormapScalingY = Array.from(Array(COLORSCALE_LENGTH).keys()).map(x => x / (COLORSCALE_LENGTH - 1));
+                colormapScalingY = colormapScalingY.map(x => scaleValue(x, frame.renderConfig.scaling, frame.renderConfig.alpha, frame.renderConfig.gamma, frame.renderConfig.bias, frame.renderConfig.contrast, appStore.preferenceStore?.useSmoothedBiasContrast));
+                // fit to the histogram y axis
+                if (linePlotProps.logY) {
+                    colormapScalingY = colormapScalingY.map(x => Math.pow(10, Math.log10(linePlotProps.yMin) + x * (Math.log10(linePlotProps.yMax) - Math.log10(linePlotProps.yMin))));
+                } else {
+                    colormapScalingY = colormapScalingY.map(x => linePlotProps.yMin + x * (linePlotProps.yMax - linePlotProps.yMin));
+                }
+
+                let colormapScalingData = [];
+                for (let i = 0; i < COLORSCALE_LENGTH; i++) {
+                    colormapScalingData.push({x: colormapScalingX[i], y: colormapScalingY[i]});
+                }
+                const colormapScalingProps: MultiPlotProps = {
+                    data: colormapScalingData,
+                    type: PlotType.LINES,
+                    borderColor: appStore.darkTheme ? Colors.GRAY5 : Colors.GRAY1,
+                    borderWidth: 0.5,
+                    opacity: 0.5
+                };
+                linePlotProps.multiPlotPropsMap.set("colormapScaling", colormapScalingProps);
             }
         }
 
@@ -400,8 +428,8 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
                     </div>
                 </div>
                 }
-                <div className="colormap-config">
-                    <ColormapConfigComponent
+                <div className="options-container">
+                    <HistogramConfigComponent
                         darkTheme={appStore.darkTheme}
                         renderConfig={frame.renderConfig}
                         onCubeHistogramSelected={this.handleCubeHistogramSelected}
@@ -427,6 +455,9 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
                             onKeyDown={this.handleScaleMaxChange}
                         />
                     </FormGroup>
+                    <ColormapConfigComponent
+                        renderConfig={frame.renderConfig}
+                    />
                     {this.width < histogramCutoff && percentileSelectDiv}
                 </div>
                 <TaskProgressDialogComponent
@@ -437,7 +468,8 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
                     onCancel={this.handleCubeHistogramCancelled}
                     text={"Calculating cube histogram"}
                 />
-                <ReactResizeDetector handleWidth handleHeight onResize={this.onResize} refreshMode={"throttle"}/>
+                <ReactResizeDetector handleWidth handleHeight onResize={this.onResize} refreshMode={"throttle"}>
+                </ReactResizeDetector>
             </div>
         );
     }

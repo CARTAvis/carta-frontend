@@ -60,8 +60,8 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
                 this.catalogFileId = catalogFileIds[0];
             }
             if (widgetStore) {
-                this.plotType = widgetStore.plotType;   
-            }  
+                this.plotType = widgetStore.plotType;
+            }
             if (profileStore) {
                 let progressString = "";
                 const catalogFile = profileStore.catalogInfo;
@@ -126,7 +126,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
                     if (!xColumn && !yColumn && plotWidgetStore.scatterborder === undefined) {
                         const scatterCoords = profileStore.get2DPlotData(plotWidgetStore.xColumnName, plotWidgetStore.yColumnName, profileStore.catalogData);
                         const scatterBorder = this.getScatterBorder(scatterCoords.wcsX, scatterCoords.wcsY);
-                        plotWidgetStore.setScatterborder(scatterBorder);   
+                        plotWidgetStore.setScatterborder(scatterBorder);
                     }
                     break;
                 case CatalogPlotType.Histogram:
@@ -213,7 +213,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
         data.type = "scattergl";
         data.mode = "markers";
         data.marker = {
-            symbol: "circle", 
+            symbol: "circle",
             color: Colors.BLUE2,
             opacity: 1
         };
@@ -273,7 +273,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
         const indicatorInfo = widgetStore.indicatorInfo;
         if (indicatorInfo) {
             if (widgetStore.plotType === CatalogPlotType.D2Scatter) {
-                profileInfo.push(`${widgetStore.xColumnName}: ${indicatorInfo.x}, ${widgetStore.yColumnName}: ${indicatorInfo.y}`);      
+                profileInfo.push(`${widgetStore.xColumnName}: ${indicatorInfo.x}, ${widgetStore.yColumnName}: ${indicatorInfo.y}`);
             } else if (widgetStore.plotType === CatalogPlotType.Histogram) {
                 profileInfo.push(`${widgetStore.xColumnName}: ${indicatorInfo.x}, Count: ${indicatorInfo.y}`);
             }
@@ -300,12 +300,12 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
             if (widgetsStore.xColumnName === CatalogPlotComponent.emptyColumn || widgetsStore.yColumnName === CatalogPlotComponent.emptyColumn) {
                 return;
             }
-            widgetsStore.setScatterborder(this.initScatterBorder);   
+            widgetsStore.setScatterborder(this.initScatterBorder);
         } else if (widgetsStore.plotType === CatalogPlotType.Histogram) {
             if (column === CatalogPlotComponent.emptyColumn) {
                 return;
             }
-            widgetsStore.setHistogramXBorder(this.initHistogramXBorder);   
+            widgetsStore.setHistogramXBorder(this.initHistogramXBorder);
         }
     }
 
@@ -315,7 +315,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
         const val = changeEvent.target.checked;
         if (widgetsStore && catalogWidgetStore) {
             catalogWidgetStore.setShowSelectedData(val);
-            CatalogStore.Instance.updateShowSelectedData(this.catalogFileId, val);   
+            CatalogStore.Instance.updateShowSelectedData(this.catalogFileId, val);
         }
     }
 
@@ -325,7 +325,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
     }
 
     private onHover = (event: Plotly.PlotMouseEvent) => {
-        const widgetStore = this.widgetStore;        
+        const widgetStore = this.widgetStore;
         const points = event.points;
         if (points.length && widgetStore) {
             const point = points[0];
@@ -339,7 +339,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
             widgetsStore.setScatterborder(this.initScatterBorder);
         } else {
             widgetsStore.setHistogramXBorder(this.initHistogramXBorder);
-        }    
+        }
     }
 
     private onRelayout = (event: any) => {
@@ -360,13 +360,13 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
                         yMin: isFinite(yMin) ? yMin : widgetStore.scatterborder.yMin,
                         yMax: isFinite(yMax) ? yMax : widgetStore.scatterborder.yMax
                     };
-                    widgetStore.setScatterborder(scatterBorder);   
+                    widgetStore.setScatterborder(scatterBorder);
                 }
 
                 if (event["xaxis.autorange"] && event["yaxis.autorange"]) {
                     widgetStore.setScatterborder(this.initScatterBorder);
                 }
-            } 
+            }
             if (widgetStore.plotType === CatalogPlotType.Histogram) {
                 const xMin = event["xaxis.range[0]"];
                 const xMax = event["xaxis.range[1]"];
@@ -375,7 +375,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
                         xMin: isFinite(xMin) ? xMin : widgetStore.histogramBorder.xMin,
                         xMax: isFinite(xMax) ? xMax : widgetStore.histogramBorder.xMax,
                     };
-                    this.widgetStore.setHistogramXBorder(histogramBorder); 
+                    this.widgetStore.setHistogramXBorder(histogramBorder);
                 }
 
                 if (event["xaxis.autorange"]) {
@@ -390,7 +390,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
         const profileStore = this.profileStore;
         if (profileStore?.shouldUpdateData) {
             profileStore.setUpdateMode(CatalogUpdateMode.PlotsUpdate);
-            profileStore.setUpdatingDataStream(true);   
+            profileStore.setUpdatingDataStream(true);
             let catalogFilter = profileStore.updateRequestDataSize;
             appStore.sendCatalogFilter(catalogFilter);
         }
@@ -417,21 +417,21 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
                 let arraySize = 0;
                 for (let i = 0; i < points.length; i++) {
                     const count = points[i].pointIndices.length;
-                    arraySize = arraySize + count;   
+                    arraySize = arraySize + count;
                 }
                 selectedPointIndices = Array(arraySize);
                 for (let i = 0; i < points.length; i++) {
                     const selectedPoints = points[i].pointIndices;
                     const size = selectedPoints.length;
                     for (let j = 0; j < size; j++) {
-                        selectedPointIndices[i * size + j] = selectedPoints[j]; 
+                        selectedPointIndices[i * size + j] = selectedPoints[j];
                     }
                 }
             }
 
             if (selectedPointIndices?.length) {
                 profileStore.setSelectedPointIndices(selectedPointIndices, true);
-                catalogWidgetStore.setCatalogTableAutoScroll(true);   
+                catalogWidgetStore.setCatalogTableAutoScroll(true);
             }
         }
     }
@@ -460,11 +460,11 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
             let selectedPointIndex = [];
             const selectedPoint = event.points[0] as any;
             if (this.widgetStore.plotType === CatalogPlotType.D2Scatter) {
-                selectedPointIndex.push(selectedPoint.pointIndex);   
+                selectedPointIndex.push(selectedPoint.pointIndex);
             } else if (this.widgetStore.plotType === CatalogPlotType.Histogram && selectedPoint.pointIndices.length) {
                 selectedPointIndex = selectedPoint.pointIndices;
             }
-            
+
             profileStore.setSelectedPointIndices(selectedPointIndex, true);
             catalogWidgetStore.setCatalogTableAutoScroll(true);
         }
@@ -490,7 +490,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
         // fixed react plotlyjs bug with fixed range and changed x range 
         if (this.widgetStore.plotType === CatalogPlotType.Histogram) {
             const yaxis = figure.layout.yaxis.range;
-            this.histogramY = {yMin: yaxis[0], yMax: yaxis[1]}; 
+            this.histogramY = {yMin: yaxis[0], yMax: yaxis[1]};
         }
     }
 
@@ -549,7 +549,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
         for (let index = 0; index < columnsName.length; index++) {
             const column = columnsName[index];
             if (!CatalogPlotComponent.UnsupportedDataTypes.includes(column.dataType)) {
-                xyOptions.push(column.name); 
+                xyOptions.push(column.name);
             }
         }
 
@@ -557,10 +557,10 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
 
         const renderFileSelect = (
             <FormGroup  inline={true} label="File">
-                <Select 
+                <Select
                     className="bp3-fill"
                     filterable={false}
-                    items={catalogFileItems} 
+                    items={catalogFileItems}
                     activeItem={this.catalogFileId}
                     onItemSelect={this.handleCatalogFileChange}
                     itemRenderer={this.renderFilePopOver}
@@ -573,9 +573,9 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
 
         const renderXSelect = (
             <FormGroup inline={true} label="X">
-                <Select 
+                <Select
                     className="bp3-fill"
-                    items={xyOptions} 
+                    items={xyOptions}
                     activeItem={widgetStore.xColumnName}
                     onItemSelect={item => this.handleColumnNameChange("x", item)}
                     itemRenderer={this.renderColumnNamePopOver}
@@ -598,9 +598,9 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
 
         const renderYSelect = (
             <FormGroup inline={true} label="Y">
-                <Select 
+                <Select
                     className="bp3-fill"
-                    items={xyOptions} 
+                    items={xyOptions}
                     activeItem={widgetStore.yColumnName}
                     onItemSelect={item => this.handleColumnNameChange("y", item)}
                     itemRenderer={this.renderColumnNamePopOver}
@@ -637,9 +637,9 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
         }
 
         let layout: Partial<Plotly.Layout> = {
-            width: this.width * ratio, 
+            width: this.width * ratio,
             height: (this.height - 85) * ratio,
-            paper_bgcolor: themeColor, 
+            paper_bgcolor: themeColor,
             plot_bgcolor: themeColor,
             hovermode: "closest" ,
             xaxis: {
@@ -705,7 +705,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
             showlegend: false,
             dragmode: widgetStore.dragmode,
         };
-        
+
         let data;
         if (widgetStore.plotType === CatalogPlotType.D2Scatter) {
             data = this.scatterData.data;
@@ -737,7 +737,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
             layout.yaxis.rangemode = "tozero";
             layout.yaxis.title = "Count";
             if (widgetStore.logScaleY) {
-                layout.yaxis.type = "log";   
+                layout.yaxis.type = "log";
             }
         }
 
@@ -827,7 +827,8 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
                         </Tooltip>
                     </div>
                 </div>
-                <ReactResizeDetector handleWidth handleHeight onResize={this.onResize} refreshMode={"throttle"} refreshRate={33}/>
+                <ReactResizeDetector handleWidth handleHeight onResize={this.onResize} refreshMode={"throttle"} refreshRate={33}>
+                </ReactResizeDetector>
             </div>
         );
     }

@@ -1,15 +1,15 @@
 import * as React from "react";
 import {ImageComponent} from "./ImageComponent";
-import * as smoothingBoxcar from "static/help/smoothing_boxcar.png";
-import * as smoothingGaussian from "static/help/smoothing_gaussian.png";
-import * as smoothingHanning from "static/help/smoothing_hanning.png";
-import * as smoothingBinning from "static/help/smoothing_binning.png";
-import * as smoothingSG from "static/help/smoothing_SG.png";
-import * as smoothingBoxcar_d from "static/help/smoothing_boxcar_d.png";
-import * as smoothingGaussian_d from "static/help/smoothing_gaussian_d.png";
-import * as smoothingHanning_d from "static/help/smoothing_hanning_d.png";
-import * as smoothingBinning_d from "static/help/smoothing_binning_d.png";
-import * as smoothingSG_d from "static/help/smoothing_SG_d.png";
+import smoothingBoxcar from "static/help/smoothing_boxcar.png";
+import smoothingGaussian from "static/help/smoothing_gaussian.png";
+import smoothingHanning from "static/help/smoothing_hanning.png";
+import smoothingBinning from "static/help/smoothing_binning.png";
+import smoothingSG from "static/help/smoothing_SG.png";
+import smoothingBoxcar_d from "static/help/smoothing_boxcar_d.png";
+import smoothingGaussian_d from "static/help/smoothing_gaussian_d.png";
+import smoothingHanning_d from "static/help/smoothing_hanning_d.png";
+import smoothingBinning_d from "static/help/smoothing_binning_d.png";
+import smoothingSG_d from "static/help/smoothing_SG_d.png";
 
 export class StokesAnalysisSettingsSmoothingHelpComponent extends React.Component {
     public render() {

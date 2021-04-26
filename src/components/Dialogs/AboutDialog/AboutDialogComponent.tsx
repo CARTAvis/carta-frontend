@@ -5,7 +5,7 @@ import {DraggableDialogComponent} from "components/Dialogs";
 import {DialogStore} from "stores";
 import {CARTA_INFO} from "models";
 import "./AboutDialogComponent.scss";
-import * as logoPng from "static/carta_logo.png";
+import logoPng from "static/carta_logo.png";
 
 @observer
 export class AboutDialogComponent extends React.Component {

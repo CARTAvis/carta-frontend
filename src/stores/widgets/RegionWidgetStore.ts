@@ -36,7 +36,7 @@ export class RegionWidgetStore {
         this.regionIdMap.clear();
     };
 
-    @action setRegionId = (fileId: number, regionId: number) => {
+    @action setRegionId (fileId: number, regionId: number) {
         this.regionIdMap.set(fileId, regionId);
     };
 

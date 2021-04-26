@@ -9,10 +9,10 @@ import {CARTA} from "carta-protobuf";
 import {LinePlotComponent, LinePlotComponentProps, ProfilerInfoComponent, ScatterPlotComponent, ScatterPlotComponentProps, VERTICAL_RANGE_PADDING, PlotType, SmoothingType} from "components/Shared";
 import {StokesAnalysisToolbarComponent} from "./StokesAnalysisToolbarComponent/StokesAnalysisToolbarComponent";
 import {TickType, MultiPlotProps} from "../Shared/LinePlot/PlotContainer/PlotContainerComponent";
-import {SpectralProfileStore, DefaultWidgetConfig, WidgetProps, HelpType, AnimatorStore, WidgetsStore, AppStore} from "stores";
+import {AppStore, AnimatorStore, DefaultWidgetConfig, FrameStore, HelpType, WidgetsStore, WidgetProps, SpectralProfileStore} from "stores";
 import {StokesAnalysisWidgetStore, StokesCoordinate} from "stores/widgets";
-import {Point2D} from "models";
-import {clamp, normalising, polarizationAngle, polarizedIntensity, binarySearchByX, closestPointIndexToCursor, toFixed, toExponential, minMaxPointArrayZ, formattedNotation, minMaxArray} from "utilities";
+import {Point2D, SpectralColorMap, SpectralType} from "models";
+import {clamp, normalising, polarizationAngle, polarizedIntensity, binarySearchByX, closestPointIndexToCursor, toFixed, toExponential, minMaxPointArrayZ, formattedNotation, minMaxArray, getColorForTheme} from "utilities";
 import "./StokesAnalysisComponent.scss";
 
 type Border = { xMin: number, xMax: number, yMin: number, yMax: number };
@@ -138,6 +138,24 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
         this.height = height;
         this.widgetStore.clearScatterPlotXYBounds();
     };
+
+    // true: red->blue, false: blue->red. chartjs plot tick lables with increasing order by default, no need to check for CDELT
+    private getColorMapOrder(frame: FrameStore): boolean {
+        const defaultType = frame?.spectralAxis?.type.code;
+        let CTYPE = frame?.spectralType ?? defaultType;
+        if (CTYPE === SpectralType.CHANNEL) {
+            CTYPE = defaultType;
+        }
+
+        switch (CTYPE) {
+            case SpectralColorMap.FREQ:
+            case SpectralColorMap.ENER:
+            case SpectralColorMap.WAVE:        
+                return true;
+            default:
+                return false;
+        }
+    }
 
     @computed get currentChannelValue(): number {
         const frame = this.widgetStore.effectiveFrame;
@@ -512,10 +530,10 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
         return a === b && a === c && a === d && a !== null;
     }
 
-    private getScatterColor(percentage: number, frequencyIncreases: boolean): string {
+    private getScatterColor(percentage: number, reversed: boolean): string {
         const colorMap = this.widgetStore.colorPixel.color;
         const mapSize = this.widgetStore.colorPixel.size;
-        if (!frequencyIncreases) {
+        if (reversed) {
             percentage = 1 - percentage;
         }
         const index = Math.round(percentage * mapSize) * 4;
@@ -523,21 +541,14 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
         return `rgba(${colorMap[index]}, ${colorMap[index + 1]}, ${colorMap[index + 2]}, ${opacity})`;
     }
 
-    private frequencyIncreases(data: Point3D[]): boolean {
-        const zFirst = data[0].z;
-        const zLast = data[data.length - 1].z;
-        if (zFirst > zLast) {
-            return false;
-        }
-        return true;
-    }
-
     private fillScatterColor(data: Array<{ x: number, y: number, z?: number }>, interactionBorder: { xMin: number, xMax: number }, zIndex: boolean): Array<string> {
         let scatterColors = [];
-        if (data && data.length && zIndex && interactionBorder) {
+        const widgetStore = this.widgetStore;
+        if (data && data.length && zIndex && interactionBorder && widgetStore) {
             let xlinePlotRange = interactionBorder;
             const outOfRangeColor = `hsla(0, 0%, 50%, ${this.opacityOutRange})`;
-            const zOrder = this.frequencyIncreases(data);
+            const frame = widgetStore.effectiveFrame;
+            const reversed = this.getColorMapOrder(frame);
             const localPoints = [];
             for (let index = 0; index < data.length; index++) {
                 const point = data[index];
@@ -553,10 +564,12 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
                 if (point.z >= xlinePlotRange.xMin && point.z <= xlinePlotRange.xMax) {
                     outRange = false;
                 }
-                const percentage = (point.z - minMaxZ.minVal) / (minMaxZ.maxVal - minMaxZ.minVal);
-                pointColor = outRange ? outOfRangeColor : this.getScatterColor(percentage, zOrder);
+                let percentage = (point.z - minMaxZ.minVal) / (minMaxZ.maxVal - minMaxZ.minVal);
+                if (widgetStore.invertedColorMap) {
+                    percentage = 1 - percentage;
+                }
+                pointColor = outRange ? outOfRangeColor : this.getScatterColor(percentage, reversed);
                 scatterColors.push(pointColor);
-                
             }
         }
         return scatterColors;
@@ -670,7 +683,6 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
                 compositeProfile = this.calculateCompositeProfile(region.isClosedRegion ? this.widgetStore.statsType : CARTA.StatsType.Sum);
             }
         }
-
         let channelInfo = frame.channelInfo;
         if (compositeProfile && channelInfo) {
             let quDic = this.assembleScatterPlotData(compositeProfile.qProfile, compositeProfile.uProfile, StokesCoordinate.PolarizationQU);
@@ -954,8 +966,8 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
                 paLinePlotProps.opacity = lineOpacity;
                 quLinePlotProps.opacity = lineOpacity;
                 
-                let primaryLineColor = this.widgetStore.primaryLineColor.colorHex;
-                let ulinePlotColor = this.widgetStore.secondaryLineColor.colorHex;
+                let primaryLineColor = getColorForTheme(this.widgetStore.primaryLineColor);
+                let ulinePlotColor = getColorForTheme(this.widgetStore.secondaryLineColor);
                 if (appStore.darkTheme) {
                     if (!this.widgetStore.primaryLineColor.fixed) {
                         primaryLineColor = Colors.BLUE4;   
@@ -1008,7 +1020,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
                     let smoothedPaPlotProps: MultiPlotProps = {
                         data: currentPlotData.paSmoothedValues.dataset,
                         type: smoothingStore.lineType,
-                        borderColor: smoothingStore.colorMap.get(StokesCoordinate.PolarizationAngle) ? smoothingStore.colorMap.get(StokesCoordinate.PolarizationAngle).colorHex : primaryLineColor,
+                        borderColor: getColorForTheme(smoothingStore.colorMap.get(StokesCoordinate.PolarizationAngle) ? getColorForTheme(smoothingStore.colorMap.get(StokesCoordinate.PolarizationAngle)) : primaryLineColor),
                         borderWidth: this.widgetStore.lineWidth + 1,
                         pointRadius: this.widgetStore.linePlotPointSize + 1
                     };
@@ -1135,8 +1147,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
             }
 
             if (frame.spectralAxis && !frame.isCoordChannel) {
-                const spectralSystem = frame.isSpectralSystemConvertible ? frame.spectralSystem : `${frame.spectralInfo.specsys}`;
-                paLinePlotProps.xLabel = piLinePlotProps.xLabel = quLinePlotProps.xLabel = `${spectralSystem && spectralSystem !== "" ? spectralSystem + ", " : ""}${frame.spectralCoordinate}`;
+                paLinePlotProps.xLabel = piLinePlotProps.xLabel = quLinePlotProps.xLabel = frame.spectralLabel;
             }
 
             paLinePlotProps.markers = [];
@@ -1238,7 +1249,9 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
                     </div>
                     <ProfilerInfoComponent info={this.genProfilerInfo()}/>
                 </div>
-                <ReactResizeDetector handleWidth handleHeight onResize={this.onResize} refreshMode={"throttle"} refreshRate={33}/>
+                <ReactResizeDetector handleWidth handleHeight onResize={this.onResize} refreshMode={"throttle"} refreshRate={33}>
+
+                </ReactResizeDetector>
             </div>
         );
     }
