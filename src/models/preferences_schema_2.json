@@ -116,6 +116,9 @@
             "minimum": 0,
             "maximum": 1
         },
+        "useSmoothedBiasContrast": {
+            "type": "boolean"
+        },
         "contourGeneratorType": {
             "type": "string",
             "enum": [

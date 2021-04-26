@@ -653,7 +653,7 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
                         rows.push(`# smoothed_x\tsmoothed_y`);
                     }
 
-                    if (props.data) {
+                    if (key!== "colormapScaling" && props.data) {
                         props.data.forEach(o => {
                             rows.push(`${o.x}\t${toExponential(o.y, 10)}`);
                         });

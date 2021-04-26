@@ -88,6 +88,25 @@ export class FileBrowserStore {
     @observable selectedFiles: ISelectedFile[];
 
     @action showFileBrowser = (mode: BrowserMode, append = false) => {
+        switch (mode) {
+            case BrowserMode.SaveFile:
+                if (AppStore.Instance.appendFileDisabled || AppStore.Instance.backendService?.serverFeatureFlags === CARTA.ServerFeatureFlags.READ_ONLY) {
+                    return;
+                }
+                break;
+            case BrowserMode.File:
+                if (!append && AppStore.Instance.openFileDisabled) {
+                    return;
+                } else if (append && AppStore.Instance.appendFileDisabled) {
+                    return;
+                }
+                break;
+            case BrowserMode.Catalog:
+            default:
+                if (AppStore.Instance.appendFileDisabled) {
+                    return;
+                }
+        }
         this.appendingFrame = append;
         this.browserMode = mode;
         DialogStore.Instance.showFileBrowserDialog();

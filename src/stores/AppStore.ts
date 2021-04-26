@@ -251,6 +251,14 @@ export class AppStore {
         }
     }
 
+    @computed get openFileDisabled(): boolean {
+        return this.backendService?.connectionStatus !== ConnectionStatus.ACTIVE || this.fileLoading;
+    }
+
+    @computed get appendFileDisabled(): boolean {
+        return this.openFileDisabled || !this.activeFrame;
+    }
+
     // Frame actions
     @computed get activeFrameIndex(): number {
         if (!this.activeFrame) {
@@ -517,7 +525,9 @@ export class AppStore {
     };
 
     @action closeCurrentFile = (confirmClose: boolean = true) => {
-        this.closeFile(this.activeFrame, confirmClose);
+        if (!this.appendFileDisabled) {
+            this.closeFile(this.activeFrame, confirmClose);
+        }
     };
 
     @action closeOtherFiles = (frame: FrameStore, confirmClose: boolean = true) => {
