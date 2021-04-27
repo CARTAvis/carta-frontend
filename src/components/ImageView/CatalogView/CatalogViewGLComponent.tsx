@@ -167,7 +167,6 @@ export class CatalogViewGLComponent extends React.Component<CatalogViewGLCompone
             const frame = appStore.getFrame(catalogStore.getFramIdByCatalogId(fileId));
             const reProjection = catalogStore.reProjection(frame, destinationFrame);
             const catalog = catalogStore.catalogGLData.get(fileId);
-            // console.log(frame.frameInfo.fileId, fileId, destinationFrame.frameInfo.fileId)
             if(catalog) {
                 const catalogWidgetStore = catalogStore.getCatalogWidgetStore(fileId);
                 const shape = catalogWidgetStore.shapeSettings;

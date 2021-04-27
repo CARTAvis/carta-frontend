@@ -1390,6 +1390,11 @@ export class AppStore {
                         coords.yHeaderInfo.units, 
                         catalogProfileStore.catalogCoordinateSystem.system
                     );
+                    const reProjection = this.catalogStore.reProjection(frame, this.activeFrame);
+                    if (reProjection) {
+                        const imageMapId = `${frame.frameInfo.fileId}-${this.activeFrame.frameInfo.fileId}`;
+                        this.catalogStore.updateSpatialMatchedCatalog(imageMapId, catalogFileId);
+                    }
                 }
             }
         }

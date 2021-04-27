@@ -83,7 +83,7 @@ export class CatalogStore {
         }
     }
 
-    @action updateSpatialMatchedCatalog(imageMapId: string, catalogFileId: number, ) {
+    @action updateSpatialMatchedCatalog(imageMapId: string, catalogFileId: number) {
             const activeFrame = AppStore.Instance.activeFrame;
             const catalogWidgetStore = this.getCatalogWidgetStore(catalogFileId);
             const xColumn = catalogWidgetStore.xAxis;
