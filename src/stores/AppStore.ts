@@ -1,5 +1,5 @@
 import * as _ from "lodash";
-import {action, autorun, computed, observable, ObservableMap, when, makeObservable, runInAction} from "mobx";
+import {action, autorun, computed, makeObservable, observable, ObservableMap, runInAction, when} from "mobx";
 import * as Long from "long";
 import {Classes, Colors, IOptionProps, setHotkeysDialogProps} from "@blueprintjs/core";
 import {Utils} from "@blueprintjs/table";
@@ -33,7 +33,7 @@ import {
     SpectralProfileStore,
     WidgetsStore
 } from ".";
-import {distinct, GetRequiredTiles, mapToObject, getTimestamp, getColorForTheme} from "utilities";
+import {distinct, getColorForTheme, GetRequiredTiles, getTimestamp, mapToObject} from "utilities";
 import {ApiService, BackendService, ConnectionStatus, ScriptingService, TileService, TileStreamDetails} from "services";
 import {FrameView, Point2D, PresetLayout, ProtobufProcessing, Theme, TileCoordinate, WCSMatchingType} from "models";
 import {HistogramWidgetStore, RegionWidgetStore, SpatialProfileWidgetStore, SpectralProfileWidgetStore, StatsWidgetStore, StokesAnalysisWidgetStore} from "./widgets";
@@ -445,7 +445,7 @@ export class AppStore {
                 AppStore.Instance.dialogStore.hideStokesDialog();
                 resolve(ack.openFileAck.fileId);
             }, err => {
-                console.log(err)
+                console.log(err);
                 this.alertStore.showAlert(`Error loading files: ${err}`);
                 this.endFileLoading();
                 reject(err);
@@ -453,7 +453,7 @@ export class AppStore {
 
             this.fileCounter++;
         });
-    }
+    };
 
     @action appendConcatFile = (stokesFiles: CARTA.IStokesFile[], directory: string, hdu: string) => {
         // Stop animations playing before loading a new frame
@@ -493,13 +493,13 @@ export class AppStore {
             this.startFileSaving();
             const fileId = this.activeFrame.frameInfo.fileId;
             this.backendService.saveFile(fileId, directory, filename, fileType, regionId, channels, stokes, !shouldDropDegenerateAxes).subscribe(ack => {
-                AppToaster.show({ icon: "saved", message: `${filename} saved.`, intent: "success", timeout: 3000 });
+                AppToaster.show({icon: "saved", message: `${filename} saved.`, intent: "success", timeout: 3000});
                 this.fileBrowserStore.hideFileBrowser();
                 this.endFileSaving();
                 resolve(ack.fileId);
             }, error => {
                 console.error(error);
-                AppToaster.show({ icon: "warning-sign", message: error, intent: "danger", timeout: 3000 });
+                AppToaster.show({icon: "warning-sign", message: error, intent: "danger", timeout: 3000});
                 this.endFileSaving();
                 reject(error);
             });
@@ -652,7 +652,7 @@ export class AppStore {
 
     @action shiftFrame = (delta: number) => {
         if (this.activeFrame && this.frames.length > 1) {
-            const frameIds = this.frames.map(f => f.frameInfo.fileId)
+            const frameIds = this.frames.map(f => f.frameInfo.fileId);
             const currentIndex = frameIds.indexOf(this.activeFrame.frameInfo.fileId);
             const requiredIndex = (this.frames.length + currentIndex + delta) % this.frames.length;
             this.setActiveFrame(frameIds[requiredIndex]);
@@ -930,7 +930,7 @@ export class AppStore {
             this.preferenceStore.setPreference(PreferenceKeys.GLOBAL_THEME, theme);
             this.updateASTColors();
         }
-    }
+    };
 
     private updateASTColors() {
         if (this.astReady) {
@@ -943,7 +943,7 @@ export class AppStore {
                 getColorForTheme(this.overlayStore.axes.color),
                 getColorForTheme(this.overlayStore.numbers.color),
                 getColorForTheme(this.overlayStore.labels.color)
-            ]
+            ];
             AST.setColors(astColors);
         }
     }
@@ -1104,6 +1104,7 @@ export class AppStore {
             const userString = this.username ? ` as ${this.username}` : "";
             switch (newConnectionStatus) {
                 case ConnectionStatus.ACTIVE:
+                    AppToaster.clear();
                     if (this.backendService.connectionDropped) {
                         AppToaster.show(WarningToast(`Reconnected to server${userString}. Some errors may occur`));
                     } else {
@@ -1111,8 +1112,9 @@ export class AppStore {
                     }
                     break;
                 case ConnectionStatus.CLOSED:
-                    if (this.previousConnectionStatus === ConnectionStatus.ACTIVE) {
+                    if (this.previousConnectionStatus === ConnectionStatus.ACTIVE || this.previousConnectionStatus === ConnectionStatus.PENDING) {
                         AppToaster.show(ErrorToast("Disconnected from server"));
+                        this.alertStore.showRetryAlert("You have been disconnected from the server. Do you want to reconnect? Please note that temporary images such as moment images or PV images generated via the GUI will be unloaded.", this.onReconnectAlertClosed);
                     }
                     break;
                 default:
@@ -1216,7 +1218,6 @@ export class AppStore {
         this.backendService.errorStream.subscribe(this.handleErrorStream);
         this.backendService.statsStream.subscribe(this.handleRegionStatsStream);
         this.backendService.momentProgressStream.subscribe(this.handleMomentProgressStream);
-        this.backendService.reconnectStream.subscribe(this.handleReconnectStream);
         this.backendService.scriptingStream.subscribe(this.handleScriptingRequest);
         this.tileService.tileStream.subscribe(this.handleTileStream);
 
@@ -1227,7 +1228,6 @@ export class AppStore {
             this.apiService.setToken(authTokenParam);
         }
 
-        // Splash screen mask
         autorun(() => {
             if (this.astReady && this.zfpReady && this.cartaComputeReady && this.apiService.authenticated) {
                 this.preferenceStore.fetchPreferences().then(() => {
@@ -1235,8 +1235,9 @@ export class AppStore {
                         // Attempt connection after authenticating
                         this.tileService.setCache(this.preferenceStore.gpuTileCache, this.preferenceStore.systemTileCache);
                         if (!this.layoutStore.applyLayout(this.preferenceStore.layout)) {
-                            AlertStore.Instance.showAlert(`Applying preference layout "${this.preferenceStore.layout}" failed!`);
+                            AlertStore.Instance.showAlert(`Applying preference layout "${this.preferenceStore.layout}" failed! Resetting preference layout to default.`);
                             this.layoutStore.applyLayout(PresetLayout.DEFAULT);
+                            this.preferenceStore.setPreference(PreferenceKeys.GLOBAL_LAYOUT, PresetLayout.DEFAULT);
                         }
                         this.cursorFrozen = this.preferenceStore.isCursorFrozen;
                         this.connectToServer();
@@ -1371,7 +1372,7 @@ export class AppStore {
         }
     };
 
-    handleRegionStatsStream = (regionStatsData: CARTA.RegionStatsData) => {
+    @action handleRegionStatsStream = (regionStatsData: CARTA.RegionStatsData) => {
         if (!regionStatsData) {
             return;
         }
@@ -1443,22 +1444,28 @@ export class AppStore {
         }
     };
 
-    handleReconnectStream = () => {
-        this.alertStore.showInteractiveAlert("Do you want to resume your session? Please note that temporary images such as moment images or PV images generated via the GUI will be unloaded.", this.onResumeAlertClosed);
-    };
-
     handleScriptingRequest = (request: CARTA.IScriptingRequest) => {
         this.scriptingService.handleScriptingRequest(request).then(this.backendService.sendScriptingResponse);
     };
 
     // endregion
 
-    @action onResumeAlertClosed = (confirmed: boolean) => {
+    @action onReconnectAlertClosed = (confirmed: boolean) => {
         if (!confirmed) {
             // TODO: How do we handle the situation where the user does not want to resume?
             return;
         }
+        this.backendService.connect(this.backendService.serverUrl).subscribe(ack => {
+            if (ack.sessionType === CARTA.SessionType.RESUMED) {
+                console.log(`Reconnected with session ID ${ack.sessionId}`);
+                this.logStore.addInfo(`Reconnected to server with session ID ${ack.sessionId}`, ["network"]);
+                this.resumeSession();
+            }
 
+        }, err => console.log(err));
+    };
+
+    @action private resumeSession = () => {
         // Some things should be reset when the user reconnects
         this.animatorStore.stopAnimation();
         this.tileService.clearRequestQueue();
