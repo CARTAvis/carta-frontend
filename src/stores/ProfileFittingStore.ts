@@ -16,6 +16,8 @@ export class ProfileFittingStore {
     @observable lockedSlope: boolean;
     @observable resultYIntercept: number;
     @observable resultSlope: number;
+    @observable resultYInterceptError: number;
+    @observable resultSlopeError: number;
     @observable selectedIndex: number;
     @observable hasResult: boolean;
     @observable resultLog: string;
@@ -91,18 +93,24 @@ export class ProfileFittingStore {
         if (this.components && this.hasResult) {
             if (this.continuum !== FittingContinuum.NONE) {
                 resultString += `Y Intercept = ${this.resultYIntercept}\n`;
+                resultString +=  !this.lockedYIntercept ? `Y Intercept Error : ${this.resultYInterceptError}\n` : "";
             }
             if (this.continuum === FittingContinuum.FIRST_ORDER) {
                 resultString += `Slope = ${this.resultSlope}\n`;
+                resultString += !this.lockedSlope ? `Slope Error : ${this.resultSlopeError}\n` : "";
+            }
+            if (this.continuum !== FittingContinuum.NONE) {
+                resultString += "\n";
             }
             for (let i = 0; i <  this.components.length; i++) {
                 const component = this.components[i];
-                const componentString =
-                    `\nComponent #${i+1}\n`+
-                    `Center = ${component.resutlCenter}\n` +
-                    `Amplitude = ${component.resultAmp}\n` +
-                    `FWHM = ${component.resultFwhm}\n`;
-                resultString += componentString;
+                resultString += `Component #${i+1}\nCenter = ${component.resutlCenter}\n`;
+                resultString += !component.lockedCenter ? `Center Error : ${component.resutlCenterError}\n` : "";
+                resultString += `Amplitude = ${component.resultAmp}\n`;
+                resultString += !component.lockedAmp ? `Amplitude Error : ${component.resultAmpError}\n` : "";
+                resultString += `FWHM = ${component.resultFwhm}\n`;
+                resultString += !component.lockedFwhm ? `FWHM Error : ${component.resultFwhmError}\n` : "";
+                resultString += `Integral = ${component.resultIntegral}\n\n`;
             }
         }
 
@@ -257,12 +265,18 @@ export class ProfileFittingStore {
 
         const fittingResult = GSL.gaussianFitting(x, y, inputData, lockedInputData, orderInputData, lockedOrderInputData);
         this.setResultYIntercept(fittingResult.yIntercept);
+        this.setResultYInterceptError(fittingResult.yInterceptError)
         this.setResultSlope(fittingResult.slope);
+        this.setResultSlopeError(fittingResult.slopeError);
         for (let i = 0; i < this.components.length ; i++) {
             const component = this.components[i];
-            component.setResultCenter(fittingResult.center[i]);
-            component.setResultAmp(fittingResult.amp[i]);
-            component.setResultFwhm(fittingResult.fwhm[i]);
+            component.setResultCenter(fittingResult.center[2 * i]);
+            component.setResultCenterError(fittingResult.center[2 * i + 1]);
+            component.setResultAmp(fittingResult.amp[2 * i]);
+            component.setResultAmpError(fittingResult.amp[2 * i + 1]);
+            component.setResultFwhm(fittingResult.fwhm[2 * i]);
+            component.setResultFwhmError(fittingResult.fwhm[2 * i + 1]);
+            component.setResultIntegral(fittingResult.integral[i])
         }
         this.setResultLog(fittingResult.log);
         this.setHasResult(true);
@@ -311,6 +325,14 @@ export class ProfileFittingStore {
 
     @action setResultSlope = (val: number) => {
         this.resultSlope = val;
+    }
+
+    @action setResultYInterceptError = (val: number) => {
+        this.resultYInterceptError = val;
+    }
+
+    @action setResultSlopeError = (val: number) => {
+        this.resultSlopeError = val;
     }
 
     @action setSelectedIndex = (val: number) => {
@@ -370,6 +392,10 @@ export class ProfileFittingIndividualStore {
     @observable resutlCenter: number;
     @observable resultAmp: number;
     @observable resultFwhm: number;
+    @observable resutlCenterError: number;
+    @observable resultAmpError: number;
+    @observable resultFwhmError: number;
+    @observable resultIntegral: number;
 
     @computed get isReadyToFit(): boolean {
         return (isFinite(this.center) && isFinite(this.amp) && isFinite(this.fwhm) && (this.amp !== 0 && this.fwhm !== 0));
@@ -419,5 +445,21 @@ export class ProfileFittingIndividualStore {
 
     @action setResultFwhm = (val: number) => {
         this.resultFwhm = val;
+    }
+
+    @action setResultCenterError = (val: number) => {
+        this.resutlCenterError = val;
+    }
+
+    @action setResultAmpError = (val: number) => {
+        this.resultAmpError = val;
+    }
+
+    @action setResultFwhmError = (val: number) => {
+        this.resultFwhmError = val;
+    }
+
+    @action setResultIntegral = (val: number) => {
+        this.resultIntegral = val;
     }
 }

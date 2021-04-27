@@ -45,10 +45,17 @@
             }
         }
 
-        .fitting-result-pre{
-            overflow: auto;
-            height: 100%;
-            flex: 2 2 auto;
+        .fitting-result{
+            display: flex;
+            flex-direction: column;
+            height: 200px;
+            width: 300px;
+
+            .fitting-result-pre{
+                overflow: auto;
+                height: 100%;
+                flex: 1;
+            }
         }
     }
 
@@ -68,13 +75,26 @@
 }
 
 .fitting-popover{
-    display: flex;
-    flex-direction: column;
-    height: 400px;
 
-    .fitting-log-pre{
-        overflow: auto;
-        height: 100%;
-        flex: 1;
+    .fitting-log{
+        display: flex;
+        flex-direction: column;
+        height: 400px;
+        .fitting-log-pre{
+            overflow: auto;
+            height: 100%;
+            flex: 1;
+        }
     }
+
+    .fitting-popover-footer{
+        display: flex;
+        flex-direction: row;
+        justify-content: flex-end;
+
+        .fitting-log-button{
+            margin: 10px
+        }
+    }
+
 }

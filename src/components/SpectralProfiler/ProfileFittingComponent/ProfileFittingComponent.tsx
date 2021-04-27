@@ -8,7 +8,7 @@ import {SpectralProfileWidgetStore} from "stores/widgets/SpectralProfileWidgetSt
 import {AppStore, SpectralProfileStore} from "stores";
 import {ProcessedSpectralProfile} from "models";
 import {CARTA} from "carta-protobuf";
-import {clamp} from "utilities";
+import {clamp, getTimestamp} from "utilities";
 import "./ProfileFittingComponent.scss";
 import { RegionId } from "stores/widgets";
 
@@ -113,7 +113,38 @@ export class ProfileFittingComponent extends React.Component<ProfileFittingCompo
     }
 
     private saveLog = () => {
-        
+        let headerString = "";
+        const frame = this.props.widgetStore.effectiveFrame;
+        if (frame && frame.frameInfo && frame.regionSet) {
+            headerString += `# image: ${frame.filename}\n`;
+
+            const regionId = this.props.widgetStore.effectiveRegionId;
+            const region = frame.regionSet.regions.find(r => r.regionId === regionId);
+
+            // statistic type, ignore when region == cursor
+            if (regionId !== 0) {
+                headerString += `# statistic: ${SpectralProfileWidgetStore.StatsTypeString(this.props.widgetStore.statsType)}\n`;
+            }
+            // region info
+            if (region) {
+                headerString += `# ${region.regionProperties}\n`;
+                if (frame.validWcs) {
+                    headerString += `# ${frame.getRegionWcsProperties(region)}\n`;
+                }
+            }
+        }
+
+        headerString += `# Fitting function : ${this.props.fittingStore.function === FittingFunction.GAUSSIAN ? "Gaussian" : "Lorentzian"}\n`
+        headerString += `# Fitting ${this.props.fittingStore.components.length} component${this.props.fittingStore.components.length > 1 ? "s" : ""}\n`
+
+        const content = `data:text/plain;charset=utf-8,${headerString}\n${this.props.fittingStore.resultLog}\n`;
+        const dataURL = encodeURI(content).replace(/#/g, "%23");
+
+        const a = document.createElement("a") as HTMLAnchorElement;
+        a.href = dataURL;
+
+        a.download = `Profile Fitting Result Log-${getTimestamp()}.txt`;
+        a.dispatchEvent(new MouseEvent("click"));
     }
 
     private reset = () => {
@@ -383,12 +414,14 @@ export class ProfileFittingComponent extends React.Component<ProfileFittingCompo
                         </FormGroup>
                     }
                     <FormGroup label="Fitting result" inline={true}>
-                        <Pre className="fitting-result-pre">
-                            <Text>
-                                {fittingStore.resultString}
-                            </Text>
-                        </Pre>
-                    </FormGroup>              
+                        <div className="fitting-result">
+                            <Pre className="fitting-result-pre">
+                                <Text>
+                                    {fittingStore.resultString}
+                                </Text>
+                            </Pre>
+                        </div>
+                    </FormGroup>
                 </div>
                 <div className="profile-fitting-footer">
                     <AnchorButton 
@@ -409,18 +442,21 @@ export class ProfileFittingComponent extends React.Component<ProfileFittingCompo
                             intent={Intent.PRIMARY}
                             disabled={!fittingStore.hasResult}
                         />
-                        <div> 
-                            <div className="fitting-popover">
+                        <div className="fitting-popover">
+                            <div className="fitting-log">
                                 <Pre className="fitting-log-pre">
                                     <Text>
                                         {fittingStore.resultLog}
                                     </Text>
                                 </Pre>
                             </div>
-                            <Button
-                                text="Save log"
-                                onClick={this.saveLog}
-                            />
+                            <div className="fitting-popover-footer">
+                                <Button
+                                    text="Save log"
+                                    onClick={this.saveLog}
+                                    className="fitting-log-button"
+                                />
+                            </div>
                         </div>
                     </Popover>
                     <Switch
