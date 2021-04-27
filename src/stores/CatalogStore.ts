@@ -1,6 +1,7 @@
 import * as AST from "ast_wrapper";
+import {CARTA} from "carta-protobuf";
 import {action, observable, ObservableMap, computed,makeObservable} from "mobx";
-import {AppStore, CatalogProfileStore, CatalogSystemType, WidgetsStore} from "stores";
+import {AppStore, CatalogProfileStore, CatalogSystemType, FrameStore, WidgetsStore} from "stores";
 import {CatalogWebGLService, CatalogTextureType} from "services";
 import {CatalogWidgetStore} from "stores/widgets";
 
@@ -80,6 +81,74 @@ export class CatalogStore {
             catalog.dataPoints = dataPoints;
             CatalogWebGLService.Instance.updateDataTexture(fileId, dataPoints, CatalogTextureType.Position);
         }
+    }
+
+    @action updateSpatialMatchedCatalog(imageMapId: string, catalogFileId: number, ) {
+            const activeFrame = AppStore.Instance.activeFrame;
+            const catalogWidgetStore = this.getCatalogWidgetStore(catalogFileId);
+            const xColumn = catalogWidgetStore.xAxis;
+            const yColumn = catalogWidgetStore.yAxis;
+            if (xColumn && yColumn) {
+                const catalogProfileStore = this.catalogProfileStores.get(catalogFileId);
+                const coords = catalogProfileStore.get2DPlotData(xColumn, yColumn, catalogProfileStore.catalogData);
+                const wcs = activeFrame.validWcs ? activeFrame.wcsInfo : 0;
+                let dataPoints = new Float32Array(coords.wcsX.length * 2);
+                const catalogSystem = catalogProfileStore.catalogCoordinateSystem.system;
+                switch (catalogSystem) {
+                    case CatalogSystemType.Pixel0:
+                        for (let i = 0; i < coords.wcsX.length; i++) {
+                            dataPoints[i * 2] = coords.wcsX[i];
+                            dataPoints[i * 2 + 1] = coords.wcsY[i];
+                        }
+                        break;
+                    case CatalogSystemType.Pixel1:
+                        for (let i = 0; i < coords.wcsX.length; i++) {
+                            dataPoints[i * 2] = coords.wcsX[i] - 1;
+                            dataPoints[i * 2 + 1] = coords.wcsY[i] - 1;
+                        }
+                        break;
+                    default:
+                        const pixelData = CatalogStore.TransformCatalogData(coords.wcsX, coords.wcsY, wcs, coords.xHeaderInfo.units, coords.yHeaderInfo.units, catalogSystem);
+                        for (let i = 0; i < pixelData.xImageCoords.length; i++) {
+                            dataPoints[i * 2] = pixelData.xImageCoords[i];
+                            dataPoints[i * 2 + 1] = pixelData.yImageCoords[i];
+                        }
+                        break;
+                }
+                CatalogWebGLService.Instance.updateSpatialMatchedTexture(imageMapId, catalogFileId, dataPoints);
+            }
+    }
+
+    // only recalculate position when source image and destination image have different projection types
+    // takes about 3s to recalculate and update 1M points
+    convertSpatailMatchedData() {
+        const activeFrame = AppStore.Instance.activeFrame;
+        const destinationFrameId = activeFrame?.frameInfo?.fileId;
+        if(activeFrame?.spatialReference) {
+            const sourceFrameId = activeFrame.spatialReference.frameInfo.fileId;
+            const imageMapId = `${sourceFrameId}-${destinationFrameId}`;
+            this.imageAssociatedCatalogId.get(sourceFrameId)?.forEach(catalogFileId => {
+                this.updateSpatialMatchedCatalog(imageMapId, catalogFileId);   
+            });
+        }
+
+        activeFrame?.secondarySpatialImages?.forEach(frame => {
+            const sourceFrameId = frame.frameInfo.fileId;
+            const imageMapId = `${sourceFrameId}-${destinationFrameId}`;
+            this.imageAssociatedCatalogId.get(sourceFrameId)?.forEach(catalogFileId => {
+                this.updateSpatialMatchedCatalog(imageMapId, catalogFileId);   
+            });
+        });
+    }
+
+    reProjection(source: FrameStore, destination: FrameStore): boolean {
+        let reProjection = false;
+        const sourceProjection = this.getFrameProjection(source.frameInfo.fileInfoExtended.computedEntries);
+        if(destination !== source) {
+            const destinationProjection = this.getFrameProjection(destination.frameInfo.fileInfoExtended.computedEntries);
+            reProjection = sourceProjection !== destinationProjection;
+        }
+        return reProjection;
     }
 
     @action clearImageCoordsData(fileId: number) {
@@ -184,16 +253,16 @@ export class CatalogStore {
         if (activeFrame) {
             const imageId = activeFrame.frameInfo.fileId;
             let associatedCatalogIds = [...this.imageAssociatedCatalogId.get(imageId)];
-            const spatialMatchedImageId = activeFrame?.spatialReference?.frameInfo?.fileId;
+            const spatialMatchedImageId = activeFrame.spatialReference?.frameInfo?.fileId;
             if (spatialMatchedImageId >= 0) {
-                const spatialReferencedCatalogs = this.imageAssociatedCatalogId.get(spatialMatchedImageId);
+                const spatialReferencedCatalogs = [...this.imageAssociatedCatalogId.get(spatialMatchedImageId)];
                 associatedCatalogIds = [...new Set([].concat(...[associatedCatalogIds, spatialReferencedCatalogs]))].filter(catalogFileId => {
                     return this.catalogGLData.get(catalogFileId) !== undefined;
                 });
             }
 
             activeFrame.secondarySpatialImages?.forEach(frame => {
-                const secondarySpatialReferencedCatalogs = this.imageAssociatedCatalogId.get(frame.frameInfo.fileId);
+                const secondarySpatialReferencedCatalogs = [...this.imageAssociatedCatalogId.get(frame.frameInfo.fileId)];
                 associatedCatalogIds = [...new Set([].concat(...[associatedCatalogIds, secondarySpatialReferencedCatalogs]))].filter(catalogFileId => {
                     return this.catalogGLData.get(catalogFileId) !== undefined;
                 });;
@@ -238,6 +307,16 @@ export class CatalogStore {
             }
         });
         return fileList;
+    }
+
+    getFrameProjection(computedEntries: CARTA.IHeaderEntry[]) {
+        let projection = null;
+        computedEntries.forEach(header => {
+            if (header.name === "Projection") {
+                projection = header.value;
+            }
+        });
+        return projection;
     }
 
     // catalog widget store

@@ -162,10 +162,12 @@ export class CatalogViewGLComponent extends React.Component<CatalogViewGLCompone
         let rangeOffset = {x: 0.0, y: 0.0};
         let rotationAngle = 0.0;
         let scaleAdjustment = 1.0;
-
+        const destinationFrame = appStore.activeFrame;
         catalogStore.activeCatalogFiles.forEach(fileId => {
             const frame = appStore.getFrame(catalogStore.getFramIdByCatalogId(fileId));
+            const reProjection = catalogStore.reProjection(frame, destinationFrame);
             const catalog = catalogStore.catalogGLData.get(fileId);
+            // console.log(frame.frameInfo.fileId, fileId, destinationFrame.frameInfo.fileId)
             if(catalog) {
                 const catalogWidgetStore = catalogStore.getCatalogWidgetStore(fileId);
                 const shape = catalogWidgetStore.shapeSettings;
@@ -178,9 +180,14 @@ export class CatalogViewGLComponent extends React.Component<CatalogViewGLCompone
                 this.gl.uniform1f(shaderUniforms.LineThickness, lineThickness);
                 this.gl.uniform1i(shaderUniforms.ShowSelectedSource, catalogWidgetStore.showSelectedData? 1.0 : 0.0);
                 //FrameView
-                if (frame.spatialReference) {
-                    const baseRequiredView = frame.spatialReference.requiredFrameView;
-                    const originAdjustedOffset = subtract2D(frame.spatialTransform.origin, scale2D(rotate2D(frame.spatialTransform.origin, frame.spatialTransform.rotation), frame.spatialTransform.scale));
+                let sourceFrame = frame;
+                if(reProjection) {
+                    sourceFrame = destinationFrame;
+                }
+
+                if (sourceFrame.spatialReference) {
+                    const baseRequiredView = sourceFrame.spatialReference.requiredFrameView;
+                    const originAdjustedOffset = subtract2D(sourceFrame.spatialTransform.origin, scale2D(rotate2D(sourceFrame.spatialTransform.origin, sourceFrame.spatialTransform.rotation), sourceFrame.spatialTransform.scale));
 
                     rangeScale = {
                         x: 1.0 / (baseRequiredView.xMax - baseRequiredView.xMin),
@@ -188,13 +195,13 @@ export class CatalogViewGLComponent extends React.Component<CatalogViewGLCompone
                     };
 
                     rangeOffset = {
-                        x: (frame.spatialTransform.translation.x - baseRequiredView.xMin + originAdjustedOffset.x) * rangeScale.x,
-                        y: (frame.spatialTransform.translation.y - baseRequiredView.yMin + originAdjustedOffset.y) * rangeScale.y
+                        x: (sourceFrame.spatialTransform.translation.x - baseRequiredView.xMin + originAdjustedOffset.x) * rangeScale.x,
+                        y: (sourceFrame.spatialTransform.translation.y - baseRequiredView.yMin + originAdjustedOffset.y) * rangeScale.y
                     };
-                    rotationAngle = -frame.spatialTransform.rotation;
-                    scaleAdjustment = frame.spatialTransform.scale;
+                    rotationAngle = -sourceFrame.spatialTransform.rotation;
+                    scaleAdjustment = sourceFrame.spatialTransform.scale;
                 } else {
-                    let baseRequiredView = frame.requiredFrameView;
+                    let baseRequiredView = sourceFrame.requiredFrameView;
                     rangeScale = {
                         x: 1.0 / (baseRequiredView.xMax - baseRequiredView.xMin),
                         y: 1.0 / (baseRequiredView.yMax - baseRequiredView.yMin),
@@ -207,6 +214,7 @@ export class CatalogViewGLComponent extends React.Component<CatalogViewGLCompone
                     rotationAngle = 0.0;
                     scaleAdjustment = 1.0;
                 }
+
                 this.gl.uniform2f(shaderUniforms.RangeOffset, rangeOffset.x, rangeOffset.y);
                 this.gl.uniform2f(shaderUniforms.RangeScale, rangeScale.x, rangeScale.y);
                 this.gl.uniform1f(shaderUniforms.ScaleAdjustment, scaleAdjustment);
@@ -266,7 +274,23 @@ export class CatalogViewGLComponent extends React.Component<CatalogViewGLCompone
                 }
 
                 // position 
-                const positionTexture = this.catalogWebGLService.getDataTexture(fileId, CatalogTextureType.Position);
+                let positionTexture = undefined;
+                if(reProjection) {
+                    let source = -1;
+                    if (destinationFrame.spatialReference) {
+                        source = destinationFrame.spatialReference.frameInfo.fileId;
+                    }
+
+                    if (destinationFrame.secondarySpatialImages?.length) {
+                        catalogStore.convertSpatailMatchedData();
+                        const secondarySpatialReferencedCatalogs = catalogStore.imageAssociatedCatalogId.get(frame.frameInfo.fileId);
+                        source = secondarySpatialReferencedCatalogs.includes(fileId) ? frame.frameInfo.fileId : -1;
+                    }
+                    const imageMapId = `${source}-${destinationFrame.frameInfo.fileId}`;
+                    positionTexture = this.catalogWebGLService.getSpatialMatchedTexture(imageMapId, fileId);
+                } else {
+                    positionTexture = this.catalogWebGLService.getDataTexture(fileId, CatalogTextureType.Position);
+                }
                 if (dataPoints?.length && positionTexture) {
                     this.gl.uniform3f(shaderUniforms.PointColor, color.r / 255.0, color.g / 255.0, color.b / 255.0);
                     this.gl.uniform3f(shaderUniforms.SelectedSourceColor, selectedSourceColor.r / 255.0, selectedSourceColor.g / 255.0, selectedSourceColor.b / 255.0);

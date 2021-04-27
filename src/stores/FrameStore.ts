@@ -1595,6 +1595,9 @@ export class FrameStore {
             this.frameRegionSet.deleteRegion(region);
         }
 
+        if (AppStore.Instance.catalogStore.reProjection(frame, this)) {
+            AppStore.Instance.catalogStore.convertSpatailMatchedData();   
+        }
         return true;
     };
 

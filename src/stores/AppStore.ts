@@ -660,7 +660,7 @@ export class AppStore {
                     let associatedCatalogFiles = [];
                     const catalogStore = CatalogStore.Instance;
                     const catalogComponentSize = catalogStore.catalogProfiles.size;
-                    let currentAssociatedCatalogFile = catalogStore.activeCatalogFiles;
+                    let currentAssociatedCatalogFile = catalogStore.imageAssociatedCatalogId.get(frame.frameInfo.fileId);
                     if (currentAssociatedCatalogFile?.length) {
                         associatedCatalogFiles = currentAssociatedCatalogFile;
                     } else {

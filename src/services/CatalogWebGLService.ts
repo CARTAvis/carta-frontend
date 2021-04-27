@@ -9,7 +9,8 @@ export enum CatalogTextureType{
     Orientation,
     Position,
     SelectedSource,
-    SizeMinor
+    SizeMinor,
+    SpatialMatch
 }
 
 interface ShaderUniforms {
@@ -49,6 +50,7 @@ export class CatalogWebGLService {
     private static staticInstance: CatalogWebGLService;
     private cmapTexture: WebGLTexture;
     private dataTextures: Map<number, WebGLTexture>;
+    private spatialMatchedDataTextures: Map<string, Map<number, WebGLTexture>>;
     private sizeTextures: Map<number, WebGLTexture>;
     private colorTextures: Map<number, WebGLTexture>;
     private orientationTextures: Map<number, WebGLTexture>;
@@ -113,6 +115,22 @@ export class CatalogWebGLService {
         }
     }
 
+    public updateSpatialMatchedTexture = (imageMapId: string, catalogFileId: number, dataPoints: Float32Array) => {
+        const textures = this.spatialMatchedDataTextures.get(imageMapId);
+        const texture = createTextureFromArray(this.gl, dataPoints, WebGL2RenderingContext.TEXTURE1, 2)
+        if (textures) {
+            this.spatialMatchedDataTextures.get(imageMapId).set(catalogFileId, texture);
+        } else {
+            const destinationTextures = new Map<number, WebGLTexture>();
+            destinationTextures.set(catalogFileId, texture);
+            this.spatialMatchedDataTextures.set(imageMapId, destinationTextures);
+        }
+    }
+
+    public getSpatialMatchedTexture = (imageMapId: string, catalogFileId: number) => {
+        return this.spatialMatchedDataTextures.get(imageMapId)?.get(catalogFileId);
+    }
+
     public clearTexture = (fileId: number) => {
         this.dataTextures.delete(fileId);
         this.selectedSourceTextures.delete(fileId);
@@ -120,6 +138,13 @@ export class CatalogWebGLService {
         this.colorTextures.delete(fileId);
         this.orientationTextures.delete(fileId);
         this.sizeMinorTextures.delete(fileId);
+        this.clearSpatialMatchedTexture(fileId);
+    }
+
+    private clearSpatialMatchedTexture = (catalogFileId: number) => {
+        this.spatialMatchedDataTextures.forEach(catalogs => {
+            catalogs.delete(catalogFileId);
+        })
     }
 
     private initShaders() {
@@ -179,6 +204,7 @@ export class CatalogWebGLService {
         this.sizeTextures = new Map<number, WebGLTexture>();
         this.colorTextures = new Map<number, WebGLTexture>();
         this.sizeMinorTextures = new Map<number, WebGLTexture>();
+        this.spatialMatchedDataTextures = new Map<string, Map<number, WebGLTexture>>();
     }
 
     private constructor() {
