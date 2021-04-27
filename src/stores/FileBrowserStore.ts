@@ -1,5 +1,5 @@
-import {action, computed, observable, makeObservable, runInAction} from "mobx";
 import {IOptionProps, TabId} from "@blueprintjs/core";
+import {action, computed, observable, makeObservable, runInAction, autorun} from "mobx";
 import {CARTA} from "carta-protobuf";
 import {BackendService} from "services";
 import {AppStore, DialogStore, PreferenceKeys, PreferenceStore} from "stores";
@@ -62,8 +62,28 @@ export class FileBrowserStore {
     @observable catalogFileInfo: CARTA.ICatalogFileInfo;
     @observable catalogHeaders: Array<CARTA.ICatalogHeader>;
 
+    // Save image
     @observable saveFilename: string = "";
     @observable saveFileType: CARTA.FileType = CARTA.FileType.CASA;
+    @observable saveSpectralRange: string[] = ["0", "0"];
+    @observable saveStokesOption: number;
+    @observable saveRegionId: number;
+    @observable shouldDropDegenerateAxes: boolean;
+
+    constructor() {
+        makeObservable(this);
+        this.exportCoordinateType = CARTA.CoordinateType.WORLD;
+        this.exportFileType = CARTA.FileType.CRTF;
+
+        // Update channelValueBounds for save image
+        autorun(() => {
+            if (AppStore.Instance.activeFrame) {
+                FileBrowserStore.Instance.initialSaveSpectralRange();
+                this.setSaveFileType(AppStore.Instance.activeFrame?.frameInfo?.fileInfo.type);
+            }
+        });
+
+    }
 
     @observable selectedFiles: ISelectedFile[];
 
@@ -104,6 +124,9 @@ export class FileBrowserStore {
         if (AppStore.Instance.activeFrame && mode === BrowserMode.SaveFile) {
             this.saveFilename = AppStore.Instance.activeFrame.frameInfo.fileInfo.name;
         }
+        this.initialSaveSpectralRange();
+        this.saveRegionId = 0;
+        this.shouldDropDegenerateAxes = false;
     };
 
     @action hideFileBrowser = () => {
@@ -221,6 +244,16 @@ export class FileBrowserStore {
         }));
     };
 
+    /// Update the spectral range for save image file
+    @action initialSaveSpectralRange = () => {
+        const activeFrame = AppStore.Instance.activeFrame;
+        if (activeFrame && activeFrame.numChannels > 1) {
+            const min = Math.min(activeFrame.channelValueBounds.max, activeFrame.channelValueBounds.min);
+            const max = Math.max(activeFrame.channelValueBounds.max, activeFrame.channelValueBounds.min);
+            const delta = (max - min) / (activeFrame.numChannels - 1);
+            this.saveSpectralRange = [min.toString(), max.toString(), delta.toString()];
+        }
+    };
     @action getConcatFilesHeader = (directory: string, file: string, hdu: string): Promise<{file: string, info: CARTA.IFileInfoExtended}> => {
         return new Promise((resolve, reject) => {
             BackendService.Instance.getFileInfo(directory, file, hdu).subscribe((res: CARTA.FileInfoResponse) => {
@@ -324,6 +357,20 @@ export class FileBrowserStore {
         PreferenceStore.Instance.setPreference(PreferenceKeys.SILENT_FILE_SORTING_STRING, sortingString);
     };
 
+    @action setSaveRegionId = (regionId: number) => {
+        if (0 <= regionId && isFinite(regionId)) {
+            this.saveRegionId = regionId;
+        }
+    };
+
+    @action setSaveSpectralRangeMin = (min: string) => {
+        this.saveSpectralRange[0] = min;
+    };
+
+    @action setSaveSpectralRangeMax = (max: string) => {
+        this.saveSpectralRange[1] = max;
+    };
+    
     @action setSelectedFiles = (selection: ISelectedFile[]) => {
         this.selectedFiles = selection;
     };
@@ -410,8 +457,9 @@ export class FileBrowserStore {
     @computed get getBrowserMode(): FileInfoType {
         switch (this.browserMode) {
             case BrowserMode.File:
-            case BrowserMode.SaveFile:
                 return FileInfoType.IMAGE_FILE;
+            case BrowserMode.SaveFile:
+                return FileInfoType.SAVE_IMAGE;
             case BrowserMode.Catalog:
                 return FileInfoType.CATALOG_FILE;
             default:
@@ -451,9 +499,27 @@ export class FileBrowserStore {
         return {columnHeaders: columnHeaders, columnsData: columnsData};
     }
 
-    constructor() {
-        makeObservable(this);
-        this.exportCoordinateType = CARTA.CoordinateType.WORLD;
-        this.exportFileType = CARTA.FileType.CRTF;
+    /// Transfer the request from stokes string
+    /// to [start, end, stride]
+    /// Ex. "ABC" could be "IQU" or "QUV"
+    /// Ex. "AB" could be "IQ", "IU", "IV", "QU", "UV", or "QV"
+    @computed get saveStokesRange(): number[] {
+        // [start, end, stride] for "ABCD"
+        const options: number[][] = [
+            [], // all
+            [0, 0, 1], // A
+            [1, 1, 1], // B
+            [2, 2, 1], // C
+            [3, 3, 1], // D
+            [0, 1, 1], // AB
+            [1, 2, 1], // BC
+            [2, 3, 1], // CD
+            [0, 2, 2], // AC
+            [0, 3, 3], // AD
+            [1, 3, 2], // BD
+            [0, 2, 1], // ABC
+            [1, 3, 1], // BCD
+        ];
+        return options[this.saveStokesOption];
     }
 }
