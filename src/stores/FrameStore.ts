@@ -52,6 +52,7 @@ export const WCS_PRECISION = 10;
 export class FrameStore {
     private static readonly CursorInfoMaxPrecision = 25;
     private static readonly ZoomInertiaDuration = 250;
+    private static readonly CursorMovementDuration = 250;
 
     private readonly spectralFrame: AST.FrameSet;
     private readonly controlMaps: Map<FrameStore, ControlMap>;
@@ -73,6 +74,7 @@ export class FrameStore {
     public spectralCoordsSupported: Map<string, { type: SpectralType, unit: SpectralUnit }>;
     public spectralSystemsSupported: Array<SpectralSystem>;
     public spatialTransformAST: AST.FrameSet;
+    private cursorMovementHandle: NodeJS.Timeout;
 
     // Region set for the current frame. Accessed via regionSet, to take into account region sharing
     @observable private readonly frameRegionSet: RegionSetStore;
@@ -85,6 +87,7 @@ export class FrameStore {
     @observable center: Point2D;
     @observable cursorInfo: CursorInfo;
     @observable cursorValue: { position: Point2D, channel: number, value: number };
+    @observable cursorMoving: boolean;
     @observable zoomLevel: number;
     @observable stokes: number;
     @observable channel: number;
@@ -764,6 +767,7 @@ export class FrameStore {
 
         this.isRequestingMoments = false;
         this.requestingMomentsProgress = 0;
+        this.cursorMovementHandle = null;
 
         this.stokesFiles = [];
 
@@ -872,6 +876,7 @@ export class FrameStore {
         // need initialized wcs to get correct cursor info
         this.cursorInfo = this.getCursorInfo(this.center);
         this.cursorValue = {position: {x: NaN, y: NaN}, channel: 0, value: NaN};
+        this.cursorMoving = false;
 
         autorun(() => {
             // update zoomLevel when image viewer is available for drawing
@@ -1060,7 +1065,7 @@ export class FrameStore {
                 let astString = new ASTSettingsString();
                 astString.add("Format(1)", this.isPVImage || this.isUVImage ? undefined : this.overlayStore.numbers.cursorFormatStringX(precisionX));
                 astString.add("Format(2)", this.isPVImage || this.isUVImage ? undefined : this.overlayStore.numbers.cursorFormatStringY(precisionY));
-                astString.add("System", this.isPVImage || this.isUVImage ? 'cartesian' : this.overlayStore.global.explicitSystem);
+                astString.add("System", this.isPVImage || this.isUVImage ? "cartesian" : this.overlayStore.global.explicitSystem);
 
                 let formattedNeighbourhood = normalizedNeighbourhood.map((pos) => AST.getFormattedCoordinates(this.wcsInfo, pos.x, pos.y, astString.toString(), true));
                 let [p, n1, n2] = formattedNeighbourhood;
@@ -1211,7 +1216,8 @@ export class FrameStore {
         }
     }
 
-    @action private setChannelValues(values: number[]) {
+    @action
+    private setChannelValues(values: number[]) {
         this.channelValues = values;
     }
 
@@ -1301,7 +1307,7 @@ export class FrameStore {
 
     @action setSpectralCoordinate = (coordStr: string): boolean => {
         if (this.spectralCoordsSupported?.has(coordStr)) {
-            const coord: {type: SpectralType, unit: SpectralUnit} = this.spectralCoordsSupported.get(coordStr);
+            const coord: { type: SpectralType, unit: SpectralUnit } = this.spectralCoordsSupported.get(coordStr);
             this.spectralType = coord.type;
             this.spectralUnit = coord.unit;
             return true;
@@ -1418,6 +1424,11 @@ export class FrameStore {
                 frame.cursorInfo = frame.getCursorInfo(posSecondaryImage);
             }
         }
+        this.cursorMoving = true;
+        clearTimeout(this.cursorMovementHandle);
+        this.cursorMovementHandle = setTimeout(() => runInAction(() => {
+            this.cursorMoving = false;
+        }), FrameStore.CursorMovementDuration);
     }
 
     @action setCursorValue(position: Point2D, channel: number, value: number) {
@@ -1762,5 +1773,5 @@ export class FrameStore {
 
     @action setStokesFiles = (stokesFiles: CARTA.StokesFile[]) => {
         this.stokesFiles = stokesFiles;
-    }
+    };
 }

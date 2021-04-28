@@ -144,7 +144,7 @@ export class SpatialProfileWidgetStore {
     }
 
     private static GetCursorSpatialConfig(frame: FrameStore, coordinate: string): CARTA.SetSpatialRequirements.ISpatialConfig {
-        if (!AppStore.Instance.cursorFrozen) {
+        if (frame.cursorMoving && !AppStore.Instance.cursorFrozen) {
             if (coordinate.includes("x")) {
                 return {
                     coordinate,
