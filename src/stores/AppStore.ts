@@ -1,5 +1,5 @@
 import * as _ from "lodash";
-import {action, autorun, computed, observable, ObservableMap, when, makeObservable, runInAction} from "mobx";
+import {action, autorun, computed, makeObservable, observable, ObservableMap, runInAction, when} from "mobx";
 import * as Long from "long";
 import {Classes, Colors, IOptionProps, setHotkeysDialogProps} from "@blueprintjs/core";
 import {Utils} from "@blueprintjs/table";
@@ -15,7 +15,6 @@ import {
     CatalogProfileStore,
     CatalogStore,
     CatalogUpdateMode,
-    dayPalette,
     DialogStore,
     FileBrowserStore,
     FrameInfo,
@@ -24,7 +23,6 @@ import {
     LayoutStore,
     LogEntry,
     LogStore,
-    nightPalette,
     OverlayStore,
     PreferenceKeys,
     PreferenceStore,
@@ -35,9 +33,9 @@ import {
     SpectralProfileStore,
     WidgetsStore
 } from ".";
-import {distinct, GetRequiredTiles, mapToObject, getTimestamp} from "utilities";
+import {distinct, getColorForTheme, GetRequiredTiles, getTimestamp, mapToObject} from "utilities";
 import {ApiService, BackendService, ConnectionStatus, ScriptingService, TileService, TileStreamDetails} from "services";
-import {FrameView, Point2D, ProtobufProcessing, Theme, TileCoordinate, WCSMatchingType} from "models";
+import {FrameView, Point2D, PresetLayout, ProtobufProcessing, Theme, TileCoordinate, WCSMatchingType} from "models";
 import {HistogramWidgetStore, RegionWidgetStore, SpatialProfileWidgetStore, SpectralProfileWidgetStore, StatsWidgetStore, StokesAnalysisWidgetStore} from "./widgets";
 import {getImageCanvas, ImageViewLayer} from "components";
 import {AppToaster, ErrorToast, SuccessToast, WarningToast} from "components/Shared";
@@ -160,18 +158,12 @@ export class AppStore {
 
         let autoFileLoaded = false;
 
-        AST.onReady.then(runInAction(() => {
-            AST.setPalette(this.darkTheme ? nightPalette : dayPalette);
+        AST.onReady.then(action(() => {
             this.astReady = true;
             if (this.backendService.connectionStatus === ConnectionStatus.ACTIVE && !autoFileLoaded && fileSearchParam) {
                 this.loadFile(folderSearchParam, fileSearchParam, "");
             }
         }));
-
-        const authTokenParam = url.searchParams.get("token");
-        if (authTokenParam) {
-            ApiService.Instance.setToken(authTokenParam);
-        }
 
         this.backendService.connect(wsURL).subscribe(ack => {
             console.log(`Connected with session ID ${ack.sessionId}`);
@@ -195,6 +187,7 @@ export class AppStore {
     @observable taskStartTime: number;
     @observable taskCurrentTime: number;
     @observable fileLoading: boolean;
+    @observable fileSaving: boolean;
     @observable resumingSession: boolean;
 
     @action restartTaskProgress = () => {
@@ -224,6 +217,14 @@ export class AppStore {
         this.fileLoading = false;
     };
 
+    @action startFileSaving = () => {
+        this.fileSaving = true;
+    };
+
+    @action endFileSaving = () => {
+        this.fileSaving = false;
+    };
+
     // Keyboard shortcuts
     @computed get modifierString() {
         // Modifier string for shortcut keys.
@@ -248,6 +249,14 @@ export class AppStore {
         } else {
             return this.preferenceStore.theme === Theme.DARK;
         }
+    }
+
+    @computed get openFileDisabled(): boolean {
+        return this.backendService?.connectionStatus !== ConnectionStatus.ACTIVE || this.fileLoading;
+    }
+
+    @computed get appendFileDisabled(): boolean {
+        return this.openFileDisabled || !this.activeFrame;
     }
 
     // Frame actions
@@ -277,17 +286,17 @@ export class AppStore {
         return this.catalogStore.catalogProfileStores.size;
     }
 
-    @computed get frameNames(): IOptionProps [] {
-        let names: IOptionProps [] = [];
+    @computed get frameNames(): IOptionProps[] {
+        let names: IOptionProps[] = [];
         this.frames.forEach((frame, index) => names.push({label: index + ": " + frame.filename, value: frame.frameInfo.fileId}));
         return names;
     }
 
-    @computed get frameChannels(): number [] {
+    @computed get frameChannels(): number[] {
         return this.frames.map(frame => frame.requiredChannel);
     }
 
-    @computed get frameStokes(): number [] {
+    @computed get frameStokes(): number[] {
         return this.frames.map(frame => frame.requiredStokes);
     }
 
@@ -315,7 +324,7 @@ export class AppStore {
         return this.spatialGroup.filter(f => f.contourConfig.enabled && f.contourConfig.visible);
     }
 
-    @action addFrame = (ack: CARTA.OpenFileAck, directory: string, hdu: string): boolean => {
+    @action addFrame = (ack: CARTA.IOpenFileAck, directory: string, hdu: string): boolean => {
         if (!ack) {
             return false;
         }
@@ -424,6 +433,43 @@ export class AppStore {
         });
     };
 
+    @action loadConcatStokes = (stokesFiles: CARTA.IStokesFile[], directory: string, hdu: string) => {
+        return new Promise<number>((resolve, reject) => {
+            this.startFileLoading();
+            this.backendService.loadStokeFiles(stokesFiles, this.fileCounter, CARTA.RenderMode.RASTER).subscribe(ack => {
+                if (!this.addFrame(ack.openFileAck, directory, hdu)) {
+                    AppToaster.show({icon: "warning-sign", message: "Load file failed.", intent: "danger", timeout: 3000});
+                }
+                this.endFileLoading();
+                this.fileBrowserStore.hideFileBrowser();
+                AppStore.Instance.dialogStore.hideStokesDialog();
+                resolve(ack.openFileAck.fileId);
+            }, err => {
+                console.log(err);
+                this.alertStore.showAlert(`Error loading files: ${err}`);
+                this.endFileLoading();
+                reject(err);
+            });
+
+            this.fileCounter++;
+        });
+    };
+
+    @action appendConcatFile = (stokesFiles: CARTA.IStokesFile[], directory: string, hdu: string) => {
+        // Stop animations playing before loading a new frame
+        this.animatorStore.stopAnimation();
+        // hide all catalog data
+        if (this.catalogNum) {
+            CatalogStore.Instance.resetDisplayedData([]);
+        }
+        return this.loadConcatStokes(stokesFiles, directory, hdu);
+    };
+
+    @action openConcatFile = (stokesFiles: CARTA.IStokesFile[], directory: string, hdu: string) => {
+        this.removeAllFrames();
+        return this.loadConcatStokes(stokesFiles, directory, hdu);
+    };
+
     @action appendFile = (directory: string, file: string, hdu: string) => {
         // Stop animations playing before loading a new frame
         this.animatorStore.stopAnimation();
@@ -439,17 +485,24 @@ export class AppStore {
         return this.loadFile(directory, file, hdu);
     };
 
-    @action saveFile = (directory: string, filename: string, fileType: CARTA.FileType) => {
-        if (!this.activeFrame) {
-            return;
-        }
-        const fileId = this.activeFrame.frameInfo.fileId;
-        this.backendService.saveFile(fileId, directory, filename, fileType).subscribe(() => {
-            AppToaster.show({icon: "saved", message: `${filename} saved.`, intent: "success", timeout: 3000});
-            this.fileBrowserStore.hideFileBrowser();
-        }, error => {
-            console.error(error);
-            AppToaster.show({icon: "warning-sign", message: error, intent: "danger", timeout: 3000});
+    @action saveFile = (directory: string, filename: string, fileType: CARTA.FileType, regionId?: number, channels?: number[], stokes?: number[], shouldDropDegenerateAxes?: boolean) => {
+        return new Promise<number>((resolve, reject) => {
+            if (!this.activeFrame) {
+                reject();
+            }
+            this.startFileSaving();
+            const fileId = this.activeFrame.frameInfo.fileId;
+            this.backendService.saveFile(fileId, directory, filename, fileType, regionId, channels, stokes, !shouldDropDegenerateAxes).subscribe(ack => {
+                AppToaster.show({icon: "saved", message: `${filename} saved.`, intent: "success", timeout: 3000});
+                this.fileBrowserStore.hideFileBrowser();
+                this.endFileSaving();
+                resolve(ack.fileId);
+            }, error => {
+                console.error(error);
+                AppToaster.show({icon: "warning-sign", message: error, intent: "danger", timeout: 3000});
+                this.endFileSaving();
+                reject(error);
+            });
         });
     };
 
@@ -472,7 +525,9 @@ export class AppStore {
     };
 
     @action closeCurrentFile = (confirmClose: boolean = true) => {
-        this.closeFile(this.activeFrame, confirmClose);
+        if (!this.appendFileDisabled) {
+            this.closeFile(this.activeFrame, confirmClose);
+        }
     };
 
     @action closeOtherFiles = (frame: FrameStore, confirmClose: boolean = true) => {
@@ -599,7 +654,7 @@ export class AppStore {
 
     @action shiftFrame = (delta: number) => {
         if (this.activeFrame && this.frames.length > 1) {
-            const frameIds = this.frames.map(f => f.frameInfo.fileId)
+            const frameIds = this.frames.map(f => f.frameInfo.fileId);
             const currentIndex = frameIds.indexOf(this.activeFrame.frameInfo.fileId);
             const requiredIndex = (this.frames.length + currentIndex + delta) % this.frames.length;
             this.setActiveFrame(frameIds[requiredIndex]);
@@ -861,16 +916,39 @@ export class AppStore {
     };
 
     @action setDarkTheme = () => {
-        this.preferenceStore.setPreference(PreferenceKeys.GLOBAL_THEME, Theme.DARK);
+        this.setTheme(Theme.DARK);
     };
 
     @action setLightTheme = () => {
-        this.preferenceStore.setPreference(PreferenceKeys.GLOBAL_THEME, Theme.LIGHT);
+        this.setTheme(Theme.LIGHT);
     };
 
     @action setAutoTheme = () => {
-        this.preferenceStore.setPreference(PreferenceKeys.GLOBAL_THEME, Theme.AUTO);
+        this.setTheme(Theme.AUTO);
     };
+
+    @action setTheme = (theme: string) => {
+        if (Theme.isValid(theme)) {
+            this.preferenceStore.setPreference(PreferenceKeys.GLOBAL_THEME, theme);
+            this.updateASTColors();
+        }
+    };
+
+    private updateASTColors() {
+        if (this.astReady) {
+            const astColors = [
+                getColorForTheme(this.overlayStore.global.color),
+                getColorForTheme(this.overlayStore.title.color),
+                getColorForTheme(this.overlayStore.grid.color),
+                getColorForTheme(this.overlayStore.border.color),
+                getColorForTheme(this.overlayStore.ticks.color),
+                getColorForTheme(this.overlayStore.axes.color),
+                getColorForTheme(this.overlayStore.numbers.color),
+                getColorForTheme(this.overlayStore.labels.color)
+            ];
+            AST.setColors(astColors);
+        }
+    }
 
     @action toggleCursorFrozen = () => {
         this.cursorFrozen = !this.cursorFrozen;
@@ -969,8 +1047,8 @@ export class AppStore {
         this.helpStore = HelpStore.Instance;
         this.layoutStore = LayoutStore.Instance;
         this.logStore = LogStore.Instance;
-        this.overlayStore = OverlayStore.Instance;
         this.preferenceStore = PreferenceStore.Instance;
+        this.overlayStore = OverlayStore.Instance;
         this.widgetsStore = WidgetsStore.Instance;
 
         this.astReady = false;
@@ -989,8 +1067,7 @@ export class AppStore {
         this.initRequirements();
         this.activeLayer = ImageViewLayer.RegionMoving;
 
-        AST.onReady.then(runInAction(() => {
-            AST.setPalette(this.darkTheme ? nightPalette : dayPalette);
+        AST.onReady.then(action(() => {
             this.astReady = true;
             this.logStore.addInfo("AST library loaded", ["ast"]);
         }));
@@ -1030,6 +1107,7 @@ export class AppStore {
             const userString = this.username ? ` as ${this.username}` : "";
             switch (newConnectionStatus) {
                 case ConnectionStatus.ACTIVE:
+                    AppToaster.clear();
                     if (this.backendService.connectionDropped) {
                         AppToaster.show(WarningToast(`Reconnected to server${userString}. Some errors may occur`));
                     } else {
@@ -1037,8 +1115,9 @@ export class AppStore {
                     }
                     break;
                 case ConnectionStatus.CLOSED:
-                    if (this.previousConnectionStatus === ConnectionStatus.ACTIVE) {
+                    if (this.previousConnectionStatus === ConnectionStatus.ACTIVE || this.previousConnectionStatus === ConnectionStatus.PENDING) {
                         AppToaster.show(ErrorToast("Disconnected from server"));
+                        this.alertStore.showRetryAlert("You have been disconnected from the server. Do you want to reconnect? Please note that temporary images such as moment images or PV images generated via the GUI will be unloaded.", this.onReconnectAlertClosed);
                     }
                     break;
                 default:
@@ -1126,9 +1205,11 @@ export class AppStore {
             }
         });
 
-        // Set palette if theme changes
+        // Set overlay defaults from current frame
         autorun(() => {
-            AST.setPalette(this.darkTheme ? nightPalette : dayPalette);
+            if (this.activeFrame) {
+                this.overlayStore.setDefaultsFromAST(this.activeFrame);
+            }
         });
 
         // Update requirements every 200 ms
@@ -1143,21 +1224,31 @@ export class AppStore {
         this.backendService.errorStream.subscribe(this.handleErrorStream);
         this.backendService.statsStream.subscribe(this.handleRegionStatsStream);
         this.backendService.momentProgressStream.subscribe(this.handleMomentProgressStream);
-        this.backendService.reconnectStream.subscribe(this.handleReconnectStream);
         this.backendService.scriptingStream.subscribe(this.handleScriptingRequest);
         this.tileService.tileStream.subscribe(this.handleTileStream);
 
-        // Splash screen mask
+        // Set auth token from URL if it exists
+        const url = new URL(window.location.href);
+        const authTokenParam = url.searchParams.get("token");
+        if (authTokenParam) {
+            this.apiService.setToken(authTokenParam);
+        }
+
         autorun(() => {
             if (this.astReady && this.zfpReady && this.cartaComputeReady && this.apiService.authenticated) {
                 this.preferenceStore.fetchPreferences().then(() => {
                     this.layoutStore.fetchLayouts().then(() => {
                         // Attempt connection after authenticating
                         this.tileService.setCache(this.preferenceStore.gpuTileCache, this.preferenceStore.systemTileCache);
-                        this.layoutStore.applyLayout(this.preferenceStore.layout);
+                        if (!this.layoutStore.applyLayout(this.preferenceStore.layout)) {
+                            AlertStore.Instance.showAlert(`Applying preference layout "${this.preferenceStore.layout}" failed! Resetting preference layout to default.`);
+                            this.layoutStore.applyLayout(PresetLayout.DEFAULT);
+                            this.preferenceStore.setPreference(PreferenceKeys.GLOBAL_LAYOUT, PresetLayout.DEFAULT);
+                        }
                         this.cursorFrozen = this.preferenceStore.isCursorFrozen;
                         this.connectToServer();
                     });
+                    this.updateASTColors();
                 });
             }
         });
@@ -1287,7 +1378,7 @@ export class AppStore {
         }
     };
 
-    handleRegionStatsStream = (regionStatsData: CARTA.RegionStatsData) => {
+    @action handleRegionStatsStream = (regionStatsData: CARTA.RegionStatsData) => {
         if (!regionStatsData) {
             return;
         }
@@ -1359,25 +1450,35 @@ export class AppStore {
         }
     };
 
-    handleReconnectStream = () => {
-        this.alertStore.showInteractiveAlert("You have reconnected to the CARTA server. Do you want to resume your session?", this.onResumeAlertClosed);
-    };
-
     handleScriptingRequest = (request: CARTA.IScriptingRequest) => {
         this.scriptingService.handleScriptingRequest(request).then(this.backendService.sendScriptingResponse);
     };
 
     // endregion
 
-    @action onResumeAlertClosed = (confirmed: boolean) => {
+    @action onReconnectAlertClosed = (confirmed: boolean) => {
         if (!confirmed) {
             // TODO: How do we handle the situation where the user does not want to resume?
             return;
         }
+        this.backendService.connect(this.backendService.serverUrl).subscribe(ack => {
+            if (ack.sessionType === CARTA.SessionType.RESUMED) {
+                console.log(`Reconnected with session ID ${ack.sessionId}`);
+                this.logStore.addInfo(`Reconnected to server with session ID ${ack.sessionId}`, ["network"]);
+                this.resumeSession();
+            }
 
+        }, err => console.log(err));
+    };
+
+    @action private resumeSession = () => {
         // Some things should be reset when the user reconnects
         this.animatorStore.stopAnimation();
         this.tileService.clearRequestQueue();
+
+        // Ignore & remove generated in-memory images(moments/PV, fileId >= 1000)
+        const inMemoryImages = this.frames.filter(frame => frame.frameInfo.fileId >= 1000);
+        inMemoryImages.forEach(frame => this.removeFrame(frame));
 
         const images: CARTA.IImageProperties[] = this.frames.map(frame => {
             const info = frame.frameInfo;
@@ -1418,7 +1519,8 @@ export class AppStore {
                 channel: frame.requiredChannel,
                 stokes: frame.requiredStokes,
                 regions: mapToObject(regions),
-                contourSettings
+                contourSettings,
+                stokesFiles: frame.stokesFiles
             };
         });
 
@@ -1726,7 +1828,8 @@ export class AppStore {
 
     exportImage = (): boolean => {
         if (this.activeFrame) {
-            const composedCanvas = getImageCanvas(this.overlayStore.padding);
+            const backgroundColor = this.preferenceStore.transparentImageBackground ? "rgba(255, 255, 255, 0)" : (this.darkTheme ? Colors.DARK_GRAY3 : Colors.LIGHT_GRAY5);
+            const composedCanvas = getImageCanvas(this.overlayStore.padding, this.overlayStore.colorbar.position, backgroundColor);
             if (composedCanvas) {
                 composedCanvas.toBlob((blob) => {
                     const link = document.createElement("a") as HTMLAnchorElement;
@@ -1742,7 +1845,7 @@ export class AppStore {
 
     getImageDataUrl = (backgroundColor: string) => {
         if (this.activeFrame) {
-            const composedCanvas = getImageCanvas(this.overlayStore.padding, backgroundColor);
+            const composedCanvas = getImageCanvas(this.overlayStore.padding, this.overlayStore.colorbar.position, backgroundColor);
             if (composedCanvas) {
                 return composedCanvas.toDataURL();
             }

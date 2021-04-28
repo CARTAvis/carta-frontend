@@ -3,6 +3,7 @@ import {observer} from "mobx-react";
 import {computed} from "mobx";
 import {Classes, H5, InputGroup, Position, Tooltip} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
+import * as AST from "ast_wrapper";
 import {AppStore, FrameStore, RegionCoordinate, RegionStore, NUMBER_FORMAT_LABEL, WCS_PRECISION} from "stores";
 import {Point2D, WCSPoint2D} from "models";
 import {closeTo, formattedArcsec, getFormattedWCSPoint, getPixelValueFromWCS, getValueFromArcsecString, isWCSStringFormatValid} from "utilities";
@@ -13,7 +14,7 @@ import "./EllipticalRegionForm.scss";
 const KEYCODE_ENTER = 13;
 
 @observer
-export class EllipticalRegionForm extends React.Component<{ region: RegionStore, frame: FrameStore, wcsInfo: number }> {
+export class EllipticalRegionForm extends React.Component<{ region: RegionStore, frame: FrameStore, wcsInfo: AST.FrameSet }> {
     private static readonly REGION_PIXEL_EPS = 1.0e-3;
 
     // size determined by reference frame
@@ -310,7 +311,7 @@ export class EllipticalRegionForm extends React.Component<{ region: RegionStore,
                             <td><span className="info-string">{infoString}</span></td>
                         </tr>
                         <tr>
-                            <td>Axes {pxUnitSpan}</td>
+                            <td>Semi-axes {pxUnitSpan}</td>
                             <td>{sizeWidthInput}</td>
                             <td>{sizeHeightInput}</td>
                             <td><span className="info-string">{sizeInfoString}</span></td>

@@ -19,6 +19,7 @@ export enum PreferenceKeys {
     GLOBAL_DRAG_PANNING = "dragPanning",
     GLOBAL_SPECTRAL_MATCHING_TYPE = "spectralMatchingType",
     GLOBAL_AUTO_WCS_MATCHING = "autoWCSMatching",
+    GLOBAL_TRANSPARENT_IMAGE_BACKGROUND = "transparentImageBackground",
 
     RENDER_CONFIG_SCALING = "scaling",
     RENDER_CONFIG_COLORMAP = "colormap",
@@ -27,6 +28,7 @@ export enum PreferenceKeys {
     RENDER_CONFIG_SCALING_GAMMA = "scalingGamma",
     RENDER_CONFIG_NAN_COLOR_HEX = "nanColorHex",
     RENDER_CONFIG_NAN_ALPHA = "nanAlpha",
+    RENDER_CONFIG_USE_SMOOTHED_BIAS_CONTRAST = "useSmoothedBiasContrast",
 
     CONTOUR_CONFIG_CONTOUR_GENERATOR_TYPE = "contourGeneratorType",
     CONTOUR_CONFIG_CONTOUR_SMOOTHING_MODE = "contourSmoothingMode",
@@ -86,6 +88,7 @@ const DEFAULTS = {
         dragPanning: true,
         spectralMatchingType: SpectralType.VRAD,
         autoWCSMatching: WCSMatchingType.NONE,
+        transparentImageBackground: false,
     },
     RENDER_CONFIG: {
         scaling: FrameScaling.LINEAR,
@@ -95,6 +98,7 @@ const DEFAULTS = {
         scalingGamma: 1,
         nanColorHex: "#137CBD",
         nanAlpha: 1,
+        useSmoothedBiasContrast: true,
     },
     CONTOUR_CONFIG: {
         contourGeneratorType: ContourGeneratorType.StartStepMultiplier,
@@ -107,12 +111,12 @@ const DEFAULTS = {
         contourColormap: "viridis",
     },
     WCS_OVERLAY: {
-        astColor: 4,
+        astColor: "auto-blue",
         astGridVisible: false,
         astLabelsVisible: true,
         wcsType: WCSType.AUTOMATIC,
         beamVisible: true,
-        beamColor: Colors.GRAY3,
+        beamColor: "auto-gray",
         beamType: BeamType.Open,
         beamWidth: 1,
     },
@@ -204,6 +208,10 @@ export class PreferenceStore {
         return this.preferences.get(PreferenceKeys.GLOBAL_AUTO_WCS_MATCHING) ?? DEFAULTS.GLOBAL.autoWCSMatching;
     }
 
+    @computed get transparentImageBackground(): boolean {
+        return this.preferences.get(PreferenceKeys.GLOBAL_TRANSPARENT_IMAGE_BACKGROUND) ?? DEFAULTS.GLOBAL.transparentImageBackground;
+    }
+
     // getters for render config
     @computed get scaling(): FrameScaling {
         return this.preferences.get(PreferenceKeys.RENDER_CONFIG_SCALING) ?? DEFAULTS.RENDER_CONFIG.scaling;
@@ -231,6 +239,10 @@ export class PreferenceStore {
 
     @computed get nanAlpha(): number {
         return this.preferences.get(PreferenceKeys.RENDER_CONFIG_NAN_ALPHA) ?? DEFAULTS.RENDER_CONFIG.nanAlpha;
+    }
+
+    @computed get useSmoothedBiasContrast(): boolean {
+        return this.preferences.get(PreferenceKeys.RENDER_CONFIG_USE_SMOOTHED_BIAS_CONTRAST) ?? DEFAULTS.RENDER_CONFIG.useSmoothedBiasContrast;
     }
 
     // getters for Contour Config
@@ -279,7 +291,7 @@ export class PreferenceStore {
     }
 
     // getters for WCS overlay
-    @computed get astColor(): number {
+    @computed get astColor(): string {
         return this.preferences.get(PreferenceKeys.WCS_OVERLAY_AST_COLOR) ?? DEFAULTS.WCS_OVERLAY.astColor;
     }
 
@@ -456,14 +468,16 @@ export class PreferenceStore {
         this.clearPreferences([
             PreferenceKeys.GLOBAL_THEME, PreferenceKeys.GLOBAL_AUTOLAUNCH, PreferenceKeys.GLOBAL_LAYOUT,
             PreferenceKeys.GLOBAL_CURSOR_POSITION, PreferenceKeys.GLOBAL_ZOOM_MODE, PreferenceKeys.GLOBAL_ZOOM_POINT,
-            PreferenceKeys.GLOBAL_DRAG_PANNING, PreferenceKeys.GLOBAL_SPECTRAL_MATCHING_TYPE, PreferenceKeys.GLOBAL_AUTO_WCS_MATCHING]);
+            PreferenceKeys.GLOBAL_DRAG_PANNING, PreferenceKeys.GLOBAL_SPECTRAL_MATCHING_TYPE, PreferenceKeys.GLOBAL_AUTO_WCS_MATCHING,
+            PreferenceKeys.GLOBAL_TRANSPARENT_IMAGE_BACKGROUND
+        ]);
     };
 
     @action resetRenderConfigSettings = () => {
         this.clearPreferences([
             PreferenceKeys.RENDER_CONFIG_COLORMAP, PreferenceKeys.RENDER_CONFIG_NAN_ALPHA, PreferenceKeys.RENDER_CONFIG_NAN_COLOR_HEX,
             PreferenceKeys.RENDER_CONFIG_PERCENTILE, PreferenceKeys.RENDER_CONFIG_SCALING, PreferenceKeys.RENDER_CONFIG_SCALING_ALPHA,
-            PreferenceKeys.RENDER_CONFIG_SCALING_GAMMA
+            PreferenceKeys.RENDER_CONFIG_SCALING_GAMMA, PreferenceKeys.RENDER_CONFIG_USE_SMOOTHED_BIAS_CONTRAST
         ]);
     };
 
@@ -542,13 +556,13 @@ export class PreferenceStore {
                 PreferenceKeys.GLOBAL_ZOOM_POINT, PreferenceKeys.GLOBAL_SPECTRAL_MATCHING_TYPE, PreferenceKeys.RENDER_CONFIG_COLORMAP, PreferenceKeys.RENDER_CONFIG_NAN_COLOR_HEX,
                 PreferenceKeys.CONTOUR_CONFIG_CONTOUR_GENERATOR_TYPE, PreferenceKeys.CONTOUR_CONFIG_CONTOUR_COLOR, PreferenceKeys.CONTOUR_CONFIG_CONTOUR_COLORMAP,
                 PreferenceKeys.WCS_OVERLAY_WCS_TYPE, PreferenceKeys.WCS_OVERLAY_BEAM_COLOR, PreferenceKeys.WCS_OVERLAY_BEAM_TYPE, PreferenceKeys.REGION_COLOR,
-                PreferenceKeys.REGION_CREATION_MODE,
+                PreferenceKeys.REGION_CREATION_MODE, PreferenceKeys.WCS_OVERLAY_AST_COLOR,
                 PreferenceKeys.CATALOG_TABLE_SEPARATOR_POSITION
             ];
 
             const intKeys = [
                 PreferenceKeys.GLOBAL_AUTO_WCS_MATCHING, PreferenceKeys.RENDER_CONFIG_SCALING, PreferenceKeys.CONTOUR_CONFIG_CONTOUR_SMOOTHING_MODE,
-                PreferenceKeys.CONTOUR_CONFIG_CONTOUR_SMOOTHING_FACTOR, PreferenceKeys.CONTOUR_CONFIG_CONTOUR_NUM_LEVELS, PreferenceKeys.WCS_OVERLAY_AST_COLOR,
+                PreferenceKeys.CONTOUR_CONFIG_CONTOUR_SMOOTHING_FACTOR, PreferenceKeys.CONTOUR_CONFIG_CONTOUR_NUM_LEVELS,
                 PreferenceKeys.REGION_DASH_LENGTH, PreferenceKeys.REGION_TYPE, PreferenceKeys.PERFORMANCE_IMAGE_COMPRESSION_QUALITY, PreferenceKeys.PERFORMANCE_ANIMATION_COMPRESSION_QUALITY,
                 PreferenceKeys.PERFORMANCE_GPU_TILE_CACHE, PreferenceKeys.PERFORMANCE_SYSTEM_TILE_CACHE, PreferenceKeys.PERFORMANCE_CONTOUR_DECIMATION,
                 PreferenceKeys.PERFORMANCE_CONTOUR_COMPRESSION_LEVEL, PreferenceKeys.PERFORMANCE_CONTOUR_CHUNK_SIZE, PreferenceKeys.PERFORMANCE_CONTOUR_CONTROL_MAP_WIDTH,
@@ -563,7 +577,8 @@ export class PreferenceStore {
             ];
 
             const booleanKeys = [
-                PreferenceKeys.GLOBAL_AUTOLAUNCH, PreferenceKeys.GLOBAL_DRAG_PANNING, PreferenceKeys.CONTOUR_CONFIG_CONTOUR_COLORMAP_ENABLED,
+                PreferenceKeys.GLOBAL_AUTOLAUNCH, PreferenceKeys.GLOBAL_DRAG_PANNING, PreferenceKeys.GLOBAL_TRANSPARENT_IMAGE_BACKGROUND,
+                PreferenceKeys.RENDER_CONFIG_USE_SMOOTHED_BIAS_CONTRAST, PreferenceKeys.CONTOUR_CONFIG_CONTOUR_COLORMAP_ENABLED,
                 PreferenceKeys.WCS_OVERLAY_AST_GRID_VISIBLE, PreferenceKeys.WCS_OVERLAY_AST_LABELS_VISIBLE, PreferenceKeys.WCS_OVERLAY_BEAM_VISIBLE,
                 PreferenceKeys.PERFORMANCE_STREAM_CONTOURS_WHILE_ZOOMING, PreferenceKeys.PERFORMANCE_LOW_BAND_WIDTH_MODE
             ];

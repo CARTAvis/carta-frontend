@@ -120,4 +120,13 @@ export class DialogStore {
     @action hideExternalPageDialog = () => {
         this.externalPageDialogVisible = false;
     };
+
+    // Stokes
+    @observable stokesDialogVisible: boolean = false;
+    @action showStokesDialog = () => {
+        this.stokesDialogVisible = true;
+    };
+    @action hideStokesDialog = () => {
+        this.stokesDialogVisible = false;
+    };
 }

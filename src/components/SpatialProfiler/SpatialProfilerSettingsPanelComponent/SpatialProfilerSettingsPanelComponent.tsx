@@ -1,7 +1,7 @@
 import * as React from "react";
 import {computed, autorun} from "mobx";
 import {observer} from "mobx-react";
-import {Colors, Tabs, Tab} from "@blueprintjs/core";
+import {Tabs, Tab} from "@blueprintjs/core";
 import {LinePlotSettingsPanelComponentProps, LinePlotSettingsPanelComponent, SmoothingSettingsComponent} from "components/Shared";
 import {SpatialProfileWidgetStore} from "stores/widgets";
 import {WidgetProps, DefaultWidgetConfig, HelpType, WidgetsStore, AppStore} from "stores";
@@ -153,8 +153,6 @@ export class SpatialProfilerSettingsPanelComponent extends React.Component<Widge
         }];
 
         const lineSettingsProps: LinePlotSettingsPanelComponentProps = {
-            darkMode: AppStore.Instance.darkTheme,
-            primaryDarkModeLineColor: Colors.BLUE4,
             primaryLineColor: widgetStore.primaryLineColor,
             lineWidth: widgetStore.lineWidth,
             plotType: widgetStore.plotType,

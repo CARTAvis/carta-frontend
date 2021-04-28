@@ -50,15 +50,14 @@ Module.fonts = [
 ];
 
 Module.colors = [
-    "black",
-    "white",
-    "red",
-    "green",
-    "blue",
-    "cyan",
-    "magenta",
-    "yellow",
-    "grey"
+    "blue", // global
+    "blue", // title
+    "blue", // grid
+    "blue", // border
+    "blue", // tick
+    "blue", // axe
+    "blue", // number
+    "blue" // label
 ];
 Module.shapes = [
     "\u25A1", // Square
@@ -75,8 +74,12 @@ Module.shapes = [
     "\u2606", // White star
 ];
 
-Module.setPalette = function (colors) {
+Module.setColors = function (colors) {
     Module.colors = colors;
+};
+
+Module.setColor = function (color, index) {
+    Module.colors[index] = color;
 };
 
 Module.setFontList = function (fonts) {
@@ -92,7 +95,9 @@ Module.setCanvas = function (canvas) {
 };
 
 Module.plot = Module.cwrap("plotGrid", "number", ["number", "number", "number", "number", "number", "number", "number", "number", "number", "number", "number", "string"]);
-Module.initFrame = Module.cwrap("initFrame", "number", ["string"]);
+Module.emptyFitsChan = Module.cwrap("emptyFitsChan", "number");
+Module.putFits = Module.cwrap("putFits", null, ["number", "string"])
+Module.getFrameFromFitsChan = Module.cwrap("getFrameFromFitsChan", "number", ["number"]);
 Module.getSpectralFrame = Module.cwrap("getSpectralFrame", "number", ["number"]);
 Module.getSkyFrameSet = Module.cwrap("getSkyFrameSet", "number", ["number"]);
 Module.initDummyFrame = Module.cwrap("initDummyFrame", "number", []);
@@ -110,10 +115,15 @@ Module.spectralTransform = Module.cwrap("spectralTransform", "number", ["number"
 Module.getLastErrorMessage = Module.cwrap("getLastErrorMessage", "string");
 Module.clearLastErrorMessage = Module.cwrap("clearLastErrorMessage", null);
 Module.copy = Module.cwrap("copy", null, ["number"]);
-Module.delete = Module.cwrap("deleteObject", null, ["number"]);
+Module.deleteObject = Module.cwrap("deleteObject", null, ["number"]);
 Module.invert = Module.cwrap("invert", "number", ["number"]);
 Module.convert = Module.cwrap("convert", "number", ["number", "number", "string"]);
 Module.shiftMap2D = Module.cwrap("shiftMap2D", "number", ["number", "number"]);
+Module.scaleMap2D = Module.cwrap("scaleMap2D", "number", ["number", "number"]);
+Module.frame = Module.cwrap("frame", "number", ["number", "string"]);
+Module.addFrame = Module.cwrap("addFrame", null, ["number", "number", "number", "number"]);
+Module.setI = Module.cwrap("setI", null, ["number", "string", "number"]);
+Module.setD = Module.cwrap("setD", null, ["number", "string", "number"]);
 Module.createTransformedFrameset = Module.cwrap("createTransformedFrameset", "number", ["number", "number", "number", "number", "number", "number", "number", "number"]);
 Module.fillTransformGrid = Module.cwrap("fillTransformGrid", "number", ["number", "number", "number", "number", "number", "number", "number", "number"]);
 
@@ -151,7 +161,7 @@ Module.getWCSValueFromFormattedString = function (wcsInfo: number, formatString:
     return {x: xOut[0], y: yOut[0]};
 }
 
-Module.transformPointArrays = function (wcsInfo: number, xIn: Float64Array, yIn: Float64Array, forward: number) {
+Module.transformPointArrays = function (wcsInfo: number, xIn: Float64Array, yIn: Float64Array, forward: boolean = true) {
     // Return empty array if arguments are invalid
     if (!(xIn instanceof Float64Array) || !(yIn instanceof Float64Array) || xIn.length !== yIn.length) {
         return {x: new Float64Array(1), y: new Float64Array(1)};
