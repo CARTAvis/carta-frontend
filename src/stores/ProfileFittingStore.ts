@@ -68,8 +68,8 @@ export class ProfileFittingStore {
         return null;
     }
 
-    @computed get componentPlottingBoxs(): LinePlotInsideBoxMarker[] {
-        const boxs: LinePlotInsideBoxMarker[] = [];
+    @computed get componentPlottingBoxes(): LinePlotInsideBoxMarker[] {
+        const boxes: LinePlotInsideBoxMarker[] = [];
         if (this.components) {
             for (let i = 0; i < this.components.length; i++) {
                 const component = this.components[i];
@@ -81,11 +81,11 @@ export class ProfileFittingStore {
                         opacity: (i === this.selectedIndex) ? 0.5 : 0.2,
                         strokeColor: (i === this.selectedIndex) ? getColorForTheme("auto-grey") : null
                     }
-                    boxs.push(initialBox);
+                    boxes.push(initialBox);
                 }
             }
         }
-        return boxs;
+        return boxes;
     }
 
     @computed get resultString(): string {

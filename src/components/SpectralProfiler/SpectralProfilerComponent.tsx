@@ -405,7 +405,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
             isSelectingInsideBox: this.widgetStore.fittingStore.isCursorSelectionOn,
             setSelectedInsideBox: this.setSelectedBox,
             setSelectedLine: this.setSelectedLine,
-            insideBoxs: this.widgetStore.fittingStore.componentPlottingBoxs,
+            insideBoxes: this.widgetStore.fittingStore.componentPlottingBoxes,
             zeroLineWidth: 2,
             order: 1,
             multiPlotPropsMap: new Map()

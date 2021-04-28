@@ -110,7 +110,7 @@ export class LinePlotComponentProps {
     isSelectingInsideBox?: boolean;
     setSelectedInsideBox?: (minX: number, maxX: number, minY: number, maxY: number) => void;
     setSelectedLine?: (startX: number, endX: number, startY: number, endY: number) => void;
-    insideBoxs?: LinePlotInsideBoxMarker[];
+    insideBoxes?: LinePlotInsideBoxMarker[];
     order?: number;
     multiPlotPropsMap?: Map<string, MultiPlotProps>;
 }
@@ -957,19 +957,30 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
         return borderRect;
     };
 
-    private genInsideBoxs = () => {
+    private genInsideBoxes = () => {
         const chartArea = this.chartArea;
-        let insideBoxs = [];
-        if (this.props.insideBoxs && chartArea) {
-            for (let i = 0; i < this.props.insideBoxs.length; i++) {
-                const box = this.props.insideBoxs[i];
-                insideBoxs.push(
+        let insideBoxes = [];
+        if (this.props.insideBoxes && chartArea) {
+            for (let i = 0; i < this.props.insideBoxes.length; i++) {
+                const box = this.props.insideBoxes[i];
+                const xMin = this.getPixelForValueX(box.boundary.xMin);
+                const xMax = this.getPixelForValueX(box.boundary.xMax);
+                const yMin = this.getPixelForValueY(box.boundary.yMin);
+                const yMax = this.getPixelForValueY(box.boundary.yMax);
+                if (xMin > chartArea.right || xMax < chartArea.left || yMin < chartArea.top || yMax > chartArea.bottom) {
+                    continue;
+                }
+                const xStart = Math.max(xMin, chartArea.left);
+                const xEnd = Math.min(xMax, chartArea.right);
+                const yStart = Math.max(yMax, chartArea.top);
+                const yEnd = Math.min(yMin, chartArea.bottom);
+                insideBoxes.push(
                     <Rect
                         key = {i}
-                        x = {this.getPixelForValueX(box.boundary.xMin)}
-                        y = {this.getPixelForValueY(box.boundary.yMin)}
-                        width = {this.getPixelForValueX(box.boundary.xMax) - this.getPixelForValueX(box.boundary.xMin)}
-                        height = {this.getPixelForValueY(box.boundary.yMax) - this.getPixelForValueY(box.boundary.yMin)}
+                        x = {xStart}
+                        y = {yStart}
+                        width = {xEnd - xStart}
+                        height = {yEnd - yStart}
                         fill={box.color}
                         opacity={box.opacity}
                         stroke={box.strokeColor}
@@ -978,7 +989,7 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
                 );
             }
         }
-        return insideBoxs;
+        return insideBoxes;
     }
 
     private genMeanRMSForPngPlot = (): {
@@ -1072,7 +1083,7 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
                     <Layer>
                         {this.genLines()}
                         {this.genSelectionRect()}
-                        {this.genInsideBoxs()}
+                        {this.genInsideBoxes()}
                         {this.genBorderRect()}
                     </Layer>
                 </Stage>
