@@ -172,7 +172,7 @@ Module.gaussianFitting = function (xIn: Float64Array | Float32Array, yIn: Float6
     Module.resultAmp = Module._malloc(componentN * 8 * 2); // amp with error
     Module.resultCenter = Module._malloc(componentN * 8 * 2); // center with error
     Module.resultFwhm = Module._malloc(componentN * 8 * 2); // fwhm with error
-    Module.resultIntegral = Module._malloc(componentN * 8);
+    Module.resultIntegral = Module._malloc(componentN * 8 * 2); // integral with error
 
     const log = Module.fittingGaussian(
         Module.xIn, Module.yIn, dataN,
@@ -184,7 +184,7 @@ Module.gaussianFitting = function (xIn: Float64Array | Float32Array, yIn: Float6
     const centerOut = new Float64Array(Module.HEAPF64.buffer, Module.resultCenter, componentN * 2).slice();
     const ampOut = new Float64Array(Module.HEAPF64.buffer, Module.resultAmp, componentN * 2).slice();
     const fwhmOut = new Float64Array(Module.HEAPF64.buffer, Module.resultFwhm, componentN * 2).slice();
-    const integralOut = new Float64Array(Module.HEAPF64.buffer, Module.resultIntegral, componentN).slice()
+    const integralOut = new Float64Array(Module.HEAPF64.buffer, Module.resultIntegral, componentN * 2).slice()
 
     Module._free(Module.xIn);
     Module._free(Module.yIn);

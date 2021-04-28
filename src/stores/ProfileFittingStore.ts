@@ -94,11 +94,11 @@ export class ProfileFittingStore {
         if (this.components && this.hasResult) {
             if (this.continuum !== FittingContinuum.NONE) {
                 resultString += `Y Intercept = ${this.resultYIntercept}\n`;
-                resultString +=  !this.lockedYIntercept ? `Y Intercept Error : ${this.resultYInterceptError}\n` : "";
+                resultString +=  this.resultYInterceptError ? `Y Intercept Error = ${this.resultYInterceptError}\n` : "";
             }
             if (this.continuum === FittingContinuum.FIRST_ORDER) {
                 resultString += `Slope = ${this.resultSlope}\n`;
-                resultString += !this.lockedSlope ? `Slope Error : ${this.resultSlopeError}\n` : "";
+                resultString += this.resultSlopeError ? `Slope Error = ${this.resultSlopeError}\n` : "";
             }
             if (this.continuum !== FittingContinuum.NONE) {
                 resultString += "\n";
@@ -106,12 +106,13 @@ export class ProfileFittingStore {
             for (let i = 0; i <  this.components.length; i++) {
                 const component = this.components[i];
                 resultString += `Component #${i+1}\nCenter = ${component.resutlCenter}\n`;
-                resultString += !component.lockedCenter ? `Center Error : ${component.resutlCenterError}\n` : "";
+                resultString += component.resutlCenterError ? `Center Error = ${component.resutlCenterError}\n` : "";
                 resultString += `Amplitude = ${component.resultAmp}\n`;
-                resultString += !component.lockedAmp ? `Amplitude Error : ${component.resultAmpError}\n` : "";
+                resultString += component.resultAmpError ? `Amplitude Error = ${component.resultAmpError}\n` : "";
                 resultString += `FWHM = ${component.resultFwhm}\n`;
-                resultString += !component.lockedFwhm ? `FWHM Error : ${component.resultFwhmError}\n` : "";
-                resultString += `Integral = ${component.resultIntegral}\n\n`;
+                resultString += component.resultFwhmError ? `FWHM Error = ${component.resultFwhmError}\n` : "";
+                resultString += `Integral = ${component.resultIntegral}\n`;
+                resultString += component.resultIntegralError ? `Integral Error = ${component.resultIntegralError}\n\n` : "";
             }
         }
 
@@ -291,7 +292,8 @@ export class ProfileFittingStore {
             component.setResultAmpError(fittingResult.amp[2 * i + 1]);
             component.setResultFwhm(fittingResult.fwhm[2 * i]);
             component.setResultFwhmError(fittingResult.fwhm[2 * i + 1]);
-            component.setResultIntegral(fittingResult.integral[i])
+            component.setResultIntegral(fittingResult.integral[2 * i]);
+            component.setResultIntegralError(fittingResult.integral[2 * i + 1]);
         }
         this.setResultLog(fittingResult.log);
         this.setHasResult(true);
@@ -411,6 +413,7 @@ export class ProfileFittingIndividualStore {
     @observable resultAmpError: number;
     @observable resultFwhmError: number;
     @observable resultIntegral: number;
+    @observable resultIntegralError: number;
 
     @computed get isReadyToFit(): boolean {
         return (isFinite(this.center) && isFinite(this.amp) && isFinite(this.fwhm) && (this.amp !== 0 && this.fwhm !== 0));
@@ -476,5 +479,9 @@ export class ProfileFittingIndividualStore {
 
     @action setResultIntegral = (val: number) => {
         this.resultIntegral = val;
+    }
+
+    @action setResultIntegralError = (val: number) => {
+        this.resultIntegralError = val;
     }
 }

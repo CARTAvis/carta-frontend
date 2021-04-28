@@ -347,7 +347,7 @@ callback(const size_t iter, void *params,
 }
 
 void
-solve_system(gsl_vector *x, gsl_multifit_nlinear_fdf *fdf, gsl_multifit_nlinear_parameters *params, gsl_vector *errors)
+solve_system(gsl_vector *x, gsl_multifit_nlinear_fdf *fdf, gsl_multifit_nlinear_parameters *params, gsl_matrix* covar)
 {
   const gsl_multifit_nlinear_type *T = gsl_multifit_nlinear_trust;
   const size_t max_iter = 200;
@@ -373,12 +373,7 @@ solve_system(gsl_vector *x, gsl_multifit_nlinear_fdf *fdf, gsl_multifit_nlinear_
 
   /* compute covariance of best fit parameters */
   gsl_matrix *J = gsl_multifit_nlinear_jac(work);
-  gsl_matrix *covar = gsl_matrix_alloc (p, p);
   gsl_multifit_nlinear_covar (J, 0.0, covar);
-  size_t i;
-  for (i = 0; i < x->size; i++) {
-    gsl_vector_set(errors, i, sqrt(gsl_matrix_get(covar, i, i)));
-  }
 
   /* store final cost */
   gsl_blas_ddot(f, f, &chisq);
@@ -400,7 +395,6 @@ solve_system(gsl_vector *x, gsl_multifit_nlinear_fdf *fdf, gsl_multifit_nlinear_
   snprintf(logBuffer, sizeof(logBuffer), "%s final cost          : %.12e\n", logBuffer, chisq);
   snprintf(logBuffer, sizeof(logBuffer), "%s final cond(J)       : %.12e\n", logBuffer, 1.0 / rcond);
 
-  gsl_matrix_free(covar);
   gsl_multifit_nlinear_free(work);
 }
 
@@ -450,7 +444,7 @@ char * EMSCRIPTEN_KEEPALIVE fittingGaussian(
 
     gsl_vector *f = gsl_vector_alloc(n); // vector of data points
     gsl_vector *x = gsl_vector_alloc(p); // vector of model parameters(unlocked input)
-    gsl_vector *errors = gsl_vector_alloc(p); // vector of fitting result errors
+    gsl_matrix *covar = gsl_matrix_alloc (p, p); // matrix of covariance
     gsl_multifit_nlinear_fdf fdf;
     gsl_multifit_nlinear_parameters fdf_params = gsl_multifit_nlinear_default_parameters();
     struct data fit_data;
@@ -498,15 +492,18 @@ char * EMSCRIPTEN_KEEPALIVE fittingGaussian(
     }
 
     fdf_params.trs = gsl_multifit_nlinear_trs_lm;
-    solve_system(x, &fdf, &fdf_params, errors);
+    solve_system(x, &fdf, &fdf_params, covar);
 
     size_t index;
+    double yIntercept, yInterceptError, slope, slopeError;
     snprintf(logBuffer, sizeof(logBuffer), "%s\n baseline\n", logBuffer);
     if (lockedOrderInputs[0] == 0) {
         index = gsl_vector_get(orderParameterIndexes, 0);
-        orderInputsOut[0] = gsl_vector_get(x, index);
-        orderInputsOut[1] = gsl_vector_get(errors, index);
-        snprintf(logBuffer, sizeof(logBuffer), "%s y intercept         : %.12e +/- %.12e (%.3g%%)\n", logBuffer, gsl_vector_get(x, index), gsl_vector_get(errors, index), 100 * gsl_vector_get(errors, index)/ abs(gsl_vector_get(x, index)));
+        yIntercept = gsl_vector_get(x, index);
+        yInterceptError = sqrt(gsl_matrix_get(covar, index, index));
+        orderInputsOut[0] = yIntercept;
+        orderInputsOut[1] = yInterceptError;
+        snprintf(logBuffer, sizeof(logBuffer), "%s y intercept         : %.12e +/- %.12e (%.3g%%)\n", logBuffer, yIntercept, yInterceptError, 100 * yInterceptError/ abs(yIntercept));
     } else {
         orderInputsOut[0] = orderInputs[0];
         snprintf(logBuffer, sizeof(logBuffer), "%s y intercept  (fixed): %.12e\n", logBuffer, orderInputs[0]);
@@ -514,22 +511,25 @@ char * EMSCRIPTEN_KEEPALIVE fittingGaussian(
 
     if (lockedOrderInputs[1] == 0) {
         index = gsl_vector_get(orderParameterIndexes, 1);
-        orderInputsOut[2] = gsl_vector_get(x, index);
-        orderInputsOut[3] = gsl_vector_get(errors, index);
-        snprintf(logBuffer, sizeof(logBuffer), "%s slope               : %.12e +/- %.12e (%.3g%%)\n", logBuffer, gsl_vector_get(x, index), gsl_vector_get(errors, index), 100 * gsl_vector_get(errors, index)/ abs(gsl_vector_get(x, index)));
+        slope = gsl_vector_get(x, index);
+        slopeError = sqrt(gsl_matrix_get(covar, index, index));
+        orderInputsOut[2] = slope;
+        orderInputsOut[3] = slopeError;
+        snprintf(logBuffer, sizeof(logBuffer), "%s slope               : %.12e +/- %.12e (%.3g%%)\n", logBuffer, slope, slopeError, 100 * slopeError/ abs(slope));
     } else {
         orderInputsOut[2] = orderInputs[1];
         snprintf(logBuffer, sizeof(logBuffer), "%s slope        (fixed): %.12e\n", logBuffer, orderInputs[1]);
     }
 
-    double amp, center, fwhm, ampError, centerError, fwhmError, integral;
+    double amp, center, fwhm, ampError, centerError, fwhmError, integral, integralError, sigmaAmpFwhm;
     // /* print data and model */
     for (i = 0; i < componentN; ++i)
     {
         snprintf(logBuffer, sizeof(logBuffer), "%s component #%zu\n", logBuffer, i + 1);
         if (lockedInputs[i][0] == 0) {
-            amp = gsl_vector_get(x, gsl_matrix_get(parameterIndexs, i, 0));
-            ampError = gsl_vector_get(errors, gsl_matrix_get(parameterIndexs, i, 0));
+            index = gsl_matrix_get(parameterIndexs, i, 0);
+            amp = gsl_vector_get(x, index);
+            ampError = sqrt(gsl_matrix_get(covar, index, index));
             snprintf(logBuffer, sizeof(logBuffer), "%s amp%zu                : %.12e +/- %.12e (%.3g%%)\n", logBuffer, i + 1, amp, ampError, 100 * ampError / abs(amp));
         } else {
             amp = inputs[i][0];
@@ -538,8 +538,9 @@ char * EMSCRIPTEN_KEEPALIVE fittingGaussian(
         }
 
         if (lockedInputs[i][1] == 0) {
-            center = gsl_vector_get(x, gsl_matrix_get(parameterIndexs, i, 1));
-            centerError = gsl_vector_get(errors, gsl_matrix_get(parameterIndexs, i, 1));
+            index = gsl_matrix_get(parameterIndexs, i, 1);
+            center = gsl_vector_get(x, index);
+            centerError = sqrt(gsl_matrix_get(covar, index, index));
             snprintf(logBuffer, sizeof(logBuffer), "%s center%zu             : %.12e +/- %.12e (%.3g%%)\n", logBuffer, i + 1, center, centerError, 100 * centerError / abs(center));
         } else {
             center = inputs[i][1];
@@ -548,8 +549,9 @@ char * EMSCRIPTEN_KEEPALIVE fittingGaussian(
         }
 
         if (lockedInputs[i][2] == 0) {
-            fwhm = gsl_vector_get(x, gsl_matrix_get(parameterIndexs, i, 2));
-            fwhmError = gsl_vector_get(errors, gsl_matrix_get(parameterIndexs, i, 2));
+            index = gsl_matrix_get(parameterIndexs, i, 2);
+            fwhm = gsl_vector_get(x, index);
+            fwhmError = sqrt(gsl_matrix_get(covar, index, index));
             snprintf(logBuffer, sizeof(logBuffer), "%s fwhm%zu               : %.12e +/- %.12e (%.3g%%)\n", logBuffer, i + 1, fwhm, fwhmError, 100 * fwhmError / abs(fwhm));
         } else {
             fwhm = inputs[i][2];
@@ -562,7 +564,21 @@ char * EMSCRIPTEN_KEEPALIVE fittingGaussian(
         } else if (function == 1) {
             integral = 0.5 * M_PI * amp * fwhm;
         }
-        snprintf(logBuffer, sizeof(logBuffer), "%s integral of function: %.12e\n", logBuffer, integral);
+
+        if (lockedInputs[i][0] == 1 && lockedInputs[i][2] == 1) {
+            integralError = NAN;
+            snprintf(logBuffer, sizeof(logBuffer), "%s integral of function: %.12e\n", logBuffer, integral);
+        } else {
+            if (lockedInputs[i][0] == 0 && lockedInputs[i][2] == 0) {
+                sigmaAmpFwhm = gsl_matrix_get(covar, gsl_matrix_get(parameterIndexs, i, 0), gsl_matrix_get(parameterIndexs, i, 2));
+                integralError = integral * sqrt(pow(ampError / amp, 2) + pow(fwhmError / fwhm, 2) + 2 * sigmaAmpFwhm / (amp * fwhm));
+            } else if (lockedInputs[i][0] == 0) {
+                integralError = integral * abs(ampError / amp);
+            } else {
+                integralError = integral * abs(fwhmError / fwhm);
+            }
+            snprintf(logBuffer, sizeof(logBuffer), "%s integral of function: %.12e +/- %.12e (%.3g%%)\n", logBuffer, integral, integralError, 100 * integralError / abs(integral));
+        }
 
         ampOut[2 * i] = amp;
         ampOut[2 * i + 1] = ampError;
@@ -570,12 +586,13 @@ char * EMSCRIPTEN_KEEPALIVE fittingGaussian(
         centerOut[2 * i + 1] = centerError;
         fwhmOut[2 * i] = fwhm;
         fwhmOut[2 * i + 1] = fwhmError;
-        integralOut[i] = integral;
+        integralOut[2 * i] = integral;
+        integralOut[2 * i + 1] = integralError;
     }
 
     gsl_vector_free(f);
     gsl_vector_free(x);
-    gsl_vector_free(errors);
+    gsl_matrix_free(covar);
     gsl_matrix_free(parameterIndexs);
     gsl_vector_free(orderParameterIndexes);
 
