@@ -12,20 +12,20 @@ export enum CatalogPlotType {
 }
 
 export enum CatalogOverlayShape {
-    BoxLined = 1,
-    CircleFilled = 2,
-    CircleLined = 3,
-    HexagonLined = 5,
-    RhombLined = 7,
-    TriangleUpLined = 9,
-    EllipseLined = 11,
-    TriangleDownLined = 13,
-    HexagonLined2 = 15,
-    CrossFilled = 16,
-    CrossLined = 17,
-    XFilled = 18,
-    XLined = 19,
-    LineSegmentFILLED = 20
+    BOX_LINED = 1,
+    CIRCLE_FILLED = 2,
+    CIRCLE_LINED = 3,
+    HEXAGON_LINED = 5,
+    RHOMB_LINED = 7,
+    TRIANGLE_LINED_UP = 9,
+    ELLIPSE_LINED = 11,
+    TRIANGLE_LINED_DOWN = 13,
+    HEXAGON_LINED_2 = 15,
+    CROSS_FILLED = 16,
+    CROSS_LINED = 17,
+    X_FILLED = 18,
+    X_LINED = 19,
+    LineSegment_FILLED = 20
 }
 
 export enum CatalogSettingsTabs {
@@ -53,18 +53,18 @@ export class CatalogWidgetStore {
     public static readonly SizeMapMin = 0;
 
     private OverlayShapeSettings =  new Map<number, {featherWidth: number, minSize: number}>([
-        [CatalogOverlayShape.BoxLined, {featherWidth: 0.35, minSize: 1.5}],
-        [CatalogOverlayShape.CircleFilled, {featherWidth: 0.35, minSize: 1.5}],
-        [CatalogOverlayShape.CircleLined, {featherWidth: 0.5, minSize: 1.5}],
-        [CatalogOverlayShape.EllipseLined, {featherWidth: 1.0, minSize: 3.5}],
-        [CatalogOverlayShape.HexagonLined, {featherWidth: 0.35, minSize: 0}],
-        [CatalogOverlayShape.RhombLined, {featherWidth: 0.35, minSize: 1.5}],
-        [CatalogOverlayShape.TriangleUpLined, {featherWidth: 0.35, minSize: 0}],
-        [CatalogOverlayShape.TriangleDownLined, {featherWidth: 0.35, minSize: 0}],
-        [CatalogOverlayShape.HexagonLined2, {featherWidth: 0.35, minSize: 0}],
-        [CatalogOverlayShape.CrossFilled, {featherWidth: 0.5, minSize: 3.5}],
-        [CatalogOverlayShape.XFilled, {featherWidth: 0.5, minSize: 3.5}],
-        [CatalogOverlayShape.LineSegmentFILLED, {featherWidth: 0.35, minSize: 3}]
+        [CatalogOverlayShape.BOX_LINED, {featherWidth: 0.35, minSize: 1.5}],
+        [CatalogOverlayShape.CIRCLE_FILLED, {featherWidth: 0.35, minSize: 1.5}],
+        [CatalogOverlayShape.CIRCLE_LINED, {featherWidth: 0.5, minSize: 1.5}],
+        [CatalogOverlayShape.ELLIPSE_LINED, {featherWidth: 1.0, minSize: 3.5}],
+        [CatalogOverlayShape.HEXAGON_LINED, {featherWidth: 0.35, minSize: 0}],
+        [CatalogOverlayShape.RHOMB_LINED, {featherWidth: 0.35, minSize: 1.5}],
+        [CatalogOverlayShape.TRIANGLE_LINED_UP, {featherWidth: 0.35, minSize: 0}],
+        [CatalogOverlayShape.TRIANGLE_LINED_DOWN, {featherWidth: 0.35, minSize: 0}],
+        [CatalogOverlayShape.HEXAGON_LINED_2, {featherWidth: 0.35, minSize: 0}],
+        [CatalogOverlayShape.CROSS_FILLED, {featherWidth: 0.5, minSize: 3.5}],
+        [CatalogOverlayShape.X_FILLED, {featherWidth: 0.5, minSize: 3.5}],
+        [CatalogOverlayShape.LineSegment_FILLED, {featherWidth: 0.35, minSize: 3}]
     ]);
 
     @observable catalogFileId: number;
@@ -125,7 +125,7 @@ export class CatalogWidgetStore {
         this.catalogPlotType = CatalogPlotType.ImageOverlay;
         this.catalogColor = Colors.TURQUOISE3;
         this.catalogSize = 10;
-        this.catalogShape = CatalogOverlayShape.CircleLined;
+        this.catalogShape = CatalogOverlayShape.CIRCLE_LINED;
         this.xAxis = CatalogOverlay.NONE;
         this.yAxis = CatalogOverlay.NONE;
         this.tableSeparatorPosition = PreferenceStore.Instance.catalogTableSeparatorPosition;
@@ -684,7 +684,7 @@ export class CatalogWidgetStore {
     }
 
     @computed get enableSizeMinorTab(): boolean {
-        return this.sizeMapColumn !== CatalogOverlay.NONE && this.catalogShape === CatalogOverlayShape.EllipseLined; 
+        return this.sizeMapColumn !== CatalogOverlay.NONE && this.catalogShape === CatalogOverlayShape.ELLIPSE_LINED; 
     }
 
     @computed get maxPointSizebyType(): number {

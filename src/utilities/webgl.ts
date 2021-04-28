@@ -107,7 +107,7 @@ export function initWebGL2(){
     return gl;
 }
 
-export function createTextureFromArray(gl: WebGL2RenderingContext, data: Float32Array, texIndex: number = WebGL2RenderingContext.TEXTURE0, components: number = 1):WebGLTexture {
+export function createTextureFromArray(gl: WebGL2RenderingContext, data: Float32Array | Uint8Array, texIndex: number = WebGL2RenderingContext.TEXTURE0, components: number = 1):WebGLTexture {
     const GL2 = WebGL2RenderingContext;
     const numPoints = data.length / components;
     if (data.length % components !== 0) {
@@ -119,11 +119,13 @@ export function createTextureFromArray(gl: WebGL2RenderingContext, data: Float32
     let width = Math.ceil(Math.sqrt(numPoints));
     let height = Math.ceil(numPoints / width);
 
-    let paddedData: Float32Array;
+    let paddedData;
+    const UIn8 = getBufferElementType(data) === "UIn8";
     if (width * height === numPoints) {
         paddedData = data;
     } else {
-        paddedData = new Float32Array(width * height * components);
+        const size = width * height * components;
+        paddedData = UIn8? new Uint8Array(size) : new Float32Array(size);
         paddedData.set(data, 0);
     }
 
@@ -132,7 +134,12 @@ export function createTextureFromArray(gl: WebGL2RenderingContext, data: Float32
     gl.bindTexture(GL2.TEXTURE_2D, texture);
     switch (components) {
         case 1:
-            gl.texImage2D(GL2.TEXTURE_2D, 0, GL2.R32F, width, height, 0, GL2.RED, GL2.FLOAT, paddedData);
+            if(UIn8) {
+                gl.pixelStorei(GL2.UNPACK_ALIGNMENT, 1);
+                gl.texImage2D(GL2.TEXTURE_2D, 0, GL2.R8UI, width, height, 0, GL2.RED_INTEGER, GL2.UNSIGNED_BYTE, paddedData);
+            } else {
+                gl.texImage2D(GL2.TEXTURE_2D, 0, GL2.R32F, width, height, 0, GL2.RED, GL2.FLOAT, paddedData);
+            }
             break;
         case 2:
             gl.texImage2D(GL2.TEXTURE_2D, 0, GL2.RG32F, width, height, 0, GL2.RG, GL2.FLOAT, paddedData);
@@ -152,4 +159,12 @@ export function createTextureFromArray(gl: WebGL2RenderingContext, data: Float32
     gl.texParameteri(GL2.TEXTURE_2D, GL2.TEXTURE_WRAP_S, GL2.CLAMP_TO_EDGE);
     gl.texParameteri(GL2.TEXTURE_2D, GL2.TEXTURE_WRAP_T, GL2.CLAMP_TO_EDGE);
     return texture;
+}
+
+function getBufferElementType(buffer: ArrayBufferView): string {
+    if (buffer.constructor === Uint8Array) {
+        return "UIn8";
+    } else {
+        return "Float32";
+    }
 }

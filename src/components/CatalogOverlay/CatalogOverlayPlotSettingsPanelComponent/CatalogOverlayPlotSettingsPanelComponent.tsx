@@ -44,18 +44,18 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
 
     private catalogFileNames: Map<number, string>;
     private catalogOverlayShape: Array<CatalogOverlayShape> = [
-        CatalogOverlayShape.BoxLined,
-        CatalogOverlayShape.CircleFilled,
-        CatalogOverlayShape.CircleLined,
-        CatalogOverlayShape.CrossFilled,
-        CatalogOverlayShape.EllipseLined,
-        CatalogOverlayShape.HexagonLined,
-        CatalogOverlayShape.HexagonLined2,
-        CatalogOverlayShape.RhombLined,
-        CatalogOverlayShape.TriangleDownLined,
-        CatalogOverlayShape.TriangleUpLined,
-        CatalogOverlayShape.XFilled,
-        CatalogOverlayShape.LineSegmentFILLED
+        CatalogOverlayShape.BOX_LINED,
+        CatalogOverlayShape.CIRCLE_FILLED,
+        CatalogOverlayShape.CIRCLE_LINED,
+        CatalogOverlayShape.CROSS_FILLED,
+        CatalogOverlayShape.ELLIPSE_LINED,
+        CatalogOverlayShape.HEXAGON_LINED,
+        CatalogOverlayShape.HEXAGON_LINED_2,
+        CatalogOverlayShape.RHOMB_LINED,
+        CatalogOverlayShape.TRIANGLE_LINED_DOWN,
+        CatalogOverlayShape.TRIANGLE_LINED_UP,
+        CatalogOverlayShape.X_FILLED,
+        CatalogOverlayShape.LineSegment_FILLED
     ];
 
     public static get WIDGET_CONFIG(): DefaultWidgetConfig {
@@ -672,29 +672,29 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
         const widgetStore = this.widgetStore;
         let color = widgetStore.catalogColor;
         switch (shape) {
-            case CatalogOverlayShape.CircleLined:
+            case CatalogOverlayShape.CIRCLE_LINED:
                 return <Icon icon="circle" color={color}/>;
-            case CatalogOverlayShape.CircleFilled:
+            case CatalogOverlayShape.CIRCLE_FILLED:
                 return <Icon icon="full-circle" color={color}/>;
-            case CatalogOverlayShape.BoxLined:
+            case CatalogOverlayShape.BOX_LINED:
                 return <Icon icon="square" color={color}/>;
-            case CatalogOverlayShape.CrossFilled:
+            case CatalogOverlayShape.CROSS_FILLED:
                 return <Icon icon="plus" color={color}/>;
-            case CatalogOverlayShape.XFilled:
+            case CatalogOverlayShape.X_FILLED:
                 return <Icon icon="cross" color={color}/>;
-            case CatalogOverlayShape.TriangleUpLined:
+            case CatalogOverlayShape.TRIANGLE_LINED_UP:
                 return IconWrapper(triangleUp, color, false);
-            case CatalogOverlayShape.TriangleDownLined:
+            case CatalogOverlayShape.TRIANGLE_LINED_DOWN:
                 return IconWrapper(triangleDown, color, false);
-            case CatalogOverlayShape.RhombLined:
+            case CatalogOverlayShape.RHOMB_LINED:
                 return IconWrapper(rhomb, color, false);
-            case CatalogOverlayShape.HexagonLined2:
+            case CatalogOverlayShape.HEXAGON_LINED_2:
                 return IconWrapper(hexagon2, color, false);
-            case CatalogOverlayShape.HexagonLined:
+            case CatalogOverlayShape.HEXAGON_LINED:
                 return IconWrapper(hexagon, color, false);
-            case CatalogOverlayShape.EllipseLined:
+            case CatalogOverlayShape.ELLIPSE_LINED:
                 return IconWrapper(ellipse, color, false);
-            case CatalogOverlayShape.LineSegmentFILLED:
+            case CatalogOverlayShape.LineSegment_FILLED:
                 return <Icon icon="minus" style={{"transform": "rotate(90deg)"}} color={color}/>;
             default:
                 return <Icon icon="circle" color={color}/>;

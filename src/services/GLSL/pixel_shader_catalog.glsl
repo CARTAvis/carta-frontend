@@ -36,15 +36,10 @@ precision highp float;
 uniform float uLineThickness;
 uniform highp int uShapeType;
 uniform float uFeatherWidth;
-uniform vec3 uPointColor;
 uniform vec3 uSelectedSourceColor;
-uniform sampler2D uCmapTexture;
-uniform int uNumCmaps;
-uniform int uCmapIndex;
 uniform bool uOmapEnabled;
-uniform bool uCmapEnabled;
 
-in float v_colour;
+in vec3 v_colour;
 in float v_pointSize;
 in float v_orientation;
 in float v_selected;
@@ -467,13 +462,5 @@ void main() {
     float alpha = getAlphaValue(posPixelSpace, rMin, rMax);
 
     // Blending
-    if (uCmapEnabled && !isNaN(v_colour)) {
-        float x = clamp(v_colour, 0.0, 1.0);
-        float cmapYVal = (float(uCmapIndex) + 0.5) / float(uNumCmaps);
-        vec2 cmapCoords = vec2(x, cmapYVal);
-        outColor = (1.0 - outline) * vec4(texture(uCmapTexture, cmapCoords).xyz, alpha) + outline * vec4(uSelectedSourceColor, alpha2);
-    } else {
-        // outColor = vec4((1.0 - outline) * uPointColor + outline * uSelectedSourceColor, alpha);
-        outColor = (1.0 - outline) * vec4(uPointColor, alpha) + outline * vec4(uSelectedSourceColor, alpha2);
-    }
+    outColor = (1.0 - outline) * vec4(v_colour, alpha) + outline * vec4(uSelectedSourceColor, alpha2);
 }

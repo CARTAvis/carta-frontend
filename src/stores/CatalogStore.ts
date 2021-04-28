@@ -5,7 +5,8 @@ import {CatalogWebGLService, CatalogTextureType} from "services";
 import {CatalogWidgetStore} from "stores/widgets";
 
 type CatalogOverlayCoords = {
-    dataPoints: Float32Array,
+    x: Float32Array,
+    y: Float32Array,
     displayed: boolean;
 };
 
@@ -47,7 +48,8 @@ export class CatalogStore {
 
     @action addCatalog(fileId: number) {
         this.catalogGLData.set(fileId, {
-            dataPoints:new Float32Array(0),
+            x: new Float32Array(0),
+            y: new Float32Array(0),
             displayed: true
         });
     }
@@ -55,39 +57,44 @@ export class CatalogStore {
     @action updateCatalogData(fileId: number, xData: Array<number>, yData: Array<number>, wcsInfo: AST.FrameSet, xUnit: string, yUnit: string, catalogFrame: CatalogSystemType) {
         const catalog = this.catalogGLData.get(fileId);
         if (catalog) {
-            const dataSize = catalog.dataPoints.length;
-            let dataPoints = new Float32Array(dataSize + xData.length * 2);
-            dataPoints.set(catalog.dataPoints);
+            const dataSize = catalog.x.length;
+            let xPoints = new Float32Array(dataSize + xData.length);
+            let yPoints = new Float32Array(dataSize + yData.length);
+            xPoints.set(catalog.x);
+            yPoints.set(catalog.y);
             switch (catalogFrame) {
                 case CatalogSystemType.Pixel0:
                     for (let i = 0; i < xData.length; i++) {
-                        dataPoints[dataSize + i * 2] = xData[i];
-                        dataPoints[dataSize + i * 2 + 1] = yData[i];
+                        xPoints[dataSize + i] = xData[i];
+                        yPoints[dataSize + i] = yData[i];
                     }
                     break;
                 case CatalogSystemType.Pixel1:
                     for (let i = 0; i < xData.length; i++) {
-                        dataPoints[dataSize + i * 2] = xData[i] - 1;
-                        dataPoints[dataSize + i * 2 + 1] = yData[i] - 1;
+                        xPoints[dataSize + i] = xData[i] - 1;
+                        yPoints[dataSize + i] = yData[i] - 1;
                     }
                     break;
                 default:
                     const pixelData = CatalogStore.TransformCatalogData(xData, yData, wcsInfo, xUnit, yUnit, catalogFrame);
                     for (let i = 0; i < pixelData.xImageCoords.length; i++) {
-                        dataPoints[dataSize + i * 2] = pixelData.xImageCoords[i];
-                        dataPoints[dataSize + i * 2 + 1] = pixelData.yImageCoords[i];
+                        xPoints[dataSize + i] = pixelData.xImageCoords[i];
+                        yPoints[dataSize + i] = pixelData.yImageCoords[i];
                     }
                     break;
             }
-            catalog.dataPoints = dataPoints;
-            CatalogWebGLService.Instance.updateDataTexture(fileId, dataPoints, CatalogTextureType.Position);
+            catalog.x = xPoints;
+            catalog.y = yPoints;
+            CatalogWebGLService.Instance.updateDataTexture(fileId, xPoints, CatalogTextureType.X);
+            CatalogWebGLService.Instance.updateDataTexture(fileId, yPoints, CatalogTextureType.Y);
         }
     }
 
     @action clearImageCoordsData(fileId: number) {
         const catalog = this.catalogGLData.get(fileId);
         if (catalog) {
-            catalog.dataPoints = new Float32Array(0);
+            catalog.x = new Float32Array(0);
+            catalog.y = new Float32Array(0);
         }
     }
 

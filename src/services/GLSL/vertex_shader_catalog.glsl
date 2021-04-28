@@ -34,27 +34,32 @@ precision highp float;
 #define POWER 4
 #define GAMMA 5
 
-uniform sampler2D uPositionTexture;
+uniform sampler2D uCmapTexture;
+uniform sampler2D uXTexture;
+uniform sampler2D uYTexture;
 uniform sampler2D uSizeTexture;
 uniform sampler2D uColorTexture;
 uniform sampler2D uOrientationTexture;
-uniform sampler2D uSelectedSourceTexture;
+uniform highp usampler2D uSelectedSourceTexture;
 uniform sampler2D uSizeMinorTexture;
 
 uniform vec2 uFrameViewMin;
 uniform vec2 uFrameViewMax;
-uniform float uFeatherWidth;
-uniform bool uSmapEnabled;
-uniform float uPointSize;
+uniform vec3 uPointColor;
 uniform highp int uShapeType;
+uniform int uNumCmaps;
+uniform int uCmapIndex;
+uniform float uFeatherWidth;
+uniform float uPointSize;
+uniform bool uSizeMajorMapEnabled;
 uniform bool uAreaMode;
 uniform bool uShowSelectedSource;
-uniform bool uSminorMapEnabled;
+uniform bool uSizeMinorMapEnabled;
 uniform bool uAreaModeMinor;
 uniform bool uCmapEnabled;
 uniform bool uOmapEnabled;
 
-out float v_colour;
+out vec3 v_colour;
 out float v_pointSize;
 out float v_orientation;
 out float v_selected;
@@ -62,6 +67,13 @@ out float v_minorSize;
 
 
 vec4 getValueByIndexFromTexture(sampler2D texture, int index) {
+    ivec2 size = textureSize(texture, 0);
+    int row = index / size.x;
+    int col = index - row * size.x;
+    return texelFetch(texture, ivec2(col, row), 0);
+}
+
+uvec4 getValueByIndexFromTexture(usampler2D texture, int index) {
     ivec2 size = textureSize(texture, 0);
     int row = index / size.x;
     int col = index - row * size.x;
@@ -121,20 +133,24 @@ bool isNaN(float val) {
 }
 
 void main() {
-    vec4 data = getValueByIndexFromTexture(uPositionTexture, gl_VertexID);
-    vec4 selectedSource = getValueByIndexFromTexture(uSelectedSourceTexture, gl_VertexID);
-    vec2 pos = data.xy;
+    vec4 x = getValueByIndexFromTexture(uXTexture, gl_VertexID);
+    vec4 y = getValueByIndexFromTexture(uYTexture, gl_VertexID);
+    uvec4 selectedSource = getValueByIndexFromTexture(uSelectedSourceTexture, gl_VertexID);
+    vec2 pos = vec2(x.x,y.x);
     gl_Position = vec4(imageToGL(pos), 0.5, 1);
 
-    v_colour = -1.0;
+    v_colour = uPointColor;
     v_orientation = -1.0;
     v_minorSize = -1.0;
-    v_selected = selectedSource.x;
+    v_selected = float(selectedSource.x);
     v_pointSize = uPointSize;
 
     if (uCmapEnabled) {
         vec4 color = getValueByIndexFromTexture(uColorTexture, gl_VertexID);
-        v_colour = color.x;
+        float x = clamp(color.x, 0.0, 1.0);
+        float cmapYVal = (float(uCmapIndex) + 0.5) / float(uNumCmaps);
+        vec2 cmapCoords = vec2(x, cmapYVal);
+        v_colour = texture(uCmapTexture, cmapCoords).xyz;
     }
 
     if (uOmapEnabled) {
@@ -142,7 +158,7 @@ void main() {
         v_orientation = orientation.x;
     }
 
-    if (uSmapEnabled) {
+    if (uSizeMajorMapEnabled) {
         vec4 sizeMajor = getValueByIndexFromTexture(uSizeTexture, gl_VertexID);
         float size = sizeMajor.x;
         if(!isNaN(size)) {
@@ -155,7 +171,7 @@ void main() {
     }
 
     if (uShowSelectedSource) {
-        if (selectedSource.x == 1.0) {
+        if (v_selected == 1.0) {
             gl_PointSize = v_pointSize + uFeatherWidth;
         } else {
             gl_PointSize = 0.0;
@@ -164,7 +180,7 @@ void main() {
         gl_PointSize = v_pointSize + uFeatherWidth;
     }
 
-    if (uSminorMapEnabled) {
+    if (uSizeMinorMapEnabled) {
         vec4 sizeMinor = getValueByIndexFromTexture(uSizeMinorTexture, gl_VertexID);
         v_minorSize = sizeMinor.x;
         if (uAreaModeMinor) {

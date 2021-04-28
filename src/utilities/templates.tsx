@@ -14,7 +14,7 @@ export const TemplateNodes = {
     WebGL2ErrorMessage: (
         <div>
             <div>
-                <p>Could not load WebGL2.0. Catalog will not be displayed properly.</p>
+                <p>Could not load WebGL2.0. The catalog overlay feature will not be available.</p>
             </div>
             <div>
                 <small> If you are using CARTA with Safari, please ensure WebGL2.0 is enabled at Develop &gt; Experimental Features &gt; WebGL2.0 then reload the page.</small>
