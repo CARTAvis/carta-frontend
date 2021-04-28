@@ -7,7 +7,7 @@ Module.filterHanning = Module.cwrap("filterHanning", "number", ["number", "numbe
 Module.filterDecimation = Module.cwrap("filterDecimation", "number", ["number", "number", "number", "number", "number"]);
 Module.filterBinning = Module.cwrap("filterBinning", "number", ["number", "number", "number", "number"]);
 Module.filterSavitzkyGolay = Module.cwrap("filterSavitzkyGolay", "number", ["number", "number", "number", "number", "number", "number"]);
-Module.fittingGaussian = Module.cwrap("fittingGaussian", "string", ["number", "number", "number", "number", "number", "number", "number", "number", "number", "number", "number", "number", "number"])
+Module.fittingGaussian = Module.cwrap("fittingGaussian", "string", ["number", "number", "number", "number", "number", "number", "number", "number", "number", "number", "number", "number", "number", "number"])
 
 Module.boxcarSmooth = function (yIn: Float64Array | Float32Array, kernelSize: number) {
     // Return empty array if arguments are invalid
@@ -132,7 +132,7 @@ Module.savitzkyGolaySmooth = function (xIn: Float64Array | Float32Array, yIn: Fl
 
 // inputData stores initial guesses as [yIntercept, slope, amp1, center1, fwhm1, amp2, center2, fwhm2, ...]
 // lockedInputdData stores which initial guesses are locked as [yIntercept, slope, 1(amp1), 0(center1), 0(fwhm1), 0(amp2), 1(center2), 0(fwhm2), ...]
-Module.gaussianFitting = function (xIn: Float64Array | Float32Array, yIn: Float64Array | Float32Array, inputData: number[], lockedInputData: number[], orderInputData: number[], lockedOrderInputData: number[]) {
+Module.gaussianFitting = function (xIn: Float64Array | Float32Array, yIn: Float64Array | Float32Array, inputData: number[], lockedInputData: number[], orderInputData: number[], lockedOrderInputData: number[], fittingFunction: number) {
     if (!xIn || !yIn || !inputData || !lockedInputData) {
         return null;
     }
@@ -177,7 +177,7 @@ Module.gaussianFitting = function (xIn: Float64Array | Float32Array, yIn: Float6
     const log = Module.fittingGaussian(
         Module.xIn, Module.yIn, dataN,
         Module.inputArray, Module.lockedInputArray, componentN,
-        Module.orderValues, Module.lockedOrderValues,
+        fittingFunction, Module.orderValues, Module.lockedOrderValues,
         Module.resultAmp, Module.resultCenter, Module.resultFwhm, Module.resultOrderValues, Module.resultIntegral);
 
     const orderValuesOut = new Float64Array(Module.HEAPF64.buffer, Module.resultOrderValues, 4).slice();

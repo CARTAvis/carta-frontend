@@ -246,22 +246,27 @@ struct data
   double *y;
   size_t n;
   size_t component;
+  int function;
   double **inputs;
-  int **lockedInputs;
-  gsl_matrix *parameterIndexs;
   double *orderInputs;
+  int **lockedInputs;
   int *lockedOrderInputs;
+  gsl_matrix *parameterIndexs;
   gsl_vector *orderParameterIndexes;
 };
 
 char logBuffer[4096];
 
 /* model function: amp * exp( -4ln2[(t - center)/ fwhm]^2 */
-double
-gaussian(const double amp, const double center, const double fwhm, const double x)
+double gaussian(const double amp, const double center, const double fwhm, const double x)
 {
-  const double z = (x - center) / fwhm;
-  return (amp * exp(-4 * log(2.0) * z * z));
+  return (amp * exp(-4 * log(2.0) * pow((x - center) / fwhm, 2)));
+}
+
+/* model function: amp * (0.5fwhm)^2 / [(t - center)^2 + (0.5fwhm)^2] */
+double lorentzian(const double amp, const double center, const double fwhm, const double x)
+{
+  return (amp * 0.25 * pow(fwhm, 2) / (pow(x - center, 2) + 0.25 * pow(fwhm, 2)));
 }
 
 int func_f (const gsl_vector * x, void *params, gsl_vector * f) {
@@ -293,7 +298,12 @@ int func_f (const gsl_vector * x, void *params, gsl_vector * f) {
             } else {
                 fwhm = d->inputs[j][2];
             }
-            y = y + gaussian(amp, center, fwhm, ti);
+
+            if (d->function == 0) {
+                y = y + gaussian(amp, center, fwhm, ti);
+            } else if (d->function == 1) {
+                y = y + lorentzian(amp, center, fwhm, ti);
+            }
         }
 
         double yIntercept, slope;
@@ -423,9 +433,14 @@ size_t getModelParametersIndexMatrix(int **lockedInputs, gsl_matrix *parameterIn
 char * EMSCRIPTEN_KEEPALIVE fittingGaussian(
     double* xInArray, double* yInArray, const int dataN,
     double **inputs, int **lockedInputs, const int componentN,
-    double* orderInputs, int* lockedOrderInputs,
+    int function, double* orderInputs, int* lockedOrderInputs,
     double* ampOut, double* centerOut, double* fwhmOut, double* orderInputsOut, double* integralOut) {
     snprintf(logBuffer, sizeof(logBuffer), "");
+    if (function == 0) {
+        snprintf(logBuffer, sizeof(logBuffer), "%s Gaussian function fitting with %d component(s)\n", logBuffer, componentN);
+    } else if (function == 1) {
+        snprintf(logBuffer, sizeof(logBuffer), "%s Lorentzian function fitting with %d component(s)\n", logBuffer, componentN);
+    }
 
     gsl_matrix *parameterIndexs = gsl_matrix_alloc(componentN, 3); // the matrix to store the indexes of unlocked inputs in vector of model parameters
     gsl_vector *orderParameterIndexes = gsl_vector_alloc(2);
@@ -445,11 +460,12 @@ char * EMSCRIPTEN_KEEPALIVE fittingGaussian(
     fit_data.y = yInArray;
     fit_data.n = n;
     fit_data.component = componentN;
+    fit_data.function = function;
     fit_data.inputs = inputs;
-    fit_data.lockedInputs = lockedInputs;
-    fit_data.parameterIndexs = parameterIndexs;
     fit_data.orderInputs = orderInputs;
+    fit_data.lockedInputs = lockedInputs;
     fit_data.lockedOrderInputs = lockedOrderInputs;
+    fit_data.parameterIndexs = parameterIndexs;
     fit_data.orderParameterIndexes = orderParameterIndexes;
 
     /* define function to be minimized */
@@ -541,7 +557,11 @@ char * EMSCRIPTEN_KEEPALIVE fittingGaussian(
             snprintf(logBuffer, sizeof(logBuffer), "%s fwhm%zu        (fixed): %.12e\n", logBuffer, i + 1, fwhm);
         }
 
-        integral = amp * abs(fwhm / (2 * sqrt(log(2.0)))) * sqrt(M_PI);
+        if (function == 0) {
+            integral = amp * abs(fwhm / (2 * sqrt(log(2.0)))) * sqrt(M_PI);
+        } else if (function == 1) {
+            integral = 0.5 * M_PI * amp * fwhm;
+        }
         snprintf(logBuffer, sizeof(logBuffer), "%s integral of function: %.12e\n", logBuffer, integral);
 
         ampOut[2 * i] = amp;

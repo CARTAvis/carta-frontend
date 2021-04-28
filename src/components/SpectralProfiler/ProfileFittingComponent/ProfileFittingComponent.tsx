@@ -2,7 +2,7 @@ import * as React from "react";
 import {computed, observable, action, autorun, makeObservable} from "mobx";
 import {observer} from "mobx-react";
 import {AnchorButton, FormGroup, HTMLSelect, Slider, Pre, Text, Intent, Tooltip, Switch, Popover, Button} from "@blueprintjs/core";
-import {SafeNumericInput} from "components/Shared";
+import {SafeNumericInput, SmoothingType} from "components/Shared";
 import {ProfileFittingStore} from "stores/ProfileFittingStore"
 import {SpectralProfileWidgetStore} from "stores/widgets/SpectralProfileWidgetStore";
 import {AppStore, SpectralProfileStore} from "stores";
@@ -13,8 +13,8 @@ import "./ProfileFittingComponent.scss";
 import { RegionId } from "stores/widgets";
 
 export enum FittingFunction {
-    GAUSSIAN,
-    LORENTZIAN
+    GAUSSIAN = 0,
+    LORENTZIAN = 1
 }
 
 export enum FittingContinuum {
@@ -31,6 +31,11 @@ export interface ProfileFittingComponentProps {
 @observer
 export class ProfileFittingComponent extends React.Component<ProfileFittingComponentProps> {
     @observable isShowingLog: boolean;
+
+    private onFunctionChanged = (ev) => {
+        this.reset();
+        this.props.fittingStore.setFunction(parseInt(ev.target.value));
+    }
 
     private onContinuumValueChanged = (ev) => {
         this.props.fittingStore.setYIntercept(0);
@@ -77,7 +82,12 @@ export class ProfileFittingComponent extends React.Component<ProfileFittingCompo
     private autoDetect = () => {
         this.props.fittingStore.setHasResult(false);
         this.props.fittingStore.setComponents(1, true);
-        this.props.fittingStore.autoDetect(this.plottingData.x, Array.prototype.slice.call(this.plottingData.y));
+        if (this.props.widgetStore.smoothingStore.type !== SmoothingType.NONE) {
+            const smoothingData = this.props.widgetStore.smoothingStore.getSmoothingValues(this.plottingData.x, this.plottingData.y);
+            this.props.fittingStore.autoDetect(smoothingData.x, Array.prototype.slice.call(smoothingData.y));
+        } else {
+            this.props.fittingStore.autoDetect(this.plottingData.x, Array.prototype.slice.call(this.plottingData.y));
+        }
         if (this.props.fittingStore.isAutoDetectWithFitting) {
             this.fitData();
         }
@@ -134,9 +144,6 @@ export class ProfileFittingComponent extends React.Component<ProfileFittingCompo
             }
         }
 
-        headerString += `# Fitting function : ${this.props.fittingStore.function === FittingFunction.GAUSSIAN ? "Gaussian" : "Lorentzian"}\n`
-        headerString += `# Fitting ${this.props.fittingStore.components.length} component${this.props.fittingStore.components.length > 1 ? "s" : ""}\n`
-
         const content = `data:text/plain;charset=utf-8,${headerString}\n${this.props.fittingStore.resultLog}\n`;
         const dataURL = encodeURI(content).replace(/#/g, "%23");
 
@@ -164,7 +171,13 @@ export class ProfileFittingComponent extends React.Component<ProfileFittingCompo
 
     private fitData = () => {
         if (this.props.fittingStore.readyToFit) {
-            this.props.fittingStore.fitData(this.plottingData.x, this.plottingData.y)
+            if (this.props.widgetStore.smoothingStore.type !== SmoothingType.NONE) {
+                const smoothData = this.props.widgetStore.smoothingStore.getSmoothingValues(this.plottingData.x, this.plottingData.y);
+                let nonNaNIndex = smoothData.y.findIndex(yi => !isNaN(yi));
+                this.props.fittingStore.fitData(smoothData.x.slice(nonNaNIndex , smoothData.x.length - nonNaNIndex), smoothData.y.slice(nonNaNIndex, smoothData.y.length - nonNaNIndex));
+            } else {
+                this.props.fittingStore.fitData(this.plottingData.x, this.plottingData.y)
+            }
         }
     }
 
@@ -280,7 +293,7 @@ export class ProfileFittingComponent extends React.Component<ProfileFittingCompo
                         <HTMLSelect 
                             value={fittingStore.function} 
                             options={[{label:"Gaussian", value: FittingFunction.GAUSSIAN}, {label:"Lorentzian", value: FittingFunction.LORENTZIAN}]} 
-                            onChange={(ev) => fittingStore.setFunction(parseInt(ev.target.value))}
+                            onChange={this.onFunctionChanged}
                         />
                     </FormGroup>
                     <FormGroup label="Auto detect" inline={true}>
