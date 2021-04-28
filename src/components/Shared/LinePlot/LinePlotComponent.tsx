@@ -57,6 +57,7 @@ export interface LinePlotInsideBoxMarker {
     color?: string;
     opacity?: number;
     strokeColor?: string;
+    text?: string;
 }
 
 export class LinePlotComponentProps {
@@ -987,6 +988,9 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
                         strokeWidth={1}
                     />
                 );
+                if (box.text) {
+                    insideBoxes.push(<Text key={i + "-text"} text={box.text} x={xStart} y={(yStart + yEnd) / 2} width={xEnd - xStart} align={"center"} fill={this.props.darkMode ? Colors.LIGHT_GRAY4 : Colors.GRAY1}/>)
+                }
             }
         }
         return insideBoxes;

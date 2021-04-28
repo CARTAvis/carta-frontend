@@ -79,7 +79,8 @@ export class ProfileFittingStore {
                         boundary: {xMin: component.center - 0.5 * component.fwhm, xMax: component.center + 0.5 * component.fwhm, yMin: 0 + deltaYForContinuum, yMax: component.amp + deltaYForContinuum},
                         color: getColorForTheme("auto-lime"),
                         opacity: (i === this.selectedIndex) ? 0.5 : 0.2,
-                        strokeColor: (i === this.selectedIndex) ? getColorForTheme("auto-grey") : null
+                        strokeColor: (i === this.selectedIndex) ? getColorForTheme("auto-grey") : null,
+                        text: `${i + 1}`
                     }
                     boxes.push(initialBox);
                 }
