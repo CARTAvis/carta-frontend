@@ -10,7 +10,6 @@ import {ProcessedSpectralProfile} from "models";
 import {CARTA} from "carta-protobuf";
 import {clamp, getTimestamp} from "utilities";
 import "./ProfileFittingComponent.scss";
-import { RegionId } from "stores/widgets";
 
 export enum FittingFunction {
     GAUSSIAN = 0,
@@ -202,13 +201,13 @@ export class ProfileFittingComponent extends React.Component<ProfileFittingCompo
         return null;
     }
 
-    @computed get plottingData(): {x: number[] ,y: Float32Array | Float64Array} {
+    @computed get coordinateData(): ProcessedSpectralProfile {
         const widgetStore = this.props.widgetStore;
         const frame = widgetStore.effectiveFrame;
         if (!frame) {
             return null;
         }
-
+        
         let coordinateData: ProcessedSpectralProfile;
         let regionId = widgetStore.effectiveRegionId;
         if (frame.regionSet) {
@@ -217,6 +216,13 @@ export class ProfileFittingComponent extends React.Component<ProfileFittingCompo
                 coordinateData = this.profileStore.getProfile(widgetStore.coordinate, region.isClosedRegion ? widgetStore.statsType : CARTA.StatsType.Sum);
             }
         }
+        return coordinateData; 
+    }
+
+    @computed get plottingData(): {x: number[] , y: Float32Array | Float64Array} {
+        const widgetStore = this.props.widgetStore;
+        const frame = widgetStore.effectiveFrame;
+        const coordinateData = this.coordinateData;
 
         if (coordinateData && coordinateData.values && coordinateData.values.length &&
             frame.channelValues && frame.channelValues.length &&
@@ -276,13 +282,7 @@ export class ProfileFittingComponent extends React.Component<ProfileFittingCompo
         makeObservable(this);
         autorun(() => {
             // clear fitting data when the profile data changed
-            if (props.widgetStore.effectiveRegionId && props.widgetStore.statsType && props.widgetStore.coordinate &&
-                props.widgetStore.effectiveFrame?.regionSet?.regions?.find(r => r.regionId === props.widgetStore.effectiveRegionId)?.center) {
-                this.reset();
-            }
-
-            // clear fitting data when the profile data changed
-            if (props.widgetStore.effectiveRegionId === RegionId.CURSOR && props.widgetStore.effectiveFrame.cursorValue.position) {
+            if (this.coordinateData) {
                 this.reset();
             }
         });

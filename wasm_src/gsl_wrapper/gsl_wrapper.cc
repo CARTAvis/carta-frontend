@@ -385,15 +385,15 @@ solve_system(gsl_vector *x, gsl_multifit_nlinear_fdf *fdf, gsl_multifit_nlinear_
 
   /* print summary */
   snprintf(logBuffer, sizeof(logBuffer), "%s summary from method '%s/%s'\n", logBuffer, gsl_multifit_nlinear_name(work), gsl_multifit_nlinear_trs_name(work));
-  snprintf(logBuffer, sizeof(logBuffer), "%s number of iterations: %zu\n", logBuffer, gsl_multifit_nlinear_niter(work));
-  snprintf(logBuffer, sizeof(logBuffer), "%s function evaluations: %zu\n", logBuffer, fdf->nevalf);
-  snprintf(logBuffer, sizeof(logBuffer), "%s Jacobian evaluations: %zu\n", logBuffer, fdf->nevaldf);
-  snprintf(logBuffer, sizeof(logBuffer), "%s reason for stopping : %s\n", logBuffer, (info == 1) ? "small step size" : "small gradient");
-  snprintf(logBuffer, sizeof(logBuffer), "%s initial |f(x)|      : %f\n", logBuffer, sqrt(chisq0));
-  snprintf(logBuffer, sizeof(logBuffer), "%s final |f(x)|        : %f\n", logBuffer, sqrt(chisq));
-  snprintf(logBuffer, sizeof(logBuffer), "%s initial cost        : %.12e\n", logBuffer, chisq0);
-  snprintf(logBuffer, sizeof(logBuffer), "%s final cost          : %.12e\n", logBuffer, chisq);
-  snprintf(logBuffer, sizeof(logBuffer), "%s final cond(J)       : %.12e\n", logBuffer, 1.0 / rcond);
+  snprintf(logBuffer, sizeof(logBuffer), "%s number of iterations = %zu\n", logBuffer, gsl_multifit_nlinear_niter(work));
+  snprintf(logBuffer, sizeof(logBuffer), "%s function evaluations = %zu\n", logBuffer, fdf->nevalf);
+  snprintf(logBuffer, sizeof(logBuffer), "%s Jacobian evaluations = %zu\n", logBuffer, fdf->nevaldf);
+  snprintf(logBuffer, sizeof(logBuffer), "%s reason for stopping  = %s\n", logBuffer, (info == 1) ? "small step size" : "small gradient");
+  snprintf(logBuffer, sizeof(logBuffer), "%s initial |f(x)|       = %f\n", logBuffer, sqrt(chisq0));
+  snprintf(logBuffer, sizeof(logBuffer), "%s final |f(x)|         = %f\n", logBuffer, sqrt(chisq));
+  snprintf(logBuffer, sizeof(logBuffer), "%s initial cost         = %.12e\n", logBuffer, chisq0);
+  snprintf(logBuffer, sizeof(logBuffer), "%s final cost           = %.12e\n", logBuffer, chisq);
+  snprintf(logBuffer, sizeof(logBuffer), "%s final cond(J)        = %.12e\n", logBuffer, 1.0 / rcond);
 
   gsl_multifit_nlinear_free(work);
 }
@@ -503,10 +503,10 @@ char * EMSCRIPTEN_KEEPALIVE fittingGaussian(
         yInterceptError = sqrt(gsl_matrix_get(covar, index, index));
         orderInputsOut[0] = yIntercept;
         orderInputsOut[1] = yInterceptError;
-        snprintf(logBuffer, sizeof(logBuffer), "%s y intercept         : %.12e +/- %.12e (%.3g%%)\n", logBuffer, yIntercept, yInterceptError, 100 * yInterceptError/ abs(yIntercept));
+        snprintf(logBuffer, sizeof(logBuffer), "%s y intercept          = %.12e +/- %.12e (%.3g%%)\n", logBuffer, yIntercept, yInterceptError, 100 * yInterceptError/ abs(yIntercept));
     } else {
         orderInputsOut[0] = orderInputs[0];
-        snprintf(logBuffer, sizeof(logBuffer), "%s y intercept  (fixed): %.12e\n", logBuffer, orderInputs[0]);
+        snprintf(logBuffer, sizeof(logBuffer), "%s y intercept  (fixed) = %.12e\n", logBuffer, orderInputs[0]);
     }
 
     if (lockedOrderInputs[1] == 0) {
@@ -515,10 +515,10 @@ char * EMSCRIPTEN_KEEPALIVE fittingGaussian(
         slopeError = sqrt(gsl_matrix_get(covar, index, index));
         orderInputsOut[2] = slope;
         orderInputsOut[3] = slopeError;
-        snprintf(logBuffer, sizeof(logBuffer), "%s slope               : %.12e +/- %.12e (%.3g%%)\n", logBuffer, slope, slopeError, 100 * slopeError/ abs(slope));
+        snprintf(logBuffer, sizeof(logBuffer), "%s slope                = %.12e +/- %.12e (%.3g%%)\n", logBuffer, slope, slopeError, 100 * slopeError/ abs(slope));
     } else {
         orderInputsOut[2] = orderInputs[1];
-        snprintf(logBuffer, sizeof(logBuffer), "%s slope        (fixed): %.12e\n", logBuffer, orderInputs[1]);
+        snprintf(logBuffer, sizeof(logBuffer), "%s slope        (fixed) = %.12e\n", logBuffer, orderInputs[1]);
     }
 
     double amp, center, fwhm, ampError, centerError, fwhmError, integral, integralError, sigmaAmpFwhm;
@@ -530,33 +530,33 @@ char * EMSCRIPTEN_KEEPALIVE fittingGaussian(
             index = gsl_matrix_get(parameterIndexs, i, 0);
             amp = gsl_vector_get(x, index);
             ampError = sqrt(gsl_matrix_get(covar, index, index));
-            snprintf(logBuffer, sizeof(logBuffer), "%s amp%zu                : %.12e +/- %.12e (%.3g%%)\n", logBuffer, i + 1, amp, ampError, 100 * ampError / abs(amp));
+            snprintf(logBuffer, sizeof(logBuffer), "%s amp%zu                 = %.12e +/- %.12e (%.3g%%)\n", logBuffer, i + 1, amp, ampError, 100 * ampError / abs(amp));
         } else {
             amp = inputs[i][0];
             ampError = NAN;
-            snprintf(logBuffer, sizeof(logBuffer), "%s amp%zu         (fixed): %.12e\n", logBuffer, i + 1, amp);
+            snprintf(logBuffer, sizeof(logBuffer), "%s amp%zu         (fixed) = %.12e\n", logBuffer, i + 1, amp);
         }
 
         if (lockedInputs[i][1] == 0) {
             index = gsl_matrix_get(parameterIndexs, i, 1);
             center = gsl_vector_get(x, index);
             centerError = sqrt(gsl_matrix_get(covar, index, index));
-            snprintf(logBuffer, sizeof(logBuffer), "%s center%zu             : %.12e +/- %.12e (%.3g%%)\n", logBuffer, i + 1, center, centerError, 100 * centerError / abs(center));
+            snprintf(logBuffer, sizeof(logBuffer), "%s center%zu              = %.12e +/- %.12e (%.3g%%)\n", logBuffer, i + 1, center, centerError, 100 * centerError / abs(center));
         } else {
             center = inputs[i][1];
             centerError = NAN;
-            snprintf(logBuffer, sizeof(logBuffer), "%s center%zu      (fixed): %.12e\n", logBuffer, i + 1, center);
+            snprintf(logBuffer, sizeof(logBuffer), "%s center%zu      (fixed) = %.12e\n", logBuffer, i + 1, center);
         }
 
         if (lockedInputs[i][2] == 0) {
             index = gsl_matrix_get(parameterIndexs, i, 2);
             fwhm = gsl_vector_get(x, index);
             fwhmError = sqrt(gsl_matrix_get(covar, index, index));
-            snprintf(logBuffer, sizeof(logBuffer), "%s fwhm%zu               : %.12e +/- %.12e (%.3g%%)\n", logBuffer, i + 1, fwhm, fwhmError, 100 * fwhmError / abs(fwhm));
+            snprintf(logBuffer, sizeof(logBuffer), "%s fwhm%zu                = %.12e +/- %.12e (%.3g%%)\n", logBuffer, i + 1, fwhm, fwhmError, 100 * fwhmError / abs(fwhm));
         } else {
             fwhm = inputs[i][2];
             fwhmError = NAN;
-            snprintf(logBuffer, sizeof(logBuffer), "%s fwhm%zu        (fixed): %.12e\n", logBuffer, i + 1, fwhm);
+            snprintf(logBuffer, sizeof(logBuffer), "%s fwhm%zu        (fixed) = %.12e\n", logBuffer, i + 1, fwhm);
         }
 
         if (function == 0) {
@@ -567,7 +567,7 @@ char * EMSCRIPTEN_KEEPALIVE fittingGaussian(
 
         if (lockedInputs[i][0] == 1 && lockedInputs[i][2] == 1) {
             integralError = NAN;
-            snprintf(logBuffer, sizeof(logBuffer), "%s integral of function: %.12e\n", logBuffer, integral);
+            snprintf(logBuffer, sizeof(logBuffer), "%s integral of function = %.12e\n", logBuffer, integral);
         } else {
             if (lockedInputs[i][0] == 0 && lockedInputs[i][2] == 0) {
                 sigmaAmpFwhm = gsl_matrix_get(covar, gsl_matrix_get(parameterIndexs, i, 0), gsl_matrix_get(parameterIndexs, i, 2));
@@ -577,7 +577,7 @@ char * EMSCRIPTEN_KEEPALIVE fittingGaussian(
             } else {
                 integralError = integral * abs(fwhmError / fwhm);
             }
-            snprintf(logBuffer, sizeof(logBuffer), "%s integral of function: %.12e +/- %.12e (%.3g%%)\n", logBuffer, integral, integralError, 100 * integralError / abs(integral));
+            snprintf(logBuffer, sizeof(logBuffer), "%s integral of function ~= %.12e +/- %.12e (%.3g%%)\n", logBuffer, integral, integralError, 100 * integralError / abs(integral));
         }
 
         ampOut[2 * i] = amp;

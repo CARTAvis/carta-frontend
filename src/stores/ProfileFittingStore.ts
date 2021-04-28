@@ -112,7 +112,7 @@ export class ProfileFittingStore {
                 resultString += `FWHM = ${component.resultFwhm}\n`;
                 resultString += component.resultFwhmError ? `FWHM Error = ${component.resultFwhmError}\n` : "";
                 resultString += `Integral = ${component.resultIntegral}\n`;
-                resultString += component.resultIntegralError ? `Integral Error = ${component.resultIntegralError}\n\n` : "";
+                resultString += component.resultIntegralError ? `Integral Error ~= ${component.resultIntegralError}\n\n` : "";
             }
         }
 
