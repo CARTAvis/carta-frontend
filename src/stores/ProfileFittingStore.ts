@@ -307,7 +307,7 @@ export class ProfileFittingStore {
         this.selectedIndex = 0;
         this.isAutoDetectWithCont = false;
         this.isAutoDetectWithFitting = false;
-        this.enableResidual = false;
+        this.enableResidual = true;
     }
 
     @action setFunction = (val: FittingFunction) => {

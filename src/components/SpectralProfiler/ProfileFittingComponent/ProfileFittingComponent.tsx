@@ -31,6 +31,7 @@ export interface ProfileFittingComponentProps {
 @observer
 export class ProfileFittingComponent extends React.Component<ProfileFittingComponentProps> {
     @observable isShowingLog: boolean;
+    @observable isShowingResultButton: boolean;
 
     private onFunctionChanged = (ev) => {
         this.reset();
@@ -77,6 +78,14 @@ export class ProfileFittingComponent extends React.Component<ProfileFittingCompo
 
     private onFwhmValueChanged = (val: number) => {
         this.props.fittingStore.selectedComponent.setFwhm(val);
+    }
+
+    private onMouseOverResult = () => {
+        this.setIsShowingResultButton(true);
+    }
+
+    private onMouseLeaveResult = () => {
+        this.setIsShowingResultButton(false);
     }
 
     private autoDetect = () => {
@@ -258,6 +267,10 @@ export class ProfileFittingComponent extends React.Component<ProfileFittingCompo
         this.isShowingLog = val;
     }
 
+    @action setIsShowingResultButton(val: boolean) {
+        this.isShowingResultButton = val;
+    }
+
     constructor(props: ProfileFittingComponentProps) {
         super(props);
         makeObservable(this);
@@ -284,8 +297,8 @@ export class ProfileFittingComponent extends React.Component<ProfileFittingCompo
                 <div className="profile-fitting-form">
                     <FormGroup label="Data source" inline={true}>
                         <HTMLSelect 
-                            value={appStore.activeFrameIndex} 
-                            options={appStore.frameNames} 
+                            value={appStore.activeFrameIndex}
+                            options={appStore.frames.map(frame => {return {label: frame.filename, value: frame.frameInfo.fileId};})} 
                             onChange={(ev) => appStore.setActiveFrame(parseInt(ev.target.value))}
                         />
                     </FormGroup>
@@ -427,12 +440,15 @@ export class ProfileFittingComponent extends React.Component<ProfileFittingCompo
                         </FormGroup>
                     }
                     <FormGroup label="Fitting result" inline={true}>
-                        <div className="fitting-result">
-                            <Pre className="fitting-result-pre">
-                                <Text>
-                                    {fittingStore.resultString}
-                                </Text>
-                            </Pre>
+                        <div onMouseOver={this.onMouseOverResult} onMouseLeave={this.onMouseLeaveResult}>
+                            <div className="fitting-result">
+                                <Pre className="fitting-result-pre">
+                                    <Text>
+                                        {fittingStore.resultString}
+                                    </Text>
+                                </Pre>
+                            </div>
+                            {this.isShowingResultButton ? <Button icon="import" onClick={this.saveLog} className="fitting-result-hover-button"/> : <div style={{height: "30px"}}/>}
                         </div>
                     </FormGroup>
                 </div>

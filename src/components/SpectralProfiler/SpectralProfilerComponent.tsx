@@ -121,12 +121,12 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
                     ySum2 += y * y;
                 }
             }
-
             let smoothingValues: Point2D[] = this.widgetStore.smoothingStore.getSmoothingPoint2DArray(channelValues, coordinateData.values);
             let fittingBaselineValues: Point2D[] = this.widgetStore.fittingStore.getBaseLinePoint2DArray(channelValues);
             let fittingResultValues: Point2D[] = this.widgetStore.fittingStore.getFittingResultPoint2DArray(channelValues);
             let fittingIndividualResultValues: Array<Point2D[]> = this.widgetStore.fittingStore.getFittingIndividualResultPoint2DArrays(channelValues);
-            let fittingResidualValues: Point2D[] = this.widgetStore.fittingStore.getFittingResidualPoint2DArray(channelValues, coordinateData.values);
+            const smoothingData = this.widgetStore.smoothingStore.getSmoothingValues(channelValues, coordinateData.values);
+            let fittingResidualValues: Point2D[] = this.widgetStore.smoothingStore.type === SmoothingType.NONE ? this.widgetStore.fittingStore.getFittingResidualPoint2DArray(channelValues, coordinateData.values) : this.widgetStore.fittingStore.getFittingResidualPoint2DArray(smoothingData.x, smoothingData.y);
 
             if (yCount > 0) {
                 yMean = ySum / yCount;
