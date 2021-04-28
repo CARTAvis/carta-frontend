@@ -1988,4 +1988,12 @@ export class AppStore {
     }
 
     // endregion
+
+    public cleanSpectralProfileDataOfRegion = (regionId: number) => {
+        // clean up spectral profile data right after region is updated, or the old data may be displayed in spectral profiler
+        const regionProfileStoreMaps = Array.from(this.spectralProfiles?.values());
+        regionProfileStoreMaps?.forEach(regionProfileStoreMap => {
+            regionProfileStoreMap.get(regionId)?.clearProfiles();
+        });
+    };
 }

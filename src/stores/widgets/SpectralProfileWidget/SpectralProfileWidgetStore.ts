@@ -339,14 +339,15 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         const profileColorMap = this.lineColorMap;
         profiles.forEach(profile => {
             if (profile) {
+                numProfiles++;
+                colors.push(getColorForTheme(profileColorMap.get(profile.colorKey)));
+                labels.push(profile.label);
+                comments.push(profile.comments);
+
                 const pointsAndProperties = this.getDataPointsAndProperties(profile.channelValues, profile.data, wantMeanRms);
+                data.push(pointsAndProperties?.points ?? []);
+                smoothedData.push(pointsAndProperties?.smoothedPoints ?? []);
                 if (pointsAndProperties) {
-                    numProfiles++;
-                    data.push(pointsAndProperties.points);
-                    colors.push(getColorForTheme(profileColorMap.get(profile.colorKey)));
-                    labels.push(profile.label);
-                    comments.push(profile.comments);
-                    smoothedData.push(pointsAndProperties.smoothedPoints);
                     if (wantMeanRms) {
                         yMean = pointsAndProperties.yMean;
                         yRms = pointsAndProperties.yRms;
@@ -736,7 +737,10 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
                 yMean = ySum / yCount;
                 yRms = Math.sqrt((ySum2 / yCount) - yMean * yMean);
             }
+
+            return {points: points, smoothedPoints: smoothedPoints, xBound: xBound, yBound: yBound, yMean: yMean, yRms: yRms};
+        } else {
+            return undefined;
         }
-        return {points: points, smoothedPoints: smoothedPoints, xBound: xBound, yBound: yBound, yMean: yMean, yRms: yRms};
     };
 }

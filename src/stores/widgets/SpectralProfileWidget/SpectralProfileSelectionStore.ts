@@ -186,7 +186,7 @@ export class SpectralProfileSelectionStore {
             const frameProfileStoreMap = appStore.spectralProfiles.get(profileConfig.fileId);
             const regionProfileStoreMap = frameProfileStoreMap?.get(profileConfig.regionId);
             const profileData = regionProfileStoreMap?.getProfile(profileConfig.coordinate, profileConfig.statsType);
-            if (frame && profileData) {
+            if (frame) {
                 profiles.push({
                     channelValues: frame.channelValues,
                     data: profileData,

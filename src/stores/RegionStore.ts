@@ -5,7 +5,7 @@ import * as AST from "ast_wrapper";
 import {Point2D} from "models";
 import {BackendService} from "services";
 import {add2D, getApproximateEllipsePoints, getApproximatePolygonPoints, isAstBadPoint, midpoint2D, minMax2D, rotate2D, scale2D, simplePolygonPointTest, simplePolygonTest, subtract2D, toFixed, transformPoint} from "utilities";
-import {FrameStore} from "stores";
+import {AppStore, FrameStore} from "stores";
 
 export const CURSOR_REGION_ID = 0;
 export const FOCUS_REGION_RATIO = 0.4;
@@ -408,6 +408,7 @@ export class RegionStore {
     // Update the region with the backend
     private updateRegion = () => {
         if (this.isValid) {
+            AppStore.Instance.cleanSpectralProfileDataOfRegion(this.regionId);
             if (this.regionId === CURSOR_REGION_ID && this.regionType === CARTA.RegionType.POINT) {
                 this.backendService.setCursor(this.fileId, this.center.x, this.center.y);
             } else {

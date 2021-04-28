@@ -157,7 +157,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
             const xLabel = cursorXUnit === "Channel" ? `Channel ${toFixed(nearest.point.x)}` : `${floatXStr} ${cursorXUnit}`;
             cursorInfoString = `(${xLabel}, ${toExponential(nearest.point.y, 2)})`;
         }
-        return `${label}: ${cursorInfoString}`;
+        return `${label}: ${cursorInfoString ?? "---"}`;
     };
 
     private genProfilerInfo = (): ProfileInfo[] => {
