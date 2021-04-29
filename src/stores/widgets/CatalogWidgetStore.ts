@@ -428,6 +428,11 @@ export class CatalogWidgetStore {
             this.sizeColumnMax = {default: undefined, clipd: undefined};
             if (coloum === CatalogOverlay.NONE) {
                 this.sizeArea = false;
+                this.sizeColumnMinLocked = false;
+                this.sizeColumnMaxLocked = false;
+                this.sizeMinorColumnMinLocked = false;
+                this.sizeMinorColumnMaxLocked = false;
+                this.sizeMinorMapColumn = CatalogOverlay.NONE;
             }   
         }
     }
@@ -505,6 +510,10 @@ export class CatalogWidgetStore {
             this.sizeMinorColumnMax = {default: undefined, clipd: undefined};
             if (coloum === CatalogOverlay.NONE) {
                 this.sizeMinorArea = false;
+                this.sizeMinorColumnMinLocked = false;
+                this.sizeMinorColumnMaxLocked = false;
+                this.sizeColumnMinLocked = false;
+                this.sizeColumnMaxLocked = false;
             }
         }
     }
