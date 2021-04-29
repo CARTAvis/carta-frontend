@@ -172,7 +172,7 @@ export class CatalogViewGLComponent extends React.Component<CatalogViewGLCompone
             const lineThickness = catalogWidgetStore.thickness * devicePixelRatio;
             let color = tinycolor(catalogWidgetStore.catalogColor).toRgb();
             let selectedSourceColor = tinycolor(catalogWidgetStore.highlightColor).toRgb();
-            let pointSize = catalogWidgetStore.catalogSize + shape.minSize;
+            let pointSize = catalogWidgetStore.catalogSize + shape.diameterBase;
             this.gl.uniform1f(shaderUniforms.LineThickness, lineThickness);
             this.gl.uniform1i(shaderUniforms.ShowSelectedSource, catalogWidgetStore.showSelectedData? 1.0 : 0.0);
             // size

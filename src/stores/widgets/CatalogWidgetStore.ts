@@ -52,19 +52,19 @@ export class CatalogWidgetStore {
     public static readonly MaxAngle = 720;
     public static readonly SizeMapMin = 0;
 
-    private OverlayShapeSettings =  new Map<number, {featherWidth: number, minSize: number}>([
-        [CatalogOverlayShape.BOX_LINED, {featherWidth: 0.35, minSize: 1.5}],
-        [CatalogOverlayShape.CIRCLE_FILLED, {featherWidth: 0.35, minSize: 1.5}],
-        [CatalogOverlayShape.CIRCLE_LINED, {featherWidth: 0.5, minSize: 1.5}],
-        [CatalogOverlayShape.ELLIPSE_LINED, {featherWidth: 1.0, minSize: 3.5}],
-        [CatalogOverlayShape.HEXAGON_LINED, {featherWidth: 0.35, minSize: 0}],
-        [CatalogOverlayShape.RHOMB_LINED, {featherWidth: 0.35, minSize: 1.5}],
-        [CatalogOverlayShape.TRIANGLE_LINED_UP, {featherWidth: 0.35, minSize: 0}],
-        [CatalogOverlayShape.TRIANGLE_LINED_DOWN, {featherWidth: 0.35, minSize: 0}],
-        [CatalogOverlayShape.HEXAGON_LINED_2, {featherWidth: 0.35, minSize: 0}],
-        [CatalogOverlayShape.CROSS_FILLED, {featherWidth: 0.5, minSize: 3.5}],
-        [CatalogOverlayShape.X_FILLED, {featherWidth: 0.5, minSize: 3.5}],
-        [CatalogOverlayShape.LineSegment_FILLED, {featherWidth: 0.35, minSize: 3}]
+    private OverlayShapeSettings =  new Map<number, {featherWidth: number, diameterBase: number, areaBase: number}>([
+        [CatalogOverlayShape.BOX_LINED, {featherWidth: 0.35, diameterBase: 1.5, areaBase: 100}],
+        [CatalogOverlayShape.CIRCLE_FILLED, {featherWidth: 0.35, diameterBase: 1.5, areaBase: 70}],
+        [CatalogOverlayShape.CIRCLE_LINED, {featherWidth: 0.5, diameterBase: 1.5, areaBase: 70}],
+        [CatalogOverlayShape.ELLIPSE_LINED, {featherWidth: 1.0, diameterBase: 10, areaBase: 100}],
+        [CatalogOverlayShape.HEXAGON_LINED, {featherWidth: 0.35, diameterBase: 0, areaBase: 50}],
+        [CatalogOverlayShape.RHOMB_LINED, {featherWidth: 0.35, diameterBase: 1.5, areaBase: 100}],
+        [CatalogOverlayShape.TRIANGLE_LINED_UP, {featherWidth: 0.35, diameterBase: 0, areaBase: 20}],
+        [CatalogOverlayShape.TRIANGLE_LINED_DOWN, {featherWidth: 0.35, diameterBase: 0, areaBase: 20}],
+        [CatalogOverlayShape.HEXAGON_LINED_2, {featherWidth: 0.35, diameterBase: 0, areaBase: 50}],
+        [CatalogOverlayShape.CROSS_FILLED, {featherWidth: 0.5, diameterBase: 3.5, areaBase: 150}],
+        [CatalogOverlayShape.X_FILLED, {featherWidth: 0.5, diameterBase: 3.5, areaBase: 150}],
+        [CatalogOverlayShape.LineSegment_FILLED, {featherWidth: 0.35, diameterBase: 3, areaBase: 100}]
     ]);
 
     @observable catalogFileId: number;
@@ -650,7 +650,7 @@ export class CatalogWidgetStore {
         let column = this.sizeMapData;
         if (!this.disableSizeMap && column?.length && this.sizeColumnMin.clipd !== undefined && this.sizeColumnMax.clipd !== undefined) {
             const pointSize = this.pointSizebyType;
-            let min = this.shapeSettings.minSize;
+            let min = this.sizeArea? this.shapeSettings.areaBase : this.shapeSettings.diameterBase;
             return CARTACompute.CalculateCatalogSize(
                 column,
                 this.sizeColumnMin.clipd, 
@@ -669,7 +669,7 @@ export class CatalogWidgetStore {
         let column = this.sizeMinorMapData;
         if (!this.disableSizeMinorMap && column?.length && this.sizeMinorColumnMin.clipd !== undefined && this.sizeMinorColumnMax.clipd !== undefined) {
             const pointSize = this.minorPointSizebyType;
-            let min = this.shapeSettings.minSize;
+            let min = this.sizeArea? this.shapeSettings.areaBase : this.shapeSettings.diameterBase;
             return CARTACompute.CalculateCatalogSize(
                 column,
                 this.sizeMinorColumnMin.clipd, 
@@ -736,10 +736,10 @@ export class CatalogWidgetStore {
         return this.orientationMapColumn === CatalogOverlay.NONE;
     }
 
-    @computed get shapeSettings(): {featherWidth: number, minSize: number} {
+    @computed get shapeSettings(): {featherWidth: number, diameterBase: number, areaBase: number} {
         const pointSize = this.sizeMajor? this.pointSizebyType : this.minorPointSizebyType;
         if (pointSize.min === 0) {
-            return {featherWidth: this.OverlayShapeSettings.get(this.catalogShape).featherWidth, minSize: 0};
+            return {featherWidth: this.OverlayShapeSettings.get(this.catalogShape).featherWidth, diameterBase: 0, areaBase: 0};
         }
         return this.OverlayShapeSettings.get(this.catalogShape);
     }
