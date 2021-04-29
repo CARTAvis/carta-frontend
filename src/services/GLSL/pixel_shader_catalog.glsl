@@ -93,7 +93,7 @@ float featherRangeEllipse(vec2 r, float rMin, float rMax) {
         }
         aa = pow(vec2(rMaxMinor, rMinMinor), p);
     }
-    vec2 v = ((1.0 - pow(r.x, 2.0) / aa) * bb - pow(r.y, 2.0) - uFeatherWidth) / (20.0 * uFeatherWidth);
+    vec2 v = ((1.0 - pow(r.x, 2.0) / aa) * bb - pow(r.y, 2.0) - uFeatherWidth) / (6.0 * uFeatherWidth);
     vec2 alpha = smoothstep(0.0, 1.0, v);
     return alpha.x * (1.0 - alpha.y);
 }
