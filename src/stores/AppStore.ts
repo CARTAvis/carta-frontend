@@ -264,9 +264,17 @@ export class AppStore {
         return frameMap;
     }
 
-    // catalog
     @computed get catalogNum(): number {
         return this.catalogStore.catalogProfileStores.size;
+    }
+
+    @computed get catalogNextFileId(): number {
+        let id = 1;
+        const currentCatalogIds = Array.from(this.catalogStore.catalogProfileStores.keys());
+        while (currentCatalogIds.includes(id) && currentCatalogIds.length) {
+            id += 1;
+        }
+        return id;
     }
 
     @computed get frameNames(): IOptionProps [] {
@@ -647,7 +655,7 @@ export class AppStore {
             this.startFileLoading();
 
             const frame = this.activeFrame;
-            const fileId = this.catalogNum + 1;
+            const fileId = this.catalogNextFileId;
 
             this.backendService.loadCatalogFile(directory, file, fileId, previewDataSize).subscribe(ack => runInAction(() => {
                 this.endFileLoading();
@@ -713,31 +721,12 @@ export class AppStore {
             this.catalogStore.catalogWidgets.delete(fileId);
             this.widgetsStore.catalogWidgets.delete(catalogWidgetId);
             // remove overlay
-            catalogStore.removeCatalog(fileId);
+            catalogStore.removeCatalog(fileId, catalogComponentId);
             // remove profile store
             catalogStore.catalogProfileStores.delete(fileId);
 
             if (!this.activeFrame) {
                 return;
-            }
-            // update associated image
-            const fileIds = catalogStore.imageAssociatedCatalogId.get(this.activeFrame.frameInfo.fileId);
-            const activeImageId = AppStore.Instance.activeFrame.frameInfo.fileId;
-            let associatedCatalogId = [];
-            if (fileIds) {
-                associatedCatalogId = fileIds.filter(catalogFileId => {
-                    return catalogFileId !== fileId;
-                });
-                catalogStore.updateImageAssociatedCatalogId(activeImageId, associatedCatalogId);
-            }
-
-            // update catalogProfiles fileId            
-            if (catalogComponentId && associatedCatalogId.length) {
-                catalogStore.catalogProfiles.forEach((catalogFileId, componentId) => {
-                    if (catalogFileId === fileId) {
-                        catalogStore.catalogProfiles.set(componentId, associatedCatalogId[0]);
-                    }
-                });
             }
         }
     }
@@ -1652,6 +1641,10 @@ export class AppStore {
             } else if (f.spatialReference) {
                 f.setSpatialReference(frame);
             }
+        }
+
+        if(oldRef?.secondarySpatialImages.length) {
+            oldRef.secondarySpatialImages = [];
         }
 
     };

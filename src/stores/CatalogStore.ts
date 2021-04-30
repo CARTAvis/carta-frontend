@@ -1,7 +1,7 @@
 import * as AST from "ast_wrapper";
 import {CARTA} from "carta-protobuf";
 import {action, observable, ObservableMap, computed,makeObservable} from "mobx";
-import {AppStore, CatalogProfileStore, CatalogSystemType, FrameStore, WidgetsStore} from "stores";
+import {AppStore, CatalogProfileStore, CatalogSystemType, CatalogOverlay, FrameStore, WidgetsStore} from "stores";
 import {CatalogWebGLService, CatalogTextureType} from "services";
 import {CatalogWidgetStore} from "stores/widgets";
 
@@ -24,15 +24,15 @@ export class CatalogStore {
     private static readonly ArcminUnits = ["arcmin", "arcminute"];
 
     @observable catalogGLData: ObservableMap<number, CatalogOverlayCoords>;
-    // map image file id with catalog file Id
+    // image file id : catalog file Id
     @observable imageAssociatedCatalogId: Map<number, Array<number>>;
-    // map catalog component Id with catalog file Id
+    // catalog component Id : catalog file Id
     @observable catalogProfiles: Map<string, number>;
-    // map catalog plot component Id with catalog file Id and associated catalog plot widget id
+    // catalog plot component Id : catalog file Id and associated catalog plot widget id
     @observable catalogPlots: Map<string, ObservableMap<number, string>>;
-    // catalog Profile store with catalog file Id
+    // catalog file Id : catalog Profile store
     @observable catalogProfileStores: Map<number, CatalogProfileStore>;
-    // catalog file Id with catalog widget storeId
+    // catalog file Id : catalog widget storeId
     @observable catalogWidgets: Map<number, string>;
 
     private constructor() {
@@ -88,7 +88,7 @@ export class CatalogStore {
             const catalogWidgetStore = this.getCatalogWidgetStore(catalogFileId);
             const xColumn = catalogWidgetStore.xAxis;
             const yColumn = catalogWidgetStore.yAxis;
-            if (xColumn && yColumn) {
+            if (xColumn !== CatalogOverlay.NONE && yColumn !== CatalogOverlay.NONE) {
                 const catalogProfileStore = this.catalogProfileStores.get(catalogFileId);
                 const coords = catalogProfileStore.get2DPlotData(xColumn, yColumn, catalogProfileStore.catalogData);
                 const wcs = activeFrame.validWcs ? activeFrame.wcsInfo : 0;
@@ -121,23 +121,18 @@ export class CatalogStore {
 
     // only recalculate position when source image and destination image have different projection types
     // takes about 3s to recalculate and update 1M points
+    // todo: move calculation on GUP 
     convertSpatailMatchedData() {
         const activeFrame = AppStore.Instance.activeFrame;
         const destinationFrameId = activeFrame?.frameInfo?.fileId;
-        if(activeFrame?.spatialReference) {
-            const sourceFrameId = activeFrame.spatialReference.frameInfo.fileId;
-            const imageMapId = `${sourceFrameId}-${destinationFrameId}`;
-            this.imageAssociatedCatalogId.get(sourceFrameId)?.forEach(catalogFileId => {
-                this.updateSpatialMatchedCatalog(imageMapId, catalogFileId);   
-            });
-        }
-
-        activeFrame?.secondarySpatialImages?.forEach(frame => {
+        activeFrame.spatialSiblings?.forEach(frame => {
             const sourceFrameId = frame.frameInfo.fileId;
-            const imageMapId = `${sourceFrameId}-${destinationFrameId}`;
-            this.imageAssociatedCatalogId.get(sourceFrameId)?.forEach(catalogFileId => {
-                this.updateSpatialMatchedCatalog(imageMapId, catalogFileId);   
-            });
+            if (sourceFrameId !== destinationFrameId) {
+                const imageMapId = `${sourceFrameId}-${destinationFrameId}`;
+                this.imageAssociatedCatalogId.get(sourceFrameId)?.forEach(catalogFileId => {
+                    this.updateSpatialMatchedCatalog(imageMapId, catalogFileId);   
+                });   
+            }
         });
     }
 
@@ -158,9 +153,28 @@ export class CatalogStore {
         }
     }
 
-    @action removeCatalog(fileId: number) {
+    @action removeCatalog(fileId: number, catalogComponentId?: string) {
         this.catalogGLData.delete(fileId);
         CatalogWebGLService.Instance.clearTexture(fileId);
+        // update associated image
+        const frame = AppStore.Instance.getFrame(this.getFramIdByCatalogId(fileId));
+        const fileIds = this.imageAssociatedCatalogId.get(frame.frameInfo.fileId);
+        let associatedCatalogId = [];
+        if (fileIds) {
+            associatedCatalogId = fileIds.filter(catalogFileId => {
+                return catalogFileId !== fileId;
+            });
+            this.updateImageAssociatedCatalogId(frame.frameInfo.fileId, associatedCatalogId);
+        }
+
+        // update catalogProfiles fileId            
+        if (catalogComponentId && associatedCatalogId.length) {
+            this.catalogProfiles.forEach((catalogFileId, componentId) => {
+                if (catalogFileId === fileId) {
+                    this.catalogProfiles.set(componentId, associatedCatalogId[0]);
+                }
+            });
+        }
     }
 
     @action updateImageAssociatedCatalogId(activeFrameIndex: number, associatedCatalogFiles: number[]) {
@@ -253,17 +267,9 @@ export class CatalogStore {
         if (activeFrame) {
             const imageId = activeFrame.frameInfo.fileId;
             let associatedCatalogIds = [...this.imageAssociatedCatalogId.get(imageId)];
-            const spatialMatchedImageId = activeFrame.spatialReference?.frameInfo?.fileId;
-            if (spatialMatchedImageId >= 0) {
-                const spatialReferencedCatalogs = [...this.imageAssociatedCatalogId.get(spatialMatchedImageId)];
-                associatedCatalogIds = [...new Set([].concat(...[associatedCatalogIds, spatialReferencedCatalogs]))].filter(catalogFileId => {
-                    return this.catalogGLData.get(catalogFileId) !== undefined;
-                });
-            }
-
-            activeFrame.secondarySpatialImages?.forEach(frame => {
-                const secondarySpatialReferencedCatalogs = [...this.imageAssociatedCatalogId.get(frame.frameInfo.fileId)];
-                associatedCatalogIds = [...new Set([].concat(...[associatedCatalogIds, secondarySpatialReferencedCatalogs]))].filter(catalogFileId => {
+            activeFrame.spatialSiblings?.forEach(frame => {
+                const catalogs = [...this.imageAssociatedCatalogId.get(frame.frameInfo.fileId)];
+                associatedCatalogIds = [...new Set([].concat(...[associatedCatalogIds, catalogs]))].filter(catalogFileId => {
                     return this.catalogGLData.get(catalogFileId) !== undefined;
                 });;
             });

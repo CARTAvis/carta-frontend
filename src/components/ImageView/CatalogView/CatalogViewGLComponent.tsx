@@ -275,17 +275,7 @@ export class CatalogViewGLComponent extends React.Component<CatalogViewGLCompone
                 // position 
                 let positionTexture = undefined;
                 if(reProjection) {
-                    let source = -1;
-                    if (destinationFrame.spatialReference) {
-                        source = destinationFrame.spatialReference.frameInfo.fileId;
-                    }
-
-                    if (destinationFrame.secondarySpatialImages?.length) {
-                        catalogStore.convertSpatailMatchedData();
-                        const secondarySpatialReferencedCatalogs = catalogStore.imageAssociatedCatalogId.get(frame.frameInfo.fileId);
-                        source = secondarySpatialReferencedCatalogs.includes(fileId) ? frame.frameInfo.fileId : -1;
-                    }
-                    const imageMapId = `${source}-${destinationFrame.frameInfo.fileId}`;
+                    const imageMapId = `${frame.frameInfo.fileId}-${destinationFrame.frameInfo.fileId}`;
                     positionTexture = this.catalogWebGLService.getSpatialMatchedTexture(imageMapId, fileId);
                 } else {
                     positionTexture = this.catalogWebGLService.getDataTexture(fileId, CatalogTextureType.Position);
