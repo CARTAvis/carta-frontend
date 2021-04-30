@@ -64,6 +64,7 @@ out float v_pointSize;
 out float v_orientation;
 out float v_selected;
 out float v_minorSize;
+out float v_featherWidth;
 
 
 vec4 getValueByIndexFromTexture(sampler2D texture, int index) {
@@ -144,6 +145,7 @@ void main() {
     v_minorSize = -1.0;
     v_selected = float(selectedSource.x);
     v_pointSize = uPointSize;
+    v_featherWidth = uFeatherWidth;
 
     if (uCmapEnabled) {
         vec4 color = getValueByIndexFromTexture(uColorTexture, gl_VertexID);
@@ -172,12 +174,12 @@ void main() {
 
     if (uShowSelectedSource) {
         if (v_selected == 1.0) {
-            gl_PointSize = v_pointSize + uFeatherWidth;
+            gl_PointSize = v_pointSize + v_featherWidth;
         } else {
             gl_PointSize = 0.0;
         }
     } else {
-        gl_PointSize = v_pointSize + uFeatherWidth;
+        gl_PointSize = v_pointSize + v_featherWidth;
     }
 
     if (uSizeMinorMapEnabled) {
@@ -187,7 +189,11 @@ void main() {
             v_minorSize = getSquareSideByArea(v_pointSize, v_minorSize);
         }
         if (v_pointSize < v_minorSize) {
-            gl_PointSize = v_minorSize + uFeatherWidth;
+            gl_PointSize = v_minorSize + v_featherWidth;
         }
+    }
+
+    if (uShapeType == ELLIPSE_LINED) {
+        v_featherWidth = v_pointSize / 50.0 * 15.0 + 0.7;
     }
 }

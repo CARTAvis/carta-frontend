@@ -46,17 +46,18 @@ export class CatalogWidgetStore {
     public static readonly MaxAreaSize = 4000;
     public static readonly MinTableSeparatorPosition = 5;
     public static readonly MaxTableSeparatorPosition = 95;
-    public static readonly MinThickness = 1.5;
+    public static readonly MinThickness = 1.0;
     public static readonly MaxThickness = 10;
     public static readonly MinAngle = 0;
     public static readonly MaxAngle = 720;
     public static readonly SizeMapMin = 0;
 
+    // -1 : apply different featherWidth according shape size
     private OverlayShapeSettings =  new Map<number, {featherWidth: number, diameterBase: number, areaBase: number}>([
         [CatalogOverlayShape.BOX_LINED, {featherWidth: 0.35, diameterBase: 1.5, areaBase: 100}],
         [CatalogOverlayShape.CIRCLE_FILLED, {featherWidth: 0.35, diameterBase: 1.5, areaBase: 70}],
         [CatalogOverlayShape.CIRCLE_LINED, {featherWidth: 0.5, diameterBase: 1.5, areaBase: 70}],
-        [CatalogOverlayShape.ELLIPSE_LINED, {featherWidth: 1.0, diameterBase: 10, areaBase: 100}],
+        [CatalogOverlayShape.ELLIPSE_LINED, {featherWidth: -1.0, diameterBase: 6, areaBase: 100}],
         [CatalogOverlayShape.HEXAGON_LINED, {featherWidth: 0.35, diameterBase: 0, areaBase: 50}],
         [CatalogOverlayShape.RHOMB_LINED, {featherWidth: 0.35, diameterBase: 1.5, areaBase: 100}],
         [CatalogOverlayShape.TRIANGLE_LINED_UP, {featherWidth: 0.35, diameterBase: 0, areaBase: 20}],
@@ -669,7 +670,7 @@ export class CatalogWidgetStore {
         let column = this.sizeMinorMapData;
         if (!this.disableSizeMinorMap && column?.length && this.sizeMinorColumnMin.clipd !== undefined && this.sizeMinorColumnMax.clipd !== undefined) {
             const pointSize = this.minorPointSizebyType;
-            let min = this.sizeArea? this.shapeSettings.areaBase : this.shapeSettings.diameterBase;
+            let min = this.sizeMinorArea? this.shapeSettings.areaBase : this.shapeSettings.diameterBase;
             return CARTACompute.CalculateCatalogSize(
                 column,
                 this.sizeMinorColumnMin.clipd, 
