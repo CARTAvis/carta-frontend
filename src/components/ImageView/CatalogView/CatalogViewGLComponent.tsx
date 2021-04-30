@@ -165,7 +165,7 @@ export class CatalogViewGLComponent extends React.Component<CatalogViewGLCompone
         const destinationFrame = appStore.activeFrame;
         catalogStore.activeCatalogFiles.forEach(fileId => {
             const frame = appStore.getFrame(catalogStore.getFramIdByCatalogId(fileId));
-            const reProjection = catalogStore.reProjection(frame, destinationFrame);
+            const isActive = frame === destinationFrame;
             const catalog = catalogStore.catalogGLData.get(fileId);
             if(catalog) {
                 const catalogWidgetStore = catalogStore.getCatalogWidgetStore(fileId);
@@ -180,10 +180,9 @@ export class CatalogViewGLComponent extends React.Component<CatalogViewGLCompone
                 this.gl.uniform1i(shaderUniforms.ShowSelectedSource, catalogWidgetStore.showSelectedData? 1.0 : 0.0);
                 //FrameView
                 let sourceFrame = frame;
-                if(reProjection) {
+                if(!isActive) {
                     sourceFrame = destinationFrame;
                 }
-
                 if (sourceFrame.spatialReference) {
                     const baseRequiredView = sourceFrame.spatialReference.requiredFrameView;
                     const originAdjustedOffset = subtract2D(sourceFrame.spatialTransform.origin, scale2D(rotate2D(sourceFrame.spatialTransform.origin, sourceFrame.spatialTransform.rotation), sourceFrame.spatialTransform.scale));
@@ -274,7 +273,7 @@ export class CatalogViewGLComponent extends React.Component<CatalogViewGLCompone
 
                 // position 
                 let positionTexture = undefined;
-                if(reProjection) {
+                if(!isActive) {
                     const imageMapId = `${frame.frameInfo.fileId}-${destinationFrame.frameInfo.fileId}`;
                     positionTexture = this.catalogWebGLService.getSpatialMatchedTexture(imageMapId, fileId);
                 } else {

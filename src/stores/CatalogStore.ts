@@ -1,7 +1,6 @@
 import * as AST from "ast_wrapper";
-import {CARTA} from "carta-protobuf";
 import {action, observable, ObservableMap, computed,makeObservable} from "mobx";
-import {AppStore, CatalogProfileStore, CatalogSystemType, CatalogOverlay, FrameStore, WidgetsStore} from "stores";
+import {AppStore, CatalogProfileStore, CatalogSystemType, CatalogOverlay, WidgetsStore} from "stores";
 import {CatalogWebGLService, CatalogTextureType} from "services";
 import {CatalogWidgetStore} from "stores/widgets";
 
@@ -134,16 +133,6 @@ export class CatalogStore {
                 });   
             }
         });
-    }
-
-    reProjection(source: FrameStore, destination: FrameStore): boolean {
-        let reProjection = false;
-        const sourceProjection = this.getFrameProjection(source.frameInfo.fileInfoExtended.computedEntries);
-        if(destination !== source) {
-            const destinationProjection = this.getFrameProjection(destination.frameInfo.fileInfoExtended.computedEntries);
-            reProjection = sourceProjection !== destinationProjection;
-        }
-        return reProjection;
     }
 
     @action clearImageCoordsData(fileId: number) {
@@ -313,16 +302,6 @@ export class CatalogStore {
             }
         });
         return fileList;
-    }
-
-    getFrameProjection(computedEntries: CARTA.IHeaderEntry[]) {
-        let projection = null;
-        computedEntries.forEach(header => {
-            if (header.name === "Projection") {
-                projection = header.value;
-            }
-        });
-        return projection;
     }
 
     // catalog widget store
