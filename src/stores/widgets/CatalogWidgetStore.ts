@@ -53,19 +53,19 @@ export class CatalogWidgetStore {
     public static readonly SizeMapMin = 0;
 
     // -1 : apply different featherWidth according shape size
-    private OverlayShapeSettings =  new Map<number, {featherWidth: number, diameterBase: number, areaBase: number}>([
-        [CatalogOverlayShape.BOX_LINED, {featherWidth: 0.35, diameterBase: 1.5, areaBase: 100}],
-        [CatalogOverlayShape.CIRCLE_FILLED, {featherWidth: 0.35, diameterBase: 1.5, areaBase: 70}],
-        [CatalogOverlayShape.CIRCLE_LINED, {featherWidth: 0.5, diameterBase: 1.5, areaBase: 70}],
-        [CatalogOverlayShape.ELLIPSE_LINED, {featherWidth: -1.0, diameterBase: 6, areaBase: 100}],
-        [CatalogOverlayShape.HEXAGON_LINED, {featherWidth: 0.35, diameterBase: 0, areaBase: 50}],
-        [CatalogOverlayShape.RHOMB_LINED, {featherWidth: 0.35, diameterBase: 1.5, areaBase: 100}],
-        [CatalogOverlayShape.TRIANGLE_LINED_UP, {featherWidth: 0.35, diameterBase: 0, areaBase: 20}],
-        [CatalogOverlayShape.TRIANGLE_LINED_DOWN, {featherWidth: 0.35, diameterBase: 0, areaBase: 20}],
-        [CatalogOverlayShape.HEXAGON_LINED_2, {featherWidth: 0.35, diameterBase: 0, areaBase: 50}],
-        [CatalogOverlayShape.CROSS_FILLED, {featherWidth: 0.5, diameterBase: 3.5, areaBase: 150}],
-        [CatalogOverlayShape.X_FILLED, {featherWidth: 0.5, diameterBase: 3.5, areaBase: 150}],
-        [CatalogOverlayShape.LineSegment_FILLED, {featherWidth: 0.35, diameterBase: 3, areaBase: 100}]
+    private OverlayShapeSettings =  new Map<number, {featherWidth: number, diameterBase: number, areaBase: number, thicknessBase: number}>([
+        [CatalogOverlayShape.BOX_LINED, {featherWidth: 0.35, diameterBase: 1.5, areaBase: 100, thicknessBase: 1.5}],
+        [CatalogOverlayShape.CIRCLE_FILLED, {featherWidth: 0.35, diameterBase: 1.5, areaBase: 70, thicknessBase: 1}],
+        [CatalogOverlayShape.CIRCLE_LINED, {featherWidth: 0.5, diameterBase: 1.5, areaBase: 70, thicknessBase: 1}],
+        [CatalogOverlayShape.ELLIPSE_LINED, {featherWidth: -1.0, diameterBase: 8, areaBase: 100, thicknessBase: 1.5}],
+        [CatalogOverlayShape.HEXAGON_LINED, {featherWidth: 0.35, diameterBase: 0, areaBase: 50, thicknessBase: 1.3}],
+        [CatalogOverlayShape.RHOMB_LINED, {featherWidth: 0.35, diameterBase: 1.5, areaBase: 100, thicknessBase: 1.5}],
+        [CatalogOverlayShape.TRIANGLE_LINED_UP, {featherWidth: 0.35, diameterBase: 0, areaBase: 20, thicknessBase: 2}],
+        [CatalogOverlayShape.TRIANGLE_LINED_DOWN, {featherWidth: 0.35, diameterBase: 0, areaBase: 20, thicknessBase: 2}],
+        [CatalogOverlayShape.HEXAGON_LINED_2, {featherWidth: 0.35, diameterBase: 0, areaBase: 50, thicknessBase: 1.3}],
+        [CatalogOverlayShape.CROSS_FILLED, {featherWidth: 0.5, diameterBase: 3.5, areaBase: 150, thicknessBase: 1}],
+        [CatalogOverlayShape.X_FILLED, {featherWidth: 0.5, diameterBase: 3.5, areaBase: 150, thicknessBase: 1}],
+        [CatalogOverlayShape.LineSegment_FILLED, {featherWidth: 0.35, diameterBase: 3, areaBase: 100, thicknessBase: 1}]
     ]);
 
     @observable catalogFileId: number;
@@ -737,10 +737,10 @@ export class CatalogWidgetStore {
         return this.orientationMapColumn === CatalogOverlay.NONE;
     }
 
-    @computed get shapeSettings(): {featherWidth: number, diameterBase: number, areaBase: number} {
+    @computed get shapeSettings(): {featherWidth: number, diameterBase: number, areaBase: number, thicknessBase: number} {
         const pointSize = this.sizeMajor? this.pointSizebyType : this.minorPointSizebyType;
         if (pointSize.min === 0) {
-            return {featherWidth: this.OverlayShapeSettings.get(this.catalogShape).featherWidth, diameterBase: 0, areaBase: 0};
+            return {featherWidth: this.OverlayShapeSettings.get(this.catalogShape).featherWidth, diameterBase: 0, areaBase: 0, thicknessBase: 0};
         }
         return this.OverlayShapeSettings.get(this.catalogShape);
     }
