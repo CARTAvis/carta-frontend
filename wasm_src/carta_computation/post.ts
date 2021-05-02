@@ -118,7 +118,7 @@ Module.CalculateCatalogSize = (data: Float32Array, min: number, max: number, siz
 
     const float32 = new Float32Array(Module.HEAPF32.buffer, dataOnWasmHeap, N);
     Module._free(dataOnWasmHeap);
-    return float32;
+    return float32.slice();
 }
 
 Module.CalculateCatalogColor = (data: Float32Array, invert: boolean, min: number, max: number, scaling: number, alpha: number = 1000, gamma: number = 1.5): Float32Array => {
@@ -131,7 +131,7 @@ Module.CalculateCatalogColor = (data: Float32Array, invert: boolean, min: number
 
     const float32 = new Float32Array(Module.HEAPF32.buffer, dataOnWasmHeap, N);
     Module._free(dataOnWasmHeap);
-    return float32;
+    return float32.slice();
 }
 
 Module.CalculateCatalogOrientation = (data: Float32Array, min: number, max: number, angleMin: number, angleMax: number, scaling: number, alpha: number = 1000, gamma: number = 1.5): Float32Array => {
@@ -144,7 +144,7 @@ Module.CalculateCatalogOrientation = (data: Float32Array, min: number, max: numb
 
     const float32 = new Float32Array(Module.HEAPF32.buffer, dataOnWasmHeap, N);
     Module._free(dataOnWasmHeap);
-    return float32;
+    return float32.slice();
 }
 
 module.exports = Module;
