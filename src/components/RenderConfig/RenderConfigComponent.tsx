@@ -288,6 +288,8 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
             const currentPlotData = this.plotData;
             if (currentPlotData) {
                 let histogramProps: MultiPlotProps = {
+                    imageName: imageName,
+                    plotName: plotName,
                     data: currentPlotData.values,
                     type: this.widgetStore.plotType,
                     borderColor: primaryLineColor
@@ -373,6 +375,8 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
                     colormapScalingData.push({x: colormapScalingX[i], y: colormapScalingY[i]});
                 }
                 const colormapScalingProps: MultiPlotProps = {
+                    imageName: imageName,
+                    plotName: plotName,
                     data: colormapScalingData,
                     type: PlotType.LINES,
                     borderColor: appStore.darkTheme ? Colors.GRAY5 : Colors.GRAY1,

@@ -42,7 +42,7 @@ EMSCRIPTEN_KEEPALIVE void putFits(AstFitsChan* fitschan, const char* card)
     astPutFits(fitschan, card, true);
 }
 
-EMSCRIPTEN_KEEPALIVE AstFrameSet* getFrameFromFitsChan(AstFitsChan* fitschan)
+EMSCRIPTEN_KEEPALIVE AstFrameSet* getFrameFromFitsChan(AstFitsChan* fitschan, bool checkSkyDomain)
 {
     astClear(fitschan, "Card");
     AstFrameSet* frameSet = static_cast<AstFrameSet*>(astRead(fitschan));
@@ -50,6 +50,15 @@ EMSCRIPTEN_KEEPALIVE AstFrameSet* getFrameFromFitsChan(AstFitsChan* fitschan)
     {
         cout << "Creating frame set failed." << endl;
         return nullptr;
+    }
+
+    // work around for missing CTYPE1 & CTYPE2
+    if (checkSkyDomain) {
+        const char *domain = astGetC(frameSet, "Domain");
+        if (!strstr(domain, "SKY")) {
+            astDelete(frameSet);
+            return nullptr;
+        }
     }
 
     return frameSet;
@@ -83,7 +92,7 @@ EMSCRIPTEN_KEEPALIVE AstSpecFrame* getSpectralFrame(AstFrameSet* frameSet)
         return nullptr;
     }
 
-    return specframe;
+    return static_cast<AstSpecFrame*> astCopy(specframe);
 }
 
 EMSCRIPTEN_KEEPALIVE AstFrameSet* getSkyFrameSet(AstFrameSet* frameSet)
@@ -402,9 +411,9 @@ EMSCRIPTEN_KEEPALIVE void deleteObject(AstFrameSet* src)
     astDelete(src);
 }
 
-EMSCRIPTEN_KEEPALIVE AstFrameSet* copy(AstFrameSet* src)
+EMSCRIPTEN_KEEPALIVE AstObject* copy(AstObject* src)
 {
-    return static_cast<AstFrameSet*> astCopy(src);
+    return static_cast<AstObject*> astCopy(src);
 }
 
 EMSCRIPTEN_KEEPALIVE void invert(AstFrameSet* src)

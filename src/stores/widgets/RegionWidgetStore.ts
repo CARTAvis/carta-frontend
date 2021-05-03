@@ -1,6 +1,5 @@
-import { action, observable, computed, makeObservable } from "mobx";
-import {AppStore} from "../AppStore";
-import {FrameStore} from "../FrameStore";
+import {action, observable, computed, makeObservable} from "mobx";
+import {AppStore, FrameStore, RegionStore} from "..";
 
 export const ACTIVE_FILE_ID = -1;
 
@@ -45,17 +44,17 @@ export class RegionWidgetStore {
     }
 
     @computed get effectiveFrame(): FrameStore {
-        if (this.appStore.activeFrame && this.appStore.frames && this.appStore.frames.length > 0) {
+        if (this.appStore.activeFrame && this.appStore.frames?.length > 0) {
             return this.fileId === ACTIVE_FILE_ID || !this.appStore.getFrame(this.fileId) ? this.appStore.activeFrame : this.appStore.getFrame(this.fileId);
         }
         return null;
     }
 
-    @computed get matchActiveFrame() {
+    @computed get isEffectiveFrameEqualToActiveFrame(): boolean {
         return this.effectiveFrame && this.appStore.activeFrame.frameInfo.fileId === this.effectiveFrame.frameInfo.fileId;
     }
 
-    @computed get effectiveRegionId() {
+    @computed get effectiveRegionId(): number {
         if (this.effectiveFrame) {
             const regionId = this.regionIdMap.get(this.fileId);
             if (regionId !== RegionId.ACTIVE && regionId !== undefined) {
@@ -70,8 +69,12 @@ export class RegionWidgetStore {
         return this.type === RegionsType.CLOSED ? RegionId.IMAGE : RegionId.CURSOR;
     }
 
-    @computed get matchesSelectedRegion() {
-        if (this.matchActiveFrame) {
+    @computed get effectiveRegion(): RegionStore {
+        return this.effectiveFrame?.getRegion(this.effectiveRegionId);
+    }
+
+    @computed get matchesSelectedRegion(): boolean {
+        if (this.isEffectiveFrameEqualToActiveFrame) {
             if (this.appStore.selectedRegion) {
                 return this.effectiveRegionId === this.appStore.selectedRegion.regionId;
             } else {
@@ -88,19 +91,19 @@ export class RegionWidgetStore {
 
         widgetsMap.forEach(widgetStore => {
             const frame = widgetStore.effectiveFrame;
-            if (!frame || !frame.regionSet) {
-            return;
+            if (!frame) {
+                return;
             }
             const fileId = frame.frameInfo.fileId;
             const regionId = widgetStore.effectiveRegionId;
-            const region = frame.regionSet.regions.find(r => r.regionId === regionId);
-            if (regionId === -1 || (region && region.isClosedRegion)) {
+            const region = frame.getRegion(regionId);
+            if (regionId === -1 || (region?.isClosedRegion)) {
                 let frameRequirementsArray = updatedRequirements.get(fileId);
                 if (!frameRequirementsArray) {
                     frameRequirementsArray = [];
                     updatedRequirements.set(fileId, frameRequirementsArray);
                 }
-                if (frameRequirementsArray.indexOf(regionId) === -1) {
+                if (!frameRequirementsArray.includes(regionId)) {
                     frameRequirementsArray.push(regionId);
                 }
             }

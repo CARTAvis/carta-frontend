@@ -82,7 +82,7 @@ export class RegionSelectorComponent extends React.Component<{ widgetStore: Regi
         let regionClassName = "unlinked-to-selected";
         const linkedClass = "linked-to-selected";
 
-        if (widgetStore.matchActiveFrame && widgetStore.fileId !== ACTIVE_FILE_ID) {
+        if (widgetStore.isEffectiveFrameEqualToActiveFrame && widgetStore.fileId !== ACTIVE_FILE_ID) {
             frameClassName = AppStore.Instance.darkTheme ? `${linkedClass} dark-theme` : linkedClass;
         }
 
