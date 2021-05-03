@@ -14,7 +14,15 @@
         }
         .bp3-label {
             width: 10em;
-            text-align: right;
+
+            .line-label {
+                max-width: calc(100% - 80px);
+                text-overflow: ellipsis;
+                overflow: hidden;
+                white-space: nowrap;
+                display: inline-block;
+                vertical-align: middle;
+            }
         }
     }
 
@@ -33,7 +41,6 @@
     }
 
     .reset-range-content {
-        margin-left: 101px;
         .reset-range-button{
             width: 10em;
         }
