@@ -739,10 +739,11 @@ export class CatalogWidgetStore {
 
     @computed get shapeSettings(): {featherWidth: number, diameterBase: number, areaBase: number, thicknessBase: number} {
         const pointSize = this.sizeMajor? this.pointSizebyType : this.minorPointSizebyType;
+        const config = this.OverlayShapeSettings.get(this.catalogShape);
         if (pointSize.min === 0) {
-            return {featherWidth: this.OverlayShapeSettings.get(this.catalogShape).featherWidth, diameterBase: 0, areaBase: 0, thicknessBase: 0};
+            return {featherWidth: config.featherWidth, diameterBase: 0, areaBase: 0, thicknessBase: config.thicknessBase};
         }
-        return this.OverlayShapeSettings.get(this.catalogShape);
+        return config;
     }
 
     public init = (widgetSettings): void => {
