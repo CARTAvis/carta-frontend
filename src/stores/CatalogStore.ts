@@ -56,7 +56,7 @@ export class CatalogStore {
 
     @action updateCatalogData(fileId: number, xData: Array<number>, yData: Array<number>, wcsInfo: AST.FrameSet, xUnit: string, yUnit: string, catalogFrame: CatalogSystemType) {
         const catalog = this.catalogGLData.get(fileId);
-        if (catalog) {
+        if (catalog && xData && yData) {
             const dataSize = catalog.x.length;
             let xPoints = new Float32Array(dataSize + xData.length);
             let yPoints = new Float32Array(dataSize + yData.length);
@@ -101,7 +101,6 @@ export class CatalogStore {
     @action removeCatalog(fileId: number) {
         this.catalogGLData.delete(fileId);
         CatalogWebGLService.Instance.clearTexture(fileId);
-        console.log(CatalogWebGLService.Instance)
     }
 
     @action updateImageAssociatedCatalogId(activeFrameIndex: number, associatedCatalogFiles: number[]) {

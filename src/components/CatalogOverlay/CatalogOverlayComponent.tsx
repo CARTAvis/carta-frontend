@@ -138,10 +138,11 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
     @computed get enablePlotButton(): boolean {
         const profileStore = this.profileStore;
         const catalogWidgetStore = this.widgetStore;
+        const enable = !profileStore.loadingData && !profileStore.updatingDataStream && catalogWidgetStore.xAxis !== CatalogOverlay.NONE && profileStore.get1DPlotData(catalogWidgetStore.xAxis)?.wcsData?.length > 0;
         if (catalogWidgetStore.catalogPlotType === CatalogPlotType.Histogram) {
-            return (catalogWidgetStore.xAxis !== CatalogOverlay.NONE && !profileStore.loadingData && !profileStore.updatingDataStream);
+            return enable;
         } else {
-            return (catalogWidgetStore.xAxis !== CatalogOverlay.NONE && catalogWidgetStore.yAxis !== CatalogOverlay.NONE && !profileStore.loadingData && !profileStore.updatingDataStream);
+            return (catalogWidgetStore.yAxis !== CatalogOverlay.NONE && enable);
         }
     }
 
