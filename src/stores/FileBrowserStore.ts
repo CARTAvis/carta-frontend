@@ -393,13 +393,15 @@ export class FileBrowserStore {
 
     @action cancelRequestingFile = () => {
         if (this.loadingProgress < 1.0) {
-            BackendService.Instance.cancelRequestingFiles();
+            BackendService.Instance.cancelRequestingFileList(CARTA.FileListType.Image);
+            this.resetLoadingStates();
         }
     };
 
     @action cancelRequestingCatalog = () => {
         if (this.loadingProgress < 1.0) {
-            BackendService.Instance.cancelRequestingCatalogs();
+            BackendService.Instance.cancelRequestingFileList(CARTA.FileListType.Catalog);
+            this.resetLoadingStates();
         }
     };
 

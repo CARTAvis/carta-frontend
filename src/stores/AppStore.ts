@@ -1243,7 +1243,7 @@ export class AppStore {
         this.backendService.momentProgressStream.subscribe(this.handleMomentProgressStream);
         this.backendService.scriptingStream.subscribe(this.handleScriptingRequest);
         this.tileService.tileStream.subscribe(this.handleTileStream);
-        this.backendService.progressStream.subscribe(this.handleFileProgressStream);
+        this.backendService.listProgressStream.subscribe(this.handleFileProgressStream);
 
         // Set auth token from URL if it exists
         const url = new URL(window.location.href);
@@ -1455,7 +1455,7 @@ export class AppStore {
         }
     };
 
-    handleFileProgressStream = (fileProgress: CARTA.Progress) => {
+    handleFileProgressStream = (fileProgress: CARTA.ListProgress) => {
         if (!fileProgress) {
             return;
         }
