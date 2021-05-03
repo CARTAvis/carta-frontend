@@ -27,12 +27,7 @@ enum HeaderTableColumnName {
 @observer
 export class CatalogOverlayComponent extends React.Component<WidgetProps> {
     @computed get catalogFileId() {
-        const catalogId = CatalogStore.Instance.catalogProfiles?.get(this.props.id);
-        const catalogFileIds = CatalogStore.Instance.activeCatalogFiles;
-        if (!catalogFileIds.includes(catalogId) && catalogFileIds.length) {
-            return catalogFileIds[0];
-        }
-        return catalogId;
+        return CatalogStore.Instance.catalogProfiles?.get(this.props.id);
     }
 
     @observable catalogTableRef: Table = undefined;
@@ -143,10 +138,11 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
     @computed get enablePlotButton(): boolean {
         const profileStore = this.profileStore;
         const catalogWidgetStore = this.widgetStore;
+        const enable = !profileStore.loadingData && !profileStore.updatingDataStream && catalogWidgetStore.xAxis !== CatalogOverlay.NONE && profileStore.get1DPlotData(catalogWidgetStore.xAxis)?.wcsData?.length > 0;
         if (catalogWidgetStore.catalogPlotType === CatalogPlotType.Histogram) {
-            return (catalogWidgetStore.xAxis !== CatalogOverlay.NONE && !profileStore.loadingData && !profileStore.updatingDataStream);
+            return enable;
         } else {
-            return (catalogWidgetStore.xAxis !== CatalogOverlay.NONE && catalogWidgetStore.yAxis !== CatalogOverlay.NONE && !profileStore.loadingData && !profileStore.updatingDataStream);
+            return (catalogWidgetStore.yAxis !== CatalogOverlay.NONE && enable);
         }
     }
 

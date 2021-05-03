@@ -6,11 +6,7 @@ declare var addOnPostRun: any;
 const decompress = Module.cwrap("ZSTD_decompress", "number", ["number", "number", "number", "number"]);
 const decodeArray = Module.cwrap("decodeArray", "number", ["number", "number", "number"]);
 const generateVertexData = Module.cwrap("generateVertexData", "number", ["number", "number", "number", "number", "number", "number"]);
-const calculateCatalogSizeArea = Module.cwrap("calculateCatalogSizeArea", null, ["number", "number", "number", "number", "number", "number", "number", "number", "number", "number"]);
-const calculateCatalogSizeDiameter = Module.cwrap("calculateCatalogSizeDiameter", null, ["number", "number", "number", "number", "number", "number", "number", "number", "number", "number"]);
-const calculateCatalogColorMap = Module.cwrap("calculateCatalogColorMap", null, ["number", "number", "number", "number", "number", "number", "number"]);
-const calculateCatalogOrientationMap = Module.cwrap("calculateCatalogOrientationMap", null, ["number", "number", "number", "number", "number", "number", "number", "number", "number"]);
-
+const calculateCatalogMap = Module.cwrap("calculateCatalogMap", null, ["number", "number", "number", "number", "number", "number", "number", "number", "number", "number", "number", "number"]);
 const VertexDataElements = 8;
 
 Module.srcAllocated = 0;
@@ -115,14 +111,14 @@ Module.CalculateCatalogSize = (data: Float32Array, min: number, max: number, siz
     Module.HEAPF32.set(data, dataOnWasmHeap / bytes_per_element);
 
     if (area) {
-        calculateCatalogSizeArea(dataOnWasmHeap, N, min, max, sizeMin, sizeMax, scaling, devicePixelRatio, alpha, gamma);
+        calculateCatalogMap(1, dataOnWasmHeap, N, min, max, sizeMin, sizeMax, scaling, alpha, gamma, devicePixelRatio, false);
     } else {
-        calculateCatalogSizeDiameter(dataOnWasmHeap, N, min, max, sizeMin, sizeMax, scaling, devicePixelRatio, alpha, gamma);
+        calculateCatalogMap(0, dataOnWasmHeap, N, min, max, sizeMin, sizeMax, scaling, alpha, gamma, devicePixelRatio, false);
     }
 
     const float32 = new Float32Array(Module.HEAPF32.buffer, dataOnWasmHeap, N);
     Module._free(dataOnWasmHeap);
-    return float32;
+    return float32.slice();
 }
 
 Module.CalculateCatalogColor = (data: Float32Array, invert: boolean, min: number, max: number, scaling: number, alpha: number = 1000, gamma: number = 1.5): Float32Array => {
@@ -131,11 +127,11 @@ Module.CalculateCatalogColor = (data: Float32Array, invert: boolean, min: number
     const dataOnWasmHeap = Module._malloc(N * bytes_per_element);
     Module.HEAPF32.set(data, dataOnWasmHeap / bytes_per_element);
 
-    calculateCatalogColorMap(dataOnWasmHeap, N, invert, min, max, scaling, alpha, gamma);
+    calculateCatalogMap(2, dataOnWasmHeap, N, min, max, 0.0, 0.0, scaling, alpha, gamma, 1, invert);
 
     const float32 = new Float32Array(Module.HEAPF32.buffer, dataOnWasmHeap, N);
     Module._free(dataOnWasmHeap);
-    return float32;
+    return float32.slice();
 }
 
 Module.CalculateCatalogOrientation = (data: Float32Array, min: number, max: number, angleMin: number, angleMax: number, scaling: number, alpha: number = 1000, gamma: number = 1.5): Float32Array => {
@@ -144,11 +140,11 @@ Module.CalculateCatalogOrientation = (data: Float32Array, min: number, max: numb
     const dataOnWasmHeap = Module._malloc(N * bytes_per_element);
     Module.HEAPF32.set(data, dataOnWasmHeap / bytes_per_element);
 
-    calculateCatalogOrientationMap(dataOnWasmHeap, N, min, max, angleMin, angleMax, scaling, alpha, gamma);
+    calculateCatalogMap(3, dataOnWasmHeap, N, min, max, angleMin, angleMax, scaling, alpha, gamma, 1, false);
 
     const float32 = new Float32Array(Module.HEAPF32.buffer, dataOnWasmHeap, N);
     Module._free(dataOnWasmHeap);
-    return float32;
+    return float32.slice();
 }
 
 module.exports = Module;

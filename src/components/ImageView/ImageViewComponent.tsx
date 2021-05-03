@@ -80,16 +80,16 @@ export const getImageCanvas = (padding: Padding, colorbarPosition: string, backg
         ctx.drawImage(beamProfileCanvas, padding.left * devicePixelRatio, padding.top * devicePixelRatio);
     }
 
-    if (regionCanvas) {
-        ctx.drawImage(regionCanvas, padding.left * devicePixelRatio, padding.top * devicePixelRatio);
-    }
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.drawImage(overlayCanvas, 0, 0);
 
     if (catalogCanvas) {
         ctx.drawImage(catalogCanvas, padding.left * devicePixelRatio, padding.top * devicePixelRatio);
     }
 
-    ctx.setTransform(1, 0, 0, 1, 0, 0);
-    ctx.drawImage(overlayCanvas, 0, 0);
+    if (regionCanvas) {
+        ctx.drawImage(regionCanvas, padding.left * devicePixelRatio, padding.top * devicePixelRatio);
+    }
 
     return composedCanvas;
 };
@@ -243,6 +243,12 @@ export class ImageViewComponent extends React.Component<WidgetProps> {
                     />
                     }
                     {appStore.activeFrame &&
+                    <CatalogViewGLComponent
+                        docked={this.props.docked}
+                        onZoomed={this.onZoomed}
+                    />
+                    }
+                    {appStore.activeFrame &&
                     <RegionViewComponent
                         frame={appStore.activeFrame}
                         width={appStore.activeFrame.renderWidth}
@@ -259,12 +265,6 @@ export class ImageViewComponent extends React.Component<WidgetProps> {
                         cursorPoint={appStore.activeFrame.cursorInfo.posImageSpace}
                         docked={this.props.docked && (this.activeLayer === ImageViewLayer.RegionMoving || this.activeLayer === ImageViewLayer.RegionCreating)}
                     />
-                    }
-                    {appStore.activeFrame &&
-                        <CatalogViewGLComponent
-                            docked={this.props.docked}
-                            onZoomed={this.onZoomed}
-                        />
                     }
                     <ToolbarComponent
                         docked={this.props.docked}

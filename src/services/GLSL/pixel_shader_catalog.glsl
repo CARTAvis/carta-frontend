@@ -35,20 +35,15 @@ precision highp float;
 
 uniform float uLineThickness;
 uniform highp int uShapeType;
-uniform float uFeatherWidth;
-uniform vec3 uPointColor;
 uniform vec3 uSelectedSourceColor;
-uniform sampler2D uCmapTexture;
-uniform int uNumCmaps;
-uniform int uCmapIndex;
 uniform bool uOmapEnabled;
-uniform bool uCmapEnabled;
 
-in float v_colour;
+in vec3 v_colour;
 in float v_pointSize;
 in float v_orientation;
 in float v_selected;
 in float v_minorSize;
+in float v_featherWidth;
 out vec4 outColor;
 
 mat2 rot45 = mat2(COS_45, -COS_45, COS_45, COS_45);
@@ -67,13 +62,13 @@ mat2 rotateMat(float deg) {
 // Circle
 float featherRange(vec2 a, float rMax) {
     float r = length(a);
-    float v = (rMax - r - uFeatherWidth) / (2.0 * uFeatherWidth);
+    float v = (rMax - r - v_featherWidth) / (2.0 * v_featherWidth);
     return smoothstep(0.0, 1.0, v);
 }
 
 float featherRange(vec2 a, float rMin, float rMax) {
     float r = length(a);
-    vec2 v = (vec2(rMax, rMin) - r - uFeatherWidth) / (2.0 * uFeatherWidth);
+    vec2 v = (vec2(rMax, rMin) - r - v_featherWidth) / (2.0 * v_featherWidth);
     vec2 alpha = smoothstep(0.0, 1.0, v);
     // subtract inner feathered circle
     return (alpha.x) * (1.0 - alpha.y);
@@ -81,7 +76,7 @@ float featherRange(vec2 a, float rMin, float rMax) {
 
 // Ellipse
 float featherRangeEllipse(vec2 r, float rMax) {
-    float v = ((pow(rMax, 2.0) - pow(r.x, 2.0) * 3.0) - uFeatherWidth - pow(r.y, 2.0)) / (2.0 * uFeatherWidth);
+    float v = ((pow(rMax, 2.0) - pow(r.x, 2.0) * 3.0) - v_featherWidth - pow(r.y, 2.0)) / (2.0 * v_featherWidth);
     return smoothstep(0.0, 1.0, v);
 }
 
@@ -89,6 +84,7 @@ float featherRangeEllipse(vec2 r, float rMin, float rMax) {
     vec2 p = vec2(2.0, 2.0);
     vec2 bb = pow(vec2(rMax, rMin), p);
     vec2 aa = bb / 3.0;
+    float featherWidth = 6.0 * v_featherWidth;
     if (v_minorSize >= 0.0) {
         float rMaxMinor = v_minorSize * 0.5;
         float rMinMinor = rMaxMinor - uLineThickness;
@@ -97,21 +93,24 @@ float featherRangeEllipse(vec2 r, float rMin, float rMax) {
             rMinMinor = rMinMinor - uLineThickness * 0.7;
         }
         aa = pow(vec2(rMaxMinor, rMinMinor), p);
+        if (aa.x > bb.x) {
+            featherWidth = 0.5 * featherWidth;
+        }
     }
-    vec2 v = ((1.0 - pow(r.x, 2.0) / aa) * bb - pow(r.y, 2.0) - uFeatherWidth) / (20.0 * uFeatherWidth);
+    vec2 v = ((1.0 - pow(r.x, 2.0) / aa) * bb - pow(r.y, 2.0) - v_featherWidth) / featherWidth;
     vec2 alpha = smoothstep(0.0, 1.0, v);
     return alpha.x * (1.0 - alpha.y);
 }
 
 // Rhomb
 float featherRangeRhomb(vec2 r, float rMax) {
-    float v = (rMax - abs(r.x) - uFeatherWidth - abs(r.y)) / (2.0 * uFeatherWidth);
+    float v = (rMax - abs(r.x) - v_featherWidth - abs(r.y)) / (2.0 * v_featherWidth);
     return smoothstep(0.0, 1.0, v);
 }
 
 float featherRangeRhomb(vec2 r, float rMin, float rMax) {
-    float v = (rMax - abs(r.x) - uFeatherWidth - abs(r.y)) / (2.0 * uFeatherWidth);
-    float v2 = (rMin - abs(r.x) - uFeatherWidth - abs(r.y)) / (2.0 * uFeatherWidth);
+    float v = (rMax - abs(r.x) - v_featherWidth - abs(r.y)) / (2.0 * v_featherWidth);
+    float v2 = (rMin - abs(r.x) - v_featherWidth - abs(r.y)) / (2.0 * v_featherWidth);
     float alpha = smoothstep(0.0, 1.0, v);
     float alpha2 = smoothstep(0.0, 1.0, v2);
     return alpha * (1.0 - alpha2);
@@ -168,13 +167,13 @@ vec2 distHexSelected(vec2 radius) {
 
 float featherRangeHex(vec2 r, float rMax) {
     float maxDist = distHex(r, rMax);
-    float v = (uFeatherWidth - maxDist) / (2.0 * uFeatherWidth);
+    float v = (v_featherWidth - maxDist) / (2.0 * v_featherWidth);
     return smoothstep(0.0, 1.0, v);
 }
 
 float featherRangeHex(vec2 r, float rMin, float rMax) {
     vec2 maxDist = distHex(r, vec2(rMax, rMin));
-    vec2 v = (uFeatherWidth - maxDist) / (2.0 * uFeatherWidth);
+    vec2 v = (v_featherWidth - maxDist) / (2.0 * v_featherWidth);
     vec2 alpha = smoothstep(0.0, 1.0, v);
     return alpha.x * (1.0 - alpha.y);
 }
@@ -225,13 +224,13 @@ vec2 distTriangleSelected(vec2 radius) {
 
 float featherRangeTriangleDown(vec2 r, float rMax) {
     float maxDist = distTriangleDown(r, rMax);
-    float v = (uFeatherWidth - maxDist) / (2.0 * uFeatherWidth);
+    float v = (v_featherWidth - maxDist) / (2.0 * v_featherWidth);
     return smoothstep(0.0, 1.0, v);
 }
 
 float featherRangeTriangleDown(vec2 r, float rMin, float rMax) {
     vec2 maxDist = distTriangleDown(r, vec2(rMax, rMin));
-    vec2 v = (uFeatherWidth - maxDist) / (2.0 * uFeatherWidth);
+    vec2 v = (v_featherWidth - maxDist) / (2.0 * v_featherWidth);
     vec2 alpha = smoothstep(0.0, 1.0, v);
     return alpha.x * (1.0 - alpha.y);
 }
@@ -251,15 +250,15 @@ float featherRangeTriangleUp(vec2 r, float rMin, float rMax) {
 float featherRangeCross(vec2 r, float rMin, float rMax) {
     float lineThickness = (rMax - rMin) * 0.5;
     if(r.y > -lineThickness && r.y < lineThickness){
-        float v = (lineThickness + uFeatherWidth - abs(r.y)) / (2.0 * uFeatherWidth);
-        float v2 = (rMax - lineThickness - uFeatherWidth - abs(r.x)) / (2.0 * uFeatherWidth);
+        float v = (lineThickness + v_featherWidth - abs(r.y)) / (2.0 * v_featherWidth);
+        float v2 = (rMax - lineThickness - v_featherWidth - abs(r.x)) / (2.0 * v_featherWidth);
         float alpha = smoothstep(0.0, 1.0, v);
         float alpha2 = smoothstep(0.0, 1.0, v2);
         return alpha * alpha2;
     }
     if(r.x > -lineThickness && r.x < lineThickness){
-        float v = (lineThickness + uFeatherWidth - abs(r.x)) / (2.0 * uFeatherWidth);
-        float v2 = (rMax - lineThickness - uFeatherWidth - abs(r.y)) / (2.0 * uFeatherWidth);
+        float v = (lineThickness + v_featherWidth - abs(r.x)) / (2.0 * v_featherWidth);
+        float v2 = (rMax - lineThickness - v_featherWidth - abs(r.y)) / (2.0 * v_featherWidth);
         float alpha3 = smoothstep(0.0, 1.0, v);
         float alpha4 = smoothstep(0.0, 1.0, v2);
         return alpha3 * alpha4;
@@ -305,8 +304,8 @@ float featherRangeXLined(vec2 r, float rMin, float rMax) {
 // Line Segment
 float featherLineSegment(vec2 r, float rMin, float rMax) {
     float lineThickness = (rMax - rMin) * 0.5;
-    float v = (lineThickness + uFeatherWidth - abs(r.x)) / (2.0 * uFeatherWidth);
-    float v2 = (rMax - lineThickness - uFeatherWidth - abs(r.y)) / (2.0 * uFeatherWidth);
+    float v = (lineThickness + v_featherWidth - abs(r.x)) / (2.0 * v_featherWidth);
+    float v2 = (rMax - lineThickness - v_featherWidth - abs(r.y)) / (2.0 * v_featherWidth);
     float alpha = smoothstep(0.0, 1.0, v);
     float alpha2 = smoothstep(0.0, 1.0, v2);
     return alpha * alpha2;
@@ -442,7 +441,7 @@ void main() {
     if (v_minorSize > v_pointSize) {
         side = v_minorSize;
     }
-    vec2 posPixelSpace = (0.5 - gl_PointCoord) * (side + uFeatherWidth);
+    vec2 posPixelSpace = (0.5 - gl_PointCoord) * (side + v_featherWidth);
     float rMax = v_pointSize * 0.5;
     float rMin = rMax - uLineThickness;
     float outline = 0.0;
@@ -467,13 +466,5 @@ void main() {
     float alpha = getAlphaValue(posPixelSpace, rMin, rMax);
 
     // Blending
-    if (uCmapEnabled && !isNaN(v_colour)) {
-        float x = clamp(v_colour, 0.0, 1.0);
-        float cmapYVal = (float(uCmapIndex) + 0.5) / float(uNumCmaps);
-        vec2 cmapCoords = vec2(x, cmapYVal);
-        outColor = (1.0 - outline) * vec4(texture(uCmapTexture, cmapCoords).xyz, alpha) + outline * vec4(uSelectedSourceColor, alpha2);
-    } else {
-        // outColor = vec4((1.0 - outline) * uPointColor + outline * uSelectedSourceColor, alpha);
-        outColor = (1.0 - outline) * vec4(uPointColor, alpha) + outline * vec4(uSelectedSourceColor, alpha2);
-    }
+    outColor = (1.0 - outline) * vec4(v_colour, alpha) + outline * vec4(uSelectedSourceColor, alpha2);
 }

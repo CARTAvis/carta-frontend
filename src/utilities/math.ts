@@ -77,37 +77,97 @@ export function getPercentiles(histogram: CARTA.IHistogram, ranks: number[]): nu
     return calculatedPercentiles;
 }
 
-export function scaleValue(x: number, scaling: FrameScaling, alpha: number = 1000, gamma: number = 1.5) {
-    switch (scaling) {
-        case FrameScaling.SQUARE:
-            return x * x;
-        case FrameScaling.SQRT:
-            return Math.sqrt(x);
-        case FrameScaling.LOG:
-            return Math.log(alpha * x + 1.0) / Math.log(alpha + 1.0);
-        case FrameScaling.POWER:
-            return (Math.pow(alpha, x) - 1.0) / (alpha - 1.0);
-        case FrameScaling.GAMMA:
-            return Math.pow(x, gamma);
-        default:
-            return x;
-    }
+function errorFunction(x: number, c: number, x0: number) {
+    const y = Math.exp(c * (x - x0));
+    return y / (y + 1);
 }
 
-export function scaleValueInverse(x: number, scaling: FrameScaling, alpha: number = 1000, gamma: number = 1.5) {
+function errorFunctionInverse(x: number, c: number, x0: number) {
+    return Math.log(x / (1 - x)) / c + x0;
+}
+
+function getSmoothedValue(bias: number, contrast: number) {
+    const smoothedBias = bias / 2 + 0.5; // [-1, 1] map to [0, 1]
+    let smoothedContrast = contrast < 1 ? 0 : contrast - 1; // [1, 2] map to [0, 1]
+
+    smoothedContrast = smoothedContrast === 0 ? 0.001 : smoothedContrast * 12;
+    const offset = errorFunction(0, smoothedContrast, smoothedBias);
+    let denominator = errorFunction(1, smoothedContrast, smoothedBias) - offset;
+    if (denominator <= 0) {
+        denominator = 0.1;
+    }
+    return ({bias: smoothedBias, contrast: smoothedContrast, offset: offset, denominator: denominator})
+}
+
+export function scaleValue(x: number, scaling: FrameScaling, alpha: number = 1000, gamma: number = 1.5, bias: number = 0, contrast: number = 1, useSmoothedBiasContrast: boolean = true) {
+    let scaleValue;
     switch (scaling) {
         case FrameScaling.SQUARE:
-            return Math.sqrt(x);
+            scaleValue =  x * x;
+            break;
         case FrameScaling.SQRT:
-            return x * x;
+            scaleValue =  Math.sqrt(x);
+            break;
         case FrameScaling.LOG:
-            return (Math.pow(alpha + 1, x) - 1.0) / alpha;
+            scaleValue = Math.log(alpha * x + 1.0) / Math.log(alpha + 1.0);
+            break;
         case FrameScaling.POWER:
-            return alpha === 1 ? 0 : Math.log((alpha - 1.0) * x + 1.0) / Math.log(alpha);
+            scaleValue = (Math.pow(alpha, x) - 1.0) / (alpha - 1.0);
+            break;
         case FrameScaling.GAMMA:
-            return Math.pow(x, 1.0 / gamma);
+            scaleValue = Math.pow(x, gamma);
+            break;
         default:
-            return x;
+            scaleValue = x;
+    }
+
+    if (useSmoothedBiasContrast) {
+        if (contrast <= 1) {
+            const smoothedBias = 0.5 - bias / 2; // [-1, 1] map to [1, 0]
+            scaleValue = clamp((scaleValue - smoothedBias) * contrast + smoothedBias, 0, 1);
+        } else {
+            const smoothedValue = getSmoothedValue(bias, contrast);
+            scaleValue = (errorFunction(scaleValue, smoothedValue.contrast, smoothedValue.bias) - smoothedValue.offset) / smoothedValue.denominator;
+        }
+    } else {
+        scaleValue = clamp(scaleValue - bias, 0, 1);
+        scaleValue = clamp((scaleValue - 0.5) * contrast + 0.5, 0, 1);
+    }
+    return scaleValue;
+}
+
+export function scaleValueInverse(x: number, scaling: FrameScaling, alpha: number = 1000, gamma: number = 1.5, bias: number = 0, contrast: number = 1, useSmoothedBiasContrast: boolean = true) {
+    let scaleValue;
+    if (useSmoothedBiasContrast) {
+        if (contrast <= 1) {
+            const smoothedBias = 0.5 - bias / 2; // [-1, 1] map to [1, 0]
+            if (x === 0 && smoothedBias === 0 && contrast === 0) {
+                scaleValue = 1;
+            } else {
+                scaleValue = clamp((x - smoothedBias) / contrast + smoothedBias, 0, 1);
+            }
+        } else {
+            const smoothedValue = getSmoothedValue(bias, contrast);
+            scaleValue = clamp(errorFunctionInverse(x * smoothedValue.denominator + smoothedValue.offset, smoothedValue.contrast, smoothedValue.bias), 0, 1);
+        }
+    } else {
+        scaleValue = (x - 0.5) / contrast + 0.5;
+        scaleValue = clamp(scaleValue + bias, 0, 1);
+    }
+
+    switch (scaling) {
+        case FrameScaling.SQUARE:
+            return Math.sqrt(scaleValue);
+        case FrameScaling.SQRT:
+            return scaleValue * scaleValue;
+        case FrameScaling.LOG:
+            return (Math.pow(alpha + 1, scaleValue) - 1.0) / alpha;
+        case FrameScaling.POWER:
+            return alpha === 1 ? 0 : Math.log((alpha - 1.0) * scaleValue + 1.0) / Math.log(alpha);
+        case FrameScaling.GAMMA:
+            return Math.pow(scaleValue, 1.0 / gamma);
+        default:
+            return scaleValue;
     }
 }
 

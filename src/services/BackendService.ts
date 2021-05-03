@@ -2,8 +2,8 @@ import {action, observable, makeObservable, runInAction} from "mobx";
 import {CARTA} from "carta-protobuf";
 import {Observable, Observer, Subject, throwError} from "rxjs";
 import {AppStore, PreferenceStore, RegionStore} from "stores";
-import {ApiService} from "./ApiService";
 import {mapToObject} from "utilities";
+import {ApiService} from "./ApiService";
 
 export enum ConnectionStatus {
     CLOSED = 0,
@@ -27,6 +27,9 @@ export class BackendService {
 
     private static readonly IcdVersion = 20;
     private static readonly DefaultFeatureFlags = CARTA.ClientFeatureFlags.WEB_ASSEMBLY | CARTA.ClientFeatureFlags.WEB_GL;
+    private static readonly MaxConnectionAttempts = 15;
+    private static readonly ConnectionAttemptDelay = 1000;
+
     @observable connectionStatus: ConnectionStatus;
     readonly loggingEnabled: boolean;
     @observable connectionDropped: boolean;
@@ -41,7 +44,6 @@ export class BackendService {
     private connection: WebSocket;
     private lastPingTime: number;
     private lastPongTime: number;
-    private autoReconnect: boolean;
     private observerRequestMap: Map<number, Observer<any>>;
     private eventCounter: number;
 
@@ -55,7 +57,6 @@ export class BackendService {
     readonly contourStream: Subject<CARTA.ContourImageData>;
     readonly catalogStream: Subject<CARTA.CatalogFilterResponse>;
     readonly momentProgressStream: Subject<CARTA.MomentProgress>;
-    readonly reconnectStream: Subject<void>;
     readonly scriptingStream: Subject<CARTA.ScriptingRequest>;
     private readonly decoderMap: Map<CARTA.EventType, {messageClass: any, handler: HandlerFunction}>;
 
@@ -79,7 +80,6 @@ export class BackendService {
         this.scriptingStream = new Subject<CARTA.ScriptingRequest>();
         this.catalogStream = new Subject<CARTA.CatalogFilterResponse>();
         this.momentProgressStream = new Subject<CARTA.MomentProgress>();
-        this.reconnectStream = new Subject<void>();
 
         // Construct handler and decoder maps
         this.decoderMap = new Map<CARTA.EventType, { messageClass: any, handler: HandlerFunction }>([
@@ -119,14 +119,15 @@ export class BackendService {
     }
 
     @action("connect")
-    connect(url: string, autoConnect: boolean = true): Observable<CARTA.RegisterViewerAck> {
+    connect(url: string): Observable<CARTA.RegisterViewerAck> {
         if (this.connection) {
             this.connection.onclose = null;
             this.connection.close();
         }
 
+        const isReconnection: boolean = url === this.serverUrl;
+        let connectionAttempts = 0;
         const apiService = ApiService.Instance;
-        this.autoReconnect = autoConnect;
         this.connectionDropped = false;
         this.connectionStatus = ConnectionStatus.PENDING;
         this.serverUrl = url;
@@ -134,12 +135,11 @@ export class BackendService {
         this.connection.binaryType = "arraybuffer";
         this.connection.onmessage = this.messageHandler.bind(this);
         this.connection.onclose = (ev: CloseEvent) => runInAction(()=>{
-            // Only change to closed connection if the connection was originally active
-            if (this.connectionStatus === ConnectionStatus.ACTIVE) {
+            // Only change to closed connection if the connection was originally active or this is a reconnection
+            if (this.connectionStatus === ConnectionStatus.ACTIVE || isReconnection || connectionAttempts >= BackendService.MaxConnectionAttempts) {
                 this.connectionStatus = ConnectionStatus.CLOSED;
-            }
-            // Reconnect to the same URL if Websocket is closed
-            if (!ev.wasClean && this.autoReconnect) {
+            } else {
+                connectionAttempts++;
                 setTimeout(() => {
                     const newConnection = new WebSocket(apiService.accessToken ? url + `?token=${apiService.accessToken}` : url);
                     newConnection.binaryType = "arraybuffer";
@@ -148,7 +148,7 @@ export class BackendService {
                     newConnection.onclose = this.connection.onclose;
                     newConnection.onmessage = this.connection.onmessage;
                     this.connection = newConnection;
-                }, 1000);
+                }, BackendService.ConnectionAttemptDelay);
             }
         });
 
@@ -158,7 +158,6 @@ export class BackendService {
                     this.connectionDropped = true;
                 }
                 this.connectionStatus = ConnectionStatus.ACTIVE;
-                this.autoReconnect = true;
                 const message = CARTA.RegisterViewer.create({sessionId: this.sessionId, clientFeatureFlags: BackendService.DefaultFeatureFlags});
                 // observer map is cleared, so that old subscriptions don't get incorrectly fired
                 this.observerRequestMap.clear();
@@ -171,7 +170,7 @@ export class BackendService {
             });
 
             this.connection.onerror = (ev => {
-                AppStore.Instance.logStore.addInfo(`Connecting to server ${url} failed. Retrying...`, ["network"]);
+                AppStore.Instance.logStore.addInfo(`Connecting to server ${url} failed.`, ["network"]);
                 console.log(ev);
             });
         });
@@ -404,11 +403,11 @@ export class BackendService {
     }
 
     @action("save file")
-    saveFile(fileId: number, outputFileDirectory: string, outputFileName: string, outputFileType: CARTA.FileType): Observable<CARTA.SaveFileAck> {
+    saveFile(fileId: number, outputFileDirectory: string, outputFileName: string, outputFileType: CARTA.FileType, regionId?: number, channels?: number[], stokes?: number[], keepDegenerate?: boolean): Observable<CARTA.SaveFileAck> {
         if (this.connectionStatus !== ConnectionStatus.ACTIVE) {
             return throwError(new Error("Not connected"));
         } else {
-            const message = CARTA.SaveFile.create({fileId, outputFileDirectory, outputFileName, outputFileType});
+            const message = CARTA.SaveFile.create({fileId, outputFileDirectory, outputFileName, outputFileType, regionId, channels, stokes, keepDegenerate});
             const requestId = this.eventCounter;
             this.logEvent(CARTA.EventType.SAVE_FILE, this.eventCounter, message, false);
             if (this.sendEvent(CARTA.EventType.SAVE_FILE, CARTA.SaveFile.encode(message).finish())) {
@@ -770,11 +769,6 @@ export class BackendService {
         this.grpcPort = ack.grpcPort;
 
         this.onSimpleMappedResponse(eventId, ack);
-
-        // use the reconnect stream when the session type is resumed
-        if (ack.success && ack.sessionType === CARTA.SessionType.RESUMED) {
-            this.reconnectStream.next();
-        }
     }
 
     private onStartAnimationAck(eventId: number, ack: CARTA.StartAnimationAck) {

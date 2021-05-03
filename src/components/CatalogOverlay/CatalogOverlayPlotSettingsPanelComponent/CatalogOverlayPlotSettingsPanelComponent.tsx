@@ -4,7 +4,7 @@ import {action, autorun, computed, makeObservable} from "mobx";
 import * as React from "react";
 import {AnchorButton, Button, ButtonGroup, FormGroup, Icon, MenuItem, PopoverPosition, Switch, Tab, Tabs, Tooltip} from "@blueprintjs/core";
 import {Select, IItemRendererProps, ItemPredicate} from "@blueprintjs/select";
-import {AppStore, CatalogStore, CatalogProfileStore, CatalogOverlay, DefaultWidgetConfig, HelpType, PreferenceStore, PreferenceKeys, WidgetProps, WidgetsStore} from "stores";
+import {AppStore, CatalogStore, CatalogProfileStore, CatalogOverlay, DefaultWidgetConfig, HelpType, WidgetProps, WidgetsStore} from "stores";
 import {CatalogOverlayShape, CatalogWidgetStore, CatalogSettingsTabs, ValueClip} from "stores/widgets";
 import {CatalogOverlayComponent} from "components";
 import {AutoColorPickerComponent, ClearableNumericInputComponent, ColormapComponent, SafeNumericInput, ScalingSelectComponent} from "components/Shared";
@@ -44,18 +44,18 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
 
     private catalogFileNames: Map<number, string>;
     private catalogOverlayShape: Array<CatalogOverlayShape> = [
-        CatalogOverlayShape.BoxLined,
-        CatalogOverlayShape.CircleFilled,
-        CatalogOverlayShape.CircleLined,
-        CatalogOverlayShape.CrossFilled,
-        CatalogOverlayShape.EllipseLined,
-        CatalogOverlayShape.HexagonLined,
-        CatalogOverlayShape.HexagonLined2,
-        CatalogOverlayShape.RhombLined,
-        CatalogOverlayShape.TriangleDownLined,
-        CatalogOverlayShape.TriangleUpLined,
-        CatalogOverlayShape.XFilled,
-        CatalogOverlayShape.LineSegmentFILLED
+        CatalogOverlayShape.BOX_LINED,
+        CatalogOverlayShape.CIRCLE_FILLED,
+        CatalogOverlayShape.CIRCLE_LINED,
+        CatalogOverlayShape.CROSS_FILLED,
+        CatalogOverlayShape.ELLIPSE_LINED,
+        CatalogOverlayShape.HEXAGON_LINED,
+        CatalogOverlayShape.HEXAGON_LINED_2,
+        CatalogOverlayShape.RHOMB_LINED,
+        CatalogOverlayShape.TRIANGLE_LINED_DOWN,
+        CatalogOverlayShape.TRIANGLE_LINED_UP,
+        CatalogOverlayShape.X_FILLED,
+        CatalogOverlayShape.LineSegment_FILLED
     ];
 
     public static get WIDGET_CONFIG(): DefaultWidgetConfig {
@@ -64,7 +64,7 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
             type: "floating-settings",
             minWidth: 350,
             minHeight: 250,
-            defaultWidth: 400,
+            defaultWidth: 350,
             defaultHeight: 560,
             title: "catalog-overlay-settings",
             isCloseable: true,
@@ -158,71 +158,6 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
         const disableOrientationMap = disabledOverlayPanel || widgetStore.disableOrientationMap;
         const disableSizeMinorMap = disableSizeMap || widgetStore.disableSizeMinorMap;
 
-        const globalPanel = (
-            <div className="panel-container">
-                <FormGroup  inline={true} label="Displayed columns">
-                    <SafeNumericInput
-                        placeholder="Default Displayed Columns"
-                        min={1}
-                        value={PreferenceStore.Instance.catalogDisplayedColumnSize}
-                        stepSize={1}
-                        onValueChange={(value: number) => PreferenceStore.Instance.setPreference(PreferenceKeys.CATALOG_DISPLAYED_COLUMN_SIZE, value)}
-                    />
-                </FormGroup>
-            </div>
-        );
-
-        const overlayPanel = (
-            <div className="panel-container">
-                <FormGroup label={"Color"} inline={true}  disabled={disabledOverlayPanel}>
-                    <AutoColorPickerComponent
-                        color={widgetStore.catalogColor}
-                        presetColors={[...SWATCH_COLORS, "transparent"]}
-                        setColor={(color: string) => {
-                            widgetStore.setCatalogColor(color === "transparent" ? "#000000" : getColorForTheme(color));
-                        }}
-                        disableAlpha={true}
-                        disabled={disabledOverlayPanel}
-                    />
-                </FormGroup>
-                <FormGroup label={"Overlay Highlight"} inline={true}  disabled={disabledOverlayPanel}>
-                    <AutoColorPickerComponent
-                        color={widgetStore.highlightColor}
-                        presetColors={[...SWATCH_COLORS, "transparent"]}
-                        setColor={(color: string) => {
-                            widgetStore.setHighlightColor(color === "transparent" ? "#000000" : getColorForTheme(color));
-                        }}
-                        disableAlpha={true}
-                        disabled={disabledOverlayPanel}
-                    />
-                </FormGroup>
-                <FormGroup  inline={true} label="Size" labelInfo="(px)"  disabled={disabledOverlayPanel}>
-                    <SafeNumericInput
-                        className="catalog-size-overlay"
-                        placeholder="Size"
-                        disabled={disabledOverlayPanel || !widgetStore.disableSizeMap}
-                        min={CatalogWidgetStore.MinOverlaySize}
-                        max={CatalogWidgetStore.MaxOverlaySize}
-                        value={widgetStore.catalogSize}
-                        stepSize={0.5}
-                        onValueChange={(value: number) => widgetStore.setCatalogSize(value)}
-                    />
-                </FormGroup>
-                <FormGroup  inline={true} label="Thickness" disabled={disabledOverlayPanel}>
-                    <SafeNumericInput
-                        className="catalog-size-overlay"
-                        placeholder="Thickness"
-                        disabled={disabledOverlayPanel}
-                        min={CatalogWidgetStore.MinThickness}
-                        max={CatalogWidgetStore.MaxThickness}
-                        value={widgetStore.thickness}
-                        stepSize={0.5}
-                        onValueChange={(value: number) => widgetStore.setThickness(value)}
-                    />
-                </FormGroup>
-            </div>
-        );
-
         const noResults = (<MenuItem disabled={true} text="No results" />);
         
         const sizeMajor = (
@@ -243,10 +178,11 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
                         <Button text={widgetStore.sizeMapColumn} disabled={disabledOverlayPanel} rightIcon="double-caret-vertical"/>
                     </Select>
                 </FormGroup>
-                <FormGroup label={"Scaling"} inline={true}>
+                <FormGroup label={"Scaling"} inline={true} disabled={disableSizeMap}>
                     <ScalingSelectComponent
                         selectedItem={widgetStore.sizeScalingType}
                         onItemSelect={(type) => widgetStore.setSizeScalingType(type)}
+                        disabled={disableSizeMap}
                     />
                 </FormGroup>
                 <FormGroup inline={true} label={"Size Mode"} disabled={disableSizeMap}>
@@ -255,26 +191,46 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
                         <AnchorButton disabled={disableSizeMap} text={"Area"} active={widgetStore.sizeArea} onClick={() => widgetStore.setSizeArea(true)}/>
                     </ButtonGroup>
                 </FormGroup>
-                <ClearableNumericInputComponent
-                    label="Clip Min"
-                    max={widgetStore.sizeColumnMax.clipd}
-                    integerOnly={false}
-                    value={widgetStore.sizeColumnMin.clipd}
-                    onValueChanged={val => widgetStore.setSizeColumnMin(val, "clipd")}
-                    onValueCleared={() => widgetStore.resetSizeColumnValue("min")}
-                    displayExponential={true}
-                    disabled={disableSizeMap}
-                />
-                <ClearableNumericInputComponent
-                    label="Clip Max"
-                    min={widgetStore.sizeColumnMin.clipd}
-                    integerOnly={false}
-                    value={widgetStore.sizeColumnMax.clipd}
-                    onValueChanged={val => widgetStore.setSizeColumnMax(val, "clipd")}
-                    onValueCleared={() => widgetStore.resetSizeColumnValue("max")}
-                    displayExponential={true}
-                    disabled={disableSizeMap}
-                />
+                <div className="numeric-input-lock">
+                    <ClearableNumericInputComponent
+                        label="Clip Min"
+                        max={widgetStore.sizeColumnMax.clipd}
+                        integerOnly={false}
+                        value={widgetStore.sizeColumnMin.clipd}
+                        onValueChanged={val => widgetStore.setSizeColumnMin(val, "clipd")}
+                        onValueCleared={() => widgetStore.resetSizeColumnValue("min")}
+                        displayExponential={true}
+                        disabled={disableSizeMap || widgetStore.sizeMinorColumnMinLocked}
+                    />
+                    <AnchorButton 
+                        className="lock-button" 
+                        icon={widgetStore.sizeColumnMinLocked ||  widgetStore.sizeMinorColumnMinLocked? "lock" : "unlock"}
+                        intent={widgetStore.sizeColumnMinLocked ? "success" : "none"}
+                        disabled={disableSizeMinorMap || widgetStore.sizeMinorColumnMinLocked}   
+                        minimal={true} 
+                        onClick={widgetStore.toggleSizeColumnMinLock}
+                    />
+                </div>
+                <div className="numeric-input-lock">
+                    <ClearableNumericInputComponent
+                        label="Clip Max"
+                        min={widgetStore.sizeColumnMin.clipd}
+                        integerOnly={false}
+                        value={widgetStore.sizeColumnMax.clipd}
+                        onValueChanged={val => widgetStore.setSizeColumnMax(val, "clipd")}
+                        onValueCleared={() => widgetStore.resetSizeColumnValue("max")}
+                        displayExponential={true}
+                        disabled={disableSizeMap || widgetStore.sizeMinorColumnMaxLocked}
+                    />
+                    <AnchorButton 
+                        className="lock-button" 
+                        icon={widgetStore.sizeColumnMaxLocked || widgetStore.sizeMinorColumnMaxLocked ? "lock" : "unlock"}
+                        intent={widgetStore.sizeColumnMaxLocked ? "success" : "none"}
+                        disabled={disableSizeMinorMap || widgetStore.sizeMinorColumnMaxLocked}  
+                        minimal={true} 
+                        onClick={widgetStore.toggleSizeColumnMaxLock}
+                    />
+                </div>
             </div>
         );
 
@@ -296,10 +252,11 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
                         <Button text={widgetStore.sizeMinorMapColumn} disabled={disabledOverlayPanel} rightIcon="double-caret-vertical"/>
                     </Select>
                 </FormGroup>
-                <FormGroup label={"Scaling"} inline={true}>
+                <FormGroup label={"Scaling"} inline={true} disabled={disableSizeMinorMap}>
                     <ScalingSelectComponent
                         selectedItem={widgetStore.sizeMinorScalingType}
                         onItemSelect={(type) => widgetStore.setSizeMinorScalingType(type)}
+                        disabled={disableSizeMinorMap}
                     />
                 </FormGroup>
                 <FormGroup inline={true} label={"Size Mode"} disabled={disableSizeMinorMap}>
@@ -308,31 +265,73 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
                         <AnchorButton disabled={disableSizeMinorMap} text={"Area"} active={widgetStore.sizeMinorArea} onClick={() => widgetStore.setSizeMinorArea(true)}/>
                     </ButtonGroup>
                 </FormGroup>
-                <ClearableNumericInputComponent
-                    label="Clip Min"
-                    max={widgetStore.sizeMinorColumnMax.clipd}
-                    integerOnly={false}
-                    value={widgetStore.sizeMinorColumnMin.clipd}
-                    onValueChanged={val => widgetStore.setSizeMinorColumnMin(val, "clipd")}
-                    onValueCleared={() => widgetStore.resetSizeMinorColumnValue("min")}
-                    displayExponential={true}
-                    disabled={disableSizeMinorMap}
-                />
-                <ClearableNumericInputComponent
-                    label="Clip Max"
-                    min={widgetStore.sizeMinorColumnMin.clipd}
-                    integerOnly={false}
-                    value={widgetStore.sizeMinorColumnMax.clipd}
-                    onValueChanged={val => widgetStore.setSizeMinorColumnMax(val, "clipd")}
-                    onValueCleared={() => widgetStore.resetSizeMinorColumnValue("max")}
-                    displayExponential={true}
-                    disabled={disableSizeMinorMap}
-                />
+                <div className="numeric-input-lock">
+                    <ClearableNumericInputComponent
+                        label="Clip Min"
+                        max={widgetStore.sizeMinorColumnMax.clipd}
+                        integerOnly={false}
+                        value={widgetStore.sizeMinorColumnMin.clipd}
+                        onValueChanged={val => widgetStore.setSizeMinorColumnMin(val, "clipd")}
+                        onValueCleared={() => widgetStore.resetSizeMinorColumnValue("min")}
+                        displayExponential={true}
+                        disabled={disableSizeMinorMap || widgetStore.sizeColumnMinLocked}
+                    />
+                    <AnchorButton 
+                        className="lock-button" 
+                        icon={widgetStore.sizeColumnMinLocked ||  widgetStore.sizeMinorColumnMinLocked ? "lock" : "unlock"}
+                        intent={widgetStore.sizeMinorColumnMinLocked ? "success" : "none"}
+                        disabled={disableSizeMinorMap || widgetStore.sizeColumnMinLocked}  
+                        minimal={true} 
+                        onClick={widgetStore.toggleSizeMinorColumnMinLock}
+                    />
+                </div>
+                <div className="numeric-input-lock">
+                    <ClearableNumericInputComponent
+                        label="Clip Max"
+                        min={widgetStore.sizeMinorColumnMin.clipd}
+                        integerOnly={false}
+                        value={widgetStore.sizeMinorColumnMax.clipd}
+                        onValueChanged={val => widgetStore.setSizeMinorColumnMax(val, "clipd")}
+                        onValueCleared={() => widgetStore.resetSizeMinorColumnValue("max")}
+                        displayExponential={true}
+                        disabled={disableSizeMinorMap || widgetStore.sizeColumnMaxLocked}
+                    />
+                    <AnchorButton 
+                        className="lock-button" 
+                        icon={widgetStore.sizeColumnMaxLocked || widgetStore.sizeMinorColumnMaxLocked ? "lock" : "unlock"}
+                        intent={widgetStore.sizeMinorColumnMaxLocked ? "success" : "none"}
+                        disabled={disableSizeMinorMap || widgetStore.sizeColumnMaxLocked} 
+                        minimal={true} 
+                        onClick={widgetStore.toggleSizeMinorColumnMaxLock}
+                    />
+                </div>
             </div>
         );
 
         const sizeMap = (
             <div className="panel-container">
+                <FormGroup  inline={true} label="Size" labelInfo="(px)"  disabled={disabledOverlayPanel}>
+                    <SafeNumericInput
+                        placeholder="Size"
+                        disabled={disabledOverlayPanel || !widgetStore.disableSizeMap}
+                        min={CatalogWidgetStore.MinOverlaySize}
+                        max={CatalogWidgetStore.MaxOverlaySize}
+                        value={widgetStore.catalogSize}
+                        stepSize={0.5}
+                        onValueChange={(value: number) => widgetStore.setCatalogSize(value)}
+                    />
+                </FormGroup>
+                <FormGroup  inline={true} label="Thickness" disabled={disabledOverlayPanel}>
+                    <SafeNumericInput
+                        placeholder="Thickness"
+                        disabled={disabledOverlayPanel}
+                        min={CatalogWidgetStore.MinThickness}
+                        max={CatalogWidgetStore.MaxThickness}
+                        value={widgetStore.thickness}
+                        stepSize={0.5}
+                        onValueChange={(value: number) => widgetStore.setThickness(value)}
+                    />
+                </FormGroup>
                 <Tabs
                     id="catalogSettings"
                     vertical={false}
@@ -373,6 +372,28 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
 
         const colorMap = (
             <div className="panel-container">
+                <FormGroup label={"Color"} inline={true}  disabled={disabledOverlayPanel || !widgetStore.disableColorMap}>
+                    <AutoColorPickerComponent
+                        color={widgetStore.catalogColor}
+                        presetColors={[...SWATCH_COLORS, "transparent"]}
+                        setColor={(color: string) => {
+                            widgetStore.setCatalogColor(color === "transparent" ? "#000000" : getColorForTheme(color));
+                        }}
+                        disableAlpha={true}
+                        disabled={disabledOverlayPanel || !widgetStore.disableColorMap}
+                    />
+                </FormGroup>
+                <FormGroup label={"Overlay Highlight"} inline={true}  disabled={disabledOverlayPanel}>
+                    <AutoColorPickerComponent
+                        color={widgetStore.highlightColor}
+                        presetColors={[...SWATCH_COLORS, "transparent"]}
+                        setColor={(color: string) => {
+                            widgetStore.setHighlightColor(color === "transparent" ? "#000000" : getColorForTheme(color));
+                        }}
+                        disableAlpha={true}
+                        disabled={disabledOverlayPanel}
+                    />
+                </FormGroup>
                 <FormGroup inline={true} label="Column" disabled={disabledOverlayPanel}>
                     <Select
                         items={this.axisOption}
@@ -389,23 +410,26 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
                         <Button text={widgetStore.colorMapColumn} disabled={disabledOverlayPanel} rightIcon="double-caret-vertical"/>
                     </Select>
                 </FormGroup>
-                <FormGroup label={"Scaling"} inline={true}>
+                <FormGroup label={"Scaling"} inline={true} disabled={disableColorMap}>
                     <ScalingSelectComponent
                         selectedItem={widgetStore.colorScalingType}
                         onItemSelect={(type) => widgetStore.setColorScalingType(type)}
+                        disabled={disableColorMap}
                     />
                 </FormGroup>
-                <FormGroup inline={true} label="Color Map">
+                <FormGroup inline={true} label="Color Map" disabled={disableColorMap}>
                     <ColormapComponent
                         inverted={false}
                         selectedItem={widgetStore.colorMap}
                         onItemSelect={(selected) => widgetStore.setColorMap(selected)}
+                        disabled={disableColorMap}
                     />
                 </FormGroup>
-                <FormGroup label={"Invert Color Map"} inline={true}>
+                <FormGroup label={"Invert Color Map"} inline={true} disabled={disableColorMap}>
                     <Switch
                         checked={widgetStore.invertedColorMap}
                         onChange={(ev) => widgetStore.setColorMapDirection(ev.currentTarget.checked)}
+                        disabled={disableColorMap}
                     />
                 </FormGroup>
                 <ClearableNumericInputComponent
@@ -449,10 +473,11 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
                         <Button text={widgetStore.orientationMapColumn} disabled={disabledOverlayPanel} rightIcon="double-caret-vertical"/>
                     </Select>
                 </FormGroup>
-                <FormGroup label={"Scaling"} inline={true}>
+                <FormGroup label={"Scaling"} inline={true} disabled={disableOrientationMap}>
                     <ScalingSelectComponent
                         selectedItem={widgetStore.orientationScalingType}
                         onItemSelect={(type) => widgetStore.setOrientationScalingType(type)}
+                        disabled={disableOrientationMap}
                     />
                 </FormGroup>
                 <FormGroup  inline={true} label="Orientation Min" labelInfo="(degree)"  disabled={disableOrientationMap}>
@@ -543,8 +568,6 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
                     selectedTabId={widgetStore.settingsTabId}
                     onChange={(tabId) => this.handleSelectedTabChanged(tabId)}
                 >
-                    <Tab id={CatalogSettingsTabs.GLOBAL} title="Global" panel={globalPanel}/>
-                    <Tab id={CatalogSettingsTabs.STYLING} title="Styling" panel={overlayPanel} disabled={disabledOverlayPanel}/>
                     <Tab id={CatalogSettingsTabs.SIZE} title="Size" panel={sizeMap} disabled={disabledOverlayPanel}/>
                     <Tab id={CatalogSettingsTabs.COLOR} title="Color" panel={colorMap} disabled={disabledOverlayPanel}/>
                     <Tab id={CatalogSettingsTabs.ORIENTATION} title="Orientation" panel={orientationMap} disabled={disabledOverlayPanel}/>
@@ -647,29 +670,29 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
         const widgetStore = this.widgetStore;
         let color = widgetStore.catalogColor;
         switch (shape) {
-            case CatalogOverlayShape.CircleLined:
+            case CatalogOverlayShape.CIRCLE_LINED:
                 return <Icon icon="circle" color={color}/>;
-            case CatalogOverlayShape.CircleFilled:
+            case CatalogOverlayShape.CIRCLE_FILLED:
                 return <Icon icon="full-circle" color={color}/>;
-            case CatalogOverlayShape.BoxLined:
+            case CatalogOverlayShape.BOX_LINED:
                 return <Icon icon="square" color={color}/>;
-            case CatalogOverlayShape.CrossFilled:
+            case CatalogOverlayShape.CROSS_FILLED:
                 return <Icon icon="plus" color={color}/>;
-            case CatalogOverlayShape.XFilled:
+            case CatalogOverlayShape.X_FILLED:
                 return <Icon icon="cross" color={color}/>;
-            case CatalogOverlayShape.TriangleUpLined:
+            case CatalogOverlayShape.TRIANGLE_LINED_UP:
                 return IconWrapper(triangleUp, color, false);
-            case CatalogOverlayShape.TriangleDownLined:
+            case CatalogOverlayShape.TRIANGLE_LINED_DOWN:
                 return IconWrapper(triangleDown, color, false);
-            case CatalogOverlayShape.RhombLined:
+            case CatalogOverlayShape.RHOMB_LINED:
                 return IconWrapper(rhomb, color, false);
-            case CatalogOverlayShape.HexagonLined2:
+            case CatalogOverlayShape.HEXAGON_LINED_2:
                 return IconWrapper(hexagon2, color, false);
-            case CatalogOverlayShape.HexagonLined:
+            case CatalogOverlayShape.HEXAGON_LINED:
                 return IconWrapper(hexagon, color, false);
-            case CatalogOverlayShape.EllipseLined:
+            case CatalogOverlayShape.ELLIPSE_LINED:
                 return IconWrapper(ellipse, color, false);
-            case CatalogOverlayShape.LineSegmentFILLED:
+            case CatalogOverlayShape.LineSegment_FILLED:
                 return <Icon icon="minus" style={{"transform": "rotate(90deg)"}} color={color}/>;
             default:
                 return <Icon icon="circle" color={color}/>;

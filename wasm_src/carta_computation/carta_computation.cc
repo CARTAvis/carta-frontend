@@ -27,6 +27,13 @@ typedef enum {
     CUSTOM = 7
 } FrameScaling;
 
+typedef enum {
+    SIZE_DIAMETER = 0,
+    SIZE_AREA = 1,
+    COLOR = 2,
+    ORIENTATION = 3
+} CatalogMapType;
+
 const float MiterLimit = 1.5f;
 const int VertexDataElements = 8;
 
@@ -262,55 +269,51 @@ float scaleValue(float x, int scaling, float alpha, float gamma) {
     }
 }
 
-void calculateCatalogSizeDiameter(float* data, size_t N, float min, float max, int sizeMin, int sizeMax, int scaling, int devicePixelRatio, float alpha, float gamma) {
-    float columnMin = scaleValue(min, scaling, alpha, gamma);
-    float columnMax = scaleValue(max, scaling, alpha, gamma);
+void calculateCatalogMap(int mapType, float* data, size_t N, float dataMin, float dataMax, int clipMin, int clipMax, int scaling, float alpha, float gamma, int devicePixelRatio, bool invert) {
+    float columnMin = scaleValue(dataMin, scaling, alpha, gamma);
+    float columnMax = scaleValue(dataMax, scaling, alpha, gamma);
     float range = columnMax - columnMin;
-    for (size_t i = 0; i < N; i++)
-    {
-        float v = clamp(*(data + i), min, max);
-        float value = scaleValue(v, scaling, alpha, gamma);
-        *(data + i) = ((value - columnMin) / range * (sizeMax - sizeMin) + sizeMin) * devicePixelRatio;
-    }
-}
 
-void calculateCatalogSizeArea(float* data, size_t N, float min, float max, int sizeMin, int sizeMax, int scaling, int devicePixelRatio, float alpha, float gamma) {
-    float columnMin = scaleValue(min, scaling, alpha, gamma);
-    float columnMax = scaleValue(max, scaling, alpha, gamma);
-    float range = columnMax - columnMin;
-    for (size_t i = 0; i < N; i++)
+    switch (mapType)
     {
-        float v = clamp(*(data + i), min, max);
-        float value = scaleValue(v, scaling, alpha, gamma);
-        *(data + i) = (sqrt((value - columnMin) / range) * (sizeMax - sizeMin) + sizeMin) * devicePixelRatio;
-    }
-}
-
-void calculateCatalogColorMap(float* data, size_t dataSize, bool invert, float min, float max, int scaling, float alpha, float gamma) {
-    float columnMin = scaleValue(min, scaling, alpha, gamma);
-    float columnMax = scaleValue(max, scaling, alpha, gamma);
-    float range = columnMax - columnMin;
-    for (size_t i = 0; i < dataSize; i++)
-    {
-        float v = clamp(*(data + i), min, max);
-        float value = (scaleValue(v, scaling, alpha, gamma) - columnMin) / range;
-        if (invert)
+    case SIZE_DIAMETER:
+        for (size_t i = 0; i < N; i++)
         {
-            value = 1 - value;
+            float v = clamp(data[i], dataMin, dataMax);
+            float value = scaleValue(v, scaling, alpha, gamma);
+            data[i] = ((value - columnMin) / range * (clipMax - clipMin) + clipMin) * devicePixelRatio;
         }
-        *(data + i) = value;
-    }
-}
-
-void calculateCatalogOrientationMap(float* data, size_t N, float min, float max, float angleMin, float angleMax, int scaling, float alpha, float gamma) {
-    float columnMin = scaleValue(min, scaling, alpha, gamma);
-    float columnMax = scaleValue(max, scaling, alpha, gamma);
-    float range = columnMax - columnMin;
-    for (size_t i = 0; i < N; i++)
-    {
-        float v = clamp(*(data + i), min, max);
-        float value = scaleValue(v, scaling, alpha, gamma);
-        *(data + i) = ((value - columnMin) / range * (angleMax - angleMin) + angleMin);
+        break;
+    case SIZE_AREA:
+        for (size_t i = 0; i < N; i++)
+        {
+            float v = clamp(data[i], dataMin, dataMax);
+            float value = scaleValue(v, scaling, alpha, gamma);
+            data[i] = (sqrt((value - columnMin) / range) * (clipMax - clipMin) + clipMin) * devicePixelRatio;
+        }
+        break;
+    case COLOR:
+        for (size_t i = 0; i < N; i++)
+        {
+            float v = clamp(data[i], dataMin, dataMax);
+            float value = (scaleValue(v, scaling, alpha, gamma) - columnMin) / range;
+            if (invert)
+            {
+                value = 1 - value;
+            }
+            data[i] = value;
+        }
+        break;
+    case ORIENTATION:
+        for (size_t i = 0; i < N; i++)
+        {
+            float v = clamp(data[i], dataMin, dataMax);
+            float value = scaleValue(v, scaling, alpha, gamma);
+            data[i] = ((value - columnMin) / range * (clipMax - clipMin) + clipMin);
+        }
+        break;
+    default:
+        break;
     }
 }
 
