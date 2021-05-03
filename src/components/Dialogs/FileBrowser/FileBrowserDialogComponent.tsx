@@ -152,7 +152,7 @@ export class FileBrowserDialogComponent extends React.Component {
         fileBrowserStore.setExportFilename(ev.target.value);
     };
 
-    private handleFileBrowserRequestingCancelled = () => {
+    private handleFileBrowserRequestCancelled = () => {
         const fileBrowserStore = FileBrowserStore.Instance;
         if (fileBrowserStore.browserMode === BrowserMode.Catalog){
             fileBrowserStore.cancelRequestingCatalog();
@@ -561,9 +561,9 @@ export class FileBrowserDialogComponent extends React.Component {
                     progress={fileBrowserStore.loadingProgress}
                     timeRemaining={appStore.estimatedTaskRemainingTime}
                     cancellable={true}
-                    onCancel={this.handleFileBrowserRequestingCancelled}
-                    text={"Loading files"}
-                    contentText={`loading files ${fileBrowserStore.loadingCheckedCount} / ${fileBrowserStore.loadingTotalCount}`}
+                    onCancel={this.handleFileBrowserRequestCancelled}
+                    text={"Loading"}
+                    contentText={`loading ${fileBrowserStore.loadingCheckedCount} / ${fileBrowserStore.loadingTotalCount}`}
                 />
             </DraggableDialogComponent>
         );
