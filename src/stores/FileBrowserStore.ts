@@ -391,17 +391,13 @@ export class FileBrowserStore {
         this.updateLoadingState(0, 0, 0);
     };
 
-    @action cancelRequestingFile = () => {
+    @action cancelRequestingFileList = () => {
         if (this.loadingProgress < 1.0) {
-            BackendService.Instance.cancelRequestingFileList(CARTA.FileListType.Image);
-            this.resetLoadingStates();
-        }
-    };
-
-    @action cancelRequestingCatalog = () => {
-        if (this.loadingProgress < 1.0) {
-            BackendService.Instance.cancelRequestingFileList(CARTA.FileListType.Catalog);
-            this.resetLoadingStates();
+            if (this.browserMode === BrowserMode.Catalog) {
+                BackendService.Instance.cancelRequestingFileList(CARTA.FileListType.Catalog);
+            } else {
+                BackendService.Instance.cancelRequestingFileList(CARTA.FileListType.Image);
+            }
         }
     };
 

@@ -154,11 +154,7 @@ export class FileBrowserDialogComponent extends React.Component {
 
     private handleFileBrowserRequestCancelled = () => {
         const fileBrowserStore = FileBrowserStore.Instance;
-        if (fileBrowserStore.browserMode === BrowserMode.Catalog){
-            fileBrowserStore.cancelRequestingCatalog();
-        } else {
-            fileBrowserStore.cancelRequestingFile();
-        }
+        fileBrowserStore.cancelRequestingFileList();
         fileBrowserStore.resetLoadingStates();
     };
 
