@@ -1,6 +1,10 @@
 .catalog-settings{
     margin: 20px;
 
+    .file-menu .bp3-button{
+        white-space: nowrap;
+        display: inline-block;
+    }
     .bp3-form-group {
         &:first-of-type {
             margin-left: 0px;
@@ -26,6 +30,7 @@
 
     .numeric-input-lock {
         display: inline-flex;
+        width: 100%;
         .lock-button {
             margin-bottom: 20px;
         }

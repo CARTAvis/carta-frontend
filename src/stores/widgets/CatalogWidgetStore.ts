@@ -551,6 +551,9 @@ export class CatalogWidgetStore {
 
     @action setCatalogShape(shape: CatalogOverlayShape) {
         this.catalogShape = shape;
+        if (shape !== CatalogOverlayShape.ELLIPSE_LINED && this.sizeAxisTabId === CatalogSettingsTabs.SIZE_MINOR) {
+            this.sizeAxisTabId = CatalogSettingsTabs.SIZE_MAJOR;
+        }
     }
 
     @action setxAxis(xColumnName: string) {

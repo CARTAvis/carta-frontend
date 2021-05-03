@@ -312,7 +312,6 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
             <div className="panel-container">
                 <FormGroup  inline={true} label="Size" labelInfo="(px)"  disabled={disabledOverlayPanel}>
                     <SafeNumericInput
-                        className="catalog-size-overlay"
                         placeholder="Size"
                         disabled={disabledOverlayPanel || !widgetStore.disableSizeMap}
                         min={CatalogWidgetStore.MinOverlaySize}
@@ -324,7 +323,6 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
                 </FormGroup>
                 <FormGroup  inline={true} label="Thickness" disabled={disabledOverlayPanel}>
                     <SafeNumericInput
-                        className="catalog-size-overlay"
                         placeholder="Thickness"
                         disabled={disabledOverlayPanel}
                         min={CatalogWidgetStore.MinThickness}
