@@ -142,7 +142,7 @@ export class LinePlotSettingsPanelComponent extends React.Component<LinePlotSett
                     }
                     { typeof props.meanRmsVisible !== "undefined"
                         && props.handleMeanRmsChanged
-                        &&  <FormGroup inline={true} label={"Show Mean/RMS"}>
+                        &&  <FormGroup inline={true} label={"Show Mean/RMS"} helperText={"Only visible in single profile"}>
                                 <Switch checked={props.meanRmsVisible} onChange={props.handleMeanRmsChanged}/>
                             </FormGroup>
                     }
