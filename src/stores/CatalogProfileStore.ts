@@ -3,7 +3,8 @@ import {Regions, IRegion} from "@blueprintjs/table";
 import {CARTA} from "carta-protobuf";
 import {AppStore, CatalogStore, PreferenceStore} from "stores";
 import {filterProcessedColumnData, minMaxArray} from "utilities";
-import {ProcessedColumnData} from "models";
+import {ProcessedColumnData, TypedArray} from "models";
+import {CatalogWebGLService, CatalogTextureType} from "services";
 
 export interface CatalogInfo {
     fileId: number;
@@ -352,25 +353,23 @@ export class CatalogProfileStore {
 
     @action setSelectedPointIndices = (pointIndices: Array<number>, autoPanZoom: boolean) => {
         this.selectedPointIndices = pointIndices;
-
-        const coords = CatalogStore.Instance.catalogData.get(this.catalogFileId);
-        if (coords?.xImageCoords?.length) {
+        const coordsArray = CatalogStore.Instance.catalogGLData.get(this.catalogFileId);
+        if (coordsArray?.x?.length) {
             let selectedX = [];
             let selectedY = [];
-            let xArray = coords.xImageCoords;
-            let yArray = coords.yImageCoords;
-
+            const selectedData = new Uint8Array(coordsArray.x.length);
             for (let index = 0; index < pointIndices.length; index++) {
-                const pointIndex = pointIndices[index];
-                const x = xArray[pointIndex];
-                const y = yArray[pointIndex];
+                const i = pointIndices[index];
+                const x = coordsArray.x[i];
+                const y = coordsArray.y[i];
+
                 if (!this.isInfinite(x) && !this.isInfinite(y)) {
                     selectedX.push(x);
                     selectedY.push(y);
                 }
+                selectedData[i] = 1.0;
             }
-            CatalogStore.Instance.updateSelectedPoints(this.catalogFileId, selectedX, selectedY);
-
+            CatalogWebGLService.Instance.updateDataTexture(this.catalogFileId, selectedData, CatalogTextureType.SelectedSource);
             if (autoPanZoom) {
                 const selectedDataLength = selectedX.length;
                 if (selectedDataLength === 1) {
@@ -391,7 +390,7 @@ export class CatalogProfileStore {
 
             }
         }
-    };
+    }
 
     @action setMaxRows(maxRows: number) {
         this.updateTableStatus(true);   
@@ -548,14 +547,13 @@ export class CatalogProfileStore {
         }
     }
 
-    public get1DPlotData(column: string): { wcsData?: Array<number>, headerInfo: CARTA.ICatalogHeader } {
+    public get1DPlotData(column: string): { wcsData?: TypedArray, headerInfo: CARTA.ICatalogHeader } {
         const controlHeader = this.catalogControlHeader;
         const header = controlHeader.get(column);
         const headerInfo = this.catalogHeader[header.dataIndex];
         const xColumn = this.catalogData.get(headerInfo.columnIndex);
-
         if (xColumn && xColumn.dataType !== CARTA.ColumnType.String && xColumn.dataType !== CARTA.ColumnType.Bool) {
-            const wcsData = xColumn.data as Array<number>;
+            const wcsData = xColumn.data as TypedArray;
             return {wcsData, headerInfo};
         } else {
             return {headerInfo};

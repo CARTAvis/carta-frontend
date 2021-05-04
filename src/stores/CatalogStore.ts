@@ -1,14 +1,12 @@
 import * as AST from "ast_wrapper";
 import {action, observable, ObservableMap, computed,makeObservable} from "mobx";
 import {AppStore, CatalogProfileStore, CatalogSystemType, WidgetsStore} from "stores";
+import {CatalogWebGLService, CatalogTextureType} from "services";
 import {CatalogWidgetStore} from "stores/widgets";
 
-type CatalogOverlayDataInfo = {
-    xImageCoords: Array<number>,
-    yImageCoords: Array<number>,
-    xSelectedCoords: Array<number>,
-    ySelectedCoords: Array<number>,
-    showSelectedData: boolean;
+type CatalogOverlayCoords = {
+    x: Float32Array,
+    y: Float32Array,
     displayed: boolean;
 };
 
@@ -26,7 +24,7 @@ export class CatalogStore {
     private static readonly ArcsecUnits = ["arcsec", "arcsecond"];
     private static readonly ArcminUnits = ["arcmin", "arcminute"];
 
-    @observable catalogData: ObservableMap<number, CatalogOverlayDataInfo>;
+    @observable catalogGLData: ObservableMap<number, CatalogOverlayCoords>;
     // map image file id with catalog file Id
     @observable imageAssociatedCatalogId: Map<number, Array<number>>;
     // map catalog component Id with catalog file Id
@@ -40,7 +38,7 @@ export class CatalogStore {
 
     private constructor() {
         makeObservable(this);
-        this.catalogData = new ObservableMap();
+        this.catalogGLData = new ObservableMap();
         this.imageAssociatedCatalogId = new Map<number, Array<number>>();
         this.catalogProfiles = new Map<string, number>();
         this.catalogPlots = new Map<string, ObservableMap<number, string>>();
@@ -49,86 +47,60 @@ export class CatalogStore {
     }
 
     @action addCatalog(fileId: number) {
-        // init catalog overlay data
-        this.catalogData.set(fileId, {
-            xImageCoords: [],
-            yImageCoords: [],
-            xSelectedCoords: [],
-            ySelectedCoords: [],
-            showSelectedData: false,
+        this.catalogGLData.set(fileId, {
+            x: new Float32Array(0),
+            y: new Float32Array(0),
             displayed: true
         });
     }
 
     @action updateCatalogData(fileId: number, xData: Array<number>, yData: Array<number>, wcsInfo: AST.FrameSet, xUnit: string, yUnit: string, catalogFrame: CatalogSystemType) {
-        const catalogDataInfo = this.catalogData.get(fileId);
-        if (catalogDataInfo) {
+        const catalog = this.catalogGLData.get(fileId);
+        if (catalog && xData && yData) {
+            const dataSize = catalog.x.length;
+            let xPoints = new Float32Array(dataSize + xData.length);
+            let yPoints = new Float32Array(dataSize + yData.length);
+            xPoints.set(catalog.x);
+            yPoints.set(catalog.y);
             switch (catalogFrame) {
                 case CatalogSystemType.Pixel0:
                     for (let i = 0; i < xData.length; i++) {
-                        catalogDataInfo.xImageCoords.push(xData[i]);
-                        catalogDataInfo.yImageCoords.push(yData[i]);
+                        xPoints[dataSize + i] = xData[i];
+                        yPoints[dataSize + i] = yData[i];
                     }
                     break;
                 case CatalogSystemType.Pixel1:
                     for (let i = 0; i < xData.length; i++) {
-                        catalogDataInfo.xImageCoords.push(xData[i] - 1);
-                        catalogDataInfo.yImageCoords.push(yData[i] - 1);
+                        xPoints[dataSize + i] = xData[i] - 1;
+                        yPoints[dataSize + i] = yData[i] - 1;
                     }
                     break;
                 default:
                     const pixelData = CatalogStore.TransformCatalogData(xData, yData, wcsInfo, xUnit, yUnit, catalogFrame);
                     for (let i = 0; i < pixelData.xImageCoords.length; i++) {
-                        catalogDataInfo.xImageCoords.push(pixelData.xImageCoords[i]);
-                        catalogDataInfo.yImageCoords.push(pixelData.yImageCoords[i]);
+                        xPoints[dataSize + i] = pixelData.xImageCoords[i];
+                        yPoints[dataSize + i] = pixelData.yImageCoords[i];
                     }
                     break;
             }
-            this.catalogData.set(fileId,
-                {
-                    xImageCoords: catalogDataInfo.xImageCoords,
-                    yImageCoords: catalogDataInfo.yImageCoords,
-                    xSelectedCoords: catalogDataInfo.xSelectedCoords,
-                    ySelectedCoords: catalogDataInfo.ySelectedCoords,
-                    showSelectedData: catalogDataInfo.showSelectedData,
-                    displayed: catalogDataInfo.displayed
-                });
-        }
-    }
-
-    @action updateSelectedPoints(fileId: number, xSelectedCoords: Array<number>, ySelectedCoords: Array<number>) {
-        const catalogDataInfo = this.catalogData.get(fileId);
-        if (catalogDataInfo) {
-            this.catalogData.set(fileId,
-                {
-                    xImageCoords: catalogDataInfo.xImageCoords,
-                    yImageCoords: catalogDataInfo.yImageCoords,
-                    xSelectedCoords: xSelectedCoords,
-                    ySelectedCoords: ySelectedCoords,
-                    showSelectedData: catalogDataInfo.showSelectedData,
-                    displayed: catalogDataInfo.displayed
-                });
+            catalog.x = xPoints;
+            catalog.y = yPoints;
+            CatalogWebGLService.Instance.updateDataTexture(fileId, xPoints, CatalogTextureType.X);
+            CatalogWebGLService.Instance.updateDataTexture(fileId, yPoints, CatalogTextureType.Y);
         }
     }
 
     @action clearImageCoordsData(fileId: number) {
-        const catalogData = this.catalogData.get(fileId);
-        if (catalogData) {
-            catalogData.xImageCoords = [];
-            catalogData.yImageCoords = [];
-            catalogData.showSelectedData = false;
+        const catalog = this.catalogGLData.get(fileId);
+        if (catalog) {
+            catalog.x = new Float32Array(0);
+            catalog.y = new Float32Array(0);
         }
     }
 
     @action removeCatalog(fileId: number) {
-        this.catalogData.delete(fileId);
-    }
-
-    @action updateShowSelectedData(fileId: number, val: boolean) {
-        const catalog = this.catalogData.get(fileId);
-        if (catalog) {
-            catalog.showSelectedData = val;
-        }
+        this.catalogGLData.delete(fileId);
+        CatalogWebGLService.Instance.clearTexture(fileId);
     }
 
     @action updateImageAssociatedCatalogId(activeFrameIndex: number, associatedCatalogFiles: number[]) {
@@ -169,33 +141,16 @@ export class CatalogStore {
 
     @action resetDisplayedData(associatedCatalogFileId: Array<number>) {
         if (associatedCatalogFileId.length) {
-            this.catalogData.forEach((catalogDataInfo, fileId) => {
+            this.catalogGLData.forEach((catalog, fileId) => {
                 let displayed = true;
                 if (!associatedCatalogFileId.includes(fileId)) {
                     displayed = false;
                 }
-                this.catalogData.set(fileId,
-                    {
-                        xImageCoords: catalogDataInfo.xImageCoords,
-                        yImageCoords: catalogDataInfo.yImageCoords,
-                        xSelectedCoords: catalogDataInfo.xSelectedCoords,
-                        ySelectedCoords: catalogDataInfo.ySelectedCoords,
-                        showSelectedData: catalogDataInfo.showSelectedData,
-                        displayed: displayed
-                    }
-                );
+                catalog.displayed = displayed;
             });
         } else {
-            this.catalogData.forEach((catalogDataInfo, fileId) => {
-                this.catalogData.set(fileId,
-                    {
-                        xImageCoords: catalogDataInfo.xImageCoords,
-                        yImageCoords: catalogDataInfo.yImageCoords,
-                        xSelectedCoords: catalogDataInfo.xSelectedCoords,
-                        ySelectedCoords: catalogDataInfo.ySelectedCoords,
-                        showSelectedData: catalogDataInfo.showSelectedData,
-                        displayed: false
-                    });
+            this.catalogGLData.forEach((catalog) => {
+                catalog.displayed = false;
             });
         }
     }
