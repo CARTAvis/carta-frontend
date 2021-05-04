@@ -178,6 +178,7 @@ export class WidgetsStore {
         if (fileId === ACTIVE_FILE_ID) {
             storeMap.forEach(widgetStore => {
                 widgetStore.clearRegionMap();
+                widgetStore.setFileId(ACTIVE_FILE_ID);
             });
         } else {
             storeMap.forEach(widgetStore => {

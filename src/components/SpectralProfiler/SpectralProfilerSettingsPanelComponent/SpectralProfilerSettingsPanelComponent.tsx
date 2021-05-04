@@ -55,18 +55,11 @@ export class SpectralProfilerSettingsPanelComponent extends React.Component<Widg
         autorun(() => {
             if (this.widgetStore) {
                 const frame = this.widgetStore.effectiveFrame;
-                const coordinate = this.widgetStore.coordinate;
-                if (frame && coordinate) {
-                    let coordinateString: string;
-                    if (coordinate.length === 2) {
-                        coordinateString = `Z Profile (Stokes ${coordinate[0]})`;
-                    } else {
-                        coordinateString = `Z Profile`;
-                    }
+                if (frame) {
                     const regionId = this.widgetStore.effectiveRegionId;
                     const regionString = regionId === 0 ? "Cursor" : `Region #${regionId}`;
                     const selectedString = this.widgetStore.matchesSelectedRegion ? "(Active)" : "";
-                    appStore.widgetsStore.setWidgetTitle(this.props.floatingSettingsId, `${coordinateString} Settings: ${regionString} ${selectedString}`);
+                    appStore.widgetsStore.setWidgetTitle(this.props.floatingSettingsId, `Z Profile Settings: ${regionString} ${selectedString}`);
                 }
             }
         });
@@ -147,11 +140,13 @@ export class SpectralProfilerSettingsPanelComponent extends React.Component<Widg
     render() {
         const widgetStore = this.widgetStore;
         const lineSettingsProps: LinePlotSettingsPanelComponentProps = {
-            primaryLineColor: widgetStore.primaryLineColor,
+            lineColorMap: widgetStore.lineColorMap,
+            lineOrderedKeys: widgetStore.profileSelectionStore.profileOrderedKeys,
+            lineOptions: widgetStore.profileSelectionStore.profileOptions,
             lineWidth: widgetStore.lineWidth,
             plotType: widgetStore.plotType,
             linePlotPointSize: widgetStore.linePlotPointSize,
-            setPrimaryLineColor: widgetStore.setPrimaryLineColor,
+            setLineColor: widgetStore.setProfileColor,
             setLineWidth: widgetStore.setLineWidth,
             setLinePlotPointSize: widgetStore.setLinePlotPointSize,
             setPlotType: widgetStore.setPlotType,
@@ -184,7 +179,7 @@ export class SpectralProfilerSettingsPanelComponent extends React.Component<Widg
                         }
                     />
                     <Tab id={SpectralProfilerSettingsTabs.STYLING} panelClassName="styling-tab-panel" title="Styling" panel={<LinePlotSettingsPanelComponent {...lineSettingsProps}/>}/>
-                    <Tab id={SpectralProfilerSettingsTabs.SMOOTHING} title="Smoothing" panel={<SmoothingSettingsComponent smoothingStore={widgetStore.smoothingStore}/>}/>
+                    <Tab id={SpectralProfilerSettingsTabs.SMOOTHING} title="Smoothing" panel={<SmoothingSettingsComponent smoothingStore={widgetStore.smoothingStore} disableColorAndLineWidth={widgetStore.profileNum > 1}/>}/>
                     <Tab id={SpectralProfilerSettingsTabs.MOMENTS} panelClassName="moment-tab-panel" title="Moments" panel={<MomentGeneratorComponent widgetStore={widgetStore}/>}/>
                 </Tabs>
             </div>

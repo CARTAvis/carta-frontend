@@ -2,12 +2,14 @@ import * as React from "react";
 import {observer} from "mobx-react";
 import {FormGroup, Switch, Button, HTMLSelect} from "@blueprintjs/core";
 import {AutoColorPickerComponent, PlotTypeSelectorComponent, PlotType, SafeNumericInput} from "components/Shared";
-import {SWATCH_COLORS} from "utilities";
+import {LineKey, LineOption} from "models";
+import {DEFAULT_COLOR, SWATCH_COLORS} from "utilities";
 import "./LinePlotSettingsPanelComponent.scss";
 
 export class LinePlotSettingsPanelComponentProps {
-    primaryLineColor: string;
-    secondaryLineColor?: string;
+    lineColorMap: Map<LineKey, string>;
+    lineOrderedKeys?: LineKey[];
+    lineOptions?: LineOption[];
     lineWidth: number;
     plotType: PlotType;
     linePlotPointSize: number;
@@ -24,8 +26,7 @@ export class LinePlotSettingsPanelComponentProps {
     xMaxVal?: number;
     yMinVal?: number;
     yMaxVal?: number;
-    setPrimaryLineColor: (color: string) => void;
-    setSecondaryLineColor?: (color: string) => void;
+    setLineColor: (lineKey: LineKey, color: string) => void;
     setLineWidth: (val: number) => void;
     setLinePlotPointSize: (val: number) => void;
     setPlotType: (val: PlotType) => void;
@@ -53,6 +54,38 @@ export enum LineSettings {
 
 @observer
 export class LinePlotSettingsPanelComponent extends React.Component<LinePlotSettingsPanelComponentProps> {
+    private getLineColorSelectors = (): JSX.Element => {
+        const lineColorMap = this.props.lineColorMap;
+        const setLineColor = this.props.setLineColor;
+        if (lineColorMap && setLineColor) {
+            const lineKeys = this.props.lineOrderedKeys ?? Array.from(lineColorMap.keys());
+            return (
+                <React.Fragment>
+                    {lineKeys.map((lineKey, index) => {
+                        const lineLabel = this.props.lineOptions?.find(option => option.value === lineKey)?.label;
+                        return (
+                            <FormGroup
+                                key={index}
+                                inline={true}
+                                label="Line Color"
+                                labelInfo={lineLabel ? <React.Fragment>(<span className="line-label" title={lineLabel}>{lineLabel}</span>)</React.Fragment> : ""}
+                            >
+                                <AutoColorPickerComponent
+                                    color={lineColorMap.get(lineKey) ?? DEFAULT_COLOR}
+                                    presetColors={[...SWATCH_COLORS, "transparent"]}
+                                    setColor={(color: string) => {
+                                        setLineColor(lineKey, color === "transparent" ? "#000000" : color);
+                                    }}
+                                    disableAlpha={true}
+                                />
+                            </FormGroup>
+                        );
+                    })}
+                </React.Fragment>
+            );
+        }
+        return null;
+    };
 
     render() {
         const props = this.props;
@@ -64,29 +97,7 @@ export class LinePlotSettingsPanelComponent extends React.Component<LinePlotSett
                             <HTMLSelect value={props.userSelectedCoordinate} options={props.profileCoordinateOptions} onChange={props.handleCoordinateChanged}/>
                         </FormGroup>
                     }
-                    <FormGroup inline={true} label="Primary Color">
-                        <AutoColorPickerComponent
-                            color={props.primaryLineColor}
-                            presetColors={[...SWATCH_COLORS, "transparent"]}
-                            setColor={(color: string) => {
-                                props.setPrimaryLineColor(color === "transparent" ? "#000000" : color);
-                            }}
-                            disableAlpha={true}
-                        />
-                    </FormGroup>
-                    {props.secondaryLineColor
-                        && props.setSecondaryLineColor 
-                        &&  <FormGroup inline={true} label="Secondary Color">
-                                <AutoColorPickerComponent
-                                    color={props.secondaryLineColor}
-                                    presetColors={[...SWATCH_COLORS, "transparent"]}
-                                    setColor={(color: string) => {
-                                        props.setSecondaryLineColor(color === "transparent" ? "#000000" : color);
-                                    }}
-                                    disableAlpha={true}
-                                />
-                            </FormGroup>
-                    }
+                    {this.getLineColorSelectors()}
                     <FormGroup  inline={true} label="Line Width" labelInfo="(px)">
                         <SafeNumericInput
                             placeholder="Line Width"
@@ -131,7 +142,7 @@ export class LinePlotSettingsPanelComponent extends React.Component<LinePlotSett
                     }
                     { typeof props.meanRmsVisible !== "undefined"
                         && props.handleMeanRmsChanged
-                        &&  <FormGroup inline={true} label={"Show Mean/RMS"}>
+                        &&  <FormGroup inline={true} label={"Show Mean/RMS"} helperText={"Only visible in single profile"}>
                                 <Switch checked={props.meanRmsVisible} onChange={props.handleMeanRmsChanged}/>
                             </FormGroup>
                     }
@@ -195,7 +206,7 @@ export class LinePlotSettingsPanelComponent extends React.Component<LinePlotSett
                     { typeof props.isAutoScaledX !== "undefined" 
                         &&  typeof props.isAutoScaledY !== "undefined"
                         &&  props.clearXYBounds
-                        &&  <FormGroup inline={true} className="reset-range-content">
+                        &&  <FormGroup label={"Reset Range"} inline={true} className="reset-range-content">
                                 <Button className="reset-range-button" icon={"zoom-to-fit"} small={true} disabled={props.isAutoScaledX && props.isAutoScaledY} onClick={props.clearXYBounds}>Reset Range</Button>
                             </FormGroup>
                     }

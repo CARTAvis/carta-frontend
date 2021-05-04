@@ -260,6 +260,10 @@ export class AppStore {
     }
 
     // Frame actions
+    @computed get activeFrameFileId(): number {
+        return this.activeFrame?.frameInfo.fileId;
+    }
+
     @computed get activeFrameIndex(): number {
         if (!this.activeFrame) {
             return -1;
@@ -294,10 +298,13 @@ export class AppStore {
         return id;
     }
 
-    @computed get frameNames(): IOptionProps [] {
-        let names: IOptionProps [] = [];
-        this.frames.forEach((frame, index) => names.push({label: index + ": " + frame.filename, value: frame.frameInfo.fileId}));
-        return names;
+    @computed get frameNames(): IOptionProps[] {
+        return this.frames?.map((frame, index) => {
+            return {
+                label: index + ": " + frame.filename,
+                value: frame.frameInfo.fileId
+            };
+        });
     }
 
     @computed get frameChannels(): number[] {
@@ -326,6 +333,22 @@ export class AppStore {
         }
 
         return activeGroupFrames;
+    }
+
+    @computed get spatialAndSpectalMatchedFileIds(): number[] {
+        let matchedIds = [];
+        if (this.spatialReference) {
+            matchedIds.push(this.spatialReference.frameInfo.fileId);
+        }
+
+        const spatialMatchedFileIds = this.spatialReference?.spatialSiblings?.map(matchedFrame => {return matchedFrame.frameInfo.fileId;});
+        const spectralMatchedFileIds = this.spatialReference?.spectralSiblings?.map(matchedFrame => {return matchedFrame.frameInfo.fileId;});
+        spatialMatchedFileIds?.forEach(spatialMatchedFileId => {
+            if (spectralMatchedFileIds?.includes(spatialMatchedFileId)) {
+                matchedIds.push(spatialMatchedFileId);
+            }
+        });
+        return matchedIds;
     }
 
     @computed get contourFrames(): FrameStore[] {
@@ -1276,7 +1299,6 @@ export class AppStore {
                 frameMap.set(spectralProfileData.regionId, profileStore);
             }
 
-            profileStore.stokes = spectralProfileData.stokes;
             for (let profile of spectralProfileData.profiles) {
                 profileStore.setProfile(ProtobufProcessing.ProcessSpectralProfile(profile, spectralProfileData.progress));
             }
@@ -1627,6 +1649,10 @@ export class AppStore {
             return this.activeFrame;
         }
         return this.frames.find(f => f.frameInfo.fileId === fileId);
+    }
+
+    getFrameName(fileId: number) {
+        return this.getFrame(fileId)?.filename;
     }
 
     @computed get selectedRegion(): RegionStore {

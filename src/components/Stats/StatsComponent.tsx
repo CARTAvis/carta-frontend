@@ -7,7 +7,7 @@ import {CARTA} from "carta-protobuf";
 import {DefaultWidgetConfig, WidgetProps, HelpType, WidgetsStore, AppStore} from "stores";
 import {StatsWidgetStore} from "stores/widgets";
 import {toExponential, exportTsvFile} from "utilities";
-import {RegionSelectorComponent} from "components";
+import {RegionSelectorComponent} from "components/Shared";
 import {ToolbarComponent} from "components/Shared/LinePlot/Toolbar/ToolbarComponent";
 import "./StatsComponent.scss";
 
@@ -165,20 +165,15 @@ export class StatsComponent extends React.Component<WidgetProps> {
     exportData = () => {
         const frame = this.widgetStore.effectiveFrame;
         if (this.statsData && frame) {
-            const fileName = this.widgetStore.effectiveFrame.filename;
+            const fileName = frame.filename;
             const plotName = "statistics";
             const title = `# ${fileName} ${plotName}\n`;
 
             let regionInfo = "";
-            let regionId = this.widgetStore.effectiveRegionId;
+            const regionId = this.widgetStore.effectiveRegionId;
             if (regionId !== -1) {
-                const region = this.widgetStore.effectiveFrame.regionSet.regions.find(r => r.regionId === regionId);
-                if (region) {
-                    regionInfo += `# ${region.regionProperties}\n`;
-                    if (frame.validWcs) {
-                        regionInfo += `# ${frame.getRegionWcsProperties(region)}\n`;
-                    }
-                }
+                const regionProperties = frame.getRegionProperties(regionId);
+                regionProperties?.forEach(regionProperty => regionInfo += `# ${regionProperty}\n`);
             } else {
                 regionInfo += "# full image\n"
             }
