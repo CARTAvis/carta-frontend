@@ -48,7 +48,7 @@ class ProfileSelectionButtonComponent extends React.Component<ProfileSelectionBu
             <ButtonGroup fill={true} className={className}>
                 <Tooltip content={this.props.tooltip} position={Position.TOP}>
                     <AnchorButton
-                        text={this.props.categoryName}
+                        text={<span className={this.props.disableOptions ? "bp3-text-disabled" : ""}>{this.props.categoryName}</span>}
                         active={this.props.isActiveCategory}
                         onClick={(ev) => this.props.onCategorySelect()}
                         disabled={this.props.disabled}
