@@ -167,7 +167,7 @@ export class CatalogViewGLComponent extends React.Component<CatalogViewGLCompone
         let rotationAngle = 0.0;
         let scaleAdjustment = 1.0;
         const destinationFrame = appStore.activeFrame;
-        catalogStore.activeCatalogFiles.forEach(fileId => {
+        catalogStore.activeCatalogFiles?.forEach(fileId => {
             const frame = appStore.getFrame(catalogStore.getFramIdByCatalogId(fileId));
             const isActive = frame === destinationFrame;
             const catalog = catalogStore.catalogGLData.get(fileId);
@@ -328,7 +328,7 @@ export class CatalogViewGLComponent extends React.Component<CatalogViewGLCompone
         const catalogStore = CatalogStore.Instance;
 
         let selectedPoint = {fileId: undefined, minIndex: undefined, minDistanceSquared: Number.MAX_VALUE};
-        catalogStore.catalogGLData.forEach((catalog, fileId) => {
+        catalogStore.catalogGLData?.forEach((catalog, fileId) => {
             const frame = AppStore.Instance.getFrame(catalogStore.getFramIdByCatalogId(fileId));
             const cursorPosImageSpace = canvasToTransformedImagePos(clickEvent.offsetX, clickEvent.offsetY, frame, frame.renderWidth, frame.renderHeight);
             const closestPoint = closestCatalogIndexToCursor(cursorPosImageSpace, catalog.x, catalog.y);
@@ -352,7 +352,7 @@ export class CatalogViewGLComponent extends React.Component<CatalogViewGLCompone
     private onDoubleClick() {
         const catalogStore = CatalogStore.Instance;
         if (catalogStore?.catalogGLData?.size) {   
-            catalogStore.catalogProfileStores.forEach((profileStore) => {   
+            catalogStore.catalogProfileStores?.forEach((profileStore) => {   
                 const widgetStoreId = CatalogStore.Instance.catalogWidgets.get(profileStore.catalogFileId);
                 profileStore.setSelectedPointIndices([], false);
                 WidgetsStore.Instance.catalogWidgets.get(widgetStoreId)?.setCatalogTableAutoScroll(false);

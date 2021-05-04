@@ -99,8 +99,6 @@ export class CatalogStore {
                 const catalogProfileStore = this.catalogProfileStores.get(catalogFileId);
                 const coords = catalogProfileStore.get2DPlotData(xColumn, yColumn, catalogProfileStore.catalogData);
                 const wcs = activeFrame.validWcs ? activeFrame.wcsInfo : 0;
-                // let dataPoints = new Float32Array(coords.wcsX.length * 2);
-
                 let xPoints = new Float32Array(coords.wcsX.length);
                 let yPoints = new Float32Array(coords.wcsX.length);
                 const catalogSystem = catalogProfileStore.catalogCoordinateSystem.system;
