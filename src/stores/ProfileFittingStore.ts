@@ -4,7 +4,7 @@ import {SpectralProfileWidgetStore} from "stores/widgets";
 import {Point2D} from "models";
 import * as GSL from "gsl_wrapper";
 import {LinePlotInsideBoxMarker} from "components/Shared/LinePlot/LinePlotComponent";
-import {getColorForTheme} from "utilities";
+import {getColorForTheme, toFixed} from "utilities";
 import {autoDetecting} from "utilities/fitting_heuristics";
 
 export class ProfileFittingStore {
@@ -111,26 +111,26 @@ export class ProfileFittingStore {
         let resultString = "";
         if (this.components && this.hasResult) {
             if (this.continuum !== FittingContinuum.NONE) {
-                resultString += `Y Intercept = ${this.resultYIntercept}\n`;
-                resultString +=  this.resultYInterceptError ? `Y Intercept Error = ${this.resultYInterceptError}\n` : "";
+                resultString += `Y Intercept = ${toFixed(this.resultYIntercept, 6)}\n`;
+                resultString +=  this.resultYInterceptError ? `Y Intercept Error = ${toFixed(this.resultYInterceptError, 6)} (${toFixed(Math.abs(this.resultYInterceptError * 100 / this.resultYIntercept), 3)}%)\n` : "";
             }
             if (this.continuum === FittingContinuum.FIRST_ORDER) {
-                resultString += `Slope = ${this.resultSlope}\n`;
-                resultString += this.resultSlopeError ? `Slope Error = ${this.resultSlopeError}\n` : "";
+                resultString += `Slope = ${toFixed(this.resultSlope, 6)}\n`;
+                resultString += this.resultSlopeError ? `Slope Error = ${toFixed(this.resultSlopeError, 6)} (${toFixed(Math.abs(this.resultSlopeError * 100 / this.resultSlope), 3)}%)\n` : "";
             }
             if (this.continuum !== FittingContinuum.NONE) {
                 resultString += "\n";
             }
             for (let i = 0; i <  this.components.length; i++) {
                 const component = this.components[i];
-                resultString += `Component #${i+1}\nCenter = ${component.resutlCenter}\n`;
-                resultString += component.resutlCenterError ? `Center Error = ${component.resutlCenterError}\n` : "";
-                resultString += `Amplitude = ${component.resultAmp}\n`;
-                resultString += component.resultAmpError ? `Amplitude Error = ${component.resultAmpError}\n` : "";
-                resultString += `FWHM = ${component.resultFwhm}\n`;
-                resultString += component.resultFwhmError ? `FWHM Error = ${component.resultFwhmError}\n` : "";
-                resultString += `Integral = ${component.resultIntegral}\n`;
-                resultString += component.resultIntegralError ? `Integral Error ~= ${component.resultIntegralError}\n\n` : "";
+                resultString += `Component #${i+1}\nCenter = ${toFixed(component.resutlCenter, 6)}\n`;
+                resultString += component.resutlCenterError ? `Center Error = ${toFixed(component.resutlCenterError, 6)} (${toFixed(Math.abs(component.resutlCenterError * 100 / component.resutlCenter), 3)}%)\n` : "";
+                resultString += `Amplitude = ${toFixed(component.resultAmp, 6)} \n`;
+                resultString += component.resultAmpError ? `Amplitude Error = ${toFixed(component.resultAmpError, 6)} (${toFixed(Math.abs(component.resultAmpError * 100 / component.resultAmp), 3)}%)\n` : "";
+                resultString += `FWHM = ${toFixed(component.resultFwhm, 6)}\n`;
+                resultString += component.resultFwhmError ? `FWHM Error = ${toFixed(component.resultFwhmError, 6)} (${toFixed(Math.abs(component.resultFwhmError * 100 / component.resultFwhm), 3)}%)\n` : "";
+                resultString += `Integral = ${toFixed(component.resultIntegral, 6)}\n`;
+                resultString += component.resultIntegralError ? `Integral Error ~= ${toFixed(component.resultIntegralError, 6)} (${toFixed(Math.abs(component.resultIntegralError * 100 / component.resultIntegral), 3)}%)\n\n` : "";
             }
         }
 
@@ -277,8 +277,8 @@ export class ProfileFittingStore {
         if (!this.widgetStore?.plotData?.fittingData) {
             return;
         }
-        const x = this.widgetStore.plotData.fittingData.x;
-        const y = this.widgetStore.plotData.fittingData.y;
+        const x = this.fittingData.x;
+        const y = this.fittingData.y;
         this.setOriginData(x, y);
         const inputData = [];
         const lockedInputData = [];

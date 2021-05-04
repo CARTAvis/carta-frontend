@@ -180,92 +180,9 @@ export class ProfileFittingComponent extends React.Component<ProfileFittingCompo
 
     private fitData = () => {
         if (this.props.fittingStore.readyToFit) {
-            // const fittingData = this.props.widgetStore.plotData.fittingData;
-            // if (this.props.widgetStore.smoothingStore.type !== SmoothingType.NONE) {
-            //     const smoothData = this.props.widgetStore.smoothingStore.getSmoothingValues(fittingData.rawX, fittingData.rawY);
-            //     let nonNaNIndex = smoothData.y.findIndex(yi => !isNaN(yi));
-            //     this.props.fittingStore.fitData(smoothData.x.slice(nonNaNIndex , smoothData.x.length - nonNaNIndex), smoothData.y.slice(nonNaNIndex, smoothData.y.length - nonNaNIndex));
-            // } else {
-                this.props.fittingStore.fitData();
-            // }
+            this.props.fittingStore.fitData();
         }
     }
-
-    // @computed get profileStore(): SpectralProfileStore {
-    //     if (this.props.widgetStore.effectiveFrame) {
-    //         let fileId = this.props.widgetStore.effectiveFrame.frameInfo.fileId;
-    //         const regionId = this.props.widgetStore.effectiveRegionId;
-    //         const frameMap = AppStore.Instance.spectralProfiles.get(fileId);
-    //         if (frameMap) {
-    //             return frameMap.get(regionId);
-    //         }
-    //     }
-    //     return null;
-    // }
-
-    // @computed get coordinateData(): ProcessedSpectralProfile {
-    //     const widgetStore = this.props.widgetStore;
-    //     const frame = widgetStore.effectiveFrame;
-    //     if (!frame) {
-    //         return null;
-    //     }
-        
-    //     let coordinateData: ProcessedSpectralProfile;
-    //     let regionId = widgetStore.effectiveRegionId;
-    //     if (frame.regionSet) {
-    //         const region = frame.regionSet.regions.find(r => r.regionId === regionId);
-    //         if (region && this.profileStore) {
-    //             coordinateData = this.profileStore.getProfile(widgetStore.coordinate, region.isClosedRegion ? widgetStore.statsType : CARTA.StatsType.Sum);
-    //         }
-    //     }
-    //     return coordinateData; 
-    // }
-
-    // @computed get plottingData(): {x: number[] , y: Float32Array | Float64Array} {
-    //     if (this.props.widgetStore?.plotData?.fittingData) {
-    //         const fittingData = this.props.widgetStore?.plotData?.fittingData
-    //         return {x: fittingData.rawX, y: fittingData.rawY};
-    //     }
-    //     return null
-    //     const widgetStore = this.props.widgetStore;
-    //     const frame = widgetStore.effectiveFrame;
-    //     const coordinateData = this.coordinateData;
-
-    //     if (coordinateData && coordinateData.values && coordinateData.values.length &&
-    //         frame.channelValues && frame.channelValues.length &&
-    //         coordinateData.values.length === frame.channelValues.length) {
-    //         const channelValues = frame.channelValues;
-    //         let xMin = Math.min(channelValues[0], channelValues[channelValues.length - 1]);
-    //         let xMax = Math.max(channelValues[0], channelValues[channelValues.length - 1]);
-
-    //         if (!widgetStore.isAutoScaledX) {
-    //             const localXMin = clamp(widgetStore.minX, xMin, xMax);
-    //             const localXMax = clamp(widgetStore.maxX, xMin, xMax);
-    //             xMin = localXMin;
-    //             xMax = localXMax;
-    //         }
-
-    //         let xMinIndex, xMaxIndex;
-    //         for (let i = 0; i < channelValues.length; i++) {
-    //             const x = channelValues[i];
-    //             if (x < xMin || x > xMax) {
-    //                 if (isFinite(xMinIndex)) {
-    //                     break;
-    //                 } else {
-    //                     continue;
-    //                 }
-    //             }
-
-    //             if (!isFinite(xMinIndex)) {
-    //                 xMinIndex = i;
-    //             }
-    //             xMaxIndex = i;
-    //         }
-
-    //         return {x: channelValues.slice(xMinIndex, xMaxIndex + 1), y: coordinateData.values.slice(xMinIndex, xMaxIndex + 1)};
-    //     }
-    //     return null;
-    // }
 
     autoButtonTooltip = () => {
         return(
@@ -499,11 +416,13 @@ export class ProfileFittingComponent extends React.Component<ProfileFittingCompo
                             </div>
                         </div>
                     </Popover>
-                    <Switch
-                        label="residual"
-                        checked={fittingStore.enableResidual}
-                        onChange={(ev) => fittingStore.setEnableResidual(ev.currentTarget.checked)}
-                    />
+                    <div className="switch-wrapper">
+                        <Switch
+                            label="residual"
+                            checked={fittingStore.enableResidual}
+                            onChange={(ev) => fittingStore.setEnableResidual(ev.currentTarget.checked)}
+                            />
+                    </div>
                 </div>
             </div>
         );

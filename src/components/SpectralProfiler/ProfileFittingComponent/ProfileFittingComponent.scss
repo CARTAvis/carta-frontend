@@ -55,6 +55,7 @@
                 overflow: auto;
                 height: 100%;
                 flex: 1;
+                user-select: text;
             }
         }
 
@@ -74,7 +75,9 @@
             margin-left: 10px;
         }
 
-        .bp3-switch{
+        .switch-wrapper{
+            height: 30px;
+            padding-top: 5px;
             margin-left: 15px;
         }
     }
@@ -90,6 +93,8 @@
             overflow: auto;
             height: 100%;
             flex: 1;
+            margin: 5px;
+            user-select: text;
         }
     }
 
