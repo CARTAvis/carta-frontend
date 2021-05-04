@@ -31,8 +31,6 @@ precision highp float;
 #define SIN_90 1.0
 #define COS_90 0.0
 
-#define FLT_MAX 3.402823466e+38
-
 uniform float uLineThickness;
 uniform highp int uShapeType;
 uniform vec3 uSelectedSourceColor;

@@ -1,5 +1,6 @@
 #version 300 es
 precision highp float;
+precision highp usampler2D;
 
 #define BOX_FILLED 0
 #define BOX_LINED 1
