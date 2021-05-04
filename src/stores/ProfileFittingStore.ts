@@ -1,5 +1,6 @@
 import {action, computed, observable, makeObservable} from "mobx";
 import {FittingFunction, FittingContinuum} from "components/SpectralProfiler/ProfileFittingComponent/ProfileFittingComponent";
+import {SpectralProfileWidgetStore} from "stores/widgets";
 import {Point2D} from "models";
 import * as GSL from "gsl_wrapper";
 import {LinePlotInsideBoxMarker} from "components/Shared/LinePlot/LinePlotComponent";
@@ -28,7 +29,10 @@ export class ProfileFittingStore {
     @observable isAutoDetectWithFitting: boolean;
     @observable hasAutoDetectResult: boolean;
     @observable detectedComponentN: number;
-    @observable enableResidual: boolean
+    @observable enableResidual: boolean;
+    @observable originData: {x: number[], y: Float32Array |Float64Array}
+
+    private readonly widgetStore: SpectralProfileWidgetStore;
 
     @action setComponents(length: number, reset?: boolean) {
         this.setSelectedIndex(length - 1);
@@ -64,6 +68,20 @@ export class ProfileFittingStore {
     @computed get selectedComponent(): ProfileFittingIndividualStore {
         if (this.components && this.selectedIndex < this.components.length) {
             return this.components[this.selectedIndex];
+        }
+        return null;
+    }
+
+    @computed get fittingData(): {x: number[], y: Float32Array | Float64Array} {
+        if (this.widgetStore.plotData.fittingData) {
+            let x = this.widgetStore.plotData.fittingData.x;
+            let y = this.widgetStore.plotData.fittingData.y;
+            let nonNaNIndex = y.findIndex(yi => !isNaN(yi));
+            if (nonNaNIndex > 0) {
+                x = x.slice(nonNaNIndex , x.length - nonNaNIndex);
+                y = y.slice(nonNaNIndex , y.length - nonNaNIndex);
+            } 
+            return {x, y};
         }
         return null;
     }
@@ -163,8 +181,9 @@ export class ProfileFittingStore {
         return amp * 0.25 * Math.pow(fwhm, 2) / (Math.pow(x - center, 2) + 0.25 * Math.pow(fwhm, 2));
     }
 
-    getBaseLinePoint2DArray(x: number[]): Point2D[] {
+    @computed get baseLinePoint2DArray(): Point2D[] {
         if (this.components && this.continuum !== FittingContinuum.NONE) {
+            const x = this.widgetStore.plotData.fittingData.x;
             const continuumPoint2DArray = new Array<{ x: number, y: number }>(x.length);
             for (let i = 0; i < x.length; i++) {
                 let yi = this.yIntercept;
@@ -178,8 +197,9 @@ export class ProfileFittingStore {
         return [];
     }
 
-    getFittingResultPoint2DArray(x: number[]): Point2D[] {
+    @computed get resultPoint2DArray(): Point2D[] {
         if (this.components && this.hasResult) {
+            const x = this.originData.x;
             const resultPoint2DArray = new Array<Point2D>(x.length);
             for (let i = 0; i < x.length; i++) {
                 let yi = 0;
@@ -197,8 +217,9 @@ export class ProfileFittingStore {
         return [];
     }
 
-    getFittingIndividualResultPoint2DArrays(x: number[]): Array<Point2D[]> {
+    @computed get singleResultsPoint2DArrays(): Array<Point2D[]> {
         if (this.components && this.hasResult) {
+            const x = this.originData.x;
             const individualResultPoint2DArrays = new Array<Point2D[]>(this.components.length);
             for (const component of this.components) {
                 let individualResultPoint2DArray: Point2D[] = [];
@@ -213,8 +234,10 @@ export class ProfileFittingStore {
         return [];
     }
 
-    getFittingResidualPoint2DArray(x: number[], y: Float32Array | Float64Array): Point2D[] {
+    @computed get residualPoint2DArray(): Point2D[] {
         if (this.components && this.hasResult) {
+            const x = this.originData.x;
+            const y = this.originData.y;
             const residualPoint2DArray = new Array<{ x: number, y: number }>(x.length);
             for (let i = 0; i < x.length; i++) {
                 let yi = 0;
@@ -232,7 +255,9 @@ export class ProfileFittingStore {
         return [];
     }
 
-    autoDetect = (x: number[], y: number[]): void => {
+    autoDetect = (): void => {
+        const x = this.fittingData.x;
+        const y = Array.prototype.slice.call(this.fittingData.y);
         const result = autoDetecting(x, y, this.isAutoDetectWithCont ? null: {order: this.continuum, yIntercept: this.yIntercept, slope: this.slope});
         if (result.components?.length > 0) {
             this.setComponents(result.components.length, true);
@@ -248,7 +273,13 @@ export class ProfileFittingStore {
         this.setDetectedComponentN(result.components? result.components.length : 0);
     }
 
-    fitData = (x: number[], y: Float32Array | Float64Array): void => {        
+    fitData = (): void => {
+        if (!this.widgetStore?.plotData?.fittingData) {
+            return;
+        }
+        const x = this.widgetStore.plotData.fittingData.x;
+        const y = this.widgetStore.plotData.fittingData.y;
+        this.setOriginData(x, y);
         const inputData = [];
         const lockedInputData = [];
         this.components.forEach(component => {
@@ -299,8 +330,9 @@ export class ProfileFittingStore {
         this.setHasResult(true);
     }
 
-    constructor() {
+    constructor(widgetStore: SpectralProfileWidgetStore) {
         makeObservable(this);
+        this.widgetStore = widgetStore;
         this.function = FittingFunction.GAUSSIAN;
         this.components = [new ProfileFittingIndividualStore()];
         this.continuum = FittingContinuum.NONE;
@@ -396,6 +428,9 @@ export class ProfileFittingStore {
         this.enableResidual = val;
     }
 
+    @action setOriginData = (x: number[], y: Float32Array | Float64Array) => {
+        this.originData = {x, y};
+    }
 }
 
 export class ProfileFittingIndividualStore {

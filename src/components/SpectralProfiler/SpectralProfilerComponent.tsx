@@ -4,18 +4,17 @@ import {action, autorun, computed, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 import {Colors, NonIdealState} from "@blueprintjs/core";
 import ReactResizeDetector from "react-resize-detector";
-import {CARTA} from "carta-protobuf";
-import {LineMarker, LinePlotComponent, LinePlotComponentProps, LinePlotSelectingMode, ProfilerInfoComponent, VERTICAL_RANGE_PADDING, SmoothingType, PlotType} from "components/Shared";
-import {TickType, MultiPlotProps} from "../Shared/LinePlot/PlotContainer/PlotContainerComponent";
+import SplitPane, { Pane } from "react-split-pane";
+import {LineMarker, LinePlotComponent, LinePlotComponentProps, LinePlotSelectingMode, SmoothingType, PlotType} from "components/Shared";
+import {MultiPlotProps, TickType} from "../Shared/LinePlot/PlotContainer/PlotContainerComponent";
 import {SpectralProfilerToolbarComponent} from "./SpectralProfilerToolbarComponent/SpectralProfilerToolbarComponent";
-import {SpectralProfileStore, WidgetProps, HelpType, AnimatorStore, WidgetsStore, AppStore, DefaultWidgetConfig, RegionStore} from "stores";
-import {SpectralProfileWidgetStore} from "stores/widgets";
-import {Point2D, ProcessedSpectralProfile} from "models";
-import {binarySearchByX, clamp, formattedExponential, formattedNotation, toExponential, toFixed, getColorForTheme} from "utilities";
+import {ProfileInfo, SpectralProfilerInfoComponent} from "./SpectralProfilerInfoComponent/SpectralProfilerInfoComponent";
+import {WidgetProps, HelpType, AnimatorStore, WidgetsStore, AppStore, DefaultWidgetConfig} from "stores";
+import {MultiPlotData, MultiProfileCategory, SpectralProfileWidgetStore} from "stores/widgets";
+import {Point2D} from "models";
+import {binarySearchByX, formattedExponential, formattedNotation, toExponential, toFixed, getColorForTheme} from "utilities";
 import "./SpectralProfilerComponent.scss";
 import { FittingContinuum } from "./ProfileFittingComponent/ProfileFittingComponent";
-
-type PlotData = { values: Point2D[], smoothingValues: Point2D[], fittingBaselineValues: Point2D[], fittingResultValues: Point2D[], fittingIndividualResultValues:Array<Point2D[]>, fittingResidualValues: Point2D[], xMin: number, xMax: number, yMin: number, yMax: number, yMean: number, yRms: number, progress: number };
 
 @observer
 export class SpectralProfilerComponent extends React.Component<WidgetProps> {
@@ -23,10 +22,10 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
         return {
             id: "spectral-profiler",
             type: "spectral-profiler",
-            minWidth: 250,
-            minHeight: 225,
-            defaultWidth: 750,
-            defaultHeight: 275,
+            minWidth: 780,
+            minHeight: 300,
+            defaultWidth: 780,
+            defaultHeight: 300,
             title: "Z Profile: Cursor",
             isCloseable: true,
             helpType: HelpType.SPECTRAL_PROFILER
@@ -48,125 +47,12 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
         return new SpectralProfileWidgetStore();
     }
 
-    @computed get profileStore(): SpectralProfileStore {
-        if (this.widgetStore.effectiveFrame) {
-            let fileId = this.widgetStore.effectiveFrame.frameInfo.fileId;
-            const regionId = this.widgetStore.effectiveRegionId;
-            const frameMap = AppStore.Instance.spectralProfiles.get(fileId);
-            if (frameMap) {
-                return frameMap.get(regionId);
-            }
-        }
-        return null;
+    @computed get plotData(): MultiPlotData {
+        return this.widgetStore.plotData;
     }
 
-    @computed get plotData(): PlotData {
-        const frame = this.widgetStore.effectiveFrame;
-        if (!frame) {
-            return null;
-        }
-
-        let coordinateData: ProcessedSpectralProfile;
-        let regionId = this.widgetStore.effectiveRegionId;
-        if (frame.regionSet) {
-            const region = frame.regionSet.regions.find(r => r.regionId === regionId);
-            if (region && this.profileStore) {
-                coordinateData = this.profileStore.getProfile(this.widgetStore.coordinate, region.isClosedRegion ? this.widgetStore.statsType : CARTA.StatsType.Sum);
-            }
-        }
-
-        if (coordinateData && coordinateData.values && coordinateData.values.length &&
-            frame.channelValues && frame.channelValues.length &&
-            coordinateData.values.length === frame.channelValues.length) {
-            const channelValues = frame.channelValues;
-            let xMin = Math.min(channelValues[0], channelValues[channelValues.length - 1]);
-            let xMax = Math.max(channelValues[0], channelValues[channelValues.length - 1]);
-
-            if (!this.widgetStore.isAutoScaledX) {
-                const localXMin = clamp(this.widgetStore.minX, xMin, xMax);
-                const localXMax = clamp(this.widgetStore.maxX, xMin, xMax);
-                xMin = localXMin;
-                xMax = localXMax;
-            }
-
-            let yMin = Number.MAX_VALUE;
-            let yMax = -Number.MAX_VALUE;
-            let yMean;
-            let yRms;
-            // Variables for mean and RMS calculations
-            let ySum = 0;
-            let ySum2 = 0;
-            let yCount = 0;
-
-            let values: Array<{ x: number, y: number }> = [];
-            for (let i = 0; i < channelValues.length; i++) {
-                const x = channelValues[i];
-                const y = coordinateData.values[i];
-
-                // Skip values outside of range. If array already contains elements, we've reached the end of the range, and can break
-                if (x < xMin || x > xMax) {
-                    if (values.length) {
-                        break;
-                    } else {
-                        continue;
-                    }
-                }
-                values.push({x, y});
-                // Mean/RMS calculations
-                if (!isNaN(y)) {
-                    yMin = Math.min(yMin, y);
-                    yMax = Math.max(yMax, y);
-                    yCount++;
-                    ySum += y;
-                    ySum2 += y * y;
-                }
-            }
-            let smoothingValues: Point2D[] = this.widgetStore.smoothingStore.getSmoothingPoint2DArray(channelValues, coordinateData.values);
-            let fittingBaselineValues: Point2D[] = this.widgetStore.fittingStore.getBaseLinePoint2DArray(channelValues);
-            let fittingResultValues: Point2D[] = this.widgetStore.fittingStore.getFittingResultPoint2DArray(channelValues);
-            let fittingIndividualResultValues: Array<Point2D[]> = this.widgetStore.fittingStore.getFittingIndividualResultPoint2DArrays(channelValues);
-            const smoothingData = this.widgetStore.smoothingStore.getSmoothingValues(channelValues, coordinateData.values);
-            let fittingResidualValues: Point2D[] = this.widgetStore.smoothingStore.type === SmoothingType.NONE ? this.widgetStore.fittingStore.getFittingResidualPoint2DArray(channelValues, coordinateData.values) : this.widgetStore.fittingStore.getFittingResidualPoint2DArray(smoothingData.x, smoothingData.y);
-
-            if (yCount > 0) {
-                yMean = ySum / yCount;
-                yRms = Math.sqrt((ySum2 / yCount) - yMean * yMean);
-            }
-
-            if (yMin === Number.MAX_VALUE) {
-                yMin = undefined;
-                yMax = undefined;
-            } else {
-                // extend y range a bit
-                const range = yMax - yMin;
-                yMin -= range * VERTICAL_RANGE_PADDING;
-                yMax += range * VERTICAL_RANGE_PADDING;
-            }
-            return {values, smoothingValues, fittingBaselineValues, fittingResultValues, fittingIndividualResultValues, fittingResidualValues, xMin, xMax, yMin, yMax, yMean, yRms, progress: coordinateData.progress};
-        }
-        return null;
-    }
-
-    @computed get exportHeaders(): string[] {
-        let headerString = [];
-        const frame = this.widgetStore.effectiveFrame;
-        if (frame && frame.frameInfo && frame.regionSet) {
-            const regionId = this.widgetStore.effectiveRegionId;
-            const region = frame.regionSet.regions.find(r => r.regionId === regionId);
-
-            // statistic type, ignore when region == cursor
-            if (regionId !== 0) {
-                headerString.push(`statistic: ${SpectralProfileWidgetStore.StatsTypeString(this.widgetStore.statsType)}`);
-            }
-            // region info
-            if (region) {
-                headerString.push(region.regionProperties);
-                if (frame.validWcs) {
-                    headerString.push(frame.getRegionWcsProperties(region));
-                }
-            }
-        }
-        return headerString;
+    @computed get isMeanRmsVisible(): boolean { // Show Mean/RMS when only 1 profile
+        return this.widgetStore.meanRmsVisible && this.plotData?.numProfiles === 1;
     }
 
     constructor(props: WidgetProps) {
@@ -185,39 +71,21 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
                 appStore.widgetsStore.addSpectralProfileWidget(this.props.id);
             }
         }
-        // Update widget title when region or coordinate changes
+
+        // Update widget title
         autorun(() => {
-            if (this.widgetStore && this.widgetStore.effectiveFrame) {
-                const coordinate = this.widgetStore.coordinate;
-                const frame = this.widgetStore.effectiveFrame;
-                let progressString = "";
-                const currentData = this.plotData;
-                if (currentData && isFinite(currentData.progress)) {
-                    if (currentData.progress < 1.0) {
-                        progressString = `[${toFixed(currentData.progress * 100)}% complete]`;
-                        this.widgetStore.updateStreamingDataStatus(true);
-                    } else {
-                        this.widgetStore.updateStreamingDataStatus(false);
-                    }
+            let title = "Z Profile";
+            const currentData = this.plotData;
+            if (this.widgetStore && currentData && isFinite(currentData.progress)) {
+                if (currentData.progress < 1.0) {
+                    const totalProgress = currentData.numProfiles * 100;
+                    title += `: [${toFixed(currentData.progress * totalProgress)}%/${totalProgress}% complete]`
+                    this.widgetStore.updateStreamingDataStatus(true);
+                } else {
+                    this.widgetStore.updateStreamingDataStatus(false);
                 }
-                if (frame && coordinate) {
-                    let coordinateString: string;
-                    if (coordinate.length === 2) {
-                        coordinateString = `Z Profile (Stokes ${coordinate[0]})`;
-                    } else {
-                        coordinateString = `Z Profile`;
-                    }
-                    const regionId = this.widgetStore.effectiveRegionId;
-                    const regionString = regionId === 0 ? "Cursor" : `Region #${regionId}`;
-                    const selectedString = this.widgetStore.matchesSelectedRegion ? "(Active)" : "";
-                    appStore.widgetsStore.setWidgetTitle(this.props.id, `${coordinateString}: ${regionString} ${selectedString} ${progressString}`);
-                }
-                if (currentData) {
-                    this.widgetStore.initXYBoundaries(currentData.xMin, currentData.xMax, currentData.yMin, currentData.yMax);
-                }
-            } else {
-                appStore.widgetsStore.setWidgetTitle(this.props.id, `Z Profile: Cursor`);
             }
+            appStore.widgetsStore.setWidgetTitle(this.props.id, title);
         });
     }
 
@@ -280,35 +148,49 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
         this.widgetStore.setCursor(x);
     }, 33);
 
-    private genProfilerInfo = (): string[] => {
-        let profilerInfo: string[] = [];
-        const frame = this.widgetStore.effectiveFrame;
-        if (frame && this.plotData) {
-            const cursorX = {
-                profiler: this.widgetStore.cursorX,
-                image: this.currentChannelValue,
-                unit: frame.spectralUnitStr
-            };
-            const data = this.plotData.values;
-            const nearest = binarySearchByX(data, this.widgetStore.isMouseMoveIntoLinePlots ? cursorX.profiler : cursorX.image);
-            let cursorString = "";
-            if (nearest && nearest.point && nearest.index >= 0 && nearest.index < data.length) {
-                let floatXStr = "";
-                const diffLeft = nearest.index - 1 >= 0 ? Math.abs(nearest.point.x - data[nearest.index - 1].x) : 0;
-                if (diffLeft > 0 && diffLeft < 1e-6) {
-                    floatXStr = formattedNotation(nearest.point.x);
-                } else if (diffLeft >= 1e-6  && diffLeft < 1e-3) {
-                    floatXStr = toFixed(nearest.point.x, 6);
-                } else {
-                    floatXStr = toFixed(nearest.point.x, 3);
-                }
-                const xLabel = cursorX.unit === "Channel" ? "Channel " + toFixed(nearest.point.x) : floatXStr + " " + cursorX.unit;
-                cursorString =  "(" + xLabel + ", " + toExponential(nearest.point.y, 2) + ")";
+    private genCursoInfoString = (data: Point2D[], cursorXValue: number, cursorXUnit: string, label: string): string => {
+        let cursorInfoString = undefined;
+        const nearest = binarySearchByX(data, cursorXValue);
+        if (nearest?.point && nearest?.index >= 0 && nearest?.index < data?.length) {
+            let floatXStr = "";
+            const diffLeft = nearest.index - 1 >= 0 ? Math.abs(nearest.point.x - data[nearest.index - 1].x) : 0;
+            if (diffLeft > 0 && diffLeft < 1e-6) {
+                floatXStr = formattedNotation(nearest.point.x);
+            } else if (diffLeft >= 1e-6  && diffLeft < 1e-3) {
+                floatXStr = toFixed(nearest.point.x, 6);
+            } else {
+                floatXStr = toFixed(nearest.point.x, 3);
             }
+            const xLabel = cursorXUnit === "Channel" ? `Channel ${toFixed(nearest.point.x)}` : `${floatXStr} ${cursorXUnit}`;
+            cursorInfoString = `(${xLabel}, ${toExponential(nearest.point.y, 2)})`;
+        }
+        return `${label}: ${cursorInfoString ?? "---"}`;
+    };
 
-            profilerInfo.push(`${this.widgetStore.isMouseMoveIntoLinePlots ? "Cursor:" : "Data:"} ${cursorString}`);
-            if (this.widgetStore.meanRmsVisible) {
-                profilerInfo.push(`Mean/RMS: ${formattedExponential(this.plotData.yMean, 2) + " / " + formattedExponential(this.plotData.yRms, 2)}`);
+    private genProfilerInfo = (): ProfileInfo[] => {
+        let profilerInfo: ProfileInfo[] = [];
+        const frame = this.widgetStore.effectiveFrame;
+        if (frame && this.plotData?.numProfiles > 0 && this.plotData?.data) {
+            const isCursorInsideLinePlots = this.widgetStore.isMouseMoveIntoLinePlots;
+            const label = isCursorInsideLinePlots ? "Cursor" : "Data";
+            const cursorXValue = isCursorInsideLinePlots ? this.widgetStore.cursorX : this.currentChannelValue;
+            const cursorXUnit = frame.spectralUnitStr;
+
+            if (this.plotData.numProfiles === 1) { // Single profile, Mean/RMS is available
+                const data = this.plotData.data[0];
+                const cursorInfoString = this.genCursoInfoString(data, cursorXValue, cursorXUnit, label);
+                profilerInfo.push({
+                    infoString: this.isMeanRmsVisible ? `${cursorInfoString}, Mean/RMS: ${formattedExponential(this.plotData.yMean, 2)}/${formattedExponential(this.plotData.yRms, 2)}` : cursorInfoString
+                });
+            } else {
+                for (let i = 0; i < this.plotData.numProfiles; i++) {
+                    const data = this.plotData.data[i];
+                    const cursorInfoString = this.genCursoInfoString(data, cursorXValue, cursorXUnit, label);
+                    profilerInfo.push({
+                        color: this.plotData.colors?.[i],
+                        infoString: `${cursorInfoString}, ${this.plotData.labels?.[i]?.image}, ${this.plotData.labels?.[i]?.plot}`
+                    });
+                }
             }
         }
         return profilerInfo;
@@ -378,16 +260,10 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
             return <NonIdealState icon={"error"} title={"Missing profile"} description={"Profile not found"}/>;
         }
 
-        const frame = this.widgetStore.effectiveFrame;
-        const imageName = (frame ? frame.filename : undefined);
-
         let linePlotProps: LinePlotComponentProps = {
             xLabel: "Channel",
             yLabel: "Value",
             darkMode: appStore.darkTheme,
-            imageName: imageName,
-            plotName: `Z profile`,
-            plotType: this.widgetStore.plotType,
             tickTypeY: TickType.Scientific,
             graphClicked: this.onChannelChanged,
             graphZoomedX: this.widgetStore.setXBounds,
@@ -408,107 +284,130 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
             insideBoxes: this.widgetStore.fittingStore.componentPlottingBoxes,
             zeroLineWidth: 2,
             order: 1,
-            multiPlotPropsMap: new Map()
+            multiPlotPropsMap: new Map<string, MultiPlotProps>()
         };
 
-        if (this.profileStore && frame) {
+        const frame = this.widgetStore.effectiveFrame;
+        if (frame) {
             if (frame.spectralAxis && !frame.isCoordChannel) {
                 linePlotProps.xLabel = frame.spectralLabel;
             }
             if (frame.unit) {
-                let yLabelName = "Value";
-                let yLabelUnit = `(${frame.unit})`;
-                let region: RegionStore;
-                if (frame.regionSet) {
-                    region = frame.regionSet.regions.find(r => r.regionId === this.widgetStore.effectiveRegionId);
-                    if (region && region.regionType !== CARTA.RegionType.POINT) {
-                        yLabelName = SpectralProfileWidgetStore.StatsTypeString(this.widgetStore.statsType);
-                        if (this.widgetStore.statsType === CARTA.StatsType.FluxDensity) {
-                            yLabelUnit =  "(Jy)";
-                        } else if (this.widgetStore.statsType === CARTA.StatsType.SumSq) {
-                            yLabelUnit = `(${frame.unit})^2`;
-                        }
+                let yLabelUnit = "";
+                if (this.widgetStore.profileSelectionStore.isSameStatsTypeUnit) {
+                    if (this.widgetStore.profileSelectionStore.isStatsTypeFluxDensityOnly) {
+                        yLabelUnit =  " (Jy)";
+                    } else if (this.widgetStore.profileSelectionStore.isStatsTypeSumSqOnly) {
+                        yLabelUnit = ` (${frame.unit})^2`;
+                    } else {
+                        yLabelUnit = ` (${frame.unit})`;
                     }
                 }
-                linePlotProps.yLabel = `${yLabelName} ${yLabelUnit}`;
+                linePlotProps.yLabel = `Value${yLabelUnit}`;
             }
 
             const currentPlotData = this.plotData;
-            if (currentPlotData) {
-                linePlotProps.data = currentPlotData.values;
+            if (currentPlotData?.numProfiles > 0) {
+                linePlotProps.imageName = currentPlotData.plotName?.image;
+                linePlotProps.plotName = currentPlotData.plotName?.plot;
+                // Fill profile & smoothed profiles
+                for(let i = 0; i < currentPlotData.numProfiles; i++) {
+                    const smoothingStore = this.widgetStore.smoothingStore;
+                    const imageName = currentPlotData.labels[i]?.image;
+                    const plotName = `Z-profile-${currentPlotData.labels[i]?.plot}`.replace(/,\s/g, '-')?.replace(/\s/g, '_');
+                    if (i < currentPlotData.data?.length) {
+                        linePlotProps.multiPlotPropsMap.set(`profile${i}`, {
+                            imageName: imageName,
+                            plotName: plotName,
+                            data: currentPlotData.data[i],
+                            type: this.widgetStore.plotType,
+                            borderColor: currentPlotData.colors[i],
+                            comments: currentPlotData.comments[i],
+                            order: 1,
+                            hidden: smoothingStore.type !== SmoothingType.NONE && !smoothingStore.isOverlayOn
+                        });
+                    }
+
+                    if (smoothingStore.type !== SmoothingType.NONE && i < currentPlotData.smoothedData?.length) {
+                        linePlotProps.multiPlotPropsMap.set(`smoothedProfile${i}`, {
+                            imageName: imageName,
+                            plotName: `${plotName}-smoothed`,
+                            data: currentPlotData.smoothedData[i],
+                            type: smoothingStore.lineType,
+                            borderColor: currentPlotData.numProfiles > 1 ? currentPlotData.colors[i] : getColorForTheme(smoothingStore.lineColor),
+                            borderWidth: currentPlotData.numProfiles > 1 ? this.widgetStore.lineWidth + 1 : smoothingStore.lineWidth,
+                            pointRadius: smoothingStore.pointRadius,  
+                            order: 0,
+                            comments: [...currentPlotData.comments[i], ...smoothingStore.comments]
+                        });
+                    }
+                }
+
                 // Opacity ranges from 0.15 to 0.40 when data is in progress, and is 1.0 when finished
                 linePlotProps.opacity = currentPlotData.progress < 1.0 ? 0.15 + currentPlotData.progress / 4.0 : 1.0;
-                
+
                 // set line color
                 let primaryLineColor = getColorForTheme(this.widgetStore.primaryLineColor);
                 linePlotProps.lineColor = primaryLineColor;
-                const smoothingStore = this.widgetStore.smoothingStore;
-                if (smoothingStore.type !== SmoothingType.NONE) {
-                    if (!smoothingStore.isOverlayOn) {
-                        linePlotProps.lineColor = "#00000000";
-                    }
-
-                    let smoothingPlotProps: MultiPlotProps = {
-                        data: currentPlotData.smoothingValues,
-                        type: smoothingStore.lineType,
-                        borderColor: getColorForTheme(smoothingStore.lineColor),
-                        borderWidth: smoothingStore.lineWidth,
-                        pointRadius: smoothingStore.pointRadius,
-                        order: 0,
-                        exportData: smoothingStore.exportData
-                    };
-                    linePlotProps.multiPlotPropsMap.set("smoothed", smoothingPlotProps);
-                }
 
                 const fittingStore = this.widgetStore.fittingStore;
-                if (fittingStore.continuum !== FittingContinuum.NONE && !fittingStore.hasResult) {
-                    let fittingPlotProps: MultiPlotProps = {
-                        data: currentPlotData.fittingBaselineValues,
-                        type: PlotType.LINES,
-                        borderColor: getColorForTheme("auto-lime"),
-                        borderWidth: 1,
-                        pointRadius: 1,
-                        order: 0
-                    }
-                    linePlotProps.multiPlotPropsMap.set("fittingBaseline", fittingPlotProps);
-                }
-                if (fittingStore.hasResult) {
-                    let fittingPlotProps: MultiPlotProps = {
-                        data: currentPlotData.fittingResultValues,
-                        type: PlotType.LINES,
-                        borderColor: getColorForTheme("auto-orange"),
-                        borderWidth: 1,
-                        pointRadius: 1,
-                        order: 0
-                    }
-                    linePlotProps.multiPlotPropsMap.set("fittingResult", fittingPlotProps);
-
-                    for (let i = 0; i < currentPlotData.fittingIndividualResultValues.length; i++) {
-                        const individualPlotProps: MultiPlotProps = {
-                            data: currentPlotData.fittingIndividualResultValues[i],
+                if (this.widgetStore.profileSelectionStore.activeProfileCategory === MultiProfileCategory.NONE) {
+                    if (fittingStore.continuum !== FittingContinuum.NONE && !fittingStore.hasResult) {
+                        let fittingPlotProps: MultiPlotProps = {
+                            imageName: currentPlotData.plotName.image,
+                            plotName: currentPlotData.plotName.plot,
+                            data: fittingStore.baseLinePoint2DArray,
                             type: PlotType.LINES,
-                            borderColor: getColorForTheme("auto-orange"),
+                            borderColor: getColorForTheme("auto-lime"),
                             borderWidth: 1,
                             pointRadius: 1,
-                            order: 0,
-                            opacity: 0.6
+                            order: 0
                         }
-                        linePlotProps.multiPlotPropsMap.set(`fittingIndividual(${i + 1})`, individualPlotProps);
+                        linePlotProps.multiPlotPropsMap.set("fittingBaseline", fittingPlotProps);
                     }
-
-                    if (fittingStore.enableResidual) {
-                        let fittingResidualPlotProps: MultiPlotProps = {
-                            data: currentPlotData.fittingResidualValues,
-                            type: PlotType.POINTS,
+                    if (fittingStore.hasResult) {
+                        let fittingPlotProps: MultiPlotProps = {
+                            imageName: currentPlotData.plotName.image,
+                            plotName: currentPlotData.plotName.plot,
+                            data: fittingStore.resultPoint2DArray,
+                            type: PlotType.LINES,
                             borderColor: getColorForTheme("auto-orange"),
                             borderWidth: 1,
                             pointRadius: 1,
                             order: 0
                         }
-                        linePlotProps.multiPlotPropsMap.set("fittingResidual", fittingResidualPlotProps);
+                        linePlotProps.multiPlotPropsMap.set("fittingResult", fittingPlotProps);
+                        
+                        for (let i = 0; i < fittingStore.singleResultsPoint2DArrays.length; i++) {
+                            const individualPlotProps: MultiPlotProps = {
+                                imageName: currentPlotData.plotName.image,
+                                plotName: currentPlotData.plotName.plot,
+                                data: fittingStore.singleResultsPoint2DArrays[i],
+                                type: PlotType.LINES,
+                                borderColor: getColorForTheme("auto-orange"),
+                                borderWidth: 1,
+                                pointRadius: 1,
+                                order: 0,
+                                opacity: 0.6
+                            }
+                            linePlotProps.multiPlotPropsMap.set(`fittingIndividual(${i + 1})`, individualPlotProps);
+                        }
+                        
+                        if (fittingStore.enableResidual) {
+                            let fittingResidualPlotProps: MultiPlotProps = {
+                                imageName: currentPlotData.plotName.image,
+                                plotName: currentPlotData.plotName.plot,
+                                data: fittingStore.residualPoint2DArray,
+                                type: PlotType.POINTS,
+                                borderColor: getColorForTheme("auto-orange"),
+                                borderWidth: 1,
+                                pointRadius: 1,
+                                order: 0
+                            }
+                            linePlotProps.multiPlotPropsMap.set("fittingResidual", fittingResidualPlotProps);
+                        }
                     }
-                }
-
+                }    
                 // Determine scale in X and Y directions. If auto-scaling, use the bounds of the current data
                 if (this.widgetStore.isAutoScaledX) {
                     linePlotProps.xMin = currentPlotData.xMin;
@@ -557,7 +456,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
                 });
             }
 
-            if (this.widgetStore.meanRmsVisible && currentPlotData && isFinite(currentPlotData.yMean) && isFinite(currentPlotData.yRms)) {
+            if (this.isMeanRmsVisible && isFinite(currentPlotData.yMean) && isFinite(currentPlotData.yRms)) {
                 linePlotProps.markers.push({
                     value: currentPlotData.yMean,
                     id: "marker-mean",
@@ -590,8 +489,6 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
                     color: appStore.darkTheme ? Colors.GRAY4 : Colors.GRAY2
                 });
             }
-
-            linePlotProps.comments = this.exportHeaders;
         }
 
         let className = "spectral-profiler-widget";
@@ -609,13 +506,22 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
                     <div className="profile-toolbar">
                         <SpectralProfilerToolbarComponent widgetStore={this.widgetStore} id={this.props.id}/>
                     </div>
-                    <div className="profile-plot">
-                        <LinePlotComponent {...linePlotProps}/>
-                    </div>
-                    <ProfilerInfoComponent info={this.genProfilerInfo()}/>
+                    <SplitPane
+                        className="body-split-pane"
+                        split="horizontal"
+                        primary={"second"}
+                        defaultSize={"25%"}
+                        minSize={"25%"}
+                    >
+                        <Pane className={"line-plot-container"}>
+                            <LinePlotComponent {...linePlotProps}/>
+                        </Pane>
+                        <Pane className={"info-container"}>
+                            <SpectralProfilerInfoComponent profileInfo={this.genProfilerInfo()}/>
+                        </Pane>
+                    </SplitPane>
                 </div>
-                <ReactResizeDetector handleWidth handleHeight onResize={this.onResize} refreshMode={"throttle"} refreshRate={33}>
-                </ReactResizeDetector>
+                <ReactResizeDetector handleWidth handleHeight onResize={this.onResize} refreshMode={"throttle"} refreshRate={33}/>
             </div>
         );
     }

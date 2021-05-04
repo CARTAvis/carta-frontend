@@ -1,14 +1,12 @@
 import * as React from "react";
-import {computed, observable, action, autorun, makeObservable} from "mobx";
+import {observable, action, autorun, makeObservable} from "mobx";
 import {observer} from "mobx-react";
 import {AnchorButton, FormGroup, HTMLSelect, Slider, Pre, Text, Intent, Tooltip, Switch, Popover, Button} from "@blueprintjs/core";
-import {SafeNumericInput, SmoothingType} from "components/Shared";
+import {SafeNumericInput} from "components/Shared";
 import {ProfileFittingStore} from "stores/ProfileFittingStore"
-import {SpectralProfileWidgetStore} from "stores/widgets/SpectralProfileWidgetStore";
-import {AppStore, SpectralProfileStore} from "stores";
-import {ProcessedSpectralProfile} from "models";
-import {CARTA} from "carta-protobuf";
-import {clamp, getTimestamp} from "utilities";
+import {SpectralProfileWidgetStore} from "stores/widgets";
+import {AppStore} from "stores";
+import {getTimestamp} from "utilities";
 import "./ProfileFittingComponent.scss";
 
 export enum FittingFunction {
@@ -90,14 +88,17 @@ export class ProfileFittingComponent extends React.Component<ProfileFittingCompo
     private autoDetect = () => {
         this.props.fittingStore.setHasResult(false);
         this.props.fittingStore.setComponents(1, true);
-        if (this.props.widgetStore.smoothingStore.type !== SmoothingType.NONE) {
-            const smoothingData = this.props.widgetStore.smoothingStore.getSmoothingValues(this.plottingData.x, this.plottingData.y);
-            this.props.fittingStore.autoDetect(smoothingData.x, Array.prototype.slice.call(smoothingData.y));
-        } else {
-            this.props.fittingStore.autoDetect(this.plottingData.x, Array.prototype.slice.call(this.plottingData.y));
-        }
-        if (this.props.fittingStore.isAutoDetectWithFitting) {
-            this.fitData();
+        if (this.props.widgetStore?.plotData?.fittingData) {
+            // const fittingData = this.props.widgetStore.plotData.fittingData;
+            // if (this.props.widgetStore.smoothingStore.type !== SmoothingType.NONE) {
+            //     const smoothingData = this.props.widgetStore.smoothingStore.getSmoothingValues(fittingData.rawX, fittingData.rawY);
+            //     this.props.fittingStore.autoDetect(smoothingData.x, Array.prototype.slice.call(smoothingData.y));
+            // } else {
+                this.props.fittingStore.autoDetect();
+            // }
+            if (this.props.fittingStore.isAutoDetectWithFitting) {
+                this.fitData();
+            }
         }
         this.props.fittingStore.setHasAutoDetectResult(true);
     }
@@ -141,7 +142,7 @@ export class ProfileFittingComponent extends React.Component<ProfileFittingCompo
 
             // statistic type, ignore when region == cursor
             if (regionId !== 0) {
-                headerString += `# statistic: ${SpectralProfileWidgetStore.StatsTypeString(this.props.widgetStore.statsType)}\n`;
+                headerString += `# statistic: ${this.props.widgetStore.profileSelectionStore.selectedStatsTypes[0]}\n`;
             }
             // region info
             if (region) {
@@ -179,86 +180,92 @@ export class ProfileFittingComponent extends React.Component<ProfileFittingCompo
 
     private fitData = () => {
         if (this.props.fittingStore.readyToFit) {
-            if (this.props.widgetStore.smoothingStore.type !== SmoothingType.NONE) {
-                const smoothData = this.props.widgetStore.smoothingStore.getSmoothingValues(this.plottingData.x, this.plottingData.y);
-                let nonNaNIndex = smoothData.y.findIndex(yi => !isNaN(yi));
-                this.props.fittingStore.fitData(smoothData.x.slice(nonNaNIndex , smoothData.x.length - nonNaNIndex), smoothData.y.slice(nonNaNIndex, smoothData.y.length - nonNaNIndex));
-            } else {
-                this.props.fittingStore.fitData(this.plottingData.x, this.plottingData.y)
-            }
+            // const fittingData = this.props.widgetStore.plotData.fittingData;
+            // if (this.props.widgetStore.smoothingStore.type !== SmoothingType.NONE) {
+            //     const smoothData = this.props.widgetStore.smoothingStore.getSmoothingValues(fittingData.rawX, fittingData.rawY);
+            //     let nonNaNIndex = smoothData.y.findIndex(yi => !isNaN(yi));
+            //     this.props.fittingStore.fitData(smoothData.x.slice(nonNaNIndex , smoothData.x.length - nonNaNIndex), smoothData.y.slice(nonNaNIndex, smoothData.y.length - nonNaNIndex));
+            // } else {
+                this.props.fittingStore.fitData();
+            // }
         }
     }
 
-    @computed get profileStore(): SpectralProfileStore {
-        if (this.props.widgetStore.effectiveFrame) {
-            let fileId = this.props.widgetStore.effectiveFrame.frameInfo.fileId;
-            const regionId = this.props.widgetStore.effectiveRegionId;
-            const frameMap = AppStore.Instance.spectralProfiles.get(fileId);
-            if (frameMap) {
-                return frameMap.get(regionId);
-            }
-        }
-        return null;
-    }
+    // @computed get profileStore(): SpectralProfileStore {
+    //     if (this.props.widgetStore.effectiveFrame) {
+    //         let fileId = this.props.widgetStore.effectiveFrame.frameInfo.fileId;
+    //         const regionId = this.props.widgetStore.effectiveRegionId;
+    //         const frameMap = AppStore.Instance.spectralProfiles.get(fileId);
+    //         if (frameMap) {
+    //             return frameMap.get(regionId);
+    //         }
+    //     }
+    //     return null;
+    // }
 
-    @computed get coordinateData(): ProcessedSpectralProfile {
-        const widgetStore = this.props.widgetStore;
-        const frame = widgetStore.effectiveFrame;
-        if (!frame) {
-            return null;
-        }
+    // @computed get coordinateData(): ProcessedSpectralProfile {
+    //     const widgetStore = this.props.widgetStore;
+    //     const frame = widgetStore.effectiveFrame;
+    //     if (!frame) {
+    //         return null;
+    //     }
         
-        let coordinateData: ProcessedSpectralProfile;
-        let regionId = widgetStore.effectiveRegionId;
-        if (frame.regionSet) {
-            const region = frame.regionSet.regions.find(r => r.regionId === regionId);
-            if (region && this.profileStore) {
-                coordinateData = this.profileStore.getProfile(widgetStore.coordinate, region.isClosedRegion ? widgetStore.statsType : CARTA.StatsType.Sum);
-            }
-        }
-        return coordinateData; 
-    }
+    //     let coordinateData: ProcessedSpectralProfile;
+    //     let regionId = widgetStore.effectiveRegionId;
+    //     if (frame.regionSet) {
+    //         const region = frame.regionSet.regions.find(r => r.regionId === regionId);
+    //         if (region && this.profileStore) {
+    //             coordinateData = this.profileStore.getProfile(widgetStore.coordinate, region.isClosedRegion ? widgetStore.statsType : CARTA.StatsType.Sum);
+    //         }
+    //     }
+    //     return coordinateData; 
+    // }
 
-    @computed get plottingData(): {x: number[] , y: Float32Array | Float64Array} {
-        const widgetStore = this.props.widgetStore;
-        const frame = widgetStore.effectiveFrame;
-        const coordinateData = this.coordinateData;
+    // @computed get plottingData(): {x: number[] , y: Float32Array | Float64Array} {
+    //     if (this.props.widgetStore?.plotData?.fittingData) {
+    //         const fittingData = this.props.widgetStore?.plotData?.fittingData
+    //         return {x: fittingData.rawX, y: fittingData.rawY};
+    //     }
+    //     return null
+    //     const widgetStore = this.props.widgetStore;
+    //     const frame = widgetStore.effectiveFrame;
+    //     const coordinateData = this.coordinateData;
 
-        if (coordinateData && coordinateData.values && coordinateData.values.length &&
-            frame.channelValues && frame.channelValues.length &&
-            coordinateData.values.length === frame.channelValues.length) {
-            const channelValues = frame.channelValues;
-            let xMin = Math.min(channelValues[0], channelValues[channelValues.length - 1]);
-            let xMax = Math.max(channelValues[0], channelValues[channelValues.length - 1]);
+    //     if (coordinateData && coordinateData.values && coordinateData.values.length &&
+    //         frame.channelValues && frame.channelValues.length &&
+    //         coordinateData.values.length === frame.channelValues.length) {
+    //         const channelValues = frame.channelValues;
+    //         let xMin = Math.min(channelValues[0], channelValues[channelValues.length - 1]);
+    //         let xMax = Math.max(channelValues[0], channelValues[channelValues.length - 1]);
 
-            if (!widgetStore.isAutoScaledX) {
-                const localXMin = clamp(widgetStore.minX, xMin, xMax);
-                const localXMax = clamp(widgetStore.maxX, xMin, xMax);
-                xMin = localXMin;
-                xMax = localXMax;
-            }
+    //         if (!widgetStore.isAutoScaledX) {
+    //             const localXMin = clamp(widgetStore.minX, xMin, xMax);
+    //             const localXMax = clamp(widgetStore.maxX, xMin, xMax);
+    //             xMin = localXMin;
+    //             xMax = localXMax;
+    //         }
 
-            let xMinIndex, xMaxIndex;
-            for (let i = 0; i < channelValues.length; i++) {
-                const x = channelValues[i];
-                if (x < xMin || x > xMax) {
-                    if (isFinite(xMinIndex)) {
-                        break;
-                    } else {
-                        continue;
-                    }
-                }
+    //         let xMinIndex, xMaxIndex;
+    //         for (let i = 0; i < channelValues.length; i++) {
+    //             const x = channelValues[i];
+    //             if (x < xMin || x > xMax) {
+    //                 if (isFinite(xMinIndex)) {
+    //                     break;
+    //                 } else {
+    //                     continue;
+    //                 }
+    //             }
 
-                if (!isFinite(xMinIndex)) {
-                    xMinIndex = i;
-                }
-                xMaxIndex = i;
-            }
+    //             if (!isFinite(xMinIndex)) {
+    //                 xMinIndex = i;
+    //             }
+    //             xMaxIndex = i;
+    //         }
 
-            return {x: channelValues.slice(xMinIndex, xMaxIndex + 1), y: coordinateData.values.slice(xMinIndex, xMaxIndex + 1)};
-        }
-        return null;
-    }
+    //         return {x: channelValues.slice(xMinIndex, xMaxIndex + 1), y: coordinateData.values.slice(xMinIndex, xMaxIndex + 1)};
+    //     }
+    //     return null;
+    // }
 
     autoButtonTooltip = () => {
         return(
@@ -282,7 +289,11 @@ export class ProfileFittingComponent extends React.Component<ProfileFittingCompo
         makeObservable(this);
         autorun(() => {
             // clear fitting data when the profile data changed
-            if (this.coordinateData) {
+            if (this.props.widgetStore?.profileSelectionStore?.profiles[0]) {
+                this.reset();
+            }
+
+            if (this.props.widgetStore?.smoothingStore?.type) {
                 this.reset();
             }
         });
