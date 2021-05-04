@@ -137,10 +137,10 @@ export class CatalogViewGLComponent extends React.Component<CatalogViewGLCompone
     }
 
     private updateCanvas = () => {
-        // const appStore = AppStore.Instance;
-        // const baseFrame = appStore.activeFrame;
+        const appStore = AppStore.Instance;
+        const baseFrame = appStore.activeFrame;
 
-        if (this.canvas && this.gl && this.catalogWebGLService.shaderUniforms) {
+        if (baseFrame && this.canvas && this.gl && this.catalogWebGLService.shaderUniforms) {
             this.resizeAndClearCanvas();
             this.renderCatalog();
             // draw in 2d canvas
