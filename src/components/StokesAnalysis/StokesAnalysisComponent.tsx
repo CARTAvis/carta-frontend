@@ -526,8 +526,8 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
         if (reversed) {
             percentage = 1 - percentage;
         }
-        const index = Math.round(percentage * mapSize) * 4;
-        const opacity = this.widgetStore.pointTransparency ? this.widgetStore.pointTransparency : 1;  
+        const index = Math.round(percentage * (mapSize - 1)) * 4;
+        const opacity = this.widgetStore.pointTransparency ? this.widgetStore.pointTransparency : 1; 
         return `rgba(${colorMap[index]}, ${colorMap[index + 1]}, ${colorMap[index + 2]}, ${opacity})`;
     }
 
