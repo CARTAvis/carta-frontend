@@ -1,7 +1,7 @@
 import * as React from "react";
 import {action, autorun, computed, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
-import {AnchorButton, FormGroup, Intent, NonIdealState, Switch, Tooltip, MenuItem, PopoverPosition, Button} from "@blueprintjs/core";
+import {AnchorButton, ButtonGroup, FormGroup, Intent, NonIdealState, Switch, Tooltip, MenuItem, PopoverPosition, Button} from "@blueprintjs/core";
 import {Cell, Column, Regions, RenderMode, SelectionModes, Table} from "@blueprintjs/table";
 import * as ScrollUtils from "../../../node_modules/@blueprintjs/table/lib/esm/common/internal/scrollUtils";
 import {Select, IItemRendererProps, ItemPredicate} from "@blueprintjs/select";
@@ -11,8 +11,8 @@ import FuzzySearch from "fuzzy-search";
 import {CARTA} from "carta-protobuf";
 import {FilterableTableComponent, FilterableTableComponentProps, ClearableNumericInputComponent} from "components/Shared";
 import {AppStore, CatalogStore, CatalogProfileStore, CatalogOverlay, CatalogUpdateMode, CatalogSystemType, DefaultWidgetConfig, HelpType, WidgetProps, WidgetsStore, PreferenceStore, PreferenceKeys} from "stores";
-import {CatalogWidgetStore, CatalogPlotWidgetStoreProps, CatalogPlotType} from "stores/widgets";
-import {toFixed, ComparisonOperator} from "utilities";
+import {CatalogWidgetStore, CatalogPlotWidgetStoreProps, CatalogPlotType, CatalogSettingsTabs} from "stores/widgets";
+import {ComparisonOperator, toFixed} from "utilities";
 import {ProcessedColumnData} from "models";
 import "./CatalogOverlayComponent.scss";
 
@@ -36,7 +36,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
 
     private catalogHeaderTableRef: Table = undefined;
     private catalogFileNames: Map<number, string>;
-    private static readonly axisDataType = [
+    static readonly axisDataType = [
         CARTA.ColumnType.Double,
         CARTA.ColumnType.Float,
         CARTA.ColumnType.Int8,
@@ -138,10 +138,11 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
     @computed get enablePlotButton(): boolean {
         const profileStore = this.profileStore;
         const catalogWidgetStore = this.widgetStore;
+        const enable = !profileStore.loadingData && !profileStore.updatingDataStream && catalogWidgetStore.xAxis !== CatalogOverlay.NONE && profileStore.get1DPlotData(catalogWidgetStore.xAxis)?.wcsData?.length > 0;
         if (catalogWidgetStore.catalogPlotType === CatalogPlotType.Histogram) {
-            return (catalogWidgetStore.xAxis !== CatalogOverlay.NONE && !profileStore.loadingData && !profileStore.updatingDataStream);
+            return enable;
         } else {
-            return (catalogWidgetStore.xAxis !== CatalogOverlay.NONE && catalogWidgetStore.yAxis !== CatalogOverlay.NONE && !profileStore.loadingData && !profileStore.updatingDataStream);
+            return (catalogWidgetStore.yAxis !== CatalogOverlay.NONE && enable);
         }
     }
 
@@ -192,14 +193,9 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         const catalogWidgetStore = this.widgetStore;
         this.height = height;
         this.width = width;
-        // fixed bug from blueprintjs, only display 4 rows.
+        // fixed bug from blueprintjs, only display 4 rows. catalog name missing (in PR #1104) fixed after package update.
         if (profileStore && this.catalogHeaderTableRef) {
             this.updateTableSize(this.catalogHeaderTableRef, this.props.docked);
-            // hack way to update catalog title
-            if (profileStore.progress === 1 || profileStore.progress === undefined) {
-                const fileName = profileStore.catalogInfo.fileInfo.name;
-                WidgetsStore.Instance.setWidgetComponentTitle(this.props.id, `Catalog : ${fileName}`);
-            }
         }
         if (profileStore && this.catalogTableRef && catalogWidgetStore) {
             this.updateTableSize(this.catalogTableRef, this.props.docked);
@@ -264,7 +260,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
     @computed get axisOption() {
         const profileStore = this.profileStore;
         let axisOptions = [];
-
+        axisOptions.push(CatalogOverlay.NONE);
         profileStore.catalogControlHeader.forEach((header, columnName) => {
             const dataType = profileStore.catalogHeader[header.dataIndex].dataType;
             if (CatalogOverlayComponent.axisDataType.includes(dataType) && header.display) {
@@ -274,7 +270,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         return axisOptions;
     }
 
-    private renderAxisPopOver = (catalogName: string, itemProps: IItemRendererProps) => {
+    private renderColumnNamePopOver = (catalogName: string, itemProps: IItemRendererProps) => {
         return (
             <MenuItem
                 key={catalogName}
@@ -551,12 +547,14 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
 
     private handleResetClick = () => {
         const profileStore = this.profileStore;
+        const catalogWidgetStore = this.widgetStore;
         const appStore = AppStore.Instance;
-        if (profileStore) {
+        if (profileStore && catalogWidgetStore) {
             profileStore.resetCatalogFilterRequest();
             this.resetSelectedPointIndices();
             appStore.catalogStore.clearImageCoordsData(this.catalogFileId);
             appStore.sendCatalogFilter(profileStore.catalogFilterRequest);
+            catalogWidgetStore.resetMaps();
         }
     }
 
@@ -575,7 +573,15 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
                     const wcs = frame.validWcs ? frame.wcsInfo : 0;
                     const catalogFileId = this.catalogFileId;
                     catalogStore.clearImageCoordsData(catalogFileId);
-                    catalogStore.updateCatalogData(catalogFileId, imageCoords.wcsX, imageCoords.wcsY, wcs, imageCoords.xHeaderInfo.units, imageCoords.yHeaderInfo.units, profileStore.catalogCoordinateSystem.system);
+                    catalogStore.updateCatalogData(
+                        catalogFileId, 
+                        imageCoords.wcsX, 
+                        imageCoords.wcsY, 
+                        wcs, 
+                        imageCoords.xHeaderInfo.units, 
+                        imageCoords.yHeaderInfo.units, 
+                        profileStore.catalogCoordinateSystem.system
+                    );
                     profileStore.setSelectedPointIndices(profileStore.selectedPointIndices, false);
                     catalogWidgetStore.setCatalogTableAutoScroll(false);
                 }
@@ -707,6 +713,11 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         }
     }
 
+    private shortcutoOnClick = (type: CatalogSettingsTabs) => {
+        this.widgetStore.setSettingsTabId(type);
+        AppStore.Instance.widgetsStore.createFloatingSettingsWidget(CatalogOverlayComponent.WIDGET_CONFIG.title, this.props.id, CatalogOverlayComponent.WIDGET_CONFIG.type);
+    };
+
     public render() {
         const catalogWidgetStore = this.widgetStore;
         const profileStore = this.profileStore;
@@ -824,6 +835,12 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
                             <Button text={activeSystem} disabled={!isImageOverlay} rightIcon="double-caret-vertical"/>
                         </Select>
                     </FormGroup>
+
+                    <ButtonGroup className="catalog-map-buttons">
+                        <AnchorButton onClick={() => this.shortcutoOnClick(CatalogSettingsTabs.SIZE)}>Size</AnchorButton>
+                        <AnchorButton onClick={() => this.shortcutoOnClick(CatalogSettingsTabs.COLOR)}>Color</AnchorButton>
+                        <AnchorButton onClick={() => this.shortcutoOnClick(CatalogSettingsTabs.ORIENTATION)}>Orientation</AnchorButton>
+                    </ButtonGroup>
                 </div>
                 <SplitPane
                     className="catalog-table"
@@ -869,7 +886,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
                                     items={this.axisOption}
                                     activeItem={null}
                                     onItemSelect={(columnName) => catalogWidgetStore.setxAxis(columnName)}
-                                    itemRenderer={this.renderAxisPopOver}
+                                    itemRenderer={this.renderColumnNamePopOver}
                                     disabled={disable}
                                     popoverProps={{popoverClassName: "catalog-select", minimal: true , position: PopoverPosition.AUTO_END}}
                                     filterable={true}
@@ -887,7 +904,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
                                     items={this.axisOption}
                                     activeItem={null}
                                     onItemSelect={(columnName) => catalogWidgetStore.setyAxis(columnName)}
-                                    itemRenderer={this.renderAxisPopOver}
+                                    itemRenderer={this.renderColumnNamePopOver}
                                     disabled={isHistogram || disable}
                                     popoverProps={{popoverClassName: "catalog-select", minimal: true , position: PopoverPosition.AUTO_END}}
                                     filterable={true}
@@ -906,45 +923,36 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
                                 onValueChanged={val => profileStore.setMaxRows(val)}
                                 onValueCleared={() => profileStore.setMaxRows(profileStore.catalogInfo.dataSize)}
                                 displayExponential={false}
-                                updateValueOnKeyDown={true}
                                 disabled={disable}
                             />
                         </div>
                     </div>
-                    <div className="footer-button-container">
-                        <div className="footer-button">
-                            <Tooltip content={"Apply filter"}>
+                    <div className="bp3-dialog-footer">
+                        <div className="bp3-dialog-footer-actions">
                             <AnchorButton
                                 intent={Intent.PRIMARY}
                                 text="Update"
                                 onClick={this.handleFilterRequest}
                                 disabled={disable || !profileStore.updateTableView}
                             />
-                            </Tooltip>
-                            <Tooltip content={"Reset view"}>
                             <AnchorButton
                                 intent={Intent.PRIMARY}
                                 text="Reset"
                                 onClick={this.handleResetClick}
                                 disabled={disable}
                             />
-                            </Tooltip>
-                            <Tooltip content={"Close file"}>
                             <AnchorButton
                                 intent={Intent.PRIMARY}
                                 text="Close"
                                 onClick={this.handleFileCloseClick}
                                 disabled={disable}
                             />
-                            </Tooltip>
-                            <Tooltip content={"Plot data"}>
                             <AnchorButton
                                 intent={Intent.PRIMARY}
                                 text="Plot"
                                 onClick={this.handlePlotClick}
                                 disabled={!this.enablePlotButton}
                             />
-                            </Tooltip>
                         </div>
                     </div>
                 </div>

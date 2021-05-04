@@ -71,9 +71,9 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
     @observable maskRange: NumberRange;
     @observable selectedMoments: CARTA.Moment[];
 
-    @observable readonly smoothingStore: ProfileSmoothingStore;
+    readonly smoothingStore: ProfileSmoothingStore;
     readonly profileSelectionStore: SpectralProfileSelectionStore;
-    @observable readonly fittingStore: ProfileFittingStore;
+    readonly fittingStore: ProfileFittingStore;
 
     @override setRegionId = (fileId: number, regionId: number) => {
         this.regionIdMap.set(fileId, regionId);
@@ -352,7 +352,6 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
                 const pointsAndProperties = this.getDataPointsAndProperties(profile.channelValues, profile.data, wantMeanRms);
                 data.push(pointsAndProperties?.points ?? []);
                 smoothedData.push(pointsAndProperties?.smoothedPoints ?? []);
-                
                 if (pointsAndProperties) {
                     if (wantMeanRms) {
                         yMean = pointsAndProperties.yMean;

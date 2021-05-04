@@ -13,8 +13,8 @@ import {WidgetProps, HelpType, AnimatorStore, WidgetsStore, AppStore, DefaultWid
 import {MultiPlotData, MultiProfileCategory, SpectralProfileWidgetStore} from "stores/widgets";
 import {Point2D} from "models";
 import {binarySearchByX, formattedExponential, formattedNotation, toExponential, toFixed, getColorForTheme} from "utilities";
+import {FittingContinuum} from "./ProfileFittingComponent/ProfileFittingComponent";
 import "./SpectralProfilerComponent.scss";
-import { FittingContinuum } from "./ProfileFittingComponent/ProfileFittingComponent";
 
 @observer
 export class SpectralProfilerComponent extends React.Component<WidgetProps> {
@@ -336,7 +336,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
                             type: smoothingStore.lineType,
                             borderColor: currentPlotData.numProfiles > 1 ? currentPlotData.colors[i] : getColorForTheme(smoothingStore.lineColor),
                             borderWidth: currentPlotData.numProfiles > 1 ? this.widgetStore.lineWidth + 1 : smoothingStore.lineWidth,
-                            pointRadius: smoothingStore.pointRadius,  
+                            pointRadius: smoothingStore.pointRadius,
                             order: 0,
                             comments: [...currentPlotData.comments[i], ...smoothingStore.comments]
                         });

@@ -3,6 +3,8 @@
 #include <cstdint>
 #include <iostream>
 #include <algorithm>
+#include <stdlib.h>
+#include <string.h>
 
 #include "Point2D.h"
 
@@ -13,6 +15,24 @@ union Block {
     int intValues[4];
     char byteValues[16];
 };
+
+typedef enum {
+    LINEAR = 0,
+    LOG = 1,
+    SQRT = 2,
+    SQUARE = 3,
+    POWER = 4,
+    GAMMA = 5,
+    EXP = 6,
+    CUSTOM = 7
+} FrameScaling;
+
+typedef enum {
+    SIZE_DIAMETER = 0,
+    SIZE_AREA = 1,
+    COLOR = 2,
+    ORIENTATION = 3
+} CatalogMapType;
 
 const float MiterLimit = 1.5f;
 const int VertexDataElements = 8;
@@ -219,6 +239,81 @@ void generateVertexData(void* dst, size_t dstCapacity, float* srcVertices, int n
         int startIndex = indexOffsets[i] / 2;
         int endIndex = i < numPolyLines - 1 ? indexOffsets[i + 1] / 2 : numVertices;
         fillSinglePolyline(srcVertices, startIndex, endIndex, dstIndex, vertexData, vertexDataShort, i > 0, i < numPolyLines - 1);
+    }
+}
+
+float clamp(float d, float min, float max) {
+    if (d!=d)
+    {
+        return min;
+    }
+    const double t = d < min ? min : d;
+    return t > max ? max : t;
+}
+
+float scaleValue(float x, int scaling, float alpha, float gamma) {
+    switch (scaling)
+    {
+    case SQUARE:
+        return x * x;
+    case SQRT:
+        return sqrt(x);
+    case LOG:
+        return clamp(log(alpha * x + 1.0) / log(alpha), 0.0, 1.0);
+    case POWER:
+        return (pow(alpha, x) - 1.0) / alpha;
+    case GAMMA:
+        return pow(x, gamma);
+    default:
+        return x;
+    }
+}
+
+void calculateCatalogMap(int mapType, float* data, size_t N, float dataMin, float dataMax, int clipMin, int clipMax, int scaling, float alpha, float gamma, int devicePixelRatio, bool invert) {
+    float columnMin = scaleValue(dataMin, scaling, alpha, gamma);
+    float columnMax = scaleValue(dataMax, scaling, alpha, gamma);
+    float range = columnMax - columnMin;
+
+    switch (mapType)
+    {
+    case SIZE_DIAMETER:
+        for (size_t i = 0; i < N; i++)
+        {
+            float v = clamp(data[i], dataMin, dataMax);
+            float value = scaleValue(v, scaling, alpha, gamma);
+            data[i] = ((value - columnMin) / range * (clipMax - clipMin) + clipMin) * devicePixelRatio;
+        }
+        break;
+    case SIZE_AREA:
+        for (size_t i = 0; i < N; i++)
+        {
+            float v = clamp(data[i], dataMin, dataMax);
+            float value = scaleValue(v, scaling, alpha, gamma);
+            data[i] = (sqrt((value - columnMin) / range) * (clipMax - clipMin) + clipMin) * devicePixelRatio;
+        }
+        break;
+    case COLOR:
+        for (size_t i = 0; i < N; i++)
+        {
+            float v = clamp(data[i], dataMin, dataMax);
+            float value = (scaleValue(v, scaling, alpha, gamma) - columnMin) / range;
+            if (invert)
+            {
+                value = 1 - value;
+            }
+            data[i] = value;
+        }
+        break;
+    case ORIENTATION:
+        for (size_t i = 0; i < N; i++)
+        {
+            float v = clamp(data[i], dataMin, dataMax);
+            float value = scaleValue(v, scaling, alpha, gamma);
+            data[i] = ((value - columnMin) / range * (clipMax - clipMin) + clipMin);
+        }
+        break;
+    default:
+        break;
     }
 }
 

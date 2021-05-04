@@ -12,7 +12,7 @@ import {ToolbarComponent} from "./Toolbar/ToolbarComponent";
 import {BeamProfileOverlayComponent} from "./BeamProfileOverlay/BeamProfileOverlayComponent";
 import {RegionViewComponent} from "./RegionView/RegionViewComponent";
 import {ContourViewComponent} from "./ContourView/ContourViewComponent";
-import {CatalogViewComponent} from "./CatalogView/CatalogViewComponent";
+import {CatalogViewGLComponent} from "./CatalogView/CatalogViewGLComponent";
 import {AppStore, RegionStore, DefaultWidgetConfig, WidgetProps, HelpType, Padding} from "stores";
 import {CursorInfo, Point2D} from "models";
 import {toFixed} from "utilities";
@@ -22,6 +22,7 @@ export const getImageCanvas = (padding: Padding, colorbarPosition: string, backg
     const rasterCanvas = document.getElementById("raster-canvas") as HTMLCanvasElement;
     const contourCanvas = document.getElementById("contour-canvas") as HTMLCanvasElement;
     const overlayCanvas = document.getElementById("overlay-canvas") as HTMLCanvasElement;
+    const catalogCanvas = document.getElementById("catalog-canvas") as HTMLCanvasElement;
 
     if (!rasterCanvas || !contourCanvas || !overlayCanvas) {
         return null;
@@ -30,7 +31,7 @@ export const getImageCanvas = (padding: Padding, colorbarPosition: string, backg
     let colorbarCanvas: HTMLCanvasElement;
     let regionCanvas: HTMLCanvasElement;
     let beamProfileCanvas: HTMLCanvasElement;
-    let catalogCanvas: HTMLCanvasElement;
+
     const colorbarQuery = $(".colorbar-stage").children().children("canvas");
     if (colorbarQuery && colorbarQuery.length) {
         colorbarCanvas = colorbarQuery[0] as HTMLCanvasElement;
@@ -44,11 +45,6 @@ export const getImageCanvas = (padding: Padding, colorbarPosition: string, backg
     const regionQuery = $(".region-stage").children().children("canvas");
     if (regionQuery && regionQuery.length) {
         regionCanvas = regionQuery[0] as HTMLCanvasElement;
-    }
-
-    const catalogQuery = $(".catalog-plotly")?.children()?.children()?.children(".gl-container")?.children(".gl-canvas-context");
-    if (catalogQuery && catalogQuery.length) {
-        catalogCanvas = catalogQuery[0] as HTMLCanvasElement;
     }
 
     const composedCanvas = document.createElement("canvas") as HTMLCanvasElement;
@@ -84,20 +80,16 @@ export const getImageCanvas = (padding: Padding, colorbarPosition: string, backg
         ctx.drawImage(beamProfileCanvas, padding.left * devicePixelRatio, padding.top * devicePixelRatio);
     }
 
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.drawImage(overlayCanvas, 0, 0);
+
+    if (catalogCanvas) {
+        ctx.drawImage(catalogCanvas, padding.left * devicePixelRatio, padding.top * devicePixelRatio);
+    }
+
     if (regionCanvas) {
         ctx.drawImage(regionCanvas, padding.left * devicePixelRatio, padding.top * devicePixelRatio);
     }
-
-    if (catalogCanvas) {
-        if (devicePixelRatio === 1) {
-            ctx.drawImage(catalogCanvas, padding.left * devicePixelRatio, padding.top * devicePixelRatio, catalogCanvas.width / 2, catalogCanvas.height / 2);   
-        } else {
-            ctx.drawImage(catalogCanvas, padding.left * devicePixelRatio, padding.top * devicePixelRatio);
-        }
-    }
-
-    ctx.setTransform(1, 0, 0, 1, 0, 0);
-    ctx.drawImage(overlayCanvas, 0, 0);
 
     return composedCanvas;
 };
@@ -251,6 +243,12 @@ export class ImageViewComponent extends React.Component<WidgetProps> {
                     />
                     }
                     {appStore.activeFrame &&
+                    <CatalogViewGLComponent
+                        docked={this.props.docked}
+                        onZoomed={this.onZoomed}
+                    />
+                    }
+                    {appStore.activeFrame &&
                     <RegionViewComponent
                         frame={appStore.activeFrame}
                         width={appStore.activeFrame.renderWidth}
@@ -266,16 +264,6 @@ export class ImageViewComponent extends React.Component<WidgetProps> {
                         cursorFrozen={appStore.cursorFrozen}
                         cursorPoint={appStore.activeFrame.cursorInfo.posImageSpace}
                         docked={this.props.docked && (this.activeLayer === ImageViewLayer.RegionMoving || this.activeLayer === ImageViewLayer.RegionCreating)}
-                    />
-                    }
-                    {appStore.activeFrame &&
-                    <CatalogViewComponent
-                        width={appStore.activeFrame.renderWidth}
-                        height={appStore.activeFrame.renderHeight}
-                        activeLayer={this.activeLayer}
-                        docked={this.props.docked && appStore.activeLayer === ImageViewLayer.Catalog}
-                        onClicked={this.onClicked}
-                        onZoomed={this.onZoomed}
                     />
                     }
                     <ToolbarComponent

@@ -226,11 +226,19 @@ export class HelpDrawerComponent extends React.Component {
                 content: ""
         }],[
             HelpType.CATALOG_SETTINGS_OVERLAY, {
-                title: "Catalog Settings",
+                title: "Catalog Styling",
                 content: ""
         }],[
             HelpType.CATALOG_SETTINGS_COLOR, {
-                title: "Catalog Settings",
+                title: "Catalog Color",
+                content: ""
+        }],[
+            HelpType.CATALOG_SETTINGS_SIZE, {
+                title: "Catalog Size",
+                content: ""
+        }],[
+            HelpType.CATALOG_SETTINGS_ORIENTATION, {
+                title: "Catalog Orientation",
                 content: ""
         }],[
             HelpType.SPECTRAL_LINE_QUERY, {
