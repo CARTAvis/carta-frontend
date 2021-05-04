@@ -123,6 +123,7 @@ class ProfileSelectionComponent extends React.Component<{profileSelectionStore: 
     public render() {
         const profileSelectionStore = this.props.profileSelectionStore;
         const frame = profileSelectionStore.selectedFrame;
+        const disabled = !(frame?.channelInfo);
 
         return (
             <div className="profile-selection-panel">
@@ -131,7 +132,7 @@ class ProfileSelectionComponent extends React.Component<{profileSelectionStore: 
                     isActiveCategory={profileSelectionStore.activeProfileCategory === MultiProfileCategory.IMAGE}
                     itemOptions={profileSelectionStore.frameOptions}
                     itemSelected={[profileSelectionStore.selectedFrameWidgetFileId]}
-                    disabled={!frame}
+                    disabled={disabled}
                     isSelectingSpecificItem={profileSelectionStore.isSelectingActiveFrame}
                     onCategorySelect={() => {
                         profileSelectionStore.setActiveProfileCategory(
@@ -151,7 +152,7 @@ class ProfileSelectionComponent extends React.Component<{profileSelectionStore: 
                     isActiveCategory={profileSelectionStore.activeProfileCategory === MultiProfileCategory.REGION}
                     itemOptions={profileSelectionStore.regionOptions}
                     itemSelected={profileSelectionStore.selectedRegionIds}
-                    disabled={!frame}
+                    disabled={disabled}
                     isSelectingSpecificItem={profileSelectionStore.isSelectingActiveRegion}
                     onCategorySelect={() => {
                         profileSelectionStore.setActiveProfileCategory(
@@ -171,7 +172,7 @@ class ProfileSelectionComponent extends React.Component<{profileSelectionStore: 
                     isActiveCategory={profileSelectionStore.activeProfileCategory === MultiProfileCategory.STATISTIC}
                     itemOptions={profileSelectionStore.statsTypeOptions}
                     itemSelected={profileSelectionStore.isStatsTypeSelectionAvailable ? profileSelectionStore.selectedStatsTypes : [CARTA.StatsType.Mean]}
-                    disabled={!frame}
+                    disabled={disabled}
                     disableOptions={!profileSelectionStore.isStatsTypeSelectionAvailable}
                     onCategorySelect={() => {
                         profileSelectionStore.setActiveProfileCategory(
@@ -191,7 +192,7 @@ class ProfileSelectionComponent extends React.Component<{profileSelectionStore: 
                     isActiveCategory={profileSelectionStore.activeProfileCategory === MultiProfileCategory.STOKES}
                     itemOptions={profileSelectionStore.coordinateOptions}
                     itemSelected={profileSelectionStore.selectedCoordinates}
-                    disabled={!frame}
+                    disabled={disabled}
                     disableOptions={!(frame?.hasStokes)}
                     onCategorySelect={() => {
                         profileSelectionStore.setActiveProfileCategory(
