@@ -162,8 +162,8 @@ class ProfileSelectionComponent extends React.Component<{profileSelectionStore: 
                     onItemSelect={this.onRegionItemClick}
                     tooltip={
                         <span>
-                            {`Click to enable/disable multiple profiles of ${MultiProfileCategory.REGION}`}
-                            <span><br/><i><small>Spectral profiler shows the profiles of selected regions when enabled.</small></i></span>
+                            {`Click to enable/disable multiple selections of ${MultiProfileCategory.REGION}`}
+                            <span><br/><i><small>Spectral profiler shows the profiles of multi-selected regions when enabled.</small></i></span>
                         </span>
                     }
                 />
@@ -182,8 +182,8 @@ class ProfileSelectionComponent extends React.Component<{profileSelectionStore: 
                     onItemSelect={this.onStatsItemClick}
                     tooltip={
                         <span>
-                            {`Click to enable/disable multiple profiles of ${MultiProfileCategory.STATISTIC}`}
-                            <span><br/><i><small>Spectral profiler shows the profiles of selected statistics when enabled.</small></i></span>
+                            {`Click to enable/disable multiple selections of ${MultiProfileCategory.STATISTIC}`}
+                            <span><br/><i><small>Spectral profiler shows the profiles of multi-selected statistics when enabled.</small></i></span>
                         </span>
                     }
                 />
@@ -202,8 +202,8 @@ class ProfileSelectionComponent extends React.Component<{profileSelectionStore: 
                     onItemSelect={this.onStokesItemClick}
                     tooltip={
                         <span>
-                            {`Click to enable/disable multiple profiles of ${MultiProfileCategory.STOKES}`}
-                            <span><br/><i><small>Spectral profiler shows the profiles of selected stokes when enabled.</small></i></span>
+                            {`Click to enable/disable multiple selections of ${MultiProfileCategory.STOKES}`}
+                            <span><br/><i><small>Spectral profiler shows the profiles of multi-selected stokes when enabled.</small></i></span>
                         </span>
                     }
                 />
