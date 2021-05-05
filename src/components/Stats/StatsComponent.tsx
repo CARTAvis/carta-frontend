@@ -1,7 +1,7 @@
 import * as React from "react";
 import {observer} from "mobx-react";
 import {action, autorun, computed, makeObservable, observable} from "mobx";
-import {HTMLTable, NonIdealState} from "@blueprintjs/core";
+import {HTMLTable, NonIdealState, FormGroup, HTMLSelect} from "@blueprintjs/core";
 import ReactResizeDetector from "react-resize-detector";
 import {CARTA} from "carta-protobuf";
 import {DefaultWidgetConfig, WidgetProps, HelpType, WidgetsStore, AppStore} from "stores";
@@ -49,12 +49,18 @@ export class StatsComponent extends React.Component<WidgetProps> {
         if (this.widgetStore.effectiveFrame) {
             let fileId = this.widgetStore.effectiveFrame.frameInfo.fileId;
             let regionId = this.widgetStore.effectiveRegionId;
+            let coordinate = this.widgetStore.coordinate;
 
             const frameMap = appStore.regionStats.get(fileId);
             if (!frameMap) {
                 return null;
             }
-            return frameMap.get(regionId);
+            const regionMap = frameMap.get(regionId)
+            if (!regionMap){
+                return null;
+            }
+            const stokes = this.widgetStore.effectiveFrame.stokesInfo.findIndex(stokes => stokes === coordinate.slice(0, 1));
+            return regionMap.get(stokes === -1 ? this.widgetStore.effectiveFrame.requiredStokes : stokes);
         }
         return null;
     }
@@ -65,6 +71,10 @@ export class StatsComponent extends React.Component<WidgetProps> {
 
     @action hideMouseEnterWidget = () => {
         this.isMouseEntered = false;
+    };
+
+    private handleCoordinateChanged = (changeEvent: React.ChangeEvent<HTMLSelectElement>) => {
+        this.widgetStore.setCoordinate(changeEvent.target.value);
     };
 
     private static readonly STATS_NAME_MAP = new Map<CARTA.StatsType, string>([
@@ -205,6 +215,25 @@ export class StatsComponent extends React.Component<WidgetProps> {
     public render() {
         const appStore = AppStore.Instance;
 
+        const widgetStore = this.widgetStore;
+
+        let enableStokesSelect = false;
+        let stokesClassName = "unlinked-to-selected";
+        const profileCoordinateOptions = [{value: "z", label: "Current"}];
+        
+        if (widgetStore.effectiveFrame && widgetStore.effectiveFrame.regionSet) {
+
+            enableStokesSelect = widgetStore.effectiveFrame.hasStokes;
+            
+            const stokesInfo = widgetStore.effectiveFrame.stokesInfo;
+            stokesInfo.forEach(stokes => profileCoordinateOptions.push({value: `${stokes}z`, label: stokes}));
+
+            const linkedClass = "linked-to-selected-stokes";
+            if (enableStokesSelect && widgetStore.matchActiveFrame && (widgetStore.coordinate === stokesInfo[widgetStore.effectiveFrame.requiredStokes] + "z")) {
+                stokesClassName = AppStore.Instance.darkTheme ? `${linkedClass} dark-theme` : linkedClass;
+            }
+        }
+
         let formContent;
         let exportDataComponent = null;
         if (this.statsData) {
@@ -261,6 +290,9 @@ export class StatsComponent extends React.Component<WidgetProps> {
             <div className={className}>
                 <div className="stats-toolbar">
                     <RegionSelectorComponent widgetStore={this.widgetStore}/>
+                    <FormGroup label={"Stokes"} inline={true} disabled={!enableStokesSelect}>
+                        <HTMLSelect className={stokesClassName} value={widgetStore.coordinate} options={profileCoordinateOptions} onChange={this.handleCoordinateChanged} disabled={!enableStokesSelect}/>
+                    </FormGroup>
                 </div>
                 <div 
                     className="stats-display"

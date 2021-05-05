@@ -18,6 +18,7 @@ export class StatsWidgetStore extends RegionWidgetStore {
     constructor() {
         super(RegionsType.CLOSED);
         makeObservable(this);
+        this.coordinate = "z";
     }
 
     public static CalculateRequirementsMap(widgetsMap: Map<string, StatsWidgetStore>) {
@@ -43,6 +44,7 @@ export class StatsWidgetStore extends RegionWidgetStore {
                 let regionRequirements = frameRequirements.get(regionId);
                 if (!regionRequirements) {
                     regionRequirements = new CARTA.SetStatsRequirements({fileId, regionId});
+                    frameRequirements.set(regionId, regionRequirements);
                 }
 
                 if (!regionRequirements.statsConfigs) {
@@ -51,7 +53,7 @@ export class StatsWidgetStore extends RegionWidgetStore {
 
                 let hitogramConfig = regionRequirements.statsConfigs.find(config => config.coordinate === coordinate);
                 if (!hitogramConfig) {
-                    regionRequirements.statsConfigs.push({coordinate});
+                    regionRequirements.statsConfigs.push({coordinate: coordinate, statsTypes: AppStore.DEFAULT_STATS_TYPES});
                 }
 
             }

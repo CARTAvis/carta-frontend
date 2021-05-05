@@ -110,6 +110,7 @@ export class HistogramWidgetStore extends RegionWidgetStore {
                 let regionRequirements = frameRequirements.get(regionId);
                 if (!regionRequirements) {
                     regionRequirements = new CARTA.SetHistogramRequirements({fileId, regionId});
+                    frameRequirements.set(regionId, regionRequirements);
                 }
 
                 if (!regionRequirements.histograms) {
@@ -118,7 +119,7 @@ export class HistogramWidgetStore extends RegionWidgetStore {
 
                 let hitogramConfig = regionRequirements.histograms.find(config => config.coordinate === coordinate);
                 if (!hitogramConfig) {
-                    regionRequirements.histograms.push({coordinate});
+                    regionRequirements.histograms.push({coordinate: coordinate, channel: -1, numBins: -1});
                 }
 
             }
@@ -152,7 +153,7 @@ export class HistogramWidgetStore extends RegionWidgetStore {
                 // If regions in the existing array are missing, add requirements for those regions
                 for (const regionId of updatedStatsArray) {
                     if (statsArray.indexOf(regionId) === -1) {
-                        diffList.push({fileId, regionId, histograms: [{channel: -1, numBins: -1}]});
+                        diffList.push({fileId, regionId, histograms: [{coordinate: "z", channel: -1, numBins: -1}]});
                     }
                 }
             }
@@ -163,7 +164,7 @@ export class HistogramWidgetStore extends RegionWidgetStore {
             // If there's no existing array, add requirements for all new regions
             if (!statsArray) {
                 for (const regionId of updatedStatsArray) {
-                    diffList.push({fileId, regionId, histograms: [{channel: -1, numBins: -1}]});
+                    diffList.push({fileId, regionId, histograms: [{coordinate: "z", channel: -1, numBins: -1}]});
                 }
             }
         });
@@ -250,6 +251,7 @@ export class HistogramWidgetStore extends RegionWidgetStore {
         this.linePlotPointSize = 1.5;
         this.lineWidth = 1;
         this.linePlotInitXYBoundaries = { minXVal: 0, maxXVal: 0, minYVal: 0, maxYVal: 0 };
+        this.coordinate = "z";
     }
 
     // settings
