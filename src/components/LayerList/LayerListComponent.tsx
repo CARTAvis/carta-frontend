@@ -62,7 +62,7 @@ export class LayerListComponent extends React.Component<WidgetProps> {
         const fileId = frame.frameInfo.fileId;
         appStore.setActiveFrame(fileId);
         if(frame.secondarySpatialImages?.length || frame.spatialReference) {
-            appStore.catalogStore.convertSpatailMatchedData();
+            appStore.catalogStore.convertSpatialMatchedData();
         }
     };
 

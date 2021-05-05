@@ -1638,7 +1638,7 @@ export class FrameStore {
             this.frameRegionSet.deleteRegion(region);
         }
 
-        AppStore.Instance.catalogStore.convertSpatailMatchedData();
+        AppStore.Instance.catalogStore.convertSpatialMatchedData();
          
         return true;
     };

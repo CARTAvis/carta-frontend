@@ -569,7 +569,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         switch (catalogWidgetStore.catalogPlotType) {
             case CatalogPlotType.ImageOverlay:
                 profileStore.setUpdateMode(CatalogUpdateMode.ViewUpdate);
-                const frame = appStore.getFrame(catalogStore.getFramIdByCatalogId(this.catalogFileId));
+                const frame = appStore.getFrame(catalogStore.getFrameIdByCatalogId(this.catalogFileId));
                 if (frame) {
                     const imageCoords = profileStore.get2DPlotData(catalogWidgetStore.xAxis, catalogWidgetStore.yAxis, profileStore.catalogData);
                     const wcs = frame.validWcs ? frame.wcsInfo : 0;

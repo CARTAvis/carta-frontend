@@ -127,8 +127,8 @@ export class CatalogStore {
 
     // only recalculate position when source image and destination image have different projection types
     // takes about 3s to recalculate and update 1M points
-    // todo: move calculation on GUP 
-    convertSpatailMatchedData() {
+    // TODO: use control maps to perform approximate transformation on the GPU
+    convertSpatialMatchedData() {
         const activeFrame = AppStore.Instance.activeFrame;
         const destinationFrameId = activeFrame?.frameInfo?.fileId;
         activeFrame.spatialSiblings?.forEach(frame => {
@@ -154,7 +154,7 @@ export class CatalogStore {
         this.catalogGLData.delete(fileId);
         CatalogWebGLService.Instance.clearTexture(fileId);
         // update associated image
-        const frame = AppStore.Instance.getFrame(this.getFramIdByCatalogId(fileId));
+        const frame = AppStore.Instance.getFrame(this.getFrameIdByCatalogId(fileId));
         const fileIds = this.imageAssociatedCatalogId.get(frame?.frameInfo.fileId);
         let associatedCatalogId = [];
         if (fileIds) {
@@ -199,14 +199,14 @@ export class CatalogStore {
         }
     };
 
-    getImageIdbyCatalog(catalogFileId: number) {
-        let imagefileId = undefined;
+    getImageIdByCatalog(catalogFileId: number) {
+        let imageFileId = undefined;
         this.imageAssociatedCatalogId.forEach((catalogFileList, imageId) => {
             if (catalogFileList.includes(catalogFileId)) {
-                imagefileId = imageId;
+                imageFileId = imageId;
             }
         });
-        return imagefileId;
+        return imageFileId;
     }
 
     @action setCatalogPlots(componentId: string, fileId: number, widgetId: string) {
@@ -222,7 +222,7 @@ export class CatalogStore {
 
     // remove catalog plot widget, keep placeholder
     @action clearCatalogPlotsByFileId(fileId: number) {
-        this.catalogPlots.forEach((catalogWidgetMap, componentId) => {
+        this.catalogPlots.forEach((catalogWidgetMap, _componentId) => {
             const widgetId = catalogWidgetMap.get(fileId);
             WidgetsStore.Instance.catalogPlotWidgets.delete(widgetId);
             catalogWidgetMap.delete(fileId);
@@ -232,7 +232,7 @@ export class CatalogStore {
     @action clearCatalogPlotsByComponentId(componentId: string) {
         const catalogWidgetMap = this.catalogPlots.get(componentId);
         if (catalogWidgetMap) {
-            catalogWidgetMap.forEach((widgetId, catalogFileId) => {
+            catalogWidgetMap.forEach((widgetId, _catalogFileId) => {
                 WidgetsStore.Instance.catalogPlotWidgets.delete(widgetId);
             });
             this.catalogPlots.delete(componentId);
@@ -270,7 +270,7 @@ export class CatalogStore {
                 const catalogs = [...this.imageAssociatedCatalogId.get(frame.frameInfo.fileId)];
                 associatedCatalogIds = [...new Set([].concat(...[associatedCatalogIds, catalogs]))].filter(catalogFileId => {
                     return this.catalogGLData.get(catalogFileId) !== undefined;
-                });;
+                });
             });
             return associatedCatalogIds.sort((a, b) => a - b);
         } else {
@@ -278,7 +278,7 @@ export class CatalogStore {
         }
     }
 
-    getFramIdByCatalogId(catalogId: number): number {
+    getFrameIdByCatalogId(catalogId: number): number {
         let frameId = -1;
         this.imageAssociatedCatalogId.forEach((catalogIds, imageId) => {
             if (catalogIds.includes(catalogId)) {

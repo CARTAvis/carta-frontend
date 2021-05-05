@@ -373,7 +373,7 @@ export class CatalogProfileStore {
             CatalogWebGLService.Instance.updateDataTexture(this.catalogFileId, selectedData, CatalogTextureType.SelectedSource);
             if (autoPanZoom) {
                 const appStore = AppStore.Instance;
-                const frame = appStore.getFrame(catalogStore.getFramIdByCatalogId(this.catalogFileId));
+                const frame = appStore.getFrame(catalogStore.getFrameIdByCatalogId(this.catalogFileId));
                 const selectedDataLength = selectedX.length;
                 let positionImageSpace = {x: selectedX[0], y: selectedY[0]};
                 if (selectedDataLength > 1) {

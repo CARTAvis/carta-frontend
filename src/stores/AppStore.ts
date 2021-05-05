@@ -1416,7 +1416,7 @@ export class AppStore {
                 const catalogWidgetStore = this.widgetsStore.catalogWidgets.get(catalogWidgetStoreId);
                 const xColumn = catalogWidgetStore.xAxis;
                 const yColumn = catalogWidgetStore.yAxis;
-                const frame = this.getFrame(this.catalogStore.getFramIdByCatalogId(catalogFileId));
+                const frame = this.getFrame(this.catalogStore.getFrameIdByCatalogId(catalogFileId));
                 if (xColumn && yColumn && frame) {
                     const coords = catalogProfileStore.get2DPlotData(xColumn, yColumn, catalogData);
                     const wcs = frame.validWcs ? frame.wcsInfo : 0;

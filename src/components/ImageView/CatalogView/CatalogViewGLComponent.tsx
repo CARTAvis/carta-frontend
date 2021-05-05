@@ -6,9 +6,9 @@ import {CatalogTextureType, CatalogWebGLService} from "services";
 import {canvasToTransformedImagePos} from "components/ImageView/RegionView/shared";
 import {CursorInfo} from "models";
 import {ImageViewLayer} from "../ImageViewComponent";
-import "./CatalogViewGLComponent.scss";
 import {CatalogOverlayShape} from "stores/widgets";
 import {closestCatalogIndexToCursor, subtract2D, scale2D, rotate2D} from "utilities";
+import "./CatalogViewGLComponent.scss";
 
 export interface CatalogViewGLComponentProps {
     docked: boolean;
@@ -168,7 +168,7 @@ export class CatalogViewGLComponent extends React.Component<CatalogViewGLCompone
         let scaleAdjustment = 1.0;
         const destinationFrame = appStore.activeFrame;
         catalogStore.activeCatalogFiles?.forEach(fileId => {
-            const frame = appStore.getFrame(catalogStore.getFramIdByCatalogId(fileId));
+            const frame = appStore.getFrame(catalogStore.getFrameIdByCatalogId(fileId));
             const isActive = frame === destinationFrame;
             const catalog = catalogStore.catalogGLData.get(fileId);
             if(catalog) {
@@ -329,7 +329,7 @@ export class CatalogViewGLComponent extends React.Component<CatalogViewGLCompone
 
         let selectedPoint = {fileId: undefined, minIndex: undefined, minDistanceSquared: Number.MAX_VALUE};
         catalogStore.catalogGLData?.forEach((catalog, fileId) => {
-            const frame = AppStore.Instance.getFrame(catalogStore.getFramIdByCatalogId(fileId));
+            const frame = AppStore.Instance.getFrame(catalogStore.getFrameIdByCatalogId(fileId));
             const cursorPosImageSpace = canvasToTransformedImagePos(clickEvent.offsetX, clickEvent.offsetY, frame, frame.renderWidth, frame.renderHeight);
             const closestPoint = closestCatalogIndexToCursor(cursorPosImageSpace, catalog.x, catalog.y);
             if (closestPoint.minDistanceSquared < selectedPoint.minDistanceSquared) {
