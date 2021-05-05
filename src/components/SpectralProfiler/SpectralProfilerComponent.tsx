@@ -10,7 +10,7 @@ import {MultiPlotProps, TickType} from "../Shared/LinePlot/PlotContainer/PlotCon
 import {SpectralProfilerToolbarComponent} from "./SpectralProfilerToolbarComponent/SpectralProfilerToolbarComponent";
 import {ProfileInfo, SpectralProfilerInfoComponent} from "./SpectralProfilerInfoComponent/SpectralProfilerInfoComponent";
 import {WidgetProps, HelpType, AnimatorStore, WidgetsStore, AppStore, DefaultWidgetConfig} from "stores";
-import {MultiPlotData, MultiProfileCategory, SpectralProfileWidgetStore} from "stores/widgets";
+import {MultiPlotData, SpectralProfileWidgetStore} from "stores/widgets";
 import {Point2D} from "models";
 import {binarySearchByX, formattedExponential, formattedNotation, toExponential, toFixed, getColorForTheme} from "utilities";
 import {FittingContinuum} from "./ProfileFittingComponent/ProfileFittingComponent";
@@ -351,7 +351,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
                 linePlotProps.lineColor = primaryLineColor;
 
                 const fittingStore = this.widgetStore.fittingStore;
-                if (this.widgetStore.profileSelectionStore.activeProfileCategory === MultiProfileCategory.NONE) {
+                if (this.widgetStore.profileNum === 1) {
                     if (fittingStore.continuum !== FittingContinuum.NONE && !fittingStore.hasResult) {
                         let fittingPlotProps: MultiPlotProps = {
                             imageName: currentPlotData.plotName.image,
