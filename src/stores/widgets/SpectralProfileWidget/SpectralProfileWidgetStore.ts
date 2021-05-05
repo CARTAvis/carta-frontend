@@ -8,7 +8,6 @@ import {LineKey, Point2D, ProcessedSpectralProfile, SpectralSystem} from "models
 import tinycolor from "tinycolor2";
 import {SpectralProfilerSettingsTabs} from "components";
 import {clamp, getColorForTheme, isAutoColor} from "utilities";
-import {MultiProfileCategory} from "./SpectralProfileSelectionStore";
 
 export enum MomentSelectingMode {
     NONE = 1,
@@ -378,7 +377,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         });
 
         let fittingData: {x: number[], y: Float32Array | Float64Array};
-        if (this.profileSelectionStore.activeProfileCategory === MultiProfileCategory.NONE && profiles.length === 1 && startEndIndexes.length === 1) {
+        if (profiles.length === 1 && startEndIndexes.length === 1) {
             let x = profiles[0].channelValues.slice(startEndIndexes[0].startIndex, startEndIndexes[0].endIndex + 1);
             let y = profiles[0].data.values.slice(startEndIndexes[0].startIndex, startEndIndexes[0].endIndex + 1)
             if (this.smoothingStore.type !== SmoothingType.NONE) {
