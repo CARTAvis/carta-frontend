@@ -323,10 +323,6 @@ float featherLineSegmentLined(vec2 r, float rMin, float rMax) {
     return 0.0;
 }
 
-bool isNaN(float val) {
-    return val != val;
-}
-
 float drawOutline(vec2 posPixelSpace, float borderWidth, float rMin, float rMax) {
     vec2 pos = vec2(0.0, 0.0);
     vec2 pos2 = vec2(0.0, 0.0);
@@ -436,7 +432,7 @@ void main() {
     float outline = 0.0;
     float alpha2 = 0.0;
     // orientation
-    if(uOmapEnabled && !isNaN(v_orientation)){
+    if(uOmapEnabled){
         posPixelSpace*= rotateMat(v_orientation);
     }
 

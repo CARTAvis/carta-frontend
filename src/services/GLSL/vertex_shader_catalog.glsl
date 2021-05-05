@@ -120,7 +120,7 @@ float getSquareSideByArea(float area, float minorSize) {
 }
 
 bool isNaN(float val) {
-    return val != val;
+    return isnan(val) || isinf(val);
 }
 
 vec2 rotate2D(vec2 vector, float theta) {
@@ -139,7 +139,7 @@ void main() {
     gl_Position = vec4(imageToGL(pos), 0.5, 1);
 
     v_colour = uPointColor;
-    v_orientation = -1.0;
+    v_orientation = 0.0;
     v_minorSize = -1.0;
     v_selected = float(selectedSource.x);
     v_pointSize = uPointSize;
@@ -155,7 +155,9 @@ void main() {
 
     if (uOmapEnabled) {
         vec4 orientation = getValueByIndexFromTexture(uOrientationTexture, gl_VertexID);
-        v_orientation = orientation.x;
+        if (!isNaN(orientation.x)) {
+            v_orientation = orientation.x;
+        }
     }
 
     if (uSizeMajorMapEnabled) {
