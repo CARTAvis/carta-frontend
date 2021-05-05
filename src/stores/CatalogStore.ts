@@ -6,8 +6,7 @@ import {CatalogWidgetStore} from "stores/widgets";
 
 type CatalogOverlayCoords = {
     x: Float32Array,
-    y: Float32Array,
-    displayed: boolean;
+    y: Float32Array
 };
 
 export class CatalogStore {
@@ -49,8 +48,7 @@ export class CatalogStore {
     @action addCatalog(fileId: number) {
         this.catalogGLData.set(fileId, {
             x: new Float32Array(0),
-            y: new Float32Array(0),
-            displayed: true
+            y: new Float32Array(0)
         });
     }
 
@@ -157,7 +155,7 @@ export class CatalogStore {
         CatalogWebGLService.Instance.clearTexture(fileId);
         // update associated image
         const frame = AppStore.Instance.getFrame(this.getFramIdByCatalogId(fileId));
-        const fileIds = this.imageAssociatedCatalogId.get(frame.frameInfo.fileId);
+        const fileIds = this.imageAssociatedCatalogId.get(frame?.frameInfo.fileId);
         let associatedCatalogId = [];
         if (fileIds) {
             associatedCatalogId = fileIds.filter(catalogFileId => {
@@ -188,7 +186,6 @@ export class CatalogStore {
                 this.catalogProfiles.set(componentId, activeCatalogFileIds[0]);
             });  
         }
-        this.resetDisplayedData(activeCatalogFileIds);
     }
 
     // update associated catalogProfile fileId
@@ -210,22 +207,6 @@ export class CatalogStore {
             }
         });
         return imagefileId;
-    }
-
-    @action resetDisplayedData(associatedCatalogFileId: Array<number>) {
-        if (associatedCatalogFileId.length) {
-            this.catalogGLData.forEach((catalog, fileId) => {
-                let displayed = true;
-                if (!associatedCatalogFileId.includes(fileId)) {
-                    displayed = false;
-                }
-                catalog.displayed = displayed;
-            });
-        } else {
-            this.catalogGLData.forEach((catalog) => {
-                catalog.displayed = false;
-            });
-        }
     }
 
     @action setCatalogPlots(componentId: string, fileId: number, widgetId: string) {
@@ -266,12 +247,14 @@ export class CatalogStore {
     }
 
     @action closeAssociatedCatalog(imageFileId: number) {
+        const appStore = AppStore.Instance;
         const catalogFileIds = this.imageAssociatedCatalogId.get(imageFileId);
         if (catalogFileIds?.length) {
             catalogFileIds.forEach((catalogFileId) => {
                 const widgetId = this.catalogWidgets.get(catalogFileId);
                 if (widgetId) {
-                    AppStore.Instance.removeCatalog(catalogFileId, widgetId);   
+                    appStore.widgetsStore.catalogWidgets.get(widgetId)?.resetMaps();
+                    appStore.removeCatalog(catalogFileId, widgetId);   
                 }
             });
             this.imageAssociatedCatalogId.delete(imageFileId);

@@ -79,8 +79,10 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
 
     @action handleFileCloseClick = () => {
         const appStore = AppStore.Instance;
+        const catalogWidgetStore = this.widgetStore;
         const widgetId = CatalogStore.Instance.catalogWidgets.get(this.catalogFileId);
         appStore.removeCatalog(this.catalogFileId, widgetId, this.props.id);
+        catalogWidgetStore?.resetMaps();
     }
 
     // overwrite scrollToRegion to avoid crush when viewportRect is undefined (unpin action with goldenLayout)

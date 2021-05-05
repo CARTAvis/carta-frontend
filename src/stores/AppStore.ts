@@ -489,10 +489,6 @@ export class AppStore {
     @action appendConcatFile = (stokesFiles: CARTA.IStokesFile[], directory: string, hdu: string) => {
         // Stop animations playing before loading a new frame
         this.animatorStore.stopAnimation();
-        // hide all catalog data
-        if (this.catalogNum) {
-            CatalogStore.Instance.resetDisplayedData([]);
-        }
         return this.loadConcatStokes(stokesFiles, directory, hdu);
     };
 
@@ -504,10 +500,6 @@ export class AppStore {
     @action appendFile = (directory: string, file: string, hdu: string) => {
         // Stop animations playing before loading a new frame
         this.animatorStore.stopAnimation();
-        // hide all catalog data
-        if (this.catalogNum) {
-            CatalogStore.Instance.resetDisplayedData([]);
-        }
         return this.loadFile(directory, file, hdu);
     };
 
