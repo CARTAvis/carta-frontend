@@ -1,5 +1,6 @@
 #version 300 es
 precision highp float;
+precision highp int;
 
 #define BOX_FILLED 0
 #define BOX_LINED 1
@@ -32,7 +33,7 @@ precision highp float;
 #define COS_90 0.0
 
 uniform float uLineThickness;
-uniform highp int uShapeType;
+uniform int uShapeType;
 uniform vec3 uSelectedSourceColor;
 uniform bool uOmapEnabled;
 
@@ -329,108 +330,98 @@ bool isNaN(float val) {
 float drawOutline(vec2 posPixelSpace, float borderWidth, float rMin, float rMax) {
     vec2 pos = vec2(0.0, 0.0);
     vec2 pos2 = vec2(0.0, 0.0);
-    switch(uShapeType){
-        case BOX_FILLED:
-        case BOX_LINED:
-            pos = rMin + borderWidth - abs(posPixelSpace * rot45);
-            return step(length(pos), length(posPixelSpace * rot45));
-        case RHOMB_FILLED:
-        case RHOMB_LINED:
-            pos = rMin + borderWidth - abs(posPixelSpace);
-            return step(length(pos), length(posPixelSpace));
-        case CIRCLE_FILLED:
-        case CIRCLE_LINED:
-            return step(rMin + borderWidth, length(posPixelSpace));
-        case ELLIPSE_FILLED:
-        case ELLIPSE_LINED:
-            float bb = pow(rMin + borderWidth, 2.0);
-            float aa = bb / 3.0;
-            if (v_minorSize >= 0.0) {
-                float rMinMinor = v_minorSize * 0.5 - 2.0 * uLineThickness + borderWidth;
-                aa = pow(rMinMinor, 2.0);
-                pos.y = (1.0 - pow(posPixelSpace.x, 2.0) / aa) * bb;
-            } else {
-                pos.y = (1.0 - pow(posPixelSpace.x, 2.0) / aa) * bb;
-            }
-            pos.x = posPixelSpace.x * posPixelSpace.x;
-            return step(pos.x + pos.y, pos.x + posPixelSpace.y * posPixelSpace.y);
-        case HEXAGON_FILLED:
-        case HEXAGON_LINED:
-            pos = rMin + borderWidth - distHexSelected(vec2(rMin, rMin));
-            pos2 = distHex(posPixelSpace, vec2(rMin, rMin));
-            return step(length(pos), length(pos2));
-        case HEXAGON_FILLED_2:
-        case HEXAGON_LINED_2:
-            pos = rMin + borderWidth - distHexSelected(vec2(rMin, rMin));
-            pos2 = distHex(posPixelSpace * rot90, vec2(rMin, rMin));
-            return step(length(pos), length(pos2));
-        case TRIANGLE_FILLED_DOWN:
-        case TRIANGLE_LINED_DOWN:
-            pos = rMin + borderWidth - distTriangleSelected(vec2(rMin, rMin));
-            pos2 = distTriangleDown(posPixelSpace, vec2(rMin, rMin));
-            return step(length(pos), length(pos2));
-        case TRIANGLE_FILLED_UP:
-        case TRIANGLE_LINED_UP:
-            pos = rMin + borderWidth - distTriangleSelected(vec2(rMin, rMin));
-            pos2 = distTriangleDown(posPixelSpace * rot180, vec2(rMin, rMin));
-            return step(length(pos), length(pos2));
-        case CROSS_FILLED:
-            return featherRangeCrossLined(posPixelSpace, rMin, rMax);
-        case X_FILLED:
-            return featherRangeCrossLined(posPixelSpace * rot45, rMin, rMax);
-        case LineSegment_FILLED:
-            return featherLineSegmentLined(posPixelSpace, rMin, rMax);
-        default:
-            return 0.0;
+    if (uShapeType == BOX_FILLED || uShapeType == BOX_LINED){
+        pos = rMin + borderWidth - abs(posPixelSpace * rot45);
+        return step(length(pos), length(posPixelSpace * rot45));
+    } else if (uShapeType == RHOMB_FILLED || uShapeType == RHOMB_LINED) {
+        pos = rMin + borderWidth - abs(posPixelSpace);
+        return step(length(pos), length(posPixelSpace));
+    } else if (uShapeType == CIRCLE_FILLED || uShapeType == CIRCLE_LINED) {
+        return step(rMin + borderWidth, length(posPixelSpace));
+    } else if (uShapeType == ELLIPSE_FILLED || uShapeType == ELLIPSE_LINED) { 
+        float bb = pow(rMin + borderWidth, 2.0);
+        float aa = bb / 3.0;
+        if (v_minorSize >= 0.0) {
+            float rMinMinor = v_minorSize * 0.5 - 2.0 * uLineThickness + borderWidth;
+            aa = pow(rMinMinor, 2.0);
+            pos.y = (1.0 - pow(posPixelSpace.x, 2.0) / aa) * bb;
+        } else {
+            pos.y = (1.0 - pow(posPixelSpace.x, 2.0) / aa) * bb;
+        }
+        pos.x = posPixelSpace.x * posPixelSpace.x;
+        return step(pos.x + pos.y, pos.x + posPixelSpace.y * posPixelSpace.y);
+    } else if (uShapeType == HEXAGON_FILLED || uShapeType == HEXAGON_LINED) {
+        pos = rMin + borderWidth - distHexSelected(vec2(rMin, rMin));
+        pos2 = distHex(posPixelSpace, vec2(rMin, rMin));
+        return step(length(pos), length(pos2));
+    } else if (uShapeType == HEXAGON_FILLED_2 || uShapeType == HEXAGON_LINED_2) {
+        pos = rMin + borderWidth - distHexSelected(vec2(rMin, rMin));
+        pos2 = distHex(posPixelSpace * rot90, vec2(rMin, rMin));
+        return step(length(pos), length(pos2));
+    } else if (uShapeType == TRIANGLE_FILLED_DOWN || uShapeType == TRIANGLE_LINED_DOWN) {
+        pos = rMin + borderWidth - distTriangleSelected(vec2(rMin, rMin));
+        pos2 = distTriangleDown(posPixelSpace, vec2(rMin, rMin));
+        return step(length(pos), length(pos2));
+    } else if (uShapeType == TRIANGLE_FILLED_UP || uShapeType == TRIANGLE_LINED_UP) {
+        pos = rMin + borderWidth - distTriangleSelected(vec2(rMin, rMin));
+        pos2 = distTriangleDown(posPixelSpace * rot180, vec2(rMin, rMin));
+        return step(length(pos), length(pos2));
+    } else if (uShapeType == CROSS_FILLED || uShapeType == CROSS_LINED) {
+        return featherRangeCrossLined(posPixelSpace, rMin, rMax);
+    } else if (uShapeType == X_FILLED) {
+        return featherRangeCrossLined(posPixelSpace * rot45, rMin, rMax);
+    } else if (uShapeType == LineSegment_FILLED) {
+        return featherLineSegmentLined(posPixelSpace, rMin, rMax);
+    } else {
+        return 0.0;
     }
 }
 
 float getAlphaValue(vec2 posPixelSpace, float rMin, float rMax) {
-    switch(uShapeType){
-        case BOX_FILLED:
-            return featherRangeSquare(posPixelSpace, rMax);
-        case BOX_LINED:
-            return featherRangeSquare(posPixelSpace, rMin, rMax);
-        case CIRCLE_FILLED:
-            return featherRange(posPixelSpace, rMax);
-        case CIRCLE_LINED:
-            return featherRange(posPixelSpace, rMin, rMax);
-        case HEXAGON_FILLED:
-            return featherRangeHex(posPixelSpace, rMax);
-        case HEXAGON_LINED:
-            return featherRangeHex(posPixelSpace, rMin, rMax);
-        case RHOMB_FILLED:
-            return featherRangeRhomb(posPixelSpace, rMax);
-        case RHOMB_LINED:
-            return featherRangeRhomb(posPixelSpace, rMin, rMax);
-        case TRIANGLE_FILLED_UP:
-            return featherRangeTriangleUp(posPixelSpace, rMax);
-        case TRIANGLE_LINED_UP:
-            return featherRangeTriangleUp(posPixelSpace, rMin, rMax);
-        case ELLIPSE_FILLED:
-            return featherRangeEllipse(posPixelSpace, rMax);
-        case ELLIPSE_LINED:
-            return featherRangeEllipse(posPixelSpace, rMin, rMax);
-        case TRIANGLE_FILLED_DOWN:
-            return featherRangeTriangleDown(posPixelSpace, rMax);
-        case TRIANGLE_LINED_DOWN:
-            return featherRangeTriangleDown(posPixelSpace, rMin, rMax);
-        case HEXAGON_FILLED_2:
-            return featherRangeHex2(posPixelSpace, rMax);
-        case HEXAGON_LINED_2:
-            return featherRangeHex2(posPixelSpace, rMin, rMax);
-        case CROSS_FILLED:
-            return featherRangeCross(posPixelSpace, rMin, rMax);
-        case CROSS_LINED:
-            return featherRangeCrossLined(posPixelSpace, rMin, rMax);
-        case X_FILLED:
-            return featherRangeX(posPixelSpace, rMin, rMax);
-        case X_LINED:
-            return featherRangeXLined(posPixelSpace, rMin, rMax);
-        case LineSegment_FILLED:
-            return featherLineSegment(posPixelSpace, rMin, rMax);
-        default:
-            return 0.0;
+    if (uShapeType == BOX_FILLED) {
+        return featherRangeSquare(posPixelSpace, rMax);
+    } else if (uShapeType == BOX_LINED) {
+        return featherRangeSquare(posPixelSpace, rMin, rMax);
+    } else if (uShapeType == CIRCLE_FILLED) {
+        return featherRange(posPixelSpace, rMax);
+    } else if (uShapeType == CIRCLE_LINED) {
+        return featherRange(posPixelSpace, rMin, rMax);
+    } else if (uShapeType == HEXAGON_FILLED) {
+        return featherRangeHex(posPixelSpace, rMax);
+    } else if (uShapeType == HEXAGON_LINED) {
+        return featherRangeHex(posPixelSpace, rMin, rMax);
+    } else if (uShapeType == RHOMB_FILLED) {
+        return featherRangeRhomb(posPixelSpace, rMax);
+    } else if (uShapeType == RHOMB_LINED) {
+        return featherRangeRhomb(posPixelSpace, rMin, rMax);
+    } else if (uShapeType == TRIANGLE_FILLED_UP) {
+        return featherRangeTriangleUp(posPixelSpace, rMax);
+    } else if (uShapeType == TRIANGLE_LINED_UP) {
+        return featherRangeTriangleUp(posPixelSpace, rMin, rMax);
+    } else if (uShapeType == ELLIPSE_FILLED) {
+        return featherRangeEllipse(posPixelSpace, rMax);
+    } else if (uShapeType == ELLIPSE_LINED) {
+        return featherRangeEllipse(posPixelSpace, rMin, rMax);
+    } else if (uShapeType == TRIANGLE_FILLED_DOWN) {
+        return featherRangeTriangleDown(posPixelSpace, rMax);
+    } else if (uShapeType == TRIANGLE_LINED_DOWN) {
+        return featherRangeTriangleDown(posPixelSpace, rMin, rMax);
+    } else if (uShapeType == HEXAGON_FILLED_2) {
+        return featherRangeHex2(posPixelSpace, rMax);
+    } else if (uShapeType == HEXAGON_LINED_2) {
+        return featherRangeHex2(posPixelSpace, rMin, rMax);
+    } else if (uShapeType == CROSS_FILLED) {
+        return featherRangeCross(posPixelSpace, rMin, rMax);
+    } else if (uShapeType == CROSS_LINED) {
+        return featherRangeCrossLined(posPixelSpace, rMin, rMax);
+    } else if (uShapeType == X_FILLED) {
+        return featherRangeX(posPixelSpace, rMin, rMax);
+    } else if (uShapeType == X_LINED) {
+        return featherRangeXLined(posPixelSpace, rMin, rMax);
+    } else if (uShapeType == LineSegment_FILLED) {
+        return featherLineSegment(posPixelSpace, rMin, rMax);
+    } else {
+        return 0.0;
     }
 }
 

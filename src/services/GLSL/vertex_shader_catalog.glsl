@@ -1,6 +1,7 @@
 #version 300 es
 precision highp float;
 precision highp usampler2D;
+precision highp int;
 
 #define BOX_FILLED 0
 #define BOX_LINED 1
@@ -41,13 +42,13 @@ uniform sampler2D uYTexture;
 uniform sampler2D uSizeTexture;
 uniform sampler2D uColorTexture;
 uniform sampler2D uOrientationTexture;
-uniform highp usampler2D uSelectedSourceTexture;
+uniform usampler2D uSelectedSourceTexture;
 uniform sampler2D uSizeMinorTexture;
 
 uniform vec2 uFrameViewMin;
 uniform vec2 uFrameViewMax;
 uniform vec3 uPointColor;
-uniform highp int uShapeType;
+uniform int uShapeType;
 uniform int uNumCmaps;
 uniform int uCmapIndex;
 uniform float uFeatherWidth;
@@ -99,39 +100,22 @@ vec3 hsv2rgb(vec3 c)
 }
 
 float getSquareSideByArea(float area, float minorSize) {
-    switch (uShapeType) {
-        case BOX_FILLED:
-        case BOX_LINED:
-        case RHOMB_FILLED:
-        case RHOMB_LINED:
-        case CROSS_FILLED:
-        case CROSS_LINED:
-        case X_FILLED:
-        case X_LINED:
-        case LineSegment_FILLED:
-            return sqrt(area);
-        case CIRCLE_FILLED:
-        case CIRCLE_LINED:
-            return sqrt(area / PI) * 2.0;
-        case HEXAGON_FILLED:
-        case HEXAGON_LINED:
-        case HEXAGON_FILLED_2:
-        case HEXAGON_LINED_2:
-            return sqrt((2.0 * area) / (3.0 * SQRT3)) * SIN_60 * 2.0;
-        case TRIANGLE_FILLED_UP:
-        case TRIANGLE_LINED_UP:
-        case TRIANGLE_FILLED_DOWN:
-        case TRIANGLE_LINED_DOWN:
-            return sqrt(area * 4.0 / SQRT3);
-        case ELLIPSE_FILLED:
-        case ELLIPSE_LINED:
-            float side = sqrt(area / PI) * 2.0;
-            if (minorSize >= 0.0 && area < minorSize) {
-                side = sqrt(minorSize / PI) * 2.0;
-            }   
-            return side;
-        default:
-            return 0.0;
+    if (uShapeType == BOX_FILLED || uShapeType == BOX_LINED || uShapeType == RHOMB_FILLED || uShapeType == RHOMB_LINED || uShapeType == CROSS_FILLED || uShapeType == CROSS_LINED || uShapeType == X_FILLED || uShapeType == X_LINED || uShapeType == LineSegment_FILLED) {
+        return sqrt(area);
+    } else if (uShapeType == CIRCLE_FILLED || uShapeType == CIRCLE_LINED) {
+        return sqrt(area / PI) * 2.0;
+    } else if (uShapeType == HEXAGON_FILLED || uShapeType == HEXAGON_LINED || uShapeType == HEXAGON_FILLED_2 || uShapeType == HEXAGON_LINED_2) {
+        return sqrt((2.0 * area) / (3.0 * SQRT3)) * SIN_60 * 2.0;
+    } else if (uShapeType == TRIANGLE_FILLED_UP || uShapeType == TRIANGLE_LINED_UP || uShapeType == TRIANGLE_FILLED_DOWN || uShapeType == TRIANGLE_LINED_DOWN) {
+        return sqrt(area * 4.0 / SQRT3);
+    } else if (uShapeType == ELLIPSE_FILLED || uShapeType == ELLIPSE_LINED) {
+        float side = sqrt(area / PI) * 2.0;
+        if (minorSize >= 0.0 && area < minorSize) {
+            side = sqrt(minorSize / PI) * 2.0;
+        }   
+        return side;
+    } else {
+        return 0.0;
     }
 }
 
