@@ -79,8 +79,10 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
 
     @action handleFileCloseClick = () => {
         const appStore = AppStore.Instance;
+        const catalogWidgetStore = this.widgetStore;
         const widgetId = CatalogStore.Instance.catalogWidgets.get(this.catalogFileId);
         appStore.removeCatalog(this.catalogFileId, widgetId, this.props.id);
+        catalogWidgetStore?.resetMaps();
     }
 
     // overwrite scrollToRegion to avoid crush when viewportRect is undefined (unpin action with goldenLayout)
@@ -561,13 +563,13 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
     private handlePlotClick = () => {
         const profileStore = this.profileStore;
         const appStore = AppStore.Instance;
-        const frame = appStore.activeFrame;
         const catalogStore = CatalogStore.Instance;
         const catalogWidgetStore = this.widgetStore;
         // init plot data   
         switch (catalogWidgetStore.catalogPlotType) {
             case CatalogPlotType.ImageOverlay:
                 profileStore.setUpdateMode(CatalogUpdateMode.ViewUpdate);
+                const frame = appStore.getFrame(catalogStore.getFrameIdByCatalogId(this.catalogFileId));
                 if (frame) {
                     const imageCoords = profileStore.get2DPlotData(catalogWidgetStore.xAxis, catalogWidgetStore.yAxis, profileStore.catalogData);
                     const wcs = frame.validWcs ? frame.wcsInfo : 0;
@@ -584,6 +586,11 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
                     );
                     profileStore.setSelectedPointIndices(profileStore.selectedPointIndices, false);
                     catalogWidgetStore.setCatalogTableAutoScroll(false);
+
+                    if (frame !== appStore.activeFrame) {
+                        const imageMapId = `${frame.frameInfo.fileId}-${appStore.activeFrame.frameInfo.fileId}`;
+                        catalogStore.updateSpatialMatchedCatalog(imageMapId, catalogFileId);
+                    }
                 }
                 if (profileStore.shouldUpdateData) {
                     profileStore.setUpdatingDataStream(true);

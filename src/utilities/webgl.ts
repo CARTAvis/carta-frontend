@@ -3,7 +3,7 @@ import {TemplateNodes} from "./templates";
 
 export const GL = WebGLRenderingContext;
 
-export function getShaderFromString(gl: WebGLRenderingContext, shaderScript: string, type: number) {
+export function getShaderFromString(gl: WebGLRenderingContext | WebGL2RenderingContext, shaderScript: string, type: number) {
     if (!gl || !shaderScript || !(type === GL.VERTEX_SHADER || type === GL.FRAGMENT_SHADER)) {
         return null;
     }
@@ -99,6 +99,7 @@ export function initWebGL(){
 }
 
 export function initWebGL2(){
+    // setting premultipliedAlpha: false?
     const gl = document.createElement("canvas").getContext("webgl2");
     if (!gl) {
         AlertStore.Instance.showAlert(TemplateNodes.WebGL2ErrorMessage, "issue");

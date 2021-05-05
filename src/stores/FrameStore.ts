@@ -1434,9 +1434,12 @@ export class FrameStore {
         }
     }
 
-    @action setCenter(x: number, y: number) {
+    @action setCenter(x: number, y: number, enableSpatialTransform: boolean = true) {
         if (this.spatialReference) {
-            const centerPointRefImage = this.spatialTransform.transformCoordinate({x, y}, true);
+            let centerPointRefImage = {x, y};
+            if (enableSpatialTransform) {
+                centerPointRefImage = this.spatialTransform.transformCoordinate({x, y}, true);   
+            }
             this.spatialReference.setCenter(centerPointRefImage.x, centerPointRefImage.y);
         } else {
             this.center = {x, y};
@@ -1635,6 +1638,8 @@ export class FrameStore {
             this.frameRegionSet.deleteRegion(region);
         }
 
+        AppStore.Instance.catalogStore.convertSpatialMatchedData();
+         
         return true;
     };
 
