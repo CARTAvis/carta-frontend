@@ -11,6 +11,7 @@ interface TaskProgressDialogComponentProps {
     cancellable: boolean;
     onCancel?: () => void;
     text: string;
+    contentText?: string;
 }
 
 @observer
@@ -50,6 +51,7 @@ export class TaskProgressDialogComponent extends React.Component<TaskProgressDia
             >
                 <div className={Classes.DIALOG_BODY}>
                     <ProgressBar value={this.props.progress} animate={!isFinite(this.props.progress)} stripes={!isFinite(this.props.progress)} intent={"primary"}/>
+                    <>{this.props.contentText}</>
                 </div>
                 {this.props.cancellable &&
                 <div className={Classes.DIALOG_FOOTER}>

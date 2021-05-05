@@ -87,6 +87,11 @@ export class FileBrowserStore {
 
     @observable selectedFiles: ISelectedFile[];
 
+    @observable isLoadingDialogOpen: boolean;
+    @observable loadingProgress: number;
+    @observable loadingCheckedCount: number;
+    @observable loadingTotalCount: number;
+
     @action showFileBrowser = (mode: BrowserMode, append = false) => {
         switch (mode) {
             case BrowserMode.SaveFile:
@@ -136,30 +141,31 @@ export class FileBrowserStore {
         this.HDUfileInfoExtended = null;
         this.regionFileInfo = null;
         this.catalogFileInfo = null;
+        AppStore.Instance.restartTaskProgress();
 
         if (this.browserMode === BrowserMode.File || this.browserMode === BrowserMode.SaveFile) {
             backendService.getFileList(directory).subscribe(res => runInAction(() => {
                 this.fileList = res;
-                this.loadingList = false;
+                this.resetLoadingStates();
             }), err => runInAction(() => {
                 console.log(err);
-                this.loadingList = false;
+                this.resetLoadingStates();
             }));
         } else if (this.browserMode === BrowserMode.Catalog) {
             backendService.getCatalogList(directory).subscribe(res => runInAction(() => {
                 this.catalogFileList = res;
-                this.loadingList = false;
+                this.resetLoadingStates();
             }), err => runInAction(() => {
                 console.log(err);
-                this.loadingList = false;
+                this.resetLoadingStates();
             }));
         } else {
             backendService.getRegionList(directory).subscribe(res => runInAction(() => {
                 this.fileList = res;
-                this.loadingList = false;
+                this.resetLoadingStates();
             }), err => runInAction(() => {
                 console.log(err);
-                this.loadingList = false;
+                this.resetLoadingStates();
             }));
         }
     };
@@ -367,6 +373,32 @@ export class FileBrowserStore {
     
     @action setSelectedFiles = (selection: ISelectedFile[]) => {
         this.selectedFiles = selection;
+    };
+
+    @action showLoadingDialog = () => {
+        this.isLoadingDialogOpen = true;
+    }
+
+    @action updateLoadingState = (progress: number, checkedCount: number, totalCount: number) => {
+        this.loadingProgress = progress;
+        this.loadingCheckedCount = checkedCount;
+        this.loadingTotalCount = totalCount;
+    };
+
+    @action resetLoadingStates = () => {
+        this.loadingList = false;
+        this.isLoadingDialogOpen = false;
+        this.updateLoadingState(0, 0, 0);
+    };
+
+    @action cancelRequestingFileList = () => {
+        if (this.loadingProgress < 1.0) {
+            if (this.browserMode === BrowserMode.Catalog) {
+                BackendService.Instance.cancelRequestingFileList(CARTA.FileListType.Catalog);
+            } else {
+                BackendService.Instance.cancelRequestingFileList(CARTA.FileListType.Image);
+            }
+        }
     };
 
     @computed get HDUList(): IOptionProps[] {

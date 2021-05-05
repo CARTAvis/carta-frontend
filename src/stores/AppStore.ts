@@ -1224,6 +1224,7 @@ export class AppStore {
         this.backendService.momentProgressStream.subscribe(this.handleMomentProgressStream);
         this.backendService.scriptingStream.subscribe(this.handleScriptingRequest);
         this.tileService.tileStream.subscribe(this.handleTileStream);
+        this.backendService.listProgressStream.subscribe(this.handleFileProgressStream);
 
         // Set auth token from URL if it exists
         const url = new URL(window.location.href);
@@ -1447,6 +1448,15 @@ export class AppStore {
             frame.updateRequestingMomentsProgress(momentProgress.progress);
             this.updateTaskProgress(momentProgress.progress);
         }
+    };
+
+    handleFileProgressStream = (fileProgress: CARTA.ListProgress) => {
+        if (!fileProgress) {
+            return;
+        }
+        this.fileBrowserStore.updateLoadingState(fileProgress.percentage, fileProgress.checkedCount, fileProgress.totalCount);
+        this.fileBrowserStore.showLoadingDialog();
+        this.updateTaskProgress(fileProgress.percentage);
     };
 
     handleErrorStream = (errorData: CARTA.ErrorData) => {
