@@ -1,13 +1,12 @@
 import * as AST from "ast_wrapper";
 import {action, observable, ObservableMap, computed,makeObservable} from "mobx";
-import {AppStore, CatalogProfileStore, CatalogSystemType, WidgetsStore} from "stores";
+import {AppStore, CatalogProfileStore, CatalogSystemType, CatalogOverlay, WidgetsStore} from "stores";
 import {CatalogWebGLService, CatalogTextureType} from "services";
 import {CatalogWidgetStore} from "stores/widgets";
 
 type CatalogOverlayCoords = {
     x: Float32Array,
-    y: Float32Array,
-    displayed: boolean;
+    y: Float32Array
 };
 
 export class CatalogStore {
@@ -25,15 +24,15 @@ export class CatalogStore {
     private static readonly ArcminUnits = ["arcmin", "arcminute"];
 
     @observable catalogGLData: ObservableMap<number, CatalogOverlayCoords>;
-    // map image file id with catalog file Id
+    // image file id : catalog file Id
     @observable imageAssociatedCatalogId: Map<number, Array<number>>;
-    // map catalog component Id with catalog file Id
+    // catalog component Id : catalog file Id
     @observable catalogProfiles: Map<string, number>;
-    // map catalog plot component Id with catalog file Id and associated catalog plot widget id
+    // catalog plot component Id : catalog file Id and associated catalog plot widget id
     @observable catalogPlots: Map<string, ObservableMap<number, string>>;
-    // catalog Profile store with catalog file Id
+    // catalog file Id : catalog Profile store
     @observable catalogProfileStores: Map<number, CatalogProfileStore>;
-    // catalog file Id with catalog widget storeId
+    // catalog file Id : catalog widget storeId
     @observable catalogWidgets: Map<number, string>;
 
     private constructor() {
@@ -49,8 +48,7 @@ export class CatalogStore {
     @action addCatalog(fileId: number) {
         this.catalogGLData.set(fileId, {
             x: new Float32Array(0),
-            y: new Float32Array(0),
-            displayed: true
+            y: new Float32Array(0)
         });
     }
 
@@ -90,6 +88,60 @@ export class CatalogStore {
         }
     }
 
+    @action updateSpatialMatchedCatalog(imageMapId: string, catalogFileId: number) {
+            const activeFrame = AppStore.Instance.activeFrame;
+            const catalogWidgetStore = this.getCatalogWidgetStore(catalogFileId);
+            const xColumn = catalogWidgetStore.xAxis;
+            const yColumn = catalogWidgetStore.yAxis;
+            if (xColumn !== CatalogOverlay.NONE && yColumn !== CatalogOverlay.NONE) {
+                const catalogProfileStore = this.catalogProfileStores.get(catalogFileId);
+                const coords = catalogProfileStore.get2DPlotData(xColumn, yColumn, catalogProfileStore.catalogData);
+                const wcs = activeFrame.validWcs ? activeFrame.wcsInfo : 0;
+                let xPoints = new Float32Array(coords.wcsX.length);
+                let yPoints = new Float32Array(coords.wcsX.length);
+                const catalogSystem = catalogProfileStore.catalogCoordinateSystem.system;
+                switch (catalogSystem) {
+                    case CatalogSystemType.Pixel0:
+                        for (let i = 0; i < coords.wcsX.length; i++) {
+                            xPoints[i] = coords.wcsX[i];
+                            yPoints[i] = coords.wcsY[i];
+                        }
+                        break;
+                    case CatalogSystemType.Pixel1:
+                        for (let i = 0; i < coords.wcsX.length; i++) {
+                            xPoints[i] = coords.wcsX[i] - 1;
+                            yPoints[i] = coords.wcsY[i] - 1;
+                        }
+                        break;
+                    default:
+                        const pixelData = CatalogStore.TransformCatalogData(coords.wcsX, coords.wcsY, wcs, coords.xHeaderInfo.units, coords.yHeaderInfo.units, catalogSystem);
+                        for (let i = 0; i < pixelData.xImageCoords.length; i++) {
+                            xPoints[i] = pixelData.xImageCoords[i];
+                            yPoints[i] = pixelData.yImageCoords[i];
+                        }
+                        break;
+                }
+                CatalogWebGLService.Instance.updateSpatialMatchedTexture(imageMapId, catalogFileId, xPoints, yPoints);
+            }
+    }
+
+    // only recalculate position when source image and destination image have different projection types
+    // takes about 3s to recalculate and update 1M points
+    // TODO: use control maps to perform approximate transformation on the GPU
+    convertSpatialMatchedData() {
+        const activeFrame = AppStore.Instance.activeFrame;
+        const destinationFrameId = activeFrame?.frameInfo?.fileId;
+        activeFrame.spatialSiblings?.forEach(frame => {
+            const sourceFrameId = frame.frameInfo.fileId;
+            if (sourceFrameId !== destinationFrameId) {
+                const imageMapId = `${sourceFrameId}-${destinationFrameId}`;
+                this.imageAssociatedCatalogId.get(sourceFrameId)?.forEach(catalogFileId => {
+                    this.updateSpatialMatchedCatalog(imageMapId, catalogFileId);   
+                });   
+            }
+        });
+    }
+
     @action clearImageCoordsData(fileId: number) {
         const catalog = this.catalogGLData.get(fileId);
         if (catalog) {
@@ -98,9 +150,28 @@ export class CatalogStore {
         }
     }
 
-    @action removeCatalog(fileId: number) {
+    @action removeCatalog(fileId: number, catalogComponentId?: string) {
         this.catalogGLData.delete(fileId);
         CatalogWebGLService.Instance.clearTexture(fileId);
+        // update associated image
+        const frame = AppStore.Instance.getFrame(this.getFrameIdByCatalogId(fileId));
+        const fileIds = this.imageAssociatedCatalogId.get(frame?.frameInfo.fileId);
+        let associatedCatalogId = [];
+        if (fileIds) {
+            associatedCatalogId = fileIds.filter(catalogFileId => {
+                return catalogFileId !== fileId;
+            });
+            this.updateImageAssociatedCatalogId(frame.frameInfo.fileId, associatedCatalogId);
+        }
+
+        // update catalogProfiles fileId            
+        if (catalogComponentId && associatedCatalogId.length) {
+            this.catalogProfiles.forEach((catalogFileId, componentId) => {
+                if (catalogFileId === fileId) {
+                    this.catalogProfiles.set(componentId, associatedCatalogId[0]);
+                }
+            });
+        }
     }
 
     @action updateImageAssociatedCatalogId(activeFrameIndex: number, associatedCatalogFiles: number[]) {
@@ -115,7 +186,6 @@ export class CatalogStore {
                 this.catalogProfiles.set(componentId, activeCatalogFileIds[0]);
             });  
         }
-        this.resetDisplayedData(activeCatalogFileIds);
     }
 
     // update associated catalogProfile fileId
@@ -129,30 +199,14 @@ export class CatalogStore {
         }
     };
 
-    getImageIdbyCatalog(catalogFileId: number) {
-        let imagefileId = undefined;
+    getImageIdByCatalog(catalogFileId: number) {
+        let imageFileId = undefined;
         this.imageAssociatedCatalogId.forEach((catalogFileList, imageId) => {
             if (catalogFileList.includes(catalogFileId)) {
-                imagefileId = imageId;
+                imageFileId = imageId;
             }
         });
-        return imagefileId;
-    }
-
-    @action resetDisplayedData(associatedCatalogFileId: Array<number>) {
-        if (associatedCatalogFileId.length) {
-            this.catalogGLData.forEach((catalog, fileId) => {
-                let displayed = true;
-                if (!associatedCatalogFileId.includes(fileId)) {
-                    displayed = false;
-                }
-                catalog.displayed = displayed;
-            });
-        } else {
-            this.catalogGLData.forEach((catalog) => {
-                catalog.displayed = false;
-            });
-        }
+        return imageFileId;
     }
 
     @action setCatalogPlots(componentId: string, fileId: number, widgetId: string) {
@@ -168,7 +222,7 @@ export class CatalogStore {
 
     // remove catalog plot widget, keep placeholder
     @action clearCatalogPlotsByFileId(fileId: number) {
-        this.catalogPlots.forEach((catalogWidgetMap, componentId) => {
+        this.catalogPlots.forEach((catalogWidgetMap, _componentId) => {
             const widgetId = catalogWidgetMap.get(fileId);
             WidgetsStore.Instance.catalogPlotWidgets.delete(widgetId);
             catalogWidgetMap.delete(fileId);
@@ -178,7 +232,7 @@ export class CatalogStore {
     @action clearCatalogPlotsByComponentId(componentId: string) {
         const catalogWidgetMap = this.catalogPlots.get(componentId);
         if (catalogWidgetMap) {
-            catalogWidgetMap.forEach((widgetId, catalogFileId) => {
+            catalogWidgetMap.forEach((widgetId, _catalogFileId) => {
                 WidgetsStore.Instance.catalogPlotWidgets.delete(widgetId);
             });
             this.catalogPlots.delete(componentId);
@@ -193,12 +247,14 @@ export class CatalogStore {
     }
 
     @action closeAssociatedCatalog(imageFileId: number) {
+        const appStore = AppStore.Instance;
         const catalogFileIds = this.imageAssociatedCatalogId.get(imageFileId);
         if (catalogFileIds?.length) {
             catalogFileIds.forEach((catalogFileId) => {
                 const widgetId = this.catalogWidgets.get(catalogFileId);
                 if (widgetId) {
-                    AppStore.Instance.removeCatalog(catalogFileId, widgetId);   
+                    appStore.widgetsStore.catalogWidgets.get(widgetId)?.resetMaps();
+                    appStore.removeCatalog(catalogFileId, widgetId);   
                 }
             });
             this.imageAssociatedCatalogId.delete(imageFileId);
@@ -209,10 +265,27 @@ export class CatalogStore {
         const activeFrame = AppStore.Instance.activeFrame;
         if (activeFrame) {
             const imageId = activeFrame.frameInfo.fileId;
-            return this.imageAssociatedCatalogId.get(imageId);
+            let associatedCatalogIds = [...this.imageAssociatedCatalogId.get(imageId)];
+            activeFrame.spatialSiblings?.forEach(frame => {
+                const catalogs = [...this.imageAssociatedCatalogId.get(frame.frameInfo.fileId)];
+                associatedCatalogIds = [...new Set([].concat(...[associatedCatalogIds, catalogs]))].filter(catalogFileId => {
+                    return this.catalogGLData.get(catalogFileId) !== undefined;
+                });
+            });
+            return associatedCatalogIds.sort((a, b) => a - b);
         } else {
             return [];
         }
+    }
+
+    getFrameIdByCatalogId(catalogId: number): number {
+        let frameId = -1;
+        this.imageAssociatedCatalogId.forEach((catalogIds, imageId) => {
+            if (catalogIds.includes(catalogId)) {
+                frameId = imageId;
+            }
+        });
+        return frameId;
     }
 
     getAssociatedIdByWidgetId(catalogPlotWidgetId: string): {catalogPlotComponentId: string, catalogFileId: number} {

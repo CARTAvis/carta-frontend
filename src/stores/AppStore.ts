@@ -289,9 +289,17 @@ export class AppStore {
         return frameMap;
     }
 
-    // catalog
     @computed get catalogNum(): number {
         return this.catalogStore.catalogProfileStores.size;
+    }
+
+    @computed get catalogNextFileId(): number {
+        let id = 1;
+        const currentCatalogIds = Array.from(this.catalogStore.catalogProfileStores.keys());
+        while (currentCatalogIds?.includes(id) && currentCatalogIds.length) {
+            id += 1;
+        }
+        return id;
     }
 
     @computed get frameNames(): IOptionProps[] {
@@ -495,10 +503,6 @@ export class AppStore {
     @action appendConcatFile = (stokesFiles: CARTA.IStokesFile[], directory: string, hdu: string) => {
         // Stop animations playing before loading a new frame
         this.animatorStore.stopAnimation();
-        // hide all catalog data
-        if (this.catalogNum) {
-            CatalogStore.Instance.resetDisplayedData([]);
-        }
         return this.loadConcatStokes(stokesFiles, directory, hdu);
     };
 
@@ -510,10 +514,6 @@ export class AppStore {
     @action appendFile = (directory: string, file: string, hdu: string) => {
         // Stop animations playing before loading a new frame
         this.animatorStore.stopAnimation();
-        // hide all catalog data
-        if (this.catalogNum) {
-            CatalogStore.Instance.resetDisplayedData([]);
-        }
         return this.loadFile(directory, file, hdu);
     };
 
@@ -718,7 +718,7 @@ export class AppStore {
             this.startFileLoading();
 
             const frame = this.activeFrame;
-            const fileId = this.catalogNum + 1;
+            const fileId = this.catalogNextFileId;
 
             this.backendService.loadCatalogFile(directory, file, fileId, previewDataSize).subscribe(ack => runInAction(() => {
                 this.endFileLoading();
@@ -731,7 +731,7 @@ export class AppStore {
                     let associatedCatalogFiles = [];
                     const catalogStore = CatalogStore.Instance;
                     const catalogComponentSize = catalogStore.catalogProfiles.size;
-                    let currentAssociatedCatalogFile = catalogStore.activeCatalogFiles;
+                    let currentAssociatedCatalogFile = catalogStore.imageAssociatedCatalogId.get(frame.frameInfo.fileId);
                     if (currentAssociatedCatalogFile?.length) {
                         associatedCatalogFiles = currentAssociatedCatalogFile;
                     } else {
@@ -784,31 +784,12 @@ export class AppStore {
             this.catalogStore.catalogWidgets.delete(fileId);
             this.widgetsStore.catalogWidgets.delete(catalogWidgetId);
             // remove overlay
-            catalogStore.removeCatalog(fileId);
+            catalogStore.removeCatalog(fileId, catalogComponentId);
             // remove profile store
             catalogStore.catalogProfileStores.delete(fileId);
 
             if (!this.activeFrame) {
                 return;
-            }
-            // update associated image
-            const fileIds = catalogStore.activeCatalogFiles;
-            const activeImageId = AppStore.Instance.activeFrame.frameInfo.fileId;
-            let associatedCatalogId = [];
-            if (fileIds) {
-                associatedCatalogId = fileIds.filter(catalogFileId => {
-                    return catalogFileId !== fileId;
-                });
-                catalogStore.updateImageAssociatedCatalogId(activeImageId, associatedCatalogId);
-            }
-
-            // update catalogProfiles fileId            
-            if (catalogComponentId && associatedCatalogId.length) {
-                catalogStore.catalogProfiles.forEach((catalogFileId, componentId) => {
-                    if (catalogFileId === fileId) {
-                        catalogStore.catalogProfiles.set(componentId, associatedCatalogId[0]);
-                    }
-                });
             }
         }
     }
@@ -1257,6 +1238,7 @@ export class AppStore {
         this.backendService.momentProgressStream.subscribe(this.handleMomentProgressStream);
         this.backendService.scriptingStream.subscribe(this.handleScriptingRequest);
         this.tileService.tileStream.subscribe(this.handleTileStream);
+        this.backendService.listProgressStream.subscribe(this.handleFileProgressStream);
 
         // Set auth token from URL if it exists
         const url = new URL(window.location.href);
@@ -1448,9 +1430,10 @@ export class AppStore {
                 const catalogWidgetStore = this.widgetsStore.catalogWidgets.get(catalogWidgetStoreId);
                 const xColumn = catalogWidgetStore.xAxis;
                 const yColumn = catalogWidgetStore.yAxis;
-                if (xColumn && yColumn) {
+                const frame = this.getFrame(this.catalogStore.getFrameIdByCatalogId(catalogFileId));
+                if (xColumn && yColumn && frame) {
                     const coords = catalogProfileStore.get2DPlotData(xColumn, yColumn, catalogData);
-                    const wcs = this.activeFrame.validWcs ? this.activeFrame.wcsInfo : 0;
+                    const wcs = frame.validWcs ? frame.wcsInfo : 0;
                     this.catalogStore.updateCatalogData(
                         catalogFileId, 
                         coords.wcsX, 
@@ -1460,6 +1443,11 @@ export class AppStore {
                         coords.yHeaderInfo.units, 
                         catalogProfileStore.catalogCoordinateSystem.system
                     );
+
+                    if (frame !== this.activeFrame) {
+                        const imageMapId = `${frame.frameInfo.fileId}-${this.activeFrame.frameInfo.fileId}`;
+                        this.catalogStore.updateSpatialMatchedCatalog(imageMapId, catalogFileId);
+                    }
                 }
             }
         }
@@ -1474,6 +1462,15 @@ export class AppStore {
             frame.updateRequestingMomentsProgress(momentProgress.progress);
             this.updateTaskProgress(momentProgress.progress);
         }
+    };
+
+    handleFileProgressStream = (fileProgress: CARTA.ListProgress) => {
+        if (!fileProgress) {
+            return;
+        }
+        this.fileBrowserStore.updateLoadingState(fileProgress.percentage, fileProgress.checkedCount, fileProgress.totalCount);
+        this.fileBrowserStore.showLoadingDialog();
+        this.updateTaskProgress(fileProgress.percentage);
     };
 
     handleErrorStream = (errorData: CARTA.ErrorData) => {
@@ -1727,6 +1724,10 @@ export class AppStore {
             } else if (f.spatialReference) {
                 f.setSpatialReference(frame);
             }
+        }
+
+        if(oldRef?.secondarySpatialImages.length) {
+            oldRef.secondarySpatialImages = [];
         }
 
     };
