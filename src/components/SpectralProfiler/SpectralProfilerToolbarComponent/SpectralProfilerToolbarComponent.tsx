@@ -157,7 +157,7 @@ class ProfileSelectionComponent extends React.Component<{profileSelectionStore: 
                     categoryTooltip={
                         <span>
                             {`Click to enable/disable multiple profiles of ${MultiProfileCategory.IMAGE}`}
-                            <span><br/><i><small>Spectral profiler shows the profiles of both spatially and spectrally<br/>matched images related to the selected image when enabled.<br/>Toggle both spatial(XY) and spectral(Z) matching in Image List widget.</small></i></span>
+                            <span><br/><i><small>When enabled, Spectral Profiler will show multiple profiles from<br/>different images which are matched both spatially and spectrally.<br/>Toggle both spatial(XY) and spectral(Z) matching in Image List widget.</small></i></span>
                         </span>
                     }
                     dropdownTooltip={{
@@ -182,7 +182,7 @@ class ProfileSelectionComponent extends React.Component<{profileSelectionStore: 
                     categoryTooltip={
                         <span>
                             {`Click to enable/disable multiple selections of ${MultiProfileCategory.REGION}`}
-                            <span><br/><i><small>Spectral profiler shows the profiles of multi-selected regions when enabled.</small></i></span>
+                            <span><br/><i><small>When enabled, Spectral Profiler will show multiple profiles from different selected regions.</small></i></span>
                         </span>
                     }
                     dropdownTooltip={{
@@ -207,12 +207,12 @@ class ProfileSelectionComponent extends React.Component<{profileSelectionStore: 
                     categoryTooltip={
                         <span>
                             {`Click to enable/disable multiple selections of ${MultiProfileCategory.STATISTIC}`}
-                            <span><br/><i><small>Spectral profiler shows the profiles of multi-selected statistics when enabled.</small></i></span>
+                            <span><br/><i><small>When enabled, Spectral Profiler will show multiple profiles with different selected statistic quantities.</small></i></span>
                         </span>
                     }
                     dropdownTooltip={{
-                        nonActive: "Click to select a statistic type.",
-                        active: "Click to select multiple statistic types.",
+                        nonActive: "Click to select a statistic quantity.",
+                        active: "Click to select multiple statistic quantities.",
                         disabled: "Statistic options are available only for non-point regions."
                     }}
                 />
@@ -232,13 +232,13 @@ class ProfileSelectionComponent extends React.Component<{profileSelectionStore: 
                     categoryTooltip={
                         <span>
                             {`Click to enable/disable multiple selections of ${MultiProfileCategory.STOKES}`}
-                            <span><br/><i><small>Spectral profiler shows the profiles of multi-selected stokes when enabled.</small></i></span>
+                            <span><br/><i><small>When enabled, Spectral Profiler will show multiple profiles with different selected Stokes.</small></i></span>
                         </span>
                     }
                     dropdownTooltip={{
-                        nonActive: "Click to select a stokes parameter.",
-                        active: "Click to select multiple stokes parameters.",
-                        disabled: "There is no other stokes parameter in the selected image."
+                        nonActive: "Click to select a Stokes parameter.",
+                        active: "Click to select multiple Stokes parameters.",
+                        disabled: "There is no other Stokes parameter in the selected image."
                     }}
                 />
             </div>
