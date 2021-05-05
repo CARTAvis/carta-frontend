@@ -236,9 +236,9 @@ class ProfileSelectionComponent extends React.Component<{profileSelectionStore: 
                         </span>
                     }
                     dropdownTooltip={{
-                        nonActive: "Click to select a stokes coordinate.",
-                        active: "Click to select multiple stokes coordinates.",
-                        disabled: "There is no other stokes coordinate in the selected image."
+                        nonActive: "Click to select a stokes parameter.",
+                        active: "Click to select multiple stokes parameters.",
+                        disabled: "There is no other stokes parameter in the selected image."
                     }}
                 />
             </div>
