@@ -6,6 +6,7 @@ import {LinePlotSettingsPanelComponentProps, LinePlotSettingsPanelComponent, Smo
 import {SpatialProfileWidgetStore} from "stores/widgets";
 import {WidgetProps, DefaultWidgetConfig, HelpType, WidgetsStore, AppStore} from "stores";
 import {parseNumber} from "utilities";
+import {LineKey} from "models";
 import "./SpatialProfilerSettingsPanelComponent.scss";
 
 const KEYCODE_ENTER = 13;
@@ -153,12 +154,13 @@ export class SpatialProfilerSettingsPanelComponent extends React.Component<Widge
         }];
 
         const lineSettingsProps: LinePlotSettingsPanelComponentProps = {
-            primaryLineColor: widgetStore.primaryLineColor,
+            lineColorMap: new Map<LineKey, string>([["Primary", widgetStore.primaryLineColor]]),
+            lineOptions: [{value: "Primary", label: "Primary"}],
             lineWidth: widgetStore.lineWidth,
             plotType: widgetStore.plotType,
             linePlotPointSize: widgetStore.linePlotPointSize,
             showWCSAxis: widgetStore.wcsAxisVisible,
-            setPrimaryLineColor: widgetStore.setPrimaryLineColor,
+            setLineColor: (lineKey: LineKey, color: string) => widgetStore.setPrimaryLineColor(color),
             setLineWidth: widgetStore.setLineWidth,
             setLinePlotPointSize: widgetStore.setLinePlotPointSize,
             handleWcsAxisChanged: this.handleWcsAxisChanged,

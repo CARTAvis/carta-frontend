@@ -6,7 +6,7 @@ import {Alert, AnchorButton, Breadcrumb, Breadcrumbs, Button, IBreadcrumbProps, 
 import {CARTA} from "carta-protobuf";
 import {FileInfoComponent, FileInfoType} from "components/FileInfo/FileInfoComponent";
 import {FileListTableComponent} from "./FileListTable/FileListTableComponent";
-import {DraggableDialogComponent} from "components/Dialogs";
+import {DraggableDialogComponent, TaskProgressDialogComponent} from "components/Dialogs";
 import {SimpleTableComponentProps} from "components/Shared";
 import {AppStore, BrowserMode, CatalogProfileStore, FileBrowserStore, FileFilteringType, HelpType, ISelectedFile, PreferenceKeys, PreferenceStore} from "stores";
 import "./FileBrowserDialogComponent.scss";
@@ -150,6 +150,12 @@ export class FileBrowserDialogComponent extends React.Component {
     private handleExportInputChanged = (ev: React.ChangeEvent<HTMLInputElement>) => {
         const fileBrowserStore = FileBrowserStore.Instance;
         fileBrowserStore.setExportFilename(ev.target.value);
+    };
+
+    private handleFileBrowserRequestCancelled = () => {
+        const fileBrowserStore = FileBrowserStore.Instance;
+        fileBrowserStore.cancelRequestingFileList();
+        fileBrowserStore.resetLoadingStates();
     };
 
     @action handleFilterStringInputChanged = (ev: React.ChangeEvent<HTMLInputElement>) => {
@@ -546,6 +552,15 @@ export class FileBrowserDialogComponent extends React.Component {
                 >
                     This file exists. Are you sure to overwrite it?
                 </Alert>
+                <TaskProgressDialogComponent
+                    isOpen={fileBrowserStore.loadingList && fileBrowserStore.isLoadingDialogOpen && fileBrowserStore.loadingProgress < 1}
+                    progress={fileBrowserStore.loadingProgress}
+                    timeRemaining={appStore.estimatedTaskRemainingTime}
+                    cancellable={true}
+                    onCancel={this.handleFileBrowserRequestCancelled}
+                    text={"Loading"}
+                    contentText={`loading ${fileBrowserStore.loadingCheckedCount} / ${fileBrowserStore.loadingTotalCount}`}
+                />
             </DraggableDialogComponent>
         );
     }

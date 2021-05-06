@@ -4,7 +4,8 @@ import * as React from "react";
 import {AnchorButton, FormGroup, Switch, ButtonGroup, Tooltip} from "@blueprintjs/core";
 import {AppStore, FrameStore} from "stores";
 import {StokesAnalysisWidgetStore} from "stores/widgets";
-import {StokesAnalysisComponent, RegionSelectorComponent, StokesAnalysisSettingsTabs} from "components";
+import {StokesAnalysisComponent, StokesAnalysisSettingsTabs} from "components";
+import {RegionSelectorComponent} from "components/Shared";
 import {CustomIcon} from "icons/CustomIcons";
 import "./StokesAnalysisToolbarComponent.scss";
 

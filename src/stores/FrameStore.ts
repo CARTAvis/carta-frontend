@@ -1018,6 +1018,10 @@ export class FrameStore {
         }), FrameStore.ZoomInertiaDuration);
     };
 
+    public getRegion = (regionId: number): RegionStore => {
+        return this.regionSet?.regions?.find(r => r.regionId === regionId);
+    };
+
     public convertToNativeWCS = (value: number): number => {
         if (!this.spectralFrame || !isFinite(value)) {
             return undefined;
@@ -1180,6 +1184,18 @@ export class FrameStore {
         return undefined;
     };
 
+    public getRegionProperties(regionId: number): string[] {
+        let propertyString = [];
+        const region = this.getRegion(regionId);
+        if (region) {
+            propertyString.push(region.regionProperties);
+            if (this.validWcs) {
+                propertyString.push(this.getRegionWcsProperties(region));
+            }
+        }
+        return propertyString;
+    };
+
     public getRegionWcsProperties(region: RegionStore): string {
         if (!this.validWcs || !isFinite(region.center.x) || !isFinite(region.center.y)) {
             return "Invalid";
@@ -1190,7 +1206,7 @@ export class FrameStore {
             return "Invalid";
         }
 
-        const center = region.regionId === RegionId.CURSOR ? `${this.cursorInfo.infoWCS.x}, ${this.cursorInfo.infoWCS.y}` : `${wcsCenter.x}, ${wcsCenter.y}`;
+        const center = region.regionId === RegionId.CURSOR ? `${this.cursorInfo?.infoWCS?.x}, ${this.cursorInfo?.infoWCS?.y}` : `${wcsCenter.x}, ${wcsCenter.y}`;
         const wcsSize = this.getWcsSizeInArcsec(region.size);
         const size = wcsSize ? {x: formattedArcsec(wcsSize.x, WCS_PRECISION), y: formattedArcsec(wcsSize.y, WCS_PRECISION)} : null;
         const systemType = OverlayStore.Instance.global.explicitSystem;
@@ -1303,19 +1319,34 @@ export class FrameStore {
         this.center.y = (this.frameInfo.fileInfoExtended.height - 1) / 2.0;
     };
 
-    @action setSpectralCoordinate = (coordStr: string): boolean => {
+    @action setSpectralCoordinateToRadioVelocity = () => {
+        const coordStr = GenCoordinateLabel(SpectralType.VRAD, SPECTRAL_DEFAULT_UNIT.get(SpectralType.VRAD));
+        if (this.spectralCoordsSupported?.has(coordStr)) {
+            this.setSpectralCoordinate(coordStr);
+        }
+    };
+
+    @action setSpectralCoordinate = (coordStr: string, alignSpectralSiblings: boolean = true): boolean => {
         if (this.spectralCoordsSupported?.has(coordStr)) {
             const coord: {type: SpectralType, unit: SpectralUnit} = this.spectralCoordsSupported.get(coordStr);
             this.spectralType = coord.type;
             this.spectralUnit = coord.unit;
+
+            if (alignSpectralSiblings) {
+                (!this.spectralReference ? this.secondarySpectralImages : this.spectralSiblings)?.forEach(spectrallyMatchedFrame => spectrallyMatchedFrame.setSpectralCoordinate(coordStr, false));
+            }
             return true;
         }
         return false;
     };
 
-    @action setSpectralSystem = (spectralSystem: SpectralSystem): boolean => {
+    @action setSpectralSystem = (spectralSystem: SpectralSystem, alignSpectralSiblings: boolean = true): boolean => {
         if (this.spectralSystemsSupported?.includes(spectralSystem)) {
             this.spectralSystem = spectralSystem;
+
+            if (alignSpectralSiblings) {
+                (!this.spectralReference ? this.secondarySpectralImages : this.spectralSiblings)?.forEach(spectrallyMatchedFrame => spectrallyMatchedFrame.setSpectralSystem(spectralSystem, false));
+            }
             return true;
         }
         return false;
@@ -1403,9 +1434,12 @@ export class FrameStore {
         }
     }
 
-    @action setCenter(x: number, y: number) {
+    @action setCenter(x: number, y: number, enableSpatialTransform: boolean = true) {
         if (this.spatialReference) {
-            const centerPointRefImage = this.spatialTransform.transformCoordinate({x, y}, true);
+            let centerPointRefImage = {x, y};
+            if (enableSpatialTransform) {
+                centerPointRefImage = this.spatialTransform.transformCoordinate({x, y}, true);   
+            }
             this.spatialReference.setCenter(centerPointRefImage.x, centerPointRefImage.y);
         } else {
             this.center = {x, y};
@@ -1604,6 +1638,8 @@ export class FrameStore {
             this.frameRegionSet.deleteRegion(region);
         }
 
+        AppStore.Instance.catalogStore.convertSpatialMatchedData();
+         
         return true;
     };
 
@@ -1687,6 +1723,10 @@ export class FrameStore {
         this.spectralReference.addSecondarySpectralImage(this);
         const matchedChannel = getTransformedChannel(frame.wcsInfo3D, this.wcsInfo3D, preferenceStore.spectralMatchingType, frame.requiredChannel);
         this.setChannels(matchedChannel, this.requiredStokes, false);
+
+        // Align spectral settings to spectral reference
+        this.setSpectralCoordinate(frame.spectralCoordinate, false);
+
         return true;
     };
 

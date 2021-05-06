@@ -3,7 +3,7 @@ import * as React from "react";
 import {FormGroup, HTMLSelect} from "@blueprintjs/core";
 import {AppStore} from "stores";
 import {HistogramWidgetStore} from "stores/widgets";
-import {RegionSelectorComponent} from "components";
+import {RegionSelectorComponent} from "components/Shared";
 import "./HistogramToolbarComponent.scss";
 
 @observer
@@ -26,7 +26,7 @@ export class HistogramToolbarComponent extends React.Component<{ widgetStore: Hi
             stokesInfo.forEach(stokes => profileCoordinateOptions.push({value: `${stokes}z`, label: stokes}));
 
             const linkedClass = "linked-to-selected-stokes";
-            if (enableStokesSelect && widgetStore.matchActiveFrame && (widgetStore.coordinate === stokesInfo[widgetStore.effectiveFrame.requiredStokes] + "z")) {
+            if (enableStokesSelect && widgetStore.isEffectiveFrameEqualToActiveFrame && (widgetStore.coordinate === stokesInfo[widgetStore.effectiveFrame.requiredStokes] + "z")) {
                 stokesClassName = AppStore.Instance.darkTheme ? `${linkedClass} dark-theme` : linkedClass;
             }
         }

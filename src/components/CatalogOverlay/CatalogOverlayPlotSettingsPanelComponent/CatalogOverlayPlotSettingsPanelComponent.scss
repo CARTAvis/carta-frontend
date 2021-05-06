@@ -1,6 +1,10 @@
 .catalog-settings{
     margin: 20px;
 
+    .file-menu .bp3-button{
+        white-space: nowrap;
+        display: inline-block;
+    }
     .bp3-form-group {
         &:first-of-type {
             margin-left: 0px;
@@ -14,18 +18,22 @@
 
     .bp3-numeric-input {
         .bp3-input-group {
-            width: 60px;
+            width: 110px;
         }
     }
 
-    .panel-container {
-        .file-menu .bp3-button{
-            width: 150px;
-            height: 30px;
-            .bp3-button-text {
-                overflow: hidden;
-                white-space: nowrap;
-            }
+    .catalog-size-overlay {
+        .bp3-input-group {
+            width: 50px;
         }
     }
+
+    .numeric-input-lock {
+        display: inline-flex;
+        width: 100%;
+        .lock-button {
+            margin-bottom: 20px;
+        }
+    }
+
 }

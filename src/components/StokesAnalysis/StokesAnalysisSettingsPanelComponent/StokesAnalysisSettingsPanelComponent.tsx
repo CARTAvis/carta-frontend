@@ -5,6 +5,7 @@ import {Tab, Tabs} from "@blueprintjs/core";
 import {LinePlotSettingsPanelComponent, LinePlotSettingsPanelComponentProps, ScatterPlotSettingsPanelComponentProps, ScatterPlotSettingsPanelComponent, SpectralSettingsComponent, SmoothingSettingsComponent} from "components/Shared";
 import {StokesAnalysisWidgetStore} from "stores/widgets";
 import {WidgetProps, DefaultWidgetConfig, HelpType, WidgetsStore, AppStore} from "stores";
+import {LineKey} from "models";
 import "./StokesAnalysisSettingsPanelComponent.scss";
 
 export enum StokesAnalysisSettingsTabs {
@@ -76,16 +77,21 @@ export class StokesAnalysisSettingsPanelComponent extends React.Component<Widget
     render() {
         const widgetStore = this.widgetStore;
         const lineSettingsProps: LinePlotSettingsPanelComponentProps = {
-            primaryLineColor: widgetStore.primaryLineColor,
+            lineColorMap: new Map<LineKey, string>([["Primary", widgetStore.primaryLineColor], ["Secondary", widgetStore.secondaryLineColor]]),
+            lineOptions: [{value: "Primary", label: "Primary"}, {value: "Secondary", label: "Secondary"}],
             lineWidth: widgetStore.lineWidth,
             plotType: widgetStore.plotType,
             linePlotPointSize: widgetStore.linePlotPointSize,
-            setPrimaryLineColor: widgetStore.setPrimaryLineColor,
+            setLineColor: (lineKey: LineKey, color: string) => {
+                if (lineKey === "Primary") {
+                    widgetStore.setPrimaryLineColor(color);
+                } else if (lineKey === "Secondary") {
+                    widgetStore.setSecondaryLineColor(color);
+                }
+            },
             setLineWidth: widgetStore.setLineWidth,
             setLinePlotPointSize: widgetStore.setLinePlotPointSize,
             setPlotType: widgetStore.setPlotType,
-            secondaryLineColor: widgetStore.secondaryLineColor,
-            setSecondaryLineColor: widgetStore.setSecondaryLineColor
         };
 
         const scatterSettingsProps: ScatterPlotSettingsPanelComponentProps = {
