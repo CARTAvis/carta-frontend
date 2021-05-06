@@ -43,7 +43,7 @@ export class HistogramComponent extends React.Component<WidgetProps> {
                 return widgetStore;
             }
         }
-        console.log("!!!can't find store for widget");
+        console.log("can't find store for widget");
         return new HistogramWidgetStore();
     }
 
@@ -72,7 +72,11 @@ export class HistogramComponent extends React.Component<WidgetProps> {
                 return null;
             }
             const stokes = this.widgetStore.effectiveFrame.stokesInfo.findIndex(stokes => stokes === coordinate.slice(0, 1));
-            return regionMap.get(stokes === -1 ? this.widgetStore.effectiveFrame.requiredStokes : stokes)[0];
+            const regionHistogramData = regionMap.get(stokes === -1 ? this.widgetStore.effectiveFrame.requiredStokes : stokes)
+            if (!regionHistogramData) {
+                return null;
+            }
+            return regionHistogramData.histograms[0];
         }
         return null;
     }
