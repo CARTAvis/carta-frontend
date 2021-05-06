@@ -41,6 +41,10 @@ import {getImageCanvas, ImageViewLayer} from "components";
 import {AppToaster, ErrorToast, SuccessToast, WarningToast} from "components/Shared";
 import GitCommit from "../static/gitInfo";
 
+interface FrameOption extends IOptionProps {
+    hasZAxis: boolean;
+}
+
 export class AppStore {
     private static staticInstance: AppStore;
 
@@ -303,6 +307,16 @@ export class AppStore {
             return {
                 label: index + ": " + frame.filename,
                 value: frame.frameInfo.fileId
+            };
+        });
+    }
+
+    @computed get frameOptions(): FrameOption[] {
+        return this.frames?.map((frame, index) => {
+            return {
+                label: index + ": " + frame.filename,
+                value: frame.frameInfo.fileId,
+                hasZAxis: frame?.channelInfo !== undefined && frame?.channelInfo !== null
             };
         });
     }
