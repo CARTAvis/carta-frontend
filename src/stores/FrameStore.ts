@@ -551,6 +551,10 @@ export class FrameStore {
         return this.spectralType === SpectralType.CHANNEL;
     }
 
+    @computed get isCoordVelocity(): boolean {
+        return this.spectralType === SpectralType.VRAD || this.spectralType === SpectralType.VOPT;
+    }
+
     @computed get nativeSpectralCoordinate(): string {
         return this.spectralAxis ? `${this.spectralAxis.type.name} (${this.spectralAxis.type.unit})` : undefined;
     }
