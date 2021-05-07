@@ -438,14 +438,19 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
     }
 
     @computed get transformedSpectralLines(): SpectralLine[] {
-        // transform to corresponding value according to current widget's spectral settings
-        let transformedSpectralLines: SpectralLine[] = [];
         const frame = this.effectiveFrame;
-        if (frame && this.spectralLinesMHz) {
-            this.spectralLinesMHz.forEach(spectralLine => {
-                const transformedValue = frame.convertFreqMHzToSettingWCS(spectralLine.value);
+
+        // Ignoring plotting lines when:
+        // 1. x cooridnate is channel
+        // 2. showing multiple profiles of different images in radio/optical velocity.(observation sources are not aligned now)
+        const disablePlot = frame?.isCoordChannel || (frame?.isCoordVelocity && this.profileSelectionStore.isShowingProfilesOfMultiImages);
+
+        let transformedSpectralLines: SpectralLine[] = [];
+        if (frame && !disablePlot) {
+            this.spectralLinesMHz?.forEach(spectralLine => {
+                const transformedValue = frame.convertFreqMHzToSettingWCS(spectralLine?.value);
                 if (isFinite(transformedValue)) {
-                    transformedSpectralLines.push({species: spectralLine.species, value: transformedValue, qn: spectralLine.qn});
+                    transformedSpectralLines.push({species: spectralLine?.species, value: transformedValue, qn: spectralLine?.qn});
                 }
             });
         }
