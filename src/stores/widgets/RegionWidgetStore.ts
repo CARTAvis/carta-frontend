@@ -85,29 +85,4 @@ export class RegionWidgetStore {
         }
         return false;
     }
-
-    public static CalculateRequirementsArray(widgetsMap: Map<string, RegionWidgetStore>) {
-        const updatedRequirements = new Map<number, Array<number>>();
-
-        widgetsMap.forEach(widgetStore => {
-            const frame = widgetStore.effectiveFrame;
-            if (!frame) {
-                return;
-            }
-            const fileId = frame.frameInfo.fileId;
-            const regionId = widgetStore.effectiveRegionId;
-            const region = frame.getRegion(regionId);
-            if (regionId === -1 || (region?.isClosedRegion)) {
-                let frameRequirementsArray = updatedRequirements.get(fileId);
-                if (!frameRequirementsArray) {
-                    frameRequirementsArray = [];
-                    updatedRequirements.set(fileId, frameRequirementsArray);
-                }
-                if (!frameRequirementsArray.includes(regionId)) {
-                    frameRequirementsArray.push(regionId);
-                }
-            }
-        });
-        return updatedRequirements;
-    }
 }

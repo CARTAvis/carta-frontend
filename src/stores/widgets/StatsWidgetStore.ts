@@ -61,56 +61,11 @@ export class StatsWidgetStore extends RegionWidgetStore {
         return updatedRequirements;
     }
 
-    public static DiffRequirementsArray(originalRequirements: Map<number, Array<number>>, updatedRequirements: Map<number, Array<number>>) {
-        const diffList: CARTA.SetStatsRequirements[] = [];
-
-        // Three possible scenarios:
-        // 1. Existing array, no new array => diff should be empty stats requirements for each element of existing array
-        // 2. No existing array, new array => diff should be full stats requirements for each element of new array
-        // 3. Existing array and new array => diff should be empty stats for those missing in new array, full stats for those missing in old array
-
-        // (1) & (3) handled first
-        originalRequirements.forEach((statsArray, fileId) => {
-            const updatedStatsArray = updatedRequirements.get(fileId);
-            // If there's no new array, remove requirements for all existing regions
-            if (!updatedStatsArray) {
-                for (const regionId of statsArray) {
-                    diffList.push(CARTA.SetStatsRequirements.create({fileId, regionId, statsConfigs: []}));
-                }
-            } else {
-                // If regions in the new array are missing, remove requirements for those regions
-                for (const regionId of statsArray) {
-                    if (updatedStatsArray.indexOf(regionId) === -1) {
-                        diffList.push(CARTA.SetStatsRequirements.create({fileId, regionId, statsConfigs: []}));
-                    }
-                }
-                // If regions in the existing array are missing, add requirements for those regions
-                for (const regionId of updatedStatsArray) {
-                    if (statsArray.indexOf(regionId) === -1) {
-                        diffList.push(CARTA.SetStatsRequirements.create({fileId, regionId, statsConfigs: [{ coordinate: "z", statsTypes: AppStore.DEFAULT_STATS_TYPES}]}));
-                    }
-                }
-            }
-        });
-
-        updatedRequirements.forEach((updatedStatsArray, fileId) => {
-            const statsArray = originalRequirements.get(fileId);
-            // If there's no existing array, add requirements for all new regions
-            if (!statsArray) {
-                for (const regionId of updatedStatsArray) {
-                    diffList.push(CARTA.SetStatsRequirements.create({fileId, regionId, statsConfigs: [{ coordinate: "z", statsTypes: AppStore.DEFAULT_STATS_TYPES}]}));
-                }
-            }
-        });
-
-        return diffList;
-    }
-
     // This function diffs the updated requirements map with the existing requirements map, and reacts to changes
     // Three diff cases are checked:
-    // 1. The old map has an entry, but the new one does not => send an "empty" SetSpectralRequirements message
-    // 2. The old and new maps both have entries, but they are different => send the new SetSpectralRequirements message
-    // 3. The new map has an entry, but the old one does not => send the new SetSpectralRequirements message
+    // 1. The old map has an entry, but the new one does not => send an "empty" SetStatsRequirements message
+    // 2. The old and new maps both have entries, but they are different => send the new SetStatsRequirements message
+    // 3. The new map has an entry, but the old one does not => send the new SetStatsRequirements message
     // The easiest way to check all three is to first add any missing entries to the new map (as empty requirements), and then check the updated maps entries
     public static DiffStatsRequirements(originalRequirements: Map<number, Map<number, CARTA.SetStatsRequirements>>, updatedRequirements: Map<number, Map<number, CARTA.SetStatsRequirements>>) {
         const diffList: CARTA.SetStatsRequirements[] = [];
