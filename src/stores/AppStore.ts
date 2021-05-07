@@ -467,7 +467,6 @@ export class AppStore {
                 }
                 this.endFileLoading();
                 this.fileBrowserStore.hideFileBrowser();
-                WidgetsStore.ResetWidgetPlotXYBounds(this.widgetsStore.histogramWidgets)
                 WidgetsStore.ResetWidgetPlotXYBounds(this.widgetsStore.spatialProfileWidgets);
                 WidgetsStore.ResetWidgetPlotXYBounds(this.widgetsStore.spectralProfileWidgets);
                 WidgetsStore.ResetWidgetPlotXYBounds(this.widgetsStore.stokesAnalysisWidgets);
@@ -492,7 +491,6 @@ export class AppStore {
                 this.endFileLoading();
                 this.fileBrowserStore.hideFileBrowser();
                 AppStore.Instance.dialogStore.hideStokesDialog();
-                WidgetsStore.ResetWidgetPlotXYBounds(this.widgetsStore.histogramWidgets)
                 WidgetsStore.ResetWidgetPlotXYBounds(this.widgetsStore.spatialProfileWidgets);
                 WidgetsStore.ResetWidgetPlotXYBounds(this.widgetsStore.spectralProfileWidgets);
                 WidgetsStore.ResetWidgetPlotXYBounds(this.widgetsStore.stokesAnalysisWidgets);
