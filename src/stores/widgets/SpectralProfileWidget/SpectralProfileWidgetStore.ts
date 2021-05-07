@@ -316,7 +316,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
 
     @computed get plotData(): MultiPlotData {
         const frame = this.effectiveFrame;
-        if (!frame) {
+        if (!(frame?.channelInfo)) {
             return null;
         }
 

@@ -98,7 +98,7 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
         const profileStore = this.profileStore;
         let axisOptions = [];
         axisOptions.push(CatalogOverlay.NONE);
-        profileStore?.catalogControlHeader.forEach((header, columnName) => {
+        profileStore?.catalogControlHeader?.forEach((header, columnName) => {
             const dataType = profileStore.catalogHeader[header.dataIndex].dataType;
             if (CatalogOverlayComponent.axisDataType.includes(dataType) && header.display) {
                 axisOptions.push(columnName);

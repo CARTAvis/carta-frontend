@@ -2,7 +2,7 @@ import {action, computed, observable, makeObservable} from "mobx";
 import {Regions, IRegion} from "@blueprintjs/table";
 import {CARTA} from "carta-protobuf";
 import {AppStore, CatalogStore, PreferenceStore} from "stores";
-import {filterProcessedColumnData, minMaxArray} from "utilities";
+import {filterProcessedColumnData, minMaxArray, transformPoint} from "utilities";
 import {ProcessedColumnData, TypedArray} from "models";
 import {CatalogWebGLService, CatalogTextureType} from "services";
 
@@ -353,6 +353,7 @@ export class CatalogProfileStore {
 
     @action setSelectedPointIndices = (pointIndices: Array<number>, autoPanZoom: boolean) => {
         this.selectedPointIndices = pointIndices;
+        const catalogStore = CatalogStore.Instance;
         const coordsArray = CatalogStore.Instance.catalogGLData.get(this.catalogFileId);
         if (coordsArray?.x?.length) {
             let selectedX = [];
@@ -371,23 +372,29 @@ export class CatalogProfileStore {
             }
             CatalogWebGLService.Instance.updateDataTexture(this.catalogFileId, selectedData, CatalogTextureType.SelectedSource);
             if (autoPanZoom) {
+                const appStore = AppStore.Instance;
+                const frame = appStore.getFrame(catalogStore.getFrameIdByCatalogId(this.catalogFileId));
                 const selectedDataLength = selectedX.length;
-                if (selectedDataLength === 1) {
-                    const x = selectedX[0];
-                    const y = selectedY[0];
-                    AppStore.Instance.activeFrame.setCenter(x, y);      
-                }
-
+                let positionImageSpace = {x: selectedX[0], y: selectedY[0]};
                 if (selectedDataLength > 1) {
                     const minMaxX = minMaxArray(selectedX);
                     const minMaxY = minMaxArray(selectedY);
                     const width = minMaxX.maxVal - minMaxX.minVal;
                     const height = minMaxY.maxVal - minMaxY.minVal;
-                    AppStore.Instance.activeFrame.setCenter(width / 2 + minMaxX.minVal, height / 2 + minMaxY.minVal);
-                    const zoomLevel = Math.min(AppStore.Instance.activeFrame.renderWidth / width, AppStore.Instance.activeFrame.renderHeight / height);
-                    AppStore.Instance.activeFrame.setZoom(zoomLevel);   
+                    positionImageSpace = {x: width / 2 + minMaxX.minVal, y: height / 2 + minMaxY.minVal};
+                    const zoomLevel = Math.min(appStore.activeFrame.renderWidth / width, appStore.activeFrame.renderHeight / height);
+                    appStore.activeFrame.setZoom(zoomLevel);   
                 }
 
+                if (frame.spatialReference && frame !== appStore.activeFrame) {
+                    positionImageSpace = transformPoint(frame.spatialTransformAST, positionImageSpace, true);
+                }
+                
+                if (appStore.activeFrame.spatialReference && !frame.spatialReference) {
+                    appStore.activeFrame.setCenter(positionImageSpace.x, positionImageSpace.y, false);
+                } else {
+                    appStore.activeFrame.setCenter(positionImageSpace.x, positionImageSpace.y);
+                }
             }
         }
     }
