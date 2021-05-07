@@ -276,6 +276,11 @@ export class StokesAnalysisWidgetStore extends RegionWidgetStore {
         this.scatterOutRangePointsZIndex = [];
     };
 
+    @action clearXYBounds = () => {
+        this.clearLinePlotsXYBounds();
+        this.clearScatterPlotXYBounds();
+    }
+
     @action setQULinePlotsXYBounds = (minX: number, maxX: number, minY: number, maxY: number) => {
         this.sharedMinX = minX;
         this.sharedMaxX = maxX;
