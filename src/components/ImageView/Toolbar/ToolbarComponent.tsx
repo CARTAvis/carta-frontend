@@ -66,6 +66,8 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
         this.props.onActiveLayerChange(layer);
         if (layer === ImageViewLayer.RegionMoving) {
             AppStore.Instance.activeFrame.regionSet.setMode(RegionMode.MOVING);
+        } else {
+            AppStore.Instance.activeFrame.regionSet.setMode(RegionMode.CREATING);
         }
     }
 
