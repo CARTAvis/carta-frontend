@@ -24,7 +24,7 @@ export class ProfileFittingStore {
     @observable resultLog: string;
     @observable isCursorSelectingYIntercept: boolean;
     @observable isCursorSelectingSlope: boolean;
-    @observable isCursorSelectionOn: boolean;
+    @observable isCursorSelectingComponent: boolean;
     @observable isAutoDetectWithCont: boolean;
     @observable isAutoDetectWithFitting: boolean;
     @observable hasAutoDetectResult: boolean;
@@ -62,7 +62,7 @@ export class ProfileFittingStore {
         selectedComponent.setAmp(isPositiveAmp ? yMax - yMin: yMin - yMax);
         selectedComponent.setCenter(centerX);
         selectedComponent.setFwhm(xMax - xMin);
-        this.isCursorSelectionOn = false;
+        this.isCursorSelectingComponent = false;
     }
 
     @computed get selectedComponent(): ProfileFittingIndividualStore {
@@ -395,8 +395,8 @@ export class ProfileFittingStore {
         this.isCursorSelectingSlope = val;
     }
 
-    @action setIsCursorSelectionOn = (val: boolean) => {
-        this.isCursorSelectionOn = val;
+    @action setIsCursorSelectingComponentOn = (val: boolean) => {
+        this.isCursorSelectingComponent = val;
     }
 
     @action setIsAutoDetectWithCont = (val: boolean) => {

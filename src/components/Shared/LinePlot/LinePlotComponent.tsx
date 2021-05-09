@@ -183,6 +183,8 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
             return "ew-resize";
         } else if (this.props.selectingMode === LinePlotSelectingMode.VERTICAL) {
             return "ns-resize";
+        } else if (this.props.selectingMode === LinePlotSelectingMode.BOX && this.props.setSelectedInsideBox && this.props.isSelectingInsideBox) {
+            return "pointer";
         }
         return "crosshair";
     }

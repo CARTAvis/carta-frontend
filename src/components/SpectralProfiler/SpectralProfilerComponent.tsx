@@ -96,7 +96,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
 
     onChannelChanged = (x: number) => {
         const frame = this.widgetStore.effectiveFrame;
-        if (x === null || x === undefined || !isFinite(x) || AnimatorStore.Instance.animationActive) {
+        if (x === null || x === undefined || !isFinite(x) || AnimatorStore.Instance.animationActive || this.widgetStore.fittingStore.isCursorSelectingComponent) {
             return;
         }
         const nearestIndex = frame.findChannelIndexByValue(x);
@@ -138,7 +138,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
             return LinePlotSelectingMode.LINE;
         } else if (this.widgetStore.fittingStore.isCursorSelectingSlope) {
             return LinePlotSelectingMode.LINE;
-        } else if (this.widgetStore.fittingStore.isCursorSelectionOn) {
+        } else if (this.widgetStore.fittingStore.isCursorSelectingComponent) {
             return LinePlotSelectingMode.BOX;
         }
         return LinePlotSelectingMode.BOX;
@@ -278,7 +278,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
             pointRadius: this.widgetStore.linePlotPointSize,
             selectingMode: this.linePlotSelectingMode,
             setSelectedRange: this.setSelectedRange,
-            isSelectingInsideBox: this.widgetStore.fittingStore.isCursorSelectionOn,
+            isSelectingInsideBox: this.widgetStore.fittingStore.isCursorSelectingComponent,
             setSelectedInsideBox: this.setSelectedBox,
             setSelectedLine: this.setSelectedLine,
             insideBoxes: this.widgetStore.fittingStore.componentPlottingBoxes,

@@ -102,7 +102,7 @@ export class ProfileFittingComponent extends React.Component<ProfileFittingCompo
     };
 
     private cursorSelecting = () => {
-        this.props.fittingStore.setIsCursorSelectionOn(!this.props.fittingStore.isCursorSelectionOn);
+        this.props.fittingStore.setIsCursorSelectingComponentOn(!this.props.fittingStore.isCursorSelectingComponent);
     };
 
     private onCenterLocked = () => {
@@ -168,7 +168,7 @@ export class ProfileFittingComponent extends React.Component<ProfileFittingCompo
         fittingStore.setResultSlope(0);
         fittingStore.setIsCursorSelectingYIntercept(false);
         fittingStore.setIsCursorSelectingSlope(false);
-        fittingStore.setIsCursorSelectionOn(false);
+        fittingStore.setIsCursorSelectingComponentOn(false);
         fittingStore.setHasAutoDetectResult(false);
     };
 
@@ -297,7 +297,7 @@ export class ProfileFittingComponent extends React.Component<ProfileFittingCompo
                                         buttonPosition="none"
                                     />
                                     <AnchorButton onClick={this.onCenterLocked} icon={fittingStore.selectedComponent.lockedCenter ? "lock" : "unlock"} disabled={disabled}/>
-                                    <AnchorButton onClick={this.cursorSelecting} active={fittingStore.isCursorSelectionOn} icon="select" disabled={disabled}/>
+                                    <AnchorButton onClick={this.cursorSelecting} active={fittingStore.isCursorSelectingComponent} icon="select" disabled={disabled}/>
                                 </div>
                             </FormGroup>
                             <FormGroup label="Amplitude" inline={true}>
@@ -310,7 +310,7 @@ export class ProfileFittingComponent extends React.Component<ProfileFittingCompo
                                         buttonPosition="none"
                                         />
                                     <AnchorButton onClick={this.onAmpLocked} icon={fittingStore.selectedComponent.lockedAmp ? "lock" : "unlock"} disabled={disabled}/>
-                                    <AnchorButton onClick={this.cursorSelecting} active={fittingStore.isCursorSelectionOn} icon="select" disabled={disabled}/>
+                                    <AnchorButton onClick={this.cursorSelecting} active={fittingStore.isCursorSelectingComponent} icon="select" disabled={disabled}/>
                                 </div>
                             </FormGroup>
                             <FormGroup label="FWHM" inline={true}>
@@ -323,7 +323,7 @@ export class ProfileFittingComponent extends React.Component<ProfileFittingCompo
                                         buttonPosition="none"
                                     />
                                     <AnchorButton onClick={this.onFwhmLocked} icon={fittingStore.selectedComponent.lockedFwhm ? "lock" : "unlock"} disabled={disabled}/>
-                                    <AnchorButton onClick={this.cursorSelecting} active={fittingStore.isCursorSelectionOn} icon="select" disabled={disabled}/>
+                                    <AnchorButton onClick={this.cursorSelecting} active={fittingStore.isCursorSelectingComponent} icon="select" disabled={disabled}/>
                                 </div>
                             </FormGroup>
                             <FormGroup label="Continuum" inline={true}>
