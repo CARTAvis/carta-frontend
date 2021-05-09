@@ -1,10 +1,10 @@
 import {action, computed, observable, makeObservable} from "mobx";
+import * as GSL from "gsl_wrapper";
 import {FittingFunction, FittingContinuum} from "components/SpectralProfiler/ProfileFittingComponent/ProfileFittingComponent";
 import {SpectralProfileWidgetStore} from "stores/widgets";
 import {Point2D} from "models";
-import * as GSL from "gsl_wrapper";
 import {LinePlotInsideBoxMarker} from "components/Shared/LinePlot/LinePlotComponent";
-import {getColorForTheme, toFixed} from "utilities";
+import {getColorForTheme, toFixed, gaussian, lorentzian} from "utilities";
 import {autoDetecting} from "utilities/fitting_heuristics";
 
 export class ProfileFittingStore {
@@ -172,15 +172,6 @@ export class ProfileFittingStore {
         return text;
     }
 
-    private gaussian(x: number, amp: number, center: number, fwhm: number) {
-        const z = (x - center) / fwhm;
-        return amp * Math.exp(-4 * Math.log(2) * z * z);
-    }
-
-    private lorentzian(x: number, amp: number, center: number, fwhm: number) {
-        return amp * 0.25 * Math.pow(fwhm, 2) / (Math.pow(x - center, 2) + 0.25 * Math.pow(fwhm, 2));
-    }
-
     @computed get baseLinePoint2DArray(): Point2D[] {
         if (this.components && this.continuum !== FittingContinuum.NONE) {
             const x = this.widgetStore.plotData.fittingData.x;
@@ -205,9 +196,9 @@ export class ProfileFittingStore {
                 let yi = 0;
                 for (const component of this.components) {
                     if (this.function === FittingFunction.GAUSSIAN) {
-                        yi += this.gaussian(x[i], component.resultAmp, component.resutlCenter, component.resultFwhm);
+                        yi += gaussian(x[i], component.resultAmp, component.resutlCenter, component.resultFwhm);
                     } else if (this.function === FittingFunction.LORENTZIAN) {
-                        yi += this.lorentzian(x[i], component.resultAmp, component.resutlCenter, component.resultFwhm);
+                        yi += lorentzian(x[i], component.resultAmp, component.resutlCenter, component.resultFwhm);
                     }
                 }
                 resultPoint2DArray.push({x: x[i], y: yi + (this.resultSlope * x[i] + this.resultYIntercept)});
@@ -224,7 +215,7 @@ export class ProfileFittingStore {
             for (const component of this.components) {
                 let individualResultPoint2DArray: Point2D[] = [];
                 for (let i = 0; i < x.length; i++) {
-                    const yi = this.function === FittingFunction.GAUSSIAN ? this.gaussian(x[i], component.resultAmp, component.resutlCenter, component.resultFwhm) : this.lorentzian(x[i], component.resultAmp, component.resutlCenter, component.resultFwhm);
+                    const yi = this.function === FittingFunction.GAUSSIAN ? gaussian(x[i], component.resultAmp, component.resutlCenter, component.resultFwhm) : lorentzian(x[i], component.resultAmp, component.resutlCenter, component.resultFwhm);
                     individualResultPoint2DArray.push({x: x[i], y: yi + (this.resultSlope * x[i] + this.resultYIntercept)});
                 }
                 individualResultPoint2DArrays.push(individualResultPoint2DArray);
@@ -243,9 +234,9 @@ export class ProfileFittingStore {
                 let yi = 0;
                 for (const component of this.components) {
                     if (this.function === FittingFunction.GAUSSIAN) {
-                        yi += this.gaussian(x[i], component.resultAmp, component.resutlCenter, component.resultFwhm);
+                        yi += gaussian(x[i], component.resultAmp, component.resutlCenter, component.resultFwhm);
                     } else if (this.function === FittingFunction.LORENTZIAN) {
-                        yi += this.lorentzian(x[i], component.resultAmp, component.resutlCenter, component.resultFwhm);
+                        yi += lorentzian(x[i], component.resultAmp, component.resutlCenter, component.resultFwhm);
                     }
                 }
                 residualPoint2DArray.push({x: x[i], y: y[i] - (yi + (this.resultSlope * x[i] + this.resultYIntercept))});
@@ -310,9 +301,9 @@ export class ProfileFittingStore {
             lockedOrderInputData.push(this.lockedSlope ? 1: 0);
         }
 
-        const fittingResult = GSL.gaussianFitting(x, y, inputData, lockedInputData, orderInputData, lockedOrderInputData, this.function);
+        const fittingResult = GSL.fitting(this.function, x, y, inputData, lockedInputData, orderInputData, lockedOrderInputData);
         this.setResultYIntercept(fittingResult.yIntercept);
-        this.setResultYInterceptError(fittingResult.yInterceptError)
+        this.setResultYInterceptError(fittingResult.yInterceptError);
         this.setResultSlope(fittingResult.slope);
         this.setResultSlopeError(fittingResult.slopeError);
         for (let i = 0; i < this.components.length ; i++) {

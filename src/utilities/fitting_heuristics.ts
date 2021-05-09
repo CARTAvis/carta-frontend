@@ -1,6 +1,7 @@
 import * as _ from "lodash";
 import * as GSL from "gsl_wrapper";
-import { ProfileFittingIndividualStore } from "stores/ProfileFittingStore";
+import {ProfileFittingIndividualStore} from "stores/ProfileFittingStore";
+import { FittingFunction } from "components/SpectralProfiler/ProfileFittingComponent/ProfileFittingComponent";
 
 export function hanningSmoothing(data: number[]) {
     // hanning width = 3
@@ -99,7 +100,7 @@ export function histogramGaussianFit(y: number[], bins: number) {
 
     // [amp, center, fwhm]
     const initialGuess = [_.max(histY), histXCenter[_.findIndex(histY, (y => y === _.max(histY)))], 2 * Math.sqrt(Math.log(10) * 2 ) * 0.5 * (deltaHistXCenter)];
-    const histogramGaussianFitting = GSL.gaussianFitting(new Float64Array(histXCenter), new Float64Array(histY), initialGuess, [0, 0, 0], [0, 0], [1, 1], 0);
+    const histogramGaussianFitting = GSL.fitting(FittingFunction.GAUSSIAN, new Float64Array(histXCenter), new Float64Array(histY), initialGuess, [0, 0, 0], [0, 0], [1, 1]);
 
     const intensitySmoothedMean = histogramGaussianFitting.center[0];
     const intensitySmoothedStddev = histogramGaussianFitting.fwhm[0] / (2 * Math.sqrt(Math.log(2) * 2 ));

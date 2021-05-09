@@ -218,13 +218,13 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
                 this.widgetStore.fittingStore.setIsCursorSelectingSlope(false);
             }
         }
-    }
+    };
 
     private setSelectedBox = (xMin: number, xMax: number, yMin: number, yMax: number) => {
         if (isFinite(xMin) && isFinite(xMax) && isFinite(yMin) && isFinite(yMax)) {
             this.widgetStore.fittingStore.setComponentByCursor(xMin, xMax, yMin, yMax);
         }
-    }
+    };
 
     private fillVisibleSpectralLines = (): LineMarker[] => {
         let spectralLineMarkers: LineMarker[] = [];

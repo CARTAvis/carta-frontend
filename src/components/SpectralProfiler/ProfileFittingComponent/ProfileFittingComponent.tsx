@@ -3,7 +3,7 @@ import {observable, action, autorun, makeObservable} from "mobx";
 import {observer} from "mobx-react";
 import {AnchorButton, FormGroup, HTMLSelect, Slider, Pre, Text, Intent, Tooltip, Switch, Popover, Button} from "@blueprintjs/core";
 import {SafeNumericInput} from "components/Shared";
-import {ProfileFittingStore} from "stores/ProfileFittingStore"
+import {ProfileFittingStore} from "stores/ProfileFittingStore";
 import {SpectralProfileWidgetStore} from "stores/widgets";
 import {AppStore} from "stores";
 import {getTimestamp} from "utilities";
@@ -33,103 +33,97 @@ export class ProfileFittingComponent extends React.Component<ProfileFittingCompo
     private onFunctionChanged = (ev) => {
         this.reset();
         this.props.fittingStore.setFunction(parseInt(ev.target.value));
-    }
+    };
 
     private onContinuumValueChanged = (ev) => {
         this.props.fittingStore.setYIntercept(0);
         this.props.fittingStore.setSlope(0);
         this.props.fittingStore.setContinuum(parseInt(ev.target.value));
-    }
+    };
 
     private onYInterceptValueChanged = (val: number) => {
         this.props.fittingStore.setYIntercept(val);
-    }
+    };
 
     private onSlopeValueChanged = (val: number) => {
         this.props.fittingStore.setSlope(val);
-    }
+    };
 
     private onYInterceptValueLocked = () => {
         this.props.fittingStore.setLockedYIntercept(!this.props.fittingStore.lockedYIntercept);
-    }
+    };
 
     private onSlopeValueLocked = () => {
         this.props.fittingStore.setLockedSlope(!this.props.fittingStore.lockedSlope);
-    }
+    };
 
     private cursorSelectingYIntercept = () => {
         this.props.fittingStore.setIsCursorSelectingYIntercept(!this.props.fittingStore.isCursorSelectingYIntercept);
-    }
+    };
 
     private cursorSelectingSlope = () => {
         this.props.fittingStore.setIsCursorSelectingSlope(!this.props.fittingStore.isCursorSelectingSlope);
-    }
+    };
 
     private onCenterValueChanged = (val: number) => {
         this.props.fittingStore.selectedComponent.setCenter(val);
-    }
+    };
 
     private onAmpValueChanged = (val: number) => {
         this.props.fittingStore.selectedComponent.setAmp(val);
-    }
+    };
 
     private onFwhmValueChanged = (val: number) => {
         this.props.fittingStore.selectedComponent.setFwhm(val);
-    }
+    };
 
     private onMouseOverResult = () => {
         this.setIsShowingResultButton(true);
-    }
+    };
 
     private onMouseLeaveResult = () => {
         this.setIsShowingResultButton(false);
-    }
+    };
 
     private autoDetect = () => {
         this.props.fittingStore.setHasResult(false);
         this.props.fittingStore.setComponents(1, true);
         if (this.props.widgetStore?.plotData?.fittingData) {
-            // const fittingData = this.props.widgetStore.plotData.fittingData;
-            // if (this.props.widgetStore.smoothingStore.type !== SmoothingType.NONE) {
-            //     const smoothingData = this.props.widgetStore.smoothingStore.getSmoothingValues(fittingData.rawX, fittingData.rawY);
-            //     this.props.fittingStore.autoDetect(smoothingData.x, Array.prototype.slice.call(smoothingData.y));
-            // } else {
-                this.props.fittingStore.autoDetect();
-            // }
+            this.props.fittingStore.autoDetect();
             if (this.props.fittingStore.isAutoDetectWithFitting) {
                 this.fitData();
             }
         }
         this.props.fittingStore.setHasAutoDetectResult(true);
-    }
+    };
 
     private deleteComponent = () => {
         this.props.fittingStore.deleteSelectedComponent();
-    }
+    };
 
     private cursorSelecting = () => {
         this.props.fittingStore.setIsCursorSelectionOn(!this.props.fittingStore.isCursorSelectionOn);
-    }
+    };
 
     private onCenterLocked = () => {
         this.props.fittingStore.selectedComponent.setLockedCenter(!this.props.fittingStore.selectedComponent.lockedCenter);
-    }
+    };
 
     private onAmpLocked = () => {
         this.props.fittingStore.selectedComponent.setLockedAmp(!this.props.fittingStore.selectedComponent.lockedAmp);
-    }
+    };
 
     private onFwhmLocked = () => {
         this.props.fittingStore.selectedComponent.setLockedFwhm(!this.props.fittingStore.selectedComponent.lockedFwhm);
-    }
+    };
 
     private showLog = () => {
         this.setIsShowingLog(true);
-    }
+    };
 
     private handleLogClose = () => {
         this.setIsShowingLog(false);
-    }
+    };
 
     private saveLog = () => {
         let headerString = "";
@@ -161,11 +155,11 @@ export class ProfileFittingComponent extends React.Component<ProfileFittingCompo
 
         a.download = `Profile Fitting Result Log-${getTimestamp()}.txt`;
         a.dispatchEvent(new MouseEvent("click"));
-    }
+    };
 
-    private reset = () => {
+    @action private reset = () => {
         const fittingStore = this.props.fittingStore;
-        fittingStore.setComponents(1,true);
+        fittingStore.setComponents(1, true);
         fittingStore.setHasResult(false);
         fittingStore.setContinuum(FittingContinuum.NONE);
         fittingStore.setYIntercept(0);
@@ -176,23 +170,24 @@ export class ProfileFittingComponent extends React.Component<ProfileFittingCompo
         fittingStore.setIsCursorSelectingSlope(false);
         fittingStore.setIsCursorSelectionOn(false);
         fittingStore.setHasAutoDetectResult(false);
-    }
+    };
 
     private fitData = () => {
         if (this.props.fittingStore.readyToFit) {
             this.props.fittingStore.fitData();
         }
-    }
+    };
 
     autoButtonTooltip = () => {
-        return(
+        return (
             <span><i>
                 Automatically detect features in the spectrum <br/>
                 and set initial guess for each component.<br/>
                 [Experimental]
             </i></span>
-        )
-    }
+        );
+    };
+
     @action setIsShowingLog(val: boolean) {
         this.isShowingLog = val;
     }

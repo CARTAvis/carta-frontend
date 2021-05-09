@@ -207,3 +207,12 @@ export function minMaxArray(data: Array<number> | TypedArray): {minVal: number, 
     }
     return {minVal: NaN, maxVal: NaN};
 }
+
+export function gaussian(x: number, amp: number, center: number, fwhm: number) {
+    const z = (x - center) / fwhm;
+    return amp * Math.exp(-4 * Math.log(2) * z * z);
+}
+
+export function lorentzian(x: number, amp: number, center: number, fwhm: number) {
+    return amp * 0.25 * Math.pow(fwhm, 2) / (Math.pow(x - center, 2) + 0.25 * Math.pow(fwhm, 2));
+}
