@@ -64,9 +64,9 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
 
     private handelActiveLayerClicked = (layer: ImageViewLayer) => {
         this.props.onActiveLayerChange(layer);
-        if (layer === ImageViewLayer.RegionMoving) {
+        if (layer === ImageViewLayer.RegionMoving || layer === ImageViewLayer.Catalog) {
             AppStore.Instance.activeFrame.regionSet.setMode(RegionMode.MOVING);
-        } else {
+        } else if (layer === ImageViewLayer.RegionCreating) {
             AppStore.Instance.activeFrame.regionSet.setMode(RegionMode.CREATING);
         }
     }
@@ -201,13 +201,13 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
                 {frame.regionSet.mode === RegionMode.CREATING &&
                 <Tooltip position={tooltipPosition} content={<span>Create region<br/><i><small>Click to select region type</small></i></span>}>
                     <Popover content={regionMenu} position={Position.TOP} minimal={true}>
-                        <AnchorButton icon={regionIcon} active={!catalogOverlayEnabled} onClick={() => this.handelActiveLayerClicked(ImageViewLayer.RegionCreating)}/>
+                        <AnchorButton icon={regionIcon} active={true}/>
                     </Popover>
                 </Tooltip>
                 }
                 {frame.regionSet.mode === RegionMode.MOVING &&
                 <Tooltip position={tooltipPosition} content={<span>Create region<br/><i><small>Double-click to select region type.<br/>Press C to enter creation mode.</small></i></span>}>
-                    <AnchorButton icon={regionIcon} onClick={() => frame.regionSet.setMode(RegionMode.CREATING)}/>
+                    <AnchorButton icon={regionIcon} onClick={() => this.handelActiveLayerClicked(ImageViewLayer.RegionCreating)}/>
                 </Tooltip>
                 }
                 <Tooltip position={tooltipPosition} content="Select and pan mode">
