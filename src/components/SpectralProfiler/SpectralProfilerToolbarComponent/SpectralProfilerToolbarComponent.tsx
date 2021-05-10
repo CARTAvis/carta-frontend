@@ -258,6 +258,11 @@ export class SpectralProfilerToolbarComponent extends React.Component<{ widgetSt
         AppStore.Instance.widgetsStore.createFloatingSettingsWidget(SpectralProfilerComponent.WIDGET_CONFIG.title, this.props.id, SpectralProfilerComponent.WIDGET_CONFIG.type);
     };
 
+    private fittingShortcutClick = () => {
+        this.props.widgetStore.setSettingsTabId(SpectralProfilerSettingsTabs.FITTING);
+        AppStore.Instance.widgetsStore.createFloatingSettingsWidget(SpectralProfilerComponent.WIDGET_CONFIG.title, this.props.id, SpectralProfilerComponent.WIDGET_CONFIG.type);
+    };
+
     public render() {
         const widgetStore = this.props.widgetStore;
         return (
@@ -269,6 +274,9 @@ export class SpectralProfilerToolbarComponent extends React.Component<{ widgetSt
                     </Tooltip>
                     <Tooltip content="Moments">
                         <AnchorButton icon={<CustomIcon icon="moments"/>} onClick={this.momentsShortcutClick}/>
+                    </Tooltip>
+                    <Tooltip content="Fitting">
+                        <AnchorButton icon="regression-chart" onClick={this.fittingShortcutClick}/>
                     </Tooltip>
                 </ButtonGroup>
             </div>

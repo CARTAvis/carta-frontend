@@ -1,9 +1,9 @@
 import {action, autorun, computed, observable, makeObservable, override} from "mobx";
 import {NumberRange} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
-import {PlotType, LineSettings, VERTICAL_RANGE_PADDING} from "components/Shared";
+import {PlotType, LineSettings, VERTICAL_RANGE_PADDING, SmoothingType} from "components/Shared";
 import {RegionWidgetStore, RegionsType, ACTIVE_FILE_ID, SpectralLine, SpectralProfileSelectionStore} from "stores/widgets";
-import {AppStore, ProfileSmoothingStore} from "stores";
+import {AppStore, ProfileSmoothingStore, ProfileFittingStore} from "stores";
 import {LineKey, Point2D, ProcessedSpectralProfile, SpectralSystem} from "models";
 import tinycolor from "tinycolor2";
 import {SpectralProfilerSettingsTabs} from "components";
@@ -23,6 +23,7 @@ export type MultiPlotData = {
     numProfiles: number,
     data: DataPoints[],
     smoothedData: DataPoints[],
+    fittingData: {x: number[], y: Float32Array | Float64Array},
     colors: string[],
     labels: {image: string, plot: string}[],
     comments: Comments[],
@@ -71,6 +72,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
 
     readonly smoothingStore: ProfileSmoothingStore;
     readonly profileSelectionStore: SpectralProfileSelectionStore;
+    readonly fittingStore: ProfileFittingStore;
 
     @override setRegionId = (fileId: number, regionId: number) => {
         this.regionIdMap.set(fileId, regionId);
@@ -284,6 +286,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         this.linePlotInitXYBoundaries = { minXVal: 0, maxXVal: 0, minYVal: 0, maxYVal: 0 };
 
         this.smoothingStore = new ProfileSmoothingStore();
+        this.fittingStore = new ProfileFittingStore(this);
         this.profileSelectionStore = new SpectralProfileSelectionStore(this, coordinate);
         this.selectingMode = MomentSelectingMode.NONE;
         this.channelValueRange = [0, 0];
@@ -335,6 +338,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         let yMean = undefined;
         let yRms = undefined;
         let progressSum: number = 0;
+        let startEndIndexes: {startIndex: number, endIndex: number}[] = [];
         const wantMeanRms = profiles.length === 1;
         const profileColorMap = this.lineColorMap;
         profiles.forEach(profile => {
@@ -367,9 +371,22 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
                         yBound.yMax = pointsAndProperties.yBound.yMax;
                     }
                     progressSum = progressSum + profile.data.progress;
+                    startEndIndexes.push({startIndex: pointsAndProperties.startIndex, endIndex: pointsAndProperties.endIndex});
                 }
             }
         });
+
+        let fittingData: {x: number[], y: Float32Array | Float64Array};
+        if (profiles.length === 1 && startEndIndexes.length === 1) {
+            let x = profiles[0].channelValues.slice(startEndIndexes[0].startIndex, startEndIndexes[0].endIndex + 1);
+            let y = profiles[0].data.values.slice(startEndIndexes[0].startIndex, startEndIndexes[0].endIndex + 1)
+            if (this.smoothingStore.type !== SmoothingType.NONE) {
+                const smoothedData = this.smoothingStore.getSmoothingValues(x, y);
+                x = smoothedData.x;
+                y = smoothedData.y;
+            }
+            fittingData = { x: x, y: y}
+        }
 
         if (xBound.xMin === Number.MAX_VALUE) {
             xBound.xMin = undefined;
@@ -390,6 +407,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
             numProfiles: numProfiles,
             data: data,
             smoothedData: smoothedData,
+            fittingData: fittingData,
             colors: colors,
             labels: labels,
             comments: comments,
@@ -695,7 +713,9 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         xBound: XBound,
         yBound: YBound,
         yMean: number,
-        yRms: number
+        yRms: number,
+        startIndex: number,
+        endIndex: number
     } => {
         let points: Point2D[] = [];
         let smoothedPoints: Point2D[] = [];
@@ -709,7 +729,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
             let ySum = 0;
             let ySum2 = 0;
             let yCount = 0;
-
+            let startIndex, endIndex;
             for (let i = 0; i < frameChannelValues.length; i++) {
                 const x = frameChannelValues[i];
                 const y = profile.values[i];
@@ -722,6 +742,11 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
                         continue;
                     }
                 }
+
+                if (!isFinite(startIndex)) {
+                    startIndex = i;
+                }
+                endIndex = i;
                 points.push({x, y});
 
                 // update yMin/yMax & calculate Mean/RMS
@@ -743,7 +768,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
                 yRms = Math.sqrt((ySum2 / yCount) - yMean * yMean);
             }
 
-            return {points: points, smoothedPoints: smoothedPoints, xBound: xBound, yBound: yBound, yMean: yMean, yRms: yRms};
+            return {points: points, smoothedPoints: smoothedPoints, xBound: xBound, yBound: yBound, yMean: yMean, yRms: yRms, startIndex: startIndex, endIndex: endIndex};
         } else {
             return undefined;
         }
