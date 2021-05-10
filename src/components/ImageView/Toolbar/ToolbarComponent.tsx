@@ -64,10 +64,10 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
 
     private handelActiveLayerClicked = (layer: ImageViewLayer) => {
         this.props.onActiveLayerChange(layer);
-        if (layer === ImageViewLayer.RegionMoving || layer === ImageViewLayer.Catalog) {
-            AppStore.Instance.activeFrame.regionSet.setMode(RegionMode.MOVING);
-        } else if (layer === ImageViewLayer.RegionCreating) {
+        if (layer === ImageViewLayer.RegionCreating) {
             AppStore.Instance.activeFrame.regionSet.setMode(RegionMode.CREATING);
+        } else {
+            AppStore.Instance.activeFrame.regionSet.setMode(RegionMode.MOVING);
         }
     }
 
