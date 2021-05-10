@@ -96,17 +96,17 @@ function getSmoothedValue(bias: number, contrast: number) {
     if (denominator <= 0) {
         denominator = 0.1;
     }
-    return ({bias: smoothedBias, contrast: smoothedContrast, offset: offset, denominator: denominator})
+    return ({bias: smoothedBias, contrast: smoothedContrast, offset: offset, denominator: denominator});
 }
 
 export function scaleValue(x: number, scaling: FrameScaling, alpha: number = 1000, gamma: number = 1.5, bias: number = 0, contrast: number = 1, useSmoothedBiasContrast: boolean = true) {
     let scaleValue;
     switch (scaling) {
         case FrameScaling.SQUARE:
-            scaleValue =  x * x;
+            scaleValue = x * x;
             break;
         case FrameScaling.SQRT:
-            scaleValue =  Math.sqrt(x);
+            scaleValue = Math.sqrt(x);
             break;
         case FrameScaling.LOG:
             scaleValue = Math.log(alpha * x + 1.0) / Math.log(alpha + 1.0);
@@ -183,7 +183,7 @@ export function floorToPower(val: number, power: number) {
     return Math.pow(power, Math.floor(Math.log(val) / Math.log(power)));
 }
 
-export function minMaxArray(data: Array<number> | TypedArray): {minVal: number, maxVal: number} {
+export function minMaxArray(data: Array<number> | TypedArray): { minVal: number, maxVal: number } {
     if (data && data.length) {
         let maxVal = -Number.MAX_VALUE;
         let minVal = Number.MAX_VALUE;
@@ -206,4 +206,13 @@ export function minMaxArray(data: Array<number> | TypedArray): {minVal: number, 
         }
     }
     return {minVal: NaN, maxVal: NaN};
+}
+
+export function gaussian(x: number, amp: number, center: number, fwhm: number) {
+    const z = (x - center) / fwhm;
+    return amp * Math.exp(-4 * Math.log(2) * z * z);
+}
+
+export function lorentzian(x: number, amp: number, center: number, fwhm: number) {
+    return amp * 0.25 * Math.pow(fwhm, 2) / (Math.pow(x - center, 2) + 0.25 * Math.pow(fwhm, 2));
 }

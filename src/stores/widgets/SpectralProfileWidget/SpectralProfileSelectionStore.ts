@@ -393,6 +393,10 @@ export class SpectralProfileSelectionStore {
         return this.activeProfileCategory === MultiProfileCategory.NONE;
     }
 
+    @computed get isShowingProfilesOfMultiImages(): boolean {
+        return this.activeProfileCategory === MultiProfileCategory.IMAGE && this.profiles?.length > 1;
+    }
+
     @action private switchToSingleModeHandily = (profileCategory: MultiProfileCategory) => {
         if (profileCategory === MultiProfileCategory.REGION) {
             this.selectSingleRegionHandily();

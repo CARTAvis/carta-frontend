@@ -7,6 +7,7 @@ import {MomentGeneratorComponent} from "../MomentGeneratorComponent/MomentGenera
 import {SpectralProfileWidgetStore} from "stores/widgets";
 import {WidgetProps, DefaultWidgetConfig, HelpType, AppStore, WidgetsStore} from "stores";
 import {parseNumber} from "utilities";
+import {ProfileFittingComponent} from "../ProfileFittingComponent/ProfileFittingComponent";
 import "./SpectralProfilerSettingsPanelComponent.scss";
 
 const KEYCODE_ENTER = 13;
@@ -15,7 +16,8 @@ export enum SpectralProfilerSettingsTabs {
     CONVERSION,
     STYLING,
     SMOOTHING,
-    MOMENTS
+    MOMENTS,
+    FITTING
 }
 
 @observer
@@ -27,8 +29,8 @@ export class SpectralProfilerSettingsPanelComponent extends React.Component<Widg
             type: "floating-settings",
             minWidth: 280,
             minHeight: 225,
-            defaultWidth: 480,
-            defaultHeight: 575,
+            defaultWidth: 500,
+            defaultHeight: 600,
             title: "spectral-profiler-settings",
             isCloseable: true,
             parentId: "spectal-profiler",
@@ -75,7 +77,7 @@ export class SpectralProfilerSettingsPanelComponent extends React.Component<Widg
         }
 
         const val = parseFloat(ev.currentTarget.value);
-        const widgetStore = this.widgetStore; 
+        const widgetStore = this.widgetStore;
         const minX = parseNumber(widgetStore.minX, widgetStore.linePlotInitXYBoundaries.minXVal);
         const maxX = parseNumber(widgetStore.maxX, widgetStore.linePlotInitXYBoundaries.maxXVal);
         if (isFinite(val) && val !== minX && val < maxX) {
@@ -135,7 +137,7 @@ export class SpectralProfilerSettingsPanelComponent extends React.Component<Widg
 
     handleSelectedTabChanged = (newTabId: React.ReactText) => {
         this.widgetStore.setSettingsTabId(Number.parseInt(newTabId.toString()));
-    }
+    };
 
     render() {
         const widgetStore = this.widgetStore;
@@ -169,18 +171,19 @@ export class SpectralProfilerSettingsPanelComponent extends React.Component<Widg
             <div className="spectral-settings">
                 <Tabs id="spectralSettingTabs" selectedTabId={widgetStore.settingsTabId} onChange={this.handleSelectedTabChanged}>
                     <Tab id={SpectralProfilerSettingsTabs.CONVERSION} panelClassName="conversion-tab-panel" title="Conversion"
-                        panel={
-                            <SpectralSettingsComponent
-                                frame={widgetStore.effectiveFrame}
-                                onSpectralCoordinateChange={widgetStore.setSpectralCoordinate}
-                                onSpectralSystemChange={widgetStore.setSpectralSystem}
-                                disable={widgetStore.effectiveFrame?.isPVImage}
-                            />
-                        }
+                         panel={
+                             <SpectralSettingsComponent
+                                 frame={widgetStore.effectiveFrame}
+                                 onSpectralCoordinateChange={widgetStore.setSpectralCoordinate}
+                                 onSpectralSystemChange={widgetStore.setSpectralSystem}
+                                 disable={widgetStore.effectiveFrame?.isPVImage}
+                             />
+                         }
                     />
                     <Tab id={SpectralProfilerSettingsTabs.STYLING} panelClassName="styling-tab-panel" title="Styling" panel={<LinePlotSettingsPanelComponent {...lineSettingsProps}/>}/>
                     <Tab id={SpectralProfilerSettingsTabs.SMOOTHING} title="Smoothing" panel={<SmoothingSettingsComponent smoothingStore={widgetStore.smoothingStore} disableColorAndLineWidth={widgetStore.profileNum > 1}/>}/>
                     <Tab id={SpectralProfilerSettingsTabs.MOMENTS} panelClassName="moment-tab-panel" title="Moments" panel={<MomentGeneratorComponent widgetStore={widgetStore}/>}/>
+                    <Tab id={SpectralProfilerSettingsTabs.FITTING} panelClassName="fitting-tab-panel" title="Fitting" panel={<ProfileFittingComponent fittingStore={widgetStore.fittingStore} widgetStore={widgetStore}/>}/>
                 </Tabs>
             </div>
         );
