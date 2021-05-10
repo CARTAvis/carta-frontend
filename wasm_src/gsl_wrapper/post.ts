@@ -7,7 +7,7 @@ Module.filterHanning = Module.cwrap("filterHanning", "number", ["number", "numbe
 Module.filterDecimation = Module.cwrap("filterDecimation", "number", ["number", "number", "number", "number", "number"]);
 Module.filterBinning = Module.cwrap("filterBinning", "number", ["number", "number", "number", "number"]);
 Module.filterSavitzkyGolay = Module.cwrap("filterSavitzkyGolay", "number", ["number", "number", "number", "number", "number", "number"]);
-Module.fittingGaussian = Module.cwrap("fitting", "string", ["number", "number", "number", "number", "number", "number", "number", "number", "number", "number", "number", "number", "number", "number"])
+Module.fittingGaussian = Module.cwrap("fitting", "string", ["number", "number", "number", "number", "number", "number", "number", "number", "number", "number", "number", "number", "number", "number"]);
 
 Module.boxcarSmooth = function (yIn: Float64Array | Float32Array, kernelSize: number) {
     // Return empty array if arguments are invalid
@@ -156,7 +156,7 @@ Module.fitting = function (functionType: number, xIn: Float64Array | Float32Arra
     Module.inputData = Module._malloc(componentN * 3 * 8); // 2-dimensional array: double inputData[][3]
     Module.HEAPF64.set(new Float64Array(inputData), Module.inputData / 8);
     const inputArray: number[] = [];
-    for (let i = 0 ; i < componentN; i++) {
+    for (let i = 0; i < componentN; i++) {
         inputArray.push(Module.inputData + i * 3 * 8);
     }
     Module.inputArray = Module._malloc(componentN * 4);
@@ -166,7 +166,7 @@ Module.fitting = function (functionType: number, xIn: Float64Array | Float32Arra
     Module.HEAP32.set(new Int32Array(lockedInputData), Module.lockedInputData / 4);
     const lockedInputArray: number[] = [];
     for (let i = 0; i < componentN; i++) {
-        lockedInputArray.push(Module.lockedInputData + i * 3 * 4)
+        lockedInputArray.push(Module.lockedInputData + i * 3 * 4);
     }
     Module.lockedInputArray = Module._malloc(componentN * 4);
     Module.HEAPU32.set(new Uint32Array(lockedInputArray), Module.lockedInputArray / 4);
@@ -188,7 +188,7 @@ Module.fitting = function (functionType: number, xIn: Float64Array | Float32Arra
     const centerOut = new Float64Array(Module.HEAPF64.buffer, Module.resultCenter, componentN * 2).slice(); // [amp1, amp1Error, amp2, amp2Error, ...]
     const ampOut = new Float64Array(Module.HEAPF64.buffer, Module.resultAmp, componentN * 2).slice(); // [center1, center1Error, center2, center2Error, ...]
     const fwhmOut = new Float64Array(Module.HEAPF64.buffer, Module.resultFwhm, componentN * 2).slice(); // [fwhm1, fwhm1Error, fwhm2, fwhmError2, ...]
-    const integralOut = new Float64Array(Module.HEAPF64.buffer, Module.resultIntegral, componentN * 2).slice() // [integral1, integral1Error, integral2, integral2Error, ...]
+    const integralOut = new Float64Array(Module.HEAPF64.buffer, Module.resultIntegral, componentN * 2).slice(); // [integral1, integral1Error, integral2, integral2Error, ...]
     const result = {yIntercept: orderValuesOut[0], yInterceptError: orderValuesOut[1], slope: orderValuesOut[2], slopeError: orderValuesOut[3], center: centerOut, amp: ampOut, fwhm: fwhmOut, log: log, integral: integralOut};
 
     Module._free(Module.xIn);
@@ -204,7 +204,7 @@ Module.fitting = function (functionType: number, xIn: Float64Array | Float32Arra
     Module._free(Module.resultAmp);
     Module._free(Module.resultFwhm);
     Module._free(Module.resultIntegral);
-    return result
-}
+    return result;
+};
 
 module.exports = Module;

@@ -77,7 +77,7 @@ export class SpectralProfilerSettingsPanelComponent extends React.Component<Widg
         }
 
         const val = parseFloat(ev.currentTarget.value);
-        const widgetStore = this.widgetStore; 
+        const widgetStore = this.widgetStore;
         const minX = parseNumber(widgetStore.minX, widgetStore.linePlotInitXYBoundaries.minXVal);
         const maxX = parseNumber(widgetStore.maxX, widgetStore.linePlotInitXYBoundaries.maxXVal);
         if (isFinite(val) && val !== minX && val < maxX) {
@@ -137,7 +137,7 @@ export class SpectralProfilerSettingsPanelComponent extends React.Component<Widg
 
     handleSelectedTabChanged = (newTabId: React.ReactText) => {
         this.widgetStore.setSettingsTabId(Number.parseInt(newTabId.toString()));
-    }
+    };
 
     render() {
         const widgetStore = this.widgetStore;
@@ -171,14 +171,14 @@ export class SpectralProfilerSettingsPanelComponent extends React.Component<Widg
             <div className="spectral-settings">
                 <Tabs id="spectralSettingTabs" selectedTabId={widgetStore.settingsTabId} onChange={this.handleSelectedTabChanged}>
                     <Tab id={SpectralProfilerSettingsTabs.CONVERSION} panelClassName="conversion-tab-panel" title="Conversion"
-                        panel={
-                            <SpectralSettingsComponent
-                                frame={widgetStore.effectiveFrame}
-                                onSpectralCoordinateChange={widgetStore.setSpectralCoordinate}
-                                onSpectralSystemChange={widgetStore.setSpectralSystem}
-                                disable={widgetStore.effectiveFrame?.isPVImage}
-                            />
-                        }
+                         panel={
+                             <SpectralSettingsComponent
+                                 frame={widgetStore.effectiveFrame}
+                                 onSpectralCoordinateChange={widgetStore.setSpectralCoordinate}
+                                 onSpectralSystemChange={widgetStore.setSpectralSystem}
+                                 disable={widgetStore.effectiveFrame?.isPVImage}
+                             />
+                         }
                     />
                     <Tab id={SpectralProfilerSettingsTabs.STYLING} panelClassName="styling-tab-panel" title="Styling" panel={<LinePlotSettingsPanelComponent {...lineSettingsProps}/>}/>
                     <Tab id={SpectralProfilerSettingsTabs.SMOOTHING} title="Smoothing" panel={<SmoothingSettingsComponent smoothingStore={widgetStore.smoothingStore} disableColorAndLineWidth={widgetStore.profileNum > 1}/>}/>

@@ -30,7 +30,7 @@ export class ProfileFittingStore {
     @observable hasAutoDetectResult: boolean;
     @observable detectedComponentN: number;
     @observable enableResidual: boolean;
-    @observable originData: {x: number[], y: Float32Array |Float64Array}
+    @observable originData: { x: number[], y: Float32Array | Float64Array };
 
     private readonly widgetStore: SpectralProfileWidgetStore;
 
@@ -50,16 +50,16 @@ export class ProfileFittingStore {
     @action deleteSelectedComponent() {
         if (this.components.length > 1) {
             this.components = this.components.slice(0, this.selectedIndex).concat(this.components.slice(this.selectedIndex + 1));
-            this.selectedIndex = this.selectedIndex === 0 ? 0: this.selectedIndex - 1;
+            this.selectedIndex = this.selectedIndex === 0 ? 0 : this.selectedIndex - 1;
         }
     }
 
     @action setComponentByCursor(xMin: number, xMax: number, yMin: number, yMax: number) {
         const selectedComponent = this.selectedComponent;
-        const centerX = (xMin + xMax)/ 2
+        const centerX = (xMin + xMax) / 2;
         const baselineCenterY = this.slope * centerX + this.yIntercept;
         const isPositiveAmp = ((yMin + yMax) / 2) >= baselineCenterY;
-        selectedComponent.setAmp(isPositiveAmp ? yMax - yMin: yMin - yMax);
+        selectedComponent.setAmp(isPositiveAmp ? yMax - yMin : yMin - yMax);
         selectedComponent.setCenter(centerX);
         selectedComponent.setFwhm(xMax - xMin);
         this.isCursorSelectingComponent = false;
@@ -72,15 +72,15 @@ export class ProfileFittingStore {
         return null;
     }
 
-    @computed get fittingData(): {x: number[], y: Float32Array | Float64Array} {
+    @computed get fittingData(): { x: number[], y: Float32Array | Float64Array } {
         if (this.widgetStore.plotData.fittingData) {
             let x = this.widgetStore.plotData.fittingData.x;
             let y = this.widgetStore.plotData.fittingData.y;
             let nonNaNIndex = y.findIndex(yi => !isNaN(yi));
             if (nonNaNIndex > 0) {
-                x = x.slice(nonNaNIndex , x.length - nonNaNIndex);
-                y = y.slice(nonNaNIndex , y.length - nonNaNIndex);
-            } 
+                x = x.slice(nonNaNIndex, x.length - nonNaNIndex);
+                y = y.slice(nonNaNIndex, y.length - nonNaNIndex);
+            }
             return {x, y};
         }
         return null;
@@ -99,7 +99,7 @@ export class ProfileFittingStore {
                         opacity: (i === this.selectedIndex) ? 0.5 : 0.2,
                         strokeColor: (i === this.selectedIndex) ? getColorForTheme("auto-grey") : null,
                         text: `${i + 1}`
-                    }
+                    };
                     boxes.push(initialBox);
                 }
             }
@@ -112,7 +112,7 @@ export class ProfileFittingStore {
         if (this.components && this.hasResult) {
             if (this.continuum !== FittingContinuum.NONE) {
                 resultString += `Y Intercept = ${toFixed(this.resultYIntercept, 6)}\n`;
-                resultString +=  this.resultYInterceptError ? `Y Intercept Error = ${toFixed(this.resultYInterceptError, 6)} (${toFixed(Math.abs(this.resultYInterceptError * 100 / this.resultYIntercept), 3)}%)\n` : "";
+                resultString += this.resultYInterceptError ? `Y Intercept Error = ${toFixed(this.resultYInterceptError, 6)} (${toFixed(Math.abs(this.resultYInterceptError * 100 / this.resultYIntercept), 3)}%)\n` : "";
             }
             if (this.continuum === FittingContinuum.FIRST_ORDER) {
                 resultString += `Slope = ${toFixed(this.resultSlope, 6)}\n`;
@@ -121,9 +121,9 @@ export class ProfileFittingStore {
             if (this.continuum !== FittingContinuum.NONE) {
                 resultString += "\n";
             }
-            for (let i = 0; i <  this.components.length; i++) {
+            for (let i = 0; i < this.components.length; i++) {
                 const component = this.components[i];
-                resultString += `Component #${i+1}\nCenter = ${toFixed(component.resutlCenter, 6)}\n`;
+                resultString += `Component #${i + 1}\nCenter = ${toFixed(component.resutlCenter, 6)}\n`;
                 resultString += component.resutlCenterError ? `Center Error = ${toFixed(component.resutlCenterError, 6)} (${toFixed(Math.abs(component.resutlCenterError * 100 / component.resutlCenter), 3)}%)\n` : "";
                 resultString += `Amplitude = ${toFixed(component.resultAmp, 6)} \n`;
                 resultString += component.resultAmpError ? `Amplitude Error = ${toFixed(component.resultAmpError, 6)} (${toFixed(Math.abs(component.resultAmpError * 100 / component.resultAmp), 3)}%)\n` : "";
@@ -181,7 +181,7 @@ export class ProfileFittingStore {
                 if (this.continuum === FittingContinuum.FIRST_ORDER) {
                     yi += x[i] * this.slope;
                 }
-                continuumPoint2DArray.push({x:x[i], y:yi});
+                continuumPoint2DArray.push({x: x[i], y: yi});
             }
             return continuumPoint2DArray;
         }
@@ -249,7 +249,7 @@ export class ProfileFittingStore {
     autoDetect = (): void => {
         const x = this.fittingData.x;
         const y = Array.prototype.slice.call(this.fittingData.y);
-        const result = autoDetecting(x, y, this.isAutoDetectWithCont ? null: {order: this.continuum, yIntercept: this.yIntercept, slope: this.slope});
+        const result = autoDetecting(x, y, this.isAutoDetectWithCont ? null : {order: this.continuum, yIntercept: this.yIntercept, slope: this.slope});
         if (result.components?.length > 0) {
             this.setComponents(result.components.length, true);
             for (let i = 0; i < result.components.length; i++) {
@@ -261,8 +261,8 @@ export class ProfileFittingStore {
             this.setYIntercept(result.yIntercept);
             this.setSlope(result.slope);
         }
-        this.setDetectedComponentN(result.components? result.components.length : 0);
-    }
+        this.setDetectedComponentN(result.components ? result.components.length : 0);
+    };
 
     fitData = (): void => {
         if (!this.widgetStore?.plotData?.fittingData) {
@@ -277,10 +277,10 @@ export class ProfileFittingStore {
             inputData.push(component.amp);
             inputData.push(component.center);
             inputData.push(component.fwhm);
-            lockedInputData.push(component.lockedAmp ? 1: 0);
-            lockedInputData.push(component.lockedCenter ? 1: 0);
-            lockedInputData.push(component.lockedFwhm ? 1: 0);
-        })
+            lockedInputData.push(component.lockedAmp ? 1 : 0);
+            lockedInputData.push(component.lockedCenter ? 1 : 0);
+            lockedInputData.push(component.lockedFwhm ? 1 : 0);
+        });
 
         const orderInputData = [];
         const lockedOrderInputData = [];
@@ -292,13 +292,13 @@ export class ProfileFittingStore {
         } else if (this.continuum === FittingContinuum.ZEROTH_ORDER) {
             orderInputData.push(this.yIntercept);
             orderInputData.push(0);
-            lockedOrderInputData.push(this.lockedYIntercept ? 1: 0);
+            lockedOrderInputData.push(this.lockedYIntercept ? 1 : 0);
             lockedOrderInputData.push(1);
         } else if (this.continuum === FittingContinuum.FIRST_ORDER) {
             orderInputData.push(this.yIntercept);
             orderInputData.push(this.slope);
-            lockedOrderInputData.push(this.lockedYIntercept ? 1: 0);
-            lockedOrderInputData.push(this.lockedSlope ? 1: 0);
+            lockedOrderInputData.push(this.lockedYIntercept ? 1 : 0);
+            lockedOrderInputData.push(this.lockedSlope ? 1 : 0);
         }
 
         const fittingResult = GSL.fitting(this.function, x, y, inputData, lockedInputData, orderInputData, lockedOrderInputData);
@@ -306,7 +306,7 @@ export class ProfileFittingStore {
         this.setResultYInterceptError(fittingResult.yInterceptError);
         this.setResultSlope(fittingResult.slope);
         this.setResultSlopeError(fittingResult.slopeError);
-        for (let i = 0; i < this.components.length ; i++) {
+        for (let i = 0; i < this.components.length; i++) {
             const component = this.components[i];
             component.setResultCenter(fittingResult.center[2 * i]);
             component.setResultCenterError(fittingResult.center[2 * i + 1]);
@@ -319,7 +319,7 @@ export class ProfileFittingStore {
         }
         this.setResultLog(fittingResult.log);
         this.setHasResult(true);
-    }
+    };
 
     constructor(widgetStore: SpectralProfileWidgetStore) {
         makeObservable(this);
@@ -337,91 +337,91 @@ export class ProfileFittingStore {
 
     @action setFunction = (val: FittingFunction) => {
         this.function = val;
-    }
+    };
 
     @action setContinuum = (val: FittingContinuum) => {
         this.continuum = val;
-    }
+    };
 
     @action setYIntercept = (val: number) => {
         this.yIntercept = val;
-    }
+    };
 
     @action setSlope = (val: number) => {
         this.slope = val;
-    }
+    };
 
     @action setLockedYIntercept = (val: boolean) => {
         this.lockedYIntercept = val;
-    }
+    };
 
     @action setLockedSlope = (val: boolean) => {
         this.lockedSlope = val;
-    }
+    };
 
     @action setResultYIntercept = (val: number) => {
         this.resultYIntercept = val;
-    }
+    };
 
     @action setResultSlope = (val: number) => {
         this.resultSlope = val;
-    }
+    };
 
     @action setResultYInterceptError = (val: number) => {
         this.resultYInterceptError = val;
-    }
+    };
 
     @action setResultSlopeError = (val: number) => {
         this.resultSlopeError = val;
-    }
+    };
 
     @action setSelectedIndex = (val: number) => {
         this.selectedIndex = val;
-    }
+    };
 
     @action setHasResult = (val: boolean) => {
         this.hasResult = val;
-    }
+    };
 
     @action setResultLog = (val: string) => {
         this.resultLog = val;
-    }
+    };
 
     @action setIsCursorSelectingYIntercept = (val: boolean) => {
         this.isCursorSelectingYIntercept = val;
-    }
+    };
 
     @action setIsCursorSelectingSlope = (val: boolean) => {
         this.isCursorSelectingSlope = val;
-    }
+    };
 
     @action setIsCursorSelectingComponentOn = (val: boolean) => {
         this.isCursorSelectingComponent = val;
-    }
+    };
 
     @action setIsAutoDetectWithCont = (val: boolean) => {
         this.isAutoDetectWithCont = val;
-    }
+    };
 
     @action setIsAutoDetectWithFitting = (val: boolean) => {
         this.isAutoDetectWithFitting = val;
-    }
+    };
 
     @action setHasAutoDetectResult = (val: boolean) => {
         this.hasAutoDetectResult = val;
-    }
+    };
 
     @action setDetectedComponentN = (val: number) => {
         this.detectedComponentN = val;
-    }
+    };
 
     @action setEnableResidual = (val: boolean) => {
         this.enableResidual = val;
-    }
+    };
 
     @action setOriginData = (x: number[], y: Float32Array | Float64Array) => {
         this.originData = {x, y};
-    }
+    };
 }
 
 export class ProfileFittingIndividualStore {
@@ -457,57 +457,57 @@ export class ProfileFittingIndividualStore {
 
     @action setCenter = (val: number) => {
         this.center = val;
-    }
+    };
 
     @action setAmp = (val: number) => {
         this.amp = val;
-    }
+    };
 
     @action setFwhm = (val: number) => {
         this.fwhm = val;
-    }
+    };
 
     @action setLockedCenter = (val: boolean) => {
         this.lockedCenter = val;
-    }
+    };
 
     @action setLockedAmp = (val: boolean) => {
         this.lockedAmp = val;
-    }
+    };
 
     @action setLockedFwhm = (val: boolean) => {
         this.lockedFwhm = val;
-    }
+    };
 
     @action setResultCenter = (val: number) => {
         this.resutlCenter = val;
-    }
+    };
 
     @action setResultAmp = (val: number) => {
         this.resultAmp = val;
-    }
+    };
 
     @action setResultFwhm = (val: number) => {
         this.resultFwhm = val;
-    }
+    };
 
     @action setResultCenterError = (val: number) => {
         this.resutlCenterError = val;
-    }
+    };
 
     @action setResultAmpError = (val: number) => {
         this.resultAmpError = val;
-    }
+    };
 
     @action setResultFwhmError = (val: number) => {
         this.resultFwhmError = val;
-    }
+    };
 
     @action setResultIntegral = (val: number) => {
         this.resultIntegral = val;
-    }
+    };
 
     @action setResultIntegralError = (val: number) => {
         this.resultIntegralError = val;
-    }
+    };
 }

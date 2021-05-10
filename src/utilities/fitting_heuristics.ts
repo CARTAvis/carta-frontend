@@ -1,13 +1,13 @@
 import * as _ from "lodash";
 import * as GSL from "gsl_wrapper";
 import {ProfileFittingIndividualStore} from "stores/ProfileFittingStore";
-import { FittingFunction } from "components/SpectralProfiler/ProfileFittingComponent/ProfileFittingComponent";
+import {FittingFunction} from "components/SpectralProfiler/ProfileFittingComponent/ProfileFittingComponent";
 
 export function hanningSmoothing(data: number[]) {
     // hanning width = 3
     const smoothedData: number[] = [];
     smoothedData.push(data[0]);
-    for (let i = 1 ; i < data.length -1; i++) {
+    for (let i = 1; i < data.length - 1; i++) {
         const value = 0.25 * data[i - 1] + 0.5 * data[i] + 0.25 * data[i + 1];
         smoothedData.push(value);
     }
@@ -17,15 +17,15 @@ export function hanningSmoothing(data: number[]) {
 
 export function binning(data: number[], binWidth: number) {
     const binnedData: number[] = [];
-    for (let i = 0; i < data.length - binWidth; i = i + binWidth ) {
-        binnedData.push(_.mean(data.slice(i, (i + binWidth > data.length) ? data.length : i + binWidth)))
+    for (let i = 0; i < data.length - binWidth; i = i + binWidth) {
+        binnedData.push(_.mean(data.slice(i, (i + binWidth > data.length) ? data.length : i + binWidth)));
     }
     return binnedData;
 }
 
 export function getIndexByValue(values: number[], targetValue: number) {
     // const deltaVelocity = Math.abs(values[1] - values[0]);
-    for (let i = 0; i < values.length - 1; i ++) {
+    for (let i = 0; i < values.length - 1; i++) {
         if (values[i] <= targetValue && targetValue < values[i + 1]) {
             return i;
         } else if (values[i] >= targetValue && targetValue > values[i + 1]) {
@@ -53,8 +53,8 @@ export function profilePreprocessing(data: number[]) {
  *
  * hist: The values of the histogram.
  * binEdges: Return the bin edges.
-*/
-export function histogram(data: number[], binN: number): {hist: number[], binEdges: number[]} {
+ */
+export function histogram(data: number[], binN: number): { hist: number[], binEdges: number[] } {
     if (isFinite(binN) && binN > 0) {
 
     }
@@ -63,7 +63,7 @@ export function histogram(data: number[], binN: number): {hist: number[], binEdg
     const max = _.max(data);
     const binWidth = (max - min) / binN;
 
-    for (let i = 0; i < binN ; i++) {
+    for (let i = 0; i < binN; i++) {
         binEdges.push(min + i * binWidth);
     }
 
@@ -92,26 +92,26 @@ export function histogramGaussianFit(y: number[], bins: number) {
     // padding 0 to both sides of the histogram
     const histY: number[] = [0, ...histResult.hist, 0];
     const histXCenterTmp = [];
-    for (let i = 0; i < histResult.binEdges.length - 2 ; i++) {
-        histXCenterTmp.push((histResult.binEdges[i] + histResult.binEdges[i + 1])/ 2);
+    for (let i = 0; i < histResult.binEdges.length - 2; i++) {
+        histXCenterTmp.push((histResult.binEdges[i] + histResult.binEdges[i + 1]) / 2);
     }
     const deltaHistXCenter = histXCenterTmp[1] - histXCenterTmp[0];
     const histXCenter: number[] = [histXCenterTmp[0] - deltaHistXCenter, ...histXCenterTmp, histXCenterTmp[histXCenterTmp.length - 1] + deltaHistXCenter];
 
     // [amp, center, fwhm]
-    const initialGuess = [_.max(histY), histXCenter[_.findIndex(histY, (y => y === _.max(histY)))], 2 * Math.sqrt(Math.log(10) * 2 ) * 0.5 * (deltaHistXCenter)];
+    const initialGuess = [_.max(histY), histXCenter[_.findIndex(histY, (y => y === _.max(histY)))], 2 * Math.sqrt(Math.log(10) * 2) * 0.5 * (deltaHistXCenter)];
     const histogramGaussianFitting = GSL.fitting(FittingFunction.GAUSSIAN, new Float64Array(histXCenter), new Float64Array(histY), initialGuess, [0, 0, 0], [0, 0], [1, 1]);
 
     const intensitySmoothedMean = histogramGaussianFitting.center[0];
-    const intensitySmoothedStddev = histogramGaussianFitting.fwhm[0] / (2 * Math.sqrt(Math.log(2) * 2 ));
-    return {center: intensitySmoothedMean, stddev: intensitySmoothedStddev}
+    const intensitySmoothedStddev = histogramGaussianFitting.fwhm[0] / (2 * Math.sqrt(Math.log(2) * 2));
+    return {center: intensitySmoothedMean, stddev: intensitySmoothedStddev};
 }
 
-export function getEstimatedPoints(xInput: number[], yInput:number[]): {x: number, y: number}[] {
+export function getEstimatedPoints(xInput: number[], yInput: number[]): { x: number, y: number }[] {
 
     const yDataFlippedSum = yInput.map((value, i) => {
         return value + yInput[yInput.length - 1 - i];
-    })
+    });
 
     const fitHistogramResult = histogramGaussianFit(yDataFlippedSum, Math.floor(Math.sqrt(yDataFlippedSum.length)));
     const flippedSumMean = fitHistogramResult.center;
@@ -126,7 +126,7 @@ export function getEstimatedPoints(xInput: number[], yInput:number[]): {x: numbe
     const CEILING = flippedSumMean + SN * flippedSumStddev;
     for (let i = 0; i < yDataFlippedSum.length; i++) {
         const value = yDataFlippedSum[i];
-        if(value < CEILING && value > FLOOR && SWITCH === false && i <= yDataFlippedSum.length - 2) {
+        if (value < CEILING && value > FLOOR && SWITCH === false && i <= yDataFlippedSum.length - 2) {
             INDEX_FROM = i;
             SWITCH = true;
         } else if ((value > CEILING || value < FLOOR) && SWITCH === true) {
@@ -134,7 +134,7 @@ export function getEstimatedPoints(xInput: number[], yInput:number[]): {x: numbe
             SWITCH = false;
             xMeanSegment.push(_.mean(xInput.slice(INDEX_FROM, INDEX_TO)));
             yMeanSegment.push(_.mean(yInput.slice(INDEX_FROM, INDEX_TO)));
-        } else if(value < CEILING && value > FLOOR && SWITCH === true && i === yDataFlippedSum.length - 1) {
+        } else if (value < CEILING && value > FLOOR && SWITCH === true && i === yDataFlippedSum.length - 1) {
             INDEX_TO = i;
             xMeanSegment.push(_.mean(xInput.slice(INDEX_FROM, INDEX_TO)));
             yMeanSegment.push(_.mean(yInput.slice(INDEX_FROM, INDEX_TO)));
@@ -143,16 +143,16 @@ export function getEstimatedPoints(xInput: number[], yInput:number[]): {x: numbe
     }
 
     if (xMeanSegment.length <= 1) {
-        xMeanSegment.push(_.mean(xInput.slice(0, Math.floor(xInput.length)/ 2)));
-        xMeanSegment.push(_.mean(xInput.slice(Math.floor(xInput.length/ 2),xInput.length)));
-        yMeanSegment.push(_.mean(yInput.slice(0, Math.floor(yInput.length)/ 2)));
-        yMeanSegment.push(_.mean(yInput.slice(Math.floor(yInput.length/ 2), yInput.length)));
+        xMeanSegment.push(_.mean(xInput.slice(0, Math.floor(xInput.length) / 2)));
+        xMeanSegment.push(_.mean(xInput.slice(Math.floor(xInput.length / 2), xInput.length)));
+        yMeanSegment.push(_.mean(yInput.slice(0, Math.floor(yInput.length) / 2)));
+        yMeanSegment.push(_.mean(yInput.slice(Math.floor(yInput.length / 2), yInput.length)));
     }
-    return [{x: xMeanSegment[0], y : yMeanSegment[0]},{x: xMeanSegment[xMeanSegment.length - 1], y : yMeanSegment[yMeanSegment.length - 1]}];
+    return [{x: xMeanSegment[0], y: yMeanSegment[0]}, {x: xMeanSegment[xMeanSegment.length - 1], y: yMeanSegment[yMeanSegment.length - 1]}];
 }
 
-export function autoDetecting(xInput: number[], yInput:number[], orderInputs?: {order: number, yIntercept: number, slope: number}) : {components:ProfileFittingIndividualStore[], order: number, yIntercept: number, slope:number} {
- 
+export function autoDetecting(xInput: number[], yInput: number[], orderInputs?: { order: number, yIntercept: number, slope: number }): { components: ProfileFittingIndividualStore[], order: number, yIntercept: number, slope: number } {
+
     // This part of codes tries to analyze the input spectrum and guesses where spectral and continuum features are, then sets up a set of initial solution for the GSL profile fitter. The procedure is outlined below.
 
     // On the GUI, there is a toggle 'w/ cont.' which sets a flag to the guesser if continuum needs to be taken into account or not. 
@@ -218,7 +218,7 @@ export function autoDetecting(xInput: number[], yInput:number[], orderInputs?: {
     const intensitySmoothedStddev = fitHistogramResult.stddev;
 
     if (orderInputs) {
-        order = orderInputs.order
+        order = orderInputs.order;
     } else {
         // validate order of baseline with estimatedPoints and histogram fitting stddev
         const orderValidWidth = 3 * intensitySmoothedStddev;
@@ -236,8 +236,8 @@ export function autoDetecting(xInput: number[], yInput:number[], orderInputs?: {
     }
 
     // 1st: marking channels with signals
-    const lineBoxs: {fromIndex, toIndex, fromIndexOri, toIndexOri}[] = [];
-    let switchFrom  = false;
+    const lineBoxs: { fromIndex, toIndex, fromIndexOri, toIndexOri }[] = [];
+    let switchFrom = false;
     const nSigmaThreshold = 2;
     const signalChCountThreshold = 4;
     const floor = intensitySmoothedMean - nSigmaThreshold * intensitySmoothedStddev;
@@ -246,7 +246,7 @@ export function autoDetecting(xInput: number[], yInput:number[], orderInputs?: {
     let fromIndex = 0, toIndex = 0, fromIndexOri, toIndexOri;
     for (let i = 0; i < ySmoothed.length; i++) {
         const value = ySmoothed[i];
-        if((value > ceiling || value < floor) && switchFrom === false) {
+        if ((value > ceiling || value < floor) && switchFrom === false) {
             fromIndex = i;
             switchFrom = true;
         } else if (value < ceiling && value > floor && switchFrom === true) {
@@ -254,14 +254,14 @@ export function autoDetecting(xInput: number[], yInput:number[], orderInputs?: {
             switchFrom = false;
             fromIndexOri = getIndexByValue(x, xSmoothed[fromIndex]);
             toIndexOri = getIndexByValue(x, xSmoothed[toIndex]);
-            if (toIndexOri - fromIndexOri + 1 >= signalChCountThreshold && (_.mean(ySmoothed.slice(fromIndex, toIndex + 1))> intensitySmoothedMean + 3 * intensitySmoothedStddev || _.mean(ySmoothed.slice(fromIndex, toIndex + 1)) < intensitySmoothedMean - 3 * intensitySmoothedStddev)) {
+            if (toIndexOri - fromIndexOri + 1 >= signalChCountThreshold && (_.mean(ySmoothed.slice(fromIndex, toIndex + 1)) > intensitySmoothedMean + 3 * intensitySmoothedStddev || _.mean(ySmoothed.slice(fromIndex, toIndex + 1)) < intensitySmoothedMean - 3 * intensitySmoothedStddev)) {
                 lineBoxs.push({fromIndexOri, toIndexOri, fromIndex, toIndex});
             }
-        } else if((value > ceiling || value < floor) && switchFrom === true && i === ySmoothed.length - 1) {
+        } else if ((value > ceiling || value < floor) && switchFrom === true && i === ySmoothed.length - 1) {
             toIndex = i;
             fromIndexOri = getIndexByValue(x, xSmoothed[fromIndex]);
             toIndexOri = getIndexByValue(x, xSmoothed[toIndex]);
-            if (toIndexOri - fromIndexOri + 1 >= signalChCountThreshold && (_.mean(ySmoothed.slice(fromIndex, toIndex + 1))> intensitySmoothedMean + 3 * intensitySmoothedStddev || _.mean(ySmoothed.slice(fromIndex, toIndex + 1)) < intensitySmoothedMean - 3 * intensitySmoothedStddev)) {
+            if (toIndexOri - fromIndexOri + 1 >= signalChCountThreshold && (_.mean(ySmoothed.slice(fromIndex, toIndex + 1)) > intensitySmoothedMean + 3 * intensitySmoothedStddev || _.mean(ySmoothed.slice(fromIndex, toIndex + 1)) < intensitySmoothedMean - 3 * intensitySmoothedStddev)) {
                 lineBoxs.push({fromIndexOri, toIndexOri, fromIndex, toIndex});
             }
             break;
@@ -269,9 +269,9 @@ export function autoDetecting(xInput: number[], yInput:number[], orderInputs?: {
     }
 
     // 2nd: checking multiplicity per identified feature in 1st step
-    const lineBoxsFinal:{fromIndex, toIndex, fromIndexOri, toIndexOri}[] = [];
+    const lineBoxsFinal: { fromIndex, toIndex, fromIndexOri, toIndexOri }[] = [];
     const multiChCountThreshold = 12;
-    const multiMeanSnThreshold = 4
+    const multiMeanSnThreshold = 4;
     //const multiWidthThreshold = 7;
 
     for (let i = 0; i < lineBoxs.length; i++) {
@@ -287,10 +287,14 @@ export function autoDetecting(xInput: number[], yInput:number[], orderInputs?: {
         const dividerLocalMinValue = [];
 
         if (Math.abs(meanSN) >= multiMeanSnThreshold && chCount >= multiChCountThreshold) {
-            for (let j = lineBox.fromIndex ; j < lineBox.toIndex - 4; j++) {
-                const tempData = ySmoothed.slice(j,j + 5);
-                const tempMap = tempData.map((data, index) => {return {data, index}})
-                const sortedArg = _.sortBy(tempMap, temp => temp.data).map((data) => {return data.index}); 
+            for (let j = lineBox.fromIndex; j < lineBox.toIndex - 4; j++) {
+                const tempData = ySmoothed.slice(j, j + 5);
+                const tempMap = tempData.map((data, index) => {
+                    return {data, index};
+                });
+                const sortedArg = _.sortBy(tempMap, temp => temp.data).map((data) => {
+                    return data.index;
+                });
                 if ((sortedArg[3] === 0 && sortedArg[4] === 4) || (sortedArg[3] === 4 && sortedArg[4] === 0)) {
                     dividerLocalMinIndex.push(getIndexByValue(x, xSmoothed[j + 2]));
                     dividerLocalMinValue.push(ySmoothed[j + 2]);
@@ -309,8 +313,8 @@ export function autoDetecting(xInput: number[], yInput:number[], orderInputs?: {
             for (const index of dividerLocalMaxIndex) {
                 dividerIndexTmp.push(index);
             }
-            dividerIndexTmp = dividerIndexTmp.sort((a,b) => a - b);
-            
+            dividerIndexTmp = dividerIndexTmp.sort((a, b) => a - b);
+
             // dividerValueTmp is not used elsewhere
             for (const index of dividerIndexTmp) {
                 if (dividerLocalMinIndex.indexOf(index) !== -1) {
@@ -322,7 +326,7 @@ export function autoDetecting(xInput: number[], yInput:number[], orderInputs?: {
             dividerIndex.push(lineBox.fromIndexOri);
 
             if (dividerIndexTmp.length === 0) {
-                
+
             } else if (dividerIndexTmp.length === 1) {
                 const middle = dividerIndexTmp[0];
                 if (meanSN > 0) {
@@ -349,13 +353,13 @@ export function autoDetecting(xInput: number[], yInput:number[], orderInputs?: {
                         if (dividerLocalMinIndex.indexOf(right) !== -1) {
                             dividerIndex.push(right);
                         } else if (dividerLocalMaxIndex.indexOf(right) !== -1) {
-                            dividerIndex.push(Math.floor((left + right)/2));
+                            dividerIndex.push(Math.floor((left + right) / 2));
                         }
                     }
                 } else {
                     if (dividerLocalMinIndex.indexOf(left) !== -1) {
                         if (dividerLocalMinIndex.indexOf(right) !== -1) {
-                            dividerIndex.push(Math.floor((left + right)/2));
+                            dividerIndex.push(Math.floor((left + right) / 2));
                         } else if (dividerLocalMaxIndex.indexOf(right) !== -1) {
                             dividerIndex.push(right);
                         }
@@ -366,11 +370,11 @@ export function autoDetecting(xInput: number[], yInput:number[], orderInputs?: {
                             dividerIndex.push(left);
                             dividerIndex.push(right);
                         }
-                    } 
+                    }
                 }
             } else if (dividerIndexTmp.length >= 3) {
                 if (meanSN > 0) {
-                    for (let k = 0; k < dividerIndexTmp.length - 2;  k++) {
+                    for (let k = 0; k < dividerIndexTmp.length - 2; k++) {
                         const left = dividerIndexTmp[k];
                         const middle = dividerIndexTmp[k + 1];
                         const right = dividerIndexTmp[k + 2];
@@ -384,7 +388,7 @@ export function autoDetecting(xInput: number[], yInput:number[], orderInputs?: {
                             if (dividerLocalMinIndex.indexOf(middle) !== -1 && dividerLocalMaxIndex.indexOf(right) !== -1) {
                                 dividerIndex.push(middle);
                             } else if (dividerLocalMaxIndex.indexOf(middle) !== -1) {
-                                dividerIndex.push(Math.floor((left + middle)/2));
+                                dividerIndex.push(Math.floor((left + middle) / 2));
                             }
                         }
                     }
@@ -402,7 +406,7 @@ export function autoDetecting(xInput: number[], yInput:number[], orderInputs?: {
                         dividerIndex.push(dividerIndexTmpLast2);
                     }
                 } else {
-                    for (let k = 0; k < dividerIndexTmp.length - 2;  k++) {
+                    for (let k = 0; k < dividerIndexTmp.length - 2; k++) {
                         const left = dividerIndexTmp[k];
                         const middle = dividerIndexTmp[k + 1];
                         const right = dividerIndexTmp[k + 2];
@@ -416,7 +420,7 @@ export function autoDetecting(xInput: number[], yInput:number[], orderInputs?: {
                             if (dividerLocalMaxIndex.indexOf(middle) !== -1 && dividerLocalMinIndex.indexOf(right) !== -1) {
                                 dividerIndex.push(middle);
                             } else if (dividerLocalMinIndex.indexOf(middle) !== -1) {
-                                dividerIndex.push(Math.floor((left + middle)/2));
+                                dividerIndex.push(Math.floor((left + middle) / 2));
                             }
                         }
                     }
@@ -440,9 +444,9 @@ export function autoDetecting(xInput: number[], yInput:number[], orderInputs?: {
 
             for (let d = 0; d < dividerIndex.length - 1; d++) {
                 const fromIndexOri = dividerIndex[d];
-                const toIndexOri = dividerIndex[d+1];
-                const fromIndex = getIndexByValue(xSmoothed,x[dividerIndex[d]]);
-                const toIndex = getIndexByValue(xSmoothed,x[dividerIndex[d + 1]]);
+                const toIndexOri = dividerIndex[d + 1];
+                const fromIndex = getIndexByValue(xSmoothed, x[dividerIndex[d]]);
+                const toIndex = getIndexByValue(xSmoothed, x[dividerIndex[d + 1]]);
                 lineBoxsFinal.push({fromIndexOri, toIndexOri, fromIndex, toIndex});
             }
         } else {
@@ -453,7 +457,7 @@ export function autoDetecting(xInput: number[], yInput:number[], orderInputs?: {
     const components: ProfileFittingIndividualStore[] = [];
     for (const lineBox of lineBoxsFinal) {
         const component = new ProfileFittingIndividualStore();
-        component.setFwhm(Math.abs(x[lineBox.toIndexOri] -x[lineBox.fromIndexOri]) / 2);
+        component.setFwhm(Math.abs(x[lineBox.toIndexOri] - x[lineBox.fromIndexOri]) / 2);
         const localYSmoothed = ySmoothed.slice(lineBox.fromIndex, lineBox.toIndex + 1);
         const localYExtrema = _.mean(localYSmoothed) > intensitySmoothedMean ? _.max(localYSmoothed) : _.min(localYSmoothed);
         component.setAmp(localYExtrema);
