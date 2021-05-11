@@ -16,3 +16,15 @@ export function exportTsvFile(imageName: string, plotName: string, content: stri
 
     return null;
 }
+
+export function exportTxtFile(imageName: string, content: string){
+    const TxtData = `data:text/tab-separated-values;charset=utf-8,${content}\n`;
+
+    const a = document.createElement("a") as HTMLAnchorElement;
+    a.href = TxtData;
+
+    a.download = `${imageName}-header.txt`;
+    a.dispatchEvent(new MouseEvent("click"));
+
+    return null;
+}

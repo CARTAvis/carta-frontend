@@ -83,6 +83,16 @@
             user-select: none;
         }
     }
+    
+    .header-export{
+        position: absolute;
+        bottom: 0px;
+        right: 0;
+        margin: 0 10px 10px 0;
+        transition: opacity 400ms;
+    }
+
+
 }
 
 .header-search-input {

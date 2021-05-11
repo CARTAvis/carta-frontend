@@ -8,6 +8,7 @@ import {CARTA} from "carta-protobuf";
 import {SimpleTableComponent, SimpleTableComponentProps} from "components/Shared";
 import {ImageSaveComponent} from "components/Dialogs";
 import "./FileInfoComponent.scss";
+import {exportTxtFile} from "utilities";
 
 export enum FileInfoType {
     IMAGE_FILE = "image-file",
@@ -437,6 +438,30 @@ export class FileInfoComponent extends React.Component<{
             ) : null;
     };
 
+    private ExportHeader = ()=>{
+        let HeaderContent = this.props.fileInfoExtended.headerEntries;
+        const imageName = this.props.fileInfoExtended.computedEntries[0].value;
+        let content = "";
+        HeaderContent.forEach((row,index)=>{
+            if (row.comment){
+                content += `${row.name} = ${row.value} / ${row.comment}\n`;
+            } else {
+                content += `${row.name} = ${row.value}\n`;
+            }
+        });
+
+        exportTxtFile(imageName,`${content}`);
+    };
+
+    private renderExportHeader = () => {
+        return (!this.props.isLoading && !this.props.errorMessage && this.props.fileInfoExtended &&
+            this.props.selectedTab === FileInfoType.IMAGE_HEADER) ? (
+    
+            <Button icon="download" className="header-export" onClick={this.ExportHeader} style={{opacity: (this.isMouseEntered || this.isSearchOpened) ? 1 : 0}}></Button>
+        ) : null;
+    };
+
+
     render() {
         return (
             <div className="file-info" onMouseEnter={this.onMouseEnter} onMouseLeave={this.onMouseLeave}>
@@ -446,6 +471,7 @@ export class FileInfoComponent extends React.Component<{
                 </div>
                 {this.renderInfoPanel()}
                 {this.renderHeaderSearch()}
+                {this.renderExportHeader()}
             </div>
         );
     }
