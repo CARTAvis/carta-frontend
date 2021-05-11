@@ -5,7 +5,7 @@ import {observer} from "mobx-react";
 import {Group, Layer, Line, Rect, Stage} from "react-konva";
 import Konva from "konva";
 import {CARTA} from "carta-protobuf";
-import {FrameStore, OverlayStore, PreferenceStore, RegionMode, RegionStore} from "stores";
+import {AppStore, FrameStore, OverlayStore, PreferenceStore, RegionMode, RegionStore} from "stores";
 import {SimpleShapeRegionComponent} from "./SimpleShapeRegionComponent";
 import {PolygonRegionComponent} from "./PolygonRegionComponent";
 import {PointRegionComponent} from "./PointRegionComponent";
@@ -13,6 +13,7 @@ import {canvasToImagePos, canvasToTransformedImagePos, imageToCanvasPos, transfo
 import {CursorInfo, Point2D} from "models";
 import {average2D, length2D, pointDistanceSquared, scale2D, subtract2D, transformPoint} from "utilities";
 import "./RegionViewComponent.scss";
+import { ImageViewLayer } from "../ImageViewComponent";
 
 export interface RegionViewComponentProps {
     frame: FrameStore;
@@ -288,6 +289,26 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
         // Ignore region creation mode clicks
         if (this.props.frame.regionSet.mode === RegionMode.CREATING && mouseEvent.button === 0) {
             return;
+        }
+
+        if (this.props.frame.regionSet.mode === RegionMode.CREATING && mouseEvent.button === 0) {
+            return;
+        }
+
+        if (AppStore.Instance?.activeLayer === ImageViewLayer.DistanceMeasuring) {
+            const distanceMeasuring = this.props.frame.distanceMeasuring;
+            const imagePos = this.props.frame.cursorInfo.posImageSpace;
+            if (!distanceMeasuring.isCreating && !distanceMeasuring.isCreated) {
+                distanceMeasuring.setStartPos(imagePos.x, imagePos.y);
+            } else if (distanceMeasuring.isCreating) {
+                distanceMeasuring.setFinishPos(imagePos.x, imagePos.y);
+            } else {
+                distanceMeasuring.resetPos();
+                distanceMeasuring.setStartPos(imagePos.x, imagePos.y);
+            }
+            console.log(distanceMeasuring.startX, distanceMeasuring.startY, distanceMeasuring.finishX, distanceMeasuring.finishY);
+        } else {
+            this.props.frame.distanceMeasuring.resetPos();
         }
 
         // Deselect selected region if in drag-to-pan mode and user clicks on the stage

@@ -194,7 +194,8 @@ EMSCRIPTEN_KEEPALIVE AstFrameSet* initDummyFrame()
 }
 
 EMSCRIPTEN_KEEPALIVE int plotGrid(AstFrameSet* wcsinfo, double imageX1, double imageX2, double imageY1, double imageY2, double width, double height,
-                                        double paddingLeft, double paddingRight, double paddingTop, double paddingBottom, const char* args)
+                                        double paddingLeft, double paddingRight, double paddingTop, double paddingBottom, const char* args,
+                                        bool showCurve, double curveX1, double curveY1, double curveX2, double curveY2)
 {
  if (!wcsinfo)
     {
@@ -221,6 +222,13 @@ EMSCRIPTEN_KEEPALIVE int plotGrid(AstFrameSet* wcsinfo, double imageX1, double i
 	plot = astPlot(wcsinfo, gbox, pbox, args);
 	astBBuf(plot);
     astGrid(plot);
+
+    if (showCurve) {
+        double start[] = {curveX1, curveY1};
+        double finish[] = {curveX2, curveY2};
+        astCurve(plot, start, finish);
+    }
+
     astEBuf(plot);
     astAnnul(plot);
     if (!astOK)
