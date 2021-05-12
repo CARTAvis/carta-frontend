@@ -77,7 +77,7 @@ export class HistogramComponent extends React.Component<WidgetProps> {
             if (!regionHistogramData) {
                 return null;
             }
-            return regionHistogramData.histograms[0];
+            return regionHistogramData.histograms;
         }
         return null;
     }

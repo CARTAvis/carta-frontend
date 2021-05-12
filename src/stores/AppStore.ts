@@ -1321,15 +1321,13 @@ export class AppStore {
 
         // Add histogram to pending histogram list
         if (regionHistogramData.regionId === -1) {
-            regionHistogramData.histograms.forEach(histogram => {
-                const key = `${regionHistogramData.fileId}_${regionHistogramData.stokes}_${histogram.channel}`;
-                this.pendingChannelHistograms.set(key, regionHistogramData);
-            });
+            const key = `${regionHistogramData.fileId}_${regionHistogramData.stokes}_${regionHistogramData.channel}`;
+            this.pendingChannelHistograms.set(key, regionHistogramData);
         } else if (regionHistogramData.regionId === -2) {
             // Update cube histogram if it is still required
             const updatedFrame = this.getFrame(regionHistogramData.fileId);
             if (updatedFrame) {
-                const cubeHist = regionHistogramData.histograms[0];
+                const cubeHist = regionHistogramData.histograms;
                 if (cubeHist && (updatedFrame.renderConfig.useCubeHistogram || updatedFrame.renderConfig.useCubeHistogramContours)) {
                     updatedFrame.renderConfig.updateCubeHistogram(cubeHist, regionHistogramData.progress);
                     this.updateTaskProgress(regionHistogramData.progress);
@@ -1364,11 +1362,12 @@ export class AppStore {
         // Apply pending channel histogram
         const key = `${tileStreamDetails.fileId}_${tileStreamDetails.stokes}_${tileStreamDetails.channel}`;
         const pendingHistogram = this.pendingChannelHistograms.get(key);
-        if (pendingHistogram && pendingHistogram.histograms && pendingHistogram.histograms.length) {
+        if (pendingHistogram && pendingHistogram.histograms) {
             const updatedFrame = this.getFrame(pendingHistogram.fileId);
-            const channelHist = pendingHistogram.histograms.find(hist => hist.channel === updatedFrame.channel);
+            const channelHist = pendingHistogram.histograms;
             if (updatedFrame && channelHist) {
                 updatedFrame.renderConfig.setStokes(pendingHistogram.stokes);
+                updatedFrame.renderConfig.setHistChannel(pendingHistogram.channel);
                 updatedFrame.renderConfig.updateChannelHistogram(channelHist);
                 updatedFrame.channel = tileStreamDetails.channel;
                 updatedFrame.stokes = tileStreamDetails.stokes;
