@@ -25,6 +25,6 @@ export function exportTxtFile(imageName: string, content: string){
 
     a.download = `${imageName}-header.txt`;
     a.dispatchEvent(new MouseEvent("click"));
-
+    
     return null;
 }

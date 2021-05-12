@@ -438,25 +438,23 @@ export class FileInfoComponent extends React.Component<{
             ) : null;
     };
 
-    private ExportHeader = ()=>{
+    private ExportHeader = () => {
         let HeaderContent = this.props.fileInfoExtended.headerEntries;
         const imageName = this.props.fileInfoExtended.computedEntries[0].value;
         let content = "";
-        HeaderContent.forEach((row,index)=>{
+        HeaderContent.forEach((row, index) => {
             if (row.comment){
                 content += `${row.name} = ${row.value} / ${row.comment}\n`;
             } else {
                 content += `${row.name} = ${row.value}\n`;
             }
         });
-
-        exportTxtFile(imageName,`${content}`);
+        exportTxtFile(imageName, `${content}`);
     };
 
     private renderExportHeader = () => {
         return (!this.props.isLoading && !this.props.errorMessage && this.props.fileInfoExtended &&
             this.props.selectedTab === FileInfoType.IMAGE_HEADER) ? (
-    
             <Button icon="download" className="header-export" onClick={this.ExportHeader} style={{opacity: (this.isMouseEntered || this.isSearchOpened) ? 1 : 0}}></Button>
         ) : null;
     };
