@@ -455,7 +455,7 @@ export class FileInfoComponent extends React.Component<{
     private renderExportHeader = () => {
         return (!this.props.isLoading && !this.props.errorMessage && this.props.fileInfoExtended &&
             this.props.selectedTab === FileInfoType.IMAGE_HEADER) ? (
-            <Button icon="download" className="header-export" onClick={this.exportHeader} style={{opacity: (this.isMouseEntered || this.isSearchOpened) ? 1 : 0}}></Button>
+            <Button icon="import" className="header-export" onClick={this.exportHeader} style={{opacity: (this.isMouseEntered || this.isSearchOpened) ? 1 : 0}}></Button>
         ) : null;
     };
 
