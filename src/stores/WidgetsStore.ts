@@ -673,13 +673,20 @@ export class WidgetsStore {
         const type = itemConfig.component;
         // Get widget config from type
         let widgetConfig = WidgetsStore.GetDefaultWidgetConfig(type);
+        const container = item["container"] as GoldenLayout.Container;
+        let centerX = 0;
+        if (container && container.width) {
+            centerX = ev.target.getBoundingClientRect().right + 36 - container.width * 0.5; // 36(px) is the length between help button and right border of widget
+        }
+
         if (widgetConfig.helpType && !Array.isArray(widgetConfig.helpType)) {
-            const container = item["container"] as GoldenLayout.Container;
-            let centerX = 0;
-            if (container && container.width) {
-                centerX = ev.target.getBoundingClientRect().right + 36 - container.width * 0.5; // 36(px) is the length between help button and right border of widget
-            }
             HelpStore.Instance.showHelpDrawer(widgetConfig.helpType, centerX);
+        } else {
+            const id = itemConfig.id as string;
+            const catalogPlotWidgetStore = this.catalogPlotWidgets.get(id);
+            if (catalogPlotWidgetStore) {
+                HelpStore.Instance.showHelpDrawer(catalogPlotWidgetStore.plotType === CatalogPlotType.Histogram ? HelpType.CATALOG_HISTOGRAM_PLOT: HelpType.CATALOG_SCATTER_PLOT, centerX);
+            }
         }
     };
 
