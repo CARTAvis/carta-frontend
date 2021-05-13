@@ -66,7 +66,7 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
                     settings.viewWidth * pixelRatio, settings.viewHeight * pixelRatio,
                     settings.padding.left * pixelRatio, settings.padding.right * pixelRatio, settings.padding.top * pixelRatio, settings.padding.bottom * pixelRatio,
                     styleString,
-                    frame.distanceMeasuring.isCreated, frame.distanceMeasuring.startX, frame.distanceMeasuring.startY, frame.distanceMeasuring.finishX, frame.distanceMeasuring.finishY);
+                    frame.distanceMeasuring.showCurve, frame.distanceMeasuring.start.x, frame.distanceMeasuring.start.y, frame.distanceMeasuring.finish.x, frame.distanceMeasuring.finish.y);
             };
 
             let currentStyleString = settings.styleString;
@@ -111,6 +111,9 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
         const numbersColor = this.props.overlaySettings.numbers.color;
         const labelsColor = this.props.overlaySettings.labels.color;
         const darktheme = AppStore.Instance.darkTheme;
+        const distanceMeasuringShowCurve = frame.distanceMeasuring.showCurve;
+        const distanceMeasuringStart = frame.distanceMeasuring.start;
+        const distanceMeasuringFinish = frame.distanceMeasuring.finish;
         /* eslint-enable no-unused-vars, @typescript-eslint/no-unused-vars */
 
         // Trigger switching AST overlay axis for PV image

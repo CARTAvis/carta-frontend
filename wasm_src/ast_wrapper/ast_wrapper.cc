@@ -226,7 +226,29 @@ EMSCRIPTEN_KEEPALIVE int plotGrid(AstFrameSet* wcsinfo, double imageX1, double i
     if (showCurve) {
         double start[] = {curveX1, curveY1};
         double finish[] = {curveX2, curveY2};
+        double corner[] = {curveX2, curveY1};
         astCurve(plot, start, finish);
+        astCurve(plot, start, corner);
+        astCurve(plot, corner, finish);
+
+        double dist = astDistance(wcsinfo, start, finish);
+
+        string distString;
+        if (dist < M_PI / 180.0) {
+            distString = to_string(dist * 180.0 / M_PI * 3600.0);
+            distString += '"';
+        } else {
+            distString = to_string(dist * 180.0 / M_PI);
+            distString += "\u00B0";
+        }
+    
+
+        const char *distChar = distString.c_str();
+
+        double middle[2];
+        astOffset(wcsinfo, start, finish, dist / 2, middle);
+        float up[] = {0.0f, 1.0f}; // horizontal text
+        astText(plot, distChar, middle, up, "TC");
     }
 
     astEBuf(plot);

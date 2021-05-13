@@ -64,6 +64,15 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
         }
     }, 100);
 
+    updateDistanceMeasureFinishPos = _.throttle((x: number, y: number) => {
+        const frame = this.props.frame;
+        if (frame.wcsInfo) {
+            const imagePos = canvasToTransformedImagePos(x, y, frame, this.props.width, this.props.height);
+            const wcsPos = transformPoint(frame.wcsInfo, imagePos);
+            this.props.frame.distanceMeasuring.setFinish(wcsPos);
+        }
+    }, 100);
+
     private getCursorCanvasPos(imageX: number, imageY: number): Point2D {
         const frame = this.props.frame;
         const posCanvasSpace = transformedImageToCanvasPos(imageX, imageY, frame, this.props.width, this.props.height);
@@ -287,36 +296,37 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
         }
 
         // Ignore region creation mode clicks
-        if (this.props.frame.regionSet.mode === RegionMode.CREATING && mouseEvent.button === 0) {
+        if (frame.regionSet.mode === RegionMode.CREATING && mouseEvent.button === 0) {
             return;
         }
 
-        if (this.props.frame.regionSet.mode === RegionMode.CREATING && mouseEvent.button === 0) {
+        if (frame.regionSet.mode === RegionMode.CREATING && mouseEvent.button === 0) {
             return;
         }
 
-        if (AppStore.Instance?.activeLayer === ImageViewLayer.DistanceMeasuring) {
-            const distanceMeasuring = this.props.frame.distanceMeasuring;
-            const imagePos = this.props.frame.cursorInfo.posImageSpace;
-            if (!distanceMeasuring.isCreating && !distanceMeasuring.isCreated) {
-                distanceMeasuring.setStartPos(imagePos.x, imagePos.y);
+        if (frame.wcsInfo && AppStore.Instance?.activeLayer === ImageViewLayer.DistanceMeasuring) {
+            const imagePos = canvasToTransformedImagePos(mouseEvent.offsetX, mouseEvent.offsetY, frame, this.props.width, this.props.height);
+            const wcsPos = transformPoint(frame.wcsInfo, imagePos);
+            const distanceMeasuring = frame.distanceMeasuring;
+            if (!distanceMeasuring.isCreating && !distanceMeasuring.showCurve) {
+                distanceMeasuring.setStart(wcsPos);
+                distanceMeasuring.setIsCreating(true);
             } else if (distanceMeasuring.isCreating) {
-                distanceMeasuring.setFinishPos(imagePos.x, imagePos.y);
+                distanceMeasuring.setFinish(wcsPos);
+                distanceMeasuring.setIsCreating(false);
             } else {
                 distanceMeasuring.resetPos();
-                distanceMeasuring.setStartPos(imagePos.x, imagePos.y);
+                distanceMeasuring.setStart(wcsPos);
+                distanceMeasuring.setIsCreating(true);
             }
-            console.log(distanceMeasuring.startX, distanceMeasuring.startY, distanceMeasuring.finishX, distanceMeasuring.finishY);
-        } else {
-            this.props.frame.distanceMeasuring.resetPos();
         }
 
         // Deselect selected region if in drag-to-pan mode and user clicks on the stage
         if (this.props.dragPanningEnabled && !isSecondaryClick) {
-            this.props.frame.regionSet.deselectRegion();
+            frame.regionSet.deselectRegion();
         }
 
-        if (this.props.frame.wcsInfo && this.props.onClicked && (!this.props.dragPanningEnabled || isSecondaryClick)) {
+        if (frame.wcsInfo && this.props.onClicked && (!this.props.dragPanningEnabled || isSecondaryClick)) {
             const cursorPosImageSpace = canvasToTransformedImagePos(mouseEvent.offsetX, mouseEvent.offsetY, frame, this.props.width, this.props.height);
             this.props.onClicked(this.props.frame.getCursorInfo(cursorPosImageSpace));
         }
@@ -352,8 +362,13 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
                 default:
                     break;
             }
-        } else if (!this.props.cursorFrozen) {
-            this.updateCursorPos(mouseEvent.offsetX, mouseEvent.offsetY);
+        } else {
+            if (frame.wcsInfo && AppStore.Instance?.activeLayer === ImageViewLayer.DistanceMeasuring && frame.distanceMeasuring.isCreating) {
+                this.updateDistanceMeasureFinishPos(mouseEvent.offsetX, mouseEvent.offsetY);
+            }
+            if (!this.props.cursorFrozen) {
+                this.updateCursorPos(mouseEvent.offsetX, mouseEvent.offsetY);
+            }
         }
     };
 
