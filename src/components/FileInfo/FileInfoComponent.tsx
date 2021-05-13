@@ -416,15 +416,15 @@ export class FileInfoComponent extends React.Component<{
 
         return (!this.props.isLoading && !this.props.errorMessage && this.props.fileInfoExtended &&
             this.props.selectedTab === FileInfoType.IMAGE_HEADER) ? (
+                <ButtonGroup className="header-search-button" style={{opacity: (this.isMouseEntered || this.isSearchOpened) ? 1 : 0}}>
                 <Popover
-                    className="header-search-button"
                     position={Position.LEFT}
                     interactionKind={PopoverInteractionKind.CLICK_TARGET_ONLY}
                     modifiers={popoverModifiers}
                     onOpening={() => this.handleSearchPanelClicked(true)}
                     onClosing={() => this.handleSearchPanelClicked(false)}
                 >
-                    <Button icon="search-text" style={{opacity: (this.isMouseEntered || this.isSearchOpened) ? 1 : 0}}></Button>
+                    <Button icon="search-text"></Button>
                     <InputGroup
                         className="header-search-input"
                         autoFocus={true}
@@ -435,6 +435,8 @@ export class FileInfoComponent extends React.Component<{
                         onKeyDown={(ev) => this.handleClickMatched(1, ev)}
                     />
                 </Popover>
+                <Button icon="import" onClick={this.exportHeader}></Button>
+                </ButtonGroup>
             ) : null;
     };
 
@@ -442,6 +444,7 @@ export class FileInfoComponent extends React.Component<{
         const headerContent = this.props.fileInfoExtended.headerEntries;
         const imageName = this.props.fileInfoExtended.computedEntries[0].value;
         let content = "";
+        content += `# ${imageName}\n`
         headerContent.forEach((row, index) => {
             if (row.comment){
                 content += `${row.name} = ${row.value} / ${row.comment}\n`;
@@ -450,13 +453,6 @@ export class FileInfoComponent extends React.Component<{
             }
         });
         exportTxtFile(imageName, content);
-    };
-
-    private renderExportHeader = () => {
-        return (!this.props.isLoading && !this.props.errorMessage && this.props.fileInfoExtended &&
-            this.props.selectedTab === FileInfoType.IMAGE_HEADER) ? (
-            <Button icon="import" className="header-export" onClick={this.exportHeader} style={{opacity: (this.isMouseEntered || this.isSearchOpened) ? 1 : 0}}></Button>
-        ) : null;
     };
 
     render() {
@@ -468,7 +464,6 @@ export class FileInfoComponent extends React.Component<{
                 </div>
                 {this.renderInfoPanel()}
                 {this.renderHeaderSearch()}
-                {this.renderExportHeader()}
             </div>
         );
     }

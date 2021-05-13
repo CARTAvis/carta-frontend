@@ -19,9 +19,10 @@ export function exportTsvFile(imageName: string, plotName: string, content: stri
 
 export function exportTxtFile(imageName: string, content: string){
     const txtData = `data:text/plain;charset=utf-8,${content}\n`;
+    const dataURL = encodeURI(txtData).replace(/#/g, "%23");
 
     const a = document.createElement("a") as HTMLAnchorElement;
-    a.href = txtData;
+    a.href = dataURL;
 
     a.download = `${imageName}-header.txt`;
     a.dispatchEvent(new MouseEvent("click"));
