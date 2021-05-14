@@ -6,6 +6,7 @@ import {CARTA} from "carta-protobuf";
 import {AppStore, OverlayStore, RegionMode, SystemType} from "stores";
 import {ImageViewLayer} from "../ImageViewComponent";
 import {toFixed} from "utilities";
+import {CustomIcon} from "icons/CustomIcons";
 import "./ToolbarComponent.scss";
 
 export class ToolbarComponentProps {
@@ -64,12 +65,10 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
 
     private handelActiveLayerClicked = (layer: ImageViewLayer) => {
         this.props.onActiveLayerChange(layer);
-        if (layer === ImageViewLayer.RegionMoving) {
+        if (layer === ImageViewLayer.RegionMoving || layer === ImageViewLayer.DistanceMeasuring) {
             AppStore.Instance.activeFrame.regionSet.setMode(RegionMode.MOVING);
         }
-        if (layer !== ImageViewLayer.DistanceMeasuring) {
-            AppStore.Instance.activeFrame.distanceMeasuring.resetPos();
-        }
+        AppStore.Instance.activeFrame.distanceMeasuring.resetPos();
     }
 
     exportImageTooltip = () => {
@@ -196,7 +195,7 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
         return (
             <ButtonGroup className={className} style={styleProps} vertical={this.props.vertical}>
                 <Tooltip position={tooltipPosition} content="Measure distance">
-                    <AnchorButton icon={"blank"} active={appStore.activeLayer === ImageViewLayer.DistanceMeasuring} onClick={() => this.handelActiveLayerClicked(ImageViewLayer.DistanceMeasuring)}/>
+                    <AnchorButton icon={<CustomIcon icon="distanceMeasuring"/>} active={appStore.activeLayer === ImageViewLayer.DistanceMeasuring} onClick={() => this.handelActiveLayerClicked(ImageViewLayer.DistanceMeasuring)}/>
                 </Tooltip>
                 <Tooltip position={tooltipPosition} content={<span>Catalog selection<br/><i><small>Click to select single catalog source</small></i></span>}>
                     <AnchorButton icon={"locate"} active={appStore.activeLayer === ImageViewLayer.Catalog} onClick={() => this.handelActiveLayerClicked(ImageViewLayer.Catalog)} disabled={catalogSelectionDisabled}/>

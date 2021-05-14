@@ -13,6 +13,7 @@ import "./ToolbarMenuComponent.scss";
 export class ToolbarMenuComponent extends React.Component {
     handleRegionTypeClicked = (type: CARTA.RegionType) => {
         const appStore = AppStore.Instance;
+        appStore.updateActiveLayer(ImageViewLayer.RegionCreating);
         appStore.activeFrame.regionSet.setNewRegionType(type);
         appStore.activeFrame.regionSet.setMode(RegionMode.CREATING);
     };
