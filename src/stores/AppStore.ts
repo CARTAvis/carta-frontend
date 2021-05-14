@@ -41,6 +41,10 @@ import {getImageCanvas, ImageViewLayer} from "components";
 import {AppToaster, ErrorToast, SuccessToast, WarningToast} from "components/Shared";
 import GitCommit from "../static/gitInfo";
 
+interface FrameOption extends IOptionProps {
+    hasZAxis: boolean;
+}
+
 export class AppStore {
     private static staticInstance: AppStore;
 
@@ -307,6 +311,16 @@ export class AppStore {
         });
     }
 
+    @computed get frameOptions(): FrameOption[] {
+        return this.frames?.map((frame, index) => {
+            return {
+                label: index + ": " + frame.filename,
+                value: frame.frameInfo.fileId,
+                hasZAxis: frame?.channelInfo !== undefined && frame?.channelInfo !== null
+            };
+        });
+    }
+
     @computed get frameChannels(): number[] {
         return this.frames.map(frame => frame.requiredChannel);
     }
@@ -453,6 +467,9 @@ export class AppStore {
                 }
                 this.endFileLoading();
                 this.fileBrowserStore.hideFileBrowser();
+                WidgetsStore.ResetWidgetPlotXYBounds(this.widgetsStore.spatialProfileWidgets);
+                WidgetsStore.ResetWidgetPlotXYBounds(this.widgetsStore.spectralProfileWidgets);
+                WidgetsStore.ResetWidgetPlotXYBounds(this.widgetsStore.stokesAnalysisWidgets);
                 resolve(ack.fileId);
             }, err => {
                 this.alertStore.showAlert(`Error loading file: ${err}`);
@@ -474,6 +491,9 @@ export class AppStore {
                 this.endFileLoading();
                 this.fileBrowserStore.hideFileBrowser();
                 AppStore.Instance.dialogStore.hideStokesDialog();
+                WidgetsStore.ResetWidgetPlotXYBounds(this.widgetsStore.spatialProfileWidgets);
+                WidgetsStore.ResetWidgetPlotXYBounds(this.widgetsStore.spectralProfileWidgets);
+                WidgetsStore.ResetWidgetPlotXYBounds(this.widgetsStore.stokesAnalysisWidgets);
                 resolve(ack.openFileAck.fileId);
             }, err => {
                 console.log(err);

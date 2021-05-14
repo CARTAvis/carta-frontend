@@ -261,7 +261,7 @@ export class SpectralProfileSelectionStore {
         let options: LineOption[] = [{value: ACTIVE_FILE_ID, label: "Active"}];
 
         const appStore = AppStore.Instance;
-        const frameNameOptions = appStore.frameNames;
+        const frameOptions = appStore.frameOptions;
         if (this.activeProfileCategory === MultiProfileCategory.IMAGE) {
             const matchedFrameIds = appStore.spatialAndSpectalMatchedFileIds;
 
@@ -272,21 +272,23 @@ export class SpectralProfileSelectionStore {
                 activeOption.hightlight = true;
             }
 
-            frameNameOptions?.forEach(frameNameOption => {
+            frameOptions?.forEach(frameNameOption => {
                 const isMatched = matchedFrameIds?.length > 1 && matchedFrameIds?.includes(frameNameOption.value as number);
                 options.push({
                     value: frameNameOption.value,
                     label: `${frameNameOption.label}${isMatched ? " (matched)" : ""}`,
                     hightlight: isMatched,
-                    active: frameNameOption.value === appStore.activeFrameFileId
+                    active: frameNameOption.value === appStore.activeFrameFileId,
+                    disabled: !frameNameOption.hasZAxis
                 });
             });
         } else {
-            options = options.concat(frameNameOptions?.map(frameNameOption => {
+            options = options.concat(frameOptions?.map(frameNameOption => {
                 return {
                     value: frameNameOption.value,
                     label: frameNameOption.label,
-                    active: frameNameOption.value === appStore.activeFrameFileId
+                    active: frameNameOption.value === appStore.activeFrameFileId,
+                    disabled: !frameNameOption.hasZAxis
                 };
             }));
         }
@@ -389,6 +391,10 @@ export class SpectralProfileSelectionStore {
 
     @computed get isSingleProfileMode(): boolean {
         return this.activeProfileCategory === MultiProfileCategory.NONE;
+    }
+
+    @computed get isShowingProfilesOfMultiImages(): boolean {
+        return this.activeProfileCategory === MultiProfileCategory.IMAGE && this.profiles?.length > 1;
     }
 
     @action private switchToSingleModeHandily = (profileCategory: MultiProfileCategory) => {

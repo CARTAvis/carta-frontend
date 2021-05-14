@@ -1,0 +1,111 @@
+.profile-fitting-panel{
+
+    .profile-fitting-form{
+
+        .bp3-form-group {
+            &:first-of-type {
+                margin-left: 0px;
+            }
+            .bp3-label {
+                width: 10em;
+                text-align: left;
+            }
+        }
+
+        .components-input{
+            display: flex;
+            flex-direction: row;
+
+            .bp3-input-group{
+                width: 40px;
+            }
+        }
+
+        .components-slider{
+            display: flex;
+            flex-direction: row;
+            height: 30px;
+
+            .bp3-slider{
+                margin-left: 15px;
+                width: 100%;
+            }
+
+            .bp3-button{
+                margin-left: 15px;
+            }
+        }
+
+        .component-input{
+            display: flex;
+            flex-direction: row;
+
+            .bp3-switch{
+                margin-left: 15px;
+            }
+        }
+
+        .fitting-result{
+            display: flex;
+            flex-direction: column;
+            height: 200px;
+            width: 300px;
+
+            .fitting-result-pre{
+                overflow: auto;
+                height: 100%;
+                flex: 1;
+                user-select: text;
+            }
+        }
+
+        .fitting-result-hover-button{
+            position: relative;
+            top: -50px;
+            left: 260px;
+        }
+    }
+
+    .profile-fitting-footer{
+        display: flex;
+        flex-direction: row;
+        justify-content: flex-end;
+
+        .bp3-button{
+            margin-left: 10px;
+        }
+
+        .switch-wrapper{
+            height: 30px;
+            padding-top: 5px;
+            margin-left: 15px;
+        }
+    }
+}
+
+.fitting-popover{
+
+    .fitting-log{
+        display: flex;
+        flex-direction: column;
+        height: 400px;
+        .fitting-log-pre{
+            overflow: auto;
+            height: 100%;
+            flex: 1;
+            margin: 5px;
+            user-select: text;
+        }
+    }
+
+    .fitting-popover-footer{
+        display: flex;
+        flex-direction: row;
+        justify-content: flex-end;
+
+        .fitting-log-button{
+            margin: 10px
+        }
+    }
+
+}

@@ -200,6 +200,20 @@ export class WidgetsStore {
         });
     };
 
+    public static ResetWidgetPlotXYBounds(storeMap: Map<string, SpatialProfileWidgetStore | SpectralProfileWidgetStore | HistogramWidgetStore | StokesAnalysisWidgetStore>, fileId: number = ACTIVE_FILE_ID) {
+        if (fileId === ACTIVE_FILE_ID) {
+            storeMap.forEach(widgetStore => {
+                widgetStore.clearXYBounds();
+            });
+        } else {
+            storeMap.forEach(widgetStore => {
+                if (widgetStore.fileId === fileId) {
+                    widgetStore.clearXYBounds();
+                }
+            });
+        }
+    }
+
     private constructor() {
         makeObservable(this);
         this.spatialProfileWidgets = new Map<string, SpatialProfileWidgetStore>();
