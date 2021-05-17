@@ -390,7 +390,7 @@ export class FileInfoComponent extends React.Component<{
         );
     };
 
-    private renderHeaderSearch = () => {
+    private renderHeaderToolbar = () => {
         const popoverModifiers: PopperModifiers = {arrow: {enabled: false}, offset: {offset: '0, 10px, 0, 0'}};
         const searchIter = (
             <ButtonGroup className="header-search">
@@ -417,13 +417,13 @@ export class FileInfoComponent extends React.Component<{
         return (!this.props.isLoading && !this.props.errorMessage && this.props.fileInfoExtended &&
             this.props.selectedTab === FileInfoType.IMAGE_HEADER) ? (
                 <ButtonGroup className="header-search-button" style={{opacity: (this.isMouseEntered || this.isSearchOpened) ? 1 : 0}}>
-                <Popover
+                    <Popover
                     position={Position.LEFT}
                     interactionKind={PopoverInteractionKind.CLICK_TARGET_ONLY}
                     modifiers={popoverModifiers}
                     onOpening={() => this.handleSearchPanelClicked(true)}
                     onClosing={() => this.handleSearchPanelClicked(false)}
-                >
+                    >
                     <Button icon="search-text"></Button>
                     <InputGroup
                         className="header-search-input"
@@ -434,17 +434,17 @@ export class FileInfoComponent extends React.Component<{
                         onChange={this.handleSearchStringChanged}
                         onKeyDown={(ev) => this.handleClickMatched(1, ev)}
                     />
-                </Popover>
-                <Button icon="import" onClick={this.exportHeader}></Button>
+                    </Popover>
+                    <Button icon="import" onClick={this.exportHeader}></Button>
                 </ButtonGroup>
             ) : null;
     };
 
     private exportHeader = () => {
         const headerContent = this.props.fileInfoExtended.headerEntries;
-        const imageName = this.props.fileInfoExtended.computedEntries[0].value;
+        const imageName = `${this.props.fileInfoExtended.computedEntries[0].value}-Header`;
         let content = "";
-        content += `# ${imageName}\n`
+        content += `# ${this.props.fileInfoExtended.computedEntries[0].value}\n`
         headerContent.forEach((row, index) => {
             if (row.comment){
                 content += `${row.name} = ${row.value} / ${row.comment}\n`;
@@ -463,7 +463,7 @@ export class FileInfoComponent extends React.Component<{
                     {this.renderHDUList()}
                 </div>
                 {this.renderInfoPanel()}
-                {this.renderHeaderSearch()}
+                {this.renderHeaderToolbar()}
             </div>
         );
     }

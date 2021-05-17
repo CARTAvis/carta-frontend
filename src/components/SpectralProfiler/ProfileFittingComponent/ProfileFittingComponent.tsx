@@ -8,6 +8,7 @@ import {SpectralProfileWidgetStore} from "stores/widgets";
 import {AppStore} from "stores";
 import {getTimestamp} from "utilities";
 import "./ProfileFittingComponent.scss";
+import {exportTxtFile} from "utilities";
 
 export enum FittingFunction {
     GAUSSIAN = 0,
@@ -147,14 +148,9 @@ export class ProfileFittingComponent extends React.Component<ProfileFittingCompo
             }
         }
 
-        const content = `data:text/plain;charset=utf-8,${headerString}\n${this.props.fittingStore.resultLog}\n`;
-        const dataURL = encodeURI(content).replace(/#/g, "%23");
-
-        const a = document.createElement("a") as HTMLAnchorElement;
-        a.href = dataURL;
-
-        a.download = `Profile Fitting Result Log-${getTimestamp()}.txt`;
-        a.dispatchEvent(new MouseEvent("click"));
+        const content = `${headerString}\n${this.props.fittingStore.resultLog}`;
+        const givenName = `Profile Fitting Result Log-${getTimestamp()}`
+        exportTxtFile(givenName, content);
     };
 
     @action private reset = () => {
