@@ -1,10 +1,10 @@
 import {action, autorun, computed, observable, makeObservable, override} from "mobx";
-import {NumberRange} from "@blueprintjs/core";
+import {IOptionProps, NumberRange} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import {PlotType, LineSettings, VERTICAL_RANGE_PADDING, SmoothingType} from "components/Shared";
 import {RegionWidgetStore, RegionsType, ACTIVE_FILE_ID, SpectralLine, SpectralProfileSelectionStore} from "stores/widgets";
 import {AppStore, ProfileSmoothingStore, ProfileFittingStore} from "stores";
-import {LineKey, Point2D, ProcessedSpectralProfile, SpectralSystem} from "models";
+import {FileId, LineKey, Point2D, ProcessedSpectralProfile, RegionId, SpectralSystem} from "models";
 import tinycolor from "tinycolor2";
 import {SpectralProfilerSettingsTabs} from "components";
 import {clamp, getColorForTheme, isAutoColor} from "utilities";
@@ -64,6 +64,8 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
     public static readonly PRIMARY_LINE_KEY = "Primary";
 
     // moment settings
+    @observable momentFileId: FileId;
+    @observable momentRegionId: RegionId;
     @observable selectingMode: MomentSelectingMode;
     @observable channelValueRange: NumberRange;
     @observable momentMask: CARTA.MomentMask;
@@ -89,6 +91,14 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         if (this.effectiveFrame.setSpectralSystem(specsys)) {
             this.clearXBounds();
         }
+    };
+
+    @action setMomentFileId = (fileId: FileId) => {
+        this.momentFileId = fileId;
+    };
+
+    @action setMomentRegionId = (regionId: RegionId) => {
+        this.momentRegionId = regionId;
     };
 
     @action setMomentRangeSelectingMode = (mode: MomentSelectingMode) => {
@@ -157,17 +167,19 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         return this.selectedMoments.includes(momentType);
     };
 
+    // TODO: figure out if frame is selectable
     @action requestMoment = () => {
-        const frame = this.effectiveFrame;
+        const frame = AppStore.Instance.getFrame(this.momentFileId);
+        if (frame) {
         const channelIndex1 = frame.findChannelIndexByValue(this.channelValueRange[0]);
         const channelIndex2 = frame.findChannelIndexByValue(this.channelValueRange[1]);
-        if (frame && isFinite(channelIndex1) && isFinite(channelIndex2)) {
+        if (isFinite(channelIndex1) && isFinite(channelIndex2)) {
             const channelIndexRange: CARTA.IIntBounds = {
                 min: channelIndex1 <= channelIndex2 ? channelIndex1 : channelIndex2,
                 max: channelIndex1 <= channelIndex2 ? channelIndex2 : channelIndex1
             };
             const requestMessage: CARTA.IMomentRequest = {
-                fileId: frame.frameInfo.fileId,
+                fileId: this.momentFileId,
                 moments: this.selectedMoments,
                 axis: CARTA.MomentAxis.SPECTRAL,
                 regionId: (this.fileId === ACTIVE_FILE_ID && this.effectiveRegionId === 0) ? -1 : this.effectiveRegionId, // request image when region dropdown is active with no region selected
@@ -178,6 +190,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
             frame.resetMomentRequestState();
             frame.setIsRequestingMoments(true);
             AppStore.Instance.requestMoment(requestMessage, frame);
+        }
         }
     };
 
@@ -453,6 +466,17 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
             };
         }
         return null;
+    }
+
+    @computed get momentRegionOptions(): IOptionProps[] {
+        const frame = AppStore.Instance.getFrame(this.momentFileId);
+        return frame?.regionSet?.regions?.filter(r => !r.isTemporary && (r.isClosedRegion || r.regionType === CARTA.RegionType.POINT))?.map(region => {
+            return {
+                value: region?.regionId,
+                label: region?.nameString,
+                disabled: !region?.isClosedRegion
+            };
+        });
     }
 
     @computed get transformedSpectralLines(): SpectralLine[] {

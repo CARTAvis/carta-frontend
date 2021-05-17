@@ -4,7 +4,7 @@ import {CARTA} from "carta-protobuf";
 import {AnchorButton, Button, Divider, FormGroup, HTMLSelect, MenuItem, Position, Tooltip} from "@blueprintjs/core";
 import {ItemPredicate, ItemRenderer, MultiSelect} from "@blueprintjs/select";
 import {TaskProgressDialogComponent} from "components/Dialogs";
-import {RegionSelectorComponent, SafeNumericInput, SpectralSettingsComponent} from "components/Shared";
+import {SafeNumericInput, SpectralSettingsComponent} from "components/Shared";
 import {MomentSelectingMode, SpectralProfileWidgetStore, RegionId} from "stores/widgets";
 import {AppStore} from "stores";
 import {MOMENT_TEXT} from "models";
@@ -99,7 +99,26 @@ export class MomentGeneratorComponent extends React.Component<{widgetStore: Spec
         const widgetStore = this.props.widgetStore;
         const frame = widgetStore.effectiveFrame;
 
-        const regionPanel = <RegionSelectorComponent widgetStore={this.props.widgetStore} nonClosedDisabled={true}/>;
+        const regionPanel = (
+            <React.Fragment>
+                <FormGroup label={"Image"} inline={true} disabled={false}>
+                    <HTMLSelect
+                        value={widgetStore.momentFileId}
+                        options={widgetStore.frameOptions}
+                        onChange={(ev) => widgetStore.setMomentFileId(parseInt(ev.target.value))}
+                        disabled={false}
+                    />
+                </FormGroup>
+                <FormGroup label={"Region"} inline={true} disabled={false}>
+                    <HTMLSelect
+                        value={widgetStore.momentRegionId}
+                        options={widgetStore.momentRegionOptions}
+                        onChange={(ev) => widgetStore.setMomentRegionId(parseInt(ev.target.value))}
+                        disabled={false}
+                    />
+                </FormGroup>
+            </React.Fragment>
+        );
 
         const spectralPanel = (
             <React.Fragment>
