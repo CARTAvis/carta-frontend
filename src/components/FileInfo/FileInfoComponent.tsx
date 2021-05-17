@@ -424,8 +424,8 @@ export class FileInfoComponent extends React.Component<{
                     onOpening={() => this.handleSearchPanelClicked(true)}
                     onClosing={() => this.handleSearchPanelClicked(false)}
                     >
-                    <Button icon="search-text"></Button>
-                    <InputGroup
+                        <Button icon="search-text"></Button>
+                        <InputGroup
                         className="header-search-input"
                         autoFocus={true}
                         placeholder={"Search text"}
@@ -433,7 +433,7 @@ export class FileInfoComponent extends React.Component<{
                         rightElement={searchIter}
                         onChange={this.handleSearchStringChanged}
                         onKeyDown={(ev) => this.handleClickMatched(1, ev)}
-                    />
+                        />
                     </Popover>
                     <Button icon="import" onClick={this.exportHeader}></Button>
                 </ButtonGroup>
