@@ -202,18 +202,26 @@ void plotDistText(AstFrameSet* wcsinfo, AstPlot* plot, double* start, double* fi
 
     string distString;
     const char* unit = astGetC(wcsinfo, "Unit(1)");
-    if (strcmp(unit, "degrees") == 0 || strcmp(unit, "hh:mm:ss.ss") == 0) {
-        if (dist < M_PI / 180.0 / 60.0) {
+    if (strcmp(unit, "degrees") == 0 || strcmp(unit, "hh:mm:ss.ss") == 0)
+    {
+        if (dist < M_PI / 180.0 / 60.0)
+        {
             distString = to_string(dist * 180.0 / M_PI * 3600.0);
             distString += '"';
-        } else if (dist < M_PI / 180.0) {
+        }
+        else if (dist < M_PI / 180.0)
+        {
             distString = to_string(dist * 180.0 / M_PI * 60.0);
             distString += "'";
-        } else {
+        }
+        else
+        {
             distString = to_string(dist * 180.0 / M_PI);
             distString += "\u00B0";
         }
-    } else {
+    }
+    else
+    {
         distString = to_string(dist);
     }
     const char* distChar = distString.c_str();
@@ -230,39 +238,43 @@ EMSCRIPTEN_KEEPALIVE int plotGrid(AstFrameSet* wcsinfo, double imageX1, double i
         return 1;
     }
 
-	AstPlot* plot;
-	double hi = 1, lo = -1, scale, x1 = paddingLeft, x2 = width - paddingRight, xleft, xright, xscale;
-	double y1 = paddingBottom, y2 = height - paddingTop, ybottom, yscale, ytop;
+    AstPlot* plot;
+    double hi = 1, lo = -1, scale, x1 = paddingLeft, x2 = width - paddingRight, xleft, xright, xscale;
+    double y1 = paddingBottom, y2 = height - paddingTop, ybottom, yscale, ytop;
 
-	double nx = imageX2 - imageX1;
-	double ny = imageY2 - imageY1;
+    double nx = imageX2 - imageX1;
+    double ny = imageY2 - imageY1;
 
-	xscale = (x2 - x1) / nx;
-	yscale = (y2 - y1) / ny;
-	scale = (xscale < yscale) ? xscale : yscale;
-	xleft = 0.5f * (x1 + x2 - nx * scale);
-	xright = 0.5f * (x1 + x2 + nx * scale);
-	ybottom = 0.5f * (y1 + y2 - ny * scale);
-	ytop = 0.5f * (y1 + y2 + ny * scale);
+    xscale = (x2 - x1) / nx;
+    yscale = (y2 - y1) / ny;
+    scale = (xscale < yscale) ? xscale : yscale;
+    xleft = 0.5f * (x1 + x2 - nx * scale);
+    xright = 0.5f * (x1 + x2 + nx * scale);
+    ybottom = 0.5f * (y1 + y2 - ny * scale);
+    ytop = 0.5f * (y1 + y2 + ny * scale);
 
-	float gbox[] = {(float)xleft, (float)ybottom, (float)xright, (float)ytop};
-	double pbox[] = {imageX1, imageY1, imageX2, imageY2};
-	plot = astPlot(wcsinfo, gbox, pbox, args);
-	astBBuf(plot);
+    float gbox[] = {(float)xleft, (float)ybottom, (float)xright, (float)ytop};
+    double pbox[] = {imageX1, imageY1, imageX2, imageY2};
+    plot = astPlot(wcsinfo, gbox, pbox, args);
+    astBBuf(plot);
     astGrid(plot);
 
-    if (showCurve) {
+    if (showCurve)
+    {
         double in[2][4] = {{curveX1, curveX2, curveX2, curveX1}, {curveY1, curveY2, curveY1, curveY1}};
         const double* inPtr = in[0];
         astPolyCurve(plot, 4, 2, 4, inPtr);
 
         double start[] = {curveX1, curveY1};
         double finish[] = {curveX2, curveY2};
-        if (isPVImage) {
+        if (isPVImage)
+        {
             double corner[] = {curveX2, curveY1};
             plotDistText(wcsinfo, plot, start, corner);
             plotDistText(wcsinfo, plot, finish, corner);
-        } else {
+        }
+        else
+        {
             plotDistText(wcsinfo, plot, start, finish);
         }        
     }

@@ -1,27 +1,26 @@
 import * as AST from "ast_wrapper";
 import {action, computed, observable, makeObservable} from "mobx";
-import { AppStore } from "./AppStore";
-import { getColorForTheme } from "utilities";
-import { ImageViewLayer } from "components";
-import { Point2D } from "models";
-import { AstColorsIndex, ASTSettingsString } from "stores";
-
-const DISTANCE_MEASURE_DEFAULT_WIDTH = 1.5;
-const DISTANCE_MEASURE_DEFAULT_FONTSIZE = 14;
-const DISTANCE_MEASURE_DEFAULT_COLOR= '#62D96B';
+import {ImageViewLayer} from "components";
+import {AppStore, AstColorsIndex, ASTSettingsString} from "stores";
+import {getColorForTheme} from "utilities";
+import {Point2D} from "models";
 
 export class DistanceMeasuringStore {
     @observable start: Point2D;
     @observable finish: Point2D;
     @observable isCreating: boolean;
-    @observable color: string
+    @observable color: string;
+
+    static readonly DEFAULT_WIDTH = 1.5;
+    static readonly DEFAULT_FONTSIZE = 14;
+    static readonly DEFAULT_COLOR= '#62D96B';
 
     constructor() {
         makeObservable(this);
         this.start = {x: null, y: null};
         this.finish = {x: null, y: null};
         this.isCreating = false;
-        this.color = DISTANCE_MEASURE_DEFAULT_COLOR;
+        this.color = DistanceMeasuringStore.DEFAULT_COLOR;
     }
 
     @computed get showCurve(): boolean {
@@ -31,9 +30,9 @@ export class DistanceMeasuringStore {
     @computed get styleString() {
         let astString = new ASTSettingsString();
         astString.add("Color(Curve)", AstColorsIndex.DISTANCE_MEASURE);
-        astString.add("Width(Curve)", DISTANCE_MEASURE_DEFAULT_WIDTH);
+        astString.add("Width(Curve)", DistanceMeasuringStore.DEFAULT_WIDTH);
         astString.add("Color(Strings)", AstColorsIndex.DISTANCE_MEASURE);
-        astString.add("Size(Strings)", DISTANCE_MEASURE_DEFAULT_FONTSIZE);
+        astString.add("Size(Strings)", DistanceMeasuringStore.DEFAULT_FONTSIZE);
         return astString.toString();
     }
 

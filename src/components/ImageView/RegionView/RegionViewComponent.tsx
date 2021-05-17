@@ -13,7 +13,7 @@ import {canvasToImagePos, canvasToTransformedImagePos, imageToCanvasPos, transfo
 import {CursorInfo, Point2D} from "models";
 import {average2D, length2D, pointDistanceSquared, scale2D, subtract2D, transformPoint} from "utilities";
 import "./RegionViewComponent.scss";
-import { ImageViewLayer } from "../ImageViewComponent";
+import {ImageViewLayer} from "../ImageViewComponent";
 
 export interface RegionViewComponentProps {
     frame: FrameStore;

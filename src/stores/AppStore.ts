@@ -16,6 +16,7 @@ import {
     CatalogStore,
     CatalogUpdateMode,
     DialogStore,
+    DistanceMeasuringStore,
     FileBrowserStore,
     FrameInfo,
     FrameStore,
@@ -967,7 +968,7 @@ export class AppStore {
                 getColorForTheme(this.overlayStore.axes.color),
                 getColorForTheme(this.overlayStore.numbers.color),
                 getColorForTheme(this.overlayStore.labels.color),
-                getColorForTheme('#62D96B')
+                getColorForTheme(DistanceMeasuringStore.DEFAULT_COLOR)
             ];
             AST.setColors(astColors);
         }
