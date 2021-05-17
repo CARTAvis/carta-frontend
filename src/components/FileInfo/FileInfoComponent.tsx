@@ -418,21 +418,21 @@ export class FileInfoComponent extends React.Component<{
             this.props.selectedTab === FileInfoType.IMAGE_HEADER) ? (
                 <ButtonGroup className="header-search-button" style={{opacity: (this.isMouseEntered || this.isSearchOpened) ? 1 : 0}}>
                     <Popover
-                    position={Position.LEFT}
-                    interactionKind={PopoverInteractionKind.CLICK_TARGET_ONLY}
-                    modifiers={popoverModifiers}
-                    onOpening={() => this.handleSearchPanelClicked(true)}
-                    onClosing={() => this.handleSearchPanelClicked(false)}
+                        position={Position.LEFT}
+                        interactionKind={PopoverInteractionKind.CLICK_TARGET_ONLY}
+                        modifiers={popoverModifiers}
+                        onOpening={() => this.handleSearchPanelClicked(true)}
+                        onClosing={() => this.handleSearchPanelClicked(false)}
                     >
                         <Button icon="search-text"></Button>
                         <InputGroup
-                        className="header-search-input"
-                        autoFocus={true}
-                        placeholder={"Search text"}
-                        leftIcon="search-text"
-                        rightElement={searchIter}
-                        onChange={this.handleSearchStringChanged}
-                        onKeyDown={(ev) => this.handleClickMatched(1, ev)}
+                            className="header-search-input"
+                            autoFocus={true}
+                            placeholder={"Search text"}
+                            leftIcon="search-text"
+                            rightElement={searchIter}
+                            onChange={this.handleSearchStringChanged}
+                            onKeyDown={(ev) => this.handleClickMatched(1, ev)}
                         />
                     </Popover>
                     <Button icon="import" onClick={this.exportHeader}></Button>
