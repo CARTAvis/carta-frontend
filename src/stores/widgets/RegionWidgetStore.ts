@@ -89,12 +89,7 @@ export class RegionWidgetStore {
     }
 
     @computed get frameOptions(): IOptionProps[] {
-        const appStore = AppStore.Instance;
-        let frameOptions: IOptionProps[] = [{value: ACTIVE_FILE_ID, label: "Active"}];
-        if (appStore.activeFrame) {
-            frameOptions = frameOptions.concat(appStore.frameNames);
-        }
-        return frameOptions;
+        return [{value: ACTIVE_FILE_ID, label: "Active"}, ...(AppStore.Instance.frameNames ?? [])];
     }
 
     public static CalculateRequirementsArray(widgetsMap: Map<string, RegionWidgetStore>) {
