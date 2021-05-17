@@ -296,7 +296,7 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
         }
 
         // Ignore region creation mode clicks
-        if (frame.regionSet.mode === RegionMode.CREATING && mouseEvent.button === 0) {
+        if (this.props.frame.regionSet.mode === RegionMode.CREATING && mouseEvent.button === 0) {
             return;
         }
 
@@ -323,10 +323,10 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
 
         // Deselect selected region if in drag-to-pan mode and user clicks on the stage
         if (this.props.dragPanningEnabled && !isSecondaryClick) {
-            frame.regionSet.deselectRegion();
+            this.props.frame.regionSet.deselectRegion();
         }
 
-        if (frame.wcsInfo && this.props.onClicked && (!this.props.dragPanningEnabled || isSecondaryClick)) {
+        if (this.props.frame.wcsInfo && this.props.onClicked && (!this.props.dragPanningEnabled || isSecondaryClick)) {
             const cursorPosImageSpace = canvasToTransformedImagePos(mouseEvent.offsetX, mouseEvent.offsetY, frame, this.props.width, this.props.height);
             this.props.onClicked(this.props.frame.getCursorInfo(cursorPosImageSpace));
         }

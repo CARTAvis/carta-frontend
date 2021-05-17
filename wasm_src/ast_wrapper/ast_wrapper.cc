@@ -202,7 +202,7 @@ void plotDistText(AstFrameSet* wcsinfo, AstPlot* plot, double* start, double* fi
 
     string distString;
     const char* unit = astGetC(wcsinfo, "Unit(1)");
-    if (strcmp(unit, "degrees") == 0) {
+    if (strcmp(unit, "degrees") == 0 || strcmp(unit, "hh:mm:ss.ss") == 0) {
         if (dist < M_PI / 180.0 / 60.0) {
             distString = to_string(dist * 180.0 / M_PI * 3600.0);
             distString += '"';

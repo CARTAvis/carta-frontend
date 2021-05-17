@@ -39,7 +39,7 @@ export class DistanceMeasuringStore {
 
     @action setIsCreating = (isCreating) => {
         this.isCreating = isCreating;
-    }
+    };
 
     @action setStart = (pos: Point2D) => {
         this.start = pos;
