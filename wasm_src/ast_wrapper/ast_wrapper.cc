@@ -193,11 +193,39 @@ EMSCRIPTEN_KEEPALIVE AstFrameSet* initDummyFrame()
     return frameSet;
 }
 
+void plotDistText(AstFrameSet* wcsinfo, AstPlot* plot, double* start, double* finish)
+{
+    double dist = astDistance(wcsinfo, start, finish);
+    double middle[2];
+    astOffset(plot, start, finish, dist / 2, middle);
+    float up[] = {0.0f, 1.0f}; // horizontal text
+
+    string distString;
+    const char* unit = astGetC(wcsinfo, "Unit(1)");
+    if (strcmp(unit, "degrees") == 0) {
+        if (dist < M_PI / 180.0 / 60.0) {
+            distString = to_string(dist * 180.0 / M_PI * 3600.0);
+            distString += '"';
+        } else if (dist < M_PI / 180.0) {
+            distString = to_string(dist * 180.0 / M_PI * 60.0);
+            distString += "'";
+        } else {
+            distString = to_string(dist * 180.0 / M_PI);
+            distString += "\u00B0";
+        }
+    } else {
+        distString = to_string(dist);
+    }
+    const char* distChar = distString.c_str();
+
+    astText(plot, distChar, middle, up, "TC");
+}
+
 EMSCRIPTEN_KEEPALIVE int plotGrid(AstFrameSet* wcsinfo, double imageX1, double imageX2, double imageY1, double imageY2, double width, double height,
                                         double paddingLeft, double paddingRight, double paddingTop, double paddingBottom, const char* args,
-                                        bool showCurve, double curveX1, double curveY1, double curveX2, double curveY2)
+                                        bool showCurve, bool isPVImage, double curveX1, double curveY1, double curveX2, double curveY2)
 {
- if (!wcsinfo)
+    if (!wcsinfo)
     {
         return 1;
     }
@@ -224,31 +252,19 @@ EMSCRIPTEN_KEEPALIVE int plotGrid(AstFrameSet* wcsinfo, double imageX1, double i
     astGrid(plot);
 
     if (showCurve) {
+        double in[2][4] = {{curveX1, curveX2, curveX2, curveX1}, {curveY1, curveY2, curveY1, curveY1}};
+        const double* inPtr = in[0];
+        astPolyCurve(plot, 4, 2, 4, inPtr);
+
         double start[] = {curveX1, curveY1};
         double finish[] = {curveX2, curveY2};
-        double corner[] = {curveX2, curveY1};
-        astCurve(plot, start, finish);
-        astCurve(plot, start, corner);
-        astCurve(plot, corner, finish);
-
-        double dist = astDistance(wcsinfo, start, finish);
-
-        string distString;
-        if (dist < M_PI / 180.0) {
-            distString = to_string(dist * 180.0 / M_PI * 3600.0);
-            distString += '"';
+        if (isPVImage) {
+            double corner[] = {curveX2, curveY1};
+            plotDistText(wcsinfo, plot, start, corner);
+            plotDistText(wcsinfo, plot, finish, corner);
         } else {
-            distString = to_string(dist * 180.0 / M_PI);
-            distString += "\u00B0";
-        }
-    
-
-        const char *distChar = distString.c_str();
-
-        double middle[2];
-        astOffset(wcsinfo, start, finish, dist / 2, middle);
-        float up[] = {0.0f, 1.0f}; // horizontal text
-        astText(plot, distChar, middle, up, "TC");
+            plotDistText(wcsinfo, plot, start, finish);
+        }        
     }
 
     astEBuf(plot);
@@ -386,7 +402,7 @@ EMSCRIPTEN_KEEPALIVE int transform3D(AstSpecFrame* wcsinfo, double x, double y, 
         return 1;
     }
 
-    double in[] ={x, y, z};
+    double in[] = {x, y, z};
     astTranN(wcsinfo, 1, 3, 1, in, forward, 3, 1, out);
     if (!astOK)
     {

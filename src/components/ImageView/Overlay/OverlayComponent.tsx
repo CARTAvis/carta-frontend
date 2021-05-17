@@ -66,7 +66,8 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
                     settings.viewWidth * pixelRatio, settings.viewHeight * pixelRatio,
                     settings.padding.left * pixelRatio, settings.padding.right * pixelRatio, settings.padding.top * pixelRatio, settings.padding.bottom * pixelRatio,
                     styleString,
-                    frame.distanceMeasuring.showCurve, frame.distanceMeasuring.start.x, frame.distanceMeasuring.start.y, frame.distanceMeasuring.finish.x, frame.distanceMeasuring.finish.y);
+                    frame.distanceMeasuring.showCurve, frame.isPVImage,
+                    frame.distanceMeasuring.start.x, frame.distanceMeasuring.start.y, frame.distanceMeasuring.finish.x, frame.distanceMeasuring.finish.y);
             };
 
             let currentStyleString = settings.styleString;
