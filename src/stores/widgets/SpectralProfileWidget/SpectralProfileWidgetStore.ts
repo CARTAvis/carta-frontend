@@ -4,7 +4,7 @@ import {CARTA} from "carta-protobuf";
 import {PlotType, LineSettings, VERTICAL_RANGE_PADDING, SmoothingType} from "components/Shared";
 import {RegionWidgetStore, RegionsType, RegionId, ACTIVE_FILE_ID, SpectralLine, SpectralProfileSelectionStore} from "stores/widgets";
 import {AppStore, ProfileSmoothingStore, ProfileFittingStore} from "stores";
-import {FileId, LineKey, Point2D, ProcessedSpectralProfile, SpectralSystem} from "models";
+import {LineKey, Point2D, ProcessedSpectralProfile, SpectralSystem} from "models";
 import tinycolor from "tinycolor2";
 import {SpectralProfilerSettingsTabs} from "components";
 import {clamp, getColorForTheme, isAutoColor} from "utilities";
@@ -64,7 +64,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
     public static readonly PRIMARY_LINE_KEY = "Primary";
 
     // moment settings
-    @observable momentFileId: FileId;
+    @observable momentFileId: number;
     @observable momentRegionId: number;
     @observable selectingMode: MomentSelectingMode;
     @observable channelValueRange: NumberRange;
@@ -93,11 +93,11 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         }
     };
 
-    @action setMomentFileId = (fileId: FileId) => {
+    @action setMomentFileId = (fileId: number) => {
         this.momentFileId = fileId;
     };
 
-    @action setMomentRegionId = (regionId: RegionId) => {
+    @action setMomentRegionId = (regionId: number) => {
         this.momentRegionId = regionId;
     };
 
