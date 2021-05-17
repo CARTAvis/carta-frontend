@@ -64,7 +64,7 @@ export class RegionSelectorComponent extends React.Component<{ widgetStore: Regi
                 default:
                     fiteredRegions = regions;
             }
-            regionOptions = regionOptions.concat(fiteredRegions.map(r => {return {value: r.regionId, label: r.nameString, disabled: false}; }));
+            regionOptions = regionOptions.concat(fiteredRegions.map(r => {return {value: r.regionId, label: r.nameString};}));
 
             if (widgetStore.type === RegionsType.CLOSED_AND_POINT && regionOptions.length === 1) {
                 regionOptions = regionOptions.concat([{value: RegionId.CURSOR, label: "Cursor"}]);

@@ -2,9 +2,9 @@ import {action, autorun, computed, observable, makeObservable, override} from "m
 import {IOptionProps, NumberRange} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import {PlotType, LineSettings, VERTICAL_RANGE_PADDING, SmoothingType} from "components/Shared";
-import {RegionWidgetStore, RegionsType, ACTIVE_FILE_ID, SpectralLine, SpectralProfileSelectionStore} from "stores/widgets";
+import {RegionWidgetStore, RegionsType, RegionId, ACTIVE_FILE_ID, SpectralLine, SpectralProfileSelectionStore} from "stores/widgets";
 import {AppStore, ProfileSmoothingStore, ProfileFittingStore} from "stores";
-import {FileId, LineKey, Point2D, ProcessedSpectralProfile, RegionId, SpectralSystem} from "models";
+import {FileId, LineKey, Point2D, ProcessedSpectralProfile, SpectralSystem} from "models";
 import tinycolor from "tinycolor2";
 import {SpectralProfilerSettingsTabs} from "components";
 import {clamp, getColorForTheme, isAutoColor} from "utilities";
@@ -65,7 +65,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
 
     // moment settings
     @observable momentFileId: FileId;
-    @observable momentRegionId: RegionId;
+    @observable momentRegionId: number;
     @observable selectingMode: MomentSelectingMode;
     @observable channelValueRange: NumberRange;
     @observable momentMask: CARTA.MomentMask;
@@ -302,6 +302,8 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         this.fittingStore = new ProfileFittingStore(this);
         this.profileSelectionStore = new SpectralProfileSelectionStore(this, coordinate);
         this.selectingMode = MomentSelectingMode.NONE;
+        this.momentFileId = 0; // TODO
+        this.momentRegionId = RegionId.ACTIVE; // TODO
         this.channelValueRange = [0, 0];
         this.momentMask = CARTA.MomentMask.None;
         this.maskRange = [0, 1];
@@ -470,13 +472,10 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
 
     @computed get momentRegionOptions(): IOptionProps[] {
         const frame = AppStore.Instance.getFrame(this.momentFileId);
-        return frame?.regionSet?.regions?.filter(r => !r.isTemporary && (r.isClosedRegion || r.regionType === CARTA.RegionType.POINT))?.map(region => {
-            return {
-                value: region?.regionId,
-                label: region?.nameString,
-                disabled: !region?.isClosedRegion
-            };
+        const validRegionOptions = frame?.regionSet?.regions?.filter(r => !r.isTemporary && (r.isClosedRegion || r.regionType === CARTA.RegionType.POINT))?.map(region => {
+            return {value: region?.regionId, label: region?.nameString, disabled: !region?.isClosedRegion};
         });
+        return [{value: RegionId.ACTIVE, label: "Active"}, ...(validRegionOptions ?? [])];
     }
 
     @computed get transformedSpectralLines(): SpectralLine[] {
