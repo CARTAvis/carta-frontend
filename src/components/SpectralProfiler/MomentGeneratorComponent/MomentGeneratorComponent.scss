@@ -11,6 +11,12 @@
     .moment-panel {
         width: 430px;
 
+        .image-region-select {
+            .bp3-html-select {
+                width: 120px;
+            }
+        }
+
         .range-select {
             display: flex;
             flex-direction: row;
