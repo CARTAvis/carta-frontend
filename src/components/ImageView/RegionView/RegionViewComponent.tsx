@@ -69,7 +69,7 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
         if (frame.wcsInfo) {
             const imagePos = canvasToTransformedImagePos(x, y, frame, this.props.width, this.props.height);
             const wcsPos = transformPoint(frame.wcsInfo, imagePos);
-            this.props.frame.distanceMeasuring.setFinish(wcsPos);
+            frame.distanceMeasuring.setFinish(wcsPos);
         }
     }, 100);
 
@@ -300,29 +300,25 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
             return;
         }
 
-        if (frame.regionSet.mode === RegionMode.CREATING && mouseEvent.button === 0) {
-            return;
-        }
-
         if (frame.wcsInfo && AppStore.Instance?.activeLayer === ImageViewLayer.DistanceMeasuring) {
             const imagePos = canvasToTransformedImagePos(mouseEvent.offsetX, mouseEvent.offsetY, frame, this.props.width, this.props.height);
             const wcsPos = transformPoint(frame.wcsInfo, imagePos);
-            const distanceMeasuring = frame.distanceMeasuring;
-            if (!distanceMeasuring.isCreating && !distanceMeasuring.showCurve) {
-                distanceMeasuring.setStart(wcsPos);
-                distanceMeasuring.setIsCreating(true);
-            } else if (distanceMeasuring.isCreating) {
-                distanceMeasuring.setFinish(wcsPos);
-                distanceMeasuring.setIsCreating(false);
+            const dist = frame.distanceMeasuring;
+            if (!dist.isCreating && !dist.showCurve) {
+                dist.setStart(wcsPos);
+                dist.setIsCreating(true);
+            } else if (dist.isCreating) {
+                dist.setFinish(wcsPos);
+                dist.setIsCreating(false);
             } else {
-                distanceMeasuring.resetPos();
-                distanceMeasuring.setStart(wcsPos);
-                distanceMeasuring.setIsCreating(true);
+                dist.resetPos();
+                dist.setStart(wcsPos);
+                dist.setIsCreating(true);
             }
         }
 
         // Deselect selected region if in drag-to-pan mode and user clicks on the stage
-        if ((this.props.dragPanningEnabled && !isSecondaryClick) || AppStore.Instance?.activeLayer === ImageViewLayer.DistanceMeasuring) {
+        if (this.props.dragPanningEnabled && !isSecondaryClick) {
             this.props.frame.regionSet.deselectRegion();
         }
 
