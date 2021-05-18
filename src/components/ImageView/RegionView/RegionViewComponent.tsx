@@ -322,7 +322,7 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
         }
 
         // Deselect selected region if in drag-to-pan mode and user clicks on the stage
-        if (this.props.dragPanningEnabled && !isSecondaryClick) {
+        if ((this.props.dragPanningEnabled && !isSecondaryClick) || AppStore.Instance?.activeLayer === ImageViewLayer.DistanceMeasuring) {
             this.props.frame.regionSet.deselectRegion();
         }
 
@@ -479,7 +479,7 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
                                 selected={r === regionSet.selectedRegion}
                                 onSelect={regionSet.selectRegion}
                                 onDoubleClick={this.handleRegionDoubleClick}
-                                listening={regionSet.mode !== RegionMode.CREATING}
+                                listening={regionSet.mode !== RegionMode.CREATING && AppStore.Instance?.activeLayer !== ImageViewLayer.DistanceMeasuring}
                             />
                         );
                     } else if (r.regionType === CARTA.RegionType.POINT) {
@@ -506,7 +506,7 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
                                 selected={r === regionSet.selectedRegion}
                                 onSelect={regionSet.selectRegion}
                                 onDoubleClick={this.handleRegionDoubleClick}
-                                listening={regionSet.mode !== RegionMode.CREATING}
+                                listening={regionSet.mode !== RegionMode.CREATING && AppStore.Instance?.activeLayer !== ImageViewLayer.DistanceMeasuring}
                                 isRegionCornerMode={this.props.isRegionCornerMode}
                             />
                         );
