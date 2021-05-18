@@ -101,20 +101,20 @@ export class MomentGeneratorComponent extends React.Component<{widgetStore: Spec
 
         const regionPanel = (
             <React.Fragment>
-                <FormGroup label={"Image"} inline={true} disabled={false}>
+                <FormGroup label={"Image"} inline={true} disabled={appStore.frameNum <= 0}>
                     <HTMLSelect
                         value={widgetStore.momentFileId}
                         options={widgetStore.frameOptions}
                         onChange={(ev) => widgetStore.setMomentFileId(parseInt(ev.target.value))}
-                        disabled={false}
+                        disabled={appStore.frameNum <= 0}
                     />
                 </FormGroup>
-                <FormGroup label={"Region"} inline={true} disabled={false}>
+                <FormGroup label={"Region"} inline={true} disabled={!widgetStore.momentRegionOptions}>
                     <HTMLSelect
                         value={widgetStore.momentRegionId}
                         options={widgetStore.momentRegionOptions}
                         onChange={(ev) => widgetStore.setMomentRegionId(parseInt(ev.target.value))}
-                        disabled={false}
+                        disabled={!widgetStore.momentRegionOptions}
                     />
                 </FormGroup>
             </React.Fragment>

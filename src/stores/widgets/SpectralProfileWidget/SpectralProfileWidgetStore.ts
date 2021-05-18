@@ -302,8 +302,8 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         this.fittingStore = new ProfileFittingStore(this);
         this.profileSelectionStore = new SpectralProfileSelectionStore(this, coordinate);
         this.selectingMode = MomentSelectingMode.NONE;
-        this.momentFileId = 0; // TODO
-        this.momentRegionId = RegionId.ACTIVE; // TODO
+        this.momentFileId = ACTIVE_FILE_ID;
+        this.momentRegionId = RegionId.ACTIVE;
         this.channelValueRange = [0, 0];
         this.momentMask = CARTA.MomentMask.None;
         this.maskRange = [0, 1];
@@ -472,10 +472,13 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
 
     @computed get momentRegionOptions(): IOptionProps[] {
         const frame = AppStore.Instance.getFrame(this.momentFileId);
-        const validRegionOptions = frame?.regionSet?.regions?.filter(r => !r.isTemporary && (r.isClosedRegion || r.regionType === CARTA.RegionType.POINT))?.map(region => {
-            return {value: region?.regionId, label: region?.nameString, disabled: !region?.isClosedRegion};
-        });
-        return [{value: RegionId.ACTIVE, label: "Active"}, ...(validRegionOptions ?? [])];
+        if (frame?.regionSet) {
+            const validRegionOptions = frame.regionSet.regions?.filter(r => !r.isTemporary && (r.isClosedRegion || r.regionType === CARTA.RegionType.POINT))?.map(region => {
+                return {value: region?.regionId, label: region?.nameString, disabled: !region?.isClosedRegion};
+            });
+            return [{value: RegionId.ACTIVE, label: "Active"}, ...(validRegionOptions ?? [])];
+        }
+        return undefined;
     }
 
     @computed get transformedSpectralLines(): SpectralLine[] {
