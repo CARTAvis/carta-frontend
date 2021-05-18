@@ -471,7 +471,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
     }
 
     @computed get momentRegionOptions(): IOptionProps[] {
-        const frame = AppStore.Instance.getFrame(this.momentFileId);
+        const frame = this.momentFileId === ACTIVE_FILE_ID ? this.effectiveFrame : AppStore.Instance.getFrame(this.momentFileId);
         if (frame?.regionSet) {
             const validRegionOptions = frame.regionSet.regions?.filter(r => !r.isTemporary && (r.isClosedRegion || r.regionType === CARTA.RegionType.POINT))?.map(region => {
                 return {value: region?.regionId, label: region?.nameString, disabled: !region?.isClosedRegion};
