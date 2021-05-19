@@ -92,10 +92,6 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         }
     };
 
-    @action setMomentRegionId = (regionId: number) => {
-        this.momentRegionId = regionId;
-    };
-
     @action selectMomentRegion = (regionId: number) => {
         this.momentRegionId = regionId;
         if (this.profileSelectionStore.activeProfileCategory !== MultiProfileCategory.REGION) {
