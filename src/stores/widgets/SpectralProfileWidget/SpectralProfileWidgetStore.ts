@@ -169,7 +169,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
 
     @action requestMoment = () => {
         const frame = this.effectiveFrame;
-        if (frame) {
+        if (frame && this.isMomentRegionValid) {
             const channelIndex1 = frame.findChannelIndexByValue(this.channelValueRange[0]);
             const channelIndex2 = frame.findChannelIndexByValue(this.channelValueRange[1]);
             if (isFinite(channelIndex1) && isFinite(channelIndex2)) {
@@ -181,8 +181,8 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
                     fileId: frame.frameInfo.fileId,
                     moments: this.selectedMoments,
                     axis: CARTA.MomentAxis.SPECTRAL,
-                    // Request moments of the whole image(-1) when active region is cursor
-                    regionId: this.isMomentRegionWholeImage ? -1 : this.momentRegionId,
+                    // Request moments of the whole image(effectiveRegionId === 0) when active region is cursor (TODO: check correctness)
+                    regionId: this.momentRegionId === RegionId.ACTIVE ? this.effectiveRegionId : this.momentRegionId,
                     spectralRange: channelIndexRange,
                     mask: this.momentMask,
                     pixelRange: new CARTA.FloatBounds({min: this.maskRange[0], max: this.maskRange[1]})
@@ -485,6 +485,23 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
 
     @computed get isMomentRegionWholeImage(): boolean {
         return this.momentRegionId === RegionId.ACTIVE && this.effectiveRegionId === RegionId.CURSOR;
+    }
+
+    /*
+    @computed get momentRegionId(): number {
+        return this.momentRegionId === RegionId.ACTIVE ? this.effectiveRegionId : this.momentRegionId;
+    }
+    */
+
+    @computed get momentRegionInfo(): string {
+        if (this.effectiveFrame) {
+            if (this.isMomentRegionWholeImage) {
+                return "Image";
+            } else {
+                return `Region ${this.momentRegionId === RegionId.ACTIVE ? this.effectiveRegionId : this.momentRegionId}`;
+            }
+        }
+        return undefined;
     }
 
     @computed get isMomentRegionValid(): boolean {

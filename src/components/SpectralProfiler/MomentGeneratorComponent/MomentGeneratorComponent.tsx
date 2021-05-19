@@ -98,10 +98,18 @@ export class MomentGeneratorComponent extends React.Component<{widgetStore: Spec
         const appStore = AppStore.Instance;
         const widgetStore = this.props.widgetStore;
         const frame = widgetStore.effectiveFrame;
+        const fileInfo = frame ? `${frame.frameInfo.fileId}: ${frame.filename}` : undefined;
+        const regionInfo = widgetStore.momentRegionInfo;
 
         const regionPanel = (
             <React.Fragment>
-                <FormGroup className={"image-region-select"} label={"Image"} inline={true} disabled={!frame}>
+                <FormGroup
+                    className={"image-region-select"}
+                    label={"Image"}
+                    inline={true}
+                    labelInfo={fileInfo ? <React.Fragment>(<span className="label-info" title={fileInfo}>{fileInfo}</span>)</React.Fragment> : undefined}
+                    disabled={!frame}
+                >
                     <HTMLSelect
                         value={widgetStore.fileId}
                         options={widgetStore.frameOptions}
@@ -113,6 +121,7 @@ export class MomentGeneratorComponent extends React.Component<{widgetStore: Spec
                     className={"image-region-select"}
                     label={"Region"}
                     inline={true}
+                    labelInfo={regionInfo ? <React.Fragment>(<span className="label-info" title={regionInfo}>{regionInfo}</span>)</React.Fragment> : undefined}
                     disabled={!frame}
                 >
                     <HTMLSelect
@@ -124,7 +133,7 @@ export class MomentGeneratorComponent extends React.Component<{widgetStore: Spec
                     {frame &&
                     <Tooltip
                         minimal={true}
-                        content={<span>When cursor is the active region in Spectral Profiler,<br/> option 'Active' means requesting moments of the whole image.</span>}
+                        content={<span>When cursor is the active region, option 'Active' refers to whole image.</span>}
                         position={Position.BOTTOM}
                     >
                         <Icon className="region-help" icon="help" intent={Intent.WARNING}/>

@@ -9,11 +9,18 @@
     }
 
     .moment-panel {
-        width: 430px;
-
         .image-region-select {
             .bp3-html-select {
                 width: 120px;
+            }
+
+            .label-info {
+                max-width: calc(100% - 55px);
+                text-overflow: ellipsis;
+                overflow: hidden;
+                white-space: nowrap;
+                display: inline-block;
+                vertical-align: middle;
             }
 
             .region-help {
