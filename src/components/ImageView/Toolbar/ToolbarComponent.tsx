@@ -194,7 +194,7 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
 
         return (
             <ButtonGroup className={className} style={styleProps} vertical={this.props.vertical}>
-                <Tooltip position={tooltipPosition} content="Measure distance">
+                <Tooltip position={tooltipPosition} content={<span>Measure distance<br/><i><small>Click to draw geodesic curves</small></i></span>}>
                     <AnchorButton icon={<CustomIcon icon="distanceMeasuring"/>} active={appStore.activeLayer === ImageViewLayer.DistanceMeasuring} onClick={() => this.handelActiveLayerClicked(ImageViewLayer.DistanceMeasuring)}/>
                 </Tooltip>
                 <Tooltip position={tooltipPosition} content={<span>Catalog selection<br/><i><small>Click to select single catalog source</small></i></span>}>

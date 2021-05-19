@@ -11,7 +11,7 @@ import {PolygonRegionComponent} from "./PolygonRegionComponent";
 import {PointRegionComponent} from "./PointRegionComponent";
 import {canvasToImagePos, canvasToTransformedImagePos, imageToCanvasPos, transformedImageToCanvasPos} from "./shared";
 import {CursorInfo, Point2D} from "models";
-import {average2D, length2D, pointDistanceSquared, scale2D, subtract2D, transformPoint} from "utilities";
+import {average2D, isAstBadPoint, length2D, pointDistanceSquared, scale2D, subtract2D, transformPoint} from "utilities";
 import "./RegionViewComponent.scss";
 import {ImageViewLayer} from "../ImageViewComponent";
 
@@ -296,35 +296,37 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
         }
 
         // Ignore region creation mode clicks
-        if (this.props.frame.regionSet.mode === RegionMode.CREATING && mouseEvent.button === 0) {
+        if (frame.regionSet.mode === RegionMode.CREATING && mouseEvent.button === 0) {
             return;
         }
 
         if (frame.wcsInfo && AppStore.Instance?.activeLayer === ImageViewLayer.DistanceMeasuring) {
             const imagePos = canvasToTransformedImagePos(mouseEvent.offsetX, mouseEvent.offsetY, frame, this.props.width, this.props.height);
             const wcsPos = transformPoint(frame.wcsInfo, imagePos);
-            const dist = frame.distanceMeasuring;
-            if (!dist.isCreating && !dist.showCurve) {
-                dist.setStart(wcsPos);
-                dist.setIsCreating(true);
-            } else if (dist.isCreating) {
-                dist.setFinish(wcsPos);
-                dist.setIsCreating(false);
-            } else {
-                dist.resetPos();
-                dist.setStart(wcsPos);
-                dist.setIsCreating(true);
+            if (!isAstBadPoint(wcsPos)) {
+                const dist = frame.distanceMeasuring;
+                if (!dist.isCreating && !dist.showCurve) {
+                    dist.setStart(wcsPos);
+                    dist.setIsCreating(true);
+                } else if (dist.isCreating) {
+                    dist.setFinish(wcsPos);
+                    dist.setIsCreating(false);
+                } else {
+                    dist.resetPos();
+                    dist.setStart(wcsPos);
+                    dist.setIsCreating(true);
+                }
             }
         }
 
         // Deselect selected region if in drag-to-pan mode and user clicks on the stage
         if (this.props.dragPanningEnabled && !isSecondaryClick) {
-            this.props.frame.regionSet.deselectRegion();
+            frame.regionSet.deselectRegion();
         }
 
-        if (this.props.frame.wcsInfo && this.props.onClicked && (!this.props.dragPanningEnabled || isSecondaryClick)) {
+        if (frame.wcsInfo && this.props.onClicked && (!this.props.dragPanningEnabled || isSecondaryClick)) {
             const cursorPosImageSpace = canvasToTransformedImagePos(mouseEvent.offsetX, mouseEvent.offsetY, frame, this.props.width, this.props.height);
-            this.props.onClicked(this.props.frame.getCursorInfo(cursorPosImageSpace));
+            this.props.onClicked(frame.getCursorInfo(cursorPosImageSpace));
         }
     };
 
@@ -573,7 +575,7 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
 
         let cursor: string;
 
-        if (frame.regionSet.mode === RegionMode.CREATING) {
+        if (frame.regionSet.mode === RegionMode.CREATING || AppStore.Instance?.activeLayer === ImageViewLayer.DistanceMeasuring) {
             cursor = "crosshair";
         } else if (frame.regionSet.selectedRegion && frame.regionSet.selectedRegion.editing) {
             cursor = "move";

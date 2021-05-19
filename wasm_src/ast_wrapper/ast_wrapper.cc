@@ -223,6 +223,9 @@ void plotDistText(AstFrameSet* wcsinfo, AstPlot* plot, double* start, double* fi
     else
     {
         distString = to_string(dist);
+        if (unit[0] == '\0') {
+            distString += "pix";
+        }
     }
     const char* distChar = distString.c_str();
 
