@@ -968,7 +968,7 @@ export class AppStore {
                 getColorForTheme(this.overlayStore.axes.color),
                 getColorForTheme(this.overlayStore.numbers.color),
                 getColorForTheme(this.overlayStore.labels.color),
-                getColorForTheme(DistanceMeasuringStore.DEFAULT_COLOR)
+                getColorForTheme(this.activeFrame ? this.activeFrame.distanceMeasuring?.color : DistanceMeasuringStore.DEFAULT_COLOR)
             ];
             AST.setColors(astColors);
         }
