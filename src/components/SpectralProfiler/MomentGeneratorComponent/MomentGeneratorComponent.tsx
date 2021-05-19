@@ -113,15 +113,15 @@ export class MomentGeneratorComponent extends React.Component<{widgetStore: Spec
                     className={"image-region-select"}
                     label={"Region"}
                     inline={true}
-                    disabled={!widgetStore.momentRegionOptions}
+                    disabled={!frame}
                 >
                     <HTMLSelect
                         value={widgetStore.momentRegionId}
                         options={widgetStore.momentRegionOptions}
                         onChange={(ev) => widgetStore.selectMomentRegion(parseInt(ev.target.value))}
-                        disabled={!widgetStore.momentRegionOptions}
+                        disabled={!frame}
                     />
-                    {widgetStore.momentRegionOptions &&
+                    {frame &&
                     <Tooltip
                         minimal={true}
                         content={<span>When cursor is the active region in Spectral Profiler,<br/> option 'Active' means requesting moments of the whole image.</span>}

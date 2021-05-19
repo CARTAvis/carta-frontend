@@ -471,13 +471,16 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
 
     @computed get momentRegionOptions(): IOptionProps[] {
         const frame = this.effectiveFrame;
+        let momentRegionOptions = [{value: RegionId.ACTIVE, label: "Active"}];
         if (frame?.regionSet) {
             const validRegionOptions = frame.regionSet.regions?.filter(r => !r.isTemporary && (r.isClosedRegion || r.regionType === CARTA.RegionType.POINT))?.map(region => {
                 return {value: region?.regionId, label: region?.nameString, disabled: !region?.isClosedRegion};
             });
-            return [{value: RegionId.ACTIVE, label: "Active"}, ...(validRegionOptions ?? [])];
+            if (validRegionOptions) {
+                momentRegionOptions = momentRegionOptions.concat(validRegionOptions);
+            }
         }
-        return undefined;
+        return momentRegionOptions;
     }
 
     @computed get isMomentRegionWholeImage(): boolean {
