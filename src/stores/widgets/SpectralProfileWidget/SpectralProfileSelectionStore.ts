@@ -44,6 +44,10 @@ export class SpectralProfileSelectionStore {
     private readonly widgetStore: SpectralProfileWidgetStore;
     private readonly DEFAULT_COORDINATE: string;
 
+    public isRegionSelected = (regionId: number): boolean => {
+        return this.selectedRegionIds?.includes(regionId);
+    };
+
     // getFormattedSpectralConfigs() is a simple converter to transform this.profileConfigs to SpectralConfig,
     // and SpectralConfig is specially for CalculateRequirementsMap in SpectralProfileWidgetStore.
     // P.S. this.profileConfigs has the key statType & SpectralConfig has the key statsType's'
