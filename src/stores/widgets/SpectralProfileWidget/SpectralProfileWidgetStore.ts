@@ -181,8 +181,8 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
                     fileId: frame.frameInfo.fileId,
                     moments: this.selectedMoments,
                     axis: CARTA.MomentAxis.SPECTRAL,
-                    // When selected option is 'Active' & cursor is the active region, request moment of whole image(-1)
-                    regionId: this.momentRegionId === RegionId.ACTIVE && this.effectiveRegionId === RegionId.CURSOR ? -1 : this.momentRegionId,
+                    // Request moments of the whole image(-1) when active region is cursor
+                    regionId: this.isMomentRegionWholeImage ? -1 : this.momentRegionId,
                     spectralRange: channelIndexRange,
                     mask: this.momentMask,
                     pixelRange: new CARTA.FloatBounds({min: this.maskRange[0], max: this.maskRange[1]})
@@ -480,13 +480,16 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         return undefined;
     }
 
+    @computed get isMomentRegionWholeImage(): boolean {
+        return this.momentRegionId === RegionId.ACTIVE && this.effectiveRegionId === RegionId.CURSOR;
+    }
+
     @computed get isMomentRegionValid(): boolean {
         if (this.effectiveFrame) {
-            if (this.momentRegionId === RegionId.ACTIVE) {
-                // Request moments of the whole image when active region is cursor
-                return this.effectiveRegionId === RegionId.CURSOR ? true : this.effectiveRegion?.isClosedRegion;
+            if (this.isMomentRegionWholeImage) {
+                return true;
             } else {
-                return this.effectiveFrame.getRegion(this.momentRegionId)?.isClosedRegion;
+                return this.momentRegionId === RegionId.ACTIVE ? this.effectiveRegion?.isClosedRegion : this.effectiveFrame.getRegion(this.momentRegionId)?.isClosedRegion;
             }
         }
         return false;
