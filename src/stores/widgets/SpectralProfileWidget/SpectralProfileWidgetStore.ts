@@ -2,7 +2,7 @@ import {action, autorun, computed, observable, makeObservable, override} from "m
 import {IOptionProps, NumberRange} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import {PlotType, LineSettings, VERTICAL_RANGE_PADDING, SmoothingType} from "components/Shared";
-import {MultiProfileCategory, RegionWidgetStore, RegionsType, RegionId, SpectralLine, SpectralProfileSelectionStore} from "stores/widgets";
+import {RegionWidgetStore, RegionsType, RegionId, SpectralLine, SpectralProfileSelectionStore} from "stores/widgets";
 import {AppStore, ProfileSmoothingStore, ProfileFittingStore} from "stores";
 import {LineKey, Point2D, ProcessedSpectralProfile, SpectralSystem} from "models";
 import tinycolor from "tinycolor2";
@@ -94,11 +94,6 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
 
     @action selectMomentRegion = (regionId: number) => {
         this.momentRegionId = regionId;
-        if (this.profileSelectionStore.activeProfileCategory !== MultiProfileCategory.REGION) {
-            this.profileSelectionStore.selectRegionSingleMode(regionId);
-        } else if (regionId !== RegionId.ACTIVE && !this.profileSelectionStore.isRegionSelected(regionId)) {
-            this.profileSelectionStore.selectRegionMultiMode(regionId, regionId + 2);
-        }
     };
 
     @action setMomentRangeSelectingMode = (mode: MomentSelectingMode) => {
@@ -177,12 +172,12 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
                     min: channelIndex1 <= channelIndex2 ? channelIndex1 : channelIndex2,
                     max: channelIndex1 <= channelIndex2 ? channelIndex2 : channelIndex1
                 };
+                const regionId = this.momentRegionId === RegionId.ACTIVE ? (this.effectiveFrame.regionSet?.selectedRegion?.regionId ?? RegionId.CURSOR) : this.momentRegionId;
                 const requestMessage: CARTA.IMomentRequest = {
                     fileId: frame.frameInfo.fileId,
                     moments: this.selectedMoments,
                     axis: CARTA.MomentAxis.SPECTRAL,
-                    // Request moments of the whole image(effectiveRegionId === 0) when active region is cursor (TODO: check correctness)
-                    regionId: this.momentRegionId === RegionId.ACTIVE ? this.effectiveRegionId : this.momentRegionId,
+                    regionId: regionId,
                     spectralRange: channelIndexRange,
                     mask: this.momentMask,
                     pixelRange: new CARTA.FloatBounds({min: this.maskRange[0], max: this.maskRange[1]})
@@ -483,36 +478,33 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         return momentRegionOptions;
     }
 
-    @computed get isMomentRegionWholeImage(): boolean {
-        return this.momentRegionId === RegionId.ACTIVE && this.effectiveRegionId === RegionId.CURSOR;
-    }
-
-    /*
-    @computed get momentRegionId(): number {
-        return this.momentRegionId === RegionId.ACTIVE ? this.effectiveRegionId : this.momentRegionId;
-    }
-    */
-
-    @computed get momentRegionInfo(): string {
-        if (this.effectiveFrame) {
-            if (this.isMomentRegionWholeImage) {
-                return "Image";
-            } else {
-                return `Region ${this.momentRegionId === RegionId.ACTIVE ? this.effectiveRegionId : this.momentRegionId}`;
-            }
-        }
-        return undefined;
-    }
-
+    // Valid region for moments:
+    // 1. cursor(selectedRegion === undefined), request moments of whole image
+    // 2. closed region
     @computed get isMomentRegionValid(): boolean {
         if (this.effectiveFrame) {
-            if (this.isMomentRegionWholeImage) {
-                return true;
+            if (this.momentRegionId === RegionId.ACTIVE) {
+                const region = this.effectiveFrame.regionSet?.selectedRegion;
+                return region?.isClosedRegion ?? true;
             } else {
-                return this.momentRegionId === RegionId.ACTIVE ? this.effectiveRegion?.isClosedRegion : this.effectiveFrame.getRegion(this.momentRegionId)?.isClosedRegion;
+                const region = this.effectiveFrame.getRegion(this.momentRegionId);
+                return region?.isClosedRegion ?? false;
             }
         }
         return false;
+    }
+
+    @computed get momentRegionInfo(): string {
+        if (this.effectiveFrame) {
+            if (this.momentRegionId === RegionId.ACTIVE) {
+                const region = this.effectiveFrame.regionSet?.selectedRegion;
+                return region?.nameString ?? "Image";
+            } else {
+                const region = this.effectiveFrame.getRegion(this.momentRegionId);
+                return region?.nameString ?? undefined;
+            }
+        }
+        return undefined;
     }
 
     @computed get transformedSpectralLines(): SpectralLine[] {
