@@ -307,6 +307,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         autorun(() => {
             if (this.effectiveFrame) {
                 this.updateRanges();
+                this.momentRegionId = RegionId.ACTIVE;
             }
         });
 
@@ -479,7 +480,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
     }
 
     // Valid region for moments:
-    // 1. cursor(regionSet.selectedRegion === undefined), request moments of whole image
+    // 1. cursor(regionSet.selectedRegion === 0 or undefined), request moments of whole image
     // 2. closed region
     @computed get isMomentRegionValid(): boolean {
         if (this.effectiveFrame) {
@@ -498,7 +499,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         if (this.effectiveFrame) {
             if (this.momentRegionId === RegionId.ACTIVE) {
                 const region = this.effectiveFrame.regionSet?.selectedRegion;
-                return region?.nameString ?? "Image";
+                return !region || region.regionId === RegionId.CURSOR ? "Image" : region.nameString;
             } else {
                 const region = this.effectiveFrame.getRegion(this.momentRegionId);
                 return region?.nameString ?? undefined;
