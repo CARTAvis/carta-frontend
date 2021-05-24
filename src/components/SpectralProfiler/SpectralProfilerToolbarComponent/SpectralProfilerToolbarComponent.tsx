@@ -1,7 +1,7 @@
 import {observer} from "mobx-react";
 import * as React from "react";
 import {CARTA} from "carta-protobuf";
-import {AnchorButton, ButtonGroup, Intent, Menu, MenuItem, Popover, Position, Tooltip} from "@blueprintjs/core";
+import {AnchorButton, ButtonGroup, Checkbox, Intent, Menu, MenuItem, Popover, Position, Tooltip} from "@blueprintjs/core";
 import {AppStore} from "stores";
 import {MultiProfileCategory, SpectralProfileWidgetStore, SpectralProfileSelectionStore} from "stores/widgets";
 import {SpectralProfilerComponent, SpectralProfilerSettingsTabs} from "components";
@@ -57,12 +57,13 @@ class ProfileSelectionButtonComponent extends React.Component<ProfileSelectionBu
         }
 
         return (
-            <ButtonGroup fill={true} className={className}>
+            <div className={className}>
                 <Tooltip content={this.props.categoryTooltip} position={Position.TOP}>
-                    <AnchorButton
-                        text={<span className={this.props.disableOptions ? "bp3-text-disabled" : ""}>{this.props.categoryName}</span>}
-                        active={this.props.isActiveCategory}
-                        onClick={(ev) => this.props.onCategorySelect()}
+                     <Checkbox
+                        className={"category-checkbox"}
+                        labelElement={<span>{this.props.categoryName}:</span>}
+                        checked={this.props.isActiveCategory}
+                        onChange={(ev) => this.props.onCategorySelect()}
                         disabled={this.props.disabled}
                     />
                 </Tooltip>
@@ -95,7 +96,7 @@ class ProfileSelectionButtonComponent extends React.Component<ProfileSelectionBu
                         />
                     </Tooltip>
                 </Popover>
-            </ButtonGroup>
+            </div>
         );
     }
 }
