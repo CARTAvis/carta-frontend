@@ -22,9 +22,9 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
         return {
             id: "spectral-profiler",
             type: "spectral-profiler",
-            minWidth: 875,
+            minWidth: 780,
             minHeight: 300,
-            defaultWidth: 875,
+            defaultWidth: 780,
             defaultHeight: 300,
             title: "Z Profile: Cursor",
             isCloseable: true,
