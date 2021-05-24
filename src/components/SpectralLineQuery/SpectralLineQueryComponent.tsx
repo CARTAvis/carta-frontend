@@ -197,12 +197,12 @@ export class SpectralLineQueryComponent extends React.Component<WidgetProps> {
 
     private handleFilter = () => {
         this.widgetStore.filter();
-        this.resultTableRef?.scrollToRegion(Regions.row(0));
+        setTimeout(() => this.resultTableRef?.scrollToRegion(Regions.row(0)), 20);
     };
 
     private handleResetFilter = () => {
         this.widgetStore.resetFilter()
-        this.resultTableRef?.scrollToRegion(Regions.row(0));
+        setTimeout(() => this.resultTableRef?.scrollToRegion(Regions.row(0)), 20);
     };
 
     private handlePlot = () => {
