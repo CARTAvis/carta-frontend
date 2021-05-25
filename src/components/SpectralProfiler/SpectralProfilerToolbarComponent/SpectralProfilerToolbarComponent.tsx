@@ -61,7 +61,7 @@ class ProfileSelectionButtonComponent extends React.Component<ProfileSelectionBu
                 <Tooltip content={this.props.categoryTooltip} position={Position.TOP}>
                     <Checkbox
                         className={"category-checkbox"}
-                        labelElement={<span>{this.props.categoryName}:</span>}
+                        label={`${this.props.categoryName}:`}
                         checked={this.props.isActiveCategory}
                         onChange={(ev) => this.props.onCategorySelect()}
                         disabled={this.props.disabled}
