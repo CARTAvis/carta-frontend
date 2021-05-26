@@ -293,6 +293,21 @@ export class FileBrowserDialogComponent extends React.Component {
     private renderExportFilenameInput() {
         const fileBrowserStore = FileBrowserStore.Instance;
 
+        const regionMenu = (
+            <Popover
+                content={
+                    <Menu>
+                        <MenuItem text="Export all regions"/>
+                    </Menu>
+                }
+                position={Position.BOTTOM_RIGHT}
+            >
+                <Button minimal={true} rightIcon="caret-down">
+                    {fileBrowserStore.exportAllRegions ? "Export all regions" : ""}
+                </Button>
+            </Popover>
+        );
+
         const coordinateTypeMenu = (
             <Popover
                 content={
@@ -328,6 +343,7 @@ export class FileBrowserDialogComponent extends React.Component {
 
         let sideMenu = (
             <div>
+                {regionMenu}
                 {fileTypeMenu}
                 {coordinateTypeMenu}
             </div>
