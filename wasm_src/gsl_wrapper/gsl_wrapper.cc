@@ -474,6 +474,10 @@ char * EMSCRIPTEN_KEEPALIVE fitting(
     fdf_params.trs = gsl_multifit_nlinear_trs_lm;
     solve_system(x, &fdf, &fdf_params, covar, residual);
 
+    /* For an unweighted least-squares function f_i = (Y(x, t_i) - y_i)
+       the covariance matrix should be multiplied by the variance of the residuals
+       about the best-fit \sigma^2 = \sum (y_i - Y(x,t_i))^2 / (n-p)
+       to give the variance-covariance matrix \sigma^2 C. */
     double residualVariance = 0;
     for (size_t i = 0; i < n; ++i)
     {
