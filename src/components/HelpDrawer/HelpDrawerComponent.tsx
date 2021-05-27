@@ -27,6 +27,7 @@ import {
     SpectralProfilerSettingsStylingHelpComponent,
     SpectralProfilerSettingsSmoothingHelpComponent,
     SpectralProfilerSettingsMomentsHelpComponent,
+    SpectralProfilerSettingsFittingHelpComponent,
     StatsHelpComponent,
     StokesAnalysisHelpComponent,
     StokesAnalysisSettingsConversionHelpComponent,
@@ -36,6 +37,9 @@ import {
     CatalogOverlayHelpComponent,
     CatalogHistogramPlotHelpComponent,
     CatalogScatterPlotHelpComponent,
+    CatalogSettingsColorHelpComponent,
+    CatalogSettingsSizeHelpComponent,
+    CatalogSettingsOrientationHelpComponent,
     SpectralLineQueryHelpComponent,
     StokesDialogHelpComponent
 } from "./HelpContent";
@@ -185,6 +189,10 @@ export class HelpDrawerComponent extends React.Component {
                 title: "Spectral Profiler Settings",
                 content: <SpectralProfilerSettingsMomentsHelpComponent/>
         }], [
+            HelpType.SPECTRAL_PROFILER_SETTINGS_FITTING, {
+                title: "Spectral Profiler Settings",
+                content: <SpectralProfilerSettingsFittingHelpComponent/>
+        }], [
             HelpType.STATS, {
                 title: "Statistics",
                 content: <StatsHelpComponent/>
@@ -230,16 +238,16 @@ export class HelpDrawerComponent extends React.Component {
                 content: ""
         }],[
             HelpType.CATALOG_SETTINGS_COLOR, {
-                title: "Catalog Color",
-                content: ""
+                title: "Catalog Settings",
+                content: <CatalogSettingsColorHelpComponent/>
         }],[
             HelpType.CATALOG_SETTINGS_SIZE, {
-                title: "Catalog Size",
-                content: ""
+                title: "Catalog Settings",
+                content: <CatalogSettingsSizeHelpComponent/>
         }],[
             HelpType.CATALOG_SETTINGS_ORIENTATION, {
-                title: "Catalog Orientation",
-                content: ""
+                title: "Catalog Settings",
+                content: <CatalogSettingsOrientationHelpComponent/>
         }],[
             HelpType.SPECTRAL_LINE_QUERY, {
                 title: "Spectral Line Query",
