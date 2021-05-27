@@ -120,7 +120,18 @@ export class FileBrowserDialogComponent extends React.Component {
         }
     };
 
-    private exportRegion(directory: string, filename: string) {
+    private handleSelectExportRegion = (regionId: number) => {
+        const fileBrowserStore = FileBrowserStore.Instance;
+        if (regionId === 0) { // selected export all regions
+            fileBrowserStore.setIsExportAllRegions(true);
+            fileBrowserStore.clearExportRegions();
+        } else {
+            fileBrowserStore.addExportRegion(regionId);
+            fileBrowserStore.setIsExportAllRegions(false);
+        }
+    };
+
+    private exportRegion = (directory: string, filename: string) => {
         if (!filename || !directory) {
             return;
         }
@@ -130,7 +141,7 @@ export class FileBrowserDialogComponent extends React.Component {
         const fileBrowserStore = FileBrowserStore.Instance;
         appStore.exportRegions(directory, filename, fileBrowserStore.exportCoordinateType, fileBrowserStore.exportFileType);
         console.log(`Exporting all regions to ${directory}/${filename}`);
-    }
+    };
 
     private handleOverwriteAlertConfirmed = () => {
         this.overwriteExistingFileAlertVisible = false;
@@ -293,17 +304,33 @@ export class FileBrowserDialogComponent extends React.Component {
     private renderExportFilenameInput() {
         const fileBrowserStore = FileBrowserStore.Instance;
 
+        const regionMenuOptions = fileBrowserStore.exportRegionOptions.map((item, index) =>
+            <MenuItem
+                key={item.value}
+                text={item.active ? <b>{item.label}</b> : item.label}
+                icon={fileBrowserStore.exportRegions?.includes(item.value as number) ? "tick" : "blank"}
+                onClick={() => this.handleSelectExportRegion(item.value as number)}
+                shouldDismissPopover={false}
+            />
+        );
+
         const regionMenu = (
             <Popover
                 content={
                     <Menu>
-                        <MenuItem text="Export all regions"/>
+                        <MenuItem
+                            text="Export all regions"
+                            icon={fileBrowserStore.isExportAllRegions ? "tick" : "blank"}
+                            onClick={() => this.handleSelectExportRegion(0)}
+                            shouldDismissPopover={false}
+                        />
+                        {regionMenuOptions}
                     </Menu>
                 }
                 position={Position.BOTTOM_RIGHT}
             >
                 <Button minimal={true} rightIcon="caret-down">
-                    {fileBrowserStore.exportAllRegions ? "Export all regions" : ""}
+                    {fileBrowserStore.isExportAllRegions ? "Export all regions" : ""}
                 </Button>
             </Popover>
         );

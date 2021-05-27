@@ -4,8 +4,9 @@ import {CARTA} from "carta-protobuf";
 import {BackendService} from "services";
 import {AppStore, DialogStore, PreferenceKeys, PreferenceStore} from "stores";
 import {FileInfoType} from "components";
-import {ProcessedColumnData} from "models";
+import {LineOption, ProcessedColumnData} from "models";
 import {getDataTypeString} from "utilities";
+import { RegionId } from "./widgets";
 
 export enum BrowserMode {
     File,
@@ -56,8 +57,8 @@ export class FileBrowserStore {
     @observable exportFilename: string;
     @observable exportCoordinateType: CARTA.CoordinateType;
     @observable exportFileType: RegionFileType;
-    @observable exportAllRegions: boolean = true;
-    @observable exportRegions: number[];
+    @observable isExportAllRegions: boolean = true;
+    @observable exportRegions: number[] = [];
 
     @observable catalogFileList: CARTA.ICatalogListResponse;
     @observable selectedCatalogFile: CARTA.ICatalogFileInfo;
@@ -346,6 +347,20 @@ export class FileBrowserStore {
         this.exportFileType = fileType;
     };
 
+    @action setIsExportAllRegions = (isExportAllRegions: boolean) => {
+        this.isExportAllRegions = isExportAllRegions;
+    };
+
+    @action clearExportRegions = () => {
+        this.exportRegions = [];
+    };
+
+    @action addExportRegion = (regionId: number) => {
+        if (!this.exportRegions.includes(regionId)) {
+            this.exportRegions.push(regionId);
+        }
+    }
+
     @action setSaveFilename = (filename: string) => {
         this.saveFilename = filename;
     };
@@ -521,5 +536,23 @@ export class FileBrowserStore {
             [1, 3, 1], // BCD
         ];
         return options[this.saveStokesOption];
+    }
+
+    @computed get exportRegionOptions(): LineOption[] {
+        let options: LineOption[] = [];
+        const appStore = AppStore.Instance;
+        const frame = appStore.activeFrame;
+        if (frame?.regionSet?.regions) {
+            const activeRegionId = appStore.selectedRegion ? appStore.selectedRegion.regionId : RegionId.CURSOR;
+            const filteredRegions = frame.regionSet.regions.filter(r => !r.isTemporary && r.isClosedRegion);
+            options = options.concat(filteredRegions?.map(r => {
+                return {
+                    value: r.regionId,
+                    label: r.nameString + (r.regionId === activeRegionId ? " (Active)" : ""),
+                    active: r.regionId === activeRegionId
+                };
+            }));
+        }
+        return options;
     }
 }
