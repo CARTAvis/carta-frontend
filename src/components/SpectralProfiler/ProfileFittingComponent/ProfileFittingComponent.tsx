@@ -216,6 +216,12 @@ export class ProfileFittingComponent extends React.Component<ProfileFittingCompo
         const fittingStore = this.props.fittingStore;
         const disabled = this.props.widgetStore.profileNum > 1;
 
+        const cursorSelectionButton = (
+            <Tooltip content={<span><i>{fittingStore.isCursorSelectingComponent ? "Disable cursor selection" : "Enable cursor selection"}</i></span>}>
+                <AnchorButton onClick={this.cursorSelecting} active={fittingStore.isCursorSelectingComponent} icon="select" disabled={disabled}/>
+            </Tooltip>
+        );
+
         return (
             <div className="profile-fitting-panel">
                 <Tooltip content={disabled ? "Profile fitting is not available when there are multiple profiles in the plot." : ""}>
@@ -282,7 +288,9 @@ export class ProfileFittingComponent extends React.Component<ProfileFittingCompo
                                                 onChange={val => fittingStore.setSelectedIndex(val - 1)}
                                                 disabled={fittingStore.components.length <= 1}
                                             />
-                                            <AnchorButton intent={Intent.NONE} icon={"trash"} onClick={this.deleteComponent}/>
+                                            <Tooltip content={<span><i>Delete Current Component</i></span>}>
+                                                <AnchorButton intent={Intent.NONE} icon={"trash"} onClick={this.deleteComponent}/>
+                                            </Tooltip>
                                         </div>
                                     }
                                 </div>
@@ -296,8 +304,10 @@ export class ProfileFittingComponent extends React.Component<ProfileFittingCompo
                                         allowNumericCharactersOnly={false}
                                         buttonPosition="none"
                                     />
-                                    <AnchorButton onClick={this.onCenterLocked} icon={fittingStore.selectedComponent.lockedCenter ? "lock" : "unlock"} disabled={disabled}/>
-                                    <AnchorButton onClick={this.cursorSelecting} active={fittingStore.isCursorSelectingComponent} icon="select" disabled={disabled}/>
+                                    <Tooltip content={<span><i>{fittingStore.selectedComponent.lockedCenter ? "Unlock center" : "Lock center"}</i></span>}>
+                                        <AnchorButton onClick={this.onCenterLocked} icon={fittingStore.selectedComponent.lockedCenter ? "lock" : "unlock"} disabled={disabled}/>
+                                    </Tooltip>
+                                    {cursorSelectionButton}
                                 </div>
                             </FormGroup>
                             <FormGroup label="Amplitude" inline={true}>
@@ -309,8 +319,10 @@ export class ProfileFittingComponent extends React.Component<ProfileFittingCompo
                                         allowNumericCharactersOnly={false}
                                         buttonPosition="none"
                                         />
-                                    <AnchorButton onClick={this.onAmpLocked} icon={fittingStore.selectedComponent.lockedAmp ? "lock" : "unlock"} disabled={disabled}/>
-                                    <AnchorButton onClick={this.cursorSelecting} active={fittingStore.isCursorSelectingComponent} icon="select" disabled={disabled}/>
+                                    <Tooltip content={<span><i>{fittingStore.selectedComponent.lockedCenter ? "Unlock amplitude" : "Lock amplitude"}</i></span>}>
+                                        <AnchorButton onClick={this.onAmpLocked} icon={fittingStore.selectedComponent.lockedAmp ? "lock" : "unlock"} disabled={disabled}/>
+                                    </Tooltip>
+                                    {cursorSelectionButton}
                                 </div>
                             </FormGroup>
                             <FormGroup label="FWHM" inline={true}>
@@ -322,8 +334,10 @@ export class ProfileFittingComponent extends React.Component<ProfileFittingCompo
                                         allowNumericCharactersOnly={false}
                                         buttonPosition="none"
                                     />
-                                    <AnchorButton onClick={this.onFwhmLocked} icon={fittingStore.selectedComponent.lockedFwhm ? "lock" : "unlock"} disabled={disabled}/>
-                                    <AnchorButton onClick={this.cursorSelecting} active={fittingStore.isCursorSelectingComponent} icon="select" disabled={disabled}/>
+                                    <Tooltip content={<span><i>{fittingStore.selectedComponent.lockedCenter ? "Unlock FWHM" : "Lock FWHM"}</i></span>}>
+                                        <AnchorButton onClick={this.onFwhmLocked} icon={fittingStore.selectedComponent.lockedFwhm ? "lock" : "unlock"} disabled={disabled}/>
+                                    </Tooltip>
+                                    {cursorSelectionButton}
                                 </div>
                             </FormGroup>
                             <FormGroup label="Continuum" inline={true}>
