@@ -188,10 +188,10 @@ export class ProfileFittingStore {
         return [];
     }
 
-    @computed get resultPoint2DArray(): Point2D[] {
+    @computed get modelPoint2DArray(): Point2D[] {
         if (this.components && this.hasResult) {
             const x = this.originData.x;
-            const resultPoint2DArray = new Array<Point2D>(x.length);
+            const modelPoint2DArray = new Array<Point2D>(x.length);
             for (let i = 0; i < x.length; i++) {
                 let yi = 0;
                 for (const component of this.components) {
@@ -201,26 +201,26 @@ export class ProfileFittingStore {
                         yi += lorentzian(x[i], component.resultAmp, component.resutlCenter, component.resultFwhm);
                     }
                 }
-                resultPoint2DArray.push({x: x[i], y: yi + (this.resultSlope * x[i] + this.resultYIntercept)});
+                modelPoint2DArray.push({x: x[i], y: yi + (this.resultSlope * x[i] + this.resultYIntercept)});
             }
-            return resultPoint2DArray;
+            return modelPoint2DArray;
         }
         return [];
     }
 
-    @computed get singleResultsPoint2DArrays(): Array<Point2D[]> {
+    @computed get individualModelPoint2DArrays(): Array<Point2D[]> {
         if (this.components && this.hasResult) {
             const x = this.originData.x;
-            const individualResultPoint2DArrays = new Array<Point2D[]>(this.components.length);
+            const individualModelPoint2DArrays = new Array<Point2D[]>(this.components.length);
             for (const component of this.components) {
                 let individualResultPoint2DArray: Point2D[] = [];
                 for (let i = 0; i < x.length; i++) {
                     const yi = this.function === FittingFunction.GAUSSIAN ? gaussian(x[i], component.resultAmp, component.resutlCenter, component.resultFwhm) : lorentzian(x[i], component.resultAmp, component.resutlCenter, component.resultFwhm);
                     individualResultPoint2DArray.push({x: x[i], y: yi + (this.resultSlope * x[i] + this.resultYIntercept)});
                 }
-                individualResultPoint2DArrays.push(individualResultPoint2DArray);
+                individualModelPoint2DArrays.push(individualResultPoint2DArray);
             }
-            return individualResultPoint2DArrays;
+            return individualModelPoint2DArrays;
         }
         return [];
     }

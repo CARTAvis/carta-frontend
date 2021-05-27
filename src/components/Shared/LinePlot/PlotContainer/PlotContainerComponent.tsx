@@ -65,6 +65,8 @@ export class MultiPlotProps {
     order?: number;
     comments?: string[];
     hidden?: boolean;
+    followingData?: string[];
+    noExport?: boolean;
 }
 
 interface MulticolorLineChartDatasets extends ChartDataSets {
