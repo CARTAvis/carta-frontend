@@ -652,6 +652,11 @@ export class WidgetsStore {
             widgetConfig.componentId = id;
         }
 
+        const catalogPlotWidgetStore = this.catalogPlotWidgets.get(id);
+        if (catalogPlotWidgetStore) {
+            widgetConfig.helpType = catalogPlotWidgetStore.plotType === CatalogPlotType.Histogram ? HelpType.CATALOG_HISTOGRAM_PLOT: HelpType.CATALOG_SCATTER_PLOT;
+        }
+
         // Set default size and position from the existing item
         const container = item["container"] as GoldenLayout.Container;
         if (container && container.width && container.height) {
