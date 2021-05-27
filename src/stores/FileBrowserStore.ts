@@ -79,12 +79,7 @@ export class FileBrowserStore {
         autorun(() => {
             if (AppStore.Instance.activeFrame) {
                 FileBrowserStore.Instance.initialSaveSpectralRange();
-                const initialFileType = AppStore.Instance.activeFrame.frameInfo?.fileInfo.type;
-                if (initialFileType === CARTA.FileType.FITS || initialFileType === CARTA.FileType.CASA) {
-                    this.setSaveFileType(initialFileType);
-                } else {
-                    this.setSaveFileType(CARTA.FileType.FITS);
-                }
+                this.setSaveFileType(AppStore.Instance.activeFrame.frameInfo?.fileInfo.type === CARTA.FileType.CASA ? CARTA.FileType.CASA : CARTA.FileType.FITS);
             }
         });
 
