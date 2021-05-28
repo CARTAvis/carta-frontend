@@ -572,7 +572,7 @@ export class FileBrowserStore {
             this.exportRegions.forEach((value, index) => {
                 optionsText += AppStore.Instance.activeFrame?.regionSet?.regions[value].nameString;
                 optionsText += index !== this.exportRegions.length - 1 ? ", " : "";
-            })
+            });
         }
         return optionsText;
     }
