@@ -34,7 +34,7 @@ export class ImageViewSettingsHelpComponent extends React.Component {
                 <p>This section allows users to adjust the appearance of an interior axis overlay, including visibility, color, and line width.</p>
 
                 <h3 id="numbers">Numbers</h3>
-                <p>This sections allows users to customize the appearance of tick values, including:</p>
+                <p>This section allows users to customize the appearance of tick values, including:</p>
                 <ul>
                     <li>visibility</li>
                     <li>font type</li>
@@ -47,11 +47,29 @@ export class ImageViewSettingsHelpComponent extends React.Component {
                 <h3 id="labels">Labels</h3>
                 <p>This section allows users to modify the styles of the x and y labels, such as font type, font size, and color. A custom label can be defined.</p>
 
+                <h3>Colorbar</h3>
+                <p>The appearance of the colorbar is highly configurable. This includes:</p>
+                <ul>
+                    <li>visibility</li>
+                    <li>bar width</li>
+                    <li>offset</li>
+                    <li>position</li>
+                    <li>ticks density</li>
+                    <li>border style</li>
+                    <li>label style</li>
+                    <li>tick value style</li>
+                    <li>tick style</li>
+                </ul>
+
                 <h3 id="beam">Beam</h3>
                 <p>This section allows users to change the appearance of a beam overlay (color, type, and line width) and adjust its position in the image viewer.</p>
 
+                <h3>Conversion</h3>
+                <p>This allows conversions of the spectral axis of a position-velocity image. For example, if image header supports sufficient information, the axis labels can be displayed as offset v.s. velocity, offset v.s. frequency, or offset v.s. wavelength, etc.</p>
+
+                <br/>
                 <h4>EXAMPLE</h4>
-                <p><ImageComponent light={imageOverlayDemo} dark={imageOverlayDemo_d} width="90%"/></p>
+                <p><ImageComponent light={imageOverlayDemo} dark={imageOverlayDemo_d} width="100%"/></p>
 
             </div>
         );

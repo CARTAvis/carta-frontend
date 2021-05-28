@@ -20,7 +20,10 @@ export class RegionDialogHelpComponent extends React.Component {
                     is decimal degree. Region size can be defined in arcsecond with <code>&quot;</code>, in arcminute with <code>&apos;</code>, or in degree with <code>deg</code>.</p>
                 <br/>
                 <h4 id="note">NOTE</h4>
-                <p>The displayed image coordinates refer to the spatial reference image as indicated in the title of the dialogue.</p>
+                <ul>
+                    <li>The displayed image coordinates refer to the spatial reference image as indicated in the title of the dialogue.</li>
+                    <li>The appearance of a region on a spatially matched image may be distorted due to projection effect.</li>
+                </ul>
                 <h4 id="tip">TIP</h4>
                 <p><code>Double-Click</code> on a region in the image viewer or on an entry in the region list widget will bring up this region configuration dialogue.</p>
 

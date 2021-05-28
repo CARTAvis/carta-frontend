@@ -18,9 +18,9 @@ export class HistogramHelpComponent extends React.Component {
                 <p>The x and y ranges of the histogram plot can be modified by</p>
                 <ul>
                     <li><code>scrolling wheel</code> (up to zoom in and down to zoom out with respect to the cursor position)</li>
-                    <li><code>click-and-drag</code> horizontally to zoom in x</li>
-                    <li><code>click-and-drag</code> vertically to zoom in y</li>
-                    <li><code>click-and-drag</code> diagonally to zoom in both x and y</li>
+                    <li><code>drag-and-drop</code> horizontally to zoom in x</li>
+                    <li><code>drag-and-drop</code> vertically to zoom in y</li>
+                    <li><code>drag-and-drop</code> diagonally to zoom in both x and y</li>
                     <li><code>double-click</code> to reset x and y ranges</li>
                     <li><code>shift + click-and-drag</code> to pan in x</li>
                 </ul>

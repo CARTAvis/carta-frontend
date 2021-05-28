@@ -46,11 +46,11 @@ export class ImageViewHelpComponent extends React.Component {
                 <p>Zoom actions can be triggered in different ways. The most common one is to use mouse and scroll wheel. By scrolling up, image is zoomed in, while by scrolling down, image is zoomed out. Alternatively, users may use the
                     tool buttons at the bottom-right corner of the image viewer to zoom in, zoom out, zoom to fit screen resolution, or zoom to fit image view.</p>
                 <p><ImageComponent light={zoomButton} dark={zoomButton_d} width="70%"/></p>
-                <p>Pan action is achieved by <code>Click-and-drag</code> as default. This default can be changed via the preferences dialogue (<strong>File</strong> -&gt; <strong>Preferences</strong> -&gt; <strong>Global</strong>). The
-                    alternative mode is <code>Click</code> and the clicked pixel will be centered in the image viewer.</p>
+                <p>Pan action is achieved by <code>drag-end-drop</code> as default. This default can be changed via the preferences dialogue (<strong>File</strong> -&gt; <strong>Preferences</strong> -&gt; <strong>Global</strong>). The
+                    alternative mode is <code>click</code> and the clicked pixel will be centered in the image viewer.</p>
 
                 <h3 id="matching-image-spatially-and-spectrally">Matching image spatially and spectrally</h3>
-                <p>Appended images may be matched in world coordinate spatially and/or spectrally. This can be triggered by the &quot;WCS matching&quot; button. Matching WCS on appending can be enabled in the preferences dialogue.</p>
+                <p>Different images may be matched in world coordinate spatially and/or spectrally. This can be triggered by the &quot;WCS matching&quot; button. Matching WCS on appending can be enabled in the preferences dialogue.</p>
                 <p><ImageComponent light={WCSMatchButton} dark={WCSMatchButton_d} width="70%"/></p>
                 <p>CARTA supports the following matching schemes:</p>
                 <ul>
@@ -59,11 +59,11 @@ export class ImageViewHelpComponent extends React.Component {
                     <li>Spectral only: images are matched to the reference image in the spectral domain with nearest interpolation.</li>
                     <li>Spatial and spectral: images are matched to the reference image both in the spatial domain and spectral domain.</li>
                 </ul>
-                <p>Note that images are spatially matched by applying translation, rotation, and scaling. Inconsistency may be prominent when attempting to match wide field images or images with different projection types. However, grid
+                <p>Note that images are spatially matched by applying translation, rotation, and scaling. Inconsistency may be prominent when attempting to match wide field images or images with different projection schemes. However, grid
                     lines are still accurate per image. If contour layers exist, they will match the raster image in the current image view with high position accuracy. Spectral matching is performed with nearest interpolation.</p>
 
                 <h3 id="contour-layers">Contour layers</h3>
-                <p>A contour layer can be generated via the contour configuration dialogue. Contours of spatially matched image are re-projected to other spatially matched raster image.</p>
+                <p>A contour layer can be generated via the contour configuration dialogue. Contours of spatially matched image are re-projected precisely to other spatially matched raster image.</p>
                 <p><ImageComponent light={contourButton} dark={contourButton_d} width="85%"/></p>
 
                 <h3 id="region-of-interest">Region of interest</h3>
@@ -84,10 +84,10 @@ export class ImageViewHelpComponent extends React.Component {
                 <p>To select a source, use the Catalog selection button. The selected source will be highlighted in the table of the Catalog widget.</p>
                 <p><ImageComponent light={catalogSelectionButton} dark={catalogSelectionButton_d} width="70%"/></p>
 
-                <h3 id="customizing-the-image-plot">Customizing the image plot</h3>
-                <p> The image overlay can be customized via the image view settings dialogue. Plenty amounts of options are provided.</p>
+                <h3 id="customizing-the-image-plot">Image plot cosmetics</h3>
+                <p> The image plot, such as grid line style, label style, colorbar style, etc., can be customized via the image viewer settings dialogue.</p>
 
-                <h3 id="exports">Exports</h3>
+                <h3 id="exports">Image plot export</h3>
                 <p>What users see in the current image view can be exported as a PNG file with the &quot;Export image&quot; button in the image tool bar.</p>
                 <p><ImageComponent light={exportPNGButton} dark={exportPNGButton_d} width="70%"/></p>
 

@@ -22,6 +22,7 @@ export class PreferencesHelpComponent extends React.Component {
                     <li>Enable drag-to-pan: when enabled, pan action is achieved by click-and-dragging. When disabled, pan action is achieved by a click where the clicked pixel will be centered in the image viewer.</li>
                     <li>WCS matching on append: trigger WCS matching automatically for newly appended images</li>
                     <li>Spectral matching: spectral convention to be used for spectral matching of image cubes</li>
+                    <li>Transparent image background: when enabled, the exported png image will have a transparent background. When disabled (default), a white or a black background is added based on the GUI theme.</li>
                 </ul>
                 <h3 id="render-configuration">Render configuration</h3>
                 <p>This section provides customization of how a raster image is rendered by default.</p>
@@ -30,6 +31,7 @@ export class PreferencesHelpComponent extends React.Component {
                     <li>Default colormap: colormap for rendering a raster image</li>
                     <li>Default percentile ranks: clip level to be applied to the pixel value-to-color mapping</li>
                     <li>NaN color: color to render a NaN (not a number) pixel</li>
+                    <li>Smoothed bias/contrast: when enabled (default), smooth bias and contrast funtions are applied, resulting a  smooth scaling function. When disabled, the final scaling function contains kinks.</li>
                 </ul>
                 <h3 id="contour-configuration">Contour configuration</h3>
                 <p>This section provides customization of how a contour layer is calculated and rendered by default.</p>
@@ -54,6 +56,11 @@ export class PreferencesHelpComponent extends React.Component {
                     <li>Beam color: the color to render a beam element</li>
                     <li>Beam type: render a beam as open shape or filled shape</li>
                     <li>Beam width: line width to render an open-shape beam</li>
+                </ul>
+                <h3>Catalog</h3>
+                <p>This section provides options to configure the catalog widget.</p>
+                <ul>
+                    <li>Displayed columns: default displayed number of columns of a catalog in the widget.</li>
                 </ul>
                 <h3 id="region">Region</h3>
                 <p>This section provides customization of region rendering properties and region creation interactivity.</p>

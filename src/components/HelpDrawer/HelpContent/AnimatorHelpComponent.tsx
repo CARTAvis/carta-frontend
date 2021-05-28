@@ -18,6 +18,7 @@ export class AnimatorHelpComponent extends React.Component {
                 </ul>
                 <p>For channel, users may limit a channel range for animation playback via the double slider.</p>
                 <p>A desired frame rate per second (fps) can be defined in the frame rate spinbox. Note that the real fps depends on computer performance and network performance.</p>
+                <p>A step for animation playback (default 1) can be set with the step spinbox. Click the frame rate dropdown to select step and use the spinbox to define a step.</p>
                 <p>For performance concern and resource management, animation playback will be automatically stopped after 5 minutes by default. This can be customized in the &quot;Performance&quot; tab of the preferences dialogue
                     (<strong>File</strong> -&gt; <strong>Preferences</strong>). Maximum playback time is 30 mins.</p>
             </div>

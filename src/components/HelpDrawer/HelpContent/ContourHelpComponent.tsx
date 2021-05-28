@@ -29,7 +29,7 @@ export class ContourHelpComponent extends React.Component {
                 <p>To remove a contour layer, click the &quot;Clear&quot; button.</p>
                 <p>Users may use the lock button next to the data source dropdown to disable or enable synchronization of data source with the image slider in the animator.</p>
                 <h3 id="contour-smoothness">Contour smoothness</h3>
-                <p>By default, image is Gaussian-smoothed with a kernel size of four pixels before calculating contour vertices. This can be customized in the &quot;Configuration&quot; tab. Smoothing mode includes:</p>
+                <p>By default, image is Gaussian-smoothed with a kernel size of 4 by 4 pixels before calculating contour vertices. This can be customized in the &quot;Configuration&quot; tab. Smoothing mode includes:</p>
                 <ul>
                     <li>No smoothing</li>
                     <li>Block (faster, not ideal for compact objects)</li>
@@ -44,10 +44,10 @@ export class ContourHelpComponent extends React.Component {
                     <li>Bias</li>
                     <li>Contrast</li>
                 </ul>
-                <p>Note that changes in styling will be applied immediately if the contour levels set does not change.</p>
+                <p>Note that changes in styling will be applied immediately if the contour level set does not change.</p>
                 <h3 id="customizing-the-contour-configuration-dialogue">Customizing the contour configuration dialogue</h3>
                 <p>The defaults of many options in the contour configuration dialogue are customizable via the &quot;Contour configuration&quot; tab in the preference dialogue.</p>
-                <p>Performance related options are included in the &quot;Performance&quot; tab of the preference dialogue. <em>Note that we do not recommend to modify the factory defaults. Change with cautions.</em></p>
+                <p>Performance related options are included in the &quot;Performance&quot; tab of the preferences dialogue. <em>Note that we do not recommend modifying the factory defaults. Change with cautions.</em></p>
             </div>
         );
     }

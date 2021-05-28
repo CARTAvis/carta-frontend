@@ -26,10 +26,10 @@ export class SpatialProfilerHelpComponent extends React.Component {
                     <li><code>click-and-drag</code> vertically to zoom in y</li>
                     <li><code>click-and-drag</code> diagonally to zoom in both x and y</li>
                     <li><code>double-click</code> to reset x and y ranges</li>
-                    <li><code>shift + click-and-drag</code> to pan in x</li>
+                    <li><code>shift + drag-and-drop</code> to pan in x</li>
                 </ul>
                 <p>In addition, the x and y ranges can be explicitly set in the spatial profiler settings dialogue.</p>
-                <h3 id="exports">Exports</h3>
+                <h3 id="exports">Profile plot export</h3>
                 <p>The spatial profile plot can be exported as a png file or a text file in tsv format via the buttons at the bottom-right corner (shown when hovering over the plot).</p>
                 <h3 id="plot-cosmetics">Plot cosmetics</h3>
                 <p>The appearance of the spatial profile plot is customizable via the &quot;Styling&quot; tab of the spatial profiler settings dialogue (the cog icon). Supported options are:</p>
@@ -42,7 +42,7 @@ export class SpatialProfilerHelpComponent extends React.Component {
                 </ul>
                 <br/>
                 <h4 id="note">NOTE</h4>
-                <p>For performance concerns, a profile is decimated before rendering if the number of points of the profile is greater than the screen resolution of the spatial profiler widget. The kernel size of profile decimation is
+                <p>For performance concerns, a profile is min-max decimated before rendering if the number of points of the profile is greater than the screen resolution of the spatial profiler widget. The kernel size of profile decimation is
                     dynamically adjusted so that profile features are mostly preserved. When decimation is applied, the line style of the profile plot is switched to &quot;line&quot;, regardless the setting in the spatial profiler settings
                     dialogue. When no decimation is applied (e.g., at higher profile zoom level, or profile has fewer points than the screen resolution), the line style becomes &quot;step&quot; (as default in the &quot;Styling&quot; tab of
                     the settings dialogue).</p>
