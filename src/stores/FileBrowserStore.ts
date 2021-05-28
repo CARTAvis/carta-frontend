@@ -3,10 +3,10 @@ import {action, computed, observable, makeObservable, runInAction, autorun} from
 import {CARTA} from "carta-protobuf";
 import {BackendService} from "services";
 import {AppStore, DialogStore, PreferenceKeys, PreferenceStore} from "stores";
+import {RegionId} from "stores/widgets";
 import {FileInfoType} from "components";
 import {LineOption, ProcessedColumnData} from "models";
 import {getDataTypeString} from "utilities";
-import { RegionId } from "./widgets";
 
 export enum BrowserMode {
     File,
@@ -553,13 +553,13 @@ export class FileBrowserStore {
         if (frame?.regionSet?.regions) {
             const activeRegionId = appStore.selectedRegion ? appStore.selectedRegion.regionId : RegionId.CURSOR;
             const filteredRegions = frame.regionSet.regions.filter(r => !r.isTemporary && r.isClosedRegion);
-            options = options.concat(filteredRegions?.map(r => {
+            options = filteredRegions?.map(r => {
                 return {
                     value: r.regionId,
                     label: r.nameString + (r.regionId === activeRegionId ? " (Active)" : ""),
                     active: r.regionId === activeRegionId
                 };
-            }));
+            });
         }
         return options;
     }
