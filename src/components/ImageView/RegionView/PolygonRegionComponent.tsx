@@ -113,11 +113,17 @@ export class PolygonRegionComponent extends React.Component<PolygonRegionCompone
     };
 
     @action private handleStrokeMouseEnter = (konvaEvent: Konva.KonvaEventObject<MouseEvent>) => {
+        if (konvaEvent.target?.getStage()) {
+            this.previousCursorStyle = konvaEvent.target.getStage().container().style.cursor;
+        }
         this.handleMouseMove(konvaEvent);
     };
 
-    @action private handleStrokeMouseLeave = () => {
+    @action private handleStrokeMouseLeave = (konvaEvent: Konva.KonvaEventObject<MouseEvent>) => {
         this.hoverIntersection = null;
+        if (konvaEvent.target?.getStage()) {
+            konvaEvent.target.getStage().container().style.cursor = this.previousCursorStyle;
+        }
     };
 
     @action private handleMouseMove = (konvaEvent: Konva.KonvaEventObject<MouseEvent>) => {
@@ -146,21 +152,27 @@ export class PolygonRegionComponent extends React.Component<PolygonRegionCompone
             if (closestIndex >= 0 && minDistance <= NEW_ANCHOR_MAX_DISTANCE) {
                 this.hoverIntersection = closestPoint;
                 this.hoverIndex = closestIndex;
+                if (konvaEvent.target?.getStage()) {
+                    konvaEvent.target.getStage().container().style.cursor = "crosshair";
+                }
             } else {
                 this.hoverIntersection = null;
+                if (konvaEvent.target?.getStage()) {
+                    konvaEvent.target.getStage().container().style.cursor = this.previousCursorStyle;
+                }
             }
         }
     };
 
     private handleAnchorMouseEnter = (konvaEvent: Konva.KonvaEventObject<MouseEvent>) => {
-        if (konvaEvent.target && konvaEvent.target.getStage()) {
+        if (konvaEvent.target?.getStage()) {
             this.previousCursorStyle = konvaEvent.target.getStage().container().style.cursor;
             konvaEvent.target.getStage().container().style.cursor = "move";
         }
     };
 
     private handleAnchorMouseOut = (konvaEvent: Konva.KonvaEventObject<MouseEvent>) => {
-        if (konvaEvent.target && konvaEvent.target.getStage()) {
+        if (konvaEvent.target?.getStage()) {
             konvaEvent.target.getStage().container().style.cursor = this.previousCursorStyle;
         }
     };
