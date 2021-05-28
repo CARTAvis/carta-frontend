@@ -14,6 +14,7 @@ export class ResizableDialogComponentProps {
     minHeight?: number;
     enableResizing: boolean;
     helpType?: HelpType;
+    onResizeStop?: (newWidth: number, newHeight: number) => void;
 }
 
 export class DraggableDialogComponent extends React.Component<ResizableDialogComponentProps> {
@@ -40,6 +41,12 @@ export class DraggableDialogComponent extends React.Component<ResizableDialogCom
     private onClickHelpButton = () => {
         const centerX = this.rnd.draggable.state.x + this.rnd.resizable.size.width * 0.5;
         HelpStore.Instance.showHelpDrawer(this.props.helpType, centerX);
+    }
+
+    private onResizeStop = (e, direction, elementRef: HTMLDivElement) => {
+        if (this.props.onResizeStop) {
+            this.props.onResizeStop(elementRef.offsetWidth, elementRef.offsetHeight);
+        }
     }
 
     render() {
@@ -80,6 +87,7 @@ export class DraggableDialogComponent extends React.Component<ResizableDialogCom
                     minHeight={this.props.minHeight}
                     dragHandleClassName={"bp3-dialog-header"}
                     ref={c => { this.rnd = c; }}
+                    onResizeStop={this.onResizeStop}
                 >
                     <Dialog hasBackdrop={false} usePortal={false}  enforceFocus={false} autoFocus={true} {...this.props.dialogProps} children={this.props.children}/>
                 </Rnd>

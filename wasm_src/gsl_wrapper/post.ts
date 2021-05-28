@@ -176,12 +176,13 @@ Module.fitting = function (functionType: number, xIn: Float64Array | Float32Arra
     Module.resultCenter = Module._malloc(componentN * 8 * 2); // center with error.
     Module.resultFwhm = Module._malloc(componentN * 8 * 2); // fwhm with error.
     Module.resultIntegral = Module._malloc(componentN * 8 * 2); // integral with error.
+    Module.resultResidual = Module._malloc(dataN * 8);
 
     const log = Module.fittingGaussian(
         Module.xIn, Module.yIn, dataN,
         Module.inputArray, Module.lockedInputArray, componentN,
         functionType, Module.orderValues, Module.lockedOrderValues,
-        Module.resultAmp, Module.resultCenter, Module.resultFwhm, Module.resultOrderValues, Module.resultIntegral
+        Module.resultAmp, Module.resultCenter, Module.resultFwhm, Module.resultOrderValues, Module.resultIntegral, Module.resultResidual
     );
 
     const orderValuesOut = new Float64Array(Module.HEAPF64.buffer, Module.resultOrderValues, 4).slice(); // [yIntercept, yInterceptError, slope, slopeError]
@@ -189,7 +190,8 @@ Module.fitting = function (functionType: number, xIn: Float64Array | Float32Arra
     const ampOut = new Float64Array(Module.HEAPF64.buffer, Module.resultAmp, componentN * 2).slice(); // [center1, center1Error, center2, center2Error, ...]
     const fwhmOut = new Float64Array(Module.HEAPF64.buffer, Module.resultFwhm, componentN * 2).slice(); // [fwhm1, fwhm1Error, fwhm2, fwhmError2, ...]
     const integralOut = new Float64Array(Module.HEAPF64.buffer, Module.resultIntegral, componentN * 2).slice(); // [integral1, integral1Error, integral2, integral2Error, ...]
-    const result = {yIntercept: orderValuesOut[0], yInterceptError: orderValuesOut[1], slope: orderValuesOut[2], slopeError: orderValuesOut[3], center: centerOut, amp: ampOut, fwhm: fwhmOut, log: log, integral: integralOut};
+    const residualOut = new Float64Array(Module.HEAPF64.buffer, Module.resultResidual, dataN).slice();
+    const result = {yIntercept: orderValuesOut[0], yInterceptError: orderValuesOut[1], slope: orderValuesOut[2], slopeError: orderValuesOut[3], center: centerOut, amp: ampOut, fwhm: fwhmOut, log: log, integral: integralOut, residual: residualOut};
 
     Module._free(Module.xIn);
     Module._free(Module.yIn);
@@ -204,6 +206,7 @@ Module.fitting = function (functionType: number, xIn: Float64Array | Float32Arra
     Module._free(Module.resultAmp);
     Module._free(Module.resultFwhm);
     Module._free(Module.resultIntegral);
+    Module._free(Module.resultResidual);
     return result;
 };
 

@@ -8,6 +8,7 @@ import {CARTA} from "carta-protobuf";
 import {SimpleTableComponent, SimpleTableComponentProps} from "components/Shared";
 import {ImageSaveComponent} from "components/Dialogs";
 import "./FileInfoComponent.scss";
+import {exportTxtFile} from "utilities";
 
 export enum FileInfoType {
     IMAGE_FILE = "image-file",
@@ -389,7 +390,7 @@ export class FileInfoComponent extends React.Component<{
         );
     };
 
-    private renderHeaderSearch = () => {
+    private renderHeaderToolbar = () => {
         const popoverModifiers: PopperModifiers = {arrow: {enabled: false}, offset: {offset: '0, 10px, 0, 0'}};
         const searchIter = (
             <ButtonGroup className="header-search">
@@ -415,26 +416,43 @@ export class FileInfoComponent extends React.Component<{
 
         return (!this.props.isLoading && !this.props.errorMessage && this.props.fileInfoExtended &&
             this.props.selectedTab === FileInfoType.IMAGE_HEADER) ? (
-                <Popover
-                    className="header-search-button"
-                    position={Position.LEFT}
-                    interactionKind={PopoverInteractionKind.CLICK_TARGET_ONLY}
-                    modifiers={popoverModifiers}
-                    onOpening={() => this.handleSearchPanelClicked(true)}
-                    onClosing={() => this.handleSearchPanelClicked(false)}
-                >
-                    <Button icon="search-text" style={{opacity: (this.isMouseEntered || this.isSearchOpened) ? 1 : 0}}></Button>
-                    <InputGroup
-                        className="header-search-input"
-                        autoFocus={true}
-                        placeholder={"Search text"}
-                        leftIcon="search-text"
-                        rightElement={searchIter}
-                        onChange={this.handleSearchStringChanged}
-                        onKeyDown={(ev) => this.handleClickMatched(1, ev)}
-                    />
-                </Popover>
+                <ButtonGroup className="header-search-button" style={{opacity: (this.isMouseEntered || this.isSearchOpened) ? 1 : 0}}>
+                    <Popover
+                        position={Position.LEFT}
+                        interactionKind={PopoverInteractionKind.CLICK_TARGET_ONLY}
+                        modifiers={popoverModifiers}
+                        onOpening={() => this.handleSearchPanelClicked(true)}
+                        onClosing={() => this.handleSearchPanelClicked(false)}
+                    >
+                        <Button icon="search-text"></Button>
+                        <InputGroup
+                            className="header-search-input"
+                            autoFocus={true}
+                            placeholder={"Search text"}
+                            leftIcon="search-text"
+                            rightElement={searchIter}
+                            onChange={this.handleSearchStringChanged}
+                            onKeyDown={(ev) => this.handleClickMatched(1, ev)}
+                        />
+                    </Popover>
+                    <Button icon="import" onClick={this.exportHeader}></Button>
+                </ButtonGroup>
             ) : null;
+    };
+
+    private exportHeader = () => {
+        const headerContent = this.props.fileInfoExtended.headerEntries;
+        const imageName = `${this.props.fileInfoExtended.computedEntries[0].value}-Header`;
+        let content = "";
+        content += `# ${this.props.fileInfoExtended.computedEntries[0].value}\n`
+        headerContent.forEach((row, index) => {
+            if (row.comment){
+                content += `${row.name} = ${row.value} / ${row.comment}\n`;
+            } else {
+                content += `${row.name} = ${row.value}\n`;
+            }
+        });
+        exportTxtFile(imageName, content);
     };
 
     render() {
@@ -445,7 +463,7 @@ export class FileInfoComponent extends React.Component<{
                     {this.renderHDUList()}
                 </div>
                 {this.renderInfoPanel()}
-                {this.renderHeaderSearch()}
+                {this.renderHeaderToolbar()}
             </div>
         );
     }
