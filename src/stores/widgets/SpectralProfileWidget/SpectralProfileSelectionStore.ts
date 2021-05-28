@@ -74,10 +74,10 @@ export class SpectralProfileSelectionStore {
         return formattedSpectralConfigs;
     };
 
-    private genProfileLabel = (fileId: number, regionId: number, statsType: CARTA.StatsType, coordinate: string): {image: string, plot: string} => {
+    private genProfileLabel = (fileId: number, regionName: string, statsType: CARTA.StatsType, coordinate: string): {image: string, plot: string} => {
         return {
             image: AppStore.Instance.getFrameName(fileId),
-            plot: `${regionId === RegionId.CURSOR ? "Cursor" : `Region ${regionId}`}, Statistic ${StatsTypeString(statsType)}, Cooridnate ${SUPPORTED_STOKES_LABEL_MAP.get(coordinate)}`
+            plot: `${regionName}, Statistic ${StatsTypeString(statsType)}, Cooridnate ${SUPPORTED_STOKES_LABEL_MAP.get(coordinate)}`
         };
     };
 
@@ -98,7 +98,7 @@ export class SpectralProfileSelectionStore {
                                 statsType: statsType,
                                 coordinate: selectedCoordinate,
                                 colorKey: fileId,
-                                label: this.genProfileLabel(fileId, this.effectiveRegionId, statsType, selectedCoordinate)
+                                label: this.genProfileLabel(fileId, region?.nameString, statsType, selectedCoordinate)
                             });
                         }
                     });
@@ -109,7 +109,7 @@ export class SpectralProfileSelectionStore {
                         statsType: statsType,
                         coordinate: selectedCoordinate,
                         colorKey: this.selectedFrameFileId,
-                        label: this.genProfileLabel(this.selectedFrameFileId, this.effectiveRegionId, statsType, selectedCoordinate)
+                        label: this.genProfileLabel(this.selectedFrameFileId, region?.nameString, statsType, selectedCoordinate)
                     });
                 }
             } else if (this.activeProfileCategory === MultiProfileCategory.REGION) {
@@ -125,7 +125,7 @@ export class SpectralProfileSelectionStore {
                             statsType: statsType,
                             coordinate: selectedCoordinate,
                             colorKey: selectedRegionId,
-                            label: this.genProfileLabel(this.selectedFrameFileId, selectedRegionId, statsType, selectedCoordinate)
+                            label: this.genProfileLabel(this.selectedFrameFileId, region?.nameString, statsType, selectedCoordinate)
                         });
                     }
                 });
@@ -140,7 +140,7 @@ export class SpectralProfileSelectionStore {
                             statsType: statsType,
                             coordinate: selectedCoordinate,
                             colorKey: statsType,
-                            label: this.genProfileLabel(this.selectedFrameFileId, this.effectiveRegionId, statsType, selectedCoordinate)
+                            label: this.genProfileLabel(this.selectedFrameFileId, region?.nameString, statsType, selectedCoordinate)
                         });
                     });
                 } else {
@@ -150,7 +150,7 @@ export class SpectralProfileSelectionStore {
                         statsType: CARTA.StatsType.Sum,
                         coordinate: selectedCoordinate,
                         colorKey: CARTA.StatsType.Sum,
-                        label: this.genProfileLabel(this.selectedFrameFileId, this.effectiveRegionId, CARTA.StatsType.Sum, selectedCoordinate)
+                        label: this.genProfileLabel(this.selectedFrameFileId, region?.nameString, CARTA.StatsType.Sum, selectedCoordinate)
                     });
                 }
             } else if (this.activeProfileCategory === MultiProfileCategory.STOKES) {
@@ -164,7 +164,7 @@ export class SpectralProfileSelectionStore {
                         statsType: statsType,
                         coordinate: coordinate,
                         colorKey: coordinate,
-                        label: this.genProfileLabel(this.selectedFrameFileId, this.effectiveRegionId, statsType, coordinate)
+                        label: this.genProfileLabel(this.selectedFrameFileId, region?.nameString, statsType, coordinate)
                     });
                 });
             }

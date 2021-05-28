@@ -16,3 +16,16 @@ export function exportTsvFile(imageName: string, plotName: string, content: stri
 
     return null;
 }
+
+export function exportTxtFile(fileName: string, content: string) {
+    const txtData = `data:text/plain;charset=utf-8,${content}\n`;
+    const dataURL = encodeURI(txtData).replace(/#/g, "%23");
+
+    const a = document.createElement("a") as HTMLAnchorElement;
+    a.href = dataURL;
+
+    a.download = `${fileName}.txt`;
+    a.dispatchEvent(new MouseEvent("click"));
+
+    return null;
+}
