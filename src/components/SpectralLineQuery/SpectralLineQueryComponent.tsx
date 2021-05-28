@@ -28,6 +28,7 @@ export class SpectralLineQueryComponent extends React.Component<WidgetProps> {
     @observable headerTableColumnWidths: Array<number>;
     private headerTableRef: Table;
     private resultTableRef: Table;
+    private scrollToTopHandle;
 
     public static get WIDGET_CONFIG(): DefaultWidgetConfig {
         return {
@@ -197,12 +198,14 @@ export class SpectralLineQueryComponent extends React.Component<WidgetProps> {
 
     private handleFilter = () => {
         this.widgetStore.filter();
-        setTimeout(() => this.resultTableRef?.scrollToRegion(Regions.row(0)), 20);
+        clearTimeout(this.scrollToTopHandle);
+        this.scrollToTopHandle = setTimeout(() => this.resultTableRef?.scrollToRegion(Regions.row(0)), 20);
     };
 
     private handleResetFilter = () => {
         this.widgetStore.resetFilter()
-        setTimeout(() => this.resultTableRef?.scrollToRegion(Regions.row(0)), 20);
+        clearTimeout(this.scrollToTopHandle);
+        this.scrollToTopHandle = setTimeout(() => this.resultTableRef?.scrollToRegion(Regions.row(0)), 20);
     };
 
     private handlePlot = () => {
