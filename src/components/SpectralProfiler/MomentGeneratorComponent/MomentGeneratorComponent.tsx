@@ -127,6 +127,7 @@ export class MomentGeneratorComponent extends React.Component<{widgetStore: Spec
                     <Tooltip
                         content={<span>When cursor is the active region, option 'Active' refers to whole image.</span>}
                         position={Position.BOTTOM}
+                        disabled={!frame}
                     >
                         <HTMLSelect
                             value={widgetStore.momentRegionId}
