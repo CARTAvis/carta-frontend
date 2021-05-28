@@ -257,6 +257,12 @@ export class RegionStore {
         } else {
             this.coordinate = RegionCoordinate.Image;
         }
+
+        // Force rotation to zero if image pixes are non-square
+        if (!this.activeFrame?.hasSquarePixels) {
+            this.rotation = 0;
+        }
+
         this.regionApproximationMap = new Map<number, Point2D[]>();
         this.simplePolygonTest();
         this.modifiedTimestamp = performance.now();
@@ -324,6 +330,11 @@ export class RegionStore {
     }
 
     @action setRotation = (angle: number, skipUpdate = false) => {
+        // Images with non-square pixels do not support rotations
+        if (!this.activeFrame?.hasSquarePixels) {
+            return;
+        }
+
         this.rotation = (angle + 360) % 360;
         this.regionApproximationMap.clear();
         this.modifiedTimestamp = performance.now();

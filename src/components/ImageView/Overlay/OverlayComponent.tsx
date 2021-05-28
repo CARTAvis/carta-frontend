@@ -50,7 +50,7 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
             // Take aspect ratio scaling into account
             let tempWcsInfo = AST.copy(wcsInfo);
 
-            if (frame.aspectRatio !== 1.0) {
+            if (!frame.hasSquarePixels) {
                 const scaleMapping = AST.scaleMap2D(1.0, 1.0 / frame.aspectRatio);
                 const newFrame = AST.frame(2, "Domain=PIXEL");
                 AST.addFrame(tempWcsInfo, 1, scaleMapping, newFrame);
