@@ -358,7 +358,9 @@ export class SpectralLineQueryComponent extends React.Component<WidgetProps> {
             filter: widgetStore.controlHeader,
             dataset: widgetStore.filterResult,
             columnHeaders: widgetStore.displayedColumnHeaders,
-            numVisibleRows: widgetStore.numVisibleRows,
+            // Workaround for disappearing scroll(+3), should be a bug of BlueprintJS in <table>.
+            // The filter header hight is 60px and occupies the hight of 3 rows(20px/row)
+            numVisibleRows: widgetStore.numVisibleRows > 0 ? widgetStore.numVisibleRows + 3 : widgetStore.numVisibleRows,
             flipRowSelection: widgetStore.selectSingleLine,
             updateTableRef: (ref) => { this.resultTableRef = ref; },
             disableSort: true,
