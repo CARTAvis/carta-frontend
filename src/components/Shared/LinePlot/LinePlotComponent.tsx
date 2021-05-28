@@ -699,7 +699,7 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
                         if (followingData?.data) {
                             followingData.data.forEach(obj => {
                                 if (obj.x === o.x) {
-                                    rowData = rowData + `\t${toExponential(obj.y, 10)}`;
+                                    rowData = rowData + `\t${toExponential(obj.y, 6)}`;
                                 }
                             });
                         }
