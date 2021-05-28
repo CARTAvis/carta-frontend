@@ -1,7 +1,7 @@
 import * as React from "react";
 import {observer} from "mobx-react";
 import {CARTA} from "carta-protobuf";
-import {AnchorButton, Button, Divider, FormGroup, HTMLSelect, Icon, Intent, MenuItem, Position, Tooltip} from "@blueprintjs/core";
+import {AnchorButton, Button, Divider, FormGroup, HTMLSelect, MenuItem, Position, Tooltip} from "@blueprintjs/core";
 import {ItemPredicate, ItemRenderer, MultiSelect} from "@blueprintjs/select";
 import {TaskProgressDialogComponent} from "components/Dialogs";
 import {SafeNumericInput, SpectralSettingsComponent} from "components/Shared";
@@ -124,20 +124,17 @@ export class MomentGeneratorComponent extends React.Component<{widgetStore: Spec
                     labelInfo={regionInfo ? <React.Fragment>(<span className="label-info" title={regionInfo}>{regionInfo}</span>)</React.Fragment> : undefined}
                     disabled={!frame}
                 >
-                    <HTMLSelect
-                        value={widgetStore.momentRegionId}
-                        options={widgetStore.momentRegionOptions}
-                        onChange={(ev) => widgetStore.selectMomentRegion(parseInt(ev.target.value))}
-                        disabled={!frame}
-                    />
-                    {frame &&
                     <Tooltip
-                        minimal={true}
                         content={<span>When cursor is the active region, option 'Active' refers to whole image.</span>}
                         position={Position.BOTTOM}
                     >
-                        <Icon className="region-help" icon="help" intent={Intent.WARNING}/>
-                    </Tooltip>}
+                        <HTMLSelect
+                            value={widgetStore.momentRegionId}
+                            options={widgetStore.momentRegionOptions}
+                            onChange={(ev) => widgetStore.selectMomentRegion(parseInt(ev.target.value))}
+                            disabled={!frame}
+                        />
+                    </Tooltip>
                 </FormGroup>
             </React.Fragment>
         );
