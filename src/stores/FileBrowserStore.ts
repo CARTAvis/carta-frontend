@@ -358,8 +358,16 @@ export class FileBrowserStore {
     @action addExportRegion = (regionId: number) => {
         if (!this.exportRegions.includes(regionId)) {
             this.exportRegions.push(regionId);
+            this.exportRegions.sort();
         }
-    }
+    };
+
+    @action deleteExportRegion = (regionId: number) => {
+        const index = this.exportRegions.indexOf(regionId);
+        if (index > -1) {
+            this.exportRegions.splice(index, 1);
+        }
+    };
 
     @action setSaveFilename = (filename: string) => {
         this.saveFilename = filename;
@@ -554,5 +562,18 @@ export class FileBrowserStore {
             }));
         }
         return options;
+    }
+
+    @computed get exportRegionOptionsText(): string {
+        let optionsText = "";
+        if (this.isExportAllRegions) {
+            optionsText = "Export all regions";
+        } else {
+            this.exportRegions.forEach((value, index) => {
+                optionsText += AppStore.Instance.activeFrame?.regionSet?.regions[value].nameString;
+                optionsText += index !== this.exportRegions.length - 1 ? ", " : "";
+            })
+        }
+        return optionsText;
     }
 }
