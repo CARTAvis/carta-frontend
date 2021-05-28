@@ -467,7 +467,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
 
     @computed get momentRegionOptions(): IOptionProps[] {
         const frame = this.effectiveFrame;
-        let momentRegionOptions = [{value: RegionId.ACTIVE, label: "Active"}];
+        let momentRegionOptions = [{value: RegionId.ACTIVE, label: "Active"}, {value: RegionId.IMAGE, label: "Image"}];
         if (frame?.regionSet) {
             const validRegionOptions = frame.regionSet.regions?.filter(r => !r.isTemporary && (r.isClosedRegion || r.regionType === CARTA.RegionType.POINT))?.map(region => {
                 return {value: region?.regionId, label: region?.nameString, disabled: !region?.isClosedRegion};
@@ -484,7 +484,9 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
     // 2. closed region
     @computed get isMomentRegionValid(): boolean {
         if (this.effectiveFrame) {
-            if (this.momentRegionId === RegionId.ACTIVE) {
+            if (this.momentRegionId === RegionId.IMAGE) {
+                return true;
+            } else if (this.momentRegionId === RegionId.ACTIVE) {
                 const region = this.effectiveFrame.regionSet?.selectedRegion;
                 return region?.isClosedRegion ?? true;
             } else {
@@ -497,7 +499,9 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
 
     @computed get momentRegionInfo(): string {
         if (this.effectiveFrame) {
-            if (this.momentRegionId === RegionId.ACTIVE) {
+            if (this.momentRegionId === RegionId.IMAGE) {
+                return "Image";
+            } else if (this.momentRegionId === RegionId.ACTIVE) {
                 const region = this.effectiveFrame.regionSet?.selectedRegion;
                 return !region || region.regionId === RegionId.CURSOR ? "Image" : region.nameString;
             } else {
