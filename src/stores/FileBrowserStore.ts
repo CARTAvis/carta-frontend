@@ -57,8 +57,8 @@ export class FileBrowserStore {
     @observable exportFilename: string;
     @observable exportCoordinateType: CARTA.CoordinateType;
     @observable exportFileType: RegionFileType;
-    @observable isExportAllRegions: boolean = true;
-    @observable exportRegions: number[] = [];
+    @observable isExportAllRegions: boolean;
+    @observable exportRegionsIndexes: number[];
 
     @observable catalogFileList: CARTA.ICatalogListResponse;
     @observable selectedCatalogFile: CARTA.ICatalogFileInfo;
@@ -78,12 +78,15 @@ export class FileBrowserStore {
         this.exportCoordinateType = CARTA.CoordinateType.WORLD;
         this.exportFileType = CARTA.FileType.CRTF;
 
-        // Update channelValueBounds for save image
         autorun(() => {
+            // Update channelValueBounds for save image
             if (AppStore.Instance.activeFrame) {
                 FileBrowserStore.Instance.initialSaveSpectralRange();
                 this.setSaveFileType(AppStore.Instance.activeFrame.frameInfo?.fileInfo.type === CARTA.FileType.CASA ? CARTA.FileType.CASA : CARTA.FileType.FITS);
             }
+
+            this.setIsExportAllRegions(true);
+            this.clearExportRegionsIndexes();
         });
 
     }
@@ -351,21 +354,21 @@ export class FileBrowserStore {
         this.isExportAllRegions = isExportAllRegions;
     };
 
-    @action clearExportRegions = () => {
-        this.exportRegions = [];
+    @action clearExportRegionsIndexes = () => {
+        this.exportRegionsIndexes = [];
     };
 
-    @action addExportRegion = (regionId: number) => {
-        if (!this.exportRegions.includes(regionId)) {
-            this.exportRegions.push(regionId);
-            this.exportRegions.sort();
+    @action addExportRegionsIndex = (regionIndex: number) => {
+        if (!this.exportRegionsIndexes.includes(regionIndex)) {
+            this.exportRegionsIndexes.push(regionIndex);
+            this.exportRegionsIndexes.sort();
         }
     };
 
-    @action deleteExportRegion = (regionId: number) => {
-        const index = this.exportRegions.indexOf(regionId);
+    @action deleteExportRegionsIndex = (regionIndex: number) => {
+        const index = this.exportRegionsIndexes.indexOf(regionIndex);
         if (index > -1) {
-            this.exportRegions.splice(index, 1);
+            this.exportRegionsIndexes.splice(index, 1);
         }
     };
 
@@ -552,13 +555,14 @@ export class FileBrowserStore {
         const frame = appStore.activeFrame;
         if (frame?.regionSet?.regions) {
             const activeRegionId = appStore.selectedRegion ? appStore.selectedRegion.regionId : RegionId.CURSOR;
-            const filteredRegions = frame.regionSet.regions.filter(r => !r.isTemporary && r.isClosedRegion);
-            options = filteredRegions?.map(r => {
-                return {
-                    value: r.regionId,
-                    label: r.nameString + (r.regionId === activeRegionId ? " (Active)" : ""),
-                    active: r.regionId === activeRegionId
-                };
+            frame.regionSet.regions.forEach((region, index) => {
+                if (region.regionId !== RegionId.CURSOR) {
+                    options.push({
+                        value: index,
+                        label: region.nameString + (region.regionId === activeRegionId ? " (Active)" : ""),
+                        active: region.regionId === activeRegionId
+                    })
+                }
             });
         }
         return options;
@@ -569,9 +573,9 @@ export class FileBrowserStore {
         if (this.isExportAllRegions) {
             optionsText = "Export all regions";
         } else {
-            this.exportRegions.forEach((value, index) => {
-                optionsText += AppStore.Instance.activeFrame?.regionSet?.regions[value].nameString;
-                optionsText += index !== this.exportRegions.length - 1 ? ", " : "";
+            this.exportRegionsIndexes.forEach((value, index) => {
+                optionsText += AppStore.Instance.activeFrame?.regionSet?.regions[value]?.nameString;
+                optionsText += index !== this.exportRegionsIndexes.length - 1 ? ", " : "";
             });
         }
         return optionsText;

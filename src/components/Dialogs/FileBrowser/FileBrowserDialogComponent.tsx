@@ -113,20 +113,20 @@ export class FileBrowserDialogComponent extends React.Component {
         fileBrowserStore.setSaveFilename(ev.target.value);
     };
 
-    private handleExportRegionSelected = (regionId: number) => {
+    private handleRegionMenuSelected = (regionIndex: number) => {
         const fileBrowserStore = FileBrowserStore.Instance;
-        if (regionId === 0) { // selected export all regions
+        if (regionIndex === -1) { // selected export all regions
             fileBrowserStore.setIsExportAllRegions(true);
-            fileBrowserStore.clearExportRegions();
+            fileBrowserStore.clearExportRegionsIndexes();
         } else {
-            if (fileBrowserStore.exportRegions.includes(regionId)) {
-                if (fileBrowserStore.exportRegions.length === 1) {
+            if (fileBrowserStore.exportRegionsIndexes.includes(regionIndex)) {
+                if (fileBrowserStore.exportRegionsIndexes.length === 1) {
                     return;
                 } else {
-                    fileBrowserStore.deleteExportRegion(regionId);
+                    fileBrowserStore.deleteExportRegionsIndex(regionIndex);
                 }
             } else {
-                fileBrowserStore.addExportRegion(regionId);
+                fileBrowserStore.addExportRegionsIndex(regionIndex);
                 fileBrowserStore.setIsExportAllRegions(false);
             }
         }
@@ -151,7 +151,7 @@ export class FileBrowserDialogComponent extends React.Component {
         filename = filename.trim();
         const appStore = AppStore.Instance;
         const fileBrowserStore = FileBrowserStore.Instance;
-        appStore.exportRegions(directory, filename, fileBrowserStore.exportCoordinateType, fileBrowserStore.exportFileType, fileBrowserStore.isExportAllRegions, fileBrowserStore.exportRegions);
+        appStore.exportRegions(directory, filename, fileBrowserStore.exportCoordinateType, fileBrowserStore.exportFileType, fileBrowserStore.isExportAllRegions, fileBrowserStore.exportRegionsIndexes);
         console.log(`Exporting all regions to ${directory}/${filename}`);
     };
 
@@ -320,13 +320,13 @@ export class FileBrowserDialogComponent extends React.Component {
             <MenuItem
                 key={item.value}
                 text={item.active ? <b>{item.label}</b> : item.label}
-                icon={fileBrowserStore.exportRegions?.includes(item.value as number) ? "tick" : "blank"}
-                onClick={() => this.handleExportRegionSelected(item.value as number)}
+                icon={fileBrowserStore.exportRegionsIndexes?.includes(item.value as number) ? "tick" : "blank"}
+                onClick={() => this.handleRegionMenuSelected(item.value as number)}
                 shouldDismissPopover={false}
             />
         );
 
-        const regionMenu = (
+        const regionMenu = fileBrowserStore.exportRegionOptions.length > 1 ? (
             <Popover
                 minimal={true}
                 content={
@@ -334,7 +334,7 @@ export class FileBrowserDialogComponent extends React.Component {
                         <MenuItem
                             text="Export all regions"
                             icon={fileBrowserStore.isExportAllRegions ? "tick" : "blank"}
-                            onClick={() => this.handleExportRegionSelected(0)}
+                            onClick={() => this.handleRegionMenuSelected(-1)}
                             shouldDismissPopover={false}
                         />
                         {regionMenuOptions}
@@ -346,7 +346,7 @@ export class FileBrowserDialogComponent extends React.Component {
                     {fileBrowserStore.exportRegionOptionsText}
                 </Button>
             </Popover>
-        );
+        ) : null;
 
         const coordinateTypeMenu = (
             <Popover
