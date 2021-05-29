@@ -38,4 +38,4 @@ export * from "./CatalogSettingsColorHelpComponent";
 export * from "./CatalogSettingsSizeHelpComponent";
 export * from "./CatalogSettingsOrientationHelpComponent";
 export * from "./SpectralLineQueryHelpComponent";
-export * from "./StokesDialogHelpComponent";
+export * from "./StokesHypercubeDialogHelpComponent";

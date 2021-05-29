@@ -41,7 +41,7 @@ import {
     CatalogSettingsSizeHelpComponent,
     CatalogSettingsOrientationHelpComponent,
     SpectralLineQueryHelpComponent,
-    StokesDialogHelpComponent
+    StokesHypercubeDialogHelpComponent
 } from "./HelpContent";
 import {AppStore, HelpStore, HelpType} from "stores";
 
@@ -107,8 +107,8 @@ export class HelpDrawerComponent extends React.Component {
                 content: <RegionDialogHelpComponent/>
         }], [
             HelpType.STOKES, {
-                title: "Stokes Dialog",
-                content: <StokesDialogHelpComponent/>
+                title: "Stokes Hypercube Dialog",
+                content: <StokesHypercubeDialogHelpComponent/>
         }],
 
         // Widgets

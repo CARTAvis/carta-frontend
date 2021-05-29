@@ -24,6 +24,7 @@ export class StatsHelpComponent extends React.Component {
                     <li>StdDev: standard deviation of pixel values in a region</li>
                     <li>Min: minimum pixel value in a region</li>
                     <li>Max: maximum pixel value in a region</li>
+                    <li>Extrema: the maximum or minimum value in a region, depending on which absolute value is greater</li>
                     <li>RMS: root mean square of pixel values in a region</li>
                     <li>SumSq: summation of squared pixel values in a region</li>
                 </ul>
