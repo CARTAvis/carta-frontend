@@ -27,6 +27,8 @@ export class StatsHelpComponent extends React.Component {
                     <li>RMS: root mean square of pixel values in a region</li>
                     <li>SumSq: summation of squared pixel values in a region</li>
                 </ul>
+                <h3>Text export</h3>
+                <p>The statistics table can be exported as a text file. The &quot;Export&quot; button shows up at the bottom-right corner of the widget when hovering over the table.</p>
                 <br/>
                 <h4 id="tip">TIP</h4>
                 <p>Multiple statistics widgets can be created to show statistics for different images and different regions.</p>
