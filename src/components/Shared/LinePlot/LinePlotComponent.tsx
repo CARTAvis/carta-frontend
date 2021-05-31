@@ -659,7 +659,7 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
         }
 
         this.props.multiPlotPropsMap?.forEach((multiPlotProp, key) => {
-            if (key === "colormapScaling" || multiPlotProp.noExport) { // TODO: remove (key === "colormapScaling") to fully support multiple lines
+            if (multiPlotProp.noExport) {
                 return;
             }
 
