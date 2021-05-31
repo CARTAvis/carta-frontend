@@ -562,7 +562,7 @@ char * EMSCRIPTEN_KEEPALIVE fitting(
 
         if (lockedInputs[i][0] == 1 && lockedInputs[i][2] == 1) {
             integralError = NAN;
-            snprintf(logBuffer, sizeof(logBuffer), "%s integral of function = %.12e\n", logBuffer, integral);
+            snprintf(logBuffer, sizeof(logBuffer), "%s integral of function = %.12e @integralUnit\n", logBuffer, integral);
         } else {
             if (lockedInputs[i][0] == 0 && lockedInputs[i][2] == 0) {
                 sigmaAmpFwhm = residualVariance * gsl_matrix_get(covar, gsl_matrix_get(parameterIndexes, i, 0), gsl_matrix_get(parameterIndexes, i, 2));
@@ -572,7 +572,7 @@ char * EMSCRIPTEN_KEEPALIVE fitting(
             } else {
                 integralError = integral * abs(fwhmError / fwhm);
             }
-            snprintf(logBuffer, sizeof(logBuffer), "%s integral of function ~= %.12e +/- %.12e (%.3g%%)\n", logBuffer, integral, integralError, 100 * integralError / abs(integral));
+            snprintf(logBuffer, sizeof(logBuffer), "%s integral of function ~= %.12e @integralUnit +/- %.12e (%.3g%%)\n", logBuffer, integral, integralError, 100 * integralError / abs(integral));
         }
 
         ampOut[2 * i] = amp;
