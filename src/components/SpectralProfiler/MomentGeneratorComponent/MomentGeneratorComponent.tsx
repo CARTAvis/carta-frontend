@@ -124,18 +124,12 @@ export class MomentGeneratorComponent extends React.Component<{widgetStore: Spec
                     labelInfo={regionInfo ? <React.Fragment>(<span className="label-info" title={regionInfo}>{regionInfo}</span>)</React.Fragment> : undefined}
                     disabled={!frame}
                 >
-                    <Tooltip
-                        content={<span>When cursor is the active region, option 'Active' refers to whole image.</span>}
-                        position={Position.BOTTOM}
+                    <HTMLSelect
+                        value={widgetStore.momentRegionId}
+                        options={widgetStore.momentRegionOptions}
+                        onChange={(ev) => widgetStore.selectMomentRegion(parseInt(ev.target.value))}
                         disabled={!frame}
-                    >
-                        <HTMLSelect
-                            value={widgetStore.momentRegionId}
-                            options={widgetStore.momentRegionOptions}
-                            onChange={(ev) => widgetStore.selectMomentRegion(parseInt(ev.target.value))}
-                            disabled={!frame}
-                        />
-                    </Tooltip>
+                    />
                 </FormGroup>
             </React.Fragment>
         );
