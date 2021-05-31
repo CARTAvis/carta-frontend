@@ -168,16 +168,17 @@ export class SimpleShapeRegionComponent extends React.Component<RegionComponentP
 
         if (anchor.includes("left") || anchor.includes("right")) {
             w = Math.abs(deltaAnchorPointUnrotated.x) * sizeFactor;
+            if (keepAspect) {
+                h = w;
+            }
         }
         if (anchor.includes("top") || anchor.includes("bottom")) {
             h = Math.abs(deltaAnchorPointUnrotated.y) * sizeFactor;
+            if (keepAspect) {
+                w = h;
+            }
         }
 
-        if (keepAspect) {
-            const maxSide = Math.max(w, h);
-            w = maxSide;
-            h = maxSide;
-        }
         if (region.regionType === CARTA.RegionType.RECTANGLE) {
             region.setControlPoints([this.editStartCenterPoint, {x: Math.max(1e-3, w), y: Math.max(1e-3, h)}]);
         } else {

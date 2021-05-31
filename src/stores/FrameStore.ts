@@ -443,21 +443,12 @@ export class FrameStore {
     }
 
     @computed get isPVImage(): boolean {
-        return this.positionAxis !== undefined;
-    }
-
-    @computed get positionAxis(): number {
         if (this.frameInfo?.fileInfoExtended?.headerEntries) {
             const entries = this.frameInfo.fileInfoExtended.headerEntries;
             const axis1 = entries.find(entry => entry.name.includes("CTYPE1"));
-            const axis2 = entries.find(entry => entry.name.includes("CTYPE2"));
-            if (axis1?.value?.match(/offset|position|offset position/i)) {
-                return 1;
-            } else if (axis2?.value?.match(/offset|position|offset position/i)) {
-                return 2;
-            }
+            return axis1?.value?.match(/offset|position|offset position/i) ? true : false;
         }
-        return undefined;
+        return false;
     }
 
     @computed get isUVImage(): boolean {
@@ -485,7 +476,13 @@ export class FrameStore {
             // Locate spectral dimension from axis 1~4
             let dimension = undefined;
             if (this.isPVImage) {
-                dimension = this.positionAxis === 1 ? 2 : 1;
+                const typeHeader2 = entries.find(entry => entry.name.includes("CTYPE2"));
+                const typeHeader3 = entries.find(entry => entry.name.includes("CTYPE3"));
+                if (typeHeader2 && !typeHeader2.value.match(/stokes/i)) { // spectral axis should be CTYPE2
+                    dimension = 2;
+                } else if (typeHeader3 && !typeHeader3.value.match(/stokes/i)) { // spectral axis should be CTYPE3
+                    dimension = 3;
+                }
             } else {
                 const typeHeader3 = entries.find(entry => entry.name.includes("CTYPE3"));
                 const typeHeader4 = entries.find(entry => entry.name.includes("CTYPE4"));
@@ -797,7 +794,7 @@ export class FrameStore {
         this.animationChannelRange = [0, frameInfo.fileInfoExtended.depth - 1];
 
         if (this.isPVImage) {
-            const astFrameSet = this.initFrame2D();
+            const astFrameSet = this.initPVFrame();
             if (astFrameSet) {
                 this.spectralFrame = AST.getSpectralFrame(astFrameSet);
                 this.wcsInfo = AST.copy(astFrameSet);
@@ -931,6 +928,51 @@ export class FrameStore {
             return undefined;
         }
         return AST.transformSpectralPoint(this.spectralFrame, type, unit, system, value);
+    };
+
+    private initPVFrame = (): AST.FrameSet => {
+        const spectralDimension = this.spectralAxis?.dimension;
+        if (!this.isPVImage || !(spectralDimension === 2 || spectralDimension === 3)) {
+            return undefined;
+        }
+
+        const fitsChan = AST.emptyFitsChan();
+        for (let entry of this.frameInfo.fileInfoExtended.headerEntries) {
+            if (entry.name.match(/(CTYPE|CDELT|CRPIX|CRVAL|CUNIT|NAXIS|CROTA)[4-9]/)) {
+                continue;
+            }
+
+            let name = entry.name;
+            if (spectralDimension === 2) {
+                if (entry.name.match(/(CTYPE|CDELT|CRPIX|CRVAL|CUNIT|NAXIS|CROTA)[3]/)) {
+                    continue;
+                }
+            } else { // spectralDimension === 3
+                if (entry.name.match(/(CTYPE|CDELT|CRPIX|CRVAL|CUNIT|NAXIS|CROTA)[2]/)) {
+                    continue;
+                } else if (entry.name.match(/(CTYPE|CDELT|CRPIX|CRVAL|CUNIT|NAXIS|CROTA)[3]/)) {
+                    name = entry.name.replace("3", "2");
+                }
+            }
+
+            let value = trimFitsComment(entry.value);
+            if (entry.name.toUpperCase() === "NAXIS" || entry.name.toUpperCase() === "WCSAXES") {
+                value = "2";
+            }
+            if (entry.entryType === CARTA.EntryType.STRING) {
+                value = `'${value}'`;
+            } else {
+                value = FrameStore.ShiftASTCoords(entry, value);
+            }
+
+            while (name.length < 8) {
+                name += " ";
+            }
+
+            const entryString = `${name}=  ${value}`;
+            AST.putFits(fitsChan, entryString);
+        }
+        return AST.getFrameFromFitsChan(fitsChan, false);
     };
 
     private initFrame2D = (): AST.FrameSet => {

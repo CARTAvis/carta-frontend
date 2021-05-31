@@ -63,9 +63,15 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
         OverlayStore.Instance.global.setSystem(coordinateSystem);
     };
 
-    private handelActiveLayerClicked = (layer: ImageViewLayer) => {
+    private handleActiveLayerClicked = (layer: ImageViewLayer) => {
         this.props.onActiveLayerChange(layer);
+<<<<<<< HEAD
         if (layer === ImageViewLayer.RegionMoving || layer === ImageViewLayer.DistanceMeasuring) {
+=======
+        if (layer === ImageViewLayer.RegionCreating) {
+            AppStore.Instance.activeFrame.regionSet.setMode(RegionMode.CREATING);
+        } else {
+>>>>>>> dev
             AppStore.Instance.activeFrame.regionSet.setMode(RegionMode.MOVING);
         }
         AppStore.Instance.activeFrame.distanceMeasuring.resetPos();
@@ -198,17 +204,26 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
                     <AnchorButton icon={<CustomIcon icon="distanceMeasuring"/>} active={appStore.activeLayer === ImageViewLayer.DistanceMeasuring} onClick={() => this.handelActiveLayerClicked(ImageViewLayer.DistanceMeasuring)}/>
                 </Tooltip>
                 <Tooltip position={tooltipPosition} content={<span>Catalog selection<br/><i><small>Click to select single catalog source</small></i></span>}>
+<<<<<<< HEAD
                     <AnchorButton icon={"locate"} active={appStore.activeLayer === ImageViewLayer.Catalog} onClick={() => this.handelActiveLayerClicked(ImageViewLayer.Catalog)} disabled={catalogSelectionDisabled}/>
+=======
+                    <AnchorButton icon={"locate"} active={catalogOverlayEnabled} onClick={() => this.handleActiveLayerClicked(ImageViewLayer.Catalog)} disabled={catalogSelectionDisabled}/>
+>>>>>>> dev
                 </Tooltip>
                 {frame.regionSet.mode === RegionMode.CREATING &&
                 <Tooltip position={tooltipPosition} content={<span>Create region<br/><i><small>Click to select region type</small></i></span>}>
                     <Popover content={regionMenu} position={Position.TOP} minimal={true}>
+<<<<<<< HEAD
                         <AnchorButton icon={regionIcon} active={appStore.activeLayer === ImageViewLayer.RegionCreating} onClick={() => this.handelActiveLayerClicked(ImageViewLayer.RegionCreating)}/>
+=======
+                        <AnchorButton icon={regionIcon} active={true}/>
+>>>>>>> dev
                     </Popover>
                 </Tooltip>
                 }
                 {frame.regionSet.mode === RegionMode.MOVING &&
                 <Tooltip position={tooltipPosition} content={<span>Create region<br/><i><small>Double-click to select region type.<br/>Press C to enter creation mode.</small></i></span>}>
+<<<<<<< HEAD
                     <AnchorButton icon={regionIcon} onClick={() => {
                         frame.regionSet.setMode(RegionMode.CREATING)
                         this.handelActiveLayerClicked(ImageViewLayer.RegionCreating)
@@ -217,6 +232,13 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
                 }
                 <Tooltip position={tooltipPosition} content="Select and pan mode">
                     <AnchorButton icon={"hand"} onClick={() => this.handelActiveLayerClicked(ImageViewLayer.RegionMoving)} active={frame.regionSet.mode === RegionMode.MOVING && appStore.activeLayer === ImageViewLayer.RegionMoving}/>
+=======
+                    <AnchorButton icon={regionIcon} onClick={() => this.handleActiveLayerClicked(ImageViewLayer.RegionCreating)}/>
+                </Tooltip>
+                }
+                <Tooltip position={tooltipPosition} content="Select and pan mode">
+                    <AnchorButton icon={"hand"} onClick={() => this.handleActiveLayerClicked(ImageViewLayer.RegionMoving)} active={frame.regionSet.mode === RegionMode.MOVING && !catalogOverlayEnabled}/>
+>>>>>>> dev
                 </Tooltip>
                 <Tooltip position={tooltipPosition} content={<span>Zoom in (Scroll wheel up){currentZoomSpan}</span>}>
                     <AnchorButton icon={"zoom-in"} onClick={this.handleZoomInClicked}/>
