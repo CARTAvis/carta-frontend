@@ -152,7 +152,7 @@ export class FileBrowserDialogComponent extends React.Component {
         const appStore = AppStore.Instance;
         const fileBrowserStore = FileBrowserStore.Instance;
         appStore.exportRegions(directory, filename, fileBrowserStore.exportCoordinateType, fileBrowserStore.exportFileType, fileBrowserStore.isExportAllRegions, fileBrowserStore.exportRegionIndexes);
-        console.log(`Exporting all regions to ${directory}/${filename}`);
+        console.log(`Exporting regions to ${directory}/${filename}`);
     };
 
     private handleOverwriteAlertConfirmed = () => {
@@ -299,7 +299,7 @@ export class FileBrowserDialogComponent extends React.Component {
             case (BrowserMode.RegionExport):
                 const frame = appStore.activeFrame;
                 return (
-                    <Tooltip content={"Export all regions for the currently active image"}>
+                    <Tooltip content={"Export regions for the currently active image"}>
                         <AnchorButton
                             intent={Intent.PRIMARY}
                             disabled={!FileBrowserDialogComponent.ValidateFilename(fileBrowserStore.exportFilename) || !frame || frame.regionSet.regions.length <= 1}
@@ -322,7 +322,7 @@ export class FileBrowserDialogComponent extends React.Component {
                 content={
                     <Menu>
                         <MenuItem
-                            text="Export all regions"
+                            text="All regions"
                             icon={fileBrowserStore.isExportAllRegions ? "tick" : "blank"}
                             onClick={() => this.handleRegionMenuSelected(-1)}
                             shouldDismissPopover={false}

@@ -571,7 +571,7 @@ export class FileBrowserStore {
     @computed get exportRegionOptionsText(): string {
         let optionsText = "";
         if (this.isExportAllRegions) {
-            optionsText = "Export all regions";
+            optionsText = "All regions";
         } else {
             this.exportRegionIndexes.forEach((value, index) => {
                 optionsText += AppStore.Instance.activeFrame?.regionSet?.regions[value]?.nameString;
