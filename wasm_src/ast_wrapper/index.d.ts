@@ -15,7 +15,7 @@ export function setCanvas(canvas: HTMLCanvasElement);
 export function plot(frameSet: FrameSet, imageX1: number, imageX2: number, imageY1: number, imageY2: number, width: number, height: number, paddingLeft: number, paddingRight: number, paddingTop: number, paddingBottom: number, options: string);
 export function emptyFitsChan(): FitsChan;
 export function putFits(fitsChan: FitsChan, card: string): void;
-export function getFrameFromFitsChan(fitsChan: FitsChan): FrameSet;
+export function getFrameFromFitsChan(fitsChan: FitsChan, checkSkyDomain: boolean): FrameSet;
 export function getSpectralFrame(frameSet: FrameSet): SpecFrame;
 export function getSkyFrameSet(frameSet: FrameSet): FrameSet;
 export function initDummyFrame(): FrameSet;

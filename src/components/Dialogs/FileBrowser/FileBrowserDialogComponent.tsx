@@ -6,7 +6,7 @@ import {Alert, AnchorButton, Breadcrumb, Breadcrumbs, Button, IBreadcrumbProps, 
 import {CARTA} from "carta-protobuf";
 import {FileInfoComponent, FileInfoType} from "components/FileInfo/FileInfoComponent";
 import {FileListTableComponent} from "./FileListTable/FileListTableComponent";
-import {DraggableDialogComponent} from "components/Dialogs";
+import {DraggableDialogComponent, TaskProgressDialogComponent} from "components/Dialogs";
 import {SimpleTableComponentProps} from "components/Shared";
 import {AppStore, BrowserMode, CatalogProfileStore, FileBrowserStore, FileFilteringType, HelpType, ISelectedFile, PreferenceKeys, PreferenceStore} from "stores";
 import "./FileBrowserDialogComponent.scss";
@@ -16,10 +16,14 @@ export class FileBrowserDialogComponent extends React.Component {
     @observable overwriteExistingFileAlertVisible: boolean;
     @observable fileFilterString: string = "";
     @observable debouncedFilterString: string = "";
+    @observable defaultWidth: number;
+    @observable defaultHeight: number;
 
     constructor(props: any) {
         super(props);
         makeObservable(this);
+        this.defaultWidth = 1200;
+        this.defaultHeight = 600;
     }
 
     private handleTabChange = (newId: TabId) => {
@@ -150,6 +154,12 @@ export class FileBrowserDialogComponent extends React.Component {
     private handleExportInputChanged = (ev: React.ChangeEvent<HTMLInputElement>) => {
         const fileBrowserStore = FileBrowserStore.Instance;
         fileBrowserStore.setExportFilename(ev.target.value);
+    };
+
+    private handleFileBrowserRequestCancelled = () => {
+        const fileBrowserStore = FileBrowserStore.Instance;
+        fileBrowserStore.cancelRequestingFileList();
+        fileBrowserStore.resetLoadingStates();
     };
 
     @action handleFilterStringInputChanged = (ev: React.ChangeEvent<HTMLInputElement>) => {
@@ -423,6 +433,11 @@ export class FileBrowserDialogComponent extends React.Component {
         }
     };
 
+    @action private updateDefaultSize = (newWidth: number, newHeight: number) => {
+        this.defaultWidth = newWidth;
+        this.defaultHeight = newHeight;
+    };
+
     public render() {
         const appStore = AppStore.Instance;
         const fileBrowserStore = appStore.fileBrowserStore;
@@ -470,7 +485,7 @@ export class FileBrowserDialogComponent extends React.Component {
         const fileList = fileBrowserStore.getfileListByMode;
 
         return (
-            <DraggableDialogComponent dialogProps={dialogProps} helpType={HelpType.FILE_Browser} minWidth={400} minHeight={400} defaultWidth={1200} defaultHeight={600} enableResizing={true}>
+            <DraggableDialogComponent dialogProps={dialogProps} helpType={HelpType.FILE_Browser} minWidth={400} minHeight={400} defaultWidth={this.defaultWidth} defaultHeight={this.defaultHeight} enableResizing={true} onResizeStop={this.updateDefaultSize}>
                 <div className="file-path">
                     {this.pathItems &&
                         <React.Fragment>
@@ -546,6 +561,15 @@ export class FileBrowserDialogComponent extends React.Component {
                 >
                     This file exists. Are you sure to overwrite it?
                 </Alert>
+                <TaskProgressDialogComponent
+                    isOpen={fileBrowserStore.loadingList && fileBrowserStore.isLoadingDialogOpen && fileBrowserStore.loadingProgress < 1}
+                    progress={fileBrowserStore.loadingProgress}
+                    timeRemaining={appStore.estimatedTaskRemainingTime}
+                    cancellable={true}
+                    onCancel={this.handleFileBrowserRequestCancelled}
+                    text={"Loading"}
+                    contentText={`loading ${fileBrowserStore.loadingCheckedCount} / ${fileBrowserStore.loadingTotalCount}`}
+                />
             </DraggableDialogComponent>
         );
     }

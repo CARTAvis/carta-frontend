@@ -4,34 +4,52 @@
     overflow: hidden;
     display: flex;
     user-select: none;
-    .bp3-form-group {
+
+    .profile-selection-panel {
         margin-bottom: 5px;
         margin-top: 5px;
-        margin-left: 15px;
+        padding-left: 8px;
+        display: flex;
+        flex-direction: row;
 
-        &:first-of-type {
-            margin-left: 5px;
+        .category-set {
+            display: flex;
+            align-items: center;
+            margin-right: 15px;
+
+            .category-checkbox {
+                margin: 0 5px 0 0;
+                font-weight: bold;
+            }
+
+            .dropdown-button {
+                padding: 0 0 0 5px;
+                width: 90px;
+
+                .bp3-button {
+                    padding-left: 8px;
+                    padding-right: 8px;
+
+                    .bp3-button-text {
+                        margin-right: 0;
+                    }
+                }
+
+                .overflow-text {
+                    max-width: 60px;
+                    text-overflow: ellipsis;
+                    overflow: hidden;
+                    white-space: nowrap;
+                    display: block;
+                }
+            }
         }
     }
 
-    .profile-buttons {
+    .shortcut-buttons {
         margin-bottom: 5px;
         margin-top: 5px;
         margin-left: auto;
         padding-right: 8px;
-    }
-
-    .unlinked-to-selected {
-        border: 1px solid transparent;
-    }
-
-    .linked-to-selected-stokes {
-        border: 1px solid $blue2;
-
-        &.dark-theme {
-            border: 1px solid $blue4;
-        }
-
-        transition: border 250ms linear;
     }
 }

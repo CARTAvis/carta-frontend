@@ -10,7 +10,7 @@ emcc -o build/gsl_wrapper.js gsl_wrapper.cc --pre-js build/pre.js --post-js buil
     -L../../wasm_libs/built/lib -lm -lgsl -lm -lgslcblas -g0 -O2 -std=c++11 \
     -s WASM=1 -s ALLOW_MEMORY_GROWTH=1 \
     -s NO_EXIT_RUNTIME=1 -s EXPORTED_FUNCTIONS='["_filterGaussian", "_malloc", "_free"]' \
-    -s EXTRA_EXPORTED_RUNTIME_METHODS='["ccall", "cwrap"]'
+    -s EXTRA_EXPORTED_RUNTIME_METHODS='["ccall", "cwrap", "getValue"]'
 
 printf "Checking for GSL wrapper WASM..."
 if [[ $(find build/gsl_wrapper.js -type f -size +10000c 2>/dev/null) ]]; then

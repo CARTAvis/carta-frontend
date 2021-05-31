@@ -28,6 +28,7 @@ export class SpectralLineQueryComponent extends React.Component<WidgetProps> {
     @observable headerTableColumnWidths: Array<number>;
     private headerTableRef: Table;
     private resultTableRef: Table;
+    private scrollToTopHandle;
 
     public static get WIDGET_CONFIG(): DefaultWidgetConfig {
         return {
@@ -197,12 +198,14 @@ export class SpectralLineQueryComponent extends React.Component<WidgetProps> {
 
     private handleFilter = () => {
         this.widgetStore.filter();
-        this.resultTableRef?.scrollToRegion(Regions.row(0));
+        clearTimeout(this.scrollToTopHandle);
+        this.scrollToTopHandle = setTimeout(() => this.resultTableRef?.scrollToRegion(Regions.row(0)), 20);
     };
 
     private handleResetFilter = () => {
         this.widgetStore.resetFilter()
-        this.resultTableRef?.scrollToRegion(Regions.row(0));
+        clearTimeout(this.scrollToTopHandle);
+        this.scrollToTopHandle = setTimeout(() => this.resultTableRef?.scrollToRegion(Regions.row(0)), 20);
     };
 
     private handlePlot = () => {
@@ -358,7 +361,9 @@ export class SpectralLineQueryComponent extends React.Component<WidgetProps> {
             filter: widgetStore.controlHeader,
             dataset: widgetStore.filterResult,
             columnHeaders: widgetStore.displayedColumnHeaders,
-            numVisibleRows: widgetStore.numVisibleRows,
+            // Workaround for disappearing scroll(+3), should be a bug of BlueprintJS in <table>.
+            // The filter header hight is 60px and occupies the hight of 3 rows(20px/row)
+            numVisibleRows: widgetStore.numVisibleRows > 0 ? widgetStore.numVisibleRows + 3 : widgetStore.numVisibleRows,
             flipRowSelection: widgetStore.selectSingleLine,
             updateTableRef: (ref) => { this.resultTableRef = ref; },
             disableSort: true,

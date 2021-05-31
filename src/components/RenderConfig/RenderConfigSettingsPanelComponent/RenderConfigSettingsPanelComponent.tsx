@@ -5,6 +5,8 @@ import {LinePlotSettingsPanelComponentProps, LinePlotSettingsPanelComponent} fro
 import {RenderConfigWidgetStore} from "stores/widgets/RenderConfigWidgetStore";
 import {WidgetProps, DefaultWidgetConfig, HelpType, WidgetsStore} from "stores";
 import {parseNumber} from "utilities";
+import {LineKey} from "models";
+import "./RenderConfigSettingsPanelComponent.scss";
 
 const KEYCODE_ENTER = 13;
 
@@ -17,7 +19,7 @@ export class RenderConfigSettingsPanelComponent extends React.Component<WidgetPr
             type: "floating-settings",
             minWidth: 280,
             minHeight: 225,
-            defaultWidth: 300,
+            defaultWidth: 350,
             defaultHeight: 375,
             title: "render-config-settings",
             isCloseable: true,
@@ -118,11 +120,12 @@ export class RenderConfigSettingsPanelComponent extends React.Component<WidgetPr
     render() {
         const widgetStore = this.widgetStore;
         const lineSettingsProps: LinePlotSettingsPanelComponentProps = {
-            primaryLineColor: widgetStore.primaryLineColor,
+            lineColorMap: new Map<LineKey, string>([["Primary", widgetStore.primaryLineColor]]),
+            lineOptions: [{value: "Primary", label: "Primary"}],
             lineWidth: widgetStore.lineWidth,
             plotType: widgetStore.plotType,
             linePlotPointSize: widgetStore.linePlotPointSize,
-            setPrimaryLineColor: widgetStore.setPrimaryLineColor,
+            setLineColor: (lineKey: LineKey, color: string) => widgetStore.setPrimaryLineColor(color),
             setLineWidth: widgetStore.setLineWidth,
             setLinePlotPointSize: widgetStore.setLinePlotPointSize,
             setPlotType: widgetStore.setPlotType,
@@ -146,7 +149,9 @@ export class RenderConfigSettingsPanelComponent extends React.Component<WidgetPr
         };
 
         return (
-            <LinePlotSettingsPanelComponent {...lineSettingsProps}/>
+            <div className="render-config-settings-panel">
+                <LinePlotSettingsPanelComponent {...lineSettingsProps}/>
+            </div>
         );
     }
 }

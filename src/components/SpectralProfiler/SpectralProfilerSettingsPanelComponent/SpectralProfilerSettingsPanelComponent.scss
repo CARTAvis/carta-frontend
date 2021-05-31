@@ -17,9 +17,15 @@
         }
     }
 
-    .styling-tab-panel, .moment-tab-panel {
+    .styling-tab-panel {
         .bp3-form-group .bp3-label {
-            width: 8em;
+            width: 12em;
+        }
+    }
+
+    .moment-tab-panel {
+        .bp3-form-group .bp3-label {
+            width: 9em;
         }
     }
 }

@@ -124,11 +124,7 @@ export class ProfileSmoothingStore {
 
     @computed get comments(): string[] {
         let comments: string[] = [];
-        if (this.exportData) {
-            this.exportData.forEach((content, title) => {
-                comments.push(`${title}: ${content}`);
-            });
-        }
+        this.exportData?.forEach((content, title) => comments.push(`${title}: ${content}`));
         return comments;
     }
 

@@ -179,8 +179,8 @@ export class RegionStore {
             return "Cursor";
         } else if (this.name && this.name !== "") {
             return this.name;
-        } else {
-            return `Region ${this.regionId}`;
+        } else { // temporary region id < 0, use "..." for representation
+            return `Region ${this.regionId > CURSOR_REGION_ID ? this.regionId : "..."}`;
         }
     }
 
