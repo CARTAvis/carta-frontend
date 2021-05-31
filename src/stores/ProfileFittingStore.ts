@@ -22,6 +22,7 @@ export class ProfileFittingStore {
     @observable selectedIndex: number;
     @observable hasResult: boolean;
     @observable resultLog: string;
+    @observable resultResidual: Float32Array | Float64Array;
     @observable isCursorSelectingYIntercept: boolean;
     @observable isCursorSelectingSlope: boolean;
     @observable isCursorSelectingComponent: boolean;
@@ -228,18 +229,9 @@ export class ProfileFittingStore {
     @computed get residualPoint2DArray(): Point2D[] {
         if (this.components && this.hasResult) {
             const x = this.originData.x;
-            const y = this.originData.y;
             const residualPoint2DArray = new Array<{ x: number, y: number }>(x.length);
             for (let i = 0; i < x.length; i++) {
-                let yi = 0;
-                for (const component of this.components) {
-                    if (this.function === FittingFunction.GAUSSIAN) {
-                        yi += gaussian(x[i], component.resultAmp, component.resutlCenter, component.resultFwhm);
-                    } else if (this.function === FittingFunction.LORENTZIAN) {
-                        yi += lorentzian(x[i], component.resultAmp, component.resutlCenter, component.resultFwhm);
-                    }
-                }
-                residualPoint2DArray.push({x: x[i], y: y[i] - (yi + (this.resultSlope * x[i] + this.resultYIntercept))});
+                residualPoint2DArray.push({x: x[i], y: this.resultResidual[i]});
             }
             return residualPoint2DArray;
         }
@@ -318,6 +310,7 @@ export class ProfileFittingStore {
             component.setResultIntegralError(fittingResult.integral[2 * i + 1]);
         }
         this.setResultLog(fittingResult.log);
+        this.setResultResidual(fittingResult.residual);
         this.setHasResult(true);
     };
 
@@ -386,6 +379,10 @@ export class ProfileFittingStore {
     @action setResultLog = (val: string) => {
         this.resultLog = val;
     };
+
+    @action setResultResidual = (val: Float32Array | Float64Array) => {
+        this.resultResidual = val;
+    }
 
     @action setIsCursorSelectingYIntercept = (val: boolean) => {
         this.isCursorSelectingYIntercept = val;
