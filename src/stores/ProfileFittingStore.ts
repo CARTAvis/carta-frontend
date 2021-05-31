@@ -137,7 +137,7 @@ export class ProfileFittingStore {
                 resultString += this.resultYInterceptError ? `Y Intercept Error = ${toFixed(this.resultYInterceptError, 6)} (${toFixed(Math.abs(this.resultYInterceptError * 100 / this.resultYIntercept), 3)}%)\n` : "";
             }
             if (this.continuum === FittingContinuum.FIRST_ORDER) {
-                resultString += `Slope = ${toFixed(this.resultSlope, 6)} (${yUnit}/${xUnit})\n`;
+                resultString += `Slope = ${toFixed(this.resultSlope, 6)} (${yUnit} / ${xUnit})\n`;
                 resultString += this.resultSlopeError ? `Slope Error = ${toFixed(this.resultSlopeError, 6)} (${toFixed(Math.abs(this.resultSlopeError * 100 / this.resultSlope), 3)}%)\n` : "";
             }
             if (this.continuum !== FittingContinuum.NONE) {
@@ -152,7 +152,7 @@ export class ProfileFittingStore {
                 resultString += component.resultAmpError ? `Amplitude Error = ${toFixed(component.resultAmpError, 6)} (${toFixed(Math.abs(component.resultAmpError * 100 / component.resultAmp), 3)}%)\n` : "";
                 resultString += `FWHM = ${toFixed(component.resultFwhm, 6)} (${xUnit})\n`;
                 resultString += component.resultFwhmError ? `FWHM Error = ${toFixed(component.resultFwhmError, 6)} (${toFixed(Math.abs(component.resultFwhmError * 100 / component.resultFwhm), 3)}%)\n` : "";
-                resultString += `Integral = ${toFixed(component.resultIntegral, 6)} (${xUnit}*${yUnit})\n`;
+                resultString += `Integral = ${toFixed(component.resultIntegral, 6)} (${yUnit} * ${xUnit})\n`;
                 resultString += component.resultIntegralError ? `Integral Error ~= ${toFixed(component.resultIntegralError, 6)} (${toFixed(Math.abs(component.resultIntegralError * 100 / component.resultIntegral), 3)}%)\n\n` : "";
             }
         }
@@ -336,8 +336,8 @@ export class ProfileFittingStore {
         let log: string = fittingResult.log;
         log = log.replaceAll("@yUnit", yUnit ? `(${yUnit})` : "");
         log = log.replaceAll("@xUnit", xUnit ? `(${xUnit})` : "");
-        log = log.replace("@slopeUnit", xUnit && yUnit ? `(${yUnit}/${xUnit})` : "");
-        log = log.replaceAll("@integralUnit", xUnit && yUnit ? `(${xUnit}*${yUnit})` : "");
+        log = log.replace("@slopeUnit", yUnit && xUnit ? `(${yUnit} / ${xUnit})` : "");
+        log = log.replaceAll("@integralUnit", yUnit && xUnit ? `(${yUnit} * ${xUnit})` : "");
         this.setResultLog(log);
         this.setResultResidual(fittingResult.residual);
         this.setHasResult(true);
