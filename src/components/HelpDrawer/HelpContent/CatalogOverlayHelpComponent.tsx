@@ -10,7 +10,7 @@ export class CatalogOverlayHelpComponent extends React.Component {
         return (
             <div>
                 <p><ImageComponent light={headCatalogueButton} dark={headCatalogueButton_d} width="90%"/></p>
-                <p>Source catalogue files in the VOTable or the FITS format can be loaded in CARTA (via &quot;File&quot;-&gt; &quot;Import catalog&quot;) for visualization as an image overlay, or a 2D scatter plot, or a histogram.</p>
+                <p>Source catalogue files in VOTable or FITS format can be loaded in CARTA (via &quot;File&quot;-&gt; &quot;Import catalog&quot;) for visualization as an image overlay, or a 2D scatter plot, or a histogram.</p>
                 <p>Once a source catalogue file is loaded, the information of each column will be shown in the upper table, while the actual catalogue entries are displayed in the lower table. By default, only the first 10 columns are
                     enabled and displayed. Users may configure it to show or hide certain columns to be displayed in the lower table.</p>
                 
