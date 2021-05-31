@@ -200,7 +200,7 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
                     <AnchorButton icon={<CustomIcon icon="distanceMeasuring"/>} active={appStore.activeLayer === ImageViewLayer.DistanceMeasuring} onClick={() => this.handleActiveLayerClicked(ImageViewLayer.DistanceMeasuring)}/>
                 </Tooltip>
                 <Tooltip position={tooltipPosition} content={<span>Catalog selection<br/><i><small>Click to select single catalog source</small></i></span>}>
-                    <AnchorButton icon={"locate"} active={appStore.activeLayer === ImageViewLayer.Catalog} onClick={() => this.handleActiveLayerClicked(ImageViewLayer.Catalog)} disabled={catalogSelectionDisabled}/>v
+                    <AnchorButton icon={"locate"} active={appStore.activeLayer === ImageViewLayer.Catalog} onClick={() => this.handleActiveLayerClicked(ImageViewLayer.Catalog)} disabled={catalogSelectionDisabled}/>
                 </Tooltip>
                 {frame.regionSet.mode === RegionMode.CREATING &&
                 <Tooltip position={tooltipPosition} content={<span>Create region<br/><i><small>Click to select region type</small></i></span>}>
