@@ -3,7 +3,7 @@ import * as GSL from "gsl_wrapper";
 import {FittingFunction, FittingContinuum} from "components/SpectralProfiler/ProfileFittingComponent/ProfileFittingComponent";
 import {SpectralProfileWidgetStore} from "stores/widgets";
 import {Point2D} from "models";
-import {LinePlotInsideBoxMarker} from "components/Shared/LinePlot/LinePlotComponent";
+import {LinePlotInsideBoxMarker, LinePlotInsideTextMarker} from "components/Shared/LinePlot/LinePlotComponent";
 import {getColorForTheme, toFixed, gaussian, lorentzian} from "utilities";
 import {autoDetecting} from "utilities/fitting_heuristics";
 
@@ -92,7 +92,7 @@ export class ProfileFittingStore {
         if (this.components) {
             for (let i = 0; i < this.components.length; i++) {
                 const component = this.components[i];
-                if (component.isReadyToFit && !(isFinite(component.resutlCenter) && isFinite(component.resultAmp) && isFinite(component.resultFwhm))) {
+                if (component.isReadyToFit && !(isFinite(component.resultCenter) && isFinite(component.resultAmp) && isFinite(component.resultFwhm))) {
                     const deltaYForContinuum = component.center * this.slope + this.yIntercept;
                     const initialBox: LinePlotInsideBoxMarker = {
                         boundary: {xMin: component.center - 0.5 * component.fwhm, xMax: component.center + 0.5 * component.fwhm, yMin: 0 + deltaYForContinuum, yMax: component.amp + deltaYForContinuum},
@@ -106,6 +106,25 @@ export class ProfileFittingStore {
             }
         }
         return boxes;
+    }
+
+    @computed get componentResultNumber(): LinePlotInsideTextMarker[] {
+        const texts: LinePlotInsideTextMarker[] = [];
+        if (this.components && this.hasResult) {
+            for (let i = 0; i < this.components.length; i++) {
+                const component = this.components[i];
+                if (isFinite(component.resultCenter) && isFinite(component.resultAmp) && isFinite(component.resultFwhm)) {
+                    const deltaYForContinuum = component.resultCenter * this.resultSlope + this.resultYIntercept;
+                    const insideText: LinePlotInsideTextMarker = {
+                        x: component.resultCenter,
+                        y: deltaYForContinuum + 0.5 * component.resultAmp,
+                        text: `${i + 1}`
+                    };
+                    texts.push(insideText);
+                }
+            }
+        }
+        return texts;
     }
 
     @computed get resultString(): string {
@@ -124,11 +143,12 @@ export class ProfileFittingStore {
             }
             for (let i = 0; i < this.components.length; i++) {
                 const component = this.components[i];
-                resultString += `Component #${i + 1}\nCenter = ${toFixed(component.resutlCenter, 6)}\n`;
-                resultString += component.resutlCenterError ? `Center Error = ${toFixed(component.resutlCenterError, 6)} (${toFixed(Math.abs(component.resutlCenterError * 100 / component.resutlCenter), 3)}%)\n` : "";
-                resultString += `Amplitude = ${toFixed(component.resultAmp, 6)} \n`;
+                resultString += `Component #${i + 1}\n`;
+                resultString += `Center = ${toFixed(component.resultCenter, 6)} (${this.widgetStore.effectiveFrame.spectralUnitStr})\n`;
+                resultString += component.resultCenterError ? `Center Error = ${toFixed(component.resultCenterError, 6)} (${toFixed(Math.abs(component.resultCenterError * 100 / component.resultCenter), 3)}%)\n` : "";
+                resultString += `Amplitude = ${toFixed(component.resultAmp, 6)} (${this.widgetStore.yUnit})\n`;
                 resultString += component.resultAmpError ? `Amplitude Error = ${toFixed(component.resultAmpError, 6)} (${toFixed(Math.abs(component.resultAmpError * 100 / component.resultAmp), 3)}%)\n` : "";
-                resultString += `FWHM = ${toFixed(component.resultFwhm, 6)}\n`;
+                resultString += `FWHM = ${toFixed(component.resultFwhm, 6)} (${this.widgetStore.effectiveFrame.spectralUnitStr})\n`;
                 resultString += component.resultFwhmError ? `FWHM Error = ${toFixed(component.resultFwhmError, 6)} (${toFixed(Math.abs(component.resultFwhmError * 100 / component.resultFwhm), 3)}%)\n` : "";
                 resultString += `Integral = ${toFixed(component.resultIntegral, 6)}\n`;
                 resultString += component.resultIntegralError ? `Integral Error ~= ${toFixed(component.resultIntegralError, 6)} (${toFixed(Math.abs(component.resultIntegralError * 100 / component.resultIntegral), 3)}%)\n\n` : "";
@@ -197,9 +217,9 @@ export class ProfileFittingStore {
                 let yi = 0;
                 for (const component of this.components) {
                     if (this.function === FittingFunction.GAUSSIAN) {
-                        yi += gaussian(x[i], component.resultAmp, component.resutlCenter, component.resultFwhm);
+                        yi += gaussian(x[i], component.resultAmp, component.resultCenter, component.resultFwhm);
                     } else if (this.function === FittingFunction.LORENTZIAN) {
-                        yi += lorentzian(x[i], component.resultAmp, component.resutlCenter, component.resultFwhm);
+                        yi += lorentzian(x[i], component.resultAmp, component.resultCenter, component.resultFwhm);
                     }
                 }
                 resultPoint2DArray.push({x: x[i], y: yi + (this.resultSlope * x[i] + this.resultYIntercept)});
@@ -216,7 +236,7 @@ export class ProfileFittingStore {
             for (const component of this.components) {
                 let individualResultPoint2DArray: Point2D[] = [];
                 for (let i = 0; i < x.length; i++) {
-                    const yi = this.function === FittingFunction.GAUSSIAN ? gaussian(x[i], component.resultAmp, component.resutlCenter, component.resultFwhm) : lorentzian(x[i], component.resultAmp, component.resutlCenter, component.resultFwhm);
+                    const yi = this.function === FittingFunction.GAUSSIAN ? gaussian(x[i], component.resultAmp, component.resultCenter, component.resultFwhm) : lorentzian(x[i], component.resultAmp, component.resultCenter, component.resultFwhm);
                     individualResultPoint2DArray.push({x: x[i], y: yi + (this.resultSlope * x[i] + this.resultYIntercept)});
                 }
                 individualResultPoint2DArrays.push(individualResultPoint2DArray);
@@ -309,7 +329,11 @@ export class ProfileFittingStore {
             component.setResultIntegral(fittingResult.integral[2 * i]);
             component.setResultIntegralError(fittingResult.integral[2 * i + 1]);
         }
-        this.setResultLog(fittingResult.log);
+        let log: string = fittingResult.log;
+        log = log.replaceAll("@yUnit", this.widgetStore.yUnit ? `(${this.widgetStore.yUnit})` : "");
+        log = log.replaceAll("@xUnit", this.widgetStore.effectiveFrame.spectralUnitStr ? `(${this.widgetStore.effectiveFrame.spectralUnitStr})` : "");
+        log = log.replace("@slopeUnit", this.widgetStore.yUnit && this.widgetStore.effectiveFrame.spectralUnitStr ?`(${this.widgetStore.yUnit}/${this.widgetStore.effectiveFrame.spectralUnitStr})` : "");
+        this.setResultLog(log);
         this.setResultResidual(fittingResult.residual);
         this.setHasResult(true);
     };
@@ -429,10 +453,10 @@ export class ProfileFittingIndividualStore {
     @observable lockedCenter: boolean;
     @observable lockedAmp: boolean;
     @observable lockedFwhm: boolean;
-    @observable resutlCenter: number;
+    @observable resultCenter: number;
     @observable resultAmp: number;
     @observable resultFwhm: number;
-    @observable resutlCenterError: number;
+    @observable resultCenterError: number;
     @observable resultAmpError: number;
     @observable resultFwhmError: number;
     @observable resultIntegral: number;
@@ -477,7 +501,7 @@ export class ProfileFittingIndividualStore {
     };
 
     @action setResultCenter = (val: number) => {
-        this.resutlCenter = val;
+        this.resultCenter = val;
     };
 
     @action setResultAmp = (val: number) => {
@@ -489,7 +513,7 @@ export class ProfileFittingIndividualStore {
     };
 
     @action setResultCenterError = (val: number) => {
-        this.resutlCenterError = val;
+        this.resultCenterError = val;
     };
 
     @action setResultAmpError = (val: number) => {

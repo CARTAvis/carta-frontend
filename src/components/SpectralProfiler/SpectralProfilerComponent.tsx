@@ -282,6 +282,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
             setSelectedInsideBox: this.setSelectedBox,
             setSelectedLine: this.setSelectedLine,
             insideBoxes: this.widgetStore.fittingStore.componentPlottingBoxes,
+            insideTexts: this.widgetStore.fittingStore.componentResultNumber,
             zeroLineWidth: 2,
             order: 1,
             multiPlotPropsMap: new Map<string, MultiPlotProps>()
@@ -292,18 +293,8 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
             if (frame.spectralAxis && !frame.isCoordChannel) {
                 linePlotProps.xLabel = frame.spectralLabel;
             }
-            if (frame.unit) {
-                let yLabelUnit = "";
-                if (this.widgetStore.profileSelectionStore.isSameStatsTypeUnit) {
-                    if (this.widgetStore.profileSelectionStore.isStatsTypeFluxDensityOnly) {
-                        yLabelUnit = " (Jy)";
-                    } else if (this.widgetStore.profileSelectionStore.isStatsTypeSumSqOnly) {
-                        yLabelUnit = ` (${frame.unit})^2`;
-                    } else {
-                        yLabelUnit = ` (${frame.unit})`;
-                    }
-                }
-                linePlotProps.yLabel = `Value${yLabelUnit}`;
+            if (this.widgetStore.yUnit) {
+                linePlotProps.yLabel = `Value (${this.widgetStore.yUnit})`;
             }
 
             const currentPlotData = this.plotData;
