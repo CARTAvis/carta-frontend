@@ -50,7 +50,7 @@ export class ImageViewHelpComponent extends React.Component {
                     alternative mode is <code>click</code>, which causes the clicked pixel to be centered in the image viewer.</p>
 
                 <h3 id="matching-image-spatially-and-spectrally">Matching image spatially and spectrally</h3>
-                <p>Different images may be matched in world coordinate spatially and/or spectrally. This can be triggered by the &quot;WCS matching&quot; button. Matching WCS on appending can be enabled in the preferences dialog.</p>
+                <p>Different images may be matched in world coordinate spatially and/or spectrally. This can be triggered by the <code>WCS matching</code> button. Matching WCS on appending can be enabled in the preferences dialog.</p>
                 <p><ImageComponent light={WCSMatchButton} dark={WCSMatchButton_d} width="70%"/></p>
                 <p>CARTA supports the following matching schemes:</p>
                 <ul>
@@ -88,7 +88,7 @@ export class ImageViewHelpComponent extends React.Component {
                 <p> Elements of the image plot such as grid line style, label style, colorbar style, etc., can be customized via the image viewer settings dialog.</p>
 
                 <h3 id="exports">Image plot export</h3>
-                <p>What you see in the current image view can be exported as a PNG file with the &quot;Export image&quot; button in the image tool bar.</p>
+                <p>What you see in the current image view can be exported as a PNG file with the <code>Export image</code> button in the image tool bar.</p>
                 <p><ImageComponent light={exportPNGButton} dark={exportPNGButton_d} width="70%"/></p>
 
                 <h3 id="image-information-and-header">Image information and header</h3>

@@ -72,8 +72,8 @@ export class PreferencesHelpComponent extends React.Component {
                     <li>Creation mode: the way how rectangle and ellipse regions are created with cursor</li>
                 </ul>
                 <h3 id="performance">Performance</h3>
-                <p>Performance related control parameters are included here. We do not recommend you to change the settings here. If the bandwidth connecting to a CARTA server is limited, you may enable the &quot;low bandwidth
-                    mode&quot; which reduces displayed image resolution and cursor responsiveness.</p>
+                <p>Performance related control parameters are included here. We do not recommend you to change the settings here. If the bandwidth connecting to a CARTA server is limited, you may enable the <code>low bandwidth
+                    mode</code> which reduces displayed image resolution and cursor responsiveness.</p>
                 <h3 id="log-events">Log events</h3>
                 <p>This is for development and debugging purpose. General users should not enable anything here.</p>
             </div>
