@@ -8,7 +8,7 @@ export class PreferencesHelpComponent extends React.Component {
         return (
             <div>
                 <p><ImageComponent light={headPreferenceButton} dark={headPreferenceButton_d} width="90%"/></p>
-                <p>The preferences dialogue provides a centralized place to customize the entire graphical user interface and performance control parameters. All settings are recorded and applied to new CARTA sessions. Some settings are
+                <p>The preferences dialog provides a centralized place to customize the entire graphical user interface and performance control parameters. All settings are recorded and applied to new CARTA sessions. Some settings are
                     effective immediately.</p>
                 <h3 id="global">Global</h3>
                 <p>This section provides usability customization.</p>
@@ -22,7 +22,7 @@ export class PreferencesHelpComponent extends React.Component {
                     <li>Enable drag-to-pan: when enabled, pan action is achieved by click-and-dragging. When disabled, pan action is achieved by a click where the clicked pixel will be centered in the image viewer.</li>
                     <li>WCS matching on append: trigger WCS matching automatically for newly appended images</li>
                     <li>Spectral matching: spectral convention to be used for spectral matching of image cubes</li>
-                    <li>Transparent image background: when enabled, the exported png image will have a transparent background. When disabled (default), a white or a black background is added based on the GUI theme.</li>
+                    <li>Transparent image background: when this is enabled, the exported png image will have a transparent background. When it is disabled (default), a white or a black background is added depending on the GUI theme.</li>
                 </ul>
                 <h3 id="render-configuration">Render configuration</h3>
                 <p>This section provides customization of how a raster image is rendered by default.</p>
@@ -31,7 +31,7 @@ export class PreferencesHelpComponent extends React.Component {
                     <li>Default colormap: colormap for rendering a raster image</li>
                     <li>Default percentile ranks: clip level to be applied to the pixel value-to-color mapping</li>
                     <li>NaN color: color to render a NaN (not a number) pixel</li>
-                    <li>Smoothed bias/contrast: when enabled (default), smooth bias and contrast funtions are applied, resulting a  smooth scaling function. When disabled, the final scaling function contains kinks.</li>
+                    <li>Smoothed bias/contrast: when this is enabled (default), smooth bias and contrast functions are applied, resulting   a smooth scaling function. When it is disabled, the final scaling function contains kinks.</li>
                 </ul>
                 <h3 id="contour-configuration">Contour configuration</h3>
                 <p>This section provides customization of how a contour layer is calculated and rendered by default.</p>
@@ -72,7 +72,7 @@ export class PreferencesHelpComponent extends React.Component {
                     <li>Creation mode: the way how rectangle and ellipse regions are created with cursor</li>
                 </ul>
                 <h3 id="performance">Performance</h3>
-                <p>Performance related control parameters are included here. We do not recommend users to change the settings here. If the bandwidth connecting to a CARTA server is limited, users may enable the &quot;low bandwidth
+                <p>Performance related control parameters are included here. We do not recommend you to change the settings here. If the bandwidth connecting to a CARTA server is limited, you may enable the &quot;low bandwidth
                     mode&quot; which reduces displayed image resolution and cursor responsiveness.</p>
                 <h3 id="log-events">Log events</h3>
                 <p>This is for development and debugging purpose. General users should not enable anything here.</p>

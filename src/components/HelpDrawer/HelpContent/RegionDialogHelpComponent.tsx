@@ -5,7 +5,7 @@ export class RegionDialogHelpComponent extends React.Component {
         return (
             <div>
 
-                <p>The region configuration dialogue allows users to change the appearance of a region, such as</p>
+                <p>The region configuration dialog allows you to change the appearance of a region, such as</p>
                 <ul>
                     <li>color</li>
                     <li>linewidth</li>
@@ -21,11 +21,11 @@ export class RegionDialogHelpComponent extends React.Component {
                 <br/>
                 <h4 id="note">NOTE</h4>
                 <ul>
-                    <li>The displayed image coordinates refer to the spatial reference image as indicated in the title of the dialogue.</li>
-                    <li>The appearance of a region on a spatially matched image may be distorted due to projection effect.</li>
+                    <li>The displayed image coordinates refer to the spatial reference image as indicated in the title of the dialog.</li>
+                    <li>The appearance of a region on a spatially matched image may be distorted due to projection effects.</li>
                 </ul>
                 <h4 id="tip">TIP</h4>
-                <p><code>Double-Click</code> on a region in the image viewer or on an entry in the region list widget will bring up this region configuration dialogue.</p>
+                <p><code>Double-Click</code> on a region in the image viewer or on an entry in the region list widget will bring up this region configuration dialog.</p>
 
             </div>
         );

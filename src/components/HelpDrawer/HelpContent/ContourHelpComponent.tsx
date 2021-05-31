@@ -8,11 +8,11 @@ export class ContourHelpComponent extends React.Component {
         return (
             <div>
                 <p><ImageComponent light={headContourButton} dark={headContourButton_d} width="90%"/></p>
-                <p>Contour configuration dialogue allows users to generate a contour layer on top of a raster image in the image viewer. Steps to create a contour layer with the &quot;Levels&quot; tab are:</p>
+                <p>Contour configuration dialog allows you to generate a contour layer on top of a raster image in the image viewer. Steps to create a contour layer with the &quot;Levels&quot; tab are:</p>
                 <ol>
                     <li>
                         <p>Select an image from the &quot;Data source&quot; dropdown. A per-channel histogram of the current channel and current Stokes as indicated in the animator will be displayed with visualization of mean (in dashed
-                            line) and mean +/- one standard deviation (in shaded area). Optionally, users can request per-cube histogram if necessary.</p>
+                            line) and mean +/- one standard deviation (in shaded area). Optionally, you can request per-cube histogram if necessary.</p>
                     </li>
                     <li>
                         <p>Define a set of contour levels to be calculated and rendered. There are various ways to define levels:</p>
@@ -27,9 +27,9 @@ export class ContourHelpComponent extends React.Component {
                     </li>
                 </ol>
                 <p>To remove a contour layer, click the &quot;Clear&quot; button.</p>
-                <p>Users may use the lock button next to the data source dropdown to disable or enable synchronization of data source with the image slider in the animator.</p>
+                <p>You may use the lock button next to the data source dropdown to disable or enable synchronization of data source with the image slider in the animator.</p>
                 <h3 id="contour-smoothness">Contour smoothness</h3>
-                <p>By default, image is Gaussian-smoothed with a kernel size of 4 by 4 pixels before calculating contour vertices. This can be customized in the &quot;Configuration&quot; tab. Smoothing mode includes:</p>
+                <p>By default, the image is Gaussian-smoothed with a kernel size of four by four pixels before contour vertices are calculated. This can be customized in the &quot;Configuration&quot; tab. Suppored smoothing modes are:</p>
                 <ul>
                     <li>No smoothing</li>
                     <li>Block (faster, not ideal for compact objects)</li>
@@ -45,9 +45,9 @@ export class ContourHelpComponent extends React.Component {
                     <li>Contrast</li>
                 </ul>
                 <p>Note that changes in styling will be applied immediately if the contour level set does not change.</p>
-                <h3 id="customizing-the-contour-configuration-dialogue">Customizing the contour configuration dialogue</h3>
-                <p>The defaults of many options in the contour configuration dialogue are customizable via the &quot;Contour configuration&quot; tab in the preference dialogue.</p>
-                <p>Performance related options are included in the &quot;Performance&quot; tab of the preferences dialogue. <em>Note that we do not recommend modifying the factory defaults. Change with cautions.</em></p>
+                <h3 id="customizing-the-contour-configuration-dialog">Customizing the contour configuration dialog</h3>
+                <p>The defaults of many options in the contour configuration dialog are customizable via the &quot;Contour configuration&quot; tab in the preference dialog.</p>
+                <p>Performance-related options are included in the &quot;Performance&quot; tab of the preferences dialog. <em>Note that we do not recommend modifying the factory defaults. Change with caution.</em></p>
             </div>
         );
     }

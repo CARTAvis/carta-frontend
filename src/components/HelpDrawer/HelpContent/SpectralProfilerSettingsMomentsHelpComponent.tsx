@@ -37,7 +37,7 @@ export class SpectralProfilerSettingsMomentsHelpComponent extends React.Componen
                         </ul>
                     </li>
                 </ul>
-                <p>When all the parameters are defined, by clicking the &quot;Generate&quot; button moment calculations will begin. Depending on the file size, moment calculations may take a while. If that happens, users may consider to
+                <p>When all the parameters are defined, by clicking the &quot;Generate&quot; button moment calculations will begin. Depending on the file size, moment calculations may take a while. If that happens, you may consider to
                     cancel the calculations and re-define a proper region and/or spectral range.</p>
                 <p>Once moment images are generated, they will be loaded and displayed in the image viewer. They are named as $image_filename.moment.$keyword. For example, if moment 0, 1 and 2 images are generated from the image M51.fits,
                     they will be named as M51.fits.moment.integrated, M51.fits.moment.weighted_coord, and M51.fits.moment.weighted_dispersion_coord, respectively. These images are kept in RAM per session and if there is a new request of

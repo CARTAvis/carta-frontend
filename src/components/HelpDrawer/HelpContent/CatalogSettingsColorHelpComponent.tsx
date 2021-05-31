@@ -8,7 +8,7 @@ export class CatalogSettingsColorHelpComponent extends React.Component {
         return (
             <div>
                 <h3>Marker color</h3>
-                <p>This dialogue provides options to define a color or a colormap to source markers of an image overlay. If the &quot;Column&quot; dropdown menu is None, all markers are rendered with a single color as defined with the &quot;Color&quot; dropdown menu. Users may assign a numeric data column for color mapping. Different scaling, colormap, or clip bounds can be applied.</p>
+                <p>This dialog provides options to set the color or colormap to source markers of an image overlay. If the &quot;Column&quot; dropdown menu is None, all markers are rendered with a single color as set with the &quot;Color&quot; dropdown menu. You may assign a numeric data column for color mapping. Different scaling, colormap, or clip bounds can be applied.</p>
                 <p><ImageComponent light={demoImageOverlayColorMapping} dark={demoImageOverlayColorMapping_d} width="100%"/></p>
             </div>
         );

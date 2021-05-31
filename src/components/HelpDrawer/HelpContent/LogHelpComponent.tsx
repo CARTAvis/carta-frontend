@@ -16,7 +16,7 @@ export class LogHelpComponent extends React.Component {
                     <li>Error</li>
                     <li>Critical</li>
                 </ul>
-                <p>When users believe there is something wrong, please contact the <a href="mailto:carta_helpdesk@asiaa.sinica.edu.tw">helpdesk</a> or file an issue
+                <p>When you believe there is something wrong, please contact the <a href="mailto:carta_helpdesk@asiaa.sinica.edu.tw">helpdesk</a> or file an issue
                     on <a href="https://github.com/CARTAvis/carta/issues">Github</a> (recommended).</p>
 
             </div>

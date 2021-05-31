@@ -12,7 +12,7 @@ export class HistogramHelpComponent extends React.Component {
                 <h3 id="images">Images</h3>
                 <p>The image dropdown defaults to &quot;Active&quot; image which means the current image in the image viewer.</p>
                 <h3 id="regions">Regions</h3>
-                <p>The region dropdown defaults to &quot;Active&quot; region which means a selected region in the image viewer. Users can select a region by clicking one in the image viewer, or by clicking a region entry on the region list
+                <p>The region dropdown defaults to &quot;Active&quot; region which means a selected region in the image viewer. You can select a region by clicking one in the image viewer, or by clicking a region entry on the region list
                     widget. Histogram plot of the selected region will be updated accordingly.</p>
                 <h3 id="interactivity-zoom-and-pan">Interactivity: zoom and pan</h3>
                 <p>The x and y ranges of the histogram plot can be modified by</p>
@@ -24,11 +24,11 @@ export class HistogramHelpComponent extends React.Component {
                     <li><code>double-click</code> to reset x and y ranges</li>
                     <li><code>shift + click-and-drag</code> to pan in x</li>
                 </ul>
-                <p>In addition, the x and y ranges can be explicitly set in the histogram settings dialogue.</p>
+                <p>In addition, the x and y ranges can be explicitly set in the histogram settings dialog.</p>
                 <h3 id="exports">Exports</h3>
                 <p>The histogram plot can be exported as a png file or a text file in tsv format via the buttons at the bottom-right corner (shown when hovering over the plot).</p>
                 <h3 id="plot-cosmetics">Plot cosmetics</h3>
-                <p>The appearance of the histogram plot is customizable via the histogram settings dialogue (the cog icon). Supported options are:</p>
+                <p>The appearance of the histogram plot is customizable via the histogram settings dialog (the cog icon). Supported options are:</p>
                 <ul>
                     <li>color of the plot</li>
                     <li>plot styles including steps (default), lines, and dots</li>
