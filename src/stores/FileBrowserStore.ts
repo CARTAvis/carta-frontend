@@ -58,7 +58,7 @@ export class FileBrowserStore {
     @observable exportCoordinateType: CARTA.CoordinateType;
     @observable exportFileType: RegionFileType;
     @observable isExportAllRegions: boolean;
-    @observable exportRegionsIndexes: number[];
+    @observable exportRegionIndexes: number[];
 
     @observable catalogFileList: CARTA.ICatalogListResponse;
     @observable selectedCatalogFile: CARTA.ICatalogFileInfo;
@@ -86,7 +86,7 @@ export class FileBrowserStore {
             }
 
             this.setIsExportAllRegions(true);
-            this.clearExportRegionsIndexes();
+            this.clearExportRegionIndexes();
         });
 
     }
@@ -354,21 +354,21 @@ export class FileBrowserStore {
         this.isExportAllRegions = isExportAllRegions;
     };
 
-    @action clearExportRegionsIndexes = () => {
-        this.exportRegionsIndexes = [];
+    @action clearExportRegionIndexes = () => {
+        this.exportRegionIndexes = [];
     };
 
-    @action addExportRegionsIndex = (regionIndex: number) => {
-        if (!this.exportRegionsIndexes.includes(regionIndex)) {
-            this.exportRegionsIndexes.push(regionIndex);
-            this.exportRegionsIndexes.sort();
+    @action addExportRegionIndex = (regionIndex: number) => {
+        if (!this.exportRegionIndexes.includes(regionIndex)) {
+            this.exportRegionIndexes.push(regionIndex);
+            this.exportRegionIndexes.sort();
         }
     };
 
-    @action deleteExportRegionsIndex = (regionIndex: number) => {
-        const index = this.exportRegionsIndexes.indexOf(regionIndex);
+    @action deleteExportRegionIndex = (regionIndex: number) => {
+        const index = this.exportRegionIndexes.indexOf(regionIndex);
         if (index > -1) {
-            this.exportRegionsIndexes.splice(index, 1);
+            this.exportRegionIndexes.splice(index, 1);
         }
     };
 
@@ -561,7 +561,7 @@ export class FileBrowserStore {
                         value: index,
                         label: region.nameString + (region.regionId === activeRegionId ? " (Active)" : ""),
                         active: region.regionId === activeRegionId
-                    })
+                    });
                 }
             });
         }
@@ -573,9 +573,9 @@ export class FileBrowserStore {
         if (this.isExportAllRegions) {
             optionsText = "Export all regions";
         } else {
-            this.exportRegionsIndexes.forEach((value, index) => {
+            this.exportRegionIndexes.forEach((value, index) => {
                 optionsText += AppStore.Instance.activeFrame?.regionSet?.regions[value]?.nameString;
-                optionsText += index !== this.exportRegionsIndexes.length - 1 ? ", " : "";
+                optionsText += index !== this.exportRegionIndexes.length - 1 ? ", " : "";
             });
         }
         return optionsText;
