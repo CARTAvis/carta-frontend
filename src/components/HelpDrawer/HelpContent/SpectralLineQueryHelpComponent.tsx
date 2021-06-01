@@ -44,6 +44,7 @@ export class SpectralLineQueryHelpComponent extends React.Component {
                     <li><code>10...50</code> (everything between 10 and 50, inclusive)</li>
                 </ul>
                 <p>For string columns, partial match is adopted. For example, <code>CH3</code> (no quotation) will return entries containing the &quot;CH3&quot; string.</p>
+                <p>Once a set of filters is set, you can click the <code>Filter</code> button to apply it to the line table.</p>
                 <h3>Spectral line ID visualization</h3>
                 <p>The &quot;Shifted Frequency&quot; column is computed based on the user input of a velocity or a redshift. This &quot;Shifted Frequency&quot; is adopted for line ID overlay on a spectral profiler widget.</p>
                 <p>You can use the checkbox to select a set of lines to be overplotted in a spectral profiler widget. The maximum number of line ID overlays is 1000.</p>
