@@ -385,7 +385,7 @@ export class ProfileFittingComponent extends React.Component<ProfileFittingCompo
                                 <div onMouseOver={this.onMouseOverResult} onMouseLeave={this.onMouseLeaveResult}>
                                     <div className="fitting-result">
                                         <Pre className="fitting-result-pre" disabled={disabled}>
-                                            <Text>
+                                            <Text className="fitting-result-text">
                                                 {fittingStore.resultString}
                                             </Text>
                                         </Pre>
@@ -417,7 +417,7 @@ export class ProfileFittingComponent extends React.Component<ProfileFittingCompo
                                 <div className="fitting-popover">
                                     <div className="fitting-log">
                                         <Pre className="fitting-log-pre">
-                                            <Text>
+                                            <Text className="fitting-log-text">
                                                 {fittingStore.resultLog}
                                             </Text>
                                         </Pre>

@@ -59,6 +59,15 @@ export interface LinePlotInsideBoxMarker {
     text?: string;
 }
 
+export interface LinePlotInsideTextMarker {
+    x: number;
+    y: number;
+    text: string;
+    fontSize?: number;
+    color?: string;
+    opacity?: number;
+}
+
 export class LinePlotComponentProps {
     width?: number;
     height?: number;
@@ -111,6 +120,7 @@ export class LinePlotComponentProps {
     setSelectedInsideBox?: (minX: number, maxX: number, minY: number, maxY: number) => void;
     setSelectedLine?: (startX: number, endX: number, startY: number, endY: number) => void;
     insideBoxes?: LinePlotInsideBoxMarker[];
+    insideTexts?: LinePlotInsideTextMarker[];
     order?: number;
     multiPlotPropsMap?: Map<string, MultiPlotProps>;
 }
@@ -1017,6 +1027,36 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
         return insideBoxes;
     }
 
+    private genInsideTexts = () => {
+        const chartArea = this.chartArea;
+        let insideTexts = [];
+        if (this.props.insideTexts && chartArea) {
+            for (let i = 0; i < this.props.insideTexts.length; i++) {
+                const insideText = this.props.insideTexts[i];
+                const x = this.getPixelForValueX(insideText.x);
+                const y = this.getPixelForValueY(insideText.y);
+                if (x > chartArea.right || x < chartArea.left || y < chartArea.top || y > chartArea.bottom) {
+                    continue;
+                }
+                const fontSize = insideText.fontSize ? insideText.fontSize : 12;
+                insideTexts.push(
+                    <Text
+                        key={i + "-text"}
+                        text={insideText.text}
+                        fontSize={fontSize}
+                        x={x - insideText.text.length * fontSize / 2}
+                        y={y}
+                        width={insideText.text.length * fontSize}
+                        align={"center"}
+                        fill={insideText.color ? insideText.color : this.props.darkMode ? Colors.LIGHT_GRAY4 : Colors.GRAY1}
+                        opacity={insideText.opacity}
+                    />
+                );
+            }
+        }
+        return insideTexts;
+    }
+
     private genMeanRMSForPngPlot = (): {
         mean: {color: string, dash: number, y: number, xLeft: number, xRight: number},
         RMS: {color: string, opacity: number, xLeft: number, yTop: number, width: number, height: number}
@@ -1109,6 +1149,7 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
                         {this.genLines()}
                         {this.genSelectionRect()}
                         {this.genInsideBoxes()}
+                        {this.genInsideTexts()}
                         {this.genBorderRect()}
                     </Layer>
                 </Stage>
