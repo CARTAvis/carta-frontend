@@ -98,8 +98,13 @@ export function histogramGaussianFit(y: number[], bins: number) {
     const deltaHistXCenter = histXCenterTmp[1] - histXCenterTmp[0];
     const histXCenter: number[] = [histXCenterTmp[0] - deltaHistXCenter, ...histXCenterTmp, histXCenterTmp[histXCenterTmp.length - 1] + deltaHistXCenter];
 
+    const maxHistYIndex = _.findIndex(histY, (y => y === _.max(histY)));
+    // when maxHistYIndex is on the edge of the histY(excluded added zero), return values without Gaussian fitting
+    if (maxHistYIndex === 1 || maxHistYIndex === histY.length - 2) {
+        return {center: histXCenter[maxHistYIndex], stddev: deltaHistXCenter};
+    }
     // [amp, center, fwhm]
-    const initialGuess = [_.max(histY), histXCenter[_.findIndex(histY, (y => y === _.max(histY)))], 2 * Math.sqrt(Math.log(10) * 2) * 0.5 * (deltaHistXCenter)];
+    const initialGuess = [_.max(histY), histXCenter[maxHistYIndex], 2 * Math.sqrt(Math.log(10) * 2) * 0.5 * (deltaHistXCenter)];
     const histogramGaussianFitting = GSL.fitting(FittingFunction.GAUSSIAN, new Float64Array(histXCenter), new Float64Array(histY), initialGuess, [0, 0, 0], [0, 0], [1, 1]);
 
     const intensitySmoothedMean = histogramGaussianFitting.center[0];

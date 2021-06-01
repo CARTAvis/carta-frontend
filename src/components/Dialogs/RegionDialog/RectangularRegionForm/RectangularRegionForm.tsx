@@ -635,7 +635,15 @@ export class RectangularRegionForm extends React.Component<{ region: RegionStore
                         <tr>
                             <td>P.A. <span className={Classes.TEXT_MUTED}>(deg)</span></td>
                             <td>
-                                <SafeNumericInput selectAllOnFocus={true} buttonPosition="none" placeholder="P.A." value={region.rotation} onBlur={this.handleRotationChange} onKeyDown={this.handleRotationChange}/>
+                                <SafeNumericInput
+                                    disabled={!this.props.frame?.hasSquarePixels}
+                                    selectAllOnFocus={true}
+                                    buttonPosition="none"
+                                    placeholder="P.A."
+                                    value={region.rotation}
+                                    onBlur={this.handleRotationChange}
+                                    onKeyDown={this.handleRotationChange}
+                                />
                             </td>
                         </tr>
                         </tbody>
