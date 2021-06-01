@@ -488,6 +488,8 @@ export class FileBrowserStore {
                 return FileInfoType.SAVE_IMAGE;
             case BrowserMode.Catalog:
                 return FileInfoType.CATALOG_FILE;
+            case BrowserMode.RegionExport:
+                return FileInfoType.SELECT_REGION;
             default:
                 return FileInfoType.REGION_FILE;
         }

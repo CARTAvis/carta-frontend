@@ -113,25 +113,6 @@ export class FileBrowserDialogComponent extends React.Component {
         fileBrowserStore.setSaveFilename(ev.target.value);
     };
 
-    private handleRegionMenuSelected = (regionIndex: number) => {
-        const fileBrowserStore = FileBrowserStore.Instance;
-        if (regionIndex === -1) { // selected export all regions
-            fileBrowserStore.setIsExportAllRegions(true);
-            fileBrowserStore.clearExportRegionIndexes();
-        } else {
-            if (fileBrowserStore.exportRegionIndexes.includes(regionIndex)) {
-                if (fileBrowserStore.exportRegionIndexes.length === 1) {
-                    return;
-                } else {
-                    fileBrowserStore.deleteExportRegionIndex(regionIndex);
-                }
-            } else {
-                fileBrowserStore.addExportRegionIndex(regionIndex);
-                fileBrowserStore.setIsExportAllRegions(false);
-            }
-        }
-    };
-
     private handleExportRegionsClicked = () => {
         const fileBrowserStore = FileBrowserStore.Instance;
         const filename = fileBrowserStore.exportFilename.trim();
@@ -316,36 +297,6 @@ export class FileBrowserDialogComponent extends React.Component {
     private renderExportFilenameInput() {
         const fileBrowserStore = FileBrowserStore.Instance;
 
-        const regionMenu = fileBrowserStore.exportRegionOptions.length > 1 ? (
-            <Popover
-                minimal={true}
-                content={
-                    <Menu>
-                        <MenuItem
-                            text="All regions"
-                            icon={fileBrowserStore.isExportAllRegions ? "tick" : "blank"}
-                            onClick={() => this.handleRegionMenuSelected(-1)}
-                            shouldDismissPopover={false}
-                        />
-                        {fileBrowserStore.exportRegionOptions.map((item) =>
-                            <MenuItem
-                                key={item.value}
-                                text={item.active ? <b>{item.label}</b> : item.label}
-                                icon={fileBrowserStore.exportRegionIndexes?.includes(item.value as number) ? "tick" : "blank"}
-                                onClick={() => this.handleRegionMenuSelected(item.value as number)}
-                                shouldDismissPopover={false}
-                            />
-                        )}
-                    </Menu>
-                }
-                position={Position.BOTTOM_RIGHT}
-            >
-                <Button minimal={true} rightIcon="caret-down">
-                    {fileBrowserStore.exportRegionOptionsText}
-                </Button>
-            </Popover>
-        ) : null;
-
         const coordinateTypeMenu = (
             <Popover
                 minimal={true}
@@ -382,7 +333,6 @@ export class FileBrowserDialogComponent extends React.Component {
 
         let sideMenu = (
             <div>
-                {regionMenu}
                 {fileTypeMenu}
                 {coordinateTypeMenu}
             </div>
@@ -651,6 +601,8 @@ export class FileBrowserDialogComponent extends React.Component {
                 return [FileInfoType.SAVE_IMAGE, FileInfoType.IMAGE_FILE, FileInfoType.IMAGE_HEADER];
             case BrowserMode.Catalog:
                 return [FileInfoType.CATALOG_FILE, FileInfoType.CATALOG_HEADER];
+            case BrowserMode.RegionExport:
+                return [FileInfoType.SELECT_REGION, FileInfoType.REGION_FILE];
             default:
                 return [FileInfoType.REGION_FILE];
         }
