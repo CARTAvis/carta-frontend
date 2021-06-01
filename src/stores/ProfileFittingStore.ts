@@ -128,6 +128,10 @@ export class ProfileFittingStore {
     }
 
     @computed get resultString(): string {
+        if (!this.widgetStore?.effectiveFrame) {
+            return "";
+        }
+
         let resultString = "";
         const xUnit = this.widgetStore.effectiveFrame.spectralUnitStr;
         const yUnit = this.widgetStore.yUnit;
@@ -279,7 +283,7 @@ export class ProfileFittingStore {
     };
 
     fitData = (): void => {
-        if (!this.widgetStore?.plotData?.fittingData) {
+        if (!this.widgetStore?.plotData?.fittingData || !this.widgetStore.effectiveFrame) {
             return;
         }
         const x = this.fittingData.x;
