@@ -8,7 +8,11 @@
     }
 
     .profile-legend {
-        display: inline-flex;
-        flex-wrap: nowrap;
+        display: block;
+
+        .profile-info {
+            display: inline-flex;
+            flex-wrap: nowrap;
+        }
     }
 }
