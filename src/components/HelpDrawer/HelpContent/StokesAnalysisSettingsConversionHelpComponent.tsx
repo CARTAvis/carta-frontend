@@ -5,7 +5,7 @@ export class StokesAnalysisSettingsConversionHelpComponent extends React.Compone
         return (
             <div>
                 <h3>Conversion</h3>
-                <p>With the &quot;Conversion&quot; tab, users can change the spectral convention, including:</p>
+                <p>With the <code>Conversion</code> tab, you can change the spectral convention, including:</p>
                 <ul>
                     <li>Radio velocity (km/s, m/s)</li>
                     <li>Optical velocity (km/s, m/s)</li>

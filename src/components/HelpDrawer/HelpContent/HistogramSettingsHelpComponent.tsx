@@ -4,7 +4,7 @@ export class HistogramSettingsHelpComponent extends React.Component {
     public render() {
         return (
             <div>
-                <p>Histogram settings dialogue allows users to customize the appearance of the histogram plot, and set x and y ranges of the plot explicitly.</p>
+                <p>Histogram settings dialog allows you to customize the appearance of the histogram plot, and set x and y ranges of the plot explicitly.</p>
                 <p>Supported options are:</p>
                 <ul>
                     <li>color of the plot</li>
