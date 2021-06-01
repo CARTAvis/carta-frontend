@@ -35,7 +35,7 @@ export class SpectralProfilerSettingsPanelComponent extends React.Component<Widg
             isCloseable: true,
             parentId: "spectal-profiler",
             parentType: "spectral-profiler",
-            helpType: [HelpType.SPECTRAL_PROFILER_SETTINGS_CONVERSION, HelpType.SPECTRAL_PROFILER_SETTINGS_STYLING, HelpType.SPECTRAL_PROFILER_SETTINGS_SMOOTHING, HelpType.SPECTRAL_PROFILER_SETTINGS_MOMENTS]
+            helpType: [HelpType.SPECTRAL_PROFILER_SETTINGS_CONVERSION, HelpType.SPECTRAL_PROFILER_SETTINGS_STYLING, HelpType.SPECTRAL_PROFILER_SETTINGS_SMOOTHING, HelpType.SPECTRAL_PROFILER_SETTINGS_MOMENTS, HelpType.SPECTRAL_PROFILER_SETTINGS_FITTING]
         };
     }
 
