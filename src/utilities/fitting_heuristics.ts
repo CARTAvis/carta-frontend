@@ -98,12 +98,25 @@ export function histogramGaussianFit(y: number[], bins: number) {
     const deltaHistXCenter = histXCenterTmp[1] - histXCenterTmp[0];
     const histXCenter: number[] = [histXCenterTmp[0] - deltaHistXCenter, ...histXCenterTmp, histXCenterTmp[histXCenterTmp.length - 1] + deltaHistXCenter];
 
+    const maxHistYIndex = _.findIndex(histY, (y => y === _.max(histY)));
+    // when maxHistYIndex is on the edge of the histY(excluded added zero), return values without Gaussian fitting
+    if (maxHistYIndex === 1 || maxHistYIndex === histY.length - 2) {
+        console.log("histogram without Gaussian fit, mean:", histXCenter[maxHistYIndex]);
+        console.log("histogram without Gaussian fit, stddev:", deltaHistXCenter);
+        return {center: histXCenter[maxHistYIndex], stddev: deltaHistXCenter};
+    }
     // [amp, center, fwhm]
-    const initialGuess = [_.max(histY), histXCenter[_.findIndex(histY, (y => y === _.max(histY)))], 2 * Math.sqrt(Math.log(10) * 2) * 0.5 * (deltaHistXCenter)];
+    const initialGuess = [_.max(histY), histXCenter[maxHistYIndex], 2 * Math.sqrt(Math.log(10) * 2) * 0.5 * (deltaHistXCenter)];
+    console.log("initialGuess", initialGuess);
+    console.log("histY:", histY);
+    console.log("histXCenter:", histXCenter);
     const histogramGaussianFitting = GSL.fitting(FittingFunction.GAUSSIAN, new Float64Array(histXCenter), new Float64Array(histY), initialGuess, [0, 0, 0], [0, 0], [1, 1]);
 
     const intensitySmoothedMean = histogramGaussianFitting.center[0];
     const intensitySmoothedStddev = histogramGaussianFitting.fwhm[0] / (2 * Math.sqrt(Math.log(2) * 2));
+    console.log("histogram Gaussian fit, amplitude = " + histogramGaussianFitting.amp[0]);
+    console.log("histogram Gaussian fit, mean = " + intensitySmoothedMean);
+    console.log("histogram Gaussian fit, stddev = " + intensitySmoothedStddev);
     return {center: intensitySmoothedMean, stddev: intensitySmoothedStddev};
 }
 
@@ -113,6 +126,7 @@ export function getEstimatedPoints(xInput: number[], yInput: number[]): { x: num
         return value + yInput[yInput.length - 1 - i];
     });
 
+    console.log("yDataFlippedSum histogram Gaussian fit");
     const fitHistogramResult = histogramGaussianFit(yDataFlippedSum, Math.floor(Math.sqrt(yDataFlippedSum.length)));
     const flippedSumMean = fitHistogramResult.center;
     const flippedSumStddev = fitHistogramResult.stddev;
@@ -129,13 +143,16 @@ export function getEstimatedPoints(xInput: number[], yInput: number[]): { x: num
         if (value < CEILING && value > FLOOR && SWITCH === false && i <= yDataFlippedSum.length - 2) {
             INDEX_FROM = i;
             SWITCH = true;
+            console.log(i);
         } else if ((value > CEILING || value < FLOOR) && SWITCH === true) {
             INDEX_TO = i;
             SWITCH = false;
+            console.log("(" + INDEX_FROM + ", " + INDEX_TO + ")");
             xMeanSegment.push(_.mean(xInput.slice(INDEX_FROM, INDEX_TO)));
             yMeanSegment.push(_.mean(yInput.slice(INDEX_FROM, INDEX_TO)));
         } else if (value < CEILING && value > FLOOR && SWITCH === true && i === yDataFlippedSum.length - 1) {
             INDEX_TO = i;
+            console.log("(" + INDEX_FROM + ", " + INDEX_TO + ")");
             xMeanSegment.push(_.mean(xInput.slice(INDEX_FROM, INDEX_TO)));
             yMeanSegment.push(_.mean(yInput.slice(INDEX_FROM, INDEX_TO)));
             break;
@@ -148,6 +165,8 @@ export function getEstimatedPoints(xInput: number[], yInput: number[]): { x: num
         yMeanSegment.push(_.mean(yInput.slice(0, Math.floor(yInput.length) / 2)));
         yMeanSegment.push(_.mean(yInput.slice(Math.floor(yInput.length / 2), yInput.length)));
     }
+    console.log("xMeanSegment:", xMeanSegment);
+    console.log("yMeanSegment:", yMeanSegment);
     return [{x: xMeanSegment[0], y: yMeanSegment[0]}, {x: xMeanSegment[xMeanSegment.length - 1], y: yMeanSegment[yMeanSegment.length - 1]}];
 }
 
@@ -213,6 +232,7 @@ export function autoDetecting(xInput: number[], yInput: number[], orderInputs?: 
 
     // fit a gaussian to the intensity histogram as an estimate of continuum level and noise level
     const bins = Math.floor(Math.sqrt(y.length));
+    console.log("ySmoothed histogram Gaussian fit");
     const fitHistogramResult = histogramGaussianFit(ySmoothed, bins <= 8 ? 8 : bins);
     const intensitySmoothedMean = fitHistogramResult.center;
     const intensitySmoothedStddev = fitHistogramResult.stddev;
@@ -268,6 +288,11 @@ export function autoDetecting(xInput: number[], yInput: number[], orderInputs?: 
         }
     }
 
+    console.log("identified line interval:")
+    for (const iLineBox of lineBoxs) {
+        console.log("fromIndexOri :" + iLineBox.fromIndexOri + ", toIndexOri :" + iLineBox.toIndexOri + ", fromIndex :" + iLineBox.fromIndex + ", toIndex :" + iLineBox.toIndex);
+    }
+
     // 2nd: checking multiplicity per identified feature in 1st step
     const lineBoxsFinal: { fromIndex, toIndex, fromIndexOri, toIndexOri }[] = [];
     const multiChCountThreshold = 12;
@@ -286,6 +311,7 @@ export function autoDetecting(xInput: number[], yInput: number[], orderInputs?: 
         const dividerLocalMaxValue = [];
         const dividerLocalMinValue = [];
 
+        console.log("mean S/N of the line interval: {fromIndexOri :" + lineBox.fromIndexOri + ", toIndexOri :" + lineBox.toIndexOri + ", fromIndex :" + lineBox.fromIndex + ", toIndex :" + lineBox.toIndex + "}(" + chCount + "channels): " + meanSN);
         if (Math.abs(meanSN) >= multiMeanSnThreshold && chCount >= multiChCountThreshold) {
             for (let j = lineBox.fromIndex; j < lineBox.toIndex - 4; j++) {
                 const tempData = ySmoothed.slice(j, j + 5);
@@ -314,6 +340,7 @@ export function autoDetecting(xInput: number[], yInput: number[], orderInputs?: 
                 dividerIndexTmp.push(index);
             }
             dividerIndexTmp = dividerIndexTmp.sort((a, b) => a - b);
+            console.log("dividerIndexTmp: ", dividerIndexTmp);
 
             // dividerValueTmp is not used elsewhere
             for (const index of dividerIndexTmp) {
@@ -381,14 +408,18 @@ export function autoDetecting(xInput: number[], yInput: number[], orderInputs?: 
                         if (dividerLocalMinIndex.indexOf(left) !== -1) {
                             if (dividerLocalMinIndex.indexOf(middle) !== -1) {
                                 dividerIndex.push(left);
+                                console.log("add left: ", left);
                             } else if (dividerLocalMaxIndex.indexOf(middle) !== -1 && k === 0) {
                                 dividerIndex.push(left);
+                                console.log("add left: ", left);
                             }
                         } else if (dividerLocalMaxIndex.indexOf(left) !== -1) {
                             if (dividerLocalMinIndex.indexOf(middle) !== -1 && dividerLocalMaxIndex.indexOf(right) !== -1) {
                                 dividerIndex.push(middle);
+                                console.log("add middle: ", middle);
                             } else if (dividerLocalMaxIndex.indexOf(middle) !== -1) {
                                 dividerIndex.push(Math.floor((left + middle) / 2));
+                                console.log("add mean of left and middle: ", Math.floor((left + middle)/2));
                             }
                         }
                     }
@@ -396,14 +427,17 @@ export function autoDetecting(xInput: number[], yInput: number[], orderInputs?: 
                     const dividerIndexTmpLast1 = dividerIndexTmp[dividerIndexTmp.length - 1];
                     if (dividerLocalMinIndex.indexOf(dividerIndexTmpLast1) !== -1) {
                         dividerIndex.push(dividerIndexTmpLast1);
+                        console.log("add last one: ", dividerIndexTmpLast1);
                     }
                     const dividerIndexTmpLast2 = dividerIndexTmp[dividerIndexTmp.length - 2];
                     if (dividerLocalMaxIndex.indexOf(dividerIndexTmpLast2) !== -1 && dividerLocalMaxIndex.indexOf(dividerIndexTmpLast1) !== -1) {
                         dividerIndex.push(Math.floor((dividerIndexTmpLast2 + dividerIndexTmpLast1) / 2));
+                        console.log("add mean of last two: ", Math.floor((dividerIndexTmpLast2 + dividerIndexTmpLast1) / 2));
                     }
                     const dividerIndexTmpLast3 = dividerIndexTmp[dividerIndexTmp.length - 3];
                     if (dividerLocalMinIndex.indexOf(dividerIndexTmpLast3) !== -1 && dividerLocalMinIndex.indexOf(dividerIndexTmpLast2) !== -1 && dividerLocalMaxIndex.indexOf(dividerIndexTmpLast1) !== -1) {
                         dividerIndex.push(dividerIndexTmpLast2);
+                        console.log("add the 2nd last one: ", dividerIndexTmpLast1);
                     }
                 } else {
                     for (let k = 0; k < dividerIndexTmp.length - 2; k++) {
@@ -413,14 +447,18 @@ export function autoDetecting(xInput: number[], yInput: number[], orderInputs?: 
                         if (dividerLocalMaxIndex.indexOf(left) !== -1) {
                             if (dividerLocalMaxIndex.indexOf(middle) !== -1) {
                                 dividerIndex.push(left);
+                                console.log("add left: ", left);
                             } else if (dividerLocalMinIndex.indexOf(middle) !== -1 && k === 0) {
                                 dividerIndex.push(left);
+                                console.log("add left: ", left);
                             }
                         } else if (dividerLocalMinIndex.indexOf(left) !== -1) {
                             if (dividerLocalMaxIndex.indexOf(middle) !== -1 && dividerLocalMinIndex.indexOf(right) !== -1) {
                                 dividerIndex.push(middle);
+                                console.log("add middle: ", middle);
                             } else if (dividerLocalMinIndex.indexOf(middle) !== -1) {
                                 dividerIndex.push(Math.floor((left + middle) / 2));
+                                console.log("add mean of left and middle: ", Math.floor((left + middle)/2));
                             }
                         }
                     }
@@ -428,14 +466,17 @@ export function autoDetecting(xInput: number[], yInput: number[], orderInputs?: 
                     const dividerIndexTmpLast1 = dividerIndexTmp[dividerIndexTmp.length - 1];
                     if (dividerLocalMaxIndex.indexOf(dividerIndexTmpLast1) !== -1) {
                         dividerIndex.push(dividerIndexTmpLast1);
+                        console.log("add last one: ", dividerIndexTmpLast1);
                     }
                     const dividerIndexTmpLast2 = dividerIndexTmp[dividerIndexTmp.length - 2];
                     if (dividerLocalMinIndex.indexOf(dividerIndexTmpLast2) !== -1 && dividerLocalMinIndex.indexOf(dividerIndexTmpLast1) !== -1) {
                         dividerIndex.push(Math.floor((dividerIndexTmpLast2 + dividerIndexTmpLast1) / 2));
+                        console.log("add mean of last two: ", Math.floor((dividerIndexTmpLast2 + dividerIndexTmpLast1) / 2));
                     }
                     const dividerIndexTmpLast3 = dividerIndexTmp[dividerIndexTmp.length - 3];
                     if (dividerLocalMaxIndex.indexOf(dividerIndexTmpLast3) !== -1 && dividerLocalMaxIndex.indexOf(dividerIndexTmpLast2) !== -1 && dividerLocalMinIndex.indexOf(dividerIndexTmpLast1) !== -1) {
                         dividerIndex.push(dividerIndexTmpLast2);
+                        console.log("add the 2nd last one: ", dividerIndexTmpLast2);
                     }
                 }
             }
@@ -452,6 +493,11 @@ export function autoDetecting(xInput: number[], yInput: number[], orderInputs?: 
         } else {
             lineBoxsFinal.push(lineBox);
         }
+    }
+
+    console.log("final identified line interval:")
+    for (const iLineBox of lineBoxsFinal) {
+        console.log("fromIndexOri :" + iLineBox.fromIndexOri + ", toIndexOri :" + iLineBox.toIndexOri + ", fromIndex :" + iLineBox.fromIndex + ", toIndex :" + iLineBox.toIndex);
     }
 
     const components: ProfileFittingIndividualStore[] = [];
