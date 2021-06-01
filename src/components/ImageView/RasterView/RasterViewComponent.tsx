@@ -1,7 +1,7 @@
 import * as React from "react";
 import tinycolor from "tinycolor2";
 import {observer} from "mobx-react";
-import {AppStore, RasterRenderType} from "stores";
+import {AppStore, FrameStore, RasterRenderType} from "stores";
 import {FrameView, Point2D, TileCoordinate} from "models";
 import {GetRequiredTiles, GL, LayerToMip, add2D, scale2D} from "utilities";
 import {RasterTile, TILE_SIZE, TileService, TileWebGLService} from "services";
@@ -9,6 +9,7 @@ import "./RasterViewComponent.scss";
 
 export class RasterViewComponentProps {
     docked: boolean;
+    frame: FrameStore;
 }
 
 @observer
@@ -31,7 +32,7 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
     }
 
     private updateCanvas = () => {
-        const frame = AppStore.Instance.activeFrame;
+        const frame = this.props.frame;
         const tileRenderService = TileWebGLService.Instance;
         if (frame && this.canvas && this.gl && tileRenderService.cmapTexture) {
             const histStokes = frame.renderConfig.stokes;
@@ -51,7 +52,7 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
     private updateUniforms() {
         const appStore = AppStore.Instance;
         const shaderUniforms = TileWebGLService.Instance.shaderUniforms;
-        const frame = appStore.activeFrame;
+        const frame = this.props.frame;
         const renderConfig = frame.renderConfig;
 
         if (renderConfig && shaderUniforms) {
@@ -77,7 +78,7 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
     }
 
     private updateCanvasSize() {
-        const frame = AppStore.Instance.activeFrame;
+        const frame = this.props.frame;
         const tileRenderService = TileWebGLService.Instance;
         // Resize and clear the canvas if needed
         if (frame && frame.isRenderable && (this.canvas.width !== frame.renderWidth * devicePixelRatio || this.canvas.height !== frame.renderHeight * devicePixelRatio)) {
@@ -88,7 +89,7 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
     }
 
     private renderCanvas() {
-        const frame = AppStore.Instance.activeFrame;
+        const frame = this.props.frame;
         // Only clear and render if we're in animation or tiled mode
         if (frame && frame.isRenderable && frame.renderType !== RasterRenderType.NONE) {
             this.gl.viewport(0, 0, frame.renderWidth * devicePixelRatio, frame.renderHeight * devicePixelRatio);
@@ -106,7 +107,7 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
     }
 
     private renderTiledCanvas() {
-        const frame = AppStore.Instance.activeFrame;
+        const frame = this.props.frame;
         const tileRenderService = TileWebGLService.Instance;
 
         this.gl.bindBuffer(WebGLRenderingContext.ARRAY_BUFFER, tileRenderService.vertexUVBuffer);
@@ -136,7 +137,7 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
 
     private renderTiles(tiles: TileCoordinate[], mip: number, peek: boolean = false, numPlaceholderLayersHighRes: number, renderLowRes: boolean) {
         const tileService = TileService.Instance;
-        const frame = AppStore.Instance.activeFrame;
+        const frame = this.props.frame;
 
         if (!tileService) {
             return;
@@ -201,7 +202,7 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
     }
 
     private renderTile(tile: TileCoordinate, rasterTile: RasterTile, mip: number) {
-        const frame = AppStore.Instance.activeFrame;
+        const frame = this.props.frame;
         const tileRenderService = TileWebGLService.Instance;
         const tileService = TileService.Instance;
 
@@ -265,7 +266,7 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
         // dummy values to trigger React's componentDidUpdate()
         /* eslint-disable @typescript-eslint/no-unused-vars */
         const appStore = AppStore.Instance;
-        const frame = appStore.activeFrame;
+        const frame = this.props.frame;
         if (frame) {
             const spatialReference = frame.spatialReference || frame;
             const frameView = spatialReference.requiredFrameView;

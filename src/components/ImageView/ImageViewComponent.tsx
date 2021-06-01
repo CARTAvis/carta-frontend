@@ -244,6 +244,7 @@ export class ImageViewComponent extends React.Component<WidgetProps> {
                     }
                     {appStore.activeFrame &&
                     <CatalogViewGLComponent
+                        frame={appStore.activeFrame}
                         docked={this.props.docked}
                         onZoomed={this.onZoomed}
                     />
@@ -289,9 +290,11 @@ export class ImageViewComponent extends React.Component<WidgetProps> {
         return (
             <div className="image-view-div" onMouseOver={this.onMouseEnter} onMouseLeave={this.onMouseLeave}>
                 <RasterViewComponent
+                    frame={appStore.activeFrame}
                     docked={this.props.docked}
                 />
                 <ContourViewComponent
+                    frame={appStore.activeFrame}
                     docked={this.props.docked}
                 />
                 {divContents}

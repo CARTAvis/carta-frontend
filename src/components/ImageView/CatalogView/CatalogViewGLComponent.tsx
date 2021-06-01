@@ -1,7 +1,7 @@
 import {observer} from "mobx-react";
 import * as React from "react";
 import tinycolor from "tinycolor2";
-import {AppStore, CatalogStore, RenderConfigStore, WidgetsStore} from "stores";
+import {AppStore, CatalogStore, FrameStore, RenderConfigStore, WidgetsStore} from "stores";
 import {CatalogTextureType, CatalogWebGLService} from "services";
 import {canvasToTransformedImagePos} from "components/ImageView/RegionView/shared";
 import {CursorInfo} from "models";
@@ -12,6 +12,7 @@ import "./CatalogViewGLComponent.scss";
 
 export interface CatalogViewGLComponentProps {
     docked: boolean;
+    frame: FrameStore;
     onZoomed?: (cursorInfo: CursorInfo, delta: number) => void;
 }
 
@@ -37,12 +38,13 @@ export class CatalogViewGLComponent extends React.Component<CatalogViewGLCompone
         // dummy values to trigger React's componentDidUpdate()
         /* eslint-disable @typescript-eslint/no-unused-vars */
         const appStore = AppStore.Instance;
-        const baseFrame = appStore.activeFrame;
+        const baseFrame = this.props.frame;
         if (baseFrame) {
             const view = baseFrame.requiredFrameView;
         }
 
         const catalogStore = appStore.catalogStore;
+        // TODO: Render catalogs for current image, not active image
         const catalogFileIds = catalogStore.activeCatalogFiles; 
         catalogStore.catalogGLData.forEach((catalog, fileId) => {
             const catalogWidgetStore = catalogStore.getCatalogWidgetStore(fileId);
@@ -117,7 +119,7 @@ export class CatalogViewGLComponent extends React.Component<CatalogViewGLCompone
     }
 
     private resizeAndClearCanvas() {
-        const frame = AppStore.Instance.activeFrame;
+        const frame = this.props.frame;
         if (!frame) {
             return;
         }
@@ -137,8 +139,7 @@ export class CatalogViewGLComponent extends React.Component<CatalogViewGLCompone
     }
 
     private updateCanvas = () => {
-        const appStore = AppStore.Instance;
-        const baseFrame = appStore.activeFrame;
+        const baseFrame = this.props.frame;
 
         if (baseFrame && this.canvas && this.gl && this.catalogWebGLService.shaderUniforms) {
             this.resizeAndClearCanvas();
@@ -166,7 +167,7 @@ export class CatalogViewGLComponent extends React.Component<CatalogViewGLCompone
         let rangeOffset = {x: 0.0, y: 0.0};
         let rotationAngle = 0.0;
         let scaleAdjustment = 1.0;
-        const destinationFrame = appStore.activeFrame;
+        const destinationFrame = this.props.frame;
         catalogStore.activeCatalogFiles?.forEach(fileId => {
             const frame = appStore.getFrame(catalogStore.getFrameIdByCatalogId(fileId));
             const isActive = frame === destinationFrame;
@@ -313,7 +314,7 @@ export class CatalogViewGLComponent extends React.Component<CatalogViewGLCompone
     private onWheelCaptured = (event) => {
         if (event && event.nativeEvent && event.nativeEvent.type === "wheel") {
             const wheelEvent = event.nativeEvent;
-            const frame = AppStore.Instance.activeFrame;
+            const frame = this.props.frame;
             const lineHeight = 15;
             const delta = wheelEvent.deltaMode === WheelEvent.DOM_DELTA_PIXEL ? wheelEvent.deltaY : wheelEvent.deltaY * lineHeight;
             if (frame.wcsInfo && this.props.onZoomed) {
