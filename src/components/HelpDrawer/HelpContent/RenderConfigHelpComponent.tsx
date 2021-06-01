@@ -14,7 +14,7 @@ export class RenderConfigHelpComponent extends React.Component {
                 <p>By default, a per-channel histogram is shown, and optionally a per-cube histogram can be displayed via the <code>Histogram</code> dropdown.</p>
                 <p>Different scaling functions and colormaps can be chosen via
                     the <code>Scaling</code> and <code>Color map</code> dropdowns, respectively. A color map might be inverted via the <code>Invert color map</code> toggle.</p>
-                <p>Bias and contrast can be adjusted jointly via the 2D box (x as bias and y as contrast). The effective scaling function is visualized as a grey curve between the two red vertical lines. By default, smooth bias and contrast functions are applied so that the resulting scaling function is a smooth curve. You may disable this feature with the <code>Render configuration</code> tab of the preferences diagloue.</p>
+                <p>Bias and contrast can be adjusted jointly via the 2D box (x as bias and y as contrast). The effective scaling function is visualized as a grey curve between the two red vertical lines. By default, smooth bias and contrast functions are applied so that the resulting scaling function is a smooth curve. You may disable this feature with the <code>Render configuration</code> tab of the preferences dialog.</p>
                 <p>The appearance of the histogram plot can be configured through the render configuration settings dialog, including:</p>
                 <ul>
                     <li>color of the plot</li>
