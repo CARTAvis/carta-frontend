@@ -145,6 +145,13 @@ export class FrameStore {
         return (this.overlayStore.renderWidth / this.frameInfo.fileInfoExtended.width) / (this.overlayStore.renderHeight / this.frameInfo.fileInfoExtended.height);
     }
 
+    get hasSquarePixels(): boolean {
+        if (isFinite(this.framePixelRatio)) {
+            return this.framePixelRatio === 1.0;
+        }
+        return false;
+    }
+
     @computed get requiredFrameView(): FrameView {
         // use spatial reference frame to calculate frame view, if it exists
         if (this.spatialReference) {
@@ -1633,7 +1640,7 @@ export class FrameStore {
             return false;
         }
 
-        if (frame.aspectRatio !== 1.0 || this.aspectRatio !== 1.0) {
+        if (!frame.hasSquarePixels || !this.hasSquarePixels) {
             console.log("Cannot perform spatial transform between images with non-square pixels");
             this.spatialReference = null;
             return false;
