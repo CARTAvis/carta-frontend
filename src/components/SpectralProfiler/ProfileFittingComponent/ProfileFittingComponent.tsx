@@ -319,7 +319,7 @@ export class ProfileFittingComponent extends React.Component<ProfileFittingCompo
                                         allowNumericCharactersOnly={false}
                                         buttonPosition="none"
                                         />
-                                    <Tooltip content={<span><i>{fittingStore.selectedComponent.lockedCenter ? "Unlock amplitude" : "Lock amplitude"}</i></span>}>
+                                    <Tooltip content={<span><i>{fittingStore.selectedComponent.lockedAmp ? "Unlock amplitude" : "Lock amplitude"}</i></span>}>
                                         <AnchorButton onClick={this.onAmpLocked} icon={fittingStore.selectedComponent.lockedAmp ? "lock" : "unlock"} disabled={disabled}/>
                                     </Tooltip>
                                     {cursorSelectionButton}
@@ -334,7 +334,7 @@ export class ProfileFittingComponent extends React.Component<ProfileFittingCompo
                                         allowNumericCharactersOnly={false}
                                         buttonPosition="none"
                                     />
-                                    <Tooltip content={<span><i>{fittingStore.selectedComponent.lockedCenter ? "Unlock FWHM" : "Lock FWHM"}</i></span>}>
+                                    <Tooltip content={<span><i>{fittingStore.selectedComponent.lockedFwhm ? "Unlock FWHM" : "Lock FWHM"}</i></span>}>
                                         <AnchorButton onClick={this.onFwhmLocked} icon={fittingStore.selectedComponent.lockedFwhm ? "lock" : "unlock"} disabled={disabled}/>
                                     </Tooltip>
                                     {cursorSelectionButton}
