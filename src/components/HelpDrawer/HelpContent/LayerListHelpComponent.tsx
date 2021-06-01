@@ -13,7 +13,7 @@ export class LayerListHelpComponent extends React.Component {
                 <p>Per image, you can click the <code>XY</code> button to enable/disable spatial matching and click the <code>Z</code> button to enable/disable spectral matching. To match color range to the reference image, click the <code>R</code> button.</p>
                 <p>To change reference image, <code>right-click</code> on a row to bring up the menu.</p>
                 <p>To close an image (or images), <code>right-click</code> on a row to bring up the menu.</p>
-                <p>The list order reflects the order of the image slider in the animator. To chnage the order, <code>click</code> to select an entry and <code>drag-and-drop</code> it to the desired position.</p>
+                <p>The list order reflects the order of the image slider in the animator. To change the order, <code>click</code> to select an entry and <code>drag-and-drop</code> it to the desired position.</p>
             </div>
         );
     }
