@@ -82,8 +82,8 @@ export class RegionSelectComponent extends React.Component {
             <div className="select-region">
                 {regionOptionNum > 0 ? (
                     <FormGroup label="Select export regions">
-                        {regionOptionNum > 1 ? this.renderSelectAll : null}
-                        {this.renderRegionOptions}
+                        {regionOptionNum > 1 ? this.renderSelectAll() : null}
+                        {this.renderRegionOptions()}
                     </FormGroup>
                 ) : <span>No regions in the active image.</span>}
             </div>
