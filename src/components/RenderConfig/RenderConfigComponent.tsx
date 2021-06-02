@@ -381,7 +381,8 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
                     type: PlotType.LINES,
                     borderColor: appStore.darkTheme ? Colors.GRAY5 : Colors.GRAY1,
                     borderWidth: 0.5,
-                    opacity: 0.5
+                    opacity: 0.5,
+                    noExport: true
                 };
                 linePlotProps.multiPlotPropsMap.set("colormapScaling", colormapScalingProps);
             }

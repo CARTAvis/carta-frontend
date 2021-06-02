@@ -50,7 +50,7 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
             // Take aspect ratio scaling into account
             let tempWcsInfo = AST.copy(wcsInfo);
 
-            if (frame.aspectRatio !== 1.0) {
+            if (!frame.hasSquarePixels) {
                 const scaleMapping = AST.scaleMap2D(1.0, 1.0 / frame.aspectRatio);
                 const newFrame = AST.frame(2, "Domain=PIXEL");
                 AST.addFrame(tempWcsInfo, 1, scaleMapping, newFrame);
@@ -114,10 +114,10 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
 
         // Trigger switching AST overlay axis for PV image
         if (frame.isPVImage && frame.spectralAxis?.valid) {
-            AST.set(frame.wcsInfo, `${frame.spectralType ? `System(${frame.spectralAxis.dimension})=${frame.spectralType},` : ""}` +
-                                    `${frame.spectralUnit ? `Unit(${frame.spectralAxis.dimension})=${frame.spectralUnit},` : ""}` +
+            AST.set(frame.wcsInfo, `${frame.spectralType ? `System(2)=${frame.spectralType},` : ""}` +
+                                    `${frame.spectralUnit ? `Unit(2)=${frame.spectralUnit},` : ""}` +
                                     `${frame.spectralSystem ? `StdOfRest=${frame.spectralSystem},` : ""}` +
-                                    `${frame.spectralType && frame.spectralSystem ? `Label(${frame.spectralAxis.dimension})=[${frame.spectralSystem}] ${SPECTRAL_TYPE_STRING.get(frame.spectralType)},` : ""}`
+                                    `${frame.spectralType && frame.spectralSystem ? `Label(2)=[${frame.spectralSystem}] ${SPECTRAL_TYPE_STRING.get(frame.spectralType)},` : ""}`
             );
         }
 

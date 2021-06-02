@@ -16,10 +16,14 @@ export class FileBrowserDialogComponent extends React.Component {
     @observable overwriteExistingFileAlertVisible: boolean;
     @observable fileFilterString: string = "";
     @observable debouncedFilterString: string = "";
+    @observable defaultWidth: number;
+    @observable defaultHeight: number;
 
     constructor(props: any) {
         super(props);
         makeObservable(this);
+        this.defaultWidth = 1200;
+        this.defaultHeight = 600;
     }
 
     private handleTabChange = (newId: TabId) => {
@@ -429,6 +433,11 @@ export class FileBrowserDialogComponent extends React.Component {
         }
     };
 
+    @action private updateDefaultSize = (newWidth: number, newHeight: number) => {
+        this.defaultWidth = newWidth;
+        this.defaultHeight = newHeight;
+    };
+
     public render() {
         const appStore = AppStore.Instance;
         const fileBrowserStore = appStore.fileBrowserStore;
@@ -476,7 +485,7 @@ export class FileBrowserDialogComponent extends React.Component {
         const fileList = fileBrowserStore.getfileListByMode;
 
         return (
-            <DraggableDialogComponent dialogProps={dialogProps} helpType={HelpType.FILE_Browser} minWidth={400} minHeight={400} defaultWidth={1200} defaultHeight={600} enableResizing={true}>
+            <DraggableDialogComponent dialogProps={dialogProps} helpType={HelpType.FILE_Browser} minWidth={400} minHeight={400} defaultWidth={this.defaultWidth} defaultHeight={this.defaultHeight} enableResizing={true} onResizeStop={this.updateDefaultSize}>
                 <div className="file-path">
                     {this.pathItems &&
                         <React.Fragment>

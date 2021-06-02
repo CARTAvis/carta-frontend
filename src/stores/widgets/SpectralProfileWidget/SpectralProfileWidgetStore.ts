@@ -1,8 +1,8 @@
 import {action, autorun, computed, observable, makeObservable, override} from "mobx";
-import {NumberRange} from "@blueprintjs/core";
+import {IOptionProps, NumberRange} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import {PlotType, LineSettings, VERTICAL_RANGE_PADDING, SmoothingType} from "components/Shared";
-import {RegionWidgetStore, RegionsType, ACTIVE_FILE_ID, SpectralLine, SpectralProfileSelectionStore} from "stores/widgets";
+import {RegionWidgetStore, RegionsType, RegionId, SpectralLine, SpectralProfileSelectionStore} from "stores/widgets";
 import {AppStore, ProfileSmoothingStore, ProfileFittingStore} from "stores";
 import {LineKey, Point2D, ProcessedSpectralProfile, SpectralSystem} from "models";
 import tinycolor from "tinycolor2";
@@ -64,6 +64,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
     public static readonly PRIMARY_LINE_KEY = "Primary";
 
     // moment settings
+    @observable momentRegionId: number;
     @observable selectingMode: MomentSelectingMode;
     @observable channelValueRange: NumberRange;
     @observable momentMask: CARTA.MomentMask;
@@ -89,6 +90,10 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         if (this.effectiveFrame.setSpectralSystem(specsys)) {
             this.clearXBounds();
         }
+    };
+
+    @action selectMomentRegion = (regionId: number) => {
+        this.momentRegionId = regionId;
     };
 
     @action setMomentRangeSelectingMode = (mode: MomentSelectingMode) => {
@@ -159,25 +164,28 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
 
     @action requestMoment = () => {
         const frame = this.effectiveFrame;
-        const channelIndex1 = frame.findChannelIndexByValue(this.channelValueRange[0]);
-        const channelIndex2 = frame.findChannelIndexByValue(this.channelValueRange[1]);
-        if (frame && isFinite(channelIndex1) && isFinite(channelIndex2)) {
-            const channelIndexRange: CARTA.IIntBounds = {
-                min: channelIndex1 <= channelIndex2 ? channelIndex1 : channelIndex2,
-                max: channelIndex1 <= channelIndex2 ? channelIndex2 : channelIndex1
-            };
-            const requestMessage: CARTA.IMomentRequest = {
-                fileId: frame.frameInfo.fileId,
-                moments: this.selectedMoments,
-                axis: CARTA.MomentAxis.SPECTRAL,
-                regionId: (this.fileId === ACTIVE_FILE_ID && this.effectiveRegionId === 0) ? -1 : this.effectiveRegionId, // request image when region dropdown is active with no region selected
-                spectralRange: channelIndexRange,
-                mask: this.momentMask,
-                pixelRange: new CARTA.FloatBounds({min: this.maskRange[0], max: this.maskRange[1]})
-            };
-            frame.resetMomentRequestState();
-            frame.setIsRequestingMoments(true);
-            AppStore.Instance.requestMoment(requestMessage, frame);
+        if (frame && this.isMomentRegionValid) {
+            const channelIndex1 = frame.findChannelIndexByValue(this.channelValueRange[0]);
+            const channelIndex2 = frame.findChannelIndexByValue(this.channelValueRange[1]);
+            if (isFinite(channelIndex1) && isFinite(channelIndex2)) {
+                const channelIndexRange: CARTA.IIntBounds = {
+                    min: channelIndex1 <= channelIndex2 ? channelIndex1 : channelIndex2,
+                    max: channelIndex1 <= channelIndex2 ? channelIndex2 : channelIndex1
+                };
+                const regionId = this.momentRegionId === RegionId.ACTIVE ? (this.effectiveFrame.regionSet?.selectedRegion?.regionId ?? RegionId.CURSOR) : this.momentRegionId;
+                const requestMessage: CARTA.IMomentRequest = {
+                    fileId: frame.frameInfo.fileId,
+                    moments: this.selectedMoments,
+                    axis: CARTA.MomentAxis.SPECTRAL,
+                    regionId: regionId,
+                    spectralRange: channelIndexRange,
+                    mask: this.momentMask,
+                    pixelRange: new CARTA.FloatBounds({min: this.maskRange[0], max: this.maskRange[1]})
+                };
+                frame.resetMomentRequestState();
+                frame.setIsRequestingMoments(true);
+                AppStore.Instance.requestMoment(requestMessage, frame);
+            }
         }
     };
 
@@ -289,6 +297,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         this.fittingStore = new ProfileFittingStore(this);
         this.profileSelectionStore = new SpectralProfileSelectionStore(this, coordinate);
         this.selectingMode = MomentSelectingMode.NONE;
+        this.momentRegionId = RegionId.ACTIVE;
         this.channelValueRange = [0, 0];
         this.momentMask = CARTA.MomentMask.None;
         this.maskRange = [0, 1];
@@ -298,6 +307,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         autorun(() => {
             if (this.effectiveFrame) {
                 this.updateRanges();
+                this.momentRegionId = RegionId.ACTIVE;
             }
         });
 
@@ -455,6 +465,53 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         return null;
     }
 
+    @computed get momentRegionOptions(): IOptionProps[] {
+        const frame = this.effectiveFrame;
+        let momentRegionOptions = [{value: RegionId.ACTIVE, label: "Active"}, {value: RegionId.IMAGE, label: "Image"}];
+        if (frame?.regionSet) {
+            const validRegionOptions = frame.regionSet.regions?.filter(r => !r.isTemporary && (r.isClosedRegion || r.regionType === CARTA.RegionType.POINT))?.map(region => {
+                return {value: region?.regionId, label: region?.nameString, disabled: !region?.isClosedRegion};
+            });
+            if (validRegionOptions) {
+                momentRegionOptions = momentRegionOptions.concat(validRegionOptions);
+            }
+        }
+        return momentRegionOptions;
+    }
+
+    // Valid region for moments:
+    // 1. cursor(regionSet.selectedRegion === 0 or undefined), request moments of whole image
+    // 2. closed region
+    @computed get isMomentRegionValid(): boolean {
+        if (this.effectiveFrame) {
+            if (this.momentRegionId === RegionId.IMAGE) {
+                return true;
+            } else if (this.momentRegionId === RegionId.ACTIVE) {
+                const region = this.effectiveFrame.regionSet?.selectedRegion;
+                return region?.isClosedRegion ?? true;
+            } else {
+                const region = this.effectiveFrame.getRegion(this.momentRegionId);
+                return region?.isClosedRegion ?? false;
+            }
+        }
+        return false;
+    }
+
+    @computed get momentRegionInfo(): string {
+        if (this.effectiveFrame) {
+            if (this.momentRegionId === RegionId.IMAGE) {
+                return "Image";
+            } else if (this.momentRegionId === RegionId.ACTIVE) {
+                const region = this.effectiveFrame.regionSet?.selectedRegion;
+                return !region || region.regionId === RegionId.CURSOR ? "Image" : region.nameString;
+            } else {
+                const region = this.effectiveFrame.getRegion(this.momentRegionId);
+                return region?.nameString ?? undefined;
+            }
+        }
+        return undefined;
+    }
+
     @computed get transformedSpectralLines(): SpectralLine[] {
         const frame = this.effectiveFrame;
 
@@ -473,6 +530,23 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
             });
         }
         return transformedSpectralLines;
+    }
+
+    @computed get yUnit(): string {
+        let yUnit = "";
+        const frame = this.effectiveFrame;
+        if (frame?.unit) {
+            if (this.profileSelectionStore.isSameStatsTypeUnit) {
+                if (this.profileSelectionStore.isStatsTypeFluxDensityOnly) {
+                    yUnit = "Jy";
+                } else if (this.profileSelectionStore.isStatsTypeSumSqOnly) {
+                    yUnit = `(${frame.unit})^2`;
+                } else {
+                    yUnit = `${frame.unit}`;
+                }
+            }
+        }
+        return yUnit;
     }
 
     public static CalculateRequirementsMap(widgetsMap: Map<string, SpectralProfileWidgetStore>) {
@@ -676,6 +750,10 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         if (typeof widgetSettings.maxYVal === "number") {
             this.linePlotInitXYBoundaries.maxYVal = widgetSettings.maxYVal;
         }
+    };
+
+    public selectFrame = (fileId: number) => {
+        this.profileSelectionStore.selectFrame(fileId);
     };
 
     public toConfig = () => {
