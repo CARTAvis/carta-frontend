@@ -45,23 +45,23 @@ export class RegionSelectComponent extends React.Component {
             fileBrowserStore.addExportRegionIndex(regionIndex);
         }
     };
-    
-    render() {
+
+    private renderSelectAll = () => {
+        return (
+            <Checkbox
+                key={0}
+                checked={this.isSelectAll}
+                indeterminate={this.isIndeterminateSelectAll}
+                label="Select all"
+                onChange={this.handleSelectAllChanged}
+            />
+        );
+    };
+
+    private renderRegionOptions = () => {
         const fileBrowserStore = FileBrowserStore.Instance;
         return (
-            <div className="select-region">
-            {fileBrowserStore.exportRegionOptions?.length > 0 ? (
-            <FormGroup label="Select export regions">
-                {fileBrowserStore.exportRegionOptions?.length > 1 ? (
-                <Checkbox
-                    key={0}
-                    checked={this.isSelectAll}
-                    indeterminate={this.isIndeterminateSelectAll}
-                    label="Select all"
-                    onChange={this.handleSelectAllChanged}
-                />
-                ) : null}
-                {fileBrowserStore.exportRegionOptions.map(item =>
+            fileBrowserStore.exportRegionOptions.map(item =>
                 <Checkbox
                     key={item.value}
                     checked={fileBrowserStore.exportRegionIndexes?.includes(item.value as number)}
@@ -72,12 +72,20 @@ export class RegionSelectComponent extends React.Component {
                         </React.Fragment>
                     }
                     onChange={() => this.handleSelectRegionChanged(item.value as number)}
-                />
-                )}
-            </FormGroup>
-            ) : (
-            <span>No regions in the active image.</span>
-            )}
+            />)
+        );  
+    };
+    
+    render() {
+        const regionOptionNum = FileBrowserStore.Instance.exportRegionOptions?.length;
+        return (
+            <div className="select-region">
+                {regionOptionNum > 0 ? (
+                    <FormGroup label="Select export regions">
+                        {regionOptionNum > 1 ? this.renderSelectAll : null}
+                        {this.renderRegionOptions}
+                    </FormGroup>
+                ) : <span>No regions in the active image.</span>}
             </div>
         );
     }

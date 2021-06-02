@@ -351,7 +351,7 @@ export class FileBrowserStore {
 
     @action resetExportRegionIndexes = () => {
         if (AppStore.Instance.activeFrame?.regionSet?.regions) {
-            // exclude cursor region
+            // include all region indexes except cursor region
             this.exportRegionIndexes = Array.from(AppStore.Instance.activeFrame.regionSet.regions.keys()).slice(1);
         } else {
             this.exportRegionIndexes = [];
