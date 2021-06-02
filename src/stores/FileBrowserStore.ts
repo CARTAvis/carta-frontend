@@ -2,7 +2,7 @@ import {IOptionProps, TabId} from "@blueprintjs/core";
 import {action, computed, observable, makeObservable, runInAction, autorun} from "mobx";
 import {CARTA} from "carta-protobuf";
 import {BackendService} from "services";
-import {AppStore, DialogStore, PreferenceKeys, PreferenceStore} from "stores";
+import {AppStore, DialogStore, PreferenceKeys, PreferenceStore, RegionStore} from "stores";
 import {RegionId} from "stores/widgets";
 import {FileInfoType} from "components";
 import {LineOption, ProcessedColumnData} from "models";
@@ -57,8 +57,7 @@ export class FileBrowserStore {
     @observable exportFilename: string;
     @observable exportCoordinateType: CARTA.CoordinateType;
     @observable exportFileType: RegionFileType;
-    @observable isExportAllRegions: boolean;
-    @observable exportRegionIndexes: number[];
+    @observable exportRegionIndexes: number[] = [];
 
     @observable catalogFileList: CARTA.ICatalogListResponse;
     @observable selectedCatalogFile: CARTA.ICatalogFileInfo;
@@ -79,14 +78,14 @@ export class FileBrowserStore {
         this.exportFileType = CARTA.FileType.CRTF;
 
         autorun(() => {
-            // Update channelValueBounds for save image
             if (AppStore.Instance.activeFrame) {
+                // Update channelValueBounds for save image
                 FileBrowserStore.Instance.initialSaveSpectralRange();
                 this.setSaveFileType(AppStore.Instance.activeFrame.frameInfo?.fileInfo.type === CARTA.FileType.CASA ? CARTA.FileType.CASA : CARTA.FileType.FITS);
-            }
 
-            this.setIsExportAllRegions(true);
-            this.clearExportRegionIndexes();
+                // update regions
+                this.resetExportRegionIndexes();
+            }
         });
 
     }
@@ -350,8 +349,13 @@ export class FileBrowserStore {
         this.exportFileType = fileType;
     };
 
-    @action setIsExportAllRegions = (isExportAllRegions: boolean) => {
-        this.isExportAllRegions = isExportAllRegions;
+    @action resetExportRegionIndexes = () => {
+        if (AppStore.Instance.activeFrame?.regionSet?.regions) {
+            // exclude cursor region
+            this.exportRegionIndexes = Array.from(AppStore.Instance.activeFrame.regionSet.regions.keys()).slice(1);
+        } else {
+            this.exportRegionIndexes = [];
+        }
     };
 
     @action clearExportRegionIndexes = () => {
@@ -405,7 +409,7 @@ export class FileBrowserStore {
 
     @action showLoadingDialog = () => {
         this.isLoadingDialogOpen = true;
-    }
+    };
 
     @action updateLoadingState = (progress: number, checkedCount: number, totalCount: number) => {
         this.loadingProgress = progress;
@@ -561,25 +565,13 @@ export class FileBrowserStore {
                 if (region.regionId !== RegionId.CURSOR) {
                     options.push({
                         value: index,
-                        label: region.nameString + (region.regionId === activeRegionId ? " (Active)" : ""),
-                        active: region.regionId === activeRegionId
+                        label: region.nameString,
+                        active: region.regionId === activeRegionId,
+                        icon: RegionStore.RegionIconString(region.regionType)
                     });
                 }
             });
         }
         return options;
-    }
-
-    @computed get exportRegionOptionsText(): string {
-        let optionsText = "";
-        if (this.isExportAllRegions) {
-            optionsText = "All regions";
-        } else {
-            this.exportRegionIndexes.forEach((value, index) => {
-                optionsText += AppStore.Instance.activeFrame?.regionSet?.regions[value]?.nameString;
-                optionsText += index !== this.exportRegionIndexes.length - 1 ? ", " : "";
-            });
-        }
-        return optionsText;
     }
 }

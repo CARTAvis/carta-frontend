@@ -852,21 +852,15 @@ export class AppStore {
         });
     };
 
-    @action exportRegions = (directory: string, file: string, coordType: CARTA.CoordinateType, fileType: RegionFileType, isExportAllRegions: boolean, exportRegions: number[]) => {
+    @action exportRegions = (directory: string, file: string, coordType: CARTA.CoordinateType, fileType: RegionFileType, exportRegions: number[]) => {
         const frame = this.activeFrame;
         // Prevent exporting if only the cursor region exists
-        if (!frame.regionSet.regions || frame.regionSet.regions.length <= 1) {
+        if (!frame.regionSet.regions || frame.regionSet.regions.length <= 1 || exportRegions.length < 1) {
             return;
         }
 
         const regionStyles = new Map<number, CARTA.IRegionStyle>();
-        let regions;
-        if (isExportAllRegions) {
-            regions = frame.regionSet.regions;
-        } else {
-            regions = exportRegions.map(value => frame.regionSet.regions[value]);
-        }
-        for (const region of regions) {
+        for (const region of exportRegions.map(value => frame.regionSet.regions[value])) {
             regionStyles.set(region.regionId, {
                 name: region.name,
                 color: region.color,
