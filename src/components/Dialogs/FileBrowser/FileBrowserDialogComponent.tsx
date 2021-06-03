@@ -283,7 +283,7 @@ export class FileBrowserDialogComponent extends React.Component {
                     <Tooltip content={"Export regions for the currently active image"}>
                         <AnchorButton
                             intent={Intent.PRIMARY}
-                            disabled={!FileBrowserDialogComponent.ValidateFilename(fileBrowserStore.exportFilename) || !frame || frame.regionSet.regions.length <= 1 || fileBrowserStore.exportRegionIndexes.length < 1}
+                            disabled={!FileBrowserDialogComponent.ValidateFilename(fileBrowserStore.exportFilename) || !frame || frame.regionSet.regions.length <= 1 || fileBrowserStore.exportRegionNum < 1}
                             onClick={this.handleExportRegionsClicked}
                             text="Export Regions"
                         />
