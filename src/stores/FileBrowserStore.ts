@@ -574,4 +574,12 @@ export class FileBrowserStore {
         }
         return options;
     }
+
+    @computed get regionOptionNum(): number {
+        return this.exportRegionOptions?.length;
+    }
+
+    @computed get exportRegionNum(): number {
+        return this.exportRegionIndexes?.length;
+    }
 }

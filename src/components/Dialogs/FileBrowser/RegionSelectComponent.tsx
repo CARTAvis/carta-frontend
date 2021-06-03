@@ -1,7 +1,7 @@
 import * as React from "react";
 import {observer} from "mobx-react";
 import {autorun, computed, makeObservable} from "mobx";
-import {Checkbox, FormGroup, Icon} from "@blueprintjs/core";
+import {Checkbox, Icon} from "@blueprintjs/core";
 import {FileBrowserStore} from "stores";
 import "./RegionSelectComponent.scss";
 
@@ -10,13 +10,12 @@ export class RegionSelectComponent extends React.Component {
 
     @computed private get isSelectAll(): boolean {
         const fileBrowserStore = FileBrowserStore.Instance;
-        return fileBrowserStore.exportRegionIndexes?.length === fileBrowserStore.exportRegionOptions?.length;
+        return fileBrowserStore.exportRegionNum === fileBrowserStore.regionOptionNum;
     }
 
     @computed private get isIndeterminateSelectAll(): boolean {
         const fileBrowserStore = FileBrowserStore.Instance;
-        const exportRegionNumber = fileBrowserStore.exportRegionIndexes?.length;
-        return exportRegionNumber > 0 && exportRegionNumber < fileBrowserStore.exportRegionOptions?.length;
+        return fileBrowserStore.exportRegionNum > 0 && fileBrowserStore.exportRegionNum < fileBrowserStore.regionOptionNum;
     }
 
     constructor(props: any) {
@@ -44,6 +43,22 @@ export class RegionSelectComponent extends React.Component {
         } else {
             fileBrowserStore.addExportRegionIndex(regionIndex);
         }
+    };
+
+    private renderSelectStatus = () => {
+        const fileBrowserStore = FileBrowserStore.Instance;
+        let status;
+        switch (fileBrowserStore.exportRegionNum) {
+            case 0:
+                status = "Please select regions to export.";
+                break;
+            case 1:
+                status = `Selected 1 / ${fileBrowserStore.regionOptionNum} region.`;
+                break;
+            default:
+                status = `Selected ${fileBrowserStore.exportRegionNum} / ${fileBrowserStore.regionOptionNum} regions.`;
+        }
+        return <pre className="select-status">{status}</pre>;
     };
 
     private renderSelectAll = () => {
@@ -77,15 +92,16 @@ export class RegionSelectComponent extends React.Component {
     };
     
     render() {
-        const regionOptionNum = FileBrowserStore.Instance.exportRegionOptions?.length;
+        const optionNum = FileBrowserStore.Instance.regionOptionNum;
         return (
             <div className="select-region">
-                {regionOptionNum > 0 ? (
-                    <FormGroup label="Select export regions">
-                        {regionOptionNum > 1 ? this.renderSelectAll() : null}
+                {optionNum > 0 ? (
+                    <React.Fragment>
+                        {this.renderSelectStatus()}
+                        {optionNum > 1 ? this.renderSelectAll() : null}
                         {this.renderRegionOptions()}
-                    </FormGroup>
-                ) : <span>No regions in the active image.</span>}
+                    </React.Fragment>
+                ) : <pre className="select-status">No regions in the active image.</pre>}
             </div>
         );
     }
