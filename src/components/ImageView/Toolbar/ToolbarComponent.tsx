@@ -3,7 +3,7 @@ import {CSSProperties} from "react";
 import {observer} from "mobx-react";
 import {AnchorButton, ButtonGroup, IconName, Menu, MenuItem, Popover, PopoverPosition, Position, Tooltip} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
-import {AppStore, OverlayStore, RegionMode, SystemType} from "stores";
+import {AppStore, OverlayStore, RegionMode, RegionStore, SystemType} from "stores";
 import {ImageViewLayer} from "../ImageViewComponent";
 import {toFixed} from "utilities";
 import "./ToolbarComponent.scss";
@@ -129,23 +129,7 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
             </Menu>
         );
 
-        let regionIcon: IconName;
-        switch (frame.regionSet.newRegionType) {
-            case CARTA.RegionType.POINT:
-                regionIcon = "symbol-square";
-                break;
-            case CARTA.RegionType.RECTANGLE:
-                regionIcon = "square";
-                break;
-            case CARTA.RegionType.ELLIPSE:
-                regionIcon = "circle";
-                break;
-            case CARTA.RegionType.POLYGON:
-                regionIcon = "polygon-filter";
-                break;
-            default:
-                regionIcon = "error";
-        }
+        const regionIcon: IconName = RegionStore.RegionIconString(frame.regionSet.newRegionType);
 
         const spatialMatchingEnabled = !!frame.spatialReference;
         const spectralMatchingEnabled = !!frame.spectralReference;

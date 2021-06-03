@@ -87,7 +87,8 @@ export class RegionSelectComponent extends React.Component {
                         </React.Fragment>
                     }
                     onChange={() => this.handleSelectRegionChanged(item.value as number)}
-            />)
+                />
+            )
         );  
     };
     

@@ -855,7 +855,7 @@ export class AppStore {
     @action exportRegions = (directory: string, file: string, coordType: CARTA.CoordinateType, fileType: RegionFileType, exportRegions: number[]) => {
         const frame = this.activeFrame;
         // Prevent exporting if only the cursor region exists
-        if (!frame.regionSet?.regions || frame.regionSet.regions.length <= 1 || exportRegions.length < 1) {
+        if (!frame.regionSet?.regions || frame.regionSet.regions.length <= 1 || exportRegions?.length < 1) {
             return;
         }
 
