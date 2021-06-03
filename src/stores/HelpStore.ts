@@ -60,6 +60,7 @@ export enum HelpType {
     SPECTRAL_PROFILER_SETTINGS_STYLING = "spectral-profiler-settings-styling",
     SPECTRAL_PROFILER_SETTINGS_SMOOTHING = "spectral-profiler-settings-smoothing",
     SPECTRAL_PROFILER_SETTINGS_MOMENTS = "spectral-profiler-settings-moments",
+    SPECTRAL_PROFILER_SETTINGS_FITTING = "spectral-profiler-settings-fitting",
     STATS = "stats",
     STOKES_ANALYSIS = "stoke-analysis",
     STOKES_ANALYSIS_SETTINGS_CONVERSION = "stoke-analysis-settings-conversion",

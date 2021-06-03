@@ -29,13 +29,13 @@ export class SpectralProfilerSettingsPanelComponent extends React.Component<Widg
             type: "floating-settings",
             minWidth: 280,
             minHeight: 225,
-            defaultWidth: 500,
+            defaultWidth: 550,
             defaultHeight: 600,
             title: "spectral-profiler-settings",
             isCloseable: true,
             parentId: "spectal-profiler",
             parentType: "spectral-profiler",
-            helpType: [HelpType.SPECTRAL_PROFILER_SETTINGS_CONVERSION, HelpType.SPECTRAL_PROFILER_SETTINGS_STYLING, HelpType.SPECTRAL_PROFILER_SETTINGS_SMOOTHING, HelpType.SPECTRAL_PROFILER_SETTINGS_MOMENTS]
+            helpType: [HelpType.SPECTRAL_PROFILER_SETTINGS_CONVERSION, HelpType.SPECTRAL_PROFILER_SETTINGS_STYLING, HelpType.SPECTRAL_PROFILER_SETTINGS_SMOOTHING, HelpType.SPECTRAL_PROFILER_SETTINGS_MOMENTS, HelpType.SPECTRAL_PROFILER_SETTINGS_FITTING]
         };
     }
 

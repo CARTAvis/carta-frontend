@@ -98,7 +98,7 @@ export class MomentGeneratorComponent extends React.Component<{widgetStore: Spec
         const appStore = AppStore.Instance;
         const widgetStore = this.props.widgetStore;
         const frame = widgetStore.effectiveFrame;
-        const fileInfo = frame ? `${frame.frameInfo.fileId}: ${frame.filename}` : undefined;
+        const fileInfo = frame ? `${appStore.getFrameIndex(frame.frameInfo.fileId)}: ${frame.filename}` : undefined;
         const regionInfo = widgetStore.momentRegionInfo;
 
         const regionPanel = (

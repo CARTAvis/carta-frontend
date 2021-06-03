@@ -1684,6 +1684,10 @@ export class AppStore {
         return this.getFrame(fileId)?.filename;
     }
 
+    getFrameIndex(fileId: number): number {
+        return this.frames?.findIndex((frame) => frame?.frameInfo.fileId === fileId);
+    }
+
     @computed get selectedRegion(): RegionStore {
         if (this.activeFrame && this.activeFrame.regionSet && this.activeFrame.regionSet.selectedRegion && this.activeFrame.regionSet.selectedRegion.regionId !== 0) {
             return this.activeFrame.regionSet.selectedRegion;

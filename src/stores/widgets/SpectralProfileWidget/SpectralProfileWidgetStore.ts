@@ -532,6 +532,23 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         return transformedSpectralLines;
     }
 
+    @computed get yUnit(): string {
+        let yUnit = "";
+        const frame = this.effectiveFrame;
+        if (frame?.unit) {
+            if (this.profileSelectionStore.isSameStatsTypeUnit) {
+                if (this.profileSelectionStore.isStatsTypeFluxDensityOnly) {
+                    yUnit = "Jy";
+                } else if (this.profileSelectionStore.isStatsTypeSumSqOnly) {
+                    yUnit = `(${frame.unit})^2`;
+                } else {
+                    yUnit = `${frame.unit}`;
+                }
+            }
+        }
+        return yUnit;
+    }
+
     public static CalculateRequirementsMap(widgetsMap: Map<string, SpectralProfileWidgetStore>) {
         const updatedRequirements = new Map<number, Map<number, CARTA.SetSpectralRequirements>>();
 
