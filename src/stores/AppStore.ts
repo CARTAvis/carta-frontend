@@ -443,26 +443,26 @@ export class AppStore {
         return true;
     };
 
-    @action loadFile = (directory: string, file: string, hdu: string) => {
+    @action loadFile = (path: string, filename: string, hdu: string) => {
         return new Promise<number>((resolve, reject) => {
             this.startFileLoading();
 
-            if (!file) {
-                const lastDirSeparator = directory.lastIndexOf("/");
+            if (!filename) {
+                const lastDirSeparator = path.lastIndexOf("/");
                 if (lastDirSeparator >= 0) {
-                    file = directory.substring(lastDirSeparator + 1);
-                    directory = directory.substring(0, lastDirSeparator);
+                    filename = path.substring(lastDirSeparator + 1);
+                    path = path.substring(0, lastDirSeparator);
                 }
-            } else if (!directory && file.includes("/")) {
-                const lastDirSeparator = file.lastIndexOf("/");
+            } else if (!path && filename.includes("/")) {
+                const lastDirSeparator = filename.lastIndexOf("/");
                 if (lastDirSeparator >= 0) {
-                    directory = file.substring(0, lastDirSeparator);
-                    file = file.substring(lastDirSeparator + 1);
+                    path = filename.substring(0, lastDirSeparator);
+                    filename = filename.substring(lastDirSeparator + 1);
                 }
             }
 
-            this.backendService.loadFile(directory, file, hdu, this.fileCounter, CARTA.RenderMode.RASTER).subscribe(ack => {
-                if (!this.addFrame(ack, directory, hdu)) {
+            this.backendService.loadFile(path, filename, hdu, this.fileCounter, CARTA.RenderMode.RASTER).subscribe(ack => {
+                if (!this.addFrame(ack, path, hdu)) {
                     AppToaster.show({icon: "warning-sign", message: "Load file failed.", intent: "danger", timeout: 3000});
                 }
                 this.endFileLoading();
@@ -517,15 +517,31 @@ export class AppStore {
         return this.loadConcatStokes(stokesFiles, directory, hdu);
     };
 
-    @action appendFile = (directory: string, file: string, hdu: string) => {
+    /**
+     * @access public
+     * @async
+     * Appends a file at the given path to the list of existing open files
+     * @param path - path to the parent directory of the file to open, or of the file itself
+     * @param {string=} filename - filename of the file to open
+     * @param {string=} hdu - HDU to open. If left blank, the first image HDU will be opened
+     * @return {Promise<number>} [async] the file ID of the opened file
+     */
+    @action appendFile = (path: string, filename: string, hdu: string) => {
         // Stop animations playing before loading a new frame
         this.animatorStore.stopAnimation();
-        return this.loadFile(directory, file, hdu);
+        return this.loadFile(path, filename, hdu);
     };
 
-    @action openFile = (directory: string, file: string, hdu: string) => {
+    /**
+     * Closes all existing files and opens a file at the given path
+     * @param path - path to the parent directory of the file to open, or of the file itself
+     * @param {string=} filename - filename of the file to open
+     * @param {string=} hdu - HDU to open. If left blank, the first image HDU will be opened
+     * @return {Promise<number>} [async] the file ID of the opened file
+     */
+    @action openFile = (path: string, filename?: string, hdu?: string) => {
         this.removeAllFrames();
-        return this.loadFile(directory, file, hdu);
+        return this.loadFile(path, filename, hdu);
     };
 
     @action saveFile = (directory: string, filename: string, fileType: CARTA.FileType, regionId?: number, channels?: number[], stokes?: number[], shouldDropDegenerateAxes?: boolean) => {
@@ -549,6 +565,7 @@ export class AppStore {
         });
     };
 
+
     @action closeFile = (frame: FrameStore, confirmClose: boolean = true) => {
         if (!frame) {
             return;
@@ -567,7 +584,11 @@ export class AppStore {
         }
     };
 
-    @action closeCurrentFile = (confirmClose: boolean = true) => {
+    /**
+     * Closes the currently active image
+     * @param confirmClose [boolean=] - Flag indicating whether to display a confirmation dialog before closing
+     */
+    @action closeCurrentFile = (confirmClose: boolean = false) => {
         if (!this.appendFileDisabled) {
             this.closeFile(this.activeFrame, confirmClose);
         }
