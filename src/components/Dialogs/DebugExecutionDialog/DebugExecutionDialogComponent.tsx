@@ -75,7 +75,7 @@ export class DebugExecutionDialogComponent extends React.Component {
                         padding={5}
                         textareaId="codeArea"
                         style={{
-                            fontFamily: "\"Fira code\", \"Fira Mono\", monospace",
+                            fontFamily: "'Fira code', 'Fira Mono', monospace",
                             fontSize: 12,
                         }}
                         placeholder="Enter execution string"

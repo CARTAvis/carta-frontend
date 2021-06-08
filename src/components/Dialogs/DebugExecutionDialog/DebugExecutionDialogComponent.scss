@@ -23,6 +23,7 @@
     margin-bottom: 10px;
   }
 
+  // Line number CSS adapted from https://github.com/satya164/react-simple-code-editor/issues/16
   .line-numbers {
     counter-reset: line;
 
@@ -37,7 +38,7 @@
 
     .editor-line-number {
       position: absolute;
-      left: 0px;
+      left: 0;
       color: #cccccc;
       text-align: right;
       width: 40px;
