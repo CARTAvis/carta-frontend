@@ -21,6 +21,10 @@ export class DebugExecutionDialogComponent extends React.Component {
         return this.functionToExecute !== undefined;
     }
 
+    @action setFunctionToExecute = (f) => {
+        this.functionToExecute = f;
+    };
+
     constructor(props: any) {
         super(props);
         makeObservable(this);
@@ -30,11 +34,13 @@ export class DebugExecutionDialogComponent extends React.Component {
 
         if (AsyncFunction) {
             autorun(() => {
+                let f;
                 try {
-                    this.functionToExecute = new AsyncFunction(this.inputString);
+                    f = new AsyncFunction(this.inputString);
                 } catch (e) {
-                    this.functionToExecute = undefined;
+                    f = undefined;
                 }
+                this.setFunctionToExecute(f);
             }, {delay: 200});
         }
     }
@@ -98,7 +104,7 @@ export class DebugExecutionDialogComponent extends React.Component {
 
     @action setIsExecuting = (val: boolean) => {
         this.isExecuting = val;
-    }
+    };
 
     onExecuteClicked = async () => {
         if (!this.functionToExecute) {

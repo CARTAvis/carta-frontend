@@ -518,9 +518,9 @@ export class AppStore {
     };
 
     /**
+     * Appends a file at the given path to the list of existing open files
      * @access public
      * @async
-     * Appends a file at the given path to the list of existing open files
      * @param path - path to the parent directory of the file to open, or of the file itself
      * @param {string=} filename - filename of the file to open
      * @param {string=} hdu - HDU to open. If left blank, the first image HDU will be opened
@@ -1963,14 +1963,8 @@ export class AppStore {
         return val;
     };
 
-    getFileList = (directory: string) => {
-        return new Promise((resolve, reject) => {
-            this.backendService.getFileList(directory).subscribe(res => {
-                resolve(res);
-            }, error => {
-                reject(error);
-            });
-        });
+    getFileList = async (directory: string) => {
+        return await this.backendService.getFileList(directory);
     };
 
     // region requirements calculations
