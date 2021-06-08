@@ -137,7 +137,7 @@ export class AppStore {
         this.username = username;
     };
 
-    @action connectToServer = () => {
+    connectToServer = async () => {
         // Remove query parameters, replace protocol and remove trailing /
         let wsURL = window.location.href.replace(window.location.search, "").replace(/^http/, "ws").replace(/\/$/, "");
         if (process.env.NODE_ENV === "development") {
@@ -160,26 +160,21 @@ export class AppStore {
         const folderSearchParam = url.searchParams.get("folder");
         const fileSearchParam = url.searchParams.get("file");
 
-        let autoFileLoaded = false;
-
-        AST.onReady.then(action(() => {
+        try {
+            await AST.onReady;
             this.astReady = true;
-            if (this.backendService.connectionStatus === ConnectionStatus.ACTIVE && !autoFileLoaded && fileSearchParam) {
-                this.loadFile(folderSearchParam, fileSearchParam, "");
-            }
-        }));
-
-        this.backendService.connect(wsURL).subscribe(ack => {
+            const ack = await this.backendService.connect(wsURL);
             console.log(`Connected with session ID ${ack.sessionId}`);
             this.logStore.addInfo(`Connected to server ${wsURL} with session ID ${ack.sessionId}`, ["network"]);
-            if (this.astReady && fileSearchParam) {
-                autoFileLoaded = true;
-                this.loadFile(folderSearchParam, fileSearchParam, "");
+            if (fileSearchParam) {
+                await this.loadFile(folderSearchParam, fileSearchParam, "");
             }
             if (this.preferenceStore.autoLaunch && !fileSearchParam) {
                 this.fileBrowserStore.showFileBrowser(BrowserMode.File);
             }
-        }, err => console.log(err));
+        } catch (err) {
+            console.log(err);
+        }
     };
 
     @action handleThemeChange = (darkMode: boolean) => {
@@ -355,8 +350,12 @@ export class AppStore {
             matchedIds.push(this.spatialReference.frameInfo.fileId);
         }
 
-        const spatialMatchedFileIds = this.spatialReference?.spatialSiblings?.map(matchedFrame => {return matchedFrame.frameInfo.fileId;});
-        const spectralMatchedFileIds = this.spatialReference?.spectralSiblings?.map(matchedFrame => {return matchedFrame.frameInfo.fileId;});
+        const spatialMatchedFileIds = this.spatialReference?.spatialSiblings?.map(matchedFrame => {
+            return matchedFrame.frameInfo.fileId;
+        });
+        const spectralMatchedFileIds = this.spatialReference?.spectralSiblings?.map(matchedFrame => {
+            return matchedFrame.frameInfo.fileId;
+        });
         spatialMatchedFileIds?.forEach(spatialMatchedFileId => {
             if (spectralMatchedFileIds?.includes(spatialMatchedFileId)) {
                 matchedIds.push(spatialMatchedFileId);
@@ -443,67 +442,63 @@ export class AppStore {
         return true;
     };
 
-    @action loadFile = (path: string, filename: string, hdu: string) => {
-        return new Promise<number>((resolve, reject) => {
-            this.startFileLoading();
+    loadFile = async (path: string, filename: string, hdu: string) => {
+        this.startFileLoading();
 
-            if (!filename) {
-                const lastDirSeparator = path.lastIndexOf("/");
-                if (lastDirSeparator >= 0) {
-                    filename = path.substring(lastDirSeparator + 1);
-                    path = path.substring(0, lastDirSeparator);
-                }
-            } else if (!path && filename.includes("/")) {
-                const lastDirSeparator = filename.lastIndexOf("/");
-                if (lastDirSeparator >= 0) {
-                    path = filename.substring(0, lastDirSeparator);
-                    filename = filename.substring(lastDirSeparator + 1);
-                }
+        if (!filename) {
+            const lastDirSeparator = path.lastIndexOf("/");
+            if (lastDirSeparator >= 0) {
+                filename = path.substring(lastDirSeparator + 1);
+                path = path.substring(0, lastDirSeparator);
             }
+        } else if (!path && filename.includes("/")) {
+            const lastDirSeparator = filename.lastIndexOf("/");
+            if (lastDirSeparator >= 0) {
+                path = filename.substring(0, lastDirSeparator);
+                filename = filename.substring(lastDirSeparator + 1);
+            }
+        }
 
-            this.backendService.loadFile(path, filename, hdu, this.fileCounter, CARTA.RenderMode.RASTER).subscribe(ack => {
-                if (!this.addFrame(ack, path, hdu)) {
-                    AppToaster.show({icon: "warning-sign", message: "Load file failed.", intent: "danger", timeout: 3000});
-                }
-                this.endFileLoading();
-                this.fileBrowserStore.hideFileBrowser();
-                WidgetsStore.ResetWidgetPlotXYBounds(this.widgetsStore.spatialProfileWidgets);
-                WidgetsStore.ResetWidgetPlotXYBounds(this.widgetsStore.spectralProfileWidgets);
-                WidgetsStore.ResetWidgetPlotXYBounds(this.widgetsStore.stokesAnalysisWidgets);
-                resolve(ack.fileId);
-            }, err => {
-                this.alertStore.showAlert(`Error loading file: ${err}`);
-                this.endFileLoading();
-                reject(err);
-            });
-
+        try {
+            const ack = await this.backendService.loadFile(path, filename, hdu, this.fileCounter, CARTA.RenderMode.RASTER);
             this.fileCounter++;
-        });
+            if (!this.addFrame(ack, path, hdu)) {
+                AppToaster.show({icon: "warning-sign", message: "Load file failed.", intent: "danger", timeout: 3000});
+            }
+            this.endFileLoading();
+            this.fileBrowserStore.hideFileBrowser();
+            WidgetsStore.ResetWidgetPlotXYBounds(this.widgetsStore.spatialProfileWidgets);
+            WidgetsStore.ResetWidgetPlotXYBounds(this.widgetsStore.spectralProfileWidgets);
+            WidgetsStore.ResetWidgetPlotXYBounds(this.widgetsStore.stokesAnalysisWidgets);
+            return ack.fileId;
+        } catch (err) {
+            this.alertStore.showAlert(`Error loading file: ${err}`);
+            this.endFileLoading();
+            throw(err);
+        }
     };
 
-    @action loadConcatStokes = (stokesFiles: CARTA.IStokesFile[], directory: string, hdu: string) => {
-        return new Promise<number>((resolve, reject) => {
-            this.startFileLoading();
-            this.backendService.loadStokeFiles(stokesFiles, this.fileCounter, CARTA.RenderMode.RASTER).subscribe(ack => {
-                if (!this.addFrame(ack.openFileAck, directory, hdu)) {
-                    AppToaster.show({icon: "warning-sign", message: "Load file failed.", intent: "danger", timeout: 3000});
-                }
-                this.endFileLoading();
-                this.fileBrowserStore.hideFileBrowser();
-                AppStore.Instance.dialogStore.hideStokesDialog();
-                WidgetsStore.ResetWidgetPlotXYBounds(this.widgetsStore.spatialProfileWidgets);
-                WidgetsStore.ResetWidgetPlotXYBounds(this.widgetsStore.spectralProfileWidgets);
-                WidgetsStore.ResetWidgetPlotXYBounds(this.widgetsStore.stokesAnalysisWidgets);
-                resolve(ack.openFileAck.fileId);
-            }, err => {
-                console.log(err);
-                this.alertStore.showAlert(`Error loading files: ${err}`);
-                this.endFileLoading();
-                reject(err);
-            });
-
+    loadConcatStokes = async (stokesFiles: CARTA.IStokesFile[], directory: string, hdu: string) => {
+        this.startFileLoading();
+        try {
+            const ack = await this.backendService.loadStokeFiles(stokesFiles, this.fileCounter, CARTA.RenderMode.RASTER);
             this.fileCounter++;
-        });
+            if (!this.addFrame(ack.openFileAck, directory, hdu)) {
+                AppToaster.show({icon: "warning-sign", message: "Load file failed.", intent: "danger", timeout: 3000});
+            }
+            this.endFileLoading();
+            this.fileBrowserStore.hideFileBrowser();
+            AppStore.Instance.dialogStore.hideStokesDialog();
+            WidgetsStore.ResetWidgetPlotXYBounds(this.widgetsStore.spatialProfileWidgets);
+            WidgetsStore.ResetWidgetPlotXYBounds(this.widgetsStore.spectralProfileWidgets);
+            WidgetsStore.ResetWidgetPlotXYBounds(this.widgetsStore.stokesAnalysisWidgets);
+            return ack.openFileAck.fileId;
+        } catch (err) {
+            console.log(err);
+            this.alertStore.showAlert(`Error loading files: ${err}`);
+            this.endFileLoading();
+            throw(err);
+        }
     };
 
     @action appendConcatFile = (stokesFiles: CARTA.IStokesFile[], directory: string, hdu: string) => {
@@ -544,27 +539,25 @@ export class AppStore {
         return this.loadFile(path, filename, hdu);
     };
 
-    @action saveFile = (directory: string, filename: string, fileType: CARTA.FileType, regionId?: number, channels?: number[], stokes?: number[], shouldDropDegenerateAxes?: boolean) => {
-        return new Promise<number>((resolve, reject) => {
-            if (!this.activeFrame) {
-                reject();
-            }
-            this.startFileSaving();
-            const fileId = this.activeFrame.frameInfo.fileId;
-            this.backendService.saveFile(fileId, directory, filename, fileType, regionId, channels, stokes, !shouldDropDegenerateAxes).subscribe(ack => {
-                AppToaster.show({icon: "saved", message: `${filename} saved.`, intent: "success", timeout: 3000});
-                this.fileBrowserStore.hideFileBrowser();
-                this.endFileSaving();
-                resolve(ack.fileId);
-            }, error => {
-                console.error(error);
-                AppToaster.show({icon: "warning-sign", message: error, intent: "danger", timeout: 3000});
-                this.endFileSaving();
-                reject(error);
-            });
-        });
+    saveFile = async (directory: string, filename: string, fileType: CARTA.FileType, regionId?: number, channels?: number[], stokes?: number[], shouldDropDegenerateAxes?: boolean) => {
+        if (!this.activeFrame) {
+            throw new Error("No active image");
+        }
+        this.startFileSaving();
+        const fileId = this.activeFrame.frameInfo.fileId;
+        try {
+            const ack = await this.backendService.saveFile(fileId, directory, filename, fileType, regionId, channels, stokes, !shouldDropDegenerateAxes);
+            AppToaster.show({icon: "saved", message: `${filename} saved.`, intent: "success", timeout: 3000});
+            this.fileBrowserStore.hideFileBrowser();
+            this.endFileSaving();
+            return ack.fileId;
+        } catch (err) {
+            console.error(err);
+            AppToaster.show({icon: "warning-sign", message: err, intent: "danger", timeout: 3000});
+            this.endFileSaving();
+            throw err;
+        }
     };
-
 
     @action closeFile = (frame: FrameStore, confirmClose: boolean = true) => {
         if (!frame) {
@@ -732,22 +725,22 @@ export class AppStore {
     };
 
     // Open catalog file
-    @action appendCatalog = (directory: string, file: string, previewDataSize: number, type: CARTA.CatalogFileType) => {
+    appendCatalog = async (directory: string, file: string, previewDataSize: number, type: CARTA.CatalogFileType) => {
         return new Promise<number>((resolve, reject) => {
             if (!this.activeFrame) {
                 AppToaster.show(ErrorToast("Please load the image file"));
-                reject();
+                throw new Error("No image file");
             }
             if (!(type === CARTA.CatalogFileType.VOTable)) {
-                AppToaster.show(ErrorToast("`Catalog type not supported"));
-                reject();
+                AppToaster.show(ErrorToast("Catalog type not supported"));
+                throw new Error("Catalog type not supported");
             }
             this.startFileLoading();
 
             const frame = this.activeFrame;
             const fileId = this.catalogNextFileId;
 
-            this.backendService.loadCatalogFile(directory, file, fileId, previewDataSize).subscribe(ack => runInAction(() => {
+            this.backendService.loadCatalogFile(directory, file, fileId, previewDataSize).then(ack => runInAction(() => {
                 this.endFileLoading();
                 if (frame && ack.success && ack.dataSize) {
                     let catalogInfo: CatalogInfo = {fileId, directory, fileInfo: ack.fileInfo, dataSize: ack.dataSize};
@@ -839,7 +832,7 @@ export class AppStore {
     };
 
     // Region file actions
-    @action importRegion = (directory: string, file: string, type: CARTA.FileType | CARTA.CatalogFileType) => {
+    importRegion = async (directory: string, file: string, type: CARTA.FileType | CARTA.CatalogFileType) => {
         if (!this.activeFrame || !(type === CARTA.FileType.CRTF || type === CARTA.FileType.DS9_REG)) {
             AppToaster.show(ErrorToast("Region type not supported"));
             return;
@@ -847,7 +840,8 @@ export class AppStore {
 
         // ensure that the same frame is used in the callback, to prevent issues when the active frame changes while the region is being imported
         const frame = this.activeFrame;
-        this.backendService.importRegion(directory, file, type, frame.frameInfo.fileId).subscribe(ack => {
+        try {
+            const ack = await this.backendService.importRegion(directory, file, type, frame.frameInfo.fileId);
             if (frame && ack.success && ack.regions) {
                 const regionMap = new Map<string, CARTA.IRegionInfo>(Object.entries(ack.regions));
                 const regionStyles = new Map<string, CARTA.IRegionStyle>(Object.entries(ack.regionStyles));
@@ -867,13 +861,13 @@ export class AppStore {
                 });
             }
             this.fileBrowserStore.hideFileBrowser();
-        }, error => {
-            console.error(error);
-            AppToaster.show(ErrorToast(error));
-        });
+        } catch (err) {
+            console.error(err);
+            AppToaster.show(ErrorToast(err));
+        }
     };
 
-    @action exportRegions = (directory: string, file: string, coordType: CARTA.CoordinateType, fileType: RegionFileType) => {
+    exportRegions = async (directory: string, file: string, coordType: CARTA.CoordinateType, fileType: RegionFileType) => {
         const frame = this.activeFrame;
         // Prevent exporting if only the cursor region exists
         if (!frame.regionSet.regions || frame.regionSet.regions.length <= 1) {
@@ -889,13 +883,15 @@ export class AppStore {
                 dashList: region.dashLength ? [region.dashLength] : []
             });
         }
-        this.backendService.exportRegion(directory, file, fileType, coordType, frame.frameInfo.fileId, regionStyles).subscribe(() => {
+
+        try {
+            await this.backendService.exportRegion(directory, file, fileType, coordType, frame.frameInfo.fileId, regionStyles);
             AppToaster.show(SuccessToast("saved", `Exported regions for ${frame.filename} using ${coordType === CARTA.CoordinateType.WORLD ? "world" : "pixel"} coordinates`));
             this.fileBrowserStore.hideFileBrowser();
-        }, error => {
-            console.error(error);
-            AppToaster.show(ErrorToast(error));
-        });
+        } catch (err) {
+            console.error(err);
+            AppToaster.show(ErrorToast(err));
+        }
     };
 
     @action requestCubeHistogram = (fileId: number = -1) => {
@@ -914,7 +910,7 @@ export class AppStore {
         }
     };
 
-    @action requestMoment = (message: CARTA.IMomentRequest, frame: FrameStore) => {
+    @action requestMoment = async (message: CARTA.IMomentRequest, frame: FrameStore) => {
         if (!message || !frame) {
             return;
         }
@@ -926,29 +922,25 @@ export class AppStore {
         }
         frame.removeMomentImage();
 
-        this.backendService.requestMoment(message).subscribe(ack => {
-            if (ack.success) {
-                if (!ack.cancel && ack.openFileAcks) {
-                    ack.openFileAcks.forEach(openFileAck => {
-                        if (this.addFrame(CARTA.OpenFileAck.create(openFileAck), this.fileBrowserStore.startingDirectory, "")) {
-                            this.fileCounter++;
-                            frame.addMomentImage(this.frames.find(f => f.frameInfo.fileId === openFileAck.fileId));
-                        } else {
-                            AppToaster.show({icon: "warning-sign", message: "Load file failed.", intent: "danger", timeout: 3000});
-                        }
-                    });
-                }
-            } else {
-                AppToaster.show({icon: "warning-sign", message: `Moment generation failed. ${ack?.message}`, intent: "danger", timeout: 3000});
-            }
-            frame.resetMomentRequestState();
-            this.endFileLoading();
-        }, error => {
-            frame.resetMomentRequestState();
-            this.endFileLoading();
-            console.error(error);
-        });
         this.restartTaskProgress();
+
+        try {
+            const ack = await this.backendService.requestMoment(message);
+            if (!ack.cancel && ack.openFileAcks) {
+                for (const openFileAck of ack.openFileAcks) {
+                    if (this.addFrame(CARTA.OpenFileAck.create(openFileAck), this.fileBrowserStore.startingDirectory, "")) {
+                        this.fileCounter++;
+                        frame.addMomentImage(this.frames.find(f => f.frameInfo.fileId === openFileAck.fileId));
+                    } else {
+                        AppToaster.show({icon: "warning-sign", message: "Load file failed.", intent: "danger", timeout: 3000});
+                    }
+                }
+            }
+        } catch (err) {
+            frame.resetMomentRequestState();
+            this.endFileLoading();
+            console.error(err);
+        }
     };
 
     @action cancelRequestingMoment = (fileId: number = -1) => {
@@ -1463,12 +1455,12 @@ export class AppStore {
                     const coords = catalogProfileStore.get2DPlotData(xColumn, yColumn, catalogData);
                     const wcs = frame.validWcs ? frame.wcsInfo : 0;
                     this.catalogStore.updateCatalogData(
-                        catalogFileId, 
-                        coords.wcsX, 
-                        coords.wcsY, 
-                        wcs, 
-                        coords.xHeaderInfo.units, 
-                        coords.yHeaderInfo.units, 
+                        catalogFileId,
+                        coords.wcsX,
+                        coords.wcsY,
+                        wcs,
+                        coords.xHeaderInfo.units,
+                        coords.yHeaderInfo.units,
                         catalogProfileStore.catalogCoordinateSystem.system
                     );
 
@@ -1519,22 +1511,25 @@ export class AppStore {
 
     // endregion
 
-    @action onReconnectAlertClosed = (confirmed: boolean) => {
+    onReconnectAlertClosed = async (confirmed: boolean) => {
         if (!confirmed) {
             // TODO: How do we handle the situation where the user does not want to resume?
             return;
         }
-        this.backendService.connect(this.backendService.serverUrl).subscribe(ack => {
+
+        try {
+            const ack = await this.backendService.connect(this.backendService.serverUrl);
             if (ack.sessionType === CARTA.SessionType.RESUMED) {
                 console.log(`Reconnected with session ID ${ack.sessionId}`);
                 this.logStore.addInfo(`Reconnected to server with session ID ${ack.sessionId}`, ["network"]);
                 this.resumeSession();
             }
-
-        }, err => console.log(err));
+        } catch (err) {
+            console.log(err);
+        }
     };
 
-    @action private resumeSession = () => {
+    @action private resumeSession = async () => {
         // Some things should be reset when the user reconnects
         this.animatorStore.stopAnimation();
         this.tileService.clearRequestQueue();
@@ -1605,10 +1600,13 @@ export class AppStore {
 
         this.resumingSession = true;
 
-        this.backendService.resumeSession({images, catalogFiles}).subscribe(this.onSessionResumed, err => {
+        try {
+            await this.backendService.resumeSession({images, catalogFiles});
+            this.onSessionResumed();
+        } catch (err) {
             console.error(err);
             this.alertStore.showAlert("Error resuming session");
-        });
+        }
     };
 
     @action private onSessionResumed = () => {
@@ -1758,7 +1756,7 @@ export class AppStore {
             }
         }
 
-        if(oldRef?.secondarySpatialImages.length) {
+        if (oldRef?.secondarySpatialImages.length) {
             oldRef.secondarySpatialImages = [];
         }
 

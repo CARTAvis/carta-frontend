@@ -1,4 +1,4 @@
-import { action, observable, makeObservable } from "mobx";
+import {action, observable, makeObservable} from "mobx";
 import * as AST from "ast_wrapper";
 import {CARTA} from "carta-protobuf";
 import {CURSOR_REGION_ID, FrameStore, PreferenceStore, RegionStore} from "stores";
@@ -79,12 +79,10 @@ export class RegionSetStore {
             this.preference.regionColor, this.preference.regionLineWidth, this.preference.regionDashLength, rotation, regionName);
         this.regions.push(region);
         if (!temporary) {
-            this.backendService.setRegion(this.frame.frameInfo.fileId, -1, region).subscribe(ack => {
-                if (ack.success) {
-                    console.log(`Updating regionID from ${region.regionId} to ${ack.regionId}`);
-                    region.setRegionId(ack.regionId);
-                }
-            });
+            this.backendService.setRegion(this.frame.frameInfo.fileId, -1, region).then(ack => {
+                console.log(`Updating regionID from ${region.regionId} to ${ack.regionId}`);
+                region.setRegionId(ack.regionId);
+            }, err => console.log(err));
         }
 
         return region;
