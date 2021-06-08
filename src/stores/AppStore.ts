@@ -1074,6 +1074,7 @@ export class AppStore {
     private constructor() {
         makeObservable(this);
         AppStore.staticInstance = this;
+        window["app"] = this;
         // Assign service instances
         this.backendService = BackendService.Instance;
         this.tileService = TileService.Instance;
@@ -1960,6 +1961,16 @@ export class AppStore {
             return obj;
         }
         return val;
+    };
+
+    getFileList = (directory: string) => {
+        return new Promise((resolve, reject) => {
+            this.backendService.getFileList(directory).subscribe(res => {
+                resolve(res);
+            }, error => {
+                reject(error);
+            });
+        });
     };
 
     // region requirements calculations

@@ -1,10 +1,13 @@
 import * as React from "react";
+import * as prism from "prismjs";
 import {observer} from "mobx-react";
-import {action, computed, makeObservable, observable} from "mobx";
-import {AnchorButton, Classes, EditableText, IDialogProps, Intent} from "@blueprintjs/core";
+import {action, autorun, computed, makeObservable, observable} from "mobx";
+import {AnchorButton, Classes, IDialogProps, Intent} from "@blueprintjs/core";
+import Editor from "react-simple-code-editor";
 import {DraggableDialogComponent} from "components/Dialogs";
-import {ExecutionEntry, ScriptingService} from "services";
 import {AppStore} from "stores";
+
+import "prismjs/themes/prism.css";
 import "./DebugExecutionDialogComponent.scss";
 
 @observer
@@ -12,29 +15,28 @@ export class DebugExecutionDialogComponent extends React.Component {
     @observable inputString: string = localStorage.getItem("debugString") ?? "";
     @observable isExecuting: boolean;
     @observable errorString: string = "";
+    @observable functionToExecute;
 
-    @computed get executionEntries() {
-        let entries = this.inputString.split("\n");
-        let executionStrings = new Array<ExecutionEntry>();
-
-        for (let entry of entries) {
-            if (!entry || !entry.length || entry.startsWith("//")) {
-                continue;
-            }
-            const executionEntry = ExecutionEntry.FromString(entry);
-            if (!executionEntry.valid) {
-                return [];
-            } else {
-                executionStrings.push(executionEntry);
-            }
-        }
-
-        return executionStrings;
+    @computed get validInput() {
+        return this.functionToExecute !== undefined;
     }
 
     constructor(props: any) {
         super(props);
         makeObservable(this);
+
+        const AsyncFunction = Object.getPrototypeOf(async function () {
+        }).constructor;
+
+        if (AsyncFunction) {
+            autorun(() => {
+                try {
+                    this.functionToExecute = new AsyncFunction(this.inputString);
+                } catch (e) {
+                    this.functionToExecute = undefined;
+                }
+            }, {delay: 200});
+        }
     }
 
     public render() {
@@ -55,17 +57,27 @@ export class DebugExecutionDialogComponent extends React.Component {
             title: "Execute a command"
         };
 
-        const validInput = (this.executionEntries && this.executionEntries.length);
-
         return (
             <DraggableDialogComponent dialogProps={dialogProps} defaultWidth={700} defaultHeight={400} enableResizing={true}>
                 <div className={Classes.DIALOG_BODY}>
-                    <EditableText className="input-text" onChange={this.handleActionInput} value={this.inputString} minLines={5} intent={!validInput ? "warning" : "success"} placeholder="Enter execution string" multiline={true}/>
+                    <Editor
+                        className={"language-js line-numbers"}
+                        value={this.inputString}
+                        onValueChange={this.handleActionInput}
+                        highlight={this.applyHighlight}
+                        tabSize={4}
+                        padding={5}
+                        textareaId="codeArea"
+                        style={{
+                            fontFamily: "\"Fira code\", \"Fira Mono\", monospace",
+                            fontSize: 12,
+                        }}
+                        placeholder="Enter execution string"
+                    />
                 </div>
                 <div className={Classes.DIALOG_FOOTER}>
                     <div className={Classes.DIALOG_FOOTER_ACTIONS}>
-                        <AnchorButton intent={Intent.PRIMARY} onClick={this.onExecuteClicked} disabled={!validInput || this.isExecuting} text="Execute"/>
-                        <AnchorButton intent={Intent.WARNING} onClick={() => appStore.backendService.scriptingStream.next(JSON.parse(this.inputString))} text="DebugTest"/>
+                        <AnchorButton intent={Intent.PRIMARY} onClick={this.onExecuteClicked} disabled={!this.validInput || this.isExecuting} text="Execute"/>
                         <AnchorButton intent={Intent.NONE} onClick={appStore.dialogStore.hideDebugExecutionDialog} text="Close"/>
                     </div>
                 </div>
@@ -73,14 +85,33 @@ export class DebugExecutionDialogComponent extends React.Component {
         );
     }
 
+    applyHighlight = (code: string) => {
+        return prism.highlight(code, prism.languages.js, "js")
+            .split("\n")
+            .map((line, i) => `<span class='editor-line-number'>${i + 1}</span>${line}`)
+            .join("\n");
+    };
+
     @action handleActionInput = (newValue: string) => {
         this.inputString = newValue;
     };
 
+    @action setIsExecuting = (val: boolean) => {
+        this.isExecuting = val;
+    }
+
     onExecuteClicked = async () => {
-        this.isExecuting = true;
-        await ScriptingService.Instance.executeEntries(this.executionEntries);
+        if (!this.functionToExecute) {
+            return;
+        }
+
+        this.setIsExecuting(true);
+        try {
+            await this.functionToExecute();
+        } catch (e) {
+            console.log(e);
+        }
         localStorage.setItem("debugString", this.inputString);
-        this.isExecuting = false;
+        this.setIsExecuting(false);
     };
 }

@@ -1,13 +1,47 @@
+@import "~@blueprintjs/core/lib/scss/variables.scss";
+
 .debug-execution-dialog {
-    user-select: none;
+  user-select: none;
 
-    .input-text {
-        margin-left: 5px;
-        margin-right: 5px;
-        margin-top: 5px;
+  .bp3-dialog-body {
+    background: $white;
+  }
+
+  &.bp3-dark {
+    .bp3-dialog-body {
+      background: $dark-gray1;
+    }
+  }
+
+  .input-text {
+    margin-left: 5px;
+    margin-right: 5px;
+    margin-top: 5px;
+  }
+
+  .bp3-input-group {
+    margin-bottom: 10px;
+  }
+
+  .line-numbers {
+    counter-reset: line;
+
+    #codeArea {
+      outline: none;
+      padding-left: 60px !important;
     }
 
-    .bp3-input-group {
-        margin-bottom: 10px;
+    pre {
+      padding-left: 60px !important;
     }
+
+    .editor-line-number {
+      position: absolute;
+      left: 0px;
+      color: #cccccc;
+      text-align: right;
+      width: 40px;
+      font-weight: 100;
+    }
+  }
 }
