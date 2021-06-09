@@ -1,8 +1,8 @@
 import * as React from "react";
 import {observer} from "mobx-react";
 import {Cell, Column, Table, SelectionModes, RenderMode, ColumnHeaderCell, IRegion} from "@blueprintjs/table";
-import {Checkbox, PopoverInteractionKind, InputGroup, Icon, Label} from "@blueprintjs/core";
-import {Popover2} from "@blueprintjs/popover2";
+import {Checkbox, InputGroup, Icon, Label} from "@blueprintjs/core";
+import {Popover2, Popover2InteractionKind} from "@blueprintjs/popover2";
 import {IconName} from "@blueprintjs/icons";
 import {IRowIndices} from "@blueprintjs/table/lib/esm/common/grid";
 import {CARTA} from "carta-protobuf";
@@ -117,7 +117,7 @@ export class FilterableTableComponent extends React.Component<FilterableTableCom
                         className={"column-popover"}
                         popoverClassName={this.props.darkTheme ? "column-popover-dark" : "column-popover"}
                         content={filterSyntax}
-                        interactionKind={PopoverInteractionKind.HOVER}
+                        interactionKind={Popover2InteractionKind.HOVER}
                     >
                         <InputGroup
                             key={"column-popover-" + columnIndex}
@@ -231,7 +231,7 @@ export class FilterableTableComponent extends React.Component<FilterableTableCom
                             className={"column-popover"} 
                             popoverClassName={popOverClass} 
                             content={headerDescription ?? "Description not avaliable"}
-                            interactionKind={PopoverInteractionKind.HOVER}
+                            interactionKind={Popover2InteractionKind.HOVER}
                         >
                             {column.name}
                         </Popover2>
@@ -244,7 +244,7 @@ export class FilterableTableComponent extends React.Component<FilterableTableCom
             <ColumnHeaderCell>
                 <ColumnHeaderCell className={"column-name"} nameRenderer={nameRenderer}/>
                 <ColumnHeaderCell isActive={controlheader?.filter !== ""}>
-                    <Popover2 hoverOpenDelay={250} hoverCloseDelay={0} className={"column-popover"} popoverClassName={popOverClass} content={filterSyntax} interactionKind={PopoverInteractionKind.HOVER}>
+                    <Popover2 hoverOpenDelay={250} hoverCloseDelay={0} className={"column-popover"} popoverClassName={popOverClass} content={filterSyntax} interactionKind={Popover2InteractionKind.HOVER}>
                         <InputGroup
                             key={"column-popover-" + columnIndex}
                             small={true}
