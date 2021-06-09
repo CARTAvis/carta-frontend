@@ -62,23 +62,11 @@ export class HistogramConfigComponent extends React.Component<HistogramConfigPro
                             itemRenderer={this.renderHistogramSelectItem}
                             disabled={this.props.disableHistogramSelect}
                         >
-                            <Button
-                                text={renderConfig.useCubeHistogram ? "Per-Cube" : "Per-Channel"}
-                                rightIcon="double-caret-vertical"
-                                alignText={"right"}
-                                disabled={this.props.disableHistogramSelect}
-                            />
+                            <Button text={renderConfig.useCubeHistogram ? "Per-Cube" : "Per-Channel"} rightIcon="double-caret-vertical" alignText={"right"} disabled={this.props.disableHistogramSelect} />
                         </HistogramSelect>
                     </FormGroup>
                 )}
-                <Alert
-                    className={AppStore.Instance.darkTheme ? "bp3-dark" : ""}
-                    icon={"time"}
-                    isOpen={this.showCubeHistogramAlert}
-                    onCancel={this.handleAlertCancel}
-                    onConfirm={this.handleAlertConfirm}
-                    cancelButtonText={"Cancel"}
-                >
+                <Alert className={AppStore.Instance.darkTheme ? "bp3-dark" : ""} icon={"time"} isOpen={this.showCubeHistogramAlert} onCancel={this.handleAlertCancel} onConfirm={this.handleAlertConfirm} cancelButtonText={"Cancel"}>
                     <p>Calculating a cube histogram may take a long time, depending on the size of the file. Are you sure you want to continue?</p>
                 </Alert>
             </React.Fragment>

@@ -6,35 +6,13 @@ import {Colors, NonIdealState} from "@blueprintjs/core";
 import ReactResizeDetector from "react-resize-detector";
 import {ChartArea} from "chart.js";
 import {CARTA} from "carta-protobuf";
-import {
-    LinePlotComponent,
-    LinePlotComponentProps,
-    ProfilerInfoComponent,
-    ScatterPlotComponent,
-    ScatterPlotComponentProps,
-    VERTICAL_RANGE_PADDING,
-    PlotType,
-    SmoothingType
-} from "components/Shared";
+import {LinePlotComponent, LinePlotComponentProps, ProfilerInfoComponent, ScatterPlotComponent, ScatterPlotComponentProps, VERTICAL_RANGE_PADDING, PlotType, SmoothingType} from "components/Shared";
 import {StokesAnalysisToolbarComponent} from "./StokesAnalysisToolbarComponent/StokesAnalysisToolbarComponent";
 import {TickType, MultiPlotProps} from "../Shared/LinePlot/PlotContainer/PlotContainerComponent";
 import {AppStore, AnimatorStore, DefaultWidgetConfig, FrameStore, HelpType, WidgetsStore, WidgetProps, SpectralProfileStore} from "stores";
 import {StokesAnalysisWidgetStore, StokesCoordinate} from "stores/widgets";
 import {Point2D, SpectralColorMap, SpectralType} from "models";
-import {
-    clamp,
-    normalising,
-    polarizationAngle,
-    polarizedIntensity,
-    binarySearchByX,
-    closestPointIndexToCursor,
-    toFixed,
-    toExponential,
-    minMaxPointArrayZ,
-    formattedNotation,
-    minMaxArray,
-    getColorForTheme
-} from "utilities";
+import {clamp, normalising, polarizationAngle, polarizedIntensity, binarySearchByX, closestPointIndexToCursor, toFixed, toExponential, minMaxPointArrayZ, formattedNotation, minMaxArray, getColorForTheme} from "utilities";
 import "./StokesAnalysisComponent.scss";
 
 type Border = {xMin: number; xMax: number; yMin: number; yMax: number};
@@ -103,9 +81,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
     }
 
     @computed get exportQUScatterHeaders(): string[] {
-        return this.widgetStore.smoothingStore.type === SmoothingType.NONE
-            ? this.exportHeaders
-            : this.exportHeaders.concat(this.widgetStore.smoothingStore.comments);
+        return this.widgetStore.smoothingStore.type === SmoothingType.NONE ? this.exportHeaders : this.exportHeaders.concat(this.widgetStore.smoothingStore.comments);
     }
 
     constructor(props: WidgetProps) {
@@ -352,14 +328,8 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
             let uProfileOriginal = this.profileStore.getProfile(StokesCoordinate.LinearPolarizationU, statsType);
 
             if (qProfileOriginal && uProfileOriginal && qProfileOriginal.values && uProfileOriginal.values) {
-                let qProfileSmoothedValues = this.widgetStore.smoothingStore.getSmoothingValues(
-                    this.widgetStore.effectiveFrame.channelValues,
-                    qProfileOriginal.values
-                );
-                let uProfileSmoothedValues = this.widgetStore.smoothingStore.getSmoothingValues(
-                    this.widgetStore.effectiveFrame.channelValues,
-                    uProfileOriginal.values
-                );
+                let qProfileSmoothedValues = this.widgetStore.smoothingStore.getSmoothingValues(this.widgetStore.effectiveFrame.channelValues, qProfileOriginal.values);
+                let uProfileSmoothedValues = this.widgetStore.smoothingStore.getSmoothingValues(this.widgetStore.effectiveFrame.channelValues, uProfileOriginal.values);
                 let qProfile = [];
                 let uProfile = [];
                 let piProfile = [];
@@ -389,10 +359,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
                         qProfile = StokesAnalysisComponent.calculateFractionalPol(qProfile, iProfileOriginal.values);
                         uProfile = StokesAnalysisComponent.calculateFractionalPol(uProfile, iProfileOriginal.values);
                         if (this.widgetStore.smoothingStore.type !== SmoothingType.NONE) {
-                            let iProfileSmoothedValues = this.widgetStore.smoothingStore.getSmoothingValues(
-                                this.widgetStore.effectiveFrame.channelValues,
-                                iProfileOriginal.values
-                            );
+                            let iProfileSmoothedValues = this.widgetStore.smoothingStore.getSmoothingValues(this.widgetStore.effectiveFrame.channelValues, iProfileOriginal.values);
                             piProfileSmoothed = StokesAnalysisComponent.calculateFractionalPol(piProfileSmoothed, iProfileSmoothedValues.y);
                             qProfileSmoothed = StokesAnalysisComponent.calculateFractionalPol(qProfileSmoothed, iProfileSmoothedValues.y);
                             uProfileSmoothed = StokesAnalysisComponent.calculateFractionalPol(uProfileSmoothed, iProfileSmoothedValues.y);
@@ -509,11 +476,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
             yMin = localYMin;
             yMax = localYMax;
         }
-        if (
-            !this.widgetStore.isQULinePlotAutoScaledY &&
-            isLinePlots &&
-            (type === StokesCoordinate.LinearPolarizationQ || type === StokesCoordinate.LinearPolarizationU)
-        ) {
+        if (!this.widgetStore.isQULinePlotAutoScaledY && isLinePlots && (type === StokesCoordinate.LinearPolarizationQ || type === StokesCoordinate.LinearPolarizationU)) {
             const localYMin = clamp(this.widgetStore.quMinY, yMin, yMax);
             const localYMax = clamp(this.widgetStore.quMaxY, yMin, yMax);
             yMin = localYMin;
@@ -680,11 +643,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
         return data[hi].z;
     }
 
-    private getScatterChannel(
-        data: Array<{x: number; y: number; z?: number}>,
-        channel: {channelCurrent: number; channelHovered: number},
-        zIndex: boolean
-    ): {currentChannel: Point3D; hoveredChannel: Point3D} {
+    private getScatterChannel(data: Array<{x: number; y: number; z?: number}>, channel: {channelCurrent: number; channelHovered: number}, zIndex: boolean): {currentChannel: Point3D; hoveredChannel: Point3D} {
         let indicator = {currentChannel: data[0], hoveredChannel: data[0]};
         if (data && data.length && zIndex && channel) {
             let channelCurrent = channel.channelCurrent;
@@ -758,11 +717,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
         let channelInfo = frame.channelInfo;
         if (compositeProfile && channelInfo) {
             let quDic = this.assembleScatterPlotData(compositeProfile.qProfile, compositeProfile.uProfile, StokesCoordinate.PolarizationQU);
-            let quSmoothedDic = this.assembleScatterPlotData(
-                compositeProfile.qProfileSmoothed,
-                compositeProfile.uProfileSmoothed,
-                StokesCoordinate.PolarizationQU
-            );
+            let quSmoothedDic = this.assembleScatterPlotData(compositeProfile.qProfileSmoothed, compositeProfile.uProfileSmoothed, StokesCoordinate.PolarizationQU);
             let piDic = this.assembleLinePlotData(compositeProfile.piProfile, frame.channelValues, StokesCoordinate.PolarizedIntensity);
             let paDic = this.assembleLinePlotData(compositeProfile.paProfile, frame.channelValues, StokesCoordinate.PolarizationAngle);
             let qDic = this.assembleLinePlotData(compositeProfile.qProfile, frame.channelValues, StokesCoordinate.LinearPolarizationQ);
@@ -834,15 +789,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
         }
     };
 
-    private getCursorInfo = (
-        quDataset: readonly Point3D[],
-        piDataset: readonly Point2D[],
-        paDataset: readonly Point2D[],
-        scatterCursorProfiler: Point3D,
-        lineCursorProfiler: number,
-        scatterCursorImage: Point3D,
-        lineCursorImage: number
-    ) => {
+    private getCursorInfo = (quDataset: readonly Point3D[], piDataset: readonly Point2D[], paDataset: readonly Point2D[], scatterCursorProfiler: Point3D, lineCursorProfiler: number, scatterCursorImage: Point3D, lineCursorImage: number) => {
         let cursorInfo = null;
         const isMouseEntered = this.widgetStore.isMouseMoveIntoLinePlots || this.widgetStore.isMouseMoveIntoScatterPlots;
         const xUnit = this.widgetStore.effectiveFrame ? this.widgetStore.effectiveFrame.spectralUnitStr : "Channel";
@@ -879,37 +826,18 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
 
     private genProfilerInfo = (): string[] => {
         let profilerInfo: string[] = [];
-        if (
-            !this.cursorInfo ||
-            this.cursorInfo.quValue.x === null ||
-            this.cursorInfo.quValue.y === null ||
-            isNaN(this.cursorInfo.quValue.x) ||
-            isNaN(this.cursorInfo.quValue.y)
-        ) {
+        if (!this.cursorInfo || this.cursorInfo.quValue.x === null || this.cursorInfo.quValue.y === null || isNaN(this.cursorInfo.quValue.x) || isNaN(this.cursorInfo.quValue.y)) {
             return profilerInfo;
         }
         const frame = this.widgetStore.effectiveFrame;
         if (frame && this.plotData) {
-            const xLabel =
-                this.cursorInfo.xUnit === "Channel"
-                    ? "Channel " + toFixed(this.cursorInfo.channel)
-                    : formattedNotation(this.cursorInfo.channel) + " " + this.cursorInfo.xUnit;
+            const xLabel = this.cursorInfo.xUnit === "Channel" ? "Channel " + toFixed(this.cursorInfo.channel) : formattedNotation(this.cursorInfo.channel) + " " + this.cursorInfo.xUnit;
             const fractionalPol = this.widgetStore.fractionalPolVisible;
             const qLabel = fractionalPol ? ", Q/I: " : ", Q: ";
             const uLabel = fractionalPol ? ", U/I: " : ", U: ";
             const piLabel = fractionalPol ? ", PI/I: " : ", PI: ";
             const cursorString =
-                "(" +
-                xLabel +
-                qLabel +
-                toExponential(this.cursorInfo.quValue.x, 2) +
-                uLabel +
-                toExponential(this.cursorInfo.quValue.y, 2) +
-                piLabel +
-                toExponential(this.cursorInfo.pi, 2) +
-                ", PA: " +
-                toFixed(this.cursorInfo.pa, 2) +
-                ")";
+                "(" + xLabel + qLabel + toExponential(this.cursorInfo.quValue.x, 2) + uLabel + toExponential(this.cursorInfo.quValue.y, 2) + piLabel + toExponential(this.cursorInfo.pi, 2) + ", PA: " + toFixed(this.cursorInfo.pa, 2) + ")";
             profilerInfo.push(`${this.cursorInfo.isMouseEntered ? "Cursor:" : "Data:"} ${cursorString}`);
         }
         return profilerInfo;
@@ -1042,18 +970,10 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
             };
             const currentPlotData = this.plotData;
             let channel = {channelCurrent: 0, channelHovered: 0};
-            if (
-                currentPlotData &&
-                currentPlotData.piValues &&
-                currentPlotData.paValues &&
-                currentPlotData.qValues &&
-                currentPlotData.uValues &&
-                currentPlotData.quValues
-            ) {
+            if (currentPlotData && currentPlotData.piValues && currentPlotData.paValues && currentPlotData.qValues && currentPlotData.uValues && currentPlotData.quValues) {
                 piLinePlotProps.data = currentPlotData.piValues.dataset;
                 paLinePlotProps.data = currentPlotData.paValues.dataset;
-                quScatterPlotProps.data =
-                    this.widgetStore.smoothingStore.type === SmoothingType.NONE ? currentPlotData.quValues.dataset : currentPlotData.quSmoothedValues.dataset;
+                quScatterPlotProps.data = this.widgetStore.smoothingStore.type === SmoothingType.NONE ? currentPlotData.quValues.dataset : currentPlotData.quSmoothedValues.dataset;
 
                 const lineOpacity = this.minProgress < 1.0 ? 0.15 + this.minProgress / 4.0 : 1.0;
                 quLinePlotProps.opacity = lineOpacity;
@@ -1096,13 +1016,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
                 quLinePlotProps.multiPlotPropsMap.set(StokesCoordinate.LinearPolarizationU, uPlotProps);
 
                 const smoothingStore = this.widgetStore.smoothingStore;
-                if (
-                    smoothingStore.type !== SmoothingType.NONE &&
-                    currentPlotData.qSmoothedValues &&
-                    currentPlotData.uSmoothedValues &&
-                    currentPlotData.piSmoothedValues &&
-                    currentPlotData.piSmoothedValues
-                ) {
+                if (smoothingStore.type !== SmoothingType.NONE && currentPlotData.qSmoothedValues && currentPlotData.uSmoothedValues && currentPlotData.piSmoothedValues && currentPlotData.piSmoothedValues) {
                     let smoothedQPlotProps: MultiPlotProps = {
                         imageName: imageName,
                         plotName: "q-smoothed",
@@ -1135,11 +1049,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
                         plotName: "pa-smoothed",
                         data: currentPlotData.paSmoothedValues.dataset,
                         type: smoothingStore.lineType,
-                        borderColor: getColorForTheme(
-                            smoothingStore.colorMap.get(StokesCoordinate.PolarizationAngle)
-                                ? getColorForTheme(smoothingStore.colorMap.get(StokesCoordinate.PolarizationAngle))
-                                : primaryLineColor
-                        ),
+                        borderColor: getColorForTheme(smoothingStore.colorMap.get(StokesCoordinate.PolarizationAngle) ? getColorForTheme(smoothingStore.colorMap.get(StokesCoordinate.PolarizationAngle)) : primaryLineColor),
                         borderWidth: this.widgetStore.lineWidth + 1,
                         pointRadius: this.widgetStore.linePlotPointSize + 1
                     };
@@ -1172,10 +1082,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
                 let paBorder = currentPlotData.paValues.border;
                 let quBorder = currentPlotData.quValues.border;
 
-                if (
-                    this.compareVariable(qBorder.xMin, uBorder.xMin, piBorder.xMin, paBorder.xMin) &&
-                    this.compareVariable(qBorder.xMax, uBorder.xMax, piBorder.xMax, paBorder.xMax)
-                ) {
+                if (this.compareVariable(qBorder.xMin, uBorder.xMin, piBorder.xMin, paBorder.xMin) && this.compareVariable(qBorder.xMax, uBorder.xMax, piBorder.xMax, paBorder.xMax)) {
                     interactionBorder = {xMin: paBorder.xMin, xMax: paBorder.xMax};
                     this.channelBorder = {xMin: paBorder.xMin, xMax: paBorder.xMax};
                     if (this.widgetStore.isLinePlotsAutoScaledX) {

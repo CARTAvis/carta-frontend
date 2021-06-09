@@ -2,14 +2,7 @@ import {FrameView, Point2D, Transform2D} from "models";
 import {FrameStore} from "stores";
 import {rotate2D, scale2D} from "utilities";
 
-export function canvasToImagePos(
-    canvasX: number,
-    canvasY: number,
-    frameView: FrameView,
-    layerWidth: number,
-    layerHeight: number,
-    spatialTransform: Transform2D = null
-): Point2D {
+export function canvasToImagePos(canvasX: number, canvasY: number, frameView: FrameView, layerWidth: number, layerHeight: number, spatialTransform: Transform2D = null): Point2D {
     let offset = {x: 0.0, y: 0.0};
     if (spatialTransform) {
         offset = scale2D(rotate2D(offset, spatialTransform.rotation), spatialTransform.scale);
@@ -21,14 +14,7 @@ export function canvasToImagePos(
     };
 }
 
-export function imageToCanvasPos(
-    imageX: number,
-    imageY: number,
-    frameView: FrameView,
-    layerWidth: number,
-    layerHeight: number,
-    spatialTransform: Transform2D = null
-): Point2D {
+export function imageToCanvasPos(imageX: number, imageY: number, frameView: FrameView, layerWidth: number, layerHeight: number, spatialTransform: Transform2D = null): Point2D {
     const viewWidth = frameView.xMax - frameView.xMin;
     const viewHeight = frameView.yMax - frameView.yMin;
     return {

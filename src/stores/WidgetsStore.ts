@@ -170,10 +170,7 @@ export class WidgetsStore {
                 widgetConfig: RegionListComponent.WIDGET_CONFIG
             }
         ],
-        [
-            WidgetType.Log,
-            {isCustomIcon: false, icon: "application", onClick: () => WidgetsStore.Instance.createFloatingLogWidget(), widgetConfig: LogComponent.WIDGET_CONFIG}
-        ],
+        [WidgetType.Log, {isCustomIcon: false, icon: "application", onClick: () => WidgetsStore.Instance.createFloatingLogWidget(), widgetConfig: LogComponent.WIDGET_CONFIG}],
         [
             WidgetType.SpatialProfiler,
             {
@@ -292,10 +289,7 @@ export class WidgetsStore {
         });
     };
 
-    public static ResetWidgetPlotXYBounds(
-        storeMap: Map<string, SpatialProfileWidgetStore | SpectralProfileWidgetStore | HistogramWidgetStore | StokesAnalysisWidgetStore>,
-        fileId: number = ACTIVE_FILE_ID
-    ) {
+    public static ResetWidgetPlotXYBounds(storeMap: Map<string, SpatialProfileWidgetStore | SpectralProfileWidgetStore | HistogramWidgetStore | StokesAnalysisWidgetStore>, fileId: number = ACTIVE_FILE_ID) {
         if (fileId === ACTIVE_FILE_ID) {
             storeMap.forEach(widgetStore => {
                 widgetStore.clearXYBounds();
@@ -751,8 +745,7 @@ export class WidgetsStore {
 
         const catalogPlotWidgetStore = this.catalogPlotWidgets.get(id);
         if (catalogPlotWidgetStore) {
-            widgetConfig.helpType =
-                catalogPlotWidgetStore.plotType === CatalogPlotType.Histogram ? HelpType.CATALOG_HISTOGRAM_PLOT : HelpType.CATALOG_SCATTER_PLOT;
+            widgetConfig.helpType = catalogPlotWidgetStore.plotType === CatalogPlotType.Histogram ? HelpType.CATALOG_HISTOGRAM_PLOT : HelpType.CATALOG_SCATTER_PLOT;
         }
 
         // Set default size and position from the existing item
@@ -788,10 +781,7 @@ export class WidgetsStore {
             const id = itemConfig.id as string;
             const catalogPlotWidgetStore = this.catalogPlotWidgets.get(id);
             if (catalogPlotWidgetStore) {
-                HelpStore.Instance.showHelpDrawer(
-                    catalogPlotWidgetStore.plotType === CatalogPlotType.Histogram ? HelpType.CATALOG_HISTOGRAM_PLOT : HelpType.CATALOG_SCATTER_PLOT,
-                    centerX
-                );
+                HelpStore.Instance.showHelpDrawer(catalogPlotWidgetStore.plotType === CatalogPlotType.Histogram ? HelpType.CATALOG_HISTOGRAM_PLOT : HelpType.CATALOG_SCATTER_PLOT, centerX);
             }
         }
     };

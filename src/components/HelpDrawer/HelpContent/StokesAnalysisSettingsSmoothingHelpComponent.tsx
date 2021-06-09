@@ -16,9 +16,7 @@ export class StokesAnalysisSettingsSmoothingHelpComponent extends React.Componen
         return (
             <div>
                 <h3>Smoothing</h3>
-                <p>
-                    Smoothing may be applied to profiles and the scatter plot to enhance signal-to-noise ratio. CARTA provides the following smoothing methods:
-                </p>
+                <p>Smoothing may be applied to profiles and the scatter plot to enhance signal-to-noise ratio. CARTA provides the following smoothing methods:</p>
                 <ul>
                     <li>
                         <b>Boxcar</b>: convolution with a boxcar function
@@ -33,15 +31,11 @@ export class StokesAnalysisSettingsSmoothingHelpComponent extends React.Componen
                         <b>Binning</b>: averaging channels with a given width
                     </li>
                     <li>
-                        <b>Savitzky-Golay</b>: fitting successive sub-sets of adjacent data points with a low-degree polynomial by the method of linear least
-                        squares
+                        <b>Savitzky-Golay</b>: fitting successive sub-sets of adjacent data points with a low-degree polynomial by the method of linear least squares
                     </li>
                 </ul>
                 <p>Optionally, the original profile can be overplotted with the smoothed profile. </p>
-                <p>
-                    The data of the smoothed profile is appended in the exported tsv file if smoothing is applied. The tsv file of the scatter plot only
-                    contains the smoothed data if smoothing is applied.
-                </p>
+                <p>The data of the smoothed profile is appended in the exported tsv file if smoothing is applied. The tsv file of the scatter plot only contains the smoothed data if smoothing is applied.</p>
 
                 <h3>Examples</h3>
                 <p>Boxcar: Kernel = 2</p>

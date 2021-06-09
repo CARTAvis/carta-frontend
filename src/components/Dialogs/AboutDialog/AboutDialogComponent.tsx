@@ -86,8 +86,7 @@ export class AboutDialogComponent extends React.Component {
                     </ul>
                     <h3>License</h3>
                     <p className={Classes.TEXT_SMALL}>
-                        Copyright (C) 2018-2021 ASIAA, IDIA, NRAO, and Department of Physics, University of Alberta. This program is free software; you can
-                        redistribute it and/or modify it under the terms of the&#160;
+                        Copyright (C) 2018-2021 ASIAA, IDIA, NRAO, and Department of Physics, University of Alberta. This program is free software; you can redistribute it and/or modify it under the terms of the&#160;
                         <a href="http://www.gnu.org/copyleft/gpl.html" rel="noopener noreferrer" target="_blank">
                             GNU General Public License version 3
                         </a>

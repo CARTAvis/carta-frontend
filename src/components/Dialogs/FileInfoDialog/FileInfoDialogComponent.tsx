@@ -28,15 +28,7 @@ export class FileInfoDialogComponent extends React.Component {
         };
 
         return (
-            <DraggableDialogComponent
-                dialogProps={dialogProps}
-                helpType={HelpType.FILE_INFO}
-                minWidth={400}
-                minHeight={400}
-                defaultWidth={800}
-                defaultHeight={600}
-                enableResizing={true}
-            >
+            <DraggableDialogComponent dialogProps={dialogProps} helpType={HelpType.FILE_INFO} minWidth={400} minHeight={400} defaultWidth={800} defaultHeight={600} enableResizing={true}>
                 <div className="bp3-dialog-body">
                     <FileInfoComponent
                         infoTypes={[FileInfoType.IMAGE_FILE, FileInfoType.IMAGE_HEADER]}

@@ -59,13 +59,7 @@ class ProfileSelectionButtonComponent extends React.Component<ProfileSelectionBu
         return (
             <div className={className}>
                 <Tooltip content={this.props.categoryTooltip} position={Position.TOP}>
-                    <Checkbox
-                        className={"category-checkbox"}
-                        label={this.props.categoryName}
-                        checked={this.props.isActiveCategory}
-                        onChange={ev => this.props.onCategorySelect()}
-                        disabled={this.props.disabled}
-                    />
+                    <Checkbox className={"category-checkbox"} label={this.props.categoryName} checked={this.props.isActiveCategory} onChange={ev => this.props.onCategorySelect()} disabled={this.props.disabled} />
                 </Tooltip>
                 <Popover
                     content={
@@ -154,9 +148,7 @@ class ProfileSelectionComponent extends React.Component<{profileSelectionStore: 
                     disabled={!frame}
                     isSelectingSpecificItem={profileSelectionStore.isSelectingActiveFrame}
                     onCategorySelect={() => {
-                        profileSelectionStore.setActiveProfileCategory(
-                            profileSelectionStore.activeProfileCategory !== MultiProfileCategory.IMAGE ? MultiProfileCategory.IMAGE : MultiProfileCategory.NONE
-                        );
+                        profileSelectionStore.setActiveProfileCategory(profileSelectionStore.activeProfileCategory !== MultiProfileCategory.IMAGE ? MultiProfileCategory.IMAGE : MultiProfileCategory.NONE);
                     }}
                     onItemSelect={this.onFrameItemClick}
                     categoryTooltip={
@@ -190,11 +182,7 @@ class ProfileSelectionComponent extends React.Component<{profileSelectionStore: 
                     disabled={disabled}
                     isSelectingSpecificItem={profileSelectionStore.isSelectingActiveRegion}
                     onCategorySelect={() => {
-                        profileSelectionStore.setActiveProfileCategory(
-                            profileSelectionStore.activeProfileCategory !== MultiProfileCategory.REGION
-                                ? MultiProfileCategory.REGION
-                                : MultiProfileCategory.NONE
-                        );
+                        profileSelectionStore.setActiveProfileCategory(profileSelectionStore.activeProfileCategory !== MultiProfileCategory.REGION ? MultiProfileCategory.REGION : MultiProfileCategory.NONE);
                     }}
                     onItemSelect={this.onRegionItemClick}
                     categoryTooltip={
@@ -222,11 +210,7 @@ class ProfileSelectionComponent extends React.Component<{profileSelectionStore: 
                     disabled={disabled}
                     disableOptions={!profileSelectionStore.isStatsTypeSelectionAvailable}
                     onCategorySelect={() => {
-                        profileSelectionStore.setActiveProfileCategory(
-                            profileSelectionStore.activeProfileCategory !== MultiProfileCategory.STATISTIC
-                                ? MultiProfileCategory.STATISTIC
-                                : MultiProfileCategory.NONE
-                        );
+                        profileSelectionStore.setActiveProfileCategory(profileSelectionStore.activeProfileCategory !== MultiProfileCategory.STATISTIC ? MultiProfileCategory.STATISTIC : MultiProfileCategory.NONE);
                     }}
                     onItemSelect={this.onStatsItemClick}
                     categoryTooltip={
@@ -254,11 +238,7 @@ class ProfileSelectionComponent extends React.Component<{profileSelectionStore: 
                     disabled={disabled}
                     disableOptions={!frame?.hasStokes}
                     onCategorySelect={() => {
-                        profileSelectionStore.setActiveProfileCategory(
-                            profileSelectionStore.activeProfileCategory !== MultiProfileCategory.STOKES
-                                ? MultiProfileCategory.STOKES
-                                : MultiProfileCategory.NONE
-                        );
+                        profileSelectionStore.setActiveProfileCategory(profileSelectionStore.activeProfileCategory !== MultiProfileCategory.STOKES ? MultiProfileCategory.STOKES : MultiProfileCategory.NONE);
                     }}
                     onItemSelect={this.onStokesItemClick}
                     categoryTooltip={
@@ -287,29 +267,17 @@ class ProfileSelectionComponent extends React.Component<{profileSelectionStore: 
 export class SpectralProfilerToolbarComponent extends React.Component<{widgetStore: SpectralProfileWidgetStore; id: string}> {
     private smoothingShortcutClick = () => {
         this.props.widgetStore.setSettingsTabId(SpectralProfilerSettingsTabs.SMOOTHING);
-        AppStore.Instance.widgetsStore.createFloatingSettingsWidget(
-            SpectralProfilerComponent.WIDGET_CONFIG.title,
-            this.props.id,
-            SpectralProfilerComponent.WIDGET_CONFIG.type
-        );
+        AppStore.Instance.widgetsStore.createFloatingSettingsWidget(SpectralProfilerComponent.WIDGET_CONFIG.title, this.props.id, SpectralProfilerComponent.WIDGET_CONFIG.type);
     };
 
     private momentsShortcutClick = () => {
         this.props.widgetStore.setSettingsTabId(SpectralProfilerSettingsTabs.MOMENTS);
-        AppStore.Instance.widgetsStore.createFloatingSettingsWidget(
-            SpectralProfilerComponent.WIDGET_CONFIG.title,
-            this.props.id,
-            SpectralProfilerComponent.WIDGET_CONFIG.type
-        );
+        AppStore.Instance.widgetsStore.createFloatingSettingsWidget(SpectralProfilerComponent.WIDGET_CONFIG.title, this.props.id, SpectralProfilerComponent.WIDGET_CONFIG.type);
     };
 
     private fittingShortcutClick = () => {
         this.props.widgetStore.setSettingsTabId(SpectralProfilerSettingsTabs.FITTING);
-        AppStore.Instance.widgetsStore.createFloatingSettingsWidget(
-            SpectralProfilerComponent.WIDGET_CONFIG.title,
-            this.props.id,
-            SpectralProfilerComponent.WIDGET_CONFIG.type
-        );
+        AppStore.Instance.widgetsStore.createFloatingSettingsWidget(SpectralProfilerComponent.WIDGET_CONFIG.title, this.props.id, SpectralProfilerComponent.WIDGET_CONFIG.type);
     };
 
     public render() {

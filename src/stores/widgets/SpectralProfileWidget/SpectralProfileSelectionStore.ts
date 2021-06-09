@@ -452,11 +452,7 @@ export class SpectralProfileSelectionStore {
         }
 
         // Switch previously selected category to single selection mode from multi selection mode
-        if (
-            this.activeProfileCategory === MultiProfileCategory.REGION ||
-            this.activeProfileCategory === MultiProfileCategory.STATISTIC ||
-            this.activeProfileCategory === MultiProfileCategory.STOKES
-        ) {
+        if (this.activeProfileCategory === MultiProfileCategory.REGION || this.activeProfileCategory === MultiProfileCategory.STATISTIC || this.activeProfileCategory === MultiProfileCategory.STOKES) {
             this.switchToSingleModeHandily(this.activeProfileCategory);
         }
         this.activeProfileCategory = profileCategory;

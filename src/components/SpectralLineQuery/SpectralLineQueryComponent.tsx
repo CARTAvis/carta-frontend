@@ -1,23 +1,7 @@
 import * as React from "react";
 import {action, computed, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
-import {
-    AnchorButton,
-    Button,
-    Classes,
-    ControlGroup,
-    FormGroup,
-    HTMLSelect,
-    Intent,
-    Menu,
-    MenuItem,
-    Overlay,
-    Popover,
-    Position,
-    Spinner,
-    Switch,
-    Tooltip
-} from "@blueprintjs/core";
+import {AnchorButton, Button, Classes, ControlGroup, FormGroup, HTMLSelect, Intent, Menu, MenuItem, Overlay, Popover, Position, Spinner, Switch, Tooltip} from "@blueprintjs/core";
 import {Cell, Column, Regions, RenderMode, SelectionModes, Table} from "@blueprintjs/table";
 import SplitPane, {Pane} from "react-split-pane";
 import ReactResizeDetector from "react-resize-detector";
@@ -152,12 +136,7 @@ export class SpectralLineQueryComponent extends React.Component<WidgetProps> {
         return (
             <Cell className="header-table-cell" key={`cell_switch_${rowIndex}`}>
                 <React.Fragment>
-                    <Switch
-                        className="cell-switch-button"
-                        key={`cell_switch_button_${rowIndex}`}
-                        checked={display ?? false}
-                        onChange={ev => widgetStore.setHeaderDisplay(ev.currentTarget.checked, columnName)}
-                    />
+                    <Switch className="cell-switch-button" key={`cell_switch_button_${rowIndex}`} checked={display ?? false} onChange={ev => widgetStore.setHeaderDisplay(ev.currentTarget.checked, columnName)} />
                 </React.Fragment>
             </Cell>
         );
@@ -261,18 +240,10 @@ export class SpectralLineQueryComponent extends React.Component<WidgetProps> {
         const inputByRange = (
             <React.Fragment>
                 <FormGroup label="From" inline={true}>
-                    <SafeNumericInput
-                        value={widgetStore.queryRange[0]}
-                        buttonPosition="none"
-                        onValueChange={val => widgetStore.setQueryRange([val, widgetStore.queryRange[1]])}
-                    />
+                    <SafeNumericInput value={widgetStore.queryRange[0]} buttonPosition="none" onValueChange={val => widgetStore.setQueryRange([val, widgetStore.queryRange[1]])} />
                 </FormGroup>
                 <FormGroup label="To" inline={true}>
-                    <SafeNumericInput
-                        value={widgetStore.queryRange[1]}
-                        buttonPosition="none"
-                        onValueChange={val => widgetStore.setQueryRange([widgetStore.queryRange[0], val])}
-                    />
+                    <SafeNumericInput value={widgetStore.queryRange[1]} buttonPosition="none" onValueChange={val => widgetStore.setQueryRange([widgetStore.queryRange[0], val])} />
                 </FormGroup>
             </React.Fragment>
         );
@@ -280,18 +251,10 @@ export class SpectralLineQueryComponent extends React.Component<WidgetProps> {
         const inputByCenter = (
             <React.Fragment>
                 <FormGroup inline={true}>
-                    <SafeNumericInput
-                        value={widgetStore.queryRangeByCenter[0]}
-                        buttonPosition="none"
-                        onValueChange={val => widgetStore.setQueryRangeByCenter([val, widgetStore.queryRangeByCenter[1]])}
-                    />
+                    <SafeNumericInput value={widgetStore.queryRangeByCenter[0]} buttonPosition="none" onValueChange={val => widgetStore.setQueryRangeByCenter([val, widgetStore.queryRangeByCenter[1]])} />
                 </FormGroup>
                 <FormGroup label="±" inline={true}>
-                    <SafeNumericInput
-                        value={widgetStore.queryRangeByCenter[1]}
-                        buttonPosition="none"
-                        onValueChange={val => widgetStore.setQueryRangeByCenter([widgetStore.queryRangeByCenter[0], val])}
-                    />
+                    <SafeNumericInput value={widgetStore.queryRangeByCenter[1]} buttonPosition="none" onValueChange={val => widgetStore.setQueryRangeByCenter([widgetStore.queryRangeByCenter[0], val])} />
                 </FormGroup>
             </React.Fragment>
         );
@@ -308,11 +271,7 @@ export class SpectralLineQueryComponent extends React.Component<WidgetProps> {
                     </FormGroup>
                     {widgetStore.queryRangeType === SpectralLineQueryRangeType.Range ? inputByRange : inputByCenter}
                     <FormGroup inline={true}>
-                        <HTMLSelect
-                            options={Object.values(SpectralLineQueryUnit)}
-                            value={widgetStore.queryUnit}
-                            onChange={ev => widgetStore.setQueryUnit(ev.currentTarget.value as SpectralLineQueryUnit)}
-                        />
+                        <HTMLSelect options={Object.values(SpectralLineQueryUnit)} value={widgetStore.queryUnit} onChange={ev => widgetStore.setQueryUnit(ev.currentTarget.value as SpectralLineQueryUnit)} />
                     </FormGroup>
                     <ControlGroup className="intensity-limit">
                         <FormGroup label={"Intensity Limit"} inline={true}>
@@ -320,11 +279,7 @@ export class SpectralLineQueryComponent extends React.Component<WidgetProps> {
                         </FormGroup>
                         {widgetStore.intensityLimitEnabled && (
                             <Tooltip content="CDMS/JPL intensity (log)" position={Position.BOTTOM}>
-                                <SafeNumericInput
-                                    value={widgetStore.intensityLimitValue}
-                                    buttonPosition="none"
-                                    onValueChange={val => widgetStore.setIntensityLimitValue(val)}
-                                />
+                                <SafeNumericInput value={widgetStore.intensityLimitValue} buttonPosition="none" onValueChange={val => widgetStore.setIntensityLimitValue(val)} />
                             </Tooltip>
                         )}
                     </ControlGroup>
@@ -340,25 +295,15 @@ export class SpectralLineQueryComponent extends React.Component<WidgetProps> {
         const redshiftPanel = (
             <div className="redshift-panel">
                 <FormGroup inline={true}>
-                    <HTMLSelect
-                        options={[RedshiftType.V, RedshiftType.Z]}
-                        value={widgetStore.redshiftType}
-                        onChange={ev => widgetStore.setRedshiftType(ev.currentTarget.value as RedshiftType)}
-                    />
+                    <HTMLSelect options={[RedshiftType.V, RedshiftType.Z]} value={widgetStore.redshiftType} onChange={ev => widgetStore.setRedshiftType(ev.currentTarget.value as RedshiftType)} />
                 </FormGroup>
                 <FormGroup inline={true}>
-                    <SafeNumericInput
-                        value={widgetStore.redshiftInput}
-                        buttonPosition="none"
-                        onBlur={this.handleRedshiftChange}
-                        onKeyDown={this.handleRedshiftChange}
-                    />
+                    <SafeNumericInput value={widgetStore.redshiftInput} buttonPosition="none" onBlur={this.handleRedshiftChange} onKeyDown={this.handleRedshiftChange} />
                 </FormGroup>
             </div>
         );
 
-        const isSelectedWidgetExisted =
-            widgetStore.selectedSpectralProfilerID && AppStore.Instance.widgetsStore.getSpectralWidgetStoreByID(widgetStore.selectedSpectralProfilerID);
+        const isSelectedWidgetExisted = widgetStore.selectedSpectralProfilerID && AppStore.Instance.widgetsStore.getSpectralWidgetStoreByID(widgetStore.selectedSpectralProfilerID);
         const widgetMenu = (
             <Popover
                 content={
@@ -428,14 +373,7 @@ export class SpectralLineQueryComponent extends React.Component<WidgetProps> {
             <div className={className}>
                 <div className="bp3-dialog-body">
                     {queryPanel}
-                    <SplitPane
-                        className="body-split-pane"
-                        split="horizontal"
-                        primary={"second"}
-                        defaultSize={"60%"}
-                        minSize={"5%"}
-                        onChange={this.onTableResize}
-                    >
+                    <SplitPane className="body-split-pane" split="horizontal" primary={"second"} defaultSize={"60%"} minSize={"5%"} onChange={this.onTableResize}>
                         <Pane className={"header-table-container"}>{this.width > 0 && this.createHeaderTable()}</Pane>
                         <Pane className={"result-table-container"}>
                             {redshiftPanel}
@@ -458,31 +396,14 @@ export class SpectralLineQueryComponent extends React.Component<WidgetProps> {
                             <AnchorButton text="Reset" intent={Intent.PRIMARY} onClick={this.handleResetFilter} />
                         </Tooltip>
                         <Tooltip content={plotTip} position={Position.BOTTOM}>
-                            <AnchorButton
-                                text="Plot"
-                                intent={Intent.PRIMARY}
-                                disabled={!appStore.activeFrame || widgetStore.filterResult.size <= 0 || !isSelectedWidgetExisted || !isSelectedLinesUnderLimit}
-                                onClick={this.handlePlot}
-                            />
+                            <AnchorButton text="Plot" intent={Intent.PRIMARY} disabled={!appStore.activeFrame || widgetStore.filterResult.size <= 0 || !isSelectedWidgetExisted || !isSelectedLinesUnderLimit} onClick={this.handlePlot} />
                         </Tooltip>
                         <Tooltip content="Clear plotted lines" position={Position.BOTTOM}>
-                            <AnchorButton
-                                text="Clear"
-                                intent={Intent.PRIMARY}
-                                disabled={!appStore.activeFrame || !isSelectedWidgetExisted || widgetStore.filterResult.size <= 0}
-                                onClick={this.handleClear}
-                            />
+                            <AnchorButton text="Clear" intent={Intent.PRIMARY} disabled={!appStore.activeFrame || !isSelectedWidgetExisted || widgetStore.filterResult.size <= 0} onClick={this.handleClear} />
                         </Tooltip>
                     </div>
                 </div>
-                <Overlay
-                    className={Classes.OVERLAY_SCROLL_CONTAINER}
-                    autoFocus={true}
-                    canEscapeKeyClose={false}
-                    canOutsideClickClose={false}
-                    isOpen={widgetStore.isQuerying}
-                    usePortal={false}
-                >
+                <Overlay className={Classes.OVERLAY_SCROLL_CONTAINER} autoFocus={true} canEscapeKeyClose={false} canOutsideClickClose={false} isOpen={widgetStore.isQuerying} usePortal={false}>
                     <div className="query-loading-overlay">
                         <Spinner intent={Intent.PRIMARY} size={30} value={null} />
                     </div>

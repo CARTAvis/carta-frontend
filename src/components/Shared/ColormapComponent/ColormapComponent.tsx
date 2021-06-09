@@ -40,16 +40,7 @@ export const ColormapComponent: React.FC<ColormapComponentProps> = props => {
         if (!modifiers.matchesPredicate) {
             return null;
         }
-        return (
-            <MenuItem
-                active={modifiers.active}
-                disabled={modifiers.disabled}
-                label={colormap}
-                key={colormap}
-                onClick={handleClick}
-                text={renderColormapBlock(colormap)}
-            />
-        );
+        return <MenuItem active={modifiers.active} disabled={modifiers.disabled} label={colormap} key={colormap} onClick={handleClick} text={renderColormapBlock(colormap)} />;
     };
 
     return (

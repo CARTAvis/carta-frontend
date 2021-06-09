@@ -4,21 +4,7 @@ import {CARTA} from "carta-protobuf";
 import * as AST from "ast_wrapper";
 import {Point2D} from "models";
 import {BackendService} from "services";
-import {
-    add2D,
-    getApproximateEllipsePoints,
-    getApproximatePolygonPoints,
-    isAstBadPoint,
-    midpoint2D,
-    minMax2D,
-    rotate2D,
-    scale2D,
-    simplePolygonPointTest,
-    simplePolygonTest,
-    subtract2D,
-    toFixed,
-    transformPoint
-} from "utilities";
+import {add2D, getApproximateEllipsePoints, getApproximatePolygonPoints, isAstBadPoint, midpoint2D, minMax2D, rotate2D, scale2D, simplePolygonPointTest, simplePolygonTest, subtract2D, toFixed, transformPoint} from "utilities";
 import {FrameStore} from "stores";
 
 export const CURSOR_REGION_ID = 0;
@@ -229,14 +215,7 @@ export class RegionStore {
                 approximatePoints = [transformPoint(astTransform, this.center, false)];
             }
             if (this.regionType === CARTA.RegionType.ELLIPSE) {
-                approximatePoints = getApproximateEllipsePoints(
-                    astTransform,
-                    this.center,
-                    this.size.y,
-                    this.size.x,
-                    this.rotation,
-                    RegionStore.TARGET_VERTEX_COUNT
-                );
+                approximatePoints = getApproximateEllipsePoints(astTransform, this.center, this.size.y, this.size.x, this.rotation, RegionStore.TARGET_VERTEX_COUNT);
             } else if (this.regionType === CARTA.RegionType.RECTANGLE) {
                 let halfWidth = this.size.x / 2;
                 let halfHeight = this.size.y / 2;
@@ -431,12 +410,8 @@ export class RegionStore {
         if (this.activeFrame) {
             this.activeFrame.setCenter(this.center.x, this.center.y);
 
-            if (
-                this.activeFrame.renderWidth < this.activeFrame.zoomLevel * this.boundingBox.x ||
-                this.activeFrame.renderHeight < this.activeFrame.zoomLevel * this.boundingBox.y
-            ) {
-                const zoomLevel =
-                    FOCUS_REGION_RATIO * Math.min(this.activeFrame.renderWidth / this.boundingBox.x, this.activeFrame.renderHeight / this.boundingBox.y);
+            if (this.activeFrame.renderWidth < this.activeFrame.zoomLevel * this.boundingBox.x || this.activeFrame.renderHeight < this.activeFrame.zoomLevel * this.boundingBox.y) {
+                const zoomLevel = FOCUS_REGION_RATIO * Math.min(this.activeFrame.renderWidth / this.boundingBox.x, this.activeFrame.renderHeight / this.boundingBox.y);
                 this.activeFrame.setZoom(zoomLevel);
             }
         }

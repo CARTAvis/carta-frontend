@@ -80,14 +80,7 @@ export class SaveLayoutDialogComponent extends React.Component {
             <DraggableDialogComponent dialogProps={dialogProps} helpType={HelpType.SAVE_LAYOUT} defaultWidth={400} defaultHeight={185} enableResizing={true}>
                 <div className={Classes.DIALOG_BODY}>
                     <FormGroup inline={true} label="Save current layout as:">
-                        <InputGroup
-                            className="layout-name-input"
-                            placeholder="Enter layout name"
-                            value={this.layoutName}
-                            autoFocus={true}
-                            onChange={this.handleInput}
-                            onKeyDown={this.handleKeyDown}
-                        />
+                        <InputGroup className="layout-name-input" placeholder="Enter layout name" value={this.layoutName} autoFocus={true} onChange={this.handleInput} onKeyDown={this.handleKeyDown} />
                     </FormGroup>
                 </div>
                 <div className={Classes.DIALOG_FOOTER}>

@@ -10,12 +10,7 @@ export class CoordinateComponent extends React.Component<{region: RegionStore; d
         const region = this.props.region;
         return (
             <div className="coordinate-panel">
-                <RadioGroup
-                    inline={true}
-                    onChange={ev => region.setCoordinate(ev.currentTarget.value as RegionCoordinate)}
-                    selectedValue={region.coordinate}
-                    disabled={this.props.disableCooridnate}
-                >
+                <RadioGroup inline={true} onChange={ev => region.setCoordinate(ev.currentTarget.value as RegionCoordinate)} selectedValue={region.coordinate} disabled={this.props.disableCooridnate}>
                     <Radio label={RegionCoordinate.Image} value={RegionCoordinate.Image} />
                     <Radio label={RegionCoordinate.World} value={RegionCoordinate.World} />
                 </RadioGroup>

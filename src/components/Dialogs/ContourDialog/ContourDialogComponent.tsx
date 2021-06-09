@@ -1,23 +1,7 @@
 import * as React from "react";
 import {action, autorun, computed, makeObservable, observable, runInAction} from "mobx";
 import {observer} from "mobx-react";
-import {
-    Alert,
-    AnchorButton,
-    Button,
-    Classes,
-    Colors,
-    FormGroup,
-    HTMLSelect,
-    IDialogProps,
-    Intent,
-    MenuItem,
-    NonIdealState,
-    Tab,
-    Tabs,
-    TagInput,
-    Tooltip
-} from "@blueprintjs/core";
+import {Alert, AnchorButton, Button, Classes, Colors, FormGroup, HTMLSelect, IDialogProps, Intent, MenuItem, NonIdealState, Tab, Tabs, TagInput, Tooltip} from "@blueprintjs/core";
 import {Select} from "@blueprintjs/select";
 import {CARTA} from "carta-protobuf";
 import {DraggableDialogComponent, TaskProgressDialogComponent} from "components/Dialogs";
@@ -127,12 +111,7 @@ export class ContourDialogComponent extends React.Component {
 
     @computed get plotData(): {values: Array<Point2D>; xMin: number; xMax: number; yMin: number; yMax: number} {
         const dataSource = AppStore.Instance.contourDataSource;
-        if (
-            dataSource &&
-            dataSource.renderConfig.contourHistogram &&
-            dataSource.renderConfig.contourHistogram.bins &&
-            dataSource.renderConfig.contourHistogram.bins.length
-        ) {
+        if (dataSource && dataSource.renderConfig.contourHistogram && dataSource.renderConfig.contourHistogram.bins && dataSource.renderConfig.contourHistogram.bins.length) {
             const histogram = dataSource.renderConfig.contourHistogram;
             let minIndex = 0;
             let maxIndex = histogram.bins.length - 1;
@@ -304,13 +283,7 @@ export class ContourDialogComponent extends React.Component {
 
         if (!appStore || !appStore.contourDataSource) {
             return (
-                <DraggableDialogComponent
-                    dialogProps={dialogProps}
-                    helpType={HelpType.CONTOUR}
-                    defaultWidth={ContourDialogComponent.DefaultWidth}
-                    defaultHeight={ContourDialogComponent.DefaultHeight}
-                    enableResizing={true}
-                >
+                <DraggableDialogComponent dialogProps={dialogProps} helpType={HelpType.CONTOUR} defaultWidth={ContourDialogComponent.DefaultWidth} defaultHeight={ContourDialogComponent.DefaultHeight} enableResizing={true}>
                     <NonIdealState icon={"folder-open"} title={"No file loaded"} description={"Load a file using the menu"} />
                 </DraggableDialogComponent>
             );
@@ -427,22 +400,14 @@ export class ContourDialogComponent extends React.Component {
                             onItemSelect={this.handleHistogramChange}
                             itemRenderer={this.renderHistogramSelectItem}
                         >
-                            <Button
-                                text={dataSource.renderConfig.useCubeHistogramContours ? "Per-Cube" : "Per-Channel"}
-                                rightIcon="double-caret-vertical"
-                                alignText={"right"}
-                            />
+                            <Button text={dataSource.renderConfig.useCubeHistogramContours ? "Per-Cube" : "Per-Channel"} rightIcon="double-caret-vertical" alignText={"right"} />
                         </HistogramSelect>
                     </FormGroup>
                 )}
                 <div className="histogram-plot">
                     <LinePlotComponent {...linePlotProps} />
                 </div>
-                <ContourGeneratorPanelComponent
-                    frame={dataSource}
-                    generatorType={appStore.preferenceStore.contourGeneratorType}
-                    onLevelsGenerated={this.handleLevelsGenerated}
-                />
+                <ContourGeneratorPanelComponent frame={dataSource} generatorType={appStore.preferenceStore.contourGeneratorType} onLevelsGenerated={this.handleLevelsGenerated} />
                 <div className="contour-level-panel-levels">
                     <FormGroup label={"Levels"} inline={true}>
                         <TagInput
@@ -494,13 +459,7 @@ export class ContourDialogComponent extends React.Component {
         );
 
         return (
-            <DraggableDialogComponent
-                dialogProps={dialogProps}
-                helpType={HelpType.CONTOUR}
-                defaultWidth={ContourDialogComponent.DefaultWidth}
-                defaultHeight={ContourDialogComponent.DefaultHeight}
-                enableResizing={true}
-            >
+            <DraggableDialogComponent dialogProps={dialogProps} helpType={HelpType.CONTOUR} defaultWidth={ContourDialogComponent.DefaultWidth} defaultHeight={ContourDialogComponent.DefaultHeight} enableResizing={true}>
                 <div className={Classes.DIALOG_BODY}>
                     <FormGroup inline={true} label="Data Source">
                         <DataSourceSelect
@@ -512,54 +471,26 @@ export class ContourDialogComponent extends React.Component {
                             itemRenderer={this.renderDataSourceSelectItem}
                             disabled={appStore.animatorStore.animationActive}
                         >
-                            <Button
-                                text={dataSource.filename}
-                                rightIcon="double-caret-vertical"
-                                alignText={"right"}
-                                disabled={appStore.animatorStore.animationActive}
-                            />
+                            <Button text={dataSource.filename} rightIcon="double-caret-vertical" alignText={"right"} disabled={appStore.animatorStore.animationActive} />
                         </DataSourceSelect>
-                        <Tooltip
-                            content={appStore.frameLockedToContour ? "Data source is locked to active image" : "Data source is independent of active image"}
-                        >
-                            <AnchorButton
-                                className="lock-button"
-                                icon={appStore.frameLockedToContour ? "lock" : "unlock"}
-                                minimal={true}
-                                onClick={appStore.toggleFrameContourLock}
-                            />
+                        <Tooltip content={appStore.frameLockedToContour ? "Data source is locked to active image" : "Data source is independent of active image"}>
+                            <AnchorButton className="lock-button" icon={appStore.frameLockedToContour ? "lock" : "unlock"} minimal={true} onClick={appStore.toggleFrameContourLock} />
                         </Tooltip>
                     </FormGroup>
                     <Tabs defaultSelectedTabId={ContourDialogTabs.Levels} renderActiveTabPanelOnly={false}>
                         <Tab id={ContourDialogTabs.Levels} title="Levels" panel={levelPanel} panelClassName="contour-level-panel" />
                         <Tab id={ContourDialogTabs.Configuration} title="Configuration" panel={configPanel} panelClassName="contour-config-panel" />
-                        <Tab
-                            id={ContourDialogTabs.Styling}
-                            title="Styling"
-                            panel={<ContourStylePanelComponent frame={dataSource} darkTheme={appStore.darkTheme} />}
-                        />
+                        <Tab id={ContourDialogTabs.Styling} title="Styling" panel={<ContourStylePanelComponent frame={dataSource} darkTheme={appStore.darkTheme} />} />
                     </Tabs>
                 </div>
                 <div className={Classes.DIALOG_FOOTER}>
                     <div className={Classes.DIALOG_FOOTER_ACTIONS}>
                         <AnchorButton intent={Intent.WARNING} onClick={this.handleClearContours} disabled={!dataSource.contourConfig.enabled} text="Clear" />
-                        <AnchorButton
-                            intent={Intent.SUCCESS}
-                            onClick={this.handleApplyContours}
-                            disabled={!hasLevels || (!this.contourConfigChanged && dataSource.contourConfig.enabled)}
-                            text="Apply"
-                        />
+                        <AnchorButton intent={Intent.SUCCESS} onClick={this.handleApplyContours} disabled={!hasLevels || (!this.contourConfigChanged && dataSource.contourConfig.enabled)} text="Apply" />
                         <AnchorButton intent={Intent.NONE} onClick={appStore.dialogStore.hideContourDialog} text="Close" />
                     </div>
                 </div>
-                <Alert
-                    className={appStore.darkTheme ? "bp3-dark" : ""}
-                    icon={"time"}
-                    isOpen={this.showCubeHistogramAlert}
-                    onCancel={this.handleAlertCancel}
-                    onConfirm={this.handleAlertConfirm}
-                    cancelButtonText={"Cancel"}
-                >
+                <Alert className={appStore.darkTheme ? "bp3-dark" : ""} icon={"time"} isOpen={this.showCubeHistogramAlert} onCancel={this.handleAlertCancel} onConfirm={this.handleAlertConfirm} cancelButtonText={"Cancel"}>
                     <p>Calculating a cube histogram may take a long time, depending on the size of the file. Are you sure you want to continue?</p>
                 </Alert>
                 <TaskProgressDialogComponent

@@ -11,10 +11,8 @@ export class StokesAnalysisHelpComponent extends React.Component {
                     <ImageComponent light={headStokesButton} dark={headStokesButton_d} width="90%" />
                 </p>
                 <p>
-                    The Stokes analysis widget is specifically made for efficient visualization of a cube with{" "}
-                    <em>multiple channels and multiple Stokes parameters (at least QU)</em>. If you have Stokes images as individual files, please use the file
-                    browser to select them (multiple selection) in the file list first and click the <code>Load as hypercube</code> button to form a Stokes
-                    hypercube.
+                    The Stokes analysis widget is specifically made for efficient visualization of a cube with <em>multiple channels and multiple Stokes parameters (at least QU)</em>. If you have Stokes images as individual files, please
+                    use the file browser to select them (multiple selection) in the file list first and click the <code>Load as hypercube</code> button to form a Stokes hypercube.
                 </p>
                 <p>The widget includes plots, such as:</p>
                 <ul>
@@ -23,17 +21,13 @@ export class StokesAnalysisHelpComponent extends React.Component {
                     <li>Linearly polarized angle spectral profile</li>
                     <li>Stokes Q vs Stokes U scatter plot</li>
                 </ul>
-                <p>
-                    All these plots are inter-linked so that when zooming profiles, data in the visible range will be highlighted in the scatter plot, and vice
-                    versa.
-                </p>
+                <p>All these plots are inter-linked so that when zooming profiles, data in the visible range will be highlighted in the scatter plot, and vice versa.</p>
                 <h3 id="images">Image dropdown menu</h3>
                 <p>The image dropdown defaults to &quot;Active&quot; image which means the current image in the image viewer.</p>
                 <h3 id="regions">Region dropdown menu</h3>
                 <p>
-                    The region dropdown defaults to &quot;Active&quot; region which means a selected region in the image viewer. You can select a region by
-                    clicking one on the image viewer, or by clicking a region entry on the region list widget. Stokes profile plot of the selected region will
-                    be updated accordingly. If no region is selected, &quot;Active&quot; region defaults to cursor.
+                    The region dropdown defaults to &quot;Active&quot; region which means a selected region in the image viewer. You can select a region by clicking one on the image viewer, or by clicking a region entry on the region list
+                    widget. Stokes profile plot of the selected region will be updated accordingly. If no region is selected, &quot;Active&quot; region defaults to cursor.
                 </p>
                 <h3 id="spectral-conventions-and-reference-frame">Spectral conventions and reference frame</h3>
                 <p>
@@ -57,15 +51,14 @@ export class StokesAnalysisHelpComponent extends React.Component {
                 <p>Note that depending on the integrity of image headers, some conversions may not be possible.</p>
                 <h3 id="data-smoothing">Data smoothing</h3>
                 <p>
-                    The displayed profiles and the scatter plot can be smoothed via the <code>Smoothing</code> tab of the Stokes analysis settings dialog (the
-                    cog icon). A shortcut button of the <code>Smoothing</code> tab can be found at the top-right corner of the widget.
+                    The displayed profiles and the scatter plot can be smoothed via the <code>Smoothing</code> tab of the Stokes analysis settings dialog (the cog icon). A shortcut button of the <code>Smoothing</code> tab can be found at
+                    the top-right corner of the widget.
                 </p>
                 <h3 id="responsive-and-progressive-profile-update">Responsive and progressive profile update</h3>
                 <p>
-                    When region Stokes profiles are requested, depending on the performance of the server, you may see profiles are updated piece by piece in
-                    regular interval. This feature provides a visual progress update for better user experience. In addition, if you move a region while
-                    profiles are being updating, the old calculations will be terminated immediately and calculations of the new region Stokes profiles will
-                    start. You will see partial profiles in seconds.
+                    When region Stokes profiles are requested, depending on the performance of the server, you may see profiles are updated piece by piece in regular interval. This feature provides a visual progress update for better user
+                    experience. In addition, if you move a region while profiles are being updating, the old calculations will be terminated immediately and calculations of the new region Stokes profiles will start. You will see partial
+                    profiles in seconds.
                 </p>
                 <h3 id="interactivity-zoom-pan-changing-channel">Interactivity: zoom, pan, changing channel</h3>
                 <p>The x and y ranges of the Stokes profile plot can be modified by</p>
@@ -90,18 +83,14 @@ export class StokesAnalysisHelpComponent extends React.Component {
                     </li>
                 </ul>
                 <p>
-                    You may click on the Stokes profile plot to switch to a channel (as indicated by a red vertical line) and view the image in the image
-                    viewer. The red line is draggable and acts equivalently like the channel slider in the animator widget.
+                    You may click on the Stokes profile plot to switch to a channel (as indicated by a red vertical line) and view the image in the image viewer. The red line is draggable and acts equivalently like the channel slider in the
+                    animator widget.
                 </p>
                 <h3 id="exports">Profile plot and scatter plot export</h3>
-                <p>
-                    The Stokes profile plots and the QU scatter plot can be exported as a png file or a text file in tsv format via the buttons at the
-                    bottom-right corner (shown when you hover over the plot).
-                </p>
+                <p>The Stokes profile plots and the QU scatter plot can be exported as a png file or a text file in tsv format via the buttons at the bottom-right corner (shown when you hover over the plot).</p>
                 <h3 id="plot-cosmetics">Plot cosmetics</h3>
                 <p>
-                    The appearance of the Stokes profile plot is customizable via the <code>Line Plot Styling</code> tab of the Stokes analysis settings dialog
-                    (the cog icon). Supported options are:
+                    The appearance of the Stokes profile plot is customizable via the <code>Line Plot Styling</code> tab of the Stokes analysis settings dialog (the cog icon). Supported options are:
                 </p>
                 <ul>
                     <li>colors of Stokes Q and Stokes U profiles</li>

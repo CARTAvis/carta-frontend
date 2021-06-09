@@ -124,13 +124,7 @@ export class LayerListComponent extends React.Component<WidgetProps> {
                             </span>
                         }
                     >
-                        <AnchorButton
-                            minimal={true}
-                            small={true}
-                            active={frame.renderConfig.visible}
-                            intent={frame.renderConfig.visible ? "success" : "none"}
-                            onClick={frame.renderConfig.toggleVisibility}
-                        >
+                        <AnchorButton minimal={true} small={true} active={frame.renderConfig.visible} intent={frame.renderConfig.visible ? "success" : "none"} onClick={frame.renderConfig.toggleVisibility}>
                             R
                         </AnchorButton>
                     </Tooltip>
@@ -147,13 +141,7 @@ export class LayerListComponent extends React.Component<WidgetProps> {
                                 </span>
                             }
                         >
-                            <AnchorButton
-                                minimal={true}
-                                small={true}
-                                active={frame.contourConfig.visible}
-                                intent={frame.contourConfig.visible ? "success" : "none"}
-                                onClick={frame.contourConfig.toggleVisibility}
-                            >
+                            <AnchorButton minimal={true} small={true} active={frame.contourConfig.visible} intent={frame.contourConfig.visible ? "success" : "none"} onClick={frame.contourConfig.toggleVisibility}>
                                 C
                             </AnchorButton>
                         </Tooltip>
@@ -326,21 +314,9 @@ export class LayerListComponent extends React.Component<WidgetProps> {
                 return (
                     <Menu>
                         <MenuDivider title={frame.filename} />
-                        <MenuItem
-                            disabled={appStore.spatialReference === frame}
-                            text="Set as spatial reference"
-                            onClick={() => appStore.setSpatialReference(frame)}
-                        />
-                        <MenuItem
-                            disabled={appStore.spectralReference === frame || frame.frameInfo.fileInfoExtended.depth <= 1}
-                            text="Set as spectral reference"
-                            onClick={() => appStore.setSpectralReference(frame)}
-                        />
-                        <MenuItem
-                            disabled={appStore.rasterScalingReference === frame}
-                            text="Set as raster scaling reference"
-                            onClick={() => appStore.setRasterScalingReference(frame)}
-                        />
+                        <MenuItem disabled={appStore.spatialReference === frame} text="Set as spatial reference" onClick={() => appStore.setSpatialReference(frame)} />
+                        <MenuItem disabled={appStore.spectralReference === frame || frame.frameInfo.fileInfoExtended.depth <= 1} text="Set as spectral reference" onClick={() => appStore.setSpectralReference(frame)} />
+                        <MenuItem disabled={appStore.rasterScalingReference === frame} text="Set as raster scaling reference" onClick={() => appStore.setRasterScalingReference(frame)} />
                         <MenuDivider />
                         <MenuItem text="Close image" onClick={() => appStore.closeFile(frame)} />
                         <MenuItem text="Close other images" disabled={appStore.frames?.length <= 1} onClick={() => appStore.closeOtherFiles(frame)} />
@@ -359,8 +335,7 @@ export class LayerListComponent extends React.Component<WidgetProps> {
         if (frameNum <= 0) {
             return (
                 <div className="layer-list-widget">
-                    <NonIdealState icon={"folder-open"} title={"No file loaded"} description={"Load a file using the menu"} />;
-                    <ReactResizeDetector handleWidth handleHeight onResize={this.onResize}></ReactResizeDetector>
+                    <NonIdealState icon={"folder-open"} title={"No file loaded"} description={"Load a file using the menu"} />;<ReactResizeDetector handleWidth handleHeight onResize={this.onResize}></ReactResizeDetector>
                 </div>
             );
         }

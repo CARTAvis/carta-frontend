@@ -75,16 +75,7 @@ export function createFP32Texture(gl: WebGLRenderingContext, width: number, heig
     return texture;
 }
 
-export function copyToFP32Texture(
-    gl: WebGLRenderingContext,
-    texture: WebGLTexture,
-    data: Float32Array,
-    texIndex: number,
-    dataWidth: number,
-    dataHeight: number,
-    xOffset: number,
-    yOffset: number
-) {
+export function copyToFP32Texture(gl: WebGLRenderingContext, texture: WebGLTexture, data: Float32Array, texIndex: number, dataWidth: number, dataHeight: number, xOffset: number, yOffset: number) {
     if (!gl) {
         return;
     }
@@ -117,12 +108,7 @@ export function initWebGL2() {
     return gl;
 }
 
-export function createTextureFromArray(
-    gl: WebGL2RenderingContext,
-    data: Float32Array | Uint8Array,
-    texIndex: number = WebGL2RenderingContext.TEXTURE0,
-    components: number = 1
-): WebGLTexture {
+export function createTextureFromArray(gl: WebGL2RenderingContext, data: Float32Array | Uint8Array, texIndex: number = WebGL2RenderingContext.TEXTURE0, components: number = 1): WebGLTexture {
     const GL2 = WebGL2RenderingContext;
     const numPoints = data.length / components;
     if (data.length % components !== 0) {

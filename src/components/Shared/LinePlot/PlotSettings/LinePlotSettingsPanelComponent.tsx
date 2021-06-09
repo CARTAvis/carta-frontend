@@ -106,11 +106,7 @@ export class LinePlotSettingsPanelComponent extends React.Component<LinePlotSett
                 <React.Fragment>
                     {props.userSelectedCoordinate && props.handleCoordinateChanged && (
                         <FormGroup label={"Coordinate"} inline={true}>
-                            <HTMLSelect
-                                value={props.userSelectedCoordinate}
-                                options={props.profileCoordinateOptions}
-                                onChange={props.handleCoordinateChanged}
-                            />
+                            <HTMLSelect value={props.userSelectedCoordinate} options={props.profileCoordinateOptions} onChange={props.handleCoordinateChanged} />
                         </FormGroup>
                     )}
                     {this.getLineColorSelectors()}
@@ -220,13 +216,7 @@ export class LinePlotSettingsPanelComponent extends React.Component<LinePlotSett
                     )}
                     {typeof props.isAutoScaledX !== "undefined" && typeof props.isAutoScaledY !== "undefined" && props.clearXYBounds && (
                         <FormGroup label={"Reset Range"} inline={true} className="reset-range-content">
-                            <Button
-                                className="reset-range-button"
-                                icon={"zoom-to-fit"}
-                                small={true}
-                                disabled={props.isAutoScaledX && props.isAutoScaledY}
-                                onClick={props.clearXYBounds}
-                            >
+                            <Button className="reset-range-button" icon={"zoom-to-fit"} small={true} disabled={props.isAutoScaledX && props.isAutoScaledY} onClick={props.clearXYBounds}>
                                 Reset Range
                             </Button>
                         </FormGroup>

@@ -86,13 +86,7 @@ export function getTransformedChannel(srcTransform: AST.FrameSet, destTransform:
     return destPixelValue.z;
 }
 
-export function getTransformedChannelList(
-    srcTransform: AST.FrameSet,
-    destTransform: AST.FrameSet,
-    matchingType: SpectralType,
-    firstChannel: number,
-    lastChannel: number
-) {
+export function getTransformedChannelList(srcTransform: AST.FrameSet, destTransform: AST.FrameSet, matchingType: SpectralType, firstChannel: number, lastChannel: number) {
     if (matchingType === SpectralType.CHANNEL || firstChannel > lastChannel) {
         return [];
     }
@@ -139,14 +133,7 @@ export function isAstBadPoint(point: Point2D) {
     return !point || isAstBad(point.x) || isAstBad(point.y);
 }
 
-export function getApproximateEllipsePoints(
-    astTransform: AST.FrameSet,
-    centerReferenceImage: Point2D,
-    radA: number,
-    radB: number,
-    rotation: number,
-    targetVertexCount: number
-): Point2D[] {
+export function getApproximateEllipsePoints(astTransform: AST.FrameSet, centerReferenceImage: Point2D, radA: number, radB: number, rotation: number, targetVertexCount: number): Point2D[] {
     const dTheta = (2.0 * Math.PI) / targetVertexCount;
     const xCoords = new Float64Array(targetVertexCount);
     const yCoords = new Float64Array(targetVertexCount);
@@ -166,12 +153,7 @@ export function getApproximateEllipsePoints(
     return approximatePoints;
 }
 
-export function getApproximatePolygonPoints(
-    astTransform: AST.FrameSet,
-    controlPoints: Point2D[],
-    targetVertexCount: number,
-    closed: boolean = true
-): Point2D[] {
+export function getApproximatePolygonPoints(astTransform: AST.FrameSet, controlPoints: Point2D[], targetVertexCount: number, closed: boolean = true): Point2D[] {
     const totalLength = polygonPerimeter(controlPoints, closed);
     const idealSubdivisionLength = totalLength / targetVertexCount;
 

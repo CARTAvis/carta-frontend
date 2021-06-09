@@ -18,13 +18,7 @@ const IconWrapper = (path: React.SVGProps<SVGPathElement>, color: string, fill: 
     }
     return (
         <span className="bp3-icon">
-            <svg
-                data-icon="triangle-up-open"
-                width="16"
-                height="16"
-                viewBox={`0 0 ${viewboxDefault} ${viewboxDefault}`}
-                style={{stroke: color, fill: fillColor, strokeWidth: strokeWidth}}
-            >
+            <svg data-icon="triangle-up-open" width="16" height="16" viewBox={`0 0 ${viewboxDefault} ${viewboxDefault}`} style={{stroke: color, fill: fillColor, strokeWidth: strokeWidth}}>
                 {path}
             </svg>
         </span>
@@ -69,13 +63,7 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
             isCloseable: true,
             parentId: "catalog-overlay",
             parentType: "catalog-overlay",
-            helpType: [
-                HelpType.CATALOG_SETTINGS_GOLBAL,
-                HelpType.CATALOG_SETTINGS_OVERLAY,
-                HelpType.CATALOG_SETTINGS_COLOR,
-                HelpType.CATALOG_SETTINGS_SIZE,
-                HelpType.CATALOG_SETTINGS_ORIENTATION
-            ]
+            helpType: [HelpType.CATALOG_SETTINGS_GOLBAL, HelpType.CATALOG_SETTINGS_OVERLAY, HelpType.CATALOG_SETTINGS_COLOR, HelpType.CATALOG_SETTINGS_SIZE, HelpType.CATALOG_SETTINGS_ORIENTATION]
         };
     }
 
@@ -178,20 +166,11 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
                     </Select>
                 </FormGroup>
                 <FormGroup label={"Scaling"} inline={true} disabled={disableSizeMap}>
-                    <ScalingSelectComponent
-                        selectedItem={widgetStore.sizeScalingType}
-                        onItemSelect={type => widgetStore.setSizeScalingType(type)}
-                        disabled={disableSizeMap}
-                    />
+                    <ScalingSelectComponent selectedItem={widgetStore.sizeScalingType} onItemSelect={type => widgetStore.setSizeScalingType(type)} disabled={disableSizeMap} />
                 </FormGroup>
                 <FormGroup inline={true} label={"Size Mode"} disabled={disableSizeMap}>
                     <ButtonGroup>
-                        <AnchorButton
-                            disabled={disableSizeMap}
-                            text={"Diameter"}
-                            active={!widgetStore.sizeArea}
-                            onClick={() => widgetStore.setSizeArea(false)}
-                        />
+                        <AnchorButton disabled={disableSizeMap} text={"Diameter"} active={!widgetStore.sizeArea} onClick={() => widgetStore.setSizeArea(false)} />
                         <AnchorButton disabled={disableSizeMap} text={"Area"} active={widgetStore.sizeArea} onClick={() => widgetStore.setSizeArea(true)} />
                     </ButtonGroup>
                 </FormGroup>
@@ -257,26 +236,12 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
                     </Select>
                 </FormGroup>
                 <FormGroup label={"Scaling"} inline={true} disabled={disableSizeMinorMap}>
-                    <ScalingSelectComponent
-                        selectedItem={widgetStore.sizeMinorScalingType}
-                        onItemSelect={type => widgetStore.setSizeMinorScalingType(type)}
-                        disabled={disableSizeMinorMap}
-                    />
+                    <ScalingSelectComponent selectedItem={widgetStore.sizeMinorScalingType} onItemSelect={type => widgetStore.setSizeMinorScalingType(type)} disabled={disableSizeMinorMap} />
                 </FormGroup>
                 <FormGroup inline={true} label={"Size Mode"} disabled={disableSizeMinorMap}>
                     <ButtonGroup>
-                        <AnchorButton
-                            disabled={disableSizeMinorMap}
-                            text={"Diameter"}
-                            active={!widgetStore.sizeMinorArea}
-                            onClick={() => widgetStore.setSizeMinorArea(false)}
-                        />
-                        <AnchorButton
-                            disabled={disableSizeMinorMap}
-                            text={"Area"}
-                            active={widgetStore.sizeMinorArea}
-                            onClick={() => widgetStore.setSizeMinorArea(true)}
-                        />
+                        <AnchorButton disabled={disableSizeMinorMap} text={"Diameter"} active={!widgetStore.sizeMinorArea} onClick={() => widgetStore.setSizeMinorArea(false)} />
+                        <AnchorButton disabled={disableSizeMinorMap} text={"Area"} active={widgetStore.sizeMinorArea} onClick={() => widgetStore.setSizeMinorArea(true)} />
                     </ButtonGroup>
                 </FormGroup>
                 <div className="numeric-input-lock">
@@ -346,12 +311,7 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
                         onValueChange={(value: number) => widgetStore.setThickness(value)}
                     />
                 </FormGroup>
-                <Tabs
-                    id="catalogSettings"
-                    vertical={false}
-                    selectedTabId={widgetStore.sizeAxisTabId}
-                    onChange={tabId => this.handleSelectedAxisTabChanged(tabId)}
-                >
+                <Tabs id="catalogSettings" vertical={false} selectedTabId={widgetStore.sizeAxisTabId} onChange={tabId => this.handleSelectedAxisTabChanged(tabId)}>
                     <Tab id={CatalogSettingsTabs.SIZE_MAJOR} title="Major" panel={sizeMajor} />
                     <Tab id={CatalogSettingsTabs.SIZE_MINOR} title="Minor" panel={sizeMinor} disabled={!widgetStore.enableSizeMinorTab} />
                 </Tabs>
@@ -425,26 +385,13 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
                     </Select>
                 </FormGroup>
                 <FormGroup label={"Scaling"} inline={true} disabled={disableColorMap}>
-                    <ScalingSelectComponent
-                        selectedItem={widgetStore.colorScalingType}
-                        onItemSelect={type => widgetStore.setColorScalingType(type)}
-                        disabled={disableColorMap}
-                    />
+                    <ScalingSelectComponent selectedItem={widgetStore.colorScalingType} onItemSelect={type => widgetStore.setColorScalingType(type)} disabled={disableColorMap} />
                 </FormGroup>
                 <FormGroup inline={true} label="Color Map" disabled={disableColorMap}>
-                    <ColormapComponent
-                        inverted={false}
-                        selectedItem={widgetStore.colorMap}
-                        onItemSelect={selected => widgetStore.setColorMap(selected)}
-                        disabled={disableColorMap}
-                    />
+                    <ColormapComponent inverted={false} selectedItem={widgetStore.colorMap} onItemSelect={selected => widgetStore.setColorMap(selected)} disabled={disableColorMap} />
                 </FormGroup>
                 <FormGroup label={"Invert Color Map"} inline={true} disabled={disableColorMap}>
-                    <Switch
-                        checked={widgetStore.invertedColorMap}
-                        onChange={ev => widgetStore.setColorMapDirection(ev.currentTarget.checked)}
-                        disabled={disableColorMap}
-                    />
+                    <Switch checked={widgetStore.invertedColorMap} onChange={ev => widgetStore.setColorMapDirection(ev.currentTarget.checked)} disabled={disableColorMap} />
                 </FormGroup>
                 <ClearableNumericInputComponent
                     label="Clip Min"
@@ -488,11 +435,7 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
                     </Select>
                 </FormGroup>
                 <FormGroup label={"Scaling"} inline={true} disabled={disableOrientationMap}>
-                    <ScalingSelectComponent
-                        selectedItem={widgetStore.orientationScalingType}
-                        onItemSelect={type => widgetStore.setOrientationScalingType(type)}
-                        disabled={disableOrientationMap}
-                    />
+                    <ScalingSelectComponent selectedItem={widgetStore.orientationScalingType} onItemSelect={type => widgetStore.setOrientationScalingType(type)} disabled={disableOrientationMap} />
                 </FormGroup>
                 <FormGroup inline={true} label="Orientation Min" labelInfo="(degree)" disabled={disableOrientationMap}>
                     <SafeNumericInput

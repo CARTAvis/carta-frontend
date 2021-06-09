@@ -138,11 +138,7 @@ export class StokesDialogComponent extends React.Component {
                                 itemRenderer={this.renderPopOver}
                                 popoverProps={{popoverClassName: "catalog-select", minimal: true, position: PopoverPosition.AUTO_END}}
                             >
-                                <Button
-                                    className="bp3-minimal catalog-represent-as-select-button"
-                                    text={this.getLabelFromValue(this.stokes.get(file).stokesType)}
-                                    rightIcon="double-caret-vertical"
-                                />
+                                <Button className="bp3-minimal catalog-represent-as-select-button" text={this.getLabelFromValue(this.stokes.get(file).stokesType)} rightIcon="double-caret-vertical" />
                             </Select>
                         </Cell>
                     );
@@ -162,15 +158,7 @@ export class StokesDialogComponent extends React.Component {
         };
 
         return (
-            <DraggableDialogComponent
-                dialogProps={dialogProps}
-                helpType={HelpType.STOKES}
-                minWidth={300}
-                minHeight={250}
-                defaultWidth={602}
-                defaultHeight={300}
-                enableResizing={true}
-            >
+            <DraggableDialogComponent dialogProps={dialogProps} helpType={HelpType.STOKES} minWidth={300} minHeight={250} defaultWidth={602} defaultHeight={300} enableResizing={true}>
                 <div className="bp3-dialog-body">
                     <Table
                         className={"file-table"}
@@ -197,13 +185,7 @@ export class StokesDialogComponent extends React.Component {
                         />
                         <AnchorButton
                             intent={Intent.PRIMARY}
-                            disabled={
-                                appStore.fileLoading ||
-                                !fileBrowserStore.selectedFile ||
-                                !fileBrowserStore.fileInfoResp ||
-                                fileBrowserStore.loadingInfo ||
-                                !this.noneType
-                            }
+                            disabled={appStore.fileLoading || !fileBrowserStore.selectedFile || !fileBrowserStore.fileInfoResp || fileBrowserStore.loadingInfo || !this.noneType}
                             onClick={this.loadSelectedFiles}
                             text={"Load"}
                         />

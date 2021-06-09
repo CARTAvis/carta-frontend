@@ -13,6 +13,6 @@
     "singleQuote": false,
     "trailingComma": "none",
     "useTabs": false,
-    "printWidth": 160,
+    "printWidth": 240,
     "tabWidth": 4
 }

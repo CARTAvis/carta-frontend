@@ -129,16 +129,7 @@ export class TileService {
                     const eventArgs = event.data[2];
                     const length = eventArgs.width * eventArgs.subsetHeight;
                     const resultArray = new Float32Array(buffer, 0, length);
-                    this.updateStream(
-                        eventArgs.fileId,
-                        eventArgs.channel,
-                        eventArgs.stokes,
-                        resultArray,
-                        eventArgs.width,
-                        eventArgs.subsetHeight,
-                        eventArgs.layer,
-                        eventArgs.tileCoordinate
-                    );
+                    this.updateStream(eventArgs.fileId, eventArgs.channel, eventArgs.stokes, resultArray, eventArgs.width, eventArgs.subsetHeight, eventArgs.layer, eventArgs.tileCoordinate);
                 }
             };
         }
@@ -177,15 +168,7 @@ export class TileService {
         return this.cachedTiles.get(tileCoordinateEncoded);
     }
 
-    requestTiles(
-        tiles: TileCoordinate[],
-        fileId: number,
-        channel: number,
-        stokes: number,
-        focusPoint: Point2D,
-        compressionQuality: number,
-        channelsChanged: boolean = false
-    ) {
+    requestTiles(tiles: TileCoordinate[], fileId: number, channel: number, stokes: number, focusPoint: Point2D, compressionQuality: number, channelsChanged: boolean = false) {
         let fileChanged = this.currentFileId !== fileId;
 
         if (fileChanged) {
@@ -211,10 +194,7 @@ export class TileService {
                 continue;
             }
             const encodedCoordinate = tile.encode();
-            const tileCached =
-                !(channelsChanged || fileChanged) &&
-                ((tile.layer < NUM_PERSISTENT_LAYERS && this.persistentTiles.has(encodedCoordinate)) ||
-                    (tile.layer >= NUM_PERSISTENT_LAYERS && this.cachedTiles.has(encodedCoordinate)));
+            const tileCached = !(channelsChanged || fileChanged) && ((tile.layer < NUM_PERSISTENT_LAYERS && this.persistentTiles.has(encodedCoordinate)) || (tile.layer >= NUM_PERSISTENT_LAYERS && this.cachedTiles.has(encodedCoordinate)));
             if (!tileCached && !this.pendingRequests.has(encodedCoordinate)) {
                 const compressedTile = !channelsChanged && this.getCompressedCache(fileId).get(encodedCoordinate);
                 const pendingCompressionMap = this.pendingDecompressions.get(key);
@@ -307,9 +287,7 @@ export class TileService {
 
     private initTextures() {
         const textureSizeMb = (TEXTURE_SIZE * TEXTURE_SIZE * 4) / 1024 / 1024;
-        console.log(
-            `Creating ${this.textureArray.length} tile textures of size ${textureSizeMb} MB each (${textureSizeMb * this.textureArray.length} MB total)`
-        );
+        console.log(`Creating ${this.textureArray.length} tile textures of size ${textureSizeMb} MB each (${textureSizeMb * this.textureArray.length} MB total)`);
         for (let i = 0; i < this.textureArray.length; i++) {
             this.textureArray[i] = createFP32Texture(this.gl, TEXTURE_SIZE, TEXTURE_SIZE, WebGLRenderingContext.TEXTURE0);
         }
@@ -376,23 +354,16 @@ export class TileService {
 
         const currentChannels = this.channelMap.get(tileMessage.fileId);
         // Ignore stale tiles that don't match the currently required tiles. During animation, ignore changes to channel
-        if (
-            this.currentFileId !== tileMessage.fileId ||
-            (!this.animationEnabled && (!currentChannels || currentChannels.channel !== tileMessage.channel || currentChannels.stokes !== tileMessage.stokes))
-        ) {
+        if (this.currentFileId !== tileMessage.fileId || (!this.animationEnabled && (!currentChannels || currentChannels.channel !== tileMessage.channel || currentChannels.stokes !== tileMessage.stokes))) {
             console.log(`Ignoring stale tile for channel=${tileMessage.channel} (Current channel=${currentChannels ? currentChannels.channel : undefined})`);
             return;
         }
 
         if (this.animationEnabled && tileMessage.animationId !== this.backendService.animationId) {
-            console.log(
-                `Skipping stale tile during animation Message animation_id: ${tileMessage.animationId}. Service animation_id: ${this.backendService.animationId}`
-            );
+            console.log(`Skipping stale tile during animation Message animation_id: ${tileMessage.animationId}. Service animation_id: ${this.backendService.animationId}`);
             return;
         } else if (!this.animationEnabled && tileMessage.animationId !== 0) {
-            console.log(
-                `Skipping stale animation tile outside of animation. Message animation_id: ${tileMessage.animationId}. Service animation_id: ${this.backendService.animationId}`
-            );
+            console.log(`Skipping stale animation tile outside of animation. Message animation_id: ${tileMessage.animationId}. Service animation_id: ${this.backendService.animationId}`);
             return;
         }
 
@@ -414,29 +385,11 @@ export class TileService {
                 this.updateRemainingTileCount();
 
                 if (tileMessage.compressionType === CARTA.CompressionType.NONE) {
-                    const decompressedData = new Float32Array(
-                        tile.imageData.buffer.slice(tile.imageData.byteOffset, tile.imageData.byteOffset + tile.imageData.byteLength)
-                    );
-                    this.updateStream(
-                        tileMessage.fileId,
-                        tileMessage.channel,
-                        tileMessage.stokes,
-                        decompressedData,
-                        tile.width,
-                        tile.height,
-                        tile.layer,
-                        encodedCoordinate
-                    );
+                    const decompressedData = new Float32Array(tile.imageData.buffer.slice(tile.imageData.byteOffset, tile.imageData.byteOffset + tile.imageData.byteLength));
+                    this.updateStream(tileMessage.fileId, tileMessage.channel, tileMessage.stokes, decompressedData, tile.width, tile.height, tile.layer, encodedCoordinate);
                 } else {
                     this.getCompressedCache(tileMessage.fileId).set(encodedCoordinate, {tile, compressionQuality: tileMessage.compressionQuality});
-                    this.asyncDecompressTile(
-                        tileMessage.fileId,
-                        tileMessage.channel,
-                        tileMessage.stokes,
-                        tile,
-                        tileMessage.compressionQuality,
-                        encodedCoordinate
-                    );
+                    this.asyncDecompressTile(tileMessage.fileId, tileMessage.channel, tileMessage.stokes, tile, tileMessage.compressionQuality, encodedCoordinate);
                 }
             }
         }
@@ -480,16 +433,7 @@ export class TileService {
         this.compressionRequestCounter++;
     }
 
-    private updateStream(
-        fileId: number,
-        channel: number,
-        stokes: number,
-        decompressedData: Float32Array,
-        width: number,
-        height: number,
-        layer: number,
-        encodedCoordinate: number
-    ) {
+    private updateStream(fileId: number, channel: number, stokes: number, decompressedData: Float32Array, width: number, height: number, layer: number, encodedCoordinate: number) {
         const key = `${fileId}_${stokes}_${channel}`;
         const pendingCompressionMap = this.pendingDecompressions.get(key);
         if (!pendingCompressionMap) {

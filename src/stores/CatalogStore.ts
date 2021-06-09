@@ -52,15 +52,7 @@ export class CatalogStore {
         });
     }
 
-    @action updateCatalogData(
-        fileId: number,
-        xData: Array<number>,
-        yData: Array<number>,
-        wcsInfo: AST.FrameSet,
-        xUnit: string,
-        yUnit: string,
-        catalogFrame: CatalogSystemType
-    ) {
+    @action updateCatalogData(fileId: number, xData: Array<number>, yData: Array<number>, wcsInfo: AST.FrameSet, xUnit: string, yUnit: string, catalogFrame: CatalogSystemType) {
         const catalog = this.catalogGLData.get(fileId);
         if (catalog && xData && yData) {
             const dataSize = catalog.x.length;
@@ -122,14 +114,7 @@ export class CatalogStore {
                     }
                     break;
                 default:
-                    const pixelData = CatalogStore.TransformCatalogData(
-                        coords.wcsX,
-                        coords.wcsY,
-                        wcs,
-                        coords.xHeaderInfo.units,
-                        coords.yHeaderInfo.units,
-                        catalogSystem
-                    );
+                    const pixelData = CatalogStore.TransformCatalogData(coords.wcsX, coords.wcsY, wcs, coords.xHeaderInfo.units, coords.yHeaderInfo.units, catalogSystem);
                     for (let i = 0; i < pixelData.xImageCoords.length; i++) {
                         xPoints[i] = pixelData.xImageCoords[i];
                         yPoints[i] = pixelData.yImageCoords[i];
@@ -352,14 +337,7 @@ export class CatalogStore {
         }
     }
 
-    private static TransformCatalogData(
-        xWcsData: Array<number>,
-        yWcsData: Array<number>,
-        wcsInfo: AST.FrameSet,
-        xUnit: string,
-        yUnit: string,
-        catalogFrame: CatalogSystemType
-    ): {xImageCoords: Float64Array; yImageCoords: Float64Array} {
+    private static TransformCatalogData(xWcsData: Array<number>, yWcsData: Array<number>, wcsInfo: AST.FrameSet, xUnit: string, yUnit: string, catalogFrame: CatalogSystemType): {xImageCoords: Float64Array; yImageCoords: Float64Array} {
         if (xWcsData?.length === yWcsData?.length && xWcsData?.length > 0) {
             const N = xWcsData.length;
 

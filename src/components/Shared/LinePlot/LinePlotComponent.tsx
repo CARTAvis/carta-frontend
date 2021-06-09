@@ -499,12 +499,7 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
     };
 
     onStageWheel = ev => {
-        if (
-            (this.props.data || (this.props.multiPlotPropsMap && this.props.multiPlotPropsMap.size > 0)) &&
-            this.props.scrollZoom &&
-            this.props.graphZoomedX &&
-            this.chartArea
-        ) {
+        if ((this.props.data || (this.props.multiPlotPropsMap && this.props.multiPlotPropsMap.size > 0)) && this.props.scrollZoom && this.props.graphZoomedX && this.chartArea) {
             const wheelEvent: WheelEvent = ev.evt;
             const chartArea = this.chartArea;
             const lineHeight = 15;
@@ -581,11 +576,7 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
         composedCanvas.height = canvas.height;
 
         const ctx = composedCanvas.getContext("2d");
-        ctx.fillStyle = AppStore.Instance.preferenceStore.transparentImageBackground
-            ? "rgba(255, 255, 255, 0.0)"
-            : this.props.darkMode
-            ? Colors.DARK_GRAY3
-            : Colors.LIGHT_GRAY5;
+        ctx.fillStyle = AppStore.Instance.preferenceStore.transparentImageBackground ? "rgba(255, 255, 255, 0.0)" : this.props.darkMode ? Colors.DARK_GRAY3 : Colors.LIGHT_GRAY5;
         ctx.fillRect(0, 0, composedCanvas.width, composedCanvas.height);
         ctx.drawImage(canvas, 0, 0);
 
@@ -671,9 +662,7 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
             // data part
             rows.push("# x\ty");
             const useScientificForm = plotName === "histogram" || this.props.tickTypeX === TickType.Scientific;
-            rows = rows.concat(
-                this.props.data.map(o => (useScientificForm ? `${toExponential(o.x, 10)}\t${toExponential(o.y, 10)}` : `${o.x}\t${toExponential(o.y, 10)}`))
-            );
+            rows = rows.concat(this.props.data.map(o => (useScientificForm ? `${toExponential(o.x, 10)}\t${toExponential(o.y, 10)}` : `${o.x}\t${toExponential(o.y, 10)}`)));
 
             exportTsvFile(imageName, plotName, `${comment}\n${rows.join("\n")}\n`);
         }
@@ -734,9 +723,7 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
             return undefined;
         }
         const chartArea = this.chartArea;
-        const thickness =
-            this.getPixelForValueY(marker.value - marker.width / 2.0, this.props.logY) -
-            this.getPixelForValueY(marker.value + marker.width / 2.0, this.props.logY);
+        const thickness = this.getPixelForValueY(marker.value - marker.width / 2.0, this.props.logY) - this.getPixelForValueY(marker.value + marker.width / 2.0, this.props.logY);
         const valueCanvasSpace = this.getCanvasSpaceY(marker.value);
         const lowerBound = clamp(valueCanvasSpace - thickness, chartArea.top, chartArea.bottom);
         const upperBound = clamp(valueCanvasSpace + thickness, chartArea.top, chartArea.bottom);
@@ -762,66 +749,17 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
             const arrowSize = MARKER_HITBOX_THICKNESS / 1.5;
             const arrowStart = 3;
             lineSegments = [
-                <Line
-                    listening={false}
-                    key={0}
-                    points={[chartArea.left, 0, chartArea.right, 0]}
-                    strokeWidth={1}
-                    stroke={markerColor}
-                    opacity={markerOpacity}
-                    dash={marker.dash}
-                />,
-                <Arrow
-                    listening={false}
-                    key={1}
-                    x={midPoint}
-                    y={0}
-                    points={[0, -arrowStart, 0, -arrowStart - arrowSize]}
-                    pointerLength={arrowSize}
-                    pointerWidth={arrowSize}
-                    opacity={markerOpacity}
-                    fill={markerColor}
-                />,
-                <Arrow
-                    listening={false}
-                    key={2}
-                    x={midPoint}
-                    y={0}
-                    points={[0, arrowStart, 0, arrowStart + arrowSize]}
-                    pointerLength={arrowSize}
-                    pointerWidth={arrowSize}
-                    opacity={markerOpacity}
-                    fill={markerColor}
-                />
+                <Line listening={false} key={0} points={[chartArea.left, 0, chartArea.right, 0]} strokeWidth={1} stroke={markerColor} opacity={markerOpacity} dash={marker.dash} />,
+                <Arrow listening={false} key={1} x={midPoint} y={0} points={[0, -arrowStart, 0, -arrowStart - arrowSize]} pointerLength={arrowSize} pointerWidth={arrowSize} opacity={markerOpacity} fill={markerColor} />,
+                <Arrow listening={false} key={2} x={midPoint} y={0} points={[0, arrowStart, 0, arrowStart + arrowSize]} pointerLength={arrowSize} pointerWidth={arrowSize} opacity={markerOpacity} fill={markerColor} />
             ];
         } else {
             if (marker.width) {
                 const boxInfo = this.calcMarkerBox(marker);
                 const yTop = boxInfo?.lowerBound - valueCanvasSpace;
-                lineSegments = [
-                    <Rect
-                        listening={false}
-                        key={0}
-                        x={chartArea.left}
-                        y={yTop}
-                        width={lineWidth}
-                        height={boxInfo?.height}
-                        fill={markerColor}
-                        opacity={markerOpacity}
-                    />
-                ];
+                lineSegments = [<Rect listening={false} key={0} x={chartArea.left} y={yTop} width={lineWidth} height={boxInfo?.height} fill={markerColor} opacity={markerOpacity} />];
             } else {
-                lineSegments = [
-                    <Line
-                        listening={false}
-                        key={0}
-                        points={[chartArea.left, 0, chartArea.right, 0]}
-                        strokeWidth={1}
-                        stroke={markerColor}
-                        opacity={markerOpacity}
-                        dash={marker.dash}
-                    />
-                ];
+                lineSegments = [<Line listening={false} key={0} points={[chartArea.left, 0, chartArea.right, 0]} strokeWidth={1} stroke={markerColor} opacity={markerOpacity} dash={marker.dash} />];
             }
         }
         if (marker.label) {
@@ -830,22 +768,8 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
 
         if (marker.draggable) {
             return (
-                <Group
-                    key={marker.id + "-draggable"}
-                    x={0}
-                    y={valueCanvasSpace}
-                    draggable={true}
-                    dragBoundFunc={pos => this.dragBoundsFuncHorizontal(pos, marker)}
-                    onDragMove={ev => this.onMarkerDragged(ev, marker)}
-                >
-                    <Rect
-                        x={chartArea.left}
-                        y={-MARKER_HITBOX_THICKNESS / 2.0}
-                        width={lineWidth}
-                        height={MARKER_HITBOX_THICKNESS}
-                        onMouseEnter={() => this.setHoveredMarker(marker)}
-                        onMouseLeave={() => this.setHoveredMarker(undefined)}
-                    />
+                <Group key={marker.id + "-draggable"} x={0} y={valueCanvasSpace} draggable={true} dragBoundFunc={pos => this.dragBoundsFuncHorizontal(pos, marker)} onDragMove={ev => this.onMarkerDragged(ev, marker)}>
+                    <Rect x={chartArea.left} y={-MARKER_HITBOX_THICKNESS / 2.0} width={lineWidth} height={MARKER_HITBOX_THICKNESS} onMouseEnter={() => this.setHoveredMarker(marker)} onMouseLeave={() => this.setHoveredMarker(undefined)} />
                     {lineSegments}
                 </Group>
             );
@@ -858,14 +782,7 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
         }
     };
 
-    private genVerticalLine = (
-        marker: LineMarker,
-        isHovering: boolean,
-        markerColor: string,
-        markerOpacity: number,
-        valueCanvasSpace: number,
-        isShowingLabels?: boolean
-    ) => {
+    private genVerticalLine = (marker: LineMarker, isHovering: boolean, markerColor: string, markerOpacity: number, valueCanvasSpace: number, isShowingLabels?: boolean) => {
         const chartArea = this.chartArea;
         const lineHeight = chartArea.bottom - chartArea.top;
         const isHoverMarker = isHovering && this.hoveredMarker.id === marker.id;
@@ -880,36 +797,9 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
             const arrowSize = MARKER_HITBOX_THICKNESS / 1.5;
             const arrowStart = 3;
             lineSegments = [
-                <Line
-                    listening={false}
-                    key={0}
-                    points={[0, chartArea.top, 0, chartArea.bottom]}
-                    strokeWidth={1}
-                    stroke={markerColor}
-                    opacity={markerOpacity}
-                />,
-                <Arrow
-                    listening={false}
-                    key={1}
-                    x={0}
-                    y={midPoint}
-                    points={[-arrowStart, 0, -arrowStart - arrowSize, 0]}
-                    pointerLength={arrowSize}
-                    pointerWidth={arrowSize}
-                    opacity={markerOpacity}
-                    fill={markerColor}
-                />,
-                <Arrow
-                    listening={false}
-                    key={2}
-                    x={0}
-                    y={midPoint}
-                    points={[arrowStart, 0, arrowStart + arrowSize, 0]}
-                    pointerLength={arrowSize}
-                    pointerWidth={arrowSize}
-                    opacity={markerOpacity}
-                    fill={markerColor}
-                />
+                <Line listening={false} key={0} points={[0, chartArea.top, 0, chartArea.bottom]} strokeWidth={1} stroke={markerColor} opacity={markerOpacity} />,
+                <Arrow listening={false} key={1} x={0} y={midPoint} points={[-arrowStart, 0, -arrowStart - arrowSize, 0]} pointerLength={arrowSize} pointerWidth={arrowSize} opacity={markerOpacity} fill={markerColor} />,
+                <Arrow listening={false} key={2} x={0} y={midPoint} points={[arrowStart, 0, arrowStart + arrowSize, 0]} pointerLength={arrowSize} pointerWidth={arrowSize} opacity={markerOpacity} fill={markerColor} />
             ];
         } else {
             if (marker.width) {
@@ -917,36 +807,13 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
                 let lowerBound = clamp(valueCanvasSpace - thickness, chartArea.left, chartArea.right);
                 let upperBound = clamp(valueCanvasSpace + thickness, chartArea.left, chartArea.right);
                 let croppedThickness = upperBound - lowerBound;
-                lineSegments = [
-                    <Rect
-                        listening={false}
-                        key={0}
-                        x={lowerBound - valueCanvasSpace}
-                        y={chartArea.top}
-                        width={croppedThickness}
-                        height={lineHeight}
-                        fill={markerColor}
-                        opacity={markerOpacity}
-                    />
-                ];
+                lineSegments = [<Rect listening={false} key={0} x={lowerBound - valueCanvasSpace} y={chartArea.top} width={croppedThickness} height={lineHeight} fill={markerColor} opacity={markerOpacity} />];
             } else {
-                lineSegments = [
-                    <Line
-                        listening={false}
-                        key={0}
-                        points={[0, chartArea.top, 0, chartArea.bottom]}
-                        strokeWidth={1}
-                        stroke={markerColor}
-                        opacity={markerOpacity}
-                        dash={marker.dash}
-                    />
-                ];
+                lineSegments = [<Line listening={false} key={0} points={[0, chartArea.top, 0, chartArea.bottom]} strokeWidth={1} stroke={markerColor} opacity={markerOpacity} dash={marker.dash} />];
             }
         }
         if (isShowingLabels && marker.label) {
-            lineSegments.push(
-                <Text align={"left"} fill={markerColor} key={lineSegments.length} text={marker.label} rotation={-90} x={0} y={chartArea.bottom} />
-            );
+            lineSegments.push(<Text align={"left"} fill={markerColor} key={lineSegments.length} text={marker.label} rotation={-90} x={0} y={chartArea.bottom} />);
         }
 
         if (marker.draggable) {
@@ -961,14 +828,7 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
                     onDragEnd={this.onMarkerDragEnd}
                     onDragMove={ev => this.onMarkerDragged(ev, marker)}
                 >
-                    <Rect
-                        x={-MARKER_HITBOX_THICKNESS / 2.0}
-                        y={chartArea.top}
-                        width={MARKER_HITBOX_THICKNESS}
-                        height={lineHeight}
-                        onMouseEnter={() => this.setHoveredMarker(marker)}
-                        onMouseLeave={() => this.setHoveredMarker(undefined)}
-                    />
+                    <Rect x={-MARKER_HITBOX_THICKNESS / 2.0} y={chartArea.top} width={MARKER_HITBOX_THICKNESS} height={lineHeight} onMouseEnter={() => this.setHoveredMarker(marker)} onMouseLeave={() => this.setHoveredMarker(undefined)} />
                     {lineSegments}
                 </Group>
             );
@@ -1054,46 +914,10 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
                 // Selection rectangle consists of a filled rectangle with drag corners
                 selectionRect = [
                     <Rect fill={Colors.GRAY3} key={0} opacity={0.2} x={start.x} y={start.y} width={delta.x} height={delta.y} />,
-                    <Line
-                        stroke={Colors.GRAY3}
-                        key={1}
-                        x={start.x}
-                        y={start.y}
-                        points={[0, XY_ZOOM_THRESHOLD / 2.0, 0, 0, XY_ZOOM_THRESHOLD / 2.0, 0]}
-                        strokeWidth={3}
-                        scaleX={Math.sign(delta.x)}
-                        scaleY={Math.sign(delta.y)}
-                    />,
-                    <Line
-                        stroke={Colors.GRAY3}
-                        key={2}
-                        x={end.x}
-                        y={start.y}
-                        points={[0, XY_ZOOM_THRESHOLD / 2.0, 0, 0, -XY_ZOOM_THRESHOLD / 2.0, 0]}
-                        strokeWidth={3}
-                        scaleX={Math.sign(delta.x)}
-                        scaleY={Math.sign(delta.y)}
-                    />,
-                    <Line
-                        stroke={Colors.GRAY3}
-                        key={3}
-                        x={start.x}
-                        y={end.y}
-                        points={[0, -XY_ZOOM_THRESHOLD / 2.0, 0, 0, XY_ZOOM_THRESHOLD / 2.0, 0]}
-                        strokeWidth={3}
-                        scaleX={Math.sign(delta.x)}
-                        scaleY={Math.sign(delta.y)}
-                    />,
-                    <Line
-                        stroke={Colors.GRAY3}
-                        key={4}
-                        x={end.x}
-                        y={end.y}
-                        points={[-XY_ZOOM_THRESHOLD / 2.0, 0, 0, 0, 0, -XY_ZOOM_THRESHOLD / 2.0]}
-                        strokeWidth={3}
-                        scaleX={Math.sign(delta.x)}
-                        scaleY={Math.sign(delta.y)}
-                    />
+                    <Line stroke={Colors.GRAY3} key={1} x={start.x} y={start.y} points={[0, XY_ZOOM_THRESHOLD / 2.0, 0, 0, XY_ZOOM_THRESHOLD / 2.0, 0]} strokeWidth={3} scaleX={Math.sign(delta.x)} scaleY={Math.sign(delta.y)} />,
+                    <Line stroke={Colors.GRAY3} key={2} x={end.x} y={start.y} points={[0, XY_ZOOM_THRESHOLD / 2.0, 0, 0, -XY_ZOOM_THRESHOLD / 2.0, 0]} strokeWidth={3} scaleX={Math.sign(delta.x)} scaleY={Math.sign(delta.y)} />,
+                    <Line stroke={Colors.GRAY3} key={3} x={start.x} y={end.y} points={[0, -XY_ZOOM_THRESHOLD / 2.0, 0, 0, XY_ZOOM_THRESHOLD / 2.0, 0]} strokeWidth={3} scaleX={Math.sign(delta.x)} scaleY={Math.sign(delta.y)} />,
+                    <Line stroke={Colors.GRAY3} key={4} x={end.x} y={end.y} points={[-XY_ZOOM_THRESHOLD / 2.0, 0, 0, 0, 0, -XY_ZOOM_THRESHOLD / 2.0]} strokeWidth={3} scaleX={Math.sign(delta.x)} scaleY={Math.sign(delta.y)} />
                 ];
             } else if (this.zoomMode === ZoomMode.NONE && this.props.selectingMode === LinePlotSelectingMode.LINE) {
                 // Selection rectangle consists of a filled rectangle with drag corners
@@ -1154,31 +978,9 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
                 const xEnd = Math.min(xMax, chartArea.right);
                 const yStart = Math.max(yMax, chartArea.top);
                 const yEnd = Math.min(yMin, chartArea.bottom);
-                insideBoxes.push(
-                    <Rect
-                        key={i}
-                        x={xStart}
-                        y={yStart}
-                        width={xEnd - xStart}
-                        height={yEnd - yStart}
-                        fill={box.color}
-                        opacity={box.opacity}
-                        stroke={box.strokeColor}
-                        strokeWidth={1}
-                    />
-                );
+                insideBoxes.push(<Rect key={i} x={xStart} y={yStart} width={xEnd - xStart} height={yEnd - yStart} fill={box.color} opacity={box.opacity} stroke={box.strokeColor} strokeWidth={1} />);
                 if (box.text) {
-                    insideBoxes.push(
-                        <Text
-                            key={i + "-text"}
-                            text={box.text}
-                            x={xStart}
-                            y={(yStart + yEnd) / 2}
-                            width={xEnd - xStart}
-                            align={"center"}
-                            fill={this.props.darkMode ? Colors.LIGHT_GRAY4 : Colors.GRAY1}
-                        />
-                    );
+                    insideBoxes.push(<Text key={i + "-text"} text={box.text} x={xStart} y={(yStart + yEnd) / 2} width={xEnd - xStart} align={"center"} fill={this.props.darkMode ? Colors.LIGHT_GRAY4 : Colors.GRAY1} />);
                 }
             }
         }
@@ -1270,25 +1072,9 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
 
     render() {
         return (
-            <div
-                className={"line-plot-component"}
-                style={{cursor: this.cursorShape}}
-                onKeyDown={this.onKeyDown}
-                onMouseEnter={this.onMouseEnter}
-                onMouseMove={this.onMouseMove}
-                onMouseLeave={this.onMouseLeave}
-                tabIndex={0}
-            >
+            <div className={"line-plot-component"} style={{cursor: this.cursorShape}} onKeyDown={this.onKeyDown} onMouseEnter={this.onMouseEnter} onMouseMove={this.onMouseMove} onMouseLeave={this.onMouseLeave} tabIndex={0}>
                 <ReactResizeDetector handleWidth handleHeight onResize={this.resize} refreshMode={"throttle"} refreshRate={33}></ReactResizeDetector>
-                {this.width > 0 && this.height > 0 && (
-                    <PlotContainerComponent
-                        {...this.props}
-                        plotRefUpdated={this.onPlotRefUpdated}
-                        chartAreaUpdated={this.updateChart}
-                        width={this.width}
-                        height={this.height}
-                    />
-                )}
+                {this.width > 0 && this.height > 0 && <PlotContainerComponent {...this.props} plotRefUpdated={this.onPlotRefUpdated} chartAreaUpdated={this.updateChart} width={this.width} height={this.height} />}
                 {this.width > 0 && this.height > 0 && (
                     <Stage
                         className={"annotation-stage"}
@@ -1310,14 +1096,7 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
                         </Layer>
                     </Stage>
                 )}
-                {(this.props.data !== undefined || this.props.multiPlotPropsMap?.size > 0) && (
-                    <ToolbarComponent
-                        darkMode={this.props.darkMode}
-                        visible={this.isMouseEntered}
-                        exportImage={this.exportImage}
-                        exportData={this.exportData}
-                    />
-                )}
+                {(this.props.data !== undefined || this.props.multiPlotPropsMap?.size > 0) && <ToolbarComponent darkMode={this.props.darkMode} visible={this.isMouseEntered} exportImage={this.exportImage} exportData={this.exportData} />}
             </div>
         );
     }

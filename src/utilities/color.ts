@@ -24,25 +24,7 @@ export const SWATCH_COLORS = [
 ];
 export const DEFAULT_COLOR = SWATCH_COLORS[0];
 
-const SELECTABLE_COLORS = [
-    "blue",
-    "orange",
-    "green",
-    "red",
-    "violet",
-    "sepia",
-    "indigo",
-    "gray",
-    "lime",
-    "turquoise",
-    "forest",
-    "gold",
-    "cobalt",
-    "light_gray",
-    "dark_gray",
-    "white",
-    "black"
-];
+const SELECTABLE_COLORS = ["blue", "orange", "green", "red", "violet", "sepia", "indigo", "gray", "lime", "turquoise", "forest", "gold", "cobalt", "light_gray", "dark_gray", "white", "black"];
 export const AUTO_COLOR_OPTIONS = SELECTABLE_COLORS.map(color => {
     return `auto-${color}`;
 });

@@ -17,14 +17,7 @@ export class SplashScreenComponent extends React.Component {
         }
 
         return (
-            <Overlay
-                className={Classes.OVERLAY_SCROLL_CONTAINER}
-                autoFocus={true}
-                canEscapeKeyClose={false}
-                canOutsideClickClose={false}
-                isOpen={appStore.splashScreenVisible}
-                usePortal={true}
-            >
+            <Overlay className={Classes.OVERLAY_SCROLL_CONTAINER} autoFocus={true} canEscapeKeyClose={false} canOutsideClickClose={false} isOpen={appStore.splashScreenVisible} usePortal={true}>
                 <div className={className}>
                     <div className={"image-div"}>
                         <img src={logoPng} width={150} />

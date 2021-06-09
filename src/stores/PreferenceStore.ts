@@ -2,20 +2,7 @@ import {action, computed, observable, makeObservable} from "mobx";
 import {Colors} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import {BeamType, ContourGeneratorType, FileFilteringType, FrameScaling} from "stores";
-import {
-    CompressionQuality,
-    CursorPosition,
-    Event,
-    PresetLayout,
-    RegionCreationMode,
-    SpectralType,
-    Theme,
-    TileCache,
-    WCSMatchingType,
-    WCSType,
-    Zoom,
-    ZoomPoint
-} from "models";
+import {CompressionQuality, CursorPosition, Event, PresetLayout, RegionCreationMode, SpectralType, Theme, TileCache, WCSMatchingType, WCSType, Zoom, ZoomPoint} from "models";
 import {parseBoolean} from "utilities";
 import {ApiService} from "services";
 
@@ -532,14 +519,7 @@ export class PreferenceStore {
     };
 
     @action resetRegionSettings = () => {
-        this.clearPreferences([
-            PreferenceKeys.REGION_COLOR,
-            PreferenceKeys.REGION_CREATION_MODE,
-            PreferenceKeys.REGION_DASH_LENGTH,
-            PreferenceKeys.REGION_LINE_WIDTH,
-            PreferenceKeys.REGION_TYPE,
-            PreferenceKeys.REGION_SIZE
-        ]);
+        this.clearPreferences([PreferenceKeys.REGION_COLOR, PreferenceKeys.REGION_CREATION_MODE, PreferenceKeys.REGION_DASH_LENGTH, PreferenceKeys.REGION_LINE_WIDTH, PreferenceKeys.REGION_TYPE, PreferenceKeys.REGION_SIZE]);
     };
 
     @action resetPerformanceSettings = () => {

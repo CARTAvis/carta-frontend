@@ -89,12 +89,7 @@ export class ProtobufProcessing {
             floatCoordinates = new Float32Array(u8Copy.buffer);
         }
         // generate indices
-        const indexOffsets = new Int32Array(
-            contourSet.rawStartIndices.buffer.slice(
-                contourSet.rawStartIndices.byteOffset,
-                contourSet.rawStartIndices.byteOffset + contourSet.rawStartIndices.byteLength
-            )
-        );
+        const indexOffsets = new Int32Array(contourSet.rawStartIndices.buffer.slice(contourSet.rawStartIndices.byteOffset, contourSet.rawStartIndices.byteOffset + contourSet.rawStartIndices.byteLength));
 
         return {
             level: contourSet.level,

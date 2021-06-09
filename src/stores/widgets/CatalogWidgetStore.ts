@@ -630,14 +630,7 @@ export class CatalogWidgetStore {
     orientationArray(): Float32Array {
         let column = this.orientationMapData;
         if (!this.disableOrientationMap && column?.length && this.orientationMin.clipd !== undefined && this.orientationMax.clipd !== undefined) {
-            return CARTACompute.CalculateCatalogOrientation(
-                column,
-                this.orientationMin.clipd,
-                this.orientationMax.clipd,
-                this.angleMin,
-                this.angleMax,
-                this.orientationScalingType
-            );
+            return CARTACompute.CalculateCatalogOrientation(column, this.orientationMin.clipd, this.orientationMax.clipd, this.angleMin, this.angleMax, this.orientationScalingType);
         }
         return new Float32Array(0);
     }
@@ -655,13 +648,7 @@ export class CatalogWidgetStore {
     colorArray(): Float32Array {
         const column = this.colorMapData;
         if (!this.disableColorMap && column?.length && this.colorColumnMin.clipd !== undefined && this.colorColumnMax.clipd !== undefined) {
-            return CARTACompute.CalculateCatalogColor(
-                column,
-                this.invertedColorMap,
-                this.colorColumnMin.clipd,
-                this.colorColumnMax.clipd,
-                this.colorScalingType
-            );
+            return CARTACompute.CalculateCatalogColor(column, this.invertedColorMap, this.colorColumnMin.clipd, this.colorColumnMax.clipd, this.colorScalingType);
         }
         return new Float32Array(0);
     }
@@ -691,16 +678,7 @@ export class CatalogWidgetStore {
         if (!this.disableSizeMap && column?.length && this.sizeColumnMin.clipd !== undefined && this.sizeColumnMax.clipd !== undefined) {
             const pointSize = this.pointSizebyType;
             let min = this.sizeArea ? this.shapeSettings.areaBase : this.shapeSettings.diameterBase;
-            return CARTACompute.CalculateCatalogSize(
-                column,
-                this.sizeColumnMin.clipd,
-                this.sizeColumnMax.clipd,
-                pointSize.min + min,
-                pointSize.max + min,
-                this.sizeScalingType,
-                this.sizeArea,
-                devicePixelRatio
-            );
+            return CARTACompute.CalculateCatalogSize(column, this.sizeColumnMin.clipd, this.sizeColumnMax.clipd, pointSize.min + min, pointSize.max + min, this.sizeScalingType, this.sizeArea, devicePixelRatio);
         }
         return new Float32Array(0);
     }
@@ -710,16 +688,7 @@ export class CatalogWidgetStore {
         if (!this.disableSizeMinorMap && column?.length && this.sizeMinorColumnMin.clipd !== undefined && this.sizeMinorColumnMax.clipd !== undefined) {
             const pointSize = this.minorPointSizebyType;
             let min = this.sizeMinorArea ? this.shapeSettings.areaBase : this.shapeSettings.diameterBase;
-            return CARTACompute.CalculateCatalogSize(
-                column,
-                this.sizeMinorColumnMin.clipd,
-                this.sizeMinorColumnMax.clipd,
-                pointSize.min + min,
-                pointSize.max + min,
-                this.sizeMinorScalingType,
-                this.sizeMinorArea,
-                devicePixelRatio
-            );
+            return CARTACompute.CalculateCatalogSize(column, this.sizeMinorColumnMin.clipd, this.sizeMinorColumnMax.clipd, pointSize.min + min, pointSize.max + min, this.sizeMinorScalingType, this.sizeMinorArea, devicePixelRatio);
         }
         return new Float32Array(0);
     }

@@ -2,14 +2,7 @@ import * as React from "react";
 import {computed, autorun} from "mobx";
 import {observer} from "mobx-react";
 import {Tab, Tabs} from "@blueprintjs/core";
-import {
-    LinePlotSettingsPanelComponent,
-    LinePlotSettingsPanelComponentProps,
-    ScatterPlotSettingsPanelComponentProps,
-    ScatterPlotSettingsPanelComponent,
-    SpectralSettingsComponent,
-    SmoothingSettingsComponent
-} from "components/Shared";
+import {LinePlotSettingsPanelComponent, LinePlotSettingsPanelComponentProps, ScatterPlotSettingsPanelComponentProps, ScatterPlotSettingsPanelComponent, SpectralSettingsComponent, SmoothingSettingsComponent} from "components/Shared";
 import {StokesAnalysisWidgetStore} from "stores/widgets";
 import {WidgetProps, DefaultWidgetConfig, HelpType, WidgetsStore, AppStore} from "stores";
 import {LineKey} from "models";
@@ -36,12 +29,7 @@ export class StokesAnalysisSettingsPanelComponent extends React.Component<Widget
             isCloseable: true,
             parentId: "stokes",
             parentType: "stokes",
-            helpType: [
-                HelpType.STOKES_ANALYSIS_SETTINGS_CONVERSION,
-                HelpType.STOKES_ANALYSIS_SETTINGS_LINE_PLOT_STYLING,
-                HelpType.STOKES_ANALYSIS_SETTINGS_SCATTER_PLOT_STYLING,
-                HelpType.STOKES_ANALYSIS_SETTINGS_SMOOTHING
-            ]
+            helpType: [HelpType.STOKES_ANALYSIS_SETTINGS_CONVERSION, HelpType.STOKES_ANALYSIS_SETTINGS_LINE_PLOT_STYLING, HelpType.STOKES_ANALYSIS_SETTINGS_SCATTER_PLOT_STYLING, HelpType.STOKES_ANALYSIS_SETTINGS_SMOOTHING]
         };
     }
 
@@ -132,30 +120,11 @@ export class StokesAnalysisSettingsPanelComponent extends React.Component<Widget
                     <Tab
                         id={StokesAnalysisSettingsTabs.CONVERSION}
                         title="Conversion"
-                        panel={
-                            <SpectralSettingsComponent
-                                frame={widgetStore.effectiveFrame}
-                                onSpectralCoordinateChange={widgetStore.setSpectralCoordinate}
-                                onSpectralSystemChange={widgetStore.setSpectralSystem}
-                                disable={!hasStokes}
-                            />
-                        }
+                        panel={<SpectralSettingsComponent frame={widgetStore.effectiveFrame} onSpectralCoordinateChange={widgetStore.setSpectralCoordinate} onSpectralSystemChange={widgetStore.setSpectralSystem} disable={!hasStokes} />}
                     />
-                    <Tab
-                        id={StokesAnalysisSettingsTabs.LINE_PLOT_STYLING}
-                        title="Line Plot Styling"
-                        panel={<LinePlotSettingsPanelComponent {...lineSettingsProps} />}
-                    />
-                    <Tab
-                        id={StokesAnalysisSettingsTabs.SCATTER_PLOT_STYLING}
-                        title="Scatter Plot Styling"
-                        panel={<ScatterPlotSettingsPanelComponent {...scatterSettingsProps} />}
-                    />
-                    <Tab
-                        id={StokesAnalysisSettingsTabs.SMOOTHING}
-                        title="Smoothing"
-                        panel={<SmoothingSettingsComponent smoothingStore={widgetStore.smoothingStore} diableStyle={true} diableDecimation={true} />}
-                    />
+                    <Tab id={StokesAnalysisSettingsTabs.LINE_PLOT_STYLING} title="Line Plot Styling" panel={<LinePlotSettingsPanelComponent {...lineSettingsProps} />} />
+                    <Tab id={StokesAnalysisSettingsTabs.SCATTER_PLOT_STYLING} title="Scatter Plot Styling" panel={<ScatterPlotSettingsPanelComponent {...scatterSettingsProps} />} />
+                    <Tab id={StokesAnalysisSettingsTabs.SMOOTHING} title="Smoothing" panel={<SmoothingSettingsComponent smoothingStore={widgetStore.smoothingStore} diableStyle={true} diableDecimation={true} />} />
                 </Tabs>
             </div>
         );

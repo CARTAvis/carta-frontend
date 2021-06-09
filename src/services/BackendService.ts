@@ -318,14 +318,7 @@ export class BackendService {
     }
 
     @action("export regions")
-    exportRegion(
-        directory: string,
-        file: string,
-        type: CARTA.FileType,
-        coordType: CARTA.CoordinateType,
-        fileId: number,
-        regionStyles: Map<number, CARTA.IRegionStyle>
-    ): Observable<CARTA.ExportRegionAck> {
+    exportRegion(directory: string, file: string, type: CARTA.FileType, coordType: CARTA.CoordinateType, fileId: number, regionStyles: Map<number, CARTA.IRegionStyle>): Observable<CARTA.ExportRegionAck> {
         if (this.connectionStatus !== ConnectionStatus.ACTIVE) {
             return throwError(new Error("Not connected"));
         } else {
@@ -414,16 +407,7 @@ export class BackendService {
     }
 
     @action("save file")
-    saveFile(
-        fileId: number,
-        outputFileDirectory: string,
-        outputFileName: string,
-        outputFileType: CARTA.FileType,
-        regionId?: number,
-        channels?: number[],
-        stokes?: number[],
-        keepDegenerate?: boolean
-    ): Observable<CARTA.SaveFileAck> {
+    saveFile(fileId: number, outputFileDirectory: string, outputFileName: string, outputFileType: CARTA.FileType, regionId?: number, channels?: number[], stokes?: number[], keepDegenerate?: boolean): Observable<CARTA.SaveFileAck> {
         if (this.connectionStatus !== ConnectionStatus.ACTIVE) {
             return throwError(new Error("Not connected"));
         } else {

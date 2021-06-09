@@ -342,25 +342,13 @@ export class SimpleShapeRegionComponent extends React.Component<RegionComponentP
 
         if (frame.spatialReference) {
             const centerSecondaryImage = transformPoint(frame.spatialTransformAST, centerReferenceImage, false);
-            const centerPixelSpace = transformedImageToCanvasPos(
-                centerSecondaryImage.x,
-                centerSecondaryImage.y,
-                frame,
-                this.props.layerWidth,
-                this.props.layerHeight
-            );
+            const centerPixelSpace = transformedImageToCanvasPos(centerSecondaryImage.x, centerSecondaryImage.y, frame, this.props.layerWidth, this.props.layerHeight);
             // Ellipse axes swapped
             const pointsSecondaryImage = region.getRegionApproximation(frame.spatialTransformAST);
             const N = pointsSecondaryImage.length;
             const pointArray = new Array<number>(N * 2);
             for (let i = 0; i < N; i++) {
-                const approxPointPixelSpace = transformedImageToCanvasPos(
-                    pointsSecondaryImage[i].x,
-                    pointsSecondaryImage[i].y,
-                    frame,
-                    this.props.layerWidth,
-                    this.props.layerHeight
-                );
+                const approxPointPixelSpace = transformedImageToCanvasPos(pointsSecondaryImage[i].x, pointsSecondaryImage[i].y, frame, this.props.layerWidth, this.props.layerHeight);
                 pointArray[i * 2] = approxPointPixelSpace.x - centerPixelSpace.x;
                 pointArray[i * 2 + 1] = approxPointPixelSpace.y - centerPixelSpace.y;
             }
@@ -391,13 +379,7 @@ export class SimpleShapeRegionComponent extends React.Component<RegionComponentP
             const rotation = region.rotation;
             const zoomLevel = frame.zoomLevel;
 
-            const centerPixelSpace = transformedImageToCanvasPos(
-                centerReferenceImage.x,
-                centerReferenceImage.y,
-                frame,
-                this.props.layerWidth,
-                this.props.layerHeight
-            );
+            const centerPixelSpace = transformedImageToCanvasPos(centerReferenceImage.x, centerReferenceImage.y, frame, this.props.layerWidth, this.props.layerHeight);
             let width = (region.size.x * zoomLevel) / devicePixelRatio;
             let height = (region.size.y * zoomLevel) / devicePixelRatio;
 
@@ -425,15 +407,7 @@ export class SimpleShapeRegionComponent extends React.Component<RegionComponentP
             };
 
             if (region.regionType === CARTA.RegionType.RECTANGLE) {
-                shapeNode = (
-                    <Rect
-                        {...commonProps}
-                        width={width * frame.aspectRatio}
-                        height={height}
-                        offsetX={(width * frame.aspectRatio) / 2.0}
-                        offsetY={height / 2.0}
-                    />
-                );
+                shapeNode = <Rect {...commonProps} width={width * frame.aspectRatio} height={height} offsetX={(width * frame.aspectRatio) / 2.0} offsetY={height / 2.0} />;
             } else {
                 shapeNode = <Ellipse {...commonProps} radiusY={width} radiusX={height * frame.aspectRatio} />;
             }

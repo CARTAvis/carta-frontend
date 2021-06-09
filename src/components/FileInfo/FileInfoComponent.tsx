@@ -1,27 +1,7 @@
 import * as React from "react";
 import {observer} from "mobx-react";
 import {action, makeObservable, observable} from "mobx";
-import {
-    Button,
-    ButtonGroup,
-    ControlGroup,
-    Divider,
-    FormGroup,
-    HTMLSelect,
-    InputGroup,
-    IOptionProps,
-    NonIdealState,
-    Popover,
-    PopoverInteractionKind,
-    PopperModifiers,
-    Position,
-    Pre,
-    Spinner,
-    Tab,
-    TabId,
-    Tabs,
-    Text
-} from "@blueprintjs/core";
+import {Button, ButtonGroup, ControlGroup, Divider, FormGroup, HTMLSelect, InputGroup, IOptionProps, NonIdealState, Popover, PopoverInteractionKind, PopperModifiers, Position, Pre, Spinner, Tab, TabId, Tabs, Text} from "@blueprintjs/core";
 import {FixedSizeList as List} from "react-window";
 import AutoSizer from "react-virtualized-auto-sizer";
 import {CARTA} from "carta-protobuf";
@@ -155,10 +135,7 @@ export class FileInfoComponent extends React.Component<{
             this.matchedLocationArray = [];
 
             this.props.fileInfoExtended.headerEntries.forEach((entriesValue, index) => {
-                let splitString =
-                    entriesValue.name !== "END"
-                        ? `${entriesValue.name} = ${entriesValue.value}${entriesValue.comment && " / " + entriesValue.comment}`.split(searchStringRegExp)
-                        : entriesValue.name.split(searchStringRegExp);
+                let splitString = entriesValue.name !== "END" ? `${entriesValue.name} = ${entriesValue.value}${entriesValue.comment && " / " + entriesValue.comment}`.split(searchStringRegExp) : entriesValue.name.split(searchStringRegExp);
                 this.splitLengthArray.push(splitString.map(value => value.length));
                 this.matchedTotal += splitString.length - 1;
                 if (splitString.length > 1) {
@@ -245,10 +222,7 @@ export class FileInfoComponent extends React.Component<{
             <ControlGroup vertical={false}>
                 <Divider />
                 <FormGroup inline={true} label="HDU">
-                    <HTMLSelect
-                        options={this.props.HDUOptions.HDUList}
-                        onChange={ev => this.props.HDUOptions.handleSelectedHDUChange(ev.currentTarget.value)}
-                    />
+                    <HTMLSelect options={this.props.HDUOptions.HDUList} onChange={ev => this.props.HDUOptions.handleSelectedHDUChange(ev.currentTarget.value)} />
                 </FormGroup>
             </ControlGroup>
         ) : undefined;
@@ -264,23 +238,9 @@ export class FileInfoComponent extends React.Component<{
                 if (this.props.isLoading) {
                     return <NonIdealState className="non-ideal-state-file" icon={<Spinner className="astLoadingSpinner" />} title="Loading file info..." />;
                 } else if (this.props.errorMessage) {
-                    return (
-                        <NonIdealState
-                            className="non-ideal-state-file"
-                            icon="document"
-                            title="Cannot open file!"
-                            description={this.props.errorMessage + " Select another file from the folder."}
-                        />
-                    );
+                    return <NonIdealState className="non-ideal-state-file" icon="document" title="Cannot open file!" description={this.props.errorMessage + " Select another file from the folder."} />;
                 } else if (!this.props.fileInfoExtended && !this.props.regionFileInfo && !this.props.catalogFileInfo) {
-                    return (
-                        <NonIdealState
-                            className="non-ideal-state-file"
-                            icon="document"
-                            title="No file selected."
-                            description="Select a file from the folder."
-                        />
-                    );
+                    return <NonIdealState className="non-ideal-state-file" icon="document" title="No file selected." description="Select a file from the folder." />;
                 }
                 break;
         }

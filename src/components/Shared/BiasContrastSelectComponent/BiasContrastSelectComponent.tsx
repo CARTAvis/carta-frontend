@@ -32,8 +32,7 @@ export class BiasContrastSelectComponent extends React.Component<BiasContrastSel
         clearTimeout(this.updateValuesTimer);
         this.updateValuesTimer = setTimeout(() => {
             const bias = (clamp(x, 0, this.props.boardWidth) / this.props.boardWidth) * (this.props.biasMax - this.props.biasMin) + this.props.biasMin;
-            const contrast =
-                this.props.contrastMax - (clamp(y, 0, this.props.boardHeight) / this.props.boardHeight) * (this.props.contrastMax - this.props.contrastMin);
+            const contrast = this.props.contrastMax - (clamp(y, 0, this.props.boardHeight) / this.props.boardHeight) * (this.props.contrastMax - this.props.contrastMin);
             this.props.setBias(bias);
             this.props.setContrast(contrast);
         }, interval);
@@ -62,16 +61,7 @@ export class BiasContrastSelectComponent extends React.Component<BiasContrastSel
     render() {
         const twoDimensionBoard = (
             <React.Fragment>
-                <Rect
-                    x={0}
-                    y={0}
-                    width={this.props.boardWidth}
-                    height={this.props.boardHeight}
-                    stroke={Colors.LIGHT_GRAY1}
-                    strokeWidth={4}
-                    onClick={this.handleClick}
-                    onDblClick={this.handleDoubleClick}
-                />
+                <Rect x={0} y={0} width={this.props.boardWidth} height={this.props.boardHeight} stroke={Colors.LIGHT_GRAY1} strokeWidth={4} onClick={this.handleClick} onDblClick={this.handleDoubleClick} />
                 <Circle
                     x={((this.props.bias - this.props.biasMin) * this.props.boardWidth) / (this.props.biasMax - this.props.biasMin)}
                     y={((this.props.contrastMax - this.props.contrast) * this.props.boardHeight) / (this.props.contrastMax - this.props.contrastMin)}

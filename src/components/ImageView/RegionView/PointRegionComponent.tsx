@@ -82,16 +82,7 @@ export class PointRegionComponent extends React.Component<PointRegionComponentPr
 
         return (
             <Group>
-                <Rect
-                    rotation={rotation}
-                    x={centerPixelSpace.x}
-                    y={centerPixelSpace.y}
-                    width={POINT_WIDTH}
-                    height={POINT_WIDTH}
-                    offsetX={POINT_WIDTH * 0.5}
-                    offsetY={POINT_WIDTH * 0.5}
-                    fill={region.color}
-                />
+                <Rect rotation={rotation} x={centerPixelSpace.x} y={centerPixelSpace.y} width={POINT_WIDTH} height={POINT_WIDTH} offsetX={POINT_WIDTH * 0.5} offsetY={POINT_WIDTH * 0.5} fill={region.color} />
                 <Rect
                     rotation={rotation}
                     x={centerPixelSpace.x}

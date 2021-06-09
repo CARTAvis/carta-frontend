@@ -45,13 +45,7 @@ export class ColormapConfigComponent extends React.Component<ColormapConfigProps
                 </FormGroup>
                 {(renderConfig.scaling === FrameScaling.LOG || renderConfig.scaling === FrameScaling.POWER) && (
                     <FormGroup label={"Alpha"} inline={true}>
-                        <SafeNumericInput
-                            min={RenderConfigStore.ALPHA_MIN}
-                            max={RenderConfigStore.ALPHA_MAX}
-                            buttonPosition={"none"}
-                            value={renderConfig.alpha}
-                            onValueChange={renderConfig.setAlpha}
-                        />
+                        <SafeNumericInput min={RenderConfigStore.ALPHA_MIN} max={RenderConfigStore.ALPHA_MAX} buttonPosition={"none"} value={renderConfig.alpha} onValueChange={renderConfig.setAlpha} />
                     </FormGroup>
                 )}
                 {renderConfig.scaling === FrameScaling.GAMMA && (
@@ -69,13 +63,7 @@ export class ColormapConfigComponent extends React.Component<ColormapConfigProps
                     </FormGroup>
                 )}
                 <FormGroup inline={true}>
-                    <Button
-                        minimal={true}
-                        rightIcon={this.extendBiasContrast ? "double-chevron-up" : "double-chevron-down"}
-                        alignText={"right"}
-                        small={true}
-                        onClick={this.switchExtendBiasContrast}
-                    >
+                    <Button minimal={true} rightIcon={this.extendBiasContrast ? "double-chevron-up" : "double-chevron-down"} alignText={"right"} small={true} onClick={this.switchExtendBiasContrast}>
                         {"Bias / Contrast"}
                     </Button>
                 </FormGroup>

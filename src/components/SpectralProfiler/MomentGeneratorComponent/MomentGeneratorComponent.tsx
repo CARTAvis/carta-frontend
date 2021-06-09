@@ -75,14 +75,7 @@ export class MomentGeneratorComponent extends React.Component<{widgetStore: Spec
 
     private renderMomentSelectItem: ItemRenderer<CARTA.Moment> = (moment: CARTA.Moment, {modifiers, handleClick}) => {
         const momentContent = MOMENT_TEXT.get(moment);
-        return momentContent ? (
-            <MenuItem
-                text={`${momentContent.tag}: ${momentContent.text}`}
-                onClick={handleClick}
-                key={moment}
-                icon={this.props.widgetStore.isMomentSelected(moment) ? "tick" : "blank"}
-            />
-        ) : undefined;
+        return momentContent ? <MenuItem text={`${momentContent.tag}: ${momentContent.text}`} onClick={handleClick} key={moment} icon={this.props.widgetStore.isMomentSelected(moment) ? "tick" : "blank"} /> : undefined;
     };
 
     private handleMomentTagRemove = (tag: string, index: number) => {
@@ -127,12 +120,7 @@ export class MomentGeneratorComponent extends React.Component<{widgetStore: Spec
                     }
                     disabled={!frame}
                 >
-                    <HTMLSelect
-                        value={widgetStore.fileId}
-                        options={widgetStore.frameOptions}
-                        onChange={ev => widgetStore.selectFrame(parseInt(ev.target.value))}
-                        disabled={!frame}
-                    />
+                    <HTMLSelect value={widgetStore.fileId} options={widgetStore.frameOptions} onChange={ev => widgetStore.selectFrame(parseInt(ev.target.value))} disabled={!frame} />
                 </FormGroup>
                 <FormGroup
                     className={"image-region-select"}
@@ -151,48 +139,26 @@ export class MomentGeneratorComponent extends React.Component<{widgetStore: Spec
                     }
                     disabled={!frame}
                 >
-                    <HTMLSelect
-                        value={widgetStore.momentRegionId}
-                        options={widgetStore.momentRegionOptions}
-                        onChange={ev => widgetStore.selectMomentRegion(parseInt(ev.target.value))}
-                        disabled={!frame}
-                    />
+                    <HTMLSelect value={widgetStore.momentRegionId} options={widgetStore.momentRegionOptions} onChange={ev => widgetStore.selectMomentRegion(parseInt(ev.target.value))} disabled={!frame} />
                 </FormGroup>
             </React.Fragment>
         );
 
         const spectralPanel = (
             <React.Fragment>
-                <SpectralSettingsComponent
-                    frame={frame}
-                    onSpectralCoordinateChange={widgetStore.setSpectralCoordinate}
-                    onSpectralSystemChange={widgetStore.setSpectralSystem}
-                    disable={frame?.isPVImage}
-                />
+                <SpectralSettingsComponent frame={frame} onSpectralCoordinateChange={widgetStore.setSpectralCoordinate} onSpectralSystemChange={widgetStore.setSpectralSystem} disable={frame?.isPVImage} />
                 {frame && frame.numChannels > 1 && (
                     <FormGroup label="Range" inline={true} labelInfo={frame?.spectralUnit ? `(${frame.spectralUnit})` : ""}>
                         <div className="range-select">
                             <FormGroup label="From" inline={true}>
-                                <SafeNumericInput
-                                    value={widgetStore.channelValueRange[0]}
-                                    buttonPosition="none"
-                                    onValueChange={val => this.onChannelFromChanged(val)}
-                                />
+                                <SafeNumericInput value={widgetStore.channelValueRange[0]} buttonPosition="none" onValueChange={val => this.onChannelFromChanged(val)} />
                             </FormGroup>
                             <FormGroup label="To" inline={true}>
-                                <SafeNumericInput
-                                    value={widgetStore.channelValueRange[1]}
-                                    buttonPosition="none"
-                                    onValueChange={val => this.onChannelToChanged(val)}
-                                />
+                                <SafeNumericInput value={widgetStore.channelValueRange[1]} buttonPosition="none" onValueChange={val => this.onChannelToChanged(val)} />
                             </FormGroup>
                             <div className="cursor-select">
                                 <Tooltip content="Use cursor to select channel range in profiler" position={Position.BOTTOM}>
-                                    <AnchorButton
-                                        className={widgetStore.isSelectingMomentChannelRange ? "bp3-active" : ""}
-                                        icon="select"
-                                        onClick={this.handleChannelSelectionClicked}
-                                    />
+                                    <AnchorButton className={widgetStore.isSelectingMomentChannelRange ? "bp3-active" : ""} icon="select" onClick={this.handleChannelSelectionClicked} />
                                 </Tooltip>
                             </div>
                         </div>
@@ -207,9 +173,7 @@ export class MomentGeneratorComponent extends React.Component<{widgetStore: Spec
                     <HTMLSelect
                         value={widgetStore.momentMask}
                         options={Object.keys(CARTA.MomentMask).map(key => ({label: key, value: CARTA.MomentMask[key]}))}
-                        onChange={(event: React.FormEvent<HTMLSelectElement>) =>
-                            widgetStore.setMomentMask(parseInt(event.currentTarget.value) as CARTA.MomentMask)
-                        }
+                        onChange={(event: React.FormEvent<HTMLSelectElement>) => widgetStore.setMomentMask(parseInt(event.currentTarget.value) as CARTA.MomentMask)}
                         disabled={!frame}
                     />
                 </FormGroup>
@@ -224,11 +188,7 @@ export class MomentGeneratorComponent extends React.Component<{widgetStore: Spec
                             </FormGroup>
                             <div className="cursor-select">
                                 <Tooltip content="Use cursor to select mask range in profiler" position={Position.BOTTOM}>
-                                    <AnchorButton
-                                        className={widgetStore.isSelectingMomentMaskRange ? "bp3-active" : ""}
-                                        icon="select"
-                                        onClick={this.handleMaskSelectionClicked}
-                                    />
+                                    <AnchorButton className={widgetStore.isSelectingMomentMaskRange ? "bp3-active" : ""} icon="select" onClick={this.handleMaskSelectionClicked} />
                                 </Tooltip>
                             </div>
                         </div>
@@ -237,12 +197,7 @@ export class MomentGeneratorComponent extends React.Component<{widgetStore: Spec
             </React.Fragment>
         );
 
-        const isAbleToGenerate =
-            frame &&
-            frame.numChannels > 1 &&
-            !appStore.animatorStore.animationActive &&
-            !appStore.widgetsStore.isSpectralWidgetStreamingData &&
-            widgetStore.isMomentRegionValid;
+        const isAbleToGenerate = frame && frame.numChannels > 1 && !appStore.animatorStore.animationActive && !appStore.widgetsStore.isSpectralWidgetStreamingData && widgetStore.isMomentRegionValid;
         const hint = (
             <span>
                 <br />

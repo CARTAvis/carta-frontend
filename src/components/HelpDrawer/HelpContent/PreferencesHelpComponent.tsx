@@ -11,8 +11,8 @@ export class PreferencesHelpComponent extends React.Component {
                     <ImageComponent light={headPreferenceButton} dark={headPreferenceButton_d} width="90%" />
                 </p>
                 <p>
-                    The preferences dialog provides a centralized place to customize the entire graphical user interface and performance control parameters. All
-                    settings are recorded and applied to new CARTA sessions. Some settings are effective immediately.
+                    The preferences dialog provides a centralized place to customize the entire graphical user interface and performance control parameters. All settings are recorded and applied to new CARTA sessions. Some settings are
+                    effective immediately.
                 </p>
                 <h3 id="global">Global</h3>
                 <p>This section provides usability customization.</p>
@@ -23,16 +23,10 @@ export class PreferencesHelpComponent extends React.Component {
                     <li>Initial cursor position: fix cursor at the image center or have cursor free to move</li>
                     <li>Initial zoom level: view full image or view image with one image pixel to one screen pixel ratio</li>
                     <li>Zoom to: control the focus of zooming with scrolling wheel</li>
-                    <li>
-                        Enable drag-to-pan: when enabled, pan action is achieved by click-and-dragging. When disabled, pan action is achieved by a click where
-                        the clicked pixel will be centered in the image viewer.
-                    </li>
+                    <li>Enable drag-to-pan: when enabled, pan action is achieved by click-and-dragging. When disabled, pan action is achieved by a click where the clicked pixel will be centered in the image viewer.</li>
                     <li>WCS matching on append: trigger WCS matching automatically for newly appended images</li>
                     <li>Spectral matching: spectral convention to be used for spectral matching of image cubes</li>
-                    <li>
-                        Transparent image background: when this is enabled, the exported png image will have a transparent background. When it is disabled
-                        (default), a white or a black background is added depending on the GUI theme.
-                    </li>
+                    <li>Transparent image background: when this is enabled, the exported png image will have a transparent background. When it is disabled (default), a white or a black background is added depending on the GUI theme.</li>
                 </ul>
                 <h3 id="render-configuration">Render configuration</h3>
                 <p>This section provides customization of how a raster image is rendered by default.</p>
@@ -41,10 +35,7 @@ export class PreferencesHelpComponent extends React.Component {
                     <li>Default colormap: colormap for rendering a raster image</li>
                     <li>Default percentile ranks: clip level to be applied to the pixel value-to-color mapping</li>
                     <li>NaN color: color to render a NaN (not a number) pixel</li>
-                    <li>
-                        Smoothed bias/contrast: when this is enabled (default), smooth bias and contrast functions are applied, resulting a smooth scaling
-                        function. When it is disabled, the final scaling function contains kinks.
-                    </li>
+                    <li>Smoothed bias/contrast: when this is enabled (default), smooth bias and contrast functions are applied, resulting a smooth scaling function. When it is disabled, the final scaling function contains kinks.</li>
                 </ul>
                 <h3 id="contour-configuration">Contour configuration</h3>
                 <p>This section provides customization of how a contour layer is calculated and rendered by default.</p>
@@ -86,9 +77,8 @@ export class PreferencesHelpComponent extends React.Component {
                 </ul>
                 <h3 id="performance">Performance</h3>
                 <p>
-                    Performance related control parameters are included here. We do not recommend you to change the settings here. If the bandwidth connecting
-                    to a CARTA server is limited, you may enable the <code>low bandwidth mode</code> which reduces displayed image resolution and cursor
-                    responsiveness.
+                    Performance related control parameters are included here. We do not recommend you to change the settings here. If the bandwidth connecting to a CARTA server is limited, you may enable the <code>low bandwidth mode</code>{" "}
+                    which reduces displayed image resolution and cursor responsiveness.
                 </p>
                 <h3 id="log-events">Log events</h3>
                 <p>This is for development and debugging purpose. General users should not enable anything here.</p>

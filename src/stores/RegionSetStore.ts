@@ -59,16 +59,7 @@ export class RegionSetStore {
         return this.addRegion(points, 0, CARTA.RegionType.POLYGON, temporary);
     };
 
-    @action addExistingRegion = (
-        points: Point2D[],
-        rotation: number,
-        regionType: CARTA.RegionType,
-        regionId: number,
-        name: string,
-        color: string,
-        lineWidth: number,
-        dashes: number[]
-    ) => {
+    @action addExistingRegion = (points: Point2D[], rotation: number, regionType: CARTA.RegionType, regionId: number, name: string, color: string, lineWidth: number, dashes: number[]) => {
         const region = this.addRegion(points, rotation, regionType, true, regionId, name);
         // additional imported style properties;
         if (color) {
@@ -83,14 +74,7 @@ export class RegionSetStore {
         return region;
     };
 
-    private addRegion(
-        points: Point2D[],
-        rotation: number,
-        regionType: CARTA.RegionType,
-        temporary: boolean = false,
-        regionId: number = this.getTempRegionId(),
-        regionName: string = ""
-    ) {
+    private addRegion(points: Point2D[], rotation: number, regionType: CARTA.RegionType, temporary: boolean = false, regionId: number = this.getTempRegionId(), regionName: string = "") {
         const region = new RegionStore(
             this.backendService,
             this.frame.frameInfo.fileId,
@@ -204,16 +188,7 @@ export class RegionSetStore {
                         newRegion.setName(region.name);
                         newRegion.setColor(region.color);
                     } else {
-                        newRegion = this.addExistingRegion(
-                            newControlPoints,
-                            rotation,
-                            region.regionType,
-                            newId,
-                            region.name,
-                            region.color,
-                            region.lineWidth,
-                            region.dashLength ? [region.dashLength] : []
-                        );
+                        newRegion = this.addExistingRegion(newControlPoints, rotation, region.regionType, newId, region.name, region.color, region.lineWidth, region.dashLength ? [region.dashLength] : []);
                         newRegion.endCreating();
                     }
                     newRegion.setLocked(region.locked);

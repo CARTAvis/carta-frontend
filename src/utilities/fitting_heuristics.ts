@@ -104,15 +104,7 @@ export function histogramGaussianFit(y: number[], bins: number) {
     }
     // [amp, center, fwhm]
     const initialGuess = [_.max(histY), histXCenter[maxHistYIndex], 2 * Math.sqrt(Math.log(10) * 2) * 0.5 * deltaHistXCenter];
-    const histogramGaussianFitting = GSL.fitting(
-        FittingFunction.GAUSSIAN,
-        new Float64Array(histXCenter),
-        new Float64Array(histY),
-        initialGuess,
-        [0, 0, 0],
-        [0, 0],
-        [1, 1]
-    );
+    const histogramGaussianFitting = GSL.fitting(FittingFunction.GAUSSIAN, new Float64Array(histXCenter), new Float64Array(histY), initialGuess, [0, 0, 0], [0, 0], [1, 1]);
 
     const intensitySmoothedMean = histogramGaussianFitting.center[0];
     const intensitySmoothedStddev = histogramGaussianFitting.fwhm[0] / (2 * Math.sqrt(Math.log(2) * 2));
@@ -165,11 +157,7 @@ export function getEstimatedPoints(xInput: number[], yInput: number[]): {x: numb
     ];
 }
 
-export function autoDetecting(
-    xInput: number[],
-    yInput: number[],
-    orderInputs?: {order: number; yIntercept: number; slope: number}
-): {components: ProfileFittingIndividualStore[]; order: number; yIntercept: number; slope: number} {
+export function autoDetecting(xInput: number[], yInput: number[], orderInputs?: {order: number; yIntercept: number; slope: number}): {components: ProfileFittingIndividualStore[]; order: number; yIntercept: number; slope: number} {
     // This part of codes tries to analyze the input spectrum and guesses where spectral and continuum features are, then sets up a set of initial solution for the GSL profile fitter. The procedure is outlined below.
 
     // On the GUI, there is a toggle 'w/ cont.' which sets a flag to the guesser if continuum needs to be taken into account or not.
@@ -243,12 +231,7 @@ export function autoDetecting(
             order = -1;
             yIntercept = 0;
             slope = 0;
-        } else if (
-            yMean - orderValidWidth < startPoint.y &&
-            startPoint.y < yMean + orderValidWidth &&
-            yMean - orderValidWidth < endPoint.y &&
-            endPoint.y < yMean + orderValidWidth
-        ) {
+        } else if (yMean - orderValidWidth < startPoint.y && startPoint.y < yMean + orderValidWidth && yMean - orderValidWidth < endPoint.y && endPoint.y < yMean + orderValidWidth) {
             order = 0;
             yIntercept = yMean;
             slope = 0;
@@ -281,8 +264,7 @@ export function autoDetecting(
             toIndexOri = getIndexByValue(x, xSmoothed[toIndex]);
             if (
                 toIndexOri - fromIndexOri + 1 >= signalChCountThreshold &&
-                (_.mean(ySmoothed.slice(fromIndex, toIndex + 1)) > intensitySmoothedMean + 3 * intensitySmoothedStddev ||
-                    _.mean(ySmoothed.slice(fromIndex, toIndex + 1)) < intensitySmoothedMean - 3 * intensitySmoothedStddev)
+                (_.mean(ySmoothed.slice(fromIndex, toIndex + 1)) > intensitySmoothedMean + 3 * intensitySmoothedStddev || _.mean(ySmoothed.slice(fromIndex, toIndex + 1)) < intensitySmoothedMean - 3 * intensitySmoothedStddev)
             ) {
                 lineBoxs.push({fromIndexOri, toIndexOri, fromIndex, toIndex});
             }
@@ -292,8 +274,7 @@ export function autoDetecting(
             toIndexOri = getIndexByValue(x, xSmoothed[toIndex]);
             if (
                 toIndexOri - fromIndexOri + 1 >= signalChCountThreshold &&
-                (_.mean(ySmoothed.slice(fromIndex, toIndex + 1)) > intensitySmoothedMean + 3 * intensitySmoothedStddev ||
-                    _.mean(ySmoothed.slice(fromIndex, toIndex + 1)) < intensitySmoothedMean - 3 * intensitySmoothedStddev)
+                (_.mean(ySmoothed.slice(fromIndex, toIndex + 1)) > intensitySmoothedMean + 3 * intensitySmoothedStddev || _.mean(ySmoothed.slice(fromIndex, toIndex + 1)) < intensitySmoothedMean - 3 * intensitySmoothedStddev)
             ) {
                 lineBoxs.push({fromIndexOri, toIndexOri, fromIndex, toIndex});
             }
@@ -434,11 +415,7 @@ export function autoDetecting(
                         dividerIndex.push(Math.floor((dividerIndexTmpLast2 + dividerIndexTmpLast1) / 2));
                     }
                     const dividerIndexTmpLast3 = dividerIndexTmp[dividerIndexTmp.length - 3];
-                    if (
-                        dividerLocalMinIndex.indexOf(dividerIndexTmpLast3) !== -1 &&
-                        dividerLocalMinIndex.indexOf(dividerIndexTmpLast2) !== -1 &&
-                        dividerLocalMaxIndex.indexOf(dividerIndexTmpLast1) !== -1
-                    ) {
+                    if (dividerLocalMinIndex.indexOf(dividerIndexTmpLast3) !== -1 && dividerLocalMinIndex.indexOf(dividerIndexTmpLast2) !== -1 && dividerLocalMaxIndex.indexOf(dividerIndexTmpLast1) !== -1) {
                         dividerIndex.push(dividerIndexTmpLast2);
                     }
                 } else {
@@ -470,11 +447,7 @@ export function autoDetecting(
                         dividerIndex.push(Math.floor((dividerIndexTmpLast2 + dividerIndexTmpLast1) / 2));
                     }
                     const dividerIndexTmpLast3 = dividerIndexTmp[dividerIndexTmp.length - 3];
-                    if (
-                        dividerLocalMaxIndex.indexOf(dividerIndexTmpLast3) !== -1 &&
-                        dividerLocalMaxIndex.indexOf(dividerIndexTmpLast2) !== -1 &&
-                        dividerLocalMinIndex.indexOf(dividerIndexTmpLast1) !== -1
-                    ) {
+                    if (dividerLocalMaxIndex.indexOf(dividerIndexTmpLast3) !== -1 && dividerLocalMaxIndex.indexOf(dividerIndexTmpLast2) !== -1 && dividerLocalMinIndex.indexOf(dividerIndexTmpLast1) !== -1) {
                         dividerIndex.push(dividerIndexTmpLast2);
                     }
                 }

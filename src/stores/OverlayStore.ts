@@ -936,15 +936,9 @@ export class OverlayColorbarSettings {
         const maxOrder = Math.max(...orders);
         const minOrder = Math.min(...orders);
         if (maxOrder >= 5.0 || minOrder <= -5.0) {
-            return this.roundedNumbers.numbers.map(x =>
-                x.toExponential(
-                    this.numberCustomPrecision ? this.numberPrecision : x === 0 ? 0 : clamp(this.roundedNumbers.precision + this.getPrecision(x), 0, 50)
-                )
-            );
+            return this.roundedNumbers.numbers.map(x => x.toExponential(this.numberCustomPrecision ? this.numberPrecision : x === 0 ? 0 : clamp(this.roundedNumbers.precision + this.getPrecision(x), 0, 50)));
         } else {
-            return this.roundedNumbers.numbers.map(x =>
-                x.toFixed(this.numberCustomPrecision ? this.numberPrecision : clamp(this.roundedNumbers.precision, 0, 50))
-            );
+            return this.roundedNumbers.numbers.map(x => x.toFixed(this.numberCustomPrecision ? this.numberPrecision : clamp(this.roundedNumbers.precision, 0, 50)));
         }
     }
 
@@ -1250,11 +1244,7 @@ export class OverlayStore {
     }
 
     @computed get colorbarHoverInfoHeight(): number {
-        return !this.colorbar.visible ||
-            (this.colorbar.visible && this.colorbar.position !== "bottom" && this.labels.show) ||
-            (this.colorbar.visible && this.colorbar.position === "bottom" && this.colorbar.labelVisible)
-            ? 0
-            : 10;
+        return !this.colorbar.visible || (this.colorbar.visible && this.colorbar.position !== "bottom" && this.labels.show) || (this.colorbar.visible && this.colorbar.position === "bottom" && this.colorbar.labelVisible) ? 0 : 10;
     }
 
     @computed get paddingLeft(): number {
@@ -1266,20 +1256,11 @@ export class OverlayStore {
     }
 
     @computed get paddingTop(): number {
-        return (
-            this.base +
-            (this.title.show ? this.titleGap + this.title.fontSize : this.colorbar.visible && this.colorbar.position === "top" ? this.colorbar.totalWidth : 0)
-        );
+        return this.base + (this.title.show ? this.titleGap + this.title.fontSize : this.colorbar.visible && this.colorbar.position === "top" ? this.colorbar.totalWidth : 0);
     }
 
     @computed get paddingBottom(): number {
-        return (
-            this.base +
-            this.numberWidth +
-            this.labelWidth +
-            (this.colorbar.visible && this.colorbar.position === "bottom" ? this.colorbar.totalWidth : 0) +
-            this.colorbarHoverInfoHeight
-        );
+        return this.base + this.numberWidth + this.labelWidth + (this.colorbar.visible && this.colorbar.position === "bottom" ? this.colorbar.totalWidth : 0) + this.colorbarHoverInfoHeight;
     }
 
     @computed get padding(): Padding {

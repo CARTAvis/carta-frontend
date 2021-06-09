@@ -24,18 +24,15 @@ export class ImageViewHelpComponent extends React.Component {
         return (
             <div>
                 <p>
-                    The image viewer widget serves as the core component of CARTA. It allows you to visualize images in rasters and in contours. Region of
-                    interests can be defined interactively with the image viewer and subsequent image analysis can be performed with other widgets. Catalogue
-                    files can be loaded and visualized in the image viewer with the Catalogue widget.
+                    The image viewer widget serves as the core component of CARTA. It allows you to visualize images in rasters and in contours. Region of interests can be defined interactively with the image viewer and subsequent image
+                    analysis can be performed with other widgets. Catalogue files can be loaded and visualized in the image viewer with the Catalogue widget.
                 </p>
                 <p>
-                    Images can be loaded via <strong>File</strong> -&gt; <strong>Open image</strong> (will close all loaded image first). You may load multiple
-                    images via <strong>File</strong> -&gt; <strong>Append image</strong>. All images are loaded as raster by default. Contour layers can be
-                    further generated via the contour configuration dialog.
+                    Images can be loaded via <strong>File</strong> -&gt; <strong>Open image</strong> (will close all loaded image first). You may load multiple images via <strong>File</strong> -&gt; <strong>Append image</strong>. All images
+                    are loaded as raster by default. Contour layers can be further generated via the contour configuration dialog.
                 </p>
                 <p>
-                    Information of world coordinates and image coordinates at the cursor position is shown at the top of the image viewer. To freeze/unfreeze
-                    the cursor position, press <code>F</code> key.
+                    Information of world coordinates and image coordinates at the cursor position is shown at the top of the image viewer. To freeze/unfreeze the cursor position, press <code>F</code> key.
                 </p>
 
                 <h3 id="image-tool-buttons">Image tool buttons</h3>
@@ -55,23 +52,20 @@ export class ImageViewHelpComponent extends React.Component {
 
                 <h3 id="zoom-and-pan">Zoom and pan</h3>
                 <p>
-                    Zoom actions can be triggered in different ways. The most common one is to use mouse and scroll wheel. By scrolling up, image is zoomed in,
-                    while by scrolling down, image is zoomed out. Alternatively, you may use the tool buttons at the bottom-right corner of the image viewer to
-                    zoom in, zoom out, zoom to fit screen resolution, or zoom to fit image view.
+                    Zoom actions can be triggered in different ways. The most common one is to use mouse and scroll wheel. By scrolling up, image is zoomed in, while by scrolling down, image is zoomed out. Alternatively, you may use the
+                    tool buttons at the bottom-right corner of the image viewer to zoom in, zoom out, zoom to fit screen resolution, or zoom to fit image view.
                 </p>
                 <p>
                     <ImageComponent light={zoomButton} dark={zoomButton_d} width="70%" />
                 </p>
                 <p>
-                    Panning is achieved by <code>drag-end-drop</code> as default. This default can be changed via the preferences dialog (<strong>File</strong>{" "}
-                    -&gt; <strong>Preferences</strong> -&gt; <strong>Global</strong>). The alternative mode is <code>click</code>, which causes the clicked
-                    pixel to be centered in the image viewer.
+                    Panning is achieved by <code>drag-end-drop</code> as default. This default can be changed via the preferences dialog (<strong>File</strong> -&gt; <strong>Preferences</strong> -&gt; <strong>Global</strong>). The
+                    alternative mode is <code>click</code>, which causes the clicked pixel to be centered in the image viewer.
                 </p>
 
                 <h3 id="matching-image-spatially-and-spectrally">Matching image spatially and spectrally</h3>
                 <p>
-                    Different images may be matched in world coordinate spatially and/or spectrally. This can be triggered by the <code>WCS matching</code>{" "}
-                    button. Matching WCS on appending can be enabled in the preferences dialog.
+                    Different images may be matched in world coordinate spatially and/or spectrally. This can be triggered by the <code>WCS matching</code> button. Matching WCS on appending can be enabled in the preferences dialog.
                 </p>
                 <p>
                     <ImageComponent light={WCSMatchButton} dark={WCSMatchButton_d} width="70%" />
@@ -84,17 +78,13 @@ export class ImageViewHelpComponent extends React.Component {
                     <li>Spatial and spectral: images are matched to the reference image both in the spatial domain and spectral domain.</li>
                 </ul>
                 <p>
-                    Note that images are spatially matched through application of translation, rotation, and scaling. You may see prominent inconsistencies if
-                    you attempt to match wide field images or images with different projection schemes. However, grid lines are still accurate per image. If
-                    contour layers exist, they will match the raster image in the current image view with high position accuracy. Spectral matching is performed
-                    with nearest interpolation.
+                    Note that images are spatially matched through application of translation, rotation, and scaling. You may see prominent inconsistencies if you attempt to match wide field images or images with different projection
+                    schemes. However, grid lines are still accurate per image. If contour layers exist, they will match the raster image in the current image view with high position accuracy. Spectral matching is performed with nearest
+                    interpolation.
                 </p>
 
                 <h3 id="contour-layers">Contour layers</h3>
-                <p>
-                    A contour layer can be generated via the contour configuration dialog. Contours of spatially matched image are re-projected precisely to
-                    other spatially matched raster images.
-                </p>
+                <p>A contour layer can be generated via the contour configuration dialog. Contours of spatially matched image are re-projected precisely to other spatially matched raster images.</p>
                 <p>
                     <ImageComponent light={contourButton} dark={contourButton_d} width="85%" />
                 </p>
@@ -111,8 +101,8 @@ export class ImageViewHelpComponent extends React.Component {
                     <ImageComponent light={regionButton} dark={regionButton_d} width="70%" />
                 </p>
                 <p>
-                    The default region type and the default region creation mode are customizable in the preferences dialog. Region shortcut buttons are
-                    available at the top of the CARTA GUI. The tooltip of a region shortcut button provides instructions to create a region.
+                    The default region type and the default region creation mode are customizable in the preferences dialog. Region shortcut buttons are available at the top of the CARTA GUI. The tooltip of a region shortcut button provides
+                    instructions to create a region.
                 </p>
 
                 <h3 id="catalogue-layers">Catalog overlay</h3>
@@ -126,11 +116,7 @@ export class ImageViewHelpComponent extends React.Component {
                 </p>
 
                 <h3 id="customizing-the-image-plot">Image plot cosmetics</h3>
-                <p>
-                    {" "}
-                    Elements of the image plot such as grid line style, label style, colorbar style, etc., can be customized via the image viewer settings
-                    dialog.
-                </p>
+                <p> Elements of the image plot such as grid line style, label style, colorbar style, etc., can be customized via the image viewer settings dialog.</p>
 
                 <h3 id="exports">Image plot export</h3>
                 <p>

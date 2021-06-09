@@ -258,18 +258,8 @@ export class ProfileFittingComponent extends React.Component<ProfileFittingCompo
                                     <Tooltip content={this.autoButtonTooltip()}>
                                         <AnchorButton onClick={this.autoDetect} icon="series-search" disabled={disabled} />
                                     </Tooltip>
-                                    <Switch
-                                        label="w/ cont."
-                                        checked={fittingStore.isAutoDetectWithCont}
-                                        onChange={ev => fittingStore.setIsAutoDetectWithCont(!fittingStore.isAutoDetectWithCont)}
-                                        disabled={disabled}
-                                    />
-                                    <Switch
-                                        label="auto fit"
-                                        checked={fittingStore.isAutoDetectWithFitting}
-                                        onChange={ev => fittingStore.setIsAutoDetectWithFitting(!fittingStore.isAutoDetectWithFitting)}
-                                        disabled={disabled}
-                                    />
+                                    <Switch label="w/ cont." checked={fittingStore.isAutoDetectWithCont} onChange={ev => fittingStore.setIsAutoDetectWithCont(!fittingStore.isAutoDetectWithCont)} disabled={disabled} />
+                                    <Switch label="auto fit" checked={fittingStore.isAutoDetectWithFitting} onChange={ev => fittingStore.setIsAutoDetectWithFitting(!fittingStore.isAutoDetectWithFitting)} disabled={disabled} />
                                 </div>
                             </FormGroup>
                             {fittingStore.hasAutoDetectResult && (
@@ -279,14 +269,7 @@ export class ProfileFittingComponent extends React.Component<ProfileFittingCompo
                             )}
                             <FormGroup label="Components" inline={true}>
                                 <div className={"components-input"}>
-                                    <SafeNumericInput
-                                        value={fittingStore.components.length}
-                                        min={1}
-                                        max={20}
-                                        stepSize={1}
-                                        onValueChange={val => fittingStore.setComponents(Math.round(val))}
-                                        disabled={disabled}
-                                    />
+                                    <SafeNumericInput value={fittingStore.components.length} min={1} max={20} stepSize={1} onValueChange={val => fittingStore.setComponents(Math.round(val))} disabled={disabled} />
                                     {fittingStore.components.length > 1 && (
                                         <div className="components-slider">
                                             <Slider
@@ -327,11 +310,7 @@ export class ProfileFittingComponent extends React.Component<ProfileFittingCompo
                                             </span>
                                         }
                                     >
-                                        <AnchorButton
-                                            onClick={this.onCenterLocked}
-                                            icon={fittingStore.selectedComponent.lockedCenter ? "lock" : "unlock"}
-                                            disabled={disabled}
-                                        />
+                                        <AnchorButton onClick={this.onCenterLocked} icon={fittingStore.selectedComponent.lockedCenter ? "lock" : "unlock"} disabled={disabled} />
                                     </Tooltip>
                                     {cursorSelectionButton}
                                 </div>
@@ -352,11 +331,7 @@ export class ProfileFittingComponent extends React.Component<ProfileFittingCompo
                                             </span>
                                         }
                                     >
-                                        <AnchorButton
-                                            onClick={this.onAmpLocked}
-                                            icon={fittingStore.selectedComponent.lockedAmp ? "lock" : "unlock"}
-                                            disabled={disabled}
-                                        />
+                                        <AnchorButton onClick={this.onAmpLocked} icon={fittingStore.selectedComponent.lockedAmp ? "lock" : "unlock"} disabled={disabled} />
                                     </Tooltip>
                                     {cursorSelectionButton}
                                 </div>
@@ -377,11 +352,7 @@ export class ProfileFittingComponent extends React.Component<ProfileFittingCompo
                                             </span>
                                         }
                                     >
-                                        <AnchorButton
-                                            onClick={this.onFwhmLocked}
-                                            icon={fittingStore.selectedComponent.lockedFwhm ? "lock" : "unlock"}
-                                            disabled={disabled}
-                                        />
+                                        <AnchorButton onClick={this.onFwhmLocked} icon={fittingStore.selectedComponent.lockedFwhm ? "lock" : "unlock"} disabled={disabled} />
                                     </Tooltip>
                                     {cursorSelectionButton}
                                 </div>
@@ -410,51 +381,20 @@ export class ProfileFittingComponent extends React.Component<ProfileFittingCompo
                                             allowNumericCharactersOnly={false}
                                             buttonPosition="none"
                                         />
-                                        <AnchorButton
-                                            onClick={this.onYInterceptValueLocked}
-                                            icon={fittingStore.lockedYIntercept ? "lock" : "unlock"}
-                                            disabled={disabled}
-                                        />
+                                        <AnchorButton onClick={this.onYInterceptValueLocked} icon={fittingStore.lockedYIntercept ? "lock" : "unlock"} disabled={disabled} />
                                         {fittingStore.continuum === FittingContinuum.ZEROTH_ORDER && (
-                                            <AnchorButton
-                                                onClick={this.cursorSelectingYIntercept}
-                                                active={fittingStore.isCursorSelectingYIntercept}
-                                                icon="select"
-                                                disabled={disabled}
-                                            />
+                                            <AnchorButton onClick={this.cursorSelectingYIntercept} active={fittingStore.isCursorSelectingYIntercept} icon="select" disabled={disabled} />
                                         )}
-                                        {fittingStore.continuum === FittingContinuum.FIRST_ORDER && (
-                                            <AnchorButton
-                                                onClick={this.cursorSelectingSlope}
-                                                active={fittingStore.isCursorSelectingSlope}
-                                                icon="select"
-                                                disabled={disabled}
-                                            />
-                                        )}
+                                        {fittingStore.continuum === FittingContinuum.FIRST_ORDER && <AnchorButton onClick={this.cursorSelectingSlope} active={fittingStore.isCursorSelectingSlope} icon="select" disabled={disabled} />}
                                     </div>
                                 </FormGroup>
                             )}
                             {fittingStore.continuum === FittingContinuum.FIRST_ORDER && (
                                 <FormGroup label="Slope" inline={true}>
                                     <div className="component-input">
-                                        <SafeNumericInput
-                                            value={fittingStore.slope}
-                                            onValueChange={this.onSlopeValueChanged}
-                                            disabled={fittingStore.lockedSlope || disabled}
-                                            allowNumericCharactersOnly={false}
-                                            buttonPosition="none"
-                                        />
-                                        <AnchorButton
-                                            onClick={this.onSlopeValueLocked}
-                                            icon={fittingStore.lockedSlope ? "lock" : "unlock"}
-                                            disabled={disabled}
-                                        />
-                                        <AnchorButton
-                                            onClick={this.cursorSelectingSlope}
-                                            active={fittingStore.isCursorSelectingSlope}
-                                            icon="select"
-                                            disabled={disabled}
-                                        />
+                                        <SafeNumericInput value={fittingStore.slope} onValueChange={this.onSlopeValueChanged} disabled={fittingStore.lockedSlope || disabled} allowNumericCharactersOnly={false} buttonPosition="none" />
+                                        <AnchorButton onClick={this.onSlopeValueLocked} icon={fittingStore.lockedSlope ? "lock" : "unlock"} disabled={disabled} />
+                                        <AnchorButton onClick={this.cursorSelectingSlope} active={fittingStore.isCursorSelectingSlope} icon="select" disabled={disabled} />
                                     </div>
                                 </FormGroup>
                             )}
@@ -465,11 +405,7 @@ export class ProfileFittingComponent extends React.Component<ProfileFittingCompo
                                             <Text className="fitting-result-text">{fittingStore.resultString}</Text>
                                         </Pre>
                                     </div>
-                                    {this.isShowingResultButton ? (
-                                        <Button icon="import" onClick={this.saveLog} className="fitting-result-hover-button" />
-                                    ) : (
-                                        <div style={{height: "30px"}} />
-                                    )}
+                                    {this.isShowingResultButton ? <Button icon="import" onClick={this.saveLog} className="fitting-result-hover-button" /> : <div style={{height: "30px"}} />}
                                 </div>
                             </FormGroup>
                         </div>
@@ -490,12 +426,7 @@ export class ProfileFittingComponent extends React.Component<ProfileFittingCompo
                                 </div>
                             </Popover>
                             <div className="switch-wrapper">
-                                <Switch
-                                    label="residual"
-                                    checked={fittingStore.enableResidual}
-                                    onChange={ev => fittingStore.setEnableResidual(ev.currentTarget.checked)}
-                                    disabled={disabled}
-                                />
+                                <Switch label="residual" checked={fittingStore.enableResidual} onChange={ev => fittingStore.setEnableResidual(ev.currentTarget.checked)} disabled={disabled} />
                             </div>
                         </div>
                     </FormGroup>

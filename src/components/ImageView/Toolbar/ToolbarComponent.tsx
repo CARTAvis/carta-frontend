@@ -133,24 +133,12 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
 
         const coordinateSystemMenu = (
             <Menu>
-                <MenuItem
-                    text={ToolbarComponent.CoordinateSystemName.get(SystemType.Auto)}
-                    onClick={() => this.handleCoordinateSystemClicked(SystemType.Auto)}
-                />
+                <MenuItem text={ToolbarComponent.CoordinateSystemName.get(SystemType.Auto)} onClick={() => this.handleCoordinateSystemClicked(SystemType.Auto)} />
                 <MenuItem text={ToolbarComponent.CoordinateSystemName.get(SystemType.FK5)} onClick={() => this.handleCoordinateSystemClicked(SystemType.FK5)} />
                 <MenuItem text={ToolbarComponent.CoordinateSystemName.get(SystemType.FK4)} onClick={() => this.handleCoordinateSystemClicked(SystemType.FK4)} />
-                <MenuItem
-                    text={ToolbarComponent.CoordinateSystemName.get(SystemType.Galactic)}
-                    onClick={() => this.handleCoordinateSystemClicked(SystemType.Galactic)}
-                />
-                <MenuItem
-                    text={ToolbarComponent.CoordinateSystemName.get(SystemType.Ecliptic)}
-                    onClick={() => this.handleCoordinateSystemClicked(SystemType.Ecliptic)}
-                />
-                <MenuItem
-                    text={ToolbarComponent.CoordinateSystemName.get(SystemType.ICRS)}
-                    onClick={() => this.handleCoordinateSystemClicked(SystemType.ICRS)}
-                />
+                <MenuItem text={ToolbarComponent.CoordinateSystemName.get(SystemType.Galactic)} onClick={() => this.handleCoordinateSystemClicked(SystemType.Galactic)} />
+                <MenuItem text={ToolbarComponent.CoordinateSystemName.get(SystemType.Ecliptic)} onClick={() => this.handleCoordinateSystemClicked(SystemType.Ecliptic)} />
+                <MenuItem text={ToolbarComponent.CoordinateSystemName.get(SystemType.ICRS)} onClick={() => this.handleCoordinateSystemClicked(SystemType.ICRS)} />
             </Menu>
         );
 
@@ -200,18 +188,8 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
                     active={spectralMatchingEnabled && !spatialMatchingEnabled}
                     onClick={() => appStore.setMatchingEnabled(false, true)}
                 />
-                <MenuItem
-                    text="Spatial only"
-                    disabled={!canEnableSpatialMatching}
-                    active={!spectralMatchingEnabled && spatialMatchingEnabled}
-                    onClick={() => appStore.setMatchingEnabled(true, false)}
-                />
-                <MenuItem
-                    text="None"
-                    disabled={!canEnableSpatialMatching}
-                    active={!spectralMatchingEnabled && !spatialMatchingEnabled}
-                    onClick={() => appStore.setMatchingEnabled(false, false)}
-                />
+                <MenuItem text="Spatial only" disabled={!canEnableSpatialMatching} active={!spectralMatchingEnabled && spatialMatchingEnabled} onClick={() => appStore.setMatchingEnabled(true, false)} />
+                <MenuItem text="None" disabled={!canEnableSpatialMatching} active={!spectralMatchingEnabled && !spatialMatchingEnabled} onClick={() => appStore.setMatchingEnabled(false, false)} />
             </Menu>
         );
 
@@ -232,12 +210,7 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
                         </span>
                     }
                 >
-                    <AnchorButton
-                        icon={"locate"}
-                        active={catalogOverlayEnabled}
-                        onClick={() => this.handleActiveLayerClicked(ImageViewLayer.Catalog)}
-                        disabled={catalogSelectionDisabled}
-                    />
+                    <AnchorButton icon={"locate"} active={catalogOverlayEnabled} onClick={() => this.handleActiveLayerClicked(ImageViewLayer.Catalog)} disabled={catalogSelectionDisabled} />
                 </Tooltip>
                 {frame.regionSet.mode === RegionMode.CREATING && (
                     <Tooltip
@@ -278,11 +251,7 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
                     </Tooltip>
                 )}
                 <Tooltip position={tooltipPosition} content="Select and pan mode">
-                    <AnchorButton
-                        icon={"hand"}
-                        onClick={() => this.handleActiveLayerClicked(ImageViewLayer.RegionMoving)}
-                        active={frame.regionSet.mode === RegionMode.MOVING && !catalogOverlayEnabled}
-                    />
+                    <AnchorButton icon={"hand"} onClick={() => this.handleActiveLayerClicked(ImageViewLayer.RegionMoving)} active={frame.regionSet.mode === RegionMode.MOVING && !catalogOverlayEnabled} />
                 </Tooltip>
                 <Tooltip position={tooltipPosition} content={<span>Zoom in (Scroll wheel up){currentZoomSpan}</span>}>
                     <AnchorButton icon={"zoom-in"} onClick={this.handleZoomInClicked} />

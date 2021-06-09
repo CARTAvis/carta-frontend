@@ -65,12 +65,7 @@ export class PolygonRegionForm extends React.Component<{region: RegionStore; wcs
         if (wcsString === (isXCoordinate ? pointWCS.x : pointWCS.y)) {
             return;
         }
-        if (
-            isWCSStringFormatValid(
-                wcsString,
-                isXCoordinate ? AppStore.Instance.overlayStore.numbers.formatTypeX : AppStore.Instance.overlayStore.numbers.formatTypeY
-            )
-        ) {
+        if (isWCSStringFormatValid(wcsString, isXCoordinate ? AppStore.Instance.overlayStore.numbers.formatTypeX : AppStore.Instance.overlayStore.numbers.formatTypeY)) {
             const newPoint = getPixelValueFromWCS(this.props.wcsInfo, isXCoordinate ? {x: wcsString, y: pointWCS.y} : {x: pointWCS.x, y: wcsString});
             if (!newPoint) {
                 return;
@@ -151,8 +146,7 @@ export class PolygonRegionForm extends React.Component<{region: RegionStore; wcs
                     </Tooltip>
                 );
             }
-            const infoString =
-                region.coordinate === RegionCoordinate.Image ? `WCS: ${WCSPoint2D.ToString(pointWCS)}` : `Image: ${Point2D.ToString(point, "px", 3)}`;
+            const infoString = region.coordinate === RegionCoordinate.Image ? `WCS: ${WCSPoint2D.ToString(pointWCS)}` : `Image: ${Point2D.ToString(point, "px", 3)}`;
             return (
                 <tr key={index}>
                     <td>

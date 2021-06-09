@@ -36,14 +36,7 @@ import {
 import {distinct, getColorForTheme, GetRequiredTiles, getTimestamp, mapToObject} from "utilities";
 import {ApiService, BackendService, ConnectionStatus, ScriptingService, TileService, TileStreamDetails} from "services";
 import {FrameView, Point2D, PresetLayout, ProtobufProcessing, Theme, TileCoordinate, WCSMatchingType} from "models";
-import {
-    HistogramWidgetStore,
-    RegionWidgetStore,
-    SpatialProfileWidgetStore,
-    SpectralProfileWidgetStore,
-    StatsWidgetStore,
-    StokesAnalysisWidgetStore
-} from "./widgets";
+import {HistogramWidgetStore, RegionWidgetStore, SpatialProfileWidgetStore, SpectralProfileWidgetStore, StatsWidgetStore, StokesAnalysisWidgetStore} from "./widgets";
 import {getImageCanvas, ImageViewLayer} from "components";
 import {AppToaster, ErrorToast, SuccessToast, WarningToast} from "components/Shared";
 import GitCommit from "../static/gitInfo";
@@ -451,11 +444,7 @@ export class AppStore {
             if (this.preferenceStore.autoWCSMatching & WCSMatchingType.SPATIAL && this.spatialReference !== newFrame) {
                 this.setSpatialMatchingEnabled(newFrame, true);
             }
-            if (
-                this.preferenceStore.autoWCSMatching & WCSMatchingType.SPECTRAL &&
-                this.spectralReference !== newFrame &&
-                newFrame.frameInfo.fileInfoExtended.depth > 1
-            ) {
+            if (this.preferenceStore.autoWCSMatching & WCSMatchingType.SPECTRAL && this.spectralReference !== newFrame && newFrame.frameInfo.fileInfoExtended.depth > 1) {
                 this.setSpectralMatchingEnabled(newFrame, true);
             }
         }
@@ -555,15 +544,7 @@ export class AppStore {
         return this.loadFile(directory, file, hdu);
     };
 
-    @action saveFile = (
-        directory: string,
-        filename: string,
-        fileType: CARTA.FileType,
-        regionId?: number,
-        channels?: number[],
-        stokes?: number[],
-        shouldDropDegenerateAxes?: boolean
-    ) => {
+    @action saveFile = (directory: string, filename: string, fileType: CARTA.FileType, regionId?: number, channels?: number[], stokes?: number[], shouldDropDegenerateAxes?: boolean) => {
         return new Promise<number>((resolve, reject) => {
             if (!this.activeFrame) {
                 reject();
@@ -595,14 +576,11 @@ export class AppStore {
         const secondaries = frame.secondarySpatialImages.concat(frame.secondarySpectralImages).filter(distinct);
         const numSecondaries = secondaries.length;
         if (confirmClose && numSecondaries) {
-            this.alertStore.showInteractiveAlert(
-                `${numSecondaries} image${numSecondaries > 1 ? "s that are" : " that is"} matched to this image will be unmatched.`,
-                confirmed => {
-                    if (confirmed) {
-                        this.removeFrame(frame);
-                    }
+            this.alertStore.showInteractiveAlert(`${numSecondaries} image${numSecondaries > 1 ? "s that are" : " that is"} matched to this image will be unmatched.`, confirmed => {
+                if (confirmed) {
+                    this.removeFrame(frame);
                 }
-            );
+            });
         } else {
             this.removeFrame(frame);
         }
@@ -926,12 +904,7 @@ export class AppStore {
         }
         this.backendService.exportRegion(directory, file, fileType, coordType, frame.frameInfo.fileId, regionStyles).subscribe(
             () => {
-                AppToaster.show(
-                    SuccessToast(
-                        "saved",
-                        `Exported regions for ${frame.filename} using ${coordType === CARTA.CoordinateType.WORLD ? "world" : "pixel"} coordinates`
-                    )
-                );
+                AppToaster.show(SuccessToast("saved", `Exported regions for ${frame.filename} using ${coordType === CARTA.CoordinateType.WORLD ? "world" : "pixel"} coordinates`));
                 this.fileBrowserStore.hideFileBrowser();
             },
             error => {
@@ -1101,15 +1074,7 @@ export class AppStore {
                 // TODO: dynamic tile size
                 const tileSizeFullRes = reqView.mip * 256;
                 const midPointTileCoords = {x: midPointImageCoords.x / tileSizeFullRes - 0.5, y: midPointImageCoords.y / tileSizeFullRes - 0.5};
-                this.tileService.requestTiles(
-                    tiles,
-                    frame.frameInfo.fileId,
-                    frame.channel,
-                    frame.stokes,
-                    midPointTileCoords,
-                    this.preferenceStore.imageCompressionQuality,
-                    true
-                );
+                this.tileService.requestTiles(tiles, frame.frameInfo.fileId, frame.channel, frame.stokes, midPointTileCoords, this.preferenceStore.imageCompressionQuality, true);
             } else {
                 this.tileService.updateInactiveFileChannel(frame.frameInfo.fileId, frame.channel, frame.stokes);
             }
@@ -1273,8 +1238,7 @@ export class AppStore {
             if (this.activeFrame) {
                 const updates = [];
                 // Calculate if new data is required
-                const updateRequiredChannels =
-                    this.activeFrame.requiredChannel !== this.activeFrame.channel || this.activeFrame.requiredStokes !== this.activeFrame.stokes;
+                const updateRequiredChannels = this.activeFrame.requiredChannel !== this.activeFrame.channel || this.activeFrame.requiredStokes !== this.activeFrame.stokes;
                 // Don't auto-update when animation is playing
                 if (!this.animatorStore.animationActive && updateRequiredChannels) {
                     updates.push({frame: this.activeFrame, channel: this.activeFrame.requiredChannel, stokes: this.activeFrame.requiredStokes});
@@ -1298,12 +1262,7 @@ export class AppStore {
         autorun(() => {
             if (this.activeFrame?.cursorInfo?.posImageSpace) {
                 const pos = {x: Math.round(this.activeFrame.cursorInfo.posImageSpace.x), y: Math.round(this.activeFrame.cursorInfo.posImageSpace.y)};
-                if (
-                    pos.x >= 0 &&
-                    pos.x <= this.activeFrame.frameInfo.fileInfoExtended.width - 1 &&
-                    pos.y >= 0 &&
-                    pos.y <= this.activeFrame.frameInfo.fileInfoExtended.height - 1
-                ) {
+                if (pos.x >= 0 && pos.x <= this.activeFrame.frameInfo.fileInfoExtended.width - 1 && pos.y >= 0 && pos.y <= this.activeFrame.frameInfo.fileInfoExtended.height - 1) {
                     if (this.preferenceStore.lowBandwidthMode) {
                         throttledSetCursorLowBandwidth(this.activeFrame.frameInfo.fileId, pos);
                     } else if (this.activeFrame.frameInfo.fileFeatureFlags & CARTA.FileFeatureFlags.ROTATED_DATASET) {
@@ -1352,9 +1311,7 @@ export class AppStore {
                         // Attempt connection after authenticating
                         this.tileService.setCache(this.preferenceStore.gpuTileCache, this.preferenceStore.systemTileCache);
                         if (!this.layoutStore.applyLayout(this.preferenceStore.layout)) {
-                            AlertStore.Instance.showAlert(
-                                `Applying preference layout "${this.preferenceStore.layout}" failed! Resetting preference layout to default.`
-                            );
+                            AlertStore.Instance.showAlert(`Applying preference layout "${this.preferenceStore.layout}" failed! Resetting preference layout to default.`);
                             this.layoutStore.applyLayout(PresetLayout.DEFAULT);
                             this.preferenceStore.setPreference(PreferenceKeys.GLOBAL_LAYOUT, PresetLayout.DEFAULT);
                         }
@@ -1534,15 +1491,7 @@ export class AppStore {
                 if (xColumn && yColumn && frame) {
                     const coords = catalogProfileStore.get2DPlotData(xColumn, yColumn, catalogData);
                     const wcs = frame.validWcs ? frame.wcsInfo : 0;
-                    this.catalogStore.updateCatalogData(
-                        catalogFileId,
-                        coords.wcsX,
-                        coords.wcsY,
-                        wcs,
-                        coords.xHeaderInfo.units,
-                        coords.yHeaderInfo.units,
-                        catalogProfileStore.catalogCoordinateSystem.system
-                    );
+                    this.catalogStore.updateCatalogData(catalogFileId, coords.wcsX, coords.wcsY, wcs, coords.xHeaderInfo.units, coords.yHeaderInfo.units, catalogProfileStore.catalogCoordinateSystem.system);
 
                     if (frame !== this.activeFrame) {
                         const imageMapId = `${frame.frameInfo.fileId}-${this.activeFrame.frameInfo.fileId}`;
@@ -1778,12 +1727,7 @@ export class AppStore {
     }
 
     @computed get selectedRegion(): RegionStore {
-        if (
-            this.activeFrame &&
-            this.activeFrame.regionSet &&
-            this.activeFrame.regionSet.selectedRegion &&
-            this.activeFrame.regionSet.selectedRegion.regionId !== 0
-        ) {
+        if (this.activeFrame && this.activeFrame.regionSet && this.activeFrame.regionSet.selectedRegion && this.activeFrame.regionSet.selectedRegion.regionId !== 0) {
             return this.activeFrame.regionSet.selectedRegion;
         }
         return null;
@@ -1856,11 +1800,7 @@ export class AppStore {
 
         if (val) {
             if (!frame.setSpatialReference(this.spatialReference)) {
-                AppToaster.show(
-                    WarningToast(
-                        `Could not enable spatial matching of ${frame.filename} to reference image ${this.spatialReference.filename}. No valid transform was found`
-                    )
-                );
+                AppToaster.show(WarningToast(`Could not enable spatial matching of ${frame.filename} to reference image ${this.spatialReference.filename}. No valid transform was found`));
             }
         } else {
             frame.clearSpatialReference();
@@ -1912,11 +1852,7 @@ export class AppStore {
 
         if (val) {
             if (!frame.setSpectralReference(this.spectralReference)) {
-                AppToaster.show(
-                    WarningToast(
-                        `Could not enable spectral matching (velocity system) of ${frame.filename} to reference image ${this.spectralReference.filename}. No valid transform was found`
-                    )
-                );
+                AppToaster.show(WarningToast(`Could not enable spectral matching (velocity system) of ${frame.filename} to reference image ${this.spectralReference.filename}. No valid transform was found`));
             }
         } else {
             frame.clearSpectralReference();
@@ -1988,11 +1924,7 @@ export class AppStore {
 
     exportImage = (): boolean => {
         if (this.activeFrame) {
-            const backgroundColor = this.preferenceStore.transparentImageBackground
-                ? "rgba(255, 255, 255, 0)"
-                : this.darkTheme
-                ? Colors.DARK_GRAY3
-                : Colors.LIGHT_GRAY5;
+            const backgroundColor = this.preferenceStore.transparentImageBackground ? "rgba(255, 255, 255, 0)" : this.darkTheme ? Colors.DARK_GRAY3 : Colors.LIGHT_GRAY5;
             const composedCanvas = getImageCanvas(this.overlayStore.padding, this.overlayStore.colorbar.position, backgroundColor);
             if (composedCanvas) {
                 composedCanvas.toBlob(blob => {

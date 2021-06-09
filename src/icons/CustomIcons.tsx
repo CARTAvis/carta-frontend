@@ -3,16 +3,7 @@ import {Icon} from "@blueprintjs/core";
 import {AppStore} from "stores";
 import "./CustomIcons.scss";
 
-export declare type CustomIconName =
-    | "contour"
-    | "center"
-    | "regionList"
-    | "spatialProfiler"
-    | "spectralProfiler"
-    | "stokes"
-    | "spectralLineQuery"
-    | "smoothing"
-    | "moments";
+export declare type CustomIconName = "contour" | "center" | "regionList" | "spatialProfiler" | "spectralProfiler" | "stokes" | "spectralLineQuery" | "smoothing" | "moments";
 
 export class CustomIcon extends React.Component<{icon: CustomIconName; size?: number}> {
     static readonly SIZE_STANDARD = 16;
@@ -78,10 +69,7 @@ const centerSvg = (
 const regionListSvg = (
     <g>
         <g id="Layer_1-2" data-name="Layer 1">
-            <path
-                className="cls-1"
-                d="M1,6H8A.9448.9448,0,0,0,9,5,.9448.9448,0,0,0,8,4H1A1,1,0,0,0,1,6Zm9,6H1a1,1,0,0,0,0,2h9a1,1,0,0,0,0-2Zm0-4H1a1,1,0,0,0,0,2h9a.9448.9448,0,0,0,1-1A.9448.9448,0,0,0,10,8Z"
-            />
+            <path className="cls-1" d="M1,6H8A.9448.9448,0,0,0,9,5,.9448.9448,0,0,0,8,4H1A1,1,0,0,0,1,6Zm9,6H1a1,1,0,0,0,0,2h9a1,1,0,0,0,0-2Zm0-4H1a1,1,0,0,0,0,2h9a.9448.9448,0,0,0,1-1A.9448.9448,0,0,0,10,8Z" />
         </g>
         <path d="M15.6169,5.6628a2.6806,2.6806,0,0,1-.0932-.4019,3.6675,3.6675,0,0,1-.04-.4307q-.0089-.2191-.0244-.43a3.8144,3.8144,0,0,0-.0694-.4062,1.2166,1.2166,0,0,0-.1382-.3533A.8941.8941,0,0,0,15,3.3679a1.0366,1.0366,0,0,0-.4106-.1623V3.1894a1.2325,1.2325,0,0,0,.7676-.5444,1.7581,1.7581,0,0,0,.24-.9262A1.3974,1.3974,0,0,0,15.13.6063,1.9077,1.9077,0,0,0,13.8339.2h-2.73V6h.7722V3.5223h1.8847a1.0267,1.0267,0,0,1,.4549.0852.7677.7677,0,0,1,.2763.2275.9485.9485,0,0,1,.154.3332q.0486.1908.0813.4022a2.9046,2.9046,0,0,1,.049.43q.0078.22.0158.41a2.4616,2.4616,0,0,0,.037.3455A.48.48,0,0,0,14.9386,6H15.8A.9979.9979,0,0,1,15.6169,5.6628ZM14.423,2.6735a1.1087,1.1087,0,0,1-.4264.1583,3.079,3.079,0,0,1-.5117.0406H11.8765V.85h1.9171a1.0026,1.0026,0,0,1,.788.276,1.0431,1.0431,0,0,1,.2433.7149,1.0608,1.0608,0,0,1-.11.516A.8646.8646,0,0,1,14.423,2.6735Z" />
     </g>
@@ -148,14 +136,7 @@ const spectralLineQuerySvg = (
     />
 );
 
-const profileSmoothingSvg = (
-    <path
-        strokeWidth="2.42095"
-        strokeLinecap="round"
-        fill="none"
-        d="M 1.413244,14.6062 H 3.9277429 V 8.378223 H 6.9751347 V 1.4946692 H 9.5085614 L 14.575415,14.576401"
-    />
-);
+const profileSmoothingSvg = <path strokeWidth="2.42095" strokeLinecap="round" fill="none" d="M 1.413244,14.6062 H 3.9277429 V 8.378223 H 6.9751347 V 1.4946692 H 9.5085614 L 14.575415,14.576401" />;
 
 const momentGeneratorSvg = (
     <path

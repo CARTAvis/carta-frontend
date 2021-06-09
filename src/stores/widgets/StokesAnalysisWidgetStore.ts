@@ -88,10 +88,7 @@ export class StokesAnalysisWidgetStore extends RegionWidgetStore {
         return requiredCoordinate;
     }
 
-    public static addToRequirementsMap(
-        updatedRequirements: Map<number, Map<number, CARTA.SetSpectralRequirements>>,
-        widgetsMap: Map<string, StokesAnalysisWidgetStore>
-    ): Map<number, Map<number, CARTA.SetSpectralRequirements>> {
+    public static addToRequirementsMap(updatedRequirements: Map<number, Map<number, CARTA.SetSpectralRequirements>>, widgetsMap: Map<string, StokesAnalysisWidgetStore>): Map<number, Map<number, CARTA.SetSpectralRequirements>> {
         widgetsMap.forEach(widgetStore => {
             const frame = widgetStore.effectiveFrame;
             if (frame && frame.hasStokes) {
@@ -399,41 +396,22 @@ export class StokesAnalysisWidgetStore extends RegionWidgetStore {
         if (secondaryLineColor.isValid() || isAutoColor(widgetSettings.secondaryLineColor)) {
             this.secondaryLineColor = widgetSettings.secondaryLineColor;
         }
-        if (
-            typeof widgetSettings.lineWidth === "number" &&
-            widgetSettings.lineWidth >= LineSettings.MIN_WIDTH &&
-            widgetSettings.lineWidth <= LineSettings.MAX_WIDTH
-        ) {
+        if (typeof widgetSettings.lineWidth === "number" && widgetSettings.lineWidth >= LineSettings.MIN_WIDTH && widgetSettings.lineWidth <= LineSettings.MAX_WIDTH) {
             this.lineWidth = widgetSettings.lineWidth;
         }
-        if (
-            typeof widgetSettings.linePlotPointSize === "number" &&
-            widgetSettings.linePlotPointSize >= LineSettings.MIN_POINT_SIZE &&
-            widgetSettings.linePlotPointSize <= LineSettings.MAX_POINT_SIZE
-        ) {
+        if (typeof widgetSettings.linePlotPointSize === "number" && widgetSettings.linePlotPointSize >= LineSettings.MIN_POINT_SIZE && widgetSettings.linePlotPointSize <= LineSettings.MAX_POINT_SIZE) {
             this.linePlotPointSize = widgetSettings.linePlotPointSize;
         }
-        if (
-            typeof widgetSettings.plotType === "string" &&
-            (widgetSettings.plotType === PlotType.STEPS || widgetSettings.plotType === PlotType.LINES || widgetSettings.plotType === PlotType.POINTS)
-        ) {
+        if (typeof widgetSettings.plotType === "string" && (widgetSettings.plotType === PlotType.STEPS || widgetSettings.plotType === PlotType.LINES || widgetSettings.plotType === PlotType.POINTS)) {
             this.plotType = widgetSettings.plotType;
         }
         if (typeof widgetSettings.colorMap === "string") {
             this.colorMap = widgetSettings.colorMap;
         }
-        if (
-            typeof widgetSettings.scatterPlotPointSize === "number" &&
-            widgetSettings.scatterPlotPointSize >= ScatterSettings.MIN_POINT_SIZE &&
-            widgetSettings.scatterPlotPointSize <= ScatterSettings.MAX_POINT_SIZE
-        ) {
+        if (typeof widgetSettings.scatterPlotPointSize === "number" && widgetSettings.scatterPlotPointSize >= ScatterSettings.MIN_POINT_SIZE && widgetSettings.scatterPlotPointSize <= ScatterSettings.MAX_POINT_SIZE) {
             this.scatterPlotPointSize = widgetSettings.scatterPlotPointSize;
         }
-        if (
-            typeof widgetSettings.pointTransparency === "number" &&
-            widgetSettings.pointTransparency >= ScatterSettings.MIN_TRANSPARENCY &&
-            widgetSettings.pointTransparency <= ScatterSettings.MAX_TRANSPARENCY
-        ) {
+        if (typeof widgetSettings.pointTransparency === "number" && widgetSettings.pointTransparency >= ScatterSettings.MIN_TRANSPARENCY && widgetSettings.pointTransparency <= ScatterSettings.MAX_TRANSPARENCY) {
             this.pointTransparency = widgetSettings.pointTransparency;
         }
         if (typeof widgetSettings.equalAxes === "boolean") {

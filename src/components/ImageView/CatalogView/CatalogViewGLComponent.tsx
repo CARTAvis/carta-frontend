@@ -189,10 +189,7 @@ export class CatalogViewGLComponent extends React.Component<CatalogViewGLCompone
                 }
                 if (sourceFrame.spatialReference) {
                     const baseRequiredView = sourceFrame.spatialReference.requiredFrameView;
-                    const originAdjustedOffset = subtract2D(
-                        sourceFrame.spatialTransform.origin,
-                        scale2D(rotate2D(sourceFrame.spatialTransform.origin, sourceFrame.spatialTransform.rotation), sourceFrame.spatialTransform.scale)
-                    );
+                    const originAdjustedOffset = subtract2D(sourceFrame.spatialTransform.origin, scale2D(rotate2D(sourceFrame.spatialTransform.origin, sourceFrame.spatialTransform.rotation), sourceFrame.spatialTransform.scale));
 
                     rangeScale = {
                         x: 1.0 / (baseRequiredView.xMax - baseRequiredView.xMin),
@@ -281,12 +278,7 @@ export class CatalogViewGLComponent extends React.Component<CatalogViewGLCompone
                 // position
                 if (catalog.x?.length && catalog?.y.length) {
                     this.gl.uniform3f(shaderUniforms.PointColor, color.r / 255.0, color.g / 255.0, color.b / 255.0);
-                    this.gl.uniform3f(
-                        shaderUniforms.SelectedSourceColor,
-                        selectedSourceColor.r / 255.0,
-                        selectedSourceColor.g / 255.0,
-                        selectedSourceColor.b / 255.0
-                    );
+                    this.gl.uniform3f(shaderUniforms.SelectedSourceColor, selectedSourceColor.r / 255.0, selectedSourceColor.g / 255.0, selectedSourceColor.b / 255.0);
                     this.gl.uniform1i(shaderUniforms.ShapeType, catalogWidgetStore.catalogShape);
                     this.gl.uniform1f(shaderUniforms.PointSize, pointSize * devicePixelRatio);
 

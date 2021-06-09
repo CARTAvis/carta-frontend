@@ -50,21 +50,8 @@ export const ScalingSelectComponent: React.FC<ScalingComponentProps> = props => 
     };
 
     return (
-        <ScalingSelect
-            activeItem={props.selectedItem}
-            onItemSelect={props.onItemSelect}
-            popoverProps={SCALING_POPOVER_PROPS}
-            filterable={false}
-            items={SCALING_KEYS}
-            itemRenderer={renderScalingSelectItem}
-            disabled={props.disabled}
-        >
-            <Button
-                text={RenderConfigStore.SCALING_TYPES.get(props.selectedItem)}
-                rightIcon="double-caret-vertical"
-                alignText={"right"}
-                disabled={props.disabled}
-            />
+        <ScalingSelect activeItem={props.selectedItem} onItemSelect={props.onItemSelect} popoverProps={SCALING_POPOVER_PROPS} filterable={false} items={SCALING_KEYS} itemRenderer={renderScalingSelectItem} disabled={props.disabled}>
+            <Button text={RenderConfigStore.SCALING_TYPES.get(props.selectedItem)} rightIcon="double-caret-vertical" alignText={"right"} disabled={props.disabled} />
         </ScalingSelect>
     );
 };

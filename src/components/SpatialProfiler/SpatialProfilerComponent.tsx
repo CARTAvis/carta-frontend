@@ -187,9 +187,7 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
     @computed get exportHeader(): string[] {
         const appStore = AppStore.Instance;
         const headerString: string[] = [];
-        headerString.push(
-            `region (pixel): Point[${toFixed(appStore.activeFrame.cursorInfo.posImageSpace.x)}, ${toFixed(appStore.activeFrame.cursorInfo.posImageSpace.y)}]`
-        );
+        headerString.push(`region (pixel): Point[${toFixed(appStore.activeFrame.cursorInfo.posImageSpace.x)}, ${toFixed(appStore.activeFrame.cursorInfo.posImageSpace.y)}]`);
         if (appStore.activeFrame.cursorInfo.infoWCS) {
             headerString.push(`region (world): Point[${appStore.activeFrame.cursorInfo.infoWCS.x}, ${appStore.activeFrame.cursorInfo.infoWCS.y}]`);
         }
@@ -237,15 +235,9 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
                     return null;
                 }
                 if (isXProfile) {
-                    this.setAutoScaleBounds(
-                        clamp(this.frame.requiredFrameView.xMin, 0, this.frame.frameInfo.fileInfoExtended.width),
-                        clamp(this.frame.requiredFrameView.xMax, 0, this.frame.frameInfo.fileInfoExtended.width)
-                    );
+                    this.setAutoScaleBounds(clamp(this.frame.requiredFrameView.xMin, 0, this.frame.frameInfo.fileInfoExtended.width), clamp(this.frame.requiredFrameView.xMax, 0, this.frame.frameInfo.fileInfoExtended.width));
                 } else {
-                    this.setAutoScaleBounds(
-                        clamp(this.frame.requiredFrameView.yMin, 0, this.frame.frameInfo.fileInfoExtended.height),
-                        clamp(this.frame.requiredFrameView.yMax, 0, this.frame.frameInfo.fileInfoExtended.height)
-                    );
+                    this.setAutoScaleBounds(clamp(this.frame.requiredFrameView.yMin, 0, this.frame.frameInfo.fileInfoExtended.height), clamp(this.frame.requiredFrameView.yMax, 0, this.frame.frameInfo.fileInfoExtended.height));
                 }
             },
             {delay: AUTOSCALE_THROTTLE_TIME}

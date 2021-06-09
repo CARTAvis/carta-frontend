@@ -363,26 +363,14 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
             }
 
             if (isFinite(scaleMinVal) && isFinite(scaleMaxVal) && scaleMinVal < scaleMaxVal) {
-                const colormapScalingX = Array.from(Array(COLORSCALE_LENGTH).keys()).map(
-                    x => scaleMinVal + (x / (COLORSCALE_LENGTH - 1)) * (scaleMaxVal - scaleMinVal)
-                );
+                const colormapScalingX = Array.from(Array(COLORSCALE_LENGTH).keys()).map(x => scaleMinVal + (x / (COLORSCALE_LENGTH - 1)) * (scaleMaxVal - scaleMinVal));
                 let colormapScalingY = Array.from(Array(COLORSCALE_LENGTH).keys()).map(x => x / (COLORSCALE_LENGTH - 1));
                 colormapScalingY = colormapScalingY.map(x =>
-                    scaleValue(
-                        x,
-                        frame.renderConfig.scaling,
-                        frame.renderConfig.alpha,
-                        frame.renderConfig.gamma,
-                        frame.renderConfig.bias,
-                        frame.renderConfig.contrast,
-                        appStore.preferenceStore?.useSmoothedBiasContrast
-                    )
+                    scaleValue(x, frame.renderConfig.scaling, frame.renderConfig.alpha, frame.renderConfig.gamma, frame.renderConfig.bias, frame.renderConfig.contrast, appStore.preferenceStore?.useSmoothedBiasContrast)
                 );
                 // fit to the histogram y axis
                 if (linePlotProps.logY) {
-                    colormapScalingY = colormapScalingY.map(x =>
-                        Math.pow(10, Math.log10(linePlotProps.yMin) + x * (Math.log10(linePlotProps.yMax) - Math.log10(linePlotProps.yMin)))
-                    );
+                    colormapScalingY = colormapScalingY.map(x => Math.pow(10, Math.log10(linePlotProps.yMin) + x * (Math.log10(linePlotProps.yMax) - Math.log10(linePlotProps.yMin))));
                 } else {
                     colormapScalingY = colormapScalingY.map(x => linePlotProps.yMin + x * (linePlotProps.yMax - linePlotProps.yMin));
                 }
@@ -431,11 +419,7 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
             percentileSelectDiv = (
                 <div className="percentile-select">
                     <FormGroup label="Clip Percentile" inline={true}>
-                        <HTMLSelect
-                            options={percentileRankOptions}
-                            value={frame.renderConfig.selectedPercentileVal}
-                            onChange={this.handlePercentileRankSelectChanged}
-                        />
+                        <HTMLSelect options={percentileRankOptions} value={frame.renderConfig.selectedPercentileVal} onChange={this.handlePercentileRankSelectChanged} />
                     </FormGroup>
                 </div>
             );
@@ -462,22 +446,10 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
                         warnOnCubeHistogram={(frame.frameInfo.fileFeatureFlags & CARTA.FileFeatureFlags.CUBE_HISTOGRAMS) === 0}
                     />
                     <FormGroup label={"Clip Min"} inline={true}>
-                        <SafeNumericInput
-                            value={frame.renderConfig.scaleMinVal}
-                            selectAllOnFocus={true}
-                            buttonPosition={"none"}
-                            onBlur={this.handleScaleMinChange}
-                            onKeyDown={this.handleScaleMinChange}
-                        />
+                        <SafeNumericInput value={frame.renderConfig.scaleMinVal} selectAllOnFocus={true} buttonPosition={"none"} onBlur={this.handleScaleMinChange} onKeyDown={this.handleScaleMinChange} />
                     </FormGroup>
                     <FormGroup label={"Clip Max"} inline={true}>
-                        <SafeNumericInput
-                            value={frame.renderConfig.scaleMaxVal}
-                            selectAllOnFocus={true}
-                            buttonPosition={"none"}
-                            onBlur={this.handleScaleMaxChange}
-                            onKeyDown={this.handleScaleMaxChange}
-                        />
+                        <SafeNumericInput value={frame.renderConfig.scaleMaxVal} selectAllOnFocus={true} buttonPosition={"none"} onBlur={this.handleScaleMaxChange} onKeyDown={this.handleScaleMaxChange} />
                     </FormGroup>
                     <ColormapConfigComponent renderConfig={frame.renderConfig} />
                     {this.width < histogramCutoff && percentileSelectDiv}

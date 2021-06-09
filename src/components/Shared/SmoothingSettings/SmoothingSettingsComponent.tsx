@@ -62,15 +62,9 @@ export class SmoothingSettingsComponent extends React.Component<{
                     <React.Fragment>
                         {!this.props.disableColorAndLineWidth && (
                             <FormGroup inline={true} label="Color">
-                                {smoothingStore.colorMap.size > 0 && (
-                                    <HTMLSelect value={smoothingStore.selectedLine} options={colorKeys} onChange={this.handleSelectedLineChanged} />
-                                )}
+                                {smoothingStore.colorMap.size > 0 && <HTMLSelect value={smoothingStore.selectedLine} options={colorKeys} onChange={this.handleSelectedLineChanged} />}
                                 <AutoColorPickerComponent
-                                    color={
-                                        smoothingStore.selectedLine && smoothingStore.colorMap.get(smoothingStore.selectedLine)
-                                            ? smoothingStore.colorMap.get(smoothingStore.selectedLine)
-                                            : smoothingStore.lineColor
-                                    }
+                                    color={smoothingStore.selectedLine && smoothingStore.colorMap.get(smoothingStore.selectedLine) ? smoothingStore.colorMap.get(smoothingStore.selectedLine) : smoothingStore.lineColor}
                                     presetColors={SWATCH_COLORS}
                                     setColor={(color: string) => {
                                         if (smoothingStore.selectedLine && smoothingStore.colorMap.get(smoothingStore.selectedLine)) {
@@ -119,78 +113,36 @@ export class SmoothingSettingsComponent extends React.Component<{
                 )}
                 {smoothingStore.type === SmoothingType.BOXCAR && (
                     <FormGroup label={"Kernel"} inline={true}>
-                        <SafeNumericInput
-                            value={smoothingStore.boxcarSize}
-                            min={2}
-                            stepSize={1}
-                            className="narrow"
-                            onValueChange={val => smoothingStore.setBoxcarSize(Math.round(val))}
-                        />
+                        <SafeNumericInput value={smoothingStore.boxcarSize} min={2} stepSize={1} className="narrow" onValueChange={val => smoothingStore.setBoxcarSize(Math.round(val))} />
                     </FormGroup>
                 )}
                 {smoothingStore.type === SmoothingType.GAUSSIAN && (
                     <FormGroup label={"Sigma"} inline={true}>
-                        <SafeNumericInput
-                            value={smoothingStore.gaussianSigma}
-                            min={1}
-                            className="narrow"
-                            onValueChange={val => smoothingStore.setGaussianSigma(val)}
-                        />
+                        <SafeNumericInput value={smoothingStore.gaussianSigma} min={1} className="narrow" onValueChange={val => smoothingStore.setGaussianSigma(val)} />
                     </FormGroup>
                 )}
                 {smoothingStore.type === SmoothingType.HANNING && (
                     <FormGroup label={"Kernel"} inline={true}>
-                        <SafeNumericInput
-                            value={smoothingStore.hanningSize}
-                            min={3}
-                            stepSize={2}
-                            className="narrow"
-                            onValueChange={val => smoothingStore.setHanningSize(Math.round(val))}
-                        />
+                        <SafeNumericInput value={smoothingStore.hanningSize} min={3} stepSize={2} className="narrow" onValueChange={val => smoothingStore.setHanningSize(Math.round(val))} />
                     </FormGroup>
                 )}
                 {smoothingStore.type === SmoothingType.DECIMATION && (
                     <FormGroup label={"Decimation Width"} inline={true}>
-                        <SafeNumericInput
-                            value={smoothingStore.decimationWidth}
-                            min={2}
-                            stepSize={1}
-                            className="narrow"
-                            onValueChange={val => smoothingStore.setDecimationWidth(Math.round(val))}
-                        />
+                        <SafeNumericInput value={smoothingStore.decimationWidth} min={2} stepSize={1} className="narrow" onValueChange={val => smoothingStore.setDecimationWidth(Math.round(val))} />
                     </FormGroup>
                 )}
                 {smoothingStore.type === SmoothingType.BINNING && (
                     <FormGroup label={"Binning Width"} inline={true}>
-                        <SafeNumericInput
-                            value={smoothingStore.binWidth}
-                            min={2}
-                            stepSize={1}
-                            className="narrow"
-                            onValueChange={val => smoothingStore.setBinWidth(Math.round(val))}
-                        />
+                        <SafeNumericInput value={smoothingStore.binWidth} min={2} stepSize={1} className="narrow" onValueChange={val => smoothingStore.setBinWidth(Math.round(val))} />
                     </FormGroup>
                 )}
                 {smoothingStore.type === SmoothingType.SAVITZKY_GOLAY && (
                     <React.Fragment>
                         <FormGroup label={"Kernel"} inline={true}>
-                            <SafeNumericInput
-                                value={smoothingStore.savitzkyGolaySize}
-                                min={5}
-                                stepSize={2}
-                                className="narrow"
-                                onValueChange={val => smoothingStore.setSavitzkyGolaySize(Math.round(val))}
-                            />
+                            <SafeNumericInput value={smoothingStore.savitzkyGolaySize} min={5} stepSize={2} className="narrow" onValueChange={val => smoothingStore.setSavitzkyGolaySize(Math.round(val))} />
                         </FormGroup>
                         <FormGroup label="Degree of Fitting" inline={true}>
-                            <SafeNumericInput
-                                value={smoothingStore.savitzkyGolayOrder}
-                                min={0}
-                                max={4}
-                                stepSize={2}
-                                className="narrow"
-                                onValueChange={val => smoothingStore.setSavitzkyGolayOrder(Math.round(val))}
-                            />
+                            <SafeNumericInput value={smoothingStore.savitzkyGolayOrder} min={0} max={4} stepSize={2} className="narrow" onValueChange={val => smoothingStore.setSavitzkyGolayOrder(Math.round(val))} />
                         </FormGroup>
                     </React.Fragment>
                 )}

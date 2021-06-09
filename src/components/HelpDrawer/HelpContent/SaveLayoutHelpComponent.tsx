@@ -10,8 +10,7 @@ export class SaveLayoutHelpComponent extends React.Component {
                     Load a preset layout or a custom layout: <strong>View</strong> -&gt; <strong>Layouts</strong> -&gt; <strong>Existing layouts</strong>
                 </p>
                 <p>
-                    Set a layout as the default layout: <strong>File</strong> -&gt; <strong>Preferences</strong> -&gt; <strong>Global</strong> tab -&gt;{" "}
-                    <strong>Initial layout</strong>.
+                    Set a layout as the default layout: <strong>File</strong> -&gt; <strong>Preferences</strong> -&gt; <strong>Global</strong> tab -&gt; <strong>Initial layout</strong>.
                 </p>
                 <p>
                     Delete a custom layout: <strong>View</strong> -&gt; <strong>Layouts</strong> -&gt; <strong>Delete layout</strong>.

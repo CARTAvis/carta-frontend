@@ -115,26 +115,8 @@ export class PointRegionForm extends React.Component<{region: RegionStore; wcsIn
         const centerWCSPoint = getFormattedWCSPoint(this.props.wcsInfo, centerPoint);
         let xInput, yInput;
         if (region.coordinate === RegionCoordinate.Image) {
-            xInput = (
-                <SafeNumericInput
-                    selectAllOnFocus={true}
-                    buttonPosition="none"
-                    placeholder="X Coordinate"
-                    value={centerPoint.x}
-                    onBlur={this.handleCenterXChange}
-                    onKeyDown={this.handleCenterXChange}
-                />
-            );
-            yInput = (
-                <SafeNumericInput
-                    selectAllOnFocus={true}
-                    buttonPosition="none"
-                    placeholder="Y Coordinate"
-                    value={centerPoint.y}
-                    onBlur={this.handleCenterYChange}
-                    onKeyDown={this.handleCenterYChange}
-                />
-            );
+            xInput = <SafeNumericInput selectAllOnFocus={true} buttonPosition="none" placeholder="X Coordinate" value={centerPoint.x} onBlur={this.handleCenterXChange} onKeyDown={this.handleCenterXChange} />;
+            yInput = <SafeNumericInput selectAllOnFocus={true} buttonPosition="none" placeholder="Y Coordinate" value={centerPoint.y} onBlur={this.handleCenterYChange} onKeyDown={this.handleCenterYChange} />;
         } else {
             xInput = (
                 <Tooltip content={`Format: ${NUMBER_FORMAT_LABEL.get(formatX)}`} position={Position.BOTTOM} hoverOpenDelay={300}>
@@ -163,8 +145,7 @@ export class PointRegionForm extends React.Component<{region: RegionStore; wcsIn
                 </Tooltip>
             );
         }
-        const infoString =
-            region.coordinate === RegionCoordinate.Image ? `WCS: ${WCSPoint2D.ToString(centerWCSPoint)}` : `Image: ${Point2D.ToString(centerPoint, "px", 3)}`;
+        const infoString = region.coordinate === RegionCoordinate.Image ? `WCS: ${WCSPoint2D.ToString(centerWCSPoint)}` : `Image: ${Point2D.ToString(centerPoint, "px", 3)}`;
         const pxUnitSpan = region.coordinate === RegionCoordinate.Image ? <span className={Classes.TEXT_MUTED}>(px)</span> : "";
         return (
             <div className="form-section point-region-form">

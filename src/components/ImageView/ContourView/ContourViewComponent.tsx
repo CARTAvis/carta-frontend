@@ -80,10 +80,7 @@ export class ContourViewComponent extends React.Component<ContourViewComponentPr
             };
 
             // Instead of rotating and scaling about an origin on the GPU (float32), we take this out of the shader, and perform beforehand (float64, and consistent)
-            const originAdjustedOffset = subtract2D(
-                baseFrame.spatialTransform.origin,
-                scale2D(rotate2D(baseFrame.spatialTransform.origin, baseFrame.spatialTransform.rotation), baseFrame.spatialTransform.scale)
-            );
+            const originAdjustedOffset = subtract2D(baseFrame.spatialTransform.origin, scale2D(rotate2D(baseFrame.spatialTransform.origin, baseFrame.spatialTransform.rotation), baseFrame.spatialTransform.scale));
 
             const rangeOffset = {
                 x: (baseFrame.spatialTransform.translation.x - baseRequiredView.xMin + originAdjustedOffset.x) * rangeScale.x,

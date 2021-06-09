@@ -10,20 +10,7 @@ import SplitPane, {Pane} from "react-split-pane";
 import FuzzySearch from "fuzzy-search";
 import {CARTA} from "carta-protobuf";
 import {FilterableTableComponent, FilterableTableComponentProps, ClearableNumericInputComponent} from "components/Shared";
-import {
-    AppStore,
-    CatalogStore,
-    CatalogProfileStore,
-    CatalogOverlay,
-    CatalogUpdateMode,
-    CatalogSystemType,
-    DefaultWidgetConfig,
-    HelpType,
-    WidgetProps,
-    WidgetsStore,
-    PreferenceStore,
-    PreferenceKeys
-} from "stores";
+import {AppStore, CatalogStore, CatalogProfileStore, CatalogOverlay, CatalogUpdateMode, CatalogSystemType, DefaultWidgetConfig, HelpType, WidgetProps, WidgetsStore, PreferenceStore, PreferenceKeys} from "stores";
 import {CatalogWidgetStore, CatalogPlotWidgetStoreProps, CatalogPlotType, CatalogSettingsTabs} from "stores/widgets";
 import {ComparisonOperator, toFixed} from "utilities";
 import {ProcessedColumnData} from "models";
@@ -110,15 +97,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         }
         const currScrollLeft = viewportRect?.left;
         const currScrollTop = viewportRect?.top;
-        const {scrollLeft, scrollTop} = ScrollUtils.getScrollPositionForRegion(
-            region,
-            currScrollLeft,
-            currScrollTop,
-            ref.grid.getCumulativeWidthBefore,
-            ref.grid.getCumulativeHeightBefore,
-            numFrozenRows,
-            numFrozenColumns
-        );
+        const {scrollLeft, scrollTop} = ScrollUtils.getScrollPositionForRegion(region, currScrollLeft, currScrollTop, ref.grid.getCumulativeWidthBefore, ref.grid.getCumulativeHeightBefore, numFrozenRows, numFrozenColumns);
         const correctedScrollLeft = ref.shouldDisableHorizontalScroll() ? 0 : scrollLeft;
         const correctedScrollTop = ref.shouldDisableVerticalScroll() ? 0 : scrollTop;
         ref.quadrantStackInstance.scrollToPosition(correctedScrollLeft, correctedScrollTop);
@@ -153,11 +132,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
     @computed get enablePlotButton(): boolean {
         const profileStore = this.profileStore;
         const catalogWidgetStore = this.widgetStore;
-        const enable =
-            !profileStore.loadingData &&
-            !profileStore.updatingDataStream &&
-            catalogWidgetStore.xAxis !== CatalogOverlay.NONE &&
-            profileStore.get1DPlotData(catalogWidgetStore.xAxis)?.wcsData?.length > 0;
+        const enable = !profileStore.loadingData && !profileStore.updatingDataStream && catalogWidgetStore.xAxis !== CatalogOverlay.NONE && profileStore.get1DPlotData(catalogWidgetStore.xAxis)?.wcsData?.length > 0;
         if (catalogWidgetStore.catalogPlotType === CatalogPlotType.Histogram) {
             return enable;
         } else {
@@ -272,13 +247,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         return (
             <Cell className="header-table-cell" key={`cell_switch_${rowIndex}`}>
                 <React.Fragment>
-                    <Switch
-                        className="cell-switch-button"
-                        key={`cell_switch_button_${rowIndex}`}
-                        disabled={disable}
-                        checked={display}
-                        onChange={changeEvent => this.handleHeaderDisplayChange(changeEvent, columnName)}
-                    />
+                    <Switch className="cell-switch-button" key={`cell_switch_button_${rowIndex}`} disabled={disable} checked={display} onChange={changeEvent => this.handleHeaderDisplayChange(changeEvent, columnName)} />
                 </React.Fragment>
             </Cell>
         );
@@ -593,15 +562,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
                     const wcs = frame.validWcs ? frame.wcsInfo : 0;
                     const catalogFileId = this.catalogFileId;
                     catalogStore.clearImageCoordsData(catalogFileId);
-                    catalogStore.updateCatalogData(
-                        catalogFileId,
-                        imageCoords.wcsX,
-                        imageCoords.wcsY,
-                        wcs,
-                        imageCoords.xHeaderInfo.units,
-                        imageCoords.yHeaderInfo.units,
-                        profileStore.catalogCoordinateSystem.system
-                    );
+                    catalogStore.updateCatalogData(catalogFileId, imageCoords.wcsX, imageCoords.wcsY, wcs, imageCoords.xHeaderInfo.units, imageCoords.yHeaderInfo.units, profileStore.catalogCoordinateSystem.system);
                     profileStore.setSelectedPointIndices(profileStore.selectedPointIndices, false);
                     catalogWidgetStore.setCatalogTableAutoScroll(false);
 
@@ -694,14 +655,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
     };
 
     private renderSystemPopOver = (system: CatalogSystemType, itemProps: IItemRendererProps) => {
-        const menuItem = (
-            <MenuItem
-                key={system}
-                text={this.profileStore.CoordinateSystemName.get(system)}
-                onClick={itemProps.handleClick}
-                active={itemProps.modifiers.active}
-            />
-        );
+        const menuItem = <MenuItem key={system} text={this.profileStore.CoordinateSystemName.get(system)} onClick={itemProps.handleClick} active={itemProps.modifiers.active} />;
         switch (system) {
             case CatalogSystemType.Pixel0:
                 return (
@@ -726,11 +680,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
 
     private shortcutoOnClick = (type: CatalogSettingsTabs) => {
         this.widgetStore.setSettingsTabId(type);
-        AppStore.Instance.widgetsStore.createFloatingSettingsWidget(
-            CatalogOverlayComponent.WIDGET_CONFIG.title,
-            this.props.id,
-            CatalogOverlayComponent.WIDGET_CONFIG.type
-        );
+        AppStore.Instance.widgetsStore.createFloatingSettingsWidget(CatalogOverlayComponent.WIDGET_CONFIG.title, this.props.id, CatalogOverlayComponent.WIDGET_CONFIG.type);
     };
 
     public render() {
@@ -905,12 +855,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
                                     itemPredicate={this.filterColumn}
                                     resetOnSelect={true}
                                 >
-                                    <Button
-                                        className="catalog-xaxis-button"
-                                        text={catalogWidgetStore.xAxis}
-                                        disabled={disable}
-                                        rightIcon="double-caret-vertical"
-                                    />
+                                    <Button className="catalog-xaxis-button" text={catalogWidgetStore.xAxis} disabled={disable} rightIcon="double-caret-vertical" />
                                 </Select>
                             </FormGroup>
 
@@ -928,12 +873,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
                                     itemPredicate={this.filterColumn}
                                     resetOnSelect={true}
                                 >
-                                    <Button
-                                        className="catalog-yaxis-button"
-                                        text={catalogWidgetStore.yAxis}
-                                        disabled={isHistogram || disable}
-                                        rightIcon="double-caret-vertical"
-                                    />
+                                    <Button className="catalog-yaxis-button" text={catalogWidgetStore.yAxis} disabled={isHistogram || disable} rightIcon="double-caret-vertical" />
                                 </Select>
                             </FormGroup>
 
@@ -950,12 +890,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
                     </div>
                     <div className="bp3-dialog-footer">
                         <div className="bp3-dialog-footer-actions">
-                            <AnchorButton
-                                intent={Intent.PRIMARY}
-                                text="Update"
-                                onClick={this.handleFilterRequest}
-                                disabled={disable || !profileStore.updateTableView}
-                            />
+                            <AnchorButton intent={Intent.PRIMARY} text="Update" onClick={this.handleFilterRequest} disabled={disable || !profileStore.updateTableView} />
                             <AnchorButton intent={Intent.PRIMARY} text="Reset" onClick={this.handleResetClick} disabled={disable} />
                             <AnchorButton intent={Intent.PRIMARY} text="Close" onClick={this.handleFileCloseClick} disabled={disable} />
                             <AnchorButton intent={Intent.PRIMARY} text="Plot" onClick={this.handlePlotClick} disabled={!this.enablePlotButton} />

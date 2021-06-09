@@ -229,10 +229,7 @@ export class ProfileSmoothingStore {
             if ((xMinIndex || xMaxIndex === 0) && xMaxIndex) {
                 const indexes = this.getLocalStartEndIndexes(x.length, xMinIndex, xMaxIndex, this.savitzkyGolaySize);
                 const localYs = y.subarray(indexes.startSmoothing, indexes.endSmoothing + 1);
-                smoothingYs = GSL.savitzkyGolaySmooth(x, localYs, this.savitzkyGolaySize, this.savitzkyGolayOrder).subarray(
-                    indexes.smoothedStart,
-                    indexes.smoothedEnd + 1
-                );
+                smoothingYs = GSL.savitzkyGolaySmooth(x, localYs, this.savitzkyGolaySize, this.savitzkyGolayOrder).subarray(indexes.smoothedStart, indexes.smoothedEnd + 1);
                 smoothingXs = x.slice(xMinIndex, xMaxIndex + 1);
             } else {
                 smoothingYs = GSL.savitzkyGolaySmooth(x, y, this.savitzkyGolaySize, this.savitzkyGolayOrder);

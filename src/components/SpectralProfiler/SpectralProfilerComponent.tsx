@@ -97,13 +97,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
 
     onChannelChanged = (x: number) => {
         const frame = this.widgetStore.effectiveFrame;
-        if (
-            x === null ||
-            x === undefined ||
-            !isFinite(x) ||
-            AnimatorStore.Instance.animationActive ||
-            this.widgetStore.fittingStore.isCursorSelectingComponent
-        ) {
+        if (x === null || x === undefined || !isFinite(x) || AnimatorStore.Instance.animationActive || this.widgetStore.fittingStore.isCursorSelectingComponent) {
             return;
         }
         const nearestIndex = frame.findChannelIndexByValue(x);
@@ -188,9 +182,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
                 const data = this.plotData.data[0];
                 const cursorInfoString = this.genCursoInfoString(data, cursorXValue, cursorXUnit, label);
                 profilerInfo.push({
-                    infoString: this.isMeanRmsVisible
-                        ? `${cursorInfoString}, Mean/RMS: ${formattedExponential(this.plotData.yMean, 2)}/${formattedExponential(this.plotData.yRms, 2)}`
-                        : cursorInfoString
+                    infoString: this.isMeanRmsVisible ? `${cursorInfoString}, Mean/RMS: ${formattedExponential(this.plotData.yMean, 2)}/${formattedExponential(this.plotData.yRms, 2)}` : cursorInfoString
                 });
             } else {
                 for (let i = 0; i < this.plotData.numProfiles; i++) {
@@ -327,10 +319,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
                             comments: currentPlotData.comments[i],
                             order: 1,
                             hidden: smoothingStore.type !== SmoothingType.NONE && !smoothingStore.isOverlayOn,
-                            followingData:
-                                this.widgetStore.profileNum === 1 && fittingStore.hasResult && smoothingStore.type === SmoothingType.NONE
-                                    ? ["fittingModel", "fittingResidual"]
-                                    : null
+                            followingData: this.widgetStore.profileNum === 1 && fittingStore.hasResult && smoothingStore.type === SmoothingType.NONE ? ["fittingModel", "fittingResidual"] : null
                         });
                     }
 

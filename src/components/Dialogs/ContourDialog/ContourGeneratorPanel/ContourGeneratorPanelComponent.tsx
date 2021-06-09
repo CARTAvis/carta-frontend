@@ -55,31 +55,12 @@ export class ContourGeneratorPanelComponent extends React.Component<{
         return (
             <div className="parameter-container">
                 <div className="parameter-line">
-                    <ClearableNumericInputComponent
-                        label="Min"
-                        value={this.minValue}
-                        onValueChanged={val => (this.enteredMinValue = val)}
-                        onValueCleared={() => (this.enteredMinValue = undefined)}
-                        displayExponential={true}
-                    />
-                    <ClearableNumericInputComponent
-                        label="Max"
-                        value={this.maxValue}
-                        onValueChanged={val => (this.enteredMaxValue = val)}
-                        onValueCleared={() => (this.enteredMaxValue = undefined)}
-                        displayExponential={true}
-                    />
+                    <ClearableNumericInputComponent label="Min" value={this.minValue} onValueChanged={val => (this.enteredMinValue = val)} onValueCleared={() => (this.enteredMinValue = undefined)} displayExponential={true} />
+                    <ClearableNumericInputComponent label="Max" value={this.maxValue} onValueChanged={val => (this.enteredMaxValue = val)} onValueCleared={() => (this.enteredMaxValue = undefined)} displayExponential={true} />
                 </div>
                 <div className="parameter-line">
                     <FormGroup label="N" inline={true}>
-                        <SafeNumericInput
-                            value={this.numLevels}
-                            min={1}
-                            max={20}
-                            stepSize={1}
-                            className="narrow"
-                            onValueChange={val => (this.numLevels = Math.floor(val))}
-                        />
+                        <SafeNumericInput value={this.numLevels} min={1} max={20} stepSize={1} className="narrow" onValueChange={val => (this.numLevels = Math.floor(val))} />
                     </FormGroup>
                     <FormGroup label="Scaling" inline={true}>
                         <ScalingSelectComponent selectedItem={this.scalingType} onItemSelect={val => (this.scalingType = val)} />
@@ -114,12 +95,7 @@ export class ContourGeneratorPanelComponent extends React.Component<{
     @observable multiplierValue: number = 1;
 
     @computed get startValue() {
-        if (
-            this.enteredStartValue === undefined &&
-            this.props.frame &&
-            this.props.frame.renderConfig.contourHistogram &&
-            this.props.frame.renderConfig.contourHistogram.stdDev > 0
-        ) {
+        if (this.enteredStartValue === undefined && this.props.frame && this.props.frame.renderConfig.contourHistogram && this.props.frame.renderConfig.contourHistogram.stdDev > 0) {
             return this.props.frame.renderConfig.contourHistogram.mean + 5.0 * this.props.frame.renderConfig.contourHistogram.stdDev;
         } else {
             return this.enteredStartValue;
@@ -127,12 +103,7 @@ export class ContourGeneratorPanelComponent extends React.Component<{
     }
 
     @computed get stepValue() {
-        if (
-            this.enteredStepValue === undefined &&
-            this.props.frame &&
-            this.props.frame.renderConfig.contourHistogram &&
-            this.props.frame.renderConfig.contourHistogram.stdDev > 0
-        ) {
+        if (this.enteredStepValue === undefined && this.props.frame && this.props.frame.renderConfig.contourHistogram && this.props.frame.renderConfig.contourHistogram.stdDev > 0) {
             return 4.0 * this.props.frame.renderConfig.contourHistogram.stdDev;
         } else {
             return this.enteredStepValue;
@@ -148,40 +119,15 @@ export class ContourGeneratorPanelComponent extends React.Component<{
         return (
             <div className="parameter-container">
                 <div className="parameter-line">
-                    <ClearableNumericInputComponent
-                        label="Start"
-                        value={this.startValue}
-                        onValueChanged={val => (this.enteredStartValue = val)}
-                        onValueCleared={() => (this.enteredStartValue = undefined)}
-                        displayExponential={true}
-                    />
-                    <ClearableNumericInputComponent
-                        label="Step"
-                        value={this.stepValue}
-                        onValueChanged={val => (this.enteredStepValue = val)}
-                        onValueCleared={() => (this.enteredStepValue = undefined)}
-                        displayExponential={true}
-                    />
+                    <ClearableNumericInputComponent label="Start" value={this.startValue} onValueChanged={val => (this.enteredStartValue = val)} onValueCleared={() => (this.enteredStartValue = undefined)} displayExponential={true} />
+                    <ClearableNumericInputComponent label="Step" value={this.stepValue} onValueChanged={val => (this.enteredStepValue = val)} onValueCleared={() => (this.enteredStepValue = undefined)} displayExponential={true} />
                 </div>
                 <div className="parameter-line">
                     <FormGroup label="N" inline={true}>
-                        <SafeNumericInput
-                            value={this.numLevels}
-                            min={1}
-                            max={20}
-                            stepSize={1}
-                            className="narrow"
-                            onValueChange={val => (this.numLevels = Math.floor(val))}
-                        />
+                        <SafeNumericInput value={this.numLevels} min={1} max={20} stepSize={1} className="narrow" onValueChange={val => (this.numLevels = Math.floor(val))} />
                     </FormGroup>
                     <FormGroup label="Multiplier" inline={true}>
-                        <SafeNumericInput
-                            value={this.multiplierValue}
-                            min={0.1}
-                            stepSize={1}
-                            className="narrow"
-                            onValueChange={val => (this.multiplierValue = val)}
-                        />
+                        <SafeNumericInput value={this.multiplierValue} min={0.1} stepSize={1} className="narrow" onValueChange={val => (this.multiplierValue = val)} />
                     </FormGroup>
                 </div>
             </div>
@@ -230,44 +176,17 @@ export class ContourGeneratorPanelComponent extends React.Component<{
         return (
             <div className="parameter-container">
                 <div className="parameter-line">
-                    <ClearableNumericInputComponent
-                        label="Reference"
-                        value={this.refValue}
-                        onValueChanged={val => (this.enteredRefValue = val)}
-                        onValueCleared={() => (this.enteredRefValue = undefined)}
-                        displayExponential={true}
-                    />
+                    <ClearableNumericInputComponent label="Reference" value={this.refValue} onValueChanged={val => (this.enteredRefValue = val)} onValueCleared={() => (this.enteredRefValue = undefined)} displayExponential={true} />
                     <FormGroup label="N" inline={true}>
-                        <SafeNumericInput
-                            value={this.numLevels}
-                            min={1}
-                            max={20}
-                            stepSize={1}
-                            className="narrow"
-                            onValueChange={val => (this.numLevels = Math.floor(val))}
-                        />
+                        <SafeNumericInput value={this.numLevels} min={1} max={20} stepSize={1} className="narrow" onValueChange={val => (this.numLevels = Math.floor(val))} />
                     </FormGroup>
                 </div>
                 <div className="parameter-line">
                     <FormGroup label="Upper (%)" inline={true}>
-                        <SafeNumericInput
-                            value={this.upperPercentage}
-                            min={0}
-                            max={100}
-                            stepSize={1}
-                            className="narrow"
-                            onValueChange={val => (this.upperPercentage = val)}
-                        />
+                        <SafeNumericInput value={this.upperPercentage} min={0} max={100} stepSize={1} className="narrow" onValueChange={val => (this.upperPercentage = val)} />
                     </FormGroup>
                     <FormGroup label="Lower (%)" inline={true}>
-                        <SafeNumericInput
-                            value={this.lowerPercentage}
-                            min={0}
-                            max={100}
-                            stepSize={1}
-                            className="narrow"
-                            onValueChange={val => (this.lowerPercentage = val)}
-                        />
+                        <SafeNumericInput value={this.lowerPercentage} min={0} max={100} stepSize={1} className="narrow" onValueChange={val => (this.lowerPercentage = val)} />
                     </FormGroup>
                 </div>
             </div>
@@ -299,12 +218,7 @@ export class ContourGeneratorPanelComponent extends React.Component<{
     @observable sigmaLevels: number[] = [-5, 5, 9, 13, 17];
 
     @computed get meanValue() {
-        if (
-            this.enteredMeanValue === undefined &&
-            this.props.frame &&
-            this.props.frame.renderConfig.contourHistogram &&
-            this.props.frame.renderConfig.contourHistogram.stdDev > 0
-        ) {
+        if (this.enteredMeanValue === undefined && this.props.frame && this.props.frame.renderConfig.contourHistogram && this.props.frame.renderConfig.contourHistogram.stdDev > 0) {
             return this.props.frame.renderConfig.contourHistogram.mean;
         } else {
             return this.enteredMeanValue;
@@ -312,12 +226,7 @@ export class ContourGeneratorPanelComponent extends React.Component<{
     }
 
     @computed get sigmaValue() {
-        if (
-            this.enteredSigmaValue === undefined &&
-            this.props.frame &&
-            this.props.frame.renderConfig.contourHistogram &&
-            this.props.frame.renderConfig.contourHistogram.stdDev > 0
-        ) {
+        if (this.enteredSigmaValue === undefined && this.props.frame && this.props.frame.renderConfig.contourHistogram && this.props.frame.renderConfig.contourHistogram.stdDev > 0) {
             return this.props.frame.renderConfig.contourHistogram.stdDev;
         } else {
             return this.enteredSigmaValue;
@@ -350,20 +259,8 @@ export class ContourGeneratorPanelComponent extends React.Component<{
         return (
             <div className="parameter-container">
                 <div className="parameter-line">
-                    <ClearableNumericInputComponent
-                        label="Mean"
-                        value={this.meanValue}
-                        onValueChanged={val => (this.enteredMeanValue = val)}
-                        onValueCleared={() => (this.enteredMeanValue = undefined)}
-                        displayExponential={true}
-                    />
-                    <ClearableNumericInputComponent
-                        label="Sigma"
-                        value={this.sigmaValue}
-                        onValueChanged={val => (this.enteredSigmaValue = val)}
-                        onValueCleared={() => (this.enteredSigmaValue = undefined)}
-                        displayExponential={true}
-                    />
+                    <ClearableNumericInputComponent label="Mean" value={this.meanValue} onValueChanged={val => (this.enteredMeanValue = val)} onValueCleared={() => (this.enteredMeanValue = undefined)} displayExponential={true} />
+                    <ClearableNumericInputComponent label="Sigma" value={this.sigmaValue} onValueChanged={val => (this.enteredSigmaValue = val)} onValueCleared={() => (this.enteredSigmaValue = undefined)} displayExponential={true} />
                 </div>
                 <div className="parameter-line">
                     <FormGroup label={"Sigma List"} inline={true}>
@@ -445,12 +342,7 @@ export class ContourGeneratorPanelComponent extends React.Component<{
                             activeItem={this.generator}
                             popoverProps={SCALING_POPOVER_PROPS}
                             filterable={false}
-                            items={[
-                                ContourGeneratorType.StartStepMultiplier,
-                                ContourGeneratorType.MinMaxNScaling,
-                                ContourGeneratorType.PercentagesRefValue,
-                                ContourGeneratorType.MeanSigmaList
-                            ]}
+                            items={[ContourGeneratorType.StartStepMultiplier, ContourGeneratorType.MinMaxNScaling, ContourGeneratorType.PercentagesRefValue, ContourGeneratorType.MeanSigmaList]}
                             onItemSelect={val => (this.generator = val)}
                             itemRenderer={this.renderGeneratorSelectItem}
                         >

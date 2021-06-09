@@ -62,11 +62,7 @@ export class ColorbarComponent extends React.Component {
         const colorbarSettings = appStore.overlayStore.colorbar;
 
         let getColor = (customColor: boolean, color: string): string => {
-            return customColor
-                ? getColorForTheme(color)
-                : colorbarSettings.customColor
-                ? getColorForTheme(colorbarSettings.color)
-                : getColorForTheme(appStore.overlayStore.global.color);
+            return customColor ? getColorForTheme(color) : colorbarSettings.customColor ? getColorForTheme(colorbarSettings.color) : getColorForTheme(appStore.overlayStore.global.color);
         };
 
         // to avoid blurry border when width <= 1px, add 0.5 px offset to the colorbar if necessary
@@ -82,9 +78,7 @@ export class ColorbarComponent extends React.Component {
         let rectX = colorbarSettings.offset + (isOnePixBorder ? 0.5 / devicePixelRatio : 0);
         let rectY = colorbarSettings.yOffset - (isOnePixBorder && (isIntPosition(colorbarSettings.yOffset) ? 0.5 / devicePixelRatio : 0));
         let rectWidth = colorbarSettings.width;
-        let rectHeight =
-            colorbarSettings.height +
-            (isOnePixBorder && (!isIntPosition(colorbarSettings.height) ? (isIntPosition(colorbarSettings.yOffset) ? 0.5 : -0.5) / devicePixelRatio : 0));
+        let rectHeight = colorbarSettings.height + (isOnePixBorder && (!isIntPosition(colorbarSettings.height) ? (isIntPosition(colorbarSettings.yOffset) ? 0.5 : -0.5) / devicePixelRatio : 0));
         let rectGradientStart = {x: 0, y: colorbarSettings.yOffset};
         let rectGradientEnd = {x: 0, y: colorbarSettings.yOffset + colorbarSettings.height};
         let labelXPos = colorbarSettings.rightBorderPos + colorbarSettings.numberWidth + colorbarSettings.textGap;
@@ -107,12 +101,7 @@ export class ColorbarComponent extends React.Component {
             rectY = rectX;
             rectX = colorbarSettings.yOffset + (isOnePixBorder && (isIntPosition(colorbarSettings.yOffset) ? 0.5 / devicePixelRatio : 0));
             [rectWidth, rectHeight] = [rectHeight, rectWidth];
-            [rectGradientStart.x, rectGradientStart.y, rectGradientEnd.x, rectGradientEnd.y] = [
-                rectGradientEnd.y,
-                rectGradientEnd.x,
-                rectGradientStart.y,
-                rectGradientStart.x
-            ];
+            [rectGradientStart.x, rectGradientStart.y, rectGradientEnd.x, rectGradientEnd.y] = [rectGradientEnd.y, rectGradientEnd.x, rectGradientStart.y, rectGradientStart.x];
             [labelXPos, labelYPos] = [labelYPos, labelXPos];
             hoverBarPosition = [hoverBarPosition[1], hoverBarPosition[0], hoverBarPosition[3], hoverBarPosition[2]];
         }
@@ -160,14 +149,7 @@ export class ColorbarComponent extends React.Component {
                             tickPoints[1] = colorbarSettings.rightBorderPos + colorbarSettings.tickLen;
                         }
                     }
-                    ticks.push(
-                        <Line
-                            points={tickPoints}
-                            stroke={getColor(colorbarSettings.tickCustomColor, colorbarSettings.tickColor)}
-                            strokeWidth={colorbarSettings.tickWidth / devicePixelRatio}
-                            key={i.toString()}
-                        />
-                    );
+                    ticks.push(<Line points={tickPoints} stroke={getColor(colorbarSettings.tickCustomColor, colorbarSettings.tickColor)} strokeWidth={colorbarSettings.tickWidth / devicePixelRatio} key={i.toString()} />);
                 }
                 if (colorbarSettings.numberVisible) {
                     let numberXPos = colorbarSettings.rightBorderPos + colorbarSettings.textGap;
@@ -245,11 +227,7 @@ export class ColorbarComponent extends React.Component {
 
         const hoverBar =
             colorbarSettings.showHoverInfo && this.showHoverInfo ? (
-                <Line
-                    points={hoverBarPosition}
-                    stroke={colorbarSettings.customColor ? getColorForTheme(colorbarSettings.color) : getColorForTheme(appStore.overlayStore.global.color)}
-                    strokeWidth={1 / devicePixelRatio}
-                />
+                <Line points={hoverBarPosition} stroke={colorbarSettings.customColor ? getColorForTheme(colorbarSettings.color) : getColorForTheme(appStore.overlayStore.global.color)} strokeWidth={1 / devicePixelRatio} />
             ) : null;
 
         const hoverInfo =

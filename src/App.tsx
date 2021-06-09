@@ -25,13 +25,7 @@ export class App extends React.Component {
         switch (alertStore.alertType) {
             case AlertType.Info:
                 return (
-                    <Alert
-                        icon={alertStore.alertIcon}
-                        className={darkTheme ? "bp3-dark" : ""}
-                        isOpen={alertStore.alertVisible}
-                        onClose={alertStore.dismissAlert}
-                        canEscapeKeyCancel={true}
-                    >
+                    <Alert icon={alertStore.alertIcon} className={darkTheme ? "bp3-dark" : ""} isOpen={alertStore.alertVisible} onClose={alertStore.dismissAlert} canEscapeKeyCancel={true}>
                         <p>{alertStore.alertText}</p>
                     </Alert>
                 );
@@ -83,21 +77,9 @@ export class App extends React.Component {
             <div className={className}>
                 <UIControllerComponent />
                 {alertComponent}
-                <TaskProgressDialogComponent
-                    progress={undefined}
-                    timeRemaining={0}
-                    isOpen={appStore.resumingSession}
-                    cancellable={false}
-                    text={"Resuming session..."}
-                />
+                <TaskProgressDialogComponent progress={undefined} timeRemaining={0} isOpen={appStore.resumingSession} cancellable={false} text={"Resuming session..."} />
                 <div className={glClassName} ref={ref => appStore.setAppContainer(ref)}>
-                    <ReactResizeDetector
-                        handleWidth
-                        handleHeight
-                        onResize={this.onContainerResize}
-                        refreshMode={"throttle"}
-                        refreshRate={200}
-                    ></ReactResizeDetector>
+                    <ReactResizeDetector handleWidth handleHeight onResize={this.onContainerResize} refreshMode={"throttle"} refreshRate={200}></ReactResizeDetector>
                 </div>
                 <HotkeyTargetContainer />
                 <FloatingWidgetManagerComponent />

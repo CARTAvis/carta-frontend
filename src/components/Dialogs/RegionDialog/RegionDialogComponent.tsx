@@ -14,12 +14,8 @@ import "./RegionDialogComponent.scss";
 
 @observer
 export class RegionDialogComponent extends React.Component {
-    private static readonly MissingRegionNode = (
-        <NonIdealState icon={"folder-open"} title={"No region selected"} description={"Select a region using the list or image view"} />
-    );
-    private static readonly InvalidRegionNode = (
-        <NonIdealState icon={"error"} title={"Region not supported"} description={"The selected region does not have any editable properties"} />
-    );
+    private static readonly MissingRegionNode = (<NonIdealState icon={"folder-open"} title={"No region selected"} description={"Select a region using the list or image view"} />);
+    private static readonly InvalidRegionNode = (<NonIdealState icon={"error"} title={"Region not supported"} description={"The selected region does not have any editable properties"} />);
 
     private handleDeleteClicked = () => {
         const appStore = AppStore.Instance;
@@ -111,15 +107,7 @@ export class RegionDialogComponent extends React.Component {
         );
 
         return (
-            <DraggableDialogComponent
-                dialogProps={dialogProps}
-                helpType={HelpType.REGION_DIALOG}
-                defaultWidth={775}
-                defaultHeight={475}
-                minHeight={300}
-                minWidth={400}
-                enableResizing={true}
-            >
+            <DraggableDialogComponent dialogProps={dialogProps} helpType={HelpType.REGION_DIALOG} defaultWidth={775} defaultHeight={475} minHeight={300} minWidth={400} enableResizing={true}>
                 <div className={Classes.DIALOG_BODY}>{bodyContent}</div>
                 <div className={Classes.DIALOG_FOOTER}>
                     <div className={Classes.DIALOG_FOOTER_ACTIONS}>

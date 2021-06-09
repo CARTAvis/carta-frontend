@@ -56,25 +56,12 @@ export class AutoColorPickerComponent extends React.Component<AutoColorPickerCom
                 <div key={"custom-color"} className={"custom-color"}>
                     <Popover position={PopoverPosition.BOTTOM_RIGHT} popoverClassName={popoverClassName}>
                         <Button text={"Other"} className="color-swatch-button" disabled={this.props.disabled} />
-                        <SketchPicker
-                            color={this.autoColor}
-                            onChange={this.handleColorChange}
-                            disableAlpha={this.props.disableAlpha}
-                            presetColors={this.props.presetColors}
-                        />
+                        <SketchPicker color={this.autoColor} onChange={this.handleColorChange} disableAlpha={this.props.disableAlpha} presetColors={this.props.presetColors} />
                     </Popover>
                 </div>
             );
         } else {
-            return (
-                <MenuItem
-                    active={modifiers.active}
-                    disabled={modifiers.disabled}
-                    key={colorItem}
-                    onClick={handleClick}
-                    text={this.renderColorBlock(getColorForTheme(colorItem))}
-                />
-            );
+            return <MenuItem active={modifiers.active} disabled={modifiers.disabled} key={colorItem} onClick={handleClick} text={this.renderColorBlock(getColorForTheme(colorItem))} />;
         }
     };
 

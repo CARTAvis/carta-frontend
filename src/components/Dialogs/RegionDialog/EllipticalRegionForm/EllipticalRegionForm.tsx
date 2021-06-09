@@ -220,26 +220,8 @@ export class EllipticalRegionForm extends React.Component<{region: RegionStore; 
         const centerWCSPoint = getFormattedWCSPoint(this.props.wcsInfo, centerPoint);
         let xInput, yInput;
         if (region.coordinate === RegionCoordinate.Image) {
-            xInput = (
-                <SafeNumericInput
-                    selectAllOnFocus={true}
-                    buttonPosition="none"
-                    placeholder="X Coordinate"
-                    value={centerPoint.x}
-                    onBlur={this.handleCenterXChange}
-                    onKeyDown={this.handleCenterXChange}
-                />
-            );
-            yInput = (
-                <SafeNumericInput
-                    selectAllOnFocus={true}
-                    buttonPosition="none"
-                    placeholder="Y Coordinate"
-                    value={centerPoint.y}
-                    onBlur={this.handleCenterYChange}
-                    onKeyDown={this.handleCenterYChange}
-                />
-            );
+            xInput = <SafeNumericInput selectAllOnFocus={true} buttonPosition="none" placeholder="X Coordinate" value={centerPoint.x} onBlur={this.handleCenterXChange} onKeyDown={this.handleCenterXChange} />;
+            yInput = <SafeNumericInput selectAllOnFocus={true} buttonPosition="none" placeholder="Y Coordinate" value={centerPoint.y} onBlur={this.handleCenterYChange} onKeyDown={this.handleCenterYChange} />;
         } else {
             xInput = (
                 <Tooltip content={`Format: ${NUMBER_FORMAT_LABEL.get(formatX)}`} position={Position.BOTTOM} hoverOpenDelay={300}>
@@ -268,33 +250,14 @@ export class EllipticalRegionForm extends React.Component<{region: RegionStore; 
                 </Tooltip>
             );
         }
-        const infoString =
-            region.coordinate === RegionCoordinate.Image ? `WCS: ${WCSPoint2D.ToString(centerWCSPoint)}` : `Image: ${Point2D.ToString(centerPoint, "px", 3)}`;
+        const infoString = region.coordinate === RegionCoordinate.Image ? `WCS: ${WCSPoint2D.ToString(centerWCSPoint)}` : `Image: ${Point2D.ToString(centerPoint, "px", 3)}`;
 
         // size
         const size = region.size;
         let sizeWidthInput, sizeHeightInput;
         if (region.coordinate === RegionCoordinate.Image) {
-            sizeWidthInput = (
-                <SafeNumericInput
-                    selectAllOnFocus={true}
-                    buttonPosition="none"
-                    placeholder="Semi-major"
-                    value={size.x}
-                    onBlur={this.handleMajorAxisChange}
-                    onKeyDown={this.handleMajorAxisChange}
-                />
-            );
-            sizeHeightInput = (
-                <SafeNumericInput
-                    selectAllOnFocus={true}
-                    buttonPosition="none"
-                    placeholder="Semi-minor"
-                    value={size.y}
-                    onBlur={this.handleMinorAxisChange}
-                    onKeyDown={this.handleMinorAxisChange}
-                />
-            );
+            sizeWidthInput = <SafeNumericInput selectAllOnFocus={true} buttonPosition="none" placeholder="Semi-major" value={size.x} onBlur={this.handleMajorAxisChange} onKeyDown={this.handleMajorAxisChange} />;
+            sizeHeightInput = <SafeNumericInput selectAllOnFocus={true} buttonPosition="none" placeholder="Semi-minor" value={size.y} onBlur={this.handleMinorAxisChange} onKeyDown={this.handleMinorAxisChange} />;
         } else {
             sizeWidthInput = (
                 <Tooltip content={"Format: arcsec(\"), arcmin('), or degrees(deg)"} position={Position.BOTTOM} hoverOpenDelay={300}>
@@ -323,10 +286,7 @@ export class EllipticalRegionForm extends React.Component<{region: RegionStore; 
                 </Tooltip>
             );
         }
-        const sizeInfoString =
-            region.coordinate === RegionCoordinate.Image
-                ? `(Semi-major, Semi-minor): ${WCSPoint2D.ToString(this.sizeWCS)}`
-                : `Image: ${Point2D.ToString(size, "px", 3)}`;
+        const sizeInfoString = region.coordinate === RegionCoordinate.Image ? `(Semi-major, Semi-minor): ${WCSPoint2D.ToString(this.sizeWCS)}` : `Image: ${Point2D.ToString(size, "px", 3)}`;
         const pxUnitSpan = region.coordinate === RegionCoordinate.Image ? <span className={Classes.TEXT_MUTED}>(px)</span> : "";
         return (
             <div className="form-section elliptical-region-form">

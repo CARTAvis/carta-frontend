@@ -102,14 +102,7 @@ export class LogComponent extends React.Component<WidgetProps> {
 
         const allTagSpans = tagList.map((tag, index) => {
             return (
-                <Tag
-                    interactive={true}
-                    minimal={this.isTagHidden(tag)}
-                    intent={this.isTagHidden(tag) ? "none" : "primary"}
-                    className={this.isTagHidden(tag) ? "tag-hidden" : ""}
-                    key={index}
-                    onClick={() => this.onTagClicked(tag)}
-                >
+                <Tag interactive={true} minimal={this.isTagHidden(tag)} intent={this.isTagHidden(tag) ? "none" : "primary"} className={this.isTagHidden(tag) ? "tag-hidden" : ""} key={index} onClick={() => this.onTagClicked(tag)}>
                     {tag}
                 </Tag>
             );

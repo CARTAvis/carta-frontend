@@ -51,18 +51,7 @@
                 },
                 "id": {
                     "type": "string",
-                    "enum": [
-                        "floating-settings",
-                        "layer-list",
-                        "log",
-                        "animator",
-                        "region-list",
-                        "image-view",
-                        "stats",
-                        "spectral-line-query",
-                        "catalog-overlay",
-                        "catalog-plot"
-                    ]
+                    "enum": ["floating-settings", "layer-list", "log", "animator", "region-list", "image-view", "stats", "spectral-line-query", "catalog-overlay", "catalog-plot"]
                 },
                 "width": {
                     "$ref": "#/definitions/percentage-value"

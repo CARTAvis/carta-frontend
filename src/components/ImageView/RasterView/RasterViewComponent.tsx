@@ -80,11 +80,7 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
         const frame = AppStore.Instance.activeFrame;
         const tileRenderService = TileWebGLService.Instance;
         // Resize and clear the canvas if needed
-        if (
-            frame &&
-            frame.isRenderable &&
-            (this.canvas.width !== frame.renderWidth * devicePixelRatio || this.canvas.height !== frame.renderHeight * devicePixelRatio)
-        ) {
+        if (frame && frame.isRenderable && (this.canvas.width !== frame.renderWidth * devicePixelRatio || this.canvas.height !== frame.renderHeight * devicePixelRatio)) {
             this.canvas.width = frame.renderWidth * devicePixelRatio;
             this.canvas.height = frame.renderHeight * devicePixelRatio;
             tileRenderService.setCanvasSize(frame.renderWidth * devicePixelRatio, frame.renderHeight * devicePixelRatio);

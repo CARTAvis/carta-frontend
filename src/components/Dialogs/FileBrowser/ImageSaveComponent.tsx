@@ -184,16 +184,12 @@ export class ImageSaveComponent extends React.Component {
                                         <HTMLSelect
                                             value={activeFrame && (activeFrame.spectralCoordinate || "")}
                                             options={spectralCoordinateOptions}
-                                            onChange={(event: React.FormEvent<HTMLSelectElement>) =>
-                                                this.updateSpectralCoordinate(event.currentTarget.value as string)
-                                            }
+                                            onChange={(event: React.FormEvent<HTMLSelectElement>) => this.updateSpectralCoordinate(event.currentTarget.value as string)}
                                         />
                                         <HTMLSelect
                                             value={activeFrame && (activeFrame.spectralSystem || "")}
                                             options={spectralSystemOptions}
-                                            onChange={(event: React.FormEvent<HTMLSelectElement>) =>
-                                                this.updateSpectralSystem(event.currentTarget.value as SpectralSystem)
-                                            }
+                                            onChange={(event: React.FormEvent<HTMLSelectElement>) => this.updateSpectralSystem(event.currentTarget.value as SpectralSystem)}
                                         />
                                     </FormGroup>
                                 </div>
@@ -235,21 +231,12 @@ export class ImageSaveComponent extends React.Component {
                             <React.Fragment>
                                 <div className="stokes-select">
                                     <FormGroup label={"Stokes"} inline={true}>
-                                        <HTMLSelect
-                                            value={fileBrowser.saveStokesOption || ""}
-                                            options={stokesOptions}
-                                            onChange={(event: React.FormEvent<HTMLSelectElement>) => this.updateStokes(parseInt(event.currentTarget.value))}
-                                        />
+                                        <HTMLSelect value={fileBrowser.saveStokesOption || ""} options={stokesOptions} onChange={(event: React.FormEvent<HTMLSelectElement>) => this.updateStokes(parseInt(event.currentTarget.value))} />
                                     </FormGroup>
                                 </div>
                             </React.Fragment>
                         )}
-                        <Switch
-                            className="drop-degenerate"
-                            checked={fileBrowser.shouldDropDegenerateAxes}
-                            label="Drop degenerate axes"
-                            onChange={this.onChangeShouldDropDegenerateAxes}
-                        />
+                        <Switch className="drop-degenerate" checked={fileBrowser.shouldDropDegenerateAxes} label="Drop degenerate axes" onChange={this.onChangeShouldDropDegenerateAxes} />
                     </div>
                 )}
             </React.Fragment>

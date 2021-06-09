@@ -216,9 +216,7 @@ export class ScatterPlotComponent extends React.Component<ScatterPlotComponentPr
         const chartArea = this.chartArea;
         let lineSegments = [];
         if (chartArea) {
-            lineSegments.push(
-                <Line listening={false} key={0} points={[0, chartArea.top, 0, chartArea.bottom]} strokeWidth={1} stroke={markerColor} opacity={markerOpacity} />
-            );
+            lineSegments.push(<Line listening={false} key={0} points={[0, chartArea.top, 0, chartArea.bottom]} strokeWidth={1} stroke={markerColor} opacity={markerOpacity} />);
         }
         return (
             <Group key={id} x={valueCanvasSpace} y={0}>
@@ -231,9 +229,7 @@ export class ScatterPlotComponent extends React.Component<ScatterPlotComponentPr
         const chartArea = this.chartArea;
         let lineSegments = [];
         if (chartArea) {
-            lineSegments.push(
-                <Line listening={false} key={0} points={[chartArea.left, 0, chartArea.right, 0]} strokeWidth={1} stroke={markerColor} opacity={markerOpacity} />
-            );
+            lineSegments.push(<Line listening={false} key={0} points={[chartArea.left, 0, chartArea.right, 0]} strokeWidth={1} stroke={markerColor} opacity={markerOpacity} />);
         }
         return (
             <Group key={id} x={0} y={valueCanvasSpace}>
@@ -261,15 +257,7 @@ export class ScatterPlotComponent extends React.Component<ScatterPlotComponentPr
         let indicator = [];
         const channel = this.props.indicatorInteractionChannel;
         const markerOpacity = this.markerOpacity;
-        if (
-            chartArea &&
-            channel &&
-            channel.hoveredChannel &&
-            !isNaN(channel.hoveredChannel.x) &&
-            !isNaN(channel.hoveredChannel.y) &&
-            !this.isMouseEntered &&
-            channel.start
-        ) {
+        if (chartArea && channel && channel.hoveredChannel && !isNaN(channel.hoveredChannel.x) && !isNaN(channel.hoveredChannel.y) && !this.isMouseEntered && channel.start) {
             const channelH = this.props.indicatorInteractionChannel.hoveredChannel;
             const markerColor = this.props.darkMode ? Colors.GRAY4 : Colors.GRAY2;
             if (channelH.x >= this.props.xMin && channelH.x <= this.props.xMax && channelH.y >= this.props.yMin && channelH.y <= this.props.yMax) {
@@ -291,12 +279,7 @@ export class ScatterPlotComponent extends React.Component<ScatterPlotComponentPr
         if (this.isMouseEntered && this.props.cursorNearestPoint) {
             const nearestPoint = this.props.cursorNearestPoint;
             const markerColor = this.props.darkMode ? Colors.GRAY4 : Colors.GRAY2;
-            if (
-                nearestPoint.x >= this.props.xMin &&
-                nearestPoint.x <= this.props.xMax &&
-                nearestPoint.y >= this.props.yMin &&
-                nearestPoint.y <= this.props.yMax
-            ) {
+            if (nearestPoint.x >= this.props.xMin && nearestPoint.x <= this.props.xMax && nearestPoint.y >= this.props.yMin && nearestPoint.y <= this.props.yMax) {
                 const x = Math.floor(this.getPixelValue(nearestPoint.x, this.props.xMin, this.props.xMax, true)) + 0.5 * devicePixelRatio;
                 const y = Math.floor(this.getPixelValue(nearestPoint.y, this.props.yMin, this.props.yMax, false)) + 0.5 * devicePixelRatio;
                 indicator.push(this.genCircle("scatter-indicator-y-hovered-circle", markerColor, x, y));
@@ -316,11 +299,7 @@ export class ScatterPlotComponent extends React.Component<ScatterPlotComponentPr
         composedCanvas.height = canvas.height;
 
         const ctx = composedCanvas.getContext("2d");
-        ctx.fillStyle = AppStore.Instance.preferenceStore.transparentImageBackground
-            ? "rgba(255, 255, 255, 0.0)"
-            : this.props.darkMode
-            ? Colors.DARK_GRAY3
-            : Colors.LIGHT_GRAY5;
+        ctx.fillStyle = AppStore.Instance.preferenceStore.transparentImageBackground ? "rgba(255, 255, 255, 0.0)" : this.props.darkMode ? Colors.DARK_GRAY3 : Colors.LIGHT_GRAY5;
         ctx.fillRect(0, 0, composedCanvas.width, composedCanvas.height);
         ctx.drawImage(canvas, 0, 0);
 
@@ -506,12 +485,7 @@ export class ScatterPlotComponent extends React.Component<ScatterPlotComponentPr
             const chartArea = this.chartArea;
             const lineHeight = 15;
             const zoomSpeed = 0.001;
-            if (
-                wheelEvent.offsetX > chartArea.right ||
-                wheelEvent.offsetX < chartArea.left ||
-                wheelEvent.offsetY > chartArea.bottom ||
-                wheelEvent.offsetY < chartArea.top
-            ) {
+            if (wheelEvent.offsetX > chartArea.right || wheelEvent.offsetX < chartArea.left || wheelEvent.offsetY > chartArea.bottom || wheelEvent.offsetY < chartArea.top) {
                 return;
             }
             const delta = wheelEvent.deltaMode === WheelEvent.DOM_DELTA_PIXEL ? wheelEvent.deltaY : wheelEvent.deltaY * lineHeight;
@@ -583,46 +557,10 @@ export class ScatterPlotComponent extends React.Component<ScatterPlotComponentPr
                 // Selection rectangle consists of a filled rectangle with drag corners
                 selectionRect = [
                     <Rect fill={Colors.GRAY3} key={0} opacity={0.2} x={start.x} y={start.y} width={delta.x} height={delta.y} />,
-                    <Line
-                        stroke={Colors.GRAY3}
-                        key={1}
-                        x={start.x}
-                        y={start.y}
-                        points={[0, XY_ZOOM_THRESHOLD / 2.0, 0, 0, XY_ZOOM_THRESHOLD / 2.0, 0]}
-                        strokeWidth={3}
-                        scaleX={Math.sign(delta.x)}
-                        scaleY={Math.sign(delta.y)}
-                    />,
-                    <Line
-                        stroke={Colors.GRAY3}
-                        key={2}
-                        x={end.x}
-                        y={start.y}
-                        points={[0, XY_ZOOM_THRESHOLD / 2.0, 0, 0, -XY_ZOOM_THRESHOLD / 2.0, 0]}
-                        strokeWidth={3}
-                        scaleX={Math.sign(delta.x)}
-                        scaleY={Math.sign(delta.y)}
-                    />,
-                    <Line
-                        stroke={Colors.GRAY3}
-                        key={3}
-                        x={start.x}
-                        y={end.y}
-                        points={[0, -XY_ZOOM_THRESHOLD / 2.0, 0, 0, XY_ZOOM_THRESHOLD / 2.0, 0]}
-                        strokeWidth={3}
-                        scaleX={Math.sign(delta.x)}
-                        scaleY={Math.sign(delta.y)}
-                    />,
-                    <Line
-                        stroke={Colors.GRAY3}
-                        key={4}
-                        x={end.x}
-                        y={end.y}
-                        points={[-XY_ZOOM_THRESHOLD / 2.0, 0, 0, 0, 0, -XY_ZOOM_THRESHOLD / 2.0]}
-                        strokeWidth={3}
-                        scaleX={Math.sign(delta.x)}
-                        scaleY={Math.sign(delta.y)}
-                    />
+                    <Line stroke={Colors.GRAY3} key={1} x={start.x} y={start.y} points={[0, XY_ZOOM_THRESHOLD / 2.0, 0, 0, XY_ZOOM_THRESHOLD / 2.0, 0]} strokeWidth={3} scaleX={Math.sign(delta.x)} scaleY={Math.sign(delta.y)} />,
+                    <Line stroke={Colors.GRAY3} key={2} x={end.x} y={start.y} points={[0, XY_ZOOM_THRESHOLD / 2.0, 0, 0, -XY_ZOOM_THRESHOLD / 2.0, 0]} strokeWidth={3} scaleX={Math.sign(delta.x)} scaleY={Math.sign(delta.y)} />,
+                    <Line stroke={Colors.GRAY3} key={3} x={start.x} y={end.y} points={[0, -XY_ZOOM_THRESHOLD / 2.0, 0, 0, XY_ZOOM_THRESHOLD / 2.0, 0]} strokeWidth={3} scaleX={Math.sign(delta.x)} scaleY={Math.sign(delta.y)} />,
+                    <Line stroke={Colors.GRAY3} key={4} x={end.x} y={end.y} points={[-XY_ZOOM_THRESHOLD / 2.0, 0, 0, 0, 0, -XY_ZOOM_THRESHOLD / 2.0]} strokeWidth={3} scaleX={Math.sign(delta.x)} scaleY={Math.sign(delta.y)} />
                 ];
             }
         }
@@ -641,25 +579,9 @@ export class ScatterPlotComponent extends React.Component<ScatterPlotComponentPr
                 tabIndex={0}
             >
                 <ReactResizeDetector handleWidth handleHeight onResize={this.resize} refreshMode={"throttle"} refreshRate={33}></ReactResizeDetector>
+                {this.width > 0 && this.height > 0 && <PlotContainerComponent {...this.props} plotRefUpdated={this.onPlotRefUpdated} chartAreaUpdated={this.updateChart} width={this.width} height={this.height} />}
                 {this.width > 0 && this.height > 0 && (
-                    <PlotContainerComponent
-                        {...this.props}
-                        plotRefUpdated={this.onPlotRefUpdated}
-                        chartAreaUpdated={this.updateChart}
-                        width={this.width}
-                        height={this.height}
-                    />
-                )}
-                {this.width > 0 && this.height > 0 && (
-                    <Stage
-                        className={"annotation-stage"}
-                        width={this.width}
-                        height={this.height}
-                        onMouseMove={this.onStageMouseMove}
-                        onMouseDown={this.onStageMouseDown}
-                        onMouseUp={this.onStageMouseUp}
-                        onWheel={this.onStageWheel}
-                    >
+                    <Stage className={"annotation-stage"} width={this.width} height={this.height} onMouseMove={this.onStageMouseMove} onMouseDown={this.onStageMouseDown} onMouseUp={this.onStageMouseUp} onWheel={this.onStageWheel}>
                         <Layer>
                             {this.genIndicator()}
                             {this.genBorderRect()}
@@ -667,14 +589,7 @@ export class ScatterPlotComponent extends React.Component<ScatterPlotComponentPr
                         </Layer>
                     </Stage>
                 )}
-                {(this.props.data !== undefined || this.props.multiPlotPropsMap?.size > 0) && (
-                    <ToolbarComponent
-                        darkMode={this.props.darkMode}
-                        visible={this.isMouseEntered}
-                        exportImage={this.exportImage}
-                        exportData={this.exportData}
-                    />
-                )}
+                {(this.props.data !== undefined || this.props.multiPlotPropsMap?.size > 0) && <ToolbarComponent darkMode={this.props.darkMode} visible={this.isMouseEntered} exportImage={this.exportImage} exportData={this.exportData} />}
             </div>
         );
     }

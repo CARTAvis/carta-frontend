@@ -28,11 +28,7 @@ export class PlotTypeSelectorComponent extends React.Component<PlotTypeSelectCom
     private plotTypeButton = (value: PlotType) => {
         return (
             <Tooltip content={value}>
-                <AnchorButton
-                    icon={PlotTypeSelectorComponent.getIconForType(value)}
-                    active={this.props.value === value}
-                    onClick={() => this.props.onValueChanged(value)}
-                />
+                <AnchorButton icon={PlotTypeSelectorComponent.getIconForType(value)} active={this.props.value === value} onClick={() => this.props.onValueChanged(value)} />
             </Tooltip>
         );
     };

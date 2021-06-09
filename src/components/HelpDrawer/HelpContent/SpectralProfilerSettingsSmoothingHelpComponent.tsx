@@ -33,17 +33,13 @@ export class SpectralProfilerSettingsSmoothingHelpComponent extends React.Compon
                         <b>Binning</b>: averaging channels with a given width
                     </li>
                     <li>
-                        <b>Savitzky-Golay</b>: fitting successive sub-sets of adjacent data points with a low-degree polynomial by the method of linear least
-                        squares
+                        <b>Savitzky-Golay</b>: fitting successive sub-sets of adjacent data points with a low-degree polynomial by the method of linear least squares
                     </li>
                     <li>
                         <b>Decimation</b>: min-max decimation with a given width
                     </li>
                 </ul>
-                <p>
-                    Optionally, the original profile can be overplotted with the smoothed profile. The appearance of the smoothed profile, including color,
-                    style, width, and size, can be customized.
-                </p>
+                <p>Optionally, the original profile can be overplotted with the smoothed profile. The appearance of the smoothed profile, including color, style, width, and size, can be customized.</p>
                 <p>The data of the smoothed profile is appended in the exported tsv file if smoothing is applied.</p>
 
                 <h3>Examples</h3>

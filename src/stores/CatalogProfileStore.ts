@@ -522,11 +522,7 @@ export class CatalogProfileStore {
         return this.catalogInfo.fileId;
     }
 
-    public get2DPlotData(
-        xColumnName: string,
-        yColumnName: string,
-        columnsData: Map<number, ProcessedColumnData>
-    ): {wcsX?: Array<number>; wcsY?: Array<number>; xHeaderInfo: CARTA.ICatalogHeader; yHeaderInfo: CARTA.ICatalogHeader} {
+    public get2DPlotData(xColumnName: string, yColumnName: string, columnsData: Map<number, ProcessedColumnData>): {wcsX?: Array<number>; wcsY?: Array<number>; xHeaderInfo: CARTA.ICatalogHeader; yHeaderInfo: CARTA.ICatalogHeader} {
         const controlHeader = this.catalogControlHeader;
         const xHeader = controlHeader.get(xColumnName);
         const yHeader = controlHeader.get(yColumnName);
@@ -536,14 +532,7 @@ export class CatalogProfileStore {
         const xColumn = columnsData.get(xHeaderInfo.columnIndex);
         const yColumn = columnsData.get(yHeaderInfo.columnIndex);
 
-        if (
-            xColumn &&
-            xColumn.dataType !== CARTA.ColumnType.String &&
-            xColumn.dataType !== CARTA.ColumnType.Bool &&
-            yColumn &&
-            yColumn.dataType !== CARTA.ColumnType.String &&
-            yColumn.dataType !== CARTA.ColumnType.Bool
-        ) {
+        if (xColumn && xColumn.dataType !== CARTA.ColumnType.String && xColumn.dataType !== CARTA.ColumnType.Bool && yColumn && yColumn.dataType !== CARTA.ColumnType.String && yColumn.dataType !== CARTA.ColumnType.Bool) {
             const wcsX = xColumn.data as Array<number>;
             const wcsY = yColumn.data as Array<number>;
             return {wcsX, wcsY, xHeaderInfo, yHeaderInfo};

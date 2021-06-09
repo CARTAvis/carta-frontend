@@ -79,9 +79,7 @@ export class FileBrowserStore {
         autorun(() => {
             if (AppStore.Instance.activeFrame) {
                 FileBrowserStore.Instance.initialSaveSpectralRange();
-                this.setSaveFileType(
-                    AppStore.Instance.activeFrame.frameInfo?.fileInfo.type === CARTA.FileType.CASA ? CARTA.FileType.CASA : CARTA.FileType.FITS
-                );
+                this.setSaveFileType(AppStore.Instance.activeFrame.frameInfo?.fileInfo.type === CARTA.FileType.CASA ? CARTA.FileType.CASA : CARTA.FileType.FITS);
             }
         });
     }
@@ -440,9 +438,7 @@ export class FileBrowserStore {
             ? Object.keys(this.HDUfileInfoExtended)?.map(hdu => {
                   // hdu extension name is in field 3 of fileInfoExtended computed entries
                   const extName =
-                      this.HDUfileInfoExtended[hdu]?.computedEntries?.length >= 3 && this.HDUfileInfoExtended[hdu].computedEntries[2]?.name === "Extension name"
-                          ? `: ${this.HDUfileInfoExtended[hdu].computedEntries[2]?.value}`
-                          : "";
+                      this.HDUfileInfoExtended[hdu]?.computedEntries?.length >= 3 && this.HDUfileInfoExtended[hdu].computedEntries[2]?.name === "Extension name" ? `: ${this.HDUfileInfoExtended[hdu].computedEntries[2]?.value}` : "";
                   return {
                       label: `${hdu}${extName}`,
                       value: hdu

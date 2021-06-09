@@ -75,8 +75,7 @@ export class RegionListComponent extends React.Component<WidgetProps> {
         if (!frame) {
             return (
                 <div className="region-list-widget">
-                    <NonIdealState icon={"folder-open"} title={"No file loaded"} description={"Load a file using the menu"} />;
-                    <ReactResizeDetector handleWidth handleHeight onResize={this.onResize}></ReactResizeDetector>
+                    <NonIdealState icon={"folder-open"} title={"No file loaded"} description={"Load a file using the menu"} />;<ReactResizeDetector handleWidth handleHeight onResize={this.onResize}></ReactResizeDetector>
                 </div>
             );
         }
@@ -157,10 +156,7 @@ export class RegionListComponent extends React.Component<WidgetProps> {
                 sizeEntry = (
                     <td style={{width: RegionListComponent.SIZE_COLUMN_DEFAULT_WIDTH}} onDoubleClick={this.handleRegionListDoubleClick}>
                         {region.regionType !== CARTA.RegionType.POINT && (
-                            <Tooltip
-                                content={region.regionType === CARTA.RegionType.ELLIPSE ? "Semi-major and semi-minor axes" : "Width and height"}
-                                position={Position.BOTTOM}
-                            >
+                            <Tooltip content={region.regionType === CARTA.RegionType.ELLIPSE ? "Semi-major and semi-minor axes" : "Width and height"} position={Position.BOTTOM}>
                                 {sizeContent}
                             </Tooltip>
                         )}
@@ -194,11 +190,7 @@ export class RegionListComponent extends React.Component<WidgetProps> {
             }
 
             return (
-                <tr
-                    className={selectedRegion && selectedRegion.regionId === region.regionId ? "selected" : ""}
-                    key={region.regionId}
-                    onClick={() => frame.regionSet.selectRegion(region)}
-                >
+                <tr className={selectedRegion && selectedRegion.regionId === region.regionId ? "selected" : ""} key={region.regionId} onClick={() => frame.regionSet.selectRegion(region)}>
                     {lockEntry}
                     {focusEntry}
                     <td style={{width: nameWidth}} onDoubleClick={this.handleRegionListDoubleClick}>

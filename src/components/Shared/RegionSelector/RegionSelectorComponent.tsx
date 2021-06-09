@@ -93,23 +93,10 @@ export class RegionSelectorComponent extends React.Component<{widgetStore: Regio
         return (
             <React.Fragment>
                 <FormGroup label={"Image"} inline={true} disabled={!enableFrameselect}>
-                    <HTMLSelect
-                        className={frameClassName}
-                        value={selectedFrameValue}
-                        options={widgetStore.frameOptions}
-                        onChange={this.handleFrameChanged}
-                        disabled={!enableFrameselect}
-                        style={{width: "100px"}}
-                    />
+                    <HTMLSelect className={frameClassName} value={selectedFrameValue} options={widgetStore.frameOptions} onChange={this.handleFrameChanged} disabled={!enableFrameselect} style={{width: "100px"}} />
                 </FormGroup>
                 <FormGroup label={"Region"} inline={true} disabled={!enableRegionSelect}>
-                    <HTMLSelect
-                        className={regionClassName}
-                        value={selectedValue}
-                        options={regionOptions}
-                        onChange={this.handleRegionChanged}
-                        disabled={!enableRegionSelect}
-                    />
+                    <HTMLSelect className={regionClassName} value={selectedValue} options={regionOptions} onChange={this.handleRegionChanged} disabled={!enableRegionSelect} />
                 </FormGroup>
             </React.Fragment>
         );

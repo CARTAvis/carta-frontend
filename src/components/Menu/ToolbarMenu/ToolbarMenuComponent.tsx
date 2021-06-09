@@ -69,28 +69,13 @@ export class ToolbarMenuComponent extends React.Component {
             <React.Fragment>
                 <ButtonGroup className={actionsClassName}>
                     <Tooltip content={<span>Point</span>}>
-                        <AnchorButton
-                            icon={"symbol-square"}
-                            onClick={() => this.handleRegionTypeClicked(CARTA.RegionType.POINT)}
-                            active={isRegionCreating && newRegionType === CARTA.RegionType.POINT}
-                            disabled={regionButtonsDisabled}
-                        />
+                        <AnchorButton icon={"symbol-square"} onClick={() => this.handleRegionTypeClicked(CARTA.RegionType.POINT)} active={isRegionCreating && newRegionType === CARTA.RegionType.POINT} disabled={regionButtonsDisabled} />
                     </Tooltip>
                     <Tooltip content={<span>Rectangle{this.regionTooltip("square")}</span>}>
-                        <AnchorButton
-                            icon={"square"}
-                            onClick={() => this.handleRegionTypeClicked(CARTA.RegionType.RECTANGLE)}
-                            active={isRegionCreating && newRegionType === CARTA.RegionType.RECTANGLE}
-                            disabled={regionButtonsDisabled}
-                        />
+                        <AnchorButton icon={"square"} onClick={() => this.handleRegionTypeClicked(CARTA.RegionType.RECTANGLE)} active={isRegionCreating && newRegionType === CARTA.RegionType.RECTANGLE} disabled={regionButtonsDisabled} />
                     </Tooltip>
                     <Tooltip content={<span>Ellipse{this.regionTooltip("circle")}</span>}>
-                        <AnchorButton
-                            icon={"circle"}
-                            onClick={() => this.handleRegionTypeClicked(CARTA.RegionType.ELLIPSE)}
-                            active={isRegionCreating && newRegionType === CARTA.RegionType.ELLIPSE}
-                            disabled={regionButtonsDisabled}
-                        />
+                        <AnchorButton icon={"circle"} onClick={() => this.handleRegionTypeClicked(CARTA.RegionType.ELLIPSE)} active={isRegionCreating && newRegionType === CARTA.RegionType.ELLIPSE} disabled={regionButtonsDisabled} />
                     </Tooltip>
                     <Tooltip
                         content={
@@ -113,12 +98,7 @@ export class ToolbarMenuComponent extends React.Component {
                             </span>
                         }
                     >
-                        <AnchorButton
-                            icon={"polygon-filter"}
-                            onClick={() => this.handleRegionTypeClicked(CARTA.RegionType.POLYGON)}
-                            active={isRegionCreating && newRegionType === CARTA.RegionType.POLYGON}
-                            disabled={regionButtonsDisabled}
-                        />
+                        <AnchorButton icon={"polygon-filter"} onClick={() => this.handleRegionTypeClicked(CARTA.RegionType.POLYGON)} active={isRegionCreating && newRegionType === CARTA.RegionType.POLYGON} disabled={regionButtonsDisabled} />
                     </Tooltip>
                 </ButtonGroup>
                 <ButtonGroup className={className}>
@@ -136,9 +116,7 @@ export class ToolbarMenuComponent extends React.Component {
                                 }
                             >
                                 <AnchorButton
-                                    icon={
-                                        widgetConfig.isCustomIcon ? <CustomIcon icon={widgetConfig.icon as CustomIconName} /> : (widgetConfig.icon as IconName)
-                                    }
+                                    icon={widgetConfig.isCustomIcon ? <CustomIcon icon={widgetConfig.icon as CustomIconName} /> : (widgetConfig.icon as IconName)}
                                     id={`${trimmedStr}Button`} // id particularly is for drag source in WidgetStore
                                     onClick={widgetConfig.onClick}
                                 />
@@ -154,11 +132,7 @@ export class ToolbarMenuComponent extends React.Component {
                         <AnchorButton icon={"wrench"} onClick={dialogStore.showPreferenceDialog} active={dialogStore.preferenceDialogVisible} />
                     </Tooltip>
                     <Tooltip content={<span>Contours</span>}>
-                        <AnchorButton
-                            icon={<CustomIcon icon={"contour"} />}
-                            onClick={dialogStore.showContourDialog}
-                            active={dialogStore.contourDialogVisible}
-                        />
+                        <AnchorButton icon={<CustomIcon icon={"contour"} />} onClick={dialogStore.showContourDialog} active={dialogStore.contourDialogVisible} />
                     </Tooltip>
                 </ButtonGroup>
             </React.Fragment>

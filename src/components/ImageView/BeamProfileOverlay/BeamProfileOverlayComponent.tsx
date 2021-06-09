@@ -85,9 +85,7 @@ export class BeamProfileOverlayComponent extends React.Component<BeamProfileOver
                 ellipse = <Ellipse radiusX={plotProps.a} radiusY={plotProps.b} stroke={plotProps.color} strokeWidth={plotProps.strokeWidth} />;
                 break;
             case BeamType.Solid:
-                ellipse = (
-                    <Ellipse radiusX={plotProps.a} radiusY={plotProps.b} fill={plotProps.color} stroke={plotProps.color} strokeWidth={plotProps.strokeWidth} />
-                );
+                ellipse = <Ellipse radiusX={plotProps.a} radiusY={plotProps.b} fill={plotProps.color} stroke={plotProps.color} strokeWidth={plotProps.strokeWidth} />;
                 break;
         }
         return (

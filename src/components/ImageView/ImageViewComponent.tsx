@@ -233,9 +233,7 @@ export class ImageViewComponent extends React.Component<WidgetProps> {
                         />
                     )}
                     {appStore.activeFrame && overlayStore.colorbar.visible && <ColorbarComponent />}
-                    {appStore.activeFrame && (
-                        <BeamProfileOverlayComponent top={overlayStore.padding.top} left={overlayStore.padding.left} docked={this.props.docked} padding={10} />
-                    )}
+                    {appStore.activeFrame && <BeamProfileOverlayComponent top={overlayStore.padding.top} left={overlayStore.padding.left} docked={this.props.docked} padding={10} />}
                     {appStore.activeFrame && <CatalogViewGLComponent docked={this.props.docked} onZoomed={this.onZoomed} />}
                     {appStore.activeFrame && (
                         <RegionViewComponent
@@ -252,22 +250,11 @@ export class ImageViewComponent extends React.Component<WidgetProps> {
                             dragPanningEnabled={appStore.preferenceStore.dragPanning}
                             cursorFrozen={appStore.cursorFrozen}
                             cursorPoint={appStore.activeFrame.cursorInfo.posImageSpace}
-                            docked={
-                                this.props.docked && (this.activeLayer === ImageViewLayer.RegionMoving || this.activeLayer === ImageViewLayer.RegionCreating)
-                            }
+                            docked={this.props.docked && (this.activeLayer === ImageViewLayer.RegionMoving || this.activeLayer === ImageViewLayer.RegionCreating)}
                         />
                     )}
-                    <ToolbarComponent
-                        docked={this.props.docked}
-                        visible={appStore.imageToolbarVisible}
-                        vertical={false}
-                        onActiveLayerChange={appStore.updateActiveLayer}
-                        activeLayer={this.activeLayer}
-                    />
-                    <div
-                        style={{opacity: this.showRatioIndicator ? 1 : 0, left: imageRatioTagOffset.x, top: imageRatioTagOffset.y}}
-                        className={"tag-image-ratio"}
-                    >
+                    <ToolbarComponent docked={this.props.docked} visible={appStore.imageToolbarVisible} vertical={false} onActiveLayerChange={appStore.updateActiveLayer} activeLayer={this.activeLayer} />
+                    <div style={{opacity: this.showRatioIndicator ? 1 : 0, left: imageRatioTagOffset.x, top: imageRatioTagOffset.y}} className={"tag-image-ratio"}>
                         <Tag large={true}>
                             {effectiveWidth} x {effectiveHeight} ({toFixed(effectiveWidth / effectiveHeight, 2)})
                         </Tag>

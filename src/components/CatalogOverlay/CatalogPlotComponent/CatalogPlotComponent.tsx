@@ -263,12 +263,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
         if (widgetStore?.plotType === CatalogPlotType.Histogram) {
             return widgetStore.xColumnName !== emptyColumn && !profileStore.loadingData && !profileStore.updatingDataStream;
         } else if (widgetStore?.plotType === CatalogPlotType.D2Scatter) {
-            return (
-                widgetStore.xColumnName !== emptyColumn &&
-                widgetStore.yColumnName !== emptyColumn &&
-                !profileStore.loadingData &&
-                !profileStore.updatingDataStream
-            );
+            return widgetStore.xColumnName !== emptyColumn && widgetStore.yColumnName !== emptyColumn && !profileStore.loadingData && !profileStore.updatingDataStream;
         } else {
             return false;
         }

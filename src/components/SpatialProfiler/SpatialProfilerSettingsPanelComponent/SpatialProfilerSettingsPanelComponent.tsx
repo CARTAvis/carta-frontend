@@ -190,11 +190,7 @@ export class SpatialProfilerSettingsPanelComponent extends React.Component<Widge
             <div className="spatial-profiler-settings">
                 <Tabs id="spatialSettingTabs" selectedTabId={widgetStore.settingsTabId} onChange={this.handleSelectedTabChanged}>
                     <Tab id={SpatialProfilerSettingsTabs.STYLING} title="Styling" panel={<LinePlotSettingsPanelComponent {...lineSettingsProps} />} />
-                    <Tab
-                        id={SpatialProfilerSettingsTabs.SMOOTHING}
-                        title="Smoothing"
-                        panel={<SmoothingSettingsComponent smoothingStore={widgetStore.smoothingStore} />}
-                    />
+                    <Tab id={SpatialProfilerSettingsTabs.SMOOTHING} title="Smoothing" panel={<SmoothingSettingsComponent smoothingStore={widgetStore.smoothingStore} />} />
                 </Tabs>
             </div>
         );

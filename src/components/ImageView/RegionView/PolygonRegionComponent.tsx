@@ -87,13 +87,7 @@ export class PolygonRegionComponent extends React.Component<PolygonRegionCompone
             const frame = this.props.frame;
             const index = node.index;
             if (index >= 0 && index < region.controlPoints.length) {
-                let positionImageSpace = canvasToTransformedImagePos(
-                    node.position().x,
-                    node.position().y,
-                    frame,
-                    this.props.layerWidth,
-                    this.props.layerHeight
-                );
+                let positionImageSpace = canvasToTransformedImagePos(node.position().x, node.position().y, frame, this.props.layerWidth, this.props.layerHeight);
                 if (frame.spatialReference) {
                     positionImageSpace = transformPoint(frame.spatialTransformAST, positionImageSpace, true);
                 }
@@ -284,24 +278,12 @@ export class PolygonRegionComponent extends React.Component<PolygonRegionCompone
         if (frame.spatialReference) {
             const centerReferenceImage = average2D(controlPoints);
             const centerSecondaryImage = transformPoint(frame.spatialTransformAST, centerReferenceImage, false);
-            centerPointCanvasSpace = transformedImageToCanvasPos(
-                centerSecondaryImage.x,
-                centerSecondaryImage.y,
-                frame,
-                this.props.layerWidth,
-                this.props.layerHeight
-            );
+            centerPointCanvasSpace = transformedImageToCanvasPos(centerSecondaryImage.x, centerSecondaryImage.y, frame, this.props.layerWidth, this.props.layerHeight);
             const pointsSecondaryImage = region.getRegionApproximation(frame.spatialTransformAST);
             const N = pointsSecondaryImage.length;
             pointArray = new Array<number>(N * 2);
             for (let i = 0; i < N; i++) {
-                const approxPointPixelSpace = transformedImageToCanvasPos(
-                    pointsSecondaryImage[i].x,
-                    pointsSecondaryImage[i].y,
-                    frame,
-                    this.props.layerWidth,
-                    this.props.layerHeight
-                );
+                const approxPointPixelSpace = transformedImageToCanvasPos(pointsSecondaryImage[i].x, pointsSecondaryImage[i].y, frame, this.props.layerWidth, this.props.layerHeight);
                 pointArray[i * 2] = approxPointPixelSpace.x - centerPointCanvasSpace.x;
                 pointArray[i * 2 + 1] = approxPointPixelSpace.y - centerPointCanvasSpace.y;
             }
@@ -324,9 +306,7 @@ export class PolygonRegionComponent extends React.Component<PolygonRegionCompone
             rotation = (-frame.spatialTransform.rotation * 180.0) / Math.PI;
         } else {
             rotation = 0;
-            controlPoints = controlPoints.map(p =>
-                imageToCanvasPos(p.x, p.y, frameView, this.props.layerWidth, this.props.layerHeight, frame.spatialTransform)
-            );
+            controlPoints = controlPoints.map(p => imageToCanvasPos(p.x, p.y, frameView, this.props.layerWidth, this.props.layerHeight, frame.spatialTransform));
             centerPointCanvasSpace = average2D(controlPoints);
             // Construct anchors if region is selected
             if (this.props.selected && !region.locked) {
@@ -337,13 +317,7 @@ export class PolygonRegionComponent extends React.Component<PolygonRegionCompone
             }
 
             if (this.hoverIntersection && !region.locked) {
-                const anchorPositionPixelSpace = transformedImageToCanvasPos(
-                    this.hoverIntersection.x,
-                    this.hoverIntersection.y,
-                    frame,
-                    this.props.layerWidth,
-                    this.props.layerHeight
-                );
+                const anchorPositionPixelSpace = transformedImageToCanvasPos(this.hoverIntersection.x, this.hoverIntersection.y, frame, this.props.layerWidth, this.props.layerHeight);
                 newAnchor = this.anchorNode(anchorPositionPixelSpace.x, anchorPositionPixelSpace.y, rotation);
             }
 

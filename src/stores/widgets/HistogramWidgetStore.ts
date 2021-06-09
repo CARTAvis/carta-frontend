@@ -164,27 +164,16 @@ export class HistogramWidgetStore extends RegionWidgetStore {
         if (lineColor.isValid() || isAutoColor(widgetSettings.primaryLineColor)) {
             this.primaryLineColor = widgetSettings.primaryLineColor;
         }
-        if (
-            typeof widgetSettings.lineWidth === "number" &&
-            widgetSettings.lineWidth >= LineSettings.MIN_WIDTH &&
-            widgetSettings.lineWidth <= LineSettings.MAX_WIDTH
-        ) {
+        if (typeof widgetSettings.lineWidth === "number" && widgetSettings.lineWidth >= LineSettings.MIN_WIDTH && widgetSettings.lineWidth <= LineSettings.MAX_WIDTH) {
             this.lineWidth = widgetSettings.lineWidth;
         }
-        if (
-            typeof widgetSettings.linePlotPointSize === "number" &&
-            widgetSettings.linePlotPointSize >= LineSettings.MIN_POINT_SIZE &&
-            widgetSettings.linePlotPointSize <= LineSettings.MAX_POINT_SIZE
-        ) {
+        if (typeof widgetSettings.linePlotPointSize === "number" && widgetSettings.linePlotPointSize >= LineSettings.MIN_POINT_SIZE && widgetSettings.linePlotPointSize <= LineSettings.MAX_POINT_SIZE) {
             this.linePlotPointSize = widgetSettings.linePlotPointSize;
         }
         if (typeof widgetSettings.logScaleY === "boolean") {
             this.logScaleY = widgetSettings.logScaleY;
         }
-        if (
-            typeof widgetSettings.plotType === "string" &&
-            (widgetSettings.plotType === PlotType.STEPS || widgetSettings.plotType === PlotType.LINES || widgetSettings.plotType === PlotType.POINTS)
-        ) {
+        if (typeof widgetSettings.plotType === "string" && (widgetSettings.plotType === PlotType.STEPS || widgetSettings.plotType === PlotType.LINES || widgetSettings.plotType === PlotType.POINTS)) {
             this.plotType = widgetSettings.plotType;
         }
         if (typeof widgetSettings.minXVal === "number") {

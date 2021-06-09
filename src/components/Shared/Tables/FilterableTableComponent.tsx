@@ -142,9 +142,7 @@ export class FilterableTableComponent extends React.Component<FilterableTableCom
     private renderCheckboxCell = (rowIndex: number, columnIndex: number, columnData: any) => {
         return (
             <Cell key={`cell_${columnIndex}_${rowIndex}`} interactive={false}>
-                <React.Fragment>
-                    {rowIndex < columnData?.length ? <Checkbox checked={columnData[rowIndex]} onChange={() => this.props.flipRowSelection(rowIndex)} /> : null}
-                </React.Fragment>
+                <React.Fragment>{rowIndex < columnData?.length ? <Checkbox checked={columnData[rowIndex]} onChange={() => this.props.flipRowSelection(rowIndex)} /> : null}</React.Fragment>
             </Cell>
         );
     };
@@ -253,21 +251,8 @@ export class FilterableTableComponent extends React.Component<FilterableTableCom
             <ColumnHeaderCell>
                 <ColumnHeaderCell className={"column-name"} nameRenderer={nameRenderer} />
                 <ColumnHeaderCell isActive={controlheader?.filter !== ""}>
-                    <Popover
-                        hoverOpenDelay={250}
-                        hoverCloseDelay={0}
-                        className={"column-popover"}
-                        popoverClassName={popOverClass}
-                        content={filterSyntax}
-                        interactionKind={PopoverInteractionKind.HOVER}
-                    >
-                        <InputGroup
-                            key={"column-popover-" + columnIndex}
-                            small={true}
-                            placeholder="Click to filter"
-                            value={controlheader?.filter ?? ""}
-                            onChange={ev => this.props.updateColumnFilter(ev.currentTarget.value, column.name)}
-                        />
+                    <Popover hoverOpenDelay={250} hoverCloseDelay={0} className={"column-popover"} popoverClassName={popOverClass} content={filterSyntax} interactionKind={PopoverInteractionKind.HOVER}>
+                        <InputGroup key={"column-popover-" + columnIndex} small={true} placeholder="Click to filter" value={controlheader?.filter ?? ""} onChange={ev => this.props.updateColumnFilter(ev.currentTarget.value, column.name)} />
                     </Popover>
                 </ColumnHeaderCell>
             </ColumnHeaderCell>
@@ -323,10 +308,7 @@ export class FilterableTableComponent extends React.Component<FilterableTableCom
         table.columnHeaders?.forEach(header => {
             const columnIndex = header.columnIndex;
             let dataArray = tableData.get(columnIndex)?.data;
-            const column =
-                header.name === SpectralLineHeaders.LineSelection && this.props.flipRowSelection
-                    ? this.renderCheckboxColumn(header, dataArray)
-                    : this.renderDataColumnWithFilter(header, dataArray);
+            const column = header.name === SpectralLineHeaders.LineSelection && this.props.flipRowSelection ? this.renderCheckboxColumn(header, dataArray) : this.renderDataColumnWithFilter(header, dataArray);
             tableColumns.push(column);
         });
 
