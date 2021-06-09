@@ -8,6 +8,7 @@ import {SpectralProfileWidgetStore} from "stores/widgets";
 import {AppStore} from "stores";
 import {getTimestamp} from "utilities";
 import "./ProfileFittingComponent.scss";
+import {exportTxtFile} from "utilities";
 
 export enum FittingFunction {
     GAUSSIAN = 0,
@@ -147,14 +148,9 @@ export class ProfileFittingComponent extends React.Component<ProfileFittingCompo
             }
         }
 
-        const content = `data:text/plain;charset=utf-8,${headerString}\n${this.props.fittingStore.resultLog}\n`;
-        const dataURL = encodeURI(content).replace(/#/g, "%23");
-
-        const a = document.createElement("a") as HTMLAnchorElement;
-        a.href = dataURL;
-
-        a.download = `Profile Fitting Result Log-${getTimestamp()}.txt`;
-        a.dispatchEvent(new MouseEvent("click"));
+        const content = `${headerString}\n${this.props.fittingStore.resultLog}`;
+        const fileName = `Profile Fitting Result Log-${getTimestamp()}`;
+        exportTxtFile(fileName, content);
     };
 
     @action private reset = () => {
@@ -215,6 +211,12 @@ export class ProfileFittingComponent extends React.Component<ProfileFittingCompo
         const appStore = AppStore.Instance;
         const fittingStore = this.props.fittingStore;
         const disabled = this.props.widgetStore.profileNum > 1;
+
+        const cursorSelectionButton = (
+            <Tooltip content={<span><i>{fittingStore.isCursorSelectingComponent ? "Disable cursor selection" : "Enable cursor selection"}</i></span>}>
+                <AnchorButton onClick={this.cursorSelecting} active={fittingStore.isCursorSelectingComponent} icon="select" disabled={disabled}/>
+            </Tooltip>
+        );
 
         return (
             <div className="profile-fitting-panel">
@@ -282,7 +284,9 @@ export class ProfileFittingComponent extends React.Component<ProfileFittingCompo
                                                 onChange={val => fittingStore.setSelectedIndex(val - 1)}
                                                 disabled={fittingStore.components.length <= 1}
                                             />
-                                            <AnchorButton intent={Intent.NONE} icon={"trash"} onClick={this.deleteComponent}/>
+                                            <Tooltip content={<span><i>Delete Current Component</i></span>}>
+                                                <AnchorButton intent={Intent.NONE} icon={"trash"} onClick={this.deleteComponent}/>
+                                            </Tooltip>
                                         </div>
                                     }
                                 </div>
@@ -296,8 +300,10 @@ export class ProfileFittingComponent extends React.Component<ProfileFittingCompo
                                         allowNumericCharactersOnly={false}
                                         buttonPosition="none"
                                     />
-                                    <AnchorButton onClick={this.onCenterLocked} icon={fittingStore.selectedComponent.lockedCenter ? "lock" : "unlock"} disabled={disabled}/>
-                                    <AnchorButton onClick={this.cursorSelecting} active={fittingStore.isCursorSelectingComponent} icon="select" disabled={disabled}/>
+                                    <Tooltip content={<span><i>{fittingStore.selectedComponent.lockedCenter ? "Unlock center" : "Lock center"}</i></span>}>
+                                        <AnchorButton onClick={this.onCenterLocked} icon={fittingStore.selectedComponent.lockedCenter ? "lock" : "unlock"} disabled={disabled}/>
+                                    </Tooltip>
+                                    {cursorSelectionButton}
                                 </div>
                             </FormGroup>
                             <FormGroup label="Amplitude" inline={true}>
@@ -309,8 +315,10 @@ export class ProfileFittingComponent extends React.Component<ProfileFittingCompo
                                         allowNumericCharactersOnly={false}
                                         buttonPosition="none"
                                         />
-                                    <AnchorButton onClick={this.onAmpLocked} icon={fittingStore.selectedComponent.lockedAmp ? "lock" : "unlock"} disabled={disabled}/>
-                                    <AnchorButton onClick={this.cursorSelecting} active={fittingStore.isCursorSelectingComponent} icon="select" disabled={disabled}/>
+                                    <Tooltip content={<span><i>{fittingStore.selectedComponent.lockedAmp ? "Unlock amplitude" : "Lock amplitude"}</i></span>}>
+                                        <AnchorButton onClick={this.onAmpLocked} icon={fittingStore.selectedComponent.lockedAmp ? "lock" : "unlock"} disabled={disabled}/>
+                                    </Tooltip>
+                                    {cursorSelectionButton}
                                 </div>
                             </FormGroup>
                             <FormGroup label="FWHM" inline={true}>
@@ -322,8 +330,10 @@ export class ProfileFittingComponent extends React.Component<ProfileFittingCompo
                                         allowNumericCharactersOnly={false}
                                         buttonPosition="none"
                                     />
-                                    <AnchorButton onClick={this.onFwhmLocked} icon={fittingStore.selectedComponent.lockedFwhm ? "lock" : "unlock"} disabled={disabled}/>
-                                    <AnchorButton onClick={this.cursorSelecting} active={fittingStore.isCursorSelectingComponent} icon="select" disabled={disabled}/>
+                                    <Tooltip content={<span><i>{fittingStore.selectedComponent.lockedFwhm ? "Unlock FWHM" : "Lock FWHM"}</i></span>}>
+                                        <AnchorButton onClick={this.onFwhmLocked} icon={fittingStore.selectedComponent.lockedFwhm ? "lock" : "unlock"} disabled={disabled}/>
+                                    </Tooltip>
+                                    {cursorSelectionButton}
                                 </div>
                             </FormGroup>
                             <FormGroup label="Continuum" inline={true}>
@@ -375,7 +385,7 @@ export class ProfileFittingComponent extends React.Component<ProfileFittingCompo
                                 <div onMouseOver={this.onMouseOverResult} onMouseLeave={this.onMouseLeaveResult}>
                                     <div className="fitting-result">
                                         <Pre className="fitting-result-pre" disabled={disabled}>
-                                            <Text>
+                                            <Text className="fitting-result-text">
                                                 {fittingStore.resultString}
                                             </Text>
                                         </Pre>
@@ -407,7 +417,7 @@ export class ProfileFittingComponent extends React.Component<ProfileFittingCompo
                                 <div className="fitting-popover">
                                     <div className="fitting-log">
                                         <Pre className="fitting-log-pre">
-                                            <Text>
+                                            <Text className="fitting-log-text">
                                                 {fittingStore.resultLog}
                                             </Text>
                                         </Pre>

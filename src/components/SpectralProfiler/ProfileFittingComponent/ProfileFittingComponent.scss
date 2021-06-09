@@ -27,12 +27,13 @@
             height: 30px;
 
             .bp3-slider{
-                margin-left: 15px;
+                margin-left: 20px;
+                min-width: 200px;
                 width: 100%;
             }
 
             .bp3-button{
-                margin-left: 15px;
+                margin-left: 20px;
             }
         }
 
@@ -48,21 +49,25 @@
         .fitting-result{
             display: flex;
             flex-direction: column;
-            height: 200px;
-            width: 300px;
+            height: 210px;
+            width: 350px;
 
             .fitting-result-pre{
                 overflow: auto;
                 height: 100%;
                 flex: 1;
                 user-select: text;
+
+                .fitting-result-text{
+                    font-size: 14px;
+                }
             }
         }
 
         .fitting-result-hover-button{
             position: relative;
             top: -50px;
-            left: 260px;
+            left: 310px;
         }
     }
 
@@ -76,6 +81,8 @@
         }
 
         .switch-wrapper{
+            display: flex;
+            align-items: center;
             height: 30px;
             padding-top: 5px;
             margin-left: 15px;
@@ -95,6 +102,10 @@
             flex: 1;
             margin: 5px;
             user-select: text;
+
+            .fitting-log-text{
+                font-size: 14px;
+            }
         }
     }
 

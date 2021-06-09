@@ -168,16 +168,17 @@ export class SimpleShapeRegionComponent extends React.Component<RegionComponentP
 
         if (anchor.includes("left") || anchor.includes("right")) {
             w = Math.abs(deltaAnchorPointUnrotated.x) * sizeFactor;
+            if (keepAspect) {
+                h = w;
+            }
         }
         if (anchor.includes("top") || anchor.includes("bottom")) {
             h = Math.abs(deltaAnchorPointUnrotated.y) * sizeFactor;
+            if (keepAspect) {
+                w = h;
+            }
         }
 
-        if (keepAspect) {
-            const maxSide = Math.max(w, h);
-            w = maxSide;
-            h = maxSide;
-        }
         if (region.regionType === CARTA.RegionType.RECTANGLE) {
             region.setControlPoints([this.editStartCenterPoint, {x: Math.max(1e-3, w), y: Math.max(1e-3, h)}]);
         } else {
@@ -444,7 +445,6 @@ export class SimpleShapeRegionComponent extends React.Component<RegionComponentP
             let rotatorOffset = (15 / zoomLevel) * devicePixelRatio;
 
             const anchorConfigs = [
-                {anchor: "rotator", offset: {x: 0, y: offsetY + rotatorOffset}},
                 {anchor: "top", offset: {x: 0, y: offsetY}},
                 {anchor: "bottom", offset: {x: 0, y: -offsetY}},
                 {anchor: "left", offset: {x: -offsetX, y: 0}},
@@ -454,6 +454,10 @@ export class SimpleShapeRegionComponent extends React.Component<RegionComponentP
                 {anchor: "top-right", offset: {x: offsetX, y: offsetY}},
                 {anchor: "bottom-right", offset: {x: offsetX, y: -offsetY}}
             ];
+
+            if (frame.hasSquarePixels) {
+                anchorConfigs.push({anchor: "rotator", offset: {x: 0, y: offsetY + rotatorOffset}});
+            }
 
             anchors = anchorConfigs.map((config) => {
                 let posImage = add2D(centerReferenceImage, rotate2D(config.offset, region.rotation * Math.PI / 180));

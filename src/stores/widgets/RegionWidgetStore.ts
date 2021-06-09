@@ -1,4 +1,5 @@
 import {action, observable, computed, makeObservable} from "mobx";
+import {IOptionProps} from "@blueprintjs/core";
 import {AppStore, FrameStore, RegionStore} from "..";
 
 export const ACTIVE_FILE_ID = -1;
@@ -13,6 +14,7 @@ export enum RegionsType {
     CLOSED,
     CLOSED_AND_POINT
 }
+
 export class RegionWidgetStore {
     protected readonly appStore: AppStore;
     @observable fileId: number;
@@ -84,5 +86,9 @@ export class RegionWidgetStore {
             }
         }
         return false;
+    }
+
+    @computed get frameOptions(): IOptionProps[] {
+        return [{value: ACTIVE_FILE_ID, label: "Active"}, ...(AppStore.Instance.frameNames ?? [])];
     }
 }

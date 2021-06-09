@@ -22,9 +22,9 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
         return {
             id: "spectral-profiler",
             type: "spectral-profiler",
-            minWidth: 780,
+            minWidth: 870,
             minHeight: 300,
-            defaultWidth: 780,
+            defaultWidth: 870,
             defaultHeight: 300,
             title: "Z Profile: Cursor",
             isCloseable: true,
@@ -282,6 +282,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
             setSelectedInsideBox: this.setSelectedBox,
             setSelectedLine: this.setSelectedLine,
             insideBoxes: this.widgetStore.fittingStore.componentPlottingBoxes,
+            insideTexts: this.widgetStore.fittingStore.componentResultNumber,
             zeroLineWidth: 2,
             order: 1,
             multiPlotPropsMap: new Map<string, MultiPlotProps>()
@@ -292,21 +293,12 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
             if (frame.spectralAxis && !frame.isCoordChannel) {
                 linePlotProps.xLabel = frame.spectralLabel;
             }
-            if (frame.unit) {
-                let yLabelUnit = "";
-                if (this.widgetStore.profileSelectionStore.isSameStatsTypeUnit) {
-                    if (this.widgetStore.profileSelectionStore.isStatsTypeFluxDensityOnly) {
-                        yLabelUnit = " (Jy)";
-                    } else if (this.widgetStore.profileSelectionStore.isStatsTypeSumSqOnly) {
-                        yLabelUnit = ` (${frame.unit})^2`;
-                    } else {
-                        yLabelUnit = ` (${frame.unit})`;
-                    }
-                }
-                linePlotProps.yLabel = `Value${yLabelUnit}`;
+            if (this.widgetStore.yUnit) {
+                linePlotProps.yLabel = `Value (${this.widgetStore.yUnit})`;
             }
 
             const currentPlotData = this.plotData;
+            const fittingStore = this.widgetStore.fittingStore;
             if (currentPlotData?.numProfiles > 0) {
                 linePlotProps.imageName = currentPlotData.plotName?.image;
                 linePlotProps.plotName = currentPlotData.plotName?.plot;
@@ -324,7 +316,8 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
                             borderColor: currentPlotData.colors[i],
                             comments: currentPlotData.comments[i],
                             order: 1,
-                            hidden: smoothingStore.type !== SmoothingType.NONE && !smoothingStore.isOverlayOn
+                            hidden: smoothingStore.type !== SmoothingType.NONE && !smoothingStore.isOverlayOn,
+                            followingData: this.widgetStore.profileNum === 1 && fittingStore.hasResult && smoothingStore.type === SmoothingType.NONE ? ["fittingModel", "fittingResidual"] : null
                         });
                     }
 
@@ -338,7 +331,8 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
                             borderWidth: currentPlotData.numProfiles > 1 ? this.widgetStore.lineWidth + 1 : smoothingStore.lineWidth,
                             pointRadius: smoothingStore.pointRadius,
                             order: 0,
-                            comments: [...currentPlotData.comments[i], ...smoothingStore.comments]
+                            comments: [...currentPlotData.comments[i], ...smoothingStore.comments],
+                            followingData: this.widgetStore.profileNum === 1 && fittingStore.hasResult ? ["fittingModel", "fittingResidual"] : null
                         });
                     }
                 }
@@ -350,7 +344,6 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
                 let primaryLineColor = getColorForTheme(this.widgetStore.primaryLineColor);
                 linePlotProps.lineColor = primaryLineColor;
 
-                const fittingStore = this.widgetStore.fittingStore;
                 if (this.widgetStore.profileNum === 1) {
                     if (fittingStore.continuum !== FittingContinuum.NONE && !fittingStore.hasResult) {
                         let fittingPlotProps: MultiPlotProps = {
@@ -361,7 +354,8 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
                             borderColor: getColorForTheme("auto-lime"),
                             borderWidth: 1,
                             pointRadius: 1,
-                            order: 0
+                            order: 0,
+                            noExport: true
                         };
                         linePlotProps.multiPlotPropsMap.set("fittingBaseline", fittingPlotProps);
                     }
@@ -369,28 +363,30 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
                         let fittingPlotProps: MultiPlotProps = {
                             imageName: currentPlotData.plotName.image,
                             plotName: currentPlotData.plotName.plot,
-                            data: fittingStore.resultPoint2DArray,
+                            data: fittingStore.modelPoint2DArray,
                             type: PlotType.LINES,
                             borderColor: getColorForTheme("auto-orange"),
                             borderWidth: 1,
                             pointRadius: 1,
-                            order: 0
+                            order: 0,
+                            noExport: true
                         };
-                        linePlotProps.multiPlotPropsMap.set("fittingResult", fittingPlotProps);
+                        linePlotProps.multiPlotPropsMap.set("fittingModel", fittingPlotProps);
 
-                        for (let i = 0; i < fittingStore.singleResultsPoint2DArrays.length; i++) {
+                        for (let i = 0; i < fittingStore.individualModelPoint2DArrays.length; i++) {
                             const individualPlotProps: MultiPlotProps = {
                                 imageName: currentPlotData.plotName.image,
                                 plotName: currentPlotData.plotName.plot,
-                                data: fittingStore.singleResultsPoint2DArrays[i],
+                                data: fittingStore.individualModelPoint2DArrays[i],
                                 type: PlotType.LINES,
                                 borderColor: getColorForTheme("auto-orange"),
                                 borderWidth: 1,
                                 pointRadius: 1,
                                 order: 0,
-                                opacity: 0.6
+                                opacity: 0.6,
+                                noExport: true
                             };
-                            linePlotProps.multiPlotPropsMap.set(`fittingIndividual(${i + 1})`, individualPlotProps);
+                            linePlotProps.multiPlotPropsMap.set(`fittingModel(${i + 1})`, individualPlotProps);
                         }
 
                         if (fittingStore.enableResidual) {
@@ -402,7 +398,8 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
                                 borderColor: getColorForTheme("auto-orange"),
                                 borderWidth: 1,
                                 pointRadius: 1,
-                                order: 0
+                                order: 0,
+                                noExport: true
                             };
                             linePlotProps.multiPlotPropsMap.set("fittingResidual", fittingResidualPlotProps);
                         }
