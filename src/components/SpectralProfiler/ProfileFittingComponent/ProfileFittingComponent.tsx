@@ -175,7 +175,7 @@ export class ProfileFittingComponent extends React.Component<ProfileFittingCompo
         }
     };
 
-    autoButtonTooltip2 = () => {
+    autoButtonTooltip = () => {
         return (
             <span><i>
                 Automatically detect features in the spectrum <br/>
@@ -242,7 +242,7 @@ export class ProfileFittingComponent extends React.Component<ProfileFittingCompo
                             </FormGroup>
                             <FormGroup label="Auto detect" inline={true}>
                                 <div className={"component-input"}>
-                                    <Tooltip2 content={this.autoButtonTooltip2()}>
+                                    <Tooltip2 content={this.autoButtonTooltip()}>
                                         <AnchorButton onClick={this.autoDetect} icon="series-search" disabled={disabled}/>
                                     </Tooltip2>
                                     <Switch
