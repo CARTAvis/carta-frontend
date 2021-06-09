@@ -1,7 +1,8 @@
 import * as React from "react";
 import {observable, action, autorun, makeObservable} from "mobx";
 import {observer} from "mobx-react";
-import {AnchorButton, FormGroup, HTMLSelect, Slider, Pre, Text, Intent, Tooltip, Switch, Popover, Button} from "@blueprintjs/core";
+import {AnchorButton, FormGroup, HTMLSelect, Slider, Pre, Text, Intent, Switch, Button} from "@blueprintjs/core";
+import {Popover2, Tooltip2} from "@blueprintjs/popover2";
 import {SafeNumericInput} from "components/Shared";
 import {ProfileFittingStore} from "stores/ProfileFittingStore";
 import {SpectralProfileWidgetStore} from "stores/widgets";
@@ -174,7 +175,7 @@ export class ProfileFittingComponent extends React.Component<ProfileFittingCompo
         }
     };
 
-    autoButtonTooltip = () => {
+    autoButtonTooltip2 = () => {
         return (
             <span><i>
                 Automatically detect features in the spectrum <br/>
@@ -213,14 +214,14 @@ export class ProfileFittingComponent extends React.Component<ProfileFittingCompo
         const disabled = this.props.widgetStore.profileNum > 1;
 
         const cursorSelectionButton = (
-            <Tooltip content={<span><i>{fittingStore.isCursorSelectingComponent ? "Disable cursor selection" : "Enable cursor selection"}</i></span>}>
+            <Tooltip2 content={<span><i>{fittingStore.isCursorSelectingComponent ? "Disable cursor selection" : "Enable cursor selection"}</i></span>}>
                 <AnchorButton onClick={this.cursorSelecting} active={fittingStore.isCursorSelectingComponent} icon="select" disabled={disabled}/>
-            </Tooltip>
+            </Tooltip2>
         );
 
         return (
             <div className="profile-fitting-panel">
-                <Tooltip content={disabled ? "Profile fitting is not available when there are multiple profiles in the plot." : ""}>
+                <Tooltip2 content={disabled ? "Profile fitting is not available when there are multiple profiles in the plot." : ""}>
                     <FormGroup disabled={disabled}>
                         <div className="profile-fitting-form">
                             <FormGroup label="Data source" inline={true}>
@@ -241,9 +242,9 @@ export class ProfileFittingComponent extends React.Component<ProfileFittingCompo
                             </FormGroup>
                             <FormGroup label="Auto detect" inline={true}>
                                 <div className={"component-input"}>
-                                    <Tooltip content={this.autoButtonTooltip()}>
+                                    <Tooltip2 content={this.autoButtonTooltip2()}>
                                         <AnchorButton onClick={this.autoDetect} icon="series-search" disabled={disabled}/>
-                                    </Tooltip>
+                                    </Tooltip2>
                                     <Switch
                                         label="w/ cont."
                                         checked={fittingStore.isAutoDetectWithCont}
@@ -284,9 +285,9 @@ export class ProfileFittingComponent extends React.Component<ProfileFittingCompo
                                                 onChange={val => fittingStore.setSelectedIndex(val - 1)}
                                                 disabled={fittingStore.components.length <= 1}
                                             />
-                                            <Tooltip content={<span><i>Delete Current Component</i></span>}>
+                                            <Tooltip2 content={<span><i>Delete Current Component</i></span>}>
                                                 <AnchorButton intent={Intent.NONE} icon={"trash"} onClick={this.deleteComponent}/>
-                                            </Tooltip>
+                                            </Tooltip2>
                                         </div>
                                     }
                                 </div>
@@ -300,9 +301,9 @@ export class ProfileFittingComponent extends React.Component<ProfileFittingCompo
                                         allowNumericCharactersOnly={false}
                                         buttonPosition="none"
                                     />
-                                    <Tooltip content={<span><i>{fittingStore.selectedComponent.lockedCenter ? "Unlock center" : "Lock center"}</i></span>}>
+                                    <Tooltip2 content={<span><i>{fittingStore.selectedComponent.lockedCenter ? "Unlock center" : "Lock center"}</i></span>}>
                                         <AnchorButton onClick={this.onCenterLocked} icon={fittingStore.selectedComponent.lockedCenter ? "lock" : "unlock"} disabled={disabled}/>
-                                    </Tooltip>
+                                    </Tooltip2>
                                     {cursorSelectionButton}
                                 </div>
                             </FormGroup>
@@ -315,9 +316,9 @@ export class ProfileFittingComponent extends React.Component<ProfileFittingCompo
                                         allowNumericCharactersOnly={false}
                                         buttonPosition="none"
                                         />
-                                    <Tooltip content={<span><i>{fittingStore.selectedComponent.lockedAmp ? "Unlock amplitude" : "Lock amplitude"}</i></span>}>
+                                    <Tooltip2 content={<span><i>{fittingStore.selectedComponent.lockedAmp ? "Unlock amplitude" : "Lock amplitude"}</i></span>}>
                                         <AnchorButton onClick={this.onAmpLocked} icon={fittingStore.selectedComponent.lockedAmp ? "lock" : "unlock"} disabled={disabled}/>
-                                    </Tooltip>
+                                    </Tooltip2>
                                     {cursorSelectionButton}
                                 </div>
                             </FormGroup>
@@ -330,9 +331,9 @@ export class ProfileFittingComponent extends React.Component<ProfileFittingCompo
                                         allowNumericCharactersOnly={false}
                                         buttonPosition="none"
                                     />
-                                    <Tooltip content={<span><i>{fittingStore.selectedComponent.lockedFwhm ? "Unlock FWHM" : "Lock FWHM"}</i></span>}>
+                                    <Tooltip2 content={<span><i>{fittingStore.selectedComponent.lockedFwhm ? "Unlock FWHM" : "Lock FWHM"}</i></span>}>
                                         <AnchorButton onClick={this.onFwhmLocked} icon={fittingStore.selectedComponent.lockedFwhm ? "lock" : "unlock"} disabled={disabled}/>
-                                    </Tooltip>
+                                    </Tooltip2>
                                     {cursorSelectionButton}
                                 </div>
                             </FormGroup>
@@ -407,7 +408,7 @@ export class ProfileFittingComponent extends React.Component<ProfileFittingCompo
                                 onClick={this.fitData}
                                 disabled={!fittingStore.readyToFit || disabled}
                             />
-                            <Popover isOpen={this.isShowingLog} onClose={this.handleLogClose}> 
+                            <Popover2 isOpen={this.isShowingLog} onClose={this.handleLogClose}> 
                                 <AnchorButton
                                     text="View log"
                                     onClick={this.showLog}
@@ -430,7 +431,7 @@ export class ProfileFittingComponent extends React.Component<ProfileFittingCompo
                                         />
                                     </div>
                                 </div>
-                            </Popover>
+                            </Popover2>
                             <div className="switch-wrapper">
                                 <Switch
                                     label="residual"
@@ -441,7 +442,7 @@ export class ProfileFittingComponent extends React.Component<ProfileFittingCompo
                             </div>
                         </div>
                     </FormGroup>
-                </Tooltip>
+                </Tooltip2>
             </div>
         );
     }
