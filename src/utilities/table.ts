@@ -75,25 +75,41 @@ export function numericFiltering(columnData: Array<number>, dataIndexes: number[
 
     let compareFunction = undefined;
     if (filter.operator === CARTA.ComparisonOperator.Equal && filter.values.length === 1) {
-        compareFunction = (data: number): boolean => { return data - filter.values[0] === 0; };
+        compareFunction = (data: number): boolean => {
+            return data - filter.values[0] === 0;
+        };
     } else if (filter.operator === CARTA.ComparisonOperator.NotEqual && filter.values.length === 1) {
-        compareFunction = (data: number): boolean => { return data - filter.values[0] !== 0; };
+        compareFunction = (data: number): boolean => {
+            return data - filter.values[0] !== 0;
+        };
     } else if (filter.operator === CARTA.ComparisonOperator.Lesser && filter.values.length === 1) {
-        compareFunction = (data: number): boolean => { return data < filter.values[0]; };
+        compareFunction = (data: number): boolean => {
+            return data < filter.values[0];
+        };
     } else if (filter.operator === CARTA.ComparisonOperator.LessorOrEqual && filter.values.length === 1) {
-        compareFunction = (data: number): boolean => { return data <= filter.values[0]; };
+        compareFunction = (data: number): boolean => {
+            return data <= filter.values[0];
+        };
     } else if (filter.operator === CARTA.ComparisonOperator.Greater && filter.values.length === 1) {
-        compareFunction = (data: number): boolean => { return data > filter.values[0]; };
+        compareFunction = (data: number): boolean => {
+            return data > filter.values[0];
+        };
     } else if (filter.operator === CARTA.ComparisonOperator.GreaterOrEqual && filter.values.length === 1) {
-        compareFunction = (data: number): boolean => { return data >= filter.values[0]; };
+        compareFunction = (data: number): boolean => {
+            return data >= filter.values[0];
+        };
     } else if (filter.operator === CARTA.ComparisonOperator.RangeOpen && filter.values.length === 2) {
         const min = Math.min(filter.values[0], filter.values[1]);
         const max = Math.max(filter.values[0], filter.values[1]);
-        compareFunction = (data: number): boolean => { return data >= min && data <= max; };
+        compareFunction = (data: number): boolean => {
+            return data >= min && data <= max;
+        };
     } else if (filter.operator === CARTA.ComparisonOperator.RangeClosed && filter.values.length === 2) {
         const min = Math.min(filter.values[0], filter.values[1]);
         const max = Math.max(filter.values[0], filter.values[1]);
-        compareFunction = (data: number): boolean => { return data > min && data < max; };
+        compareFunction = (data: number): boolean => {
+            return data > min && data < max;
+        };
     } else {
         return [];
     }
@@ -137,7 +153,7 @@ export function stringFiltering(columnData: Array<string>, dataIndexes: number[]
 
     let filteredDataIndexes = [];
     dataIndexes.forEach(dataIndex => {
-        if (dataIndex >= 0 && dataIndex < columnData.length && (columnData[dataIndex])?.includes(filterString)) {
+        if (dataIndex >= 0 && dataIndex < columnData.length && columnData[dataIndex]?.includes(filterString)) {
             filteredDataIndexes.push(dataIndex);
         }
     });

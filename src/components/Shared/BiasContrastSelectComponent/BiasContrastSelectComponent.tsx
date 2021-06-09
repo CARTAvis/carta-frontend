@@ -26,14 +26,14 @@ interface BiasContrastSelectComponentProps {
 
 @observer
 export class BiasContrastSelectComponent extends React.Component<BiasContrastSelectComponentProps> {
-
     private updateValuesTimer;
 
     private updateValues = (x: number, y: number, interval: number) => {
         clearTimeout(this.updateValuesTimer);
         this.updateValuesTimer = setTimeout(() => {
-            const bias = clamp(x, 0, this.props.boardWidth) / this.props.boardWidth * (this.props.biasMax - this.props.biasMin) + this.props.biasMin;
-            const contrast = this.props.contrastMax -  clamp(y, 0, this.props.boardHeight) / this.props.boardHeight * (this.props.contrastMax - this.props.contrastMin);
+            const bias = (clamp(x, 0, this.props.boardWidth) / this.props.boardWidth) * (this.props.biasMax - this.props.biasMin) + this.props.biasMin;
+            const contrast =
+                this.props.contrastMax - (clamp(y, 0, this.props.boardHeight) / this.props.boardHeight) * (this.props.contrastMax - this.props.contrastMin);
             this.props.setBias(bias);
             this.props.setContrast(contrast);
         }, interval);
@@ -55,16 +55,8 @@ export class BiasContrastSelectComponent extends React.Component<BiasContrastSel
         this.updateValues(point.x, point.y, DRAG_MOVE_INTERVAL);
     };
 
-    private resetButton = (handleClick) => {
-        return (
-            <Button
-                icon={"reset"}
-                minimal={true}
-                small={true}
-                style={{opacity: 0.5}}
-                onClick={handleClick}
-            />
-        );
+    private resetButton = handleClick => {
+        return <Button icon={"reset"} minimal={true} small={true} style={{opacity: 0.5}} onClick={handleClick} />;
     };
 
     render() {
@@ -81,12 +73,12 @@ export class BiasContrastSelectComponent extends React.Component<BiasContrastSel
                     onDblClick={this.handleDoubleClick}
                 />
                 <Circle
-                    x={(this.props.bias - this.props.biasMin) * this.props.boardWidth / (this.props.biasMax - this.props.biasMin)}
-                    y={(this.props.contrastMax - this.props.contrast) * this.props.boardHeight / (this.props.contrastMax - this.props.contrastMin)}
+                    x={((this.props.bias - this.props.biasMin) * this.props.boardWidth) / (this.props.biasMax - this.props.biasMin)}
+                    y={((this.props.contrastMax - this.props.contrast) * this.props.boardHeight) / (this.props.contrastMax - this.props.contrastMin)}
                     radius={5}
                     fill={Colors.GRAY3}
                     draggable={true}
-                    dragBoundFunc={(pos) => ({x: clamp(pos.x, 0, this.props.boardWidth), y: clamp(pos.y, 0, this.props.boardHeight)})}
+                    dragBoundFunc={pos => ({x: clamp(pos.x, 0, this.props.boardWidth), y: clamp(pos.y, 0, this.props.boardHeight)})}
                     onDragMove={this.handleDragMove}
                     onDblClick={this.handleDoubleClick}
                 />
@@ -95,19 +87,12 @@ export class BiasContrastSelectComponent extends React.Component<BiasContrastSel
 
         return (
             <React.Fragment>
-                <Stage
-                    className={"bias-contrast-stage"}
-                    width={this.props.boardWidth}
-                    height={this.props.boardHeight}
-                    style={{paddingBottom: 10}}
-                >
-                    <Layer>
-                        {twoDimensionBoard}
-                    </Layer>
+                <Stage className={"bias-contrast-stage"} width={this.props.boardWidth} height={this.props.boardHeight} style={{paddingBottom: 10}}>
+                    <Layer>{twoDimensionBoard}</Layer>
                 </Stage>
                 <FormGroup label={"Bias"} inline={true}>
                     <SafeNumericInput
-                        className={'step-input'}
+                        className={"step-input"}
                         min={this.props.biasMin}
                         max={this.props.biasMax}
                         stepSize={0.1}
@@ -119,7 +104,7 @@ export class BiasContrastSelectComponent extends React.Component<BiasContrastSel
                 </FormGroup>
                 <FormGroup label={"Contrast"} inline={true}>
                     <SafeNumericInput
-                        className={'step-input'}
+                        className={"step-input"}
                         min={this.props.contrastMin}
                         max={this.props.contrastMax}
                         stepSize={0.1}

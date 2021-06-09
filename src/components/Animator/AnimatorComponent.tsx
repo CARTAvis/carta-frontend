@@ -1,7 +1,24 @@
 import * as React from "react";
 import {observer} from "mobx-react";
 import {action, makeObservable, observable} from "mobx";
-import {AnchorButton, Button, ButtonGroup, ControlGroup, HTMLSelect, IconName, Menu, MenuItem, NonIdealState, NumberRange, Popover, Position, Radio, RangeSlider, Slider, Tooltip} from "@blueprintjs/core";
+import {
+    AnchorButton,
+    Button,
+    ButtonGroup,
+    ControlGroup,
+    HTMLSelect,
+    IconName,
+    Menu,
+    MenuItem,
+    NonIdealState,
+    NumberRange,
+    Popover,
+    Position,
+    Radio,
+    RangeSlider,
+    Slider,
+    Tooltip
+} from "@blueprintjs/core";
 import ReactResizeDetector from "react-resize-detector";
 import {AnimationMode, PlayMode, DefaultWidgetConfig, WidgetProps, HelpType, AnimatorStore, AppStore} from "stores";
 import {SafeNumericInput} from "components/Shared";
@@ -192,7 +209,8 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
 
     private getPlayModeIcon = (): IconName => {
         switch (AnimatorStore.Instance.playMode) {
-            case PlayMode.FORWARD: default:
+            case PlayMode.FORWARD:
+            default:
                 return "arrow-right";
             case PlayMode.BACKWARD:
                 return "arrow-left";
@@ -238,33 +256,31 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
                         onChange={this.onAnimationModeChanged}
                         label="Image"
                     />
-                    {hideSliders &&
-                    <SafeNumericInput
-                        value={frameIndex}
-                        min={-1}
-                        max={appStore.frames.length}
-                        stepSize={1}
-                        onValueChange={this.onFrameChanged}
-                        fill={true}
-                        disabled={appStore.animatorStore.animationActive}
-                    />
-                    }
-                    {!hideSliders &&
-                    <React.Fragment>
-                        <Slider
+                    {hideSliders && (
+                        <SafeNumericInput
                             value={frameIndex}
-                            min={0}
-                            max={appStore.frames.length - 1}
-                            showTrackFill={false}
+                            min={-1}
+                            max={appStore.frames.length}
                             stepSize={1}
-                            onChange={this.onFrameChanged}
+                            onValueChange={this.onFrameChanged}
+                            fill={true}
                             disabled={appStore.animatorStore.animationActive}
                         />
-                        <div className="slider-info">
-                            {activeFrame.filename}
-                        </div>
-                    </React.Fragment>
-                    }
+                    )}
+                    {!hideSliders && (
+                        <React.Fragment>
+                            <Slider
+                                value={frameIndex}
+                                min={0}
+                                max={appStore.frames.length - 1}
+                                showTrackFill={false}
+                                stepSize={1}
+                                onChange={this.onFrameChanged}
+                                disabled={appStore.animatorStore.animationActive}
+                            />
+                            <div className="slider-info">{activeFrame.filename}</div>
+                        </React.Fragment>
+                    )}
                 </div>
             );
         }
@@ -272,7 +288,7 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
         // Channel Control
         if (numChannels > 1) {
             const numLabels = 5;
-            const channelStep = numChannels > 10 ? ((numChannels - 1) / (numLabels - 1)) : 1;
+            const channelStep = numChannels > 10 ? (numChannels - 1) / (numLabels - 1) : 1;
             channelSlider = (
                 <div className="animator-slider">
                     <Radio
@@ -282,54 +298,54 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
                         onChange={this.onAnimationModeChanged}
                         label="Channel"
                     />
-                    {hideSliders &&
-                    <SafeNumericInput
-                        value={activeFrame.requiredChannel}
-                        min={-1}
-                        max={numChannels}
-                        stepSize={1}
-                        onValueChange={this.onChannelChanged}
-                        fill={true}
-                        disabled={appStore.animatorStore.animationActive}
-                    />
-                    }
-                    {!hideSliders &&
-                    <React.Fragment>
-                        <Slider
-                            className="channel-slider"
+                    {hideSliders && (
+                        <SafeNumericInput
                             value={activeFrame.requiredChannel}
-                            min={0}
-                            max={numChannels - 1}
-                            labelStepSize={channelStep}
-                            labelPrecision={0}
-                            showTrackFill={false}
-                            onChange={this.onChannelChanged}
+                            min={-1}
+                            max={numChannels}
+                            stepSize={1}
+                            onValueChange={this.onChannelChanged}
+                            fill={true}
                             disabled={appStore.animatorStore.animationActive}
                         />
-                        <div className="slider-info">
-                            <pre>{activeFrame.simpleSpectralInfo}</pre>
-                        </div>
-                    </React.Fragment>
-                    }
+                    )}
+                    {!hideSliders && (
+                        <React.Fragment>
+                            <Slider
+                                className="channel-slider"
+                                value={activeFrame.requiredChannel}
+                                min={0}
+                                max={numChannels - 1}
+                                labelStepSize={channelStep}
+                                labelPrecision={0}
+                                showTrackFill={false}
+                                onChange={this.onChannelChanged}
+                                disabled={appStore.animatorStore.animationActive}
+                            />
+                            <div className="slider-info">
+                                <pre>{activeFrame.simpleSpectralInfo}</pre>
+                            </div>
+                        </React.Fragment>
+                    )}
                 </div>
             );
             channelRangeSlider = (
                 <div className="animator-slider range-slider">
-                    <div className="range-label"/>
-                    {!hideSliders &&
-                    <React.Fragment>
-                        <RangeSlider
-                            value={activeFrame.animationChannelRange}
-                            min={0}
-                            max={numChannels - 1}
-                            labelStepSize={channelStep}
-                            labelPrecision={0}
-                            onChange={this.onRangeChanged}
-                            disabled={appStore.animatorStore.animationActive}
-                        />
-                        <div className="slider-info"/>
-                    </React.Fragment>
-                    }
+                    <div className="range-label" />
+                    {!hideSliders && (
+                        <React.Fragment>
+                            <RangeSlider
+                                value={activeFrame.animationChannelRange}
+                                min={0}
+                                max={numChannels - 1}
+                                labelStepSize={channelStep}
+                                labelPrecision={0}
+                                onChange={this.onRangeChanged}
+                                disabled={appStore.animatorStore.animationActive}
+                            />
+                            <div className="slider-info" />
+                        </React.Fragment>
+                    )}
                 </div>
             );
         }
@@ -345,30 +361,30 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
                         onChange={this.onAnimationModeChanged}
                         label="Stokes"
                     />
-                    {hideSliders &&
-                    <SafeNumericInput
-                        value={activeFrame.requiredStokes}
-                        min={-1}
-                        max={activeFrame.frameInfo.fileInfoExtended.stokes}
-                        stepSize={1}
-                        onValueChange={this.onStokesChanged}
-                        disabled={appStore.animatorStore.animationActive}
-                        fill={true}
-                    />
-                    }
-                    {!hideSliders &&
-                    <React.Fragment>
-                        <Slider
+                    {hideSliders && (
+                        <SafeNumericInput
                             value={activeFrame.requiredStokes}
-                            min={0}
-                            showTrackFill={false}
-                            max={activeFrame.frameInfo.fileInfoExtended.stokes - 1}
-                            onChange={this.onStokesChanged}
+                            min={-1}
+                            max={activeFrame.frameInfo.fileInfoExtended.stokes}
+                            stepSize={1}
+                            onValueChange={this.onStokesChanged}
                             disabled={appStore.animatorStore.animationActive}
+                            fill={true}
                         />
-                        <div className="slider-info"/>
-                    </React.Fragment>
-                    }
+                    )}
+                    {!hideSliders && (
+                        <React.Fragment>
+                            <Slider
+                                value={activeFrame.requiredStokes}
+                                min={0}
+                                showTrackFill={false}
+                                max={activeFrame.frameInfo.fileInfoExtended.stokes - 1}
+                                onChange={this.onStokesChanged}
+                                disabled={appStore.animatorStore.animationActive}
+                            />
+                            <div className="slider-info" />
+                        </React.Fragment>
+                    )}
                 </div>
             );
         }
@@ -383,85 +399,121 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
                 className="playback-mode"
                 content={
                     <Menu>
-                        <MenuItem icon="arrow-right" text="Play Forward" active={appStore.animatorStore.playMode === PlayMode.FORWARD} onClick={() => appStore.animatorStore.playMode = PlayMode.FORWARD}/>
-                        <MenuItem icon="arrow-left" text="Play Backwards" active={appStore.animatorStore.playMode === PlayMode.BACKWARD} onClick={() => appStore.animatorStore.playMode = PlayMode.BACKWARD}/>
-                        <MenuItem icon="swap-horizontal" text="Bouncing" active={appStore.animatorStore.playMode === PlayMode.BOUNCING} onClick={() => appStore.animatorStore.playMode = PlayMode.BOUNCING}/>
-                        <MenuItem icon="exchange" text="Blink" active={appStore.animatorStore.playMode === PlayMode.BLINK} onClick={() => appStore.animatorStore.playMode = PlayMode.BLINK}/>
+                        <MenuItem
+                            icon="arrow-right"
+                            text="Play Forward"
+                            active={appStore.animatorStore.playMode === PlayMode.FORWARD}
+                            onClick={() => (appStore.animatorStore.playMode = PlayMode.FORWARD)}
+                        />
+                        <MenuItem
+                            icon="arrow-left"
+                            text="Play Backwards"
+                            active={appStore.animatorStore.playMode === PlayMode.BACKWARD}
+                            onClick={() => (appStore.animatorStore.playMode = PlayMode.BACKWARD)}
+                        />
+                        <MenuItem
+                            icon="swap-horizontal"
+                            text="Bouncing"
+                            active={appStore.animatorStore.playMode === PlayMode.BOUNCING}
+                            onClick={() => (appStore.animatorStore.playMode = PlayMode.BOUNCING)}
+                        />
+                        <MenuItem
+                            icon="exchange"
+                            text="Blink"
+                            active={appStore.animatorStore.playMode === PlayMode.BLINK}
+                            onClick={() => (appStore.animatorStore.playMode = PlayMode.BLINK)}
+                        />
                     </Menu>
                 }
                 position={Position.TOP}
             >
                 <Tooltip content="Playback Mode" position={Position.TOP}>
-                    <AnchorButton icon={this.getPlayModeIcon()} disabled={appStore.animatorStore.animationActive}>{!iconOnly && "Mode"}</AnchorButton>
+                    <AnchorButton icon={this.getPlayModeIcon()} disabled={appStore.animatorStore.animationActive}>
+                        {!iconOnly && "Mode"}
+                    </AnchorButton>
                 </Tooltip>
             </Popover>
         );
 
         const playbackButtons = (
             <ButtonGroup fill={true} className="playback-buttons">
-                <Button icon={"chevron-backward"} onClick={this.onFirstClicked}>{!iconOnly && "First"}</Button>
-                <Button icon={"step-backward"} onClick={this.onPrevClicked}>{!iconOnly && "Prev"}</Button>
-                {appStore.animatorStore.animationActive &&
-                <Button icon={"stop"} onClick={appStore.animatorStore.stopAnimation}>{!iconOnly && "Stop"}</Button>
-                }
-                {!appStore.animatorStore.animationActive &&
-                <Button icon={"play"} onClick={appStore.animatorStore.startAnimation}>{!iconOnly && "Play"}</Button>
-                }
-                <Button icon={"step-forward"} onClick={this.onNextClicked}>{!iconOnly && "Next"}</Button>
-                <Button icon={"chevron-forward"} onClick={this.onLastClicked}>{!iconOnly && "Last"}</Button>
+                <Button icon={"chevron-backward"} onClick={this.onFirstClicked}>
+                    {!iconOnly && "First"}
+                </Button>
+                <Button icon={"step-backward"} onClick={this.onPrevClicked}>
+                    {!iconOnly && "Prev"}
+                </Button>
+                {appStore.animatorStore.animationActive && (
+                    <Button icon={"stop"} onClick={appStore.animatorStore.stopAnimation}>
+                        {!iconOnly && "Stop"}
+                    </Button>
+                )}
+                {!appStore.animatorStore.animationActive && (
+                    <Button icon={"play"} onClick={appStore.animatorStore.startAnimation}>
+                        {!iconOnly && "Play"}
+                    </Button>
+                )}
+                <Button icon={"step-forward"} onClick={this.onNextClicked}>
+                    {!iconOnly && "Next"}
+                </Button>
+                <Button icon={"chevron-forward"} onClick={this.onLastClicked}>
+                    {!iconOnly && "Last"}
+                </Button>
             </ButtonGroup>
         );
 
         const numericControl = (
             <ControlGroup className="playback-numeric-control">
-                <HTMLSelect options={[NumericInputType.FrameRate, NumericInputType.Step]} onChange={(ev) => this.onNumericInputTypeChange(ev.currentTarget.value as NumericInputType)}/>
-                {this.numericInputType === NumericInputType.FrameRate ?
-                <SafeNumericInput
-                    value={appStore.animatorStore.frameRate}
-                    min={appStore.animatorStore.minFrameRate}
-                    max={appStore.animatorStore.maxFrameRate}
-                    stepSize={1}
-                    minorStepSize={1}
-                    majorStepSize={1}
-                    onValueChange={appStore.animatorStore.setFrameRate}
-                    disabled={appStore.animatorStore.animationActive}
-                /> :
-                <SafeNumericInput
-                    value={appStore.animatorStore.step}
-                    min={appStore.animatorStore.minStep}
-                    max={appStore.animatorStore.maxStep}
-                    stepSize={1}
-                    minorStepSize={1}
-                    majorStepSize={1}
-                    onValueChange={appStore.animatorStore.setStep}
-                    disabled={appStore.animatorStore.animationActive}
+                <HTMLSelect
+                    options={[NumericInputType.FrameRate, NumericInputType.Step]}
+                    onChange={ev => this.onNumericInputTypeChange(ev.currentTarget.value as NumericInputType)}
                 />
-                }
+                {this.numericInputType === NumericInputType.FrameRate ? (
+                    <SafeNumericInput
+                        value={appStore.animatorStore.frameRate}
+                        min={appStore.animatorStore.minFrameRate}
+                        max={appStore.animatorStore.maxFrameRate}
+                        stepSize={1}
+                        minorStepSize={1}
+                        majorStepSize={1}
+                        onValueChange={appStore.animatorStore.setFrameRate}
+                        disabled={appStore.animatorStore.animationActive}
+                    />
+                ) : (
+                    <SafeNumericInput
+                        value={appStore.animatorStore.step}
+                        min={appStore.animatorStore.minStep}
+                        max={appStore.animatorStore.maxStep}
+                        stepSize={1}
+                        minorStepSize={1}
+                        majorStepSize={1}
+                        onValueChange={appStore.animatorStore.setStep}
+                        disabled={appStore.animatorStore.animationActive}
+                    />
+                )}
             </ControlGroup>
         );
 
         return (
             <div className="animator-widget">
-                {!activeFrame &&
-                <NonIdealState icon={"folder-open"} title={"No file loaded"} description={"Load a file using the menu"}/>
-                }
+                {!activeFrame && <NonIdealState icon={"folder-open"} title={"No file loaded"} description={"Load a file using the menu"} />}
+                {activeFrame && (
+                    <div className={playbackClass}>
+                        {playbackButtons}
+                        {playbackModeButton}
+                        {numericControl}
+                    </div>
+                )}
                 {activeFrame &&
-                <div className={playbackClass}>
-                    {playbackButtons}
-                    {playbackModeButton}
-                    {numericControl}
-                </div>
-                }
-                {activeFrame && this.width > 0 && // temporary fix for broken range slider, issue #1078
-                <div className="animator-sliders">
-                    {frameSlider}
-                    {channelSlider}
-                    {channelRangeSlider}
-                    {stokesSlider}
-                </div>
-                }
-                <ReactResizeDetector handleWidth handleHeight onResize={this.onResize} refreshMode={"throttle"} refreshRate={33}>
-                </ReactResizeDetector>
+                    this.width > 0 && ( // temporary fix for broken range slider, issue #1078
+                        <div className="animator-sliders">
+                            {frameSlider}
+                            {channelSlider}
+                            {channelRangeSlider}
+                            {stokesSlider}
+                        </div>
+                    )}
+                <ReactResizeDetector handleWidth handleHeight onResize={this.onResize} refreshMode={"throttle"} refreshRate={33}></ReactResizeDetector>
             </div>
         );
     }

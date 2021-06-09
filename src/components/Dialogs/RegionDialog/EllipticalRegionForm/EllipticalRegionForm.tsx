@@ -14,7 +14,7 @@ import "./EllipticalRegionForm.scss";
 const KEYCODE_ENTER = 13;
 
 @observer
-export class EllipticalRegionForm extends React.Component<{ region: RegionStore, frame: FrameStore, wcsInfo: AST.FrameSet }> {
+export class EllipticalRegionForm extends React.Component<{region: RegionStore; frame: FrameStore; wcsInfo: AST.FrameSet}> {
     private static readonly REGION_PIXEL_EPS = 1.0e-3;
 
     // size determined by reference frame
@@ -31,11 +31,11 @@ export class EllipticalRegionForm extends React.Component<{ region: RegionStore,
         return null;
     }
 
-    private handleNameChange = (ev) => {
+    private handleNameChange = ev => {
         this.props.region.setName(ev.currentTarget.value);
     };
 
-    private handleCenterXChange = (ev) => {
+    private handleCenterXChange = ev => {
         if (ev.type === "keydown" && ev.keyCode !== KEYCODE_ENTER) {
             return;
         }
@@ -51,7 +51,7 @@ export class EllipticalRegionForm extends React.Component<{ region: RegionStore,
         ev.currentTarget.value = existingValue;
     };
 
-    private handleCenterYChange = (ev) => {
+    private handleCenterYChange = ev => {
         if (ev.type === "keydown" && ev.keyCode !== KEYCODE_ENTER) {
             return;
         }
@@ -67,7 +67,7 @@ export class EllipticalRegionForm extends React.Component<{ region: RegionStore,
         ev.currentTarget.value = existingValue;
     };
 
-    private handleCenterWCSXChange = (ev) => {
+    private handleCenterWCSXChange = ev => {
         if (ev.type === "keydown" && ev.keyCode !== KEYCODE_ENTER) {
             return;
         }
@@ -91,7 +91,7 @@ export class EllipticalRegionForm extends React.Component<{ region: RegionStore,
         ev.currentTarget.value = centerWCSPoint.x;
     };
 
-    private handleCenterWCSYChange = (ev) => {
+    private handleCenterWCSYChange = ev => {
         if (ev.type === "keydown" && ev.keyCode !== KEYCODE_ENTER) {
             return;
         }
@@ -115,7 +115,7 @@ export class EllipticalRegionForm extends React.Component<{ region: RegionStore,
         ev.currentTarget.value = centerWCSPoint.y;
     };
 
-    private handleMajorAxisChange = (ev) => {
+    private handleMajorAxisChange = ev => {
         if (ev.type === "keydown" && ev.keyCode !== KEYCODE_ENTER) {
             return;
         }
@@ -131,7 +131,7 @@ export class EllipticalRegionForm extends React.Component<{ region: RegionStore,
         ev.currentTarget.value = existingValue;
     };
 
-    private handleMajorAxisWCSChange = (ev) => {
+    private handleMajorAxisWCSChange = ev => {
         if (ev.type === "keydown" && ev.keyCode !== KEYCODE_ENTER) {
             return;
         }
@@ -152,7 +152,7 @@ export class EllipticalRegionForm extends React.Component<{ region: RegionStore,
         ev.currentTarget.value = this.sizeWCS.x;
     };
 
-    private handleMinorAxisChange = (ev) => {
+    private handleMinorAxisChange = ev => {
         if (ev.type === "keydown" && ev.keyCode !== KEYCODE_ENTER) {
             return;
         }
@@ -168,7 +168,7 @@ export class EllipticalRegionForm extends React.Component<{ region: RegionStore,
         ev.currentTarget.value = existingValue;
     };
 
-    private handleMinorAxisWCSChange = (ev) => {
+    private handleMinorAxisWCSChange = ev => {
         if (ev.type === "keydown" && ev.keyCode !== KEYCODE_ENTER) {
             return;
         }
@@ -189,7 +189,7 @@ export class EllipticalRegionForm extends React.Component<{ region: RegionStore,
         ev.currentTarget.value = this.sizeWCS.y;
     };
 
-    private handleRotationChange = (ev) => {
+    private handleRotationChange = ev => {
         if (ev.type === "keydown" && ev.keyCode !== KEYCODE_ENTER) {
             return;
         }
@@ -220,8 +220,26 @@ export class EllipticalRegionForm extends React.Component<{ region: RegionStore,
         const centerWCSPoint = getFormattedWCSPoint(this.props.wcsInfo, centerPoint);
         let xInput, yInput;
         if (region.coordinate === RegionCoordinate.Image) {
-            xInput = <SafeNumericInput selectAllOnFocus={true} buttonPosition="none" placeholder="X Coordinate" value={centerPoint.x} onBlur={this.handleCenterXChange} onKeyDown={this.handleCenterXChange}/>;
-            yInput = <SafeNumericInput selectAllOnFocus={true} buttonPosition="none" placeholder="Y Coordinate" value={centerPoint.y} onBlur={this.handleCenterYChange} onKeyDown={this.handleCenterYChange}/>;
+            xInput = (
+                <SafeNumericInput
+                    selectAllOnFocus={true}
+                    buttonPosition="none"
+                    placeholder="X Coordinate"
+                    value={centerPoint.x}
+                    onBlur={this.handleCenterXChange}
+                    onKeyDown={this.handleCenterXChange}
+                />
+            );
+            yInput = (
+                <SafeNumericInput
+                    selectAllOnFocus={true}
+                    buttonPosition="none"
+                    placeholder="Y Coordinate"
+                    value={centerPoint.y}
+                    onBlur={this.handleCenterYChange}
+                    onKeyDown={this.handleCenterYChange}
+                />
+            );
         } else {
             xInput = (
                 <Tooltip content={`Format: ${NUMBER_FORMAT_LABEL.get(formatX)}`} position={Position.BOTTOM} hoverOpenDelay={300}>
@@ -250,14 +268,33 @@ export class EllipticalRegionForm extends React.Component<{ region: RegionStore,
                 </Tooltip>
             );
         }
-        const infoString = region.coordinate === RegionCoordinate.Image ? `WCS: ${WCSPoint2D.ToString(centerWCSPoint)}` : `Image: ${Point2D.ToString(centerPoint, "px", 3)}`;
+        const infoString =
+            region.coordinate === RegionCoordinate.Image ? `WCS: ${WCSPoint2D.ToString(centerWCSPoint)}` : `Image: ${Point2D.ToString(centerPoint, "px", 3)}`;
 
         // size
         const size = region.size;
         let sizeWidthInput, sizeHeightInput;
         if (region.coordinate === RegionCoordinate.Image) {
-            sizeWidthInput = <SafeNumericInput selectAllOnFocus={true} buttonPosition="none" placeholder="Semi-major" value={size.x} onBlur={this.handleMajorAxisChange} onKeyDown={this.handleMajorAxisChange}/>;
-            sizeHeightInput = <SafeNumericInput selectAllOnFocus={true} buttonPosition="none" placeholder="Semi-minor" value={size.y} onBlur={this.handleMinorAxisChange} onKeyDown={this.handleMinorAxisChange}/>;
+            sizeWidthInput = (
+                <SafeNumericInput
+                    selectAllOnFocus={true}
+                    buttonPosition="none"
+                    placeholder="Semi-major"
+                    value={size.x}
+                    onBlur={this.handleMajorAxisChange}
+                    onKeyDown={this.handleMajorAxisChange}
+                />
+            );
+            sizeHeightInput = (
+                <SafeNumericInput
+                    selectAllOnFocus={true}
+                    buttonPosition="none"
+                    placeholder="Semi-minor"
+                    value={size.y}
+                    onBlur={this.handleMinorAxisChange}
+                    onKeyDown={this.handleMinorAxisChange}
+                />
+            );
         } else {
             sizeWidthInput = (
                 <Tooltip content={"Format: arcsec(\"), arcmin('), or degrees(deg)"} position={Position.BOTTOM} hoverOpenDelay={300}>
@@ -286,7 +323,10 @@ export class EllipticalRegionForm extends React.Component<{ region: RegionStore,
                 </Tooltip>
             );
         }
-        const sizeInfoString = region.coordinate === RegionCoordinate.Image ? `(Semi-major, Semi-minor): ${WCSPoint2D.ToString(this.sizeWCS)}` : `Image: ${Point2D.ToString(size, "px", 3)}`;
+        const sizeInfoString =
+            region.coordinate === RegionCoordinate.Image
+                ? `(Semi-major, Semi-minor): ${WCSPoint2D.ToString(this.sizeWCS)}`
+                : `Image: ${Point2D.ToString(size, "px", 3)}`;
         const pxUnitSpan = region.coordinate === RegionCoordinate.Image ? <span className={Classes.TEXT_MUTED}>(px)</span> : "";
         return (
             <div className="form-section elliptical-region-form">
@@ -294,42 +334,50 @@ export class EllipticalRegionForm extends React.Component<{ region: RegionStore,
                 <div className="form-contents">
                     <table>
                         <tbody>
-                        <tr>
-                            <td>Region Name</td>
-                            <td colSpan={2}>
-                                <InputGroup placeholder="Enter a region name" value={region.name} onChange={this.handleNameChange}/>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td>Coordinate</td>
-                            <td colSpan={2}><CoordinateComponent region={region} disableCooridnate={!this.props.wcsInfo}/></td>
-                        </tr>
-                        <tr>
-                            <td>Center {pxUnitSpan}</td>
-                            <td>{xInput}</td>
-                            <td>{yInput}</td>
-                            <td><span className="info-string">{infoString}</span></td>
-                        </tr>
-                        <tr>
-                            <td>Semi-axes {pxUnitSpan}</td>
-                            <td>{sizeWidthInput}</td>
-                            <td>{sizeHeightInput}</td>
-                            <td><span className="info-string">{sizeInfoString}</span></td>
-                        </tr>
-                        <tr>
-                            <td>P.A. <span className={Classes.TEXT_MUTED}>(deg)</span></td>
-                            <td>
-                                <SafeNumericInput
-                                    disabled={!this.props.frame?.hasSquarePixels}
-                                    selectAllOnFocus={true}
-                                    buttonPosition="none"
-                                    placeholder="P.A."
-                                    value={region.rotation}
-                                    onBlur={this.handleRotationChange}
-                                    onKeyDown={this.handleRotationChange}
-                                />
-                            </td>
-                        </tr>
+                            <tr>
+                                <td>Region Name</td>
+                                <td colSpan={2}>
+                                    <InputGroup placeholder="Enter a region name" value={region.name} onChange={this.handleNameChange} />
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>Coordinate</td>
+                                <td colSpan={2}>
+                                    <CoordinateComponent region={region} disableCooridnate={!this.props.wcsInfo} />
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>Center {pxUnitSpan}</td>
+                                <td>{xInput}</td>
+                                <td>{yInput}</td>
+                                <td>
+                                    <span className="info-string">{infoString}</span>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>Semi-axes {pxUnitSpan}</td>
+                                <td>{sizeWidthInput}</td>
+                                <td>{sizeHeightInput}</td>
+                                <td>
+                                    <span className="info-string">{sizeInfoString}</span>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    P.A. <span className={Classes.TEXT_MUTED}>(deg)</span>
+                                </td>
+                                <td>
+                                    <SafeNumericInput
+                                        disabled={!this.props.frame?.hasSquarePixels}
+                                        selectAllOnFocus={true}
+                                        buttonPosition="none"
+                                        placeholder="P.A."
+                                        value={region.rotation}
+                                        onBlur={this.handleRotationChange}
+                                        onKeyDown={this.handleRotationChange}
+                                    />
+                                </td>
+                            </tr>
                         </tbody>
                     </table>
                 </div>

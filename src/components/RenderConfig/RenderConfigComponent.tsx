@@ -53,7 +53,7 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
         return new RenderConfigWidgetStore();
     }
 
-    @computed get plotData(): { values: Array<Point2D>, xMin: number, xMax: number, yMin: number, yMax: number } {
+    @computed get plotData(): {values: Array<Point2D>; xMin: number; xMax: number; yMin: number; yMax: number} {
         const frame = AppStore.Instance.activeFrame;
         if (frame && frame.renderConfig.histogram && frame.renderConfig.histogram.bins && frame.renderConfig.histogram.bins.length) {
             const histogram = frame.renderConfig.histogram;
@@ -73,7 +73,7 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
             let yMin = histogram.bins[minIndex];
             let yMax = yMin;
 
-            let values: Array<{ x: number, y: number }>;
+            let values: Array<{x: number; y: number}>;
             const N = maxIndex - minIndex;
             if (N > 0 && !isNaN(N)) {
                 values = new Array(maxIndex - minIndex);
@@ -133,7 +133,7 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
         }
     }
 
-    handleScaleMinChange = (ev) => {
+    handleScaleMinChange = ev => {
         if (ev.type === "keydown" && ev.keyCode !== KEYCODE_ENTER) {
             return;
         }
@@ -145,7 +145,7 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
         }
     };
 
-    handleScaleMaxChange = (ev) => {
+    handleScaleMaxChange = ev => {
         if (ev.type === "keydown" && ev.keyCode !== KEYCODE_ENTER) {
             return;
         }
@@ -214,7 +214,7 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
         }
     };
 
-    onGraphCursorMoved = _.throttle((x) => {
+    onGraphCursorMoved = _.throttle(x => {
         this.widgetStore.setCursor(x);
     }, 100);
 
@@ -246,7 +246,7 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
         if (!frame || !this.widgetStore) {
             return (
                 <div className="render-config-container">
-                    <NonIdealState icon={"folder-open"} title={"No file loaded"} description={"Load a file using the menu"}/>
+                    <NonIdealState icon={"folder-open"} title={"No file loaded"} description={"Load a file using the menu"} />
                 </div>
             );
         }
@@ -320,23 +320,26 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
         }
 
         if (frame.renderConfig) {
-            linePlotProps.markers = [{
-                value: scaleMinVal,
-                id: "marker-min",
-                label: this.widgetStore.markerTextVisible ? "Min" : undefined,
-                draggable: true,
-                dragCustomBoundary: {xMax: scaleMaxVal},
-                dragMove: this.onMinMoved,
-                horizontal: false,
-            }, {
-                value: scaleMaxVal,
-                id: "marker-max",
-                label: this.widgetStore.markerTextVisible ? "Max" : undefined,
-                draggable: true,
-                dragCustomBoundary: {xMin: scaleMinVal},
-                dragMove: this.onMaxMoved,
-                horizontal: false,
-            }];
+            linePlotProps.markers = [
+                {
+                    value: scaleMinVal,
+                    id: "marker-min",
+                    label: this.widgetStore.markerTextVisible ? "Min" : undefined,
+                    draggable: true,
+                    dragCustomBoundary: {xMax: scaleMaxVal},
+                    dragMove: this.onMinMoved,
+                    horizontal: false
+                },
+                {
+                    value: scaleMaxVal,
+                    id: "marker-max",
+                    label: this.widgetStore.markerTextVisible ? "Max" : undefined,
+                    draggable: true,
+                    dragCustomBoundary: {xMin: scaleMinVal},
+                    dragMove: this.onMaxMoved,
+                    horizontal: false
+                }
+            ];
 
             if (this.widgetStore.meanRmsVisible && frame.renderConfig.histogram && frame.renderConfig.histogram.stdDev > 0) {
                 linePlotProps.markers.push({
@@ -359,13 +362,27 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
                 });
             }
 
-            if (isFinite(scaleMinVal) && isFinite(scaleMaxVal) && (scaleMinVal < scaleMaxVal)) {
-                const colormapScalingX = Array.from(Array(COLORSCALE_LENGTH).keys()).map(x => scaleMinVal + x / (COLORSCALE_LENGTH - 1) * (scaleMaxVal - scaleMinVal));
+            if (isFinite(scaleMinVal) && isFinite(scaleMaxVal) && scaleMinVal < scaleMaxVal) {
+                const colormapScalingX = Array.from(Array(COLORSCALE_LENGTH).keys()).map(
+                    x => scaleMinVal + (x / (COLORSCALE_LENGTH - 1)) * (scaleMaxVal - scaleMinVal)
+                );
                 let colormapScalingY = Array.from(Array(COLORSCALE_LENGTH).keys()).map(x => x / (COLORSCALE_LENGTH - 1));
-                colormapScalingY = colormapScalingY.map(x => scaleValue(x, frame.renderConfig.scaling, frame.renderConfig.alpha, frame.renderConfig.gamma, frame.renderConfig.bias, frame.renderConfig.contrast, appStore.preferenceStore?.useSmoothedBiasContrast));
+                colormapScalingY = colormapScalingY.map(x =>
+                    scaleValue(
+                        x,
+                        frame.renderConfig.scaling,
+                        frame.renderConfig.alpha,
+                        frame.renderConfig.gamma,
+                        frame.renderConfig.bias,
+                        frame.renderConfig.contrast,
+                        appStore.preferenceStore?.useSmoothedBiasContrast
+                    )
+                );
                 // fit to the histogram y axis
                 if (linePlotProps.logY) {
-                    colormapScalingY = colormapScalingY.map(x => Math.pow(10, Math.log10(linePlotProps.yMin) + x * (Math.log10(linePlotProps.yMax) - Math.log10(linePlotProps.yMin))));
+                    colormapScalingY = colormapScalingY.map(x =>
+                        Math.pow(10, Math.log10(linePlotProps.yMin) + x * (Math.log10(linePlotProps.yMax) - Math.log10(linePlotProps.yMin)))
+                    );
                 } else {
                     colormapScalingY = colormapScalingY.map(x => linePlotProps.yMin + x * (linePlotProps.yMax - linePlotProps.yMin));
                 }
@@ -405,18 +422,20 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
             );
             percentileButtonsDiv = (
                 <div className="percentile-buttons">
-                    <ButtonGroup fill={true}>
-                        {percentileRankButtons}
-                    </ButtonGroup>
+                    <ButtonGroup fill={true}>{percentileRankButtons}</ButtonGroup>
                 </div>
             );
         } else {
-            const percentileRankOptions: IOptionProps [] = RenderConfigStore.PERCENTILE_RANKS.map(rank => ({label: `${rank}%`, value: rank}));
+            const percentileRankOptions: IOptionProps[] = RenderConfigStore.PERCENTILE_RANKS.map(rank => ({label: `${rank}%`, value: rank}));
             percentileRankOptions.push({label: "Custom", value: -1});
             percentileSelectDiv = (
                 <div className="percentile-select">
                     <FormGroup label="Clip Percentile" inline={true}>
-                        <HTMLSelect options={percentileRankOptions} value={frame.renderConfig.selectedPercentileVal} onChange={this.handlePercentileRankSelectChanged}/>
+                        <HTMLSelect
+                            options={percentileRankOptions}
+                            value={frame.renderConfig.selectedPercentileVal}
+                            onChange={this.handlePercentileRankSelectChanged}
+                        />
                     </FormGroup>
                 </div>
             );
@@ -424,15 +443,15 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
 
         return (
             <div className="render-config-container">
-                {this.width > histogramCutoff &&
-                <div className="histogram-container">
-                    {displayRankButtons ? percentileButtonsDiv : percentileSelectDiv}
-                    <div className="histogram-plot">
-                        <LinePlotComponent {...linePlotProps}/>
-                        {this.width >= histogramCutoff && <ProfilerInfoComponent info={this.genProfilerInfo()}/>}
+                {this.width > histogramCutoff && (
+                    <div className="histogram-container">
+                        {displayRankButtons ? percentileButtonsDiv : percentileSelectDiv}
+                        <div className="histogram-plot">
+                            <LinePlotComponent {...linePlotProps} />
+                            {this.width >= histogramCutoff && <ProfilerInfoComponent info={this.genProfilerInfo()} />}
+                        </div>
                     </div>
-                </div>
-                }
+                )}
                 <div className="options-container">
                     <HistogramConfigComponent
                         darkTheme={appStore.darkTheme}
@@ -460,9 +479,7 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
                             onKeyDown={this.handleScaleMaxChange}
                         />
                     </FormGroup>
-                    <ColormapConfigComponent
-                        renderConfig={frame.renderConfig}
-                    />
+                    <ColormapConfigComponent renderConfig={frame.renderConfig} />
                     {this.width < histogramCutoff && percentileSelectDiv}
                 </div>
                 <TaskProgressDialogComponent
@@ -473,8 +490,7 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
                     onCancel={this.handleCubeHistogramCancelled}
                     text={"Calculating cube histogram"}
                 />
-                <ReactResizeDetector handleWidth handleHeight onResize={this.onResize} refreshMode={"throttle"}>
-                </ReactResizeDetector>
+                <ReactResizeDetector handleWidth handleHeight onResize={this.onResize} refreshMode={"throttle"}></ReactResizeDetector>
             </div>
         );
     }

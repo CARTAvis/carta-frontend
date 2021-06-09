@@ -28,7 +28,7 @@ export enum SystemType {
     FK4 = "FK4",
     FK5 = "FK5",
     Galactic = "GALACTIC",
-    ICRS = "ICRS",
+    ICRS = "ICRS"
 }
 
 export enum NumberFormatType {
@@ -40,7 +40,7 @@ export enum NumberFormatType {
 export const NUMBER_FORMAT_LABEL = new Map<NumberFormatType, string>([
     [NumberFormatType.HMS, "H:M:S"],
     [NumberFormatType.DMS, "D:M:S"],
-    [NumberFormatType.Degrees, "Degrees"],
+    [NumberFormatType.Degrees, "Degrees"]
 ]);
 
 export enum BeamType {
@@ -64,7 +64,7 @@ export class ASTSettingsString {
 
     add(name: string, value: any, storeIf: boolean = true) {
         if (value !== undefined && storeIf) {
-            let storedValue = (typeof value === "boolean" ? (value ? 1 : 0) : value);
+            let storedValue = typeof value === "boolean" ? (value ? 1 : 0) : value;
             this.stringList.push(`${name}=${storedValue}`);
         }
     }
@@ -94,7 +94,7 @@ export class OverlayGlobalSettings {
         let astString = new ASTSettingsString();
         astString.add("Labelling", this.labelType);
         astString.add("Color", AstColorsIndex.GLOBAL);
-        astString.add("Tol", toFixed(this.tolerance / 100, 2), (this.tolerance >= 0.001)); // convert to fraction
+        astString.add("Tol", toFixed(this.tolerance / 100, 2), this.tolerance >= 0.001); // convert to fraction
         astString.add("System", this.explicitSystem);
         return astString.toString();
     }
@@ -232,7 +232,7 @@ export class OverlayGridSettings {
         let astString = new ASTSettingsString();
         astString.add("Grid", this.visible);
         astString.add("Color(Grid)", AstColorsIndex.GRID, this.customColor);
-        astString.add("Width(Grid)", this.width, (this.width > 0));
+        astString.add("Width(Grid)", this.width, this.width > 0);
         astString.add("Gap(1)", this.gapX, this.customGap);
         astString.add("Gap(2)", this.gapY, this.customGap);
         return astString.toString();
@@ -289,7 +289,7 @@ export class OverlayBorderSettings {
         let astString = new ASTSettingsString();
         astString.add("Border", this.visible);
         astString.add("Color(Border)", AstColorsIndex.BORDER, this.customColor);
-        astString.add("Width(Border)", this.width, (this.width > 0));
+        astString.add("Width(Border)", this.width, this.width > 0);
         return astString.toString();
     }
 
@@ -336,7 +336,7 @@ export class OverlayTickSettings {
         astString.add("MinTick(1)", this.densityX, this.customDensity);
         astString.add("MinTick(2)", this.densityY, this.customDensity);
         astString.add("Color(Ticks)", AstColorsIndex.TICK, this.customColor);
-        astString.add("Width(Ticks)", this.width, (this.width > 0));
+        astString.add("Width(Ticks)", this.width, this.width > 0);
         astString.add("MinTickLen", toFixed(this.length / 100, 2)); // convert to fraction
         astString.add("MajTickLen", toFixed(this.majorLength / 100, 2)); // convert to fraction
         return astString.toString();
@@ -412,7 +412,7 @@ export class OverlayAxisSettings {
 
         astString.add("DrawAxes", this.visible);
         astString.add("Color(Axes)", AstColorsIndex.AXIS, this.customColor);
-        astString.add("Width(Axes)", this.width, (this.width > 0));
+        astString.add("Width(Axes)", this.width, this.width > 0);
 
         return astString.toString();
     }
@@ -492,7 +492,7 @@ export class OverlayNumberSettings {
             return undefined;
         }
 
-        const precision = (this.customPrecision ? this.precision : "*");
+        const precision = this.customPrecision ? this.precision : "*";
         return `${this.formatTypeX}.${precision}`;
     }
 
@@ -501,7 +501,7 @@ export class OverlayNumberSettings {
             return undefined;
         }
 
-        const precision = (this.customPrecision ? this.precision : "*");
+        const precision = this.customPrecision ? this.precision : "*";
         return `${this.formatTypeY}.${precision}`;
     }
 
@@ -510,7 +510,7 @@ export class OverlayNumberSettings {
             return undefined;
         }
 
-        let format = (this.customFormat ? this.formatX : this.defaultFormatX);
+        let format = this.customFormat ? this.formatX : this.defaultFormatX;
         return `${format}.${precision}`;
     }
 
@@ -519,7 +519,7 @@ export class OverlayNumberSettings {
             return undefined;
         }
 
-        let format = (this.customFormat ? this.formatY : this.defaultFormatY);
+        let format = this.customFormat ? this.formatY : this.defaultFormatY;
         return `${format}.${precision}`;
     }
 
@@ -757,7 +757,7 @@ export class OverlayColorbarSettings {
     @action setShowHoverInfo = (show: boolean) => {
         this.showHoverInfo = show;
     };
-    
+
     @action setWidth = (width: number) => {
         this.width = width;
     };
@@ -889,7 +889,7 @@ export class OverlayColorbarSettings {
     }
 
     @computed get tickNum(): number {
-        const tickNum = Math.round(this.height / 100.0 * this.tickDensity);
+        const tickNum = Math.round((this.height / 100.0) * this.tickDensity);
         return this.height && tickNum > 1 ? tickNum : 1;
     }
 
@@ -901,18 +901,18 @@ export class OverlayColorbarSettings {
         return Math.floor(this.getOrder(x));
     };
 
-    @computed get roundedNumbers(): {numbers: number[], precision: number} {
+    @computed get roundedNumbers(): {numbers: number[]; precision: number} {
         const frame = AppStore.Instance?.activeFrame;
         const scaleMinVal = frame?.renderConfig?.scaleMinVal;
         const scaleMaxVal = frame?.renderConfig?.scaleMaxVal;
         const tickNum = this.tickNum;
-        if (!isFinite(scaleMinVal) || !isFinite(scaleMaxVal) || (scaleMinVal >= scaleMaxVal) || !tickNum) {
+        if (!isFinite(scaleMinVal) || !isFinite(scaleMaxVal) || scaleMinVal >= scaleMaxVal || !tickNum) {
             return null;
         } else {
             let dy = (scaleMaxVal - scaleMinVal) / tickNum; // estimate the step
             let precision = -this.getPrecision(dy); // estimate precision
             const roundBase = Math.pow(10, precision);
-            const min =  Math.round(scaleMinVal * roundBase) / roundBase;
+            const min = Math.round(scaleMinVal * roundBase) / roundBase;
             dy = Math.ceil(dy * roundBase) / roundBase; // the exact step
             precision = -this.getPrecision(dy); // the exact precision of the step
 
@@ -936,9 +936,15 @@ export class OverlayColorbarSettings {
         const maxOrder = Math.max(...orders);
         const minOrder = Math.min(...orders);
         if (maxOrder >= 5.0 || minOrder <= -5.0) {
-            return this.roundedNumbers.numbers.map(x => x.toExponential(this.numberCustomPrecision ? this.numberPrecision : (x === 0 ? 0 : clamp(this.roundedNumbers.precision + this.getPrecision(x), 0, 50))));
+            return this.roundedNumbers.numbers.map(x =>
+                x.toExponential(
+                    this.numberCustomPrecision ? this.numberPrecision : x === 0 ? 0 : clamp(this.roundedNumbers.precision + this.getPrecision(x), 0, 50)
+                )
+            );
         } else {
-            return this.roundedNumbers.numbers.map(x => x.toFixed(this.numberCustomPrecision ? this.numberPrecision : clamp(this.roundedNumbers.precision, 0, 50)));
+            return this.roundedNumbers.numbers.map(x =>
+                x.toFixed(this.numberCustomPrecision ? this.numberPrecision : clamp(this.roundedNumbers.precision, 0, 50))
+            );
         }
     }
 
@@ -950,9 +956,9 @@ export class OverlayColorbarSettings {
             return [];
         }
         if (this.position === "right") {
-            return this.roundedNumbers.numbers.map(x => this.yOffset + this.height * (scaleMaxVal - x) / (scaleMaxVal - scaleMinVal));
+            return this.roundedNumbers.numbers.map(x => this.yOffset + (this.height * (scaleMaxVal - x)) / (scaleMaxVal - scaleMinVal));
         } else {
-            return this.roundedNumbers.numbers.map(x => this.yOffset + this.height * (x - scaleMinVal) / (scaleMaxVal - scaleMinVal));
+            return this.roundedNumbers.numbers.map(x => this.yOffset + (this.height * (x - scaleMinVal)) / (scaleMaxVal - scaleMinVal));
         }
     }
 
@@ -965,7 +971,7 @@ export class OverlayColorbarSettings {
     }
 
     @computed get numberWidth(): number {
-        const textWidth = Math.max(...(this.texts.map(x => x.length))) * this.textRatio[clamp(Math.floor(this.numberFont / 4), 0, this.textRatio.length)];
+        const textWidth = Math.max(...this.texts.map(x => x.length)) * this.textRatio[clamp(Math.floor(this.numberFont / 4), 0, this.textRatio.length)];
         return this.numberVisible ? this.numberFontSize * (this.numberRotation || this.position !== "right" ? 1 : textWidth) + this.textGap : 0;
     }
 
@@ -977,7 +983,8 @@ export class OverlayColorbarSettings {
         return this.offset + this.width + this.numberWidth + this.labelWidth;
     }
 
-    @computed get stageWidth(): number { // total width + base
+    @computed get stageWidth(): number {
+        // total width + base
         return this.totalWidth + 5;
     }
 }
@@ -1184,7 +1191,7 @@ export class OverlayStore {
     };
 
     @computed get labelsHidden() {
-        return (this.labels.hidden && this.numbers.hidden && this.title.hidden);
+        return this.labels.hidden && this.numbers.hidden && this.title.hidden;
     }
 
     @computed get styleString() {
@@ -1213,7 +1220,7 @@ export class OverlayStore {
     }
 
     @computed get showNumbers() {
-        return (this.numbers.show && this.global.labelType === LabelType.Exterior);
+        return this.numbers.show && this.global.labelType === LabelType.Exterior;
     }
 
     @computed get defaultGap() {
@@ -1225,9 +1232,9 @@ export class OverlayStore {
     }
 
     @computed get cumulativeLabelGap() {
-        const numGap = (this.showNumbers ? this.defaultGap : 0);
-        const numHeight = (this.showNumbers ? this.numbers.fontSize : 0);
-        return (numGap + numHeight + this.defaultGap);
+        const numGap = this.showNumbers ? this.defaultGap : 0;
+        const numHeight = this.showNumbers ? this.numbers.fontSize : 0;
+        return numGap + numHeight + this.defaultGap;
     }
 
     @computed get base() {
@@ -1243,10 +1250,14 @@ export class OverlayStore {
     }
 
     @computed get colorbarHoverInfoHeight(): number {
-        return (!(this.colorbar.visible) || (this.colorbar.visible && this.colorbar.position !== "bottom" && this.labels.show) || (this.colorbar.visible && this.colorbar.position === "bottom" && this.colorbar.labelVisible) ? 0 : 10);
+        return !this.colorbar.visible ||
+            (this.colorbar.visible && this.colorbar.position !== "bottom" && this.labels.show) ||
+            (this.colorbar.visible && this.colorbar.position === "bottom" && this.colorbar.labelVisible)
+            ? 0
+            : 10;
     }
 
-    @computed get paddingLeft(): number { 
+    @computed get paddingLeft(): number {
         return this.base + this.numberWidth + this.labelWidth;
     }
 
@@ -1255,11 +1266,20 @@ export class OverlayStore {
     }
 
     @computed get paddingTop(): number {
-        return this.base + (this.title.show ? this.titleGap + this.title.fontSize : (this.colorbar.visible && this.colorbar.position === "top" ? this.colorbar.totalWidth : 0));
+        return (
+            this.base +
+            (this.title.show ? this.titleGap + this.title.fontSize : this.colorbar.visible && this.colorbar.position === "top" ? this.colorbar.totalWidth : 0)
+        );
     }
 
     @computed get paddingBottom(): number {
-        return this.base + this.numberWidth + this.labelWidth + (this.colorbar.visible && this.colorbar.position === "bottom" ? this.colorbar.totalWidth : 0) + this.colorbarHoverInfoHeight;
+        return (
+            this.base +
+            this.numberWidth +
+            this.labelWidth +
+            (this.colorbar.visible && this.colorbar.position === "bottom" ? this.colorbar.totalWidth : 0) +
+            this.colorbarHoverInfoHeight
+        );
     }
 
     @computed get padding(): Padding {
@@ -1277,7 +1297,7 @@ export class OverlayStore {
     }
 
     @computed get renderHeight() {
-        const renderHeight =  this.viewHeight - this.paddingTop - this.paddingBottom;
+        const renderHeight = this.viewHeight - this.paddingTop - this.paddingBottom;
         return renderHeight > 1 ? renderHeight : 1; // return value > 1 to prevent crashing
     }
 }

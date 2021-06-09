@@ -17,21 +17,21 @@ export enum StokesCoordinate {
     CircularPolarization = "Vz",
     PolarizedIntensity = "PIz",
     PolarizationAngle = "PAz",
-    PolarizationQU = "QvsU",
+    PolarizationQU = "QvsU"
 }
 
 const DEFAULTS = {
-        fractionalPolVisible: false,
-        scatterOutRangePointsZIndex: [],
-        primaryLineColor: "auto-blue",
-        secondaryLineColor: "auto-orange",
-        lineWidth: 1,
-        linePlotPointSize: 1.5,
-        scatterPlotPointSize: 3,
-        equalAxes: true,
-        colorMap: "jet",
-        pointTransparency: 1,
-        invertedColorMap: false
+    fractionalPolVisible: false,
+    scatterOutRangePointsZIndex: [],
+    primaryLineColor: "auto-blue",
+    secondaryLineColor: "auto-orange",
+    lineWidth: 1,
+    linePlotPointSize: 1.5,
+    scatterPlotPointSize: 3,
+    equalAxes: true,
+    colorMap: "jet",
+    pointTransparency: 1,
+    invertedColorMap: false
 };
 
 export class StokesAnalysisWidgetStore extends RegionWidgetStore {
@@ -58,7 +58,7 @@ export class StokesAnalysisWidgetStore extends RegionWidgetStore {
     @observable fractionalPolVisible: boolean;
     scatterOutRangePointsZIndex: Array<number>;
 
-    // settings 
+    // settings
     @observable plotType: PlotType;
     @observable primaryLineColor: string;
     @observable secondaryLineColor: string;
@@ -67,31 +67,31 @@ export class StokesAnalysisWidgetStore extends RegionWidgetStore {
     @observable scatterPlotPointSize: number;
     @observable equalAxes: boolean;
     @observable colorMap: string;
-    @observable colorPixel: { color: Uint8ClampedArray, size: number };
+    @observable colorPixel: {color: Uint8ClampedArray; size: number};
     @observable pointTransparency: number;
     @observable invertedColorMap: boolean;
     readonly smoothingStore: ProfileSmoothingStore;
     @observable settingsTabId: StokesAnalysisSettingsTabs;
-    
+
     private static requestDataType = [StokesCoordinate.LinearPolarizationQ, StokesCoordinate.LinearPolarizationU];
-    private static ValidStatsTypes = [
-        CARTA.StatsType.Mean,
-    ];
+    private static ValidStatsTypes = [CARTA.StatsType.Mean];
 
     // return regionRequirements spectralProfiles coordinate array
     private static requiredCoordinate(widgetStore: StokesAnalysisWidgetStore): Array<StokesCoordinate> {
         let requiredCoordinate = StokesAnalysisWidgetStore.requestDataType;
         let Iz = requiredCoordinate.indexOf(StokesCoordinate.TotalIntensity);
         if (widgetStore.fractionalPolVisible) {
-            if (Iz < 0 ) {
+            if (Iz < 0) {
                 requiredCoordinate.push(StokesCoordinate.TotalIntensity);
             }
         }
         return requiredCoordinate;
     }
 
-    public static addToRequirementsMap(updatedRequirements: Map<number, Map<number, CARTA.SetSpectralRequirements>>, widgetsMap: Map<string, StokesAnalysisWidgetStore>)
-        : Map<number, Map<number, CARTA.SetSpectralRequirements>> {
+    public static addToRequirementsMap(
+        updatedRequirements: Map<number, Map<number, CARTA.SetSpectralRequirements>>,
+        widgetsMap: Map<string, StokesAnalysisWidgetStore>
+    ): Map<number, Map<number, CARTA.SetSpectralRequirements>> {
         widgetsMap.forEach(widgetStore => {
             const frame = widgetStore.effectiveFrame;
             if (frame && frame.hasStokes) {
@@ -144,7 +144,7 @@ export class StokesAnalysisWidgetStore extends RegionWidgetStore {
 
     @action setScatterChartAres = (chartArea: ChartArea) => {
         this.scatterChartArea = chartArea;
-    }
+    };
 
     @action setMouseMoveIntoScatterPlots = (val: boolean) => {
         this.isMouseMoveIntoScatterPlots = val;
@@ -200,7 +200,7 @@ export class StokesAnalysisWidgetStore extends RegionWidgetStore {
         this.linePlotcursorX = cursorVal;
     };
 
-    @action setScatterPlotCursor = (cursorVal: { x: number, y: number }) => {
+    @action setScatterPlotCursor = (cursorVal: {x: number; y: number}) => {
         this.scatterPlotCursorX = cursorVal.x;
         this.scatterPlotCursorY = cursorVal.y;
     };
@@ -214,7 +214,7 @@ export class StokesAnalysisWidgetStore extends RegionWidgetStore {
         this.regionIdMap.set(fileId, regionId);
         this.clearLinePlotsXYBounds();
         this.clearScatterPlotXYBounds();
-    };
+    }
 
     constructor() {
         super(RegionsType.CLOSED_AND_POINT);
@@ -234,7 +234,7 @@ export class StokesAnalysisWidgetStore extends RegionWidgetStore {
         this.pointTransparency = DEFAULTS.pointTransparency;
         this.smoothingStore = new ProfileSmoothingStore();
         this.settingsTabId = StokesAnalysisSettingsTabs.CONVERSION;
-        this.invertedColorMap  = DEFAULTS.invertedColorMap;
+        this.invertedColorMap = DEFAULTS.invertedColorMap;
     }
 
     @action setQUScatterPlotXBounds = (minVal: number, maxVal: number) => {
@@ -279,7 +279,7 @@ export class StokesAnalysisWidgetStore extends RegionWidgetStore {
     @action clearXYBounds = () => {
         this.clearLinePlotsXYBounds();
         this.clearScatterPlotXYBounds();
-    }
+    };
 
     @action setQULinePlotsXYBounds = (minX: number, maxX: number, minY: number, maxY: number) => {
         this.sharedMinX = minX;
@@ -320,33 +320,33 @@ export class StokesAnalysisWidgetStore extends RegionWidgetStore {
 
     @action setPrimaryLineColor = (color: string) => {
         this.primaryLineColor = color;
-    }
+    };
 
     @action setSecondaryLineColor = (color: string) => {
         this.secondaryLineColor = color;
-    }
+    };
 
     @action setLineWidth = (val: number) => {
         if (val >= LineSettings.MIN_WIDTH && val <= LineSettings.MAX_WIDTH) {
-            this.lineWidth = val;   
+            this.lineWidth = val;
         }
-    }
+    };
 
     @action setLinePlotPointSize = (val: number) => {
         if (val >= LineSettings.MIN_POINT_SIZE && val <= LineSettings.MAX_POINT_SIZE) {
-            this.linePlotPointSize = val;   
+            this.linePlotPointSize = val;
         }
-    }
+    };
 
     @action setScatterPlotPointSize = (val: number) => {
-        if (val >= ScatterSettings.MIN_POINT_SIZE && val <= ScatterSettings.MAX_POINT_SIZE ) {
-            this.scatterPlotPointSize = val;   
+        if (val >= ScatterSettings.MIN_POINT_SIZE && val <= ScatterSettings.MAX_POINT_SIZE) {
+            this.scatterPlotPointSize = val;
         }
-    }
+    };
 
     @action setEqualAxesValue = (val: boolean) => {
         this.equalAxes = val;
-    }
+    };
 
     @action setColormap = (colormap: string) => {
         this.colorMap = colormap;
@@ -355,36 +355,36 @@ export class StokesAnalysisWidgetStore extends RegionWidgetStore {
 
     @action setPointTransparency = (val: number) => {
         if (val >= ScatterSettings.MIN_TRANSPARENCY && val <= ScatterSettings.MAX_TRANSPARENCY) {
-            this.pointTransparency = val;   
+            this.pointTransparency = val;
         }
-    }
+    };
 
     @action setSettingsTabId = (tabId: StokesAnalysisSettingsTabs) => {
         this.settingsTabId = tabId;
-    }
+    };
 
     @computed get isLinePlotsAutoScaledX() {
-        return (this.sharedMinX === undefined || this.sharedMaxX === undefined);
+        return this.sharedMinX === undefined || this.sharedMaxX === undefined;
     }
 
     @computed get isQUScatterPlotAutoScaledX() {
-        return (this.quScatterMinX === undefined || this.quScatterMaxX === undefined);
+        return this.quScatterMinX === undefined || this.quScatterMaxX === undefined;
     }
 
     @computed get isQUScatterPlotAutoScaledY() {
-        return (this.quScatterMinY === undefined || this.quScatterMaxY === undefined);
+        return this.quScatterMinY === undefined || this.quScatterMaxY === undefined;
     }
 
     @computed get isQULinePlotAutoScaledY() {
-        return (this.quMinY === undefined || this.quMaxY === undefined);
+        return this.quMinY === undefined || this.quMaxY === undefined;
     }
 
     @computed get isPolIntensityAutoScaledY() {
-        return (this.polIntensityMinY === undefined || this.polIntensityMaxY === undefined);
+        return this.polIntensityMinY === undefined || this.polIntensityMaxY === undefined;
     }
 
     @computed get isPolAngleAutoScaledY() {
-        return (this.polAngleMinY === undefined || this.polAngleMaxY === undefined);
+        return this.polAngleMinY === undefined || this.polAngleMaxY === undefined;
     }
 
     public init = (widgetSettings): void => {
@@ -399,22 +399,41 @@ export class StokesAnalysisWidgetStore extends RegionWidgetStore {
         if (secondaryLineColor.isValid() || isAutoColor(widgetSettings.secondaryLineColor)) {
             this.secondaryLineColor = widgetSettings.secondaryLineColor;
         }
-        if (typeof widgetSettings.lineWidth === "number" && widgetSettings.lineWidth >= LineSettings.MIN_WIDTH && widgetSettings.lineWidth <= LineSettings.MAX_WIDTH) {
+        if (
+            typeof widgetSettings.lineWidth === "number" &&
+            widgetSettings.lineWidth >= LineSettings.MIN_WIDTH &&
+            widgetSettings.lineWidth <= LineSettings.MAX_WIDTH
+        ) {
             this.lineWidth = widgetSettings.lineWidth;
         }
-        if (typeof widgetSettings.linePlotPointSize === "number" && widgetSettings.linePlotPointSize >= LineSettings.MIN_POINT_SIZE && widgetSettings.linePlotPointSize <= LineSettings.MAX_POINT_SIZE) {
+        if (
+            typeof widgetSettings.linePlotPointSize === "number" &&
+            widgetSettings.linePlotPointSize >= LineSettings.MIN_POINT_SIZE &&
+            widgetSettings.linePlotPointSize <= LineSettings.MAX_POINT_SIZE
+        ) {
             this.linePlotPointSize = widgetSettings.linePlotPointSize;
         }
-        if (typeof widgetSettings.plotType === "string" && (widgetSettings.plotType === PlotType.STEPS || widgetSettings.plotType === PlotType.LINES || widgetSettings.plotType === PlotType.POINTS)) {
+        if (
+            typeof widgetSettings.plotType === "string" &&
+            (widgetSettings.plotType === PlotType.STEPS || widgetSettings.plotType === PlotType.LINES || widgetSettings.plotType === PlotType.POINTS)
+        ) {
             this.plotType = widgetSettings.plotType;
         }
         if (typeof widgetSettings.colorMap === "string") {
             this.colorMap = widgetSettings.colorMap;
         }
-        if (typeof widgetSettings.scatterPlotPointSize === "number" && widgetSettings.scatterPlotPointSize >= ScatterSettings.MIN_POINT_SIZE && widgetSettings.scatterPlotPointSize <= ScatterSettings.MAX_POINT_SIZE ) {
+        if (
+            typeof widgetSettings.scatterPlotPointSize === "number" &&
+            widgetSettings.scatterPlotPointSize >= ScatterSettings.MIN_POINT_SIZE &&
+            widgetSettings.scatterPlotPointSize <= ScatterSettings.MAX_POINT_SIZE
+        ) {
             this.scatterPlotPointSize = widgetSettings.scatterPlotPointSize;
         }
-        if (typeof widgetSettings.pointTransparency === "number" && widgetSettings.pointTransparency >= ScatterSettings.MIN_TRANSPARENCY && widgetSettings.pointTransparency <= ScatterSettings.MAX_TRANSPARENCY) {
+        if (
+            typeof widgetSettings.pointTransparency === "number" &&
+            widgetSettings.pointTransparency >= ScatterSettings.MIN_TRANSPARENCY &&
+            widgetSettings.pointTransparency <= ScatterSettings.MAX_TRANSPARENCY
+        ) {
             this.pointTransparency = widgetSettings.pointTransparency;
         }
         if (typeof widgetSettings.equalAxes === "boolean") {

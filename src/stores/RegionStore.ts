@@ -4,7 +4,21 @@ import {CARTA} from "carta-protobuf";
 import * as AST from "ast_wrapper";
 import {Point2D} from "models";
 import {BackendService} from "services";
-import {add2D, getApproximateEllipsePoints, getApproximatePolygonPoints, isAstBadPoint, midpoint2D, minMax2D, rotate2D, scale2D, simplePolygonPointTest, simplePolygonTest, subtract2D, toFixed, transformPoint} from "utilities";
+import {
+    add2D,
+    getApproximateEllipsePoints,
+    getApproximatePolygonPoints,
+    isAstBadPoint,
+    midpoint2D,
+    minMax2D,
+    rotate2D,
+    scale2D,
+    simplePolygonPointTest,
+    simplePolygonTest,
+    subtract2D,
+    toFixed,
+    transformPoint
+} from "utilities";
 import {FrameStore} from "stores";
 
 export const CURSOR_REGION_ID = 0;
@@ -179,7 +193,8 @@ export class RegionStore {
             return "Cursor";
         } else if (this.name && this.name !== "") {
             return this.name;
-        } else { // temporary region id < 0, use "..." for representation
+        } else {
+            // temporary region id < 0, use "..." for representation
             return `Region ${this.regionId > CURSOR_REGION_ID ? this.regionId : "..."}`;
         }
     }
@@ -192,13 +207,9 @@ export class RegionStore {
             case CARTA.RegionType.POINT:
                 return `Point (pixel) [${center}]`;
             case CARTA.RegionType.RECTANGLE:
-                return `rotbox[[${center}], ` +
-                    `[${toFixed(this.size.x, 6)}pix, ${toFixed(this.size.y, 6)}pix], ` +
-                    `${toFixed(this.rotation, 6)}deg]`;
+                return `rotbox[[${center}], ` + `[${toFixed(this.size.x, 6)}pix, ${toFixed(this.size.y, 6)}pix], ` + `${toFixed(this.rotation, 6)}deg]`;
             case CARTA.RegionType.ELLIPSE:
-                return `ellipse[[${center}], ` +
-                    `[${toFixed(this.size.x, 6)}pix, ${toFixed(this.size.y, 6)}pix], ` +
-                    `${toFixed(this.rotation, 6)}deg]`;
+                return `ellipse[[${center}], ` + `[${toFixed(this.size.x, 6)}pix, ${toFixed(this.size.y, 6)}pix], ` + `${toFixed(this.rotation, 6)}deg]`;
             case CARTA.RegionType.POLYGON:
                 let polygonProperties = "poly[";
                 this.controlPoints.forEach((point, index) => {
@@ -218,16 +229,23 @@ export class RegionStore {
                 approximatePoints = [transformPoint(astTransform, this.center, false)];
             }
             if (this.regionType === CARTA.RegionType.ELLIPSE) {
-                approximatePoints = getApproximateEllipsePoints(astTransform, this.center, this.size.y, this.size.x, this.rotation, RegionStore.TARGET_VERTEX_COUNT);
+                approximatePoints = getApproximateEllipsePoints(
+                    astTransform,
+                    this.center,
+                    this.size.y,
+                    this.size.x,
+                    this.rotation,
+                    RegionStore.TARGET_VERTEX_COUNT
+                );
             } else if (this.regionType === CARTA.RegionType.RECTANGLE) {
                 let halfWidth = this.size.x / 2;
                 let halfHeight = this.size.y / 2;
-                const rotation = this.rotation * Math.PI / 180.0;
+                const rotation = (this.rotation * Math.PI) / 180.0;
                 const points: Point2D[] = [
                     add2D(this.center, rotate2D({x: -halfWidth, y: -halfHeight}, rotation)),
                     add2D(this.center, rotate2D({x: +halfWidth, y: -halfHeight}, rotation)),
                     add2D(this.center, rotate2D({x: +halfWidth, y: +halfHeight}, rotation)),
-                    add2D(this.center, rotate2D({x: -halfWidth, y: +halfHeight}, rotation)),
+                    add2D(this.center, rotate2D({x: -halfWidth, y: +halfHeight}, rotation))
                 ];
                 approximatePoints = getApproximatePolygonPoints(astTransform, points, RegionStore.TARGET_VERTEX_COUNT);
             } else {
@@ -238,8 +256,19 @@ export class RegionStore {
         return approximatePoints;
     }
 
-    constructor(backendService: BackendService, fileId: number, activeFrame: FrameStore, controlPoints: Point2D[], regionType: CARTA.RegionType, regionId: number = -1,
-                color: string = Colors.TURQUOISE5, lineWidth: number = 2, dashLength: number = 0, rotation: number = 0, name: string = "") {
+    constructor(
+        backendService: BackendService,
+        fileId: number,
+        activeFrame: FrameStore,
+        controlPoints: Point2D[],
+        regionType: CARTA.RegionType,
+        regionId: number = -1,
+        color: string = Colors.TURQUOISE5,
+        lineWidth: number = 2,
+        dashLength: number = 0,
+        rotation: number = 0,
+        name: string = ""
+    ) {
         makeObservable(this);
         this.fileId = fileId;
         this.activeFrame = activeFrame;
@@ -325,7 +354,6 @@ export class RegionStore {
             this.isSimplePolygon = simplePolygonPointTest(points, point) && simplePolygonPointTest(points, point - 1);
         } else {
             this.isSimplePolygon = simplePolygonTest(points);
-
         }
     }
 
@@ -403,8 +431,12 @@ export class RegionStore {
         if (this.activeFrame) {
             this.activeFrame.setCenter(this.center.x, this.center.y);
 
-            if (this.activeFrame.renderWidth < this.activeFrame.zoomLevel * this.boundingBox.x || this.activeFrame.renderHeight < this.activeFrame.zoomLevel * this.boundingBox.y) {
-                const zoomLevel = FOCUS_REGION_RATIO * Math.min(this.activeFrame.renderWidth / this.boundingBox.x, this.activeFrame.renderHeight / this.boundingBox.y);
+            if (
+                this.activeFrame.renderWidth < this.activeFrame.zoomLevel * this.boundingBox.x ||
+                this.activeFrame.renderHeight < this.activeFrame.zoomLevel * this.boundingBox.y
+            ) {
+                const zoomLevel =
+                    FOCUS_REGION_RATIO * Math.min(this.activeFrame.renderWidth / this.boundingBox.x, this.activeFrame.renderHeight / this.boundingBox.y);
                 this.activeFrame.setZoom(zoomLevel);
             }
         }

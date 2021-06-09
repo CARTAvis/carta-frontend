@@ -11,7 +11,6 @@ interface ColormapConfigProps {
 
 @observer
 export class ColormapConfigComponent extends React.Component<ColormapConfigProps> {
-
     @observable extendBiasContrast: boolean = false;
 
     @action switchExtendBiasContrast = () => {
@@ -23,7 +22,7 @@ export class ColormapConfigComponent extends React.Component<ColormapConfigProps
         makeObservable(this);
     }
 
-    handleInvertedChanged: React.FormEventHandler<HTMLInputElement> = (evt) => {
+    handleInvertedChanged: React.FormEventHandler<HTMLInputElement> = evt => {
         this.props.renderConfig.setInverted(evt.currentTarget.checked);
     };
 
@@ -36,54 +35,44 @@ export class ColormapConfigComponent extends React.Component<ColormapConfigProps
         return (
             <React.Fragment>
                 <FormGroup label={"Scaling"} inline={true}>
-                    <ScalingSelectComponent
-                        selectedItem={renderConfig.scaling}
-                        onItemSelect={renderConfig.setScaling}
-                    />
+                    <ScalingSelectComponent selectedItem={renderConfig.scaling} onItemSelect={renderConfig.setScaling} />
                 </FormGroup>
                 <FormGroup label={"Color map"} inline={true}>
-                    <ColormapComponent
-                        inverted={renderConfig.inverted}
-                        selectedItem={renderConfig.colorMap}
-                        onItemSelect={renderConfig.setColorMap}
-                    />
+                    <ColormapComponent inverted={renderConfig.inverted} selectedItem={renderConfig.colorMap} onItemSelect={renderConfig.setColorMap} />
                 </FormGroup>
                 <FormGroup label={"Invert color map"} inline={true}>
-                    <Switch
-                        checked={renderConfig.inverted}
-                        onChange={this.handleInvertedChanged}
-                    />
+                    <Switch checked={renderConfig.inverted} onChange={this.handleInvertedChanged} />
                 </FormGroup>
-                {(renderConfig.scaling === FrameScaling.LOG || renderConfig.scaling === FrameScaling.POWER) &&
-                <FormGroup label={"Alpha"} inline={true}>
-                    <SafeNumericInput
-                        min={RenderConfigStore.ALPHA_MIN}
-                        max={RenderConfigStore.ALPHA_MAX}
-                        buttonPosition={"none"}
-                        value={renderConfig.alpha}
-                        onValueChange={renderConfig.setAlpha}
-                    />
-                </FormGroup>
-                }
-                {renderConfig.scaling === FrameScaling.GAMMA &&
-                <FormGroup label={"Gamma"} inline={true}>
-                    <SafeNumericInput
-                        className={'step-input'}
-                        min={RenderConfigStore.GAMMA_MIN}
-                        max={RenderConfigStore.GAMMA_MAX}
-                        stepSize={0.1}
-                        minorStepSize={0.01}
-                        majorStepSize={0.5}
-                        value={renderConfig.gamma}
-                        onValueChange={renderConfig.setGamma}
-                    />
-                </FormGroup>
-                }
+                {(renderConfig.scaling === FrameScaling.LOG || renderConfig.scaling === FrameScaling.POWER) && (
+                    <FormGroup label={"Alpha"} inline={true}>
+                        <SafeNumericInput
+                            min={RenderConfigStore.ALPHA_MIN}
+                            max={RenderConfigStore.ALPHA_MAX}
+                            buttonPosition={"none"}
+                            value={renderConfig.alpha}
+                            onValueChange={renderConfig.setAlpha}
+                        />
+                    </FormGroup>
+                )}
+                {renderConfig.scaling === FrameScaling.GAMMA && (
+                    <FormGroup label={"Gamma"} inline={true}>
+                        <SafeNumericInput
+                            className={"step-input"}
+                            min={RenderConfigStore.GAMMA_MIN}
+                            max={RenderConfigStore.GAMMA_MAX}
+                            stepSize={0.1}
+                            minorStepSize={0.01}
+                            majorStepSize={0.5}
+                            value={renderConfig.gamma}
+                            onValueChange={renderConfig.setGamma}
+                        />
+                    </FormGroup>
+                )}
                 <FormGroup inline={true}>
                     <Button
                         minimal={true}
                         rightIcon={this.extendBiasContrast ? "double-chevron-up" : "double-chevron-down"}
-                        alignText={'right'}
+                        alignText={"right"}
                         small={true}
                         onClick={this.switchExtendBiasContrast}
                     >

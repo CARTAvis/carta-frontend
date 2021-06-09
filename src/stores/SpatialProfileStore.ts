@@ -1,4 +1,4 @@
-import { action, observable, makeObservable } from "mobx";
+import {action, observable, makeObservable} from "mobx";
 import {CARTA} from "carta-protobuf";
 import {ProcessedSpatialProfile, ProtobufProcessing} from "models";
 
@@ -20,8 +20,12 @@ export class SpatialProfileStore {
 
     @action updateFromStream(spatialProfileData: CARTA.ISpatialProfileData) {
         // If the profile store has the same coordinates as the incoming one, just add to the profiles
-        if (this.channel === spatialProfileData.channel && this.stokes === spatialProfileData.stokes
-            && this.x === spatialProfileData.x && this.y === spatialProfileData.y) {
+        if (
+            this.channel === spatialProfileData.channel &&
+            this.stokes === spatialProfileData.stokes &&
+            this.x === spatialProfileData.x &&
+            this.y === spatialProfileData.y
+        ) {
             for (let profile of spatialProfileData.profiles) {
                 this.profiles.set(profile.coordinate, ProtobufProcessing.ProcessSpatialProfile(profile));
             }

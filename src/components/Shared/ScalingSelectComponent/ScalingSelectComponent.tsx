@@ -31,7 +31,7 @@ const ScalingSelect = Select.ofType<FrameScaling>();
 const SCALING_KEYS = Array.from(RenderConfigStore.SCALING_TYPES.keys());
 export const SCALING_POPOVER_PROPS: Partial<IPopoverProps> = {minimal: true, position: "auto-end", popoverClassName: "colormap-select-popover"};
 
-export const ScalingSelectComponent: React.FC<ScalingComponentProps> = (props) => {
+export const ScalingSelectComponent: React.FC<ScalingComponentProps> = props => {
     const renderScalingSelectItem = (scaling: FrameScaling, {handleClick, modifiers, query}) => {
         if (!modifiers.matchesPredicate || !RenderConfigStore.SCALING_TYPES.has(scaling)) {
             return null;
@@ -43,7 +43,7 @@ export const ScalingSelectComponent: React.FC<ScalingComponentProps> = (props) =
                 label={RenderConfigStore.SCALING_TYPES.get(scaling)}
                 key={scaling}
                 onClick={handleClick}
-                text={<div className="equation-div" style={{backgroundImage: `url(${equationPngMap.get(scaling)}`, backgroundSize: 'contain'}}/>}
+                text={<div className="equation-div" style={{backgroundImage: `url(${equationPngMap.get(scaling)}`, backgroundSize: "contain"}} />}
                 style={{width: "220px"}}
             />
         );
@@ -59,7 +59,12 @@ export const ScalingSelectComponent: React.FC<ScalingComponentProps> = (props) =
             itemRenderer={renderScalingSelectItem}
             disabled={props.disabled}
         >
-            <Button text={RenderConfigStore.SCALING_TYPES.get(props.selectedItem)} rightIcon="double-caret-vertical" alignText={"right"} disabled={props.disabled}/>
+            <Button
+                text={RenderConfigStore.SCALING_TYPES.get(props.selectedItem)}
+                rightIcon="double-caret-vertical"
+                alignText={"right"}
+                disabled={props.disabled}
+            />
         </ScalingSelect>
     );
 };

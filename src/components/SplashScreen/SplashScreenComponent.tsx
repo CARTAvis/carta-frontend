@@ -17,16 +17,25 @@ export class SplashScreenComponent extends React.Component {
         }
 
         return (
-            <Overlay className={Classes.OVERLAY_SCROLL_CONTAINER} autoFocus={true} canEscapeKeyClose={false} canOutsideClickClose={false} isOpen={appStore.splashScreenVisible} usePortal={true}>
+            <Overlay
+                className={Classes.OVERLAY_SCROLL_CONTAINER}
+                autoFocus={true}
+                canEscapeKeyClose={false}
+                canOutsideClickClose={false}
+                isOpen={appStore.splashScreenVisible}
+                usePortal={true}
+            >
                 <div className={className}>
                     <div className={"image-div"}>
-                        <img src={logoPng} width={150}/>
+                        <img src={logoPng} width={150} />
                     </div>
                     <div className={"appInfo-div"}>
-                        <h1>{CARTA_INFO.acronym} {CARTA_INFO.version} ({CARTA_INFO.date})</h1>
+                        <h1>
+                            {CARTA_INFO.acronym} {CARTA_INFO.version} ({CARTA_INFO.date})
+                        </h1>
                         <p>{CARTA_INFO.fullName}</p>
                     </div>
-                    <Spinner intent={Intent.PRIMARY} size={30} value={null}/>
+                    <Spinner intent={Intent.PRIMARY} size={30} value={null} />
                     <div className={"loadingInfo-div"}>
                         <p>{appStore.logStore.newestMsg}</p>
                     </div>

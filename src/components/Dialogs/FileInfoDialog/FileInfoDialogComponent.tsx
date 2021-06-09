@@ -8,7 +8,6 @@ import "./FileInfoDialogComponent.scss";
 
 @observer
 export class FileInfoDialogComponent extends React.Component {
-
     render() {
         const appStore = AppStore.Instance;
 
@@ -25,11 +24,19 @@ export class FileInfoDialogComponent extends React.Component {
             lazy: true,
             isOpen: appStore.dialogStore.fileInfoDialogVisible,
             onClose: appStore.dialogStore.hideFileInfoDialog,
-            title: "File Header",
+            title: "File Header"
         };
 
         return (
-            <DraggableDialogComponent dialogProps={dialogProps} helpType={HelpType.FILE_INFO} minWidth={400} minHeight={400} defaultWidth={800} defaultHeight={600} enableResizing={true}>
+            <DraggableDialogComponent
+                dialogProps={dialogProps}
+                helpType={HelpType.FILE_INFO}
+                minWidth={400}
+                minHeight={400}
+                defaultWidth={800}
+                defaultHeight={600}
+                enableResizing={true}
+            >
                 <div className="bp3-dialog-body">
                     <FileInfoComponent
                         infoTypes={[FileInfoType.IMAGE_FILE, FileInfoType.IMAGE_HEADER]}

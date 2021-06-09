@@ -12,7 +12,7 @@ import "./StokesDialogComponent.scss";
 @observer
 export class StokesDialogComponent extends React.Component {
     @observable stokes: Map<string, CARTA.IStokesFile>;
-    @observable stokesHeader: Map<string, CARTA.IFileInfoExtended>; 
+    @observable stokesHeader: Map<string, CARTA.IFileInfoExtended>;
 
     @action updateStokesType = (fileName: string, type: CARTA.StokesType) => {
         let currentStoke = this.stokes.get(fileName);
@@ -27,24 +27,24 @@ export class StokesDialogComponent extends React.Component {
                 file: currentStoke.file,
                 hdu: currentStoke.hdu,
                 stokesType: type
-            }
-            this.stokes.set(fileName, stoke);   
+            };
+            this.stokes.set(fileName, stoke);
         }
-    }
+    };
 
     @action setStokes = (fileName: string, stoke: CARTA.IStokesFile) => {
         this.stokes.set(fileName, stoke);
-    }
+    };
 
     @action setStokesHeader = (fileName: string, fileInfoExtended: CARTA.IFileInfoExtended) => {
         this.stokesHeader.set(fileName, fileInfoExtended);
-    }
+    };
 
     @computed get fileNames(): string[] {
         let files = [];
-        this.stokes.forEach((type,file) => {
-            files.push(file)
-        })
+        this.stokes.forEach((type, file) => {
+            files.push(file);
+        });
         return files;
     }
 
@@ -54,45 +54,47 @@ export class StokesDialogComponent extends React.Component {
 
     @computed get noneType(): boolean {
         let load = true;
-        this.stokes.forEach((file) => {
+        this.stokes.forEach(file => {
             if (file.stokesType === CARTA.StokesType.STOKES_TYPE_NONE) {
                 load = false;
             }
-        })
+        });
         return load;
     }
 
-    constructor(props){
+    constructor(props) {
         super(props);
         makeObservable(this);
         this.stokes = new Map();
         this.stokesHeader = new Map();
 
-        reaction(() => this.stokesDialogVisible, (stokesDialogVisible) => {
-            if (stokesDialogVisible) {
-                const fileBrowserStore = AppStore.Instance.fileBrowserStore;
-                this.stokes = new Map();
-                fileBrowserStore.selectedFiles.forEach(file => {
-                    AppStore.Instance.fileBrowserStore.getConcatFilesHeader(
-                        AppStore.Instance.fileBrowserStore.fileList.directory, 
-                        file.fileInfo.name, 
-                        file.hdu
-                    ).then(response => {
-                        // In fileInfoExtended: { [k: string]: CARTA.IFileInfoExtended }, sometimes k is " "
-                        const k = Object.keys(response.info)[0];
-                        const stoke: CARTA.IStokesFile = {
-                            directory: fileBrowserStore.fileList.directory,
-                            file: file.fileInfo.name,
-                            hdu: file.hdu,
-                            stokesType: this.getStokeType(response.info[k], response.file)
-                        }
-                        this.setStokes(file.fileInfo.name, stoke);
-                    }).catch(err => {
-                        console.log(err)
+        reaction(
+            () => this.stokesDialogVisible,
+            stokesDialogVisible => {
+                if (stokesDialogVisible) {
+                    const fileBrowserStore = AppStore.Instance.fileBrowserStore;
+                    this.stokes = new Map();
+                    fileBrowserStore.selectedFiles.forEach(file => {
+                        AppStore.Instance.fileBrowserStore
+                            .getConcatFilesHeader(AppStore.Instance.fileBrowserStore.fileList.directory, file.fileInfo.name, file.hdu)
+                            .then(response => {
+                                // In fileInfoExtended: { [k: string]: CARTA.IFileInfoExtended }, sometimes k is " "
+                                const k = Object.keys(response.info)[0];
+                                const stoke: CARTA.IStokesFile = {
+                                    directory: fileBrowserStore.fileList.directory,
+                                    file: file.fileInfo.name,
+                                    hdu: file.hdu,
+                                    stokesType: this.getStokeType(response.info[k], response.file)
+                                };
+                                this.setStokes(file.fileInfo.name, stoke);
+                            })
+                            .catch(err => {
+                                console.log(err);
+                            });
                     });
-                });   
+                }
             }
-        });
+        );
     }
 
     render() {
@@ -104,13 +106,7 @@ export class StokesDialogComponent extends React.Component {
             className += " bp3-dark";
         }
 
-        let stokeItems = [
-            CARTA.StokesType.STOKES_TYPE_NONE, 
-            CARTA.StokesType.I, 
-            CARTA.StokesType.Q, 
-            CARTA.StokesType.U, 
-            CARTA.StokesType.V
-        ];
+        let stokeItems = [CARTA.StokesType.STOKES_TYPE_NONE, CARTA.StokesType.I, CARTA.StokesType.Q, CARTA.StokesType.U, CARTA.StokesType.V];
 
         const files = this.fileNames;
 
@@ -119,30 +115,39 @@ export class StokesDialogComponent extends React.Component {
                 key={"FileName"}
                 name={"File name"}
                 cellRenderer={(rowIndex, columnIndex) => (
-                        <Cell className="header-table-cell" key={`cell_${columnIndex}_${rowIndex}`} interactive={true}>{this.fileNames[rowIndex]}</Cell>
-                    )
-                }
+                    <Cell className="header-table-cell" key={`cell_${columnIndex}_${rowIndex}`} interactive={true}>
+                        {this.fileNames[rowIndex]}
+                    </Cell>
+                )}
             />
         );
 
         const stokesDropDown = (
-            <Column  key={"Stokes"} name={"Stokes"} cellRenderer={rowIndex => {
-                const file = files[rowIndex];
-                return (
-                    <Cell className="cell-dropdown-menu" key={`cell_drop_down_${rowIndex}`} interactive={true}>
-                        <Select
-                            filterable={false}
-                            items={stokeItems}
-                            activeItem={this.stokes.get(file).stokesType}
-                            onItemSelect={type => this.updateStokesType(file, type)}
-                            itemRenderer={this.renderPopOver}
-                            popoverProps={{popoverClassName: "catalog-select", minimal: true , position: PopoverPosition.AUTO_END}}
-                        >
-                            <Button className="bp3-minimal catalog-represent-as-select-button" text={this.getLabelFromValue(this.stokes.get(file).stokesType)} rightIcon="double-caret-vertical"/>
-                        </Select>
-                    </Cell>
-                )
-            }}/>
+            <Column
+                key={"Stokes"}
+                name={"Stokes"}
+                cellRenderer={rowIndex => {
+                    const file = files[rowIndex];
+                    return (
+                        <Cell className="cell-dropdown-menu" key={`cell_drop_down_${rowIndex}`} interactive={true}>
+                            <Select
+                                filterable={false}
+                                items={stokeItems}
+                                activeItem={this.stokes.get(file).stokesType}
+                                onItemSelect={type => this.updateStokesType(file, type)}
+                                itemRenderer={this.renderPopOver}
+                                popoverProps={{popoverClassName: "catalog-select", minimal: true, position: PopoverPosition.AUTO_END}}
+                            >
+                                <Button
+                                    className="bp3-minimal catalog-represent-as-select-button"
+                                    text={this.getLabelFromValue(this.stokes.get(file).stokesType)}
+                                    rightIcon="double-caret-vertical"
+                                />
+                            </Select>
+                        </Cell>
+                    );
+                }}
+            />
         );
 
         const dialogProps: IDialogProps = {
@@ -153,11 +158,19 @@ export class StokesDialogComponent extends React.Component {
             lazy: true,
             isOpen: appStore.dialogStore.stokesDialogVisible,
             onClose: appStore.dialogStore.hideStokesDialog,
-            title: "Merging Stokes hypercube",
+            title: "Merging Stokes hypercube"
         };
 
         return (
-            <DraggableDialogComponent dialogProps={dialogProps} helpType={HelpType.STOKES} minWidth={300} minHeight={250} defaultWidth={602} defaultHeight={300} enableResizing={true}>
+            <DraggableDialogComponent
+                dialogProps={dialogProps}
+                helpType={HelpType.STOKES}
+                minWidth={300}
+                minHeight={250}
+                defaultWidth={602}
+                defaultHeight={300}
+                enableResizing={true}
+            >
                 <div className="bp3-dialog-body">
                     <Table
                         className={"file-table"}
@@ -184,7 +197,13 @@ export class StokesDialogComponent extends React.Component {
                         />
                         <AnchorButton
                             intent={Intent.PRIMARY}
-                            disabled={appStore.fileLoading || !fileBrowserStore.selectedFile || !fileBrowserStore.fileInfoResp || fileBrowserStore.loadingInfo || !this.noneType}
+                            disabled={
+                                appStore.fileLoading ||
+                                !fileBrowserStore.selectedFile ||
+                                !fileBrowserStore.fileInfoResp ||
+                                fileBrowserStore.loadingInfo ||
+                                !this.noneType
+                            }
                             onClick={this.loadSelectedFiles}
                             text={"Load"}
                         />
@@ -200,10 +219,10 @@ export class StokesDialogComponent extends React.Component {
             stokeFiles.push(file);
         });
         await this.loadFile(stokeFiles)
-        .then(() => AppStore.Instance.activeFrame?.setStokesFiles(stokeFiles))
-        .catch(() => {
-            AppStore.Instance.activeFrame?.setStokesFiles([]);
-        });
+            .then(() => AppStore.Instance.activeFrame?.setStokesFiles(stokeFiles))
+            .catch(() => {
+                AppStore.Instance.activeFrame?.setStokesFiles([]);
+            });
     };
 
     private loadFile = async (files: CARTA.StokesFile[]) => {
@@ -217,12 +236,12 @@ export class StokesDialogComponent extends React.Component {
 
         if (fileBrowserStore.browserMode === BrowserMode.File) {
             const frames = appStore.frames;
-            if (!(fileBrowserStore.appendingFrame) || !frames.length) {
+            if (!fileBrowserStore.appendingFrame || !frames.length) {
                 await appStore.openConcatFile(files, fileBrowserStore.fileList.directory, files[0].hdu);
             } else {
                 await appStore.appendConcatFile(files, fileBrowserStore.fileList.directory, files[0].hdu);
-             }
-        } 
+            }
+        }
 
         fileBrowserStore.saveStartingDirectory();
     };
@@ -236,23 +255,16 @@ export class StokesDialogComponent extends React.Component {
             case 3:
                 return "U";
             case 4:
-                return "V"; 
+                return "V";
             default:
                 return "None";
         }
-    }
+    };
 
     private renderPopOver = (stokesType: CARTA.StokesType, itemProps: IItemRendererProps) => {
         const label = this.getLabelFromValue(stokesType);
-        return (
-            <MenuItem
-                key={`${stokesType}: ${label}`}
-                text={label}
-                onClick={itemProps.handleClick}
-                active={itemProps.modifiers.active}
-            />
-        );
-    }
+        return <MenuItem key={`${stokesType}: ${label}`} text={label} onClick={itemProps.handleClick} active={itemProps.modifiers.active} />;
+    };
 
     private getStokeType = (fileInfoExtended: CARTA.IFileInfoExtended, file: string): CARTA.StokesType => {
         let type = this.getTypeFromHeader(fileInfoExtended?.headerEntries);
@@ -260,24 +272,32 @@ export class StokesDialogComponent extends React.Component {
             type = this.getTypeFromName(file);
         }
         return type;
-    }
+    };
 
     private getTypeFromHeader(headers: CARTA.IHeaderEntry[]): CARTA.StokesType {
         let CRVAL: CARTA.IHeaderEntry = {};
         let type = CARTA.StokesType.STOKES_TYPE_NONE;
-        const CTYPE =  headers?.find(obj => { 
-            return (obj.value.toUpperCase() === "STOKES"); 
+        const CTYPE = headers?.find(obj => {
+            return obj.value.toUpperCase() === "STOKES";
         });
 
         if (CTYPE) {
             if (CTYPE.name.includes("1")) {
-                CRVAL = headers.find(obj => { return obj.name === "CRVAL1"; });
+                CRVAL = headers.find(obj => {
+                    return obj.name === "CRVAL1";
+                });
             } else if (CTYPE.name.includes("2")) {
-                CRVAL = headers.find(obj => { return obj.name === "CRVAL2"; });
-            }  else if (CTYPE.name.includes("3")) {
-                CRVAL = headers.find(obj => { return obj.name === "CRVAL3"; });
-            }  else if (CTYPE.name.includes("4")) {
-                CRVAL = headers.find(obj => { return obj.name === "CRVAL4"; });
+                CRVAL = headers.find(obj => {
+                    return obj.name === "CRVAL2";
+                });
+            } else if (CTYPE.name.includes("3")) {
+                CRVAL = headers.find(obj => {
+                    return obj.name === "CRVAL3";
+                });
+            } else if (CTYPE.name.includes("4")) {
+                CRVAL = headers.find(obj => {
+                    return obj.name === "CRVAL4";
+                });
             }
         }
 
@@ -293,7 +313,7 @@ export class StokesDialogComponent extends React.Component {
                 break;
             case 4:
                 type = CARTA.StokesType.V;
-                break;       
+                break;
             default:
                 break;
         }

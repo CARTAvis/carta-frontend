@@ -10,7 +10,7 @@ import {SWATCH_COLORS} from "utilities";
 import "./AppearanceForm.scss";
 
 @observer
-export class AppearanceForm extends React.Component<{ region: RegionStore, darkTheme: boolean }> {
+export class AppearanceForm extends React.Component<{region: RegionStore; darkTheme: boolean}> {
     private static readonly APPEARANCE_CHANGE_DELAY = 100;
 
     private handleLineWidthChange = _.throttle((value: number) => {
@@ -44,20 +44,20 @@ export class AppearanceForm extends React.Component<{ region: RegionStore, darkT
                             darkTheme={this.props.darkTheme}
                         />
                     </FormGroup>
-                    {region.regionType !== CARTA.RegionType.POINT &&
-                        <FormGroup  inline={true} label="Line Width" labelInfo="(px)"> 
+                    {region.regionType !== CARTA.RegionType.POINT && (
+                        <FormGroup inline={true} label="Line Width" labelInfo="(px)">
                             <SafeNumericInput
-                                    placeholder="Line Width"
-                                    min={RegionStore.MIN_LINE_WIDTH}
-                                    max={RegionStore.MAX_LINE_WIDTH}
-                                    value={region.lineWidth}
-                                    stepSize={0.5}
-                                    onValueChange={this.handleLineWidthChange}
+                                placeholder="Line Width"
+                                min={RegionStore.MIN_LINE_WIDTH}
+                                max={RegionStore.MAX_LINE_WIDTH}
+                                value={region.lineWidth}
+                                stepSize={0.5}
+                                onValueChange={this.handleLineWidthChange}
                             />
                         </FormGroup>
-                    }
-                    {region.regionType !== CARTA.RegionType.POINT &&
-                        <FormGroup inline={true} label="Dash Length" labelInfo="(px)">  
+                    )}
+                    {region.regionType !== CARTA.RegionType.POINT && (
+                        <FormGroup inline={true} label="Dash Length" labelInfo="(px)">
                             <SafeNumericInput
                                 placeholder="Dash Length"
                                 min={0}
@@ -67,7 +67,7 @@ export class AppearanceForm extends React.Component<{ region: RegionStore, darkT
                                 onValueChange={this.handleDashLengthChange}
                             />
                         </FormGroup>
-                    }
+                    )}
                 </div>
             </div>
         );

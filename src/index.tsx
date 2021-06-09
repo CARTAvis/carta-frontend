@@ -43,11 +43,11 @@ async function fetchConfig() {
         const script = document.createElement("script");
         script.src = "https://apis.google.com/js/client.js";
         script.onload = () => {
-            ReactDOM.render(<App/>, document.getElementById("root") as HTMLElement);
+            ReactDOM.render(<App />, document.getElementById("root") as HTMLElement);
         };
         document.body.appendChild(script);
     } else {
-        ReactDOM.render(<App/>, document.getElementById("root") as HTMLElement);
+        ReactDOM.render(<App />, document.getElementById("root") as HTMLElement);
     }
 }
 

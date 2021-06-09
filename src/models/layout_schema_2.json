@@ -12,11 +12,7 @@
         },
         "plot-type": {
             "description": "Describes a plot type",
-            "enum": [
-                "Steps",
-                "Lines",
-                "Points"
-            ]
+            "enum": ["Steps", "Lines", "Points"]
         },
         "line-width": {
             "description": "Describes a plot line width",
@@ -39,36 +35,16 @@
         "spatial-coord": {
             "description": "Spatial coordinate",
             "type": "string",
-            "enum": [
-                "x",
-                "Ix",
-                "Qx",
-                "Ux",
-                "Vx",
-                "y",
-                "Iy",
-                "Qy",
-                "Uy",
-                "Vy"
-            ]
+            "enum": ["x", "Ix", "Qx", "Ux", "Vx", "y", "Iy", "Qy", "Uy", "Vy"]
         },
         "spectral-coord": {
             "description": "Spectral coordinate",
             "type": "string",
-            "enum": [
-                "z",
-                "Iz",
-                "Qz",
-                "Uz",
-                "Vz"
-            ]
+            "enum": ["z", "Iz", "Qz", "Uz", "Vz"]
         },
         "basic-widget": {
             "description": "Widgets that have no associated settings",
-            "required": [
-                "type",
-                "id"
-            ],
+            "required": ["type", "id"],
             "properties": {
                 "type": {
                     "const": "component"
@@ -98,10 +74,7 @@
         },
         "spectral-profiler": {
             "description": "Spectral profiler widgets",
-            "required": [
-                "type",
-                "id"
-            ],
+            "required": ["type", "id"],
             "properties": {
                 "type": {
                     "const": "component"
@@ -153,10 +126,7 @@
         },
         "spatial-profiler": {
             "description": "Spatial profiler widgets",
-            "required": [
-                "type",
-                "id"
-            ],
+            "required": ["type", "id"],
             "properties": {
                 "type": {
                     "const": "component"
@@ -215,10 +185,7 @@
         },
         "render-config": {
             "description": "Render config widgets",
-            "required": [
-                "type",
-                "id"
-            ],
+            "required": ["type", "id"],
             "properties": {
                 "type": {
                     "const": "component"
@@ -273,10 +240,7 @@
         },
         "histogram": {
             "description": "Histogram widgets",
-            "required": [
-                "type",
-                "id"
-            ],
+            "required": ["type", "id"],
             "properties": {
                 "type": {
                     "const": "component"
@@ -325,10 +289,7 @@
         },
         "stokes": {
             "description": "Stokes analysis widgets",
-            "required": [
-                "type",
-                "id"
-            ],
+            "required": ["type", "id"],
             "properties": {
                 "type": {
                     "const": "component"
@@ -401,18 +362,11 @@
         "gl-container": {
             "description": "A GoldenLayout container",
             "type": "object",
-            "required": [
-                "type",
-                "content"
-            ],
+            "required": ["type", "content"],
             "additionalProperties": false,
             "properties": {
                 "type": {
-                    "enum": [
-                        "row",
-                        "column",
-                        "stack"
-                    ]
+                    "enum": ["row", "column", "stack"]
                 },
                 "content": {
                     "type": "array",
@@ -441,11 +395,7 @@
             }
         }
     },
-    "required": [
-        "layoutVersion",
-        "docked",
-        "floating"
-    ],
+    "required": ["layoutVersion", "docked", "floating"],
     "properties": {
         "layoutVersion": {
             "description": "The version of the layout contained",

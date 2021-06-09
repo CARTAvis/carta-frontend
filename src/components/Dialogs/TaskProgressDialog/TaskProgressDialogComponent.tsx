@@ -16,7 +16,6 @@ interface TaskProgressDialogComponentProps {
 
 @observer
 export class TaskProgressDialogComponent extends React.Component<TaskProgressDialogComponentProps> {
-
     render() {
         let titleText = this.props.text;
         let timeRemainingText;
@@ -50,18 +49,23 @@ export class TaskProgressDialogComponent extends React.Component<TaskProgressDia
                 isOpen={this.props.isOpen}
             >
                 <div className={Classes.DIALOG_BODY}>
-                    <ProgressBar value={this.props.progress} animate={!isFinite(this.props.progress)} stripes={!isFinite(this.props.progress)} intent={"primary"}/>
+                    <ProgressBar
+                        value={this.props.progress}
+                        animate={!isFinite(this.props.progress)}
+                        stripes={!isFinite(this.props.progress)}
+                        intent={"primary"}
+                    />
                     <>{this.props.contentText}</>
                 </div>
-                {this.props.cancellable &&
-                <div className={Classes.DIALOG_FOOTER}>
-                    <div className={Classes.DIALOG_FOOTER_ACTIONS}>
-                        <Tooltip content="Cancel the current task">
-                            <AnchorButton onClick={this.props.onCancel}>Cancel</AnchorButton>
-                        </Tooltip>
+                {this.props.cancellable && (
+                    <div className={Classes.DIALOG_FOOTER}>
+                        <div className={Classes.DIALOG_FOOTER_ACTIONS}>
+                            <Tooltip content="Cancel the current task">
+                                <AnchorButton onClick={this.props.onCancel}>Cancel</AnchorButton>
+                            </Tooltip>
+                        </div>
                     </div>
-                </div>
-                }
+                )}
             </Dialog>
         );
     }

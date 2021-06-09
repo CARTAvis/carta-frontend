@@ -75,7 +75,16 @@ export function createFP32Texture(gl: WebGLRenderingContext, width: number, heig
     return texture;
 }
 
-export function copyToFP32Texture(gl: WebGLRenderingContext, texture: WebGLTexture, data: Float32Array, texIndex: number, dataWidth: number, dataHeight: number, xOffset: number, yOffset: number) {
+export function copyToFP32Texture(
+    gl: WebGLRenderingContext,
+    texture: WebGLTexture,
+    data: Float32Array,
+    texIndex: number,
+    dataWidth: number,
+    dataHeight: number,
+    xOffset: number,
+    yOffset: number
+) {
     if (!gl) {
         return;
     }
@@ -88,7 +97,7 @@ export function copyToFP32Texture(gl: WebGLRenderingContext, texture: WebGLTextu
     gl.texParameteri(GL.TEXTURE_2D, GL.TEXTURE_WRAP_T, GL.CLAMP_TO_EDGE);
 }
 
-export function initWebGL(){
+export function initWebGL() {
     const gl = document.createElement("canvas").getContext("webgl");
     const floatExtension = gl?.getExtension("OES_texture_float");
     if (!gl || !floatExtension) {
@@ -98,7 +107,7 @@ export function initWebGL(){
     return gl;
 }
 
-export function initWebGL2(){
+export function initWebGL2() {
     // setting premultipliedAlpha: false?
     const gl = document.createElement("canvas").getContext("webgl2");
     if (!gl) {
@@ -108,7 +117,12 @@ export function initWebGL2(){
     return gl;
 }
 
-export function createTextureFromArray(gl: WebGL2RenderingContext, data: Float32Array | Uint8Array, texIndex: number = WebGL2RenderingContext.TEXTURE0, components: number = 1):WebGLTexture {
+export function createTextureFromArray(
+    gl: WebGL2RenderingContext,
+    data: Float32Array | Uint8Array,
+    texIndex: number = WebGL2RenderingContext.TEXTURE0,
+    components: number = 1
+): WebGLTexture {
     const GL2 = WebGL2RenderingContext;
     const numPoints = data.length / components;
     if (data.length % components !== 0) {
@@ -126,7 +140,7 @@ export function createTextureFromArray(gl: WebGL2RenderingContext, data: Float32
         paddedData = data;
     } else {
         const size = width * height * components;
-        paddedData = UIn8? new Uint8Array(size) : new Float32Array(size);
+        paddedData = UIn8 ? new Uint8Array(size) : new Float32Array(size);
         paddedData.set(data, 0);
     }
 
@@ -135,7 +149,7 @@ export function createTextureFromArray(gl: WebGL2RenderingContext, data: Float32
     gl.bindTexture(GL2.TEXTURE_2D, texture);
     switch (components) {
         case 1:
-            if(UIn8) {
+            if (UIn8) {
                 gl.pixelStorei(GL2.UNPACK_ALIGNMENT, 1);
                 gl.texImage2D(GL2.TEXTURE_2D, 0, GL2.R8UI, width, height, 0, GL2.RED_INTEGER, GL2.UNSIGNED_BYTE, paddedData);
             } else {

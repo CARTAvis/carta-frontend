@@ -186,7 +186,7 @@ export class SpectralLineQueryWidgetStore extends RegionWidgetStore {
         if (redshiftType === RedshiftType.Z && this.redshiftInput < 0) {
             this.redshiftInput = 0;
         }
-     };
+    };
 
     @action setRedshiftInput = (input: number) => {
         if (isFinite(input)) {
@@ -196,7 +196,7 @@ export class SpectralLineQueryWidgetStore extends RegionWidgetStore {
     };
 
     @action private applyShiftFactor = () => {
-        const shiftedData = this.shiftedFreqColumnRawData.map((value) => {
+        const shiftedData = this.shiftedFreqColumnRawData.map(value => {
             return isFinite(value) ? value * this.redshiftFactor : undefined;
         });
         this.filterResult.set(SHIFTIED_FREQUENCY_COLUMN_INDEX, {
@@ -280,31 +280,37 @@ export class SpectralLineQueryWidgetStore extends RegionWidgetStore {
             AppStore.Instance.alertStore.showAlert("Please specify a frequency range.");
         } else if (Math.abs(freqMHzTo - freqMHzFrom) > FREQUENCY_RANGE_LIMIT) {
             AppStore.Instance.alertStore.showAlert(
-                `Frequency range ${freqMHzFrom <= freqMHzTo ? freqMHzFrom : freqMHzTo} MHz to ${freqMHzFrom <= freqMHzTo ? freqMHzTo : freqMHzFrom} MHz is too wide.` +
-                `Please specify a frequency range within ${FREQUENCY_RANGE_LIMIT / 1e3} GHz.`
+                `Frequency range ${freqMHzFrom <= freqMHzTo ? freqMHzFrom : freqMHzTo} MHz to ${
+                    freqMHzFrom <= freqMHzTo ? freqMHzTo : freqMHzFrom
+                } MHz is too wide.` + `Please specify a frequency range within ${FREQUENCY_RANGE_LIMIT / 1e3} GHz.`
             );
         } else {
             this.isQuerying = true;
             const backendService = BackendService.Instance;
-            backendService.requestSpectralLine(new CARTA.DoubleBounds({min: freqMHzFrom, max: freqMHzTo}), this.intensityLimitEnabled ? this.intensityLimitValue : NaN).subscribe(ack => {
-                if (ack.success && ack.dataSize >= 0) {
-                    this.numDataRows = ack.dataSize;
-                    this.columnHeaders = this.preprocessHeaders(ack.headers);
-                    this.controlHeader = this.initControlHeader(this.columnHeaders);
-                    this.queryResult = this.initColumnData(ack.spectralLineData, ack.dataSize, this.columnHeaders);
-                    this.updateFilterResult(this.fullRowIndexes);
-                    this.isDataFiltered = false;
-                    this.filterNum = 0;
-                } else {
-                    this.resetQueryContents();
-                    AppStore.Instance.alertStore.showAlert(ack.message);
-                }
-                this.isQuerying = false;
-            }, error => {
-                this.isQuerying = false;
-                console.error(error);
-                AppStore.Instance.alertStore.showAlert(error);
-            });
+            backendService
+                .requestSpectralLine(new CARTA.DoubleBounds({min: freqMHzFrom, max: freqMHzTo}), this.intensityLimitEnabled ? this.intensityLimitValue : NaN)
+                .subscribe(
+                    ack => {
+                        if (ack.success && ack.dataSize >= 0) {
+                            this.numDataRows = ack.dataSize;
+                            this.columnHeaders = this.preprocessHeaders(ack.headers);
+                            this.controlHeader = this.initControlHeader(this.columnHeaders);
+                            this.queryResult = this.initColumnData(ack.spectralLineData, ack.dataSize, this.columnHeaders);
+                            this.updateFilterResult(this.fullRowIndexes);
+                            this.isDataFiltered = false;
+                            this.filterNum = 0;
+                        } else {
+                            this.resetQueryContents();
+                            AppStore.Instance.alertStore.showAlert(ack.message);
+                        }
+                        this.isQuerying = false;
+                    },
+                    error => {
+                        this.isQuerying = false;
+                        console.error(error);
+                        AppStore.Instance.alertStore.showAlert(error);
+                    }
+                );
         }
     };
 
@@ -327,7 +333,7 @@ export class SpectralLineQueryWidgetStore extends RegionWidgetStore {
         // find intersections of indexes from filter criteria
         let filteredRowIndexes = this.fullRowIndexes;
         let filterNum = 0;
-        this.controlHeader.forEach((controlHeader) => {
+        this.controlHeader.forEach(controlHeader => {
             const filterString = controlHeader.filter;
             if (filterString !== "") {
                 const column = this.queryResult.get(controlHeader.columnIndex);
@@ -351,7 +357,7 @@ export class SpectralLineQueryWidgetStore extends RegionWidgetStore {
     };
 
     @action resetFilter = () => {
-        this.controlHeader.forEach((controlHeader) => {
+        this.controlHeader.forEach(controlHeader => {
             controlHeader.filter = "";
         });
         if (this.isDataFiltered) {
@@ -374,9 +380,9 @@ export class SpectralLineQueryWidgetStore extends RegionWidgetStore {
     }
 
     @computed get redshiftFactor() {
-        return this.redshiftType === RedshiftType.V ?
-            Math.sqrt((1 - (this.redshiftInput * 1e3) / SPEED_OF_LIGHT) / (1 + (this.redshiftInput * 1e3) / SPEED_OF_LIGHT)) :
-            1 / (this.redshiftInput + 1);
+        return this.redshiftType === RedshiftType.V
+            ? Math.sqrt((1 - (this.redshiftInput * 1e3) / SPEED_OF_LIGHT) / (1 + (this.redshiftInput * 1e3) / SPEED_OF_LIGHT))
+            : 1 / (this.redshiftInput + 1);
     }
 
     @computed get displayedColumnHeaders(): Array<CARTA.CatalogHeader> {
@@ -395,13 +401,13 @@ export class SpectralLineQueryWidgetStore extends RegionWidgetStore {
             return 0;
         }
         let numSelected = 0;
-        lineSelectionData?.forEach(isSelected => numSelected += (isSelected ? 1 : 0));
+        lineSelectionData?.forEach(isSelected => (numSelected += isSelected ? 1 : 0));
         return numSelected;
     }
 
     @computed get filters(): string[] {
         let filters = [];
-        this.controlHeader.forEach((value) => {
+        this.controlHeader.forEach(value => {
             if (value.filter) {
                 filters.push(value);
             }
@@ -418,7 +424,7 @@ export class SpectralLineQueryWidgetStore extends RegionWidgetStore {
 
     @computed get resultTableColumnWidths(): Array<number> {
         const columnWidths = [];
-        this.controlHeader.forEach((value) => {
+        this.controlHeader.forEach(value => {
             if (value.display) {
                 columnWidths.push(value.columnWidth);
             }
@@ -448,26 +454,32 @@ export class SpectralLineQueryWidgetStore extends RegionWidgetStore {
         let columnHeaders = [];
 
         // 1. collect headers & rename to comprehensive headers
-        ackHeaders?.forEach((header) => {
+        ackHeaders?.forEach(header => {
             const headerName = SPLA_HEADER_MAP.has(header.name as SpectralLineHeaders) ? SPLA_HEADER_MAP.get(header.name as SpectralLineHeaders) : header.name;
-            columnHeaders.push(new CARTA.CatalogHeader({
-                name: headerName,
-                dataType: header.dataType,
-                columnIndex: header.columnIndex,
-                description: SPECTRAL_LINE_DESCRIPTION.get(headerName as SpectralLineHeaders)
-            }));
+            columnHeaders.push(
+                new CARTA.CatalogHeader({
+                    name: headerName,
+                    dataType: header.dataType,
+                    columnIndex: header.columnIndex,
+                    description: SPECTRAL_LINE_DESCRIPTION.get(headerName as SpectralLineHeaders)
+                })
+            );
         });
 
         // 2. insert line selection column header
-        columnHeaders.splice(0, 0, new CARTA.CatalogHeader({
-            name: SpectralLineHeaders.LineSelection,
-            dataType: CARTA.ColumnType.Bool,
-            columnIndex: LINE_SELECTION_COLUMN_INDEX,
-            description: SPECTRAL_LINE_DESCRIPTION.get(SpectralLineHeaders.LineSelection)
-        }));
+        columnHeaders.splice(
+            0,
+            0,
+            new CARTA.CatalogHeader({
+                name: SpectralLineHeaders.LineSelection,
+                dataType: CARTA.ColumnType.Bool,
+                columnIndex: LINE_SELECTION_COLUMN_INDEX,
+                description: SPECTRAL_LINE_DESCRIPTION.get(SpectralLineHeaders.LineSelection)
+            })
+        );
 
         return columnHeaders.sort((a, b) => {
-            return (a.columnIndex - b.columnIndex);
+            return a.columnIndex - b.columnIndex;
         });
     };
 
@@ -553,15 +565,15 @@ export class SpectralLineQueryWidgetStore extends RegionWidgetStore {
         this.redshiftType = RedshiftType.V;
         this.redshiftInput = 0;
         this.queryResultTableRef = undefined;
-        this.selectedSpectralProfilerID = AppStore.Instance.widgetsStore.spectralProfilerList.length > 0 ?
-            AppStore.Instance.widgetsStore.spectralProfilerList[0] : undefined;
+        this.selectedSpectralProfilerID =
+            AppStore.Instance.widgetsStore.spectralProfilerList.length > 0 ? AppStore.Instance.widgetsStore.spectralProfilerList[0] : undefined;
         this.resetQueryContents();
 
         // update selected spectral profiler when currently selected is closed
         autorun(() => {
             if (!AppStore.Instance.widgetsStore.getSpectralWidgetStoreByID(this.selectedSpectralProfilerID)) {
-                this.selectedSpectralProfilerID = AppStore.Instance.widgetsStore.spectralProfilerList.length > 0 ?
-                AppStore.Instance.widgetsStore.spectralProfilerList[0] : undefined;
+                this.selectedSpectralProfilerID =
+                    AppStore.Instance.widgetsStore.spectralProfilerList.length > 0 ? AppStore.Instance.widgetsStore.spectralProfilerList[0] : undefined;
             }
         });
     }

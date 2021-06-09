@@ -3,14 +3,10 @@ import * as AST from "ast_wrapper";
 import {observer} from "mobx-react";
 import {action, autorun, makeObservable, observable} from "mobx";
 import {Select, ItemRenderer} from "@blueprintjs/select";
-import {
-    Button, Collapse, Divider, FormGroup, HTMLSelect,
-    InputGroup, MenuItem,
-    Switch, Tab, Tabs, TabId
-} from "@blueprintjs/core";
+import {Button, Collapse, Divider, FormGroup, HTMLSelect, InputGroup, MenuItem, Switch, Tab, Tabs, TabId} from "@blueprintjs/core";
 import {AutoColorPickerComponent, SafeNumericInput, SpectralSettingsComponent} from "components/Shared";
 import {AppStore, BeamType, LabelType, SystemType, HelpType, NumberFormatType, NUMBER_FORMAT_LABEL, DefaultWidgetConfig, WidgetProps} from "stores";
-import { SWATCH_COLORS} from "utilities";
+import {SWATCH_COLORS} from "utilities";
 import "./ImageViewSettingsPanelComponent.scss";
 
 enum ImageViewSettingsPanelTabs {
@@ -59,7 +55,7 @@ export class Font {
     }
 }
 
-const astFonts: Font[] = AST.fonts.map((x, i) => (new Font(x, i)));
+const astFonts: Font[] = AST.fonts.map((x, i) => new Font(x, i));
 const FontSelect = Select.ofType<Font>();
 
 export const renderFont: ItemRenderer<Font> = (font, {handleClick, modifiers, query}) => {
@@ -69,7 +65,7 @@ export const renderFont: ItemRenderer<Font> = (font, {handleClick, modifiers, qu
             disabled={modifiers.disabled}
             key={font.id}
             onClick={handleClick}
-            text={(<span style={{fontFamily: font.family, fontWeight: font.weight, fontStyle: font.style}}>{font.name}</span>)}
+            text={<span style={{fontFamily: font.family, fontWeight: font.weight, fontStyle: font.style}}>{font.name}</span>}
         />
     );
 };
@@ -107,9 +103,15 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
                 disabled={!visible}
                 filterable={false}
                 popoverProps={{minimal: true, placement: "bottom", popoverClassName: "fontselect"}}
-                onItemSelect={(font) => fontSetter(font.id)}
+                onItemSelect={font => fontSetter(font.id)}
             >
-                <Button text={(<span style={{fontFamily: currentFont.family, fontWeight: currentFont.weight, fontStyle: currentFont.style}}>{currentFont.name}</span>)} disabled={!visible} rightIcon="double-caret-vertical"/>
+                <Button
+                    text={
+                        <span style={{fontFamily: currentFont.family, fontWeight: currentFont.weight, fontStyle: currentFont.style}}>{currentFont.name}</span>
+                    }
+                    disabled={!visible}
+                    rightIcon="double-caret-vertical"
+                />
             </FontSelect>
         );
     }
@@ -145,21 +147,16 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
         const beam = overlayStore.beam;
         const beamSettings = beam.settingsForDisplay;
 
-        const interior: boolean = (global.labelType === LabelType.Interior);
+        const interior: boolean = global.labelType === LabelType.Interior;
 
-        const disabledIfInterior = (interior && "Does not apply to interior labelling.");
-        const disabledIfExterior = (!interior && "Does not apply to exterior labelling.");
-        const disabledIfNoWcs = (!global.validWcs && "This image has no valid WCS data.");
+        const disabledIfInterior = interior && "Does not apply to interior labelling.";
+        const disabledIfExterior = !interior && "Does not apply to exterior labelling.";
+        const disabledIfNoWcs = !global.validWcs && "This image has no valid WCS data.";
 
         const globalPanel = (
             <div className="panel-container">
                 <FormGroup inline={true} label="Color">
-                    <AutoColorPickerComponent
-                        color={global.color}
-                        presetColors={SWATCH_COLORS}
-                        setColor={global.setColor}
-                        disableAlpha={true}
-                    />
+                    <AutoColorPickerComponent color={global.color} presetColors={SWATCH_COLORS} setColor={global.setColor} disableAlpha={true} />
                 </FormGroup>
                 <FormGroup inline={true} label="Tolerance" labelInfo="(%)">
                     <SafeNumericInput
@@ -174,19 +171,14 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
                 </FormGroup>
                 <FormGroup inline={true} label="Labelling">
                     <HTMLSelect
-                        options={Object.keys(LabelType).map((key) => ({label: key, value: LabelType[key]}))}
+                        options={Object.keys(LabelType).map(key => ({label: key, value: LabelType[key]}))}
                         value={global.labelType}
                         onChange={(event: React.FormEvent<HTMLSelectElement>) => global.setLabelType(event.currentTarget.value as LabelType)}
                     />
                 </FormGroup>
-                <FormGroup
-                    inline={true}
-                    label="Coordinate system"
-                    disabled={!global.validWcs}
-                    helperText={disabledIfNoWcs}
-                >
+                <FormGroup inline={true} label="Coordinate system" disabled={!global.validWcs} helperText={disabledIfNoWcs}>
                     <HTMLSelect
-                        options={Object.keys(SystemType).map((key) => ({label: key, value: SystemType[key]}))}
+                        options={Object.keys(SystemType).map(key => ({label: key, value: SystemType[key]}))}
                         value={global.system}
                         disabled={!global.validWcs}
                         onChange={(event: React.FormEvent<HTMLSelectElement>) => global.setSystem(event.currentTarget.value as SystemType)}
@@ -198,10 +190,7 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
         const titlePanel = (
             <div className="panel-container">
                 <FormGroup inline={true} label="Visible">
-                    <Switch
-                        checked={title.visible}
-                        onChange={(ev) => title.setVisible(ev.currentTarget.checked)}
-                    />
+                    <Switch checked={title.visible} onChange={ev => title.setVisible(ev.currentTarget.checked)} />
                 </FormGroup>
                 <FormGroup inline={true} className="font-group" label="Font" disabled={!title.visible}>
                     {this.fontSelect(title.visible, title.font, title.setFont)}
@@ -215,34 +204,26 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
                     />
                 </FormGroup>
                 <FormGroup inline={true} label="Custom text" disabled={!title.visible}>
-                    <Switch
-                        checked={title.customText}
-                        disabled={!title.visible}
-                        onChange={(ev) => title.setCustomText(ev.currentTarget.checked)}
-                    />
+                    <Switch checked={title.customText} disabled={!title.visible} onChange={ev => title.setCustomText(ev.currentTarget.checked)} />
                 </FormGroup>
                 <Collapse isOpen={title.customText}>
                     <FormGroup inline={true} label="Title Text" disabled={!title.visible}>
-                        <InputGroup disabled={!title.visible} value={title.customTitleString} placeholder="Enter title text" onChange={ev => title.setCustomTitleString(ev.currentTarget.value)}/>
+                        <InputGroup
+                            disabled={!title.visible}
+                            value={title.customTitleString}
+                            placeholder="Enter title text"
+                            onChange={ev => title.setCustomTitleString(ev.currentTarget.value)}
+                        />
                     </FormGroup>
                 </Collapse>
                 <FormGroup inline={true} label="Custom color" disabled={!title.visible}>
-                    <Switch
-                        checked={title.customColor}
-                        disabled={!title.visible}
-                        onChange={(ev) => title.setCustomColor(ev.currentTarget.checked)}
-                    />
+                    <Switch checked={title.customColor} disabled={!title.visible} onChange={ev => title.setCustomColor(ev.currentTarget.checked)} />
                 </FormGroup>
                 <Collapse isOpen={title.customColor}>
                     <FormGroup inline={true} label="Color" disabled={!title.visible}>
-                        {title.visible &&
-                            <AutoColorPickerComponent
-                                color={title.color}
-                                presetColors={SWATCH_COLORS}
-                                setColor={title.setColor}
-                                disableAlpha={true}
-                            />
-                        }
+                        {title.visible && (
+                            <AutoColorPickerComponent color={title.color} presetColors={SWATCH_COLORS} setColor={title.setColor} disableAlpha={true} />
+                        )}
                     </FormGroup>
                 </Collapse>
             </div>
@@ -250,56 +231,26 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
 
         const ticksPanel = (
             <div className="panel-container">
-                <FormGroup
-                    inline={true}
-                    label="Draw on all edges"
-                    disabled={interior}
-                    helperText={disabledIfInterior}
-                >
-                    <Switch
-                        checked={ticks.drawAll}
-                        disabled={interior}
-                        onChange={(ev) => ticks.setDrawAll(ev.currentTarget.checked)}
-                    />
+                <FormGroup inline={true} label="Draw on all edges" disabled={interior} helperText={disabledIfInterior}>
+                    <Switch checked={ticks.drawAll} disabled={interior} onChange={ev => ticks.setDrawAll(ev.currentTarget.checked)} />
                 </FormGroup>
                 <FormGroup inline={true} label="Custom density">
-                    <Switch
-                        checked={ticks.customDensity}
-                        onChange={(ev) => ticks.setCustomDensity(ev.currentTarget.checked)}
-                    />
+                    <Switch checked={ticks.customDensity} onChange={ev => ticks.setCustomDensity(ev.currentTarget.checked)} />
                 </FormGroup>
                 <Collapse isOpen={ticks.customDensity}>
                     <FormGroup inline={true} label="Density" labelInfo="(X)">
-                        <SafeNumericInput
-                            placeholder="Density"
-                            min={0}
-                            value={ticks.densityX}
-                            onValueChange={(value: number) => ticks.setDensityX(value)}
-                        />
+                        <SafeNumericInput placeholder="Density" min={0} value={ticks.densityX} onValueChange={(value: number) => ticks.setDensityX(value)} />
                     </FormGroup>
                     <FormGroup inline={true} label="Density" labelInfo="(Y)">
-                        <SafeNumericInput
-                            placeholder="Density"
-                            min={0}
-                            value={ticks.densityY}
-                            onValueChange={(value: number) => ticks.setDensityY(value)}
-                        />
+                        <SafeNumericInput placeholder="Density" min={0} value={ticks.densityY} onValueChange={(value: number) => ticks.setDensityY(value)} />
                     </FormGroup>
                 </Collapse>
                 <FormGroup inline={true} label="Custom color">
-                    <Switch
-                        checked={ticks.customColor}
-                        onChange={(ev) => ticks.setCustomColor(ev.currentTarget.checked)}
-                    />
+                    <Switch checked={ticks.customColor} onChange={ev => ticks.setCustomColor(ev.currentTarget.checked)} />
                 </FormGroup>
                 <Collapse isOpen={ticks.customColor}>
                     <FormGroup inline={true} label="Color">
-                        <AutoColorPickerComponent
-                            color={ticks.color}
-                            presetColors={SWATCH_COLORS}
-                            setColor={ticks.setColor}
-                            disableAlpha={true}
-                        />
+                        <AutoColorPickerComponent color={ticks.color} presetColors={SWATCH_COLORS} setColor={ticks.setColor} disableAlpha={true} />
                     </FormGroup>
                 </Collapse>
                 <FormGroup inline={true} label="Width" labelInfo="(px)">
@@ -344,28 +295,16 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
         const gridPanel = (
             <div className="panel-container">
                 <FormGroup inline={true} label="Visible">
-                    <Switch
-                        checked={grid.visible}
-                        onChange={(ev) => grid.setVisible(ev.currentTarget.checked)}
-                    />
+                    <Switch checked={grid.visible} onChange={ev => grid.setVisible(ev.currentTarget.checked)} />
                 </FormGroup>
                 <FormGroup inline={true} label="Custom color" disabled={!grid.visible}>
-                    <Switch
-                        checked={grid.customColor}
-                        disabled={!grid.visible}
-                        onChange={(ev) => grid.setCustomColor(ev.currentTarget.checked)}
-                    />
+                    <Switch checked={grid.customColor} disabled={!grid.visible} onChange={ev => grid.setCustomColor(ev.currentTarget.checked)} />
                 </FormGroup>
                 <Collapse isOpen={grid.customColor}>
                     <FormGroup inline={true} label="Color" disabled={!grid.visible}>
-                        {grid.visible &&
-                            <AutoColorPickerComponent
-                                color={grid.color}
-                                presetColors={SWATCH_COLORS}
-                                setColor={grid.setColor}
-                                disableAlpha={true}
-                            />
-                        }
+                        {grid.visible && (
+                            <AutoColorPickerComponent color={grid.color} presetColors={SWATCH_COLORS} setColor={grid.setColor} disableAlpha={true} />
+                        )}
                     </FormGroup>
                 </Collapse>
                 <FormGroup inline={true} label="Width" labelInfo="(px)" disabled={!grid.visible}>
@@ -381,11 +320,7 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
                     />
                 </FormGroup>
                 <FormGroup inline={true} label="Custom gap" disabled={!grid.visible}>
-                    <Switch
-                        checked={grid.customGap}
-                        disabled={!grid.visible}
-                        onChange={(ev) => grid.setCustomGap(ev.currentTarget.checked)}
-                    />
+                    <Switch checked={grid.customGap} disabled={!grid.visible} onChange={ev => grid.setCustomGap(ev.currentTarget.checked)} />
                 </FormGroup>
                 <Collapse isOpen={grid.customGap}>
                     <FormGroup inline={true} label="Gap" labelInfo="(X)" disabled={!grid.visible}>
@@ -419,28 +354,16 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
         const borderPanel = (
             <div className="panel-container">
                 <FormGroup inline={true} label="Visible">
-                    <Switch
-                        checked={border.visible}
-                        onChange={(ev) => border.setVisible(ev.currentTarget.checked)}
-                    />
+                    <Switch checked={border.visible} onChange={ev => border.setVisible(ev.currentTarget.checked)} />
                 </FormGroup>
                 <FormGroup inline={true} label="Custom color" disabled={!border.visible}>
-                    <Switch
-                        checked={border.customColor}
-                        disabled={!border.visible}
-                        onChange={(ev) => border.setCustomColor(ev.currentTarget.checked)}
-                    />
+                    <Switch checked={border.customColor} disabled={!border.visible} onChange={ev => border.setCustomColor(ev.currentTarget.checked)} />
                 </FormGroup>
                 <Collapse isOpen={border.customColor}>
                     <FormGroup inline={true} label="Color" disabled={!border.visible}>
-                        {border.visible &&
-                            <AutoColorPickerComponent
-                                color={border.color}
-                                presetColors={SWATCH_COLORS}
-                                setColor={border.setColor}
-                                disableAlpha={true}
-                            />
-                        }
+                        {border.visible && (
+                            <AutoColorPickerComponent color={border.color} presetColors={SWATCH_COLORS} setColor={border.setColor} disableAlpha={true} />
+                        )}
                     </FormGroup>
                 </Collapse>
                 <FormGroup inline={true} label="Width" labelInfo="(px)" disabled={!border.visible}>
@@ -461,49 +384,20 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
 
         const axesPanel = (
             <div className="panel-container">
-                <FormGroup
-                    inline={true}
-                    label="Visible"
-                    disabled={!interior}
-                    helperText={disabledIfExterior}
-                >
-                    <Switch
-                        checked={axes.visible}
-                        disabled={!interior}
-                        onChange={(ev) => axes.setVisible(ev.currentTarget.checked)}
-                    />
+                <FormGroup inline={true} label="Visible" disabled={!interior} helperText={disabledIfExterior}>
+                    <Switch checked={axes.visible} disabled={!interior} onChange={ev => axes.setVisible(ev.currentTarget.checked)} />
                 </FormGroup>
                 <FormGroup inline={true} label="Custom color" disabled={!interior || !axes.visible}>
-                    <Switch
-                        checked={axes.customColor}
-                        disabled={!interior || !axes.visible}
-                        onChange={(ev) => axes.setCustomColor(ev.currentTarget.checked)}
-                    />
+                    <Switch checked={axes.customColor} disabled={!interior || !axes.visible} onChange={ev => axes.setCustomColor(ev.currentTarget.checked)} />
                 </FormGroup>
                 <Collapse isOpen={axes.customColor}>
-                    <FormGroup
-                        inline={true}
-                        label="Color"
-                        disabled={!interior || !axes.visible}
-                        helperText={disabledIfExterior}
-                    >
-                        {interior && axes.visible &&
-                            <AutoColorPickerComponent
-                                color={axes.color}
-                                presetColors={SWATCH_COLORS}
-                                setColor={axes.setColor}
-                                disableAlpha={true}
-                            />
-                        }
+                    <FormGroup inline={true} label="Color" disabled={!interior || !axes.visible} helperText={disabledIfExterior}>
+                        {interior && axes.visible && (
+                            <AutoColorPickerComponent color={axes.color} presetColors={SWATCH_COLORS} setColor={axes.setColor} disableAlpha={true} />
+                        )}
                     </FormGroup>
                 </Collapse>
-                <FormGroup
-                    inline={true}
-                    label="Width"
-                    labelInfo="(px)"
-                    disabled={!interior || !axes.visible}
-                    helperText={disabledIfExterior}
-                >
+                <FormGroup inline={true} label="Width" labelInfo="(px)" disabled={!interior || !axes.visible} helperText={disabledIfExterior}>
                     <SafeNumericInput
                         placeholder="Width"
                         min={0.001}
@@ -521,10 +415,7 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
         const numbersPanel = (
             <div className="panel-container">
                 <FormGroup inline={true} label="Visible">
-                    <Switch
-                        checked={numbers.visible}
-                        onChange={(ev) => numbers.setVisible(ev.currentTarget.checked)}
-                    />
+                    <Switch checked={numbers.visible} onChange={ev => numbers.setVisible(ev.currentTarget.checked)} />
                 </FormGroup>
                 <FormGroup inline={true} className="font-group" label="Font" disabled={!numbers.visible}>
                     {this.fontSelect(numbers.visible, numbers.font, numbers.setFont)}
@@ -538,35 +429,17 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
                     />
                 </FormGroup>
                 <FormGroup inline={true} label="Custom color" disabled={!numbers.visible}>
-                    <Switch
-                        checked={numbers.customColor}
-                        disabled={!numbers.visible}
-                        onChange={(ev) => numbers.setCustomColor(ev.currentTarget.checked)}
-                    />
+                    <Switch checked={numbers.customColor} disabled={!numbers.visible} onChange={ev => numbers.setCustomColor(ev.currentTarget.checked)} />
                 </FormGroup>
                 <Collapse isOpen={numbers.customColor}>
                     <FormGroup inline={true} label="Color" disabled={!numbers.visible}>
-                        {numbers.visible &&
-                            <AutoColorPickerComponent
-                                color={numbers.color}
-                                presetColors={SWATCH_COLORS}
-                                setColor={numbers.setColor}
-                                disableAlpha={true}
-                            />
-                        }
+                        {numbers.visible && (
+                            <AutoColorPickerComponent color={numbers.color} presetColors={SWATCH_COLORS} setColor={numbers.setColor} disableAlpha={true} />
+                        )}
                     </FormGroup>
                 </Collapse>
-                <FormGroup
-                    inline={true}
-                    label="Custom format"
-                    disabled={!numbers.validWcs}
-                    helperText={disabledIfNoWcs}
-                >
-                    <Switch
-                        checked={numbers.customFormat}
-                        disabled={!numbers.validWcs}
-                        onChange={(ev) => numbers.setCustomFormat(ev.currentTarget.checked)}
-                    />
+                <FormGroup inline={true} label="Custom format" disabled={!numbers.validWcs} helperText={disabledIfNoWcs}>
+                    <Switch checked={numbers.customFormat} disabled={!numbers.validWcs} onChange={ev => numbers.setCustomFormat(ev.currentTarget.checked)} />
                 </FormGroup>
                 <Collapse isOpen={numbers.customFormat && numbers.validWcs}>
                     <FormGroup inline={true} label="Format" labelInfo="(X)">
@@ -592,16 +465,11 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
                         />
                     </FormGroup>
                 </Collapse>
-                <FormGroup
-                    inline={true}
-                    label="Custom precision"
-                    disabled={!numbers.validWcs}
-                    helperText={disabledIfNoWcs}
-                >
+                <FormGroup inline={true} label="Custom precision" disabled={!numbers.validWcs} helperText={disabledIfNoWcs}>
                     <Switch
                         checked={numbers.customPrecision}
                         disabled={!numbers.validWcs}
-                        onChange={(ev) => numbers.setCustomPrecision(ev.currentTarget.checked)}
+                        onChange={ev => numbers.setCustomPrecision(ev.currentTarget.checked)}
                     />
                 </FormGroup>
                 <Collapse isOpen={numbers.customPrecision && numbers.validWcs}>
@@ -620,10 +488,7 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
         const labelsPanel = (
             <div className="panel-container">
                 <FormGroup inline={true} label="Visible">
-                    <Switch
-                        checked={labels.visible}
-                        onChange={(ev) => labels.setVisible(ev.currentTarget.checked)}
-                    />
+                    <Switch checked={labels.visible} onChange={ev => labels.setVisible(ev.currentTarget.checked)} />
                 </FormGroup>
                 <FormGroup inline={true} className="font-group" label="Font" disabled={!labels.visible}>
                     {this.fontSelect(labels.visible, labels.font, labels.setFont)}
@@ -637,37 +502,34 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
                     />
                 </FormGroup>
                 <FormGroup inline={true} label="Custom text" disabled={!labels.visible}>
-                    <Switch
-                        checked={labels.customText}
-                        disabled={!labels.visible}
-                        onChange={(ev) => labels.setCustomText(ev.currentTarget.checked)}
-                    />
+                    <Switch checked={labels.customText} disabled={!labels.visible} onChange={ev => labels.setCustomText(ev.currentTarget.checked)} />
                 </FormGroup>
                 <Collapse isOpen={labels.customText}>
                     <FormGroup inline={true} label="Label Text (X)" disabled={!labels.visible}>
-                        <InputGroup disabled={!labels.visible} value={labels.customLabelX} placeholder="Enter label text" onChange={ev => labels.setCustomLabelX(ev.currentTarget.value)}/>
+                        <InputGroup
+                            disabled={!labels.visible}
+                            value={labels.customLabelX}
+                            placeholder="Enter label text"
+                            onChange={ev => labels.setCustomLabelX(ev.currentTarget.value)}
+                        />
                     </FormGroup>
                     <FormGroup inline={true} label="Label Text (Y)" disabled={!labels.visible}>
-                        <InputGroup disabled={!labels.visible} value={labels.customLabelY} placeholder="Enter label text" onChange={ev => labels.setCustomLabelY(ev.currentTarget.value)}/>
+                        <InputGroup
+                            disabled={!labels.visible}
+                            value={labels.customLabelY}
+                            placeholder="Enter label text"
+                            onChange={ev => labels.setCustomLabelY(ev.currentTarget.value)}
+                        />
                     </FormGroup>
                 </Collapse>
                 <FormGroup inline={true} label="Custom color" disabled={!labels.visible}>
-                    <Switch
-                        checked={labels.customColor}
-                        disabled={!labels.visible}
-                        onChange={(ev) => labels.setCustomColor(ev.currentTarget.checked)}
-                    />
+                    <Switch checked={labels.customColor} disabled={!labels.visible} onChange={ev => labels.setCustomColor(ev.currentTarget.checked)} />
                 </FormGroup>
                 <Collapse isOpen={labels.customColor}>
                     <FormGroup inline={true} label="Color" disabled={!labels.visible}>
-                        {labels.visible &&
-                            <AutoColorPickerComponent
-                                color={labels.color}
-                                presetColors={SWATCH_COLORS}
-                                setColor={labels.setColor}
-                                disableAlpha={true}
-                            />
-                        }
+                        {labels.visible && (
+                            <AutoColorPickerComponent color={labels.color} presetColors={SWATCH_COLORS} setColor={labels.setColor} disableAlpha={true} />
+                        )}
                     </FormGroup>
                 </Collapse>
             </div>
@@ -676,16 +538,13 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
         const colorbarPanel = (
             <div className="panel-container">
                 <FormGroup inline={true} label="Visible">
-                    <Switch
-                        checked={colorbar.visible}
-                        onChange={(ev) => colorbar.setVisible(ev.currentTarget.checked)}
-                    />
+                    <Switch checked={colorbar.visible} onChange={ev => colorbar.setVisible(ev.currentTarget.checked)} />
                 </FormGroup>
                 <FormGroup inline={true} label="Cursor info" disabled={!colorbar.visible}>
                     <Switch
                         disabled={!colorbar.visible}
                         checked={colorbar.showHoverInfo}
-                        onChange={(ev) => colorbar.setShowHoverInfo(ev.currentTarget.checked)}
+                        onChange={ev => colorbar.setShowHoverInfo(ev.currentTarget.checked)}
                     />
                 </FormGroup>
                 <FormGroup inline={true} label="Width" labelInfo="(px)" disabled={!colorbar.visible}>
@@ -716,18 +575,19 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
                         intOnly={true}
                     />
                 </FormGroup>
-                <FormGroup inline={true} label="Position"  disabled={!colorbar.visible}>
-                    <HTMLSelect
-                        value={colorbar.position}
-                        disabled={!colorbar.visible}
-                        onChange={(ev) => colorbar.setPosition(ev.currentTarget.value)}
-                    >
+                <FormGroup inline={true} label="Position" disabled={!colorbar.visible}>
+                    <HTMLSelect value={colorbar.position} disabled={!colorbar.visible} onChange={ev => colorbar.setPosition(ev.currentTarget.value)}>
                         <option value={"right"}>right</option>
                         <option value={"top"}>top</option>
                         <option value={"bottom"}>bottom</option>
                     </HTMLSelect>
                 </FormGroup>
-                <FormGroup inline={true} label="Ticks density" labelInfo="(per 100px)" disabled={!colorbar.visible || (!colorbar.tickVisible && !colorbar.numberVisible)}>
+                <FormGroup
+                    inline={true}
+                    label="Ticks density"
+                    labelInfo="(per 100px)"
+                    disabled={!colorbar.visible || (!colorbar.tickVisible && !colorbar.numberVisible)}
+                >
                     <SafeNumericInput
                         placeholder="Ticks density"
                         min={0.2}
@@ -741,39 +601,26 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
                     />
                 </FormGroup>
                 <FormGroup inline={true} label="Custom color" disabled={!colorbar.visible}>
-                    <Switch
-                        checked={colorbar.customColor}
-                        disabled={!colorbar.visible}
-                        onChange={(ev) => colorbar.setCustomColor(ev.currentTarget.checked)}
-                    />
+                    <Switch checked={colorbar.customColor} disabled={!colorbar.visible} onChange={ev => colorbar.setCustomColor(ev.currentTarget.checked)} />
                 </FormGroup>
                 <Collapse isOpen={colorbar.customColor}>
                     <FormGroup inline={true} label="color" disabled={!colorbar.visible}>
-                        {colorbar.visible &&
-                            <AutoColorPickerComponent
-                                color={colorbar.color}
-                                presetColors={SWATCH_COLORS}
-                                setColor={colorbar.setColor}
-                                disableAlpha={true}
-                            />
-                        }
+                        {colorbar.visible && (
+                            <AutoColorPickerComponent color={colorbar.color} presetColors={SWATCH_COLORS} setColor={colorbar.setColor} disableAlpha={true} />
+                        )}
                     </FormGroup>
                 </Collapse>
                 <hr></hr>
                 <FormGroup inline={true} label="Label" disabled={!colorbar.visible}>
-                    <Switch
-                        checked={colorbar.labelVisible}
-                        disabled={!colorbar.visible}
-                        onChange={(ev) => colorbar.setLabelVisible(ev.currentTarget.checked)}
-                    />
+                    <Switch checked={colorbar.labelVisible} disabled={!colorbar.visible} onChange={ev => colorbar.setLabelVisible(ev.currentTarget.checked)} />
                 </FormGroup>
-                <FormGroup inline={true} label="Label rotation"  disabled={!colorbar.visible || !colorbar.labelVisible || colorbar.position !== "right"}>
+                <FormGroup inline={true} label="Label rotation" disabled={!colorbar.visible || !colorbar.labelVisible || colorbar.position !== "right"}>
                     <HTMLSelect
                         value={colorbar.labelRotation}
                         disabled={!colorbar.visible || !colorbar.labelVisible || colorbar.position !== "right"}
-                        onChange={(ev) => {
+                        onChange={ev => {
                             colorbar.setLabelRotation(Number(ev.currentTarget.value));
-                            if (colorbar.numberRotation !== 0 && ((Number(ev.currentTarget.value) === 90) || (Number(ev.currentTarget.value) === -90))) {
+                            if (colorbar.numberRotation !== 0 && (Number(ev.currentTarget.value) === 90 || Number(ev.currentTarget.value) === -90)) {
                                 colorbar.setNumberRotation(Number(ev.currentTarget.value));
                             }
                         }}
@@ -783,7 +630,7 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
                     </HTMLSelect>
                 </FormGroup>
                 <FormGroup inline={true} className="font-group" label="Label font" disabled={!colorbar.visible || !colorbar.labelVisible}>
-                    {this.fontSelect((colorbar.visible && colorbar.labelVisible), colorbar.labelFont, colorbar.setLabelFont)}
+                    {this.fontSelect(colorbar.visible && colorbar.labelVisible, colorbar.labelFont, colorbar.setLabelFont)}
                     <SafeNumericInput
                         min={7}
                         max={96}
@@ -796,7 +643,7 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
                     <Switch
                         checked={colorbar.labelCustomText}
                         disabled={!colorbar.visible || !colorbar.labelVisible}
-                        onChange={(ev) => colorbar.setLabelCustomText(ev.currentTarget.checked)}
+                        onChange={ev => colorbar.setLabelCustomText(ev.currentTarget.checked)}
                     />
                 </FormGroup>
                 <Collapse isOpen={colorbar.labelCustomText}>
@@ -813,19 +660,19 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
                     <Switch
                         checked={colorbar.labelCustomColor}
                         disabled={!colorbar.visible || !colorbar.labelVisible}
-                        onChange={(ev) => colorbar.setLabelCustomColor(ev.currentTarget.checked)}
+                        onChange={ev => colorbar.setLabelCustomColor(ev.currentTarget.checked)}
                     />
                 </FormGroup>
                 <Collapse isOpen={colorbar.labelCustomColor}>
                     <FormGroup inline={true} label="Label color" disabled={!colorbar.visible || !colorbar.labelVisible}>
-                        {colorbar.visible && colorbar.labelVisible &&
+                        {colorbar.visible && colorbar.labelVisible && (
                             <AutoColorPickerComponent
                                 color={colorbar.labelColor}
                                 presetColors={SWATCH_COLORS}
                                 setColor={colorbar.setLabelColor}
                                 disableAlpha={true}
                             />
-                        }
+                        )}
                     </FormGroup>
                 </Collapse>
                 <hr></hr>
@@ -833,14 +680,14 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
                     <Switch
                         checked={colorbar.numberVisible}
                         disabled={!colorbar.visible}
-                        onChange={(ev) => colorbar.setNumberVisible(ev.currentTarget.checked)}
+                        onChange={ev => colorbar.setNumberVisible(ev.currentTarget.checked)}
                     />
                 </FormGroup>
-                <FormGroup inline={true} label="Numbers rotation"  disabled={!colorbar.visible || !colorbar.numberVisible || colorbar.position !== "right"}>
+                <FormGroup inline={true} label="Numbers rotation" disabled={!colorbar.visible || !colorbar.numberVisible || colorbar.position !== "right"}>
                     <HTMLSelect
                         value={colorbar.numberRotation}
                         disabled={!colorbar.visible || !colorbar.numberVisible || colorbar.position !== "right"}
-                        onChange={(ev) => colorbar.setNumberRotation(Number(ev.currentTarget.value))}
+                        onChange={ev => colorbar.setNumberRotation(Number(ev.currentTarget.value))}
                     >
                         <option value={-90}>-90</option>
                         <option value={0}>0</option>
@@ -848,7 +695,7 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
                     </HTMLSelect>
                 </FormGroup>
                 <FormGroup inline={true} className="font-group" label="Numbers font" disabled={!colorbar.visible || !colorbar.numberVisible}>
-                    {this.fontSelect((colorbar.visible && colorbar.numberVisible), colorbar.numberFont, colorbar.setNumberFont)}
+                    {this.fontSelect(colorbar.visible && colorbar.numberVisible, colorbar.numberFont, colorbar.setNumberFont)}
                     <SafeNumericInput
                         min={7}
                         max={96}
@@ -861,7 +708,7 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
                     <Switch
                         checked={colorbar.numberCustomPrecision}
                         disabled={!colorbar.visible || !colorbar.numberVisible}
-                        onChange={(ev) => colorbar.setNumberCustomPrecision(ev.currentTarget.checked)}
+                        onChange={ev => colorbar.setNumberCustomPrecision(ev.currentTarget.checked)}
                     />
                 </FormGroup>
                 <Collapse isOpen={colorbar.numberCustomPrecision}>
@@ -880,28 +727,24 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
                     <Switch
                         checked={colorbar.numberCustomColor}
                         disabled={!colorbar.visible || !colorbar.numberVisible}
-                        onChange={(ev) => colorbar.setNumberCustomColor(ev.currentTarget.checked)}
+                        onChange={ev => colorbar.setNumberCustomColor(ev.currentTarget.checked)}
                     />
                 </FormGroup>
                 <Collapse isOpen={colorbar.numberCustomColor}>
                     <FormGroup inline={true} label="Numbers color" disabled={!colorbar.visible || !colorbar.numberVisible}>
-                        {colorbar.visible && colorbar.numberVisible &&
+                        {colorbar.visible && colorbar.numberVisible && (
                             <AutoColorPickerComponent
                                 color={colorbar.numberColor}
                                 presetColors={SWATCH_COLORS}
                                 setColor={colorbar.setNumberColor}
                                 disableAlpha={true}
                             />
-                        }
+                        )}
                     </FormGroup>
                 </Collapse>
                 <hr></hr>
                 <FormGroup inline={true} label="Ticks" disabled={!colorbar.visible}>
-                    <Switch
-                        checked={colorbar.tickVisible}
-                        disabled={!colorbar.visible}
-                        onChange={(ev) => colorbar.setTickVisible(ev.currentTarget.checked)}
-                    />
+                    <Switch checked={colorbar.tickVisible} disabled={!colorbar.visible} onChange={ev => colorbar.setTickVisible(ev.currentTarget.checked)} />
                 </FormGroup>
                 <FormGroup inline={true} label="Ticks length" labelInfo="(px)" disabled={!colorbar.visible || !colorbar.tickVisible}>
                     <SafeNumericInput
@@ -933,19 +776,19 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
                     <Switch
                         checked={colorbar.tickCustomColor}
                         disabled={!colorbar.visible || !colorbar.tickVisible}
-                        onChange={(ev) => colorbar.setTickCustomColor(ev.currentTarget.checked)}
+                        onChange={ev => colorbar.setTickCustomColor(ev.currentTarget.checked)}
                     />
                 </FormGroup>
                 <Collapse isOpen={colorbar.tickCustomColor}>
                     <FormGroup inline={true} label="Ticks color" disabled={!colorbar.visible || !colorbar.tickVisible}>
-                        {colorbar.visible && colorbar.tickVisible &&
+                        {colorbar.visible && colorbar.tickVisible && (
                             <AutoColorPickerComponent
                                 color={colorbar.tickColor}
                                 presetColors={SWATCH_COLORS}
                                 setColor={colorbar.setTickColor}
                                 disableAlpha={true}
                             />
-                        }
+                        )}
                     </FormGroup>
                 </Collapse>
                 <hr></hr>
@@ -953,7 +796,7 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
                     <Switch
                         checked={colorbar.borderVisible}
                         disabled={!colorbar.visible}
-                        onChange={(ev) => colorbar.setBorderVisible(ev.currentTarget.checked)}
+                        onChange={ev => colorbar.setBorderVisible(ev.currentTarget.checked)}
                     />
                 </FormGroup>
                 <FormGroup inline={true} label="Border width" labelInfo="(px)" disabled={!colorbar.visible || !colorbar.borderVisible}>
@@ -973,19 +816,19 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
                     <Switch
                         checked={colorbar.borderCustomColor}
                         disabled={!colorbar.visible || !colorbar.borderVisible}
-                        onChange={(ev) => colorbar.setBorderCustomColor(ev.currentTarget.checked)}
+                        onChange={ev => colorbar.setBorderCustomColor(ev.currentTarget.checked)}
                     />
                 </FormGroup>
                 <Collapse isOpen={colorbar.borderCustomColor}>
                     <FormGroup inline={true} label="Border color" disabled={!colorbar.visible || !colorbar.borderVisible}>
-                        {colorbar.visible && colorbar.borderVisible &&
+                        {colorbar.visible && colorbar.borderVisible && (
                             <AutoColorPickerComponent
                                 color={colorbar.borderColor}
                                 presetColors={SWATCH_COLORS}
                                 setColor={colorbar.setBorderColor}
                                 disableAlpha={true}
                             />
-                        }
+                        )}
                     </FormGroup>
                 </Collapse>
             </div>
@@ -1001,22 +844,14 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
                     />
                 </FormGroup>
                 <FormGroup inline={true} label="Visible">
-                    <Switch
-                        checked={beamSettings.visible}
-                        onChange={(ev) =>  beamSettings.setVisible(ev.currentTarget.checked)}
-                    />
+                    <Switch checked={beamSettings.visible} onChange={ev => beamSettings.setVisible(ev.currentTarget.checked)} />
                 </FormGroup>
                 <FormGroup inline={true} label="Color">
-                    <AutoColorPickerComponent
-                        color={beamSettings.color}
-                        presetColors={SWATCH_COLORS}
-                        setColor={beamSettings.setColor}
-                        disableAlpha={true}
-                    />
+                    <AutoColorPickerComponent color={beamSettings.color} presetColors={SWATCH_COLORS} setColor={beamSettings.setColor} disableAlpha={true} />
                 </FormGroup>
                 <FormGroup inline={true} label="Type">
                     <HTMLSelect
-                        options={Object.keys(BeamType).map((key) => ({label: key, value: BeamType[key]}))}
+                        options={Object.keys(BeamType).map(key => ({label: key, value: BeamType[key]}))}
                         value={beamSettings.type}
                         onChange={(event: React.FormEvent<HTMLSelectElement>) => beamSettings.setType(event.currentTarget.value as BeamType)}
                     />
@@ -1065,7 +900,7 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
         const spectralPanel = isPVImage ? (
             <div className="panel-container">
                 <p>For spatial-spectral image</p>
-                <Divider/>
+                <Divider />
                 <p>Spectral axis</p>
                 <SpectralSettingsComponent
                     frame={appStore.activeFrame}
@@ -1084,23 +919,18 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
 
         return (
             <div className={className}>
-                <Tabs
-                    id="imageViewSettingsTabs"
-                    vertical={true}
-                    selectedTabId={this.selectedTab}
-                    onChange={this.setSelectedTab}
-                >
-                    <Tab id={ImageViewSettingsPanelTabs.GLOBAL} title={ImageViewSettingsPanelTabs.GLOBAL} panel={globalPanel}/>
-                    <Tab id={ImageViewSettingsPanelTabs.TITLE} title={ImageViewSettingsPanelTabs.TITLE} panel={titlePanel}/>
-                    <Tab id={ImageViewSettingsPanelTabs.TICKS} title={ImageViewSettingsPanelTabs.TICKS} panel={ticksPanel}/>
-                    <Tab id={ImageViewSettingsPanelTabs.GRID} title={ImageViewSettingsPanelTabs.GRID} panel={gridPanel}/>
-                    <Tab id={ImageViewSettingsPanelTabs.BORDER} title={ImageViewSettingsPanelTabs.BORDER} panel={borderPanel}/>
-                    <Tab id={ImageViewSettingsPanelTabs.AXES} title={ImageViewSettingsPanelTabs.AXES} panel={axesPanel}/>
-                    <Tab id={ImageViewSettingsPanelTabs.NUMBERS} title={ImageViewSettingsPanelTabs.NUMBERS} panel={numbersPanel}/>
-                    <Tab id={ImageViewSettingsPanelTabs.LABELS} title={ImageViewSettingsPanelTabs.LABELS} panel={labelsPanel}/>
-                    <Tab id={ImageViewSettingsPanelTabs.COLORBAR} title={ImageViewSettingsPanelTabs.COLORBAR} panel={colorbarPanel}/>
-                    <Tab id={ImageViewSettingsPanelTabs.BEAM} title={ImageViewSettingsPanelTabs.BEAM} panel={beamPanel} disabled={appStore.frameNum <= 0}/>
-                    <Tab id={ImageViewSettingsPanelTabs.CONVERSION} title={ImageViewSettingsPanelTabs.CONVERSION} panel={spectralPanel} disabled={!isPVImage}/>
+                <Tabs id="imageViewSettingsTabs" vertical={true} selectedTabId={this.selectedTab} onChange={this.setSelectedTab}>
+                    <Tab id={ImageViewSettingsPanelTabs.GLOBAL} title={ImageViewSettingsPanelTabs.GLOBAL} panel={globalPanel} />
+                    <Tab id={ImageViewSettingsPanelTabs.TITLE} title={ImageViewSettingsPanelTabs.TITLE} panel={titlePanel} />
+                    <Tab id={ImageViewSettingsPanelTabs.TICKS} title={ImageViewSettingsPanelTabs.TICKS} panel={ticksPanel} />
+                    <Tab id={ImageViewSettingsPanelTabs.GRID} title={ImageViewSettingsPanelTabs.GRID} panel={gridPanel} />
+                    <Tab id={ImageViewSettingsPanelTabs.BORDER} title={ImageViewSettingsPanelTabs.BORDER} panel={borderPanel} />
+                    <Tab id={ImageViewSettingsPanelTabs.AXES} title={ImageViewSettingsPanelTabs.AXES} panel={axesPanel} />
+                    <Tab id={ImageViewSettingsPanelTabs.NUMBERS} title={ImageViewSettingsPanelTabs.NUMBERS} panel={numbersPanel} />
+                    <Tab id={ImageViewSettingsPanelTabs.LABELS} title={ImageViewSettingsPanelTabs.LABELS} panel={labelsPanel} />
+                    <Tab id={ImageViewSettingsPanelTabs.COLORBAR} title={ImageViewSettingsPanelTabs.COLORBAR} panel={colorbarPanel} />
+                    <Tab id={ImageViewSettingsPanelTabs.BEAM} title={ImageViewSettingsPanelTabs.BEAM} panel={beamPanel} disabled={appStore.frameNum <= 0} />
+                    <Tab id={ImageViewSettingsPanelTabs.CONVERSION} title={ImageViewSettingsPanelTabs.CONVERSION} panel={spectralPanel} disabled={!isPVImage} />
                 </Tabs>
             </div>
         );

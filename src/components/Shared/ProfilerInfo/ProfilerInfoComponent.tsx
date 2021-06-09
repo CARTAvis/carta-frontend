@@ -5,10 +5,10 @@ interface ProfilerInfoComponentProps {
     info: string[];
 }
 
-export const ProfilerInfoComponent: React.FC<ProfilerInfoComponentProps> = (props) => {
+export const ProfilerInfoComponent: React.FC<ProfilerInfoComponentProps> = props => {
     let infoString = "";
     props.info?.forEach((info, index) => {
-        infoString = index === 0 ? info : (infoString + ", " + info);
+        infoString = index === 0 ? info : infoString + ", " + info;
     });
 
     return (

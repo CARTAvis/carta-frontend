@@ -89,7 +89,12 @@ export class ProtobufProcessing {
             floatCoordinates = new Float32Array(u8Copy.buffer);
         }
         // generate indices
-        const indexOffsets = new Int32Array(contourSet.rawStartIndices.buffer.slice(contourSet.rawStartIndices.byteOffset, contourSet.rawStartIndices.byteOffset + contourSet.rawStartIndices.byteLength));
+        const indexOffsets = new Int32Array(
+            contourSet.rawStartIndices.buffer.slice(
+                contourSet.rawStartIndices.byteOffset,
+                contourSet.rawStartIndices.byteOffset + contourSet.rawStartIndices.byteLength
+            )
+        );
 
         return {
             level: contourSet.level,
@@ -149,10 +154,9 @@ export class ProtobufProcessing {
                 return {dataType: CARTA.ColumnType.UnsupportedType, data: []};
         }
         return {dataType: column.dataType, data: data};
-
     }
 
-    static ProcessCatalogData(catalogData: { [k: string]: CARTA.IColumnData }): Map<number, ProcessedColumnData> {
+    static ProcessCatalogData(catalogData: {[k: string]: CARTA.IColumnData}): Map<number, ProcessedColumnData> {
         const dataMap = new Map<number, ProcessedColumnData>();
         const originalMap = new Map(Object.entries(catalogData));
         originalMap.forEach((column, i) => {

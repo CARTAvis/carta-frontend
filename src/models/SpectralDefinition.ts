@@ -15,7 +15,7 @@ export const STANDARD_SPECTRAL_TYPE_SETS: SpectralTypeSet[] = [
     {code: "ZOPT", name: "Redshift", unit: ""},
     {code: "AWAV", name: "Air wavelength", unit: "m"},
     {code: "VELO", name: "Apparent radial velocity", unit: "m/s"},
-    {code: "BETA", name: "Beta", unit: ""},
+    {code: "BETA", name: "Beta", unit: ""}
 ];
 
 // FREQ, ENER, WAVN
@@ -23,7 +23,7 @@ export enum SpectralColorMap {
     FREQ = "FREQ",
     ENER = "ENER",
     WAVE = "WAVE"
-};
+}
 
 export enum SpectralType {
     VRAD = "VRAD",
@@ -56,7 +56,7 @@ export enum SpectralUnit {
     MM = "mm",
     UM = "um",
     NM = "nm",
-    ANGSTROM  = "Angstrom"
+    ANGSTROM = "Angstrom"
 }
 
 export const IsSpectralUnitSupported = (unit: string): boolean => {
@@ -96,7 +96,7 @@ export const GenCoordinateLabel = (type: SpectralType, unit: SpectralUnit): stri
     return `${type ? SPECTRAL_TYPE_STRING.get(type) : ""}${unit ? " (" + unit + ")" : ""}`;
 };
 
-export const SPECTRAL_COORDS_SUPPORTED = new Map<string, {type: SpectralType, unit: SpectralUnit}>([
+export const SPECTRAL_COORDS_SUPPORTED = new Map<string, {type: SpectralType; unit: SpectralUnit}>([
     [GenCoordinateLabel(SpectralType.VRAD, SpectralUnit.KMS), {type: SpectralType.VRAD, unit: SpectralUnit.KMS}],
     [GenCoordinateLabel(SpectralType.VRAD, SpectralUnit.MS), {type: SpectralType.VRAD, unit: SpectralUnit.MS}],
     [GenCoordinateLabel(SpectralType.VOPT, SpectralUnit.KMS), {type: SpectralType.VOPT, unit: SpectralUnit.KMS}],
@@ -115,5 +115,5 @@ export const SPECTRAL_COORDS_SUPPORTED = new Map<string, {type: SpectralType, un
     [GenCoordinateLabel(SpectralType.AWAV, SpectralUnit.UM), {type: SpectralType.AWAV, unit: SpectralUnit.UM}],
     [GenCoordinateLabel(SpectralType.AWAV, SpectralUnit.NM), {type: SpectralType.AWAV, unit: SpectralUnit.NM}],
     [GenCoordinateLabel(SpectralType.AWAV, SpectralUnit.ANGSTROM), {type: SpectralType.AWAV, unit: SpectralUnit.ANGSTROM}],
-    ["Channel", {type: SpectralType.CHANNEL, unit: null}],
+    ["Channel", {type: SpectralType.CHANNEL, unit: null}]
 ]);

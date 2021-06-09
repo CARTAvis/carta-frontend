@@ -74,7 +74,7 @@ export class PointRegionComponent extends React.Component<PointRegionComponentPr
             const pointReferenceImage = region.center;
             const pointSecondaryImage = transformPoint(frame.spatialTransformAST, pointReferenceImage, false);
             centerPixelSpace = transformedImageToCanvasPos(pointSecondaryImage.x, pointSecondaryImage.y, frame, this.props.layerWidth, this.props.layerHeight);
-            rotation = -frame.spatialTransform.rotation * 180.0 / Math.PI;
+            rotation = (-frame.spatialTransform.rotation * 180.0) / Math.PI;
         } else {
             centerPixelSpace = transformedImageToCanvasPos(region.center.x, region.center.y, frame, this.props.layerWidth, this.props.layerHeight);
             rotation = 0;

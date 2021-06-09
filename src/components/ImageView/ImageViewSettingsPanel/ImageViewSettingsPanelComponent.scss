@@ -20,7 +20,7 @@
     }
 
     .bp3-numeric-input input {
-        width: 100px ! important;
+        width: 100px !important;
     }
 
     .bp3-form-group {
@@ -32,16 +32,16 @@
             text-align: right;
         }
     }
-    
+
     .font-group {
         .bp3-form-content {
             display: flex;
         }
-        
+
         input {
-            width: 40px ! important;
+            width: 40px !important;
         }
-        
+
         button > span > span {
             width: 150px;
             overflow: hidden;
@@ -49,7 +49,7 @@
             display: inline-block;
             white-space: nowrap;
         }
-        
+
         button {
             width: 190px;
             margin-right: 5px;

@@ -2,7 +2,7 @@ import {action, computed, observable, makeObservable} from "mobx";
 import {FrameStore, PreferenceStore} from "stores";
 import {CARTA} from "carta-protobuf";
 import {clamp, getColorsForValues, getPercentiles, scaleValueInverse} from "utilities";
-import { AppStore } from "./AppStore";
+import {AppStore} from "./AppStore";
 
 export enum FrameScaling {
     LINEAR = 0,
@@ -26,29 +26,112 @@ export class RenderConfigStore {
     ]);
 
     static readonly COLOR_MAPS_ALL = [
-        "accent", "afmhot", "autumn", "binary", "Blues",
-        "bone", "BrBG", "brg", "BuGn", "BuPu",
-        "bwr", "CMRmap", "cool", "coolwarm", "copper",
-        "cubehelix", "dark2", "flag", "gist_earth", "gist_gray",
-        "gist_heat", "gist_ncar", "gist_rainbow", "gist_stern", "gist_yarg",
-        "GnBu", "gnuplot", "gnuplot2", "gray", "greens",
-        "greys", "hot", "hsv", "inferno", "jet",
-        "magma", "nipy_spectral", "ocean", "oranges", "OrRd",
-        "paired", "pastel1", "pastel2", "pink", "PiYG",
-        "plasma", "PRGn", "prism", "PuBu", "PuBuGn",
-        "PuOr", "PuRd", "purples", "rainbow", "RdBu",
-        "RdGy", "RdPu", "RdYlBu", "RdYlGn", "reds",
-        "seismic", "set1", "set2", "set3", "spectral",
-        "spring", "summer", "tab10", "tab20", "tab20b",
-        "tab20c", "terrain", "viridis", "winter", "Wistia",
-        "YlGn", "YlGnBu", "YlOrBr", "YlOrRd"
+        "accent",
+        "afmhot",
+        "autumn",
+        "binary",
+        "Blues",
+        "bone",
+        "BrBG",
+        "brg",
+        "BuGn",
+        "BuPu",
+        "bwr",
+        "CMRmap",
+        "cool",
+        "coolwarm",
+        "copper",
+        "cubehelix",
+        "dark2",
+        "flag",
+        "gist_earth",
+        "gist_gray",
+        "gist_heat",
+        "gist_ncar",
+        "gist_rainbow",
+        "gist_stern",
+        "gist_yarg",
+        "GnBu",
+        "gnuplot",
+        "gnuplot2",
+        "gray",
+        "greens",
+        "greys",
+        "hot",
+        "hsv",
+        "inferno",
+        "jet",
+        "magma",
+        "nipy_spectral",
+        "ocean",
+        "oranges",
+        "OrRd",
+        "paired",
+        "pastel1",
+        "pastel2",
+        "pink",
+        "PiYG",
+        "plasma",
+        "PRGn",
+        "prism",
+        "PuBu",
+        "PuBuGn",
+        "PuOr",
+        "PuRd",
+        "purples",
+        "rainbow",
+        "RdBu",
+        "RdGy",
+        "RdPu",
+        "RdYlBu",
+        "RdYlGn",
+        "reds",
+        "seismic",
+        "set1",
+        "set2",
+        "set3",
+        "spectral",
+        "spring",
+        "summer",
+        "tab10",
+        "tab20",
+        "tab20b",
+        "tab20c",
+        "terrain",
+        "viridis",
+        "winter",
+        "Wistia",
+        "YlGn",
+        "YlGnBu",
+        "YlOrBr",
+        "YlOrRd"
     ];
     static readonly COLOR_MAPS_SELECTED = [
-        "afmhot", "Blues", "coolwarm", "cubehelix", "gist_heat",
-        "gist_stern", "gnuplot", "gnuplot2", "gray", "greens",
-        "greys", "hot", "inferno", "jet", "magma",
-        "nipy_spectral", "plasma", "rainbow", "RdBu", "RdGy",
-        "reds", "seismic", "spectral", "tab10", "viridis"
+        "afmhot",
+        "Blues",
+        "coolwarm",
+        "cubehelix",
+        "gist_heat",
+        "gist_stern",
+        "gnuplot",
+        "gnuplot2",
+        "gray",
+        "greens",
+        "greys",
+        "hot",
+        "inferno",
+        "jet",
+        "magma",
+        "nipy_spectral",
+        "plasma",
+        "rainbow",
+        "RdBu",
+        "RdGy",
+        "reds",
+        "seismic",
+        "spectral",
+        "tab10",
+        "viridis"
     ];
 
     static readonly PERCENTILE_RANKS = [90, 95, 99, 99.5, 99.9, 99.95, 99.99, 100];
@@ -127,11 +210,24 @@ export class RenderConfigStore {
 
     @computed get colorscaleArray() {
         const colorsForValues = getColorsForValues(this.colorMap);
-        const indexArray = Array.from(Array(colorsForValues.size).keys()).map(x => this.inverted ? 1 - x / colorsForValues.size : x / colorsForValues.size);
-        const scaledArray = indexArray.map(x => 1.0 - scaleValueInverse(x, this.scaling, this.alpha, this.gamma, this.bias, this.contrast, AppStore.Instance?.preferenceStore?.useSmoothedBiasContrast));
-        let rbgString = (index: number): string => (
-            `rgb(${colorsForValues.color[index * 4]}, ${colorsForValues.color[index * 4 + 1]}, ${colorsForValues.color[index * 4 + 2]}, ${colorsForValues.color[index * 4 + 3]})`
+        const indexArray = Array.from(Array(colorsForValues.size).keys()).map(x => (this.inverted ? 1 - x / colorsForValues.size : x / colorsForValues.size));
+        const scaledArray = indexArray.map(
+            x =>
+                1.0 -
+                scaleValueInverse(
+                    x,
+                    this.scaling,
+                    this.alpha,
+                    this.gamma,
+                    this.bias,
+                    this.contrast,
+                    AppStore.Instance?.preferenceStore?.useSmoothedBiasContrast
+                )
         );
+        let rbgString = (index: number): string =>
+            `rgb(${colorsForValues.color[index * 4]}, ${colorsForValues.color[index * 4 + 1]}, ${colorsForValues.color[index * 4 + 2]}, ${
+                colorsForValues.color[index * 4 + 3]
+            })`;
 
         let colorscale = [];
         if (this.contrast === 0) {
@@ -337,7 +433,7 @@ export class RenderConfigStore {
         for (const frame of siblings) {
             frame.renderConfig.updateFrom(this);
         }
-    }
+    };
 
     @action updateFrom = (other: RenderConfigStore) => {
         this.scaling = other.scaling;
@@ -348,5 +444,5 @@ export class RenderConfigStore {
         this.scaleMin[this.stokes] = other.scaleMinVal;
         this.scaleMax[this.stokes] = other.scaleMaxVal;
         this.selectedPercentile[this.stokes] = -1;
-    }
+    };
 }

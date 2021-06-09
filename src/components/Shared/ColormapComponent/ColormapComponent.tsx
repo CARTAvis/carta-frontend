@@ -16,7 +16,7 @@ interface ColormapComponentProps {
 const ColorMapSelect = Select.ofType<string>();
 const COLORMAP_POPOVER_PROPS: Partial<IPopoverProps> = {minimal: true, position: "auto-end", popoverClassName: "colormap-select-popover"};
 
-export const ColormapComponent: React.FC<ColormapComponentProps> = (props) => {
+export const ColormapComponent: React.FC<ColormapComponentProps> = props => {
     const renderColormapBlock = (colormap: string) => {
         let className = "colormap-block";
         const blockHeight = 15;
@@ -30,7 +30,7 @@ export const ColormapComponent: React.FC<ColormapComponentProps> = (props) => {
                     height: `${blockHeight}px`,
                     backgroundImage: `url(${allMaps})`,
                     backgroundSize: `100% calc(300% * ${N})`,
-                    backgroundPosition: `0 calc(300% * -${i} - ${blockHeight}px)`,
+                    backgroundPosition: `0 calc(300% * -${i} - ${blockHeight}px)`
                 }}
             />
         );
@@ -62,7 +62,7 @@ export const ColormapComponent: React.FC<ColormapComponentProps> = (props) => {
             onItemSelect={props.onItemSelect}
             itemRenderer={renderColormapSelectItem}
         >
-            <Button disabled={props.disabled} text={renderColormapBlock(props.selectedItem)} rightIcon="double-caret-vertical" alignText={"right"}/>
+            <Button disabled={props.disabled} text={renderColormapBlock(props.selectedItem)} rightIcon="double-caret-vertical" alignText={"right"} />
         </ColorMapSelect>
     );
 };

@@ -13,14 +13,14 @@ import "./PointRegionForm.scss";
 const KEYCODE_ENTER = 13;
 
 @observer
-export class PointRegionForm extends React.Component<{ region: RegionStore, wcsInfo: AST.FrameSet }> {
+export class PointRegionForm extends React.Component<{region: RegionStore; wcsInfo: AST.FrameSet}> {
     private static readonly REGION_PIXEL_EPS = 1.0e-3;
 
-    private handleNameChange = (ev) => {
+    private handleNameChange = ev => {
         this.props.region.setName(ev.currentTarget.value);
     };
 
-    private handleCenterXChange = (ev) => {
+    private handleCenterXChange = ev => {
         if (ev.type === "keydown" && ev.keyCode !== KEYCODE_ENTER) {
             return;
         }
@@ -36,7 +36,7 @@ export class PointRegionForm extends React.Component<{ region: RegionStore, wcsI
         ev.currentTarget.value = existingValue;
     };
 
-    private handleCenterYChange = (ev) => {
+    private handleCenterYChange = ev => {
         if (ev.type === "keydown" && ev.keyCode !== KEYCODE_ENTER) {
             return;
         }
@@ -52,7 +52,7 @@ export class PointRegionForm extends React.Component<{ region: RegionStore, wcsI
         ev.currentTarget.value = existingValue;
     };
 
-    private handleCenterWCSXChange = (ev) => {
+    private handleCenterWCSXChange = ev => {
         if (ev.type === "keydown" && ev.keyCode !== KEYCODE_ENTER) {
             return;
         }
@@ -76,7 +76,7 @@ export class PointRegionForm extends React.Component<{ region: RegionStore, wcsI
         ev.currentTarget.value = centerWCSPoint.x;
     };
 
-    private handleCenterWCSYChange = (ev) => {
+    private handleCenterWCSYChange = ev => {
         if (ev.type === "keydown" && ev.keyCode !== KEYCODE_ENTER) {
             return;
         }
@@ -107,7 +107,7 @@ export class PointRegionForm extends React.Component<{ region: RegionStore, wcsI
         const formatX = AppStore.Instance.overlayStore.numbers.formatTypeX;
         const formatY = AppStore.Instance.overlayStore.numbers.formatTypeY;
         const region = this.props.region;
-        if (!region  || region.regionType !== CARTA.RegionType.POINT) {
+        if (!region || region.regionType !== CARTA.RegionType.POINT) {
             return null;
         }
 
@@ -115,8 +115,26 @@ export class PointRegionForm extends React.Component<{ region: RegionStore, wcsI
         const centerWCSPoint = getFormattedWCSPoint(this.props.wcsInfo, centerPoint);
         let xInput, yInput;
         if (region.coordinate === RegionCoordinate.Image) {
-            xInput = <SafeNumericInput selectAllOnFocus={true} buttonPosition="none" placeholder="X Coordinate" value={centerPoint.x} onBlur={this.handleCenterXChange} onKeyDown={this.handleCenterXChange}/>;
-            yInput = <SafeNumericInput selectAllOnFocus={true} buttonPosition="none" placeholder="Y Coordinate" value={centerPoint.y} onBlur={this.handleCenterYChange} onKeyDown={this.handleCenterYChange}/>;
+            xInput = (
+                <SafeNumericInput
+                    selectAllOnFocus={true}
+                    buttonPosition="none"
+                    placeholder="X Coordinate"
+                    value={centerPoint.x}
+                    onBlur={this.handleCenterXChange}
+                    onKeyDown={this.handleCenterXChange}
+                />
+            );
+            yInput = (
+                <SafeNumericInput
+                    selectAllOnFocus={true}
+                    buttonPosition="none"
+                    placeholder="Y Coordinate"
+                    value={centerPoint.y}
+                    onBlur={this.handleCenterYChange}
+                    onKeyDown={this.handleCenterYChange}
+                />
+            );
         } else {
             xInput = (
                 <Tooltip content={`Format: ${NUMBER_FORMAT_LABEL.get(formatX)}`} position={Position.BOTTOM} hoverOpenDelay={300}>
@@ -145,7 +163,8 @@ export class PointRegionForm extends React.Component<{ region: RegionStore, wcsI
                 </Tooltip>
             );
         }
-        const infoString = region.coordinate === RegionCoordinate.Image ? `WCS: ${WCSPoint2D.ToString(centerWCSPoint)}` : `Image: ${Point2D.ToString(centerPoint, "px", 3)}`;
+        const infoString =
+            region.coordinate === RegionCoordinate.Image ? `WCS: ${WCSPoint2D.ToString(centerWCSPoint)}` : `Image: ${Point2D.ToString(centerPoint, "px", 3)}`;
         const pxUnitSpan = region.coordinate === RegionCoordinate.Image ? <span className={Classes.TEXT_MUTED}>(px)</span> : "";
         return (
             <div className="form-section point-region-form">
@@ -153,22 +172,26 @@ export class PointRegionForm extends React.Component<{ region: RegionStore, wcsI
                 <div className="form-contents">
                     <table>
                         <tbody>
-                        <tr>
-                            <td>Region Name</td>
-                            <td colSpan={2}>
-                                <InputGroup placeholder="Enter a region name" value={region.name} onChange={this.handleNameChange}/>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td>Coordinate</td>
-                            <td colSpan={2}><CoordinateComponent region={region} disableCooridnate={!this.props.wcsInfo}/></td>
-                        </tr>
-                        <tr>
-                            <td>Center {pxUnitSpan}</td>
-                            <td>{xInput}</td>
-                            <td>{yInput}</td>
-                            <td><span className="info-string">{infoString}</span></td>
-                        </tr>
+                            <tr>
+                                <td>Region Name</td>
+                                <td colSpan={2}>
+                                    <InputGroup placeholder="Enter a region name" value={region.name} onChange={this.handleNameChange} />
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>Coordinate</td>
+                                <td colSpan={2}>
+                                    <CoordinateComponent region={region} disableCooridnate={!this.props.wcsInfo} />
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>Center {pxUnitSpan}</td>
+                                <td>{xInput}</td>
+                                <td>{yInput}</td>
+                                <td>
+                                    <span className="info-string">{infoString}</span>
+                                </td>
+                            </tr>
                         </tbody>
                     </table>
                 </div>

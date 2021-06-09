@@ -14,13 +14,18 @@ export class ToolbarComponentProps {
 
 @observer
 export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
-
     exportImageTooltip = () => {
         return (
-            <span><br/><i><small>
-                Background color is {AppStore.Instance.preferenceStore.transparentImageBackground ? "transparent" : "filled"}.<br/>
-                {AppStore.Instance.preferenceStore.transparentImageBackground ? "Disable" : "Enable"} transparent image background in Preferences.<br/>
-            </small></i></span>
+            <span>
+                <br />
+                <i>
+                    <small>
+                        Background color is {AppStore.Instance.preferenceStore.transparentImageBackground ? "transparent" : "filled"}.<br />
+                        {AppStore.Instance.preferenceStore.transparentImageBackground ? "Disable" : "Enable"} transparent image background in Preferences.
+                        <br />
+                    </small>
+                </i>
+            </span>
         );
     };
 
@@ -37,12 +42,13 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
 
         return (
             <ButtonGroup className={className} style={styleProps}>
-                {(this.props.exportImage) ?
+                {this.props.exportImage ? (
                     <Tooltip content={<span>Export image {this.exportImageTooltip()}</span>}>
-                        <AnchorButton icon="floppy-disk" onClick={this.props.exportImage}/>
-                    </Tooltip> : null}
+                        <AnchorButton icon="floppy-disk" onClick={this.props.exportImage} />
+                    </Tooltip>
+                ) : null}
                 <Tooltip content="Export data">
-                    <AnchorButton icon="th" onClick={this.props.exportData}/>
+                    <AnchorButton icon="th" onClick={this.props.exportData} />
                 </Tooltip>
             </ButtonGroup>
         );

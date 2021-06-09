@@ -24,13 +24,13 @@ export class ExternalPageDialogComponent extends React.Component {
             lazy: true,
             isOpen: appStore.dialogStore.externalPageDialogVisible,
             onClose: appStore.dialogStore.hideExternalPageDialog,
-            title: appStore.dialogStore.externalPageDialogTitle,
+            title: appStore.dialogStore.externalPageDialogTitle
         };
 
         return (
             <DraggableDialogComponent dialogProps={dialogProps} minWidth={400} minHeight={400} defaultWidth={800} defaultHeight={600} enableResizing={true}>
                 <div className="bp3-dialog-body">
-                    <Iframe url={appStore.dialogStore.externalPageDialogUrl}/>
+                    <Iframe url={appStore.dialogStore.externalPageDialogUrl} />
                 </div>
             </DraggableDialogComponent>
         );

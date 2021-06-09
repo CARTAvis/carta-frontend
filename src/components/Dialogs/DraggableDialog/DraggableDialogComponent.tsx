@@ -18,14 +18,13 @@ export class ResizableDialogComponentProps {
 }
 
 export class DraggableDialogComponent extends React.Component<ResizableDialogComponentProps> {
-
     private dd: HTMLDivElement;
     private rnd: Rnd;
 
     componentDidUpdate() {
         const header = this.dd.getElementsByClassName("bp3-dialog-header");
         if (this.props.helpType && header.length > 0 && this.dd.getElementsByClassName("help-button").length === 0) {
-            const helpButton = <Button icon="help" minimal={true} onClick={this.onClickHelpButton}/>;
+            const helpButton = <Button icon="help" minimal={true} onClick={this.onClickHelpButton} />;
             const helpButtonDiv = document.createElement("div") as HTMLDivElement;
             helpButtonDiv.setAttribute("class", "help-button");
             ReactDOM.render(helpButton, helpButtonDiv);
@@ -41,13 +40,13 @@ export class DraggableDialogComponent extends React.Component<ResizableDialogCom
     private onClickHelpButton = () => {
         const centerX = this.rnd.draggable.state.x + this.rnd.resizable.size.width * 0.5;
         HelpStore.Instance.showHelpDrawer(this.props.helpType, centerX);
-    }
+    };
 
     private onResizeStop = (e, direction, elementRef: HTMLDivElement) => {
         if (this.props.onResizeStop) {
             this.props.onResizeStop(elementRef.offsetWidth, elementRef.offsetHeight);
         }
-    }
+    };
 
     render() {
         const w = window,
@@ -70,28 +69,37 @@ export class DraggableDialogComponent extends React.Component<ResizableDialogCom
         };
 
         return (
-            <div className={"draggable-dialog"} ref={ref => this.dd = ref}>
-                {this.props.dialogProps.isOpen &&
-                <Rnd
-                    enableResizing={resizeSettings}
-                    bounds={".gl-container-app"}
-                    dragGrid={[1, 1]}
-                    resizeGrid={[25, 25]}
-                    default={{
-                        x: Math.floor(Math.max((windowWidth - this.props.defaultWidth) / 2, 0)),
-                        y: Math.floor(Math.max((windowHeight - this.props.defaultHeight) / 2, 0)),
-                        width: Math.min(this.props.defaultWidth, windowWidth),
-                        height: Math.min(this.props.defaultHeight, windowHeight)
-                    }}
-                    minWidth={this.props.minWidth}
-                    minHeight={this.props.minHeight}
-                    dragHandleClassName={"bp3-dialog-header"}
-                    ref={c => { this.rnd = c; }}
-                    onResizeStop={this.onResizeStop}
-                >
-                    <Dialog hasBackdrop={false} usePortal={false}  enforceFocus={false} autoFocus={true} {...this.props.dialogProps} children={this.props.children}/>
-                </Rnd>
-                }
+            <div className={"draggable-dialog"} ref={ref => (this.dd = ref)}>
+                {this.props.dialogProps.isOpen && (
+                    <Rnd
+                        enableResizing={resizeSettings}
+                        bounds={".gl-container-app"}
+                        dragGrid={[1, 1]}
+                        resizeGrid={[25, 25]}
+                        default={{
+                            x: Math.floor(Math.max((windowWidth - this.props.defaultWidth) / 2, 0)),
+                            y: Math.floor(Math.max((windowHeight - this.props.defaultHeight) / 2, 0)),
+                            width: Math.min(this.props.defaultWidth, windowWidth),
+                            height: Math.min(this.props.defaultHeight, windowHeight)
+                        }}
+                        minWidth={this.props.minWidth}
+                        minHeight={this.props.minHeight}
+                        dragHandleClassName={"bp3-dialog-header"}
+                        ref={c => {
+                            this.rnd = c;
+                        }}
+                        onResizeStop={this.onResizeStop}
+                    >
+                        <Dialog
+                            hasBackdrop={false}
+                            usePortal={false}
+                            enforceFocus={false}
+                            autoFocus={true}
+                            {...this.props.dialogProps}
+                            children={this.props.children}
+                        />
+                    </Rnd>
+                )}
             </div>
         );
     }

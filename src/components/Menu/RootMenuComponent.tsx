@@ -39,22 +39,34 @@ export class RootMenuComponent extends React.Component {
         return (
             <Menu className="widgets-menu">
                 <Menu.Item text="Info Panels" icon={"panel-stats"}>
-                    <Menu.Item text={WidgetType.Region} icon={<CustomIcon icon={regionListConfig.icon as CustomIconName}/>} onClick={regionListConfig.onClick}/>
-                    <Menu.Item text={WidgetType.ImageList} icon={imageListConfig.icon as IconName} onClick={imageListConfig.onClick}/>
-                    <Menu.Item text={WidgetType.Log} icon={logConfig.icon as IconName} onClick={logConfig.onClick}/>
+                    <Menu.Item
+                        text={WidgetType.Region}
+                        icon={<CustomIcon icon={regionListConfig.icon as CustomIconName} />}
+                        onClick={regionListConfig.onClick}
+                    />
+                    <Menu.Item text={WidgetType.ImageList} icon={imageListConfig.icon as IconName} onClick={imageListConfig.onClick} />
+                    <Menu.Item text={WidgetType.Log} icon={logConfig.icon as IconName} onClick={logConfig.onClick} />
                 </Menu.Item>
                 <Menu.Item text="Profiles" icon={"pulse"}>
-                    <Menu.Item text={WidgetType.SpatialProfiler} icon={<CustomIcon icon={spatialProfilerConfig.icon as CustomIconName}/>} onClick={spatialProfilerConfig.onClick}/>
-                    <Menu.Item text={WidgetType.SpectralProfiler} icon={<CustomIcon icon={spectralProfilerConfig.icon as CustomIconName}/>} onClick={spectralProfilerConfig.onClick}/>
+                    <Menu.Item
+                        text={WidgetType.SpatialProfiler}
+                        icon={<CustomIcon icon={spatialProfilerConfig.icon as CustomIconName} />}
+                        onClick={spatialProfilerConfig.onClick}
+                    />
+                    <Menu.Item
+                        text={WidgetType.SpectralProfiler}
+                        icon={<CustomIcon icon={spectralProfilerConfig.icon as CustomIconName} />}
+                        onClick={spectralProfilerConfig.onClick}
+                    />
                 </Menu.Item>
                 {restWidgets.map(widgetType => {
                     const widgetConfig = WidgetsStore.Instance.CARTAWidgets.get(widgetType);
-                    const trimmedStr = widgetType.replace(/\s+/g, '');
+                    const trimmedStr = widgetType.replace(/\s+/g, "");
                     return (
                         <Menu.Item
                             key={`${trimmedStr}Menu`}
                             text={widgetType}
-                            icon={widgetConfig.isCustomIcon ? <CustomIcon icon={widgetConfig.icon as CustomIconName}/> : widgetConfig.icon as IconName}
+                            icon={widgetConfig.isCustomIcon ? <CustomIcon icon={widgetConfig.icon as CustomIconName} /> : (widgetConfig.icon as IconName)}
                             onClick={widgetConfig.onClick}
                         />
                     );
@@ -73,42 +85,22 @@ export class RootMenuComponent extends React.Component {
         const apiService = appStore.apiService;
         if (apiService.authenticated && ApiService.RuntimeConfig.apiAddress) {
             serverMenu.push(
-                <Menu.Item
-                    key="restart"
-                    text="Restart Service"
-                    disabled={!appStore.apiService.authenticated}
-                    onClick={appStore.apiService.stopServer}
-                />
+                <Menu.Item key="restart" text="Restart Service" disabled={!appStore.apiService.authenticated} onClick={appStore.apiService.stopServer} />
             );
         }
         if (ApiService.RuntimeConfig.logoutAddress || ApiService.RuntimeConfig.googleClientId) {
-            serverMenu.push(
-                <Menu.Item
-                    key="logout"
-                    text="Logout"
-                    disabled={!appStore.apiService.authenticated}
-                    onClick={appStore.apiService.logout}
-                />
-            );
+            serverMenu.push(<Menu.Item key="logout" text="Logout" disabled={!appStore.apiService.authenticated} onClick={appStore.apiService.logout} />);
         }
         if (ApiService.RuntimeConfig.dashboardAddress) {
-            serverMenu.push(
-                <Menu.Item
-                    key="dashboard"
-                    text="Dashboard"
-                    onClick={this.handleDashboardClicked}
-                />
-            );
+            serverMenu.push(<Menu.Item key="dashboard" text="Dashboard" onClick={this.handleDashboardClicked} />);
         }
 
         let serverSubMenu: React.ReactNode;
         if (serverMenu.length) {
             serverSubMenu = (
                 <React.Fragment>
-                    <Menu.Divider/>
-                    <Menu.Item text="Server">
-                        {serverMenu}
-                    </Menu.Item>
+                    <Menu.Divider />
+                    <Menu.Item text="Server">{serverMenu}</Menu.Item>
                 </React.Fragment>
             );
         }
@@ -139,13 +131,8 @@ export class RootMenuComponent extends React.Component {
                         onClick={() => appStore.fileBrowserStore.showFileBrowser(BrowserMode.SaveFile, false)}
                     />
                 </Tooltip>
-                <Menu.Item
-                    text="Close image"
-                    label={`${modString}W`}
-                    disabled={appStore.appendFileDisabled}
-                    onClick={() => appStore.closeCurrentFile(true)}
-                />
-                <Menu.Divider/>
+                <Menu.Item text="Close image" label={`${modString}W`} disabled={appStore.appendFileDisabled} onClick={() => appStore.closeCurrentFile(true)} />
+                <Menu.Divider />
                 <Menu.Item
                     text="Import regions"
                     disabled={!appStore.activeFrame}
@@ -153,30 +140,39 @@ export class RootMenuComponent extends React.Component {
                 />
                 <Tooltip
                     content={"not allowed in read-only mode"}
-                    disabled={!appStore.activeFrame || !appStore.activeFrame.regionSet.regions || appStore.activeFrame.regionSet.regions.length <= 1 || appStore.backendService?.serverFeatureFlags !== CARTA.ServerFeatureFlags.READ_ONLY}
+                    disabled={
+                        !appStore.activeFrame ||
+                        !appStore.activeFrame.regionSet.regions ||
+                        appStore.activeFrame.regionSet.regions.length <= 1 ||
+                        appStore.backendService?.serverFeatureFlags !== CARTA.ServerFeatureFlags.READ_ONLY
+                    }
                     position={Position.LEFT}
                 >
                     <Menu.Item
                         text="Export regions"
-                        disabled={!appStore.activeFrame || !appStore.activeFrame.regionSet.regions || appStore.activeFrame.regionSet.regions.length <= 1 || appStore.backendService.serverFeatureFlags === CARTA.ServerFeatureFlags.READ_ONLY}
+                        disabled={
+                            !appStore.activeFrame ||
+                            !appStore.activeFrame.regionSet.regions ||
+                            appStore.activeFrame.regionSet.regions.length <= 1 ||
+                            appStore.backendService.serverFeatureFlags === CARTA.ServerFeatureFlags.READ_ONLY
+                        }
                         onClick={() => appStore.fileBrowserStore.showFileBrowser(BrowserMode.RegionExport, false)}
                     />
                 </Tooltip>
-                <Menu.Divider/>
+                <Menu.Divider />
                 <Menu.Item
                     text="Import catalog"
                     label={`${modString}G`}
                     disabled={appStore.appendFileDisabled}
                     onClick={() => appStore.fileBrowserStore.showFileBrowser(BrowserMode.Catalog, false)}
                 />
-                <Menu.Divider/>
+                <Menu.Divider />
+                <Menu.Item text="Export image" label={`${modString}E`} disabled={!appStore.activeFrame} onClick={appStore.exportImage} />
                 <Menu.Item
-                    text="Export image"
-                    label={`${modString}E`}
-                    disabled={!appStore.activeFrame}
-                    onClick={appStore.exportImage}
+                    text="Preferences"
+                    onClick={appStore.dialogStore.showPreferenceDialog}
+                    disabled={appStore.preferenceStore.supportsServer && connectionStatus !== ConnectionStatus.ACTIVE}
                 />
-                <Menu.Item text="Preferences" onClick={appStore.dialogStore.showPreferenceDialog} disabled={appStore.preferenceStore.supportsServer && connectionStatus !== ConnectionStatus.ACTIVE}/>
                 {serverSubMenu}
             </Menu>
         );
@@ -199,79 +195,74 @@ export class RootMenuComponent extends React.Component {
         const viewMenu = (
             <Menu>
                 <Menu.Item text="Theme" icon={"media"}>
-                    <Menu.Item text="Automatic" icon={"contrast"} onClick={appStore.setAutoTheme}/>
-                    <Menu.Item text="Light" icon={"flash"} onClick={appStore.setLightTheme}/>
-                    <Menu.Item text="Dark" icon={"moon"} onClick={appStore.setDarkTheme}/>
+                    <Menu.Item text="Automatic" icon={"contrast"} onClick={appStore.setAutoTheme} />
+                    <Menu.Item text="Light" icon={"flash"} onClick={appStore.setLightTheme} />
+                    <Menu.Item text="Dark" icon={"moon"} onClick={appStore.setDarkTheme} />
                 </Menu.Item>
                 <Menu.Item text="Layouts" icon={"page-layout"} disabled={layoutStore.supportsServer && connectionStatus !== ConnectionStatus.ACTIVE}>
                     <Menu.Item text="Existing Layouts" disabled={!presetLayouts && !userLayouts}>
-                        {presetLayouts && presetLayouts.length > 0 && presetLayouts.map((value) =>
-                            <Menu.Item
-                                key={value}
-                                text={value}
-                                active={value === appStore.layoutStore.currentLayoutName}
-                                onClick={() => appStore.layoutStore.applyLayout(value)}
-                            />
-                        )}
+                        {presetLayouts &&
+                            presetLayouts.length > 0 &&
+                            presetLayouts.map(value => (
+                                <Menu.Item
+                                    key={value}
+                                    text={value}
+                                    active={value === appStore.layoutStore.currentLayoutName}
+                                    onClick={() => appStore.layoutStore.applyLayout(value)}
+                                />
+                            ))}
                         {userLayouts && userLayouts.length > 0 && (
                             <React.Fragment>
-                                <MenuDivider/>
-                                {userLayouts.map((value) =>
+                                <MenuDivider />
+                                {userLayouts.map(value => (
                                     <Menu.Item
                                         key={value}
                                         text={value}
                                         active={value === appStore.layoutStore.currentLayoutName}
                                         onClick={() => appStore.layoutStore.applyLayout(value)}
                                     />
-                                )}
+                                ))}
                             </React.Fragment>
                         )}
                     </Menu.Item>
-                    <Menu.Item text="Save Layout" onClick={appStore.dialogStore.showSaveLayoutDialog}/>
+                    <Menu.Item text="Save Layout" onClick={appStore.dialogStore.showSaveLayoutDialog} />
                     <Menu.Item text="Delete Layout" disabled={!userLayouts || userLayouts.length <= 0}>
-                        {userLayouts && userLayouts.length > 0 && userLayouts.map((value) =>
-                            <Menu.Item
-                                key={value}
-                                text={value}
-                                active={value === appStore.layoutStore.currentLayoutName}
-                                onClick={() => {
-                                    appStore.layoutStore.deleteLayout(value);
-                                    if (value === appStore.preferenceStore.layout) {
-                                        appStore.preferenceStore.setPreference(PreferenceKeys.GLOBAL_LAYOUT, PresetLayout.DEFAULT);
-                                    }
-                                }}
-                            />
-                        )}
+                        {userLayouts &&
+                            userLayouts.length > 0 &&
+                            userLayouts.map(value => (
+                                <Menu.Item
+                                    key={value}
+                                    text={value}
+                                    active={value === appStore.layoutStore.currentLayoutName}
+                                    onClick={() => {
+                                        appStore.layoutStore.deleteLayout(value);
+                                        if (value === appStore.preferenceStore.layout) {
+                                            appStore.preferenceStore.setPreference(PreferenceKeys.GLOBAL_LAYOUT, PresetLayout.DEFAULT);
+                                        }
+                                    }}
+                                />
+                            ))}
                     </Menu.Item>
                 </Menu.Item>
-                {layerItems.length > 0 &&
-                <Menu.Item text="Images" icon={"multi-select"}>
-                    {layerItems}
-                    <Menu.Divider/>
-                    <Menu.Item text="Previous image" icon={"step-backward"} disabled={layerItems.length < 2} onClick={appStore.prevFrame}/>
-                    <Menu.Item text="Next image" icon={"step-forward"} disabled={layerItems.length < 2} onClick={appStore.nextFrame}/>
-                </Menu.Item>
-                }
-                <Menu.Item
-                    text="File header"
-                    icon={"app-header"}
-                    disabled={!appStore.activeFrame}
-                    onClick={appStore.dialogStore.showFileInfoDialog}
-                />
-                <Menu.Item
-                    text="Contours"
-                    icon={<CustomIcon icon="contour"/>}
-                    onClick={appStore.dialogStore.showContourDialog}
-                />
+                {layerItems.length > 0 && (
+                    <Menu.Item text="Images" icon={"multi-select"}>
+                        {layerItems}
+                        <Menu.Divider />
+                        <Menu.Item text="Previous image" icon={"step-backward"} disabled={layerItems.length < 2} onClick={appStore.prevFrame} />
+                        <Menu.Item text="Next image" icon={"step-forward"} disabled={layerItems.length < 2} onClick={appStore.nextFrame} />
+                    </Menu.Item>
+                )}
+                <Menu.Item text="File header" icon={"app-header"} disabled={!appStore.activeFrame} onClick={appStore.dialogStore.showFileInfoDialog} />
+                <Menu.Item text="Contours" icon={<CustomIcon icon="contour" />} onClick={appStore.dialogStore.showContourDialog} />
             </Menu>
         );
 
         const helpMenu = (
             <Menu>
-                <Menu.Item text="Online Manual" icon={"manual"} onClick={this.handleDocumentationClicked}/>
-                <Menu.Item text="Controls and Shortcuts" icon={"key-control"} label={"Shift + ?"} onClick={appStore.dialogStore.showHotkeyDialog}/>
-                <Menu.Item text="Debug Execution" icon={"console"} onClick={appStore.dialogStore.showDebugExecutionDialog}/>
-                <Menu.Item text="About" icon={"info-sign"} onClick={appStore.dialogStore.showAboutDialog}/>
+                <Menu.Item text="Online Manual" icon={"manual"} onClick={this.handleDocumentationClicked} />
+                <Menu.Item text="Controls and Shortcuts" icon={"key-control"} label={"Shift + ?"} onClick={appStore.dialogStore.showHotkeyDialog} />
+                <Menu.Item text="Debug Execution" icon={"console"} onClick={appStore.dialogStore.showDebugExecutionDialog} />
+                <Menu.Item text="About" icon={"info-sign"} onClick={appStore.dialogStore.showAboutDialog} />
             </Menu>
         );
 
@@ -286,16 +277,27 @@ export class RootMenuComponent extends React.Component {
                 break;
             case ConnectionStatus.ACTIVE:
                 if (appStore.backendService.connectionDropped) {
-                    connectivityTooltip = <span>Reconnected to server {userString} after disconnect. Some errors may occur<br/><i><small>Latency: {latencyString}</small></i></span>;
+                    connectivityTooltip = (
+                        <span>
+                            Reconnected to server {userString} after disconnect. Some errors may occur
+                            <br />
+                            <i>
+                                <small>Latency: {latencyString}</small>
+                            </i>
+                        </span>
+                    );
                     connectivityClass += " warning";
                 } else {
                     connectivityTooltip = (
                         <span>
-                            Connected to server {userString}<br/>
+                            Connected to server {userString}
+                            <br />
                             <i>
                                 <small>
-                                    Latency: {latencyString}<br/>
-                                    Session ID: {appStore.backendService.sessionId}<br/>
+                                    Latency: {latencyString}
+                                    <br />
+                                    Session ID: {appStore.backendService.sessionId}
+                                    <br />
                                     {appStore.backendService.grpcPort > 0 && <span>GRPC Port: {appStore.backendService.grpcPort}</span>}
                                 </small>
                             </i>
@@ -329,7 +331,7 @@ export class RootMenuComponent extends React.Component {
             loadingTooltipFragment = (
                 <React.Fragment>
                     {tilesTooltipContent}
-                    {contoursLoading && tilesLoading && <br/>}
+                    {contoursLoading && tilesLoading && <br />}
                     {contourTooltipContent}
                 </React.Fragment>
             );
@@ -341,47 +343,64 @@ export class RootMenuComponent extends React.Component {
         if (loadingTooltipFragment) {
             loadingIndicator = (
                 <Tooltip content={loadingTooltipFragment}>
-                    <Icon icon={"cloud-download"} className={loadingIndicatorClass}/>
+                    <Icon icon={"cloud-download"} className={loadingIndicatorClass} />
                 </Tooltip>
             );
         } else {
-            loadingIndicator = <Icon icon={"cloud-download"} className={loadingIndicatorClass}/>;
+            loadingIndicator = <Icon icon={"cloud-download"} className={loadingIndicatorClass} />;
         }
 
         return (
             <div className="root-menu">
                 <Popover autoFocus={false} minimal={true} content={fileMenu} position={Position.BOTTOM_LEFT}>
                     <Menu className="root-menu-entry">
-                        <Menu.Item text="File"/>
+                        <Menu.Item text="File" />
                     </Menu>
                 </Popover>
                 <Popover autoFocus={false} minimal={true} content={viewMenu} position={Position.BOTTOM_LEFT}>
                     <Menu className="root-menu-entry">
-                        <Menu.Item text="View"/>
+                        <Menu.Item text="View" />
                     </Menu>
                 </Popover>
                 <Popover autoFocus={false} minimal={true} content={this.genWidgetsMenu()} position={Position.BOTTOM_LEFT}>
                     <Menu className="root-menu-entry">
-                        <Menu.Item text="Widgets"/>
+                        <Menu.Item text="Widgets" />
                     </Menu>
                 </Popover>
                 <Popover autoFocus={false} minimal={true} content={helpMenu} position={Position.BOTTOM_LEFT}>
                     <Menu className="root-menu-entry">
-                        <Menu.Item text="Help"/>
+                        <Menu.Item text="Help" />
                     </Menu>
                 </Popover>
-                <ToolbarMenuComponent/>
-                <Alert className={appStore.darkTheme ? "bp3-dark" : ""} isOpen={this.documentationAlertVisible} onClose={this.handleAlertDismissed} canEscapeKeyCancel={true} canOutsideClickCancel={true} confirmButtonText={"Dismiss"}>
+                <ToolbarMenuComponent />
+                <Alert
+                    className={appStore.darkTheme ? "bp3-dark" : ""}
+                    isOpen={this.documentationAlertVisible}
+                    onClose={this.handleAlertDismissed}
+                    canEscapeKeyCancel={true}
+                    canOutsideClickCancel={true}
+                    confirmButtonText={"Dismiss"}
+                >
                     Documentation will open in a new tab. Please ensure any popup blockers are disabled.
                 </Alert>
                 {loadingIndicator}
-                {appStore.preferenceStore.lowBandwidthMode &&
-                <Tooltip content={<span>CARTA is running in low bandwidth mode<br/><i><small>Image resolution and cursor responsiveness will be reduced</small></i></span>}>
-                    <Icon icon={"feed"} className="connectivity-icon warning"/>
-                </Tooltip>
-                }
+                {appStore.preferenceStore.lowBandwidthMode && (
+                    <Tooltip
+                        content={
+                            <span>
+                                CARTA is running in low bandwidth mode
+                                <br />
+                                <i>
+                                    <small>Image resolution and cursor responsiveness will be reduced</small>
+                                </i>
+                            </span>
+                        }
+                    >
+                        <Icon icon={"feed"} className="connectivity-icon warning" />
+                    </Tooltip>
+                )}
                 <Tooltip content={connectivityTooltip}>
-                    <Icon icon={"symbol-circle"} className={connectivityClass}/>
+                    <Icon icon={"symbol-circle"} className={connectivityClass} />
                 </Tooltip>
                 <div id="hidden-status-info">
                     <span id="info-session-id">{appStore.backendService.sessionId}</span>
@@ -397,7 +416,7 @@ export class RootMenuComponent extends React.Component {
         if (process.env.REACT_APP_TARGET !== "linux" && process.env.REACT_APP_TARGET !== "darwin") {
             this.documentationAlertVisible = true;
             clearTimeout(this.documentationAlertTimeoutHandle);
-            this.documentationAlertTimeoutHandle = setTimeout(() => this.documentationAlertVisible = false, 10000);
+            this.documentationAlertTimeoutHandle = setTimeout(() => (this.documentationAlertVisible = false), 10000);
         }
     };
 

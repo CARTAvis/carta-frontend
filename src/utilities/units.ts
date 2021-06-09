@@ -100,7 +100,8 @@ export function formattedArcsec(arcsec: number, decimals: number = -1): string {
     return arcString;
 }
 
-export function wavelengthToFrequency(meter: number) { // return in Hz
+export function wavelengthToFrequency(meter: number) {
+    // return in Hz
     if (!isFinite(meter) || meter === 0 || meter === null) {
         return undefined;
     }

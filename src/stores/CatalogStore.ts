@@ -1,12 +1,12 @@
 import * as AST from "ast_wrapper";
-import {action, observable, ObservableMap, computed,makeObservable} from "mobx";
+import {action, observable, ObservableMap, computed, makeObservable} from "mobx";
 import {AppStore, CatalogProfileStore, CatalogSystemType, CatalogOverlay, WidgetsStore} from "stores";
 import {CatalogWebGLService, CatalogTextureType} from "services";
 import {CatalogWidgetStore} from "stores/widgets";
 
 type CatalogOverlayCoords = {
-    x: Float32Array,
-    y: Float32Array
+    x: Float32Array;
+    y: Float32Array;
 };
 
 export class CatalogStore {
@@ -52,7 +52,15 @@ export class CatalogStore {
         });
     }
 
-    @action updateCatalogData(fileId: number, xData: Array<number>, yData: Array<number>, wcsInfo: AST.FrameSet, xUnit: string, yUnit: string, catalogFrame: CatalogSystemType) {
+    @action updateCatalogData(
+        fileId: number,
+        xData: Array<number>,
+        yData: Array<number>,
+        wcsInfo: AST.FrameSet,
+        xUnit: string,
+        yUnit: string,
+        catalogFrame: CatalogSystemType
+    ) {
         const catalog = this.catalogGLData.get(fileId);
         if (catalog && xData && yData) {
             const dataSize = catalog.x.length;
@@ -89,40 +97,47 @@ export class CatalogStore {
     }
 
     @action updateSpatialMatchedCatalog(imageMapId: string, catalogFileId: number) {
-            const activeFrame = AppStore.Instance.activeFrame;
-            const catalogWidgetStore = this.getCatalogWidgetStore(catalogFileId);
-            const xColumn = catalogWidgetStore.xAxis;
-            const yColumn = catalogWidgetStore.yAxis;
-            if (xColumn !== CatalogOverlay.NONE && yColumn !== CatalogOverlay.NONE) {
-                const catalogProfileStore = this.catalogProfileStores.get(catalogFileId);
-                const coords = catalogProfileStore.get2DPlotData(xColumn, yColumn, catalogProfileStore.catalogData);
-                const wcs = activeFrame.validWcs ? activeFrame.wcsInfo : 0;
-                let xPoints = new Float32Array(coords.wcsX.length);
-                let yPoints = new Float32Array(coords.wcsX.length);
-                const catalogSystem = catalogProfileStore.catalogCoordinateSystem.system;
-                switch (catalogSystem) {
-                    case CatalogSystemType.Pixel0:
-                        for (let i = 0; i < coords.wcsX.length; i++) {
-                            xPoints[i] = coords.wcsX[i];
-                            yPoints[i] = coords.wcsY[i];
-                        }
-                        break;
-                    case CatalogSystemType.Pixel1:
-                        for (let i = 0; i < coords.wcsX.length; i++) {
-                            xPoints[i] = coords.wcsX[i] - 1;
-                            yPoints[i] = coords.wcsY[i] - 1;
-                        }
-                        break;
-                    default:
-                        const pixelData = CatalogStore.TransformCatalogData(coords.wcsX, coords.wcsY, wcs, coords.xHeaderInfo.units, coords.yHeaderInfo.units, catalogSystem);
-                        for (let i = 0; i < pixelData.xImageCoords.length; i++) {
-                            xPoints[i] = pixelData.xImageCoords[i];
-                            yPoints[i] = pixelData.yImageCoords[i];
-                        }
-                        break;
-                }
-                CatalogWebGLService.Instance.updateSpatialMatchedTexture(imageMapId, catalogFileId, xPoints, yPoints);
+        const activeFrame = AppStore.Instance.activeFrame;
+        const catalogWidgetStore = this.getCatalogWidgetStore(catalogFileId);
+        const xColumn = catalogWidgetStore.xAxis;
+        const yColumn = catalogWidgetStore.yAxis;
+        if (xColumn !== CatalogOverlay.NONE && yColumn !== CatalogOverlay.NONE) {
+            const catalogProfileStore = this.catalogProfileStores.get(catalogFileId);
+            const coords = catalogProfileStore.get2DPlotData(xColumn, yColumn, catalogProfileStore.catalogData);
+            const wcs = activeFrame.validWcs ? activeFrame.wcsInfo : 0;
+            let xPoints = new Float32Array(coords.wcsX.length);
+            let yPoints = new Float32Array(coords.wcsX.length);
+            const catalogSystem = catalogProfileStore.catalogCoordinateSystem.system;
+            switch (catalogSystem) {
+                case CatalogSystemType.Pixel0:
+                    for (let i = 0; i < coords.wcsX.length; i++) {
+                        xPoints[i] = coords.wcsX[i];
+                        yPoints[i] = coords.wcsY[i];
+                    }
+                    break;
+                case CatalogSystemType.Pixel1:
+                    for (let i = 0; i < coords.wcsX.length; i++) {
+                        xPoints[i] = coords.wcsX[i] - 1;
+                        yPoints[i] = coords.wcsY[i] - 1;
+                    }
+                    break;
+                default:
+                    const pixelData = CatalogStore.TransformCatalogData(
+                        coords.wcsX,
+                        coords.wcsY,
+                        wcs,
+                        coords.xHeaderInfo.units,
+                        coords.yHeaderInfo.units,
+                        catalogSystem
+                    );
+                    for (let i = 0; i < pixelData.xImageCoords.length; i++) {
+                        xPoints[i] = pixelData.xImageCoords[i];
+                        yPoints[i] = pixelData.yImageCoords[i];
+                    }
+                    break;
             }
+            CatalogWebGLService.Instance.updateSpatialMatchedTexture(imageMapId, catalogFileId, xPoints, yPoints);
+        }
     }
 
     // only recalculate position when source image and destination image have different projection types
@@ -136,8 +151,8 @@ export class CatalogStore {
             if (sourceFrameId !== destinationFrameId) {
                 const imageMapId = `${sourceFrameId}-${destinationFrameId}`;
                 this.imageAssociatedCatalogId.get(sourceFrameId)?.forEach(catalogFileId => {
-                    this.updateSpatialMatchedCatalog(imageMapId, catalogFileId);   
-                });   
+                    this.updateSpatialMatchedCatalog(imageMapId, catalogFileId);
+                });
             }
         });
     }
@@ -164,7 +179,7 @@ export class CatalogStore {
             this.updateImageAssociatedCatalogId(frame.frameInfo.fileId, associatedCatalogId);
         }
 
-        // update catalogProfiles fileId            
+        // update catalogProfiles fileId
         if (catalogComponentId && associatedCatalogId.length) {
             this.catalogProfiles.forEach((catalogFileId, componentId) => {
                 if (catalogFileId === fileId) {
@@ -182,9 +197,9 @@ export class CatalogStore {
         const fileIds = this.imageAssociatedCatalogId.get(imageFileId);
         const activeCatalogFileIds = fileIds ? fileIds : [];
         if (this.catalogProfiles.size && activeCatalogFileIds?.length) {
-            this.catalogProfiles.forEach((value , componentId) => {
+            this.catalogProfiles.forEach((value, componentId) => {
                 this.catalogProfiles.set(componentId, activeCatalogFileIds[0]);
-            });  
+            });
         }
     }
 
@@ -250,11 +265,11 @@ export class CatalogStore {
         const appStore = AppStore.Instance;
         const catalogFileIds = this.imageAssociatedCatalogId.get(imageFileId);
         if (catalogFileIds?.length) {
-            catalogFileIds.forEach((catalogFileId) => {
+            catalogFileIds.forEach(catalogFileId => {
                 const widgetId = this.catalogWidgets.get(catalogFileId);
                 if (widgetId) {
                     appStore.widgetsStore.catalogWidgets.get(widgetId)?.resetMaps();
-                    appStore.removeCatalog(catalogFileId, widgetId);   
+                    appStore.removeCatalog(catalogFileId, widgetId);
                 }
             });
             this.imageAssociatedCatalogId.delete(imageFileId);
@@ -288,7 +303,7 @@ export class CatalogStore {
         return frameId;
     }
 
-    getAssociatedIdByWidgetId(catalogPlotWidgetId: string): {catalogPlotComponentId: string, catalogFileId: number} {
+    getAssociatedIdByWidgetId(catalogPlotWidgetId: string): {catalogPlotComponentId: string; catalogFileId: number} {
         let catalogPlotComponentId;
         let catalogFileId;
         this.catalogPlots.forEach((catalogWidgetMap, componentId) => {
@@ -319,7 +334,7 @@ export class CatalogStore {
         const widgetsStore = WidgetsStore.Instance;
         if (this.catalogWidgets.has(fileId)) {
             const widgetStoreId = this.catalogWidgets.get(fileId);
-            return widgetsStore.catalogWidgets.get(widgetStoreId);     
+            return widgetsStore.catalogWidgets.get(widgetStoreId);
         } else {
             const widgetId = widgetsStore.addCatalogWidget(fileId);
             return widgetsStore.catalogWidgets.get(widgetId);
@@ -337,7 +352,14 @@ export class CatalogStore {
         }
     }
 
-    private static TransformCatalogData(xWcsData: Array<number>, yWcsData: Array<number>, wcsInfo: AST.FrameSet, xUnit: string, yUnit: string, catalogFrame: CatalogSystemType): { xImageCoords: Float64Array, yImageCoords: Float64Array } {
+    private static TransformCatalogData(
+        xWcsData: Array<number>,
+        yWcsData: Array<number>,
+        wcsInfo: AST.FrameSet,
+        xUnit: string,
+        yUnit: string,
+        catalogFrame: CatalogSystemType
+    ): {xImageCoords: Float64Array; yImageCoords: Float64Array} {
         if (xWcsData?.length === yWcsData?.length && xWcsData?.length > 0) {
             const N = xWcsData.length;
 

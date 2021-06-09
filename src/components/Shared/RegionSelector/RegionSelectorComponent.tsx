@@ -7,7 +7,7 @@ import {RegionWidgetStore, RegionsType, RegionId, ACTIVE_FILE_ID} from "stores/w
 import "./RegionSelectorComponent.scss";
 
 @observer
-export class RegionSelectorComponent extends React.Component<{ widgetStore: RegionWidgetStore, onFrameChanged?: (newFrame: FrameStore) => void }> {
+export class RegionSelectorComponent extends React.Component<{widgetStore: RegionWidgetStore; onFrameChanged?: (newFrame: FrameStore) => void}> {
     private handleFrameChanged = (changeEvent: React.ChangeEvent<HTMLSelectElement>) => {
         const appStore = AppStore.Instance;
         const widgetStore = this.props.widgetStore;
@@ -64,7 +64,11 @@ export class RegionSelectorComponent extends React.Component<{ widgetStore: Regi
                 default:
                     fiteredRegions = regions;
             }
-            regionOptions = regionOptions.concat(fiteredRegions.map(r => {return {value: r.regionId, label: r.nameString};}));
+            regionOptions = regionOptions.concat(
+                fiteredRegions.map(r => {
+                    return {value: r.regionId, label: r.nameString};
+                })
+            );
 
             if (widgetStore.type === RegionsType.CLOSED_AND_POINT && regionOptions.length === 1) {
                 regionOptions = regionOptions.concat([{value: RegionId.CURSOR, label: "Cursor"}]);
@@ -89,10 +93,23 @@ export class RegionSelectorComponent extends React.Component<{ widgetStore: Regi
         return (
             <React.Fragment>
                 <FormGroup label={"Image"} inline={true} disabled={!enableFrameselect}>
-                    <HTMLSelect className={frameClassName} value={selectedFrameValue} options={widgetStore.frameOptions} onChange={this.handleFrameChanged} disabled={!enableFrameselect} style={{width: "100px"}}/>
+                    <HTMLSelect
+                        className={frameClassName}
+                        value={selectedFrameValue}
+                        options={widgetStore.frameOptions}
+                        onChange={this.handleFrameChanged}
+                        disabled={!enableFrameselect}
+                        style={{width: "100px"}}
+                    />
                 </FormGroup>
                 <FormGroup label={"Region"} inline={true} disabled={!enableRegionSelect}>
-                    <HTMLSelect className={regionClassName} value={selectedValue} options={regionOptions} onChange={this.handleRegionChanged} disabled={!enableRegionSelect}/>
+                    <HTMLSelect
+                        className={regionClassName}
+                        value={selectedValue}
+                        options={regionOptions}
+                        onChange={this.handleRegionChanged}
+                        disabled={!enableRegionSelect}
+                    />
                 </FormGroup>
             </React.Fragment>
         );

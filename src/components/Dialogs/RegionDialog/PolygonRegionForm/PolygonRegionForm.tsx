@@ -14,7 +14,7 @@ import "./PolygonRegionForm.scss";
 const KEYCODE_ENTER = 13;
 
 @observer
-export class PolygonRegionForm extends React.Component<{ region: RegionStore, wcsInfo: AST.FrameSet }> {
+export class PolygonRegionForm extends React.Component<{region: RegionStore; wcsInfo: AST.FrameSet}> {
     private static readonly REGION_PIXEL_EPS = 1.0e-3;
 
     @observable displayColorPicker: boolean;
@@ -24,7 +24,7 @@ export class PolygonRegionForm extends React.Component<{ region: RegionStore, wc
         makeObservable(this);
     }
 
-    private handleNameChange = (ev) => {
+    private handleNameChange = ev => {
         this.props.region.setName(ev.currentTarget.value);
     };
 
@@ -65,7 +65,12 @@ export class PolygonRegionForm extends React.Component<{ region: RegionStore, wc
         if (wcsString === (isXCoordinate ? pointWCS.x : pointWCS.y)) {
             return;
         }
-        if (isWCSStringFormatValid(wcsString, isXCoordinate ? AppStore.Instance.overlayStore.numbers.formatTypeX : AppStore.Instance.overlayStore.numbers.formatTypeY)) {
+        if (
+            isWCSStringFormatValid(
+                wcsString,
+                isXCoordinate ? AppStore.Instance.overlayStore.numbers.formatTypeX : AppStore.Instance.overlayStore.numbers.formatTypeY
+            )
+        ) {
             const newPoint = getPixelValueFromWCS(this.props.wcsInfo, isXCoordinate ? {x: wcsString, y: pointWCS.y} : {x: pointWCS.x, y: wcsString});
             if (!newPoint) {
                 return;
@@ -104,8 +109,8 @@ export class PolygonRegionForm extends React.Component<{ region: RegionStore, wc
                         buttonPosition="none"
                         placeholder="X Coordinate"
                         value={point.x}
-                        onBlur={(evt) => this.handlePointChange(index, true, evt)}
-                        onKeyDown={(evt) => this.handlePointChange(index, true, evt)}
+                        onBlur={evt => this.handlePointChange(index, true, evt)}
+                        onKeyDown={evt => this.handlePointChange(index, true, evt)}
                     />
                 );
                 yInput = (
@@ -114,8 +119,8 @@ export class PolygonRegionForm extends React.Component<{ region: RegionStore, wc
                         buttonPosition="none"
                         placeholder="Y Coordinate"
                         value={point.y}
-                        onBlur={(evt) => this.handlePointChange(index, false, evt)}
-                        onKeyDown={(evt) => this.handlePointChange(index, false, evt)}
+                        onBlur={evt => this.handlePointChange(index, false, evt)}
+                        onKeyDown={evt => this.handlePointChange(index, false, evt)}
                     />
                 );
             } else {
@@ -127,8 +132,8 @@ export class PolygonRegionForm extends React.Component<{ region: RegionStore, wc
                             placeholder="X WCS Coordinate"
                             disabled={!this.props.wcsInfo || !pointWCS}
                             value={pointWCS ? pointWCS.x : ""}
-                            onBlur={(evt) => this.handleWCSPointChange(index, true, evt)}
-                            onKeyDown={(evt) => this.handleWCSPointChange(index, true, evt)}
+                            onBlur={evt => this.handleWCSPointChange(index, true, evt)}
+                            onKeyDown={evt => this.handleWCSPointChange(index, true, evt)}
                         />
                     </Tooltip>
                 );
@@ -140,19 +145,24 @@ export class PolygonRegionForm extends React.Component<{ region: RegionStore, wc
                             placeholder="Y WCS Coordinate"
                             disabled={!this.props.wcsInfo || !pointWCS}
                             value={pointWCS ? pointWCS.y : ""}
-                            onBlur={(evt) => this.handleWCSPointChange(index, false, evt)}
-                            onKeyDown={(evt) => this.handleWCSPointChange(index, false, evt)}
+                            onBlur={evt => this.handleWCSPointChange(index, false, evt)}
+                            onKeyDown={evt => this.handleWCSPointChange(index, false, evt)}
                         />
                     </Tooltip>
                 );
             }
-            const infoString = region.coordinate === RegionCoordinate.Image ? `WCS: ${WCSPoint2D.ToString(pointWCS)}` : `Image: ${Point2D.ToString(point, "px", 3)}`;
+            const infoString =
+                region.coordinate === RegionCoordinate.Image ? `WCS: ${WCSPoint2D.ToString(pointWCS)}` : `Image: ${Point2D.ToString(point, "px", 3)}`;
             return (
                 <tr key={index}>
-                    <td>Point {index} {pxUnitSpan}</td>
+                    <td>
+                        Point {index} {pxUnitSpan}
+                    </td>
                     <td>{xInput}</td>
                     <td>{yInput}</td>
-                    <td><span className="info-string">{infoString}</span></td>
+                    <td>
+                        <span className="info-string">{infoString}</span>
+                    </td>
                 </tr>
             );
         });
@@ -162,17 +172,19 @@ export class PolygonRegionForm extends React.Component<{ region: RegionStore, wc
                 <div className="form-contents">
                     <table>
                         <tbody>
-                        <tr>
-                            <td>Region Name</td>
-                            <td colSpan={2}>
-                                <InputGroup placeholder="Enter a region name" value={region.name} onChange={this.handleNameChange}/>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td>Coordinate</td>
-                            <td colSpan={2}><CoordinateComponent region={region} disableCooridnate={!this.props.wcsInfo}/></td>
-                        </tr>
-                        {pointRows}
+                            <tr>
+                                <td>Region Name</td>
+                                <td colSpan={2}>
+                                    <InputGroup placeholder="Enter a region name" value={region.name} onChange={this.handleNameChange} />
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>Coordinate</td>
+                                <td colSpan={2}>
+                                    <CoordinateComponent region={region} disableCooridnate={!this.props.wcsInfo} />
+                                </td>
+                            </tr>
+                            {pointRows}
                         </tbody>
                     </table>
                 </div>

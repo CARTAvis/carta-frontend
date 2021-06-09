@@ -13,14 +13,14 @@ export class ImageSaveComponent extends React.Component {
         super(props);
         makeObservable(this);
 
-        autorun(()=>{
+        autorun(() => {
             const appStore = AppStore.Instance;
             if (this.validSaveSpectralRangeStart && this.validSaveSpectralRangeEnd) {
-                appStore.endFileSaving()
+                appStore.endFileSaving();
             } else {
                 appStore.startFileSaving();
             }
-        })
+        });
     }
 
     @computed get validSaveSpectralRangeStart() {
@@ -68,43 +68,41 @@ export class ImageSaveComponent extends React.Component {
         if (activeFrame?.setSpectralCoordinate(coordStr)) {
             FileBrowserStore.Instance.initialSaveSpectralRange();
         }
-    };
+    }
 
     updateSpectralSystem(specsys: SpectralSystem): void {
         const activeFrame = AppStore.Instance.activeFrame;
         if (activeFrame?.setSpectralSystem(specsys)) {
             FileBrowserStore.Instance.initialSaveSpectralRange();
         }
-    };
+    }
 
     @action updateStokes(option: number): void {
         FileBrowserStore.Instance.saveStokesOption = option;
-    };
+    }
 
     /// Generate options for stokes via string
     @computed get stokesOptions() {
         const activeFrame = AppStore.Instance.activeFrame;
         const stokesInfo = activeFrame.stokesInfo;
-        let options = [
-            { value: 0, label: stokesInfo.join("") },
-        ];
+        let options = [{value: 0, label: stokesInfo.join("")}];
         const optionsAddFourElements = () => {
-            options.push({ value: 4, label: stokesInfo[3] });
-            options.push({ value: 7, label: stokesInfo.slice(2, 4).join("") });
-            options.push({ value: 9, label: stokesInfo[0] + stokesInfo[3] });
-            options.push({ value: 10, label: stokesInfo[1] + stokesInfo[3] });
-            options.push({ value: 11, label: stokesInfo.slice(0, 3).join("") });
-            options.push({ value: 12, label: stokesInfo.slice(1, 4).join("") });
+            options.push({value: 4, label: stokesInfo[3]});
+            options.push({value: 7, label: stokesInfo.slice(2, 4).join("")});
+            options.push({value: 9, label: stokesInfo[0] + stokesInfo[3]});
+            options.push({value: 10, label: stokesInfo[1] + stokesInfo[3]});
+            options.push({value: 11, label: stokesInfo.slice(0, 3).join("")});
+            options.push({value: 12, label: stokesInfo.slice(1, 4).join("")});
         };
         const optionsAddThreeElements = () => {
-            options.push({ value: 3, label: stokesInfo[2] });
-            options.push({ value: 5, label: stokesInfo.slice(0, 2).join("") });
-            options.push({ value: 6, label: stokesInfo.slice(1, 3).join("") });
-            options.push({ value: 8, label: stokesInfo[0] + stokesInfo[2] });
+            options.push({value: 3, label: stokesInfo[2]});
+            options.push({value: 5, label: stokesInfo.slice(0, 2).join("")});
+            options.push({value: 6, label: stokesInfo.slice(1, 3).join("")});
+            options.push({value: 8, label: stokesInfo[0] + stokesInfo[2]});
         };
         const optionsAddTwoElements = () => {
-            options.push({ value: 1, label: stokesInfo[0] });
-            options.push({ value: 2, label: stokesInfo[1] });
+            options.push({value: 1, label: stokesInfo[0]});
+            options.push({value: 2, label: stokesInfo[1]});
         };
         if (activeFrame) {
             switch (stokesInfo.join("")) {
@@ -132,18 +130,32 @@ export class ImageSaveComponent extends React.Component {
             return options.sort((a, b) => a.value - b.value);
         }
         return [];
-    };
+    }
 
     private renderSaveImageControl() {
         const fileBrowser = FileBrowserStore.Instance;
         const activeFrame = AppStore.Instance.activeFrame;
         const closedRegions = activeFrame.regionSet?.regions.filter(region => region.regionId > 0 && region.isClosedRegion);
-        const regionOptions: IOptionProps[] = [{ value: 0, label: "Image" }].concat(closedRegions.map(region => ({ value: region.regionId, label: `${region.name ? region.name : region.regionId} (${CARTA.RegionType[region.regionType]})` })));
+        const regionOptions: IOptionProps[] = [{value: 0, label: "Image"}].concat(
+            closedRegions.map(region => ({
+                value: region.regionId,
+                label: `${region.name ? region.name : region.regionId} (${CARTA.RegionType[region.regionType]})`
+            }))
+        );
         // Global value of Spectral Coordinate System and Unit
         const nativeSpectralCoordinate = activeFrame ? activeFrame.nativeSpectralCoordinate : undefined;
-        const spectralCoordinateOptions: IOptionProps[] = activeFrame && activeFrame.spectralCoordsSupported ?
-            Array.from(activeFrame.spectralCoordsSupported.keys()).map((coord: string) => { return { value: coord, label: coord === nativeSpectralCoordinate ? coord + " (Native WCS)" : coord }; }) : [];
-        const spectralSystemOptions: IOptionProps[] = activeFrame && activeFrame.spectralSystemsSupported ? activeFrame.spectralSystemsSupported.map(system => { return { value: system, label: system }; }) : [];
+        const spectralCoordinateOptions: IOptionProps[] =
+            activeFrame && activeFrame.spectralCoordsSupported
+                ? Array.from(activeFrame.spectralCoordsSupported.keys()).map((coord: string) => {
+                      return {value: coord, label: coord === nativeSpectralCoordinate ? coord + " (Native WCS)" : coord};
+                  })
+                : [];
+        const spectralSystemOptions: IOptionProps[] =
+            activeFrame && activeFrame.spectralSystemsSupported
+                ? activeFrame.spectralSystemsSupported.map(system => {
+                      return {value: system, label: system};
+                  })
+                : [];
         const stokesOptions: IOptionProps[] = this.stokesOptions;
         // Calculate a small step size
         const numChannels = activeFrame.numChannels;
@@ -153,7 +165,7 @@ export class ImageSaveComponent extends React.Component {
         const majorStepSize = delta * 0.1;
         return (
             <React.Fragment>
-                {activeFrame &&
+                {activeFrame && (
                     <div className="file-save">
                         <ControlGroup className="file-name" vertical={false}>
                             <Label className="label">{"Source"}</Label>
@@ -163,30 +175,24 @@ export class ImageSaveComponent extends React.Component {
                         </ControlGroup>
                         <ControlGroup className="region-select" vertical={false}>
                             <Label className="label">{"Region"}</Label>
-                            <HTMLSelect
-                                value={fileBrowser.saveRegionId}
-                                onChange={this.handleRegionChanged}
-                                options={regionOptions}
-                            />
+                            <HTMLSelect value={fileBrowser.saveRegionId} onChange={this.handleRegionChanged} options={regionOptions} />
                         </ControlGroup>
-                        {numChannels > 1 &&
+                        {numChannels > 1 && (
                             <React.Fragment>
                                 <div className="coordinate-select">
-                                    <FormGroup label={"Range unit"} inline={true} >
+                                    <FormGroup label={"Range unit"} inline={true}>
                                         <HTMLSelect
                                             value={activeFrame && (activeFrame.spectralCoordinate || "")}
                                             options={spectralCoordinateOptions}
-                                            onChange={
-                                                (event: React.FormEvent<HTMLSelectElement>) =>
-                                                    this.updateSpectralCoordinate(event.currentTarget.value as string)
+                                            onChange={(event: React.FormEvent<HTMLSelectElement>) =>
+                                                this.updateSpectralCoordinate(event.currentTarget.value as string)
                                             }
                                         />
                                         <HTMLSelect
                                             value={activeFrame && (activeFrame.spectralSystem || "")}
                                             options={spectralSystemOptions}
-                                            onChange={
-                                                (event: React.FormEvent<HTMLSelectElement>) =>
-                                                    this.updateSpectralSystem(event.currentTarget.value as SpectralSystem)
+                                            onChange={(event: React.FormEvent<HTMLSelectElement>) =>
+                                                this.updateSpectralSystem(event.currentTarget.value as SpectralSystem)
                                             }
                                         />
                                     </FormGroup>
@@ -224,23 +230,20 @@ export class ImageSaveComponent extends React.Component {
                                     </ControlGroup>
                                 </div>
                             </React.Fragment>
-                        }
-                        {activeFrame.hasStokes &&
+                        )}
+                        {activeFrame.hasStokes && (
                             <React.Fragment>
                                 <div className="stokes-select">
                                     <FormGroup label={"Stokes"} inline={true}>
                                         <HTMLSelect
                                             value={fileBrowser.saveStokesOption || ""}
                                             options={stokesOptions}
-                                            onChange={
-                                                (event: React.FormEvent<HTMLSelectElement>) =>
-                                                    this.updateStokes(parseInt(event.currentTarget.value))
-                                            }
+                                            onChange={(event: React.FormEvent<HTMLSelectElement>) => this.updateStokes(parseInt(event.currentTarget.value))}
                                         />
                                     </FormGroup>
                                 </div>
                             </React.Fragment>
-                        }
+                        )}
                         <Switch
                             className="drop-degenerate"
                             checked={fileBrowser.shouldDropDegenerateAxes}
@@ -248,14 +251,12 @@ export class ImageSaveComponent extends React.Component {
                             onChange={this.onChangeShouldDropDegenerateAxes}
                         />
                     </div>
-                }
+                )}
             </React.Fragment>
         );
     }
 
     render() {
-        return (
-            this.renderSaveImageControl()
-        );
+        return this.renderSaveImageControl();
     }
 }

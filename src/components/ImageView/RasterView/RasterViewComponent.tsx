@@ -65,7 +65,7 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
             this.gl.uniform1i(shaderUniforms.UseSmoothedBiasContrast, appStore.preferenceStore.useSmoothedBiasContrast ? 1 : 0);
             this.gl.uniform1f(shaderUniforms.Gamma, renderConfig.gamma);
             this.gl.uniform1f(shaderUniforms.Alpha, renderConfig.alpha);
-            this.gl.uniform1f(shaderUniforms.CanvasWidth, frame.renderWidth * devicePixelRatio / frame.aspectRatio);
+            this.gl.uniform1f(shaderUniforms.CanvasWidth, (frame.renderWidth * devicePixelRatio) / frame.aspectRatio);
             this.gl.uniform1f(shaderUniforms.CanvasHeight, frame.renderHeight * devicePixelRatio);
 
             const nanColor = tinycolor(appStore.preferenceStore.nanColorHex).setAlpha(appStore.preferenceStore.nanAlpha);
@@ -80,7 +80,11 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
         const frame = AppStore.Instance.activeFrame;
         const tileRenderService = TileWebGLService.Instance;
         // Resize and clear the canvas if needed
-        if (frame && frame.isRenderable && (this.canvas.width !== frame.renderWidth * devicePixelRatio || this.canvas.height !== frame.renderHeight * devicePixelRatio)) {
+        if (
+            frame &&
+            frame.isRenderable &&
+            (this.canvas.width !== frame.renderWidth * devicePixelRatio || this.canvas.height !== frame.renderHeight * devicePixelRatio)
+        ) {
             this.canvas.width = frame.renderWidth * devicePixelRatio;
             this.canvas.height = frame.renderHeight * devicePixelRatio;
             tileRenderService.setCanvasSize(frame.renderWidth * devicePixelRatio, frame.renderHeight * devicePixelRatio);
@@ -156,22 +160,22 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
                     highResPlaceholders.push({
                         layer: tile.layer + 1,
                         x: tile.x * 2,
-                        y: tile.y * 2,
+                        y: tile.y * 2
                     });
                     highResPlaceholders.push({
                         layer: tile.layer + 1,
                         x: tile.x * 2 + 1,
-                        y: tile.y * 2,
+                        y: tile.y * 2
                     });
                     highResPlaceholders.push({
                         layer: tile.layer + 1,
                         x: tile.x * 2,
-                        y: tile.y * 2 + 1,
+                        y: tile.y * 2 + 1
                     });
                     highResPlaceholders.push({
                         layer: tile.layer + 1,
                         x: tile.x * 2 + 1,
-                        y: tile.y * 2 + 1,
+                        y: tile.y * 2 + 1
                     });
                 }
 
@@ -180,7 +184,7 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
                     const lowResTile = {
                         layer: tile.layer - 1,
                         x: Math.floor(tile.x / 2.0),
-                        y: Math.floor(tile.y / 2.0),
+                        y: Math.floor(tile.y / 2.0)
                     };
                     placeholderTileMap.set(TileCoordinate.EncodeCoordinate(lowResTile), true);
                 }
@@ -233,7 +237,7 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
             yMax: (tile.y + 1) * tileSizeAdjusted,
             mip: 1
         };
-        let bottomLeft = {x: (tileImageView.xMin - full.xMin) - 0.5, y: (tileImageView.yMin - full.yMin) - 0.5};
+        let bottomLeft = {x: tileImageView.xMin - full.xMin - 0.5, y: tileImageView.yMin - full.yMin - 0.5};
         let tileScaling = scale2D({x: 1, y: 1}, mip * spatialRef.zoomLevel);
 
         if (frame.spatialReference && frame.spatialTransform) {
@@ -242,7 +246,7 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
             const rotationOriginImageSpace: Point2D = add2D(frame.spatialTransform.origin, frame.spatialTransform.translation);
             const rotationOriginCanvasSpace: Point2D = {
                 x: spatialRef.zoomLevel * (rotationOriginImageSpace.x - full.xMin),
-                y: spatialRef.zoomLevel * (rotationOriginImageSpace.y - full.yMin),
+                y: spatialRef.zoomLevel * (rotationOriginImageSpace.y - full.yMin)
             };
             this.gl.uniform2f(tileRenderService.shaderUniforms.RotationOrigin, rotationOriginCanvasSpace.x, rotationOriginCanvasSpace.y);
             this.gl.uniform1f(tileRenderService.shaderUniforms.RotationAngle, -frame.spatialTransform.rotation);
@@ -300,14 +304,15 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
                 <canvas
                     className="raster-canvas"
                     id="raster-canvas"
-                    ref={(ref) => this.canvas = ref}
+                    ref={ref => (this.canvas = ref)}
                     style={{
                         top: padding.top,
                         left: padding.left,
-                        width: frame && frame.isRenderable ? (frame.renderWidth || 1) : 1,
-                        height: frame && frame.isRenderable ? (frame.renderHeight || 1) : 1
+                        width: frame && frame.isRenderable ? frame.renderWidth || 1 : 1,
+                        height: frame && frame.isRenderable ? frame.renderHeight || 1 : 1
                     }}
                 />
-            </div>);
+            </div>
+        );
     }
 }

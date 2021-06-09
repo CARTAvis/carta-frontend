@@ -40,7 +40,7 @@ export class LinePlotSettingsPanelComponentProps {
     handleXMinChange?: (ev: React.KeyboardEvent<HTMLInputElement> | React.FocusEvent<HTMLInputElement>) => void;
     handleXMaxChange?: (ev: React.KeyboardEvent<HTMLInputElement> | React.FocusEvent<HTMLInputElement>) => void;
     handleYMinChange?: (ev: React.KeyboardEvent<HTMLInputElement> | React.FocusEvent<HTMLInputElement>) => void;
-    handleYMaxChange?: (ev: React.KeyboardEvent<HTMLInputElement> | React.FocusEvent<HTMLInputElement>) => void; 
+    handleYMaxChange?: (ev: React.KeyboardEvent<HTMLInputElement> | React.FocusEvent<HTMLInputElement>) => void;
 }
 
 export enum LineSettings {
@@ -68,7 +68,19 @@ export class LinePlotSettingsPanelComponent extends React.Component<LinePlotSett
                                 key={index}
                                 inline={true}
                                 label="Line Color"
-                                labelInfo={lineLabel ? <React.Fragment>(<span className="line-label" title={lineLabel}>{lineLabel}</span>)</React.Fragment> : ""}
+                                labelInfo={
+                                    lineLabel ? (
+                                        <React.Fragment>
+                                            (
+                                            <span className="line-label" title={lineLabel}>
+                                                {lineLabel}
+                                            </span>
+                                            )
+                                        </React.Fragment>
+                                    ) : (
+                                        ""
+                                    )
+                                }
                             >
                                 <AutoColorPickerComponent
                                     color={lineColorMap.get(lineKey) ?? DEFAULT_COLOR}
@@ -92,13 +104,17 @@ export class LinePlotSettingsPanelComponent extends React.Component<LinePlotSett
         return (
             <div className="line-settings-panel">
                 <React.Fragment>
-                    {props.userSelectedCoordinate && props.handleCoordinateChanged &&
+                    {props.userSelectedCoordinate && props.handleCoordinateChanged && (
                         <FormGroup label={"Coordinate"} inline={true}>
-                            <HTMLSelect value={props.userSelectedCoordinate} options={props.profileCoordinateOptions} onChange={props.handleCoordinateChanged}/>
+                            <HTMLSelect
+                                value={props.userSelectedCoordinate}
+                                options={props.profileCoordinateOptions}
+                                onChange={props.handleCoordinateChanged}
+                            />
                         </FormGroup>
-                    }
+                    )}
                     {this.getLineColorSelectors()}
-                    <FormGroup  inline={true} label="Line Width" labelInfo="(px)">
+                    <FormGroup inline={true} label="Line Width" labelInfo="(px)">
                         <SafeNumericInput
                             placeholder="Line Width"
                             min={LineSettings.MIN_WIDTH}
@@ -109,7 +125,7 @@ export class LinePlotSettingsPanelComponent extends React.Component<LinePlotSett
                             onValueChange={(value: number) => props.setLineWidth(value)}
                         />
                     </FormGroup>
-                    <FormGroup  inline={true} label="Point Size" labelInfo="(px)">
+                    <FormGroup inline={true} label="Point Size" labelInfo="(px)">
                         <SafeNumericInput
                             placeholder="Point Size"
                             min={LineSettings.MIN_POINT_SIZE}
@@ -120,96 +136,101 @@ export class LinePlotSettingsPanelComponent extends React.Component<LinePlotSett
                             onValueChange={(value: number) => props.setLinePlotPointSize(value)}
                         />
                     </FormGroup>
-                    { typeof props.logScaleY !== "undefined" && props.handleLogScaleChanged &&
+                    {typeof props.logScaleY !== "undefined" && props.handleLogScaleChanged && (
                         <FormGroup inline={true} label={"Log Scale"}>
-                            <Switch checked={props.logScaleY} onChange={props.handleLogScaleChanged}/>
+                            <Switch checked={props.logScaleY} onChange={props.handleLogScaleChanged} />
                         </FormGroup>
-                    }
-                    { typeof props.markerTextVisible !== "undefined" && props.handleMarkerTextChanged &&
+                    )}
+                    {typeof props.markerTextVisible !== "undefined" && props.handleMarkerTextChanged && (
                         <FormGroup inline={true} label={"Show Labels"}>
-                            <Switch checked={props.markerTextVisible} onChange={props.handleMarkerTextChanged}/>
+                            <Switch checked={props.markerTextVisible} onChange={props.handleMarkerTextChanged} />
                         </FormGroup>
-                    }
-                    {typeof props.useWcsValues !== "undefined" && props.handleWcsValuesChanged &&
+                    )}
+                    {typeof props.useWcsValues !== "undefined" && props.handleWcsValuesChanged && (
                         <FormGroup inline={true} label={"Use WCS Values"}>
-                            <Switch checked={props.useWcsValues} onChange={props.handleWcsValuesChanged}/>
+                            <Switch checked={props.useWcsValues} onChange={props.handleWcsValuesChanged} />
                         </FormGroup>
-                    }
-                    {typeof props.showWCSAxis !== "undefined" && props.handleWcsAxisChanged &&
+                    )}
+                    {typeof props.showWCSAxis !== "undefined" && props.handleWcsAxisChanged && (
                         <FormGroup inline={true} label={"Show WCS Axis"}>
-                            <Switch checked={props.showWCSAxis} onChange={props.handleWcsAxisChanged}/>
+                            <Switch checked={props.showWCSAxis} onChange={props.handleWcsAxisChanged} />
                         </FormGroup>
-                    }
-                    { typeof props.meanRmsVisible !== "undefined"
-                        && props.handleMeanRmsChanged
-                        &&  <FormGroup inline={true} label={"Show Mean/RMS"} helperText={"Only visible in single profile"}>
-                                <Switch checked={props.meanRmsVisible} onChange={props.handleMeanRmsChanged}/>
-                            </FormGroup>
-                    }
+                    )}
+                    {typeof props.meanRmsVisible !== "undefined" && props.handleMeanRmsChanged && (
+                        <FormGroup inline={true} label={"Show Mean/RMS"} helperText={"Only visible in single profile"}>
+                            <Switch checked={props.meanRmsVisible} onChange={props.handleMeanRmsChanged} />
+                        </FormGroup>
+                    )}
                     <FormGroup inline={true} label={"Line Style"}>
-                        <PlotTypeSelectorComponent value={props.plotType} onValueChanged={props.setPlotType}/>
+                        <PlotTypeSelectorComponent value={props.plotType} onValueChanged={props.setPlotType} />
                     </FormGroup>
-                    { typeof props.xMinVal !== "undefined"  && props.handleXMinChange &&
-                    <FormGroup label={"X Min"} inline={true}>
-                        <SafeNumericInput
-                            className="line-boundary"
-                            value={props.xMinVal}
-                            selectAllOnFocus={true}
-                            buttonPosition={"none"}
-                            allowNumericCharactersOnly={true}
-                            onBlur={props.handleXMinChange}
-                            onKeyDown={props.handleXMinChange}
-                        />
-                    </FormGroup>
-                    }
-                    { typeof props.xMaxVal !== "undefined"  && props.handleXMaxChange &&
-                    <FormGroup label={"X Max"} inline={true}>
-                        <SafeNumericInput
-                            className="line-boundary"
-                            value={props.xMaxVal}
-                            selectAllOnFocus={true}
-                            buttonPosition={"none"}
-                            allowNumericCharactersOnly={true}
-                            onBlur={props.handleXMaxChange}
-                            onKeyDown={props.handleXMaxChange}
-                        />
-                    </FormGroup>
-                    }
-                    { typeof props.yMinVal !== "undefined"  && props.handleYMinChange &&
-                    <FormGroup label={"Y Min"} inline={true}>
-                        <SafeNumericInput
-                            className="line-boundary"
-                            asyncControl={true}
-                            value={props.yMinVal}
-                            selectAllOnFocus={true}
-                            buttonPosition={"none"}
-                            allowNumericCharactersOnly={true}
-                            onBlur={props.handleYMinChange}
-                            onKeyDown={props.handleYMinChange}
-                        />
-                    </FormGroup>
-                    }
-                    { typeof props.yMaxVal !== "undefined"  && props.handleYMaxChange &&
-                    <FormGroup label={"Y Max"} inline={true}>
-                        <SafeNumericInput
-                            className="line-boundary"
-                            asyncControl={true}
-                            value={props.yMaxVal}
-                            selectAllOnFocus={true}
-                            buttonPosition={"none"}
-                            allowNumericCharactersOnly={true}
-                            onBlur={props.handleYMaxChange}
-                            onKeyDown={props.handleYMaxChange}
-                        />
-                    </FormGroup>
-                    }
-                    { typeof props.isAutoScaledX !== "undefined" 
-                        &&  typeof props.isAutoScaledY !== "undefined"
-                        &&  props.clearXYBounds
-                        &&  <FormGroup label={"Reset Range"} inline={true} className="reset-range-content">
-                                <Button className="reset-range-button" icon={"zoom-to-fit"} small={true} disabled={props.isAutoScaledX && props.isAutoScaledY} onClick={props.clearXYBounds}>Reset Range</Button>
-                            </FormGroup>
-                    }
+                    {typeof props.xMinVal !== "undefined" && props.handleXMinChange && (
+                        <FormGroup label={"X Min"} inline={true}>
+                            <SafeNumericInput
+                                className="line-boundary"
+                                value={props.xMinVal}
+                                selectAllOnFocus={true}
+                                buttonPosition={"none"}
+                                allowNumericCharactersOnly={true}
+                                onBlur={props.handleXMinChange}
+                                onKeyDown={props.handleXMinChange}
+                            />
+                        </FormGroup>
+                    )}
+                    {typeof props.xMaxVal !== "undefined" && props.handleXMaxChange && (
+                        <FormGroup label={"X Max"} inline={true}>
+                            <SafeNumericInput
+                                className="line-boundary"
+                                value={props.xMaxVal}
+                                selectAllOnFocus={true}
+                                buttonPosition={"none"}
+                                allowNumericCharactersOnly={true}
+                                onBlur={props.handleXMaxChange}
+                                onKeyDown={props.handleXMaxChange}
+                            />
+                        </FormGroup>
+                    )}
+                    {typeof props.yMinVal !== "undefined" && props.handleYMinChange && (
+                        <FormGroup label={"Y Min"} inline={true}>
+                            <SafeNumericInput
+                                className="line-boundary"
+                                asyncControl={true}
+                                value={props.yMinVal}
+                                selectAllOnFocus={true}
+                                buttonPosition={"none"}
+                                allowNumericCharactersOnly={true}
+                                onBlur={props.handleYMinChange}
+                                onKeyDown={props.handleYMinChange}
+                            />
+                        </FormGroup>
+                    )}
+                    {typeof props.yMaxVal !== "undefined" && props.handleYMaxChange && (
+                        <FormGroup label={"Y Max"} inline={true}>
+                            <SafeNumericInput
+                                className="line-boundary"
+                                asyncControl={true}
+                                value={props.yMaxVal}
+                                selectAllOnFocus={true}
+                                buttonPosition={"none"}
+                                allowNumericCharactersOnly={true}
+                                onBlur={props.handleYMaxChange}
+                                onKeyDown={props.handleYMaxChange}
+                            />
+                        </FormGroup>
+                    )}
+                    {typeof props.isAutoScaledX !== "undefined" && typeof props.isAutoScaledY !== "undefined" && props.clearXYBounds && (
+                        <FormGroup label={"Reset Range"} inline={true} className="reset-range-content">
+                            <Button
+                                className="reset-range-button"
+                                icon={"zoom-to-fit"}
+                                small={true}
+                                disabled={props.isAutoScaledX && props.isAutoScaledY}
+                                onClick={props.clearXYBounds}
+                            >
+                                Reset Range
+                            </Button>
+                        </FormGroup>
+                    )}
                 </React.Fragment>
             </div>
         );

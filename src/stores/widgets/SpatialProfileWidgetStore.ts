@@ -18,14 +18,14 @@ export class SpatialProfileWidgetStore {
     @observable markerTextVisible: boolean;
     @observable isMouseMoveIntoLinePlots: boolean;
 
-    // settings 
+    // settings
     @observable wcsAxisVisible: boolean;
     @observable plotType: PlotType;
     @observable meanRmsVisible: boolean;
     @observable primaryLineColor: string;
     @observable lineWidth: number;
     @observable linePlotPointSize: number;
-    @observable linePlotInitXYBoundaries: { minXVal: number, maxXVal: number, minYVal: number, maxYVal: number };
+    @observable linePlotInitXYBoundaries: {minXVal: number; maxXVal: number; minYVal: number; maxYVal: number};
     readonly smoothingStore: ProfileSmoothingStore;
     @observable settingsTabId: SpatialProfilerSettingsTabs;
 
@@ -112,7 +112,7 @@ export class SpatialProfileWidgetStore {
 
     @action setSettingsTabId = (val: SpatialProfilerSettingsTabs) => {
         this.settingsTabId = val;
-    }
+    };
 
     constructor(coordinate: string = "x", fileId: number = -1, regionId: number = 0) {
         makeObservable(this);
@@ -129,17 +129,17 @@ export class SpatialProfileWidgetStore {
         this.primaryLineColor = "auto-blue";
         this.linePlotPointSize = 1.5;
         this.lineWidth = 1;
-        this.linePlotInitXYBoundaries = { minXVal: 0, maxXVal: 0, minYVal: 0, maxYVal: 0 };
+        this.linePlotInitXYBoundaries = {minXVal: 0, maxXVal: 0, minYVal: 0, maxYVal: 0};
         this.smoothingStore = new ProfileSmoothingStore();
         this.settingsTabId = SpatialProfilerSettingsTabs.STYLING;
     }
 
     @computed get isAutoScaledX() {
-        return (this.minX === undefined || this.maxX === undefined);
+        return this.minX === undefined || this.maxX === undefined;
     }
 
     @computed get isAutoScaledY() {
-        return (this.minY === undefined || this.maxY === undefined);
+        return this.minY === undefined || this.maxY === undefined;
     }
 
     public static CalculateRequirementsMap(frame: FrameStore, widgetsMap: Map<string, SpatialProfileWidgetStore>) {
@@ -186,7 +186,10 @@ export class SpatialProfileWidgetStore {
     // 2. The old and new maps both have entries, but they are different => send the new SetSpectralRequirements message
     // 3. The new map has an entry, but the old one does not => send the new SetSpectralRequirements message
     // The easiest way to check all three is to first add any missing entries to the new map (as empty requirements), and then check the updated maps entries
-    public static DiffSpatialRequirements(originalRequirements: Map<number, Map<number, CARTA.SetSpatialRequirements>>, updatedRequirements: Map<number, Map<number, CARTA.SetSpatialRequirements>>) {
+    public static DiffSpatialRequirements(
+        originalRequirements: Map<number, Map<number, CARTA.SetSpatialRequirements>>,
+        updatedRequirements: Map<number, Map<number, CARTA.SetSpatialRequirements>>
+    ) {
         const diffList: CARTA.SetSpatialRequirements[] = [];
 
         // Fill updated requirements with missing entries
@@ -244,31 +247,30 @@ export class SpatialProfileWidgetStore {
                     }
                 });
             }
-
         });
         // Sort list so that requirements clearing occurs first
-        return diffList.sort((a, b) => a.spatialProfiles.length > b.spatialProfiles.length ? 1 : -1);
+        return diffList.sort((a, b) => (a.spatialProfiles.length > b.spatialProfiles.length ? 1 : -1));
     }
 
     // settings
     @action setPrimaryLineColor = (color: string) => {
         this.primaryLineColor = color;
-    }
+    };
 
     @action setLineWidth = (val: number) => {
         if (val >= LineSettings.MIN_WIDTH && val <= LineSettings.MAX_WIDTH) {
-            this.lineWidth = val;   
+            this.lineWidth = val;
         }
-    }
+    };
 
     @action setLinePlotPointSize = (val: number) => {
         if (val >= LineSettings.MIN_POINT_SIZE && val <= LineSettings.MAX_POINT_SIZE) {
-            this.linePlotPointSize = val;   
+            this.linePlotPointSize = val;
         }
-    }
+    };
 
-    @action initXYBoundaries (minXVal: number, maxXVal: number, minYVal: number, maxYVal: number) {
-        this.linePlotInitXYBoundaries = { minXVal: minXVal, maxXVal: maxXVal, minYVal: minYVal, maxYVal: maxYVal };
+    @action initXYBoundaries(minXVal: number, maxXVal: number, minYVal: number, maxYVal: number) {
+        this.linePlotInitXYBoundaries = {minXVal: minXVal, maxXVal: maxXVal, minYVal: minYVal, maxYVal: maxYVal};
     }
 
     public init = (widgetSettings): void => {
@@ -282,10 +284,18 @@ export class SpatialProfileWidgetStore {
         if (lineColor.isValid() || isAutoColor(widgetSettings.primaryLineColor)) {
             this.primaryLineColor = widgetSettings.primaryLineColor;
         }
-        if (typeof widgetSettings.lineWidth === "number" && widgetSettings.lineWidth >= LineSettings.MIN_WIDTH && widgetSettings.lineWidth <= LineSettings.MAX_WIDTH) {
+        if (
+            typeof widgetSettings.lineWidth === "number" &&
+            widgetSettings.lineWidth >= LineSettings.MIN_WIDTH &&
+            widgetSettings.lineWidth <= LineSettings.MAX_WIDTH
+        ) {
             this.lineWidth = widgetSettings.lineWidth;
         }
-        if (typeof widgetSettings.linePlotPointSize === "number" && widgetSettings.linePlotPointSize >= LineSettings.MIN_POINT_SIZE && widgetSettings.linePlotPointSize <= LineSettings.MAX_POINT_SIZE) {
+        if (
+            typeof widgetSettings.linePlotPointSize === "number" &&
+            widgetSettings.linePlotPointSize >= LineSettings.MIN_POINT_SIZE &&
+            widgetSettings.linePlotPointSize <= LineSettings.MAX_POINT_SIZE
+        ) {
             this.linePlotPointSize = widgetSettings.linePlotPointSize;
         }
         if (typeof widgetSettings.wcsAxisVisible === "boolean") {
@@ -294,7 +304,10 @@ export class SpatialProfileWidgetStore {
         if (typeof widgetSettings.meanRmsVisible === "boolean") {
             this.meanRmsVisible = widgetSettings.meanRmsVisible;
         }
-        if (typeof widgetSettings.plotType === "string" && (widgetSettings.plotType === PlotType.STEPS || widgetSettings.plotType === PlotType.LINES || widgetSettings.plotType === PlotType.POINTS)) {
+        if (
+            typeof widgetSettings.plotType === "string" &&
+            (widgetSettings.plotType === PlotType.STEPS || widgetSettings.plotType === PlotType.LINES || widgetSettings.plotType === PlotType.POINTS)
+        ) {
             this.plotType = widgetSettings.plotType;
         }
         if (typeof widgetSettings.minXVal === "number") {

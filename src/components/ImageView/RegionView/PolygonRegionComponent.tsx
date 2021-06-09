@@ -87,7 +87,13 @@ export class PolygonRegionComponent extends React.Component<PolygonRegionCompone
             const frame = this.props.frame;
             const index = node.index;
             if (index >= 0 && index < region.controlPoints.length) {
-                let positionImageSpace = canvasToTransformedImagePos(node.position().x, node.position().y, frame, this.props.layerWidth, this.props.layerHeight);
+                let positionImageSpace = canvasToTransformedImagePos(
+                    node.position().x,
+                    node.position().y,
+                    frame,
+                    this.props.layerWidth,
+                    this.props.layerHeight
+                );
                 if (frame.spatialReference) {
                     positionImageSpace = transformPoint(frame.spatialTransformAST, positionImageSpace, true);
                 }
@@ -223,8 +229,8 @@ export class PolygonRegionComponent extends React.Component<PolygonRegionCompone
 
         const pointArray = new Array<number>(points.length * 2);
         for (let i = 0; i < points.length; i++) {
-            const x = ((points[i].x + offset.x - currentView.xMin) / viewWidth * this.props.layerWidth);
-            const y = this.props.layerHeight - ((points[i].y + offset.y - currentView.yMin) / viewHeight * this.props.layerHeight);
+            const x = ((points[i].x + offset.x - currentView.xMin) / viewWidth) * this.props.layerWidth;
+            const y = this.props.layerHeight - ((points[i].y + offset.y - currentView.yMin) / viewHeight) * this.props.layerHeight;
             pointArray[i * 2] = x;
             pointArray[i * 2 + 1] = y;
         }
@@ -254,13 +260,13 @@ export class PolygonRegionComponent extends React.Component<PolygonRegionCompone
                 onDragStart: this.handleAnchorDragStart,
                 onDragEnd: this.handleAnchorDragEnd,
                 onDragMove: this.handleAnchorDrag,
-                onDblClick: this.handleAnchorDoubleClick,
+                onDblClick: this.handleAnchorDoubleClick
             };
         } else {
             anchorProps.opacity = 0.5;
             anchorProps.listening = false;
         }
-        return <Rect {...anchorProps}/>;
+        return <Rect {...anchorProps} />;
     }
 
     render() {
@@ -278,12 +284,24 @@ export class PolygonRegionComponent extends React.Component<PolygonRegionCompone
         if (frame.spatialReference) {
             const centerReferenceImage = average2D(controlPoints);
             const centerSecondaryImage = transformPoint(frame.spatialTransformAST, centerReferenceImage, false);
-            centerPointCanvasSpace = transformedImageToCanvasPos(centerSecondaryImage.x, centerSecondaryImage.y, frame, this.props.layerWidth, this.props.layerHeight);
+            centerPointCanvasSpace = transformedImageToCanvasPos(
+                centerSecondaryImage.x,
+                centerSecondaryImage.y,
+                frame,
+                this.props.layerWidth,
+                this.props.layerHeight
+            );
             const pointsSecondaryImage = region.getRegionApproximation(frame.spatialTransformAST);
             const N = pointsSecondaryImage.length;
             pointArray = new Array<number>(N * 2);
             for (let i = 0; i < N; i++) {
-                const approxPointPixelSpace = transformedImageToCanvasPos(pointsSecondaryImage[i].x, pointsSecondaryImage[i].y, frame, this.props.layerWidth, this.props.layerHeight);
+                const approxPointPixelSpace = transformedImageToCanvasPos(
+                    pointsSecondaryImage[i].x,
+                    pointsSecondaryImage[i].y,
+                    frame,
+                    this.props.layerWidth,
+                    this.props.layerHeight
+                );
                 pointArray[i * 2] = approxPointPixelSpace.x - centerPointCanvasSpace.x;
                 pointArray[i * 2 + 1] = approxPointPixelSpace.y - centerPointCanvasSpace.y;
             }
@@ -303,10 +321,12 @@ export class PolygonRegionComponent extends React.Component<PolygonRegionCompone
                 newAnchor = this.anchorNode(pCanvasPos.x, pCanvasPos.y, rotation);
             }
 
-            rotation = -frame.spatialTransform.rotation * 180.0 / Math.PI;
+            rotation = (-frame.spatialTransform.rotation * 180.0) / Math.PI;
         } else {
             rotation = 0;
-            controlPoints = controlPoints.map(p => imageToCanvasPos(p.x, p.y, frameView, this.props.layerWidth, this.props.layerHeight, frame.spatialTransform));
+            controlPoints = controlPoints.map(p =>
+                imageToCanvasPos(p.x, p.y, frameView, this.props.layerWidth, this.props.layerHeight, frame.spatialTransform)
+            );
             centerPointCanvasSpace = average2D(controlPoints);
             // Construct anchors if region is selected
             if (this.props.selected && !region.locked) {
@@ -317,7 +337,13 @@ export class PolygonRegionComponent extends React.Component<PolygonRegionCompone
             }
 
             if (this.hoverIntersection && !region.locked) {
-                const anchorPositionPixelSpace = transformedImageToCanvasPos(this.hoverIntersection.x, this.hoverIntersection.y, frame, this.props.layerWidth, this.props.layerHeight);
+                const anchorPositionPixelSpace = transformedImageToCanvasPos(
+                    this.hoverIntersection.x,
+                    this.hoverIntersection.y,
+                    frame,
+                    this.props.layerWidth,
+                    this.props.layerHeight
+                );
                 newAnchor = this.anchorNode(anchorPositionPixelSpace.x, anchorPositionPixelSpace.y, rotation);
             }
 
@@ -335,7 +361,7 @@ export class PolygonRegionComponent extends React.Component<PolygonRegionCompone
                     y={centerPointCanvasSpace.y}
                     stroke={region.isSimplePolygon ? region.color : INVALID_POLYGON_COLOR}
                     strokeWidth={region.lineWidth}
-                    opacity={region.isTemporary ? 0.5 : (region.locked ? 0.70 : 1)}
+                    opacity={region.isTemporary ? 0.5 : region.locked ? 0.7 : 1}
                     dash={[region.dashLength]}
                     closed={!region.creating}
                     listening={this.props.listening && !region.locked}

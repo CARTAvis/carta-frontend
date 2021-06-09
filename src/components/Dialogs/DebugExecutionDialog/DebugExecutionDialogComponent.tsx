@@ -55,18 +55,30 @@ export class DebugExecutionDialogComponent extends React.Component {
             title: "Execute a command"
         };
 
-        const validInput = (this.executionEntries && this.executionEntries.length);
+        const validInput = this.executionEntries && this.executionEntries.length;
 
         return (
             <DraggableDialogComponent dialogProps={dialogProps} defaultWidth={700} defaultHeight={400} enableResizing={true}>
                 <div className={Classes.DIALOG_BODY}>
-                    <EditableText className="input-text" onChange={this.handleActionInput} value={this.inputString} minLines={5} intent={!validInput ? "warning" : "success"} placeholder="Enter execution string" multiline={true}/>
+                    <EditableText
+                        className="input-text"
+                        onChange={this.handleActionInput}
+                        value={this.inputString}
+                        minLines={5}
+                        intent={!validInput ? "warning" : "success"}
+                        placeholder="Enter execution string"
+                        multiline={true}
+                    />
                 </div>
                 <div className={Classes.DIALOG_FOOTER}>
                     <div className={Classes.DIALOG_FOOTER_ACTIONS}>
-                        <AnchorButton intent={Intent.PRIMARY} onClick={this.onExecuteClicked} disabled={!validInput || this.isExecuting} text="Execute"/>
-                        <AnchorButton intent={Intent.WARNING} onClick={() => appStore.backendService.scriptingStream.next(JSON.parse(this.inputString))} text="DebugTest"/>
-                        <AnchorButton intent={Intent.NONE} onClick={appStore.dialogStore.hideDebugExecutionDialog} text="Close"/>
+                        <AnchorButton intent={Intent.PRIMARY} onClick={this.onExecuteClicked} disabled={!validInput || this.isExecuting} text="Execute" />
+                        <AnchorButton
+                            intent={Intent.WARNING}
+                            onClick={() => appStore.backendService.scriptingStream.next(JSON.parse(this.inputString))}
+                            text="DebugTest"
+                        />
+                        <AnchorButton intent={Intent.NONE} onClick={appStore.dialogStore.hideDebugExecutionDialog} text="Close" />
                     </div>
                 </div>
             </DraggableDialogComponent>

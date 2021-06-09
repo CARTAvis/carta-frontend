@@ -20,7 +20,7 @@ class ProfileSelectionButtonComponentProps {
     disableOptions?: boolean;
     isSelectingSpecificItem?: boolean;
     categoryTooltip: JSX.Element;
-    dropdownTooltip: {nonActive: string, active: string, disabled: string};
+    dropdownTooltip: {nonActive: string; active: string; disabled: string};
     onCategorySelect: () => void;
     onItemSelect: (item: MultiSelectItem, itemIndex: number) => void;
 }
@@ -63,24 +63,24 @@ class ProfileSelectionButtonComponent extends React.Component<ProfileSelectionBu
                         className={"category-checkbox"}
                         label={this.props.categoryName}
                         checked={this.props.isActiveCategory}
-                        onChange={(ev) => this.props.onCategorySelect()}
+                        onChange={ev => this.props.onCategorySelect()}
                         disabled={this.props.disabled}
                     />
                 </Tooltip>
                 <Popover
                     content={
                         <Menu>
-                            {this.props.itemOptions?.map((item, index) =>
+                            {this.props.itemOptions?.map((item, index) => (
                                 <MenuItem
                                     key={item.value}
                                     text={item.active ? <b>{item.label}</b> : item.label}
                                     disabled={item?.disabled}
                                     intent={item.hightlight ? Intent.PRIMARY : Intent.NONE}
-                                    onClick={(ev) => this.props.onItemSelect(item.value, index)}
+                                    onClick={ev => this.props.onItemSelect(item.value, index)}
                                     icon={this.props.itemSelected?.includes(item.value) ? "tick" : "blank"}
                                     shouldDismissPopover={false}
                                 />
-                            )}
+                            ))}
                         </Menu>
                     }
                     minimal={true}
@@ -89,7 +89,11 @@ class ProfileSelectionButtonComponent extends React.Component<ProfileSelectionBu
                 >
                     <Tooltip content={dropdownHelpText} position={Position.TOP}>
                         <AnchorButton
-                            text={<span className="overflow-text" title={dropdownText}>{this.props.isSelectingSpecificItem ? <b>{dropdownText}</b> : dropdownText}</span>}
+                            text={
+                                <span className="overflow-text" title={dropdownText}>
+                                    {this.props.isSelectingSpecificItem ? <b>{dropdownText}</b> : dropdownText}
+                                </span>
+                            }
                             className="dropdown-button"
                             rightIcon={"caret-down"}
                             disabled={this.props.disabled || this.props.disableOptions}
@@ -138,7 +142,7 @@ class ProfileSelectionComponent extends React.Component<{profileSelectionStore: 
     public render() {
         const profileSelectionStore = this.props.profileSelectionStore;
         const frame = profileSelectionStore.selectedFrame;
-        const disabled = !(frame?.channelInfo);
+        const disabled = !frame?.channelInfo;
 
         return (
             <div className="profile-selection-panel">
@@ -158,7 +162,18 @@ class ProfileSelectionComponent extends React.Component<{profileSelectionStore: 
                     categoryTooltip={
                         <span>
                             {`Click to enable/disable multiple profiles of ${MultiProfileCategory.IMAGE}`}
-                            <span><br/><i><small>When enabled, Spectral Profiler will show multiple profiles from<br/>different images which are matched both spatially and spectrally.<br/>Toggle both spatial(XY) and spectral(Z) matching in Image List widget.</small></i></span>
+                            <span>
+                                <br />
+                                <i>
+                                    <small>
+                                        When enabled, Spectral Profiler will show multiple profiles from
+                                        <br />
+                                        different images which are matched both spatially and spectrally.
+                                        <br />
+                                        Toggle both spatial(XY) and spectral(Z) matching in Image List widget.
+                                    </small>
+                                </i>
+                            </span>
                         </span>
                     }
                     dropdownTooltip={{
@@ -176,14 +191,21 @@ class ProfileSelectionComponent extends React.Component<{profileSelectionStore: 
                     isSelectingSpecificItem={profileSelectionStore.isSelectingActiveRegion}
                     onCategorySelect={() => {
                         profileSelectionStore.setActiveProfileCategory(
-                            profileSelectionStore.activeProfileCategory !== MultiProfileCategory.REGION ? MultiProfileCategory.REGION : MultiProfileCategory.NONE
+                            profileSelectionStore.activeProfileCategory !== MultiProfileCategory.REGION
+                                ? MultiProfileCategory.REGION
+                                : MultiProfileCategory.NONE
                         );
                     }}
                     onItemSelect={this.onRegionItemClick}
                     categoryTooltip={
                         <span>
                             {`Click to enable/disable multiple selections of ${MultiProfileCategory.REGION}`}
-                            <span><br/><i><small>When enabled, Spectral Profiler will show multiple profiles from different selected regions.</small></i></span>
+                            <span>
+                                <br />
+                                <i>
+                                    <small>When enabled, Spectral Profiler will show multiple profiles from different selected regions.</small>
+                                </i>
+                            </span>
                         </span>
                     }
                     dropdownTooltip={{
@@ -201,14 +223,21 @@ class ProfileSelectionComponent extends React.Component<{profileSelectionStore: 
                     disableOptions={!profileSelectionStore.isStatsTypeSelectionAvailable}
                     onCategorySelect={() => {
                         profileSelectionStore.setActiveProfileCategory(
-                            profileSelectionStore.activeProfileCategory !== MultiProfileCategory.STATISTIC ? MultiProfileCategory.STATISTIC : MultiProfileCategory.NONE
+                            profileSelectionStore.activeProfileCategory !== MultiProfileCategory.STATISTIC
+                                ? MultiProfileCategory.STATISTIC
+                                : MultiProfileCategory.NONE
                         );
                     }}
                     onItemSelect={this.onStatsItemClick}
                     categoryTooltip={
                         <span>
                             {`Click to enable/disable multiple selections of ${MultiProfileCategory.STATISTIC}`}
-                            <span><br/><i><small>When enabled, Spectral Profiler will show multiple profiles with different selected statistic quantities.</small></i></span>
+                            <span>
+                                <br />
+                                <i>
+                                    <small>When enabled, Spectral Profiler will show multiple profiles with different selected statistic quantities.</small>
+                                </i>
+                            </span>
                         </span>
                     }
                     dropdownTooltip={{
@@ -223,17 +252,24 @@ class ProfileSelectionComponent extends React.Component<{profileSelectionStore: 
                     itemOptions={profileSelectionStore.coordinateOptions}
                     itemSelected={profileSelectionStore.selectedCoordinates}
                     disabled={disabled}
-                    disableOptions={!(frame?.hasStokes)}
+                    disableOptions={!frame?.hasStokes}
                     onCategorySelect={() => {
                         profileSelectionStore.setActiveProfileCategory(
-                            profileSelectionStore.activeProfileCategory !== MultiProfileCategory.STOKES ? MultiProfileCategory.STOKES : MultiProfileCategory.NONE
+                            profileSelectionStore.activeProfileCategory !== MultiProfileCategory.STOKES
+                                ? MultiProfileCategory.STOKES
+                                : MultiProfileCategory.NONE
                         );
                     }}
                     onItemSelect={this.onStokesItemClick}
                     categoryTooltip={
                         <span>
                             {`Click to enable/disable multiple selections of ${MultiProfileCategory.STOKES}`}
-                            <span><br/><i><small>When enabled, Spectral Profiler will show multiple profiles with different selected Stokes.</small></i></span>
+                            <span>
+                                <br />
+                                <i>
+                                    <small>When enabled, Spectral Profiler will show multiple profiles with different selected Stokes.</small>
+                                </i>
+                            </span>
                         </span>
                     }
                     dropdownTooltip={{
@@ -248,36 +284,48 @@ class ProfileSelectionComponent extends React.Component<{profileSelectionStore: 
 }
 
 @observer
-export class SpectralProfilerToolbarComponent extends React.Component<{ widgetStore: SpectralProfileWidgetStore, id: string }> {
+export class SpectralProfilerToolbarComponent extends React.Component<{widgetStore: SpectralProfileWidgetStore; id: string}> {
     private smoothingShortcutClick = () => {
         this.props.widgetStore.setSettingsTabId(SpectralProfilerSettingsTabs.SMOOTHING);
-        AppStore.Instance.widgetsStore.createFloatingSettingsWidget(SpectralProfilerComponent.WIDGET_CONFIG.title, this.props.id, SpectralProfilerComponent.WIDGET_CONFIG.type);
+        AppStore.Instance.widgetsStore.createFloatingSettingsWidget(
+            SpectralProfilerComponent.WIDGET_CONFIG.title,
+            this.props.id,
+            SpectralProfilerComponent.WIDGET_CONFIG.type
+        );
     };
 
     private momentsShortcutClick = () => {
         this.props.widgetStore.setSettingsTabId(SpectralProfilerSettingsTabs.MOMENTS);
-        AppStore.Instance.widgetsStore.createFloatingSettingsWidget(SpectralProfilerComponent.WIDGET_CONFIG.title, this.props.id, SpectralProfilerComponent.WIDGET_CONFIG.type);
+        AppStore.Instance.widgetsStore.createFloatingSettingsWidget(
+            SpectralProfilerComponent.WIDGET_CONFIG.title,
+            this.props.id,
+            SpectralProfilerComponent.WIDGET_CONFIG.type
+        );
     };
 
     private fittingShortcutClick = () => {
         this.props.widgetStore.setSettingsTabId(SpectralProfilerSettingsTabs.FITTING);
-        AppStore.Instance.widgetsStore.createFloatingSettingsWidget(SpectralProfilerComponent.WIDGET_CONFIG.title, this.props.id, SpectralProfilerComponent.WIDGET_CONFIG.type);
+        AppStore.Instance.widgetsStore.createFloatingSettingsWidget(
+            SpectralProfilerComponent.WIDGET_CONFIG.title,
+            this.props.id,
+            SpectralProfilerComponent.WIDGET_CONFIG.type
+        );
     };
 
     public render() {
         const widgetStore = this.props.widgetStore;
         return (
             <div className="spectral-profiler-toolbar">
-                <ProfileSelectionComponent profileSelectionStore={widgetStore.profileSelectionStore}/>
+                <ProfileSelectionComponent profileSelectionStore={widgetStore.profileSelectionStore} />
                 <ButtonGroup className="shortcut-buttons">
                     <Tooltip content="Smoothing">
-                        <AnchorButton icon={<CustomIcon icon="smoothing"/>} onClick={this.smoothingShortcutClick}/>
+                        <AnchorButton icon={<CustomIcon icon="smoothing" />} onClick={this.smoothingShortcutClick} />
                     </Tooltip>
                     <Tooltip content="Moments">
-                        <AnchorButton icon={<CustomIcon icon="moments"/>} onClick={this.momentsShortcutClick}/>
+                        <AnchorButton icon={<CustomIcon icon="moments" />} onClick={this.momentsShortcutClick} />
                     </Tooltip>
                     <Tooltip content="Fitting">
-                        <AnchorButton icon="regression-chart" onClick={this.fittingShortcutClick}/>
+                        <AnchorButton icon="regression-chart" onClick={this.fittingShortcutClick} />
                     </Tooltip>
                 </ButtonGroup>
             </div>

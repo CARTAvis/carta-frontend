@@ -36,7 +36,14 @@ export function LayerToMip(layer: number, imageSize: Point2D, tileSize: Point2D)
 
 export function GetRequiredTiles(frameView: FrameView, imageSize: Point2D, tileSize: Point2D): TileCoordinate[] {
     // Validate FrameView object
-    if (!frameView || !isFinite(frameView.xMin) || !isFinite(frameView.xMax) || !isFinite(frameView.yMin) || !isFinite(frameView.yMax) || !isFinite(frameView.mip)) {
+    if (
+        !frameView ||
+        !isFinite(frameView.xMin) ||
+        !isFinite(frameView.xMax) ||
+        !isFinite(frameView.yMin) ||
+        !isFinite(frameView.yMax) ||
+        !isFinite(frameView.mip)
+    ) {
         return [];
     }
 
@@ -75,7 +82,7 @@ export function GetRequiredTiles(frameView: FrameView, imageSize: Point2D, tileS
 
     const adjustedTileSize: Point2D = {
         x: frameView.mip * tileSize.x,
-        y: frameView.mip * tileSize.y,
+        y: frameView.mip * tileSize.y
     };
 
     const xStart = Math.floor(boundedFrameView.xMin / adjustedTileSize.x);

@@ -1,14 +1,14 @@
 import * as React from "react";
 import {AnchorButton, FormGroup, NumericInput, Tooltip, INumericInputProps} from "@blueprintjs/core";
 import {observer} from "mobx-react";
-import {action ,makeObservable, observable} from "mobx";
+import {action, makeObservable, observable} from "mobx";
 import {toExponential} from "utilities";
 
 const KEYCODE_ENTER = 13;
 
 export interface ClearableNumericInputProps extends INumericInputProps {
-    label: string; 
-    value: number; 
+    label: string;
+    value: number;
     min?: number;
     max?: number;
     integerOnly?: boolean;
@@ -32,7 +32,7 @@ export class ClearableNumericInputComponent extends React.Component<ClearableNum
         this.isFocused = value;
     }
 
-    handleChange = (ev) => { 
+    handleChange = ev => {
         if (ev.type === "keydown" && ev.keyCode !== KEYCODE_ENTER) {
             return;
         }
@@ -51,7 +51,7 @@ export class ClearableNumericInputComponent extends React.Component<ClearableNum
         if (this.props.displayExponential) {
             this.setFocused(false);
         }
-    }
+    };
 
     private validation = (value: string): string => {
         const valueAsNumber = parseFloat(value);
@@ -59,7 +59,7 @@ export class ClearableNumericInputComponent extends React.Component<ClearableNum
         if (this.props.integerOnly) {
             const roundValue = Math.round(valueAsNumber);
             if (isFinite(roundValue)) {
-                valueAsString = roundValue.toString();   
+                valueAsString = roundValue.toString();
             }
         }
 
@@ -71,9 +71,9 @@ export class ClearableNumericInputComponent extends React.Component<ClearableNum
             valueAsString = this.props.max.toString();
         }
         return valueAsString;
-    }
+    };
 
-    render () {
+    render() {
         let value = this.props.displayExponential && !this.isFocused ? toExponential(Number(this.props.value), 3) : this.props.value;
         return (
             <FormGroup className={this.props.className} label={this.props.label} inline={true} disabled={this.props.disabled}>
@@ -89,7 +89,7 @@ export class ClearableNumericInputComponent extends React.Component<ClearableNum
                     disabled={this.props.disabled}
                     rightElement={
                         <Tooltip content="Reset value to default" disabled={this.props.disabled}>
-                            <AnchorButton icon="refresh" minimal={true} onClick={this.props.onValueCleared} disabled={this.props.disabled}/>
+                            <AnchorButton icon="refresh" minimal={true} onClick={this.props.onValueCleared} disabled={this.props.disabled} />
                         </Tooltip>
                     }
                 />
