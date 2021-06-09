@@ -21,6 +21,7 @@ import {
     FrameStore,
     HelpStore,
     LayoutStore,
+    SnippetStore,
     LogEntry,
     LogStore,
     OverlayStore,
@@ -66,6 +67,7 @@ export class AppStore {
     readonly fileBrowserStore: FileBrowserStore;
     readonly helpStore: HelpStore;
     readonly layoutStore: LayoutStore;
+    readonly snippetStore: SnippetStore;
     readonly logStore: LogStore;
     readonly overlayStore: OverlayStore;
     readonly preferenceStore: PreferenceStore;
@@ -1081,6 +1083,7 @@ export class AppStore {
         this.fileBrowserStore = FileBrowserStore.Instance;
         this.helpStore = HelpStore.Instance;
         this.layoutStore = LayoutStore.Instance;
+        this.snippetStore = SnippetStore.Instance;
         this.logStore = LogStore.Instance;
         this.preferenceStore = PreferenceStore.Instance;
         this.overlayStore = OverlayStore.Instance;
@@ -1281,6 +1284,7 @@ export class AppStore {
                         this.cursorFrozen = this.preferenceStore.isCursorFrozen;
                         this.connectToServer();
                     });
+                    this.snippetStore.fetchSnippets();
                     this.updateASTColors();
                 });
             }

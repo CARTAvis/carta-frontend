@@ -5,17 +5,19 @@ import {action, autorun, computed, makeObservable, observable} from "mobx";
 import {AnchorButton, Classes, IDialogProps, Intent} from "@blueprintjs/core";
 import Editor from "react-simple-code-editor";
 import {DraggableDialogComponent} from "components/Dialogs";
-import {AppStore} from "stores";
+import {Snippet} from "models";
+import {AppStore, SnippetStore} from "stores";
 
 import "prismjs/themes/prism.css";
 import "./DebugExecutionDialogComponent.scss";
 
 @observer
 export class DebugExecutionDialogComponent extends React.Component {
-    @observable inputString: string = localStorage.getItem("debugString") ?? "";
+    @observable inputString: string = "";
     @observable isExecuting: boolean;
     @observable errorString: string = "";
     @observable functionToExecute;
+    private filledFromHistory: boolean = false;
 
     @computed get validInput() {
         return this.functionToExecute !== undefined;
@@ -25,9 +27,23 @@ export class DebugExecutionDialogComponent extends React.Component {
         this.functionToExecute = f;
     };
 
+    @action setInputString = (val: string) => {
+        this.inputString = val;
+    }
+
     constructor(props: any) {
         super(props);
         makeObservable(this);
+
+        const snippetStore = SnippetStore.Instance;
+
+        autorun(()=>{
+            const previousSnippet = snippetStore.snippets.get("_previous");
+            if (!this.filledFromHistory && previousSnippet) {
+                this.setInputString(previousSnippet.code);
+                this.filledFromHistory = true;
+            }
+        });
 
         const AsyncFunction = Object.getPrototypeOf(async function () {
         }).constructor;
@@ -117,7 +133,15 @@ export class DebugExecutionDialogComponent extends React.Component {
         } catch (e) {
             console.log(e);
         }
-        localStorage.setItem("debugString", this.inputString);
+        const snippet: Snippet = {
+            snippetVersion: 1,
+            frontendVersion: "v2.0.0",
+            tags: ["previous"],
+            categories: ["previous", "testing"],
+            requires: [],
+            code: this.inputString
+        }
         this.setIsExecuting(false);
+        await SnippetStore.Instance.saveSnippet("_previous", snippet);
     };
 }

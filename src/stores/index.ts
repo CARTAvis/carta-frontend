@@ -23,3 +23,4 @@ export * from "./HelpStore";
 export * from "./ProfileSmoothingStore";
 export * from "./CatalogProfileStore";
 export * from "./ProfileFittingStore";
+export * from "./SnippetStore"
