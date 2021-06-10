@@ -222,7 +222,7 @@ export class ProfileFittingComponent extends React.Component<ProfileFittingCompo
 
         return (
             <div className="profile-fitting-panel">
-                <Tooltip2 content={disabled ? "Profile fitting is not available when there are multiple profiles in the plot." : ""}>
+                <Tooltip2 disabled={!disabled} content={"Profile fitting is not available when there are multiple profiles in the plot."}>
                     <FormGroup disabled={disabled}>
                         <div className="profile-fitting-form">
                             <FormGroup label="Data source" inline={true}>
