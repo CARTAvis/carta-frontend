@@ -195,6 +195,7 @@ export class ProfileFittingComponent extends React.Component<ProfileFittingCompo
 
     constructor(props: ProfileFittingComponentProps) {
         super(props);
+        this.isShowingLog = false;
         makeObservable(this);
         autorun(() => {
             // clear fitting data when the profile data changed
@@ -408,29 +409,34 @@ export class ProfileFittingComponent extends React.Component<ProfileFittingCompo
                                 onClick={this.fitData}
                                 disabled={!fittingStore.readyToFit || disabled}
                             />
-                            <Popover2 isOpen={this.isShowingLog} onClose={this.handleLogClose}> 
+                            <Popover2
+                                isOpen={this.isShowingLog}
+                                onClose={this.handleLogClose}
+                                content={
+                                    <div className="fitting-popover">
+                                        <div className="fitting-log">
+                                            <Pre className="fitting-log-pre">
+                                                <Text className="fitting-log-text">
+                                                    {fittingStore.resultLog}
+                                                </Text>
+                                            </Pre>
+                                        </div>
+                                        <div className="fitting-popover-footer">
+                                            <Button
+                                                text="Save log"
+                                                onClick={this.saveLog}
+                                                className="fitting-log-button"
+                                            />
+                                        </div>
+                                    </div>
+                                }
+                            >
                                 <AnchorButton
                                     text="View log"
                                     onClick={this.showLog}
                                     intent={Intent.PRIMARY}
                                     disabled={!fittingStore.hasResult || disabled}
                                 />
-                                <div className="fitting-popover">
-                                    <div className="fitting-log">
-                                        <Pre className="fitting-log-pre">
-                                            <Text className="fitting-log-text">
-                                                {fittingStore.resultLog}
-                                            </Text>
-                                        </Pre>
-                                    </div>
-                                    <div className="fitting-popover-footer">
-                                        <Button
-                                            text="Save log"
-                                            onClick={this.saveLog}
-                                            className="fitting-log-button"
-                                        />
-                                    </div>
-                                </div>
                             </Popover2>
                             <div className="switch-wrapper">
                                 <Switch
