@@ -1,7 +1,8 @@
 import * as React from "react";
 import {observer} from "mobx-react";
 import {action, makeObservable, observable} from "mobx";
-import {Button, ButtonGroup, ControlGroup, Divider, FormGroup, HTMLSelect, InputGroup, IOptionProps, NonIdealState, Popover, PopoverInteractionKind, PopperModifiers, Position, Pre, Spinner, Tab, TabId, Tabs, Text} from "@blueprintjs/core";
+import {Button, ButtonGroup, ControlGroup, Divider, FormGroup, HTMLSelect, InputGroup, IOptionProps, NonIdealState, Position, Pre, Spinner, Tab, TabId, Tabs, Text} from "@blueprintjs/core";
+import {Popover2, Popover2InteractionKind} from "@blueprintjs/popover2";
 import {FixedSizeList as List} from "react-window";
 import AutoSizer from "react-virtualized-auto-sizer";
 import {CARTA} from "carta-protobuf";
@@ -397,7 +398,6 @@ export class FileInfoComponent extends React.Component<{
     };
 
     private renderHeaderToolbar = () => {
-        const popoverModifiers: PopperModifiers = {arrow: {enabled: false}, offset: {offset: '0, 10px, 0, 0'}};
         const searchIter = (
             <ButtonGroup className="header-search">
                 <span className="header-search-iter">&nbsp;{this.matchedIter} of {this.matchedTotal}&nbsp;</span>
@@ -423,24 +423,29 @@ export class FileInfoComponent extends React.Component<{
         return (!this.props.isLoading && !this.props.errorMessage && this.props.fileInfoExtended &&
             this.props.selectedTab === FileInfoType.IMAGE_HEADER) ? (
                 <ButtonGroup className="header-search-button" style={{opacity: (this.isMouseEntered || this.isSearchOpened) ? 1 : 0}}>
-                    <Popover
+                    <Popover2
                         position={Position.LEFT}
-                        interactionKind={PopoverInteractionKind.CLICK_TARGET_ONLY}
-                        modifiers={popoverModifiers}
+                        interactionKind={Popover2InteractionKind.CLICK_TARGET_ONLY}
+                        modifiers={{
+                            arrow: {enabled: false},
+                            offset: {enabled: true, options: {offset: [0, 10]}}
+                        }}
                         onOpening={() => this.handleSearchPanelClicked(true)}
                         onClosing={() => this.handleSearchPanelClicked(false)}
+                        content={
+                            <InputGroup
+                                className="header-search-input"
+                                autoFocus={true}
+                                placeholder={"Search text"}
+                                leftIcon="search-text"
+                                rightElement={searchIter}
+                                onChange={this.handleSearchStringChanged}
+                                onKeyDown={(ev) => this.handleClickMatched(1, ev)}
+                            />
+                        }
                     >
                         <Button icon="search-text"></Button>
-                        <InputGroup
-                            className="header-search-input"
-                            autoFocus={true}
-                            placeholder={"Search text"}
-                            leftIcon="search-text"
-                            rightElement={searchIter}
-                            onChange={this.handleSearchStringChanged}
-                            onKeyDown={(ev) => this.handleClickMatched(1, ev)}
-                        />
-                    </Popover>
+                    </Popover2>
                     <Button icon="import" onClick={this.exportHeader}></Button>
                 </ButtonGroup>
             ) : null;
