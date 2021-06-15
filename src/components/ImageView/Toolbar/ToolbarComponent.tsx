@@ -106,7 +106,7 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
 
         const zoomLevel = (frame.spatialReference && frame.spatialTransform) ? frame.spatialReference.zoomLevel * frame.spatialTransform.scale : frame.zoomLevel;
         const currentZoomSpan = <span><br/><i><small>Current: {toFixed(zoomLevel, 2)}x</small></i></span>;
-        const tooltipPosition: PopoverPosition = this.props.vertical ? "left" : "bottom";
+        const tooltipPosition: PopoverPosition = this.props.vertical ? "left" : "top";
 
         const regionMenu = (
             <Menu>
