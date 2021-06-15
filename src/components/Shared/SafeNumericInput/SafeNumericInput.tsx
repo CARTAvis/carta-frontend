@@ -3,8 +3,8 @@ import {NumericInput, INumericInputProps} from "@blueprintjs/core";
 
 export interface SafeNumericInputProps extends INumericInputProps {
     intOnly?: boolean;
-    onBlur? (ev: React.FocusEvent<HTMLInputElement>) : void;
-    onKeyDown? (ev: React.KeyboardEvent<HTMLInputElement>) : void;
+    onBlur?(ev: React.FocusEvent<HTMLInputElement>): void;
+    onKeyDown?(ev: React.KeyboardEvent<HTMLInputElement>): void;
 }
 
 export class SafeNumericInput extends React.Component<SafeNumericInputProps> {
@@ -20,7 +20,7 @@ export class SafeNumericInput extends React.Component<SafeNumericInputProps> {
             }
         }
 
-        if (this.props.onValueChange && isFinite(valueAsNumber) && (!isFinite(this.props.min) || this.props.min <= valueAsNumber) && (!isFinite(this.props.max) || this.props.max >= valueAsNumber)) {    
+        if (this.props.onValueChange && isFinite(valueAsNumber) && (!isFinite(this.props.min) || this.props.min <= valueAsNumber) && (!isFinite(this.props.max) || this.props.max >= valueAsNumber)) {
             this.props.onValueChange(valueAsNumber, valueAsString, inputElement);
         }
     };
@@ -28,13 +28,6 @@ export class SafeNumericInput extends React.Component<SafeNumericInputProps> {
     render() {
         const {intOnly, ...otherProps} = this.props;
 
-        return (
-            <NumericInput
-                {...otherProps}
-                asyncControl={true}
-                minorStepSize={this.props.minorStepSize ? this.props.minorStepSize : (intOnly ? 1: SafeNumericInput.minorStepSize)}
-                onValueChange={this.safeHandleValueChanged}
-            />
-        );
+        return <NumericInput {...otherProps} asyncControl={true} minorStepSize={this.props.minorStepSize ? this.props.minorStepSize : intOnly ? 1 : SafeNumericInput.minorStepSize} onValueChange={this.safeHandleValueChanged} />;
     }
 }

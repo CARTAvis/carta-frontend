@@ -194,7 +194,8 @@ export class RegionStore {
             return "Cursor";
         } else if (this.name && this.name !== "") {
             return this.name;
-        } else { // temporary region id < 0, use "..." for representation
+        } else {
+            // temporary region id < 0, use "..." for representation
             return `Region ${this.regionId > CURSOR_REGION_ID ? this.regionId : "..."}`;
         }
     }
@@ -207,13 +208,9 @@ export class RegionStore {
             case CARTA.RegionType.POINT:
                 return `Point (pixel) [${center}]`;
             case CARTA.RegionType.RECTANGLE:
-                return `rotbox[[${center}], ` +
-                    `[${toFixed(this.size.x, 6)}pix, ${toFixed(this.size.y, 6)}pix], ` +
-                    `${toFixed(this.rotation, 6)}deg]`;
+                return `rotbox[[${center}], ` + `[${toFixed(this.size.x, 6)}pix, ${toFixed(this.size.y, 6)}pix], ` + `${toFixed(this.rotation, 6)}deg]`;
             case CARTA.RegionType.ELLIPSE:
-                return `ellipse[[${center}], ` +
-                    `[${toFixed(this.size.x, 6)}pix, ${toFixed(this.size.y, 6)}pix], ` +
-                    `${toFixed(this.rotation, 6)}deg]`;
+                return `ellipse[[${center}], ` + `[${toFixed(this.size.x, 6)}pix, ${toFixed(this.size.y, 6)}pix], ` + `${toFixed(this.rotation, 6)}deg]`;
             case CARTA.RegionType.POLYGON:
                 let polygonProperties = "poly[";
                 this.controlPoints.forEach((point, index) => {
@@ -237,12 +234,12 @@ export class RegionStore {
             } else if (this.regionType === CARTA.RegionType.RECTANGLE) {
                 let halfWidth = this.size.x / 2;
                 let halfHeight = this.size.y / 2;
-                const rotation = this.rotation * Math.PI / 180.0;
+                const rotation = (this.rotation * Math.PI) / 180.0;
                 const points: Point2D[] = [
                     add2D(this.center, rotate2D({x: -halfWidth, y: -halfHeight}, rotation)),
                     add2D(this.center, rotate2D({x: +halfWidth, y: -halfHeight}, rotation)),
                     add2D(this.center, rotate2D({x: +halfWidth, y: +halfHeight}, rotation)),
-                    add2D(this.center, rotate2D({x: -halfWidth, y: +halfHeight}, rotation)),
+                    add2D(this.center, rotate2D({x: -halfWidth, y: +halfHeight}, rotation))
                 ];
                 approximatePoints = getApproximatePolygonPoints(astTransform, points, RegionStore.TARGET_VERTEX_COUNT);
             } else {
@@ -253,8 +250,19 @@ export class RegionStore {
         return approximatePoints;
     }
 
-    constructor(backendService: BackendService, fileId: number, activeFrame: FrameStore, controlPoints: Point2D[], regionType: CARTA.RegionType, regionId: number = -1,
-                color: string = Colors.TURQUOISE5, lineWidth: number = 2, dashLength: number = 0, rotation: number = 0, name: string = "") {
+    constructor(
+        backendService: BackendService,
+        fileId: number,
+        activeFrame: FrameStore,
+        controlPoints: Point2D[],
+        regionType: CARTA.RegionType,
+        regionId: number = -1,
+        color: string = Colors.TURQUOISE5,
+        lineWidth: number = 2,
+        dashLength: number = 0,
+        rotation: number = 0,
+        name: string = ""
+    ) {
         makeObservable(this);
         this.fileId = fileId;
         this.activeFrame = activeFrame;
@@ -340,7 +348,6 @@ export class RegionStore {
             this.isSimplePolygon = simplePolygonPointTest(points, point) && simplePolygonPointTest(points, point - 1);
         } else {
             this.isSimplePolygon = simplePolygonTest(points);
-
         }
     }
 

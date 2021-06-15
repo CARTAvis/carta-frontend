@@ -19,14 +19,14 @@ export class SpatialProfileWidgetStore {
     @observable markerTextVisible: boolean;
     @observable isMouseMoveIntoLinePlots: boolean;
 
-    // settings 
+    // settings
     @observable wcsAxisVisible: boolean;
     @observable plotType: PlotType;
     @observable meanRmsVisible: boolean;
     @observable primaryLineColor: string;
     @observable lineWidth: number;
     @observable linePlotPointSize: number;
-    @observable linePlotInitXYBoundaries: { minXVal: number, maxXVal: number, minYVal: number, maxYVal: number };
+    @observable linePlotInitXYBoundaries: {minXVal: number; maxXVal: number; minYVal: number; maxYVal: number};
     readonly smoothingStore: ProfileSmoothingStore;
     @observable settingsTabId: SpatialProfilerSettingsTabs;
 
@@ -136,11 +136,11 @@ export class SpatialProfileWidgetStore {
     }
 
     @computed get isAutoScaledX() {
-        return (this.minX === undefined || this.maxX === undefined);
+        return this.minX === undefined || this.maxX === undefined;
     }
 
     @computed get isAutoScaledY() {
-        return (this.minY === undefined || this.maxY === undefined);
+        return this.minY === undefined || this.maxY === undefined;
     }
 
     private static GetCursorSpatialConfig(frame: FrameStore, coordinate: string): CARTA.SetSpatialRequirements.ISpatialConfig {
@@ -150,14 +150,14 @@ export class SpatialProfileWidgetStore {
                     coordinate,
                     mip: clamp(frame.requiredFrameView.mip, 1, frame.maxMip),
                     start: Math.floor(clamp(frame.requiredFrameView.xMin, 0, frame.frameInfo.fileInfoExtended.width)),
-                    end: Math.ceil(clamp(frame.requiredFrameView.xMax, 0, frame.frameInfo.fileInfoExtended.width)),
+                    end: Math.ceil(clamp(frame.requiredFrameView.xMax, 0, frame.frameInfo.fileInfoExtended.width))
                 };
             } else {
                 return {
                     coordinate,
                     mip: clamp(frame.requiredFrameView.mip, 1, frame.maxMip),
                     start: Math.floor(clamp(frame.requiredFrameView.yMin, 0, frame.frameInfo.fileInfoExtended.height)),
-                    end: Math.ceil(clamp(frame.requiredFrameView.yMax, 0, frame.frameInfo.fileInfoExtended.height)),
+                    end: Math.ceil(clamp(frame.requiredFrameView.yMax, 0, frame.frameInfo.fileInfoExtended.height))
                 };
             }
         } else {
@@ -274,10 +274,9 @@ export class SpatialProfileWidgetStore {
                     }
                 });
             }
-
         });
         // Sort list so that requirements clearing occurs first
-        return diffList.sort((a, b) => a.spatialProfiles.length > b.spatialProfiles.length ? 1 : -1);
+        return diffList.sort((a, b) => (a.spatialProfiles.length > b.spatialProfiles.length ? 1 : -1));
     }
 
     // settings

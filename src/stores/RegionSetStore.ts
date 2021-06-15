@@ -1,4 +1,4 @@
-import { action, observable, makeObservable } from "mobx";
+import {action, observable, makeObservable} from "mobx";
 import * as AST from "ast_wrapper";
 import {CARTA} from "carta-protobuf";
 import {CURSOR_REGION_ID, FrameStore, PreferenceStore, RegionStore} from "stores";
@@ -75,8 +75,19 @@ export class RegionSetStore {
     };
 
     private addRegion(points: Point2D[], rotation: number, regionType: CARTA.RegionType, temporary: boolean = false, regionId: number = this.getTempRegionId(), regionName: string = "") {
-        const region = new RegionStore(this.backendService, this.frame.frameInfo.fileId, this.frame, points, regionType, regionId,
-            this.preference.regionColor, this.preference.regionLineWidth, this.preference.regionDashLength, rotation, regionName);
+        const region = new RegionStore(
+            this.backendService,
+            this.frame.frameInfo.fileId,
+            this.frame,
+            points,
+            regionType,
+            regionId,
+            this.preference.regionColor,
+            this.preference.regionLineWidth,
+            this.preference.regionDashLength,
+            rotation,
+            regionName
+        );
         this.regions.push(region);
         if (!temporary) {
             this.backendService.setRegion(this.frame.frameInfo.fileId, -1, region).subscribe(ack => {
@@ -123,12 +134,12 @@ export class RegionSetStore {
         this.newRegionType = type;
     };
 
-    @action setMode = (mode) => {
+    @action setMode = mode => {
         this.mode = mode;
     };
 
     @action toggleMode = () => {
-        this.mode = (this.mode === RegionMode.MOVING) ? RegionMode.CREATING : RegionMode.MOVING;
+        this.mode = this.mode === RegionMode.MOVING ? RegionMode.CREATING : RegionMode.MOVING;
     };
 
     @action migrateRegionsFromExistingSet = (sourceRegionSet: RegionSetStore, spatialTransformAST: AST.FrameSet, forward: boolean = false) => {
@@ -150,7 +161,6 @@ export class RegionSetStore {
                     this.regions[0].setCenter(centerNewFrame);
                 }
             } else {
-
                 let newControlPoints: Point2D[] = [];
                 let rotation: number = 0;
 
@@ -159,7 +169,7 @@ export class RegionSetStore {
                     if (!isAstBadPoint(centerNewFrame)) {
                         const transform = new Transform2D(spatialTransformAST, centerNewFrame);
                         const size = scale2D(region.size, forward ? transform.scale : 1.0 / transform.scale);
-                        rotation = region.rotation + (forward ? 1 : -1) * transform.rotation * 180 / Math.PI;
+                        rotation = region.rotation + ((forward ? 1 : -1) * transform.rotation * 180) / Math.PI;
                         newControlPoints = [centerNewFrame, size];
                     }
                 } else if (region.regionType === CARTA.RegionType.POINT || region.regionType === CARTA.RegionType.POLYGON) {

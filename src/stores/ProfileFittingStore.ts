@@ -31,7 +31,7 @@ export class ProfileFittingStore {
     @observable hasAutoDetectResult: boolean;
     @observable detectedComponentN: number;
     @observable enableResidual: boolean;
-    @observable originData: { x: number[], y: Float32Array | Float64Array };
+    @observable originData: {x: number[]; y: Float32Array | Float64Array};
 
     private readonly widgetStore: SpectralProfileWidgetStore;
 
@@ -59,7 +59,7 @@ export class ProfileFittingStore {
         const selectedComponent = this.selectedComponent;
         const centerX = (xMin + xMax) / 2;
         const baselineCenterY = this.slope * centerX + this.yIntercept;
-        const isPositiveAmp = ((yMin + yMax) / 2) >= baselineCenterY;
+        const isPositiveAmp = (yMin + yMax) / 2 >= baselineCenterY;
         selectedComponent.setAmp(isPositiveAmp ? yMax - yMin : yMin - yMax);
         selectedComponent.setCenter(centerX);
         selectedComponent.setFwhm(xMax - xMin);
@@ -73,7 +73,7 @@ export class ProfileFittingStore {
         return null;
     }
 
-    @computed get fittingData(): { x: number[], y: Float32Array | Float64Array } {
+    @computed get fittingData(): {x: number[]; y: Float32Array | Float64Array} {
         if (this.widgetStore.plotData.fittingData) {
             let x = this.widgetStore.plotData.fittingData.x;
             let y = this.widgetStore.plotData.fittingData.y;
@@ -95,10 +95,15 @@ export class ProfileFittingStore {
                 if (component.isReadyToFit && !(isFinite(component.resultCenter) && isFinite(component.resultAmp) && isFinite(component.resultFwhm))) {
                     const deltaYForContinuum = component.center * this.slope + this.yIntercept;
                     const initialBox: LinePlotInsideBoxMarker = {
-                        boundary: {xMin: component.center - 0.5 * component.fwhm, xMax: component.center + 0.5 * component.fwhm, yMin: 0 + deltaYForContinuum, yMax: component.amp + deltaYForContinuum},
+                        boundary: {
+                            xMin: component.center - 0.5 * component.fwhm,
+                            xMax: component.center + 0.5 * component.fwhm,
+                            yMin: 0 + deltaYForContinuum,
+                            yMax: component.amp + deltaYForContinuum
+                        },
                         color: getColorForTheme("auto-lime"),
-                        opacity: (i === this.selectedIndex) ? 0.5 : 0.2,
-                        strokeColor: (i === this.selectedIndex) ? getColorForTheme("auto-grey") : null,
+                        opacity: i === this.selectedIndex ? 0.5 : 0.2,
+                        strokeColor: i === this.selectedIndex ? getColorForTheme("auto-grey") : null,
                         text: `${i + 1}`
                     };
                     boxes.push(initialBox);
@@ -138,11 +143,11 @@ export class ProfileFittingStore {
         if (this.components && this.hasResult) {
             if (this.continuum !== FittingContinuum.NONE) {
                 resultString += `Y Intercept = ${toFixed(this.resultYIntercept, 6)} (${yUnit})\n`;
-                resultString += this.resultYInterceptError ? `Y Intercept Error = ${toFixed(this.resultYInterceptError, 6)} (${toFixed(Math.abs(this.resultYInterceptError * 100 / this.resultYIntercept), 3)}%)\n` : "";
+                resultString += this.resultYInterceptError ? `Y Intercept Error = ${toFixed(this.resultYInterceptError, 6)} (${toFixed(Math.abs((this.resultYInterceptError * 100) / this.resultYIntercept), 3)}%)\n` : "";
             }
             if (this.continuum === FittingContinuum.FIRST_ORDER) {
                 resultString += `Slope = ${toFixed(this.resultSlope, 6)} (${yUnit} / ${xUnit})\n`;
-                resultString += this.resultSlopeError ? `Slope Error = ${toFixed(this.resultSlopeError, 6)} (${toFixed(Math.abs(this.resultSlopeError * 100 / this.resultSlope), 3)}%)\n` : "";
+                resultString += this.resultSlopeError ? `Slope Error = ${toFixed(this.resultSlopeError, 6)} (${toFixed(Math.abs((this.resultSlopeError * 100) / this.resultSlope), 3)}%)\n` : "";
             }
             if (this.continuum !== FittingContinuum.NONE) {
                 resultString += "\n";
@@ -151,13 +156,13 @@ export class ProfileFittingStore {
                 const component = this.components[i];
                 resultString += `Component #${i + 1}\n`;
                 resultString += `Center = ${toFixed(component.resultCenter, 6)} (${xUnit})\n`;
-                resultString += component.resultCenterError ? `Center Error = ${toFixed(component.resultCenterError, 6)} (${toFixed(Math.abs(component.resultCenterError * 100 / component.resultCenter), 3)}%)\n` : "";
+                resultString += component.resultCenterError ? `Center Error = ${toFixed(component.resultCenterError, 6)} (${toFixed(Math.abs((component.resultCenterError * 100) / component.resultCenter), 3)}%)\n` : "";
                 resultString += `Amplitude = ${toFixed(component.resultAmp, 6)} (${yUnit})\n`;
-                resultString += component.resultAmpError ? `Amplitude Error = ${toFixed(component.resultAmpError, 6)} (${toFixed(Math.abs(component.resultAmpError * 100 / component.resultAmp), 3)}%)\n` : "";
+                resultString += component.resultAmpError ? `Amplitude Error = ${toFixed(component.resultAmpError, 6)} (${toFixed(Math.abs((component.resultAmpError * 100) / component.resultAmp), 3)}%)\n` : "";
                 resultString += `FWHM = ${toFixed(component.resultFwhm, 6)} (${xUnit})\n`;
-                resultString += component.resultFwhmError ? `FWHM Error = ${toFixed(component.resultFwhmError, 6)} (${toFixed(Math.abs(component.resultFwhmError * 100 / component.resultFwhm), 3)}%)\n` : "";
+                resultString += component.resultFwhmError ? `FWHM Error = ${toFixed(component.resultFwhmError, 6)} (${toFixed(Math.abs((component.resultFwhmError * 100) / component.resultFwhm), 3)}%)\n` : "";
                 resultString += `Integral = ${toFixed(component.resultIntegral, 6)} (${yUnit} * ${xUnit})\n`;
-                resultString += component.resultIntegralError ? `Integral Error ~= ${toFixed(component.resultIntegralError, 6)} (${toFixed(Math.abs(component.resultIntegralError * 100 / component.resultIntegral), 3)}%)\n\n` : "";
+                resultString += component.resultIntegralError ? `Integral Error ~= ${toFixed(component.resultIntegralError, 6)} (${toFixed(Math.abs((component.resultIntegralError * 100) / component.resultIntegral), 3)}%)\n\n` : "";
             }
         }
 
@@ -202,7 +207,7 @@ export class ProfileFittingStore {
     @computed get baseLinePoint2DArray(): Point2D[] {
         if (this.components && this.continuum !== FittingContinuum.NONE) {
             const x = this.widgetStore.plotData.fittingData.x;
-            const continuumPoint2DArray = new Array<{ x: number, y: number }>(x.length);
+            const continuumPoint2DArray = new Array<{x: number; y: number}>(x.length);
             for (let i = 0; i < x.length; i++) {
                 let yi = this.yIntercept;
                 if (this.continuum === FittingContinuum.FIRST_ORDER) {
@@ -242,7 +247,8 @@ export class ProfileFittingStore {
             for (const component of this.components) {
                 let individualResultPoint2DArray: Point2D[] = [];
                 for (let i = 0; i < x.length; i++) {
-                    const yi = this.function === FittingFunction.GAUSSIAN ? gaussian(x[i], component.resultAmp, component.resultCenter, component.resultFwhm) : lorentzian(x[i], component.resultAmp, component.resultCenter, component.resultFwhm);
+                    const yi =
+                        this.function === FittingFunction.GAUSSIAN ? gaussian(x[i], component.resultAmp, component.resultCenter, component.resultFwhm) : lorentzian(x[i], component.resultAmp, component.resultCenter, component.resultFwhm);
                     individualResultPoint2DArray.push({x: x[i], y: yi + (this.resultSlope * x[i] + this.resultYIntercept)});
                 }
                 individualModelPoint2DArrays.push(individualResultPoint2DArray);
@@ -255,7 +261,7 @@ export class ProfileFittingStore {
     @computed get residualPoint2DArray(): Point2D[] {
         if (this.components && this.hasResult) {
             const x = this.originData.x;
-            const residualPoint2DArray = new Array<{ x: number, y: number }>(x.length);
+            const residualPoint2DArray = new Array<{x: number; y: number}>(x.length);
             for (let i = 0; i < x.length; i++) {
                 residualPoint2DArray.push({x: x[i], y: this.resultResidual[i]});
             }
@@ -415,7 +421,7 @@ export class ProfileFittingStore {
 
     @action setResultResidual = (val: Float32Array | Float64Array) => {
         this.resultResidual = val;
-    }
+    };
 
     @action setIsCursorSelectingYIntercept = (val: boolean) => {
         this.isCursorSelectingYIntercept = val;
@@ -455,7 +461,6 @@ export class ProfileFittingStore {
 }
 
 export class ProfileFittingIndividualStore {
-
     @observable center: number;
     @observable amp: number;
     @observable fwhm: number;
@@ -472,7 +477,7 @@ export class ProfileFittingIndividualStore {
     @observable resultIntegralError: number;
 
     @computed get isReadyToFit(): boolean {
-        return (isFinite(this.center) && isFinite(this.amp) && isFinite(this.fwhm) && (this.amp !== 0 && this.fwhm !== 0));
+        return isFinite(this.center) && isFinite(this.amp) && isFinite(this.fwhm) && this.amp !== 0 && this.fwhm !== 0;
     }
 
     constructor() {

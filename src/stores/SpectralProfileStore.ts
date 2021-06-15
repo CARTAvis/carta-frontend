@@ -1,4 +1,4 @@
-import { action, observable, ObservableMap, makeObservable } from "mobx";
+import {action, observable, ObservableMap, makeObservable} from "mobx";
 import {CARTA} from "carta-protobuf";
 import {ProcessedSpectralProfile} from "models";
 

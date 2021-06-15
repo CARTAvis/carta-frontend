@@ -155,7 +155,7 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
             let cursorPoint = konvaEvent.target.getStage().getPointerPosition();
             let isPanDrag = true;
             if (konvaEvent.evt.type === "touchmove") {
-                const touchEvent = (konvaEvent.evt as unknown) as TouchEvent;
+                const touchEvent = konvaEvent.evt as unknown as TouchEvent;
 
                 if (touchEvent.touches.length > 1 && touchEvent.target) {
                     isPanDrag = false;
@@ -241,7 +241,7 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
 
         if (this.creatingRegion) {
             if (this.creatingRegion.controlPoints.length > 1 && length2D(this.creatingRegion.size) === 0) {
-                const scaleFactor = PreferenceStore.Instance.regionSize * (this.creatingRegion.regionType === CARTA.RegionType.RECTANGLE ? 1.0 : 0.5) / frame.zoomLevel;
+                const scaleFactor = (PreferenceStore.Instance.regionSize * (this.creatingRegion.regionType === CARTA.RegionType.RECTANGLE ? 1.0 : 0.5)) / frame.zoomLevel;
                 this.creatingRegion.setSize(scale2D({x: 1, y: 1}, scaleFactor));
             }
             if (this.creatingRegion.isValid) {
@@ -275,7 +275,7 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
             this.creatingRegion.beginCreating();
         }
         this.handlePolygonRegionMouseMove(mouseEvent);
-    }
+    };
 
     handleClick = (konvaEvent: Konva.KonvaEventObject<MouseEvent>) => {
         const mouseEvent = konvaEvent.evt;
@@ -373,8 +373,8 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
         if (frame.spatialReference) {
             cursorPosImageSpace = transformPoint(frame.spatialTransformAST, cursorPosImageSpace, true);
         }
-        let dx = (cursorPosImageSpace.x - this.regionStartPoint.x);
-        let dy = (cursorPosImageSpace.y - this.regionStartPoint.y);
+        let dx = cursorPosImageSpace.x - this.regionStartPoint.x;
+        let dy = cursorPosImageSpace.y - this.regionStartPoint.y;
         if (mouseEvent.shiftKey) {
             const maxDiff = Math.max(Math.abs(dx), Math.abs(dy));
             dx = Math.sign(dx) * maxDiff;
@@ -426,8 +426,7 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
             // Ignore the double click distance longer than DOUBLE_CLICK_DISTANCE
             return;
         }
-        if (frame.regionSet.mode === RegionMode.CREATING && this.creatingRegion &&
-            this.creatingRegion.regionType === CARTA.RegionType.POLYGON) {
+        if (frame.regionSet.mode === RegionMode.CREATING && this.creatingRegion && this.creatingRegion.regionType === CARTA.RegionType.POLYGON) {
             // Handle region completion
             if (this.creatingRegion.isValid && this.creatingRegion.controlPoints.length > 2) {
                 this.creatingRegion.endCreating();
@@ -462,7 +461,10 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
 
         let regionComponents = null;
         if (regionSet && regionSet.regions.length) {
-            regionComponents = regionSet.regions.filter(r => r.isValid && r.regionId !== 0).sort((a, b) => a.boundingBoxArea > b.boundingBoxArea ? -1 : 1).map(r => {
+            regionComponents = regionSet.regions
+                .filter(r => r.isValid && r.regionId !== 0)
+                .sort((a, b) => (a.boundingBoxArea > b.boundingBoxArea ? -1 : 1))
+                .map(r => {
                     if (r.regionType === CARTA.RegionType.POLYGON) {
                         return (
                             <PolygonRegionComponent
@@ -506,15 +508,14 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
                             />
                         );
                     }
-                }
-            );
+                });
         }
 
         let cursorMarker = null;
 
         if (this.props.cursorFrozen && this.props.cursorPoint) {
             const cursorPosPixelSpace = this.getCursorCanvasPos(this.props.cursorPoint.x, this.props.cursorPoint.y);
-            const rotation = frame.spatialReference ? frame.spatialTransform.rotation * 180.0 / Math.PI : 0.0;
+            const rotation = frame.spatialReference ? (frame.spatialTransform.rotation * 180.0) / Math.PI : 0.0;
 
             if (cursorPosPixelSpace) {
                 const crosshairLength = 20;
@@ -523,16 +524,16 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
                 const crosshairGap = 7;
                 cursorMarker = (
                     <Group x={Math.floor(cursorPosPixelSpace.x) + 0.5} y={Math.floor(cursorPosPixelSpace.y) + 0.5} rotation={-rotation}>
-                        <Line listening={false} points={[-crosshairLength / 2 - crosshairThicknessWide / 2, 0, -crosshairGap / 2, 0]} strokeWidth={crosshairThicknessWide} stroke="black"/>
-                        <Line listening={false} points={[crosshairGap / 2, 0, crosshairLength / 2 + crosshairThicknessWide / 2, 0]} strokeWidth={crosshairThicknessWide} stroke="black"/>
-                        <Line listening={false} points={[0, -crosshairLength / 2 - crosshairThicknessWide / 2, 0, -crosshairGap / 2]} strokeWidth={crosshairThicknessWide} stroke="black"/>
-                        <Line listening={false} points={[0, crosshairGap / 2, 0, crosshairLength / 2 + crosshairThicknessWide / 2]} strokeWidth={crosshairThicknessWide} stroke="black"/>
-                        <Rect listening={false} width={crosshairGap - 1} height={crosshairGap - 1} offsetX={crosshairGap / 2 - 0.5} offsetY={crosshairGap / 2 - 0.5} strokeWidth={1} stroke="black"/>
+                        <Line listening={false} points={[-crosshairLength / 2 - crosshairThicknessWide / 2, 0, -crosshairGap / 2, 0]} strokeWidth={crosshairThicknessWide} stroke="black" />
+                        <Line listening={false} points={[crosshairGap / 2, 0, crosshairLength / 2 + crosshairThicknessWide / 2, 0]} strokeWidth={crosshairThicknessWide} stroke="black" />
+                        <Line listening={false} points={[0, -crosshairLength / 2 - crosshairThicknessWide / 2, 0, -crosshairGap / 2]} strokeWidth={crosshairThicknessWide} stroke="black" />
+                        <Line listening={false} points={[0, crosshairGap / 2, 0, crosshairLength / 2 + crosshairThicknessWide / 2]} strokeWidth={crosshairThicknessWide} stroke="black" />
+                        <Rect listening={false} width={crosshairGap - 1} height={crosshairGap - 1} offsetX={crosshairGap / 2 - 0.5} offsetY={crosshairGap / 2 - 0.5} strokeWidth={1} stroke="black" />
 
-                        <Line listening={false} points={[-crosshairLength / 2 - crosshairThicknessNarrow / 2, 0, -crosshairGap / 2, 0]} strokeWidth={crosshairThicknessNarrow} stroke="white"/>
-                        <Line listening={false} points={[crosshairGap / 2, 0, crosshairLength / 2 + crosshairThicknessNarrow / 2, 0]} strokeWidth={crosshairThicknessNarrow} stroke="white"/>
-                        <Line listening={false} points={[0, -crosshairLength / 2 - crosshairThicknessNarrow / 2, 0, -crosshairGap / 2]} strokeWidth={crosshairThicknessNarrow} stroke="white"/>
-                        <Line listening={false} points={[0, crosshairGap / 2, 0, crosshairLength / 2 + crosshairThicknessNarrow / 2]} strokeWidth={crosshairThicknessNarrow} stroke="white"/>
+                        <Line listening={false} points={[-crosshairLength / 2 - crosshairThicknessNarrow / 2, 0, -crosshairGap / 2, 0]} strokeWidth={crosshairThicknessNarrow} stroke="white" />
+                        <Line listening={false} points={[crosshairGap / 2, 0, crosshairLength / 2 + crosshairThicknessNarrow / 2, 0]} strokeWidth={crosshairThicknessNarrow} stroke="white" />
+                        <Line listening={false} points={[0, -crosshairLength / 2 - crosshairThicknessNarrow / 2, 0, -crosshairGap / 2]} strokeWidth={crosshairThicknessNarrow} stroke="white" />
+                        <Line listening={false} points={[0, crosshairGap / 2, 0, crosshairLength / 2 + crosshairThicknessNarrow / 2]} strokeWidth={crosshairThicknessNarrow} stroke="white" />
                     </Group>
                 );
             }
@@ -556,18 +557,7 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
             } else {
                 points = [lineStart.x, lineStart.y, this.currentCursorPos.x, this.currentCursorPos.y];
             }
-            polygonCreatingLine = (
-                <Line
-                    points={points}
-                    dash={[5]}
-                    stroke={this.creatingRegion.color}
-                    strokeWidth={this.creatingRegion.lineWidth}
-                    opacity={0.5}
-                    lineJoin={"round"}
-                    listening={false}
-                    perfectDrawEnabled={false}
-                />
-            );
+            polygonCreatingLine = <Line points={points} dash={[5]} stroke={this.creatingRegion.color} strokeWidth={this.creatingRegion.lineWidth} opacity={0.5} lineJoin={"round"} listening={false} perfectDrawEnabled={false} />;
         }
 
         let cursor: string;

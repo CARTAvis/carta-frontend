@@ -23,7 +23,6 @@ test("returns an empty array if FrameView is invalid", () => {
     expect(GetRequiredTiles({xMin: 0, yMin: 0, xMax: 1024, mip: 1}, Tile256, Tile1024)).toEqual([]);
     expect(GetRequiredTiles({xMin: 0, yMin: 0, xMax: 1024, yMax: 1024}, Tile256, Tile1024)).toEqual([]);
     expect(GetRequiredTiles({xMin: 0, yMin: 0, xMax: 1024, yMax: 1024, mip: "bob"}, Tile256, Tile1024)).toEqual([]);
-
 });
 
 test("returns an empty array if FrameView bounds are inconsistent", () => {
@@ -241,8 +240,8 @@ test("returns the correct list of tiles when viewing a tall section partially ri
 test("give correct result when generating tiles for a 16K image at full resolution using 256x256 tiles", () => {
     const result = GetRequiredTiles({xMin: 0, xMax: 16384, yMin: 0, yMax: 16384, mip: 1}, {x: 16384, y: 16384}, Tile256);
 
-    let xRange = Array.from({length: 64}, ((v, k) => k));
-    let yRange = Array.from({length: 64}, ((v, k) => k));
+    let xRange = Array.from({length: 64}, (v, k) => k);
+    let yRange = Array.from({length: 64}, (v, k) => k);
 
     const expected: TileCoordinate[] = [];
     xRange.forEach(x => {

@@ -24,20 +24,17 @@ export const SWATCH_COLORS = [
 ];
 export const DEFAULT_COLOR = SWATCH_COLORS[0];
 
-const SELECTABLE_COLORS = [
-    "blue", "orange", "green", "red", "violet",
-    "sepia", "indigo", "gray", "lime", "turquoise",
-    "forest", "gold", "cobalt", "light_gray", "dark_gray",
-    "white", "black"
-];
-export const AUTO_COLOR_OPTIONS = SELECTABLE_COLORS.map(color => {return `auto-${color}`;});
+const SELECTABLE_COLORS = ["blue", "orange", "green", "red", "violet", "sepia", "indigo", "gray", "lime", "turquoise", "forest", "gold", "cobalt", "light_gray", "dark_gray", "white", "black"];
+export const AUTO_COLOR_OPTIONS = SELECTABLE_COLORS.map(color => {
+    return `auto-${color}`;
+});
 
 // SUPPORTED_COLORS are supported since ver. 1.4, and rose/vermilion are removed from selectable colors due to similar to red
 const SUPPORTED_COLORS = [...SELECTABLE_COLORS, "rose", "vermilion"];
 
 // Supported auto colors are in pattern "auto-blue", "auto-orange", "auto-green"...etc
 // Validate with regex ^auto-(blue|orange|green...)$
-const SUPPORTED_AUTO_COLORS_REGEX = new RegExp(`^auto-(${SUPPORTED_COLORS.join('|')})$`);
+const SUPPORTED_AUTO_COLORS_REGEX = new RegExp(`^auto-(${SUPPORTED_COLORS.join("|")})$`);
 
 function initContextWithSize(width: number, height: number) {
     const canvas = document.createElement("canvas") as HTMLCanvasElement;
@@ -55,7 +52,7 @@ imageObj.onload = () => {
 };
 
 // return color map as Uint8ClampedArray according colorMap
-export function getColorsForValues(colorMap: string): { color: Uint8ClampedArray, size: number } {
+export function getColorsForValues(colorMap: string): {color: Uint8ClampedArray; size: number} {
     const colorMaps = RenderConfigStore.COLOR_MAPS_ALL;
     const colorMapIndex = colorMaps.indexOf(colorMap);
 
