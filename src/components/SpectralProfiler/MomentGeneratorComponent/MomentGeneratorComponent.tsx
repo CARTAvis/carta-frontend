@@ -1,7 +1,8 @@
 import * as React from "react";
 import {observer} from "mobx-react";
 import {CARTA} from "carta-protobuf";
-import {AnchorButton, Button, Divider, FormGroup, HTMLSelect, MenuItem, Position, Tooltip} from "@blueprintjs/core";
+import {AnchorButton, Button, Divider, FormGroup, HTMLSelect, MenuItem, Position} from "@blueprintjs/core";
+import {Tooltip2} from "@blueprintjs/popover2";
 import {ItemPredicate, ItemRenderer, MultiSelect} from "@blueprintjs/select";
 import {TaskProgressDialogComponent} from "components/Dialogs";
 import {SafeNumericInput, SpectralSettingsComponent} from "components/Shared";
@@ -160,13 +161,13 @@ export class MomentGeneratorComponent extends React.Component<{widgetStore: Spec
                                 />
                             </FormGroup>
                             <div className="cursor-select">
-                                <Tooltip content="Use cursor to select channel range in profiler" position={Position.BOTTOM}>
+                                <Tooltip2 content="Use cursor to select channel range in profiler" position={Position.BOTTOM}>
                                     <AnchorButton
                                         className={widgetStore.isSelectingMomentChannelRange ? "bp3-active" : ""}
                                         icon="select"
                                         onClick={this.handleChannelSelectionClicked}
                                     />
-                                </Tooltip>
+                                </Tooltip2>
                             </div>
                         </div>
                     </FormGroup>
@@ -202,13 +203,13 @@ export class MomentGeneratorComponent extends React.Component<{widgetStore: Spec
                                 />
                             </FormGroup>
                             <div className="cursor-select">
-                                <Tooltip content="Use cursor to select mask range in profiler" position={Position.BOTTOM}>
+                                <Tooltip2 content="Use cursor to select mask range in profiler" position={Position.BOTTOM}>
                                     <AnchorButton
                                         className={widgetStore.isSelectingMomentMaskRange ? "bp3-active" : ""}
                                         icon="select"
                                         onClick={this.handleMaskSelectionClicked}
                                     />
-                                </Tooltip>
+                                </Tooltip2>
                             </div>
                         </div>
                     </FormGroup>
@@ -243,7 +244,7 @@ export class MomentGeneratorComponent extends React.Component<{widgetStore: Spec
                     />
                 </FormGroup>
                 <div className="moment-generate">
-                    <Tooltip disabled={isAbleToGenerate} content={msg} position={Position.BOTTOM}>
+                    <Tooltip2 disabled={isAbleToGenerate} content={msg} position={Position.BOTTOM}>
                         <AnchorButton
                             intent="success"
                             onClick={this.handleRequestMoment}
@@ -251,7 +252,7 @@ export class MomentGeneratorComponent extends React.Component<{widgetStore: Spec
                         >
                             Generate
                         </AnchorButton>
-                    </Tooltip>
+                    </Tooltip2>
                 </div>
             </React.Fragment>
         );

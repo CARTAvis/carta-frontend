@@ -1,4 +1,4 @@
-import {IOptionProps} from "@blueprintjs/core";
+import {IconName, IOptionProps} from "@blueprintjs/core";
 
 export type FileId = number;
 export type RegionId = number;
@@ -9,4 +9,5 @@ export interface LineOption extends IOptionProps {
     disabled?: boolean;
     hightlight?: boolean;
     active?: boolean;
+    icon?: IconName;
 }

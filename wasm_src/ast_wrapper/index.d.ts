@@ -12,7 +12,7 @@ export function setFontList(newList: string[]): void;
 export function setCanvas(canvas: HTMLCanvasElement);
 
 // cwrap'd functions
-export function plot(frameSet: FrameSet, imageX1: number, imageX2: number, imageY1: number, imageY2: number, width: number, height: number, paddingLeft: number, paddingRight: number, paddingTop: number, paddingBottom: number, options: string);
+export function plot(frameSet: FrameSet, imageX1: number, imageX2: number, imageY1: number, imageY2: number, width: number, height: number, paddingLeft: number, paddingRight: number, paddingTop: number, paddingBottom: number, options: string, showCurve: boolean, isPVImage: boolean, curveX1: number, curveY1: number, curveX2: number, curveY2: number);
 export function emptyFitsChan(): FitsChan;
 export function putFits(fitsChan: FitsChan, card: string): void;
 export function getFrameFromFitsChan(fitsChan: FitsChan, checkSkyDomain: boolean): FrameSet;

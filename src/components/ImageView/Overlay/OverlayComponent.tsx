@@ -65,7 +65,9 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
                     frameView.yMin / frame.aspectRatio, frameView.yMax / frame.aspectRatio,
                     settings.viewWidth * pixelRatio, settings.viewHeight * pixelRatio,
                     settings.padding.left * pixelRatio, settings.padding.right * pixelRatio, settings.padding.top * pixelRatio, settings.padding.bottom * pixelRatio,
-                    styleString);
+                    styleString,
+                    frame.distanceMeasuring.showCurve, frame.isPVImage,
+                    frame.distanceMeasuring.start.x, frame.distanceMeasuring.start.y, frame.distanceMeasuring.finish.x, frame.distanceMeasuring.finish.y);
             };
 
             let currentStyleString = settings.styleString;
@@ -101,6 +103,7 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
         const w = this.props.overlaySettings.viewWidth;
         const h = this.props.overlaySettings.viewHeight;
         const moving = frame.moving;
+        const system = this.props.overlaySettings.global.system;
         const globalColor = this.props.overlaySettings.global.color;
         const titleColor = this.props.overlaySettings.title.color;
         const gridColor = this.props.overlaySettings.grid.color;
@@ -110,6 +113,9 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
         const numbersColor = this.props.overlaySettings.numbers.color;
         const labelsColor = this.props.overlaySettings.labels.color;
         const darktheme = AppStore.Instance.darkTheme;
+        const distanceMeasuringShowCurve = frame.distanceMeasuring.showCurve;
+        const distanceMeasuringStart = frame.distanceMeasuring.start;
+        const distanceMeasuringFinish = frame.distanceMeasuring.finish;
         /* eslint-enable no-unused-vars, @typescript-eslint/no-unused-vars */
 
         // Trigger switching AST overlay axis for PV image

@@ -16,6 +16,7 @@ import {
     CatalogStore,
     CatalogUpdateMode,
     DialogStore,
+    DistanceMeasuringStore,
     FileBrowserStore,
     FrameInfo,
     FrameStore,
@@ -869,15 +870,15 @@ export class AppStore {
         }
     };
 
-    exportRegions = async (directory: string, file: string, coordType: CARTA.CoordinateType, fileType: RegionFileType) => {
+    exportRegions = async (directory: string, file: string, coordType: CARTA.CoordinateType, fileType: RegionFileType, exportRegions: number[]) => {
         const frame = this.activeFrame;
         // Prevent exporting if only the cursor region exists
-        if (!frame.regionSet.regions || frame.regionSet.regions.length <= 1) {
+        if (!frame.regionSet?.regions || frame.regionSet.regions.length <= 1 || exportRegions?.length < 1) {
             return;
         }
 
         const regionStyles = new Map<number, CARTA.IRegionStyle>();
-        for (const region of frame.regionSet.regions) {
+        for (const region of exportRegions.map(value => frame.regionSet.regions[value])) {
             regionStyles.set(region.regionId, {
                 name: region.name,
                 color: region.color,
@@ -981,7 +982,8 @@ export class AppStore {
                 getColorForTheme(this.overlayStore.ticks.color),
                 getColorForTheme(this.overlayStore.axes.color),
                 getColorForTheme(this.overlayStore.numbers.color),
-                getColorForTheme(this.overlayStore.labels.color)
+                getColorForTheme(this.overlayStore.labels.color),
+                getColorForTheme(this.activeFrame ? this.activeFrame.distanceMeasuring?.color : DistanceMeasuringStore.DEFAULT_COLOR)
             ];
             AST.setColors(astColors);
         }
