@@ -55,7 +55,7 @@ $border-radius-adjustment: 10px;
 .lm_splitter {
     position: relative;
     z-index: 20;
-    
+
     &.lm_vertical {
         width: calc(100% - #{$border-radius-adjustment});
         left: $border-radius-adjustment/2;
@@ -85,7 +85,7 @@ $border-radius-adjustment: 10px;
     position: relative;
     z-index: 1;
 
-    [class^=lm_] {
+    [class^="lm_"] {
         box-sizing: content-box !important;
     }
 
@@ -176,14 +176,14 @@ $border-radius-adjustment: 10px;
         .lm_tabs {
             transform-origin: left top;
             top: 0;
-            width:1000px; /*hack*/
+            width: 1000px; /*hack*/
         }
         .lm_controls {
-            bottom:0;
+            bottom: 0;
         }
     }
     .lm_items {
-        float:left;
+        float: left;
     }
 }
 
@@ -199,9 +199,9 @@ $border-radius-adjustment: 10px;
             }
         }
         .lm_tabdropdown_list {
-            top:initial;
-            right:initial;
-            left:20px;
+            top: initial;
+            right: initial;
+            left: 20px;
         }
     }
 }
@@ -222,8 +222,8 @@ $border-radius-adjustment: 10px;
             left: 3px;
         }
         .lm_tabdropdown_list {
-            top:initial;
-            right:20px;
+            top: initial;
+            right: 20px;
         }
     }
 }
@@ -232,15 +232,15 @@ $border-radius-adjustment: 10px;
 .lm_stack.lm_bottom {
     .lm_header {
         .lm_tab {
-            margin-top:0;
+            margin-top: 0;
             border-top: none;
         }
         .lm_controls {
             top: 3px;
         }
         .lm_tabdropdown_list {
-            top:initial;
-            bottom:20px;
+            top: initial;
+            bottom: 20px;
         }
     }
 }
@@ -255,7 +255,7 @@ $border-radius-adjustment: 10px;
 // Dropdown arrow for additional tabs when too many to be displayed
 .lm_header {
     .lm_controls .lm_tabdropdown:before {
-        content: '';
+        content: "";
         width: 0;
         height: 0;
         vertical-align: middle;

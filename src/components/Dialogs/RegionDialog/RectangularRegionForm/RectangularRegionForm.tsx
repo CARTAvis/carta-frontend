@@ -12,11 +12,10 @@ import {CoordinateComponent} from "../CoordinateComponent/CoordinateComponent";
 import {SafeNumericInput} from "components/Shared";
 import "./RectangularRegionForm.scss";
 
-
 const KEYCODE_ENTER = 13;
 
 @observer
-export class RectangularRegionForm extends React.Component<{ region: RegionStore, frame: FrameStore, wcsInfo: AST.FrameSet }> {
+export class RectangularRegionForm extends React.Component<{region: RegionStore; frame: FrameStore; wcsInfo: AST.FrameSet}> {
     @computed get topRightPoint(): Point2D {
         const region = this.props.region;
         if (!region || region.controlPoints.length !== 2) {
@@ -55,11 +54,11 @@ export class RectangularRegionForm extends React.Component<{ region: RegionStore
 
     private static readonly REGION_PIXEL_EPS = 1.0e-3;
 
-    private handleNameChange = (ev) => {
+    private handleNameChange = ev => {
         this.props.region.setName(ev.currentTarget.value);
     };
 
-    private handleCenterXChange = (ev) => {
+    private handleCenterXChange = ev => {
         if (ev.type === "keydown" && ev.keyCode !== KEYCODE_ENTER) {
             return;
         }
@@ -75,7 +74,7 @@ export class RectangularRegionForm extends React.Component<{ region: RegionStore
         ev.currentTarget.value = existingValue;
     };
 
-    private handleCenterYChange = (ev) => {
+    private handleCenterYChange = ev => {
         if (ev.type === "keydown" && ev.keyCode !== KEYCODE_ENTER) {
             return;
         }
@@ -91,7 +90,7 @@ export class RectangularRegionForm extends React.Component<{ region: RegionStore
         ev.currentTarget.value = existingValue;
     };
 
-    private handleCenterWCSXChange = (ev) => {
+    private handleCenterWCSXChange = ev => {
         if (ev.type === "keydown" && ev.keyCode !== KEYCODE_ENTER) {
             return;
         }
@@ -115,7 +114,7 @@ export class RectangularRegionForm extends React.Component<{ region: RegionStore
         ev.currentTarget.value = centerWCSPoint.x;
     };
 
-    private handleCenterWCSYChange = (ev) => {
+    private handleCenterWCSYChange = ev => {
         if (ev.type === "keydown" && ev.keyCode !== KEYCODE_ENTER) {
             return;
         }
@@ -139,7 +138,7 @@ export class RectangularRegionForm extends React.Component<{ region: RegionStore
         ev.currentTarget.value = centerWCSPoint.y;
     };
 
-    private handleWidthChange = (ev) => {
+    private handleWidthChange = ev => {
         if (ev.type === "keydown" && ev.keyCode !== KEYCODE_ENTER) {
             return;
         }
@@ -155,7 +154,7 @@ export class RectangularRegionForm extends React.Component<{ region: RegionStore
         ev.currentTarget.value = existingValue;
     };
 
-    private handleWidthWCSChange = (ev) => {
+    private handleWidthWCSChange = ev => {
         if (ev.type === "keydown" && ev.keyCode !== KEYCODE_ENTER) {
             return;
         }
@@ -176,7 +175,7 @@ export class RectangularRegionForm extends React.Component<{ region: RegionStore
         ev.currentTarget.value = this.sizeWCS.x;
     };
 
-    private handleHeightChange = (ev) => {
+    private handleHeightChange = ev => {
         if (ev.type === "keydown" && ev.keyCode !== KEYCODE_ENTER) {
             return;
         }
@@ -192,7 +191,7 @@ export class RectangularRegionForm extends React.Component<{ region: RegionStore
         ev.currentTarget.value = existingValue;
     };
 
-    private handleHeightWCSChange = (ev) => {
+    private handleHeightWCSChange = ev => {
         if (ev.type === "keydown" && ev.keyCode !== KEYCODE_ENTER) {
             return;
         }
@@ -229,7 +228,7 @@ export class RectangularRegionForm extends React.Component<{ region: RegionStore
         return false;
     };
 
-    private handleLeftChange = (ev) => {
+    private handleLeftChange = ev => {
         if (ev.type === "keydown" && ev.keyCode !== KEYCODE_ENTER) {
             return;
         }
@@ -243,7 +242,7 @@ export class RectangularRegionForm extends React.Component<{ region: RegionStore
         ev.currentTarget.value = existingValue;
     };
 
-    private handleLeftWCSChange = (ev) => {
+    private handleLeftWCSChange = ev => {
         if (ev.type === "keydown" && ev.keyCode !== KEYCODE_ENTER) {
             return;
         }
@@ -280,7 +279,7 @@ export class RectangularRegionForm extends React.Component<{ region: RegionStore
         return false;
     };
 
-    private handleBottomChange = (ev) => {
+    private handleBottomChange = ev => {
         if (ev.type === "keydown" && ev.keyCode !== KEYCODE_ENTER) {
             return;
         }
@@ -294,7 +293,7 @@ export class RectangularRegionForm extends React.Component<{ region: RegionStore
         ev.currentTarget.value = existingValue;
     };
 
-    private handleBottomWCSChange = (ev) => {
+    private handleBottomWCSChange = ev => {
         if (ev.type === "keydown" && ev.keyCode !== KEYCODE_ENTER) {
             return;
         }
@@ -331,7 +330,7 @@ export class RectangularRegionForm extends React.Component<{ region: RegionStore
         return false;
     };
 
-    private handleRightChange = (ev) => {
+    private handleRightChange = ev => {
         if (ev.type === "keydown" && ev.keyCode !== KEYCODE_ENTER) {
             return;
         }
@@ -345,7 +344,7 @@ export class RectangularRegionForm extends React.Component<{ region: RegionStore
         ev.currentTarget.value = existingValue;
     };
 
-    private handleRightWCSChange = (ev) => {
+    private handleRightWCSChange = ev => {
         if (ev.type === "keydown" && ev.keyCode !== KEYCODE_ENTER) {
             return;
         }
@@ -382,7 +381,7 @@ export class RectangularRegionForm extends React.Component<{ region: RegionStore
         return false;
     };
 
-    private handleTopChange = (ev) => {
+    private handleTopChange = ev => {
         if (ev.type === "keydown" && ev.keyCode !== KEYCODE_ENTER) {
             return;
         }
@@ -396,7 +395,7 @@ export class RectangularRegionForm extends React.Component<{ region: RegionStore
         ev.currentTarget.value = existingValue;
     };
 
-    private handleTopWCSChange = (ev) => {
+    private handleTopWCSChange = ev => {
         if (ev.type === "keydown" && ev.keyCode !== KEYCODE_ENTER) {
             return;
         }
@@ -417,7 +416,7 @@ export class RectangularRegionForm extends React.Component<{ region: RegionStore
         ev.currentTarget.value = topRightWCSPoint.y;
     };
 
-    private handleRotationChange = (ev) => {
+    private handleRotationChange = ev => {
         if (ev.type === "keydown" && ev.keyCode !== KEYCODE_ENTER) {
             return;
         }
@@ -449,8 +448,8 @@ export class RectangularRegionForm extends React.Component<{ region: RegionStore
         const centerWCSPoint = getFormattedWCSPoint(this.props.wcsInfo, centerPoint);
         let centerInputX, centerInputY;
         if (region.coordinate === RegionCoordinate.Image) {
-            centerInputX = <SafeNumericInput selectAllOnFocus={true} buttonPosition="none" placeholder="X Coordinate" value={centerPoint.x} onBlur={this.handleCenterXChange} onKeyDown={this.handleCenterXChange}/>;
-            centerInputY = <SafeNumericInput selectAllOnFocus={true} buttonPosition="none" placeholder="Y Coordinate" value={centerPoint.y} onBlur={this.handleCenterYChange} onKeyDown={this.handleCenterYChange}/>;
+            centerInputX = <SafeNumericInput selectAllOnFocus={true} buttonPosition="none" placeholder="X Coordinate" value={centerPoint.x} onBlur={this.handleCenterXChange} onKeyDown={this.handleCenterXChange} />;
+            centerInputY = <SafeNumericInput selectAllOnFocus={true} buttonPosition="none" placeholder="Y Coordinate" value={centerPoint.y} onBlur={this.handleCenterYChange} onKeyDown={this.handleCenterYChange} />;
         } else {
             centerInputX = (
                 <Tooltip2 content={`Format: ${NUMBER_FORMAT_LABEL.get(formatX)}`} position={Position.BOTTOM} hoverOpenDelay={300}>
@@ -486,9 +485,11 @@ export class RectangularRegionForm extends React.Component<{ region: RegionStore
         const bottomLeftWCSPoint = getFormattedWCSPoint(this.props.wcsInfo, this.bottomLeftPoint);
         let bottomLeftInputX, bottomLeftInputY;
         if (region.coordinate === RegionCoordinate.Image) {
-            bottomLeftInputX = <SafeNumericInput selectAllOnFocus={true} buttonPosition="none" placeholder="X Coordinate" value={this.bottomLeftPoint.x} onBlur={this.handleLeftChange} onKeyDown={this.handleLeftChange} disabled={isRotated}/>;
+            bottomLeftInputX = (
+                <SafeNumericInput selectAllOnFocus={true} buttonPosition="none" placeholder="X Coordinate" value={this.bottomLeftPoint.x} onBlur={this.handleLeftChange} onKeyDown={this.handleLeftChange} disabled={isRotated} />
+            );
             bottomLeftInputY = (
-                <SafeNumericInput selectAllOnFocus={true} buttonPosition="none" placeholder="Y Coordinate" value={this.bottomLeftPoint.y} onBlur={this.handleBottomChange} onKeyDown={this.handleBottomChange} disabled={isRotated}/>
+                <SafeNumericInput selectAllOnFocus={true} buttonPosition="none" placeholder="Y Coordinate" value={this.bottomLeftPoint.y} onBlur={this.handleBottomChange} onKeyDown={this.handleBottomChange} disabled={isRotated} />
             );
         } else {
             bottomLeftInputX = (
@@ -524,8 +525,8 @@ export class RectangularRegionForm extends React.Component<{ region: RegionStore
         const topRightWCSPoint = getFormattedWCSPoint(this.props.wcsInfo, this.topRightPoint);
         let topRightInputX, topRightInputY;
         if (region.coordinate === RegionCoordinate.Image) {
-            topRightInputX = <SafeNumericInput selectAllOnFocus={true} buttonPosition="none" placeholder="X Coordinate" value={this.topRightPoint.x} onBlur={this.handleRightChange} onKeyDown={this.handleRightChange} disabled={isRotated}/>;
-            topRightInputY = <SafeNumericInput selectAllOnFocus={true} buttonPosition="none" placeholder="Y Coordinate" value={this.topRightPoint.y} onBlur={this.handleTopChange} onKeyDown={this.handleTopChange} disabled={isRotated}/>;
+            topRightInputX = <SafeNumericInput selectAllOnFocus={true} buttonPosition="none" placeholder="X Coordinate" value={this.topRightPoint.x} onBlur={this.handleRightChange} onKeyDown={this.handleRightChange} disabled={isRotated} />;
+            topRightInputY = <SafeNumericInput selectAllOnFocus={true} buttonPosition="none" placeholder="Y Coordinate" value={this.topRightPoint.y} onBlur={this.handleTopChange} onKeyDown={this.handleTopChange} disabled={isRotated} />;
         } else {
             topRightInputX = (
                 <Tooltip2 content={`Format: ${NUMBER_FORMAT_LABEL.get(formatX)}`} position={Position.BOTTOM} hoverOpenDelay={300}>
@@ -560,8 +561,8 @@ export class RectangularRegionForm extends React.Component<{ region: RegionStore
         const size = region.size;
         let sizeWidthInput, sizeHeightInput;
         if (region.coordinate === RegionCoordinate.Image) {
-            sizeWidthInput = <SafeNumericInput selectAllOnFocus={true} buttonPosition="none" placeholder="Width" value={size.x} onBlur={this.handleWidthChange} onKeyDown={this.handleWidthChange}/>;
-            sizeHeightInput = <SafeNumericInput selectAllOnFocus={true} buttonPosition="none" placeholder="Height" value={size.y} onBlur={this.handleHeightChange} onKeyDown={this.handleHeightChange}/>;
+            sizeWidthInput = <SafeNumericInput selectAllOnFocus={true} buttonPosition="none" placeholder="Width" value={size.x} onBlur={this.handleWidthChange} onKeyDown={this.handleWidthChange} />;
+            sizeHeightInput = <SafeNumericInput selectAllOnFocus={true} buttonPosition="none" placeholder="Height" value={size.y} onBlur={this.handleHeightChange} onKeyDown={this.handleHeightChange} />;
         } else {
             sizeWidthInput = (
                 <Tooltip2 content={"Format: arcsec(\"), arcmin('), or degrees(deg)"} position={Position.BOTTOM} hoverOpenDelay={300}>
@@ -599,54 +600,66 @@ export class RectangularRegionForm extends React.Component<{ region: RegionStore
                 <div className="form-contents">
                     <table>
                         <tbody>
-                        <tr>
-                            <td>Region Name</td>
-                            <td colSpan={2}>
-                                <InputGroup placeholder="Enter a region name" value={region.name} onChange={this.handleNameChange}/>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td>Coordinate</td>
-                            <td colSpan={2}><CoordinateComponent region={region} disableCooridnate={!this.props.wcsInfo}/></td>
-                        </tr>
-                        <tr>
-                            <td>Center {pxUnitSpan}</td>
-                            <td>{centerInputX}</td>
-                            <td>{centerInputY}</td>
-                            <td><span className="info-string">{centerInfoString}</span></td>
-                        </tr>
-                        <tr>
-                            <td>Size {pxUnitSpan}</td>
-                            <td>{sizeWidthInput}</td>
-                            <td>{sizeHeightInput}</td>
-                            <td><span className="info-string">{sizeInfoString}</span></td>
-                        </tr>
-                        <tr>
-                            <td>Bottom Left {pxUnitSpan}</td>
-                            <td>{bottomLeftInputX}</td>
-                            <td>{bottomLeftInputY}</td>
-                            <td><span className="info-string">{bottomLeftInfoString}</span></td>
-                        </tr>
-                        <tr>
-                            <td>Top Right {pxUnitSpan}</td>
-                            <td>{topRightInputX}</td>
-                            <td>{topRightInputY}</td>
-                            <td><span className="info-string">{topRightInfoString}</span></td>
-                        </tr>
-                        <tr>
-                            <td>P.A. <span className={Classes.TEXT_MUTED}>(deg)</span></td>
-                            <td>
-                                <SafeNumericInput
-                                    disabled={!this.props.frame?.hasSquarePixels}
-                                    selectAllOnFocus={true}
-                                    buttonPosition="none"
-                                    placeholder="P.A."
-                                    value={region.rotation}
-                                    onBlur={this.handleRotationChange}
-                                    onKeyDown={this.handleRotationChange}
-                                />
-                            </td>
-                        </tr>
+                            <tr>
+                                <td>Region Name</td>
+                                <td colSpan={2}>
+                                    <InputGroup placeholder="Enter a region name" value={region.name} onChange={this.handleNameChange} />
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>Coordinate</td>
+                                <td colSpan={2}>
+                                    <CoordinateComponent region={region} disableCooridnate={!this.props.wcsInfo} />
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>Center {pxUnitSpan}</td>
+                                <td>{centerInputX}</td>
+                                <td>{centerInputY}</td>
+                                <td>
+                                    <span className="info-string">{centerInfoString}</span>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>Size {pxUnitSpan}</td>
+                                <td>{sizeWidthInput}</td>
+                                <td>{sizeHeightInput}</td>
+                                <td>
+                                    <span className="info-string">{sizeInfoString}</span>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>Bottom Left {pxUnitSpan}</td>
+                                <td>{bottomLeftInputX}</td>
+                                <td>{bottomLeftInputY}</td>
+                                <td>
+                                    <span className="info-string">{bottomLeftInfoString}</span>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>Top Right {pxUnitSpan}</td>
+                                <td>{topRightInputX}</td>
+                                <td>{topRightInputY}</td>
+                                <td>
+                                    <span className="info-string">{topRightInfoString}</span>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    P.A. <span className={Classes.TEXT_MUTED}>(deg)</span>
+                                </td>
+                                <td>
+                                    <SafeNumericInput
+                                        disabled={!this.props.frame?.hasSquarePixels}
+                                        selectAllOnFocus={true}
+                                        buttonPosition="none"
+                                        placeholder="P.A."
+                                        value={region.rotation}
+                                        onBlur={this.handleRotationChange}
+                                        onKeyDown={this.handleRotationChange}
+                                    />
+                                </td>
+                            </tr>
                         </tbody>
                     </table>
                 </div>

@@ -22,7 +22,6 @@ class FloatingWidgetComponentProps {
 
 @observer
 export class FloatingWidgetComponent extends React.Component<FloatingWidgetComponentProps> {
-
     private pinElementRef: HTMLElement;
     private rnd: Rnd;
 
@@ -102,7 +101,7 @@ export class FloatingWidgetComponent extends React.Component<FloatingWidgetCompo
         } else {
             HelpStore.Instance.showHelpDrawer(this.props.widgetConfig.helpType, centerX);
         }
-    }
+    };
 
     public render() {
         const headerHeight = 25;
@@ -121,10 +120,10 @@ export class FloatingWidgetComponent extends React.Component<FloatingWidgetCompo
             floatingContentClassName = "floating-settings-content";
         }
         const widgetConfig = this.props.widgetConfig;
-        
+
         return (
             <Rnd
-                ref={c => this.rnd = c}
+                ref={c => (this.rnd = c)}
                 className={className}
                 style={{zIndex: this.props.zIndex}}
                 default={{
@@ -149,39 +148,35 @@ export class FloatingWidgetComponent extends React.Component<FloatingWidgetCompo
                 }}
             >
                 <div className={titleClass}>
-                    <div className={"floating-title"}>
-                        {widgetConfig.title}
-                    </div>
-                    {this.props.showFloatingSettingsButton &&
-                    <div className={buttonClass} onClick={() => appStore.widgetsStore.createFloatingSettingsWidget(widgetConfig.title, widgetConfig.id, widgetConfig.type)}>
-                        <Tooltip2 content="Settings" position={Position.BOTTOM_RIGHT}>
-                            <Icon icon={"cog"}/>
-                        </Tooltip2>
-                    </div>
-                    }
-                    {widgetConfig.helpType &&
-                    <div className={buttonClass} onClick={this.onClickHelpButton}>
-                        <Tooltip2 content="Help" position={Position.BOTTOM_RIGHT}>
-                            <Icon icon={"help"}/>
-                        </Tooltip2>
-                    </div>
-                    }
-                    {this.props.showPinButton &&
-                    <div className={buttonClass} ref={ref => this.pinElementRef = ref} onClick={() => console.log("pin!")}>
-                        <Tooltip2 content="Drag pin to dock this widget" position={Position.BOTTOM_RIGHT}>
-                            <Icon icon={"pin"}/>
-                        </Tooltip2>
-                    </div>
-                    }
-                    {widgetConfig.isCloseable &&
-                    <div onMouseDown={this.props.onClosed} className={buttonClass}>
-                        <Icon icon={"cross"}/>
-                    </div>
-                    }
+                    <div className={"floating-title"}>{widgetConfig.title}</div>
+                    {this.props.showFloatingSettingsButton && (
+                        <div className={buttonClass} onClick={() => appStore.widgetsStore.createFloatingSettingsWidget(widgetConfig.title, widgetConfig.id, widgetConfig.type)}>
+                            <Tooltip2 content="Settings" position={Position.BOTTOM_RIGHT}>
+                                <Icon icon={"cog"} />
+                            </Tooltip2>
+                        </div>
+                    )}
+                    {widgetConfig.helpType && (
+                        <div className={buttonClass} onClick={this.onClickHelpButton}>
+                            <Tooltip2 content="Help" position={Position.BOTTOM_RIGHT}>
+                                <Icon icon={"help"} />
+                            </Tooltip2>
+                        </div>
+                    )}
+                    {this.props.showPinButton && (
+                        <div className={buttonClass} ref={ref => (this.pinElementRef = ref)} onClick={() => console.log("pin!")}>
+                            <Tooltip2 content="Drag pin to dock this widget" position={Position.BOTTOM_RIGHT}>
+                                <Icon icon={"pin"} />
+                            </Tooltip2>
+                        </div>
+                    )}
+                    {widgetConfig.isCloseable && (
+                        <div onMouseDown={this.props.onClosed} className={buttonClass}>
+                            <Icon icon={"cross"} />
+                        </div>
+                    )}
                 </div>
-                <div className={floatingContentClassName}>
-                    {this.props.children}
-                </div>
+                <div className={floatingContentClassName}>{this.props.children}</div>
             </Rnd>
         );
     }

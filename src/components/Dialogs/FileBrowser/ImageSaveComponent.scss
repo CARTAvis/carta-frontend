@@ -1,10 +1,9 @@
-
 .file-save {
     display: block;
     overflow-x: auto;
     height: 100%;
     width: 100%;
-    margin: .5em;
+    margin: 0.5em;
     margin-top: 1em;
 
     .file-name {
@@ -20,7 +19,7 @@
         }
     }
 
-    .region-select{
+    .region-select {
         margin: 0em;
 
         .label {
@@ -52,7 +51,7 @@
 
     .range-select {
         margin: 0em;
-        margin-top: .5em;
+        margin-top: 0.5em;
 
         .bp3-control-group {
             margin: 0;

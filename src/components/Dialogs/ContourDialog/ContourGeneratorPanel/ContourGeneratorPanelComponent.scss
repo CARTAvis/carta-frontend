@@ -16,16 +16,15 @@
     .generator-parameters-row {
         display: flex;
 
-
         .bp3-form-group .bp3-label {
             width: 6em;
             text-align: left;
         }
 
-        .parameter-container{
+        .parameter-container {
             display: flex;
             flex-direction: column;
-            .parameter-line{
+            .parameter-line {
                 display: flex;
                 flex-direction: row;
                 flex-wrap: wrap;
@@ -41,7 +40,7 @@
         }
 
         .bp3-numeric-input {
-            width:110px;
+            width: 110px;
             .bp3-input-group {
                 height: 30px;
                 input {

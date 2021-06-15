@@ -20,7 +20,9 @@ export class SimpleTableComponent extends React.Component<SimpleTableComponentPr
                 key={columnName}
                 name={columnName}
                 cellRenderer={(rowIndex, columnIndex) => (
-                    <Cell key={`cell_${columnIndex}_${rowIndex}`} interactive={true}>{rowIndex < columnData?.length ? columnData[rowIndex] : undefined}</Cell>
+                    <Cell key={`cell_${columnIndex}_${rowIndex}`} interactive={true}>
+                        {rowIndex < columnData?.length ? columnData[rowIndex] : undefined}
+                    </Cell>
                 )}
             />
         );
@@ -40,7 +42,7 @@ export class SimpleTableComponent extends React.Component<SimpleTableComponentPr
 
         return (
             <Table
-                ref={table.updateTableRef ? (ref) => table.updateTableRef(ref) : null}
+                ref={table.updateTableRef ? ref => table.updateTableRef(ref) : null}
                 numRows={table.numVisibleRows}
                 renderMode={RenderMode.NONE}
                 enableRowReordering={false}

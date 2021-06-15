@@ -54,12 +54,10 @@ export class ColorPickerComponent extends React.Component<ColorPickerComponentPr
                 onClose={this.handleColorClose}
                 position={PopoverPosition.RIGHT}
                 popoverClassName={popoverClassName}
-                content={
-                    <SketchPicker color={this.props.color} onChange={this.handleColorChange} disableAlpha={this.props.disableAlpha} presetColors={this.props.presetColors}/>
-                }
+                content={<SketchPicker color={this.props.color} onChange={this.handleColorChange} disableAlpha={this.props.disableAlpha} presetColors={this.props.presetColors} />}
             >
                 <Button onClick={this.handleColorClick} className="color-swatch-button" disabled={this.props.disabled}>
-                    <div style={{backgroundColor: buttonColor}}/>
+                    <div style={{backgroundColor: buttonColor}} />
                 </Button>
             </Popover2>
         );

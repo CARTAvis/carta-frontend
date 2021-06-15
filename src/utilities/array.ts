@@ -1,7 +1,7 @@
 import {Point2D} from "../models";
 
-// Supports sorted array in incremental or decremental order 
-export function binarySearchByX(sortedArray: readonly Point2D[], x: number): {point: Point2D, index: number} {
+// Supports sorted array in incremental or decremental order
+export function binarySearchByX(sortedArray: readonly Point2D[], x: number): {point: Point2D; index: number} {
     if (!sortedArray || sortedArray.length === 0 || x === null || x === undefined || !isFinite(x)) {
         return null;
     }

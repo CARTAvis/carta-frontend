@@ -65,12 +65,16 @@ export class ImageViewSettingsHelpComponent extends React.Component {
                 <p>This section allows you to change the appearance of a beam overlay (color, type, and line width) and adjust its position in the image viewer.</p>
 
                 <h3>Conversion</h3>
-                <p>This allows conversions of the spectral axis of a position-velocity image. For example, if the image header supports sufficient information, the axis labels can be displayed as offset v.s. velocity, offset v.s. frequency, or offset v.s. wavelength, etc..</p>
+                <p>
+                    This allows conversions of the spectral axis of a position-velocity image. For example, if the image header supports sufficient information, the axis labels can be displayed as offset v.s. velocity, offset v.s.
+                    frequency, or offset v.s. wavelength, etc..
+                </p>
 
-                <br/>
+                <br />
                 <h4>EXAMPLE</h4>
-                <p><ImageComponent light={imageOverlayDemo} dark={imageOverlayDemo_d} width="100%"/></p>
-
+                <p>
+                    <ImageComponent light={imageOverlayDemo} dark={imageOverlayDemo_d} width="100%" />
+                </p>
             </div>
         );
     }

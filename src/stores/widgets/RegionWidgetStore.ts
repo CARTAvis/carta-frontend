@@ -37,13 +37,13 @@ export class RegionWidgetStore {
         this.regionIdMap.clear();
     };
 
-    @action setRegionId (fileId: number, regionId: number) {
+    @action setRegionId(fileId: number, regionId: number) {
         this.regionIdMap.set(fileId, regionId);
-    };
+    }
 
     @action setFileId = (fileId: number) => {
         this.fileId = fileId;
-    }
+    };
 
     @computed get effectiveFrame(): FrameStore {
         if (this.appStore.activeFrame && this.appStore.frames?.length > 0) {
@@ -64,7 +64,7 @@ export class RegionWidgetStore {
             } else {
                 const selectedRegion = this.effectiveFrame.regionSet.selectedRegion;
                 if (selectedRegion) {
-                    return (this.type === RegionsType.CLOSED && !selectedRegion.isClosedRegion) ? RegionId.IMAGE : selectedRegion.regionId;
+                    return this.type === RegionsType.CLOSED && !selectedRegion.isClosedRegion ? RegionId.IMAGE : selectedRegion.regionId;
                 }
             }
         }
@@ -103,7 +103,7 @@ export class RegionWidgetStore {
             const fileId = frame.frameInfo.fileId;
             const regionId = widgetStore.effectiveRegionId;
             const region = frame.getRegion(regionId);
-            if (regionId === -1 || (region?.isClosedRegion)) {
+            if (regionId === -1 || region?.isClosedRegion) {
                 let frameRequirementsArray = updatedRequirements.get(fileId);
                 if (!frameRequirementsArray) {
                     frameRequirementsArray = [];

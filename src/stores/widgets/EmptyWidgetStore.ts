@@ -1,3 +1,1 @@
-export class EmptyWidgetStore {
-
-}
+export class EmptyWidgetStore {}
