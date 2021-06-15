@@ -96,7 +96,6 @@ export class OverlayGlobalSettings {
         astString.add("Labelling", this.labelType);
         astString.add("Color", AstColorsIndex.GLOBAL);
         astString.add("Tol", toFixed(this.tolerance / 100, 2), (this.tolerance >= 0.001)); // convert to fraction
-        astString.add("System", this.explicitSystem);
         return astString.toString();
     }
 
@@ -139,6 +138,12 @@ export class OverlayGlobalSettings {
 
     @action setSystem(system: SystemType) {
         this.system = system;
+
+        // update distance measuring position tranformation before plotting
+        const wcsInfo = AppStore.Instance.activeFrame?.wcsInfo
+        if (wcsInfo && this.explicitSystem) {
+            AST.set(wcsInfo, `System=${this.explicitSystem}`);
+        }
     }
 
     @action setDefaultSystem(system: SystemType) {

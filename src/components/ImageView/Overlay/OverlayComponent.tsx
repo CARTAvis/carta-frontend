@@ -103,6 +103,7 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
         const w = this.props.overlaySettings.viewWidth;
         const h = this.props.overlaySettings.viewHeight;
         const moving = frame.moving;
+        const system = this.props.overlaySettings.global.system;
         const globalColor = this.props.overlaySettings.global.color;
         const titleColor = this.props.overlaySettings.title.color;
         const gridColor = this.props.overlaySettings.grid.color;

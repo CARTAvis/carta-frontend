@@ -66,11 +66,8 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
 
     updateDistanceMeasureFinishPos = _.throttle((x: number, y: number) => {
         const frame = this.props.frame;
-        if (frame.wcsInfo) {
-            const imagePos = canvasToTransformedImagePos(x, y, frame, this.props.width, this.props.height);
-            const wcsPos = transformPoint(frame.wcsInfo, imagePos);
-            frame.distanceMeasuring.setFinish(wcsPos);
-        }
+        const imagePos = canvasToTransformedImagePos(x, y, frame, this.props.width, this.props.height);
+        frame.distanceMeasuring.setFinish(imagePos);
     }, 100);
 
     private getCursorCanvasPos(imageX: number, imageY: number): Point2D {
@@ -306,14 +303,14 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
             if (!isAstBadPoint(wcsPos)) {
                 const dist = frame.distanceMeasuring;
                 if (!dist.isCreating && !dist.showCurve) {
-                    dist.setStart(wcsPos);
+                    dist.setStart(imagePos);
                     dist.setIsCreating(true);
                 } else if (dist.isCreating) {
-                    dist.setFinish(wcsPos);
+                    dist.setFinish(imagePos);
                     dist.setIsCreating(false);
                 } else {
                     dist.resetPos();
-                    dist.setStart(wcsPos);
+                    dist.setStart(imagePos);
                     dist.setIsCreating(true);
                 }
             }

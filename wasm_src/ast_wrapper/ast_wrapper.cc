@@ -264,15 +264,21 @@ EMSCRIPTEN_KEEPALIVE int plotGrid(AstFrameSet* wcsinfo, double imageX1, double i
 
     if (showCurve)
     {
-        double in[2][4] = {{curveX1, curveX2, curveX2, curveX1}, {curveY1, curveY2, curveY1, curveY1}};
+        const double x[] = {curveX1, curveX2};
+        const double y[] = {curveY1, curveY2};
+        double xtran[2];
+        double ytran[2];
+        astTran2(wcsinfo, 2, x, y, 1, xtran, ytran);
+        
+        double in[2][4] = {{xtran[0], xtran[1], xtran[1], xtran[0]}, {ytran[0], ytran[1], ytran[0], ytran[0]}};
         const double* inPtr = in[0];
         astPolyCurve(plot, 4, 2, 4, inPtr);
 
-        double start[] = {curveX1, curveY1};
-        double finish[] = {curveX2, curveY2};
+        double start[] = {xtran[0], ytran[0]};
+        double finish[] = {xtran[1], ytran[1]};
         if (isPVImage)
         {
-            double corner[] = {curveX2, curveY1};
+            double corner[] = {xtran[1], ytran[0]};
             plotDistText(wcsinfo, plot, start, corner);
             plotDistText(wcsinfo, plot, finish, corner);
         }
