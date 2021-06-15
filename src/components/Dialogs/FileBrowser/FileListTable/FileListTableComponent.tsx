@@ -14,7 +14,7 @@ import "./FileListTableComponent.scss";
 
 interface FileEntry extends ISelectedFile {
     filename: string;
-    typeInfo?: { type: string, description: string };
+    typeInfo?: {type: string; description: string};
     isDirectory?: boolean;
     size?: number;
     date?: number;
@@ -51,18 +51,18 @@ export class FileListTableComponent extends React.Component<FileListTableCompone
     private cachedFileResponse: CARTA.IFileListResponse | CARTA.ICatalogListResponse;
     private rowPivotIndex: number = -1;
 
-    private static readonly FileTypeMap = new Map<CARTA.FileType, { type: string, description: string }>([
+    private static readonly FileTypeMap = new Map<CARTA.FileType, {type: string; description: string}>([
         [CARTA.FileType.CASA, {type: "CASA", description: "CASA Image"}],
         [CARTA.FileType.CRTF, {type: "CRTF", description: "CASA Region Text Format"}],
         [CARTA.FileType.DS9_REG, {type: "DS9", description: "DS9 Region Format"}],
         [CARTA.FileType.FITS, {type: "FITS", description: "Flexible Image Transport System"}],
         [CARTA.FileType.HDF5, {type: "HDF5", description: "HDF5 File (IDIA Schema)"}],
-        [CARTA.FileType.MIRIAD, {type: "Miriad", description: "Miriad Image"}],
+        [CARTA.FileType.MIRIAD, {type: "Miriad", description: "Miriad Image"}]
     ]);
 
-    private static readonly CatalogFileTypeMap = new Map<CARTA.CatalogFileType, { type: string, description: string }>([
+    private static readonly CatalogFileTypeMap = new Map<CARTA.CatalogFileType, {type: string; description: string}>([
         [CARTA.CatalogFileType.FITSTable, {type: "FITS", description: "Flexible Image Transport System"}],
-        [CARTA.CatalogFileType.VOTable, {type: "VOTable", description: "XML-Based Table Format"}],
+        [CARTA.CatalogFileType.VOTable, {type: "VOTable", description: "XML-Based Table Format"}]
     ]);
 
     private static GetFileTypeDisplay(type: CARTA.FileType) {
@@ -229,7 +229,7 @@ export class FileListTableComponent extends React.Component<FileListTableCompone
                 this.cachedSortingString = sortingString;
                 this.cachedFilterString = filterString;
                 this.cachedFileResponse = fileResponse;
-                runInAction(() => this.selectedRegions = []);
+                runInAction(() => (this.selectedRegions = []));
                 this.rowPivotIndex = -1;
                 this.props.onSelectionChanged([]);
 
@@ -270,7 +270,7 @@ export class FileListTableComponent extends React.Component<FileListTableCompone
                 return (
                     <div className="sort-label" onClick={() => this.props.onSortingChanged(name, -sortingConfig.direction)}>
                         <Label className="bp3-inline label">
-                            <Icon className="sort-icon" icon={sortDesc ? "sort-desc" : "sort-asc"}/>
+                            <Icon className="sort-icon" icon={sortDesc ? "sort-desc" : "sort-asc"} />
                             {name}
                         </Label>
                     </div>
@@ -279,29 +279,26 @@ export class FileListTableComponent extends React.Component<FileListTableCompone
                 return (
                     <div className="sort-label" onClick={() => this.props.onSortingChanged(name, 1)}>
                         <Label className="bp3-inline label">
-                            <Icon className="sort-icon inactive" icon="sort"/>
+                            <Icon className="sort-icon inactive" icon="sort" />
                             {name}
                         </Label>
                     </div>
                 );
             }
         };
-        return <ColumnHeaderCell className={"column-name"} nameRenderer={nameRenderer}/>;
+        return <ColumnHeaderCell className={"column-name"} nameRenderer={nameRenderer} />;
     };
 
     private renderFilenames = (rowIndex: number) => {
         const entry = this.tableEntries[rowIndex];
         if (!entry) {
-            return <Cell loading={true}/>;
+            return <Cell loading={true} />;
         }
         return (
-            <Cell className={entry.isDirectory? "folder-cell": "filename-cell"} tooltip={entry?.filename}>
+            <Cell className={entry.isDirectory ? "folder-cell" : "filename-cell"} tooltip={entry?.filename}>
                 <React.Fragment>
-                    <div
-                        onClick={event => this.handleEntryClicked(event, entry, rowIndex)}
-                        onDoubleClick={() => this.handleEntryDoubleClicked(entry)}
-                    >
-                        {entry?.isDirectory && <Icon icon="folder-close"/>}
+                    <div onClick={event => this.handleEntryClicked(event, entry, rowIndex)} onDoubleClick={() => this.handleEntryDoubleClicked(entry)}>
+                        {entry?.isDirectory && <Icon icon="folder-close" />}
                         <span className="cell-text">{entry?.filename}</span>
                     </div>
                 </React.Fragment>
@@ -312,15 +309,12 @@ export class FileListTableComponent extends React.Component<FileListTableCompone
     private renderTypes = (rowIndex: number) => {
         const entry = this.tableEntries[rowIndex];
         if (!entry) {
-            return <Cell loading={true}/>;
+            return <Cell loading={true} />;
         }
         return (
             <Cell tooltip={entry.typeInfo?.description}>
                 <React.Fragment>
-                    <div
-                        onClick={event => this.handleEntryClicked(event, entry, rowIndex)}
-                        onDoubleClick={() => this.handleEntryDoubleClicked(entry)}
-                    >
+                    <div onClick={event => this.handleEntryClicked(event, entry, rowIndex)} onDoubleClick={() => this.handleEntryDoubleClicked(entry)}>
                         {entry.typeInfo?.type}
                     </div>
                 </React.Fragment>
@@ -331,16 +325,13 @@ export class FileListTableComponent extends React.Component<FileListTableCompone
     private renderSizes = (rowIndex: number) => {
         const entry = this.tableEntries[rowIndex];
         if (!entry) {
-            return <Cell loading={true}/>;
+            return <Cell loading={true} />;
         }
         const sizeInBytes = entry?.size;
         return (
             <Cell>
                 <React.Fragment>
-                    <div
-                        onClick={event => this.handleEntryClicked(event, entry, rowIndex)}
-                        onDoubleClick={() => this.handleEntryDoubleClicked(entry)}
-                    >
+                    <div onClick={event => this.handleEntryClicked(event, entry, rowIndex)} onDoubleClick={() => this.handleEntryDoubleClicked(entry)}>
                         {isFinite(sizeInBytes) && FileListTableComponent.GetFileSizeDisplay(sizeInBytes)}
                     </div>
                 </React.Fragment>
@@ -351,7 +342,7 @@ export class FileListTableComponent extends React.Component<FileListTableCompone
     private renderDates = (rowIndex: number) => {
         const entry = this.tableEntries[rowIndex];
         if (!entry) {
-            return <Cell loading={true}/>;
+            return <Cell loading={true} />;
         }
 
         const unixDate = entry.date;
@@ -369,10 +360,7 @@ export class FileListTableComponent extends React.Component<FileListTableCompone
         return (
             <Cell className="time-cell">
                 <React.Fragment>
-                    <div
-                        onClick={event => this.handleEntryClicked(event, entry, rowIndex)}
-                        onDoubleClick={() => this.handleEntryDoubleClicked(entry)}
-                    >
+                    <div onClick={event => this.handleEntryClicked(event, entry, rowIndex)} onDoubleClick={() => this.handleEntryDoubleClicked(entry)}>
                         {dateString}
                     </div>
                 </React.Fragment>
@@ -442,14 +430,14 @@ export class FileListTableComponent extends React.Component<FileListTableCompone
         const entryCount = this.tableEntries.length;
         const unfilteredEntryCount = (fileResponse?.files?.length || 0) + (fileResponse?.subdirectories?.length || 0);
         if (!unfilteredEntryCount) {
-            return <NonIdealState icon="folder-open" title="Empty folder" description="There are no files or subdirectories in this folder"/>;
+            return <NonIdealState icon="folder-open" title="Empty folder" description="There are no files or subdirectories in this folder" />;
         } else if (!entryCount) {
-            return <NonIdealState icon="search" title="No results" description="There are no files or subdirectories matching the filter expression"/>;
+            return <NonIdealState icon="search" title="No results" description="There are no files or subdirectories matching the filter expression" />;
         }
 
         return (
             <Table
-                ref={ref => this.tableRef = ref}
+                ref={ref => (this.tableRef = ref)}
                 className={classes.join(" ")}
                 enableRowReordering={false}
                 renderMode={RenderMode.NONE}
@@ -466,10 +454,10 @@ export class FileListTableComponent extends React.Component<FileListTableCompone
                 numRows={this.tableEntries.length}
                 loadingOptions={this.props.loading ? [TableLoadingOption.CELLS] : []}
             >
-                <Column name="Filename" columnHeaderCellRenderer={() => this.renderColumnHeader("Filename")} cellRenderer={this.renderFilenames}/>
-                <Column name="Type" columnHeaderCellRenderer={() => this.renderColumnHeader("Type")} cellRenderer={this.renderTypes}/>
-                <Column name="Size" columnHeaderCellRenderer={() => this.renderColumnHeader("Size")} cellRenderer={this.renderSizes}/>
-                <Column name="Date" columnHeaderCellRenderer={() => this.renderColumnHeader("Date")} cellRenderer={this.renderDates}/>
+                <Column name="Filename" columnHeaderCellRenderer={() => this.renderColumnHeader("Filename")} cellRenderer={this.renderFilenames} />
+                <Column name="Type" columnHeaderCellRenderer={() => this.renderColumnHeader("Type")} cellRenderer={this.renderTypes} />
+                <Column name="Size" columnHeaderCellRenderer={() => this.renderColumnHeader("Size")} cellRenderer={this.renderSizes} />
+                <Column name="Date" columnHeaderCellRenderer={() => this.renderColumnHeader("Date")} cellRenderer={this.renderDates} />
             </Table>
         );
     }

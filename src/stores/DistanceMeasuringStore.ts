@@ -13,7 +13,7 @@ export class DistanceMeasuringStore {
 
     static readonly DEFAULT_WIDTH = 1.5;
     static readonly DEFAULT_FONTSIZE = 14;
-    static readonly DEFAULT_COLOR= '#62D96B';
+    static readonly DEFAULT_COLOR = "#62D96B";
 
     constructor() {
         makeObservable(this);
@@ -24,7 +24,7 @@ export class DistanceMeasuringStore {
     }
 
     @computed get showCurve(): boolean {
-        return (this.start.x != null && this.start.y != null && this.finish.x != null && this.finish.y != null && AppStore.Instance.activeLayer === ImageViewLayer.DistanceMeasuring);
+        return this.start.x != null && this.start.y != null && this.finish.x != null && this.finish.y != null && AppStore.Instance.activeLayer === ImageViewLayer.DistanceMeasuring;
     }
 
     @computed get styleString() {
@@ -36,7 +36,7 @@ export class DistanceMeasuringStore {
         return astString.toString();
     }
 
-    @action setIsCreating = (isCreating) => {
+    @action setIsCreating = isCreating => {
         this.isCreating = isCreating;
     };
 

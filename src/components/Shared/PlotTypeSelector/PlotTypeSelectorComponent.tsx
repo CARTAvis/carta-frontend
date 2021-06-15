@@ -15,7 +15,6 @@ interface PlotTypeSelectComponentProps {
 }
 
 export class PlotTypeSelectorComponent extends React.Component<PlotTypeSelectComponentProps> {
-
     private static getIconForType(value: PlotType) {
         switch (value) {
             case PlotType.STEPS:
@@ -30,7 +29,7 @@ export class PlotTypeSelectorComponent extends React.Component<PlotTypeSelectCom
     private plotTypeButton = (value: PlotType) => {
         return (
             <Tooltip2 content={value}>
-                <AnchorButton icon={PlotTypeSelectorComponent.getIconForType(value)} active={this.props.value === value} onClick={() => this.props.onValueChanged(value)}/>
+                <AnchorButton icon={PlotTypeSelectorComponent.getIconForType(value)} active={this.props.value === value} onClick={() => this.props.onValueChanged(value)} />
             </Tooltip2>
         );
     };

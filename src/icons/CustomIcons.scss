@@ -1,14 +1,12 @@
 @import "../../node_modules/@blueprintjs/core/lib/scss/variables.scss";
 
-
 .custom-icon {
-
     &.bp3-icon {
         // for svg(like profileSmoothingSvg) using stroke to decide icon color
         path[fill="none"] {
             stroke: $gray1;
         }
-        
+
         &.dark-theme {
             path[fill="none"] {
                 stroke: $gray4;

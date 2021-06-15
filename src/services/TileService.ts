@@ -61,7 +61,7 @@ export class TileService {
     private readonly cacheMapCompressedTiles: Map<number, LRUCache<number, CompressedTile>>;
     private readonly pendingRequests: Map<string, Map<number, boolean>>;
     private readonly pendingDecompressions: Map<string, Map<number, boolean>>;
-    private readonly channelMap: Map<number, { channel: number, stokes: number }>;
+    private readonly channelMap: Map<number, {channel: number; stokes: number}>;
     private readonly completedChannels: Map<string, boolean>;
     private currentFileId: number;
     readonly tileStream: Subject<TileStreamDetails>;
@@ -72,7 +72,7 @@ export class TileService {
     private readonly workers: Worker[];
     private compressionRequestCounter: number;
     private pendingSynchronisedTiles: Map<string, Array<number>>;
-    private receivedSynchronisedTiles: Map<string, Array<{ coordinate: number, tile: RasterTile }>>;
+    private receivedSynchronisedTiles: Map<string, Array<{coordinate: number; tile: RasterTile}>>;
     private animationEnabled: boolean;
     private readonly gl: WebGLRenderingContext;
 
@@ -108,12 +108,12 @@ export class TileService {
         this.backendService = BackendService.Instance;
         this.gl = TileWebGLService.Instance.gl;
 
-        this.channelMap = new Map<number, { channel: number, stokes: number }>();
+        this.channelMap = new Map<number, {channel: number; stokes: number}>();
         this.pendingRequests = new Map<string, Map<number, boolean>>();
         this.cacheMapCompressedTiles = new Map<number, LRUCache<number, CompressedTile>>();
         this.pendingDecompressions = new Map<string, Map<number, boolean>>();
         this.completedChannels = new Map<string, boolean>();
-        this.receivedSynchronisedTiles = new Map<string, Array<{ coordinate: number, tile: RasterTile }>>();
+        this.receivedSynchronisedTiles = new Map<string, Array<{coordinate: number; tile: RasterTile}>>();
         this.pendingSynchronisedTiles = new Map<string, Array<number>>();
 
         this.compressionRequestCounter = 0;
@@ -186,13 +186,19 @@ export class TileService {
                 receivedTiles = [];
                 this.receivedSynchronisedTiles.set(key, receivedTiles);
             }
-            this.pendingSynchronisedTiles.set(key, tiles.map(tile => tile.encode()));
+            this.pendingSynchronisedTiles.set(
+                key,
+                tiles.map(tile => tile.encode())
+            );
             this.receivedSynchronisedTiles.delete(key);
             this.clearRequestQueue(fileId);
         }
 
         if (channelsChanged || !this.channelMap.has(fileId)) {
-            this.pendingSynchronisedTiles.set(key, tiles.map(tile => tile.encode()));
+            this.pendingSynchronisedTiles.set(
+                key,
+                tiles.map(tile => tile.encode())
+            );
             this.receivedSynchronisedTiles.delete(key);
             this.clearRequestQueue(fileId);
             this.channelMap.set(fileId, {channel, stokes});
@@ -233,13 +239,15 @@ export class TileService {
 
         if (newRequests.length) {
             // sort by distance to midpoint and encode
-            const sortedRequests = newRequests.sort((a, b) => {
-                const aX = focusPoint.x - a.x;
-                const aY = focusPoint.y - a.y;
-                const bX = focusPoint.x - b.x;
-                const bY = focusPoint.y - b.y;
-                return (aX * aX + aY * aY) - (bX * bX + bY * bY);
-            }).map(tile => tile.encode());
+            const sortedRequests = newRequests
+                .sort((a, b) => {
+                    const aX = focusPoint.x - a.x;
+                    const aY = focusPoint.y - a.y;
+                    const bX = focusPoint.x - b.x;
+                    const bY = focusPoint.y - b.y;
+                    return aX * aX + aY * aY - (bX * bX + bY * bY);
+                })
+                .map(tile => tile.encode());
             if (channelsChanged) {
                 this.backendService.setChannels(fileId, channel, stokes, {fileId, compressionQuality, compressionType: CARTA.CompressionType.ZFP, tiles: sortedRequests});
             } else {
@@ -328,7 +336,7 @@ export class TileService {
     }
 
     private initTextures() {
-        const textureSizeMb = TEXTURE_SIZE * TEXTURE_SIZE * 4 / 1024 / 1024;
+        const textureSizeMb = (TEXTURE_SIZE * TEXTURE_SIZE * 4) / 1024 / 1024;
         console.log(`Creating ${this.textureArray.length} tile textures of size ${textureSizeMb} MB each (${textureSizeMb * this.textureArray.length} MB total)`);
         for (let i = 0; i < this.textureArray.length; i++) {
             this.textureArray[i] = createFP32Texture(this.gl, TEXTURE_SIZE, TEXTURE_SIZE, WebGLRenderingContext.TEXTURE0);
@@ -356,7 +364,7 @@ export class TileService {
 
     @action updateRemainingTileCount = () => {
         let remainingTiles = 0;
-        this.pendingRequests.forEach(value => this.remainingTiles += value.size);
+        this.pendingRequests.forEach(value => (this.remainingTiles += value.size));
         this.remainingTiles = remainingTiles;
     };
 
@@ -486,13 +494,16 @@ export class TileService {
         if (this.animationEnabled || pendingTiles?.length) {
             // remove coordinate from pending list
             if (pendingTiles) {
-                this.pendingSynchronisedTiles.set(key, pendingTiles.filter(v => v !== encodedCoordinate));
+                this.pendingSynchronisedTiles.set(
+                    key,
+                    pendingTiles.filter(v => v !== encodedCoordinate)
+                );
             }
             const nextTile: RasterTile = {
                 width,
                 height,
                 textureCoordinate: -1,
-                data: decompressedData,
+                data: decompressedData
             };
 
             let receivedTiles = this.receivedSynchronisedTiles.get(key);
@@ -533,7 +544,7 @@ export class TileService {
                 width,
                 height,
                 textureCoordinate,
-                data: decompressedData,
+                data: decompressedData
             };
             const gpuCacheCoordinate = encodedCoordinate + fileId / MAX_FILES;
             const oldValue = this.cachedTiles.setpop(gpuCacheCoordinate, rasterTile);

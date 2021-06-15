@@ -3,9 +3,7 @@
     "title": "Preferences",
     "description": "Schema for CARTA Preferences (Version 2)",
     "$id": "carta_preferences_2",
-    "required": [
-        "version"
-    ],
+    "required": ["version"],
     "properties": {
         "version": {
             "description": "The version of the preferences contained",
@@ -19,11 +17,7 @@
         },
         "theme": {
             "type": "string",
-            "enum": [
-                "auto",
-                "light",
-                "dark"
-            ]
+            "enum": ["auto", "light", "dark"]
         },
         "autoLaunch": {
             "type": "boolean"
@@ -34,49 +28,29 @@
         },
         "fileFilteringType": {
             "type": "string",
-            "enum": [
-                "fuzzy",
-                "unix",
-                "regex"
-            ]
+            "enum": ["fuzzy", "unix", "regex"]
         },
         "layout": {
             "type": "string"
         },
         "cursorPosition": {
             "type": "string",
-            "enum": [
-                "fixed",
-                "tracking"
-            ]
+            "enum": ["fixed", "tracking"]
         },
         "zoomMode": {
             "type": "string",
-            "enum": [
-                "fit",
-                "full"
-            ]
+            "enum": ["fit", "full"]
         },
         "zoomPoint": {
             "type": "string",
-            "enum": [
-                "cursor",
-                "center"
-            ]
+            "enum": ["cursor", "center"]
         },
         "dragPanning": {
             "type": "boolean"
         },
         "spectralMatchingType": {
             "type": "string",
-            "enum": [
-                "VRAD",
-                "VOPT",
-                "FREQ",
-                "WAVE",
-                "AWAV",
-                "CHANNEL"
-            ]
+            "enum": ["VRAD", "VOPT", "FREQ", "WAVE", "AWAV", "CHANNEL"]
         },
         "wcsMatchingType": {
             "type": "integer",
@@ -121,12 +95,7 @@
         },
         "contourGeneratorType": {
             "type": "string",
-            "enum": [
-                "start-step-multiplier",
-                "min-max-scaling",
-                "percentages-ref.value",
-                "mean-sigma-list"
-            ]
+            "enum": ["start-step-multiplier", "min-max-scaling", "percentages-ref.value", "mean-sigma-list"]
         },
         "contourSmoothingMode": {
             "type": "integer",
@@ -167,11 +136,7 @@
         },
         "wcsType": {
             "type": "string",
-            "enum": [
-                "automatic",
-                "degrees",
-                "sexagesimal"
-            ]
+            "enum": ["automatic", "degrees", "sexagesimal"]
         },
         "beamVisible": {
             "type": "boolean"
@@ -181,10 +146,7 @@
         },
         "beamType": {
             "type": "string",
-            "enum": [
-                "open",
-                "solid"
-            ]
+            "enum": ["open", "solid"]
         },
         "beamWidth": {
             "type": "number",
@@ -209,10 +171,7 @@
         },
         "regionCreationMode": {
             "type": "string",
-            "enum": [
-                "center",
-                "corner"
-            ]
+            "enum": ["center", "corner"]
         },
         "regionSize": {
             "type": "number",

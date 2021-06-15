@@ -68,8 +68,8 @@ export class ControlMap {
         const range = subtract2D(this.maxPoint, this.minPoint);
         const shiftedPoint = subtract2D(point, this.minPoint);
         const index2D: Point2D = {
-            x: this.width * shiftedPoint.x / range.x,
-            y: this.height * shiftedPoint.y / range.y,
+            x: (this.width * shiftedPoint.x) / range.x,
+            y: (this.height * shiftedPoint.y) / range.y
         };
 
         const indexFloor = {x: Math.floor(index2D.x), y: Math.floor(index2D.y)};
@@ -92,6 +92,6 @@ export class ControlMap {
     }
 
     static IsWidthValid(width: number) {
-        return (width >= 128 && width <= 1024);
+        return width >= 128 && width <= 1024;
     }
 }
