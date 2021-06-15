@@ -1,7 +1,8 @@
 import * as React from "react";
 import {observer} from "mobx-react";
 import {computed} from "mobx";
-import {Classes, H5, InputGroup, Position, Tooltip} from "@blueprintjs/core";
+import {Classes, H5, InputGroup, Position} from "@blueprintjs/core";
+import {Tooltip2} from "@blueprintjs/popover2";
 import {CARTA} from "carta-protobuf";
 import * as AST from "ast_wrapper";
 import {AppStore, FrameStore, RegionCoordinate, RegionStore, NUMBER_FORMAT_LABEL, WCS_PRECISION} from "stores";
@@ -224,7 +225,7 @@ export class EllipticalRegionForm extends React.Component<{ region: RegionStore,
             yInput = <SafeNumericInput selectAllOnFocus={true} buttonPosition="none" placeholder="Y Coordinate" value={centerPoint.y} onBlur={this.handleCenterYChange} onKeyDown={this.handleCenterYChange}/>;
         } else {
             xInput = (
-                <Tooltip content={`Format: ${NUMBER_FORMAT_LABEL.get(formatX)}`} position={Position.BOTTOM} hoverOpenDelay={300}>
+                <Tooltip2 content={`Format: ${NUMBER_FORMAT_LABEL.get(formatX)}`} position={Position.BOTTOM} hoverOpenDelay={300}>
                     <SafeNumericInput
                         allowNumericCharactersOnly={false}
                         buttonPosition="none"
@@ -234,10 +235,10 @@ export class EllipticalRegionForm extends React.Component<{ region: RegionStore,
                         onBlur={this.handleCenterWCSXChange}
                         onKeyDown={this.handleCenterWCSXChange}
                     />
-                </Tooltip>
+                </Tooltip2>
             );
             yInput = (
-                <Tooltip content={`Format: ${NUMBER_FORMAT_LABEL.get(formatY)}`} position={Position.BOTTOM} hoverOpenDelay={300}>
+                <Tooltip2 content={`Format: ${NUMBER_FORMAT_LABEL.get(formatY)}`} position={Position.BOTTOM} hoverOpenDelay={300}>
                     <SafeNumericInput
                         allowNumericCharactersOnly={false}
                         buttonPosition="none"
@@ -247,7 +248,7 @@ export class EllipticalRegionForm extends React.Component<{ region: RegionStore,
                         onBlur={this.handleCenterWCSYChange}
                         onKeyDown={this.handleCenterWCSYChange}
                     />
-                </Tooltip>
+                </Tooltip2>
             );
         }
         const infoString = region.coordinate === RegionCoordinate.Image ? `WCS: ${WCSPoint2D.ToString(centerWCSPoint)}` : `Image: ${Point2D.ToString(centerPoint, "px", 3)}`;
@@ -260,7 +261,7 @@ export class EllipticalRegionForm extends React.Component<{ region: RegionStore,
             sizeHeightInput = <SafeNumericInput selectAllOnFocus={true} buttonPosition="none" placeholder="Semi-minor" value={size.y} onBlur={this.handleMinorAxisChange} onKeyDown={this.handleMinorAxisChange}/>;
         } else {
             sizeWidthInput = (
-                <Tooltip content={"Format: arcsec(\"), arcmin('), or degrees(deg)"} position={Position.BOTTOM} hoverOpenDelay={300}>
+                <Tooltip2 content={"Format: arcsec(\"), arcmin('), or degrees(deg)"} position={Position.BOTTOM} hoverOpenDelay={300}>
                     <SafeNumericInput
                         allowNumericCharactersOnly={false}
                         buttonPosition="none"
@@ -270,10 +271,10 @@ export class EllipticalRegionForm extends React.Component<{ region: RegionStore,
                         onBlur={this.handleMajorAxisWCSChange}
                         onKeyDown={this.handleMajorAxisWCSChange}
                     />
-                </Tooltip>
+                </Tooltip2>
             );
             sizeHeightInput = (
-                <Tooltip content={"Format: arcsec(\"), arcmin('), or degrees(deg)"} position={Position.BOTTOM} hoverOpenDelay={300}>
+                <Tooltip2 content={"Format: arcsec(\"), arcmin('), or degrees(deg)"} position={Position.BOTTOM} hoverOpenDelay={300}>
                     <SafeNumericInput
                         allowNumericCharactersOnly={false}
                         buttonPosition="none"
@@ -283,7 +284,7 @@ export class EllipticalRegionForm extends React.Component<{ region: RegionStore,
                         onBlur={this.handleMinorAxisWCSChange}
                         onKeyDown={this.handleMinorAxisWCSChange}
                     />
-                </Tooltip>
+                </Tooltip2>
             );
         }
         const sizeInfoString = region.coordinate === RegionCoordinate.Image ? `(Semi-major, Semi-minor): ${WCSPoint2D.ToString(this.sizeWCS)}` : `Image: ${Point2D.ToString(size, "px", 3)}`;
@@ -319,7 +320,15 @@ export class EllipticalRegionForm extends React.Component<{ region: RegionStore,
                         <tr>
                             <td>P.A. <span className={Classes.TEXT_MUTED}>(deg)</span></td>
                             <td>
-                                <SafeNumericInput selectAllOnFocus={true} buttonPosition="none" placeholder="P.A." value={region.rotation} onBlur={this.handleRotationChange} onKeyDown={this.handleRotationChange}/>
+                                <SafeNumericInput
+                                    disabled={!this.props.frame?.hasSquarePixels}
+                                    selectAllOnFocus={true}
+                                    buttonPosition="none"
+                                    placeholder="P.A."
+                                    value={region.rotation}
+                                    onBlur={this.handleRotationChange}
+                                    onKeyDown={this.handleRotationChange}
+                                />
                             </td>
                         </tr>
                         </tbody>

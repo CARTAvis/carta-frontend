@@ -1,10 +1,12 @@
 import {observer} from "mobx-react";
 import {CARTA} from "carta-protobuf";
 import * as React from "react";
-import {AnchorButton, FormGroup, Switch, ButtonGroup, Tooltip} from "@blueprintjs/core";
+import {AnchorButton, FormGroup, Switch, ButtonGroup} from "@blueprintjs/core";
+import {Tooltip2} from "@blueprintjs/popover2";
 import {AppStore, FrameStore} from "stores";
 import {StokesAnalysisWidgetStore} from "stores/widgets";
-import {StokesAnalysisComponent, RegionSelectorComponent, StokesAnalysisSettingsTabs} from "components";
+import {StokesAnalysisComponent, StokesAnalysisSettingsTabs} from "components";
+import {RegionSelectorComponent} from "components/Shared";
 import {CustomIcon} from "icons/CustomIcons";
 import "./StokesAnalysisToolbarComponent.scss";
 
@@ -50,9 +52,9 @@ export class StokesAnalysisToolbarComponent extends React.Component<{widgetStore
                     <Switch checked={widgetStore.fractionalPolVisible} onChange={this.handleFractionalPolChanged} disabled={!enableFractionalPol}/>
                 </FormGroup>
                 <ButtonGroup className="profile-buttons">
-                    <Tooltip content="Smoothing">
+                    <Tooltip2 content="Smoothing">
                         <AnchorButton icon={<CustomIcon icon="smoothing"/>} onClick={this.smoothingShortcutClick}/>
-                    </Tooltip>
+                    </Tooltip2>
                 </ButtonGroup>
             </div>
         );

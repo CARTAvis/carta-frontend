@@ -1,12 +1,14 @@
 import * as React from "react";
 import {observer} from "mobx-react";
 import {action, makeObservable, observable} from "mobx";
-import {Button, ButtonGroup, ControlGroup, Divider, FormGroup, HTMLSelect, InputGroup, IOptionProps, NonIdealState, Popover, PopoverInteractionKind, PopperModifiers, Position, Pre, Spinner, Tab, TabId, Tabs, Text} from "@blueprintjs/core";
+import {Button, ButtonGroup, ControlGroup, Divider, FormGroup, HTMLSelect, InputGroup, IOptionProps, NonIdealState, Position, Pre, Spinner, Tab, TabId, Tabs, Text} from "@blueprintjs/core";
+import {Popover2, Popover2InteractionKind} from "@blueprintjs/popover2";
 import {FixedSizeList as List} from "react-window";
 import AutoSizer from "react-virtualized-auto-sizer";
 import {CARTA} from "carta-protobuf";
 import {SimpleTableComponent, SimpleTableComponentProps} from "components/Shared";
-import {ImageSaveComponent} from "components/Dialogs";
+import {ImageSaveComponent, RegionSelectComponent} from "components/Dialogs";
+import {exportTxtFile} from "utilities";
 import "./FileInfoComponent.scss";
 
 export enum FileInfoType {
@@ -14,6 +16,7 @@ export enum FileInfoType {
     IMAGE_HEADER = "image-header",
     SAVE_IMAGE = "save-image",
     REGION_FILE = "region-file",
+    SELECT_REGION = "select-region",
     CATALOG_FILE = "catalog-file",
     CATALOG_HEADER = "catalog-header"
 }
@@ -57,7 +60,7 @@ export class FileInfoComponent extends React.Component<{
 
     @action resetSearchString = () => {
         this.searchString = "";
-    }
+    };
 
     @action setSearchString = (inputSearchString: string) => {
         this.searchString = inputSearchString.replace("\b", "");
@@ -207,6 +210,8 @@ export class FileInfoComponent extends React.Component<{
                     return <Tab key={infoType} id={infoType} title="Catalog Header" />;
                 case (FileInfoType.REGION_FILE):
                     return <Tab key={infoType} id={infoType} title="Region Information" />;
+                case (FileInfoType.SELECT_REGION):
+                    return <Tab key={infoType} id={infoType} title="Select Regions" />;
                 default:
                     return "";
             }
@@ -233,6 +238,7 @@ export class FileInfoComponent extends React.Component<{
         switch (this.props.selectedTab) {
             // Here is only controls for save, no need to wait file info
             case FileInfoType.SAVE_IMAGE:
+            case FileInfoType.SELECT_REGION:
                 break;
             // Check if loading file
             default:
@@ -248,6 +254,8 @@ export class FileInfoComponent extends React.Component<{
         switch (this.props.selectedTab) {
             case FileInfoType.SAVE_IMAGE:
                 return (<ImageSaveComponent />);
+            case FileInfoType.SELECT_REGION:
+                return (<RegionSelectComponent />);
             case FileInfoType.IMAGE_FILE:
                 return this.renderImageHeaderList(this.props.fileInfoExtended.computedEntries);
             case FileInfoType.IMAGE_HEADER:
@@ -389,8 +397,7 @@ export class FileInfoComponent extends React.Component<{
         );
     };
 
-    private renderHeaderSearch = () => {
-        const popoverModifiers: PopperModifiers = {arrow: {enabled: false}, offset: {offset: '0, 10px, 0, 0'}};
+    private renderHeaderToolbar = () => {
         const searchIter = (
             <ButtonGroup className="header-search">
                 <span className="header-search-iter">&nbsp;{this.matchedIter} of {this.matchedTotal}&nbsp;</span>
@@ -415,26 +422,48 @@ export class FileInfoComponent extends React.Component<{
 
         return (!this.props.isLoading && !this.props.errorMessage && this.props.fileInfoExtended &&
             this.props.selectedTab === FileInfoType.IMAGE_HEADER) ? (
-                <Popover
-                    className="header-search-button"
-                    position={Position.LEFT}
-                    interactionKind={PopoverInteractionKind.CLICK_TARGET_ONLY}
-                    modifiers={popoverModifiers}
-                    onOpening={() => this.handleSearchPanelClicked(true)}
-                    onClosing={() => this.handleSearchPanelClicked(false)}
-                >
-                    <Button icon="search-text" style={{opacity: (this.isMouseEntered || this.isSearchOpened) ? 1 : 0}}></Button>
-                    <InputGroup
-                        className="header-search-input"
-                        autoFocus={true}
-                        placeholder={"Search text"}
-                        leftIcon="search-text"
-                        rightElement={searchIter}
-                        onChange={this.handleSearchStringChanged}
-                        onKeyDown={(ev) => this.handleClickMatched(1, ev)}
-                    />
-                </Popover>
+                <ButtonGroup className="header-search-button" style={{opacity: (this.isMouseEntered || this.isSearchOpened) ? 1 : 0}}>
+                    <Popover2
+                        position={Position.LEFT}
+                        interactionKind={Popover2InteractionKind.CLICK_TARGET_ONLY}
+                        modifiers={{
+                            arrow: {enabled: false},
+                            offset: {enabled: true, options: {offset: [0, 10]}}
+                        }}
+                        onOpening={() => this.handleSearchPanelClicked(true)}
+                        onClosing={() => this.handleSearchPanelClicked(false)}
+                        content={
+                            <InputGroup
+                                className="header-search-input"
+                                autoFocus={true}
+                                placeholder={"Search text"}
+                                leftIcon="search-text"
+                                rightElement={searchIter}
+                                onChange={this.handleSearchStringChanged}
+                                onKeyDown={(ev) => this.handleClickMatched(1, ev)}
+                            />
+                        }
+                    >
+                        <Button icon="search-text"></Button>
+                    </Popover2>
+                    <Button icon="import" onClick={this.exportHeader}></Button>
+                </ButtonGroup>
             ) : null;
+    };
+
+    private exportHeader = () => {
+        const headerContent = this.props.fileInfoExtended.headerEntries;
+        const imageName = `${this.props.fileInfoExtended.computedEntries[0].value}-Header`;
+        let content = "";
+        content += `# ${this.props.fileInfoExtended.computedEntries[0].value}\n`
+        headerContent.forEach((row, index) => {
+            if (row.comment){
+                content += `${row.name} = ${row.value} / ${row.comment}\n`;
+            } else {
+                content += `${row.name} = ${row.value}\n`;
+            }
+        });
+        exportTxtFile(imageName, content);
     };
 
     render() {
@@ -445,7 +474,7 @@ export class FileInfoComponent extends React.Component<{
                     {this.renderHDUList()}
                 </div>
                 {this.renderInfoPanel()}
-                {this.renderHeaderSearch()}
+                {this.renderHeaderToolbar()}
             </div>
         );
     }

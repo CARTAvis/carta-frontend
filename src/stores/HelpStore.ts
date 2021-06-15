@@ -60,6 +60,7 @@ export enum HelpType {
     SPECTRAL_PROFILER_SETTINGS_STYLING = "spectral-profiler-settings-styling",
     SPECTRAL_PROFILER_SETTINGS_SMOOTHING = "spectral-profiler-settings-smoothing",
     SPECTRAL_PROFILER_SETTINGS_MOMENTS = "spectral-profiler-settings-moments",
+    SPECTRAL_PROFILER_SETTINGS_FITTING = "spectral-profiler-settings-fitting",
     STATS = "stats",
     STOKES_ANALYSIS = "stoke-analysis",
     STOKES_ANALYSIS_SETTINGS_CONVERSION = "stoke-analysis-settings-conversion",
@@ -72,5 +73,7 @@ export enum HelpType {
     CATALOG_SETTINGS_GOLBAL = "catalog-settings-golbal",
     CATALOG_SETTINGS_OVERLAY = "catalog-settings-overlay",
     CATALOG_SETTINGS_COLOR = "catalog-settings-color",
+    CATALOG_SETTINGS_SIZE = "catalog-settings-size",
+    CATALOG_SETTINGS_ORIENTATION = "catalog-settings-orientation",
     SPECTRAL_LINE_QUERY = "spectral-line-query"
 }

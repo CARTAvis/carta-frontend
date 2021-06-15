@@ -391,15 +391,14 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
         }
 
         const isXProfile = this.widgetStore.coordinate.indexOf("x") >= 0;
-
         const imageName = (appStore.activeFrame ? appStore.activeFrame.filename : undefined);
-
+        const plotName = `${isXProfile ? "X" : "Y"} profile`;
         let linePlotProps: LinePlotComponentProps = {
             xLabel: `${isXProfile ? "X" : "Y"} coordinate`,
             yLabel: "Value",
             darkMode: appStore.darkTheme,
             imageName: imageName,
-            plotName: `${isXProfile ? "X" : "Y"} profile`,
+            plotName: plotName,
             plotType: this.widgetStore.plotType,
             tickTypeY: TickType.Scientific,
             graphZoomedX: this.widgetStore.setXBounds,
@@ -412,7 +411,7 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
             zeroLineWidth: 2,
             borderWidth: this.widgetStore.lineWidth,
             pointRadius: this.widgetStore.linePlotPointSize,
-            multiPlotPropsMap: new Map(),
+            multiPlotPropsMap: new Map<string, MultiPlotProps>(),
             order: 1
         };
 
@@ -443,13 +442,15 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
                         }
 
                         let smoothingPlotProps: MultiPlotProps = {
+                            imageName: imageName,
+                            plotName: `${plotName}-smoothed`,
                             data: currentPlotData.smoothingValues,
                             type: smoothingStore.lineType,
                             borderColor: getColorForTheme(smoothingStore.lineColor),
                             borderWidth: smoothingStore.lineWidth,
                             pointRadius: smoothingStore.pointRadius,
                             order: 0,
-                            exportData: smoothingStore.exportData
+                            comments: smoothingStore.comments
                         };
                         linePlotProps.multiPlotPropsMap.set("smoothed", smoothingPlotProps);
                     }

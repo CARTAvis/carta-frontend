@@ -16,6 +16,7 @@ import {
     CatalogStore,
     CatalogUpdateMode,
     DialogStore,
+    DistanceMeasuringStore,
     FileBrowserStore,
     FrameInfo,
     FrameStore,
@@ -40,6 +41,10 @@ import {HistogramWidgetStore, RegionWidgetStore, SpatialProfileWidgetStore, Spec
 import {getImageCanvas, ImageViewLayer} from "components";
 import {AppToaster, ErrorToast, SuccessToast, WarningToast} from "components/Shared";
 import GitCommit from "../static/gitInfo";
+
+interface FrameOption extends IOptionProps {
+    hasZAxis: boolean;
+}
 
 export class AppStore {
     private static staticInstance: AppStore;
@@ -260,6 +265,10 @@ export class AppStore {
     }
 
     // Frame actions
+    @computed get activeFrameFileId(): number {
+        return this.activeFrame?.frameInfo.fileId;
+    }
+
     @computed get activeFrameIndex(): number {
         if (!this.activeFrame) {
             return -1;
@@ -281,15 +290,36 @@ export class AppStore {
         return frameMap;
     }
 
-    // catalog
     @computed get catalogNum(): number {
         return this.catalogStore.catalogProfileStores.size;
     }
 
+    @computed get catalogNextFileId(): number {
+        let id = 1;
+        const currentCatalogIds = Array.from(this.catalogStore.catalogProfileStores.keys());
+        while (currentCatalogIds?.includes(id) && currentCatalogIds.length) {
+            id += 1;
+        }
+        return id;
+    }
+
     @computed get frameNames(): IOptionProps[] {
-        let names: IOptionProps[] = [];
-        this.frames.forEach((frame, index) => names.push({label: index + ": " + frame.filename, value: frame.frameInfo.fileId}));
-        return names;
+        return this.frames?.map((frame, index) => {
+            return {
+                label: index + ": " + frame.filename,
+                value: frame.frameInfo.fileId
+            };
+        });
+    }
+
+    @computed get frameOptions(): FrameOption[] {
+        return this.frames?.map((frame, index) => {
+            return {
+                label: index + ": " + frame.filename,
+                value: frame.frameInfo.fileId,
+                hasZAxis: frame?.channelInfo !== undefined && frame?.channelInfo !== null
+            };
+        });
     }
 
     @computed get frameChannels(): number[] {
@@ -318,6 +348,22 @@ export class AppStore {
         }
 
         return activeGroupFrames;
+    }
+
+    @computed get spatialAndSpectalMatchedFileIds(): number[] {
+        let matchedIds = [];
+        if (this.spatialReference) {
+            matchedIds.push(this.spatialReference.frameInfo.fileId);
+        }
+
+        const spatialMatchedFileIds = this.spatialReference?.spatialSiblings?.map(matchedFrame => {return matchedFrame.frameInfo.fileId;});
+        const spectralMatchedFileIds = this.spatialReference?.spectralSiblings?.map(matchedFrame => {return matchedFrame.frameInfo.fileId;});
+        spatialMatchedFileIds?.forEach(spatialMatchedFileId => {
+            if (spectralMatchedFileIds?.includes(spatialMatchedFileId)) {
+                matchedIds.push(spatialMatchedFileId);
+            }
+        });
+        return matchedIds;
     }
 
     @computed get contourFrames(): FrameStore[] {
@@ -422,6 +468,9 @@ export class AppStore {
                 }
                 this.endFileLoading();
                 this.fileBrowserStore.hideFileBrowser();
+                WidgetsStore.ResetWidgetPlotXYBounds(this.widgetsStore.spatialProfileWidgets);
+                WidgetsStore.ResetWidgetPlotXYBounds(this.widgetsStore.spectralProfileWidgets);
+                WidgetsStore.ResetWidgetPlotXYBounds(this.widgetsStore.stokesAnalysisWidgets);
                 resolve(ack.fileId);
             }, err => {
                 this.alertStore.showAlert(`Error loading file: ${err}`);
@@ -443,6 +492,9 @@ export class AppStore {
                 this.endFileLoading();
                 this.fileBrowserStore.hideFileBrowser();
                 AppStore.Instance.dialogStore.hideStokesDialog();
+                WidgetsStore.ResetWidgetPlotXYBounds(this.widgetsStore.spatialProfileWidgets);
+                WidgetsStore.ResetWidgetPlotXYBounds(this.widgetsStore.spectralProfileWidgets);
+                WidgetsStore.ResetWidgetPlotXYBounds(this.widgetsStore.stokesAnalysisWidgets);
                 resolve(ack.openFileAck.fileId);
             }, err => {
                 console.log(err);
@@ -458,10 +510,6 @@ export class AppStore {
     @action appendConcatFile = (stokesFiles: CARTA.IStokesFile[], directory: string, hdu: string) => {
         // Stop animations playing before loading a new frame
         this.animatorStore.stopAnimation();
-        // hide all catalog data
-        if (this.catalogNum) {
-            CatalogStore.Instance.resetDisplayedData([]);
-        }
         return this.loadConcatStokes(stokesFiles, directory, hdu);
     };
 
@@ -473,10 +521,6 @@ export class AppStore {
     @action appendFile = (directory: string, file: string, hdu: string) => {
         // Stop animations playing before loading a new frame
         this.animatorStore.stopAnimation();
-        // hide all catalog data
-        if (this.catalogNum) {
-            CatalogStore.Instance.resetDisplayedData([]);
-        }
         return this.loadFile(directory, file, hdu);
     };
 
@@ -681,7 +725,7 @@ export class AppStore {
             this.startFileLoading();
 
             const frame = this.activeFrame;
-            const fileId = this.catalogNum + 1;
+            const fileId = this.catalogNextFileId;
 
             this.backendService.loadCatalogFile(directory, file, fileId, previewDataSize).subscribe(ack => runInAction(() => {
                 this.endFileLoading();
@@ -694,7 +738,7 @@ export class AppStore {
                     let associatedCatalogFiles = [];
                     const catalogStore = CatalogStore.Instance;
                     const catalogComponentSize = catalogStore.catalogProfiles.size;
-                    let currentAssociatedCatalogFile = catalogStore.activeCatalogFiles;
+                    let currentAssociatedCatalogFile = catalogStore.imageAssociatedCatalogId.get(frame.frameInfo.fileId);
                     if (currentAssociatedCatalogFile?.length) {
                         associatedCatalogFiles = currentAssociatedCatalogFile;
                     } else {
@@ -747,31 +791,12 @@ export class AppStore {
             this.catalogStore.catalogWidgets.delete(fileId);
             this.widgetsStore.catalogWidgets.delete(catalogWidgetId);
             // remove overlay
-            catalogStore.removeCatalog(fileId);
+            catalogStore.removeCatalog(fileId, catalogComponentId);
             // remove profile store
             catalogStore.catalogProfileStores.delete(fileId);
 
             if (!this.activeFrame) {
                 return;
-            }
-            // update associated image
-            const fileIds = catalogStore.activeCatalogFiles;
-            const activeImageId = AppStore.Instance.activeFrame.frameInfo.fileId;
-            let associatedCatalogId = [];
-            if (fileIds) {
-                associatedCatalogId = fileIds.filter(catalogFileId => {
-                    return catalogFileId !== fileId;
-                });
-                catalogStore.updateImageAssociatedCatalogId(activeImageId, associatedCatalogId);
-            }
-
-            // update catalogProfiles fileId            
-            if (catalogComponentId && associatedCatalogId.length) {
-                catalogStore.catalogProfiles.forEach((catalogFileId, componentId) => {
-                    if (catalogFileId === fileId) {
-                        catalogStore.catalogProfiles.set(componentId, associatedCatalogId[0]);
-                    }
-                });
             }
         }
     }
@@ -828,15 +853,15 @@ export class AppStore {
         });
     };
 
-    @action exportRegions = (directory: string, file: string, coordType: CARTA.CoordinateType, fileType: RegionFileType) => {
+    @action exportRegions = (directory: string, file: string, coordType: CARTA.CoordinateType, fileType: RegionFileType, exportRegions: number[]) => {
         const frame = this.activeFrame;
         // Prevent exporting if only the cursor region exists
-        if (!frame.regionSet.regions || frame.regionSet.regions.length <= 1) {
+        if (!frame.regionSet?.regions || frame.regionSet.regions.length <= 1 || exportRegions?.length < 1) {
             return;
         }
 
         const regionStyles = new Map<number, CARTA.IRegionStyle>();
-        for (const region of frame.regionSet.regions) {
+        for (const region of exportRegions.map(value => frame.regionSet.regions[value])) {
             regionStyles.set(region.regionId, {
                 name: region.name,
                 color: region.color,
@@ -942,7 +967,8 @@ export class AppStore {
                 getColorForTheme(this.overlayStore.ticks.color),
                 getColorForTheme(this.overlayStore.axes.color),
                 getColorForTheme(this.overlayStore.numbers.color),
-                getColorForTheme(this.overlayStore.labels.color)
+                getColorForTheme(this.overlayStore.labels.color),
+                getColorForTheme(this.activeFrame ? this.activeFrame.distanceMeasuring?.color : DistanceMeasuringStore.DEFAULT_COLOR)
             ];
             AST.setColors(astColors);
         }
@@ -1220,6 +1246,7 @@ export class AppStore {
         this.backendService.momentProgressStream.subscribe(this.handleMomentProgressStream);
         this.backendService.scriptingStream.subscribe(this.handleScriptingRequest);
         this.tileService.tileStream.subscribe(this.handleTileStream);
+        this.backendService.listProgressStream.subscribe(this.handleFileProgressStream);
 
         // Set auth token from URL if it exists
         const url = new URL(window.location.href);
@@ -1287,7 +1314,6 @@ export class AppStore {
                 frameMap.set(spectralProfileData.regionId, profileStore);
             }
 
-            profileStore.stokes = spectralProfileData.stokes;
             for (let profile of spectralProfileData.profiles) {
                 profileStore.setProfile(ProtobufProcessing.ProcessSpectralProfile(profile, spectralProfileData.progress));
             }
@@ -1412,10 +1438,24 @@ export class AppStore {
                 const catalogWidgetStore = this.widgetsStore.catalogWidgets.get(catalogWidgetStoreId);
                 const xColumn = catalogWidgetStore.xAxis;
                 const yColumn = catalogWidgetStore.yAxis;
-                if (xColumn && yColumn) {
+                const frame = this.getFrame(this.catalogStore.getFrameIdByCatalogId(catalogFileId));
+                if (xColumn && yColumn && frame) {
                     const coords = catalogProfileStore.get2DPlotData(xColumn, yColumn, catalogData);
-                    const wcs = this.activeFrame.validWcs ? this.activeFrame.wcsInfo : 0;
-                    this.catalogStore.updateCatalogData(catalogFileId, coords.wcsX, coords.wcsY, wcs, coords.xHeaderInfo.units, coords.yHeaderInfo.units, catalogProfileStore.catalogCoordinateSystem.system);
+                    const wcs = frame.validWcs ? frame.wcsInfo : 0;
+                    this.catalogStore.updateCatalogData(
+                        catalogFileId, 
+                        coords.wcsX, 
+                        coords.wcsY, 
+                        wcs, 
+                        coords.xHeaderInfo.units, 
+                        coords.yHeaderInfo.units, 
+                        catalogProfileStore.catalogCoordinateSystem.system
+                    );
+
+                    if (frame !== this.activeFrame) {
+                        const imageMapId = `${frame.frameInfo.fileId}-${this.activeFrame.frameInfo.fileId}`;
+                        this.catalogStore.updateSpatialMatchedCatalog(imageMapId, catalogFileId);
+                    }
                 }
             }
         }
@@ -1430,6 +1470,15 @@ export class AppStore {
             frame.updateRequestingMomentsProgress(momentProgress.progress);
             this.updateTaskProgress(momentProgress.progress);
         }
+    };
+
+    handleFileProgressStream = (fileProgress: CARTA.ListProgress) => {
+        if (!fileProgress) {
+            return;
+        }
+        this.fileBrowserStore.updateLoadingState(fileProgress.percentage, fileProgress.checkedCount, fileProgress.totalCount);
+        this.fileBrowserStore.showLoadingDialog();
+        this.updateTaskProgress(fileProgress.percentage);
     };
 
     handleErrorStream = (errorData: CARTA.ErrorData) => {
@@ -1626,6 +1675,14 @@ export class AppStore {
         return this.frames.find(f => f.frameInfo.fileId === fileId);
     }
 
+    getFrameName(fileId: number) {
+        return this.getFrame(fileId)?.filename;
+    }
+
+    getFrameIndex(fileId: number): number {
+        return this.frames?.findIndex((frame) => frame?.frameInfo.fileId === fileId);
+    }
+
     @computed get selectedRegion(): RegionStore {
         if (this.activeFrame && this.activeFrame.regionSet && this.activeFrame.regionSet.selectedRegion && this.activeFrame.regionSet.selectedRegion.regionId !== 0) {
             return this.activeFrame.regionSet.selectedRegion;
@@ -1679,6 +1736,10 @@ export class AppStore {
             } else if (f.spatialReference) {
                 f.setSpatialReference(frame);
             }
+        }
+
+        if(oldRef?.secondarySpatialImages.length) {
+            oldRef.secondarySpatialImages = [];
         }
 
     };

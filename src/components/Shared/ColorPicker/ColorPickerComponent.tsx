@@ -5,7 +5,8 @@ import {observer} from "mobx-react";
 import {makeObservable, observable} from "mobx";
 import tinycolor from "tinycolor2";
 import {SketchPicker, ColorResult, RGBColor} from "react-color";
-import {Button, Popover, PopoverPosition} from "@blueprintjs/core";
+import {Button, PopoverPosition} from "@blueprintjs/core";
+import {Popover2} from "@blueprintjs/popover2";
 import "./ColorPickerComponent.scss";
 
 interface ColorPickerComponentProps {
@@ -48,12 +49,19 @@ export class ColorPickerComponent extends React.Component<ColorPickerComponentPr
         }
         const buttonColor = tinycolor(this.props.color).toString();
         return (
-            <Popover isOpen={this.displayColorPicker} onClose={this.handleColorClose} position={PopoverPosition.RIGHT} popoverClassName={popoverClassName}>
+            <Popover2
+                isOpen={this.displayColorPicker}
+                onClose={this.handleColorClose}
+                position={PopoverPosition.RIGHT}
+                popoverClassName={popoverClassName}
+                content={
+                    <SketchPicker color={this.props.color} onChange={this.handleColorChange} disableAlpha={this.props.disableAlpha} presetColors={this.props.presetColors}/>
+                }
+            >
                 <Button onClick={this.handleColorClick} className="color-swatch-button" disabled={this.props.disabled}>
                     <div style={{backgroundColor: buttonColor}}/>
                 </Button>
-                <SketchPicker color={this.props.color} onChange={this.handleColorChange} disableAlpha={this.props.disableAlpha} presetColors={this.props.presetColors}/>
-            </Popover>
+            </Popover2>
         );
     }
 }

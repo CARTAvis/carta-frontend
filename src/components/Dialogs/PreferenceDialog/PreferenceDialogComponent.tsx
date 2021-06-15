@@ -3,7 +3,8 @@ import * as _ from "lodash";
 import tinycolor from "tinycolor2";
 import {action, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
-import {AnchorButton, Button, Checkbox, FormGroup, HTMLSelect, IDialogProps, Intent, MenuItem, Position, Radio, RadioGroup, Switch, Tab, Tabs, Tooltip} from "@blueprintjs/core";
+import {AnchorButton, Button, Checkbox, FormGroup, HTMLSelect, IDialogProps, Intent, MenuItem, Position, Radio, RadioGroup, Switch, Tab, Tabs} from "@blueprintjs/core";
+import {Tooltip2} from "@blueprintjs/popover2";
 import {Select} from "@blueprintjs/select";
 import {ColorResult} from "react-color";
 import {CARTA} from "carta-protobuf";
@@ -619,9 +620,9 @@ export class PreferenceDialogComponent extends React.Component {
                 </div>
                 <div className="bp3-dialog-footer">
                     <div className="bp3-dialog-footer-actions">
-                        <Tooltip content="Apply to current tab only." position={Position.TOP}>
+                        <Tooltip2 content="Apply to current tab only." position={Position.TOP}>
                             <AnchorButton intent={Intent.WARNING} icon={"refresh"} onClick={this.reset} text="Restore defaults"/>
-                        </Tooltip>
+                        </Tooltip2>
                         <Button intent={Intent.NONE} onClick={appStore.dialogStore.hidePreferenceDialog} text="Close"/>
                     </div>
                 </div>

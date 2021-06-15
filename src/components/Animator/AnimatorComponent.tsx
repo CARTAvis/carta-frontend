@@ -1,7 +1,8 @@
 import * as React from "react";
 import {observer} from "mobx-react";
 import {action, makeObservable, observable} from "mobx";
-import {AnchorButton, Button, ButtonGroup, ControlGroup, HTMLSelect, IconName, Menu, MenuItem, NonIdealState, NumberRange, Popover, Position, Radio, RangeSlider, Slider, Tooltip} from "@blueprintjs/core";
+import {AnchorButton, Button, ButtonGroup, ControlGroup, HTMLSelect, IconName, Menu, MenuItem, NonIdealState, NumberRange, Position, Radio, RangeSlider, Slider} from "@blueprintjs/core";
+import {Popover2, Tooltip2} from "@blueprintjs/popover2";
 import ReactResizeDetector from "react-resize-detector";
 import {AnimationMode, PlayMode, DefaultWidgetConfig, WidgetProps, HelpType, AnimatorStore, AppStore} from "stores";
 import {SafeNumericInput} from "components/Shared";
@@ -379,7 +380,7 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
         }
 
         const playbackModeButton = (
-            <Popover
+            <Popover2
                 className="playback-mode"
                 content={
                     <Menu>
@@ -391,10 +392,10 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
                 }
                 position={Position.TOP}
             >
-                <Tooltip content="Playback Mode" position={Position.TOP}>
+                <Tooltip2 content="Playback Mode" position={Position.TOP}>
                     <AnchorButton icon={this.getPlayModeIcon()} disabled={appStore.animatorStore.animationActive}>{!iconOnly && "Mode"}</AnchorButton>
-                </Tooltip>
-            </Popover>
+                </Tooltip2>
+            </Popover2>
         );
 
         const playbackButtons = (

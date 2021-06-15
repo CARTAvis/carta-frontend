@@ -2,9 +2,10 @@ import {IOptionProps, TabId} from "@blueprintjs/core";
 import {action, computed, observable, makeObservable, runInAction, autorun} from "mobx";
 import {CARTA} from "carta-protobuf";
 import {BackendService} from "services";
-import {AppStore, DialogStore, PreferenceKeys, PreferenceStore} from "stores";
+import {AppStore, DialogStore, PreferenceKeys, PreferenceStore, RegionStore} from "stores";
+import {RegionId} from "stores/widgets";
 import {FileInfoType} from "components";
-import {ProcessedColumnData} from "models";
+import {LineOption, ProcessedColumnData} from "models";
 import {getDataTypeString} from "utilities";
 
 export enum BrowserMode {
@@ -56,6 +57,7 @@ export class FileBrowserStore {
     @observable exportFilename: string;
     @observable exportCoordinateType: CARTA.CoordinateType;
     @observable exportFileType: RegionFileType;
+    @observable exportRegionIndexes: number[] = [];
 
     @observable catalogFileList: CARTA.ICatalogListResponse;
     @observable selectedCatalogFile: CARTA.ICatalogFileInfo;
@@ -75,17 +77,25 @@ export class FileBrowserStore {
         this.exportCoordinateType = CARTA.CoordinateType.WORLD;
         this.exportFileType = CARTA.FileType.CRTF;
 
-        // Update channelValueBounds for save image
         autorun(() => {
             if (AppStore.Instance.activeFrame) {
+                // Update channelValueBounds for save image
                 FileBrowserStore.Instance.initialSaveSpectralRange();
-                this.setSaveFileType(AppStore.Instance.activeFrame?.frameInfo?.fileInfo.type);
+                this.setSaveFileType(AppStore.Instance.activeFrame.frameInfo?.fileInfo.type === CARTA.FileType.CASA ? CARTA.FileType.CASA : CARTA.FileType.FITS);
+
+                // update regions
+                this.resetExportRegionIndexes();
             }
         });
 
     }
 
     @observable selectedFiles: ISelectedFile[];
+
+    @observable isLoadingDialogOpen: boolean;
+    @observable loadingProgress: number;
+    @observable loadingCheckedCount: number;
+    @observable loadingTotalCount: number;
 
     @action showFileBrowser = (mode: BrowserMode, append = false) => {
         switch (mode) {
@@ -136,30 +146,31 @@ export class FileBrowserStore {
         this.HDUfileInfoExtended = null;
         this.regionFileInfo = null;
         this.catalogFileInfo = null;
+        AppStore.Instance.restartTaskProgress();
 
         if (this.browserMode === BrowserMode.File || this.browserMode === BrowserMode.SaveFile) {
             backendService.getFileList(directory).subscribe(res => runInAction(() => {
                 this.fileList = res;
-                this.loadingList = false;
+                this.resetLoadingStates();
             }), err => runInAction(() => {
                 console.log(err);
-                this.loadingList = false;
+                this.resetLoadingStates();
             }));
         } else if (this.browserMode === BrowserMode.Catalog) {
             backendService.getCatalogList(directory).subscribe(res => runInAction(() => {
                 this.catalogFileList = res;
-                this.loadingList = false;
+                this.resetLoadingStates();
             }), err => runInAction(() => {
                 console.log(err);
-                this.loadingList = false;
+                this.resetLoadingStates();
             }));
         } else {
             backendService.getRegionList(directory).subscribe(res => runInAction(() => {
                 this.fileList = res;
-                this.loadingList = false;
+                this.resetLoadingStates();
             }), err => runInAction(() => {
                 console.log(err);
-                this.loadingList = false;
+                this.resetLoadingStates();
             }));
         }
     };
@@ -338,6 +349,33 @@ export class FileBrowserStore {
         this.exportFileType = fileType;
     };
 
+    @action resetExportRegionIndexes = () => {
+        if (AppStore.Instance.activeFrame?.regionSet?.regions) {
+            // include all region indexes except cursor region
+            this.exportRegionIndexes = Array.from(AppStore.Instance.activeFrame.regionSet.regions.keys()).slice(1);
+        } else {
+            this.exportRegionIndexes = [];
+        }
+    };
+
+    @action clearExportRegionIndexes = () => {
+        this.exportRegionIndexes = [];
+    };
+
+    @action addExportRegionIndex = (regionIndex: number) => {
+        if (!this.exportRegionIndexes.includes(regionIndex)) {
+            this.exportRegionIndexes.push(regionIndex);
+            this.exportRegionIndexes.sort();
+        }
+    };
+
+    @action deleteExportRegionIndex = (regionIndex: number) => {
+        const index = this.exportRegionIndexes.indexOf(regionIndex);
+        if (index > -1) {
+            this.exportRegionIndexes.splice(index, 1);
+        }
+    };
+
     @action setSaveFilename = (filename: string) => {
         this.saveFilename = filename;
     };
@@ -367,6 +405,32 @@ export class FileBrowserStore {
     
     @action setSelectedFiles = (selection: ISelectedFile[]) => {
         this.selectedFiles = selection;
+    };
+
+    @action showLoadingDialog = () => {
+        this.isLoadingDialogOpen = true;
+    };
+
+    @action updateLoadingState = (progress: number, checkedCount: number, totalCount: number) => {
+        this.loadingProgress = progress;
+        this.loadingCheckedCount = checkedCount;
+        this.loadingTotalCount = totalCount;
+    };
+
+    @action resetLoadingStates = () => {
+        this.loadingList = false;
+        this.isLoadingDialogOpen = false;
+        this.updateLoadingState(0, 0, 0);
+    };
+
+    @action cancelRequestingFileList = () => {
+        if (this.loadingProgress < 1.0) {
+            if (this.browserMode === BrowserMode.Catalog) {
+                BackendService.Instance.cancelRequestingFileList(CARTA.FileListType.Catalog);
+            } else {
+                BackendService.Instance.cancelRequestingFileList(CARTA.FileListType.Image);
+            }
+        }
     };
 
     @computed get HDUList(): IOptionProps[] {
@@ -428,6 +492,8 @@ export class FileBrowserStore {
                 return FileInfoType.SAVE_IMAGE;
             case BrowserMode.Catalog:
                 return FileInfoType.CATALOG_FILE;
+            case BrowserMode.RegionExport:
+                return FileInfoType.SELECT_REGION;
             default:
                 return FileInfoType.REGION_FILE;
         }
@@ -487,5 +553,33 @@ export class FileBrowserStore {
             [1, 3, 1], // BCD
         ];
         return options[this.saveStokesOption];
+    }
+
+    @computed get exportRegionOptions(): LineOption[] {
+        let options: LineOption[] = [];
+        const appStore = AppStore.Instance;
+        const frame = appStore.activeFrame;
+        if (frame?.regionSet?.regions) {
+            const activeRegionId = appStore.selectedRegion ? appStore.selectedRegion.regionId : RegionId.CURSOR;
+            frame.regionSet.regions.forEach((region, index) => {
+                if (region.regionId !== RegionId.CURSOR) {
+                    options.push({
+                        value: index,
+                        label: region.nameString,
+                        active: region.regionId === activeRegionId,
+                        icon: RegionStore.RegionIconString(region.regionType)
+                    });
+                }
+            });
+        }
+        return options;
+    }
+
+    @computed get regionOptionNum(): number {
+        return this.exportRegionOptions?.length;
+    }
+
+    @computed get exportRegionNum(): number {
+        return this.exportRegionIndexes?.length;
     }
 }

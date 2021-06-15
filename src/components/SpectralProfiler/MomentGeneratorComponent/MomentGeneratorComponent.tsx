@@ -1,12 +1,12 @@
 import * as React from "react";
 import {observer} from "mobx-react";
 import {CARTA} from "carta-protobuf";
-import {AnchorButton, Button, Divider, FormGroup, HTMLSelect, MenuItem, Position, Tooltip} from "@blueprintjs/core";
+import {AnchorButton, Button, Divider, FormGroup, HTMLSelect, MenuItem, Position} from "@blueprintjs/core";
+import {Tooltip2} from "@blueprintjs/popover2";
 import {ItemPredicate, ItemRenderer, MultiSelect} from "@blueprintjs/select";
-import {RegionSelectorComponent} from "components";
 import {TaskProgressDialogComponent} from "components/Dialogs";
 import {SafeNumericInput, SpectralSettingsComponent} from "components/Shared";
-import {MomentSelectingMode, SpectralProfileWidgetStore, RegionId} from "stores/widgets";
+import {MomentSelectingMode, SpectralProfileWidgetStore} from "stores/widgets";
 import {AppStore} from "stores";
 import {MOMENT_TEXT} from "models";
 import "./MomentGeneratorComponent.scss";
@@ -99,8 +99,41 @@ export class MomentGeneratorComponent extends React.Component<{widgetStore: Spec
         const appStore = AppStore.Instance;
         const widgetStore = this.props.widgetStore;
         const frame = widgetStore.effectiveFrame;
+        const fileInfo = frame ? `${appStore.getFrameIndex(frame.frameInfo.fileId)}: ${frame.filename}` : undefined;
+        const regionInfo = widgetStore.momentRegionInfo;
 
-        const regionPanel = <RegionSelectorComponent widgetStore={this.props.widgetStore} nonClosedDisabled={true}/>;
+        const regionPanel = (
+            <React.Fragment>
+                <FormGroup
+                    className={"image-region-select"}
+                    label={"Image"}
+                    inline={true}
+                    labelInfo={fileInfo ? <React.Fragment>(<span className="label-info" title={fileInfo}>{fileInfo}</span>)</React.Fragment> : undefined}
+                    disabled={!frame}
+                >
+                    <HTMLSelect
+                        value={widgetStore.fileId}
+                        options={widgetStore.frameOptions}
+                        onChange={(ev) => widgetStore.selectFrame(parseInt(ev.target.value))}
+                        disabled={!frame}
+                    />
+                </FormGroup>
+                <FormGroup
+                    className={"image-region-select"}
+                    label={"Region"}
+                    inline={true}
+                    labelInfo={regionInfo ? <React.Fragment>(<span className="label-info" title={regionInfo}>{regionInfo}</span>)</React.Fragment> : undefined}
+                    disabled={!frame}
+                >
+                    <HTMLSelect
+                        value={widgetStore.momentRegionId}
+                        options={widgetStore.momentRegionOptions}
+                        onChange={(ev) => widgetStore.selectMomentRegion(parseInt(ev.target.value))}
+                        disabled={!frame}
+                    />
+                </FormGroup>
+            </React.Fragment>
+        );
 
         const spectralPanel = (
             <React.Fragment>
@@ -128,13 +161,13 @@ export class MomentGeneratorComponent extends React.Component<{widgetStore: Spec
                                 />
                             </FormGroup>
                             <div className="cursor-select">
-                                <Tooltip content="Use cursor to select channel range in profiler" position={Position.BOTTOM}>
+                                <Tooltip2 content="Use cursor to select channel range in profiler" position={Position.BOTTOM}>
                                     <AnchorButton
                                         className={widgetStore.isSelectingMomentChannelRange ? "bp3-active" : ""}
                                         icon="select"
                                         onClick={this.handleChannelSelectionClicked}
                                     />
-                                </Tooltip>
+                                </Tooltip2>
                             </div>
                         </div>
                     </FormGroup>
@@ -170,13 +203,13 @@ export class MomentGeneratorComponent extends React.Component<{widgetStore: Spec
                                 />
                             </FormGroup>
                             <div className="cursor-select">
-                                <Tooltip content="Use cursor to select mask range in profiler" position={Position.BOTTOM}>
+                                <Tooltip2 content="Use cursor to select mask range in profiler" position={Position.BOTTOM}>
                                     <AnchorButton
                                         className={widgetStore.isSelectingMomentMaskRange ? "bp3-active" : ""}
                                         icon="select"
                                         onClick={this.handleMaskSelectionClicked}
                                     />
-                                </Tooltip>
+                                </Tooltip2>
                             </div>
                         </div>
                     </FormGroup>
@@ -184,11 +217,8 @@ export class MomentGeneratorComponent extends React.Component<{widgetStore: Spec
             </React.Fragment>
         );
 
-        const effectiveRegion = (frame?.regionSet?.regions) ? frame.regionSet.regions.find(r => r.regionId === widgetStore.effectiveRegionId) : null;
-        const isEnabledRegion = effectiveRegion && effectiveRegion.isClosedRegion;
-        const isImage = widgetStore.regionIdMap.get(widgetStore.fileId) !== RegionId.CURSOR && widgetStore.effectiveRegionId === 0; // request image when region dropdown is active with no region selected
-        const isAbleToGenerate = frame && frame.numChannels > 1 && !appStore.animatorStore.animationActive && !appStore.widgetsStore.isSpectralWidgetStreamingData && (isEnabledRegion || isImage);
-        const hint = <span><br/><i><small>Please ensure<br/>1. Animation playback is stopped.<br/>2. Spectral profile generation is complete.<br/>3. Cursor or point region is not selected.</small></i></span>;
+        const isAbleToGenerate = frame && frame.numChannels > 1 && !appStore.animatorStore.animationActive && !appStore.widgetsStore.isSpectralWidgetStreamingData && widgetStore.isMomentRegionValid;
+        const hint = <span><br/><i><small>Please ensure:<br/>1. Animation playback is stopped.<br/>2. Spectral profile generation is complete.<br/>3. Point region is not selected.</small></i></span>;
         const msg = <span>Unable to generate moment images{hint}</span>;
         const momentsPanel = (
             <React.Fragment>
@@ -214,7 +244,7 @@ export class MomentGeneratorComponent extends React.Component<{widgetStore: Spec
                     />
                 </FormGroup>
                 <div className="moment-generate">
-                    <Tooltip disabled={isAbleToGenerate} content={msg} position={Position.BOTTOM}>
+                    <Tooltip2 disabled={isAbleToGenerate} content={msg} position={Position.BOTTOM}>
                         <AnchorButton
                             intent="success"
                             onClick={this.handleRequestMoment}
@@ -222,7 +252,7 @@ export class MomentGeneratorComponent extends React.Component<{widgetStore: Spec
                         >
                             Generate
                         </AnchorButton>
-                    </Tooltip>
+                    </Tooltip2>
                 </div>
             </React.Fragment>
         );

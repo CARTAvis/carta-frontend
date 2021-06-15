@@ -1,5 +1,5 @@
 import {action, computed, observable, makeObservable} from "mobx";
-import {Colors} from "@blueprintjs/core";
+import {Colors, IconName} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import * as AST from "ast_wrapper";
 import {Point2D} from "models";
@@ -57,6 +57,21 @@ export class RegionStore {
                 return "Polygon";
             default:
                 return "Not Implemented";
+        }
+    }
+
+    public static RegionIconString(regionType: CARTA.RegionType): IconName {
+        switch (regionType) {
+            case CARTA.RegionType.POINT:
+                return "symbol-square";
+            case CARTA.RegionType.RECTANGLE:
+                return "square";
+            case CARTA.RegionType.ELLIPSE:
+                return "circle";
+            case CARTA.RegionType.POLYGON:
+                return "polygon-filter";
+            default:
+                return "error";
         }
     }
 
@@ -179,8 +194,8 @@ export class RegionStore {
             return "Cursor";
         } else if (this.name && this.name !== "") {
             return this.name;
-        } else {
-            return `Region ${this.regionId}`;
+        } else { // temporary region id < 0, use "..." for representation
+            return `Region ${this.regionId > CURSOR_REGION_ID ? this.regionId : "..."}`;
         }
     }
 
@@ -257,6 +272,12 @@ export class RegionStore {
         } else {
             this.coordinate = RegionCoordinate.Image;
         }
+
+        // Force rotation to zero if image pixes are non-square
+        if (!this.activeFrame?.hasSquarePixels) {
+            this.rotation = 0;
+        }
+
         this.regionApproximationMap = new Map<number, Point2D[]>();
         this.simplePolygonTest();
         this.modifiedTimestamp = performance.now();
@@ -324,6 +345,11 @@ export class RegionStore {
     }
 
     @action setRotation = (angle: number, skipUpdate = false) => {
+        // Images with non-square pixels do not support rotations
+        if (!this.activeFrame?.hasSquarePixels) {
+            return;
+        }
+
         this.rotation = (angle + 360) % 360;
         this.regionApproximationMap.clear();
         this.modifiedTimestamp = performance.now();

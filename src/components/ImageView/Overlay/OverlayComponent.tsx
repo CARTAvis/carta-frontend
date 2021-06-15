@@ -50,7 +50,7 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
             // Take aspect ratio scaling into account
             let tempWcsInfo = AST.copy(wcsInfo);
 
-            if (frame.aspectRatio !== 1.0) {
+            if (!frame.hasSquarePixels) {
                 const scaleMapping = AST.scaleMap2D(1.0, 1.0 / frame.aspectRatio);
                 const newFrame = AST.frame(2, "Domain=PIXEL");
                 AST.addFrame(tempWcsInfo, 1, scaleMapping, newFrame);
@@ -65,7 +65,9 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
                     frameView.yMin / frame.aspectRatio, frameView.yMax / frame.aspectRatio,
                     settings.viewWidth * pixelRatio, settings.viewHeight * pixelRatio,
                     settings.padding.left * pixelRatio, settings.padding.right * pixelRatio, settings.padding.top * pixelRatio, settings.padding.bottom * pixelRatio,
-                    styleString);
+                    styleString,
+                    frame.distanceMeasuring.showCurve, frame.isPVImage,
+                    frame.distanceMeasuring.start.x, frame.distanceMeasuring.start.y, frame.distanceMeasuring.finish.x, frame.distanceMeasuring.finish.y);
             };
 
             let currentStyleString = settings.styleString;
@@ -101,6 +103,7 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
         const w = this.props.overlaySettings.viewWidth;
         const h = this.props.overlaySettings.viewHeight;
         const moving = frame.moving;
+        const system = this.props.overlaySettings.global.system;
         const globalColor = this.props.overlaySettings.global.color;
         const titleColor = this.props.overlaySettings.title.color;
         const gridColor = this.props.overlaySettings.grid.color;
@@ -110,14 +113,17 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
         const numbersColor = this.props.overlaySettings.numbers.color;
         const labelsColor = this.props.overlaySettings.labels.color;
         const darktheme = AppStore.Instance.darkTheme;
+        const distanceMeasuringShowCurve = frame.distanceMeasuring.showCurve;
+        const distanceMeasuringStart = frame.distanceMeasuring.start;
+        const distanceMeasuringFinish = frame.distanceMeasuring.finish;
         /* eslint-enable no-unused-vars, @typescript-eslint/no-unused-vars */
 
         // Trigger switching AST overlay axis for PV image
         if (frame.isPVImage && frame.spectralAxis?.valid) {
-            AST.set(frame.wcsInfo, `${frame.spectralType ? `System(${frame.spectralAxis.dimension})=${frame.spectralType},` : ""}` +
-                                    `${frame.spectralUnit ? `Unit(${frame.spectralAxis.dimension})=${frame.spectralUnit},` : ""}` +
+            AST.set(frame.wcsInfo, `${frame.spectralType ? `System(2)=${frame.spectralType},` : ""}` +
+                                    `${frame.spectralUnit ? `Unit(2)=${frame.spectralUnit},` : ""}` +
                                     `${frame.spectralSystem ? `StdOfRest=${frame.spectralSystem},` : ""}` +
-                                    `${frame.spectralType && frame.spectralSystem ? `Label(${frame.spectralAxis.dimension})=[${frame.spectralSystem}] ${SPECTRAL_TYPE_STRING.get(frame.spectralType)},` : ""}`
+                                    `${frame.spectralType && frame.spectralSystem ? `Label(2)=[${frame.spectralSystem}] ${SPECTRAL_TYPE_STRING.get(frame.spectralType)},` : ""}`
             );
         }
 

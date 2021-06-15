@@ -1,9 +1,10 @@
 import * as React from "react";
 import * as Plotly from "plotly.js";
 import Plot from "react-plotly.js";
-import {autorun, computed, observable, action, makeObservable} from "mobx";
+import {action, autorun, computed, runInAction, observable, makeObservable} from "mobx";
 import {observer} from "mobx-react";
-import {FormGroup, AnchorButton, Intent, Tooltip, Switch, Button, MenuItem, PopoverPosition, NonIdealState} from "@blueprintjs/core";
+import {FormGroup, AnchorButton, Intent, Switch, Button, MenuItem, PopoverPosition, NonIdealState} from "@blueprintjs/core";
+import {Tooltip2} from "@blueprintjs/popover2";
 import {Select, IItemRendererProps, ItemPredicate} from "@blueprintjs/select";
 import ReactResizeDetector from "react-resize-detector";
 import FuzzySearch from "fuzzy-search";
@@ -13,6 +14,7 @@ import {CatalogPlotWidgetStore, Border, DragMode, XBorder, CatalogPlotWidgetStor
 import {ProfilerInfoComponent, ClearableNumericInputComponent} from "components/Shared";
 import {Colors} from "@blueprintjs/core";
 import {toFixed, minMaxArray} from "utilities";
+import {TypedArray} from "models/Processed";
 import "./CatalogPlotComponent.scss";
 
 @observer
@@ -57,7 +59,9 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
             const widgetStore =  this.widgetStore;
             const catalogFileIds = CatalogStore.Instance.activeCatalogFiles;
             if (!catalogFileIds?.includes(this.catalogFileId) && catalogFileIds?.length > 0) {
-                this.catalogFileId = catalogFileIds[0];
+                runInAction(() => {
+                    this.catalogFileId = catalogFileIds[0];
+                })
             }
             if (widgetStore) {
                 this.plotType = widgetStore.plotType;
@@ -182,7 +186,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
         };
     }
 
-    private getHistogramXBorder(xArray: number[]): XBorder {
+    private getHistogramXBorder(xArray: number[] | TypedArray): XBorder {
         const xBounds = minMaxArray(xArray);
         return {
             xMin: xBounds.minVal,
@@ -315,7 +319,6 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
         const val = changeEvent.target.checked;
         if (widgetsStore && catalogWidgetStore) {
             catalogWidgetStore.setShowSelectedData(val);
-            CatalogStore.Instance.updateShowSelectedData(this.catalogFileId, val);
         }
     }
 
@@ -444,7 +447,6 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
         profileStore.setSelectedPointIndices([], false);
         catalogWidgetStore.setCatalogTableAutoScroll(false);
         catalogWidgetStore.setShowSelectedData(false);
-        catalogStore.updateShowSelectedData(this.catalogFileId, false);
     }
 
     // Single source selected
@@ -720,7 +722,6 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
             layout.yaxis.range = [border.yMin, border.yMax];
             layout.yaxis.title = widgetStore.yColumnName;
             layout.yaxis.tickformat = ".2e";
-            layout["hoverdistance"] = 5;
         } else {
             data = this.histogramData.data;
             let border;
@@ -779,7 +780,6 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
                 onValueChanged={val => this.onNumBinChange(val)}
                 onValueCleared={() => this.onNumBinChange(this.numBinsX)}
                 displayExponential={false}
-                updateValueOnKeyDown={true}
                 disabled={disabled}
             />
         );
@@ -809,22 +809,22 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
                         style={{transform: isScatterPlot? `scale(${scale})` : "scale(1)", transformOrigin: "top left"}}
                     />
                 </div>
-                <div className="catalog-plot-footer">
+                <div className="bp3-dialog-footer">
                     <div className="scatter-info">
                         <ProfilerInfoComponent info={this.genProfilerInfo}/>
                     </div>
-                    <div className="actions">
-                        <FormGroup label={"Show only selected sources"} inline={true} disabled={disabled}>
-                            <Switch checked={catalogWidgetStore.showSelectedData} onChange={this.handleShowSelectedDataChanged} disabled={disabled}/>
-                        </FormGroup>
-                        <Tooltip className="plot-button" content={"Update plots with data"}>
-                            <AnchorButton
-                                intent={Intent.PRIMARY}
-                                text="Plot All"
-                                onClick={this.handlePlotClick}
-                                disabled={disabled}
-                            />
-                        </Tooltip>
+                    <div className="bp3-dialog-footer-actions">
+                        <Tooltip2 content={"Show only selected sources at image and table viewer"}>
+                            <FormGroup label={"Selected only"} inline={true} disabled={disabled}>
+                                <Switch checked={catalogWidgetStore.showSelectedData} onChange={this.handleShowSelectedDataChanged} disabled={disabled}/>
+                            </FormGroup>
+                        </Tooltip2>            
+                        <AnchorButton
+                            intent={Intent.PRIMARY}
+                            text="Plot"
+                            onClick={this.handlePlotClick}
+                            disabled={disabled}
+                        />
                     </div>
                 </div>
                 <ReactResizeDetector handleWidth handleHeight onResize={this.onResize} refreshMode={"throttle"} refreshRate={33}>

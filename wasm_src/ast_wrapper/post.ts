@@ -57,7 +57,8 @@ Module.colors = [
     "blue", // tick
     "blue", // axe
     "blue", // number
-    "blue" // label
+    "blue", // label
+    "#62D96B"
 ];
 Module.shapes = [
     "\u25A1", // Square
@@ -97,7 +98,7 @@ Module.setCanvas = function (canvas) {
 Module.plot = Module.cwrap("plotGrid", "number", ["number", "number", "number", "number", "number", "number", "number", "number", "number", "number", "number", "string"]);
 Module.emptyFitsChan = Module.cwrap("emptyFitsChan", "number");
 Module.putFits = Module.cwrap("putFits", null, ["number", "string"])
-Module.getFrameFromFitsChan = Module.cwrap("getFrameFromFitsChan", "number", ["number"]);
+Module.getFrameFromFitsChan = Module.cwrap("getFrameFromFitsChan", "number", ["number", "number"]);
 Module.getSpectralFrame = Module.cwrap("getSpectralFrame", "number", ["number"]);
 Module.getSkyFrameSet = Module.cwrap("getSkyFrameSet", "number", ["number"]);
 Module.initDummyFrame = Module.cwrap("initDummyFrame", "number", []);

@@ -7,8 +7,7 @@ import {RegionWidgetStore, RegionsType, RegionId, ACTIVE_FILE_ID} from "stores/w
 import "./RegionSelectorComponent.scss";
 
 @observer
-export class RegionSelectorComponent extends React.Component<{ widgetStore: RegionWidgetStore, onFrameChanged?: (newFrame: FrameStore) => void, nonClosedDisabled?: boolean }> {
-
+export class RegionSelectorComponent extends React.Component<{ widgetStore: RegionWidgetStore, onFrameChanged?: (newFrame: FrameStore) => void }> {
     private handleFrameChanged = (changeEvent: React.ChangeEvent<HTMLSelectElement>) => {
         const appStore = AppStore.Instance;
         const widgetStore = this.props.widgetStore;
@@ -38,10 +37,7 @@ export class RegionSelectorComponent extends React.Component<{ widgetStore: Regi
 
         let enableFrameselect = false;
         let selectedFrameValue: number = ACTIVE_FILE_ID;
-        let frameOptions: IOptionProps[] = [{value: ACTIVE_FILE_ID, label: "Active"}];
-
         if (appStore.activeFrame) {
-            frameOptions = frameOptions.concat(appStore.frameNames);
             selectedFrameValue = widgetStore.fileId;
             enableFrameselect = true;
         }
@@ -68,7 +64,7 @@ export class RegionSelectorComponent extends React.Component<{ widgetStore: Regi
                 default:
                     fiteredRegions = regions;
             }
-            regionOptions = regionOptions.concat(fiteredRegions.map(r => {return {value: r.regionId, label: r.nameString, disabled: this.props.nonClosedDisabled ? !r.isClosedRegion : false}; }));
+            regionOptions = regionOptions.concat(fiteredRegions.map(r => {return {value: r.regionId, label: r.nameString};}));
 
             if (widgetStore.type === RegionsType.CLOSED_AND_POINT && regionOptions.length === 1) {
                 regionOptions = regionOptions.concat([{value: RegionId.CURSOR, label: "Cursor"}]);
@@ -82,7 +78,7 @@ export class RegionSelectorComponent extends React.Component<{ widgetStore: Regi
         let regionClassName = "unlinked-to-selected";
         const linkedClass = "linked-to-selected";
 
-        if (widgetStore.matchActiveFrame && widgetStore.fileId !== ACTIVE_FILE_ID) {
+        if (widgetStore.isEffectiveFrameEqualToActiveFrame && widgetStore.fileId !== ACTIVE_FILE_ID) {
             frameClassName = AppStore.Instance.darkTheme ? `${linkedClass} dark-theme` : linkedClass;
         }
 
@@ -93,7 +89,7 @@ export class RegionSelectorComponent extends React.Component<{ widgetStore: Regi
         return (
             <React.Fragment>
                 <FormGroup label={"Image"} inline={true} disabled={!enableFrameselect}>
-                    <HTMLSelect className={frameClassName} value={selectedFrameValue} options={frameOptions} onChange={this.handleFrameChanged} disabled={!enableFrameselect} style={{width: "100px"}}/>
+                    <HTMLSelect className={frameClassName} value={selectedFrameValue} options={widgetStore.frameOptions} onChange={this.handleFrameChanged} disabled={!enableFrameselect} style={{width: "100px"}}/>
                 </FormGroup>
                 <FormGroup label={"Region"} inline={true} disabled={!enableRegionSelect}>
                     <HTMLSelect className={regionClassName} value={selectedValue} options={regionOptions} onChange={this.handleRegionChanged} disabled={!enableRegionSelect}/>

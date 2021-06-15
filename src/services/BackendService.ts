@@ -58,6 +58,7 @@ export class BackendService {
     readonly catalogStream: Subject<CARTA.CatalogFilterResponse>;
     readonly momentProgressStream: Subject<CARTA.MomentProgress>;
     readonly scriptingStream: Subject<CARTA.ScriptingRequest>;
+    readonly listProgressStream: Subject<CARTA.ListProgress>;
     private readonly decoderMap: Map<CARTA.EventType, {messageClass: any, handler: HandlerFunction}>;
 
     private constructor() {
@@ -80,6 +81,7 @@ export class BackendService {
         this.scriptingStream = new Subject<CARTA.ScriptingRequest>();
         this.catalogStream = new Subject<CARTA.CatalogFilterResponse>();
         this.momentProgressStream = new Subject<CARTA.MomentProgress>();
+        this.listProgressStream = new Subject<CARTA.ListProgress>();
 
         // Construct handler and decoder maps
         this.decoderMap = new Map<CARTA.EventType, { messageClass: any, handler: HandlerFunction }>([
@@ -87,6 +89,7 @@ export class BackendService {
             [CARTA.EventType.FILE_LIST_RESPONSE, {messageClass: CARTA.FileListResponse, handler: this.onSimpleMappedResponse}],
             [CARTA.EventType.REGION_LIST_RESPONSE, {messageClass: CARTA.RegionListResponse, handler: this.onSimpleMappedResponse}],
             [CARTA.EventType.CATALOG_LIST_RESPONSE, {messageClass: CARTA.CatalogListResponse, handler: this.onSimpleMappedResponse}],
+            [CARTA.EventType.FILE_LIST_PROGRESS, {messageClass: CARTA.ListProgress, handler: this.onStreameListProgress}],
             [CARTA.EventType.FILE_INFO_RESPONSE, {messageClass: CARTA.FileInfoResponse, handler: this.onSimpleMappedResponse}],
             [CARTA.EventType.REGION_FILE_INFO_RESPONSE, {messageClass: CARTA.RegionFileInfoResponse, handler: this.onSimpleMappedResponse}],
             [CARTA.EventType.CATALOG_FILE_INFO_RESPONSE, {messageClass: CARTA.CatalogFileInfoResponse, handler: this.onSimpleMappedResponse}],
@@ -678,6 +681,20 @@ export class BackendService {
         }
     }
 
+    @action("cancel requesting file list")
+    cancelRequestingFileList(fileListType: CARTA.FileListType) {
+        if (this.connectionStatus !== ConnectionStatus.ACTIVE) {
+            return throwError(new Error("Not connected"));
+        } else {
+            const message = CARTA.StopFileList.create({fileListType: fileListType});
+            this.logEvent(CARTA.EventType.STOP_FILE_LIST, this.eventCounter, message, false);
+            if (this.sendEvent(CARTA.EventType.STOP_FILE_LIST, new Uint8Array())) {
+                return true;
+            }
+            return throwError(new Error("Could not send event"));
+        }
+    }
+
     @action("request spectral line")
     requestSpectralLine(frequencyRange: CARTA.DoubleBounds, intensityLimit: number): Observable<CARTA.SpectralLineResponse> {
         if (this.connectionStatus !== ConnectionStatus.ACTIVE) {
@@ -818,6 +835,10 @@ export class BackendService {
 
     private onStreamedMomentProgress(_eventId: number, momentProgress: CARTA.MomentProgress) {
         this.momentProgressStream.next(momentProgress);
+    }
+
+    private onStreameListProgress(_eventId: number, listProgress: CARTA.ListProgress) {
+        this.listProgressStream.next(listProgress);
     }
 
     private sendEvent(eventType: CARTA.EventType, payload: Uint8Array): boolean {

@@ -7,6 +7,7 @@ Module.filterHanning = Module.cwrap("filterHanning", "number", ["number", "numbe
 Module.filterDecimation = Module.cwrap("filterDecimation", "number", ["number", "number", "number", "number", "number"]);
 Module.filterBinning = Module.cwrap("filterBinning", "number", ["number", "number", "number", "number"]);
 Module.filterSavitzkyGolay = Module.cwrap("filterSavitzkyGolay", "number", ["number", "number", "number", "number", "number", "number"]);
+Module.fittingGaussian = Module.cwrap("fitting", "string", ["number", "number", "number", "number", "number", "number", "number", "number", "number", "number", "number", "number", "number", "number"]);
 
 Module.boxcarSmooth = function (yIn: Float64Array | Float32Array, kernelSize: number) {
     // Return empty array if arguments are invalid
@@ -127,6 +128,86 @@ Module.savitzkyGolaySmooth = function (xIn: Float64Array | Float32Array, yIn: Fl
     Module._free(Module.yIn);
     Module._free(Module.yOut);
     return yOut;
+};
+
+// functionType = 0, using Gaussian. functionType = 1, using Lorentzian.
+// inputData stores initial guesses as [amp1, center1, fwhm1, amp2, center2, fwhm2, ...]
+// lockedInputdData stores which initial guesses are locked as [1(amp1), 0(center1), 0(fwhm1), 0(amp2), 1(center2), 0(fwhm2), ...]. 1 as locked, 0 as unlocked.
+// orderInputData stores initial guesses as [yIntercept, slope]
+// lockedOrderInputData stores which initial guesses are locked as [0(yIntercept), 1(slope)]. 1 as locked, 0 as unlocked..
+Module.fitting = function (functionType: number, xIn: Float64Array | Float32Array, yIn: Float64Array | Float32Array, inputData: number[], lockedInputData: number[], orderInputData: number[], lockedOrderInputData: number[]) {
+    if (!xIn || !yIn || !inputData || !lockedInputData) {
+        return null;
+    }
+
+    const dataN = xIn.length;
+    Module.xIn = Module._malloc(dataN * 8);
+    Module.yIn = Module._malloc(dataN * 8);
+    Module.HEAPF64.set(new Float64Array(xIn), Module.xIn / 8);
+    Module.HEAPF64.set(new Float64Array(yIn), Module.yIn / 8);
+
+    const componentN = inputData.length / 3;
+
+    Module.orderValues = Module._malloc(2 * 8);
+    Module.lockedOrderValues = Module._malloc(2 * 4);
+    Module.HEAPF64.set(new Float64Array(orderInputData), Module.orderValues / 8);
+    Module.HEAP32.set(new Int32Array(lockedOrderInputData), Module.lockedOrderValues / 4);
+
+    Module.inputData = Module._malloc(componentN * 3 * 8); // 2-dimensional array: double inputData[][3]
+    Module.HEAPF64.set(new Float64Array(inputData), Module.inputData / 8);
+    const inputArray: number[] = [];
+    for (let i = 0; i < componentN; i++) {
+        inputArray.push(Module.inputData + i * 3 * 8);
+    }
+    Module.inputArray = Module._malloc(componentN * 4);
+    Module.HEAPU32.set(new Uint32Array(inputArray), Module.inputArray / 4);
+
+    Module.lockedInputData = Module._malloc(componentN * 3 * 4); // 2-dimensional array: int lockedInputData [][3]
+    Module.HEAP32.set(new Int32Array(lockedInputData), Module.lockedInputData / 4);
+    const lockedInputArray: number[] = [];
+    for (let i = 0; i < componentN; i++) {
+        lockedInputArray.push(Module.lockedInputData + i * 3 * 4);
+    }
+    Module.lockedInputArray = Module._malloc(componentN * 4);
+    Module.HEAPU32.set(new Uint32Array(lockedInputArray), Module.lockedInputArray / 4);
+
+    Module.resultOrderValues = Module._malloc(4 * 8); // yIntercept, yInterceptError, slope, slopeError
+    Module.resultAmp = Module._malloc(componentN * 8 * 2); // amp with error.
+    Module.resultCenter = Module._malloc(componentN * 8 * 2); // center with error.
+    Module.resultFwhm = Module._malloc(componentN * 8 * 2); // fwhm with error.
+    Module.resultIntegral = Module._malloc(componentN * 8 * 2); // integral with error.
+    Module.resultResidual = Module._malloc(dataN * 8);
+
+    const log = Module.fittingGaussian(
+        Module.xIn, Module.yIn, dataN,
+        Module.inputArray, Module.lockedInputArray, componentN,
+        functionType, Module.orderValues, Module.lockedOrderValues,
+        Module.resultAmp, Module.resultCenter, Module.resultFwhm, Module.resultOrderValues, Module.resultIntegral, Module.resultResidual
+    );
+
+    const orderValuesOut = new Float64Array(Module.HEAPF64.buffer, Module.resultOrderValues, 4).slice(); // [yIntercept, yInterceptError, slope, slopeError]
+    const centerOut = new Float64Array(Module.HEAPF64.buffer, Module.resultCenter, componentN * 2).slice(); // [amp1, amp1Error, amp2, amp2Error, ...]
+    const ampOut = new Float64Array(Module.HEAPF64.buffer, Module.resultAmp, componentN * 2).slice(); // [center1, center1Error, center2, center2Error, ...]
+    const fwhmOut = new Float64Array(Module.HEAPF64.buffer, Module.resultFwhm, componentN * 2).slice(); // [fwhm1, fwhm1Error, fwhm2, fwhmError2, ...]
+    const integralOut = new Float64Array(Module.HEAPF64.buffer, Module.resultIntegral, componentN * 2).slice(); // [integral1, integral1Error, integral2, integral2Error, ...]
+    const residualOut = new Float64Array(Module.HEAPF64.buffer, Module.resultResidual, dataN).slice();
+    const result = {yIntercept: orderValuesOut[0], yInterceptError: orderValuesOut[1], slope: orderValuesOut[2], slopeError: orderValuesOut[3], center: centerOut, amp: ampOut, fwhm: fwhmOut, log: log, integral: integralOut, residual: residualOut};
+
+    Module._free(Module.xIn);
+    Module._free(Module.yIn);
+    Module._free(Module.orderValues);
+    Module._free(Module.lockedOrderValues);
+    Module._free(Module.inputArray);
+    Module._free(Module.inputData);
+    Module._free(Module.lockedInputArray);
+    Module._free(Module.lockedInputData);
+    Module._free(Module.resultOrderValues);
+    Module._free(Module.resultCenter);
+    Module._free(Module.resultAmp);
+    Module._free(Module.resultFwhm);
+    Module._free(Module.resultIntegral);
+    Module._free(Module.resultResidual);
+    return result;
 };
 
 module.exports = Module;

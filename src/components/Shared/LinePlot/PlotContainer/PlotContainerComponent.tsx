@@ -54,6 +54,8 @@ export class PlotContainerProps {
 }
 
 export class MultiPlotProps {
+    imageName: string;
+    plotName: string;
     data: { x: number, y: number }[];
     type: PlotType;
     borderColor?: string;
@@ -61,7 +63,10 @@ export class MultiPlotProps {
     pointRadius?: number;
     opacity?: number;
     order?: number;
-    exportData?: Map<string, string>;
+    comments?: string[];
+    hidden?: boolean;
+    followingData?: string[];
+    noExport?: boolean;
 }
 
 interface MulticolorLineChartDatasets extends ChartDataSets {
@@ -469,6 +474,10 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
 
         if (this.props.multiPlotPropsMap && this.props.multiPlotPropsMap.size > 0) {
             this.props.multiPlotPropsMap.forEach((props, key) => {
+                if (props.hidden) {
+                    return;
+                }
+
                 let currentLineColor = props.borderColor ? props.borderColor : lineColor;
                 let currentOpacity = clamp((props.opacity ? props.opacity : opacity) || 1.0, 0, 1);
                 if (currentOpacity < 1.0) {

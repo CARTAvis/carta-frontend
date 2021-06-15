@@ -13,10 +13,10 @@ export class ImageSaveComponent extends React.Component {
         super(props);
         makeObservable(this);
 
-        autorun(()=>{
+        autorun(() => {
             const appStore = AppStore.Instance;
             if (this.validSaveSpectralRangeStart && this.validSaveSpectralRangeEnd) {
-                appStore.endFileSaving()
+                appStore.endFileSaving();
             } else {
                 appStore.startFileSaving();
             }
