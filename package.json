@@ -84,6 +84,8 @@
         "build-protobuf": "./protobuf/build_proto.sh",
         "test": "react-scripts test --env=jsdom",
         "eject": "react-scripts eject",
+        "reformat": "npx prettier --write ./src",
+        "checkformat": "npx prettier --check ./src",
         "prepack": "npm run build-libs-docker; npm run build-docker"
     },
     "eslintConfig": {
