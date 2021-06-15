@@ -2,7 +2,8 @@ import {observer} from "mobx-react";
 import FuzzySearch from "fuzzy-search";
 import {action, autorun, computed, makeObservable} from "mobx";
 import * as React from "react";
-import {AnchorButton, Button, ButtonGroup, FormGroup, Icon, MenuItem, PopoverPosition, Switch, Tab, Tabs, Tooltip} from "@blueprintjs/core";
+import {AnchorButton, Button, ButtonGroup, FormGroup, Icon, MenuItem, PopoverPosition, Switch, Tab, Tabs} from "@blueprintjs/core";
+import {Tooltip2} from "@blueprintjs/popover2";
 import {Select, IItemRendererProps, ItemPredicate} from "@blueprintjs/select";
 import {AppStore, CatalogStore, CatalogProfileStore, CatalogOverlay, DefaultWidgetConfig, HelpType, WidgetProps, WidgetsStore} from "stores";
 import {CatalogOverlayShape, CatalogWidgetStore, CatalogSettingsTabs, ValueClip} from "stores/widgets";
@@ -354,7 +355,7 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
                     />
                 </FormGroup>
                 <FormGroup  inline={true} label="Size Max" labelInfo="(px)"  disabled={disableSizeMap}>
-                    <Tooltip content = {`Maximum size ${widgetStore.maxPointSizebyType}`}>
+                    <Tooltip2 content = {`Maximum size ${widgetStore.maxPointSizebyType}`}>
                         <SafeNumericInput
                             allowNumericCharactersOnly={true}
                             asyncControl={true}
@@ -365,7 +366,7 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
                             onBlur={(ev) => this.handleChange(ev, "size-max")}
                             onKeyDown={(ev) => this.handleChange(ev, "size-max")}
                         />
-                    </Tooltip>
+                    </Tooltip2>
                 </FormGroup>
             </div>
         )

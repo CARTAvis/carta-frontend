@@ -4,7 +4,8 @@ import {computed} from "mobx";
 import {observer} from "mobx-react";
 import {makeObservable, observable} from "mobx";
 import {SketchPicker, ColorResult} from "react-color";
-import {Button, Popover, PopoverPosition, MenuItem} from "@blueprintjs/core";
+import {Button, PopoverPosition, MenuItem} from "@blueprintjs/core";
+import {Popover2} from "@blueprintjs/popover2";
 import {Select} from "@blueprintjs/select";
 import {AUTO_COLOR_OPTIONS, getColorForTheme} from "utilities";
 import "./AutoColorPickerComponent.scss";
@@ -53,10 +54,13 @@ export class AutoColorPickerComponent extends React.Component<AutoColorPickerCom
 
             return (
                 <div key={"custom-color"} className={"custom-color"}>
-                    <Popover position={PopoverPosition.BOTTOM_RIGHT} popoverClassName={popoverClassName}>
+                    <Popover2
+                        position={PopoverPosition.BOTTOM_RIGHT}
+                        popoverClassName={popoverClassName}
+                        content={<SketchPicker color={this.autoColor} onChange={this.handleColorChange} disableAlpha={this.props.disableAlpha} presetColors={this.props.presetColors}/>}
+                    >
                         <Button text={"Other"} className="color-swatch-button" disabled={this.props.disabled}/>
-                        <SketchPicker color={this.autoColor} onChange={this.handleColorChange} disableAlpha={this.props.disableAlpha} presetColors={this.props.presetColors}/>
-                    </Popover>
+                    </Popover2>
                 </div>
             );
         } else {

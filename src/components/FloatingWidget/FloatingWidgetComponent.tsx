@@ -2,7 +2,8 @@ import * as React from "react";
 import * as GoldenLayout from "golden-layout";
 import {observer} from "mobx-react";
 import {Rnd} from "react-rnd";
-import {Icon, Position, Tooltip} from "@blueprintjs/core";
+import {Icon, Position} from "@blueprintjs/core";
+import {Tooltip2} from "@blueprintjs/popover2";
 import {PlaceholderComponent} from "components";
 import {AppStore, HelpStore, LayoutStore, WidgetConfig, CatalogStore} from "stores";
 import "./FloatingWidgetComponent.scss";
@@ -153,23 +154,23 @@ export class FloatingWidgetComponent extends React.Component<FloatingWidgetCompo
                     </div>
                     {this.props.showFloatingSettingsButton &&
                     <div className={buttonClass} onClick={() => appStore.widgetsStore.createFloatingSettingsWidget(widgetConfig.title, widgetConfig.id, widgetConfig.type)}>
-                        <Tooltip content="Settings" position={Position.BOTTOM_RIGHT}>
+                        <Tooltip2 content="Settings" position={Position.BOTTOM_RIGHT}>
                             <Icon icon={"cog"}/>
-                        </Tooltip>
+                        </Tooltip2>
                     </div>
                     }
                     {widgetConfig.helpType &&
                     <div className={buttonClass} onClick={this.onClickHelpButton}>
-                        <Tooltip content="Help" position={Position.BOTTOM_RIGHT}>
+                        <Tooltip2 content="Help" position={Position.BOTTOM_RIGHT}>
                             <Icon icon={"help"}/>
-                        </Tooltip>
+                        </Tooltip2>
                     </div>
                     }
                     {this.props.showPinButton &&
                     <div className={buttonClass} ref={ref => this.pinElementRef = ref} onClick={() => console.log("pin!")}>
-                        <Tooltip content="Drag pin to dock this widget" position={Position.BOTTOM_RIGHT}>
+                        <Tooltip2 content="Drag pin to dock this widget" position={Position.BOTTOM_RIGHT}>
                             <Icon icon={"pin"}/>
-                        </Tooltip>
+                        </Tooltip2>
                     </div>
                     }
                     {widgetConfig.isCloseable &&

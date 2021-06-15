@@ -1,7 +1,8 @@
 import * as React from "react";
 import {CSSProperties} from "react";
 import {observer} from "mobx-react";
-import {AnchorButton, ButtonGroup, Tooltip} from "@blueprintjs/core";
+import {AnchorButton, ButtonGroup} from "@blueprintjs/core";
+import {Tooltip2} from "@blueprintjs/popover2";
 import {AppStore} from "stores";
 import "./ToolbarComponent.scss";
 
@@ -38,12 +39,12 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
         return (
             <ButtonGroup className={className} style={styleProps}>
                 {(this.props.exportImage) ?
-                    <Tooltip content={<span>Export image {this.exportImageTooltip()}</span>}>
+                    <Tooltip2 content={<span>Export image {this.exportImageTooltip()}</span>}>
                         <AnchorButton icon="floppy-disk" onClick={this.props.exportImage}/>
-                    </Tooltip> : null}
-                <Tooltip content="Export data">
+                    </Tooltip2> : null}
+                <Tooltip2 content="Export data">
                     <AnchorButton icon="th" onClick={this.props.exportData}/>
-                </Tooltip>
+                </Tooltip2>
             </ButtonGroup>
         );
     }

@@ -4,7 +4,7 @@ export class RenderConfigSettingsHelpComponent extends React.Component {
     public render() {
         return (
             <div>
-                <p>The appearance of the histogram plot in the render configuration widget can be customized through this settings dialogue, including:</p>
+                <p>The appearance of the histogram plot in the render configuration widget can be customized through this settings dialog, including:</p>
                 <ul>
                     <li>color of the plot</li>
                     <li>plot styles including steps (default), lines, and dots</li>

@@ -1,7 +1,8 @@
 import * as React from "react";
 import {observer} from "mobx-react";
 import {makeObservable, observable} from "mobx";
-import {Classes, H5, InputGroup, Position, Tooltip} from "@blueprintjs/core";
+import {Classes, H5, InputGroup, Position} from "@blueprintjs/core";
+import {Tooltip2} from "@blueprintjs/popover2";
 import {CARTA} from "carta-protobuf";
 import * as AST from "ast_wrapper";
 import {AppStore, RegionCoordinate, RegionStore, NUMBER_FORMAT_LABEL} from "stores";
@@ -120,7 +121,7 @@ export class PolygonRegionForm extends React.Component<{ region: RegionStore, wc
                 );
             } else {
                 xInput = (
-                    <Tooltip content={`Format: ${NUMBER_FORMAT_LABEL.get(formatX)}`} position={Position.BOTTOM} hoverOpenDelay={300}>
+                    <Tooltip2 content={`Format: ${NUMBER_FORMAT_LABEL.get(formatX)}`} position={Position.BOTTOM} hoverOpenDelay={300}>
                         <SafeNumericInput
                             allowNumericCharactersOnly={false}
                             buttonPosition="none"
@@ -130,10 +131,10 @@ export class PolygonRegionForm extends React.Component<{ region: RegionStore, wc
                             onBlur={(evt) => this.handleWCSPointChange(index, true, evt)}
                             onKeyDown={(evt) => this.handleWCSPointChange(index, true, evt)}
                         />
-                    </Tooltip>
+                    </Tooltip2>
                 );
                 yInput = (
-                    <Tooltip content={`Format: ${NUMBER_FORMAT_LABEL.get(formatY)}`} position={Position.BOTTOM} hoverOpenDelay={300}>
+                    <Tooltip2 content={`Format: ${NUMBER_FORMAT_LABEL.get(formatY)}`} position={Position.BOTTOM} hoverOpenDelay={300}>
                         <SafeNumericInput
                             allowNumericCharactersOnly={false}
                             buttonPosition="none"
@@ -143,7 +144,7 @@ export class PolygonRegionForm extends React.Component<{ region: RegionStore, wc
                             onBlur={(evt) => this.handleWCSPointChange(index, false, evt)}
                             onKeyDown={(evt) => this.handleWCSPointChange(index, false, evt)}
                         />
-                    </Tooltip>
+                    </Tooltip2>
                 );
             }
             const infoString = region.coordinate === RegionCoordinate.Image ? `WCS: ${WCSPoint2D.ToString(pointWCS)}` : `Image: ${Point2D.ToString(point, "px", 3)}`;
