@@ -1,6 +1,7 @@
 import * as React from "react";
 import {observer} from "mobx-react";
-import {Classes, H5, InputGroup, Position, Tooltip} from "@blueprintjs/core";
+import {Classes, H5, InputGroup, Position} from "@blueprintjs/core";
+import {Tooltip2} from "@blueprintjs/popover2";
 import {CARTA} from "carta-protobuf";
 import * as AST from "ast_wrapper";
 import {AppStore, RegionCoordinate, RegionStore, NUMBER_FORMAT_LABEL} from "stores";
@@ -119,7 +120,7 @@ export class PointRegionForm extends React.Component<{ region: RegionStore, wcsI
             yInput = <SafeNumericInput selectAllOnFocus={true} buttonPosition="none" placeholder="Y Coordinate" value={centerPoint.y} onBlur={this.handleCenterYChange} onKeyDown={this.handleCenterYChange}/>;
         } else {
             xInput = (
-                <Tooltip content={`Format: ${NUMBER_FORMAT_LABEL.get(formatX)}`} position={Position.BOTTOM} hoverOpenDelay={300}>
+                <Tooltip2 content={`Format: ${NUMBER_FORMAT_LABEL.get(formatX)}`} position={Position.BOTTOM} hoverOpenDelay={300}>
                     <SafeNumericInput
                         allowNumericCharactersOnly={false}
                         buttonPosition="none"
@@ -129,10 +130,10 @@ export class PointRegionForm extends React.Component<{ region: RegionStore, wcsI
                         onBlur={this.handleCenterWCSXChange}
                         onKeyDown={this.handleCenterWCSXChange}
                     />
-                </Tooltip>
+                </Tooltip2>
             );
             yInput = (
-                <Tooltip content={`Format: ${NUMBER_FORMAT_LABEL.get(formatY)}`} position={Position.BOTTOM} hoverOpenDelay={300}>
+                <Tooltip2 content={`Format: ${NUMBER_FORMAT_LABEL.get(formatY)}`} position={Position.BOTTOM} hoverOpenDelay={300}>
                     <SafeNumericInput
                         allowNumericCharactersOnly={false}
                         buttonPosition="none"
@@ -142,7 +143,7 @@ export class PointRegionForm extends React.Component<{ region: RegionStore, wcsI
                         onBlur={this.handleCenterWCSYChange}
                         onKeyDown={this.handleCenterWCSYChange}
                     />
-                </Tooltip>
+                </Tooltip2>
             );
         }
         const infoString = region.coordinate === RegionCoordinate.Image ? `WCS: ${WCSPoint2D.ToString(centerWCSPoint)}` : `Image: ${Point2D.ToString(centerPoint, "px", 3)}`;

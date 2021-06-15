@@ -3,6 +3,7 @@ export * from "./AnimatorStore";
 export * from "./AppStore";
 export * from "./ContourStore";
 export * from "./ContourConfigStore";
+export * from "./DistanceMeasuringStore";
 export * from "./FileBrowserStore";
 export * from "./FrameStore";
 export * from "./LogStore";

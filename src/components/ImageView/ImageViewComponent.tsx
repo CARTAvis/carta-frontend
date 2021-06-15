@@ -97,7 +97,8 @@ export const getImageCanvas = (padding: Padding, colorbarPosition: string, backg
 export enum ImageViewLayer {
     RegionCreating = "regionCreating",
     Catalog = "catalog",
-    RegionMoving = "regionMoving"
+    RegionMoving = "regionMoving",
+    DistanceMeasuring = "distanceMeasuring"
 }
 
 @observer

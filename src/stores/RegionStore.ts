@@ -1,5 +1,5 @@
 import {action, computed, observable, makeObservable} from "mobx";
-import {Colors} from "@blueprintjs/core";
+import {Colors, IconName} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import * as AST from "ast_wrapper";
 import {Point2D} from "models";
@@ -57,6 +57,21 @@ export class RegionStore {
                 return "Polygon";
             default:
                 return "Not Implemented";
+        }
+    }
+
+    public static RegionIconString(regionType: CARTA.RegionType): IconName {
+        switch (regionType) {
+            case CARTA.RegionType.POINT:
+                return "symbol-square";
+            case CARTA.RegionType.RECTANGLE:
+                return "square";
+            case CARTA.RegionType.ELLIPSE:
+                return "circle";
+            case CARTA.RegionType.POLYGON:
+                return "polygon-filter";
+            default:
+                return "error";
         }
     }
 

@@ -1,7 +1,8 @@
 import * as React from "react";
 import {makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
-import {Alert, Icon, Menu, Popover, Position, Tooltip, MenuDivider} from "@blueprintjs/core";
+import {Alert, Icon, Menu, Position, MenuDivider} from "@blueprintjs/core";
+import {Popover2, Tooltip2} from "@blueprintjs/popover2";
 import {ToolbarMenuComponent} from "./ToolbarMenu/ToolbarMenuComponent";
 import {PresetLayout} from "models";
 import {AppStore, BrowserMode, PreferenceKeys, WidgetsStore, WidgetType} from "stores";
@@ -127,7 +128,7 @@ export class RootMenuComponent extends React.Component {
                     disabled={appStore.appendFileDisabled}
                     onClick={() => appStore.fileBrowserStore.showFileBrowser(BrowserMode.File, true)}
                 />
-                <Tooltip
+                <Tooltip2
                     content={"not allowed in read-only mode"}
                     disabled={appStore.appendFileDisabled || appStore.backendService?.serverFeatureFlags !== CARTA.ServerFeatureFlags.READ_ONLY}
                     position={Position.LEFT}
@@ -138,7 +139,7 @@ export class RootMenuComponent extends React.Component {
                         disabled={appStore.appendFileDisabled || appStore.backendService?.serverFeatureFlags === CARTA.ServerFeatureFlags.READ_ONLY}
                         onClick={() => appStore.fileBrowserStore.showFileBrowser(BrowserMode.SaveFile, false)}
                     />
-                </Tooltip>
+                </Tooltip2>
                 <Menu.Item
                     text="Close image"
                     label={`${modString}W`}
@@ -151,7 +152,7 @@ export class RootMenuComponent extends React.Component {
                     disabled={!appStore.activeFrame}
                     onClick={() => appStore.fileBrowserStore.showFileBrowser(BrowserMode.RegionImport, false)}
                 />
-                <Tooltip
+                <Tooltip2
                     content={"not allowed in read-only mode"}
                     disabled={!appStore.activeFrame || !appStore.activeFrame.regionSet.regions || appStore.activeFrame.regionSet.regions.length <= 1 || appStore.backendService?.serverFeatureFlags !== CARTA.ServerFeatureFlags.READ_ONLY}
                     position={Position.LEFT}
@@ -161,7 +162,7 @@ export class RootMenuComponent extends React.Component {
                         disabled={!appStore.activeFrame || !appStore.activeFrame.regionSet.regions || appStore.activeFrame.regionSet.regions.length <= 1 || appStore.backendService.serverFeatureFlags === CARTA.ServerFeatureFlags.READ_ONLY}
                         onClick={() => appStore.fileBrowserStore.showFileBrowser(BrowserMode.RegionExport, false)}
                     />
-                </Tooltip>
+                </Tooltip2>
                 <Menu.Divider/>
                 <Menu.Item
                     text="Import catalog"
@@ -340,9 +341,9 @@ export class RootMenuComponent extends React.Component {
         let loadingIndicator;
         if (loadingTooltipFragment) {
             loadingIndicator = (
-                <Tooltip content={loadingTooltipFragment}>
+                <Tooltip2 content={loadingTooltipFragment}>
                     <Icon icon={"cloud-download"} className={loadingIndicatorClass}/>
-                </Tooltip>
+                </Tooltip2>
             );
         } else {
             loadingIndicator = <Icon icon={"cloud-download"} className={loadingIndicatorClass}/>;
@@ -350,39 +351,39 @@ export class RootMenuComponent extends React.Component {
 
         return (
             <div className="root-menu">
-                <Popover autoFocus={false} minimal={true} content={fileMenu} position={Position.BOTTOM_LEFT}>
+                <Popover2 autoFocus={false} minimal={true} content={fileMenu} position={Position.BOTTOM_LEFT}>
                     <Menu className="root-menu-entry">
                         <Menu.Item text="File"/>
                     </Menu>
-                </Popover>
-                <Popover autoFocus={false} minimal={true} content={viewMenu} position={Position.BOTTOM_LEFT}>
+                </Popover2>
+                <Popover2 autoFocus={false} minimal={true} content={viewMenu} position={Position.BOTTOM_LEFT}>
                     <Menu className="root-menu-entry">
                         <Menu.Item text="View"/>
                     </Menu>
-                </Popover>
-                <Popover autoFocus={false} minimal={true} content={this.genWidgetsMenu()} position={Position.BOTTOM_LEFT}>
+                </Popover2>
+                <Popover2 autoFocus={false} minimal={true} content={this.genWidgetsMenu()} position={Position.BOTTOM_LEFT}>
                     <Menu className="root-menu-entry">
                         <Menu.Item text="Widgets"/>
                     </Menu>
-                </Popover>
-                <Popover autoFocus={false} minimal={true} content={helpMenu} position={Position.BOTTOM_LEFT}>
+                </Popover2>
+                <Popover2 autoFocus={false} minimal={true} content={helpMenu} position={Position.BOTTOM_LEFT}>
                     <Menu className="root-menu-entry">
                         <Menu.Item text="Help"/>
                     </Menu>
-                </Popover>
+                </Popover2>
                 <ToolbarMenuComponent/>
                 <Alert className={appStore.darkTheme ? "bp3-dark" : ""} isOpen={this.documentationAlertVisible} onClose={this.handleAlertDismissed} canEscapeKeyCancel={true} canOutsideClickCancel={true} confirmButtonText={"Dismiss"}>
                     Documentation will open in a new tab. Please ensure any popup blockers are disabled.
                 </Alert>
                 {loadingIndicator}
                 {appStore.preferenceStore.lowBandwidthMode &&
-                <Tooltip content={<span>CARTA is running in low bandwidth mode<br/><i><small>Image resolution and cursor responsiveness will be reduced</small></i></span>}>
+                <Tooltip2 content={<span>CARTA is running in low bandwidth mode<br/><i><small>Image resolution and cursor responsiveness will be reduced</small></i></span>}>
                     <Icon icon={"feed"} className="connectivity-icon warning"/>
-                </Tooltip>
+                </Tooltip2>
                 }
-                <Tooltip content={connectivityTooltip}>
+                <Tooltip2 content={connectivityTooltip}>
                     <Icon icon={"symbol-circle"} className={connectivityClass}/>
-                </Tooltip>
+                </Tooltip2>
                 <div id="hidden-status-info">
                     <span id="info-session-id">{appStore.backendService.sessionId}</span>
                     <span id="info-grpc-port">{appStore.backendService.grpcPort}</span>

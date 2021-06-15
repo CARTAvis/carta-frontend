@@ -2,7 +2,7 @@ import {action, autorun, computed, observable, makeObservable, runInAction} from
 import {NumberRange} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import * as AST from "ast_wrapper";
-import {AnimatorStore, AppStore, ASTSettingsString, ContourConfigStore, ContourStore, LogStore, OverlayBeamStore, OverlayStore, PreferenceStore, RegionSetStore, RegionStore, RenderConfigStore} from "stores";
+import {AnimatorStore, AppStore, ASTSettingsString, ContourConfigStore, ContourStore, DistanceMeasuringStore, LogStore, OverlayBeamStore, OverlayStore, PreferenceStore, RegionSetStore, RegionStore, RenderConfigStore} from "stores";
 import {
     ChannelInfo,
     ControlMap,
@@ -73,6 +73,8 @@ export class FrameStore {
     public spectralCoordsSupported: Map<string, { type: SpectralType, unit: SpectralUnit }>;
     public spectralSystemsSupported: Array<SpectralSystem>;
     public spatialTransformAST: AST.FrameSet;
+
+    public distanceMeasuring: DistanceMeasuringStore;
 
     // Region set for the current frame. Accessed via regionSet, to take into account region sharing
     @observable private readonly frameRegionSet: RegionSetStore;
@@ -770,6 +772,8 @@ export class FrameStore {
         this.requestingMomentsProgress = 0;
 
         this.stokesFiles = [];
+
+        this.distanceMeasuring = new DistanceMeasuringStore();
 
         // synchronize AST overlay's color/grid/label with preference when frame is created
         const astColor = preferenceStore.astColor;
